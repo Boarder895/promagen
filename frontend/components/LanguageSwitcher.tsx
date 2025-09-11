@@ -1,0 +1,10 @@
+const langs = ["English","中文(简体)","Español","العربية","हिन्दी","Português","Français","Русский","Deutsch","日本語"];
+
+export default function LanguageSwitcher(){
+  return (
+    <div style={{margin:"12px 0"}}>
+      <label style={{marginRight:8}}>Language:</label>
+      <select>{langs.map(l => <option key={l}>{l}</option>)}</select>
+    </div>
+  );
+}

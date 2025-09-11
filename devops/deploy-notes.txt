@@ -1,0 +1,4 @@
+Backend: Node/Express (Prisma, Postgres/Neon). Run locally with: npm run dev
+Frontend: Next.js on Vercel (app.promagen.com).
+WordPress: Marketing site (promagen.com) with shortcode + embed.
+DNS: app.promagen.com -> Vercel (CNAME). promagen.com -> WordPress host.

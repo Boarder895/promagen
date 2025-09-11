@@ -1,4 +1,5 @@
-// C:\Users\Martin Yarnold\Projects\promagen\prisma\schema.prisma
+// prisma/schema.prisma — Promagen DB schema (20 providers)
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,9 +9,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Platform {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
+enum Provider {
+  openai
+  stability
+  leonardo
+  deepai
+  google_imagen
+  lexica
+  novelai
+  edenai
+  runware
+  hive
+  recraft
+  artistly
+  canva
+  adobe_firefly
+  midjourney
+  bing_image_creator
+  nightcafe
+  playground
+  pixlr
+  fotor
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  keys      Key[]
+}
+
+model Key {
+  id         String   @id @default(cuid())
+  userId     String
+  provider   Provider
+  cipherText String   // AES-256-GCM encrypted API key
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Metric {
+  id        String   @id @default(cuid())
+  provider  Provider
+  category  String   // adoption, quality, speed, cost, safety, innovation, ethics
+  value     Float
+  source    String
+  createdAt DateTime @default(now())
+}
+
+model Score {
+  id        String   @id @default(cuid())
+  provider  Provider
+  total     Float
+  createdAt DateTime @default(now())
+}
+
+model Override {
+  id        String   @id @default(cuid())
+  provider  Provider
+  category  String
+  delta     Float
+  createdAt DateTime @default(now())
 }

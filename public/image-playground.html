@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Image Playground</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 20px; }
+    header { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    textarea { width: 100%; min-height: 120px; }
+    .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:12px; margin-top:16px; }
+    .card { border:1px solid #e5e7eb; border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:8px; }
+    .thumb { background:#f3f4f6; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; overflow:hidden; border-radius:6px; }
+    .thumb img { width:100%; height:100%; object-fit:cover; }
+    .sp { flex:1 }
+    .toast { position:fixed; top:10px; right:10px; background:#fee2e2; color:#991b1b; padding:8px 10px; border-radius:6px; font-size:12px; display:none; }
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast"></div>
+  <h1>Image Playground</h1>
+  <header>
+    <label>Provider
+      <select id="provider">
+        <option value="openai">openai</option>
+        <option value="echo">echo (demo)</option>
+      </select>
+    </label>
+    <label>Model
+      <input id="model" value="gpt-image-1" placeholder="gpt-image-1" />
+    </label>
+    <label>Size
+      <select id="size">
+        <option>1024x1024</option>
+        <option>1792x1024</option>
+        <option>1024x1792</option>
+      </select>
+    </label>
+    <label>n
+      <input id="n" type="number" min="1" max="10" value="1" style="width:64px" />
+    </label>
+    <label>quality
+      <select id="quality">
+        <option>standard</option>
+        <option>hd</option>
+      </select>
+    </label>
+    <span class="sp"></span>
+    <button id="go">Generate</button>
+    <button id="clear">Clear gallery</button>
+  </header>
+
+  <p><textarea id="prompt" placeholder="Describe the image...">A radiant heroine riding a white unicorn through a photorealistic mushroom city, Pixar–Ghibli vibe, cinematic lighting</textarea></p>
+
+  <div class="grid" id="grid"></div>
+
+<script>
+const $ = (id)=>document.getElementById(id);
+const toast = (msg)=>{ const t=$('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none', 4000); };
+
+$('go').onclick = async () => {
+  const provider = $('provider').value;
+  const model = $('model').value.trim();
+  const size = $('size').value;
+  const n = parseInt($('n').value || '1', 10);
+  const quality = $('quality').value;
+  const prompt = $('prompt').value.trim();
+
+  const url = `/api/ai/${provider}/images`;
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-user-id':'dev-user' },
+      body: JSON.stringify({ model, prompt, size, n, quality })
+    });
+    const data = await r.json();
+    if (!r.ok) { toast(JSON.stringify(data)); return; }
+    (data.result?.images ?? []).forEach((img, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const box = document.createElement('div');
+      box.className = 'thumb';
+
+      const a = document.createElement('a');
+      a.textContent = 'download';
+      a.download = `img_${Date.now()}_${i}.png`;
+
+      if (img.dataUrl) {
+        const im = document.createElement('img'); im.src = img.dataUrl; box.appendChild(im);
+        a.href = img.dataUrl;
+      } else if (img.url) {
+        const im = document.createElement('img'); im.src = img.url; box.appendChild(im);
+        a.href = img.url;
+      } else {
+        box.textContent = 'no image';
+      }
+
+      const meta = document.createElement('div');
+      meta.style.fontSize='12px';
+      meta.style.color='#6b7280';
+      meta.textContent = provider + ' — ' + new Date().toISOString();
+
+      card.appendChild(box);
+      card.appendChild(meta);
+      card.appendChild(a);
+      $('grid').prepend(card);
+    });
+  } catch (e) {
+    toast(String(e));
+  }
+};
+
+$('clear').onclick = ()=> $('grid').innerHTML = '';
+</script>
+</body>
+</html>

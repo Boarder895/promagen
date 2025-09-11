@@ -1,0 +1,16 @@
+const key = (await getDecryptedKey("openai"))?.trim();
+if (!key) return res.status(404).json({ ok: false, error: "no key stored for openai" });
+
+const r = await fetch("https://api.openai.com/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ model, messages, temperature }),
+});
+
+const data = await r.json();
+if (!r.ok) {
+  return res.status(r.status).json({ ok: false, error: data?.error?.message ?? "proxy_failed", raw: data });
+}

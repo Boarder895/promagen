@@ -1,0 +1,159 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Image Playground</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 16px; }
+      h1 { margin: 0 0 12px; }
+      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+      label { font-size: 12px; color: #333; margin-right: 4px; }
+      select, input[type="text"], input[type="number"] { padding: 4px 6px; }
+      textarea { width: 100%; height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      button { padding: 6px 10px; }
+      #status { margin: 8px 0; font-size: 12px; color: #555; white-space: pre-wrap; }
+      .gallery { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+      .card { border: 1px solid #ddd; border-radius: 8px; padding: 8px; }
+      .card img { width: 100%; height: auto; display: block; border-radius: 6px; }
+      .echo { margin-top: 24px; padding: 12px; border: 1px dashed #bbb; border-radius: 8px; }
+      .muted { color: #777; font-size: 12px; }
+      .topbar { margin-bottom:8px; }
+      a.top { text-decoration:none; color:#06c; }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="top" href="/">Home</a>
+      <span class="muted">Credits: OFF</span>
+      <button id="ping" type="button" style="margin-left:8px;">Ping</button>
+      <button id="build" type="button">Build</button>
+      <button id="jstest" type="button">Test</button>
+    </div>
+    <h1>Image Playground</h1>
+
+    <div class="row">
+      <label for="provider">Provider</label>
+      <select id="provider">
+        <option value="openai" selected>openai</option>
+        <option value="leonardo">leonardo</option>
+      </select>
+
+      <label for="model">Model</label>
+      <input id="model" type="text" value="gpt-image-1" size="22" />
+
+      <label for="size">Size</label>
+      <select id="size">
+        <option selected>1024x1024</option>
+        <option>1024x1536</option>
+        <option>1536x1024</option>
+        <option>auto</option>
+      </select>
+
+      <label for="n">n</label>
+      <input id="n" type="number" min="1" max="4" value="1" style="width:60px" />
+
+      <label for="quality">quality</label>
+      <select id="quality">
+        <option>low</option>
+        <option selected>medium</option>
+        <option>high</option>
+        <option>auto</option>
+      </select>
+
+      <button id="go" type="button">Generate</button>
+      <button id="clear" type="button">Clear gallery</button>
+    </div>
+
+    <textarea id="prompt" placeholder="Describe the image…"></textarea>
+    <div id="status" class="muted">JS bound ✓</div>
+    <div id="gallery" class="gallery"></div>
+
+    <div class="echo">
+      <h3 style="margin-top:0">Echo demo</h3>
+      <p class="muted">Sends JSON to <code>/api/echo</code> and prints exactly what the server received.</p>
+      <textarea id="echoBody">{ "hello": "world" }</textarea>
+      <div class="row">
+        <button id="echoBtn" type="button">Send Echo</button>
+        <div id="echoStatus" class="muted">Idle.</div>
+      </div>
+      <pre id="echoOut" style="white-space:pre-wrap;background:#f8f8f8;padding:8px;border-radius:8px;border:1px solid #eee;max-height:220px;overflow:auto;"></pre>
+    </div>
+
+    <script>
+      window.addEventListener("error", (e) => {
+        const s = document.getElementById("status");
+        if (s) s.textContent = "JS error: " + (e.error?.message || e.message || String(e.error));
+      });
+
+      const el = (id) => document.getElementById(id);
+      const setStatus = (msg) => el("status").textContent = msg;
+      const addCard = (src) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const img = document.createElement("img");
+        img.src = src;
+        card.appendChild(img);
+        el("gallery").prepend(card);
+      };
+
+      el("jstest").addEventListener("click", () => setStatus("JS test: OK"));
+
+      el("clear").addEventListener("click", () => { el("gallery").innerHTML = ""; setStatus("Gallery cleared."); });
+      el("ping").addEventListener("click", async () => {
+        const r = await fetch("/api/health"); setStatus("Ping → " + JSON.stringify(await r.json()));
+      });
+      el("build").addEventListener("click", async () => {
+        const r = await fetch("/api/build"); setStatus("Build → " + JSON.stringify(await r.json()));
+      });
+
+      el("go").addEventListener("click", async () => {
+        const provider = el("provider").value;
+        let model = el("model").value.trim();
+        // sensible default per provider if user didn't set one
+        if (!model) model = provider === "openai" ? "gpt-image-1" : "";
+
+        const size = el("size").value;
+        const n = Math.max(1, Math.min(4, Number(el("n").value || 1)));
+        const quality = el("quality").value;
+        const prompt = el("prompt").value.trim();
+
+        if (!prompt) return setStatus("Please enter a prompt.");
+
+        setStatus(`Sending to /api/ai/${provider}/images … (n=${n}, ${size}, ${model || "(default)"}, ${quality})`);
+        try {
+          const r = await fetch(`/api/ai/${provider}/images`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt, size, n, model, quality }),
+          });
+          const text = await r.text();
+          let j; try { j = JSON.parse(text); } catch { j = { ok:false, error:text }; }
+          if (!r.ok || !j.ok) throw new Error(j.error?.message || j.error || `HTTP ${r.status}`);
+          (j.dataUrls || []).forEach(addCard);
+          setStatus(`Done. Received ${(j.dataUrls || []).length} image(s).`);
+        } catch (err) {
+          setStatus("Error: " + (err.message || String(err)));
+        }
+      });
+
+      el("echoBtn").addEventListener("click", async () => {
+        const echoStatus = document.getElementById("echoStatus");
+        const echoOut = document.getElementById("echoOut");
+        echoStatus.textContent = "Sending…";
+        echoOut.textContent = "";
+        let body; try { body = JSON.parse(document.getElementById("echoBody").value); } catch { echoStatus.textContent = "Invalid JSON"; return; }
+        try {
+          const r = await fetch("/api/echo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+          const j = await r.json();
+          if (!r.ok || !j.ok) throw new Error(j.error?.message || j.error || `HTTP ${r.status}`);
+          echoOut.textContent = JSON.stringify(j, null, 2);
+          echoStatus.textContent = "Echo OK.";
+        } catch (err) {
+          echoStatus.textContent = "Echo error: " + (err.message || String(err));
+        }
+      });
+    </script>
+  </body>
+</html>
+

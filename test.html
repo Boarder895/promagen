@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Promagen Proxy Test</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; }
+    textarea { width: 100%; min-height: 80px; }
+    .chat { border: 1px solid #ccc; padding: 1rem; min-height: 200px; margin-top: 1rem; white-space: pre-wrap; }
+    .msg { margin-bottom: 0.5rem; }
+    .role { font-size: 0.8em; color: #666; }
+  </style>
+</head>
+<body>
+  <h1>Promagen OpenAI Proxy Test</h1>
+  <p>Backend: <span id="apiBase"></span></p>
+
+  <div>
+    <label>Model: 
+      <select id="model">
+        <option value="gpt-4o-mini">gpt-4o-mini</option>
+      </select>
+    </label>
+    <label style="margin-left:1em;">Temperature:
+      <input type="number" id="temp" value="0.2" min="0" max="2" step="0.1" />
+    </label>
+  </div>
+
+  <textarea id="input" placeholder="Type your message…"></textarea><br/>
+  <button id="send">Send</button>
+  <button id="reset">Reset</button>
+
+  <div class="chat" id="chat"></div>
+
+  <script>
+    const API_BASE = "http://localhost:4000"; // change if hosted elsewhere
+    document.getElementById("apiBase").textContent = API_BASE;
+
+    let history = [{ role: "system", content: "You are a helpful assistant." }];
+
+    function render() {
+      const chat = document.getElementById("chat");
+      chat.innerHTML = history.map(m =>
+        `<div class="msg"><div class="role">${m.role}</div><div>${m.content}</div></div>`
+      ).join("");
+    }
+    render();
+
+    document.getElementById("send").onclick = async () => {
+      const input = document.getElementById("input");
+      const model = document.getElementById("model").value;
+      const temperature = parseFloat(document.getElementById("temp").value);
+      const content = input.value.trim();
+      if (!content) return;
+
+      history.push({ role: "user", content });
+      render();
+      input.value = "";
+
+      const r = await fetch(`${API_BASE}/api/ai/openai/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, temperature, messages: history })
+      });
+      const j = await r.json();
+      if (j.ok) {
+        history.push({ role: "assistant", content: j.text });
+      } else {
+        history.push({ role: "assistant", content: `Error: ${j.error}` });
+      }
+      render();
+    };
+
+    document.getElementById("reset").onclick = () => {
+      history = [{ role: "system", content: "You are a helpful assistant." }];
+      render();
+    };
+  </script>
+</body>
+</html>
