@@ -1,0 +1,49 @@
+import { useEffect, useState } from "react";
+import { ALL_PROVIDERS } from "@/lib/providers";
+
+export default function PreferredProvidersForm() {
+  const [selected, setSelected] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/user/me/preferences", { credentials: "include" })
+      .then(r => r.json()).then(d => setSelected(d?.preferredProviders ?? []));
+  }, []);
+
+  function toggle(id: string) {
+    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
+
+  async function save() {
+    setSaving(true);
+    await fetch("/api/user/me/preferences", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ preferredProviders: selected })
+    });
+    setSaving(false);
+  }
+
+  return (
+    <div>
+      <h3>Preferred Platforms</h3>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))", gap:12 }}>
+        {ALL_PROVIDERS.map(p => (
+          <label key={p.id} style={{ border:"1px solid #ddd", borderRadius:8, padding:10, cursor:"pointer" }}>
+            <input
+              type="checkbox"
+              checked={selected.includes(p.id)}
+              onChange={() => toggle(p.id)}
+              style={{ marginRight:8 }}
+            />
+            {p.name}
+          </label>
+        ))}
+      </div>
+      <button onClick={save} disabled={saving} style={{ marginTop:12 }}>
+        {saving ? "Saving..." : "Save Preferences"}
+      </button>
+    </div>
+  );
+}
