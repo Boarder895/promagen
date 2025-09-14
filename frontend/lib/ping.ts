@@ -1,6 +1,12 @@
+// frontend/lib/ping.ts — COMPLETE
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export type HealthResult = { ok: boolean; latencyMs?: number; error?: string };
+export type HealthResult = {
+  ok: boolean;
+  status?: "ok" | "degraded" | "down";
+  latencyMs?: number;
+  error?: string;
+};
 
 export async function pingHealth(timeoutMs = 3000): Promise<HealthResult> {
   if (!API_BASE) return { ok: false, error: "API base — not set" };
@@ -8,9 +14,21 @@ export async function pingHealth(timeoutMs = 3000): Promise<HealthResult> {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const start = performance.now();
   try {
-    const res = await fetch(`${API_BASE}/health`, { signal: controller.signal, cache: "no-store" });
+    const res = await fetch(`${API_BASE}/healthz/deep`, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
     clearTimeout(timer);
-    return { ok: res.ok, latencyMs: Math.round(performance.now() - start) };
+    const json = await res.json().catch(() => ({}));
+    const latencyMs = Math.round(performance.now() - start);
+    // Treat non-200 as down but still return latency/status if present
+    const status = json?.status as "ok" | "degraded" | "down" | undefined;
+    return {
+      ok: res.ok || status === "ok" || status === "degraded",
+      status,
+      latencyMs,
+      error: res.ok ? undefined : `http ${res.status}`,
+    };
   } catch (e: any) {
     clearTimeout(timer);
     return { ok: false, error: e?.name === "AbortError" ? "timeout" : String(e) };

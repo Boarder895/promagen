@@ -1,5 +1,6 @@
 "use client";
 
+// frontend/components/StatusChip.tsx — COMPLETE
 import { useEffect, useMemo, useState } from "react";
 import { pingHealth, fetchVersion } from "@/lib/ping";
 
@@ -21,17 +22,21 @@ export default function StatusChip() {
       setState({ status: "unset", detail: "API base — not set" });
       return;
     }
-    const [health, vers] = await Promise.all([pingHealth(3000), fetchVersion()]);
+    const [health, vers] = await Promise.all([pingHealth(3500), fetchVersion()]);
     if (health.ok) {
+      const mapped =
+        health.status === "degraded"
+          ? "degraded"
+          : "live"; // ok -> live unless server said degraded
       setState({
-        status: "live",
+        status: mapped,
         latency: health.latencyMs,
         version: vers?.version,
         commit: vers?.commit,
         buildTime: vers?.buildTime,
       });
     } else {
-      setState({ status: health.error === "timeout" ? "degraded" : "down", detail: health.error });
+      setState({ status: "down", detail: health.error });
     }
   }
 
@@ -43,19 +48,27 @@ export default function StatusChip() {
 
   const color = useMemo(() => {
     switch (state.status) {
-      case "live": return "bg-green-600";
-      case "degraded": return "bg-amber-500";
-      case "down": return "bg-red-600";
-      default: return "bg-gray-500";
+      case "live":
+        return "bg-green-600";
+      case "degraded":
+        return "bg-amber-500";
+      case "down":
+        return "bg-red-600";
+      default:
+        return "bg-gray-500";
     }
   }, [state.status]);
 
   const label = useMemo(() => {
     switch (state.status) {
-      case "live": return `Live${state.latency ? ` • ${state.latency}ms` : ""}`;
-      case "degraded": return "Degraded";
-      case "down": return "Down";
-      default: return "API base — not set";
+      case "live":
+        return `Live${state.latency ? ` • ${state.latency}ms` : ""}`;
+      case "degraded":
+        return `Degraded${state.latency ? ` • ${state.latency}ms` : ""}`;
+      case "down":
+        return "Down";
+      default:
+        return "API base — not set";
     }
   }, [state.status, state.latency]);
 
