@@ -1,1 +1,4 @@
-{}
+{
+  "/api/admin/ping/route": "app/api/admin/ping/route.js",
+  "/api/admin/sync/route": "app/api/admin/sync/route.js"
+}

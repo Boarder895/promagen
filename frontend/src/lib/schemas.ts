@@ -1,0 +1,16 @@
+import { z } from 'zod';
+
+export const ProviderSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  href: z.string().url(),
+  slogan: z.string().optional(),
+  kind: z.union([z.string().min(1), z.array(z.string().min(1))]),
+  icon: z.string().url().optional(),
+  tags: z.array(z.string().min(1)).optional(),
+  rel: z.string().optional(),
+});
+
+export const ProvidersSchema = z.array(ProviderSchema);
+export type ProviderValidated = z.infer<typeof ProviderSchema>;
+

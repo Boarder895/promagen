@@ -1,32 +1,36 @@
-import { getLeaderboard } from "@/lib/apiClient";
-import ProviderCard from "@/components/ProviderCard";
-import WorldClocks from "@/components/WorldClocks";
-
-export default async function Page() {
-  // Server-side fetch; no-store so you see live changes when you refresh
-  const data = await getLeaderboard();
-
-  const sorted = [...data.providers].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .map((p, i) => ({ ...p, rank: i + 1 }));
+export default function Page() {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "— not set —";
 
   return (
-    <main className="space-y-8">
-      <section className="space-y-2">
-        <h2 className="text-xl font-semibold">Live Leaderboard</h2>
-        <p className="text-sm text-gray-600">
-          Updated: {new Date(data.updatedAt).toLocaleString()}
+    <main style={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 16,
+      fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
+      padding: 24
+    }}>
+      <header style={{ textAlign: "center" }}>
+        <h1 style={{ margin: 0, fontSize: 36 }}>Promagen</h1>
+        <p style={{ marginTop: 8, color: "#555" }}>
+          Frontend is live on Vercel.
         </p>
-        <div className="grid gap-3">
-          {sorted.map((p) => (
-            <ProviderCard key={p.id} p={p} />
-          ))}
-        </div>
+      </header>
+
+      <section style={{
+        padding: 16,
+        border: "1px solid #eee",
+        borderRadius: 12,
+        background: "#fafafa"
+      }}>
+        <strong>API base:</strong> {apiBase}
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-xl font-semibold">World Clocks</h2>
-        <WorldClocks />
-      </section>
+      <footer style={{ marginTop: 24, color: "#777" }}>
+        <span>Private preview — not indexed.</span>
+      </footer>
     </main>
   );
 }

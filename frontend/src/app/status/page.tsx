@@ -1,0 +1,83 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+type Status = {
+  status: "ok" | "degraded" | "down";
+  now: string;
+  uptimeSec: number;
+  node: string;
+  pid: number;
+  region: string | null;
+  memoryMB: { rss: number; heapUsed: number; heapTotal: number };
+  lastHealthAt: string | null;
+};
+
+export default function StatusPage() {
+  const API = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.promagen.com";
+  const [data, setData] = useState<Status | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API}/status`, { cache: "no-store" })
+      .then(async (r) => (r.ok ? r.json() : Promise.reject(await r.text())))
+      .then((j) => !cancelled && setData(j))
+      .catch((e) => !cancelled && setError(typeof e === "string" ? e : e?.message || "Error"));
+    return () => {
+      cancelled = true;
+    };
+  }, [API]);
+
+  if (error) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <h1 className="mb-4 text-2xl font-semibold">Service Status</h1>
+        <div className="rounded-xl border bg-red-50 p-4 text-sm text-red-700">
+          Failed to load status: {error}
+        </div>
+      </main>
+    );
+  }
+
+  if (!data) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <h1 className="mb-4 text-2xl font-semibold">Service Status</h1>
+        <div className="animate-pulse rounded-xl border p-4 text-sm text-gray-500">Loading…</div>
+      </main>
+    );
+  }
+
+  const secs = data.uptimeSec;
+  const d = Math.floor(secs / 86400);
+  const h = Math.floor((secs % 86400) / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = secs % 60;
+
+  return (
+    <main className="mx-auto max-w-3xl p-6">
+      <h1 className="mb-4 text-2xl font-semibold">Service Status</h1>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card title="Status" value={data.status.toUpperCase()} />
+        <Card title="Region" value={data.region ?? "unknown"} />
+        <Card title="Uptime" value={`${d}d ${h}h ${m}m ${s}s`} />
+        <Card title="Node" value={`${data.node} (pid ${data.pid})`} />
+        <Card title="RSS Memory" value={`${data.memoryMB.rss} MB`} />
+        <Card title="Heap (used/total)" value={`${data.memoryMB.heapUsed} / ${data.memoryMB.heapTotal} MB`} />
+        <Card title="Last /health" value={data.lastHealthAt ?? "never"} />
+        <Card title="Now" value={data.now} />
+      </div>
+    </main>
+  );
+}
+
+function Card({ title, value }: { title: string; value: string }) {
+  return (
+    <div className="rounded-xl border bg-white p-4 shadow-sm">
+      <div className="text-xs uppercase tracking-wide text-gray-500">{title}</div>
+      <div className="mt-1 text-base text-gray-900">{value}</div>
+    </div>
+  );
+}
