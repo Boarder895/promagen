@@ -1,23 +1,25 @@
+// src/app/api/admin/ping/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-
-function gate(req: NextRequest): NextResponse | null {
-  const token = process.env.ADMIN_BEARER_TOKEN || '';
-  if (!token) return NextResponse.json({ error: 'Server missing ADMIN_BEARER_TOKEN' }, { status: 500 });
-  const auth = req.headers.get('authorization') || '';
-  const [scheme, supplied] = auth.split(' ');
-  if (scheme !== 'Bearer' || supplied !== token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  return null;
-}
-
-export const dynamic = 'force-dynamic';
-
-export async function GET(req: NextRequest) {
-  const res = gate(req); if (res) return res;
-  return NextResponse.json({ ok: true, method: 'GET', ts: Date.now() });
-}
+import requireAdmin from '@/lib/requireAdmin';
+import rateLimit from '@/lib/rateLimit';
 
 export async function POST(req: NextRequest) {
-  const res = gate(req); if (res) return res;
-  let body: unknown = null; try { body = await req.json(); } catch {}
-  return NextResponse.json({ ok: true, method: 'POST', received: body, ts: Date.now() });
+  try {
+    await requireAdmin(req);
+
+    const limit = Number(process.env.ADMIN_RATE_LIMIT ?? 30);
+    const windowMs = Number(process.env.ADMIN_RATE_WINDOW_MS ?? 60_000);
+
+    const r = rateLimit(req, 'admin:ping', limit, windowMs);
+    if (!r.ok) {
+      return NextResponse.json(
+        { error: 'Too Many Requests', retryAfterSeconds: Math.ceil(r.retryAfterMs / 1000) },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(r.retryAfterMs / 1000)) } }
+      );
+    }
+
+    return NextResponse.json({ ok: true, ts: Date.now() });
+  } catch (e: any) {
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }

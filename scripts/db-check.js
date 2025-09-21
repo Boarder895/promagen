@@ -4,3 +4,5 @@ const p = new PrismaClient();
   console.log(await p.apiKey.findMany());
   await p.$disconnect();
 })();
+
+

@@ -74,3 +74,5 @@ export async function generateImage(args: GenArgs) {
   if (args.provider === "openai") return generateOpenAI(args.model, args.prompt, size);
   throw new Error(`Unknown provider: ${args.provider}`);
 }
+
+

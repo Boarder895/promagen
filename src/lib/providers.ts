@@ -29,3 +29,5 @@ export const PROVIDER_LABELS: Record<Provider,string> = {
   pixlr: "Pixlr",
   fotor: "Fotor"
 };
+
+

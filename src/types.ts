@@ -18,3 +18,5 @@ export interface Provider {
   available(): boolean;
   generate(req: GenRequest): Promise<Buffer>; // returns PNG bytes
 }
+
+

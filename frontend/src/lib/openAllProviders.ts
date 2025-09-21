@@ -1,13 +1,1 @@
-// src/lib/openAllProviders.ts
-import PROVIDERS, { withQuery } from "@/lib/providers";
-
-export function openAllProviders(prompt: string, extra?: Record<string, string>) {
-  const p = (prompt ?? "").slice(0, 2000);
-  try { navigator.clipboard?.writeText(p); } catch {}
-
-  for (const prov of PROVIDERS) {
-    // append ?p=<prompt> to the href (safe even if provider ignores it)
-    const href = withQuery(prov.href, { p, ...(extra || {}) });
-    window.open(href, "_blank", "noopener,noreferrer");
-  }
-}
+// src/lib/openAllProviders.tsimport PROVIDERS, { withQuery } from "@/lib/providers";export function openAllProviders(prompt: string, extra?: Record<string, string>) {  const p = (prompt ?? "").slice(0, 2000);  try { navigator.clipboard?.writeText(p); } catch {}  for (const prov of PROVIDERS) {    // append ?p=<prompt> to the href (safe even if provider ignores it)    const href = withQuery(prov.href, { p, ...(extra || {}) });    window.open(href, "_blank", "noopener,noreferrer");  }}

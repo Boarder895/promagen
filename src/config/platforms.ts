@@ -34,3 +34,5 @@ export const PLATFORMS_20: Platform[] = [
 
 // convenience maps
 export const PLATFORMS_BY_ID = Object.fromEntries(PLATFORMS_20.map(p => [p.id, p]));
+
+

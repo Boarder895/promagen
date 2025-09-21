@@ -19,3 +19,5 @@ for (const name of targets) {
   fs.writeFileSync(file, content, "utf8");
   console.log("Wrote", file);
 }
+
+

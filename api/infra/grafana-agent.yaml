@@ -1,0 +1,23 @@
+server:
+  log_level: info
+
+metrics:
+  wal_directory: /tmp/grafana-agent-wal
+  global:
+    scrape_interval: 15s
+  configs:
+    - name: promagen
+      scrape_configs:
+        - job_name: promagen-api-staging
+          metrics_path: /metrics
+          static_configs:
+            - targets: ["promagen-api-staging.internal:4000"]
+        - job_name: promagen-api
+          metrics_path: /metrics
+          static_configs:
+            - targets: ["promagen-api.internal:4000"]
+      remote_write:
+        - url: ${REMOTE_WRITE_URL}
+          basic_auth:
+            username: ${REMOTE_WRITE_USERNAME}
+            password: ${REMOTE_WRITE_PASSWORD}

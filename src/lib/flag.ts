@@ -6,3 +6,5 @@ export function flagEmoji(cc: string | null | undefined): string {
     .toUpperCase()
     .replace(/./g, c => String.fromCodePoint((c.charCodeAt(0) - 65) + 0x1F1E6));
 }
+
+

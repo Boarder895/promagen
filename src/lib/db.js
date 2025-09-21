@@ -10,3 +10,5 @@ exports.prisma = globalForPrisma.prisma ||
     });
 if (process.env.NODE_ENV !== "production")
     globalForPrisma.prisma = exports.prisma;
+
+

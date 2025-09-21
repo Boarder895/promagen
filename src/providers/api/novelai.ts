@@ -6,3 +6,5 @@ export const lexicaProvider: ImageProvider = {
     return { ok: false, provider: "lexica", code: "NOT_CONFIGURED", message: "Adapter pending: add API endpoint + auth" };
   }
 };
+
+

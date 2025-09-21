@@ -8,3 +8,5 @@ export function applySecurity(app: Express) {
   app.use(cors({ origin: true, credentials: true }));
   app.use(rateLimit({ windowMs: 60_000, max: 120 }));
 }
+
+

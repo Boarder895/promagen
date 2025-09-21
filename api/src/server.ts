@@ -1,50 +1,95 @@
-// ──────────────────────────────────────────────────────────────
-// src/server.ts — COMPLETE (adds /healthz/deep)
-// ──────────────────────────────────────────────────────────────
-import "dotenv/config";
-import express, { type Request, type Response } from "express";
-import helmet from "helmet";
+import express from "express";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
-import morgan from "morgan";
 
-// ESM + NodeNext: include .js in relative imports
-import openaiRoutes from "./routes/openai.js";
-import versionRoute from "./routes/version.js";
-import deepHealth from "./routes/healthz.js";
-
+// --- App setup
 const app = express();
-app.set("trust proxy", 1);
-app.use(express.json({ limit: "1mb" }));
+app.use(cors());
+app.use(express.json());
 
-// Security / logging
-app.use(helmet());
-app.use(morgan("tiny"));
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      const allowed = (process.env.ALLOWED_ORIGINS ?? "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      if (!origin || allowed.includes(origin)) cb(null, true);
-      else cb(new Error("CORS blocked"));
-    },
-    credentials: true,
-  })
-);
-app.use(rateLimit({ windowMs: 60_000, max: 100 }));
+// --- Meta/version
+const startedAt = new Date();
+const VERSION = process.env.BUILD_VERSION || process.env.COMMIT_SHA || "dev";
 
-// Routes
-app.use("/api/ai/openai", openaiRoutes);
-app.get("/version", versionRoute);
-app.get("/health", (_req: Request, res: Response) => {
-  res.json({ ok: true, ts: new Date().toISOString() });
+// --- Routes
+app.get("/", (_req, res) => {
+  res.status(200).send({
+    name: "promagen-api",
+    ok: true,
+    version: VERSION,
+    msg: "Hello from Promagen API",
+  });
 });
-app.get("/healthz/deep", deepHealth);
 
-// Start
-const port = Number(process.env.PORT) || 4000;
-app.listen(port, () => {
-  console.log(`🚀 API listening on http://localhost:${port}`);
+// Health endpoint used by Fly checks and external uptime pings.
+// Keep this ultra-cheap: no DB, no external calls.
+app.get("/health", (_req, res) => {
+  res.status(200).send("OK");
 });
+
+// Status endpoint for humans/dashboards. Light DB wiring can be added later.
+app.get("/status", async (_req, res) => {
+  const now = new Date();
+  const uptimeMs = now.getTime() - startedAt.getTime();
+  res.status(200).send({
+    status: "ok",
+    version: VERSION,
+    startedAt: startedAt.toISOString(),
+    now: now.toISOString(),
+    uptimeMs,
+    // db: "skipped", // wire Prisma pinimport express from "express";
+import cors from "cors";
+
+// --- App setup
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// --- Meta/version
+const startedAt = new Date();
+const VERSION = process.env.BUILD_VERSION || process.env.COMMIT_SHA || "dev";
+
+// --- Routes
+app.get("/", (_req, res) => {
+  res.status(200).send({
+    name: "promagen-api",
+    ok: true,
+    version: VERSION,
+    msg: "Hello from Promagen API",
+  });
+});
+
+// Health endpoint used by Fly checks and external uptime pings.
+// Keep this ultra-cheap: no DB, no external calls.
+app.get("/health", (_req, res) => {
+  res.status(200).send("OK");
+});
+
+// Status endpoint for humans/dashboards. Light DB wiring can be added later.
+app.get("/status", async (_req, res) => {
+  const now = new Date();
+  const uptimeMs = now.getTime() - startedAt.getTime();
+  res.status(200).send({
+    status: "ok",
+    version: VERSION,
+    startedAt: startedAt.toISOString(),
+    now: now.toISOString(),
+    uptimeMs,
+    // db: "skipped", // wire Prisma ping here later if you want
+  });
+});
+
+// --- Bind
+const PORT = Number(process.env.PORT) || 8080;
+
+// IMPORTANT for Fly: listen on ALL interfaces
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`[promagen-api] listening on 0.0.0.0:${PORT} (version=${VERSION})`);
+});
+
+
+
+
+
+
+
+

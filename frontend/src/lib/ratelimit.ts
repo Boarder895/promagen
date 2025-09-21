@@ -1,49 +1,45 @@
-type Bucket = { tokens: number; last: number };
+// src/lib/rateLimit.ts
+import type { NextRequest } from 'next/server';
 
-export type RateLimitOptions = {
-  windowMs: number;
-  max: number;
-  refill?: number;
-  keyPrefix?: string;
-};
+type Bucket = { count: number; resetAt: number };
+const memoryBuckets = new Map<string, Bucket>();
 
-export function createRateLimiter(opts: RateLimitOptions) {
-  const buckets = new Map<string, Bucket>();
-  const refill = opts.refill ?? opts.max / opts.windowMs;
+/**
+ * Default export – simple in-memory rate limiter for admin endpoints.
+ * NOTE: Good enough for single-process dev/prod on one machine.
+ * For multi-instance deploys move this to Redis.
+ *
+ * @param req      NextRequest (used to key on IP)
+ * @param name     string to namespace the bucket (e.g., 'admin:ping')
+ * @param limit    max requests in window
+ * @param windowMs window size in ms
+ *
+ * @returns { ok, retryAfterMs }
+ */
+export default function rateLimit(
+  req: NextRequest,
+  name: string,
+  limit: number,
+  windowMs: number
+): { ok: boolean; retryAfterMs: number } {
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+    (req as any).ip ||
+    '127.0.0.1';
 
-  function keyFor(ip: string) {
-    return `${opts.keyPrefix || 'rl'}:${ip}`;
+  const key = `${name}:${ip}`;
+  const now = Date.now();
+
+  let b = memoryBuckets.get(key);
+  if (!b || now >= b.resetAt) {
+    b = { count: 0, resetAt: now + windowMs };
+    memoryBuckets.set(key, b);
   }
 
-  function take(ip: string) {
-    const k = keyFor(ip);
-    const now = Date.now();
-    const b = buckets.get(k) ?? { tokens: opts.max, last: now };
-    const elapsed = now - b.last;
-    b.tokens = Math.min(opts.max, b.tokens + elapsed * refill);
-    b.last = now;
-
-    if (b.tokens >= 1) {
-      b.tokens -= 1;
-      buckets.set(k, b);
-      return { allowed: true, remaining: Math.floor(b.tokens) };
-    }
-    buckets.set(k, b);
-    return { allowed: false, remaining: Math.floor(b.tokens) };
+  if (b.count >= limit) {
+    return { ok: false, retryAfterMs: b.resetAt - now };
   }
 
-  return { take };
-}
-
-export function clientIpFromHeaders(headers: Headers): string {
-  const xff = headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0].trim();
-  const cf = headers.get('cf-connecting-ip');
-  if (cf) return cf.trim();
-  const fwd = headers.get('forwarded');
-  if (fwd) {
-    const m = /for="?([^;"]+)/i.exec(fwd);
-    if (m) return m[1].replace(/"/g, '');
-  }
-  return '0.0.0.0';
+  b.count += 1;
+  return { ok: true, retryAfterMs: 0 };
 }

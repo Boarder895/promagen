@@ -1,70 +1,74 @@
 "use client";
 
 import { useEffect } from "react";
+import { getAffiliateUrl } from "@/lib/api";  // Assuming this function returns a URL for a given provider
 import type { Prompt } from "@/data/prompts";
-import { getAffiliateUrl } from "@/lib/affiliates";
-import { postRemix } from "@/lib/api";
 
-export default function PromptDrawer({
-  prompt,
-  onClose
-}: {
+interface PromptDrawerProps {
   prompt: Prompt | null;
   onClose: () => void;
-}) {
-  useEffect(() => {
-    const onEsc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onEsc);
-    return () => window.removeEventListener("keydown", onEsc);
-  }, [onClose]);
+}
 
+export default function PromptDrawer({ prompt, onClose }: PromptDrawerProps) {
+  // If no prompt is selected, render nothing (drawer closed)
   if (!prompt) return null;
 
-  const runAcrossProviders = async () => {
-    try {
-      // bump counters server-side (non-blocking)
-      postRemix(prompt.id).catch(() => {});
-    } finally {
-      // open provider affiliate in new tab
-      const url = getAffiliateUrl(prompt);
-      window.open(url, "_blank", "noopener,noreferrer");
-    }
-  };
+  // Close drawer on Escape key
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  // Prevent background scrolling when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  // Prepare affiliate link (if any) for the prompt's provider
+  const affiliateUrl = prompt.provider ? getAffiliateUrl(prompt.provider) : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="w-full max-w-2xl rounded-2xl bg-white p-4 shadow-xl">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base font-semibold">{prompt.title}</h3>
-          <button
-            className="rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
-            onClick={onClose}
+    <div className="fixed inset-0 bg-black/50 flex">
+      {/* Click outside the drawer content to close */}
+      <div className="flex-1" onClick={onClose} />
+
+      {/* Drawer content panel */}
+      <div className="w-full max-w-md bg-white p-5 overflow-auto">
+        <h2 className="text-xl font-semibold mb-3">{prompt.title}</h2>
+        <p className="mb-4 whitespace-pre-line">{prompt.body}</p>
+        <p className="text-sm text-gray-500 mb-2">
+          <strong>Author:</strong> {prompt.author} &nbsp;|&nbsp; 
+          <strong>Provider:</strong> {prompt.provider}
+        </p>
+        <p className="text-sm text-gray-500 mb-4">
+          <strong>Tags:</strong> {prompt.tags.join(", ")}
+        </p>
+        {affiliateUrl && (
+          <a
+            href={affiliateUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block text-blue-600 hover:underline mb-4"
+          >
+            🔗 Open on {prompt.provider} (affiliate link)
+          </a>
+        )}
+        <div className="text-right">
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
           >
             Close
-          </button>
-        </div>
-
-        <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{prompt.body}</p>
-
-        <div className="mt-4 flex flex-wrap gap-1">
-          {prompt.tags.map((t) => (
-            <span key={t} className="rounded-full bg-gray-50 px-2 py-0.5 text-[10px] ring-1 ring-gray-200">
-              #{t}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-6 flex items-center justify-between text-xs text-gray-500">
-          <span>Provider: {prompt.provider}</span>
-          <button
-            onClick={runAcrossProviders}
-            className="rounded-md bg-black px-3 py-1.5 text-white hover:bg-gray-800"
-          >
-            Run across providers
           </button>
         </div>
       </div>
     </div>
   );
 }
-

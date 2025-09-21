@@ -16,3 +16,5 @@ add(httpjsonAdapter, "PROVIDER_HTTPJSON_ENABLE");
 
 export function getAdapter(name: string) { return REGISTRY[name]; }
 export function listProviders() { return Object.keys(REGISTRY); }
+
+

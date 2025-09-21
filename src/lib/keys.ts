@@ -40,3 +40,5 @@ export async function getProjectKey(provider: Provider): Promise<string | null> 
   const val = envName ? process.env[envName] : undefined;
   return val && val.trim() ? val : null;
 }
+
+

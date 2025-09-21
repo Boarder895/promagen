@@ -14,3 +14,5 @@ document.getElementById('b')!.addEventListener('click', async () => {
   (document.getElementById('o') as HTMLElement).textContent =
     await sendChat([{ role: 'user', content: txt }]);
 });
+
+

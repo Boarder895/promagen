@@ -1,7 +1,18 @@
 "use client";
 
-// FRONTEND • components/health/HealthContext.tsx
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+/**
+ * FRONTEND • src/components/health/HealthContext.tsx
+ * Small client-side context that polls a /health endpoint via a helper in /src/lib/health.
+ */
+
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { fetchHealth, type HealthResponse, type HealthStatus } from "@/lib/health";
 
 type HealthCtx = {

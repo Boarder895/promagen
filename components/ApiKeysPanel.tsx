@@ -27,6 +27,35 @@ export default function ApiKeysPanel() {
       await fetch(API("/api/keys"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        bimport React, { useEffect, useState } from "react";
+
+type Provider =
+  | "artistly" | "openai" | "stability" | "leonardo" | "ideogram" | "fotor" | "nightcafe";
+
+const PROVIDERS: Provider[] = ["artistly","openai","stability","leonardo","ideogram","fotor","nightcafe"];
+
+const API = (path: string) => `http://localhost:4000${path}`;
+
+export default function ApiKeysPanel() {
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [formProvider, setFormProvider] = useState<Provider>("artistly");
+  const [apiKey, setApiKey] = useState("");
+
+  async function refresh() {
+    const res = await fetch(API("/api/keys/providers"));
+    const data = await res.json();
+    setProviders(data.providers ?? []);
+  }
+
+  useEffect(() => { refresh(); }, []);
+
+  async function save() {
+    setLoading(true);
+    try {
+      await fetch(API("/api/keys"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider: formProvider, apiKey })
       });
       setApiKey("");
@@ -90,3 +119,4 @@ export default function ApiKeysPanel() {
     </div>
   );
 }
+

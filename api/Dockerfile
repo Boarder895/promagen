@@ -1,24 +1,21 @@
-# Build deps
-FROM node:20-alpine AS deps
+# ---- Build stage
+FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
-
-# Compile TypeScript -> /app/dist
-FROM node:20-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY package*.json tsconfig.json ./
+COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
 
-# Runtime image
-FROM node:20-alpine AS runner
+# ---- Runtime stage
+FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=8080
-COPY --from=deps  /app/node_modules ./node_modules
+# Only copy what we need to run
 COPY package*.json ./
+RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
+
+# Fly sets PORT; our server reads it. No EXPOSE needed for fly, but harmless:
 EXPOSE 8080
-CMD ["node","dist/server.js"]
+CMD ["node", "dist/server.js"]

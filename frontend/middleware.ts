@@ -1,17 +1,40 @@
-// frontend/middleware.ts
-import { NextRequest, NextResponse } from "next/server";
-const USER = process.env.BASIC_AUTH_USER;
-const PASS = process.env.BASIC_AUTH_PASS;
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+// Set this in Vercel as a normal env var (not NEXT_PUBLIC): APP_ORIGIN=https://app.promagen.com
+const ALLOWED = new Set(
+  [process.env.APP_ORIGIN].filter(Boolean) as string[]
+);
+
 export function middleware(req: NextRequest) {
-  if (!USER || !PASS) return NextResponse.next();
-  const a = req.headers.get("authorization");
-  if (a?.startsWith("Basic ")) {
-    const [u, p] = Buffer.from(a.split(" ")[1], "base64").toString().split(":");
-    if (u === USER && p === PASS) return NextResponse.next();
+  const { pathname, host, protocol } = req.nextUrl;
+
+  // Only protect admin API routes
+  if (!pathname.startsWith('/api/admin')) {
+    return NextResponse.next();
   }
-  return new NextResponse("Authentication required.", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="Promagen Preview"' }
-  });
+
+  // Derive the "current" origin as a fallback allow (useful on previews)
+  const thisOrigin = `${protocol}//${host}`;
+  const origin = req.headers.get('origin') || '';
+  const referer = req.headers.get('referer') || '';
+
+  // Build the allowlist: APP_ORIGIN plus current deployment’s origin
+  const allow = new Set([thisOrigin, ...ALLOWED]);
+
+  const originOk = origin && Array.from(allow).some(o => origin.startsWith(o));
+  const refererOk = referer && Array.from(allow).some(o => referer.startsWith(o));
+
+  // Require BOTH headers to be present and match (hardline CSRF stance)
+  if (!originOk || !refererOk) {
+    return new NextResponse('Forbidden (same-origin admin API only)', { status: 403 });
+  }
+
+  return NextResponse.next();
 }
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] };
+
+export const config = {
+  matcher: ['/api/admin/:path*'],
+};
+
+

@@ -26,3 +26,4 @@ export function coerceToCapabilities(req: CanonicalImageRequest): CanonicalImage
 
   return req;
 }
+

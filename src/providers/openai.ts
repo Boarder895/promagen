@@ -43,3 +43,5 @@ export const openaiAdapter: ProviderAdapter = {
     return items;
   },
 };
+
+

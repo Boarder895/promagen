@@ -102,3 +102,5 @@ export const leonardoAdapter: ProviderAdapter = {
     throw new Error(`Leonardo generation timed out (last status=${lastStatus ?? "unknown"})`);
   },
 };
+
+

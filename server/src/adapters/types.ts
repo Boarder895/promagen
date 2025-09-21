@@ -19,3 +19,4 @@ export type CanonicalImageRequest = {
   userId?: string;
   presetId?: string;
 };
+

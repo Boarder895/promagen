@@ -25,3 +25,5 @@ export async function loadAdapters() {
     fotor: await import("./fotor").catch(()=>null),
   };
 }
+
+

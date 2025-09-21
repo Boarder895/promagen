@@ -24,3 +24,5 @@ export const httpjsonAdapter: ProviderAdapter = {
     return { url: out };
   },
 };
+
+

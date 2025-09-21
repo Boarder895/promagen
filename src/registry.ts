@@ -14,3 +14,5 @@ export function providersAvailable(): Provider[] {
 export function getProvider(id: string): Provider | undefined {
   return all.find(p => p.id === id && p.available());
 }
+
+

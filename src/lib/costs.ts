@@ -68,3 +68,5 @@ export function estimateImageCredits(input: ImageCostInput): number {
 
   return basePerImage * n;
 }
+
+

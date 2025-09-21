@@ -22,3 +22,4 @@ export const ALL_PROVIDERS = [
 ] as const;
 
 export type ProviderId = typeof ALL_PROVIDERS[number]["id"];
+

@@ -1,38 +1,59 @@
-// Simple fetch helpers for the public API
-import type { Prompt } from "@/data/prompts";
+// src/lib/api.ts
+"use client";
 
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || "";
+import useSWR from "swr";
 
-export interface PromptsResponse {
-  items: Prompt[];
-  total: number;
-  limit: number;
-  offset: number;
+type ListParams = {
+  q?: string;
+  tag?: string;
+  sort?: "trending" | "createdAt";
+  limit?: number;
+};
+
+type Prompt = {
+  id: string;
+  title: string;
+  summary: string;
+  body: string;
+  tags: string[];
+  author: string;
+  curated?: boolean;
+  provider: string;
+};
+
+const fetcher = (url: string) =>
+  fetch(url, { cache: "no-store" }).then((r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  });
+
+/** SWR hook for the /api/prompts endpoint (works with App Router) */
+export function usePromptsSWR(params: ListParams) {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  if (params.tag) qs.set("tag", params.tag);
+  if (params.sort) qs.set("sort", params.sort);
+  if (params.limit) qs.set("limit", String(params.limit));
+
+  const key = `/api/prompts${qs.size ? "?" + qs.toString() : ""}`;
+  return useSWR<{ items: Prompt[] }>(key, fetcher);
 }
 
-export async function fetchPrompts(opts: {
-  q?: string;
-  tag?: string;          // single tag for server-side filtering (we'll AND the rest client-side)
-  sort?: "trending" | "likes" | "uses" | "createdAt";
-  limit?: number;
-  offset?: number;
-  signal?: AbortSignal;
-}): Promise<PromptsResponse> {
-  if (!API_BASE) throw new Error("API base URL is not set");
+/** Central place to generate outbound/affiliate links per provider */
+export function getAffiliateUrl(provider: string | undefined | null) {
+  if (!provider) return null;
 
-  const params = new URLSearchParams();
-  if (opts.q) params.set("q", opts.q);
-  if (opts.tag) params.set("tag", opts.tag);
-  if (opts.sort) params.set("sort", opts.sort);
-  if (opts.limit) params.set("limit", String(opts.limit));
-  if (opts.offset) params.set("offset", String(opts.offset));
-
-  const url = `${API_BASE}/prompts?${params.toString()}`;
-  const res = await fetch(url, { signal: opts.signal, cache: "no-store" });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`API ${res.status}: ${text || res.statusText}`);
+  // Example mapping (extend as needed; safe default is provider homepage)
+  switch (provider.toLowerCase()) {
+    case "openai":
+      return "https://openai.com/";
+    case "anthropic":
+      return "https://www.anthropic.com/";
+    case "google":
+    case "gemini":
+      return "https://ai.google/";
+    default:
+      // Fallback – avoid 404s; keep it neutral/safe
+      return `https://www.google.com/search?q=${encodeURIComponent(provider)}`;
   }
-  return (await res.json()) as PromptsResponse;
 }

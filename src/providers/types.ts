@@ -14,3 +14,5 @@ export interface ProviderAdapter {
   name: string;
   generateImages(opts: GenOptions): Promise<string[]>; // array of URLs or data: URLs
 }
+
+

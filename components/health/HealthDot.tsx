@@ -1,0 +1,28 @@
+"use client";
+
+import React from "react";
+import { useHealth } from "@/components/health/HealthContext";
+
+function cls(...s: (string | false | null | undefined)[]) {
+  return s.filter(Boolean).join(" ");
+}
+
+export default function HealthDot({ label }: { label?: string }) {
+  const { status } = useHealth();
+  const color =
+    status === "ok" ? "bg-green-500" : status === "degraded" ? "bg-amber-500" : "bg-red-500";
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      {label ? <span className="text-sm text-gray-600">{label}</span> : null}
+      <span
+        title={`Service: ${status}`}
+        className={cls(
+          "inline-block h-2.5 w-2.5 rounded-full ring-2 ring-white shadow",
+          color
+        )}
+      />
+    </span>
+  );
+}
+

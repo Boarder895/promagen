@@ -77,3 +77,4 @@ for (const name of API_STUBS) {
 }
 
 function pretty(n){ return n.replace(/_/g," ").replace(/\b\w/g, c => c.toUpperCase()); }
+

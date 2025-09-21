@@ -20,3 +20,5 @@ export const stabilityAdapter: ProviderAdapter = {
     return { url: `data:image/png;base64,${base64}` };
   },
 };
+
+

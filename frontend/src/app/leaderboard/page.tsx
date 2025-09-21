@@ -1,31 +1,22 @@
-import { getLeaderboard } from "@/lib/apiClient";
-import ProviderCard from "@/components/ProviderCard";
-import WorldClocks from "@/components/WorldClocks";
+// src/app/leaderboard/page.tsx
+import React from 'react'
+import { getLeaderboard, LeaderboardEntry } from '@/lib/apiClient'
 
-export default async function LeaderboardPage() {
-  const data = await getLeaderboard();
-  const sorted = [...data.providers]
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .map((p, i) => ({ ...p, rank: i + 1 }));
+export default async function LeaderboardPage(): Promise<JSX.Element> {
+  // Fetch the leaderboard data on the server
+  const leaderboard: LeaderboardEntry[] = await getLeaderboard()
 
   return (
-    <main className="space-y-8">
-      <section className="space-y-2">
-        <h2 className="text-xl font-semibold">Live Leaderboard</h2>
-        <p className="text-sm text-gray-600">
-          Updated: {new Date(data.updatedAt).toLocaleString()}
-        </p>
-        <div className="grid gap-3">
-          {sorted.map((p) => (
-            <ProviderCard key={p.id} p={p} />
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-xl font-semibold">World Clocks</h2>
-        <WorldClocks />
-      </section>
-    </main>
-  );
+    <section>
+      <h1>Leaderboard</h1>
+      <ul>
+        {leaderboard.map((entry) => (
+          <li key={entry.id}>
+            {entry.name}: {entry.score}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }
+

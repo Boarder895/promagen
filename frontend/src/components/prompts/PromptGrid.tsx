@@ -11,7 +11,7 @@ import {
   getTrending,
   getCommunity,
   seedPrompts,
-  type Prompt
+  type Prompt,
 } from "@/data/prompts";
 import { usePromptsSWR } from "@/lib/api";
 
@@ -31,7 +31,7 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
     q: query || undefined,
     tag: firstTag,
     sort,
-    limit: 200
+    limit: 200,
   });
 
   const search = useSearchParams();
@@ -40,6 +40,7 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
 
   // Prefer live API; fall back to seeds
   const apiItems = data?.items ?? null;
+
   const items = useMemo(() => {
     let base: Prompt[] =
       apiItems !== null
@@ -56,10 +57,8 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
       if (tab === "community") base = base.filter((p) => !p.curated);
     }
 
-    // Multi-tag AND; when using seeds, also do client-side text search
-    base = base.filter((p) =>
-      activeTags.length === 0 || activeTags.every((t) => p.tags.includes(t))
-    );
+    // Multi-tag AND; plus client-side text search when using seeds
+    base = base.filter((p) => activeTags.length === 0 || activeTags.every((t) => p.tags.includes(t)));
 
     if (apiItems === null && query.trim()) {
       const q = query.toLowerCase();
@@ -70,7 +69,7 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
           p.body.toLowerCase().includes(q) ||
           p.provider.toLowerCase().includes(q) ||
           p.author.toLowerCase().includes(q) ||
-          p.tags.some((t) => t.toLowerCase().includes(q))
+          p.tags.some((t) => t.toLowerCase().includes(q)),
       );
     }
 
@@ -81,7 +80,7 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
   const currentId = (search.get("id") ?? initialId) || undefined;
   const current = useMemo(
     () => (currentId ? (apiItems ?? seedPrompts).find((x) => x.id === currentId) || null : null),
-    [apiItems, currentId]
+    [apiItems, currentId],
   );
 
   const openPrompt = (p: Prompt) => {
@@ -96,7 +95,6 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
     qs.delete("id");
     router.replace(qs.size ? `${pathname}?${qs}` : pathname);
   };
-
   const toggleTag = (t: string) =>
     setActiveTags((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
 
@@ -109,9 +107,7 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
             key={t}
             onClick={() => setTab(t)}
             className={`rounded-full px-3 py-1 text-xs ring-1 ${
-              tab === t
-                ? "bg-gray-900 text-white ring-gray-900"
-                : "bg-white text-gray-800 ring-gray-200 hover:bg-gray-50"
+              tab === t ? "bg-gray-900 text-white ring-gray-900" : "bg-white text-gray-800 ring-gray-200 hover:bg-gray-50"
             }`}
           >
             {t[0].toUpperCase() + t.slice(1)}
@@ -131,7 +127,7 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
       {/* Tag filters */}
       <div className="flex flex-wrap gap-2">
         {(apiItems
-          ? Array.from(new Set(apiItems.flatMap((p) => p.tags))).sort((a, b) => a.localeCompare(b))
+          ? Array.from(new Set(apiItems.flatMap((p: any) => p.tags))).sort((a, b) => a.localeCompare(b))
           : seedAllTags()
         ).map((t) => {
           const active = activeTags.includes(t);
@@ -140,9 +136,7 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
               key={t}
               onClick={() => toggleTag(t)}
               className={`rounded-full px-3 py-1 text-xs ring-1 ${
-                active
-                  ? "bg-gray-900 text-white ring-gray-900"
-                  : "bg-white text-gray-800 ring-gray-200 hover:bg-gray-50"
+                active ? "bg-gray-900 text-white ring-gray-900" : "bg-white text-gray-800 ring-gray-200 hover:bg-gray-50"
               }`}
             >
               #{t}
@@ -180,4 +174,3 @@ export default function PromptGrid({ initialId }: { initialId?: string }) {
     </div>
   );
 }
-

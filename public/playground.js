@@ -77,3 +77,4 @@ async function clearGallery(){
 document.getElementById("genForm").addEventListener("submit", generate);
 document.getElementById("clear").addEventListener("click", clearGallery);
 Promise.all([loadProviders(), loadStats(), loadImages()]);
+

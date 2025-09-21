@@ -19,3 +19,5 @@ export function toErrorResponse(err: unknown): { status: number; body: any } {
   const msg = (err as any)?.message ?? String(err);
   return { status: 500, body: { ok: false, error: msg } };
 }
+
+

@@ -31,6 +31,39 @@ async function loadProviders() {
     const { providers } = await j("/api/ai/providers");
     if (!providers?.length) throw new Error("No providers available");
     providerSel.innerHTML = providers.map(p => `<option value="${p.id}">${p.id}</option>`).join("");
+    const pref/* playground app */
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+const providerSel = $("#provider");
+const grid        = $("#grid");
+const msg         = $("#msg");
+const statsBadge  = $("#stats");
+const go          = $("#go");
+
+async function j(url, opts) {
+  const r = await fetch(url, opts);
+  const t = await r.text();
+  if (!r.ok) throw new Error(t || `${r.status} ${r.statusText}`);
+  try { return JSON.parse(t); } catch { return t; }
+}
+
+function showError(e) {
+  console.error(e);
+  msg.textContent = e.message || String(e);
+  msg.classList.add("error");
+}
+
+function clearMsg() {
+  msg.textContent = "";
+  msg.classList.remove("error");
+}
+
+async function loadProviders() {
+  try {
+    const { providers } = await j("/api/ai/providers");
+    if (!providers?.length) throw new Error("No providers available");
+    providerSel.innerHTML = providers.map(p => `<option value="${p.id}">${p.id}</option>`).join("");
     const pref = localStorage.getItem("pmg.provider");
     if (pref && providers.find(p => p.id === pref)) providerSel.value = pref;
   } catch {
@@ -120,3 +153,4 @@ document.getElementById("clear").addEventListener("click", clearGallery);
 
 // initial load
 Promise.all([loadProviders(), loadStats(), loadImages()]);
+
