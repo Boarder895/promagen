@@ -1,41 +1,39 @@
-// C:\Users\Martin Yarnold\Projects\promagen\frontend\tsconfig.json
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ES2023",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
+    "lib": ["dom", "dom.iterable", "es2022"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
+    "noEmit": true,
+
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
     "incremental": true,
+
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["src/*"]
     },
-    "esModuleInterop": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+
+    /* 👇 let TS accept .js and ignore JSDoc type checking in them */
+    "allowJs": true,
+    "checkJs": false,
+
+    "types": ["node"],
+    "plugins": [{ "name": "next" }]
   },
   "include": [
     "next-env.d.ts",
-    "src/**/*",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    "global.d.ts",
     ".next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

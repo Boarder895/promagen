@@ -1,15 +1,16 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/api/admin/ping/route": "app/api/admin/ping/route.js",
-  "/api/admin/sync/route": "app/api/admin/sync/route.js",
   "/api/health/route": "app/api/health/route.js",
+  "/api/admin/sync/route": "app/api/admin/sync/route.js",
   "/api/providers/route": "app/api/providers/route.js",
   "/api/world-clocks/route": "app/api/world-clocks/route.js",
+  "/prompts[id]/page": "app/prompts[id]/page.js",
+  "/page": "app/page.js",
+  "/status/page": "app/status/page.js",
+  "/widget/preferred/page": "app/widget/preferred/page.js",
   "/leaderboard/page": "app/leaderboard/page.js",
   "/providers/page": "app/providers/page.js",
-  "/prompts/[id]/page": "app/prompts/[id]/page.js",
-  "/page": "app/page.js",
   "/prompts/page": "app/prompts/page.js",
-  "/status/page": "app/status/page.js",
-  "/widget/preferred/page": "app/widget/preferred/page.js"
+  "/prompts/[id]/page": "app/prompts/[id]/page.js"
 }

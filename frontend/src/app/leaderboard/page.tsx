@@ -1,22 +1,10 @@
-// src/app/leaderboard/page.tsx
-import React from 'react'
-import { getLeaderboard, LeaderboardEntry } from '@/lib/apiClient'
+export const dynamic = 'force-dynamic';
 
-export default async function LeaderboardPage(): Promise<JSX.Element> {
-  // Fetch the leaderboard data on the server
-  const leaderboard: LeaderboardEntry[] = await getLeaderboard()
-
+export default function LeaderboardPage() {
   return (
-    <section>
-      <h1>Leaderboard</h1>
-      <ul>
-        {leaderboard.map((entry) => (
-          <li key={entry.id}>
-            {entry.name}: {entry.score}
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
+    <main className="mx-auto max-w-3xl p-6">
+      <h1 className="text-2xl font-semibold mb-3">Leaderboard</h1>
+      <p className="opacity-80">Coming soon — leaderboard data will appear here.</p>
+    </main>
+  );
 }
-
