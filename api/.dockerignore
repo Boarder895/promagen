@@ -1,8 +1,6 @@
+.git
 node_modules
 dist
-.git
-.gitignore
-Dockerfile*
-.fly
-.vscode
-npm-debug.log*
+*.log
+dev.db
+
