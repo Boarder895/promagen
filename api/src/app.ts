@@ -1,23 +1,15 @@
-// src/app.ts
-import express, { type Express, type RequestHandler } from "express";
-import helmet from "helmet";
-import cors from "cors";
-import { httpLogger } from "./middleware/logger";
+import express, { type Request, type Response } from 'express';
 
-export function createApp(): Express {
-  const app: Express = express();
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-  // Casts ensure Express picks the correct .use() overloads
-  app.use(helmet() as RequestHandler);
-  app.use(express.json() as unknown as RequestHandler);
-  app.use(cors() as RequestHandler);
-  app.use(httpLogger as unknown as RequestHandler);
+app.get('/health', (_req: Request, res: Response) => res.status(200).send('OK'));
 
-  // Minimal routes so the service is functional
-  app.get("/health", (_req, res) => res.status(200).send("ok"));
-  app.get("/metrics", (_req, res) => res.type("text/plain").send("# metrics\n"));
-  app.get("/scores", (_req, res) => res.json({ scores: [] }));
+export default app;
 
-  return app;
-}
+
+
+
+
 
