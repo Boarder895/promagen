@@ -16,6 +16,8 @@
   "dependencies": {
     "@prisma/client": "6.16.2",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
     "pino": "^9.11.0"
   },
   "devDependencies": {
