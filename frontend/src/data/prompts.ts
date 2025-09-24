@@ -1,0 +1,42 @@
+﻿export type Prompt = {
+  id: string;
+  title: string;
+  body: string;
+  tags: string[];
+  author?: string;
+  createdAt: string;
+  likes?: number;
+};
+
+const _now = new Date().toISOString();
+
+export const prompts: Prompt[] = [
+  { id: "p-1", title: "Summarize a PDF", body: "Summarize the attached PDF in 5 bullet points, then give a 1-sentence TL;DR.", tags: ["summarize","pdf"], author: "system", createdAt: _now, likes: 42 },
+  { id: "p-2", title: "SQL to Plain English", body: "Explain what this SQL query does step by step; highlight potential pitfalls.", tags: ["sql","explain"], author: "system", createdAt: _now, likes: 31 },
+  { id: "p-3", title: "Refactor React Component", body: "Refactor the given React component to idiomatic TS + a11y.", tags: ["react","typescript","a11y"], author: "system", createdAt: _now, likes: 27 },
+  { id: "p-4", title: "Marketing Angle Finder", body: "Given a product description, list 10 marketing angles w/ hook, benefit, proof.", tags: ["marketing","copy"], author: "system", createdAt: _now, likes: 19 }
+];
+
+export const seedPrompts = prompts;
+
+export function getTrending(limit = 8): Prompt[] {
+  return [...prompts].sort((a,b)=>(b.likes??0)-(a.likes??0)).slice(0, limit);
+}
+
+export function getCurated(limit = 8): Prompt[] {
+  return [...prompts].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0, limit);
+}
+
+export function getPromptById(id: string): Prompt | null {
+  return prompts.find(p => p.id === id) ?? null;
+}
+
+export function searchPrompts(q: string): Prompt[] {
+  const n = q.trim().toLowerCase();
+  if (!n) return [];
+  return prompts.filter(p =>
+    p.title.toLowerCase().includes(n) ||
+    p.body.toLowerCase().includes(n) ||
+    p.tags.some(t => t.toLowerCase().includes(n))
+  );
+}

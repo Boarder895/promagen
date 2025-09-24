@@ -1,7 +1,7 @@
-// src/app/layout.tsx
+﻿// src/app/layout.tsx
 import './globals.css'
 import type { Metadata } from 'next'
-import Providers from './providers'   // <— moved from src/pages/providers.tsx
+import Providers from './_providers'   // <â€” moved from src/page./_providers.tsx
 
 export const metadata: Metadata = {
   title: 'Promagen',
@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>{children}./_providers>
       </body>
     </html>
   )
