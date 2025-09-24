@@ -1,0 +1,17 @@
+// prisma/schema.dev.prisma
+// Local dev: single-file SQLite DB (fast + zero friction)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Prompt {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+}

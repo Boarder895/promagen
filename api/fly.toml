@@ -2,25 +2,25 @@ app = "promagen-api"
 primary_region = "lhr"
 
 [env]
-PORT = "3001"
+  PORT = "3001"
+  NODE_ENV = "production"
 
 [http_service]
-internal_port = 3001
-force_https = true
-auto_start_machines = true
-auto_stop_machines = false
-min_machines_running = 1
-processes = ["app"]
+  internal_port = 3001
+  force_https = true
+  auto_start_machines = true
+  auto_stop_machines = true
+  min_machines_running = 1
+  processes = ["app"]
 
   [http_service.concurrency]
-  type = "connections"
-  soft_limit = 25
-  hard_limit = 50
+    type = "requests"
+    soft_limit = 20
+    hard_limit = 40
 
   [[http_service.checks]]
-  interval = "10s"
-  timeout = "3s"
-  grace_period = "45s"
-  method = "GET"
-  path = "/health"
-
+    interval = "10s"
+    timeout = "3s"
+    grace_period = "45s"
+    method = "GET"
+    path = "/health"

@@ -1,0 +1,17 @@
+// prisma/schema.prod.prisma
+// Production: managed Postgres via Fly.io (DATABASE_URL required)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Prompt {
+  id        Int      @id @default(autoincrement())
+  text      String
+  createdAt DateTime @default(now())
+}

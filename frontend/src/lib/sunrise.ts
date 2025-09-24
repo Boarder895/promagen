@@ -1,1 +1,10 @@
-// FRONTEND — NEXT.JS// frontend/lib/sunrise.ts// NOAA-style sunrise calc. Returns Date (UTC) or null.export type LatLng = { lat: number; lon: number };const deg2rad = (deg: number) => (Math.PI * deg) / 180;const rad2deg = (rad: number) => (180 * rad) / Math.PI;function dayOfYear(d: Date): number {  const start = Date.UTC(d.getUTCFullYear(), 0, 0);  const diff = +new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())) - start;  return Math.floor(diff / 86400000);}export function sunriseUtc(date: Date, { lat, lon }: LatLng): Date | null {  const zenith = 90.833;  const N = dayOfYear(date);  const lngHour = lon / 15;  const t = N + ((6 - lngHour) / 24);  const M = (0.9856 * t) - 3.289;  let L = M + (1.916 * Math.sin(deg2rad(M))) + (0.020 * Math.sin(2 * deg2rad(M))) + 282.634;  L = ((L + 360) % 360);  let RA = rad2deg(Math.atan(0.91764 * Math.tan(deg2rad(L))));  RA = ((RA + 360) % 360);  const Lquadrant  = Math.floor(L / 90) * 90;  const RAquadrant = Math.floor(RA / 90) * 90;  RA = (RA + (Lquadrant - RAquadrant)) / 15;  const sinDec = 0.39782 * Math.sin(deg2rad(L));  const cosDec = Math.cos(Math.asin(sinDec));  const cosH = (Math.cos(deg2rad(zenith)) - (sinDec * Math.sin(deg2rad(lat)))) / (cosDec * Math.cos(deg2rad(lat)));  if (cosH > 1 || cosH < -1) return null;  const H = 360 - rad2deg(Math.acos(cosH));  const Hhours = H / 15;  const T = Hhours + RA - (0.06571 * t) - 6.622;  let UT = (T - lngHour) % 24;  if (UT < 0) UT += 24;  const y = date.getUTCFullYear();  const m = date.getUTCMonth();  const d = date.getUTCDate();  const hours = Math.floor(UT);  const minutes = Math.floor((UT - hours) * 60);  const seconds = Math.round((((UT - hours) * 60) - minutes) * 60);  return new Date(Date.UTC(y, m, d, hours, minutes, seconds));}
+// Minimal export so `import('@/lib/sunrise')` is a module.
+// You can replace with a real implementation later.
+export const SUNRISE_LIB = true;
+
+export function getSunriseSunset(_lat: number, _lon: number, _isoDate?: string) {
+  return {
+    sunrise: "06:00",
+    sunset: "18:00",
+  };
+}

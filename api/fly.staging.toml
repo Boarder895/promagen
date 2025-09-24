@@ -1,0 +1,32 @@
+# fly.staging.toml
+# Staging config for promagen API
+
+app = "promagen-api-staging-1"   # 👈 change if you picked a different Fly app name
+
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3001"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[http_service.checks]]
+  interval = "15s"
+  timeout = "2s"
+  grace_period = "10s"
+  method = "GET"
+  path = "/health"
+
+[metrics]
+  port = 3001
+  path = "/metrics"

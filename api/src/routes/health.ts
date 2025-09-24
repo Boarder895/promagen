@@ -1,22 +1,16 @@
-import { Router, type Request, type Response } from 'express';
-import { prisma } from '../prisma';
+import { Router } from "express";
 
 const router = Router();
 
-router.get('/health', (_req: Request, res: Response) => {
-  res.status(200).json({ ok: true });
-});
-
-router.get('/health/db', async (_req: Request, res: Response) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    res.status(200).json({ db: 'ok' });
-  } catch (err) {
-    res.status(500).json({ db: 'down', error: (err as Error).message });
-  }
+/** Basic health probe */
+router.get("/", (_req, res) => {
+  res.json({
+    ok: true,
+    name: "Promagen API",
+    pid: process.pid,
+    uptimeSec: Math.floor(process.uptime()),
+    nowIso: new Date().toISOString(),
+  });
 });
 
 export default router;
-
-
-

@@ -1,1 +1,22 @@
-// frontend/lib/ping.ts — COMPLETEconst API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;export type HealthResult = {  ok: boolean;  status?: "ok" | "degraded" | "down";  latencyMs?: number;  error?: string;};export async function pingHealth(timeoutMs = 3000): Promise<HealthResult> {  if (!API_BASE) return { ok: false, error: "API base — not set" };  const controller = new AbortController();  const timer = setTimeout(() => controller.abort(), timeoutMs);  const start = performance.now();  try {    const res = await fetch(`${API_BASE}/healthz/deep`, {      signal: controller.signal,      cache: "no-store",    });    clearTimeout(timer);    const json = await res.json().catch(() => ({}));    const latencyMs = Math.round(performance.now() - start);    // Treat non-200 as down but still return latency/status if present    const status = json?.status as "ok" | "degraded" | "down" | undefined;    return {      ok: res.ok || status === "ok" || status === "degraded",      status,      latencyMs,      error: res.ok ? undefined : `http ${res.status}`,    };  } catch (e: any) {    clearTimeout(timer);    return { ok: false, error: e?.name === "AbortError" ? "timeout" : String(e) };  }}export async function fetchVersion(): Promise<Record<string, any> | null> {  if (!API_BASE) return null;  try {    const res = await fetch(`${API_BASE}/version`, { cache: "no-store" });    if (!res.ok) return null;    return await res.json();  } catch {    return null;  }}
+export type PingHealth =
+  | { ok: true; status: "ok" | "degraded"; latencyMs: number }
+  | { ok: false; status: "down"; latencyMs: number; error?: string };
+
+export async function pingHealth(timeoutMs = 3000): Promise<PingHealth> {
+  const controller = new AbortController();
+  const to = setTimeout(() => controller.abort(), timeoutMs);
+  const t0 = performance.now();
+  try {
+    const res = await fetch("/api/health", { signal: controller.signal, headers: { accept: "application/json" } });
+    const latency = Math.max(0, Math.round(performance.now() - t0));
+    clearTimeout(to);
+    if (!res.ok) return { ok: false, status: "down", latencyMs: latency, error: String(res.status) };
+    const json = (await res.json().catch(() => ({}))) as any;
+    const status = json?.status === "degraded" ? "degraded" : "ok";
+    return { ok: true, status, latencyMs: latency };
+  } catch (err: any) {
+    clearTimeout(to);
+    const latency = Math.max(0, Math.round(performance.now() - t0));
+    return { ok: false, status: "down", latencyMs: latency, error: err?.message ?? "network" };
+  }
+}

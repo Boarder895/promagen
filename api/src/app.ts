@@ -1,79 +1,58 @@
-import express, { type Request, type Response } from 'express';
+// src/app.ts
+import 'dotenv/config';
+import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import cors, { type CorsOptions } from 'cors';
+import cors, { CorsOptions } from 'cors';
 
-const app = express();
-
-// Behind Fly's proxy so req.ip is correct (needed for rate limit)
-app.set('trust proxy', 1);
-
-/**
- * SECURITY HEADERS
- * For an API, keep CSP minimal; other Helmet protections stay on.
- */
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      useDefaults: true,
-      directives: {
-        // API doesn’t serve HTML assets; make this very tight.
-        defaultSrc: ["'none'"],
-        connectSrc: ["'self'"], // browsers loading API docs, if any
-        frameAncestors: ["'none'"],
-        baseUri: ["'none'"]
-      }
-    },
-    crossOriginEmbedderPolicy: false // APIs don’t need COEP and it can break fetchers
-  })
-);
-
-/**
- * CORS
- * Allow only the origins you specify via CORS_ORIGINS (comma-separated).
- * Falls back to localhost:3000 for dev.
- * We allow no credentials; if you later need cookies, flip `credentials: true`.
- */
-const allowedOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
+// ----- CORS allow-list from env (comma-separated) -----
+const allowList = (process.env.CORS_ORIGINS ?? '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
 
 const corsOptions: CorsOptions = {
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true);            // curl/Postman
-    return cb(null, allowedOrigins.includes(origin));
+  origin(origin, cb) {
+    // allow non-browser tools with no Origin header (curl, fly health, etc.)
+    if (!origin) return cb(null, true);
+    if (allowList.includes(origin)) return cb(null, true);
+    return cb(new Error('Not allowed by CORS'));
   },
-  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false,
-  maxAge: 600
+  credentials: true,
 };
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // preflight
+// ----- App -----
+const app = express();
 
-/**
- * RATE LIMIT
- * Skip health so Fly’s check never trips 429.
- */
-const limiter = rateLimit({
-  windowMs: 60_000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => req.path === '/health'
-});
-app.use(limiter);
+app.set('trust proxy', 1);          // correct client IPs behind Fly's proxy
+app.disable('x-powered-by');
 
-// Body parsers
-app.use(express.json());
+// Security + parsing
+app.use(helmet());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions));
 
-// Health for Fly + sanity pings
-app.get('/health', (_req: Request, res: Response) => res.status(200).send('OK'));
+// Health probe
+app.get('/health', (_req, res) => res.status(200).send('OK'));
+
+// ----- Routes -----
+// IMPORTANT: keep the .js in relative imports with node16/nodenext
+import echoRouter from './routes/echo.js';
+app.use('/v1/echo', echoRouter);
+
+// 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found', path: req.path });
+});
+
+// Error handler
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const message = err instanceof Error ? err.message : 'Internal Server Error';
+  res.status(500).json({ error: message });
+});
 
 export default app;
+
 
 
 

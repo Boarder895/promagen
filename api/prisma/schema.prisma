@@ -1,17 +1,25 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+model Prompt {
+  id        Int      @id @default(autoincrement())
+  title     String   @unique          // short human-readable name
+  text      String                      // the actual prompt text
+  tagsJson  Json                        // JSON array of strings e.g. ["neon","map"]
+  likes     Int      @default(0)
+  remixes   Int      @default(0)
+  provider  String?
+  author    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model Score {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  value     Int      @default(0)
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
-}
+
+
 

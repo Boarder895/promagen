@@ -1,22 +1,22 @@
 // scripts/ensure-db.js
-import fs from "fs";
-import path from "path";
+import { execSync } from "node:child_process";
 
-const dbUrl = process.env.DATABASE_URL || "";
-// Only care about file-based SQLite URLs like: file:/data/dev.db or file:./dev.db
-const m = dbUrl.match(/^file:(.+)$/);
-if (!m) {
-  console.log("[ensure-db] Non-file DATABASE_URL; nothing to create.");
-  process.exit(0);
+const url = process.env.DATABASE_URL || "file:/data/dev.db";
+
+function run(cmd) {
+  console.log(`[ensure-db] ${cmd}`);
+  execSync(cmd, { stdio: "inherit" });
 }
 
-const dbPath = m[1];
-const abs = path.isAbsolute(dbPath) ? dbPath : path.join(process.cwd(), dbPath);
-const dir = path.dirname(abs);
+try {
+  // Make sure Prisma client is ready (harmless if already generated)
+  run("npx prisma generate");
 
-if (!fs.existsSync(dir)) {
-  fs.mkdirSync(dir, { recursive: true });
-  console.log(`[ensure-db] Created directory ${dir}`);
-} else {
-  console.log(`[ensure-db] Directory exists: ${dir}`);
+  // For SQLite, db push is the simplest way to ensure schema exists
+  run(`npx prisma db push --skip-generate --accept-data-loss`);
+
+  console.log(`[ensure-db] DB ready at ${url}`);
+} catch (err) {
+  console.error("[ensure-db] failed:", err?.message || err);
+  process.exit(1);
 }
