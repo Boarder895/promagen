@@ -2,7 +2,6 @@
   "name": "promagen-api",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx src/server.ts",
