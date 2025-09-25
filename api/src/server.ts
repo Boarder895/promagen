@@ -3,6 +3,8 @@ import cors from 'cors';
 
 import providersRouter from './routes/providers';   // <-- default import
 import { healthHandler } from './services/health';
+import versionRouter from './routes/version';
+
 
 const app = express();
 
@@ -14,7 +16,7 @@ app.get('/health', healthHandler);
 
 // feature routers
 app.use('/api/providers', providersRouter);
-
+app.use('/version', versionRouter);
 // boot
 const PORT = Number(process.env.PORT || 3001);
 const HOST = '0.0.0.0';
