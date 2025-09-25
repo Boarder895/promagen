@@ -1,4 +1,0 @@
-"use client";
-export default function WorldClocks() {
-  return <div className="text-xs text-gray-500">UTC: {new Date().toUTCString()}</div>;
-}
