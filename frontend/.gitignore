@@ -49,3 +49,7 @@ frontend-structure.txt
 frontend_tree.txt
 debug_bundle.txt
 
+
+# local env & backups
+.env.local
+*.bak
