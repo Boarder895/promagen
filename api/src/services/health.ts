@@ -38,7 +38,6 @@ export const healthHandler: RequestHandler = async (_req, res) => {
     const payload = await runALLChecksCached();
     res.json(payload);
   } catch {
-    // never explode health
     res.status(200).json({ ok: true, degraded: true, error: 'health-check-exception' });
   }
 };

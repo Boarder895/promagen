@@ -14,7 +14,7 @@ router.get('/', async (_req, res) => {
     const cached = getCache<any[]>(cacheKey);
     if (cached) return res.json(cached);
 
-    // Fetch overrides if table exists (keep guard for resilience)
+    // Fetch overrides (guarded in case table doesn't exist in some env)
     let overrides: any[] = [];
     try {
       overrides = await prisma.providerOverride.findMany();
@@ -37,10 +37,11 @@ router.get('/', async (_req, res) => {
   }
 });
 
-// Optional: light status with health summary joined in
+// Optional: light status with health summary
 router.get('/status', async (_req, res) => {
   const health = await runALLChecksCached();
   res.json({ ok: true, count: PROVIDERS.length, health });
 });
 
-export default router;
+export default router;   // <-- default export (matches server.ts)
+

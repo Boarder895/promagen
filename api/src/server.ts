@@ -1,24 +1,24 @@
-// BACKEND · EXPRESS
-// File: C:\Users\Martin Yarnold\Projects\promagen\api\src\server.ts
+import express from 'express';
+import cors from 'cors';
 
-import express from "express";
-import cors from "cors";
-import { providersRouter } from "./routes/providers";
+import providersRouter from './routes/providers';   // <-- default import
+import { healthHandler } from './services/health';
 
 const app = express();
 
-// Basic middleware
-app.use(cors());
 app.use(express.json());
+app.use(cors()); // keep it simple for now; we'll tighten later
 
-// Infra endpoints stay at root
-app.get("/health", (_req, res) => res.status(200).json({ ok: true }));
+// infra endpoints
+app.get('/health', healthHandler);
 
-// Versioned API root per project rule
-app.use("/api/v1", providersRouter);
+// feature routers
+app.use('/api/providers', providersRouter);
 
-// Bind to 0.0.0.0 and PORT 3001 (project standard)
+// boot
 const PORT = Number(process.env.PORT || 3001);
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`[api] listening on http://0.0.0.0:${PORT}`);
+const HOST = '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+  console.log(`[api] listening on http://${HOST}:${PORT}`);
 });

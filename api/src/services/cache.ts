@@ -1,4 +1,3 @@
-// Simple in-memory cache for small objects/arrays. CJS-safe (no import.meta/require shims).
 type Entry<T> = { value: T; expiresAt: number };
 const store = new Map<string, Entry<unknown>>();
 
