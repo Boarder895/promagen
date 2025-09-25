@@ -7,10 +7,14 @@
   "scripts": {
     "dev": "tsx src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed": "prisma db seed"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
+    "@prisma/client": "^6.16.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -24,7 +28,11 @@
     "@types/express-rate-limit": "^6.0.0",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.11.30",
+    "prisma": "^6.16.2",
     "tsx": "^4.10.5",
     "typescript": "^5.4.5"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }

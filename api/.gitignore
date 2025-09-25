@@ -13,4 +13,5 @@ out/
 # Env & local
 .env*
 .DS_Store
+.env
 
