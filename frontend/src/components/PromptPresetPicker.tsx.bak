@@ -1,0 +1,151 @@
+"use client";
+
+import * as React from "react";
+
+/**
+ * We accept any preset shape and normalize it at the edge,
+ * so TS won't choke if upstream doesn't include "provider".
+ */
+type AnyPreset = Record<string, unknown>;
+
+type NormalizedPreset = {
+  id: string;
+  title: string;
+  prompt: string;
+  provider?: string; // optional, extracted if present under several possible keys
+  tags?: string[];
+};
+
+function normalizePreset(p: AnyPreset): NormalizedPreset | null {
+  // try a few common keys safely
+  const id =
+    (p["id"] as string) ??
+    (p["_id"] as string) ??
+    (p["slug"] as string) ??
+    (p["key"] as string);
+
+  const title =
+    (p["title"] as string) ??
+    (p["name"] as string) ??
+    (p["label"] as string);
+
+  const prompt =
+    (p["prompt"] as string) ??
+    (p["text"] as string) ??
+    (p["content"] as string);
+
+  // provider might be stored under various names
+  const provider =
+    (p["provider"] as string) ??
+    (p["providerId"] as string) ??
+    (p["platform"] as string) ??
+    ((p["model"] as Record<string, unknown> | undefined)?.["provider"] as
+      | string
+      | undefined) ??
+    undefined;
+
+  const tags =
+    (Array.isArray(p["tags"]) ? (p["tags"] as string[]) : undefined) ??
+    (Array.isArray(p["keywords"]) ? (p["keywords"] as string[]) : undefined);
+
+  if (!id || !title || !prompt) return null;
+
+  return { id, title, prompt, provider, tags };
+}
+
+async function fetchPresets(): Promise<NormalizedPreset[]> {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  const res = await fetch(`${base}/api/v1/presets`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const raw = (await res.json()) as AnyPreset[];
+  const list = raw
+    .map(normalizePreset)
+    .filter((x): x is NormalizedPreset => !!x);
+  return list;
+}
+
+export default function PromptPresetPicker() {
+  const [list, setList] = React.useState<NormalizedPreset[] | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [query, setQuery] = React.useState("");
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchPresets();
+        if (!cancelled) setList(data);
+      } catch (e: unknown) {
+        const msg =
+          typeof e === "string" ? e : (e as Error)?.message ?? "Failed to load presets";
+        if (!cancelled) setError(msg);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filtered =
+    list?.filter(
+      (p) =>
+        p.title.toLowerCase().includes(query.toLowerCase()) ||
+        p.provider?.toLowerCase().includes(query.toLowerCase()) ||
+        p.tags?.some((t) => t.toLowerCase().includes(query.toLowerCase()))
+    ) ?? [];
+
+  if (loading) return <div className="p-4">Loading presets…</div>;
+  if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
+
+  return (
+    <div className="space-y-4 p-4">
+      <div className="flex gap-2">
+        <input
+          className="w-full rounded-xl border px-3 py-2"
+          placeholder="Search presets by title, provider, or tag"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-sm text-gray-600">No presets match your search.</p>
+      ) : (
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {filtered.map((p) => (
+            <li key={p.id} className="rounded-xl border p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-medium">{p.title}</div>
+                  {p.provider ? (
+                    <div className="text-xs text-gray-500">Provider: {p.provider}</div>
+                  ) : null}
+                </div>
+                {p.tags?.length ? (
+                  <div className="flex flex-wrap gap-1">
+                    {p.tags.slice(0, 4).map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full border px-2 py-0.5 text-[11px] text-gray-600"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+              <pre className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap text-xs text-gray-700">
+                {p.prompt}
+              </pre>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

@@ -1,4 +1,4 @@
-// frontend/app/widget/preferred/page.tsx
+﻿// frontend/app/widget/preferred/page.tsx
 import { cookies } from "next/headers";
 
 type PrefsResponse = { preferredProviders: string[] };

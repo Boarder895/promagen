@@ -1,31 +1,39 @@
-import { useEffect, useState } from "react";
-import { ALL_PROVIDERS } from "@/lib/providers";
+﻿"use client";
 
-export default function CompareRunner({ showAll=false }:{ showAll?: boolean }) {
-  const [prefs, setPrefs] = useState<string[] | null>(null);
-  useEffect(() => {
-    fetch("/api/user/me/preferences", { credentials:"include" })
-      .then(r => r.json()).then(d => setPrefs(d?.preferredProviders ?? []));
-  }, []);
-  if (prefs === null) return null;
+import React, { useMemo, useState } from "react";
+import PROVIDERS, { type Provider } from "@/lib/providers"; // <- default import
 
-  const providers = showAll || prefs.length === 0
-    ? ALL_PROVIDERS
-    : ALL_PROVIDERS.filter(p => prefs.includes(p.id));
+export default function CompareRunner({ showAll = false }: { showAll?: boolean }) {
+  const [selection, setSelection] = useState<string[]>([]);
+
+  const providers = useMemo<Provider[]>(
+    () => (showAll ? PROVIDERS : PROVIDERS.filter((p) => p.api)),
+    [showAll]
+  );
+
+  function toggle(id: string) {
+    setSelection((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
 
   return (
-    <div>
-      {/* toggle in page chrome */}
-      {/* <Switch label="Show all providers" .../> */}
-      {providers.map(p => (
-        <button key={p.id} onClick={()=> runCompareWith(p.id)}>
-          Run with {p.name}
-        </button>
-      ))}
-    </div>
+    <section className="p-4 border rounded-xl">
+      <h3 className="font-semibold mb-3">Compare Providers</h3>
+      <div className="grid md:grid-cols-2 gap-2">
+        {providers.map((p) => (
+          <label key={p.id} className="flex items-center gap-2 border rounded-md p-2">
+            <input
+              type="checkbox"
+              checked={selection.includes(p.id)}
+              onChange={() => toggle(p.id)}
+            />
+            <span className="font-medium">{p.name}</span>
+            <span className="text-xs opacity-70 ml-auto">{p.api ? "API" : "Manual"}</span>
+          </label>
+        ))}
+      </div>
+      <div className="mt-4 text-sm opacity-80">
+        Selected: {selection.length ? selection.join(", ") : "none"}
+      </div>
+    </section>
   );
-}
-
-function runCompareWith(providerId: string) {
-  // call your backend with the canonical request + providerId
 }

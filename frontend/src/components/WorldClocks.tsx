@@ -1,4 +1,4 @@
-// FRONTEND — NEXT.JS
+﻿// FRONTEND â€” NEXT.JS
 // frontend/components/WorldClocks.tsx
 // Live clocks, reading city list from /api/world-clocks (single source of truth).
 
@@ -59,15 +59,15 @@ export default function WorldClocks() {
   }, [cities, now]);
 
   if (error) {
-    return <div className="pmg-clocks">Couldn’t load clocks: {error}</div>;
+    return <div className="pmg-clocks">Couldnâ€™t load clocks: {error}</div>;
   }
   if (!cities) {
-    return <div className="pmg-clocks">Loading world clocks…</div>;
+    return <div className="pmg-clocks">Loading world clocksâ€¦</div>;
   }
 
   return (
     <div className="pmg-clocks">
-      <div className="pmg-clocks__title">World Clocks (ordered by today’s sunrise)</div>
+      <div className="pmg-clocks__title">World Clocks (ordered by todayâ€™s sunrise)</div>
       <div className="pmg-clocks__grid">
         {sorted.map(({ city, sunriseUtc }) => {
           const time = new Intl.DateTimeFormat("en-GB", {
@@ -80,12 +80,12 @@ export default function WorldClocks() {
 
           const sunriseLocal = sunriseUtc
             ? new Intl.DateTimeFormat("en-GB", { timeZone: city.timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(sunriseUtc)
-            : "—";
+            : "â€”";
 
           return (
             <div key={city.id} className="pmg-clock">
               <div className="pmg-clock__name">
-                <span className="pmg-clock__flag" aria-hidden="true">{city.flag || "🕒"}</span>
+                <span className="pmg-clock__flag" aria-hidden="true">{city.flag || "ðŸ•’"}</span>
                 {city.name}
               </div>
               <div className="pmg-clock__time">{time}</div>

@@ -1,5 +1,5 @@
-export default function Page() {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "— not set —";
+﻿export default function Page() {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "â€” not set â€”";
 
   return (
     <main style={{
@@ -29,7 +29,7 @@ export default function Page() {
       </section>
 
       <footer style={{ marginTop: 24, color: "#777" }}>
-        <span>Private preview — not indexed.</span>
+        <span>Private preview â€” not indexed.</span>
       </footer>
     </main>
   );

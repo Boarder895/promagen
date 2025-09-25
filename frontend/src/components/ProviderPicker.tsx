@@ -1,47 +1,45 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
-import { PROVIDERS, ProviderKey } from "@/lib/providers";
-import { runAcrossProviders } from "@/lib/runAcrossProviders";
-import { Prompt } from "@/hooks/usePrompts";
+import React, { useState } from "react";
+import {
+  PROVIDER_IDS,
+  PROVIDER_MAP,
+  type ProviderKey,
+} from "@/lib/providers";
 
-export function ProviderPicker({ prompt }: { prompt: Prompt }) {
+export default function ProviderPicker({
+  selected: initial,
+  onChange,
+}: {
+  selected?: ProviderKey[];
+  onChange?: (ids: ProviderKey[]) => void;
+}) {
   const [selected, setSelected] = useState<Set<ProviderKey>>(
-    new Set(PROVIDERS.map((p) => p.key)) // default: all
+    new Set(initial ?? PROVIDER_IDS) // default: all
   );
 
-  function toggle(key: ProviderKey) {
-    setSelected((s) => {
-      const next = new Set(s);
-      next.has(key) ? next.delete(key) : next.add(key);
+  function toggle(id: ProviderKey) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      onChange?.([...next]);
       return next;
     });
   }
 
-  function run() {
-    runAcrossProviders(prompt, Array.from(selected));
-  }
-
   return (
-    <div className="rounded-2xl border p-4">
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {PROVIDERS.map((p) => (
-          <label key={p.key} className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={selected.has(p.key)}
-              onChange={() => toggle(p.key)}
-            />
-            <span>{p.name}</span>
-          </label>
-        ))}
-      </div>
-      <button
-        className="mt-4 px-3 py-1.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500"
-        onClick={run}
-      >
-        Run across providers
-      </button>
+    <div className="flex flex-wrap gap-2">
+      {PROVIDER_IDS.map((id) => (
+        <label key={id} className="inline-flex items-center gap-2 border rounded px-2 py-1">
+          <input
+            type="checkbox"
+            checked={selected.has(id)}
+            onChange={() => toggle(id)}
+          />
+          <span>{PROVIDER_MAP[id].name}</span>
+        </label>
+      ))}
     </div>
   );
 }
+

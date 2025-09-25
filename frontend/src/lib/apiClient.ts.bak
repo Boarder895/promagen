@@ -1,0 +1,12 @@
+export type LeaderboardEntry = { id: string; name: string; score?: number };
+
+export async function getLeaderboard(): Promise<{ providers: LeaderboardEntry[]; updatedAt: string }> {
+  return {
+    providers: [
+      { id: "openai", name: "OpenAI", score: 97 },
+      { id: "anthropic", name: "Anthropic", score: 93 },
+      { id: "groq", name: "Groq", score: 88 }
+    ],
+    updatedAt: new Date().toISOString()
+  };
+}

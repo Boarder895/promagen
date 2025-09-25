@@ -1,20 +1,26 @@
-﻿// Popular Prompt Grid page route
+﻿import React from "react";
 import PromptGrid from "@/components/prompts/PromptGrid";
+import { type PromptQuery } from "@/lib/api";
 
-export const metadata = {
-  title: "Popular Prompts â€” Promagen",
-  description: "Curated, trending, and community prompts you can copy and run across providers."
+export const revalidate = 60;
+
+type PageProps = {
+  searchParams?: Partial<Record<keyof PromptQuery, string>>;
 };
 
-export default function PromptsPage({ searchParams }: { searchParams: { id?: string } }) {
+export default function PromptsIndexPage({ searchParams }: PageProps) {
+  const q: PromptQuery = {
+    q: searchParams?.q,
+    tag: searchParams?.tag,
+    page: searchParams?.page ? Number(searchParams.page) : 1,
+    pageSize: searchParams?.pageSize ? Number(searchParams.pageSize) : 20,
+    sort: (searchParams?.sort as PromptQuery["sort"]) ?? "latest",
+  };
+
   return (
-    <main className="mx-auto max-w-6xl p-4 sm:p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Popular Prompts</h1>
-        <p className="text-sm text-gray-600">MVP â€” read-only curated set</p>
-      </div>
-      <PromptGrid initialId={searchParams?.id} />
+    <main className="p-6 max-w-5xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-4">Community Prompts</h1>
+      <PromptGrid query={q} />
     </main>
   );
 }
-

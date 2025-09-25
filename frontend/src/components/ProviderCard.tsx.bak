@@ -1,0 +1,34 @@
+"use client";
+import React from "react";
+import { getProviderLabel } from "@/lib/providerUtils";
+
+/**
+ * Defensive ProviderCard — uses getProviderLabel so both `name` and `displayName`
+ * shapes are supported.
+ *
+ * Replace the file at src/components/ProviderCard.tsx with this content.
+ */
+
+type ProviderLike = {
+  id: string;
+  name?: string;
+  displayName?: string;
+  score?: number;
+};
+
+type Props = {
+  p: ProviderLike;
+};
+
+export default function ProviderCard({ p }: Props) {
+  const label = getProviderLabel(p);
+  return (
+    <div className="rounded border p-3 flex items-center justify-between">
+      <div>
+        <span className="font-medium">{label}</span>
+        {typeof p.score === "number" ? <span className="ml-2 text-sm text-gray-500">({p.score})</span> : null}
+      </div>
+      <div className="text-xs text-gray-400">{p.id}</div>
+    </div>
+  );
+}

@@ -1,4 +1,4 @@
-// src/pages/providers.tsx
+﻿// src/pages/providers.tsx
 import ProviderGrid from '@/components/ProviderGrid';
 
 export default function ProvidersPage() {

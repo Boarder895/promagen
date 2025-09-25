@@ -1,37 +1,59 @@
-import { useState } from "react";
-import type { Preset } from "@/lib/presets";
-import { Presets } from "@/lib/presets"; // mirror from server or fetch via API
+﻿"use client";
 
-export default function PromptPresetPicker({ onSubmit }:{
-  onSubmit: (payload: any) => void
+import React from "react";
+
+export type Preset = {
+  id: string;
+  title: string;
+  prompt: string;
+  negativePrompt?: string;
+  provider?: string;  // required by callers
+  model?: string;
+};
+
+const DEFAULTS: Preset[] = [
+  {
+    id: "p1",
+    title: "Photoreal Character",
+    prompt: "semi-realistic cartoon character, cinematic lighting, crisp details",
+    provider: "openai",
+    model: "dalle-latest",
+  },
+  {
+    id: "p2",
+    title: "Ultra Photoreal Background",
+    prompt: "ultra-photorealistic environment, dynamic lighting, high detail",
+    provider: "stability",
+    model: "sdxl",
+  },
+];
+
+export default function PromptPresetPicker({
+  onSelect,
+  presets,
+}: {
+  onSelect?: (preset: Preset) => void;
+  presets?: Preset[];
 }) {
-  const [presetId, setPresetId] = useState(Presets[0].id);
-  const [prompt, setPrompt] = useState("");
-
-  const preset = Presets.find(p => p.id === presetId)!;
-
-  function handleGenerate() {
-    const payload = {
-      presetId: preset.id,
-      provider: preset.provider,
-      model: preset.model,
-      ...preset.defaults,
-      prompt
-    };
-    onSubmit(payload);
-  }
-
+  const items = presets?.length ? presets : DEFAULTS;
   return (
-    <div>
-      <label>Preset</label>
-      <select value={presetId} onChange={e=>setPresetId(e.target.value)}>
-        {Presets.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-      </select>
-
-      <label>Prompt</label>
-      <textarea value={prompt} onChange={e=>setPrompt(e.target.value)} />
-
-      <button onClick={handleGenerate}>Generate</button>
+    <div className="space-y-2">
+      {items.map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          className="w-full text-left border rounded-md p-2 hover:bg-gray-50"
+          onClick={() => onSelect?.(p)}
+        >
+          <div className="font-medium">{p.title}</div>
+          <div className="text-xs opacity-70">
+            {p.provider ?? "provider: n/a"}{p.model ? ` · ${p.model}` : ""}
+          </div>
+          <div className="text-sm mt-1 line-clamp-2">{p.prompt}</div>
+        </button>
+      ))}
     </div>
   );
 }
+
+

@@ -1,0 +1,30 @@
+﻿/* Minimal compatibility shim - safe default for builds.
+   Replace or expand with your real API helpers later.
+*/
+
+export type Prompt = {
+  id: string;
+  title?: string;
+  body?: string;
+  tags?: string[];
+  createdAt?: string | number | Date;
+  score?: number;
+};
+
+export async function apiGet<T = any>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  const res = await fetch(input, init);
+  if (!res.ok) {
+    let body = "";
+    try { body = await res.text(); } catch { body = ""; }
+    throw new Error(`apiGet failed: ${res.status} ${res.statusText} - ${body.slice(0,200)}`);
+  }
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    return (await res.json()) as T;
+  }
+  return (await res.text()) as unknown as T;
+}
+
+// Re-exports / aliases for older code that expects different names
+export { apiGet as apiGet };
+export { Prompt as ApiPrompt };

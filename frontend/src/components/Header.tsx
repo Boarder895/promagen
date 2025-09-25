@@ -1,4 +1,4 @@
-// src/components/Header.tsx — COMPLETE (with Providers link)
+﻿// src/components/Header.tsx â€” COMPLETE (with Providers link)
 import Link from "next/link";
 import StatusChip from "@/components/StatusChip";
 import ServiceBanner from "@/components/ServiceBanner";

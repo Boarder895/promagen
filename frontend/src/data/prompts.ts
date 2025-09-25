@@ -1,42 +1,66 @@
-﻿export type Prompt = {
-  id: string;
-  title: string;
-  body: string;
-  tags: string[];
-  author?: string;
-  createdAt: string;
-  likes?: number;
-};
+﻿// src/data/prompts.ts
+import type { Prompt } from "@/lib/api";
+export type { Prompt } from "@/lib/api"; // keep this re-export so imports work
 
-const _now = new Date().toISOString();
+// …leave the rest of your seed data and functions as-is…
 
-export const prompts: Prompt[] = [
-  { id: "p-1", title: "Summarize a PDF", body: "Summarize the attached PDF in 5 bullet points, then give a 1-sentence TL;DR.", tags: ["summarize","pdf"], author: "system", createdAt: _now, likes: 42 },
-  { id: "p-2", title: "SQL to Plain English", body: "Explain what this SQL query does step by step; highlight potential pitfalls.", tags: ["sql","explain"], author: "system", createdAt: _now, likes: 31 },
-  { id: "p-3", title: "Refactor React Component", body: "Refactor the given React component to idiomatic TS + a11y.", tags: ["react","typescript","a11y"], author: "system", createdAt: _now, likes: 27 },
-  { id: "p-4", title: "Marketing Angle Finder", body: "Given a product description, list 10 marketing angles w/ hook, benefit, proof.", tags: ["marketing","copy"], author: "system", createdAt: _now, likes: 19 }
+const SEED_PROMPTS: Prompt[] = [
+  {
+    id: "seed-1",
+    title: "Mushroom City at Dawn",
+    prompt: "Ultra-photorealistic fungal skyline with fiber-optic trees, cinematic lighting.",
+    summary: "A glowing mushroom metropolis greeting sunrise.",
+    description: "Photoreal forest city of colossal mushrooms with warm windows and mist.",
+    tags: ["fantasy", "environment"],
+    likes: 42,
+    author: "System",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "seed-2",
+    title: "Crystal Cavern Throne",
+    prompt: "Gem-lit cavern with ominous reflections, semi-realistic cartoon character.",
+    summary: "Dark regal throne room inside a jewel cave.",
+    description: "Crystalline walls, gem refractions, moody cinematic contrast.",
+    tags: ["villain", "cave"],
+    likes: 27,
+    author: "System",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "seed-3",
+    title: "Unicorn Ridge",
+    prompt: "White unicorn with silver mane under storm-lit sky, cinematic depth.",
+    summary: "Aurora the unicorn poised on a windswept ridge.",
+    description: "Storm clouds, rim lighting, shallow depth of field.",
+    tags: ["character", "creature"],
+    likes: 31,
+    author: "System",
+    createdAt: new Date().toISOString(),
+  },
 ];
 
-export const seedPrompts = prompts;
-
-export function getTrending(limit = 8): Prompt[] {
-  return [...prompts].sort((a,b)=>(b.likes??0)-(a.likes??0)).slice(0, limit);
+export async function getCommunity(): Promise<Prompt[]> {
+  return SEED_PROMPTS;
 }
-
-export function getCurated(limit = 8): Prompt[] {
-  return [...prompts].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0, limit);
+export async function getTrending(): Promise<Prompt[]> {
+  return SEED_PROMPTS.slice(0, 2);
 }
-
-export function getPromptById(id: string): Prompt | null {
-  return prompts.find(p => p.id === id) ?? null;
+export async function getCurated(): Promise<Prompt[]> {
+  return SEED_PROMPTS;
 }
+export const seedPrompts: Prompt[] = SEED_PROMPTS;
 
-export function searchPrompts(q: string): Prompt[] {
-  const n = q.trim().toLowerCase();
-  if (!n) return [];
-  return prompts.filter(p =>
-    p.title.toLowerCase().includes(n) ||
-    p.body.toLowerCase().includes(n) ||
-    p.tags.some(t => t.toLowerCase().includes(n))
-  );
-}
+export const allTags: string[] = [
+  "fantasy",
+  "environment",
+  "character",
+  "villain",
+  "city",
+  "portrait",
+  "poster",
+  "concept-art",
+];
+export const seedAllTags = allTags;
+
+

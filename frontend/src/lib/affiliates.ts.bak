@@ -1,0 +1,12 @@
+import type { Prompt } from "@/data/prompts";
+
+export function getAffiliateUrl(p: Prompt): string {
+  // very simple default; plug your real mapping here
+  const base = p.provider?.toLowerCase() || "openai";
+  const map: Record<string, string> = {
+    openai: "https://openai.com",
+    anthropic: "https://www.anthropic.com",
+    groq: "https://groq.com"
+  };
+  return map[base] || "https://example.com";
+}

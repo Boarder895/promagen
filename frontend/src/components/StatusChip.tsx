@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-// frontend/components/StatusChip.tsx — COMPLETE
+// frontend/components/StatusChip.tsx â€” COMPLETE
 import { useEffect, useMemo, useState } from "react";
 import { pingHealth, fetchVersion } from "@/lib/ping";
 
@@ -19,7 +19,7 @@ export default function StatusChip() {
 
   async function refresh() {
     if (!apiBase) {
-      setState({ status: "unset", detail: "API base — not set" });
+      setState({ status: "unset", detail: "API base â€” not set" });
       return;
     }
     const [health, vers] = await Promise.all([pingHealth(3500), fetchVersion()]);
@@ -62,13 +62,13 @@ export default function StatusChip() {
   const label = useMemo(() => {
     switch (state.status) {
       case "live":
-        return `Live${state.latency ? ` • ${state.latency}ms` : ""}`;
+        return `Live${state.latency ? ` â€¢ ${state.latency}ms` : ""}`;
       case "degraded":
-        return `Degraded${state.latency ? ` • ${state.latency}ms` : ""}`;
+        return `Degraded${state.latency ? ` â€¢ ${state.latency}ms` : ""}`;
       case "down":
         return "Down";
       default:
-        return "API base — not set";
+        return "API base â€” not set";
     }
   }, [state.status, state.latency]);
 
@@ -80,7 +80,7 @@ export default function StatusChip() {
       state.buildTime ? state.buildTime : null,
       state.detail ? `(${state.detail})` : null,
     ].filter(Boolean);
-    return parts.join(" • ") || "No build metadata";
+    return parts.join(" â€¢ ") || "No build metadata";
   }, [state]);
 
   return (

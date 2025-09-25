@@ -1,4 +1,4 @@
-// FRONTEND • NEXT.JS
+﻿// FRONTEND â€¢ NEXT.JS
 // File: frontend/components/SiteHeader.tsx
 "use client";
 

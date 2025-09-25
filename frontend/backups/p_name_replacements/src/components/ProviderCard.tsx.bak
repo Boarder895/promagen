@@ -1,0 +1,8 @@
+﻿"use client";
+export default function ProviderCard({ p }: { p: { id: string; name: string; score?: number } }) {
+  return (
+    <div className="rounded border p-3 flex items-center justify-between">
+      <span>{p.name}</span><span className="text-gray-600">{p.score ?? 0}</span>
+    </div>
+  );
+}

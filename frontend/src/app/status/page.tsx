@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -44,7 +44,7 @@ export default function StatusPage() {
     return (
       <main className="mx-auto max-w-3xl p-6">
         <h1 className="mb-4 text-2xl font-semibold">Service Status</h1>
-        <div className="animate-pulse rounded-xl border p-4 text-sm text-gray-500">Loading…</div>
+        <div className="animate-pulse rounded-xl border p-4 text-sm text-gray-500">Loadingâ€¦</div>
       </main>
     );
   }

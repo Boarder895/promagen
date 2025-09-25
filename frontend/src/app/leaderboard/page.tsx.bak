@@ -1,0 +1,18 @@
+import { getLeaderboard } from "@/lib/apiClient";
+
+export default async function LeaderboardPage() {
+  const data = await getLeaderboard();
+  const sorted = [...data.providers]
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    .map((p, i) => ({ ...p, rank: i + 1 }));
+
+  return (
+    <main className="p-6">
+      <h1 className="text-xl font-semibold mb-3">Live Leaderboard</h1>
+      <p className="text-sm text-gray-600 mb-4">Updated: {new Date(data.updatedAt).toLocaleString()}</p>
+      <ol className="list-decimal list-inside space-y-1">
+        {sorted.map(r => <li key={r.id}>{r.rank}. {r.name} — score {r.score}</li>)}
+      </ol>
+    </main>
+  );
+}
