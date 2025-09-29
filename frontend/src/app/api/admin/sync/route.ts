@@ -1,19 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+// POST /api/admin/sync  (guarded by middleware.ts)
+import { NextResponse } from "next/server";
+import { refreshProviders } from "@/lib/providerState";
 
-function gate(req: NextRequest): NextResponse | null {
-  const token = process.env.ADMIN_BEARER_TOKEN || '';
-  if (!token) return NextResponse.json({ error: 'Server missing ADMIN_BEARER_TOKEN' }, { status: 500 });
-  const auth = req.headers.get('authorization') || '';
-  const [scheme, supplied] = auth.split(' ');
-  if (scheme !== 'Bearer' || supplied !== token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  return null;
+export async function POST() {
+  try {
+    const res = await refreshProviders();
+    return NextResponse.json({ ok: true, ...res }, { status: 200 });
+  } catch {
+    return NextResponse.json({ ok: false, error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
-export const dynamic = 'force-dynamic';
-
-export async function POST(req: NextRequest) {
-  const res = gate(req); if (res) return res;
-  let body: unknown = null; try { body = await req.json(); } catch {}
-  // do your sync work here…
-  return NextResponse.json({ ok: true, received: body ?? null, ts: Date.now() });
+// Optional method guards
+export function GET() {
+  return NextResponse.json({ ok: false, error: "Method Not Allowed" }, { status: 405 });
 }
+export const PUT = GET, DELETE = GET, PATCH = GET;

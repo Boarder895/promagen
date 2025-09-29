@@ -1,7 +1,6 @@
 ﻿"use client";
 
-// frontend/components/StatusChip.tsx â€” COMPLETE
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { pingHealth, fetchVersion } from "@/lib/ping";
 
 type State = {
@@ -17,71 +16,60 @@ export default function StatusChip() {
   const [state, setState] = useState<State>({ status: "unset" });
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  async function refresh() {
+  // stable callback so useEffect can depend on it
+  const refresh = useCallback(async () => {
     if (!apiBase) {
-      setState({ status: "unset", detail: "API base â€” not set" });
+      setState({ status: "unset", detail: "API base — not set" });
       return;
     }
     const [health, vers] = await Promise.all([pingHealth(3500), fetchVersion()]);
     if (health.ok) {
-      const mapped =
-        health.status === "degraded"
-          ? "degraded"
-          : "live"; // ok -> live unless server said degraded
       setState({
-        status: mapped,
+        status: health.status === "degraded" ? "degraded" : "live",
         latency: health.latencyMs,
         version: vers?.version,
         commit: vers?.commit,
-        buildTime: vers?.buildTime,
+        buildTime: vers?.buildTime
       });
     } else {
       setState({ status: "down", detail: health.error });
     }
-  }
+  }, [apiBase]);
 
   useEffect(() => {
     refresh();
     const id = setInterval(refresh, 30_000);
     return () => clearInterval(id);
-  }, []);
+  }, [refresh]); // <-- include refresh (fixes exhaustive-deps)
 
   const color = useMemo(() => {
     switch (state.status) {
-      case "live":
-        return "bg-green-600";
-      case "degraded":
-        return "bg-amber-500";
-      case "down":
-        return "bg-red-600";
-      default:
-        return "bg-gray-500";
+      case "live": return "bg-green-600";
+      case "degraded": return "bg-amber-500";
+      case "down": return "bg-red-600";
+      default: return "bg-gray-500";
     }
   }, [state.status]);
 
   const label = useMemo(() => {
+    const latency = state.latency ? ` • ${state.latency}ms` : "";
     switch (state.status) {
-      case "live":
-        return `Live${state.latency ? ` â€¢ ${state.latency}ms` : ""}`;
-      case "degraded":
-        return `Degraded${state.latency ? ` â€¢ ${state.latency}ms` : ""}`;
-      case "down":
-        return "Down";
-      default:
-        return "API base â€” not set";
+      case "live": return `Live${latency}`;
+      case "degraded": return `Degraded${latency}`;
+      case "down": return "Down";
+      default: return "API base — not set";
     }
   }, [state.status, state.latency]);
 
   const tooltip = useMemo(() => {
-    if (state.status === "unset") return "Set NEXT_PUBLIC_API_BASE_URL.";
     const parts = [
       state.version ? `v${state.version}` : null,
       state.commit ? `commit ${state.commit}` : null,
-      state.buildTime ? state.buildTime : null,
-      state.detail ? `(${state.detail})` : null,
+      state.buildTime || null,
+      state.detail ? `(${state.detail})` : null
     ].filter(Boolean);
-    return parts.join(" â€¢ ") || "No build metadata";
-  }, [state]);
+    return parts.join(" • ") || "No build metadata";
+  }, [state.version, state.commit, state.buildTime, state.detail]);
 
   return (
     <div className="inline-flex items-center gap-2">

@@ -1,47 +1,28 @@
-import { Router } from 'express';
-import prisma from '../db/prisma';
-import { PROVIDERS } from '../providers/registry';
-import { runALLChecksCached } from '../services/health';
-import { getCache, setCache } from '../services/cache';
+import { Router } from 'express'
+import { PROVIDERS, UPDATED_AT, type ProviderId } from '../registry/providers'
 
-const router = Router();
+const router = Router()
 
-// GET /api/providers
-router.get('/', async (_req, res) => {
-  try {
-    // small cache to avoid hammering DB
-    const cacheKey = 'providers:list:v1';
-    const cached = getCache<any[]>(cacheKey);
-    if (cached) return res.json(cached);
+// GET /api/v1/providers
+router.get('/', (_req, res) => {
+  const apiEnabled = PROVIDERS.filter(p => p.apiEnabled)
+  const nonApi = PROVIDERS.filter(p => !p.apiEnabled)
+  res.json({
+    updatedAt: UPDATED_AT,
+    count: PROVIDERS.length,
+    apiEnabledCount: apiEnabled.length,
+    providers: PROVIDERS,
+    apiEnabled,
+    nonApi
+  })
+})
 
-    // Fetch overrides (guarded in case table doesn't exist in some env)
-    let overrides: any[] = [];
-    try {
-      overrides = await prisma.providerOverride.findMany();
-    } catch {
-      overrides = [];
-    }
+// GET /api/v1/providers/:id
+router.get('/:id', (req, res) => {
+  const id = req.params.id as ProviderId
+  const p = PROVIDERS.find(x => x.id === id)
+  if (!p) return res.status(404).json({ error: 'provider_not_found', id })
+  res.json(p)
+})
 
-    const byId = new Map(overrides.map((o: any) => [o.providerId, o]));
-    const merged = PROVIDERS.map((p) => ({
-      id: p.id,
-      name: p.name,
-      override: byId.get(p.id) || null,
-    }));
-
-    setCache(cacheKey, merged, 60_000);
-    return res.json(merged);
-  } catch (err) {
-    console.error('[providers] unexpected error', err);
-    return res.status(500).json({ ok: false });
-  }
-});
-
-// Optional: light status with health summary
-router.get('/status', async (_req, res) => {
-  const health = await runALLChecksCached();
-  res.json({ ok: true, count: PROVIDERS.length, health });
-});
-
-export default router;   // <-- default export (matches server.ts)
-
+export default router

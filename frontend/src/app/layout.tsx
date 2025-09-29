@@ -1,18 +1,11 @@
-﻿import React from "react";
-import Providers from "./_providers";
+﻿import "./globals.css";
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Promagen" };
 
-/**
- * Root layout for Next App Router.
- * Keep this file simple and valid JSX/TSX.
- *
- * Save this file as UTF-8 (no BOM).
- */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <Providers>{children}</Providers>
-      </body>
+      <body className="bg-neutral-50 text-neutral-900 antialiased">{children}</body>
     </html>
   );
 }

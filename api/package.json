@@ -5,9 +5,17 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
-    "seed": "prisma db seed"
+    "dev:sqlite": "cross-env PRISMA_SCHEMA=./prisma/schema.sqlite.prisma DATABASE_URL=file:./dev.db tsx src/server.ts",
+    "dev:pg": "cross-env PRISMA_SCHEMA=./prisma/schema.postgres.prisma tsx src/server.ts",
+    "migrate:sqlite": "cross-env PRISMA_SCHEMA=./prisma/schema.sqlite.prisma DATABASE_URL=file:./dev.db prisma migrate reset -f && prisma generate",
+    "migrate:pg": "cross-env PRISMA_SCHEMA=./prisma/schema.postgres.prisma prisma migrate deploy && prisma generate",
+    "studio:sqlite": "cross-env PRISMA_SCHEMA=./prisma/schema.sqlite.prisma DATABASE_URL=file:./dev.db prisma studio",
+    "studio:pg": "cross-env PRISMA_SCHEMA=./prisma/schema.postgres.prisma prisma studio",
+    "sync:sqlite": "cross-env PRISMA_SCHEMA=./prisma/schema.sqlite.prisma DATABASE_URL=file:./dev.db prisma db push --force-reset && prisma generate",
+    "seed": "node prisma/seed.js",
+    "reseed": "cross-env SEED_CLEAR=true node prisma/seed.js",
+    "gen:secret": "node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
+    "smoke": "node scripts/smoke.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -19,7 +27,9 @@
     "express": "^4.19.2",
     "express-rate-limit": "^7.3.1",
     "helmet": "^7.1.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "zod": "^4.1.11",
+    "cross-env": "^7.0.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -30,8 +40,6 @@
     "prisma": "^6.16.2",
     "tsx": "^4.10.5",
     "typescript": "^5.4.5"
-  },
-  "prisma": {
-    "seed": "node prisma/seed.js"
   }
 }
+

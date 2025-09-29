@@ -1,0 +1,48 @@
+// ───────────────────────────────────────────────────────────────────────────────
+// File: frontend/src/components/ProviderTile.tsx  (NEW)
+// ───────────────────────────────────────────────────────────────────────────────
+import * as React from 'react';
+import { Button } from './ui/Button';
+import { Chip } from './ui/Chip';
+import { Card, CardBody, CardFooter, CardHeader } from './ui/Card';
+
+type ProviderTileProps = {
+  name: string;
+  logoUrl?: string;
+  onRun?: () => void;
+  onCopyOpen?: () => void;
+  apiEnabled?: boolean;
+  affiliate?: boolean;
+};
+
+export const ProviderTile: React.FC<ProviderTileProps> = ({ name, logoUrl, apiEnabled, affiliate, onRun, onCopyOpen }) => (
+  <Card className="grid place-items-center p-6 text-center">
+    <CardHeader className="w-full flex-col items-center justify-center gap-3 p-0">
+      <div className="size-18 grid place-items-center rounded-2xl bg-slate-50 border border-slate-200">
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="" className="max-h-12 max-w-12" />
+        ) : (
+          <span className="text-2xl" aria-hidden>🖼️</span>
+        )}
+      </div>
+      <h3 className="text-base font-semibold text-slate-900">{name}</h3>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        {apiEnabled && <Chip tone="api">⚡ API</Chip>}
+        <Chip tone="copy">✂️ Copy & Open</Chip>
+        {affiliate && <Chip tone="affiliate">💸 Affiliate</Chip>}
+      </div>
+    </CardHeader>
+    <CardBody className="p-0 pt-4">
+      <p className="text-sm text-slate-600 max-w-[22ch] mx-auto">Run via API when available, or copy and open in the platform.</p>
+    </CardBody>
+    <CardFooter className="w-full flex-col gap-3 p-0 pt-6">
+      <Button variant="primary" onClick={onRun} disabled={!apiEnabled} fullWidth>
+        Run in Promagen
+      </Button>
+      <Button variant="secondary" onClick={onCopyOpen} fullWidth>
+        Copy & Open
+      </Button>
+    </CardFooter>
+  </Card>
+);

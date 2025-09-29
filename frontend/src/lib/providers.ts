@@ -1,76 +1,63 @@
-// src/lib/providers.ts
+// FRONTEND SOURCE OF TRUTH — Option A
+// Alias in tsconfig.json: "@/*" -> "src/*"  (import as '@/lib/providers')
 
-export type Provider = {
-  id: string;          // lowercase slug (e.g., "openai")
-  name: string;        // display name
-  api?: boolean;       // has public API integration
-  affiliate?: boolean; // affiliate programme
-  website?: string;
-};
+export type ProviderId =
+  | 'openai' | 'stability' | 'leonardo' | 'i23rf' | 'artistly'
+  | 'adobe' | 'midjourney' | 'canva' | 'bing' | 'ideogram'
+  | 'picsart' | 'fotor' | 'nightcafe' | 'playground' | 'pixlr'
+  | 'deepai' | 'novelai' | 'lexica' | 'openart' | 'flux'
 
-// --- Canonical provider list (20) ---
-const LIST: Provider[] = [
-  { id: "openai",        name: "OpenAI",               api: true,  affiliate: false, website: "https://openai.com" },
-  { id: "stability",     name: "Stability AI",         api: true,  affiliate: true,  website: "https://platform.stability.ai" },
-  { id: "leonardo",      name: "Leonardo",             api: true,  affiliate: true,  website: "https://leonardo.ai" },
-  { id: "i23rf",         name: "I23RF",                api: false, affiliate: true,  website: "https://www.123rf.com" },
-  { id: "artistly",      name: "Artistly",             api: false, affiliate: true,  website: "https://artistly.ai" },
-  { id: "adobe-firefly", name: "Adobe Firefly",        api: false, affiliate: true,  website: "https://www.adobe.com/products/firefly.html" },
-  { id: "midjourney",    name: "Midjourney",           api: false, affiliate: false, website: "https://www.midjourney.com" },
-  { id: "canva",         name: "Canva",                api: false, affiliate: true,  website: "https://www.canva.com" },
-  { id: "bing",          name: "Bing Image Creator",   api: false, affiliate: false, website: "https://www.bing.com/create" },
-  { id: "ideogram",      name: "Ideogram",             api: false, affiliate: true,  website: "https://ideogram.ai" },
-  { id: "picsart",       name: "Picsart",              api: true,  affiliate: true,  website: "https://picsart.com" },
-  { id: "fotor",         name: "Fotor",                api: false, affiliate: true,  website: "https://www.fotor.com" },
-  { id: "nightcafe",     name: "NightCafe",            api: false, affiliate: true,  website: "https://creator.nightcafe.studio" },
-  { id: "playground",    name: "Playground AI",        api: false, affiliate: true,  website: "https://playground.com" },
-  { id: "pixlr",         name: "Pixlr",                api: false, affiliate: true,  website: "https://pixlr.com" },
-  { id: "deepai",        name: "DeepAI",               api: true,  affiliate: false, website: "https://deepai.org" },
-  { id: "novelai",       name: "NovelAI",              api: true,  affiliate: true,  website: "https://novelai.net" },
-  { id: "lexica",        name: "Lexica",               api: true,  affiliate: true,  website: "https://lexica.art" },
-  { id: "openart",       name: "OpenArt",              api: false, affiliate: true,  website: "https://openart.ai" },
-  { id: "flux-schnell",  name: "Flux Schnell",         api: true,  affiliate: false, website: "https://blackforestlabs.ai" },
-];
-
-// ---- Exports so every import style compiles ----
-export const ALL_PROVIDERS: Provider[] = LIST;
-export const PROVIDERS: Provider[] = LIST;
-
-// Keys & helpers (no const assertion)
-export type ProviderKey = Provider["id"];
-export const PROVIDER_IDS: ProviderKey[] = LIST.map((p) => p.id);
-export const PROVIDER_MAP: Record<ProviderKey, Provider> =
-  Object.fromEntries(LIST.map((p) => [p.id, p])) as Record<ProviderKey, Provider>;
-
-export function getById(id: ProviderKey): Provider | undefined {
-  return PROVIDER_MAP[id];
+export interface ProviderInfo {
+  id: ProviderId
+  name: string
+  /** true = we can send via API today */
+  apiEnabled: boolean
+  /** fallback path: Copy & Open */
+  copyOpen: true
+  affiliate?: boolean
+  url?: string
 }
 
-export function byKind(kind: "all" | "api" | "manual" = "all"): Provider[] {
-  if (kind === "api") return LIST.filter((p) => !!p.api);
-  if (kind === "manual") return LIST.filter((p) => !p.api);
-  return LIST;
+/** The type your demo page imports */
+export type ProviderStatus = {
+  id: ProviderId
+  name: string
+  /** 'real' = API enabled; 'copy' = open in site; 'disabled' = not available (rare) */
+  mode: 'real' | 'copy' | 'disabled'
 }
 
-/** Append query params to a URL. */
-export function withQuery(
-  base: string,
-  params: Record<string, string | number | boolean | null | undefined>
-): string {
-  const usp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === null || v === "") continue;
-    usp.set(k, String(v));
-  }
-  const q = usp.toString();
-  return q ? (base.includes("?") ? `${base}&${q}` : `${base}?${q}`) : base;
-}
+export const PROVIDERS: ProviderInfo[] = [
+  { id: 'openai',    name: 'OpenAI DALL·E / GPT-Image', apiEnabled: true,  copyOpen: true, url: 'https://platform.openai.com/' },
+  { id: 'stability', name: 'Stability AI',              apiEnabled: true,  copyOpen: true, url: 'https://platform.stability.ai/' },
+  { id: 'leonardo',  name: 'Leonardo AI',               apiEnabled: true,  copyOpen: true, url: 'https://leonardo.ai/' },
+  { id: 'i23rf',     name: 'I23RF',                     apiEnabled: false, copyOpen: true, url: 'https://www.123rf.com/' },
+  { id: 'artistly',  name: 'Artistly',                  apiEnabled: false, copyOpen: true, affiliate: true, url: 'https://artistly.ai/' },
+  { id: 'adobe',     name: 'Adobe Firefly',             apiEnabled: false, copyOpen: true, affiliate: true, url: 'https://www.adobe.com/products/firefly.html' },
+  { id: 'midjourney',name: 'Midjourney',                apiEnabled: false, copyOpen: true, url: 'https://www.midjourney.com/' },
+  { id: 'canva',     name: 'Canva Text-to-Image',       apiEnabled: false, copyOpen: true, affiliate: true, url: 'https://www.canva.com/' },
+  { id: 'bing',      name: 'Bing Image Creator',        apiEnabled: false, copyOpen: true, url: 'https://www.bing.com/images/create' },
+  { id: 'ideogram',  name: 'Ideogram',                  apiEnabled: false, copyOpen: true, url: 'https://ideogram.ai/' },
+  { id: 'picsart',   name: 'Picsart',                   apiEnabled: false, copyOpen: true, affiliate: true, url: 'https://picsart.com/' },
+  { id: 'fotor',     name: 'Fotor',                     apiEnabled: false, copyOpen: true, affiliate: true, url: 'https://www.fotor.com/' },
+  { id: 'nightcafe', name: 'NightCafe',                 apiEnabled: false, copyOpen: true, affiliate: true, url: 'https://creator.nightcafe.studio/' },
+  { id: 'playground',name: 'Playground AI',             apiEnabled: false, copyOpen: true, url: 'https://playgroundai.com/' },
+  { id: 'pixlr',     name: 'Pixlr',                     apiEnabled: false, copyOpen: true, affiliate: true, url: 'https://pixlr.com/' },
+  { id: 'deepai',    name: 'DeepAI',                    apiEnabled: true,  copyOpen: true, url: 'https://deepai.org/' },
+  { id: 'novelai',   name: 'NovelAI',                   apiEnabled: false, copyOpen: true, url: 'https://novelai.net/' },
+  { id: 'lexica',    name: 'Lexica',                    apiEnabled: true,  copyOpen: true, url: 'https://lexica.art/' },
+  { id: 'openart',   name: 'OpenArt',                   apiEnabled: false, copyOpen: true, affiliate: true, url: 'https://openart.ai/' },
+  { id: 'flux',      name: 'Flux Schnell',              apiEnabled: false, copyOpen: true, url: 'https://blackforestlabs.ai/' }
+]
 
-export default LIST;
-export type { Provider as PromagenProvider };
+// Convenience lookups
+export const API_ENABLED = PROVIDERS.filter(p => p.apiEnabled)
+export const NON_API = PROVIDERS.filter(p => !p.apiEnabled)
 
-
-
-
-
+/** What the demo page calls */
+export const getProviders = async (): Promise<ProviderStatus[]> =>
+  PROVIDERS.map(p => ({
+    id: p.id,
+    name: p.name,
+    mode: p.apiEnabled ? 'real' : 'copy'
+  }))
 

@@ -1,124 +1,58 @@
-﻿/**
- * src/lib/api.ts
- * SERVER-SAFE: no React hooks here.
- */
+﻿// Shared API helpers for Promagen (server & client-safe)
 
-import type { Provider } from "./providers";
-import PROVIDERS from "./providers";
+export const API_BASE =
+  (process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.promagen.com").replace(/\/+$/, "");
 
-// Centralised API base (overridable via NEXT_PUBLIC_API_BASE_URL)
-export const getApiBase = (): string =>
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "https://api.promagen.com";
+type FetchJSONOptions = RequestInit & { timeoutMs?: number };
 
-// Small JSON helper
-async function safeJson<T>(res: Response): Promise<T> {
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return (await res.json()) as T;
-}
+export async function fetchJSON<T = unknown>(
+  path: string,
+  { timeoutMs = 12000, ...init }: FetchJSONOptions = {}
+): Promise<T> {
+  const url = `${API_BASE}/${path.replace(/^\/+/, "")}`;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
 
-// ---------------- Providers ----------------
-
-export async function fetchProviders(): Promise<Provider[]> {
-  const base = getApiBase();
   try {
-    const res = await fetch(`${base}/api/v1/providers`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      next: { revalidate: 60 },
+    const res = await fetch(url, {
+      ...init,
+      cache: "no-store",
+      headers: { Accept: "application/json", ...(init.headers || {}) },
+      signal: ctrl.signal,
     });
-    return await safeJson<Provider[]>(res);
-  } catch {
-    // Fallback to local registry so the UI still renders
-    return PROVIDERS;
+
+    const text = await res.text();
+    let body: unknown = null;
+    try {
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      body = text;
+    }
+
+    if (!res.ok) {
+      const msg =
+        typeof body === "object" && body && "message" in (body as any)
+          ? (body as any).message
+          : text || `HTTP ${res.status}`;
+      throw new Error(`Request failed: ${res.status} ${res.statusText} — ${msg}`);
+    }
+
+    return body as T;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-// ---------------- Prompts: types ----------------
-
-export type Prompt = {
-  id: string;
-  title: string;
-  prompt: string;       // full prompt text
-  tags: string[];
-  likes: number;
-  author?: string;
-  createdAt?: string;
-
-  // Optional fields used by various pages/components:
-  summary?: string;
-  description?: string;
-  provider?: string;    // e.g., "midjourney", "stability", "leonardo"
-  model?: string;
+export type MetaResponse = {
+  schema: string;
+  dbProvider: string;
+  env?: string;
+  node?: string;
+  latestAudit?: string;
+  generatedAt?: string;
+  [k: string]: unknown;
 };
 
-export type PromptQuery = {
-  q?: string;
-  tag?: string;
-  page?: number;
-  pageSize?: number;
-  sort?: "latest" | "top";
-};
-
-export type PromptList = {
-  items: Prompt[];
-  total: number;
-  page: number;
-  pageSize: number;
-};
-
-// ---------------- Prompts: actions ----------------
-
-export async function postLike(
-  id: string
-): Promise<{ ok: boolean; likes?: number }> {
-  const base = getApiBase();
-  try {
-    const res = await fetch(
-      `${base}/api/v1/prompts/${encodeURIComponent(id)}/like`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-    return await safeJson<{ ok: boolean; likes?: number }>(res);
-  } catch {
-    // optimistic fallback
-    return { ok: true };
-  }
+export function getMeta() {
+  return fetchJSON<MetaResponse>("api/v1/meta");
 }
-
-export async function postRemix(
-  id: string,
-  data: { title?: string; prompt: string; tags?: string[] }
-): Promise<{ ok: boolean; id?: string }> {
-  const base = getApiBase();
-  try {
-    const res = await fetch(
-      `${base}/api/v1/prompts/${encodeURIComponent(id)}/remix`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }
-    );
-    return await safeJson<{ ok: boolean; id?: string }>(res);
-  } catch {
-    // local id so UI can continue
-    return { ok: true, id: `local-${Date.now()}` };
-  }
-}
-
-// ---------------- Legacy helper (optional) ----------------
-// Some older code expects apiGet<T>(url). Keep it tiny and universal.
-export async function apiGet<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...(init || {}),
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
-  });
-  return safeJson<T>(res);
-}
-

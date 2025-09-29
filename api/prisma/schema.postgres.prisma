@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // e.g. postgresql://user:pass@host:5432/db?schema=promagen20&sslmode=require
+}
+
+model ProviderOverride {
+  id              String   @id @default(cuid())      @db.Text
+  providerId      String   @unique                  @db.Text
+  scoreAdjustment Int?
+  isHardOverride  Boolean  @default(false)
+  finalScore      Int?
+  notes           String?                           @db.Text
+  createdAt       DateTime @default(now())          @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt               @db.Timestamptz(6)
+}
+
+model LeaderboardAudit {
+  id            String   @id @default(cuid())       @db.Text
+  generatedAt   DateTime @default(now())           @db.Timestamptz(6)
+  reviewer      String?                            @db.Text
+  period        String?                            @db.Text
+  base          Int?
+  bases         Json?
+  signature     String                              @db.Text       // SHA-256 of JSON payload
+  hmacSignature String?                             @db.Text       // HMAC-SHA256(JSON, AUDIT_HMAC_SECRET)
+  jsonPayload   Json
+  csvPayload    String                              @db.Text
+}
