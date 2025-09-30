@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { sunriseUtc } from "@/lib/sunrise";
@@ -24,7 +24,9 @@ function useTick(ms = 1000) {
 export default function WorldClocks() {
   const [cities, setCities] = useState<City[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const tick = useTick(1000);
+
+  // Drive re-renders once per second, but we don't need the value.
+  useTick(1000);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,22 +40,32 @@ export default function WorldClocks() {
         if (!cancelled) setError(e?.message || "Failed to load cities");
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // make 'now' stable and only depend on tick (remove extra deps)
-  const now = useMemo(() => new Date(), [tick]);
+  // Current time used for display only (no memo needed).
+  const now = new Date();
+
+  // Only reshuffle ordering when the *day* changes or the city list changes.
+  const dayKey = `${now.getUTCFullYear()}-${now.getUTCMonth()}-${now.getUTCDate()}`;
 
   const sorted = useMemo(() => {
     if (!cities) return [];
-    const base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const [y, m, d] = dayKey.split("-").map(Number);
+    const base = new Date(Date.UTC(y, m, d)); // midnight UTC today
     return [...cities]
       .map((c) => {
         const sr = sunriseUtc(base, { lat: c.lat, lon: c.lon });
-        return { city: c, sunriseUtc: sr, sortKey: sr ? sr.getTime() : Number.POSITIVE_INFINITY };
+        return {
+          city: c,
+          sunriseUtc: sr,
+          sortKey: sr ? sr.getTime() : Number.POSITIVE_INFINITY,
+        };
       })
       .sort((a, b) => a.sortKey - b.sortKey);
-  }, [cities, now]);
+  }, [cities, dayKey]);
 
   if (error) return <div className="pmg-clocks">Couldn&rsquo;t load clocks: {error}</div>;
   if (!cities) return <div className="pmg-clocks">Loading world clocks&hellip;</div>;
@@ -64,21 +76,36 @@ export default function WorldClocks() {
       <div className="pmg-clocks__grid">
         {sorted.map(({ city, sunriseUtc }) => {
           const time = new Intl.DateTimeFormat("en-GB", {
-            timeZone: city.timeZone, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+            timeZone: city.timeZone,
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
           }).format(now);
 
           const date = new Intl.DateTimeFormat("en-GB", {
-            timeZone: city.timeZone, weekday: "short", day: "2-digit", month: "short", year: "numeric"
+            timeZone: city.timeZone,
+            weekday: "short",
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
           }).format(now);
 
           const sunriseLocal = sunriseUtc
-            ? new Intl.DateTimeFormat("en-GB", { timeZone: city.timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(sunriseUtc)
-            : "—";
+            ? new Intl.DateTimeFormat("en-GB", {
+                timeZone: city.timeZone,
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              }).format(sunriseUtc)
+            : "�";
 
           return (
             <div key={city.id} className="pmg-clock">
               <div className="pmg-clock__name">
-                <span className="pmg-clock__flag" aria-hidden="true">{city.flag || "🕑"}</span>
+                <span className="pmg-clock__flag" aria-hidden="true">
+                  {city.flag || "??"}
+                </span>
                 {city.name}
               </div>
               <div className="pmg-clock__time">{time}</div>

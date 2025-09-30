@@ -1,62 +1,150 @@
-﻿// Canonical Books module — stable exports used by /docs pages and export routes.
+// src/lib/books.ts
 
-export type NormalizedDocSection = {
-  id?: string;
-  title?: string;
-  summary?: string;
-  status?: string;
-  tags?: string[];
-  videoUrl?: string;
+export type ChecklistItem = {
+  id: string;
+  text: string;
+  done: boolean;
 };
 
-export type NormalizedBook = {
+export type Section = {
+  id: string;
   title: string;
-  sections: NormalizedDocSection[];
+  summary: string;
+  status: "todo" | "in-progress" | "in-review" | "done";
+  videoUrl?: string;
+  lastUpdated?: string; // ISO date
+  tags?: string[];
+  priority?: number;
+  owner?: string;
+  eta?: string;
+  checklist?: ChecklistItem[];
 };
 
-// ---- Default minimal content (extend freely)
-const USERS: NormalizedBook = {
-  title: "Users’ Book — Promagen Functionality",
-  sections: []
+export type HistoryEntry = {
+  id: string;
+  text: string;
+  date?: string; // ISO date
 };
 
-const DEVELOPERS: NormalizedBook = {
-  title: "Developers’ Book — Build & Ops",
-  sections: []
+export type BookMeta = {
+  title: string;
+  subtitle?: string;
 };
 
-const HISTORY: NormalizedBook = {
-  title: "History Book — Changelog & Decisions",
-  sections: []
+export type Book = {
+  title: string;           // legacy heading (kept)
+  meta?: BookMeta;         // optional richer metadata
+  sections: Section[];
+  entries?: HistoryEntry[]; // used by History
 };
 
-// ---- Named exports (back-compat aliases many pages expect)
-export const users = USERS;
-export const usersBook = USERS;
-export const Users = USERS;
-export const UsersBook = USERS;
+export type Books = {
+  users: Book;
+  developers: Book;
+  history: Book;
+};
 
-export const developers = DEVELOPERS;
-export const developersBook = DEVELOPERS;
+export function loadBooks(): Books {
+  const users: Book = {
+    title: "Users� Book � Promagen Functionality",
+    meta: {
+      title: "Users� Book � Promagen Functionality",
+      subtitle: "User-facing manual for features, pricing, and daily usage.",
+    },
+    sections: [
+      {
+        id: "overview",
+        title: "What is Promagen?",
+        summary:
+          "Promagen compares 20 AI image providers, runs prompts across them, and curates a popular prompt library. This manual is the single source of truth for users.",
+        status: "in-review",
+        lastUpdated: "2025-09-28",
+        tags: ["intro", "core"],
+        priority: 1,
+        owner: "docs",
+        checklist: [
+          { id: "ov-1", text: "Short pitch written", done: true },
+          { id: "ov-2", text: "Feature table added", done: false },
+        ],
+      },
+    ],
+  };
 
-export const history = HISTORY;
-export const historyBook = HISTORY;
+  const developers: Book = {
+    title: "Developers� Book � Build & Architecture",
+    meta: {
+      title: "Developers� Book � Build & Architecture",
+      subtitle: "Architecture, invariants, provider registry, workflows.",
+    },
+    sections: [
+      {
+        id: "routing",
+        title: "Docs Routing Invariant",
+        summary:
+          "app/docs/* owns docs routing. Content source is TSX pages only. Three-column layout: left Developers Book, center borderless doc (~740�780px), right Users Book + Build Progress.",
+        status: "in-review",
+        lastUpdated: "2025-09-28",
+        tags: ["routing", "invariants"],
+      },
+      {
+        id: "providers",
+        title: "Canonical 20-Provider List",
+        summary:
+          "Frontend is source of truth until launch. IDs: openai, stability, leonardo, i23rf, artistly, adobe, midjourney, canva, bing, ideogram, picsart, fotor, nightcafe, playground, pixlr, deepai, novelai, lexica, openart, flux.",
+        status: "in-review",
+        lastUpdated: "2025-09-26",
+        tags: ["providers", "registry"],
+      },
+    ],
+  };
 
-/** Synchronous loader used by pages and /docs/export/* routes */
-export function loadBooks() {
+  const history: Book = {
+    title: "History � Decisions & Changelog",
+    meta: {
+      title: "History � Decisions & Changelog",
+      subtitle: "Timeline of locked decisions and fixes.",
+    },
+    sections: [
+      {
+        id: "log-policy",
+        title: "Logging & Decisions",
+        summary:
+          "Key choices recorded: App Router for docs; API v1 routing; Fly single machine LHR; 123RF?I23RF; PROD API default for frontend.",
+        status: "in-review",
+        lastUpdated: "2025-09-29",
+        tags: ["history", "decisions"],
+      },
+    ],
+    entries: [
+      {
+        id: "2025-09-29-type-fix",
+        text: "Added optional `meta` and `entries` to Book; pages use safe access.",
+        date: "2025-09-29",
+      },
+    ],
+  };
+
+  return { users, developers, history };
+}
+
+export function getBook<K extends keyof Books>(key: K): Books[K] {
+  return loadBooks()[key];
+}
+
+/** Safe meta accessor so pages don't poke book.meta directly. */
+export function metaOf(book: Book): BookMeta {
   return {
-    users: USERS,
-    developers: DEVELOPERS,
-    history: HISTORY
+    title: book.meta?.title ?? book.title,
+    subtitle: book.meta?.subtitle,
   };
 }
 
-/** Helper if a page asks for one book by key */
-export function getBook(name: "users" | "developers" | "history"): NormalizedBook {
-  return loadBooks()[name];
-}
 
-// Named const to satisfy import/no-anonymous-default-export
-const BooksExport = { users: USERS, developers: DEVELOPERS, history: HISTORY };
-export default BooksExport;
+
+
+
+
+
+
+
 

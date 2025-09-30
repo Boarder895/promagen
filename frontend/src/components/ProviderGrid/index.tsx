@@ -1,44 +1,59 @@
-// src/components/ProviderGrid/index.tsx
-import React from "react";
-import PROVIDERS, { type Provider } from "@/lib/providers";
-import { fetchProviders } from "@/lib/api";
+"use client";
 
-export const revalidate = 60;
+import React, { useMemo, useState } from "react";
+import { PROVIDERS } from "@/lib/providers";
+import type { Provider } from "@/lib/providers";
 
-type Kind = "all" | "api" | "manual";
+type Filter = "all" | "api" | "affiliate" | "manual";
 
-/** Accepts either `kind` or legacy `filter` prop. */
-export default async function ProviderGrid(props: { kind?: Kind; filter?: Kind; prompt?: unknown }) {
-  const kind: Kind = props.kind ?? props.filter ?? "all";
+export default function ProviderGrid() {
+  const [filter, setFilter] = useState<Filter>("all");
+  const providers = useMemo<Provider[]>(() => [...PROVIDERS], []);
 
-  let list: Provider[] = [];
-  try {
-    list = await fetchProviders();
-  } catch {
-    // ignore network errors and fall back
-  }
-  if (!list?.length) list = PROVIDERS;
-
-  const items =
-    kind === "api" ? list.filter((p) => !!p.api)
-    : kind === "manual" ? list.filter((p) => !p.api)
-    : list;
+  const list = useMemo(() => {
+    switch (filter) {
+      case "api":
+        return providers.filter((p) => p.hasApi);
+      case "affiliate":
+        // tolerant: some Provider objects may not have affiliate
+        return providers.filter((p) => "affiliate" in (p as any) && Boolean((p as any).affiliate));
+      case "manual":
+        return providers.filter((p) => !p.hasApi);
+      default:
+        return providers;
+    }
+  }, [providers, filter]);
 
   return (
-    <div className="grid grid-cols-12 gap-2">
-      <div className="col-span-4 font-medium border-b pb-1">Name</div>
-      <div className="col-span-3 font-medium border-b pb-1">ID</div>
-      <div className="col-span-2 font-medium border-b pb-1">API</div>
-      <div className="col-span-3 font-medium border-b pb-1">Affiliate</div>
-      {items.map((p) => (
-        <React.Fragment key={p.id}>
-          <div className="col-span-4 py-2 border-b">{p.name}</div>
-          <div className="col-span-3 py-2 border-b">{p.id}</div>
-          <div className="col-span-2 py-2 border-b">{p.api ? "Yes" : "No"}</div>
-          <div className="col-span-3 py-2 border-b">{p.affiliate ? "Yes" : "No"}</div>
-        </React.Fragment>
-      ))}
-    </div>
+    <section className="p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <label className="text-sm">Filter:</label>
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as Filter)}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="all">All</option>
+          <option value="api">API</option>
+          <option value="affiliate">Affiliate</option>
+          <option value="manual">Manual</option>
+        </select>
+      </div>
+
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {list.map((p) => (
+          <li key={p.id} className="border rounded-lg p-3">
+            <div className="font-medium">{p.name}</div>
+            <div className="text-xs opacity-70">
+              API: {p.hasApi ? "Yes" : "No"}
+              {"affiliate" in (p as any) && (p as any).affiliate
+                ? ` • Affiliate: ${(p as any).affiliate}`
+                : ""}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

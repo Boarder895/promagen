@@ -1,58 +1,25 @@
-﻿// Shared API helpers for Promagen (server & client-safe)
+// Central API base + tiny metadata helper for pages that import getMeta.
+// Ports: UI 3000 / API 3001 in dev; prod default = https://api.promagen.com
 
+// Named exports only (project rule).
 export const API_BASE =
-  (process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.promagen.com").replace(/\/+$/, "");
+  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+  'https://api.promagen.com';
 
-type FetchJSONOptions = RequestInit & { timeoutMs?: number };
-
-export async function fetchJSON<T = unknown>(
-  path: string,
-  { timeoutMs = 12000, ...init }: FetchJSONOptions = {}
-): Promise<T> {
-  const url = `${API_BASE}/${path.replace(/^\/+/, "")}`;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(url, {
-      ...init,
-      cache: "no-store",
-      headers: { Accept: "application/json", ...(init.headers || {}) },
-      signal: ctrl.signal,
-    });
-
-    const text = await res.text();
-    let body: unknown = null;
-    try {
-      body = text ? JSON.parse(text) : null;
-    } catch {
-      body = text;
-    }
-
-    if (!res.ok) {
-      const msg =
-        typeof body === "object" && body && "message" in (body as any)
-          ? (body as any).message
-          : text || `HTTP ${res.status}`;
-      throw new Error(`Request failed: ${res.status} ${res.statusText} — ${msg}`);
-    }
-
-    return body as T;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-export type MetaResponse = {
-  schema: string;
-  dbProvider: string;
-  env?: string;
-  node?: string;
-  latestAudit?: string;
-  generatedAt?: string;
-  [k: string]: unknown;
+export type AppMeta = {
+  title: string;
+  description?: string;
 };
 
-export function getMeta() {
-  return fetchJSON<MetaResponse>("api/v1/meta");
+// Minimal central meta registry so pages like /app/status/page.tsx
+// and /app/test/meta/page.tsx can do: import { getMeta } from '@/lib/api'
+const META: Record<string, AppMeta> = {
+  status: { title: 'Status · Promagen', description: 'System health and checks.' },
+  'test/meta': { title: 'Meta Test · Promagen' },
+  default: { title: 'Promagen' },
+};
+
+// Safe lookup with sensible fallback.
+export function getMeta(key: string): AppMeta {
+  return META[key] ?? META.default;
 }

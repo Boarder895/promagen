@@ -1,8 +1,13 @@
-// Shim so pages can import "@/components/PromptCard" and pass { p }.
-// It re-exports the Prompt type and adapts props to the real component.
-import RealPromptCard from "./prompts/PromptCard";
-export type { Prompt } from "@/lib/api";
+"use client";
 
-export default function PromptCard({ p }: { p: import("@/lib/api").Prompt }) {
+import React, { type ComponentProps } from "react";
+import RealPromptCard from "./prompts/PromptCard";
+
+// Infer the "item" type from the real card to keep typings aligned.
+type RealProps = ComponentProps<typeof RealPromptCard>;
+type ItemType = RealProps extends { item: infer T } ? T : unknown;
+export type Prompt = ItemType;
+
+export default function PromptCard({ p }: { p: ItemType }) {
   return <RealPromptCard item={p} />;
 }

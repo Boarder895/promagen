@@ -1,25 +1,76 @@
-// ───────────────────────────────────────────────────────────────────────────────
-// File: frontend/src/components/ui/Card.tsx  (NEW)
-// ───────────────────────────────────────────────────────────────────────────────
-import * as React from 'react';
-import clsx from 'clsx';
+"use client";
 
-type CardProps = React.HTMLAttributes<HTMLDivElement> & { as?: keyof JSX.IntrinsicElements };
+import * as React from "react";
 
-export const Card: React.FC<CardProps> = ({ as: Tag = 'div', className, children, ...rest }) => (
-  <Tag className={clsx('rounded-2xl bg-white shadow-card border border-slate-200', className)} {...rest}>
+/**
+ * Simple, robust Card primitives.
+ * - No polymorphic `as` prop (avoids SVG/IntrinsicElement inference chaos).
+ * - Named exports only (fits your eslint policy).
+ * - Forward refs for compatibility with libs.
+ */
+
+type DivProps = React.HTMLAttributes<HTMLDivElement>;
+
+export const Card = React.forwardRef<HTMLDivElement, DivProps>(
+  ({ className = "", children, ...rest }, ref) => (
+    <div
+      ref={ref}
+      className={`rounded-xl border border-slate-200 bg-white shadow-sm ${className}`}
+      {...rest}
+    >
+      {children}
+    </div>
+  )
+);
+Card.displayName = "Card";
+
+export const CardHeader = React.forwardRef<HTMLDivElement, DivProps>(
+  ({ className = "", children, ...rest }, ref) => (
+    <div ref={ref} className={`p-4 border-b ${className}`} {...rest}>
+      {children}
+    </div>
+  )
+);
+CardHeader.displayName = "CardHeader";
+
+export const CardContent = React.forwardRef<HTMLDivElement, DivProps>(
+  ({ className = "", children, ...rest }, ref) => (
+    <div ref={ref} className={`p-4 ${className}`} {...rest}>
+      {children}
+    </div>
+  )
+);
+CardContent.displayName = "CardContent";
+
+export const CardFooter = React.forwardRef<HTMLDivElement, DivProps>(
+  ({ className = "", children, ...rest }, ref) => (
+    <div ref={ref} className={`p-4 border-t ${className}`} {...rest}>
+      {children}
+    </div>
+  )
+);
+CardFooter.displayName = "CardFooter";
+
+export const CardTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className = "", children, ...rest }, ref) => (
+  <h3 ref={ref} className={`text-base font-semibold ${className}`} {...rest}>
     {children}
-  </Tag>
-);
+  </h3>
+));
+CardTitle.displayName = "CardTitle";
 
-export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...rest }) => (
-  <div className={clsx('flex items-start justify-between gap-3 p-6 pb-0', className)} {...rest}>{children}</div>
-);
+export const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className = "", children, ...rest }, ref) => (
+  <p ref={ref} className={`text-sm text-slate-600 ${className}`} {...rest}>
+    {children}
+  </p>
+));
+CardDescription.displayName = "CardDescription";
 
-export const CardBody: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...rest }) => (
-  <div className={clsx('p-6', className)} {...rest}>{children}</div>
-);
+/** Back-compat alias so existing imports keep working */
+export { CardContent as CardBody };
 
-export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...rest }) => (
-  <div className={clsx('p-6 pt-0 flex items-center justify-between', className)} {...rest}>{children}</div>
-);

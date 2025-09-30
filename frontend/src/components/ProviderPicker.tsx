@@ -1,45 +1,33 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from "react";
-import {
-  PROVIDER_IDS,
-  PROVIDER_MAP,
-  type ProviderKey,
-} from "@/lib/providers";
+import React from "react";
+import { PROVIDER_IDS } from "@/lib/providers";
+import type { ProviderId } from "@/lib/providers";
 
-export default function ProviderPicker({
-  selected: initial,
-  onChange,
-}: {
-  selected?: ProviderKey[];
-  onChange?: (ids: ProviderKey[]) => void;
-}) {
-  const [selected, setSelected] = useState<Set<ProviderKey>>(
-    new Set(initial ?? PROVIDER_IDS) // default: all
-  );
+type Props = {
+  value?: ProviderId;
+  onChange?: (id: ProviderId) => void;
+  label?: string;
+};
 
-  function toggle(id: ProviderKey) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      onChange?.([...next]);
-      return next;
-    });
-  }
-
+export default function ProviderPicker({ value, onChange, label = "Provider" }: Props) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {PROVIDER_IDS.map((id) => (
-        <label key={id} className="inline-flex items-center gap-2 border rounded px-2 py-1">
-          <input
-            type="checkbox"
-            checked={selected.has(id)}
-            onChange={() => toggle(id)}
-          />
-          <span>{PROVIDER_MAP[id].name}</span>
-        </label>
-      ))}
-    </div>
+    <label className="block">
+      <span className="text-sm font-medium">{label}</span>
+      <select
+        className="mt-1 block w-full border rounded px-2 py-1 text-sm"
+        value={value ?? ""}
+        onChange={(e) => onChange?.(e.target.value as ProviderId)}
+      >
+        <option value="" disabled>
+          Select…
+        </option>
+        {PROVIDER_IDS.map((id) => (
+          <option key={id} value={id}>
+            {id}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
-

@@ -1,75 +1,55 @@
-﻿'use client'
+// src/components/ProviderGrid.tsx
+import * as React from "react";
+import { providers, type Provider } from "@/lib/providers";
 
-import * as React from 'react'
-import { PROVIDERS } from '@/lib/providers'
+type Mode = "all" | "api" | "affiliate" | "manual";
 
-export default function ProviderGrid() {
+export type ProviderGridProps = {
+  /** New, preferred prop */
+  kind?: Mode;
+  /** Legacy prop kept for compatibility */
+  filter?: Mode;
+  className?: string;
+};
+
+function byMode(list: Provider[], mode: Mode): Provider[] {
+  switch (mode) {
+    case "api":
+      return list.filter((p) => p.hasApi);
+    case "affiliate":
+      return list.filter((p) => p.affiliate);
+    case "manual":
+      return list.filter((p) => !p.hasApi);
+    case "all":
+    default:
+      return list;
+  }
+}
+
+export default function ProviderGrid({
+  kind = "all",
+  filter,
+  className = "",
+}: ProviderGridProps) {
+  const mode: Mode = (filter ?? kind) as Mode;
+  const list = byMode(providers, mode);
+
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-        gap: 16
-      }}
-    >
-      {PROVIDERS.map((p) => (
-        <article
-          key={p.id}
-          style={{
-            border: '1px solid var(--border)',
-            borderRadius: 12,
-            padding: 14,
-            background: 'var(--card-bg)'
-          }}
-        >
-          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-            <strong>{p.name}</strong>
-            <span
-              title={p.apiEnabled ? 'API enabled' : 'Copy & Open only'}
-              style={{
-                fontSize: 12,
-                padding: '2px 8px',
-                borderRadius: 9999,
-                border: '1px solid var(--border)',
-                background: p.apiEnabled ? 'color-mix(in oklab, #00c853 15%, var(--card-bg))' : 'color-mix(in oklab, #ffc400 18%, var(--card-bg))'
-              }}
-            >
-              {p.apiEnabled ? '⚡ API' : '✂️ Copy & Open'}
+    <div className={`grid gap-3 sm:grid-cols-2 lg:grid-cols-3 ${className}`}>
+      {list.map((p) => (
+        <article key={p.id} className="rounded-xl border p-4 shadow-sm bg-white/50">
+          <div className="text-base font-semibold">{p.name}</div>
+          <div className="text-xs opacity-70 mt-1">{p.id}</div>
+          <div className="mt-3 text-sm flex items-center gap-3">
+            <span className="inline-flex items-center rounded-lg border px-2 py-0.5 text-xs">
+              API: {p.hasApi ? "Yes" : "No"}
             </span>
-          </header>
-
-          <footer style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {p.affiliate && (
-              <span
-                title="Affiliate — we may earn a commission"
-                style={{
-                  fontSize: 12,
-                  padding: '2px 8px',
-                  borderRadius: 9999,
-                  border: '1px solid var(--border)'
-                }}
-              >
-                💸 Affiliate
-              </span>
-            )}
-            {p.url && (
-              <a
-                href={p.url}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  fontSize: 12,
-                  padding: '2px 10px',
-                  borderRadius: 9999,
-                  border: '1px solid var(--border)'
-                }}
-              >
-                Visit
-              </a>
-            )}
-          </footer>
+            <span className="inline-flex items-center rounded-lg border px-2 py-0.5 text-xs">
+              Affiliate: {p.affiliate ? "Yes" : "No"}
+            </span>
+          </div>
         </article>
       ))}
     </div>
-  )
+  );
 }

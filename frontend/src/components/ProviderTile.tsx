@@ -1,5 +1,5 @@
 // ───────────────────────────────────────────────────────────────────────────────
-// File: frontend/src/components/ProviderTile.tsx  (NEW)
+// File: frontend/src/components/ProviderTile.tsx
 // ───────────────────────────────────────────────────────────────────────────────
 import * as React from 'react';
 import { Button } from './ui/Button';
@@ -15,7 +15,14 @@ type ProviderTileProps = {
   affiliate?: boolean;
 };
 
-export const ProviderTile: React.FC<ProviderTileProps> = ({ name, logoUrl, apiEnabled, affiliate, onRun, onCopyOpen }) => (
+export const ProviderTile: React.FC<ProviderTileProps> = ({
+  name,
+  logoUrl,
+  apiEnabled,
+  affiliate,
+  onRun,
+  onCopyOpen,
+}) => (
   <Card className="grid place-items-center p-6 text-center">
     <CardHeader className="w-full flex-col items-center justify-center gap-3 p-0">
       <div className="size-18 grid place-items-center rounded-2xl bg-slate-50 border border-slate-200">
@@ -33,9 +40,13 @@ export const ProviderTile: React.FC<ProviderTileProps> = ({ name, logoUrl, apiEn
         {affiliate && <Chip tone="affiliate">💸 Affiliate</Chip>}
       </div>
     </CardHeader>
+
     <CardBody className="p-0 pt-4">
-      <p className="text-sm text-slate-600 max-w-[22ch] mx-auto">Run via API when available, or copy and open in the platform.</p>
+      <p className="text-sm text-slate-600 max-w-[22ch] mx-auto">
+        Run via API when available, or copy and open in the platform.
+      </p>
     </CardBody>
+
     <CardFooter className="w-full flex-col gap-3 p-0 pt-6">
       <Button variant="primary" onClick={onRun} disabled={!apiEnabled} fullWidth>
         Run in Promagen

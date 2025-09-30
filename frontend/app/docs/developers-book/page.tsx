@@ -1,4 +1,4 @@
-﻿export default function DevelopersBookPage() {
+export default function DevelopersBookPage() {
   return (
     <article>
       <header className="mb-6">
@@ -47,20 +47,23 @@
         <ul className="list-disc space-y-1 pl-6">
           <li>Dark mode (site-wide toggle).</li>
           <li>Header toggle + dark variants; persist via <code>localStorage</code>.</li>
-          <li>Accessibility polish (skip-links, focus rings, roles/labels).</li>
-          <li><strong>Provider selector wired to registry</strong> (20 providers; badges for API/Pay/Copy&Open/Affiliate).</li>
+          <li>Accessibility polish (skip-links, focus rings, roles/labels) — design uniformity.</li>
+          <li>
+            <strong>Provider selector wired to registry</strong> (canonical 20 providers; badges for
+            <em> API</em> / <em> Pay</em> / <em> Copy &amp; Open</em> / <em> Affiliate</em>).
+          </li>
           <li>Partial “unified prompt runner” (manual UI providers first).</li>
-          <li>Transient provider cards; mini-thumbs; optimistic nav.</li>
-          <li>Progress indicator for non-API providers (preview → thumb state).</li>
-          <li>Docs polish pass: Developers, Users (links/screenshots/consistency).</li>
+          <li>Transient/placeholder provider cards; mini-thumbnails; optimistic nav.</li>
+          <li>Persistent progress indicator for non-API providers (preview → thumbnail state).</li>
+          <li>Docs polish pass: Developers, Users (links, screenshots, consistency).</li>
         </ul>
       </section>
 
       <section id="medium-term" aria-labelledby="medium-h" className="mb-8">
         <h2 id="medium-h" className="mb-3 text-lg font-semibold">🧩 Medium-term</h2>
         <ul className="list-disc space-y-1 pl-6">
-          <li>Backend API integration (feature-flagged).</li>
-          <li>Rate limiting &amp; safety (helmet + CSP, express-rate-limit, Zod).</li>
+          <li>Backend API integration for real providers (feature-flagged).</li>
+          <li>Rate limiting &amp; safety (helmet + CSP, express-rate-limit, Zod validation).</li>
           <li>Collectors: hourly (speed/uptime) &amp; nightly (all criteria) + overrides UI.</li>
           <li>Provider admin tools + read-only audits.</li>
           <li>Automation for score snapshots &amp; deltas.</li>
@@ -74,7 +77,9 @@
           openai, stability, leonardo, i23rf, artistly, adobe, midjourney, canva, bing, ideogram, picsart,
           fotor, nightcafe, playground, pixlr, deepai, novelai, lexica, openart, flux (Flux Schnell).
         </p>
-        <p className="text-sm text-neutral-600">Canonical list for registry/UI; changes need a decision log.</p>
+        <p className="text-sm text-neutral-600">
+          Canonical list used across registry and UI. Changes require an explicit decision log.
+        </p>
       </section>
     </article>
   );

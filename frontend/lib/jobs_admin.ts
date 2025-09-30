@@ -1,4 +1,4 @@
-﻿// lib/jobs_admin.ts
+// lib/jobs_admin.ts
 
 export type AdminJob = {
   id: string;

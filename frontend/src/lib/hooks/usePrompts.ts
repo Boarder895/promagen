@@ -1,44 +1,71 @@
-// src/lib/hooks/usePrompts.ts
-"use client";
+﻿import { useEffect, useMemo, useState } from "react";
+import { API_BASE } from "@/lib/api";
 
-import { useEffect, useMemo, useState } from "react";
-import type { PromptList, PromptQuery } from "@/lib/api";
-import { getApiBase } from "@/lib/api";
+export type Prompt = {
+  id: string;
+  text?: string;
+  title?: string;
+  providerId?: string;
+  createdAt?: string;
+};
 
-/** Client hook to fetch a paginated prompt list (no SWR). */
-export function usePromptsSWR(params: PromptQuery) {
-  const [data, setData] = useState<PromptList | undefined>(undefined);
-  const [error, setError] = useState<unknown>(undefined);
-  const [isLoading, setLoading] = useState<boolean>(true);
+export type PromptList = {
+  items: Prompt[];
+  total: number;
+};
 
-  const url = useMemo(() => {
-    const base = getApiBase();
-    const usp = new URLSearchParams();
-    if (params.q) usp.set("q", params.q);
-    if (params.tag) usp.set("tag", params.tag);
-    if (params.page) usp.set("page", String(params.page));
-    if (params.pageSize) usp.set("pageSize", String(params.pageSize));
-    if (params.sort) usp.set("sort", params.sort);
-    return `${base}/api/v1/prompts?${usp.toString()}`;
-  }, [params.q, params.tag, params.page, params.pageSize, params.sort]);
+export type PromptQuery = {
+  q?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type UsePromptsOptions = PromptQuery & {
+  /** Optional client-side filter: return only prompts that satisfy this predicate. */
+  filter?: (p: Prompt) => boolean;
+};
+
+export function usePrompts(options: UsePromptsOptions = {}) {
+  const { q, limit, offset, filter } = options;
+
+  const [data, setData] = useState<PromptList>({ items: [], total: 0 });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const qs = useMemo(() => {
+    const p = new URLSearchParams();
+    if (q) p.set("q", q);
+    if (typeof limit === "number") p.set("limit", String(limit));
+    if (typeof offset === "number") p.set("offset", String(offset));
+    const s = p.toString();
+    return s ? `?${s}` : "";
+  }, [q, limit, offset]);
 
   useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    fetch(url, { headers: { "Content-Type": "application/json" } })
-      .then((r) => r.json())
-      .then((json: PromptList) => {
-        if (alive) {
-          setData(json);
-          setError(undefined);
-        }
-      })
-      .catch((e) => alive && setError(e))
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
+    let cancelled = false;
+    const run = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/prompts${qs}`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as PromptList;
+        if (!cancelled) setData(json);
+      } catch (e: any) {
+        if (!cancelled) setError(e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
-  }, [url]);
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [qs]);
 
-  return { data, error, isLoading };
+  const all = data?.items ?? [];
+  const filtered = typeof filter === "function" ? all.filter(filter) : all;
+
+  // Back-compat shape that callers expect:
+  return { data, loading, error, filtered };
 }

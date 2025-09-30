@@ -20,7 +20,7 @@ export function getProviderState(): ProviderMeta[] {
 }
 
 /**
- * Simulated refresh — replace later with real calls per provider.
+ * Simulated refresh â€” replace later with real calls per provider.
  * For now: mark "official" API providers as ok (lower latency),
  * UI-only as ok/degraded mix (slightly higher latency).
  */
@@ -30,8 +30,8 @@ export async function refreshProviders(): Promise<{ updated: number; at: string 
 
   for (const p of PROVIDERS) {
     // fake latency band
-    const base = p.api === "official" ? 120 : 220;
-    const jitter = Math.floor(Math.random() * 80); // 0–79
+    const base = p.hasApi === "official" ? 120 : 220;
+    const jitter = Math.floor(Math.random() * 80); // 0â€“79
     const latency = base + jitter;
 
     // simple health heuristic

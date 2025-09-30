@@ -1,13 +1,13 @@
-﻿"use client";
+"use client";
 
 import React, { useMemo, useState } from "react";
-import PROVIDERS, { type Provider } from "@/lib/providers"; // <- default import
+import { providers, type Provider } from "@/lib/providers";
 
 export default function CompareRunner({ showAll = false }: { showAll?: boolean }) {
   const [selection, setSelection] = useState<string[]>([]);
 
-  const providers = useMemo<Provider[]>(
-    () => (showAll ? PROVIDERS : PROVIDERS.filter((p) => p.api)),
+  const list = useMemo<Provider[]>(
+    () => (showAll ? providers : providers.filter((p) => p.hasApi)),
     [showAll]
   );
 
@@ -19,7 +19,7 @@ export default function CompareRunner({ showAll = false }: { showAll?: boolean }
     <section className="p-4 border rounded-xl">
       <h3 className="font-semibold mb-3">Compare Providers</h3>
       <div className="grid md:grid-cols-2 gap-2">
-        {providers.map((p) => (
+        {list.map((p) => (
           <label key={p.id} className="flex items-center gap-2 border rounded-md p-2">
             <input
               type="checkbox"
@@ -27,7 +27,7 @@ export default function CompareRunner({ showAll = false }: { showAll?: boolean }
               onChange={() => toggle(p.id)}
             />
             <span className="font-medium">{p.name}</span>
-            <span className="text-xs opacity-70 ml-auto">{p.api ? "API" : "Manual"}</span>
+            <span className="text-xs opacity-70 ml-auto">{p.hasApi ? "API" : "Manual"}</span>
           </label>
         ))}
       </div>

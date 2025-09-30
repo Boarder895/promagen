@@ -149,29 +149,29 @@ else if (cmd === "dev") {
   const b = load();
 
   // Try to move from inProgress
-  let idx = b.developersBook.inProgress.findIndex((s: any) => s.id === id);
+  let idx = b.developers.inProgress.findIndex((s: any) => s.id === id);
   if (idx !== -1) {
-    const item = b.developersBook.inProgress.splice(idx, 1)[0];
+    const item = b.developers.inProgress.splice(idx, 1)[0];
     item.completedAt = new Date().toISOString();
-    b.developersBook.done.unshift(item);
+    b.developers.done.unshift(item);
     save(b);
     console.log(`Developers’ Book: completed ${id} (from inProgress)`);
     process.exit(0);
   }
 
   // Try to move from queued
-  idx = b.developersBook.queued.findIndex((s: any) => s.id === id);
+  idx = b.developers.queued.findIndex((s: any) => s.id === id);
   if (idx !== -1) {
-    const item = b.developersBook.queued.splice(idx, 1)[0];
+    const item = b.developers.queued.splice(idx, 1)[0];
     item.completedAt = new Date().toISOString();
-    b.developersBook.done.unshift(item);
+    b.developers.done.unshift(item);
     save(b);
     console.log(`Developers’ Book: completed ${id} (from queued)`);
     process.exit(0);
   }
 
   // Already done?
-  const already = b.developersBook.done.find((s: any) => s.id === id);
+  const already = b.developers.done.find((s: any) => s.id === id);
   if (already) {
     console.log(
       `Developers’ Book: ${id} is already done (${already.completedAt || "no timestamp"})`
@@ -199,7 +199,7 @@ else if (cmd === "history") {
       : new Date().toISOString().slice(0, 10);
 
   const b = load();
-  b.historyBook.entries.unshift({ date, item: msg, status });
+  b.history.entries.unshift({ date, item: msg, status });
   save(b);
   console.log(`History added: [${date}] ${msg} — ${status}`);
   postSlack(`📘 ${msg} — ${status} (${date})`);
@@ -212,3 +212,4 @@ else {
   usage();
   process.exit(1);
 }
+

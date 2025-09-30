@@ -1,7 +1,7 @@
 // Demo generator (Option A). Matches your page's call signature:
 //   const jobId = await startGeneration(p.id, prompt);
 
-import type { ProviderId } from '@/lib/providers'
+import type { ProviderId } from "@/lib/providers"
 
 export type JobState = 'queued' | 'running' | 'ok' | 'error'
 

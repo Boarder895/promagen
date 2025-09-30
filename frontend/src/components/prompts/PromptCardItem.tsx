@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import * as React from "react";
 
 type PromptCardItemProps = {
@@ -46,7 +46,7 @@ export default function PromptCardItem({
           className={`shrink-0 rounded-full border px-3 py-1 text-sm ${liked ? "bg-black text-white" : ""}`}
           aria-pressed={liked}
         >
-          ❤️ {likes}
+          ?? {likes}
         </button>
       </div>
     </li>

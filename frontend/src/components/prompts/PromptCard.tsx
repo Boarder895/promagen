@@ -1,66 +1,62 @@
-﻿"use client";
+"use client";
 
-import React, { useState } from "react";
-import type { Prompt } from "@/lib/api";
-import { postLike, postRemix } from "@/lib/api";
+import React from "react";
+
+/**
+ * Local Prompt shape (loose + forward-compatible).
+ * Avoids importing a non-existent `Prompt` type from "@/lib/api".
+ */
+export type Prompt = {
+  id?: string | number;
+  title?: string;
+  prompt?: string;        // main text
+  negative?: string;
+  provider?: string;      // provider id or name
+  createdAt?: string | Date;
+  tags?: string[];
+  [key: string]: unknown;
+};
 
 export default function PromptCard({ item }: { item: Prompt }) {
-  const [likes, setLikes] = useState<number>(
-    typeof item.likes === "number" ? item.likes : 0
-  );
-  const [busy, setBusy] = useState<boolean>(false);
-
-  async function onLike() {
-    try {
-      setBusy(true);
-      const res = await postLike(item.id);
-      // Always pass a number to setLikes
-      setLikes(typeof res.likes === "number" ? res.likes : likes + 1);
-    } catch {
-      setLikes((v) => v + 1);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onRemix() {
-    try {
-      setBusy(true);
-      await postRemix(item.id, {
-        title: `${item.title} (remix)`,
-        prompt: item.prompt,
-        tags: item.tags,
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
+  const title = item.title ?? "Untitled prompt";
+  const body = item.prompt ?? "";
+  const provider = item.provider ?? "unknown";
+  const created = item.createdAt
+    ? new Date(item.createdAt).toLocaleString()
+    : undefined;
+  const tags = Array.isArray(item.tags) ? item.tags : [];
 
   return (
-    <div className="border rounded-lg p-3">
-      <div className="font-semibold">{item.title}</div>
-      <div className="text-sm opacity-80 mt-1">{item.prompt}</div>
-      {item.summary && <div className="text-xs mt-1 opacity-70">{item.summary}</div>}
-      <div className="flex items-center gap-3 mt-3">
-        <button
-          type="button"
-          className="px-2 py-1 border rounded disabled:opacity-50"
-          onClick={onLike}
-          disabled={busy}
-        >
-          ❤️ {likes}
-        </button>
-        <button
-          type="button"
-          className="px-2 py-1 border rounded disabled:opacity-50"
-          onClick={onRemix}
-          disabled={busy}
-        >
-          Remix
-        </button>
-      </div>
-    </div>
+    <article className="rounded-xl border border-zinc-200 p-4 shadow-sm">
+      <header className="mb-2 flex items-center gap-2">
+        <h3 className="text-base font-semibold leading-6">{title}</h3>
+        <span className="ml-auto text-xs opacity-70">Provider: {provider}</span>
+      </header>
+
+      {body ? (
+        <p className="text-sm opacity-90">
+          {body.length > 260 ? `${body.slice(0, 260)}�` : body}
+        </p>
+      ) : (
+        <p className="text-sm opacity-60">No prompt text</p>
+      )}
+
+      {tags.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {tags.slice(0, 8).map((t) => (
+            <span key={String(t)} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs">
+              #{String(t)}
+            </span>
+          ))}
+          {tags.length > 8 && (
+            <span className="text-xs opacity-60">+{tags.length - 8} more</span>
+          )}
+        </div>
+      )}
+
+      {created && (
+        <footer className="mt-3 text-xs opacity-60">Created: {created}</footer>
+      )}
+    </article>
   );
 }
-
-
