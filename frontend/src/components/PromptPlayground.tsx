@@ -1,12 +1,22 @@
-"use client";
+﻿'use client';
 
-import React, { useEffect, useState } from "react";
-import { getProviders, type Provider } from "@/lib/providers";
+import React, { useEffect, useState } from 'react';
+import { getProviders, type Provider } from '@/lib/providers';
 
 export default function PromptPlayground() {
   const [providers, setProviders] = useState<Provider[]>([]);
+
+  // Sync load: no promise, no .then()
   useEffect(() => {
-    getProviders().then((list) => setProviders(list ?? [])).catch(() => setProviders([]));
+    const list = getProviders();
+    setProviders(list);
   }, []);
-  return <div className="text-sm opacity-80">Providers: {providers.length}</div>;
+
+  return (
+    <div className="p-4">
+      <div className="text-sm">Providers: {providers.length}</div>
+    </div>
+  );
 }
+
+

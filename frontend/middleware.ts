@@ -1,4 +1,4 @@
-// middleware.ts
+﻿// middleware.ts
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -46,7 +46,7 @@ export function middleware(req: NextRequest) {
     if (!expected || token !== expected) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
-    // Token ok → allow
+    // Token ok â†’ allow
     return NextResponse.next();
   }
 
@@ -76,3 +76,5 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: ["/api/:path*"],
 };
+
+

@@ -1,4 +1,4 @@
-// src/pages/prompts/index.tsx
+﻿// src/pages/prompts/index.tsx
 import Head from "next/head";
 import PromptCard, { Prompt } from "@/components/PromptCard";
 
@@ -16,7 +16,7 @@ export async function getServerSideProps() {
 export default function PromptsIndex({ prompts }: PageProps) {
   return (
     <>
-      <Head><title>Prompts • Promagen</title></Head>
+      <Head><title>Prompts â€¢ Promagen</title></Head>
       <main className="mx-auto max-w-6xl p-6 space-y-6">
         <h1 className="text-2xl font-semibold">Prompts</h1>
         {prompts.length === 0 ? (
@@ -30,3 +30,5 @@ export default function PromptsIndex({ prompts }: PageProps) {
     </>
   );
 }
+
+

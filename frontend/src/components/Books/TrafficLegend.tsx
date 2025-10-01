@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 export default function TrafficLegend() {
   const Dot = ({ c }: { c: string }) => <span className={`w-2 h-2 rounded-full inline-block ${c} mr-2`} />;
   return (
@@ -9,3 +9,5 @@ export default function TrafficLegend() {
     </div>
   );
 }
+
+

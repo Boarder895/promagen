@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { getBook } from "@/lib/books";
@@ -9,7 +9,7 @@ export default function BuildQuickClean() {
 
   return (
     <section className="mt-6 opacity-90">
-      <h2 className="text-xl font-semibold tracking-tight">Developers Book � Quick View</h2>
+      <h2 className="text-xl font-semibold tracking-tight">Developers Book ï¿½ Quick View</h2>
       {sections.length === 0 ? (
         <p className="mt-2 text-sm opacity-70">
           Nothing to show yet. Add sections to <span className="font-mono">developersBook.sections</span>.
@@ -27,3 +27,5 @@ export default function BuildQuickClean() {
     </section>
   );
 }
+
+

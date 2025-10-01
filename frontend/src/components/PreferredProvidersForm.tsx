@@ -1,9 +1,9 @@
-"use client";
+﻿'use client';
 
-import { useEffect, useState } from "react";
-import { providers, type Provider } from "@/lib/providers";
+import { useEffect, useState } from 'react';
+import { PROVIDERS, type Provider } from '@/lib/providers';
 
-export default function PreferredProvidersForm() {
+export function PreferredProvidersForm() {
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -12,11 +12,13 @@ export default function PreferredProvidersForm() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch("/api/user/me/preferences", { credentials: "include" });
+        const r = await fetch('/api/user/me/preferences', { credentials: 'include' });
         const d = await r.json();
-        if (!cancelled) setSelected(Array.isArray(d?.preferredProviders) ? d.preferredProviders : []);
+        if (!cancelled) {
+          setSelected(Array.isArray(d?.preferredProviders) ? d.preferredProviders : []);
+        }
       } catch {
-        // ignore ï¿½ keep defaults
+        // ignore — keep defaults
       }
     })();
     return () => {
@@ -25,16 +27,18 @@ export default function PreferredProvidersForm() {
   }, []);
 
   function toggle(id: string) {
-    setSelected(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   }
 
   async function save() {
     setSaving(true);
     try {
-      await fetch("/api/user/me/preferences", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      await fetch('/api/user/me/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ preferredProviders: selected }),
       });
     } finally {
@@ -42,8 +46,8 @@ export default function PreferredProvidersForm() {
     }
   }
 
-  // Only list providers that exist; keep typing friendly
-  const list: Provider[] = providers;
+  // Canonical list
+  const list: Provider[] = [...PROVIDERS];
 
   return (
     <div>
@@ -51,7 +55,7 @@ export default function PreferredProvidersForm() {
 
       <div
         className="grid gap-3"
-        style={{ gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))" }}
+        style={{ gridTemplateColumns: 'repeat(auto-fill,minmax(180px,1fr))' }}
       >
         {list.map((p) => (
           <label
@@ -64,7 +68,9 @@ export default function PreferredProvidersForm() {
               onChange={() => toggle(p.id)}
             />
             <span className="font-medium">{p.name}</span>
-            <span className="text-xs opacity-70 ml-auto">{p.hasApi ? "API" : "Manual"}</span>
+            <span className="text-xs opacity-70 ml-auto">
+              {p.hasApi ? 'API' : 'Manual'}
+            </span>
           </label>
         ))}
       </div>
@@ -74,8 +80,11 @@ export default function PreferredProvidersForm() {
         disabled={saving}
         className="mt-3 rounded-lg border px-3 py-1 text-sm"
       >
-        {saving ? "Saving..." : "Save Preferences"}
+        {saving ? 'Saving...' : 'Save Preferences'}
       </button>
     </div>
   );
 }
+
+
+

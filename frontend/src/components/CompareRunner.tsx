@@ -1,39 +1,47 @@
-"use client";
+﻿'use client';
 
-import React, { useMemo, useState } from "react";
-import { providers, type Provider } from "@/lib/providers";
+import * as React from 'react';
+import { PROVIDERS, type Provider } from '@/lib/providers';
 
-export default function CompareRunner({ showAll = false }: { showAll?: boolean }) {
-  const [selection, setSelection] = useState<string[]>([]);
+/**
+ * Simple compare runner that lists API-capable providers.
+ * (This replaces any legacy use of a lowercased `providers` import.)
+ */
+export function CompareRunner(): JSX.Element {
+  const [filter, setFilter] = React.useState<'all' | 'api'>('all');
 
-  const list = useMemo<Provider[]>(
-    () => (showAll ? providers : providers.filter((p) => p.hasApi)),
-    [showAll]
-  );
-
-  function toggle(id: string) {
-    setSelection((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  }
+  const list: Provider[] = React.useMemo(() => {
+    const base = [...PROVIDERS];
+    return filter === 'api' ? base.filter((p) => p.hasApi) : base;
+  }, [filter]);
 
   return (
-    <section className="p-4 border rounded-xl">
-      <h3 className="font-semibold mb-3">Compare Providers</h3>
-      <div className="grid md:grid-cols-2 gap-2">
+    <section className="p-4">
+      <div className="mb-3 flex items-center gap-3">
+        <h2 className="text-base font-semibold">Compare Runner</h2>
+
+        <select
+          className="rounded border px-2 py-1 text-sm"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as 'all' | 'api')}
+        >
+          <option value="all">All providers</option>
+          <option value="api">API-capable only</option>
+        </select>
+
+        <span className="text-xs opacity-70">Showing {list.length}</span>
+      </div>
+
+      <ul className="space-y-2">
         {list.map((p) => (
-          <label key={p.id} className="flex items-center gap-2 border rounded-md p-2">
-            <input
-              type="checkbox"
-              checked={selection.includes(p.id)}
-              onChange={() => toggle(p.id)}
-            />
-            <span className="font-medium">{p.name}</span>
-            <span className="text-xs opacity-70 ml-auto">{p.hasApi ? "API" : "Manual"}</span>
-          </label>
+          <li key={p.id} className="rounded-lg border p-3">
+            <div className="font-medium">{p.name}</div>
+            <div className="text-xs opacity-70">{p.id}</div>
+          </li>
         ))}
-      </div>
-      <div className="mt-4 text-sm opacity-80">
-        Selected: {selection.length ? selection.join(", ") : "none"}
-      </div>
+      </ul>
     </section>
   );
 }
+
+

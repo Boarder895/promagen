@@ -1,4 +1,4 @@
-// Demo generator (Option A). Matches your page's call signature:
+﻿// Demo generator (Option A). Matches your page's call signature:
 //   const jobId = await startGeneration(p.id, prompt);
 
 import type { ProviderId } from "@/lib/providers"
@@ -23,3 +23,5 @@ export const generate = async (req: GenerateRequest): Promise<GenerateResponse> 
   provider: req.provider,
   status: 'queued'
 })
+
+

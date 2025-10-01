@@ -1,16 +1,16 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { getBook } from "@/lib/books"; // named import
 
-/** Developers Book � Quick View (uses sections) */
+/** Developers Book ï¿½ Quick View (uses sections) */
 export default function BuildQuick() {
   const devBook: any = getBook("developers");
   const sections = Array.isArray(devBook?.sections) ? devBook.sections : [];
 
   return (
     <section className="mt-6 opacity-90">
-      <h2 className="text-xl font-semibold tracking-tight">Developers Book � Quick View</h2>
+      <h2 className="text-xl font-semibold tracking-tight">Developers Book ï¿½ Quick View</h2>
 
       {sections.length === 0 ? (
         <p className="mt-2 text-sm opacity-70">
@@ -51,6 +51,8 @@ export default function BuildQuick() {
     </section>
   );
 }
+
+
 
 
 

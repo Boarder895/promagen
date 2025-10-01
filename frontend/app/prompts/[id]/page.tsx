@@ -1,4 +1,4 @@
-type PageProps = {
+﻿type PageProps = {
   params: { id: string };
 };
 
@@ -12,9 +12,11 @@ export default function PromptDetailPage({ params }: PageProps) {
       <h1 className="text-xl font-semibold">Prompt</h1>
       <p className="opacity-70">ID: {id}</p>
       <p className="text-sm">
-        This is a placeholder detail view. Once the API is ready, we’ll fetch the prompt text
+        This is a placeholder detail view. Once the API is ready, weâ€™ll fetch the prompt text
         and metadata here.
       </p>
     </div>
   );
 }
+
+

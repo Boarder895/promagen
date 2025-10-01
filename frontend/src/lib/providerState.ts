@@ -1,48 +1,51 @@
-// src/lib/providerState.ts
-import { PROVIDERS, type ProviderId, type ProviderInfo } from "./providers";
+﻿// src/lib/providerState.ts
+import { PROVIDERS, providersWithApi } from "@/lib/providers";
+import type { ProviderId } from "@/lib/providers";
 
 export type Health = "ok" | "degraded" | "down";
 
-export interface ProviderMeta extends ProviderInfo {
-  health: Health;
-  lastLatencyMs: number | null;
-  lastCheckedAt: string | null;
-}
+export type ProviderState = Record<
+  ProviderId,
+  {
+    health: Health;
+    api: "official" | "manual";
+  }
+>;
 
-// Module-level singleton state (persists for the server process)
-const state: Record<ProviderId, ProviderMeta> = Object.fromEntries(
-  PROVIDERS.map(p => [p.id, { ...p, health: "degraded", lastLatencyMs: null, lastCheckedAt: null }])
-) as Record<ProviderId, ProviderMeta>;
+/** Build the initial per-provider state from the canonical registry. */
+export const initialProviderState = (): ProviderState => {
+  const state = {} as ProviderState;
 
-export function getProviderState(): ProviderMeta[] {
-  // Return in the same order as PROVIDERS
-  return PROVIDERS.map(p => state[p.id]);
-}
+  // Whatever iterable comes back (ids or objects), normalize to ProviderId[]
+  const upstream: Iterable<unknown> =
+    (Symbol.iterator in Object(providersWithApi())
+      ? (providersWithApi() as Iterable<unknown>)
+      : []) as Iterable<unknown>;
 
-/**
- * Simulated refresh â€” replace later with real calls per provider.
- * For now: mark "official" API providers as ok (lower latency),
- * UI-only as ok/degraded mix (slightly higher latency).
- */
-export async function refreshProviders(): Promise<{ updated: number; at: string }> {
-  const now = new Date().toISOString();
-  let updated = 0;
+  const apiIds: ProviderId[] = Array.from(upstream)
+    .map((v) => {
+      if (typeof v === "string") return v as ProviderId;
+      if (v && typeof v === "object" && "id" in (v as Record<string, unknown>)) {
+        const id = (v as { id?: unknown }).id;
+        if (typeof id === "string") return id as ProviderId;
+      }
+      return null;
+    })
+    .filter((x): x is ProviderId => typeof x === "string" && x.length > 0);
+
+  const apiSet = new Set<ProviderId>(apiIds);
 
   for (const p of PROVIDERS) {
-    // fake latency band
-    const base = p.hasApi === "official" ? 120 : 220;
-    const jitter = Math.floor(Math.random() * 80); // 0â€“79
-    const latency = base + jitter;
-
-    // simple health heuristic
-    const health: Health =
-      latency < 180 ? "ok" : latency < 260 ? "degraded" : "down";
-
-    state[p.id].health = health;
-    state[p.id].lastLatencyMs = latency;
-    state[p.id].lastCheckedAt = now;
-    updated++;
+    state[p.id] = {
+      health: "ok",
+      api: apiSet.has(p.id) ? "official" : "manual",
+    };
   }
 
-  return { updated, at: now };
-}
+  return state;
+};
+
+/** Minimal refresh used by admin sync routes. */
+export const refreshProviders = (): ProviderState => {
+  return initialProviderState();
+};

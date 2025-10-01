@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 
 export default function CopyLinkButton({ anchorId }: { anchorId: string }) {
@@ -18,3 +18,5 @@ export default function CopyLinkButton({ anchorId }: { anchorId: string }) {
     </button>
   );
 }
+
+

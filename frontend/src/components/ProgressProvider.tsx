@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { createContext, useContext, useMemo, useReducer } from "react";
 
@@ -8,7 +8,7 @@ export type Job = {
   provider: string;
   label: string;
   state: JobState;
-  progress?: number;   // 0–100 while running
+  progress?: number;   // 0â€“100 while running
   startedAt: number;
   endedAt?: number;
   tookMs?: number;
@@ -59,3 +59,5 @@ export function useProgress() {
   if (!ctx) throw new Error("useProgress must be used inside <ProgressProvider/>");
   return ctx;
 }
+
+

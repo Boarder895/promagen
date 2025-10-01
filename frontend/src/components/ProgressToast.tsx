@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { useProgress } from "./ProgressProvider";
@@ -22,8 +22,8 @@ export default function ProgressToast() {
             <Badge state={j.state} />
           </div>
           <div className="mt-1 text-xs opacity-70">
-            {j.state === "running" && `Generating… ${Math.round(j.progress ?? 0)}%`}
-            {j.state === "queued" && "Queued…"}
+            {j.state === "running" && `Generatingâ€¦ ${Math.round(j.progress ?? 0)}%`}
+            {j.state === "queued" && "Queuedâ€¦"}
             {j.state === "ok" && `Done${j.tookMs ? ` in ${j.tookMs} ms` : ""}`}
             {j.state === "error" && `Failed${j.error ? `: ${j.error}` : ""}`}
           </div>
@@ -56,3 +56,5 @@ function Badge({ state }: { state: "queued" | "running" | "ok" | "error" }) {
     </span>
   );
 }
+
+

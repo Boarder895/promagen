@@ -1,4 +1,4 @@
-type Props = { rank: number; name: string; score: number; delta?: number };
+﻿type Props = { rank: number; name: string; score: number; delta?: number };
 
 export default function ProviderCard({ rank, name, score, delta = 0 }: Props){
   return (
@@ -9,7 +9,9 @@ export default function ProviderCard({ rank, name, score, delta = 0 }: Props){
       <div style={{width:24,height:24,borderRadius:6, background:"#ddd"}} />
       <div><strong>{rank}. {name}</strong></div>
       <div style={{textAlign:"right"}}>{score.toFixed(1)}</div>
-      <div style={{textAlign:"right"}}>{delta >= 0 ? `▲ ${delta.toFixed(1)}` : `▼ ${Math.abs(delta).toFixed(1)}`}</div>
+      <div style={{textAlign:"right"}}>{delta >= 0 ? `â–² ${delta.toFixed(1)}` : `â–¼ ${Math.abs(delta).toFixed(1)}`}</div>
     </div>
   );
 }
+
+

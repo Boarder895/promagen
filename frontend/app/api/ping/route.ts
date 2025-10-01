@@ -1,4 +1,4 @@
-// src/app/api/ping/route.ts (Next.js App Router API route)
+﻿// app/api/ping/route.ts (Next.js App Router API route)
 import { NextResponse } from "next/server";
 
 export const revalidate = 0;            // no static cache
@@ -21,3 +21,6 @@ export async function GET() {
     );
   }
 }
+
+
+

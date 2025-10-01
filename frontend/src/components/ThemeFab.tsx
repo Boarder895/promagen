@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 
@@ -91,3 +91,5 @@ function Icon({ mode }: { mode: ThemeChoice }) {
     </svg>
   )
 }
+
+

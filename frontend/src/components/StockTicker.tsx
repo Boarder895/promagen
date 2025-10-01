@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+﻿import { useEffect, useRef } from "react";
 
 export default function StockTicker() {
   const ref = useRef<HTMLDivElement>(null);
@@ -8,7 +8,9 @@ export default function StockTicker() {
       overflow:"hidden", whiteSpace:"nowrap", border:"1px solid #eee",
       padding:"8px 12px", borderRadius:8, background:"#fafafa"
     }}>
-      OpenAI ▲1.2 • Stability ▼0.4 • Leonardo ▲0.7 • DeepAI — •
+      OpenAI â–²1.2 â€¢ Stability â–¼0.4 â€¢ Leonardo â–²0.7 â€¢ DeepAI â€” â€¢
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 
 export default function CopyCLIButton({ cmd }: { cmd: string }) {
@@ -16,3 +16,5 @@ export default function CopyCLIButton({ cmd }: { cmd: string }) {
     </button>
   );
 }
+
+

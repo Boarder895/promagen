@@ -1,4 +1,4 @@
-// Jobs streaming simulator for demos (Option A).
+﻿// Jobs streaming simulator for demos (Option A).
 // - startJob(providerId, { durationMs?, failureRate? }) -> jobId
 // - streamJob(jobId, onEvent) -> stop()
 // Exports JobEvent used by demo pages.
@@ -115,3 +115,5 @@ export function streamJob(jobId: string, onEvent: (ev: JobEvent) => void): () =>
     clear()
   }
 }
+
+

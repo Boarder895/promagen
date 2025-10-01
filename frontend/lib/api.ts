@@ -1,4 +1,4 @@
-// Lightweight fetch helpers for the Promagen API (works on server & client)
+﻿// Lightweight fetch helpers for the Promagen API (works on server & client)
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || "https://api.promagen.com";
@@ -38,7 +38,7 @@ export async function fetchJSON<T = unknown>(
       const msg = typeof data === "object" && data && "message" in (data as any)
         ? (data as any).message
         : text || `HTTP ${res.status}`;
-      throw new Error(`Request failed: ${res.status} ${res.statusText} — ${msg}`);
+      throw new Error(`Request failed: ${res.status} ${res.statusText} â€” ${msg}`);
     }
 
     return data as T;
@@ -64,3 +64,5 @@ export type MetaResponse = {
 };
 
 export const getMeta = () => fetchJSON<MetaResponse>("/api/v1/meta");
+
+

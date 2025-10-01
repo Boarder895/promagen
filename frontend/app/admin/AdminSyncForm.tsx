@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
@@ -14,7 +14,7 @@ function SubmitButton() {
       disabled={pending}
       className="rounded-2xl border px-4 py-2 shadow-sm hover:shadow transition disabled:opacity-60"
     >
-      {pending ? "Syncing…" : "Run Sync"}
+      {pending ? "Syncingâ€¦" : "Run Sync"}
     </button>
   );
 }
@@ -49,11 +49,13 @@ export default function AdminSyncForm({
             state.ok ? "border-green-500 bg-green-50" : "border-red-500 bg-red-50"
           }`}
         >
-          {state.ok ? `✅ ${state.message || "Sync completed"}` : "❌ Sync failed"}
+          {state.ok ? `âœ… ${state.message || "Sync completed"}` : "âŒ Sync failed"}
         </div>
       )}
     </div>
   );
 }
+
+
 
 

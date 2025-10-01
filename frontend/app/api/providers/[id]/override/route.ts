@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 const API_BASE = process.env.API_BASE || 'http://localhost:3001';
 
@@ -31,3 +31,4 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     return NextResponse.json({ ok: false, error: 'proxy_failed', message: e?.message }, { status: 502 });
   }
 }
+

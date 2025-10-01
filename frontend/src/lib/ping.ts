@@ -1,4 +1,4 @@
-// frontend/lib/ping.ts — COMPLETE
+﻿// frontend/lib/ping.ts â€” COMPLETE
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export type HealthResult = {
@@ -9,7 +9,7 @@ export type HealthResult = {
 };
 
 export async function pingHealth(timeoutMs = 3000): Promise<HealthResult> {
-  if (!API_BASE) return { ok: false, error: "API base — not set" };
+  if (!API_BASE) return { ok: false, error: "API base â€” not set" };
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const start = performance.now();
@@ -45,3 +45,5 @@ export async function fetchVersion(): Promise<Record<string, any> | null> {
     return null;
   }
 }
+
+

@@ -1,4 +1,4 @@
-// src/lib/books.ts
+﻿// src/lib/books.ts
 
 export type ChecklistItem = {
   id: string;
@@ -46,9 +46,9 @@ export type Books = {
 
 export function loadBooks(): Books {
   const users: Book = {
-    title: "Users� Book � Promagen Functionality",
+    title: "Usersï¿½ Book ï¿½ Promagen Functionality",
     meta: {
-      title: "Users� Book � Promagen Functionality",
+      title: "Usersï¿½ Book ï¿½ Promagen Functionality",
       subtitle: "User-facing manual for features, pricing, and daily usage.",
     },
     sections: [
@@ -71,9 +71,9 @@ export function loadBooks(): Books {
   };
 
   const developers: Book = {
-    title: "Developers� Book � Build & Architecture",
+    title: "Developersï¿½ Book ï¿½ Build & Architecture",
     meta: {
-      title: "Developers� Book � Build & Architecture",
+      title: "Developersï¿½ Book ï¿½ Build & Architecture",
       subtitle: "Architecture, invariants, provider registry, workflows.",
     },
     sections: [
@@ -81,7 +81,7 @@ export function loadBooks(): Books {
         id: "routing",
         title: "Docs Routing Invariant",
         summary:
-          "app/docs/* owns docs routing. Content source is TSX pages only. Three-column layout: left Developers Book, center borderless doc (~740�780px), right Users Book + Build Progress.",
+          "app/docs/* owns docs routing. Content source is TSX pages only. Three-column layout: left Developers Book, center borderless doc (~740ï¿½780px), right Users Book + Build Progress.",
         status: "in-review",
         lastUpdated: "2025-09-28",
         tags: ["routing", "invariants"],
@@ -99,9 +99,9 @@ export function loadBooks(): Books {
   };
 
   const history: Book = {
-    title: "History � Decisions & Changelog",
+    title: "History ï¿½ Decisions & Changelog",
     meta: {
-      title: "History � Decisions & Changelog",
+      title: "History ï¿½ Decisions & Changelog",
       subtitle: "Timeline of locked decisions and fixes.",
     },
     sections: [
@@ -138,6 +138,8 @@ export function metaOf(book: Book): BookMeta {
     subtitle: book.meta?.subtitle,
   };
 }
+
+
 
 
 

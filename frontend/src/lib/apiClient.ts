@@ -1,4 +1,4 @@
-// Named exports only for libraries.
+﻿// Named exports only for libraries.
 import { API_BASE } from '@/lib/api';
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -26,3 +26,5 @@ export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise
   }
   return (await res.json()) as T;
 }
+
+

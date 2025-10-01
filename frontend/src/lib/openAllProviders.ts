@@ -1,8 +1,19 @@
-import type { Provider } from "@/lib/providers";
-import { PROVIDERS } from "@/lib/providers";
+﻿// Facade over the canonical list. Named exports only.
 
-export const OPENAI_PROVIDERS: Provider[] = PROVIDERS.filter(p => p.id === "openai");
+export {
+  type ProviderId,
+  type ProviderKind,
+  type ProviderMeta,
+  PROVIDERS as openAIProviders,   // legacy alias some UI uses
+  PROVIDERS,
+  PROVIDER_IDS,
+  PROVIDERS_BY_ID,
+  API_PROVIDERS,
+  UI_ONLY_PROVIDERS,
+} from "./openAIProviders";
 
-export function isOpenAIProvider(id: string): boolean {
-  return id === "openai";
-}
+// Primary alias expected by some components
+import { PROVIDERS as _PROVIDERS } from "./openAIProviders";
+export const openAllProviders = _PROVIDERS;
+
+

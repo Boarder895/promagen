@@ -1,42 +1,63 @@
-"use client";
+﻿"use client";
 
-import React from "react";
-import { usePrompts, type Prompt } from "@/hooks/usePrompts";
+import * as React from "react";
+import { usePrompts, type Prompt } from "@/lib/hooks/usePrompts";
 
-export type PromptDrawerProps<T extends Prompt = Prompt> = {
-  params?: Record<string, string | string[] | undefined>;
-  allPrompts: T[];
-  limit?: number;
+export type PromptDrawerProps = {
+  params?: Record<string, unknown>;
+  allPrompts: Prompt[];
   title?: string;
 };
 
-export function PromptDrawer<T extends Prompt>({
+export const PromptDrawer = ({
   params = {},
   allPrompts,
-  limit = 5,
-  title = "Latest",
-}: PromptDrawerProps<T>) {
-  const { filtered } = usePrompts<T>({ params, allPrompts });
+  title = "Prompts",
+}: PromptDrawerProps) => {
+  const { filtered, loading, error } = usePrompts({ params, allPrompts });
 
-  if (!Array.isArray(filtered) || filtered.length === 0) {
+  if (error) {
     return (
-      <aside className="p-3 border-l">
-        <h3 className="font-semibold mb-2">{title}</h3>
+      <aside className="rounded-xl border p-4 text-red-800 bg-red-50">
+        Error: {error.message}
+      </aside>
+    );
+  }
+
+  if (loading) {
+    return (
+      <aside className="rounded-xl border p-4">
+        <div className="h-3 w-24 rounded bg-gray-200 animate-pulse" />
+      </aside>
+    );
+  }
+
+  if (!filtered || filtered.length === 0) {
+    return (
+      <aside className="rounded-xl border p-4 text-gray-600">
         <p className="text-sm opacity-70">No prompts yet.</p>
       </aside>
     );
   }
 
   return (
-    <aside className="p-3 border-l">
-      <h3 className="font-semibold mb-2">{title}</h3>
+    <aside className="space-y-3">
+      <div className="text-sm font-semibold">{title}</div>
       <ul className="space-y-2">
-        {filtered.slice(0, limit).map((p) => (
-          <li key={String(p.id)} className="text-sm">
-            {p.title ?? "Untitled prompt"}
+        {filtered.map((p) => (
+          <li
+            key={p.id}
+            className="rounded-lg border p-3 hover:bg-gray-50 transition-colors"
+          >
+            <div className="text-sm font-medium">{p.title}</div>
+            <div className="text-xs text-gray-600 line-clamp-2 mt-0.5">
+              {p.text}
+            </div>
           </li>
         ))}
       </ul>
     </aside>
   );
-}
+};
+
+

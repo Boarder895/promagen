@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { type ComponentProps } from "react";
 import RealPromptCard from "./prompts/PromptCard";
@@ -11,3 +11,5 @@ export type Prompt = ItemType;
 export default function PromptCard({ p }: { p: ItemType }) {
   return <RealPromptCard item={p} />;
 }
+
+

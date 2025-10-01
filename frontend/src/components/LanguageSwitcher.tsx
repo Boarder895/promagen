@@ -1,4 +1,4 @@
-const langs = ["English","中文(简体)","Español","العربية","हिन्दी","Português","Français","Русский","Deutsch","日本語"];
+﻿const langs = ["English","ä¸­æ–‡(ç®€ä½“)","EspaÃ±ol","Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©","à¤¹à¤¿à¤¨à¥à¤¦à¥€","PortuguÃªs","FranÃ§ais","Ð ÑƒÑÑÐºÐ¸Ð¹","Deutsch","æ—¥æœ¬èªž"];
 
 export default function LanguageSwitcher(){
   return (
@@ -8,3 +8,5 @@ export default function LanguageSwitcher(){
     </div>
   );
 }
+
+

@@ -1,7 +1,7 @@
-import React from "react";
+﻿import React from "react";
 import { PromptGrid } from "@/components/prompts/PromptGrid"; // named import
 import { getCommunity } from "@/data/prompts";
-import type { Prompt } from "@/hooks/usePrompts";
+import type { Prompt } from '@/lib/hooks/usePrompts';
 
 export const revalidate = 60;
 
@@ -21,3 +21,6 @@ export default async function PromptsPage() {
     </main>
   );
 }
+
+
+

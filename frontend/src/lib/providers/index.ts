@@ -1,4 +1,4 @@
-// src/lib/providers/index.ts
+﻿// src/lib/providers/index.ts
 export type Provider = {
   id: string;
   name: string;
@@ -10,3 +10,5 @@ export const providers: Provider[] = [
   { id: "anthropic", name: "Anthropic", api: true },
   { id: "manual", name: "Manual Upload", api: false },
 ];
+
+

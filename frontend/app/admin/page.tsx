@@ -1,15 +1,16 @@
-import AdminSyncForm from "./AdminSyncForm";
-import { doSync, initialSyncState, type SyncState } from "./actions";
+﻿// App Router page at /admin
+// Note: Next.js requires a default export for page components (allowed exception in your ESLint overrides).
+
+export const dynamic = "force-dynamic"; // optional, safe default for admin
 
 export default function AdminPage() {
-  // Pass the exported initial state so client & server are in sync
   return (
-    <main className="px-6 py-8 space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Admin</h1>
-      <AdminSyncForm
-        action={doSync as (prev: SyncState, formData: FormData) => Promise<SyncState>}
-        initialState={initialSyncState}
-      />
+    <main className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Admin</h1>
+      <p className="opacity-70">Admin home is alive. Use the menu to run sync/ping etc.</p>
     </main>
   );
 }
+
+
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import * as React from 'react'
 
@@ -46,3 +46,5 @@ export function Chip({ type, label, className, ...rest }: ChipProps) {
 }
 
 export default Chip
+
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import * as React from 'react'
 import { startGeneration } from '@/lib/generate'
@@ -73,7 +73,7 @@ export default function RunGrid({ providers }: { providers: Provider[] }) {
                 disabled={st === 'queued' || st === 'running'}
                 onClick={() => runOne(p)}
               >
-                {st === 'queued' || st === 'running' ? 'Generating…' : 'Run'}
+                {st === 'queued' || st === 'running' ? 'Generatingâ€¦' : 'Run'}
               </button>
 
               {st !== 'idle' && (
@@ -99,3 +99,5 @@ export default function RunGrid({ providers }: { providers: Provider[] }) {
     </section>
   )
 }
+
+

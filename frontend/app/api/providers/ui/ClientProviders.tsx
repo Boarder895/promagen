@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 
@@ -126,7 +126,7 @@ export default function ClientProviders({ initialData }: { initialData: Provider
               </div>
               {p.override ? (
                 <span className="badge bg-blue-50">
-                  Adj: {typeof p.override.scoreAdjustment === 'number' ? p.override.scoreAdjustment : '—'}
+                  Adj: {typeof p.override.scoreAdjustment === 'number' ? p.override.scoreAdjustment : 'â€”'}
                 </span>
               ) : (
                 <span className="badge bg-gray-50">No override</span>
@@ -144,10 +144,10 @@ export default function ClientProviders({ initialData }: { initialData: Provider
       {editing && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40">
           <div className="card w-full max-w-lg p-4">
-            <h2 className="mb-2 text-lg font-semibold">Edit score – {editing.name}</h2>
+            <h2 className="mb-2 text-lg font-semibold">Edit score â€“ {editing.name}</h2>
 
             <label className="mb-1 block text-sm text-gray-600" htmlFor="score">
-              Score adjustment (-100 … 100)
+              Score adjustment (-100 â€¦ 100)
             </label>
             <input
               id="score"
@@ -173,7 +173,7 @@ export default function ClientProviders({ initialData }: { initialData: Provider
                   Cancel
                 </button>
                 <button className="btn" onClick={save} disabled={busy}>
-                  {busy ? 'Saving…' : 'Save'}
+                  {busy ? 'Savingâ€¦' : 'Save'}
                 </button>
                 <button
                   className="btn bg-red-600 hover:bg-red-700"
@@ -191,7 +191,7 @@ export default function ClientProviders({ initialData }: { initialData: Provider
               <div className="mb-2 text-sm font-semibold">Recent changes</div>
               <div className="rounded-lg border border-gray-200">
                 {auditBusy ? (
-                  <div className="p-3 text-sm text-gray-500">Loading…</div>
+                  <div className="p-3 text-sm text-gray-500">Loadingâ€¦</div>
                 ) : !audit?.length ? (
                   <div className="p-3 text-sm text-gray-500">No recent changes.</div>
                 ) : (
@@ -205,7 +205,7 @@ export default function ClientProviders({ initialData }: { initialData: Provider
                           </div>
                         </div>
                         <div className="mt-1 text-xs text-gray-600">
-                          {a.prevScore ?? '—'} → {a.newScore ?? '—'} · {a.ip ?? 'ip:—'}
+                          {a.prevScore ?? 'â€”'} â†’ {a.newScore ?? 'â€”'} Â· {a.ip ?? 'ip:â€”'}
                         </div>
                       </li>
                     ))}
@@ -225,3 +225,5 @@ export default function ClientProviders({ initialData }: { initialData: Provider
     </main>
   );
 }
+
+

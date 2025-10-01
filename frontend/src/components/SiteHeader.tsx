@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import ApiStatusBadge from "@/components/ApiStatusBadge";
@@ -27,3 +27,5 @@ export default function SiteHeader() {
     </header>
   );
 }
+
+

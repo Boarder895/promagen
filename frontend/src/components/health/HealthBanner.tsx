@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-// FRONTEND • components/health/HealthBanner.tsx
+// FRONTEND â€¢ components/health/HealthBanner.tsx
 import React from "react";
 import { useHealth } from "@/components/health/HealthContext";
 import { AlertTriangle, Activity, RefreshCcw } from "lucide-react";
@@ -40,9 +40,11 @@ export default function HealthBanner() {
           aria-label="Refresh health status"
         >
           <RefreshCcw size={14} className={checking ? "animate-spin" : ""} />
-          {checking ? "Checking…" : "Recheck"}
+          {checking ? "Checkingâ€¦" : "Recheck"}
         </button>
       </div>
     </div>
   );
 }
+
+

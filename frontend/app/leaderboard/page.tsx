@@ -1,37 +1,72 @@
-import React from "react";
-import { PROVIDERS, type Provider } from "@/lib/providers";
+﻿'use client';
 
-export const revalidate = 60;
+import React from 'react';
+import { PROVIDERS, type ProviderMeta } from '@/lib/providers';
 
-type Scored = Provider & { apiWeight: number; affiliateWeight: number };
+// Row = provider + demo score for compile sanity.
+// Replace scoring with your 7-criteria weighted calc later.
+type Row = ProviderMeta & { score: number; uiOnly: boolean };
+
+const toScore = (p: ProviderMeta): number => {
+  // Safe boolean reads for optional fields
+  const supports = p.supportsAutomation === true ? 1 : 0;
+  const hasAff   = p.hasAffiliate === true ? 1 : 0;
+
+  // Simple, deterministic demo score
+  // API/supportsAutomation is dominant; affiliate is a small bump.
+  return Math.max(0, supports * 1.0 + hasAff * 0.1);
+};
 
 export default function LeaderboardPage() {
-  const items: Scored[] = [...PROVIDERS].map((p) => ({
-    ...p,
-    apiWeight: p.hasApi ? 1 : 0,
-    affiliateWeight: "affiliate" in (p as any) ? Number((p as any).affiliate) || 0 : 0,
-  }));
-
-  items.sort(
-    (a, b) =>
-      b.apiWeight - a.apiWeight ||
-      b.affiliateWeight - a.affiliateWeight ||
-      a.name.localeCompare(b.name)
-  );
+  const rows: Row[] = PROVIDERS
+    .map((p) => ({
+      ...p,
+      uiOnly: p.hasApi === false,         // derive instead of reading a missing field
+      score: toScore(p),
+    }))
+    .sort((a, b) => b.score - a.score);
 
   return (
-    <main className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">Provider Leaderboard</h1>
-      <ol className="space-y-2">
-        {items.map((p) => (
-          <li key={p.id} className="border rounded-lg p-3 flex items-center justify-between">
-            <span className="font-medium">{p.name}</span>
-            <span className="text-sm opacity-80">
-              API: {p.hasApi ? "Yes" : "No"} • Affiliate: {p.affiliateWeight}
-            </span>
-          </li>
-        ))}
-      </ol>
+    <main className="p-6">
+      <h1 className="text-lg font-semibold mb-4">Provider Leaderboard (Demo)</h1>
+
+      <div className="overflow-x-auto rounded-xl border">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="text-left px-3 py-2">#</th>
+              <th className="text-left px-3 py-2">Provider</th>
+              <th className="text-left px-3 py-2">ID</th>
+              <th className="text-left px-3 py-2">API?</th>
+              <th className="text-left px-3 py-2">Supports Automation?</th>
+              <th className="text-left px-3 py-2">Affiliate?</th>
+              <th className="text-left px-3 py-2">UI-only?</th>
+              <th className="text-left px-3 py-2">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p, i) => (
+              <tr key={p.id} className="border-t">
+                <td className="px-3 py-2">{i + 1}</td>
+                <td className="px-3 py-2 font-medium">{p.name}</td>
+                <td className="px-3 py-2 opacity-70">{p.id}</td>
+                <td className="px-3 py-2">{p.hasApi ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{p.supportsAutomation === true ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{p.hasAffiliate === true ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{p.uiOnly ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{p.score.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-xs text-gray-500 mt-3">
+        Demo scoring for compile sanity. Weâ€™ll swap in the 7-criteria weighted score later.
+      </p>
     </main>
   );
 }
+
+
+

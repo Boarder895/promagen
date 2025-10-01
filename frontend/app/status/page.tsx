@@ -1,4 +1,4 @@
-import { getMeta } from '@/lib/api';
+﻿import { getMeta } from '@/lib/api';
 
 export default async function StatusPage() {
   // getMeta requires a key
@@ -16,4 +16,6 @@ export default async function StatusPage() {
     </div>
   );
 }
+
+
 

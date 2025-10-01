@@ -1,7 +1,7 @@
-import { getMeta } from '@/lib/api';
+﻿import { getMeta } from '@/lib/api';
 
 export default async function MetaTestPage() {
-  const meta = getMeta('test/meta'); // 🔧 pass a key
+  const meta = getMeta('test/meta'); // ðŸ”§ pass a key
   const pretty = JSON.stringify(meta, null, 2);
 
   return (
@@ -11,3 +11,5 @@ export default async function MetaTestPage() {
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-// Server component builds the provider list; client buttons will start the simulator.
+﻿// Server component builds the provider list; client buttons will start the simulator.
 import RunGrid from './run-grid'
 import { getProviders } from "@/lib/providers"
 
@@ -9,11 +9,13 @@ export default async function Page() {
 
   return (
     <main className="space-y-6">
-      <h1 className="text-2xl font-semibold">Demo Â· Generation Progress</h1>
+      <h1 className="text-2xl font-semibold">Demo Ã‚Â· Generation Progress</h1>
       <p className="opacity-80">
-        Click a provider or â€œRun Allâ€. This uses the simulator to mimic generation delays and updates tile badges.
+        Click a provider or Ã¢â‚¬Å“Run AllÃ¢â‚¬Â. This uses the simulator to mimic generation delays and updates tile badges.
       </p>
       <RunGrid providers={providers} />
     </main>
   )
 }
+
+

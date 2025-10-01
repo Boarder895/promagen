@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React from 'react';
 
 export default function DocsChrome({
@@ -20,3 +20,5 @@ export default function DocsChrome({
     </div>
   );
 }
+
+

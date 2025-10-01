@@ -1,4 +1,4 @@
-// Simple Markdown loader with recursive <!-- include: path.md --> support.
+﻿// Simple Markdown loader with recursive <!-- include: path.md --> support.
 // Paths are relative to the docs root. Works in Next.js server components.
 
 import fs from "node:fs";
@@ -56,3 +56,5 @@ export function listDocs(): { slug: string; file: string; title: string }[] {
     })
     .sort((a, b) => a.slug.localeCompare(b.slug));
 }
+
+

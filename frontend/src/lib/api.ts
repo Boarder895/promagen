@@ -1,4 +1,4 @@
-// Central API base + tiny metadata helper for pages that import getMeta.
+﻿// Central API base + tiny metadata helper for pages that import getMeta.
 // Ports: UI 3000 / API 3001 in dev; prod default = https://api.promagen.com
 
 // Named exports only (project rule).
@@ -14,8 +14,8 @@ export type AppMeta = {
 // Minimal central meta registry so pages like /app/status/page.tsx
 // and /app/test/meta/page.tsx can do: import { getMeta } from '@/lib/api'
 const META: Record<string, AppMeta> = {
-  status: { title: 'Status · Promagen', description: 'System health and checks.' },
-  'test/meta': { title: 'Meta Test · Promagen' },
+  status: { title: 'Status Â· Promagen', description: 'System health and checks.' },
+  'test/meta': { title: 'Meta Test Â· Promagen' },
   default: { title: 'Promagen' },
 };
 
@@ -23,3 +23,5 @@ const META: Record<string, AppMeta> = {
 export function getMeta(key: string): AppMeta {
   return META[key] ?? META.default;
 }
+
+

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { API_BASE } from '@/lib/api';
 
 // Local minimal types for the hook
@@ -58,4 +58,6 @@ export function usePrompts(query: PromptQuery = {}) {
 
   return { data, loading, error };
 }
+
+
 

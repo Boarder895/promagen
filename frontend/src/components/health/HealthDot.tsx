@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { useHealth } from "@/components/health/HealthContext";
@@ -24,3 +24,5 @@ export default function HealthDot({ label }: { label?: string }) {
     </span>
   );
 }
+
+

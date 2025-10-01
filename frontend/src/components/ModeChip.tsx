@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 export default function ModeChip({ mode }: { mode: "real" | "simulated" | "disabled" }) {
   const map = {
     real:       { t: "API",       c: "border-green-300 bg-green-50", dot: "#16a34a" },
@@ -12,3 +12,5 @@ export default function ModeChip({ mode }: { mode: "real" | "simulated" | "disab
     </span>
   );
 }
+
+

@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-// FRONTEND • components/ui/Toast.tsx
+// FRONTEND â€¢ components/ui/Toast.tsx
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 type Toast = { id: number; title: string; body?: string };
@@ -38,3 +38,5 @@ export function useToast() {
   if (!ctx) throw new Error("useToast must be used within <ToastProvider>");
   return ctx;
 }
+
+

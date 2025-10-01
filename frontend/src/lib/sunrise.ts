@@ -1,4 +1,4 @@
-// FRONTEND — NEXT.JS
+﻿// FRONTEND â€” NEXT.JS
 // frontend/lib/sunrise.ts
 // NOAA-style sunrise calc. Returns Date (UTC) or null.
 
@@ -43,3 +43,5 @@ export function sunriseUtc(date: Date, { lat, lon }: LatLng): Date | null {
   const seconds = Math.round((((UT - hours) * 60) - minutes) * 60);
   return new Date(Date.UTC(y, m, d, hours, minutes, seconds));
 }
+
+

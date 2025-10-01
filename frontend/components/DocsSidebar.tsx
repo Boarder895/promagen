@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -6,9 +6,9 @@ import { useMemo, useState } from "react";
 import Fuse from "fuse.js";
 
 const PAGES = [
-  { slug: "developers", title: "📘 Developers Book", desc: "Feature commands, paths, admin ops." },
-  { slug: "users",      title: "📙 Users Book",       desc: "User walkthrough + YouTube links." },
-  { slug: "build-plan", title: "🏗 Build Progress Book", desc: "What’s done vs outstanding." }
+  { slug: "developers", title: "ðŸ“˜ Developers Book", desc: "Feature commands, paths, admin ops." },
+  { slug: "users",      title: "ðŸ“™ Users Book",       desc: "User walkthrough + YouTube links." },
+  { slug: "build-plan", title: "ðŸ— Build Progress Book", desc: "Whatâ€™s done vs outstanding." }
 ];
 
 export default function DocsSidebar() {
@@ -27,7 +27,7 @@ export default function DocsSidebar() {
       <h2 style={{margin: "0 0 12px"}}>Promagen Docs</h2>
       <input
         aria-label="Search docs"
-        placeholder="Search…"
+        placeholder="Searchâ€¦"
         value={q}
         onChange={e => setQ(e.target.value)}
         style={{width: "100%", padding: "8px 10px", border: "1px solid #e5e7eb", borderRadius: 8, marginBottom: 12}}
@@ -45,8 +45,10 @@ export default function DocsSidebar() {
         })}
       </nav>
       <div style={{borderTop: "1px solid #eee", marginTop: 16, paddingTop: 12}}>
-        <Link className={`nav-link${pathname === "/docs" ? " active" : ""}`} href="/docs">📚 Docs Home</Link>
+        <Link className={`nav-link${pathname === "/docs" ? " active" : ""}`} href="/docs">ðŸ“š Docs Home</Link>
       </div>
     </div>
   );
 }
+
+

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 
 export function requireBearer(req: NextRequest): NextResponse | null {
   const token = process.env.ADMIN_BEARER_TOKEN || '';
@@ -12,3 +12,5 @@ export function requireBearer(req: NextRequest): NextResponse | null {
   }
   return null;
 }
+
+

@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { getBook } from "@/lib/books"; // named import
 
 /**
- * BuildAudit � reads from developers book via getBook("developers")
+ * BuildAudit ï¿½ reads from developers book via getBook("developers")
  */
 export default function BuildAudit() {
   const devBook: any = getBook("developers");
@@ -12,7 +12,7 @@ export default function BuildAudit() {
 
   return (
     <section className="mt-6 opacity-90">
-      <h2 className="text-xl font-semibold tracking-tight">Developers Book � Build Audit</h2>
+      <h2 className="text-xl font-semibold tracking-tight">Developers Book ï¿½ Build Audit</h2>
 
       {sections.length === 0 ? (
         <p className="mt-2 text-sm opacity-70">
@@ -49,6 +49,8 @@ export default function BuildAudit() {
     </section>
   );
 }
+
+
 
 
 

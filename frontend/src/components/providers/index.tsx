@@ -1,19 +1,8 @@
-"use client";
+﻿// Legacy compatibility shim.
+// Some older code imported from "src/components/providers" expecting a list.
+// We now re-export the canonical registry so those imports continue to work.
 
-import React from "react";
-import { providers, type Provider } from "@/lib/providers";
+export { PROVIDERS } from '@/lib/providers';
+export type { Provider, ProviderId, ProviderMeta } from '@/lib/providers';
 
-export default function ProvidersIndex() {
-  const list: Provider[] = providers;
 
-  return (
-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {list.map((p) => (
-        <div key={p.id} className="rounded-lg border p-3">
-          <div className="font-medium">{p.name}</div>
-          <div className="text-xs opacity-70">{p.hasApi ? "API" : "Manual"}</div>
-        </div>
-      ))}
-    </section>
-  );
-}

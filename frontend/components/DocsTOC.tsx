@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -48,3 +48,5 @@ export default function TOC() {
     </nav>
   );
 }
+
+

@@ -1,4 +1,4 @@
-// src/components/Header.tsx � uses Next/Image and keeps Status/Health
+﻿// src/components/Header.tsx ï¿½ uses Next/Image and keeps Status/Health
 import Link from "next/link";
 import Image from "next/image";
 import StatusChip from "@/components/StatusChip";
@@ -37,3 +37,5 @@ export default function Header() {
     </>
   );
 }
+
+

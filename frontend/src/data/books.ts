@@ -1,4 +1,4 @@
-// src/data/books.ts
+﻿// src/data/books.ts
 import raw from "./books.json";
 
 export type BookSection = { title: string; items: string[] };
@@ -20,3 +20,5 @@ export const books: BooksDataCompat = {
 };
 
 export default books;
+
+

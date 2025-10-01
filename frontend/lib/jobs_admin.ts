@@ -1,4 +1,4 @@
-// lib/jobs_admin.ts
+﻿// lib/jobs_admin.ts
 
 export type AdminJob = {
   id: string;
@@ -20,3 +20,5 @@ export async function getRecentJobs(take: number = 10): Promise<AdminJob[]> {
   // if (!res.ok) throw new Error("Failed to fetch jobs");
   // return (await res.json()) as AdminJob[];
 }
+
+
