@@ -4,29 +4,61 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // e.g. postgresql://user:pass@host:5432/db?schema=promagen20&sslmode=require
+  url      = env("DATABASE_URL")
+}
+
+model ProviderSnapshotBatch {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  snapshots ProviderSnapshot[]
+}
+
+model Provider {
+  id        String   @id
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  overrides ProviderOverride[]
+}
+
+model ProviderSnapshot {
+  id        String   @id @default(cuid())
+  providerId String
+  name      String
+  score     Int?
+  reason    String?
+  createdAt DateTime @default(now())
+  batchId   String
+  batch     ProviderSnapshotBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@index([batchId])
 }
 
 model ProviderOverride {
-  id              String   @id @default(cuid())      @db.Text
-  providerId      String   @unique                  @db.Text
+  id              String   @id @default(cuid())
+  providerId      String   @unique
   scoreAdjustment Int?
   isHardOverride  Boolean  @default(false)
   finalScore      Int?
-  notes           String?                           @db.Text
-  createdAt       DateTime @default(now())          @db.Timestamptz(6)
-  updatedAt       DateTime @updatedAt               @db.Timestamptz(6)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 }
 
 model LeaderboardAudit {
-  id            String   @id @default(cuid())       @db.Text
-  generatedAt   DateTime @default(now())           @db.Timestamptz(6)
-  reviewer      String?                            @db.Text
-  period        String?                            @db.Text
+  id            String   @id @default(cuid())
+  generatedAt   DateTime @default(now())
+  reviewer      String?
+  period        String?
   base          Int?
   bases         Json?
-  signature     String                              @db.Text       // SHA-256 of JSON payload
-  hmacSignature String?                             @db.Text       // HMAC-SHA256(JSON, AUDIT_HMAC_SECRET)
+  signature     String
+  hmacSignature String?
   jsonPayload   Json
-  csvPayload    String                              @db.Text
+  csvPayload    String
 }
+
