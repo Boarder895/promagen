@@ -1,27 +1,17 @@
-name: Generate Docs from Source
+name: update-docs
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'docs/source.json'
-      - 'scripts/generate-docs.js'
-      - '.github/workflows/update-docs.yml'
-      - '**/*.ts'
-      - '**/*.tsx'
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions: {}
 
 jobs:
-  build:
+  noop:
+    name: Parked (no-op)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: node scripts/generate-docs.js
-      - name: Commit regenerated docs
+      - name: Explain status
         run: |
-          git config user.name "promagen-bot"
-          git config user.email "bot@promagen.com"
-          git add docs/developers.md docs/users.md docs/build-plan.md
-          git diff --cached --quiet || git commit -m "chore(docs): regenerate from source.json"
-          git push
+          echo "update-docs workflow is parked. No git pushes from CI."
+          echo "Run manually via 'workflow_dispatch' if you add a generator later."
