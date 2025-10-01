@@ -1,4 +1,4 @@
-﻿// Legacy compatibility shim.
+// Legacy compatibility shim.
 // Some older code imported from "src/components/providers" expecting a list.
 // We now re-export the canonical registry so those imports continue to work.
 

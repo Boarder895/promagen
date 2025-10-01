@@ -1,4 +1,4 @@
-﻿// Temporary shim so TS understands the server-actions hooks on React 18 types.
+// Temporary shim so TS understands the server-actions hooks on React 18 types.
 // Remove once your React/Next types natively include these signatures.
 
 declare module "react-dom" {

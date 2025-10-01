@@ -1,229 +1,132 @@
-﻿'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useState, ChangeEvent } from "react";
 
 type ProviderOverride = {
-  scoreAdjustment?: number | null;
-  finalScore?: number | null;
-  isHardOverride?: boolean | null;
-  notes?: string | null;
-} | null;
+  id: string;
+  uiProviderId?: string | null;
+  textProviderId?: string | null;
+  imageProviderId?: string | null;
+  embedProviderId?: string | null;
+};
 
-type ProviderRow = { id: string; name: string; override: ProviderOverride };
+type ProviderRow = {
+  id: string;
+  name: string;
+  override?: ProviderOverride | null;
+};
 
 type AuditRow = {
   id: string;
-  action: 'PATCH' | 'DELETE' | string;
-  prevScore?: number | null;
-  newScore?: number | null;
-  ip?: string | null;
-  userAgent?: string | null;
-  createdAt: string;
+  providerId: string;
+  userId: string;
+  action: "override" | "clear";
+  createdAt: string; // ISO string
+  notes?: string | null;
 };
 
-export default function ClientProviders({ initialData }: { initialData: ProviderRow[] }) {
-  const [rows, setRows] = useState<ProviderRow[]>(initialData);
-  const [editing, setEditing] = useState<ProviderRow | null>(null);
-  const [score, setScore] = useState<string>('');
-  const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-  const [audit, setAudit] = useState<AuditRow[] | null>(null);
-  const [auditBusy, setAuditBusy] = useState(false);
+type ClientProvidersProps = {
+  initialData: ProviderRow[];
+  audit?: AuditRow[];
+  overrides?: ProviderOverride[];
+  mutated?: boolean;
+};
 
-  function openEdit(r: ProviderRow) {
-    setEditing(r);
-    setScore((r.override?.scoreAdjustment ?? '').toString());
-    setAudit(null);
-    void loadAudit(r.id);
+export function ClientProviders(props: ClientProvidersProps) {
+  const { initialData, audit, overrides: initialOverrides, mutated } = props;
+  const [rows] = useState<ProviderRow[]>(initialData ?? []);
+  // underscore value to satisfy no-unused-vars; we only update it here
+  const [_overrides, setOverrides] = useState<ProviderOverride[]>(initialOverrides ?? []);
+
+  function updateOverride(providerId: string, patch: Partial<ProviderOverride>) {
+    setOverrides((prev) => {
+      const next = prev.slice();
+      const idx = next.findIndex((o) => o.id === providerId);
+      if (idx === -1) {
+        next.push({ id: providerId, ...patch });
+      } else {
+        next[idx] = { ...next[idx], ...patch };
+      }
+      return next;
+    });
   }
 
-  async function loadAudit(id: string) {
-    try {
-      setAuditBusy(true);
-      const res = await fetch(`/api/providers/${id}/override/audit`, { cache: 'no-store' });
-      const data = await res.json();
-      if (res.ok && data?.ok) setAudit(data.rows ?? []);
-      else setAudit([]);
-    } catch {
-      setAudit([]);
-    } finally {
-      setAuditBusy(false);
-    }
-  }
-
-  async function save() {
-    if (!editing) return;
-    const num = Number(score);
-    if (!Number.isInteger(num) || num < -100 || num > 100) {
-      setToast('Enter an integer between -100 and 100'); 
-      return;
-    }
-
-    setBusy(true);
-    const prev = rows;
-    setRows((rs) =>
-      rs.map((p) =>
-        p.id === editing.id ? { ...p, override: { ...(p.override ?? {}), scoreAdjustment: num } } : p
-      )
-    );
-
-    try {
-      const res = await fetch(`/api/providers/${editing.id}/override`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scoreAdjustment: num }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data?.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
-      setToast('Saved');
-      await loadAudit(editing.id);
-      setEditing(null);
-    } catch (e: any) {
-      setRows(prev); // rollback
-      setToast(`Save failed: ${e?.message ?? 'unknown'}`);
-    } finally {
-      setBusy(false);
-      setTimeout(() => setToast(null), 2500);
-    }
-  }
-
-  async function resetOverride() {
-    if (!editing) return;
-    setBusy(true);
-    const prev = rows;
-    // optimistic clear
-    setRows((rs) =>
-      rs.map((p) => (p.id === editing.id ? { ...p, override: null } : p))
-    );
-    try {
-      const res = await fetch(`/api/providers/${editing.id}/override`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok || !data?.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
-      setToast(data.cleared ? 'Override reset' : 'No override to reset');
-      await loadAudit(editing.id);
-      setEditing(null);
-    } catch (e: any) {
-      setRows(prev); // rollback
-      setToast(`Reset failed: ${e?.message ?? 'unknown'}`);
-    } finally {
-      setBusy(false);
-      setTimeout(() => setToast(null), 2500);
-    }
+  function onChangeFactory(
+    providerId: string,
+    key: keyof Omit<ProviderOverride, "id">
+  ) {
+    return (e: ChangeEvent<HTMLInputElement>) => {
+      const v = e.target.value.trim();
+      updateOverride(providerId, { [key]: v.length > 0 ? v : null } as Partial<ProviderOverride>);
+    };
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="mb-1 text-2xl font-bold">Image Model Providers</h1>
-      <p className="mb-6 text-sm text-gray-600">{rows.length} providers loaded from the API.</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Providers</h2>
+        {mutated ? <span className="text-xs opacity-75">pending changes</span> : null}
+      </div>
 
-      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {rows.map((p) => (
-          <li key={p.id} className="card p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-sm font-semibold">{p.name}</div>
-                <div className="text-xs text-gray-500">{p.id}</div>
-              </div>
-              {p.override ? (
-                <span className="badge bg-blue-50">
-                  Adj: {typeof p.override.scoreAdjustment === 'number' ? p.override.scoreAdjustment : 'â€”'}
-                </span>
-              ) : (
-                <span className="badge bg-gray-50">No override</span>
-              )}
-            </div>
+      <div className="grid gap-3">
+        {rows.map((r) => (
+          <div key={r.id} className="rounded border p-3">
+            <div className="font-medium">{r.name}</div>
 
-            <div className="mt-3">
-              <button className="btn" onClick={() => openEdit(p)}>Edit score</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+            <div className="mt-2 flex flex-wrap gap-3 text-sm">
+              <label className="flex items-center gap-2">
+                <span>Text</span>
+                <input
+                  className="rounded border px-2 py-1"
+                  defaultValue={r.override?.textProviderId ?? ""}
+                  onChange={onChangeFactory(r.id, "textProviderId")}
+                />
+              </label>
 
-      {/* Dialog */}
-      {editing && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40">
-          <div className="card w-full max-w-lg p-4">
-            <h2 className="mb-2 text-lg font-semibold">Edit score â€“ {editing.name}</h2>
+              <label className="flex items-center gap-2">
+                <span>Image</span>
+                <input
+                  className="rounded border px-2 py-1"
+                  defaultValue={r.override?.imageProviderId ?? ""}
+                  onChange={onChangeFactory(r.id, "imageProviderId")}
+                />
+              </label>
 
-            <label className="mb-1 block text-sm text-gray-600" htmlFor="score">
-              Score adjustment (-100 â€¦ 100)
-            </label>
-            <input
-              id="score"
-              type="number"
-              min={-100}
-              max={100}
-              step={1}
-              value={score}
-              onChange={(e) => setScore(e.target.value)}
-              className="input"
-            />
+              <label className="flex items-center gap-2">
+                <span>UI</span>
+                <input
+                  className="rounded border px-2 py-1"
+                  defaultValue={r.override?.uiProviderId ?? ""}
+                  onChange={onChangeFactory(r.id, "uiProviderId")}
+                />
+              </label>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-xs text-gray-500">
-                Server clamps to [-100, 100]; changes are audited.
-              </div>
-              <div className="flex gap-2">
-                <button
-                  className="btn bg-gray-200 text-gray-900 hover:bg-gray-300"
-                  onClick={() => setEditing(null)}
-                  disabled={busy}
-                >
-                  Cancel
-                </button>
-                <button className="btn" onClick={save} disabled={busy}>
-                  {busy ? 'Savingâ€¦' : 'Save'}
-                </button>
-                <button
-                  className="btn bg-red-600 hover:bg-red-700"
-                  onClick={resetOverride}
-                  disabled={busy}
-                  title="Reset override to none"
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
-
-            {/* Tiny audit list */}
-            <div className="mt-5">
-              <div className="mb-2 text-sm font-semibold">Recent changes</div>
-              <div className="rounded-lg border border-gray-200">
-                {auditBusy ? (
-                  <div className="p-3 text-sm text-gray-500">Loadingâ€¦</div>
-                ) : !audit?.length ? (
-                  <div className="p-3 text-sm text-gray-500">No recent changes.</div>
-                ) : (
-                  <ul className="divide-y">
-                    {audit.map((a) => (
-                      <li key={a.id} className="p-3 text-sm">
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium">{a.action}</div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(a.createdAt).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="mt-1 text-xs text-gray-600">
-                          {a.prevScore ?? 'â€”'} â†’ {a.newScore ?? 'â€”'} Â· {a.ip ?? 'ip:â€”'}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              <label className="flex items-center gap-2">
+                <span>Embed</span>
+                <input
+                  className="rounded border px-2 py-1"
+                  defaultValue={r.override?.embedProviderId ?? ""}
+                  onChange={onChangeFactory(r.id, "embedProviderId")}
+                />
+              </label>
             </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {toast && (
-        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
-          <div className="rounded-lg bg-black px-3 py-2 text-sm text-white shadow">{toast}</div>
-        </div>
+      {audit && audit.length > 0 && (
+        <details className="rounded border p-3">
+          <summary className="cursor-pointer font-medium">Recent override activity</summary>
+          <ul className="mt-2 text-sm">
+            {audit.map((a) => (
+              <li key={a.id}>
+                {new Date(a.createdAt).toLocaleString()} - {a.action} - {a.providerId}
+                {a.notes ? " — " + a.notes : ""}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
-    </main>
+    </div>
   );
 }
-
-

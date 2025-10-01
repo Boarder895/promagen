@@ -1,4 +1,4 @@
-﻿// FRONTEND â€¢ NEXT.JS
+// FRONTEND • NEXT.JS
 // File: frontend/app/global-error.tsx
 "use client";
 

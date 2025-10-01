@@ -1,27 +1,26 @@
-﻿// Demo generator (Option A). Matches your page's call signature:
-//   const jobId = await startGeneration(p.id, prompt);
+// Minimal, typed, and no unused args.
 
-import type { ProviderId } from "@/lib/providers"
+export type ProviderId = "openai" | "anthropic" | "bedrock" | "other";
 
-export type JobState = 'queued' | 'running' | 'ok' | 'error'
+export type StartGenerationRequest = {
+  provider: ProviderId;
+  prompt: string;
+};
 
-export type StartResponse = { jobId: string }
+export type StartGenerationResponse = {
+  ok: true;
+  id: string;
+};
 
-/** Start a generation job (stubbed) */
-export async function startGeneration(provider: ProviderId, prompt: string): Promise<string> {
-  // In a real integration you'd POST to your backend here.
-  // We return a deterministic-ish id so progress can be tied to it.
-  const jobId = `job_${provider}_${Date.now()}`
-  return jobId
+export async function startGeneration(req: StartGenerationRequest): Promise<StartGenerationResponse> {
+  // TODO: call your API / provider. Placeholder keeps types strict.
+  const id = `${req.provider}:${Date.now()}`;
+  return { ok: true, id };
 }
 
-// Keep a compatible export name some code might use
-export type GenerateRequest = { provider: ProviderId; prompt: string; userId?: string }
-export type GenerateResponse = { jobId: string; provider: ProviderId; status: JobState; imageUrl?: string; error?: string }
-export const generate = async (req: GenerateRequest): Promise<GenerateResponse> => ({
-  jobId: await startGeneration(req.provider, req.prompt),
-  provider: req.provider,
-  status: 'queued'
-})
-
+// Example of the earlier unused-arg issue fixed via underscore
+export function generate(_prompt: string): string {
+  // Future implementation will use the prompt; underscore keeps ESLint happy meanwhile.
+  return "not-implemented";
+}
 

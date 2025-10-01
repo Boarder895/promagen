@@ -1,4 +1,4 @@
-﻿// Named exports only.
+// Named exports only.
 // Self-contained link helpers used by UI to build provider routes + query strings.
 
 import type { ProviderId } from "./openAIProviders";

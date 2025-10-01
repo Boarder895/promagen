@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import Link from "next/link";
 import { getBook } from "@/lib/books";
 
 /**
- * TopBar ï¿½ builds nav from the three books via getBook()
+ * TopBar � builds nav from the three books via getBook()
  * No Books/BookStore/BooksDataCompat anywhere.
  */
 export default function TopBar() {

@@ -1,4 +1,4 @@
-﻿// src/components/layout/PromptRunnerLayout.tsx
+// src/components/layout/PromptRunnerLayout.tsx
 import * as React from "react";
 import clsx from "clsx";
 

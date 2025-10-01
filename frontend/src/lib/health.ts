@@ -1,4 +1,4 @@
-﻿// FRONTEND â€¢ lib/health.ts
+// FRONTEND • lib/health.ts
 export type HealthStatus = "ok" | "degraded" | "down";
 export interface HealthResponse {
   status: HealthStatus;

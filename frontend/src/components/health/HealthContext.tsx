@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-// FRONTEND â€¢ components/health/HealthContext.tsx
+// FRONTEND • components/health/HealthContext.tsx
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { fetchHealth, type HealthResponse, type HealthStatus } from "@/lib/health";
 

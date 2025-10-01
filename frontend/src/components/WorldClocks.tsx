@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { sunriseUtc } from "@/lib/sunrise";
@@ -98,7 +98,7 @@ export default function WorldClocks() {
                 minute: "2-digit",
                 hour12: false,
               }).format(sunriseUtc)
-            : "ï¿½";
+            : "�";
 
           return (
             <div key={city.id} className="pmg-clock">

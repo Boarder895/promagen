@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 
 export default function DocsLayout({ children }: { children: ReactNode }) {

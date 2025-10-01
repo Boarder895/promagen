@@ -1,9 +1,9 @@
-﻿// Named exports only. No default exports.
+// Named exports only. No default exports.
 //
 // Canonical 20-provider list for Promagen (frontend is the source of truth).
 
 export type ProviderId =
-  | "openai"        // OpenAI DALLÂ·E/GPT-Image
+  | "openai"        // OpenAI DALL·E/GPT-Image
   | "stability"     // Stability AI
   | "leonardo"      // Leonardo AI
   | "i23rf"         // I23RF (renamed from 123RF)
@@ -38,7 +38,7 @@ export interface ProviderMeta {
 
 // Canonical list (order stable)
 export const PROVIDERS: ProviderMeta[] = [
-  { id: "openai",     name: "OpenAI DALLÂ·E/GPT-Image", kind: "api", supportsAutomation: true,  uiOnly: false, hasAffiliate: false },
+  { id: "openai",     name: "OpenAI DALL·E/GPT-Image", kind: "api", supportsAutomation: true,  uiOnly: false, hasAffiliate: false },
   { id: "stability",  name: "Stability AI",            kind: "api", supportsAutomation: true,  uiOnly: false, hasAffiliate: false },
   { id: "leonardo",   name: "Leonardo AI",             kind: "api", supportsAutomation: true,  uiOnly: false, hasAffiliate: true  },
   { id: "i23rf",      name: "I23RF",                   kind: "ui",  supportsAutomation: false, uiOnly: true,  hasAffiliate: true  },

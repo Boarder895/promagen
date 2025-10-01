@@ -1,22 +1,37 @@
-﻿"use client";
-import { useEffect, useState } from "react";
+"use client";
 
-export default function CopyLinkButton({ anchorId }: { anchorId: string }) {
+import { useState } from "react";
+
+type Props = { id: string; className?: string };
+
+function getDisplayUrlForPromptId(id: string) {
+  const base = typeof window !== "undefined" ? window.location.origin : "";
+  return `${base}/image/prompts/${encodeURIComponent(id)}`;
+}
+
+export default function CopyLinkButton({ id, className }: Props) {
   const [copied, setCopied] = useState(false);
-  const href = typeof window !== "undefined" ? `${location.origin}${location.pathname}#${anchorId}` : `#${anchorId}`;
+
+  async function onCopy() {
+    const url = getDisplayUrlForPromptId(id);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setCopied(false);
+    }
+  }
 
   return (
     <button
-      className="text-xs underline opacity-80 hover:opacity-100"
-      onClick={async () => {
-        await navigator.clipboard.writeText(href);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1200);
-      }}
+      type="button"
+      onClick={onCopy}
+      className={className ?? "rounded border px-2 py-1 text-sm"}
+      aria-live="polite"
+      aria-label={copied ? "Copied link" : "Copy link"}
     >
       {copied ? "Copied!" : "Copy link"}
     </button>
   );
 }
-
-

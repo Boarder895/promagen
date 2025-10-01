@@ -1,32 +1,23 @@
-﻿// app/admin/syncForm.tsx
 "use client";
 
+import { doSync, initialSyncState, type SyncState as _SyncState } from "@/admin/actions";
 import { useFormState } from "react-dom";
-import { useEffect, useState } from "react";
-import { doSync, initialSyncState, type SyncState } from "@/admin/actions";
+import { useRef } from "react";
 
-export default function AdminSyncForm() {
-  // Let react-dom infer types; don't add generics here
+export default function SyncForm() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction] = useFormState(doSync, initialSyncState);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    setVisible(state.ok !== null);
-  }, [state.ok]);
 
   return (
-    <form action={formAction} className="space-y-3">
-      <button className="rounded-lg border px-3 py-2">Run sync</button>
+    <form ref={formRef} action={formAction} className="space-y-3">
+      <div className="flex items-center gap-2">
+        <button type="submit" className="rounded border px-3 py-2">
+          Sync now
+        </button>
+      </div>
 
-      {visible && (
-        <div
-          className={`rounded-lg border p-3 text-sm ${
-            state.ok ? "border-green-500" : "border-red-500"
-          }`}
-        >
-          <div className="font-medium">{state.ok ? "Success" : "Failed"}</div>
-          <div className="opacity-80">{state.message ?? ""}</div>
-        </div>
+      {state?.message && (
+        <p className="text-sm opacity-80">{state.message}</p>
       )}
     </form>
   );

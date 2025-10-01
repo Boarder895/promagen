@@ -1,4 +1,4 @@
-﻿// middleware.ts
+// middleware.ts
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -46,7 +46,7 @@ export function middleware(req: NextRequest) {
     if (!expected || token !== expected) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
-    // Token ok â†’ allow
+    // Token ok → allow
     return NextResponse.next();
   }
 

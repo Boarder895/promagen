@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 // Shared state for the admin sync flow
 export type SyncState = {

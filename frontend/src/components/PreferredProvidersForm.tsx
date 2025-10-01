@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { PROVIDERS, type Provider } from '@/lib/providers';
@@ -18,7 +18,7 @@ export function PreferredProvidersForm() {
           setSelected(Array.isArray(d?.preferredProviders) ? d.preferredProviders : []);
         }
       } catch {
-        // ignore — keep defaults
+        // ignore � keep defaults
       }
     })();
     return () => {

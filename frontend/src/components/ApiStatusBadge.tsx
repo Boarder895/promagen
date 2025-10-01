@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE } from "@/lib/api";
@@ -67,7 +67,7 @@ export default function ApiStatusBadge({
       return (
         <span className="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-1 text-sm">
           <Dot color="#16a34a" />
-          API up <span className="opacity-70">Â· {state.ms} ms</span>
+          API up <span className="opacity-70">· {state.ms} ms</span>
         </span>
       );
     }
@@ -75,7 +75,7 @@ export default function ApiStatusBadge({
       return (
         <span className="inline-flex items-center gap-2 rounded-full border border-red-300 bg-red-50 px-3 py-1 text-sm">
           <Dot color="#dc2626" />
-          API down <span className="opacity-70">Â· {state.error}</span>
+          API down <span className="opacity-70">· {state.error}</span>
         </span>
       );
     }
@@ -83,7 +83,7 @@ export default function ApiStatusBadge({
       return (
         <span className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-50 px-3 py-1 text-sm">
           <Spinner />
-          Checkingâ€¦
+          Checking…
         </span>
       );
     }
@@ -100,7 +100,7 @@ export default function ApiStatusBadge({
     return (
       <button
         onClick={check}
-        title={`API: ${state.kind}${"when" in state ? ` Â· ${state.when}` : ""}`}
+        title={`API: ${state.kind}${"when" in state ? ` · ${state.when}` : ""}`}
         className="inline-flex items-center gap-2"
       >
         {state.kind === "up" ? <Dot color="#16a34a" /> : state.kind === "down" ? <Dot color="#dc2626" /> : <Dot color="#6b7280" />}

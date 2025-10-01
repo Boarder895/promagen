@@ -1,4 +1,4 @@
-﻿// FRONTEND â€” NEXT.JS
+// FRONTEND — NEXT.JS
 // frontend/lib/sunrise.ts
 // NOAA-style sunrise calc. Returns Date (UTC) or null.
 

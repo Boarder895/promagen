@@ -1,4 +1,4 @@
-﻿// App Router page at /admin
+// App Router page at /admin
 // Note: Next.js requires a default export for page components (allowed exception in your ESLint overrides).
 
 export const dynamic = "force-dynamic"; // optional, safe default for admin

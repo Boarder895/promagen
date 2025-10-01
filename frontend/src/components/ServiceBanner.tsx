@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { pingHealth } from "@/lib/ping";
@@ -45,8 +45,8 @@ export default function ServiceBanner() {
       }}
     >
       <strong>{label}</strong>
-      {typeof view.latency === "number" ? ` â€¢ ${view.latency}ms` : ""}
-      {view.detail ? ` â€” ${view.detail}` : ""}
+      {typeof view.latency === "number" ? ` • ${view.latency}ms` : ""}
+      {view.detail ? ` — ${view.detail}` : ""}
       <button
         onClick={() => setDismissed(true)}
         style={{

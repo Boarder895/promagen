@@ -1,4 +1,4 @@
-﻿// POST /api/admin/sync  (guarded by middleware.ts)
+// POST /api/admin/sync  (guarded by middleware.ts)
 import { NextResponse } from "next/server";
 import { refreshProviders } from "@/lib/providerState";
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { usePrompts, type Prompt } from "@/lib/hooks/usePrompts";
@@ -18,7 +18,7 @@ export const PromptGrid = ({
 
   if (error) {
     return <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800">
-      <div className="font-semibold">Couldn’t load prompts</div>
+      <div className="font-semibold">Couldn�t load prompts</div>
       <div className="text-sm opacity-80">{error.message}</div>
     </div>;
   }

@@ -1,21 +1,18 @@
-﻿// Server component builds the provider list; client buttons will start the simulator.
-import RunGrid from './run-grid'
-import { getProviders } from "@/lib/providers"
+// App Router page: use named import (Promagen rule: no default exports)
+import { RunGrid } from "./run-grid";
 
-export default async function Page() {
-  // Use the Option-A frontend registry
-  const all = await getProviders()
-  const providers = all.map(p => ({ id: p.id, name: p.name }))
+const providers = [
+  { id: "openai", name: "OpenAI DALL·E/GPT-Image" },
+  { id: "stability", name: "Stability AI" },
+  { id: "leonardo", name: "Leonardo AI" },
+  // Add more as needed; your canonical 20-provider list can be wired later.
+];
 
+export default function Page() {
   return (
-    <main className="space-y-6">
-      <h1 className="text-2xl font-semibold">Demo Ã‚Â· Generation Progress</h1>
-      <p className="opacity-80">
-        Click a provider or Ã¢â‚¬Å“Run AllÃ¢â‚¬Â. This uses the simulator to mimic generation delays and updates tile badges.
-      </p>
-      <RunGrid providers={providers} />
-    </main>
-  )
+    <div className="space-y-6">
+      <h1 className="text-xl font-semibold">Provider Run Demo</h1>
+      <RunGrid providers={providers} defaultPrompt="A whimsical lighthouse at sunset" />
+    </div>
+  );
 }
-
-

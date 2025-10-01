@@ -1,4 +1,4 @@
-﻿export async function sendChat(messages: {role:"system"|"user"|"assistant", content:string}[]) {
+export async function sendChat(messages: {role:"system"|"user"|"assistant", content:string}[]) {
   const r = await fetch("http://localhost:4000/api/ai/openai/chat", {
     method: "POST",
     headers: {"Content-Type":"application/json"},

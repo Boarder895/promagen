@@ -1,4 +1,4 @@
-﻿// app/docs/users/page.tsx
+// app/docs/users/page.tsx
 import { getBook, metaOf } from "@/lib/books";
 
 export default function UsersPage() {
@@ -19,7 +19,7 @@ export default function UsersPage() {
             <p className="opacity-80">{s.summary}</p>
             <div className="text-xs opacity-60 mt-2">
               Status: {s.status}
-              {s.lastUpdated ? ` ï¿½ Updated: ${s.lastUpdated}` : null}
+              {s.lastUpdated ? ` � Updated: ${s.lastUpdated}` : null}
             </div>
           </article>
         ))}

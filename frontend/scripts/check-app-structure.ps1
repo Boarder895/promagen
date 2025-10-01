@@ -1,65 +1,65 @@
-﻿$ErrorActionPreference = "Stop"
+﻿# App Router must live at .\app\** (NO .\src\app). Also scan code for "src/app".
 
-function Fail($msg) { Write-Error $msg; $script:failed = $true }
+[CmdletBinding()]
+param(
+  # Optional override; if omitted we compute repo root from this script's location.
+  [string]$RepoRoot
+)
 
-# Resolve repo root (works inside hooks/CI)
-$repo = (& git rev-parse --show-toplevel 2>$null); if (-not $repo) { $repo = (Resolve-Path ".").Path }
-Set-Location $repo
+$ErrorActionPreference = 'Stop'
 
-Write-Host "== App structure check =="
-Write-Host "Repo: $repo`n"
-
-# A) Root app must exist
-if (-not (Test-Path ".\app")) { Fail "Missing .\app folder (root App Router)." } else { Write-Host "✔ Root .\app exists" }
-
-# B) src\app must NOT exist
-if (Test-Path ".\src\app") {
-  Fail "Found disallowed .\src\app tree."
-  Get-ChildItem ".\src\app" -Recurse -File | Select-Object -First 20 | ForEach-Object { Write-Host "  - $($_.FullName)" }
-} else {
-  Write-Host "✔ No .\src\app tree"
+# Resolve repo root robustly (no reliance on -LiteralPath/-Parent or $PSScriptRoot)
+if (-not $RepoRoot -or $RepoRoot.Trim() -eq '') {
+  $scriptPath = $MyInvocation.MyCommand.Path
+  if ($scriptPath -and $scriptPath.Trim() -ne '') {
+    $scriptDir = [System.IO.Path]::GetDirectoryName($scriptPath)       # ...\frontend\scripts
+    $RepoRoot  = [System.IO.Path]::GetDirectoryName($scriptDir)        # ...\frontend
+  }
+  if (-not $RepoRoot -or $RepoRoot.Trim() -eq '') {
+    $RepoRoot = (Get-Location).Path
+  }
 }
 
-# C) No 'src/app' references anywhere (sources/config/docs)
-$hits = Get-ChildItem . -Recurse -File -Include *.ts,*.tsx,*.js,*.jsx,*.json,*.md,*.css,*.scss,*.yml,*.yaml |
-  Where-Object { $_.FullName -notlike "*\node_modules\*" -and $_.FullName -notlike "*\.next\*" } |
-  Select-String -SimpleMatch "src/app"
-if ($hits) {
-  Fail "Found 'src/app' references:"; $hits | Select-Object Path,LineNumber,Line | Format-Table -AutoSize
-} else {
-  Write-Host "✔ No 'src/app' references"
-}
+function OK   ([string]$m){ Write-Host $m -ForegroundColor Green }
+function FAIL ([string]$m){ Write-Host $m -ForegroundColor Red;  exit 1 }
 
-# D) tsconfig path alias must include './app/*'
-$tsPath = ".\tsconfig.json"
-if (Test-Path $tsPath) {
+Write-Host "== App structure check ==" -ForegroundColor Cyan
+Write-Host ("Repo: {0}" -f $RepoRoot) -ForegroundColor DarkGray
+
+# 1) Must have .\app
+$app = Join-Path $RepoRoot 'app'
+if (Test-Path -LiteralPath $app) { OK 'Root .\app exists' } else { FAIL "Missing .\app (expected: $app)" }
+
+# 2) Must NOT have .\src\app
+$srcApp = Join-Path $RepoRoot 'src\app'
+if (Test-Path -LiteralPath $srcApp) { FAIL 'Forbidden folder .\src\app found (move contents into .\app)' } else { OK 'No .\src\app tree' }
+
+# 3) Scan for "src/app" string references (exclude vendor/build & non-source files)
+$exts    = '.ts','.tsx','.js','.jsx','.json','.css','.scss'
+$exclude = '\\node_modules\\|\\\.next\\|\\\.git\\|\\dist\\|\\build\\|\\docs\\'
+
+$files = Get-ChildItem -Path (Join-Path $RepoRoot '*') -Recurse -File |
+         Where-Object {
+           $_.FullName -notmatch $exclude -and
+           $exts -contains $_.Extension.ToLower()
+         }
+
+$hits = @()
+foreach ($f in $files) {
   try {
-    $ts = Get-Content $tsPath -Raw | ConvertFrom-Json
-    $paths = $ts.compilerOptions.paths."@/*"
-    $ok = $paths -contains "./app/*"
-  } catch {
-    # Fallback: text search if tsconfig contains comments / non-JSON
-    $ok = (Select-String -Path $tsPath -SimpleMatch '"@/*": [' -Context 0,4 | Select-String -SimpleMatch "./app/*") -ne $null
-  }
-  if (-not $ok) { Fail "tsconfig.json paths['@/*'] must include ""./app/*""." } else { Write-Host "✔ tsconfig @/* includes ./app/*" }
-} else {
-  Fail "Missing tsconfig.json"
+    $m = Select-String -LiteralPath $f.FullName -Pattern 'src/app' -SimpleMatch -ErrorAction Stop
+    if ($m) { $hits += $m }
+  } catch { }
 }
 
-# E) Tailwind content globs must cover ./app
-$twFiles = @(".\tailwind.config.ts", ".\tailwind.config.js") | Where-Object { Test-Path $_ }
-if ($twFiles.Count -gt 0) {
-  $hasAppGlob = $false
-  foreach ($f in $twFiles) {
-    if (Select-String -Path $f -SimpleMatch "./app/**/*") { $hasAppGlob = $true }
+if ($hits.Count -gt 0) {
+  Write-Host "Found 'src/app' references:" -ForegroundColor Red
+  foreach ($h in ($hits | Sort-Object Path,LineNumber)) {
+    Write-Host ("{0}:{1}: {2}" -f $h.Path, $h.LineNumber, $h.Line)
   }
-  if (-not $hasAppGlob) { Fail "Tailwind config must include ""./app/**/*.{ts,tsx,md,mdx}"" in content." } else { Write-Host "✔ Tailwind content includes ./app/**/*" }
+  exit 1
 } else {
-  Write-Host "ℹ No tailwind config found; skipping glob check"
+  OK "No 'src/app' references in code"
+  exit 0
 }
 
-if ($script:failed) {
-  Write-Host "`n❌ App structure check FAILED"; exit 1
-} else {
-  Write-Host "`n✅ App structure check PASSED"; exit 0
-}

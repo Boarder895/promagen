@@ -1,4 +1,4 @@
-﻿// src/lib/providerState.ts
+// src/lib/providerState.ts
 import { PROVIDERS, providersWithApi } from "@/lib/providers";
 import type { ProviderId } from "@/lib/providers";
 

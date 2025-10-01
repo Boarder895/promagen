@@ -1,4 +1,4 @@
-﻿// Admin jobs â€” frontend stub (Option A) aligned to your Admin UI.
+// Admin jobs — frontend stub (Option A) aligned to your Admin UI.
 // Adds `result?: { imageUrl?: string }` and keeps all previously added fields.
 
 export type AdminJobState = 'queued' | 'running' | 'ok' | 'error'

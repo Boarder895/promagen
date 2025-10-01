@@ -1,5 +1,5 @@
-// Named-exports only (Promagen rule).
-// Lightweight client for demo job runs. Uses your versioned API: /api/v1/*
+// Named exports only.
+// Tiny client for the demo "run across providers" flow.
 
 export type StartJobPayload = {
   providerId: string;
@@ -33,7 +33,7 @@ export async function startGeneration(payload: StartJobPayload): Promise<string>
   }
 
   const data: unknown = await res.json();
-  // Narrow: expect { jobId: string }
+  // Expect shape { jobId: string }
   if (
     typeof data === "object" &&
     data !== null &&
@@ -42,32 +42,24 @@ export async function startGeneration(payload: StartJobPayload): Promise<string>
   ) {
     return (data as { jobId: string }).jobId;
   }
-
   throw new Error("startGeneration: unexpected response shape");
 }
 
 /**
- * Stream job events via SSE. Server should send lines like:
- *  event: progress
- *  data: {"job":{"id":"...","state":"running","progress":42}}
- *
- * Returns a stop() function that closes the stream.
+ * Subscribe to Server-Sent Events for a job.
+ * Server should emit "progress", "done", "error" with data: {"job":{...}}
+ * Returns a stop() function to close the stream.
  */
 export function streamJob(jobId: string, onEvent: (e: JobEvent) => void): () => void {
-  // Ensure client-side usage
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-
-  const url = `/api/v1/jobs/${encodeURIComponent(jobId)}/stream`;
-  const es = new EventSource(url);
+  if (typeof window === "undefined") return () => {};
+  const es = new EventSource(`/api/v1/jobs/${encodeURIComponent(jobId)}/stream`);
 
   es.addEventListener("progress", (evt) => {
     try {
       const parsed = JSON.parse((evt as MessageEvent).data) as { job: Job };
       onEvent({ type: "progress", job: parsed.job });
     } catch {
-      // ignore parse errors
+      /* ignore */
     }
   });
 
@@ -89,11 +81,6 @@ export function streamJob(jobId: string, onEvent: (e: JobEvent) => void): () => 
     }
   });
 
-  es.onerror = () => {
-    // network/server error — close to avoid zombie connection
-    es.close();
-  };
-
+  es.onerror = () => es.close();
   return () => es.close();
 }
-

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { type ComponentProps } from "react";
 import RealPromptCard from "./prompts/PromptCard";

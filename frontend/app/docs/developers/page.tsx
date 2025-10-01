@@ -1,4 +1,4 @@
-﻿// app/docs/developers/page.tsx
+// app/docs/developers/page.tsx
 import { getBook } from "@/lib/books";
 
 export default function DevelopersPage() {
@@ -26,7 +26,7 @@ export default function DevelopersPage() {
             <p className="opacity-80">{s.summary}</p>
             <div className="text-xs opacity-60 mt-2">
               Status: {s.status}
-              {s.lastUpdated ? ` ï¿½ Updated: ${s.lastUpdated}` : null}
+              {s.lastUpdated ? ` � Updated: ${s.lastUpdated}` : null}
             </div>
           </article>
         ))}

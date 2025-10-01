@@ -1,103 +1,151 @@
-﻿'use client'
+"use client";
 
-import * as React from 'react'
-import { startGeneration } from '@/lib/generate'
-import { streamJob, type JobEvent } from '@/lib/jobs'
+import { useState } from "react";
+import type { JobEvent } from "@/lib/jobsClient";
+import { startGeneration, streamJob } from "@/lib/jobsClient";
 
-type Provider = { id: string; name: string }
+type Provider = {
+  id: string;
+  name: string;
+};
 
-type LocalState = Record<
+type JobState = "queued" | "running" | "done" | "error";
+
+type RunState = Record<
   string,
-  { state: 'idle' | 'queued' | 'running' | 'ok' | 'error'; progress: number; url?: string; error?: string }
->
+  { state: JobState; progress: number; jobId?: string; outputUrl?: string | null; error?: string | null }
+>;
 
-export default function RunGrid({ providers }: { providers: Provider[] }) {
-  const [prompt, setPrompt] = React.useState('a luminous mushroom town at sunset, cinematic, ultra detailed')
-  const [local, setLocal] = React.useState<LocalState>({})
+type RunGridProps = {
+  providers: Provider[];
+  defaultPrompt?: string;
+};
+
+export function RunGrid({ providers, defaultPrompt = "" }: RunGridProps) {
+  const [prompt, setPrompt] = useState<string>(defaultPrompt);
+  const [local, setLocal] = useState<RunState>({});
 
   async function runOne(p: Provider) {
-    setLocal(s => ({ ...s, [p.id]: { state: 'queued', progress: 0 } }))
-    const jobId = await startGeneration(p.id as any, prompt)
+    setLocal((s) => ({ ...s, [p.id]: { state: "queued", progress: 0 } }));
+
+    const jobId = await startGeneration({ providerId: p.id, prompt });
+
+    setLocal((s) => ({ ...s, [p.id]: { ...s[p.id], state: "running", progress: 0, jobId } }));
 
     const stop = streamJob(jobId, (ev: JobEvent) => {
-      const j = ev.job
-      setLocal(s => ({
-        ...s,
-        [p.id]: {
-          state: j.state,
-          progress: j.progress ?? 0,
-          url: j.result?.imageUrl,
-          error: j.error,
-        },
-      }))
-      if (j.state === 'ok' || j.state === 'error') stop()
-    })
+      const j = ev.job;
+      if (ev.type === "progress") {
+        setLocal((s) => ({
+          ...s,
+          [p.id]: { ...s[p.id], state: j.state, progress: j.progress ?? s[p.id]?.progress ?? 0 },
+        }));
+      } else if (ev.type === "done") {
+        setLocal((s) => ({
+          ...s,
+          [p.id]: {
+            ...s[p.id],
+            state: "done",
+            progress: 100,
+            outputUrl: j.outputUrl ?? null,
+          },
+        }));
+        stop();
+      } else if (ev.type === "error") {
+        setLocal((s) => ({
+          ...s,
+          [p.id]: {
+            ...s[p.id],
+            state: "error",
+            progress: 0,
+            error: j.error ?? "Unknown error",
+          },
+        }));
+        stop();
+      }
+    });
   }
 
-  function runAll() {
-    providers.forEach(runOne)
+  async function runAll() {
+    for (const p of providers) {
+      // eslint-disable-next-line no-await-in-loop
+      await runOne(p);
+    }
   }
 
   return (
-    <section className="space-y-4">
-      <div className="rounded-2xl border p-4 space-y-3">
-        <label className="block text-sm font-medium">Prompt</label>
-        <textarea
-          className="w-full rounded-xl border p-3"
-          rows={3}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-        <div className="flex gap-3">
-          <button onClick={runAll} className="rounded-xl border px-4 py-2 hover:bg-gray-50">
-            Run All
-          </button>
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-end gap-3">
+        <label className="flex grow flex-col gap-1">
+          <span className="text-sm font-medium">Prompt</span>
+          <textarea
+            className="min-h-[72px] rounded border px-3 py-2"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Describe the image you want to generate..."
+          />
+        </label>
+
+        <button
+          type="button"
+          className="h-10 rounded bg-black px-4 text-white disabled:opacity-50 dark:bg-white dark:text-black"
+          onClick={runAll}
+          disabled={providers.length === 0 || prompt.trim().length === 0}
+        >
+          Run across providers
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {providers.map((p) => {
-          const st = local[p.id]?.state ?? 'idle'
-          const pr = local[p.id]?.progress ?? 0
-          const url = local[p.id]?.url
-          const err = local[p.id]?.error
-
+          const st = local[p.id];
+          const pct = Math.max(0, Math.min(100, st?.progress ?? 0));
           return (
-            <div key={p.id} className="rounded-2xl border p-4 space-y-3">
-              <div className="flex items-center justify-between gap-3">
+            <div key={p.id} className="rounded border p-3">
+              <div className="mb-2 flex items-center justify-between">
                 <div className="font-medium">{p.name}</div>
+                <button
+                  type="button"
+                  className="text-sm underline opacity-80 hover:opacity-100"
+                  onClick={() => runOne(p)}
+                >
+                  Run
+                </button>
               </div>
 
-              <button
-                className="w-full rounded-xl border px-3 py-2 hover:bg-gray-50 disabled:opacity-60"
-                disabled={st === 'queued' || st === 'running'}
-                onClick={() => runOne(p)}
-              >
-                {st === 'queued' || st === 'running' ? 'Generatingâ€¦' : 'Run'}
-              </button>
+              <div className="text-xs opacity-75">State: {st?.state ?? "idle"}</div>
 
-              {st !== 'idle' && (
-                <>
-                  <div className="h-2 w-full rounded bg-gray-200 overflow-hidden">
-                    <div className="h-2 bg-black/70" style={{ width: `${Math.round(pr)}%` }} />
-                  </div>
-                  <div className="text-xs opacity-70">{Math.round(pr)}%</div>
-                </>
-              )}
+              <div className="mt-2 h-2 w-full rounded bg-gray-200">
+                <div
+                  className="h-2 rounded bg-blue-600"
+                  style={{ width: `${pct}%` }}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={pct}
+                  role="progressbar"
+                />
+              </div>
 
-              {st === 'ok' && url && (
-                <a className="block text-sm underline break-all" href={url} target="_blank" rel="noreferrer">
-                  Open result
-                </a>
-              )}
+              {st?.outputUrl ? (
+                <div className="mt-3">
+                  <a
+                    href={st.outputUrl}
+                    className="text-sm text-blue-600 underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View output
+                  </a>
+                </div>
+              ) : null}
 
-              {st === 'error' && err && <div className="text-xs text-red-600 break-all">{err}</div>}
+              {st?.error ? <div className="mt-3 text-sm text-red-600">Error: {st.error}</div> : null}
             </div>
-          )
+          );
         })}
       </div>
-    </section>
-  )
+    </div>
+  );
 }
+
 
 

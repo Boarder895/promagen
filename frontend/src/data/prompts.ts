@@ -1,4 +1,4 @@
-﻿// src/data/prompts.ts
+// src/data/prompts.ts
 // Canonical prompt types + temporary data fetchers (stubbed until API/DB is wired).
 
 export type Prompt = {
@@ -22,7 +22,7 @@ export async function getCommunity(): Promise<Prompt[]> {
       id: "starter-1",
       title: "Mushroom town at dusk",
       prompt:
-        "Pixarï¿½Ghibli semi-real characters in a glowing mushroom town at dusk, ultra-photorealistic background, cinematic lighting",
+        "Pixar�Ghibli semi-real characters in a glowing mushroom town at dusk, ultra-photorealistic background, cinematic lighting",
       tags: ["fracture", "worldbuilding"],
     },
     {

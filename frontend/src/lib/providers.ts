@@ -1,5 +1,5 @@
-﻿// src/lib/providers.ts
-// Promagen canonical provider registry â€” FRONTEND is the source of truth.
+// src/lib/providers.ts
+// Promagen canonical provider registry — FRONTEND is the source of truth.
 // Named exports only.
 
 export const PROVIDER_IDS = [
@@ -35,7 +35,7 @@ export interface Provider {
 export type ProviderMeta = Provider;
 
 export const PROVIDERS: Readonly<Provider[]> = [
-  { id: 'openai',     name: 'OpenAI DALLÂ·E/GPT-Image', hasApi: true,  supportsAutomation: true,  hasAffiliate: false, affiliate: null, website: 'https://openai.com' },
+  { id: 'openai',     name: 'OpenAI DALL·E/GPT-Image', hasApi: true,  supportsAutomation: true,  hasAffiliate: false, affiliate: null, website: 'https://openai.com' },
   { id: 'stability',  name: 'Stability AI',            hasApi: true,  supportsAutomation: true,  hasAffiliate: false, affiliate: null, website: 'https://stability.ai' },
   { id: 'leonardo',   name: 'Leonardo AI',             hasApi: true,  supportsAutomation: true,  hasAffiliate: true,  affiliate: null, website: 'https://leonardo.ai' },
   { id: 'i23rf',      name: 'I23RF',                   hasApi: false, supportsAutomation: false, hasAffiliate: false, affiliate: null, website: 'https://www.123rf.com' },

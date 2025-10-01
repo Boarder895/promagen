@@ -1,4 +1,4 @@
-﻿// app/docs/page.tsx
+// app/docs/page.tsx
 import { getBook, metaOf } from "@/lib/books";
 
 export default function DocsHome() {

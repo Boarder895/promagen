@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { PROVIDER_IDS } from "@/lib/providers";
@@ -20,7 +20,7 @@ export default function ProviderPicker({ value, onChange, label = "Provider" }: 
         onChange={(e) => onChange?.(e.target.value as ProviderId)}
       >
         <option value="" disabled>
-          Selectâ€¦
+          Select…
         </option>
         {PROVIDER_IDS.map((id) => (
           <option key={id} value={id}>

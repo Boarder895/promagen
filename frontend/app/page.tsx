@@ -1,4 +1,4 @@
-﻿// Server Component â€” safe to render on the server.
+// Server Component — safe to render on the server.
 // Pass only serialisable props (no functions / event handlers).
 
 import RunPanel from "@/components/RunPanel";

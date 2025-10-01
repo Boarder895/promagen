@@ -1,26 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { RunAcrossProvidersButton } from "@/components/RunAcrossProvidersButton";
 
-type Prompt = {
-  id: string;
-  text: string;
-};
+type PageProps = { params: { id: string } };
 
-export default function PromptPage({ params }: { params: { id: string } }) {
-  const [prompt, setPrompt] = useState<Prompt | null>(null);
+export function ImagePromptPage({ params }: PageProps) {
+  // Keep underscored until the editor UI uses it.
+  const [_prompt, _setPrompt] = useState<string>("");
 
   return (
-    <main className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Prompt {params.id}</h1>
-      {prompt ? (
-        <p className="mb-4">{prompt.text}</p>
-      ) : (
-        <p className="opacity-70">No prompt loaded yet.</p>
-      )}
-      {/* New-style usage; still compatible because component now handles both */}
-      <RunAcrossProvidersButton promptId={params.id} />
-    </main>
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">Image Prompt</h1>
+      <p className="text-sm opacity-80">ID: {params.id}</p>
+      {/* TODO: render prompt details / editor here */}
+    </div>
   );
 }

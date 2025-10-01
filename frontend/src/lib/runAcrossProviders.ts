@@ -1,4 +1,4 @@
-﻿// src/lib/runAcrossProviders.ts
+// src/lib/runAcrossProviders.ts
 // Named exports only (project rule).
 import { PROVIDERS } from "@/lib/providers";
 

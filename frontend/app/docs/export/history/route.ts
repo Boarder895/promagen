@@ -1,4 +1,4 @@
-﻿// app/docs/export/history/route.ts
+// app/docs/export/history/route.ts
 import { getBook, metaOf } from "@/lib/books";
 
 /** Build a safe, trimmed payload for the History book. */

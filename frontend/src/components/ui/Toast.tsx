@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-// FRONTEND â€¢ components/ui/Toast.tsx
+// FRONTEND • components/ui/Toast.tsx
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 type Toast = { id: number; title: string; body?: string };

@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 
 /**
  * Client Component that owns its interactivity.
- * This prevents the â€œEvent handlers cannot be passed to Client Component propsâ€
+ * This prevents the “Event handlers cannot be passed to Client Component props”
  * error you saw when handlers were created in a Server Component.
  */
 export default function RunPanel({ initialLabel }: { initialLabel: string }) {
@@ -14,7 +14,7 @@ export default function RunPanel({ initialLabel }: { initialLabel: string }) {
   function handleClick() {
     // Do whatever you need here (navigate, start a job, etc.)
     setCount((c) => c + 1);
-    setLabel((l) => (l === "Run" ? "Runningâ€¦" : "Run"));
+    setLabel((l) => (l === "Run" ? "Running…" : "Run"));
     // Example: console log to prove it works
     console.log("RunPanel clicked; count =", count + 1);
   }

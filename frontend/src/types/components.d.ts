@@ -1,4 +1,4 @@
-﻿declare module '@/components/DocsTOC' {
+declare module '@/components/DocsTOC' {
   const Component: React.ComponentType<any>;
   export default Component;
 }
