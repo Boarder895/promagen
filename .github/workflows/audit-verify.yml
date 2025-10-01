@@ -9,21 +9,11 @@ on:
 permissions: {}
 
 jobs:
-  verify:
+  noop:
+    name: Parked (no-op)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install deps (frontend)
-        working-directory: frontend
-        run: npm ci
-      - name: Lint (warnings allowed)
-        working-directory: frontend
-        run: npm run lint -- --max-warnings=999999
-      - name: App structure check
-        working-directory: frontend
-        run: pwsh -NoProfile -File scripts/check-app-structure.ps1
-      - name: Finish
-        run: echo "verify complete"
+      - name: Explain status
+        run: |
+          echo "audit-verify workflow is parked. No verification steps run in CI."
+          echo "Re-enable later when the audit script is ready."
