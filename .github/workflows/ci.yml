@@ -1,48 +1,44 @@
 name: CI
+
 on:
   push:
-    branches: [ "**" ]
   pull_request:
-    types: [opened, synchronize, reopened, closed]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: npm ci
-      - name: Lint
-        run: npm run -s lint || true
-      - name: Test
-        run: npm test -- --watch=false || true
-      - name: Typecheck
-        run: npm run -s typecheck || true
-
-      - name: Extract taskShortId from commits/PR text
-        id: task
+    defaults:
+      run:
         shell: bash
-        run: |
-          TEXT="$(git log -1 --pretty=%B)"
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TEXT="$TEXT\n${{ github.event.pull_request.title }}\n${{ github.event.pull_request.body }}"
-          fi
-          ID=$(printf "%b" "$TEXT" | grep -Eo '#task-[0-9]+' | head -n1 | grep -Eo '[0-9]+')
-          if [ -z "$ID" ]; then
-            ID=$(printf "%b" "$TEXT" | grep -Eo 'task:[0-9]+' | head -n1 | cut -d: -f2)
-          fi
-          echo "id=$ID" >> $GITHUB_OUTPUT
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Report CI summary to Promagen API
-        if: steps.task.outputs.id != ''
-        env:
-          API_BASE: ${{ vars.PROMAGEN_API_BASE }} # set in repo variables, e.g. http://127.0.0.1:3001
-          TASK_ID: ${{ steps.task.outputs.id }}
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+            api/package-lock.json
+
+      - name: Install root deps (if any)
         run: |
-          LINT_OK=true
-          TESTS_OK=true
-          TYPES_OK=true
-          curl -sS -X POST "$API_BASE/api/v1/hooks/ci" \
-            -H "Content-Type: application/json" \
-            -d "{\"taskShortId\":$TASK_ID,\"lintOk\":$LINT_OK,\"testsOk\":$TESTS_OK,\"typesOk\":$TYPES_OK,\"url\":\"$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\"}"
+          if [ -f package-lock.json ]; then npm ci --ignore-scripts; fi
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npx eslint "src/**/*.{ts,tsx,js,jsx}" --max-warnings=0
+
+      - name: Install API deps (optional)
+        working-directory: api
+        run: |
+          if [ -f package-lock.json ]; then npm ci --ignore-scripts; fi
+
+      # Add more steps later (build/tests) when needed; keep it minimal for now.
