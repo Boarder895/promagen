@@ -1,15 +1,25 @@
+// src/lib/types.ts
+// Provider types live here. Exchange types are re-exported from ./markets.
+// Named exports only.
+
+export type ProviderId =
+  | "openai" | "stability" | "adobe" | "midjourney" | "canva" | "ideogram"
+  | "playground" | "lexica" | "picsart" | "fotor" | "pixlr" | "deepai"
+  | "novelai" | "openart" | "flux" | "leonardo" | "bing" | "i23rf"
+  | "artistly" | "runway";
+
+export type Provider = { id: ProviderId; name: string };
+
+// Keep this loose enough for MIGBoard
+export type TrendDeltas = { up: number; down: number };
+
 export type ProviderScore = {
-  id: string;           // internal id e.g. "openai", "i23rf"
-  name: string;         // display name e.g. "OpenAI", "I23RF"
-  logoUrl?: string;     // optional logo
-  score: number;        // 0-100
-  delta?: number;       // change since last snapshot (+/-)
-  rank?: number;        // computed rank
+  id: ProviderId;
+  score?: number;          // overall score (optional)
+  points?: number;         // raw points (optional)
+  deltas?: TrendDeltas;    // 24h/7d etc. deltas (optional)
 };
 
-export type LeaderboardResponse = {
-  updatedAt: string;         // ISO timestamp
-  providers: ProviderScore[]; // sorted or unsorted; we’ll sort if needed
-};
-
+// Canonical exchange types â€” re-export only (do NOT redeclare here)
+export type { Market as Exchange, MarketId as ExchangeId } from "./markets";
 

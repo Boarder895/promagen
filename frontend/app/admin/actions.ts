@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 // Shared state for the admin sync flow
 export type SyncState = {
@@ -24,5 +24,6 @@ export async function doSync(
     return { ok: false, message: msg };
   }
 }
+
 
 

@@ -26,11 +26,13 @@ export default function PromptPresetCard({
     >
       <div className="font-semibold">{preset.title}</div>
       <div className="text-xs opacity-70">
-        {preset.provider ?? "provider: n/a"}{preset.model ? ` · ${preset.model}` : ""}
+        {preset.provider ?? "provider: n/a"}{preset.model ? ` ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${preset.model}` : ""}
       </div>
       <div className="text-sm mt-1 line-clamp-2">{preset.prompt}</div>
     </button>
   );
 }
+
+
 
 

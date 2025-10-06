@@ -1,18 +1,13 @@
-// app/docs/page.tsx
-import { getBook, metaOf } from "@/lib/books";
-
-export default function DocsHome() {
-  const history = getBook("history");
-  const meta = metaOf(history);
-
+﻿export default function Page() {
   return (
-    <main className="px-6 py-8 space-y-2">
-      <h1 className="text-2xl font-semibold tracking-tight">{meta.title}</h1>
-      {meta.subtitle ? <p className="text-sm opacity-70">{meta.subtitle}</p> : null}
+    <main className="p-8">
+      <ul className="list-disc pl-6 space-y-2">
+        <li><a className="underline" href="/docs/developers">Developersâ€™ Book</a></li>
+        <li><a className="underline" href="/docs/users-book">Usersâ€™ Book</a></li>
+      </ul>
     </main>
   );
 }
-
 
 
 

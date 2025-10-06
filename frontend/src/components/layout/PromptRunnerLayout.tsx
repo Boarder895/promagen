@@ -1,4 +1,4 @@
-// src/components/layout/PromptRunnerLayout.tsx
+// @/components/layout/PromptRunnerLayout.tsx
 import * as React from "react";
 import clsx from "clsx";
 
@@ -32,5 +32,7 @@ Footer.displayName = "PromptRunnerLayout.Footer";
 
 export const PromptRunnerLayout = Object.assign(Root, { Left, Right, Footer });
 export default PromptRunnerLayout;
+
+
 
 

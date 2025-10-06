@@ -14,8 +14,8 @@ export type AppMeta = {
 // Minimal central meta registry so pages like /app/status/page.tsx
 // and /app/test/meta/page.tsx can do: import { getMeta } from '@/lib/api'
 const META: Record<string, AppMeta> = {
-  status: { title: 'Status · Promagen', description: 'System health and checks.' },
-  'test/meta': { title: 'Meta Test · Promagen' },
+  status: { title: 'Status Ãƒâ€šÃ‚Â· Promagen', description: 'System health and checks.' },
+  'test/meta': { title: 'Meta Test Ãƒâ€šÃ‚Â· Promagen' },
   default: { title: 'Promagen' },
 };
 
@@ -23,5 +23,7 @@ const META: Record<string, AppMeta> = {
 export function getMeta(key: string): AppMeta {
   return META[key] ?? META.default;
 }
+
+
 
 

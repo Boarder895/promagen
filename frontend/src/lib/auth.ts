@@ -14,3 +14,5 @@ export function requireBearer(req: NextRequest): NextResponse | null {
 }
 
 
+
+

@@ -22,8 +22,8 @@ export default function ProgressToast() {
             <Badge state={j.state} />
           </div>
           <div className="mt-1 text-xs opacity-70">
-            {j.state === "running" && `Generating… ${Math.round(j.progress ?? 0)}%`}
-            {j.state === "queued" && "Queued…"}
+            {j.state === "running" && `GeneratingÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦ ${Math.round(j.progress ?? 0)}%`}
+            {j.state === "queued" && "QueuedÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦"}
             {j.state === "ok" && `Done${j.tookMs ? ` in ${j.tookMs} ms` : ""}`}
             {j.state === "error" && `Failed${j.error ? `: ${j.error}` : ""}`}
           </div>
@@ -56,5 +56,7 @@ function Badge({ state }: { state: "queued" | "running" | "ok" | "error" }) {
     </span>
   );
 }
+
+
 
 

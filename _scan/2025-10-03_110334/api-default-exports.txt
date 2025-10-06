@@ -1,0 +1,7 @@
+﻿C:\Users\Martin Yarnold\Projects\promagen\api\src\db\prisma.ts:13 -> export default prisma;
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\healthz.ts:65 -> export default async function deepHealth(_req: Request, res: Response) {
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\meta.ts:74 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\openai.ts:9 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\providers.ts:28 -> export default router
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\version.ts:14 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\api\prisma.config.ts:4 -> export default defineConfig({

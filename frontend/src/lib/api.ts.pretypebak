@@ -134,3 +134,4 @@ export type Prompt = {
    tags?: string[];
    createdAt?: string | number | Date;
  };
+

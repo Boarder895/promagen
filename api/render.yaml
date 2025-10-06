@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: promagen-api
+    env: node
+    plan: free
+    rootDir: api
+    buildCommand: npm ci
+    startCommand: npx prisma generate && npx prisma migrate deploy && npx tsx src/server.ts
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: AUDIT_HMAC_SECRET
+        generateValue: true
+      - key: PRISMA_SCHEMA
+        value: ./prisma/schema.postgres.prisma
+      - key: DATABASE_URL
+        fromDatabase:
+          name: promagen-db
+          property: connectionString
+    healthCheckPath: /health
+
+databases:
+  - name: promagen-db
+    plan: free

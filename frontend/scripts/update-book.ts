@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+﻿#!/usr/bin/env ts-node
 import fs from "fs";
 import path from "path";
 
@@ -155,7 +155,7 @@ else if (cmd === "dev") {
     item.completedAt = new Date().toISOString();
     b.developers.done.unshift(item);
     save(b);
-    console.log(`Developers’ Book: completed ${id} (from inProgress)`);
+    console.log(`Developersâ€™ Book: completed ${id} (from inProgress)`);
     process.exit(0);
   }
 
@@ -166,7 +166,7 @@ else if (cmd === "dev") {
     item.completedAt = new Date().toISOString();
     b.developers.done.unshift(item);
     save(b);
-    console.log(`Developers’ Book: completed ${id} (from queued)`);
+    console.log(`Developersâ€™ Book: completed ${id} (from queued)`);
     process.exit(0);
   }
 
@@ -174,7 +174,7 @@ else if (cmd === "dev") {
   const already = b.developers.done.find((s: any) => s.id === id);
   if (already) {
     console.log(
-      `Developers’ Book: ${id} is already done (${already.completedAt || "no timestamp"})`
+      `Developersâ€™ Book: ${id} is already done (${already.completedAt || "no timestamp"})`
     );
     process.exit(0);
   }
@@ -201,8 +201,8 @@ else if (cmd === "history") {
   const b = load();
   b.history.entries.unshift({ date, item: msg, status });
   save(b);
-  console.log(`History added: [${date}] ${msg} — ${status}`);
-  postSlack(`📘 ${msg} — ${status} (${date})`);
+  console.log(`History added: [${date}] ${msg} â€” ${status}`);
+  postSlack(`ðŸ“˜ ${msg} â€” ${status} (${date})`);
   process.exit(0);
 }
 
@@ -212,6 +212,7 @@ else {
   usage();
   process.exit(1);
 }
+
 
 
 

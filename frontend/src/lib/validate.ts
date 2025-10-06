@@ -7,3 +7,5 @@ export const parseJson = async <T>(req: Request, schema: ZodSchema<T>): Promise<
     return { ok: true, data: parsed.data };
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : "Invalid JSON body" }; }
 };
+
+

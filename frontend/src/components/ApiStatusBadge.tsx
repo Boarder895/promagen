@@ -67,7 +67,7 @@ export default function ApiStatusBadge({
       return (
         <span className="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-1 text-sm">
           <Dot color="#16a34a" />
-          API up <span className="opacity-70">· {state.ms} ms</span>
+          API up <span className="opacity-70">ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· {state.ms} ms</span>
         </span>
       );
     }
@@ -75,7 +75,7 @@ export default function ApiStatusBadge({
       return (
         <span className="inline-flex items-center gap-2 rounded-full border border-red-300 bg-red-50 px-3 py-1 text-sm">
           <Dot color="#dc2626" />
-          API down <span className="opacity-70">· {state.error}</span>
+          API down <span className="opacity-70">ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· {state.error}</span>
         </span>
       );
     }
@@ -83,7 +83,7 @@ export default function ApiStatusBadge({
       return (
         <span className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-gray-50 px-3 py-1 text-sm">
           <Spinner />
-          Checking…
+          CheckingÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦
         </span>
       );
     }
@@ -100,7 +100,7 @@ export default function ApiStatusBadge({
     return (
       <button
         onClick={check}
-        title={`API: ${state.kind}${"when" in state ? ` · ${state.when}` : ""}`}
+        title={`API: ${state.kind}${"when" in state ? ` ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${state.when}` : ""}`}
         className="inline-flex items-center gap-2"
       >
         {state.kind === "up" ? <Dot color="#16a34a" /> : state.kind === "down" ? <Dot color="#dc2626" /> : <Dot color="#6b7280" />}
@@ -144,5 +144,7 @@ function Spinner() {
     </svg>
   );
 }
+
+
 
 

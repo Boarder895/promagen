@@ -1,151 +1,152 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
-import type { JobEvent } from "@/lib/jobsClient";
-import { startGeneration, streamJob } from "@/lib/jobsClient";
+import { useEffect, useRef, useState } from "react";
 
-type Provider = {
-  id: string;
-  name: string;
+/** Promagen-lite job types (local to this file so it compiles even if upstream types move) */
+type JobState = "queued" | "running" | "succeeded" | "failed";
+
+export type RunState = {
+  id: string;              // stable UI id for the row/card
+  state: JobState;         // current state
+  progress?: number;       // 0–100
+  jobId?: string;          // provider job id (optional)
+  outputUrl?: string | null;
+  error?: string | null;
 };
 
-type JobState = "queued" | "running" | "done" | "error";
-
-type RunState = Record<
-  string,
-  { state: JobState; progress: number; jobId?: string; outputUrl?: string | null; error?: string | null }
->;
-
-type RunGridProps = {
-  providers: Provider[];
-  defaultPrompt?: string;
+/** Public props: keep tiny; you can pass a jobId or let it render a demo row */
+type Props = {
+  jobId?: string;
+  onUpdate?: (next: RunState) => void; // optional external tap for state changes
 };
 
-export function RunGrid({ providers, defaultPrompt = "" }: RunGridProps) {
-  const [prompt, setPrompt] = useState<string>(defaultPrompt);
-  const [local, setLocal] = useState<RunState>({});
+/** Named export only (project rule). */
+export const RunGrid = ({ jobId, onUpdate }: Props) => {
+  const [rows, setRows] = useState<RunState[]>(() => [
+    {
+      id: jobId ?? "demo-1",
+      state: "queued",
+      progress: 0,
+      jobId,
+      outputUrl: null,
+      error: null,
+    },
+  ]);
 
-  async function runOne(p: Provider) {
-    setLocal((s) => ({ ...s, [p.id]: { state: "queued", progress: 0 } }));
+  // simple fake “progress” so the UI is alive while you reconnect the real stream
+  const timer = useRef<number | null>(null);
 
-    const jobId = await startGeneration({ providerId: p.id, prompt });
-
-    setLocal((s) => ({ ...s, [p.id]: { ...s[p.id], state: "running", progress: 0, jobId } }));
-
-    const stop = streamJob(jobId, (ev: JobEvent) => {
-      const j = ev.job;
-      if (ev.type === "progress") {
-        setLocal((s) => ({
-          ...s,
-          [p.id]: { ...s[p.id], state: j.state, progress: j.progress ?? s[p.id]?.progress ?? 0 },
-        }));
-      } else if (ev.type === "done") {
-        setLocal((s) => ({
-          ...s,
-          [p.id]: {
-            ...s[p.id],
-            state: "done",
-            progress: 100,
-            outputUrl: j.outputUrl ?? null,
-          },
-        }));
-        stop();
-      } else if (ev.type === "error") {
-        setLocal((s) => ({
-          ...s,
-          [p.id]: {
-            ...s[p.id],
-            state: "error",
-            progress: 0,
-            error: j.error ?? "Unknown error",
-          },
-        }));
-        stop();
-      }
-    });
-  }
-
-  async function runAll() {
-    for (const p of providers) {
-      // eslint-disable-next-line no-await-in-loop
-      await runOne(p);
+  useEffect(() => {
+    // clear any old timer
+    if (timer.current) {
+      window.clearInterval(timer.current);
+      timer.current = null;
     }
-  }
+
+    // drive a gentle progress loop
+    timer.current = window.setInterval(() => {
+      setRows((prev) => {
+        const next = prev.map((r) => {
+          if (r.state === "succeeded" || r.state === "failed") return r;
+
+          const nextProgress = Math.min(100, (r.progress ?? 0) + 5);
+          const nextState: JobState =
+            nextProgress >= 100 ? "succeeded" : (r.state === "queued" ? "running" : r.state);
+
+          const updated: RunState = {
+            ...r,
+            state: nextState,
+            progress: nextProgress,
+            outputUrl: nextProgress >= 100 ? (r.outputUrl ?? "#") : r.outputUrl,
+          };
+
+          onUpdate?.(updated);
+          return updated;
+        });
+        return next;
+      });
+    }, 400) as unknown as number;
+
+    return () => {
+      if (timer.current) window.clearInterval(timer.current);
+      timer.current = null;
+    };
+  }, [onUpdate]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-end gap-3">
-        <label className="flex grow flex-col gap-1">
-          <span className="text-sm font-medium">Prompt</span>
-          <textarea
-            className="min-h-[72px] rounded border px-3 py-2"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe the image you want to generate..."
-          />
-        </label>
-
-        <button
-          type="button"
-          className="h-10 rounded bg-black px-4 text-white disabled:opacity-50 dark:bg-white dark:text-black"
-          onClick={runAll}
-          disabled={providers.length === 0 || prompt.trim().length === 0}
-        >
-          Run across providers
-        </button>
+    <div className="p-4">
+      <h2 className="text-xl font-semibold mb-3">Run Grid</h2>
+      <div className="overflow-x-auto rounded-xl border">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <Th>ID</Th>
+              <Th>State</Th>
+              <Th>Progress</Th>
+              <Th>Output</Th>
+              <Th>Error</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id} className="border-t">
+                <Td className="font-mono">{r.id}</Td>
+                <Td>
+                  <StateBadge state={r.state} />
+                </Td>
+                <Td>
+                  <ProgressBar value={r.progress ?? 0} />
+                </Td>
+                <Td>
+                  {r.outputUrl ? (
+                    <a href={r.outputUrl} className="underline" target="_blank" rel="noreferrer">
+                      open
+                    </a>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  )}
+                </Td>
+                <Td>
+                  {r.error ? <span className="text-red-600">{r.error}</span> : <span className="text-gray-400">—</span>}
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {providers.map((p) => {
-          const st = local[p.id];
-          const pct = Math.max(0, Math.min(100, st?.progress ?? 0));
-          return (
-            <div key={p.id} className="rounded border p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="font-medium">{p.name}</div>
-                <button
-                  type="button"
-                  className="text-sm underline opacity-80 hover:opacity-100"
-                  onClick={() => runOne(p)}
-                >
-                  Run
-                </button>
-              </div>
-
-              <div className="text-xs opacity-75">State: {st?.state ?? "idle"}</div>
-
-              <div className="mt-2 h-2 w-full rounded bg-gray-200">
-                <div
-                  className="h-2 rounded bg-blue-600"
-                  style={{ width: `${pct}%` }}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={pct}
-                  role="progressbar"
-                />
-              </div>
-
-              {st?.outputUrl ? (
-                <div className="mt-3">
-                  <a
-                    href={st.outputUrl}
-                    className="text-sm text-blue-600 underline"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    View output
-                  </a>
-                </div>
-              ) : null}
-
-              {st?.error ? <div className="mt-3 text-sm text-red-600">Error: {st.error}</div> : null}
-            </div>
-          );
-        })}
+      {/* Hook to wire your real stream later */}
+      <div className="mt-3 text-xs text-gray-500">
+        Streaming hook: call <code>setRows(fn)</code> inside your stream handler when <code>ev.type === "update"</code>.
       </div>
     </div>
   );
-}
+};
 
+/** Tiny UI helpers (kept local to avoid import churn) */
+const Th = (props: { children: React.ReactNode }) => (
+  <th className="text-left font-semibold px-3 py-2">{props.children}</th>
+);
+const Td = (props: { children: React.ReactNode; className?: string }) => (
+  <td className={`px-3 py-2 ${props.className ?? ""}`}>{props.children}</td>
+);
 
+const ProgressBar = ({ value }: { value: number }) => (
+  <div className="w-40 h-2 rounded bg-gray-200">
+    <div className="h-2 rounded" style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: "currentColor" }} />
+    <span className="ml-2 align-middle">{Math.round(value)}%</span>
+  </div>
+);
+
+const StateBadge = ({ state }: { state: JobState }) => {
+  const cls =
+    state === "succeeded"
+      ? "bg-green-100 text-green-700"
+      : state === "failed"
+      ? "bg-red-100 text-red-700"
+      : state === "running"
+      ? "bg-amber-100 text-amber-700"
+      : "bg-gray-100 text-gray-700";
+  return <span className={`px-2 py-1 rounded ${cls}`}>{state}</span>;
+};
 

@@ -1,6 +1,6 @@
 "use client";
 
-// FRONTEND • components/health/HealthContext.tsx
+// FRONTEND ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ components/health/HealthContext.tsx
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { fetchHealth, type HealthResponse, type HealthStatus } from "@/lib/health";
 
@@ -54,5 +54,7 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
+
+
 
 

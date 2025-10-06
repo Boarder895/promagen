@@ -1,4 +1,4 @@
-// Admin jobs — frontend stub (Option A) aligned to your Admin UI.
+// Admin jobs ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â frontend stub (Option A) aligned to your Admin UI.
 // Adds `result?: { imageUrl?: string }` and keeps all previously added fields.
 
 export type AdminJobState = 'queued' | 'running' | 'ok' | 'error'
@@ -78,5 +78,7 @@ export async function getJobById(id: string): Promise<AdminJob | null> {
   const all = await listJobs()
   return all.find(j => j.id === id) ?? null
 }
+
+
 
 

@@ -1,0 +1,19 @@
+name: Uptime
+on:
+  schedule: [{ cron: "*/10 * * * *" }] # every 10 minutes
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check site health and notify API
+        env:
+          TARGET: ${{ vars.PROMAGEN_HEALTH_URL }} # e.g. https://your-site/health
+          API_BASE: ${{ vars.PROMAGEN_API_BASE }}
+        run: |
+          if curl -fsS "$TARGET" > /dev/null; then
+            curl -sS -X POST "$API_BASE/api/v1/hooks/health" -H "Content-Type: application/json" -d '{"up":true,"evidenceUrl":"'"$TARGET"'"}'
+          else
+            curl -sS -X POST "$API_BASE/api/v1/hooks/health" -H "Content-Type: application/json" -d '{"up":false,"evidenceUrl":"'"$TARGET"'"}'
+          fi

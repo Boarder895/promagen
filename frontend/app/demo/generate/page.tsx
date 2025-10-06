@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import { getProviders, type Provider } from '@/lib/providers';
@@ -28,5 +28,6 @@ export default function GeneratePage() {
     </main>
   );
 }
+
 
 

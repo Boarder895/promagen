@@ -1,11 +1,11 @@
-// Popular Prompt Grid — seed data (MVP, read-only)
+﻿// Popular Prompt Grid â€” seed data (MVP, read-only)
 export type Prompt = {
   id: string;
   title: string;
   summary: string;
   body: string;
   tags: string[];
-  provider: string;        // “Midjourney”, “DALL·E”, “Stable Diffusion”, etc.
+  provider: string;        // â€œMidjourneyâ€, â€œDALLÂ·Eâ€, â€œStable Diffusionâ€, etc.
   author: string;
   uses: number;
   likes: number;
@@ -16,7 +16,7 @@ export type Prompt = {
 const curated: Prompt[] = [
   {
     id: "p-hero-landing",
-    title: "Hero Landing — Product Photo, Clean Gradient",
+    title: "Hero Landing â€” Product Photo, Clean Gradient",
     summary: "Generate a glossy hero product image on a soft gradient with realistic reflections.",
     body:
       "Ultra-clean hero product shot on a soft radial gradient background. 50mm lens, studio lighting, subtle shadow, glossy reflection on surface, no text, center composition. Photorealistic, high dynamic range.",
@@ -49,7 +49,7 @@ const curated: Prompt[] = [
     body:
       "1970s magazine portrait, Kodak Portra emulation, warm film grain, subtle halation, soft key light, off-white background, confident pose, no modern objects, shallow depth of field.",
     tags: ["portrait", "film", "vintage", "editorial"],
-    provider: "DALL·E",
+    provider: "DALLÂ·E",
     author: "Promagen Team",
     uses: 15310,
     likes: 2810,
@@ -58,7 +58,7 @@ const curated: Prompt[] = [
   },
   {
     id: "p-ui-wireframe",
-    title: "UI Wireframe — Greyscale Components",
+    title: "UI Wireframe â€” Greyscale Components",
     summary: "Generate low-fidelity UI screens made of simple boxes, lines, and labels.",
     body:
       "Greyscale UI wireframe screens, simple boxes and lines, clear hierarchy, 12-column grid hints, legible labels, no real brand marks, no color except greys. Export at 1920x1080.",
@@ -77,7 +77,7 @@ const curated: Prompt[] = [
     body:
       "Watercolor botanical illustration, soft wet-on-wet blends, gentle ink bleed, textured cotton paper background, muted palette, negative space, poster layout, title area left blank.",
     tags: ["watercolor", "botanical", "poster"],
-    provider: "DALL·E",
+    provider: "DALLÂ·E",
     author: "@atelier",
     uses: 9210,
     likes: 1675,
@@ -100,7 +100,7 @@ const curated: Prompt[] = [
   },
   {
     id: "p-ink-animals",
-    title: "Minimal Ink Animals — Logo-Ready",
+    title: "Minimal Ink Animals â€” Logo-Ready",
     summary: "One-stroke animal marks for identity work.",
     body:
       "Minimal one-stroke animal silhouettes, logo-ready, high contrast black ink on white, perfect vector edges, centered composition, no background elements.",
@@ -114,12 +114,12 @@ const curated: Prompt[] = [
   },
   {
     id: "p-architectural-section",
-    title: "Architectural Section — Line & Tone",
+    title: "Architectural Section â€” Line & Tone",
     summary: "Crisp architectural section drawings with tone-filled rooms.",
     body:
       "Architectural section drawing, clean linework, consistent hatching, tone-filled rooms, human scale figures in profile, labels area left blank, export high DPI.",
     tags: ["architecture", "drawing", "section"],
-    provider: "DALL·E",
+    provider: "DALLÂ·E",
     author: "@studioK",
     uses: 5120,
     likes: 860,
@@ -128,7 +128,7 @@ const curated: Prompt[] = [
   },
   {
     id: "p-food-overhead",
-    title: "Overhead Food Board — Natural Light",
+    title: "Overhead Food Board â€” Natural Light",
     summary: "Top-down rustic food spread, natural backlight, wood surface.",
     body:
       "Overhead top-down rustic food board, natural window backlight, wooden surface, shallow props, balanced palette, soft shadows, no messy crumbs, editorial style.",
@@ -161,7 +161,7 @@ const curated: Prompt[] = [
     body:
       "Vehicle orthographic blueprint, front/side/top, precise line weights, dotted dimension lines, annotations area blank, navy blueprint paper texture, white ink.",
     tags: ["blueprint", "vehicle", "orthographic"],
-    provider: "DALL·E",
+    provider: "DALLÂ·E",
     author: "@mechanica",
     uses: 6110,
     likes: 1115,
@@ -170,7 +170,7 @@ const curated: Prompt[] = [
   },
   {
     id: "p-cinematic-portrait",
-    title: "Cinematic Portrait — Rembrandt Light",
+    title: "Cinematic Portrait â€” Rembrandt Light",
     summary: "Close-up portrait with Rembrandt triangle and shallow DOF.",
     body:
       "Cinematic portrait, Rembrandt lighting triangle, shallow depth of field, 85mm lens equivalent, muted color grade, film grain subtle, background out of focus.",
@@ -203,5 +203,6 @@ export function allTags(): string[] {
   seedPrompts.forEach(p => p.tags.forEach(t => s.add(t)));
   return Array.from(s).sort();
 }
+
 
 

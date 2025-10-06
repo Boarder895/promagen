@@ -1,5 +1,5 @@
 // src/lib/providers.ts
-// Promagen canonical provider registry — FRONTEND is the source of truth.
+// Promagen canonical provider registry ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â FRONTEND is the source of truth.
 // Named exports only.
 
 export const PROVIDER_IDS = [
@@ -35,7 +35,7 @@ export interface Provider {
 export type ProviderMeta = Provider;
 
 export const PROVIDERS: Readonly<Provider[]> = [
-  { id: 'openai',     name: 'OpenAI DALL·E/GPT-Image', hasApi: true,  supportsAutomation: true,  hasAffiliate: false, affiliate: null, website: 'https://openai.com' },
+  { id: 'openai',     name: 'OpenAI DALLÃƒâ€šÃ‚Â·E/GPT-Image', hasApi: true,  supportsAutomation: true,  hasAffiliate: false, affiliate: null, website: 'https://openai.com' },
   { id: 'stability',  name: 'Stability AI',            hasApi: true,  supportsAutomation: true,  hasAffiliate: false, affiliate: null, website: 'https://stability.ai' },
   { id: 'leonardo',   name: 'Leonardo AI',             hasApi: true,  supportsAutomation: true,  hasAffiliate: true,  affiliate: null, website: 'https://leonardo.ai' },
   { id: 'i23rf',      name: 'I23RF',                   hasApi: false, supportsAutomation: false, hasAffiliate: false, affiliate: null, website: 'https://www.123rf.com' },
@@ -68,6 +68,8 @@ export const getProviderById = (id: ProviderId): Provider | undefined => PROVIDE
 export const providersWithApi = (): Provider[] => PROVIDERS.filter((p) => p.hasApi);
 export const assertProviderId = (id: string): id is ProviderId =>
   (PROVIDER_IDS as readonly string[]).includes(id);
+
+
 
 
 

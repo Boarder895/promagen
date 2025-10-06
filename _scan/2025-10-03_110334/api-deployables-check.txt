@@ -1,0 +1,3 @@
+﻿fly.toml exists: True
+Dockerfile exists: True
+prisma/schema.prisma exists: True

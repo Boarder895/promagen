@@ -1,0 +1,2 @@
+﻿package.json has UTF-8 BOM: NO
+package.json parses as JSON: YES

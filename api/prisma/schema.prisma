@@ -1,78 +1,49 @@
+// BACKEND · Prisma schema (REPLACE)
+// Normalized scoring for providers with 7 criteria.
+// Local dev can use SQLite (PRISMA_PROVIDER=sqlite, DATABASE_URL="file:./dev.db").
+// Prod on Fly should use Postgres (PRISMA_PROVIDER=postgresql, DATABASE_URL set via secret).
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")  // file:./dev.db
-}
-
-model ProviderSnapshotBatch {
-  id        String             @id @default(cuid())
-  createdAt DateTime           @default(now())
-  snapshots ProviderSnapshot[]
+  provider = "sqlite"       // for local dev
+  url      = env("DATABASE_URL")
 }
 
 model Provider {
-  id        String             @id @db.VarChar(64)
+  id           String         @id @default(cuid())
+  slug         String         @unique          // canonical id, e.g. "adobe", "i23rf"
+  displayName  String
+  hasApi       Boolean        @default(false)
+  hasAffiliate Boolean        @default(false)
+  isActive     Boolean        @default(true)
+
+  scores       ProviderScore[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Criterion {
+  id        String         @id @default(cuid())
+  key       String         @unique // adoption|quality|speed|cost|trust|automation|ethics
   name      String
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  overrides ProviderOverride[]
+  weight    Int
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  scores    ProviderScore[]
 }
 
-model ProviderSnapshot {
-  id         String                @id @default(cuid())
-  batchId    String
-  providerId String
-  status     String
-  latencyMs  Int?
-  score      Int
-  note       String?
-  createdAt  DateTime              @default(now())
-  batch      ProviderSnapshotBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+model ProviderScore {
+  id          String    @id @default(cuid())
+  providerId  String
+  criterionId String
+  raw         Int       // 0..100 (weighted at read: raw * (weight/100))
 
-  @@index([providerId])
-  @@index([batchId])
-}
+  provider   Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  criterion  Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
 
-model ProviderOverride {
-  id              Int      @id @default(autoincrement())
-  providerId      String
-  scoreAdjustment Int      @default(0)
-  isHardOverride  Boolean  @default(false)
-  finalScore      Int?
-  notes           String?
-  updatedBy       String?  @db.VarChar(280)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  provider        Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-
-  @@index([providerId])
-}
-
-model ProviderOverrideAudit {
-  id         String   @id @default(cuid())
-  providerId String
-  action     String
-  prevScore  Int?
-  newScore   Int?
-  ip         String?
-  userAgent  String?
-  metadata   Json?
-  createdAt  DateTime @default(now())
-
-  @@index([providerId, createdAt])
-}
-
-model LeaderboardAudit {
-  id          String   @id @default(cuid())
-  generatedAt DateTime @default(now())
-  reviewer    String?
-  period      String?
-  base        Int?
-  bases       Json?
-  signature   String
-  jsonPayload Json     // { base, rows }
-  csvPayload  String   // full CSV including header lines
+  @@unique([providerId, criterionId])
 }

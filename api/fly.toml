@@ -4,6 +4,16 @@ primary_region = "lhr"
 [build]
   dockerfile = "Dockerfile"
 
+# Make sure the Node app listens on Fly's port (matches http_service.internal_port)
+[env]
+  PORT = "8080"
+  NODE_ENV = "production"
+
+# Record deploys back to the Promagen API after each release.
+# Set fly secret: API_HOOK_URL=https://your-api-host (e.g., https://promagen-api.fly.dev)
+[deploy]
+  release_command = "sh -lc 'curl -sS -X POST \"$API_HOOK_URL/api/v1/hooks/deploy\" -H \"Content-Type: application/json\" -d \"{\\\"version\\\":\\\"$FLY_IMAGE_REF\\\",\\\"status\\\":\\\"ok\\\",\\\"url\\\":\\\"https://$FLY_APP_NAME.fly.dev\\\"}\" || true'"
+
 [http_service]
   internal_port = 8080
   force_https = true

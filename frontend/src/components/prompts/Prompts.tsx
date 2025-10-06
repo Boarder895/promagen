@@ -1,4 +1,4 @@
-// FRONTEND � NEXT.JS (App Router)
+// FRONTEND ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½ NEXT.JS (App Router)
 // Named exports only
 
 import * as React from "react";
@@ -48,7 +48,7 @@ export const Prompts = ({
   if (error) {
     return (
       <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800">
-        <div className="font-semibold">Couldn�t load prompts</div>
+        <div className="font-semibold">CouldnÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½t load prompts</div>
         <div className="text-sm opacity-80">{error.message}</div>
       </div>
     );
@@ -109,5 +109,7 @@ export const Prompts = ({
     </section>
   );
 };
+
+
 
 

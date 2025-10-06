@@ -3,7 +3,7 @@
 // Canonical 20-provider list for Promagen (frontend is the source of truth).
 
 export type ProviderId =
-  | "openai"        // OpenAI DALL·E/GPT-Image
+  | "openai"        // OpenAI DALLÃƒâ€šÃ‚Â·E/GPT-Image
   | "stability"     // Stability AI
   | "leonardo"      // Leonardo AI
   | "i23rf"         // I23RF (renamed from 123RF)
@@ -38,7 +38,7 @@ export interface ProviderMeta {
 
 // Canonical list (order stable)
 export const PROVIDERS: ProviderMeta[] = [
-  { id: "openai",     name: "OpenAI DALL·E/GPT-Image", kind: "api", supportsAutomation: true,  uiOnly: false, hasAffiliate: false },
+  { id: "openai",     name: "OpenAI DALLÃƒâ€šÃ‚Â·E/GPT-Image", kind: "api", supportsAutomation: true,  uiOnly: false, hasAffiliate: false },
   { id: "stability",  name: "Stability AI",            kind: "api", supportsAutomation: true,  uiOnly: false, hasAffiliate: false },
   { id: "leonardo",   name: "Leonardo AI",             kind: "api", supportsAutomation: true,  uiOnly: false, hasAffiliate: true  },
   { id: "i23rf",      name: "I23RF",                   kind: "ui",  supportsAutomation: false, uiOnly: true,  hasAffiliate: true  },
@@ -74,5 +74,7 @@ export const openAIProviders = PROVIDERS;
 export const getProvider = (id: ProviderId): ProviderMeta | undefined => PROVIDERS_BY_ID[id];
 export const API_PROVIDERS: ProviderMeta[] = PROVIDERS.filter(p => p.kind === "api");
 export const UI_ONLY_PROVIDERS: ProviderMeta[] = PROVIDERS.filter(p => p.kind === "ui");
+
+
 
 

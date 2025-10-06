@@ -20,7 +20,7 @@ export default function ProviderPicker({ value, onChange, label = "Provider" }: 
         onChange={(e) => onChange?.(e.target.value as ProviderId)}
       >
         <option value="" disabled>
-          Select…
+          SelectÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦
         </option>
         {PROVIDER_IDS.map((id) => (
           <option key={id} value={id}>
@@ -31,5 +31,7 @@ export default function ProviderPicker({ value, onChange, label = "Provider" }: 
     </label>
   );
 }
+
+
 
 

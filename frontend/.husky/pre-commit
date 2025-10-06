@@ -1,1 +1,1 @@
-pwsh -NoProfile -ExecutionPolicy Bypass -File scripts\enforce-imports.ps1
+﻿npm run --prefix frontend lint:guard

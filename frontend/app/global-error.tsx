@@ -1,4 +1,4 @@
-// FRONTEND • NEXT.JS
+﻿// FRONTEND â€¢ NEXT.JS
 // File: frontend/app/global-error.tsx
 "use client";
 
@@ -28,5 +28,6 @@ export default function GlobalError({
     </html>
   );
 }
+
 
 

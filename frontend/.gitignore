@@ -53,3 +53,9 @@ debug_bundle.txt
 # local env & backups
 .env.local
 *.bak
+.vercel
+.env*.local
+
+# backups
+*.bak
+*.backup.*

@@ -98,7 +98,7 @@ export default function WorldClocks() {
                 minute: "2-digit",
                 hour12: false,
               }).format(sunriseUtc)
-            : "�";
+            : "ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½";
 
           return (
             <div key={city.id} className="pmg-clock">
@@ -121,5 +121,7 @@ export default function WorldClocks() {
     </div>
   );
 }
+
+
 
 

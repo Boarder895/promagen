@@ -35,7 +35,7 @@ export default function PromptCard({ item }: { item: Prompt }) {
 
       {body ? (
         <p className="text-sm opacity-90">
-          {body.length > 260 ? `${body.slice(0, 260)}�` : body}
+          {body.length > 260 ? `${body.slice(0, 260)}ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½` : body}
         </p>
       ) : (
         <p className="text-sm opacity-60">No prompt text</p>
@@ -60,5 +60,7 @@ export default function PromptCard({ item }: { item: Prompt }) {
     </article>
   );
 }
+
+
 
 

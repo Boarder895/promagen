@@ -8,7 +8,7 @@ export type Job = {
   provider: string;
   label: string;
   state: JobState;
-  progress?: number;   // 0–100 while running
+  progress?: number;   // 0ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œ100 while running
   startedAt: number;
   endedAt?: number;
   tookMs?: number;
@@ -59,5 +59,7 @@ export function useProgress() {
   if (!ctx) throw new Error("useProgress must be used inside <ProgressProvider/>");
   return ctx;
 }
+
+
 
 

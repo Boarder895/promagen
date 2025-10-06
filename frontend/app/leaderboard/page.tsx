@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { PROVIDERS, type ProviderMeta } from '@/lib/providers';
@@ -62,11 +62,12 @@ export default function LeaderboardPage() {
       </div>
 
       <p className="text-xs text-gray-500 mt-3">
-        Demo scoring for compile sanity. We’ll swap in the 7-criteria weighted score later.
+        Demo scoring for compile sanity. Weâ€™ll swap in the 7-criteria weighted score later.
       </p>
     </main>
   );
 }
+
 
 
 

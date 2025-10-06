@@ -1,15 +1,16 @@
-import { PrismaClient } from '@prisma/client';
+// BACKEND · Prisma singleton (NEW) · named exports only
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __prisma__: PrismaClient | undefined;
+import { PrismaClient } from "@prisma/client";
+
+let prismaGlobal: PrismaClient;
+
+export const prisma =
+  (global as any).__prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === "production" ? ["error"] : ["query", "error", "warn"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  (global as any).__prisma = prisma;
 }
 
-// One PrismaClient per process; reuse during dev HMR
-const prisma = global.__prisma__ ?? new PrismaClient();
-
-if (process.env.NODE_ENV !== 'production') {
-  global.__prisma__ = prisma;
-}
-
-export { prisma };

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 
 function normalizeBase(b: string | null): string {
   const base =
@@ -21,5 +21,6 @@ export async function GET(req: NextRequest) {
     return new NextResponse('unreachable', { status: 502 });
   }
 }
+
 
 

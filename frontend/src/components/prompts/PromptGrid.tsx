@@ -18,7 +18,7 @@ export const PromptGrid = ({
 
   if (error) {
     return <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800">
-      <div className="font-semibold">Couldn�t load prompts</div>
+      <div className="font-semibold">CouldnÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½t load prompts</div>
       <div className="text-sm opacity-80">{error.message}</div>
     </div>;
   }
@@ -66,5 +66,7 @@ export const PromptGrid = ({
     </section>
   );
 };
+
+
 
 

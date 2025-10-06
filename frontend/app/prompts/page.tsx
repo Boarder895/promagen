@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { PromptGrid } from "@/components/prompts/PromptGrid"; // named import
 import { getCommunity } from "@/data/prompts";
 import type { Prompt } from '@/lib/hooks/usePrompts';
@@ -21,6 +21,7 @@ export default async function PromptsPage() {
     </main>
   );
 }
+
 
 
 

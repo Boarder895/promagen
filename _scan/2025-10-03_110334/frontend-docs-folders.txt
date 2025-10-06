@@ -1,0 +1,3 @@
+﻿C:\Users\Martin Yarnold\Projects\promagen\frontend\app\docs
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\docs\developers
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\docs\users-book

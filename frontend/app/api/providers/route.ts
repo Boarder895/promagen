@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 const API_BASE = process.env.API_BASE || 'http://localhost:3001';
 
@@ -32,6 +32,7 @@ export async function GET() {
     );
   }
 }
+
 
 
 

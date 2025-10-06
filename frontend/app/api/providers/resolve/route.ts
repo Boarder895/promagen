@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 const API_BASE = process.env.API_BASE || 'http://localhost:3001';
 
 export async function POST(req: Request) {
@@ -12,5 +12,6 @@ export async function POST(req: Request) {
   const payload = type.includes('application/json') ? await upstream.json() : await upstream.text();
   return NextResponse.json(payload as any, { status: upstream.status });
 }
+
 
 

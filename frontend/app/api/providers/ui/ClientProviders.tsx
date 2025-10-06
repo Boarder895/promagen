@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, ChangeEvent } from "react";
 
@@ -121,7 +121,7 @@ export function ClientProviders(props: ClientProvidersProps) {
             {audit.map((a) => (
               <li key={a.id}>
                 {new Date(a.createdAt).toLocaleString()} - {a.action} - {a.providerId}
-                {a.notes ? " — " + a.notes : ""}
+                {a.notes ? " â€” " + a.notes : ""}
               </li>
             ))}
           </ul>
@@ -130,3 +130,4 @@ export function ClientProviders(props: ClientProvidersProps) {
     </div>
   );
 }
+

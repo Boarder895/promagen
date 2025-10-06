@@ -1,14 +1,15 @@
 {
   "usersBook": {
-    "title": "Users’ Book — Promagen Functionality",
+    "title": "UsersÃ¢â‚¬â„¢ Book Ã¢â‚¬â€ Promagen Functionality",
     "sections": []
   },
   "developersBook": {
-    "title": "Developers’ Book — Promagen Build",
+    "title": "DevelopersÃ¢â‚¬â„¢ Book Ã¢â‚¬â€ Promagen Build",
     "sections": []
   },
   "buildProgress": {
-    "title": "Build Progress — Promagen Checklist",
+    "title": "Build Progress Ã¢â‚¬â€ Promagen Checklist",
     "items": []
   }
 }
+

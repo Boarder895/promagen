@@ -1,4 +1,4 @@
-// No "use client" here — safe for server or client imports.
+// No "use client" here ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â safe for server or client imports.
 
 export function youtubeIdFromUrl(url: string): string | null {
   if (!url) return null;
@@ -35,5 +35,7 @@ export function youtubeThumb(url: string): string | null {
   const id = youtubeIdFromUrl(url);
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
+
+
 
 

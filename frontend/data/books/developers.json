@@ -1,0 +1,12 @@
+[
+  {
+    "date": "2025-10-02",
+    "title": "Task board snapshot",
+    "body": "Ongoing: App Router docs polish; provider registry UI wiring.\nDone: /api/admin/books + JSON store; /docs/* reading from store.\nPending: Leaderboard collectors; Popular Prompt Grid; helmet/CSP; rate limiting; Zod validation.",
+    "tags": [
+      "tasks",
+      "dev"
+    ],
+    "status": "in-progress"
+  }
+]

@@ -47,7 +47,7 @@ export default function PromptPresetPicker({
         >
           <div className="font-medium">{p.title}</div>
           <div className="text-xs opacity-70">
-            {p.provider ?? "provider: n/a"}{p.model ? ` � ${p.model}` : ""}
+            {p.provider ?? "provider: n/a"}{p.model ? ` ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½ ${p.model}` : ""}
           </div>
           <div className="text-sm mt-1 line-clamp-2">{p.prompt}</div>
         </button>
@@ -55,6 +55,8 @@ export default function PromptPresetPicker({
     </div>
   );
 }
+
+
 
 
 

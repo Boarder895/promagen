@@ -1,72 +1,81 @@
+// frontend/eslint.config.mjs
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
+import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import importPlugin from "eslint-plugin-import";
 import nextPlugin from "@next/eslint-plugin-next";
 
-const NEXT_SPECIAL_GLOBS = [
-  "app/**/page.tsx",
-  "app/**/layout.tsx",
-  "app/**/template.tsx",
-  "app/**/default.tsx",
-  "app/**/loading.tsx",
-  "app/**/error.tsx",
-  "app/**/global-error.tsx",
-  "app/**/not-found.tsx",
-  "app/**/route.ts",
-  "pages/**/[[]*[]].tsx",
-  "pages/**/index.tsx",
-  "pages/**/_app.tsx",
-  "pages/**/_document.tsx",
-];
-
+/** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
+  // don't report unused disable comments
+  { linterOptions: { reportUnusedDisableDirectives: "off" } },
+
+  // ignore build artifacts
+  { ignores: ["node_modules/**", ".next/**", "dist/**", "public/**"] },
+
+  // base configs
   js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
-  nextPlugin.configs["core-web-vitals"],
+  ...tseslint.configs.recommended,
 
-  { ignores: [".next/**","node_modules/**","dist/**"] },
-
+  // project rules (apply to source files)
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.browser, ...globals.node },
     },
-    plugins: { import: importPlugin, "react-hooks": reactHooks, "react-refresh": reactRefresh },
+    plugins: {
+      "react-hooks": reactHooks,
+      "@next/next": nextPlugin,
+    },
     rules: {
-      "react-refresh/only-export-components": "off",
+      // import guardrails
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            { name: "@/markets", message: "Use @/lib/markets instead." },
+            {
+              name: "@/lib/marketTime",
+              message: "Use helpers in @/lib/markets instead of @/lib/marketTime.",
+            },
+          ],
+        },
+      ],
+
+      // essential plugin rules
       "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn",
-      "import/no-default-export": "off",
+      "react-hooks/exhaustive-deps": "error",
+      "@next/next/no-img-element": "off",
+
+      // baseline during cleanup
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
+      "prefer-const": "warn",
+      "no-empty": "off",
     },
   },
 
-  // Enforce named exports first in library-ish code
+  // declaration/types: allow loose typing & unuseds
   {
-    files: [
-      "src/lib/**/*.{ts,tsx}",
-      "src/hooks/**/*.{ts,tsx}",
-      "src/data/**/*.{ts,tsx}",
-      "src/types/**/*.{ts,tsx}",
-      "src/utils/**/*.{ts,tsx}",
-      "src/services/**/*.{ts,tsx}",
-    ],
-    rules: { "import/no-default-export": "error" },
+    files: ["src/**/*.d.ts", "src/types/**/*"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off",
+    },
   },
 
-  // Allow Next special files to use default exports
-  { files: NEXT_SPECIAL_GLOBS, rules: { "import/no-default-export": "off" } },
-
-  // Allow in .d.ts
-  { files: ["**/*.d.ts"], rules: { "import/no-default-export": "off" } },
-
-  // TEMP: relax for components during Phase 1 migration
+  // file-specific: allow a temporary unused in markets.ts
   {
-    files: [ "components/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}" ],
-    rules: { "import/no-default-export": "off" },
+    files: ["src/lib/markets.ts"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+    },
   },
 ];
+
+

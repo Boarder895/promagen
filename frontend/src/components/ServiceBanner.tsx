@@ -45,8 +45,8 @@ export default function ServiceBanner() {
       }}
     >
       <strong>{label}</strong>
-      {typeof view.latency === "number" ? ` • ${view.latency}ms` : ""}
-      {view.detail ? ` — ${view.detail}` : ""}
+      {typeof view.latency === "number" ? ` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¢ ${view.latency}ms` : ""}
+      {view.detail ? ` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${view.detail}` : ""}
       <button
         onClick={() => setDismissed(true)}
         style={{
@@ -65,5 +65,7 @@ export default function ServiceBanner() {
     </div>
   );
 }
+
+
 
 

@@ -1,0 +1,113 @@
+﻿C:\Users\Martin Yarnold\Projects\promagen\api\src\db\prisma.ts:13 -> export default prisma;
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\healthz.ts:65 -> export default async function deepHealth(_req: Request, res: Response) {
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\meta.ts:74 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\openai.ts:9 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\providers.ts:28 -> export default router
+C:\Users\Martin Yarnold\Projects\promagen\api\src\legacy\version.ts:14 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\api\prisma.config.ts:4 -> export default defineConfig({
+C:\Users\Martin Yarnold\Projects\promagen\app\docs\users-book\page.tsx:39 -> export default UsersBookPage;
+C:\Users\Martin Yarnold\Projects\promagen\app\settings\keys\page.tsx:3 -> export default function Page() { return <ApiKeysPanel />; }
+C:\Users\Martin Yarnold\Projects\promagen\app\page.tsx:9 -> export default function Page() {
+C:\Users\Martin Yarnold\Projects\promagen\components\ApiKeysPanel.tsx:10 -> export default function ApiKeysPanel() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\admin\providers\page.tsx:22 -> export default _default;
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\admin\AdminSyncForm.tsx:22 -> export default function AdminSyncForm({
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\admin\page.tsx:6 -> export default function AdminPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\admin\syncForm.tsx:7 -> export default function SyncForm() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\demo\generate\page.tsx:6 -> export default function GeneratePage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\demo\runs\page.tsx:11 -> export default function Page() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\demo\ui-showcase\page.tsx:54 -> export default UiShowcasePage;
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\demo\layout.tsx:3 -> export default function DemoLayout({ children }: { children: ReactNode }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\docs\developers\page.tsx:11 -> export default function Page() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\docs\users-book\page.tsx:6 -> export default function Page() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\docs\layout.tsx:28 -> export default function Layout({ children }: { children: ReactNode }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\docs\page.tsx:1 -> export default function Page() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\leaderboard\page.tsx:20 -> export default function LeaderboardPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\market\CopyButton.tsx:3 -> export default function CopyButton({ text }: { text: string }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\market\page.tsx:26 -> export default async function MarketPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\market\Ticker.tsx:5 -> export default function Ticker({ base }: { base: string }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\prompt\page.tsx:6 -> export default function PromptPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\prompts\[id]\page.tsx:7 -> export default function PromptDetailPage({ params }: PageProps) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\prompts\page.tsx:8 -> export default async function PromptsPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\providers\leaderboard\bulk\page.tsx:1 -> export default function BulkLeaderboardPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\providers\error.tsx:3 -> export default function Error({ error }: { error: Error & { digest?: string } }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\providers\loading.tsx:1 -> export default function Loading() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\providers\page.tsx:4 -> export default function ProvidersPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\status\page.tsx:3 -> export default async function StatusPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\test\leaderboard\page.tsx:47 -> export default _default;
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\test\meta\loading.tsx:1 -> export default function Loading() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\test\meta\page.tsx:3 -> export default async function MetaTestPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\widget\preferred\page.tsx:22 -> export default async function PreferredWidget() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\global-error.tsx:5 -> export default function GlobalError({
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\layout.tsx:6 -> export default function RootLayout({ children }: { children: React.ReactNode }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\page.tsx:31 -> export default _default;
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\theme-script.tsx:8 -> export default function ThemeScript() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\app\_providers.tsx:6 -> export default function Providers({ children }: { children: React.ReactNode }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\backups\2025-10-02\page.backup.2025-10-02.tsx:4 -> export default function UsersPage() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\components\DocsSidebar.tsx:14 -> export default function DocsSidebar() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\components\DocsTOC.tsx:8 -> export default function TOC() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\pages\api\cron\import.ts:3 -> export default async function handler(_req: NextApiRequest, res: NextApiResponse) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\health\HealthBanner.tsx:20 -> export default function HealthBanner() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\health\HealthDot.tsx:10 -> export default function HealthDot({ label }: { label?: string }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\health\HealthToastWatcher.tsx:8 -> export default function HealthToastWatcher() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\layout\PromptRunnerLayout.tsx:34 -> export default PromptRunnerLayout;
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\prompts\PromptCard.tsx:20 -> export default function PromptCard({ item }: { item: Prompt }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\prompts\PromptCardItem.tsx:12 -> export default function PromptCardItem({
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ApiStatusBadge.tsx:12 -> export default function ApiStatusBadge({
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\Chip.tsx:48 -> export default Chip
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\DocsSidebar.tsx:5 -> export default function DocsSidebar() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\DocsTOC.tsx:5 -> export default function DocsTOC() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\Header.tsx:8 -> export default function Header() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\LanguageSwitcher.tsx:3 -> export default function LanguageSwitcher(){
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\Leaderboard.tsx:28 -> export default function Leaderboard() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\LeftNav.tsx:4 -> export default LeftNav; // ✅ adds default export to satisfy default-imports
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\Markdown.tsx:16 -> export default function Markdown({ markdown }: Props) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ModeChip.tsx:2 -> export default function ModeChip({ mode }: { mode: "real" | "simulated" | "disabled" }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ProgressBar.tsx:3 -> export default function ProgressBar({ value }: { value: number }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ProgressToast.tsx:6 -> export default function ProgressToast() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\PromptCard.tsx:11 -> export default function PromptCard({ p }: { p: ItemType }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\PromptPlayground.tsx:6 -> export default function PromptPlayground() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\PromptPresetCard.tsx:14 -> export default function PromptPresetCard({
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\PromptPresetPicker.tsx:31 -> export default function PromptPresetPicker({
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ProviderCard.tsx:3 -> export default function ProviderCard({ rank, name, score, delta = 0 }: Props){
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ProviderPicker.tsx:13 -> export default function ProviderPicker({ value, onChange, label = "Provider" }: Props) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\RunPanel.tsx:10 -> export default function RunPanel({ initialLabel }: { initialLabel: string }) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ServiceBanner.tsx:8 -> export default function ServiceBanner() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\SiteFooter.tsx:3 -> export default function SiteFooter() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\SiteHeader.tsx:6 -> export default function SiteHeader() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\StatusChip.tsx:15 -> export default function StatusChip() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\StockTicker.tsx:3 -> export default function StockTicker() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ThemeFab.tsx:9 -> export default function ThemeFab() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\WorldClocks.tsx:24 -> export default function WorldClocks() {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\data\books.ts:22 -> export default books;
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\pages\prompts\index.tsx:16 -> export default function PromptsIndex({ prompts }: PageProps) {
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\types\components.d.ts:3 -> export default Component;
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\types\components.d.ts:8 -> export default Component;
+C:\Users\Martin Yarnold\Projects\promagen\frontend\tailwind.config.ts:8 -> export default config;
+C:\Users\Martin Yarnold\Projects\promagen\pages\settings\keys.tsx:2 -> export default function Page() { return <ApiKeysPanel />; }
+C:\Users\Martin Yarnold\Projects\promagen\routes\openai.ts:84 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\server\src\routes\user.ts:27 -> export default r;
+C:\Users\Martin Yarnold\Projects\promagen\src\adapters\openai.ts:35 -> export default openai;
+C:\Users\Martin Yarnold\Projects\promagen\src\components\CreditsBanner.tsx:5 -> export default function CreditsBanner() {
+C:\Users\Martin Yarnold\Projects\promagen\src\components\FlagBarChip.tsx:13 -> export default function FlagBarChip({
+C:\Users\Martin Yarnold\Projects\promagen\src\components\GlobalCountryStrip.tsx:16 -> export default function GlobalCountryStrip() {
+C:\Users\Martin Yarnold\Projects\promagen\src\components\ImagePlayground.tsx:3 -> export default function ImagePlayground() {
+C:\Users\Martin Yarnold\Projects\promagen\src\components\LiveChip.tsx:8 -> export default function LiveChip({ providerId, updatedSuffix = "" }: Props) {
+C:\Users\Martin Yarnold\Projects\promagen\src\components\PlatformLiveDrawer.tsx:24 -> export default function PlatformLiveDrawer({ providerId, providerName, onClose }: Props) {
+C:\Users\Martin Yarnold\Projects\promagen\src\components\PromagenMVP.tsx:380 -> export default function PromagenMVP() {
+C:\Users\Martin Yarnold\Projects\promagen\src\components\ProviderCountryChips.tsx:16 -> export default function ProviderCountryChips({ providerId }: { providerId: string }) {
+C:\Users\Martin Yarnold\Projects\promagen\src\lib\crypto.ts:64 -> export default { encrypt, decrypt, storeEncryptedKey, getDecryptedKey, deleteStoredKey };
+C:\Users\Martin Yarnold\Projects\promagen\src\lib\db.ts:19 -> export default prisma;
+C:\Users\Martin Yarnold\Projects\promagen\src\lib\prisma.ts:16 -> export default prisma;
+C:\Users\Martin Yarnold\Projects\promagen\src\pages\index.tsx:5 -> export default function Home() {
+C:\Users\Martin Yarnold\Projects\promagen\src\pages\platforms.tsx:14 -> export default function PlatformsPage() {
+C:\Users\Martin Yarnold\Projects\promagen\src\pages\_app.tsx:4 -> export default function App({ Component, pageProps }: AppProps) {
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\cron\import.ts:10 -> export default r;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\admin.ts:74 -> export default r;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\ai.ts:211 -> export default r;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\health.ts:10 -> export default r;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\images.ts:33 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\live.ts:84 -> export default r;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\models.ts:15 -> export default r;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\openai.ts:78 -> export default router;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\platforms.ts:20 -> export default r;
+C:\Users\Martin Yarnold\Projects\promagen\src\routes\web.ts:166 -> export default r;

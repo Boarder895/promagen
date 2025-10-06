@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { doSync, initialSyncState, type SyncState as _SyncState } from "@/admin/actions";
 import { useFormState } from "react-dom";
@@ -22,6 +22,7 @@ export default function SyncForm() {
     </form>
   );
 }
+
 
 
 

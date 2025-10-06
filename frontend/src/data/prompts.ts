@@ -22,7 +22,7 @@ export async function getCommunity(): Promise<Prompt[]> {
       id: "starter-1",
       title: "Mushroom town at dusk",
       prompt:
-        "Pixar�Ghibli semi-real characters in a glowing mushroom town at dusk, ultra-photorealistic background, cinematic lighting",
+        "PixarÃƒÂ¯Ã‚Â¿Ã‚Â½Ghibli semi-real characters in a glowing mushroom town at dusk, ultra-photorealistic background, cinematic lighting",
       tags: ["fracture", "worldbuilding"],
     },
     {
@@ -34,6 +34,8 @@ export async function getCommunity(): Promise<Prompt[]> {
     },
   ];
 }
+
+
 
 
 

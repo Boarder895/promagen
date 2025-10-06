@@ -1,4 +1,4 @@
-// FRONTEND • lib/health.ts
+// FRONTEND ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ lib/health.ts
 export type HealthStatus = "ok" | "degraded" | "down";
 export interface HealthResponse {
   status: HealthStatus;
@@ -23,5 +23,7 @@ export async function fetchHealth(signal?: AbortSignal): Promise<HealthResponse>
     return { status: "down", message: msg };
   }
 }
+
+
 
 

@@ -19,7 +19,7 @@ export default function StatusChip() {
   // stable callback so useEffect can depend on it
   const refresh = useCallback(async () => {
     if (!apiBase) {
-      setState({ status: "unset", detail: "API base � not set" });
+      setState({ status: "unset", detail: "API base ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½ not set" });
       return;
     }
     const [health, vers] = await Promise.all([pingHealth(3500), fetchVersion()]);
@@ -52,12 +52,12 @@ export default function StatusChip() {
   }, [state.status]);
 
   const label = useMemo(() => {
-    const latency = state.latency ? ` � ${state.latency}ms` : "";
+    const latency = state.latency ? ` ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½ ${state.latency}ms` : "";
     switch (state.status) {
       case "live": return `Live${latency}`;
       case "degraded": return `Degraded${latency}`;
       case "down": return "Down";
-      default: return "API base � not set";
+      default: return "API base ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½ not set";
     }
   }, [state.status, state.latency]);
 
@@ -68,7 +68,7 @@ export default function StatusChip() {
       state.buildTime || null,
       state.detail ? `(${state.detail})` : null
     ].filter(Boolean);
-    return parts.join(" � ") || "No build metadata";
+    return parts.join(" ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¿Ãƒâ€šÃ‚Â½ ") || "No build metadata";
   }, [state.version, state.commit, state.buildTime, state.detail]);
 
   return (
@@ -91,5 +91,7 @@ export default function StatusChip() {
     </div>
   );
 }
+
+
 
 

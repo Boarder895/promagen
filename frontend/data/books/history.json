@@ -1,0 +1,12 @@
+[
+  {
+    "date": "2025-10-02",
+    "title": "Books automation online",
+    "body": "Secured POST writes to /data/books/*.json. First seed created.",
+    "tags": [
+      "milestone",
+      "history"
+    ],
+    "status": "done"
+  }
+]

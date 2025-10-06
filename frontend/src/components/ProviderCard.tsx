@@ -9,9 +9,11 @@ export default function ProviderCard({ rank, name, score, delta = 0 }: Props){
       <div style={{width:24,height:24,borderRadius:6, background:"#ddd"}} />
       <div><strong>{rank}. {name}</strong></div>
       <div style={{textAlign:"right"}}>{score.toFixed(1)}</div>
-      <div style={{textAlign:"right"}}>{delta >= 0 ? `▲ ${delta.toFixed(1)}` : `▼ ${Math.abs(delta).toFixed(1)}`}</div>
+      <div style={{textAlign:"right"}}>{delta >= 0 ? `ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â² ${delta.toFixed(1)}` : `ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â¼ ${Math.abs(delta).toFixed(1)}`}</div>
     </div>
   );
 }
+
+
 
 

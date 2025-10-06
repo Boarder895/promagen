@@ -1,0 +1,2 @@
+﻿App Router under root ./app:  YES
+App Router under ./src/app:   NO

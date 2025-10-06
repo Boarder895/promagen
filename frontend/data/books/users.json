@@ -1,0 +1,22 @@
+[
+  {
+    "date": "2025-10-02",
+    "title": "How Promagen works",
+    "body": "Live leaderboard, side-by-side runs, prompt library, Popular Prompt Grid.",
+    "tags": [
+      "overview",
+      "users-book"
+    ],
+    "status": "done"
+  },
+  {
+    "date": "2025-10-02",
+    "title": "Getting started (YouTube)",
+    "body": "Placeholder - drop the real link once uploaded.",
+    "tags": [
+      "video",
+      "onboarding"
+    ],
+    "status": "in-progress"
+  }
+]

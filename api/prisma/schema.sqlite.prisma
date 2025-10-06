@@ -1,63 +1,81 @@
+// SQLite schema for LOCAL DEV & CI  (DATABASE_URL like: file:./dev.db)
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL") // file:./dev.db
+  url      = env("DATABASE_URL") // e.g. file:./dev.db
 }
 
-model ProviderSnapshotBatch {
+// NOTE: SQLite + Prisma 5.x → no native enums, no Json type, no autoincrement() on non-ID.
+// We represent enum-ish values as String, and Json payloads as String (JSON.stringify/parse in code).
+
+model Task {
+  id          String          @id @default(cuid())
+  shortId     Int             @unique // set in code on create
+  title       String
+  description String?
+  area        String?
+  status      String          @default("todo") // todo|doing|blocked|done
+  priority    String          @default("medium") // low|medium|high
+  owner       String?
+  labels      String? // JSON string of string[]
+  links       String? // JSON string of {label,url}[]
+  checklists  ChecklistItem[]
+  events      Event[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ChecklistItem {
+  id          String  @id @default(cuid())
+  taskId      String?
+  task        Task?   @relation(fields: [taskId], references: [id])
+  text        String
+  done        Boolean @default(false)
+  source      String  @default("manual") // manual|ci|collector|webhook
+  evidenceUrl String?
+}
+
+model Event {
+  id         String   @id @default(cuid())
+  type       String
+  payload    String // JSON string
+  occurredAt DateTime @default(now())
+  source     String
+  taskId     String?
+  task       Task?    @relation(fields: [taskId], references: [id])
+}
+
+model PublicNote {
   id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  snapshots ProviderSnapshot[]
-}
-
-model Provider {
-  id        String   @id
-  name      String
+  headline  String
+  body      String
+  severity  String   @default("info") // info|success|warning|error
+  link      String?
+  visible   Boolean  @default(false)
+  approved  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  overrides ProviderOverride[]
 }
 
-model ProviderSnapshot {
-  id        String   @id @default(cuid())
-  providerId String
-  name      String
-  score     Int?
-  reason    String?
-  createdAt DateTime @default(now())
-  batchId   String
-  batch     ProviderSnapshotBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
-
-  @@index([providerId])
-  @@index([batchId])
+model Video {
+  id       String  @id @default(cuid())
+  title    String
+  url      String
+  note     String?
+  audience String  @default("users") // users|devs|both
 }
 
-model ProviderOverride {
-  id              String   @id @default(cuid())
-  providerId      String   @unique
-  scoreAdjustment Int?
-  isHardOverride  Boolean  @default(false)
-  finalScore      Int?
-  notes           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-}
-
-model LeaderboardAudit {
-  id            String   @id @default(cuid())
-  generatedAt   DateTime @default(now())
-  reviewer      String?
-  period        String?
-  base          Int?
-  bases         Json?
-  signature     String
-  hmacSignature String?
-  jsonPayload   Json
-  csvPayload    String
+model Incident {
+  id          String    @id @default(cuid())
+  status      String    @default("open") // open|resolved
+  severity    String    @default("minor") // minor|major|critical
+  summary     String?
+  source      String
+  evidenceUrl String?
+  openedAt    DateTime  @default(now())
+  resolvedAt  DateTime?
 }

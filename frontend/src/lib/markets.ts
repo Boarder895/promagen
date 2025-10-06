@@ -1,0 +1,144 @@
+// src/lib/markets.ts
+// Single source of truth for exchanges.
+// Named exports only (Promagen rule). UTF-8 / LF.
+
+import { DateTime } from 'luxon';
+
+export type Region = 'asia' | 'middle_east' | 'europe' | 'americas' | 'africa';
+
+export type Market = {
+  id: string;
+  symbol: string;
+  name: string;
+  tz: string;                 // IANA timezone, e.g. "Asia/Tokyo"
+  open: [number, number];     // [hour, minute] in local time
+  close: [number, number];    // [hour, minute] in local time
+  days?: number[];            // 0=Sun … 6=Sat (default Mon–Fri)
+  region?: Region;
+  holidays?: Array<(d: DateTime) => boolean>; // optional holiday rules (return true if closed)
+};
+
+export type MarketComputed = {
+  id: string;
+  symbol: string;
+  name: string;
+  tz: string;
+  hours: string;              // "09:00–16:00"
+  localTime: string;          // "12:34"
+  open: boolean;
+  nextOpenMinutes: number | null;
+  holiday: boolean;
+};
+
+// Back-compat alias for legacy imports (some files ask for MarketRow)
+export type MarketRow = MarketComputed;
+
+const DEFAULT_DAYS = [1, 2, 3, 4, 5]; // Mon–Fri (Luxon weekday Mon=1…Sun=7 → %7)
+
+const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+
+const isHoliday = (m: Market, dt: DateTime): boolean =>
+  (m.holidays ?? []).some(fn => {
+    try { return fn(dt); } catch { return false; }
+  });
+
+/** Minutes until the next opening bell from nowLocal (searches up to 14 days). */
+const minutesUntilNextOpen = (m: Market, nowLocal: DateTime, tradingDays: number[]): number | null => {
+  const todayOpen = nowLocal.set({ hour: m.open[0], minute: m.open[1], second: 0, millisecond: 0 });
+  const todayClose = nowLocal.set({ hour: m.close[0], minute: m.close[1], second: 0, millisecond: 0 });
+void todayClose;
+  const weekday0 = nowLocal.weekday % 7; // 0=Sun … 6=Sat
+  const isTradingDay = tradingDays.includes(weekday0);
+
+  // Before open today and not a holiday → open today
+  if (isTradingDay && nowLocal < todayOpen && !isHoliday(m, nowLocal)) {
+    return Math.max(0, Math.floor(todayOpen.diff(nowLocal, 'minutes').minutes));
+  }
+
+  // Otherwise find next valid trading day
+  for (let i = 1; i <= 14; i++) {
+    const dt = nowLocal.plus({ days: i });
+    const w0 = dt.weekday % 7;
+    if (!tradingDays.includes(w0)) continue;
+
+    const openAt = dt.set({ hour: m.open[0], minute: m.open[1], second: 0, millisecond: 0 });
+    if (isHoliday(m, openAt)) continue;
+
+    return Math.max(0, Math.floor(openAt.diff(nowLocal, 'minutes').minutes));
+  }
+  return null;
+};
+
+/** Project a Market into its computed, UI-ready shape. */
+export const computeMarket = (m: Market, nowUtc: DateTime = DateTime.utc()): MarketComputed => {
+  const nowLocal = nowUtc.setZone(m.tz);
+  const tradingDays = m.days ?? DEFAULT_DAYS;
+
+  const openAt = nowLocal.set({ hour: m.open[0], minute: m.open[1], second: 0, millisecond: 0 });
+  const closeAt = nowLocal.set({ hour: m.close[0], minute: m.close[1], second: 0, millisecond: 0 });
+
+  const weekday0 = nowLocal.weekday % 7; // 0=Sun … 6=Sat
+  const tradingToday = tradingDays.includes(weekday0);
+  const holiday = isHoliday(m, nowLocal);
+  const openNow = tradingToday && !holiday && nowLocal >= openAt && nowLocal <= closeAt;
+
+  return {
+    id: m.id,
+    symbol: m.symbol,
+    name: m.name,
+    tz: m.tz,
+    hours: `${pad(m.open[0])}:${pad(m.open[1])}–${pad(m.close[0])}:${pad(m.close[1])}`,
+    localTime: nowLocal.toFormat('HH:mm'),
+    open: openNow,
+    nextOpenMinutes: openNow ? 0 : minutesUntilNextOpen(m, nowLocal, tradingDays),
+    holiday,
+  };
+};
+
+/** Canonical 16 exchanges (order: Asia → Middle East → Europe/Africa → Americas). */
+export const MarketList: Market[] = [
+  // Asia–Pacific
+  { id: 'tse',   symbol: 'TSE',   name: 'Tokyo Stock Exchange',                 tz: 'Asia/Tokyo',       open: [9, 0],  close: [15, 0],  region: 'asia' },
+  { id: 'sse',   symbol: 'SSE',   name: 'Shanghai Stock Exchange',              tz: 'Asia/Shanghai',    open: [9, 30], close: [15, 0],  region: 'asia' },
+  { id: 'hkex',  symbol: 'HKEX',  name: 'Hong Kong Exchanges',                  tz: 'Asia/Hong_Kong',   open: [9, 30], close: [16, 0],  region: 'asia' },
+  { id: 'sgx',   symbol: 'SGX',   name: 'Singapore Exchange',                   tz: 'Asia/Singapore',   open: [9, 0],  close: [17, 0],  region: 'asia' },
+  { id: 'asx',   symbol: 'ASX',   name: 'ASX (Sydney)',                         tz: 'Australia/Sydney', open: [10, 0], close: [16, 0],  region: 'asia' },
+
+  // Middle East
+  { id: 'dfm',   symbol: 'DFM',   name: 'Dubai Financial Market',               tz: 'Asia/Dubai',       open: [10, 0], close: [15, 0],  days: [1,2,3,4,5,6], region: 'middle_east' },
+
+  // Europe & Africa
+  { id: 'epa',   symbol: 'PAR',   name: 'Euronext Paris',                       tz: 'Europe/Paris',     open: [9, 0],  close: [17, 30], region: 'europe' },
+  { id: 'xetra', symbol: 'XET',   name: 'Xetra (Frankfurt)',                    tz: 'Europe/Berlin',    open: [9, 0],  close: [17, 30], region: 'europe' },
+  { id: 'lse',   symbol: 'LSE',   name: 'London Stock Exchange',                tz: 'Europe/London',    open: [8, 0],  close: [16, 30], region: 'europe' },
+  { id: 'moex',  symbol: 'MOEX',  name: 'Moscow Exchange',                      tz: 'Europe/Moscow',    open: [10, 0], close: [18, 45], region: 'europe' }, // keep as Europe; change region if you want UI grouping as 'asia'
+  { id: 'jse',   symbol: 'JSE',   name: 'Johannesburg Stock Exchange',          tz: 'Africa/Johannesburg', open: [9, 0], close: [17, 0], region: 'africa' },
+
+  // Americas
+  { id: 'nyse',  symbol: 'NYSE',  name: 'New York Stock Exchange',              tz: 'America/New_York', open: [9, 30], close: [16, 0],  region: 'americas' },
+  { id: 'nasdaq',symbol: 'NASDAQ',name: 'NASDAQ (New York)',                    tz: 'America/New_York', open: [9, 30], close: [16, 0],  region: 'americas' },
+  { id: 'b3',    symbol: 'B3',    name: 'B3 (Brasil Bolsa Balcão, São Paulo)',  tz: 'America/Sao_Paulo', open: [10, 0], close: [17, 0],  region: 'americas' },
+  { id: 'tsx',   symbol: 'TSX',   name: 'Toronto Stock Exchange',               tz: 'America/Toronto',  open: [9, 30], close: [16, 0],  region: 'americas' },
+  { id: 'bcba',  symbol: 'BCBA',  name: 'Buenos Aires Stock Exchange',          tz: 'America/Argentina/Buenos_Aires', open: [11, 0], close: [17, 0], region: 'americas' },
+];
+
+/** Convenience exports expected by other modules. */
+export type MarketId = (typeof MarketList)[number]['id'];
+
+export const MarketSymbols: Record<MarketId, string> =
+  Object.fromEntries(MarketList.map(m => [m.id as MarketId, m.symbol])) as Record<MarketId, string>;
+
+export const getMarketById = (id: string): Market | undefined =>
+  MarketList.find(m => m.id === id);
+
+export const getMarket = getMarketById;              // singular finder
+export const getMarkets = (): Market[] => MarketList; // plural accessor
+
+
+
+
+
+
+
+
+

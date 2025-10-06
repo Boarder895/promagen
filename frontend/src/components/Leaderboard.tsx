@@ -41,11 +41,13 @@ export default function Leaderboard() {
           <div style={{width:24,height:24,borderRadius:6, background:"#ddd"}} />
           <div><strong>{i+1}. {r.provider}</strong></div>
           <div style={{textAlign:"right"}}>{r.score.toFixed(1)}</div>
-          <div style={{textAlign:"right"}}>{r.delta >= 0 ? `▲ ${r.delta.toFixed(1)}` : `▼ ${Math.abs(r.delta).toFixed(1)}`}</div>
+          <div style={{textAlign:"right"}}>{r.delta >= 0 ? `ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â² ${r.delta.toFixed(1)}` : `ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“Ãƒâ€šÃ‚Â¼ ${Math.abs(r.delta).toFixed(1)}`}</div>
         </div>
       ))}
     </div>
   );
 }
+
+
 
 

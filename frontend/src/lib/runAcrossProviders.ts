@@ -15,3 +15,5 @@ export function openAllProviders(promptText: string): void {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 }
+
+

@@ -1,66 +1,63 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 import Link from "next/link";
 
-export default function DocsLayout({ children }: { children: ReactNode }) {
+const SHOW_DEV = process.env.NEXT_PUBLIC_SHOW_DEV_BOOK === "true";
+
+type NavItem = { label: string; href: string };
+type NavCardProps = { title: string; items: NavItem[] };
+
+function NavCard({ title, items }: NavCardProps) {
   return (
-    <div className="min-h-screen w-full">
-      {/* 3-column grid with sticky sidebars */}
-      <div className="mx-auto grid max-w-[1600px] grid-cols-12 gap-6 px-4 py-6 lg:gap-8 lg:px-8">
-        {/* LEFT: Developers Book nav */}
-        <aside className="col-span-12 lg:col-span-3">
-          <div className="sticky top-4">
-            <nav className="rounded-2xl border bg-white/70 p-4 shadow-sm backdrop-blur">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
-                Developers Book
-              </h2>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/docs/developers-book" className="hover:underline">Overview</Link></li>
-                <li><Link href="/docs/developers-book#shipped" className="hover:underline">Shipped</Link></li>
-                <li><Link href="/docs/developers-book#in-progress" className="hover:underline">In progress</Link></li>
-                <li><Link href="/docs/developers-book#todo" className="hover:underline">To-Do (near-term)</Link></li>
-                <li><Link href="/docs/developers-book#medium-term" className="hover:underline">Medium-term</Link></li>
-              </ul>
-            </nav>
-          </div>
-        </aside>
+    <aside className="rounded-2xl border bg-white p-4 shadow-sm">
+      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground">
+        {title.toUpperCase()}
+      </h2>
+      <ul className="mt-3 space-y-2 text-sm">
+        {items.map((it) => (
+          <li key={it.href}>
+            <Link className="underline-offset-2 hover:underline" href={it.href}>
+              {it.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+}
 
-        {/* CENTER: Active page (your markdown/tsx content renders here) */}
-        <main className="col-span-12 lg:col-span-6">
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <div className="mx-auto prose-doc">
-              {children}
-            </div>
-          </div>
-        </main>
+export default function Layout({ children }: { children: ReactNode }) {
+  return (
+    <div className="mx-auto max-w-7xl gap-4 p-4 lg:grid lg:grid-cols-[240px_1fr_240px]">
+      {/* Left nav: Developers (hidden unless env flag is true) */}
+      <div className="space-y-4">
+        {SHOW_DEV ? (
+          <NavCard
+            title="Developers Book"
+            items={[
+              { label: "Overview", href: "/docs/developers" },
+              { label: "Shipped", href: "/docs/developers" },
+              { label: "In progress", href: "/docs/developers" },
+              { label: "To-Do (near-term)", href: "/docs/developers" },
+              { label: "Medium-term", href: "/docs/developers" },
+            ]}
+          />
+        ) : null}
+      </div>
 
-        {/* RIGHT: Users/Progress nav */}
-        <aside className="col-span-12 lg:col-span-3">
-          <div className="sticky top-4 space-y-6">
-            <nav className="rounded-2xl border bg-white/70 p-4 shadow-sm backdrop-blur">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
-                Users Book
-              </h2>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/docs/users-book" className="hover:underline">Overview</Link></li>
-                <li><Link href="/docs/users-book#getting-started" className="hover:underline">Getting started</Link></li>
-                <li><Link href="/docs/users-book#faq" className="hover:underline">FAQ</Link></li>
-              </ul>
-            </nav>
+      {/* Main content */}
+      <main className="rounded-2xl border bg-white p-4 shadow-sm">{children}</main>
 
-            <nav className="rounded-2xl border bg-white/70 p-4 shadow-sm backdrop-blur">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
-                Build Progress Book
-              </h2>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/docs/build-progress-book" className="hover:underline">Latest updates</Link></li>
-                <li><Link href="/docs/build-progress-book#milestones" className="hover:underline">Milestones</Link></li>
-              </ul>
-            </nav>
-          </div>
-        </aside>
+      {/* Right nav: Users (always shown) */}
+      <div className="space-y-4">
+        <NavCard
+          title="Users Book"
+          items={[
+            { label: "Overview", href: "/docs/users-book" },
+            { label: "Getting started", href: "/docs/users-book" },
+            { label: "FAQ", href: "/docs/users-book" },
+          ]}
+        />
       </div>
     </div>
   );
 }
-
-
