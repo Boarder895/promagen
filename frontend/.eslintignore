@@ -1,8 +1,0 @@
-﻿.next/
-dist/
-build/
-out/
-coverage/
-vercel/
-.vscode/
-node_modules/

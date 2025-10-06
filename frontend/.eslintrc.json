@@ -1,34 +1,17 @@
-{
+﻿{
   "root": true,
-  "extends": [
-    "next/core-web-vitals",
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
-  ],
+  "extends": ["next/core-web-vitals"],
   "plugins": ["@typescript-eslint", "import"],
-  "parserOptions": {
-    "project": ["./tsconfig.json"]
-  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": { "project": "./tsconfig.json" },
   "ignorePatterns": [
-    ".next/",
-    "node_modules/",
-    "dist/",
-    "build/",
-    "out/",
-    "coverage/",
-    "vercel/",
-    ".vscode/"
+    ".next/", "node_modules/", "dist/", "build/", "out/", "coverage/", "vercel/", ".vscode/"
   ],
   "rules": {
     "import/no-default-export": "error",
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
   },
   "overrides": [
-    {
-      "files": ["**/*page.tsx", "**/*layout.tsx", "next.config.{js,cjs,mjs,ts}"],
-      "rules": {
-        "import/no-default-export": "off"
-      }
-    }
+    { "files": ["**/*page.tsx", "**/*layout.tsx", "next.config.*"], "rules": { "import/no-default-export": "off" } }
   ]
 }
