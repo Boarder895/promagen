@@ -1,15 +1,14 @@
-﻿/* Cross-platform prebuild wrapper:
-   - On Windows: run the existing PowerShell step.
-   - On Linux/macOS (Vercel): skip gracefully. */
-const { spawnSync } = require('node:child_process');
+﻿const { spawnSync } = require("node:child_process");
+const isWin = process.platform === "win32";
+const isCI = !!process.env.CI;
 
-if (process.platform === 'win32') {
+if (isWin && !isCI) {
   const res = spawnSync(
-    'pwsh',
-    ['-NoProfile','-ExecutionPolicy','Bypass','-File','scripts\\enforce-imports.ps1'],
-    { stdio: 'inherit', shell: true }
+    "pwsh",
+    ["-NoProfile","-ExecutionPolicy","Bypass","-File","scripts\\enforce-imports.ps1"],
+    { stdio: "inherit", shell: true }
   );
   process.exit(res.status ?? 0);
 } else {
-  console.log('prebuild: skipping Windows-only PowerShell step on non-Windows CI');
+  console.log("prebuild: skipping on CI/non-Windows");
 }
