@@ -1,81 +1,58 @@
-// frontend/eslint.config.mjs
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
-import globals from "globals";
-import reactHooks from "eslint-plugin-react-hooks";
-import nextPlugin from "@next/eslint-plugin-next";
+// C:\Users\Martin Yarnold\Projects\promagen\frontend\eslint.config.mjs
+import js from '@eslint/js';
+import next from 'eslint-config-next';
+import pluginImport from 'eslint-plugin-import';
+import tseslint from 'typescript-eslint';
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
-  // don't report unused disable comments
-  { linterOptions: { reportUnusedDisableDirectives: "off" } },
-
-  // ignore build artifacts
-  { ignores: ["node_modules/**", ".next/**", "dist/**", "public/**"] },
-
-  // base configs
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-
-  // project rules (apply to source files)
+  // 1) Ignore heavy/build folders
   {
-    files: ["src/**/*.{ts,tsx,js,jsx}"],
+    ignores: [
+      '.next/',
+      'node_modules/',
+      'dist/',
+      'build/',
+      'out/',
+      'coverage/',
+      'vercel/',
+      '.vscode/'
+    ],
+  },
+
+  // 2) Base JS + Next.js Core Web Vitals
+  js.configs.recommended,
+  ...next,
+
+  // 3) TypeScript (type-aware)
+  ...tseslint.configs.recommendedTypeChecked,
+  {
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: { ...globals.browser, ...globals.node },
+      parser: tseslint.parser,
+      parserOptions: {
+        project: ['./tsconfig.json'],
+        tsconfigRootDir: import.meta.dirname
+      }
     },
     plugins: {
-      "react-hooks": reactHooks,
-      "@next/next": nextPlugin,
+      import: pluginImport
     },
     rules: {
-      // import guardrails
-      "no-restricted-imports": [
-        "error",
-        {
-          paths: [
-            { name: "@/markets", message: "Use @/lib/markets instead." },
-            {
-              name: "@/lib/marketTime",
-              message: "Use helpers in @/lib/markets instead of @/lib/marketTime.",
-            },
-          ],
-        },
-      ],
+      // Promagen locked rule: named exports only
+      'import/no-default-export': 'error',
 
-      // essential plugin rules
-      "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "error",
-      "@next/next/no-img-element": "off",
-
-      // baseline during cleanup
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-      ],
-      "prefer-const": "warn",
-      "no-empty": "off",
-    },
+      // Useful hygiene
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
+    }
   },
 
-  // declaration/types: allow loose typing & unuseds
+  // 4) Allow default exports for Next App Router files that require them
   {
-    files: ["src/**/*.d.ts", "src/types/**/*"],
+    files: ['**/*page.tsx', '**/*layout.tsx', 'next.config.*'],
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-    },
-  },
-
-  // file-specific: allow a temporary unused in markets.ts
-  {
-    files: ["src/lib/markets.ts"],
-    rules: {
-      "@typescript-eslint/no-unused-vars": "off",
-    },
-  },
+      'import/no-default-export': 'off'
+    }
+  }
 ];
 
 
