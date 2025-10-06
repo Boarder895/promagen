@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "promagen-frontend",
   "private": true,
   "version": "0.1.0",
@@ -6,7 +6,7 @@
     "build": "next build",
     "clean": "pwsh -NoProfile -File scripts/clean.ps1",
     "start": "next start -p 3000",
-    "lint": "next lint --max-warnings=0",
+    "lint": "eslint . --max-warnings=0",
     "lint:guard": "eslint \"src/**/*.{ts,tsx}\" --max-warnings=0",
     "check:app-structure": "pwsh -NoProfile -File scripts/check-app-structure.ps1",
     "books:clean": "pwsh ./scripts/books-cleanup.ps1",
@@ -62,7 +62,8 @@
     "@typescript-eslint/parser": "^8.45.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.37.0",
-    "eslint-config-next": "15.5.4",
+    "eslint-config-next": "^15.5.4",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^6.1.1",
     "globals": "^16.4.0",
     "husky": "^9.1.7",
@@ -77,5 +78,3 @@
     "node": "20.x"
   }
 }
-
-
