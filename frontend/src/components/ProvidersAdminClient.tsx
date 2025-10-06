@@ -1,4 +1,4 @@
-// FRONTEND ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Admin client for providers (NEW) ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· named exports only
+﻿// FRONTEND ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· Admin client for providers (NEW) ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· named exports only
 "use client";
 import { useEffect, useState } from 'react';
 
@@ -104,7 +104,7 @@ export const ProvidersAdminClient = () => {
   };
 
   if (err) return <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-rose-800">{err}</div>;
-  if (!payload) return <div className="rounded-md border border-neutral-200 bg-white p-4 text-neutral-600">LoadingÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦</div>;
+  if (!payload) return <div className="rounded-md border border-neutral-200 bg-white p-4 text-neutral-600">LoadingÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</div>;
 
   return (
     <section className="space-y-3">
@@ -126,8 +126,8 @@ export const ProvidersAdminClient = () => {
               <tr key={p.slug} className="hover:bg-neutral-50">
                 <td className="px-3 py-2">{p.name}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{p.total.toFixed(1)}</td>
-                <td className="px-3 py-2 text-right">{p.hasApi ? "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€¦Ã¢â‚¬â„¢" : "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â"}</td>
-                <td className="px-3 py-2 text-right">{p.hasAffiliate ? "ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â" : "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â"}</td>
+                <td className="px-3 py-2 text-right">{p.hasApi ? "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢" : "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â"}</td>
+                <td className="px-3 py-2 text-right">{p.hasAffiliate ? "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â" : "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â"}</td>
                 <td className="px-3 py-2 text-right">
                   <button className="rounded-md border border-neutral-300 px-2 py-1 text-xs hover:bg-neutral-50" onClick={() => openEdit(p)}>
                     Edit
@@ -157,11 +157,11 @@ export const ProvidersAdminClient = () => {
             <div className="flex items-end gap-3">
               <label className="text-sm inline-flex items-center gap-2">
                 <input type="checkbox" checked={form.hasApi} onChange={(e) => setForm({ ...form, hasApi: e.target.checked })} />
-                ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€¦Ã¢â‚¬â„¢ API
+                ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ API
               </label>
               <label className="text-sm inline-flex items-center gap-2">
                 <input type="checkbox" checked={form.hasAffiliate} onChange={(e) => setForm({ ...form, hasAffiliate: e.target.checked })} />
-                ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¤Ãƒâ€šÃ‚Â Affiliate
+                ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Affiliate
               </label>
             </div>
           </div>
@@ -191,7 +191,7 @@ export const ProvidersAdminClient = () => {
                 await saveScores(editing.slug);
               }}
             >
-              {saving ? "SavingÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¦" : "Save changes"}
+              {saving ? "SavingÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦" : "Save changes"}
             </button>
             <button className="rounded-md border border-neutral-300 px-3 py-1 text-sm" onClick={() => { setEditing(null); setForm(null); }}>
               Cancel

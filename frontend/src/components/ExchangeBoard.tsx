@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useMemo } from 'react';
 import { useSWRCache } from "@/lib/swrcache";
 import { getExchangesStatus, type ExchangeStatus } from "@/lib/dataGateway";
@@ -73,7 +73,7 @@ type Row = {
 };
 
 function fmt(n?: number, opts: Intl.NumberFormatOptions = {}): string {
-  if (typeof n !== "number" || Number.isNaN(n)) return "Ã¢â‚¬â€";
+  if (typeof n !== "number" || Number.isNaN(n)) return "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â";
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, ...opts }).format(n);
 }
 
@@ -154,7 +154,6 @@ export function ExchangeBoard() {
   // Optional breadcrumb
   useEffect(() => {
     if (Array.isArray(data)) {
-      // eslint-disable-next-line no-console
       console.debug("[ExchangeBoard] received", data.length, "exchanges");
     }
   }, [data]);
@@ -223,7 +222,7 @@ export function ExchangeBoard() {
                   ) : null}
                 </div>
 
-                <div className="text-xs text-gray-500">{r.isOpen === true ? "open" : r.isOpen === false ? "closed" : "Ã¢â‚¬â€"}</div>
+                <div className="text-xs text-gray-500">{r.isOpen === true ? "open" : r.isOpen === false ? "closed" : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"}</div>
 
                 {/* Mini trend sparkline if provided */}
                 {Array.isArray(r.spark) ? <div className="mt-2 w-36"><Sparkline data={r.spark} /></div> : null}
@@ -243,7 +242,7 @@ export function ExchangeBoard() {
                         : "text-gray-600"
                     }`}
                   >
-                    {r.deltaPts != null ? fmt(r.deltaPts) : "Ã¢â‚¬â€"} ({r.deltaPct != null ? fmt(r.deltaPct) + "%" : "Ã¢â‚¬â€"})
+                    {r.deltaPts != null ? fmt(r.deltaPts) : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"} ({r.deltaPct != null ? fmt(r.deltaPct) + "%" : "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"})
                   </div>
                 </div>
               </div>
