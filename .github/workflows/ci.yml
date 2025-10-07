@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -35,7 +35,7 @@ jobs:
 
       # Optional: only adds annotations if the matcher file exists
       - name: Add ESLint problem matcher
-        run: echo "::add-matcher::../.github/eslint-problem-matcher.json" || true
+        run: echo "echo "skip legacy matcher (disabled)"" || true
 
       - name: ESLint (warnings allowed)
         run: npm run lint:ci
