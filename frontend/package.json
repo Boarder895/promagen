@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "promagen-frontend",
   "version": "0.1.0",
   "private": true,
@@ -7,12 +7,11 @@
   },
 "scripts": {
   "dev": "next dev",
-  "build": "next build",
+  "build": "node ./scripts/prebuild.cjs && next build",
   "start": "next start",
-  "lint": "eslint . -f unix",
-  "lint:fix": "eslint . --fix -f unix",
-  "lint:guards": "eslint -c ./eslint.import-guards.mjs . -f unix",
-  "lint:ci": "eslint \"src/**/*.{ts,tsx,js,jsx}\" -f unix --max-warnings=100000"
+  "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
+  "lint:ci": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
+  "prepare": "node -e \"if(process.env.CI){process.exit(0)}try{require('husky').install()}catch(e){process.exit(0)}\""
 },
   "dependencies": {
     "next": "15.0.3",
@@ -34,3 +33,4 @@
     "typescript-eslint": "^8.46.0"
   }
 }
+
