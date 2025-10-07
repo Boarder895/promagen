@@ -1,1 +1,6 @@
-﻿npm run --prefix frontend lint:guard
+﻿#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Fast local checks. Warnings won't block your commit.
+npm --prefix frontend run lint --silent
+
