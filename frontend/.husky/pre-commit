@@ -1,6 +1,10 @@
 ﻿#!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Fast local checks. Warnings won't block your commit.
-npm --prefix frontend run lint --silent
-
+# Lint only changed files for speed; fall back to full lint if none detected
+FILES="$(git diff --name-only --cached --diff-filter=ACM | tr '\n' ' ')"
+if [ -n "$FILES" ]; then
+  npx --yes eslint --max-warnings=0 $FILES || exit 1
+else
+  npm run -s lint || exit 1
+fi
