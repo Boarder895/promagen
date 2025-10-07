@@ -6,14 +6,13 @@
   "node": "20.x"
   },
 "scripts": {
-   "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint . -f unix",
-    "lint:fix": "eslint . --fix -f unix",
-    "lint:guards": "eslint -c ./eslint.import-guards.mjs . -f unix",
-    "lint:ci": "eslint . -f unix --max-warnings=100000",
-    "prebuild": "node ./scripts/prebuild.cjs || true" 
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "eslint . -f unix",
+  "lint:fix": "eslint . --fix -f unix",
+  "lint:guards": "eslint -c ./eslint.import-guards.mjs . -f unix",
+  "lint:ci": "eslint . -f unix --max-warnings=100000"
 },
   "dependencies": {
     "next": "15.0.3",
