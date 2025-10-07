@@ -1,4 +1,4 @@
-name: "ci lint+build"
+﻿name: "ci lint+build"
 
 on:
   push:
@@ -30,7 +30,7 @@ jobs:
 
       # Matcher lives at repo root; override working-directory for this step.
       - name: Add ESLint problem matcher
-        run: echo "::add-matcher::.github/eslint-problem-matcher.json"
+        run: echo "::add-matcher::${{ github.workspace }}/.github/eslint-problem-matcher.json"
         working-directory: .
 
       - name: Use Node.js 20.x
@@ -57,5 +57,6 @@ jobs:
         if: always()
         run: echo "::remove-matcher owner=eslint-unix::"
         working-directory: .
+
 
 

@@ -1,4 +1,4 @@
-name: update-docs
+﻿name: update-docs
 on:
   push:
     branches: [ main, master ]
@@ -15,3 +15,4 @@ jobs:
         run: |
           echo "update-docs workflow is parked. No git pushes from CI."
           echo "Run manually via 'workflow_dispatch' if you add a generator later."
+

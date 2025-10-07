@@ -1,4 +1,4 @@
-name: Uptime
+﻿name: Uptime
 on:
   schedule: [{ cron: "*/10 * * * *" }] # every 10 minutes
   workflow_dispatch:
@@ -17,3 +17,4 @@ jobs:
           else
             curl -sS -X POST "$API_BASE/api/v1/hooks/health" -H "Content-Type: application/json" -d '{"up":false,"evidenceUrl":"'"$TARGET"'"}'
           fi
+
