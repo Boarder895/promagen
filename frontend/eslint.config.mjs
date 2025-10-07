@@ -1,51 +1,81 @@
-﻿import js from "@eslint/js";
-import tseslint from "typescript-eslint";
-import reactHooks from "eslint-plugin-react-hooks";
-import nextPlugin from "@next/eslint-plugin-next";
+﻿// ESLint v9 flat config — Promagen frontend (Phase 1)
+// Enforce named exports in src/** now; temporarily allow defaults in app/**
+// Ignore backups and scripts; allow Next App Router special files.
 
-export default [
-  // Keep memory down: ignore non-source dirs
+import tseslint from 'typescript-eslint';
+import importPlugin from 'eslint-plugin-import';
+import reactHooks from 'eslint-plugin-react-hooks';
+
+/** @type {import("eslint").Linter.FlatConfig[]} */
+const config = [
+  // 0) Global ignores
   {
     ignores: [
-      ".next/**","node_modules/**","dist/**","build/**","out/**",
-      "coverage/**","vercel/**",".vscode/**","_backup/**","backup-*/**","scripts/**"
+      'node_modules/**',
+      '.next/**',
+      'dist/**',
+      'build/**',
+      'coverage/**',
+      '_backup/**',
+      'backup-*/**',
+      'app/**/*.backup.*',
+      'app/*backup*.*',
+      'scripts/**', // skip scripts for now
     ],
   },
 
-  // Base JS + lightweight TS (no type-checking)
-  js.configs.recommended,
+  // 1) Base TS rules
   ...tseslint.configs.recommended,
 
-  // Register only the rules we reference in code/comments
+  // 2) Project rules — enforce named exports in src/**
   {
-    plugins: { "react-hooks": reactHooks, "@next/next": nextPlugin },
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    plugins: { import: importPlugin, 'react-hooks': reactHooks },
     rules: {
-      "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn"
-      // We don't turn on any Next rules globally; plugin is present so
-      // file-level disable comments like @next/next/no-img-element work.
-    }
+      'import/no-default-export': 'error',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/triple-slash-reference': 'off',
+    },
   },
 
-  // Node-style config files (silence 'module is not defined')
+  // 3) App Router special files — allow default exports (Next requires)
   {
-    files: ["next.config.*","postcss.config.*","tailwind.config.*"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "script",
-      globals: { module: "readonly", require: "readonly", process: "readonly", __dirname: "readonly" }
-    }
+    files: [
+      'app/**/page.tsx',
+      'app/**/layout.tsx',
+      'app/**/loading.tsx',
+      'app/**/error.tsx',
+      'app/**/not-found.tsx',
+    ],
+    rules: { 'import/no-default-export': 'off' },
   },
 
-  // Relax a couple rules for now to cut noise
+  // 4) App (temporary) — allow defaults while we prep a codemod
   {
+    files: ['app/**/*.ts', 'app/**/*.tsx'],
+    rules: { 'import/no-default-export': 'off' },
+  },
+
+  // 5) Config/decl
+  {
+    files: [
+      'next.config.*',
+      'postcss.config.*',
+      'tailwind.config.*',
+      'eslint.config.*',
+      '**/*.d.ts',
+    ],
     rules: {
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
-      "@typescript-eslint/no-explicit-any": "off",
-      "no-empty": ["error", { "allowEmptyCatch": true }]
-    }
+      'import/no-default-export': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/triple-slash-reference': 'off',
+    },
   },
-
-  // Allow triple-slash reference in this one legacy file for now
-  { files: ["global.d.ts"], rules: { "@typescript-eslint/triple-slash-reference": "off" } }
 ];
+
+export default config;
+
