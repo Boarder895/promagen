@@ -1,25 +1,47 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["DOM", "ES2022"],
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "jsx": "preserve",
-    "strict": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "allowJs": false,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./app/*", "./src/*", "./*"]
-    },
-    "types": ["node"],
-    "incremental": true,
-    "esModuleInterop": true,
-    "plugins": [{ "name": "next" }]
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+    "compilerOptions":  {
+                            "jsx":  "preserve",
+                            "module":  "ESNext",
+                            "baseUrl":  ".",
+                            "moduleResolution":  "Bundler",
+                            "strict":  true,
+                            "skipLibCheck":  true,
+                            "target":  "ES2022",
+                            "plugins":  [
+                                            {
+                                                "name":  "next"
+                                            }
+                                        ],
+                            "paths":  {
+                                          "@/*":  [
+                                                      "./app/*",
+                                                      "./src/*",
+                                                      "./*"
+                                                  ]
+                                      },
+                            "resolveJsonModule":  true,
+                            "noImplicitAny":  false,
+                            "lib":  [
+                                        "DOM",
+                                        "ES2022"
+                                    ],
+                            "allowJs":  false,
+                            "types":  [
+                                          "node"
+                                      ],
+                            "incremental":  true,
+                            "isolatedModules":  true,
+                            "noEmit":  true,
+                            "esModuleInterop":  true
+                        },
+    "include":  [
+                    "next-env.d.ts",
+                    "**/*.ts",
+                    "**/*.tsx",
+                    ".next/types/**/*.ts",
+                    "global.d.ts"
+                ],
+    "exclude":  [
+                    "node_modules"
+                ]
 }
