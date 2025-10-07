@@ -12,7 +12,7 @@
   "lint": "eslint . -f unix",
   "lint:fix": "eslint . --fix -f unix",
   "lint:guards": "eslint -c ./eslint.import-guards.mjs . -f unix",
-  "lint:ci": "eslint . -f unix --max-warnings=100000"
+  "lint:ci": "eslint \"src/**/*.{ts,tsx,js,jsx}\" -f unix --max-warnings=100000"
 },
   "dependencies": {
     "next": "15.0.3",

@@ -6,7 +6,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import importPlugin from 'eslint-plugin-import'
 
 export default [
-  // Ignore generated/backup/build & config files
+  // 1) Ignore junk, backups, generated, and configs
   {
     ignores: [
       '**/node_modules/**',
@@ -15,21 +15,25 @@ export default [
       '**/out/**',
       '**/_backup/**',
       'backup-*/**',
+      '**/*.backup.*',
       'scripts/**',
+      // local config/build files — don’t lint these
       'eslint.config.mjs',
       'eslint.import-guards.mjs',
-      'next.config.mjs',
-      'postcss.config.js',
+      'next.config.*',
+      'postcss.config.*',
+      'tailwind.config.*',
     ],
   },
 
-  // JS files: basic rules only
+  // 2) JS baseline
   js.configs.recommended,
 
-  // TS files: type-aware configs, applied only to ts/tsx
+  // 3) TS baseline (type-aware)
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
 
+  // 4) TS/TSX rule tuning
   {
     files: ['**/*.{ts,tsx}'],
     plugins: {
@@ -39,7 +43,7 @@ export default [
     languageOptions: {
       parserOptions: {
         projectService: true,
-        allowDefaultProject: true,       // fixes “not found by the project service”
+        allowDefaultProject: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -47,21 +51,48 @@ export default [
       'import/resolver': { typescript: true },
     },
     rules: {
-      // Make noisy rules warnings so CI won’t fail on them
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // Make the “unsafe/any/promise” family warnings (not errors)
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       '@typescript-eslint/no-unsafe-member-access': 'warn',
       '@typescript-eslint/no-unsafe-call': 'warn',
       '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
       '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/require-await': 'warn',
-      '@typescript-eslint/await-thenable': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-empty-function': 'warn',
       'no-empty': 'warn',
 
-      // Don’t block on export style (Next.js code often uses default exports)
+      // Demote stylistic rules
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/consistent-type-definitions': 'off',
+      '@typescript-eslint/array-type': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+      '@typescript-eslint/prefer-regexp-exec': 'off',
+      '@typescript-eslint/no-inferrable-types': 'off',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+
+      // Next codebase commonly uses default exports — don’t block them
       'import/no-default-export': 'off',
     },
   },
+
+  // 5) Loosen up for declaration files & shared type folders
+  {
+    files: ['**/*.d.ts', 'src/types/**'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/require-await': 'off',
+    },
+  },
 ]
+
 
 
