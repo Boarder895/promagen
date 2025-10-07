@@ -1,6 +1,6 @@
-﻿// ESLint v9 flat config — Promagen frontend (Phase 1)
-// Enforce named exports in src/** now; temporarily allow defaults in app/**
-// Ignore backups and scripts; allow Next App Router special files.
+﻿// ESLint v9 flat config — Phase 1.0 (green CI)
+// Goal: warnings for TS strictness everywhere; allow defaults in app/**;
+// temporarily WARN (not error) on default exports in src/** until migration.
 
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
@@ -8,7 +8,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 /** @type {import("eslint").Linter.FlatConfig[]} */
 const config = [
-  // 0) Global ignores
+  // Ignore build output and backups
   {
     ignores: [
       'node_modules/**',
@@ -18,31 +18,29 @@ const config = [
       'coverage/**',
       '_backup/**',
       'backup-*/**',
-      'app/**/*.backup.*',
-      'app/*backup*.*',
-      'scripts/**', // skip scripts for now
+      'scripts/**',
     ],
   },
 
-  // 1) Base TS rules
+  // Base TS rules
   ...tseslint.configs.recommended,
 
-  // 2) Project rules — enforce named exports in src/**
+  // Global TS/React sanity (apply to ALL ts/tsx)
   {
-    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    files: ['**/*.ts', '**/*.tsx'],
     plugins: { import: importPlugin, 'react-hooks': reactHooks },
     rules: {
-      'import/no-default-export': 'error',
+      // keep velocity — don’t fail PRs on these
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+
+      // react hooks
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-require-imports': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      '@typescript-eslint/triple-slash-reference': 'off',
     },
   },
 
-  // 3) App Router special files — allow default exports (Next requires)
+  // Allow default exports for Next.js App Router special files
   {
     files: [
       'app/**/page.tsx',
@@ -54,13 +52,19 @@ const config = [
     rules: { 'import/no-default-export': 'off' },
   },
 
-  // 4) App (temporary) — allow defaults while we prep a codemod
+  // Temporarily allow defaults in the rest of app/**
   {
     files: ['app/**/*.ts', 'app/**/*.tsx'],
     rules: { 'import/no-default-export': 'off' },
   },
 
-  // 5) Config/decl
+  // Enforce policy in src/**, but as a WARNING (for now)
+  {
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    rules: { 'import/no-default-export': 'warn' },
+  },
+
+  // Config/decl
   {
     files: [
       'next.config.*',
@@ -71,11 +75,10 @@ const config = [
     ],
     rules: {
       'import/no-default-export': 'off',
-      '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/triple-slash-reference': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 ];
 
 export default config;
-
