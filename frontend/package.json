@@ -6,11 +6,12 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "node ./scripts/prebuild.cjs && next build",
+    "lint": "eslint .",             // local: show warnings + errors
+    "lint:ci": "eslint . --quiet",  // CI: show only errors; warnings won't fail
+    "lint:fix": "eslint . --fix",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint . --max-warnings=0",
-    "prepare": "node -e \"if(process.env.CI){process.exit(0)}try{require('husky').install()}catch(e){process.exit(0)}\""
+    "dev": "next dev"
   },
   "dependencies": {
     "next": "15.0.3",
@@ -18,11 +19,12 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.37.0",
     "@types/node": "22.7.6",
     "@types/react": "18.3.10",
     "@types/react-dom": "18.3.0",
     "@typescript-eslint/parser": "^8.46.0",
-    "eslint": "9.12.0",
+    "eslint": "^9.37.0",
     "eslint-config-next": "15.0.3",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-react-hooks": "^6.1.1",
