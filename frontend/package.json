@@ -5,14 +5,15 @@
   "engines": {
     "node": "20.x"
   },
-  "scripts": {
-    "lint": "eslint .",             // local: show warnings + errors
-    "lint:ci": "eslint . --quiet",  // CI: show only errors; warnings won't fail
-    "lint:fix": "eslint . --fix",
-    "build": "next build",
-    "start": "next start",
-    "dev": "next dev"
-  },
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "eslint . --max-warnings=0",
+  "lint:ci": "eslint . --quiet --format unix",
+  "lint:fix": "eslint . --fix",
+  "typecheck": "tsc -p tsconfig.json --noEmit"
+},
   "dependencies": {
     "next": "15.0.3",
     "react": "18.3.1",
