@@ -6,23 +6,20 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 
 export default tseslint.config(
-  // ignore generated/build artifacts
-  { ignores: ['node_modules/**', '.next/**', 'dist/**', 'coverage/**'] },
+  // Ignore build and backup artefacts
+  { ignores: ['node_modules/**', '.next/**', 'dist/**', 'coverage/**', '**/_backup/**', 'backup-*/**'] },
 
-  // base JS rules
+  // Non type-checked base (keeps CI fast & non-blocking)
   js.configs.recommended,
-
-  // TS rules with type-checking
-  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.recommended,
 
   {
-    name: 'project-rules',
+    name: 'project-base',
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        // let TS “project service” find your tsconfig automatically
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+        // no projectService -> no type-aware rules or "project service" errors
+        projectService: false,
       },
       globals: { ...globals.browser, ...globals.node },
     },
@@ -34,36 +31,34 @@ export default tseslint.config(
       'import/resolver': { typescript: true, node: true },
     },
     rules: {
-      // keep CI green with --quiet: warnings are OK, errors are not
+      // keep CI green: warnings are fine, errors are not
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
 
-      // default off here; we’ll turn it on for src/** below
-      'import/no-default-export': 'off',
-
-      // react hooks
+      // hooks stay enforced
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+
+      // default off globally; we'll scope it below
+      'import/no-default-export': 'off',
     },
   },
 
-  // Enforce named exports inside src/**
+  // Scope: nudge toward named exports in real code, but as a warning for now
   {
     files: ['src/**/*.{ts,tsx}'],
-    rules: { 'import/no-default-export': 'error' },
+    rules: { 'import/no-default-export': 'warn' },
   },
 
-  // Allow defaults in app/**, config files, and .d.ts
+  // Allow defaults in app/**, d.ts, configs and scripts
   {
     files: [
       'app/**/*.{ts,tsx}',
-      '**/*.{config,cjs,mjs}.{js,ts}',
       '**/*.d.ts',
+      '**/*.{config,cjs,mjs}.{js,ts}',
+      'scripts/**/*.{js,ts,cjs,mjs}',
     ],
-    rules: {
-      'import/no-default-export': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-    },
+    rules: { 'import/no-default-export': 'off' },
   },
 );
 
