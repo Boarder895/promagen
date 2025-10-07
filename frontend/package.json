@@ -1,15 +1,15 @@
-{
-  "name": "promagen-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "engines": {
-    "node": "20.x"
-  },
-  "scripts": {
-    "dev": "next dev",
-    "build": "node ./scripts/prebuild.cjs && next build",
-    "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
-    "prepare": "husky"
-  }
+﻿{
+    "name":  "promagen-frontend",
+    "version":  "0.1.0",
+    "private":  true,
+    "engines":  {
+                    "node":  "20.x"
+                },
+    "scripts":  {
+                    "dev":  "next dev",
+                    "build":  "node ./scripts/prebuild.cjs \u0026\u0026 next build",
+                    "start":  "next start",
+                    "lint":  "eslint . --ext .ts,.tsx --max-warnings=0",
+                    "prepare":  "node -e \"if(process.env.CI){process.exit(0)}else{try{require(\u0027husky\u0027).install()}catch(e){process.exit(0)}}\""
+                }
 }
