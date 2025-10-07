@@ -1,61 +1,70 @@
-﻿// ESLint v9 flat config — Promagen frontend
+﻿// frontend/eslint.config.mjs
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
 import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
 
-/** @type {import('eslint').Linter.Config[]} */
-export default [
-  // ignore build artefacts
-  {
-    ignores: [
-      'node_modules/', '.next/', 'dist/', 'out/', 'coverage/',
-      '**/*.d.ts', '_backup/**', 'backup-*/**'
-    ],
-  },
+export default tseslint.config(
+  // ignore generated/build artifacts
+  { ignores: ['node_modules/**', '.next/**', 'dist/**', 'coverage/**'] },
 
-  // base JS/TS rules (lightweight; no type-aware project required)
+  // base JS rules
   js.configs.recommended,
-  ...tseslint.configs.recommended,
 
-  // project-wide tweaks + plugins
+  // TS rules with type-checking
+  ...tseslint.configs.recommendedTypeChecked,
+
   {
-    plugins: { import: importPlugin, 'react-hooks': reactHooks },
+    name: 'project-rules',
     languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
+      parser: tseslint.parser,
+      parserOptions: {
+        // let TS “project service” find your tsconfig automatically
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+      globals: { ...globals.browser, ...globals.node },
+    },
+    plugins: {
+      import: importPlugin,
+      'react-hooks': reactHooks,
+    },
+    settings: {
+      'import/resolver': { typescript: true, node: true },
     },
     rules: {
-      // TypeScript: relax during migration (warnings only)
+      // keep CI green with --quiet: warnings are OK, errors are not
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
 
-      // React Hooks
+      // default off here; we’ll turn it on for src/** below
+      'import/no-default-export': 'off',
+
+      // react hooks
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
     },
   },
 
-  // Enforce named exports in our source tree (soft for now = warn)
+  // Enforce named exports inside src/**
   {
-    files: ['src/**/*.{ts,tsx,js,jsx}'],
-    rules: {
-      'import/no-default-export': 'warn',
-    },
+    files: ['src/**/*.{ts,tsx}'],
+    rules: { 'import/no-default-export': 'error' },
   },
 
-  // Allow default exports where Next.js encourages/forces it
+  // Allow defaults in app/**, config files, and .d.ts
   {
     files: [
-      'app/**/*.{ts,tsx,js,jsx}',
-      'pages/**/*.{ts,tsx,js,jsx}',
-      'middleware.ts',
-      'next.config.{js,cjs,mjs,ts}',
-      'postcss.config.{js,cjs,mjs,ts}',
-      'tailwind.config.{js,cjs,mjs,ts}',
-      '*.config.{js,cjs,mjs,ts}',
-      'scripts/**/*.{js,ts}'
+      'app/**/*.{ts,tsx}',
+      '**/*.{config,cjs,mjs}.{js,ts}',
+      '**/*.d.ts',
     ],
-    rules: { 'import/no-default-export': 'off' },
+    rules: {
+      'import/no-default-export': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
   },
-];
+);
+
 
