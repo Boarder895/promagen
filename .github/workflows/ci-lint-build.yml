@@ -1,0 +1,62 @@
+name: ci: lint + build
+
+on:
+  push:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci-lint-build.yml'
+      - '.github/eslint-problem-matcher.json'
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci-lint-build.yml'
+      - '.github/eslint-problem-matcher.json'
+
+permissions:
+  contents: read
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+
+    # All commands default to run inside the frontend app
+    defaults:
+      run:
+        shell: bash
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The matcher file lives at the repo root (.github/...),
+      # so run this step from the root (override working-directory)
+      - name: Add ESLint problem matcher
+        run: echo "::add-matcher::.github/eslint-problem-matcher.json"
+        working-directory: .
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps (ci)
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck --if-present
+
+      # Warnings are allowed (no --max-warnings=0). ESLint exits non-zero only on errors.
+      - name: ESLint (warnings allowed)
+        run: npm run lint:ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Remove ESLint problem matcher
+        if: always()
+        run: echo "::remove-matcher owner=eslint-unix::"
+        working-directory: .
+
