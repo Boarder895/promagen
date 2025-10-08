@@ -1,14 +1,27 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+import type { NextRequest } from 'next/server';
 
-export async function GET(_req: Request, { params }: any) {
-  const { id } = params as { id: string };
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
-  const r = await fetch(`${API_BASE}/api/v1/audit/${id}/csv`, { cache: 'no-store' });
-  const csv = await r.text();
+export async function GET(_req: NextRequest, ctx: any) {
+  // Next 15 may pass the context as a Promise — don’t over-type it, just await.
+  const { id } = (await ctx)?.params ?? {};
+  if (!id) {
+    return new Response('Missing id', { status: 400 });
+  }
 
-  return new Response(csv, {
-    status: r.status,
-    headers: { 'Content-Type': 'text/csv; charset=utf-8' },
+  const res = await fetch(`${API_BASE}/api/audit/${id}/csv`, {
+    cache: 'no-store',
+    headers: { accept: 'text/csv' },
+  });
+
+  const body = await res.text();
+  return new Response(body, {
+    status: res.status,
+    headers: {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
   });
 }
 
