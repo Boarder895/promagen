@@ -1,23 +1,16 @@
-import type { NextRequest } from 'next/server';
+﻿import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+type Ctx = { params: { id: string } };
 
-export async function GET(
-  _req: NextRequest,
-  ctx: Promise<{ params: { id: string } }>
-) {
-  const { id } = (await ctx).params;
-
-  const upstream = await fetch(`${API_BASE}/api/audit/${id}`, { cache: 'no-store' });
-  const body = await upstream.text();
-
-  return new Response(body, {
-    status: upstream.status,
+export async function GET(_req: NextRequest, { params }: Ctx) {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+  const res = await fetch(${base}/api/audit//csv, { cache: 'no-store' });
+  const csv = await res.text();
+  return new NextResponse(csv, {
     headers: {
-      'Content-Type': upstream.headers.get('content-type') ?? 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
+      'content-type': 'text/csv; charset=utf-8',
+      'cache-control': 'no-store',
     },
   });
 }
-

@@ -1,9 +1,13 @@
+// app/api/audit/[id]/csv/route.ts
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
 
-export async function GET(_: Request, ctx: { params: { id: string } }) {
-  const r = await fetch(`${API_BASE}/api/v1/audit/${ctx.params.id}`, { cache: 'no-store' });
-  const j = await r.json();
-  return NextResponse.json(j, { status: r.status });
+type Ctx = { params: { id: string } };
+
+export async function GET(_req: NextRequest, { params }: Ctx) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/audit/${params.id}/csv`, { cache: 'no-store' });
+  const csv = await res.text();
+  return new NextResponse(csv, {
+    headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' },
+  });
 }
-
