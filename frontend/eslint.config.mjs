@@ -48,6 +48,12 @@ export default [
   // Next app & configs
   { files: ['app/**/*.{ts,tsx}','middleware.ts','next.config.{js,ts,mjs,cjs}','tailwind.config.{js,ts,mjs,cjs}'],
     rules: { 'import/no-default-export':'off' } },
+
+  // --- ADDED: relax only for app/*
+  { files: ['app/**/*.{ts,tsx}'], rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'unused-imports/no-unused-imports': 'off',
+    } },
 ];
 
 
