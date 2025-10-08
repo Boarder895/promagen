@@ -10,7 +10,7 @@
     "prebuild": "node scripts/verify-package-json.cjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
+    "lint": "eslint . --max-warnings=0 -f stylish",
     "lint:ci": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json --noEmit",
