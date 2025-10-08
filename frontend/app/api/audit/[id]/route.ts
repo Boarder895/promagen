@@ -1,13 +1,14 @@
-// app/api/audit/[id]/csv/route.ts
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-type Ctx = { params: { id: string } };
+export async function GET(_req: NextRequest, context: unknown) {
+  const { id } = (context as { params: { id: string } }).params; // narrow locally
 
-export async function GET(_req: NextRequest, { params }: Ctx) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/audit/${params.id}/csv`, { cache: 'no-store' });
-  const csv = await res.text();
-  return new NextResponse(csv, {
-    headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' },
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+  const res  = await fetch(`${base}/api/audit/${id}`, { cache: 'no-store' });
+  const json = await res.json();
+
+  return NextResponse.json(json, {
+    headers: { 'content-type': 'application/json; charset=utf-8' },
   });
 }
