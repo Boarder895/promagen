@@ -59,3 +59,10 @@ debug_bundle.txt
 # backups
 *.bak
 *.backup.*
+
+# backups
+_backup/
+.backup/
+**/_backup/
+**/.backup/
+

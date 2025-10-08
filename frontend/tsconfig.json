@@ -1,4 +1,4 @@
-﻿{
+{
     "compilerOptions":  {
                             "jsx":  "preserve",
                             "module":  "ESNext",
@@ -44,6 +44,10 @@
                     "src/types/**/*.d.ts"
                 ],
     "exclude":  [
-                    "node_modules"
+                    "node_modules",
+                    "_backup",
+                    "**/_backup/**",
+                    ".backup",
+                    "**/.backup/**"
                 ]
 }

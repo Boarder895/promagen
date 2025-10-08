@@ -8,3 +8,10 @@ _backup
 backup-*
 scripts
 configs
+
+# backups
+_backup/
+.backup/
+**/_backup/
+**/.backup/
+
