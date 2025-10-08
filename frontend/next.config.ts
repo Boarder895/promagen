@@ -2,7 +2,7 @@
 
 const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true }, // <- lets the build pass
+  typescript: { ignoreBuildErrors: true }, // CI enforces typing
 };
 
 export default nextConfig;

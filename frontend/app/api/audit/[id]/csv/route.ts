@@ -9,18 +9,13 @@ export async function GET(
 ) {
   const { id } = (await ctx).params;
 
-  const upstream = await fetch(`${API_BASE}/api/audit/${id}`, {
-    cache: 'no-store',
-  });
-
-  // Pass through the upstream response
+  const upstream = await fetch(`${API_BASE}/api/audit/${id}`, { cache: 'no-store' });
   const body = await upstream.text();
+
   return new Response(body, {
     status: upstream.status,
     headers: {
-      'Content-Type':
-        upstream.headers.get('content-type') ??
-        'application/json; charset=utf-8',
+      'Content-Type': upstream.headers.get('content-type') ?? 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
     },
   });
