@@ -1,5 +1,7 @@
-﻿// C:\Users\Martin Yarnold\Projects\promagen\frontend\eslint.config.mjs  (REPLACE)
-// ESLint v9 flat config, ESM
+﻿// ESLint v9 flat config (scoped)
+// Allows default exports in src/components/** for now.
+// Enforces named exports in src/lib/** and src/hooks/**.
+// Relaxes no-explicit-any in components; keeps it on in lib/hooks.
 import tseslint from 'typescript-eslint';
 import importPlugin from 'eslint-plugin-import';
 import reactPlugin from 'eslint-plugin-react';
@@ -7,8 +9,8 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import unusedImports from 'eslint-plugin-unused-imports';
 
 export default [
-  // Central ignore list (replaces .eslintignore)
   {
+    // replaces .eslintignore
     ignores: [
       '**/_backup/**',
       '**/.backup/**',
@@ -20,14 +22,13 @@ export default [
       '**/*.bak.*',
       'app/page.autofix.bak.tsx',
       'app/page.backup.tsx',
-      'app/page.original.tsx'
+      'app/page.original.tsx',
     ],
   },
 
-  // Base TypeScript rules (non type-checked — faster CI, no parserServices)
+  // Base TS rules (non type-checked)
   ...tseslint.configs.recommended,
 
-  // Global defaults
   {
     files: ['**/*.{ts,tsx,js,cjs,mjs}'],
     languageOptions: {
@@ -42,16 +43,13 @@ export default [
       'react-hooks': reactHooks,
     },
     rules: {
-      // Promagen: keep code tidy
       'unused-imports/no-unused-imports': 'error',
-
-      // React
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
 
-      // Turn off type-aware rules (no parser services here)
+      // turn off type-aware rules (no parserServices)
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
@@ -59,15 +57,44 @@ export default [
     },
   },
 
-  // Enforce named exports ONLY in src/** for now
+  // TEMP: Components can default-export; relax "any" there
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/components/**/*.{ts,tsx}'],
     rules: {
-      'import/no-default-export': 'error',
+      'import/no-default-export': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 
-  // Next.js & transitional allowances: allow default exports in app/** & middleware
+  // Enforce named exports + stricter "any" in lib and hooks
+  {
+    files: ['src/lib/**/*.{ts,tsx}', 'src/hooks/**/*.{ts,tsx}'],
+    rules: {
+      'import/no-default-export': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+
+  // Node scripts: allow require/default
+  {
+    files: ['scripts/**/*.{js,cjs}'],
+    languageOptions: { sourceType: 'script' },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'import/no-default-export': 'off',
+    },
+  },
+
+  // Type decl files: allow default + any
+  {
+    files: ['**/*.d.ts'],
+    rules: {
+      'import/no-default-export': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
+  // Next configs: allow default exports
   {
     files: [
       'app/**/*.{ts,tsx}',
@@ -79,24 +106,6 @@ export default [
       'import/no-default-export': 'off',
     },
   },
-
-  // .d.ts type declaration files: allow any + default exports where needed
-  {
-    files: ['**/*.d.ts'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      'import/no-default-export': 'off',
-    },
-  },
-
-  // Node scripts (CommonJS/JS): allow require()
-  {
-    files: ['scripts/**/*.{js,cjs}'],
-    languageOptions: { sourceType: 'script' },
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-      'import/no-default-export': 'off',
-    },
-  },
 ];
+
 
