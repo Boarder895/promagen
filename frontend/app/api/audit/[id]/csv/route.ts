@@ -1,8 +1,6 @@
-﻿// app/api/audit/[id]/csv/route.ts
-import { NextResponse } from "next/server";
+﻿import { NextResponse, type NextRequest } from "next/server";
 
-export async function GET(_req: Request, context: any) {
-  // narrow just what we need
+export async function GET(req: NextRequest, context: any) {
   const { id } = (context?.params as { id: string });
 
   const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
