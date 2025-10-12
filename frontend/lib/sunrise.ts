@@ -17,22 +17,24 @@ export function sunriseUtc(date: Date, { lat, lon }: LatLng): Date | null {
   const zenith = 90.833;
   const N = dayOfYear(date);
   const lngHour = lon / 15;
-  const t = N + ((6 - lngHour) / 24);
-  const M = (0.9856 * t) - 3.289;
-  let L = M + (1.916 * Math.sin(deg2rad(M))) + (0.020 * Math.sin(2 * deg2rad(M))) + 282.634;
-  L = ((L + 360) % 360);
+  const t = N + (6 - lngHour) / 24;
+  const M = 0.9856 * t - 3.289;
+  let L = M + 1.916 * Math.sin(deg2rad(M)) + 0.02 * Math.sin(2 * deg2rad(M)) + 282.634;
+  L = (L + 360) % 360;
   let RA = rad2deg(Math.atan(0.91764 * Math.tan(deg2rad(L))));
-  RA = ((RA + 360) % 360);
-  const Lquadrant  = Math.floor(L / 90) * 90;
+  RA = (RA + 360) % 360;
+  const Lquadrant = Math.floor(L / 90) * 90;
   const RAquadrant = Math.floor(RA / 90) * 90;
   RA = (RA + (Lquadrant - RAquadrant)) / 15;
   const sinDec = 0.39782 * Math.sin(deg2rad(L));
   const cosDec = Math.cos(Math.asin(sinDec));
-  const cosH = (Math.cos(deg2rad(zenith)) - (sinDec * Math.sin(deg2rad(lat)))) / (cosDec * Math.cos(deg2rad(lat)));
+  const cosH =
+    (Math.cos(deg2rad(zenith)) - sinDec * Math.sin(deg2rad(lat))) /
+    (cosDec * Math.cos(deg2rad(lat)));
   if (cosH > 1 || cosH < -1) return null;
   const H = 360 - rad2deg(Math.acos(cosH));
   const Hhours = H / 15;
-  const T = Hhours + RA - (0.06571 * t) - 6.622;
+  const T = Hhours + RA - 0.06571 * t - 6.622;
   let UT = (T - lngHour) % 24;
   if (UT < 0) UT += 24;
   const y = date.getUTCFullYear();
@@ -40,6 +42,6 @@ export function sunriseUtc(date: Date, { lat, lon }: LatLng): Date | null {
   const d = date.getUTCDate();
   const hours = Math.floor(UT);
   const minutes = Math.floor((UT - hours) * 60);
-  const seconds = Math.round((((UT - hours) * 60) - minutes) * 60);
+  const seconds = Math.round(((UT - hours) * 60 - minutes) * 60);
   return new Date(Date.UTC(y, m, d, hours, minutes, seconds));
 }

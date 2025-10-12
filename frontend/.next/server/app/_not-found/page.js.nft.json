@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "files": [
+    "../../../../node_modules/next",
+    "../../../package.json",
+    "../../chunks/248.js",
+    "../../chunks/857.js",
+    "../../webpack-runtime.js",
+    "page_client-reference-manifest.js"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/health/route": "app/api/health/route.js",
+  "/docs/users-book/page": "app/docs/users-book/page.js",
+  "/app/page": "app/app/page.js",
+  "/health-check/page": "app/health-check/page.js",
+  "/api/world-clocks/route": "app/api/world-clocks/route.js",
+  "/docs/developers-book/page": "app/docs/developers-book/page.js",
+  "/settings/keys/page": "app/settings/keys/page.js",
+  "/page": "app/page.js",
+  "/status/page": "app/status/page.js"
+}

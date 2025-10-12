@@ -1,0 +1,63 @@
+{
+  "version": 4,
+  "routes": {
+    "/docs/users-book": {
+      "experimentalBypassFor": [
+        { "type": "header", "key": "Next-Action" },
+        { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/docs/users-book",
+      "dataRoute": "/docs/users-book.rsc"
+    },
+    "/": {
+      "experimentalBypassFor": [
+        { "type": "header", "key": "Next-Action" },
+        { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/",
+      "dataRoute": "/index.rsc"
+    },
+    "/docs/developers-book": {
+      "experimentalBypassFor": [
+        { "type": "header", "key": "Next-Action" },
+        { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/docs/developers-book",
+      "dataRoute": "/docs/developers-book.rsc"
+    },
+    "/api/world-clocks": {
+      "initialHeaders": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=300, stale-while-revalidate=600",
+        "content-type": "application/json",
+        "x-next-cache-tags": "_N_T_/layout,_N_T_/api/layout,_N_T_/api/world-clocks/layout,_N_T_/api/world-clocks/route,_N_T_/api/world-clocks"
+      },
+      "experimentalBypassFor": [
+        { "type": "header", "key": "Next-Action" },
+        { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/api/world-clocks",
+      "dataRoute": null
+    },
+    "/app": {
+      "experimentalBypassFor": [
+        { "type": "header", "key": "Next-Action" },
+        { "type": "header", "key": "content-type", "value": "multipart/form-data;.*" }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/app",
+      "dataRoute": "/app.rsc"
+    }
+  },
+  "dynamicRoutes": {},
+  "notFoundRoutes": [],
+  "preview": {
+    "previewModeId": "317804b1f201571ece8c57dc8830280c",
+    "previewModeSigningKey": "170aea65e103a1547ecb232ba1492ca2dd61041ee1eab3458f5fd7fe45e46977",
+    "previewModeEncryptionKey": "7e1f92c386f4f41bbdd2fcaf5457519c8c9d06217a4e4d7f6e52ed4b7fe00d4a"
+  }
+}
