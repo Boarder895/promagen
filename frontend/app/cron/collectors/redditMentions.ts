@@ -1,5 +1,4 @@
-import prisma from '../../lib/db';
-import fetch from 'node-fetch';
+﻿import prisma from '../../lib/db';
 import { subMinutes } from 'date-fns';
 
 const APP_ID = process.env.REDDIT_APP_ID!;
@@ -80,3 +79,4 @@ export async function runRedditMentionsCollector(): Promise<void> {
     }
   }
 }
+
