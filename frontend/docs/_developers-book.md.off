@@ -1,0 +1,81 @@
+# 📗 Promagen — Developers Book
+
+**Principles (the “5 things” + uniformity)**
+- Functionality first — ship features that work, safe and correct  
+- Modern, pleasing design — clean UI polish  
+- Longevity — maintainable code, stable stack  
+- Ease & simplicity — low friction for devs & users  
+- Cost-effective scaling — start lean, upgrade as revenue grows  
+- Uniformity — consistent patterns, naming and UX
+
+---
+
+## ✅ Shipped
+- App Router skeleton & base routes (`/status`, `/new/issue`, `/learn/runs`, `/providers`, `/docs/*`)
+- Option A provider registry and demo generation simulator
+- Jobs stream simulator and UI wiring
+- Layout: sticky topbar & sidebar with route-scoped styles
+- `/report` playground (simulated run)
+- `/leaderboard` page (provider list)
+
+---
+
+## 🟡 In progress
+- Docs TOC wiring & content tidy
+- Demo polish (loading/empty/error states, type clean-ups)
+- Logging pino → Logtail (tighten redaction)
+- AES-256-GCM helpers (vault flow to finish)
+
+---
+
+## ⬜ To-Do (near-term)
+- **Dark mode** (site-wide toggle)  
+  _UX_: header toggle; add dark variants to nav/layout; persist via `localStorage`  
+  _Benefits_: (Functionality, Uniformity, Ease)
+- **ARIA + accessibility polish** (skip-links, focus rings, roles/labels) (Design, Uniformity)
+- **Provider selector wired to registry** (canonical 20 providers; badges for ⚡ API / ✂️ Copy & Open / 💸 Affiliate) (Functionality, Longevity)
+- **Toast/notification pattern via `usePromptRunner`** (success/fail; cancellable) (Functionality, Uniformity)
+- **Frontend API progress indicator for API jobs** (spinner → thumbnail state; optimistic row) (Functionality, Cost)
+- **Persist jobs with Prisma** (survive restarts; filter by provider/user/time) (Longevity, Ease)
+- **Docs content pass**: Developers, Users (links, screenshots) (Longevity, Ease)
+
+---
+
+## ⏭️ Medium-term
+- Backend API integration for “real” providers (feature-flagged) (Functionality, Longevity, Cost)
+- Rate limiting & safety guards (helmet + CSP, express-rate-limit, Zod) (Functionality, Longevity)
+- Leaderboard collectors (hourly speed/uptime, nightly full) + overrides UI (Functionality)
+- Admin panel (read-only first) + audit log (Longevity)
+- Postgres backups daily + restore test (Longevity)
+- Cookie banner when sessions/analytics added (Compliance)
+
+---
+
+## 🧩 Provider Canon (locked — keep list intact)
+openai, stability, leonardo, **i23rf**, artistly, adobe, midjourney, canva, bing, ideogram, picsart, fotor, nightcafe, playground, pixlr, deepai, novelai, lexica, openart, **flux** (Flux Schnell)
+
+---
+
+## 🧭 Integration policies (locked)
+- **Frontend is source of truth for providers** until launch (`frontend/src/lib/providers.ts`)
+- **Versioned API root** `/api/v1/*`; infra at root (`/health`, `/metrics`)
+- **WordPress ↔ App:** public = WP shortcode; personalized/secure = embedded iframe from `app.promagen.com`
+
+---
+
+## 🗒️ Changelog
+**2025-09-28**  
+- Developers Book moved to “Build Progress Book” style (middle column).  
+- Logged Dark Mode as near-term with UX + persistence details.  
+- Reconfirmed provider canon and integration policies.
+
+**2025-09-27**  
+- Dual-option Prompt Runner highlighted (⚡ / ✂️)  
+- Score Adjustment Editor live with clamping  
+- Provider badges integrated into plan (⚡ / ✂️ / 💸)
+
+**2025-09-26**  
+- App Router migration (partial)  
+- PROD API default, admin endpoints live
+
+---

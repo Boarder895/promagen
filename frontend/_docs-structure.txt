@@ -1,0 +1,29 @@
+
+=== 1) Any 'docs' route folders under src/app ===
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\app\docs
+
+=== 2) All layout.tsx files under src/app (to see which layout wraps your route) ===
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\app\layout.tsx
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\app\docs\layout.tsx
+
+=== 3) Developers Book pages (page.tsx / mdx / md) ===
+C:\Users\Martin Yarnold\Projects\promagen\frontend\src\app\docs\developers-book\page.tsx
+
+=== 4) Root-level ./docs content folder (if present) ===
+FOUND .\docs
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\build-plan.md
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\developers-book.md
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\developers.md
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\source.json
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\users.md
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\partials\_in-progress.md
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\partials\_principles.md
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\partials\_shipped.md
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\partials\_todo-medium.md
+C:\Users\Martin Yarnold\Projects\promagen\frontend\docs\partials\_todo-near.md
+
+=== 5) Key styling/config files ===
+FOUND C:\Users\Martin Yarnold\Projects\promagen\frontend\src\app\globals.css
+FOUND C:\Users\Martin Yarnold\Projects\promagen\frontend\tailwind.config.ts
+FOUND C:\Users\Martin Yarnold\Projects\promagen\frontend\src\app\layout.tsx
+FOUND C:\Users\Martin Yarnold\Projects\promagen\frontend\src\app\docs\layout.tsx

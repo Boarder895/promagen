@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")  // file:./dev.db
+}
+
+model ProviderSnapshotBatch {
+  id        String             @id @default(cuid())
+  createdAt DateTime           @default(now())
+  snapshots ProviderSnapshot[]
+}
+
+model Provider {
+  id        String             @id @db.VarChar(64)
+  name      String
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  overrides ProviderOverride[]
+}
+
+model ProviderSnapshot {
+  id         String                @id @default(cuid())
+  batchId    String
+  providerId String
+  status     String
+  latencyMs  Int?
+  score      Int
+  note       String?
+  createdAt  DateTime              @default(now())
+  batch      ProviderSnapshotBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@index([batchId])
+}
+
+model ProviderOverride {
+  id              Int      @id @default(autoincrement())
+  providerId      String
+  scoreAdjustment Int      @default(0)
+  isHardOverride  Boolean  @default(false)
+  finalScore      Int?
+  notes           String?
+  updatedBy       String?  @db.VarChar(280)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  provider        Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+}
+
+model ProviderOverrideAudit {
+  id         String   @id @default(cuid())
+  providerId String
+  action     String
+  prevScore  Int?
+  newScore   Int?
+  ip         String?
+  userAgent  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([providerId, createdAt])
+}
+
+model LeaderboardAudit {
+  id          String   @id @default(cuid())
+  generatedAt DateTime @default(now())
+  reviewer    String?
+  period      String?
+  base        Int?
+  bases       Json?
+  signature   String
+  jsonPayload Json     // { base, rows }
+  csvPayload  String   // full CSV including header lines
+}
