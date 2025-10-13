@@ -1,4 +1,4 @@
-// frontend/app/widget/preferred/page.tsx
+﻿// frontend/app/widget/preferred/page.tsx
 import { cookies } from "next/headers";
 
 type PrefsResponse = { preferredProviders: string[] };
@@ -17,7 +17,7 @@ async function getPreferences(): Promise<PrefsResponse | null> {
   return res.json();
 }
 
-export const dynamic = "force-dynamic"; // never cache; reflects the current user
+export const dynamic = 'force-static'; // never cache; reflects the current user
 
 export default async function PreferredWidget() {
   const prefs = await getPreferences();
@@ -84,5 +84,6 @@ export default async function PreferredWidget() {
     </html>
   );
 }
+
 
 

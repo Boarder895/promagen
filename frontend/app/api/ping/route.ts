@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 
 // Edge runtime: fast, stateless; ideal for health checks
-export const runtime = "edge";
+export const runtime = 'nodejs';
 
 // Stable JSON 200 for monitors; no caching
 export function GET() {
@@ -15,3 +15,4 @@ export function GET() {
 export function HEAD() {
   return new Response(null, { status: 200, headers: { "Cache-Control": "no-store" } });
 }
+
