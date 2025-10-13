@@ -11,3 +11,6 @@ Thumbs.db
 .vscode/
 
 /generated/prisma
+
+# Next.js
+.next/
