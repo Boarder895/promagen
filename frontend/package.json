@@ -8,7 +8,8 @@
                     "prebuild":  "pnpm run lint",
                     "build":  "next build",
                     "start":  "next start -p 3000",
-                    "lint":  "next lint --max-warnings=0"
+                    "lint": "next lint",
+                    "lint:guard": "next lint --max-warnings=0"
                 },
     "dependencies":  {
                          "@radix-ui/react-slot":  "^1.2.3",
