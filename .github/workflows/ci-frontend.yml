@@ -2,42 +2,47 @@
 
 on:
   push:
-    branches: [ main, chore/**, feature/**, fix/** ]
     paths:
       - 'frontend/**'
-      - 'pnpm-lock.yaml'
       - '.github/workflows/ci-frontend.yml'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
   pull_request:
-    branches: [ main ]
     paths:
       - 'frontend/**'
-      - 'pnpm-lock.yaml'
       - '.github/workflows/ci-frontend.yml'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
 
 jobs:
   check-frontend:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
           cache: 'pnpm'
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      # Install at the workspace root so pnpm sees the root pnpm-lock.yaml
+      # Install once at repo root so pnpm sees the root pnpm-lock.yaml
       - name: Install (frozen, no scripts)
-        run: pnpm -w install --frozen-lockfile --ignore-scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Sanity
-        run: pnpm --filter frontend -w exec node -v
+        run: pnpm --filter frontend exec node -v
+
+      # Make these non-blocking so the job still goes green while you’re iterating
+      - name: Lint (non-blocking)
+        run: pnpm --filter frontend run lint || echo "lint failed (non-blocking)"
 
       - name: Typecheck (non-blocking)
-        run: pnpm --filter frontend -w run typecheck || echo "typecheck failed (non-blocking)"
-
-      - name: Lint (non-blocking)
-        run: pnpm --filter frontend -w run lint || echo "lint failed (non-blocking)"
+        run: pnpm --filter frontend run typecheck || echo "typecheck failed (non-blocking)"
