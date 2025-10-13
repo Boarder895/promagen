@@ -1,0 +1,13 @@
+on:
+  push:
+    branches: [ "main", "chore/**", "feat/**" ]
+    paths:
+      - "frontend/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/ci-frontend.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "frontend/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/ci-frontend.yml"
