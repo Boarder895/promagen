@@ -1,12 +1,13 @@
 "use client";
 
-import { doSync, initialSyncState, type SyncState as _SyncState } from "@/admin/actions";
-import { useFormState } from "react-dom";
 import { useRef } from "react";
+import { useFormState } from "react-dom";
+
+import { doSync, initialSyncState, type SyncState as _SyncState } from "@/admin/actions";
 
 export default function SyncForm() {
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction] = useFormState(doSync, initialSyncState);
+  const [state, formAction] = useFormState<_SyncState>(doSync, initialSyncState);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-3">
@@ -16,9 +17,7 @@ export default function SyncForm() {
         </button>
       </div>
 
-      {state?.message && (
-        <p className="text-sm opacity-80">{state.message}</p>
-      )}
+      {state?.message && <p className="text-sm opacity-80">{state.message}</p>}
     </form>
   );
 }
