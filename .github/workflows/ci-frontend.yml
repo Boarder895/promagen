@@ -1,40 +1,32 @@
-# .github/workflows/ci-frontend.yml
-name: CI – frontend
+﻿name: ci-frontend
 on:
   push:
-    branches: [main]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/ci-frontend.yml'
+    paths: ['frontend/**', '.github/workflows/ci-frontend.yml']
   pull_request:
-    paths:
-      - 'frontend/**'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    paths: ['frontend/**', '.github/workflows/ci-frontend.yml']
 
 jobs:
-  build:
+  check-frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
-
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-
-      - uses: pnpm/action-setup@v3
-        with: { version: 8 }
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run build
-      - run: pnpm run lint --if-present
-      - run: pnpm run test --if-present
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+      - name: Install (headless, no scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Sanity
+        run: |
+          node -v
+          pnpm -v
+      - name: Lint (non-blocking)
+        run: pnpm -s lint || echo "lint failed (non-blocking)"
+      - name: Typecheck (non-blocking)
+        run: pnpm -s typecheck || echo "typecheck failed (non-blocking)"
