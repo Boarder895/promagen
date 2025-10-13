@@ -14,3 +14,5 @@ Thumbs.db
 
 # Next.js
 .next/
+
+frontend/pnpm-lock.yaml
