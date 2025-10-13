@@ -1,32 +1,8 @@
-<<<<<<< HEAD
-﻿export default function HomePage() {
+ï»¿export default function HomePage() {
   return (
     <main>
-      Home. Try <a href="/settings/keys">Settings → Keys</a>.
-    </main>
-  );
-}
-=======
-// Server Component — safe to render on the server.
-// Pass only serialisable props (no functions / event handlers).
-
-import RunPanel from "@/components/RunPanel";
-
-export default function Page() {
-  return (
-    <main className="space-y-6 p-6">
-      <h1 className="text-2xl font-semibold">Promagen</h1>
-      <p className="opacity-70 max-w-[60ch]">
-        Welcome to your Option A demo surface. The button below is rendered
-        by a Client Component and owns its own event handlers, which keeps the
-        server/client boundary happy.
-      </p>
-
-      {/* Only data, never functions */}
-      <RunPanel initialLabel="Run" />
+      Home. Try <a href="/settings/keys">Settings â†’ Keys</a>.
     </main>
   );
 }
 
-
->>>>>>> 2ae501b4f413143a9435e5c577312aa7dbda9955

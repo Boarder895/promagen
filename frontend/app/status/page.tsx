@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 // Server Component
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +28,8 @@ export default async function StatusPage() {
         <div className="font-medium">API</div>
         <div className="text-sm opacity-80">
           {'ok' in health && health.ok
-            ? `UP • ${('time' in health && (health as any).time) || ''}`
-            : `DOWN • ${('error' in health && (health as any).error) || 'unknown'}`}
+            ? `UP â€¢ ${('time' in health && (health as any).time) || ''}`
+            : `DOWN â€¢ ${('error' in health && (health as any).error) || 'unknown'}`}
         </div>
       </section>
 
@@ -41,26 +40,4 @@ export default async function StatusPage() {
     </main>
   );
 }
-=======
-import { getMeta } from '@/lib/api';
 
-export default async function StatusPage() {
-  // getMeta requires a key
-  const meta = getMeta('status');
-
-  return (
-    <div className="max-w-xl px-6 space-y-3">
-      <h1 className="text-xl font-semibold">Status</h1>
-      <p className="opacity-70">{meta.title}</p>
-      <ul className="list-disc pl-6">
-        <li>Frontend: OK</li>
-        <li>API: OK</li>
-        <li>DB: OK</li>
-      </ul>
-    </div>
-  );
-}
-
-
-
->>>>>>> 2ae501b4f413143a9435e5c577312aa7dbda9955
