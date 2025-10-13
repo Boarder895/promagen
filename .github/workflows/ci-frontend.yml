@@ -1,20 +1,27 @@
 ﻿name: check-frontend
+
 on:
   push:
     paths:
       - 'frontend/**'
-      - '.github/workflows/**'
+      - '.github/workflows/ci-frontend.yml'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
   pull_request:
     paths:
       - 'frontend/**'
+      - '.github/workflows/ci-frontend.yml'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
 
 jobs:
   check:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
-      # Install pnpm first so setup-node can cache it
+      # Install pnpm first so setup-node can cache properly
       - uses: pnpm/action-setup@v4
         with:
           version: 10
@@ -25,12 +32,12 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install (root; frozen, no scripts)
-        run: pnpm install --frozen-lockfile --ignore-scripts
+      # Use the workspace lockfile at repo root, but install only the frontend project
+      - name: Install (frozen, no scripts)
+        run: pnpm -C frontend install --frozen-lockfile --ignore-scripts
 
       - name: Sanity
-        run: pnpm --filter frontend exec node -v
+        run: pnpm -C frontend exec node -v
 
       - name: Lint (non-blocking)
-        run: pnpm --filter frontend run lint || echo '::warning::lint failed (non-blocking)'
-        continue-on-error: true
+        run: pnpm -C frontend run lint || echo "lint failed (non-blocking)"
