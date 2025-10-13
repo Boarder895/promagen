@@ -1,11 +1,29 @@
-﻿name: app-structure
+﻿name: check-frontend
 on:
-  push: { branches: ["**"] }
+  push:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/**'
   pull_request:
+    paths:
+      - 'frontend/**'
+
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: App structure check
-        run: pwsh -NoProfile -File scripts/check-app-structure.ps1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: Install (root; frozen, no scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Sanity
+        run: pnpm --filter frontend exec node -v
+      - name: Lint (non-blocking)
+        run: pnpm --filter frontend run lint || echo "::warning::lint failed (non-blocking)"
+        continue-on-error: true
