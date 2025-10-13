@@ -1,13 +1,29 @@
-on:
-  push:
-    branches: [ "main", "chore/**", "feat/**" ]
-    paths:
-      - "frontend/**"
-      - "pnpm-lock.yaml"
-      - ".github/workflows/ci-frontend.yml"
-  pull_request:
-    branches: [ "main" ]
-    paths:
-      - "frontend/**"
-      - "pnpm-lock.yaml"
-      - ".github/workflows/ci-frontend.yml"
+jobs:
+  check-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # Install at the repo root so pnpm sees pnpm-lock.yaml
+      - name: Install (frozen, no scripts)
+        run: pnpm -w install --frozen-lockfile --ignore-scripts
+
+      # Now run the frontend tasks
+      - name: Sanity
+        run: pnpm --filter frontend -w run -r -c echo ok
+
+      - name: Lint (non-blocking)
+        run: pnpm --filter frontend -w run lint || echo "Lint failed (non-blocking)"
+
+      - name: Typecheck (non-blocking)
+        run: pnpm --filter frontend -w run typecheck || echo "typecheck failed (non-blocking)"
+
