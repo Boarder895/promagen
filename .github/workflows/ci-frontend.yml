@@ -1,0 +1,40 @@
+name: ci-frontend
+
+on:
+  push:
+    branches: [ feat/vercel-frontend ]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ci-frontend.yml"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/ci-frontend.yml"
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend   # <<< run all commands in /frontend
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint --max-warnings=0
+      - run: pnpm build
