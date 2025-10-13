@@ -1,0 +1,102 @@
+{
+  "edition": "auto", 
+  "whatsNew": {
+    "developers": [
+      "Dual-option model enforced: **Run in Promagen ⚡** + **Copy & Open ✂️** shown for all providers.",
+      "Provider schema includes `copyAndOpenEnabled: true` and `embedAllowed`.",
+      "Prompt Runner fallback flow clarified (API errors flip to ✂️ path)."
+    ],
+    "users": [
+      "Two buttons on every provider: **⚡ Run in Promagen** and **✂️ Copy & Open**.",
+      "Badges explained (⚡ API, ✂️ Copy & Open, 💸 Affiliate).",
+      "Copy & Open is the universal fallback if API is unavailable."
+    ],
+    "buildPlan": [
+      "Dual-option Prompt Runner highlighted.",
+      "Score Adjustment Editor confirmed live with clamping.",
+      "Provider badges integrated into plan."
+    ]
+  },
+
+  "entryPoints": {
+    "marketing": "https://promagen.com",
+    "app": "https://app.promagen.com"
+  },
+
+  "features": {
+    "leaderboardPath": "/leaderboard",
+    "providersPath": "/providers",
+    "promptPath": "/prompt",
+    "promptsPath": "/prompts",
+    "keysPath": "/keys",
+    "docsPath": "/docs",
+    "metricsPath": "/metrics",
+    "admin": {
+      "health": "https://api.promagen.com/health",
+      "ping": "/api/admin/ping",
+      "sync": "/api/admin/sync"
+    }
+  },
+
+  "badges": {
+    "api": "⚡ API",
+    "copyOpen": "✂️ Copy & Open",
+    "affiliate": "💸 Affiliate"
+  },
+
+  "providerPolicy": {
+    "alwaysCopyOpen": true,
+    "notes": "All providers show Copy & Open; API button appears when apiEnabled && userHasValidKey."
+  },
+
+  "buildPlan": {
+    "foundation": { "done": ["Repo split", "ENV strategy"], "todo": ["CI/CD", "CHANGELOG/tags"] },
+    "backend": {
+      "done": ["Bind 0.0.0.0:3001", "Health 200", "Prisma + release_command", "Fly secrets"],
+      "partial": ["Logging→Logtail redaction", "AES-256-GCM helpers"],
+      "todo": ["Rate limiting", "Zod validation", "Metrics endpoint"]
+    },
+    "frontend": {
+      "done": ["PROD API default", "Admin endpoints"],
+      "partial": ["App Router migration", "Root middleware"],
+      "todo": ["Error boundaries + toasts", "Provider selector"]
+    },
+    "security": {
+      "done": ["HTTPS", "CORS allow-list", "Origin/Referer checks", "Admin token"],
+      "partial": ["Structured logging redaction"],
+      "todo": ["helmet + CSP", "Rate limiting", "Zod validation", "Dep hygiene", "Cookies"]
+    },
+    "providers": {
+      "partial": ["Registry scaffolded (20 locked)"],
+      "todo": ["API providers (OpenAI, Stability, Leonardo)", "UI providers (Midjourney, Canva, Firefly)", "Dual-option Prompt Runner UI", "Encryption vault"]
+    },
+    "leaderboard": {
+      "done": ["Blueprint locked", "Basic view", "Score Adjustment Editor (clamped)"],
+      "todo": ["Collectors (hourly/nightly)", "Manual review UI", "Snapshots/sparklines/▲▼", "Evidence/provenance"]
+    },
+    "prompts": {
+      "todo": ["Grid UI", "Like weighting", "Refine/Remix", "SEO surface"]
+    },
+    "wpApp": {
+      "done": ["Policy locked (iframe for secure features)"],
+      "todo": ["Public shortcode", "Personalized iframe scaffolding", "Affiliate disclosures"]
+    },
+    "ops": {
+      "done": ["Fly logs", "Logtail sink"],
+      "partial": ["Slack alerts"],
+      "todo": ["Uptime pings", "Runbooks", "Backups + restore test"]
+    },
+    "adminAccess": {
+      "done": ["Token pattern"],
+      "partial": ["Token docs"],
+      "todo": ["Admin panel UI", "Audit log"]
+    },
+    "compliance": {
+      "partial": ["Minimal PII stance (keys encrypted)"],
+      "todo": ["Retention policy + ERD", "GDPR export/delete", "Cookie banner"]
+    },
+    "releaseQA": {
+      "todo": ["Staging envs", "Smoke tests", "E2E happy paths", "Go/No-Go checklist"]
+    }
+  }
+}

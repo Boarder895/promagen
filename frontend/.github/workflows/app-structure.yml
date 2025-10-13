@@ -1,0 +1,12 @@
+﻿name: app-structure
+on:
+  push: { branches: ["**"] }
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-powershell@v1
+      - name: App structure check
+        run: pwsh -NoProfile -File scripts/check-app-structure.ps1

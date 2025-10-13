@@ -1,0 +1,16 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+export function requireBearer(req: NextRequest): NextResponse | null {
+  const token = process.env.ADMIN_BEARER_TOKEN || '';
+  if (!token) {
+    return NextResponse.json({ error: 'Server missing ADMIN_BEARER_TOKEN' }, { status: 500 });
+  }
+  const auth = req.headers.get('authorization') || '';
+  const [scheme, supplied] = auth.split(' ');
+  if (scheme !== 'Bearer' || !supplied || supplied !== token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  return null;
+}
+
+

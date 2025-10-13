@@ -73,3 +73,5 @@ export async function GET() {
   res.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
   return res;
 }
+
+

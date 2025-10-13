@@ -1,3 +1,17 @@
-node_modules
-.env
+# Node
+node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+
+# Next.js
+.next/
+out/
+.vercel/
+
+# Env & local
+.env*
+.DS_Store
+.env
+

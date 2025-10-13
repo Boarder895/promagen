@@ -1,73 +1,33 @@
-const express = require("express");
-const helmet = require("helmet");
-const cors = require("cors");
-const morgan = require("morgan");
-const auth = require("basic-auth");
+// C:\Users\Martin Yarnold\Projects\promagen\api\server.js
+const express = require('express');
+const cors = require('cors');
 
 const app = express();
+const PORT = process.env.PORT || 8080;
 
-// --- config ---
-const PORT = process.env.PORT || 3000;
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "https://app.promagen.com")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
-const BASIC_AUTH_USER = process.env.BASIC_AUTH_USER || "";
-const BASIC_AUTH_PASS = process.env.BASIC_AUTH_PASS || "";
+// CORS (open or restrict via env)
+const allowed = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(s => s.trim()).filter(Boolean);
 
-// --- middleware ---
-app.disable("x-powered-by");
-app.use(helmet({ crossOriginResourcePolicy: false }));
-app.use(express.json());
-app.use(morgan("tiny"));
 app.use(cors({
-  origin(origin, cb) {
-    // allow server-to-server/no-origin and any whitelisted origins
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    cb(new Error("CORS blocked"));
+  origin: (origin, cb) => {
+    if (!origin || allowed.length === 0 || allowed.includes(origin)) return cb(null, true);
+    return cb(new Error('CORS blocked'));
   },
-  credentials: true
 }));
+app.use(express.json());
 
-// Optional: protect all routes with Basic Auth if creds provided
-if (BASIC_AUTH_USER && BASIC_AUTH_PASS) {
-  app.use((req, res, next) => {
-    const creds = auth(req);
-    if (creds && creds.name === BASIC_AUTH_USER && creds.pass === BASIC_AUTH_PASS) return next();
-    res.set("WWW-Authenticate", 'Basic realm="Promagen API"');
-    return res.status(401).json({ ok: false, error: "Unauthorized" });
-  });
-}
+// Health
+app.get('/health', (req, res) => res.json({ ok: true }));
 
-// --- health + sample routes ---
-app.get("/health", (req, res) => {
-  res.json({ ok: true, service: "promagen-api", time: new Date().toISOString() });
+// ★ Leaderboard (this is what the frontend calls)
+app.get('/api/leaderboard', (req, res) => {
+  const providers = [
+    { id: 'openai',    name: 'OpenAI',    score: 92.1, delta: 0.4  },
+    { id: 'i23rf',     name: 'I23RF',     score: 83.6, delta: -0.7 },
+    { id: 'stability', name: 'Stability', score: 80.2, delta: 1.2  },
+  ];
+  res.json({ updatedAt: new Date().toISOString(), providers });
 });
 
-app.get("/ready", (req, res) => {
-  // add DB checks later if needed
-  res.json({ ready: true });
-});
-
-app.get("/v1/ping", (req, res) => {
-  res.json({ pong: true });
-});
-
-// root info
-app.get("/", (req, res) => {
-  res.json({
-    name: "Promagen API",
-    endpoints: ["/health", "/ready", "/v1/ping"],
-    allowed_origins: ALLOWED_ORIGINS
-  });
-});
-
-// error handler (last)
-app.use((err, req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ ok: false, error: "Internal error" });
-});
-
-app.listen(PORT, () => {
-  console.log(`Promagen API listening on ${PORT}`);
-});
+app.listen(PORT, () => console.log(`promagen-api listening on ${PORT}`));

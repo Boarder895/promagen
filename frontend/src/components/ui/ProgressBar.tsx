@@ -1,0 +1,31 @@
+// ───────────────────────────────────────────────────────────────────────────────
+// File: frontend/src/components/ui/ProgressBar.tsx  (NEW)
+// ───────────────────────────────────────────────────────────────────────────────
+import * as React from 'react';
+import clsx from 'clsx';
+
+type ProgressProps = {
+  value?: number; // 0..100; if undefined => indeterminate animated stripe
+  label?: string;
+  className?: string;
+};
+
+export const ProgressBar: React.FC<ProgressProps> = ({ value, label, className }) => {
+  const determinate = typeof value === 'number' && value >= 0;
+  return (
+    <div className={clsx('w-full', className)} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={determinate ? value : undefined} aria-label={label || 'progress'}>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+        {determinate ? (
+          <div className="h-full rounded-full bg-accent-500 transition-[width] duration-200 ease-out" style={{ width: `${Math.min(100, Math.max(0, value!))}%` }} />
+        ) : (
+          <div className="h-full w-1/3 rounded-full bg-accent-500 animate-[progress_1.2s_ease-in-out_infinite]" />
+        )}
+      </div>
+      <style>{`
+        @keyframes progress { 0% { transform: translateX(-120%);} 100% { transform: translateX(300%);} }
+      `}</style>
+    </div>
+  );
+};
+
+

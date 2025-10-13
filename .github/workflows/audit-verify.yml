@@ -1,0 +1,19 @@
+name: audit-verify
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  noop:
+    name: Parked (no-op)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain status
+        run: |
+          echo "audit-verify workflow is parked. No verification steps run in CI."
+          echo "Re-enable later when the audit script is ready."
