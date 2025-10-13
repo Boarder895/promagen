@@ -1,10 +1,10 @@
-name: Lint
+name: lint
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ feat/vercel-frontend ]
   push:
-    branches: [ main ]
+    branches: [ feat/vercel-frontend ]
 
 defaults:
   run:
@@ -15,11 +15,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: corepack enable
-      - run: pnpm install --frozen-lockfile
-      - name: Lint
-        run: pnpm run lint
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (guard)
+        run: pnpm run lint:guard

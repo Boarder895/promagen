@@ -1,17 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  images: {
-    remotePatterns: [
-      // { protocol: "https", hostname: "cdn.yoursite.com" },
-    ],
-  },
-  // Ensure linting runs during `next build`
+  reactStrictMode: true,
+
+  // Keep lint visible in CI, but don't fail production builds on lint issues.
+  // CI will run a separate lint job; build stays green.
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
+
+  // Leave TS errors blocking builds (safer). If you need to unblock temporarily,
+  // flip to `true` and revert once fixed.
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+
+  poweredByHeader: false,
 };
 
-export default nextConfig;
+module.exports = nextConfig;
 
 
 

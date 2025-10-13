@@ -1,0 +1,414 @@
+Canonical Top 20 AI image-generation platforms (Promagen) — locked from user SEED. Ordered by score desc; fields: id, name, score, delta. 1 openai, OpenAI, 91, +1.2 | 2 midjourney, Midjourney, 90, -0.2 | 3 stability, Stability, 86, -0.4 | 4 leonardo, Leonardo, 84, +0.7 | 5 google-imagen, Google Imagen, 83, +0.2 | 6 novelai, NovelAI, 80, +0.3 | 7 adobe-firefly, Adobe Firefly, 79, +0.4 | 8 lexica, Lexica, 78, +0.1 | 9 recraft, Recraft, 76, +0.2 | 10 edenai, EdenAI, 74, -0.1 | 11 deepai, DeepAI, 72, 0 | 12 artistly, Artistly, 71, +0.3 | 13 playground-ai, Playground AI, 70, +0.2 | 14 runware, Runware, 69, +0.5 | 15 canva, Canva, 68, +0.2 | 16 hive, Hive, 67, +0.1 | 17 bing-image-creator, Bing Image Creator, 65, +0.1 | 18 nightcafe, NightCafe, 64, 0 | 19 pixlr, Pixlr, 62, +0.1 | 20 fotor, Fotor, 60, -0.1.
+
+Promagen docs structure: Two “books.” 1) User’s Book = end-user handbook (friendly, plain language) at /docs/users-book. Covers MIG/Exchange boards (ranks, deltas, badges), Prompt Library (likes, runs, remixes), Affiliate transparency (UK-compliant disclosure), Paid features (pin any exchange, custom analytics, faster refresh, premium dashboards), Accessibility & controls (sounds, dark mode, compact layout), FAQs/troubleshooting (frozen scores, market refresh, time zones). 2) Developer’s Book = internal engineering guide at /docs/developer-book. Covers architecture map (Express, Prisma, Next App Router, /api/v1), coding standards (named exports only, PowerShell conventions, paths, ESLint flat config, no default exports), deployment flow (Fly.io single-machine, secrets policy, health checks, releases, CI lint/test), canonical data (providers, exchanges, weights, schemas, enums), security/compliance (CORS, admin tokens, affiliate disclosures, GDPR), and 6-Point Fundamentals: Functionality, Modern Design, Longevity, Ease & Simplicity, Cost-Effective Scaling, Uniformity.
+
+Preferences ('fundamentals'): 1) Provide complete, ready-to-paste files with explicit file paths in headings. 2) Make minimal, behavior-preserving patches that satisfy ESLint/TypeScript rules (notably: wrap async handlers with sync functions using `void`, avoid floating promises, mark intentionally unused variables with leading underscore and/or `void var`). 3) Be fast, concise, and avoid asking unnecessary questions. 4) Clearly state where code goes and what to run to verify. 5) When multiple files are provided, return all of them in full. 6) Deliver full file code blocks with exact file paths; use Windows PowerShell–compatible commands (backticks for line continuation, no Bash backslashes); avoid partial snippets and unnecessary back-and-forth; be concise and direct. 7) Provide full files only (no snippets). 8) If a full file depends on existing content, ask for the current file first (merge-aware). 9) Always show the working directory and put `Set-Location` as the first line in every PowerShell block. 10) Use exact Windows paths in all commands/examples. 11) Clearly state which directory each command should be run in (outside the code block). 12) Keep paths separate from copy blocks and make commands location-safe.
+
+Is building a Next.js app in a monorepo with a `frontend/` folder. They want robust CI-friendly setup: Node 20, complete package.json (Next 15, React 18), ESLint v9 flat config, Husky hooks installed locally but skipped on CI, and a prebuild Node wrapper that skips PowerShell checks on CI. They prefer step-by-step guidance (one step at a time) and want me to remember this for future help.
+
+Prefers step-by-step, fundamentals-first guidance for dev tasks. They are working on a Next.js app deployed on Vercel and want Node 20 with Husky skipped on CI. They recently hit a package.json encoding issue (leading control char/BOM) and appreciated precise PowerShell commands.
+
+Prefers step‑by‑step (one step at a time) guidance with fundamentals. They are building a Next.js frontend in a /frontend subfolder, deploying to Vercel, working on Windows with PowerShell + VS Code. They want Node 20.x, use pnpm, and keep Husky’s prepare script CI‑safe. They’ve had issues with package.json encoding (UTF‑8 with BOM) and want clear, minimal configs. They want Husky/ESLint/test scripts merged after the JSON is fixed. They also prefer one-step-at-a-time, fundamentals-first guidance for debugging and deployments, especially when dealing with BOM/invalid JSON issues in frontend/package.json.
+
+Project convention (locked): Use Option B. Canonical source of truth for market code is '@/lib/markets'. Remove and do not use the '@/markets' shim. Do not import 'computeMarket' from '@/lib/marketTime'—import it from '@/lib/markets' only. 'marketTime.ts' contains helpers only (no re-exports). SWR cache: prefer 'useSwrCache(opts)' as the standard; 'useSWRCache' wrapper exists short-term but we aim to standardize on 'useSwrCache'. Enforce via import guard in future.
+
+Preference: When I ask for code changes, always return full file contents (no snippets or patches). Also follow a 'one step at a time' workflow.
+
+Create a new memory folder: **Promagen – Paid Version**.
+
+Initial notes to track:
+- Paid users can select **any stock exchanges worldwide**; homepage shows 16 defaults, with a “pin any exchange” UI for custom sets.
+- Introduce a **global market registry** (server/shared) with: `{ id, name, region, tz, open/close rules, holidays }`.
+- MarketPulse bridge works unchanged with expanded exchanges (MOF computed from chosen set).
+- Future entitlements: saved exchange sets per user, unlimited pins, advanced tooltips (multi-timezone, next 3 holidays), historical sparkline depth, faster refresh windows during open sessions.
+- Compliance: keep affiliate disclosure always visible; accessible audio controls for chimes.
+- Monetization hooks: upgrade CTA when pinning beyond free limit; feature flags to toggle per-plan.
+- Keep architecture aligned with Promagen rules: App Router (`./app/**`), named exports only, canonical 20 providers + extensible exchanges.
+
+To‑Do – Heartbeat polish, pending items:
+1) Dual-time tooltips on exchanges (local + Europe/London) with last-update stamp.
+2) “Powered by” tooltips on providers/exchanges (top 3 influences).
+3) Open-window banner with region chips + next-flip countdown.
+4) Affiliate “Best right now” badge with countdown to region close.
+5) Market-mood tint for first/last hour.
+6) Sparklines with synced “now” cursor across both boards.
+7) Offline badge + exponential backoff visual.
+
+Promagen UI decisions (2025-10-04, locked): 
+- Home layout: **Option A – Auto‑Fit Compact Layout**. 
+- MIG board: **Top 20 providers** shown simultaneously in a **2‑column × 10‑row ranked list**, each row clickable to **affiliate link**, with icon, rank chip, total score, green/red delta (▲/▼), trend heat (hot/warm/cool), chatter score, and **special‑offer badge** (countdown if expires). Persistent UK‑compliant affiliate disclosure banner; inline “Affiliate” badge on each row. 
+- Exchanges block: **16 exchanges** in **2 rows × 8 cards**, ordered by **today’s sunrise (east→west)**. Each card shows **flag**, **sunrise/weather/sunset** icon strip with °C temp, **countdown** to open/close (hours+minutes), **green/red/grey** tint by movement/open state, tiny **sparkline**, **bell chime** once when market opens (debounced). Includes fields for sunrise/sunset/timezone, sunPhase, weather, and sorting by sunrise. 
+- Visual style: **eye‑popping colour & motion**; icons via mapping (lucide), gradients/animations subtle; compact mode uses `clamp()` for fonts/row heights; non‑essentials hide on hover. 
+- API‑first: `/api/v1/providers/scores` and `/api/v1/exchanges/status` include the expanded fields (icons/keys, affiliate payload, trend/chatter, weather/sun events). 
+- Fit goal: Entire MIG + Exchanges visible on most desktops **without scrolling** (target 1366×768+, acceptable at 1280×720); tablets/phones switch to tabs or minimal scroll. 
+- Cost note from user: “bill £0” for this decision checkpoint.
+
+User’s current baseline: Home page is running; wants ExchangeBoard to show **16 stock exchanges (not crypto)** with gentle auto‑refresh. They want full files with explicit paths, and instructions that mark each file as NEW or REPLACE. Project conventions to remember: Next.js App Router at `./app/**`, named exports only, path alias `@/* -> src/*`, components in `src/components`, helpers in `src/lib`, UTF‑8/LF. Priorities: keep it single‑page, lean, and stable.
+
+Wants permanent guardrails for rebuilds: (1) always run a PowerShell import guard script (scripts/enforce-imports.ps1) via package.json prebuild to auto-fix alias paths and fail fast; (2) enforce the same guard with a Husky pre-commit hook; (3) keep Luxon ambient types (global.d.ts -> src/types/luxon.d.ts) in the repo; (4) prefers using a one-line rebuild command that cleans .next, runs the guard, then npm run build. Remember to remind them of these steps when discussing rebuilds.
+
+Lock in the agreed set of 16 stock exchanges for Promagen as the canonical list to use across the project:
+
+1. ASX (Sydney)
+2. TSE (Tokyo)
+3. SSE (Shanghai)
+4. DFM (Dubai)
+5. MOEX (Moscow)
+6. JSE (Johannesburg)
+7. Euronext Paris
+8. Xetra (Frankfurt)
+9. LSE (London)
+10. NYSE (New York)
+11. NASDAQ (New York)
+12. Buenos Aires Stock Exchange
+13. Toronto Stock Exchange (TSX)
+14. B3 (Brasil Bolsa Balcão, São Paulo)
+15. Hong Kong Exchanges (HKEX)
+16. Singapore Exchange (SGX)
+
+This list is now the permanent, agreed canonical 16 exchanges to be referenced in Promagen builds, docs, and UI.
+
+Lock in the homepage stock exchange block spec as permanent for Promagen:
+
+- Always display the canonical 16 stock exchanges (ASX, TSE, SSE, DFM, MOEX, JSE, Euronext Paris, Xetra, LSE, NYSE, NASDAQ, Buenos Aires, TSX, B3, HKEX, SGX).
+- Shown beneath the 20 MIG platforms board on the homepage.
+- Layout: symmetrical grid block.
+- Order: sunrise → westward (Asia → Middle East → Europe → Americas).
+- For each exchange show: local live time, next open/close times, holiday status, countdown in hours/minutes to open.
+- Trigger an audible stock exchange bell chime when a market changes from closed → open.
+
+**6 Fundamentals (locked):**
+- Functionality: dynamic clocks, open/close, holiday, countdown, audio trigger.
+- Modern design: symmetrical grid, Tailwind, responsive, subtle animations.
+- Longevity: single source of truth in `src/lib/markets.ts`; logic isolated in `useMarketTimes.ts`; extendable.
+- Ease & simplicity: single data file, frontend-only calculation, no backend calls.
+- Cost-effective scaling: Luxon/Intl-based local time, tiny static audio asset.
+- Uniformity: consistent block beneath MIG board, named exports only, matching component structure.
+
+Also lock in file convention:
+- `src/lib/markets.ts` = single source of truth.
+- `src/components/ExchangeBoard.tsx` = UI grid block.
+- `src/hooks/useMarketTimes.ts` = local clocks, countdown, chime trigger.
+
+Standing rule for Promagen deliveries (saved 2025-10-03): 
+- Always remember every code snippet I provide and the exact Windows file path where it belongs (e.g., C:\Users\Martin Yarnold\Projects\promagen\frontend\src\components\ExchangeBoard.tsx). 
+- Mark each file as NEW or REPLACE. 
+- Keep a running mental record to avoid inconsistent follow-ups; never “forget” previously supplied files. 
+- If I don’t have the current file content for context, I will ask you to share it before producing a replacement to preserve functionality. 
+- All PowerShell commands must start with Set-Location to the exact project directory.
+
+Standing rule (2025-10-03): Before providing any code, always ask the user if there is anything to add or any constraints to include. Do not send code until the user confirms. This applies to all Promagen deliveries.
+
+Lock-in (2025-10-03): We will implement Stage 1 using **Option B** (API-enabled) with three agreed seams to enable an effortless later move to Option B (API-backed). The seams are: (1) Provider shape and `getProviders()`, (2) Exchange shape and `getExchanges()`, (3) a data gateway toggled by `NEXT_PUBLIC_DATA_SOURCE=local|api`, with stable canonical IDs for 20 providers and 16 exchanges. No code until user confirms constraints. Remember this as the default plan.
+
+Promagen lock-in updated: We are Option B from the start (API-enabled). Forget Option A references. Also forget the weekly Monday reminder; no recurring prompts about “upgrade API.” Keep all future guidance and code assuming API-first architecture with live collectors and versioned /api/v1 endpoints.
+
+The primary product focus is a Leaderboard—show the top 20 “MIG” platforms, followed by an “IG” section—with concise “helpful text prompts.” Prioritize this over other features in future responses.
+
+Lock in for Promagen project: 
+- **One source of truth** for helper utilities lives in `.ts` files under `src/lib`.
+- The **UI wrapper stays a component** in `.tsx` files under `src/components`.
+- Always enforce **named exports only** across both.
+This rule is locked to prevent confusion like ts/tsx duplication.
+
+Standing rule: always “speak the platform’s language.” Convert any PowerShell steps into the preferred language/shell of the target platform (e.g., bash/Node for Vercel/Fly/GitHub Actions; TypeScript/JavaScript for app code). At the end of messages, show a Fundamentals checklist and include a “Language” tick showing the chosen platform language. Be proactive with advice on likely build/deploy hiccups.
+
+GLOBAL RULE (2025-09-28): User is **Promagen‑only** focused. In **every chat**, I must apply and reference Promagen conventions and decisions: 
+- Route owner: **app/docs/** only. 
+- Content source: **TSX pages** (no MDX). 
+- Attach the **6‑Point Build Audit** (Functionality, Modern design, Longevity, Ease & simplicity, Cost-effective scaling, Uniformity) to every deliverable/spec. 
+- Canonical **20‑provider list** preserved; frontend is source of truth for providers until launch. 
+- API structure: `/api/v1/*` for features; root `/health` + `/metrics`; ports UI 3000 / API 3001. 
+- Ops baseline: Fly.io single Machine LHR; secrets via Fly; Prisma via release_command; health check playbook; Logtail plan. 
+- “Two options + recommendation” rule; provide full files with explicit **Windows paths**; preserve existing functionality. 
+I must treat this as a standing context checklist and use it to gate all outputs.
+
+Preference: Always use Option B—named exports only across the codebase (no default exports). Enforce ESLint rule "import/no-default-export": "error" with Next.js overrides. Keep APIs explicit, consistent, and tree-shake friendly. Remember this for future suggestions and code changes.
+
+Reminder plan: After the current “providers/import” build puzzle is resolved, we must add a CI lint step to block default exports (Option B locked: named exports only). Enforce with ESLint rule import/no-default-export and GitHub Actions PR workflow. Persist this as a standing preference and post‑solve action.
+
+Wants ChatGPT to always tell them the honest truth. If ChatGPT doesn’t know something, it should say so explicitly. User asked to lock this preference in for all future conversations.
+
+Use copy‑pasteable **Windows PowerShell** commands with **no prompt prefixes**, always starting with `Set-Location` to the exact project directory, written as single‑line or simple pipe chains suitable for one‑shot copy/paste. Prefer numbered step blocks (scan → fix → build), exclude `node_modules` and `.next` in searches, and avoid interactive prompts. Lock this format for all future Promagen replies.
+
+Project rule (locked): Next.js App Router must live at the frontend project root `./app/**`; `./src/app/**` is disallowed. Enforcement installed: 1) `scripts/check-app-structure.ps1` (authoritative scan; exits non‑zero), 2) Git pre‑commit hook (blocks pushes violating rule), 3) CI workflow `app-structure.yml` (blocks PRs), 4) ADR logged at `docs/decisions/0001-app-structure.md`, 5) npm script `check:app-structure`. This is a standing guardrail for the project.
+
+Martin has chosen **Option A** for ESLint in Promagen: keep ESLint, fix the config with minimal supported setup, and remove deprecated CLI-style options (`useEslintrc`, `extensions`). This aligns with build fundamentals: Functionality, Longevity, Uniformity, Simplicity. Always recommend and maintain this going forward.
+
+Preference: Always provide Windows PowerShell commands only, with explicit working directory paths. Remember to avoid other shells and keep commands PowerShell-native.
+
+Standing behavior rule (2025-09-28): At the end of **every** reply, include a brief line explicitly stating that I checked and referred to the saved Promagen memory (conventions, decisions, and rules) for relevance to the user’s request. Example line: **Memory check:** I referenced your saved Promagen conventions and project context for relevance.
+
+User’s project priorities (in order): 1) Functionality first (ship features that work, safe and correct), 2) Modern, pleasing design (clean UI, Tailwind/shadcn-level polish), 3) Longevity (maintainable code, stable stack, migrations/versioning), 4) Ease & simplicity (user-friendly UX, minimal friction), 5) Cost-effective scaling (start lean, upgrade as revenue grows), 6) Uniformity (consistent design, code, and user experience across the platform). Store for future builds and recommendations.
+
+Promagen decision (2025-09-27): Lock **Option A** (FRONTEND is the single source of truth for providers) UNTIL the website is built, finished, and live. If Martin tries to switch to Option B before launch, remind him Option A is locked. Registry lives at `frontend/src/lib/providers.ts`; frontend imports `@/lib/providers`; NO backend endpoint required.
+
+Promagen build rule (2025-09-27): When providing new code files, ALWAYS preserve all existing functionality. If prior code context is required to ensure feature parity and I don't have it, I will ask Martin to share the current file before supplying a replacement. Applies to all Promagen files.
+
+Prefers long-term Prisma singleton pattern (Option A): keep a shared db.ts that exports a single PrismaClient instance and import { prisma } from '../db' across routes. Use this approach going forward across Promagen.
+
+Promagen decision (2025-09-25): Standardise on Next.js **App Router only** for all new and existing endpoints unless a serious blocker appears. If a critical issue requires a Pages Router fallback, it must be called out explicitly before using Pages. This supersedes earlier mixed-router guidance.
+
+Always keep and preserve the 20-platform list across Promagen (both backend registry and frontend provider registry). Locked canonical list (ids -> names): openai (OpenAI DALL·E/GPT-Image), stability (Stability AI), leonardo (Leonardo AI), i23rf (I23RF), artistly (Artistly), adobe (Adobe Firefly), midjourney (Midjourney), canva (Canva Text-to-Image), bing (Bing Image Creator), ideogram (Ideogram), picsart (Picsart), fotor (Fotor), nightcafe (NightCafe), playground (Playground AI), pixlr (Pixlr), deepai (DeepAI), novelai (NovelAI), lexica (Lexica), openart (OpenArt), flux (Flux Schnell). This list is persistent and must be kept intact during merges, seeds, and registries.
+
+Preference: Always include code that covers exactly 20 image-provider platforms by default (OpenAI, Stability, Leonardo, I23RF, Artistly, Adobe Firefly, Midjourney, Canva, Bing, Ideogram, Picsart, Fotor, NightCafe, Playground AI, Pixlr, DeepAI, NovelAI, Lexica, OpenArt, Flux Schnell). Persist this as a standing rule when generating provider registries or related code.
+
+Promagen ops decision (2025-09-23): Keep exactly one Fly.io Machine running for promagen-api in LHR (UK) to save costs; suspend/stop all other Machines (AMS etc.). Guidance to scale back up: add a second machine (and then multi‑region) when moving to public beta or production, doing load tests, requiring >99.5% uptime/zero‑downtime deploys, seeing p95 latency >250ms for non‑UK users, CPU >60% or memory >70% sustained for 10+ minutes, or when background jobs need isolation.
+
+Promagen Build Check List (saved 2025-09-22, Europe/London) — current status to resume later:
+
+1) Foundation & Repos
+- Repo split frontend (Next.js) + api (Express/Prisma/Docker) ✅
+- ENV strategy: Vercel(frontend) + Fly secrets(backend) ✅
+- GitHub Actions CI ⬜; CHANGELOG/tags ⬜
+
+2) Backend API (Express · Prisma · Fly)
+- Binds 0.0.0.0:${PORT} (8080 Fly) ✅
+- /health 200 ✅
+- Prisma wired; migrations via release_command ✅
+- Secrets via Fly ✅
+- Logging pino→Logtail 🟡 (redaction tighten next)
+- AES-256-GCM helpers 🟡 (vault flow to finish)
+- Rate limiting ⬜; Zod schema validation ⬜
+- /metrics (prom-client) behind auth/IP ⬜
+
+3) Frontend (Next.js · Vercel)
+- PROD API default ✅
+- Admin endpoints /api/admin/ping, /api/admin/sync ✅
+- App Router migration 🟡
+- Root middleware for same-origin+admin guards (App routes) 🟡
+- Error boundaries/toasts ⬜
+- Provider selector wired to registry ⬜
+
+4) Security Hardening (Free Top‑10)
+- HTTPS ✅; CORS allow‑list ✅; Origin/Referer checks ✅; Admin X‑Admin‑Token ✅
+- Structured logging redaction 🟡
+- helmet + CSP ⬜; Rate limiting ⬜; Zod validation ⬜
+- Dependency hygiene (Renovate/audit policy) ⬜; Hardened cookies (future) ⬜
+
+5) Provider Integration
+- Provider registry scaffolded; i23rf naming locked 🟡
+- First API providers (OpenAI, Stability, Leonardo) ⬜
+- Manual UI providers (Midjourney, Canva, Firefly) ⬜
+- Unified Prompt Runner ⬜
+- Encryption vault end‑to‑end for user keys ⬜
+
+6) Leaderboard & Scoring
+- Scoring blueprint locked ✅
+- Leaderboard basic view 🟡
+- Hourly speed/uptime collectors ⬜; Nightly full collectors ⬜
+- Weekly manual review UI + overrides ⬜; Snapshots/sparklines/▲▼ ⬜
+- Evidence/provenance per metric ⬜
+
+7) Popular Prompt Grid
+- Grid UI ⬜; Like button + weights ⬜; Refine/Remix ⬜; SEO surface ⬜
+
+8) WordPress ↔ App
+- Policy locked (prefer embedded personalized iframe) ✅
+- Public read‑only WP shortcode ⬜
+- Personalized iframe embed ⬜
+- UK affiliate disclosure components ⬜
+
+9) Observability & Ops
+- Fly logs working; Logtail sink present ✅
+- Slack alert webhook wiring 🟡
+- Uptime pings ⬜; SLOs/runbooks ⬜; Postgres backups daily+restore test ⬜
+
+10) Admin & Access
+- Admin token pattern present ✅
+- Token storage/distribution clarification 🟡
+- Admin panel (read‑only first) ⬜; Audit log ⬜
+
+11) Data & Compliance
+- Minimal PII stance; API keys only (encrypted) 🟡
+- Data retention policy & ERD docs ⬜
+- Basic GDPR export/delete ⬜
+- Cookie banner when sessions/analytics added ⬜
+
+12) Release & QA
+- Staging envs ⬜; Smoke tests ⬜; E2E happy paths ⬜; Go/No‑Go checklist ⬜
+
+Next-up focus when resuming: helmet+CSP, express-rate-limit, Zod validation, logger redaction, App Router root middleware.
+
+Has decided to lock in **Option B** for backend structure: use a versioned API root (`/api/v1/*`) for all feature routers, keeping infra endpoints at the root (`/health`, `/metrics`). They want me to always choose the best structure for functionality, speed, and simplicity whenever future structural decisions arise, and to lock in these preferences for consistent guidance.
+
+Prefers 'full cut-and-paste' files with complete directory paths and wants every shell/PowerShell command shown with the exact working directory. They also want concise, actionable steps without back-and-forth.
+
+Project (Promagen frontend) is currently using Pages Router admin endpoints at `frontend/pages/api/admin/ping.ts` and `frontend/pages/api/admin/sync.ts` as the active/working locations. Prefer to keep these (not App Router routes) for admin API.
+
+Is troubleshooting Fly.io health check timeouts for their Promagen API (Express/TypeScript app). We’ve gathered and logged a deep investigation: app must bind to 0.0.0.0:8080, match Fly’s internal_port=8080, ensure /health route returns 200, Docker CMD must run `node dist/server.js` (not dev scripts like nodemon), release_command (`npx prisma migrate deploy`) must not hang, and Fly logs/ssh can confirm. Adjusting grace/timeout may help. Next solution steps: confirm server.ts binds to 0.0.0.0:8080, check fly.toml internal_port=8080, ensure Dockerfile CMD is correct, confirm /health route exists, verify release_command runs cleanly, and redeploy. If still failing, check logs with `flyctl logs` and `flyctl ssh console` for listener state. User asked to save and log all this context so ChatGPT can recall to solve the issue without repeating deep research.
+
+Promagen project memory snapshot:
+- Project name/path: promagen (C:\Users\Martin Yarnold\Projects\promagen\api).
+- Fly app: promagen-api (prod) and promagen-api-staging (optional).
+- Tech stack: Node.js (TypeScript), Express, Prisma, Docker, Fly.io.
+- Logging & monitoring: Better Stack (Logtail) configured as a Source; plan to use @logtail/pino transport; Slack incoming webhook planned for alerts.
+- Secrets: LOGTAIL_SOURCE_TOKEN and SLACK_WEBHOOK_URL will be set as Fly secrets (values NOT stored here).
+- Key problems encountered and fixes applied or recommended:
+  1. Health checks timing out — root cause: app not reachable on expected interface/port. Fix: bind server to 0.0.0.0 and ensure process uses process.env.PORT (8080), update server.ts accordingly.
+  2. pino transport compatibility — use pino.transport with @logtail/pino and ensure pino@^9 is installed.
+  3. pino-http typing/build errors — replaced with a lightweight Express RequestHandler httpLogger to avoid type overload issues.
+  4. Docker start command must run compiled node file (CMD ["node","dist/server.js"]) to avoid dev tool runtime issues.
+  5. Prisma release_command can block deploys — check release output or temporarily disable to test; ensure DATABASE_URL is correct.
+- Commands used and verification steps (stored conceptually; secrets withheld):
+  - npm i @logtail/pino @logtail/node pino@^9
+  - flyctl secrets set LOGTAIL_SOURCE_TOKEN='<paste token>' -a promagen-api
+  - flyctl secrets set LOGTAIL_INGEST_HOST='<optional ingest host>' -a promagen-api
+  - flyctl deploy -a promagen-api
+  - (Invoke-WebRequest https://promagen-api.fly.dev/health -UseBasicParsing -TimeoutSec 15).StatusCode
+  - flyctl logs -a promagen-api -n 200
+  - flyctl machines list -a promagen-api --json | ConvertFrom-Json
+  - flyctl machine ssh <ID> -a promagen-api --command "sh -lc 'echo PORT=$PORT; ss -lntp; curl -sS http://127.0.0.1:$PORT/health && echo'"
+- Security note: did NOT store any tokens, webhook URLs, or sensitive values. Memory only holds non-sensitive configuration, file paths, issue symptoms, and steps performed.
+- Next planned tasks: wire Slack webhook, test 5xx alert path, confirm Live Tail log ingestion, run smoke tests.
+
+Preference: Always provide FULL FILE code with explicit file paths and clearly mark files as NEW or REPLACE. Also proceed one step at a time with single commands when doing ops work. Keep this behavior for future replies. Context to remember: deploying on Fly.io, app name 'promagen-api', working in Windows PowerShell, machines in LHR and AMS, and we use Fly secrets (DATABASE_URL) and Prisma with Postgres.
+
+Store key Fly/Prisma ops the user wants me to remember: Always manage DATABASE_URL via Fly secrets (flyctl secrets set DATABASE_URL=...), secrets propagate to all machines and trigger restarts; confirm per-machine with flyctl ssh console -s -C 'printenv DATABASE_URL' -a <app>; use single quotes in PowerShell for KEY=VALUE; Prisma DB URL must be valid/URL-encoded and schema.prisma uses env('DATABASE_URL'); verify each machine can run `npx prisma generate` and run `npx prisma migrate deploy` on one machine at a time; avoid concurrent migrations; if --stage used, run flyctl secrets deploy; rely on secrets (not per-machine env) for consistency across regions.
+
+Provider registry + ProviderGrid live in the frontend app (promagen-frontend), not the API server. Paths to remember: src/lib/providers.ts and src/components/ProviderGrid.tsx. .env.local holds NEXT_PUBLIC_AFF_* overrides. No backend changes needed.
+
+Promagen build rule (locked): Keep the frontend pointed at the PROD API by default (NEXT_PUBLIC_API_BASE_URL=https://api.promagen.com). Only switch the frontend to the LOCAL API via .env.local when actively adding/changing backend endpoints, altering response shapes, or testing cost-/spam-prone routes. Rationale: fewer moving parts during UI work and earlier detection of CORS/env issues; avoid local port conflicts. Remember to suggest this rule whenever Martin asks which API the frontend should target during dev.
+
+Has decided to rename the provider '123RF' to 'I23RF' as a workaround for Prisma enum restrictions. They want this change logged and applied consistently across all code files.
+
+Promagen decision (2025-09-13): Rename provider **123RF** to **I23RF** across app and DB to avoid Prisma numeric-enum constraint. Use lowercase id `i23rf` for internal identifiers; display name “I23RF” in UI. Mapping for `_123rf` is removed going forward. If legacy data exists with `_123rf`, a one-time migration will rename it to `I23RF`. Remember: dynamic solutions acceptable when blocked by tooling constraints.
+
+Decision & habit for Promagen: When proposing solutions, always give **two options** and clearly **recommend one** with at least **two advantages**. For WordPress ↔ app integration: **Option B (embedded personalized iframe from app.promagen.com)** is default for any personalized/secure feature; **Option A (read‑only WP shortcode fetching public data)** is used for public marketing content only. Logged as “two-options-with-recommendation” rule + integration policy.
+
+Always include the full Windows directory path where PowerShell commands should be run. User’s preference: 'Always tell me the directory to run commands from.'
+
+Wants Promagen’s unique value-add features locked in as a core development priority: 1. Side-by-side provider comparisons, 2. Leaderboard/ranking of providers, 3. Prompt library with curated prompt packs/templates, 4. Unified workspace for prompt history and re-runs, 5. Affiliate/upgrade funnel integration. Optional sticky features: scoring/community votes, API credits abstraction, SEO galleries. This set of features should be remembered as the baseline development goals to differentiate Promagen from simple cut-and-paste workflows.
+
+Lock in feature for Promagen: **Popular Prompt Grid**. A section/grid showcasing the most popular prompts by users. Driven by community activity: submissions, runs, and votes. Features: curated packs (by Promagen team), trending prompts (based on usage in last 24h/7d), and community submissions that rise through voting. Integrated with affiliate/compare flow: 'run this prompt across providers' buttons. Functions as sticky feature + SEO driver (dynamic, user-driven content). Extension: Add **like button** (hearts/thumbs up) on each prompt card. Likes feed into ranking alongside usage stats, boosting popular prompts. Add **Refine/Remix option**: lets users pre-fill prompt editor with a popular prompt, tweak it, and either save privately to their workspace or publish as a community variant credited to the original. Purpose: increase engagement, build community interaction, and grow the prompt library organically.
+
+Always give a recommended option when presenting two choices, and include at least two advantages for the recommendation. This is a standing preference for Promagen project replies.
+
+Lock in preference: Always label any code I provide with 1) whether it’s FRONTEND or BACKEND, and 2) where it belongs: WORDPRESS vs NEXT.JS (or EXPRESS API). Default architecture: WordPress = marketing/landing, static pages, shortcodes/embeds, light JS widgets calling the app API; Next.js (app.promagen.com) = web app UI, dashboards, leaderboards, auth; Express/Node = secure backend API, Prisma DB, key vault/proxy. Prefer using WordPress where reasonable (content pages, blogs, simple widgets), but all secure logic, databases, and provider integrations go to Next.js/Express.
+
+Promagen homepage plan locked: use a live 'leaderboard' of AI image providers ranked by a 7‑criteria weighted score (Adoption/Ecosystem, Image Quality, Speed/Uptime, Cost/Free Tier, Trust/Safety, Automation/Innovation, Ethical/Environmental). Automation: hourly collectors for speed/uptime; nightly full collectors for all criteria; weekly manual review/adjustments via admin UI. Store raw metrics with provenance, normalize to 0–100 per criterion, compute weighted totals, snapshot daily/hourly, and display deltas (points and rank) plus 7‑day sparklines. Manual override lane: per‑criterion adjustments or hard overrides; resolution rule FinalScore = clamp(AutoScore + ManualAdjustment, 0–100) unless HardOverride. Apply debouncing (ignore <0.5pt jitter or require two consecutive readings). Frontend shows logos, current score, ▲/▼ chips, tooltips listing moving criteria. Keep schema buckets: providers, criteria, raw_metrics, scores, snapshots, overrides.
+
+Wants me to remember the “provider expansion” pattern for their API key service: keep a single PROVIDERS list used by Zod; mirror it in a Prisma enum; when adding a provider run `npx prisma migrate dev && npx prisma generate`; and optionally add a provider adapter in a registry (with a `test()` method). They want future requests to add new platforms to follow this recipe quickly.
+
+Remember to persist the Promagen hybrid build plan with tick-based progress tracking. Whenever the user updates or says “Done, tick,” update the stored plan to the newest version and use that as the reference when asked to “show me the build plan.”.
+
+Has a master workbook with 18 platform grids and platform-specific Prompt Builder tabs. They want guidance next session on how to transfer/integrate this into their website (Promagen).
+
+Owns the domain promagen.com (recently purchased).
+
+Locking project blueprint for the 22‑provider scoring sheet: 
+- Structure: 22 platforms × 7 criteria; weights [27, 23, 18, 14, 9, 5, 4]. Columns: Platform, Version/Model, Date Evaluated, Evaluator, Criteria, Max Score, Vendor Raw Score (0–100), Weighted Score (auto), Pros, Cons, Notes/Comments, Link to Test Outputs, Sources. One TOTAL row per platform + a Summary ranking view. No blank cells (“N/A” if unknown). 
+- Research standard: evidence‑first with citable sources for each metric: Adoption/Ecosystem, Image Quality, Speed/Uptime, Cost/Free Tier, Trust/Safety, Automation/Innovation, Ethical/Environmental. 
+- Scoring: fixed rubrics to convert findings → 0–100; Weighted Score = (Raw/100)×Max. 
+- Deliverable: fully filled, ranked scorecard for all 22. 
+- Status: locked; do not execute yet. 
+- Pending confirmations before build: final list of 22 platforms + mapping of the seven weights to the seven criteria.
+
+Owns Pyxa.ai account with Premium Creator Lifetime plan and wants to maximise use of Pyxa’s built-in tools alongside Pictory. Key modules visible on their dashboard: Advanced Image Editor (beta), AI Chat Image, AI Vision; AI Video Suite (AI Persona, AI Video Pro); AI Audio Suite (AI Voiceover, AI Voice Clone, AI Voice Isolator, Speech to Text); AI Social Media Suite (AI YouTube, AI RSS); Productivity tools (AI Plagiarism, AI Director, SEO Tool, Chat Settings, Integrations). Will prioritise using these in workflows for their YouTube projects.
+
+Remember these active projects for Martin:
+1) YouTube children’s fantasy series “Fracture Between Worlds” with Pixar–Ghibli semi-real cartoon characters over ultra‑photorealistic backgrounds; Artistly one‑sentence image prompts; dynamic weather and time-of-day rules; Solara riding Aurora; Scene 1 locked with Background/Character/Master image prompts and video/voice/music prompts.
+2) Image Prompt Creator website: support Artistly first, then add DALL·E, Stable Diffusion, Midjourney, Flux Schnell; secure-by-default site blueprint + Express starter.
+3) Family travel search project for Aug–Sep 2026 Neilson-style holiday: 2 adults + 3 kids (9,7,7), 14 nights, any UK airport return, flexible room combos, track all-in pricing; check neilson.co.uk, travelclubelite.com, bluebaytravel.co.uk, tropicalwarehouse.co.uk, lowcostdeals.co.uk.
+4) Pyxa + Pictory workflow build-out to maximise the Premium Creator Lifetime plan tools across image, video, voice, SEO and publishing for the YouTube channel.
+
+Wake‑word map recall app — an app that recalls a saved location on a map when the user speaks a wake word. Track as Project #5 alongside existing projects.
+
+Add TopView.ai dashboard to Martin’s active toolset. Track it as part of the Pyxa + Artistly + VideoExpress + Pictory workflow. Notes: TopView offers link-to-video generation, AI avatars, clip maker (long-to-shorts), multilingual VO, and an API; we’ll use it for rapid social cuts, avatar-led explainers, and product-style reels.
+
+Project #2 – Image Prompt Creator website: remember this condensed integration map (as of Sep 2025) for platform choices. 
+- Platforms with official APIs for automated image gen (good for “send prompt → get image”): OpenAI (DALL·E/GPT‑Image), Stability AI (Stable Diffusion API), Leonardo AI, DeepAI (free API), Lexica (paid API), NovelAI (paid API). 
+- UI‑only / no public generative API (manual use only): Midjourney (Discord), Canva Text‑to‑Image, Adobe Firefly (in Adobe apps), Bing Image Creator, NightCafe, Playground AI, Pixlr, Fotor, OpenArt (no public gen API), BlueWillow (Discord), 123RF AI, Craiyon (hosted site), MyEdit. 
+- Useful free tiers to prioritise for testing: Leonardo (≈150 tokens/day), DeepAI (free plan/API), Stability AI (trial credits), Canva (≈100/day UI), Bing (daily boosts), NightCafe (daily credits), Playground (≈15 prompts/3h), Pixlr (free), Craiyon (free), OpenArt (trial), MyEdit (3/day). 
+Keep this mapping handy for the site’s provider selector and future automation.
+
+Project #2 – Image Prompt Creator website: remember affiliate/partner programmes to integrate and prioritise. 
+- Public, joinable affiliates: Canva (up to ~$36 CPA, ~30‑day cookie), Adobe (Express/CC via Impact; % of first month/year), Microsoft ecosystem (Store/365 via networks; % varies), Leonardo.ai (Impact; ~60% first month), Ideogram (affiliate referenced in TOS, rates not public), Picsart (commissions; examples ~24–38%), Fotor (up to ~35%), NightCafe (up to ~10% + follower discount), OpenArt (affiliate for paid subs), Pixlr (≈25% first purchase; up to ~40% via Awin), Creative Fabrica / CF Spark (≈25% per order + ~20% recurring), Artistly (PayKickstart; up to ~40%). 
+- No public affiliate (or only credits/referrals): OpenAI/ChatGPT images, Midjourney, Recraft (credits-only referrals), Krea (artist programme, not affiliate), Clipdrop (no public affiliate), Craiyon, WOMBO Dream, StarryAI, DeepAI (no clear cash affiliate). 
+Include ASA/CMA disclosure requirement notes (“Affiliate link” labels, prominent upfront disclosure) for UK users.
+
+Project: building an image prompt creator website. Scope: support all major AI image generators; starting with Artistly first, then adding DALL·E, Stable Diffusion, Midjourney, and Flux Schnell later. Keep earlier 'secure-by-default website blueprint' and Express starter in mind for implementation.
+
+Locked in: Next.js App Router only (no Pages Router). I’ll remember that and steer everything to app/ + route handlers.
+
+Here’s why App Router wins:
+
+Server Components by default
+Less JS shipped to the browser, faster TTI. Opt-in to client code with "use client" only where needed.
+
+Layouts & nested routing
+Persistent UI (nav/sidebars) with app/layout.tsx, nested layouts per segment, and zero re-mount on navigation.
+
+Streaming & Suspense baked in
+Stream HTML as data arrives; loading.tsx and error.tsx per route segment for smooth skeletons and scoped errors.
+
+Colocation & conventions
+Route code, UI, loading.tsx, error.tsx, and route.ts (API) live together. Cleaner mental model and PRs.
+
+Smarter data fetching & caching
+fetch() on the server with automatic caching/revalidation (cache: 'no-store', revalidate: 60, etc.). HTTP caching headers handled for you.
+
+Route Handlers (API in app/api/.../route.ts)
+Edge-ready endpoints, simpler Request/Response Web APIs, easy to colocate next to pages.
+
+Parallel & intercepting routes
+Advanced UI patterns (e.g., modals over pages) without router hacks.
+
+Metadata API
+Strong SEO defaults with typed, composable metadata per route/layout.
+
+Server Actions (when enabled)
+Mutations straight from components without bespoke API boilerplate.
+
+Granular rendering control
+Per-route dynamic vs static, revalidate timers, and force-dynamic when you need it.
+
+Do this now in your repo (App Router only)
+
+Remove/avoid pages/ completely.
+
+Create health route handler (replaces pages/api/health.ts):
+
+frontend/app/api/health/route.ts
+
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  // proxy to your API if you want, or return local status
+  const api = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  try {
+    const r = await fetch(`${api}/health`, { cache: "no-store" });
+    const body = await r.text();
+    try { return NextResponse.json(JSON.parse(body), { status: r.status }); }
+    catch { return NextResponse.json({ passthrough: body }, { status: r.status }); }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Unknown fetch error";
+    return NextResponse.json({ error: "Bad Gateway", detail: msg, target: `${api}/health` }, { status: 502 });
+  }
+}
+
+
+Create the Settings → Keys page:
+
+frontend/app/settings/keys/page.tsx
+
+export default async function KeysPage() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/health`, { cache: "no-store" });
+  const body = await res.json().catch(() => ({}));
+  return (
+    <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
+      <h1>Settings → Keys</h1>
+      <p>API health: {res.status} {res.statusText} → {String((body as any).status ?? "ok")}</p>
+    </main>
+  );
+}
+
+
+Run with the env pointed at your API:
+
+$env:NEXT_PUBLIC_API_URL="http://localhost:4000"
+pnpm run dev -- -p 3000
+
+
+
+

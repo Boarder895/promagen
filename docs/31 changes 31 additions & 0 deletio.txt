@@ -1,0 +1,4914 @@
+ 31 changes: 31 additions & 0 deletions31  
+.github/workflows/ci-frontend.yml
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,31 @@
+name: ci-frontend
+on:
+  push:
+    branches: [ feat/vercel-frontend ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci-frontend.yml'
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci-frontend.yml'
+
+jobs:
+  lint-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.18.2 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install
+        run: pnpm -C frontend install --frozen-lockfile
+      - name: Lint
+        run: pnpm -C frontend lint
+      - name: Build
+        run: pnpm -C frontend build
+ 8 changes: 8 additions & 0 deletions8  
+frontend/.editorconfig
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,8 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+ 1 change: 1 addition & 0 deletions1  
+frontend/.env.local
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1 @@
+NEXT_PUBLIC_API_URL=http://127.0.0.1:4000
+ 4 changes: 4 additions & 0 deletions4  
+frontend/.eslintignore
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,4 @@
+.next
+node_modules
+app/cron/**
+
+ 24 changes: 24 additions & 0 deletions24  
+frontend/.eslintrc.cjs
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,24 @@
+/** @type {import("eslint").Linter.Config} */
+module.exports = {
+  root: true,
+  extends: ["next/core-web-vitals"],
+  plugins: ["import", "unused-imports"],
+  rules: {
+    // Kill dead code
+    "unused-imports/no-unused-imports": "error",
+    "unused-imports/no-unused-vars": ["warn", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
+
+    // Deterministic import order with blank lines between groups
+    "import/order": ["warn", {
+      "groups": ["builtin", "external", "internal", "parent", "sibling", "index", "object", "type"],
+      "newlines-between": "always",
+      "alphabetize": { order: "asc", caseInsensitive: true }
+    }],
+
+    // Keep React hooks honest (don’t disable unless justified)
+    "react-hooks/exhaustive-deps": "error",
+  },
+  settings: {
+    next: { rootDir: ["./"] },
+  },
+};
+ 33 changes: 33 additions & 0 deletions33  
+frontend/.eslintrc.json
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,33 @@
+{
+  "root": true,
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "prettier"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "import", "unused-imports"],
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "unused-imports/no-unused-imports": "error",
+    "import/order": [
+      "warn",
+      {
+        "groups": [
+          "builtin",
+          "external",
+          "internal",
+          "parent",
+          "sibling",
+          "index",
+          "object",
+          "type"
+        ],
+        "newlines-between": "always",
+        "alphabetize": { "order": "asc", "caseInsensitive": true }
+      }
+    ]
+  }
+}
+ Binary file addedBIN +110 Bytes 
+frontend/.gitignore
+Binary file not shown.
+ 8 changes: 8 additions & 0 deletions8  
+frontend/.prettierrc.json
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,8 @@
+{
+  "singleQuote": true,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "semi": true,
+  "arrowParens": "always",
+  "endOfLine": "lf"
+}
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/adobe_firefly.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/artistly.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/bing_image_creator.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/canva.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/deepai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/edenai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/fotor.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/google_imagen.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/hive.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 14 changes: 14 additions & 0 deletions14  
+frontend/app/adapters/index.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,14 @@
+/**
+ * Minimal contract shared by adapters (enough to satisfy TS & builds).
+ * Expand later as you wire real generation calls.
+ */
+export type ProviderAdapter = {
+  /** stable id e.g. "openai" */
+  id: string;
+  /** human label e.g. "OpenAI" */
+  label: string;
+  /** optional health check / capability probe */
+  test?: () => Promise<{ ok: boolean; message?: string }>;
+  /** optional image generation entrypoint */
+  generate?: (options: any) => Promise<any>;
+};
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/leonardo.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/lexica.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/midjourney.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/nightcafe.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/novelai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 38 changes: 38 additions & 0 deletions38  
+frontend/app/adapters/openai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,38 @@
+﻿// OpenAI adapter â€” uses DB-stored key if available, else env
+import { getDecryptedKey } from '../../lib/crypto'; // your existing helper
+
+import type { ProviderAdapter } from './index';
+
+async function getKey(): Promise<string> {
+  try {
+    const k = await getDecryptedKey('openai');
+    if (k) return k;
+  } catch {
+    /* fall back to env */
+  }
+  const envKey = process.env.OPENAI_API_KEY;
+  if (!envKey) throw new Error('Missing OpenAI API key');
+  return envKey;
+}
+
+const openai: ProviderAdapter = {
+  id: 'openai',
+  label: 'OpenAI',
+  async test() {
+    try {
+      const key = await getKey();
+      const r = await fetch('https://api.openai.com/v1/models', {
+        headers: { Authorization: `Bearer ${key}` },
+      });
+      if (!r.ok) {
+        const t = await r.text();
+        return { ok: false, message: `HTTP ${r.status}: ${t.slice(0, 200)}` };
+      }
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, message: err?.message || String(err) };
+    }
+  },
+};
+
+export default openai;
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/pixlr.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/playground.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/recraft.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/runware.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/adapters/stability.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+﻿export async function test() {
+  return false;
+} // TODO: implement real probe
+ 19 changes: 19 additions & 0 deletions19  
+frontend/app/api/health/route.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,19 @@
+﻿import { NextResponse } from 'next/server';
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+
+export async function GET() {
+  try {
+    const r = await fetch(`${API}/health`, { cache: 'no-store' });
+    const text = await r.text();
+    try {
+      return NextResponse.json(JSON.parse(text), { status: r.status });
+    } catch {
+      return NextResponse.json({ passthrough: text }, { status: r.status });
+    }
+  } catch (e: any) {
+    return NextResponse.json(
+      { error: 'Bad Gateway', detail: e?.message, target: `${API}/health` },
+      { status: 502 },
+    );
+  }
+}
+  64 changes: 53 additions & 11 deletions64  
+frontend/app/api/world-clocks/route.ts
+Original file line number	Diff line number	Diff line change
+@@ -2,7 +2,7 @@
+// frontend/app/api/world-clocks/route.ts
+// Public JSON for world clocks. CORS enabled for simple GETs from WordPress.
+
+import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+
+export type WorldClockCity = {
+  id: string;
+@@ -14,20 +14,62 @@ export type WorldClockCity = {
+};
+
+const CITIES: WorldClockCity[] = [
+  { id: "london",        name: "London",        timeZone: "Europe/London",                    lat: 51.5074,  lon: -0.1278,  flag: "🇬🇧" },
+  { id: "newyork",       name: "New York",      timeZone: "America/New_York",                 lat: 40.7128,  lon: -74.0060, flag: "🇺🇸" },
+  { id: "shanghai",      name: "Shanghai",      timeZone: "Asia/Shanghai",                    lat: 31.2304,  lon: 121.4737, flag: "🇨🇳" },
+  { id: "tokyo",         name: "Tokyo",         timeZone: "Asia/Tokyo",                       lat: 35.6895,  lon: 139.6917, flag: "🇯🇵" },
+  { id: "sydney",        name: "Sydney",        timeZone: "Australia/Sydney",                 lat: -33.8688, lon: 151.2093, flag: "🇦🇺" },
+  { id: "buenosaires",   name: "Buenos Aires",  timeZone: "America/Argentina/Buenos_Aires",   lat: -34.6037, lon: -58.3816, flag: "🇦🇷" },
+  { id: "johannesburg",  name: "Johannesburg",  timeZone: "Africa/Johannesburg",              lat: -26.2041, lon: 28.0473,  flag: "🇿🇦" },
+  { id: "dubai",         name: "Dubai",         timeZone: "Asia/Dubai",                       lat: 25.2048,  lon: 55.2708,  flag: "🇦🇪" } // ← included
+  {
+    id: 'london',
+    name: 'London',
+    timeZone: 'Europe/London',
+    lat: 51.5074,
+    lon: -0.1278,
+    flag: '🇬🇧',
+  },
+  {
+    id: 'newyork',
+    name: 'New York',
+    timeZone: 'America/New_York',
+    lat: 40.7128,
+    lon: -74.006,
+    flag: '🇺🇸',
+  },
+  {
+    id: 'shanghai',
+    name: 'Shanghai',
+    timeZone: 'Asia/Shanghai',
+    lat: 31.2304,
+    lon: 121.4737,
+    flag: '🇨🇳',
+  },
+  { id: 'tokyo', name: 'Tokyo', timeZone: 'Asia/Tokyo', lat: 35.6895, lon: 139.6917, flag: '🇯🇵' },
+  {
+    id: 'sydney',
+    name: 'Sydney',
+    timeZone: 'Australia/Sydney',
+    lat: -33.8688,
+    lon: 151.2093,
+    flag: '🇦🇺',
+  },
+  {
+    id: 'buenosaires',
+    name: 'Buenos Aires',
+    timeZone: 'America/Argentina/Buenos_Aires',
+    lat: -34.6037,
+    lon: -58.3816,
+    flag: '🇦🇷',
+  },
+  {
+    id: 'johannesburg',
+    name: 'Johannesburg',
+    timeZone: 'Africa/Johannesburg',
+    lat: -26.2041,
+    lon: 28.0473,
+    flag: '🇿🇦',
+  },
+  { id: 'dubai', name: 'Dubai', timeZone: 'Asia/Dubai', lat: 25.2048, lon: 55.2708, flag: '🇦🇪' }, // ← included
+];
+
+export async function GET() {
+  const res = NextResponse.json({ cities: CITIES }, { status: 200 });
+  // Public read-only; allow any origin to GET this JSON
+  res.headers.set("Access-Control-Allow-Origin", "*");
+  res.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+  res.headers.set('Access-Control-Allow-Origin', '*');
+  res.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+  return res;
+}
+ 7 changes: 7 additions & 0 deletions7  
+frontend/app/app/ClientShell.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,7 @@
+'use client';
+
+import PromagenMVP from '@/components/PromagenMVP';
+
+export default function ClientShell() {
+  return <PromagenMVP />;
+}
+ 5 changes: 5 additions & 0 deletions5  
+frontend/app/app/page.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,5 @@
+import ClientShell from './ClientShell';
+
+export default function Page() {
+  return <ClientShell />; // no hooks here
+}
+ 114 changes: 114 additions & 0 deletions114  
+frontend/app/cron/collectors/liveUsage.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,114 @@
+﻿import prisma from '../../lib/db';
+import { subMinutes } from 'date-fns';
+
+// You likely have a table where each image/job request is recorded.
+// Adjust these queries to your schema. Below is a conservative pattern that
+// will still work if you only have a minimal "jobs" table.
+
+type ProviderRow = { id: string; slug: string; name: string };
+
+async function getProviders(): Promise<ProviderRow[]> {
+  // Prefer your existing providers table. Fall back to a static list if needed.
+  // @ts-ignore - raw query in case Prisma model isn't mapped
+  const rows = await prisma.$queryRawUnsafe(
+    `SELECT id::text, slug, name FROM providers ORDER BY name;`,
+  );
+  return rows;
+}
+
+async function collectPromagenUsage(providerId: string) {
+  const now = new Date();
+  const since5 = subMinutes(now, 5);
+  const since1 = subMinutes(now, 1);
+
+  // Example queries: adjust table/column names to yours.
+  // jobs table minimally: id, provider_id, created_at, duration_ms, ok(boolean)
+  // sessions table optionally: session_id, provider_id, last_seen
+
+  const [{ active_users }] = await prisma
+    .$queryRawUnsafe(
+      `
+    SELECT COUNT(DISTINCT session_id)::int AS active_users
+    FROM proxy_sessions
+    WHERE provider_id = $1 AND last_seen >= $2
+    `,
+      providerId,
+      since5,
+    )
+    .catch(() => [{ active_users: 0 }]);
+
+  const [{ gens_min }] = await prisma
+    .$queryRawUnsafe(
+      `
+    SELECT COALESCE(COUNT(*)::float,0) AS gens_min
+    FROM jobs
+    WHERE provider_id = $1 AND created_at >= $2
+    `,
+      providerId,
+      since1,
+    )
+    .catch(() => [{ gens_min: 0 }]);
+
+  const [{ p50_ms, p95_ms, success_rate }] = await prisma
+    .$queryRawUnsafe(
+      `
+      WITH w AS (
+        SELECT duration_ms, ok
+        FROM jobs
+        WHERE provider_id = $1 AND created_at >= $2
+      )
+      SELECT
+        COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY duration_ms),0)::int AS p50_ms,
+        COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms),0)::int AS p95_ms,
+        CASE WHEN COUNT(*)=0 THEN 100.0
+             ELSE ROUND(100.0 * SUM(CASE WHEN ok THEN 1 ELSE 0 END)::numeric / COUNT(*),2)
+        END AS success_rate
+      FROM w
+      `,
+      providerId,
+      since5,
+    )
+    .catch(() => [{ p50_ms: 0, p95_ms: 0, success_rate: 100 }]);
+
+  return {
+    promagen_active_users: active_users,
+    promagen_gens_per_min: gens_min,
+    promagen_latency_p50_ms: p50_ms,
+    promagen_latency_p95_ms: p95_ms,
+    promagen_success_rate_pct: success_rate,
+  };
+}
+
+export async function runLiveUsageCollector(): Promise<void> {
+  const providers = await getProviders();
+  const now = new Date();
+
+  for (const p of providers) {
+    const usage = await collectPromagenUsage(p.id);
+    // You may also run a tiny HEAD/GET to the provider to set status/ttfb
+    const status_ok = true;
+    const status_ttfb_ms = usage.promagen_latency_p50_ms; // reuse if no synthetic check yet
+
+    await prisma.$executeRawUnsafe(
+      `
+      INSERT INTO live_raw_metrics (
+        provider_id, ts_utc,
+        promagen_active_users, promagen_gens_per_min,
+        promagen_latency_p50_ms, promagen_latency_p95_ms,
+        promagen_success_rate_pct,
+        status_ok, status_ttfb_ms
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      `,
+      p.id,
+      now,
+      usage.promagen_active_users,
+      usage.promagen_gens_per_min,
+      usage.promagen_latency_p50_ms,
+      usage.promagen_latency_p95_ms,
+      usage.promagen_success_rate_pct,
+      status_ok,
+      status_ttfb_ms,
+    );
+  }
+}
+ 82 changes: 82 additions & 0 deletions82  
+frontend/app/cron/collectors/redditMentions.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,82 @@
+﻿import prisma from '../../lib/db';
+import { subMinutes } from 'date-fns';
+
+const APP_ID = process.env.REDDIT_APP_ID!;
+const APP_SECRET = process.env.REDDIT_APP_SECRET!;
+const USER_AGENT = process.env.REDDIT_USER_AGENT || 'PromagenLive/1.0';
+
+async function getToken(): Promise<string> {
+  const body = new URLSearchParams();
+  body.append('grant_type', 'client_credentials');
+
+  const r = await fetch('https://www.reddit.com/api/v1/access_token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': USER_AGENT,
+      Authorization: 'Basic ' + Buffer.from(`${APP_ID}:${APP_SECRET}`).toString('base64'),
+    },
+    body,
+  });
+  const j = (await r.json()) as any;
+  if (!j.access_token) throw new Error('Reddit auth failed');
+  return j.access_token as string;
+}
+
+async function countMentions(token: string, term: string): Promise<number> {
+  const r = await fetch(
+    `https://oauth.reddit.com/search?q=${encodeURIComponent(term)}&sort=new&limit=50&t=hour`,
+    {
+      headers: { Authorization: `Bearer ${token}`, 'User-Agent': USER_AGENT },
+    },
+  );
+  const j = (await r.json()) as any;
+  const posts = Array.isArray(j.data?.children) ? j.data.children : [];
+  // Very simple mentions/min approximation: posts in the last hour / 60
+  return Math.round(posts.length / 60);
+}
+
+async function getProviderNames(): Promise<{ id: string; name: string }[]> {
+  // Adjust to your schema
+  // @ts-ignore
+  return prisma.$queryRawUnsafe<{ id: string; name: string }[]>(
+    `SELECT id::text, name FROM providers ORDER BY name;`,
+  );
+}
+
+export async function runRedditMentionsCollector(): Promise<void> {
+  if (!APP_ID || !APP_SECRET) return;
+  const token = await getToken();
+
+  const providers = await getProviderNames();
+  const now = new Date();
+  const since5 = subMinutes(now, 5);
+
+  for (const { id, name } of providers) {
+    const perMin = await countMentions(token, name);
+
+    const updated = await prisma.$executeRawUnsafe(
+      `
+      UPDATE live_raw_metrics
+      SET reddit_mentions_per_min = $1,
+          ext_payload_json = COALESCE(ext_payload_json,'{}'::jsonb) || jsonb_build_object('redditTs', NOW())
+      WHERE provider_id = $2 AND ts_utc >= $3
+      `,
+      perMin,
+      id,
+      since5,
+    );
+
+    if ((updated as unknown as number) === 0) {
+      await prisma.$executeRawUnsafe(
+        `
+        INSERT INTO live_raw_metrics (provider_id, ts_utc, reddit_mentions_per_min)
+        VALUES ($1, NOW(), $2)
+        `,
+        id,
+        perMin,
+      );
+    }
+  }
+}
+
+ 56 changes: 56 additions & 0 deletions56  
+frontend/app/cron/collectors/searchPulse.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,56 @@
+import prisma from '../../lib/db';
+import { subMinutes } from 'date-fns';
+
+// Stubbed: use your chosen signal source and normalise to 0–100.
+// You can start with a heuristic (e.g., short-window relative to daily median)
+// and replace later with a proper API.
+
+async function getProviderSlugs(): Promise<{ id: string; slug: string }[]> {
+  // Adjust to your schema
+  // @ts-ignore
+  return prisma.$queryRawUnsafe<{ id: string; slug: string }[]>(
+    `SELECT id::text, slug FROM providers WHERE slug IS NOT NULL;`,
+  );
+}
+
+async function fetchPulseForTerm(_term: string): Promise<number | null> {
+  // Replace with a real source later; return 0..100 or null if unknown.
+  // For now, return a simple pseudo-random but stable index per minute to prove the pipe works.
+  const minute = Math.floor(Date.now() / 60000);
+  return minute % 100;
+}
+
+export async function runSearchPulseCollector(): Promise<void> {
+  const slugs = await getProviderSlugs();
+  const now = new Date();
+  const since2 = subMinutes(now, 2);
+
+  for (const { id, slug } of slugs) {
+    const pulse = await fetchPulseForTerm(slug);
+    if (pulse == null) continue;
+
+    // Update the most recent row for this provider (last 2 min); if none, insert.
+    const updated = await prisma.$executeRawUnsafe(
+      `
+      UPDATE live_raw_metrics
+      SET search_pulse_index = $1,
+          ext_payload_json = COALESCE(ext_payload_json,'{}'::jsonb) || jsonb_build_object('searchPulseTs', NOW())
+      WHERE provider_id = $2 AND ts_utc >= $3
+      `,
+      pulse,
+      id,
+      since2,
+    );
+
+    if ((updated as unknown as number) === 0) {
+      await prisma.$executeRawUnsafe(
+        `
+        INSERT INTO live_raw_metrics (provider_id, ts_utc, search_pulse_index)
+        VALUES ($1, NOW(), $2)
+        `,
+        id,
+        pulse,
+      );
+    }
+  }
+}
+ 24 changes: 24 additions & 0 deletions24  
+frontend/app/cron/liveCron.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,24 @@
+import cron from 'node-cron';
+import { runLiveUsageCollector } from './collectors/liveUsage';
+import { runSearchPulseCollector } from './collectors/searchPulse';
+import { runRedditMentionsCollector } from './collectors/redditMentions';
+import { computeLiveScores } from '../services/liveScoring';
+
+async function tick() {
+  try {
+    await runLiveUsageCollector();
+    await runSearchPulseCollector();
+    await runRedditMentionsCollector();
+    await computeLiveScores();
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('[liveCron] tick error', e);
+  }
+}
+
+export function startLiveCron() {
+  const expr = process.env.LIVE_COLLECTION_CRON || '*/1 * * * *'; // every minute
+  cron.schedule(expr, tick, { timezone: 'UTC' });
+  // Kick once on boot to warm the board
+  tick().catch(() => {});
+}
+ 245 changes: 245 additions & 0 deletions245  
+frontend/app/docs/developers-book/page.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,245 @@
+// frontend/app/docs/developers-book/page.tsx
+// Developers Book — Promagen
+// Last updated: 12 Oct 2025 (Europe/London)
+
+export default function DevelopersBookPage() {
+  return (
+    <main className="max-w-4xl mx-auto px-6 py-10">
+      <h1 className="text-3xl font-bold mb-2">Developers Book</h1>
+      <p className="text-sm text-gray-500 mb-8">
+        Ground truth for Promagen’s architecture, workflows, and upgrade path. This page reflects
+        the current repo state.
+      </p>
+
+      {/* === Fundamentals ================================================== */}
+      <section className="space-y-4 mb-10">
+        <h2 className="text-xl font-semibold">0) Fundamentals (do not drift)</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            <strong>Next.js App Router only</strong> (no Pages Router).
+          </li>
+          <li>
+            <strong>Homepage vision</strong>: two boards on one screen — ProvidersBoard &amp;
+            ExchangeBoard (Stage-1).
+          </li>
+          <li>
+            <strong>Option A → Option B</strong>: start with local/canonical data + light route
+            handlers; upgrade to a full API with typed endpoints and secret handling.
+          </li>
+          <li>
+            <strong>Affiliate-safe UX</strong>: disclaimers, “Best right now” badges, no dark
+            patterns.
+          </li>
+          <li>
+            <strong>Design pulses</strong>: rank-change pulses, minute-tick shimmer, sunrise
+            ordering, bells on open/close.
+          </li>
+        </ul>
+      </section>
+
+      {/* === Monorepo layout ============================================== */}
+      <section className="space-y-3 mb-10">
+        <h2 className="text-xl font-semibold">1) Monorepo layout (current reality)</h2>
+        <pre className="bg-gray-950 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+          {String.raw`promagen/
+  frontend/
+    app/                 # App Router routes & route handlers
+      api/health/route.ts
+      api/world-clocks/route.ts
+      docs/developers-book/page.tsx
+      docs/users-book/page.tsx
+      health-check/page.tsx
+      settings/keys/page.tsx
+      status/page.tsx
+      layout.tsx
+      page.tsx
+      error.tsx
+      globals.css
+    components/
+      ui/{badge,button,card,input}.tsx
+      health/{HealthBanner,HealthContext}.tsx
+      {CopyButton,CreditsBanner,LanguageSwitcher,Leaderboard,LiveChip,
+       PlatformLiveDrawer,PromagenMVP,ProviderCard,ProviderCountryChips,
+       RequestIdCopy,StockTicker,WorldClocks}.tsx
+    # assets: frontend/public/  (not present yet)
+    # styling: Tailwind config (not present); CSS/PostCSS in use
+  api/
+    src/                 # backend server code (present in extra seed)
+    prisma/
+      schema.prisma
+      migrations/...     # migration files (lock + sql)
+  .github/workflows/     # api.yml, api-ci.yml, api-deploy.yml, frontend.yml, frontend-ci.yml, lint.yml
+`}
+        </pre>
+      </section>
+
+      {/* === Routes ======================================================== */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">2) Frontend routing map</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            <code>/</code> → <code>app/page.tsx</code>
+          </li>
+          <li>
+            <code>/status</code> → <code>app/status/page.tsx</code>
+          </li>
+          <li>
+            <code>/health-check</code> → <code>app/health-check/page.tsx</code>
+          </li>
+          <li>
+            <code>/settings/keys</code> → <code>app/settings/keys/page.tsx</code>
+          </li>
+          <li>
+            <code>/docs/developers-book</code> → <code>app/docs/developers-book/page.tsx</code>
+          </li>
+          <li>
+            <code>/docs/users-book</code> → <code>app/docs/users-book/page.tsx</code>
+          </li>
+          <li>
+            API route handlers:
+            <ul className="list-disc pl-6">
+              <li>
+                <code>GET /api/health</code> → <code>app/api/health/route.ts</code>
+              </li>
+              <li>
+                <code>GET /api/world-clocks</code> → <code>app/api/world-clocks/route.ts</code>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      {/* === Components ==================================================== */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">3) Components (key sets)</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            <strong>UI primitives</strong>: Badge, Button, Card, Input (shadcn-style).
+          </li>
+          <li>
+            <strong>System/UX</strong>: HealthBanner / HealthContext, WorldClocks, CopyButton,
+            RequestIdCopy.
+          </li>
+          <li>
+            <strong>Boards scaffolding</strong>: Leaderboard, ProviderCard, ProviderCountryChips,
+            LiveChip, PlatformLiveDrawer, PromagenMVP, StockTicker.
+          </li>
+        </ul>
+      </section>
+
+      {/* === Adapters placement =========================================== */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">4) Adapters (current placement & recommendation)</h2>
+        <p>
+          Adapter files exist for many image providers under <code>app/adapters/*</code> (OpenAI,
+          Stability, Midjourney, Runway, Leonardo, Firefly, etc.).
+        </p>
+        <p className="mt-2">
+          <strong>Recommendation:</strong> move to <code>frontend/lib/adapters/*</code> and import
+          via <code>@/lib/adapters/*</code> to keep <code>app/</code> purely routes.
+        </p>
+        <pre className="bg-gray-950 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+          {String.raw`// Example import after move:
+import { generate } from '@/lib/adapters/openai'`}
+        </pre>
+      </section>
+
+      {/* === Styling & assets ============================================= */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">5) Styling & assets</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            <strong>Present:</strong> <code>app/globals.css</code>, <code>postcss.config.cjs</code>.
+          </li>
+          <li>
+            <strong>Not configured:</strong> Tailwind config (<code>tailwind.config.*</code>{' '}
+            absent). Proceed CSS-only for now.
+          </li>
+          <li>
+            <strong>Assets:</strong> <code>frontend/public/</code> not present yet. Add
+            icons/images/audio when ready; no redesign required.
+          </li>
+        </ul>
+      </section>
+
+      {/* === Backend / Prisma ============================================= */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">6) Backend & data model (Prisma/PostgreSQL)</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            <strong>DB:</strong> PostgreSQL.
+          </li>
+          <li>
+            <strong>Entities:</strong> <code>User</code> (unique <code>email</code>),{' '}
+            <code>Key</code> (FK→User), <code>Metric</code>, <code>Score</code>,{' '}
+            <code>Override</code>.
+          </li>
+          <li>
+            <strong>Enum Provider</strong>: 20 platforms (OpenAI, Stability, Leonardo, DeepAI,
+            NightCafe, Bing, Google, Midjourney, Runway, Fotor, and more).
+          </li>
+        </ul>
+        <p className="text-sm text-gray-500">
+          Full <code>api/src/**</code> routes will be documented here when included in the next
+          seed.
+        </p>
+      </section>
+
+      {/* === Env & secrets ================================================= */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">7) Environment & secrets</h2>
+        <pre className="bg-gray-950 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+          {String.raw`# frontend/.env.local (if needed)
+NEXT_PUBLIC_API_BASE=http://localhost:4000
+# api/.env
+PORT=4000
+DATABASE_URL=postgres://user:pass@localhost:5432/promagen
+OPENAI_API_KEY=sk-***`}
+        </pre>
+        <p className="text-sm">
+          Commit <code>.env.example</code>; never commit real <code>.env</code> files.
+        </p>
+      </section>
+
+      {/* === Dev & CI ====================================================== */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">8) Dev & CI quickstart</h2>
+        <pre className="bg-gray-950 text-gray-100 p-4 rounded-lg text-sm overflow-x-auto">
+          {String.raw`# Frontend
+cd frontend
+pnpm install
+pnpm run dev  # http://localhost:3000
+# Backend
+cd ../api
+pnpm install
+# npx prisma generate
+# npx tsx src/index.ts  (or: pnpm run dev, if script exists)`}
+        </pre>
+        <p>
+          Workflows present: <code>frontend(-ci).yml</code>, <code>api(-ci/-deploy).yml</code>,{' '}
+          <code>lint.yml</code>.
+        </p>
+      </section>
+
+      {/* === Option A -> B ================================================ */}
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">9) Option A → Option B</h2>
+        <ol className="list-decimal pl-6 space-y-1">
+          <li>Keep Option A running: local/canonical data + minimal route handlers.</li>
+          <li>Promote adapters into the API as services (hide keys; add typed endpoints).</li>
+          <li>
+            Create <code>frontend/lib/dataGateway.ts</code> and consume the API.
+          </li>
+          <li>
+            Add <code>public/</code> assets for audio/icons; wire “minute-tick” shimmer and bells.
+          </li>
+          <li>Add affiliate ribbons &amp; disclaimers as a shared component.</li>
+        </ol>
+      </section>
+    </main>
+  );
+}
+ 128 changes: 128 additions & 0 deletions128  
+frontend/app/docs/users-book/page.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,128 @@
+// frontend/app/docs/users-book/page.tsx
+// Users Book — Promagen
+// Last updated: 12 Oct 2025 (Europe/London)
+
+export default function UsersBookPage() {
+  return (
+    <main className="max-w-3xl mx-auto px-6 py-10">
+      <h1 className="text-3xl font-bold mb-2">Users Book</h1>
+      <p className="text-sm text-gray-500 mb-8">
+        A friendly guide to what Promagen is, how it behaves, and what’s coming next.
+      </p>
+
+      {/* What it is */}
+      <section className="space-y-3 mb-10">
+        <h2 className="text-xl font-semibold">What Promagen is</h2>
+        <p>Promagen is a live, desktop-first homepage with two rich surfaces on a single screen:</p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            <strong>Providers Board</strong>: 20 image-generation platforms with honest badges,
+            offers, pulses and quick links.
+          </li>
+          <li>
+            <strong>Exchange Board</strong>: major stock exchanges in <em>sunrise order</em>, with
+            open/close status and subtle cues.
+          </li>
+        </ul>
+        <p className="text-sm text-gray-500">
+          Today’s build has the scaffolding, time awareness, and status/health UX; the boards light
+          up as data is connected.
+        </p>
+      </section>
+
+      {/* Live now */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">What’s live right now</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            <strong>Homepage</strong>: <code>/</code>
+          </li>
+          <li>
+            <strong>Status</strong>: <code>/status</code> — system state &amp; build heartbeat.
+          </li>
+          <li>
+            <strong>Health Check</strong>: <code>/health-check</code> — quick diagnostic.
+          </li>
+          <li>
+            <strong>Docs</strong>: this page and Developers Book at <code>/docs/*</code>.
+          </li>
+          <li>
+            <strong>Server endpoints</strong>:
+            <ul className="list-disc pl-6">
+              <li>
+                <code>GET /api/health</code> — server heartbeat.
+              </li>
+              <li>
+                <code>GET /api/world-clocks</code> — feeds the world-clock widget.
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+
+      {/* How it feels */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">How it should feel</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            <strong>Sunrise ordering</strong>: the page breathes with global timezones.
+          </li>
+          <li>
+            <strong>Minute-tick shimmer</strong>: subtle rhythm so freshness is visible.
+          </li>
+          <li>
+            <strong>Rank pulses</strong>: when providers move up or down.
+          </li>
+          <li>
+            <strong>Open/close bells</strong>: gentle, with a user toggle.
+          </li>
+          <li>
+            <strong>Affiliate clarity</strong>: UK-style ribbons; “Best right now” shading without
+            tricks.
+          </li>
+        </ul>
+      </section>
+
+      {/* Assets */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">Icons, audio, and images</h2>
+        <p>
+          An assets folder (<code>frontend/public/</code>) will hold icons, images, and the market
+          bell. It isn’t present yet, so visuals use default placeholders. Nothing blocks launch;
+          assets can be added later without layout changes.
+        </p>
+      </section>
+
+      {/* Roadmap */}
+      <section className="space-y-2 mb-10">
+        <h2 className="text-xl font-semibold">What’s next</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>
+            Connect the <strong>Providers Board</strong> to curated + live data.
+          </li>
+          <li>
+            Light up the <strong>Exchange Board</strong> with open/close windows and weather/sun
+            overlays.
+          </li>
+          <li>
+            Add the gentle <strong>chime</strong> and an on/off toggle.
+          </li>
+          <li>
+            Publish a short “What’s New” on <code>/status</code> whenever something meaningful
+            ships.
+          </li>
+        </ul>
+      </section>
+
+      {/* Safety */}
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">Safety & transparency</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>Clear affiliate ribbons wherever links could earn a commission.</li>
+          <li>“Since you looked” markers so changes are obvious, not hidden.</li>
+          <li>Time drift guarded (NTP-style) so time-based UI stays trustworthy.</li>
+        </ul>
+      </section>
+    </main>
+  );
+}
+ 26 changes: 26 additions & 0 deletions26  
+frontend/app/error.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+'use client';
+
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <html>
+      <body style={{ fontFamily: 'system-ui', padding: 24 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Something went sideways.</h1>
+        <p style={{ color: '#666', marginBottom: 16 }}>
+          {error.message || 'Unknown error'} {error?.digest ? `(digest: ${error.digest})` : ''}
+        </p>
+        <button
+          onClick={() => reset()}
+          style={{ border: '1px solid #ccc', padding: '6px 10px', borderRadius: 6 }}
+        >
+          Try again
+        </button>
+      </body>
+    </html>
+  );
+}
+ 1 change: 1 addition & 0 deletions1  
+frontend/app/globals.css
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1 @@
+﻿@import '../styles/globals.css';
+ 38 changes: 38 additions & 0 deletions38  
+frontend/app/health-check/page.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,38 @@
+// frontend/app/health-check/page.tsx
+import { fetchJSON, API } from '../../lib/api';
+
+type Health = { ok: boolean; service: string; time: string };
+
+export default async function HealthCheckPage() {
+  let data: Health | null = null;
+  let error: string | null = null;
+
+  try {
+    data = await fetchJSON<Health>('/health');
+  } catch (e) {
+    error = e instanceof Error ? e.message : String(e);
+  }
+
+  return (
+    <main className="mx-auto max-w-xl p-6">
+      <h1 className="text-2xl font-semibold mb-4">Health Check</h1>
+
+      <div className="rounded-2xl border p-4">
+        <p className="mb-2">
+          Frontend → API: <code>{API}</code>
+        </p>
+
+        {data ? (
+          <pre className="mt-2 overflow-auto rounded bg-black/5 p-3 text-sm">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        ) : (
+          <div className="text-red-600">
+            Failed to fetch <code>/health</code>
+            <pre className="mt-2 overflow-auto rounded bg-black/5 p-3 text-sm">{error}</pre>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+ 7 changes: 7 additions & 0 deletions7  
+frontend/app/jobs/collectMetrics.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,7 @@
+// BACKEND
+export type RawMetric = { provider: string; category: string; value: number; source: string };
+
+export async function collectMetrics(): Promise<RawMetric[]> {
+  // Placeholder: return empty array for now
+  return [];
+}
+ 10 changes: 10 additions & 0 deletions10  
+frontend/app/jobs/updateScores.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,10 @@
+// BACKEND
+type ProviderValues = { provider: string; values: number[] };
+
+export function updateScores(raw: ProviderValues[]) {
+  // Simple average placeholder
+  return raw.map((r) => ({
+    provider: r.provider,
+    total: r.values.length ? r.values.reduce((a, b) => a + b, 0) / r.values.length : 0,
+  }));
+}
+ 19 changes: 19 additions & 0 deletions19  
+frontend/app/layout.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,19 @@
+﻿export const metadata = { title: 'Promagen' };
+
+import Link from 'next/link';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body style={{ fontFamily: 'system-ui, sans-serif', padding: 24 }}>
+        <nav style={{ marginBottom: 16 }}>
+          <Link href="/" style={{ marginRight: 12 }}>
+            Home
+          </Link>
+          <Link href="/settings/keys">Settings → Keys</Link>
+        </nav>
+        {children}
+      </body>
+    </html>
+  );
+}
+ 3 changes: 3 additions & 0 deletions3  
+frontend/app/lib/db.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,3 @@
+// Temporary stub for deploy; replace with real Prisma in the API later.
+const prisma: any = {};
+export default prisma;
+ 7 changes: 7 additions & 0 deletions7  
+frontend/app/page.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,7 @@
+﻿export default function HomePage() {
+  return (
+    <main>
+      Home. Try <a href="/settings/keys">Settings → Keys</a>.
+    </main>
+  );
+}
+ 14 changes: 14 additions & 0 deletions14  
+frontend/app/services/keys.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,14 @@
+/**
+ * Temporary implementation:
+ * - Frontend does not talk to DB; we read provider keys from env.
+ * - When you move this to the API with a real Prisma client, replace accordingly.
+ */
+export async function envKeyFor(provider: string): Promise<string | null> {
+  const map: Record<string, string | undefined> = {
+    openai: process.env.OPENAI_API_KEY,
+    // add more providers as you wire them:
+    // stability: process.env.STABILITY_API_KEY,
+    // replicate: process.env.REPLICATE_API_TOKEN,
+  };
+  return map[provider] ?? null;
+}
+ 118 changes: 118 additions & 0 deletions118  
+frontend/app/services/liveScoring.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,118 @@
+// frontend/app/services/liveScoring.ts
+// Clean scoring utilities with named exports and zero unused vars.
+
+export type Criteria = {
+  adoption: number; // ecosystem & usage
+  quality: number; // output quality
+  speed: number; // latency/uptime
+  cost: number; // affordability/free tier
+  trust: number; // safety/reliability
+  innovation: number; // pace of improvement
+  ethics: number; // environmental/ethical stance
+};
+
+export type Weights = {
+  adoption: number;
+  quality: number;
+  speed: number;
+  cost: number;
+  trust: number;
+  innovation: number;
+  ethics: number;
+};
+
+export type ProviderScoreInput = {
+  criteria: Criteria;
+  weights?: Partial<Weights>;
+  manualAdjustment?: number;
+  hardOverrideScore?: number | null;
+};
+
+export type ProviderScore = {
+  autoScore: number; // 0..100
+  finalScore: number; // 0..100
+};
+
+export const DEFAULT_WEIGHTS: Weights = {
+  adoption: 0.18,
+  quality: 0.22,
+  speed: 0.14,
+  cost: 0.1,
+  trust: 0.14,
+  innovation: 0.16,
+  ethics: 0.06,
+};
+
+export function clamp(v: number, lo = 0, hi = 100): number {
+  return Math.min(hi, Math.max(lo, v));
+}
+
+export function normalize01(v: number): number {
+  const x = clamp(v, 0, 100);
+  return x / 100;
+}
+
+export function resolveWeights(partial?: Partial<Weights>): Weights {
+  const w = { ...DEFAULT_WEIGHTS, ...(partial || {}) } as Weights;
+  const sum = w.adoption + w.quality + w.speed + w.cost + w.trust + w.innovation + w.ethics || 1;
+  return {
+    adoption: w.adoption / sum,
+    quality: w.quality / sum,
+    speed: w.speed / sum,
+    cost: w.cost / sum,
+    trust: w.trust / sum,
+    innovation: w.innovation / sum,
+    ethics: w.ethics / sum,
+  };
+}
+
+export function weightedScore(criteria: Criteria, weights?: Partial<Weights>): number {
+  const w = resolveWeights(weights);
+  const c = criteria;
+  const s =
+    normalize01(c.adoption) * w.adoption +
+    normalize01(c.quality) * w.quality +
+    normalize01(c.speed) * w.speed +
+    normalize01(c.cost) * w.cost +
+    normalize01(c.trust) * w.trust +
+    normalize01(c.innovation) * w.innovation +
+    normalize01(c.ethics) * w.ethics;
+
+  return clamp(s * 100, 0, 100);
+}
+
+export function mergeManualOverride(
+  autoScore: number,
+  manualAdjustment = 0,
+  hardOverrideScore?: number | null,
+): number {
+  if (typeof hardOverrideScore === 'number') {
+    return clamp(hardOverrideScore, 0, 100);
+  }
+  return clamp(autoScore + manualAdjustment, 0, 100);
+}
+
+/** Primary entrypoint for computing a single provider score. */
+export function computeLiveScore(input: ProviderScoreInput): ProviderScore {
+  const autoScore = weightedScore(input.criteria, input.weights);
+  const finalScore = mergeManualOverride(
+    autoScore,
+    input.manualAdjustment ?? 0,
+    input.hardOverrideScore ?? null,
+  );
+  return { autoScore, finalScore };
+}
+
+/**
+ * Compatibility wrapper (zero-arg) for cron callers.
+ * In this frontend build it’s a no-op so the import compiles cleanly.
+ * If/when you have a backend job, wire it there.
+ */
+export async function computeLiveScores(): Promise<void> {
+  return;
+}
+
+/** Optional helper for deltas. */
+export function applyDelta(base: number, delta: number): number {
+  return clamp(base + delta, 0, 100);
+}
+ 22 changes: 22 additions & 0 deletions22  
+frontend/app/settings/keys/page.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,22 @@
+﻿// app/settings/keys/page.tsx
+import { headers } from 'next/headers';
+
+export default async function KeysPage() {
+  // Build absolute origin for server-side fetch
+  const h = headers();
+  const proto = h.get('x-forwarded-proto') ?? 'http';
+  const host = h.get('host') ?? 'localhost:3000';
+  const origin = `${proto}://${host}`;
+
+  const res = await fetch(`${origin}/api/health`, { cache: 'no-store' });
+  const body = await res.json().catch(() => ({}));
+
+  return (
+    <main style={{ padding: 24, fontFamily: 'system-ui, sans-serif' }}>
+      <h1>Settings → Keys</h1>
+      <p>
+        API health: {res.status} {res.statusText} → {String((body as any).status ?? 'ok')}
+      </p>
+    </main>
+  );
+}
+ 42 changes: 42 additions & 0 deletions42  
+frontend/app/status/page.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,42 @@
+// Server Component
+export const dynamic = 'force-dynamic';
+
+type Health = { ok: boolean; service: string; time: string } | { ok: false; error: string };
+
+async function getHealth(): Promise<Health> {
+  try {
+    const res = await fetch('/api/health', { cache: 'no-store' }); // hit Next API (proxy)
+    if (!res.ok) return { ok: false, error: `${res.status} ${res.statusText}` };
+    return (await res.json()) as Health;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: msg };
+  }
+}
+
+export default async function StatusPage() {
+  const health = await getHealth();
+
+  const up = 'bg-green-100 text-green-900';
+  const down = 'bg-red-100 text-red-900';
+
+  return (
+    <main className="mx-auto max-w-3xl p-6 space-y-6">
+      <h1 className="text-2xl font-semibold">System Status</h1>
+
+      <section className={`rounded-xl p-4 ${'ok' in health && health.ok ? up : down}`}>
+        <div className="font-medium">API</div>
+        <div className="text-sm opacity-80">
+          {'ok' in health && health.ok
+            ? `UP • ${('time' in health && (health as any).time) || ''}`
+            : `DOWN • ${('error' in health && (health as any).error) || 'unknown'}`}
+        </div>
+      </section>
+
+      <section className="rounded-xl bg-gray-50 p-4 text-sm">
+        <div className="font-medium mb-2">Raw</div>
+        <pre className="overflow-x-auto">{JSON.stringify(health, null, 2)}</pre>
+      </section>
+    </main>
+  );
+}
+ 21 changes: 21 additions & 0 deletions21  
+frontend/app/utils/errors.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,21 @@
+// Basic HTTP error helpers
+export class HttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export const badRequest = (m = 'Bad Request') => new HttpError(400, m);
+export const unauthorized = (m = 'Unauthorized') => new HttpError(401, m);
+export const forbidden = (m = 'Forbidden') => new HttpError(403, m);
+export const notFound = (m = 'Not Found') => new HttpError(404, m);
+
+export function toErrorResponse(err: unknown): { status: number; body: any } {
+  if (err instanceof HttpError) {
+    return { status: err.status, body: { ok: false, error: err.message } };
+  }
+  const msg = (err as any)?.message ?? String(err);
+  return { status: 500, body: { ok: false, error: msg } };
+}
+ 21 changes: 21 additions & 0 deletions21  
+frontend/app/utils/logger.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,21 @@
+// Tiny logger wrapper with levels + optional metadata
+type Level = 'debug' | 'info' | 'warn' | 'error';
+
+function log(level: Level, msg: string, meta?: unknown) {
+  const ts = new Date().toISOString();
+  const base = `[${ts}] ${level.toUpperCase()}: ${msg}`;
+  if (meta !== undefined) {
+    // eslint-disable-next-line no-console
+    console[level === 'warn' ? 'warn' : level](base, meta);
+  } else {
+    // eslint-disable-next-line no-console
+    console[level === 'warn' ? 'warn' : level](base);
+  }
+}
+
+export const logger = {
+  debug: (m: string, meta?: unknown) => log('debug', m, meta),
+  info: (m: string, meta?: unknown) => log('info', m, meta),
+  warn: (m: string, meta?: unknown) => log('warn', m, meta),
+  error: (m: string, meta?: unknown) => log('error', m, meta),
+};
+ 24 changes: 24 additions & 0 deletions24  
+frontend/components/CopyButton.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,24 @@
+// FRONTEND • NEXT.JS
+// File: frontend/components/CopyButton.tsx
+'use client';
+
+import { useState } from 'react';
+
+export default function CopyButton({ value, label = 'Copy' }: { value: string; label?: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(value);
+          setDone(true);
+          setTimeout(() => setDone(false), 1200);
+        } catch {}
+      }}
+      className="rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
+      title={value}
+    >
+      {done ? 'Copied' : label}
+    </button>
+  );
+}
+ 51 changes: 51 additions & 0 deletions51  
+frontend/components/CreditsBanner.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,51 @@
+import React, { useEffect, useState } from 'react';
+
+type Health = { ok: boolean; credits_feature?: 'on' | 'off' };
+
+export default function CreditsBanner() {
+  const [state, setState] = useState<'on' | 'off' | 'unknown'>('unknown');
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await fetch('/api/health');
+        const j: Health = await r.json();
+        if (!alive) return;
+        const cf = (j.credits_feature ?? 'off') as 'on' | 'off';
+        setState(cf);
+      } catch {
+        if (alive) setState('unknown');
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const text =
+    state === 'on'
+      ? 'Credits: ON — usage is metered (optional feature enabled)'
+      : state === 'off'
+        ? 'Credits: OFF — optional feature parked (not engaged)'
+        : 'Credits: unknown — health check failed';
+
+  const bg = state === 'on' ? '#0b5' : state === 'off' ? '#444' : '#b50';
+
+  return (
+    <div
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        background: bg,
+        color: 'white',
+        padding: '8px 12px',
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: 14,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+ 61 changes: 61 additions & 0 deletions61  
+frontend/components/FlagBarChip.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,61 @@
+import React from 'react';
+
+import { flagEmoji } from '../lib/flag';
+
+type Props = {
+  cc: string; // ISO country code ("GB")
+  users: number; // count for this country
+  maxUsers: number; // max users among the set (for scale)
+  name?: string; // optional readable name, used for aria/tooltip
+  width?: number; // pixel width of the bar area (default 68)
+  height?: number; // pixel height of the bar (default 8)
+};
+
+export default function FlagBarChip({ cc, users, maxUsers, name, width = 68, height = 8 }: Props) {
+  const pct = maxUsers > 0 ? Math.max(0, Math.min(1, users / maxUsers)) : 0;
+  const barW = Math.max(2, Math.round(width * pct)); // minimum 2px so tiny values still show
+  const label = `${name || cc}: ${users} users`;
+
+  return (
+    <span className="chip" title={label} role="group" aria-label={label}>
+      <span className="flag" role="img" aria-label={name || cc}>
+        {flagEmoji(cc)}
+      </span>
+      <svg
+        className="bar"
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        aria-hidden="true"
+        focusable="false"
+      >
+        <rect x="0" y="0" width={width} height={height} rx={height / 2} fill="rgba(0,0,0,.08)" />
+        <rect x="0" y="0" width={barW} height={height} rx={height / 2} />
+      </svg>
+      <b className="n">{users}</b>
+      <style jsx>{`
+        .chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          padding: 0.25rem 0.55rem;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 0.75rem;
+          background: rgba(0, 0, 0, 0.03);
+          line-height: 1;
+          font-size: 0.85rem;
+          font-variant-numeric: tabular-nums;
+        }
+        .flag {
+          font-size: 1.1rem;
+        }
+        .bar {
+          display: inline-block;
+        }
+        .n {
+          font-weight: 700;
+        }
+      `}</style>
+    </span>
+  );
+}
+ 68 changes: 68 additions & 0 deletions68  
+frontend/components/GlobalCountryStrip.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,68 @@
+import React, { useEffect, useState } from 'react';
+
+import FlagBarChip from './FlagBarChip';
+
+type Row = { country_cc: string; users: number };
+
+function nameOf(cc: string) {
+  try {
+    const dn = new (Intl as any).DisplayNames(['en-GB'], { type: 'region' });
+    if (!cc || cc === 'ZZ') return 'Unknown';
+    return dn.of(cc) || cc;
+  } catch {
+    return cc || 'Unknown';
+  }
+}
+
+export default function GlobalCountryStrip() {
+  const [rows, setRows] = useState<Row[]>([]);
+
+  async function load() {
+    const r = await fetch('/api/live/geo/aggregate');
+    const j = await r.json();
+    if (!j?.ok) return;
+    const list: Row[] = j.data || [];
+    // top 6 keeps it tidy
+    setRows(list.slice(0, 6));
+  }
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!mounted) return;
+      await load();
+      const t = setInterval(load, 60_000);
+      return () => clearInterval(t);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!rows.length) return null;
+
+  const maxUsers = Math.max(...rows.map((r) => r.users));
+
+  return (
+    <div className="strip" aria-label="Top countries now">
+      {rows.map((r) => (
+        <FlagBarChip
+          key={r.country_cc}
+          cc={r.country_cc || 'ZZ'}
+          users={r.users}
+          maxUsers={maxUsers}
+          name={nameOf(r.country_cc)}
+        />
+      ))}
+      <style jsx>{`
+        .strip {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          padding: 0.5rem 0.85rem;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+      `}</style>
+    </div>
+  );
+}
+ 75 changes: 75 additions & 0 deletions75  
+frontend/components/ImagePlayground.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,75 @@
+import Image from 'next/image';
+import React, { useState } from 'react';
+
+export default function ImagePlayground() {
+  const [prompt, setPrompt] = useState('');
+  const [size, setSize] = useState('1024x1024');
+  const [status, setStatus] = useState('');
+  const [img, setImg] = useState<string | null>(null);
+
+  const generate = async () => {
+    setStatus('Generating…');
+    setImg(null);
+    try {
+      const r = await fetch('/api/ai/openai/images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, size }),
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error?.message || j.error || 'Failed');
+      setImg(j.dataUrl as string);
+      setStatus('Done.');
+    } catch (e: any) {
+      setStatus('Error: ' + (e.message ?? 'Unknown'));
+    }
+  };
+
+  return (
+    <div style={{ padding: 24 }}>
+      <h1>Image Playground</h1>
+      <p>
+        Credits are disabled; this calls <code>/api/ai/openai/images</code> directly.
+      </p>
+
+      <textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder="Describe the image…"
+        rows={6}
+        style={{ width: '100%' }}
+      />
+
+      <div style={{ margin: '8px 0' }}>
+        <label>
+          Size:{' '}
+          <select value={size} onChange={(e) => setSize(e.target.value)}>
+            <option>1024x1024</option>
+            <option>768x768</option>
+            <option>512x512</option>
+          </select>
+        </label>
+      </div>
+
+      <button onClick={generate}>Generate</button>
+      <div style={{ marginTop: 8 }}>{status}</div>
+
+      {img && (
+        <div style={{ marginTop: 12 }}>
+          {/* Square aspect since sizes are NxN; fill keeps layout responsive */}
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1' }}>
+            <Image
+              src={img}
+              alt="generated"
+              fill
+              sizes="(min-width: 768px) 700px, 100vw"
+              unoptimized
+              style={{ objectFit: 'contain' }}
+              priority={false}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+ 25 changes: 20 additions & 5 deletions25  
+frontend/components/LanguageSwitcher.tsx
+Original file line number	Diff line number	Diff line change
+@@ -1,10 +1,25 @@
+const langs = ["English","中文(简体)","Español","العربية","हिन्दी","Português","Français","Русский","Deutsch","日本語"];
+const langs = [
+  'English',
+  '中文(简体)',
+  'Español',
+  'العربية',
+  'हिन्दी',
+  'Português',
+  'Français',
+  'Русский',
+  'Deutsch',
+  '日本語',
+];
+
+export default function LanguageSwitcher(){
+export default function LanguageSwitcher() {
+  return (
+    <div style={{margin:"12px 0"}}>
+      <label style={{marginRight:8}}>Language:</label>
+      <select>{langs.map(l => <option key={l}>{l}</option>)}</select>
+    <div style={{ margin: '12px 0' }}>
+      <label style={{ marginRight: 8 }}>Language:</label>
+      <select>
+        {langs.map((l) => (
+          <option key={l}>{l}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+ 80 changes: 47 additions & 33 deletions80  
+frontend/components/Leaderboard.tsx
+Original file line number	Diff line number	Diff line change
+@@ -1,47 +1,61 @@
+import { useMemo } from "react";
+import { useMemo } from 'react';
+
+type Row = { provider: string; score: number; delta: number };
+
+const SEED: Row[] = [
+  { provider:"OpenAI", score:91, delta:+1.2 },
+  { provider:"Stability", score:86, delta:-0.4 },
+  { provider:"Leonardo", score:84, delta:+0.7 },
+  { provider:"DeepAI", score:72, delta:0 },
+  { provider:"Google Imagen", score:83, delta:+0.2 },
+  { provider:"Lexica", score:78, delta:+0.1 },
+  { provider:"NovelAI", score:80, delta:+0.3 },
+  { provider:"EdenAI", score:74, delta:-0.1 },
+  { provider:"Runware", score:69, delta:+0.5 },
+  { provider:"Hive", score:67, delta:+0.1 },
+  { provider:"Recraft", score:76, delta:+0.2 },
+  { provider:"Artistly", score:71, delta:+0.3 },
+  { provider:"Canva", score:68, delta:+0.2 },
+  { provider:"Adobe Firefly", score:79, delta:+0.4 },
+  { provider:"Midjourney", score:90, delta:-0.2 },
+  { provider:"Bing Image Creator", score:65, delta:+0.1 },
+  { provider:"NightCafe", score:64, delta:0 },
+  { provider:"Playground AI", score:70, delta:+0.2 },
+  { provider:"Pixlr", score:62, delta:+0.1 },
+  { provider:"Fotor", score:60, delta:-0.1 }
+  { provider: 'OpenAI', score: 91, delta: +1.2 },
+  { provider: 'Stability', score: 86, delta: -0.4 },
+  { provider: 'Leonardo', score: 84, delta: +0.7 },
+  { provider: 'DeepAI', score: 72, delta: 0 },
+  { provider: 'Google Imagen', score: 83, delta: +0.2 },
+  { provider: 'Lexica', score: 78, delta: +0.1 },
+  { provider: 'NovelAI', score: 80, delta: +0.3 },
+  { provider: 'EdenAI', score: 74, delta: -0.1 },
+  { provider: 'Runware', score: 69, delta: +0.5 },
+  { provider: 'Hive', score: 67, delta: +0.1 },
+  { provider: 'Recraft', score: 76, delta: +0.2 },
+  { provider: 'Artistly', score: 71, delta: +0.3 },
+  { provider: 'Canva', score: 68, delta: +0.2 },
+  { provider: 'Adobe Firefly', score: 79, delta: +0.4 },
+  { provider: 'Midjourney', score: 90, delta: -0.2 },
+  { provider: 'Bing Image Creator', score: 65, delta: +0.1 },
+  { provider: 'NightCafe', score: 64, delta: 0 },
+  { provider: 'Playground AI', score: 70, delta: +0.2 },
+  { provider: 'Pixlr', score: 62, delta: +0.1 },
+  { provider: 'Fotor', score: 60, delta: -0.1 },
+];
+
+export default function Leaderboard() {
+  const rows = useMemo(
+    () => [...SEED].sort((a,b)=> b.score - a.score || a.provider.localeCompare(b.provider)),
+    []
+    () => [...SEED].sort((a, b) => b.score - a.score || a.provider.localeCompare(b.provider)),
+    [],
+  );
+
+  return (
+    <div style={{marginTop:24}}>
+      {rows.map((r,i)=>(
+        <div key={r.provider} style={{
+          display:"grid", gridTemplateColumns:"32px 1fr 80px 80px",
+          gap:12, padding:"12px 16px", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,.08)", marginBottom:10
+        }}>
+          <div style={{width:24,height:24,borderRadius:6, background:"#ddd"}} />
+          <div><strong>{i+1}. {r.provider}</strong></div>
+          <div style={{textAlign:"right"}}>{r.score.toFixed(1)}</div>
+          <div style={{textAlign:"right"}}>{r.delta >= 0 ? `▲ ${r.delta.toFixed(1)}` : `▼ ${Math.abs(r.delta).toFixed(1)}`}</div>
+    <div style={{ marginTop: 24 }}>
+      {rows.map((r, i) => (
+        <div
+          key={r.provider}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '32px 1fr 80px 80px',
+            gap: 12,
+            padding: '12px 16px',
+            borderRadius: 12,
+            boxShadow: '0 1px 4px rgba(0,0,0,.08)',
+            marginBottom: 10,
+          }}
+        >
+          <div style={{ width: 24, height: 24, borderRadius: 6, background: '#ddd' }} />
+          <div>
+            <strong>
+              {i + 1}. {r.provider}
+            </strong>
+          </div>
+          <div style={{ textAlign: 'right' }}>{r.score.toFixed(1)}</div>
+          <div style={{ textAlign: 'right' }}>
+            {r.delta >= 0 ? `▲ ${r.delta.toFixed(1)}` : `▼ ${Math.abs(r.delta).toFixed(1)}`}
+          </div>
+        </div>
+      ))}
+    </div>
+ 66 changes: 66 additions & 0 deletions66  
+frontend/components/LiveChip.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,66 @@
+import React, { useEffect, useState } from 'react';
+
+type Props = {
+  providerId: string;
+  updatedSuffix?: string; // e.g., "BST" or "" if you prefer UTC
+};
+
+export default function LiveChip({ providerId, updatedSuffix = '' }: Props) {
+  const [score, setScore] = useState<number | null>(null);
+  const [updated, setUpdated] = useState<string>('');
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchScore() {
+      const r = await fetch(`/api/live/score?providerId=${providerId}`);
+      const j = await r.json();
+      if (!mounted || !j.ok) return;
+      setScore(j.score);
+      if (j.updatedAt) {
+        const d = new Date(j.updatedAt);
+        setUpdated(
+          d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) +
+            (updatedSuffix ? ` ${updatedSuffix}` : ''),
+        );
+      }
+    }
+
+    fetchScore();
+    const t = setInterval(fetchScore, 60_000); // refresh every 60s
+    return () => {
+      mounted = false;
+      clearInterval(t);
+    };
+  }, [providerId, updatedSuffix]);
+
+  if (score == null) {
+    return <span className="livechip livechip--loading">Live — …</span>;
+  }
+
+  return (
+    <span className="livechip">
+      Live {score} <span className="livechip__sep">•</span>{' '}
+      <span title="Last update">{updated || 'just now'}</span>
+      <style jsx>{`
+        .livechip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.875rem;
+          line-height: 1;
+          padding: 0.25rem 0.5rem;
+          border-radius: 999px;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          background: rgba(0, 0, 0, 0.04);
+        }
+        .livechip--loading {
+          opacity: 0.7;
+        }
+        .livechip__sep {
+          opacity: 0.5;
+        }
+      `}</style>
+    </span>
+  );
+}
+ 198 changes: 198 additions & 0 deletions198  
+frontend/components/PlatformLiveDrawer.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,198 @@
+import React, { useEffect, useState } from 'react';
+
+import ProviderCountryChips from './ProviderCountryChips';
+
+type LiveScore = {
+  ok: boolean;
+  providerId: string;
+  updatedAt: string;
+  score: number | null;
+  components?: {
+    promagen_usage: number;
+    search_pulse: number;
+    reddit: number;
+    community: number;
+    health: number;
+  };
+};
+
+type Props = {
+  providerId: string;
+  providerName: string;
+  onClose: () => void;
+};
+
+export default function PlatformLiveDrawer({ providerId, providerName, onClose }: Props) {
+  const [score, setScore] = useState<LiveScore | null>(null);
+  const [users, setUsers] = useState<number>(0);
+  const [updated, setUpdated] = useState<string>('');
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      const [s, b] = await Promise.all([
+        fetch(`/api/live/score?providerId=${providerId}`).then((r) => r.json()),
+        fetch(`/api/live/board`).then((r) => r.json()),
+      ]);
+      if (!mounted) return;
+
+      if (s?.ok) {
+        setScore(s);
+        setUpdated(
+          s.updatedAt
+            ? new Date(s.updatedAt).toLocaleTimeString(undefined, {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '',
+        );
+      }
+      const row = b?.data?.find((x: any) => x.providerId === providerId);
+      setUsers(row?.promagenActiveUsers ?? 0);
+    }
+
+    load();
+    const t = setInterval(load, 60_000);
+    return () => {
+      mounted = false;
+      clearInterval(t);
+    };
+  }, [providerId]);
+
+  return (
+    <div
+      className="drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${providerName} live panel`}
+    >
+      <div className="hdr">
+        <strong>{providerName}</strong>
+        <button onClick={onClose} className="x" aria-label="Close">
+          ×
+        </button>
+      </div>
+
+      <div className="grid">
+        <div className="card">
+          <div className="label">Live on Promagen</div>
+          <div className="big">{users}</div>
+          <div className="sub">users in last 5 minutes</div>
+        </div>
+
+        <div className="card">
+          <div className="label">Live Activity Score</div>
+          <div className="big">{score?.score ?? '…'}</div>
+          <div className="sub">updated {updated || 'just now'}</div>
+        </div>
+
+        <div className="card col2">
+          <div className="label">Breakdown (nowcast)</div>
+          <ul className="list">
+            <li>
+              Promagen usage: <b>{score?.components?.promagen_usage ?? 0}</b>
+            </li>
+            <li>
+              Search pulse (est.): <b>{score?.components?.search_pulse ?? 0}</b>
+            </li>
+            <li>
+              Reddit mentions (est.): <b>{score?.components?.reddit ?? 0}</b>
+            </li>
+            <li>
+              Community (est.): <b>{score?.components?.community ?? 0}</b>
+            </li>
+            <li>
+              Health: <b>{score?.components?.health ?? 0}</b>
+            </li>
+          </ul>
+          <p className="disclaimer">
+            “Live on Promagen” is first-party and exact. “Nowcast” components are estimated interest
+            signals.
+          </p>
+        </div>
+
+        <div className="card col2">
+          <div className="label">Top countries (last 5 minutes)</div>
+          <ProviderCountryChips providerId={providerId} />
+        </div>
+      </div>
+
+      <style jsx>{`
+        .drawer {
+          position: fixed;
+          top: 0;
+          right: 0;
+          height: 100vh;
+          width: min(480px, 96vw);
+          background: #fff;
+          box-shadow: -12px 0 32px rgba(0, 0, 0, 0.15);
+          display: flex;
+          flex-direction: column;
+          z-index: 60;
+          animation: slide 0.18s ease-out;
+        }
+        @keyframes slide {
+          from {
+            transform: translateX(8px);
+            opacity: 0.8;
+          }
+          to {
+            transform: none;
+            opacity: 1;
+          }
+        }
+        .hdr {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 1rem 1.25rem;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .x {
+          background: none;
+          border: none;
+          font-size: 1.5rem;
+          line-height: 1;
+          cursor: pointer;
+        }
+        .grid {
+          padding: 1rem 1.25rem;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          overflow-y: auto;
+        }
+        .card {
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 0.75rem;
+          padding: 0.9rem;
+        }
+        .col2 {
+          grid-column: 1 / -1;
+        }
+        .label {
+          font-size: 0.8rem;
+          opacity: 0.7;
+          margin-bottom: 0.25rem;
+        }
+        .big {
+          font-size: 2rem;
+          font-weight: 700;
+        }
+        .sub {
+          font-size: 0.85rem;
+          opacity: 0.7;
+        }
+        .list {
+          margin: 0.25rem 0 0.5rem 1.1rem;
+        }
+        .disclaimer {
+          font-size: 0.75rem;
+          opacity: 0.65;
+          margin: 0;
+        }
+      `}</style>
+    </div>
+  );
+}
+ 612 changes: 612 additions & 0 deletions612  
+frontend/components/PromagenMVP.tsx
+Large diffs are not rendered by default.
+
+ 31 changes: 22 additions & 9 deletions31  
+frontend/components/ProviderCard.tsx
+Original file line number	Diff line number	Diff line change
+@@ -1,15 +1,28 @@
+type Props = { rank: number; name: string; score: number; delta?: number };
+
+export default function ProviderCard({ rank, name, score, delta = 0 }: Props){
+export default function ProviderCard({ rank, name, score, delta = 0 }: Props) {
+  return (
+    <div style={{
+      display:"grid", gridTemplateColumns:"32px 1fr 80px 80px",
+      gap:12, padding:"12px 16px", borderRadius:12, boxShadow:"0 1px 4px rgba(0,0,0,.08)", marginBottom:10
+    }}>
+      <div style={{width:24,height:24,borderRadius:6, background:"#ddd"}} />
+      <div><strong>{rank}. {name}</strong></div>
+      <div style={{textAlign:"right"}}>{score.toFixed(1)}</div>
+      <div style={{textAlign:"right"}}>{delta >= 0 ? `▲ ${delta.toFixed(1)}` : `▼ ${Math.abs(delta).toFixed(1)}`}</div>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '32px 1fr 80px 80px',
+        gap: 12,
+        padding: '12px 16px',
+        borderRadius: 12,
+        boxShadow: '0 1px 4px rgba(0,0,0,.08)',
+        marginBottom: 10,
+      }}
+    >
+      <div style={{ width: 24, height: 24, borderRadius: 6, background: '#ddd' }} />
+      <div>
+        <strong>
+          {rank}. {name}
+        </strong>
+      </div>
+      <div style={{ textAlign: 'right' }}>{score.toFixed(1)}</div>
+      <div style={{ textAlign: 'right' }}>
+        {delta >= 0 ? `▲ ${delta.toFixed(1)}` : `▼ ${Math.abs(delta).toFixed(1)}`}
+      </div>
+    </div>
+  );
+}
+ 71 changes: 71 additions & 0 deletions71  
+frontend/components/ProviderCountryChips.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,71 @@
+import React, { useCallback, useEffect, useState } from 'react';
+
+import FlagBarChip from './FlagBarChip';
+
+type Row = { country_cc: string; users: number };
+
+function nameOf(cc: string) {
+  try {
+    const dn = new (Intl as any).DisplayNames(['en-GB'], { type: 'region' });
+    if (!cc || cc === 'ZZ') return 'Unknown';
+    return dn.of(cc) || cc;
+  } catch {
+    return cc || 'Unknown';
+  }
+}
+
+export default function ProviderCountryChips({ providerId }: { providerId: string }) {
+  const [rows, setRows] = useState<Row[]>([]);
+
+  const load = useCallback(async () => {
+    const r = await fetch(`/api/live/geo/provider?providerId=${providerId}`);
+    const j = await r.json();
+    if (!j?.ok) return;
+    const list: Row[] = j.data || [];
+    setRows(list.slice(0, 6)); // top 6
+  }, [providerId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      if (cancelled) return;
+      await load();
+    })();
+
+    const t = setInterval(() => {
+      if (!cancelled) void load();
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [load]);
+
+  if (!rows.length) return null;
+
+  const maxUsers = Math.max(...rows.map((r) => r.users));
+
+  return (
+    <div className="wrap" aria-label="Top countries for this platform">
+      {rows.map((r) => (
+        <FlagBarChip
+          key={r.country_cc}
+          cc={r.country_cc || 'ZZ'}
+          users={r.users}
+          maxUsers={maxUsers}
+          name={nameOf(r.country_cc)}
+        />
+      ))}
+      <style jsx>{`
+        .wrap {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.4rem;
+          margin-top: 0.25rem;
+        }
+      `}</style>
+    </div>
+  );
+}
+ 38 changes: 38 additions & 0 deletions38  
+frontend/components/RequestIdCopy.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,38 @@
+'use client';
+
+import { useState } from 'react';
+
+export default function RequestIdCopy({
+  id,
+  label = 'X-Request-ID',
+}: {
+  id?: string;
+  label?: string;
+}) {
+  const [ok, setOk] = useState<boolean | null>(null);
+  if (!id) return null;
+  return (
+    <div className="flex items-center gap-2">
+      <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+        {label}: {id}
+      </code>
+      <button
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(id);
+            setOk(true);
+            setTimeout(() => setOk(null), 1500);
+          } catch {
+            setOk(false);
+            setTimeout(() => setOk(null), 1500);
+          }
+        }}
+        className="text-xs border px-2 py-1 rounded hover:bg-gray-50"
+      >
+        Copy
+      </button>
+      {ok === true && <span className="text-xs text-green-600">copied</span>}
+      {ok === false && <span className="text-xs text-red-600">failed</span>}
+    </div>
+  );
+}
+ 19 changes: 13 additions & 6 deletions19  
+frontend/components/StockTicker.tsx
+Original file line number	Diff line number	Diff line change
+@@ -1,13 +1,20 @@
+import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
+
+export default function StockTicker() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(()=>{},[]);
+  useEffect(() => {}, []);
+  return (
+    <div ref={ref} style={{
+      overflow:"hidden", whiteSpace:"nowrap", border:"1px solid #eee",
+      padding:"8px 12px", borderRadius:8, background:"#fafafa"
+    }}>
+    <div
+      ref={ref}
+      style={{
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        border: '1px solid #eee',
+        padding: '8px 12px',
+        borderRadius: 8,
+        background: '#fafafa',
+      }}
+    >
+      OpenAI ▲1.2 • Stability ▼0.4 • Leonardo ▲0.7 • DeepAI — •
+    </div>
+  );
+  127 changes: 99 additions & 28 deletions127  
+frontend/components/WorldClocks.tsx
+Original file line number	Diff line number	Diff line change
+@@ -2,10 +2,11 @@
+// frontend/components/WorldClocks.tsx
+// Live clocks, reading city list from /api/world-clocks (single source of truth).
+
+"use client";
+'use client';
+
+import React, { useEffect, useMemo, useState } from "react";
+import { sunriseUtc } from "../lib/sunrise";
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { sunriseUtc } from '../lib/sunrise';
+
+type City = {
+  id: string;
+@@ -33,30 +34,32 @@ export default function WorldClocks() {
+    let cancelled = false;
+    const fetchCities = async () => {
+      try {
+        const r = await fetch("/api/world-clocks", { cache: "no-store" });
+        const r = await fetch('/api/world-clocks', { cache: 'no-store' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const json = await r.json();
+        if (!cancelled) setCities(json.cities as City[]);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || "Failed to load cities");
+        if (!cancelled) setError(e?.message || 'Failed to load cities');
+      }
+    };
+    fetchCities();
+    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const now = new Date();
+
+  // Keep 'now' out of memo deps to avoid constant recompute warning.
+  const sorted = useMemo(() => {
+    if (!cities) return [];
+    const now = new Date();
+    const base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    return [...cities]
+      .map((c) => {
+        const sr = sunriseUtc(base, { lat: c.lat, lon: c.lon });
+        return { city: c, sunriseUtc: sr, sortKey: sr ? sr.getTime() : Number.POSITIVE_INFINITY };
+      })
+      .sort((a, b) => a.sortKey - b.sortKey);
+  }, [cities, now]);
+  }, [cities]);
+
+  if (error) {
+    return <div className="pmg-clocks">Couldn’t load clocks: {error}</div>;
+@@ -65,27 +68,44 @@ export default function WorldClocks() {
+    return <div className="pmg-clocks">Loading world clocks…</div>;
+  }
+
+  const now = new Date(); // for live time rendering each tick
+
+  return (
+    <div className="pmg-clocks">
+      <div className="pmg-clocks__title">World Clocks (ordered by today’s sunrise)</div>
+      <div className="pmg-clocks__grid">
+        {sorted.map(({ city, sunriseUtc }) => {
+          const time = new Intl.DateTimeFormat("en-GB", {
+            timeZone: city.timeZone, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+          const time = new Intl.DateTimeFormat('en-GB', {
+            timeZone: city.timeZone,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+          }).format(now);
+
+          const date = new Intl.DateTimeFormat("en-GB", {
+            timeZone: city.timeZone, weekday: "short", day: "2-digit", month: "short", year: "numeric"
+          const date = new Intl.DateTimeFormat('en-GB', {
+            timeZone: city.timeZone,
+            weekday: 'short',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }).format(now);
+
+          const sunriseLocal = sunriseUtc
+            ? new Intl.DateTimeFormat("en-GB", { timeZone: city.timeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(sunriseUtc)
+            : "—";
+            ? new Intl.DateTimeFormat('en-GB', {
+                timeZone: city.timeZone,
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              }).format(sunriseUtc)
+            : '—';
+
+          return (
+            <div key={city.id} className="pmg-clock">
+              <div className="pmg-clock__name">
+                <span className="pmg-clock__flag" aria-hidden="true">{city.flag || "🕒"}</span>
+                <span className="pmg-clock__flag" aria-hidden="true">
+                  {city.flag || '🕒'}
+                </span>
+                {city.name}
+              </div>
+              <div className="pmg-clock__time">{time}</div>
+@@ -100,19 +120,70 @@ export default function WorldClocks() {
+      </div>
+
+      <style jsx>{`
+        .pmg-clocks { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #fff; }
+        .pmg-clocks__title { font-weight: 700; margin-bottom: 12px; }
+        .pmg-clocks__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+        .pmg-clock { border: 1px solid #eef0f2; border-radius: 10px; padding: 12px; background: #fafafa; }
+        .pmg-clock__name { font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .pmg-clock__flag { display: inline-block; font-size: 1.1rem; line-height: 1; }
+        .pmg-clock__time { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 1.6rem; letter-spacing: 0.5px; margin-bottom: 2px; }
+        .pmg-clock__date { color: #4b5563; font-size: 0.9rem; margin-bottom: 6px; }
+        .pmg-clock__meta { display: flex; justify-content: space-between; color: #6b7280; font-size: 0.8rem; }
+        .pmg-clocks {
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          padding: 16px;
+          background: #fff;
+        }
+        .pmg-clocks__title {
+          font-weight: 700;
+          margin-bottom: 12px;
+        }
+        .pmg-clocks__grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          gap: 12px;
+        }
+        .pmg-clock {
+          border: 1px solid #eef0f2;
+          border-radius: 10px;
+          padding: 12px;
+          background: #fafafa;
+        }
+        .pmg-clock__name {
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 4px;
+        }
+        .pmg-clock__flag {
+          display: inline-block;
+          font-size: 1.1rem;
+          line-height: 1;
+        }
+        .pmg-clock__time {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+            'Courier New', monospace;
+          font-size: 1.6rem;
+          letter-spacing: 0.5px;
+          margin-bottom: 2px;
+        }
+        .pmg-clock__date {
+          color: #4b5563;
+          font-size: 0.9rem;
+          margin-bottom: 6px;
+        }
+        .pmg-clock__meta {
+          display: flex;
+          justify-content: space-between;
+          color: #6b7280;
+          font-size: 0.8rem;
+        }
+        @media (prefers-color-scheme: dark) {
+          .pmg-clocks { background: #0b0d10; border-color: #1f2937; }
+          .pmg-clocks__grid .pmg-clock { background: #0f1318; border-color: #1f2937; }
+          .pmg-clock__date, .pmg-clock__meta { color: #9ca3af; }
+          .pmg-clocks {
+            background: #0b0d10;
+            border-color: #1f2937;
+          }
+          .pmg-clocks__grid .pmg-clock {
+            background: #0f1318;
+            border-color: #1f2937;
+          }
+          .pmg-clock__date,
+          .pmg-clock__meta {
+            color: #9ca3af;
+          }
+        }
+      `}</style>
+    </div>
+ 20 changes: 20 additions & 0 deletions20  
+frontend/components/health/HealthBanner.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+'use client';
+
+import { useHealth } from './HealthContext';
+
+export default function HealthBanner() {
+  const health = useHealth();
+  const bg =
+    health.status === 'up'
+      ? 'bg-green-100 text-green-900'
+      : health.status === 'down'
+        ? 'bg-red-100 text-red-900'
+        : 'bg-gray-100 text-gray-800';
+
+  return (
+    <div className={`${bg} rounded-xl px-4 py-3 text-sm flex items-center justify-between`}>
+      <span className="font-medium">API: {health.status.toUpperCase()}</span>
+      <span className="opacity-75">Frontend → API: {health.apiBase}</span>
+    </div>
+  );
+}
+ 49 changes: 49 additions & 0 deletions49  
+frontend/components/health/HealthContext.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,49 @@
+'use client';
+
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+
+type Health = { ok: boolean; service: string; time: string };
+type HealthState = {
+  status: 'up' | 'down' | 'idle';
+  last?: Health;
+  error?: string;
+  apiBase?: string;
+};
+
+const HealthCtx = createContext<HealthState>({ status: 'idle' });
+
+export function HealthProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<HealthState>({
+    status: 'idle',
+    apiBase: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
+  });
+  const timer = useRef<NodeJS.Timeout | null>(null);
+
+  async function ping() {
+    try {
+      // call our own Next API to avoid CORS and browser/env differences
+      const res = await fetch('/api/health', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const json: Health = await res.json();
+      setState((s) => ({ ...s, status: 'up', last: json, error: undefined }));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setState((s) => ({ ...s, status: 'down', error: msg }));
+    }
+  }
+
+  useEffect(() => {
+    ping();
+    timer.current = setInterval(ping, 60_000);
+    return () => {
+      if (timer.current) clearInterval(timer.current);
+    };
+  }, []);
+
+  const value = useMemo(() => state, [state]);
+  return <HealthCtx.Provider value={value}>{children}</HealthCtx.Provider>;
+}
+
+export function useHealth() {
+  return useContext(HealthCtx);
+}
+ 33 changes: 33 additions & 0 deletions33  
+frontend/components/ui/badge.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,33 @@
+import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
+
+import { cn } from '@/lib/utils';
+
+const badgeVariants = cva(
+  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+  {
+    variants: {
+      variant: {
+        default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
+        secondary:
+          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        destructive:
+          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
+        outline: 'text-foreground',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  },
+);
+
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+}
+
+export { Badge, badgeVariants };
+ 49 changes: 49 additions & 0 deletions49  
+frontend/components/ui/button.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,49 @@
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
+
+import { cn } from '@/lib/utils';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
+      },
+      size: {
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 rounded-md px-3',
+        lg: 'h-11 rounded-md px-8',
+        icon: 'h-10 w-10',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
+);
+Button.displayName = 'Button';
+
+export { Button, buttonVariants };
+ 55 changes: 55 additions & 0 deletions55  
+frontend/components/ui/card.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,55 @@
+import * as React from 'react';
+
+import { cn } from '@/lib/utils';
+
+const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn('rounded-lg border bg-card text-card-foreground shadow-sm', className)}
+      {...props}
+    />
+  ),
+);
+Card.displayName = 'Card';
+
+const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('flex flex-col space-y-1.5 p-6', className)} {...props} />
+  ),
+);
+CardHeader.displayName = 'CardHeader';
+
+const CardTitle = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn('text-2xl font-semibold leading-none tracking-tight', className)}
+      {...props}
+    />
+  ),
+);
+CardTitle.displayName = 'CardTitle';
+
+const CardDescription = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  ),
+);
+CardDescription.displayName = 'CardDescription';
+
+const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
+  ),
+);
+CardContent.displayName = 'CardContent';
+
+const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('flex items-center p-6 pt-0', className)} {...props} />
+  ),
+);
+CardFooter.displayName = 'CardFooter';
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+ 22 changes: 22 additions & 0 deletions22  
+frontend/components/ui/input.tsx
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,22 @@
+import * as React from 'react';
+
+import { cn } from '@/lib/utils';
+
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+          className,
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Input.displayName = 'Input';
+
+export { Input };
+ 2 changes: 2 additions & 0 deletions2  
+frontend/config/env.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,2 @@
+// src/config.ts
+export const FEATURE_CREDITS = (process.env.FEATURE_CREDITS ?? 'off').toLowerCase() === 'on';
+ 106 changes: 106 additions & 0 deletions106  
+frontend/config/platforms.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,106 @@
+// Promagen Top 20 Platforms — single source of truth (ordered by popularity)
+export type Platform = {
+  id: string; // stable ID for your system (slug-like)
+  name: string; // display name
+  rank: number; // 1 = most popular
+  kind: 'api' | 'affiliate' | 'ui_only'; // how we integrate today
+  markers: string[]; // UI badges/emojis, e.g. ["⚙️"], ["💸"], ["🌍"]
+  notes?: string; // short hint for tooltips
+  website?: string; // optional link (for future affiliate deep-links)
+};
+
+export const PLATFORMS_20: Platform[] = [
+  {
+    id: 'canva',
+    name: 'Canva Text-to-Image',
+    rank: 1,
+    kind: 'affiliate',
+    markers: ['💸'],
+    notes: 'Affiliate-first',
+  },
+  {
+    id: 'openai',
+    name: 'OpenAI (DALL·E / GPT-Image)',
+    rank: 2,
+    kind: 'api',
+    markers: ['⚙️'],
+    notes: 'API-ready later',
+  },
+  {
+    id: 'midjourney',
+    name: 'Midjourney',
+    rank: 3,
+    kind: 'ui_only',
+    markers: ['🌍'],
+    notes: 'Discord UI only',
+  },
+  {
+    id: 'stability',
+    name: 'Stability AI (Stable Diffusion)',
+    rank: 4,
+    kind: 'api',
+    markers: ['⚙️'],
+    notes: 'API-ready later',
+  },
+  { id: 'adobe-firefly', name: 'Adobe Firefly', rank: 5, kind: 'affiliate', markers: ['💸'] },
+  {
+    id: 'bing',
+    name: 'Bing Image Creator',
+    rank: 6,
+    kind: 'ui_only',
+    markers: ['🌍'],
+    notes: 'Microsoft ecosystem',
+  },
+  {
+    id: 'leonardo',
+    name: 'Leonardo AI',
+    rank: 7,
+    kind: 'api',
+    markers: ['⚙️', '💸'],
+    notes: 'API + affiliate',
+  },
+  { id: 'pixlr', name: 'Pixlr', rank: 8, kind: 'affiliate', markers: ['💸'] },
+  { id: 'nightcafe', name: 'NightCafe', rank: 9, kind: 'affiliate', markers: ['💸'] },
+  { id: 'fotor', name: 'Fotor', rank: 10, kind: 'affiliate', markers: ['💸'] },
+  { id: 'deepai', name: 'DeepAI', rank: 11, kind: 'api', markers: ['⚙️'] },
+  {
+    id: 'picsart',
+    name: 'Picsart',
+    rank: 12,
+    kind: 'api',
+    markers: ['⚙️', '💸'],
+    notes: 'API + affiliate',
+  },
+  { id: 'ideogram', name: 'Ideogram', rank: 13, kind: 'affiliate', markers: ['💸'] },
+  {
+    id: 'bluewillow',
+    name: 'BlueWillow',
+    rank: 14,
+    kind: 'ui_only',
+    markers: ['🌍'],
+    notes: 'Discord UI',
+  },
+  { id: 'openart', name: 'OpenArt', rank: 15, kind: 'affiliate', markers: ['💸'] },
+  { id: 'playground', name: 'Playground AI', rank: 16, kind: 'ui_only', markers: ['🌍'] },
+  { id: 'novelai', name: 'NovelAI', rank: 17, kind: 'api', markers: ['⚙️', '💸'] },
+  {
+    id: 'flux-schnell',
+    name: 'Flux Schnell',
+    rank: 18,
+    kind: 'api',
+    markers: ['⚙️'],
+    notes: 'New model family',
+  },
+  { id: 'artistly', name: 'Artistly', rank: 19, kind: 'affiliate', markers: ['💸'] },
+  {
+    id: 'krea',
+    name: 'Krea',
+    rank: 20,
+    kind: 'affiliate',
+    markers: ['💸'],
+    notes: 'Artist programme',
+  },
+];
+
+// convenience maps
+export const PLATFORMS_BY_ID = Object.fromEntries(PLATFORMS_20.map((p) => [p.id, p]));
+ Binary file modifiedBIN +4.94 KB (230%) 
+frontend/debug_bundle.txt
+Binary file not shown.
+ Binary file modifiedBIN +82 Bytes (100%) 
+frontend/frontend_tree.txt
+Binary file not shown.
+ 27 changes: 27 additions & 0 deletions27  
+frontend/lib/api.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,27 @@
+const API = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API) {
+  throw new Error(
+    'NEXT_PUBLIC_API_URL is not set. Create frontend/.env.local with NEXT_PUBLIC_API_URL=http://localhost:4000',
+  );
+}
+
+export async function fetchJSON<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API}${path}`, {
+    cache: 'no-store',
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers || {}),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`API ${res.status} ${res.statusText} at ${path} — ${text || 'no body'}`);
+  }
+
+  return res.json() as Promise<T>;
+}
+
+export { API };
+ 68 changes: 68 additions & 0 deletions68  
+frontend/lib/crypto.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,68 @@
+// frontend/lib/crypto.ts
+// Zero-dependency helpers that work in Node/Edge/Browser.
+// Named exports only.
+
+function toUInt32(x: number): number {
+  return x >>> 0;
+}
+
+/** FNV-1a 32-bit hash — simple, fast, deterministic across runtimes. */
+export function fnv1a32(input: string): string {
+  let h = 0x811c9dc5; // offset basis
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    // 32-bit multiply by 16777619
+    h = toUInt32(h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)));
+  }
+  return ('00000000' + h.toString(16)).slice(-8);
+}
+
+/** Stable provider hash from id + salt. */
+export function hashProvider(providerId: string, salt: string): string {
+  return fnv1a32(`prov:${salt}:${providerId}`);
+}
+
+/**
+ * Generate a short, URL-safe-ish id from providerId+salt.
+ * Example: uidFrom("openai","prod",10) -> "a1b2c3d4e5"
+ */
+export function uidFrom(providerId: string, salt: string, length = 12): string {
+  const hex = hashProvider(providerId, salt);
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+  let out = '';
+  for (let i = 0; i < hex.length; i += 2) {
+    const byte = parseInt(hex.slice(i, i + 2), 16);
+    out += alphabet[(byte >> 3) & 31] + alphabet[byte & 31];
+  }
+  return out.slice(0, Math.max(1, length));
+}
+
+/** Mask a key for logs/UX (keep start/end visible). */
+export function maskKey(key: string, visible = 4): string {
+  if (!key) return '';
+  const v = Math.max(1, visible);
+  if (key.length <= v * 2) return key;
+  return `${key.slice(0, v)}••••${key.slice(-v)}`;
+}
+
+/**
+ * Retrieve a usable API key. Prefers the DB value if present; otherwise uses env.
+ * Pass-through fallback (does not decrypt). Extend later if you store encrypted keys.
+ */
+export type GetKeyArgs = { db?: string | null; env?: string | null };
+
+export function getDecryptedKey(
+  dbOrArgs?: string | GetKeyArgs | null,
+  envMaybe?: string | null,
+): string | null {
+  if (dbOrArgs && typeof dbOrArgs === 'object') {
+    const db = (dbOrArgs.db ?? '').trim();
+    if (db) return db;
+    const env = (dbOrArgs.env ?? '').trim();
+    return env || null;
+  }
+  const db = ((dbOrArgs as string | null) ?? '').toString().trim();
+  if (db) return db;
+  const env = (envMaybe ?? '').toString().trim();
+  return env || null;
+}
+ 2 changes: 2 additions & 0 deletions2  
+frontend/lib/db.d.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,2 @@
+declare const prisma: any;
+export default prisma;
+ 4 changes: 4 additions & 0 deletions4  
+frontend/lib/db.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,4 @@
+// Temporary stub to satisfy imports during deploy.
+// Replace with a real Prisma client (in the API) later.
+const prisma: any = {};
+export default prisma;
+ 26 changes: 26 additions & 0 deletions26  
+frontend/lib/flag.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿/**
+ * Convert a 2-letter ISO country code to a flag emoji.
+ * Falls back gracefully if the code is missing/invalid.
+ */
+const PRESET: Record<string, string> = {
+  GB: 'ðŸ‡¬ðŸ‡§',
+  US: 'ðŸ‡ºðŸ‡¸',
+  AU: 'ðŸ‡¦ðŸ‡º',
+  NZ: 'ðŸ‡³ðŸ‡¿',
+  CA: 'ðŸ‡¨ðŸ‡¦',
+  IE: 'ðŸ‡®ðŸ‡ª',
+};
+
+export function flagEmoji(code?: string): string {
+  if (!code) return 'ðŸ³ï¸';
+  const cc = code.toUpperCase().trim();
+  if (PRESET[cc]) return PRESET[cc];
+  if (!/^[A-Z]{2}$/.test(cc)) return 'ðŸ³ï¸';
+
+  // Build from regional indicator symbols
+  const A = 'A'.charCodeAt(0);
+  const base = 0x1f1e6; // ðŸ‡¦
+  const chars = [...cc].map((c) => String.fromCodePoint(base + (c.charCodeAt(0) - A)));
+  return chars.join('');
+}
+export default flagEmoji;
+ 12 changes: 7 additions & 5 deletions12  
+frontend/lib/sendChat.ts
+Original file line number	Diff line number	Diff line change
+@@ -1,8 +1,10 @@
+export async function sendChat(messages: {role:"system"|"user"|"assistant", content:string}[]) {
+  const r = await fetch("http://localhost:4000/api/ai/openai/chat", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ model: "gpt-4o-mini", temperature: 0.2, messages })
+export async function sendChat(
+  messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
+) {
+  const r = await fetch('http://localhost:4000/api/ai/openai/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'gpt-4o-mini', temperature: 0.2, messages }),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(JSON.stringify(data));
+  20 changes: 11 additions & 9 deletions20  
+frontend/lib/sunrise.ts
+Original file line number	Diff line number	Diff line change
+@@ -17,29 +17,31 @@ export function sunriseUtc(date: Date, { lat, lon }: LatLng): Date | null {
+  const zenith = 90.833;
+  const N = dayOfYear(date);
+  const lngHour = lon / 15;
+  const t = N + ((6 - lngHour) / 24);
+  const M = (0.9856 * t) - 3.289;
+  let L = M + (1.916 * Math.sin(deg2rad(M))) + (0.020 * Math.sin(2 * deg2rad(M))) + 282.634;
+  L = ((L + 360) % 360);
+  const t = N + (6 - lngHour) / 24;
+  const M = 0.9856 * t - 3.289;
+  let L = M + 1.916 * Math.sin(deg2rad(M)) + 0.02 * Math.sin(2 * deg2rad(M)) + 282.634;
+  L = (L + 360) % 360;
+  let RA = rad2deg(Math.atan(0.91764 * Math.tan(deg2rad(L))));
+  RA = ((RA + 360) % 360);
+  const Lquadrant  = Math.floor(L / 90) * 90;
+  RA = (RA + 360) % 360;
+  const Lquadrant = Math.floor(L / 90) * 90;
+  const RAquadrant = Math.floor(RA / 90) * 90;
+  RA = (RA + (Lquadrant - RAquadrant)) / 15;
+  const sinDec = 0.39782 * Math.sin(deg2rad(L));
+  const cosDec = Math.cos(Math.asin(sinDec));
+  const cosH = (Math.cos(deg2rad(zenith)) - (sinDec * Math.sin(deg2rad(lat)))) / (cosDec * Math.cos(deg2rad(lat)));
+  const cosH =
+    (Math.cos(deg2rad(zenith)) - sinDec * Math.sin(deg2rad(lat))) /
+    (cosDec * Math.cos(deg2rad(lat)));
+  if (cosH > 1 || cosH < -1) return null;
+  const H = 360 - rad2deg(Math.acos(cosH));
+  const Hhours = H / 15;
+  const T = Hhours + RA - (0.06571 * t) - 6.622;
+  const T = Hhours + RA - 0.06571 * t - 6.622;
+  let UT = (T - lngHour) % 24;
+  if (UT < 0) UT += 24;
+  const y = date.getUTCFullYear();
+  const m = date.getUTCMonth();
+  const d = date.getUTCDate();
+  const hours = Math.floor(UT);
+  const minutes = Math.floor((UT - hours) * 60);
+  const seconds = Math.round((((UT - hours) * 60) - minutes) * 60);
+  const seconds = Math.round(((UT - hours) * 60 - minutes) * 60);
+  return new Date(Date.UTC(y, m, d, hours, minutes, seconds));
+}
+ 8 changes: 8 additions & 0 deletions8  
+frontend/lib/utils.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,8 @@
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+import type { ClassValue } from 'clsx';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+ 4 changes: 4 additions & 0 deletions4  
+frontend/lint-staged.config.cjs
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,4 @@
+module.exports = {
+  '**/*.{ts,tsx}': ['eslint --fix', 'prettier --write'],
+  '**/*.{json,md,css}': ['prettier --write']
+};
+ 14 changes: 7 additions & 7 deletions14  
+frontend/middleware.ts
+Original file line number	Diff line number	Diff line change
+@@ -1,17 +1,17 @@
+// frontend/middleware.ts
+import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
+const USER = process.env.BASIC_AUTH_USER;
+const PASS = process.env.BASIC_AUTH_PASS;
+export function middleware(req: NextRequest) {
+  if (!USER || !PASS) return NextResponse.next();
+  const a = req.headers.get("authorization");
+  if (a?.startsWith("Basic ")) {
+    const [u, p] = Buffer.from(a.split(" ")[1], "base64").toString().split(":");
+  const a = req.headers.get('authorization');
+  if (a?.startsWith('Basic ')) {
+    const [u, p] = Buffer.from(a.split(' ')[1], 'base64').toString().split(':');
+    if (u === USER && p === PASS) return NextResponse.next();
+  }
+  return new NextResponse("Authentication required.", {
+  return new NextResponse('Authentication required.', {
+    status: 401,
+    headers: { "WWW-Authenticate": 'Basic realm="Promagen Preview"' }
+    headers: { 'WWW-Authenticate': 'Basic realm="Promagen Preview"' },
+  });
+}
+export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"] };
+export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'] };
+ 5 changes: 5 additions & 0 deletions5  
+frontend/next-env.d.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,5 @@
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.
+ 22 changes: 18 additions & 4 deletions22  
+frontend/next.config.js
+Original file line number	Diff line number	Diff line change
+@@ -1,7 +1,21 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true }
+  images: {
+    remotePatterns: [
+      // { protocol: "https", hostname: "cdn.yoursite.com" },
+    ],
+  },
+  // Ensure linting runs during `next build`
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+};
+module.exports = nextConfig;
+
+export default nextConfig;
+
+
+
+
+
+
+
+ 6,183 changes: 5,998 additions & 185 deletions6,183  
+frontend/package-lock.json
+Large diffs are not rendered by default.
+
+ 38 changes: 29 additions & 9 deletions38  
+frontend/package.json
+Original file line number	Diff line number	Diff line change
+@@ -1,20 +1,40 @@
+{
+  "name": "promagen-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "dev": "next dev -p 3000",
+    "prebuild": "pnpm run lint",
+    "build": "next build",
+    "start": "next start"
+    "start": "next start -p 3000",
+    "lint": "next lint --max-warnings=0"
+  },
+  "dependencies": {
+    "@types/node": "^24.3.1",
+    "@types/react": "^19.1.12",
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.545.0",
+    "next": "14.2.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "typescript": "^5.9.2"
+    "node-cron": "^4.2.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tailwind-merge": "^3.3.1"
+  },
+  "engines": {
+    "node": ">=18.17"
+  "devDependencies": {
+    "@types/node": "20.11.19",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.1",
+    "autoprefixer": "10.4.19",
+    "eslint": "8.57.0",
+    "eslint-config-next": "^15.5.4",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-unused-imports": "^4.2.0",
+    "postcss": "8.4.35",
+    "tailwindcss": "3.4.10",
+    "typescript": "5.5.4"
+  }
+}
+ 5 changes: 0 additions & 5 deletions5  
+frontend/pages/api/cron/import.ts
+This file was deleted.
+
+ 5 changes: 0 additions & 5 deletions5  
+frontend/pages/api/health.ts
+This file was deleted.
+
+ 11 changes: 0 additions & 11 deletions11  
+frontend/pages/index.tsx
+This file was deleted.
+
+ 3,939 changes: 3,939 additions & 0 deletions3,939  
+frontend/pnpm-lock.yaml
+Large diffs are not rendered by default.
+
+ 6 changes: 6 additions & 0 deletions6  
+frontend/postcss.config.cjs
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,6 @@
+// Tailwind v4 – PostCSS plugin moved here
+module.exports = {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
+ 1 change: 1 addition & 0 deletions1  
+frontend/postcss.config.js
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1 @@
+module.exports={plugins:{tailwindcss:{},autoprefixer:{}}}
+ 17 changes: 17 additions & 0 deletions17  
+frontend/providers/_template.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,17 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+
+export const adapter: ProviderDef = {
+  id: 'yourname',
+  label: 'Your Label', // UI/export label
+  supportsNegative: true, // ← fix (was supportsNegative)
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(_input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending');
+  },
+};
+export default adapter;
+ 32 changes: 32 additions & 0 deletions32  
+frontend/providers/api/_types.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,32 @@
+﻿// frontend/providers/api/_types.ts
+// Canonical base shapes used by all image providers (UI/meta flags here).
+
+export type GenInput = {
+  prompt: string;
+  negative?: string;
+  steps?: number;
+  cfg?: number | string;
+  seed?: number | string;
+  size?: string;
+  style?: string;
+  [key: string]: unknown; // allow provider-specific extras
+};
+
+export type GenOutput = {
+  ok: boolean;
+  url?: string; // image URL / data URI
+  data?: string; // image data / data URI
+  error?: { code: string; message: string };
+  [key: string]: unknown; // provider-specific extras
+};
+
+export type ImageProvider = {
+  // Capability flags the UI/meta layer reads
+  supportsNegative: boolean;
+  supportsSeed: boolean;
+  supportsSize: boolean;
+  supportsStyle: boolean;
+
+  test(): Promise<{ ok: true }>;
+  generate(input: GenInput): Promise<GenOutput>;
+};
+ 17 changes: 17 additions & 0 deletions17  
+frontend/providers/api/adobe.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,17 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const adobeProvider: ProviderDef = {
+  id: 'adobe',
+  label: 'Adobe Firefly',
+  supportsNegative: true, // ← fix (was supportsNegative)
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(_input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+export default adobeProvider;
+ 18 changes: 18 additions & 0 deletions18  
+frontend/providers/api/deepai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,18 @@
+﻿// providers/deepai.ts
+import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const deepaiProvider: ProviderDef = {
+  id: 'deepai',
+  label: 'DeepAI',
+  name: 'deepai',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/edenai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const edenaiProvider: ProviderDef = {
+  id: 'edenai',
+  label: 'Eden AI',
+  name: 'edenai',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/flux_bfl.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const fluxBflProvider: ProviderDef = {
+  id: 'flux-bfl',
+  label: 'FLUX BFL',
+  name: 'flux-bfl',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 21 changes: 21 additions & 0 deletions21  
+frontend/providers/api/google_vertex.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,21 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const googleVertexProvider: ProviderDef = {
+  id: 'google-vertex',
+  label: 'Google Vertex',
+  name: 'google-vertex',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // TODO: wire real Vertex call + auth using google-auth-library (server-side only)
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 21 changes: 21 additions & 0 deletions21  
+frontend/providers/api/hive.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,21 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const lexicaProvider: ProviderDef = {
+  id: 'hive',
+  label: 'Hive',
+  name: 'hive',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true, // ← this was missing
+  // supportsModelSelect: true,  // only if this adapter actually needs it
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 19 changes: 19 additions & 0 deletions19  
+frontend/providers/api/leonardo.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,19 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const leonardoProvider: ProviderDef = {
+  id: 'leonardo',
+  label: 'Leonardo',
+  name: 'leonardo',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true, // ← add this
+
+  async test() {
+    return { ok: true };
+  },
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/lexica.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const lexicaProvider: ProviderDef = {
+  id: 'lexica',
+  label: 'Lexica',
+  name: 'lexica',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true, // ← add this
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/novelai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const noveliaProvider: ProviderDef = {
+  id: 'novelia',
+  label: 'Novelia',
+  name: 'novelia',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true, // ← add this
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/openai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const openaiProvider: ProviderDef = {
+  id: 'openai',
+  label: 'OpenAI',
+  name: 'openai',
+
+  supportsNegative: false,
+  supportsSeed: false,
+  supportsSize: true,
+  supportsStyle: true, // ← add this
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/picsart.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const picsartProvider: ProviderDef = {
+  id: 'picsart',
+  label: 'Picsart',
+  name: 'picsart',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true, // ← add this
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 16 changes: 16 additions & 0 deletions16  
+frontend/providers/api/playground.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,16 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const playgroundProvider: ProviderDef = {
+  id: 'playground',
+  label: 'Playground AI',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/recraft.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const recraftProvider: ProviderDef = {
+  id: 'recraft',
+  label: 'Recraft',
+  name: 'recraft',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true, // ← add this
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/runware.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const runwaymlProvider: ProviderDef = {
+  id: 'runwayml',
+  label: 'RunwayML',
+  name: 'runwayml',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true, // ← add this
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/api/stability.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const stabilityProvider: ProviderDef = {
+  id: 'stability',
+  label: 'Stability',
+  name: 'stability',
+
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true, // ← add this
+
+  async test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 13 changes: 13 additions & 0 deletions13  
+frontend/providers/copypaste/a123rf.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,13 @@
+﻿import { PromptFormatter, GenInput } from '../types';
+
+export const a123rfFormatter: PromptFormatter = {
+  name: 'a123rf',
+  format(input: GenInput) {
+    const np = input.negativePrompt ? ` (avoid: ${input.negativePrompt})` : '';
+    const sz = input.width && input.height ? ` [${input.width}x${input.height}]` : '';
+    return {
+      prompt: `${input.prompt}${np}${sz}`,
+      tips: ['Paste into a123rf UI â†’ generate.'],
+    };
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/adobe.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "adobe".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const adobeProvider: ProviderDef = {
+  id: 'adobe',
+  label: 'Adobe Firefly',
+  name: 'ADOBE',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 16 changes: 16 additions & 0 deletions16  
+frontend/providers/copypaste/artistly.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,16 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const artistlyProvider: ProviderDef = {
+  id: 'artistly',
+  label: 'Artistly',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/bing.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "bing".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const bingProvider: ProviderDef = {
+  id: 'bing',
+  label: 'Bing',
+  name: 'BING',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/canva.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "canva".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const canvaProvider: ProviderDef = {
+  id: 'canva',
+  label: 'Canva',
+  name: 'CANVA',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 13 changes: 13 additions & 0 deletions13  
+frontend/providers/copypaste/craiyon.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,13 @@
+﻿import { PromptFormatter, GenInput } from '../types';
+
+export const craiyonFormatter: PromptFormatter = {
+  name: 'craiyon',
+  format(input: GenInput) {
+    const np = input.negativePrompt ? ` (avoid: ${input.negativePrompt})` : '';
+    const sz = input.width && input.height ? ` [${input.width}x${input.height}]` : '';
+    return {
+      prompt: `${input.prompt}${np}${sz}`,
+      tips: ['Paste into craiyon UI â†’ generate.'],
+    };
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/deepai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "deepai".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const deepaiProvider: ProviderDef = {
+  id: 'deepai',
+  label: 'Deepai',
+  name: 'DEEPAI',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/dezgo.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "dezgo".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const dezgoProvider: ProviderDef = {
+  id: 'dezgo',
+  label: 'Dezgo',
+  name: 'DEZGO',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 13 changes: 13 additions & 0 deletions13  
+frontend/providers/copypaste/firefly.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,13 @@
+﻿import { PromptFormatter, GenInput } from '../types';
+
+export const fireflyFormatter: PromptFormatter = {
+  name: 'firefly',
+  format(input: GenInput) {
+    const np = input.negativePrompt ? ` (avoid: ${input.negativePrompt})` : '';
+    const sz = input.width && input.height ? ` [${input.width}x${input.height}]` : '';
+    return {
+      prompt: `${input.prompt}${np}${sz}`,
+      tips: ['Paste into firefly UI â†’ generate.'],
+    };
+  },
+};
+ 16 changes: 16 additions & 0 deletions16  
+frontend/providers/copypaste/flux.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,16 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const fluxProvider: ProviderDef = {
+  id: 'flux',
+  label: 'Flux Schnell',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 16 changes: 16 additions & 0 deletions16  
+frontend/providers/copypaste/fotor.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,16 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const fotorProvider: ProviderDef = {
+  id: 'fotor',
+  label: 'Fotor',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/getty.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "getty".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const gettyProvider: ProviderDef = {
+  id: 'getty',
+  label: 'Getty Images (Generative)',
+  name: 'GETTY',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 16 changes: 16 additions & 0 deletions16  
+frontend/providers/copypaste/i23rf.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,16 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+export const i23rfProvider: ProviderDef = {
+  id: 'i23rf',
+  label: 'I23RF',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/ideogram.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "ideogram".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const ideogramProvider: ProviderDef = {
+  id: 'ideogram',
+  label: 'Ideogram',
+  name: 'IDEOGRAM',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/leonardo.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "leonardo".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const leonardoProvider: ProviderDef = {
+  id: 'leonardo',
+  label: 'Leonardo',
+  name: 'LEONARDO',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/lexica.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "lexica".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const lexicaProvider: ProviderDef = {
+  id: 'lexica',
+  label: 'Lexica',
+  name: 'LEXICA',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/midjourney.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "midjourney".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const midjourneyProvider: ProviderDef = {
+  id: 'midjourney',
+  label: 'Midjourney',
+  name: 'MIDJOURNEY',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 13 changes: 13 additions & 0 deletions13  
+frontend/providers/copypaste/myedit.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,13 @@
+﻿import { PromptFormatter, GenInput } from '../types';
+
+export const myeditFormatter: PromptFormatter = {
+  name: 'myedit',
+  format(input: GenInput) {
+    const np = input.negativePrompt ? ` (avoid: ${input.negativePrompt})` : '';
+    const sz = input.width && input.height ? ` [${input.width}x${input.height}]` : '';
+    return {
+      prompt: `${input.prompt}${np}${sz}`,
+      tips: ['Paste into myedit UI â†’ generate.'],
+    };
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/nightcafe.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "nightcafe".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const nightcafeProvider: ProviderDef = {
+  id: 'nightcafe',
+  label: 'Nightcafe',
+  name: 'NIGHTCAFE',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/openai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "openai".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const openaiProvider: ProviderDef = {
+  id: 'openai',
+  label: 'OpenAI (DALL·E 3)',
+  name: 'OPENAI',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/openart.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "openart".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const openartProvider: ProviderDef = {
+  id: 'openart',
+  label: 'Openart',
+  name: 'OPENART',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/pika.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "pika".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const pikaProvider: ProviderDef = {
+  id: 'pika',
+  label: 'Pika',
+  name: 'PIKA',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/pixlr.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "pixlr".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const pixlrProvider: ProviderDef = {
+  id: 'pixlr',
+  label: 'Pixlr',
+  name: 'PIXLR',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/playground.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "playground".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const playgroundProvider: ProviderDef = {
+  id: 'playground',
+  label: 'Playground',
+  name: 'PLAYGROUND',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/runwayml.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "runwayml".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const runwaymlProvider: ProviderDef = {
+  id: 'runwayml',
+  label: 'Runway',
+  name: 'RUNWAYML',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/stability.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "stability".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const stabilityProvider: ProviderDef = {
+  id: 'stability',
+  label: 'Stability AI',
+  name: 'STABILITY',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/starryai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "starryai".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const starryaiProvider: ProviderDef = {
+  id: 'starryai',
+  label: 'Starryai',
+  name: 'STARRYAI',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 26 changes: 26 additions & 0 deletions26  
+frontend/providers/copypaste/wombo.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,26 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+
+/**
+ * Copy/paste export stub for "wombo".
+ * These files are EXCLUDED from the TS build; they only drive the UI's export/copy flow.
+ */
+export const womboProvider: ProviderDef = {
+  id: 'wombo',
+  label: 'WOMBO',
+  name: 'WOMBO',
+
+  // All flags true so the UI can expose full prompt controls in export flows.
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  test() {
+    return { ok: true };
+  },
+
+  async generate(input: GenInput): Promise<GenOutput> {
+    // No direct API here—this provider is export-only (copy/paste workflow).
+    throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
+  },
+};
+ 18 changes: 18 additions & 0 deletions18  
+frontend/providers/echo.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,18 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+
+export const echoProvider: ProviderDef = {
+  id: 'echo',
+  label: 'echo (dev)',
+  supportsNegative: false,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true };
+  },
+  async generate(_input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (dev stub)');
+  },
+};
+
+export default echoProvider;
+ 24 changes: 24 additions & 0 deletions24  
+frontend/providers/httpjson.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,24 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+
+function env(name: string, fallback?: string) {
+  const v = process.env[name];
+  if (v === undefined && fallback === undefined) {
+    throw new Error(`Missing env ${name}`);
+  }
+  return v ?? fallback!;
+}
+
+export const httpjsonProvider: ProviderDef = {
+  id: 'httpjson',
+  label: 'HTTP JSON',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+  async test() {
+    return { ok: true as const };
+  },
+  async generate(_input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add endpoint + auth + mapping)');
+  },
+};
+ 22 changes: 22 additions & 0 deletions22  
+frontend/providers/leonardo.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,22 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+
+const LEONARDO_API_KEY = process.env.LEONARDO_API_KEY ?? '';
+const BASE = 'https://cloud.leonardo.ai/api/rest/v1/';
+
+export const leonardoProvider: ProviderDef = {
+  id: 'leonardo',
+  label: 'Leonardo',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  async test() {
+    return { ok: true as const };
+  },
+
+  async generate(_input: GenInput): Promise<GenOutput> {
+    // Wire real API later: fetch(`${BASE}â€¦`, { headers: { Authorization: `Bearer ${LEONARDO_API_KEY}` } })
+    throw new Error('NOT_CONFIGURED: Adapter pending (add endpoint + auth + mapping)');
+  },
+};
+ 20 changes: 20 additions & 0 deletions20  
+frontend/providers/openai.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,20 @@
+﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+
+export const openaiProvider: ProviderDef = {
+  id: 'openai',
+  label: 'OpenAI',
+
+  // canonical flags
+  supportsNegative: false,
+  supportsSeed: false,
+  supportsSize: true,
+  supportsStyle: true,
+
+  async test() {
+    return { ok: true } as const;
+  },
+
+  async generate(_input: GenInput): Promise<GenOutput> {
+    throw new Error('NOT_CONFIGURED: Adapter pending (add endpoint + auth)');
+  },
+};
+ 10 changes: 10 additions & 0 deletions10  
+frontend/providers/registry.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,10 @@
+﻿// frontend/providers/registry.ts
+import { leonardoProvider } from './api/leonardo';
+import { openaiProvider } from './api/openai';
+import { stabilityProvider } from './api/stability';
+
+import type { ProviderDef } from './types';
+
+// named imports (match the provider files)
+
+export const REGISTRY: ProviderDef[] = [openaiProvider, stabilityProvider, leonardoProvider];
+ 22 changes: 22 additions & 0 deletions22  
+frontend/providers/stability.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,22 @@
+﻿// frontend/providers/stability.ts
+import type { ProviderDef, GenInput, GenOutput } from './types';
+
+export const stabilityProvider: ProviderDef = {
+  id: 'stability',
+  label: 'Stability AI',
+  supportsNegative: true,
+  supportsSeed: true,
+  supportsSize: true,
+  supportsStyle: true,
+
+  async test() {
+    return { ok: true as const };
+  },
+
+  async generate(_input: GenInput): Promise<GenOutput> {
+    // Wire the real endpoint later (auth + mapping)
+    throw new Error('NOT_CONFIGURED: Adapter pending (add endpoint + auth)');
+  },
+};
+
+export default stabilityProvider; // remove this line if you’re using named imports only
+ 36 changes: 36 additions & 0 deletions36  
+frontend/providers/types.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,36 @@
+﻿// providers/types.ts
+export type GenInput = {
+  prompt: string;
+  negative?: string;
+  steps?: number;
+  cfg?: number;
+  seed?: number;
+  size?: string; // e.g. "1024x1024"
+  style?: string; // e.g. "photographic"
+  [key: string]: unknown;
+};
+
+export type GenOutput = {
+  ok: boolean;
+  url?: string; // image URL or data URI
+  data?: string; // image data / data URI
+  error?: { code: string; message: string };
+  [key: string]: unknown; // provider-specific extras
+};
+
+export type ImageProvider = {
+  // capability flags (singular keys)
+  supportsNegative: boolean;
+  supportsSeed: boolean;
+  supportsSize: boolean;
+  supportsStyle: boolean;
+
+  test(): Promise<{ ok: true }>;
+  generate(input: GenInput): Promise<GenOutput>;
+};
+
+export type ProviderDef = ImageProvider & {
+  id: string; // stable slug e.g., "openai"
+  label: string; // UI/export label
+  name?: string; // optional internal alias
+};
+ 10 changes: 10 additions & 0 deletions10  
+frontend/scripts/set-api-local.ps1
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,10 @@
+# FRONTEND • NEXT.JS
+# Run from: C:\Users\Martin Yarnold\Projects\promagen\frontend
+param(
+  [int]$Port = 4000
+)
+$ErrorActionPreference = "Stop"
+$envFile = ".env.local"
+
+"NEXT_PUBLIC_API_BASE_URL=http://localhost:$Port" | Out-File -FilePath $envFile -Encoding utf8 -NoNewline
+Write-Host "Frontend now points to LOCAL API → http://localhost:$Port"
+ 8 changes: 8 additions & 0 deletions8  
+frontend/scripts/set-api-prod.ps1
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,8 @@
+# FRONTEND • NEXT.JS
+# Run from: C:\Users\Martin Yarnold\Projects\promagen\frontend
+$ErrorActionPreference = "Stop"
+$envFile = ".env.local"
+
+if (Test-Path $envFile) { Remove-Item $envFile -Force }
+'NEXT_PUBLIC_API_BASE_URL=https://api.promagen.com' | Out-File -FilePath $envFile -Encoding utf8 -NoNewline
+Write-Host "Frontend now points to PROD API → https://api.promagen.com"
+ 10 changes: 8 additions & 2 deletions10  
+frontend/styles/globals.css
+Original file line number	Diff line number	Diff line change
+@@ -1,2 +1,8 @@
+html,body { margin:0; padding:0; }
+* { box-sizing: border-box; }
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+* {
+  box-sizing: border-box;
+}
+ 6 changes: 6 additions & 0 deletions6  
+frontend/tailwind.config.cjs
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,6 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
+  theme: { extend: {} },
+  plugins: [],
+};
+ 2 changes: 2 additions & 0 deletions2  
+frontend/tailwind.config.js
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,2 @@
+/** @type {import("tailwindcss").Config} */
+module.exports = { content: ["./app/**/*.{ts,tsx}","./components/**/*.{ts,tsx}"], theme: { extend: {} }, plugins: [] };
+ 17 changes: 11 additions & 6 deletions17  
+frontend/tsconfig.json
+Original file line number	Diff line number	Diff line change
+@@ -1,19 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": false,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "plugins": [{ "name": "next" }]
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "providers/copypaste/**"]
+}
+ 1 change: 1 addition & 0 deletions1  
+frontend/tsconfig.tsbuildinfo
+Large diffs are not rendered by default.
+
+ 17 changes: 17 additions & 0 deletions17  
+frontend/types.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,17 @@
+﻿export type GenInput = { prompt: string };
+
+export type GenOutput = {
+  url?: string; // e.g. CDN URL for the image
+  data?: string; // base64 payload (optional)
+  error?: string; // provider-specific failure message
+};
+
+/** The promise that resolves to a health result */
+export type PromiseGenHealth = Promise<{ ok: boolean; message?: string }>;
+
+export interface ImageProvider {
+  id: string; // short id used in config URLs
+  label: string; // human label in UI
+  test?: () => PromiseGenHealth; // optional health probe
+  generate: (input: GenInput) => Promise<GenOutput>;
+}
+ 66 changes: 66 additions & 0 deletions66  
+frontend/utils/api.ts
+Original file line number	Diff line number	Diff line change
+@@ -0,0 +1,66 @@
+// FRONTEND • utils/api.ts
+// Minimal wrapper: timeout, JSON typing, optional X-Request-ID passthrough.
+
+export class ApiError extends Error {
+  status: number;
+  body: unknown;
+  requestId?: string;
+  constructor(status: number, body: unknown, requestId?: string) {
+    super(typeof (body as any)?.error === 'string' ? (body as any).error : `API ${status}`);
+    this.status = status;
+    this.body = body;
+    this.requestId = requestId;
+  }
+}
+
+type ApiOptions = {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  headers?: HeadersInit;
+  body?: any;
+  timeoutMs?: number; // default 10s
+  requestId?: string; // if provided, forwarded as X-Request-ID
+  cache?: RequestCache; // e.g. "no-store"
+  next?: NextFetchRequestConfig; // for Next.js caching hints
+};
+
+const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+
+export async function apiFetch<T = any>(path: string, opts: ApiOptions = {}) {
+  const { method = 'GET', headers, body, timeoutMs = 10_000, requestId, cache, next } = opts;
+
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(requestId ? { 'X-Request-ID': requestId } : {}),
+      ...headers,
+    },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal: controller.signal,
+    cache,
+    next,
+  }).finally(() => clearTimeout(t));
+
+  const resReqId = res.headers.get('x-request-id') ?? requestId;
+  const text = await res.text();
+  let data: any = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  if (!res.ok) {
+    throw new ApiError(res.status, data, resReqId || undefined);
+  }
+
+  return {
+    data: data as T,
+    status: res.status,
+    headers: res.headers,
+    requestId: resReqId || undefined,
+  };
+}
+Footer
+© 2025 GitHub, Inc.
+Footer navigation
+Terms
+Privacy
+Security
+Status
+Community
+Docs
+Contact
+Manage cookies
+Do not share my personal information
