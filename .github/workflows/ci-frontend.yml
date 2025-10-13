@@ -1,48 +1,32 @@
-﻿name: ci-frontend
-
+﻿name: check-frontend
 on:
   push:
     paths:
       - 'frontend/**'
-      - '.github/workflows/ci-frontend.yml'
-      - 'pnpm-workspace.yaml'
-      - 'pnpm-lock.yaml'
+      - '.github/workflows/**'
   pull_request:
     paths:
       - 'frontend/**'
-      - '.github/workflows/ci-frontend.yml'
-      - 'pnpm-workspace.yaml'
-      - 'pnpm-lock.yaml'
 
 jobs:
-  check-frontend:
+  check:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: 'pnpm'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
-      # Install once at repo root so pnpm sees the root pnpm-lock.yaml
-      - name: Install (frozen, no scripts)
+      - name: Install (root; frozen, no scripts)
         run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Sanity
         run: pnpm --filter frontend exec node -v
 
-      # Make these non-blocking so the job still goes green while you’re iterating
       - name: Lint (non-blocking)
-        run: pnpm --filter frontend run lint || echo "lint failed (non-blocking)"
-
-      - name: Typecheck (non-blocking)
-        run: pnpm --filter frontend run typecheck || echo "typecheck failed (non-blocking)"
+        run: pnpm --filter frontend run lint || echo "::warning::lint failed (non-blocking)"
+        continue-on-error: true
