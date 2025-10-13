@@ -13,13 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Install pnpm first so setup-node can cache it
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install (root; frozen, no scripts)
         run: pnpm install --frozen-lockfile --ignore-scripts
@@ -28,5 +32,5 @@ jobs:
         run: pnpm --filter frontend exec node -v
 
       - name: Lint (non-blocking)
-        run: pnpm --filter frontend run lint || echo "::warning::lint failed (non-blocking)"
+        run: pnpm --filter frontend run lint || echo '::warning::lint failed (non-blocking)'
         continue-on-error: true
