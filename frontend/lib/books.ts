@@ -1,14 +1,29 @@
-﻿// Minimal helpers used by docs/test pages that import `metaOf`.
-// Keep types loose; wire to real Metadata later if needed.
+﻿// Tiny docs helper stubs so pages like /app/docs/** can compile.
 
-export type Meta = Record<string, any>;
+export type Book = {
+  id: string;
+  title: string;
+  md?: string;      // markdown source (optional)
+  html?: string;    // rendered HTML (optional)
+  sections?: any[]; // keep loose for now
+};
 
-export function metaOf(meta: Meta = {}): Meta {
-  return {
-    title: meta.title ?? 'Promagen',
-    description: meta.description ?? '',
-    ...meta,
-  };
+// Index of known books (fill in later)
+const BOOKS: Record<string, Book> = {
+  developers: { id: 'developers', title: 'Developers Book' },
+  users: { id: 'users', title: 'Users Book' },
+};
+
+// Named export used by pages: getBook('developers')
+export function getBook(id: string): Book {
+  return BOOKS[id] ?? { id, title: id };
 }
 
-export default metaOf;
+// Some pages import meta helpers
+export type Meta = Record<string, any>;
+export function metaOf(meta: Meta = {}): Meta {
+  return { title: meta.title ?? 'Promagen', description: meta.description ?? '', ...meta };
+}
+
+// Also allow default import style:  import getBook from '@/lib/books'
+export default getBook;
