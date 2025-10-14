@@ -1,4 +1,3 @@
-// frontend/app/health-check/page.tsx
 import { fetchJSON, API } from '../../lib/api';
 
 type Health = { ok: boolean; service: string; time: string };
@@ -19,7 +18,7 @@ export default async function HealthCheckPage() {
 
       <div className="rounded-2xl border p-4">
         <p className="mb-2">
-          Frontend → API: <code>{API}</code>
+          Frontend → API: <code>{API.baseUrl}</code>
         </p>
 
         {data ? (
@@ -29,10 +28,13 @@ export default async function HealthCheckPage() {
         ) : (
           <div className="text-red-600">
             Failed to fetch <code>/health</code>
-            <pre className="mt-2 overflow-auto rounded bg-black/5 p-3 text-sm">{error}</pre>
+            {error ? (
+              <pre className="mt-2 overflow-auto rounded bg-black/5 p-3 text-sm">{error}</pre>
+            ) : null}
           </div>
         )}
       </div>
     </main>
   );
 }
+
