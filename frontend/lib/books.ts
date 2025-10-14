@@ -1,29 +1,47 @@
-﻿// Tiny docs helper stubs so pages like /app/docs/** can compile.
+﻿// Docs/book helpers — relaxed types so pages compile safely.
+
+export type BookMeta = {
+  title?: string;
+  subtitle?: string;
+  [k: string]: any;
+};
 
 export type Book = {
   id: string;
   title: string;
-  md?: string;      // markdown source (optional)
-  html?: string;    // rendered HTML (optional)
-  sections?: any[]; // keep loose for now
+  meta?: BookMeta;   // some pages read book.meta?.*
+  meta2?: BookMeta;  // some pages read book.meta2?.*
+  md?: string;
+  html?: string;
+  sections?: any[];
 };
 
-// Index of known books (fill in later)
+// Minimal registry; fill out later
 const BOOKS: Record<string, Book> = {
-  developers: { id: 'developers', title: 'Developers Book' },
-  users: { id: 'users', title: 'Users Book' },
+  developers: {
+    id: 'developers',
+    title: 'Developers Book',
+    meta: { title: 'Developers Book' },
+    meta2: { title: 'Developers Book' },
+  },
+  users: {
+    id: 'users',
+    title: 'Users Book',
+    meta: { title: 'Users Book' },
+    meta2: { title: 'Users Book' },
+  },
 };
 
-// Named export used by pages: getBook('developers')
+// Named helper used by pages
 export function getBook(id: string): Book {
   return BOOKS[id] ?? { id, title: id };
 }
 
-// Some pages import meta helpers
+// Some pages import metaOf()
 export type Meta = Record<string, any>;
 export function metaOf(meta: Meta = {}): Meta {
   return { title: meta.title ?? 'Promagen', description: meta.description ?? '', ...meta };
 }
 
-// Also allow default import style:  import getBook from '@/lib/books'
+// Default import convenience
 export default getBook;
