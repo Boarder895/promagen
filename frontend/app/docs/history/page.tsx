@@ -1,6 +1,12 @@
 // app/docs/history/page.tsx
 import { getBook, metaOf } from "@/lib/books";
 
+function formatDate(d?: string | number | Date | null) {
+  if (d == null) return "";
+  const asDate = d instanceof Date ? d : new Date(d);
+  return isNaN(asDate.getTime()) ? String(d) : asDate.toLocaleString();
+}
+
 export default function HistoryPage() {
   const book = getBook("history");
   const meta = metaOf(book);
@@ -20,7 +26,7 @@ export default function HistoryPage() {
             <p className="opacity-80">{s.summary}</p>
             <div className="text-xs opacity-60 mt-2">
               Status: {s.status}
-              {s.lastUpdated ? ` � Updated: ${s.lastUpdated}` : null}
+              {s.lastUpdated ? ` • Updated: ${formatDate(s.lastUpdated)}` : null}
             </div>
           </article>
         ))}
@@ -35,7 +41,7 @@ export default function HistoryPage() {
             {entries.map((e) => (
               <li key={e.id} className="rounded-lg border p-3">
                 <div className="text-sm">{e.text}</div>
-                {e.date ? <div className="text-xs opacity-60 mt-1">{e.date}</div> : null}
+                {e.date ? <div className="text-xs opacity-60 mt-1">{formatDate(e.date)}</div> : null}
               </li>
             ))}
           </ul>
@@ -44,6 +50,7 @@ export default function HistoryPage() {
     </main>
   );
 }
+
 
 
 
