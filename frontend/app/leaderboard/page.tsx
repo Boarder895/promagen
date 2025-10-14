@@ -1,29 +1,43 @@
 'use client';
 
 import React from 'react';
-import { PROVIDERS, type ProviderMeta } from '@/lib/providers';
+import {
+  PROVIDERS,
+  type Provider,
+  type ProviderMeta,
+  getProviderMeta,
+} from '@/lib/providers';
 
-// Row = provider + demo score for compile sanity.
-// Replace scoring with your 7-criteria weighted calc later.
-type Row = ProviderMeta & { score: number; uiOnly: boolean };
-
-const toScore = (p: ProviderMeta): number => {
-  // Safe boolean reads for optional fields
-  const supports = p.supportsAutomation === true ? 1 : 0;
-  const hasAff   = p.hasAffiliate === true ? 1 : 0;
-
-  // Simple, deterministic demo score
-  // API/supportsAutomation is dominant; affiliate is a small bump.
-  return Math.max(0, supports * 1.0 + hasAff * 0.1);
+// Row = Provider data + computed score + a couple of derived flags
+type Row = Provider & {
+  score: number;
+  uiOnly: boolean;
+  supportsAutomation?: boolean;
+  hasAffiliate?: boolean;
 };
+
+// Score from meta (stub logic; replace with your 7-criteria calc later)
+function toScore(meta?: ProviderMeta): number {
+  const supports = meta?.criteria?.automation && meta.criteria.automation > 0 ? 1 : 0;
+  const hasAff = 0; // no affiliate signal yet; keep as 0 until we add one
+  return Math.max(0, supports * 1.0 + hasAff * 0.1);
+}
 
 export default function LeaderboardPage() {
   const rows: Row[] = PROVIDERS
-    .map((p) => ({
-      ...p,
-      uiOnly: p.hasApi === false,         // derive instead of reading a missing field
-      score: toScore(p),
-    }))
+    .map((p) => {
+      const meta = getProviderMeta(p.id);
+      const hasApi = p.apiEnabled === true;
+      const supportsAutomation = (meta?.criteria?.automation ?? 0) > 0;
+
+      return {
+        ...p,
+        uiOnly: hasApi === false,
+        supportsAutomation,
+        hasAffiliate: false, // placeholder until we have a real signal
+        score: toScore(meta),
+      };
+    })
     .sort((a, b) => b.score - a.score);
 
   return (
@@ -45,16 +59,16 @@ export default function LeaderboardPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((p, i) => (
-              <tr key={p.id} className="border-t">
+            {rows.map((r, i) => (
+              <tr key={r.id} className="border-t">
                 <td className="px-3 py-2">{i + 1}</td>
-                <td className="px-3 py-2 font-medium">{p.name}</td>
-                <td className="px-3 py-2 opacity-70">{p.id}</td>
-                <td className="px-3 py-2">{p.hasApi ? 'Yes' : 'No'}</td>
-                <td className="px-3 py-2">{p.supportsAutomation === true ? 'Yes' : 'No'}</td>
-                <td className="px-3 py-2">{p.hasAffiliate === true ? 'Yes' : 'No'}</td>
-                <td className="px-3 py-2">{p.uiOnly ? 'Yes' : 'No'}</td>
-                <td className="px-3 py-2">{p.score.toFixed(2)}</td>
+                <td className="px-3 py-2 font-medium">{r.name}</td>
+                <td className="px-3 py-2 opacity-70">{r.id}</td>
+                <td className="px-3 py-2">{r.apiEnabled ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{r.supportsAutomation ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{r.hasAffiliate ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{r.uiOnly ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{r.score.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -62,11 +76,12 @@ export default function LeaderboardPage() {
       </div>
 
       <p className="text-xs text-gray-500 mt-3">
-        Demo scoring for compile sanity. We’ll swap in the 7-criteria weighted score later.
+        Demo scoring only; we’ll swap in the 7-criteria weighted score later.
       </p>
     </main>
   );
 }
+
 
 
 
