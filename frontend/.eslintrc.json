@@ -1,6 +1,5 @@
 {
   "root": true,
-<<<<<<< HEAD
   "extends": [
     "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended",
@@ -31,34 +30,4 @@
       }
     ]
   }
-=======
-  "extends": ["next/core-web-vitals", "plugin:@typescript-eslint/recommended"],
-  "parser": "@typescript-eslint/parser",
-  "plugins": ["@typescript-eslint"],
-  "rules": {
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      {
-        "argsIgnorePattern": "^_",
-        "varsIgnorePattern": "^_",
-        "caughtErrorsIgnorePattern": "^_"
-      }
-    ],
-    "no-console": ["warn", { "allow": ["warn", "error"] }]
-  },
-  "overrides": [
-    {
-      "files": ["**/*.d.ts"],
-      "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
-      }
-    },
-    {
-      "files": ["**/*.ts", "**/*.tsx"],
-      "rules": {
-        "@typescript-eslint/no-explicit-any": "warn"
-      }
-    }
-  ]
->>>>>>> 2ae501b4f413143a9435e5c577312aa7dbda9955
 }

@@ -1,16 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-<<<<<<< HEAD
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-=======
-    "lib": ["DOM", "ES2022"],
->>>>>>> 2ae501b4f413143a9435e5c577312aa7dbda9955
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
@@ -20,7 +16,6 @@
     "allowJs": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
-<<<<<<< HEAD
     "jsx": "preserve",
     "incremental": true,
     "baseUrl": ".",
@@ -32,17 +27,4 @@
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "providers/copypaste/**"]
 }
-=======
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./app/*", "./src/*", "./*"]
-    },
-    "types": ["node"],
-    "incremental": true,
-    "esModuleInterop": true,
-    "plugins": [{ "name": "next" }]
-  },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
-}
->>>>>>> 2ae501b4f413143a9435e5c577312aa7dbda9955
+
