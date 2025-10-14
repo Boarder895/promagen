@@ -1,43 +1,28 @@
-// lib/hooks/usePrompts.ts
-// Minimal, compile-safe hook used by Prompt* components
-
-import { prompts as DATA } from '@/data/prompts';
-
+// Lightweight hook + types to satisfy prompt pages/components.
+// If you have real data at src/data/prompts, this will use it.
 export type Prompt = {
   id: string;
   title: string;
-  prompt?: string;        // some code uses p.prompt
-  text?: string;          // some code uses p.text
-  tags?: string[];
-  href?: string;          // some code links to p.href
+  tags: string[];
+  prompt?: string;
+  href?: string;
+  [k: string]: unknown;
 };
 
-export type UsePromptsResult = {
-  filtered: Prompt[];
-  loading: boolean;
-  error: { message: string } | null; // components read error.message
-};
-
-export default function usePrompts({
-  params,
-  allPrompts,
-}: {
-  params?: Record<string, string>;
-  allPrompts?: Prompt[];
-} = {}): UsePromptsResult {
-  const list: Prompt[] = (allPrompts ?? (DATA as unknown as Prompt[])) ?? [];
-
-  // very light client-side filter; keep it permissive
-  let filtered = list;
-  const q = params?.q?.toLowerCase?.().trim();
-  if (q) {
-    filtered = list.filter((p) =>
-      [p.title, p.prompt, p.text, ...(p.tags ?? [])]
-        .filter(Boolean)
-        .some((s) => String(s).toLowerCase().includes(q))
-    );
-  }
-
-  return { filtered, loading: false, error: null };
+let ALL: Prompt[] = [];
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require('@/data/prompts');
+  const raw = (mod?.default ?? mod?.prompts ?? mod) as any;
+  if (Array.isArray(raw)) ALL = raw;
+} catch {
+  // fine: stay empty
 }
 
+export default function usePrompts(_opts?: {
+  params?: Record<string, string>;
+  allPrompts?: Prompt[];
+}) {
+  const data = _opts?.allPrompts ?? ALL;
+  return { filtered: data, loading: false, error: null as null | string };
+}

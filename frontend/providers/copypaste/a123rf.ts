@@ -1,4 +1,4 @@
-﻿import { PromptFormatter, GenInput } from '../types';
+import { PromptFormatter, GenInput } from '../types';
 
 export const a123rfFormatter: PromptFormatter = {
   name: 'a123rf',
@@ -7,7 +7,7 @@ export const a123rfFormatter: PromptFormatter = {
     const sz = input.width && input.height ? ` [${input.width}x${input.height}]` : '';
     return {
       prompt: `${input.prompt}${np}${sz}`,
-      tips: ['Paste into a123rf UI â†’ generate.'],
+      tips: ['Paste into a123rf UI → generate.'],
     };
   },
 };

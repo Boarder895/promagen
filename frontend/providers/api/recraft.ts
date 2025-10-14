@@ -1,4 +1,4 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const recraftProvider: ProviderDef = {
   id: 'recraft',
@@ -8,7 +8,7 @@ export const recraftProvider: ProviderDef = {
   supportsNegative: true,
   supportsSeed: true,
   supportsSize: true,
-  supportsStyle: true, // ← add this
+  supportsStyle: true, // ? add this
 
   async test() {
     return { ok: true };

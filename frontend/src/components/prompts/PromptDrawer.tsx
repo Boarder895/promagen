@@ -4,7 +4,7 @@ import * as React from 'react';
 import usePrompts, { type Prompt } from '@/lib/hooks/usePrompts';
 
 export type PromptDrawerProps = {
-  params?: Record<string, unknown>;
+  params?: Record<string, string>;
   allPrompts: Prompt[];
   title?: string;
 };
@@ -18,7 +18,7 @@ export const PromptDrawer = ({
 
   if (error) {
     return (
-      <aside className="rounded-xl border p-4 text-red-800 bg-red-50">
+      <aside className="rounded-xl border bg-red-50 p-4 text-red-800">
         Error: {String((error as Error).message ?? error)}
       </aside>
     );
@@ -27,7 +27,7 @@ export const PromptDrawer = ({
   if (loading) {
     return (
       <aside className="rounded-xl border p-4">
-        <div className="h-3 w-24 rounded bg-gray-200 animate-pulse" />
+        <div className="h-3 w-24 animate-pulse rounded bg-gray-200" />
       </aside>
     );
   }
@@ -47,10 +47,10 @@ export const PromptDrawer = ({
         {filtered.map((p: Prompt) => (
           <li
             key={p.id}
-            className="rounded-lg border p-3 hover:bg-gray-50 transition-colors"
+            className="rounded-lg border p-3 transition-colors hover:bg-gray-50"
           >
             <div className="text-sm font-medium">{p.title}</div>
-            <div className="text-xs text-gray-600 line-clamp-2 mt-0.5">
+            <div className="mt-0.5 line-clamp-2 text-xs text-gray-600">
               {p.text}
             </div>
           </li>
@@ -60,6 +60,7 @@ export const PromptDrawer = ({
   );
 };
 
+export default PromptDrawer;
 
 
 

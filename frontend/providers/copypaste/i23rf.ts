@@ -1,4 +1,4 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const i23rfProvider: ProviderDef = {
   id: 'i23rf',

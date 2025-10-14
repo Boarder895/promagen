@@ -1,4 +1,4 @@
-﻿import { PromptFormatter, GenInput } from '../types';
+import { PromptFormatter, GenInput } from '../types';
 
 export const craiyonFormatter: PromptFormatter = {
   name: 'craiyon',
@@ -7,7 +7,7 @@ export const craiyonFormatter: PromptFormatter = {
     const sz = input.width && input.height ? ` [${input.width}x${input.height}]` : '';
     return {
       prompt: `${input.prompt}${np}${sz}`,
-      tips: ['Paste into craiyon UI â†’ generate.'],
+      tips: ['Paste into craiyon UI → generate.'],
     };
   },
 };

@@ -1,41 +1,37 @@
-// src/components/Header.tsx � uses Next/Image and keeps Status/Health
-import Link from "next/link";
-import Image from "next/image";
-import StatusChip from "@/components/StatusChip";
-import ServiceBanner from "@/components/ServiceBanner";
-import HealthDot from "@/components/health/HealthDot";
+'use client';
+
+import Link from 'next/link';
+import HealthDot from '@/components/health/HealthDot';
+
+// Keep the header lean and independent of Context to avoid type churn.
+// If you want it live-wired later, import useHealth() and pass its status.
 
 export default function Header() {
   return (
-    <>
-      <header className="w-full border-b bg-white/70 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          {/* Brand */}
-          <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Promagen" width={24} height={24} priority />
-            <span className="font-semibold">Promagen</span>
+    <header className="sticky top-0 z-10 w-full border-b bg-white/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 p-3">
+        <Link href="/" className="text-lg font-semibold tracking-tight">
+          Promagen
+        </Link>
+
+        <nav className="flex items-center gap-4 text-sm">
+          <Link href="/providers" className="opacity-80 hover:opacity-100">
+            Providers
+          </Link>
+          <Link href="/prompts" className="opacity-80 hover:opacity-100">
+            Prompts
           </Link>
 
-          {/* Nav */}
-          <nav className="hidden items-center gap-5 sm:flex">
-            <Link href="/leaderboard" className="text-sm text-gray-600 hover:text-gray-900">Leaderboard</Link>
-            <Link href="/prompts" className="text-sm text-gray-600 hover:text-gray-900">Prompts</Link>
-            <Link href="/providers" className="text-sm text-gray-600 hover:text-gray-900">Providers</Link>
-            <Link href="/status" className="rounded-full border px-3 py-1 text-xs text-gray-700 hover:bg-gray-50">Status</Link>
-          </nav>
-
-          {/* Right-side indicators */}
-          <div className="flex items-center gap-4">
-            <StatusChip />
-            <HealthDot label="API" />
+          {/* Static green dot; swap to your context if desired: <HealthDot status={status}/> */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs opacity-70">API</span>
+            <HealthDot status="ok" />
           </div>
-        </div>
-      </header>
-
-      {/* Only shows when degraded/down */}
-      <ServiceBanner />
-    </>
+        </nav>
+      </div>
+    </header>
   );
 }
+
 
 

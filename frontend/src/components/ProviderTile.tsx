@@ -1,61 +1,76 @@
-// ───────────────────────────────────────────────────────────────────────────────
-// File: frontend/src/components/ProviderTile.tsx
-// ───────────────────────────────────────────────────────────────────────────────
-import * as React from 'react';
-import { Button } from './ui/Button';
-import { Chip } from './ui/Chip';
-import { Card, CardBody, CardFooter, CardHeader } from './ui/Card';
+'use client';
 
-type ProviderTileProps = {
+import * as React from 'react';
+import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button';
+import Chip from '@/components/ui/Chip';
+
+type Props = {
   name: string;
-  logoUrl?: string;
-  onRun?: () => void;
-  onCopyOpen?: () => void;
+  description?: string;
   apiEnabled?: boolean;
   affiliate?: boolean;
+  website?: string;
+  onRun?: () => void;
+  onCopyOpen?: () => void;
 };
 
-export const ProviderTile: React.FC<ProviderTileProps> = ({
+export default function ProviderTile({
   name,
-  logoUrl,
-  apiEnabled,
-  affiliate,
+  description,
+  apiEnabled = false,
+  affiliate = false,
+  website,
   onRun,
   onCopyOpen,
-}) => (
-  <Card className="grid place-items-center p-6 text-center">
-    <CardHeader className="w-full flex-col items-center justify-center gap-3 p-0">
-      <div className="size-18 grid place-items-center rounded-2xl bg-slate-50 border border-slate-200">
-        {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt="" className="max-h-12 max-w-12" />
-        ) : (
-          <span className="text-2xl" aria-hidden>🖼️</span>
-        )}
-      </div>
-      <h3 className="text-base font-semibold text-slate-900">{name}</h3>
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        {apiEnabled && <Chip tone="api">⚡ API</Chip>}
-        <Chip tone="copy">✂️ Copy & Open</Chip>
-        {affiliate && <Chip tone="affiliate">💸 Affiliate</Chip>}
-      </div>
-    </CardHeader>
+}: Props) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <span>{name}</span>
+          {apiEnabled && <Chip color="green">⚡ API</Chip>}
+          <Chip color="blue">✂️ Copy &amp; Open</Chip>
+          {affiliate && <Chip color="red">💸 Affiliate</Chip>}
+        </CardTitle>
+        {description ? (
+          <CardDescription>{description}</CardDescription>
+        ) : null}
+      </CardHeader>
 
-    <CardBody className="p-0 pt-4">
-      <p className="text-sm text-slate-600 max-w-[22ch] mx-auto">
-        Run via API when available, or copy and open in the platform.
-      </p>
-    </CardBody>
+      <CardContent>
+        {website ? (
+          <a
+            href={website}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs underline opacity-80"
+          >
+            {website}
+          </a>
+        ) : null}
+      </CardContent>
 
-    <CardFooter className="w-full flex-col gap-3 p-0 pt-6">
-      <Button variant="primary" onClick={onRun} disabled={!apiEnabled} fullWidth>
-        Run in Promagen
-      </Button>
-      <Button variant="secondary" onClick={onCopyOpen} fullWidth>
-        Copy & Open
-      </Button>
-    </CardFooter>
-  </Card>
-);
+      <CardFooter className="flex gap-2">
+        <Button
+          variant="default"
+          onClick={onRun}
+          className="w-full"
+          disabled={!apiEnabled}
+        >
+          Run
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={onCopyOpen}
+          className="w-full"
+        >
+          Copy + Open
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
 
 

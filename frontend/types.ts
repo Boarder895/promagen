@@ -1,4 +1,4 @@
-﻿export type GenInput = { prompt: string };
+export type GenInput = { prompt: string };
 
 export type GenOutput = {
   url?: string; // e.g. CDN URL for the image

@@ -1,12 +1,12 @@
 'use client';
 
-import { Button } from '@/components/ui/button';   // ⬅ lowercase shim
-import { Chip } from '@/components/ui/Chip';        // keep PascalCase (no shim)
-import { Card, CardHeader, CardFooter } from '@/components/ui/card'; // ⬅ lowercase shim
-import { ProgressBar } from '@/components/ui/ProgressBar';           // keep PascalCase (no shim)
+import Button from '@/components/ui/Button';
+import Chip from '@/components/ui/Chip';
+import { Card, CardHeader, CardFooter } from '@/components/ui/Card';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 import { PromptRunnerLayout } from '@/components/layout/PromptRunnerLayout';
 
-function UiShowcasePage() {
+export default function UiShowcasePage() {
   return (
     <PromptRunnerLayout>
       <div className="px-2 md:px-4">
@@ -24,7 +24,7 @@ function UiShowcasePage() {
               <Button className="text-sm px-3 py-1.5">Run</Button>
               <Button className="text-sm px-3 py-1.5 border">Cancel</Button>
 
-              {/* Chip has no `variant` prop; use simple chips */}
+              {/* Chip is a simple pill; no variant prop */}
               <Chip className="text-xs">alpha</Chip>
               <Chip className="text-xs">ready</Chip>
               <Chip className="text-xs">wip</Chip>
@@ -50,14 +50,3 @@ function UiShowcasePage() {
     </PromptRunnerLayout>
   );
 }
-
-export default UiShowcasePage;
-
-
-
-
-
-
-
-
-

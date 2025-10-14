@@ -1,4 +1,4 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const openaiProvider: ProviderDef = {
   id: 'openai',
@@ -8,7 +8,7 @@ export const openaiProvider: ProviderDef = {
   supportsNegative: false,
   supportsSeed: false,
   supportsSize: true,
-  supportsStyle: true, // ← add this
+  supportsStyle: true, // ? add this
 
   async test() {
     return { ok: true };

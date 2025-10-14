@@ -1,4 +1,4 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const leonardoProvider: ProviderDef = {
   id: 'leonardo',
@@ -8,7 +8,7 @@ export const leonardoProvider: ProviderDef = {
   supportsNegative: true,
   supportsSeed: true,
   supportsSize: true,
-  supportsStyle: true, // ← add this
+  supportsStyle: true, // ? add this
 
   async test() {
     return { ok: true };

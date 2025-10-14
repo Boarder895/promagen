@@ -1,4 +1,4 @@
-﻿// frontend/providers/api/_types.ts
+// frontend/providers/api/_types.ts
 // Canonical base shapes used by all image providers (UI/meta flags here).
 
 export type GenInput = {
