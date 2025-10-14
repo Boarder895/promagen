@@ -1,6 +1,6 @@
-﻿// Docs/book helpers — relaxed but *safe* types so pages compile.
+﻿// Docs/book helpers — relaxed but safe types so pages compile.
 
-/** Optional metadata blocks some pages read */
+/** Optional metadata some pages read */
 export type BookMeta = {
   title?: string;
   subtitle?: string;
@@ -12,15 +12,17 @@ export type BookSection = {
   id?: string;
   title?: string;
   summary?: string;
+  status?: string;                 // <-- added
+  lastUpdated?: string | number | Date; // <-- added
 };
 
-/** Book is now guaranteed to have `sections: []` (never undefined) */
+/** Book always has `sections` (never undefined) */
 export type Book = {
   id: string;
   title: string;
   meta?: BookMeta;
   meta2?: BookMeta;
-  sections: BookSection[];   // <-- not optional anymore
+  sections: BookSection[];
   md?: string;
   html?: string;
 };
@@ -32,21 +34,20 @@ const BOOKS: Record<string, Book> = {
     title: 'Developers Book',
     meta:  { title: 'Developers Book' },
     meta2: { title: 'Developers Book' },
-    sections: [],             // <-- present
+    sections: [],
   },
   users: {
     id: 'users',
     title: 'Users Book',
     meta:  { title: 'Users Book' },
     meta2: { title: 'Users Book' },
-    sections: [],             // <-- present
+    sections: [],
   },
 };
 
 /** Named helper used by pages */
 export function getBook(id: string): Book {
   const b = BOOKS[id] ?? { id, title: id, sections: [] };
-  // normalize in case a future entry forgets sections
   return { ...b, sections: b.sections ?? [] };
 }
 
@@ -58,4 +59,5 @@ export function metaOf(meta: Meta = {}): Meta {
 
 /** Default import convenience */
 export default getBook;
+
 
