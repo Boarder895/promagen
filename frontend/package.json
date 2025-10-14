@@ -10,10 +10,10 @@
                     "lint:guard":  "eslint \"src/**/*.{ts,tsx}\" --max-warnings=0",
                     "check:app-structure":  "pwsh -NoProfile -File scripts/check-app-structure.ps1",
                     "books:clean":  "pwsh ./scripts/books-cleanup.ps1",
-                    "rebuild":  "npm run clean:hard && npm ci && npm run build",
+                    "rebuild":  "npm run clean:hard \u0026\u0026 npm ci \u0026\u0026 npm run build",
                     "books:touch":  "node -e \"console.log(\u0027Books dir ok\u0027)\"",
                     "clean:hard":  "pwsh -NoProfile -File scripts/clean.ps1 -Hard",
-                    "rebuild:clean":  "npm run clean && npm run build",
+                    "rebuild:clean":  "npm run clean \u0026\u0026 npm run build",
                     "dev":  "next dev -p 3000",
                     "prepare":  "husky"
                 },
