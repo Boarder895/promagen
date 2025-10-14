@@ -1,35 +1,14 @@
-// Minimal in-memory view over providers + metadata.
-// Keep this tolerant; other pages import it during the great refactor.
+// Minimal stub so admin sync can call a stable function.
+// Exported both as named and default to satisfy any import style.
 
-import {
-  PROVIDERS,
-  PROVIDER_META,
-  type Provider,
-  type ProviderMeta,
-} from '@/lib/providers';
+export type ProviderRefreshResult = {
+  updated: number;
+  message?: string;
+};
 
-// Read list (stable entry point)
-export function getProviders(): Provider[] {
-  return PROVIDERS;
+export async function refreshProviders(): Promise<ProviderRefreshResult> {
+  // TODO: call your backend collector or Prisma updates here.
+  return { updated: 0, message: 'Provider registry refresh (stub).' };
 }
 
-// Convenience meta getter some pages call.
-export function getProviderMeta(id: string): ProviderMeta | undefined {
-  // PROVIDER_META may be sparse in the stub; be permissive.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (PROVIDER_META as any)?.[id];
-}
-
-// “Has API” — for demo/leaderboard usage. Treat presence of any meta as API-capable for now.
-export function providersWithApi(): Provider[] {
-  return PROVIDERS.filter((p) => {
-    // `Provider` has an id in your stubs; cast defensively.
-    const pid = (p as unknown as { id: string }).id;
-    return Boolean(getProviderMeta(pid));
-  });
-}
-
-// Called by the admin sync route. No-op stub that keeps the UI happy.
-export async function refreshProviders(): Promise<{ updated: number; message: string }> {
-  return { updated: 0, message: 'registry refreshed (stub)' };
-}
+export default refreshProviders;

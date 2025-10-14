@@ -1,82 +1,99 @@
-// Admin jobs — frontend stub (Option A) aligned to your Admin UI.
-// Adds `result?: { imageUrl?: string }` and keeps all previously added fields.
+// Named-exports only (Promagen rule).
+// Lightweight client for demo job runs. Uses your versioned API: /api/v1/*
 
-export type AdminJobState = 'queued' | 'running' | 'ok' | 'error'
+export type StartJobPayload = {
+  providerId: string;
+  prompt: string;
+};
 
-export type AdminJob = {
-  id: string
-  provider?: string
-  prompt?: string
-  state: AdminJobState
+export type Job = {
+  id: string;
+  state: "queued" | "running" | "done" | "error";
+  progress?: number;
+  outputUrl?: string | null;
+  error?: string | null;
+};
 
-  // Timeline fields
-  startedAt: number                // when the job started
-  createdAt: number                // legacy alias
-  endedAt?: number
+export type JobEvent =
+  | { type: "progress"; job: Job }
+  | { type: "done"; job: Job }
+  | { type: "error"; job: Job };
 
-  // Progress / timings
-  progress?: number                // 0..100 (your UI uses Math.round(progress))
-  _progress?: number               // legacy alias (0..100)
-  tookMs?: number
-  toolsMs?: number
+export async function startGeneration(payload: StartJobPayload): Promise<string> {
+  const res = await fetch("/api/v1/jobs/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
 
-  // Result & error
-  result?: { imageUrl?: string }   // your UI reads result.imageUrl
-  imageUrl?: string                // legacy convenience (not used by your Admin page)
-  error?: string
-}
-
-/** Demo rows with realistic shape */
-function demoRows(): AdminJob[] {
-  const now = Date.now()
-  const mk = (n: number, state: AdminJobState, prog?: number, img?: string): AdminJob => {
-    const startedAt = now - n * 10_000
-    const endedAt = state === 'ok' ? startedAt + 2_000 : undefined
-    const tookMs = endedAt ? endedAt - startedAt : undefined
-    const toolsMs = endedAt ? Math.round((tookMs ?? 2000) * 0.4) : undefined
-    return {
-      id: `demo-${n}`,
-      provider: n % 2 ? 'openai' : 'stability',
-      prompt: 'demo',
-      state,
-      startedAt,
-      createdAt: startedAt,
-      endedAt,
-      progress: prog,        // 0..100
-      _progress: prog,       // keep alias
-      tookMs,
-      toolsMs,
-      result: img ? { imageUrl: img } : undefined,
-      imageUrl: img
-    }
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`startGeneration failed (${res.status}): ${text}`);
   }
-  return [
-    mk(3, 'ok', 100, 'https://placehold.co/256x256/png'),
-    mk(2, 'running', 60),
-    mk(1, 'ok', 100, 'https://placehold.co/256x256/png')
-  ]
+
+  const data: unknown = await res.json();
+  // Narrow: expect { jobId: string }
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    "jobId" in data &&
+    typeof (data as { jobId: unknown }).jobId === "string"
+  ) {
+    return (data as { jobId: string }).jobId;
+  }
+
+  throw new Error("startGeneration: unexpected response shape");
 }
 
-/** Core list (sorted newest first) */
-export async function listJobs(limit?: number): Promise<AdminJob[]> {
-  const rows = demoRows().sort((a, b) => b.startedAt - a.startedAt)
-  return typeof limit === 'number' ? rows.slice(0, Math.max(0, limit)) : rows
-}
+/**
+ * Stream job events via SSE. Server should send lines like:
+ *  event: progress
+ *  data: {"job":{"id":"...","state":"running","progress":42}}
+ *
+ * Returns a stop() function that closes the stream.
+ */
+export function streamJob(jobId: string, onEvent: (e: JobEvent) => void): () => void {
+  // Ensure client-side usage
+  if (typeof window === "undefined") {
+    return () => {};
+  }
 
-/** Legacy alias used by the admin page */
-export async function getRecentJobs(limit?: number): Promise<AdminJob[]> {
-  return listJobs(limit)
-}
+  const url = `/api/v1/jobs/${encodeURIComponent(jobId)}/stream`;
+  const es = new EventSource(url);
 
-/** Clear finished (no-op stub) */
-export async function clearFinished(): Promise<{ cleared: number }> {
-  return { cleared: 0 }
-}
+  es.addEventListener("progress", (evt) => {
+    try {
+      const parsed = JSON.parse((evt as MessageEvent).data) as { job: Job };
+      onEvent({ type: "progress", job: parsed.job });
+    } catch {
+      // ignore parse errors
+    }
+  });
 
-/** Optional helper */
-export async function getJobById(id: string): Promise<AdminJob | null> {
-  const all = await listJobs()
-  return all.find(j => j.id === id) ?? null
-}
+  es.addEventListener("done", (evt) => {
+    try {
+      const parsed = JSON.parse((evt as MessageEvent).data) as { job: Job };
+      onEvent({ type: "done", job: parsed.job });
+    } finally {
+      es.close();
+    }
+  });
 
+  es.addEventListener("error", (evt) => {
+    try {
+      const parsed = JSON.parse((evt as MessageEvent).data) as { job: Job };
+      onEvent({ type: "error", job: parsed.job });
+    } finally {
+      es.close();
+    }
+  });
+
+  es.onerror = () => {
+    // network/server error — close to avoid zombie connection
+    es.close();
+  };
+
+  return () => es.close();
+}
 
