@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # FRONTEND • NEXT.JS
 # Run from: C:\Users\Martin Yarnold\Projects\promagen\frontend
 param(
@@ -9,9 +8,3 @@ $envFile = ".env.local"
 
 "NEXT_PUBLIC_API_BASE_URL=http://localhost:$Port" | Out-File -FilePath $envFile -Encoding utf8 -NoNewline
 Write-Host "Frontend now points to LOCAL API → http://localhost:$Port"
-=======
-﻿param([int]$Port = 4000)
-$ErrorActionPreference = "Stop"
-"NEXT_PUBLIC_API_BASE_URL=http://localhost:$Port" | Out-File -FilePath ".env.local" -Encoding utf8 -NoNewline
-Write-Host "Frontend now points to LOCAL API → http://localhost:$Port"
->>>>>>> 2ae501b4f413143a9435e5c577312aa7dbda9955

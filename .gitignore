@@ -16,3 +16,5 @@ Thumbs.db
 .next/
 
 frontend/pnpm-lock.yaml
+
+.vercel
