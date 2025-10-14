@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { usePrompts, type Prompt } from "@/lib/hooks/usePrompts";
+import * as React from 'react';
+import usePrompts, { type Prompt } from '@/lib/hooks/usePrompts';
 
 export type PromptDrawerProps = {
   params?: Record<string, unknown>;
@@ -12,14 +12,14 @@ export type PromptDrawerProps = {
 export const PromptDrawer = ({
   params = {},
   allPrompts,
-  title = "Prompts",
+  title = 'Prompts',
 }: PromptDrawerProps) => {
   const { filtered, loading, error } = usePrompts({ params, allPrompts });
 
   if (error) {
     return (
       <aside className="rounded-xl border p-4 text-red-800 bg-red-50">
-        Error: {error.message}
+        Error: {String((error as Error).message ?? error)}
       </aside>
     );
   }
@@ -32,7 +32,7 @@ export const PromptDrawer = ({
     );
   }
 
-  if (!filtered || filtered.length === 0) {
+  if (!filtered?.length) {
     return (
       <aside className="rounded-xl border p-4 text-gray-600">
         <p className="text-sm opacity-70">No prompts yet.</p>
@@ -44,7 +44,7 @@ export const PromptDrawer = ({
     <aside className="space-y-3">
       <div className="text-sm font-semibold">{title}</div>
       <ul className="space-y-2">
-        {filtered.map((p) => (
+        {filtered.map((p: Prompt) => (
           <li
             key={p.id}
             className="rounded-lg border p-3 hover:bg-gray-50 transition-colors"
@@ -59,5 +59,7 @@ export const PromptDrawer = ({
     </aside>
   );
 };
+
+
 
 

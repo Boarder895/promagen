@@ -1,4 +1,4 @@
-﻿// OpenAI adapter â€” uses DB-stored key if available, else env
+// OpenAI adapter — uses DB-stored key if available, else env
 import { getDecryptedKey } from '../../lib/crypto'; // your existing helper
 
 import type { ProviderAdapter } from './index';

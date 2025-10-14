@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { API_BASE } from "@/lib/api";
+import API_BASE from "@/lib/api";
 
 type State =
   | { kind: "idle" }
@@ -43,7 +43,10 @@ export default function ApiStatusBadge({
       const when = new Date().toLocaleTimeString();
       setState({
         kind: "down",
-        error: e?.name === "AbortError" ? `timeout ${timeoutMs}ms` : String(e?.message || e),
+        error:
+          e?.name === "AbortError"
+            ? `timeout ${timeoutMs}ms`
+            : String(e?.message || e),
         when,
       });
     } finally {
@@ -60,7 +63,7 @@ export default function ApiStatusBadge({
       if (timer.current) window.clearInterval(timer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [API_BASE, intervalMs, timeoutMs]);
+  }, [intervalMs, timeoutMs]);
 
   const chip = useMemo(() => {
     if (state.kind === "up") {
@@ -103,8 +106,16 @@ export default function ApiStatusBadge({
         title={`API: ${state.kind}${"when" in state ? ` · ${state.when}` : ""}`}
         className="inline-flex items-center gap-2"
       >
-        {state.kind === "up" ? <Dot color="#16a34a" /> : state.kind === "down" ? <Dot color="#dc2626" /> : <Dot color="#6b7280" />}
-        <span className="text-sm font-mono">{state.kind === "up" ? `${(state as any).ms}ms` : state.kind}</span>
+        {state.kind === "up" ? (
+          <Dot color="#16a34a" />
+        ) : state.kind === "down" ? (
+          <Dot color="#dc2626" />
+        ) : (
+          <Dot color="#6b7280" />
+        )}
+        <span className="text-sm font-mono">
+          {state.kind === "up" ? `${(state as any).ms}ms` : state.kind}
+        </span>
       </button>
     );
   }
@@ -139,10 +150,21 @@ function Dot({ color }: { color: string }) {
 function Spinner() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" className="animate-spin">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.25" />
-      <path d="M22 12a10 10 0 0 1-10 10" fill="none" stroke="currentColor" strokeWidth="2" />
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="2"
+        fill="none"
+        opacity="0.25"
+      />
+      <path
+        d="M22 12a10 10 0 0 1-10 10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
     </svg>
   );
 }
-
-

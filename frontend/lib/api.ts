@@ -1,20 +1,20 @@
-// Minimal API helpers for health-check and docs pages.
+// Tiny API helpers used by health/meta/test pages.
 
-export const API = {
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'https://api.promagen.com',
-};
+export const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.promagen.com';
+const API_BASE = API;
+export default API_BASE;
 
-// Generic JSON fetcher (stubbed; safe default)
-export async function fetchJSON<T = any>(input: string, init?: RequestInit): Promise<T> {
-  // In real code, you’d call fetch(`${API.baseUrl}${input}`, init) and parse JSON.
-  // For build-unblock, return an empty object as T.
-  return {} as T;
+export async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) throw new Error(`fetchJSON ${res.status}`);
+  return (await res.json()) as T;
 }
 
-// Some pages expect getMeta()
-export async function getMeta() {
-  return { title: 'Promagen', description: 'Stub meta' };
+// Some pages call getMeta('key'); make the key optional.
+export type Meta = { title?: string; description?: string };
+export function getMeta(key?: string): Meta {
+  return key
+    ? { title: key.split('/').pop() || 'Promagen', description: 'Stub meta' }
+    : { title: 'Promagen', description: 'Stub meta' };
 }
 
-// Default export allowed too: import getMeta from '@/lib/api'
-export default getMeta;

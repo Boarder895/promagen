@@ -1,9 +1,9 @@
 'use client';
 
-import { Button } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Chip';
-import { Card, CardHeader, CardFooter } from '@/components/ui/Card';
-import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Button } from '@/components/ui/button';   // ⬅ lowercase shim
+import { Chip } from '@/components/ui/Chip';        // keep PascalCase (no shim)
+import { Card, CardHeader, CardFooter } from '@/components/ui/card'; // ⬅ lowercase shim
+import { ProgressBar } from '@/components/ui/ProgressBar';           // keep PascalCase (no shim)
 import { PromptRunnerLayout } from '@/components/layout/PromptRunnerLayout';
 
 function UiShowcasePage() {

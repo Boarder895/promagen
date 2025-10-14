@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 // Edge runtime: fast, stateless; ideal for health checks
 export const runtime = "edge";

@@ -1,14 +1,13 @@
-export type Prompt = {
-  id: string;
-  title: string;
-  text: string;
-};
+// Tiny in-memory prompts list + fetch helper used by the Prompts page.
 
-export const prompts: Prompt[] = [];
+import type { Prompt } from "@/lib/hooks/usePrompts";
 
-// Used by some pages to render a community list; stubbed for now.
-export function getCommunity(): Prompt[] {
+export const prompts: Prompt[] = [
+  // seed examples if you like:
+  // { id: "hello", title: "Hello World", text: "Say hello", prompt: "Hello!" }
+];
+
+export async function getCommunity(): Promise<Prompt[]> {
+  // swap for a real fetch later; this keeps the API async for easy replacement
   return prompts;
 }
-
-export default prompts;

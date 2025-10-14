@@ -1,31 +1,21 @@
-// ───────────────────────────────────────────────────────────────────────────────
-// File: frontend/src/components/ui/ProgressBar.tsx  (NEW)
-// ───────────────────────────────────────────────────────────────────────────────
+﻿'use client';
+
 import * as React from 'react';
-import clsx from 'clsx';
 
-type ProgressProps = {
-  value?: number; // 0..100; if undefined => indeterminate animated stripe
-  label?: string;
-  className?: string;
-};
+type Props = {
+  value?: number; // 0–100 by default
+  max?: number;   // base for value; default 100
+} & React.HTMLAttributes<HTMLDivElement>;
 
-export const ProgressBar: React.FC<ProgressProps> = ({ value, label, className }) => {
-  const determinate = typeof value === 'number' && value >= 0;
+export function ProgressBar({ value = 0, max = 100, className = '', ...rest }: Props) {
+  const pct = Math.min(100, Math.max(0, max ? (value / max) * 100 : value));
   return (
-    <div className={clsx('w-full', className)} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={determinate ? value : undefined} aria-label={label || 'progress'}>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-        {determinate ? (
-          <div className="h-full rounded-full bg-accent-500 transition-[width] duration-200 ease-out" style={{ width: `${Math.min(100, Math.max(0, value!))}%` }} />
-        ) : (
-          <div className="h-full w-1/3 rounded-full bg-accent-500 animate-[progress_1.2s_ease-in-out_infinite]" />
-        )}
-      </div>
-      <style>{`
-        @keyframes progress { 0% { transform: translateX(-120%);} 100% { transform: translateX(300%);} }
-      `}</style>
+    <div className={`w-full h-2 rounded bg-gray-200 overflow-hidden ${className}`} {...rest}>
+      <div className="h-full bg-gray-900" style={{ width: `${pct}%` }} />
     </div>
   );
-};
+}
 
+// provide both named and default so imports work either way
+export default ProgressBar;
 

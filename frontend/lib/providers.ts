@@ -1,35 +1,28 @@
-// Provider registry + types used by the leaderboard and UI.
+// Canonical provider types + helpers. Looser on purpose so old pages compile.
 
-// --- Core provider record shown in grids/selectors ---
 export type Provider = {
   id: string;
   name: string;
   href?: string;
+  // flags older pages read:
   apiEnabled?: boolean;
-  copyAndOpenEnabled?: true;
+  hasApi?: boolean;
+  supportsAutomation?: boolean;
+  hasAffiliate?: boolean;
+  website?: string;
 };
 
-// --- Leaderboard metadata (scores are 0–100; all optional in the stub) ---
 export type ProviderMeta = {
-  id: string;           // matches Provider.id
-  name?: string;        // optional display override
-  score?: number;       // overall score (computed elsewhere)
-
-  criteria?: {
-    adoption?: number;
-    quality?: number;
-    speed?: number;
-    cost?: number;
-    trust?: number;
-    automation?: number;
-    ethics?: number;
-  };
+  // demo weights / scores (optional in stub)
+  criteria1?: number;
+  criteria2?: number;
+  score?: number;
 };
 
-// Public registry (fill in later)
+// Public registry (stub – fill in later)
 export const PROVIDERS: Provider[] = [];
 
-// Optional metadata map; pages can read from this or ignore it.
+// Optional metadata map; pages can read this or ignore it.
 export const PROVIDER_META: Record<string, ProviderMeta> = {};
 
 // Convenience getters
@@ -41,5 +34,12 @@ export function getProviderMeta(id: string): ProviderMeta | undefined {
   return PROVIDER_META[id];
 }
 
+// Expose ids + simple filter helpers some code expects
+export type ProviderId = string;
+export const PROVIDER_IDS: ProviderId[] = PROVIDERS.map(p => p.id);
+export const providersWithApi = PROVIDERS.filter(p => p.apiEnabled || p.hasApi);
+
 // Allow default import of the getter.
 export default getProviders;
+
+

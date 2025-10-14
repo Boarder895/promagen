@@ -1,15 +1,11 @@
 "use client";
-
-import React, { type ComponentProps } from "react";
-import RealPromptCard from "./prompts/PromptCard";
-
-// Infer the "item" type from the real card to keep typings aligned.
-type RealProps = ComponentProps<typeof RealPromptCard>;
-type ItemType = RealProps extends { item: infer T } ? T : unknown;
-export type Prompt = ItemType;
-
-export default function PromptCard({ p }: { p: ItemType }) {
-  return <RealPromptCard item={p} />;
+import React from "react";
+export type Prompt = { id: string; title: string; text: string };
+export default function PromptCard({ prompt }: { prompt: Prompt }) {
+  return (
+    <article className="rounded-md border p-2">
+      <h3 className="font-medium">{prompt.title}</h3>
+      <pre className="text-xs whitespace-pre-wrap">{prompt.text}</pre>
+    </article>
+  );
 }
-
-

@@ -1,4 +1,4 @@
-﻿// PromagenMVP.tsx — FULL FILE (replace existing)
+// PromagenMVP.tsx � FULL FILE (replace existing)
 // MVP: Live Leaderboard + Provider Page + Admin Scores panel
 // - Manual score adjustments (override / adjustment)
 // - Automated movement placeholder (autoScore + delta)
@@ -27,9 +27,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 // Types & Data
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 
 type Provider = {
   id: string;
@@ -42,7 +42,7 @@ type Provider = {
   hasApi: boolean;
   category: string;
   tagline: string;
-  affiliateUrl: string; // /out/slug — mapped to real affiliate
+  affiliateUrl: string; // /out/slug � mapped to real affiliate
 };
 
 const DEFAULTS: Provider[] = [
@@ -100,9 +100,9 @@ const DEFAULTS: Provider[] = [
   },
 ];
 
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 // Utils
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 
 function clsx(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(' ');
@@ -127,9 +127,9 @@ function rankBadge(rank: number) {
   );
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 // Sparkline (stub)
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 function Sparkline({ trend = [74, 75, 76, 75.5, 76.4] }: { trend?: number[] }) {
   const path = React.useMemo(() => {
     const w = 100,
@@ -147,9 +147,9 @@ function Sparkline({ trend = [74, 75, 76, 75.5, 76.4] }: { trend?: number[] }) {
   );
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
-// Row — Leaderboard
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
+// Row � Leaderboard
+// -------------------------------------------------------------------------------
 function ProviderRow({ i, p, onOpen }: { i: number; p: Provider; onOpen: (p: Provider) => void }) {
   const up = p.delta >= 0;
   const finalScore = scoreOf(p);
@@ -193,9 +193,9 @@ function ProviderRow({ i, p, onOpen }: { i: number; p: Provider; onOpen: (p: Pro
   );
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 // Provider Page (universal)
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 function ProviderView({ p, onBack }: { p: Provider; onBack: () => void }) {
   const [copied, setCopied] = React.useState(false);
   const [prompt, setPrompt] = React.useState(
@@ -267,7 +267,7 @@ function ProviderView({ p, onBack }: { p: Provider; onBack: () => void }) {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 className="min-h-[140px] w-full rounded-2xl border bg-white/70 dark:bg-white/5 p-4 leading-relaxed focus:outline-none focus:ring-2 focus:ring-black/10"
-                placeholder="Your generated prompt appears here…"
+                placeholder="Your generated prompt appears here�"
               />
               <div className="flex flex-wrap items-center gap-3">
                 <Button onClick={handleCopy} className="rounded-2xl">
@@ -288,7 +288,7 @@ function ProviderView({ p, onBack }: { p: Provider; onBack: () => void }) {
                   Open {p.name} in Promagen Window
                 </Button>
                 <Badge variant="outline" className="rounded-2xl">
-                  Affiliate link — we may earn a commission
+                  Affiliate link � we may earn a commission
                 </Badge>
               </div>
             </div>
@@ -338,7 +338,7 @@ function ProviderView({ p, onBack }: { p: Provider; onBack: () => void }) {
               </div>
             </div>
             <p className="text-xs opacity-70">
-              Scores are normalized 0–100 with evidence-based sources; movement debounced.
+              Scores are normalized 0�100 with evidence-based sources; movement debounced.
             </p>
           </CardContent>
         </Card>
@@ -348,7 +348,7 @@ function ProviderView({ p, onBack }: { p: Provider; onBack: () => void }) {
         <CardHeader>
           <CardTitle>API Lane</CardTitle>
           <CardDescription>
-            Optional upgrade path — consistent UI for all providers.
+            Optional upgrade path � consistent UI for all providers.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
@@ -365,9 +365,9 @@ function ProviderView({ p, onBack }: { p: Provider; onBack: () => void }) {
   );
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 // Leaderboard
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 function LeaderboardView({
   providers,
   onOpen,
@@ -415,7 +415,7 @@ function LeaderboardView({
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search providers…"
+                placeholder="Search providers�"
                 className="pl-9 rounded-2xl w-64"
               />
             </div>
@@ -439,10 +439,10 @@ function LeaderboardView({
   );
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
-// Admin Scores Panel — manual adjustments (MVP)
+// -------------------------------------------------------------------------------
+// Admin Scores Panel � manual adjustments (MVP)
 // FinalScore = hardOverride ?? clamp(autoScore + manualAdjustment)
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 function AdminScores({
   providers,
   onClose,
@@ -471,7 +471,7 @@ function AdminScores({
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Admin · Manual Score Adjustments</h2>
+        <h2 className="text-xl font-semibold">Admin � Manual Score Adjustments</h2>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={onClose} className="rounded-2xl">
             Close
@@ -497,7 +497,7 @@ function AdminScores({
             <div className="text-xs uppercase tracking-wide opacity-60 text-right">
               Hard Override
             </div>
-            <div className="text-xs uppercase tracking-wide opacity-60 text-right">Δ Today</div>
+            <div className="text-xs uppercase tracking-wide opacity-60 text-right">? Today</div>
           </div>
           <div className="divide-y mt-2">
             {draft.map((p) => (
@@ -568,9 +568,9 @@ function AdminScores({
   );
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 // Root
-// ───────────────────────────────────────────────────────────────────────────────
+// -------------------------------------------------------------------------------
 export default function PromagenMVP() {
   const [providers, setProviders] = React.useState<Provider[]>(() => {
     if (typeof window === 'undefined') return DEFAULTS as Provider[];

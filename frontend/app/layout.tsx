@@ -1,4 +1,4 @@
-﻿export const metadata = { title: 'Promagen' };
+export const metadata = { title: 'Promagen' };
 
 import Link from 'next/link';
 
@@ -10,7 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Link href="/" style={{ marginRight: 12 }}>
             Home
           </Link>
-          <Link href="/settings/keys">Settings → Keys</Link>
+          <Link href="/settings/keys">Settings ? Keys</Link>
         </nav>
         {children}
       </body>

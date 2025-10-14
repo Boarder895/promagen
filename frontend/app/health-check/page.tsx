@@ -1,39 +1,26 @@
-import { fetchJSON, API } from '../../lib/api';
-
-type Health = { ok: boolean; service: string; time: string };
+// app/health-check/page.tsx
+import API_BASE, { fetchJSON } from '../../lib/api';
 
 export default async function HealthCheckPage() {
-  let data: Health | null = null;
-  let error: string | null = null;
-
+  // keep it simple; no types drama
+  let body: unknown = null;
+  let ok = false;
   try {
-    data = await fetchJSON<Health>('/health');
-  } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
+    body = await fetchJSON(`${API_BASE}/health`);
+    ok = true;
+  } catch (e: any) {
+    body = { error: String(e?.message || e) };
   }
 
   return (
-    <main className="mx-auto max-w-xl p-6">
-      <h1 className="text-2xl font-semibold mb-4">Health Check</h1>
-
-      <div className="rounded-2xl border p-4">
-        <p className="mb-2">
-          Frontend → API: <code>{API.baseUrl}</code>
-        </p>
-
-        {data ? (
-          <pre className="mt-2 overflow-auto rounded bg-black/5 p-3 text-sm">
-            {JSON.stringify(data, null, 2)}
-          </pre>
-        ) : (
-          <div className="text-red-600">
-            Failed to fetch <code>/health</code>
-            {error ? (
-              <pre className="mt-2 overflow-auto rounded bg-black/5 p-3 text-sm">{error}</pre>
-            ) : null}
-          </div>
-        )}
-      </div>
+    <main className="p-6 space-y-4">
+      <h1 className="text-xl font-semibold">Health Check</h1>
+      <p>
+        Frontend → API: <code>{API_BASE}</code>
+      </p>
+      <pre className="rounded-lg border bg-gray-50 p-3 text-sm overflow-auto">
+        {JSON.stringify({ ok, body }, null, 2)}
+      </pre>
     </main>
   );
 }
