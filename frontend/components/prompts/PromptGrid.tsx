@@ -2,7 +2,7 @@
 
 import { prompts } from '@/data/prompts';
 
-export default function PromptGrid() {
+export function PromptGrid() {
   if (!prompts?.length) {
     return <p className="text-sm opacity-70">No prompts yet.</p>;
   }
@@ -18,3 +18,5 @@ export default function PromptGrid() {
     </div>
   );
 }
+
+export default PromptGrid;

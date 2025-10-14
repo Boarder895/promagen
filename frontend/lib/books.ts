@@ -1,4 +1,14 @@
-﻿export type Book = { id: string; title: string; author?: string };
-export const books: Book[] = [];
-export async function listBooks(){ return books; }
-export default books;
+﻿// Minimal helpers used by docs/test pages that import `metaOf`.
+// Keep types loose; wire to real Metadata later if needed.
+
+export type Meta = Record<string, any>;
+
+export function metaOf(meta: Meta = {}): Meta {
+  return {
+    title: meta.title ?? 'Promagen',
+    description: meta.description ?? '',
+    ...meta,
+  };
+}
+
+export default metaOf;

@@ -4,6 +4,11 @@ export type Prompt = {
   text: string;
 };
 
-// keep it empty to start—build won’t break if array is empty
 export const prompts: Prompt[] = [];
 
+// Used by some pages to render a community list; stubbed for now.
+export function getCommunity(): Prompt[] {
+  return prompts;
+}
+
+export default prompts;

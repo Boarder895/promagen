@@ -3,14 +3,11 @@
 type Provider = { id: string; name: string };
 
 const providers: Provider[] = [
-  // keep it empty or add names later; build just needs the file to exist
-  // { id: 'openai', name: 'OpenAI' },
+  // add real providers later
 ];
 
-export default function ProviderGrid() {
-  if (!providers.length) {
-    return <p className="text-sm opacity-70">No providers yet.</p>;
-  }
+export function ProviderGrid() {
+  if (!providers.length) return <p className="text-sm opacity-70">No providers yet.</p>;
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -22,3 +19,6 @@ export default function ProviderGrid() {
     </div>
   );
 }
+
+export default ProviderGrid;
+
