@@ -1,4 +1,4 @@
-﻿import prisma from '../../lib/db';
+import prisma from '../../lib/db';
 import { subMinutes } from 'date-fns';
 
 // You likely have a table where each image/job request is recorded.

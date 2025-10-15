@@ -1,4 +1,4 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+import type { ProviderDef, GenInput, GenOutput } from './types';
 
 export const echoProvider: ProviderDef = {
   id: 'echo',

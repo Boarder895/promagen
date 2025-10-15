@@ -1,4 +1,4 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+import type { ProviderDef, GenInput, GenOutput } from './types';
 
 function env(name: string, fallback?: string) {
   const v = process.env[name];

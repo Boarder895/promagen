@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+import { NextResponse } from 'next/server';
+=======
 ﻿import { NextResponse } from 'next/server';
+>>>>>>> origin/main
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export async function GET() {
@@ -16,4 +20,8 @@ export async function GET() {
       { status: 502 },
     );
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

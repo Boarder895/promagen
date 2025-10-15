@@ -1,50 +1,23 @@
-"use client";
+// components/health/HealthBanner.tsx
+'use client';
 
-// FRONTEND • components/health/HealthBanner.tsx
-import React from "react";
-import { useHealth } from "@/components/health/HealthContext";
-import { AlertTriangle, Activity, RefreshCcw } from "lucide-react";
-
-function tone(status: "ok" | "degraded" | "down") {
-  switch (status) {
-    case "ok":
-      return { bg: "bg-green-50", text: "text-green-800", ring: "ring-green-200" };
-    case "degraded":
-      return { bg: "bg-amber-50", text: "text-amber-800", ring: "ring-amber-200" };
-    case "down":
-    default:
-      return { bg: "bg-red-50", text: "text-red-800", ring: "ring-red-200" };
-  }
-}
+import { useHealth } from './HealthContext';
 
 export default function HealthBanner() {
-  const { status, message, lastCheck, checking, refresh } = useHealth();
+  const health = useHealth();
 
-  if (status === "ok") return null;
+  // show only when NOT ok
+  if (health.status === 'ok') return null;
 
-  const t = tone(status);
-  const label = status === "degraded" ? "Degraded performance" : "Service unavailable";
+  const label = health.status === 'degraded' ? 'Degraded performance' : 'Service unavailable';
 
   return (
-    <div className={`w-full sticky top-0 z-50 ${t.bg} ${t.text} ring-1 ${t.ring}`}>
-      <div className="mx-auto max-w-7xl px-4 py-2 flex items-center gap-3">
-        {status === "degraded" ? <Activity size={18} /> : <AlertTriangle size={18} />}
-        <div className="text-sm">
-          <strong className="mr-1">{label}.</strong>
-          {message ? <span>{message}</span> : null}
-          {lastCheck ? <span className="ml-2 opacity-80">Checked: {new Date(lastCheck).toLocaleTimeString()}</span> : null}
-        </div>
-        <button
-          onClick={refresh}
-          className="ml-auto inline-flex items-center gap-2 text-xs underline decoration-dotted"
-          aria-label="Refresh health status"
-        >
-          <RefreshCcw size={14} className={checking ? "animate-spin" : ""} />
-          {checking ? "Checking…" : "Recheck"}
-        </button>
+    <div className="rounded-lg border bg-amber-50 text-amber-900 px-3 py-2 text-sm">
+      <div className="font-medium">{label}</div>
+      <div className="opacity-80">
+        Frontend → API: <code>{health.apiBase ?? 'unknown'}</code>
       </div>
+      {health.message ? <div className="opacity-70">{health.message}</div> : null}
     </div>
   );
 }
-
-

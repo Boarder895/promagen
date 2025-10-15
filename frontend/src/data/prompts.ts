@@ -1,41 +1,13 @@
-// src/data/prompts.ts
-// Canonical prompt types + temporary data fetchers (stubbed until API/DB is wired).
+// Tiny in-memory prompts list + fetch helper used by the Prompts page.
 
-export type Prompt = {
-  id: string;
-  title: string;
-  prompt: string;
-  tags?: string[];
-  createdAt?: string; // ISO
-};
+import type { Prompt } from "@/lib/hooks/usePrompts";
 
-export type PromptQuery = {
-  q?: string;
-  tag?: string;
-  limit?: number;
-};
+export const prompts: Prompt[] = [
+  // seed examples if you like:
+  // { id: "hello", title: "Hello World", text: "Say hello", prompt: "Hello!" }
+];
 
-// TODO: replace with real API/DB call; safe empty list is fine for compile.
 export async function getCommunity(): Promise<Prompt[]> {
-  return [
-    {
-      id: "starter-1",
-      title: "Mushroom town at dusk",
-      prompt:
-        "Pixar�Ghibli semi-real characters in a glowing mushroom town at dusk, ultra-photorealistic background, cinematic lighting",
-      tags: ["fracture", "worldbuilding"],
-    },
-    {
-      id: "starter-2",
-      title: "Crystal cave reflections",
-      prompt:
-        "Dark crystal cave with refractive gemstones, rain-slick rock, volumetric light beams, high contrast mood",
-      tags: ["villains", "caves"],
-    },
-  ];
+  // swap for a real fetch later; this keeps the API async for easy replacement
+  return prompts;
 }
-
-
-
-
-

@@ -1,38 +1,50 @@
-// frontend/app/health-check/page.tsx
-import { fetchJSON, API } from '../../lib/api';
+// Server component: simple “frontend → API” health peek.
+// Uses the same lib/api helpers the rest of the app imports.
 
-type Health = { ok: boolean; service: string; time: string };
+import API_BASE, { fetchJSON } from '@/lib/api';
+
+export const revalidate = 30;
+
+type ApiHealth = {
+  status: 'ok' | 'degraded' | 'down';
+  message?: string;
+  latencyMs?: number;
+  version?: string;
+};
 
 export default async function HealthCheckPage() {
-  let data: Health | null = null;
-  let error: string | null = null;
+  let api: ApiHealth | { error: string } = { status: 'down', message: 'unknown' };
 
   try {
-    data = await fetchJSON<Health>('/health');
+    api = await fetchJSON<ApiHealth>(`${API_BASE}/health`);
   } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
+    api = { error: (e as Error).message ?? 'failed to fetch' };
   }
 
   return (
-    <main className="mx-auto max-w-xl p-6">
-      <h1 className="text-2xl font-semibold mb-4">Health Check</h1>
+    <main className="mx-auto max-w-xl space-y-4 p-6">
+      <h1 className="text-2xl font-semibold">Health Check</h1>
 
-      <div className="rounded-2xl border p-4">
-        <p className="mb-2">
-          Frontend → API: <code>{API}</code>
-        </p>
+      <article className="rounded-xl border p-4">
+        <div className="text-sm opacity-70">Frontend → API</div>
+        <div className="mt-1 font-mono text-sm">
+          Base: <code>{API_BASE}</code>
+        </div>
 
-        {data ? (
-          <pre className="mt-2 overflow-auto rounded bg-black/5 p-3 text-sm">
-            {JSON.stringify(data, null, 2)}
-          </pre>
+        {'error' in api ? (
+          <p className="mt-3 rounded bg-red-50 p-3 text-sm text-red-800">
+            Failed to fetch: {api.error}
+          </p>
         ) : (
-          <div className="text-red-600">
-            Failed to fetch <code>/health</code>
-            <pre className="mt-2 overflow-auto rounded bg-black/5 p-3 text-sm">{error}</pre>
-          </div>
+          <ul className="mt-3 text-sm">
+            <li>Status: <b>{api.status}</b></li>
+            {api.message ? <li>Message: {api.message}</li> : null}
+            {typeof api.latencyMs === 'number' ? <li>Latency: {api.latencyMs} ms</li> : null}
+            {api.version ? <li>Version: {api.version}</li> : null}
+          </ul>
         )}
-      </div>
+      </article>
     </main>
   );
 }
+

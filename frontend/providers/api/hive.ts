@@ -1,4 +1,4 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
+import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const lexicaProvider: ProviderDef = {
   id: 'hive',
@@ -8,7 +8,7 @@ export const lexicaProvider: ProviderDef = {
   supportsNegative: true,
   supportsSeed: true,
   supportsSize: true,
-  supportsStyle: true, // ← this was missing
+  supportsStyle: true, // ? this was missing
   // supportsModelSelect: true,  // only if this adapter actually needs it
 
   async test() {

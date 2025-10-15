@@ -1,22 +1,21 @@
 'use client';
-
-import React, { useEffect, useState } from 'react';
-import { getProviders, type Provider } from '@/lib/providers';
+import * as React from 'react';
+import Button from '@/components/ui/Button';
+import ProgressBar from '@/components/ui/ProgressBar';
 
 export default function PromptPlayground() {
-  const [providers, setProviders] = useState<Provider[]>([]);
-
-  // Sync load: no promise, no .then()
-  useEffect(() => {
-    const list = getProviders();
-    setProviders(list);
-  }, []);
-
+  const [text, setText] = React.useState('');
   return (
-    <div className="p-4">
-      <div className="text-sm">Providers: {providers.length}</div>
+    <div className="p-6 space-y-4">
+      <textarea
+        className="w-full border rounded p-3"
+        rows={6}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Type a prompt…"
+      />
+      <Button onClick={() => alert(text || 'No prompt yet')}>Run</Button>
+      <ProgressBar value={text.length % 101} />
     </div>
   );
 }
-
-

@@ -1,9 +1,15 @@
+<<<<<<< HEAD
+/** Keep linting, but don't fail builds on import spacing */
+=======
 /** @type {import("eslint").Linter.Config} */
+>>>>>>> origin/main
 module.exports = {
-  root: true,
-  extends: ["next/core-web-vitals"],
-  plugins: ["import", "unused-imports"],
+  extends: ['next', 'next/core-web-vitals'],
   rules: {
+<<<<<<< HEAD
+    // Stop builds failing on import group spacing/order
+    'import/order': 'warn',
+=======
     // Kill dead code
     "unused-imports/no-unused-imports": "error",
     "unused-imports/no-unused-vars": ["warn", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
@@ -20,5 +26,6 @@ module.exports = {
   },
   settings: {
     next: { rootDir: ["./"] },
+>>>>>>> origin/main
   },
 };

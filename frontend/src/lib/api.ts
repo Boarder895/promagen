@@ -1,27 +1,20 @@
-// Central API base + tiny metadata helper for pages that import getMeta.
-// Ports: UI 3000 / API 3001 in dev; prod default = https://api.promagen.com
+// Tiny API helpers used by health/meta/test pages.
 
-// Named exports only (project rule).
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
-  'https://api.promagen.com';
+export const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.promagen.com';
+const API_BASE = API;
+export default API_BASE;
 
-export type AppMeta = {
-  title: string;
-  description?: string;
-};
-
-// Minimal central meta registry so pages like /app/status/page.tsx
-// and /app/test/meta/page.tsx can do: import { getMeta } from '@/lib/api'
-const META: Record<string, AppMeta> = {
-  status: { title: 'Status · Promagen', description: 'System health and checks.' },
-  'test/meta': { title: 'Meta Test · Promagen' },
-  default: { title: 'Promagen' },
-};
-
-// Safe lookup with sensible fallback.
-export function getMeta(key: string): AppMeta {
-  return META[key] ?? META.default;
+export async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) throw new Error(`fetchJSON ${res.status}`);
+  return (await res.json()) as T;
 }
 
+// Some pages call getMeta('key'); make the key optional.
+export type Meta = { title?: string; description?: string };
+export function getMeta(key?: string): Meta {
+  return key
+    ? { title: key.split('/').pop() || 'Promagen', description: 'Stub meta' }
+    : { title: 'Promagen', description: 'Stub meta' };
+}
 

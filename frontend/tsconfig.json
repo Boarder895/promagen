@@ -1,4 +1,46 @@
 {
+<<<<<<< HEAD
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/components/*": ["src/components/*"],
+      "@/lib/*": ["src/lib/*"],
+      "@/data/*": ["src/data/*"]
+    },
+    "types": ["node"],
+    "plugins": [{ "name": "next" }]
+  },
+  "include": [
+    "next-env.d.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next/**",
+    "placeholder_quarantine/**",
+    "backup-*/**",
+    "**/backup-*/**"
+  ]
+}
+
+
+=======
     "compilerOptions":  {
                             "target":  "ES2022",
                             "lib":  [
@@ -40,3 +82,4 @@
                     "providers/copypaste/**"
                 ]
 }
+>>>>>>> origin/main

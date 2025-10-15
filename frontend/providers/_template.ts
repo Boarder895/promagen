@@ -1,9 +1,9 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+import type { ProviderDef, GenInput, GenOutput } from './types';
 
 export const adapter: ProviderDef = {
   id: 'yourname',
   label: 'Your Label', // UI/export label
-  supportsNegative: true, // ← fix (was supportsNegative)
+  supportsNegative: true, // ? fix (was supportsNegative)
   supportsSeed: true,
   supportsSize: true,
   supportsStyle: true,
