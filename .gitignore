@@ -18,3 +18,27 @@ Thumbs.db
 frontend/pnpm-lock.yaml
 
 .vercel
+# Node/Next across the whole repo
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.vercel/
+
+# IDE/OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets (repo-wide)
+.env
+.env.*
+*.env
+*.key
+*.pem
+*API_KEY*
+
+# Block the folder that caused the push-protection error
+docs/Add-Content*/
