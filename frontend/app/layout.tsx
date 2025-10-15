@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 export const metadata = { title: 'Promagen' };
+=======
+﻿export const metadata = { title: 'Promagen' };
+>>>>>>> origin/main
 
 import Link from 'next/link';
 
@@ -16,4 +20,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </body>
     </html>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

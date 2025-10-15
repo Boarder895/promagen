@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
@@ -39,3 +40,46 @@
 }
 
 
+=======
+    "compilerOptions":  {
+                            "target":  "ES2022",
+                            "lib":  [
+                                        "dom",
+                                        "dom.iterable",
+                                        "esnext"
+                                    ],
+                            "allowJs":  false,
+                            "skipLibCheck":  true,
+                            "strict":  true,
+                            "noEmit":  true,
+                            "esModuleInterop":  true,
+                            "module":  "ESNext",
+                            "moduleResolution":  "Bundler",
+                            "jsx":  "preserve",
+                            "resolveJsonModule":  true,
+                            "isolatedModules":  true,
+                            "incremental":  true,
+                            "baseUrl":  ".",
+                            "paths":  {
+                                          "@/*":  [
+                                                      "./*"
+                                                  ]
+                                      },
+                            "plugins":  [
+                                            {
+                                                "name":  "next"
+                                            }
+                                        ]
+                        },
+    "include":  [
+                    "next-env.d.ts",
+                    "**/*.ts",
+                    "**/*.tsx",
+                    ".next/types/**/*.ts"
+                ],
+    "exclude":  [
+                    "node_modules",
+                    "providers/copypaste/**"
+                ]
+}
+>>>>>>> origin/main
