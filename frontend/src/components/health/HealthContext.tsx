@@ -1,39 +1,46 @@
-// components/health/HealthContext.tsx
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { fetchHealth, type HealthResponse, type HealthStatus } from '@/lib/health';
+import React, { createContext, useContext, useMemo } from 'react';
 
-type HealthState = {
-  status: HealthStatus;            // 'ok' | 'degraded' | 'down'
-  message?: string;
+export type HealthStatus = 'ok' | 'degraded' | 'down';
+
+export type HealthState = {
+  ok: boolean;
+  status: HealthStatus;
   apiBase?: string;
+  message?: string;
 };
 
-const Ctx = createContext<HealthState>({ status: 'ok' });
+// Safe default so 404/500 (or any render without provider) won't crash
+const defaultHealth: HealthState = {
+  ok: true,
+  status: 'ok',
+  apiBase: undefined,
+  message: undefined,
+};
 
-export function HealthProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<HealthState>({ status: 'ok' });
+const HealthContext = createContext<HealthState>(defaultHealth);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        // fetchHealth(): no args per current lib signature
-        const res: HealthResponse = await fetchHealth();
-        if (!cancelled) setState(res);
-      } catch (e: any) {
-        if (!cancelled) setState({ status: 'down', message: String(e?.message || e) });
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return <Ctx.Provider value={state}>{children}</Ctx.Provider>;
+export function useHealth(): HealthState {
+  return useContext(HealthContext);
 }
 
-export const useHealth = () => useContext(Ctx);
+export function HealthProvider({
+  children,
+  value,
+}: {
+  children: React.ReactNode;
+  value?: Partial<HealthState>;
+}) {
+  const merged = useMemo<HealthState>(
+    () => ({
+      ...defaultHealth,
+      ...value,
+    }),
+    [value],
+  );
 
+  return <HealthContext.Provider value={merged}>{children}</HealthContext.Provider>;
+}
 
+export default HealthProvider;
