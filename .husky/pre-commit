@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run checks against the frontend package from repo root
+pnpm -C frontend run check:placeholders || exit 1
+pnpm -C frontend tsc --noEmit || exit 1

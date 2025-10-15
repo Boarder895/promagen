@@ -15,7 +15,9 @@
         "clean:hard": "pwsh -NoProfile -File scripts/clean.ps1 -Hard",
         "rebuild:clean": "npm run clean && npm run build",
         "dev": "next dev -p 3000",
-        "prepare": "husky"
+        "check:placeholders": "pwsh -File ./scripts/check-placeholders.ps1",
+        "check:placeholders:fix": "pwsh -File ./scripts/check-placeholders.ps1 -fix",
+        "prepare": "husky && husky install"
     },
     "dependencies": {
         "@headlessui/react": "^2.2.2",
@@ -60,7 +62,7 @@
         "autoprefixer": "^10.4.20",
         "eslint": "^8.57.0",
         "eslint-config-next": "14.2.13",
-        "husky": "^9.1.7",
+        "husky": "^8.0.0",
         "postcss": "^8.4.47",
         "prettier": "^3.3.3",
         "prettier-plugin-tailwindcss": "^0.6.8",
