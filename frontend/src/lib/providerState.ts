@@ -1,4 +1,4 @@
-// Minimal stub so admin sync can call a stable function.
+﻿// Minimal stub so admin sync can call a stable function.
 // Exported both as named and default to satisfy any import style.
 
 export type ProviderRefreshResult = {
@@ -12,3 +12,7 @@ export async function refreshProviders(): Promise<ProviderRefreshResult> {
 }
 
 export default refreshProviders;
+
+
+
+

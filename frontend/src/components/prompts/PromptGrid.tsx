@@ -1,42 +1,33 @@
+﻿// src/components/prompts/PromptGrid.tsx
 // Renders a simple grid of prompt cards.
-// Accepts the same Prompt type you use on the page.
 
 import React from "react";
 import type { Prompt } from "@/lib/hooks/usePrompts";
 
 export type PromptGridProps = {
-  params?: Record<string, string | string[]>;
+  _params?: Record<string, string | string[]>;
   allPrompts: Prompt[];
   title?: string;
 };
 
-export function PromptGrid({ params, allPrompts, title }: PromptGridProps) {
+export function PromptGrid({ _params, allPrompts, title }: PromptGridProps) {
+  void _params; // reserved for future filtering; keeps prop stable for Stage 2
+
   const items = Array.isArray(allPrompts) ? allPrompts : [];
 
   return (
-    <section className="space-y-4">
-      {title ? (
-        <h2 className="text-lg font-medium">
-          {title} <span className="opacity-60">({items.length})</span>
-        </h2>
-      ) : null}
+    <section className="space-y-3">
+      {title ? <h2 className="text-lg font-semibold">{title}</h2> : null}
 
       {items.length === 0 ? (
-        <p className="opacity-70">No prompts found.</p>
+        <p className="text-sm text-muted-foreground">No prompts yet.</p>
       ) : (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-4">
           {items.map((p) => (
-            <li key={p.id} className="rounded-xl border p-3">
-              <div className="font-medium">{p.title}</div>
-              {p.text ? (
-                <p className="text-sm opacity-80 mt-1 whitespace-pre-wrap">
-                  {p.text}
-                </p>
-              ) : null}
-              {p.prompt ? (
-                <pre className="text-xs opacity-70 mt-2 whitespace-pre-wrap">
-                  {p.prompt}
-                </pre>
+            <li key={p.id} className="rounded border p-3">
+              <div className="font-medium">{p.title ?? "Untitled"}</div>
+              {p.description ? (
+                <div className="text-xs text-muted-foreground">{p.description}</div>
               ) : null}
             </li>
           ))}
@@ -46,5 +37,10 @@ export function PromptGrid({ params, allPrompts, title }: PromptGridProps) {
   );
 }
 
-// Allow both named and default import styles.
 export default PromptGrid;
+
+
+
+
+
+

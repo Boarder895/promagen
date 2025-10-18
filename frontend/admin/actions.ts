@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 // Minimal types for the admin sync form
 export type SyncState = {
@@ -14,3 +14,4 @@ export async function doSync(_formData?: unknown): Promise<SyncState> {
   // TODO: call your backend /admin/sync, return progress, etc.
   return { status: 'done', message: 'Sync completed (stub).' };
 }
+

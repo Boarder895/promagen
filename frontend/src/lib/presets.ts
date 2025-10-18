@@ -1,4 +1,4 @@
-export type Preset = { id: string; name: string; prompt: string };
+﻿export type Preset = { id: string; name: string; prompt: string };
 
 export const presets: Preset[] = [
   { id: "short-summary", name: "Short Summary", prompt: "Summarize in 5 bullets + 1 TL;DR." },
@@ -7,5 +7,9 @@ export const presets: Preset[] = [
 
 // Some code imports { Presets }, so export an alias too:
 export const Presets = presets;
+
+
+
+
 
 

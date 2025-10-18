@@ -1,17 +1,15 @@
-'use client';
+﻿// src/components/ProgressProvider.tsx
+"use client";
 
-import * as React from 'react';
+import React from "react";
 
-type Ctx = { value: number; setValue: (n: number) => void };
-const ProgressCtx = React.createContext<Ctx | null>(null);
+export const ProgressContext = React.createContext<{ value: number }>({ value: 0 });
 
-export function ProgressProvider({ children }: { children: React.ReactNode }) {
-  const [value, setValue] = React.useState(0);
-  return <ProgressCtx.Provider value={{ value, setValue }}>{children}</ProgressCtx.Provider>;
+export default function ProgressProvider({ children }: { children: React.ReactNode }) {
+  return <ProgressContext.Provider value={{ value: 0 }}>{children}</ProgressContext.Provider>;
 }
 
-export function useProgress() {
-  const ctx = React.useContext(ProgressCtx);
-  if (!ctx) return { value: 0, setValue: (_: number) => {} };
-  return ctx;
-}
+
+
+
+

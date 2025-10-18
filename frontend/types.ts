@@ -13,5 +13,6 @@ export interface ImageProvider {
   id: string; // short id used in config URLs
   label: string; // human label in UI
   test?: () => PromiseGenHealth; // optional health probe
-  generate: (input: GenInput) => Promise<GenOutput>;
+  generate: (_input: GenInput) => Promise<GenOutput>;
 }
+

@@ -1,3 +1,11 @@
-.next
-node_modules
-app/cron/**
+﻿# Stage 1 hygiene
+.next/**
+dist/**
+node_modules/**
+
+# Not part of Stage 1 build surface
+src/providers/copypaste/**
+frontend/providers/copypaste/**
+
+# Backups & generated
+backup-*/

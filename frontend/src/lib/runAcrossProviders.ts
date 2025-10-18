@@ -1,17 +1,27 @@
-// src/lib/runAcrossProviders.ts
-// Named exports only (project rule).
-import { PROVIDERS } from "@/lib/providers";
+﻿// Utility: run an async function across all providers and collect results.
 
-/**
- * Open the current prompt across all providers.
- * For now this opens a simple route per provider; you can swap in provider-specific URLs later.
- */
-export function openAllProviders(promptText: string): void {
-  if (typeof window === "undefined") return;
+import { providers, type Provider } from "@/lib/providers";
 
-  const q = encodeURIComponent(promptText ?? "");
-  for (const p of PROVIDERS) {
-    const url = `/providers/${p.id}?q=${q}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+export type Runner<T> = (p: Provider) => Promise<T>;
+
+export async function runAcrossProviders<T>(
+  fn: Runner<T>
+): Promise<Array<{ id: string; ok: boolean; value?: T; error?: unknown }>> {
+  const out: Array<{ id: string; ok: boolean; value?: T; error?: unknown }> = [];
+  for (const p of providers) {
+    try {
+      const value = await fn(p);
+      out.push({ id: p.id, ok: true, value });
+    } catch (err) {
+      out.push({ id: p.id, ok: false, error: err });
+    }
   }
+  return out;
 }
+
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import HealthDot from '@/components/health/HealthDot';
@@ -32,6 +32,10 @@ export default function Header() {
     </header>
   );
 }
+
+
+
+
 
 
 
