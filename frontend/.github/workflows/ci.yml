@@ -2,15 +2,20 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - ci/sanity
+      - feat/*
+      - fix/*
     paths:
       - "frontend/**"
       - ".github/workflows/**"
   pull_request:
-    branches: [ main ]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/**"
+    branches:
+      - main
+      - ci/sanity
+      - feat/*
+      - fix/*
 
 jobs:
   build:
@@ -20,35 +25,37 @@ jobs:
         working-directory: frontend
 
     steps:
+      # Checkout repo
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- Setup pnpm first ---
+      # Setup pnpm first so setup-node can use its cache safely
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
 
-      # --- Setup Node.js ---
-      - name: Setup Node
+      # Setup Node.js with pnpm cache
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
-          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
 
-      # --- Install Dependencies ---
+      # Install dependencies
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # --- Lint ---
+      # Lint source files
       - name: Lint
         run: pnpm exec eslint "src/**/*.{ts,tsx}" -f stylish
 
-      # --- Typecheck ---
+      # Type check
       - name: Typecheck
         run: pnpm run typecheck
 
-      # --- Build ---
+      # Build
       - name: Build
         run: pnpm run build
+
