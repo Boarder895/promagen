@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/**"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --- Setup pnpm first ---
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      # --- Setup Node.js ---
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+
+      # --- Install Dependencies ---
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # --- Lint ---
+      - name: Lint
+        run: pnpm exec eslint "src/**/*.{ts,tsx}" -f stylish
+
+      # --- Typecheck ---
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      # --- Build ---
+      - name: Build
+        run: pnpm run build
