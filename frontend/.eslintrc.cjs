@@ -1,31 +1,80 @@
-<<<<<<< HEAD
-/** Keep linting, but don't fail builds on import spacing */
-=======
-/** @type {import("eslint").Linter.Config} */
->>>>>>> origin/main
+/** @type {import('eslint').Linter.Config} */
 module.exports = {
-  extends: ['next', 'next/core-web-vitals'],
+  root: true,
+
+  env: {
+    browser: true,
+    node: true,
+    es2023: true,
+  },
+
+  // TypeScript-aware parser
+  parser: '@typescript-eslint/parser',
+
+  parserOptions: {
+    ecmaVersion: 2023,
+    sourceType: 'module',
+    // No project: avoids perf/TS-Program issues for now
+  },
+
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react-hooks/recommended',
+    // Next.js App Router + web vitals
+    'next/core-web-vitals',
+  ],
+
+  plugins: ['@typescript-eslint'],
+
   rules: {
-<<<<<<< HEAD
-    // Stop builds failing on import group spacing/order
-    'import/order': 'warn',
-=======
-    // Kill dead code
-    "unused-imports/no-unused-imports": "error",
-    "unused-imports/no-unused-vars": ["warn", { varsIgnorePattern: "^_", argsIgnorePattern: "^_" }],
+    // Use underscore naming to intentionally ignore unused bindings
+    // (works for function args, variables, and caught errors)
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        args: 'all',
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      },
+    ],
 
-    // Deterministic import order with blank lines between groups
-    "import/order": ["warn", {
-      "groups": ["builtin", "external", "internal", "parent", "sibling", "index", "object", "type"],
-      "newlines-between": "always",
-      "alphabetize": { order: "asc", caseInsensitive: true }
-    }],
+    // Reasonable TS defaults; keep strict but practical
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/ban-ts-comment': [
+      'warn',
+      { 'ts-expect-error': 'allow-with-description' },
+    ],
+  },
 
-    // Keep React hooks honest (don’t disable unless justified)
-    "react-hooks/exhaustive-deps": "error",
-  },
-  settings: {
-    next: { rootDir: ["./"] },
->>>>>>> origin/main
-  },
+  overrides: [
+    // Declaration files often need broader types
+    {
+      files: ['**/*.d.ts'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/ban-types': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
+      },
+    },
+    // Tests (if/when added)
+    {
+      files: ['**/*.test.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
+      env: { jest: true },
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+      },
+    },
+  ],
+
+  ignorePatterns: [
+    'node_modules/',
+    '.next/',
+    '.turbo/',
+    'dist/',
+    'out/',
+    '**/*.bak',
+  ],
 };

@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-export default function Error({
+export default function GlobalError({
   error,
   reset,
 }: {
@@ -8,12 +8,23 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="p-8 space-y-4">
-      <h1 className="text-2xl font-semibold">500 — Something went wrong</h1>
-      <p className="opacity-70">{error?.message ?? 'Unknown error'}</p>
-      <button className="rounded-md border px-4 py-2" onClick={() => reset()}>
-        Try again
-      </button>
-    </div>
+    <html>
+      <body style={{ fontFamily: 'system-ui', padding: 24 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Something went sideways.</h1>
+        <p style={{ color: '#666', marginBottom: 16 }}>
+          {error.message || 'Unknown error'} {error?.digest ? `(digest: ${error.digest})` : ''}
+        </p>
+        <button
+          onClick={() => reset()}
+          style={{ border: '1px solid #ccc', padding: '6px 10px', borderRadius: 6 }}
+        >
+          Try again
+        </button>
+      </body>
+    </html>
   );
 }
+
+
+
+

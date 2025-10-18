@@ -1,9 +1,17 @@
-'use client';
+﻿// src/components/ProviderTile.tsx
+"use client";
 
-import * as React from 'react';
-import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import Chip from '@/components/ui/Chip';
+import * as React from "react";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import Button from "@/components/ui/button";
+import Chip from "@/components/ui/chip";
 
 type Props = {
   name: string;
@@ -18,8 +26,8 @@ type Props = {
 export default function ProviderTile({
   name,
   description,
-  apiEnabled = false,
-  affiliate = false,
+  apiEnabled,
+  affiliate,
   website,
   onRun,
   onCopyOpen,
@@ -29,9 +37,9 @@ export default function ProviderTile({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <span>{name}</span>
-          {apiEnabled && <Chip color="green">⚡ API</Chip>}
-          <Chip color="blue">✂️ Copy &amp; Open</Chip>
-          {affiliate && <Chip color="red">💸 Affiliate</Chip>}
+          {apiEnabled && <Chip color="green">API</Chip>}
+          <Chip color="blue">Copy &amp; Open</Chip>
+          {affiliate && <Chip color="red">Affiliate</Chip>}
         </CardTitle>
         {description ? (
           <CardDescription>{description}</CardDescription>
@@ -44,7 +52,7 @@ export default function ProviderTile({
             href={website}
             target="_blank"
             rel="noreferrer"
-            className="text-xs underline opacity-80"
+            className="text-xs underline"
           >
             {website}
           </a>
@@ -52,25 +60,21 @@ export default function ProviderTile({
       </CardContent>
 
       <CardFooter className="flex gap-2">
-        <Button
-          variant="default"
-          onClick={onRun}
-          className="w-full"
-          disabled={!apiEnabled}
-        >
+        <Button variant="default" onClick={onRun} className="w-full">
           Run
         </Button>
-        <Button
-          variant="secondary"
-          onClick={onCopyOpen}
-          className="w-full"
-        >
+        <Button variant="outline" onClick={onCopyOpen} className="w-full">
           Copy + Open
         </Button>
       </CardFooter>
     </Card>
   );
 }
+
+
+
+
+
 
 
 

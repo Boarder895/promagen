@@ -1,4 +1,4 @@
-// src/components/SiteHeader.tsx
+﻿// src/components/SiteHeader.tsx
 import ApiStatusBadge from '@/components/ApiStatusBadge';
 
 export default function SiteHeader() {
@@ -9,3 +9,7 @@ export default function SiteHeader() {
     </header>
   );
 }
+
+
+
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React from 'react';
 import type { Prompt } from '@/lib/hooks/usePrompts';
 
@@ -16,3 +16,7 @@ export default function PromptCard(props: Props) {
     </article>
   );
 }
+
+
+
+

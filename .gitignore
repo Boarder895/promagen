@@ -45,3 +45,23 @@ Thumbs.db
 docs/Add-Content*/
 =======
 >>>>>>> origin/main
+# build artifacts
+frontend/.next/
+frontend/node_modules/
+frontend/.vercel/
+frontend/backup*/
+frontend/src/backup*/
+
+# env & local config
+frontend/.env*
+
+# build artifacts
+frontend/.next/
+frontend/node_modules/
+frontend/.vercel/
+frontend/backup*/
+frontend/src/backup*/
+
+# env & local config
+frontend/.env*
+

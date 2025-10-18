@@ -1,14 +1,14 @@
-const langs = [
+﻿const langs = [
   'English',
-  '中文(简体)',
-  'Español',
-  'العربية',
-  'हिन्दी',
-  'Português',
-  'Français',
-  'Русский',
+  'ä¸­æ–‡(ç®€ä½“)',
+  'EspaÃ±ol',
+  'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©',
+  'à¤¹à¤¿à¤¨à¥à¤¦à¥€',
+  'PortuguÃªs',
+  'FranÃ§ais',
+  'Ð ÑƒÑÑÐºÐ¸Ð¹',
   'Deutsch',
-  '日本語',
+  'æ—¥æœ¬èªž',
 ];
 
 export default function LanguageSwitcher() {
@@ -23,5 +23,9 @@ export default function LanguageSwitcher() {
     </div>
   );
 }
+
+
+
+
 
 

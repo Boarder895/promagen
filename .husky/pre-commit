@@ -1,6 +1,15 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Run checks against the frontend package from repo root
-pnpm -C frontend run check:placeholders || exit 1
-pnpm -C frontend tsc --noEmit || exit 1
+# 0) Placeholder guard (PowerShell)
+pwsh -NoProfile -File ./frontend/scripts/check-placeholders.ps1 || exit 1
+
+# 1) Lint in PowerShell (so pnpm is found)
+pwsh -NoProfile -Command "pnpm -C frontend exec eslint 'src/**/*.{ts,tsx}' -f stylish"
+if [ $? -ne 0 ]; then exit 1; fi
+
+# 2) Typecheck in PowerShell
+pwsh -NoProfile -Command "pnpm -C frontend run typecheck"
+if [ $? -ne 0 ]; then exit 1; fi
+
+# Keep build in CI, not in the hook (faster commits)

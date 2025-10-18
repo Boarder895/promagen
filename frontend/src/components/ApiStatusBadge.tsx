@@ -1,4 +1,4 @@
-// frontend/src/components/ApiStatusBadge.tsx
+﻿// frontend/src/components/ApiStatusBadge.tsx
 type Props = {
   ok?: boolean;
   compact?: boolean; // <-- SiteHeader uses this
@@ -18,3 +18,7 @@ export default function ApiStatusBadge({ ok = true, compact = false }: Props) {
     </span>
   );
 }
+
+
+
+

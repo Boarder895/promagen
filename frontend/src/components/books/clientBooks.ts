@@ -1,8 +1,5 @@
-"use client";
-import books from "@/data/books"; // Next can bundle JSON for client
+﻿export default function BookPlaceholder() { return null; }
 
-export function loadClientBooks() {
-  return books;
-}
+
 
 

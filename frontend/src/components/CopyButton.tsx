@@ -1,24 +1,41 @@
-// FRONTEND • NEXT.JS
-// File: frontend/components/CopyButton.tsx
-'use client';
+﻿"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-export default function CopyButton({ value, label = 'Copy' }: { value: string; label?: string }) {
-  const [done, setDone] = useState(false);
+type CopyButtonProps = {
+  text: string;
+  className?: string;
+  label?: string;
+};
+
+export default function CopyButton({ text, className, label = "Copy" }: CopyButtonProps) {
+  const [copied, setCopied] = useState(false);
+
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1000);
+    } catch {
+      // no-op: clipboard might be blocked
+    }
+  }
+
   return (
     <button
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(value);
-          setDone(true);
-          setTimeout(() => setDone(false), 1200);
-        } catch {}
-      }}
-      className="rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
-      title={value}
+      type="button"
+      onClick={onCopy}
+      className={className}
+      aria-live="polite"
+      title={label}
     >
-      {done ? 'Copied' : label}
+      {copied ? "Copied" : label}
     </button>
   );
 }
+
+
+
+
+
+

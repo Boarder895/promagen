@@ -1,4 +1,4 @@
-export async function sendChat(
+﻿export async function sendChat(
   messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
 ) {
   const r = await fetch('http://localhost:4000/api/ai/openai/chat', {
@@ -10,5 +10,9 @@ export async function sendChat(
   if (!r.ok) throw new Error(JSON.stringify(data));
   return data.text as string;
 }
+
+
+
+
 
 

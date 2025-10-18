@@ -1,0 +1,22 @@
+﻿[
+  {"name":"Midjourney","slug":"midjourney","site":"https://www.midjourney.com","affiliateUrl":""},
+  {"name":"OpenAI DALL·E","slug":"openai-dalle","site":"https://openai.com","affiliateUrl":""},
+  {"name":"Stability AI (Stable Diffusion)","slug":"stability","site":"https://stability.ai","affiliateUrl":""},
+  {"name":"Adobe Firefly","slug":"adobe-firefly","site":"https://www.adobe.com/products/firefly.html","affiliateUrl":""},
+  {"name":"Runway","slug":"runway","site":"https://runwayml.com","affiliateUrl":""},
+  {"name":"Ideogram","slug":"ideogram","site":"https://ideogram.ai","affiliateUrl":""},
+  {"name":"Leonardo AI","slug":"leonardo","site":"https://leonardo.ai","affiliateUrl":""},
+  {"name":"Playground AI","slug":"playground","site":"https://playground.ai","affiliateUrl":""},
+  {"name":"Canva (Magic Media)","slug":"canva-magic-media","site":"https://www.canva.com","affiliateUrl":""},
+  {"name":"Bing Image Creator","slug":"bing-image","site":"https://www.bing.com/images/create","affiliateUrl":""},
+  {"name":"NightCafe","slug":"nightcafe","site":"https://nightcafe.studio","affiliateUrl":""},
+  {"name":"DreamStudio","slug":"dreamstudio","site":"https://dreamstudio.ai","affiliateUrl":""},
+  {"name":"BlueWillow","slug":"bluewillow","site":"https://www.bluewillow.ai","affiliateUrl":""},
+  {"name":"StarryAI","slug":"starryai","site":"https://starryai.com","affiliateUrl":""},
+  {"name":"Fotor AI Image","slug":"fotor","site":"https://www.fotor.com","affiliateUrl":""},
+  {"name":"Picsart AI","slug":"picsart","site":"https://picsart.com/ai","affiliateUrl":""},
+  {"name":"CF Spark (Creative Fabrica)","slug":"cf-spark","site":"https://www.creativefabrica.com/spark","affiliateUrl":""},
+  {"name":"DeepAI","slug":"deepai","site":"https://deepai.org","affiliateUrl":""},
+  {"name":"Replicate (SDXL etc.)","slug":"replicate","site":"https://replicate.com","affiliateUrl":""},
+  {"name":"Hugging Face Spaces","slug":"hf-spaces","site":"https://huggingface.co/spaces","affiliateUrl":""}
+]

@@ -1,4 +1,4 @@
-// Tiny in-memory prompts list + fetch helper used by the Prompts page.
+﻿// Tiny in-memory prompts list + fetch helper used by the Prompts page.
 
 import type { Prompt } from "@/lib/hooks/usePrompts";
 
@@ -11,3 +11,7 @@ export async function getCommunity(): Promise<Prompt[]> {
   // swap for a real fetch later; this keeps the API async for easy replacement
   return prompts;
 }
+
+
+
+
