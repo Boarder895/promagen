@@ -2,21 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Desktop/tablet focus (no mobile optimizations yet) */
+/* Light (default) */
 :root {
-  --bg: #0b0e14;
-  --fg: #e6e6e6;
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
 }
 
-html, body {
-  height: 100%;
+/* Dark (when `.dark` class is on <html>) */
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
 }
 
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font-synthesis-weight: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+html, body { height: 100%; }
+
+/* Let Tailwind drive colors via our CSS variables */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
+
