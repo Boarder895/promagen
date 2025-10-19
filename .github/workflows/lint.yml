@@ -1,4 +1,4 @@
-name: CI
+name: Lint
 
 on:
   pull_request:
@@ -7,13 +7,11 @@ on:
     branches: [ release/** ]
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
-    env:
-      NEXT_TELEMETRY_DISABLED: '1'
 
     steps:
       - name: Checkout
@@ -37,11 +35,3 @@ jobs:
 
       - name: Typecheck
         run: pnpm run typecheck
-
-      - name: Build
-        run: pnpm build
-
-
-
-
-
