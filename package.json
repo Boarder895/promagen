@@ -2,7 +2,10 @@
   "name": "promagen",
   "private": true,
   "packageManager": "pnpm@9.12.3",
-  "engines": { "node": ">=18 <21", "pnpm": ">=9" },
+  "engines": {
+    "node": "22.x",
+    "pnpm": ">=9"
+  },
   "engineStrict": true,
   "workspaces": ["frontend"],
   "scripts": {
@@ -36,3 +39,4 @@
     "husky": "^8.0.0"
   }
 }
+

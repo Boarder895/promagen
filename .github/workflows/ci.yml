@@ -3,14 +3,10 @@ name: CI
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/**'
+    paths: [ "frontend/**", ".github/workflows/**" ]
   pull_request:
     branches: [ main ]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/**'
+    paths: [ "frontend/**", ".github/workflows/**" ]
 
 jobs:
   build:
@@ -23,23 +19,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Keep pnpm aligned with your repo and skip auto-install
+      # Keep pnpm aligned; skip auto-install (we do a frozen install later)
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: '9.12.3'
+          version: 9.12.3
           run_install: false
 
-      # ✅ Fix: allow cache to resolve whether lockfile is at repo root, in frontend/, or in any subdir
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "22.x"
           cache: pnpm
+          # works whether the lockfile is at repo root or under frontend/
           cache-dependency-path: |
             pnpm-lock.yaml
             frontend/pnpm-lock.yaml
-            **/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -52,6 +47,7 @@ jobs:
 
       - name: Build
         run: pnpm run build
+
 
 
 
