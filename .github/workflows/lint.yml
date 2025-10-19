@@ -21,16 +21,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Setup pnpm
+      - name: Setup pnpm (v9)
         uses: pnpm/action-setup@v3
         with:
           version: 9
           run_install: false
 
-      - name: Install deps (pnpm, frozen)
+      # Optional but nice: cache pnpm store
+      - name: Get pnpm store path
+        id: pnpm-cache
+        run: echo "STORE_PATH=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install deps (frozen)
         run: pnpm install --frozen-lockfile
 
       - name: Lint
@@ -38,4 +49,5 @@ jobs:
 
       - name: Typecheck
         run: pnpm run typecheck
+
 
