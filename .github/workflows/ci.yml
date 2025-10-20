@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: ["**"]
   pull_request:
-    branches: [ "**" ]
+    branches: ["**"]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -26,10 +26,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Do NOT pass a version here; defer to package.json "packageManager"
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          run_install: false
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -38,8 +39,7 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      # Temporary bypass so the pipeline doesn't fail on lockfile drift.
-      # We'll revert to --frozen-lockfile after regenerating pnpm-lock.yaml.
+      # Temporary bypass while lockfile is out-of-sync
       - name: Install
         run: pnpm install --no-frozen-lockfile
 
@@ -52,16 +52,6 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # Optional: keep artifacts for debugging / previews (uncomment if you want)
-      # - name: Upload build artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: next-build
-      #     path: |
-      #       .next
-      #       next.config.* 
-      #       package.json
-      #       pnpm-lock.yaml
 
 
 
