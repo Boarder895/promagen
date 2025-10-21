@@ -1,9 +1,19 @@
 // frontend/src/app/leaderboard/page.tsx
-// Route wrapper that renders the leaderboard component at /leaderboard.
+// Thin App Router page that renders the ProviderTable at /leaderboard.
 
-import type { ProviderTile } from "@/types/ribbon";
 import ProviderTable from "@/components/leaderboard/ProviderTable";
 import providersJson from "@/data/providers.json";
+
+// Local structural type matching what ProviderTable expects.
+type ProviderRow = {
+  id: string;
+  name: string;
+  url: string;
+  affiliateUrl: string;  // required string
+  tagline: string;       // required string
+  score: number;
+  trend: "flat" | "up" | "down";
+};
 
 type ProviderJson = {
   id?: string;
@@ -12,15 +22,15 @@ type ProviderJson = {
   url?: string;
   website?: string;
   affiliateUrl?: string | null;
-  tagline?: string;
+  tagline?: string | null;
 };
 
 const slug = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-function toTiles(src: unknown, limit = 20): ProviderTile[] {
+function toRows(src: unknown, limit = 20): ProviderRow[] {
   const arr = Array.isArray(src) ? (src as ProviderJson[]) : [];
-  return arr.slice(0, limit).map((p): ProviderTile => {
+  return arr.slice(0, limit).map((p): ProviderRow => {
     const name = String(p.name ?? p.displayName ?? "Unknown");
     const url = String(p.url ?? p.website ?? "#");
     const id = String(p.id ?? slug(name));
@@ -28,24 +38,29 @@ function toTiles(src: unknown, limit = 20): ProviderTile[] {
       id,
       name,
       url,
-      affiliateUrl: p.affiliateUrl ?? undefined,
-      tagline: p.tagline ?? undefined,
+      affiliateUrl: String(p.affiliateUrl ?? ""), // force string
+      tagline: String(p.tagline ?? ""),           // force string
       score: 0,
-      trend: "flat", // match your union ('flat' | 'up' | 'down')
+      trend: "flat",
     };
   });
 }
 
 export default function LeaderboardPage() {
-  const items = toTiles(providersJson, 20);
+  const rows = toRows(providersJson, 20);
 
   return (
     <main className="min-h-dvh bg-neutral-950 text-neutral-100">
       <div className="mx-auto max-w-screen-xl px-6 py-8 space-y-4">
         <h1 className="text-2xl font-semibold">AI Image-Generation Platforms — Leaderboard</h1>
-        <ProviderTable items={items} title="TOP 20 • LIVE LEADERBOARD" />
+        <ProviderTable rows={rows} />
       </div>
     </main>
   );
 }
+
+
+
+
+
 
