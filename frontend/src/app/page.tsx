@@ -1,3 +1,4 @@
+// frontend/src/app/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -6,10 +7,12 @@ import type { RibbonMarket, RibbonPayload, MarketStatus, ProviderTile } from '@/
 import ExchangeColumn from '@/components/markets/ExchangeColumn';
 import ProviderTable from '@/components/providers/ProviderTable';
 
-// local fallback for the 20 providers (so the grid is never empty)
-import { getTop20Providers } from '@/lib/providers/top20';
+// Single source of truth for local provider data
+import providersJson from '@/data/providers.json';
 
 const HEARTBEAT_MS = 180_000;
+
+/* ----------------------------- visuals: heart ----------------------------- */
 
 function Heartline({ eastHue, westHue }: { eastHue: number; westHue: number }) {
   return (
@@ -52,11 +55,15 @@ function HeartOrb({ hue, strength }: { hue: number; strength: number }) {
   );
 }
 
+/* ------------------------------ data loaders ------------------------------ */
+
 async function fetchRibbon(): Promise<RibbonPayload> {
   const res = await fetch('/api/ribbon', { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to load ribbon');
   return res.json() as Promise<RibbonPayload>;
 }
+
+/* ---------------------------------- page ---------------------------------- */
 
 export default function HomePage() {
   const [data, setData] = useState<RibbonPayload | null>(null);
@@ -69,23 +76,45 @@ export default function HomePage() {
 
   const markets: RibbonMarket[] = useMemo(() => data?.markets ?? [], [data]);
 
-  // Fallback to local providers.json when API providers is empty
+  // Fallback providers: use local JSON when API sends none
   const providers: ProviderTile[] = useMemo(() => {
     const api = data?.providers ?? [];
-    if (api.length) return api;
+    if (api.length) return api as ProviderTile[];
 
-    // Map local minimal fields into ProviderTile shape expected by ProviderTable
-    return getTop20Providers().map((p) => ({
-      name: p.name,
-      url: p.url,
-      affiliateUrl: p.affiliateUrl ?? undefined,
-      tagline: p.tagline ?? undefined,
-      score: 0,
-      trend: 'flat',
-    })) as ProviderTile[];
-  }, [data]);
+    type ProviderJson = {
+      id?: string;
+      name?: string;
+      displayName?: string;
+      url?: string;
+      website?: string;
+      affiliateUrl?: string | null;
+      tagline?: string;
+    };
 
-  // temperature → hue helpers for Heartline/Orb
+    const slug = (s: string) =>
+      s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    const src = Array.isArray(providersJson) ? (providersJson as ProviderJson[]) : [];
+
+    return src.map((p): ProviderTile => {
+      const name = String(p.name ?? p.displayName ?? 'Unknown');
+      const url = String(p.url ?? p.website ?? '#');
+      const id = String(p.id ?? slug(name)); // required by ProviderTile
+
+      return {
+        id,
+        name,
+        url,
+        affiliateUrl: p.affiliateUrl ?? undefined,
+        tagline: p.tagline ?? undefined,
+        score: 0,
+        trend: 'flat', // ✅ match ProviderTile union ('flat' | 'up' | 'down')
+      };
+    });
+  }, [data]); // <-- close map, then close useMemo
+
+  /* ---------------------- temperature → hue helper funcs --------------------- */
+
   const tempOf = (m: RibbonMarket) => m.weather?.tempC ?? 12;
   const avg = (xs: RibbonMarket[]) =>
     xs.length ? xs.reduce((s, m) => s + tempOf(m), 0) / xs.length : 12;
@@ -133,11 +162,9 @@ export default function HomePage() {
           {/* Left ribbon (East) */}
           <ExchangeColumn title="EASTERN MARKETS" items={east} />
 
-          {/* Center: 10×2 provider table with vertical scroll when short */}
+          {/* Center: 10×2 provider table */}
           <div className="z-10 flex min-w-0 flex-col gap-3">
-            <h1 className="text-center text-2xl font-semibold">
-              AI Image-Generation Platforms
-            </h1>
+            <h1 className="text-center text-2xl font-semibold">AI Image-Generation Platforms</h1>
             <div className="max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
               <ProviderTable items={providers} title="TOP 20 • LIVE LEADERBOARD" />
             </div>
@@ -150,6 +177,11 @@ export default function HomePage() {
     </main>
   );
 }
+
+
+
+
+
 
 
 
