@@ -1,38 +1,56 @@
-'use client';
+// frontend/src/components/leaderboard/ProviderTable.tsx
+// Simple, typed leaderboard table. No data fetching here—just render what you're given.
 
-type ProviderRow = {
-  id: string;
-  name: string;
-  tagline: string;
-  score: number;
-  trend: 'up' | 'down' | 'flat';
-  affiliateUrl: string;
+import type { ProviderTile } from "@/types/ribbon";
+
+type Props = {
+  items: ProviderTile[];       // normalized tiles from the route/page
+  title?: string;
 };
 
-export default function ProviderTable({ rows }: { rows: ProviderRow[] }) {
+export default function ProviderTable({ items, title }: Props) {
+  const rows = Array.isArray(items) ? items : [];
+
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {rows.map(r => (
-        <div
-          key={r.id}
-          className="rounded-2xl border border-white/5 p-4 bg-neutral-900/40 hover:bg-neutral-900/60 transition-shadow shadow"
-          role="button"
-          aria-label={`${r.name} details`}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-lg font-semibold">{r.name}</div>
-              <div className="text-sm opacity-70">{r.tagline}</div>
-            </div>
-            <div className="text-emerald-400 text-sm font-semibold">
-              {r.score.toFixed(1)}{r.trend === 'up' ? ' ↑' : r.trend === 'down' ? ' ↓' : ' →'}
-            </div>
-          </div>
-          <div className="pt-3">
-            <a href={r.affiliateUrl} className="text-sm underline opacity-90">Try →</a>
-          </div>
+    <section className="rounded-xl border border-neutral-800 bg-neutral-900/60">
+      {title ? (
+        <div className="px-4 py-3 border-b border-neutral-800 text-sm text-neutral-300">
+          {title}
         </div>
-      ))}
-    </div>
+      ) : null}
+
+      <div className="p-3">
+        <div className="grid grid-cols-2 gap-3">
+          {rows.map((p) => (
+            <a
+              key={p.id}
+              href={p.affiliateUrl ?? p.url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="block rounded-lg border border-neutral-800/80 bg-neutral-900/80 hover:bg-neutral-900 transition-shadow shadow"
+              title={p.tagline ?? p.name}
+            >
+              <div className="flex items-center justify-between gap-2 px-3 py-3">
+                <div className="font-medium truncate">{p.name}</div>
+                <div className="text-xs text-neutral-400">
+                  {p.trend ?? "flat"}
+                </div>
+              </div>
+            </a>
+          ))}
+
+          {/* pad to 20 tiles so layout stays 10×2 even if fewer items */}
+          {rows.length < 20 &&
+            Array.from({ length: 20 - rows.length }).map((_, i) => (
+              <div
+                key={`empty-${i}`}
+                className="rounded-lg border border-dashed border-neutral-800/60 bg-neutral-900/40 min-h-[48px]"
+                aria-hidden
+              />
+            ))}
+        </div>
+      </div>
+    </section>
   );
 }
+
