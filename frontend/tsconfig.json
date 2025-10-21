@@ -22,6 +22,9 @@
   },
   "include": ["src/**/*", ".next/types/**/*.ts"],
   "exclude": [
+    "node_modules",
+    ".next",
+    "prototypes/**",
     "src/lib/books/**",
     "src/components/books/**",
     "src/app/docs/**",
@@ -29,5 +32,6 @@
     "src/providers/copypaste/**"
   ]
 }
+
 
 

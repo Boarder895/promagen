@@ -1,4 +1,4 @@
-﻿// Tiny client-safe â€œbooksâ€ list used by docs pages.
+// Tiny client-safe “books” list used by docs pages.
 export type BookSection = { id: string; title: string; text: string; date?: string | number | Date };
 export type Book = {
   id: string;

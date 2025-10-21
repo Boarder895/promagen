@@ -1,4 +1,4 @@
-﻿// src/app/settings/keys/page.tsx
+// src/app/settings/keys/page.tsx
 import { headers } from "next/headers";
 
 type HealthBody = { status?: unknown } & Record<string, unknown>;
@@ -17,9 +17,9 @@ export default async function KeysPage() {
 
   return (
     <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <h1>Settings › Keys</h1>
+      <h1>Settings � Keys</h1>
       <p>
-        API health: {res.status} ({res.statusText}) — {status}
+        API health: {res.status} ({res.statusText}) � {status}
       </p>
     </main>
   );

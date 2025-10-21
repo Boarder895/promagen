@@ -1,4 +1,4 @@
-﻿//
+//
 // Stage 1: Provider types + stub data (no APIs yet).
 //
 export type Provider = {
@@ -13,7 +13,7 @@ export type Provider = {
 
 export const providers: Provider[] = [
   { id: "midjourney", name: "Midjourney", slug: "midjourney", affiliateUrl: "", score: 0 },
-  { id: "openai", name: "OpenAI (DALL·E)", slug: "openai", affiliateUrl: "", score: 0 },
+  { id: "openai", name: "OpenAI (DALL�E)", slug: "openai", affiliateUrl: "", score: 0 },
   { id: "stability", name: "Stability (SDXL)", slug: "stability", affiliateUrl: "", score: 0 },
   { id: "adobe", name: "Adobe Firefly", slug: "adobe", affiliateUrl: "", score: 0 },
   { id: "ideogram", name: "Ideogram", slug: "ideogram", affiliateUrl: "", score: 0 },

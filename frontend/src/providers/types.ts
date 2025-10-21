@@ -1,4 +1,4 @@
-﻿// providers/types.ts
+// providers/types.ts
 export type GenInput = {
   prompt: string;
   negative?: string;

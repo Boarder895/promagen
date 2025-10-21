@@ -1,4 +1,4 @@
-﻿// Named exports only.
+// Named exports only.
 export type ProviderId =
   | 'openai' | 'stability' | 'leonardo' | 'i23rf' | 'artistly'
   | 'adobe' | 'midjourney' | 'canva' | 'bing' | 'ideogram'
@@ -10,12 +10,12 @@ export type AffiliateInfo = {
   name: string;
   url: string | null;          // put real affiliate URLs as you approve them
   label: string;               // short CTA label
-  requiresDisclosure: boolean; // UK â€œAffiliate linkâ€ badge
+  requiresDisclosure: boolean; // UK “Affiliate link” badge
 };
 
 // Canonical 20-provider list (kept in sync with project memory).
 export const AFFILIATES: Record<ProviderId, AffiliateInfo> = {
-  openai:    { id: 'openai',    name: 'OpenAI DALLÂ·E/GPT-Image', url: null, label: 'Learn more', requiresDisclosure: false },
+  openai:    { id: 'openai',    name: 'OpenAI DALL·E/GPT-Image', url: null, label: 'Learn more', requiresDisclosure: false },
   stability: { id: 'stability', name: 'Stability AI',            url: null, label: 'Free trial', requiresDisclosure: false },
   leonardo:  { id: 'leonardo',  name: 'Leonardo AI',             url: null, label: 'Affiliate',  requiresDisclosure: true  },
   i23rf:     { id: 'i23rf',     name: 'I23RF',                   url: null, label: 'Affiliate',  requiresDisclosure: true  },

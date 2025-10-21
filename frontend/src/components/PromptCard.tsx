@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React from "react";
 export type Prompt = { id: string; title: string; text: string };
 export default function PromptCard({ prompt }: { prompt: Prompt }) {

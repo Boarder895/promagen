@@ -1,4 +1,4 @@
-﻿// src/app/adapters/openai.ts
+// src/app/adapters/openai.ts
 export type ChatRole = "system" | "user" | "assistant";
 export interface ChatMessage { role: ChatRole; content: string; }
 export interface ChatRequest { model: string; messages: ChatMessage[]; }

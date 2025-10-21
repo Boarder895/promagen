@@ -1,22 +1,35 @@
-// src/lib/exchanges-ui.ts
-// UI-friendly layer on top of static exchange data. No helpers here.
+// UI-friendly adapter over the exchanges catalog for Stage-1.
+// No 'any' — just safe defaults so the ribbons render cleanly.
 
-import { exchanges, type ExchangeInfo } from "@/data/exchanges";
+import { EXCHANGES, SELECTED_IDS, type Exchange } from "@/data/exchanges";
+import type { ExchangeInfo } from "@/types/ribbon";
 
 export type ExchangeUI = ExchangeInfo & {
-  code: string;       // short label used in ribbons
-  temp?: number;      // UI stub in Stage 1
-  localTime?: string; // UI stub in Stage 1
-  open?: boolean;     // UI stub (computed later in Stage 2)
+  /** Short label shown on cards (defaults to exchange code) */
+  code: string;
+  /** Temperature °C (stub until weather is wired) */
+  temp: number;
+  /** Preformatted local time (we also compute on the card; empty is fine) */
+  localtime: string;
+  /** Market open/closed flag (stub; engine comes later) */
+  open: boolean;
 };
 
-export const exchangesUI: ExchangeUI[] = exchanges.map((e: ExchangeInfo) => ({
+function getSelectedExchanges(): Exchange[] {
+  const byId = new Map(EXCHANGES.map(e => [e.id, e]));
+  return SELECTED_IDS.map(id => byId.get(id)!).filter((e): e is Exchange => Boolean(e));
+}
+
+export const exchangesUI: ExchangeUI[] = getSelectedExchanges().map((e: Exchange) => ({
   ...e,
-  code: (e as any).code ?? e.exchange,
-  temp: typeof (e as any).temp === "number" ? (e as any).temp : 20,
-  localTime: (e as any).localTime ?? "",
-  open: typeof (e as any).open === "boolean" ? (e as any).open : false,
+  code: e.exchange,
+  temp: 20,     // neutral default
+  localtime: "",// computed at render if needed
+  open: false,  // neutral default
 }));
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-﻿// frontend/providers/stability.ts
+// frontend/providers/stability.ts
 import type { ProviderDef, GenInput, GenOutput } from './types';
 
 export const stabilityProvider: ProviderDef = {
@@ -19,7 +19,7 @@ export const stabilityProvider: ProviderDef = {
   },
 };
 
-export default stabilityProvider; // remove this line if you’re using named imports only
+export default stabilityProvider; // remove this line if you�re using named imports only
 
 
 

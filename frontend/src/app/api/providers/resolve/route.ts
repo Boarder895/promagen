@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { providers, getProvider } from "@/lib/providers";
 
 export async function GET() {

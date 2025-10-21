@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 type Health = { ok: boolean; credits_feature?: 'on' | 'off' };
 
@@ -25,10 +25,10 @@ export default function CreditsBanner() {
 
   const text =
     state === 'on'
-      ? 'Credits: ON â€” usage is metered (optional feature enabled)'
+      ? 'Credits: ON — usage is metered (optional feature enabled)'
       : state === 'off'
-        ? 'Credits: OFF â€” optional feature parked (not engaged)'
-        : 'Credits: unknown â€” health check failed';
+        ? 'Credits: OFF — optional feature parked (not engaged)'
+        : 'Credits: unknown — health check failed';
 
   const bg = state === 'on' ? '#0b5' : state === 'off' ? '#444' : '#b50';
 

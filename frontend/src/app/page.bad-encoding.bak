@@ -1,0 +1,185 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { motion, useAnimationControls } from 'framer-motion';
+import { splitEastWest } from '@/lib/market/layout';
+import { useRibbonData } from '@/hooks/useRibbonData';
+import ExchangeCard from '@/components/markets/ExchangeCard';
+
+const HEARTBEAT_MS = 180_000; // 3-minute visual pulse
+
+// --- Types that mirror the /api/ribbon payload, with fallbacks for older props
+type MarketStatus = 'open' | 'closed' | 'pre' | 'post' | 'holiday' | 'unknown';
+type RibbonItem = {
+  id: string;
+  city: string;
+  exchange: string;
+  country: string;
+  iso2: string;
+  tz: string;
+  longitude: number;
+  weather?: { tempC?: number; condition?: string };
+  market?: { status?: MarketStatus; nextChangeISO?: string | null };
+
+  // Back-compat (old UI code sometimes used these)
+  temperatureC?: number;           // old weather field
+  marketState?: MarketStatus;      // old market field
+};
+
+// --- Visuals
+function Heartline({ eastHue, westHue }: { eastHue: number; westHue: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: [0, 0.9, 0] }}
+      transition={{ duration: 1.4, ease: 'easeOut' }}
+      className="pointer-events-none absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 blur-[2px]"
+      style={{
+        background: `linear-gradient(90deg, hsl(${eastHue} 70% 55%), rgba(255,255,255,0.4), hsl(${westHue} 70% 55%))`,
+        maskImage: 'linear-gradient(90deg, transparent 0%, black 25%, black 75%, transparent 100%)',
+      }}
+      aria-hidden
+    />
+  );
+}
+
+function HeartOrb({ hue, strength }: { hue: number; strength: number }) {
+  const controls = useAnimationControls();
+  useEffect(() => {
+    controls.start({
+      scale: [0.9, 1 + strength * 0.06, 0.9],
+      opacity: [0.25, 0.45 + strength * 0.2, 0.25],
+      transition: { duration: 2.2, ease: 'easeOut' },
+    });
+  }, [strength, controls]);
+
+  return (
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0.25 }}
+      animate={controls}
+      className="pointer-events-none absolute inset-0 -z-10"
+      style={{
+        background: `radial-gradient(40% 55% at 50% 50%, hsl(${hue} 70% 45% / 0.25), transparent 65%)`,
+        filter: 'blur(18px)',
+      }}
+      aria-hidden
+    />
+  );
+}
+
+function ProviderGrid() {
+  const rows = Array.from({ length: 20 }).map((_, i) => ({
+    id: `p${i + 1}`,
+    name: `Provider #${i + 1}`,
+    tagline: i % 2 ? 'Score | Affiliate ...' : 'Score | Affiliate Enabled',
+    url: '#',
+  }));
+
+  return (
+    <div className="grid grid-cols-10 gap-3">
+      {rows.map((r, i) => (
+        <div
+          key={r.id}
+          className={[
+            'rounded-xl border border-white/10 bg-white/5 px-3 py-2',
+            i < 10 ? 'ring-1 ring-white/10' : '',
+            'transition-colors hover:border-white/20',
+          ].join(' ')}
+          title={r.tagline}
+        >
+          <div className="truncate text-[13px] font-semibold">{r.name}</div>
+          <div className="truncate text-xs text-white/60">{r.tagline}</div>
+          <div className="mt-1 flex items-center justify-between text-xs">
+            <span className="font-bold text-emerald-300">92 ?</span>
+            <a className="font-semibold text-sky-300 hover:underline" href={r.url} target="_blank" rel="noreferrer">
+              Visit
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// --- Main Page
+export default function HomePage() {
+  const { data } = useRibbonData();
+
+  // Normalize whatever came back into a clean array of RibbonItem
+  const list: RibbonItem[] = useMemo(() => {
+    const raw: any = data;
+    const arr = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
+    return (arr ?? []) as RibbonItem[];
+  }, [data]);
+
+  // Split east/west (helper expects an array)
+  const { east, west } = useMemo(() => splitEastWest(list), [list]);
+
+  // Temperature helpers (back-compat for old temperatureC prop)
+  const getTemp = (m: RibbonItem) => m.weather?.tempC ?? m.temperatureC ?? 12;
+  const avgTemp = (xs: RibbonItem[]) => (xs.length ? xs.reduce((s, m) => s + getTemp(m), 0) / xs.length : 12);
+  const tempToHue = (t: number) => {
+    const min = -20, max = 40;
+    const cl = Math.max(0, Math.min(1, (t - min) / (max - min)));
+    return Math.round(220 + (10 - 220) * cl); // blue?red
+  };
+
+  const eastHue = tempToHue(avgTemp(east));
+  const westHue = tempToHue(avgTemp(west));
+
+  // Open-count (back-compat for old marketState prop)
+  const statusOf = (m: RibbonItem): MarketStatus => m.market?.status ?? m.marketState ?? 'unknown';
+  const openCount = list.filter((d) => statusOf(d) === 'open').length;
+  const strength = list.length ? openCount / list.length : 0;
+  const orbHue = Math.round((eastHue + westHue) / 2);
+
+  // Visual heartbeat
+  const [beatKey, setBeatKey] = useState(0);
+  useEffect(() => {
+    const tick = () => setBeatKey((k) => k + 1);
+    const t = setInterval(tick, HEARTBEAT_MS);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <main className="min-h-dvh bg-neutral-950 text-neutral-100">
+      <div className="mx-auto max-w-screen-2xl px-6 py-8">
+        <div className="grid grid-cols-[320px,1fr,320px] items-start gap-6 relative">
+          {/* East column */}
+          <div className="flex min-w-[280px] flex-col gap-3" aria-label="Eastern markets">
+            <div className="pl-1 text-xs uppercase tracking-wide opacity-60">Eastern markets</div>
+            {east.map((m) => (
+              <ExchangeCard key={m.id} m={m} />
+            ))}
+          </div>
+
+          {/* Center grid + connection visuals */}
+          <div className="relative">
+            <HeartOrb hue={orbHue} strength={strength} />
+            <div key={beatKey}>
+              <Heartline eastHue={eastHue} westHue={westHue} />
+            </div>
+
+            <header className="mb-4 text-center">
+              <h1 className="text-2xl font-semibold">AI Image-Generation Platforms</h1>
+              <p className="text-sm text-white/60">Live markets frame the grid — the Heartline pulses every 3 minutes.</p>
+            </header>
+
+            <ProviderGrid />
+          </div>
+
+          {/* West column */}
+          <div className="flex min-w-[280px] flex-col gap-3" aria-label="Western markets">
+            <div className="pl-1 text-xs uppercase tracking-wide opacity-60">Western markets</div>
+            {west.map((m) => (
+              <ExchangeCard key={m.id} m={m} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+
+

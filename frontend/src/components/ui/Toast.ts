@@ -1,4 +1,4 @@
-﻿// src/components/ui/Toast.ts
+// src/components/ui/Toast.ts
 "use client";
 
 export function useToast() {

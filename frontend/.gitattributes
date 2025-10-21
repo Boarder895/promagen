@@ -1,16 +1,2 @@
-# Use LF everywhere, avoid Windows CRLF churn
-* text=auto eol=lf
-
-# Keep shell-ish scripts LF (husky likes this)
-*.sh  text eol=lf
-.husky/* text eol=lf
-
-# PowerShell as text too (don’t force CRLF)
-*.ps1 text
-
-# Images/binaries
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.pdf binary
+* text=auto
+*.{ts,tsx,js,jsx,json,css,scss,md} text eol=crlf

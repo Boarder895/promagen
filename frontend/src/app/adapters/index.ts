@@ -1,4 +1,4 @@
-﻿// src/app/adapters/index.ts
+// src/app/adapters/index.ts
 // Minimal, typed adapter registry for Stage 1 (no runtime logic yet).
 
 export type Adapter = {
