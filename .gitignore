@@ -65,3 +65,6 @@ frontend/src/backup*/
 # env & local config
 frontend/.env*
 
+
+tsconfig.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
