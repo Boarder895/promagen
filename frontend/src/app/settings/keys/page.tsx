@@ -17,9 +17,9 @@ export default async function KeysPage() {
 
   return (
     <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <h1>Settings › Keys</h1>
+      <h1>Settings ï¿½ Keys</h1>
       <p>
-        API health: {res.status} ({res.statusText}) — {status}
+        API health: {res.status} ({res.statusText}) ï¿½ {status}
       </p>
     </main>
   );

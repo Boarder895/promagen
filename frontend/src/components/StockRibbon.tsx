@@ -1,21 +1,24 @@
 "use client";
-import { exchangesUI } from "@/lib/exchanges-ui";
+
+import { exchangesUI, type ExchangeUI } from "@/lib/exchanges-ui";
 
 export default function StockRibbon() {
   return (
     <div className="flex flex-wrap gap-3 text-sm">
-      {exchangesUI.map((e) => (
+      {exchangesUI.map((e: ExchangeUI) => (
         <div key={e.id} className="px-3 py-1 rounded-full border border-white/10 bg-white/5">
-          <span className="font-semibold">{e.code}</span>
-          <span className="opacity-70"> · {e.city}</span>
-          <span> · {e.open ? "Open" : "Closed"}</span>
-          <span className="opacity-70">{typeof e.temp === "number" ? ` · ${e.temp}°` : ""}</span>
-          <span className="opacity-70">{e.localTime ? ` · ${e.localTime}` : ""}</span>
+          <span className="font-semibold">{e.code}</span>{" "}
+          <span className="opacity-70">â€¢ {e.city}</span>{" "}
+          <span>â€¢ {e.open ? "Open" : "Closed"}</span>{" "}
+          <span className="opacity-70">{typeof e.temp === "number" ? `${e.temp}Â°` : ""}</span>{" "}
+          <span className="opacity-70">{e.localtime ? `â€¢ ${e.localtime}` : ""}</span>
         </div>
       ))}
     </div>
   );
 }
+
+
 
 
 
