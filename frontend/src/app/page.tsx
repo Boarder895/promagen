@@ -6,6 +6,9 @@ import type { RibbonMarket, RibbonPayload, MarketStatus, ProviderTile } from '@/
 import ExchangeColumn from '@/components/markets/ExchangeColumn';
 import ProviderTable from '@/components/providers/ProviderTable';
 
+// local fallback for the 20 providers (so the grid is never empty)
+import { getTop20Providers } from '@/lib/providers/top20';
+
 const HEARTBEAT_MS = 180_000;
 
 function Heartline({ eastHue, westHue }: { eastHue: number; westHue: number }) {
@@ -17,7 +20,8 @@ function Heartline({ eastHue, westHue }: { eastHue: number; westHue: number }) {
       className="pointer-events-none absolute left-0 right-0 top-1/2 h-0.5 -translate-y-1/2 blur-[2px]"
       style={{
         background: `linear-gradient(90deg, hsl(${eastHue} 70% 55%), rgba(255,255,255,0.4), hsl(${westHue} 70% 55%))`,
-        maskImage: 'linear-gradient(90deg, transparent 0%, black 25%, black 75%, transparent 100%)',
+        maskImage:
+          'linear-gradient(90deg, transparent 0%, black 25%, black 75%, transparent 100%)',
       }}
       aria-hidden
     />
@@ -39,7 +43,10 @@ function HeartOrb({ hue, strength }: { hue: number; strength: number }) {
       initial={{ scale: 0.9, opacity: 0.25 }}
       animate={controls}
       className="pointer-events-none absolute inset-0 -z-10"
-      style={{ background: `radial-gradient(40% 55% at 50% 50%, hsl(${hue} 70% 45% / 0.25), transparent 65%)`, filter: 'blur(18px)' }}
+      style={{
+        background: `radial-gradient(40% 55% at 50% 50%, hsl(${hue} 70% 45% / 0.25), transparent 65%)`,
+        filter: 'blur(18px)',
+      }}
       aria-hidden
     />
   );
@@ -55,35 +62,59 @@ export default function HomePage() {
   const [data, setData] = useState<RibbonPayload | null>(null);
 
   useEffect(() => {
-    fetchRibbon().then(setData).catch(() => setData(null));
+    fetchRibbon()
+      .then(setData)
+      .catch(() => setData(null));
   }, []);
 
   const markets: RibbonMarket[] = useMemo(() => data?.markets ?? [], [data]);
-  const providers: ProviderTile[] = useMemo(() => data?.providers ?? [], [data]);
 
-  // temperature ? hue helpers for Heartline/Orb
+  // Fallback to local providers.json when API providers is empty
+  const providers: ProviderTile[] = useMemo(() => {
+    const api = data?.providers ?? [];
+    if (api.length) return api;
+
+    // Map local minimal fields into ProviderTile shape expected by ProviderTable
+    return getTop20Providers().map((p) => ({
+      name: p.name,
+      url: p.url,
+      affiliateUrl: p.affiliateUrl ?? undefined,
+      tagline: p.tagline ?? undefined,
+      score: 0,
+      trend: 'flat',
+    })) as ProviderTile[];
+  }, [data]);
+
+  // temperature â†’ hue helpers for Heartline/Orb
   const tempOf = (m: RibbonMarket) => m.weather?.tempC ?? 12;
-  const avg = (xs: RibbonMarket[]) => (xs.length ? xs.reduce((s, m) => s + tempOf(m), 0) / xs.length : 12);
+  const avg = (xs: RibbonMarket[]) =>
+    xs.length ? xs.reduce((s, m) => s + tempOf(m), 0) / xs.length : 12;
   const toHue = (t: number) => {
-    const min = -20, max = 40;
+    const min = -20,
+      max = 40;
     const cl = Math.max(0, Math.min(1, (t - min) / (max - min)));
     return Math.round(220 + (10 - 220) * cl);
   };
 
-  const east = markets.filter(m => m.exchange.longitude > 0).sort((a, b) => a.exchange.longitude - b.exchange.longitude);
-  const west = markets.filter(m => m.exchange.longitude <= 0).sort((a, b) => a.exchange.longitude - b.exchange.longitude);
+  const east = markets
+    .filter((m) => m.exchange.longitude > 0)
+    .sort((a, b) => a.exchange.longitude - b.exchange.longitude);
+
+  const west = markets
+    .filter((m) => m.exchange.longitude <= 0)
+    .sort((a, b) => a.exchange.longitude - b.exchange.longitude);
 
   const eastHue = toHue(avg(east));
   const westHue = toHue(avg(west));
 
   const status = (m: RibbonMarket): MarketStatus => m.state?.status ?? 'unknown';
-  const openCount = markets.filter(d => status(d) === 'open').length;
+  const openCount = markets.filter((d) => status(d) === 'open').length;
   const strength = markets.length ? openCount / markets.length : 0;
   const orbHue = Math.round((eastHue + westHue) / 2);
 
   const [beatKey, setBeatKey] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setBeatKey(k => k + 1), HEARTBEAT_MS);
+    const t = setInterval(() => setBeatKey((k) => k + 1), HEARTBEAT_MS);
     return () => clearInterval(t);
   }, []);
 
@@ -94,25 +125,33 @@ export default function HomePage() {
           {/* Heartline + Orb */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-full">
             <HeartOrb hue={orbHue} strength={strength} />
-            <div key={beatKey}><Heartline eastHue={eastHue} westHue={westHue} /></div>
+            <div key={beatKey}>
+              <Heartline eastHue={eastHue} westHue={westHue} />
+            </div>
           </div>
 
           {/* Left ribbon (East) */}
-          <ExchangeColumn title="Eastern markets" items={east} />
+          <ExchangeColumn title="EASTERN MARKETS" items={east} />
 
-          {/* Center: 2×10 provider table */}
+          {/* Center: 10Ã—2 provider table with vertical scroll when short */}
           <div className="z-10 flex min-w-0 flex-col gap-3">
-            <h1 className="text-center text-2xl font-semibold">AI Image-Generation Platforms</h1>
-            <ProviderTable items={providers} title="Top 20 · Live leaderboard" />
+            <h1 className="text-center text-2xl font-semibold">
+              AI Image-Generation Platforms
+            </h1>
+            <div className="max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+              <ProviderTable items={providers} title="TOP 20 â€¢ LIVE LEADERBOARD" />
+            </div>
           </div>
 
           {/* Right ribbon (West) */}
-          <ExchangeColumn title="Western markets" items={west} />
+          <ExchangeColumn title="WESTERN MARKETS" items={west} />
         </div>
       </div>
     </main>
   );
 }
+
+
 
 
 
