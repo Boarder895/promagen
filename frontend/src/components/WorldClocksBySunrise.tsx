@@ -1,4 +1,4 @@
-ï»¿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -183,7 +183,7 @@ export default function WorldClocksBySunrise() {
         ? new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: c.tz }).format(
             sunriseUTC
           )
-        : "â€”";
+        : "—";
 
       const market =
         c.market && isWeekday(now, c.tz)
@@ -199,7 +199,7 @@ export default function WorldClocksBySunrise() {
         now: timeNow,
         offset,
         sunrise: sunriseLocal,
-        marketLabel: c.market ? (market.open ? "Open" : "Closed") : "â€”",
+        marketLabel: c.market ? (market.open ? "Open" : "Closed") : "—",
         marketNext: c.market && market.nextAt ? `${market.label} ${timeFmt(c.tz).format(market.nextAt)}` : "",
       };
     });
@@ -218,7 +218,7 @@ export default function WorldClocksBySunrise() {
           <div>Sunrise: {r.sunrise}</div>
           <div>
             {r.marketLabel}
-            {r.marketNext ? ` Â· ${r.marketNext}` : ""}
+            {r.marketNext ? ` · ${r.marketNext}` : ""}
           </div>
         </div>
       ))}

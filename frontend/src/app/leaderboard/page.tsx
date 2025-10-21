@@ -1,4 +1,4 @@
-﻿import { providers, type Provider } from "@/lib/providers";
+import { providers, type Provider } from "@/lib/providers";
 
 const toScore = (_p?: Provider): number => {
   const s = _p?.score ?? 0;

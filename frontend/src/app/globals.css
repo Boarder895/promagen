@@ -1,32 +1,164 @@
-﻿@tailwind base;
+﻿/* --- Tailwind layers (must be first) --- */
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Light (default) */
-:root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+/* Dark color scheme hint */
+:root { color-scheme: dark; }
+
+/* --- Your design tokens (kept) --- */
+:root{
+  --bg: #0b0f14;
+  --text: #e8eef2;
+  --muted: #99a6b3;
+  --accent-warm: #f3b25d;
+  --accent-cool: #59b0d9;
+  --card: #0f141a;
+  --card-2: #121922;
+  --border: rgba(255,255,255,0.08);
 }
 
-/* Dark (when `.dark` class is on <html>) */
-.dark {
-  --background: 240 10% 3.9%;
-  --foreground: 0 0% 98%;
+/* --- Base element resets (kept) --- */
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+  overflow:hidden; /* lock 1080p canvas feel; remove if you want page scroll */
 }
 
-html, body { height: 100%; }
+/* --- Promagen layout helpers (kept) --- */
 
-/* Let Tailwind drive colors via our CSS variables */
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-synthesis-weight: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+/* Root 16:9 canvas */
+.promagen-root{
+  width:100vw;
+  height:100vh;
+  display:grid;
+  grid-template-rows: 1fr 48px; /* Main + footer */
+  background: transparent;
 }
+
+/* Triad grid: 15% / 70% / 15% */
+.promagen-grid{
+  display:grid;
+  grid-template-columns: 15% 70% 15%;
+  grid-auto-rows: 100%;
+  gap: 24px;
+  padding: 40px;
+  height: calc(100vh - 48px);
+}
+
+/* Left/Right columns = 6 evenly spaced capsules */
+.ribbons{
+  display:grid;
+  grid-template-rows: repeat(6, minmax(0,1fr));
+  align-content: space-between;
+  gap: 16px;
+}
+
+/* Market capsule base */
+.market-card{
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  min-height: 0;
+  position:relative;
+  overflow:hidden;
+}
+.market-card.open::after{
+  content:"";
+  position:absolute; inset:-1px;
+  border-radius:14px;
+  box-shadow: 0 0 0 2px rgba(120,220,255,0.25);
+  pointer-events:none;
+}
+
+/* Center leaderboard 10 x 2 grid */
+.leaderboard{
+  display:grid;
+  grid-template-rows: auto 1fr; /* bridge text + grid */
+  align-items:center;
+}
+.bridge{
+  text-align:center;
+  font-weight:600;
+  letter-spacing:0.2px;
+  opacity:0.9;
+  margin-bottom: 28px;
+}
+.lb-grid{
+  display:grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(2, 74px);
+  gap: 12px;
+}
+.lb-tile{
+  background: linear-gradient(180deg, #101722, #0e131b);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  overflow:hidden;
+  position:relative;
+}
+.lb-tile.featured{
+  outline: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 0 24px rgba(255,255,255,0.07) inset;
+}
+.lb-top{ font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-tagline{ font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-row{
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:12px; gap:8px;
+}
+.lb-score{ font-weight:700; }
+.lb-cta a{ color:#9bd1ff; text-decoration:none; font-weight:600; }
+
+/* Footer */
+.footer{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 0 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(6,10,14,0.6);
+  backdrop-filter: blur(8px);
+  font-size: 13px;
+}
+
+/* Heartbeat traveling shimmer (masked line) */
+.heartbeat-line{
+  position:absolute; left:0; right:0; top:0; bottom:0;
+  pointer-events:none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  mix-blend-mode: screen;
+  transform: translateX(-100%);
+  opacity:0.0;
+  transition: opacity 400ms ease;
+}
+.heartbeat-line.active{
+  opacity:0.7;
+  animation: hb-move 2.8s ease-out forwards;
+}
+@keyframes hb-move{
+  0% { transform: translateX(-110%); opacity:0.6;}
+  70%{ opacity:0.75;}
+  100%{ transform: translateX(110%); opacity:0;}
+}
+
+/* Tiny helpers */
+.row{ display:flex; align-items:center; gap:10px; }
+.muted{ color: var(--muted); }
+.badge{
+  border:1px solid var(--border);
+  border-radius:999px; padding:2px 8px; font-size:11px;
+}
+.up{ color:#5DFF9B; }
+.down{ color:#FF7B7B; }
+.temp{ font-weight:600; }
+.weather{ font-size:14px; }
+
+
 

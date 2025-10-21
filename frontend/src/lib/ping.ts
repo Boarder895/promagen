@@ -1,4 +1,4 @@
-﻿export type HealthStatus = 'ok' | 'degraded' | 'down' | 'up' | 'idle';
+export type HealthStatus = 'ok' | 'degraded' | 'down' | 'up' | 'idle';
 
 export type PingResult = {
   status: HealthStatus;

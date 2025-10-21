@@ -1,5 +1,5 @@
-﻿// ðŸš« Cron disabled in frontend.
-// Vercelâ€™s serverless runtime can't run long-lived cron jobs.
+// 🚫 Cron disabled in frontend.
+// Vercel’s serverless runtime can't run long-lived cron jobs.
 // Keep this file as a no-op so imports don't break and TypeScript is happy.
 
 export const CRON_DISABLED = true;

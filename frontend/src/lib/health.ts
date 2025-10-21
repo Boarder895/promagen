@@ -1,4 +1,4 @@
-﻿export type HealthStatus = "ok" | "degraded" | "down";
+export type HealthStatus = "ok" | "degraded" | "down";
 export interface HealthResponse {
   status: HealthStatus;
   message?: string;

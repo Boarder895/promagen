@@ -1,4 +1,4 @@
-﻿// Minimal placeholder to satisfy imports during Stage 1.
+// Minimal placeholder to satisfy imports during Stage 1.
 // Rename unused param to underscore to comply with eslint rule.
 
 export function hashProvider(_provider: string): string {

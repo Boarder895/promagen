@@ -1,4 +1,4 @@
-﻿// src/lib/providerUtils.ts
+// src/lib/providerUtils.ts
 /**
  * Small helpers for provider objects so UI can safely read labels.
  */

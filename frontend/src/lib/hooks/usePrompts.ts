@@ -1,4 +1,4 @@
-﻿import { useMemo } from 'react';
+import { useMemo } from 'react';
 
 export type Prompt = { id: string; title: string; text: string; tags?: string[]; description?: string; prompt?: string; };
 

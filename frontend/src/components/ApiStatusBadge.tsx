@@ -1,4 +1,4 @@
-﻿// frontend/src/components/ApiStatusBadge.tsx
+// frontend/src/components/ApiStatusBadge.tsx
 type Props = {
   ok?: boolean;
   compact?: boolean; // <-- SiteHeader uses this

@@ -1,4 +1,4 @@
-﻿// src/lib/db.ts
+// src/lib/db.ts
 // Minimal, typed Prisma-like stub for Stage 1.
 // Replace with a real Prisma client in API code during Stage 2/3.
 
