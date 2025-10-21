@@ -1,80 +1,80 @@
 // frontend/src/app/providers/leaderboard/page.tsx
 'use client';
 
-import React from 'react';
+import providers from '@/data/providers.json';
 
-// Import the typed data array
-import { TOP20_PROVIDERS, type ProviderTile } from '@/app/providers/top20';
+type ProviderJson = {
+  id?: string;
+  name?: string;
+  displayName?: string;
+  url?: string;
+  website?: string;
+  affiliateUrl?: string | null;
+};
 
-// Minimal runtime type check to keep us safe if someone breaks the data later.
-function toProviderArray(input: unknown): ProviderTile[] {
-  const isTile = (v: any): v is ProviderTile =>
-    v &&
-    typeof v === 'object' &&
-    typeof v.id === 'string' &&
-    typeof v.name === 'string' &&
-    typeof v.url === 'string' &&
-    typeof v.tagline === 'string' &&
-    typeof v.score === 'number' &&
-    (v.trend === 'Up' || v.trend === 'Down' || v.trend === 'Flat');
+type Row = {
+  rank: number;
+  name: string;
+  url: string;
+  affiliate: 'Yes' | 'No';
+  score: number;
+};
 
-  if (Array.isArray(input)) {
-    return input.filter(isTile);
-  }
-  return isTile(input) ? [input] : [];
+function toRows(list: unknown, limit = 20): Row[] {
+  const arr = Array.isArray(list) ? (list as ProviderJson[]) : [];
+  return arr.slice(0, limit).map((p, i) => {
+    const name = String(p.name ?? p.displayName ?? 'Unknown');
+    const url = String(p.url ?? p.website ?? '#');
+    const affiliate: 'Yes' | 'No' = p.affiliateUrl ? 'Yes' : 'No';
+    // Score is placeholder until Stage 3 wires real metrics
+    const score = 0;
+    return { rank: i + 1, name, url, affiliate, score };
+  });
 }
 
 export default function ProvidersLeaderboardPage() {
-  // Coerce any shape into a valid ProviderTile[]
-  const providers = toProviderArray(TOP20_PROVIDERS);
+  const rows = toRows(providers, 20);
 
   return (
-    <main className="p-6">
-      <h1 className="text-xl font-semibold mb-4">AI Image-Generation Platforms — Top 20</h1>
+    <main className="min-h-dvh bg-neutral-950 text-neutral-100">
+      <div className="mx-auto max-w-screen-xl px-6 py-8">
+        <h1 className="mb-6 text-2xl font-semibold">AI Image-Generation Platforms — Top 20</h1>
 
-      <ul className="grid grid-cols-1 gap-3">
-        {providers.map((p) => (
-          <li
-            key={p.id}
-            className="rounded-2xl bg-neutral-900/40 border border-neutral-800 p-4 flex items-center justify-between"
-          >
-            <div>
-              <div className="text-base font-medium">{p.name}</div>
-              <div className="text-sm text-neutral-400">{p.tagline}</div>
-            </div>
+        <div className="overflow-x-auto rounded-lg border border-neutral-800">
+          <table className="min-w-full text-sm">
+            <thead className="bg-neutral-900/60 text-neutral-300">
+              <tr>
+                <th className="px-4 py-3 text-left w-[70px]">#</th>
+                <th className="px-4 py-3 text-left">Provider</th>
+                <th className="px-4 py-3 text-left w-[90px]">Aff</th>
+                <th className="px-4 py-3 text-right w-[110px]">Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.rank} className="border-t border-neutral-800 hover:bg-neutral-900/40">
+                  <td className="px-4 py-3">{r.rank}</td>
+                  <td className="px-4 py-3">
+                    <a className="hover:underline" href={r.url} target="_blank" rel="noreferrer">
+                      {r.name}
+                    </a>
+                  </td>
+                  <td className="px-4 py-3">{r.affiliate}</td>
+                  <td className="px-4 py-3 text-right">{r.score.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-            <div className="flex items-center gap-4">
-              <div className="text-sm">
-                <span className="font-semibold">{p.score}</span>
-                <span className="ml-1 text-neutral-400">/ 100</span>
-              </div>
-              <div
-                className={`text-xs px-2 py-1 rounded-full border ${
-                  p.trend === 'Up'
-                    ? 'border-emerald-600'
-                    : p.trend === 'Down'
-                    ? 'border-red-600'
-                    : 'border-neutral-600'
-                }`}
-                title={`Trend: ${p.trend}`}
-              >
-                {p.trend}
-              </div>
-              <a
-                className="text-sm underline underline-offset-4"
-                href={p.affiliateUrl ?? p.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Visit
-              </a>
-            </div>
-          </li>
-        ))}
-      </ul>
+        <p className="mt-3 text-xs text-neutral-400">
+          Data source: <code>src/data/providers.json</code>. Scores populate in Stage&nbsp;3.
+        </p>
+      </div>
     </main>
   );
 }
+
 
 
 
