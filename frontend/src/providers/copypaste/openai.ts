@@ -1,4 +1,4 @@
-ï»¿import type { ProviderDef, GenInput, GenOutput } from '../types';
+import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 /**
  * Copy/paste export stub for "openai".
@@ -6,7 +6,7 @@
  */
 export const openaiProvider: ProviderDef = {
   id: 'openai',
-  label: 'OpenAI (DALLÂ·E 3)',
+  label: 'OpenAI (DALL·E 3)',
   name: 'OPENAI',
 
   // All flags true so the UI can expose full prompt controls in export flows.
@@ -20,7 +20,7 @@ export const openaiProvider: ProviderDef = {
   },
 
   async generate(_input: GenInput): Promise<GenOutput> {
-    // No direct API hereâ€”this provider is export-only (copy/paste workflow).
+    // No direct API here—this provider is export-only (copy/paste workflow).
     throw new Error('NOT_CONFIGURED: Export-only provider; use copy/paste workflow.');
   },
 };

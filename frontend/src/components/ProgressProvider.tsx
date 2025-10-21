@@ -1,4 +1,4 @@
-﻿// src/components/ProgressProvider.tsx
+// src/components/ProgressProvider.tsx
 "use client";
 
 import React from "react";

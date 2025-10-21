@@ -1,4 +1,4 @@
-﻿// Facade over the canonical list. Named exports only.
+// Facade over the canonical list. Named exports only.
 
 export {
   type ProviderId,

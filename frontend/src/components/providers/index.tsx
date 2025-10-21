@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import { providers, type Provider } from "@/lib/providers";
 
 function Row({ p }: { p: Provider }) {

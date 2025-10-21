@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type Provider =
   | "artistly" | "openai" | "stability" | "leonardo" | "ideogram" | "fotor" | "nightcafe";
@@ -66,7 +66,7 @@ export default function ApiKeysPanel() {
           {PROVIDERS.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
         <input
-          placeholder="paste API keyâ€¦"
+          placeholder="paste API key…"
           value={apiKey}
           onChange={e => setApiKey(e.target.value)}
           style={{ flex: 1 }}

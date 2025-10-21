@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 // Simple health ping used by Stage 1 status checks.
 export async function GET() {

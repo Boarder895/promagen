@@ -1,4 +1,4 @@
-﻿// frontend/providers/registry.ts
+// frontend/providers/registry.ts
 import { leonardoProvider } from './api/leonardo';
 import { openaiProvider } from './api/openai';
 import { stabilityProvider } from './api/stability';

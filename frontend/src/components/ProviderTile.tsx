@@ -1,4 +1,4 @@
-﻿// src/components/ProviderTile.tsx
+// src/components/ProviderTile.tsx
 "use client";
 
 import * as React from "react";

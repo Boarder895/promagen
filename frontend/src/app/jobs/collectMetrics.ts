@@ -1,4 +1,4 @@
-﻿// BACKEND
+// BACKEND
 export type RawMetric = { provider: string; category: string; value: number; source: string };
 
 export async function collectMetrics(): Promise<RawMetric[]> {

@@ -1,4 +1,4 @@
-﻿// src/lib/providers/index.ts
+// src/lib/providers/index.ts
 export type Provider = {
   id: string;
   name: string;

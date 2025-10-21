@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 // Minimal types for the admin sync form
 export type SyncState = {
