@@ -3,18 +3,23 @@
   "private": true,
   "version": "1.0.0",
   "description": "Promagen monorepo (root)",
+  "packageManager": "pnpm@10.12.0",
   "engines": {
     "node": ">=22.0.0"
   },
-  "packageManager": "pnpm@10.12.0",
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
-    "//": "No recursive postinstall. Use workspace scripts manually.",
+    "//": "Root forwards to the frontend workspace. No Next.js app lives at the root.",
     "install:all": "pnpm -w install",
-    "clean": "pnpm -r run clean || exit 0",
-    "lint": "pnpm -r run lint",
-    "typecheck": "pnpm -r run typecheck",
-    "build": "pnpm -r run build",
-    "test": "pnpm -r run test",
-    "test:ci": "pnpm -r run test:ci"
+    "clean": "pnpm -C frontend run clean || exit 0",
+    "dev": "pnpm -C frontend dev",
+    "build": "pnpm -C frontend build",
+    "start": "pnpm -C frontend start",
+    "lint": "pnpm -C frontend lint",
+    "typecheck": "pnpm -C frontend typecheck",
+    "test": "pnpm -C frontend test",
+    "test:ci": "pnpm -C frontend test:ci"
   }
 }
