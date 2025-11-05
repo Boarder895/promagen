@@ -1,4 +1,4 @@
-// providers/deepai.ts
+﻿// providers/deepai.ts
 import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const deepaiProvider: ProviderDef = {
@@ -16,6 +16,9 @@ export const deepaiProvider: ProviderDef = {
     throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
   },
 };
+
+
+
 
 
 

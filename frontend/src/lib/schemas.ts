@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 export const ProviderSchema = z.object({
   id: z.string().min(1),
@@ -13,6 +13,9 @@ export const ProviderSchema = z.object({
 
 export const ProvidersSchema = z.array(ProviderSchema);
 export type ProviderValidated = z.infer<typeof ProviderSchema>;
+
+
+
 
 
 

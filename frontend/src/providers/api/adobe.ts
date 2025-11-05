@@ -1,4 +1,4 @@
-import type { ProviderDef, GenInput, GenOutput } from '../types';
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const adobeProvider: ProviderDef = {
   id: 'adobe',
@@ -15,6 +15,9 @@ export const adobeProvider: ProviderDef = {
   },
 };
 export default adobeProvider;
+
+
+
 
 
 

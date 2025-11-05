@@ -1,12 +1,24 @@
-// frontend/src/app/api/ingest/weather/route.ts
-import { NextResponse } from "next/server";
-import { fetchWeatherForMarkets } from "@/lib/weather";
+﻿import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
+type MarketWeather = {
+  id: string; city: string; tz: string;
+  latitude: number; longitude: number;
+  tempC?: number | null; tempF?: number | null; condition?: string | null;
+};
 
-export async function GET() {
-  const items = await fetchWeatherForMarkets();
-  // In Stage-3 this endpoint would persist items to your DB; for now it mirrors snapshot.
-  return NextResponse.json({ items, asOfUTC: new Date().toISOString() });
+type ApiResp =
+  | { ok: true; count: number; data: MarketWeather[] }
+  | { ok: false; error: string };
+
+export async function POST(_req: NextRequest) {
+  // stub ingest; would call your provider and store
+  const data: MarketWeather[] = [];
+  return NextResponse.json({ ok: true, count: data.length, data } satisfies ApiResp);
 }
+
+
+
+
+
+
 

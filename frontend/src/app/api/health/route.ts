@@ -1,11 +1,17 @@
-export const runtime = "nodejs";
+﻿// frontend/src/app/api/health/route.ts
+import { NextResponse } from "next/server";
 
 export async function GET() {
-  return new Response(JSON.stringify({ ok: true, service: "promagen", stage: 1 }), {
-    status: 200,
-    headers: { "content-type": "application/json" }
+  // Simple, cache-busting health probe
+  return NextResponse.json({
+    ok: true,
+    service: "promagen-frontend",
+    time: new Date().toISOString()
   });
 }
+
+
+
 
 
 

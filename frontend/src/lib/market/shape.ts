@@ -1,4 +1,4 @@
-// Small typed utilities used by the homepage. Zero 'any'.
+ï»¿// Small typed utilities used by the homepage. Zero 'any'.
 
 /** Clamp a number between min and max. */
 export function clamp(x: number, min: number, max: number): number {
@@ -6,7 +6,7 @@ export function clamp(x: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, x));
 }
 
-/** Map a temperature in °C to a hue (blue @ cold ? red @ hot). */
+/** Map a temperature in ?C to a hue (blue @ cold ? red @ hot). */
 export function hueFromTempC(tempC: number): number {
   const t = clamp(tempC, -20, 40);
   const ratio = (t - (-20)) / (40 - (-20)); // 0..1
@@ -23,3 +23,6 @@ export function cx(...parts: Array<string | false | null | undefined>): string {
 export function isDefined<T>(x: T | null | undefined): x is T {
   return x !== null && x !== undefined;
 }
+
+
+

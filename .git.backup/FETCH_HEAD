@@ -1,0 +1,15 @@
+c30c5e0201ec10cc130dfb76d3642bdd8fc2a671		branch 'main' of https://github.com/Boarder895/promagen
+9f315c45b43623295356c13b3d53be4c8a8d053c	not-for-merge	branch 'chore/add-brand-icon' of https://github.com/Boarder895/promagen
+28931cfd41b0e4639a14ec9af872ba355710b5b1	not-for-merge	branch 'chore/add-pnpm-lock' of https://github.com/Boarder895/promagen
+a8c061dc319ce7a92d91b622e7e83a0ed7269fde	not-for-merge	branch 'chore/add-root-lockfile-and-ignore' of https://github.com/Boarder895/promagen
+6ffd49cde925ad7bc89eac366e5cd6e9e2fad120	not-for-merge	branch 'chore/ci-fix-pnpm' of https://github.com/Boarder895/promagen
+9c2a85c07f33a1ee1a56cb8560201cbc431dd9b0	not-for-merge	branch 'chore/cron-daily' of https://github.com/Boarder895/promagen
+578c520b97e0ba44a567ee51ccf35f9d601b5986	not-for-merge	branch 'chore/enforce-import-guards' of https://github.com/Boarder895/promagen
+8da6df14d5931723b83e2d25f1a281b4165a9f96	not-for-merge	branch 'chore/move-vercel-json' of https://github.com/Boarder895/promagen
+6ffd49cde925ad7bc89eac366e5cd6e9e2fad120	not-for-merge	branch 'chore/workspace-lock-sync' of https://github.com/Boarder895/promagen
+48ea78e029718ade82197dbbc6717e4f1c3bb407	not-for-merge	branch 'ci/sanity' of https://github.com/Boarder895/promagen
+b99feeb2d18851a2f5dfb26a1c3d9661c870c440	not-for-merge	branch 'docs-ci-test' of https://github.com/Boarder895/promagen
+eb14cc353d30f89fbd33ae4068a9bd263b07e3f8	not-for-merge	branch 'feat/app-router-migration' of https://github.com/Boarder895/promagen
+cab766fadff4f8d2db37038d857545f1f1c525bd	not-for-merge	branch 'feat/stage1-homepage-static' of https://github.com/Boarder895/promagen
+2ae501b4f413143a9435e5c577312aa7dbda9955	not-for-merge	branch 'feat/vercel-frontend' of https://github.com/Boarder895/promagen
+baba98c5aacd999d9e48bfefabc9c7da07032df5	not-for-merge	branch 'release/stage1-homepage' of https://github.com/Boarder895/promagen

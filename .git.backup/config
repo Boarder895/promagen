@@ -1,0 +1,57 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	logallrefupdates = true
+	ignorecase = false
+	hooksPath = .husky/_
+	autocrlf = false
+[branch "main"]
+	vscode-merge-base = origin/main
+	remote = origin
+	merge = refs/heads/main
+[remote "origin"]
+	url = https://github.com/Boarder895/promagen.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "feat/stage1-homepage-static"]
+	remote = origin
+	merge = refs/heads/feat/stage1-homepage-static
+[branch "ci/sanity"]
+	remote = origin
+	merge = refs/heads/ci/sanity
+[branch "ci/run-on-pr"]
+	remote = origin
+	merge = refs/heads/ci/run-on-pr
+[user]
+	name = Boarder895
+	email = Promagen895@gmail.com
+[branch "release/stage1-homepage"]
+	remote = origin
+	merge = refs/heads/release/stage1-homepage
+[branch "chore/add-pnpm-lock"]
+	remote = origin
+	merge = refs/heads/chore/add-pnpm-lock
+[branch "feat/theme-toggle-fix"]
+	remote = origin
+	merge = refs/heads/feat/theme-toggle-fix
+[branch "chore/add-brand-icon"]
+	remote = origin
+	merge = refs/heads/chore/add-brand-icon
+[branch "chore/stage1-sync-2025-10-21"]
+	remote = origin
+	merge = refs/heads/chore/stage1-sync-2025-10-21
+[branch "chore/trigger-prod"]
+	remote = origin
+	merge = refs/heads/chore/trigger-prod
+[branch "chore/update-lockfile"]
+	remote = origin
+	merge = refs/heads/chore/update-lockfile
+[branch "chore/cron-daily"]
+	remote = origin
+	merge = refs/heads/chore/cron-daily
+[branch "chore/workspace-lock-sync"]
+	remote = origin
+	merge = refs/heads/chore/workspace-lock-sync
+[branch "chore/ci-fix-pnpm"]
+	remote = origin
+	merge = refs/heads/chore/ci-fix-pnpm

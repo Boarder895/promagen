@@ -1,22 +1,10 @@
 {
   "version": 2,
-  "crons": [
-    { "path": "/api/ingest/weather", "schedule": "0,30 * * * *" },
-
-    { "path": "/api/ingest/market?market=tokyo",     "schedule": "0 * * * *" },
-    { "path": "/api/ingest/market?market=hongkong",  "schedule": "3 * * * *" },
-    { "path": "/api/ingest/market?market=singapore", "schedule": "6 * * * *" },
-    { "path": "/api/ingest/market?market=mumbai",    "schedule": "9 * * * *" },
-    { "path": "/api/ingest/market?market=dubai",     "schedule": "12 * * * *" },
-    { "path": "/api/ingest/market?market=moscow",    "schedule": "15 * * * *" },
-
-    { "path": "/api/ingest/market?market=frankfurt", "schedule": "18 * * * *" },
-    { "path": "/api/ingest/market?market=london",    "schedule": "21 * * * *" },
-    { "path": "/api/ingest/market?market=paris",     "schedule": "24 * * * *" },
-
-    { "path": "/api/ingest/market?market=newyork",   "schedule": "26 * * * *" },
-    { "path": "/api/ingest/market?market=toronto",   "schedule": "27 * * * *" },
-    { "path": "/api/ingest/market?market=saopaulo",  "schedule": "29 * * * *" }
-  ],
-  "routes": []
+  "framework": "nextjs",
+  "functions": {
+    "api/**": {
+      "maxDuration": 60
+    }
+  }
 }
+

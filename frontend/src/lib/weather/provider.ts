@@ -1,15 +1,28 @@
-// src/lib/weather/provider.ts
-import type { Exchange } from '../market/types';
-import type { WeatherSummary } from '../market/types';
+﻿import type { Exchange } from "../market/types";
 
-// Stage-1 mock: deterministic pseudo-random temp/condition from city name.
-export function getWeatherFor(exchange: Exchange): WeatherSummary {
-  const seed = [...exchange.city].reduce((a, c) => a + c.charCodeAt(0), 0);
-  const tempC = Math.round((((seed % 300) / 10) - 10)); // ~-10..20C
-  const conditions: WeatherSummary['condition'][] = [
-    'Clear', 'Cloudy', 'Partly Cloudy', 'Rain', 'Haze', 'Fog', 'Drizzle', 'Thunder'
-  ];
-  const condition = conditions[seed % conditions.length];
-  return { tempC, condition };
+export type WeatherSummary = {
+  tempC: number;
+  condition:
+    | "clear" | "partly-cloudy" | "cloudy" | "fog"
+    | "drizzle" | "rain" | "showers"
+    | "snow" | "snow-showers"
+    | "thunder" | "thunder-hail" | "unknown";
+  updatedISO: string;
+};
+
+export function pseudoWeather(exchange: Pick<Exchange, "city">): WeatherSummary {
+  const city = exchange.city ?? "";
+  const seed = [...city].reduce((a, c) => a + c.charCodeAt(0), 0);
+  const tempC = (seed % 35) - 5;
+  const bucket = seed % 6;
+  const condition: WeatherSummary["condition"] =
+    bucket === 0 ? "clear" :
+    bucket === 1 ? "partly-cloudy" :
+    bucket === 2 ? "cloudy" :
+    bucket === 3 ? "showers" :
+    bucket === 4 ? "rain" : "unknown";
+  return { tempC, condition, updatedISO: new Date().toISOString() };
 }
+
+
 

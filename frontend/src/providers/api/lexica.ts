@@ -1,4 +1,4 @@
-import type { ProviderDef, GenInput, GenOutput } from '../types';
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const lexicaProvider: ProviderDef = {
   id: 'lexica',
@@ -18,6 +18,9 @@ export const lexicaProvider: ProviderDef = {
     throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
   },
 };
+
+
+
 
 
 

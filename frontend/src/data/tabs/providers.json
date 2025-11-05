@@ -1,0 +1,29 @@
+[
+  {
+    "kind": "routed",
+    "id": "leaderboard",
+    "label": "Leaderboard",
+    "href": "/providers",
+    "icon": "trophy",
+    "disabled": false,
+    "badge": null
+  },
+  {
+    "kind": "routed",
+    "id": "trends",
+    "label": "Trends",
+    "href": "/providers/trends",
+    "icon": "trending-up",
+    "disabled": false,
+    "badge": null
+  },
+  {
+    "kind": "routed",
+    "id": "compare",
+    "label": "Compare",
+    "href": "/providers/compare",
+    "icon": "compare",
+    "disabled": false,
+    "badge": null
+  }
+]

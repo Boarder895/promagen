@@ -1,70 +1,75 @@
-.env
-.env.*.local
+# node
 node_modules/
+npm-debug.log*
+pnpm-debug.log*
+.yarn/*
+.pnp.*
+# build artifacts
 dist/
 build/
-.env
-*.db
-*.db-journal
-.DS_Store
-Thumbs.db
-.vscode/
-
-/generated/prisma
-
-# Next.js
+.out/
 .next/
-
-frontend/pnpm-lock.yaml
-
-.vercel
-<<<<<<< HEAD
-# Node/Next across the whole repo
-node_modules/
-.next/
-out/
-dist/
-build/
-coverage/
 .vercel/
-
-# IDE/OS
-.vscode/
-.DS_Store
-Thumbs.db
-
-# Secrets (repo-wide)
+.turbo/
+coverage/
+# env
 .env
 .env.*
-*.env
-*.key
-*.pem
-*API_KEY*
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+# large/binary artifacts
+*.zip
+*.7z
+*.rar
+*.iso
+*.mp4
+*.mov
+*.wav
+*.psd
+git_backup/
+# large/binary artifacts
+*.zip
+*.7z
+*.rar
+*.iso
+*.mp4
+*.mov
+*.wav
+*.psd
+git_backup/
+# large/binary artifacts
+*.zip
+*.7z
+*.rar
+*.iso
+*.mp4
+*.mov
+*.wav
+*.psd
+git_backup/
 
-# Block the folder that caused the push-protection error
-docs/Add-Content*/
-=======
->>>>>>> origin/main
-# build artifacts
-frontend/.next/
-frontend/node_modules/
-frontend/.vercel/
-frontend/backup*/
-frontend/src/backup*/
+# ignore large file
+/frontend.zip
 
-# env & local config
-frontend/.env*
+# ignore large file
+/.git.backup/objects/43/39c5bf787d0d8a337756e34c03ac13269c0518
 
-# build artifacts
-frontend/.next/
-frontend/node_modules/
-frontend/.vercel/
-frontend/backup*/
-frontend/src/backup*/
+# ignore large file
+/.git.backup/objects/77/fb21d91e59d7186bae1c19268a1d9f8505fff8
 
-# env & local config
-frontend/.env*
-
-
-tsconfig.tsbuildinfo
-frontend/tsconfig.tsbuildinfo
+# ignore large file
+/.git.backup/objects/ed/0ffc7fd8ba53e38e1471814b246786566d9476
+# large/binary artifacts
+*.zip
+*.7z
+*.rar
+*.iso
+*.mp4
+*.mov
+*.wav
+*.psd
+git_backup/

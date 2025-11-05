@@ -1,4 +1,4 @@
-import type { ProviderDef, GenInput, GenOutput } from './types';
+﻿import type { ProviderDef, GenInput, GenOutput } from './types';
 
 // Unused helper kept for future wiring; prefixed to satisfy eslint unused rule
 function _env(name: string, fallback?: string) {
@@ -23,6 +23,9 @@ export const httpjsonProvider: ProviderDef = {
     throw new Error('NOT_CONFIGURED: Adapter pending (add endpoint + auth + mapping)');
   },
 };
+
+
+
 
 
 

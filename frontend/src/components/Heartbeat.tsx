@@ -1,22 +1,37 @@
-"use client";
+﻿"use client";
 import { useEffect, useRef, useState } from "react";
 
-type Props = { periodMinutes?: number; };
+type Props = { periodMinutes?: number };
 
-export default function Heartbeat({ periodMinutes = 3 }: Props){
+/**
+ * Fires a short "active" pulse on mount and then every `periodMinutes`.
+ * Dependency-free, browser-safe (guards the timer on unmount).
+ */
+export default function Heartbeat({ periodMinutes = 3 }: Props) {
   const [active, setActive] = useState(false);
-  const ref = useRef<number>();
+  const intervalRef = useRef<number | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
-  useEffect(()=>{
-    const periodMs = periodMinutes * 60 * 1000;
+  useEffect(() => {
+    const periodMs = Math.max(1, periodMinutes) * 60_000;
+
     const fire = () => {
       setActive(true);
-      window.setTimeout(()=> setActive(false), 3000);
+      // brief glow
+      timeoutRef.current = window.setTimeout(() => setActive(false), 3000);
     };
-    fire(); // fire on mount
-    ref.current = window.setInterval(fire, periodMs) as unknown as number;
-    return ()=> { if(ref.current) window.clearInterval(ref.current); };
+
+    fire(); // on mount
+    intervalRef.current = window.setInterval(fire, periodMs);
+
+    return () => {
+      if (intervalRef.current !== null) window.clearInterval(intervalRef.current);
+      if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
+    };
   }, [periodMinutes]);
 
   return <div className={`heartbeat-line ${active ? "active" : ""}`} />;
 }
+
+
+

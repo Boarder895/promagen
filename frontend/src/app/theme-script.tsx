@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * Injects a tiny inline script that sets <html>.dark BEFORE React hydrates.
@@ -37,6 +37,9 @@ export default function ThemeScript() {
 
   return <script dangerouslySetInnerHTML={{ __html: code }} />
 }
+
+
+
 
 
 

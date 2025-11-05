@@ -1,4 +1,4 @@
-// frontend/src/app/prompts/page.tsx
+﻿// frontend/src/app/prompts/page.tsx
 // Canonical prompts index. Keep this minimal for Stage 1; expand in Stage 2.
 
 export default function PromptsIndexPage() {
@@ -15,4 +15,7 @@ export default function PromptsIndexPage() {
     </main>
   );
 }
+
+
+
 

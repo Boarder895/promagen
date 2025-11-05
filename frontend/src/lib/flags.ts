@@ -1,3 +1,6 @@
+﻿// frontend/src/lib/flags.ts
+import type React from "react";
+
 export function flag(iso2: string): string {
   const base = "https://cdn.jsdelivr.net/npm/country-flag-icons/3x2";
   return `${base}/${(iso2 || "UN").toUpperCase()}.svg`;
@@ -20,24 +23,4 @@ export function preloadFlag(iso2: string): void {
   link.href = flag(iso2);
   document.head.appendChild(link);
 }
-
-/** Emoji fallback (GB -> 🇬🇧). */
-export function flagEmoji(cc: string): string {
-  const s = (cc || "").trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(s)) return "🏳️";
-  const base = 0x1f1e6;
-  return String.fromCodePoint(base + (s.charCodeAt(0) - 65)) +
-         String.fromCodePoint(base + (s.charCodeAt(1) - 65));
-}
-
-
-
-
-
-
-
-
-
-
-
 

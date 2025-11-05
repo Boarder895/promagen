@@ -1,4 +1,4 @@
-// providers/types.ts
+﻿// providers/types.ts
 export type GenInput = {
   prompt: string;
   negative?: string;
@@ -34,6 +34,9 @@ export type ProviderDef = ImageProvider & {
   label: string; // UI/export label
   name?: string; // optional internal alias
 };
+
+
+
 
 
 

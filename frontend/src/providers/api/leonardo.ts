@@ -1,4 +1,4 @@
-import type { ProviderDef, GenInput, GenOutput } from '../types';
+﻿import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const leonardoProvider: ProviderDef = {
   id: 'leonardo',
@@ -17,6 +17,9 @@ export const leonardoProvider: ProviderDef = {
     throw new Error('NOT_CONFIGURED: Adapter pending (add API endpoint + auth)');
   },
 };
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 
 type ChipProps = React.HTMLAttributes<HTMLSpanElement> & {
   color?: 'blue' | 'gray' | 'green' | 'red';
@@ -21,6 +21,9 @@ export default function Chip({ color = 'gray', className, ...props }: ChipProps)
     />
   );
 }
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-// Tiny API helpers used by health/meta/test pages.
+﻿// Tiny API helpers used by health/meta/test pages.
 
 export const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.promagen.com';
 const API_BASE = API;
@@ -17,6 +17,9 @@ export function getMeta(key?: string): Meta {
     ? { title: key.split('/').pop() || 'Promagen', description: 'Stub meta' }
     : { title: 'Promagen', description: 'Stub meta' };
 }
+
+
+
 
 
 

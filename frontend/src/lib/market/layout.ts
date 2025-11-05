@@ -1,4 +1,4 @@
-// src/lib/market/layout.ts
+﻿// src/lib/market/layout.ts
 
 export type MarketStatus = 'open' | 'closed' | 'pre' | 'post' | 'holiday' | 'unknown';
 
@@ -32,4 +32,7 @@ export function splitEastWest(items: RibbonItem[] | null | undefined): EastWest 
   // east = positive longitudes (second half); west = negative longitudes (first half)
   return { east: sorted.slice(half), west: sorted.slice(0, half) };
 }
+
+
+
 

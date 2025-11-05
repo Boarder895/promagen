@@ -1,0 +1,4 @@
+# noisy or non-JSON-safe targets during pre-commit
+reports/**
+*_lint.json
+package.broken.json

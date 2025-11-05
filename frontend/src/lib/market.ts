@@ -1,12 +1,10 @@
-import type { MarketStatus } from "@/types/ribbon";
+﻿// src/lib/market.ts
+// Forward exports to the current data source (no default export there).
 
-/** Stage-1 placeholder: always 'unknown'. */
-export function computeStatus(): MarketStatus {
-  return "unknown";
-}
+import { MARKETS } from "@/data/markets";
+export { MARKETS } from "@/data/markets";
 
-/** Some code calls this; return a small canned object. */
-export async function fetchMarketQuote(_id: string): Promise<{ status: MarketStatus; nextChangeISO: string | null; }> {
-  return { status: "unknown", nextChangeISO: null };
-}
+// Convenience alias used across the app
+export const markets = MARKETS;
+
 

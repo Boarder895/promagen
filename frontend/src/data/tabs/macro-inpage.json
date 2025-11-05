@@ -1,0 +1,29 @@
+[
+  {
+    "kind": "inpage",
+    "id": "inflation",
+    "label": "Inflation",
+    "panelId": "panel-inflation",
+    "icon": "chart-line",
+    "disabled": false,
+    "badge": null
+  },
+  {
+    "kind": "inpage",
+    "id": "rates",
+    "label": "Rates",
+    "panelId": "panel-rates",
+    "icon": "percent",
+    "disabled": false,
+    "badge": null
+  },
+  {
+    "kind": "inpage",
+    "id": "commodities",
+    "label": "Commodities",
+    "panelId": "panel-commodities",
+    "icon": "bar-chart",
+    "disabled": false,
+    "badge": 3
+  }
+]

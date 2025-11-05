@@ -1,25 +1,23 @@
-// src/lib/market/types.ts
-export type MarketStatus = 'open' | 'closed' | 'pre' | 'post' | 'holiday' | 'unknown';
+﻿export type MarketStatus =
+  | "OPEN" | "CLOSED" | "PRE" | "POST"
+  | "open" | "closed" | "pre" | "post"
+  | "holiday" | "unknown";
 
-export interface Exchange {
+export type MarketState = { status: MarketStatus; nextChangeISO?: string | null };
+
+export type Exchange = {
   id: string;
   exchange: string;
   city: string;
   country: string;
   iso2: string;
-  tz: string;        // IANA zone
-  longitude: number; // for east–west split
-}
+  tz: string;
+  longitude: number;
+};
 
-export interface WeatherSummary {
-  tempC: number;
-  condition: 'Clear' | 'Cloudy' | 'Partly Cloudy' | 'Rain' | 'Haze' | 'Fog' | 'Drizzle' | 'Thunder';
-}
+export type SessionKind = "PRE" | "REG" | "POST" | undefined;
+export type Session = { startMin: number; endMin: number; kind?: SessionKind };
+export type Sessions = Session[];
 
-export interface MarketState {
-  id: string;                   // exchange id
-  status: MarketStatus;
-  nextChangeISO: string | null; // UTC ISO string, null if unknown
-}
 
 

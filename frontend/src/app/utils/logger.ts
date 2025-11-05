@@ -1,4 +1,4 @@
-// Tiny logger wrapper with levels + optional metadata
+﻿// Tiny logger wrapper with levels + optional metadata
 type Level = 'debug' | 'info' | 'warn' | 'error';
 
 function log(level: Level, msg: string, meta?: unknown) {
@@ -19,6 +19,9 @@ export const logger = {
   warn: (m: string, meta?: unknown) => log('warn', m, meta),
   error: (m: string, meta?: unknown) => log('error', m, meta),
 };
+
+
+
 
 
 

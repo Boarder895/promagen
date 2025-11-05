@@ -1,37 +1,77 @@
-﻿{
-  "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "jsx": "preserve",
-    "allowJs": false,
-    "strict": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "resolveJsonModule": true,
-    "baseUrl": "src",
-    "paths": {
-      "@/*": ["*"]
-    },
-    "types": ["node"],
-    "incremental": true,
-    "esModuleInterop": true,
-    "plugins": [{ "name": "next" }]
-  },
-  "include": ["src/**/*", ".next/types/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "prototypes/**",
-    "src/lib/books/**",
-    "src/components/books/**",
-    "src/app/docs/**",
-    "backup-*",
-    "src/providers/copypaste/**"
-  ]
+{
+    "compilerOptions":  {
+                            "target":  "ES2022",
+                            "lib":  [
+                                        "ES2023",
+                                        "DOM",
+                                        "DOM.Iterable"
+                                    ],
+                            "jsx":  "preserve",
+                            "module":  "ESNext",
+                            "moduleResolution":  "Bundler",
+                            "allowJs":  false,
+                            "noEmit":  true,
+                            "strict":  true,
+                            "skipLibCheck":  true,
+                            "skipDefaultLibCheck":  true,
+                            "resolveJsonModule":  true,
+                            "allowSyntheticDefaultImports":  true,
+                            "isolatedModules":  true,
+                            "incremental":  true,
+                            "esModuleInterop":  true,
+                            "baseUrl":  "src",
+                            "paths":  {
+                                          "@/*":  [
+                                                      "*"
+                                                  ],
+                                          "@/app/*":  [
+                                                          "app/*"
+                                                      ],
+                                          "@/components/*":  [
+                                                                 "components/*"
+                                                             ],
+                                          "@/data/*":  [
+                                                           "data/*"
+                                                       ],
+                                          "@/lib/*":  [
+                                                          "lib/*"
+                                                      ],
+                                          "@/types/*":  [
+                                                            "types/*"
+                                                        ]
+                                      },
+                            "types":  [
+                                          "node",
+                                          "react",
+                                          "react-dom",
+                                          "jest",
+                                          "@testing-library/jest-dom"
+                                      ],
+                            "plugins":  [
+                                            {
+                                                "name":  "next"
+                                            }
+                                        ]
+                        },
+    "include":  [
+                    "src/**/*.ts",
+                    "src/**/*.tsx",
+                    ".next/types/**/*.ts",
+                    "next-env.d.ts"
+                ],
+    "exclude":  [
+                    "node_modules",
+                    ".next",
+                    "dist",
+                    "build",
+                    "coverage",
+                    "scripts",
+                    "tests/**",
+                    "src/app/(tests)/**",
+                    "src/app/admin/**",
+                    "src/app/api/**",
+                    "src/app/adapters/**",
+                    "src/app/book/**",
+                    "src/app/designer/**"
+                ]
 }
-
-
-

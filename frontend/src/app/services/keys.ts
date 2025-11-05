@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Temporary implementation:
  * - Frontend does not talk to DB; we read provider keys from env.
  * - When you move this to the API with a real Prisma client, replace accordingly.
@@ -12,6 +12,9 @@ export async function envKeyFor(provider: string): Promise<string | null> {
   };
   return map[provider] ?? null;
 }
+
+
+
 
 
 

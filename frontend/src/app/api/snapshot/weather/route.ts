@@ -1,12 +1,25 @@
-// frontend/src/app/api/snapshot/weather/route.ts
-import { NextResponse } from "next/server";
-import { fetchWeatherForMarkets } from "@/lib/weather";
+﻿import { NextRequest, NextResponse } from "next/server";
 
-export const revalidate = 1800; // 30 min
+type MarketWeather = {
+  id: string; city: string; tz: string;
+  latitude: number; longitude: number;
+  tempC?: number | null; tempF?: number | null; condition?: string | null;
+};
 
-export async function GET() {
-  // Stage-1: fetch stub; Stage-2/3 can swap in live sources.
-  const items = await fetchWeatherForMarkets();
-  return NextResponse.json({ items, asOfUTC: new Date().toISOString() });
+type ApiResp =
+  | { ok: true; count: number; data: MarketWeather[] }
+  | { ok: false; error: string };
+
+export async function GET(_req: NextRequest) {
+  // snapshot read
+  const data: MarketWeather[] = [];
+  return NextResponse.json({ ok: true, count: data.length, data } satisfies ApiResp);
 }
+
+
+
+
+
+
+
 

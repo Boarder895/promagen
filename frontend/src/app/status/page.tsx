@@ -1,4 +1,4 @@
-export default function StatusPage() {
+﻿export default function StatusPage() {
   return (
     <main style={{ padding: 24 }}>
       <h1>Status</h1>
@@ -6,6 +6,9 @@ export default function StatusPage() {
     </main>
   );
 }
+
+
+
 
 
 

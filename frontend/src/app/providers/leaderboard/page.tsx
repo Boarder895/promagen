@@ -1,40 +1,8 @@
-// frontend/src/app/providers/leaderboard/page.tsx
-'use client';
+﻿'use client';
 
-import providers from '@/data/providers.json';
-
-type ProviderJson = {
-  id?: string;
-  name?: string;
-  displayName?: string;
-  url?: string;
-  website?: string;
-  affiliateUrl?: string | null;
-};
-
-type Row = {
-  rank: number;
-  name: string;
-  url: string;
-  affiliate: 'Yes' | 'No';
-  score: number;
-};
-
-function toRows(list: unknown, limit = 20): Row[] {
-  const arr = Array.isArray(list) ? (list as ProviderJson[]) : [];
-  return arr.slice(0, limit).map((p, i) => {
-    const name = String(p.name ?? p.displayName ?? 'Unknown');
-    const url = String(p.url ?? p.website ?? '#');
-    const affiliate: 'Yes' | 'No' = p.affiliateUrl ? 'Yes' : 'No';
-    // Score is placeholder until Stage 3 wires real metrics
-    const score = 0;
-    return { rank: i + 1, name, url, affiliate, score };
-  });
-}
+import { PROVIDERS } from '@/data/providers';
 
 export default function ProvidersLeaderboardPage() {
-  const rows = toRows(providers, 20);
-
   return (
     <main className="min-h-dvh bg-neutral-950 text-neutral-100">
       <div className="mx-auto max-w-screen-xl px-6 py-8">
@@ -51,16 +19,16 @@ export default function ProvidersLeaderboardPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.rank} className="border-t border-neutral-800 hover:bg-neutral-900/40">
-                  <td className="px-4 py-3">{r.rank}</td>
+              {PROVIDERS.slice(0, 20).map((p: any, i: number) => (
+                <tr key={p.id ?? i} className="border-t border-neutral-800 hover:bg-neutral-900/40">
+                  <td className="px-4 py-3">{i + 1}</td>
                   <td className="px-4 py-3">
-                    <a className="hover:underline" href={r.url} target="_blank" rel="noreferrer">
-                      {r.name}
+                    <a className="hover:underline" href={String(p.url ?? p.website ?? '#')} target="_blank" rel="noreferrer">
+                      {String(p.name ?? p.displayName ?? 'Unknown')}
                     </a>
                   </td>
-                  <td className="px-4 py-3">{r.affiliate}</td>
-                  <td className="px-4 py-3 text-right">{r.score.toFixed(2)}</td>
+                  <td className="px-4 py-3">{p.affiliateUrl ? 'Yes' : 'No'}</td>
+                  <td className="px-4 py-3 text-right">{(0).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
@@ -68,13 +36,10 @@ export default function ProvidersLeaderboardPage() {
         </div>
 
         <p className="mt-3 text-xs text-neutral-400">
-          Data source: <code>src/data/providers.json</code>. Scores populate in Stage&nbsp;3.
+          Temporary static scoring; will be computed in Stage 3.
         </p>
       </div>
     </main>
   );
 }
-
-
-
 

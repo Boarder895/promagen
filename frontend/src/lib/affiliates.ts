@@ -1,4 +1,4 @@
-// Named exports only.
+﻿// Named exports only.
 export type ProviderId =
   | 'openai' | 'stability' | 'leonardo' | 'i23rf' | 'artistly'
   | 'adobe' | 'midjourney' | 'canva' | 'bing' | 'ideogram'
@@ -44,6 +44,9 @@ export const PROVIDER_MAP: Record<ProviderId, { name: string; url: string | null
     ProviderId,
     { name: string; url: string | null }
   >;
+
+
+
 
 
 

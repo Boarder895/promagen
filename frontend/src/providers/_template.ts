@@ -1,4 +1,4 @@
-import type { ProviderDef, GenInput, GenOutput } from './types';
+﻿import type { ProviderDef, GenInput, GenOutput } from './types';
 
 export const adapter: ProviderDef = {
   id: 'yourname',
@@ -15,6 +15,9 @@ export const adapter: ProviderDef = {
   },
 };
 export default adapter;
+
+
+
 
 
 

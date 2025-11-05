@@ -1,4 +1,4 @@
-// FRONTEND � NEXT.JS (App Router)
+﻿// FRONTEND - NEXT.JS (App Router)
 // Named exports only
 
 import * as React from "react";
@@ -48,7 +48,7 @@ export const Prompts = ({
   if (error) {
     return (
       <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800">
-        <div className="font-semibold">Couldn�t load prompts</div>
+        <div className="font-semibold">Couldn't load prompts</div>
         <div className="text-sm opacity-80">{error.message}</div>
       </div>
     );
@@ -57,7 +57,7 @@ export const Prompts = ({
   if (loading) {
     return (
       <div className="rounded-xl border p-4">
-        <div className="h-4 w-24 rounded bg-gray-200 mb-3 animate-pulse" />
+        <div className="mb-3 h-4 w-24 rounded bg-gray-200 animate-pulse" />
         <div className="space-y-2">
           <div className="h-3 w-3/4 rounded bg-gray-200 animate-pulse" />
           <div className="h-3 w-2/3 rounded bg-gray-200 animate-pulse" />
@@ -73,7 +73,7 @@ export const Prompts = ({
     return (
       <div className="rounded-xl border p-4 text-gray-600">
         <div className="font-medium">{title}</div>
-        <div className="text-sm opacity-80 mt-1">{emptyMessage}</div>
+        <div className="mt-1 text-sm opacity-80">{emptyMessage}</div>
       </div>
     );
   }
@@ -86,13 +86,16 @@ export const Prompts = ({
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {prompts.map((p) => (
-          <li key={p.id} className="rounded-2xl border p-4 shadow-sm hover:shadow transition-shadow">
+          <li
+            key={p.id}
+            className="rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow"
+          >
             <div className="font-medium">{p.title}</div>
-            <p className="mt-1 text-sm text-gray-600 line-clamp-3">{p.text}</p>
+            <p className="mt-1 line-clamp-3 text-sm text-gray-600">{p.text}</p>
             {p.tags?.length ? (
               <div className="mt-2 flex flex-wrap gap-1">
                 {p.tags.map((t) => (
-                  <span key={t} className="text-xs rounded-full border px-2 py-0.5">
+                  <span key={t} className="rounded-full border px-2 py-0.5 text-xs">
                     {t}
                   </span>
                 ))}
@@ -109,9 +112,4 @@ export const Prompts = ({
     </section>
   );
 };
-
-
-
-
-
 

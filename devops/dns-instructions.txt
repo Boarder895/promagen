@@ -1,3 +1,0 @@
-promagen.com  -> WordPress host (A/AAAA per host docs)
-app.promagen.com  -> Vercel (CNAME to cname.vercel-dns.com)
-Enable HTTPS on both. Keep root on WP, app on Vercel.

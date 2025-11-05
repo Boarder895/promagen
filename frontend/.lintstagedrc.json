@@ -1,0 +1,12 @@
+{
+  "src/**/*.{ts,tsx,js,jsx}": [
+    "eslint --fix --cache --cache-location .eslintcache --format stylish"
+  ],
+  "{*.{cjs,js,ts},*.config.{cjs,js,ts}}": [
+    "eslint --fix --cache --cache-location .eslintcache --format stylish"
+  ],
+  "src/**/*.{json,md,css,scss}": [
+    "prettier --write"
+  ]
+}
+

@@ -1,22 +1,14 @@
-# Node
+.eslintcache
+.next
+.vercel
 node_modules
-npm-debug.log*
-pnpm-debug.log*
-.yarn/*
 .pnpm-store
 
-# Next.js
+
+# build and cache noise
+.eslintcache
 .next
-out
+.vercel
+node_modules
 
-# Env
-.env*
-!.env.example
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Project exclusions
-frontend/backup-*
-frontend/providers/copypaste/**
+.ignored_node_modules/

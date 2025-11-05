@@ -1,2 +1,0 @@
-# Promagen Compare Report
-

@@ -1,0 +1,28 @@
+﻿{
+  "_defaults": {
+    "supportsNegative": true,
+    "supportsPrefill": false,
+    "supportsSeed": true,
+    "supportsSteps": true
+  },
+  "openai": {},
+  "stability": {},
+  "leonardo": {},
+  "i23rf": {},
+  "artistly": {},
+  "adobe": {},
+  "midjourney": {},
+  "canva": {},
+  "bing": {},
+  "ideogram": {},
+  "picsart": {},
+  "fotor": {},
+  "nightcafe": {},
+  "playground": {},
+  "pixlr": {},
+  "deepai": {},
+  "novelai": {},
+  "lexica": {},
+  "openart": {},
+  "flux": {}
+}

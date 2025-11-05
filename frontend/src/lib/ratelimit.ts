@@ -1,4 +1,4 @@
-type Bucket = { tokens: number; last: number };
+﻿type Bucket = { tokens: number; last: number };
 
 export type RateLimitOptions = {
   windowMs: number;
@@ -47,6 +47,9 @@ export function clientIpFromHeaders(headers: Headers): string {
   }
   return '0.0.0.0';
 }
+
+
+
 
 
 

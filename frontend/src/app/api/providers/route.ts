@@ -1,4 +1,4 @@
-// src/app/api/providers/route.ts
+﻿// src/app/api/providers/route.ts
 import { NextResponse } from "next/server";
 
 const API_BASE = process.env.API_BASE || "http://localhost:3001";
@@ -29,6 +29,9 @@ export async function GET() {
     );
   }
 }
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-// frontend/src/lib/color.ts
+﻿// frontend/src/lib/color.ts
 // Typed color utilities used across ribbons/cards.
 // Self-contained to avoid mismatches with external types.
 
@@ -8,7 +8,7 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-/** Map temperature °C → hue (cold→blue 220, hot→red 10). */
+/** Map temperature °C ? hue (cold?blue 220, hot?red 10). */
 export function hueFromTempC(tempC: number): number {
   const t = clamp(tempC, -20, 40);
   const ratio = (t - (-20)) / 60; // 0..1
@@ -57,5 +57,8 @@ export function chipColor(tempC: number | null, status: MarketStatus | string): 
 export function blend(leftColor: string, rightColor: string): string {
   return `linear-gradient(90deg, ${leftColor}, ${rightColor})`;
 }
+
+
+
 
 

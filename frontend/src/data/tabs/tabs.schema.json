@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promagen.app/schemas/tabs.schema.json",
+  "title": "Promagen Tabs",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id":        { "type": "string", "pattern": "^[a-z0-9-]+$" },
+      "label":     { "type": "string", "minLength": 1 },
+      "icon":      { "type": ["string", "null"] },
+      "disabled":  { "type": ["boolean", "null"] },
+      "badge":     { "type": ["string", "number", "null"] },
+      "kind":      { "enum": ["routed", "inpage"] },
+      "href":      { "type": "string" },
+      "panelId":   { "type": "string" }
+    },
+    "required": ["id", "label"],
+    "allOf": [
+      {
+        "if":   { "properties": { "kind": { "const": "routed" } } },
+        "then": { "required": ["href"] }
+      },
+      {
+        "if":   { "properties": { "kind": { "const": "inpage" } } },
+        "then": { "required": ["panelId"] }
+      }
+    ],
+    "additionalProperties": false
+  }
+}

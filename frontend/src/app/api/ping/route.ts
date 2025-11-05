@@ -1,4 +1,4 @@
-// frontend/src/app/api/ping/route.ts
+﻿// frontend/src/app/api/ping/route.ts
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";            // Stage 1: avoid Edge to prevent SSG warning
@@ -27,6 +27,9 @@ export async function HEAD() {
     headers: { "Cache-Control": "no-store" },
   });
 }
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-export type HealthStatus = 'ok' | 'degraded' | 'down' | 'up' | 'idle';
+﻿export type HealthStatus = 'ok' | 'degraded' | 'down' | 'up' | 'idle';
 
 export type PingResult = {
   status: HealthStatus;
@@ -23,6 +23,9 @@ export async function fetchHealth(signal?: AbortSignal): Promise<HealthResponse>
   void signal; // ignored in stub
   return pingHealth();
 }
+
+
+
 
 
 
