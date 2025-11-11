@@ -1,7 +1,7 @@
-ï»¿import EXCHANGES, { type Exchange } from "@/data/exchanges";
+import EXCHANGES, { type Exchange } from "@/data/exchanges";
 import selected from "@/data/exchanges.selected.json";
 
-/** Single source of truth â€” comes from exchanges.selected.json */
+/** Single source of truth — comes from exchanges.selected.json */
 type SelectedConfig = { ids: string[] };
 export const SELECTED_IDS: string[] = (selected as SelectedConfig).ids;
 
@@ -21,11 +21,11 @@ export function byIdFlexible(id: string): Exchange | undefined {
 
   // 1) exact id
   let found = EXCHANGES.find((e) => norm(e.id) === k);
-  if (found) return found;
+  if (found) {return found;}
 
   // 2) token head against id
   found = EXCHANGES.find((e) => norm(e.id) === head);
-  if (found) return found;
+  if (found) {return found;}
 
   // 3) try `${id}-${city}` style
   found = EXCHANGES.find((e) => {
@@ -57,7 +57,7 @@ export function exchangesUI(): Exchange[] {
 export type ExchangeUI = Exchange;
 // Value alias is intentionally not provided (it would be a type error).
 
-/** Dev guard: log any ids that didnâ€™t resolve */
+/** Dev guard: log any ids that didn’t resolve */
 const _unknown = SELECTED_IDS.filter((id) => !byIdFlexible(id));
 if (process.env.NODE_ENV !== "production" && _unknown.length) {
   // eslint-disable-next-line no-console

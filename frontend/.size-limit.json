@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/size-limit@^11/schema.json",
+  "plugins": ["@size-limit/file"],
+  "files": [
+    {
+      "path": ".next/static/chunks/*.js",
+      "limit": "350 KB",
+      "gzip": true
+    },
+    {
+      "path": ".next/static/chunks/pages/*.js",
+      "limit": "350 KB",
+      "gzip": true
+    }
+  ]
+}

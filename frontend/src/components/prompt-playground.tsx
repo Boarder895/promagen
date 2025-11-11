@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import Button from "@/components/ui/button";
@@ -15,7 +15,7 @@ export default function PromptPlayground() {
         rows={6}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Type a prompt…"
+        placeholder="Type a prompt�"
       />
 
       <div className="flex items-center gap-3">

@@ -1,0 +1,23 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "",
+      "url": ["https://promagen.com/"],
+      "numberOfRuns": 1,
+      "settings": {
+        "preset": "desktop"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["error", { "minScore": 0.85 }],
+        "font-display": ["error", { "maxLength": 0 }], 
+        "uses-rel-preconnect": "warn",
+        "uses-responsive-images": "error",
+        "uses-optimized-images": "error",
+        "layout-shifts": ["error", { "maxNumericValue": 0.1 }],
+        "total-byte-weight": ["warn", { "maxNumericValue": 1_300_000 }]
+      }
+    }
+  }
+}

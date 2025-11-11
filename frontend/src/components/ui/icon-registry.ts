@@ -1,4 +1,4 @@
-﻿// frontend/src/components/ui/icon-registry.ts
+// frontend/src/components/ui/icon-registry.ts
 import { EMOJI_ICON_NAMES } from "@/components/ui/emoji";
 
 /**

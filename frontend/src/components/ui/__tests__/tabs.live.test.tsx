@@ -1,4 +1,4 @@
-﻿import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import Tabs from "../../ui/tabs";
 import InpageTab from "../../ui/inpage-tab";
@@ -27,7 +27,7 @@ test("sr-only live region updates on change", () => {
   const beta = screen.getByRole("tab", { name: /beta/i });
   fireEvent.click(beta);
 
-  // Match your actual announcement text (â€œTab changed: Betaâ€)
+  // Match your actual announcement text (“Tab changed: Beta”)
   expect(screen.getByText(/tab changed:\s*beta/i)).toBeInTheDocument();
 });
 

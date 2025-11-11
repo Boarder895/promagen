@@ -1,4 +1,4 @@
-﻿export default function RunAcrossProvidersPage({
+export default function RunAcrossProvidersPage({
   searchParams,
 }: {
   searchParams?: { promptId?: string };

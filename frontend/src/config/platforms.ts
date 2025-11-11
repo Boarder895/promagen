@@ -1,4 +1,4 @@
-ï»¿// Promagen Top 20 Platforms â€” single source of truth (ordered by popularity)
+// Promagen Top 20 Platforms — single source of truth (ordered by popularity)
 export type Platform = {
   id: string; // stable ID for your system (slug-like)
   name: string; // display name
@@ -20,7 +20,7 @@ export const PLATFORMS_20: Platform[] = [
   },
   {
     id: 'openai',
-    name: 'OpenAI (DALLÂ·E / GPT-Image)',
+    name: 'OpenAI (DALL·E / GPT-Image)',
     rank: 2,
     kind: 'api',
     markers: ['??'],

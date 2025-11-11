@@ -1,8 +1,8 @@
-ï»¿/**
+/**
  * Local, privacy-friendly telemetry for Stage 2.
  * - Records prompt copies and designer/bridge opens with timestamps.
  * - Computes trending (Top 3 in last N minutes).
- * - Provides a capped "live score nudge" (Â±3) to overlay on base scores.
+ * - Provides a capped "live score nudge" (±3) to overlay on base scores.
  *
  * Storage:
  *   localStorage['pmg.telemetry'] = {
@@ -23,10 +23,10 @@ interface TelemetryStore {
 }
 
 function load(): TelemetryStore {
-  if (typeof window === 'undefined') return { copies: {}, opens: {}, bridges: {} };
+  if (typeof window === 'undefined') {return { copies: {}, opens: {}, bridges: {} };}
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { copies: {}, opens: {}, bridges: {} };
+    if (!raw) {return { copies: {}, opens: {}, bridges: {} };}
     const parsed = JSON.parse(raw) as TelemetryStore;
     return { copies: parsed.copies ?? {}, opens: parsed.opens ?? {}, bridges: parsed.bridges ?? {} };
   } catch {
@@ -35,7 +35,7 @@ function load(): TelemetryStore {
 }
 
 function save(next: TelemetryStore) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
   localStorage.setItem(KEY, JSON.stringify(next));
 }
 
@@ -45,7 +45,7 @@ function pruneOlderThan(arr: number[], cutoff: number): number[] {
 }
 
 export function recordEvent(bucket: Buckets, providerId: string, ts = Date.now()) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
   const store = load();
   const map = store[bucket];
   map[providerId] = map[providerId] ?? [];
@@ -88,11 +88,11 @@ export function getTopN(n = 3, windowMinutes = 120): Array<{ providerId: string;
 export function liveNudges(windowMinutes = 120): Record<string, number> {
   const counts = getWindowCounts(windowMinutes);
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  if (total === 0) return {};
+  if (total === 0) {return {};}
   const nudges: Record<string, number> = {};
   for (const [pid, c] of Object.entries(counts)) {
     const share = c / total; // 0..1
-    // Map share (0..1) to roughly [-1, +3] but compress middle; clamp to Â±3
+    // Map share (0..1) to roughly [-1, +3] but compress middle; clamp to ±3
     const raw = Math.min(3, Math.max(-3, Math.round((share - 0.05) * 40) / 2)); // step 0.5
     nudges[pid] = raw;
   }

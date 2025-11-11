@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 
@@ -38,7 +38,7 @@ function useWeather() {
     try {
       const res = await fetch(FETCH_URL, { cache: "no-store" });
       const json: ApiPayload = await res.json();
-      if (!json.ok) throw new Error(json.error || "Bad response");
+      if (!json.ok) {throw new Error(json.error || "Bad response");}
       setData(json.data);
       setError(null);
     } catch (e: unknown) {
@@ -57,8 +57,8 @@ function useWeather() {
 
 export default function WeatherRibbon() {
   const { data, error } = useWeather();
-  if (error) return null;
-  if (!data) return null;
+  if (error) {return null;}
+  if (!data) {return null;}
 
   const { east, west } = splitEastWest(data);
 

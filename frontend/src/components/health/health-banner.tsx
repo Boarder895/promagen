@@ -1,4 +1,4 @@
-﻿// components/health/health-banner.tsx
+// components/health/health-banner.tsx
 'use client';
 
 import { useHealth } from './health-context';
@@ -6,7 +6,7 @@ import { useHealth } from './health-context';
 export default function HealthBanner() {
   const health = useHealth();
 
-  if (!health || health.status === 'ok') return null;
+  if (!health || health.status === 'ok') {return null;}
 
   const label = health.status === 'degraded' ? 'Degraded performance' : 'Service unavailable';
 

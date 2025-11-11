@@ -1,4 +1,4 @@
-﻿// src/lib/promptState.ts
+// src/lib/promptState.ts
 // Local, privacy-friendly copy history for Stage-2.
 
 const KEY = "pmg.copyHistory";
@@ -13,7 +13,7 @@ export type CopyItem = {
 };
 
 function read(): CopyItem[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") {return [];}
   try {
     const raw = window.localStorage.getItem(KEY);
     return raw ? (JSON.parse(raw) as CopyItem[]) : [];
@@ -23,7 +23,7 @@ function read(): CopyItem[] {
 }
 
 function write(items: CopyItem[]) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {return;}
   try {
     window.localStorage.setItem(KEY, JSON.stringify(items.slice(-CAP)));
   } catch {

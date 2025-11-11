@@ -1,4 +1,4 @@
-Ôªø// frontend/src/data/emoji.ts
+// frontend/src/data/emoji.ts
 import emojiBank from "@/data/emoji-bank.json";
 
 // Build fast lookup maps once
@@ -30,9 +30,9 @@ const musicMap = toMap((emojiBank as any).music);
 // Providers are already a flat map in the JSON
 const providerMap: Record<string, string> = (emojiBank as any).providers ?? {};
 
-// Generic getter by ‚Äúsection‚Äù then id (handy for future use)
+// Generic getter by ìsectionî then id (handy for future use)
 export function getEmoji(section: string, id: string | undefined | null): string | null {
-  if (!id) return null;
+  if (!id) {return null;}
   const sectionMap =
     {
       trends: trendMap,
@@ -57,16 +57,16 @@ export function getEmoji(section: string, id: string | undefined | null): string
 }
 
 /**
- * getTrendEmoji ‚Äì resolves a trend id like "up" | "down" | "rocket" to its emoji.
+ * getTrendEmoji ñ resolves a trend id like "up" | "down" | "rocket" to its emoji.
  * Returns null when unknown.
  */
 export function getTrendEmoji(trendId?: string | null): string | null {
-  if (!trendId) return null;
+  if (!trendId) {return null;}
   return trendMap[trendId] ?? null;
 }
 
 /**
- * getProviderEmoji ‚Äì resolves a provider to an emoji with sensible fallbacks.
+ * getProviderEmoji ñ resolves a provider to an emoji with sensible fallbacks.
  * Priority:
  *   1) explicit provider.emoji (from data pipelines)
  *   2) providers map in emoji-bank.json
@@ -80,16 +80,16 @@ export function getProviderEmoji(provider: ProviderLike): string | null {
   }
 
   // 1) explicit on the object
-  if (provider.emoji && provider.emoji.trim().length) return provider.emoji;
+  if (provider.emoji && provider.emoji.trim().length) {return provider.emoji;}
 
   // 2) providers map
   const byId = providerMap[provider.id];
-  if (byId) return byId;
+  if (byId) {return byId;}
 
   // 3) optional category fallback (e.g., "image", "video", etc. live in core)
   if (provider.category) {
     const byCategory = coreMap[provider.category];
-    if (byCategory) return byCategory;
+    if (byCategory) {return byCategory;}
   }
 
   return null;

@@ -1,4 +1,4 @@
-﻿// src/app/settings/keys/page.tsx
+// src/app/settings/keys/page.tsx
 import { headers } from "next/headers";
 
 type HealthBody = { status?: unknown } & Record<string, unknown>;

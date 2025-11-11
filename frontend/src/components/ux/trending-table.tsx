@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import * as React from "react";
 
 type Row = { providerId: string; name: string; uses: number };
@@ -14,7 +14,7 @@ export default function TrendingTable() {
       try {
         const res = await fetch("/api/analytics/top3", { cache: "no-store" });
         const json = (await res.json()) as { ok: boolean; data?: Row[] };
-        if (alive && json.ok && json.data) setRows(json.data.slice(0, 3));
+        if (alive && json.ok && json.data) {setRows(json.data.slice(0, 3));}
       } catch {
         /* allowed: silent */
       }
@@ -25,7 +25,7 @@ export default function TrendingTable() {
     return () => { alive = false; clearInterval(id); };
   }, []);
 
-  if (!rows.length) return null;
+  if (!rows.length) {return null;}
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white/80">

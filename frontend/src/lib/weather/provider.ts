@@ -1,28 +1,18 @@
-﻿import type { Exchange } from "../market/types";
+// frontend/src/lib/weather/provider.ts
+import type { Exchange } from '../markets/types';
 
-export type WeatherSummary = {
-  tempC: number;
-  condition:
-    | "clear" | "partly-cloudy" | "cloudy" | "fog"
-    | "drizzle" | "rain" | "showers"
-    | "snow" | "snow-showers"
-    | "thunder" | "thunder-hail" | "unknown";
-  updatedISO: string;
-};
+export type WeatherProvider = 'open-meteo' | 'met-office' | 'noaa';
 
-export function pseudoWeather(exchange: Pick<Exchange, "city">): WeatherSummary {
-  const city = exchange.city ?? "";
-  const seed = [...city].reduce((a, c) => a + c.charCodeAt(0), 0);
-  const tempC = (seed % 35) - 5;
-  const bucket = seed % 6;
-  const condition: WeatherSummary["condition"] =
-    bucket === 0 ? "clear" :
-    bucket === 1 ? "partly-cloudy" :
-    bucket === 2 ? "cloudy" :
-    bucket === 3 ? "showers" :
-    bucket === 4 ? "rain" : "unknown";
-  return { tempC, condition, updatedISO: new Date().toISOString() };
+export function providerForExchange(_: Exchange): WeatherProvider {
+  // Minimal stub: pick a default; wire real routing later.
+  return 'open-meteo';
 }
 
-
-
+export function providerLabel(p: WeatherProvider): string {
+  switch (p) {
+    case 'open-meteo': return 'Open-Meteo';
+    case 'met-office': return 'Met Office';
+    case 'noaa': return 'NOAA';
+    default: return String(p);
+  }
+}

@@ -1,4 +1,4 @@
-﻿// BACKEND
+// BACKEND
 type ProviderValues = { provider: string; values: number[] };
 
 export function updateScores(raw: ProviderValues[]) {

@@ -1,4 +1,4 @@
-﻿// FRONTEND - NEXT.JS (App Router)
+// FRONTEND - NEXT.JS (App Router)
 // Named exports only
 
 import * as React from "react";
@@ -31,10 +31,10 @@ export type PromptsProps = {
 };
 
 function getPrompts(src: PromptsSource): Prompt[] {
-  if (Array.isArray(src)) return src;
-  if ("filtered" in src && src.filtered) return src.filtered;
-  if ("allPrompts" in src && src.allPrompts) return src.allPrompts;
-  if ("all" in src && src.all) return src.all;
+  if (Array.isArray(src)) {return src;}
+  if ("filtered" in src && src.filtered) {return src.filtered;}
+  if ("allPrompts" in src && src.allPrompts) {return src.allPrompts;}
+  if ("all" in src && src.all) {return src.all;}
   return [];
 }
 

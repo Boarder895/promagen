@@ -1,4 +1,4 @@
-﻿/// <reference types="node" />
+/// <reference types="node" />
 // @ts-nocheck
 // Minimal Stage-2 adapter stub for 'flux'.
 // Purpose: provide buildPrompt + deepLink helpers so pages can use Copy + Open flows now.

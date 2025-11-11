@@ -1,21 +1,20 @@
-﻿// src/data/exchanges.ts
-// Single import point for the stock exchanges catalog used by Stage-1/2.
-
-import catalog from "@/data/exchanges.catalog.json";
+import catalog from './exchanges.catalog.json';
 
 export type Exchange = {
   id: string;
-  name: string;
-  city?: string;
-  country?: string;
-  tz?: string;
-  lat?: number;
-  lon?: number;
-  open?: string;
-  close?: string;
-  notes?: string;
+  city: string;
+  exchange: string;
+  country: string;
+  iso2: string;
+  tz: string;
+  longitude: number;
+  latitude: number;
+  hoursTemplate: string;
+  holidaysRef: string;
+  hemisphere: string;
+  // any optional extras:
+  name?: string;
 };
 
-export const EXCHANGES: Exchange[] = catalog as unknown as Exchange[];
+const EXCHANGES: Exchange[] = (catalog as any) as Exchange[];
 export default EXCHANGES;
-

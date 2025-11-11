@@ -1,4 +1,4 @@
-﻿// frontend/src/lib/assets.ts
+// frontend/src/lib/assets.ts
 import type React from "react";
 
 /** Default ISO2 when a market has no country code */
@@ -25,7 +25,7 @@ export function onFlagError(
 
 /** Optional: preload a flag to avoid first-use shimmer */
 export function preloadFlag(iso2?: string) {
-  if (typeof document === "undefined") return;
+  if (typeof document === "undefined") {return;}
   const href = flagSrc(iso2);
   const link = document.createElement("link");
   link.rel = "preload";

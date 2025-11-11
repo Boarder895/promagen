@@ -1,4 +1,4 @@
-﻿// src/components/prompts/PromptGrid.tsx
+// src/components/prompts/PromptGrid.tsx
 // Renders a simple grid of prompt cards.
 
 import React from "react";

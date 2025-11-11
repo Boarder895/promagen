@@ -1,29 +1,83 @@
-// /frontend/jest.config.ts
-import nextJest from 'next/jest';
+// frontend/jest.config.ts
+// Promagen — Jest config (merged to your best-code guide)
+// - TypeScript via ts-jest
+// - jsdom environment for React/Next components
+// - Stable test discovery under src/
+// - Path alias support for "@/…"
+// - CSS Modules stubbed via identity-obj-proxy
 
-const createJestConfig = nextJest({ dir: './' });
+import type { Config } from "jest";
 
-const config = {
-  testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/src/setuptests.ts'],
+const config: Config = {
+  rootDir: ".",
 
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '\\.(css|less|sass|scss)$': '<rootDir>/src/test/__mocks__/stylemock.js',
-    '\\.(gif|ttf|eot|svg|png|jpg|jpeg|webp|avif)$':
-      '<rootDir>/src/test/__mocks__/filemock.js',
+  // Use ts-jest to transform TS/TSX without type-checking during tests (faster CI).
+  preset: "ts-jest",
+  transform: {
+    "^.+\\.(ts|tsx)$": [
+      "ts-jest",
+      {
+        tsconfig: "./tsconfig.json",
+        diagnostics: false,
+        isolatedModules: true,
+      },
+    ],
   },
 
-  testPathIgnorePatterns: [
-    '<rootDir>/.next/',
-    '<rootDir>/node_modules/',
-    '<rootDir>/.pnpm/',
+  // Simulate the browser for React component tests.
+  testEnvironment: "jsdom",
+
+  // Where to look for tests.
+  testMatch: [
+    "<rootDir>/src/**/__tests__/**/*.(spec|test).(ts|tsx)",
+    "<rootDir>/src/**/?(*.)+(spec|test).(ts|tsx)",
   ],
 
-  snapshotFormat: { escapeString: true, printBasicPrototype: true },
+  // Keep noise and build artefacts out of test runs.
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/.next/",
+    "/dist/",
+    "/build/",
+    "/coverage/",
+    "/public/",
+    "/test-results/",
+    "/e2e/",
+    "/playwright/",
+  ],
 
-  // Uncomment and tailor if a specific ESM dep needs transforming:
-  // transformIgnorePatterns: ['/node_modules/(?!(@react-aria|nanoid)/)'],
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
+
+  // Match Next.js/TS path aliases and stub non-TS assets cleanly.
+  moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "\\.(css|scss|sass|less)$": "identity-obj-proxy",
+    // Static assets (optional: provide a tiny file mock if you import images in tests)
+    "\\.(gif|jpg|jpeg|png|svg|webp|avif)$": "<rootDir>/tests/__mocks__/fileMock.cjs",
+  },
+
+  // Run any DOM matchers and custom setup (e.g., jest-dom) from here.
+  setupFilesAfterEnv: ["<rootDir>/src/setuptests.ts"],
+
+  // Be strict in CI: fail on TS or ESLint errors outside of tests, handled elsewhere.
+  // (We keep Jest focused; type checking and linting run in separate scripts.)
+
+  // Deterministic coverage collection from source files.
+  collectCoverageFrom: [
+    "src/**/*.{ts,tsx}",
+    "!src/**/index.{ts,tsx}",
+    "!src/**/__tests__/**",
+    "!src/**/__mocks__/**",
+    "!src/**/types.{ts,tsx}",
+  ],
+  coverageDirectory: "<rootDir>/coverage",
+  coverageReporters: ["text-summary", "lcov"],
+
+  // Make console noise useful in CI.
+  reporters: ["default"],
+
+  // Keep transforms simple; don’t transpile node_modules.
+  transformIgnorePatterns: ["/node_modules/"],
 };
 
-export default createJestConfig(config);
+export default config;

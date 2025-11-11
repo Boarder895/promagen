@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 // Note: ensure file exists at this path with this casing.

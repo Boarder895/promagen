@@ -1,4 +1,4 @@
-ï»¿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { getCopyHistory } from '@/lib/prompt-rehydration';
@@ -14,7 +14,7 @@ export function PromptHistoryTray() {
     return () => window.removeEventListener('focus', sync);
   }, []);
 
-  if (log.length === 0) return null;
+  if (log.length === 0) {return null;}
 
   return (
     <div className="rounded-xl border border-zinc-700 bg-zinc-900 p-4 mt-4">
@@ -22,9 +22,9 @@ export function PromptHistoryTray() {
       <ul className="space-y-1 text-sm text-zinc-300">
         {log.map((entry, i) => (
           <li key={i} className="truncate">
-            <span className="font-medium">{entry.providerName}</span> Â·{' '}
-            {new Date(entry.ts).toLocaleTimeString()} â€”{' '}
-            <span className="ml-1 text-zinc-400">{entry.prompt.slice(0, 60)}â€¦</span>
+            <span className="font-medium">{entry.providerName}</span> ·{' '}
+            {new Date(entry.ts).toLocaleTimeString()} —{' '}
+            <span className="ml-1 text-zinc-400">{entry.prompt.slice(0, 60)}…</span>
           </li>
         ))}
       </ul>

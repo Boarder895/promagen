@@ -1,4 +1,4 @@
-﻿export function nowInTZ(tz: string): Date {
+export function nowInTZ(tz: string): Date {
   try { return new Date(new Date().toLocaleString("en-GB", { timeZone: tz })); }
   catch { return new Date(); }
 }

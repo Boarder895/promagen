@@ -1,4 +1,4 @@
-﻿import providers from "@/data/providers.json";
+import providers from "@/data/providers.json";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";

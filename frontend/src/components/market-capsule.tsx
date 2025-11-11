@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import type { ExchangeInfo, MarketState, Weather } from "@/types/ribbon";
 
 type Props = {

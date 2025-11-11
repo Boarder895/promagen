@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useRef, useState } from "react";
 
 type Props = { periodMinutes?: number };
@@ -25,8 +25,8 @@ export default function Heartbeat({ periodMinutes = 3 }: Props) {
     intervalRef.current = window.setInterval(fire, periodMs);
 
     return () => {
-      if (intervalRef.current !== null) window.clearInterval(intervalRef.current);
-      if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
+      if (intervalRef.current !== null) {window.clearInterval(intervalRef.current);}
+      if (timeoutRef.current !== null) {window.clearTimeout(timeoutRef.current);}
     };
   }, [periodMinutes]);
 

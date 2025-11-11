@@ -1,4 +1,4 @@
-ï»¿// frontend/src/lib/color.ts
+// frontend/src/lib/color.ts
 // Typed color utilities used across ribbons/cards.
 // Self-contained to avoid mismatches with external types.
 
@@ -8,7 +8,7 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-/** Map temperature Â°C ? hue (cold?blue 220, hot?red 10). */
+/** Map temperature °C ? hue (cold?blue 220, hot?red 10). */
 export function hueFromTempC(tempC: number): number {
   const t = clamp(tempC, -20, 40);
   const ratio = (t - (-20)) / 60; // 0..1
@@ -25,15 +25,15 @@ export const tempColor = tempToColor;
 /** Normalize loose strings to the MarketStatus union. */
 export function normalizeStatus(s: unknown): MarketStatus {
   const v = String(s ?? "unknown").toLowerCase();
-  if (v === "open") return "open";
-  if (v === "closed") return "closed";
-  if (v === "holiday") return "holiday";
-  if (v === "pre" || v === "preopen" || v === "pre-open") return "pre";
-  if (v === "post" || v === "postclose" || v === "post-close") return "post";
+  if (v === "open") {return "open";}
+  if (v === "closed") {return "closed";}
+  if (v === "holiday") {return "holiday";}
+  if (v === "pre" || v === "preopen" || v === "pre-open") {return "pre";}
+  if (v === "post" || v === "postclose" || v === "post-close") {return "post";}
   return "unknown";
 }
 
-/** Convert status to a saturation weight for chip tints (0â€“100). */
+/** Convert status to a saturation weight for chip tints (0–100). */
 export function stateSat(status: MarketStatus): number {
   switch (status) {
     case "open":    return 85;

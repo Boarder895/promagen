@@ -1,4 +1,4 @@
-﻿import Tabs from "@/components/ui/tabs";
+import Tabs from "@/components/ui/tabs";
 import InpageTab from "@/components/ui/inpage-tab";
 import TabPanel from "@/components/ui/tab-panel";
 import items from "@/data/tabs/macro-inpage.json";

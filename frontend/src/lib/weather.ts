@@ -1,4 +1,4 @@
-﻿// frontend/src/lib/weather.ts
+// frontend/src/lib/weather.ts
 type ExchangeRecord = { id: string; city: string; lat: number; lon: number; avgTempC?: number };
 
 const OPEN_METEO_URL =

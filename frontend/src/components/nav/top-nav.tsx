@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { BrainIcon, BookmarkIcon } from "@/components/ui/emoji";
@@ -15,7 +15,7 @@ export default function TopNav() {
           <Link
             href="/designer"
             className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-zinc-200 hover:border-zinc-600 hover:bg-zinc-800"
-            title="Prompt Designer — idea builder"
+            title="Prompt Designer � idea builder"
           >
             <BrainIcon /> Prompt Designer
           </Link>

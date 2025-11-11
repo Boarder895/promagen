@@ -1,45 +1,71 @@
-﻿// frontend/eslint.config.mjs
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+﻿// Promagen ESLint v9 flat-config (typed/untyped split + proper plugin binding)
+
+import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Globs that should NOT use typed rules (fast + avoids "requires type info" errors)
+const UNTYPED = [
+  "**/*.config.*",
+  "**/*.conf.*",
+  "**/*.setup.*",
+  "**/scripts/**/*.*",
+  "**/tests/**/*.*",
+  "**/__tests__/**/*.*",
+  "**/__mocks__/**/*.*",
+];
 
-export default tseslint.config(
-  // Ignore junk/prototypes/build output
-  {
-    ignores: [
-      "node_modules/**",
-      ".next/**",
-      "dist/**",
-      "build/**",
-      "coverage/**",
-      "scripts/**",
-      // prototypes you already had
-      "src/providers/copypaste/**",
-      "src/backup/**",
-      // stage gating for Stage-1/2
-      "src/app/api/**",
-      "src/app/book/**"
-    ],
-  },
+// Global ignores
+const IGNORES = [
+  "node_modules/**",
+  ".next/**",
+  "dist/**",
+  "coverage/**",
+  ".playwright/**",
+  "**/*.snap",
+];
 
-  // Main rules for your source
+export default [
+  // Base JS everywhere
+  js.configs.recommended,
+
+  // ----------------- UNTYPED (tests/config/scripts) -----------------
   {
-    files: ["src/**/*.{ts,tsx,js,jsx}"],
+    files: ["**/*.{ts,tsx}"],
+    ignores: ["src/**/*.{ts,tsx}", ...IGNORES],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        tsconfigRootDir: __dirname,
+        // no "project" => UNTYPED mode
         ecmaVersion: 2023,
         sourceType: "module",
       },
-      globals: {
-        window: "readonly",
-        document: "readonly",
-        navigator: "readonly",
-        process: "readonly",
+    },
+    plugins: {
+      // bind @typescript-eslint plugin so namespaced rules resolve
+      "@typescript-eslint": tseslint.plugin,
+      "react-hooks": reactHooks,
+    },
+    rules: {
+      ...tseslint.configs.recommended.rules, // untyped TS rules
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "@typescript-eslint/consistent-type-imports": ["warn", { prefer: "type-imports" }],
+    },
+    linterOptions: { reportUnusedDisableDirectives: true },
+  },
+
+  // ----------------- TYPED (app source only) -----------------
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: ["./tsconfig.json"],
+        tsconfigRootDir: new URL(".", import.meta.url),
+        ecmaVersion: 2023,
+        sourceType: "module",
       },
     },
     plugins: {
@@ -47,33 +73,16 @@ export default tseslint.config(
       "react-hooks": reactHooks,
     },
     rules: {
-      // Momentum helpers
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
-      "@typescript-eslint/require-await": "off",
-      "@typescript-eslint/no-floating-promises": "off",
-
-      // React hooks
+      ...tseslint.configs.recommendedTypeChecked.rules,
+      "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
-
-      // Console allowed as warn generally
       "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
 
-  // API routes: allow console fully
-  {
-    files: ["src/app/api/**/*.{ts,tsx,js,jsx}"],
-    rules: { "no-console": "off" },
-  },
-
-  // Declaration files: do not run typed program (stops db.d.ts error)
-  {
-    files: ["src/**/*.d.ts"],
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: { project: false },
-    },
-    rules: {},
-  }
-);
+  // ----------------- Global ignores -----------------
+  { ignores: IGNORES },
+];

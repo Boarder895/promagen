@@ -1,46 +1,30 @@
-﻿// frontend/src/components/providers/provider-grid.tsx
-"use client";
-
+import * as React from "react";
 import ProviderCard from "@/components/providers/provider-card";
-import type { Provider } from "@/types/providers";
+import type { Provider } from "@/types/provider";
 
-type ProviderGridProps = { providers: Provider[] };
+type Props = { providers: Provider[] };
 
-function EmptySlot({ i }: { i: number }) {
-  return (
-    <div
-      key={`empty-${i}`}
-      className="rounded-2xl border border-neutral-800/60 bg-neutral-900/60 min-h-[64px] flex items-center justify-center text-neutral-500"
-      aria-hidden="true"
-    >
-      ·
-    </div>
-  );
-}
-
-export default function ProviderGrid({ providers }: ProviderGridProps) {
-  // Sort by score desc, then name asc
-  const sorted = [...providers].sort(
-    (a, b) => b.score - a.score || a.name.localeCompare(b.name)
-  );
-
-  // Exactly 20 slots
-  const slots: (Provider | null)[] = Array.from(
-    { length: 20 },
-    (_, i) => sorted[i] ?? null
+export default function ProviderGrid({ providers }: Props) {
+  const sorted = React.useMemo(
+    () =>
+      [...providers].sort((a, b) => {
+        const sa = typeof a.score === "number" ? a.score : 0;
+        const sb = typeof b.score === "number" ? b.score : 0;
+        return sb - sa || a.name.localeCompare(b.name);
+      }),
+    [providers]
   );
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {slots.map((p, i) =>
-        p ? (
-          <ProviderCard key={p.id} provider={{ ...p, rank: i + 1 }} index={i} />
-        ) : (
-          <EmptySlot key={`empty-${i}`} i={i} />
-        )
-      )}
-    </div>
+    <section role="region" aria-label="AI providers" data-testid="providers-grid">
+      <ul role="list" className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {sorted.map((p, i) => (
+          <li key={p.id}>
+            {/* Pass rank as its own prop; do NOT inject rank into the provider object. */}
+            <ProviderCard provider={p} rank={i + 1} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
-
-

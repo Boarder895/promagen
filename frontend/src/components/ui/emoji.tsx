@@ -1,4 +1,4 @@
-﻿import * as React from "react";
+import * as React from "react";
 
 /** Single source of truth for allowed emoji names. */
 export const EMOJI_ICON_NAMES = [

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 /**
  * Injects a tiny inline script that sets <html>.dark BEFORE React hydrates.

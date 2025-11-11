@@ -1,4 +1,4 @@
-﻿// frontend/src/components/common/affiliate-badge.tsx
+// frontend/src/components/common/affiliate-badge.tsx
 export default function AffiliateBadge() {
   return (
     <span

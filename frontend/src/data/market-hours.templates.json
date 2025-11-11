@@ -1,0 +1,67 @@
+{
+  "$schema": "https://promagen/schemas/market-hours.templates.schema.json",
+  "version": 1,
+  "templates": {
+    "australasia-standard": {
+      "label": "Australasia Standard",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "16:45" }],
+      "notes": "Common baseline for NZX"
+    },
+    "australia-standard": {
+      "label": "Australia Standard",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "16:00" }],
+      "notes": "ASX cash equities"
+    },
+    "asia-break": {
+      "label": "Asia w/ Midday Break",
+      "session": [
+        { "days": "Mon-Fri", "open": "09:00", "close": "11:30" },
+        { "days": "Mon-Fri", "open": "12:30", "close": "15:00" }
+      ],
+      "notes": "JP/CN/TH typical double session"
+    },
+    "hk-break": {
+      "label": "HKEX w/ Midday Break",
+      "session": [
+        { "days": "Mon-Fri", "open": "09:30", "close": "12:00" },
+        { "days": "Mon-Fri", "open": "13:00", "close": "16:00" }
+      ],
+      "notes": "HKEX cash"
+    },
+    "asia-short": {
+      "label": "Asia Short Day",
+      "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "13:30" }],
+      "notes": "TWSE baseline; segments may vary"
+    },
+    "india-nse": {
+      "label": "India NSE",
+      "session": [{ "days": "Mon-Fri", "open": "09:15", "close": "15:30" }],
+      "notes": "Regular equity session"
+    },
+    "gulf-halfday": {
+      "label": "GCC Continuous",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "15:00" }],
+      "notes": "DFM/Tadawul continuous window"
+    },
+    "europe-uk": {
+      "label": "LSE Core",
+      "session": [{ "days": "Mon-Fri", "open": "08:00", "close": "16:30" }],
+      "notes": "London cash"
+    },
+    "europe-core": {
+      "label": "Europe Core",
+      "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:30" }],
+      "notes": "Frankfurt/Paris baseline; segments vary"
+    },
+    "africa-standard": {
+      "label": "JSE Core",
+      "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:00" }],
+      "notes": "Johannesburg cash"
+    },
+    "us-standard": {
+      "label": "US Cash",
+      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "16:00" }],
+      "notes": "NYSE/NASDAQ; early-closes handled separately"
+    }
+  }
+}

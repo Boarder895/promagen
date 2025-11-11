@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { DiceIcon } from "@/components/ui/emoji";
 

@@ -1,4 +1,4 @@
-﻿// src/types/guards.ts
+// src/types/guards.ts
 export type WithVideoUrl<T> = T & { videoUrl?: string };
 
 export function hasVideoUrl<T extends { videoUrl?: unknown }>(

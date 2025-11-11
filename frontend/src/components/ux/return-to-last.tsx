@@ -1,54 +1,66 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { urlForProvider } from "@/lib/routes";
+import { Routes } from "@/lib/routes";
+import { KEYS, LEGACY_LAST_PROVIDER_KEYS } from "@/lib/storage.keys";
+import { readSchema, writeSchema } from "@/lib/storage";
 
-// where we store the last visited provider id in localStorage
-const STORAGE_KEY = "last-provider-id";
+/**
+ * Finds the last provider id (versioned first, then legacy fallbacks)
+ * and renders a calm quick-return pill.
+ */
+
+const V = 1;
 
 export default function ReturnToLast() {
   const [lastId, setLastId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Try storage first
-    let found: string | null = null;
+    // 1) Preferred: versioned key
     try {
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
-      if (raw && typeof raw === "string" && raw.trim()) found = raw.trim();
-    } catch {}
+      const v1 = readSchema<string | null>(KEYS.providers.lastV1, V, null);
+      if (v1 && typeof v1 === "string") {
+        setLastId(v1);
+        return;
+      }
+    } catch {
+      // ignore
+    }
 
-    // Fallback: if we are already on /providers/[id], capture it for the future
-    if (!found && typeof window !== "undefined") {
-      const m = window.location.pathname.match(/^\/providers\/([^/]+)\/?$/);
-      if (m?.[1]) {
-        found = decodeURIComponent(m[1]);
-        try { window.localStorage.setItem(STORAGE_KEY, found); } catch {}
+    // 2) Legacy fallbacks
+    for (const k of LEGACY_LAST_PROVIDER_KEYS) {
+      try {
+        const raw = typeof window !== "undefined" ? localStorage.getItem(k) : null;
+        const v = (raw ?? "").trim();
+        if (v) {
+          setLastId(v);
+          // Migrate forward quietly
+          writeSchema<string | null>(KEYS.providers.lastV1, V, v);
+          break;
+        }
+      } catch {
+        /* ignore */
       }
     }
-    setLastId(found);
   }, []);
 
   if (!lastId) return null;
 
-  const href = urlForProvider(lastId);
-
   return (
-    <div className="fixed bottom-6 right-6 z-40">
+    <div className="fixed bottom-6 right-6 z-40" data-testid="return-to-last">
       <Link
-        href={href}
-        aria-label="Return to your last platform"
-        className="group inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 backdrop-blur
-                   ring-1 ring-white/10 hover:bg-white/15 hover:ring-white/20
-                   text-sm font-medium text-white shadow-[0_8px_30px_rgb(0,0,0,0.30)]
-                   transition-transform duration-150 hover:scale-[1.03]"
+        href={Routes.provider(lastId)}
+        title="Return to your last provider"
+        aria-label="Return to your last provider"
+        className="group inline-flex items-center gap-2 rounded-full border border-zinc-700/60
+                   bg-zinc-900/70 px-4 py-2 text-sm text-zinc-200 shadow-[0_8px_30px_rgba(0,0,0,0.25)]
+                   backdrop-blur hover:border-zinc-600 hover:bg-zinc-900/90"
+        data-testid="return-to-last-link"
       >
-        <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 group-hover:scale-110 transition" />
-        <span>Return to last platform</span>
+        <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 transition group-hover:scale-110" aria-hidden />
+        <span>Return to last provider</span>
       </Link>
     </div>
   );
 }
-
-
-

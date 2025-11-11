@@ -1,4 +1,4 @@
-﻿// Minimal, dependency-free weather icons.
+// Minimal, dependency-free weather icons.
 // kind: "clear" | "partly-cloudy" | "cloudy" | "fog" | "drizzle" | "rain" | "showers"
 //       | "snow" | "snow-showers" | "thunder" | "thunder-hail" | "unknown"
 

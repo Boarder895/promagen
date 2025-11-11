@@ -1,70 +1,89 @@
-﻿// frontend/src/components/providers/provider-card.tsx
-"use client";
+import type { FC } from "react";
 
-import Link from "next/link";
-import { ExternalLink } from "lucide-react";
-import { PROVIDER_STYLE_LABEL } from "@/lib/ui/provider-styles";
-import { getProviderEmoji, getTrendEmoji } from "@/data/emoji";
-import type { Provider } from "@/types/providers";
+export type Provider = {
+  id: string;
+  name: string;
+  country?: string;
+  score?: number;
+  trend?: "up" | "down" | "flat";
+  tags?: string[];
+  url?: string;
+};
 
-type Props = { provider: Provider & { rank?: number; emoji?: string; category?: string }; index?: number };
+type Props = {
+  provider: Provider;
+  /** Optional rank the grid may pass in */
+  rank?: number;
+  onCopyUrl?: (id: string) => void;
+  onOpen?: (id: string) => void;
+};
 
-export default function ProviderCard({ provider, index }: Props) {
-  const rank = provider.rank ?? (index !== undefined ? index + 1 : undefined);
-
-  // Prefer JSON-provided styleLabel; otherwise the derived map.
-  const styleLabel = (provider as any).styleLabel ?? PROVIDER_STYLE_LABEL[provider.id];
-
-  // Single-source emoji resolution
-  const providerEmoji = getProviderEmoji(provider);
-  const trendEmoji = getTrendEmoji(provider.trend);
-
-  const providerHref = `/providers/${provider.id}`;
-  const visitHref = provider.affiliateUrl ?? provider.url;
-
+export const ProviderCard: FC<Props> = ({ provider, rank, onCopyUrl, onOpen }) => {
   return (
-    <div className="group relative flex flex-col justify-between rounded-2xl border border-zinc-900/40 bg-zinc-900/40 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.25)] transition hover:border-zinc-700/60">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-sm">
-          {rank !== undefined && (
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-zinc-800 text-zinc-300">
-              {rank}
-            </span>
-          )}
-          <span className="font-medium text-zinc-100">
-            {providerEmoji ? `${providerEmoji} ` : ""}
-            {provider.name}
+    <article
+      role="listitem"
+      aria-label={`${provider.name} provider`}
+      className="rounded-2xl border border-gray-200/60 bg-white/70 shadow-sm hover:shadow transition-shadow focus-within:ring-2 focus-within:ring-indigo-500 p-4"
+      data-testid={`provider-card-${provider.id}`}
+    >
+      <header className="flex items-center gap-2 mb-2">
+        {typeof rank === "number" && (
+          <span
+            aria-label={`rank ${rank}`}
+            className="text-xs font-semibold w-6 h-6 grid place-items-center rounded-full bg-gray-100"
+          >
+            {rank}
           </span>
-          {trendEmoji && <span className="text-xs text-zinc-400">{trendEmoji}</span>}
-        </div>
-        <div className="text-xs text-zinc-400">{styleLabel}</div>
+        )}
+        <h3 className="text-base font-semibold">{provider.name}</h3>
+        {provider.trend && (
+          <span
+            className="ml-auto text-xs px-2 py-0.5 rounded-full bg-gray-100"
+            aria-label={`trend ${provider.trend}`}
+          >
+            {provider.trend === "up" ? "?" : provider.trend === "down" ? "?" : "?"}
+          </span>
+        )}
+      </header>
+
+      <div className="text-sm text-gray-700">
+        {typeof provider.score === "number" && (
+          <p aria-label="score" className="font-medium tabular-nums">
+            Score: {provider.score}
+          </p>
+        )}
+        {provider.tags?.length ? (
+          <p className="mt-1 text-gray-600">{provider.tags.map((t) => `#${t}`).join(" ")}</p>
+        ) : (
+          <p className="mt-1 text-gray-400" aria-live="polite">
+            No tags yet
+          </p>
+        )}
       </div>
 
-      {provider.tagline && (
-        <div className="mt-2 line-clamp-2 text-sm text-zinc-300">
-          {provider.tagline}
-        </div>
-      )}
-
-      <div className="mt-4 flex items-center gap-2">
-        <Link
-          href={providerHref}
-          className="rounded-full bg-white/10 px-3 py-1 text-sm text-white ring-1 ring-white/10 hover:bg-white/15"
+      <footer className="mt-3 flex gap-2">
+        <button
+          type="button"
+          data-testid={`provider-open-${provider.id}`}
+          className="rounded-xl px-3 py-1 text-sm border border-gray-300 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          onClick={() => onOpen?.(provider.id)}
+          aria-label={`Open ${provider.name} website`}
         >
-          Details
-        </Link>
-        <Link
-          href={visitHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 px-3 py-1 text-sm text-white hover:bg-emerald-500"
+          Open
+        </button>
+        <button
+          type="button"
+          data-testid={`provider-copy-${provider.id}`}
+          className="rounded-xl px-3 py-1 text-sm border border-gray-300 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          onClick={() => onCopyUrl?.(provider.id)}
+          aria-label={`Copy ${provider.name} URL`}
         >
-          <ExternalLink className="h-3 w-3" />
-          Visit
-        </Link>
-      </div>
-    </div>
+          Copy URL
+        </button>
+      </footer>
+    </article>
   );
-}
+};
 
+export default ProviderCard;
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import list from "@/data/providers.json";
 
 export default function ProvidersTable() {

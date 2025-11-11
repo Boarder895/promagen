@@ -1,4 +1,4 @@
-﻿// frontend/src/app/icons/page.tsx
+// frontend/src/app/icons/page.tsx
 import * as React from "react";
 import Icon from "@/components/ui/icon";
 import { ICON_REGISTRY } from "@/components/ui/icon-registry";

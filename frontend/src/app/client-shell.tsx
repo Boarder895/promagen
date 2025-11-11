@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import PromagenMVP from '@/components/promagen-mvp';
 

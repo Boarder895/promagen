@@ -1,4 +1,4 @@
-﻿// frontend/src/components/flag-bar-chip.tsx
+// frontend/src/components/flag-bar-chip.tsx
 import React from "react";
 import { flagSrc, onFlagError } from "@/lib/assets";
 

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { PROVIDERS } from '@/data/providers';
 
@@ -6,7 +6,7 @@ export default function ProvidersLeaderboardPage() {
   return (
     <main className="min-h-dvh bg-neutral-950 text-neutral-100">
       <div className="mx-auto max-w-screen-xl px-6 py-8">
-        <h1 className="mb-6 text-2xl font-semibold">AI Image-Generation Platforms — Top 20</h1>
+        <h1 className="mb-6 text-2xl font-semibold">AI Image-Generation Platforms � Top 20</h1>
 
         <div className="overflow-x-auto rounded-lg border border-neutral-800">
           <table className="min-w-full text-sm">

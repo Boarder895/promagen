@@ -1,4 +1,4 @@
-﻿// frontend/src/data/providers.ts
+// frontend/src/data/providers.ts
 // Make sure tsconfig.json has: "resolveJsonModule": true and "esModuleInterop": true
 
 import providersJson from "./providers.json";

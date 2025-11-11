@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 
@@ -23,7 +23,7 @@ export function useFetchInterval<T = unknown>(
     try {
       setIsLoading(true);
       const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {throw new Error(`HTTP ${res.status}`);}
       const json = (await res.json()) as T;
       setData(json);
       setError(null);
@@ -43,9 +43,9 @@ export function useFetchInterval<T = unknown>(
 
   function start() {
     clearTimer();
-    if (!running.current) return;
+    if (!running.current) {return;}
     timerRef.current = window.setInterval(() => {
-      if (whenHiddenPause && document.visibilityState === "hidden") return;
+      if (whenHiddenPause && document.visibilityState === "hidden") {return;}
       void fetchOnce();
     }, intervalMs) as unknown as number;
   }
@@ -56,7 +56,7 @@ export function useFetchInterval<T = unknown>(
 
   useEffect(() => {
     running.current = true;
-    if (immediate) void fetchOnce();
+    if (immediate) {void fetchOnce();}
     start();
     return () => {
       running.current = false;

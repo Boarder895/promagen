@@ -1,4 +1,4 @@
-﻿import { PROVIDERS } from '@/data/providers';
+import { PROVIDERS } from '@/data/providers';
 
 export default function Leaderboard() {
   return (

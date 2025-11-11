@@ -1,4 +1,4 @@
-ï»¿// frontend/src/components/providers/copy-helper-panel.tsx
+// frontend/src/components/providers/copy-helper-panel.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -20,15 +20,15 @@ export default function CopyHelperPanel({
   onRetry,
 }: Props) {
   useEffect(() => {
-    if (!open) return;
+    if (!open) {return;}
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {onClose();}
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open) {return null;}
 
   return (
     <div
@@ -47,7 +47,7 @@ export default function CopyHelperPanel({
         </p>
       ) : (
         <div className="text-sm text-neutral-700">
-          Your browser didnâ€™t allow clipboard write. Click to copy again, then paste with{" "}
+          Your browser didn’t allow clipboard write. Click to copy again, then paste with{" "}
           <kbd className="rounded-md border px-1 py-0.5 text-xs">{pasteShortcut()}</kbd>.
           {onRetry && (
             <div className="mt-3">
@@ -65,7 +65,7 @@ export default function CopyHelperPanel({
 
       <div className="mt-3 flex items-center justify-between">
         <span className="text-[11px] text-neutral-500">
-          Youâ€™re still on Promagen â€” finish there, weâ€™ll be here.
+          You’re still on Promagen — finish there, we’ll be here.
         </span>
         <button
           type="button"

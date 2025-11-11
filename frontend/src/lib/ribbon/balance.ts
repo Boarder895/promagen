@@ -1,4 +1,4 @@
-﻿import type { ExchangeId, ExchangeMeta } from "@/types/ribbon";
+import type { ExchangeId, ExchangeMeta } from "@/types/ribbon";
 
 export type AllowedN = 6 | 8 | 10 | 12 | 14 | 16;
 export const AllowedEvenNs: AllowedN[] = [6, 8, 10, 12, 14, 16];
@@ -37,13 +37,13 @@ function nearestAllowedAtLeast(x: number): AllowedN {
   const target = Math.max(6, Math.min(16, x));
   const even = target % 2 === 0 ? target : target + 1;
   for (const a of AllowedEvenNs) {
-    if (even <= a) return a;
+    if (even <= a) {return a;}
   }
   return 16;
 }
 
 function coerceAllowedN(n: number | null | undefined): AllowedN | null {
-  if (typeof n !== "number") return null;
+  if (typeof n !== "number") {return null;}
   return nearestAllowedAtLeast(n);
 }
 

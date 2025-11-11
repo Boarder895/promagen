@@ -1,4 +1,4 @@
-﻿// src/lib/providers/deeplinks.ts
+// src/lib/providers/deeplinks.ts
 import type { DeepLinkParams } from "./schema";
 
 /**

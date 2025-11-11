@@ -1,4 +1,4 @@
-﻿export default function BookPlaceholder() { return null; }
+export default function BookPlaceholder() { return null; }
 
 
 

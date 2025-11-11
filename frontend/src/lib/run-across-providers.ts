@@ -1,4 +1,4 @@
-﻿// Utility: run an async function across all providers and collect results.
+// Utility: run an async function across all providers and collect results.
 
 import { providers, type Provider } from "@/lib/providers";
 

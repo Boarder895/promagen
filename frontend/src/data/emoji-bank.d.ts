@@ -1,4 +1,4 @@
-﻿// src/data/emoji-bank.d.ts
+// src/data/emoji-bank.d.ts
 
 declare module "@/data/emoji-bank.json" {
   const emojiBank: {

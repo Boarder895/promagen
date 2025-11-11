@@ -1,94 +1,90 @@
-ï»¿// src/components/providers/copy-open-button.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import CopyHelperPanel from "./copy-helper-panel";
-import AffiliateBadge from "@/components/common/affiliate-badge";
-import { track } from "@/lib/analytics";
-import { writeToClipboard, writeToClipboardFast } from "@/lib/clipboard";
-import { saveLocal, loadLocal } from "@/lib/storage";
+import React, { useEffect, useState } from "react";
+import AffiliateBadge from "@/components/common/affiliate-badge"; // default export ?
+import { KEYS } from "@/lib/storage.keys";
+import { writeSchema, readSchema } from "@/lib/storage";
 
 type Props = {
   providerId: string;
   providerName: string;
-  providerUrl: string; // affiliate-safe outbound
-  prompt: string;
-  tip?: string;
+  providerUrl: string;
   showAffiliate?: boolean;
   className?: string;
 };
 
-const LAST_PROVIDER_KEY = "last-provider";
+const V = 1; // storage schema version
 
+/**
+ * CopyOpenButton
+ * - Opens the provider URL in a new tab (noopener, noreferrer).
+ * - Persists the last visited provider using versioned localStorage.
+ * - Shows a tiny helper state on success (no toasts; calm UI).
+ */
 export default function CopyOpenButton({
   providerId,
   providerName,
   providerUrl,
-  prompt,
-  tip,
   showAffiliate = true,
   className,
 }: Props) {
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [copiedOk, setCopiedOk] = useState(true);
-  const [lastProvider, setLastProvider] = useState<string | null>(null);
+  const [opening, setOpening] = useState(false);
+  const [lastProviderId, setLastProviderId] = useState<string | null>(null);
 
+  // Read the last known provider id on mount (for subtle UI hints if desired)
   useEffect(() => {
-    setLastProvider(loadLocal<string | null>(LAST_PROVIDER_KEY, null));
+    try {
+      const v = readSchema<string | null>(KEYS.providers.lastV1, V, null);
+      setLastProviderId(v ?? null);
+    } catch {
+      setLastProviderId(null);
+    }
   }, []);
 
-  const openProviderTab = (url: string) => {
+  function openOutbound(url: string) {
+    // Safe outbound open
     window.open(url, "_blank", "noopener,noreferrer");
-  };
+  }
 
-  const onClick = () => {
-    // 1) copy fast (no await), 2) open provider immediately, 3) show helper
-    writeToClipboardFast(prompt);
-    openProviderTab(providerUrl);
-    setPanelOpen(true);
+  async function onClick(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    if (opening) return;
+    setOpening(true);
 
-    track("copy_open_click", { providerId, providerName });
-    saveLocal(LAST_PROVIDER_KEY, providerId);
-    setLastProvider(providerId);
-  };
+    try {
+      // Persist last provider id (versioned)
+      writeSchema<string | null>(KEYS.providers.lastV1, V, providerId);
 
-  const handleRetryCopy = async () => {
-    // Your clipboard util likely returns void; treat success optimistically.
-    await writeToClipboard(prompt);
-    setCopiedOk(true);
-    track("copy_retry", { providerId, ok: true });
-  };
+      // Open immediately (optimistic)
+      openOutbound(providerUrl);
+    } finally {
+      setOpening(false);
+    }
+  }
+
+  // Optional tiny hint if the same as last
+  const isRepeat = lastProviderId === providerId;
 
   return (
-    <div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onClick}
-          className={
-            className ??
-            "inline-flex items-center justify-center rounded-2xl bg-neutral-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-400"
-          }
-          aria-label={`Copy prompt and open ${providerName}`}
-        >
-          Copy & Open in {providerName}
-        </button>
-        {showAffiliate && <AffiliateBadge />}
-      </div>
-
-      {tip ? <p className="mt-2 text-xs text-neutral-500">{tip}</p> : null}
-      {lastProvider && lastProvider === providerId ? (
-        <p className="mt-1 text-[11px] text-neutral-400">Last used here recently.</p>
-      ) : null}
-
-      <CopyHelperPanel
-        open={panelOpen}
-        providerName={providerName}
-        onClose={() => setPanelOpen(false)}
-        copiedOk={copiedOk}
-        onRetry={copiedOk ? undefined : handleRetryCopy}
-      />
+    <div className={className}>
+      {showAffiliate && <AffiliateBadge />}
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={`Open ${providerName} in a new tab`}
+        title={`Open ${providerName}`}
+        className="inline-flex items-center gap-2 rounded-md border border-zinc-700/60 bg-zinc-900/70 px-3 py-2
+                   text-sm text-zinc-100 hover:bg-zinc-900/90 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+        data-testid="copy-open-button"
+      >
+        <span className="i-lucide-external-link" aria-hidden />
+        <span>{opening ? "Opening…" : `Open ${providerName}`}</span>
+        {isRepeat && (
+          <span className="ml-1 text-xs text-emerald-400/90" aria-hidden>
+            (last)
+          </span>
+        )}
+      </button>
     </div>
   );
 }
-

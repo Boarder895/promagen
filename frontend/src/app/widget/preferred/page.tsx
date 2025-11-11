@@ -1,4 +1,4 @@
-﻿// frontend/app/widget/preferred/page.tsx
+// frontend/app/widget/preferred/page.tsx
 import { cookies } from "next/headers";
 
 type PrefsResponse = { preferredProviders: string[] };
@@ -13,7 +13,7 @@ async function getPreferences(): Promise<PrefsResponse | null> {
     credentials: "include",
     cache: "no-store",
   });
-  if (!res.ok) return null;
+  if (!res.ok) {return null;}
   return res.json();
 }
 

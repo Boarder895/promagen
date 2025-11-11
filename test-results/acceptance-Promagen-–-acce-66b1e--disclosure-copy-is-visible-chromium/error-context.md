@@ -1,0 +1,139 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link "Promagen" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e5]:
+        - link "brain Prompt Designer" [ref=e6] [cursor=pointer]:
+          - /url: /designer
+          - img "brain" [ref=e7]: "??"
+          - text: Prompt Designer
+        - link "bookmark My Prompts" [ref=e8] [cursor=pointer]:
+          - /url: /saved
+          - img "bookmark" [ref=e9]: "??"
+          - text: My Prompts
+  - main [ref=e10]:
+    - generic [ref=e11]:
+      - heading "Promagen â€” compare AI image generators and craft better prompts" [level=1] [ref=e12]
+      - paragraph [ref=e13]: "A desktop-first dashboard: live market ribbon, a 20-provider leaderboard, and prompt tools. Some rankings are prototype values and will evolve with real usage data."
+    - list [ref=e16]:
+      - listitem [ref=e17]:
+        - generic [ref=e18]:
+          - generic [ref=e19]: NZX-WELLINGTON
+          - generic [ref=e20]: Wellington
+      - listitem [ref=e21]:
+        - generic [ref=e22]:
+          - generic [ref=e23]: ASX-SYDNEY
+          - generic [ref=e24]: Sydney
+      - listitem [ref=e25]:
+        - generic [ref=e26]:
+          - generic [ref=e27]: TSE-TOKYO
+          - generic [ref=e28]: Tokyo
+      - listitem [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]: HKEX-HONG-KONG
+          - generic [ref=e32]: Hong Kong
+      - listitem [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]: NSE-MUMBAI
+          - generic [ref=e36]: Mumbai
+      - listitem [ref=e37]:
+        - generic [ref=e38]:
+          - generic [ref=e39]: DFM-DUBAI
+          - generic [ref=e40]: Dubai
+      - listitem [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]: MOEX-MOSCOW
+          - generic [ref=e44]: Moscow
+      - listitem [ref=e45]:
+        - generic [ref=e46]:
+          - generic [ref=e47]: LSE-LONDON
+          - generic [ref=e48]: London
+      - listitem [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]: CBOE-CHICAGO
+          - generic [ref=e52]: Chicago
+      - listitem [ref=e53]:
+        - generic [ref=e54]:
+          - generic [ref=e55]: B3-SAO-PAULO
+          - generic [ref=e56]: São Paulo
+      - listitem [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e59]: JSE-JOHANNESBURG
+          - generic [ref=e60]: Johannesburg
+      - listitem [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e63]: SET-BANGKOK
+          - generic [ref=e64]: Bangkok
+    - generic [ref=e65]:
+      - generic [ref=e66]:
+        - heading "Top AI Image Providers" [level=2] [ref=e67]
+        - link "Read the quick guide" [ref=e68] [cursor=pointer]:
+          - /url: /docs/users-book
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]: OpenAI DALL·E / GPT-Image
+          - generic [ref=e72]: Blueprints of imagination, priced by attention.
+        - generic [ref=e73]:
+          - generic [ref=e74]: Stability AI / Stable Diffusion
+          - generic [ref=e75]: Diffusing light and liquidity across every canvas.
+        - generic [ref=e76]:
+          - generic [ref=e77]: Leonardo AI
+          - generic [ref=e78]: High-speed creativity with studio-grade control.
+        - generic [ref=e79]:
+          - generic [ref=e80]: I23RF AI Generator
+          - generic [ref=e81]: Stock-grade imagery meets real-world licensing.
+        - generic [ref=e82]:
+          - generic [ref=e83]: Artistly
+          - generic [ref=e84]: One-sentence prompts that trade like ideas.
+        - generic [ref=e85]:
+          - generic [ref=e86]: Adobe Firefly
+          - generic [ref=e87]: Enterprise-calm, gallery-bold.
+        - generic [ref=e88]:
+          - generic [ref=e89]: Midjourney
+          - generic [ref=e90]: The prestige-format of generative art.
+        - generic [ref=e91]:
+          - generic [ref=e92]: Canva Text-to-Image
+          - generic [ref=e93]: Design as a verb, generation as a feature.
+        - generic [ref=e94]:
+          - generic [ref=e95]: Bing Image Creator
+          - generic [ref=e96]: Fast front-door to frontier models.
+        - generic [ref=e97]:
+          - generic [ref=e98]: Ideogram
+          - generic [ref=e99]: Letter-perfect images for text-heavy briefs.
+        - generic [ref=e100]:
+          - generic [ref=e101]: Picsart
+          - generic [ref=e102]: Creation suite with a social spine.
+        - generic [ref=e103]:
+          - generic [ref=e104]: Fotor
+          - generic [ref=e105]: Simple, steady, ready to edit.
+        - generic [ref=e106]:
+          - generic [ref=e107]: NightCafe
+          - generic [ref=e108]: Community-driven creation with daily rituals.
+        - generic [ref=e109]:
+          - generic [ref=e110]: Playground AI
+          - generic [ref=e111]: Control surfaces for power users.
+        - generic [ref=e112]:
+          - generic [ref=e113]: Pixlr
+          - generic [ref=e114]: Lightweight editing, instant gratification.
+        - generic [ref=e115]:
+          - generic [ref=e116]: DeepAI
+          - generic [ref=e117]: No-frills API and demos for fast checks.
+        - generic [ref=e118]:
+          - generic [ref=e119]: NovelAI
+          - generic [ref=e120]: Anime-first precision with deep controls.
+        - generic [ref=e121]:
+          - generic [ref=e122]: Lexica
+          - generic [ref=e123]: Search, study, then spin up your own.
+        - generic [ref=e124]:
+          - generic [ref=e125]: OpenArt
+          - generic [ref=e126]: Model buffet with curated presets.
+        - generic [ref=e127]:
+          - generic [ref=e128]: Flux Schnell
+          - generic [ref=e129]: Speed-first generation for rapid iteration.
+      - paragraph [ref=e130]: "Affiliate notice: some provider links are affiliate links â€” we may earn a commission."
+  - alert [ref=e131]
+```

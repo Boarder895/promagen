@@ -1,4 +1,4 @@
-﻿import ProvidersTabList from "@/components/nav/tab-list";
+import ProvidersTabList from "@/components/nav/tab-list";
 
 export default function ProvidersComparePage() {
   return (

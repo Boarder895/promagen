@@ -1,4 +1,4 @@
-﻿export async function test() {
+export async function test() {
   return false;
 } // TODO: implement real probe
 

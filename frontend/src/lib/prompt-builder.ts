@@ -1,4 +1,4 @@
-﻿// Prompt builder: formats user input into provider-native prompt syntax.
+// Prompt builder: formats user input into provider-native prompt syntax.
 // Safe to extend with new providers; keep defaults clean and readable.
 
 export type BuildInput = {

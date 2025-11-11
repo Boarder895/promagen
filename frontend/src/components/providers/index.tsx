@@ -1,41 +1,37 @@
-﻿import React from "react";
-import { providers, type Provider } from "@/lib/providers";
+import type { FC } from "react";
+import type { z } from "zod";
+import { ProvidersSchema } from "@/data/schemas";
+import ProviderCard from "./provider-card";
 
-function Row({ p }: { p: Provider }) {
+type Provider = z.infer<typeof ProvidersSchema>[number];
+
+type Props = {
+  providers: Provider[];
+  onCopyUrl?: (id: string) => void;
+  onOpen?: (id: string) => void;
+};
+
+export const ProvidersGrid: FC<Props> = ({ providers, onCopyUrl, onOpen }) => {
+  const valid = ProvidersSchema.safeParse(providers);
+  const list = valid.success ? valid.data : [];
+
   return (
-    <tr className="border-t">
-      <td className="px-3 py-2">{p.name}</td>
-      <td className="px-3 py-2">{p.apiEnabled ? "Yes" : "No"}</td>
-      <td className="px-3 py-2">{(p.score ?? 0).toFixed(2)}</td>
-    </tr>
+    <section
+      role="region"
+      aria-label="AI providers"
+      data-testid="providers-grid"
+      className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+    >
+      {list.length === 0 && (
+        <p className="text-sm text-gray-500" role="status" aria-live="polite">
+          No providers available.
+        </p>
+      )}
+      {list.map((p) => (
+        <ProviderCard key={p.id} provider={p} onCopyUrl={onCopyUrl} onOpen={onOpen} />
+      ))}
+    </section>
   );
-}
+};
 
-export default function ProvidersIndex() {
-  const rows = providers.map((p) => <Row key={p.id} p={p} />);
-  return (
-    <table className="min-w-[480px] w-full border rounded-xl">
-      <thead className="bg-gray-50">
-        <tr>
-          <th className="text-left px-3 py-2">Provider</th>
-          <th className="text-left px-3 py-2">API</th>
-          <th className="text-left px-3 py-2">Score</th>
-        </tr>
-      </thead>
-      <tbody>{rows}</tbody>
-    </table>
-  );
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
+export default ProvidersGrid;

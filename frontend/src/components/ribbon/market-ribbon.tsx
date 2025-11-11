@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import * as React from "react";
 
 type Item = { id: string; city: string; status: "OPEN" | "CLOSED" | "PRE" | "POST" };
@@ -12,7 +12,7 @@ export default function MarketRibbon() {
       try {
         const res = await fetch("/api/snapshot/markets", { cache: "no-store" });
         const json = (await res.json()) as { ok: boolean; data?: Item[] };
-        if (alive && json.ok && json.data) setItems(json.data);
+        if (alive && json.ok && json.data) {setItems(json.data);}
       } catch { /* noop */ }
     }
     load();
@@ -20,7 +20,7 @@ export default function MarketRibbon() {
     return () => { alive = false; clearInterval(id); };
   }, []);
 
-  if (!items.length) return null;
+  if (!items.length) {return null;}
 
   return (
     <div className="w-full border-y border-slate-200 bg-white/70 backdrop-blur">

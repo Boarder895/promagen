@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { urlForProviderPage } from "@/lib/routes";
+import { Routes } from '@/lib/routes';
 
 const LAST_KEYS = ["pm:last_provider", "last_provider", "lastid"] as const;
 
@@ -26,10 +26,10 @@ export default function ReturnToLast() {
     }
   }, []);
 
-  if (!lastId) return null;
+  if (!lastId) {return null;}
 
   // Accepts an id and optional sub-section; see lib/routes.
-  const href = urlForProviderPage(lastId);
+  const href = Routes.provider(lastId);
 
   return (
     <div className="fixed bottom-6 right-6 z-40">

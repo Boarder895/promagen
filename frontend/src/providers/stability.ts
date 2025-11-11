@@ -1,4 +1,4 @@
-﻿// frontend/providers/stability.ts
+// frontend/providers/stability.ts
 import type { ProviderDef, GenInput, GenOutput } from './types';
 
 export const stabilityProvider: ProviderDef = {

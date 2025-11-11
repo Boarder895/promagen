@@ -1,0 +1,8 @@
+title = "Promagen gitleaks config"
+[allowlist]
+description = "Allow local dev and test fixtures"
+paths = [
+  '''^frontend/playwright-report/''',
+  '''^frontend/coverage/''',
+  '''^frontend/.lighthouseci/'''
+]

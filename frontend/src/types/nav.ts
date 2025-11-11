@@ -1,4 +1,4 @@
-﻿export type TabBadge = string | number | null;
+export type TabBadge = string | number | null;
 
 type Base = {
   id: string;

@@ -1,63 +1,80 @@
-Ôªøimport dynamic from "next/dynamic";
+// frontend/src/app/page.tsx
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import ProvidersTable from "@/components/providers/providers-table";
 
 const Ribbon = dynamic(() => import("@/components/markets/exchange-ribbon"), { ssr: true });
 
 export default function HomePage() {
+  const asOf = new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date());
+
   return (
-    <main className="min-h-screen">
-      {/* Hero / intro */}
-      <section className="px-6 py-10 md:px-10 lg:px-16">
+    // NOTE: <main id="main"> is provided by layout.tsx
+    <div className="min-h-screen py-8">
+      <section className="px-6 md:px-10 lg:px-16">
+        {/* Exactly one <h1> on the page */}
         <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Promagen √¢‚Ç¨‚Äù compare AI image generators and craft better prompts
+          Promagen ó compare AI image generators and craft better prompts
         </h1>
-        <p className="mt-3 max-w-3xl text-sm md:text-base text-muted-foreground">
-          A desktop-first dashboard: live market ribbon, a 20-provider leaderboard, and prompt tools.
-          Some rankings are prototype values and will evolve with real usage data.
+
+        <p className="mt-3 max-w-3xl text-sm md:text-base text-neutral-300">
+          A desktop-first dashboard: live market ribbon, a 20-provider leaderboard, and
+          prompt tools. Built for calm reading and quick triage.
+        </p>
+
+        <p className="mt-2 text-xs text-neutral-400">
+          As-of {asOf}. Some links may use <strong>Affiliate</strong> routing ó we may earn a{" "}
+          <strong>commission</strong>.
         </p>
       </section>
 
-      {/* Live ribbon */}
-      <section className="border-t">
+      {/* Finance ribbon placeholder */}
+      <section aria-label="Finance ribbon" className="mt-6 px-6 md:px-10 lg:px-16">
         <Ribbon />
       </section>
 
-      {/* Leaderboard */}
-      <section className="px-4 md:px-8 lg:px-12 py-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl md:text-2xl font-medium">Top AI Image Providers</h2>
-          <Link href="/docs/users-book" className="text-sm underline underline-offset-4">
-            Read the quick guide
-          </Link>
+      {/* Three-column grid */}
+      <section
+        aria-label="Homepage grid"
+        className="mt-8 grid grid-cols-12 gap-6 px-6 md:px-10 lg:px-16"
+      >
+        {/* Left rail */}
+        <div aria-label="Eastern exchanges" role="list" className="col-span-12 md:col-span-3 space-y-3">
+          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
+          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
+          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
         </div>
-        <ProvidersTable />
-        <p className="mt-2 text-xs text-muted-foreground">
-          <span className="font-medium">Affiliate notice:</span> some provider links are affiliate links √¢‚Ç¨‚Äù we may earn a commission.
-        </p>
+
+        {/* Center: providers */}
+        <div className="col-span-12 md:col-span-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">AI providers</h2>
+            <Link href="/providers" className="text-sm underline underline-offset-4">
+              View all
+            </Link>
+          </div>
+          <div className="mt-4">
+            <ProvidersTable />
+          </div>
+
+          {/* Visible disclosure near the table (Playwright looks for this) */}
+          <p className="mt-3 text-xs text-neutral-400">
+            Disclosure: Some outgoing links may be <strong>Affiliate</strong> destinations ó we may
+            earn a <strong>commission</strong>. ìAs-ofî labels indicate the last refresh time for
+            scores and market tiles.
+          </p>
+        </div>
+
+        {/* Right rail */}
+        <div aria-label="Western exchanges" role="list" className="col-span-12 md:col-span-3 space-y-3">
+          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
+          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
+          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
+        </div>
       </section>
-    </main>
+    </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

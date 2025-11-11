@@ -1,0 +1,13 @@
+{
+  "$schema": "https://promagen/schemas/finance.config.schema.json",
+  "version": 1,
+  "provider": {
+    "name": "fx-live",
+    "base": "${FX_API_BASE}",
+    "key": "${FX_API_KEY}",
+    "timeoutMs": 800,
+    "schedule": "hourly-staggered"
+  },
+  "pairs": "*" ,
+  "notes": "pairs='*' means: allow all pair ids from src/data/fx/pairs.json. UI never hard-codes."
+}

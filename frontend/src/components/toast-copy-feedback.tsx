@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
 
 export function ToastCopyFeedback({
@@ -15,7 +15,7 @@ export function ToastCopyFeedback({
     return () => clearTimeout(timer);
   }, []);
 
-  if (!visible) return null;
+  if (!visible) {return null;}
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -23,7 +23,7 @@ export function ToastCopyFeedback({
         <span>?? Prompt copied for</span>
         <strong className="text-indigo-300">{provider}</strong>
         {style && <span className="text-zinc-400">({style})</span>}
-        <span className="text-zinc-400">• {new Date().toLocaleTimeString()}</span>
+        <span className="text-zinc-400">� {new Date().toLocaleTimeString()}</span>
       </div>
     </div>
   );

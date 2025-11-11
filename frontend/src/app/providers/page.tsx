@@ -1,4 +1,4 @@
-﻿import ProvidersTabList from "@/components/nav/tab-list";
+import ProvidersTabList from "@/components/nav/tab-list";
 
 export default function ProvidersPage() {
   return (
@@ -12,7 +12,7 @@ export default function ProvidersPage() {
       {/* Routed tabs row driven by src/data/tabs/providers.json */}
       <ProvidersTabList />
 
-      {/* Page body for the default tab (Leader­board) */}
+      {/* Page body for the default tab (Leader�board) */}
       <section className="rounded-2xl border border-neutral-200 p-6 dark:border-neutral-800">
         <h2 className="text-xl font-semibold">Leaderboard</h2>
         <p className="text-sm text-neutral-600 dark:text-neutral-400">

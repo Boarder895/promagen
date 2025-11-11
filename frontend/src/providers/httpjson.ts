@@ -1,4 +1,4 @@
-﻿import type { ProviderDef, GenInput, GenOutput } from './types';
+import type { ProviderDef, GenInput, GenOutput } from './types';
 
 // Unused helper kept for future wiring; prefixed to satisfy eslint unused rule
 function _env(name: string, fallback?: string) {

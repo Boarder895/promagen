@@ -1,4 +1,4 @@
-﻿export type WeatherCode =
+export type WeatherCode =
   | 'clear' | 'partly-cloudy' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' | string;
 
 export interface WeatherSnapshot {

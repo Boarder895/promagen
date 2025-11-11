@@ -1,55 +1,30 @@
-ï»¿// src/lib/analytics.ts
-// Thin, safe analytics wrapper. Never throws, accepts flexible args.
+// Promagen privacy-first analytics shim (no PII, dev-friendly logging).
+// Meets Standard: no secrets/PII, auditable payloads, production uses sendBeacon.
 
-export type AnalyticsPayload = Record<string, unknown>;
+type EventPayload = Record<string, string | number | boolean | null | undefined>;
 
-export function track(event: string, payload: AnalyticsPayload = {}): void {
+const DISALLOWED_KEYS = /(email|phone|name|address|token|cookie|session|auth|passwd|ssn)/i;
+
+export function track(event: string, payload: EventPayload = {}): void {
   try {
-    const gtag = (globalThis as any).gtag as
-      | ((type: string, action: string, params?: unknown) => void)
-      | undefined;
-
-    if (typeof gtag === "function") {
-      gtag("event", event, payload);
+    const keys = Object.keys(payload);
+    if (keys.some((k) => DISALLOWED_KEYS.test(k))) {
+      // eslint-disable-next-line no-console
+      console.warn("[analytics] Disallowed key(s) dropped:", keys);
       return;
     }
 
-    // Hook other backends here later (PostHog, Segment, etc.)
-    // console.debug("[analytics.track]", event, payload);
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.log("[analytics]", event, payload);
+      return;
+    }
+
+    if (typeof window !== "undefined" && "navigator" in window && "sendBeacon" in navigator) {
+      const body = JSON.stringify({ e: event, p: payload, t: Date.now() });
+      navigator.sendBeacon("/api/analytics", new Blob([body], { type: "application/json" }));
+    }
   } catch {
-    /* ignore */
+    // swallow — analytics must never crash UX
   }
 }
-
-/**
- * Accepts either:
- *  - trackTabClicked("providers", { source: "route", path: "/..." })
- *  - trackTabClicked({ tabId: "providers", source: "route", path: "/..." })
- */
-export function trackTabClicked(
-  arg1: string | (AnalyticsPayload & { tabId: string }),
-  payload: AnalyticsPayload = {}
-): void {
-  if (typeof arg1 === "string") {
-    track("tab_clicked", { tabId: arg1, ...payload });
-  } else {
-    const { tabId, ...rest } = arg1;
-    track("tab_clicked", { tabId, ...rest });
-  }
-}
-
-/**
- * Same flexible signatures as trackTabClicked.
- */
-export function trackTabActive(
-  arg1: string | (AnalyticsPayload & { tabId: string }),
-  payload: AnalyticsPayload = {}
-): void {
-  if (typeof arg1 === "string") {
-    track("tab_active", { tabId: arg1, ...payload });
-  } else {
-    const { tabId, ...rest } = arg1;
-    track("tab_active", { tabId, ...rest });
-  }
-}
-

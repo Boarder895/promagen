@@ -1,4 +1,4 @@
-﻿// Tiny logger wrapper with levels + optional metadata
+// Tiny logger wrapper with levels + optional metadata
 type Level = 'debug' | 'info' | 'warn' | 'error';
 
 function log(level: Level, msg: string, meta?: unknown) {

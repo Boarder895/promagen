@@ -1,4 +1,4 @@
-ï»¿export type ProviderId =
+export type ProviderId =
   | "openai" | "bing" | "midjourney" | "stability" | "leonardo" | "ideogram"
   | "playground" | "nightcafe" | "lexica" | "openart" | "adobe" | "canva"
   | "picsart" | "pixlr" | "deepai" | "fotor" | "flux" | "novelai" | "i23rf" | "artistly";
@@ -18,13 +18,13 @@ type Builder = (inputs: PromptInputs) => BuiltPrompt;
 const enc = (s: string) => encodeURIComponent(s);
 
 export const PROVIDER_BUILDERS: Record<ProviderId, Builder> = {
-  openai: ({ idea }) => ({ text: idea.trim(), note: "Prompt copied. Paste into DALLÂ·E 3." }),
+  openai: ({ idea }) => ({ text: idea.trim(), note: "Prompt copied. Paste into DALL·E 3." }),
   bing: ({ idea }) => ({ text: idea.trim(), note: "Prompt copied. Paste into Bing Image Creator." }),
   midjourney: ({ idea, negative, aspect, seed, styleTag }) => {
     const parts = [styleTag, idea].filter(Boolean) as string[];
-    if (aspect) parts.push(`--ar ${aspect}`);
-    if (seed) parts.push(`--seed ${seed}`);
-    if (negative?.trim()) parts.push(`--no ${negative.trim()}`);
+    if (aspect) {parts.push(`--ar ${aspect}`);}
+    if (seed) {parts.push(`--seed ${seed}`);}
+    if (negative?.trim()) {parts.push(`--no ${negative.trim()}`);}
     return { text: parts.join(" "), note: "Copied. Paste into Midjourney (Discord/web)." };
   },
   stability: ({ idea, negative, styleTag }) => {
@@ -55,7 +55,7 @@ export const PROVIDER_BUILDERS: Record<ProviderId, Builder> = {
   pixlr: ({ idea, styleTag }) => ({ text: [styleTag, idea].filter(Boolean).join(", "), note: "Copied for Pixlr." }),
   deepai: ({ idea }) => ({ text: idea.trim(), note: "Copied for DeepAI." }),
   fotor: ({ idea, styleTag }) => ({ text: [idea, styleTag].filter(Boolean).join(", "), note: "Copied for Fotor." }),
-  flux: ({ idea, styleTag }) => ({ text: [styleTag, idea].filter(Boolean).join(" â€” "), note: "Copied for Flux." }),
+  flux: ({ idea, styleTag }) => ({ text: [styleTag, idea].filter(Boolean).join(" — "), note: "Copied for Flux." }),
   novelai: ({ idea, styleTag }) => ({ text: [styleTag, idea].filter(Boolean).join(", "), note: "Copied for NovelAI." }),
   i23rf: ({ idea, styleTag }) => ({ text: [idea, styleTag].filter(Boolean).join(", "), note: "Copied for 123RF." }),
   artistly: ({ idea }) => ({ text: idea.trim(), note: "Copied for Artistly." }),

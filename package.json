@@ -21,5 +21,11 @@
     "typecheck": "pnpm -C frontend typecheck",
     "test": "pnpm -C frontend test",
     "test:ci": "pnpm -C frontend test:ci"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "^1.56.1",
+    "cheerio": "^1.1.2",
+    "lighthouse-ci": "^1.13.1"
   }
 }

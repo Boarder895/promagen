@@ -1,4 +1,4 @@
-﻿// Tiny API helpers used by health/meta/test pages.
+// Tiny API helpers used by health/meta/test pages.
 
 export const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.promagen.com';
 const API_BASE = API;
@@ -6,7 +6,7 @@ export default API_BASE;
 
 export async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
-  if (!res.ok) throw new Error(`fetchJSON ${res.status}`);
+  if (!res.ok) {throw new Error(`fetchJSON ${res.status}`);}
   return (await res.json()) as T;
 }
 

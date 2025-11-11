@@ -1,4 +1,4 @@
-﻿export type ExchangeId = string;
+export type ExchangeId = string;
 
 export type ExchangeInfo = {
   id: ExchangeId;

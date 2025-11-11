@@ -1,4 +1,4 @@
-﻿export type PrismaLike = {
+export type PrismaLike = {
   $queryRawUnsafe?<T = unknown>(sql: string, ...params: unknown[]): Promise<T[]>;
 };
 

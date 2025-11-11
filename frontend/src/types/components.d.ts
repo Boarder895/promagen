@@ -1,4 +1,4 @@
-﻿// src/types/components.d.ts
+// src/types/components.d.ts
 import type * as React from "react";
 
 declare module "@/components/DocsTOC" {

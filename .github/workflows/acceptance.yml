@@ -1,0 +1,40 @@
+name: acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: https://promagen.com
+      WWW_URL: https://www.promagen.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install PNPM
+        run: corepack enable && corepack prepare pnpm@10.12.0 --activate
+
+      - name: Install deps
+        run: pnpm -w install
+
+      - name: Install Playwright browsers
+        run: pnpm -w exec playwright install --with-deps
+
+      - name: Node smoke (A/B/robots/sitemap)
+        run: node tools/acceptance/smoke.mjs
+
+      - name: Playwright + Axe (structure/a11y/trust)
+        working-directory: tools/acceptance/playwright
+        run: pnpm -s dlx playwright test
+
+      - name: Lighthouse (performance budgets)
+        working-directory: tools/acceptance/lighthouse
+        run: pnpm -s dlx @lhci/cli autorun --config=.lighthouserc.json

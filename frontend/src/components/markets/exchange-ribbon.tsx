@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import ExchangeCard from "@/components/markets/exchange-card";
 import useRibbonData from "@/hooks/use-ribbon-data";

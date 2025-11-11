@@ -1,4 +1,4 @@
-﻿// src/components/ApiStatusBadge.tsx
+// src/components/ApiStatusBadge.tsx
 "use client";
 
 type Props = { compact?: boolean; status?: "ok" | "degraded" | "down" };

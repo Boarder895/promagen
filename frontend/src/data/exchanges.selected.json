@@ -4,13 +4,13 @@
     "asx-sydney",
     "tse-tokyo",
     "hkex-hong-kong",
+    "set-bangkok",
     "nse-mumbai",
     "dfm-dubai",
     "moex-moscow",
-    "lse-london",
-    "cboe-chicago",
-    "b3-sao-paulo",
     "jse-johannesburg",
-    "set-bangkok"
+    "lse-london",
+    "b3-sao-paulo",
+    "cboe-chicago"
   ]
 }

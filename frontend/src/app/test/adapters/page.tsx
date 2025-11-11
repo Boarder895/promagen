@@ -1,4 +1,4 @@
-﻿import { adapterIds, getAdapter } from "@/app/adapters";
+import { adapterIds, getAdapter } from "@/app/adapters";
 
 export const dynamic = "force-dynamic";
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import * as React from "react";
 
 type ToastProps = {
@@ -25,7 +25,7 @@ export default function Toast({
     return () => clearTimeout(t);
   }, [show, duration, onDone]);
 
-  if (!visible) return null;
+  if (!visible) {return null;}
 
   return (
     <div

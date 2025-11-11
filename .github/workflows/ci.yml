@@ -1,59 +1,74 @@
-name: CI
+name: promagen-ci
 
 on:
   push:
-    branches: ["**"]
+    branches: [ main ]
   pull_request:
-    branches: ["**"]
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
 
 jobs:
-  build:
+  build-test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Do NOT pass a version here; defer to package.json "packageManager"
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-
-      - name: Setup Node.js 22
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      # Temporary bypass while lockfile is out-of-sync
+          node-version: 20
+          cache: pnpm
       - name: Install
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
+      - name: ESLint (frontend)
+        working-directory: frontend
+        run: pnpm run lint
+      - name: Typecheck (frontend)
+        working-directory: frontend
+        run: pnpm run typecheck
+      - name: Unit tests (frontend)
+        working-directory: frontend
+        run: pnpm run test:ci
 
-      - name: Lint
-        run: pnpm lint
+  accessibility-smoke:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm run build
+      - name: Start preview
+        working-directory: frontend
+        run: pnpm run start & npx wait-on http://localhost:3000
+      - name: Playwright install
+        run: npx playwright install --with-deps
+      - name: Run Axe smoke
+        run: pnpm -C frontend exec playwright test tests/axe-smoke.spec.ts
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Build
-        run: pnpm build
-
-
-
-
-
-
+  lighthouse:
+    runs-on: ubuntu-latest
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build frontend
+        working-directory: frontend
+        run: pnpm run build
+      - name: Start preview
+        working-directory: frontend
+        run: pnpm run start & npx wait-on http://localhost:3000
+      - name: Lighthouse CI
+        run: npx @lhci/cli autorun --config=./lighthouserc.json

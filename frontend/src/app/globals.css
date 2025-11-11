@@ -1,6 +1,92 @@
-﻿@import 'tailwindcss';
+﻿/* frontend/src/app/globals.css
+   Promagen Global Styles — single source of truth
+   - Tailwind base/components/utilities
+   - Calm gradient background
+   - Prefers-reduced-motion (PRM) hook via html[data-prm="true"]
+   - Accessible focus ring (sky-400)
+   - Card utility + tabular numerals
+   - Triple-Diamond ribbon shimmer utility
+*/
 
-/* Your custom layers may live here if needed
+/* Tailwind (v3 style). If you’re on Tailwind v4, replace these three with:
+   @import "tailwindcss";
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------ Base tokens ------------------------------ */
+:root {
+  /* Background gradient stops */
+  --bg-a: #0b1220;
+  --bg-b: #111827;
+
+  /* Focus colour (kept in sync with design tokens) */
+  --focus-ring: 0 199 255; /* sky-400 rgb */
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: linear-gradient(180deg, var(--bg-a) 0%, var(--bg-b) 100%);
+  color-scheme: dark;
+}
+
+/* Text selection — subtle, accessible */
+::selection {
+  background-color: rgba(var(--focus-ring), 0.25);
+}
+
+/* ----------------------- Motion & accessibility hooks -------------------- */
+/* Global reduced-motion override controlled by the app state:
+   toggle with: document.documentElement.dataset.prm = "true";
+*/
+html[data-prm="true"] * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Consistent, visible focus for keyboard users */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  /* Tailwind ring via @apply for consistency across elements */
+  @apply ring-2 ring-sky-400;
+}
+
+/* ------------------------------ Utilities -------------------------------- */
+/* Cards & rails — calm, glassy surfaces used across the app */
+.card {
+  @apply rounded-2xl border border-white/10 bg-white/5 shadow-sm;
+}
+
+/* Align digits neatly in chips/tables/metrics */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ------------------------ Ribbon shimmer (calm) -------------------------- */
+/* Triple-Diamond ribbon shimmer — long, gentle drift */
+@keyframes ribbon-shimmer {
+  0%   { transform: translateX(-30%); opacity: 0.7; }
+  50%  { transform: translateX(0%);   opacity: 1;   }
+  100% { transform: translateX(30%);  opacity: 0.7; }
+}
+.animate-ribbon-shimmer {
+  animation: ribbon-shimmer 180s linear infinite;
+}
+
+/* -------------------------- Optional layer hook -------------------------- */
+/* If you need lightweight global utilities, uncomment and add here:
 @layer utilities {
   .text-balance { text-wrap: balance; }
 }

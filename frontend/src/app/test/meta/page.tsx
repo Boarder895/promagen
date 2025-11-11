@@ -1,4 +1,4 @@
-﻿import { getMeta } from '@/lib/api';
+import { getMeta } from '@/lib/api';
 
 export default async function MetaTestPage() {
   const meta = getMeta('test/meta'); // ?? pass a key

@@ -1,4 +1,4 @@
-﻿import { render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import ProvidersTabList from "../../nav/tab-list";
 
 // Mock next/navigation exports used by the component tree (usePathname + useRouter)

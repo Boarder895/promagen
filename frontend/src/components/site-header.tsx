@@ -1,4 +1,4 @@
-﻿// src/components/SiteHeader.tsx
+// src/components/SiteHeader.tsx
 import ApiStatusBadge from '@/components/api-status-badge';
 
 export default function SiteHeader() {

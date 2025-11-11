@@ -1,4 +1,4 @@
-﻿import { render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import ProvidersTabList from "../../nav/tab-list";
 
 jest.mock("next/navigation", () => {
@@ -12,7 +12,7 @@ jest.mock("next/navigation", () => {
   };
   return {
     __esModule: true,
-    // order check doesnâ€™t depend on the exact route; index is fine
+    // order check doesn’t depend on the exact route; index is fine
     usePathname: jest.fn(() => "/providers"),
     useRouter: jest.fn(() => router),
   };

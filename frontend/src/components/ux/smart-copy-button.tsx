@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import Toast from '@/components/ui/toast';
@@ -48,7 +48,7 @@ export default function SmartCopyButton({
     new Date().toLocaleTimeString(),
   ]
     .filter(Boolean)
-    .join(' • ');
+    .join(' � ');
 
   return (
     <>

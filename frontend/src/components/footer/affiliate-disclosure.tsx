@@ -1,4 +1,4 @@
-﻿// frontend/src/components/footer/affiliate-disclosure.tsx
+// frontend/src/components/footer/affiliate-disclosure.tsx
 export default function AffiliateDisclosure() {
   return (
     <p className="text-xs text-muted-foreground mt-4 max-w-prose">

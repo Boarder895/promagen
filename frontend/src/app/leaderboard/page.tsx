@@ -1,4 +1,4 @@
-﻿// Normalised to your data module that exports `PROVIDERS`.
+// Normalised to your data module that exports `PROVIDERS`.
 import { PROVIDERS } from '@/data/providers';
 
 type ProviderRow = {
@@ -26,7 +26,7 @@ export default function LeaderboardPage() {
   return (
     <main className="min-h-dvh bg-neutral-950 text-neutral-100">
       <div className="mx-auto max-w-screen-xl px-6 py-8 space-y-4">
-        <h1 className="text-2xl font-semibold">AI Image-Generation Platforms â€” Leaderboard</h1>
+        <h1 className="text-2xl font-semibold">AI Image-Generation Platforms — Leaderboard</h1>
 
         <div className="overflow-x-auto rounded-lg border border-neutral-800">
           <table className="min-w-full text-sm">

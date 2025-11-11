@@ -1,4 +1,4 @@
-ï»¿'use client';
+'use client';
 
 /**
  * The source util returns a list typed as Exchange[] in your project,
@@ -24,10 +24,10 @@ export default function StockRibbon() {
       {rows.map((e) => (
         <div key={e.id} className="px-3 py-1 rounded-full border border-white/10 bg-white/5">
           <span className="font-semibold">{e.code ?? e.id}</span>{' '}
-          <span className="opacity-70">â€¢ {e.city ?? ''}</span>{' '}
-          <span>â€¢ {e.open ? 'Open' : 'Closed'}</span>{' '}
-          <span className="opacity-70">{typeof e.temp === 'number' ? `${e.temp}Â°` : ''}</span>{' '}
-          <span className="opacity-70">{e.localtime ? `â€¢ ${e.localtime}` : ''}</span>
+          <span className="opacity-70">• {e.city ?? ''}</span>{' '}
+          <span>• {e.open ? 'Open' : 'Closed'}</span>{' '}
+          <span className="opacity-70">{typeof e.temp === 'number' ? `${e.temp}°` : ''}</span>{' '}
+          <span className="opacity-70">{e.localtime ? `• ${e.localtime}` : ''}</span>
         </div>
       ))}
     </div>

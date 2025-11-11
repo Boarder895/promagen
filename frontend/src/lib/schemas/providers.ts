@@ -1,4 +1,4 @@
-﻿// src/data/providers.schema.ts
+// src/data/providers.schema.ts
 import { z } from "zod";
 
 export const TrendSchema = z.enum(["up", "down", "flat"]);

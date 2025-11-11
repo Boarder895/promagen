@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 export type TocItem = { id: string; text: string; level?: number };
 
 export function DocsTOC({ items = [] as TocItem[] }: { items?: TocItem[] }) {
-  if (!items.length) return null;
+  if (!items.length) {return null;}
 
   return (
     <nav aria-label="Table of contents" className="text-sm">

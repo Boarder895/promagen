@@ -1,4 +1,4 @@
-﻿// src/components/nav/tab-list.tsx
+// src/components/nav/tab-list.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -25,7 +25,7 @@ export default function ProvidersTabList() {
   // Overflow detection + edge shadow state
   useEffect(() => {
     const el = listRef.current;
-    if (!el) return;
+    if (!el) {return;}
 
     const check = () => {
       const overflow = el.scrollWidth > el.clientWidth + 2;
@@ -48,7 +48,7 @@ export default function ProvidersTabList() {
   // Ensure the active tab is scrolled into view on route changes
   useEffect(() => {
     const el = listRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const active = el.querySelector<HTMLElement>("[aria-current='page']");
     active?.scrollIntoView({ inline: "center", behavior: "smooth", block: "nearest" });
   }, [pathname]);

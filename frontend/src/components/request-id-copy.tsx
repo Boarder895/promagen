@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 
@@ -10,7 +10,7 @@ export default function RequestIdCopy({
   label?: string;
 }) {
   const [ok, setOk] = useState<boolean | null>(null);
-  if (!id) return null;
+  if (!id) {return null;}
   return (
     <div className="flex items-center gap-2">
       <code className="text-xs bg-gray-100 px-2 py-1 rounded">

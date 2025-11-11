@@ -1,4 +1,4 @@
-﻿// Clipboard helpers: use writeToClipboard for awaited UX, writeToClipboardFast for best-effort fire-and-forget.
+// Clipboard helpers: use writeToClipboard for awaited UX, writeToClipboardFast for best-effort fire-and-forget.
 
 export async function writeToClipboard(text: string) {
   await navigator.clipboard.writeText(text);

@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function StockTicker() {
   const ref = useRef<HTMLDivElement>(null);
@@ -15,7 +15,7 @@ export default function StockTicker() {
         background: '#fafafa',
       }}
     >
-      OpenAI ?1.2 â€¢ Stability ?0.4 â€¢ Leonardo ?0.7 â€¢ DeepAI â€” â€¢
+      OpenAI ?1.2 • Stability ?0.4 • Leonardo ?0.7 • DeepAI — •
     </div>
   );
 }

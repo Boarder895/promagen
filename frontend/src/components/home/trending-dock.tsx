@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import TrendingTable from '@/components/ux/trending-table';
 

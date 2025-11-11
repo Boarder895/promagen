@@ -1,4 +1,4 @@
-﻿// providers/deepai.ts
+// providers/deepai.ts
 import type { ProviderDef, GenInput, GenOutput } from '../types';
 
 export const deepaiProvider: ProviderDef = {

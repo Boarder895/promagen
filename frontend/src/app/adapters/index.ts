@@ -1,4 +1,4 @@
-﻿// Stage-1/2: lightweight registry so pages can compile.
+// Stage-1/2: lightweight registry so pages can compile.
 // No network calls; just shape prompts and links.
 
 type Builder = (raw: string) => string;

@@ -1,4 +1,4 @@
-﻿//
+//
 // Stage 1: Provider types + stub data (no APIs yet).
 //
 export type Provider = {

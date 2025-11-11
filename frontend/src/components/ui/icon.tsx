@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { Emoji, type EmojiName } from "@/components/ui/emoji";
@@ -20,7 +20,7 @@ export type IconProps = {
 };
 
 export default function Icon({ name, set = "emoji", className, title }: IconProps) {
-  if (!name) return null;
+  if (!name) {return null;}
 
   if (set === "emoji") {
     return <Emoji name={name as EmojiName} className={className} title={title} />;
@@ -33,7 +33,7 @@ export default function Icon({ name, set = "emoji", className, title }: IconProp
       title={typeof name === "string" ? name : undefined}
       aria-hidden
     >
-      âŒ€
+      ⌀
     </abbr>
   );
 }

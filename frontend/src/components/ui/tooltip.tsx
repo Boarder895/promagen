@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import * as React from "react";
 
 /** Minimal tooltip shim; replace with Radix or shadcn later */

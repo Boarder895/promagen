@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 export function PromptPreview({ rawPrompt, providerId }: { rawPrompt: string; providerId: string }) {
   const stylized =
@@ -10,7 +10,7 @@ export function PromptPreview({ rawPrompt, providerId }: { rawPrompt: string; pr
 
   return (
     <pre className="rounded-md bg-zinc-900 px-4 py-2 text-sm text-zinc-200 whitespace-pre-wrap">
-      {stylized || '—'}
+      {stylized || '�'}
     </pre>
   );
 }

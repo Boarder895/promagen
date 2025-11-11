@@ -1,10 +1,10 @@
-﻿'use client';
+'use client';
 
 import * as React from 'react';
 import { useTabs } from './use-tabs';
 
 type Props = {
-  /** Logical id for this panel (must match the paired tab’s id) */
+  /** Logical id for this panel (must match the paired tab�s id) */
   id: string;
   children?: React.ReactNode;
 };

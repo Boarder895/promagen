@@ -1,6 +1,6 @@
-﻿import baseProvidersJson from "@/data/providers.json";
+import baseProvidersJson from "@/data/providers.json";
 import capsJson from "@/data/providers.capabilities.json";
-import { z } from "zod";
+import type { z } from "zod";
 import { providerSchema } from "./schema";
 
 type Provider = z.infer<typeof providerSchema>;

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import * as React from "react";
 import { useTabs } from "./use-tabs";
 
@@ -23,7 +23,7 @@ export default function InpageTab({
   const selected = id === selectedId;
 
   const handleClick = () => {
-    if (!disabled) setSelectedId(id);
+    if (!disabled) {setSelectedId(id);}
   };
 
   // Local key handler as a safety net in addition to the container handler

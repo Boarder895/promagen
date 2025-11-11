@@ -1,4 +1,4 @@
-﻿import TrendingTable from '@/components/ux/trending-table';
+import TrendingTable from '@/components/ux/trending-table';
 import { pasteHints } from '@/data/paste-hints';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ export default function BridgeFallbackPage() {
       <section className="col-span-7">
         <h1 className="text-xl font-semibold mb-4">Bridge Fallback</h1>
         <p className="text-slate-600 mb-6">
-          The embedded view was blocked. Copy your prompt and continue on the provider’s site.
+          The embedded view was blocked. Copy your prompt and continue on the provider�s site.
         </p>
 
         <div className="grid grid-cols-2 gap-4">

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import * as React from "react";
 import { TabsProvider } from "./use-tabs";
 
@@ -29,11 +29,11 @@ function firstEnabled(items: TabItem[]) {
 }
 
 function readHash() {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") {return null;}
   return window.location.hash ? window.location.hash.slice(1) : null;
 }
 function writeHash(id: string) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {return;}
   if (window.location.hash.slice(1) !== id) {
     window.history.replaceState(null, "", `#${id}`);
   }
@@ -63,7 +63,7 @@ export default function Tabs({
   const [selectedId, setSelectedId] = React.useState(initial);
 
   React.useEffect(() => {
-    if (hashSync && selectedId) writeHash(selectedId);
+    if (hashSync && selectedId) {writeHash(selectedId);}
     if (persistKey && typeof window !== "undefined") {
       try {
         window.localStorage.setItem(persistKey, selectedId);
@@ -73,7 +73,7 @@ export default function Tabs({
 
   const liveRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    if (!liveRef.current) return;
+    if (!liveRef.current) {return;}
     const label = items.find((t) => t.id === selectedId)?.label ?? selectedId;
     liveRef.current.textContent = `${liveLabel}: ${label}`;
   }, [selectedId, items, liveLabel]);
@@ -83,7 +83,7 @@ export default function Tabs({
     const tabs = listRef.current?.querySelectorAll<HTMLButtonElement>(
       '[role="tab"]:not([disabled])'
     );
-    if (!tabs || tabs.length === 0) return;
+    if (!tabs || tabs.length === 0) {return;}
 
     const arr = Array.from(tabs);
     const currentIndex = arr.findIndex((el) => el === document.activeElement);
@@ -123,7 +123,7 @@ export default function Tabs({
       e.preventDefault();
       const btn = document.activeElement as HTMLButtonElement | null;
       const id = btn?.id?.startsWith("tab-") ? btn.id.slice(4) : null;
-      if (id) setSelectedId(id);
+      if (id) {setSelectedId(id);}
     }
   };
 
