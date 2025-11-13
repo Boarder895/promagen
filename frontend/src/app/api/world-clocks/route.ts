@@ -1,84 +1,86 @@
-// BACKEND — NEXT.JS (API Route)
-// frontend/app/api/world-clocks/route.ts
-// Public JSON for world clocks. CORS enabled for simple GETs from WordPress.
+// World clocks API â€” strict types, no 'any', UTF-8 safe, CORS + caching set deliberately.
 
 import { NextResponse } from 'next/server';
+import exchangesJson from '@/data/exchanges.catalog.json';
 
-export type WorldClockCity = {
+type ClockItem = {
   id: string;
-  name: string;
-  timeZone: string;
-  lat: number;
-  lon: number;
-  flag?: string;
+  city: string;
+  tz: string;
+  iso2: string;
+  localISO: string;
 };
 
-const CITIES: WorldClockCity[] = [
-  {
-    id: 'london',
-    name: 'London',
-    timeZone: 'Europe/London',
-    lat: 51.5074,
-    lon: -0.1278,
-    flag: '????',
-  },
-  {
-    id: 'newyork',
-    name: 'New York',
-    timeZone: 'America/New_York',
-    lat: 40.7128,
-    lon: -74.006,
-    flag: '????',
-  },
-  {
-    id: 'shanghai',
-    name: 'Shanghai',
-    timeZone: 'Asia/Shanghai',
-    lat: 31.2304,
-    lon: 121.4737,
-    flag: '????',
-  },
-  { id: 'tokyo', name: 'Tokyo', timeZone: 'Asia/Tokyo', lat: 35.6895, lon: 139.6917, flag: '????' },
-  {
-    id: 'sydney',
-    name: 'Sydney',
-    timeZone: 'Australia/Sydney',
-    lat: -33.8688,
-    lon: 151.2093,
-    flag: '????',
-  },
-  {
-    id: 'buenosaires',
-    name: 'Buenos Aires',
-    timeZone: 'America/Argentina/Buenos_Aires',
-    lat: -34.6037,
-    lon: -58.3816,
-    flag: '????',
-  },
-  {
-    id: 'johannesburg',
-    name: 'Johannesburg',
-    timeZone: 'Africa/Johannesburg',
-    lat: -26.2041,
-    lon: 28.0473,
-    flag: '????',
-  },
-  { id: 'dubai', name: 'Dubai', timeZone: 'Asia/Dubai', lat: 25.2048, lon: 55.2708, flag: '????' }, // ? included
-];
+type ExchangeRow = {
+  id: string;
+  city: string;
+  tz: string;
+  iso2: string;
+};
 
-export async function GET() {
-  const res = NextResponse.json({ cities: CITIES }, { status: 200 });
-  // Public read-only; allow any origin to GET this JSON
-  res.headers.set('Access-Control-Allow-Origin', '*');
-  res.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
-  return res;
+// Narrow unknown JSON to the shape we actually use
+function isExchangeRow(u: unknown): u is ExchangeRow {
+  if (typeof u !== 'object' || u === null) return false;
+  const r = u as Record<string, unknown>;
+  return (
+    typeof r.id === 'string' &&
+    typeof r.city === 'string' &&
+    typeof r.tz === 'string' &&
+    typeof r.iso2 === 'string'
+  );
 }
 
+// Convert imported JSON into a typed array without using 'any'
+function getExchanges(): ExchangeRow[] {
+  const raw = exchangesJson as unknown;
+  if (Array.isArray(raw)) {
+    return raw.filter(isExchangeRow);
+  }
+  // Some catalog builds may export an object with a property (e.g., { exchanges: [...] })
+  if (typeof raw === 'object' && raw !== null) {
+    const maybe = (raw as Record<string, unknown>).exchanges;
+    if (Array.isArray(maybe)) {
+      return maybe.filter(isExchangeRow);
+    }
+  }
+  return [];
+}
 
+export const dynamic = 'force-dynamic';
 
+function headers() {
+  return {
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 's-maxage=60, stale-while-revalidate=300',
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, OPTIONS',
+  };
+}
 
+export async function GET() {
+  const now = new Date();
+  const rows = getExchanges();
 
+  // Cap payload for sanity and determinism in tests
+  const clocks: ClockItem[] = rows.slice(0, 64).map((e) => {
+    const localISO = new Date(
+      now.toLocaleString('en-GB', { timeZone: e.tz })
+    ).toISOString();
 
+    return {
+      id: e.id,
+      city: e.city,
+      tz: e.tz,
+      iso2: e.iso2,
+      localISO,
+    };
+  });
 
+  const payload = { ok: true, asOf: now.toISOString(), clocks };
 
+  return new NextResponse(JSON.stringify(payload), { status: 200, headers: headers() });
+}
 
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: headers() });
+}

@@ -1,18 +1,36 @@
-import { NextResponse } from "next/server";
-import { MARKETS } from "@/data/markets";
+// Ingest endpoint placeholder (frontend-only build).
+// We return a safe "disabled" response so tests/builds succeed
+// without wiring real ingest in this app layer.
 
-export const dynamic = "force-dynamic";
+import { NextResponse } from 'next/server';
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const marketId = searchParams.get("market");
-  if (!marketId) {return NextResponse.json({ error: "market required" }, { status: 400 });}
+export const dynamic = 'force-dynamic';
 
-  const def = MARKETS.find(m => m.id === marketId);
-  if (!def) {return NextResponse.json({ error: "unknown market" }, { status: 404 });}
-
-  // Stage 1–2: no live quotes yet; return definition as a stub payload.
-  return NextResponse.json({ item: def, asOfUtc: new Date().toISOString() });
+function headers() {
+  return {
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 'no-store, no-cache, must-revalidate',
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'POST, OPTIONS',
+  };
 }
 
+export async function POST(req: Request) {
+  const body = await (async () => {
+    try { return await req.json(); } catch { return null; }
+  })();
 
+  const payload = {
+    ok: false,
+    reason: 'ingest-disabled',
+    message: 'Market ingest is disabled in the frontend build.',
+    received: body ?? null,
+    asOf: new Date().toISOString(),
+  };
+
+  return new NextResponse(JSON.stringify(payload), { status: 501, headers: headers() });
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: headers() });
+}

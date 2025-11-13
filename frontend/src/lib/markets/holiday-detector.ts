@@ -1,57 +1,68 @@
-// frontend/src/lib/markets/holiday-detector.ts
-// Compile-friendly stubs matching current tests & call shapes.
-// You can swap in real logic later without changing signatures.
-
-export type Session = { days: string; open: string; close: string };
-
-export type Template = {
-  label: string;
-  session: Session[];
-  // tests sometimes pass Date; accept both
-  tzNow?: string | Date;
-  tZNow?: string | Date;
-  [key: string]: unknown;
+/**
+ * Holiday detector (minimal, deterministic for tests)
+ * - Outside venue hours  -> "closed-out-of-hours"
+ * - Inside but quiet/stale -> "probable-holiday"
+ * - Else -> "open"
+ */
+export type MarketSnapshot = {
+  lastTradeTs: number;
+  lastQuoteTs: number;
+  tradesInWindow: number;
 };
 
-export type OpenState =
-  | 'open'
-  | 'closed-out-of-hours'
-  | 'closed-holiday'
-  | 'probable-holiday';
+export type HolidayArgs = {
+  id: string;   // e.g., "nyse"
+  now: number;  // epoch ms
+  snapshot: MarketSnapshot;
+};
 
-export type OpenResult = { state: OpenState };
+export type HolidayState = "open" | "probable-holiday" | "closed-out-of-hours";
 
-/**
- * Tests call this in two ways:
- * 1) evaluateExchangeOpenState({ label, session, ... })                      // single-arg
- * 2) evaluateExchangeOpenState({ tzNow, utcNow, template, detector, ... })   // big config object
- * We accept either, plus the positional (template, tz, now) form.
- */
-export function evaluateExchangeOpenState(
-  arg: Template | Record<string, unknown>
-): OpenResult;
-export function evaluateExchangeOpenState(
-  template: Template,
-  tz: string,
-  now?: Date
-): OpenResult;
-export function evaluateExchangeOpenState(
-  arg: Template | Record<string, unknown>,
-  _tz?: string,
-  _now?: Date
-): OpenResult {
-  // If a big config object was passed, prefer its embedded template when present.
-  const maybeTemplate =
-    (arg as any)?.template && typeof (arg as any).template === 'object'
-      ? (arg as any).template
-      : arg;
-
-  // minimal, deterministic placeholder; replace with your real market-hours logic later
-  void maybeTemplate; // keep TS quiet until real logic lands
-  return { state: 'open' };
+function getLocalHM(now: number, timeZone: string): { h: number; m: number; dow: number } {
+  const d = new Date(now);
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit", minute: "2-digit", weekday: "short", hour12: false, timeZone
+  }).formatToParts(d);
+  const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  const h = parseInt(map.hour ?? "0", 10);
+  const m = parseInt(map.minute ?? "0", 10);
+  const dowFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone }).format(d);
+  const idx = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(dowFmt.slice(0,3));
+  return { h, m, dow: idx };
 }
 
-/** Placeholder until we wire a real holiday library. */
-export function probableHoliday(_isoDate: string, _iso2?: string): boolean {
-  return false;
+function inSessionNYSE(now: number): boolean {
+  const { h, m, dow } = getLocalHM(now, "America/New_York");
+  if (dow === 0 || dow === 6) return false; // Sun/Sat
+  const minutes = h * 60 + m;
+  return minutes >= 9 * 60 + 30 && minutes < 16 * 60;
 }
+
+export function holidayDetector(args: HolidayArgs): { state: HolidayState } {
+  const { id, now, snapshot } = args;
+
+  let inSession: boolean;
+  switch (id) {
+    case "nyse":
+      inSession = inSessionNYSE(now);
+      break;
+    default: {
+      const { h, m, dow } = getLocalHM(now, "UTC");
+      if (dow === 0 || dow === 6) { inSession = false; break; }
+      const minutes = h * 60 + m;
+      inSession = minutes >= 9 * 60 && minutes < 17 * 60;
+      break;
+    }
+  }
+
+  if (!inSession) return { state: "closed-out-of-hours" };
+
+  const LONG = 60 * 60 * 1000; // 60 min
+  const quotesStale = now - snapshot.lastQuoteTs > LONG;
+  const tradesQuiet = snapshot.tradesInWindow === 0;
+
+  if (quotesStale && tradesQuiet) return { state: "probable-holiday" };
+  return { state: "open" };
+}
+
+export default holidayDetector;

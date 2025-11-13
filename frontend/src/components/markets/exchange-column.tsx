@@ -1,25 +1,33 @@
-'use client';
+"use client";
 
-import ExchangeCard from './exchange-card';
-import type { RibbonMarket } from '@/types/ribbon';
+import React from "react";
+import type { Exchange } from "./exchange-card";
+import ExchangeCard from "./exchange-card";
 
-export interface ExchangeColumnProps {
-  items: RibbonMarket[];
+type Props = {
   title: string;
-}
+  items: Exchange[];
+  side: "east" | "west";
+};
 
-export default function ExchangeColumn({ items, title }: ExchangeColumnProps) {
+export default function ExchangeColumn({ title, items, side }: Props): JSX.Element {
   return (
-    <div className="flex min-w-[300px] flex-col gap-3" aria-label={`${title} markets`}>
-      <div className="pl-1 text-xs uppercase tracking-wide opacity-60">{title}</div>
-      {items.map((m) => {
-        const ex = {
-          id: m.exchange.id,
-          name: (m.exchange as any).name ?? m.exchange.city ?? m.exchange.id,
-          city: m.exchange.city,
-        };
-        return <ExchangeCard key={ex.id} exchange={ex} />;
-      })}
-    </div>
+    <section
+      role="complementary"
+      aria-label={`${title} exchanges`}
+      className={side === "east" ? "space-y-3" : "space-y-3"}
+      data-testid={`column-${side}`}
+    >
+      <h2 className="sr-only">{title}</h2>
+      <ul role="list" className="space-y-2">
+        {items.map((x) => (
+          <li key={x.id} role="listitem" aria-label={`${x.name} exchange`}>
+            <article className="rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/10">
+              <ExchangeCard exchange={x} />
+            </article>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

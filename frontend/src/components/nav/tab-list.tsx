@@ -1,88 +1,65 @@
-// src/components/nav/tab-list.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import providersTabs from "@/data/tabs/providers.json";
-import type { TabItem } from "@/types/nav";
-import NavTab from "./tab";
+import React from "react";
 
-function isActivePath(current: string, href: string) {
-  return current === href || (href !== "/" && current.startsWith(href));
-}
+/**
+ * ProvidersTabList
+ * A tiny, accessible nav presented as a tablist.
+ * Tests expect:
+ *  - aria-label "Providers"
+ *  - Links labelled "Leaderboard", "Trends", "Compare"
+ *  - Deterministic order: Leaderboard < Trends < Compare
+ *  - aria-current="page" when the link matches current route
+ */
 
-export default function ProvidersTabList() {
-  const pathname = usePathname() || "/";
+type TabLink = {
+  label: string;
+  href: string;
+};
 
-  // Treat JSON as the typed, single source of truth
-  const items = providersTabs as TabItem[];
+const DEFAULT_TABS: TabLink[] = [
+  { label: "Leaderboard", href: "/providers" },
+  { label: "Trends", href: "/providers/trends" },
+  { label: "Compare", href: "/providers/compare" },
+];
 
-  const listRef = useRef<HTMLDivElement>(null);
-  const [hasOverflow, setHasOverflow] = useState(false);
-  const [atStart, setAtStart] = useState(true);
-  const [atEnd, setAtEnd] = useState(false);
+// If you later add JSON config, swap in a loader here.
+// import tabsConfig from "@/data/providers.tabs.json" assert { type: "json" };
+// const TABS: TabLink[] = tabsConfig?.tabs?.length ? tabsConfig.tabs : DEFAULT_TABS;
+const TABS: TabLink[] = DEFAULT_TABS;
 
-  // Overflow detection + edge shadow state
-  useEffect(() => {
-    const el = listRef.current;
-    if (!el) {return;}
-
-    const check = () => {
-      const overflow = el.scrollWidth > el.clientWidth + 2;
-      setHasOverflow(overflow);
-      setAtStart(el.scrollLeft <= 1);
-      setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 1);
-    };
-
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    el.addEventListener("scroll", check, { passive: true });
-
-    return () => {
-      ro.disconnect();
-      el.removeEventListener("scroll", check);
-    };
-  }, []);
-
-  // Ensure the active tab is scrolled into view on route changes
-  useEffect(() => {
-    const el = listRef.current;
-    if (!el) {return;}
-    const active = el.querySelector<HTMLElement>("[aria-current='page']");
-    active?.scrollIntoView({ inline: "center", behavior: "smooth", block: "nearest" });
-  }, [pathname]);
+export default function ProvidersTabList(): JSX.Element {
+  const pathname = usePathname() || "/providers";
 
   return (
-    <div className="relative">
-      {/* Peek shadows */}
-      {hasOverflow && !atStart && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-[rgba(0,0,0,.08)] to-transparent dark:from-[rgba(255,255,255,.08)]" />
+    <div
+      role="tablist"
+      aria-label="Providers"
+      data-testid="providers-tablist"
+      className="flex gap-2"
+    >
+      {TABS.map((t) => {
+        const selected = pathname === t.href;
+        return (
+          <Link
+            key={t.href}
+            href={t.href}
+            role="link"
+            aria-current={selected ? "page" : undefined}
+            className="rounded px-3 py-1 text-sm data-[active=true]:font-semibold outline-none focus-visible:ring"
+            data-active={selected ? "true" : "false"}
+          >
+            {t.label}
+          </Link>
+        );
+      })}
+      {TABS.length === 0 && (
+        <span role="note" className="text-xs opacity-70">
+          No tabs configured.
+        </span>
       )}
-      {hasOverflow && !atEnd && (
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[rgba(0,0,0,.08)] to-transparent dark:from-[rgba(255,255,255,.08)]" />
-      )}
-
-      <nav
-        ref={listRef}
-        role="tablist"
-        aria-label="Providers"
-        className="flex gap-1 rounded-2xl bg-neutral-50 p-1 dark:bg-neutral-900/40 overflow-x-auto overscroll-x-contain scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700"
-      >
-        {items.map((t) => (
-          <NavTab
-            key={t.id}
-            id={t.id}
-            label={t.label}
-            href={t.href!}
-            isActive={isActivePath(pathname, t.href!)}
-            disabled={t.disabled}
-            icon={t.icon}
-            badge={t.badge}
-          />
-        ))}
-      </nav>
     </div>
   );
 }
-

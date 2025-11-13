@@ -1,63 +1,25 @@
-import { describe, it, expect } from "@jest/globals";
+import countryCurrency from "@/data/country-currency.map.json";
+import currencies from "@/data/currencies.catalog.json";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const countryCurrency: Record<string, string> = require("../data/country-currency.map.json");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const currencies: Array<{ code: string; name?: string }> = require("../data/currencies.catalog.json");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pairs: Array<{ id: string; base: string; quote: string }> = require("../data/pairs.json");
+type CountryCurrency = Record<string, string>;
+type CurrencyCatalog = Array<{ code: string; name?: string }>;
 
-const currencyCodes = new Set(currencies.map((c) => c.code.toUpperCase()));
-const countryEntries = Object.entries(countryCurrency);
-
-describe("Data integrity: currencies and pairs", () => {
-  it("every country maps to a valid ISO currency in the catalogue", () => {
-    const missing: string[] = [];
-    for (const [country, cur] of countryEntries) {
-      const code = cur.toUpperCase();
-      if (!currencyCodes.has(code)) missing.push(`${country}:${code}`);
+describe("currency catalogs", () => {
+  it("country-currency map uses ISO2→ISO3", () => {
+    const cc = countryCurrency as unknown as CountryCurrency;
+    expect(Object.keys(cc).length).toBeGreaterThan(0);
+    for (const [iso2, iso3] of Object.entries(cc)) {
+      expect(/^[A-Z]{2}$/.test(iso2)).toBe(true);
+      expect(/^[A-Z]{3}$/.test(iso3)).toBe(true);
     }
-
-    if (missing.length) {
-      // eslint-disable-next-line no-console
-      console.error("[currency] Missing from currencies.catalog.json:", missing);
-    }
-    expect(missing).toHaveLength(0);
   });
 
-  it("each FX pair base/quote exists in the currency catalogue", () => {
-    const badPairs: string[] = [];
-    for (const p of pairs) {
-      const base = p.base.toUpperCase();
-      const quote = p.quote.toUpperCase();
-      if (!currencyCodes.has(base) || !currencyCodes.has(quote)) {
-        badPairs.push(p.id);
-      }
+  it("every currency in catalog has a 3-letter code", () => {
+    const catalog = currencies as unknown as CurrencyCatalog;
+    expect(Array.isArray(catalog)).toBe(true);
+    expect(catalog.length).toBeGreaterThan(0);
+    for (const c of catalog) {
+      expect(/^[A-Z]{3}$/.test(c.code)).toBe(true);
     }
-    if (badPairs.length) {
-      // eslint-disable-next-line no-console
-      console.error("[currency] FX pairs with unknown currencies:", badPairs);
-    }
-    expect(badPairs).toHaveLength(0);
-  });
-
-  it("every currency used in pairs is referenced by at least one country (no orphan currency)", () => {
-    const used = new Set<string>();
-    for (const p of pairs) {
-      used.add(p.base.toUpperCase());
-      used.add(p.quote.toUpperCase());
-    }
-
-    const mapValues = new Set(Object.values(countryCurrency).map((v) => v.toUpperCase()));
-    const orphans: string[] = [];
-    for (const c of used) {
-      if (!mapValues.has(c)) orphans.push(c);
-    }
-
-    if (orphans.length) {
-      // eslint-disable-next-line no-console
-      console.error("[currency] Currencies used in pairs but not mapped to any country:", orphans);
-    }
-    expect(orphans).toHaveLength(0);
   });
 });

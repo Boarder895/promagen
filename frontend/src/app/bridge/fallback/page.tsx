@@ -1,34 +1,27 @@
-import TrendingTable from '@/components/ux/trending-table';
-import { pasteHints } from '@/data/paste-hints';
-
-export const dynamic = 'force-dynamic';
+/**
+ * Fallback bridge page – minimal and safe.
+ * Renders when an internal bridge target isn’t available.
+ */
+export const metadata = {
+  title: 'Bridge Fallback · Promagen',
+  description: 'A safe landing page when a bridge route is unavailable.',
+};
 
 export default function BridgeFallbackPage() {
-  // Make the tuple type explicit so children is a string, not unknown.
-  const entries = Object.entries(pasteHints) as [string, string][];
-
   return (
-    <main className="px-6 py-8 grid grid-cols-12 gap-6">
-      <section className="col-span-7">
-        <h1 className="text-xl font-semibold mb-4">Bridge Fallback</h1>
-        <p className="text-slate-600 mb-6">
-          The embedded view was blocked. Copy your prompt and continue on the provider�s site.
-        </p>
-
-        <div className="grid grid-cols-2 gap-4">
-          {entries.map(([id, hint]) => (
-            <div key={id} className="rounded-2xl border border-slate-200 p-4 bg-white shadow-sm">
-              <div className="text-sm font-semibold mb-1">{id}</div>
-              <p className="text-sm text-slate-600">{hint}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <aside className="col-span-5">
-        <TrendingTable />
-      </aside>
+    <main className="mx-auto max-w-3xl px-6 py-16">
+      <h1 className="text-2xl font-semibold tracking-tight">We can’t reach that bridge</h1>
+      <p className="mt-3 text-sm text-white/75">
+        The destination you attempted to open isn’t available right now. Try again shortly, or return to the homepage.
+      </p>
+      <div className="mt-6">
+        <a
+          href="/"
+          className="inline-flex items-center rounded-2xl border border-white/10 px-4 py-2 text-sm font-medium hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+        >
+          Go to homepage
+        </a>
+      </div>
     </main>
   );
 }
-

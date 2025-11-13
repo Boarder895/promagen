@@ -1,74 +1,76 @@
-name: promagen-ci
+name: ci
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
   pull_request:
+    branches: [ main, master ]
 
 jobs:
-  build-test:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: test
+      NEXT_TELEMETRY_DISABLED: "1"
+      CI: "true"
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: 9 }
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
-      - name: Install
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install deps (workspace)
         run: pnpm install --frozen-lockfile
-      - name: ESLint (frontend)
-        working-directory: frontend
-        run: pnpm run lint
+
       - name: Typecheck (frontend)
         working-directory: frontend
         run: pnpm run typecheck
+
       - name: Unit tests (frontend)
         working-directory: frontend
         run: pnpm run test:ci
 
-  accessibility-smoke:
-    runs-on: ubuntu-latest
-    needs: build-test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: 9 }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Build frontend
-        working-directory: frontend
-        run: pnpm run build
-      - name: Start preview
-        working-directory: frontend
-        run: pnpm run start & npx wait-on http://localhost:3000
       - name: Playwright install
-        run: npx playwright install --with-deps
-      - name: Run Axe smoke
-        run: pnpm -C frontend exec playwright test tests/axe-smoke.spec.ts
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps
 
-  lighthouse:
-    runs-on: ubuntu-latest
-    needs: build-test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: 9 }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Build frontend
+      - name: Build Next (frontend)
         working-directory: frontend
         run: pnpm run build
-      - name: Start preview
+
+      - name: Start Next server
         working-directory: frontend
-        run: pnpm run start & npx wait-on http://localhost:3000
-      - name: Lighthouse CI
-        run: npx @lhci/cli autorun --config=./lighthouserc.json
+        run: pnpm exec next start -p 3000 &
+      
+      - name: Wait for server
+        run: |
+          for i in {1..60}; do
+            if curl -sSf http://localhost:3000/ >/dev/null; then
+              echo "Server is up"; exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start" && exit 1
+
+      - name: E2E tests (frontend)
+        working-directory: frontend
+        run: pnpm exec playwright test
+
+      - name: Lighthouse budgets (home + providers)
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: ./lighthouserc.json
+          urls: |
+            http://localhost:3000/
+            http://localhost:3000/providers

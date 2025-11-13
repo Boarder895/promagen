@@ -1,13 +1,32 @@
-'use client';
+// frontend/src/hooks/usePlan.ts
+// Simple, typed plan hook. No any.
 
-import useAuth from '@/hooks/useAuth';
-import { hasFeature } from '@/lib/plan';
+import { useEffect, useState } from 'react';
 
-export default function usePlan() {
-  const { plan } = useAuth();
-  return {
-    plan,
-    can: (bucket: 'fx' | 'homepage' | 'cosmic', feature: string) => hasFeature(bucket as any, feature, plan),
-    isPaid: plan === 'paid',
+export type Plan = 'free' | 'pro' | 'enterprise';
+
+const KEY = 'promagen.plan';
+
+export function usePlan(): { plan: Plan; setPlan: (p: Plan) => void } {
+  const [plan, setPlanState] = useState<Plan>('free');
+
+  useEffect(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? (window.localStorage.getItem(KEY) as Plan | null) : null;
+      if (raw === 'pro' || raw === 'enterprise' || raw === 'free') setPlanState(raw);
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  const setPlan = (p: Plan) => {
+    setPlanState(p);
+    try {
+      if (typeof window !== 'undefined') window.localStorage.setItem(KEY, p);
+    } catch {
+      /* noop */
+    }
   };
+
+  return { plan, setPlan };
 }

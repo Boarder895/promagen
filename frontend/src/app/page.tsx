@@ -1,80 +1,169 @@
-// frontend/src/app/page.tsx
-import dynamic from "next/dynamic";
-import Link from "next/link";
+import React from "react";
+import type { Metadata } from "next";
+
 import ProvidersTable from "@/components/providers/providers-table";
+import { getProviders } from "@/lib/providers/api";
+import { getRailsForHomepage, type Exchange } from "@/lib/exchange-order";
+import { flag } from "@/lib/flags";
+import RibbonPanel from "@/components/ribbon/ribbon-panel";
 
-const Ribbon = dynamic(() => import("@/components/markets/exchange-ribbon"), { ssr: true });
+// ───────────────────────────────────────────────────────────────────────────────
+// Route metadata (SEO/OG/Twitter/Canonical)
+// ───────────────────────────────────────────────────────────────────────────────
+export const metadata: Metadata = {
+  title: "Promagen — Calm, data-rich market and AI overview",
+  description:
+    "Promagen’s home: east–west exchange rails, an AI providers leaderboard, and a focused Finance Ribbon. Calm, fast, and accessible.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Promagen — Calm, data-rich overview",
+    description:
+      "East–west exchanges, AI providers leaderboard, and a focused Finance Ribbon.",
+    url: "https://promagen.example/",
+    siteName: "Promagen",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Promagen — Calm, data-rich overview",
+    description:
+      "East–west exchanges, AI providers leaderboard, and a focused Finance Ribbon.",
+  },
+};
 
-export default function HomePage() {
-  const asOf = new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date());
+// ───────────────────────────────────────────────────────────────────────────────
+// Page (server component): static layout + data fetch; interactive ribbon is
+// handled by a small client component with pause/PRM/live status.
+// ───────────────────────────────────────────────────────────────────────────────
+export default function HomePage(): JSX.Element {
+  // Centre leaderboard data (20 items as per spec)
+  const providers = getProviders(20);
+
+  // East/West rails split per longitude rule (left = easterly half)
+  const { left, right } = getRailsForHomepage();
 
   return (
-    // NOTE: <main id="main"> is provided by layout.tsx
-    <div className="min-h-screen py-8">
-      <section className="px-6 md:px-10 lg:px-16">
-        {/* Exactly one <h1> on the page */}
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Promagen � compare AI image generators and craft better prompts
-        </h1>
+    <main
+      role="main"
+      aria-label="Promagen home"
+      className="min-h-dvh bg-gradient-to-b from-slate-50 to-slate-100"
+    >
+      {/* Finance Ribbon block with pause control, reduced-motion respect, freshness stamp and live region */}
+      <div className="max-w-7xl mx-auto px-4 pt-6">
+        <RibbonPanel pairIds={["EURUSD", "GBPUSD", "EURGBP"]} demo />
+      </div>
 
-        <p className="mt-3 max-w-3xl text-sm md:text-base text-neutral-300">
-          A desktop-first dashboard: live market ribbon, a 20-provider leaderboard, and
-          prompt tools. Built for calm reading and quick triage.
-        </p>
+      {/* Three-column homepage grid */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-4 py-6">
+        {/* Eastern exchanges rail */}
+        <section
+          role="complementary"
+          aria-label="Eastern exchanges"
+          className="space-y-3"
+          data-testid="rail-east"
+        >
+          {left.length > 0 ? (
+            left.map((x: Exchange) => (
+              <article
+                key={x.id}
+                className="flex items-center justify-between rounded-2xl p-3 bg-white/80 shadow-sm ring-1 ring-slate-200"
+                aria-label={`${x.name} exchange`}
+              >
+                <span className="inline-flex items-center">
+                  <span className="mr-2" aria-hidden="true">
+                    {flag(x.country)}
+                  </span>
+                  <span className="font-medium">{x.name}</span>
+                </span>
+                <span className="text-xs text-slate-500 tabular-nums">
+                  {x.longitude.toFixed(2)}°
+                </span>
+              </article>
+            ))
+          ) : (
+            <div
+              className="rounded-2xl p-4 bg-white/60 ring-1 ring-slate-200"
+              aria-live="polite"
+            >
+              <p className="text-sm text-slate-600">
+                No eastern exchanges selected yet. Choose markets to populate
+                this rail.
+              </p>
+            </div>
+          )}
+        </section>
 
-        <p className="mt-2 text-xs text-neutral-400">
-          As-of {asOf}. Some links may use <strong>Affiliate</strong> routing � we may earn a{" "}
-          <strong>commission</strong>.
-        </p>
-      </section>
+        {/* Centre: AI providers leaderboard */}
+        <section
+          role="region"
+          aria-label="AI providers leaderboard"
+          className="space-y-3"
+          data-testid="rail-centre"
+        >
+          <header className="mb-2 text-center">
+            <h1 className="text-2xl font-semibold">Promagen</h1>
+            <p className="text-slate-600">Calm, data-rich overview.</p>
+          </header>
 
-      {/* Finance ribbon placeholder */}
-      <section aria-label="Finance ribbon" className="mt-6 px-6 md:px-10 lg:px-16">
-        <Ribbon />
-      </section>
+          {providers.length > 0 ? (
+            <ProvidersTable
+              providers={providers}
+              title="AI Providers Leaderboard"
+              caption="Top providers ranked by Promagen score."
+              limit={20}
+              showRank
+            />
+          ) : (
+            <div
+              className="rounded-2xl p-4 bg-white/60 ring-1 ring-slate-200"
+              aria-live="polite"
+            >
+              <p className="text-sm text-slate-600">
+                No providers to display right now. Adjust your filters or check
+                back shortly.
+              </p>
+            </div>
+          )}
+        </section>
 
-      {/* Three-column grid */}
-      <section
-        aria-label="Homepage grid"
-        className="mt-8 grid grid-cols-12 gap-6 px-6 md:px-10 lg:px-16"
-      >
-        {/* Left rail */}
-        <div aria-label="Eastern exchanges" role="list" className="col-span-12 md:col-span-3 space-y-3">
-          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
-          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
-          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
-        </div>
-
-        {/* Center: providers */}
-        <div className="col-span-12 md:col-span-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">AI providers</h2>
-            <Link href="/providers" className="text-sm underline underline-offset-4">
-              View all
-            </Link>
-          </div>
-          <div className="mt-4">
-            <ProvidersTable />
-          </div>
-
-          {/* Visible disclosure near the table (Playwright looks for this) */}
-          <p className="mt-3 text-xs text-neutral-400">
-            Disclosure: Some outgoing links may be <strong>Affiliate</strong> destinations � we may
-            earn a <strong>commission</strong>. �As-of� labels indicate the last refresh time for
-            scores and market tiles.
-          </p>
-        </div>
-
-        {/* Right rail */}
-        <div aria-label="Western exchanges" role="list" className="col-span-12 md:col-span-3 space-y-3">
-          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
-          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
-          <div role="listitem" className="h-16 rounded-xl bg-white/5 ring-1 ring-white/10" />
-        </div>
-      </section>
-    </div>
+        {/* Western exchanges rail */}
+        <section
+          role="complementary"
+          aria-label="Western exchanges"
+          className="space-y-3"
+          data-testid="rail-west"
+        >
+          {right.length > 0 ? (
+            right.map((x: Exchange) => (
+              <article
+                key={x.id}
+                className="flex items-center justify-between rounded-2xl p-3 bg-white/80 shadow-sm ring-1 ring-slate-200"
+                aria-label={`${x.name} exchange`}
+              >
+                <span className="inline-flex items-center">
+                  <span className="mr-2" aria-hidden="true">
+                    {flag(x.country)}
+                  </span>
+                  <span className="font-medium">{x.name}</span>
+                </span>
+                <span className="text-xs text-slate-500 tabular-nums">
+                  {x.longitude.toFixed(2)}°
+                </span>
+              </article>
+            ))
+          ) : (
+            <div
+              className="rounded-2xl p-4 bg-white/60 ring-1 ring-slate-200"
+              aria-live="polite"
+            >
+              <p className="text-sm text-slate-600">
+                No western exchanges selected yet. Choose markets to populate
+                this rail.
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }

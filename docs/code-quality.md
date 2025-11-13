@@ -68,3 +68,32 @@ Every file should:
 - Be ready to drop into `frontend/src/...`  
 - Follow Promagen naming conventions (kebab-case folder, camelCase files, PascalCase components)  
 - Use only libraries defined in `package.json` unless scoped otherwise
+
+# Test Utilities and Structure
+
+Promagen test structure follows the **Tests Policy** from the Code Standard.
+
+**Quick guide:**
+- Component → `__tests__/`
+- Domain logic → `tests/`
+- Full app → `src/__tests__/`
+
+### Utilities here
+All reusable helpers live here, e.g.:
+- `renderWithProviders` (RTL helper)
+- `userKeyboard` (keyboard actions)
+- `mockTime` (freeze time)
+- `a11yRoles` (ARIA helpers)
+
+src/
+├── components/
+│   └── ui/__tests__/tabs.keyboard.test.tsx
+│   └── ui/__tests__/tabs.live.test.tsx
+│   └── ribbon/tests/finance-ribbon.render.test.tsx
+├── data/tests/
+│   └── cosmic.shape.test.ts
+│   └── catalogs.shape.test.ts
+│   └── country-currency.integrity.test.ts
+└── __tests__/
+    └── fx.compute-daily-arrow.test.ts
+    └── schemas.catalogs.test.ts

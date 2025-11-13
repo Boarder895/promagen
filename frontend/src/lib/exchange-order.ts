@@ -1,78 +1,68 @@
-// Exchange ordering + validation helper for Promagen rails.
-// Reads the selected exchanges list, validates fields, and returns a left/right split.
+// frontend/src/lib/exchange-order.ts
+// Exchange ordering + rail split (strict, zero 'any', SSR-safe)
 
-import exchanges from "@/data/exchanges.selected.json";
+import EXCHANGES_RAW from "@/data/exchanges.selected.json";
 
 export type Exchange = {
   id: string;
   name: string;
-  country: string;
-  longitude: number; // degrees east positive, west negative
+  country?: string;
+  longitude: number;
 };
 
-export type RailSplit = { left: Exchange[]; right: Exchange[] };
+export type Rails = { left: Exchange[]; right: Exchange[] };
 
-// Even counts allowed for paid tiers (free = 12 total)
-export const PAID_VALID_COUNTS = new Set([6, 8, 10, 12, 14, 16]);
+function toFinite(value: unknown, fallback = 0): number {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
 
-/**
- * Returns validated exchanges only.
- * Filters out items with missing or invalid longitude or country.
- */
-export function getValidatedExchanges(): Exchange[] {
-  const valid: Exchange[] = [];
-  for (const e of exchanges as any[]) {
-    if (
-      !e ||
-      typeof e.id !== "string" ||
-      typeof e.name !== "string" ||
-      typeof e.country !== "string" ||
-      typeof e.longitude !== "number" ||
-      Number.isNaN(e.longitude) ||
-      e.longitude < -180 ||
-      e.longitude > 180
-    ) {
-      // eslint-disable-next-line no-console
-      console.warn("[exchange-order] invalid exchange skipped:", e);
-      continue;
-    }
-    valid.push(e as Exchange);
+function toExchange(obj: unknown): Exchange | null {
+  if (!obj || typeof obj !== "object") return null;
+  const o = obj as Record<string, unknown>;
+  if (!("id" in o) || !("name" in o)) return null;
+  return {
+    id: String(o.id),
+    name: String(o.name),
+    country: typeof o.country === "string" ? o.country : undefined,
+    longitude: toFinite(o.longitude, 0),
+  };
+}
+
+function loadSelected(): Exchange[] {
+  const raw: unknown = EXCHANGES_RAW as unknown;
+  const arr: unknown[] = Array.isArray(raw)
+    ? raw
+    : typeof raw === "object" && raw !== null && Array.isArray((raw as { items?: unknown[] }).items)
+    ? (raw as { items: unknown[] }).items
+    : [];
+
+  const out: Exchange[] = [];
+  for (const item of arr) {
+    const ex = toExchange(item);
+    if (ex) out.push(ex);
   }
-  return valid;
+  out.sort((a, b) => a.longitude - b.longitude);
+  return out;
 }
 
-/**
- * Sort east→west by longitude (small→large).
- */
-export function sortEastToWest(xs: Exchange[]): Exchange[] {
-  return [...xs].sort((a, b) => a.longitude - b.longitude);
-}
-
-/**
- * Splits exchanges into left/right rails.
- * - Left = first half top→bottom (east→west)
- * - Right = second half reversed so the whole page reads east→west visually.
- */
-export function splitRails(xs: Exchange[]): RailSplit {
-  const sorted = sortEastToWest(xs);
+export function getRailsForHomepage(): Rails {
+  const sorted = loadSelected();
   const half = Math.ceil(sorted.length / 2);
   const left = sorted.slice(0, half);
-  const right = sorted.slice(half).reverse();
+  const right = sorted.slice(half).slice().reverse();
   return { left, right };
 }
 
-/**
- * Guards paid-tier counts.
- */
-export function isValidCount(n: number): boolean {
-  return PAID_VALID_COUNTS.has(n);
-}
+// Legacy helper for tests (strict, no 'any')
+export type ExchangeRef = { id: string };
+export type ExchangeIds = { ids: string[] } | string[];
 
-/**
- * Convenience wrapper for homepage.
- * Returns { left, right } already validated and sorted.
- */
-export function getRailsForHomepage(): RailSplit {
-  const valid = getValidatedExchanges();
-  return splitRails(valid);
+export function splitIds(exchanges: ExchangeIds): { left: ExchangeRef[]; right: ExchangeRef[] } {
+  const ids = Array.isArray(exchanges) ? exchanges.slice() : (exchanges?.ids ?? []).slice();
+  const half = Math.ceil(ids.length / 2);
+  return {
+    left: ids.slice(0, half).map((id): ExchangeRef => ({ id })),
+    right: ids.slice(half).map((id): ExchangeRef => ({ id })),
+  };
 }

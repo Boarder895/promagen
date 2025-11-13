@@ -1,30 +1,35 @@
-// Promagen privacy-first analytics shim (no PII, dev-friendly logging).
-// Meets Standard: no secrets/PII, auditable payloads, production uses sendBeacon.
+// frontend/src/lib/analytics.ts
+// Privacy-light analytics: DOM CustomEvent that Playwright/Jest can observe.
+// No PII, strictly typed, zero 'any', SSR-safe.
 
-type EventPayload = Record<string, string | number | boolean | null | undefined>;
+export type TabClickedPayload = {
+  feature: 'providers' | 'leaderboard' | 'nav' | string;
+  tabId: string;
+  label: string;
+  source?: string;
+  path?: string;
+  extra?: Record<string, unknown>;
+};
 
-const DISALLOWED_KEYS = /(email|phone|name|address|token|cookie|session|auth|passwd|ssn)/i;
+type AnalyticsEvent =
+  | { type: 'tab_clicked'; payload: TabClickedPayload }
+  | { type: 'provider_clicked'; payload: { providerId: string; source?: string } };
 
-export function track(event: string, payload: EventPayload = {}): void {
-  try {
-    const keys = Object.keys(payload);
-    if (keys.some((k) => DISALLOWED_KEYS.test(k))) {
-      // eslint-disable-next-line no-console
-      console.warn("[analytics] Disallowed key(s) dropped:", keys);
-      return;
-    }
+function emit(evt: AnalyticsEvent): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('promagen:analytics', { detail: evt }));
+}
 
-    if (process.env.NODE_ENV !== "production") {
-      // eslint-disable-next-line no-console
-      console.log("[analytics]", event, payload);
-      return;
-    }
+/** Specific helper kept for older call sites. */
+export function emitTabClicked(payload: TabClickedPayload): void {
+  emit({ type: 'tab_clicked', payload });
+}
 
-    if (typeof window !== "undefined" && "navigator" in window && "sendBeacon" in navigator) {
-      const body = JSON.stringify({ e: event, p: payload, t: Date.now() });
-      navigator.sendBeacon("/api/analytics", new Blob([body], { type: "application/json" }));
-    }
-  } catch {
-    // swallow — analytics must never crash UX
-  }
+/** Generic helper (kept for legacy imports that call track('provider_open_website', â€¦)). */
+export function track(name: string, payload: Record<string, unknown> = {}): void {
+  const safe: AnalyticsEvent =
+    name === 'tab_clicked'
+      ? { type: 'tab_clicked', payload: payload as TabClickedPayload }
+      : { type: 'provider_clicked', payload: (payload as { providerId: string; source?: string }) };
+  emit(safe);
 }

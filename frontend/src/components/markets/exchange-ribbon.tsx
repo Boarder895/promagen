@@ -1,21 +1,52 @@
-"use client";
+// src/components/markets/exchange-ribbon.tsx
+import React from "react";
 
-import ExchangeCard from "@/components/markets/exchange-card";
-import useRibbonData from "@/hooks/use-ribbon-data";
+export type RibbonItem = {
+  code: string;       // e.g. "LSE"
+  name: string;       // e.g. "London Stock Exchange"
+  city: string;       // e.g. "London"
+  tz: string;         // IANA tz, e.g. "Europe/London"
+  country?: string;   // optional; not all sources set it
+};
 
-export default function ExchangeRibbon() {
-  const items = useRibbonData();
+type Props = {
+  items?: RibbonItem[];
+  labelledById?: string; // allow external <h2 id="..."> title ownership
+};
 
+export function Ribbon({ items = [], labelledById }: Props) {
   return (
-    <div className="w-full overflow-x-auto border-y bg-neutral-950 text-neutral-100">
-      <ul className="flex gap-6 px-4 py-2 text-sm">
-        {items.map((it) => (
-          <li key={it.code} className="whitespace-nowrap">
-            <ExchangeCard exchange={{ id: it.code, name: it.name, city: it.city, tz: it.tz }} />
-          </li>
-        ))}
-      </ul>
+    <div
+      role="list"
+      aria-labelledby={labelledById}
+      className="flex gap-2 overflow-x-auto py-2"
+      data-testid="exchange-ribbon"
+    >
+      {items.map((it) => (
+        <div
+          key={it.code}
+          role="listitem"
+          className="shrink-0 rounded-xl border px-3 py-2 shadow-sm"
+          aria-label={`${it.name} — ${it.city}`}
+        >
+          <div className="text-sm font-medium">{it.name}</div>
+          <div className="text-xs opacity-70">
+            {it.city} · {it.tz}
+            {it.country ? ` · ${it.country}` : ""}
+          </div>
+        </div>
+      ))}
+      {items.length === 0 && (
+        <div
+          role="note"
+          className="text-xs opacity-70 px-1"
+          aria-label="No exchanges configured"
+        >
+          No exchanges configured.
+        </div>
+      )}
     </div>
   );
 }
 
+export default Ribbon;

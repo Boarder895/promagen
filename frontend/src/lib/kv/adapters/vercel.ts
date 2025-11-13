@@ -22,7 +22,7 @@ function headers() {
 async function http<T = unknown>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { ...init, headers: headers(), cache: "no-store" });
   if (!res.ok) throw new Error(`KV HTTP ${res.status}`);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+   
   return (await res.json()) as T;
 }
 

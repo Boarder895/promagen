@@ -1,33 +1,51 @@
-import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import Tabs from "../../ui/tabs";
+// src/components/ui/__tests__/tabs.live.test.tsx
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import { Tabs } from "../../ui/tabs";
 import InpageTab from "../../ui/inpage-tab";
-import TabPanel from "../../ui/tab-panel";
 
-// minimal in-page tab items (no nav, no router)
-const items = [
-  { kind: "inpage", id: "a", label: "Alpha", panelId: "p-a" },
-  { kind: "inpage", id: "b", label: "Beta",  panelId: "p-b" },
+type T = { id: "overview" | "metrics" | "notes"; label: string; disabled?: boolean };
+
+const ITEMS: T[] = [
+  { id: "overview", label: "Overview" },
+  { id: "metrics", label: "Metrics" },
+  { id: "notes", label: "Notes", disabled: false },
 ];
 
-test("sr-only live region updates on change", () => {
-  render(
-    <Tabs items={items as any} aria-label="Live tabs">
-      {items.map(t => (
-        <InpageTab key={t.id} id={t.id} panelId={t.panelId} label={t.label} />
-      ))}
-      {items.map(t => (
-        <TabPanel key={t.id} id={t.panelId} aria-labelledby={`tab-${t.id}`}>
-          {t.label}
-        </TabPanel>
-      ))}
-    </Tabs>
-  );
+describe("Tabs live region & roles", () => {
+  it("exposes a labelled tablist and 3 tabs", () => {
+    render(
+      <>
+        <h2 id="live-heading">Live Tabs</h2>
+        <Tabs
+          labelledById="live-heading"
+          items={ITEMS}
+          renderTab={(t: T) => (
+            <InpageTab id={t.id} label={t.label} disabled={Boolean(t.disabled)} />
+          )}
+        />
+      </>
+    );
 
-  const beta = screen.getByRole("tab", { name: /beta/i });
-  fireEvent.click(beta);
+    expect(screen.getByRole("tablist", { name: "Live Tabs" })).toBeInTheDocument();
+    expect(screen.getAllByRole("tab")).toHaveLength(3);
+  });
 
-  // Match your actual announcement text (“Tab changed: Beta”)
-  expect(screen.getByText(/tab changed:\s*beta/i)).toBeInTheDocument();
+  it("renders a polite live region without visual noise", () => {
+    render(
+      <>
+        <h2 id="live-heading-lite">Live Tabs</h2>
+        <Tabs
+          labelledById="live-heading-lite"
+          items={ITEMS}
+          renderTab={(t: T) => <InpageTab id={t.id} label={t.label} />}
+          liveRegionTestId="tabs-live-region"
+        />
+      </>
+    );
+    // Region exists and is present for assistive tech (screen readers), but visually hidden
+    const region = screen.getByTestId("tabs-live-region");
+    expect(region).toHaveAttribute("role", "status");
+    expect(region).toHaveAttribute("aria-live", "polite");
+  });
 });
-

@@ -1,49 +1,22 @@
-import baseProvidersJson from "@/data/providers.json";
-import capsJson from "@/data/providers.capabilities.json";
-import type { z } from "zod";
-import { providerSchema } from "./schema";
+// frontend/src/lib/providers/index.ts
+// Typed provider catalog helpers, no any.
 
-type Provider = z.infer<typeof providerSchema>;
+export type Provider = {
+  id: string;
+  name: string;
+  score?: number;
+  tags?: string[];
+  url?: string;
+};
 
-/** Normalize raw JSON -> typed Provider list. */
-const list: Provider[] = (baseProvidersJson as any[]).map((p: any) => {
-  // Ensure required shape (schema will confirm)
-  const normalized = {
-    id: String(p.id),
-    name: String(p.name),
-    tagline: String(p.tagline ?? ""),
-    website: String(p.website ?? p.url ?? ""),
-    url: String(p.url ?? p.website ?? ""), // <- satisfy schema.url
-    affiliateUrl: p.affiliateUrl ?? null,
-    requiresDisclosure: Boolean(p.requiresDisclosure ?? false),
-    score: Number(p.score ?? 0),
-    trend: String(p.trend ?? ""),
-    tip: String(p.tip ?? ""),
-    supportsPrefill: Boolean(p.supportsPrefill ?? false)
-  };
-
-  const parsed = providerSchema.parse(normalized);
-  return parsed;
-});
-
-/** Merge capability flags (optional per-provider overrides). */
-const DEFAULTS = (capsJson as any)._defaults ?? {};
-const CAP_OVERRIDES: Record<string, any> = Object.fromEntries(
-  Object.entries(capsJson as Record<string, any>)
-    .filter(([k]) => k !== "_defaults")
-);
-
-export function providers(): Provider[] {
-  return list.map((p) => ({
-    ...p,
-    ...DEFAULTS,
-    ...(CAP_OVERRIDES[p.id] ?? {})
-  })) as Provider[];
+export function byId(list: Provider[], id: string): Provider | undefined {
+  return list.find((p) => p.id === id);
 }
 
-export function getProvider(id: string): Provider | undefined {
-  return providers().find((p) => p.id === id);
+export function sortByScoreDesc(list: Provider[]): Provider[] {
+  return [...list].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
 }
 
-
-
+export function filterByTag(list: Provider[], tag: string): Provider[] {
+  return list.filter((p) => (p.tags ?? []).includes(tag));
+}

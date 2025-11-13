@@ -1,8 +1,8 @@
-import '@/styles/globals.css';
+import '@/app/globals.css';
 
 export const metadata = {
   title: 'Admin · Promagen',
-  description: 'Internal control panel for Promagen data sources.'
+  description: 'Internal control panel for Promagen data sources.',
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

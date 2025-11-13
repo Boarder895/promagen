@@ -1,23 +1,30 @@
-/**
- * Health endpoint – simple and auditable (no re-exports).
- * Adds cheap observability via x-runtime-ms and a provenance footer.
- */
+// Simple health endpoint aligned to Promagen standards.
+// - No PII, no secrets.
+// - Fast JSON, cache disabled, CORS open for GET.
 
-export async function GET(): Promise<Response> {
-  const started = performance.now();
-  const body = {
-    ok: true,
-    service: "promagen-frontend",
-    ts: new Date().toISOString(),
-    provenance: "frontend/src/app/api/health/route.ts#GET",
-    errorBudgetNote: "Keep A11y=100; SEO/Perf>=95; ribbon JS chunk within budget.",
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
+function headers() {
+  return {
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 'no-store, no-cache, must-revalidate',
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, OPTIONS',
   };
+}
 
-  const res = new Response(JSON.stringify(body), {
-    headers: { "content-type": "application/json; charset=utf-8" },
-  });
+export async function GET() {
+  const payload = {
+    ok: true,
+    service: 'promagen-frontend',
+    env: process.env.NODE_ENV ?? 'development',
+    asOf: new Date().toISOString(),
+  };
+  return new NextResponse(JSON.stringify(payload), { status: 200, headers: headers() });
+}
 
-  const ms = Math.max(0, Math.round(performance.now() - started));
-  res.headers.set("x-runtime-ms", String(ms));
-  return res;
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: headers() });
 }

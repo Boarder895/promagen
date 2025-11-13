@@ -1,25 +1,26 @@
-import ProvidersTabList from "@/components/nav/tab-list";
+import React from "react";
+import { getProviders } from "@/lib/providers/api";
+import ProvidersTable from "@/components/providers/providers-table";
 
-export default function ProvidersPage() {
+export const metadata = {
+  title: "AI Providers Leaderboard â€¢ Promagen",
+  description:
+    "The Promagen leaderboard of AI providers with scores, trends, and tags.",
+  robots: { index: true, follow: true },
+};
+
+export default function ProvidersLeaderboardPage(): JSX.Element {
+  const providers = getProviders();
+
   return (
-    <main className="space-y-6 p-8">
-      {/* Header kept from your placeholder */}
-      <div>
-        <h1 className="text-2xl font-semibold">Providers</h1>
-        <p className="opacity-70 text-sm">Placeholder for Stage 2.</p>
-      </div>
-
-      {/* Routed tabs row driven by src/data/tabs/providers.json */}
-      <ProvidersTabList />
-
-      {/* Page body for the default tab (Leader­board) */}
-      <section className="rounded-2xl border border-neutral-200 p-6 dark:border-neutral-800">
-        <h2 className="text-xl font-semibold">Leaderboard</h2>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Your provider leaderboard content goes here.
-        </p>
-      </section>
+    <main role="main" className="p-6">
+      <ProvidersTable
+        providers={providers}
+        title="AI Providers Leaderboard"
+        caption="Top providers ranked by Promagen score."
+        limit={20}
+        showRank
+      />
     </main>
   );
 }
-

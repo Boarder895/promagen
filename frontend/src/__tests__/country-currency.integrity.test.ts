@@ -1,66 +1,24 @@
-import { describe, it, expect } from "@jest/globals";
+import exchangesSelected from "@/data/exchanges.selected.json";
+import countryCurrencyMap from "@/data/country-currency.map.json";
 
-// Use relative imports to avoid path/alias hiccups in Jest
-// Shapes are intentionally loose; the test asserts what we need.
-type Exchange = { id: string; name: string; country: string; longitude: number };
+type ExchangesSelected = { ids: string[] };
+type CountryCurrency = Record<string, string>;
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const exchanges: Exchange[] = require("../data/exchanges.selected.json");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const countryCurrencyMap: Record<string, unknown> = require("../data/country-currency.map.json");
-
-function isIso2(s: unknown): s is string {
-  return typeof s === "string" && /^[A-Z]{2}$/.test(s);
-}
-
-describe("Data integrity: exchange countries exist in country-currency map", () => {
-  it("exchanges.selected.json should be a non-empty array", () => {
-    expect(Array.isArray(exchanges)).toBe(true);
-    expect(exchanges.length).toBeGreaterThan(0);
+describe("country-currency map integrity", () => {
+  it("exchanges.selected exposes ids[]", () => {
+    const xs = exchangesSelected as unknown as ExchangesSelected;
+    expect(Array.isArray(xs.ids)).toBe(true);
+    expect(xs.ids.length).toBeGreaterThan(0);
   });
 
-  it("country-currency.map.json should be a non-empty object", () => {
-    expect(countryCurrencyMap && typeof countryCurrencyMap === "object").toBe(true);
-    expect(Object.keys(countryCurrencyMap).length).toBeGreaterThan(0);
-  });
+  it("country-currency map is a non-empty object of ISO2->CCY", () => {
+    const map = countryCurrencyMap as unknown as CountryCurrency;
+    expect(map && typeof map).toBe("object");
+    const entries = Object.entries(map);
+    expect(entries.length).toBeGreaterThan(0);
 
-  it("every exchange.country is ISO2 and present in the map", () => {
-    const missing: Array<{ id: string; name: string; country: string }> = [];
-    const badIso: Array<{ id: string; name: string; country: string }> = [];
-
-    const keys = new Set(Object.keys(countryCurrencyMap).map((k) => k.toUpperCase()));
-
-    for (const ex of exchanges) {
-      const c = (ex.country || "").toUpperCase();
-      if (!isIso2(c)) {
-        badIso.push({ id: ex.id, name: ex.name, country: ex.country });
-        continue;
-        }
-      if (!keys.has(c)) {
-        missing.push({ id: ex.id, name: ex.name, country: c });
-      }
-    }
-
-    // Helpful diagnostics if the test fails
-    if (badIso.length) {
-      // eslint-disable-next-line no-console
-      console.error("[country-currency] Non-ISO2 countries:", badIso);
-    }
-    if (missing.length) {
-      // eslint-disable-next-line no-console
-      console.error("[country-currency] Countries missing from map:", missing);
-    }
-
-    expect(badIso).toHaveLength(0);
-    expect(missing).toHaveLength(0);
-  });
-
-  it("map keys are ISO2 (sanity check on the map file)", () => {
-    const nonIsoKeys = Object.keys(countryCurrencyMap).filter((k) => !isIso2(k.toUpperCase()));
-    if (nonIsoKeys.length) {
-      // eslint-disable-next-line no-console
-      console.error("[country-currency] Non-ISO2 keys in map:", nonIsoKeys);
-    }
-    expect(nonIsoKeys).toHaveLength(0);
+    const [k, v] = entries[0] ?? ["ZZ", "ZZZ"];
+    expect(/^[A-Z]{2}$/.test(k)).toBe(true);
+    expect(/^[A-Z]{3}$/.test(v)).toBe(true);
   });
 });

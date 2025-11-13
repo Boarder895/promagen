@@ -1,7 +1,7 @@
 import EXCHANGES, { type Exchange } from "@/data/exchanges";
 import selected from "@/data/exchanges.selected.json";
 
-/** Single source of truth — comes from exchanges.selected.json */
+/** Single source of truth ï¿½ comes from exchanges.selected.json */
 type SelectedConfig = { ids: string[] };
 export const SELECTED_IDS: string[] = (selected as SelectedConfig).ids;
 
@@ -57,10 +57,10 @@ export function exchangesUI(): Exchange[] {
 export type ExchangeUI = Exchange;
 // Value alias is intentionally not provided (it would be a type error).
 
-/** Dev guard: log any ids that didn’t resolve */
+/** Dev guard: log any ids that didnï¿½t resolve */
 const _unknown = SELECTED_IDS.filter((id) => !byIdFlexible(id));
 if (process.env.NODE_ENV !== "production" && _unknown.length) {
-  // eslint-disable-next-line no-console
+   
   console.warn("[exchanges-ui] Unknown exchange ids:", _unknown);
 }
 

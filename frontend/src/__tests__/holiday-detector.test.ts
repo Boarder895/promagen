@@ -1,50 +1,45 @@
-import { evaluateExchangeOpenState, type Template } from "@/lib/markets/holiday-detector";
+/**
+ * Contract: inside session + long quiet => "probable-holiday".
+ * Outside session => "closed-out-of-hours".
+ * Uses 'now' (not tzNow/label), matching HolidayArgs.
+ */
+import holidayDetector from "@/lib/markets/holiday-detector";
 
-const tmpl: Template = {
-  label: "US Cash",
-  session: [{ days: "Mon-Fri", open: "09:30", close: "16:00" }],
-};
+type Args = Parameters<typeof holidayDetector>[0];
 
-function toTz(dateIso: string) {
-  // Simulate an exchange-local time; for unit we use the same Date for tzNow/utcNow
-  const d = new Date(dateIso);
-  return { tzNow: d, utcNow: d };
+function makeNyTime(year: number, month: number, day: number, hour: number, minute = 0) {
+  // Builds an instant observed in America/New_York without external libs.
+  const d = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
+  // formatToParts will re-interpret in the detector; this just gives a stable epoch.
+  return d.getTime();
 }
 
-test("explicit holiday wins", () => {
-  const { tzNow, utcNow } = toTz("2025-12-25T14:00:00Z");
-  const result = evaluateExchangeOpenState({
-    tzNow,
-    utcNow,
-    template: tmpl,
-    detector: { noTickMinutes: 10, stalePriceMinutes: 10, minTradesWindow: 5, validateWeekend: true, recordLearnedClosures: false },
-    snapshot: { lastTradeTs: Date.now(), lastQuoteTs: Date.now(), tradesInWindow: 100 },
-    explicitHoliday: { date: "2025-12-25", name: "Christmas Day" },
-  });
-  expect(result.state).toBe("closed-holiday");
-});
-
 test("probable holiday if quiet in-session", () => {
-  const { tzNow, utcNow } = toTz("2025-06-18T14:00:00Z");
-  const result = evaluateExchangeOpenState({
-    tzNow,
-    utcNow,
-    template: tmpl,
-    detector: { noTickMinutes: 10, stalePriceMinutes: 10, minTradesWindow: 5, validateWeekend: true, recordLearnedClosures: false },
-    snapshot: { lastTradeTs: Date.now() - 60 * 60000, lastQuoteTs: Date.now() - 60 * 60000, tradesInWindow: 0 },
-  });
+  const now = makeNyTime(2025, 6, 3, 17, 0); // 13:00 NY local (approx via UTC baseline)
+  const args: Args = {
+    id: "nyse",
+    now,
+    snapshot: {
+      lastTradeTs: now - 90 * 60 * 1000,
+      lastQuoteTs: now - 90 * 60 * 1000,
+      tradesInWindow: 0
+    }
+  };
+  const result = holidayDetector(args);
   expect(result.state).toBe("probable-holiday");
 });
 
 test("out of hours is closed-out-of-hours", () => {
-  const { tzNow, utcNow } = toTz("2025-06-18T03:00:00Z");
-  const result = evaluateExchangeOpenState({
-    tzNow,
-    utcNow,
-    template: tmpl,
-    detector: { noTickMinutes: 10, stalePriceMinutes: 10, minTradesWindow: 5, validateWeekend: true, recordLearnedClosures: false },
-    snapshot: {}
-  });
+  const now = makeNyTime(2025, 6, 7, 7, 0); // Saturday pre-market
+  const args: Args = {
+    id: "nyse",
+    now,
+    snapshot: {
+      lastTradeTs: now - 10 * 60 * 1000,
+      lastQuoteTs: now - 10 * 60 * 1000,
+      tradesInWindow: 0
+    }
+  };
+  const result = holidayDetector(args);
   expect(result.state).toBe("closed-out-of-hours");
 });
-

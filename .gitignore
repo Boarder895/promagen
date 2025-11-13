@@ -73,3 +73,8 @@ git_backup/
 *.wav
 *.psd
 git_backup/
+frontend/.jest-cache/
+frontend/.jest-last.json
+frontend/.jest-test-count.floor
+frontend/.jest-tests.txt
+frontend/playwright-report/

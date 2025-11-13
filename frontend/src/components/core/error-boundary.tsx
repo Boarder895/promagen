@@ -42,7 +42,7 @@ export default class ErrorBoundary extends React.Component<Props, { hasError: bo
           }),
         );
       }
-      // eslint-disable-next-line no-console
+       
       console.error('[ErrorBoundary]', error, info?.componentStack);
     } catch {
       // swallow telemetry errors
@@ -54,7 +54,7 @@ export default class ErrorBoundary extends React.Component<Props, { hasError: bo
     try {
       this.props.onReset?.();
     } catch {
-      // eslint-disable-next-line no-console
+       
       console.warn('[ErrorBoundary] onReset threw');
     }
   };

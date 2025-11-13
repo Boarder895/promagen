@@ -1,30 +1,40 @@
-/* eslint-disable @next/next/no-img-element */
-import { ImageResponse } from 'next/og';
-import { env } from '@/lib/env';
+// frontend/src/app/opengraph-image.tsx
 
-export const runtime = 'edge';
-export const alt = `${env.siteName} preview`;
+import { ImageResponse } from "next/og";
+
+// Run this only on the edge runtime (what @vercel/og expects)
+export const runtime = "edge" as const;
+
+// Tell Next this route is fully dynamic – do NOT prerender at build.
+export const dynamic = "force-dynamic" as const;
+export const revalidate = 0;
+
+// OG metadata
+export const alt = "Promagen preview";
 export const size = { width: 1200, height: 630 };
-export const contentType = 'image/png';
+export const contentType = "image/png";
 
-// Minimal, dependency-free OG card (no external fonts).
-export default async function OpengraphImage() {
+export default function OpengraphImage() {
   return new ImageResponse(
     (
       <div
         style={{
-          height: '100%',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'linear-gradient(180deg, #0b1220 0%, #111827 100%)',
-          color: 'white',
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
           padding: 48,
-          justifyContent: 'space-between',
-          boxSizing: 'border-box',
+          background:
+            "linear-gradient(188deg, #0b1220 0%, #111827 100%)",
+          color: "white",
+          boxSizing: "border-box",
         }}
       >
-        <div style={{ fontSize: 44, fontWeight: 700 }}>{env.siteName}</div>
+        {/* Title */}
+        <div style={{ fontSize: 44, fontWeight: 700 }}>Promagen</div>
+
+        {/* Tagline */}
         <div
           style={{
             fontSize: 28,
@@ -33,13 +43,25 @@ export default async function OpengraphImage() {
             lineHeight: 1.25,
           }}
         >
-          AI creativity × market mood — calm, data-rich and beautifully simple.
+          AI creativity ✨ market mood — calm, data-rich and beautifully
+          simple.
         </div>
-        <div style={{ display: 'flex', fontSize: 20, opacity: 0.7 }}>
-          {env.siteUrl.replace(/^https?:\/\//, '')}
+
+        {/* Hostname */}
+        <div
+          style={{
+            display: "flex",
+            fontSize: 20,
+            opacity: 0.7,
+          }}
+        >
+          promagen.ai
         </div>
       </div>
     ),
-    { ...size }
+    {
+      width: size.width,
+      height: size.height,
+    }
   );
 }

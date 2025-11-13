@@ -24,11 +24,11 @@ export async function fetchStaggered(ids: string[], batchMs = 5000, batchSize = 
   const out: FxSnapshot[] = [];
   for (let i = 0; i < ids.length; i += batchSize) {
     const slice = ids.slice(i, i + batchSize);
-    // eslint-disable-next-line no-await-in-loop
+     
     const snap = await fetchFxSnapshot(slice);
     out.push(...snap);
     if (i + batchSize < ids.length) {
-      // eslint-disable-next-line no-await-in-loop
+       
       await new Promise(r => setTimeout(r, batchMs));
     }
   }

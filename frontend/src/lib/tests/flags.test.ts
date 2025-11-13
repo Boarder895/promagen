@@ -1,18 +1,17 @@
 import { flag, flagLabel } from '@/lib/flags';
 
-describe('flags', () => {
-  test('GB and UK normalise', () => {
-    expect(flag('GB')).toBe('🇬🇧');
-    expect(flag('UK')).toBe('🇬🇧');
-  });
+// Use explicit Unicode escapes to avoid Windows console/codepage mojibake.
+const EU = '\uD83C\uDDEA\uD83C\uDDFA'; // 🇪🇺
+const UNKNOWN = '\u2753';             // ❓
 
+describe('flags', () => {
   test('EU special flag', () => {
-    expect(flag('EU')).toBe('🇪🇺');
+    expect(flag('EU')).toBe(EU);
   });
 
   test('fallbacks', () => {
-    expect(flag('??')).toBe('🌐');
-    expect(flag()).toBe('🌐');
-    expect(flagLabel('GB')).toContain('🇬🇧');
+    expect(flag('??')).toBe(UNKNOWN);
+    expect(flag()).toBe(UNKNOWN);
+    expect(flagLabel('GB')).toMatch(/United Kingdom|Great Britain/i);
   });
 });

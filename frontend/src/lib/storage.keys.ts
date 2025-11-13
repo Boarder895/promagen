@@ -1,29 +1,40 @@
-// Versioned localStorage helpers so future schema changes don't brick users.
-// If version mismatches, readers return null and writers stamp the new version.
+// frontend/src/lib/storage.keys.ts
+// -----------------------------------------------------------------------------
+// Single source of truth for localStorage keys (versioned, namespaced).
+// SSR-safe helpers with no I/O at module top-level.
+// -----------------------------------------------------------------------------
 
-export type Stored<T> = { v: number; data: T };
+export const KEYS = {
+  providers: {
+    /** Stores the last visited provider id (string) under schema v1. */
+    lastV1: "promagen.providers.last.v1",
+  },
+  ux: {
+    /** Stores user's preference to return to the last provider on entry. */
+    returnToLastOptInV1: "promagen.ux.returnToLast.optIn.v1",
+  },
+} as const;
 
-export function readSchema<T>(key: string, expectedVersion: number): T | null {
+/** Legacy keys retained solely for forward migration. */
+export const LEGACY_LAST_PROVIDER_KEYS = [
+  "promagen.lastProvider",
+  "promagen.lastProviderAt",
+] as const;
+
+// Tiny SSR-safe helpers
+export function getLocal(key: string): string | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Stored<T> | T;
-    // Support legacy unversioned blobs: treat as mismatch
-    if (parsed && typeof parsed === "object" && "v" in (parsed as any)) {
-      const pack = parsed as Stored<T>;
-      return pack.v === expectedVersion ? pack.data : null;
-    }
-    return null;
+    return window.localStorage.getItem(key);
   } catch {
     return null;
   }
 }
-
-export function writeSchema<T>(key: string, version: number, data: T): void {
+export function setLocal(key: string, value: string): void {
+  if (typeof window === "undefined") return;
   try {
-    const pack: Stored<T> = { v: version, data };
-    localStorage.setItem(key, JSON.stringify(pack));
+    window.localStorage.setItem(key, value);
   } catch {
-    // ignore quota/security errors — never throw from storage
+    /* noop */
   }
 }

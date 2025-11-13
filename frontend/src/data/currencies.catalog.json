@@ -1,6 +1,7 @@
 [
   {
     "id": "AED",
+    "code": "AED",
     "name": "United Arab Emirates Dirham",
     "symbol": "د.إ",
     "precision": 2,
@@ -8,6 +9,7 @@
   },
   {
     "id": "ARS",
+    "code": "ARS",
     "name": "Argentine Peso",
     "symbol": "$",
     "precision": 2,
@@ -15,6 +17,7 @@
   },
   {
     "id": "AUD",
+    "code": "AUD",
     "name": "Australian Dollar",
     "symbol": "$",
     "precision": 2,
@@ -22,6 +25,7 @@
   },
   {
     "id": "BDT",
+    "code": "BDT",
     "name": "Bangladeshi Taka",
     "symbol": "৳",
     "precision": 2,
@@ -29,6 +33,7 @@
   },
   {
     "id": "BGN",
+    "code": "BGN",
     "name": "Bulgarian Lev",
     "symbol": "лв",
     "precision": 2,
@@ -36,6 +41,7 @@
   },
   {
     "id": "BMD",
+    "code": "BMD",
     "name": "Bermudian Dollar",
     "symbol": "$",
     "precision": 2,
@@ -43,6 +49,7 @@
   },
   {
     "id": "BRL",
+    "code": "BRL",
     "name": "Brazilian Real",
     "symbol": "R$",
     "precision": 2,
@@ -50,6 +57,7 @@
   },
   {
     "id": "CAD",
+    "code": "CAD",
     "name": "Canadian Dollar",
     "symbol": "$",
     "precision": 2,
@@ -57,6 +65,7 @@
   },
   {
     "id": "CHF",
+    "code": "CHF",
     "name": "Swiss Franc",
     "symbol": "Fr",
     "precision": 2,
@@ -64,6 +73,7 @@
   },
   {
     "id": "CLP",
+    "code": "CLP",
     "name": "Chilean Peso",
     "symbol": "$",
     "precision": 0,
@@ -71,6 +81,7 @@
   },
   {
     "id": "CNY",
+    "code": "CNY",
     "name": "Chinese Yuan",
     "symbol": "¥",
     "precision": 2,
@@ -78,6 +89,7 @@
   },
   {
     "id": "COP",
+    "code": "COP",
     "name": "Colombian Peso",
     "symbol": "$",
     "precision": 2,
@@ -85,6 +97,7 @@
   },
   {
     "id": "CZK",
+    "code": "CZK",
     "name": "Czech Koruna",
     "symbol": "Kč",
     "precision": 2,
@@ -92,6 +105,7 @@
   },
   {
     "id": "DKK",
+    "code": "DKK",
     "name": "Danish Krone",
     "symbol": "kr",
     "precision": 2,
@@ -99,6 +113,7 @@
   },
   {
     "id": "EGP",
+    "code": "EGP",
     "name": "Egyptian Pound",
     "symbol": "£",
     "precision": 2,
@@ -106,6 +121,7 @@
   },
   {
     "id": "EUR",
+    "code": "EUR",
     "name": "Euro",
     "symbol": "€",
     "precision": 2,
@@ -113,6 +129,7 @@
   },
   {
     "id": "GBP",
+    "code": "GBP",
     "name": "British Pound",
     "symbol": "£",
     "precision": 2,
@@ -120,6 +137,7 @@
   },
   {
     "id": "HKD",
+    "code": "HKD",
     "name": "Hong Kong Dollar",
     "symbol": "$",
     "precision": 2,
@@ -127,6 +145,7 @@
   },
   {
     "id": "HUF",
+    "code": "HUF",
     "name": "Hungarian Forint",
     "symbol": "Ft",
     "precision": 0,
@@ -134,6 +153,7 @@
   },
   {
     "id": "IDR",
+    "code": "IDR",
     "name": "Indonesian Rupiah",
     "symbol": "Rp",
     "precision": 0,
@@ -141,6 +161,7 @@
   },
   {
     "id": "ILS",
+    "code": "ILS",
     "name": "Israeli New Shekel",
     "symbol": "₪",
     "precision": 2,
@@ -148,6 +169,7 @@
   },
   {
     "id": "INR",
+    "code": "INR",
     "name": "Indian Rupee",
     "symbol": "₹",
     "precision": 2,
@@ -155,6 +177,7 @@
   },
   {
     "id": "IRR",
+    "code": "IRR",
     "name": "Iranian Rial",
     "symbol": "﷼",
     "precision": 0,
@@ -162,6 +185,7 @@
   },
   {
     "id": "ISK",
+    "code": "ISK",
     "name": "Icelandic Krona",
     "symbol": "kr",
     "precision": 0,
@@ -169,6 +193,7 @@
   },
   {
     "id": "JMD",
+    "code": "JMD",
     "name": "Jamaican Dollar",
     "symbol": "J$",
     "precision": 2,
@@ -176,6 +201,7 @@
   },
   {
     "id": "JPY",
+    "code": "JPY",
     "name": "Japanese Yen",
     "symbol": "¥",
     "precision": 0,
@@ -183,6 +209,7 @@
   },
   {
     "id": "KES",
+    "code": "KES",
     "name": "Kenyan Shilling",
     "symbol": "Sh",
     "precision": 2,
@@ -190,6 +217,7 @@
   },
   {
     "id": "KRW",
+    "code": "KRW",
     "name": "South Korean Won",
     "symbol": "₩",
     "precision": 0,
@@ -197,6 +225,7 @@
   },
   {
     "id": "LKR",
+    "code": "LKR",
     "name": "Sri Lankan Rupee",
     "symbol": "Rs",
     "precision": 2,
@@ -204,6 +233,7 @@
   },
   {
     "id": "MAD",
+    "code": "MAD",
     "name": "Moroccan Dirham",
     "symbol": "د.م.",
     "precision": 2,
@@ -211,6 +241,7 @@
   },
   {
     "id": "MXN",
+    "code": "MXN",
     "name": "Mexican Peso",
     "symbol": "$",
     "precision": 2,
@@ -218,6 +249,7 @@
   },
   {
     "id": "MYR",
+    "code": "MYR",
     "name": "Malaysian Ringgit",
     "symbol": "RM",
     "precision": 2,
@@ -225,6 +257,7 @@
   },
   {
     "id": "NGN",
+    "code": "NGN",
     "name": "Nigerian Naira",
     "symbol": "₦",
     "precision": 2,
@@ -232,6 +265,7 @@
   },
   {
     "id": "NOK",
+    "code": "NOK",
     "name": "Norwegian Krone",
     "symbol": "kr",
     "precision": 2,
@@ -239,6 +273,7 @@
   },
   {
     "id": "NZD",
+    "code": "NZD",
     "name": "New Zealand Dollar",
     "symbol": "$",
     "precision": 2,
@@ -246,6 +281,7 @@
   },
   {
     "id": "PAB",
+    "code": "PAB",
     "name": "Panamanian Balboa",
     "symbol": "B/.",
     "precision": 2,
@@ -253,6 +289,7 @@
   },
   {
     "id": "PEN",
+    "code": "PEN",
     "name": "Peruvian Sol",
     "symbol": "S/",
     "precision": 2,
@@ -260,6 +297,7 @@
   },
   {
     "id": "PHP",
+    "code": "PHP",
     "name": "Philippine Peso",
     "symbol": "₱",
     "precision": 2,
@@ -267,6 +305,7 @@
   },
   {
     "id": "PKR",
+    "code": "PKR",
     "name": "Pakistani Rupee",
     "symbol": "₨",
     "precision": 2,
@@ -274,6 +313,7 @@
   },
   {
     "id": "PLN",
+    "code": "PLN",
     "name": "Polish Zloty",
     "symbol": "zł",
     "precision": 2,
@@ -281,6 +321,7 @@
   },
   {
     "id": "PYG",
+    "code": "PYG",
     "name": "Paraguayan Guarani",
     "symbol": "₲",
     "precision": 0,
@@ -288,6 +329,7 @@
   },
   {
     "id": "RON",
+    "code": "RON",
     "name": "Romanian Leu",
     "symbol": "lei",
     "precision": 2,
@@ -295,6 +337,7 @@
   },
   {
     "id": "RUB",
+    "code": "RUB",
     "name": "Russian Ruble",
     "symbol": "₽",
     "precision": 2,
@@ -302,6 +345,7 @@
   },
   {
     "id": "SAR",
+    "code": "SAR",
     "name": "Saudi Riyal",
     "symbol": "﷼",
     "precision": 2,
@@ -309,6 +353,7 @@
   },
   {
     "id": "SEK",
+    "code": "SEK",
     "name": "Swedish Krona",
     "symbol": "kr",
     "precision": 2,
@@ -316,6 +361,7 @@
   },
   {
     "id": "SGD",
+    "code": "SGD",
     "name": "Singapore Dollar",
     "symbol": "$",
     "precision": 2,
@@ -323,6 +369,7 @@
   },
   {
     "id": "THB",
+    "code": "THB",
     "name": "Thai Baht",
     "symbol": "฿",
     "precision": 2,
@@ -330,6 +377,7 @@
   },
   {
     "id": "TND",
+    "code": "TND",
     "name": "Tunisian Dinar",
     "symbol": "د.ت",
     "precision": 3,
@@ -337,6 +385,7 @@
   },
   {
     "id": "TRY",
+    "code": "TRY",
     "name": "Turkish Lira",
     "symbol": "₺",
     "precision": 2,
@@ -344,6 +393,7 @@
   },
   {
     "id": "TTD",
+    "code": "TTD",
     "name": "Trinidad and Tobago Dollar",
     "symbol": "TT$",
     "precision": 2,
@@ -351,6 +401,7 @@
   },
   {
     "id": "TWD",
+    "code": "TWD",
     "name": "New Taiwan Dollar",
     "symbol": "NT$",
     "precision": 2,
@@ -358,6 +409,7 @@
   },
   {
     "id": "USD",
+    "code": "USD",
     "name": "US Dollar",
     "symbol": "$",
     "precision": 2,
@@ -365,6 +417,7 @@
   },
   {
     "id": "UYU",
+    "code": "UYU",
     "name": "Uruguayan Peso",
     "symbol": "$U",
     "precision": 2,
@@ -372,6 +425,7 @@
   },
   {
     "id": "VND",
+    "code": "VND",
     "name": "Vietnamese Dong",
     "symbol": "₫",
     "precision": 0,
@@ -379,6 +433,7 @@
   },
   {
     "id": "XAF",
+    "code": "XAF",
     "name": "Central African CFA franc",
     "symbol": "Fr",
     "precision": 0,
@@ -386,6 +441,7 @@
   },
   {
     "id": "XOF",
+    "code": "XOF",
     "name": "West African CFA franc",
     "symbol": "Fr",
     "precision": 0,
@@ -393,6 +449,7 @@
   },
   {
     "id": "ZAR",
+    "code": "ZAR",
     "name": "South African Rand",
     "symbol": "R",
     "precision": 2,

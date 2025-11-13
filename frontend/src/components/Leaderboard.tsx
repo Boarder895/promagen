@@ -1,25 +1,37 @@
-import { PROVIDERS } from '@/data/providers';
+// frontend/src/components/Leaderboard.tsx
+// Tight, typed stub to satisfy pages/tests; replace with your real table.
 
-export default function Leaderboard() {
+import type { FC } from 'react';
+
+export type LeaderboardRow = {
+  id: string;
+  name: string;
+  score: number;
+};
+
+type Props = {
+  rows?: LeaderboardRow[];
+};
+
+const Leaderboard: FC<Props> = ({ rows = [] }) => {
   return (
-    <div className="leaderboard">
-      <div className="lb-grid">
-        {PROVIDERS.map((p: any, i: number) => (
-          <div key={p.id ?? i} className={`lb-tile ${i < 10 ? 'featured' : ''}`} title={p.tagline ?? ''}>
-            <div className="lb-top">{String(p.name ?? p.displayName ?? 'Unknown')}</div>
-            <div className="lb-tagline">{p.tagline ?? ''}</div>
-            <div className="lb-row">
-              <div className="lb-score">92 ?</div>
-              <div className="lb-cta">
-                <a href={String(p.affiliateUrl ?? p.url ?? p.website ?? '#')} target="_blank" rel="noreferrer">
-                  Visit
-                </a>
-              </div>
-            </div>
-          </div>
+    <table aria-label="Leaderboard" className="w-full text-sm">
+      <thead>
+        <tr>
+          <th className="text-left">Provider</th>
+          <th className="text-right">Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.id}>
+            <td>{r.name}</td>
+            <td className="text-right">{r.score}</td>
+          </tr>
         ))}
-      </div>
-    </div>
+      </tbody>
+    </table>
   );
-}
+};
 
+export default Leaderboard;
