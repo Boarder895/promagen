@@ -1,6 +1,6 @@
 ﻿/* Promagen Global Styles — single source of truth
    - Tailwind import (v4-friendly)
-   - Calm gradient background
+   - Calm gradient background (not pitch-black)
    - Reduced motion hook
    - Accessible focus outline (no @apply)
    - Card utility + tabular numerals
@@ -10,8 +10,9 @@
 
 /* ------------------------------ Base tokens ------------------------------ */
 :root{
-  --bg-a:#0b1220; /* dusk */
-  --bg-b:#111827; /* night */
+  /* Slightly lighter dusk-to-night range */
+  --bg-a:#111827; /* slate-900 */
+  --bg-b:#1f2937; /* slate-800 */
   --focus: #38bdf8; /* sky-400 */
 }
 
@@ -19,12 +20,16 @@
 html,body{height:100%}
 
 body{
+  /* Calm but readable background behind the main content */
   background:linear-gradient(180deg,var(--bg-a),var(--bg-b));
-  color-scheme:dark;
+  /* Prefer light surfaces with dark text in components */
+  color-scheme: light dark;
 }
 
 /* Subtle, accessible text selection */
-::selection{ background-color: color-mix(in srgb, var(--focus) 30%, transparent) }
+::selection{
+  background-color: color-mix(in srgb, var(--focus) 30%, transparent);
+}
 
 /* ----------------------- Motion & accessibility hooks -------------------- */
 html[data-prm="true"] *{
@@ -51,7 +56,7 @@ textarea:focus-visible{
 .card{
   border-radius:1rem; /* ~rounded-2xl */
   border:1px solid rgba(255,255,255,.1);
-  background: rgba(255,255,255,.05);
+  background: rgba(255,255,255,.08);
   box-shadow:0 1px 2px rgba(0,0,0,.15);
 }
 
@@ -66,4 +71,6 @@ textarea:focus-visible{
   50%{transform:translateX(0%);opacity:1}
   100%{transform:translateX(30%);opacity:.7}
 }
-.animate-ribbon-shimmer{ animation:ribbon-shimmer 180s linear infinite }
+.animate-ribbon-shimmer{
+  animation:ribbon-shimmer 180s linear infinite;
+}
