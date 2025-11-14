@@ -1,5 +1,5 @@
-import countryCurrency from "@/data/country-currency.map.json";
-import currencies from "@/data/currencies.catalog.json";
+import countryCurrency from "@/data/fx/country-currency.map.json";
+import currencies from "@/data/fx/currencies.catalog.json";
 
 type CountryCurrency = Record<string, string>;
 type CurrencyCatalog = Array<{ code: string; name?: string }>;

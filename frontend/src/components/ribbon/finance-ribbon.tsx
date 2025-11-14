@@ -1,58 +1,68 @@
-import React from "react";
+// frontend/src/components/ribbon/finance-ribbon.tsx
+
+import * as React from "react";
 
 export type FinanceRibbonProps = {
-  /** Demo mode shows a badge and static rows. */
-  demo?: boolean;
-  /** Exact FX pair ids to render (e.g., "EURUSD"). Defaults to 3 canonical pairs. */
-  pairIds?: ReadonlyArray<string>;
   /**
-   * Optional refresh cadence in ms (accepted by tests, not used in demo).
-   * Kept for API stability; underscore prefix satisfies the unused-var rule.
+   * When true, the ribbon runs in “demo” mode:
+   * - Safe to render without real network calls
+   * - Suitable for logged-out or preview states
+   */
+  demo?: boolean;
+
+  /**
+   * Explicit list of FX pair IDs to show, e.g. ["EURUSD", "GBPUSD"].
+   * If omitted, a small, sensible default set is used.
+   */
+  pairIds?: string[];
+
+  /**
+   * Intended refresh / animation interval in milliseconds.
+   * Currently plumbed for future behaviour; not required for rendering.
    */
   intervalMs?: number;
 };
 
-const DEFAULT_PAIRS: ReadonlyArray<string> = ["EURUSD", "GBPUSD", "EURGBP"];
+/**
+ * Default FX pair ids used when the caller does not supply pairIds.
+ * This is what the contracts test asserts against.
+ */
+const DEFAULT_PAIR_IDS: string[] = ["EURUSD", "GBPUSD", "EURGBP"];
+const DEFAULT_INTERVAL_MS = 10_000;
 
-export default function FinanceRibbon(props: FinanceRibbonProps): JSX.Element {
-  const { demo = false, pairIds, intervalMs: _intervalMs } = props; // underscore => lint-clean by convention
-  const pairs = (pairIds?.length ? pairIds : DEFAULT_PAIRS).slice(0, 6);
+export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
+  demo = false,
+  pairIds,
+  intervalMs = DEFAULT_INTERVAL_MS,
+}) => {
+  // intervalMs is reserved for future animation / polling, but wired up now
+  // so the prop surface is stable and fully typed.
+  void intervalMs;
+
+  const ids = pairIds && pairIds.length > 0 ? pairIds : DEFAULT_PAIR_IDS;
 
   return (
     <section
-      aria-label="Finance ribbon"
+      role="region"
+      aria-label="Foreign exchange pairs"
       data-testid="finance-ribbon"
-      className="w-full overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10"
+      data-demo={demo ? "true" : "false"}
+      className="w-full overflow-x-auto py-2"
     >
-      {demo ? (
-        <div className="flex flex-row items-center gap-4 px-4 py-2 text-sm text-white/80">
-          <span aria-label="demo mode badge" className="rounded bg-white/10 px-2 py-0.5 text-xs">
-            Demo
-          </span>
-          {pairs.length === 0 ? (
-            <span className="text-white/60">No pairs selected</span>
-          ) : (
-            <ul role="list" aria-label="demo pairs" className="flex gap-4">
-              {pairs.map((id) => (
-                <li key={id} role="listitem" data-testid={`fx-${id}`} className="tabular-nums">
-                  {id}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      ) : (
-        <div className="px-4 py-2 text-sm text-white/80">
-          {/* Live mode: wire your data feed here later; DOM contract mirrors demo */}
-          <ul role="list" aria-label="live pairs" className="flex gap-4">
-            {pairs.map((id) => (
-              <li key={id} role="listitem" data-testid={`fx-${id}`} className="tabular-nums">
-                {id}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ul role="list" className="flex flex-row gap-3 text-sm">
+        {ids.map((id) => (
+          <li
+            key={id}
+            role="listitem"
+            className="whitespace-nowrap rounded-full bg-white/5 px-3 py-1 text-white/80 shadow-sm ring-1 ring-white/10"
+            data-testid={`fx-${id}`}
+          >
+            <span className="font-mono tracking-tight">{id}</span>
+          </li>
+        ))}
+      </ul>
     </section>
   );
-}
+};
+
+export default FinanceRibbon;

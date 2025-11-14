@@ -3,7 +3,7 @@
  * Only asserts determinism + presence; ordering weight handled by implementation.
  */
 import determineEligibilityOrder, { FxPair } from "@/lib/fx/eligibility";
-import pairs from "@/data/pairs.json";
+import pairs from "@/data/fx/pairs.json";
 
 test("order is deterministic east→west weighted", () => {
   const ordered = determineEligibilityOrder(pairs as FxPair[]);

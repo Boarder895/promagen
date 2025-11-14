@@ -5,8 +5,8 @@
 import exchangesCatalog from "@/data/exchanges.catalog.json";
 import exchangesSelectedJson from "@/data/exchanges.selected.json";
 import providers from "@/data/providers.json";
-import currenciesCatalog from "@/data/currencies.catalog.json";
-import countryCurrencyMap from "@/data/country-currency.map.json";
+import currenciesCatalog from "@/data/fx/currencies.catalog.json";
+import countryCurrencyMap from "@/data/fx/country-currency.map.json";
 
 type ExchangesSelected = { ids: string[] };
 

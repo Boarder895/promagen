@@ -1,74 +1,51 @@
-// Tiny, SSR-safe time helpers for the homepage.
-// Focus: readable local time by IANA tz, stable formatting, and safe fallbacks.
+// frontend/src/lib/time.ts
 
-export type Tz = string;
-
-type LocalTimeOptions = {
-  hour12?: boolean;
-  withSeconds?: boolean;
-  locale?: string; // e.g. 'en-GB'
-};
-
-/** Returns a best-effort local time string for a given IANA timezone. */
-export function localTime(tz: Tz, opts: LocalTimeOptions = {}): string {
-  const {
-    hour12 = false, // 24-hour by default for en-GB
-    withSeconds = false,
-    locale = 'en-GB',
-  } = opts;
-
-  try {
-    const now = new Date();
-    const fmt = new Intl.DateTimeFormat(locale, {
-      timeZone: tz,
-      hour: '2-digit',
-      minute: '2-digit',
-      ...(withSeconds ? { second: '2-digit' } : {}),
-      hour12,
-    });
-    return fmt.format(now);
-  } catch {
-    // If tz is unknown, fall back to system local
-    return new Date().toLocaleTimeString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      ...(withSeconds ? { second: '2-digit' } : {}),
-      hour12,
-    });
-  }
+/**
+ * Returns the current time as an ISO 8601 string.
+ * A custom Date can be passed for deterministic tests.
+ */
+export function isoNow(date: Date = new Date()): string {
+  return date.toISOString();
 }
 
-/** Returns an ISO string (UTC) — safe to use on client or server. */
-export function isoNow(): string {
-  return new Date().toISOString();
+/**
+ * Computes a simple local time string ("HH:MM") for a given UTC offset in minutes.
+ *
+ * - offsetMinutes is the difference from UTC in minutes (e.g. +60 for UTC+1).
+ * - baseDate defaults to now, but can be injected for tests.
+ */
+export function localTime(offsetMinutes: number, baseDate: Date = new Date()): string {
+  // Convert baseDate to UTC, then apply the offset.
+  const utcMillis = baseDate.getTime() + baseDate.getTimezoneOffset() * 60_000;
+  const localMillis = utcMillis + offsetMinutes * 60_000;
+  const local = new Date(localMillis);
+
+  const hours = local.getUTCHours().toString().padStart(2, "0");
+  const minutes = local.getUTCMinutes().toString().padStart(2, "0");
+
+  return `${hours}:${minutes}`;
 }
 
-/** Formats a GMT offset like “UTC+9” for an IANA tz, with a safe fallback. */
-export function utcOffsetLabel(tz: Tz): string {
-  try {
-    const now = new Date();
-    // Get offset minutes by formatting parts and inferring zone from UTC comparison.
-    // More reliable approach: use getTimezoneOffset on a date constructed with the tz via formatting.
-    const parts = new Intl.DateTimeFormat('en-GB', {
-      timeZone: tz,
-      timeZoneName: 'shortOffset',
-      hour: '2-digit',
-    })
-      .formatToParts(now)
-      .find((p) => p.type === 'timeZoneName')?.value;
+/**
+ * Formats a UTC offset in minutes into a human label like:
+ * - 0       â†’ "UTC"
+ * - 60      â†’ "UTC+01"
+ * - -300    â†’ "UTC-05"
+ * - 330     â†’ "UTC+05:30"
+ */
+export function utcOffsetLabel(offsetMinutes: number): string {
+  if (offsetMinutes === 0) return "UTC";
 
-    if (parts && /^UTC[+-]\d{1,2}(:\d{2})?$/.test(parts)) {
-      return parts.replace(':00', '');
-    }
-  } catch {
-    // ignore
+  const sign = offsetMinutes > 0 ? "+" : "-";
+  const abs = Math.abs(offsetMinutes);
+  const hours = Math.floor(abs / 60);
+  const minutes = abs % 60;
+
+  const hh = hours.toString().padStart(2, "0");
+  if (minutes === 0) {
+    return `UTC${sign}${hh}`;
   }
-  // Fallback to system offset
-  const mins = -new Date().getTimezoneOffset();
-  const sign = mins >= 0 ? '+' : '-';
-  const abs = Math.abs(mins);
-  const h = Math.floor(abs / 60)
-    .toString()
-    .padStart(1, '0');
-  return `UTC${sign}${h}`;
+
+  const mm = minutes.toString().padStart(2, "0");
+  return `UTC${sign}${hh}:${mm}`;
 }

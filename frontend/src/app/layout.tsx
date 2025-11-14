@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-// Keep your PauseProvider + ProvenanceFooter, and add an ErrorBoundary wrapper.
+
 import { PauseProvider } from "@/state/pause";
 import ProvenanceFooter from "@/components/core/provenance-footer";
 import ErrorBoundary from "@/components/error-boundary";
@@ -29,10 +29,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}): JSX.Element {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-dvh bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white antialiased">
+      {/* Background + gradient come from globals.css to keep a single source of truth */}
+      <body className="min-h-dvh antialiased text-slate-900">
         <PauseProvider>
           <ErrorBoundary>
             {children}
