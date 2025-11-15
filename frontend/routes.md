@@ -42,6 +42,7 @@
 [/api/snapshot/market](http://localhost:3000/api/snapshot/market)
 [/api/snapshot/weather](http://localhost:3000/api/snapshot/weather)
 [/api/track-click](http://localhost:3000/api/track-click)
+
 [/api/world-clocks](http://localhost:3000/api/world-clocks)
 
 ## Platforms

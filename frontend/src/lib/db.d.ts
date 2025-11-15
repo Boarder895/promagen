@@ -5,11 +5,3 @@ export type PrismaLike = {
 
 declare const prisma: PrismaLike;
 export default prisma;
-
-
-
-
-
-
-
-
