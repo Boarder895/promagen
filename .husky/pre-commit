@@ -1,14 +1,11 @@
-#!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
-
 echo "▶ Promagen pre-commit: running frontend lint..."
 
 pnpm -C frontend lint
 status=$?
 
 if [ "$status" -ne 0 ]; then
-  echo "✖ Lint failed – commit aborted. Fix the issues and try again."
+  echo "✖ Lint failed! Commit aborted. Fix the issues and try again."
   exit "$status"
 fi
 
-echo "✔ Lint passed – continuing commit."
+echo "✔ Lint passed ✅ continuing commit."
