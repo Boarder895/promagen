@@ -6,6 +6,11 @@ import { getProviders } from "@/lib/providers/api";
 import { getRailsForHomepage, type Exchange } from "@/lib/exchange-order";
 import { flag } from "@/lib/flags";
 import RibbonPanel from "@/components/ribbon/ribbon-panel";
+import {
+  DEMO_EXCHANGE_WEATHER,
+  type ExchangeWeather,
+} from "@/lib/weather/exchange-weather";
+import { resolveFeelsLike, resolveWeatherIcon } from "@/lib/weather/weather";
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Route metadata (SEO/OG/Twitter/Canonical)
@@ -42,6 +47,81 @@ export default function HomePage(): JSX.Element {
   // East/West rails split per longitude rule (left = easterly half)
   const { left, right } = getRailsForHomepage();
 
+  // Demo-weather index keyed by exchange id (e.g. "lse-london").
+  const weatherIndex = new Map<string, ExchangeWeather>();
+  for (const entry of DEMO_EXCHANGE_WEATHER) {
+    weatherIndex.set(entry.exchange, entry);
+  }
+
+  const renderExchangeCard = (x: Exchange): JSX.Element => {
+    const weather = weatherIndex.get(x.id) ?? null;
+    const hasWeather = weather !== null;
+
+    const feelsLike =
+      weather !== null
+        ? resolveFeelsLike(weather.tempC, weather.feelsLikeC)
+        : null;
+
+    const icon =
+      weather !== null ? resolveWeatherIcon(weather) : null;
+
+    const rawCondition = weather?.condition ?? "";
+    const conditionLabel =
+      rawCondition.length > 0
+        ? rawCondition.charAt(0).toUpperCase() + rawCondition.slice(1)
+        : "";
+
+    const longitudeLabel = x.longitude.toFixed(2);
+
+    return (
+      <article
+        key={x.id}
+        className="flex items-center justify-between rounded-2xl p-3 bg-white/80 shadow-sm ring-1 ring-slate-200"
+        aria-label={`${x.name} exchange`}
+      >
+        <span className="inline-flex items-center">
+          <span className="mr-2" aria-hidden="true">
+            {flag(x.country)}
+          </span>
+          <span className="font-medium">{x.name}</span>
+        </span>
+
+        <span className="flex flex-col items-end text-xs text-slate-500">
+          {hasWeather && (
+            <span className="inline-flex items-center gap-1 leading-none mb-0.5">
+              {icon && (
+                <span aria-hidden="true">{icon}</span>
+              )}
+              {typeof feelsLike === "number" &&
+              Number.isFinite(feelsLike) ? (
+                <span className="tabular-nums">
+                  {Math.round(feelsLike)}°C
+                </span>
+              ) : (
+                <span className="tabular-nums">
+                  {Math.round(weather!.tempC)}°C
+                </span>
+              )}
+            </span>
+          )}
+
+          <span
+            className="tabular-nums"
+            aria-label={`Longitude ${longitudeLabel} degrees`}
+          >
+            {longitudeLabel}°
+          </span>
+
+          {hasWeather && conditionLabel && (
+            <span className="text-[11px] text-slate-400 leading-tight">
+              {conditionLabel}
+            </span>
+          )}
+        </span>
+      </article>
+    );
+  };
+
   return (
     <main
       role="main"
@@ -63,23 +143,7 @@ export default function HomePage(): JSX.Element {
           data-testid="rail-east"
         >
           {left.length > 0 ? (
-            left.map((x: Exchange) => (
-              <article
-                key={x.id}
-                className="flex items-center justify-between rounded-2xl p-3 bg-white/80 shadow-sm ring-1 ring-slate-200"
-                aria-label={`${x.name} exchange`}
-              >
-                <span className="inline-flex items-center">
-                  <span className="mr-2" aria-hidden="true">
-                    {flag(x.country)}
-                  </span>
-                  <span className="font-medium">{x.name}</span>
-                </span>
-                <span className="text-xs text-slate-500 tabular-nums">
-                  {x.longitude.toFixed(2)}°
-                </span>
-              </article>
-            ))
+            left.map((x: Exchange) => renderExchangeCard(x))
           ) : (
             <div
               className="rounded-2xl p-4 bg-white/60 ring-1 ring-slate-200"
@@ -134,23 +198,7 @@ export default function HomePage(): JSX.Element {
           data-testid="rail-west"
         >
           {right.length > 0 ? (
-            right.map((x: Exchange) => (
-              <article
-                key={x.id}
-                className="flex items-center justify-between rounded-2xl p-3 bg-white/80 shadow-sm ring-1 ring-slate-200"
-                aria-label={`${x.name} exchange`}
-              >
-                <span className="inline-flex items-center">
-                  <span className="mr-2" aria-hidden="true">
-                    {flag(x.country)}
-                  </span>
-                  <span className="font-medium">{x.name}</span>
-                </span>
-                <span className="text-xs text-slate-500 tabular-nums">
-                  {x.longitude.toFixed(2)}°
-                </span>
-              </article>
-            ))
+            right.map((x: Exchange) => renderExchangeCard(x))
           ) : (
             <div
               className="rounded-2xl p-4 bg-white/60 ring-1 ring-slate-200"
