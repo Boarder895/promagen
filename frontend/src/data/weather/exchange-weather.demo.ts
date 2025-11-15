@@ -1,41 +1,132 @@
-// frontend/src/data/exchange-weather.demo.ts
+// src/data/weather/exchange-weather.demo.ts
+
+export type ExchangeWeatherCondition =
+  | 'sunny'
+  | 'cloudy'
+  | 'rain'
+  | 'storm'
+  | 'snow'
+  | 'windy';
 
 export type ExchangeWeather = {
   /**
-   * Short exchange code, matching the `exchange` field in exchanges.catalog.json
-   * e.g. "NZX", "ASX", "LSE".
+   * Exchange id, matching exchanges.catalog.json (e.g. "lse-london").
    */
   exchange: string;
-  /** Demo temperature in °C */
+  /**
+   * Demo temperature in °C shown on the card.
+   */
   tempC: number;
-  /** Short text label for the condition */
-  condition: 'sunny' | 'cloudy' | 'rain' | 'storm' | 'snow' | 'windy';
-  /** Emoji shown on the card */
+  /**
+   * Optional "feels like" temperature in °C. If omitted the UI should fall
+   * back to tempC without crashing.
+   */
+  feelsLikeC?: number;
+  /**
+   * Short text label describing the condition.
+   */
+  condition: ExchangeWeatherCondition;
+  /**
+   * Default emoji mapped from the condition.
+   */
   emoji: string;
+  /**
+   * Optional override for the emoji. If present, this wins over the default
+   * mapping. Used to prove override behaviour in tests.
+   */
+  iconOverride?: string;
 };
 
-/**
- * Demo weather – static, no external API.
- * This keeps Promagen free to run without racking up any bills.
- *
- * You can tweak these numbers / conditions whenever you like.
- */
-const DEMO_EXCHANGE_WEATHER: ExchangeWeather[] = [
-  // Oceania / Asia-Pacific rail (left side)
-  { exchange: 'NZX', tempC: 18, condition: 'cloudy', emoji: '⛅' },      // New Zealand Exchange
-  { exchange: 'ASX', tempC: 22, condition: 'sunny', emoji: '☀️' },      // Australian Securities Exchange
-  { exchange: 'TSE', tempC: 15, condition: 'rain', emoji: '🌧' },        // Tokyo Stock Exchange
-  { exchange: 'HKEX', tempC: 27, condition: 'cloudy', emoji: '⛅' },     // Hong Kong Exchanges & Clearing
-  { exchange: 'SET', tempC: 30, condition: 'storm', emoji: '⛈' },       // Stock Exchange of Thailand
-  { exchange: 'NSE', tempC: 32, condition: 'sunny', emoji: '☀️' },      // National Stock Exchange of India
+export const DEMO_EXCHANGE_WEATHER: ExchangeWeather[] = [
+  // Asia–Pacific rail (left)
+  {
+    exchange: 'nzx-wellington',
+    tempC: 14,
+    // feelsLikeC intentionally omitted to prove "no crash" behaviour.
+    condition: 'windy',
+    emoji: '🌬️',
+  },
+  {
+    exchange: 'asx-sydney',
+    tempC: 22,
+    feelsLikeC: 23,
+    condition: 'sunny',
+    emoji: '☀️',
+  },
+  {
+    exchange: 'tse-tokyo',
+    tempC: 18,
+    feelsLikeC: 17,
+    condition: 'cloudy',
+    emoji: '⛅',
+  },
+  {
+    exchange: 'hkex-hong-kong',
+    tempC: 27,
+    feelsLikeC: 29,
+    condition: 'rain',
+    emoji: '🌧',
+  },
+  {
+    exchange: 'set-bangkok',
+    tempC: 30,
+    feelsLikeC: 33,
+    condition: 'storm',
+    emoji: '⛈',
+  },
+  {
+    exchange: 'nse-mumbai',
+    tempC: 32,
+    feelsLikeC: 35,
+    condition: 'sunny',
+    emoji: '☀️',
+  },
 
-  // Europe / Middle East / Africa / Americas rail (right side)
-  { exchange: 'CBOE', tempC: 10, condition: 'cloudy', emoji: '⛅' },     // Cboe Global Markets (London hub for now)
-  { exchange: 'B3', tempC: 24, condition: 'rain', emoji: '🌧' },         // B3 – Brasil Bolsa Balcão
-  { exchange: 'LSE', tempC: 9, condition: 'cloudy', emoji: '⛅' },       // London Stock Exchange
-  { exchange: 'JSE', tempC: 20, condition: 'sunny', emoji: '☀️' },      // Johannesburg Stock Exchange
-  { exchange: 'MOEX', tempC: -2, condition: 'snow', emoji: '❄️' },      // Moscow Exchange
-  { exchange: 'DFM', tempC: 35, condition: 'sunny', emoji: '☀️' },      // Dubai Financial Market
+  // Europe / Middle East / Africa / Americas rail (right)
+  {
+    exchange: 'dfm-dubai',
+    tempC: 35,
+    feelsLikeC: 39,
+    condition: 'sunny',
+    emoji: '☀️',
+    // Explicit override – test should prove this wins.
+    iconOverride: '🔥',
+  },
+  {
+    exchange: 'moex-moscow',
+    tempC: -2,
+    feelsLikeC: -6,
+    condition: 'snow',
+    emoji: '❄️',
+  },
+  {
+    exchange: 'lse-london',
+    tempC: 9,
+    feelsLikeC: 7,
+    condition: 'cloudy',
+    emoji: '⛅',
+  },
+  {
+    exchange: 'jse-johannesburg',
+    tempC: 20,
+    feelsLikeC: 21,
+    condition: 'sunny',
+    emoji: '☀️',
+  },
+  {
+    exchange: 'b3-sao-paulo',
+    tempC: 24,
+    feelsLikeC: 25,
+    condition: 'rain',
+    emoji: '🌧',
+  },
+  {
+    exchange: 'cboe-chicago',
+    tempC: 10,
+    feelsLikeC: 6,
+    condition: 'cloudy',
+    emoji: '⛅',
+  },
 ];
 
 export default DEMO_EXCHANGE_WEATHER;

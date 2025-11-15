@@ -1,4 +1,5 @@
-// frontend/src/lib/weather/provider.ts
+// src/lib/weather/provider.ts
+
 import type { Exchange } from '../markets/types';
 
 export type WeatherProvider = 'open-meteo' | 'met-office' | 'noaa';
@@ -10,9 +11,13 @@ export function providerForExchange(_: Exchange): WeatherProvider {
 
 export function providerLabel(p: WeatherProvider): string {
   switch (p) {
-    case 'open-meteo': return 'Open-Meteo';
-    case 'met-office': return 'Met Office';
-    case 'noaa': return 'NOAA';
-    default: return String(p);
+    case 'open-meteo':
+      return 'Open-Meteo';
+    case 'met-office':
+      return 'Met Office';
+    case 'noaa':
+      return 'NOAA';
+    default:
+      return String(p);
   }
 }

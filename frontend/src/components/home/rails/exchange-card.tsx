@@ -6,9 +6,18 @@ import type { Exchange } from "@/lib/exchanges";
 import { getExchangeShortLabel } from "@/lib/exchanges";
 import { flag, flagAriaLabel } from "@/lib/flags";
 import { localTime } from "@/lib/time";
+import {
+  ExchangeWeatherBadge,
+  type ExchangeWeatherSummary,
+} from "@/components/weather/exchange-weather-badge";
 
 type ExchangeCardProps = {
   exchange: Exchange;
+  /**
+   * Optional weather snapshot for this exchange’s city.
+   * When omitted, the card shows time only.
+   */
+  weatherSummary?: ExchangeWeatherSummary | null;
 };
 
 /**
@@ -37,9 +46,13 @@ function formatGmtOffset(offsetMinutes?: number | null): string {
  * - Uses emoji flags only (no external assets).
  * - Local time derived from GMT offset minutes.
  * - GMT label is purely decorative; safe to omit when data is missing.
+ * - Optional weather badge stays small and calm beside the time.
  * - Calm, compact, and fully keyboard / screen-reader friendly.
  */
-export default function ExchangeCard({ exchange }: ExchangeCardProps) {
+export default function ExchangeCard({
+  exchange,
+  weatherSummary,
+}: ExchangeCardProps): JSX.Element {
   const { name, country, countryCode, offsetMinutes } = exchange;
 
   const shortLabel = getExchangeShortLabel(exchange);
@@ -77,14 +90,20 @@ export default function ExchangeCard({ exchange }: ExchangeCardProps) {
         </p>
       </div>
 
-      <div className="flex shrink-0 flex-col items-end text-right">
-        <p
-          className="text-xs font-semibold text-foreground tabular-nums"
-          aria-label={timeAriaLabel}
-          data-testid="exchange-local-time"
-        >
-          {localTimeLabel}
-        </p>
+      <div className="flex shrink-0 flex-col items-end text-right gap-1">
+        <div className="flex items-center gap-2">
+          <p
+            className="text-xs font-semibold text-foreground tabular-nums"
+            aria-label={timeAriaLabel}
+            data-testid="exchange-local-time"
+          >
+            {localTimeLabel}
+          </p>
+
+          {/* Tiny, optional weather badge */}
+          <ExchangeWeatherBadge summary={weatherSummary ?? null} />
+        </div>
+
         {gmtLabel ? (
           <p
             className="text-[10px] text-muted-foreground tabular-nums"
