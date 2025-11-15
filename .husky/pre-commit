@@ -1,5 +1,14 @@
-#!/usr/bin/env pwsh
- = (git diff --cached --name-only).Count
-if ( -gt 50) { Write-Error "Too many files staged: "; exit 1 }
-pnpm --prefix frontend lint
-pnpm --prefix frontend typecheck
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "▶ Promagen pre-commit: running frontend lint..."
+
+pnpm -C frontend lint
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo "✖ Lint failed – commit aborted. Fix the issues and try again."
+  exit "$status"
+fi
+
+echo "✔ Lint passed – continuing commit."

@@ -14,7 +14,7 @@ test('homepage has no critical accessibility violations', async ({ page }) => {
 
   const critical = results.violations.filter((v) => (v.impact ?? '').toLowerCase() === 'critical');
   if (critical.length) {
-    // eslint-disable-next-line no-console
+     
     console.error(JSON.stringify(critical, null, 2));
   }
   expect(critical.length, 'No critical a11y violations expected').toBe(0);

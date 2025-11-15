@@ -2,7 +2,8 @@
  * Uses the canonical single-direction ids that exist in your catalogue.
  * Only asserts determinism + presence; ordering weight handled by implementation.
  */
-import determineEligibilityOrder, { FxPair } from "@/lib/fx/eligibility";
+import type { FxPair } from "@/lib/fx/eligibility";
+import determineEligibilityOrder from "@/lib/fx/eligibility";
 import pairs from "@/data/fx/pairs.json";
 
 test("order is deterministic east→west weighted", () => {

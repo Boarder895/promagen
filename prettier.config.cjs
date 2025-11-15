@@ -1,8 +1,15 @@
-/** Prettier – formatting only. ESLint handles correctness/best-practice. */
+/** @type {import("prettier").Config} */
 module.exports = {
-  printWidth: 100,
-  singleQuote: true,
-  trailingComma: 'all',
   semi: true,
-  arrowParens: 'always',
+  singleQuote: true,
+  trailingComma: "all",
+  printWidth: 100,
+  tabWidth: 2,
+  useTabs: false,
+  arrowParens: "always",
+  bracketSpacing: true,
+  bracketSameLine: false,
+  jsxSingleQuote: false,
+  proseWrap: "preserve",
+  endOfLine: "lf",
 };

@@ -1,9 +1,21 @@
 ﻿{
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.d.ts"
+    "src/**/*.jsx",
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    "next-env.d.ts",
+    "eslint.config.mjs",
+    "next.config.*",
+    "jest.config.*",
+    "playwright.config.*",
+    "tests/**/*.ts",
+    "tests/**/*.tsx"
   ],
   "exclude": [
     "node_modules",

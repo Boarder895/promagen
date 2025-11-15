@@ -1,7 +1,0 @@
-node_modules
-dist
-.next
-coverage
-**/__snapshots__/**
-**/generated/**
-**/*.d.ts

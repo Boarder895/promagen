@@ -34,7 +34,7 @@ export default function Page() {
                 <td className="py-2 pr-3 font-mono">{id}</td>
                 <td className="py-2 pr-3">{link.supportsPrefill ? "Yes" : "No"}</td>
                 <td className="py-2 break-all">
-                  <a className="text-blue-600 hover:underline" href={link.prefilledUrl || link.url} target="_blank">
+                  <a className="text-blue-600 hover:underline" href={link.prefilledUrl || link.url} target="_blank" rel="noreferrer">
                     {link.prefilledUrl || link.url}
                   </a>
                 </td>

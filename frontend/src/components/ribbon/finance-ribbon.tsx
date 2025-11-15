@@ -16,15 +16,12 @@ export type FinanceRibbonProps = {
    */
   pairIds?: string[];
 
-  /**
-   * Intended refresh / animation interval in milliseconds.
-   * Currently plumbed for future behaviour; not required for rendering.
-   */
+  /** Reserved for future polling / animation cadence. */
   intervalMs?: number;
 };
 
 /**
- * Default FX pair ids used when the caller does not supply pairIds.
+ * Contract for the default FX pairs rendered by the ribbon.
  * This is what the contracts test asserts against.
  */
 const DEFAULT_PAIR_IDS: string[] = ["EURUSD", "GBPUSD", "EURGBP"];
@@ -39,21 +36,23 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
   // so the prop surface is stable and fully typed.
   void intervalMs;
 
-  const ids = pairIds && pairIds.length > 0 ? pairIds : DEFAULT_PAIR_IDS;
+  const ids =
+    pairIds && pairIds.length > 0 ? pairIds : DEFAULT_PAIR_IDS.slice();
+
+  const label = demo
+    ? "Live FX pairs (demo values)"
+    : "Live FX pairs";
 
   return (
     <section
-      role="region"
-      aria-label="Foreign exchange pairs"
+      aria-label={label}
+      className="overflow-hidden rounded-2xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-white"
       data-testid="finance-ribbon"
-      data-demo={demo ? "true" : "false"}
-      className="w-full overflow-x-auto py-2"
     >
-      <ul role="list" className="flex flex-row gap-3 text-sm">
+      <ul className="flex flex-wrap items-centre gap-2">
         {ids.map((id) => (
           <li
             key={id}
-            role="listitem"
             className="whitespace-nowrap rounded-full bg-white/5 px-3 py-1 text-white/80 shadow-sm ring-1 ring-white/10"
             data-testid={`fx-${id}`}
           >

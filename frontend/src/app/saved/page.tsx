@@ -8,9 +8,6 @@ export const metadata: Metadata = {
 
 /**
  * Saved (paid) – placeholder until Stage 3 unlocks.
- * - Neutral, factual copy
- * - Keyboard/a11y friendly markup
- * - No client state, no side effects
  */
 export default function SavedPage() {
   return (
@@ -36,7 +33,7 @@ export default function SavedPage() {
         <h2 id="coming-soon" className="text-sm font-semibold text-white/80">
           What will be included
         </h2>
-        <ul className="mt-3 grid gap-3 sm:grid-cols-2" role="list">
+        <ul className="mt-3 grid gap-3 sm:grid-cols-2">
           <li className="card p-4">
             <div className="text-sm font-medium">Prompt library</div>
             <p className="mt-1 text-xs text-white/70">Folders, tags, quick search.</p>

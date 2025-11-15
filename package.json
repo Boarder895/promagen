@@ -18,14 +18,20 @@
     "build": "pnpm -C frontend build",
     "start": "pnpm -C frontend start",
     "lint": "pnpm -C frontend lint",
+    "lint:fix": "pnpm -C frontend lint:fix",
+    "format": "pnpm -C frontend format",
+    "format:check": "pnpm -C frontend format:check",
     "typecheck": "pnpm -C frontend typecheck",
+    "check": "pnpm -C frontend check",
     "test": "pnpm -C frontend test",
-    "test:ci": "pnpm -C frontend test:ci"
+    "test:ci": "pnpm -C frontend test:ci",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",
     "@playwright/test": "^1.56.1",
     "cheerio": "^1.1.2",
-    "lighthouse-ci": "^1.13.1"
+    "lighthouse-ci": "^1.13.1",
+    "husky": "^9.1.7"
   }
 }

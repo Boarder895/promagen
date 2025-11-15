@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 const CANONICAL_HOST = (process.env['CANONICAL_HOST'] ?? '').toLowerCase().trim();
 const ENFORCE_CANONICAL = ((process.env['ENFORCE_CANONICAL'] ?? 'true').toLowerCase() === 'true');

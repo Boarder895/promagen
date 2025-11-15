@@ -11,10 +11,13 @@
     "build": "next build",
     "build:standalone": "cross-env NEXT_STANDALONE=true next build",
     "start": "next start --port 3000",
-    "lint": "eslint --cache --cache-location .eslintcache --format stylish \"src/**/*.{ts,tsx,js,jsx}\"",
+    "lint": "eslint . --cache --cache-location .eslintcache --format stylish",
+    "lint:fix": "eslint . --cache --cache-location .eslintcache --format stylish --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check .",
     "typecheck": "tsc --noEmit",
     "check": "pnpm run lint && pnpm run typecheck",
-    "verify": "pnpm run typecheck && eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
+    "verify": "pnpm run typecheck && eslint . --max-warnings=0",
     "test": "jest --config jest.config.cjs",
     "test:ci": "cross-env CI=true jest --config jest.config.cjs --ci --runInBand",
     "test:accept": "playwright test -c ./playwright.config.ts",
@@ -27,8 +30,11 @@
     "pretest:ci": "pwsh -File ./scripts/verify-test-layout.ps1"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx,js,jsx}": [
+    "*.{js,jsx,ts,tsx,cjs,mjs}": [
       "eslint --fix --cache --cache-location .eslintcache --format stylish"
+    ],
+    "*.{json,md,mdx,css,scss,html,yml,yaml}": [
+      "prettier --write"
     ]
   },
   "dependencies": {

@@ -30,6 +30,9 @@ export type TabsProps<T extends BaseTabItem> = {
   /** Legacy alias used in some tests. */
   labelledById?: string;
 
+  /** Optional direct aria-label for the tablist when there is no visible heading. */
+  ariaLabel?: string;
+
   /**
    * Optional custom renderer for the tab element or its inner content.
    * If this returns a React element (e.g. <InpageTab />), we clone it and inject tab props.
@@ -63,15 +66,21 @@ export type TabsProps<T extends BaseTabItem> = {
   /** Styling passthrough. */
   className?: string;
 
+  /** Optional test id for the root wrapper. */
+  rootTestId?: string;
+
+  /** Optional analytics namespace, used for data-analytics-id attributes. */
+  analyticsId?: string;
+
   /** Test ID controls (used by your suites). */
-  listTestId?: string;        // e.g. "tablist"
+  listTestId?: string; // e.g. "tablist"
   /** Legacy alias used by an earlier test. */
-  ListTestId?: string;        // keep for compatibility
-  tabTestIdPrefix?: string;   // e.g. "tab-"
+  ListTestId?: string; // keep for compatibility
+  tabTestIdPrefix?: string; // e.g. "tab-"
   panelTestIdPrefix?: string; // e.g. "panel-"
 
   /** Announce selection changes for SRs that don’t auto-announce. */
-  announceChanges?: boolean;            // default true
+  announceChanges?: boolean; // default true
   /** TestId for the aria-live region (optional). */
   liveRegionTestId?: string;
 };
@@ -91,6 +100,7 @@ export function Tabs<T extends BaseTabItem>({
   items,
   labelledBy,
   labelledById,
+  ariaLabel,
   renderTab,
   getPanel,
   initialIndex = 0,
@@ -100,6 +110,8 @@ export function Tabs<T extends BaseTabItem>({
   orientation = "horizontal",
   unmountInactivePanels = false,
   className,
+  rootTestId = "tabs-root",
+  analyticsId,
   listTestId,
   ListTestId,
   tabTestIdPrefix = "tabs-tab",
@@ -111,7 +123,8 @@ export function Tabs<T extends BaseTabItem>({
   const reactId = React.useId();
 
   const isControlled = typeof controlledIndex === "number";
-  const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+  const clamp = (n: number, lo: number, hi: number) =>
+    Math.max(lo, Math.min(hi, n));
 
   const [uncontrolledIndex, setUncontrolledIndex] = React.useState(() =>
     clamp(initialIndex, 0, Math.max(0, count - 1)),
@@ -128,7 +141,7 @@ export function Tabs<T extends BaseTabItem>({
   const nextEnabled = (start: number, dir: 1 | -1) => {
     if (count === 0) return 0;
     let i = start;
-    for (let step = 0; step < count; step++) {
+    for (let step = 0; step < count; step += 1) {
       i = (i + dir + count) % count;
       if (!isDisabledAt(i)) return i;
     }
@@ -207,7 +220,13 @@ export function Tabs<T extends BaseTabItem>({
         break;
       case "End":
         e.preventDefault();
-        setIndex(isDisabledAt(count - 1) ? nextEnabled(count - 1, -1) : count - 1);
+        setIndex(
+          isDisabledAt(count - 1)
+            ? nextEnabled(count - 1, -1)
+            : count - 1,
+        );
+        break;
+      default:
         break;
     }
   };
@@ -218,14 +237,20 @@ export function Tabs<T extends BaseTabItem>({
   const prefersReducedMotion = usePrefersReducedMotion();
 
   return (
-    <div className={className}>
+    <div
+      className={className}
+      data-testid={rootTestId}
+      data-analytics-id={analyticsId ? `${analyticsId}-root` : undefined}
+    >
       <div
         role="tablist"
-        aria-labelledby={ariaLabelledBy}
+        aria-labelledby={ariaLabel ? undefined : ariaLabelledBy}
+        aria-label={ariaLabel}
         aria-orientation={orientation}
         onKeyDown={onKeyDown}
         data-testid={tablistTestId}
         data-prm={prefersReducedMotion ? "on" : "off"}
+        tabIndex={0}
       >
         {items.map((item, i) => {
           const tabId = `${reactId}-tab-${i}`;
@@ -247,25 +272,38 @@ export function Tabs<T extends BaseTabItem>({
                   }
                 : undefined;
 
-              const existingOnClick = (raw.props as { onClick?: unknown }).onClick;
-              const incomingClassName = (raw.props as { className?: string }).className;
+              const existingOnClick = (raw.props as {
+                onClick?: unknown;
+              }).onClick;
+              const incomingClassName = (raw.props as {
+                className?: string;
+              }).className;
 
-              const extraProps: Partial<ButtonProps> & Record<string, unknown> = {
+              const extraProps: Partial<ButtonProps> &
+                Record<string, unknown> = {
                 key: item.id, // ensure a unique key on the cloned element
                 id: tabId,
                 role: "tab",
                 "aria-selected": selected,
                 "aria-controls": panelId,
                 "aria-disabled": disabled || undefined,
-                disabled: (raw.props as { disabled?: boolean }).disabled ?? disabled,
+                disabled:
+                  (raw.props as { disabled?: boolean }).disabled ?? disabled,
                 tabIndex: selected && !disabled ? 0 : -1,
                 ref: maybeRef,
-                className: [FOCUS_RING, incomingClassName].filter(Boolean).join(" "),
+                className: [FOCUS_RING, incomingClassName]
+                  .filter(Boolean)
+                  .join(" "),
                 "data-tab-id": item.id,
                 "data-testid": `${tabTestIdPrefix}--${item.id}`,
-                onClick: (e: React.MouseEvent) => {
+                "data-analytics-id": analyticsId
+                  ? `${analyticsId}-tab-${item.id}`
+                  : undefined,
+                onClick: (event: React.MouseEvent) => {
                   if (isFunction(existingOnClick)) {
-                    (existingOnClick as (ev: React.MouseEvent) => void)(e);
+                    (existingOnClick as (ev: React.MouseEvent) => void)(
+                      event,
+                    );
                   }
                   if (!disabled) setIndex(i);
                 },
@@ -291,6 +329,9 @@ export function Tabs<T extends BaseTabItem>({
                 className={FOCUS_RING}
                 data-tab-id={item.id}
                 data-testid={`${tabTestIdPrefix}--${item.id}`}
+                data-analytics-id={
+                  analyticsId ? `${analyticsId}-tab-${item.id}` : undefined
+                }
                 onClick={() => {
                   if (!disabled) setIndex(i);
                 }}
@@ -317,6 +358,9 @@ export function Tabs<T extends BaseTabItem>({
               className={FOCUS_RING}
               data-tab-id={item.id}
               data-testid={`${tabTestIdPrefix}--${item.id}`}
+              data-analytics-id={
+                analyticsId ? `${analyticsId}-tab-${item.id}` : undefined
+              }
               onClick={() => {
                 if (!disabled) setIndex(i);
               }}
@@ -352,6 +396,9 @@ export function Tabs<T extends BaseTabItem>({
             tabIndex={0}
             hidden={!selected}
             data-testid={`${panelTestIdPrefix}--${item.id}`}
+            data-analytics-id={
+              analyticsId ? `${analyticsId}-panel-${item.id}` : undefined
+            }
           >
             {panel}
           </div>
@@ -388,16 +435,16 @@ function usePrefersReducedMotion() {
     const update = () => setPrm(!!media.matches);
     update();
 
-    // Support both modern and legacy MQL APIs without `any`
-    const modern = (media as unknown as {
+    // Support both modern and legacy MQL APIs without any
+    const modern = media as unknown as {
       addEventListener?: (type: "change", listener: () => void) => void;
       removeEventListener?: (type: "change", listener: () => void) => void;
-    });
+    };
 
-    const legacy = (media as unknown as {
+    const legacy = media as unknown as {
       addListener?: (listener: () => void) => void;
       removeListener?: (listener: () => void) => void;
-    });
+    };
 
     if (modern.addEventListener && modern.removeEventListener) {
       modern.addEventListener("change", update);

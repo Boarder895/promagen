@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';

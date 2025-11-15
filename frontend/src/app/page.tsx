@@ -37,8 +37,7 @@ export const metadata: Metadata = {
 };
 
 // ───────────────────────────────────────────────────────────────────────────────
-// Page (server component): static layout + data fetch; interactive ribbon is
-// handled by a small client component with pause/PRM/live status.
+// Page (server component)
 // ───────────────────────────────────────────────────────────────────────────────
 export default function HomePage(): JSX.Element {
   // Centre leaderboard data (20 items as per spec)
@@ -62,8 +61,7 @@ export default function HomePage(): JSX.Element {
         ? resolveFeelsLike(weather.tempC, weather.feelsLikeC)
         : null;
 
-    const icon =
-      weather !== null ? resolveWeatherIcon(weather) : null;
+    const icon = weather !== null ? resolveWeatherIcon(weather) : null;
 
     const rawCondition = weather?.condition ?? "";
     const conditionLabel =
@@ -76,7 +74,7 @@ export default function HomePage(): JSX.Element {
     return (
       <article
         key={x.id}
-        className="flex items-center justify-between rounded-2xl p-3 bg-white/80 shadow-sm ring-1 ring-slate-200"
+        className="flex items-center justify-between rounded-2xl bg-white/80 p-3 ring-1 ring-slate-200 shadow-sm"
         aria-label={`${x.name} exchange`}
       >
         <span className="inline-flex items-center">
@@ -88,15 +86,10 @@ export default function HomePage(): JSX.Element {
 
         <span className="flex flex-col items-end text-xs text-slate-500">
           {hasWeather && (
-            <span className="inline-flex items-center gap-1 leading-none mb-0.5">
-              {icon && (
-                <span aria-hidden="true">{icon}</span>
-              )}
-              {typeof feelsLike === "number" &&
-              Number.isFinite(feelsLike) ? (
-                <span className="tabular-nums">
-                  {Math.round(feelsLike)}°C
-                </span>
+            <span className="mb-0.5 inline-flex items-center gap-1 leading-none">
+              {icon && <span aria-hidden="true">{icon}</span>}
+              {typeof feelsLike === "number" && Number.isFinite(feelsLike) ? (
+                <span className="tabular-nums">{Math.round(feelsLike)}°C</span>
               ) : (
                 <span className="tabular-nums">
                   {Math.round(weather!.tempC)}°C
@@ -113,7 +106,7 @@ export default function HomePage(): JSX.Element {
           </span>
 
           {hasWeather && conditionLabel && (
-            <span className="text-[11px] text-slate-400 leading-tight">
+            <span className="text-[11px] leading-tight text-slate-400">
               {conditionLabel}
             </span>
           )}
@@ -129,12 +122,12 @@ export default function HomePage(): JSX.Element {
       className="min-h-dvh bg-gradient-to-b from-slate-50 to-slate-100"
     >
       {/* Finance Ribbon block with pause control, reduced-motion respect, freshness stamp and live region */}
-      <div className="max-w-7xl mx-auto px-4 pt-6">
+      <div className="mx-auto max-w-7xl px-4 pt-6">
         <RibbonPanel pairIds={["EURUSD", "GBPUSD", "EURGBP"]} demo />
       </div>
 
       {/* Three-column homepage grid */}
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 px-4 py-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 md:grid-cols-3">
         {/* Eastern exchanges rail */}
         <section
           role="complementary"
@@ -146,7 +139,7 @@ export default function HomePage(): JSX.Element {
             left.map((x: Exchange) => renderExchangeCard(x))
           ) : (
             <div
-              className="rounded-2xl p-4 bg-white/60 ring-1 ring-slate-200"
+              className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200"
               aria-live="polite"
             >
               <p className="text-sm text-slate-600">
@@ -159,7 +152,6 @@ export default function HomePage(): JSX.Element {
 
         {/* Centre: AI providers leaderboard */}
         <section
-          role="region"
           aria-label="AI providers leaderboard"
           className="space-y-3"
           data-testid="rail-centre"
@@ -179,7 +171,7 @@ export default function HomePage(): JSX.Element {
             />
           ) : (
             <div
-              className="rounded-2xl p-4 bg-white/60 ring-1 ring-slate-200"
+              className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200"
               aria-live="polite"
             >
               <p className="text-sm text-slate-600">
@@ -201,7 +193,7 @@ export default function HomePage(): JSX.Element {
             right.map((x: Exchange) => renderExchangeCard(x))
           ) : (
             <div
-              className="rounded-2xl p-4 bg-white/60 ring-1 ring-slate-200"
+              className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200"
               aria-live="polite"
             >
               <p className="text-sm text-slate-600">

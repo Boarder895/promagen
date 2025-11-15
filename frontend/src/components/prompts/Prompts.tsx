@@ -14,7 +14,6 @@ export type Prompt = {
 type PromptObject = {
   /** Preferred if present */
   filtered?: Prompt[];
-  /** Alternate shapes we sometimes pass around */
   allPrompts?: Prompt[];
   all?: Prompt[];
 };
@@ -31,10 +30,10 @@ export type PromptsProps = {
 };
 
 function getPrompts(src: PromptsSource): Prompt[] {
-  if (Array.isArray(src)) {return src;}
-  if ("filtered" in src && src.filtered) {return src.filtered;}
-  if ("allPrompts" in src && src.allPrompts) {return src.allPrompts;}
-  if ("all" in src && src.all) {return src.all;}
+  if (Array.isArray(src)) return src;
+  if ("filtered" in src && src.filtered) return src.filtered;
+  if ("allPrompts" in src && src.allPrompts) return src.allPrompts;
+  if ("all" in src && src.all) return src.all;
   return [];
 }
 
@@ -47,8 +46,11 @@ export const Prompts = ({
 }: PromptsProps) => {
   if (error) {
     return (
-      <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800">
-        <div className="font-semibold">Couldn't load prompts</div>
+      <div
+        role="alert"
+        className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-800"
+      >
+        <div className="font-semibold">Could not load prompts</div>
         <div className="text-sm opacity-80">{error.message}</div>
       </div>
     );
@@ -79,30 +81,42 @@ export const Prompts = ({
   }
 
   return (
-    <section className="space-y-4">
-      <header>
-        <h2 className="text-xl font-semibold">{title}</h2>
-      </header>
+    <section className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm text-white">
+      <div className="mb-3 flex items-centre gap-2">
+        <h2 className="text-sm font-semibold">{title}</h2>
+      </div>
 
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="space-y-3">
         {prompts.map((p) => (
           <li
             key={p.id}
-            className="rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow"
+            className="rounded-xl border border-white/10 bg-black/30 p-3"
           >
-            <div className="font-medium">{p.title}</div>
-            <p className="mt-1 line-clamp-3 text-sm text-gray-600">{p.text}</p>
-            {p.tags?.length ? (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {p.tags.map((t) => (
-                  <span key={t} className="rounded-full border px-2 py-0.5 text-xs">
-                    {t}
-                  </span>
-                ))}
+            <div className="flex items-centre justify-between gap-2">
+              <div>
+                <div className="text-sm font-medium">{p.title}</div>
+                {p.tags && p.tags.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1 text-[11px] text-white/70">
+                    {p.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full border border-white/10 px-2 py-[1px]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : null}
+            </div>
+            <p className="mt-2 text-xs text-white/80 whitespace-pre-line">
+              {p.text}
+            </p>
             {p.href ? (
-              <a href={p.href} className="mt-3 inline-block text-sm underline">
+              <a
+                href={p.href}
+                className="mt-3 inline-block text-sm underline"
+              >
                 View
               </a>
             ) : null}
@@ -112,4 +126,3 @@ export const Prompts = ({
     </section>
   );
 };
-

@@ -17,10 +17,9 @@ export const ProvidersGrid: FC<Props> = ({ providers, onCopyUrl, onOpen }) => {
 
   return (
     <section
-      role="region"
       aria-label="AI providers"
       data-testid="providers-grid"
-      className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
     >
       {list.length === 0 && (
         <p className="text-sm text-gray-500" role="status" aria-live="polite">
@@ -28,7 +27,12 @@ export const ProvidersGrid: FC<Props> = ({ providers, onCopyUrl, onOpen }) => {
         </p>
       )}
       {list.map((p) => (
-        <ProviderCard key={p.id} provider={p} onCopyUrl={onCopyUrl} onOpen={onOpen} />
+        <ProviderCard
+          key={p.id}
+          provider={p}
+          onCopyUrl={onCopyUrl}
+          onOpen={onOpen}
+        />
       ))}
     </section>
   );
