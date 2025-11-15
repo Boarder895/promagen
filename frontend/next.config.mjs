@@ -28,9 +28,17 @@ const nextConfig = {
   // Flip it on with: NEXT_STANDALONE=true pnpm build
   output: process.env.NEXT_STANDALONE === 'true' ? 'standalone' : undefined,
 
-  // Fail CI if there are TS or ESLint errors.
-  typescript: { ignoreBuildErrors: false },
-  eslint: { ignoreDuringBuilds: false },
+  // Fail CI if there are TS errors.
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+
+  // We run ESLint via Husky + GitHub Actions.
+  // Skip Next.js' built-in lint during `next build` to avoid
+  // incompatibility with ESLint v9.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 
   // Minor perf: keep this small and focused.
   experimental: {
