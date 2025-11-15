@@ -1,0 +1,15 @@
+[
+  { "city": "Tokyo", "code": "JPX", "open": false, "temp": 22, "localTime": "09:30" },
+  { "city": "Hong Kong", "code": "HKEX", "open": false, "temp": 24, "localTime": "09:30" },
+  { "city": "Shanghai", "code": "SSE", "open": false, "temp": 21, "localTime": "09:30" },
+  { "city": "Mumbai", "code": "NSE", "open": true, "temp": 29, "localTime": "09:30" },
+  { "city": "Dubai", "code": "DFM", "open": true, "temp": 34, "localTime": "09:30" },
+  { "city": "Moscow", "code": "MOEX", "open": true, "temp": 17, "localTime": "09:30" },
+  { "city": "Frankfurt", "code": "FWB", "open": true, "temp": 15, "localTime": "09:30" },
+  { "city": "London", "code": "LSE", "open": true, "temp": 14, "localTime": "09:30" },
+  { "city": "New York", "code": "NYSE", "open": false, "temp": 18, "localTime": "09:30" },
+  { "city": "Toronto", "code": "TSX", "open": false, "temp": 12, "localTime": "09:30" },
+  { "city": "Chicago", "code": "CME", "open": false, "temp": 16, "localTime": "09:30" },
+  { "city": "São Paulo", "code": "B3", "open": false, "temp": 23, "localTime": "09:30" }
+]
+
