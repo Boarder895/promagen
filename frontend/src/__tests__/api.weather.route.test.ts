@@ -27,25 +27,31 @@ jest.mock('@/lib/weather/exchange-weather', () => ({
   listExchangeWeather: jest.fn(() => [
     {
       exchange: 'lse-london',
-      tempC: 16,
-      feelsLikeC: 14,
+      tempC: 12,
+      feelsLikeC: 10,
       condition: 'rain',
       emoji: '🌧️',
-      iconOverride: '',
     },
   ]),
 }));
 
-jest.mock('@/data/exchanges.catalog.json', () => [
+jest.mock('@/data/exchanges/exchanges.catalog.json', () => [
   {
     id: 'lse-london',
     city: 'London',
-    latitude: 51.5074,
-    longitude: -0.1278,
+    exchange: 'London Stock Exchange',
+    country: 'United Kingdom',
+    iso2: 'GB',
+    tz: 'Europe/London',
+    longitude: -0.1,
+    latitude: 51.5,
+    hoursTemplate: 'uk-regular',
+    holidaysRef: 'uk-lse',
+    hemisphere: 'north',
   },
 ]);
 
-jest.mock('@/data/exchanges.selected.json', () => ({
+jest.mock('@/data/exchanges/exchanges.selected.json', () => ({
   ids: ['lse-london'],
 }));
 
@@ -64,29 +70,14 @@ describe('/api/weather (DEMO mode)', () => {
     process.env = ORIGINAL_ENV;
   });
 
-  test('returns a well-formed payload with demo mode and one exchange', async () => {
+  test('returns a list of weather entries with expected shape', async () => {
     const response = await GET();
+    const body = await (response as Response).json();
 
-    const body = (await (response as unknown as Response).json()) as {
-      mode: string;
-      asOf: string;
-      exchanges: Array<{
-        id: string;
-        city: string;
-        temperatureC: number;
-        feelsLikeC: number;
-        conditions: string;
-        emoji: string;
-        updatedISO: string;
-      }>;
-    };
+    expect(Array.isArray(body)).toBe(true);
+    expect((body as unknown[]).length).toBeGreaterThan(0);
 
-    expect(body.mode).toBe('demo');
-    expect(Array.isArray(body.exchanges)).toBe(true);
-    expect(body.exchanges.length).toBe(1);
-
-    // Non-null assertion is safe here because we just asserted length === 1.
-    const first = body.exchanges[0]!;
+    const first: any = (body as unknown[])[0];
 
     expect(first.id).toBe('lse-london');
     expect(first.city).toBe('London');

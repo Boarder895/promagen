@@ -1,12 +1,10 @@
 // frontend/src/lib/exchange-order.ts
 // Exchange ordering + rail split (strict, no 'any', SSR-safe)
 
-import RAW_EXCHANGES, {
-  type Exchange as RawExchange,
-} from "@/data/exchanges";
-import EXCHANGES_SELECTED_RAW from "@/data/exchanges.selected.json";
-import EXCHANGES_CATALOG_RAW from "@/data/exchanges.catalog.json";
-import type { Exchange as UiExchange } from "@/lib/exchanges";
+import RAW_EXCHANGES, { type Exchange as RawExchange } from '@/data/exchanges';
+import EXCHANGES_SELECTED_RAW from '@/data/exchanges/exchanges.selected.json';
+import EXCHANGES_CATALOG_RAW from '@/data/exchanges/exchanges.catalog.json';
+import type { Exchange as UiExchange } from '@/lib/exchanges';
 
 /**
  * Public shape used by the homepage rails.
@@ -31,7 +29,7 @@ type CatalogRow = {
  * Convert a loose value into a finite number, or fall back.
  */
 function toFinite(value: unknown, fallback = 0): number {
-  const n = typeof value === "number" ? value : Number(value);
+  const n = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
 
@@ -40,20 +38,14 @@ function toFinite(value: unknown, fallback = 0): number {
  * Ignores invalid and empty entries.
  */
 function getSelectedIds(raw: unknown): string[] {
-  if (
-    !raw ||
-    typeof raw !== "object" ||
-    !("ids" in (raw as Record<string, unknown>))
-  ) {
+  if (!raw || typeof raw !== 'object' || !('ids' in (raw as Record<string, unknown>))) {
     return [];
   }
 
   const ids = (raw as SelectedJson).ids;
   if (!Array.isArray(ids)) return [];
 
-  return ids
-    .map((id) => String(id ?? "").trim())
-    .filter((id) => id.length > 0);
+  return ids.map((id) => String(id ?? '').trim()).filter((id) => id.length > 0);
 }
 
 /**
@@ -61,15 +53,13 @@ function getSelectedIds(raw: unknown): string[] {
  * We treat this as the single source of truth for co-ordinates.
  */
 function buildLongitudeIndex(): Map<string, number> {
-  const rows = Array.isArray(EXCHANGES_CATALOG_RAW)
-    ? (EXCHANGES_CATALOG_RAW as unknown[])
-    : [];
+  const rows = Array.isArray(EXCHANGES_CATALOG_RAW) ? (EXCHANGES_CATALOG_RAW as unknown[]) : [];
 
   const map = new Map<string, number>();
 
   for (const row of rows) {
     const entry = row as CatalogRow;
-    const id = String(entry.id ?? "").trim();
+    const id = String(entry.id ?? '').trim();
     if (!id || map.has(id)) continue;
 
     map.set(id, toFinite(entry.longitude, 0));
@@ -93,9 +83,7 @@ function ensureLongitudeIndex(): Map<string, number> {
 function longitudeForId(id: string, fallback = 0): number {
   const index = ensureLongitudeIndex();
   const value = index.get(id);
-  return typeof value === "number" && Number.isFinite(value)
-    ? value
-    : fallback;
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
 /**
@@ -103,25 +91,24 @@ function longitudeForId(id: string, fallback = 0): number {
  * We only fill the required fields; the rest stay optional on UiExchange.
  */
 function mapRawToUi(raw: RawExchange): Exchange {
-  const id = String(raw.id ?? "").trim();
+  const id = String(raw.id ?? '').trim();
 
-  const nameSource =
-    (raw as { name?: string }).name ??
-    (raw.exchange as string | undefined) ??
-    id;
+  const nameSource = (raw as { name?: string }).name ?? (raw.exchange as string | undefined) ?? id;
 
   const name = String(nameSource).trim();
 
-  const country = String(raw.country ?? "").trim();
-  const countryCode = String(raw.iso2 ?? "").trim().toUpperCase();
+  const country = String(raw.country ?? '').trim();
+  const countryCode = String(raw.iso2 ?? '')
+    .trim()
+    .toUpperCase();
   const city = raw.city ? String(raw.city).trim() : undefined;
-  const tz = String(raw.tz ?? "").trim();
+  const tz = String(raw.tz ?? '').trim();
 
   // Prefer a numeric longitude on the raw record if present, but fall back
   // to the catalog index so we always have a stable, finite value.
   const rawLongitude = (raw as { longitude?: unknown }).longitude;
   const longitude =
-    typeof rawLongitude === "number" && Number.isFinite(rawLongitude)
+    typeof rawLongitude === 'number' && Number.isFinite(rawLongitude)
       ? rawLongitude
       : longitudeForId(id, 0);
 
@@ -143,14 +130,12 @@ function mapRawToUi(raw: RawExchange): Exchange {
  * Duplicate ids are ignored after the first occurrence.
  */
 function buildExchangeIndex(): Map<string, Exchange> {
-  const list = Array.isArray(RAW_EXCHANGES)
-    ? (RAW_EXCHANGES as unknown as RawExchange[])
-    : [];
+  const list = Array.isArray(RAW_EXCHANGES) ? (RAW_EXCHANGES as unknown as RawExchange[]) : [];
 
   const map = new Map<string, Exchange>();
 
   for (const raw of list) {
-    const id = String(raw.id ?? "").trim();
+    const id = String(raw.id ?? '').trim();
     if (!id || map.has(id)) continue;
 
     map.set(id, mapRawToUi(raw));
@@ -181,31 +166,28 @@ function loadSelectedExchanges(): Exchange[] {
       // This uses safe defaults and a zero longitude so ordering still works.
       const placeholder = mapRawToUi({
         id,
-        city: "",
+        city: '',
         exchange: id,
-        country: "",
-        iso2: "",
-        tz: "Etc/UTC",
+        country: '',
+        iso2: '',
+        tz: 'Etc/UTC',
         longitude: 0,
         latitude: 0,
-        hoursTemplate: "",
-        holidaysRef: "",
-        hemisphere: "",
+        hoursTemplate: '',
+        holidaysRef: '',
+        hemisphere: '',
       } as unknown as RawExchange);
 
       result.push(placeholder);
     }
   }
 
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== 'production') {
     const missing = selectedIds.filter((value) => !byId.has(value));
     if (missing.length) {
       // Dev-only insight so you can keep the config honest.
       // This is intentionally noisy only in development.
-      console.warn(
-        "[exchange-order] Selected ids missing from data/exchanges:",
-        missing,
-      );
+      console.warn('[exchange-order] Selected ids missing from data/exchanges:', missing);
     }
   }
 
@@ -268,12 +250,8 @@ export type ExchangeIds = { ids: string[] } | string[];
  * Split a list of exchange ids into left/right "rails" purely by position.
  * This keeps tests loosely coupled to the full Exchange shape.
  */
-export function splitIds(
-  exchanges: ExchangeIds,
-): { left: ExchangeRef[]; right: ExchangeRef[] } {
-  const ids = Array.isArray(exchanges)
-    ? exchanges.slice()
-    : (exchanges?.ids ?? []).slice();
+export function splitIds(exchanges: ExchangeIds): { left: ExchangeRef[]; right: ExchangeRef[] } {
+  const ids = Array.isArray(exchanges) ? exchanges.slice() : (exchanges?.ids ?? []).slice();
 
   const half = Math.ceil(ids.length / 2);
 

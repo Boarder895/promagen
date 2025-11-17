@@ -1,38 +1,35 @@
-import React from "react";
-import type { Metadata } from "next";
+// src/app/page.tsx
 
-import ProvidersTable from "@/components/providers/providers-table";
-import { getProviders } from "@/lib/providers/api";
-import { getRailsForHomepage, type Exchange } from "@/lib/exchange-order";
-import { flag } from "@/lib/flags";
-import RibbonPanel from "@/components/ribbon/ribbon-panel";
-import {
-  DEMO_EXCHANGE_WEATHER,
-  type ExchangeWeather,
-} from "@/lib/weather/exchange-weather";
-import { resolveFeelsLike, resolveWeatherIcon } from "@/lib/weather/weather";
+import React from 'react';
+import type { Metadata } from 'next';
+
+import ProvidersTable from '@/components/providers/providers-table';
+import { getProviders } from '@/lib/providers/api';
+import { getRailsForHomepage, type Exchange } from '@/lib/exchange-order';
+import { flag } from '@/lib/flags';
+import RibbonPanel from '@/components/ribbon/ribbon-panel';
+import { DEMO_EXCHANGE_WEATHER, type ExchangeWeather } from '@/lib/weather/exchange-weather';
+import { resolveFeelsLike, resolveWeatherIcon } from '@/lib/weather/weather';
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Route metadata (SEO/OG/Twitter/Canonical)
 // ───────────────────────────────────────────────────────────────────────────────
 export const metadata: Metadata = {
-  title: "Promagen — Calm, data-rich market and AI overview",
+  title: 'Promagen — Calm, data-rich market and AI overview',
   description:
-    "Promagen’s home: east–west exchange rails, an AI providers leaderboard, and a focused Finance Ribbon. Calm, fast, and accessible.",
-  alternates: { canonical: "/" },
+    'Promagen’s home: east–west exchange rails, an AI providers leaderboard, and a focused Finance Ribbon. Calm, fast, and accessible.',
+  alternates: { canonical: '/' },
   openGraph: {
-    title: "Promagen — Calm, data-rich overview",
-    description:
-      "East–west exchanges, AI providers leaderboard, and a focused Finance Ribbon.",
-    url: "https://promagen.example/",
-    siteName: "Promagen",
-    type: "website",
+    title: 'Promagen — Calm, data-rich overview',
+    description: 'East–west exchanges, AI providers leaderboard, and a focused Finance Ribbon.',
+    url: 'https://promagen.example/',
+    siteName: 'Promagen',
+    type: 'website',
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Promagen — Calm, data-rich overview",
-    description:
-      "East–west exchanges, AI providers leaderboard, and a focused Finance Ribbon.",
+    card: 'summary_large_image',
+    title: 'Promagen — Calm, data-rich overview',
+    description: 'East–west exchanges, AI providers leaderboard, and a focused Finance Ribbon.',
   },
 };
 
@@ -56,18 +53,13 @@ export default function HomePage(): JSX.Element {
     const weather = weatherIndex.get(x.id) ?? null;
     const hasWeather = weather !== null;
 
-    const feelsLike =
-      weather !== null
-        ? resolveFeelsLike(weather.tempC, weather.feelsLikeC)
-        : null;
+    const feelsLike = weather !== null ? resolveFeelsLike(weather.tempC, weather.feelsLikeC) : null;
 
     const icon = weather !== null ? resolveWeatherIcon(weather) : null;
 
-    const rawCondition = weather?.condition ?? "";
+    const rawCondition = weather?.condition ?? '';
     const conditionLabel =
-      rawCondition.length > 0
-        ? rawCondition.charAt(0).toUpperCase() + rawCondition.slice(1)
-        : "";
+      rawCondition.length > 0 ? rawCondition.charAt(0).toUpperCase() + rawCondition.slice(1) : '';
 
     const longitudeLabel = x.longitude.toFixed(2);
 
@@ -88,27 +80,20 @@ export default function HomePage(): JSX.Element {
           {hasWeather && (
             <span className="mb-0.5 inline-flex items-center gap-1 leading-none">
               {icon && <span aria-hidden="true">{icon}</span>}
-              {typeof feelsLike === "number" && Number.isFinite(feelsLike) ? (
+              {typeof feelsLike === 'number' && Number.isFinite(feelsLike) ? (
                 <span className="tabular-nums">{Math.round(feelsLike)}°C</span>
               ) : (
-                <span className="tabular-nums">
-                  {Math.round(weather!.tempC)}°C
-                </span>
+                <span className="tabular-nums">{weather ? Math.round(weather.tempC) : '–'}°C</span>
               )}
             </span>
           )}
 
-          <span
-            className="tabular-nums"
-            aria-label={`Longitude ${longitudeLabel} degrees`}
-          >
+          <span className="tabular-nums" aria-label={`Longitude ${longitudeLabel} degrees`}>
             {longitudeLabel}°
           </span>
 
           {hasWeather && conditionLabel && (
-            <span className="text-[11px] leading-tight text-slate-400">
-              {conditionLabel}
-            </span>
+            <span className="text-[11px] leading-tight text-slate-400">{conditionLabel}</span>
           )}
         </span>
       </article>
@@ -123,7 +108,7 @@ export default function HomePage(): JSX.Element {
     >
       {/* Finance Ribbon block with pause control, reduced-motion respect, freshness stamp and live region */}
       <div className="mx-auto max-w-7xl px-4 pt-6">
-        <RibbonPanel pairIds={["EURUSD", "GBPUSD", "EURGBP"]} demo />
+        <RibbonPanel pairIds={['EURUSD', 'GBPUSD', 'EURGBP']} demo />
       </div>
 
       {/* Three-column homepage grid */}
@@ -138,13 +123,9 @@ export default function HomePage(): JSX.Element {
           {left.length > 0 ? (
             left.map((x: Exchange) => renderExchangeCard(x))
           ) : (
-            <div
-              className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200"
-              aria-live="polite"
-            >
+            <div className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200" aria-live="polite">
               <p className="text-sm text-slate-600">
-                No eastern exchanges selected yet. Choose markets to populate
-                this rail.
+                No eastern exchanges selected yet. Choose markets to populate this rail.
               </p>
             </div>
           )}
@@ -170,13 +151,9 @@ export default function HomePage(): JSX.Element {
               showRank
             />
           ) : (
-            <div
-              className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200"
-              aria-live="polite"
-            >
+            <div className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200" aria-live="polite">
               <p className="text-sm text-slate-600">
-                No providers to display right now. Adjust your filters or check
-                back shortly.
+                No providers to display right now. Adjust your filters or check back shortly.
               </p>
             </div>
           )}
@@ -192,13 +169,9 @@ export default function HomePage(): JSX.Element {
           {right.length > 0 ? (
             right.map((x: Exchange) => renderExchangeCard(x))
           ) : (
-            <div
-              className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200"
-              aria-live="polite"
-            >
+            <div className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200" aria-live="polite">
               <p className="text-sm text-slate-600">
-                No western exchanges selected yet. Choose markets to populate
-                this rail.
+                No western exchanges selected yet. Choose markets to populate this rail.
               </p>
             </div>
           )}

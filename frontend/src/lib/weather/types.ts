@@ -1,5 +1,14 @@
+// src/lib/weather/types.ts
+
 export type WeatherCode =
-  | 'clear' | 'partly-cloudy' | 'cloudy' | 'rain' | 'snow' | 'storm' | 'fog' | string;
+  | 'clear'
+  | 'partly-cloudy'
+  | 'cloudy'
+  | 'rain'
+  | 'snow'
+  | 'storm'
+  | 'fog'
+  | string;
 
 export interface WeatherSnapshot {
   city: string;
@@ -9,6 +18,3 @@ export interface WeatherSnapshot {
   observedISO: string | null;
   stale: boolean;
 }
-
-
-

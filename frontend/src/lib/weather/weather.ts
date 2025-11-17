@@ -68,9 +68,7 @@ export const DEFAULT_WEATHER_REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
  * This keeps tests simple: you can assert override behaviour by setting
  * iconOverride and never touching the core mapping.
  */
-export function resolveWeatherIcon(
-  entry: Pick<ExchangeWeather, 'emoji' | 'iconOverride'>,
-): string {
+export function resolveWeatherIcon(entry: Pick<ExchangeWeather, 'emoji' | 'iconOverride'>): string {
   if (entry.iconOverride && entry.iconOverride.trim().length > 0) {
     return entry.iconOverride;
   }
@@ -85,10 +83,7 @@ export function resolveWeatherIcon(
  * tempC. This guarantees a numeric value without forcing the caller to
  * duplicate the safety checks.
  */
-export function resolveFeelsLike(
-  tempC: number,
-  feelsLikeC: number | undefined,
-): number {
+export function resolveFeelsLike(tempC: number, feelsLikeC: number | undefined): number {
   if (typeof feelsLikeC === 'number' && Number.isFinite(feelsLikeC)) {
     return feelsLikeC;
   }

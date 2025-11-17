@@ -1,20 +1,16 @@
 // frontend/src/__tests__/exchange-order.test.ts
 // Ensures homepage exchange ordering and rail split remain stable.
 
-import {
-  getHomepageExchanges,
-  getRailsForHomepage,
-  splitIds,
-} from "@/lib/exchange-order";
-import type { Exchange } from "@/lib/exchange-order";
-import SELECTED_RAW from "@/data/exchanges.selected.json";
-import CATALOG_RAW from "@/data/exchanges.catalog.json";
+import { getHomepageExchanges, getRailsForHomepage, splitIds } from '@/lib/exchange-order';
+import type { Exchange } from '@/lib/exchange-order';
+import SELECTED_RAW from '@/data/exchanges/exchanges.selected.json';
+import CATALOG_RAW from '@/data/exchanges/exchanges.catalog.json';
 
 type SelectedJson = { ids: string[] };
 
 function getSelectedIds(): string[] {
   const raw = SELECTED_RAW as SelectedJson | unknown;
-  if (!raw || typeof raw !== "object" || !("ids" in raw)) return [];
+  if (!raw || typeof raw !== 'object' || !('ids' in raw)) return [];
   const ids = (raw as SelectedJson).ids;
   return Array.isArray(ids) ? ids.slice() : [];
 }
@@ -25,7 +21,7 @@ type CatalogEntry = {
 };
 
 function toFinite(value: unknown, fallback = 0): number {
-  const n = typeof value === "number" ? value : Number(value);
+  const n = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
 
@@ -35,8 +31,7 @@ function buildLongitudeIndex(): Map<string, number> {
   for (const row of rows) {
     const entry = row as CatalogEntry;
     const rawId = entry.id;
-    const id =
-      typeof rawId === "string" ? rawId.trim() : String(rawId ?? "").trim();
+    const id = typeof rawId === 'string' ? rawId.trim() : String(rawId ?? '').trim();
     if (!id) continue;
     if (!map.has(id)) {
       map.set(id, toFinite(entry.longitude, 0));
@@ -45,23 +40,23 @@ function buildLongitudeIndex(): Map<string, number> {
   return map;
 }
 
-describe("exchange-order – homepage rails", () => {
+describe('exchange-order – homepage rails', () => {
   const EXPECTED_EAST_TO_WEST: string[] = [
-    "nzx-wellington",
-    "asx-sydney",
-    "tse-tokyo",
-    "hkex-hong-kong",
-    "set-bangkok",
-    "nse-mumbai",
-    "dfm-dubai",
-    "moex-moscow",
-    "jse-johannesburg",
-    "lse-london",
-    "b3-sao-paulo",
-    "cboe-chicago",
+    'nzx-wellington',
+    'asx-sydney',
+    'tse-tokyo',
+    'hkex-hong-kong',
+    'set-bangkok',
+    'nse-mumbai',
+    'dfm-dubai',
+    'moex-moscow',
+    'jse-johannesburg',
+    'lse-london',
+    'b3-sao-paulo',
+    'cboe-chicago',
   ];
 
-  it("getRailsForHomepage splits the selected exchanges into left/right rails", () => {
+  it('getRailsForHomepage splits the selected exchanges into left/right rails', () => {
     const { left, right } = getRailsForHomepage();
 
     const leftIds = left.map((e: Exchange) => e.id);
@@ -71,7 +66,7 @@ describe("exchange-order – homepage rails", () => {
     expect(rightIds).toEqual(EXPECTED_EAST_TO_WEST.slice(6).reverse());
   });
 
-  it("getHomepageExchanges returns all selected ids ordered east→west", () => {
+  it('getHomepageExchanges returns all selected ids ordered east→west', () => {
     const selectedIds = getSelectedIds();
     const exchanges = getHomepageExchanges();
 
@@ -88,7 +83,7 @@ describe("exchange-order – homepage rails", () => {
     expect(longs).toEqual(sorted);
   });
 
-  it("splitIds mirrors the rail split logic for raw id arrays", () => {
+  it('splitIds mirrors the rail split logic for raw id arrays', () => {
     const selectedIds = getSelectedIds();
     const { left, right } = splitIds(selectedIds);
 

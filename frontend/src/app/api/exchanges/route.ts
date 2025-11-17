@@ -1,49 +1,81 @@
 // src/app/api/exchanges/route.ts
-// Uses selected exchanges as the truth set. Shape matches tests.
 
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import exchangesSelected from "@/data/exchanges.selected.json"; // JSON file you marked as SoT
+import { NextResponse } from 'next/server';
+import exchangesSelected from '@/data/exchanges/exchanges.selected.json';
+import exchangesCatalog from '@/data/exchanges/exchanges.catalog.json';
 
-type Exchange = {
-  id: string;
-  exchange?: string;
-  city?: string;
-  tz?: string;
-  latitude?: number;
-  longitude?: number;
-  hoursTemplate?: string | null;
-  workdays?: string | null;
-  holidaysRef?: string | null;
+type ExchangesSelectedJson = {
+  ids?: string[];
 };
 
-type Payload = { ok: true; data: { items: Exchange[] } };
-type ApiErr = { ok: false; error: string };
+type ExchangeCatalogRow = {
+  id: string;
+  city: string;
+  exchange: string;
+  country: string;
+  iso2: string;
+  tz: string;
+  longitude: number;
+  latitude: number;
+  hemisphere?: string;
+  hoursTemplate?: string;
+  holidaysRef?: string;
+};
 
-function asArray<T>(v: unknown): T[] {
-  return Array.isArray(v) ? (v as T[]) : [];
+type ExchangeSummary = {
+  id: string;
+  city: string;
+  exchange: string;
+  country: string;
+  iso2: string;
+  tz: string;
+  longitude: number;
+  latitude: number;
+  hemisphere?: string;
+};
+
+const selectedIds: string[] = (exchangesSelected as ExchangesSelectedJson).ids ?? [];
+const CATALOG = exchangesCatalog as ExchangeCatalogRow[];
+
+/**
+ * Map the selected id list to full exchange objects, sorted by longitude
+ * from east → west (smallest → largest).
+ */
+function getSelectedExchanges(): ExchangeSummary[] {
+  const byId = new Map<string, ExchangeCatalogRow>(CATALOG.map((row) => [row.id, row]));
+
+  const rows: ExchangeSummary[] = [];
+
+  for (const id of selectedIds) {
+    const src = byId.get(id);
+    if (!src) continue;
+
+    rows.push({
+      id: src.id,
+      city: src.city,
+      exchange: src.exchange,
+      country: src.country,
+      iso2: src.iso2,
+      tz: src.tz,
+      longitude: src.longitude,
+      latitude: src.latitude,
+      hemisphere: src.hemisphere,
+    });
+  }
+
+  rows.sort((a, b) => a.longitude - b.longitude);
+
+  return rows;
 }
 
-export async function GET(_req?: NextRequest) {
-  try {
-    const items = asArray<Exchange>(exchangesSelected);
-    if (!items.length) {
-      return NextResponse.json({ ok: false, error: "No exchanges" } as ApiErr, {
-        status: 503,
-        headers: { "cache-control": "no-store" },
-      });
-    }
-    return NextResponse.json({ ok: true, data: { items } } as Payload, {
-      status: 200,
-      headers: {
-        "cache-control": "public, s-maxage=120, stale-while-revalidate=600",
-        "x-promagen-api": "exchanges:v1",
-      },
-    });
-  } catch {
-    return NextResponse.json(
-      { ok: false, error: "Failed to load exchanges" } as ApiErr,
-      { status: 500, headers: { "cache-control": "no-store" } },
-    );
-  }
+export async function GET(): Promise<Response> {
+  const asOf = new Date().toISOString();
+  const exchanges = getSelectedExchanges();
+
+  return NextResponse.json({
+    ok: true,
+    asOf,
+    count: exchanges.length,
+    exchanges,
+  });
 }

@@ -24,16 +24,14 @@ const WEATHER_BY_EXCHANGE = new Map<string, ExchangeWeather>(
  * - null otherwise (no throwing on unknown ids – callers stay simple)
  */
 export function getExchangeWeather(exchangeId: string): ExchangeWeather | null {
-  if (!exchangeId) {
-    return null;
-  }
-
   return WEATHER_BY_EXCHANGE.get(exchangeId) ?? null;
 }
 
 /**
- * Convenience helper for tests or debugging – returns all demo entries
- * in a stable order.
+ * Convenience: list all demo exchange weather entries.
+ *
+ * This always returns a shallow copy so callers cannot accidentally
+ * mutate the underlying dataset.
  */
 export function listExchangeWeather(): ExchangeWeather[] {
   return DEMO_EXCHANGE_WEATHER.slice();

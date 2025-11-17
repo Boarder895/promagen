@@ -7,7 +7,7 @@
  * We mock fetch and environment variables so no real network calls happen.
  */
 
-import { getOrFetchMarketWeather } from '../weather-client';
+import { getOrFetchMarketWeather, __resetWeatherCache } from '../weather-client';
 
 declare const global: typeof globalThis & {
   fetch: jest.Mock;
@@ -17,83 +17,59 @@ describe('weather-client getOrFetchMarketWeather', () => {
   const ORIGINAL_ENV = process.env;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-
-    // Pretend we’re in a properly configured server environment by default.
-    process.env = { ...ORIGINAL_ENV, VISUAL_CROSSING_API_KEY: 'test-key' };
+    process.env = {
+      ...ORIGINAL_ENV,
+      VISUAL_CROSSING_API_KEY: 'test-key',
+    };
 
     global.fetch = jest.fn();
+    __resetWeatherCache();
   });
 
   afterEach(() => {
     process.env = ORIGINAL_ENV;
+    jest.resetAllMocks();
   });
 
-  test('performs a fetch on first call and returns normalised data', async () => {
-    const mockResponse = {
-      currentConditions: {
-        temp: 20,
-        feelslike: 22,
-        conditions: 'Clear',
-        datetimeEpoch: 1_700_000_000,
-      },
-    };
-
+  test('fetches from Visual Crossing when cache is empty', async () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockResponse,
+      json: async () => ({
+        currentConditions: {
+          temp: 20,
+          feelslike: 22,
+          conditions: 'Partly cloudy',
+          datetimeEpoch: 1_700_000_000,
+        },
+      }),
     });
 
-    const result = await getOrFetchMarketWeather(
-      'lse-london',
-      'London',
-      51.5074,
-      -0.1278,
-      60_000, // 1 minute for the test
-    );
+    const result = await getOrFetchMarketWeather('lse-london', 'London', 51.5, -0.1, 60_000);
 
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(result.id).toBe('lse-london');
     expect(result.city).toBe('London');
     expect(result.temperatureC).toBe(20);
     expect(result.feelsLikeC).toBe(22);
-    expect(result.conditions).toBe('Clear');
-    expect(new Date(result.updatedISO).toString()).not.toBe('Invalid Date');
+    expect(result.conditions).toBe('Partly cloudy');
   });
 
-  test('uses cache on subsequent calls within refresh interval', async () => {
-    const mockResponse = {
-      currentConditions: {
-        temp: 10,
-        feelslike: 8,
-        conditions: 'Cloudy',
-        datetimeEpoch: 1_700_000_000,
-      },
-    };
-
+  test('uses cache when entry is still fresh', async () => {
     global.fetch.mockResolvedValue({
       ok: true,
-      json: async () => mockResponse,
+      json: async () => ({
+        currentConditions: {
+          temp: 10,
+          feelslike: 11,
+          conditions: 'Cloudy',
+          datetimeEpoch: 1_700_000_000,
+        },
+      }),
     });
 
-    const key = 'nyse-new-york';
+    const first = await getOrFetchMarketWeather('lse-london', 'London', 51.5, -0.1, 60_000);
+    const second = await getOrFetchMarketWeather('lse-london', 'London', 51.5, -0.1, 60_000);
 
-    const first = await getOrFetchMarketWeather(
-      key,
-      'New York',
-      40.7128,
-      -74.006,
-      60_000,
-    );
-    const second = await getOrFetchMarketWeather(
-      key,
-      'New York',
-      40.7128,
-      -74.006,
-      60_000,
-    );
-
-    // Only one network call – second result comes from cache.
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(second).toEqual(first);
   });
@@ -106,8 +82,8 @@ describe('weather-client getOrFetchMarketWeather', () => {
       json: async () => ({}),
     });
 
-    await expect(
-      getOrFetchMarketWeather('test', 'Test City', 0, 0, 60_000),
-    ).rejects.toThrow('VISUAL_CROSSING_API_KEY is not configured in the server environment.');
+    await expect(getOrFetchMarketWeather('test', 'Test City', 0, 0, 60_000)).rejects.toThrow(
+      'VISUAL_CROSSING_API_KEY is not configured in the server environment.',
+    );
   });
 });

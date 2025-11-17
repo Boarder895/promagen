@@ -1,7 +1,7 @@
-// World clocks API — strict types, no 'any', UTF-8 safe, CORS + caching set deliberately.
+// World clocks API — strict types, no 'any', UTF-8 safe, CORS + deliberate caching.
 
 import { NextResponse } from 'next/server';
-import exchangesJson from '@/data/exchanges.catalog.json';
+import exchangesJson from '@/data/exchanges/exchanges.catalog.json';
 
 type ClockItem = {
   id: string;
@@ -18,7 +18,7 @@ type ExchangeRow = {
   iso2: string;
 };
 
-// Narrow unknown JSON to the shape we actually use
+// Narrow unknown JSON to the shape we actually use.
 function isExchangeRow(u: unknown): u is ExchangeRow {
   if (typeof u !== 'object' || u === null) return false;
   const r = u as Record<string, unknown>;
@@ -30,12 +30,14 @@ function isExchangeRow(u: unknown): u is ExchangeRow {
   );
 }
 
-// Convert imported JSON into a typed array without using 'any'
+// Convert imported JSON into a typed array without using 'any'.
 function getExchanges(): ExchangeRow[] {
   const raw = exchangesJson as unknown;
+
   if (Array.isArray(raw)) {
     return raw.filter(isExchangeRow);
   }
+
   // Some catalog builds may export an object with a property (e.g., { exchanges: [...] })
   if (typeof raw === 'object' && raw !== null) {
     const maybe = (raw as Record<string, unknown>).exchanges;
@@ -43,12 +45,13 @@ function getExchanges(): ExchangeRow[] {
       return maybe.filter(isExchangeRow);
     }
   }
+
   return [];
 }
 
 export const dynamic = 'force-dynamic';
 
-function headers() {
+function headers(): Record<string, string> {
   return {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 's-maxage=60, stale-while-revalidate=300',
@@ -57,15 +60,13 @@ function headers() {
   };
 }
 
-export async function GET() {
+export async function GET(): Promise<Response> {
   const now = new Date();
   const rows = getExchanges();
 
-  // Cap payload for sanity and determinism in tests
+  // Cap payload for sanity and determinism in tests.
   const clocks: ClockItem[] = rows.slice(0, 64).map((e) => {
-    const localISO = new Date(
-      now.toLocaleString('en-GB', { timeZone: e.tz })
-    ).toISOString();
+    const localISO = new Date(now.toLocaleString('en-GB', { timeZone: e.tz })).toISOString();
 
     return {
       id: e.id,
@@ -78,9 +79,12 @@ export async function GET() {
 
   const payload = { ok: true, asOf: now.toISOString(), clocks };
 
-  return new NextResponse(JSON.stringify(payload), { status: 200, headers: headers() });
+  return new NextResponse(JSON.stringify(payload), {
+    status: 200,
+    headers: headers(),
+  });
 }
 
-export async function OPTIONS() {
+export async function OPTIONS(): Promise<Response> {
   return new NextResponse(null, { status: 204, headers: headers() });
 }

@@ -14,138 +14,61 @@ interface VisualCrossingCurrentConditions {
   temp?: number;
   feelslike?: number;
   conditions?: string;
-  icon?: string;
   datetimeEpoch?: number;
 }
 
-interface VisualCrossingTimelineResponse {
-  resolvedAddress?: string;
+interface VisualCrossingResponse {
+  address?: string;
   timezone?: string;
   currentConditions?: VisualCrossingCurrentConditions;
 }
 
-/**
- * Simple in-memory cache keyed by an arbitrary string, typically the
- * exchange id ("lse-london" etc.).
- *
- * This is process-local and is mainly to enforce "no more than ~2 calls
- * per day per exchange" in dev and on a single Node process. When you
- * deploy Promagen to serverless, you will want a more durable cache
- * (KV / Redis / ISR), but this is a clean starting point.
- */
-type CacheKey = string;
-
-type CachedWeather = {
-  weather: MarketWeather;
-  fetchedAt: number;
+type CacheEntry = {
+  value: MarketWeather;
+  expiresAt: number;
 };
 
-const cache = new Map<CacheKey, CachedWeather>();
+const CACHE = new Map<string, CacheEntry>();
 
-function assertServerSide(): void {
-  if (typeof window !== 'undefined') {
-    // Hard fail rather than silently leaking the key into the client bundle.
-    throw new Error(
-      'weather-client must only be used server-side (API route or server component).',
-    );
-  }
+function cacheKeyFor(id: string): string {
+  return `weather:${id}`;
 }
 
 /**
- * Fetch weather for an exchange, using a simple time-based cache.
- *
- * - key: stable id for the cache (e.g. exchange id)
- * - city: human city name (for display)
- * - latitude / longitude: taken from exchanges.catalog.json
- * - refreshIntervalMs: defaults to 30 minutes; you can tune this later
- *   for paid tiers if needed.
+ * Fetch fresh weather for an exchange from Visual Crossing.
  */
-export async function getOrFetchMarketWeather(
-  key: string,
-  city: string,
-  latitude: number,
-  longitude: number,
-  refreshIntervalMs: number = DEFAULT_WEATHER_REFRESH_INTERVAL_MS,
-): Promise<MarketWeather> {
-  assertServerSide();
-
-  const now = Date.now();
-  const cached = cache.get(key);
-
-  if (cached && now - cached.fetchedAt < refreshIntervalMs) {
-    return cached.weather;
-  }
-
-  const fresh = await fetchVisualCrossingWeather(key, city, latitude, longitude);
-
-  cache.set(key, {
-    weather: fresh,
-    fetchedAt: now,
-  });
-
-  return fresh;
-}
-
-/**
- * Low-level Visual Crossing call.
- *
- * This does a single Timeline query for "now", metric units, JSON.
- * It assumes you have VISUAL_CROSSING_API_KEY set in the server env
- * (never client-side).
- */
-async function fetchVisualCrossingWeather(
+async function fetchLiveWeather(
   id: string,
   city: string,
   latitude: number,
   longitude: number,
 ): Promise<MarketWeather> {
   const apiKey = process.env.VISUAL_CROSSING_API_KEY;
-
   if (!apiKey) {
-    throw new Error(
-      'VISUAL_CROSSING_API_KEY is not configured in the server environment.',
-    );
+    throw new Error('VISUAL_CROSSING_API_KEY is not configured in the server environment.');
   }
 
-  const searchParams = new URLSearchParams({
-    key: apiKey,
-    unitGroup: 'metric',
-    include: 'current',
-    elements: 'temp,feelslike,conditions,icon,datetimeEpoch',
-    contentType: 'json',
-  });
+  const url = new URL(
+    `${encodeURIComponent(latitude)},${encodeURIComponent(longitude)}`,
+    VISUAL_CROSSING_BASE_URL,
+  );
 
-  const url = `${VISUAL_CROSSING_BASE_URL}/${latitude},${longitude}?${searchParams.toString()}`;
+  url.searchParams.set('unitGroup', 'metric');
+  url.searchParams.set('include', 'current');
+  url.searchParams.set('key', apiKey);
+  url.searchParams.set('contentType', 'json');
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-    // The homepage really doesn’t need to hang on weather.
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    // We surface a clear, typed error here so the caller can decide whether
-    // to fall back to demo data or a generic "no weather" state.
-    throw new Error(
-      `Visual Crossing request failed with status ${response.status}`,
-    );
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    throw new Error(`Visual Crossing request failed with status ${res.status} ${res.statusText}`);
   }
 
-  const json = (await response.json()) as VisualCrossingTimelineResponse;
+  const json = (await res.json()) as VisualCrossingResponse;
+
   const current = json.currentConditions ?? {};
-
-  const temperatureC =
-    typeof current.temp === 'number' ? current.temp : Number.NaN;
-
-  const feelsLikeC =
-    typeof current.feelslike === 'number' ? current.feelslike : Number.NaN;
-
-  const conditions = typeof current.conditions === 'string'
-    ? current.conditions
-    : 'Unknown';
+  const temperatureC = typeof current.temp === 'number' ? current.temp : 0;
+  const feelsLikeC = typeof current.feelslike === 'number' ? current.feelslike : temperatureC;
+  const conditions = current.conditions ?? 'Unknown';
 
   const updatedISO =
     typeof current.datetimeEpoch === 'number'
@@ -160,4 +83,42 @@ async function fetchVisualCrossingWeather(
     conditions,
     updatedISO,
   };
+}
+
+/**
+ * Get (and lazily cache) MarketWeather for an exchange.
+ *
+ * - If we have a fresh cache entry, return that.
+ * - Otherwise, fetch from Visual Crossing and populate the cache.
+ */
+export async function getOrFetchMarketWeather(
+  id: string,
+  city: string,
+  latitude: number,
+  longitude: number,
+  ttlMs: number = DEFAULT_WEATHER_REFRESH_INTERVAL_MS,
+): Promise<MarketWeather> {
+  const key = cacheKeyFor(id);
+  const now = Date.now();
+
+  const existing = CACHE.get(key);
+  if (existing && existing.expiresAt > now) {
+    return existing.value;
+  }
+
+  const fresh = await fetchLiveWeather(id, city, latitude, longitude);
+
+  CACHE.set(key, {
+    value: fresh,
+    expiresAt: now + ttlMs,
+  });
+
+  return fresh;
+}
+
+/**
+ * For tests: clear the internal cache.
+ */
+export function __resetWeatherCache(): void {
+  CACHE.clear();
 }
