@@ -35,6 +35,8 @@ export const metadata: Metadata = {
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Page (server component)
+// NOTE: HomepageGrid owns the <main>, gradient, and overall layout.
+//       This file focuses on data selection + composing the three rails.
 // ───────────────────────────────────────────────────────────────────────────────
 
 export default function HomePage(): JSX.Element {
@@ -105,6 +107,7 @@ export default function HomePage(): JSX.Element {
       left={leftRail}
       centre={centreRail}
       right={rightRail}
+      // These IDs drive the Finance Ribbon (via HomepageGrid → FinanceRibbon).
       pairIds={['EURUSD', 'GBPUSD', 'EURGBP']}
       demo
     />
