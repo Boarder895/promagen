@@ -56,16 +56,16 @@ export default function HomepageGrid({
       aria-label={mainLabel}
       className="min-h-dvh bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
     >
-      {/* Finance Ribbon block with pause control, reduced-motion respect, freshness stamp and live region */}
+      {/* Finance Ribbon block */}
       <div
         className={`
           mx-auto
           w-full
-          max-w-[1440px]
-          2xl:max-w-[1600px]
           ${RIBBON_CONTAINER_MAX_WIDTH}
           ${RIBBON_HORIZONTAL_PADDING}
           ${RIBBON_TOP_PADDING}
+          max-w-[1600px]
+          2xl:max-w-[1760px]
         `}
       >
         <RibbonPanel pairIds={pairIds} demo={demo} />
@@ -76,14 +76,14 @@ export default function HomepageGrid({
         className={`
           mx-auto
           w-full
-          max-w-[1440px]
-          2xl:max-w-[1600px]
           ${RIBBON_CONTAINER_MAX_WIDTH}
           ${RIBBON_HORIZONTAL_PADDING}
           ${RIBBON_GRID_VERTICAL_PADDING}
           grid
           ${RIBBON_GRID_COLUMNS}
           ${RIBBON_GRID_GAP}
+          max-w-[1600px]
+          2xl:max-w-[1760px]
         `}
       >
         {left}
