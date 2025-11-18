@@ -1,4 +1,4 @@
-﻿/* Promagen Global Styles — single source of truth
+﻿﻿/* Promagen Global Styles — single source of truth
    - Tailwind import (v4-friendly)
    - Light, calm gradient background
    - Reduced motion hook
@@ -6,20 +6,26 @@
    - Card utility + tabular numerals
    - Ribbon shimmer utility
 */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ------------------------------ Base tokens ------------------------------ */
 :root {
-  /* Light, subtle gradient – roughly matching the main bg */
+  /* Base tokens for background + focus */
   --bg-a: #f9fafb; /* slate-50 */
   --bg-b: #e5e7eb; /* slate-200 */
+
+  /* Warm east → cool west palette for the main canvas */
+  --bg-east: #fef3c7; /* amber-100 */
+  --bg-mid: #e5e7eb; /* slate-200 */
+  --bg-west: #0f172a; /* slate-900 */
+
   --focus: #38bdf8; /* sky-400 */
 }
 
 /* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {
-    scroll-behavior: auto !important;
+    scroll-behaviour: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -34,10 +40,16 @@ body {
 
 body {
   margin: 0;
-  background: linear-gradient(to bottom, var(--bg-a), var(--bg-b));
+  /* Warm east (left) → neutral centre → cool, darker west (right) */
+  background: linear-gradient(115deg, var(--bg-east) 0%, var(--bg-mid) 45%, var(--bg-west) 100%);
   color: #020617; /* slate-950 */
   color-scheme: light;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   text-rendering: optimizeLegibility;
 }
 
@@ -69,7 +81,7 @@ a:hover {
 /* --------------------------- Tabular numerals ---------------------------- */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
+  font-feature-settings: 'tnum';
 }
 
 /* ------------------------ Ribbon shimmer (calm) -------------------------- */

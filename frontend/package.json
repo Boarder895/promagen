@@ -27,7 +27,8 @@
     "test:lh": "node ./scripts/run-lighthouse.cjs",
     "test:accept:all": "pnpm run test:accept && pnpm run test:lh",
     "verify:tests": "pwsh -File ./scripts/verify-test-layout.ps1",
-    "pretest:ci": "pwsh -File ./scripts/verify-test-layout.ps1"
+    "pretest:ci": "pwsh -File ./scripts/verify-test-layout.ps1",
+    "validate:data": "node --loader ts-node/esm ./scripts/schema-validate.ts"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,cjs,mjs}": [

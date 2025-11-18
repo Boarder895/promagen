@@ -1,0 +1,146 @@
+[
+  {
+    "id": "eur-usd",
+    "base": "EUR",
+    "quote": "USD",
+    "label": "EUR/USD",
+    "group": "core",
+    "precision": 5
+  },
+  {
+    "id": "gbp-usd",
+    "base": "GBP",
+    "quote": "USD",
+    "label": "GBP/USD",
+    "group": "core",
+    "precision": 5
+  },
+  {
+    "id": "gbp-eur",
+    "base": "GBP",
+    "quote": "EUR",
+    "label": "GBP/EUR",
+    "group": "core",
+    "precision": 5
+  },
+  {
+    "id": "usd-jpy",
+    "base": "USD",
+    "quote": "JPY",
+    "label": "USD/JPY",
+    "group": "core",
+    "precision": 3
+  },
+  {
+    "id": "usd-cny",
+    "base": "USD",
+    "quote": "CNY",
+    "label": "USD/CNY",
+    "group": "core",
+    "precision": 4
+  },
+  {
+    "id": "usd-chf",
+    "base": "USD",
+    "quote": "CHF",
+    "label": "USD/CHF",
+    "group": "major",
+    "precision": 5
+  },
+  {
+    "id": "usd-cad",
+    "base": "USD",
+    "quote": "CAD",
+    "label": "USD/CAD",
+    "group": "major",
+    "precision": 5
+  },
+  {
+    "id": "aud-usd",
+    "base": "AUD",
+    "quote": "USD",
+    "label": "AUD/USD",
+    "group": "major",
+    "precision": 5
+  },
+  {
+    "id": "nzd-usd",
+    "base": "NZD",
+    "quote": "USD",
+    "label": "NZD/USD",
+    "group": "major",
+    "precision": 5
+  },
+  {
+    "id": "eur-gbp",
+    "base": "EUR",
+    "quote": "GBP",
+    "label": "EUR/GBP",
+    "group": "major",
+    "precision": 5
+  },
+  {
+    "id": "eur-jpy",
+    "base": "EUR",
+    "quote": "JPY",
+    "label": "EUR/JPY",
+    "group": "major",
+    "precision": 3
+  },
+  {
+    "id": "gbp-jpy",
+    "base": "GBP",
+    "quote": "JPY",
+    "label": "GBP/JPY",
+    "group": "major",
+    "precision": 3
+  },
+  {
+    "id": "eur-chf",
+    "base": "EUR",
+    "quote": "CHF",
+    "label": "EUR/CHF",
+    "group": "major",
+    "precision": 5
+  },
+  {
+    "id": "eur-cad",
+    "base": "EUR",
+    "quote": "CAD",
+    "label": "EUR/CAD",
+    "group": "major",
+    "precision": 5
+  },
+  {
+    "id": "usd-sgd",
+    "base": "USD",
+    "quote": "SGD",
+    "label": "USD/SGD",
+    "group": "apac",
+    "precision": 5
+  },
+  {
+    "id": "eur-cny",
+    "base": "EUR",
+    "quote": "CNY",
+    "label": "EUR/CNY",
+    "group": "apac",
+    "precision": 4
+  },
+  {
+    "id": "aud-jpy",
+    "base": "AUD",
+    "quote": "JPY",
+    "label": "AUD/JPY",
+    "group": "apac",
+    "precision": 3
+  },
+  {
+    "id": "nzd-jpy",
+    "base": "NZD",
+    "quote": "JPY",
+    "label": "NZD/JPY",
+    "group": "apac",
+    "precision": 3
+  }
+]

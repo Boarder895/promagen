@@ -1,0 +1,89 @@
+{
+  "guest": {
+    "id": "guest",
+    "label": "Guest",
+    "description": "Signed-out visitor with slow data and no saved preferences.",
+    "dataFreshness": {
+      "fx": "6h",
+      "commodities": "6h",
+      "crypto": "6h",
+      "exchanges": "6h"
+    },
+    "ribbon": {
+      "showFullRibbon": true,
+      "showMiniWidgetsInStudio": false
+    },
+    "exchanges": {
+      "alignment": "global-default",
+      "usesUserLocation": false
+    },
+    "studio": {
+      "access": "none",
+      "monthlyPromptLimit": 0,
+      "showPromptCounter": false,
+      "allowOpenInProvider": false
+    },
+    "upgradeHints": {
+      "showOnHomepage": false,
+      "showInStudio": false
+    }
+  },
+  "free": {
+    "id": "free",
+    "label": "Free",
+    "description": "Signed-in free account with limited prompts and standard data refresh.",
+    "dataFreshness": {
+      "fx": "15m",
+      "commodities": "15m",
+      "crypto": "15m",
+      "exchanges": "15m"
+    },
+    "ribbon": {
+      "showFullRibbon": true,
+      "showMiniWidgetsInStudio": false
+    },
+    "exchanges": {
+      "alignment": "global-default",
+      "usesUserLocation": false
+    },
+    "studio": {
+      "access": "full",
+      "monthlyPromptLimit": 30,
+      "showPromptCounter": true,
+      "allowOpenInProvider": true
+    },
+    "upgradeHints": {
+      "showOnHomepage": true,
+      "showInStudio": true
+    }
+  },
+  "pro": {
+    "id": "pro",
+    "label": "Pro",
+    "description": "Paid Promagen Pro plan with faster data, aligned markets and enhanced studio.",
+    "dataFreshness": {
+      "fx": "5m",
+      "commodities": "5m",
+      "crypto": "5m",
+      "exchanges": "5m"
+    },
+    "ribbon": {
+      "showFullRibbon": true,
+      "showMiniWidgetsInStudio": true
+    },
+    "exchanges": {
+      "alignment": "user-location",
+      "usesUserLocation": true
+    },
+    "studio": {
+      "access": "full",
+      "monthlyPromptLimit": null,
+      "showPromptCounter": true,
+      "allowOpenInProvider": true
+    },
+    "upgradeHints": {
+      "showOnHomepage": false,
+      "showInStudio": false
+    }
+  }
+}

@@ -1,15 +1,16 @@
+// src/lib/plan.ts
 import type { Plan } from '@/types/user';
 
 export const FEATURES = {
   fx: {
-    multipleSelections: (plan: Plan) => plan === 'paid',      // choose up to 5 exchange-rate cards
-    hourlyLiveUpdates: (plan: Plan) => plan === 'paid',       // live API (not just demo jitter)
+    multipleSelections: (plan: Plan) => plan === 'paid',
+    hourlyLiveUpdates: (plan: Plan) => plan === 'paid',
   },
   homepage: {
-    extraExchanges: (plan: Plan) => plan === 'paid',          // 6–16 rails selection
+    extraExchanges: (plan: Plan) => plan === 'paid',
   },
   cosmic: {
-    overlays: (plan: Plan) => plan === 'paid',                // show solstices/eclipses layer
+    overlays: (plan: Plan) => plan === 'paid',
   },
 } as const;
 

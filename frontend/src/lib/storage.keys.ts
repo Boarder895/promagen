@@ -7,31 +7,46 @@
 export const KEYS = {
   providers: {
     /** Stores the last visited provider id (string) under schema v1. */
-    lastV1: "promagen.providers.last.v1",
+    lastV1: 'promagen.providers.last.v1',
   },
   ux: {
     /** Stores user's preference to return to the last provider on entry. */
-    returnToLastOptInV1: "promagen.ux.returnToLast.optIn.v1",
+    returnToLastOptInV1: 'promagen.ux.returnToLast.optIn.v1',
+  },
+  user: {
+    /**
+     * Lightweight client-side hint of the current plan ("free" | "paid").
+     * Real source of truth will eventually be your auth/session layer.
+     */
+    planV1: 'promagen.user.plan.v1',
+  },
+  studio: {
+    /**
+     * Prompt-studio finance widget toggles (FX / Commodities / Crypto),
+     * stored as a small versioned JSON blob.
+     */
+    financeWidgetsV1: 'promagen.studio.financeWidgets.v1',
   },
 } as const;
 
 /** Legacy keys retained solely for forward migration. */
 export const LEGACY_LAST_PROVIDER_KEYS = [
-  "promagen.lastProvider",
-  "promagen.lastProviderAt",
+  'promagen.lastProvider',
+  'promagen.lastProviderAt',
 ] as const;
 
 // Tiny SSR-safe helpers
 export function getLocal(key: string): string | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
   try {
     return window.localStorage.getItem(key);
   } catch {
     return null;
   }
 }
+
 export function setLocal(key: string, value: string): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(key, value);
   } catch {
