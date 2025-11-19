@@ -13,22 +13,9 @@ import {
 } from '@/lib/ribbon/ribbon-tokens';
 
 type HomepageGridProps = {
-  /**
-   * Accessible label for the main region.
-   * Defaults to "Promagen home" but can be reused by provider detail layouts.
-   */
   mainLabel?: string;
-  /**
-   * Left-hand rail (eastern exchanges on the homepage).
-   */
   left: React.ReactNode;
-  /**
-   * Centre column (AI providers leaderboard on the homepage).
-   */
   centre: React.ReactNode;
-  /**
-   * Right-hand rail (western exchanges on the homepage).
-   */
   right: React.ReactNode;
   /**
    * FX pairs used by the Finance Ribbon at the top.
@@ -51,21 +38,14 @@ export default function HomepageGrid({
   demo = true,
 }: HomepageGridProps): JSX.Element {
   return (
-    <main
-      role="main"
-      aria-label={mainLabel}
-      className="min-h-dvh bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
-    >
-      {/* Finance Ribbon block */}
+    <main role="main" aria-label={mainLabel} className="min-h-dvh">
+      {/* Finance Ribbon block with pause control, reduced-motion respect, freshness stamp and live region */}
       <div
         className={`
           mx-auto
-          w-full
           ${RIBBON_CONTAINER_MAX_WIDTH}
           ${RIBBON_HORIZONTAL_PADDING}
           ${RIBBON_TOP_PADDING}
-          max-w-[1600px]
-          2xl:max-w-[1760px]
         `}
       >
         <RibbonPanel pairIds={pairIds} demo={demo} />
@@ -75,15 +55,12 @@ export default function HomepageGrid({
       <div
         className={`
           mx-auto
-          w-full
           ${RIBBON_CONTAINER_MAX_WIDTH}
           ${RIBBON_HORIZONTAL_PADDING}
           ${RIBBON_GRID_VERTICAL_PADDING}
           grid
           ${RIBBON_GRID_COLUMNS}
           ${RIBBON_GRID_GAP}
-          max-w-[1600px]
-          2xl:max-w-[1760px]
         `}
       >
         {left}
