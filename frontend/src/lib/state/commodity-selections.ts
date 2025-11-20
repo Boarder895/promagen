@@ -1,33 +1,33 @@
-// src/lib/state/fx-selections.ts
+// src/lib/state/commodity-selections.ts
 // -----------------------------------------------------------------------------
-// LocalStorage-backed state for the user's FX ribbon pair selections.
-// This is intentionally tiny and purely client-side; SSR uses the free defaults.
+// LocalStorage-backed state for the user's commodities ribbon selections.
+// Stored as a simple array of up to 7 CommodityId strings.
 // -----------------------------------------------------------------------------
 
-import type { FxPairId } from '@/types/finance-ribbon';
+import type { CommodityId } from '@/types/finance-ribbon';
 
-const STORAGE_KEY = 'promagen.fxSelections.v2';
-const MAX_PAIRS = 5;
+const STORAGE_KEY = 'promagen.commoditySelections.v1';
+const MAX_COMMODITIES = 7;
 
-function sanitiseIds(ids: FxPairId[]): FxPairId[] {
+function sanitiseIds(ids: CommodityId[]): CommodityId[] {
   const seen = new Set<string>();
-  const result: FxPairId[] = [];
+  const result: CommodityId[] = [];
 
   for (const raw of ids) {
     if (typeof raw !== 'string') continue;
     const trimmed = raw.trim();
     if (!trimmed) continue;
-    const upper = trimmed.toUpperCase();
-    if (seen.has(upper)) continue;
-    seen.add(upper);
-    result.push(upper);
-    if (result.length >= MAX_PAIRS) break;
+    const lower = trimmed.toLowerCase();
+    if (seen.has(lower)) continue;
+    seen.add(lower);
+    result.push(lower);
+    if (result.length >= MAX_COMMODITIES) break;
   }
 
   return result;
 }
 
-function loadRaw(): FxPairId[] | null {
+function loadRaw(): CommodityId[] | null {
   if (typeof window === 'undefined') return null;
 
   try {
@@ -47,18 +47,18 @@ function loadRaw(): FxPairId[] | null {
 }
 
 /**
- * Read the stored FX pair IDs for the paid ribbon.
+ * Read the stored commodity IDs for the paid ribbon.
  * Returns null when nothing has been stored yet or the data is invalid.
  */
-export function loadUserFxSelections(): FxPairId[] | null {
+export function loadUserCommoditySelections(): CommodityId[] | null {
   return loadRaw();
 }
 
 /**
- * Persist a new FX pair selection for the ribbon.
- * The array is cleaned (trimmed, uppercased, deduped) and capped at 5 entries.
+ * Persist a new commodities selection for the ribbon.
+ * The array is cleaned (trimmed, deduped) and capped at 7 entries.
  */
-export function saveUserFxSelections(ids: FxPairId[]): void {
+export function saveUserCommoditySelections(ids: CommodityId[]): void {
   if (typeof window === 'undefined') return;
 
   const cleaned = sanitiseIds(ids);
@@ -66,7 +66,6 @@ export function saveUserFxSelections(ids: FxPairId[]): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
   } catch {
-    // Ignore quota / private-mode errors – the ribbon will simply fall back
-    // to the free selection when persistence is unavailable.
+    // Ignore quota / private-mode errors; the UI will fall back to free selection.
   }
 }

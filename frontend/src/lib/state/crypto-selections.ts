@@ -1,17 +1,17 @@
-// src/lib/state/fx-selections.ts
+// src/lib/state/crypto-selections.ts
 // -----------------------------------------------------------------------------
-// LocalStorage-backed state for the user's FX ribbon pair selections.
-// This is intentionally tiny and purely client-side; SSR uses the free defaults.
+// LocalStorage-backed state for the user's crypto ribbon selections.
+// Stored as a simple array of up to 5 CryptoId strings.
 // -----------------------------------------------------------------------------
 
-import type { FxPairId } from '@/types/finance-ribbon';
+import type { CryptoId } from '@/types/finance-ribbon';
 
-const STORAGE_KEY = 'promagen.fxSelections.v2';
-const MAX_PAIRS = 5;
+const STORAGE_KEY = 'promagen.cryptoSelections.v1';
+const MAX_ASSETS = 5;
 
-function sanitiseIds(ids: FxPairId[]): FxPairId[] {
+function sanitiseIds(ids: CryptoId[]): CryptoId[] {
   const seen = new Set<string>();
-  const result: FxPairId[] = [];
+  const result: CryptoId[] = [];
 
   for (const raw of ids) {
     if (typeof raw !== 'string') continue;
@@ -21,13 +21,13 @@ function sanitiseIds(ids: FxPairId[]): FxPairId[] {
     if (seen.has(upper)) continue;
     seen.add(upper);
     result.push(upper);
-    if (result.length >= MAX_PAIRS) break;
+    if (result.length >= MAX_ASSETS) break;
   }
 
   return result;
 }
 
-function loadRaw(): FxPairId[] | null {
+function loadRaw(): CryptoId[] | null {
   if (typeof window === 'undefined') return null;
 
   try {
@@ -47,18 +47,18 @@ function loadRaw(): FxPairId[] | null {
 }
 
 /**
- * Read the stored FX pair IDs for the paid ribbon.
+ * Read the stored crypto IDs for the paid ribbon.
  * Returns null when nothing has been stored yet or the data is invalid.
  */
-export function loadUserFxSelections(): FxPairId[] | null {
+export function loadUserCryptoSelections(): CryptoId[] | null {
   return loadRaw();
 }
 
 /**
- * Persist a new FX pair selection for the ribbon.
+ * Persist a new crypto selection for the ribbon.
  * The array is cleaned (trimmed, uppercased, deduped) and capped at 5 entries.
  */
-export function saveUserFxSelections(ids: FxPairId[]): void {
+export function saveUserCryptoSelections(ids: CryptoId[]): void {
   if (typeof window === 'undefined') return;
 
   const cleaned = sanitiseIds(ids);
@@ -66,7 +66,6 @@ export function saveUserFxSelections(ids: FxPairId[]): void {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
   } catch {
-    // Ignore quota / private-mode errors – the ribbon will simply fall back
-    // to the free selection when persistence is unavailable.
+    // Ignore quota / private-mode errors; the UI will fall back to free selection.
   }
 }

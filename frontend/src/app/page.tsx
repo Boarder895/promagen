@@ -35,15 +35,13 @@ export const metadata: Metadata = {
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Page (server component)
-// NOTE: HomepageGrid owns the <main>, gradient, and overall layout.
-//       This file focuses on data selection + composing the three rails.
 // ───────────────────────────────────────────────────────────────────────────────
 
 export default function HomePage(): JSX.Element {
-  // Centre leaderboard data (20 items as per spec)
+  // Centre leaderboard data (20 items as per spec).
   const providers = getProviders(20);
 
-  // East/West rails split per longitude rule (left = easterly half)
+  // East/West rails split per longitude rule (left = easterly half).
   const { left, right } = getRailsForHomepage();
 
   // Demo-weather index keyed by exchange id (e.g. "lse-london").
@@ -107,8 +105,9 @@ export default function HomePage(): JSX.Element {
       left={leftRail}
       centre={centreRail}
       right={rightRail}
-      // These IDs drive the Finance Ribbon (via HomepageGrid → FinanceRibbon).
-      pairIds={['EURUSD', 'GBPUSD', 'EURGBP']}
+      // These IDs drive the Finance Ribbon (via HomepageGrid → RibbonPanel).
+      // Order here = order of chips in the FX row.
+      pairIds={['EURUSD', 'GBPUSD', 'EURGBP', 'USDJPY', 'USDCNY']}
       demo
     />
   );
