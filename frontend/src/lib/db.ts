@@ -9,17 +9,10 @@ export type PrismaLike = {
 const prisma: PrismaLike = {
   // Safe no-op; returns empty rows so UI doesn't crash.
   async $queryRawUnsafe<T = unknown>(_sql: string, ..._params: unknown[]): Promise<T[]> {
-    void _sql; void _params;
+    void _sql;
+    void _params;
     return [];
   },
 };
 
 export default prisma;
-
-
-
-
-
-
-
-
