@@ -2,7 +2,7 @@
 
 import Script from 'next/script';
 
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-QHJ7L40PCM';
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? 'G-QHJ7L40PCM';
 
 /**
  * GoogleAnalytics
