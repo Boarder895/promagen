@@ -102,8 +102,6 @@ export default function ProviderDetailPage({ params }: { params: Params }): JSX.
       left={leftRail}
       centre={centreRail}
       right={rightRail}
-      pairIds={['EURUSD', 'GBPUSD', 'EURGBP']}
-      demo
     />
   );
 }

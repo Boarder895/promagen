@@ -1,80 +1,50 @@
-// src/app/providers/[id]/prompt-builder/page.tsx
-
 import React from 'react';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
-import { getProviders } from '@/lib/providers/api';
 import PromptBuilder from '@/components/providers/prompt-builder';
+import providersCatalog from '@/data/providers/providers.json';
 import type { Provider } from '@/types/provider';
 
-type Params = { id: string };
-
-// ───────────────────────────────────────────────────────────────────────────────
-// Dynamic per-provider metadata
-// ───────────────────────────────────────────────────────────────────────────────
-
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const providers = getProviders();
-  const provider = providers.find((p) => p.id === params.id);
-
-  if (!provider) {
-    return {
-      title: 'Prompt builder • Promagen',
-      description:
-        'Focused creative workspace for crafting image prompts for a single AI provider.',
-      robots: { index: false, follow: false },
-    };
-  }
-
-  const url = `https://promagen.example/providers/${provider.id}/prompt-builder`;
-  const baseTitle = `Prompt builder — ${provider.name} • Promagen`;
-  const description = `Craft image prompts for ${provider.name} inside Promagen's focused studio.`;
-
-  return {
-    title: baseTitle,
-    description,
-    openGraph: {
-      title: baseTitle,
-      description,
-      url,
-      type: 'website',
-      siteName: 'Promagen',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: baseTitle,
-      description,
-    },
+interface PageParams {
+  params: {
+    id: string;
   };
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
-// Page
-// ───────────────────────────────────────────────────────────────────────────────
+const providers = providersCatalog as Provider[];
 
-export default function ProviderPromptBuilderPage({ params }: { params: Params }): JSX.Element {
-  const providers = getProviders();
-  const provider: Provider | undefined = providers.find((p) => p.id === params.id);
+function findProvider(id: string): Provider | null {
+  const provider = providers.find((entry) => entry.id === id);
+  return provider ?? null;
+}
 
-  const providerName = provider?.name ?? params.id;
+export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
+  const provider = findProvider(params.id);
 
   if (!provider) {
-    return (
-      <main role="main" aria-label={`Prompt builder for ${providerName}`} className="min-h-dvh">
-        <div className="mx-auto max-w-5xl px-4 py-8">
-          <p className="text-sm text-slate-700" aria-live="polite">
-            The requested AI provider is not currently available in Promagen.
-          </p>
-        </div>
-      </main>
-    );
+    return {
+      title: 'Prompt builder',
+      description: 'Build and refine AI prompts.',
+    };
+  }
+
+  return {
+    title: `${provider.name} · Prompt builder · Promagen`,
+    description: `Build and refine prompts to run on ${provider.name}.`,
+  };
+}
+
+export default function PromptBuilderPage({ params }: PageParams) {
+  const provider = findProvider(params.id);
+
+  if (!provider) {
+    notFound();
   }
 
   return (
-    <main role="main" aria-label={`Prompt builder for ${provider.name}`} className="min-h-dvh">
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <PromptBuilder provider={provider} />
-      </div>
+    <main aria-label={`Prompt builder for ${provider!.name}`} className="flex flex-col gap-6">
+      <PromptBuilder provider={provider!} />
     </main>
   );
 }

@@ -14,21 +14,20 @@ import PromptBuilderPage, {
 
 // ---------------------------------------------------------------------------
 // Global matchMedia polyfill for jsdom.
-// RibbonPanel uses window.matchMedia to respect prefers-reduced-motion.
-// jsdom doesn’t implement matchMedia, so we provide a stable test double here.
 // ---------------------------------------------------------------------------
 
 if (typeof window !== 'undefined' && !window.matchMedia) {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
-    // Basic stub – enough for the RibbonPanel pause / PRM logic not to throw.
+    configurable: true,
+    // Minimal implementation that keeps components which rely on
+    // prefers-reduced-motion / breakpoint queries happy in tests.
     value: (query: string) => ({
       matches: false,
       media: query,
       onchange: null,
-      addListener: jest.fn(), // Deprecated but still called by some libraries.
+      addListener: jest.fn(), // Deprecated but still used in some code.
       removeListener: jest.fn(),
-      // Modern event-target style API:
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
       dispatchEvent: jest.fn(),
@@ -51,12 +50,15 @@ describe('Providers routes – ribbon shells', () => {
     render(<ProviderDetailPage params={{ id: SAMPLE_ID }} />);
 
     // Heading for the provider detail page should be present.
-    // This asserts that we’ve rendered the correct provider variant.
-    expect(
-      screen.getByRole('heading', {
-        name: /midjourney/i,
-      }),
-    ).toBeInTheDocument();
+    // There are two level-1 headings containing "Midjourney":
+    // - a screen-reader-only page title, and
+    // - the visible card title in the centre column.
+    // We assert that both are rendered, then sanity-check the visible one.
+    const headings = screen.getAllByRole('heading', {
+      name: /midjourney/i,
+    });
+    expect(headings).toHaveLength(2);
+    expect(headings[1]).toHaveTextContent(/^Midjourney$/);
   });
 
   it('renders a studio layout without rails for /providers/[id]/prompt-builder', () => {

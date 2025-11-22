@@ -1,41 +1,50 @@
-// frontend/src/lib/user-plan.ts
-// -----------------------------------------------------------------------------
-// Tiny helper for working out whether the current user is on a free or paid
-// plan. For now this is backed by localStorage only; once real auth/session
-// is in place this module becomes the thin wrapper over that.
-// -----------------------------------------------------------------------------
+// src/lib/user-plan.ts
 
-import type { Plan } from '@/types/user';
-import { KEYS, getLocal, setLocal } from '@/lib/storage.keys';
+export type UserPlanId = 'free' | 'pro';
 
-const FALLBACK_PLAN: Plan = 'free';
+export interface UserPlan {
+  id: UserPlanId;
+  label: string;
+  description: string;
+  /**
+   * Maximum number of FX pairs the user can show in the ribbon / widgets.
+   * You can evolve this later for other asset classes.
+   */
+  maxFxPairs: number;
+}
 
-function normalisePlan(raw: string | null): Plan {
-  if (raw === 'paid' || raw === 'free') return raw;
-  return FALLBACK_PLAN;
+export const USER_PLANS: Record<UserPlanId, UserPlan> = {
+  free: {
+    id: 'free',
+    label: 'Free',
+    description: 'Default plan with fixed FX ribbon.',
+    maxFxPairs: 5,
+  },
+  pro: {
+    id: 'pro',
+    label: 'Pro',
+    description: 'Pro plan with a configurable FX ribbon.',
+    maxFxPairs: 5,
+  },
+};
+
+/**
+ * Coerce arbitrary input (e.g. from query params or localStorage)
+ * into a known plan id.
+ */
+export function coercePlanId(input: unknown): UserPlanId {
+  if (input === 'pro') {
+    return 'pro';
+  }
+  return 'free';
 }
 
 /**
- * Read the user's plan from localStorage, falling back safely to "free".
- * This stays side-effect free at module top-level.
+ * Default plan for a brand new user or on the server.
+ *
+ * We keep this pure and SSR-safe; any localStorage hydration
+ * is done inside the use-user-plan hook.
  */
-export function getUserPlan(): Plan {
-  if (typeof window === 'undefined') return FALLBACK_PLAN;
-  const raw = getLocal(KEYS.user.planV1);
-  return normalisePlan(raw);
-}
-
-/**
- * Persist the user's plan. This is intentionally very small – it does not
- * attempt to be a source of truth, just a client-side hint.
- */
-export function setUserPlan(plan: Plan): void {
-  setLocal(KEYS.user.planV1, plan);
-}
-
-/**
- * Convenience helper for the common case.
- */
-export function isPaidUser(): boolean {
-  return getUserPlan() === 'paid';
+export function getDefaultPlanId(): UserPlanId {
+  return 'free';
 }

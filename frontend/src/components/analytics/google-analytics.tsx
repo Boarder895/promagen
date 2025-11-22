@@ -2,17 +2,21 @@
 
 import Script from 'next/script';
 
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? 'G-QHJ7L40PCM';
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== 'false';
 
-/**
- * GoogleAnalytics
- *
- * Injects the GA4 gtag.js script on every page.
- * Used from the root layout so it runs across the whole app.
- */
 export function GoogleAnalytics() {
-  if (!GA_MEASUREMENT_ID) {
-    // Fail quietly if the ID is missing in some environment.
+  // If there is no ID or analytics are disabled, do nothing.
+  if (!ANALYTICS_ENABLED || !GA_MEASUREMENT_ID) {
+    if (process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true') {
+      // This only shows up in the browser console in debug mode.
+      // eslint-disable-next-line no-console
+      console.info(
+        '[Analytics] GoogleAnalytics disabled – enabled=%s id=%s',
+        ANALYTICS_ENABLED,
+        GA_MEASUREMENT_ID,
+      );
+    }
     return null;
   }
 

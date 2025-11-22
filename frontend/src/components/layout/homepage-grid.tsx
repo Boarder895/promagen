@@ -1,90 +1,101 @@
 // src/components/layout/homepage-grid.tsx
 
-import React from 'react';
+import React, { type ReactNode } from 'react';
 
-import RibbonPanel from '@/components/ribbon/ribbon-panel';
-import {
-  RIBBON_HORIZONTAL_PADDING,
-  RIBBON_TOP_PADDING,
-  RIBBON_GRID_VERTICAL_PADDING,
-  RIBBON_GRID_GAP,
-  RIBBON_GRID_COLUMNS,
-} from '@/lib/ribbon/ribbon-tokens';
-import { cn } from '@/lib/cn';
+import FinanceRibbon from '@/components/ribbon/finance-ribbon';
 
-type HomepageGridProps = {
+export type HomepageGridProps = {
   /**
-   * Accessible label for the main region.
+   * Main accessible label for the page content.
+   * Example: "Promagen home", "Provider details for X".
    */
-  mainLabel?: string;
-
+  mainLabel: string;
   /**
-   * Left column content (eastern exchanges rail).
+   * Left-hand column – typically the Eastern exchanges rail.
    */
-  left: React.ReactNode;
-
+  left: ReactNode;
   /**
-   * Centre column content (AI providers leaderboard / detail).
+   * Centre column – usually the providers leaderboard.
    */
-  centre: React.ReactNode;
-
+  centre: ReactNode;
   /**
-   * Right column content (western exchanges rail).
+   * Right-hand column – typically the Western exchanges rail.
    */
-  right: React.ReactNode;
-
+  right: ReactNode;
   /**
-   * FX pair IDs passed through to the Finance Ribbon.
+   * Whether to show the FinanceRibbon at the top of the centre column.
+   * Defaults to false so non-home pages stay calm.
    */
-  pairIds: string[];
-
+  showFinanceRibbon?: boolean;
   /**
-   * When true, Finance Ribbon runs in demo mode (no live API calls).
+   * When showFinanceRibbon is true, force the ribbon into demo mode.
+   * Used by tests and story-style demo renders.
    */
-  demo?: boolean;
+  financeRibbonDemo?: boolean;
 };
 
 export default function HomepageGrid({
-  mainLabel = 'Promagen home',
+  mainLabel,
   left,
   centre,
   right,
-  pairIds,
-  demo,
-}: HomepageGridProps): JSX.Element {
+  showFinanceRibbon = false,
+  financeRibbonDemo = false,
+}: HomepageGridProps) {
   return (
     <main
-      role="main"
-      aria-label={mainLabel}
-      // Key bits:
-      // - w-full      → always match the browser window width
-      // - flex-col    → ribbon on top, grid underneath
-      // Background gradient is handled globally in globals.css / <body>.
-      className="min-h-dvh w-full flex flex-col"
+      aria-labelledby="page-main-heading"
+      className="min-h-screen bg-slate-950/95 text-slate-50"
     >
-      {/* Ribbon row – full width of the window */}
-      <section
-        aria-label="Finance ribbon"
-        className={cn('w-full', RIBBON_HORIZONTAL_PADDING, RIBBON_TOP_PADDING)}
-      >
-        <RibbonPanel pairIds={pairIds} demo={demo} />
-      </section>
+      <h1 id="page-main-heading" className="sr-only">
+        {mainLabel}
+      </h1>
 
-      {/* Three-column layout – also full width of the window */}
+      {/* Hero: Promagen – a bridge between markets and imagination */}
       <section
         aria-label="Promagen overview"
-        className={cn(
-          'w-full flex-1',
-          'grid',
-          RIBBON_GRID_COLUMNS, // grid-cols-1 md:grid-cols-3
-          RIBBON_GRID_GAP, // gap-6
-          RIBBON_GRID_VERTICAL_PADDING,
-          RIBBON_HORIZONTAL_PADDING, // side padding so cards don’t kiss the edge
-        )}
+        className="w-full border-b border-slate-900/70 bg-gradient-to-b from-slate-950 via-slate-950/95 to-slate-950"
       >
-        {left}
-        {centre}
-        {right}
+        <div className="mx-auto flex w-full max-w-4xl flex-col items-center px-4 pt-8 pb-1 text-center sm:px-6 md:pb-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-sky-400/80">
+            Promagen
+          </p>
+          <h2 className="mt-2 text-xl font-semibold leading-tight sm:text-2xl md:text-3xl">
+            <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
+              Promagen – a bridge between markets and imagination
+            </span>
+          </h2>
+          <p className="mt-1 max-w-3xl text-sm text-slate-300 sm:text-base">
+            <span className="whitespace-nowrap">
+              Track what&apos;s happening out there, then turn those movements into prompts, content
+              and tools in here.
+            </span>
+          </p>
+
+          {/* Promagen-centric visual effect: soft market glow under the hero */}
+          <div className="pointer-events-none mt-2 flex w-full justify-center">
+            <div className="h-14 w-full max-w-md rounded-full bg-gradient-to-r from-sky-500/18 via-emerald-400/14 to-indigo-500/18 blur-2xl" />
+          </div>
+        </div>
+      </section>
+
+      {/* Three-column market layout that snaps to the user's screen */}
+      <section
+        aria-label="Market overview layout"
+        className="mx-auto flex w-full flex-col gap-4 px-4 pb-6 pt-0 md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)] md:gap-6"
+      >
+        <div className="space-y-3" data-testid="rail-east-wrapper">
+          {left}
+        </div>
+
+        <div className="space-y-3" data-testid="rail-centre">
+          {showFinanceRibbon && <FinanceRibbon demo={financeRibbonDemo} />}
+          {centre}
+        </div>
+
+        <div className="space-y-3" data-testid="rail-west-wrapper">
+          {right}
+        </div>
       </section>
     </main>
   );

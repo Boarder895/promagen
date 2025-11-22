@@ -1,124 +1,101 @@
-// src/components/ribbon/mini-fx-widget.tsx
 'use client';
 
 import React from 'react';
 
-import countryCurrencyMap from '@/data/fx/country-currency.map.json';
-import { flag } from '@/lib/flags';
-import { getFreeFxSelection } from '@/lib/ribbon/selection';
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
-import type { FxPair } from '@/types/finance-ribbon';
+import {
+  FREE_TIER_FX_PAIRS,
+  DEFAULT_FREE_FX_PAIR_IDS,
+  buildPairCode,
+  type FxPairConfig,
+} from '@/lib/finance/fx-pairs';
 
-export type MiniFxWidgetProps = {
-  title?: string;
+interface MiniFxWidgetProps {
   /**
-   * When true, the widget stays in demo mode:
-   * - No live FX calls
-   * - Prices rendered as "—"
+   * Optional explicit list of FX codes, e.g. ['EURUSD', 'GBPUSD'].
+   * When omitted, we fall back to the default free-tier selection.
    */
-  demo?: boolean;
-};
+  pairIds?: string[];
+  title?: string;
+}
 
-type CountryCurrencyMap = Record<string, string>;
+function buildDefaultFreePairs(): FxPairConfig[] {
+  const byId = new Map<string, FxPairConfig>();
+
+  for (const pair of FREE_TIER_FX_PAIRS) {
+    byId.set(pair.id, pair);
+  }
+
+  return DEFAULT_FREE_FX_PAIR_IDS.map((id) => byId.get(id)).filter((pair): pair is FxPairConfig =>
+    Boolean(pair),
+  );
+}
+
+const DEFAULT_WIDGET_PAIRS: FxPairConfig[] = buildDefaultFreePairs();
 
 /**
- * Build a stable currency → country map from the ISO2 → CCY map.
- * We only care about having one sensible country per currency for flag purposes.
+ * Resolve an optional list of FX codes (e.g. 'EURUSD') into concrete pair
+ * configs. When nothing is supplied or we can't resolve any codes, we fall
+ * back to the canonical free-tier set.
  */
-const CURRENCY_TO_COUNTRY: Record<string, string> = buildCurrencyToCountryMap(
-  countryCurrencyMap as CountryCurrencyMap,
-);
+function resolvePairs(pairIds?: string[]): FxPairConfig[] {
+  if (!pairIds || pairIds.length === 0) {
+    return DEFAULT_WIDGET_PAIRS;
+  }
 
-function buildCurrencyToCountryMap(map: CountryCurrencyMap): Record<string, string> {
-  const result: Record<string, string> = {};
+  const byCode = new Map<string, FxPairConfig>();
 
-  for (const [countryCode, currencyCode] of Object.entries(map)) {
-    const upperCurrency = String(currencyCode).trim().toUpperCase();
-    if (!upperCurrency) continue;
+  for (const pair of FREE_TIER_FX_PAIRS) {
+    const code = buildPairCode(pair.base, pair.quote);
+    byCode.set(code, pair);
+  }
 
-    // First hit wins so the mapping is deterministic but simple.
-    if (!result[upperCurrency]) {
-      result[upperCurrency] = countryCode;
+  const resolved: FxPairConfig[] = [];
+
+  for (const raw of pairIds) {
+    const key = raw.toUpperCase();
+    const match = byCode.get(key);
+
+    if (match) {
+      resolved.push(match);
     }
   }
 
-  return result;
+  return resolved.length > 0 ? resolved : DEFAULT_WIDGET_PAIRS;
 }
 
-function currencyFlag(currencyCode: string): string {
-  const upper = String(currencyCode).trim().toUpperCase();
-  if (!upper) return '❓';
+export function MiniFxWidget({ pairIds, title = 'FX' }: MiniFxWidgetProps) {
+  const { status, quotesByPairId } = useFxQuotes();
+  const isLoading = status === 'idle' || status === 'loading';
 
-  const countryCode = CURRENCY_TO_COUNTRY[upper];
-  if (!countryCode) return '❓';
-
-  return flag(countryCode);
-}
-
-function formatPrice(value: number | undefined, precision: number): string {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return '—';
-  }
-
-  return value.toFixed(precision);
-}
-
-export default function MiniFxWidget({
-  title = 'FX pairs',
-  demo = false,
-}: MiniFxWidgetProps): JSX.Element {
-  const selection = getFreeFxSelection();
-  const items: FxPair[] = selection.items.slice(0, 5);
-
-  // Share the same FX feed as the main ribbon.
-  const { status, quotesByPairId } = useFxQuotes({
-    enabled: !demo,
-  });
-
-  const statusLabel = demo
-    ? 'Demo'
-    : status === 'ready'
-      ? 'Live'
-      : status === 'loading'
-        ? 'Loading'
-        : status === 'error'
-          ? 'Offline'
-          : 'Waiting';
+  // Mini widget is always capped to 5 pairs for a compact layout.
+  const pairs = resolvePairs(pairIds).slice(0, 5);
 
   return (
     <section
-      aria-label="Mini FX widget"
-      className="rounded-2xl bg-slate-900 px-3 py-2 text-xs text-slate-50 shadow-sm ring-1 ring-slate-800"
+      aria-label="FX mini widget"
+      className="flex flex-col gap-2 rounded-lg border border-slate-800 bg-slate-900/60 p-3"
     >
-      <header className="mb-1 flex items-center justify-between">
-        <p className="font-semibold">{title}</p>
-        <span className="text-[10px] uppercase tracking-wide text-slate-400">{statusLabel}</span>
+      <header className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          {title}
+        </span>
       </header>
 
-      <ul className="flex flex-col gap-1.5" data-testid="mini-fx-widget">
-        {items.map((pair) => {
-          const baseFlagEmoji = currencyFlag(pair.base);
-          const quoteFlagEmoji = currencyFlag(pair.quote);
+      <ul data-testid="mini-fx-widget" className="space-y-1 text-sm">
+        {pairs.map((pair) => {
+          const code = buildPairCode(pair.base, pair.quote);
+          const quote = quotesByPairId.get(code);
+          const mid = quote?.mid;
 
-          const slug = String(pair.id).toLowerCase();
-          const quote = quotesByPairId.get(slug);
-          const valueText = !demo && quote ? formatPrice(quote.mid, pair.precision) : '—';
+          const value = typeof mid === 'number' ? mid.toFixed(4) : isLoading ? '…' : '—';
 
           return (
-            <li
-              key={pair.id}
-              className="flex items-center justify-between gap-2 rounded-xl bg-slate-900/40 px-2 py-1"
-            >
-              <span className="flex items-center gap-1 text-[11px]" aria-hidden="true">
-                <span>{baseFlagEmoji}</span>
-                <span className="text-slate-500">→</span>
-                <span>{quoteFlagEmoji}</span>
+            <li key={pair.id ?? code} className="flex items-center justify-between">
+              <span className="font-medium">
+                {pair.base}/{pair.quote}
               </span>
-
-              <span className="flex flex-col items-end">
-                <span className="font-mono text-[11px]">{pair.label}</span>
-                <span className="text-[10px] text-slate-200">{valueText}</span>
-              </span>
+              <span className="text-xs text-slate-400">{value}</span>
             </li>
           );
         })}
@@ -126,3 +103,5 @@ export default function MiniFxWidget({
     </section>
   );
 }
+
+export default MiniFxWidget;
