@@ -1,3 +1,5 @@
+// frontend/src/app/layout.tsx
+
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
@@ -20,7 +22,14 @@ export const metadata: Metadata = {
     description: 'Calm, precise, and fast.',
     type: 'website',
     url: SITE,
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Promagen' }],
+    images: [
+      {
+        url: '/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'Promagen',
+      },
+    ],
     siteName: 'Promagen',
   },
   twitter: {

@@ -1,241 +1,185 @@
-// src/components/ribbon/finance-ribbon.tsx
-
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
 import { useFxSelection } from '@/hooks/use-fx-selection';
-
 import freeFxPairIdsJson from '@/data/selected/fx.pairs.free.json';
-
-import { getAllFxPairs, buildPairCode, type FxPairConfig } from '@/lib/finance/fx-pairs';
+import {
+  ALL_FX_PAIRS,
+  DEFAULT_FREE_FX_PAIR_IDS,
+  buildPairCode,
+  type FxPairConfig,
+} from '@/lib/finance/fx-pairs';
+import type { FxQuote } from '@/types/finance-ribbon';
 
 const FREE_FX_IDS = freeFxPairIdsJson as string[];
 const RIBBON_ARIA_LABEL = 'Foreign exchange overview';
 
+/**
+ * Hard cap for the homepage ribbon – always 5 chips wide.
+ * Any extra pairs in data or user selection are ignored visually.
+ */
+const MAX_FX_CHIPS = 5;
+
 export interface FinanceRibbonProps {
   /**
-   * When true, we do not touch real hooks that use timers or localStorage.
-   * Used in tests and static demos. Renders a simple, deterministic ribbon.
+   * Demo mode is only for tests and as a hard fallback when
+   * live APIs are unavailable. You won’t pass this in normal use.
    */
   demo?: boolean;
-
   /**
-   * Optional explicit list of FX "codes" like 'EURUSD', 'GBPUSD', or slugs
-   * like 'eur-usd'. Only honoured in demo mode – in live mode we use the
-   * user selection from the FX selection store.
+   * Optional explicit list of FX pair ids or codes for demo mode.
+   * - Slugs:  "gbp-usd"
+   * - Codes:  "GBPUSD"
+   * When omitted we fall back to the canonical free-tier set.
    */
   pairIds?: string[];
-
   /**
-   * Optional polling interval override for the live FX hook.
+   * Optional polling interval override for the live quotes hook.
    */
   intervalMs?: number;
 }
 
+type FxQuoteMap = Map<string, FxQuote>;
+
+const ALL_FX_BY_ID = new Map<string, FxPairConfig>(
+  ALL_FX_PAIRS.map((pair) => [pair.id.toLowerCase(), pair]),
+);
+
+const ALL_FX_BY_CODE = new Map<string, FxPairConfig>(
+  ALL_FX_PAIRS.map((pair) => [buildPairCode(pair.base, pair.quote), pair]),
+);
+
 /**
- * Resolve a list of FX codes/slugs to concrete FxPairConfig items
- * from the full catalogue.
- *
- * - If codes are omitted or empty, we fall back to the default free pair ids
- *   from data/selected/fx.pairs.free.json (5 today).
- * - Accepts either "eur-usd" style slugs or "EURUSD" style codes.
+ * Resolve an ordered list of FX pairs from a mixed list of
+ * canonical slugs ("gbp-usd") or codes ("GBPUSD").
  */
-function resolvePairsForCodes(codes?: string[]): FxPairConfig[] {
-  const catalogue = getAllFxPairs();
+function resolveFxPairs(inputIds: string[] | undefined): FxPairConfig[] {
+  const sourceIds = inputIds && inputIds.length > 0 ? inputIds : DEFAULT_FREE_FX_PAIR_IDS;
 
-  const effectiveCodes = !codes || codes.length === 0 ? FREE_FX_IDS : codes;
+  const seen = new Set<string>();
+  const result: FxPairConfig[] = [];
 
-  const byCode = new Map<string, FxPairConfig>();
+  for (const idOrCode of sourceIds) {
+    const slugKey = idOrCode.toLowerCase();
+    const codeKey = idOrCode.toUpperCase();
 
-  for (const pair of catalogue) {
-    const code = buildPairCode(pair.base, pair.quote); // e.g. "EURUSD"
-    byCode.set(code, pair);
-  }
+    let pair = ALL_FX_BY_ID.get(slugKey);
 
-  const resolved: FxPairConfig[] = [];
+    if (!pair) {
+      pair = ALL_FX_BY_CODE.get(codeKey);
+    }
 
-  for (const raw of effectiveCodes) {
-    // Support both canonical codes ('EURUSD') and slug-style ids ('eur-usd').
-    const key = raw.replace(/-/g, '').toUpperCase();
-    const match = byCode.get(key);
-    if (match && !resolved.includes(match)) {
-      resolved.push(match);
+    if (pair && !seen.has(pair.id)) {
+      seen.add(pair.id);
+      result.push(pair);
     }
   }
 
-  // Ultra-defensive fallback: if something went wrong and we resolved nothing,
-  // take the first N unique pairs from the catalogue, where N is the number
-  // of default free ids (usually 5).
-  if (resolved.length === 0) {
-    const targetCount = FREE_FX_IDS.length || 5;
-    const seenCodes = new Set<string>();
+  return result;
+}
 
-    for (const pair of catalogue) {
-      const code = buildPairCode(pair.base, pair.quote);
-      if (seenCodes.has(code)) continue;
-      seenCodes.add(code);
-      resolved.push(pair);
-      if (resolved.length >= targetCount) break;
-    }
+function formatQuoteValue(
+  pair: FxPairConfig,
+  quotesByPairId: FxQuoteMap,
+  isLoading: boolean,
+): string {
+  const code = buildPairCode(pair.base, pair.quote);
+  const quote = quotesByPairId.get(code);
+  const mid = quote?.mid;
+
+  if (typeof mid === 'number' && Number.isFinite(mid)) {
+    // FX values are typically quoted to 4–5 decimal places.
+    return mid.toFixed(4);
   }
 
-  return resolved;
+  if (isLoading) {
+    return '…';
+  }
+
+  return '—';
 }
 
 interface FxChipProps {
   pair: FxPairConfig;
-  statusLabel: string;
-  testId: string;
-  variant: 'demo' | 'live';
+  quotesByPairId: FxQuoteMap;
+  isLoading: boolean;
 }
 
 /**
- * Single FX chip:
- * - fills available width (flex-1)
- * - inverts when the user clicks anywhere on the pill
- * - variant="demo" shows a static "demo" label
- * - variant="live" shows whatever statusLabel we pass in (…, live, —)
- *
- * State is kept *inside* the chip so it can’t be wiped out by parents.
+ * Single FX chip – no inversion, always canonical base/quote.
  */
-function FxChip({ pair, statusLabel, testId, variant }: FxChipProps) {
-  const [isInverted, setIsInverted] = React.useState(false);
-
-  const base = isInverted ? pair.quote : pair.base;
-  const quote = isInverted ? pair.base : pair.quote;
-
-  const statusText = variant === 'demo' ? 'demo' : statusLabel;
-
-  const buttonClasses =
-    variant === 'demo'
-      ? 'flex w-full items-center justify-between gap-2 rounded-full border border-slate-600 px-3 py-1 text-xs font-medium'
-      : 'flex w-full items-center justify-between gap-2 rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-medium';
+function FxChip({ pair, quotesByPairId, isLoading }: FxChipProps) {
+  const code = buildPairCode(pair.base, pair.quote);
+  const value = formatQuoteValue(pair, quotesByPairId, isLoading);
 
   return (
-    <li data-testid={testId} className="flex-1">
+    <li className="min-w-0 flex-1">
       <button
         type="button"
-        className={buttonClasses}
-        onClick={() => setIsInverted((prev) => !prev)}
-        aria-label={`Invert ${pair.base}/${pair.quote}`}
-        aria-pressed={isInverted}
+        data-testid={`fx-${code}`}
+        className="inline-flex w-full items-center justify-between gap-3 rounded-full border border-slate-700/70 bg-slate-900/80 px-4 py-2 text-xs font-medium text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
       >
-        <div className="flex items-center gap-2">
-          <span className="font-semibold">
-            {base}/{quote}
-          </span>
-          <span className="text-slate-400">{statusText}</span>
-        </div>
-        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-500/70 bg-slate-900/80 text-xs sm:text-sm text-slate-100">
-          ↔
+        <span className="truncate text-sm tracking-wide">
+          {pair.base}
+          <span className="mx-1 text-slate-500">/</span>
+          {pair.quote}
         </span>
+        <span className="text-xs tabular-nums text-slate-300">{value}</span>
       </button>
     </li>
   );
 }
 
-function DemoFxRow(props: { pairIds?: string[] }) {
-  const pairs = resolvePairsForCodes(props.pairIds);
-
-  return (
-    <ul className="flex w-full flex-row gap-2" data-testid="finance-ribbon-row-fx">
-      {pairs.map((pair) => {
-        const code = buildPairCode(pair.base, pair.quote);
-        const testId = `fx-${code}`;
-        return (
-          <FxChip
-            key={pair.id ?? code}
-            pair={pair}
-            statusLabel="demo"
-            testId={testId}
-            variant="demo"
-          />
-        );
-      })}
-    </ul>
-  );
-}
-
 /**
- * Live FX row uses useFxQuotes, which centralises:
- * - polling cadence + jitter,
- * - global pause handling,
- * - prefers-reduced-motion behaviour.
- *
- * We also clamp the selection to the free-tier length (5) so the ribbon
- * always stays as a single five-wide belt.
+ * Top-of-centre-column FX ribbon.
+ * Free: 5 locked pairs (homepage).
+ * Paid: same component, but useFxSelection will supply the user’s 5.
  */
-function LiveFxRow(props: { intervalMs?: number }) {
-  const { pairIds } = useFxSelection();
+export function FinanceRibbon({ demo = false, pairIds, intervalMs }: FinanceRibbonProps) {
+  // Plan-aware selection store. For now, free users still get the
+  // same 5; paid users will later update this via the FX picker UI.
+  const { pairIds: savedPairIds } = useFxSelection();
 
-  // Never render more than the free-tier length in the homepage ribbon –
-  // keeps the layout to 5 chips even if the underlying selection store
-  // were to contain more.
-  const limitedPairIds =
-    pairIds && pairIds.length > 0 ? pairIds.slice(0, FREE_FX_IDS.length) : undefined;
+  const effectiveIds = useMemo(() => {
+    if (demo) {
+      if (pairIds && pairIds.length > 0) {
+        return pairIds;
+      }
+      // Keep the canonical free FX list for demos so tests
+      // and screenshots stay in sync with the homepage.
+      return FREE_FX_IDS;
+    }
 
-  const pairs = resolvePairsForCodes(limitedPairIds);
+    if (savedPairIds && savedPairIds.length > 0) {
+      return savedPairIds;
+    }
 
-  const { status, quotesByPairId } = useFxQuotes(
-    props.intervalMs != null ? { intervalMs: props.intervalMs } : undefined,
-  );
+    return DEFAULT_FREE_FX_PAIR_IDS;
+  }, [demo, pairIds, savedPairIds]);
 
+  // Always render at most 5 chips so the ribbon stays aligned
+  // with the design spec and centred above the providers table.
+  const pairs = useMemo(() => resolveFxPairs(effectiveIds).slice(0, MAX_FX_CHIPS), [effectiveIds]);
+
+  // Live quotes are only enabled when not in demo.
+  const quotesOptions = demo ? { enabled: false as const } : { enabled: true as const, intervalMs };
+  const { status, quotesByPairId } = useFxQuotes(quotesOptions);
   const isLoading = status === 'idle' || status === 'loading';
-
-  return (
-    <ul className="flex w-full flex-row gap-2" data-testid="finance-ribbon-row-fx">
-      {pairs.map((pair) => {
-        const code = buildPairCode(pair.base, pair.quote);
-        const hasQuote = quotesByPairId?.has(code);
-        const liveStatusLabel = isLoading ? '…' : hasQuote ? 'live' : '—';
-        const testId = `fx-${code}`;
-
-        return (
-          <FxChip
-            key={pair.id ?? code}
-            pair={pair}
-            statusLabel={liveStatusLabel}
-            testId={testId}
-            variant="live"
-          />
-        );
-      })}
-    </ul>
-  );
-}
-
-export function FinanceRibbon({ demo, pairIds, intervalMs }: FinanceRibbonProps) {
-  // Important: early return BEFORE any hooks so demo mode does not touch
-  // user-plan or localStorage in Jest / SSR.
-  if (demo) {
-    return (
-      <section
-        aria-label={RIBBON_ARIA_LABEL}
-        role="complementary"
-        data-testid="finance-ribbon"
-        className="w-full"
-      >
-        {/* Centred belt above the three-column layout */}
-        <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-0">
-          <DemoFxRow pairIds={pairIds} />
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section
       aria-label={RIBBON_ARIA_LABEL}
       role="complementary"
       data-testid="finance-ribbon"
-      className="w-full"
+      className="rounded-3xl bg-slate-950/60 px-3 py-2 shadow-md"
     >
-      {/* Centred belt above the three-column layout */}
-      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-0">
-        <LiveFxRow intervalMs={intervalMs} />
-      </div>
+      <ul aria-label="Foreign exchange pairs" className="flex gap-2">
+        {pairs.map((pair) => (
+          <FxChip key={pair.id} pair={pair} quotesByPairId={quotesByPairId} isLoading={isLoading} />
+        ))}
+      </ul>
     </section>
   );
 }
