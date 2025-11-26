@@ -12,9 +12,12 @@ import {
   type FxPairConfig,
 } from '@/lib/finance/fx-pairs';
 import type { FxQuote } from '@/types/finance-ribbon';
+import { useRibbonPause } from '@/lib/motion/ribbon-pause-store';
+import { trackRibbonPause } from '@/lib/analytics/finance';
 
 const FREE_FX_IDS = freeFxPairIdsJson as string[];
 const RIBBON_ARIA_LABEL = 'Foreign exchange overview';
+const DEMO_LABEL_ID = 'finance-ribbon-demo-description';
 
 /**
  * Hard cap for the homepage ribbon – always 5 chips wide.
@@ -138,6 +141,19 @@ function FxChip({ pair, quotesByPairId, isLoading }: FxChipProps) {
  * Paid: same component, but useFxSelection will supply the user’s 5.
  */
 export function FinanceRibbon({ demo = false, pairIds, intervalMs }: FinanceRibbonProps) {
+  const { isPaused, togglePause } = useRibbonPause();
+
+  const handlePauseClick = () => {
+    const nextState = !isPaused;
+
+    trackRibbonPause({
+      isPaused: nextState,
+      source: 'homepage_ribbon',
+    });
+
+    togglePause();
+  };
+
   // Plan-aware selection store. For now, free users still get the
   // same 5; paid users will later update this via the FX picker UI.
   const { pairIds: savedPairIds } = useFxSelection();
@@ -171,10 +187,33 @@ export function FinanceRibbon({ demo = false, pairIds, intervalMs }: FinanceRibb
   return (
     <section
       aria-label={RIBBON_ARIA_LABEL}
+      aria-describedby={demo ? DEMO_LABEL_ID : undefined}
       role="complementary"
       data-testid="finance-ribbon"
+      data-ribbon-paused={isPaused ? 'true' : 'false'}
       className="rounded-3xl bg-slate-950/60 px-3 py-2 shadow-md"
     >
+      {demo && (
+        <p id={DEMO_LABEL_ID} className="sr-only">
+          Sample FX values, illustrative only; live data temporarily unavailable.
+        </p>
+      )}
+
+      <div className="mb-1 flex items-center justify-end">
+        <button
+          type="button"
+          onClick={handlePauseClick}
+          aria-pressed={isPaused}
+          data-testid="finance-ribbon-pause"
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-700/70 bg-slate-900/80 text-[10px] text-slate-200 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
+        >
+          <span className="sr-only">
+            {isPaused ? 'Resume FX ribbon micro-motions' : 'Pause FX ribbon micro-motions'}
+          </span>
+          <span aria-hidden="true">{isPaused ? '▸' : '❚❚'}</span>
+        </button>
+      </div>
+
       <ul aria-label="Foreign exchange pairs" className="flex gap-2">
         {pairs.map((pair) => (
           <FxChip key={pair.id} pair={pair} quotesByPairId={quotesByPairId} isLoading={isLoading} />

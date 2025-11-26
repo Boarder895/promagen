@@ -3,6 +3,7 @@
 
 import React from 'react';
 import type { FinanceWidgetPrefs } from '@/lib/ribbon/micro-widget-prefs';
+import { trackFinanceToggle } from '@/lib/analytics/finance';
 
 export type PromptFinanceTogglesProps = {
   prefs: FinanceWidgetPrefs;
@@ -27,7 +28,7 @@ function ToggleButton({ label, active, onClick }: ToggleButtonProps): JSX.Elemen
       className={
         active
           ? 'inline-flex items-center rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white'
-          : 'inline-flex items-center rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-white'
+          : 'inline-flex items-center rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-white'
       }
     >
       {label}
@@ -48,6 +49,14 @@ export default function PromptFinanceToggles({
   const handleToggle = (key: ToggleKey): void => {
     const next: FinanceWidgetPrefs = { ...prefs, [key]: !prefs[key] };
     onChange(next);
+
+    const assetClass = key as 'fx' | 'commodities' | 'crypto';
+    const state = next[key] ? 'on' : 'off';
+
+    trackFinanceToggle({
+      assetClass,
+      state,
+    });
   };
 
   return (

@@ -1,51 +1,80 @@
 // frontend/src/components/ribbon/fx-chip.tsx
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
+
+import type { FxRibbonQuote } from '@/lib/fx/ribbon-source';
+import type { WinningSide } from '@/lib/fx';
 
 type FxChipProps = {
-  base: string;
-  quote: string;
-  rate?: number | null;
-  selected?: boolean;
-  onClick?: () => void;
+  quote: FxRibbonQuote;
+  winnerSide: WinningSide;
+  showArrow: boolean;
 };
 
-function formatRate(rate?: number | null): string {
-  if (typeof rate !== "number" || !Number.isFinite(rate)) {
-    return "";
+function formatRate(value: number, precision: number): string {
+  if (!Number.isFinite(value)) {
+    return '';
   }
-  return rate.toFixed(4);
+
+  const decimals = precision >= 0 && precision <= 6 ? precision : 4;
+  return value.toFixed(decimals);
 }
 
-export default function FxChip({
-  base,
-  quote,
-  rate,
-  selected = false,
-  onClick,
-}: FxChipProps): JSX.Element {
-  const rateText = formatRate(rate);
-  const label = rateText
-    ? `${base}/${quote} ${rateText}`
-    : `${base}/${quote}`;
+/**
+ * Presentational FX chip for the legacy FX row.
+ *
+ * - Always shows base/quote in canonical order.
+ * - Draws a single up arrow on the winning side when showArrow is true.
+ */
+function FxChip({ quote, winnerSide, showArrow }: FxChipProps): React.ReactElement {
+  const { base, quote: quoteCode, label, value, precision } = quote;
+
+  const rateText = formatRate(value, precision);
+  const isBaseWinner = showArrow && winnerSide === 'base';
+  const isQuoteWinner = showArrow && winnerSide === 'quote';
+
+  const ariaSegments: string[] = [label];
+
+  if (rateText) {
+    ariaSegments.push(rateText);
+  }
+
+  if (isBaseWinner) {
+    ariaSegments.push(`${base} is stronger today`);
+  } else if (isQuoteWinner) {
+    ariaSegments.push(`${quoteCode} is stronger today`);
+  }
+
+  const ariaLabel = ariaSegments.join(', ');
 
   return (
-    <button
-      type="button"
-      className={`flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition
-        ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground"}
-      `}
-      aria-pressed={selected}
-      aria-label={label}
-      onClick={onClick}
+    <div
+      role="listitem"
+      aria-label={ariaLabel}
+      className="flex min-h-[44px] flex-1 items-center justify-between rounded-full border border-slate-800/80 bg-slate-900/60 px-3 py-2 text-sm text-slate-100"
     >
-      <span>{base}</span>
-      <span className="text-[10px] text-muted-foreground">/</span>
-      <span>{quote}</span>
-      {rateText ? (
-        <span className="text-[10px] text-muted-foreground">{rateText}</span>
-      ) : null}
-    </button>
+      <div className="flex items-baseline gap-1">
+        <span className="font-semibold tracking-wide">{base}</span>
+        <span className="text-[10px] text-slate-400">/</span>
+        <span className="font-semibold tracking-wide">{quoteCode}</span>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {rateText ? (
+          <span className="tabular-nums text-xs text-slate-200">{rateText}</span>
+        ) : (
+          <span className="text-xs text-slate-500">—</span>
+        )}
+
+        {showArrow && (isBaseWinner || isQuoteWinner) && (
+          <span aria-hidden="true" className="ml-1 text-xs leading-none text-emerald-400">
+            ↑
+          </span>
+        )}
+      </div>
+    </div>
   );
 }
+
+export default FxChip;

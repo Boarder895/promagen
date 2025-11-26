@@ -1,0 +1,1244 @@
+[
+  {
+    "country": "🇦🇷 Argentina",
+    "energy": [
+      "brent_crude",
+      "natural_gas_henry_hub",
+      "ethanol"
+    ],
+    "agriculture": [
+      "soybeans",
+      "corn",
+      "wheat"
+    ],
+    "metals": [
+      "lithium",
+      "copper",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇦🇺 Australia",
+    "energy": [
+      "coal",
+      "lng_jkm",
+      "brent_crude"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "iron_ore",
+      "bauxite",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇦🇹 Austria",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "corn"
+    ],
+    "metals": [
+      "steel_rebar",
+      "aluminium",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇧🇩 Bangladesh",
+    "energy": [
+      "coal",
+      "lng_jkm",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "rice",
+      "wheat",
+      "tea"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇧🇪 Belgium",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "sugar",
+      "barley"
+    ],
+    "metals": [
+      "steel_rebar",
+      "zinc",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇧🇲 Bermuda",
+    "energy": [
+      "brent_crude",
+      "gasoline_rbob",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "corn",
+      "wheat",
+      "rice"
+    ],
+    "metals": [
+      "gold",
+      "silver",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇧🇷 Brazil",
+    "energy": [
+      "brent_crude",
+      "ethanol",
+      "lng_jkm"
+    ],
+    "agriculture": [
+      "soybeans",
+      "sugar",
+      "coffee"
+    ],
+    "metals": [
+      "iron_ore",
+      "bauxite",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇧🇬 Bulgaria",
+    "energy": [
+      "coal",
+      "brent_crude",
+      "ttf_natural_gas"
+    ],
+    "agriculture": [
+      "wheat",
+      "corn",
+      "barley"
+    ],
+    "metals": [
+      "copper",
+      "zinc",
+      "lead"
+    ]
+  },
+  {
+    "country": "🇨🇲 Cameroon (CEMAC)",
+    "energy": [
+      "brent_crude",
+      "coal",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "cocoa",
+      "coffee",
+      "palm_oil"
+    ],
+    "metals": [
+      "cobalt",
+      "gold",
+      "iron_ore"
+    ]
+  },
+  {
+    "country": "🇨🇦 Canada",
+    "energy": [
+      "wcs_crude",
+      "natural_gas_henry_hub",
+      "heating_oil"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "gold",
+      "uranium",
+      "nickel"
+    ]
+  },
+  {
+    "country": "🇨🇱 Chile",
+    "energy": [
+      "brent_crude",
+      "lng_jkm",
+      "coal"
+    ],
+    "agriculture": [
+      "wheat",
+      "corn",
+      "barley"
+    ],
+    "metals": [
+      "copper",
+      "lithium",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇨🇳 China",
+    "energy": [
+      "coal",
+      "brent_crude",
+      "lng_jkm"
+    ],
+    "agriculture": [
+      "rice",
+      "corn",
+      "soybeans"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇨🇴 Colombia",
+    "energy": [
+      "brent_crude",
+      "coal",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "coffee",
+      "sugar",
+      "corn"
+    ],
+    "metals": [
+      "gold",
+      "copper",
+      "nickel"
+    ]
+  },
+  {
+    "country": "🇨🇿 Czechia",
+    "energy": [
+      "coal",
+      "brent_crude",
+      "ttf_natural_gas"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "corn"
+    ],
+    "metals": [
+      "steel_rebar",
+      "zinc",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇨🇮 Côte d’Ivoire (UEMOA)",
+    "energy": [
+      "brent_crude",
+      "gasoil_ulsd",
+      "coal"
+    ],
+    "agriculture": [
+      "cocoa",
+      "coffee",
+      "palm_oil"
+    ],
+    "metals": [
+      "gold",
+      "iron_ore",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇩🇰 Denmark",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "barley",
+      "wheat",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "aluminium",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇪🇬 Egypt",
+    "energy": [
+      "brent_crude",
+      "natural_gas_henry_hub",
+      "coal"
+    ],
+    "agriculture": [
+      "wheat",
+      "corn",
+      "rice"
+    ],
+    "metals": [
+      "gold",
+      "iron_ore",
+      "steel_rebar"
+    ]
+  },
+  {
+    "country": "🇪🇪 Estonia",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "coal"
+    ],
+    "agriculture": [
+      "barley",
+      "wheat",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇫🇮 Finland",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "coal"
+    ],
+    "agriculture": [
+      "barley",
+      "wheat",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "nickel",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇫🇷 France",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "corn"
+    ],
+    "metals": [
+      "steel_rebar",
+      "aluminium",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇩🇪 Germany",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "coal"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "copper",
+      "zinc"
+    ]
+  },
+  {
+    "country": "🇬🇷 Greece",
+    "energy": [
+      "brent_crude",
+      "gasoil_ulsd",
+      "ttf_natural_gas"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "cotton"
+    ],
+    "metals": [
+      "bauxite",
+      "steel_rebar",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇭🇰 Hong Kong",
+    "energy": [
+      "brent_crude",
+      "lng_jkm",
+      "coal"
+    ],
+    "agriculture": [
+      "rice",
+      "soybeans",
+      "corn"
+    ],
+    "metals": [
+      "gold",
+      "steel_rebar",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇭🇺 Hungary",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "coal"
+    ],
+    "agriculture": [
+      "corn",
+      "wheat",
+      "barley"
+    ],
+    "metals": [
+      "steel_rebar",
+      "aluminium",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇮🇸 Iceland",
+    "energy": [
+      "brent_crude",
+      "gasoil_ulsd",
+      "ttf_natural_gas"
+    ],
+    "agriculture": [
+      "barley",
+      "wheat",
+      "corn"
+    ],
+    "metals": [
+      "aluminium",
+      "steel_rebar",
+      "iron_ore"
+    ]
+  },
+  {
+    "country": "🇮🇳 India",
+    "energy": [
+      "coal",
+      "brent_crude",
+      "lng_jkm"
+    ],
+    "agriculture": [
+      "rice",
+      "wheat",
+      "sugar"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "bauxite"
+    ]
+  },
+  {
+    "country": "🇮🇩 Indonesia",
+    "energy": [
+      "coal",
+      "brent_crude",
+      "lng_jkm"
+    ],
+    "agriculture": [
+      "palm_oil",
+      "rice",
+      "coffee"
+    ],
+    "metals": [
+      "nickel",
+      "tin",
+      "bauxite"
+    ]
+  },
+  {
+    "country": "🇮🇷 Iran",
+    "energy": [
+      "brent_crude",
+      "dubai_crude",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "wheat",
+      "rice",
+      "barley"
+    ],
+    "metals": [
+      "copper",
+      "iron_ore",
+      "zinc"
+    ]
+  },
+  {
+    "country": "🇮🇪 Ireland",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "barley",
+      "wheat",
+      "live_cattle"
+    ],
+    "metals": [
+      "zinc",
+      "lead",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇮🇱 Israel",
+    "energy": [
+      "brent_crude",
+      "natural_gas_henry_hub",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "cotton",
+      "potash"
+    ],
+    "metals": [
+      "copper",
+      "gold",
+      "silver"
+    ]
+  },
+  {
+    "country": "🇮🇹 Italy",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "corn"
+    ],
+    "metals": [
+      "steel_rebar",
+      "copper",
+      "zinc"
+    ]
+  },
+  {
+    "country": "🇯🇲 Jamaica",
+    "energy": [
+      "brent_crude",
+      "coal",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "sugar",
+      "coffee",
+      "corn"
+    ],
+    "metals": [
+      "bauxite",
+      "aluminium",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇯🇵 Japan",
+    "energy": [
+      "lng_jkm",
+      "brent_crude",
+      "coal"
+    ],
+    "agriculture": [
+      "rice",
+      "soybeans",
+      "corn"
+    ],
+    "metals": [
+      "steel_rebar",
+      "copper",
+      "zinc"
+    ]
+  },
+  {
+    "country": "🇰🇪 Kenya",
+    "energy": [
+      "brent_crude",
+      "coal",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "tea",
+      "coffee",
+      "corn"
+    ],
+    "metals": [
+      "titanium_ore",
+      "gold",
+      "iron_ore"
+    ]
+  },
+  {
+    "country": "🇱🇻 Latvia",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "coal"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇱🇹 Lithuania",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "coal"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇲🇾 Malaysia",
+    "energy": [
+      "brent_crude",
+      "lng_jkm",
+      "coal"
+    ],
+    "agriculture": [
+      "palm_oil",
+      "rice",
+      "sugar"
+    ],
+    "metals": [
+      "tin",
+      "bauxite",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇲🇽 Mexico",
+    "energy": [
+      "brent_crude",
+      "natural_gas_henry_hub",
+      "gasoline_rbob"
+    ],
+    "agriculture": [
+      "corn",
+      "sugar",
+      "coffee"
+    ],
+    "metals": [
+      "silver",
+      "gold",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇲🇦 Morocco",
+    "energy": [
+      "brent_crude",
+      "coal",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "phosphates"
+    ],
+    "metals": [
+      "silver",
+      "copper",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇳🇱 Netherlands",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "sugar",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "aluminium",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇳🇿 New Zealand",
+    "energy": [
+      "brent_crude",
+      "lng_jkm",
+      "coal"
+    ],
+    "agriculture": [
+      "barley",
+      "wheat",
+      "live_cattle"
+    ],
+    "metals": [
+      "gold",
+      "iron_ore",
+      "steel_rebar"
+    ]
+  },
+  {
+    "country": "🇳🇬 Nigeria",
+    "energy": [
+      "brent_crude",
+      "natural_gas_henry_hub",
+      "coal"
+    ],
+    "agriculture": [
+      "cocoa",
+      "palm_oil",
+      "sugar"
+    ],
+    "metals": [
+      "tin",
+      "iron_ore",
+      "steel_rebar"
+    ]
+  },
+  {
+    "country": "🇳🇴 Norway",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "lng_jkm"
+    ],
+    "agriculture": [
+      "barley",
+      "wheat",
+      "corn"
+    ],
+    "metals": [
+      "titanium_ore",
+      "steel_rebar",
+      "aluminium"
+    ]
+  },
+  {
+    "country": "🇵🇰 Pakistan",
+    "energy": [
+      "coal",
+      "lng_jkm",
+      "brent_crude"
+    ],
+    "agriculture": [
+      "wheat",
+      "rice",
+      "cotton"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇵🇦 Panama",
+    "energy": [
+      "brent_crude",
+      "gasoline_rbob",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "sugar",
+      "corn",
+      "rice"
+    ],
+    "metals": [
+      "gold",
+      "copper",
+      "silver"
+    ]
+  },
+  {
+    "country": "🇵🇾 Paraguay",
+    "energy": [
+      "brent_crude",
+      "ethanol",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "soybeans",
+      "corn",
+      "sugar"
+    ],
+    "metals": [
+      "iron_ore",
+      "steel_rebar",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇵🇪 Peru",
+    "energy": [
+      "brent_crude",
+      "coal",
+      "lng_jkm"
+    ],
+    "agriculture": [
+      "coffee",
+      "corn",
+      "barley"
+    ],
+    "metals": [
+      "copper",
+      "gold",
+      "zinc"
+    ]
+  },
+  {
+    "country": "🇵🇭 Philippines",
+    "energy": [
+      "coal",
+      "lng_jkm",
+      "brent_crude"
+    ],
+    "agriculture": [
+      "rice",
+      "sugar",
+      "palm_oil"
+    ],
+    "metals": [
+      "nickel",
+      "copper",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇵🇱 Poland",
+    "energy": [
+      "coal",
+      "brent_crude",
+      "ttf_natural_gas"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "copper",
+      "silver"
+    ]
+  },
+  {
+    "country": "🇷🇴 Romania",
+    "energy": [
+      "brent_crude",
+      "coal",
+      "ttf_natural_gas"
+    ],
+    "agriculture": [
+      "corn",
+      "wheat",
+      "barley"
+    ],
+    "metals": [
+      "steel_rebar",
+      "aluminium",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇷🇺 Russia",
+    "energy": [
+      "urals_crude",
+      "coal",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "corn"
+    ],
+    "metals": [
+      "nickel",
+      "palladium",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇸🇦 Saudi Arabia",
+    "energy": [
+      "dubai_crude",
+      "brent_crude",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "wheat",
+      "dates",
+      "barley"
+    ],
+    "metals": [
+      "gold",
+      "steel_rebar",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇸🇬 Singapore",
+    "energy": [
+      "brent_crude",
+      "lng_jkm",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "palm_oil",
+      "rice",
+      "sugar"
+    ],
+    "metals": [
+      "steel_rebar",
+      "gold",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇿🇦 South Africa",
+    "energy": [
+      "coal",
+      "brent_crude",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "corn",
+      "wheat",
+      "barley"
+    ],
+    "metals": [
+      "gold",
+      "platinum",
+      "chromium"
+    ]
+  },
+  {
+    "country": "🇰🇷 South Korea",
+    "energy": [
+      "lng_jkm",
+      "coal",
+      "brent_crude"
+    ],
+    "agriculture": [
+      "rice",
+      "corn",
+      "soybeans"
+    ],
+    "metals": [
+      "steel_rebar",
+      "copper",
+      "zinc"
+    ]
+  },
+  {
+    "country": "🇪🇸 Spain",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "corn"
+    ],
+    "metals": [
+      "steel_rebar",
+      "copper",
+      "zinc"
+    ]
+  },
+  {
+    "country": "🇱🇰 Sri Lanka",
+    "energy": [
+      "coal",
+      "brent_crude",
+      "lng_jkm"
+    ],
+    "agriculture": [
+      "tea",
+      "rice",
+      "sugar"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇸🇪 Sweden",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "coal"
+    ],
+    "agriculture": [
+      "barley",
+      "wheat",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇨🇭 Switzerland",
+    "energy": [
+      "brent_crude",
+      "ttf_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "corn"
+    ],
+    "metals": [
+      "gold",
+      "silver",
+      "platinum"
+    ]
+  },
+  {
+    "country": "🇹🇼 Taiwan",
+    "energy": [
+      "lng_jkm",
+      "coal",
+      "brent_crude"
+    ],
+    "agriculture": [
+      "rice",
+      "soybeans",
+      "corn"
+    ],
+    "metals": [
+      "steel_rebar",
+      "copper",
+      "nickel"
+    ]
+  },
+  {
+    "country": "🇹🇭 Thailand",
+    "energy": [
+      "lng_jkm",
+      "coal",
+      "brent_crude"
+    ],
+    "agriculture": [
+      "rice",
+      "sugar",
+      "palm_oil"
+    ],
+    "metals": [
+      "steel_rebar",
+      "copper",
+      "zinc"
+    ]
+  },
+  {
+    "country": "🇹🇹 Trinidad and Tobago",
+    "energy": [
+      "natural_gas_henry_hub",
+      "wti_crude",
+      "lng_jkm"
+    ],
+    "agriculture": [
+      "sugar",
+      "corn",
+      "rice"
+    ],
+    "metals": [
+      "iron_ore",
+      "steel_rebar",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇹🇳 Tunisia",
+    "energy": [
+      "brent_crude",
+      "gasoil_ulsd",
+      "coal"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "phosphates"
+    ],
+    "metals": [
+      "iron_ore",
+      "steel_rebar",
+      "gold"
+    ]
+  },
+  {
+    "country": "🇹🇷 Türkiye",
+    "energy": [
+      "brent_crude",
+      "coal",
+      "ttf_natural_gas"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "cotton"
+    ],
+    "metals": [
+      "chromium",
+      "steel_rebar",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇦🇪 United Arab Emirates",
+    "energy": [
+      "dubai_crude",
+      "brent_crude",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "dates",
+      "wheat",
+      "rice"
+    ],
+    "metals": [
+      "aluminium",
+      "gold",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇬🇧 United Kingdom",
+    "energy": [
+      "brent_crude",
+      "nbp_natural_gas",
+      "gasoil_ulsd"
+    ],
+    "agriculture": [
+      "wheat",
+      "barley",
+      "rapeseed_canola"
+    ],
+    "metals": [
+      "steel_rebar",
+      "gold",
+      "copper"
+    ]
+  },
+  {
+    "country": "🇺🇸 United States",
+    "energy": [
+      "wti_crude",
+      "natural_gas_henry_hub",
+      "gasoline_rbob"
+    ],
+    "agriculture": [
+      "corn",
+      "soybeans",
+      "wheat"
+    ],
+    "metals": [
+      "gold",
+      "copper",
+      "iron_ore"
+    ]
+  },
+  {
+    "country": "🇺🇾 Uruguay",
+    "energy": [
+      "brent_crude",
+      "ethanol",
+      "natural_gas_henry_hub"
+    ],
+    "agriculture": [
+      "soybeans",
+      "barley",
+      "rice"
+    ],
+    "metals": [
+      "gold",
+      "iron_ore",
+      "steel_rebar"
+    ]
+  },
+  {
+    "country": "🇻🇳 Vietnam",
+    "energy": [
+      "coal",
+      "lng_jkm",
+      "brent_crude"
+    ],
+    "agriculture": [
+      "rice",
+      "coffee",
+      "corn"
+    ],
+    "metals": [
+      "steel_rebar",
+      "iron_ore",
+      "copper"
+    ]
+  }
+]

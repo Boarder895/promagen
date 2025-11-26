@@ -1,14 +1,28 @@
+// frontend/src/lib/fx/eligibility.ts
 /**
  * FX eligibility ordering (single canonical direction per pair).
- * Stable: weight desc (fallback 0), then id asc for determinism.
+ *
+ * Stable sort:
+ *   1. weight descending (fallback 0)
+ *   2. id ascending for determinism
  */
-export type FxPair = { id: string; base?: string; quote?: string; weight?: number };
 
-export function determineEligibilityOrder(pairs: readonly FxPair[]): FxPair[] {
+export type FxPair = {
+  id: string;
+  base?: string;
+  quote?: string;
+  weight?: number;
+};
+
+export function determineEligibilityOrder(pairs: ReadonlyArray<FxPair>): FxPair[] {
   return [...pairs].sort((a, b) => {
-    const wa = a.weight ?? 0;
-    const wb = b.weight ?? 0;
-    if (wa !== wb) return wb - wa;
+    const weightA = a.weight ?? 0;
+    const weightB = b.weight ?? 0;
+
+    if (weightA !== weightB) {
+      return weightB - weightA;
+    }
+
     return a.id.localeCompare(b.id);
   });
 }

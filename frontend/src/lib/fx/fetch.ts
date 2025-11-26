@@ -1,36 +1,91 @@
-// Post-login API fetch stub + scheduler.
-// Replace `fetchFxSnapshot` with your real endpoint when available.
+// frontend/src/lib/fx/fetch.ts
+// Client-side helper for fetching FX snapshots from Promagen's own API.
+//
+// This file must never talk directly to third-party FX providers or touch
+// API keys. The server-side integration lives in:
+//
+//   - src/app/api/ribbon/fx/route.ts
+//   - src/lib/finance/fx-client.ts
+//
+// The shape here is intentionally minimal: enough for the ribbon and tests.
 
 export type FxSnapshot = {
-  id: string;          // pair id e.g., "gbp-usd"
-  value: number;       // current value
-  prevClose: number;   // yesterday close
-  asOf: string;        // ISO timestamp
+  id: string; // pair id, e.g. "gbp-usd"
+  value: number; // current mid value
+  prevClose: number; // yesterday's close
+  asOf: string; // ISO-8601 timestamp
 };
 
+async function fetchJson(input: RequestInfo, init?: RequestInit): Promise<unknown> {
+  const response = await fetch(input, {
+    ...init,
+    credentials: 'same-origin',
+    headers: {
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`FX API responded with ${response.status}`);
+  }
+
+  return response.json() as Promise<unknown>;
+}
+
+/**
+ * Fetches a set of FX snapshots for the given pair ids from the internal API.
+ */
 export async function fetchFxSnapshot(ids: string[]): Promise<FxSnapshot[]> {
-  // TODO: call your API; for now return demo values.
-  const now = new Date().toISOString();
-  return ids.map((id) => ({
-    id,
-    value: 1.23,
-    prevClose: 1.22,
-    asOf: now,
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const searchParams = new URLSearchParams();
+  searchParams.set('pairs', ids.join(','));
+
+  const data = await fetchJson(`/api/ribbon/fx?${searchParams.toString()}`);
+
+  if (!Array.isArray(data)) {
+    throw new Error('Unexpected FX API payload: expected an array of snapshots');
+  }
+
+  return (data as FxSnapshot[]).map((item) => ({
+    id: item.id,
+    value: Number(item.value),
+    prevClose: Number(item.prevClose),
+    asOf: item.asOf,
   }));
 }
 
-// Simple stagger helper: split ids into N buckets and call with delays
-export async function fetchStaggered(ids: string[], batchMs = 5000, batchSize = 2) {
-  const out: FxSnapshot[] = [];
-  for (let i = 0; i < ids.length; i += batchSize) {
-    const slice = ids.slice(i, i + batchSize);
-     
-    const snap = await fetchFxSnapshot(slice);
-    out.push(...snap);
-    if (i + batchSize < ids.length) {
-       
-      await new Promise(r => setTimeout(r, batchMs));
+/**
+ * Simple stagger helper: split ids into batches and fetch them with delays.
+ * Used for calming refresh schedules without hammering the API.
+ */
+export async function fetchStaggered(
+  ids: string[],
+  batchMs: number = 5000,
+  batchSize: number = 2,
+): Promise<FxSnapshot[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const results: FxSnapshot[] = [];
+
+  for (let index = 0; index < ids.length; index += batchSize) {
+    const batch = ids.slice(index, index + batchSize);
+
+    const snapshot = await fetchFxSnapshot(batch);
+    results.push(...snapshot);
+
+    const hasMore = index + batchSize < ids.length;
+
+    if (hasMore && batchMs > 0) {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, batchMs);
+      });
     }
   }
-  return out;
+
+  return results;
 }

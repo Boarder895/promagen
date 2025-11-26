@@ -1,0 +1,70 @@
+country,energy_1,energy_2,energy_3,agri_1,agri_2,agri_3,metals_1,metals_2,metals_3
+🇦🇷 Argentina,brent_crude,natural_gas_henry_hub,ethanol,soybeans,corn,wheat,lithium,copper,gold
+🇦🇺 Australia,coal,lng_jkm,brent_crude,wheat,barley,rapeseed_canola,iron_ore,bauxite,gold
+🇦🇹 Austria,brent_crude,ttf_natural_gas,gasoil_ulsd,wheat,barley,corn,steel_rebar,aluminium,copper
+🇧🇩 Bangladesh,coal,lng_jkm,natural_gas_henry_hub,rice,wheat,tea,steel_rebar,iron_ore,copper
+🇧🇪 Belgium,brent_crude,ttf_natural_gas,gasoil_ulsd,wheat,sugar,barley,steel_rebar,zinc,copper
+🇧🇲 Bermuda,brent_crude,gasoline_rbob,gasoil_ulsd,corn,wheat,rice,gold,silver,copper
+🇧🇷 Brazil,brent_crude,ethanol,lng_jkm,soybeans,sugar,coffee,iron_ore,bauxite,gold
+🇧🇬 Bulgaria,coal,brent_crude,ttf_natural_gas,wheat,corn,barley,copper,zinc,lead
+🇨🇲 Cameroon (CEMAC),brent_crude,coal,gasoil_ulsd,cocoa,coffee,palm_oil,cobalt,gold,iron_ore
+🇨🇦 Canada,wcs_crude,natural_gas_henry_hub,heating_oil,wheat,barley,rapeseed_canola,gold,uranium,nickel
+🇨🇱 Chile,brent_crude,lng_jkm,coal,wheat,corn,barley,copper,lithium,gold
+🇨🇳 China,coal,brent_crude,lng_jkm,rice,corn,soybeans,steel_rebar,iron_ore,copper
+🇨🇴 Colombia,brent_crude,coal,natural_gas_henry_hub,coffee,sugar,corn,gold,copper,nickel
+🇨🇿 Czechia,coal,brent_crude,ttf_natural_gas,wheat,barley,corn,steel_rebar,zinc,copper
+🇨🇮 Côte d’Ivoire (UEMOA),brent_crude,gasoil_ulsd,coal,cocoa,coffee,palm_oil,gold,iron_ore,copper
+🇩🇰 Denmark,brent_crude,ttf_natural_gas,gasoil_ulsd,barley,wheat,rapeseed_canola,steel_rebar,aluminium,copper
+🇪🇬 Egypt,brent_crude,natural_gas_henry_hub,coal,wheat,corn,rice,gold,iron_ore,steel_rebar
+🇪🇪 Estonia,brent_crude,ttf_natural_gas,coal,barley,wheat,rapeseed_canola,steel_rebar,iron_ore,copper
+🇫🇮 Finland,brent_crude,ttf_natural_gas,coal,barley,wheat,rapeseed_canola,steel_rebar,nickel,copper
+🇫🇷 France,brent_crude,ttf_natural_gas,gasoil_ulsd,wheat,barley,corn,steel_rebar,aluminium,copper
+🇩🇪 Germany,brent_crude,ttf_natural_gas,coal,wheat,barley,rapeseed_canola,steel_rebar,copper,zinc
+🇬🇷 Greece,brent_crude,gasoil_ulsd,ttf_natural_gas,wheat,barley,cotton,bauxite,steel_rebar,copper
+🇭🇰 Hong Kong,brent_crude,lng_jkm,coal,rice,soybeans,corn,gold,steel_rebar,copper
+🇭🇺 Hungary,brent_crude,ttf_natural_gas,coal,corn,wheat,barley,steel_rebar,aluminium,copper
+🇮🇸 Iceland,brent_crude,gasoil_ulsd,ttf_natural_gas,barley,wheat,corn,aluminium,steel_rebar,iron_ore
+🇮🇳 India,coal,brent_crude,lng_jkm,rice,wheat,sugar,steel_rebar,iron_ore,bauxite
+🇮🇩 Indonesia,coal,brent_crude,lng_jkm,palm_oil,rice,coffee,nickel,tin,bauxite
+🇮🇷 Iran,brent_crude,dubai_crude,natural_gas_henry_hub,wheat,rice,barley,copper,iron_ore,zinc
+🇮🇪 Ireland,brent_crude,ttf_natural_gas,gasoil_ulsd,barley,wheat,live_cattle,zinc,lead,gold
+🇮🇱 Israel,brent_crude,natural_gas_henry_hub,gasoil_ulsd,wheat,cotton,potash,copper,gold,silver
+🇮🇹 Italy,brent_crude,ttf_natural_gas,gasoil_ulsd,wheat,barley,corn,steel_rebar,copper,zinc
+🇯🇲 Jamaica,brent_crude,coal,gasoil_ulsd,sugar,coffee,corn,bauxite,aluminium,gold
+🇯🇵 Japan,lng_jkm,brent_crude,coal,rice,soybeans,corn,steel_rebar,copper,zinc
+🇰🇪 Kenya,brent_crude,coal,gasoil_ulsd,tea,coffee,corn,titanium_ore,gold,iron_ore
+🇱🇻 Latvia,brent_crude,ttf_natural_gas,coal,wheat,barley,rapeseed_canola,steel_rebar,iron_ore,copper
+🇱🇹 Lithuania,brent_crude,ttf_natural_gas,coal,wheat,barley,rapeseed_canola,steel_rebar,iron_ore,copper
+🇲🇾 Malaysia,brent_crude,lng_jkm,coal,palm_oil,rice,sugar,tin,bauxite,copper
+🇲🇽 Mexico,brent_crude,natural_gas_henry_hub,gasoline_rbob,corn,sugar,coffee,silver,gold,copper
+🇲🇦 Morocco,brent_crude,coal,gasoil_ulsd,wheat,barley,phosphates,silver,copper,gold
+🇳🇱 Netherlands,brent_crude,ttf_natural_gas,gasoil_ulsd,wheat,sugar,rapeseed_canola,steel_rebar,aluminium,copper
+🇳🇿 New Zealand,brent_crude,lng_jkm,coal,barley,wheat,live_cattle,gold,iron_ore,steel_rebar
+🇳🇬 Nigeria,brent_crude,natural_gas_henry_hub,coal,cocoa,palm_oil,sugar,tin,iron_ore,steel_rebar
+🇳🇴 Norway,brent_crude,ttf_natural_gas,lng_jkm,barley,wheat,corn,titanium_ore,steel_rebar,aluminium
+🇵🇰 Pakistan,coal,lng_jkm,brent_crude,wheat,rice,cotton,steel_rebar,iron_ore,copper
+🇵🇦 Panama,brent_crude,gasoline_rbob,gasoil_ulsd,sugar,corn,rice,gold,copper,silver
+🇵🇾 Paraguay,brent_crude,ethanol,natural_gas_henry_hub,soybeans,corn,sugar,iron_ore,steel_rebar,gold
+🇵🇪 Peru,brent_crude,coal,lng_jkm,coffee,corn,barley,copper,gold,zinc
+🇵🇭 Philippines,coal,lng_jkm,brent_crude,rice,sugar,palm_oil,nickel,copper,gold
+🇵🇱 Poland,coal,brent_crude,ttf_natural_gas,wheat,barley,rapeseed_canola,steel_rebar,copper,silver
+🇷🇴 Romania,brent_crude,coal,ttf_natural_gas,corn,wheat,barley,steel_rebar,aluminium,copper
+🇷🇺 Russia,urals_crude,coal,natural_gas_henry_hub,wheat,barley,corn,nickel,palladium,gold
+🇸🇦 Saudi Arabia,dubai_crude,brent_crude,natural_gas_henry_hub,wheat,dates,barley,gold,steel_rebar,copper
+🇸🇬 Singapore,brent_crude,lng_jkm,gasoil_ulsd,palm_oil,rice,sugar,steel_rebar,gold,copper
+🇿🇦 South Africa,coal,brent_crude,natural_gas_henry_hub,corn,wheat,barley,gold,platinum,chromium
+🇰🇷 South Korea,lng_jkm,coal,brent_crude,rice,corn,soybeans,steel_rebar,copper,zinc
+🇪🇸 Spain,brent_crude,ttf_natural_gas,gasoil_ulsd,wheat,barley,corn,steel_rebar,copper,zinc
+🇱🇰 Sri Lanka,coal,brent_crude,lng_jkm,tea,rice,sugar,steel_rebar,iron_ore,gold
+🇸🇪 Sweden,brent_crude,ttf_natural_gas,coal,barley,wheat,rapeseed_canola,steel_rebar,iron_ore,copper
+🇨🇭 Switzerland,brent_crude,ttf_natural_gas,gasoil_ulsd,wheat,barley,corn,gold,silver,platinum
+🇹🇼 Taiwan,lng_jkm,coal,brent_crude,rice,soybeans,corn,steel_rebar,copper,nickel
+🇹🇭 Thailand,lng_jkm,coal,brent_crude,rice,sugar,palm_oil,steel_rebar,copper,zinc
+🇹🇹 Trinidad and Tobago,natural_gas_henry_hub,wti_crude,lng_jkm,sugar,corn,rice,iron_ore,steel_rebar,gold
+🇹🇳 Tunisia,brent_crude,gasoil_ulsd,coal,wheat,barley,phosphates,iron_ore,steel_rebar,gold
+🇹🇷 Türkiye,brent_crude,coal,ttf_natural_gas,wheat,barley,cotton,chromium,steel_rebar,copper
+🇦🇪 United Arab Emirates,dubai_crude,brent_crude,natural_gas_henry_hub,dates,wheat,rice,aluminium,gold,copper
+🇬🇧 United Kingdom,brent_crude,nbp_natural_gas,gasoil_ulsd,wheat,barley,rapeseed_canola,steel_rebar,gold,copper
+🇺🇸 United States,wti_crude,natural_gas_henry_hub,gasoline_rbob,corn,soybeans,wheat,gold,copper,iron_ore
+🇺🇾 Uruguay,brent_crude,ethanol,natural_gas_henry_hub,soybeans,barley,rice,gold,iron_ore,steel_rebar
+🇻🇳 Vietnam,coal,lng_jkm,brent_crude,rice,coffee,corn,steel_rebar,iron_ore,copper

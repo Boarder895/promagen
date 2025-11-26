@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import commoditiesCatalogue from '@/data/commodities/commodities.catalog.json';
+import { getAllCommodities } from '@/lib/commodities/catalog';
 import { getFreeCommodities } from '@/lib/ribbon/selection';
 import type { Commodity } from '@/types/finance-ribbon';
 
@@ -32,7 +32,10 @@ function renderChip(commodity: CommodityWithUi): JSX.Element {
 export default function MiniCommoditiesWidget({
   title = 'Commodities',
 }: MiniCommoditiesWidgetProps): JSX.Element {
-  const selection = getFreeCommodities(commoditiesCatalogue as Commodity[]);
+  // Components → helpers → data:
+  //   - getAllCommodities reads the JSON catalogue
+  //   - getFreeCommodities applies the 2–3–2 / free selection logic
+  const selection = getFreeCommodities(getAllCommodities() as Commodity[]);
   const items: CommodityWithUi[] = selection.items as CommodityWithUi[];
 
   const hasSevenItems = items.length === 7;
@@ -41,6 +44,7 @@ export default function MiniCommoditiesWidget({
   const canUseGridLayout = selection.isValid && hasSevenItems && hasCentreGroup && hasCounts;
 
   // Fallback: if the selection is not a clean 2–3–2, render a simple chip row.
+  // This is what will happen today while the free set is 5 items.
   if (!canUseGridLayout) {
     return (
       <section

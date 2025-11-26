@@ -1,0 +1,380 @@
+[
+  {
+    "commodityId": "brent_crude",
+    "primaryExchangeId": "lse-london",
+    "secondaryExchangeIds": ["nyse-new-york"],
+    "weight": 1,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "gold",
+    "primaryExchangeId": "lse-london",
+    "secondaryExchangeIds": ["nyse-new-york"],
+    "weight": 1,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "wheat",
+    "primaryExchangeId": "cboe-chicago",
+    "secondaryExchangeIds": ["euronext-paris"],
+    "weight": 1,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "corn",
+    "primaryExchangeId": "cboe-chicago",
+    "secondaryExchangeIds": ["b3-sao-paulo"],
+    "weight": 2,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "silver",
+    "primaryExchangeId": "nyse-new-york",
+    "secondaryExchangeIds": ["lse-london"],
+    "weight": 2,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "wti_crude",
+    "primaryExchangeId": "nyse-new-york",
+    "secondaryExchangeIds": ["cboe-chicago"],
+    "weight": 2,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "natural_gas_henry_hub",
+    "primaryExchangeId": "cboe-chicago",
+    "secondaryExchangeIds": ["nyse-new-york"],
+    "weight": 3,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "platinum",
+    "primaryExchangeId": "jse-johannesburg",
+    "secondaryExchangeIds": ["moex-moscow"],
+    "weight": 3,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "soybeans",
+    "primaryExchangeId": "cboe-chicago",
+    "secondaryExchangeIds": ["b3-sao-paulo"],
+    "weight": 3,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "heating_oil",
+    "primaryExchangeId": "nyse-new-york",
+    "secondaryExchangeIds": ["cboe-chicago"],
+    "weight": 4,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "palladium",
+    "primaryExchangeId": "moex-moscow",
+    "secondaryExchangeIds": ["jse-johannesburg"],
+    "weight": 4,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "soybean_meal",
+    "primaryExchangeId": "b3-sao-paulo",
+    "secondaryExchangeIds": ["cboe-chicago"],
+    "weight": 4,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "copper",
+    "primaryExchangeId": "sse-santiago",
+    "secondaryExchangeIds": ["lse-london"],
+    "weight": 5,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "gasoline_rbob",
+    "primaryExchangeId": "nyse-new-york",
+    "secondaryExchangeIds": ["cboe-chicago"],
+    "weight": 5,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "soybean_oil",
+    "primaryExchangeId": "b3-sao-paulo",
+    "secondaryExchangeIds": ["cboe-chicago"],
+    "weight": 5,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "aluminium",
+    "primaryExchangeId": "asx-sydney",
+    "secondaryExchangeIds": ["lse-london"],
+    "weight": 6,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "gasoil_ulsd",
+    "primaryExchangeId": "euronext-amsterdam",
+    "secondaryExchangeIds": ["nyse-new-york"],
+    "weight": 6,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "rapeseed_canola",
+    "primaryExchangeId": "tsx-toronto",
+    "secondaryExchangeIds": ["euronext-paris"],
+    "weight": 6,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "nickel",
+    "primaryExchangeId": "moex-moscow",
+    "secondaryExchangeIds": ["idx-jakarta"],
+    "weight": 7,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "palm_oil",
+    "primaryExchangeId": "bursa-kuala-lumpur",
+    "secondaryExchangeIds": ["set-bangkok"],
+    "weight": 7,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "ttf_natural_gas",
+    "primaryExchangeId": "euronext-amsterdam",
+    "secondaryExchangeIds": ["lse-london"],
+    "weight": 7,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "coffee",
+    "primaryExchangeId": "b3-sao-paulo",
+    "secondaryExchangeIds": ["bmv-mexico-city"],
+    "weight": 8,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "dubai_crude",
+    "primaryExchangeId": "dfm-dubai",
+    "secondaryExchangeIds": ["tadawul-riyadh"],
+    "weight": 8,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "zinc",
+    "primaryExchangeId": "bvl-lima",
+    "secondaryExchangeIds": ["b3-sao-paulo"],
+    "weight": 8,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "cocoa",
+    "primaryExchangeId": "brvm-abidjan",
+    "secondaryExchangeIds": ["bvmac-douala"],
+    "weight": 9,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "lead",
+    "primaryExchangeId": "euronext-paris",
+    "secondaryExchangeIds": ["lse-london"],
+    "weight": 9,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "nbp_natural_gas",
+    "primaryExchangeId": "lse-london",
+    "secondaryExchangeIds": ["euronext-amsterdam"],
+    "weight": 9,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "lng_jkm",
+    "primaryExchangeId": "hkex-hong-kong",
+    "secondaryExchangeIds": ["tse-tokyo"],
+    "weight": 10,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "sugar",
+    "primaryExchangeId": "b3-sao-paulo",
+    "secondaryExchangeIds": ["nse-mumbai"],
+    "weight": 10,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "tin",
+    "primaryExchangeId": "bursa-kuala-lumpur",
+    "secondaryExchangeIds": ["idx-jakarta"],
+    "weight": 10,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "cotton",
+    "primaryExchangeId": "nse-mumbai",
+    "secondaryExchangeIds": ["bist-istanbul"],
+    "weight": 11,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "iron_ore",
+    "primaryExchangeId": "sse-shanghai",
+    "secondaryExchangeIds": ["asx-sydney"],
+    "weight": 11,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "wcs_crude",
+    "primaryExchangeId": "tsx-toronto",
+    "secondaryExchangeIds": ["nyse-new-york"],
+    "weight": 11,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "orange_juice",
+    "primaryExchangeId": "nyse-new-york",
+    "secondaryExchangeIds": ["b3-sao-paulo"],
+    "weight": 12,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "steel_rebar",
+    "primaryExchangeId": "sse-shanghai",
+    "secondaryExchangeIds": ["szse-shenzhen"],
+    "weight": 12,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "urals_crude",
+    "primaryExchangeId": "moex-moscow",
+    "secondaryExchangeIds": ["xetra-frankfurt"],
+    "weight": 12,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "lithium",
+    "primaryExchangeId": "bcba-buenos-aires",
+    "secondaryExchangeIds": ["sse-santiago"],
+    "weight": 13,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "live_cattle",
+    "primaryExchangeId": "cboe-chicago",
+    "secondaryExchangeIds": ["nzx-wellington"],
+    "weight": 13,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "lean_hogs",
+    "primaryExchangeId": "cboe-chicago",
+    "secondaryExchangeIds": ["b3-sao-paulo"],
+    "weight": 14,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "rice",
+    "primaryExchangeId": "nse-mumbai",
+    "secondaryExchangeIds": ["set-bangkok"],
+    "weight": 15,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "barley",
+    "primaryExchangeId": "euronext-paris",
+    "secondaryExchangeIds": ["tadawul-riyadh"],
+    "weight": 16,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "coal",
+    "primaryExchangeId": "jse-johannesburg",
+    "secondaryExchangeIds": ["sse-shanghai"],
+    "weight": 17,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "ethanol",
+    "primaryExchangeId": "b3-sao-paulo",
+    "secondaryExchangeIds": ["cboe-chicago"],
+    "weight": 18,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "sorghum",
+    "primaryExchangeId": "cboe-chicago",
+    "secondaryExchangeIds": ["ngx-lagos"],
+    "weight": 19,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "millet",
+    "primaryExchangeId": "nse-mumbai",
+    "secondaryExchangeIds": ["ngx-lagos"],
+    "weight": 20,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "dates",
+    "primaryExchangeId": "dfm-dubai",
+    "secondaryExchangeIds": ["cse-casablanca"],
+    "weight": 21,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "tea",
+    "primaryExchangeId": "nse-nairobi",
+    "secondaryExchangeIds": ["cse-colombo"],
+    "weight": 22,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "cobalt",
+    "primaryExchangeId": "bvmac-douala",
+    "secondaryExchangeIds": ["sse-shanghai"],
+    "weight": 23,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "bauxite",
+    "primaryExchangeId": "asx-sydney",
+    "secondaryExchangeIds": ["b3-sao-paulo"],
+    "weight": 24,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "uranium",
+    "primaryExchangeId": "tsx-toronto",
+    "secondaryExchangeIds": ["asx-sydney"],
+    "weight": 25,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "chromium",
+    "primaryExchangeId": "jse-johannesburg",
+    "secondaryExchangeIds": ["bist-istanbul"],
+    "weight": 26,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "potash",
+    "primaryExchangeId": "tsx-toronto",
+    "secondaryExchangeIds": ["moex-moscow"],
+    "weight": 27,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "phosphates",
+    "primaryExchangeId": "cse-casablanca",
+    "secondaryExchangeIds": ["tunis-bvmt"],
+    "weight": 28,
+    "extraExchangeIds": []
+  },
+  {
+    "commodityId": "titanium_ore",
+    "primaryExchangeId": "jse-johannesburg",
+    "secondaryExchangeIds": ["oslo-bors"],
+    "weight": 29,
+    "extraExchangeIds": []
+  }
+]

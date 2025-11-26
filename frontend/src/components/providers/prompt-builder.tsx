@@ -3,6 +3,7 @@
 'use client';
 
 import React from 'react';
+import { trackPromptBuilderOpen } from '@/lib/analytics/providers';
 
 export interface PromptBuilderProvider {
   id?: string;
@@ -38,6 +39,18 @@ export function PromptBuilder(props: PromptBuilderProps) {
 
   const websiteUrl = provider.websiteUrl ?? provider.url;
   const textareaId = `${id}-textarea`;
+
+  // Analytics: fire when the studio mounts for a given provider.
+  React.useEffect(() => {
+    if (!provider.id) {
+      return;
+    }
+
+    trackPromptBuilderOpen({
+      providerId: provider.id,
+      location: 'providers_page',
+    });
+  }, [provider.id]);
 
   const handleCopyPrompt = () => {
     if (typeof document === 'undefined') return;
@@ -90,7 +103,7 @@ export function PromptBuilder(props: PromptBuilderProps) {
           <textarea
             id={textareaId}
             rows={6}
-            className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 shadow-inner outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+            className="w-full rounded-xl border border-slate-700 bg-slate-950/80 p-3 text-sm text-slate-100 shadow-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
             placeholder={`Write a prompt to run on ${provider.name}…`}
           />
         </label>
@@ -100,7 +113,7 @@ export function PromptBuilder(props: PromptBuilderProps) {
           <button
             type="button"
             onClick={handleCopyPrompt}
-            className="inline-flex items-center justify-center rounded-full border border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700/60"
+            className="inline-flex items-center justify-center rounded-full border border-slate-600 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-50 shadow-sm hover:border-slate-400 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
           >
             Copy prompt
           </button>
@@ -110,7 +123,7 @@ export function PromptBuilder(props: PromptBuilderProps) {
               href={websiteUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-full border border-sky-500 px-3 py-1.5 text-xs font-medium text-sky-100 hover:bg-sky-500/10"
+              className="inline-flex items-center justify-center rounded-full border border-sky-500/70 bg-sky-600/10 px-3 py-1.5 text-xs font-medium text-sky-100 hover:bg-sky-500/10 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
             >
               Open in {provider.name}
             </a>

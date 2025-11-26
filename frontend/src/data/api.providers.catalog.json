@@ -1,0 +1,108 @@
+{
+  "$schema": "https://promagen.app/schemas/api.providers.catalog.json",
+  "version": 1,
+  "providers": [
+    {
+      "id": "fmp",
+      "name": "Financial Modeling Prep",
+      "website": "https://financialmodelingprep.com",
+      "dashboard_url": "https://site.financialmodelingprep.com/developer",
+      "docs_url": "https://site.financialmodelingprep.com/developer/docs",
+      "assets": ["fx", "commodities", "crypto", "equities"],
+      "roles": ["fx-primary", "commodities-primary", "crypto-secondary", "equities-us-primary"],
+      "quota": {
+        "plan": "free",
+        "max_per_minute": null,
+        "max_per_day": 250,
+        "max_per_month": null,
+        "notes": "Free plan is roughly 250 requests per day. Used mainly for FX and commodity drilldowns, plus some crypto later."
+      }
+    },
+    {
+      "id": "exchange_rate_api",
+      "name": "ExchangeRate-API",
+      "website": "https://www.exchangerate-api.com",
+      "dashboard_url": "https://app.exchangerate-api.com/dashboard",
+      "docs_url": "https://www.exchangerate-api.com/docs/free",
+      "assets": ["fx"],
+      "roles": ["fx-fallback"],
+      "quota": {
+        "plan": "free",
+        "max_per_minute": null,
+        "max_per_day": null,
+        "max_per_month": 1500,
+        "notes": "Free tier is about 1,500 requests per month with a fixed base currency. We’ll use this only as a low-frequency FX fallback."
+      }
+    },
+    {
+      "id": "exchangerate_host",
+      "name": "exchangerate.host (APILayer)",
+      "website": "https://exchangerate.host",
+      "dashboard_url": "https://apilayer.com/marketplace/exchangerates_data-api",
+      "docs_url": "https://exchangerate.host/#/",
+      "assets": ["fx"],
+      "roles": ["fx-secondary"],
+      "quota": {
+        "plan": "free",
+        "max_per_minute": null,
+        "max_per_day": null,
+        "max_per_month": 100,
+        "notes": "APILayer version now needs an API key and typical free limits are ~100 requests per month. Keep this as last-ditch / diagnostics, not ribbon traffic."
+      }
+    },
+    {
+      "id": "api_ninjas",
+      "name": "API Ninjas",
+      "website": "https://api-ninjas.com",
+      "dashboard_url": "https://api-ninjas.com/profile",
+      "docs_url": "https://api-ninjas.com/api",
+      "assets": ["fx", "commodities", "crypto", "time", "holidays", "weather"],
+      "roles": [
+        "fx-backup",
+        "commodities-backup",
+        "crypto-primary",
+        "calendar-primary",
+        "time-primary"
+      ],
+      "quota": {
+        "plan": "free",
+        "max_per_minute": null,
+        "max_per_day": null,
+        "max_per_month": 3000,
+        "notes": "Roughly 3,000 free requests per month across all endpoints. Internal budget: ~1,000/mo for stock exchanges + working days + holidays, ~1,000/mo for FX conversions, ~1,000/mo for crypto & commodity drilldowns."
+      }
+    },
+    {
+      "id": "oilprice_api",
+      "name": "Oil Price API",
+      "website": "https://www.oilpriceapi.com",
+      "dashboard_url": "https://www.oilpriceapi.com/dashboard",
+      "docs_url": "https://www.oilpriceapi.com/faq",
+      "assets": ["commodities"],
+      "roles": ["energy-primary"],
+      "quota": {
+        "plan": "free",
+        "max_per_minute": null,
+        "max_per_day": null,
+        "max_per_month": 500,
+        "notes": "Free plan is ~500 API requests per month. We’ll spend these on key energy benchmarks like Brent, WTI and NatGas."
+      }
+    },
+    {
+      "id": "twelve_data",
+      "name": "Twelve Data",
+      "website": "https://twelvedata.com",
+      "dashboard_url": "https://twelvedata.com/account",
+      "docs_url": "https://twelvedata.com/documentation",
+      "assets": ["equities", "fx", "crypto"],
+      "roles": ["equities-us-secondary", "fx-ribbon-realtime", "crypto-ribbon-realtime"],
+      "quota": {
+        "plan": "basic-free",
+        "max_per_minute": 8,
+        "max_per_day": 800,
+        "max_per_month": null,
+        "notes": "Free basic plan: 8 calls per minute, 800 per day, covering US equities, forex and crypto. This is your high-frequency ribbon backbone."
+      }
+    }
+  ]
+}

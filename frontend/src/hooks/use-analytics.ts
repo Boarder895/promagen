@@ -9,6 +9,10 @@ import {
   type AnalyticsEventParams,
 } from '@/lib/analytics/ga';
 
+/**
+ * Small client-side hook that exposes Promagen's analytics helpers
+ * to components in a typed, memoised way.
+ */
 export function useAnalytics() {
   const trackEvent = useCallback(
     <K extends AnalyticsEventName>(name: K, params?: AnalyticsEventParams<K>) => {

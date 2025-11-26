@@ -1,0 +1,322 @@
+[
+  {
+    "code": "AE",
+    "name": "United Arab Emirates",
+    "emoji": "🇦🇪",
+    "region": "Middle East",
+    "subRegion": "Gulf",
+    "timeZoneKey": "Asia/Dubai"
+  },
+  {
+    "code": "AR",
+    "name": "Argentina",
+    "emoji": "🇦🇷",
+    "region": "Latin America",
+    "subRegion": "South America",
+    "timeZoneKey": "America/Argentina/Buenos_Aires"
+  },
+  {
+    "code": "AU",
+    "name": "Australia",
+    "emoji": "🇦🇺",
+    "region": "Asia-Pacific",
+    "subRegion": "Oceania",
+    "timeZoneKey": "Australia/Sydney"
+  },
+  {
+    "code": "BR",
+    "name": "Brazil",
+    "emoji": "🇧🇷",
+    "region": "Latin America",
+    "subRegion": "South America",
+    "timeZoneKey": "America/Sao_Paulo"
+  },
+  {
+    "code": "CA",
+    "name": "Canada",
+    "emoji": "🇨🇦",
+    "region": "North America",
+    "subRegion": "Canada",
+    "timeZoneKey": "America/Toronto"
+  },
+  {
+    "code": "CD",
+    "name": "Congo (DRC)",
+    "emoji": "🇨🇩",
+    "region": "Africa",
+    "subRegion": "Central Africa",
+    "timeZoneKey": "Africa/Lubumbashi"
+  },
+  {
+    "code": "CI",
+    "name": "Côte d’Ivoire",
+    "emoji": "🇨🇮",
+    "region": "Africa",
+    "subRegion": "West Africa",
+    "timeZoneKey": "Africa/Abidjan"
+  },
+  {
+    "code": "CL",
+    "name": "Chile",
+    "emoji": "🇨🇱",
+    "region": "Latin America",
+    "subRegion": "South America",
+    "timeZoneKey": "America/Santiago"
+  },
+  {
+    "code": "CN",
+    "name": "China",
+    "emoji": "🇨🇳",
+    "region": "Asia-Pacific",
+    "subRegion": "East Asia",
+    "timeZoneKey": "Asia/Shanghai"
+  },
+  {
+    "code": "DE",
+    "name": "Germany",
+    "emoji": "🇩🇪",
+    "region": "Europe",
+    "subRegion": "Western Europe",
+    "timeZoneKey": "Europe/Berlin"
+  },
+  {
+    "code": "EG",
+    "name": "Egypt",
+    "emoji": "🇪🇬",
+    "region": "Middle East",
+    "subRegion": "North Africa",
+    "timeZoneKey": "Africa/Cairo"
+  },
+  {
+    "code": "ES",
+    "name": "Spain",
+    "emoji": "🇪🇸",
+    "region": "Europe",
+    "subRegion": "Southern Europe",
+    "timeZoneKey": "Europe/Madrid"
+  },
+  {
+    "code": "ET",
+    "name": "Ethiopia",
+    "emoji": "🇪🇹",
+    "region": "Africa",
+    "subRegion": "East Africa",
+    "timeZoneKey": "Africa/Addis_Ababa"
+  },
+  {
+    "code": "FR",
+    "name": "France",
+    "emoji": "🇫🇷",
+    "region": "Europe",
+    "subRegion": "Western Europe",
+    "timeZoneKey": "Europe/Paris"
+  },
+  {
+    "code": "GB",
+    "name": "United Kingdom",
+    "emoji": "🇬🇧",
+    "region": "Europe",
+    "subRegion": "Western Europe",
+    "timeZoneKey": "Europe/London"
+  },
+  {
+    "code": "GH",
+    "name": "Ghana",
+    "emoji": "🇬🇭",
+    "region": "Africa",
+    "subRegion": "West Africa",
+    "timeZoneKey": "Africa/Accra"
+  },
+  {
+    "code": "ID",
+    "name": "Indonesia",
+    "emoji": "🇮🇩",
+    "region": "Asia-Pacific",
+    "subRegion": "Southeast Asia",
+    "timeZoneKey": "Asia/Jakarta"
+  },
+  {
+    "code": "IE",
+    "name": "Ireland",
+    "emoji": "🇮🇪",
+    "region": "Europe",
+    "subRegion": "Western Europe",
+    "timeZoneKey": "Europe/Dublin"
+  },
+  {
+    "code": "IN",
+    "name": "India",
+    "emoji": "🇮🇳",
+    "region": "Asia-Pacific",
+    "subRegion": "South Asia",
+    "timeZoneKey": "Asia/Kolkata"
+  },
+  {
+    "code": "IT",
+    "name": "Italy",
+    "emoji": "🇮🇹",
+    "region": "Europe",
+    "subRegion": "Southern Europe",
+    "timeZoneKey": "Europe/Rome"
+  },
+  {
+    "code": "JP",
+    "name": "Japan",
+    "emoji": "🇯🇵",
+    "region": "Asia-Pacific",
+    "subRegion": "East Asia",
+    "timeZoneKey": "Asia/Tokyo"
+  },
+  {
+    "code": "KE",
+    "name": "Kenya",
+    "emoji": "🇰🇪",
+    "region": "Africa",
+    "subRegion": "East Africa",
+    "timeZoneKey": "Africa/Nairobi"
+  },
+  {
+    "code": "KR",
+    "name": "South Korea",
+    "emoji": "🇰🇷",
+    "region": "Asia-Pacific",
+    "subRegion": "East Asia",
+    "timeZoneKey": "Asia/Seoul"
+  },
+  {
+    "code": "KZ",
+    "name": "Kazakhstan",
+    "emoji": "🇰🇿",
+    "region": "Asia-Pacific",
+    "subRegion": "Central Asia",
+    "timeZoneKey": "Asia/Almaty"
+  },
+  {
+    "code": "MA",
+    "name": "Morocco",
+    "emoji": "🇲🇦",
+    "region": "Africa",
+    "subRegion": "North Africa",
+    "timeZoneKey": "Africa/Casablanca"
+  },
+  {
+    "code": "MX",
+    "name": "Mexico",
+    "emoji": "🇲🇽",
+    "region": "Latin America",
+    "subRegion": "North America",
+    "timeZoneKey": "America/Mexico_City"
+  },
+  {
+    "code": "MY",
+    "name": "Malaysia",
+    "emoji": "🇲🇾",
+    "region": "Asia-Pacific",
+    "subRegion": "Southeast Asia",
+    "timeZoneKey": "Asia/Kuala_Lumpur"
+  },
+  {
+    "code": "NG",
+    "name": "Nigeria",
+    "emoji": "🇳🇬",
+    "region": "Africa",
+    "subRegion": "West Africa",
+    "timeZoneKey": "Africa/Lagos"
+  },
+  {
+    "code": "NL",
+    "name": "Netherlands",
+    "emoji": "🇳🇱",
+    "region": "Europe",
+    "subRegion": "Western Europe",
+    "timeZoneKey": "Europe/Amsterdam"
+  },
+  {
+    "code": "NO",
+    "name": "Norway",
+    "emoji": "🇳🇴",
+    "region": "Europe",
+    "subRegion": "Scandinavia",
+    "timeZoneKey": "Europe/Oslo"
+  },
+  {
+    "code": "NZ",
+    "name": "New Zealand",
+    "emoji": "🇳🇿",
+    "region": "Asia-Pacific",
+    "subRegion": "Oceania",
+    "timeZoneKey": "Pacific/Auckland"
+  },
+  {
+    "code": "PE",
+    "name": "Peru",
+    "emoji": "🇵🇪",
+    "region": "Latin America",
+    "subRegion": "South America",
+    "timeZoneKey": "America/Lima"
+  },
+  {
+    "code": "RU",
+    "name": "Russia",
+    "emoji": "🇷🇺",
+    "region": "Eurasia",
+    "subRegion": "Russia",
+    "timeZoneKey": "Europe/Moscow"
+  },
+  {
+    "code": "SA",
+    "name": "Saudi Arabia",
+    "emoji": "🇸🇦",
+    "region": "Middle East",
+    "subRegion": "Gulf",
+    "timeZoneKey": "Asia/Riyadh"
+  },
+  {
+    "code": "TH",
+    "name": "Thailand",
+    "emoji": "🇹🇭",
+    "region": "Asia-Pacific",
+    "subRegion": "Southeast Asia",
+    "timeZoneKey": "Asia/Bangkok"
+  },
+  {
+    "code": "TR",
+    "name": "Türkiye",
+    "emoji": "🇹🇷",
+    "region": "Eurasia",
+    "subRegion": "Asia Minor",
+    "timeZoneKey": "Europe/Istanbul"
+  },
+  {
+    "code": "UA",
+    "name": "Ukraine",
+    "emoji": "🇺🇦",
+    "region": "Europe",
+    "subRegion": "Eastern Europe",
+    "timeZoneKey": "Europe/Kyiv"
+  },
+  {
+    "code": "US",
+    "name": "United States",
+    "emoji": "🇺🇸",
+    "region": "North America",
+    "subRegion": "USA",
+    "timeZoneKey": "America/New_York"
+  },
+  {
+    "code": "VN",
+    "name": "Vietnam",
+    "emoji": "🇻🇳",
+    "region": "Asia-Pacific",
+    "subRegion": "Southeast Asia",
+    "timeZoneKey": "Asia/Ho_Chi_Minh"
+  },
+  {
+    "code": "ZA",
+    "name": "South Africa",
+    "emoji": "🇿🇦",
+    "region": "Africa",
+    "subRegion": "Southern Africa",
+    "timeZoneKey": "Africa/Johannesburg"
+  }
+]

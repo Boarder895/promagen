@@ -15,6 +15,11 @@ import type { FxQuote, FxQuotesPayload } from '@/types/finance-ribbon';
 export type FxQuotesStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 type UseFxQuotesOptions = {
+  /**
+   * When false, the hook stays completely inert – no network calls,
+   * no timers. Used for demo mode where we rely entirely on static
+   * JSON demo values.
+   */
   enabled?: boolean;
   /**
    * Fallback polling interval in milliseconds if the server
@@ -27,6 +32,17 @@ export function useFxQuotes(options?: UseFxQuotesOptions): {
   status: FxQuotesStatus;
   error: unknown;
   payload: FxQuotesPayload | null;
+  /**
+   * Map of FX quotes keyed by **code**, e.g. "GBPUSD", "EURUSD".
+   *
+   * Internally we accept either:
+   *   - slugs like "gbp-usd" from the API and convert to "GBPUSD"
+   *   - or codes already shaped as "GBPUSD"
+   *
+   * This matches how the ribbon & mini widget look things up:
+   *   const code = buildPairCode(pair.base, pair.quote); // "GBPUSD"
+   *   const quote = quotesByPairId.get(code);
+   */
   quotesByPairId: Map<string, FxQuote>;
 } {
   const { enabled = true, intervalMs = 5 * 60_000 } = options ?? {};
@@ -57,7 +73,7 @@ export function useFxQuotes(options?: UseFxQuotesOptions): {
         const res = await fetch('/api/fx', {
           method: 'GET',
           headers: {
-            'content-type': 'application/json',
+            accept: 'application/json',
           },
         });
 
@@ -78,28 +94,38 @@ export function useFxQuotes(options?: UseFxQuotesOptions): {
         if (json.nextUpdateAt) {
           const next = new Date(json.nextUpdateAt).getTime();
           const now = Date.now();
-          const delta = next - now;
 
-          if (Number.isFinite(delta) && delta > 0) {
-            delay = delta;
+          if (Number.isFinite(next) && next > now) {
+            delay = next - now;
           }
         }
 
-        if (delay > 0) {
+        if (!cancelled) {
           timer = setTimeout(fetchOnce, delay);
         }
       } catch (err) {
         if (cancelled) return;
+
+        // Keep any existing payload (so UI can still show last known values),
+        // but surface the error if we don't have anything yet.
         setError(err);
-        setStatus('error');
+        setStatus((prev) => (prev === 'ready' ? prev : 'error'));
+
+        // Conservative backoff – at least 60s, or the configured interval.
+        const RETRY_MS = Math.max(intervalMs, 60_000);
+        if (!cancelled) {
+          timer = setTimeout(fetchOnce, RETRY_MS);
+        }
       }
     }
 
-    fetchOnce();
+    void fetchOnce();
 
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
   }, [enabled, intervalMs]);
 
@@ -108,7 +134,29 @@ export function useFxQuotes(options?: UseFxQuotesOptions): {
     if (!payload?.quotes) return map;
 
     for (const q of payload.quotes) {
-      map.set(q.pairId, q);
+      const rawId = q.pairId ?? '';
+
+      // If the API sends slugs like "gbp-usd", convert to "GBPUSD".
+      // If it already sends "GBPUSD", keep it as-is (uppercased).
+      let key: string;
+
+      if (rawId.includes('-')) {
+        const parts = rawId
+          .split('-')
+          .map((part) => part.trim())
+          .filter(Boolean);
+
+        if (parts.length >= 2) {
+          key = parts.map((part) => part.toUpperCase()).join('');
+        } else {
+          // Fallback: just strip hyphens and uppercase.
+          key = rawId.replace(/-/g, '').toUpperCase();
+        }
+      } else {
+        key = rawId.toUpperCase();
+      }
+
+      map.set(key, q);
     }
 
     return map;
