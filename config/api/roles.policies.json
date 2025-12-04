@@ -1,0 +1,20 @@
+{
+  "$schema": "https://promagen.app/schemas/roles.policies.schema.json",
+  "version": 1,
+  "roles": {
+    "fx_ribbon": {
+      "role": "fx_ribbon",
+      "primary_provider": "fmp",
+      "backup_providers": ["twelvedata", "demo"],
+      "cache_ttl_seconds": 30,
+      "quality_degradation_mode": "fallback"
+    },
+    "fx_mini_widget": {
+      "role": "fx_mini_widget",
+      "primary_provider": "fmp",
+      "backup_providers": ["twelvedata", "demo"],
+      "cache_ttl_seconds": 60,
+      "quality_degradation_mode": "cached"
+    }
+  }
+}

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Promagen API Config Dashboard</title>
+    <style>
+      :root {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color-scheme: light dark;
+      }
+
+      body {
+        margin: 2rem;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .meta {
+        margin-bottom: 1.5rem;
+        colour: #555;
+      }
+
+      .meta code {
+        font-size: 0.9em;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 1200px;
+      }
+
+      thead {
+        background: #f0f0f0;
+      }
+
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 0.4rem 0.6rem;
+        vertical-align: top;
+      }
+
+      th {
+        text-align: left;
+        font-weight: 600;
+      }
+
+      .cell-id {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+          'Courier New', monospace;
+        white-space: nowrap;
+      }
+
+      .cell-hash {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+          'Courier New', monospace;
+        font-size: 0.85em;
+      }
+
+      .cell-num {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .empty {
+        text-align: centre;
+        font-style: italic;
+      }
+
+      tfoot td {
+        border-top: 2px solid #999;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Promagen API Config Dashboard</h1>
+    <div class="meta">
+      <div>Generated at: <code>2025-11-28T00:09:41.924Z</code></div>
+      <div>Providers file: <code>src/data/api.providers.catalog.json</code></div>
+      <div>Providers file hash: <code>69d34e077c54c6e1a12432f46eb3df1be4642989a4c46ded4f13d318a555f143</code></div>
+      <div>Providers version: <code>1</code></div>
+      <div>Total providers in summary: <code>6</code></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Provider</th>
+          <th>Plan</th>
+          <th>Assets</th>
+          <th>Roles</th>
+          <th>Max / minute</th>
+          <th>Max / day</th>
+          <th>Max / month</th>
+          <th>Config hash</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      <tr>
+        <td class="cell-id">api_ninjas</td>
+        <td>free</td>
+        <td>fx, commodities, crypto, time, holidays, weather</td>
+        <td>fx-backup, commodities-backup, crypto-primary, calendar-primary, time-primary</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">3000</td>
+        <td class="cell-hash" title="d4516b863ed311f0889b0feff17f8c1a670374f9bb639f265d8d228e8518b482">d4516b86</td>
+      </tr>
+  
+
+      <tr>
+        <td class="cell-id">exchange_rate_api</td>
+        <td>free</td>
+        <td>fx</td>
+        <td>fx-fallback</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">1500</td>
+        <td class="cell-hash" title="7a2b855691f691b8be9503bc6dbdd07bc1f4f0c2be6de4bc0d101de6d7c88a14">7a2b8556</td>
+      </tr>
+  
+
+      <tr>
+        <td class="cell-id">exchangerate_host</td>
+        <td>free</td>
+        <td>fx</td>
+        <td>fx-secondary</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">100</td>
+        <td class="cell-hash" title="968451a0c48c0706e9ef27950a000f2ef1414b0c0cfaaf84e2f5038099181907">968451a0</td>
+      </tr>
+  
+
+      <tr>
+        <td class="cell-id">fmp</td>
+        <td>free</td>
+        <td>fx, commodities, crypto, equities</td>
+        <td>fx-primary, commodities-primary, crypto-secondary, equities-us-primary</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">250</td>
+        <td class="cell-num">–</td>
+        <td class="cell-hash" title="978d3ecd5db953c6a5e731c9729f6b189b9c1c175f7677f3b0ba16a546c3c709">978d3ecd</td>
+      </tr>
+  
+
+      <tr>
+        <td class="cell-id">oilprice_api</td>
+        <td>free</td>
+        <td>commodities</td>
+        <td>energy-primary</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">–</td>
+        <td class="cell-num">500</td>
+        <td class="cell-hash" title="b925d2337258e69254145e88d607ad73d64eddad810b330231a7a6900b6a3325">b925d233</td>
+      </tr>
+  
+
+      <tr>
+        <td class="cell-id">twelve_data</td>
+        <td>basic-free</td>
+        <td>equities, fx, crypto</td>
+        <td>equities-us-secondary, fx-ribbon-realtime, crypto-ribbon-realtime</td>
+        <td class="cell-num">8</td>
+        <td class="cell-num">800</td>
+        <td class="cell-num">–</td>
+        <td class="cell-hash" title="782dd5f7f0e83679d76a50af3fa3fb1c30f5d67715358b2eb4510458f54b7c87">782dd5f7</td>
+      </tr>
+  
+      </tbody>
+    </table>
+  </body>
+</html>

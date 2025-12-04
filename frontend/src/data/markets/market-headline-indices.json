@@ -1,0 +1,916 @@
+{
+  "$schema": "https://promagen/schemas/market-headline-indices.schema.json",
+  "version": 1,
+  "bundle": {
+    "adx-abu-dhabi": {
+      "id": "adx-abu-dhabi",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "fadx-15",
+        "shortName": "FADX 15",
+        "longName": "FTSE ADX 15 Index",
+        "symbol": "FADX15",
+        "currency": "AED",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "asx-sydney": {
+      "id": "asx-sydney",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "asx-200",
+        "shortName": "ASX 200",
+        "longName": "S&P/ASX 200 Index",
+        "symbol": "XJO",
+        "currency": "AUD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "athens-en-ae": {
+      "id": "athens-en-ae",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "athex-alternative",
+        "shortName": "EN.A",
+        "longName": "ATHEX Alternative Market Index",
+        "symbol": "ENA",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "athex-athens": {
+      "id": "athex-athens",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "athex-composite",
+        "shortName": "ATHEX",
+        "longName": "Athens Composite Index",
+        "symbol": "GD.AT",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bcba-buenos-aires": {
+      "id": "bcba-buenos-aires",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "merval",
+        "shortName": "MERVAL",
+        "longName": "S&P Merval Index",
+        "symbol": "MERVAL",
+        "currency": "ARS",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "b3-sao-paulo": {
+      "id": "b3-sao-paulo",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ibovespa",
+        "shortName": "Ibovespa",
+        "longName": "Ibovespa Index",
+        "symbol": "IBOV",
+        "currency": "BRL",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bist-istanbul": {
+      "id": "bist-istanbul",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "bist-100",
+        "shortName": "BIST 100",
+        "longName": "Borsa Istanbul 100 Index",
+        "symbol": "XU100",
+        "currency": "TRY",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "biva-mexico-city": {
+      "id": "biva-mexico-city",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ftse-biva",
+        "shortName": "FTSE BIVA",
+        "longName": "FTSE BIVA Index",
+        "symbol": "FTSEBIVA",
+        "currency": "MXN",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bmv-mexico-city": {
+      "id": "bmv-mexico-city",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ipc",
+        "shortName": "IPC",
+        "longName": "S&P/BMV IPC Index",
+        "symbol": "MXX",
+        "currency": "MXN",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "brvm-abidjan": {
+      "id": "brvm-abidjan",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "brvm-composite",
+        "shortName": "BRVM Composite",
+        "longName": "BRVM Composite Index",
+        "symbol": "BRVMCI",
+        "currency": "XOF",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bsx-hamilton": {
+      "id": "bsx-hamilton",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "bsx-index",
+        "shortName": "BSX Index",
+        "longName": "Bermuda Stock Exchange Index",
+        "symbol": "BSX",
+        "currency": "USD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bse-mumbai": {
+      "id": "bse-mumbai",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "sensex",
+        "shortName": "SENSEX",
+        "longName": "BSE SENSEX 30 Index",
+        "symbol": "SENSEX",
+        "currency": "INR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bursa-kuala-lumpur": {
+      "id": "bursa-kuala-lumpur",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "fbm-klci",
+        "shortName": "FBM KLCI",
+        "longName": "FTSE Bursa Malaysia KLCI Index",
+        "symbol": "^KLSE",
+        "currency": "MYR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bvc-bogota": {
+      "id": "bvc-bogota",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "colcap",
+        "shortName": "COLCAP",
+        "longName": "COLCAP Index",
+        "symbol": "COLCAP",
+        "currency": "COP",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bvcv-montevideo": {
+      "id": "bvcv-montevideo",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "bvm-general",
+        "shortName": "BVM General",
+        "longName": "Montevideo Stock Exchange General Index",
+        "symbol": "BVMGEN",
+        "currency": "UYU",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bvl-lima": {
+      "id": "bvl-lima",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "bvl-general",
+        "shortName": "S&P/BVL General",
+        "longName": "S&P/BVL Peru General Index",
+        "symbol": "SPBLPGPT",
+        "currency": "PEN",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bvmac-douala": {
+      "id": "bvmac-douala",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "bvmac-all-share",
+        "shortName": "BVMAC ASI",
+        "longName": "BVMAC All Share Index",
+        "symbol": "BVMACASI",
+        "currency": "XAF",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bvp-asuncion": {
+      "id": "bvp-asuncion",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "bvp-domestic",
+        "shortName": "BVP Domestic",
+        "longName": "Paraguay Domestic Company Index",
+        "symbol": "BVPDOM",
+        "currency": "PYG",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "bvp-panama-city": {
+      "id": "bvp-panama-city",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "bvpsi",
+        "shortName": "BVPSI",
+        "longName": "Panama Stock Market Index (BVPSI)",
+        "symbol": "BVPSI",
+        "currency": "USD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "cac-paris": {
+      "id": "cac-paris",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "cac-40",
+        "shortName": "CAC 40",
+        "longName": "CAC 40 Index",
+        "symbol": "CAC",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "casablanca-alt-cse": {
+      "id": "casablanca-alt-cse",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "masi",
+        "shortName": "MASI",
+        "longName": "Moroccan All Shares Index",
+        "symbol": "MASI",
+        "currency": "MAD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "cboe-chicago": {
+      "id": "cboe-chicago",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "cboe-vix",
+        "shortName": "VIX",
+        "longName": "Cboe Volatility Index",
+        "symbol": "VIX",
+        "currency": "USD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "cse-casablanca": {
+      "id": "cse-casablanca",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "masi",
+        "shortName": "MASI",
+        "longName": "Moroccan All Shares Index",
+        "symbol": "MASI",
+        "currency": "MAD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "cse-colombo": {
+      "id": "cse-colombo",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "cse-all-share",
+        "shortName": "CSE All-Share",
+        "longName": "Colombo All-Share Index",
+        "symbol": "CSEALL",
+        "currency": "LKR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "dax-frankfurt": {
+      "id": "dax-frankfurt",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "dax-40",
+        "shortName": "DAX",
+        "longName": "DAX 40 Index",
+        "symbol": "DAX",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "dfm-dubai": {
+      "id": "dfm-dubai",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "dfmgeneral",
+        "shortName": "DFMGI",
+        "longName": "DFM General Index",
+        "symbol": "DFMGI",
+        "currency": "AED",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "dse-dhaka": {
+      "id": "dse-dhaka",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "dsex",
+        "shortName": "DSEX",
+        "longName": "DSEX Broad Index",
+        "symbol": "DSEX",
+        "currency": "BDT",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "egx-cairo": {
+      "id": "egx-cairo",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "egx-30",
+        "shortName": "EGX 30",
+        "longName": "EGX 30 Index",
+        "symbol": "EGX30",
+        "currency": "EGP",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "euronext-amsterdam": {
+      "id": "euronext-amsterdam",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "aex",
+        "shortName": "AEX",
+        "longName": "AEX Index",
+        "symbol": "AEX",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "euronext-brussels": {
+      "id": "euronext-brussels",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "bel-20",
+        "shortName": "BEL 20",
+        "longName": "BEL 20 Index",
+        "symbol": "BEL20",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "euronext-dublin": {
+      "id": "euronext-dublin",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "iseq-overall",
+        "shortName": "ISEQ",
+        "longName": "ISEQ Overall Index",
+        "symbol": "ISEQ",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "euronext-lisbon": {
+      "id": "euronext-lisbon",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "psi-20",
+        "shortName": "PSI 20",
+        "longName": "PSI 20 Index",
+        "symbol": "PSI20",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "euronext-paris": {
+      "id": "euronext-paris",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "cac-40",
+        "shortName": "CAC 40",
+        "longName": "CAC 40 Index",
+        "symbol": "CAC",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "gpw-warsaw": {
+      "id": "gpw-warsaw",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "wig-20",
+        "shortName": "WIG20",
+        "longName": "WIG 20 Index",
+        "symbol": "WIG20",
+        "currency": "PLN",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "hkex-hong-kong": {
+      "id": "hkex-hong-kong",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "hang-seng",
+        "shortName": "Hang Seng",
+        "longName": "Hang Seng Index",
+        "symbol": "HSI",
+        "currency": "HKD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "hose-ho-chi-minh": {
+      "id": "hose-ho-chi-minh",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "vn-index",
+        "shortName": "VN-Index",
+        "longName": "VN-Index (Ho Chi Minh Stock Exchange)",
+        "symbol": "VNINDEX",
+        "currency": "VND",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "ibex-madrid": {
+      "id": "ibex-madrid",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ibex-35",
+        "shortName": "IBEX 35",
+        "longName": "IBEX 35 Index",
+        "symbol": "IBEX",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "idx-jakarta": {
+      "id": "idx-jakarta",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "idx-composite",
+        "shortName": "IDX Composite",
+        "longName": "Jakarta Composite Index",
+        "symbol": "JKSE",
+        "currency": "IDR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "jse-johannesburg": {
+      "id": "jse-johannesburg",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ftse-jse-all-share",
+        "shortName": "FTSE/JSE ALSI",
+        "longName": "FTSE/JSE All Share Index",
+        "symbol": "J203",
+        "currency": "ZAR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "jse-kingston": {
+      "id": "jse-kingston",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "jse-index",
+        "shortName": "JSE Index",
+        "longName": "Jamaica Stock Exchange Index",
+        "symbol": "JSE",
+        "currency": "JMD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "krx-seoul": {
+      "id": "krx-seoul",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "kospi",
+        "shortName": "KOSPI",
+        "longName": "KOSPI Composite Index",
+        "symbol": "KOSPI",
+        "currency": "KRW",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "lse-london": {
+      "id": "lse-london",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ftse-100",
+        "shortName": "FTSE 100",
+        "longName": "FTSE 100 Index",
+        "symbol": "FTSE",
+        "currency": "GBP",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "moex-moscow": {
+      "id": "moex-moscow",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "moex",
+        "shortName": "MOEX",
+        "longName": "MOEX Russia Index",
+        "symbol": "IMOEX",
+        "currency": "RUB",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "nasdaq-new-york": {
+      "id": "nasdaq-new-york",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "nasdaq-composite",
+        "shortName": "Nasdaq",
+        "longName": "Nasdaq Composite Index",
+        "symbol": "IXIC",
+        "currency": "USD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "nse-mumbai": {
+      "id": "nse-mumbai",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "nifty-50",
+        "shortName": "Nifty 50",
+        "longName": "Nifty 50 Index",
+        "symbol": "NIFTY",
+        "currency": "INR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "nse-nairobi": {
+      "id": "nse-nairobi",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "nse-all-share",
+        "shortName": "NASI",
+        "longName": "Nairobi All Share Index",
+        "symbol": "NASI",
+        "currency": "KES",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "nsx-windhoek": {
+      "id": "nsx-windhoek",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "j203-linked",
+        "shortName": "NSX Overall",
+        "longName": "Namibian Overall (FTSE/JSE Linked) Index",
+        "symbol": "NSXOV",
+        "currency": "NAD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "nzx-wellington": {
+      "id": "nzx-wellington",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "nzx-50",
+        "shortName": "NZX 50",
+        "longName": "S&P/NZX 50 Index",
+        "symbol": "NZ50",
+        "currency": "NZD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "obx-oslo": {
+      "id": "obx-oslo",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "obx",
+        "shortName": "OBX",
+        "longName": "Oslo Børs Benchmark Index",
+        "symbol": "OBX",
+        "currency": "NOK",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "ose-osaka": {
+      "id": "ose-osaka",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "topix",
+        "shortName": "TOPIX",
+        "longName": "Tokyo Price Index",
+        "symbol": "TPX",
+        "currency": "JPY",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "otcqx-otc-markets": {
+      "id": "otcqx-otc-markets",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "otcqx-composite",
+        "shortName": "OTCQX Comp",
+        "longName": "OTCQX Composite Index",
+        "symbol": "OTCQX",
+        "currency": "USD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "pse-manila": {
+      "id": "pse-manila",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "psei",
+        "shortName": "PSEi",
+        "longName": "Philippine Stock Exchange Index",
+        "symbol": "PSEI",
+        "currency": "PHP",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "pw-johannesburg-altx": {
+      "id": "pw-johannesburg-altx",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ftse-jse-all-share",
+        "shortName": "FTSE/JSE ALSI",
+        "longName": "FTSE/JSE All Share Index",
+        "symbol": "J203",
+        "currency": "ZAR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "reykjavik-nasdaq-iceland": {
+      "id": "reykjavik-nasdaq-iceland",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "omx-iceland-15",
+        "shortName": "OMXI15",
+        "longName": "OMX Iceland 15 Index",
+        "symbol": "OMXI15",
+        "currency": "ISK",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "tsx-toronto": {
+      "id": "tsx-toronto",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "sp-tsx-composite",
+        "shortName": "S&P/TSX",
+        "longName": "S&P/TSX Composite Index",
+        "symbol": "^GSPTSE",
+        "currency": "CAD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "smi-zurich": {
+      "id": "smi-zurich",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "smi",
+        "shortName": "SMI",
+        "longName": "Swiss Market Index",
+        "symbol": "SMI",
+        "currency": "CHF",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "sse-santiago": {
+      "id": "sse-santiago",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ipsa",
+        "shortName": "IPSA",
+        "longName": "S&P/CLX IPSA Index",
+        "symbol": "IPSA",
+        "currency": "CLP",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "sse-shanghai": {
+      "id": "sse-shanghai",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "sse-composite",
+        "shortName": "SSE Composite",
+        "longName": "Shanghai Composite Index",
+        "symbol": "SSEC",
+        "currency": "CNY",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "szse-shenzhen": {
+      "id": "szse-shenzhen",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "szse-component",
+        "shortName": "SZSE Component",
+        "longName": "Shenzhen Component Index",
+        "symbol": "399001",
+        "currency": "CNY",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "tadawul-riyadh": {
+      "id": "tadawul-riyadh",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "tasi",
+        "shortName": "TASI",
+        "longName": "Tadawul All Share Index",
+        "symbol": "TASI",
+        "currency": "SAR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "tallinn-nasdaq-baltic": {
+      "id": "tallinn-nasdaq-baltic",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "omx-tallinn-gi",
+        "shortName": "OMXTGI",
+        "longName": "OMX Tallinn Gross Index",
+        "symbol": "OMXTGI",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "tase-tel-aviv": {
+      "id": "tase-tel-aviv",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ta-125",
+        "shortName": "TA-125",
+        "longName": "TA-125 Index",
+        "symbol": "TA125",
+        "currency": "ILS",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "tse-tehran": {
+      "id": "tse-tehran",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "tedpix",
+        "shortName": "TEDPIX",
+        "longName": "Tehran Exchange Dividend & Price Index",
+        "symbol": "TEDPIX",
+        "currency": "IRR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "tse-tokyo": {
+      "id": "tse-tokyo",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "nikkei-225",
+        "shortName": "Nikkei 225",
+        "longName": "Nikkei 225 Index",
+        "symbol": "N225",
+        "currency": "JPY",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "ttse-port-of-spain": {
+      "id": "ttse-port-of-spain",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "ttse-composite",
+        "shortName": "TTSE Comp",
+        "longName": "TTSE Composite Index",
+        "symbol": "TTSE",
+        "currency": "TTD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "tunis-bvmt": {
+      "id": "tunis-bvmt",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "tunindex",
+        "shortName": "TUNINDEX",
+        "longName": "Tunindex",
+        "symbol": "TUNINDEX",
+        "currency": "TND",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "twse-taipei": {
+      "id": "twse-taipei",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "taiex",
+        "shortName": "TAIEX",
+        "longName": "Taiwan Capitalisation Weighted Stock Index",
+        "symbol": "TAIEX",
+        "currency": "TWD",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "vilnius-nasdaq-baltic": {
+      "id": "vilnius-nasdaq-baltic",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "omx-vilnius-gi",
+        "shortName": "OMXVGI",
+        "longName": "OMX Vilnius Gross Index",
+        "symbol": "OMXVGI",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "wbag-vienna": {
+      "id": "wbag-vienna",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "atx",
+        "shortName": "ATX",
+        "longName": "Austrian Traded Index",
+        "symbol": "ATX",
+        "currency": "EUR",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    },
+    "wse-warsaw-newconnect": {
+      "id": "wse-warsaw-newconnect",
+      "headlineIndex": {
+        "kind": "real",
+        "id": "nc-index",
+        "shortName": "NCIndex",
+        "longName": "NewConnect Index",
+        "symbol": "NCINDEX",
+        "currency": "PLN",
+        "unit": "points",
+        "category": "headline-index"
+      }
+    }
+  }
+}

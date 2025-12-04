@@ -1,0 +1,41 @@
+name: API config report
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  api-config-report:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+
+      - name: Enable corepack (pnpm)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate API config summary
+        run: pnpm api:config-report
+
+      - name: Upload API config summary artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-config-summary
+          path: reports/api-config-summary.json
+          if-no-files-found: warn

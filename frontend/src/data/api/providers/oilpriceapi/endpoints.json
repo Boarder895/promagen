@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "provider_id": "oilpriceapi",
+  "endpoints": [
+    {
+      "id": "oilpriceapi.commodities.catalog",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "meta",
+      "role": "commodities_catalog_oilpriceapi",
+      "description": "List of commodities (energy-focused) provided by OilPriceAPI.",
+      "response_shape": "oilpriceapi.commodities.catalog_response",
+      "data_shape": "catalog",
+      "http": {
+        "method": "GET",
+        "path": "/v1/commodities",
+        "query": {}
+      },
+      "default_update": {
+        "cadence": "86400s",
+        "only_when_open": true,
+        "jitter_seconds": 60
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "oil"],
+      "notes": "OilPriceAPI commodity catalogue (energy-centric)."
+    },
+    {
+      "id": "oilpriceapi.commodities.detail",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "detail",
+      "role": "commodity_detail_oilpriceapi",
+      "description": "Detailed info for a specific commodity (energy product).",
+      "response_shape": "oilpriceapi.commodities.detail_response",
+      "data_shape": "single_quote",
+      "http": {
+        "method": "GET",
+        "path": "/v1/commodities/{symbol}",
+        "query": {}
+      },
+      "default_update": {
+        "cadence": "0s",
+        "only_when_open": true,
+        "jitter_seconds": 0
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "oil"],
+      "notes": "Detailed commodity quote from OilPriceAPI (energy commodities detail view)."
+    },
+    {
+      "id": "oilpriceapi.commodities.latest_batch",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "ribbon",
+      "role": "commodities_latest_oilpriceapi",
+      "description": "Latest prices for key energy commodities (batch).",
+      "response_shape": "oilpriceapi.commodities.latest_batch_response",
+      "data_shape": "batch_quote",
+      "http": {
+        "method": "GET",
+        "path": "/v1/commodities/latest",
+        "query": {
+          "symbols": "BRENT,OIL,WTI"
+        }
+      },
+      "default_update": {
+        "cadence": "900s",
+        "only_when_open": true,
+        "jitter_seconds": 30
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "oil"],
+      "notes": "Latest oil and energy prices batch (e.g. Brent, WTI) to enrich commodities ribbon."
+    },
+    {
+      "id": "oilpriceapi.prices.hourly",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "chart",
+      "role": "commodities_hourly_prices",
+      "description": "Hourly price series for a specific commodity (e.g. oil) from OilPriceAPI.",
+      "response_shape": "oilpriceapi.prices.hourly_response",
+      "data_shape": "time_series",
+      "http": {
+        "method": "GET",
+        "path": "/v1/prices/hourly",
+        "query": {
+          "symbol": "{symbol}"
+        }
+      },
+      "default_update": {
+        "cadence": "3600s",
+        "only_when_open": true,
+        "jitter_seconds": 60
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "oil"],
+      "notes": "Hourly time-series prices for energy commodities (updated every hour)."
+    },
+    {
+      "id": "oilpriceapi.prices.daily",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "chart",
+      "role": "commodities_daily_prices",
+      "description": "Daily price series for a commodity (OilPriceAPI, e.g. daily closes).",
+      "response_shape": "oilpriceapi.prices.daily_response",
+      "data_shape": "time_series",
+      "http": {
+        "method": "GET",
+        "path": "/v1/prices/daily",
+        "query": {
+          "symbol": "{symbol}"
+        }
+      },
+      "default_update": {
+        "cadence": "86400s",
+        "only_when_open": true,
+        "jitter_seconds": 300
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "oil"],
+      "notes": "Daily time-series prices for energy commodities (updated daily)."
+    },
+    {
+      "id": "oilpriceapi.prices.weekly",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "chart",
+      "role": "commodities_weekly_prices",
+      "description": "Weekly price series for a commodity (OilPriceAPI).",
+      "response_shape": "oilpriceapi.prices.weekly_response",
+      "data_shape": "time_series",
+      "http": {
+        "method": "GET",
+        "path": "/v1/prices/weekly",
+        "query": {
+          "symbol": "{symbol}"
+        }
+      },
+      "default_update": {
+        "cadence": "604800s",
+        "only_when_open": true,
+        "jitter_seconds": 600
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "oil"],
+      "notes": "Weekly time-series prices for energy commodities (updated weekly)."
+    },
+    {
+      "id": "oilpriceapi.marine.ports",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "meta",
+      "role": "marine_fuel_ports_catalog",
+      "description": "Catalogue of marine fuel ports covered by OilPriceAPI.",
+      "response_shape": "oilpriceapi.marine.ports_response",
+      "data_shape": "catalog",
+      "http": {
+        "method": "GET",
+        "path": "/v1/marine-fuel/ports",
+        "query": {}
+      },
+      "default_update": {
+        "cadence": "86400s",
+        "only_when_open": true,
+        "jitter_seconds": 300
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "marine_fuel"],
+      "notes": "Marine fuel ports catalogue (for marine fuel price data)."
+    },
+    {
+      "id": "oilpriceapi.marine.port_detail",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "detail",
+      "role": "marine_fuel_port_detail",
+      "description": "Detailed data for a specific marine fuel port (pricing and info).",
+      "response_shape": "oilpriceapi.marine.port_detail_response",
+      "data_shape": "single_quote",
+      "http": {
+        "method": "GET",
+        "path": "/v1/marine-fuel/ports/{port_id}",
+        "query": {}
+      },
+      "default_update": {
+        "cadence": "0s",
+        "only_when_open": true,
+        "jitter_seconds": 0
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "marine_fuel"],
+      "notes": "Detailed marine fuel port data (queried on demand for port detail views)."
+    },
+    {
+      "id": "oilpriceapi.marine.prices",
+      "provider_id": "oilpriceapi",
+      "kind": "commodities",
+      "group": "chart",
+      "role": "marine_fuel_prices",
+      "description": "Historical price series for marine fuel at a given port.",
+      "response_shape": "oilpriceapi.marine.prices_response",
+      "data_shape": "time_series",
+      "http": {
+        "method": "GET",
+        "path": "/v1/marine-fuel/prices",
+        "query": {
+          "port": "{port_id}"
+        }
+      },
+      "default_update": {
+        "cadence": "604800s",
+        "only_when_open": true,
+        "jitter_seconds": 600
+      },
+      "quota_block_id": "oilpriceapi-core",
+      "quota_cost": 1,
+      "status": "active",
+      "tags": ["commodities", "marine_fuel"],
+      "notes": "Marine fuel price series for a port (updated weekly)."
+    }
+  ]
+}

@@ -23,6 +23,7 @@
     "format:check": "pnpm -C frontend format:check",
     "typecheck": "pnpm -C frontend typecheck",
     "check": "pnpm -C frontend check",
+    "check:all": "pnpm -C frontend check:all",
     "test": "pnpm -C frontend test",
     "test:ci": "pnpm -C frontend test:ci",
     "prepare": "husky install"

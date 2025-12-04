@@ -1,6 +1,7 @@
+// C:\Users\Proma\Projects\promagen\frontend\src\components\ribbon\finance-ribbon.tsx
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
 import { useFxSelection } from '@/hooks/use-fx-selection';
@@ -11,9 +12,11 @@ import {
   buildPairCode,
   type FxPairConfig,
 } from '@/lib/finance/fx-pairs';
-import type { FxQuote } from '@/types/finance-ribbon';
+import type { FxQuote, FxQuotesPayload } from '@/types/finance-ribbon';
 import { useRibbonPause } from '@/lib/motion/ribbon-pause-store';
 import { trackRibbonPause } from '@/lib/analytics/finance';
+import { FxFreshnessBadge } from '@/components/ribbon/fx-freshness-badge';
+import { FxProvenanceBar } from '@/components/ribbon/fx-provenance-bar';
 
 const FREE_FX_IDS = freeFxPairIdsJson as string[];
 const RIBBON_ARIA_LABEL = 'Foreign exchange overview';
@@ -104,6 +107,34 @@ function formatQuoteValue(
   return '—';
 }
 
+/**
+ * Derive the most recent `asOf` timestamp from a payload, normalised
+ * to an ISO string. If no usable timestamps exist, returns null.
+ */
+function deriveLastUpdatedAt(payload: FxQuotesPayload | null | undefined): string | null {
+  if (!payload || !Array.isArray(payload.quotes) || payload.quotes.length === 0) {
+    return null;
+  }
+
+  let latest: number | null = null;
+
+  for (const quote of payload.quotes) {
+    if (!quote?.asOf) continue;
+    const ts = Date.parse(quote.asOf);
+    if (!Number.isFinite(ts)) continue;
+
+    if (latest === null || ts > latest) {
+      latest = ts;
+    }
+  }
+
+  if (latest === null) {
+    return null;
+  }
+
+  return new Date(latest).toISOString();
+}
+
 interface FxChipProps {
   pair: FxPairConfig;
   quotesByPairId: FxQuoteMap;
@@ -112,9 +143,12 @@ interface FxChipProps {
 
 /**
  * Single FX chip – no inversion, always canonical base/quote.
+ * Shows formatted mid plus a freshness badge derived from the
+ * quote’s `asOf` timestamp.
  */
 function FxChip({ pair, quotesByPairId, isLoading }: FxChipProps) {
   const code = buildPairCode(pair.base, pair.quote);
+  const quote = quotesByPairId.get(code);
   const value = formatQuoteValue(pair, quotesByPairId, isLoading);
 
   return (
@@ -129,7 +163,13 @@ function FxChip({ pair, quotesByPairId, isLoading }: FxChipProps) {
           <span className="mx-1 text-slate-500">/</span>
           {pair.quote}
         </span>
-        <span className="text-xs tabular-nums text-slate-300">{value}</span>
+        <span className="flex items-center gap-2">
+          <span className="text-xs tabular-nums text-slate-300">{value}</span>
+          {/* Freshness badge uses the quote’s asOf timestamp.
+           * In demo mode, quotesByPairId will be empty so this
+           * collapses away gracefully. */}
+          <FxFreshnessBadge quote={quote} />
+        </span>
       </button>
     </li>
   );
@@ -139,6 +179,11 @@ function FxChip({ pair, quotesByPairId, isLoading }: FxChipProps) {
  * Top-of-centre-column FX ribbon.
  * Free: 5 locked pairs (homepage).
  * Paid: same component, but useFxSelection will supply the user’s 5.
+ *
+ * Adds:
+ *  - FX provenance bar (“Live / Fallback / Demo · Provider · as of HH:mm”)
+ *  - Per-tile freshness badges (fresh / ageing / delayed)
+ * in line with the Promagen Global Standard. :contentReference[oaicite:2]{index=2}
  */
 export function FinanceRibbon({ demo = false, pairIds, intervalMs }: FinanceRibbonProps) {
   const { isPaused, togglePause } = useRibbonPause();
@@ -180,9 +225,28 @@ export function FinanceRibbon({ demo = false, pairIds, intervalMs }: FinanceRibb
   const pairs = useMemo(() => resolveFxPairs(effectiveIds).slice(0, MAX_FX_CHIPS), [effectiveIds]);
 
   // Live quotes are only enabled when not in demo.
-  const quotesOptions = demo ? { enabled: false as const } : { enabled: true as const, intervalMs };
-  const { status, quotesByPairId } = useFxQuotes(quotesOptions);
+  const quotesOptions = demo
+    ? ({ enabled: false as const } as const)
+    : ({ enabled: true as const, intervalMs } as const);
+
+  const { status, payload, quotesByPairId } = useFxQuotes(quotesOptions);
   const isLoading = status === 'idle' || status === 'loading';
+
+  // Stable demo timestamp (so the “as of” label doesn’t jump on re-renders).
+  const demoAsOfRef = useRef<string | null>(null);
+
+  if (demo && !demoAsOfRef.current) {
+    demoAsOfRef.current = new Date().toISOString();
+  }
+
+  const effectiveMode: FxQuotesPayload['mode'] | null = demo ? 'demo' : payload?.mode ?? null;
+
+  const providerId: string | null =
+    demo || !payload?.quotes || payload.quotes.length === 0
+      ? 'demo'
+      : payload.quotes[0]?.provider ?? null;
+
+  const lastUpdatedAt: string | null = demo ? demoAsOfRef.current : deriveLastUpdatedAt(payload);
 
   return (
     <section
@@ -199,7 +263,12 @@ export function FinanceRibbon({ demo = false, pairIds, intervalMs }: FinanceRibb
         </p>
       )}
 
-      <div className="mb-1 flex items-center justify-end">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <FxProvenanceBar
+          mode={effectiveMode}
+          providerId={providerId}
+          lastUpdatedAt={lastUpdatedAt}
+        />
         <button
           type="button"
           onClick={handlePauseClick}
