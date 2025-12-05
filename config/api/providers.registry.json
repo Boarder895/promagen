@@ -69,6 +69,32 @@
         "provider_site": "https://twelvedata.com",
         "quota_notes": "Ideal as a backup FX provider. Free tier offers sufficient coverage for Promagen fallback flows."
       }
+    },
+
+    "oilpriceapi": {
+      "id": "oilpriceapi",
+      "display_name": "Oil Price API",
+      "description": "Specialist energy and oil market data provider. Primary source for live oil and gas commodity prices in Promagen.",
+      "capabilities": ["commodities_ribbon", "commodities_mini_widget"],
+      "endpoints": {
+        "commodities_latest": "https://api.oilpriceapi.com/v1/prices/latest"
+      },
+      "adapters": {
+        "commodities_latest": "oilpriceapi_commodities_v1"
+      },
+      "auth": {
+        "type": "header_token",
+        "header_name": "Authorization",
+        "prefix": "Token ",
+        "env": "OILPRICEAPI_API_KEY"
+      },
+      "metadata": {
+        "quality": "live",
+        "latency_class": "fast",
+        "provider_site": "https://www.oilpriceapi.com",
+        "quota_notes": "Free and paid plans with rate limits. All requests require 'Authorization: Token YOUR_API_KEY' in the header.",
+        "notes": "Used as the primary commodities provider for oil and gas benchmarks. Gateway adapter is responsible for selecting commodity codes (e.g. WTI, Brent) via query parameters."
+      }
     }
   }
 }
