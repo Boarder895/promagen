@@ -14,9 +14,28 @@ export interface RoleAdapterContext<Params = unknown> {
 
   /**
    * Arbitrary parameters passed from the caller.
-   * For the FX ribbon this will typically contain a list of pairs.
+   * This lets each role stay strongly typed without leaking into the
+   * generic gateway plumbing.
    */
-  params: Params | undefined;
+  params: Params;
+
+  /**
+   * Wall-clock time for the current execution. Adapters should treat
+   * this as the single source of truth for "now" so tests can control
+   * time deterministically.
+   */
+  now: Date;
+
+  /**
+   * Optional cache key that higher layers may use when memoising the
+   * adapter's result.
+   */
+  cacheKey?: string;
+
+  /**
+   * High-level request identifier used in logs.
+   */
+  requestId?: string;
 
   /**
    * Optional trace identifier for correlating logs across systems.

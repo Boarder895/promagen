@@ -14,16 +14,24 @@ import {
  * Provider + endpoint resolved for a role.
  */
 export interface ResolvedRoleEndpoint {
+  /**
+   * Full provider configuration from providers.registry.json.
+   */
   provider: ProviderConfig;
+
+  /**
+   * Logical endpoint identifier for this role, as declared in the
+   * provider's endpoints/adapters maps (e.g. "fx_quotes").
+   */
   endpointId: string;
 }
 
 /**
- * Resolved representation of a role, ready for the gateway to use.
+ * Fully-resolved role that the gateway can execute.
  */
 export interface ResolvedRole {
   /**
-   * Role name, e.g. "fx-ribbon-realtime".
+   * Role name, e.g. "fx_ribbon".
    */
   role: string;
 
@@ -39,7 +47,7 @@ export interface ResolvedRole {
 
   /**
    * Whether this role should only run when the underlying market is open.
-   * (Market-hours logic will use this later.)
+   * (Market-hours integration can use this flag.)
    */
   onlyWhenOpen: boolean;
 
@@ -49,106 +57,100 @@ export interface ResolvedRole {
   primary: ResolvedRoleEndpoint;
 
   /**
-   * Ordered list of backup providers + endpoints used for fallbacks.
+   * Backup providers in order of preference.
    */
   backups: ResolvedRoleEndpoint[];
 
   /**
-   * The original policy entry from roles.policies.json.
-   * Exposed for logging/diagnostics.
+   * Raw policy from roles.policies.json for debugging.
    */
   policy: RolePolicy;
 
   /**
-   * The underlying API Brain snapshot at the time of resolution.
-   * Useful for debugging and advanced scenarios.
+   * Reference to the full API Brain in case callers need extra metadata.
    */
   brain: ApiBrain;
 }
 
 /**
- * Parse a cadence string into milliseconds.
+ * Infer the logical endpoint id that should be used for a given role.
  *
- * Supported formats (based on current config):
- * - "60s"      =>  60 seconds
- * - "300s"     => 300 seconds
- * - "86400s"   => 86400 seconds (one day)
+ * The configuration file may specify this explicitly via `endpoint_id`.
+ * When it is omitted we fall back to a simple convention so that the
+ * JSON can stay terse:
  *
- * The parser is intentionally conservative so misconfigurations fail loudly.
+ *   - FX roles → "fx_quotes"
+ *   - Commodities roles → "commodities_latest"
+ *   - Otherwise → role name itself
  */
-export function parseCadenceToMs(value: string | null | undefined): number | null {
-  if (!value) {
-    return null;
+function inferEndpointIdForRole(policy: RolePolicy): string {
+  if (policy.endpoint_id && typeof policy.endpoint_id === 'string') {
+    return policy.endpoint_id;
   }
 
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
+  const kind = policy.kind;
+
+  if (kind === 'fx' || policy.role.startsWith('fx_')) {
+    return 'fx_quotes';
   }
 
-  // Expected patterns in current config are plain seconds, e.g. "60s".
-  // We also support simple "Xs", "Xm", "Xh", "Xd" forms for future flexibility.
-  const match = /^(\d+)([smhd])?s?$/.exec(trimmed);
-
-  if (!match) {
-    throw new ApiConfigError(
-      `Invalid default_cadence value "${value}". Expected something like "60s", "300s", or "86400s".`,
-    );
+  if (kind === 'commodities' || policy.role.includes('commodities')) {
+    return 'commodities_latest';
   }
 
-  const amount = Number(match[1]);
-  const unit = match[2] ?? 's';
-
-  if (!Number.isFinite(amount) || amount < 0) {
-    throw new ApiConfigError(
-      `Invalid default_cadence amount in "${value}". Expected a non-negative number.`,
-    );
-  }
-
-  switch (unit) {
-    case 's':
-      return amount * 1000;
-    case 'm':
-      return amount * 60 * 1000;
-    case 'h':
-      return amount * 60 * 60 * 1000;
-    case 'd':
-      return amount * 24 * 60 * 60 * 1000;
-    default:
-      // This should be unreachable because of the regex, but keep TypeScript happy.
-      throw new ApiConfigError(
-        `Unsupported cadence unit in "${value}". Only s, m, h, d are supported.`,
-      );
-  }
+  return policy.role;
 }
 
 /**
- * Resolve a RolePolicy into a ResolvedRole structure.
+ * Resolve a single provider id + role into a concrete endpoint.
+ */
+function resolveEndpointForProvider(providerId: string, policy: RolePolicy): ResolvedRoleEndpoint {
+  const provider = getProviderOrThrow(providerId);
+
+  const endpointId = inferEndpointIdForRole(policy);
+
+  // Sanity check that the provider advertises this endpoint. We only
+  // throw when the endpoints map is present; older providers may rely
+  // entirely on adapter indirection.
+  if (provider.endpoints && !provider.endpoints[endpointId]) {
+    throw new ApiConfigError(
+      `Provider "${provider.id}" does not declare endpoint "${endpointId}" in providers.registry.json.`,
+    );
+  }
+
+  return {
+    provider,
+    endpointId,
+  };
+}
+
+/**
+ * Resolve a RolePolicy into a fully-wired ResolvedRole.
  */
 function buildResolvedRole(policy: RolePolicy, brain: ApiBrain): ResolvedRole {
-  const primaryProvider = getProviderOrThrow(policy.primary.provider_id);
+  if (!policy.providers || policy.providers.length === 0) {
+    throw new ApiConfigError(
+      `Role "${policy.role}" has no providers configured in roles.policies.json.`,
+    );
+  }
 
-  const primary: ResolvedRoleEndpoint = {
-    provider: primaryProvider,
-    endpointId: policy.primary.endpoint_id,
-  };
+  const [primaryId, ...backupIds] = policy.providers;
 
-  const backups: ResolvedRoleEndpoint[] = policy.backups.map((backup) => {
-    const backupProvider = getProviderOrThrow(backup.provider_id);
+  const primary = resolveEndpointForProvider(primaryId, policy);
+  const backups = backupIds.map((id) => resolveEndpointForProvider(id, policy));
 
-    return {
-      provider: backupProvider,
-      endpointId: backup.endpoint_id,
-    };
-  });
-
-  const defaultCadenceMs = parseCadenceToMs(policy.default_cadence);
+  const defaultCadenceMs =
+    typeof policy.default_cadence_ms === 'number'
+      ? policy.default_cadence_ms
+      : policy.cache_ttl_seconds
+      ? policy.cache_ttl_seconds * 1000
+      : null;
 
   return {
     role: policy.role,
     kind: policy.kind,
     defaultCadenceMs,
-    onlyWhenOpen: policy.only_when_open,
+    onlyWhenOpen: policy.only_when_open ?? false,
     primary,
     backups,
     policy,
@@ -157,9 +159,9 @@ function buildResolvedRole(policy: RolePolicy, brain: ApiBrain): ResolvedRole {
 }
 
 /**
- * Look up and resolve a role by name, or throw a clear configuration error.
+ * Public helper: resolve a role by name using the current API Brain.
  */
-export function getResolvedRoleOrThrow(roleName: string): ResolvedRole {
+export function resolveRoleByName(roleName: string): ResolvedRole {
   const brain = getApiBrain();
   const policy = getRoleOrThrow(roleName);
 

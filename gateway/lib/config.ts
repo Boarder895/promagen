@@ -8,285 +8,523 @@ import * as path from 'path';
  * malformed, or internally inconsistent.
  */
 export class ApiConfigError extends Error {
+  public readonly code = 'API_CONFIG_ERROR';
+
   constructor(message: string) {
     super(message);
     this.name = 'ApiConfigError';
   }
 }
 
+// Helpful trace so we KNOW which file is actually running.
+console.log('[API-CONFIG] config.ts loaded from:', __filename);
+
 /**
- * Provider-level auth configuration, as defined in providers.registry.json.
+ * Authentication configuration for a provider.
+ *
+ * This mirrors the shapes used in providers.registry.json but keeps the
+ * fields that the gateway actually needs.
  */
-export interface ProviderAuthConfig {
-  type: string;
-  location: string;
-  field_name?: string;
-  notes?: string;
-}
+export type ProviderAuthConfig =
+  | {
+      /**
+       * No authentication – purely public endpoint.
+       */
+      type: 'none';
+    }
+  | {
+      /**
+       * API key passed as a query parameter, e.g. ?apikey=XYZ.
+       */
+      type: 'query_param';
+      key_name: string;
+      env: string;
+    }
+  | {
+      /**
+       * API key passed via HTTP header, e.g. `Authorization: Token XYZ`.
+       */
+      type: 'header_token';
+      header_name: string;
+      env: string;
+      /**
+       * Optional fixed prefix to prepend before the key value.
+       * Common examples: "Token " or "Bearer ".
+       */
+      prefix?: string;
+    }
+  | {
+      /**
+       * Escape hatch for future provider-specific auth shapes.
+       * The config validator keeps this opaque.
+       */
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      type: string;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [key: string]: any;
+    };
 
 /**
- * One quota window (e.g. per_day, per_month).
- */
-export interface ProviderQuotaWindow {
-  max_calls: number | null;
-  notes?: string;
-}
-
-/**
- * Quota configuration for a provider.
- */
-export interface ProviderQuotaResetWindow {
-  kind: string;
-  notes?: string;
-}
-
-export interface ProviderQuota {
-  per_day?: ProviderQuotaWindow | null;
-  per_month?: ProviderQuotaWindow | null;
-  per_minute?: ProviderQuotaWindow | null;
-  per_second?: ProviderQuotaWindow | null;
-  reset_window?: ProviderQuotaResetWindow | null;
-}
-
-/**
- * Credit/charging model for a provider.
- */
-export interface ProviderCreditsModel {
-  type: string;
-  default_credits_per_request: number;
-  notes?: string;
-}
-
-/**
- * Full shape of one provider entry from providers.registry.json.
- * This mirrors api.providers.catalog.json.
+ * API provider entry in providers.registry.json.
+ *
+ * This is intentionally a minimal view – we only expose the fields the
+ * gateway actually needs to route traffic. The JSON file is free to
+ * contain extra documentation fields that the frontend can use.
  */
 export interface ProviderConfig {
+  /**
+   * Internal identifier, e.g. "fmp" or "twelvedata".
+   */
   id: string;
-  name: string;
-  label: string;
-  ui_label: string;
-  short_label: string;
-  website: string;
-  dashboard_url: string;
-  docs_url: string;
-  base_url_rest: string;
-  status: string;
-  plan_name: string;
-  plan_tier: string;
-  kinds_supported: string[];
-  roles_supported: string[];
-  auth: ProviderAuthConfig;
-  quota: ProviderQuota;
-  credits_model: ProviderCreditsModel;
-  tags: string[];
-  notes?: string;
+
+  /**
+   * Human readable display name.
+   */
+  display_name?: string;
+
+  /**
+   * Optional short code used in URLs or logs, if different from id.
+   */
+  code?: string;
+
+  /**
+   * Free-form description.
+   */
+  description?: string;
+
+  /**
+   * High level capabilities advertised by this provider, e.g.
+   * ["fx_ribbon", "fx_mini_widget"].
+   */
+  capabilities?: string[];
+
+  /**
+   * Map of logical endpoint identifiers to real URLs.
+   *
+   * Example:
+   *   {
+   *     "fx_quotes": "https://financialmodelingprep.com/api/v3/fx"
+   *   }
+   */
+  endpoints?: Record<string, string>;
+
+  /**
+   * Map of logical endpoint identifiers to adapter ids.
+   *
+   * Example:
+   *   {
+   *     "fx_quotes": "fmp_fx_v1"
+   *   }
+   */
+  adapters?: Record<string, string>;
+
+  /**
+   * Optional map of role → endpoint identifiers this provider supports.
+   *
+   * Older versions of the config used this; newer versions prefer
+   * role-local endpoint ids. We keep it optional for backwards compat.
+   */
+  roles?: Record<string, string>;
+
+  /**
+   * Authentication configuration, if required.
+   */
+  auth?: ProviderAuthConfig;
+
+  /**
+   * Bag of provider-specific metadata used by the frontend only.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  metadata?: Record<string, any>;
 }
 
 /**
- * Target provider + endpoint used by a role.
- */
-export interface RoleEndpointConfig {
-  provider_id: string;
-  endpoint_id: string;
-}
-
-/**
- * One role policy from roles.policies.json (based on api.policies.json).
+ * Role policy entry in roles.policies.json.
+ *
+ * This is the normalised in-memory shape after validation; the on-disk
+ * JSON is slightly different and is handled by validateRolesPoliciesFile.
  */
 export interface RolePolicy {
+  /**
+   * Role identifier, e.g. "fx_ribbon".
+   */
   role: string;
+
+  /**
+   * High-level kind, e.g. "fx", "crypto", "commodities".
+   */
   kind: string;
-  default_cadence: string;
-  only_when_open: boolean;
-  primary: RoleEndpointConfig;
-  backups: RoleEndpointConfig[];
-  notes?: string;
+
+  /**
+   * Ordered list of provider ids for this role.
+   * The first entry is treated as primary; any remaining entries are
+   * considered backups in order of preference.
+   */
+  providers: string[];
+
+  /**
+   * Optional default cadence in milliseconds.
+   */
+  default_cadence_ms?: number;
+
+  /**
+   * Whether this role should only run while the underlying market is open.
+   */
+  only_when_open?: boolean;
+
+  /**
+   * Optional cache TTL in seconds for the upstream data.
+   */
+  cache_ttl_seconds?: number;
+
+  /**
+   * Strategy to use when upstream quality degrades.
+   * Example values: "fallback", "cached".
+   */
+  quality_degradation_mode?: string;
+
+  /**
+   * The provider id that is considered primary in the policy.
+   * Kept for traceability; `providers[0]` will always equal this.
+   */
+  primary_provider: string;
+
+  /**
+   * Any backup provider ids, in order of preference.
+   * Kept for traceability; must match providers.slice(1).
+   */
+  backup_providers: string[];
+
+  /**
+   * Logical endpoint identifier to use for this role, e.g. "fx_quotes".
+   * If omitted, the gateway will infer a sensible default from the kind.
+   */
+  endpoint_id?: string;
 }
 
 /**
- * In-memory representation of the API Brain.
+ * Shape of providers.registry.json on disk.
+ */
+interface ProvidersRegistryFileOnDisk {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  providers: Record<string, any> | Array<Record<string, unknown>>;
+}
+
+/**
+ * Shape of roles.policies.json on disk.
+ */
+interface RolesPoliciesFileOnDisk {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  roles: Record<string, any> | Array<Record<string, unknown>>;
+}
+
+/**
+ * In-memory API Brain – this is what the rest of the gateway talks to.
  */
 export interface ApiBrain {
-  version: number;
   providers: ProviderConfig[];
   roles: RolePolicy[];
-}
 
-interface ProvidersRegistryFile {
-  version: number;
-  providers: ProviderConfig[];
+  /**
+   * Convenience lookups to avoid repeatedly scanning arrays.
+   */
+  providersById: Record<string, ProviderConfig>;
+  rolesByName: Record<string, RolePolicy>;
 }
-
-interface RolesPoliciesFile {
-  version: number;
-  roles: RolePolicy[];
-}
-
-let cachedBrain: ApiBrain | null = null;
-let providersById: Record<string, ProviderConfig> | null = null;
-let rolesByName: Record<string, RolePolicy> | null = null;
 
 /**
- * Low-level helper to read a JSON file relative to the repo root.
- *
- * Next.js sometimes runs API route code with process.cwd() pointing at
- * a deep path like:
- *   .../frontend/.next/server/app/api/fx
- *
- * but the JSON config lives in the monorepo root:
- *   .../promagen/config/api/...
- *
- * To make this robust, we walk up the directory tree until we find the
- * "promagen" folder and then resolve the JSON path from there.
+ * Cached API Brain instance so we only hit the filesystem once per
+ * cold start in serverless environments.
  */
-function readJsonFile<T>(relativePath: string): T {
+let cachedBrain: ApiBrain | null = null;
+let providersByIdCache: Record<string, ProviderConfig> | null = null;
+let rolesByNameCache: Record<string, RolePolicy> | null = null;
+
+/**
+ * Resolve a path that is *relative to the frontend root* no matter
+ * where process.cwd() is.
+ */
+function resolveFrontendRelativePath(relativeToFrontendRoot: string): string {
   const cwd = process.cwd();
 
-  let dir = cwd;
-  for (let i = 0; i < 10; i += 1) {
-    const base = path.basename(dir).toLowerCase();
-    if (base === 'promagen') {
-      // We’ve reached the repo root.
-      break;
+  const candidates = [
+    // Monorepo root → prefer frontend subfolder
+    path.resolve(cwd, 'frontend', relativeToFrontendRoot),
+    // CWD already is frontend
+    path.resolve(cwd, relativeToFrontendRoot),
+    // Compiled into .next/server – walk up from dist to project
+    path.resolve(__dirname, '..', '..', 'frontend', relativeToFrontendRoot),
+    path.resolve(__dirname, '..', '..', relativeToFrontendRoot),
+  ];
+
+  console.log(`[API-CONFIG] Resolving "${relativeToFrontendRoot}" with cwd="${cwd}"`);
+
+  const existing: string[] = [];
+
+  for (const candidate of candidates) {
+    const exists = fs.existsSync(candidate);
+    console.log(`[API-CONFIG]   candidate: ${candidate} exists=${exists}`);
+    if (exists) {
+      existing.push(candidate);
     }
-
-    const parent = path.dirname(dir);
-    if (parent === dir) {
-      // Reached filesystem root without finding "promagen"; bail out.
-      break;
-    }
-
-    // Walk one level up and keep going.
-    dir = parent;
   }
 
-  const absolutePath = path.resolve(dir, relativePath);
-
-  try {
-    const raw = fs.readFileSync(absolutePath, 'utf8');
-    return JSON.parse(raw) as T;
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
+  if (existing.length === 0) {
     throw new ApiConfigError(
-      `Failed to read JSON config at "${relativePath}" (resolved to "${absolutePath}"): ${reason}`,
-    );
-  }
-}
-
-function validateProvidersRegistryFile(raw: ProvidersRegistryFile): ProvidersRegistryFile {
-  if (typeof raw.version !== 'number') {
-    throw new ApiConfigError('providers.registry.json is missing numeric "version".');
-  }
-
-  if (raw.version !== 1) {
-    throw new ApiConfigError(
-      `Unsupported providers.registry.json version: ${raw.version}. Expected version 1.`,
+      `Unable to locate "${relativeToFrontendRoot}". Tried:\n` +
+        candidates.map((p) => ` - ${p}`).join('\n'),
     );
   }
 
-  if (!Array.isArray(raw.providers)) {
-    throw new ApiConfigError('providers.registry.json is missing "providers" array.');
-  }
+  // Prefer anything under "\frontend\" if available.
+  const preferred =
+    existing.find((p) => p.includes(`${path.sep}frontend${path.sep}`)) ?? existing[0];
 
-  return raw;
-}
-
-function validateRolesPoliciesFile(raw: RolesPoliciesFile): RolesPoliciesFile {
-  if (typeof raw.version !== 'number') {
-    throw new ApiConfigError('roles.policies.json is missing numeric "version".');
-  }
-
-  if (raw.version !== 1) {
-    throw new ApiConfigError(
-      `Unsupported roles.policies.json version: ${raw.version}. Expected version 1.`,
-    );
-  }
-
-  if (!Array.isArray(raw.roles)) {
-    throw new ApiConfigError('roles.policies.json is missing "roles" array.');
-  }
-
-  return raw;
+  console.log('[API-CONFIG] Using file:', preferred);
+  return preferred;
 }
 
 /**
- * Build the in-memory ApiBrain and the fast lookup maps.
- * This is only called once per process; subsequent calls use the cache.
+ * Read and parse a JSON file using resolveFrontendRelativePath().
+ */
+function readJsonFile<T>(relativeToFrontendRoot: string): T {
+  const filePath = resolveFrontendRelativePath(relativeToFrontendRoot);
+
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(raw) as T;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new ApiConfigError(
+      `Failed to read JSON config "${relativeToFrontendRoot}" at "${filePath}": ${message}`,
+    );
+  }
+}
+
+/**
+ * Validate providers.registry.json and normalise it into our ProviderConfig
+ * model. This catches common config mistakes early.
+ */
+function validateProvidersRegistryFile(file: ProvidersRegistryFileOnDisk): {
+  providers: ProviderConfig[];
+} {
+  if (!file || typeof file !== 'object') {
+    throw new ApiConfigError('providers.registry.json must be an object.');
+  }
+
+  // Normalise object-or-array into entries.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let entries: Array<[string, any]> = [];
+
+  if (Array.isArray(file.providers)) {
+    const arr = file.providers as Array<Record<string, unknown>>;
+    entries = arr.map((raw) => {
+      const rawId = (raw as { id?: unknown }).id;
+      const id = typeof rawId === 'string' ? rawId : String(rawId ?? '');
+      return [id, raw] as [string, Record<string, unknown>];
+    });
+  } else {
+    const map = file.providers as Record<string, unknown>;
+    entries = Object.entries(map);
+  }
+
+  if (entries.length === 0) {
+    throw new ApiConfigError('providers.registry.json must contain at least one provider.');
+  }
+
+  const seenIds = new Set<string>();
+  const providers: ProviderConfig[] = [];
+
+  for (const [idFromKey, raw] of entries) {
+    if (!raw || typeof raw !== 'object') {
+      throw new ApiConfigError('Each provider in providers.registry.json must be an object.');
+    }
+
+    const rawId = (raw as { id?: unknown }).id;
+    const id = typeof rawId === 'string' && rawId.length > 0 ? rawId : idFromKey;
+
+    if (!id || typeof id !== 'string') {
+      throw new ApiConfigError(
+        'Every provider in providers.registry.json must have a string "id".',
+      );
+    }
+
+    if (seenIds.has(id)) {
+      throw new ApiConfigError(`Duplicate provider id "${id}" in providers.registry.json.`);
+    }
+
+    seenIds.add(id);
+
+    const provider: ProviderConfig = {
+      id,
+      display_name: (raw as { display_name?: string }).display_name,
+      code: (raw as { code?: string }).code,
+      description: (raw as { description?: string }).description,
+      capabilities: (raw as { capabilities?: string[] }).capabilities,
+      endpoints: (raw as { endpoints?: Record<string, string> }).endpoints,
+      adapters: (raw as { adapters?: Record<string, string> }).adapters,
+      roles: (raw as { roles?: Record<string, string> }).roles,
+      auth: (raw as { auth?: ProviderAuthConfig }).auth,
+      metadata: (raw as { metadata?: Record<string, unknown> }).metadata,
+    };
+
+    providers.push(provider);
+  }
+
+  return { providers };
+}
+
+/**
+ * On-disk role policy shape before normalisation.
+ * This matches the JSON under roles.policies.json.
+ */
+interface RolePolicyOnDisk {
+  role?: string;
+  kind?: string;
+  primary_provider: string;
+  backup_providers?: string[];
+  cache_ttl_seconds?: number;
+  quality_degradation_mode?: string;
+  default_cadence_ms?: number;
+  only_when_open?: boolean;
+  endpoint_id?: string;
+}
+
+/**
+ * Infer a sensible "kind" field from the role name when the JSON
+ * does not specify it explicitly.
+ */
+function inferKindFromRoleName(roleName: string): string {
+  if (roleName.startsWith('fx_')) {
+    return 'fx';
+  }
+
+  if (roleName.includes('commodities')) {
+    return 'commodities';
+  }
+
+  return 'generic';
+}
+
+/**
+ * Normalise roles.policies.json into RolePolicy objects.
+ */
+function validateRolesPoliciesFile(file: RolesPoliciesFileOnDisk): {
+  roles: RolePolicy[];
+} {
+  if (!file || typeof file !== 'object') {
+    throw new ApiConfigError('roles.policies.json must be an object.');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawRoles = file.roles as Record<string, any> | any[];
+
+  const entries: Array<[string, RolePolicyOnDisk]> = Array.isArray(rawRoles)
+    ? (rawRoles as RolePolicyOnDisk[]).map((raw) => [raw.role ?? '', raw])
+    : Object.entries(rawRoles as Record<string, RolePolicyOnDisk>);
+
+  if (entries.length === 0) {
+    throw new ApiConfigError('roles.policies.json must declare at least one role.');
+  }
+
+  const roles: RolePolicy[] = [];
+  const seenRoles = new Set<string>();
+
+  for (const [key, raw] of entries) {
+    if (!raw || typeof raw !== 'object') {
+      throw new ApiConfigError('Each role in roles.policies.json must be an object.');
+    }
+
+    const roleName = raw.role || key;
+    if (!roleName || typeof roleName !== 'string') {
+      throw new ApiConfigError('Every role in roles.policies.json must have a string "role".');
+    }
+
+    if (seenRoles.has(roleName)) {
+      throw new ApiConfigError(`Duplicate role "${roleName}" in roles.policies.json.`);
+    }
+    seenRoles.add(roleName);
+
+    if (!raw.primary_provider || typeof raw.primary_provider !== 'string') {
+      throw new ApiConfigError(
+        `Role "${roleName}" must declare a string "primary_provider" in roles.policies.json.`,
+      );
+    }
+
+    const backupProviders: string[] = Array.isArray(raw.backup_providers)
+      ? raw.backup_providers.filter((p): p is string => typeof p === 'string')
+      : [];
+
+    const providers: string[] = [raw.primary_provider, ...backupProviders];
+
+    const defaultCadenceMs =
+      typeof raw.default_cadence_ms === 'number'
+        ? raw.default_cadence_ms
+        : typeof raw.cache_ttl_seconds === 'number'
+        ? raw.cache_ttl_seconds * 1000
+        : undefined;
+
+    const role: RolePolicy = {
+      role: roleName,
+      kind: raw.kind || inferKindFromRoleName(roleName),
+      providers,
+      default_cadence_ms: defaultCadenceMs,
+      only_when_open: raw.only_when_open,
+      cache_ttl_seconds: raw.cache_ttl_seconds,
+      quality_degradation_mode: raw.quality_degradation_mode,
+      primary_provider: raw.primary_provider,
+      backup_providers: backupProviders,
+      endpoint_id: raw.endpoint_id,
+    };
+
+    roles.push(role);
+  }
+
+  return { roles };
+}
+
+/**
+ * Build the API Brain from the JSON config files.
+ *
+ * This is the single place that knows how to read providers.registry.json
+ * and roles.policies.json from disk.
  */
 function buildApiBrain(): ApiBrain {
   const providersFile = validateProvidersRegistryFile(
-    readJsonFile<ProvidersRegistryFile>('config/api/providers.registry.json'),
+    readJsonFile<ProvidersRegistryFileOnDisk>('config/api/providers.registry.json'),
   );
 
   const rolesFile = validateRolesPoliciesFile(
-    readJsonFile<RolesPoliciesFile>('config/api/roles.policies.json'),
+    readJsonFile<RolesPoliciesFileOnDisk>('config/api/roles.policies.json'),
   );
 
-  const providersByIdLocal: Record<string, ProviderConfig> = Object.create(null);
-
+  const providersById: Record<string, ProviderConfig> = {};
   for (const provider of providersFile.providers) {
-    if (!provider.id) {
-      throw new ApiConfigError('Found provider without an id in providers.registry.json.');
-    }
-
-    if (providersByIdLocal[provider.id]) {
-      throw new ApiConfigError(
-        `Duplicate provider id "${provider.id}" in providers.registry.json.`,
-      );
-    }
-
-    providersByIdLocal[provider.id] = provider;
+    providersById[provider.id] = provider;
   }
 
-  const rolesByNameLocal: Record<string, RolePolicy> = Object.create(null);
-
+  const rolesByName: Record<string, RolePolicy> = {};
   for (const role of rolesFile.roles) {
-    if (!role.role) {
-      throw new ApiConfigError('Found role without a role name in roles.policies.json.');
-    }
-
-    if (rolesByNameLocal[role.role]) {
-      throw new ApiConfigError(`Duplicate role "${role.role}" in roles.policies.json.`);
-    }
-
-    const primaryProvider = providersByIdLocal[role.primary.provider_id];
-
-    if (!primaryProvider) {
-      throw new ApiConfigError(
-        `Role "${role.role}" references unknown primary provider "${role.primary.provider_id}".`,
-      );
-    }
-
-    for (const backup of role.backups) {
-      const backupProvider = providersByIdLocal[backup.provider_id];
-      if (!backupProvider) {
-        throw new ApiConfigError(
-          `Role "${role.role}" references unknown backup provider "${backup.provider_id}".`,
-        );
-      }
-    }
-
-    rolesByNameLocal[role.role] = role;
+    rolesByName[role.role] = role;
   }
 
-  providersById = providersByIdLocal;
-  rolesByName = rolesByNameLocal;
-
-  // Version is currently identical between files; take the max for safety.
-  const combinedVersion = Math.max(providersFile.version, rolesFile.version);
-
-  cachedBrain = {
-    version: combinedVersion,
+  const brain: ApiBrain = {
     providers: providersFile.providers,
     roles: rolesFile.roles,
+    providersById,
+    rolesByName,
   };
 
-  return cachedBrain;
+  cachedBrain = brain;
+  providersByIdCache = providersById;
+  rolesByNameCache = rolesByName;
+
+  return brain;
 }
 
 /**
- * Public entry point: get the cached ApiBrain (or build it on first use).
+ * Public accessor for the API Brain. This lazily builds and caches the
+ * configuration on first use.
  */
 export function getApiBrain(): ApiBrain {
   if (cachedBrain) {
@@ -297,58 +535,47 @@ export function getApiBrain(): ApiBrain {
 }
 
 /**
- * Look up a provider by id, or throw a clear configuration error.
+ * Helper to look up a provider by id or throw a descriptive error.
  */
 export function getProviderOrThrow(providerId: string): ProviderConfig {
-  if (!providersById || !cachedBrain) {
+  if (!providersByIdCache || !cachedBrain) {
     buildApiBrain();
   }
 
-  const localProvidersById = providersById;
-
-  if (!localProvidersById) {
-    // Should be impossible, but keeps TypeScript happy.
-    throw new ApiConfigError('Providers map not initialised when calling getProviderOrThrow.');
-  }
-
-  const provider = localProvidersById[providerId];
+  const map = providersByIdCache as Record<string, ProviderConfig>;
+  const provider = map[providerId];
 
   if (!provider) {
-    throw new ApiConfigError(`Unknown provider "${providerId}" requested from API Brain.`);
+    throw new ApiConfigError(`Unknown provider "${providerId}" in API Brain configuration.`);
   }
 
   return provider;
 }
 
 /**
- * Look up a role policy by role name, or throw a clear configuration error.
+ * Helper to look up a role policy by name or throw a descriptive error.
  */
 export function getRoleOrThrow(roleName: string): RolePolicy {
-  if (!rolesByName || !cachedBrain) {
+  if (!rolesByNameCache || !cachedBrain) {
     buildApiBrain();
   }
 
-  const localRolesByName = rolesByName;
-
-  if (!localRolesByName) {
-    throw new ApiConfigError('Roles map not initialised when calling getRoleOrThrow.');
-  }
-
-  const role = localRolesByName[roleName];
+  const map = rolesByNameCache as Record<string, RolePolicy>;
+  const role = map[roleName];
 
   if (!role) {
-    throw new ApiConfigError(`Unknown role "${roleName}" requested from API Brain.`);
+    throw new ApiConfigError(`Unknown role "${roleName}" in API Brain configuration.`);
   }
 
   return role;
 }
 
 /**
- * Test-only helper: clear the in-memory cache so tests can reload
+ * Testing helper: clear the cached API Brain so tests can reload
  * the API Brain after modifying the JSON files.
  */
 export function clearApiBrainCacheForTests(): void {
   cachedBrain = null;
-  providersById = null;
-  rolesByName = null;
+  providersByIdCache = null;
+  rolesByNameCache = null;
 }
