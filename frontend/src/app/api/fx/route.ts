@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getFxRibbon } from '../../../../../gateway';
+import type { FxRibbonQuote, FxMode } from '../../../../../gateway';
 
 /**
  * FX API route (/api/fx)
@@ -11,40 +12,33 @@ import { getFxRibbon } from '../../../../../gateway';
  * - Normalise it into a stable `meta` + `data` JSON structure.
  * - Always include a build identifier so tests can assert a stable contract.
  *
- * Behaviour in tests:
- * - When NODE_ENV === 'test' we **force** the demo provider so that
- *   contract tests never hit real HTTP APIs or burn quota.
+ * In tests (NODE_ENV === 'test') this route forces the `demo` provider so
+ * contract tests never burn real upstream quota.
  */
-
 export const dynamic = 'force-dynamic';
 
 /**
- * Stable build identifier propagated into every API response.
+ * Stable build identifier for this deployment.
  *
  * Priority:
  * 1. NEXT_PUBLIC_BUILD_ID (when running in the browser or Vercel-style env)
  * 2. BUILD_ID (generic CI/host build identifier)
- * 3. "local-dev" as a safe fallback for local runs.
+ * 3. "local-dev" as a safe default for local runs.
  */
 const BUILD_ID: string = process.env.NEXT_PUBLIC_BUILD_ID ?? process.env.BUILD_ID ?? 'local-dev';
 
 /**
- * Quality mode of the FX data, mirrored from the gateway.
- */
-type FxMode = 'live' | 'fallback' | 'demo' | 'cached';
-
-/**
  * Public FX quote shape returned by this API route.
  *
- * This is deliberately simple and UI-friendly – it hides the internal
- * gateway field names (pair, price, change_24h, etc.) behind a stable
- * contract that the frontend and tests can rely on.
+ * This is intentionally simpler than the internal FxRibbonQuote used by the
+ * gateway: we expose only what the frontend actually needs.
  */
 export interface FxRibbonQuoteDto {
   /**
-   * Pair identifier, e.g. "GBPUSD".
+   * Stable identifier for this chip in the ribbon, usually the raw pair,
+   * e.g. "GBPUSD".
    */
-  symbol: string;
+  id: string;
   /**
    * Base currency code, e.g. "GBP".
    */
@@ -54,31 +48,59 @@ export interface FxRibbonQuoteDto {
    */
   quote: string;
   /**
-   * Normalised bid, ask, and mid prices.
+   * Mid / last price for the pair.
    */
-  bid: number;
-  ask: number;
   mid: number;
   /**
-   * Absolute and percentage 24h change.
+   * Optional bid / ask, if the provider offers them.
    */
-  change: number;
-  changePct: number;
+  bid?: number;
+  ask?: number;
   /**
-   * ISO timestamp of when these prices were assembled.
+   * Optional absolute 24h price change.
    */
-  lastUpdated: string;
+  change?: number;
+  /**
+   * Optional percentage 24h price change.
+   */
+  changePct?: number;
+  /**
+   * Raw provider symbol for debugging / tooltips, usually the pair string.
+   */
+  providerSymbol?: string;
 }
 
 interface FxApiSuccessResponse {
   meta: {
+    /**
+     * Build identifier for this deployment (used by tests).
+     */
     buildId: string;
+    /**
+     * Logical role, e.g. "fx_ribbon".
+     */
     role: string;
-    sourceProvider: string;
+    /**
+     * Quality mode of the data.
+     */
     mode: FxMode;
+    /**
+     * Provider the role *prefers* (from roles.policies.json).
+     */
+    primaryProvider: string;
+    /**
+     * Provider that actually served this response.
+     */
+    sourceProvider: string;
+    /**
+     * ISO timestamp when this snapshot was assembled.
+     */
     asOf: string;
   };
   data: {
+    /**
+     * FX pairs making up the ribbon.
+     */
     pairs: FxRibbonQuoteDto[];
   };
 }
@@ -91,66 +113,52 @@ interface FxApiErrorResponse {
 }
 
 /**
- * Map the gateway's internal FX quote shape to the public DTO used by this route.
+ * Map an internal gateway pair (FxRibbonQuote) to the public DTO
+ * shape exposed by this API route.
  */
-function mapGatewayPairToDto(options: {
-  pair: string;
-  base: string;
-  quote: string;
-  price: number;
-  bid?: number;
-  ask?: number;
-  change_24h?: number;
-  change_24h_pct?: number;
-  asOf: string;
-}): FxRibbonQuoteDto {
-  const { pair, base, quote, price, bid, ask, change_24h, change_24h_pct, asOf } = options;
+function mapGatewayPairToDto(options: { idPrefix?: string } = {}) {
+  const { idPrefix = '' } = options;
 
-  return {
-    symbol: pair,
-    base,
-    quote,
-    bid: bid ?? price,
-    ask: ask ?? price,
-    mid: price,
-    change: change_24h ?? 0,
-    changePct: change_24h_pct ?? 0,
-    lastUpdated: asOf,
+  return (pair: FxRibbonQuote): FxRibbonQuoteDto => {
+    const rawId = pair.pair ?? `${pair.base}${pair.quote}`;
+
+    return {
+      id: `${idPrefix}${rawId}`,
+      base: pair.base,
+      quote: pair.quote,
+      mid: pair.price,
+      bid: pair.bid,
+      ask: pair.ask,
+      change: pair.change_24h,
+      changePct: pair.change_24h_pct,
+      providerSymbol: rawId,
+    };
   };
 }
 
 /**
- * Route handler.
+ * GET /api/fx
  *
- * Next.js will call this in production with a `NextRequest` argument,
- * but for tests we keep the signature argument-less so that Jest can
- * simply call `await GET()` without needing to construct a Request
- * instance or web runtime shims.
+ * Returns the homepage FX ribbon snapshot.
  */
-export async function GET() {
+export async function GET(): Promise<NextResponse<FxApiSuccessResponse | FxApiErrorResponse>> {
   try {
     const isTestRun = process.env.NODE_ENV === 'test';
 
-    const gatewayResult = await getFxRibbon({
-      // In tests always force the demo provider.
-      forceProviderId: isTestRun ? 'demo' : undefined,
-    });
+    // In tests we hard-force the demo provider so we never burn real API quota.
+    const gatewayResult = await getFxRibbon(isTestRun ? { forceProviderId: 'demo' } : undefined);
 
-    const { role, sourceProvider, mode, asOf, pairs } = gatewayResult;
+    const { role, primaryProvider, sourceProvider, mode, asOf, pairs } = gatewayResult;
 
-    const mappedPairs: FxRibbonQuoteDto[] = pairs.map((pair) =>
-      mapGatewayPairToDto({
-        ...pair,
-        asOf,
-      }),
-    );
+    const mappedPairs = pairs.map(mapGatewayPairToDto());
 
     const body: FxApiSuccessResponse = {
       meta: {
         buildId: BUILD_ID,
         role,
-        sourceProvider,
         mode,
+        primaryProvider,
+        sourceProvider,
         asOf,
       },
       data: {

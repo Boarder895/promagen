@@ -8,13 +8,16 @@ import { fetchDemoFxQuotes } from './adapters/demo.fx';
 /**
  * Promagen API Gateway — FX entry point
  *
- * Reads the API Brain configuration from config/api/*
- * and exposes typed helpers used by the frontend and workers.
+ * Reads API Brain config from config/api/* and exposes a small, stable
+ * TypeScript surface:
+ *
+ *   - getFxRibbon      → homepage 5-chip FX belt
+ *   - getFxMiniWidget  → studio / prompt-builder mini FX widget
  *
  * This file:
- * - Has no provider-specific HTTP details
- * - Has no hard-coded provider URLs
- * - Drives everything from providers.registry + roles.policies
+ * - Knows about providers, roles and caching.
+ * - Does *not* know HTTP details (that lives in the adapters).
+ * - Is safe to import from both frontend and workers.
  */
 
 // -----------------------------------------------------------------------------
@@ -22,6 +25,10 @@ import { fetchDemoFxQuotes } from './adapters/demo.fx';
 // -----------------------------------------------------------------------------
 
 interface ProviderAuthConfig {
+  /**
+   * How auth is supplied to the provider.
+   * For FX we only care about "none" and "query_param".
+   */
   type: 'none' | 'query_param';
   /**
    * Name of the query parameter that carries the API key, if type="query_param".
@@ -34,9 +41,15 @@ interface ProviderAuthConfig {
 }
 
 interface ProviderEndpointConfig {
+  /**
+   * Fully qualified FX quotes endpoint or a logical local:// URL for demo.
+   */
   fx_quotes?: string;
 }
 
+/**
+ * One provider definition from providers.registry.json.
+ */
 export interface ProviderConfig {
   id: string;
   display_name: string;
@@ -56,8 +69,18 @@ interface ProvidersRegistryFile {
   providers: Record<string, ProviderConfig>;
 }
 
+/**
+ * How a role should degrade when live quality is not available.
+ *
+ * "fallback" → try backups, then demo if all else fails.
+ * "cached"   → prefer cached data when upstream is flaky.
+ * string     → forward-compatible custom modes.
+ */
 export type QualityDegradationMode = 'fallback' | 'cached' | string;
 
+/**
+ * Role policy row from roles.policies.json.
+ */
 export interface RolePolicy {
   role: string;
   primary_provider: string;
@@ -76,8 +99,17 @@ interface RolesPoliciesFile {
 // FX result types
 // -----------------------------------------------------------------------------
 
+/**
+ * Quality mode of the FX data.
+ */
 export type FxMode = 'live' | 'fallback' | 'demo' | 'cached';
 
+/**
+ * Internal FX quote shape used by the gateway and adapters.
+ *
+ * This is intentionally fairly rich – the API route normalises this to the
+ * simpler DTO used by the frontend.
+ */
 export interface FxRibbonQuote {
   /**
    * Pair identifier, e.g. "GBPUSD".
@@ -92,63 +124,71 @@ export interface FxRibbonQuote {
    */
   quote: string;
   /**
-   * Mid or last traded price for display.
+   * Mid / last price for the pair.
    */
   price: number;
   /**
-   * Optional bid / ask for richer widgets.
+   * Optional bid / ask, if the provider offers them.
    */
   bid?: number;
   ask?: number;
   /**
-   * Absolute 24h change in price.
+   * Absolute 24h price change.
    */
   change_24h?: number;
   /**
-   * Percentage 24h change in price.
+   * Percentage 24h price change.
    */
   change_24h_pct?: number;
 }
 
+/**
+ * Normalised FX gateway result.
+ *
+ * All upstream providers (live, backup, demo, cached) are squashed into this.
+ */
 export interface FxGatewayResult {
   /**
    * Logical role, e.g. "fx_ribbon" or "fx_mini_widget".
    */
   role: string;
   /**
-   * The provider the role *prefers* (from roles.policies.json).
+   * Provider the role *prefers* (from roles.policies.json).
    */
   primaryProvider: string;
   /**
-   * The provider that actually served the data (could be backup or demo).
+   * Provider that actually served this response.
    */
   sourceProvider: string;
   /**
-   * Quality mode of this response.
+   * Quality mode of the data.
    */
   mode: FxMode;
   /**
-   * ISO timestamp of when these prices were assembled.
+   * ISO timestamp when this snapshot was assembled.
    */
   asOf: string;
   /**
-   * Normalised FX quotes for the current role.
+   * FX pairs making up the ribbon / widget.
    */
   pairs: FxRibbonQuote[];
 }
 
+/**
+ * Options for the gateway functions.
+ */
 export interface FxGatewayOptions {
   /**
-   * Force the gateway to use a specific provider instead of the role's chain.
-   * Example: "demo" for smoke-testing without hitting live APIs.
+   * Force a particular provider id, bypassing role primary/backup ordering.
+   * Very handy in tests.
    */
   forceProviderId?: string;
   /**
-   * When forcing a provider, optionally skip reading/writing cache.
+   * Skip the in-memory cache and always hit upstream providers.
    */
   bypassCache?: boolean;
   /**
-   * Optional time source (handy for tests).
+   * Optional time source (useful in tests).
    */
   now?: () => Date;
 }
@@ -169,13 +209,23 @@ const cache = new Map<string, CacheEntry>();
 // Adapters
 // -----------------------------------------------------------------------------
 
-// Adapters are responsible for calling each provider's HTTP API
-// and returning a normalised FX ribbon quote list.
+/**
+ * Contract every FX adapter must implement.
+ *
+ * The adapter:
+ * - Receives the provider config + logical role.
+ * - Returns a normalised list of FX quotes.
+ */
 export type FxAdapter = (options: {
   provider: ProviderConfig;
   role: string;
 }) => Promise<FxRibbonQuote[]>;
 
+/**
+ * Registry of known FX adapters keyed by provider id.
+ *
+ * If you add a new FX provider to providers.registry.json you wire it here.
+ */
 const FX_ADAPTERS: Record<string, FxAdapter> = {
   fmp: fetchFmpFxQuotes,
   twelvedata: fetchTwelveDataFxQuotes,
@@ -183,9 +233,14 @@ const FX_ADAPTERS: Record<string, FxAdapter> = {
 };
 
 // -----------------------------------------------------------------------------
-// Config loading — robust against Next.js/webpack bundling
+// Config loading — robust against Next.js / bundlers
 // -----------------------------------------------------------------------------
 
+/**
+ * Walk up from the current working directory until we find the "promagen"
+ * repo root. This keeps things working whether we run from /frontend,
+ * /gateway or the monorepo root.
+ */
 function findRepoRoot(startDir: string): string {
   let dir = startDir;
 
@@ -210,8 +265,8 @@ function findRepoRoot(startDir: string): string {
 
 function loadJsonFile<T>(relativePathFromRepoRoot: string): T {
   const repoRoot = findRepoRoot(process.cwd());
-  const absolute = resolve(repoRoot, relativePathFromRepoRoot);
-  const raw = readFileSync(absolute, 'utf8');
+  const absolutePath = resolve(repoRoot, relativePathFromRepoRoot);
+  const raw = readFileSync(absolutePath, 'utf8');
   return JSON.parse(raw) as T;
 }
 
@@ -358,6 +413,7 @@ async function getFxForRole(role: string, options?: FxGatewayOptions): Promise<F
   const nowFn = options?.now ?? (() => new Date());
   const { rolePolicy, chain } = pickProviderChain(role, options?.forceProviderId);
 
+  // Try cache first (unless explicitly bypassed).
   const cached = getFromCache(role, options, nowFn);
   if (cached) {
     return {
@@ -366,20 +422,17 @@ async function getFxForRole(role: string, options?: FxGatewayOptions): Promise<F
     };
   }
 
-  const registry = getProvidersRegistry();
   const asOf = nowFn().toISOString();
-
+  const registry = getProvidersRegistry();
   let lastError: unknown;
 
+  // Walk the provider chain: primary → backups.
   for (const providerId of chain) {
-    const providerConfig = getProviderConfig(providerId);
-
-    if (!providerConfig.capabilities.includes(role)) {
-      continue;
-    }
-
+    const providerConfig = registry.providers[providerId] ?? getProviderConfig(providerId);
     const adapter = FX_ADAPTERS[providerId];
+
     if (!adapter) {
+      // No adapter registered for this provider; skip.
       continue;
     }
 
@@ -412,8 +465,8 @@ async function getFxForRole(role: string, options?: FxGatewayOptions): Promise<F
     }
   }
 
-  // If we reach here, every provider in the chain has failed.
-  // As a safety net, try the demo provider even if not listed.
+  // If we reach here, every provider in the role chain has failed.
+  // As a last resort, try the demo provider even if it wasn't in the chain.
   try {
     const registryDemo = registry.providers.demo;
     const providerConfig = registryDemo ?? getProviderConfig('demo');
