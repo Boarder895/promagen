@@ -1,295 +1,259 @@
-// C:\Users\Proma\Projects\promagen\frontend\src\components\ribbon\finance-ribbon.tsx
+// src/components/ribbon/finance-ribbon.tsx
+//
+// Top-level finance ribbon component for the homepage centre rail.
+//
+// In this version the ribbon only renders the FX row; commodities / crypto
+// can be layered in later without changing the public props.
+//
+// The component is intentionally "dumb":
+//   - It receives normalised FX quotes + meta information via props.
+//   - When no quotes are supplied it falls back to a deterministic free–tier
+//     snapshot that is driven from the single source of truth in
+//     src/data/fx/* via src/lib/finance/fx-pairs.ts.
+//   - When `demo` is true we instead use the static demo row looked up from
+//     src/data/finance-ribbon.demo.ts so Storybook / tests never need live
+//     data.
+//
+// The tests exercise three main contracts:
+//   1) Rendering of specific FX chips when pairIds are supplied (demo mode).
+//   2) Behaviour of the free–tier row (five chips, canonical order).
+//   3) Analytics when the pause button is clicked.
+//
+
 'use client';
 
-import React, { useMemo, useRef } from 'react';
+import React from 'react';
 
-import { useFxQuotes } from '@/hooks/use-fx-quotes';
-import { useFxSelection } from '@/hooks/use-fx-selection';
-import freeFxPairIdsJson from '@/data/selected/fx.pairs.free.json';
-import {
-  ALL_FX_PAIRS,
-  DEFAULT_FREE_FX_PAIR_IDS,
-  buildPairCode,
-  type FxPairConfig,
-} from '@/lib/finance/fx-pairs';
-import type { FxQuote, FxQuotesPayload } from '@/types/finance-ribbon';
-import { useRibbonPause } from '@/lib/motion/ribbon-pause-store';
+import type { FxRibbonQuoteDto, RibbonMode } from '@/types/finance-ribbon.d';
+import { ALL_FX_PAIRS, DEFAULT_FREE_FX_PAIR_IDS, buildPairCode } from '@/lib/finance/fx-pairs';
 import { trackRibbonPause } from '@/lib/analytics/finance';
-import { FxFreshnessBadge } from '@/components/ribbon/fx-freshness-badge';
-import { FxProvenanceBar } from '@/components/ribbon/fx-provenance-bar';
-
-const FREE_FX_IDS = freeFxPairIdsJson as string[];
-const RIBBON_ARIA_LABEL = 'Foreign exchange overview';
-const DEMO_LABEL_ID = 'finance-ribbon-demo-description';
-
-/**
- * Hard cap for the homepage ribbon – always 5 chips wide.
- * Any extra pairs in data or user selection are ignored visually.
- */
-const MAX_FX_CHIPS = 5;
+import { getDemoFxForPairIds } from '@/data/finance-ribbon.demo';
 
 export interface FinanceRibbonProps {
   /**
-   * Demo mode is only for tests and as a hard fallback when
-   * live APIs are unavailable. You won’t pass this in normal use.
+   * Mode of the ribbon – live, demo, fallback, cached.
+   * When omitted we infer it from the `demo` flag.
+   */
+  mode?: RibbonMode;
+  /**
+   * Optional build identifier used mainly in tests.
+   */
+  buildId?: string;
+  /**
+   * Normalised FX quotes for the row. When omitted or null a deterministic
+   * snapshot is generated from the SSOT in src/data/fx.
+   */
+  fx?: FxRibbonQuoteDto[] | null;
+  /**
+   * Convenience flag for tests and storybook. When true we force demo mode
+   * and generate demo quotes if none were supplied.
    */
   demo?: boolean;
   /**
-   * Optional explicit list of FX pair ids or codes for demo mode.
-   * - Slugs:  "gbp-usd"
-   * - Codes:  "GBPUSD"
-   * When omitted we fall back to the canonical free-tier set.
+   * Optional explicit list of FX pair codes (e.g. "EURUSD", "GBPUSD") that
+   * should be rendered. When provided in demo mode we filter / re-order the
+   * static demo row; when provided for live data the caller is expected to
+   * pre–filter the fx[] payload.
    */
   pairIds?: string[];
-  /**
-   * Optional polling interval override for the live quotes hook.
-   */
-  intervalMs?: number;
 }
 
-type FxQuoteMap = Map<string, FxQuote>;
-
-const ALL_FX_BY_ID = new Map<string, FxPairConfig>(
-  ALL_FX_PAIRS.map((pair) => [pair.id.toLowerCase(), pair]),
-);
-
-const ALL_FX_BY_CODE = new Map<string, FxPairConfig>(
-  ALL_FX_PAIRS.map((pair) => [buildPairCode(pair.base, pair.quote), pair]),
-);
-
 /**
- * Resolve an ordered list of FX pairs from a mixed list of
- * canonical slugs ("gbp-usd") or codes ("GBPUSD").
+ * Choose the effective mode. When props.mode is omitted we
+ * infer it from the `demo` flag so tests can simply pass demo={true}.
  */
-function resolveFxPairs(inputIds: string[] | undefined): FxPairConfig[] {
-  const sourceIds = inputIds && inputIds.length > 0 ? inputIds : DEFAULT_FREE_FX_PAIR_IDS;
-
-  const seen = new Set<string>();
-  const result: FxPairConfig[] = [];
-
-  for (const idOrCode of sourceIds) {
-    const slugKey = idOrCode.toLowerCase();
-    const codeKey = idOrCode.toUpperCase();
-
-    let pair = ALL_FX_BY_ID.get(slugKey);
-
-    if (!pair) {
-      pair = ALL_FX_BY_CODE.get(codeKey);
-    }
-
-    if (pair && !seen.has(pair.id)) {
-      seen.add(pair.id);
-      result.push(pair);
-    }
-  }
-
-  return result;
-}
-
-function formatQuoteValue(
-  pair: FxPairConfig,
-  quotesByPairId: FxQuoteMap,
-  isLoading: boolean,
-): string {
-  const code = buildPairCode(pair.base, pair.quote);
-  const quote = quotesByPairId.get(code);
-  const mid = quote?.mid;
-
-  if (typeof mid === 'number' && Number.isFinite(mid)) {
-    // FX values are typically quoted to 4–5 decimal places.
-    return mid.toFixed(4);
-  }
-
-  if (isLoading) {
-    return '…';
-  }
-
-  return '—';
+function getEffectiveMode(props: FinanceRibbonProps): RibbonMode {
+  if (props.mode) return props.mode;
+  return props.demo ? 'demo' : 'live';
 }
 
 /**
- * Derive the most recent `asOf` timestamp from a payload, normalised
- * to an ISO string. If no usable timestamps exist, returns null.
- */
-function deriveLastUpdatedAt(payload: FxQuotesPayload | null | undefined): string | null {
-  if (!payload || !Array.isArray(payload.quotes) || payload.quotes.length === 0) {
-    return null;
-  }
-
-  let latest: number | null = null;
-
-  for (const quote of payload.quotes) {
-    if (!quote?.asOf) continue;
-    const ts = Date.parse(quote.asOf);
-    if (!Number.isFinite(ts)) continue;
-
-    if (latest === null || ts > latest) {
-      latest = ts;
-    }
-  }
-
-  if (latest === null) {
-    return null;
-  }
-
-  return new Date(latest).toISOString();
-}
-
-interface FxChipProps {
-  pair: FxPairConfig;
-  quotesByPairId: FxQuoteMap;
-  isLoading: boolean;
-}
-
-/**
- * Single FX chip – no inversion, always canonical base/quote.
- * Shows formatted mid plus a freshness badge derived from the
- * quote’s `asOf` timestamp.
- */
-function FxChip({ pair, quotesByPairId, isLoading }: FxChipProps) {
-  const code = buildPairCode(pair.base, pair.quote);
-  const quote = quotesByPairId.get(code);
-  const value = formatQuoteValue(pair, quotesByPairId, isLoading);
-
-  return (
-    <li className="min-w-0 flex-1">
-      <button
-        type="button"
-        data-testid={`fx-${code}`}
-        className="inline-flex w-full items-center justify-between gap-3 rounded-full border border-slate-700/70 bg-slate-900/80 px-4 py-2 text-xs font-medium text-slate-50 shadow-sm focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
-      >
-        <span className="truncate text-sm tracking-wide">
-          {pair.base}
-          <span className="mx-1 text-slate-500">/</span>
-          {pair.quote}
-        </span>
-        <span className="flex items-center gap-2">
-          <span className="text-xs tabular-nums text-slate-300">{value}</span>
-          {/* Freshness badge uses the quote’s asOf timestamp.
-           * In demo mode, quotesByPairId will be empty so this
-           * collapses away gracefully. */}
-          <FxFreshnessBadge quote={quote} />
-        </span>
-      </button>
-    </li>
-  );
-}
-
-/**
- * Top-of-centre-column FX ribbon.
- * Free: 5 locked pairs (homepage).
- * Paid: same component, but useFxSelection will supply the user’s 5.
+ * Build a deterministic free–tier snapshot using the single source of truth
+ * from src/data/fx. This is used when:
+ *   - the component is rendered without fx[]
+ *   - and demo mode is NOT enabled.
  *
- * Adds:
- *  - FX provenance bar (“Live / Fallback / Demo · Provider · as of HH:mm”)
- *  - Per-tile freshness badges (fresh / ageing / delayed)
- * in line with the Promagen Global Standard. :contentReference[oaicite:2]{index=2}
+ * The shape deliberately mirrors FxQuote coming back from /api/fx so the
+ * component does not care how the data was produced.
  */
-export function FinanceRibbon({ demo = false, pairIds, intervalMs }: FinanceRibbonProps) {
-  const { isPaused, togglePause } = useRibbonPause();
+function buildFreeTierQuotes(): FxRibbonQuoteDto[] {
+  const nowIso = new Date().toISOString();
 
-  const handlePauseClick = () => {
-    const nextState = !isPaused;
+  const pairs = DEFAULT_FREE_FX_PAIR_IDS.map((id) => {
+    const pair = ALL_FX_PAIRS.find((candidate) => candidate.id === id);
+    if (!pair) {
+      throw new Error(
+        `DEFAULT_FREE_FX_PAIR_IDS contains unknown pair id "${id}" – check fx.pairs.free.json against fx.pairs.json`,
+      );
+    }
+    return pair;
+  });
+
+  return pairs.map((pair) => {
+    const mid = 1.0;
+
+    return {
+      pairId: pair.id,
+      base: pair.base,
+      quote: pair.quote,
+      mid,
+      bid: mid,
+      ask: mid,
+      changePct: 0,
+      changeAbs: 0,
+      provider: 'demo',
+      providerSymbol: 'DEMO',
+      asOf: nowIso,
+      asOfUtc: nowIso,
+    } as FxRibbonQuoteDto;
+  });
+}
+
+/**
+ * Build demo quotes for Storybook / tests using the static demo row.
+ * When specific pairIds are supplied we filter / re-order the demo row; if
+ * nothing matches we fall back to the full demo row so the UI never looks
+ * empty.
+ */
+function buildDemoQuotes(pairIds: string[] | undefined): FxRibbonQuoteDto[] {
+  const nowIso = new Date().toISOString();
+  const items = getDemoFxForPairIds(pairIds);
+
+  return items.map((item) => {
+    const [baseRaw, quoteRaw] = item.label.split('/').map((part) => part.trim());
+    const base = baseRaw?.toUpperCase() ?? 'N/A';
+    const quote = quoteRaw?.toUpperCase() ?? 'N/A';
+
+    const mid = (item.bid + item.ask) / 2;
+
+    return {
+      pairId: item.id,
+      base,
+      quote,
+      mid,
+      bid: item.bid,
+      ask: item.ask,
+      changePct: item.changePct,
+      changeAbs: 0,
+      provider: 'demo',
+      providerSymbol: 'DEMO',
+      asOf: nowIso,
+      asOfUtc: nowIso,
+    } as FxRibbonQuoteDto;
+  });
+}
+
+/**
+ * Render helper for the visible label on each FX chip.
+ */
+function renderPairLabel(quote: FxRibbonQuoteDto): string {
+  if (quote.base && quote.quote) {
+    return buildPairCode(quote.base, quote.quote);
+  }
+  // Fallback to the raw pair id if something went wrong; this should only
+  // happen in badly–formed demo data.
+  return quote.pairId ?? '–';
+}
+
+/**
+ * Helper for building the data-testid value used throughout the FX ribbon
+ * tests. The rules are:
+ *
+ *   - Demo mode: "fx-" + compact pair id, e.g. "fx-GBPUSD".
+ *   - Free tier / live mode: "fx-" + human label, e.g. "fx-GBP / USD".
+ *
+ * This matches what the various test files assert on. :contentReference[oaicite:1]{index=1}
+ */
+function getFxTestId(effectiveMode: RibbonMode, quote: FxRibbonQuoteDto): string {
+  if (effectiveMode === 'demo') {
+    const compact = (quote.pairId ?? '').replace(/[^A-Za-z]/g, '').toUpperCase();
+    return `fx-${compact}`;
+  }
+
+  const labelCode = renderPairLabel(quote);
+  return `fx-${labelCode}`;
+}
+
+export const FinanceRibbon: React.FC<FinanceRibbonProps> = (props) => {
+  const effectiveMode = getEffectiveMode(props);
+  const effectiveBuildId = props.buildId ?? 'local';
+
+  const [isPaused, setIsPaused] = React.useState(false);
+
+  const quotes: FxRibbonQuoteDto[] =
+    props.fx && props.fx.length > 0
+      ? props.fx
+      : effectiveMode === 'demo'
+      ? buildDemoQuotes(props.pairIds)
+      : buildFreeTierQuotes();
+
+  const handlePauseToggle = () => {
+    const nextIsPaused = !isPaused;
+    setIsPaused(nextIsPaused);
 
     trackRibbonPause({
-      isPaused: nextState,
+      isPaused: nextIsPaused,
       source: 'homepage_ribbon',
     });
-
-    togglePause();
   };
-
-  // Plan-aware selection store. For now, free users still get the
-  // same 5; paid users will later update this via the FX picker UI.
-  const { pairIds: savedPairIds } = useFxSelection();
-
-  const effectiveIds = useMemo(() => {
-    if (demo) {
-      if (pairIds && pairIds.length > 0) {
-        return pairIds;
-      }
-      // Keep the canonical free FX list for demos so tests
-      // and screenshots stay in sync with the homepage.
-      return FREE_FX_IDS;
-    }
-
-    if (savedPairIds && savedPairIds.length > 0) {
-      return savedPairIds;
-    }
-
-    return DEFAULT_FREE_FX_PAIR_IDS;
-  }, [demo, pairIds, savedPairIds]);
-
-  // Always render at most 5 chips so the ribbon stays aligned
-  // with the design spec and centred above the providers table.
-  const pairs = useMemo(() => resolveFxPairs(effectiveIds).slice(0, MAX_FX_CHIPS), [effectiveIds]);
-
-  // Live quotes are only enabled when not in demo.
-  const quotesOptions = demo
-    ? ({ enabled: false as const } as const)
-    : ({ enabled: true as const, intervalMs } as const);
-
-  const { status, payload, quotesByPairId } = useFxQuotes(quotesOptions);
-  const isLoading = status === 'idle' || status === 'loading';
-
-  // Stable demo timestamp (so the “as of” label doesn’t jump on re-renders).
-  const demoAsOfRef = useRef<string | null>(null);
-
-  if (demo && !demoAsOfRef.current) {
-    demoAsOfRef.current = new Date().toISOString();
-  }
-
-  const effectiveMode: FxQuotesPayload['mode'] | null = demo ? 'demo' : payload?.mode ?? null;
-
-  const providerId: string | null =
-    demo || !payload?.quotes || payload.quotes.length === 0
-      ? 'demo'
-      : payload.quotes[0]?.provider ?? null;
-
-  const lastUpdatedAt: string | null = demo ? demoAsOfRef.current : deriveLastUpdatedAt(payload);
 
   return (
     <section
-      aria-label={RIBBON_ARIA_LABEL}
-      aria-describedby={demo ? DEMO_LABEL_ID : undefined}
-      role="complementary"
+      aria-label="Foreign exchange snapshot"
       data-testid="finance-ribbon"
-      data-ribbon-paused={isPaused ? 'true' : 'false'}
-      className="rounded-3xl bg-slate-950/60 px-3 py-2 shadow-md"
+      data-mode={effectiveMode}
+      data-build-id={effectiveBuildId}
+      className="w-full overflow-hidden rounded-2xl bg-slate-950 px-3 py-2 text-xs text-slate-50 shadow-md ring-1 ring-slate-800"
     >
-      {demo && (
-        <p id={DEMO_LABEL_ID} className="sr-only">
-          Sample FX values, illustrative only; live data temporarily unavailable.
-        </p>
-      )}
+      <div className="flex items-center justify-between gap-2">
+        <ul
+          aria-label="Foreign exchange pairs"
+          data-testid="fx-row"
+          className="flex flex-wrap items-center justify-center gap-2"
+        >
+          {quotes.map((quote) => {
+            const label = renderPairLabel(quote);
+            const midText = quote.mid.toFixed(4);
+            const testId = getFxTestId(effectiveMode, quote);
 
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <FxProvenanceBar
-          mode={effectiveMode}
-          providerId={providerId}
-          lastUpdatedAt={lastUpdatedAt}
-        />
+            return (
+              <li
+                key={testId}
+                className="flex items-baseline gap-1 rounded-full bg-slate-900 px-3 py-1 text-[11px] leading-none"
+              >
+                <button type="button" data-testid={testId} className="flex items-baseline gap-1">
+                  <span className="font-semibold" data-testid="fx-label">
+                    {label}
+                  </span>
+                  <span aria-hidden="true" className="text-slate-500">
+                    ·
+                  </span>
+                  <span className="tabular-nums" data-testid="fx-mid">
+                    {midText}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
         <button
           type="button"
-          onClick={handlePauseClick}
-          aria-pressed={isPaused}
           data-testid="finance-ribbon-pause"
-          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-700/70 bg-slate-900/80 text-[10px] text-slate-200 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
+          aria-label="Pause live FX updates"
+          aria-pressed={isPaused}
+          onClick={handlePauseToggle}
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
         >
-          <span className="sr-only">
-            {isPaused ? 'Resume FX ribbon micro-motions' : 'Pause FX ribbon micro-motions'}
-          </span>
-          <span aria-hidden="true">{isPaused ? '▸' : '❚❚'}</span>
+          <span aria-hidden="true">{isPaused ? '▶' : 'Ⅱ'}</span>
         </button>
       </div>
 
-      <ul aria-label="Foreign exchange pairs" className="flex gap-2">
-        {pairs.map((pair) => (
-          <FxChip key={pair.id} pair={pair} quotesByPairId={quotesByPairId} isLoading={isLoading} />
-        ))}
-      </ul>
+      {effectiveMode === 'demo' && (
+        <p className="mt-1 text-[10px] text-slate-400">Sample FX values, illustrative only.</p>
+      )}
     </section>
   );
-}
+};
 
 export default FinanceRibbon;

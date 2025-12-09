@@ -1,130 +1,209 @@
-/**
- * Demo FX adapter for Promagen.
- *
- * This adapter does not make any network calls.
- * It returns a fixed, predictable set of FX pairs for use when:
- * - Running locally without real API keys, or
- * - All live providers have failed and the gateway falls back to demo.
- */
+// C:\Users\Proma\Projects\promagen\gateway\adapters\demo.fx.ts
+//
+// Demo FX adapter wired to the FX single source of truth.
+//
+// Responsibilities:
+// - Read the canonical FX pair catalogue and default flags from
+//   frontend/src/data/fx.
+// - Build a stable default "free tier" ribbon set using the same
+//   order as the homepage.
+// - Provide slightly jittered prices so the UI feels alive, but
+//   without any external HTTP calls.
 
-import type { ProviderConfig, FxRibbonQuote } from '../index';
+import fs from 'node:fs';
+import path from 'node:path';
 
-export async function fetchDemoFxQuotes(options: {
-  provider: ProviderConfig;
-  role: string;
-}): Promise<FxRibbonQuote[]> {
-  // The provider + role are not strictly required for demo data,
-  // but they are accepted for parity with real adapters and future extension.
-  const { role } = options;
+import type { FxRibbonQuote } from '..';
 
-  // You can tailor this per role if needed in future (e.g. more pairs for mini widget),
-  // but for now we keep both fx_ribbon and fx_mini_widget on the same predictable set.
-  const pairs = getBaseDemoPairs();
+interface FxPairDemoMeta {
+  value: number;
+  prevClose: number;
+}
 
-  const now = Date.now();
+interface FxPairCatalogEntry {
+  id: string;
+  base: string;
+  quote: string;
+  label?: string;
+  precision?: number;
+  demo?: FxPairDemoMeta;
+}
 
-  // Add a tiny, deterministic wobble based on time + pair name
-  // so values are not completely static but remain stable and safe.
-  const quotes: FxRibbonQuote[] = pairs.map((baseQuote, index) => {
-    const jitterSeed = (now / 60000) | 0; // minute-level granularity
-    const hash = simpleHash(`${role}:${baseQuote.pair}:${jitterSeed}`);
-    const wobble = (hash % 9) / 10000; // up to 0.0008
-
-    const sign = hash % 2 === 0 ? 1 : -1;
-    const price = round4(baseQuote.price + sign * wobble);
-    const changeAbs = round4(price - baseQuote.price);
-    const changePct = baseQuote.price === 0 ? 0 : round4((changeAbs / baseQuote.price) * 100);
-
-    return {
-      pair: baseQuote.pair,
-      base: baseQuote.base,
-      quote: baseQuote.quote,
-      price,
-      bid: round4(price - 0.0005),
-      ask: round4(price + 0.0005),
-      change_24h: changeAbs,
-      change_24h_pct: changePct,
-    };
-  });
-
-  return quotes;
+interface FxIndexEntry {
+  id: string;
+  isDefaultFree?: boolean;
+  isDefaultPaid?: boolean;
+  group?: string;
 }
 
 /**
- * Core, deterministic demo prices for the homepage ribbon.
- * These should be stable over time and represent sensible ballpark FX levels.
- *
- * You can adjust these if you later decide to change which pairs the ribbon shows.
+ * Normalise FX pair ids so "GBP-USD" and "gbp-usd" are treated the same.
  */
-function getBaseDemoPairs(): FxRibbonQuote[] {
-  return [
-    {
-      pair: 'GBPUSD',
-      base: 'GBP',
-      quote: 'USD',
-      price: 1.26,
-      bid: 1.2595,
-      ask: 1.2605,
-      change_24h: 0.0025,
-      change_24h_pct: 0.2,
-    },
-    {
-      pair: 'EURUSD',
-      base: 'EUR',
-      quote: 'USD',
-      price: 1.09,
-      bid: 1.0895,
-      ask: 1.0905,
-      change_24h: -0.0015,
-      change_24h_pct: -0.14,
-    },
-    {
-      pair: 'USDJPY',
-      base: 'USD',
-      quote: 'JPY',
-      price: 148.2,
-      bid: 148.18,
-      ask: 148.22,
-      change_24h: 0.35,
-      change_24h_pct: 0.24,
-    },
-    {
-      pair: 'USDCAD',
-      base: 'USD',
-      quote: 'CAD',
-      price: 1.35,
-      bid: 1.3495,
-      ask: 1.3505,
-      change_24h: -0.001,
-      change_24h_pct: -0.07,
-    },
-    {
-      pair: 'AUDUSD',
-      base: 'AUD',
-      quote: 'USD',
-      price: 0.66,
-      bid: 0.6595,
-      ask: 0.6605,
-      change_24h: 0.0018,
-      change_24h_pct: 0.27,
-    },
-  ];
+function normaliseFxPairId(id: string): string {
+  return id.trim().toLowerCase();
 }
 
 /**
- * Very small, deterministic hash for jittering demo prices.
- * Not cryptographic, just enough to produce stable pseudo-randomness.
+ * Resolve a path relative to the repository root, working whether the
+ * current working directory is the repo root or the frontend folder.
+ *
+ * Example:
+ *  resolveFromRepo('frontend/src/data/fx/pairs.json')
  */
-function simpleHash(input: string): number {
-  let hash = 0;
+function resolveFromRepo(relativeFromRoot: string): string {
+  const cwd = process.cwd();
 
-  for (let index = 0; index < input.length; index += 1) {
-    hash = (hash * 31 + input.charCodeAt(index)) | 0;
+  const direct = path.join(cwd, relativeFromRoot);
+  if (fs.existsSync(direct)) {
+    return direct;
   }
 
-  return Math.abs(hash);
+  const parent = path.join(cwd, '..', relativeFromRoot);
+  if (fs.existsSync(parent)) {
+    return parent;
+  }
+
+  throw new Error(
+    `demo.fx: unable to resolve path "${relativeFromRoot}". Tried:\n` +
+      `  ${direct}\n` +
+      `  ${parent}\n` +
+      `CWD was: ${cwd}`,
+  );
 }
 
-function round4(value: number): number {
-  return Math.round(value * 10000) / 10000;
+function loadJsonFromRepo<T>(relativeFromRoot: string): T {
+  const fullPath = resolveFromRepo(relativeFromRoot);
+  const raw = fs.readFileSync(fullPath, 'utf8');
+  return JSON.parse(raw) as T;
+}
+
+/**
+ * Build the base (non-jittered) FX quotes from the FX single source
+ * of truth:
+ *
+ * - frontend/src/data/fx/pairs.json      → full catalogue
+ * - frontend/src/data/fx/fx.pairs.json  → default/flags index
+ *
+ * We use:
+ * - only entries where isDefaultFree === true
+ * - only pairs that have demo metadata
+ * - the file order from fx.pairs.json as the ribbon order.
+ */
+function buildDemoBaseQuotesFromSsot(): FxRibbonQuote[] {
+  const allPairs = loadJsonFromRepo<FxPairCatalogEntry[]>('frontend/src/data/fx/pairs.json');
+  const indexEntries = loadJsonFromRepo<FxIndexEntry[]>('frontend/src/data/fx/fx.pairs.json');
+
+  const pairsById = new Map<string, FxPairCatalogEntry>();
+
+  for (const pair of allPairs) {
+    if (!pair || typeof pair !== 'object') {
+      continue;
+    }
+
+    if (!pair.id) {
+      continue;
+    }
+
+    const normalisedId = normaliseFxPairId(pair.id);
+    pairsById.set(normalisedId, pair);
+  }
+
+  const baseQuotes: FxRibbonQuote[] = [];
+
+  for (const entry of indexEntries) {
+    if (!entry || typeof entry !== 'object') {
+      continue;
+    }
+
+    if (!entry.id || !entry.isDefaultFree) {
+      continue;
+    }
+
+    const id = normaliseFxPairId(entry.id);
+    const pair = pairsById.get(id);
+
+    if (!pair || !pair.demo) {
+      continue;
+    }
+
+    const baseCode = String(pair.base ?? '')
+      .trim()
+      .toUpperCase();
+    const quoteCode = String(pair.quote ?? '')
+      .trim()
+      .toUpperCase();
+
+    if (!baseCode || !quoteCode) {
+      continue;
+    }
+
+    const canonicalPair = `${baseCode}/${quoteCode}`;
+
+    const demoValue =
+      typeof pair.demo.value === 'number' && Number.isFinite(pair.demo.value) ? pair.demo.value : 0;
+
+    baseQuotes.push({
+      base: baseCode,
+      quote: quoteCode,
+      pair: canonicalPair,
+      price: demoValue,
+      providerSymbol: canonicalPair,
+      // We deliberately leave change_24h / change_24h_pct undefined here;
+      // the demo adapter does not pretend to offer real 24h history.
+    });
+  }
+
+  if (baseQuotes.length === 0) {
+    throw new Error('demo.fx: FX SSoT produced zero default free pairs');
+  }
+
+  return baseQuotes;
+}
+
+/**
+ * Built-in hard-coded fallback in case the FX SSoT files cannot be
+ * loaded for any reason (missing files, JSON parse error, etc.).
+ *
+ * This preserves the original behaviour: a small, fixed set of
+ * recognisable pairs with stable baseline prices.
+ */
+const FALLBACK_QUOTES: FxRibbonQuote[] = [
+  { base: 'GBP', quote: 'USD', pair: 'GBP/USD', price: 1.27, providerSymbol: 'GBPUSD' },
+  { base: 'EUR', quote: 'USD', pair: 'EUR/USD', price: 1.09, providerSymbol: 'EURUSD' },
+  { base: 'GBP', quote: 'JPY', pair: 'GBP/JPY', price: 187.5, providerSymbol: 'GBPJPY' },
+  { base: 'USD', quote: 'JPY', pair: 'USD/JPY', price: 148.2, providerSymbol: 'USDJPY' },
+  { base: 'USD', quote: 'CNY', pair: 'USD/CNY', price: 7.14, providerSymbol: 'USDCNY' },
+];
+
+/**
+ * Canonical base quotes the demo adapter will jitter around on each
+ * call.
+ */
+let DEMO_BASE_QUOTES: FxRibbonQuote[];
+
+try {
+  DEMO_BASE_QUOTES = buildDemoBaseQuotesFromSsot();
+} catch (error) {
+  // eslint-disable-next-line no-console
+  console.error('[demo.fx] Falling back to built-in demo FX pairs', error);
+  DEMO_BASE_QUOTES = FALLBACK_QUOTES;
+}
+
+function jitter(value: number): number {
+  const r = (Math.random() - 0.5) * 0.002; // ±0.1%
+  return Number((value * (1 + r)).toFixed(6));
+}
+
+/**
+ * Demo FX adapter: returns a slightly jittered copy of the canonical
+ * demo base quotes so the UI feels "alive" without making any real
+ * HTTP requests.
+ */
+export default function demoFxAdapter(): FxRibbonQuote[] {
+  return DEMO_BASE_QUOTES.map((q) => ({
+    ...q,
+    price: jitter(q.price),
+    change_24h: 0,
+    change_24h_pct: 0,
+  }));
 }

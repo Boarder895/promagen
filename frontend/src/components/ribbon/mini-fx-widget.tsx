@@ -1,3 +1,5 @@
+// src/components/ribbon/mini-fx-widget.tsx
+
 'use client';
 
 import React from 'react';
@@ -7,8 +9,10 @@ import {
   FREE_TIER_FX_PAIRS,
   DEFAULT_FREE_FX_PAIR_IDS,
   buildPairCode,
-  type FxPairConfig,
 } from '@/lib/finance/fx-pairs';
+
+// Element type for the canonical FX free-tier pairs.
+type FxPairForWidget = (typeof FREE_TIER_FX_PAIRS)[number];
 
 interface MiniFxWidgetProps {
   /**
@@ -16,41 +20,48 @@ interface MiniFxWidgetProps {
    * When omitted, we fall back to the default free-tier selection.
    */
   pairIds?: string[];
+  /**
+   * Optional label shown in the widget header.
+   */
   title?: string;
 }
 
-function buildDefaultFreePairs(): FxPairConfig[] {
-  const byId = new Map<string, FxPairConfig>();
+/**
+ * Build the canonical free-tier widget set based on DEFAULT_FREE_FX_PAIR_IDS.
+ * This keeps the default list stable and under central control.
+ */
+function buildDefaultFreePairs(): FxPairForWidget[] {
+  const byId = new Map<string, FxPairForWidget>();
 
   for (const pair of FREE_TIER_FX_PAIRS) {
     byId.set(pair.id, pair);
   }
 
-  return DEFAULT_FREE_FX_PAIR_IDS.map((id) => byId.get(id)).filter((pair): pair is FxPairConfig =>
-    Boolean(pair),
+  return DEFAULT_FREE_FX_PAIR_IDS.map((id) => byId.get(id)).filter(
+    (pair): pair is FxPairForWidget => Boolean(pair),
   );
 }
 
-const DEFAULT_WIDGET_PAIRS: FxPairConfig[] = buildDefaultFreePairs();
+const DEFAULT_WIDGET_PAIRS: FxPairForWidget[] = buildDefaultFreePairs();
 
 /**
  * Resolve an optional list of FX codes (e.g. 'EURUSD') into concrete pair
  * configs. When nothing is supplied or we can't resolve any codes, we fall
  * back to the canonical free-tier set.
  */
-function resolvePairs(pairIds?: string[]): FxPairConfig[] {
+function resolvePairs(pairIds?: string[]): FxPairForWidget[] {
   if (!pairIds || pairIds.length === 0) {
     return DEFAULT_WIDGET_PAIRS;
   }
 
-  const byCode = new Map<string, FxPairConfig>();
+  const byCode = new Map<string, FxPairForWidget>();
 
   for (const pair of FREE_TIER_FX_PAIRS) {
     const code = buildPairCode(pair.base, pair.quote);
     byCode.set(code, pair);
   }
 
-  const resolved: FxPairConfig[] = [];
+  const resolved: FxPairForWidget[] = [];
 
   for (const raw of pairIds) {
     const key = raw.toUpperCase();

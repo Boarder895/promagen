@@ -1,137 +1,321 @@
-// src/types/finance-ribbon.d.ts
+// C:\Users\Proma\Projects\promagen\frontend\src\types\finance-ribbon.d.ts
+//
+// Central type definitions for the finance ribbon and related helpers.
+// This file is deliberately framework-agnostic so it can be imported from
+// components, hooks and pure helper modules without causing React coupling.
+
+// ---------------------------------------------------------------------------
+// Core id types
+// ---------------------------------------------------------------------------
 
 export type FxPairId = string;
 export type CommodityId = string;
 export type CryptoId = string;
 
+// ---------------------------------------------------------------------------
+// FX core types
+// ---------------------------------------------------------------------------
+
 /**
  * Canonical description of an FX pair in Promagen.
- *
- * Both src/data/fx/fx.pairs.json (free tier) and src/data/fx/pairs.json
- * (full catalogue + demo values) use this as their base shape.
  */
 export interface FxPair {
   id: FxPairId;
   base: string; // e.g. "GBP"
   quote: string; // e.g. "USD"
-  label: string; // e.g. "GBP / USD"
-  group?: 'core' | 'major' | 'apac' | string;
-  precision: number; // number of decimal places
+  /**
+   * Human-readable label, e.g. "GBP / USD".
+   */
+  label: string;
+  /**
+   * Number of decimal places to display.
+   */
+  precision: number;
+
+  /**
+   * Optional country codes that can be used for flag lookups.
+   */
+  baseCountryCode?: string;
+  quoteCountryCode?: string;
+
+  /**
+   * Optional grouping metadata (core / extended / exotic, etc.).
+   */
+  group?: string;
+  subgroup?: string;
 }
 
 /**
- * Extended FX pair used by src/data/fx/pairs.json which includes
- * static demo values for offline / demo mode.
+ * Identifier for an FX data provider (e.g. "fmp", "twelvedata", "demo").
  */
-export interface FxPairWithDemo extends FxPair {
-  demo: {
-    /** Current demo value for the pair. */
-    value: number;
-    /** Previous close used to compute up/down arrows. */
-    prevClose: number;
-  };
-}
+export type FxProviderId = string;
 
 /**
- * Identifier for an upstream FX provider.
+ * Normalised FX quote used throughout the frontend.
  *
- * These are intentionally narrow so we can branch on them safely
- * inside the fx-client adapter.
- */
-export type FxProviderId = 'exchangerate-host' | 'exchange-rate-api';
-
-/**
- * Normalised FX quote consumed by UI components.
- *
- * All upstream FX vendors are adapted into this shape by the
- * server-side FX client.
+ * NOTE: We keep this broad enough to cover both the /api/fx route and
+ * any future mini-widgets. Some properties may legitimately be missing
+ * for demo / fallback data.
  */
 export interface FxQuote {
-  /** ID of the pair, matching a canonical hyphenated id. */
+  /**
+   * Stable identifier for this quote, usually the compact pair string
+   * like "GBPUSD" or a slug like "gbp-usd".
+   */
   pairId: FxPairId;
-  /** Mid-market rate or single representative price. */
+
+  base: string;
+  quote: string;
+
+  /**
+   * Mid price for the pair.
+   */
   mid: number;
-  /** Optional bid price if exposed by the provider. */
+
+  /**
+   * Optional bid / ask when available.
+   */
   bid?: number;
-  /** Optional ask price if exposed by the provider. */
   ask?: number;
-  /** ISO-8601 UTC timestamp when this quote was observed. */
+
+  /**
+   * Absolute and percentage change vs previous close, when known.
+   */
+  changeAbs?: number;
+  changePct?: number;
+
+  /**
+   * ISO timestamp from the provider.
+   */
   asOf: string;
-  /** Which upstream provider produced this quote. */
+
+  /**
+   * Optional UTC-normalised timestamp for convenience.
+   */
+  asOfUtc?: string;
+
+  /**
+   * Provider that produced this quote.
+   */
   provider: FxProviderId;
+
+  /**
+   * Short provider symbol for UI display (e.g. "FMP", "TD", "DEMO").
+   */
+  providerSymbol?: string;
 }
 
 /**
- * Payload returned by /api/fx.
+ * Ribbon mode used in the UI and payload metadata.
+ */
+export type RibbonMode = 'live' | 'demo' | 'fallback' | 'cached';
+
+/**
+ * Minimal metadata that accompanies an FX quotes payload.
+ */
+export interface FxQuotesMeta {
+  /**
+   * How the data was produced – live, demo, fallback, cached, etc.
+   */
+  mode: RibbonMode;
+
+  /**
+   * Optional build identifier so tests can assert stable contracts.
+   */
+  buildId?: string;
+
+  /**
+   * When the data was generated (UTC).
+   */
+  asOfUtc?: string;
+
+  /**
+   * When the next automatic refresh should occur, if known.
+   */
+  nextUpdateAt?: string | null;
+
+  /**
+   * Provider that produced the payload, if applicable.
+   */
+  sourceProviderId?: FxProviderId;
+
+  /**
+   * Logical role for the payload, e.g. "fx_ribbon".
+   */
+  role?: string;
+
+  /**
+   * Preferred provider id for the role (from roles.policies.json).
+   */
+  primaryProviderId?: FxProviderId;
+}
+
+/**
+ * Contract for the FX payload returned by /api/fx as seen by hooks.
  *
- * This doubles as the contract between the API route and any
- * hooks/components (e.g. useFxQuotes, mini widgets, etc).
+ * NOTE:
+ * - `quotes`, `mode` and `nextUpdateAt` are optional because older
+ *   versions of the route only exposed `meta` + `data.pairs`. Code that
+ *   consumes them should handle `undefined` gracefully.
  */
 export interface FxQuotesPayload {
-  ok: boolean;
-  /** Whether values are real-time, demo-only, or from the fallback provider. */
-  mode: 'demo' | 'live' | 'fallback';
-  quotes: FxQuote[];
-  /** When the client should next refresh, as an ISO-8601 UTC timestamp. */
-  nextUpdateAt: string;
-  /** Optional build identifier for provenance in logs and badges. */
-  buildId?: string;
+  meta: FxQuotesMeta;
+  /**
+   * Optional flattened quotes list for newer clients.
+   */
+  quotes?: FxQuote[];
+
+  /**
+   * Convenience top-level copy of `meta.mode` for legacy callers.
+   */
+  mode?: RibbonMode;
+
+  /**
+   * Optional server-suggested next refresh time.
+   */
+  nextUpdateAt?: string | null;
 }
 
 /**
- * Commodity metadata for the ribbon and mini-widgets.
+ * DTO used specifically by the finance ribbon component. For now this is
+ * an alias of FxQuote so that the component can evolve independently from
+ * the raw payload if needed.
  */
+export type FxRibbonQuoteDto = FxQuote;
+
+// ---------------------------------------------------------------------------
+// Commodities
+// ---------------------------------------------------------------------------
+
 export interface Commodity {
   id: CommodityId;
   name: string;
-  group: 'energy' | 'agriculture' | 'metals' | string;
-  symbol?: string; // e.g. "Brent", "Gold"
-  unit?: string; // e.g. "USD/bbl", "USD/oz"
-  emoji?: string; // optional micro-UI emoji
+  /**
+   * Top-level group, e.g. "energy", "metals", "agriculture".
+   */
+  group: string;
+  /**
+   * Optional subgroup for more detailed grouping (e.g. "precious").
+   */
+  subgroup?: string;
+  symbol?: string;
+  unit?: string;
+
+  /**
+   * Whether this commodity is currently active/visible.
+   */
+  isActive?: boolean;
+
+  /**
+   * Flags used by the free / paid finance ribbon presets.
+   */
+  isDefaultFree?: boolean;
+  isDefaultPaid?: boolean;
+
+  /**
+   * Optional sort priority – lower numbers appear first.
+   */
+  priority?: number;
 }
 
 /**
- * Crypto metadata for the ribbon and mini-widgets.
+ * Simple catalogue wrapper used by some helpers.
+ */
+export interface CommoditiesCatalog {
+  items: Commodity[];
+}
+
+// ---------------------------------------------------------------------------
+// Crypto assets
+// ---------------------------------------------------------------------------
+
+/**
+ * Canonical crypto asset description used by the ribbon selectors.
  */
 export interface CryptoAsset {
-  id: CryptoId; // lowercase id, e.g. "btc"
-  symbol: string; // ticker symbol, e.g. "BTC"
-  name: string; // human name, e.g. "Bitcoin"
-  rankHint: number; // approximate market-cap rank (1 = highest)
-}
-
-/**
- * Result of enforcing “exact count” rules for ribbon selections.
- */
-export interface SelectionResult<TItem, TId extends string> {
-  /** Effective items to render in the ribbon, in display order. */
-  items: TItem[];
-  /** The IDs used to derive `items` (after deduping/normalising). */
-  ids: TId[];
+  id: CryptoId;
+  symbol: string; // e.g. "BTC"
+  name: string; // e.g. "Bitcoin"
   /**
-   * Whether we’re using the user’s paid selection, the fixed free selection,
-   * or a mixed state (future use).
+   * Optional group, e.g. "layer1", "stablecoin", "defi".
    */
-  mode: 'free' | 'paid' | 'freeFallback';
-  /** Optional explanation for analytics / debug / UI messaging. */
-  reason?: string;
+  group?: string;
+  /**
+   * Optional sort priority – lower numbers appear first.
+   */
+  priority?: number;
+  /**
+   * Flags to drive free / paid defaults.
+   */
+  isDefaultFree?: boolean;
+  isDefaultPaid?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Generic ribbon selection types
+// ---------------------------------------------------------------------------
+
+/**
+ * Aggregate counters for a selection operation.
+ */
+export interface SelectionCounts {
+  requested: number;
+  matched: number;
+  selected: number;
+  extras: number;
+  missing: number;
 }
 
 /**
- * Detailed validation result for the 2–3–2 commodities crown.
+ * Generic selection result for ribbon-style UIs.
+ *
+ * TItem – the concrete item type (FX pair, commodity, crypto asset, etc.)
+ * TId   – the ID type used to address items (usually string).
+ */
+export interface SelectionResult<TItem, TId extends string | number = string> {
+  /**
+   * Items that made it into the final selection, in display order.
+   */
+  items: TItem[];
+  /**
+   * IDs that the caller originally requested (after normalisation).
+   */
+  requestedIds: TId[];
+  /**
+   * IDs that were requested but could not be included because the
+   * selection cap was exceeded.
+   */
+  extraIds: TId[];
+  /**
+   * IDs that were requested but not found in the catalogue at all.
+   */
+  missingIds: TId[];
+  /**
+   * Simple aggregate counters for debugging / analytics.
+   */
+  counts: SelectionCounts;
+  /**
+   * Optional mode/reason pair used by helpers that may fall back to
+   * defaults (e.g. "paid" vs "freeFallback").
+   */
+  mode?: string;
+  reason?: string | null;
+}
+
+/**
+ * Validation result for the 2-3-2 commodities crown pattern on the
+ * finance ribbon.
  */
 export interface CommoditySelectionValidation {
-  /** All resolved commodities (if valid) in the 2–3–2 visual order. */
-  items: Commodity[];
-  /** Counts per group, derived from the selected IDs. */
-  countsByGroup: Record<string, number>;
-  /** The group that forms the 3-item “crown” in the middle, if any. */
+  /**
+   * When valid, indicates the id of the centre group (the "crown").
+   */
   centreGroupId?: string;
   /**
    * True when:
-   * - total selected = 7,
-   * - every group represented has at least 2 items,
-   * - exactly one group has 3 items (the crown).
+   *  - total selected = 7
+   *  - every group represented has at least 2 items
+   *  - exactly one group has 3 items (the crown)
    */
   isValid: boolean;
   /**

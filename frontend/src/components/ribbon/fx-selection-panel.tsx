@@ -1,16 +1,15 @@
-// src/components/ribbon/finance-ribbon.tsx
+// src/components/ribbon/fx-selection-panel.tsx
 
 'use client';
 
 import React from 'react';
+
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
 import { useFxSelection } from '@/hooks/use-fx-selection';
-import {
-  FREE_TIER_FX_PAIRS,
-  getAllFxPairs,
-  buildPairCode,
-  type FxPairConfig,
-} from '@/lib/finance/fx-pairs';
+import { FREE_TIER_FX_PAIRS, getAllFxPairs, buildPairCode } from '@/lib/finance/fx-pairs';
+
+// Element type for FREE_TIER_FX_PAIRS – includes base, quote, label, etc.
+type FxPairForSelection = (typeof FREE_TIER_FX_PAIRS)[number];
 
 export interface FinanceRibbonProps {
   /**
@@ -31,28 +30,29 @@ export interface FinanceRibbonProps {
 }
 
 /**
- * Map an optional list of codes like ['EURUSD'] to concrete FxPairConfig items.
- * Falls back to the free-tier pairs if nothing matches.
+ * Map an optional list of codes like ['EURUSD'] to concrete FX pair items.
+ * Falls back to the default free-tier pairs if nothing matches.
  */
-function resolvePairsForCodes(codes?: string[]): FxPairConfig[] {
+function resolvePairsForCodes(codes?: string[]): FxPairForSelection[] {
   const catalogue = getAllFxPairs();
 
   if (!codes || codes.length === 0) {
     return FREE_TIER_FX_PAIRS;
   }
 
-  const byCode = new Map<string, FxPairConfig>();
+  const byCode = new Map<string, FxPairForSelection>();
 
   for (const pair of catalogue) {
     const code = buildPairCode(pair.base, pair.quote);
     byCode.set(code, pair);
   }
 
-  const resolved: FxPairConfig[] = [];
+  const resolved: FxPairForSelection[] = [];
 
   for (const raw of codes) {
     const key = raw.toUpperCase();
     const match = byCode.get(key);
+
     if (match) {
       resolved.push(match);
     }
@@ -69,6 +69,7 @@ function DemoFxRow(props: { pairIds?: string[] }) {
       <ul className="flex flex-row flex-wrap gap-2">
         {pairs.map((pair) => {
           const code = buildPairCode(pair.base, pair.quote);
+
           return (
             <li
               key={pair.id ?? code}
@@ -88,26 +89,27 @@ function DemoFxRow(props: { pairIds?: string[] }) {
 }
 
 function LiveFxRow(props: { intervalMs?: number }) {
+  const { intervalMs } = props;
+
+  const { status, quotesByPairId } = useFxQuotes({ intervalMs });
   const { pairIds } = useFxSelection();
+
   const pairs = resolvePairsForCodes(pairIds);
 
-  const { status, error, quotesByPairId } = useFxQuotes(
-    props.intervalMs != null ? { intervalMs: props.intervalMs } : undefined,
-  );
-
-  const isLoading = status === 'idle' || status === 'loading';
-
-  if (status === 'error' && error && process.env.NODE_ENV !== 'production') {
-    console.error('[FinanceRibbon] FX error:', error);
-  }
+  const statusLabel =
+    status === 'idle' || status === 'loading'
+      ? 'loading'
+      : status === 'error'
+      ? 'unavailable'
+      : 'live';
 
   return (
     <section aria-label="Foreign exchange rates">
       <ul className="flex flex-row flex-wrap gap-2">
         {pairs.map((pair) => {
           const code = buildPairCode(pair.base, pair.quote);
-          const hasQuote = Boolean(quotesByPairId?.has(code));
-          const statusLabel = isLoading ? '…' : hasQuote ? 'live' : '—';
+          const quote = quotesByPairId.get(code);
+          const value = typeof quote?.mid === 'number' ? quote.mid.toFixed(4) : '—';
 
           return (
             <li
@@ -119,6 +121,7 @@ function LiveFxRow(props: { intervalMs?: number }) {
                 {pair.base}/{pair.quote}
               </span>
               <span className="text-slate-400">{statusLabel}</span>
+              <span className="text-xs text-slate-300">{value}</span>
             </li>
           );
         })}

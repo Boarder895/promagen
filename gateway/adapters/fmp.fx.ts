@@ -1,228 +1,288 @@
 /**
- * FinancialModelingPrep FX adapter for Promagen.
+ * FMP FX adapter for Promagen.
  *
- * Responsible for:
- * - Calling the FMP FX endpoint defined in providers.registry.json
- * - Applying auth from the provider config
- * - Normalising the response into FxRibbonQuote[]
+ * Responsibilities:
+ * - Build an HTTP request to the FMP forex quote endpoint.
+ * - Apply auth from the caller (API key).
+ * - Normalise the vendor payload to FxRibbonQuote[] in canonical ribbon order.
  *
- * Notes:
- * - This implementation assumes an endpoint that accepts a comma-separated list
- *   of FX symbols via a "symbol" query parameter, e.g.:
- *   https://financialmodelingprep.com/api/v3/fx?symbol=GBPUSD,EURUSD&apikey=...
- * - If your actual FMP FX endpoint differs, you only need to adjust the URL
- *   building and response-mapping logic below; the gateway contract remains
- *   unchanged.
+ * Contract:
+ * - Input is a list of canonical FX pairs in "BASE/QUOTE" form, e.g. "GBP/USD".
+ * - Output is an array of FxRibbonQuote ordered exactly like the input list.
+ * - If no valid quotes can be produced, the adapter throws so the gateway can fall back.
+ *
+ * This file is deliberately self-contained for now: no imports from the
+ * gateway index. The rest of the gateway will be wired up to this contract.
  */
 
-import type { ProviderConfig, FxRibbonQuote } from '../index';
+export interface FxRibbonQuote {
+  base: string;
+  quote: string;
+  /**
+   * Canonical pair string, e.g. "GBP/USD".
+   */
+  pair: string;
+  /**
+   * Latest trade / mid price in quote currency.
+   */
+  price: number;
+  /**
+   * Absolute 24-hour change, if the provider exposes it.
+   */
+  change_24h?: number;
+  /**
+   * 24-hour percentage change, if the provider exposes it.
+   */
+  change_24h_pct?: number;
+  /**
+   * Symbol as the provider knows it, e.g. "GBPUSD".
+   */
+  providerSymbol: string;
+}
 
-interface FmpFxRawQuote {
-  symbol?: string; // e.g. "GBPUSD"
-  ticker?: string;
+/**
+ * Request shape for live FX adapters.
+ *
+ * The gateway (or API route) is responsible for:
+ * - Supplying the canonical ribbon pairs in "BASE/QUOTE" form.
+ * - Passing the fully-qualified endpoint URL from providers.registry.json.
+ * - Injecting the API key from the relevant environment variable.
+ */
+export interface FxAdapterRequest {
+  /**
+   * Canonical ribbon pairs, e.g. ["GBP/USD", "EUR/USD", "USD/JPY"].
+   */
+  pairs: string[];
+  /**
+   * Fully-qualified endpoint URL, e.g.
+   * "https://financialmodelingprep.com/stable/batch-forex-quotes"
+   * or "https://financialmodelingprep.com/stable/quote".
+   */
+  url: string;
+  /**
+   * Provider API key, or null / undefined when the provider does not need one.
+   */
+  apiKey?: string | null;
+  /**
+   * Optional timeout in milliseconds. Defaults to 3000ms.
+   */
+  timeoutMs?: number;
+}
+
+type FmpRawQuote = {
+  symbol?: string;
   name?: string;
-  bid?: number;
-  ask?: number;
-  price?: number;
-  last?: number;
-  changesPercentage?: number;
-  change?: number;
-  open?: number;
-  previousClose?: number;
-}
+  price?: number | string;
+  change?: number | string;
+  changesPercentage?: number | string;
+  [key: string]: unknown;
+};
 
 /**
- * Homepage + mini-widget pairs for now.
- * These match the demo adapter, so live and demo stay visually aligned.
+ * Default export used by the gateway for the FMP provider.
  */
-const RIBBON_PAIRS: string[] = ['GBPUSD', 'EURUSD', 'USDJPY', 'USDCAD', 'AUDUSD'];
+export default async function fmpFxAdapter(request: FxAdapterRequest): Promise<FxRibbonQuote[]> {
+  const { pairs, url, apiKey, timeoutMs = 3000 } = request;
 
-export async function fetchFmpFxQuotes(options: {
-  provider: ProviderConfig;
-  role: string;
-}): Promise<FxRibbonQuote[]> {
-  const { provider } = options;
-
-  if (!provider.endpoints.fx_quotes) {
-    throw new Error(
-      `FMP FX adapter: provider "${provider.id}" is missing endpoints.fx_quotes in providers.registry.json`,
-    );
+  if (!Array.isArray(pairs) || pairs.length === 0) {
+    throw new Error('FMP FX adapter: no FX pairs supplied');
   }
 
-  const url = buildFmpFxUrl(provider, RIBBON_PAIRS);
-  const response = await fetch(url.toString());
+  const symbols = pairs.map((pair) => toFmpSymbol(pair));
+  const endpoint = new URL(url);
 
-  if (!response.ok) {
-    throw new Error(`FMP FX adapter: HTTP ${response.status} when calling "${url.toString()}"`);
+  endpoint.searchParams.set('symbol', symbols.join(','));
+
+  if (apiKey) {
+    endpoint.searchParams.set('apikey', apiKey);
   }
 
-  const data = (await response.json()) as FmpFxRawQuote[] | FmpFxRawQuote | unknown;
+  const rawPayload = await fetchJsonWithTimeout(endpoint.toString(), timeoutMs);
 
-  const quotes = normaliseFmpFxResponse(data, RIBBON_PAIRS);
-
-  if (!quotes.length) {
-    throw new Error(
-      `FMP FX adapter: no FX quotes returned for requested pairs: ${RIBBON_PAIRS.join(', ')}`,
-    );
+  if (!Array.isArray(rawPayload)) {
+    throw new Error('FMP FX adapter: unexpected response shape (expected an array of quotes)');
   }
 
-  return quotes;
-}
+  const byCanonicalPair = new Map<string, FxRibbonQuote>();
 
-/**
- * Build the FMP URL using the provider's endpoint and auth configuration.
- */
-function buildFmpFxUrl(provider: ProviderConfig, pairs: string[]): URL {
-  const fxEndpoint = provider.endpoints.fx_quotes;
-  if (!fxEndpoint) {
-    throw new Error(
-      `FMP FX adapter: provider "${provider.id}" is missing endpoints.fx_quotes in providers.registry.json`,
-    );
-  }
-
-  const url = new URL(fxEndpoint);
-
-  // Add the requested pairs as a comma-separated symbol list.
-  // Adjust this if your live endpoint expects a different parameter shape.
-  url.searchParams.set('symbol', pairs.join(','));
-
-  const { auth } = provider;
-
-  if (auth.type === 'query_param') {
-    if (!auth.env || !auth.key_name) {
-      throw new Error(
-        `FMP FX adapter: provider "${provider.id}" auth config must include "env" and "key_name" for query_param`,
-      );
-    }
-
-    const apiKey = process.env[auth.env];
-
-    if (!apiKey) {
-      throw new Error(`FMP FX adapter: environment variable "${auth.env}" is not set`);
-    }
-
-    url.searchParams.set(auth.key_name, apiKey);
-  }
-
-  return url;
-}
-
-/**
- * Normalise the FMP FX payload into FxRibbonQuote[].
- *
- * FMP's JSON shape can vary slightly between endpoints, so this function is
- * intentionally defensive and looks at both "symbol" and "ticker" fields.
- */
-function normaliseFmpFxResponse(raw: unknown, requestedPairs: string[]): FxRibbonQuote[] {
-  const items: FmpFxRawQuote[] = Array.isArray(raw) ? raw : raw ? [raw as FmpFxRawQuote] : [];
-
-  if (!items.length) {
-    return [];
-  }
-
-  const bySymbol = new Map<string, FmpFxRawQuote>();
-
-  for (const item of items) {
-    const symbol = (item.symbol || item.ticker || '').toUpperCase();
-    if (!symbol) {
+  for (const item of rawPayload) {
+    if (!item || typeof item !== 'object') {
       continue;
     }
-    bySymbol.set(symbol, item);
+
+    const quote = normaliseFmpQuote(item as FmpRawQuote);
+    if (!quote) {
+      continue;
+    }
+
+    byCanonicalPair.set(quote.pair, quote);
   }
 
+  const orderedQuotes = buildOrderedQuotes(pairs, byCanonicalPair);
+
+  if (orderedQuotes.length === 0) {
+    throw new Error('FMP FX adapter: no valid quotes produced for requested ribbon pairs');
+  }
+
+  return orderedQuotes;
+}
+
+/**
+ * Convert FMP raw quote object into an internal FxRibbonQuote.
+ * Returns null when the price or symbol cannot be resolved.
+ */
+function normaliseFmpQuote(raw: FmpRawQuote): FxRibbonQuote | null {
+  const rawSymbol =
+    typeof raw.symbol === 'string' && raw.symbol.trim().length > 0 ? raw.symbol.trim() : null;
+
+  if (!rawSymbol) {
+    return null;
+  }
+
+  const { base, quote, canonical } = parsePair(rawSymbol);
+
+  const price = extractNumericField(raw, ['price']);
+  if (price == null) {
+    return null;
+  }
+
+  const change = extractNumericField(raw, ['change']);
+  const changePct = extractNumericField(raw, ['changesPercentage']);
+
+  return {
+    base,
+    quote,
+    pair: canonical,
+    price,
+    change_24h: change ?? undefined,
+    change_24h_pct: changePct ?? undefined,
+    providerSymbol: rawSymbol,
+  };
+}
+
+/**
+ * Build FxRibbonQuote[] ordered exactly like the requested ribbon pairs.
+ * Missing pairs are simply skipped.
+ */
+function buildOrderedQuotes(
+  requestedPairs: string[],
+  byCanonicalPair: Map<string, FxRibbonQuote>,
+): FxRibbonQuote[] {
   const result: FxRibbonQuote[] = [];
 
   for (const pair of requestedPairs) {
-    const symbol = pair.toUpperCase();
-    const rawQuote = bySymbol.get(symbol);
-
-    if (!rawQuote) {
-      // If the API does not return a given pair, we skip it rather than inventing data.
-      continue;
+    const { canonical } = parsePair(pair);
+    const quote = byCanonicalPair.get(canonical);
+    if (quote) {
+      result.push(quote);
     }
-
-    const base = symbol.slice(0, 3);
-    const quote = symbol.slice(3);
-
-    const price = resolvePrice(rawQuote);
-    const { changeAbs, changePct } = resolveChange(rawQuote, price);
-
-    const bid =
-      typeof rawQuote.bid === 'number' && Number.isFinite(rawQuote.bid) ? rawQuote.bid : undefined;
-
-    const ask =
-      typeof rawQuote.ask === 'number' && Number.isFinite(rawQuote.ask) ? rawQuote.ask : undefined;
-
-    result.push({
-      pair: symbol,
-      base,
-      quote,
-      price,
-      bid,
-      ask,
-      change_24h: changeAbs,
-      change_24h_pct: changePct,
-    });
   }
 
   return result;
 }
 
 /**
- * Pick a sensible price field from the FMP payload.
- * We prefer "price" or "last", and fall back to "bid" if necessary.
+ * Helper to convert canonical "GBP/USD" style pair into FMP's compact
+ * "GBPUSD" symbol.
  */
-function resolvePrice(raw: FmpFxRawQuote): number {
-  const candidates = [raw.price, raw.last, raw.bid, raw.ask];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
-      return candidate;
-    }
-  }
-
-  throw new Error('FMP FX adapter: no usable price field found in FX quote');
+function toFmpSymbol(pair: string): string {
+  const { base, quote } = parsePair(pair);
+  return `${base}${quote}`;
 }
 
 /**
- * Work out absolute and percentage change, if FMP provides it.
- * If only percentage is provided, we derive the absolute; if only absolute is
- * provided we derive the percentage; if neither, we leave both undefined.
+ * Parse an FX pair in either "GBP/USD" or "GBPUSD" form and return
+ * base, quote, and canonical "BASE/QUOTE".
+ *
+ * This version is tightened up to keep TypeScript happy: we guard
+ * rawBase / rawQuote before calling .trim(), so they are never possibly
+ * undefined when we use them.
  */
-function resolveChange(
-  raw: FmpFxRawQuote,
-  price: number,
-): { changeAbs?: number; changePct?: number } {
-  const changeAbs =
-    typeof raw.change === 'number' && Number.isFinite(raw.change) ? raw.change : undefined;
+function parsePair(input: string): {
+  base: string;
+  quote: string;
+  canonical: string;
+} {
+  const trimmed = input.trim();
 
-  const changePct =
-    typeof raw.changesPercentage === 'number' && Number.isFinite(raw.changesPercentage)
-      ? raw.changesPercentage
-      : undefined;
-
-  if (changeAbs != null && changePct != null) {
-    return { changeAbs, changePct };
+  if (!trimmed) {
+    throw new Error('FMP FX adapter: empty FX pair');
   }
 
-  if (changeAbs != null && price !== 0) {
-    return {
-      changeAbs,
-      changePct: round4((changeAbs / (price - changeAbs)) * 100),
-    };
+  if (trimmed.includes('/')) {
+    const [rawBase, rawQuote] = trimmed.split('/');
+
+    if (!rawBase || !rawQuote) {
+      throw new Error(`FMP FX adapter: invalid FX pair "${input}"`);
+    }
+
+    const base = rawBase.trim().toUpperCase();
+    const quote = rawQuote.trim().toUpperCase();
+
+    if (!base || !quote) {
+      throw new Error(`FMP FX adapter: invalid FX pair "${input}"`);
+    }
+
+    return { base, quote, canonical: `${base}/${quote}` };
   }
 
-  if (changePct != null) {
-    const abs = round4((price * changePct) / (100 + changePct));
-    return {
-      changeAbs: abs,
-      changePct,
-    };
+  if (trimmed.length === 6) {
+    const base = trimmed.slice(0, 3).toUpperCase();
+    const quote = trimmed.slice(3).toUpperCase();
+    return { base, quote, canonical: `${base}/${quote}` };
   }
 
-  return {};
+  throw new Error(`FMP FX adapter: unsupported FX pair format "${input}"`);
 }
 
-function round4(value: number): number {
-  return Math.round(value * 10000) / 10000;
+/**
+ * Extract a numeric field from a record, accepting both numbers and
+ * numeric strings. Returns null if no usable value was found.
+ */
+function extractNumericField(record: Record<string, unknown>, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = record[key];
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Minimal fetch wrapper with a per-request timeout. Throws a clear error
+ * when the request fails or times out.
+ */
+async function fetchJsonWithTimeout(url: string, timeoutMs: number): Promise<unknown> {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
+
+  try {
+    const response = await fetch(url, { signal: controller?.signal });
+
+    if (!response.ok) {
+      throw new Error(`FMP FX adapter: HTTP ${response.status} from ${url}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`FMP FX adapter: request timed out after ${timeoutMs}ms`);
+    }
+
+    throw error;
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
 }

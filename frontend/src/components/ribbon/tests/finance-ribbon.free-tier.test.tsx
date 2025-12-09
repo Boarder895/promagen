@@ -36,7 +36,15 @@ describe('FinanceRibbon – free tier', () => {
       if (!pair) {
         throw new Error(`Missing FX pair config for id "${id}" in ALL_FX_PAIRS`);
       }
-      return buildPairCode(pair.base, pair.quote);
+
+      // Mirror the component’s label logic:
+      //  - if base/quote are present, use "BASE / QUOTE"
+      //  - otherwise fall back to the raw pair id
+      if (pair.base && pair.quote) {
+        return buildPairCode(pair.base, pair.quote);
+      }
+
+      return pair.id;
     }).slice(0, 5);
 
     const actualCodes = buttons.map((button) => {

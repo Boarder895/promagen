@@ -1,96 +1,113 @@
 // src/components/ribbon/mini-commodities-widget.tsx
 
-import React from 'react';
+import type { JSX } from 'react';
 
-import { getAllCommodities } from '@/lib/commodities/catalog';
-import { getFreeCommodities } from '@/lib/ribbon/selection';
-import type { Commodity } from '@/types/finance-ribbon';
+import freeCommodityIdsJson from '@/data/selected/commodities.free.json';
+import commoditiesCatalogJson from '@/data/commodities/commodities.catalog.json';
+import type { Commodity } from '@/data/commodities/commodities.schema';
 
-export type MiniCommoditiesWidgetProps = {
-  title?: string;
-};
+/**
+ * MiniCommoditiesWidget
+ *
+ * Free tier:
+ * - 7 chips total.
+ * - Conceptual 2·3·2 crown layout:
+ *   - Group A (2)   – typically Energy
+ *   - Group B (3)   – user’s “crown” category (e.g. Agriculture in free tier)
+ *   - Group C (2)   – typically Metals
+ *
+ * The exact IDs and ordering are driven by:
+ *   src/data/selected/commodities.free.json
+ *
+ * That JSON is the single source of truth for the free-tier commodities row.
+ */
 
-type CommodityWithUi = Commodity & {
-  shortName?: string;
-  emoji?: string;
-};
+// The JSON selection, in order (should currently be 7 IDs).
+const FREE_COMMODITY_IDS: string[] = freeCommodityIdsJson as string[];
 
-function renderChip(commodity: CommodityWithUi): JSX.Element {
-  const label = commodity.shortName ?? commodity.name;
+// Catalogue entries as defined by the schema.
+type CatalogCommodity = Commodity;
 
-  return (
-    <li
-      key={commodity.id}
-      className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-900 ring-1 ring-amber-200"
-    >
-      {commodity.emoji && <span aria-hidden="true">{commodity.emoji}</span>}
-      <span>{label}</span>
-    </li>
-  );
-}
+// Build a lookup of id -> commodity from the catalogue.
+// This keeps the component aligned with the commodities SSOT.
+const COMMODITIES_BY_ID: Record<string, CatalogCommodity> = Object.fromEntries(
+  (commoditiesCatalogJson as CatalogCommodity[]).map((commodity) => [commodity.id, commodity]),
+);
 
-export default function MiniCommoditiesWidget({
-  title = 'Commodities',
-}: MiniCommoditiesWidgetProps): JSX.Element {
-  // Components → helpers → data:
-  //   - getAllCommodities reads the JSON catalogue
-  //   - getFreeCommodities applies the 2–3–2 / free selection logic
-  const selection = getFreeCommodities(getAllCommodities() as Commodity[]);
-  const items: CommodityWithUi[] = selection.items as CommodityWithUi[];
+/**
+ * Resolve the free-tier commodities from the selected IDs JSON.
+ *
+ * - Respects the order in commodities.free.json (which encodes the 2·3·2 pattern).
+ * - Does NOT drop items based on flags; the JSON selection is treated as canonical.
+ *   (If a flag and the JSON ever disagree, we still want the widget + test stable.)
+ */
+function resolveFreeCommodities(): CatalogCommodity[] {
+  const result: CatalogCommodity[] = [];
 
-  const hasSevenItems = items.length === 7;
-  const hasCentreGroup = Boolean(selection.centreGroupId);
-  const hasCounts = selection.countsByGroup && Object.keys(selection.countsByGroup).length >= 3;
-  const canUseGridLayout = selection.isValid && hasSevenItems && hasCentreGroup && hasCounts;
+  for (const rawId of FREE_COMMODITY_IDS) {
+    // Normalise any hyphenated IDs into the underscore pattern used in the catalogue.
+    const normalisedId = rawId.replace(/-/gu, '_');
 
-  // Fallback: if the selection is not a clean 2–3–2, render a simple chip row.
-  // This is what will happen today while the free set is 5 items.
-  if (!canUseGridLayout) {
-    return (
-      <section
-        aria-label="Mini commodities widget"
-        className="rounded-2xl bg-white px-3 py-2 text-xs text-slate-900 shadow-sm ring-1 ring-amber-100"
-      >
-        <header className="mb-1 flex items-center justify-between">
-          <p className="font-semibold">{title}</p>
-          <p className="text-[10px] uppercase tracking-wide text-slate-500">Free set snapshot</p>
-        </header>
+    const commodity = COMMODITIES_BY_ID[normalisedId];
 
-        <ul className="flex flex-wrap justify-centre gap-1.5" data-testid="mini-commodities-widget">
-          {items.map(renderChip)}
-        </ul>
-      </section>
-    );
+    // If the ID is missing from the catalogue, just skip it rather than crashing.
+    if (!commodity) {
+      continue;
+    }
+
+    result.push(commodity);
   }
 
-  const { centreGroupId, countsByGroup } = selection;
-  const groupIds = Object.keys(countsByGroup);
-  const sideGroupIds = groupIds.filter((id) => id !== centreGroupId);
+  return result;
+}
 
-  // Keep a stable left/right ordering between the two side groups.
-  sideGroupIds.sort();
+export function MiniCommoditiesWidget(): JSX.Element | null {
+  const freeCommodities = resolveFreeCommodities();
 
-  const [leftGroupId, rightGroupId] = sideGroupIds;
+  // Defensive: if config ever goes bad, don’t render a broken strip.
+  if (freeCommodities.length === 0) {
+    return null;
+  }
 
-  const leftItems = items.filter((c) => c.group === leftGroupId);
-  const centreItems = items.filter((c) => c.group === centreGroupId);
-  const rightItems = items.filter((c) => c.group === rightGroupId);
+  // We only care about the first 7 for this widget, in order.
+  const limited = freeCommodities.slice(0, 7);
+
+  // 2·3·2 layout over the first 7 items:
+  // [0,1] -> Group A (2)
+  // [2,3,4] -> Group B (3)
+  // [5,6] -> Group C (2)
+  const groupA = limited.slice(0, 2);
+  const groupB = limited.slice(2, 5);
+  const groupC = limited.slice(5, 7);
+
+  const groups: CatalogCommodity[][] = [groupA, groupB, groupC];
 
   return (
     <section
-      aria-label="Mini commodities widget"
-      className="rounded-2xl bg-white px-3 py-2 text-xs text-slate-900 shadow-sm ring-1 ring-amber-100"
+      data-testid="mini-commodities-widget"
+      aria-label="Popular commodities"
+      className="flex flex-col items-center gap-1 text-xs"
     >
-      <header className="mb-1 flex items-center justify-between">
-        <p className="font-semibold">{title}</p>
-        <p className="text-[10px] uppercase tracking-wide text-slate-500">Free set snapshot</p>
-      </header>
+      <h3 className="font-medium uppercase tracking-wide">Commodities</h3>
 
-      <div className="grid grid-cols-3 gap-1.5" data-testid="mini-commodities-widget">
-        <ul className="flex flex-col items-start gap-1.5">{leftItems.map(renderChip)}</ul>
-        <ul className="flex flex-col items-centre gap-1.5">{centreItems.map(renderChip)}</ul>
-        <ul className="flex flex-col items-end gap-1.5">{rightItems.map(renderChip)}</ul>
+      <div className="flex flex-col items-center gap-1">
+        {groups.map((group, groupIndex) => (
+          <ol
+            key={`mini-commodities-group-${groupIndex}`}
+            className="flex flex-row items-center justify-center gap-1"
+          >
+            {group.map((commodity) => (
+              <li key={commodity.id}>
+                <span className="inline-flex rounded-full border px-2 py-0.5">
+                  {commodity.shortName ?? commodity.name}
+                </span>
+              </li>
+            ))}
+          </ol>
+        ))}
       </div>
     </section>
   );
 }
+
+export default MiniCommoditiesWidget;

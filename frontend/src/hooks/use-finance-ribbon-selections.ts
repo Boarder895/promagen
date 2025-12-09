@@ -1,7 +1,7 @@
 // src/hooks/use-finance-ribbon-selections.ts
 // -----------------------------------------------------------------------------
 // Single hook that encapsulates the 5–7–5 selection logic for the finance ribbon.
-// - Knows whether the user is paid (via usePlan).
+// - Knows whether the user is on a paid plan (via usePlan).
 // - Reads stored selections from localStorage (FX / Commodities / Crypto).
 // - Calls the pure helpers in src/lib/ribbon/selection.ts.
 // - Exposes prompt messages like “Choose 5 FX pairs to continue.”
@@ -18,38 +18,35 @@ import {
   validateCommoditySelection,
   getFreeCryptoSelection,
   getPaidCryptoSelection,
+  type CommoditySelectionResult,
+  type SelectionResult,
 } from '@/lib/ribbon/selection';
-
-import commoditiesCatalog from '@/data/commodities/commodities.catalog.json';
 
 import { usePlan } from '@/hooks/usePlan';
 
 import { loadUserFxSelections, saveUserFxSelections } from '@/lib/state/fx-selections';
+
 import {
   loadUserCommoditySelections,
   saveUserCommoditySelections,
 } from '@/lib/state/commodity-selections';
+
 import { loadUserCryptoSelections, saveUserCryptoSelections } from '@/lib/state/crypto-selections';
 
-import type {
-  CommodityId,
-  CryptoAsset,
-  CryptoId,
-  FxPair,
-  FxPairId,
-  SelectionResult,
-  CommoditySelectionValidation,
-} from '@/types/finance-ribbon';
+import type { CommodityId, CryptoAsset, CryptoId, FxPair, FxPairId } from '@/types/finance-ribbon';
 
 export type FxSelectionViewModel = {
   selection: SelectionResult<FxPair, FxPairId>;
-  /** Non-null when we want to nudge the user to adjust their FX selection. */
+  /**
+   * Non-null when the paid selection is missing / invalid and we fell back to free.
+   * Used to nudge the user in the UI.
+   */
   promptMessage: string | null;
 };
 
 export type CommoditiesSelectionViewModel = {
-  selection: CommoditySelectionValidation;
-  /** Non-null when the paid selection is missing/invalid and we fell back to free. */
+  selection: CommoditySelectionResult;
+  /** Non-null when the paid selection is missing / invalid and we fell back to free. */
   promptMessage: string | null;
 };
 
@@ -60,94 +57,78 @@ export type CryptoSelectionViewModel = {
 };
 
 export type FinanceRibbonSelectionState = {
-  /** True once we have hydrated localStorage on the client. */
-  ready: boolean;
-  /** Convenience flag derived from the current plan. */
-  isPaid: boolean;
   fx: FxSelectionViewModel;
   commodities: CommoditiesSelectionViewModel;
   crypto: CryptoSelectionViewModel;
-  /**
-   * Imperative setters so picker UIs can update both state and localStorage.
-   * These do not enforce “exactly 5/7” – the helpers + prompts handle that.
-   */
-  setFxIds: (ids: FxPairId[]) => void;
-  setCommodityIds: (ids: CommodityId[]) => void;
-  setCryptoIds: (ids: CryptoId[]) => void;
 };
 
 export function useFinanceRibbonSelections(): FinanceRibbonSelectionState {
   const { plan } = usePlan();
-  const isPaid = plan === 'pro' || plan === 'enterprise';
 
-  const [ready, setReady] = React.useState(false);
+  // Plan is 'free' | 'pro' | 'enterprise'
+  const isPaid = plan !== 'free';
 
-  const [fxIds, setFxIdsState] = React.useState<FxPairId[] | null>(null);
-  const [commodityIds, setCommodityIdsState] = React.useState<CommodityId[] | null>(null);
-  const [cryptoIds, setCryptoIdsState] = React.useState<CryptoId[] | null>(null);
+  // ---------------------------------------------------------------------------
+  // FX
+  // ---------------------------------------------------------------------------
 
-  // Hydrate from localStorage once on the client.
-  React.useEffect(() => {
-    setFxIdsState(loadUserFxSelections());
-    setCommodityIdsState(loadUserCommoditySelections());
-    setCryptoIdsState(loadUserCryptoSelections());
-    setReady(true);
-  }, []);
+  const [fxSelection] = React.useState<FxSelectionViewModel>(() => {
+    const stored = loadUserFxSelections();
 
-  const setFxIds = React.useCallback((ids: FxPairId[]) => {
-    setFxIdsState(ids);
-    saveUserFxSelections(ids);
-  }, []);
+    if (!isPaid || !stored || stored.length === 0) {
+      const freeSelection = getFreeFxSelection();
 
-  const setCommodityIds = React.useCallback((ids: CommodityId[]) => {
-    setCommodityIdsState(ids);
-    saveUserCommoditySelections(ids);
-  }, []);
-
-  const setCryptoIds = React.useCallback((ids: CryptoId[]) => {
-    setCryptoIdsState(ids);
-    saveUserCryptoSelections(ids);
-  }, []);
-
-  // FX — 5 pairs, paid vs free + “Choose 5 to continue”.
-  const fx = React.useMemo<FxSelectionViewModel>(() => {
-    if (!isPaid) {
-      return {
-        selection: getFreeFxSelection(),
-        promptMessage: null,
-      };
-    }
-
-    const selection = getPaidFxSelection(fxIds ?? [], { fallbackToFree: true });
-
-    const promptMessage =
-      selection.mode === 'freeFallback'
-        ? (selection.reason ?? 'Choose 5 FX pairs to continue.')
-        : null;
-
-    return { selection, promptMessage };
-  }, [isPaid, fxIds]);
-
-  // Commodities — 7 items in 2–3–2, paid vs free + “Choose 7 commodities…”.
-  const commodities = React.useMemo<CommoditiesSelectionViewModel>(() => {
-    const freeSelection = getFreeCommodities(commoditiesCatalog);
-
-    if (!isPaid) {
       return {
         selection: freeSelection,
+        promptMessage: isPaid ? 'Choose 5 FX pairs to unlock the paid ribbon.' : null,
+      };
+    }
+
+    const paidSelection = getPaidFxSelection(stored, {
+      fallbackToFree: true,
+      minItems: 5,
+    });
+
+    if (paidSelection.mode === 'paid') {
+      return {
+        selection: paidSelection,
         promptMessage: null,
       };
     }
 
-    // No stored selection yet → show free set but prompt the user.
-    if (!commodityIds || commodityIds.length === 0) {
+    return {
+      selection: paidSelection,
+      promptMessage: 'Your FX selection is incomplete – update it to use the paid ribbon.',
+    };
+  });
+
+  React.useEffect(() => {
+    if (!isPaid) return;
+
+    const ids = fxSelection.selection.selected.map((pair) => pair.id);
+    if (ids.length > 0) {
+      saveUserFxSelections(ids);
+    }
+  }, [isPaid, fxSelection.selection]);
+
+  // ---------------------------------------------------------------------------
+  // Commodities
+  // ---------------------------------------------------------------------------
+
+  const [commoditiesSelection] = React.useState<CommoditiesSelectionViewModel>(() => {
+    const stored = loadUserCommoditySelections();
+    const commodityIds: CommodityId[] = stored ?? [];
+
+    if (!isPaid || commodityIds.length === 0) {
+      const freeSelection = getFreeCommodities();
+
       return {
         selection: freeSelection,
         promptMessage: 'Choose 7 commodities: 2 from two groups and 3 from your centre group.',
       };
     }
 
-    const validation = validateCommoditySelection(commoditiesCatalog, commodityIds);
+    const validation = validateCommoditySelection(undefined, commodityIds);
 
     if (validation.isValid) {
       return {
@@ -156,49 +137,79 @@ export function useFinanceRibbonSelections(): FinanceRibbonSelectionState {
       };
     }
 
-    // Invalid selection → fall back to free, explain gently.
-    let promptMessage = 'Adjust your commodity selection to match the 2–3–2 pattern.';
+    let promptMessage =
+      'Adjust your commodity selection to match the 2–3–2 pattern (2–3–2 across groups).';
 
     if (validation.reason === 'too-few-items') {
-      promptMessage = 'Choose 7 commodities: 2 from two groups and 3 from your centre group.';
+      promptMessage = 'Pick exactly 7 commodities to match the 2–3–2 pattern.';
+    } else if (validation.reason === 'bad-distribution') {
+      promptMessage = 'Spread your 7 commodities as 2–3–2 across the three groups.';
     }
+
+    const freeSelection = getFreeCommodities();
 
     return {
       selection: freeSelection,
       promptMessage,
     };
-  }, [isPaid, commodityIds]);
+  });
 
-  // Crypto — 5 assets, paid vs free + “Choose 5 cryptocurrencies…”.
-  const crypto = React.useMemo<CryptoSelectionViewModel>(() => {
-    if (!isPaid) {
+  React.useEffect(() => {
+    if (!isPaid) return;
+
+    const ids = commoditiesSelection.selection.selected.map((commodity) => commodity.id);
+
+    if (ids.length > 0) {
+      saveUserCommoditySelections(ids);
+    }
+  }, [isPaid, commoditiesSelection.selection]);
+
+  // ---------------------------------------------------------------------------
+  // Crypto
+  // ---------------------------------------------------------------------------
+
+  const [cryptoSelection] = React.useState<CryptoSelectionViewModel>(() => {
+    const stored = loadUserCryptoSelections();
+
+    if (!isPaid || !stored || stored.length === 0) {
+      const freeSelection = getFreeCryptoSelection();
+
       return {
-        selection: getFreeCryptoSelection(),
+        selection: freeSelection,
+        promptMessage: isPaid ? 'Choose 5 crypto assets to unlock the paid ribbon.' : null,
+      };
+    }
+
+    const paidSelection = getPaidCryptoSelection(stored, {
+      fallbackToFree: true,
+      minItems: 5,
+    });
+
+    if (paidSelection.mode === 'paid') {
+      return {
+        selection: paidSelection,
         promptMessage: null,
       };
     }
 
-    const selection = getPaidCryptoSelection(cryptoIds ?? [], { fallbackToFree: true });
+    return {
+      selection: paidSelection,
+      promptMessage: 'Your crypto selection is incomplete – update it to use the paid ribbon.',
+    };
+  });
 
-    const promptMessage =
-      selection.mode === 'freeFallback'
-        ? (selection.reason ?? 'Choose 5 cryptocurrencies to continue.')
-        : null;
+  React.useEffect(() => {
+    if (!isPaid) return;
 
-    return { selection, promptMessage };
-  }, [isPaid, cryptoIds]);
+    const ids = cryptoSelection.selection.selected.map((asset) => asset.id);
+    if (ids.length > 0) {
+      saveUserCryptoSelections(ids);
+    }
+  }, [isPaid, cryptoSelection.selection]);
 
   return {
-    ready,
-    isPaid,
-    fx,
-    commodities,
-    crypto,
-    setFxIds,
-    setCommodityIds,
-    setCryptoIds,
+    fx: fxSelection,
+    commodities: commoditiesSelection,
+    crypto: cryptoSelection,
   };
 }
-
-/* Keep both named and default exports to satisfy mixed import styles. */
-export default useFinanceRibbonSelections;

@@ -10,44 +10,47 @@ function makeQuote(minutesAgo: number): FxQuote {
   const asOf = new Date(now - minutesAgo * 60_000).toISOString();
 
   return {
+    base: 'GBP',
+    quote: 'USD',
     pairId: 'gbp-usd',
     mid: 1.2345,
+    bid: 1.2345,
+    ask: 1.2345,
+    changeAbs: 0,
+    changePct: 0,
     asOf,
+    asOfUtc: asOf,
     provider: 'exchange-rate-api',
+    providerSymbol: 'XRATE',
   };
 }
 
-describe('FX freshness badges', () => {
-  test('does not render a badge for a missing quote', () => {
-    render(<FxFreshnessBadge quote={undefined} />);
+describe('FxFreshnessBadge', () => {
+  test('shows Fresh for very recent quotes when showWhenFresh is true', () => {
+    const quote = makeQuote(5);
 
-    expect(screen.queryByTestId('fx-freshness-badge')).toBeNull();
-  });
-
-  test('does not render a badge for a fresh quote by default', () => {
-    const freshQuote = makeQuote(30); // 30 minutes ago
-
-    render(<FxFreshnessBadge quote={freshQuote} />);
-
-    expect(screen.queryByTestId('fx-freshness-badge')).toBeNull();
-  });
-
-  test('renders "Ageing" for a quote between 60 and 90 minutes old', () => {
-    const ageingQuote = makeQuote(75); // 75 minutes ago
-
-    render(<FxFreshnessBadge quote={ageingQuote} />);
+    render(<FxFreshnessBadge quote={quote} showWhenFresh />);
 
     const badge = screen.getByTestId('fx-freshness-badge');
-    expect(badge).toHaveTextContent('Ageing');
+    expect(badge).toHaveTextContent('Fresh');
   });
 
-  test('renders "Delayed" for a quote more than 90 minutes old', () => {
-    const delayedQuote = makeQuote(95); // 95 minutes ago
+  test('shows Delayed for moderately old quotes', () => {
+    const quote = makeQuote(30);
 
-    render(<FxFreshnessBadge quote={delayedQuote} />);
+    render(<FxFreshnessBadge quote={quote} />);
 
     const badge = screen.getByTestId('fx-freshness-badge');
     expect(badge).toHaveTextContent('Delayed');
+  });
+
+  test('shows Stale for very old quotes', () => {
+    const quote = makeQuote(120);
+
+    render(<FxFreshnessBadge quote={quote} />);
+
+    const badge = screen.getByTestId('fx-freshness-badge');
+    expect(badge).toHaveTextContent('Stale');
   });
 
   test('can optionally show "Fresh" when requested', () => {

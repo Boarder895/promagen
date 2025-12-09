@@ -1,100 +1,68 @@
 {
-  "$schema": "https://promagen.app/schemas/providers.registry.schema.json",
   "version": 1,
-  "providers": {
-    "demo": {
-      "id": "demo",
-      "display_name": "Demo Data Provider",
-      "description": "Offline-safe demo provider used only when all real data sources fail. Returns predictable placeholder financial data.",
-      "capabilities": ["fx_ribbon", "fx_mini_widget"],
-      "endpoints": {
-        "fx_quotes": "local://demo/fx"
-      },
-      "adapters": {
-        "fx_quotes": "demo_fx_v1"
-      },
-      "auth": {
-        "type": "none"
-      },
-      "metadata": {
-        "quality": "synthetic",
-        "latency_class": "instant",
-        "notes": "Used as final fallback only. Never the primary source."
-      }
-    },
-
-    "fmp": {
+  "providers": [
+    {
       "id": "fmp",
-      "display_name": "FinancialModelingPrep",
-      "description": "High-volume market data provider offering currency, equities, commodities and indices. Chosen as primary FX source for Promagen due to reliability and generous API limits.",
-      "capabilities": ["fx_ribbon", "fx_mini_widget"],
-      "endpoints": {
-        "fx_quotes": "https://financialmodelingprep.com/api/v3/fx"
+      "name": "Financial Modeling Prep",
+      "base_url": "https://financialmodelingprep.com/stable/quote",
+      "auth": {
+        "type": "query_api_key",
+        "location": "query",
+        "field": "apikey",
+        "env_var": "FMP_API_KEY"
       },
+      "quotas": {
+        "per_second": 5,
+        "per_minute": 300,
+        "per_day": 250,
+        "per_month": null
+      },
+      "capabilities": ["fx_ribbon"],
       "adapters": {
         "fx_quotes": "fmp_fx_v1"
-      },
-      "auth": {
-        "type": "query_param",
-        "key_name": "apikey",
-        "env": "FMP_API_KEY"
-      },
-      "metadata": {
-        "quality": "live",
-        "latency_class": "medium",
-        "provider_site": "https://financialmodelingprep.com",
-        "quota_notes": "Free tier supports generous requests; paid tiers offer higher precision and volume."
       }
     },
-
-    "twelvedata": {
+    {
       "id": "twelvedata",
-      "display_name": "TwelveData",
-      "description": "Reliable financial data provider offering FX, crypto and equities. Used as the first backup when the primary provider fails.",
-      "capabilities": ["fx_ribbon", "fx_mini_widget"],
-      "endpoints": {
-        "fx_quotes": "https://api.twelvedata.com/price"
+      "name": "Twelve Data",
+      "base_url": "https://api.twelvedata.com/price",
+      "auth": {
+        "type": "query_api_key",
+        "location": "query",
+        "field": "apikey",
+        "env_var": "TWELVEDATA_API_KEY"
       },
+      "quotas": {
+        "per_second": 1,
+        "per_minute": 8,
+        "per_day": 800,
+        "per_month": null
+      },
+      "capabilities": ["fx_ribbon"],
       "adapters": {
         "fx_quotes": "twelvedata_fx_v1"
-      },
-      "auth": {
-        "type": "query_param",
-        "key_name": "apikey",
-        "env": "TWELVEDATA_API_KEY"
-      },
-      "metadata": {
-        "quality": "live",
-        "latency_class": "fast",
-        "provider_site": "https://twelvedata.com",
-        "quota_notes": "Ideal as a backup FX provider. Free tier offers sufficient coverage for Promagen fallback flows."
       }
     },
-
-    "oilpriceapi": {
-      "id": "oilpriceapi",
-      "display_name": "Oil Price API",
-      "description": "Specialist energy and oil market data provider. Primary source for live oil and gas commodity prices in Promagen.",
-      "capabilities": ["commodities_ribbon", "commodities_mini_widget"],
-      "endpoints": {
-        "commodities_latest": "https://api.oilpriceapi.com/v1/prices/latest"
-      },
-      "adapters": {
-        "commodities_latest": "oilpriceapi_commodities_v1"
-      },
+    {
+      "id": "demo",
+      "name": "Promagen Demo FX",
+      "base_url": "https://demo.promagen.local/fx",
       "auth": {
-        "type": "header_token",
-        "header_name": "Authorization",
-        "prefix": "Token ",
-        "env": "OILPRICEAPI_API_KEY"
+        "type": "none",
+        "location": "none",
+        "field": null,
+        "env_var": null
       },
-      "metadata": {
-        "quality": "live",
-        "latency_class": "fast",
-        "provider_site": "https://www.oilpriceapi.com",
-        "quota_notes": "Free and paid plans with rate limits. All requests require 'Authorization: Token YOUR_API_KEY' in the header.",
-        "notes": "Used as the primary commodities provider for oil and gas benchmarks. Gateway adapter is responsible for selecting commodity codes (e.g. WTI, Brent) via query parameters."
+      "quotas": {
+        "per_second": null,
+        "per_minute": null,
+        "per_day": null,
+        "per_month": null
+      },
+      "capabilities": ["fx_ribbon"],
+      "adapters": {
+        "fx_quotes": "demo_fx_v1"
       }
     }
-  }
+  ]
 }

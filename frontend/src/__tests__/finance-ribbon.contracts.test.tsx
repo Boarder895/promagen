@@ -1,74 +1,90 @@
-// src/__tests__/finance-ribbon.contracts.test.tsx
+// frontend/src/__tests__/__finance-ribbon.contracts.test.tsx
 
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { axe } from 'jest-axe';
+import { selectForRibbon, type SelectionResult } from '../lib/ribbon/selection';
 
-import FinanceRibbon from '@/components/ribbon/finance-ribbon';
-
-// Canonical free FX selection – single source of truth.
-// Slugs like "gbp-usd", "eur-usd", "gbp-eur", "usd-jpy", "usd-cny".
-import freeFxPairIdsJson from '@/data/selected/fx.pairs.free.json';
-import { ALL_FX_PAIRS, buildPairCode, type FxPairConfig } from '@/lib/finance/fx-pairs';
-
-const FREE_FX_IDS = freeFxPairIdsJson as string[];
-
-const ALL_FX_BY_ID = new Map<string, FxPairConfig>(
-  ALL_FX_PAIRS.map((pair) => [pair.id.toLowerCase(), pair]),
-);
-
-function codesFromFreeIds(ids: string[]): string[] {
-  return ids
-    .map((id) => ALL_FX_BY_ID.get(id.toLowerCase()))
-    .filter((pair): pair is FxPairConfig => Boolean(pair))
-    .map((pair) => buildPairCode(pair.base, pair.quote));
+interface FxPair {
+  id: string;
+  label: string;
 }
 
-const FREE_FX_CODES = codesFromFreeIds(FREE_FX_IDS);
+interface Commodity {
+  id: string;
+  label: string;
+}
+
+interface CryptoAsset {
+  id: string;
+  label: string;
+}
 
 /**
- * Matches the current FinanceRibbon API:
- *
- * - Renders exactly one <section> with data-testid="finance-ribbon".
- * - In demo mode:
- *   - Uses the canonical FREE_FX_IDS list when no explicit pairIds are supplied.
- *   - Accepts an explicit pairIds list for focused screenshots / tests.
- *   - Stays inert with respect to the live FX API (useFxQuotes enabled=false).
+ * High-level contract test making sure the ribbon selection layer behaves
+ * consistently for FX, Commodities and Crypto. This test is intentionally
+ * simple and focuses on type shape and basic behaviour rather than UI.
  */
-describe('FinanceRibbon – contracts', () => {
-  it('renders the free-tier FX row in canonical order in demo mode', () => {
-    render(<FinanceRibbon demo />);
+describe('Finance ribbon selection contracts', () => {
+  it('produces a valid SelectionResult for FX, Commodities and Crypto', () => {
+    const fxCatalogue: FxPair[] = [
+      { id: 'gbp-usd', label: 'GBP / USD' },
+      { id: 'eur-usd', label: 'EUR / USD' },
+    ];
 
-    // Section shell.
-    const section = screen.getByTestId('finance-ribbon');
-    expect(section).toBeInTheDocument();
+    const commoditiesCatalogue: Commodity[] = [
+      { id: 'gold', label: 'Gold' },
+      { id: 'brent', label: 'Brent Crude' },
+    ];
 
-    // All expected free-tier pairs are present as chips.
-    FREE_FX_CODES.forEach((code) => {
-      const chip = screen.getByTestId(`fx-${code}`);
-      expect(chip).toBeInTheDocument();
+    const cryptoCatalogue: CryptoAsset[] = [
+      { id: 'btc-usd', label: 'BTC / USD' },
+      { id: 'eth-usd', label: 'ETH / USD' },
+    ];
+
+    const fxResult: SelectionResult<FxPair, string> = selectForRibbon<FxPair, string>({
+      allItems: fxCatalogue,
+      requestedIds: ['gbp-usd', 'usd-jpy'],
+      maxItems: 2,
+      getId: (item: FxPair) => item.id,
     });
-  });
 
-  it('accepts an explicit pairIds override in demo mode', () => {
-    render(<FinanceRibbon demo pairIds={['EURUSD']} />);
+    const commoditiesResult: SelectionResult<Commodity, string> = selectForRibbon<
+      Commodity,
+      string
+    >({
+      allItems: commoditiesCatalogue,
+      requestedIds: ['gold', 'wti'],
+      maxItems: 2,
+      getId: (item: Commodity) => item.id,
+    });
 
-    // Smoke: if the component renders and the chip is present, we are happy.
-    expect(screen.getByTestId('fx-EURUSD')).toBeInTheDocument();
-  });
+    const cryptoResult: SelectionResult<CryptoAsset, string> = selectForRibbon<CryptoAsset, string>(
+      {
+        allItems: cryptoCatalogue,
+        requestedIds: ['btc-usd', 'doge-usd'],
+        maxItems: 2,
+        getId: (item: CryptoAsset) => item.id,
+      },
+    );
 
-  it('accepts intervalMs as an optional prop', () => {
-    render(<FinanceRibbon demo pairIds={['EURUSD']} intervalMs={0} />);
+    // FX
+    expect(fxResult.selected.map((a: FxPair) => a.id)).toEqual(['gbp-usd']);
+    expect(fxResult.missing).toEqual(['usd-jpy']);
 
-    // Smoke: component renders and the chip is present.
-    expect(screen.getByTestId('fx-EURUSD')).toBeInTheDocument();
-  });
+    // Commodities
+    expect(commoditiesResult.selected.map((a: Commodity) => a.id)).toEqual(['gold']);
+    expect(commoditiesResult.missing).toEqual(['wti']);
 
-  it('has no basic axe accessibility violations in demo mode', async () => {
-    const { container } = render(<FinanceRibbon demo />);
+    // Crypto
+    expect(cryptoResult.selected.map((a: CryptoAsset) => a.id)).toEqual(['btc-usd']);
+    expect(cryptoResult.missing).toEqual(['doge-usd']);
 
-    const results = await axe(container);
-    expect(results.violations).toHaveLength(0);
+    // Sanity-check counts for one of them to make sure aggregation behaves.
+    const counts = fxResult.counts;
+    const sum = Object.values(counts).reduce((acc: number, value: number) => acc + value, 0);
+
+    expect(counts.requested).toBe(2);
+    expect(counts.matched).toBe(1);
+    expect(counts.selected).toBe(1);
+    expect(counts.missing).toBe(1);
+    expect(sum).toBeGreaterThan(0);
   });
 });

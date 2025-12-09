@@ -1,247 +1,264 @@
+// C:\Users\Proma\Projects\promagen\gateway\adapters\twelvedata.fx.ts
+
+import type { FxRibbonQuote, FxAdapterRequest } from '..';
+
 /**
  * TwelveData FX adapter for Promagen.
  *
- * Responsible for:
- * - Calling the TwelveData FX endpoint defined in providers.registry.json
- * - Applying auth from the provider config
- * - Normalising the response into FxRibbonQuote[]
+ * Responsibilities:
+ * - Build an HTTP request to the TwelveData FX price endpoint.
+ * - Apply auth from the caller (API key).
+ * - Normalise the vendor payload to FxRibbonQuote[] in canonical ribbon order.
  *
- * Assumptions:
- * - Endpoint in providers.registry.json is "https://api.twelvedata.com/price"
- * - We request multiple FX pairs via a comma-separated "symbol" query parameter,
- *   using symbols like "GBP/USD", "EUR/USD", "USD/JPY", etc.
- * - The response is a JSON object keyed by the symbol string, for example:
- *
- *   {
- *     "GBP/USD": { "price": "1.2634", "timestamp": "2025-12-03 21:15:00" },
- *     "EUR/USD": { "price": "1.0912", "timestamp": "2025-12-03 21:15:00" }
- *   }
- *
- * If your live TwelveData endpoint uses a slightly different path or shape
- * (for example /quote instead of /price, or an array), you only need to adjust
- * the URL construction and normalisation logic below. The gateway contract
- * (FxRibbonQuote[]) stays the same.
+ * Contract:
+ * - Input is FxAdapterRequest with:
+ *     - pairs: canonical FX pairs in "BASE/QUOTE" form, e.g. "GBP/USD".
+ *     - url:   TwelveData price endpoint, e.g. "https://api.twelvedata.com/price".
+ * - Output is an array of FxRibbonQuote ordered exactly like the input list.
+ * - If no valid quotes can be produced, the adapter throws so the gateway can fall back.
  */
 
-import type { ProviderConfig, FxRibbonQuote } from '../index';
-
-interface TwelveDataPriceEntry {
+interface TwelveDataRawQuote {
   price?: string | number;
-  datetime?: string;
-  timestamp?: string;
+  symbol?: string;
   [key: string]: unknown;
 }
 
-type TwelveDataPriceResponse =
-  | Record<string, TwelveDataPriceEntry>
-  | { data?: TwelveDataPriceEntry[] }
-  | unknown;
-
 /**
- * Homepage + mini-widget pairs, kept in sync with demo and FMP adapters
- * so the ribbon and widgets show the same universe regardless of provider.
+ * Main entry point used by the gateway.
  */
-const RIBBON_PAIRS: string[] = ['GBPUSD', 'EURUSD', 'USDJPY', 'USDCAD', 'AUDUSD'];
+export default async function twelvedataFxAdapter(
+  request: FxAdapterRequest,
+): Promise<FxRibbonQuote[]> {
+  const { pairs, url, apiKey, timeoutMs = 3000 } = request;
 
-export async function fetchTwelveDataFxQuotes(options: {
-  provider: ProviderConfig;
-  role: string;
-}): Promise<FxRibbonQuote[]> {
-  const { provider } = options;
-
-  if (!provider.endpoints.fx_quotes) {
-    throw new Error(
-      `TwelveData FX adapter: provider "${provider.id}" is missing endpoints.fx_quotes in providers.registry.json`,
-    );
+  if (!Array.isArray(pairs) || pairs.length === 0) {
+    throw new Error('TwelveData FX adapter: no FX pairs supplied');
   }
 
-  const url = buildTwelveDataFxUrl(provider, RIBBON_PAIRS);
-  const response = await fetch(url.toString());
-
-  if (!response.ok) {
-    throw new Error(
-      `TwelveData FX adapter: HTTP ${response.status} when calling "${url.toString()}"`,
-    );
+  if (!url) {
+    throw new Error('TwelveData FX adapter: missing base URL');
   }
 
-  const raw = (await response.json()) as TwelveDataPriceResponse;
+  // Build TwelveData endpoint with comma-separated symbols.
+  const endpoint = new URL(url);
+  endpoint.searchParams.set('symbol', pairs.join(','));
 
-  const quotes = normaliseTwelveDataFxResponse(raw, RIBBON_PAIRS);
+  if (apiKey) {
+    endpoint.searchParams.set('apikey', apiKey);
+  }
 
-  if (!quotes.length) {
-    throw new Error(
-      `TwelveData FX adapter: no FX quotes returned for requested pairs: ${RIBBON_PAIRS.join(
-        ', ',
-      )}`,
-    );
+  const raw = await fetchJsonWithTimeout(endpoint.toString(), timeoutMs);
+
+  // ---- Debug summary (safe: no API key, no full URL) ----
+  try {
+    const debugSummary: Record<string, unknown> = {};
+
+    if (raw && typeof raw === 'object') {
+      const obj = raw as Record<string, unknown>;
+      debugSummary.topLevelKeys = Object.keys(obj).slice(0, 10);
+      if ('status' in obj) debugSummary.status = (obj as { status?: unknown }).status;
+      if ('code' in obj) debugSummary.code = (obj as { code?: unknown }).code;
+      if ('message' in obj) debugSummary.message = (obj as { message?: unknown }).message;
+    } else {
+      debugSummary.type = typeof raw;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log('[gateway][debug][twelvedata.fx][payload]', JSON.stringify(debugSummary));
+  } catch {
+    // Never let logging break the adapter.
+  }
+  // ------------------------------------------------------
+
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('TwelveData FX adapter: unexpected payload shape');
+  }
+
+  const quotes: FxRibbonQuote[] = [];
+
+  for (const pair of pairs) {
+    const entry = findQuoteEntry(raw, pair);
+
+    if (!entry) {
+      continue;
+    }
+
+    const price = normalisePrice(entry.price);
+
+    if (price == null) {
+      continue;
+    }
+
+    const split = pair.split('/');
+    const base = (split[0] || '').trim();
+    const quote = (split[1] || '').trim();
+
+    if (!base || !quote) {
+      continue;
+    }
+
+    quotes.push({
+      base,
+      quote,
+      pair,
+      price,
+      providerSymbol: pair.replace('/', ''),
+    });
+  }
+
+  if (quotes.length === 0) {
+    throw new Error('TwelveData FX adapter: no valid quotes produced for requested ribbon pairs');
   }
 
   return quotes;
 }
 
 /**
- * Build the TwelveData URL using the provider's endpoint and auth configuration.
- */
-function buildTwelveDataFxUrl(provider: ProviderConfig, pairs: string[]): URL {
-  const fxEndpoint = provider.endpoints.fx_quotes;
-  if (!fxEndpoint) {
-    throw new Error(
-      `TwelveData FX adapter: provider "${provider.id}" is missing endpoints.fx_quotes in providers.registry.json`,
-    );
-  }
-
-  const url = new URL(fxEndpoint);
-
-  // TwelveData typically expects symbols like "GBP/USD" rather than "GBPUSD".
-  const apiSymbols = pairs.map(toTwelveDataSymbol);
-
-  url.searchParams.set('symbol', apiSymbols.join(','));
-
-  // Optional: decimal precision, can be tweaked later if needed.
-  url.searchParams.set('dp', '6');
-
-  const { auth } = provider;
-
-  if (auth.type === 'query_param') {
-    if (!auth.env || !auth.key_name) {
-      throw new Error(
-        `TwelveData FX adapter: provider "${provider.id}" auth config must include "env" and "key_name" for query_param`,
-      );
-    }
-
-    const apiKey = process.env[auth.env];
-
-    if (!apiKey) {
-      throw new Error(`TwelveData FX adapter: environment variable "${auth.env}" is not set`);
-    }
-
-    url.searchParams.set(auth.key_name, apiKey);
-  }
-
-  return url;
-}
-
-/**
- * Convert a Promagen FX pair like "GBPUSD" into a TwelveData symbol "GBP/USD".
- */
-function toTwelveDataSymbol(pair: string): string {
-  const normalised = pair.toUpperCase();
-  if (normalised.length !== 6) {
-    // Failsafe; we expect normal 3+3 FX codes.
-    return normalised;
-  }
-  const base = normalised.slice(0, 3);
-  const quote = normalised.slice(3);
-  return `${base}/${quote}`;
-}
-
-/**
- * Normalise TwelveData's response into FxRibbonQuote[].
+ * Try to locate a quote object for a given pair inside an arbitrary TwelveData payload.
  *
- * We mainly care about "price"; change_24h values are left undefined here and
- * can be enhanced later by switching to a richer endpoint (e.g. /quote).
+ * This is deliberately defensive because TwelveData can return slightly different
+ * shapes depending on whether you ask for one symbol or many, and which endpoint
+ * is wired up behind the provider URL.
+ *
+ * Supported shapes:
+ *  - { "GBP/USD": { price: "1.23" }, "EUR/USD": { ... } }
+ *  - { "GBPUSD": { price: "1.23" }, ... }
+ *  - { price: "1.23", ... }   // single-symbol /price response
+ *  - { data: [{ symbol: "GBP/USD", price: "1.23" }, ...] }
+ *  - { values: [{ symbol: "GBP/USD", price: "1.23" }, ...] }
  */
-function normaliseTwelveDataFxResponse(
-  raw: TwelveDataPriceResponse,
-  requestedPairs: string[],
-): FxRibbonQuote[] {
-  // Common TwelveData multi-symbol shape: object keyed by symbol string.
-  const bySymbol = new Map<string, TwelveDataPriceEntry>();
+function findQuoteEntry(raw: unknown, pair: string): TwelveDataRawQuote | null {
+  if (!raw || typeof raw !== 'object') {
+    return null;
+  }
 
-  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-    const record = raw as Record<string, unknown>;
+  const obj = raw as Record<string, unknown>;
+  const compactKey = pair.replace('/', '');
 
-    for (const [key, value] of Object.entries(record)) {
-      // Skip known top-level properties that are not actual symbol keys.
-      if (key === 'status' || key === 'message' || key === 'code' || key === 'data') {
-        continue;
-      }
+  // 1. Direct map with pair as key: { "GBP/USD": { price: ... } }
+  const direct = obj[pair];
+  const directQuote = asRawQuote(direct);
+  if (directQuote) {
+    return directQuote;
+  }
 
-      if (value && typeof value === 'object') {
-        bySymbol.set(key.toUpperCase(), value as TwelveDataPriceEntry);
-      }
+  // 2. Map keyed by compact symbol: { "GBPUSD": { price: ... } }
+  const compact = obj[compactKey];
+  const compactQuote = asRawQuote(compact);
+  if (compactQuote) {
+    return compactQuote;
+  }
+
+  // 3. Single-symbol price: { price: "1.23", ... }
+  if ('price' in obj) {
+    const singleQuote = asRawQuote(obj);
+    if (singleQuote && singleQuote.price != null) {
+      return singleQuote;
     }
+  }
 
-    // Some TwelveData variants nest under "data" as an array of objects.
-    if (Array.isArray((raw as { data?: unknown }).data)) {
-      const dataArray = (raw as { data?: TwelveDataPriceEntry[] }).data ?? [];
-      for (const entry of dataArray) {
-        const symbolKey = deriveSymbolKeyFromEntry(entry);
-        if (symbolKey) {
-          bySymbol.set(symbolKey.toUpperCase(), entry);
+  // 4. Container arrays: { data: [{ symbol, price }], ... } or { values: [...] }
+  const containerKeys = ['data', 'values'];
+
+  for (const key of containerKeys) {
+    const maybeContainer = obj[key];
+
+    if (Array.isArray(maybeContainer)) {
+      for (const item of maybeContainer) {
+        const quote = asRawQuote(item);
+        if (!quote) {
+          continue;
+        }
+
+        const rawSymbol = quote.symbol;
+        if (typeof rawSymbol !== 'string') {
+          continue;
+        }
+
+        const symbolUpper = rawSymbol.toUpperCase();
+        const wantedSymbols = [pair.toUpperCase(), compactKey.toUpperCase()];
+
+        if (
+          wantedSymbols.includes(symbolUpper) ||
+          wantedSymbols.includes(symbolUpper.replace('/', ''))
+        ) {
+          return quote;
         }
       }
     }
   }
 
-  const result: FxRibbonQuote[] = [];
+  return null;
+}
 
-  for (const pair of requestedPairs) {
-    const apiSymbol = toTwelveDataSymbol(pair).toUpperCase();
-
-    const entry =
-      bySymbol.get(apiSymbol) ??
-      // Some endpoints may return keys without the slash.
-      bySymbol.get(pair.toUpperCase());
-
-    if (!entry) {
-      continue;
-    }
-
-    const price = resolvePrice(entry);
-
-    const normalisedPair = pair.toUpperCase();
-    const base = normalisedPair.slice(0, 3);
-    const quote = normalisedPair.slice(3);
-
-    result.push({
-      pair: normalisedPair,
-      base,
-      quote,
-      price,
-      // TwelveData /price does not include change fields;
-      // we leave these undefined for now and let the UI handle that gracefully.
-      change_24h: undefined,
-      change_24h_pct: undefined,
-    });
+function asRawQuote(value: unknown): TwelveDataRawQuote | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
   }
 
-  return result;
+  return value as TwelveDataRawQuote;
 }
 
 /**
- * Try to derive a symbol-like key from a data entry if the API returns
- * something like an array of objects instead of a symbol-keyed map.
+ * Normalise TwelveData price value into a number.
  */
-function deriveSymbolKeyFromEntry(entry: TwelveDataPriceEntry): string | null {
-  // TwelveData sometimes surfaces "symbol" or "ticker".
-  const maybeSymbol =
-    (entry as { symbol?: string; ticker?: string }).symbol ??
-    (entry as { symbol?: string; ticker?: string }).ticker;
+function normalisePrice(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
 
-  if (maybeSymbol && typeof maybeSymbol === 'string') {
-    return maybeSymbol;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
   }
 
   return null;
 }
 
 /**
- * Extract a usable price from a TwelveData entry.
+ * Simple fetch with optional timeout, mirroring the FMP adapter behaviour.
+ * Logs a very small, scrubbed HTTP debug summary (no API keys).
  */
-function resolvePrice(entry: TwelveDataPriceEntry): number {
-  const rawPrice = entry.price;
+async function fetchJsonWithTimeout(url: string, timeoutMs: number): Promise<unknown> {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : undefined;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
 
-  if (typeof rawPrice === 'number' && Number.isFinite(rawPrice)) {
-    return rawPrice;
-  }
+  try {
+    const response = await fetch(url, { signal: controller?.signal });
 
-  if (typeof rawPrice === 'string') {
-    const parsed = Number(rawPrice);
-    if (Number.isFinite(parsed)) {
-      return parsed;
+    const safeDebug: Record<string, unknown> = {};
+    try {
+      const u = new URL(url);
+      safeDebug.endpoint = `${u.origin}${u.pathname}`;
+      safeDebug.status = response.status;
+      const symbols = u.searchParams.get('symbol');
+      if (symbols) {
+        safeDebug.symbolCount = symbols.split(',').length;
+      }
+    } catch {
+      safeDebug.status = response.status;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log('[gateway][debug][twelvedata.fx][http]', JSON.stringify(safeDebug));
+
+    if (!response.ok) {
+      throw new Error(`TwelveData FX adapter: HTTP ${response.status} from TwelveData`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`TwelveData FX adapter: request timed out after ${timeoutMs}ms`);
+    }
+
+    throw error;
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
     }
   }
-
-  throw new Error('TwelveData FX adapter: no usable price field found in FX quote');
 }
