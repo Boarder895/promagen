@@ -2,7 +2,7 @@
 
 import React, { type ReactNode } from 'react';
 
-import FinanceRibbon from '@/components/ribbon/finance-ribbon';
+import FinanceRibbon from '@/components/ribbon/finance-ribbon.container';
 
 export type HomepageGridProps = {
   /**

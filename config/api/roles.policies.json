@@ -4,10 +4,10 @@
     {
       "role": "fx_ribbon",
       "primary_provider": "twelvedata",
-      "backup_providers": ["demo"],
+      "backup_providers": [],
       "cache_ttl_seconds": 30,
       "quality_degradation": "graceful",
-      "notes": "FX ribbon Phase 1: TwelveData → Demo. FMP kept for non-FX use only."
+      "notes": "FX ribbon: TwelveData only, demo provider disabled for this role."
     }
   ]
 }

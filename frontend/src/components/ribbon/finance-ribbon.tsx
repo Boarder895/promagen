@@ -32,7 +32,8 @@ import { getDemoFxForPairIds } from '@/data/finance-ribbon.demo';
 export interface FinanceRibbonProps {
   /**
    * Mode of the ribbon – live, demo, fallback, cached.
-   * When omitted we infer it from the `demo` flag.
+   * When omitted we infer it from the `demo` flag and whether we have
+   * a real fx[] payload.
    */
   mode?: RibbonMode;
   /**
@@ -59,11 +60,26 @@ export interface FinanceRibbonProps {
 }
 
 /**
- * Choose the effective mode. When props.mode is omitted we
- * infer it from the `demo` flag so tests can simply pass demo={true}.
+ * Choose the effective mode.
+ *
+ * Rules:
+ * - If props.mode is explicitly provided, we trust it (gateway is the
+ *   source of truth).
+ * - If there is *no* fx[] payload (we are using a local synthetic
+ *   fallback such as the free–tier snapshot or demo row), we treat
+ *   the ribbon as 'demo' mode because provider is always 'demo'.
+ * - Otherwise we fall back to the original rule:
+ *     demo flag → 'demo'
+ *     default   → 'live'
  */
-function getEffectiveMode(props: FinanceRibbonProps): RibbonMode {
+function getEffectiveMode(props: FinanceRibbonProps, hasFxPayload: boolean): RibbonMode {
   if (props.mode) return props.mode;
+
+  if (!hasFxPayload) {
+    // Local synthetic data (free–tier or demo row) – always demo mode.
+    return 'demo';
+  }
+
   return props.demo ? 'demo' : 'live';
 }
 
@@ -162,7 +178,7 @@ function renderPairLabel(quote: FxRibbonQuoteDto): string {
  *   - Demo mode: "fx-" + compact pair id, e.g. "fx-GBPUSD".
  *   - Free tier / live mode: "fx-" + human label, e.g. "fx-GBP / USD".
  *
- * This matches what the various test files assert on. :contentReference[oaicite:1]{index=1}
+ * This matches what the various test files assert on.
  */
 function getFxTestId(effectiveMode: RibbonMode, quote: FxRibbonQuoteDto): string {
   if (effectiveMode === 'demo') {
@@ -175,17 +191,17 @@ function getFxTestId(effectiveMode: RibbonMode, quote: FxRibbonQuoteDto): string
 }
 
 export const FinanceRibbon: React.FC<FinanceRibbonProps> = (props) => {
-  const effectiveMode = getEffectiveMode(props);
+  const hasFxPayload = !!(props.fx && props.fx.length > 0);
+  const effectiveMode = getEffectiveMode(props, hasFxPayload);
   const effectiveBuildId = props.buildId ?? 'local';
 
   const [isPaused, setIsPaused] = React.useState(false);
 
-  const quotes: FxRibbonQuoteDto[] =
-    props.fx && props.fx.length > 0
-      ? props.fx
-      : effectiveMode === 'demo'
-      ? buildDemoQuotes(props.pairIds)
-      : buildFreeTierQuotes();
+  const quotes: FxRibbonQuoteDto[] = hasFxPayload
+    ? (props.fx as FxRibbonQuoteDto[])
+    : effectiveMode === 'demo'
+    ? buildDemoQuotes(props.pairIds)
+    : buildFreeTierQuotes();
 
   const handlePauseToggle = () => {
     const nextIsPaused = !isPaused;

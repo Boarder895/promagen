@@ -103,11 +103,11 @@ interface NormalisedFxPairRecord {
 }
 
 /**
- * Normalise a single raw FX pair record coming back from the gateway into
- * our internal, stricter shape.
+ * Convert a raw FX pair record from the gateway into our internal shape.
  *
- * The gateway payload may evolve over time; this function keeps the API
- * surface for the frontend stable by coercing and defaulting fields.
+ * This function is deliberately tolerant of multiple historical shapes:
+ * - The current FxRibbonQuote shape from the gateway (base, quote, pair, price, change_24h, change_24h_pct, providerSymbol).
+ * - Older shapes that used id/symbol/pairId, changeAbs/changePct, etc.
  */
 function normaliseFxPairRecord(rawPair: unknown): NormalisedFxPairRecord | null {
   if (!rawPair || typeof rawPair !== 'object') {
@@ -116,24 +116,55 @@ function normaliseFxPairRecord(rawPair: unknown): NormalisedFxPairRecord | null 
 
   const pairRecord = rawPair as Record<string, unknown>;
 
-  const idValue = pairRecord.id ?? pairRecord.symbol ?? pairRecord.pairId;
-  const id = typeof idValue === 'string' && idValue.trim().length > 0 ? idValue.trim() : null;
+  // Base / quote – prefer explicit fields, but fall back to splitting pair/symbol if needed.
+  const rawBase =
+    pairRecord.base ?? pairRecord.baseCurrency ?? pairRecord.currency_base ?? pairRecord.from;
 
-  const baseValue = pairRecord.base ?? pairRecord.baseCurrency ?? pairRecord.from;
-  const base =
-    typeof baseValue === 'string' && baseValue.trim().length === 3
-      ? baseValue.trim().toUpperCase()
-      : null;
+  const rawQuote =
+    pairRecord.quote ?? pairRecord.quoteCurrency ?? pairRecord.currency_quote ?? pairRecord.to;
 
-  const quoteValue = pairRecord.quote ?? pairRecord.quoteCurrency ?? pairRecord.to;
-  const quote =
-    typeof quoteValue === 'string' && quoteValue.trim().length === 3
-      ? quoteValue.trim().toUpperCase()
-      : null;
+  let base =
+    typeof rawBase === 'string' && rawBase.trim().length > 0 ? rawBase.trim().toUpperCase() : '';
 
-  if (!id || !base || !quote) {
+  let quote =
+    typeof rawQuote === 'string' && rawQuote.trim().length > 0 ? rawQuote.trim().toUpperCase() : '';
+
+  // Some payloads only have a combined symbol/pair – derive base/quote from that.
+  const rawPairId = pairRecord.pair ?? pairRecord.symbol ?? pairRecord.providerSymbol;
+  let pairStr =
+    typeof rawPairId === 'string' && rawPairId.trim().length > 0
+      ? rawPairId.trim().toUpperCase()
+      : '';
+
+  if ((!base || !quote) && pairStr) {
+    const slashIndex = pairStr.indexOf('/');
+    if (slashIndex > 0) {
+      base = base || pairStr.slice(0, slashIndex);
+      quote = quote || pairStr.slice(slashIndex + 1);
+    } else if (pairStr.length === 6) {
+      base = base || pairStr.slice(0, 3);
+      quote = quote || pairStr.slice(3);
+    }
+  }
+
+  if (!base || !quote) {
     return null;
   }
+
+  if (!pairStr) {
+    pairStr = `${base}/${quote}`;
+  }
+
+  // Identifier – prefer explicit id, then providerSymbol, then pair.
+  const rawId =
+    pairRecord.id ??
+    pairRecord.providerSymbol ??
+    pairRecord.symbol ??
+    pairRecord.pair ??
+    `${base}${quote}`;
+
+  const id =
+    typeof rawId === 'string' && rawId.trim().length > 0 ? rawId.trim() : `${base}${quote}`;
 
   const categoryValue = pairRecord.category ?? 'fx_major';
   const category =
@@ -183,7 +214,7 @@ function normaliseFxPairRecord(rawPair: unknown): NormalisedFxPairRecord | null 
       ? (changeAbs / (price - changeAbs)) * 100
       : 0;
 
-  const providerSymbolValue = pairRecord.providerSymbol ?? pairRecord.symbol;
+  const providerSymbolValue = pairRecord.providerSymbol ?? pairRecord.symbol ?? pairStr;
   const providerSymbol =
     typeof providerSymbolValue === 'string' && providerSymbolValue.trim().length > 0
       ? providerSymbolValue.trim()
@@ -214,23 +245,39 @@ function buildSuccessResponse(rawResult: unknown): FxApiSuccessResponse {
   const resultRecord =
     rawResult && typeof rawResult === 'object' ? (rawResult as Record<string, unknown>) : {};
 
-  const mode =
-    typeof resultRecord.mode === 'string' && resultRecord.mode.trim().length > 0
-      ? resultRecord.mode
-      : 'demo';
+  const rawMode = resultRecord.mode;
+  let mode: FxApiSuccessResponse['meta']['mode'];
 
-  const primaryProvider =
-    typeof resultRecord.primaryProvider === 'string' &&
-    resultRecord.primaryProvider.trim().length > 0
-      ? resultRecord.primaryProvider
+  if (rawMode === 'fallback_cached') {
+    mode = 'cached';
+  } else if (
+    rawMode === 'live' ||
+    rawMode === 'fallback' ||
+    rawMode === 'cached' ||
+    rawMode === 'demo'
+  ) {
+    mode = rawMode;
+  } else {
+    mode = 'demo';
+  }
+
+  const rawSourceProvider =
+    resultRecord.sourceProvider ?? resultRecord.primaryProvider ?? resultRecord.providerId;
+  const sourceProvider =
+    typeof rawSourceProvider === 'string' && rawSourceProvider.trim().length > 0
+      ? rawSourceProvider.trim()
       : 'unknown';
 
+  const rawAsOf = resultRecord.asOf ?? resultRecord.timestamp;
   const asOf =
-    typeof resultRecord.asOf === 'string' && resultRecord.asOf.trim().length > 0
-      ? resultRecord.asOf
+    typeof rawAsOf === 'string' && rawAsOf.trim().length > 0
+      ? rawAsOf.trim()
       : new Date().toISOString();
 
-  const rawPairs = Array.isArray(resultRecord.pairs)
+  // Prefer the new FxRibbonResult.data shape, but tolerate older names too.
+  const rawPairs = Array.isArray(resultRecord.data)
+    ? (resultRecord.data as unknown[])
+    : Array.isArray(resultRecord.pairs)
     ? (resultRecord.pairs as unknown[])
     : Array.isArray(resultRecord.quotes)
     ? (resultRecord.quotes as unknown[])
@@ -254,8 +301,8 @@ function buildSuccessResponse(rawResult: unknown): FxApiSuccessResponse {
   return {
     meta: {
       buildId: BUILD_ID,
-      mode: mode === 'fallback_cached' ? 'cached' : (mode as FxApiSuccessResponse['meta']['mode']),
-      sourceProvider: primaryProvider,
+      mode,
+      sourceProvider,
       asOf,
     },
     data,
@@ -281,6 +328,8 @@ export async function GET() {
 
     return NextResponse.json(body, { status: 200 });
   } catch (error) {
+    // Log and return a minimal error payload – the ribbon can fall back to
+    // neutral values on the frontend if needed.
      
     console.error('[/api/fx] Failed to resolve FX ribbon', error);
 
