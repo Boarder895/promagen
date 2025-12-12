@@ -12,7 +12,10 @@ const POLL_INTERVAL_MS = 30 * 60_000;
 
 function formatPrice(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(value)) return '—';
-  return value.toLocaleString(undefined, { maximumFractionDigits: 6 });
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function formatDeltaPct(value: number | null | undefined): string {
@@ -89,14 +92,20 @@ export const FinanceRibbonContainer: React.FC = () => {
   }, [pairs, quotesById, quotesByProviderSymbol]);
 
   return (
-    <section data-testid="finance-ribbon" data-status={status}>
-      <FinanceRibbon
-        buildId={buildId}
-        mode={mode}
-        chips={chips}
-        isPaused={isPaused}
-        onPauseToggle={() => setIsPaused((v) => !v)}
-      />
+    <section data-testid="finance-ribbon" data-status={status} className="w-full">
+      {/* Centres the FX ribbon above the leaderboard area */}
+      <div className="w-full flex justify-center mb-4">
+        <div className="w-full max-w-5xl">
+          <FinanceRibbon
+            buildId={buildId}
+            mode={mode}
+            chips={chips}
+            isPaused={isPaused}
+            onPauseToggle={() => setIsPaused((v) => !v)}
+          />
+        </div>
+      </div>
+
       {/* FxProvenanceBar removed */}
     </section>
   );
