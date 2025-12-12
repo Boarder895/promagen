@@ -1,143 +1,92 @@
-// src/components/ribbon/fx-selection-panel.tsx
+// C:\Users\Proma\Projects\promagen\frontend\src\components\ribbon\fx-selection-panel.tsx
+//
+// FX selection panel (SSOT-driven).
+//
+// True SSOT behaviour:
+// - The list of available pairs comes ONLY from src/data/fx/fx-ribbon.pairs.json
+// - If you edit that one file, this panel updates automatically.
+// - No demo mode. No synthetic values.
 
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
 import { useFxSelection } from '@/hooks/use-fx-selection';
-import { FREE_TIER_FX_PAIRS, getAllFxPairs, buildPairCode } from '@/lib/finance/fx-pairs';
+import { assertFxRibbonSsotValid, buildSlashPair, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 
-// Element type for FREE_TIER_FX_PAIRS – includes base, quote, label, etc.
-type FxPairForSelection = (typeof FREE_TIER_FX_PAIRS)[number];
-
-export interface FinanceRibbonProps {
-  /**
-   * Demo mode is used in Jest tests and any static storybook/demo.
-   * In this mode we do NOT call hooks that touch window/localStorage.
-   */
-  demo?: boolean;
-  /**
-   * Optional explicit list of pair codes, e.g. ['EURUSD', 'USDJPY'].
-   * In demo mode this filters the rendered chips.
-   */
-  pairIds?: string[];
-  /**
-   * Optional polling interval override for live FX fetching.
-   * The hook is free to ignore this if it has its own backoff logic.
-   */
+export interface FxSelectionPanelProps {
   intervalMs?: number;
 }
 
-/**
- * Map an optional list of codes like ['EURUSD'] to concrete FX pair items.
- * Falls back to the default free-tier pairs if nothing matches.
- */
-function resolvePairsForCodes(codes?: string[]): FxPairForSelection[] {
-  const catalogue = getAllFxPairs();
-
-  if (!codes || codes.length === 0) {
-    return FREE_TIER_FX_PAIRS;
-  }
-
-  const byCode = new Map<string, FxPairForSelection>();
-
-  for (const pair of catalogue) {
-    const code = buildPairCode(pair.base, pair.quote);
-    byCode.set(code, pair);
-  }
-
-  const resolved: FxPairForSelection[] = [];
-
-  for (const raw of codes) {
-    const key = raw.toUpperCase();
-    const match = byCode.get(key);
-
-    if (match) {
-      resolved.push(match);
-    }
-  }
-
-  return resolved.length ? resolved : FREE_TIER_FX_PAIRS;
+function normaliseCode(value: string): string {
+  return value.replace(/[^A-Za-z]/g, '').toUpperCase();
 }
 
-function DemoFxRow(props: { pairIds?: string[] }) {
-  const pairs = resolvePairsForCodes(props.pairIds);
-
-  return (
-    <section aria-label="Foreign exchange rates (demo)">
-      <ul className="flex flex-row flex-wrap gap-2">
-        {pairs.map((pair) => {
-          const code = buildPairCode(pair.base, pair.quote);
-
-          return (
-            <li
-              key={pair.id ?? code}
-              data-testid={`fx-${code}`}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-600 px-3 py-1 text-xs font-medium"
-            >
-              <span className="font-semibold">
-                {pair.base}/{pair.quote}
-              </span>
-              <span className="text-slate-400">demo</span>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
-  );
+function formatPrice(value: number | null): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+  return value.toFixed(4);
 }
 
-function LiveFxRow(props: { intervalMs?: number }) {
-  const { intervalMs } = props;
-
-  const { status, quotesByPairId } = useFxQuotes({ intervalMs });
+export function FxSelectionPanel({ intervalMs }: FxSelectionPanelProps) {
+  const { status, quotesByProviderSymbol } = useFxQuotes({ intervalMs });
   const { pairIds } = useFxSelection();
 
-  const pairs = resolvePairsForCodes(pairIds);
+  const derived = useMemo(() => {
+    assertFxRibbonSsotValid();
+    const ssotPairs = getFxRibbonPairs();
 
-  const statusLabel =
-    status === 'idle' || status === 'loading'
-      ? 'loading'
-      : status === 'error'
-      ? 'unavailable'
-      : 'live';
+    const allowed = new Map<string, (typeof ssotPairs)[number]>();
+    for (const p of ssotPairs) {
+      allowed.set(normaliseCode(p.id), p);
+    }
+
+    const requested = Array.isArray(pairIds) ? pairIds.map((x) => normaliseCode(String(x))) : [];
+    const pickedCodes = requested.filter((code) => allowed.has(code));
+
+    const pairsToShow = pickedCodes.length
+      ? pickedCodes.map((code) => allowed.get(code)!).filter(Boolean)
+      : ssotPairs;
+
+    const statusLabel =
+      status === 'idle' || status === 'loading'
+        ? 'loading'
+        : status === 'error'
+        ? 'unavailable'
+        : 'live';
+
+    const rows = pairsToShow.map((p) => {
+      const code = normaliseCode(p.id);
+      const quote = quotesByProviderSymbol.get(code) ?? null;
+
+      return {
+        key: code,
+        display: buildSlashPair(p.base, p.quote),
+        statusLabel,
+        value: formatPrice(quote?.price ?? null),
+      };
+    });
+
+    return { rows };
+  }, [pairIds, quotesByProviderSymbol, status]);
 
   return (
     <section aria-label="Foreign exchange rates">
       <ul className="flex flex-row flex-wrap gap-2">
-        {pairs.map((pair) => {
-          const code = buildPairCode(pair.base, pair.quote);
-          const quote = quotesByPairId.get(code);
-          const value = typeof quote?.mid === 'number' ? quote.mid.toFixed(4) : '—';
-
-          return (
-            <li
-              key={pair.id ?? code}
-              data-testid={`fx-${code}`}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-medium"
-            >
-              <span className="font-semibold">
-                {pair.base}/{pair.quote}
-              </span>
-              <span className="text-slate-400">{statusLabel}</span>
-              <span className="text-xs text-slate-300">{value}</span>
-            </li>
-          );
-        })}
+        {derived.rows.map((row) => (
+          <li
+            key={row.key}
+            data-testid={`fx-${row.key}`}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-xs font-medium"
+          >
+            <span className="font-semibold">{row.display}</span>
+            <span className="text-slate-400">{row.statusLabel}</span>
+            <span className="text-xs text-slate-300 tabular-nums">{row.value}</span>
+          </li>
+        ))}
       </ul>
     </section>
   );
 }
 
-export function FinanceRibbon({ demo, pairIds, intervalMs }: FinanceRibbonProps) {
-  // Important: early return BEFORE any hooks so demo mode does not touch
-  // user-plan or localStorage in Jest / SSR.
-  if (demo) {
-    return <DemoFxRow pairIds={pairIds} />;
-  }
-
-  return <LiveFxRow intervalMs={intervalMs} />;
-}
-
-export default FinanceRibbon;
+export default FxSelectionPanel;

@@ -1,67 +1,54 @@
-// src/hooks/use-fx-quotes.ts
-// -----------------------------------------------------------------------------
+// C:\Users\Proma\Projects\promagen\frontend\src\hooks\use-fx-quotes.ts
+//
 // Client hook for FX quotes.
-// - Talks to /api/fx
-// - Respects nextUpdateAt from the payload when present
-// - Falls back to a fixed interval otherwise
-// - Stays completely idle in Jest tests (NODE_ENV === "test")
-// -----------------------------------------------------------------------------
+// - Calls /api/fx
+// - Default polling: 30 minutes
+// - No demo behaviour; tests should mock fetch or mock the hook.
+//
+// Code Standard:
+// - No env access in client code
+// - Typed output
+// - Narrow effects, clear deps
 
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { FxQuote, FxQuotesPayload } from '@/types/finance-ribbon';
+
+import type { FxApiQuote, FxApiResponse } from '@/types/finance-ribbon';
 
 export type FxQuotesStatus = 'idle' | 'loading' | 'ready' | 'error';
 
-type UseFxQuotesOptions = {
-  /**
-   * When false, the hook stays completely inert – no network calls,
-   * no timers. Used for demo mode where we rely entirely on static
-   * JSON demo values.
-   */
+export interface UseFxQuotesOptions {
   enabled?: boolean;
-  /**
-   * Fallback polling interval in milliseconds if the server
-   * does not supply a nextUpdateAt hint.
-   */
   intervalMs?: number;
-};
+}
 
-export function useFxQuotes(options?: UseFxQuotesOptions): {
+export interface UseFxQuotesResult {
   status: FxQuotesStatus;
   error: unknown;
-  payload: FxQuotesPayload | null;
-  /**
-   * Map of FX quotes keyed by **code**, e.g. "GBPUSD", "EURUSD".
-   *
-   * Internally we accept either:
-   *   - slugs like "gbp-usd" from the API and convert to "GBPUSD"
-   *   - or codes already shaped as "GBPUSD"
-   *
-   * This matches how the ribbon & mini widget look things up:
-   *   const code = buildPairCode(pair.base, pair.quote); // "GBPUSD"
-   *   const quote = quotesByPairId.get(code);
-   */
-  quotesByPairId: Map<string, FxQuote>;
-} {
-  const { enabled = true, intervalMs = 5 * 60_000 } = options ?? {};
+  payload: FxApiResponse | null;
+  quotesByProviderSymbol: Map<string, FxApiQuote>;
+}
+
+const DEFAULT_INTERVAL_MS = 30 * 60_000;
+
+function normaliseCode(value: string): string {
+  return value.replace(/[^A-Za-z]/g, '').toUpperCase();
+}
+
+export function useFxQuotes(options?: UseFxQuotesOptions): UseFxQuotesResult {
+  const enabled = options?.enabled ?? true;
+  const intervalMs = options?.intervalMs ?? DEFAULT_INTERVAL_MS;
 
   const [status, setStatus] = useState<FxQuotesStatus>('idle');
   const [error, setError] = useState<unknown>(null);
-  const [payload, setPayload] = useState<FxQuotesPayload | null>(null);
+  const [payload, setPayload] = useState<FxApiResponse | null>(null);
 
   useEffect(() => {
-    // If the widget is explicitly in demo mode (enabled = false), stay inert.
-    if (!enabled) {
-      return;
-    }
+    if (!enabled) return;
 
-    // In tests we deliberately avoid network calls and timers to
-    // keep Jest output clean and deterministic.
-    if (process.env.NODE_ENV === 'test') {
-      return;
-    }
+    // Keep Jest deterministic: mock the hook or mock fetch in tests.
+    if (process.env.NODE_ENV === 'test') return;
 
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -72,50 +59,30 @@ export function useFxQuotes(options?: UseFxQuotesOptions): {
 
         const res = await fetch('/api/fx', {
           method: 'GET',
-          headers: {
-            accept: 'application/json',
-          },
+          headers: { accept: 'application/json' },
         });
 
         if (!res.ok) {
-          throw new Error(`FX route HTTP ${res.status}`);
+          throw new Error(`FX API responded with HTTP ${res.status}`);
         }
 
-        const json = (await res.json()) as FxQuotesPayload;
+        const json = (await res.json()) as FxApiResponse;
+
         if (cancelled) return;
 
         setPayload(json);
-        setStatus('ready');
         setError(null);
+        setStatus('ready');
 
-        // Prefer the server's suggestion for the next refresh.
-        let delay = intervalMs;
-
-        if (json.nextUpdateAt) {
-          const next = new Date(json.nextUpdateAt).getTime();
-          const now = Date.now();
-
-          if (Number.isFinite(next) && next > now) {
-            delay = next - now;
-          }
-        }
-
-        if (!cancelled) {
-          timer = setTimeout(fetchOnce, delay);
-        }
+        timer = setTimeout(fetchOnce, intervalMs);
       } catch (err) {
         if (cancelled) return;
 
-        // Keep any existing payload (so UI can still show last known values),
-        // but surface the error if we don't have anything yet.
         setError(err);
         setStatus((prev) => (prev === 'ready' ? prev : 'error'));
 
-        // Conservative backoff – at least 60s, or the configured interval.
-        const RETRY_MS = Math.max(intervalMs, 60_000);
-        if (!cancelled) {
-          timer = setTimeout(fetchOnce, RETRY_MS);
-        }
+        // Conservative backoff: at least 60 seconds.
+        timer = setTimeout(fetchOnce, Math.max(intervalMs, 60_000));
       }
     }
 
@@ -123,49 +90,23 @@ export function useFxQuotes(options?: UseFxQuotesOptions): {
 
     return () => {
       cancelled = true;
-      if (timer) {
-        clearTimeout(timer);
-      }
+      if (timer) clearTimeout(timer);
     };
   }, [enabled, intervalMs]);
 
-  const quotesByPairId = useMemo(() => {
-    const map = new Map<string, FxQuote>();
-    if (!payload?.quotes) return map;
+  const quotesByProviderSymbol = useMemo(() => {
+    const map = new Map<string, FxApiQuote>();
 
-    for (const q of payload.quotes) {
-      const rawId = q.pairId ?? '';
-
-      // If the API sends slugs like "gbp-usd", convert to "GBPUSD".
-      // If it already sends "GBPUSD", keep it as-is (uppercased).
-      let key: string;
-
-      if (rawId.includes('-')) {
-        const parts = rawId
-          .split('-')
-          .map((part) => part.trim())
-          .filter(Boolean);
-
-        if (parts.length >= 2) {
-          key = parts.map((part) => part.toUpperCase()).join('');
-        } else {
-          // Fallback: just strip hyphens and uppercase.
-          key = rawId.replace(/-/g, '').toUpperCase();
-        }
-      } else {
-        key = rawId.toUpperCase();
-      }
-
+    const quotes = payload?.data ?? [];
+    for (const q of quotes) {
+      // FxApiQuote.id is the canonical provider symbol (e.g. "GBPUSD").
+      const key = normaliseCode(q.id);
+      if (!key) continue;
       map.set(key, q);
     }
 
     return map;
   }, [payload]);
 
-  return {
-    status,
-    error,
-    payload,
-    quotesByPairId,
-  };
+  return { status, error, payload, quotesByProviderSymbol };
 }

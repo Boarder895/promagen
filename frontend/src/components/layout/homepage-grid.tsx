@@ -27,11 +27,6 @@ export type HomepageGridProps = {
    * Defaults to false so non-home pages stay calm.
    */
   showFinanceRibbon?: boolean;
-  /**
-   * When showFinanceRibbon is true, force the ribbon into demo mode.
-   * Used by tests and story-style demo renders.
-   */
-  financeRibbonDemo?: boolean;
 };
 
 export default function HomepageGrid({
@@ -40,7 +35,6 @@ export default function HomepageGrid({
   centre,
   right,
   showFinanceRibbon = false,
-  financeRibbonDemo = false,
 }: HomepageGridProps) {
   return (
     <main
@@ -89,7 +83,7 @@ export default function HomepageGrid({
         </div>
 
         <div className="space-y-3" data-testid="rail-centre">
-          {showFinanceRibbon && <FinanceRibbon demo={financeRibbonDemo} />}
+          {showFinanceRibbon && <FinanceRibbon />}
           {centre}
         </div>
 

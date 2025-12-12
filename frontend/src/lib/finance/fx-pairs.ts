@@ -1,91 +1,182 @@
-// src/lib/finance/fx-pairs.ts
+// C:\Users\Proma\Projects\promagen\frontend\src\lib\finance\fx-pairs.ts
+//
+// FX ribbon pairs — SSOT access layer.
+//
+// SSOT sources (your repo):
+//   - src/data/fx/pairs.json     (canonical pair metadata: base, quote, label, precision, demo, etc.)
+//   - src/data/fx/fx.pairs.json  (index of defaults + flags, references pairs by id)
+//
+// This module provides:
+//  - getFxRibbonPairs(): the 5 default free pairs used in the homepage ribbon
+//  - getFxRibbonPairCodes(): provider symbols like "GBPUSD"
+//  - buildPairCode(), buildSlashPair()
+//  - strict runtime validation (so "missing data" fails loudly during dev/build)
 
-import fxPairsJson from '@/data/fx/fx.pairs.json';
-import freeFxPairIdsJson from '@/data/selected/fx.pairs.free.json';
+import pairsCatalogJson from '@/data/fx/pairs.json';
+import fxPairsIndexJson from '@/data/fx/fx.pairs.json';
 
-import type { FxPair, FxPairId } from '@/types/finance-ribbon.d';
+export interface FxRibbonPairMeta {
+  id: string; // e.g. "gbp-usd" (catalog id)
+  base: string; // e.g. "GBP"
+  quote: string; // e.g. "USD"
+  label: string; // e.g. "GBP / USD"
+  category: string; // we’ll set this to "fx" for now (your UI expects a category string)
+  emoji?: string;
+  precision?: number;
+}
 
-/**
- * Normalise ids so everything is lower-case "gbp-usd" style.
- */
-function normaliseId(id: string): FxPairId {
-  return id.trim().toLowerCase() as FxPairId;
+type FxPairCatalogEntry = {
+  id: string;
+  base: string;
+  quote: string;
+  label?: string;
+  precision?: number;
+  demo?: unknown;
+};
+
+type FxPairIndexEntry = {
+  id: string;
+  baseCountryCode?: string;
+  quoteCountryCode?: string;
+  isDefaultFree?: boolean;
+  isDefaultPaid?: boolean;
+  group?: string;
+};
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function normaliseCurrency(value: string): string {
+  return value.replace(/[^A-Za-z]/g, '').toUpperCase();
+}
+
+export function buildPairCode(base: string, quote: string): string {
+  return `${normaliseCurrency(base)}${normaliseCurrency(quote)}`;
+}
+
+export function buildSlashPair(base: string, quote: string): string {
+  return `${normaliseCurrency(base)}/${normaliseCurrency(quote)}`;
+}
+
+function getCatalog(): FxPairCatalogEntry[] {
+  return pairsCatalogJson as FxPairCatalogEntry[];
+}
+
+function getIndex(): FxPairIndexEntry[] {
+  return fxPairsIndexJson as FxPairIndexEntry[];
+}
+
+function getCatalogMap(): Map<string, FxPairCatalogEntry> {
+  const map = new Map<string, FxPairCatalogEntry>();
+  for (const p of getCatalog()) {
+    if (!p || typeof p !== 'object') continue;
+    if (!isNonEmptyString(p.id)) continue;
+    map.set(p.id, p);
+  }
+  return map;
 }
 
 /**
- * The raw JSON is already shaped like FxPair, but we still normalise ids and
- * make sure we never accidentally mutate the imported array.
+ * The single “truthy” ribbon list:
+ * - take default free entries from fx.pairs.json
+ * - join against pairs.json to get base/quote/label/precision
+ * - enforce exactly 5 pairs
  */
-export const ALL_FX_PAIRS: FxPair[] = (fxPairsJson as unknown as FxPair[]).map((row) => ({
-  ...row,
-  id: normaliseId(row.id),
-}));
+export function getFxRibbonPairs(): FxRibbonPairMeta[] {
+  const index = getIndex();
+  const catalogById = getCatalogMap();
+
+  const defaultFree = index.filter((e) => Boolean(e?.isDefaultFree));
+
+  // Preserve the order defined in fx.pairs.json.
+  const joined: FxRibbonPairMeta[] = defaultFree.map((e) => {
+    const id = String(e.id);
+    const cat = catalogById.get(id);
+
+    return {
+      id,
+      base: cat?.base ? normaliseCurrency(cat.base) : '',
+      quote: cat?.quote ? normaliseCurrency(cat.quote) : '',
+      label: cat?.label ?? (cat?.base && cat?.quote ? `${cat.base} / ${cat.quote}` : id),
+      precision: cat?.precision,
+      category: 'fx',
+    };
+  });
+
+  return joined;
+}
+
+export function getFxRibbonPairCodes(): string[] {
+  return getFxRibbonPairs()
+    .map((p) => buildPairCode(p.base, p.quote))
+    .filter(Boolean);
+}
 
 /**
- * Convenience map for quick lookup by id.
+ * Strict validation: fail loudly if SSOT breaks.
+ * Call this from API route + container (as we do) so problems surface immediately.
  */
-const FX_BY_ID: Map<FxPairId, FxPair> = new Map(ALL_FX_PAIRS.map((pair) => [pair.id, pair]));
+export function assertFxRibbonSsotValid(): void {
+  const index = getIndex();
+  const catalog = getCatalog();
 
-/**
- * Free-tier ids from JSON, normalised.
- */
-export const DEFAULT_FREE_FX_PAIR_IDS: FxPairId[] = (freeFxPairIdsJson as string[]).map((id) =>
-  normaliseId(id),
-);
-
-/**
- * The actual FxPair objects used on the free tier.
- */
-export const FREE_TIER_FX_PAIRS: FxPair[] = DEFAULT_FREE_FX_PAIR_IDS.map((id) => {
-  const pair = FX_BY_ID.get(id);
-
-  if (!pair) {
-    throw new Error(
-      `DEFAULT_FREE_FX_PAIR_IDS contains unknown pair id "${id}" – check fx.pairs.free.json against fx.pairs.json`,
-    );
+  if (!Array.isArray(index) || index.length === 0) {
+    throw new Error('FX SSOT: src/data/fx/fx.pairs.json must be a non-empty array.');
   }
 
-  return pair;
-});
+  if (!Array.isArray(catalog) || catalog.length === 0) {
+    throw new Error('FX SSOT: src/data/fx/pairs.json must be a non-empty array.');
+  }
 
-/**
- * Small config shape used by various selectors / ribbons so we don't push
- * full FxPair objects everywhere when we only need ids + labels.
- */
-export interface FxPairConfig {
-  id: FxPairId;
-  label: string;
-}
+  const catalogById = getCatalogMap();
+  const ribbon = getFxRibbonPairs();
 
-/**
- * Utility for building a display code ("GBP / USD") from a pair.
- */
-export function buildPairCode(base: string, quote: string): string {
-  return `${base} / ${quote}`;
-}
+  // Your homepage ribbon is designed for 5 FX chips.
+  if (ribbon.length !== 5) {
+    throw new Error(`FX SSOT: expected exactly 5 default free FX pairs; found ${ribbon.length}.`);
+  }
 
-/**
- * Helper to hydrate a list of ids from JSON into real FxPair objects.
- * Used by the free-tier tests and any paid-tier selection logic.
- */
-export function getFxPairsByIds(ids: FxPairId[]): FxPair[] {
-  return ids.map((rawId) => {
-    const id = normaliseId(rawId);
-    const pair = FX_BY_ID.get(id);
+  const seenCodes = new Set<string>();
 
-    if (!pair) {
-      throw new Error(
-        `getFxPairsByIds() called with unknown pair id "${id}" – check against fx.pairs.json`,
-      );
+  for (const p of ribbon) {
+    if (!isNonEmptyString(p.id)) {
+      throw new Error('FX SSOT: ribbon pair id must be a non-empty string.');
     }
 
-    return pair;
-  });
+    const cat = catalogById.get(p.id);
+    if (!cat) {
+      throw new Error(`FX SSOT: pair id "${p.id}" exists in fx.pairs.json but not in pairs.json.`);
+    }
+
+    if (!isNonEmptyString(cat.base) || !isNonEmptyString(cat.quote)) {
+      throw new Error(`FX SSOT: pair "${p.id}" must have base and quote in pairs.json.`);
+    }
+
+    const base = normaliseCurrency(cat.base);
+    const quote = normaliseCurrency(cat.quote);
+
+    if (base.length !== 3 || quote.length !== 3) {
+      throw new Error(`FX SSOT: pair "${p.id}" base/quote must be 3-letter currency codes.`);
+    }
+
+    const code = buildPairCode(base, quote);
+    if (seenCodes.has(code)) {
+      throw new Error(`FX SSOT: duplicate ribbon currency pair code "${code}".`);
+    }
+    seenCodes.add(code);
+  }
 }
 
-/**
- * Convenience export when you genuinely need *all* pairs as typed objects.
- */
-export function getAllFxPairs(): FxPair[] {
-  return ALL_FX_PAIRS;
-}
+// -----------------------------------------------------------------------------
+// Backwards-compatible aliases (older modules used these names)
+// -----------------------------------------------------------------------------
+
+export const assertFxPairsSsotValid = assertFxRibbonSsotValid;
+export const getFxPairs = getFxRibbonPairs;
+export const getFxPairCodes = getFxRibbonPairCodes;
+
+// Legacy constants some older code may reference
+export const ALL_FX_PAIRS: FxRibbonPairMeta[] = getFxRibbonPairs();
+export const DEFAULT_FREE_FX_PAIR_IDS: string[] = getFxRibbonPairCodes();
+export const FREE_TIER_FX_PAIRS: FxRibbonPairMeta[] = ALL_FX_PAIRS;

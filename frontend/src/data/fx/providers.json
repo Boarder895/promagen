@@ -1,26 +1,10 @@
 [
   {
-    "id": "exchange-rate-api",
-    "name": "ExchangeRate-API",
+    "id": "twelvedata",
+    "name": "Twelve Data",
     "tier": "primary",
     "role": "Primary FX provider",
-    "url": "https://www.exchangerate-api.com/",
-    "copy": "Primary live FX rates provider."
-  },
-  {
-    "id": "exchangerate-host",
-    "name": "exchangerate.host",
-    "tier": "fallback",
-    "role": "Fallback FX provider",
-    "url": "https://exchangerate.host/",
-    "copy": "Fallback FX rates provider when the primary is unavailable."
-  },
-  {
-    "id": "demo",
-    "name": "Promagen demo data",
-    "tier": "demo",
-    "role": "Illustrative FX sample",
-    "url": "https://promagen.ai/",
-    "copy": "Illustrative-only FX data used when no live provider or cache is available."
+    "url": "https://twelvedata.com",
+    "copy": "Primary live FX quotes provider (Twelve Data)."
   }
 ]

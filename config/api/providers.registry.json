@@ -2,27 +2,6 @@
   "version": 1,
   "providers": [
     {
-      "id": "fmp",
-      "name": "Financial Modeling Prep",
-      "base_url": "https://financialmodelingprep.com/stable/quote",
-      "auth": {
-        "type": "query_api_key",
-        "location": "query",
-        "field": "apikey",
-        "env_var": "FMP_API_KEY"
-      },
-      "quotas": {
-        "per_second": 5,
-        "per_minute": 300,
-        "per_day": 250,
-        "per_month": null
-      },
-      "capabilities": ["fx_ribbon"],
-      "adapters": {
-        "fx_quotes": "fmp_fx_v1"
-      }
-    },
-    {
       "id": "twelvedata",
       "name": "Twelve Data",
       "base_url": "https://api.twelvedata.com/price",
@@ -41,27 +20,6 @@
       "capabilities": ["fx_ribbon"],
       "adapters": {
         "fx_quotes": "twelvedata_fx_v1"
-      }
-    },
-    {
-      "id": "demo",
-      "name": "Promagen Demo FX",
-      "base_url": "https://demo.promagen.local/fx",
-      "auth": {
-        "type": "none",
-        "location": "none",
-        "field": null,
-        "env_var": null
-      },
-      "quotas": {
-        "per_second": null,
-        "per_minute": null,
-        "per_day": null,
-        "per_month": null
-      },
-      "capabilities": ["fx_ribbon"],
-      "adapters": {
-        "fx_quotes": "demo_fx_v1"
       }
     }
   ]

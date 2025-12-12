@@ -16,8 +16,7 @@ import { DEMO_EXCHANGE_WEATHER, type ExchangeWeather } from '@/lib/weather/excha
 
 export const metadata: Metadata = {
   title: 'Promagen — Calm, data-rich AI providers overview',
-  description:
-    'Live exchange rails and an AI providers leaderboard, with predictable demo data while APIs are being wired.',
+  description: 'Live exchange rails and an AI providers leaderboard.',
 };
 
 // Build a simple lookup so ExchangeRail can resolve weather quickly.
@@ -39,7 +38,7 @@ export default function HomePage() {
       <ProvidersTable
         providers={providers}
         title="AI Providers Leaderboard"
-        caption="Scores and trends are illustrative while external APIs run in demo mode."
+        caption="Scores and trends are illustrative while external APIs are being wired."
         showRank
       />
     </section>
@@ -65,11 +64,6 @@ export default function HomePage() {
     />
   );
 
-  // Feature flag: force FX ribbon into demo mode if either of these are set.
-  const financeRibbonDemo =
-    process.env.NEXT_PUBLIC_FX_RIBBON_DEMO_MODE === 'true' ||
-    process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-
   return (
     <HomepageGrid
       mainLabel="Promagen home"
@@ -77,7 +71,6 @@ export default function HomePage() {
       centre={centreRail}
       right={rightRail}
       showFinanceRibbon
-      financeRibbonDemo={financeRibbonDemo}
     />
   );
 }

@@ -1,87 +1,62 @@
-// src/lib/finance/fx-client.ts
+// C:\Users\Proma\Projects\promagen\frontend\src\lib\finance\fx-client.ts
 // -----------------------------------------------------------------------------
-// Legacy server-side FX client for Promagen.
+// Lightweight client helpers for FX data.
 //
-// NOTE:
-// The current production FX pipeline is driven by the API gateway and the
-// /api/fx route. This module is kept as a small, self-contained helper so
-// that older imports and tests continue to compile and so that we always
-// have a deterministic demo snapshot available.
-//
-// It **never** calls third-party providers directly; it synthesises a
-// deterministic demo snapshot from the canonical FX pair catalogue.
+// Goals (current phase):
+// - No demo behaviour, no synthetic values.
+// - Always read from the internal FX API: /api/fx
+// - Keep legacy imports compiling while we migrate older code.
 // -----------------------------------------------------------------------------
 
-import type { FxPair, FxQuote, FxProviderId } from '@/types/finance-ribbon';
-import { FREE_TIER_FX_PAIRS, buildPairCode } from '@/lib/finance/fx-pairs';
+import type { FxApiResponse } from '@/types/finance-ribbon';
+import { buildPairCode } from '@/lib/finance/fx-pairs';
 
-type FxSnapshot = {
-  quotes: FxQuote[];
-  mode: 'demo';
+export type FxSnapshot = {
+  payload: FxApiResponse;
   fetchedAt: number;
 };
 
-const DEMO_PROVIDER_ID: FxProviderId = 'demo';
-
-// ... keep whatever other helpers you already have above ...
-
 /**
- * Build a deterministic demo quote for a given pair.
- * This keeps tests stable without depending on real-provider data.
+ * Fetch the canonical FX payload from the internal API.
+ *
+ * NOTE:
+ * - This helper is safe for both server and client usage.
+ * - Callers can supply a baseUrl when running server-side (e.g. during jobs/tests).
  */
-function buildDemoQuote(pair: FxPair, index: number, asOf: string): FxQuote {
-  const baseValue = 1 + index * 0.01;
-  const mid = Number(baseValue.toFixed(pair.precision));
+export async function fetchFxSnapshot(baseUrl?: string): Promise<FxSnapshot> {
+  const url = `${baseUrl ?? ''}/api/fx`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { accept: 'application/json' },
+    // Let the API route own caching; do not add extra caching here.
+  });
+
+  if (!res.ok) {
+    throw new Error(`FX API responded with HTTP ${res.status}`);
+  }
+
+  const payload = (await res.json()) as FxApiResponse;
 
   return {
-    base: pair.base,
-    quote: pair.quote,
-    pairId: pair.id,
-    mid,
-    bid: mid,
-    ask: mid,
-    changeAbs: 0,
-    changePct: 0,
-    asOf,
-    asOfUtc: asOf,
-    provider: DEMO_PROVIDER_ID,
-    providerSymbol: 'DEMO',
-  };
-}
-
-/**
- * Fetch a deterministic demo snapshot for the default free FX pairs.
- */
-export async function fetchFxSnapshot(): Promise<FxSnapshot> {
-  const now = new Date().toISOString();
-  const quotes = FREE_TIER_FX_PAIRS.map((pair, index) => buildDemoQuote(pair, index, now));
-
-  return {
-    quotes,
-    mode: 'demo',
+    payload,
     fetchedAt: Date.now(),
   };
 }
 
 /**
- * Convenience helper that returns a simple map from compact FX pair codes
- * (e.g. 'EURUSD') to mid values.
+ * Convenience helper: returns a map from compact FX pair codes (e.g. "EURUSD") to mid/price values.
+ *
+ * For now, we treat FxApiQuote.price as the mid.
  */
-export async function fetchFxMidMap(): Promise<Record<string, number>> {
-  const snapshot = await fetchFxSnapshot();
+export async function fetchFxMidMap(baseUrl?: string): Promise<Record<string, number>> {
+  const snapshot = await fetchFxSnapshot(baseUrl);
   const result: Record<string, number> = {};
 
-  for (const quote of snapshot.quotes) {
-    const [base, quoteCcy] = quote.pairId.split('-');
-
-    // Defensive guards keep TypeScript happy and avoid accidental "undefined"
-    // creeping into buildPairCode.
-    if (!base || !quoteCcy) {
-      continue;
-    }
-
-    const code = buildPairCode(base.toUpperCase(), quoteCcy.toUpperCase());
-    result[code] = quote.mid;
+  for (const q of snapshot.payload.data ?? []) {
+    if (typeof q.price !== 'number' || Number.isNaN(q.price)) continue;
+    const code = buildPairCode(q.base, q.quote);
+    result[code] = q.price;
   }
 
   return result;
