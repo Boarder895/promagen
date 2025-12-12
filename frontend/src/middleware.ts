@@ -6,7 +6,7 @@ const ENFORCE_CANONICAL = (process.env['ENFORCE_CANONICAL'] ?? 'true').toLowerCa
 const VERCEL_ENV = (process.env['VERCEL_ENV'] ?? '').toLowerCase();
 
 function buildCsp(isDev: boolean): string {
-  // Next dev needs looser script rules (webpack/HMR use eval/inline).
+  // Next dev needs looser script rules (HMR uses eval/inline).
   if (isDev) {
     return [
       "default-src 'self'",
@@ -21,10 +21,10 @@ function buildCsp(isDev: boolean): string {
     ].join('; ');
   }
 
-  // Production CSP (tight)
+  // Production CSP (compatible with Next's inline bootstrapping scripts)
   return [
     "default-src 'self'",
-    "script-src 'self' 'strict-dynamic' blob:",
+    "script-src 'self' 'unsafe-inline' blob:",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
@@ -39,30 +39,28 @@ export function middleware(req: NextRequest) {
   const url = new URL(req.url);
   const host = url.host.toLowerCase();
 
-  // Canonical apex redirect (allow localhost in dev)
-  if (ENFORCE_CANONICAL && CANONICAL_HOST && host !== CANONICAL_HOST) {
+  // Allow localhost without canonical redirects.
+  if (host !== 'localhost:3000' && ENFORCE_CANONICAL && CANONICAL_HOST && host !== CANONICAL_HOST) {
     const to = `${url.protocol}//${CANONICAL_HOST}${url.pathname}${url.search}`;
     return NextResponse.redirect(to, 308);
   }
 
   const res = NextResponse.next();
-
   const isDev = process.env.NODE_ENV === 'development';
   const csp = buildCsp(isDev);
 
-  // Security headers
   res.headers.set('X-Frame-Options', 'DENY');
   res.headers.set('X-Content-Type-Options', 'nosniff');
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
-  // COOP/COEP can be painful in dev; keep them for prod only.
+  // Keep COOP/COEP off in dev to avoid surprises.
   if (!isDev) {
     res.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
     res.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
   }
 
-  // CSP (report-only on preview; enforced otherwise)
+  // Preview: report-only. Production: enforce.
   if (VERCEL_ENV === 'preview') {
     res.headers.set('Content-Security-Policy-Report-Only', csp);
   } else {
