@@ -3,11 +3,10 @@
 import React, { useMemo, useState } from 'react';
 
 import { FinanceRibbon } from '@/components/ribbon/finance-ribbon';
-import { FxProvenanceBar } from '@/components/ribbon/fx-provenance-bar';
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
-import { assertFxPairsSsotValid, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
+import { assertFxPairsSsotValid, buildPairCode, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 
-import type { FxApiMode, FxApiQuote } from '@/types/finance-ribbon';
+import type { FxApiQuote } from '@/types/finance-ribbon';
 
 const POLL_INTERVAL_MS = 30 * 60_000;
 
@@ -34,24 +33,16 @@ export type FinanceRibbonChip = {
   direction: FinanceRibbonChipDirection;
 };
 
-/**
- * IMPORTANT:
- * - No demo behaviour.
- * - UI/layout unchanged; this container only maps API payload -> chips.
- * - Polls every 30 minutes.
- */
 export const FinanceRibbonContainer: React.FC = () => {
   const [isPaused, setIsPaused] = useState(false);
 
-  const { status, payload } = useFxQuotes({
+  const { status, payload, quotesByProviderSymbol } = useFxQuotes({
     intervalMs: POLL_INTERVAL_MS,
     enabled: !isPaused,
   });
 
-  const mode: FxApiMode = payload?.meta?.mode ?? 'live';
+  const mode = payload?.meta?.mode ?? 'live';
   const buildId = payload?.meta?.buildId ?? 'local-dev';
-  const providerId = payload?.meta?.sourceProvider ?? null;
-  const asOf = payload?.meta?.asOf ?? null;
 
   const pairs = useMemo(() => {
     assertFxPairsSsotValid();
@@ -66,7 +57,14 @@ export const FinanceRibbonContainer: React.FC = () => {
 
   const chips: FinanceRibbonChip[] = useMemo(() => {
     return pairs.map((p) => {
-      const q = quotesById.get(p.id);
+      // Primary: join by SSOT id
+      let q = quotesById.get(p.id);
+
+      // Fallback: join by normalised base+quote, e.g. GBPUSD
+      if (!q) {
+        const code = buildPairCode(p.base, p.quote);
+        q = quotesByProviderSymbol.get(code);
+      }
 
       const priceText = formatPrice(q?.price ?? null);
       const deltaText = formatDeltaPct(q?.changePct ?? null);
@@ -88,7 +86,7 @@ export const FinanceRibbonContainer: React.FC = () => {
             : 'flat',
       };
     });
-  }, [pairs, quotesById]);
+  }, [pairs, quotesById, quotesByProviderSymbol]);
 
   return (
     <section data-testid="finance-ribbon" data-status={status}>
@@ -99,8 +97,7 @@ export const FinanceRibbonContainer: React.FC = () => {
         isPaused={isPaused}
         onPauseToggle={() => setIsPaused((v) => !v)}
       />
-
-      <FxProvenanceBar mode={mode} providerId={providerId} lastUpdatedAt={asOf} />
+      {/* FxProvenanceBar removed */}
     </section>
   );
 };
