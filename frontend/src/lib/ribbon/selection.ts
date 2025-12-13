@@ -128,7 +128,7 @@ export type FxSelectionWithMode = SelectionResult<FxPair, FxPairId> & {
 };
 
 /**
- * Default free-tier FX selection – 5 pairs from the canonical index.
+ * Default free-tier FX selection – all pairs flagged isDefaultFree in the canonical index.
  */
 export function getFreeFxSelection(): SelectionResult<FxPair, FxPairId> {
   const requestedIds: FxPairId[] = FX_INDEX.filter((entry) => entry.isDefaultFree).map(
@@ -138,7 +138,7 @@ export function getFreeFxSelection(): SelectionResult<FxPair, FxPairId> {
   return selectForRibbon<FxPair, FxPairId>({
     allItems: FX_UNIVERSE,
     requestedIds,
-    maxItems: 5,
+    maxItems: requestedIds.length,
     getId: (pair) => pair.id,
   });
 }
@@ -229,14 +229,8 @@ function buildCommodityValidation(requestedIds: CommodityId[]): CommoditySelecti
   };
 }
 
-/**
- * Free-tier commodity selection (2–3–2) derived from the canonical catalogue.
- */
-export function getFreeCommodities(
-  catalogue: Commodity[] = COMMODITIES_UNIVERSE,
-): CommoditySelectionResult {
-  const defaultIds: CommodityId[] = catalogue
-    .filter((c) => (c as Commodity & { isDefaultFree?: boolean }).isDefaultFree)
+export function getFreeCommodities(): CommoditySelectionResult {
+  const defaultIds: CommodityId[] = COMMODITIES_UNIVERSE.slice()
     .sort((a, b) => {
       const aPriority = (a as Commodity & { priority?: number }).priority ?? 999;
       const bPriority = (b as Commodity & { priority?: number }).priority ?? 999;

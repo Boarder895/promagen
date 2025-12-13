@@ -8,6 +8,9 @@
     "timeoutMs": 800,
     "schedule": "hourly-staggered"
   },
-  "pairs": "*" ,
-  "notes": "pairs='*' means: allow all pair ids from src/data/fx/pairs.json. UI never hard-codes."
+  "pairs": "*",
+  "ribbon": {
+    "defaultFreePairCount": "auto"
+  },
+  "notes": "pairs='*' means: allow all pair ids from src/data/fx/pairs.json. UI never hard-codes. ribbon.defaultFreePairCount: 'auto' uses all isDefaultFree pairs from fx.pairs.json; set a number to force a fixed count (e.g. 8, 10)."
 }

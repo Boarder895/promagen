@@ -1,27 +1,12 @@
 [
   {
-    "id": "gbp-usd",
-    "baseCountryCode": "GB",
-    "quoteCountryCode": "US",
+    "id": "aud-gbp",
+    "baseCountryCode": "AU",
+    "quoteCountryCode": "GB",
     "isDefaultFree": true,
     "isDefaultPaid": true,
-    "group": "core"
-  },
-  {
-    "id": "eur-usd",
-    "baseCountryCode": "EU",
-    "quoteCountryCode": "US",
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
-    "group": "core"
-  },
-  {
-    "id": "gbp-eur",
-    "baseCountryCode": "GB",
-    "quoteCountryCode": "EU",
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
-    "group": "core"
+    "group": "core",
+    "homeLongitude": 151.21
   },
   {
     "id": "usd-jpy",
@@ -29,7 +14,8 @@
     "quoteCountryCode": "JP",
     "isDefaultFree": true,
     "isDefaultPaid": true,
-    "group": "core"
+    "group": "core",
+    "homeLongitude": 139.69
   },
   {
     "id": "usd-cny",
@@ -37,6 +23,52 @@
     "quoteCountryCode": "CN",
     "isDefaultFree": true,
     "isDefaultPaid": true,
-    "group": "core"
+    "group": "core",
+    "homeLongitude": 121.47
+  },
+  {
+    "id": "usd-aed",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "AE",
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": -98.58
+  },
+  {
+    "id": "gbp-zar",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "ZA",
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 28.05
+  },
+  {
+    "id": "eur-usd",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "US",
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 8.68
+  },
+  {
+    "id": "gbp-eur",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "EU",
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 0.0
+  },
+  {
+    "id": "gbp-usd",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "US",
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 0.0
   }
 ]

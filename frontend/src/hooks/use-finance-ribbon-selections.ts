@@ -1,10 +1,11 @@
 // src/hooks/use-finance-ribbon-selections.ts
 // -----------------------------------------------------------------------------
-// Single hook that encapsulates the 5–7–5 selection logic for the finance ribbon.
+// Single hook that encapsulates the FX–7–5 selection logic for the finance ribbon.
+// (FX count is SSOT-driven via src/data/fx/fx.pairs.json.)
 // - Knows whether the user is on a paid plan (via usePlan).
 // - Reads stored selections from localStorage (FX / Commodities / Crypto).
 // - Calls the pure helpers in src/lib/ribbon/selection.ts.
-// - Exposes prompt messages like “Choose 5 FX pairs to continue.”
+// - Exposes prompt messages like “Choose N FX pairs to continue.”
 // -----------------------------------------------------------------------------
 
 'use client';
@@ -75,18 +76,19 @@ export function useFinanceRibbonSelections(): FinanceRibbonSelectionState {
   const [fxSelection] = React.useState<FxSelectionViewModel>(() => {
     const stored = loadUserFxSelections();
 
-    if (!isPaid || !stored || stored.length === 0) {
-      const freeSelection = getFreeFxSelection();
+    const freeSelection = getFreeFxSelection();
+    const minItems = Math.max(1, freeSelection.selected.length);
 
+    if (!isPaid || !stored || stored.length === 0) {
       return {
         selection: freeSelection,
-        promptMessage: isPaid ? 'Choose 5 FX pairs to unlock the paid ribbon.' : null,
+        promptMessage: isPaid ? `Choose ${minItems} FX pairs to unlock the paid ribbon.` : null,
       };
     }
 
     const paidSelection = getPaidFxSelection(stored, {
       fallbackToFree: true,
-      minItems: 5,
+      minItems,
     });
 
     if (paidSelection.mode === 'paid') {

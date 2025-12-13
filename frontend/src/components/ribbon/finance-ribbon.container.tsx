@@ -49,7 +49,10 @@ export const FinanceRibbonContainer: React.FC = () => {
 
   const pairs = useMemo(() => {
     assertFxPairsSsotValid();
-    return getFxRibbonPairs();
+
+    // Deterministic, VPN-proof, permission-free:
+    // Fixed world ordering (east → west) using homeLongitude.
+    return getFxRibbonPairs({ order: 'homeLongitude' });
   }, []);
 
   const quotesById = useMemo(() => {
@@ -93,7 +96,6 @@ export const FinanceRibbonContainer: React.FC = () => {
 
   return (
     <section data-testid="finance-ribbon" data-status={status} className="w-full">
-      {/* Centres the FX ribbon above the leaderboard area */}
       <div className="w-full flex justify-center mb-4">
         <div className="w-full max-w-5xl">
           <FinanceRibbon
@@ -105,8 +107,6 @@ export const FinanceRibbonContainer: React.FC = () => {
           />
         </div>
       </div>
-
-      {/* FxProvenanceBar removed */}
     </section>
   );
 };
