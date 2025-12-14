@@ -3,7 +3,7 @@
 // Mini FX widget (SSOT-driven).
 //
 // True SSOT behaviour:
-// - Default pairs come ONLY from src/data/fx/fx-ribbon.pairs.json
+// - Default pairs come ONLY from src/data/fx/fx.pairs.json (via lib/finance/fx-pairs.ts)
 // - If you edit that one file, the widget changes automatically.
 // - No demo mode. No synthetic values.
 
@@ -11,8 +11,9 @@
 
 import React, { useMemo } from 'react';
 
+import FxPairLabel from '@/components/ribbon/fx-pair-label';
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
-import { assertFxRibbonSsotValid, buildSlashPair, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
+import { assertFxRibbonSsotValid, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 
 interface MiniFxWidgetProps {
   title?: string;
@@ -43,7 +44,14 @@ export function MiniFxWidget({ title = 'FX', intervalMs }: MiniFxWidgetProps) {
 
       return {
         key: code,
-        label: buildSlashPair(p.base, p.quote),
+        label: (
+          <FxPairLabel
+            base={p.base}
+            baseCountryCode={p.baseCountryCode}
+            quote={p.quote}
+            quoteCountryCode={p.quoteCountryCode}
+          />
+        ),
         value: formatPrice(quote?.price ?? null, isLoading),
       };
     });
@@ -64,7 +72,7 @@ export function MiniFxWidget({ title = 'FX', intervalMs }: MiniFxWidgetProps) {
         {rows.map((row) => (
           <li key={row.key} className="flex items-center justify-between">
             <span className="font-medium">{row.label}</span>
-            <span className="text-xs text-slate-400 tabular-nums">{row.value}</span>
+            <span className="tabular-nums text-xs text-slate-400">{row.value}</span>
           </li>
         ))}
       </ul>

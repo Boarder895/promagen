@@ -3,7 +3,7 @@
 // FX selection panel (SSOT-driven).
 //
 // True SSOT behaviour:
-// - The list of available pairs comes ONLY from src/data/fx/fx-ribbon.pairs.json
+// - The list of available pairs comes ONLY from src/data/fx/fx.pairs.json (via lib/finance/fx-pairs.ts)
 // - If you edit that one file, this panel updates automatically.
 // - No demo mode. No synthetic values.
 
@@ -11,9 +11,10 @@
 
 import React, { useMemo } from 'react';
 
+import FxPairLabel from '@/components/ribbon/fx-pair-label';
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
 import { useFxSelection } from '@/hooks/use-fx-selection';
-import { assertFxRibbonSsotValid, buildSlashPair, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
+import { assertFxRibbonSsotValid, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 
 export interface FxSelectionPanelProps {
   intervalMs?: number;
@@ -37,9 +38,7 @@ export function FxSelectionPanel({ intervalMs }: FxSelectionPanelProps) {
     const ssotPairs = getFxRibbonPairs();
 
     const allowed = new Map<string, (typeof ssotPairs)[number]>();
-    for (const p of ssotPairs) {
-      allowed.set(normaliseCode(p.id), p);
-    }
+    for (const p of ssotPairs) allowed.set(normaliseCode(p.id), p);
 
     const requested = Array.isArray(pairIds) ? pairIds.map((x) => normaliseCode(String(x))) : [];
     const pickedCodes = requested.filter((code) => allowed.has(code));
@@ -61,7 +60,14 @@ export function FxSelectionPanel({ intervalMs }: FxSelectionPanelProps) {
 
       return {
         key: code,
-        display: buildSlashPair(p.base, p.quote),
+        display: (
+          <FxPairLabel
+            base={p.base}
+            baseCountryCode={p.baseCountryCode}
+            quote={p.quote}
+            quoteCountryCode={p.quoteCountryCode}
+          />
+        ),
         statusLabel,
         value: formatPrice(quote?.price ?? null),
       };
@@ -81,7 +87,7 @@ export function FxSelectionPanel({ intervalMs }: FxSelectionPanelProps) {
           >
             <span className="font-semibold">{row.display}</span>
             <span className="text-slate-400">{row.statusLabel}</span>
-            <span className="text-xs text-slate-300 tabular-nums">{row.value}</span>
+            <span className="tabular-nums text-xs text-slate-300">{row.value}</span>
           </li>
         ))}
       </ul>

@@ -1,105 +1,150 @@
 // frontend/src/lib/flags.ts
-
-// Normalises country/region codes to a displayable flag (emoji first, fallback).
-// Keeps logic tiny and local; no heavy i18n dependency needed for the homepage rails.
+//
+// Canonical flag helpers for Promagen.
+// - SVG first (served from /public/flags/<code>.svg)
+// - Emoji fallback (works everywhere)
+// - Designed to be SSOT-driven: FX pairs supply country codes, UI just renders them.
+//
+// Notes:
+// - ISO-3166 alpha-2 codes expected (US, GB, AE, ZA, etc) plus "EU".
+// - Aliases supported: UK -> GB, EL -> GR.
 
 export type CountryCode = string;
 
 const REGIONAL_INDICATOR_A = 0x1f1e6;
 
-// Explicit Unicode escapes to behave on Windows consoles as well.
-const EU_FLAG = "\uD83C\uDDEA\uD83C\uDDFA"; // 🇪🇺
-const UNKNOWN_FLAG = "\u2753";              // ❓
+// Explicit Unicode escapes behave better across Windows consoles/editors.
+const EU_FLAG_EMOJI = '\uD83C\uDDEA\uD83C\uDDFA'; // 🇪🇺
+const UNKNOWN_FLAG_EMOJI = '\u2753'; // ❓
 
-/**
- * Minimal alias table for friendly / legacy codes used around Promagen.
- * - UK → GB (Unicode flag is 🇬🇧)
- * - EL → GR (Greece “Ellás”)
- */
 const ALIAS: Record<string, string> = {
-  UK: "GB",
-  EL: "GR",
+  UK: 'GB',
+  EL: 'GR',
 };
 
-/**
- * Convert a two-letter ISO code like "GB" into the corresponding Unicode flag emoji.
- */
-function isoToFlagEmoji(iso: string): string {
-  if (!/^[A-Z]{2}$/.test(iso)) return UNKNOWN_FLAG;
+function isoToFlagEmoji(iso: string): string | null {
+  if (!/^[A-Z]{2}$/.test(iso)) return null;
 
-  const codePoints = Array.from(iso).map((char) => {
-    const offset = char.codePointAt(0)! - 0x41; // 'A'
-    return REGIONAL_INDICATOR_A + offset;
-  });
+  const first = iso.charCodeAt(0) - 0x41; // 'A'
+  const second = iso.charCodeAt(1) - 0x41;
 
-  return String.fromCodePoint(...codePoints);
+  if (first < 0 || first > 25 || second < 0 || second > 25) return null;
+
+  return String.fromCodePoint(REGIONAL_INDICATOR_A + first, REGIONAL_INDICATOR_A + second);
 }
 
 /**
- * Main flag helper.
- *
- * - Accepts loose codes like "uk", "GB", " eu " etc.
- * - Applies alias mapping.
- * - Returns emoji where possible, otherwise the UNKNOWN_FLAG.
+ * Normalise input into a supported country/region code.
+ * - trims
+ * - uppercases
+ * - applies aliases (UK->GB, EL->GR)
+ * - allows EU
+ * Returns null for invalid input.
  */
-export function flag(code?: CountryCode): string {
-  if (!code) return UNKNOWN_FLAG;
+export function normaliseCountryCode(code?: CountryCode | null): string | null {
+  if (!code) return null;
 
-  const trimmed = code.trim().toUpperCase();
-  const iso = ALIAS[trimmed] ?? trimmed;
+  const trimmed = String(code).trim().toUpperCase();
+  if (!trimmed) return null;
 
-  if (iso === "EU") {
-    return EU_FLAG;
-  }
+  const normalised = ALIAS[trimmed] ?? trimmed;
 
-  if (!/^[A-Z]{2}$/.test(iso)) {
-    return UNKNOWN_FLAG;
-  }
+  if (normalised === 'EU') return 'EU';
+  if (!/^[A-Z]{2}$/.test(normalised)) return null;
+
+  return normalised;
+}
+
+/**
+ * Returns an emoji flag for a country code (or EU). Returns null if invalid/missing.
+ */
+export function countryCodeToFlagEmoji(countryCode?: CountryCode | null): string | null {
+  const iso = normaliseCountryCode(countryCode);
+  if (!iso) return null;
+
+  if (iso === 'EU') return EU_FLAG_EMOJI;
 
   return isoToFlagEmoji(iso);
 }
 
 /**
- * Human-friendly label combining emoji and a readable name.
- * Example: "🇬🇧 United Kingdom flag"
+ * Returns the SVG path for a flag in /public/flags, or null if the code is invalid/missing.
+ * Example: "/flags/gb.svg"
  */
-export function flagLabel(code?: CountryCode): string {
-  const emoji = flag(code);
-  const label = flagAriaLabel(code);
-  return `${emoji} ${label}`;
+export function flagSrc(countryCode?: CountryCode | null): string | null {
+  const iso = normaliseCountryCode(countryCode);
+  if (!iso) return null;
+
+  return `/flags/${iso.toLowerCase()}.svg`;
 }
 
 /**
- * Accessible label text for screen readers (“United Kingdom flag”, “European Union flag”).
- * Keeps a small common mapping and falls back to a generic “XX flag” or “Unknown flag”.
+ * Accessible label for screen readers / titles.
+ * Keeps a small friendly map and falls back to "XX flag".
  */
-export function flagAriaLabel(code?: CountryCode): string {
-  if (!code) return "Unknown flag";
-
-  const trimmed = code.trim().toUpperCase();
-  const iso = ALIAS[trimmed] ?? trimmed;
-
-  if (iso === "EU") return "European Union flag";
-  if (!/^[A-Z]{2}$/.test(iso)) return "Unknown flag";
+export function flagAriaLabel(countryCode?: CountryCode | null): string {
+  const iso = normaliseCountryCode(countryCode);
+  if (!iso) return 'Unknown flag';
+  if (iso === 'EU') return 'European Union flag';
 
   const common: Record<string, string> = {
-    GB: "United Kingdom flag",
-    UK: "United Kingdom flag",
-    US: "United States flag",
-    AE: "United Arab Emirates flag",
-    IN: "India flag",
-    SG: "Singapore flag",
-    HK: "Hong Kong flag",
-    JP: "Japan flag",
-    AU: "Australia flag",
-    NZ: "New Zealand flag",
-    CN: "China flag",
-    DE: "Germany flag",
-    FR: "France flag",
-    NL: "Netherlands flag",
-    BR: "Brazil flag",
-    CA: "Canada flag",
+    GB: 'United Kingdom flag',
+    US: 'United States flag',
+    AE: 'United Arab Emirates flag',
+    ZA: 'South Africa flag',
+    EU: 'European Union flag',
+    JP: 'Japan flag',
+    CN: 'China flag',
+    AU: 'Australia flag',
+    NZ: 'New Zealand flag',
+    CA: 'Canada flag',
+    BR: 'Brazil flag',
+    IN: 'India flag',
+    SG: 'Singapore flag',
+    HK: 'Hong Kong flag',
+    DE: 'Germany flag',
+    FR: 'France flag',
+    NL: 'Netherlands flag',
+    CH: 'Switzerland flag',
   };
 
   return common[iso] ?? `${iso} flag`;
+}
+
+/**
+ * Backwards-compatible helpers (kept because other parts of the site may use them).
+ * flag(): always returns a symbol (emoji), even if unknown.
+ */
+export function flag(code?: CountryCode | null): string {
+  return countryCodeToFlagEmoji(code) ?? UNKNOWN_FLAG_EMOJI;
+}
+
+export function flagLabel(code?: CountryCode | null): string {
+  return `${flag(code)} ${flagAriaLabel(code)}`;
+}
+
+/**
+ * FX label helpers (string form).
+ * Used for tooltips, logs, compact text-only contexts.
+ */
+export function formatCurrencyWithFlag(
+  currencyCode: string,
+  countryCode?: CountryCode | null,
+): string {
+  const code = (currencyCode ?? '').trim().toUpperCase();
+  const emoji = countryCodeToFlagEmoji(countryCode);
+  return emoji ? `${code} ${emoji}` : code;
+}
+
+export function formatFxPairLabelWithFlags(
+  base: string,
+  baseCountryCode: CountryCode | null | undefined,
+  quote: string,
+  quoteCountryCode: CountryCode | null | undefined,
+  separator = ' / ',
+): string {
+  return `${formatCurrencyWithFlag(base, baseCountryCode)}${separator}${formatCurrencyWithFlag(
+    quote,
+    quoteCountryCode,
+  )}`;
 }

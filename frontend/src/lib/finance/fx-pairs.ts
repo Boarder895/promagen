@@ -45,6 +45,10 @@ export interface FxRibbonPairMeta {
   emoji?: string;
   precision?: number;
   homeLongitude?: number;
+  // Optional country/region codes used to render flags alongside currency codes.
+  // These live ONLY in src/data/fx/fx.pairs.json (index metadata), not pairs.json.
+  baseCountryCode?: string;
+  quoteCountryCode?: string;
 }
 
 type FxPairCatalogEntry = {
@@ -82,6 +86,10 @@ function normalisePairId(value: string): string {
 }
 
 function normaliseCurrency(value: string): string {
+  return value.replace(/[^A-Za-z]/g, '').toUpperCase();
+}
+
+function normaliseCountryCode(value: string): string {
   return value.replace(/[^A-Za-z]/g, '').toUpperCase();
 }
 
@@ -227,6 +235,13 @@ export function getFxRibbonPairs(options?: FxRibbonPairsOptions): FxRibbonPairMe
       ? normaliseLongitude(e.homeLongitude)
       : undefined;
 
+    const baseCountryCode = isNonEmptyString(e.baseCountryCode)
+      ? normaliseCountryCode(e.baseCountryCode)
+      : undefined;
+    const quoteCountryCode = isNonEmptyString(e.quoteCountryCode)
+      ? normaliseCountryCode(e.quoteCountryCode)
+      : undefined;
+
     return {
       id,
       base: cat?.base ? normaliseCurrency(cat.base) : '',
@@ -234,6 +249,8 @@ export function getFxRibbonPairs(options?: FxRibbonPairsOptions): FxRibbonPairMe
       label: cat?.label ?? (cat?.base && cat?.quote ? `${cat.base} / ${cat.quote}` : id),
       precision: cat?.precision,
       category: 'fx',
+      baseCountryCode,
+      quoteCountryCode,
       homeLongitude,
     };
   });
@@ -301,6 +318,24 @@ export function assertFxRibbonSsotValid(): void {
       if (lon < -180 || lon > 180) {
         throw new Error(
           `FX SSOT: pair "${id}" homeLongitude must be between -180 and 180; got ${lon}.`,
+        );
+      }
+    }
+
+    if (row.baseCountryCode !== undefined) {
+      const cc = normaliseCountryCode(String(row.baseCountryCode));
+      if (cc.length !== 2) {
+        throw new Error(
+          `FX SSOT: pair "${id}" baseCountryCode must be a 2-letter code; got "${row.baseCountryCode}".`,
+        );
+      }
+    }
+
+    if (row.quoteCountryCode !== undefined) {
+      const cc = normaliseCountryCode(String(row.quoteCountryCode));
+      if (cc.length !== 2) {
+        throw new Error(
+          `FX SSOT: pair "${id}" quoteCountryCode must be a 2-letter code; got "${row.quoteCountryCode}".`,
         );
       }
     }

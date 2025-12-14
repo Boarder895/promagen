@@ -89,52 +89,48 @@ function readPositiveIntEnv(name: string, fallback: number, min: number, max: nu
   const n = Number(raw);
   if (!Number.isFinite(n)) return fallback;
 
-  const i = Math.floor(n);
-  if (i < min) return min;
-  if (i > max) return max;
-  return i;
+  const v = Math.floor(n);
+  if (v < min || v > max) return fallback;
+
+  return v;
 }
 
-// TTL in seconds:
-// - Production default: 1800s (30 minutes)
-// - Dev default: 300s (5 minutes)
+// Default: 30 minutes in prod, 5 minutes in dev (to stop local refresh chewing credits)
 const DEFAULT_TTL_SECONDS = process.env.NODE_ENV === 'production' ? 30 * 60 : 5 * 60;
 
-// Allowable range: 10s .. 6h
 const CACHE_TTL_SECONDS = readPositiveIntEnv(
-  'FX_RIBBON_CACHE_TTL_SECONDS',
+  'FX_RIBBON_TTL_SECONDS',
   DEFAULT_TTL_SECONDS,
-  10,
-  6 * 60 * 60,
+  5,
+  24 * 60 * 60,
 );
+
 const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
 
-// Trace toggle (logs + optional headers via route)
+// Trace flag (safe in prod, but typically off)
 const TRACE_ENABLED = (process.env.FX_RIBBON_TRACE ?? '').trim() === '1';
 
-// Backoff base/max in seconds (optional; safe defaults)
-const BACKOFF_BASE_SECONDS = readPositiveIntEnv('FX_RIBBON_BACKOFF_BASE_SECONDS', 60, 5, 30 * 60); // default 60s
+// 429 backoff config (seconds)
+const BACKOFF_BASE_SECONDS = readPositiveIntEnv('FX_RIBBON_BACKOFF_BASE_SECONDS', 30, 5, 3600);
 const BACKOFF_MAX_SECONDS = readPositiveIntEnv(
   'FX_RIBBON_BACKOFF_MAX_SECONDS',
-  15 * 60,
+  10 * 60,
   30,
-  60 * 60,
-); // default 15m
+  24 * 60 * 60,
+);
 
 // -----------------------------------------------------------------------------
-// Trace / counters (in-memory, per server process)
+// Internal counters / tracing
 // -----------------------------------------------------------------------------
 
-type FxRibbonDecision =
+export type FxRibbonDecision =
   | 'cache_hit'
-  | 'single_flight_wait'
   | 'upstream_fetch'
+  | 'single_flight_wait'
   | 'rate_limited_cache'
-  | 'rate_limited_no_cache'
-  | 'upstream_error_cache'
-  | 'upstream_error_no_cache';
+  | 'rate_limited_no_cache';
 
-type FxRibbonCounters = {
+export type FxRibbonCounters = {
   callsTotal: number;
   cacheHits: number;
   singleFlightWaits: number;
@@ -143,7 +139,7 @@ type FxRibbonCounters = {
   errors: number;
 };
 
-type FxRibbonTraceSnapshot = {
+export type FxRibbonTraceSnapshot = {
   enabled: boolean;
   lastDecision: FxRibbonDecision;
   lastFetchId: string | null;
@@ -178,7 +174,8 @@ function traceLog(message: string, extra?: Record<string, unknown>) {
     decision: lastDecision,
     fetchId: lastFetchId,
   };
-  console.info(message, { ...base, ...(extra ?? {}) });
+  // eslint allows console.debug (but not console.info)
+  console.debug(message, { ...base, ...(extra ?? {}) });
 }
 
 export function getFxRibbonTraceSnapshot(): FxRibbonTraceSnapshot {
@@ -238,126 +235,53 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function toFiniteNumber(value: unknown): number | null {
-  const n =
-    typeof value === 'string' ? Number(value) : typeof value === 'number' ? value : Number.NaN;
-  return Number.isFinite(n) ? n : null;
-}
+function parseExchangeRateValue(raw: unknown): number | null {
+  if (raw === null || raw === undefined) return null;
 
-class RateLimitedError extends Error {
-  public readonly status = 429;
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
 
-  constructor(message: string) {
-    super(message);
-    this.name = 'RateLimitedError';
-  }
-}
-
-async function fetchJsonWithTimeout(url: string, timeoutMs: number): Promise<unknown> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { accept: 'application/json' },
-      signal: controller.signal,
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => '<no body>');
-      const msg = `HTTP ${res.status} for ${url} :: ${body.slice(0, 200)}`;
-      if (res.status === 429) throw new RateLimitedError(msg);
-      throw new Error(msg);
-    }
-
-    return (await res.json()) as unknown;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Twelve Data bulk FX fetch (one request, many symbols)
-// We use /exchange_rate with symbol=EUR/USD,GBP/USD,... (comma-separated)
-// -----------------------------------------------------------------------------
-
-type TwelveDataExchangeRateItem = {
-  symbol?: string;
-  rate?: string | number;
-  price?: string | number;
-  close?: string | number;
-  status?: string;
-  message?: string;
-  code?: number | string;
-};
-
-function looksRateLimitedPayload(raw: unknown): boolean {
-  if (!isRecord(raw)) return false;
-
-  const status = typeof raw.status === 'string' ? raw.status.toLowerCase() : '';
-  const msg = typeof raw.message === 'string' ? raw.message.toLowerCase() : '';
-  const code = raw.code;
-
-  const codeNum =
-    typeof code === 'number' ? code : typeof code === 'string' ? Number(code) : Number.NaN;
-
-  return (
-    status === 'error' &&
-    (codeNum === 429 ||
-      msg.includes('too many') ||
-      msg.includes('rate limit') ||
-      msg.includes('minute') ||
-      msg.includes('limit'))
-  );
-}
-
-function parseExchangeRateValue(item: unknown): number | null {
-  if (!isRecord(item)) return null;
-  const it = item as TwelveDataExchangeRateItem;
-
-  if (typeof it.status === 'string' && it.status.toLowerCase() === 'error') return null;
-
-  const v = it.rate ?? it.price ?? it.close;
-  return toFiniteNumber(v);
-}
-
-async function fetchTwelveDataBulkExchangeRates(
-  symbols: string[],
-  apiKey: string,
-): Promise<Map<string, number | null>> {
-  const endpoint = new URL('https://api.twelvedata.com/exchange_rate');
-  endpoint.searchParams.set('symbol', symbols.join(','));
-  endpoint.searchParams.set('apikey', apiKey);
-
-  const raw = await fetchJsonWithTimeout(endpoint.toString(), 8_000);
-
-  // Sometimes 200 OK but payload is {status:"error", code:429, ...}
-  if (looksRateLimitedPayload(raw)) {
-    throw new RateLimitedError(`Twelve Data rate-limited payload for ${endpoint.toString()}`);
+  if (typeof raw === 'string') {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
   }
 
-  // Sometimes 200 OK but payload is {status:"error", message:"..."}
   if (isRecord(raw)) {
-    const status = typeof raw.status === 'string' ? raw.status.toLowerCase() : '';
-    if (status === 'error') {
-      const msg = typeof raw.message === 'string' ? raw.message : 'Unknown Twelve Data error';
-      throw new Error(`FX: Twelve Data error: ${msg}`);
+    const candidates = [raw.rate, raw.price, raw.close, raw.value];
+    for (const c of candidates) {
+      const parsed = parseExchangeRateValue(c);
+      if (parsed !== null) return parsed;
     }
   }
 
+  return null;
+}
+
+function parseTwelveDataBulkExchangeRateResponse(
+  raw: unknown,
+  symbols: string[],
+): Map<string, number | null> {
   const out = new Map<string, number | null>();
 
-  // Format A: array of items [{symbol, rate}, ...]
-  if (Array.isArray(raw)) {
-    for (const item of raw) {
-      if (!isRecord(item)) continue;
-      const sym =
-        typeof (item as TwelveDataExchangeRateItem).symbol === 'string'
-          ? String((item as TwelveDataExchangeRateItem).symbol)
-          : null;
+  // Format A: { data: [{symbol, rate}, ...] } or { values: [...] }
+  if (isRecord(raw) && Array.isArray((raw as Record<string, unknown>).data)) {
+    const arr = (raw as Record<string, unknown>).data as unknown[];
+    for (const row of arr) {
+      if (!isRecord(row)) continue;
+      const sym = typeof row.symbol === 'string' ? row.symbol : null;
       if (!sym) continue;
-      out.set(sym, parseExchangeRateValue(item));
+      out.set(sym, parseExchangeRateValue(row.rate ?? row.price ?? row.close));
+    }
+    for (const s of symbols) if (!out.has(s)) out.set(s, null);
+    return out;
+  }
+
+  if (isRecord(raw) && Array.isArray((raw as Record<string, unknown>).values)) {
+    const arr = (raw as Record<string, unknown>).values as unknown[];
+    for (const row of arr) {
+      if (!isRecord(row)) continue;
+      const sym = typeof row.symbol === 'string' ? row.symbol : null;
+      if (!sym) continue;
+      out.set(sym, parseExchangeRateValue(row.rate ?? row.price ?? row.close));
     }
     for (const s of symbols) if (!out.has(s)) out.set(s, null);
     return out;
@@ -382,6 +306,37 @@ async function fetchTwelveDataBulkExchangeRates(
   }
 
   throw new Error('FX: Unexpected Twelve Data response format for bulk exchange_rate.');
+}
+
+class RateLimitedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RateLimitedError';
+  }
+}
+
+async function fetchTwelveDataBulkExchangeRates(
+  symbols: string[],
+  apiKey: string,
+): Promise<Map<string, number | null>> {
+  const joined = symbols.join(',');
+  const url = `https://api.twelvedata.com/exchange_rate?symbol=${encodeURIComponent(
+    joined,
+  )}&apikey=${encodeURIComponent(apiKey)}`;
+
+  const res = await fetch(url, { method: 'GET', cache: 'no-store' });
+
+  if (res.status === 429) {
+    throw new RateLimitedError('FX: Twelve Data rate-limited (HTTP 429).');
+  }
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`FX: Twelve Data HTTP ${res.status}. ${text}`.trim());
+  }
+
+  const json = (await res.json()) as unknown;
+  return parseTwelveDataBulkExchangeRateResponse(json, symbols);
 }
 
 // -----------------------------------------------------------------------------
@@ -570,26 +525,9 @@ export async function getFxRibbon(): Promise<FxApiResponse> {
         throw err;
       }
 
-      // Non-429 failure: if cache exists, serve it (economical + resilient)
-      if (ribbonCache) {
-        counters.errors += 1;
-        lastDecision = 'upstream_error_cache';
-        traceLog('[fx.ribbon] upstream error; serving cache', {
-          error: err instanceof Error ? err.message : String(err),
-        });
-
-        return {
-          ...ribbonCache.payload,
-          meta: {
-            ...ribbonCache.payload.meta,
-            mode: 'cached',
-          },
-        };
-      }
-
       counters.errors += 1;
-      lastDecision = 'upstream_error_no_cache';
-      traceLog('[fx.ribbon] upstream error; no cache available (throwing)', {
+      lastDecision = 'rate_limited_no_cache';
+      traceLog('[fx.ribbon] error (throwing)', {
         error: err instanceof Error ? err.message : String(err),
       });
 

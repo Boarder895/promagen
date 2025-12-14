@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { FinanceRibbon } from '@/components/ribbon/finance-ribbon';
+import FxPairLabel from '@/components/ribbon/fx-pair-label';
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
 import { assertFxPairsSsotValid, buildPairCode, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 
@@ -28,7 +29,7 @@ export type FinanceRibbonChipDirection = 'up' | 'down' | 'flat';
 
 export type FinanceRibbonChip = {
   id: string;
-  label: string;
+  label: React.ReactNode;
   category: string;
   emoji: string | null;
   priceText: string;
@@ -49,9 +50,6 @@ export const FinanceRibbonContainer: React.FC = () => {
 
   const pairs = useMemo(() => {
     assertFxPairsSsotValid();
-
-    // Deterministic, VPN-proof, permission-free:
-    // Fixed world ordering (east → west) using homeLongitude.
     return getFxRibbonPairs({ order: 'homeLongitude' });
   }, []);
 
@@ -63,10 +61,8 @@ export const FinanceRibbonContainer: React.FC = () => {
 
   const chips: FinanceRibbonChip[] = useMemo(() => {
     return pairs.map((p) => {
-      // Primary: join by SSOT id
       let q = quotesById.get(p.id);
 
-      // Fallback: join by normalised base+quote, e.g. GBPUSD
       if (!q) {
         const code = buildPairCode(p.base, p.quote);
         q = quotesByProviderSymbol.get(code);
@@ -75,28 +71,37 @@ export const FinanceRibbonContainer: React.FC = () => {
       const priceText = formatPrice(q?.price ?? null);
       const deltaText = formatDeltaPct(q?.changePct ?? null);
 
+      const direction: FinanceRibbonChipDirection =
+        q?.changePct === null || q?.changePct === undefined
+          ? 'flat'
+          : q.changePct > 0
+          ? 'up'
+          : q.changePct < 0
+          ? 'down'
+          : 'flat';
+
       return {
         id: p.id,
-        label: p.label,
+        label: (
+          <FxPairLabel
+            base={p.base}
+            baseCountryCode={p.baseCountryCode}
+            quote={p.quote}
+            quoteCountryCode={p.quoteCountryCode}
+          />
+        ),
         category: p.category,
         emoji: p.emoji ?? null,
         priceText,
         deltaText,
-        direction:
-          q?.changePct === null || q?.changePct === undefined
-            ? 'flat'
-            : q.changePct > 0
-            ? 'up'
-            : q.changePct < 0
-            ? 'down'
-            : 'flat',
+        direction,
       };
     });
   }, [pairs, quotesById, quotesByProviderSymbol]);
 
   return (
     <section data-testid="finance-ribbon" data-status={status} className="w-full">
-      <div className="w-full flex justify-center mb-4">
+      <div className="mb-4 flex w-full justify-center">
         <div className="w-full max-w-5xl">
           <FinanceRibbon
             buildId={buildId}
