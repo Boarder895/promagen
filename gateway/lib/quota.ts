@@ -1,33 +1,17 @@
-// C:\Users\Proma\Projects\promagen\gateway\lib\quota.ts
+// gateway/lib/quota.ts
 
 import { logInfo } from './logging';
 
+export type QuotaDecision = {
+  allowed: boolean;
+  reason?: string;
+};
+
 /**
- * Quota handling for providers.
- *
- * This does NOT block calls — it simply logs budget usage
- * so you understand behaviour in dev and production.
+ * Placeholder quota logic.
+ * Keep the signature explicit so callers must pass both params.
  */
-
-interface QuotaState {
-  totalCalls: number;
-  lastCallAt: number | null;
-}
-
-const quotaMap = new Map<string, QuotaState>();
-
-export function applyQuotaAllowance(providerConfig: any): void {
-  const id = providerConfig.id;
-
-  let state = quotaMap.get(id);
-  if (!state) {
-    state = { totalCalls: 0, lastCallAt: null };
-  }
-
-  state.totalCalls += 1;
-  state.lastCallAt = Date.now();
-
-  quotaMap.set(id, state);
-
-  logInfo(`Quota tick for provider '${id}'`, state);
+export function applyQuotaAllowance(providerId: string, units: number): QuotaDecision {
+  logInfo('quota check', { providerId, units });
+  return { allowed: true };
 }

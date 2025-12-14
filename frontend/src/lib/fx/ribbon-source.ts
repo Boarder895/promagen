@@ -1,19 +1,15 @@
-// frontend/src/lib/fx/ribbon-source.ts
+// C:\Users\Proma\Projects\promagen\frontend\src\lib\fx\ribbon-source.ts
 //
 // Client-side entry point for the finance ribbon's FX row.
-// Knows about:
-//   - free default pair ids (from src/data/selected/fx.pairs.free.json)
-//   - live vs demo mode
-//   - daily arrow calculation (via calculate.ts)
-//   - "force demo" feature flag
 //
-// It does NOT talk directly to the external FX provider; it calls the internal
-// API helper in fetch.ts, which in turn talks to /api/ribbon/fx on the server.
+// IMPORTANT:
+// - Default pair list comes from SSOT (fx.pairs.json via fx-pairs.ts).
+// - No hard slice(0, 5). The number of default FREE pairs is SSOT-driven.
 
 'use client';
 
 import pairsJson from '@/data/fx/pairs.json';
-import freePairIdsJson from '@/data/selected/fx.pairs.free.json';
+import { getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 import { buildDemoSnapshots } from './demo-walk';
 import type { FxSnapshot } from './fetch';
 import { fetchFxSnapshot } from './fetch';
@@ -46,27 +42,48 @@ export type FxRibbonLoadResult = {
   quotes: FxRibbonQuote[];
 };
 
+function normaliseId(value: string): string {
+  return value
+    .trim()
+    .replace(/[_\s]+/g, '-')
+    .toLowerCase();
+}
+
+function dedupeKeepOrder(ids: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const raw of ids) {
+    if (typeof raw !== 'string') continue;
+    const id = normaliseId(raw);
+    if (!id) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+
+  return out;
+}
+
 /**
- * Helper: read the free default ids from src/data/selected/fx.pairs.free.json,
- * clamp to 5 for the homepage ribbon.
+ * Default FREE ids come from SSOT:
+ * - frontend/src/data/fx/fx.pairs.json (isDefaultFree)
+ * - joined with pairs.json for metadata
  */
 function getFreeDefaultPairIds(): string[] {
-  const ids = (freePairIdsJson as string[]) ?? [];
-  return ids.slice(0, 5);
+  const metas = getFxRibbonPairs({ tier: 'free', order: 'ssot' });
+  return metas.map((m) => m.id);
 }
 
 /**
  * Helper: look up label & metadata for a given pair id.
  */
 function findPairConfig(id: string): PairConfig {
-  const match = pairs.find((item) => item.id === id);
-
-  if (match) {
-    return match;
-  }
+  const match = pairs.find((item) => normaliseId(item.id) === normaliseId(id));
+  if (match) return match;
 
   // Fallback: synthesise a label from the id, e.g. "gbp-usd" → "GBP / USD".
-  const normalised = id.replace(/_/g, '-').toUpperCase();
+  const normalised = normaliseId(id).toUpperCase();
   const [base, quote] = normalised.split('-');
 
   return {
@@ -105,7 +122,7 @@ function mapSnapshotsToRibbonQuotes(_mode: FxRibbonMode, snapshots: FxSnapshot[]
 /**
  * Core loader for the FX ribbon.
  *
- * - Uses the selected free-tier pair ids when no explicit ids are provided.
+ * - Uses SSOT default free-tier ids when no explicit ids are provided.
  * - If the "force demo" feature flag is set, always returns demo data.
  * - Otherwise:
  *    - tries live snapshots via fetchFxSnapshot;
@@ -113,7 +130,7 @@ function mapSnapshotsToRibbonQuotes(_mode: FxRibbonMode, snapshots: FxSnapshot[]
  */
 export async function getFxRibbonQuotes(explicitIds?: string[]): Promise<FxRibbonLoadResult> {
   const defaultIds = getFreeDefaultPairIds();
-  const ids = (explicitIds && explicitIds.length > 0 ? explicitIds : defaultIds).slice(0, 5);
+  const ids = dedupeKeepOrder(explicitIds && explicitIds.length > 0 ? explicitIds : defaultIds);
 
   const FORCE_DEMO =
     process.env.NEXT_PUBLIC_FX_RIBBON_DEMO_MODE === 'true' ||
@@ -123,10 +140,7 @@ export async function getFxRibbonQuotes(explicitIds?: string[]): Promise<FxRibbo
   if (FORCE_DEMO) {
     const demoSnapshots = buildDemoSnapshots(ids);
     const quotes = mapSnapshotsToRibbonQuotes('demo', demoSnapshots);
-    return {
-      mode: 'demo',
-      quotes,
-    };
+    return { mode: 'demo', quotes };
   }
 
   try {
@@ -135,25 +149,14 @@ export async function getFxRibbonQuotes(explicitIds?: string[]): Promise<FxRibbo
     if (!Array.isArray(liveSnapshots) || liveSnapshots.length === 0) {
       const demoSnapshots = buildDemoSnapshots(ids);
       const quotes = mapSnapshotsToRibbonQuotes('demo', demoSnapshots);
-      return {
-        mode: 'demo',
-        quotes,
-      };
+      return { mode: 'demo', quotes };
     }
 
     const quotes = mapSnapshotsToRibbonQuotes('live', liveSnapshots);
-    return {
-      mode: 'live',
-      quotes,
-    };
+    return { mode: 'live', quotes };
   } catch {
-    // Any failure falls back to demo mode; this keeps the ribbon looking
-    // healthy even if the FX provider is down.
     const demoSnapshots = buildDemoSnapshots(ids);
     const quotes = mapSnapshotsToRibbonQuotes('demo', demoSnapshots);
-    return {
-      mode: 'demo',
-      quotes,
-    };
+    return { mode: 'demo', quotes };
   }
 }

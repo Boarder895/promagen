@@ -1,4 +1,4 @@
-// src/lib/user-preferences/selection-store.ts
+// C:\Users\Proma\Projects\promagen\frontend\src\lib\user-preferences\selection-store.ts
 
 import type { UserPlanId } from '@/lib/user-plan';
 

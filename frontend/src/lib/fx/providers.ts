@@ -9,9 +9,8 @@
 //     src/data/fx/fx.pairs.json + src/data/fx/pairs.json (via fx-pairs.ts)
 // - Cache results in-memory for 30 minutes (server-side) to protect quotas.
 //
-// Notes:
-// - Twelve Data /price expects: symbol=GBP/USD&apikey=...
-// - We return change/changePct as null because /price doesn't supply them.
+// IMPORTANT:
+// - No hard-coded "5 pairs" cap. Whatever SSOT returns is what we request.
 // -----------------------------------------------------------------------------
 
 import rawProviders from '@/data/fx/providers.json';
@@ -171,7 +170,9 @@ export async function getFxRibbon(): Promise<FxApiResponse> {
   }
 
   assertFxRibbonSsotValid();
-  const pairs = getFxRibbonPairs();
+
+  // SSOT-driven list (free tier by default) – NO trimming here.
+  const pairs = getFxRibbonPairs({ tier: 'free', order: 'ssot' });
 
   const twelveKey = (process.env.TWELVEDATA_API_KEY ?? '').trim();
   if (!twelveKey) {
@@ -181,10 +182,16 @@ export async function getFxRibbon(): Promise<FxApiResponse> {
   const quotes: FxApiQuote[] = [];
   let anyPrice = false;
 
-  // Sequential requests: helps stay well inside Twelve Data’s per-minute limits.
+  // Sequential requests: keeps you well inside per-minute limits.
   for (const p of pairs) {
-    const base = String(p.base).toUpperCase();
-    const quote = String(p.quote).toUpperCase();
+    if (!p) {
+      // Defensive: satisfies TS if any upstream typing ever widens.
+       
+      continue;
+    }
+
+    const base = String(p.base ?? '').toUpperCase();
+    const quote = String(p.quote ?? '').toUpperCase();
 
     const slash = buildSlashPair(base, quote);
     const price = await fetchTwelveDataPrice(slash, twelveKey);
@@ -192,11 +199,11 @@ export async function getFxRibbon(): Promise<FxApiResponse> {
     if (price !== null) anyPrice = true;
 
     quotes.push({
-      id: p.id, // must match SSOT id (e.g. "gbp-usd") for the UI join
+      id: String(p.id), // must match SSOT id (e.g. "gbp-usd") for the UI join
       base,
       quote,
-      label: p.label,
-      category: p.category ?? 'fx',
+      label: String(p.label ?? `${base} / ${quote}`),
+      category: String(p.category ?? 'fx'),
       price,
       change: null,
       changePct: null,

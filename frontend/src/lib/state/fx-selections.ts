@@ -1,13 +1,22 @@
-// src/lib/state/fx-selections.ts
+// C:\Users\Proma\Projects\promagen\frontend\src\lib\state\fx-selections.ts
 // -----------------------------------------------------------------------------
 // LocalStorage-backed state for the user's FX ribbon pair selections.
-// This is intentionally tiny and purely client-side; SSR uses the free defaults.
+//
+// IMPORTANT:
+// - No hard "5 pairs" cap.
+// - We store canonical SSOT ids like "gbp-usd".
 // -----------------------------------------------------------------------------
 
 import type { FxPairId } from '@/types/finance-ribbon';
 
 const STORAGE_KEY = 'promagen.fxSelections.v2';
-const MAX_PAIRS = 5;
+
+function normaliseId(value: string): FxPairId {
+  return value
+    .trim()
+    .replace(/[_\s]+/g, '-')
+    .toLowerCase() as FxPairId;
+}
 
 function sanitiseIds(ids: FxPairId[]): FxPairId[] {
   const seen = new Set<string>();
@@ -17,11 +26,14 @@ function sanitiseIds(ids: FxPairId[]): FxPairId[] {
     if (typeof raw !== 'string') continue;
     const trimmed = raw.trim();
     if (!trimmed) continue;
-    const upper = trimmed.toUpperCase();
-    if (seen.has(upper)) continue;
-    seen.add(upper);
-    result.push(upper);
-    if (result.length >= MAX_PAIRS) break;
+
+    const id = normaliseId(trimmed);
+    if (!id) continue;
+
+    if (seen.has(id)) continue;
+    seen.add(id);
+
+    result.push(id);
   }
 
   return result;
@@ -38,7 +50,7 @@ function loadRaw(): FxPairId[] | null {
     if (!Array.isArray(parsed)) return null;
 
     const ids = parsed.filter((value) => typeof value === 'string') as string[];
-    const cleaned = sanitiseIds(ids);
+    const cleaned = sanitiseIds(ids as FxPairId[]);
 
     return cleaned.length > 0 ? cleaned : null;
   } catch {
@@ -56,7 +68,7 @@ export function loadUserFxSelections(): FxPairId[] | null {
 
 /**
  * Persist a new FX pair selection for the ribbon.
- * The array is cleaned (trimmed, uppercased, deduped) and capped at 5 entries.
+ * The array is cleaned (trimmed, canonicalised, deduped).
  */
 export function saveUserFxSelections(ids: FxPairId[]): void {
   if (typeof window === 'undefined') return;
@@ -67,6 +79,6 @@ export function saveUserFxSelections(ids: FxPairId[]): void {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
   } catch {
     // Ignore quota / private-mode errors – the ribbon will simply fall back
-    // to the free selection when persistence is unavailable.
+    // to defaults when persistence is unavailable.
   }
 }

@@ -1,35 +1,46 @@
 // C:\Users\Proma\Projects\promagen\gateway\lib\types.ts
 
-/**
- * Minimal shape of provider config as read from config/api/providers.registry.json.
- * We only include what the gateway lib actually needs.
- */
+export type FxMode = 'live' | 'cached';
 
-export interface ProviderAuthConfig {
-  type: 'none' | 'query_api_key';
-  location: 'none' | 'query';
-  field?: string | null;
-  env_var?: string | null;
-  key_name?: string | null;
-  env?: string | null;
-}
+export type FxRibbonPair = {
+  id: string; // e.g. "gbp-usd"
+  base: string; // "GBP"
+  quote: string; // "USD"
+  label: string; // "GBP / USD"
+  category?: string; // keep optional to avoid SSOT/type fights
+};
 
-export interface ProviderQuotaConfig {
-  per_second?: number | null;
-  per_minute?: number | null;
-  per_day?: number | null;
-  per_month?: number | null;
-}
+export type FxRibbonQuote = {
+  pair: string; // pair id, e.g. "gbp-usd"
+  base: string;
+  quote: string;
+  label: string;
+  price: number;
 
-export interface ProviderConfig {
-  id: string;
-  name: string;
-  base_url: string | null;
-  auth: ProviderAuthConfig;
-  quotas?: ProviderQuotaConfig;
-  capabilities?: string[];
-  adapters: {
-    fx_quotes?: string;
-    // future domains can be added here
-  };
-}
+  // Optional extras (providers may supply)
+  change?: number | null;
+  changePct?: number | null;
+  timestamp?: number | null;
+};
+
+// Back-compat name used by gateway/index.ts
+export type FxRibbonPairQuote = FxRibbonQuote;
+
+export type FxRibbonResult = {
+  mode: FxMode;
+  sourceProvider: string;
+  pairs: FxRibbonPairQuote[];
+};
+
+// What gateway passes into adapters
+export type FxAdapterRequest = {
+  roleId: string;
+  requestedPairs: FxRibbonPair[];
+};
+
+// What adapters must return
+export type FxAdapterResponse = {
+  providerId: string;
+  mode: 'live';
+  pairs: FxRibbonPairQuote[];
+};

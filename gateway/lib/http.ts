@@ -1,72 +1,54 @@
-// C:\Users\Proma\Projects\promagen\gateway\lib\http.ts
+// gateway/lib/http.ts
 
+import type { ProviderEndpointConfig } from './config';
 import { logError, logInfo } from './logging';
 
-// ----------------------------------------------
-// Types
-// ----------------------------------------------
-
-export interface ProviderConfig {
-  id: string;
-  base_url: string;
-  api_key_env: string | null;
+export type FetchJsonOptions = {
+  providerId: string;
+  endpoint: ProviderEndpointConfig;
+  url: string;
   headers?: Record<string, string>;
-  adapters: {
-    fx_quotes: string;
-  };
-}
+  timeoutMs?: number;
+};
 
-// ----------------------------------------------
-// Generic GET JSON helper
-// ----------------------------------------------
+/**
+ * Minimal JSON fetch helper with sane errors.
+ * Node 18+ provides global fetch; we rely on @types/node for typing.
+ */
+export async function fetchJson<T>(opts: FetchJsonOptions): Promise<T> {
+  const { providerId, url, timeoutMs = 10_000 } = opts;
 
-export async function httpGetJson(url: string, config: ProviderConfig): Promise<unknown> {
-  const apiKey = config.api_key_env ? process.env[config.api_key_env] : undefined;
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
 
-  const finalUrl =
-    apiKey && url.includes('?')
-      ? `${url}&apikey=${apiKey}`
-      : apiKey
-      ? `${url}?apikey=${apiKey}`
-      : url;
+  try {
+    logInfo('fetchJson request', { providerId, url });
 
-  const headers: Record<string, string> = {
-    Accept: 'application/json',
-    ...(config.headers ?? {}),
-  };
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        ...(opts.headers ?? {}),
+      },
+      signal: controller.signal,
+    });
 
-  logInfo(`HTTP GET → ${finalUrl}`);
+    const text = await res.text();
 
-  const res = await fetch(finalUrl, { method: 'GET', headers });
+    if (!res.ok) {
+      const msg = `[${providerId}] HTTP ${res.status} ${res.statusText} for ${url}`;
+      logError(msg, { body: text.slice(0, 300) });
+      throw new Error(msg);
+    }
 
-  if (!res.ok) {
-    const msg = `HTTP GET failed for provider '${config.id}' with status ${res.status}`;
-    logError(msg);
-    throw new Error(msg);
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      const msg = `[${providerId}] Invalid JSON for ${url}`;
+      logError(msg, { body: text.slice(0, 300) });
+      throw new Error(msg);
+    }
+  } finally {
+    clearTimeout(t);
   }
-
-  return res.json();
-}
-
-// ----------------------------------------------
-// FMP: fetch array of FX pairs
-// base_url example: https://financialmodelingprep.com/api/v3/fx
-// ----------------------------------------------
-
-export async function fetchFmpForex(baseUrl: string, config: ProviderConfig): Promise<unknown> {
-  return httpGetJson(baseUrl, config);
-}
-
-// ----------------------------------------------
-// TwelveData: fetch multiple pairs (sequence of calls)
-// base_url example: https://api.twelvedata.com/forex_pair?symbol=GBP/USD
-// ----------------------------------------------
-
-export async function fetchTwelveDataForex(
-  baseUrl: string,
-  config: ProviderConfig,
-): Promise<unknown> {
-  // We expect the adapter to know the pairs it needs.
-  // This is a single-call design, so we just call the base URL.
-  return httpGetJson(baseUrl, config);
 }
