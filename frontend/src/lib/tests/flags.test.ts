@@ -1,8 +1,8 @@
-import { flag, flagLabel } from '@/lib/flags';
+import { flag, flagLabel } from '@/data/flags/flags';
 
 // Use explicit Unicode escapes to avoid Windows console/codepage mojibake.
 const EU = '\uD83C\uDDEA\uD83C\uDDFA'; // 🇪🇺
-const UNKNOWN = '\u2753';             // ❓
+const UNKNOWN = '\u2753'; // ❓
 
 describe('flags', () => {
   test('EU special flag', () => {

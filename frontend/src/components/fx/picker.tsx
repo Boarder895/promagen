@@ -3,7 +3,7 @@
 import * as React from 'react';
 
 import FxPairLabel from '@/components/ribbon/fx-pair-label';
-import { formatFxPairLabelWithFlags } from '@/lib/finance/flags';
+import { formatFxPairLabelWithFlags } from '@/data/flags/flags';
 import { assertFxRibbonSsotValid, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 
 type Props = {

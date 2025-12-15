@@ -9,7 +9,7 @@
 
 import * as React from 'react';
 
-import { countryCodeToFlagEmoji, flagAriaLabel, flagSrc } from '@/lib/flags';
+import Flag from '@/components/ui/flag';
 
 export interface FxPairLabelProps {
   base: string;
@@ -18,44 +18,6 @@ export interface FxPairLabelProps {
   quoteCountryCode?: string | null;
   separator?: string;
   className?: string;
-}
-
-function FlagGlyph({ countryCode }: { countryCode?: string | null }) {
-  const src = flagSrc(countryCode);
-  const emoji = countryCodeToFlagEmoji(countryCode);
-  const title = countryCode ? flagAriaLabel(countryCode) : undefined;
-
-  const [svgFailed, setSvgFailed] = React.useState(false);
-
-  if (src && !svgFailed) {
-    return (
-      // Using <img> intentionally for tiny local SVGs in /public (simple + fast).
-      // If you later want next/image, we can switch — but SVG handling varies by config.
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        width={12}
-        height={12}
-        alt=""
-        aria-hidden="true"
-        title={title}
-        loading="lazy"
-        decoding="async"
-        onError={() => setSvgFailed(true)}
-        className="h-3 w-3 rounded-[2px] ring-1 ring-slate-800"
-      />
-    );
-  }
-
-  if (emoji) {
-    return (
-      <span aria-hidden="true" title={title}>
-        {emoji}
-      </span>
-    );
-  }
-
-  return null;
 }
 
 function CurrencyWithFlag({
@@ -70,7 +32,7 @@ function CurrencyWithFlag({
   return (
     <span className="inline-flex items-center gap-1">
       <span>{code}</span>
-      <FlagGlyph countryCode={countryCode} />
+      <Flag countryCode={countryCode} />
     </span>
   );
 }
@@ -80,7 +42,7 @@ export function FxPairLabel({
   baseCountryCode,
   quote,
   quoteCountryCode,
-  separator = ' / ',
+  separator = '/',
   className,
 }: FxPairLabelProps) {
   return (

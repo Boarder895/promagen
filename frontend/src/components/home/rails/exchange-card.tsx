@@ -1,74 +1,66 @@
 // frontend/src/components/home/rails/exchange-card.tsx
-"use client";
+'use client';
 
-import * as React from "react";
-import type { Exchange } from "@/lib/exchanges";
-import { getExchangeShortLabel } from "@/lib/exchanges";
-import { flag, flagAriaLabel } from "@/lib/flags";
-import { localTime } from "@/lib/time";
+import * as React from 'react';
+import type { Exchange } from '@/lib/exchanges';
+import { getExchangeShortLabel } from '@/lib/exchanges';
+import Flag from '@/components/ui/flag';
+import { localTime } from '@/lib/time';
 import {
   ExchangeWeatherBadge,
   type ExchangeWeatherSummary,
-} from "@/components/weather/exchange-weather-badge";
+} from '@/components/weather/exchange-weather-badge';
 
 type ExchangeCardProps = {
   exchange: Exchange;
   /**
-   * Optional weather snapshot for this exchange’s city.
-   * When omitted, the card shows time only.
+   * Optional weather summary (from SSR route handler).
+   * If missing, we render without the weather badge.
    */
   weatherSummary?: ExchangeWeatherSummary | null;
 };
 
-/**
- * Formats a GMT offset in minutes into a label like "GMT+09:00".
- * Falls back to an empty string if the offset is missing or invalid.
- */
-function formatGmtOffset(offsetMinutes?: number | null): string {
-  if (typeof offsetMinutes !== "number" || !Number.isFinite(offsetMinutes)) {
-    return "";
-  }
+function formatGmtOffset(offsetMinutes: number) {
+  if (!Number.isFinite(offsetMinutes)) return '';
+  if (offsetMinutes === 0) return 'GMT';
 
-  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const sign = offsetMinutes > 0 ? '+' : '-';
   const abs = Math.abs(offsetMinutes);
+
   const hours = Math.floor(abs / 60);
-  const minutes = abs % 60;
+  const mins = abs % 60;
 
-  const hh = hours.toString().padStart(2, "0");
-  const mm = minutes.toString().padStart(2, "0");
-
-  return `GMT${sign}${hh}:${mm}`;
+  return mins === 0 ? `GMT${sign}${hours}` : `GMT${sign}${hours}:${String(mins).padStart(2, '0')}`;
 }
 
-/**
- * Canonical ExchangeCard used across the homepage rails.
- *
- * - Uses emoji flags only (no external assets).
- * - Local time derived from GMT offset minutes.
- * - GMT label is purely decorative; safe to omit when data is missing.
- * - Optional weather badge stays small and calm beside the time.
- * - Calm, compact, and fully keyboard / screen-reader friendly.
- */
-export default function ExchangeCard({
-  exchange,
-  weatherSummary,
-}: ExchangeCardProps): JSX.Element {
-  const { name, country, countryCode, offsetMinutes } = exchange;
+function getOffsetMinutes(exchange: Exchange): number | null {
+  // Canonical field in your data/tests is `offsetMinutes`.
+  const asRecord = exchange as unknown as Record<string, unknown>;
+
+  if (typeof asRecord.offsetMinutes === 'number' && Number.isFinite(asRecord.offsetMinutes)) {
+    return asRecord.offsetMinutes;
+  }
+
+  // Back-compat: if any older data ever used `tzOffsetMinutes`.
+  if (typeof asRecord.tzOffsetMinutes === 'number' && Number.isFinite(asRecord.tzOffsetMinutes)) {
+    return asRecord.tzOffsetMinutes;
+  }
+
+  return null;
+}
+
+export function ExchangeCard({ exchange, weatherSummary }: ExchangeCardProps) {
+  const { name, countryCode } = exchange;
 
   const shortLabel = getExchangeShortLabel(exchange);
 
-  const hasOffset =
-    typeof offsetMinutes === "number" && Number.isFinite(offsetMinutes);
+  const offsetMinutes = getOffsetMinutes(exchange);
+  const hasOffset = typeof offsetMinutes === 'number';
 
-  const localTimeLabel = hasOffset ? localTime(offsetMinutes!) : "—:—";
-  const gmtLabel = hasOffset ? formatGmtOffset(offsetMinutes!) : "";
+  const localTimeLabel = hasOffset ? localTime(offsetMinutes) : '—:—';
+  const gmtLabel = hasOffset ? formatGmtOffset(offsetMinutes) : '';
 
-  const flagEmoji = flag(countryCode);
-  const flagLabelText = flagAriaLabel(countryCode);
-
-  const timeAriaLabel = hasOffset
-    ? `Local time ${localTimeLabel}`
-    : "Local time unavailable";
+  const timeAriaLabel = hasOffset ? `Local time ${localTimeLabel}` : 'Local time unavailable';
 
   return (
     <div
@@ -76,44 +68,31 @@ export default function ExchangeCard({
       role="group"
       aria-label={`${name} stock exchange`}
       data-exchange-id={exchange.id}
-      data-testid="exchange-card"
     >
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="flex items-center gap-2">
-          <span aria-label={flagLabelText} role="img" className="shrink-0">
-            {flagEmoji}
-          </span>
-          <span className="truncate font-medium">{name}</span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-2">
+            <Flag countryCode={countryCode} decorative={false} className="shrink-0" />
+            <span className="truncate font-medium">{name}</span>
+          </div>
+          <p className="truncate text-[11px] text-muted-foreground">
+            {shortLabel} · {exchange.city}
+          </p>
         </div>
-        <p className="truncate text-[11px] text-muted-foreground">
-          {shortLabel} · {country}
-        </p>
       </div>
 
-      <div className="flex shrink-0 flex-col items-end text-right gap-1">
-        <div className="flex items-center gap-2">
-          <p
-            className="text-xs font-semibold text-foreground tabular-nums"
-            aria-label={timeAriaLabel}
-            data-testid="exchange-local-time"
-          >
+      <div className="ml-3 flex items-center gap-2">
+        {weatherSummary ? <ExchangeWeatherBadge summary={weatherSummary} /> : null}
+
+        <div className="text-right">
+          <div className="font-medium" aria-label={timeAriaLabel}>
             {localTimeLabel}
-          </p>
-
-          {/* Tiny, optional weather badge */}
-          <ExchangeWeatherBadge summary={weatherSummary ?? null} />
+          </div>
+          {gmtLabel ? <div className="text-[11px] text-muted-foreground">{gmtLabel}</div> : null}
         </div>
-
-        {gmtLabel ? (
-          <p
-            className="text-[10px] text-muted-foreground tabular-nums"
-            aria-hidden="true"
-            data-testid="exchange-gmt-offset"
-          >
-            {gmtLabel}
-          </p>
-        ) : null}
       </div>
     </div>
   );
 }
+
+export default ExchangeCard;

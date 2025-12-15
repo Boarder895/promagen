@@ -1,537 +1,540 @@
-// C:\Users\Proma\Projects\promagen\frontend\src\lib\fx\providers.ts
-// -----------------------------------------------------------------------------
-// FX provider + server-side ribbon loader (Twelve Data only).
-//
-// Rules (as requested):
-// - Disregard all API providers apart from Twelve Data.
-// - No demo mode. No demo fallback. Ever.
-// - SSOT for ribbon pairs is derived from:
-//     src/data/fx/fx.pairs.json + src/data/fx/pairs.json (via fx-pairs.ts)
-// - Cache results server-side to protect quotas.
-// - NO hard-coded cap. Whatever SSOT returns is what we request.
-//
-// Upgrades implemented here:
-// 1) TTL configurable by env (default: 30m prod, 5m dev).
-// 2) Internal counter/trace for upstream calls (proof of bulk/cached/single-flight).
-//
-// Big wins:
-// - ONE upstream call for ALL ribbon symbols (bulk exchange_rate request).
-// - Single-flight de-duplication: concurrent callers share one upstream call.
-// - Backoff on 429s: extend TTL and ride cache during rate limits.
-// -----------------------------------------------------------------------------
+/**
+ * FX providers + caching for the finance ribbon.
+ *
+ * Goals:
+ * - Single upstream request for all ribbon symbols (bulk exchange_rate).
+ * - Server-side TTL caching to avoid repeated upstream calls.
+ * - Single-flight de-duplication under concurrency.
+ * - Backoff + "ride the cache" on rate limit.
+ * - SSOT-aware cache key so edits to fx.pairs.json invalidate immediately.
+ */
 
-import rawProviders from '@/data/fx/providers.json';
-import { assertFxRibbonSsotValid, getFxRibbonPairs, buildSlashPair } from '@/lib/finance/fx-pairs';
-import type { FxApiResponse, FxApiQuote, FxApiMode } from '@/types/finance-ribbon';
+import { createHash } from 'crypto';
+import type { FxApiMeta, FxApiMode, FxApiQuote, FxApiResponse } from '@/types/finance-ribbon';
+import { getDefaultFxPairsWithIndexForTier } from '@/data/fx';
 
-export type FxProviderTier = 'primary' | 'fallback' | 'unknown';
-
-export interface FxProviderMeta {
-  id: string;
-  name: string;
-  tier: FxProviderTier | string;
-  role: string;
-  url: string;
-  copy: string;
-}
-
-const PROVIDERS: FxProviderMeta[] = (rawProviders as FxProviderMeta[])
-  .map((p) => ({ ...p, id: String(p.id).toLowerCase() }))
-  .filter((p) => p.id === 'twelvedata'); // enforce Twelve Data only
-
-const providersById = new Map<string, FxProviderMeta>();
-for (const provider of PROVIDERS) providersById.set(provider.id, provider);
-
-export function getFxProviderMeta(id: string | null | undefined): FxProviderMeta | null {
-  if (!id) return null;
-  return providersById.get(id.toLowerCase()) ?? null;
-}
-
-export interface FxProviderSummary {
-  meta: FxProviderMeta;
-  modeLabel: string;
-  provenanceLabel: string;
-  emphasiseFallback: boolean;
-}
-
-export function getFxProviderSummary(
-  mode: FxApiMode | null | undefined,
-  providerId: string | null | undefined,
-): FxProviderSummary {
-  const meta = getFxProviderMeta(providerId) ??
-    getFxProviderMeta('twelvedata') ?? {
-      id: 'twelvedata',
-      name: 'Twelve Data',
-      tier: 'primary',
-      role: 'Primary FX provider',
-      url: 'https://twelvedata.com',
-      copy: 'Primary live FX quotes provider (Twelve Data).',
-    };
-
-  const modeLabel = mode === 'cached' ? 'Cached data' : 'Live data';
-
-  return {
-    meta,
-    modeLabel,
-    provenanceLabel: meta.copy,
-    emphasiseFallback: false, // there is no fallback
-  };
-}
-
-// -----------------------------------------------------------------------------
-// Config (ENV)
-// -----------------------------------------------------------------------------
-
-function readPositiveIntEnv(name: string, fallback: number, min: number, max: number): number {
-  const raw = (process.env[name] ?? '').trim();
-  if (!raw) return fallback;
-
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return fallback;
-
-  const v = Math.floor(n);
-  if (v < min || v > max) return fallback;
-
-  return v;
-}
-
-// Default: 30 minutes in prod, 5 minutes in dev (to stop local refresh chewing credits)
-const DEFAULT_TTL_SECONDS = process.env.NODE_ENV === 'production' ? 30 * 60 : 5 * 60;
-
-const CACHE_TTL_SECONDS = readPositiveIntEnv(
-  'FX_RIBBON_TTL_SECONDS',
-  DEFAULT_TTL_SECONDS,
-  5,
-  24 * 60 * 60,
-);
-
-const CACHE_TTL_MS = CACHE_TTL_SECONDS * 1000;
-
-// Trace flag (safe in prod, but typically off)
-const TRACE_ENABLED = (process.env.FX_RIBBON_TRACE ?? '').trim() === '1';
-
-// 429 backoff config (seconds)
-const BACKOFF_BASE_SECONDS = readPositiveIntEnv('FX_RIBBON_BACKOFF_BASE_SECONDS', 30, 5, 3600);
-const BACKOFF_MAX_SECONDS = readPositiveIntEnv(
-  'FX_RIBBON_BACKOFF_MAX_SECONDS',
-  10 * 60,
-  30,
-  24 * 60 * 60,
-);
-
-// -----------------------------------------------------------------------------
-// Internal counters / tracing
-// -----------------------------------------------------------------------------
-
-export type FxRibbonDecision =
+type CacheDecision =
   | 'cache_hit'
-  | 'upstream_fetch'
-  | 'single_flight_wait'
-  | 'rate_limited_cache'
-  | 'rate_limited_no_cache';
-
-export type FxRibbonCounters = {
-  callsTotal: number;
-  cacheHits: number;
-  singleFlightWaits: number;
-  upstreamFetches: number;
-  rateLimitedServes: number;
-  errors: number;
-};
+  | 'cache_miss'
+  | 'singleflight_join'
+  | 'rate_limited_ride_cache'
+  | 'rate_limited_no_cache'
+  | 'ssot_changed_invalidate';
 
 export type FxRibbonTraceSnapshot = {
-  enabled: boolean;
-  lastDecision: FxRibbonDecision;
-  lastFetchId: string | null;
-  lastUpstreamAtIso: string | null;
-  lastSymbolsCount: number | null;
-  lastUniqueSymbolsCount: number | null;
   ttlSeconds: number;
-  rateLimitedUntilIso: string | null;
-  counters: FxRibbonCounters;
-};
-
-const counters: FxRibbonCounters = {
-  callsTotal: 0,
-  cacheHits: 0,
-  singleFlightWaits: 0,
-  upstreamFetches: 0,
-  rateLimitedServes: 0,
-  errors: 0,
-};
-
-let lastDecision: FxRibbonDecision = 'cache_hit';
-let lastFetchId: string | null = null;
-let lastUpstreamAtIso: string | null = null;
-let lastSymbolsCount: number | null = null;
-let lastUniqueSymbolsCount: number | null = null;
-
-function traceLog(message: string, extra?: Record<string, unknown>) {
-  if (!TRACE_ENABLED) return;
-  const base = {
-    scope: 'fx.ribbon',
-    ttlSeconds: CACHE_TTL_SECONDS,
-    decision: lastDecision,
-    fetchId: lastFetchId,
+  ssotKey: string;
+  cache: {
+    hasValue: boolean;
+    asOf?: string;
+    expiresAt?: string;
+    key?: string;
   };
-  // eslint allows console.debug (but not console.info)
-  console.debug(message, { ...base, ...(extra ?? {}) });
-}
-
-export function getFxRibbonTraceSnapshot(): FxRibbonTraceSnapshot {
-  return {
-    enabled: TRACE_ENABLED,
-    lastDecision,
-    lastFetchId,
-    lastUpstreamAtIso,
-    lastSymbolsCount,
-    lastUniqueSymbolsCount,
-    ttlSeconds: CACHE_TTL_SECONDS,
-    rateLimitedUntilIso:
-      rateLimitedUntilMs > Date.now() ? new Date(rateLimitedUntilMs).toISOString() : null,
-    counters: { ...counters },
+  inFlight: boolean;
+  lastDecision?: CacheDecision;
+  lastError?: string;
+  counters: {
+    ribbonCalls: number;
+    upstreamCalls: number;
+    upstreamSymbolsTotal: number;
   };
-}
-
-// -----------------------------------------------------------------------------
-// Server-side cache + single-flight + 429 backoff
-// -----------------------------------------------------------------------------
+  rateLimit: {
+    until?: string;
+    last429At?: string;
+    cooldownSeconds?: number;
+  };
+};
 
 type FxRibbonCache = {
-  expiresAt: number;
+  key: string;
   payload: FxApiResponse;
+  expiresAtMs: number;
 };
 
-let ribbonCache: FxRibbonCache | null = null;
+type FxRibbonPair = {
+  id: string; // SSOT id, e.g. "gbp-usd"
+  base: string; // "GBP"
+  quote: string; // "USD"
+  label: string; // "GBP / USD"
+  category: string; // e.g. "core"
+  symbol: string; // Twelve Data symbol, e.g. "GBP/USD"
+};
 
-// Single-flight: if many requests arrive concurrently, they all await the same promise.
+type TwelveDataBulkItem = {
+  symbol: string;
+
+  // Some Twelve Data responses use "rate"
+  rate?: string | number;
+
+  // The exchange_rate endpoint often uses "exchange_rate"
+  exchange_rate?: string | number;
+
+  timestamp?: number;
+};
+
+type TwelveDataBulkResponse = {
+  code?: number;
+  message?: string;
+  status?: string;
+  data?: TwelveDataBulkItem[] | Record<string, TwelveDataBulkItem>;
+};
+
+export type FxProviderSummary = {
+  modeLabel: string;
+  emphasiseFallback: boolean;
+  meta: {
+    id: string;
+    name: string;
+  };
+};
+
+const BUILD_ID =
+  process.env.NEXT_PUBLIC_BUILD_ID ??
+  process.env.VERCEL_GIT_COMMIT_SHA ??
+  process.env.GIT_COMMIT_SHA ??
+  'local-dev';
+
+function isProd(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+function readPositiveIntEnv(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  const i = Math.floor(n);
+  if (i <= 0) return fallback;
+  return i;
+}
+
+// Default TTL: 30 mins in prod; 5 mins locally.
+const CACHE_TTL_SECONDS = readPositiveIntEnv('FX_RIBBON_TTL_SECONDS', isProd() ? 30 * 60 : 5 * 60);
+
+// Rate-limit cooldown (seconds) applied when Twelve Data returns 429.
+// While rate-limited, we "ride the cache" and avoid retry storms.
+const RATE_LIMIT_COOLDOWN_SECONDS = readPositiveIntEnv('FX_RIBBON_429_COOLDOWN_SECONDS', 10 * 60);
+
+let ribbonCache: FxRibbonCache | null = null;
 let ribbonInFlight: Promise<FxApiResponse> | null = null;
 
-// 429 backoff state
-let rateLimitedUntilMs = 0;
-let rateLimitBackoffMs = BACKOFF_BASE_SECONDS * 1000;
+let lastDecision: CacheDecision | undefined;
+let lastError: string | undefined;
 
-function nowIso(): string {
-  return new Date().toISOString();
+let rateLimitedUntilMs: number | undefined;
+let last429AtMs: number | undefined;
+
+let lastSsotKey = 'ssot:unknown';
+
+const counters = {
+  ribbonCalls: 0,
+  upstreamCalls: 0,
+  upstreamSymbolsTotal: 0,
+};
+
+function nowMs(): number {
+  return Date.now();
 }
 
-function buildId(): string {
-  return process.env.NEXT_PUBLIC_BUILD_ID ?? process.env.VERCEL_GIT_COMMIT_SHA ?? 'local-dev';
+function iso(ms: number): string {
+  return new Date(ms).toISOString();
 }
 
-function buildResponse(mode: FxApiMode, quotes: FxApiQuote[]): FxApiResponse {
+function normaliseSymbol(symbol: string): string {
+  // Twelve Data expects FX pairs as "EUR/USD" etc.
+  return symbol.trim();
+}
+
+function uniqueStrings(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const s of items) {
+    if (!seen.has(s)) {
+      seen.add(s);
+      out.push(s);
+    }
+  }
+  return out;
+}
+
+function ssotKeyFromOrderedIds(orderedIds: string[]): string {
+  // Stable fingerprint of the SSOT order.
+  // Any change to ids or their order changes the key => cache invalidates instantly.
+  const raw = orderedIds.join('|');
+  const hash = createHash('sha1').update(raw).digest('hex').slice(0, 12);
+  return `fxpairs:${hash}`;
+}
+
+function buildMeta(
+  mode: FxApiMeta['mode'],
+  sourceProvider: FxApiMeta['sourceProvider'],
+  asOfIso: string,
+): FxApiMeta {
   return {
-    meta: {
-      buildId: buildId(),
-      mode,
-      sourceProvider: 'twelvedata',
-      asOf: nowIso(),
-    },
-    data: quotes,
+    buildId: BUILD_ID,
+    mode,
+    sourceProvider,
+    asOf: asOfIso,
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+function buildResponse(params: {
+  mode: FxApiMeta['mode'];
+  sourceProvider: FxApiMeta['sourceProvider'];
+  asOfIso: string;
+  data: FxApiQuote[];
+  error?: string;
+}): FxApiResponse {
+  return {
+    meta: buildMeta(params.mode, params.sourceProvider, params.asOfIso),
+    data: params.data,
+    error: params.error,
+  };
 }
 
-function parseExchangeRateValue(raw: unknown): number | null {
-  if (raw === null || raw === undefined) return null;
-
-  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
-
-  if (typeof raw === 'string') {
-    const n = Number(raw);
-    return Number.isFinite(n) ? n : null;
-  }
-
-  if (isRecord(raw)) {
-    const candidates = [raw.rate, raw.price, raw.close, raw.value];
-    for (const c of candidates) {
-      const parsed = parseExchangeRateValue(c);
-      if (parsed !== null) return parsed;
-    }
-  }
-
-  return null;
+function canUseCache(ms: number, key: string): boolean {
+  return ribbonCache !== null && ribbonCache.key === key && ribbonCache.expiresAtMs > ms;
 }
 
-function parseTwelveDataBulkExchangeRateResponse(
-  raw: unknown,
-  symbols: string[],
-): Map<string, number | null> {
-  const out = new Map<string, number | null>();
+function invalidateForSsotChange(nextKey: string): void {
+  if (nextKey === lastSsotKey) return;
 
-  // Format A: { data: [{symbol, rate}, ...] } or { values: [...] }
-  if (isRecord(raw) && Array.isArray((raw as Record<string, unknown>).data)) {
-    const arr = (raw as Record<string, unknown>).data as unknown[];
-    for (const row of arr) {
-      if (!isRecord(row)) continue;
-      const sym = typeof row.symbol === 'string' ? row.symbol : null;
-      if (!sym) continue;
-      out.set(sym, parseExchangeRateValue(row.rate ?? row.price ?? row.close));
-    }
-    for (const s of symbols) if (!out.has(s)) out.set(s, null);
-    return out;
-  }
+  // SSOT changed: invalidate cache and any in-flight request so we can reflect changes immediately.
+  ribbonCache = null;
+  ribbonInFlight = null;
 
-  if (isRecord(raw) && Array.isArray((raw as Record<string, unknown>).values)) {
-    const arr = (raw as Record<string, unknown>).values as unknown[];
-    for (const row of arr) {
-      if (!isRecord(row)) continue;
-      const sym = typeof row.symbol === 'string' ? row.symbol : null;
-      if (!sym) continue;
-      out.set(sym, parseExchangeRateValue(row.rate ?? row.price ?? row.close));
-    }
-    for (const s of symbols) if (!out.has(s)) out.set(s, null);
-    return out;
-  }
-
-  // Format B: single item {symbol, rate}
-  if (isRecord(raw) && ('rate' in raw || 'price' in raw || 'close' in raw)) {
-    const sym =
-      typeof raw.symbol === 'string' ? raw.symbol : symbols.length === 1 ? symbols[0] : null;
-
-    if (sym) out.set(sym, parseExchangeRateValue(raw));
-    for (const s of symbols) if (!out.has(s)) out.set(s, null);
-    return out;
-  }
-
-  // Format C: object keyed by symbol { "EUR/USD": {...}, "GBP/USD": {...}, ... }
-  if (isRecord(raw)) {
-    for (const s of symbols) {
-      out.set(s, parseExchangeRateValue(raw[s]));
-    }
-    return out;
-  }
-
-  throw new Error('FX: Unexpected Twelve Data response format for bulk exchange_rate.');
+  lastDecision = 'ssot_changed_invalidate';
+  lastSsotKey = nextKey;
 }
 
-class RateLimitedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RateLimitedError';
+function bumpRateLimit(now: number): void {
+  last429AtMs = now;
+  rateLimitedUntilMs = now + RATE_LIMIT_COOLDOWN_SECONDS * 1000;
+
+  // If we have a cache value, extend its life so we can ride it while rate-limited.
+  if (ribbonCache) {
+    const extended = Math.max(ribbonCache.expiresAtMs, rateLimitedUntilMs);
+    ribbonCache = { ...ribbonCache, expiresAtMs: extended };
   }
+}
+
+function isRateLimited(now: number): boolean {
+  return typeof rateLimitedUntilMs === 'number' && rateLimitedUntilMs > now;
+}
+
+function parseTwelveDataBulk(data: TwelveDataBulkResponse): Map<string, TwelveDataBulkItem> {
+  const map = new Map<string, TwelveDataBulkItem>();
+
+  if (!data || typeof data !== 'object') return map;
+
+  // Some responses are array-based
+  if (Array.isArray(data.data)) {
+    for (const item of data.data) {
+      if (!item?.symbol) continue;
+      map.set(normaliseSymbol(item.symbol), item);
+    }
+    return map;
+  }
+
+  // Some responses are record-based
+  const record = data.data;
+  if (record && typeof record === 'object' && !Array.isArray(record)) {
+    for (const [k, v] of Object.entries(record)) {
+      if (!v) continue;
+      const sym = v.symbol ? normaliseSymbol(v.symbol) : normaliseSymbol(k);
+      map.set(sym, v);
+    }
+  }
+
+  return map;
+}
+
+function parseRate(item: TwelveDataBulkItem | undefined): number | null {
+  if (!item) return null;
+
+  const raw = item.rate ?? item.exchange_rate;
+  if (raw === undefined || raw === null) return null;
+
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n)) return null;
+
+  return n;
+}
+
+function buildRibbonPairsAndKey(): { pairs: FxRibbonPair[]; key: string } {
+  // SSOT-driven, ordered exactly as fx.pairs.json defines it (via data/fx index).
+  const ssotPairs = getDefaultFxPairsWithIndexForTier('free');
+
+  const orderedIds = ssotPairs.map((p) => p.id);
+  const key = ssotKeyFromOrderedIds(orderedIds);
+
+  const pairs: FxRibbonPair[] = ssotPairs.map((p) => {
+    const base = p.base.toUpperCase();
+    const quote = p.quote.toUpperCase();
+    const label = p.label ?? `${base} / ${quote}`;
+    const category = p.group ?? 'fx';
+    const symbol = `${base}/${quote}`;
+
+    return {
+      id: p.id,
+      base,
+      quote,
+      label,
+      category,
+      symbol,
+    };
+  });
+
+  return { pairs, key };
+}
+
+function pairsToQuotes(pairs: FxRibbonPair[], map: Map<string, TwelveDataBulkItem>): FxApiQuote[] {
+  const out: FxApiQuote[] = [];
+
+  for (const pair of pairs) {
+    const sym = normaliseSymbol(pair.symbol);
+    const rate = parseRate(map.get(sym));
+
+    out.push({
+      id: pair.id, // IMPORTANT: matches SSOT id used by the UI ribbon
+      base: pair.base,
+      quote: pair.quote,
+      label: pair.label,
+      category: pair.category,
+      price: rate,
+      change: null,
+      changePct: null,
+    });
+  }
+
+  return out;
 }
 
 async function fetchTwelveDataBulkExchangeRates(
   symbols: string[],
-  apiKey: string,
-): Promise<Map<string, number | null>> {
-  const joined = symbols.join(',');
-  const url = `https://api.twelvedata.com/exchange_rate?symbol=${encodeURIComponent(
-    joined,
-  )}&apikey=${encodeURIComponent(apiKey)}`;
+): Promise<Map<string, TwelveDataBulkItem>> {
+  const apiKey = process.env.TWELVEDATA_API_KEY;
+  if (!apiKey) {
+    throw new Error('Missing TWELVEDATA_API_KEY');
+  }
 
-  const res = await fetch(url, { method: 'GET', cache: 'no-store' });
+  const endpoint = 'exchange_rate';
+  const baseUrl = 'https://api.twelvedata.com';
+  const url = new URL(`${baseUrl}/${endpoint}`);
+
+  // Twelve Data: comma-separated symbols like "EUR/USD,GBP/USD"
+  url.searchParams.set('symbol', symbols.join(','));
+  url.searchParams.set('apikey', apiKey);
+
+  counters.upstreamCalls += 1;
+  counters.upstreamSymbolsTotal += symbols.length;
+
+  const res = await fetch(url.toString(), {
+    method: 'GET',
+    // Upstream fetch should not be cached by Next — our own cache handles it.
+    cache: 'no-store',
+  });
 
   if (res.status === 429) {
-    throw new RateLimitedError('FX: Twelve Data rate-limited (HTTP 429).');
+    const now = nowMs();
+    bumpRateLimit(now);
+    throw new Error('Twelve Data rate-limited (429)');
   }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`FX: Twelve Data HTTP ${res.status}. ${text}`.trim());
+    const body = await res.text().catch(() => '');
+    throw new Error(
+      `Twelve Data error: ${res.status} ${res.statusText}${body ? ` – ${body}` : ''}`,
+    );
   }
 
-  const json = (await res.json()) as unknown;
-  return parseTwelveDataBulkExchangeRateResponse(json, symbols);
+  const json = (await res.json()) as TwelveDataBulkResponse;
+  if (json?.status && json.status !== 'ok') {
+    throw new Error(`Twelve Data response not ok: ${json.message ?? 'unknown error'}`);
+  }
+
+  return parseTwelveDataBulk(json);
 }
 
-// -----------------------------------------------------------------------------
-// Main entry point
-// -----------------------------------------------------------------------------
+function logTrace(message: string, extra?: Record<string, unknown>): void {
+  console.debug(`[fx.ribbon] ${message}`, extra ?? {});
+}
+
+export function getFxProviderSummary(
+  mode: FxApiMode | null,
+  providerId: string | null,
+): FxProviderSummary {
+  const id = (providerId ?? 'twelvedata').toLowerCase();
+
+  const name =
+    id === 'twelvedata'
+      ? 'Twelve Data'
+      : id === 'cache'
+      ? 'Cache'
+      : id === 'fallback'
+      ? 'Fallback'
+      : providerId ?? 'Unknown';
+
+  const modeLabel =
+    mode === 'cached'
+      ? 'Cached'
+      : mode === 'fallback'
+      ? 'Fallback'
+      : mode === 'live'
+      ? 'Live'
+      : '—';
+
+  return {
+    modeLabel,
+    emphasiseFallback: mode === 'fallback',
+    meta: { id, name },
+  };
+}
+
+export function getFxRibbonTraceSnapshot(): FxRibbonTraceSnapshot {
+  return {
+    ttlSeconds: CACHE_TTL_SECONDS,
+    ssotKey: lastSsotKey,
+    cache: {
+      hasValue: Boolean(ribbonCache),
+      asOf: ribbonCache?.payload.meta.asOf,
+      expiresAt: ribbonCache ? iso(ribbonCache.expiresAtMs) : undefined,
+      key: ribbonCache?.key,
+    },
+    inFlight: Boolean(ribbonInFlight),
+    lastDecision,
+    lastError,
+    counters: { ...counters },
+    rateLimit: {
+      until: typeof rateLimitedUntilMs === 'number' ? iso(rateLimitedUntilMs) : undefined,
+      last429At: typeof last429AtMs === 'number' ? iso(last429AtMs) : undefined,
+      cooldownSeconds: RATE_LIMIT_COOLDOWN_SECONDS,
+    },
+  };
+}
+
+export function getFxRibbonTtlSeconds(): number {
+  return CACHE_TTL_SECONDS;
+}
 
 export async function getFxRibbon(): Promise<FxApiResponse> {
-  counters.callsTotal += 1;
+  counters.ribbonCalls += 1;
 
-  const now = Date.now();
+  // Compute pairs + SSOT key every call (small, and guarantees correctness).
+  const { pairs, key } = buildRibbonPairsAndKey();
+  invalidateForSsotChange(key);
 
-  // If currently rate-limited: do not attempt upstream calls.
-  if (now < rateLimitedUntilMs) {
-    if (ribbonCache) {
-      counters.rateLimitedServes += 1;
-      lastDecision = 'rate_limited_cache';
-      traceLog('[fx.ribbon] rate-limited; serving cache', {
-        rateLimitedUntil: new Date(rateLimitedUntilMs).toISOString(),
+  const now = nowMs();
+
+  // 1) If rate-limited, ride the cache if possible (avoid retry storms).
+  if (isRateLimited(now)) {
+    if (canUseCache(now, key)) {
+      lastDecision = 'rate_limited_ride_cache';
+      logTrace('rate-limited → riding cache', {
+        until: iso(rateLimitedUntilMs as number),
+        key,
+        expiresAt: iso((ribbonCache as FxRibbonCache).expiresAtMs),
       });
-
-      return {
-        ...ribbonCache.payload,
-        meta: {
-          ...ribbonCache.payload.meta,
-          mode: 'cached',
-        },
-      };
+      return (ribbonCache as FxRibbonCache).payload;
     }
 
-    counters.errors += 1;
     lastDecision = 'rate_limited_no_cache';
-    traceLog('[fx.ribbon] rate-limited; no cache available');
+    logTrace('rate-limited with no cache → returning empty', {
+      until: iso(rateLimitedUntilMs as number),
+      key,
+    });
 
-    throw new RateLimitedError('FX: Rate-limited and no cache available.');
+    const asOfIso = new Date().toISOString();
+    return buildResponse({
+      mode: 'live',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data: [],
+      error: 'Rate-limited and no valid cache available',
+    });
   }
 
-  // Cache hit
-  if (ribbonCache && ribbonCache.expiresAt > now) {
-    counters.cacheHits += 1;
+  // 2) Cache hit (SSOT-keyed)
+  if (canUseCache(now, key)) {
     lastDecision = 'cache_hit';
-    traceLog('[fx.ribbon] cache hit');
-
-    return {
-      ...ribbonCache.payload,
-      meta: {
-        ...ribbonCache.payload.meta,
-        mode: 'cached',
-      },
-    };
+    logTrace('cache hit', {
+      key,
+      ttlSeconds: CACHE_TTL_SECONDS,
+      expiresAt: iso((ribbonCache as FxRibbonCache).expiresAtMs),
+      asOf: (ribbonCache as FxRibbonCache).payload.meta.asOf,
+    });
+    return (ribbonCache as FxRibbonCache).payload;
   }
 
-  // Single-flight: if another request is already fetching, await it.
+  // 3) Single-flight: if one request is in-flight, join it (only valid for same SSOT key).
   if (ribbonInFlight) {
-    counters.singleFlightWaits += 1;
-    lastDecision = 'single_flight_wait';
-    traceLog('[fx.ribbon] single-flight wait');
+    lastDecision = 'singleflight_join';
+    logTrace('single-flight join', { key });
     return ribbonInFlight;
   }
 
+  // 4) Cache miss: fetch new values
+  lastDecision = 'cache_miss';
+
+  const symbols = uniqueStrings(pairs.map((p) => normaliseSymbol(p.symbol)));
+
   ribbonInFlight = (async () => {
-    const fetchId = `fx-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    lastFetchId = fetchId;
-
     try {
-      assertFxRibbonSsotValid();
-
-      // SSOT-driven list (free tier by default) – NO trimming here.
-      const pairs = getFxRibbonPairs({ tier: 'free', order: 'ssot' });
-
-      const twelveKey = (process.env.TWELVEDATA_API_KEY ?? '').trim();
-      if (!twelveKey) {
-        throw new Error(
-          'FX: TWELVEDATA_API_KEY is missing. Twelve Data is the only allowed provider.',
-        );
-      }
-
-      if (!pairs || pairs.length === 0) {
-        throw new Error('FX: SSOT returned zero ribbon pairs.');
-      }
-
-      // Build symbol list in SSOT order
-      const symbolsInOrder: string[] = pairs.map((p) => {
-        const base = String(p.base ?? '').toUpperCase();
-        const quote = String(p.quote ?? '').toUpperCase();
-        return buildSlashPair(base, quote);
+      logTrace('cache miss → fetching bulk', {
+        key,
+        pairCount: pairs.length,
+        symbolCount: symbols.length,
+        ttlSeconds: CACHE_TTL_SECONDS,
       });
 
-      // De-dupe for request (keeps order for UI using original list)
-      const uniqueSymbols = Array.from(new Set(symbolsInOrder));
+      const map = await fetchTwelveDataBulkExchangeRates(symbols);
 
-      lastSymbolsCount = symbolsInOrder.length;
-      lastUniqueSymbolsCount = uniqueSymbols.length;
+      const quotes = pairsToQuotes(pairs, map);
 
-      counters.upstreamFetches += 1;
-      lastDecision = 'upstream_fetch';
-      lastUpstreamAtIso = nowIso();
-
-      traceLog('[fx.ribbon] upstream fetch (bulk)', {
-        symbols: symbolsInOrder.length,
-        uniqueSymbols: uniqueSymbols.length,
-        endpoint: 'exchange_rate',
+      const asOfIso = new Date().toISOString();
+      const payload = buildResponse({
+        mode: 'live',
+        sourceProvider: 'twelvedata',
+        asOfIso,
+        data: quotes,
       });
 
-      // ONE bulk request for all symbols
-      const ratesBySymbol = await fetchTwelveDataBulkExchangeRates(uniqueSymbols, twelveKey);
+      ribbonCache = {
+        key,
+        payload,
+        expiresAtMs: nowMs() + CACHE_TTL_SECONDS * 1000,
+      };
 
-      const quotes: FxApiQuote[] = [];
-      let anyPrice = false;
+      lastError = undefined;
 
-      for (const p of pairs) {
-        const base = String(p.base ?? '').toUpperCase();
-        const quote = String(p.quote ?? '').toUpperCase();
-        const slash = buildSlashPair(base, quote);
-
-        const price = ratesBySymbol.get(slash) ?? null;
-        if (price !== null) anyPrice = true;
-
-        quotes.push({
-          id: String(p.id), // must match SSOT id (e.g. "gbp-usd") for the UI join
-          base,
-          quote,
-          label: String(p.label ?? `${base} / ${quote}`),
-          category: String(p.category ?? 'fx'),
-          price,
-          change: null,
-          changePct: null,
-        });
-      }
-
-      if (!anyPrice) {
-        throw new Error('FX: Twelve Data returned no valid prices for the ribbon pairs.');
-      }
-
-      const payload = buildResponse('live', quotes);
-
-      // Store cache
-      ribbonCache = { payload, expiresAt: Date.now() + CACHE_TTL_MS };
-
-      // Success resets backoff
-      rateLimitedUntilMs = 0;
-      rateLimitBackoffMs = BACKOFF_BASE_SECONDS * 1000;
-
-      traceLog('[fx.ribbon] upstream fetch success', {
-        cachedForSeconds: CACHE_TTL_SECONDS,
+      logTrace('fetch ok → cached', {
+        key,
+        quoteCount: quotes.length,
+        expiresAt: iso((ribbonCache as FxRibbonCache).expiresAtMs),
       });
 
       return payload;
     } catch (err: unknown) {
-      // 429 backoff behaviour:
-      // - Extend TTL (if we have cache) and serve cached result
-      // - Exponential backoff up to a cap
-      if (err instanceof RateLimitedError) {
-        const nowInner = Date.now();
+      const message = err instanceof Error ? err.message : String(err);
+      lastError = message;
 
-        rateLimitedUntilMs = nowInner + rateLimitBackoffMs;
-        rateLimitBackoffMs = Math.min(rateLimitBackoffMs * 2, BACKOFF_MAX_SECONDS * 1000);
-
-        if (ribbonCache) {
-          counters.rateLimitedServes += 1;
-          lastDecision = 'rate_limited_cache';
-
-          // Extend cache so we ride it during the cool-down
-          ribbonCache.expiresAt = Math.max(ribbonCache.expiresAt, rateLimitedUntilMs);
-
-          traceLog('[fx.ribbon] rate-limited; serving cache + extending TTL', {
-            rateLimitedUntil: new Date(rateLimitedUntilMs).toISOString(),
-            nextBackoffMs: rateLimitBackoffMs,
-          });
-
-          return {
-            ...ribbonCache.payload,
-            meta: {
-              ...ribbonCache.payload.meta,
-              mode: 'cached',
-            },
-          };
-        }
-
-        counters.errors += 1;
-        lastDecision = 'rate_limited_no_cache';
-        traceLog('[fx.ribbon] rate-limited; no cache available (throwing)', {
-          rateLimitedUntil: new Date(rateLimitedUntilMs).toISOString(),
-          nextBackoffMs: rateLimitBackoffMs,
-        });
-
-        throw err;
+      // If we have *any* cached value for the same key, prefer it.
+      const now2 = nowMs();
+      if (ribbonCache && ribbonCache.key === key && ribbonCache.expiresAtMs > now2) {
+        logTrace('fetch failed → serving cached value', { key, message });
+        return ribbonCache.payload;
       }
 
-      counters.errors += 1;
-      lastDecision = 'rate_limited_no_cache';
-      traceLog('[fx.ribbon] error (throwing)', {
-        error: err instanceof Error ? err.message : String(err),
-      });
+      logTrace('fetch failed → returning empty', { key, message });
 
-      throw err;
+      const asOfIso = new Date().toISOString();
+      return buildResponse({
+        mode: 'live',
+        sourceProvider: 'twelvedata',
+        asOfIso,
+        data: [],
+        error: message,
+      });
     } finally {
       ribbonInFlight = null;
     }
