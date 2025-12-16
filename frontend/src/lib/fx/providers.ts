@@ -43,6 +43,12 @@ export type FxRibbonTraceSnapshot = {
     last429At?: string;
     cooldownSeconds?: number;
   };
+  lastFetch?: {
+    at?: string;
+    expectedSymbols: number;
+    missingCount: number;
+    missingSymbols: string[];
+  };
 };
 
 type FxRibbonCache = {
@@ -72,12 +78,15 @@ type TwelveDataBulkItem = {
   timestamp?: number;
 };
 
-type TwelveDataBulkResponse = {
-  code?: number;
-  message?: string;
-  status?: string;
-  data?: TwelveDataBulkItem[] | Record<string, TwelveDataBulkItem>;
-};
+type TwelveDataBulkResponse =
+  | {
+      code?: number;
+      message?: string;
+      status?: string;
+      data?: TwelveDataBulkItem[] | Record<string, TwelveDataBulkItem>;
+    }
+  // IMPORTANT: Twelve Data sometimes returns a TOP-LEVEL record keyed by symbol
+  | Record<string, TwelveDataBulkItem | unknown>;
 
 export type FxProviderSummary = {
   modeLabel: string;
@@ -132,6 +141,10 @@ const counters = {
   upstreamSymbolsTotal: 0,
 };
 
+let lastFetchAtMs: number | undefined;
+let lastExpectedSymbols = 0;
+let lastMissingSymbols: string[] = [];
+
 function nowMs(): number {
   return Date.now();
 }
@@ -140,9 +153,31 @@ function iso(ms: number): string {
   return new Date(ms).toISOString();
 }
 
-function normaliseSymbol(symbol: string): string {
-  // Twelve Data expects FX pairs as "EUR/USD" etc.
-  return symbol.trim();
+/**
+ * Canonicalise an FX symbol so “eur/usd”, “EUR/USD”, “EURUSD”, “eur-usd” all become “EUR/USD”.
+ */
+export function normaliseSymbol(symbol: string): string {
+  const raw = String(symbol ?? '').trim();
+  if (!raw) return '';
+
+  const cleaned = raw.replace(/\s+/g, '').replace(/\\/g, '/').replace(/-/g, '/').toUpperCase();
+
+  if (cleaned.includes('/')) {
+    const parts = cleaned.split('/').filter(Boolean);
+    const base = parts[0] ?? '';
+    const quote = parts[1] ?? '';
+    if (!base || !quote) return cleaned;
+    return `${base}/${quote}`;
+  }
+
+  const lettersOnly = cleaned.replace(/[^A-Z]/g, '');
+  if (lettersOnly.length === 6) {
+    const base = lettersOnly.slice(0, 3);
+    const quote = lettersOnly.slice(3, 6);
+    return `${base}/${quote}`;
+  }
+
+  return cleaned;
 }
 
 function uniqueStrings(items: string[]): string[] {
@@ -222,27 +257,55 @@ function isRateLimited(now: number): boolean {
   return typeof rateLimitedUntilMs === 'number' && rateLimitedUntilMs > now;
 }
 
-function parseTwelveDataBulk(data: TwelveDataBulkResponse): Map<string, TwelveDataBulkItem> {
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Parse Twelve Data bulk response.
+ *
+ * Supported shapes:
+ * 1) { status: "ok", data: [ {symbol, rate}, ... ] }
+ * 2) { status: "ok", data: { "eur/usd": {symbol, rate}, ... } }
+ * 3) { "eur/usd": {symbol, rate}, "gbp/usd": {symbol, rate}, ... }  <-- THIS IS YOUR CURRENT REALITY
+ */
+function parseTwelveDataBulk(json: unknown): Map<string, TwelveDataBulkItem> {
   const map = new Map<string, TwelveDataBulkItem>();
+  if (!json) return map;
 
-  if (!data || typeof data !== 'object') return map;
+  // If it’s the wrapped form with "data"
+  if (isPlainObject(json) && 'data' in json) {
+    const data = (json as { data?: unknown }).data;
 
-  // Some responses are array-based
-  if (Array.isArray(data.data)) {
-    for (const item of data.data) {
-      if (!item?.symbol) continue;
-      map.set(normaliseSymbol(item.symbol), item);
+    if (Array.isArray(data)) {
+      for (const item of data) {
+        if (!isPlainObject(item)) continue;
+        const sym = (item.symbol as string | undefined) ?? '';
+        if (!sym) continue;
+        map.set(normaliseSymbol(sym), item as TwelveDataBulkItem);
+      }
+      return map;
     }
+
+    if (isPlainObject(data)) {
+      for (const [k, v] of Object.entries(data)) {
+        if (!isPlainObject(v)) continue;
+        const sym = (v.symbol as string | undefined) ?? k;
+        map.set(normaliseSymbol(sym), v as TwelveDataBulkItem);
+      }
+      return map;
+    }
+
     return map;
   }
 
-  // Some responses are record-based
-  const record = data.data;
-  if (record && typeof record === 'object' && !Array.isArray(record)) {
-    for (const [k, v] of Object.entries(record)) {
-      if (!v) continue;
-      const sym = v.symbol ? normaliseSymbol(v.symbol) : normaliseSymbol(k);
-      map.set(sym, v);
+  // If it’s the TOP-LEVEL record form: { "eur/usd": {...}, ... }
+  if (isPlainObject(json)) {
+    for (const [k, v] of Object.entries(json)) {
+      if (!isPlainObject(v)) continue;
+      const sym = (v.symbol as string | undefined) ?? k;
+      if (!sym) continue;
+      map.set(normaliseSymbol(sym), v as TwelveDataBulkItem);
     }
   }
 
@@ -348,9 +411,16 @@ async function fetchTwelveDataBulkExchangeRates(
     );
   }
 
+  // ✅ LINT FIX: actually use the TwelveDataBulkResponse type
   const json = (await res.json()) as TwelveDataBulkResponse;
-  if (json?.status && json.status !== 'ok') {
-    throw new Error(`Twelve Data response not ok: ${json.message ?? 'unknown error'}`);
+
+  // If the wrapped response exists and says "not ok", surface it.
+  if (isPlainObject(json) && 'status' in json) {
+    const status = String((json as { status?: unknown }).status ?? '');
+    if (status && status !== 'ok') {
+      const message = String((json as { message?: unknown }).message ?? 'unknown error');
+      throw new Error(`Twelve Data response not ok: ${message}`);
+    }
   }
 
   return parseTwelveDataBulk(json);
@@ -409,6 +479,12 @@ export function getFxRibbonTraceSnapshot(): FxRibbonTraceSnapshot {
       until: typeof rateLimitedUntilMs === 'number' ? iso(rateLimitedUntilMs) : undefined,
       last429At: typeof last429AtMs === 'number' ? iso(last429AtMs) : undefined,
       cooldownSeconds: RATE_LIMIT_COOLDOWN_SECONDS,
+    },
+    lastFetch: {
+      at: typeof lastFetchAtMs === 'number' ? iso(lastFetchAtMs) : undefined,
+      expectedSymbols: lastExpectedSymbols,
+      missingCount: lastMissingSymbols.length,
+      missingSymbols: [...lastMissingSymbols],
     },
   };
 }
@@ -488,6 +564,18 @@ export async function getFxRibbon(): Promise<FxApiResponse> {
       });
 
       const map = await fetchTwelveDataBulkExchangeRates(symbols);
+
+      // Trace: missing symbols (this is the regression detector)
+      lastFetchAtMs = nowMs();
+      lastExpectedSymbols = symbols.length;
+      lastMissingSymbols = symbols.filter((s) => !map.has(normaliseSymbol(s)));
+
+      if (lastMissingSymbols.length > 0) {
+        logTrace('symbol lookup misses detected', {
+          missingCount: lastMissingSymbols.length,
+          missingSymbols: lastMissingSymbols,
+        });
+      }
 
       const quotes = pairsToQuotes(pairs, map);
 

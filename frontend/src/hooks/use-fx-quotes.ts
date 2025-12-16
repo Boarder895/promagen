@@ -99,10 +99,18 @@ export function useFxQuotes(options?: UseFxQuotesOptions): UseFxQuotesResult {
 
     const quotes = payload?.data ?? [];
     for (const q of quotes) {
-      // FxApiQuote.id is the canonical provider symbol (e.g. "GBPUSD").
-      const key = normaliseCode(q.id);
-      if (!key) continue;
-      map.set(key, q);
+      // Robust mapping:
+      // - If q.id is "gbp-usd" → normaliseCode gives "GBPUSD"
+      // - If q.id is "GBPUSD"  → normaliseCode gives "GBPUSD"
+      // - Always also map base+quote in case ids change later.
+      const byId = normaliseCode(q.id);
+      if (byId) map.set(byId, q);
+
+      const byBaseQuote = normaliseCode(`${q.base}${q.quote}`);
+      if (byBaseQuote) map.set(byBaseQuote, q);
+
+      const byLabel = normaliseCode(q.label);
+      if (byLabel) map.set(byLabel, q);
     }
 
     return map;
