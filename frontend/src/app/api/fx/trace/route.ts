@@ -1,10 +1,4 @@
-// C:\Users\Proma\Projects\promagen\frontend\src\app\api\fx\trace\route.ts
-//
-// FX trace endpoint: returns internal cache/single-flight counters and last decision.
-// Purpose: prove API savings from a browser tab without relying on console output.
-//
-// This route is intentionally dynamic (never statically optimised).
-
+// frontend/src/app/api/fx/trace/route.ts
 import { NextResponse } from 'next/server';
 
 import { getFxRibbonTraceSnapshot } from '@/lib/fx/providers';
@@ -13,24 +7,14 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
-  try {
-    const snapshot = getFxRibbonTraceSnapshot();
+export async function GET(): Promise<Response> {
+  const snapshot = getFxRibbonTraceSnapshot();
 
-    return NextResponse.json(snapshot, {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-
-    return NextResponse.json(
-      {
-        ok: false,
-        error: message,
-      },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json(snapshot, {
+    headers: {
+      // API Brain: trace is observation-only and must never trigger refresh.
+      // Keep it CDN-honest by making no caching promises here.
+      'Cache-Control': 'no-store',
+    },
+  });
 }

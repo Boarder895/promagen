@@ -27,13 +27,13 @@
     "homeLongitude": 121.47
   },
   {
-    "id": "usd-aed",
+    "id": "usd-brl",
     "baseCountryCode": "US",
-    "quoteCountryCode": "AE",
+    "quoteCountryCode": "BR",
     "isDefaultFree": true,
     "isDefaultPaid": true,
     "group": "core",
-    "homeLongitude": -98.58
+    "homeLongitude": -46.63
   },
   {
     "id": "gbp-zar",

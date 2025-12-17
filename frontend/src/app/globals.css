@@ -5,16 +5,20 @@
    - Accessible focus outline (no @apply)
    - Card utility + tabular numerals
    - Ribbon shimmer utility
+
+   Enhancements (FX “alive” language):
+   - Winner arrow micro-transition
+   - Neutral breath pulse (slow, subtle)
+   - Tick nudge (1–2px)
+   - Whisper tint (very faint, 200–300ms)
 */
 @import 'tailwindcss';
 
 /* ------------------------------ Base tokens ------------------------------ */
 :root {
-  /* Base tokens for background + focus */
   --bg-a: #f9fafb; /* slate-50 */
   --bg-b: #e5e7eb; /* slate-200 */
 
-  /* Warm east → cool west palette for the main canvas */
   --bg-east: #fef3c7; /* amber-100 */
   --bg-mid: #e5e7eb; /* slate-200 */
   --bg-west: #0f172a; /* slate-900 */
@@ -25,7 +29,7 @@
 /* Respect users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {
-    scroll-behaviour: auto !important;
+    scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -40,16 +44,10 @@ body {
 
 body {
   margin: 0;
-  /* Warm east (left) → neutral centre → cool, darker west (right) */
   background: linear-gradient(115deg, var(--bg-east) 0%, var(--bg-mid) 45%, var(--bg-west) 100%);
   color: #020617; /* slate-950 */
   color-scheme: light;
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   text-rendering: optimizeLegibility;
 }
 
@@ -64,7 +62,6 @@ a:hover {
   text-decoration-thickness: 0.12em;
 }
 
-/* Accessible focus ring for key interactives */
 :where(a, button, input, textarea, select):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
@@ -72,8 +69,8 @@ a:hover {
 
 /* ------------------------------ Card utility ----------------------------- */
 .card {
-  border-radius: 1rem; /* ~rounded-2xl */
-  border: 1px solid rgba(15, 23, 42, 0.06); /* very soft border */
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.06);
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
 }
@@ -102,4 +99,114 @@ a:hover {
 
 .animate-ribbon-shimmer {
   animation: ribbon-shimmer 180s linear infinite;
+}
+
+/* ======================================================================== */
+/* FX “alive” micro-motion                                                   */
+/* ======================================================================== */
+
+/* Winner arrow — single green arrow with micro fade */
+.fx-winner-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.9em; /* keeps spacing stable */
+  color: rgba(52, 211, 153, 0.95); /* emerald-ish */
+  transform: translateY(-0.04em);
+  transition: opacity 220ms ease;
+  will-change: opacity;
+}
+
+.fx-winner-arrow--off {
+  opacity: 0;
+}
+
+.fx-winner-arrow--on {
+  opacity: 1;
+}
+
+/* Neutral breath pulse (slow, tiny) */
+@keyframes fx-neutral-breathe {
+  0% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+.fx-neutral-breathe {
+  animation: fx-neutral-breathe 8s ease-in-out infinite;
+}
+
+/* Tick nudge: tiny move, terminal-like */
+@keyframes fx-tick-up {
+  0% {
+    transform: translateY(1px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes fx-tick-down {
+  0% {
+    transform: translateY(-1px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.fx-tick-up {
+  animation: fx-tick-up 180ms ease-out 1;
+}
+
+.fx-tick-down {
+  animation: fx-tick-down 180ms ease-out 1;
+}
+
+.fx-tick-flat {
+  /* no animation */
+}
+
+/* Whisper tint: very faint flash behind the price, fades quickly */
+@keyframes fx-whisper-up {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+  35% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes fx-whisper-down {
+  0% {
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
+  }
+  35% {
+    box-shadow: 0 0 0 6px rgba(248, 113, 113, 0.08);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
+  }
+}
+
+.fx-price {
+  border-radius: 0.4rem;
+  padding: 0 0.15rem;
+}
+
+.fx-whisper-up {
+  animation: fx-whisper-up 260ms ease-out 1;
+}
+
+.fx-whisper-down {
+  animation: fx-whisper-down 260ms ease-out 1;
 }

@@ -1,80 +1,133 @@
+// frontend/src/lib/fx/providers.ts
 /**
  * FX providers + caching for the finance ribbon.
  *
- * Goals:
- * - Single upstream request for all ribbon symbols (bulk exchange_rate).
- * - Server-side TTL caching to avoid repeated upstream calls.
- * - Single-flight de-duplication under concurrency.
- * - Backoff + "ride the cache" on rate limit.
- * - SSOT-aware cache key so edits to fx.pairs.json invalidate immediately.
+ * GUARANTEES (do not delete):
+ * - Bulk request (N→1) ✅
+ * - TTL caching ✅
+ * - Single-flight de-duplication ✅
+ * - 429 cooldown + ride-cache ✅
+ * - SSOT-key invalidation ✅
+ * - Trace snapshot includes missing symbol diagnostics ✅
+ *
+ * AGREED BEHAVIOUR (server truth):
+ * - Always return the full SSOT list (prices may be null).
+ * - A/B group caches: refresh half-at-a-time (4+4 when SSOT has 8).
+ * - Weekend freeze (Europe/London): never fetch upstream on Sat/Sun.
+ * - Traffic is informational only (does NOT influence TTL or refresh permission).
  */
 
 import { createHash } from 'crypto';
+
 import type { FxApiMeta, FxApiMode, FxApiQuote, FxApiResponse } from '@/types/finance-ribbon';
 import { getDefaultFxPairsWithIndexForTier } from '@/data/fx';
 
+type FxRibbonGroupId = 'A' | 'B';
+
 type CacheDecision =
   | 'cache_hit'
-  | 'cache_miss'
-  | 'singleflight_join'
+  | 'cache_miss_refresh_A'
+  | 'cache_miss_refresh_B'
+  | 'singleflight_join_A'
+  | 'singleflight_join_B'
+  | 'weekend_freeze_ride_cache'
+  | 'weekend_freeze_no_cache'
   | 'rate_limited_ride_cache'
   | 'rate_limited_no_cache'
-  | 'ssot_changed_invalidate';
+  | 'ssot_changed_invalidate'
+  | 'no_api_key_ride_cache'
+  | 'no_api_key_no_cache';
 
 export type FxRibbonTraceSnapshot = {
+  // Base TTL policy (prod default remains 30 minutes unless env overrides)
   ttlSeconds: number;
   ssotKey: string;
+
+  // Backwards-compatible “merged cache” view.
   cache: {
     hasValue: boolean;
     asOf?: string;
     expiresAt?: string;
     key?: string;
   };
+
   inFlight: boolean;
   lastDecision?: CacheDecision;
   lastError?: string;
+
   counters: {
     ribbonCalls: number;
     upstreamCalls: number;
     upstreamSymbolsTotal: number;
   };
+
   rateLimit: {
     until?: string;
     last429At?: string;
     cooldownSeconds?: number;
   };
+
+  weekendFreeze: {
+    active: boolean;
+    londonWeekday: string;
+    timezone: string;
+  };
+
+  traffic: {
+    windowSeconds: number;
+    hitsInWindow: number;
+    factor: number;
+  };
+
+  schedule: {
+    cycleIndex: number;
+    scheduledGroup: FxRibbonGroupId;
+    cycleLengthSeconds: number;
+  };
+
+  groups: {
+    A: {
+      hasValue: boolean;
+      asOf?: string;
+      expiresAt?: string;
+      inFlight: boolean;
+      expectedSymbols: number;
+      missingCount: number;
+      missingSymbols: string[];
+    };
+    B: {
+      hasValue: boolean;
+      asOf?: string;
+      expiresAt?: string;
+      inFlight: boolean;
+      expectedSymbols: number;
+      missingCount: number;
+      missingSymbols: string[];
+    };
+  };
+
   lastFetch?: {
     at?: string;
+    group?: FxRibbonGroupId;
     expectedSymbols: number;
     missingCount: number;
     missingSymbols: string[];
   };
 };
 
-type FxRibbonCache = {
-  key: string;
-  payload: FxApiResponse;
-  expiresAtMs: number;
-};
-
 type FxRibbonPair = {
-  id: string; // SSOT id, e.g. "gbp-usd"
-  base: string; // "GBP"
-  quote: string; // "USD"
-  label: string; // "GBP / USD"
-  category: string; // e.g. "core"
-  symbol: string; // Twelve Data symbol, e.g. "GBP/USD"
+  id: string;
+  base: string;
+  quote: string;
+  label: string;
+  category: string;
+  symbol: string;
 };
 
 type TwelveDataBulkItem = {
   symbol: string;
-
-  // Some Twelve Data responses use "rate"
   rate?: string | number;
-
-  // The exchange_rate endpoint often uses "exchange_rate"
   exchange_rate?: string | number;
-
   timestamp?: number;
 };
 
@@ -85,16 +138,22 @@ type TwelveDataBulkResponse =
       status?: string;
       data?: TwelveDataBulkItem[] | Record<string, TwelveDataBulkItem>;
     }
-  // IMPORTANT: Twelve Data sometimes returns a TOP-LEVEL record keyed by symbol
   | Record<string, TwelveDataBulkItem | unknown>;
 
 export type FxProviderSummary = {
   modeLabel: string;
   emphasiseFallback: boolean;
-  meta: {
-    id: string;
-    name: string;
-  };
+  meta: { id: string; name: string };
+};
+
+type FxRibbonGroupCache = {
+  group: FxRibbonGroupId;
+  ssotKey: string;
+  asOfIso: string;
+  expiresAtMs: number;
+  quotes: FxApiQuote[];
+  expectedSymbols: number;
+  missingSymbols: string[];
 };
 
 const BUILD_ID =
@@ -103,8 +162,13 @@ const BUILD_ID =
   process.env.GIT_COMMIT_SHA ??
   'local-dev';
 
+const LONDON_TIMEZONE = 'Europe/London';
+
 function isProd(): boolean {
   return process.env.NODE_ENV === 'production';
+}
+function isDev(): boolean {
+  return process.env.NODE_ENV !== 'production';
 }
 
 function readPositiveIntEnv(name: string, fallback: number): number {
@@ -117,15 +181,21 @@ function readPositiveIntEnv(name: string, fallback: number): number {
   return i;
 }
 
-// Default TTL: 30 mins in prod; 5 mins locally.
-const CACHE_TTL_SECONDS = readPositiveIntEnv('FX_RIBBON_TTL_SECONDS', isProd() ? 30 * 60 : 5 * 60);
-
-// Rate-limit cooldown (seconds) applied when Twelve Data returns 429.
-// While rate-limited, we "ride the cache" and avoid retry storms.
+// IMPORTANT: user explicitly locked prod TTL at 30 minutes.
+const BASE_TTL_SECONDS = readPositiveIntEnv('FX_RIBBON_TTL_SECONDS', isProd() ? 30 * 60 : 5 * 60);
 const RATE_LIMIT_COOLDOWN_SECONDS = readPositiveIntEnv('FX_RIBBON_429_COOLDOWN_SECONDS', 10 * 60);
 
-let ribbonCache: FxRibbonCache | null = null;
-let ribbonInFlight: Promise<FxApiResponse> | null = null;
+const TRAFFIC_WINDOW_SECONDS = readPositiveIntEnv('FX_RIBBON_TRAFFIC_WINDOW_SECONDS', 60);
+
+const DEV_UPSTREAM_BUDGET_WINDOW_MS = readPositiveIntEnv(
+  'FX_DEV_UPSTREAM_BUDGET_WINDOW_MS',
+  60_000,
+);
+const DEV_UPSTREAM_BUDGET_MAX_CALLS = readPositiveIntEnv('FX_DEV_UPSTREAM_BUDGET_MAX_CALLS', 3);
+const DEV_UPSTREAM_BUDGET_WARN_COOLDOWN_MS = readPositiveIntEnv(
+  'FX_DEV_UPSTREAM_BUDGET_WARN_COOLDOWN_MS',
+  30_000,
+);
 
 let lastDecision: CacheDecision | undefined;
 let lastError: string | undefined;
@@ -141,26 +211,45 @@ const counters = {
   upstreamSymbolsTotal: 0,
 };
 
+// Group caches and per-group single-flight.
+let groupCacheA: FxRibbonGroupCache | null = null;
+let groupCacheB: FxRibbonGroupCache | null = null;
+let inFlightA: Promise<FxRibbonGroupCache> | null = null;
+let inFlightB: Promise<FxRibbonGroupCache> | null = null;
+
+// Diagnostics for trace.
 let lastFetchAtMs: number | undefined;
+let lastFetchGroup: FxRibbonGroupId | undefined;
 let lastExpectedSymbols = 0;
 let lastMissingSymbols: string[] = [];
+
+let lastLondonWeekday = '—';
+let lastWeekendFreeze = false;
+
+const ribbonHitTimesMs: number[] = [];
+let lastTrafficHits = 0;
+let lastTrafficFactor = 1;
+
+// Track upstream calls in dev so we can shout if someone accidentally multiplies fetch paths.
+const upstreamCallTimesMs: number[] = [];
+let lastBudgetWarnAtMs = 0;
+
+// Schedule diagnostics
+let lastCycleIndex = 0;
+let lastScheduledGroup: FxRibbonGroupId = 'A';
 
 function nowMs(): number {
   return Date.now();
 }
-
 function iso(ms: number): string {
   return new Date(ms).toISOString();
 }
 
-/**
- * Canonicalise an FX symbol so “eur/usd”, “EUR/USD”, “EURUSD”, “eur-usd” all become “EUR/USD”.
- */
 export function normaliseSymbol(symbol: string): string {
   const raw = String(symbol ?? '').trim();
   if (!raw) return '';
 
-  const cleaned = raw.replace(/\s+/g, '').replace(/\\/g, '/').replace(/-/g, '/').toUpperCase();
+  const cleaned = raw.replace(/\s+/g, '').replace(/\\/g, '/').replace(/[_-]/g, '/').toUpperCase();
 
   if (cleaned.includes('/')) {
     const parts = cleaned.split('/').filter(Boolean);
@@ -193,8 +282,6 @@ function uniqueStrings(items: string[]): string[] {
 }
 
 function ssotKeyFromOrderedIds(orderedIds: string[]): string {
-  // Stable fingerprint of the SSOT order.
-  // Any change to ids or their order changes the key => cache invalidates instantly.
   const raw = orderedIds.join('|');
   const hash = createHash('sha1').update(raw).digest('hex').slice(0, 12);
   return `fxpairs:${hash}`;
@@ -205,12 +292,7 @@ function buildMeta(
   sourceProvider: FxApiMeta['sourceProvider'],
   asOfIso: string,
 ): FxApiMeta {
-  return {
-    buildId: BUILD_ID,
-    mode,
-    sourceProvider,
-    asOf: asOfIso,
-  };
+  return { buildId: BUILD_ID, mode, sourceProvider, asOf: asOfIso };
 }
 
 function buildResponse(params: {
@@ -227,53 +309,14 @@ function buildResponse(params: {
   };
 }
 
-function canUseCache(ms: number, key: string): boolean {
-  return ribbonCache !== null && ribbonCache.key === key && ribbonCache.expiresAtMs > ms;
-}
-
-function invalidateForSsotChange(nextKey: string): void {
-  if (nextKey === lastSsotKey) return;
-
-  // SSOT changed: invalidate cache and any in-flight request so we can reflect changes immediately.
-  ribbonCache = null;
-  ribbonInFlight = null;
-
-  lastDecision = 'ssot_changed_invalidate';
-  lastSsotKey = nextKey;
-}
-
-function bumpRateLimit(now: number): void {
-  last429AtMs = now;
-  rateLimitedUntilMs = now + RATE_LIMIT_COOLDOWN_SECONDS * 1000;
-
-  // If we have a cache value, extend its life so we can ride it while rate-limited.
-  if (ribbonCache) {
-    const extended = Math.max(ribbonCache.expiresAtMs, rateLimitedUntilMs);
-    ribbonCache = { ...ribbonCache, expiresAtMs: extended };
-  }
-}
-
-function isRateLimited(now: number): boolean {
-  return typeof rateLimitedUntilMs === 'number' && rateLimitedUntilMs > now;
-}
-
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-/**
- * Parse Twelve Data bulk response.
- *
- * Supported shapes:
- * 1) { status: "ok", data: [ {symbol, rate}, ... ] }
- * 2) { status: "ok", data: { "eur/usd": {symbol, rate}, ... } }
- * 3) { "eur/usd": {symbol, rate}, "gbp/usd": {symbol, rate}, ... }  <-- THIS IS YOUR CURRENT REALITY
- */
 function parseTwelveDataBulk(json: unknown): Map<string, TwelveDataBulkItem> {
   const map = new Map<string, TwelveDataBulkItem>();
   if (!json) return map;
 
-  // If it’s the wrapped form with "data"
   if (isPlainObject(json) && 'data' in json) {
     const data = (json as { data?: unknown }).data;
 
@@ -299,7 +342,6 @@ function parseTwelveDataBulk(json: unknown): Map<string, TwelveDataBulkItem> {
     return map;
   }
 
-  // If it’s the TOP-LEVEL record form: { "eur/usd": {...}, ... }
   if (isPlainObject(json)) {
     for (const [k, v] of Object.entries(json)) {
       if (!isPlainObject(v)) continue;
@@ -324,12 +366,11 @@ function parseRate(item: TwelveDataBulkItem | undefined): number | null {
   return n;
 }
 
-function buildRibbonPairsAndKey(): { pairs: FxRibbonPair[]; key: string } {
-  // SSOT-driven, ordered exactly as fx.pairs.json defines it (via data/fx index).
+function buildRibbonPairsAndKey(): { pairs: FxRibbonPair[]; ssotKey: string } {
   const ssotPairs = getDefaultFxPairsWithIndexForTier('free');
 
   const orderedIds = ssotPairs.map((p) => p.id);
-  const key = ssotKeyFromOrderedIds(orderedIds);
+  const ssotKey = ssotKeyFromOrderedIds(orderedIds);
 
   const pairs: FxRibbonPair[] = ssotPairs.map((p) => {
     const base = p.base.toUpperCase();
@@ -338,69 +379,182 @@ function buildRibbonPairsAndKey(): { pairs: FxRibbonPair[]; key: string } {
     const category = p.group ?? 'fx';
     const symbol = `${base}/${quote}`;
 
-    return {
-      id: p.id,
-      base,
-      quote,
-      label,
-      category,
-      symbol,
-    };
+    return { id: p.id, base, quote, label, category, symbol };
   });
 
-  return { pairs, key };
+  return { pairs, ssotKey };
 }
 
-function pairsToQuotes(pairs: FxRibbonPair[], map: Map<string, TwelveDataBulkItem>): FxApiQuote[] {
-  const out: FxApiQuote[] = [];
+function buildEmptyQuotes(pairs: FxRibbonPair[]): FxApiQuote[] {
+  return pairs.map((p) => ({
+    id: p.id,
+    base: p.base,
+    quote: p.quote,
+    label: p.label,
+    category: p.category,
+    price: null,
+    change: null,
+    changePct: null,
+  }));
+}
 
-  for (const pair of pairs) {
-    const sym = normaliseSymbol(pair.symbol);
-    const rate = parseRate(map.get(sym));
+function groupSplit(pairs: FxRibbonPair[]): { A: FxRibbonPair[]; B: FxRibbonPair[] } {
+  const half = Math.ceil(pairs.length / 2);
+  return {
+    A: pairs.slice(0, half),
+    B: pairs.slice(half),
+  };
+}
 
-    out.push({
-      id: pair.id, // IMPORTANT: matches SSOT id used by the UI ribbon
-      base: pair.base,
-      quote: pair.quote,
-      label: pair.label,
-      category: pair.category,
-      price: rate,
-      change: null,
-      changePct: null,
-    });
+function getLondonWeekdayShort(ms: number): string {
+  try {
+    const dtf = new Intl.DateTimeFormat('en-GB', { timeZone: LONDON_TIMEZONE, weekday: 'short' });
+    return dtf.format(new Date(ms));
+  } catch {
+    // Fallback: UTC weekday
+    const d = new Date(ms).getUTCDay();
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d] ?? '—';
   }
+}
 
-  return out;
+function isWeekendLondon(ms: number): boolean {
+  const wd = getLondonWeekdayShort(ms).toLowerCase();
+  return wd.startsWith('sat') || wd.startsWith('sun');
+}
+
+function pruneTimes(times: number[], windowMs: number, now: number): void {
+  for (;;) {
+    const oldest = times.at(0);
+    if (oldest === undefined) break;
+    if (oldest >= now - windowMs) break;
+    times.shift();
+  }
+}
+
+function updateTraffic(now: number): void {
+  // Traffic is observational only. It must NEVER influence TTL or refresh permission.
+  const windowMs = TRAFFIC_WINDOW_SECONDS * 1000;
+  ribbonHitTimesMs.push(now);
+  pruneTimes(ribbonHitTimesMs, windowMs, now);
+
+  lastTrafficHits = ribbonHitTimesMs.length;
+  lastTrafficFactor = 1;
+}
+
+function nextScheduledGroup(): FxRibbonGroupId {
+  // Alternation is based on the last *actual* upstream refresh, not wall-clock parity.
+  // This avoids minute-parity regressions on restarts and ensures the schedule
+  // only advances when a refresh truly happens.
+  return lastFetchGroup === 'A' ? 'B' : 'A';
+}
+
+function isCycleDue(now: number): boolean {
+  if (typeof lastFetchAtMs !== 'number') return true;
+  return now - lastFetchAtMs >= BASE_TTL_SECONDS * 1000;
+}
+
+function invalidateForSsotChange(nextKey: string): void {
+  if (nextKey === lastSsotKey) return;
+
+  groupCacheA = null;
+  groupCacheB = null;
+  inFlightA = null;
+  inFlightB = null;
+
+  // Reset refresh authority state so the new SSOT can fetch without waiting for the old TTL window.
+  lastFetchAtMs = undefined;
+  lastFetchGroup = undefined;
+  lastExpectedSymbols = 0;
+  lastMissingSymbols = [];
+  lastCycleIndex = 0;
+  lastScheduledGroup = 'A';
+
+  lastDecision = 'ssot_changed_invalidate';
+  lastSsotKey = nextKey;
+}
+
+function bumpRateLimit(now: number): void {
+  last429AtMs = now;
+  rateLimitedUntilMs = now + RATE_LIMIT_COOLDOWN_SECONDS * 1000;
+
+  // Extend caches so we can "ride" them during cooldown.
+  if (groupCacheA)
+    groupCacheA = {
+      ...groupCacheA,
+      expiresAtMs: Math.max(groupCacheA.expiresAtMs, rateLimitedUntilMs),
+    };
+  if (groupCacheB)
+    groupCacheB = {
+      ...groupCacheB,
+      expiresAtMs: Math.max(groupCacheB.expiresAtMs, rateLimitedUntilMs),
+    };
+}
+
+function isRateLimited(now: number): boolean {
+  return typeof rateLimitedUntilMs === 'number' && rateLimitedUntilMs > now;
+}
+
+function logTrace(message: string, extra?: Record<string, unknown>): void {
+  if (!isDev()) return;
+  // Dev-only to avoid noisy prod logs.
+
+  console.debug(`[fx.ribbon] ${message}`, extra ?? {});
+}
+
+function devUpstreamBudgetGuard(callSite: string, symbolCount: number): void {
+  if (!isDev()) return;
+
+  const now = nowMs();
+  upstreamCallTimesMs.push(now);
+  pruneTimes(upstreamCallTimesMs, DEV_UPSTREAM_BUDGET_WINDOW_MS, now);
+
+  if (upstreamCallTimesMs.length <= DEV_UPSTREAM_BUDGET_MAX_CALLS) return;
+  if (now - lastBudgetWarnAtMs < DEV_UPSTREAM_BUDGET_WARN_COOLDOWN_MS) return;
+
+  lastBudgetWarnAtMs = now;
+
+  const err = new Error('FX upstream budget exceeded');
+  const stack = err.stack ? err.stack.split('\n').slice(0, 6).join('\n') : '(no stack)';
+
+  console.warn(
+    `[fx.ribbon][DEV WARNING] Upstream calls are spiking (likely multiple fetch paths or dev HMR resets).\n` +
+      `Window: ${DEV_UPSTREAM_BUDGET_WINDOW_MS}ms, calls: ${upstreamCallTimesMs.length}, max: ${DEV_UPSTREAM_BUDGET_MAX_CALLS}\n` +
+      `Call site: ${callSite}, symbols: ${symbolCount}\n` +
+      `Tip: check for multiple client pollers or extra endpoints calling Twelve Data.\n` +
+      `${stack}`,
+  );
 }
 
 async function fetchTwelveDataBulkExchangeRates(
   symbols: string[],
+  callSite: string,
 ): Promise<Map<string, TwelveDataBulkItem>> {
   const apiKey = process.env.TWELVEDATA_API_KEY;
-  if (!apiKey) {
-    throw new Error('Missing TWELVEDATA_API_KEY');
-  }
+  if (!apiKey) throw new Error('Missing TWELVEDATA_API_KEY');
+
+  devUpstreamBudgetGuard(callSite, symbols.length);
 
   const endpoint = 'exchange_rate';
   const baseUrl = 'https://api.twelvedata.com';
   const url = new URL(`${baseUrl}/${endpoint}`);
 
-  // Twelve Data: comma-separated symbols like "EUR/USD,GBP/USD"
   url.searchParams.set('symbol', symbols.join(','));
-  url.searchParams.set('apikey', apiKey);
 
   counters.upstreamCalls += 1;
   counters.upstreamSymbolsTotal += symbols.length;
 
   const res = await fetch(url.toString(), {
     method: 'GET',
-    // Upstream fetch should not be cached by Next — our own cache handles it.
     cache: 'no-store',
+    headers: {
+      // Twelve Data docs recommend this header form.
+      Authorization: `apikey ${apiKey}`,
+      accept: 'application/json',
+    },
   });
 
   if (res.status === 429) {
-    const now = nowMs();
-    bumpRateLimit(now);
+    bumpRateLimit(nowMs());
     throw new Error('Twelve Data rate-limited (429)');
   }
 
@@ -411,10 +565,8 @@ async function fetchTwelveDataBulkExchangeRates(
     );
   }
 
-  // ✅ LINT FIX: actually use the TwelveDataBulkResponse type
   const json = (await res.json()) as TwelveDataBulkResponse;
 
-  // If the wrapped response exists and says "not ok", surface it.
   if (isPlainObject(json) && 'status' in json) {
     const status = String((json as { status?: unknown }).status ?? '');
     if (status && status !== 'ok') {
@@ -426,8 +578,183 @@ async function fetchTwelveDataBulkExchangeRates(
   return parseTwelveDataBulk(json);
 }
 
-function logTrace(message: string, extra?: Record<string, unknown>): void {
-  console.debug(`[fx.ribbon] ${message}`, extra ?? {});
+function getGroupRideCache(group: FxRibbonGroupId, ssotKey: string): FxRibbonGroupCache | null {
+  const cache = group === 'A' ? groupCacheA : groupCacheB;
+  if (!cache) return null;
+  if (cache.ssotKey !== ssotKey) return null;
+  return cache;
+}
+
+function getGroupFreshCache(
+  group: FxRibbonGroupId,
+  ssotKey: string,
+  now: number,
+): FxRibbonGroupCache | null {
+  const cache = getGroupRideCache(group, ssotKey);
+  if (!cache) return null;
+
+  // IMPORTANT: group validity is policy TTL × 2 because each group refreshes every other cycle.
+  // expiresAtMs is the single source of truth for freshness.
+  if (cache.expiresAtMs <= now) return null;
+
+  return cache;
+}
+
+function setGroupCache(next: FxRibbonGroupCache): void {
+  if (next.group === 'A') groupCacheA = next;
+  else groupCacheB = next;
+}
+
+function groupInFlight(group: FxRibbonGroupId): Promise<FxRibbonGroupCache> | null {
+  return group === 'A' ? inFlightA : inFlightB;
+}
+
+function setGroupInFlight(group: FxRibbonGroupId, p: Promise<FxRibbonGroupCache> | null): void {
+  if (group === 'A') inFlightA = p;
+  else inFlightB = p;
+}
+
+function groupPairsToQuotes(
+  pairs: FxRibbonPair[],
+  map: Map<string, TwelveDataBulkItem>,
+): FxApiQuote[] {
+  return pairs.map((pair) => {
+    const sym = normaliseSymbol(pair.symbol);
+    const rate = parseRate(map.get(sym));
+
+    return {
+      id: pair.id,
+      base: pair.base,
+      quote: pair.quote,
+      label: pair.label,
+      category: pair.category,
+      price: rate,
+      change: null,
+      changePct: null,
+    };
+  });
+}
+
+function mergeQuotesInSsotOrder(params: {
+  ssotPairs: FxRibbonPair[];
+  groupA: FxRibbonGroupCache | null;
+  groupB: FxRibbonGroupCache | null;
+}): FxApiQuote[] {
+  const byId = new Map<string, FxApiQuote>();
+
+  // Start with a complete, stable list (all null prices).
+  for (const q of buildEmptyQuotes(params.ssotPairs)) byId.set(q.id, q);
+
+  // Overlay whichever caches we have.
+  for (const cache of [params.groupA, params.groupB]) {
+    if (!cache) continue;
+    for (const q of cache.quotes) byId.set(q.id, q);
+  }
+
+  return params.ssotPairs.map(
+    (p) =>
+      byId.get(p.id) ?? {
+        id: p.id,
+        base: p.base,
+        quote: p.quote,
+        label: p.label,
+        category: p.category,
+        price: null,
+        change: null,
+        changePct: null,
+      },
+  );
+}
+
+function newestAsOfIso(
+  groupA: FxRibbonGroupCache | null,
+  groupB: FxRibbonGroupCache | null,
+): string {
+  const a = groupA?.asOfIso;
+  const b = groupB?.asOfIso;
+  if (a && b) return Date.parse(a) >= Date.parse(b) ? a : b;
+  return a ?? b ?? new Date().toISOString();
+}
+
+async function refreshGroup(params: {
+  group: FxRibbonGroupId;
+  ssotKey: string;
+  pairs: FxRibbonPair[];
+  symbols: string[];
+  now: number;
+}): Promise<FxRibbonGroupCache> {
+  const { group, ssotKey, pairs, symbols, now } = params;
+
+  const existingInFlight = groupInFlight(group);
+  if (existingInFlight) {
+    lastDecision = group === 'A' ? 'singleflight_join_A' : 'singleflight_join_B';
+    logTrace('single-flight join', { group, ssotKey });
+    return existingInFlight;
+  }
+
+  const decision: CacheDecision = group === 'A' ? 'cache_miss_refresh_A' : 'cache_miss_refresh_B';
+  lastDecision = decision;
+
+  // Refresh counter (trace-only). This increments only when we start a new upstream call.
+  lastCycleIndex += 1;
+
+  const promise = (async () => {
+    try {
+      const map = await fetchTwelveDataBulkExchangeRates(symbols, `fx_ribbon_group_${group}`);
+
+      lastFetchAtMs = nowMs();
+      lastFetchGroup = group;
+      lastExpectedSymbols = symbols.length;
+
+      const missing: string[] = [];
+      for (const pair of pairs) {
+        const sym = normaliseSymbol(pair.symbol);
+        if (!map.has(sym)) missing.push(`${pair.id} -> ${pair.symbol}`);
+      }
+      lastMissingSymbols = missing;
+
+      if (missing.length > 0) {
+        logTrace('symbol lookup misses detected', {
+          group,
+          missingCount: missing.length,
+          missingSymbols: missing,
+        });
+      }
+
+      const quotes = groupPairsToQuotes(pairs, map);
+      const asOfIso = new Date().toISOString();
+
+      const cache: FxRibbonGroupCache = {
+        group,
+        ssotKey,
+        asOfIso,
+        // Each group refreshes every other cycle ⇒ hold window is 2× policy TTL.
+        expiresAtMs: now + BASE_TTL_SECONDS * 2 * 1000,
+        quotes,
+        expectedSymbols: symbols.length,
+        missingSymbols: missing,
+      };
+
+      setGroupCache(cache);
+
+      lastError = undefined;
+
+      logTrace('fetch ok → cached', {
+        group,
+        ssotKey,
+        quoteCount: quotes.length,
+        expiresAt: iso(cache.expiresAtMs),
+      });
+
+      return cache;
+    } finally {
+      setGroupInFlight(group, null);
+    }
+  })();
+
+  setGroupInFlight(group, promise);
+
+  return promise;
 }
 
 export function getFxProviderSummary(
@@ -435,7 +762,6 @@ export function getFxProviderSummary(
   providerId: string | null,
 ): FxProviderSummary {
   const id = (providerId ?? 'twelvedata').toLowerCase();
-
   const name =
     id === 'twelvedata'
       ? 'Twelve Data'
@@ -454,24 +780,34 @@ export function getFxProviderSummary(
       ? 'Live'
       : '—';
 
-  return {
-    modeLabel,
-    emphasiseFallback: mode === 'fallback',
-    meta: { id, name },
-  };
+  return { modeLabel, emphasiseFallback: mode === 'fallback', meta: { id, name } };
 }
 
 export function getFxRibbonTraceSnapshot(): FxRibbonTraceSnapshot {
+  const rideA = getGroupRideCache('A', lastSsotKey);
+  const rideB = getGroupRideCache('B', lastSsotKey);
+
+  const mergedHasValue = Boolean(rideA || rideB);
+  const mergedAsOf = newestAsOfIso(rideA, rideB);
+
+  const mergedExpiresAtMsCandidates: number[] = [];
+  if (rideA) mergedExpiresAtMsCandidates.push(rideA.expiresAtMs);
+  if (rideB) mergedExpiresAtMsCandidates.push(rideB.expiresAtMs);
+
+  const mergedExpiresAtMs = mergedExpiresAtMsCandidates.length
+    ? Math.min(...mergedExpiresAtMsCandidates)
+    : undefined;
+
   return {
-    ttlSeconds: CACHE_TTL_SECONDS,
+    ttlSeconds: BASE_TTL_SECONDS,
     ssotKey: lastSsotKey,
     cache: {
-      hasValue: Boolean(ribbonCache),
-      asOf: ribbonCache?.payload.meta.asOf,
-      expiresAt: ribbonCache ? iso(ribbonCache.expiresAtMs) : undefined,
-      key: ribbonCache?.key,
+      hasValue: mergedHasValue,
+      asOf: mergedHasValue ? mergedAsOf : undefined,
+      expiresAt: typeof mergedExpiresAtMs === 'number' ? iso(mergedExpiresAtMs) : undefined,
+      key: lastSsotKey,
     },
-    inFlight: Boolean(ribbonInFlight),
+    inFlight: Boolean(inFlightA || inFlightB),
     lastDecision,
     lastError,
     counters: { ...counters },
@@ -480,8 +816,44 @@ export function getFxRibbonTraceSnapshot(): FxRibbonTraceSnapshot {
       last429At: typeof last429AtMs === 'number' ? iso(last429AtMs) : undefined,
       cooldownSeconds: RATE_LIMIT_COOLDOWN_SECONDS,
     },
+    weekendFreeze: {
+      active: lastWeekendFreeze,
+      londonWeekday: lastLondonWeekday,
+      timezone: LONDON_TIMEZONE,
+    },
+    traffic: {
+      windowSeconds: TRAFFIC_WINDOW_SECONDS,
+      hitsInWindow: lastTrafficHits,
+      factor: lastTrafficFactor,
+    },
+    schedule: {
+      cycleIndex: lastCycleIndex,
+      scheduledGroup: lastScheduledGroup,
+      cycleLengthSeconds: BASE_TTL_SECONDS,
+    },
+    groups: {
+      A: {
+        hasValue: Boolean(rideA),
+        asOf: rideA?.asOfIso,
+        expiresAt: rideA ? iso(rideA.expiresAtMs) : undefined,
+        inFlight: Boolean(inFlightA),
+        expectedSymbols: rideA?.expectedSymbols ?? 0,
+        missingCount: rideA?.missingSymbols.length ?? 0,
+        missingSymbols: rideA?.missingSymbols ?? [],
+      },
+      B: {
+        hasValue: Boolean(rideB),
+        asOf: rideB?.asOfIso,
+        expiresAt: rideB ? iso(rideB.expiresAtMs) : undefined,
+        inFlight: Boolean(inFlightB),
+        expectedSymbols: rideB?.expectedSymbols ?? 0,
+        missingCount: rideB?.missingSymbols.length ?? 0,
+        missingSymbols: rideB?.missingSymbols ?? [],
+      },
+    },
     lastFetch: {
       at: typeof lastFetchAtMs === 'number' ? iso(lastFetchAtMs) : undefined,
+      group: lastFetchGroup,
       expectedSymbols: lastExpectedSymbols,
       missingCount: lastMissingSymbols.length,
       missingSymbols: [...lastMissingSymbols],
@@ -489,144 +861,189 @@ export function getFxRibbonTraceSnapshot(): FxRibbonTraceSnapshot {
   };
 }
 
+/**
+ * TTL used by the API route for Cache-Control headers.
+ * This returns the policy TTL (fixed; traffic does not affect it).
+ */
 export function getFxRibbonTtlSeconds(): number {
-  return CACHE_TTL_SECONDS;
+  return BASE_TTL_SECONDS;
+}
+
+function safeModeFromDidFetch(didFetch: boolean): FxApiMode {
+  return didFetch ? 'live' : 'cached';
 }
 
 export async function getFxRibbon(): Promise<FxApiResponse> {
   counters.ribbonCalls += 1;
 
-  // Compute pairs + SSOT key every call (small, and guarantees correctness).
-  const { pairs, key } = buildRibbonPairsAndKey();
-  invalidateForSsotChange(key);
-
   const now = nowMs();
+  updateTraffic(now);
 
-  // 1) If rate-limited, ride the cache if possible (avoid retry storms).
-  if (isRateLimited(now)) {
-    if (canUseCache(now, key)) {
-      lastDecision = 'rate_limited_ride_cache';
-      logTrace('rate-limited → riding cache', {
-        until: iso(rateLimitedUntilMs as number),
-        key,
-        expiresAt: iso((ribbonCache as FxRibbonCache).expiresAtMs),
-      });
-      return (ribbonCache as FxRibbonCache).payload;
-    }
+  lastLondonWeekday = getLondonWeekdayShort(now);
+  lastWeekendFreeze = isWeekendLondon(now);
 
-    lastDecision = 'rate_limited_no_cache';
-    logTrace('rate-limited with no cache → returning empty', {
-      until: iso(rateLimitedUntilMs as number),
-      key,
-    });
+  const { pairs, ssotKey } = buildRibbonPairsAndKey();
+  invalidateForSsotChange(ssotKey);
 
-    const asOfIso = new Date().toISOString();
+  const split = groupSplit(pairs);
+  const symbolsA = uniqueStrings(split.A.map((p) => normaliseSymbol(p.symbol)));
+  const symbolsB = uniqueStrings(split.B.map((p) => normaliseSymbol(p.symbol)));
+
+  // Next scheduled group is derived from the last successful refresh (state), not wall-clock parity.
+  const scheduledGroup = nextScheduledGroup();
+  lastScheduledGroup = scheduledGroup;
+
+  const hasApiKey = Boolean(process.env.TWELVEDATA_API_KEY);
+
+  // “Ride-cache” views (may be stale, but still useful for stable UI)
+  const rideA = getGroupRideCache('A', ssotKey);
+  const rideB = getGroupRideCache('B', ssotKey);
+
+  // “Fresh” views (used only to decide whether to fetch upstream)
+  const freshA = getGroupFreshCache('A', ssotKey, now);
+  const freshB = getGroupFreshCache('B', ssotKey, now);
+
+  // Global “no upstream calls” states.
+  if (lastWeekendFreeze) {
+    const hasAnyCache = Boolean(rideA || rideB);
+    lastDecision = hasAnyCache ? 'weekend_freeze_ride_cache' : 'weekend_freeze_no_cache';
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
     return buildResponse({
-      mode: 'live',
+      mode: 'cached',
       sourceProvider: 'twelvedata',
       asOfIso,
-      data: [],
-      error: 'Rate-limited and no valid cache available',
+      data,
+      error: hasAnyCache ? undefined : 'Weekend freeze (no cache available)',
     });
   }
 
-  // 2) Cache hit (SSOT-keyed)
-  if (canUseCache(now, key)) {
+  // In tests, never call upstream unless explicitly allowed.
+  const isTest = process.env.NODE_ENV === 'test';
+  const allowUpstreamInTests = process.env.FX_ALLOW_UPSTREAM_IN_TESTS === 'true';
+
+  if (!hasApiKey || (isTest && !allowUpstreamInTests)) {
+    const hasAnyCache = Boolean(rideA || rideB);
+    lastDecision = hasAnyCache ? 'no_api_key_ride_cache' : 'no_api_key_no_cache';
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
+    return buildResponse({
+      mode: 'cached',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+      error: hasAnyCache ? undefined : 'Missing TWELVEDATA_API_KEY',
+    });
+  }
+
+  if (isRateLimited(now)) {
+    const hasAnyCache = Boolean(rideA || rideB);
+    lastDecision = hasAnyCache ? 'rate_limited_ride_cache' : 'rate_limited_no_cache';
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
+    return buildResponse({
+      mode: 'cached',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+      error: hasAnyCache ? undefined : 'Rate-limited (no cache available)',
+    });
+  }
+
+  // A/B refresh policy: only the scheduled half can refresh this cycle.
+  const scheduled = scheduledGroup;
+  const scheduledFresh = scheduled === 'A' ? freshA : freshB;
+
+  // Global TTL gate: at most ONE upstream call per policy TTL window, regardless of traffic.
+  const cycleDue = isCycleDue(now);
+  const hasAnyCache = Boolean(rideA || rideB);
+
+  // If we are still inside the TTL window, serve cache (ride-cache) and do not refresh.
+  // Exception: if we have no cache at all, allow bootstrap refresh.
+  if (!cycleDue && hasAnyCache) {
     lastDecision = 'cache_hit';
-    logTrace('cache hit', {
-      key,
-      ttlSeconds: CACHE_TTL_SECONDS,
-      expiresAt: iso((ribbonCache as FxRibbonCache).expiresAtMs),
-      asOf: (ribbonCache as FxRibbonCache).payload.meta.asOf,
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
+    return buildResponse({
+      mode: 'cached',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
     });
-    return (ribbonCache as FxRibbonCache).payload;
   }
 
-  // 3) Single-flight: if one request is in-flight, join it (only valid for same SSOT key).
-  if (ribbonInFlight) {
-    lastDecision = 'singleflight_join';
-    logTrace('single-flight join', { key });
-    return ribbonInFlight;
+  // If scheduled half is still fresh, we do not fetch.
+  if (scheduledFresh) {
+    lastDecision = 'cache_hit';
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
+    return buildResponse({
+      mode: 'cached',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+    });
   }
 
-  // 4) Cache miss: fetch new values
-  lastDecision = 'cache_miss';
+  // Cache miss for the scheduled half ⇒ refresh *only that half*.
+  try {
+    const refreshed =
+      scheduled === 'A'
+        ? await refreshGroup({
+            group: 'A',
+            ssotKey,
+            pairs: split.A,
+            symbols: symbolsA,
+            now,
+          })
+        : await refreshGroup({
+            group: 'B',
+            ssotKey,
+            pairs: split.B,
+            symbols: symbolsB,
+            now,
+          });
 
-  const symbols = uniqueStrings(pairs.map((p) => normaliseSymbol(p.symbol)));
+    const nextA = scheduled === 'A' ? refreshed : getGroupRideCache('A', ssotKey);
+    const nextB = scheduled === 'B' ? refreshed : getGroupRideCache('B', ssotKey);
 
-  ribbonInFlight = (async () => {
-    try {
-      logTrace('cache miss → fetching bulk', {
-        key,
-        pairCount: pairs.length,
-        symbolCount: symbols.length,
-        ttlSeconds: CACHE_TTL_SECONDS,
-      });
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: nextA, groupB: nextB });
+    const asOfIso = newestAsOfIso(nextA, nextB);
 
-      const map = await fetchTwelveDataBulkExchangeRates(symbols);
+    return buildResponse({
+      mode: safeModeFromDidFetch(true),
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    lastError = message;
 
-      // Trace: missing symbols (this is the regression detector)
-      lastFetchAtMs = nowMs();
-      lastExpectedSymbols = symbols.length;
-      lastMissingSymbols = symbols.filter((s) => !map.has(normaliseSymbol(s)));
+    // If we have *any* cache (even stale), serve it; otherwise return a full null-price list with an error.
+    const fallbackA = getGroupRideCache('A', ssotKey);
+    const fallbackB = getGroupRideCache('B', ssotKey);
 
-      if (lastMissingSymbols.length > 0) {
-        logTrace('symbol lookup misses detected', {
-          missingCount: lastMissingSymbols.length,
-          missingSymbols: lastMissingSymbols,
-        });
-      }
+    const hasAnyCache = Boolean(fallbackA || fallbackB);
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: fallbackA, groupB: fallbackB });
+    const asOfIso = newestAsOfIso(fallbackA, fallbackB);
 
-      const quotes = pairsToQuotes(pairs, map);
-
-      const asOfIso = new Date().toISOString();
-      const payload = buildResponse({
-        mode: 'live',
-        sourceProvider: 'twelvedata',
-        asOfIso,
-        data: quotes,
-      });
-
-      ribbonCache = {
-        key,
-        payload,
-        expiresAtMs: nowMs() + CACHE_TTL_SECONDS * 1000,
-      };
-
-      lastError = undefined;
-
-      logTrace('fetch ok → cached', {
-        key,
-        quoteCount: quotes.length,
-        expiresAt: iso((ribbonCache as FxRibbonCache).expiresAtMs),
-      });
-
-      return payload;
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      lastError = message;
-
-      // If we have *any* cached value for the same key, prefer it.
-      const now2 = nowMs();
-      if (ribbonCache && ribbonCache.key === key && ribbonCache.expiresAtMs > now2) {
-        logTrace('fetch failed → serving cached value', { key, message });
-        return ribbonCache.payload;
-      }
-
-      logTrace('fetch failed → returning empty', { key, message });
-
-      const asOfIso = new Date().toISOString();
-      return buildResponse({
-        mode: 'live',
-        sourceProvider: 'twelvedata',
-        asOfIso,
-        data: [],
-        error: message,
-      });
-    } finally {
-      ribbonInFlight = null;
-    }
-  })();
-
-  return ribbonInFlight;
+    return buildResponse({
+      mode: safeModeFromDidFetch(false),
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+      error: hasAnyCache ? undefined : message,
+    });
+  }
 }

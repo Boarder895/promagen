@@ -1,196 +1,116 @@
 // frontend/src/data/fx/index.ts
-//
-// Canonical view of FX pairs and default selections.
-//
-// Rules:
-//  - All FX pair metadata (base, quote, label, precision, demo)
-//    comes from pairs.json only.
-//  - fx.pairs.json is an index of defaults and flags that
-//    references pairs by id only.
-//  - This module is the single TS entry point for FX pair data.
-//    Other code should import from here, not raw JSON files.
+/**
+ * FX SSOT Access Layer
+ *
+ * API BRAIN COMPLIANCE:
+ * - This file is SSOT-only.
+ * - It MUST NOT contain timing, freshness, or provider logic.
+ * - It MUST return a deterministic, ordered list.
+ * - Ordering MUST be stable across runs to preserve:
+ *   - A/B group split
+ *   - Cache keys
+ *   - Trace diagnostics
+ *
+ * This file is allowed to:
+ * - Read static JSON
+ * - Filter by tier
+ *
+ * This file is NOT allowed to:
+ * - Fetch
+ * - Poll
+ * - Randomise
+ * - Read env vars
+ * - React to traffic or time
+ */
 
-import pairsJson from './pairs.json';
-import fxPairsIndexJson from './fx.pairs.json';
-import type { FxPair } from '@/types/fx';
+import fxPairs from './fx.pairs.json';
+import countryCurrencyMap from './country-currency.map.json';
 
-export type FxPairMeta = FxPair;
 export type FxTier = 'free' | 'paid';
 
-export interface FxPairIndexEntry {
+export interface FxPairSSOT {
   id: string;
-  baseCountryCode?: string;
-  quoteCountryCode?: string;
-  isDefaultFree?: boolean;
-  isDefaultPaid?: boolean;
-  group?: string;
+  base: string;
+  quote: string;
+  label: string;
+  group: string;
+  tiers: FxTier[];
+  homeLongitude?: number;
+  index: number; // deterministic SSOT index (critical for A/B)
 }
 
-export interface FxPairWithIndexMeta extends FxPairMeta, FxPairIndexEntry {}
+function toUpperTrim(value: unknown): string {
+  return typeof value === 'string' ? value.trim().toUpperCase() : '';
+}
 
-/**
- * Normalise an FX pair id into the canonical form used throughout the app.
- *
- * Examples:
- *   "GBP-USD"   → "gbp-usd"
- *   "gbp_usd"   → "gbp-usd"
- *   "  Gbp-Usd" → "gbp-usd"
- */
-export function normaliseFxPairId(rawId: string): string {
-  const trimmed = rawId.trim();
+function resolveCurrencyCode(rawCurrency: unknown, rawCountryCode: unknown): string {
+  const direct = toUpperTrim(rawCurrency);
+  if (direct) return direct;
 
-  if (!trimmed) {
-    return trimmed;
-  }
+  const country = toUpperTrim(rawCountryCode);
+  if (!country) return 'UNDEFINED';
 
-  return trimmed
-    .replace(/[_\s]+/g, '-') // underscores / spaces → hyphen
-    .toLowerCase();
+  const map = countryCurrencyMap as unknown as Record<string, string>;
+  const mapped = map[country];
+  return toUpperTrim(mapped) || 'UNDEFINED';
+}
+
+function resolveTiers(raw: any): FxTier[] {
+  if (Array.isArray(raw?.tiers)) return raw.tiers as FxTier[];
+
+  const tiers: FxTier[] = [];
+  if (raw?.isDefaultFree === true) tiers.push('free');
+  if (raw?.isDefaultPaid === true) tiers.push('paid');
+
+  // Safe fallback: if the SSOT row has no explicit tier flags, treat it as free.
+  return tiers.length ? tiers : ['free'];
 }
 
 /**
- * Canonical FX pair catalogue.
- *
- * This is the single source of truth for all FX pairs that appear in Promagen:
- *  - homepage FX ribbon (free)
- *  - paid FX picker
- *  - any future mini widgets
- *
- * It comes from a JSON file that is validated by tests.
+ * Internal normalisation.
+ * This ensures:
+ * - Stable casing
+ * - Predictable labels
+ * - No accidental runtime mutation
  */
-const ALL_PAIRS: FxPairMeta[] = (pairsJson as FxPairMeta[]).map((pair) => {
-  const base = pair.base.toUpperCase();
-  const quote = pair.quote.toUpperCase();
-  const id = normaliseFxPairId(pair.id);
-  const label = pair.label ?? `${base} / ${quote}`;
+function normalisePair(raw: any, index: number): FxPairSSOT {
+  const base = resolveCurrencyCode(raw?.base, raw?.baseCountryCode);
+  const quote = resolveCurrencyCode(raw?.quote, raw?.quoteCountryCode);
 
   return {
-    ...pair,
-    id,
+    id: String(raw?.id),
     base,
     quote,
-    label,
-  };
-});
-
-/**
- * Map for fast id → meta lookup.
- */
-const PAIR_BY_ID: Map<string, FxPairMeta> = new Map(ALL_PAIRS.map((pair) => [pair.id, pair]));
-
-/**
- * FX index entries (defaults + flags).
- *
- * These entries must:
- *  - reference FX pairs by id only
- *  - never redefine base / quote / label / precision / demo
- */
-const INDEX_ENTRIES: FxPairIndexEntry[] = fxPairsIndexJson as FxPairIndexEntry[];
-
-/**
- * Default free and paid pair id lists.
- *
- * Order is preserved from fx.pairs.json.
- */
-const DEFAULT_FREE_PAIR_IDS: string[] = INDEX_ENTRIES.filter((entry) => entry.isDefaultFree).map(
-  (entry) => normaliseFxPairId(entry.id),
-);
-
-const DEFAULT_PAID_PAIR_IDS: string[] = INDEX_ENTRIES.filter((entry) => entry.isDefaultPaid).map(
-  (entry) => normaliseFxPairId(entry.id),
-);
-
-/**
- * Return the full FX pair catalogue.
- *
- * Callers should treat the returned array as read-only.
- */
-export function getAllFxPairs(): FxPairMeta[] {
-  return ALL_PAIRS;
-}
-
-/**
- * Look up an FX pair by id.
- *
- * Accepts any reasonably formatted id; it will be normalised first.
- */
-export function getFxPairById(id: string): FxPairMeta | undefined {
-  const normalised = normaliseFxPairId(id);
-  return PAIR_BY_ID.get(normalised);
-}
-
-/**
- * Look up an FX pair by id and throw if it does not exist.
- */
-export function requireFxPairById(id: string): FxPairMeta {
-  const pair = getFxPairById(id);
-
-  if (!pair) {
-    throw new Error(`Unknown FX pair id "${id}"`);
-  }
-
-  return pair;
-}
-
-/**
- * Default FX pairs for a given tier.
- *
- * - Free tier → DEFAULT_FREE_PAIR_IDS
- * - Paid tier → DEFAULT_PAID_PAIR_IDS
- *
- * Any missing ids are silently skipped, but this should be prevented
- * by the FX SSoT Jest tests.
- */
-export function getDefaultFxPairsForTier(tier: FxTier): FxPairMeta[] {
-  const ids = tier === 'free' ? DEFAULT_FREE_PAIR_IDS : DEFAULT_PAID_PAIR_IDS;
-
-  return ids
-    .map((pairId) => PAIR_BY_ID.get(pairId))
-    .filter((pair): pair is FxPairMeta => Boolean(pair));
-}
-
-/**
- * Raw index entries from fx.pairs.json.
- *
- * Mostly useful for flags (isDefaultFree / isDefaultPaid / group / country codes).
- */
-export function getFxPairIndexEntries(): FxPairIndexEntry[] {
-  return INDEX_ENTRIES;
-}
-
-/**
- * Look up a raw index entry by id.
- */
-export function getFxPairIndexEntryById(id: string): FxPairIndexEntry | undefined {
-  const normalised = normaliseFxPairId(id);
-  return INDEX_ENTRIES.find((entry) => normaliseFxPairId(entry.id) === normalised);
-}
-
-/**
- * Merge canonical pair metadata with any index flags (defaults, group, country codes).
- */
-export function mergeFxPairWithIndexMeta(pair: FxPairMeta): FxPairWithIndexMeta {
-  const indexEntry = getFxPairIndexEntryById(pair.id);
-
-  if (!indexEntry) {
-    return pair;
-  }
-
-  const { id: _ignored, ...restIndex } = indexEntry;
-
-  return {
-    ...pair,
-    ...restIndex,
+    label: raw?.label ? String(raw.label) : `${base} / ${quote}`,
+    group: raw?.group ? String(raw.group) : 'fx',
+    tiers: resolveTiers(raw),
+    homeLongitude: typeof raw?.homeLongitude === 'number' ? raw.homeLongitude : undefined,
+    index,
   };
 }
 
 /**
- * Convenience helper: default FX pairs for a tier with index flags applied.
+ * getDefaultFxPairsWithIndexForTier
  *
- * Useful for:
- *  - homepage default FX row (free)
- *  - starting state of the paid FX picker
+ * SINGLE SOURCE OF TRUTH for:
+ * - FX ribbon membership
+ * - Ordering
+ * - A/B group slicing
+ * - Cache key fingerprinting
+ *
+ * CRITICAL GUARANTEES:
+ * - Output order == JSON order
+ * - Index is assigned BEFORE filtering
+ * - Filtering never reorders
  */
-export function getDefaultFxPairsWithIndexForTier(tier: FxTier): FxPairWithIndexMeta[] {
-  return getDefaultFxPairsForTier(tier).map(mergeFxPairWithIndexMeta);
+export function getDefaultFxPairsWithIndexForTier(tier: FxTier): FxPairSSOT[] {
+  if (!Array.isArray(fxPairs)) {
+    throw new Error('fx.pairs.json must export an array');
+  }
+
+  // Step 1: normalise + index in declared order
+  const indexed: FxPairSSOT[] = fxPairs.map((raw, idx) => normalisePair(raw, idx));
+
+  // Step 2: filter by tier ONLY (no sorting, no reshaping)
+  return indexed.filter((pair) => pair.tiers.includes(tier));
 }

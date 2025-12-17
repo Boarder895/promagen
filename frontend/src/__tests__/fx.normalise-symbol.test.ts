@@ -1,7 +1,7 @@
 import { normaliseSymbol } from '@/lib/fx/providers';
 
 describe('normaliseSymbol()', () => {
-  it('maps eur/usd and EUR/USD to the same key', () => {
+  it('maps eur/usd and EUR/USD to the same canonical key', () => {
     expect(normaliseSymbol('eur/usd')).toBe('EUR/USD');
     expect(normaliseSymbol('EUR/USD')).toBe('EUR/USD');
   });

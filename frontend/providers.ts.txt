@@ -1,0 +1,1285 @@
+﻿// frontend/src/lib/fx/providers.ts
+/**
+ * FX providers + caching for the finance ribbon.
+ *
+ * GUARANTEES (do not delete):
+ * - Bulk request (Nâ†’1) âœ…
+ * - TTL caching âœ…
+ * - Single-flight de-duplication âœ…
+ * - 429 cooldown + ride-cache âœ…
+ * - SSOT-key invalidation âœ…
+ * - Trace snapshot includes missing symbol diagnostics âœ…
+ *
+ * API BRAIN COMPLIANCE (no-bypass):
+ * - ONE authority decides upstream permission (this file).
+ * - TTL + provider choice come from config/api/roles.policies.json (role: fx_ribbon).
+ * - Provider endpoints + auth wiring come from config/api/providers.registry.json.
+ * - Traffic is observational only and must NEVER influence permission.
+ * - A/B alternation is an authority consequence (last successful refresh), not wall-clock parity.
+ * - Weekend freeze (Europe/London): never fetch upstream on Sat/Sun.
+ */
+
+import { createHash } from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
+import type { FxApiMeta, FxApiMode, FxApiQuote, FxApiResponse } from '@/types/finance-ribbon';
+import { getDefaultFxPairsWithIndexForTier } from '@/data/fx';
+
+type FxRibbonGroupId = 'A' | 'B';
+
+type CacheDecision =
+  | 'cache_hit'
+  | 'cache_miss_refresh_A'
+  | 'cache_miss_refresh_B'
+  | 'singleflight_join_A'
+  | 'singleflight_join_B'
+  | 'weekend_freeze_ride_cache'
+  | 'weekend_freeze_no_cache'
+  | 'rate_limited_ride_cache'
+  | 'rate_limited_no_cache'
+  | 'ssot_changed_invalidate'
+  | 'no_api_key_ride_cache'
+  | 'no_api_key_no_cache'
+  | 'policy_load_failed_ride_cache'
+  | 'policy_load_failed_no_cache'
+  | 'policy_provider_unsupported_ride_cache'
+  | 'policy_provider_unsupported_no_cache';
+
+type FxRibbonTraceSnapshot = {
+  ttlSeconds: number;
+  ssotKey: string;
+
+  policy: {
+    role: 'fx_ribbon';
+    ttlSeconds: number;
+    primaryProvider: string;
+    backupProviders: string[];
+    loadedFrom?: string;
+    loadError?: string;
+  };
+
+  registry: {
+    loadedFrom: string | null;
+    providerCount: number;
+  };
+
+  cache: {
+    hasValue: boolean;
+    asOf?: string;
+    expiresAt?: string;
+    key?: string;
+  };
+
+  inFlight: boolean;
+  lastDecision?: CacheDecision;
+  lastError?: string;
+
+  counters: {
+    ribbonCalls: number;
+    upstreamCalls: number;
+    upstreamSymbolsTotal: number;
+  };
+
+  rateLimit: {
+    until?: string;
+    last429At?: string;
+    cooldownSeconds: number;
+  };
+
+  weekendFreeze: {
+    active: boolean;
+    londonWeekday: string;
+    timezone: string;
+  };
+
+  traffic: {
+    windowSeconds: number;
+    hitsInWindow: number;
+    factor: number;
+  };
+
+  schedule: {
+    cycleIndex: number;
+    lastScheduledGroup: FxRibbonGroupId;
+  };
+
+  groups: {
+    A: {
+      hasValue: boolean;
+      asOf?: string;
+      expiresAt?: string;
+      inFlight: boolean;
+      expectedSymbols: number;
+      missingCount: number;
+      missingSymbols: string[];
+    };
+    B: {
+      hasValue: boolean;
+      asOf?: string;
+      expiresAt?: string;
+      inFlight: boolean;
+      expectedSymbols: number;
+      missingCount: number;
+      missingSymbols: string[];
+    };
+  };
+
+  lastFetch?: {
+    at?: string;
+    group?: FxRibbonGroupId;
+    expectedSymbols: number;
+    missingCount: number;
+    missingSymbols: string[];
+  };
+};
+
+type TwelveDataBulkItem = {
+  // Some Twelve Data endpoints return the symbol as the object key (e.g. {"EUR/USD": { price: "..." }}),
+  // so symbol is optional here.
+  symbol?: string;
+  rate?: string | number;
+  exchange_rate?: string | number;
+  price?: string | number;
+  timestamp?: number;
+};
+
+type TwelveDataBulkResponse =
+  | {
+      code?: number;
+      message?: string;
+      status?: string;
+      data?: TwelveDataBulkItem[] | Record<string, TwelveDataBulkItem>;
+    }
+  | Record<string, TwelveDataBulkItem | unknown>;
+
+export type FxProviderSummary = {
+  modeLabel: string;
+  emphasiseFallback: boolean;
+  meta: { id: string; name: string };
+};
+
+type FxRibbonGroupCache = {
+  group: FxRibbonGroupId;
+  ssotKey: string;
+  asOfIso: string;
+  expiresAtMs: number;
+  quotes: FxApiQuote[];
+  expectedSymbols: number;
+  missingSymbols: string[];
+};
+
+type RolesPoliciesFile = {
+  version?: string;
+  roles?: Array<{
+    role: string;
+    primary_provider?: string;
+    backup_providers?: string[];
+    cache_ttl_seconds?: number;
+    quality_degradation_mode?: string;
+  }>;
+};
+
+type ProvidersRegistryFile = {
+  version?: string;
+  providers?: Array<{
+    id: string;
+    name?: string;
+    base_url?: string;
+    auth?: {
+      type?: string;
+      location?: string;
+      field?: string;
+      env_var?: string;
+    };
+    quotas?: Record<string, unknown>;
+    capabilities?: string[];
+    adapters?: Record<string, string>;
+  }>;
+};
+
+type ProviderRegistryItem = NonNullable<ProvidersRegistryFile['providers']>[number];
+
+type FxRibbonPolicy = {
+  ttlSeconds: number;
+  primaryProvider: string;
+  backupProviders: string[];
+  loadedFrom?: string;
+  loadError?: string;
+};
+
+// -------
+// Constants
+// -------
+
+const BUILD_ID = createHash('sha256')
+  .update(`${process.env.VERCEL_GIT_COMMIT_SHA ?? ''}|${process.env.NODE_ENV ?? ''}`)
+  .digest('hex')
+  .slice(0, 12);
+
+const LONDON_TIMEZONE = 'Europe/London';
+
+// Traffic window is observational only (trace/debug). It must never alter permission.
+const TRAFFIC_WINDOW_SECONDS = 60;
+
+// Rate limit cooldown is enforced on 429 (ride-cache, no upstream).
+const RATE_LIMIT_COOLDOWN_SECONDS = 15 * 60;
+
+// Dev-only upstream guard (warn if someone accidentally creates NÃ— calls).
+const DEV_UPSTREAM_WARN_CALLS_PER_MIN = 8;
+
+const DEV_TTL_OVERRIDE_SECONDS = Number(process.env.NEXT_PUBLIC_DEV_FX_TTL_SECONDS ?? 0);
+
+// -------
+// Module state (server authority)
+// -------
+
+const counters = {
+  ribbonCalls: 0,
+  upstreamCalls: 0,
+  upstreamSymbolsTotal: 0,
+};
+
+let groupCacheA: FxRibbonGroupCache | null = null;
+let groupCacheB: FxRibbonGroupCache | null = null;
+
+let inFlightA: Promise<FxRibbonGroupCache> | null = null;
+let inFlightB: Promise<FxRibbonGroupCache> | null = null;
+
+let lastFetchAtMs: number | null = null;
+let lastFetchGroup: FxRibbonGroupId | undefined;
+
+let lastDecision: CacheDecision | undefined;
+let lastError: string | undefined;
+
+let lastSsotKey = '';
+
+// missing symbol diagnostics for the *last attempted refresh* (not current cache)
+let lastExpectedSymbols = 0;
+let lastMissingSymbols: string[] = [];
+
+// 429 / cooldown
+let last429AtMs: number | null = null;
+let rateLimitedUntilMs: number | null = null;
+
+// weekend freeze diagnostics
+let lastLondonWeekday = 'â€”';
+let lastWeekendFreeze = false;
+
+// traffic diagnostics
+const ribbonHitTimesMs: number[] = [];
+let lastTrafficHits = 0;
+let lastTrafficFactor = 1;
+
+// Track upstream calls in dev so we can shout if someone accidentally multiplies fetch paths.
+const upstreamCallTimesMs: number[] = [];
+let lastBudgetWarnAtMs = 0;
+
+// Schedule diagnostics
+let lastCycleIndex = 0;
+let lastScheduledGroup: FxRibbonGroupId = 'A';
+
+// Policy cache (loaded from config/api/roles.policies.json)
+let policyCache: FxRibbonPolicy | null = null;
+
+// Provider registry cache (loaded from config/api/providers.registry.json)
+let providersRegistryCache: ProvidersRegistryFile | null = null;
+let providersRegistryLoadedFrom: string | null = null;
+let providersRegistryMtimeMs: number | null = null;
+
+// Roles policy cache file timestamp tracking (so local edits take effect without restart)
+let rolesPoliciesLoadedFrom: string | null = null;
+let rolesPoliciesMtimeMs: number | null = null;
+
+function nowMs(): number {
+  return Date.now();
+}
+
+function iso(ms: number): string {
+  return new Date(ms).toISOString();
+}
+
+function safeJsonParse<T>(raw: string): T | null {
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function isProd(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+function resolveRolesPoliciesPath(): string | null {
+  // Try a few likely repo layouts without guessing a single truth.
+  // This keeps the authority self-sufficient across dev/prod environments.
+  const cwd = process.cwd();
+
+  const candidates = [
+    path.join(cwd, 'config', 'api', 'roles.policies.json'),
+    path.join(cwd, 'frontend', 'config', 'api', 'roles.policies.json'),
+    path.join(cwd, 'roles.policies.json'),
+  ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+function resolveProvidersRegistryPath(): string | null {
+  const cwd = process.cwd();
+
+  const candidates = [
+    path.join(cwd, 'config', 'api', 'providers.registry.json'),
+    path.join(cwd, 'frontend', 'config', 'api', 'providers.registry.json'),
+    path.join(cwd, 'providers.registry.json'),
+  ];
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+function loadProvidersRegistryFromDisk(): ProvidersRegistryFile {
+  const fallback: ProvidersRegistryFile = { version: 'unknown', providers: [] };
+
+  try {
+    const resolved = resolveProvidersRegistryPath();
+    if (!resolved) {
+      providersRegistryLoadedFrom = null;
+      providersRegistryMtimeMs = null;
+      providersRegistryCache = fallback;
+      return fallback;
+    }
+
+    const stat = fs.statSync(resolved);
+    const raw = fs.readFileSync(resolved, 'utf8');
+    const json = safeJsonParse<ProvidersRegistryFile>(raw);
+
+    providersRegistryLoadedFrom = resolved;
+    providersRegistryMtimeMs = stat.mtimeMs;
+    providersRegistryCache = json ?? fallback;
+    return providersRegistryCache;
+  } catch {
+    providersRegistryLoadedFrom = null;
+    providersRegistryMtimeMs = null;
+    providersRegistryCache = fallback;
+    return fallback;
+  }
+}
+
+function getProvidersRegistry(): ProvidersRegistryFile {
+  // Reload if the on-disk file changed (dev friendliness; no behavioural impact in prod).
+  if (!providersRegistryCache) return loadProvidersRegistryFromDisk();
+
+  if (providersRegistryLoadedFrom) {
+    try {
+      const stat = fs.statSync(providersRegistryLoadedFrom);
+      if (providersRegistryMtimeMs === null || stat.mtimeMs !== providersRegistryMtimeMs) {
+        return loadProvidersRegistryFromDisk();
+      }
+    } catch {
+      return loadProvidersRegistryFromDisk();
+    }
+  }
+
+  return providersRegistryCache;
+}
+
+function getProviderFromRegistry(providerId: string): ProviderRegistryItem | null {
+  const id = String(providerId ?? '').toLowerCase();
+  const reg = getProvidersRegistry();
+  const providers = reg.providers ?? [];
+  return providers.find((p) => String(p.id).toLowerCase() === id) ?? null;
+}
+
+function providerDisplayName(providerId: string): string {
+  const id = String(providerId ?? '').toLowerCase();
+  if (id === 'cache') return 'Cache';
+  if (id === 'fallback') return 'Fallback';
+
+  const p = getProviderFromRegistry(id);
+  return p?.name ?? providerId ?? 'Unknown';
+}
+
+function loadFxRibbonPolicyFromDisk(): FxRibbonPolicy {
+  // API Brain: the Role Policy is the lawmaker. Code must follow it.
+  const fallbackTtl = 1800; // Prod truth anchor (30 minutes)
+  const fallback: FxRibbonPolicy = {
+    ttlSeconds: fallbackTtl,
+    primaryProvider: 'twelvedata',
+    backupProviders: [],
+  };
+
+  try {
+    const resolved = resolveRolesPoliciesPath();
+    if (!resolved) {
+      rolesPoliciesLoadedFrom = null;
+      rolesPoliciesMtimeMs = null;
+      return { ...fallback, loadError: 'roles.policies.json not found on disk' };
+    }
+
+    const stat = fs.statSync(resolved);
+
+    const raw = fs.readFileSync(resolved, 'utf8');
+    const json = safeJsonParse<RolesPoliciesFile>(raw);
+
+    rolesPoliciesLoadedFrom = resolved;
+    rolesPoliciesMtimeMs = stat.mtimeMs;
+
+    if (!json || !Array.isArray(json.roles)) {
+      return {
+        ...fallback,
+        loadedFrom: resolved,
+        loadError: 'roles.policies.json invalid JSON shape',
+      };
+    }
+
+    const roles = Array.isArray(json.roles) ? json.roles : [];
+    const role = roles.find((r) => r && r.role === 'fx_ribbon');
+
+    if (!role) {
+      return { ...fallback, loadedFrom: resolved, loadError: 'role fx_ribbon not found' };
+    }
+
+    const ttl = Number(role.cache_ttl_seconds);
+    const ttlSeconds = Number.isFinite(ttl) && ttl > 0 ? Math.floor(ttl) : fallbackTtl;
+
+    const primaryProvider = String(role.primary_provider ?? 'twelvedata').toLowerCase();
+    const backupProviders = Array.isArray(role.backup_providers)
+      ? role.backup_providers.map((p) => String(p).toLowerCase())
+      : [];
+
+    const basePolicy: FxRibbonPolicy = {
+      ttlSeconds,
+      primaryProvider,
+      backupProviders,
+      loadedFrom: resolved,
+      loadError: undefined,
+    };
+
+    // Dev-only TTL override (never in prod) â€” useful for local tuning without editing policy.
+    if (!isProd() && DEV_TTL_OVERRIDE_SECONDS > 0) {
+      return { ...basePolicy, ttlSeconds: DEV_TTL_OVERRIDE_SECONDS };
+    }
+
+    return basePolicy;
+  } catch (err) {
+    rolesPoliciesLoadedFrom = null;
+    rolesPoliciesMtimeMs = null;
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ...fallback, loadError: msg };
+  }
+}
+
+function getFxRibbonPolicy(): FxRibbonPolicy {
+  if (!policyCache) {
+    policyCache = loadFxRibbonPolicyFromDisk();
+    return policyCache;
+  }
+
+  // Dev friendliness: reload policy if the file changed.
+  if (rolesPoliciesLoadedFrom) {
+    try {
+      const stat = fs.statSync(rolesPoliciesLoadedFrom);
+      if (rolesPoliciesMtimeMs === null || stat.mtimeMs !== rolesPoliciesMtimeMs) {
+        policyCache = loadFxRibbonPolicyFromDisk();
+      }
+    } catch {
+      policyCache = loadFxRibbonPolicyFromDisk();
+    }
+  }
+
+  return policyCache;
+}
+
+function policyTtlSeconds(): number {
+  return getFxRibbonPolicy().ttlSeconds;
+}
+
+function policyPrimaryProvider(): string {
+  return getFxRibbonPolicy().primaryProvider;
+}
+
+export function normaliseSymbol(symbol: string): string {
+  const raw = String(symbol ?? '').trim();
+  if (!raw) return '';
+
+  const cleaned = raw.replace(/\s+/g, '').replace(/\\/g, '/').replace(/[_-]/g, '/').toUpperCase();
+
+  if (cleaned.includes('/')) {
+    const parts = cleaned.split('/').filter(Boolean);
+    const base = parts[0] ?? '';
+    const quote = parts[1] ?? '';
+    return base && quote ? `${base}/${quote}` : cleaned;
+  }
+
+  // Try to interpret "EURUSD" style by splitting into 3+3.
+  if (cleaned.length === 6) return `${cleaned.slice(0, 3)}/${cleaned.slice(3)}`;
+
+  return cleaned;
+}
+
+function ssotKeyFromOrderedIds(ids: string[]): string {
+  // SSOT fingerprint used to invalidate cache immediately if pairs change.
+  return createHash('sha256').update(ids.join('|')).digest('hex').slice(0, 16);
+}
+
+function buildMeta(
+  mode: FxApiMeta['mode'],
+  sourceProvider: FxApiMeta['sourceProvider'],
+  asOfIso: string,
+): FxApiMeta {
+  return { buildId: BUILD_ID, mode, sourceProvider, asOf: asOfIso };
+}
+
+function buildResponse(params: {
+  mode: FxApiMeta['mode'];
+  sourceProvider: FxApiMeta['sourceProvider'];
+  asOfIso: string;
+  data: FxApiQuote[];
+  error?: string;
+}): FxApiResponse {
+  return {
+    meta: buildMeta(params.mode, params.sourceProvider, params.asOfIso),
+    data: params.data,
+    error: params.error,
+  };
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parseTwelveDataBulk(json: unknown): Map<string, TwelveDataBulkItem> {
+  const map = new Map<string, TwelveDataBulkItem>();
+  if (!json) return map;
+
+  if (isPlainObject(json) && 'data' in json) {
+    const data = (json as { data?: unknown }).data;
+
+    if (Array.isArray(data)) {
+      for (const item of data) {
+        if (!isPlainObject(item)) continue;
+        const sym = (item.symbol as string | undefined) ?? '';
+        if (!sym) continue;
+        map.set(normaliseSymbol(sym), item as TwelveDataBulkItem);
+      }
+      return map;
+    }
+
+    if (isPlainObject(data)) {
+      for (const [k, v] of Object.entries(data)) {
+        if (!isPlainObject(v)) continue;
+        const sym = (v.symbol as string | undefined) ?? k;
+        if (!sym) continue;
+        map.set(normaliseSymbol(sym), v as TwelveDataBulkItem);
+      }
+      return map;
+    }
+
+    return map;
+  }
+
+  if (isPlainObject(json)) {
+    for (const [k, v] of Object.entries(json)) {
+      if (!isPlainObject(v)) continue;
+      const sym = (v.symbol as string | undefined) ?? k;
+      if (!sym) continue;
+      map.set(normaliseSymbol(sym), v as TwelveDataBulkItem);
+    }
+  }
+
+  return map;
+}
+
+function getLondonWeekdayShort(ms: number): string {
+  try {
+    const dtf = new Intl.DateTimeFormat('en-GB', { timeZone: LONDON_TIMEZONE, weekday: 'short' });
+    return dtf.format(new Date(ms));
+  } catch {
+    const d = new Date(ms).getUTCDay();
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d] ?? 'â€”';
+  }
+}
+
+function isWeekendLondon(ms: number): boolean {
+  const wd = getLondonWeekdayShort(ms).toLowerCase();
+  return wd.startsWith('sat') || wd.startsWith('sun');
+}
+
+type FxRibbonPair = {
+  id: string;
+  base: string;
+  quote: string;
+  label: string;
+  category: string;
+  symbol: string;
+};
+
+function buildRibbonPairsAndKey(): { pairs: FxRibbonPair[]; ssotKey: string } {
+  const ssotPairs = getDefaultFxPairsWithIndexForTier('free');
+
+  const orderedIds = ssotPairs.map((p) => p.id);
+  const ssotKey = ssotKeyFromOrderedIds(orderedIds);
+
+  const pairs: FxRibbonPair[] = ssotPairs.map((p) => {
+    const base = p.base.toUpperCase();
+    const quote = p.quote.toUpperCase();
+    const label = p.label ?? `${base} / ${quote}`;
+    const category = p.group ?? 'fx';
+    const symbol = `${base}/${quote}`;
+
+    return { id: p.id, base, quote, label, category, symbol };
+  });
+
+  return { pairs, ssotKey };
+}
+
+function groupSplit(pairs: FxRibbonPair[]): { A: FxRibbonPair[]; B: FxRibbonPair[] } {
+  // Stable split: even index â†’ A, odd index â†’ B.
+  const A: FxRibbonPair[] = [];
+  const B: FxRibbonPair[] = [];
+  for (let i = 0; i < pairs.length; i += 1) {
+    const p = pairs[i];
+    if (!p) continue;
+    if (i % 2 === 0) A.push(p);
+    else B.push(p);
+  }
+  return { A, B };
+}
+
+function newestAsOfIso(a: FxRibbonGroupCache | null, b: FxRibbonGroupCache | null): string {
+  if (a && b) return a.asOfIso > b.asOfIso ? a.asOfIso : b.asOfIso;
+  if (a) return a.asOfIso;
+  if (b) return b.asOfIso;
+  return new Date(0).toISOString();
+}
+
+function uniqueStrings(arr: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const s of arr) {
+    const v = String(s ?? '').trim();
+    if (!v) continue;
+    if (seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+}
+
+function pruneTimes(arr: number[], windowMs: number, now: number): void {
+  const cutoff = now - windowMs;
+  while (arr.length && arr[0] < cutoff) arr.shift();
+}
+
+function updateTraffic(now: number): void {
+  // Traffic is observational only. It must NEVER influence TTL or refresh permission.
+  const windowMs = TRAFFIC_WINDOW_SECONDS * 1000;
+  ribbonHitTimesMs.push(now);
+  pruneTimes(ribbonHitTimesMs, windowMs, now);
+
+  lastTrafficHits = ribbonHitTimesMs.length;
+  lastTrafficFactor = 1;
+}
+
+function nextScheduledGroup(): FxRibbonGroupId {
+  // Alternation advances only when a refresh truly happens (authority consequence).
+  return lastFetchGroup === 'A' ? 'B' : 'A';
+}
+
+function invalidateForSsotChange(nextKey: string): void {
+  if (!lastSsotKey) {
+    lastSsotKey = nextKey;
+    return;
+  }
+
+  if (lastSsotKey !== nextKey) {
+    // Immediate invalidation: do not wait for TTL.
+    groupCacheA = null;
+    groupCacheB = null;
+
+    lastDecision = 'ssot_changed_invalidate';
+    lastSsotKey = nextKey;
+  }
+}
+
+function bumpRateLimit(now: number): void {
+  last429AtMs = now;
+  rateLimitedUntilMs = now + RATE_LIMIT_COOLDOWN_SECONDS * 1000;
+
+  if (groupCacheA)
+    groupCacheA = {
+      ...groupCacheA,
+      expiresAtMs: Math.max(groupCacheA.expiresAtMs, rateLimitedUntilMs),
+    };
+  if (groupCacheB)
+    groupCacheB = {
+      ...groupCacheB,
+      expiresAtMs: Math.max(groupCacheB.expiresAtMs, rateLimitedUntilMs),
+    };
+}
+
+function isRateLimited(now: number): boolean {
+  return typeof rateLimitedUntilMs === 'number' && now < rateLimitedUntilMs;
+}
+
+function getGroupCache(group: FxRibbonGroupId): FxRibbonGroupCache | null {
+  return group === 'A' ? groupCacheA : groupCacheB;
+}
+
+function setGroupCache(cache: FxRibbonGroupCache): void {
+  if (cache.group === 'A') groupCacheA = cache;
+  else groupCacheB = cache;
+}
+
+function groupInFlight(group: FxRibbonGroupId): Promise<FxRibbonGroupCache> | null {
+  return group === 'A' ? inFlightA : inFlightB;
+}
+
+function setGroupInFlight(group: FxRibbonGroupId, p: Promise<FxRibbonGroupCache> | null): void {
+  if (group === 'A') inFlightA = p;
+  else inFlightB = p;
+}
+
+function getGroupRideCache(group: FxRibbonGroupId, ssotKey: string): FxRibbonGroupCache | null {
+  const cache = getGroupCache(group);
+  if (!cache) return null;
+  if (cache.ssotKey !== ssotKey) return null;
+  return cache;
+}
+
+function getGroupFreshCache(
+  group: FxRibbonGroupId,
+  ssotKey: string,
+  now: number,
+): FxRibbonGroupCache | null {
+  const cache = getGroupRideCache(group, ssotKey);
+  if (!cache) return null;
+  if (cache.expiresAtMs <= now) return null;
+  return cache;
+}
+
+function parseRate(item: TwelveDataBulkItem | undefined): number | null {
+  if (!item) return null;
+
+  const raw = item.rate ?? item.exchange_rate ?? item.price;
+  if (raw === undefined || raw === null) return null;
+
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  if (!Number.isFinite(n)) return null;
+
+  return n;
+}
+
+function groupPairsToQuotes(
+  pairs: FxRibbonPair[],
+  map: Map<string, TwelveDataBulkItem>,
+): FxApiQuote[] {
+  return pairs.map((pair) => {
+    const sym = normaliseSymbol(pair.symbol);
+    const rate = parseRate(map.get(sym));
+
+    return {
+      id: pair.id,
+      base: pair.base,
+      quote: pair.quote,
+      label: pair.label,
+      category: pair.category,
+      price: rate,
+      change: null,
+      changePct: null,
+    };
+  });
+}
+
+function mergeQuotesInSsotOrder(params: {
+  ssotPairs: FxRibbonPair[];
+  groupA: FxRibbonGroupCache | null;
+  groupB: FxRibbonGroupCache | null;
+}): FxApiQuote[] {
+  const { ssotPairs, groupA, groupB } = params;
+
+  const mapA = new Map<string, FxApiQuote>();
+  const mapB = new Map<string, FxApiQuote>();
+
+  for (const q of groupA?.quotes ?? []) mapA.set(q.id, q);
+  for (const q of groupB?.quotes ?? []) mapB.set(q.id, q);
+
+  return ssotPairs.map((p, idx) => {
+    const q = idx % 2 === 0 ? mapA.get(p.id) : mapB.get(p.id);
+    if (q) return q;
+
+    return {
+      id: p.id,
+      base: p.base,
+      quote: p.quote,
+      label: p.label,
+      category: p.category,
+      price: null,
+      change: null,
+      changePct: null,
+    };
+  });
+}
+
+function getFxProviderSummary(
+  mode: FxApiMode | null,
+  providerId: string | null,
+): FxProviderSummary {
+  const id = String(providerId ?? policyPrimaryProvider() ?? 'twelvedata').toLowerCase();
+  const name = providerDisplayName(id);
+
+  const modeLabel =
+    mode === 'cached'
+      ? 'Cached'
+      : mode === 'fallback'
+      ? 'Fallback'
+      : mode === 'live'
+      ? 'Live'
+      : 'â€”';
+
+  return { modeLabel, emphasiseFallback: mode === 'fallback', meta: { id, name } };
+}
+
+function logTrace(_msg: string, _data?: Record<string, unknown>): void {
+  // Keep this quiet by default; can be toggled if needed.
+  // Intentionally no console spam in production.
+}
+
+function devUpstreamBudgetGuard(callSite: string, symbolCount: number): void {
+  if (isProd()) return;
+
+  const now = nowMs();
+  const windowMs = 60 * 1000;
+  upstreamCallTimesMs.push(now);
+  pruneTimes(upstreamCallTimesMs, windowMs, now);
+
+  if (upstreamCallTimesMs.length <= DEV_UPSTREAM_WARN_CALLS_PER_MIN) return;
+  if (now - lastBudgetWarnAtMs < windowMs) return;
+
+  lastBudgetWarnAtMs = now;
+
+   
+  console.warn(
+    `[FX][budget] Upstream calls/min is high (${upstreamCallTimesMs.length}). callSite=${callSite} symbols=${symbolCount}`,
+  );
+}
+
+async function fetchTwelveDataBulkExchangeRates(
+  symbols: string[],
+  callSite: string,
+): Promise<Map<string, TwelveDataBulkItem>> {
+  const providerId = policyPrimaryProvider() || 'twelvedata';
+  const provider = getProviderFromRegistry(providerId) ?? getProviderFromRegistry('twelvedata');
+
+  // API Brain: provider endpoints + auth wiring belong in providers.registry.json.
+  const baseUrl = provider?.base_url || 'https://api.twelvedata.com/exchange_rate';
+  const auth = provider?.auth;
+  const envVar = auth?.env_var || 'TWELVEDATA_API_KEY';
+  const apiKey = (process.env as Record<string, string | undefined>)[envVar];
+  if (!apiKey) throw new Error(`Missing ${envVar}`);
+
+  devUpstreamBudgetGuard(callSite, symbols.length);
+
+  const url = new URL(baseUrl);
+  url.searchParams.set('symbol', symbols.join(','));
+
+  // Auth: prefer registry-driven query API key.
+  if (auth?.type === 'query_api_key' && auth.location === 'query') {
+    const field = auth.field || 'apikey';
+    url.searchParams.set(field, apiKey);
+  } else if (auth?.location === 'header' && auth.field) {
+    // Unusual for Twelve Data, but supported for generality.
+    // Note: header value is a raw key (no 'Bearer ' prefix).
+  } else {
+    // Safe fallback.
+    url.searchParams.set('apikey', apiKey);
+  }
+
+  counters.upstreamCalls += 1;
+  counters.upstreamSymbolsTotal += symbols.length;
+
+  const headers: Record<string, string> = { accept: 'application/json' };
+  if (auth?.location === 'header' && auth.field) {
+    headers[auth.field] = apiKey;
+  }
+
+  const res = await fetch(url.toString(), {
+    method: 'GET',
+    cache: 'no-store',
+    headers,
+  });
+
+  if (res.status === 429) {
+    bumpRateLimit(nowMs());
+    throw new Error('Twelve Data rate-limited (429)');
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(
+      `Twelve Data error: ${res.status} ${res.statusText}${body ? ` â€“ ${body}` : ''}`,
+    );
+  }
+
+  const json = (await res.json()) as TwelveDataBulkResponse;
+
+  if (isPlainObject(json) && 'status' in json) {
+    const status = String((json as { status?: unknown }).status ?? '');
+    if (status && status !== 'ok') {
+      const message = String((json as { message?: unknown }).message ?? 'unknown error');
+      throw new Error(`Twelve Data response not ok: ${message}`);
+    }
+  }
+
+  const map = parseTwelveDataBulk(json);
+
+  // Some Twelve Data endpoints return a single flat object (no 'data' wrapper and no keyed objects).
+  // If we requested exactly one symbol, we can still bind it deterministically.
+  if (map.size === 0 && symbols.length === 1 && isPlainObject(json)) {
+    const candidate = json as Record<string, unknown>;
+    if ('price' in candidate || 'rate' in candidate || 'exchange_rate' in candidate) {
+      map.set(normaliseSymbol(symbols[0]), candidate as unknown as TwelveDataBulkItem);
+    }
+  }
+
+  return map;
+}
+
+function setLastMissing(pairs: FxRibbonPair[], map: Map<string, TwelveDataBulkItem>): void {
+  const missing: string[] = [];
+  for (const pair of pairs) {
+    const sym = normaliseSymbol(pair.symbol);
+    if (!map.has(sym)) missing.push(`${pair.id} -> ${pair.symbol}`);
+  }
+  lastMissingSymbols = missing;
+}
+
+async function refreshGroup(params: {
+  group: FxRibbonGroupId;
+  ssotKey: string;
+  pairs: FxRibbonPair[];
+  symbols: string[];
+  now: number;
+}): Promise<FxRibbonGroupCache> {
+  const { group, ssotKey, pairs, symbols, now } = params;
+
+  const existingInFlight = groupInFlight(group);
+  if (existingInFlight) {
+    lastDecision = group === 'A' ? 'singleflight_join_A' : 'singleflight_join_B';
+    logTrace('single-flight join', { group, ssotKey });
+    return existingInFlight;
+  }
+
+  lastDecision = group === 'A' ? 'cache_miss_refresh_A' : 'cache_miss_refresh_B';
+
+  lastCycleIndex += 1;
+
+  const promise = (async () => {
+    try {
+      const map = await fetchTwelveDataBulkExchangeRates(symbols, `fx_ribbon_group_${group}`);
+
+      lastFetchAtMs = nowMs();
+      lastFetchGroup = group;
+      lastExpectedSymbols = symbols.length;
+
+      setLastMissing(pairs, map);
+
+      const quotes = groupPairsToQuotes(pairs, map);
+      const asOfIso = iso(nowMs());
+      const ttlSeconds = policyTtlSeconds();
+
+      const cache: FxRibbonGroupCache = {
+        group,
+        ssotKey,
+        asOfIso,
+        // Each group refreshes every other cycle â‡’ hold window is 2Ã— policy TTL.
+        expiresAtMs: now + ttlSeconds * 2 * 1000,
+        quotes,
+        expectedSymbols: symbols.length,
+        missingSymbols: lastMissingSymbols,
+      };
+
+      setGroupCache(cache);
+
+      lastError = undefined;
+
+      logTrace('refresh success', {
+        group,
+        ssotKey,
+        quoteCount: quotes.length,
+        expiresAt: iso(cache.expiresAtMs),
+      });
+
+      return cache;
+    } finally {
+      setGroupInFlight(group, null);
+    }
+  })();
+
+  setGroupInFlight(group, promise);
+
+  return promise;
+}
+
+export function getFxRibbonTraceSnapshot(): FxRibbonTraceSnapshot {
+  const policy = getFxRibbonPolicy();
+  const ttlSeconds = policy.ttlSeconds;
+  const reg = getProvidersRegistry();
+
+  const rideA = getGroupRideCache('A', lastSsotKey);
+  const rideB = getGroupRideCache('B', lastSsotKey);
+
+  const mergedHasValue = Boolean(rideA || rideB);
+  const mergedAsOf = newestAsOfIso(rideA, rideB);
+
+  const mergedExpiresAtMsCandidates: number[] = [];
+  if (rideA) mergedExpiresAtMsCandidates.push(rideA.expiresAtMs);
+  if (rideB) mergedExpiresAtMsCandidates.push(rideB.expiresAtMs);
+
+  const mergedExpiresAtMs = mergedExpiresAtMsCandidates.length
+    ? Math.min(...mergedExpiresAtMsCandidates)
+    : undefined;
+
+  return {
+    ttlSeconds,
+    ssotKey: lastSsotKey,
+    policy: {
+      role: 'fx_ribbon',
+      ttlSeconds: policy.ttlSeconds,
+      primaryProvider: policy.primaryProvider,
+      backupProviders: [...policy.backupProviders],
+      loadedFrom: policy.loadedFrom,
+      loadError: policy.loadError,
+    },
+    registry: {
+      loadedFrom: providersRegistryLoadedFrom,
+      providerCount: (reg.providers ?? []).length,
+    },
+    cache: {
+      hasValue: mergedHasValue,
+      asOf: mergedHasValue ? mergedAsOf : undefined,
+      expiresAt: typeof mergedExpiresAtMs === 'number' ? iso(mergedExpiresAtMs) : undefined,
+      key: lastSsotKey,
+    },
+    inFlight: Boolean(inFlightA || inFlightB),
+    lastDecision,
+    lastError,
+    counters: { ...counters },
+    rateLimit: {
+      until: typeof rateLimitedUntilMs === 'number' ? iso(rateLimitedUntilMs) : undefined,
+      last429At: typeof last429AtMs === 'number' ? iso(last429AtMs) : undefined,
+      cooldownSeconds: RATE_LIMIT_COOLDOWN_SECONDS,
+    },
+    weekendFreeze: {
+      active: lastWeekendFreeze,
+      londonWeekday: lastLondonWeekday,
+      timezone: LONDON_TIMEZONE,
+    },
+    traffic: {
+      windowSeconds: TRAFFIC_WINDOW_SECONDS,
+      hitsInWindow: lastTrafficHits,
+      factor: lastTrafficFactor,
+    },
+    schedule: {
+      cycleIndex: lastCycleIndex,
+      lastScheduledGroup,
+    },
+    groups: {
+      A: {
+        hasValue: Boolean(rideA),
+        asOf: rideA?.asOfIso,
+        expiresAt: rideA ? iso(rideA.expiresAtMs) : undefined,
+        inFlight: Boolean(inFlightA),
+        expectedSymbols: rideA?.expectedSymbols ?? 0,
+        missingCount: rideA?.missingSymbols.length ?? 0,
+        missingSymbols: rideA?.missingSymbols ?? [],
+      },
+      B: {
+        hasValue: Boolean(rideB),
+        asOf: rideB?.asOfIso,
+        expiresAt: rideB ? iso(rideB.expiresAtMs) : undefined,
+        inFlight: Boolean(inFlightB),
+        expectedSymbols: rideB?.expectedSymbols ?? 0,
+        missingCount: rideB?.missingSymbols.length ?? 0,
+        missingSymbols: rideB?.missingSymbols ?? [],
+      },
+    },
+    lastFetch: {
+      at: typeof lastFetchAtMs === 'number' ? iso(lastFetchAtMs) : undefined,
+      group: lastFetchGroup,
+      expectedSymbols: lastExpectedSymbols,
+      missingCount: lastMissingSymbols.length,
+      missingSymbols: [...lastMissingSymbols],
+    },
+  };
+}
+
+export function getFxRibbonTtlSeconds(): number {
+  return policyTtlSeconds();
+}
+
+export async function getFxRibbon(): Promise<FxApiResponse> {
+  counters.ribbonCalls += 1;
+
+  const now = nowMs();
+
+  updateTraffic(now);
+
+  lastLondonWeekday = getLondonWeekdayShort(now);
+  lastWeekendFreeze = isWeekendLondon(now);
+
+  const { pairs, ssotKey } = buildRibbonPairsAndKey();
+  invalidateForSsotChange(ssotKey);
+
+  const split = groupSplit(pairs);
+  const symbolsA = uniqueStrings(split.A.map((p) => normaliseSymbol(p.symbol)));
+  const symbolsB = uniqueStrings(split.B.map((p) => normaliseSymbol(p.symbol)));
+
+  // A/B schedule is state-based, not wall-clock parity.
+  const scheduledGroup = nextScheduledGroup();
+  lastScheduledGroup = scheduledGroup;
+
+  const rideA = getGroupRideCache('A', ssotKey);
+  const rideB = getGroupRideCache('B', ssotKey);
+
+  const policy = getFxRibbonPolicy();
+
+  // If policy cannot be loaded, do not fetch; ride cache if possible.
+  if (policy.loadError) {
+    const hasAnyCache = Boolean(rideA || rideB);
+    lastDecision = hasAnyCache ? 'policy_load_failed_ride_cache' : 'policy_load_failed_no_cache';
+    lastError = `Policy load failed: ${policy.loadError}`;
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
+    return buildResponse({
+      mode: 'cached',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+      error: hasAnyCache ? undefined : `Policy load failed: ${policy.loadError}`,
+    });
+  }
+
+  // Provider choice comes from policy. We currently execute only Twelve Data for fx_ribbon.
+  const primary = policyPrimaryProvider();
+  const supported = primary === 'twelvedata';
+
+  if (!supported) {
+    const hasAnyCache = Boolean(rideA || rideB);
+    lastDecision = hasAnyCache
+      ? 'policy_provider_unsupported_ride_cache'
+      : 'policy_provider_unsupported_no_cache';
+    lastError = `Unsupported fx_ribbon primary_provider: ${primary}`;
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
+    return buildResponse({
+      mode: 'cached',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+      error: hasAnyCache ? undefined : `Policy provider unsupported: ${primary}`,
+    });
+  }
+
+  if (lastWeekendFreeze) {
+    const hasAnyCache = Boolean(rideA || rideB);
+    lastDecision = hasAnyCache ? 'weekend_freeze_ride_cache' : 'weekend_freeze_no_cache';
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
+    return buildResponse({
+      mode: 'cached',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+      error: hasAnyCache ? undefined : 'Weekend freeze active: no upstream FX calls',
+    });
+  }
+
+  if (isRateLimited(now)) {
+    const hasAnyCache = Boolean(rideA || rideB);
+    lastDecision = hasAnyCache ? 'rate_limited_ride_cache' : 'rate_limited_no_cache';
+
+    const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: rideA, groupB: rideB });
+    const asOfIso = newestAsOfIso(rideA, rideB);
+
+    return buildResponse({
+      mode: 'cached',
+      sourceProvider: 'twelvedata',
+      asOfIso,
+      data,
+      error: hasAnyCache ? undefined : 'Rate-limited: no upstream FX calls',
+    });
+  }
+
+  // Honour TTL: only refresh one group when its cache is stale (and only the scheduled group).
+  const ttlSeconds = policyTtlSeconds();
+  const freshA = getGroupFreshCache('A', ssotKey, now);
+  const freshB = getGroupFreshCache('B', ssotKey, now);
+
+  const shouldRefreshA = !freshA;
+  const shouldRefreshB = !freshB;
+
+  let groupA = freshA ?? rideA;
+  let groupB = freshB ?? rideB;
+
+  try {
+    if (scheduledGroup === 'A' && shouldRefreshA) {
+      groupA = await refreshGroup({ group: 'A', ssotKey, pairs: split.A, symbols: symbolsA, now });
+    } else if (scheduledGroup === 'B' && shouldRefreshB) {
+      groupB = await refreshGroup({ group: 'B', ssotKey, pairs: split.B, symbols: symbolsB, now });
+    } else {
+      lastDecision = 'cache_hit';
+      lastError = undefined;
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    lastError = message;
+
+    // 429 is handled inside fetch by setting cooldown; but other failures still ride-cache.
+    const hasAny = Boolean(groupA || groupB);
+    lastDecision = hasAny ? 'cache_hit' : lastDecision;
+
+    // If we have absolutely nothing, surface the error.
+    if (!hasAny) {
+      const data = mergeQuotesInSsotOrder({ ssotPairs: pairs, groupA: null, groupB: null });
+      return buildResponse({
+        mode: 'fallback',
+        sourceProvider: 'twelvedata',
+        asOfIso: new Date(0).toISOString(),
+        data,
+        error: message,
+      });
+    }
+  }
+
+  const data = mergeQuotesInSsotOrder({
+    ssotPairs: pairs,
+    groupA: groupA ?? null,
+    groupB: groupB ?? null,
+  });
+  const asOfIso = newestAsOfIso(groupA ?? null, groupB ?? null);
+
+  const mode: FxApiMeta['mode'] = 'live';
+  const sourceProvider = getFxProviderSummary(mode, primary).meta.id;
+
+  // API contract expects sourceProvider; keep type-safe by returning the id string.
+  return buildResponse({
+    mode,
+    sourceProvider: sourceProvider as FxApiMeta['sourceProvider'],
+    asOfIso,
+    data,
+  });
+}
+

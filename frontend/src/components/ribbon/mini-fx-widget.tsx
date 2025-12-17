@@ -6,6 +6,9 @@
 // - Default pairs come ONLY from src/data/fx/fx.pairs.json (via lib/finance/fx-pairs.ts)
 // - If you edit that one file, the widget changes automatically.
 // - No demo mode. No synthetic values.
+//
+// Enhancement:
+// - Uses centralised polling from useFxQuotes (no multiplied polling)
 
 'use client';
 
@@ -20,10 +23,6 @@ interface MiniFxWidgetProps {
   intervalMs?: number;
 }
 
-function normaliseCode(value: string): string {
-  return value.replace(/[^A-Za-z]/g, '').toUpperCase();
-}
-
 function formatPrice(value: number | null, isLoading: boolean): string {
   if (isLoading) return '…';
   if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
@@ -31,7 +30,7 @@ function formatPrice(value: number | null, isLoading: boolean): string {
 }
 
 export function MiniFxWidget({ title = 'FX', intervalMs }: MiniFxWidgetProps) {
-  const { status, quotesByProviderSymbol } = useFxQuotes({ intervalMs });
+  const { status, quotesById, movementById } = useFxQuotes({ intervalMs });
   const isLoading = status === 'idle' || status === 'loading';
 
   const rows = useMemo(() => {
@@ -39,23 +38,25 @@ export function MiniFxWidget({ title = 'FX', intervalMs }: MiniFxWidgetProps) {
     const pairs = getFxRibbonPairs();
 
     return pairs.map((p) => {
-      const code = normaliseCode(p.id);
-      const quote = quotesByProviderSymbol.get(code) ?? null;
+      const quote = quotesById.get(p.id) ?? null;
+      const mv = movementById.get(p.id);
 
       return {
-        key: code,
+        key: p.id,
         label: (
           <FxPairLabel
             base={p.base}
             baseCountryCode={p.baseCountryCode}
             quote={p.quote}
             quoteCountryCode={p.quoteCountryCode}
+            winnerSide={mv?.winner ?? 'neutral'}
+            winnerOpacity={mv?.confidence ?? 0}
           />
         ),
         value: formatPrice(quote?.price ?? null, isLoading),
       };
     });
-  }, [quotesByProviderSymbol, isLoading]);
+  }, [quotesById, movementById, isLoading]);
 
   return (
     <section

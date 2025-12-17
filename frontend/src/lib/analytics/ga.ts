@@ -1,8 +1,13 @@
-// src/lib/analytics/ga.ts
+// frontend/src/lib/analytics/ga.ts
+//
+// Analytics wrapper must remain POWERLESS:
+// - No fetches, no timers, no retries, no side effects.
+// - Observational only: thin wrapper around window.gtag('event', ...).
+//
+// Why this matters to the API Brain:
+// Promagen’s “authority map” says only the Refresh Gate decides upstream work.
+// Anything else must not accidentally create traffic pressure or hidden behaviour.
 
-import { logger } from '@/app/utils/logger';
-
-// Keep window.gtag typed and safe to call.
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
@@ -17,7 +22,7 @@ declare global {
  *   - "false"                              → disabled
  *
  * - NEXT_PUBLIC_ANALYTICS_DEBUG
- *   - "true"                               → log events via logger as well
+ *   - "true"                               → log events to console as well
  */
 const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== 'false';
 const ANALYTICS_DEBUG = process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === 'true';
@@ -28,49 +33,24 @@ export type AnalyticsEventName =
   | 'prompt_builder_open'
   | 'finance_toggle'
   | 'nav_click'
-  | 'page_view_custom';
+  | 'page_view_custom'
+  | 'ribbon_pause'
+  | 'fx_pair_select';
 
 export interface AnalyticsEventPayloads {
   provider_click: {
-    /**
-     * Canonical provider id from your providers catalogue.
-     */
     provider_id: string;
-    /**
-     * Human-readable provider name (optional but nice for GA reports).
-     */
     provider_name?: string;
-    /**
-     * Where the click happened, e.g. "leaderboard", "grid".
-     */
     source?: string;
   };
   provider_outbound: {
-    /**
-     * Canonical provider id.
-     */
     provider_id: string;
-    /**
-     * Human-friendly name.
-     */
     provider_name?: string;
-    /**
-     * Destination URL the user is going to.
-     */
     href?: string;
-    /**
-     * Where the outbound link was clicked from.
-     */
     source?: string;
   };
   prompt_builder_open: {
-    /**
-     * Provider id whose studio was opened.
-     */
     provider_id: string;
-    /**
-     * Where the studio was opened from.
-     */
     location?: 'leaderboard' | 'providers_page' | 'deeplink' | string;
   };
   finance_toggle: {
@@ -84,9 +64,17 @@ export interface AnalyticsEventPayloads {
   page_view_custom: {
     page_path: string;
   };
+  ribbon_pause: {
+    is_paused: boolean;
+    source?: string;
+  };
+  fx_pair_select: {
+    count: number;
+    ids: string;
+    source?: string;
+  };
 }
 
-// Map event name → payload shape.
 export type AnalyticsEventParamsMap = {
   [K in AnalyticsEventName]: AnalyticsEventPayloads[K];
 };
@@ -101,9 +89,7 @@ export type AnalyticsEventParams<K extends AnalyticsEventName> =
  * Thin wrapper around window.gtag('event', ...).
  * - No-op on the server.
  * - Respects NEXT_PUBLIC_ANALYTICS_ENABLED.
- * - Logs via the shared logger when NEXT_PUBLIC_ANALYTICS_DEBUG === "true".
- *
- * Public API is `trackEvent(name, params?)` per the Promagen code standard.
+ * - Optional debug logging when NEXT_PUBLIC_ANALYTICS_DEBUG === "true".
  */
 export function trackEvent<K extends AnalyticsEventName>(
   name: K,
@@ -113,18 +99,18 @@ export function trackEvent<K extends AnalyticsEventName>(
 
   if (!ANALYTICS_ENABLED) {
     if (ANALYTICS_DEBUG) {
-      logger.info('[analytics] skipped (disabled)', { name, params: finalPayload });
+      // eslint-disable-next-line no-console
+      console.info('[analytics] skipped (disabled)', { name, params: finalPayload });
     }
     return;
   }
 
-  if (typeof window === 'undefined') {
-    return;
-  }
+  if (typeof window === 'undefined') return;
 
   if (typeof window.gtag !== 'function') {
     if (ANALYTICS_DEBUG) {
-      logger.warn('[analytics] window.gtag not available for event', {
+       
+      console.warn('[analytics] window.gtag not available for event', {
         name,
         params: finalPayload,
       });
@@ -133,7 +119,8 @@ export function trackEvent<K extends AnalyticsEventName>(
   }
 
   if (ANALYTICS_DEBUG) {
-    logger.info('[analytics] event', { name, params: finalPayload });
+    // eslint-disable-next-line no-console
+    console.info('[analytics] event', { name, params: finalPayload });
   }
 
   window.gtag('event', name, finalPayload);
