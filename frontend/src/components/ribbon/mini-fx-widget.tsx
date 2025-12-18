@@ -49,7 +49,7 @@ export function MiniFxWidget({ title = 'FX', intervalMs }: MiniFxWidgetProps) {
             baseCountryCode={p.baseCountryCode}
             quote={p.quote}
             quoteCountryCode={p.quoteCountryCode}
-            winnerSide={mv?.winner ?? 'neutral'}
+            winnerSide={mv?.winnerSide ?? 'neutral'}
             winnerOpacity={mv?.confidence ?? 0}
           />
         ),

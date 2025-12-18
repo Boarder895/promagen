@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-import type { FxApiQuote, FxApiResponse } from '@/types/finance-ribbon';
+import type { FxApiQuote, FxApiResponse, FxBudgetState } from '@/types/finance-ribbon';
 
 export type FxQuotesStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -15,16 +15,11 @@ export interface UseFxQuotesOptions {
 export type FxWinnerSide = 'base' | 'quote' | 'neutral';
 export type FxTickDirection = 'up' | 'down' | 'flat';
 
-export interface FxMovement {
+export type FxMovement = {
   /**
-   * Canonical winner side for modern ribbon components.
+   * Which side won (single-arrow semantics live in the renderer).
    */
   winnerSide: FxWinnerSide;
-
-  /**
-   * Back-compat alias for older components.
-   */
-  winner: FxWinnerSide;
 
   /**
    * Percentage move between the last and current quote (UI-only).
@@ -41,12 +36,36 @@ export interface FxMovement {
    * This is purely visual and MUST NOT be used to infer refresh permission.
    */
   confidence: number;
-}
+};
+
+/**
+ * Back-compat export for any consumer importing BudgetState from this hook.
+ * SSOT lives in frontend/src/types/finance-ribbon.ts.
+ */
+export type BudgetState = FxBudgetState;
+
+/**
+ * Type widening only: the server now includes meta.budget, and the hook must preserve it exactly
+ * as received from /api/fx (no inference, no normalisation, no extra calls).
+ */
+export type FxApiResponseWithBudget = FxApiResponse & {
+  meta?: FxApiResponse['meta'] & {
+    budget?: {
+      state?: FxBudgetState;
+      emoji?: string;
+    };
+  };
+};
 
 export interface UseFxQuotesResult {
   status: FxQuotesStatus;
   error: unknown;
-  payload: FxApiResponse | null;
+
+  /**
+   * Payload from /api/fx, preserved exactly as received.
+   * Includes optional meta.budget.state ('ok'|'warning'|'blocked') surfaced by server authority.
+   */
+  payload: FxApiResponseWithBudget | null;
 
   quotesById: Map<string, FxApiQuote>;
   quotesByProviderSymbol: Map<string, FxApiQuote>;
@@ -62,41 +81,35 @@ export interface UseFxQuotesResult {
 const DEFAULT_INTERVAL_MS = 30 * 60_000;
 
 // Keep the server calm. Centralised polling means “one timer”, but we also
-// clamp the maximum poll frequency so one rogue consumer can’t spam the route.
-const MIN_INTERVAL_MS = 30_000;
+// clamp the maximum poll frequency so on a busy page you can’t accidentally
+// hammer /api/fx. This does NOT control upstream refresh; it’s purely client traffic.
+const MIN_INTERVAL_MS = 5_000;
 
-// When the tab is hidden, slow down polling aggressively (reduce server chatter).
-const HIDDEN_INTERVAL_MS = 60_000;
+// When hidden, back off aggressively. This avoids useless traffic and aligns with
+// “calm UI” intent without changing server authority behaviour.
+const HIDDEN_VISIBILITY_MULTIPLIER = 6;
 
-// Thresholds (percentage points)
-const MAJORS_NEUTRAL = 0.02;
-const MAJORS_APPEAR = 0.03; // hysteresis appear
-const MAJORS_DISAPPEAR = 0.015; // hysteresis disappear
-
-const VOLATILE_NEUTRAL = 0.05;
-const VOLATILE_APPEAR = 0.075;
-const VOLATILE_DISAPPEAR = 0.035;
-
-function normaliseCode(value: string): string {
-  return String(value ?? '')
-    .replace(/[^A-Za-z]/g, '')
-    .toUpperCase();
-}
+const MAJOR_CURRENCIES = new Set(['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD']);
 
 function nowMs(): number {
   return Date.now();
 }
 
+function toIso(ms: number): string {
+  return new Date(ms).toISOString();
+}
+
+/**
+ * Returns weekday index (0=Sun..6=Sat) in Europe/London without importing heavy tz libs.
+ */
 function weekdayInLondon(ms: number): number {
-  const dtf = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', weekday: 'short' });
-  const wd = dtf.format(new Date(ms)).toLowerCase();
-  if (wd.startsWith('mon')) return 1;
-  if (wd.startsWith('tue')) return 2;
-  if (wd.startsWith('wed')) return 3;
-  if (wd.startsWith('thu')) return 4;
-  if (wd.startsWith('fri')) return 5;
-  if (wd.startsWith('sat')) return 6;
-  return 0; // sun/unknown
+  const dt = new Date(ms);
+
+  // Convert via locale string with London time, then parse back.
+  const s = dt.toLocaleString('en-GB', { timeZone: 'Europe/London' });
+  const local = new Date(s);
+
+  return local.getDay();
 }
 
 function isWeekendLondon(ms: number): boolean {
@@ -104,13 +117,18 @@ function isWeekendLondon(ms: number): boolean {
   return d === 0 || d === 6;
 }
 
+function normaliseCode(value: string): string {
+  return String(value ?? '')
+    .replace(/[^A-Za-z]/g, '')
+    .toUpperCase();
+}
+
 function isMajorPair(q: FxApiQuote): boolean {
   // Heuristic: majors tend to include USD/EUR/GBP/JPY/CHF/CAD/AUD/NZD.
   // If your SSOT has an explicit classifier, prefer that upstream.
   const base = normaliseCode(q.base);
   const quote = normaliseCode(q.quote);
-  const majors = new Set(['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD']);
-  return majors.has(base) && majors.has(quote);
+  return MAJOR_CURRENCIES.has(base) && MAJOR_CURRENCIES.has(quote);
 }
 
 function safeNumber(value: unknown): number | null {
@@ -133,71 +151,89 @@ function confidenceFromAbsDelta(absDeltaPct: number, appearThreshold: number): n
   return 0.75 + 0.25 * t;
 }
 
-function movementForQuote(params: {
-  quote: FxApiQuote;
-  prevQuote?: FxApiQuote;
-  prevMovement?: FxMovement;
-  freeze: boolean;
-}): FxMovement {
-  const { quote, prevQuote, prevMovement, freeze } = params;
-
-  // During weekend freeze we never change displayed movement state.
-  if (freeze && prevMovement) return prevMovement;
-
-  const deltaPct = computeDeltaPct(prevQuote, quote);
-  if (deltaPct === null) {
-    return { winnerSide: 'neutral', winner: 'neutral', deltaPct: 0, tick: 'flat', confidence: 0 };
-  }
-
-  const major = isMajorPair(quote);
-  const neutral = major ? MAJORS_NEUTRAL : VOLATILE_NEUTRAL;
-  const appear = major ? MAJORS_APPEAR : VOLATILE_APPEAR;
-  const disappear = major ? MAJORS_DISAPPEAR : VOLATILE_DISAPPEAR;
-
+function movementFromDelta(deltaPct: number, appearThreshold: number): FxMovement {
   const abs = Math.abs(deltaPct);
-
-  // Hysteresis:
-  // - if currently neutral, require “appear” threshold
-  // - if currently non-neutral, allow it to remain until it drops below “disappear”
-  const wasNeutral = (prevMovement?.winnerSide ?? 'neutral') === 'neutral';
-
-  const shouldBeNeutral = wasNeutral ? abs < appear : abs < disappear;
-  if (shouldBeNeutral || abs < neutral) {
-    return { winnerSide: 'neutral', winner: 'neutral', deltaPct, tick: 'flat', confidence: 0 };
+  if (abs <= appearThreshold) {
+    return { winnerSide: 'neutral', deltaPct, tick: 'flat', confidence: 0 };
   }
 
-  // Winner side: positive delta implies base strengthened (left arrow), negative implies quote strengthened (right arrow)
+  // Sign convention:
+  // +delta => base strengthened (left arrow in renderer)
+  // -delta => quote strengthened (right arrow in renderer)
   const winnerSide: FxWinnerSide = deltaPct > 0 ? 'base' : 'quote';
-
-  // Tick direction for micro motion
   const tick: FxTickDirection = deltaPct > 0 ? 'up' : 'down';
+  const confidence = confidenceFromAbsDelta(abs, appearThreshold);
 
-  return {
-    winnerSide,
-    winner: winnerSide,
-    deltaPct,
-    tick,
-    confidence: confidenceFromAbsDelta(abs, appear),
-  };
+  return { winnerSide, deltaPct, tick, confidence };
 }
 
-function computeMovement(payload: FxApiResponse, freeze: boolean, prevState: UseFxQuotesResult) {
-  const quotesById = new Map<string, FxApiQuote>();
-  const quotesByProviderSymbol = new Map<string, FxApiQuote>();
-
-  for (const q of payload.data ?? []) {
-    quotesById.set(q.id, q);
-
-    const sym = `${normaliseCode(q.base)}/${normaliseCode(q.quote)}`;
-    quotesByProviderSymbol.set(sym, q);
+function getProviderSymbolKey(quote: FxApiQuote): string {
+  const maybeProviderSymbol = (quote as unknown as Record<string, unknown>)['providerSymbol'];
+  if (typeof maybeProviderSymbol === 'string' && maybeProviderSymbol.trim().length > 0) {
+    return maybeProviderSymbol.trim();
   }
 
+  const base = normaliseCode(quote.base);
+  const q = normaliseCode(quote.quote);
+  if (base && q) return `${base}${q}`;
+
+  return quote.id;
+}
+
+function computeMovement(
+  payload: FxApiResponseWithBudget,
+  weekend: boolean,
+  prevState: UseFxQuotesResult,
+): {
+  quotesById: Map<string, FxApiQuote>;
+  quotesByProviderSymbol: Map<string, FxApiQuote>;
+  movementById: Map<string, FxMovement>;
+} {
+  const quotesById = new Map<string, FxApiQuote>();
+  const quotesByProviderSymbol = new Map<string, FxApiQuote>();
   const movementById = new Map<string, FxMovement>();
 
-  for (const [id, q] of quotesById.entries()) {
-    const prevQuote = prevState.quotesById.get(id);
-    const prevMovement = prevState.movementById.get(id);
-    movementById.set(id, movementForQuote({ quote: q, prevQuote, prevMovement, freeze }));
+  const prevQuotesById = prevState.quotesById;
+
+  // Contract: /api/fx returns { data: FxApiQuote[] }.
+  // Back-compat: accept { quotes: FxApiQuote[] } if present from older payloads.
+  const anyPayload = payload as unknown as Record<string, unknown>;
+  const rawData = anyPayload['data'];
+  const rawQuotes = anyPayload['quotes'];
+  const quotes = Array.isArray(rawData) ? rawData : Array.isArray(rawQuotes) ? rawQuotes : [];
+
+  for (const q of quotes) {
+    if (!q || typeof q !== 'object') continue;
+    if (typeof (q as FxApiQuote).id !== 'string') continue;
+
+    const quote = q as FxApiQuote;
+    quotesById.set(quote.id, quote);
+
+    const key = getProviderSymbolKey(quote);
+    quotesByProviderSymbol.set(key, quote);
+
+    // Weekend freeze: movement is frozen (UI should not change).
+    if (weekend) {
+      const frozen = prevState.movementById.get(quote.id);
+      if (frozen) movementById.set(quote.id, frozen);
+      else {
+        movementById.set(quote.id, {
+          winnerSide: 'neutral',
+          deltaPct: 0,
+          tick: 'flat',
+          confidence: 0,
+        });
+      }
+      continue;
+    }
+
+    const prev = prevQuotesById.get(quote.id);
+    const deltaPct = computeDeltaPct(prev, quote);
+
+    // Pair-class thresholds (visual only; server authority is the real spend governor).
+    const appearThreshold = isMajorPair(quote) ? 0.03 : 0.075;
+
+    movementById.set(quote.id, movementFromDelta(deltaPct ?? 0, appearThreshold));
   }
 
   return { quotesById, quotesByProviderSymbol, movementById };
@@ -205,27 +241,21 @@ function computeMovement(payload: FxApiResponse, freeze: boolean, prevState: Use
 
 type Store = {
   state: UseFxQuotesResult;
-
   listeners: Set<() => void>;
 
-  // Enabled consumer count (for lifetime management)
   enabledCount: number;
 
-  // Single shared timer for all consumers
   timer: number | null;
 
-  // Shared single-flight request
+  // Client single-flight.
   inFlight: Promise<void> | null;
   abort: AbortController | null;
 
-  // Keep last stable movement so weekend freeze can “hold” visuals.
+  // Keep last stable movement so weekend freeze can hold it.
   lastStableMovementById: Map<string, FxMovement>;
 
-  // Track per-consumer requested intervals. Effective interval is the smallest requested,
-  // clamped by MIN_INTERVAL_MS (so it can’t become “too fast”).
+  // Per-consumer interval preferences (the effective interval is the minimum).
   consumerIntervals: Map<number, number>;
-
-  // For monotonic consumer ids.
   nextConsumerId: number;
 };
 
@@ -261,23 +291,22 @@ function setState(next: Partial<UseFxQuotesResult>) {
 }
 
 function clearTimer() {
-  if (store.timer) window.clearTimeout(store.timer);
-  store.timer = null;
+  if (store.timer !== null) {
+    window.clearTimeout(store.timer);
+    store.timer = null;
+  }
 }
 
 function getEffectiveIntervalMs(): number {
-  let min = DEFAULT_INTERVAL_MS;
-  for (const v of store.consumerIntervals.values()) {
-    if (v < min) min = v;
-  }
-  return Math.max(MIN_INTERVAL_MS, min);
+  const values = Array.from(store.consumerIntervals.values());
+  const want = values.length ? Math.min(...values) : DEFAULT_INTERVAL_MS;
+  return Math.max(MIN_INTERVAL_MS, want);
 }
 
-function getPollingIntervalForVisibility(baseIntervalMs: number): number {
-  // When hidden, slow down drastically (still centralised).
-  if (typeof document === 'undefined') return baseIntervalMs;
-  if (document.visibilityState === 'hidden') return Math.max(HIDDEN_INTERVAL_MS, baseIntervalMs);
-  return baseIntervalMs;
+function getPollingIntervalForVisibility(baseMs: number): number {
+  if (typeof document === 'undefined') return baseMs;
+  if (document.visibilityState === 'hidden') return baseMs * HIDDEN_VISIBILITY_MULTIPLIER;
+  return baseMs;
 }
 
 async function fetchFxOnce(): Promise<void> {
@@ -302,7 +331,8 @@ async function fetchFxOnce(): Promise<void> {
         throw new Error(`FX API ${res.status} ${res.statusText}${text ? ` – ${text}` : ''}`);
       }
 
-      const json = (await res.json()) as FxApiResponse;
+      // IMPORTANT: preserve payload as received (meta.budget included when present).
+      const json = (await res.json()) as FxApiResponseWithBudget;
 
       const now = nowMs();
       const weekend = isWeekendLondon(now);
@@ -313,10 +343,8 @@ async function fetchFxOnce(): Promise<void> {
       const shouldFreezeDisplay = weekend && store.state.payload !== null;
 
       if (shouldFreezeDisplay) {
+        // Preserve payload/movement, only mark weekend.
         setState({
-          // Keep existing payload/quotes/movement as-is.
-          error: null,
-          status: 'ready',
           isWeekendFreeze: true,
         });
         return;
@@ -389,7 +417,7 @@ function ensureVisibilityListener() {
 
   document.addEventListener('visibilitychange', () => {
     if (store.enabledCount <= 0) return;
-    // Reschedule immediately on visibility change so we switch cadence cleanly.
+    // Reschedule to apply hidden/visible multiplier.
     scheduleNext();
   });
 }
@@ -398,25 +426,39 @@ export function useFxQuotes(options?: UseFxQuotesOptions): UseFxQuotesResult {
   const enabled = options?.enabled ?? true;
   const intervalMs = options?.intervalMs ?? DEFAULT_INTERVAL_MS;
 
-  const [, force] = useState(0);
   const consumerIdRef = useRef<number | null>(null);
+
+  // Local state tick; actual data lives in the module store (centralised polling).
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     ensureVisibilityListener();
-    const unsub = subscribe(() => force((x) => x + 1));
 
-    // Allocate a stable consumer id.
-    if (consumerIdRef.current === null) {
-      consumerIdRef.current = store.nextConsumerId++;
-    }
+    const id = store.nextConsumerId++;
+    consumerIdRef.current = id;
+
+    const unsub = subscribe(() => setTick((v) => v + 1));
+
+    return () => {
+      unsub();
+      store.consumerIntervals.delete(id);
+      consumerIdRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
     const id = consumerIdRef.current;
+    if (id === null) return;
 
+    // Register/refresh desired interval for this consumer.
+    store.consumerIntervals.set(id, Math.max(MIN_INTERVAL_MS, intervalMs));
+
+    // Pause gating: enabled consumers drive the shared timer.
     if (enabled) {
       store.enabledCount += 1;
-      store.consumerIntervals.set(id, Math.max(MIN_INTERVAL_MS, intervalMs));
 
-      // Bootstrap: fetch once immediately if we have nothing.
-      if (store.state.status === 'idle') {
+      // First enable triggers an immediate fetch (best effort).
+      if (store.enabledCount === 1) {
         void fetchFxOnce();
       }
 
@@ -424,25 +466,19 @@ export function useFxQuotes(options?: UseFxQuotesOptions): UseFxQuotesResult {
     }
 
     return () => {
-      unsub();
-
       if (enabled) {
-        store.enabledCount -= 1;
-      }
-      store.consumerIntervals.delete(id);
-
-      if (store.enabledCount <= 0) {
-        store.enabledCount = 0;
-        clearTimer();
-        store.abort?.abort();
-        store.abort = null;
-      } else {
-        // Interval set changed → reschedule using new min interval.
-        scheduleNext();
+        store.enabledCount = Math.max(0, store.enabledCount - 1);
+        if (store.enabledCount <= 0) {
+          clearTimer();
+          store.abort?.abort();
+          store.abort = null;
+          store.inFlight = null;
+        } else {
+          scheduleNext();
+        }
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
+  }, [enabled, intervalMs]);
 
   // Update interval without remounting the whole subscription.
   useEffect(() => {
@@ -455,4 +491,19 @@ export function useFxQuotes(options?: UseFxQuotesOptions): UseFxQuotesResult {
   }, [enabled, intervalMs]);
 
   return store.state;
+}
+
+// Lightweight helpers for debugging in dev tools.
+export function getFxQuotesDebugSnapshot() {
+  const s = store.state;
+  return {
+    at: toIso(nowMs()),
+    status: s.status,
+    hasPayload: Boolean(s.payload),
+    isWeekendFreeze: s.isWeekendFreeze,
+    enabledCount: store.enabledCount,
+    consumerIntervals: Array.from(store.consumerIntervals.values()),
+    effectiveIntervalMs: getEffectiveIntervalMs(),
+    visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+  };
 }

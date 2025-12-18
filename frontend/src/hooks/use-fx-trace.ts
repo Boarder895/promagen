@@ -42,13 +42,41 @@ function buildEmptySnapshot(): FxRibbonTraceSnapshot {
   return {
     ttlSeconds: 0,
     ssotKey: 'unknown',
-    cache: { hasValue: false },
+
     inFlight: false,
+
+    budget: {
+      state: 'ok',
+      dayKey: '1970-01-01',
+      daily: {
+        allowance: 0,
+        used: 0,
+        warnAt: 0,
+        blockAt: 0,
+        remaining: 0,
+        pctUsed: 0,
+      },
+      minute: {
+        windowSeconds: 0,
+        allowance: 0,
+        used: 0,
+        warnAt: 0,
+        blockAt: 0,
+        remaining: 0,
+      },
+    },
+
+    budgetIndicator: {
+      state: 'ok',
+      emoji: '🛫',
+    },
+
+    cache: { hasValue: false },
     lastDecision: undefined,
     lastError: undefined,
-    counters: { ribbonCalls: 0, upstreamCalls: 0, upstreamSymbolsTotal: 0 },
+    counters: { ribbonCalls: 0, upstreamCalls: 0, upstream429s: 0 },
     rateLimit: {},
-    weekendFreeze: { active: false, londonWeekday: '—', timezone: 'Europe/London' },
+    weekendFreeze: { isWeekendLondon: false, londonWeekday: '—', timezone: 'Europe/London' },
     traffic: { windowSeconds: 0, hitsInWindow: 0, factor: 1 },
     schedule: { cycleIndex: 0, scheduledGroup: 'A', cycleLengthSeconds: 0 },
     groups: {

@@ -37,6 +37,8 @@ export interface FinanceRibbonChip {
   deltaPct: number | null;
 }
 
+type BudgetState = 'ok' | 'warning' | 'blocked';
+
 const POLL_INTERVAL_MS = 30_000;
 
 function safeFiniteNumber(value: unknown): number | null {
@@ -92,6 +94,29 @@ function formatPrice(price: number | null, precision?: number): string {
   });
 }
 
+function normaliseBudgetState(value: unknown): BudgetState | undefined {
+  if (value === 'ok' || value === 'warning' || value === 'blocked') return value;
+  return undefined;
+}
+
+/**
+ * Read-only passthrough: budget state is computed server-side (Refresh Authority),
+ * surfaced via /api/fx meta, and simply forwarded into the presentational ribbon.
+ * No thresholds, no inference, no extra calls.
+ */
+function readBudgetState(payload: unknown): BudgetState | undefined {
+  if (!payload || typeof payload !== 'object') return undefined;
+
+  const meta = (payload as Record<string, unknown>).meta;
+  if (!meta || typeof meta !== 'object') return undefined;
+
+  const budget = (meta as Record<string, unknown>).budget;
+  if (!budget || typeof budget !== 'object') return undefined;
+
+  const state = (budget as Record<string, unknown>).state;
+  return normaliseBudgetState(state);
+}
+
 export function FinanceRibbonContainer() {
   const [isPaused, setIsPaused] = useState(false);
 
@@ -108,6 +133,9 @@ export function FinanceRibbonContainer() {
 
   const buildId = payload?.meta?.buildId ?? 'unknown';
   const mode: FxApiMode = payload?.meta?.mode ?? 'cached';
+
+  // Read-only passthrough for emoji indicator beside Pause (renderer-only).
+  const budgetState = readBudgetState(payload);
 
   const chips: FinanceRibbonChip[] = useMemo(() => {
     return pairs.map((p) => {
@@ -157,6 +185,7 @@ export function FinanceRibbonContainer() {
       chips={chips}
       isPaused={isPaused}
       onPauseToggle={() => setIsPaused((v) => !v)}
+      budgetState={budgetState}
     />
   );
 }

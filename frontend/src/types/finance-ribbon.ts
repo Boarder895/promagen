@@ -21,6 +21,24 @@ export type FxApiMode = 'live' | 'cached' | 'fallback';
 export type FxSourceProvider = 'twelvedata' | 'cache' | 'fallback' | (string & {});
 
 /**
+ * Budget state is a server-computed, informational indicator only.
+ *
+ * It exists so UI/trace can surface spend pressure without adding traffic.
+ * Clients MUST NOT use this to decide refresh timing or to attempt to force refresh.
+ */
+export type FxBudgetState = 'ok' | 'warning' | 'blocked';
+
+/**
+ * Budget metadata attached to the existing /api/fx response meta.
+ * - state: 3-stage guard output (🛫/🏖️/🧳 in UI)
+ * - emoji: optional convenience for UI; UI may also map state → emoji locally
+ */
+export interface FxApiBudgetMeta {
+  state: FxBudgetState;
+  emoji?: string;
+}
+
+/**
  * Meta is informational only.
  * It must not be used to make refresh decisions on the client.
  */
@@ -39,6 +57,12 @@ export interface FxApiMeta {
    * Not a refresh-eligibility signal.
    */
   asOf: string; // ISO string
+
+  /**
+   * Optional budget indicator (descriptive only).
+   * MUST NOT be used for client-side refresh decisions.
+   */
+  budget?: FxApiBudgetMeta;
 }
 
 /**

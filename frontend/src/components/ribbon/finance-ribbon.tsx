@@ -19,12 +19,29 @@ import type { FxApiMode } from '@/types/finance-ribbon';
 import { trackRibbonPause } from '@/lib/analytics/finance';
 import type { FinanceRibbonChip } from '@/components/ribbon/finance-ribbon.container';
 
+type BudgetState = 'ok' | 'warning' | 'blocked';
+
 export interface FinanceRibbonProps {
   buildId: string;
   mode: FxApiMode;
   chips: FinanceRibbonChip[];
   isPaused: boolean;
   onPauseToggle: () => void;
+
+  // Emoji-only budget indicator (renderer-only; state is computed server-side).
+  budgetState?: BudgetState;
+}
+
+function budgetEmoji(state: BudgetState): string {
+  switch (state) {
+    case 'warning':
+      return '🏖️';
+    case 'blocked':
+      return '🧳';
+    case 'ok':
+    default:
+      return '🛫';
+  }
 }
 
 export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
@@ -33,6 +50,7 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
   chips,
   isPaused,
   onPauseToggle,
+  budgetState,
 }) => {
   const handlePause = () => {
     // Renderer-only rule: UI may toggle local polling state, but must never influence authority.
@@ -50,6 +68,11 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
   };
 
   const pauseLabel = isPaused ? 'Resume live FX updates' : 'Pause live FX updates';
+
+  const showBudget = typeof budgetState === 'string';
+  const budgetStateSafe: BudgetState =
+    budgetState === 'warning' || budgetState === 'blocked' ? budgetState : 'ok';
+  const emoji = showBudget ? budgetEmoji(budgetStateSafe) : '';
 
   return (
     <section
@@ -103,16 +126,36 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
           })}
         </ul>
 
-        <button
-          type="button"
-          data-testid="finance-ribbon-pause"
-          aria-label={pauseLabel}
-          aria-pressed={isPaused}
-          onClick={handlePause}
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-        >
-          <span aria-hidden="true">{isPaused ? '▶' : 'Ⅱ'}</span>
-        </button>
+        <div className="flex items-center gap-1">
+          {showBudget ? (
+            <span
+              data-testid="finance-ribbon-budget"
+              data-budget-state={budgetStateSafe}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[12px]"
+              aria-label="FX upstream budget state"
+            >
+              <span className="sr-only">
+                {budgetStateSafe === 'blocked'
+                  ? 'Blocked'
+                  : budgetStateSafe === 'warning'
+                  ? 'Warning'
+                  : 'OK'}
+              </span>
+              <span aria-hidden="true">{emoji}</span>
+            </span>
+          ) : null}
+
+          <button
+            type="button"
+            data-testid="finance-ribbon-pause"
+            aria-label={pauseLabel}
+            aria-pressed={isPaused}
+            onClick={handlePause}
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          >
+            <span aria-hidden="true">{isPaused ? '▶' : 'Ⅱ'}</span>
+          </button>
+        </div>
       </div>
     </section>
   );
