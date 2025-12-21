@@ -19,7 +19,7 @@
 
 import { NextResponse } from 'next/server';
 
-import { getFxRibbon, getFxRibbonBudgetIndicator, getFxRibbonTtlSeconds } from '@/lib/fx/providers';
+import { getFxRibbon } from '@/lib/fx/providers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,6 +44,26 @@ type FxApiResponseWithBudget = {
   error?: string;
 };
 
+type UnknownRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === 'object' && value !== null;
+}
+
+function readString(record: UnknownRecord, key: string): string | undefined {
+  const value = record[key];
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function readNumber(record: UnknownRecord, key: string): number | undefined {
+  const value = record[key];
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n)) return undefined;
+  return n;
+}
+
 function getBuildId(): string {
   const sha = process.env.VERCEL_GIT_COMMIT_SHA;
   if (typeof sha === 'string' && sha.trim().length > 0) return sha.slice(0, 12);
@@ -64,13 +84,15 @@ function normaliseBudgetState(state: unknown): FxBudgetState {
   return 'ok';
 }
 
+function normaliseMode(mode: unknown, cached: unknown): FxApiResponseWithBudget['meta']['mode'] {
+  if (mode === 'live' || mode === 'cached' || mode === 'fallback') return mode;
+  if (cached === true) return 'cached';
+  return 'live';
+}
+
 function buildEmergencyFallback(message: string): FxApiResponseWithBudget {
   const buildId = getBuildId();
   const asOf = new Date().toISOString();
-
-  const indicator = getFxRibbonBudgetIndicator();
-  const state = normaliseBudgetState(indicator?.state);
-  const emoji = typeof indicator?.emoji === 'string' ? indicator.emoji : undefined;
 
   return {
     meta: {
@@ -78,7 +100,7 @@ function buildEmergencyFallback(message: string): FxApiResponseWithBudget {
       mode: 'fallback',
       sourceProvider: 'fallback',
       asOf,
-      budget: { state, ...(emoji ? { emoji } : {}) },
+      budget: { state: 'ok' },
     },
     data: [],
     error: message,
@@ -90,39 +112,45 @@ export async function GET(): Promise<Response> {
     const payload = await getFxRibbon();
 
     const buildId = getBuildId();
-    const asOf =
-      typeof payload?.meta?.asOf === 'string' && payload.meta.asOf.trim().length > 0
-        ? payload.meta.asOf
-        : new Date().toISOString();
+
+    const anyPayload = payload as unknown as UnknownRecord;
+    const rawMeta = isRecord(anyPayload['meta']) ? (anyPayload['meta'] as UnknownRecord) : {};
+
+    // Keep /api/fx contract stable: always emit asOf + sourceProvider in meta.
+    const asOf = readString(rawMeta, 'asOf') ?? new Date().toISOString();
+
+    const apiMode = normaliseMode(rawMeta['mode'], rawMeta['cached']);
 
     const sourceProvider =
-      payload?.meta?.mode === 'cached'
+      apiMode === 'cached'
         ? 'cache'
-        : String(payload?.meta?.sourceProvider ?? 'twelvedata');
+        : readString(rawMeta, 'sourceProvider') ??
+          readString(rawMeta, 'providerId') ??
+          'twelvedata';
 
-    const indicator = payload?.meta?.budget ?? getFxRibbonBudgetIndicator();
-    const state = normaliseBudgetState((indicator as { state?: unknown } | undefined)?.state);
-    const emoji =
-      typeof (indicator as { emoji?: unknown } | undefined)?.emoji === 'string'
-        ? String((indicator as { emoji?: unknown }).emoji)
-        : undefined;
+    const budgetRaw = isRecord(rawMeta['budget'])
+      ? (rawMeta['budget'] as UnknownRecord)
+      : undefined;
+    const state = normaliseBudgetState(budgetRaw?.['state']);
+    const emoji = typeof budgetRaw?.['emoji'] === 'string' ? String(budgetRaw.emoji) : undefined;
 
     const payloadWithBudget: FxApiResponseWithBudget = {
       ...(payload as unknown as Omit<FxApiResponseWithBudget, 'meta'>),
       meta: {
-        ...(payload as unknown as { meta: Record<string, unknown> }).meta,
+        ...(rawMeta as Record<string, unknown>),
         buildId,
+        mode: apiMode,
         asOf,
         sourceProvider,
         budget: { state, ...(emoji ? { emoji } : {}) },
-      } as FxApiResponseWithBudget['meta'],
+      },
     };
 
     // CDN-honest caching:
     // - Browser: do not cache (max-age=0)
     // - Edge/CDN: cache for policy TTL
     // - If payload carries an error, cache briefly so we don't amplify failures.
-    const ttlSeconds = getFxRibbonTtlSeconds();
+    const ttlSeconds = readNumber(rawMeta, 'ttlSeconds') ?? 1800;
     const sMaxAgeSeconds = payloadWithBudget.error ? Math.min(60, ttlSeconds) : ttlSeconds;
     const staleWhileRevalidateSeconds = Math.min(120, ttlSeconds);
 
@@ -142,8 +170,6 @@ export async function GET(): Promise<Response> {
 
     try {
       const fallback = buildEmergencyFallback(message);
-
-      // Even on fallback, keep headers ASCII.
       const state = normaliseBudgetState(fallback.meta.budget?.state);
 
       return NextResponse.json(fallback, {

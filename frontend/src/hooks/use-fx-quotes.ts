@@ -70,12 +70,6 @@ export interface UseFxQuotesResult {
   quotesById: Map<string, FxApiQuote>;
   quotesByProviderSymbol: Map<string, FxApiQuote>;
   movementById: Map<string, FxMovement>;
-
-  /**
-   * Weekend freeze (London): UI should not change on Sat/Sun.
-   * Preserves “this is how the market closed”.
-   */
-  isWeekendFreeze: boolean;
 }
 
 const DEFAULT_INTERVAL_MS = 30 * 60_000;
@@ -97,24 +91,6 @@ function nowMs(): number {
 
 function toIso(ms: number): string {
   return new Date(ms).toISOString();
-}
-
-/**
- * Returns weekday index (0=Sun..6=Sat) in Europe/London without importing heavy tz libs.
- */
-function weekdayInLondon(ms: number): number {
-  const dt = new Date(ms);
-
-  // Convert via locale string with London time, then parse back.
-  const s = dt.toLocaleString('en-GB', { timeZone: 'Europe/London' });
-  const local = new Date(s);
-
-  return local.getDay();
-}
-
-function isWeekendLondon(ms: number): boolean {
-  const d = weekdayInLondon(ms);
-  return d === 0 || d === 6;
 }
 
 function normaliseCode(value: string): string {
@@ -182,7 +158,6 @@ function getProviderSymbolKey(quote: FxApiQuote): string {
 
 function computeMovement(
   payload: FxApiResponseWithBudget,
-  weekend: boolean,
   prevState: UseFxQuotesResult,
 ): {
   quotesById: Map<string, FxApiQuote>;
@@ -212,21 +187,6 @@ function computeMovement(
     const key = getProviderSymbolKey(quote);
     quotesByProviderSymbol.set(key, quote);
 
-    // Weekend freeze: movement is frozen (UI should not change).
-    if (weekend) {
-      const frozen = prevState.movementById.get(quote.id);
-      if (frozen) movementById.set(quote.id, frozen);
-      else {
-        movementById.set(quote.id, {
-          winnerSide: 'neutral',
-          deltaPct: 0,
-          tick: 'flat',
-          confidence: 0,
-        });
-      }
-      continue;
-    }
-
     const prev = prevQuotesById.get(quote.id);
     const deltaPct = computeDeltaPct(prev, quote);
 
@@ -251,9 +211,6 @@ type Store = {
   inFlight: Promise<void> | null;
   abort: AbortController | null;
 
-  // Keep last stable movement so weekend freeze can hold it.
-  lastStableMovementById: Map<string, FxMovement>;
-
   // Per-consumer interval preferences (the effective interval is the minimum).
   consumerIntervals: Map<number, number>;
   nextConsumerId: number;
@@ -266,7 +223,6 @@ const emptyState: UseFxQuotesResult = {
   quotesById: new Map(),
   quotesByProviderSymbol: new Map(),
   movementById: new Map(),
-  isWeekendFreeze: false,
 };
 
 const store: Store = {
@@ -276,7 +232,6 @@ const store: Store = {
   timer: null,
   inFlight: null,
   abort: null,
-  lastStableMovementById: new Map(),
   consumerIntervals: new Map(),
   nextConsumerId: 1,
 };
@@ -334,30 +289,7 @@ async function fetchFxOnce(): Promise<void> {
       // IMPORTANT: preserve payload as received (meta.budget included when present).
       const json = (await res.json()) as FxApiResponseWithBudget;
 
-      const now = nowMs();
-      const weekend = isWeekendLondon(now);
-
-      // Weekend freeze rules:
-      // - If we already have a payload, do not let weekend traffic change what the user sees.
-      // - If we have no payload yet, accept the first payload, then freeze thereafter.
-      const shouldFreezeDisplay = weekend && store.state.payload !== null;
-
-      if (shouldFreezeDisplay) {
-        // Preserve payload/movement, only mark weekend.
-        setState({
-          isWeekendFreeze: true,
-        });
-        return;
-      }
-
-      const derived = computeMovement(json, weekend, store.state);
-
-      // Preserve stable movement map for weekend conditions (first accepted payload on weekend still ok).
-      if (!weekend) {
-        store.lastStableMovementById = new Map(derived.movementById);
-      } else if (store.lastStableMovementById.size > 0) {
-        derived.movementById = new Map(store.lastStableMovementById);
-      }
+      const derived = computeMovement(json, store.state);
 
       setState({
         payload: json,
@@ -366,7 +298,6 @@ async function fetchFxOnce(): Promise<void> {
         quotesById: derived.quotesById,
         quotesByProviderSymbol: derived.quotesByProviderSymbol,
         movementById: derived.movementById,
-        isWeekendFreeze: weekend,
       });
     } catch (err) {
       // Abort is not a real error for UX.
@@ -384,6 +315,13 @@ async function fetchFxOnce(): Promise<void> {
   })();
 
   return store.inFlight;
+}
+
+function clearTimerAndAbort() {
+  clearTimer();
+  store.abort?.abort();
+  store.abort = null;
+  store.inFlight = null;
 }
 
 function scheduleNext() {
@@ -469,10 +407,7 @@ export function useFxQuotes(options?: UseFxQuotesOptions): UseFxQuotesResult {
       if (enabled) {
         store.enabledCount = Math.max(0, store.enabledCount - 1);
         if (store.enabledCount <= 0) {
-          clearTimer();
-          store.abort?.abort();
-          store.abort = null;
-          store.inFlight = null;
+          clearTimerAndAbort();
         } else {
           scheduleNext();
         }
@@ -500,7 +435,6 @@ export function getFxQuotesDebugSnapshot() {
     at: toIso(nowMs()),
     status: s.status,
     hasPayload: Boolean(s.payload),
-    isWeekendFreeze: s.isWeekendFreeze,
     enabledCount: store.enabledCount,
     consumerIntervals: Array.from(store.consumerIntervals.values()),
     effectiveIntervalMs: getEffectiveIntervalMs(),

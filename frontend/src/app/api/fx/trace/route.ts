@@ -17,7 +17,6 @@
  */
 
 import { NextResponse } from 'next/server';
-
 import { getFxRibbonBudgetSnapshot, getFxRibbonTraceSnapshot } from '@/lib/fx/providers';
 
 type BudgetState = 'ok' | 'warning' | 'blocked';
@@ -66,6 +65,11 @@ function budgetEmoji(state: BudgetState): string {
   }
 }
 
+function getProp(obj: unknown, key: string): unknown | undefined {
+  if (!obj || typeof obj !== 'object') return undefined;
+  return (obj as Record<string, unknown>)[key];
+}
+
 function getNumber(obj: unknown, path: string[]): number | undefined {
   if (!obj || typeof obj !== 'object') return undefined;
   let cur: unknown = obj;
@@ -107,84 +111,43 @@ function getUnknownArray(obj: unknown, path: string[]): unknown[] | undefined {
 }
 
 function buildNotices(params: {
-  observedAtIso: string;
+  observedAt: string;
   snapshot: unknown;
-  budgetSnapshot: unknown;
   budgetIndicator: BudgetIndicator;
 }): { warnings: TraceNotice[]; violations: TraceNotice[]; budget: BudgetIndicator } {
   const warnings: TraceNotice[] = [];
   const violations: TraceNotice[] = [];
 
   const add = (n: Omit<TraceNotice, 'at'>) => {
-    const notice: TraceNotice = { ...n, at: params.observedAtIso };
-    if (notice.level === 'violation') violations.push(notice);
-    else warnings.push(notice);
+    const entry: TraceNotice = { ...n, at: params.observedAt };
+    if (entry.level === 'violation') violations.push(entry);
+    else warnings.push(entry);
   };
 
-  const state = params.budgetIndicator.state;
+  // Budget sanity (trace must explain budget gating)
+  const dayUsed = getNumber(params.snapshot, ['budget', 'day', 'used']);
+  const dayWarnAt = getNumber(params.snapshot, ['budget', 'day', 'warnAt']);
+  const dayBlockAt = getNumber(params.snapshot, ['budget', 'day', 'blockAt']);
 
-  if (state === 'warning') {
-    add({
-      id: 'BUDGET_WARNING',
-      level: 'warning',
-      message:
-        'Budget warning: upstream calls may soon be restricted by the Authority (watch for throttling).',
-      meta: { state },
-    });
-  }
-
-  if (state === 'blocked') {
+  if (params.budgetIndicator.state === 'blocked') {
     add({
       id: 'BUDGET_BLOCKED',
       level: 'violation',
-      message:
-        'Budget blocked: upstream calls should be refused by the Authority (ride-cache only).',
-      meta: { state },
+      message: 'Budget is blocked; upstream FX calls should be forbidden.',
     });
-  }
-
-  // Minute / daily threshold details (read-only; no recompute)
-  const minuteUsed =
-    getNumber(params.budgetSnapshot, ['minute', 'used']) ??
-    getNumber(params.budgetSnapshot, ['minute', 'count']);
-  const minuteWarnAt = getNumber(params.budgetSnapshot, ['minute', 'warnAt']);
-  const minuteBlockAt = getNumber(params.budgetSnapshot, ['minute', 'blockAt']);
-
-  if (
-    typeof minuteUsed === 'number' &&
-    typeof minuteBlockAt === 'number' &&
-    minuteUsed >= minuteBlockAt
-  ) {
+  } else if (params.budgetIndicator.state === 'warning') {
     add({
-      id: 'MINUTE_CAP_BLOCKED',
-      level: 'violation',
-      message: 'Per-minute budget has hit the block threshold (ride-cache only).',
-      meta: { used: minuteUsed, blockAt: minuteBlockAt },
-    });
-  } else if (
-    typeof minuteUsed === 'number' &&
-    typeof minuteWarnAt === 'number' &&
-    minuteUsed >= minuteWarnAt
-  ) {
-    add({
-      id: 'MINUTE_CAP_WARNING',
+      id: 'BUDGET_WARNING',
       level: 'warning',
-      message: 'Per-minute budget is in warning range.',
-      meta: { used: minuteUsed, warnAt: minuteWarnAt },
+      message: 'Budget is in warning range; upstream FX calls should be minimised.',
     });
   }
-
-  const dayUsed =
-    getNumber(params.budgetSnapshot, ['day', 'used']) ??
-    getNumber(params.budgetSnapshot, ['day', 'count']);
-  const dayWarnAt = getNumber(params.budgetSnapshot, ['day', 'warnAt']);
-  const dayBlockAt = getNumber(params.budgetSnapshot, ['day', 'blockAt']);
 
   if (typeof dayUsed === 'number' && typeof dayBlockAt === 'number' && dayUsed >= dayBlockAt) {
     add({
       id: 'DAY_CAP_BLOCKED',
       level: 'violation',
-      message: 'Daily budget has hit the block threshold (ride-cache only).',
+      message: 'Daily budget appears at/above block threshold.',
       meta: { used: dayUsed, blockAt: dayBlockAt },
     });
   } else if (typeof dayUsed === 'number' && typeof dayWarnAt === 'number' && dayUsed >= dayWarnAt) {
@@ -196,44 +159,47 @@ function buildNotices(params: {
     });
   }
 
-  // Weekend freeze hint
-  const weekendFreeze =
-    getBool(params.snapshot, ['weekendFreezeActive']) ??
-    getBool(params.snapshot, ['weekendFreeze', 'active']);
-  if (weekendFreeze) {
-    add({
-      id: 'WEEKEND_FREEZE',
-      level: 'warning',
-      message: 'Weekend freeze active (upstream FX calls should be forbidden; cache-only).',
-    });
-  }
-
   const rateLimitUntilIso =
     getString(params.snapshot, ['rateLimit', 'until']) ??
     getString(params.snapshot, ['rateLimitUntil']);
   if (rateLimitUntilIso) {
     add({
-      id: 'RATE_LIMIT_COOLDOWN',
+      id: 'RATE_LIMIT_ACTIVE',
       level: 'warning',
-      message: 'Rate-limit cooldown active (upstream should be paused).',
+      message: 'Rate-limit cooldown active; serving cache/ride-cache until cooldown expires.',
       meta: { until: rateLimitUntilIso },
     });
   }
 
-  const cacheHasValue =
+  // Cold-start / cache sanity
+  const hasCacheValue =
     getBool(params.snapshot, ['cache', 'hasValue']) ??
-    Boolean(getString(params.snapshot, ['cache', 'key']));
-  if (cacheHasValue === false) {
+    (getNumber(params.snapshot, ['cache', 'size']) ?? 0) > 0;
+
+  const lastMergedA = getUnknownArray(params.snapshot, ['merged', 'A']);
+  const lastMergedB = getUnknownArray(params.snapshot, ['merged', 'B']);
+
+  const missingA =
+    getUnknownArray(params.snapshot, ['merged', 'missing', 'A'])?.length ??
+    getUnknownArray(params.snapshot, ['missing', 'A'])?.length ??
+    0;
+
+  const missingB =
+    getUnknownArray(params.snapshot, ['merged', 'missing', 'B'])?.length ??
+    getUnknownArray(params.snapshot, ['missing', 'B'])?.length ??
+    0;
+
+  const missingTotal = missingA + missingB;
+
+  if (!hasCacheValue && (!lastMergedA || !lastMergedB)) {
     add({
-      id: 'NO_CACHE',
-      level: 'violation',
-      message: 'No ride-cache available (any block/freeze will result in null prices / error).',
+      id: 'COLD_START_NO_CACHE',
+      level: 'warning',
+      message:
+        'Cold start detected (no cache present yet). If upstream is allowed, first live fetch should warm the cache.',
     });
   }
 
-  const missingA = getNumber(params.snapshot, ['groups', 'A', 'missingCount']) ?? 0;
-  const missingB = getNumber(params.snapshot, ['groups', 'B', 'missingCount']) ?? 0;
-  const missingTotal = missingA + missingB;
   if (missingTotal > 0) {
     add({
       id: 'MISSING_SYMBOLS',
@@ -268,47 +234,25 @@ export async function GET(): Promise<Response> {
   const snapshot = getFxRibbonTraceSnapshot() as unknown as TracePayload;
 
   // Prefer authority-provided budget snapshot/indicator if present; fallback to snapshot helper.
-  const budgetSnapshot = snapshot.budget ?? getFxRibbonBudgetSnapshot();
+  const budget = snapshot?.budget ?? getFxRibbonBudgetSnapshot();
 
   const budgetState = normaliseBudgetState(
-    snapshot.budgetIndicator && typeof snapshot.budgetIndicator === 'object'
-      ? (snapshot.budgetIndicator as Record<string, unknown>).state
-      : budgetSnapshot && typeof budgetSnapshot === 'object'
-      ? (budgetSnapshot as Record<string, unknown>).state
-      : undefined,
+    getProp(snapshot?.budgetIndicator, 'state') ?? getProp(budget, 'state'),
   );
 
   const budgetIndicator: BudgetIndicator = {
     state: budgetState,
-    emoji:
-      (snapshot.budgetIndicator &&
-      typeof snapshot.budgetIndicator === 'object' &&
-      typeof (snapshot.budgetIndicator as Record<string, unknown>).emoji === 'string'
-        ? String((snapshot.budgetIndicator as Record<string, unknown>).emoji)
-        : budgetEmoji(budgetState)) || budgetEmoji(budgetState),
+    emoji: budgetEmoji(budgetState),
   };
 
-  const observedAtIso = isoNow();
+  const observedAt = isoNow();
+  const notices = buildNotices({ observedAt, snapshot, budgetIndicator });
 
-  const notices = buildNotices({
-    observedAtIso,
-    snapshot,
-    budgetSnapshot,
-    budgetIndicator,
-  });
-
-  // Preserve the existing snapshot shape at the root, only add fields.
   const payload: TracePayload = {
-    ...(snapshot as Record<string, unknown>),
-    observedAt: observedAtIso,
-
-    // Raw budget snapshot (ledger + state) for forensic debugging.
-    budget: budgetSnapshot,
-
-    // Convenience indicator aligned to UI emoji mapping.
-    budgetIndicator: notices.budget,
-
-    // Human-auditable flags (stable IDs, suitable for tests/log grep).
+    ...snapshot,
+    observedAt,
+    budget,
+    budgetIndicator,
     warnings: notices.warnings,
     violations: notices.violations,
   };

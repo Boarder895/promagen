@@ -120,7 +120,7 @@ function readBudgetState(payload: unknown): BudgetState | undefined {
 export function FinanceRibbonContainer() {
   const [isPaused, setIsPaused] = useState(false);
 
-  const { payload, quotesById, movementById, isWeekendFreeze } = useFxQuotes({
+  const { payload, quotesById, movementById } = useFxQuotes({
     enabled: !isPaused,
     intervalMs: POLL_INTERVAL_MS,
   });
@@ -161,7 +161,6 @@ export function FinanceRibbonContainer() {
             winnerSide={winnerSide}
             winnerOpacity={winnerOpacity}
             deltaPct={deltaPct}
-            weekendFreeze={isWeekendFreeze}
           />
         ),
         priceText: formatPrice(q?.price ?? null, p.precision),
@@ -174,7 +173,7 @@ export function FinanceRibbonContainer() {
         deltaPct,
       };
     });
-  }, [pairs, quotesById, movementById, isWeekendFreeze]);
+  }, [pairs, quotesById, movementById]);
 
   // No behavioural branching based on status/mode here; renderer decides how to show.
   // This container only maps data to chips and passes through state.

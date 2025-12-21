@@ -63,6 +63,7 @@ function buildEmptySnapshot(): FxRibbonTraceSnapshot {
         warnAt: 0,
         blockAt: 0,
         remaining: 0,
+        pctUsed: 0,
       },
     },
 
@@ -76,7 +77,6 @@ function buildEmptySnapshot(): FxRibbonTraceSnapshot {
     lastError: undefined,
     counters: { ribbonCalls: 0, upstreamCalls: 0, upstream429s: 0 },
     rateLimit: {},
-    weekendFreeze: { isWeekendLondon: false, londonWeekday: '—', timezone: 'Europe/London' },
     traffic: { windowSeconds: 0, hitsInWindow: 0, factor: 1 },
     schedule: { cycleIndex: 0, scheduledGroup: 'A', cycleLengthSeconds: 0 },
     groups: {

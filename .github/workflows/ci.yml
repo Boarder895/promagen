@@ -2,9 +2,9 @@ name: ci
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   build-and-test:
@@ -12,18 +12,24 @@ jobs:
 
     env:
       NODE_ENV: test
-      NEXT_TELEMETRY_DISABLED: "1"
-      CI: "true"
+      NEXT_TELEMETRY_DISABLED: '1'
+      CI: 'true'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Docs Gate (authority docs required)
+        shell: pwsh
+        run: pwsh -File scripts/docs-gate.ps1
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Setup PNPM
         uses: pnpm/action-setup@v4
@@ -52,7 +58,7 @@ jobs:
       - name: Start Next server
         working-directory: frontend
         run: pnpm exec next start -p 3000 &
-      
+
       - name: Wait for server
         run: |
           for i in {1..60}; do

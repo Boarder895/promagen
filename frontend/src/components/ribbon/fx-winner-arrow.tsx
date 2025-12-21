@@ -12,9 +12,6 @@ export type FxWinnerArrowProps = {
   /** 0..1 confidence => opacity */
   opacity: number;
 
-  /** Weekend freeze: lock arrow state; no transitions */
-  weekendFreeze?: boolean;
-
   /**
    * Confirmation delay before showing/flipping.
    * Spec: ~500–800ms. Default 650ms.
@@ -49,7 +46,6 @@ function canHoverDesktop(): boolean {
 export function FxWinnerArrow({
   winnerSide,
   opacity,
-  weekendFreeze = false,
   confirmDelayMs = 650,
   fadeOutMs = 160,
   settleMs = 40,
@@ -82,19 +78,7 @@ export function FxWinnerArrow({
     return () => clearTimers();
   }, [clearTimers]);
 
-  // Weekend freeze: lock at last stable (no transitions, no opacity drift)
   React.useEffect(() => {
-    if (!weekendFreeze) return;
-
-    clearTimers();
-    setSide(lastStable.current.side);
-    setIsVisible(lastStable.current.side !== 'off');
-    setLiveOpacity(lastStable.current.side !== 'off' ? lastStable.current.opacity : 0);
-  }, [weekendFreeze, clearTimers]);
-
-  React.useEffect(() => {
-    if (weekendFreeze) return;
-
     // On first render, render immediately (no “confirmation delay” on initial load)
     if (firstRender.current) {
       firstRender.current = false;
@@ -146,16 +130,7 @@ export function FxWinnerArrow({
     }, confirmDelayMs);
 
     timers.current.push(t1);
-  }, [
-    desiredSide,
-    desiredOpacity,
-    weekendFreeze,
-    clearTimers,
-    side,
-    fadeOutMs,
-    settleMs,
-    confirmDelayMs,
-  ]);
+  }, [desiredSide, desiredOpacity, clearTimers, side, fadeOutMs, settleMs, confirmDelayMs]);
 
   if (side === 'off') return null;
 

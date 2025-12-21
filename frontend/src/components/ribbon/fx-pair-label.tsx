@@ -31,11 +31,6 @@ export interface FxPairLabelProps {
    * 24h delta (percentage), used only for hover copy.
    */
   deltaPct?: number | null;
-
-  /**
-   * Weekend freeze: lock arrow state at Friday close.
-   */
-  weekendFreeze?: boolean;
 }
 
 function CurrencyWithFlag({
@@ -72,7 +67,6 @@ export function FxPairLabel({
   winnerSide = 'neutral',
   winnerOpacity = 1,
   deltaPct = null,
-  weekendFreeze = false,
 }: FxPairLabelProps) {
   const baseWins = winnerSide === 'base';
   const quoteWins = winnerSide === 'quote';
@@ -89,12 +83,7 @@ export function FxPairLabel({
     <span className={className ?? 'inline-flex items-center gap-1'}>
       {/* One arrow total. Side indicates winner. Always green (CSS). */}
       {baseWins ? (
-        <FxWinnerArrow
-          winnerSide="base"
-          opacity={winnerOpacity}
-          weekendFreeze={weekendFreeze}
-          hoverText={hoverText}
-        />
+        <FxWinnerArrow winnerSide="base" opacity={winnerOpacity} hoverText={hoverText} />
       ) : null}
 
       <CurrencyWithFlag currencyCode={base} countryCode={baseCountryCode} />
@@ -106,12 +95,7 @@ export function FxPairLabel({
       <CurrencyWithFlag currencyCode={quote} countryCode={quoteCountryCode} />
 
       {quoteWins ? (
-        <FxWinnerArrow
-          winnerSide="quote"
-          opacity={winnerOpacity}
-          weekendFreeze={weekendFreeze}
-          hoverText={hoverText}
-        />
+        <FxWinnerArrow winnerSide="quote" opacity={winnerOpacity} hoverText={hoverText} />
       ) : null}
     </span>
   );
