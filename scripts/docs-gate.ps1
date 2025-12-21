@@ -5,7 +5,8 @@
 #
 # Default policy:
 # - If any files under frontend/src/lib/fx/** change, then at least one of the following must be true:
-#   A) A file under docs/authority/** changed in the same diff, OR
+#   A) A file under docs/authority/** changed in the same diff AND includes a non-whitespace change
+#      (CRLF/LF-only churn and whitespace-only edits do not count), OR
 #   B) docs/doc-delta.md changed and the added lines include:
 #        Docs Gate: Yes
 #        Target doc: <path>
@@ -69,43 +70,48 @@ function Resolve-CommitRange {
     return @{ Base = $BaseOverride; Head = $HeadOverride; Source = 'manual' }
   }
 
-  $event = Get-EventJson
+  $ev = Get-EventJson
 
-  if ($null -ne $event) {
-    # pull_request event payload includes pull_request.base.sha + pull_request.head.sha
-    if ($event.pull_request -and $event.pull_request.base -and $event.pull_request.head) {
-      $b = [string]$event.pull_request.base.sha
-      $h = [string]$event.pull_request.head.sha
-      if ($b -and $h) { return @{ Base = $b; Head = $h; Source = 'pull_request' } }
-    }
+  # GitHub Actions variables
+  $eventName = $env:GITHUB_EVENT_NAME
+  $sha = $env:GITHUB_SHA
 
-    # push event payload includes before + after
-    if ($event.before -and $event.after) {
-      $b = [string]$event.before
-      $h = [string]$event.after
-      if ($b -and $h) { return @{ Base = $b; Head = $h; Source = 'push' } }
+  if ($eventName -eq 'pull_request' -and $ev -and $ev.pull_request) {
+    $base = $ev.pull_request.base.sha
+    $head = $ev.pull_request.head.sha
+    if ($base -and $head) {
+      return @{ Base = $base; Head = $head; Source = 'pull_request' }
     }
   }
 
-  # Local fallback: compare HEAD~1..HEAD
-  $hLocal = (git rev-parse HEAD 2>$null).Trim()
-  $bLocal = (git rev-parse HEAD~1 2>$null).Trim()
-  if ($bLocal -and $hLocal) {
-    return @{ Base = $bLocal; Head = $hLocal; Source = 'local' }
+  if ($eventName -eq 'push' -and $ev -and $ev.before -and $ev.after) {
+    return @{ Base = $ev.before; Head = $ev.after; Source = 'push' }
   }
 
-  throw "Unable to resolve commit range (Base/Head). Ensure git is available and history exists (fetch-depth: 0)."
+  # Fallback for local use: compare last commit to HEAD
+  try {
+    $headLocal = if ($sha) { $sha } else { (git rev-parse HEAD 2>$null) }
+    $baseLocal = (git rev-parse "$headLocal~1" 2>$null)
+    if ($headLocal -and $baseLocal) {
+      return @{ Base = $baseLocal; Head = $headLocal; Source = 'local-fallback' }
+    }
+  } catch {
+    # fall through
+  }
+
+  throw "Unable to resolve commit range. Ensure this runs in CI with proper event data, or pass -BaseSha and -HeadSha."
 }
 
 function Get-ChangedFiles([string]$Base, [string]$Head) {
   $out = git diff --name-only $Base $Head 2>$null
   if ($LASTEXITCODE -ne 0) {
-    throw "git diff failed for range $Base..$Head. Ensure checkout fetch-depth is 0 so the base commit exists."
+    throw "git diff --name-only failed for range $Base..$Head. Ensure checkout fetch-depth: 0 so both commits exist."
   }
+
   if (-not $out) { return @() }
 
-  return $out |
-    ForEach-Object { ($_ -as [string]).Trim() } |
+  return @($out) |
+    ForEach-Object { $_.Trim() } |
     Where-Object { $_ -ne '' } |
     ForEach-Object { $_ -replace '\\','/' }   # normalise slashes
 }
@@ -162,7 +168,31 @@ function DocDelta-HasRequiredAddedLines([string]$Base, [string]$Head, [string]$P
   return ($hasGate -and $hasTarget -and $hasInsertion)
 }
 
+function Get-MeaningfulDocFiles([string]$Base, [string]$Head, [string[]]$DocFiles) {
+  # Returns doc files that have at least one non-whitespace change.
+  # We ignore:
+  # - whitespace-only edits (via -w)
+  # - CRLF/LF-only churn at end-of-line (via --ignore-cr-at-eol)
+  $meaningful = New-Object System.Collections.Generic.List[string]
+
+  foreach ($f in $DocFiles) {
+    $patch = git diff $Base $Head --ignore-cr-at-eol -w -- $f 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $patch) { continue }
+
+    $patchLines = @($patch)
+    $changes = $patchLines | Where-Object {
+      (($_.StartsWith('+') -and -not $_.StartsWith('+++') -and -not $_.StartsWith('+@@'))) -or
+      (($_.StartsWith('-') -and -not $_.StartsWith('---') -and -not $_.StartsWith('-@@')))
+    }
+
+    if (@($changes).Count -gt 0) { $meaningful.Add($f) }
+  }
+
+  return $meaningful.ToArray()
+}
+
 # ---- Main
+
 $range = Resolve-CommitRange -BaseOverride $BaseSha -HeadOverride $HeadSha
 $base = $range.Base
 $head = $range.Head
@@ -187,15 +217,25 @@ $authorityFiles = Filter-ByPrefixes -Paths $changed -Prefixes $AuthorityPrefixes
 Write-Info ("Authority areas changed (" + $authorityFiles.Count + "):")
 $authorityFiles | ForEach-Object { Write-Host "  - $_" }
 
-$docsChanged = Any-PathMatchesPrefix -Paths $changed -Prefixes $DocsPrefixes
+$docFiles = Filter-ByPrefixes -Paths $changed -Prefixes $DocsPrefixes
 $docDeltaChanged = $changed | Where-Object { $_.Equals($DocDeltaPath, [System.StringComparison]::OrdinalIgnoreCase) }
 
-if ($docsChanged) {
-  $docFiles = Filter-ByPrefixes -Paths $changed -Prefixes $DocsPrefixes
-  Write-Info ("Docs updated (" + $docFiles.Count + "):")
+$meaningfulDocFiles = Get-MeaningfulDocFiles -Base $base -Head $head -DocFiles $docFiles
+
+if ($docFiles.Count -gt 0) {
+  Write-Info ("Docs changed (" + $docFiles.Count + "):")
   $docFiles | ForEach-Object { Write-Host "  - $_" }
-  Write-Info "Docs Gate: PASS (authority change accompanied by docs/authority update)."
+}
+
+if ($meaningfulDocFiles.Count -gt 0) {
+  Write-Info ("Meaningful docs updates (" + $meaningfulDocFiles.Count + "):")
+  $meaningfulDocFiles | ForEach-Object { Write-Host "  - $_" }
+  Write-Info "Docs Gate: PASS (authority change accompanied by meaningful docs/authority update)."
   exit 0
+}
+
+if ($docFiles.Count -gt 0) {
+  Write-Warn "docs/authority changed, but only whitespace/line-ending churn was detected (ignored for passing the gate)."
 }
 
 if ($docDeltaChanged) {
@@ -214,13 +254,13 @@ Docs Gate: FAIL
 Authority areas changed (e.g. frontend/src/lib/fx/**) but no in-repo documentation update was detected.
 
 To pass:
-1) Update at least one file under docs/authority/** in the same PR, OR
+1) Make a meaningful update to at least one file under docs/authority/** in the same PR (whitespace/CRLF-only changes do not count), OR
 2) Add docs/doc-delta.md and include a Doc Delta entry with:
    - Docs Gate: Yes
    - Target doc: <path>
    - Insertion point: <heading/lines>
 
 Tip:
-- For Option A (best practice), keep the authoritative docs in docs/authority/ so CI can verify the update via git diff.
+- For Option A (best practice), keep the authoritative docs in docs/authority/ so CI can verify a meaningful update via git diff (ignoring whitespace/CRLF-only churn).
 "@
 exit 1
