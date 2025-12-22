@@ -37,7 +37,6 @@ export function PromptBuilder(props: PromptBuilderProps) {
   const id =
     props.id ?? provider.id ?? `prompt-builder-${provider.name.toLowerCase().replace(/\s+/g, '-')}`;
 
-  const websiteUrl = provider.websiteUrl ?? provider.url;
   const textareaId = `${id}-textarea`;
 
   // Analytics: fire when the studio mounts for a given provider.
@@ -68,6 +67,10 @@ export function PromptBuilder(props: PromptBuilderProps) {
       });
     }
   };
+
+  const outboundHref = provider.id
+    ? `/go/${encodeURIComponent(provider.id)}?src=${encodeURIComponent('provider_detail')}`
+    : null;
 
   return (
     <section
@@ -118,9 +121,9 @@ export function PromptBuilder(props: PromptBuilderProps) {
             Copy prompt
           </button>
 
-          {websiteUrl ? (
+          {outboundHref ? (
             <a
-              href={websiteUrl}
+              href={outboundHref}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-full border border-sky-500/70 bg-sky-600/10 px-3 py-1.5 text-xs font-medium text-sky-100 hover:bg-sky-500/10 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
@@ -130,7 +133,7 @@ export function PromptBuilder(props: PromptBuilderProps) {
           ) : null}
         </div>
 
-        {websiteUrl ? (
+        {outboundHref ? (
           <p className="text-[0.7rem] text-slate-400">
             Prompts are crafted here; execution happens on the provider.
           </p>

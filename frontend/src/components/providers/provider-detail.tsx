@@ -2,160 +2,136 @@
 
 import React from 'react';
 import Link from 'next/link';
-import type { Provider } from '@/types/provider';
 
-type ProviderWithCopy = Provider & {
-  tagline?: string;
-  tip?: string;
-};
+import type { Provider } from '@/types/provider';
+import { buildGoHref } from '@/lib/affiliate/outbound';
 
 export type ProviderDetailProps = {
+  /** Provider record for this page. When null, the UI renders a safe empty state. */
   provider: Provider | null;
-  id: string;
+
+  /** Optional id fallback (useful when the provider record is missing). */
+  id?: string;
 };
 
-function trendLabel(trend?: Provider['trend']): string {
-  if (trend === 'up') return 'Trending up';
-  if (trend === 'down') return 'Trending down';
-  if (trend === 'flat') return 'No significant change';
-  return 'No trend data';
+function getOfficialUrlText(provider: Provider): string | null {
+  return provider.url ?? provider.website ?? null;
 }
 
-function trendGlyph(trend?: Provider['trend']): string {
-  if (trend === 'up') return '▲';
-  if (trend === 'down') return '▼';
-  if (trend === 'flat') return '■';
-  return '•';
+function hasOutboundDestination(provider: Provider): boolean {
+  return Boolean(provider.affiliateUrl ?? provider.url ?? provider.website);
 }
 
-export default function ProviderDetail({ provider, id }: ProviderDetailProps): JSX.Element {
+export default function ProviderDetail(props: ProviderDetailProps) {
+  const { provider, id } = props;
+
+  const providerId = provider?.id ?? id ?? '';
+  const providerName = provider?.name ?? providerId;
+
   if (!provider) {
     return (
-      <article
-        aria-label="Unknown provider"
-        className="rounded-2xl bg-white/90 p-4 ring-1 ring-amber-200 shadow-sm"
-      >
-        <header className="mb-2">
-          <h1 className="text-2xl font-semibold break-all">{id}</h1>
+      <article className="flex w-full flex-col gap-6 rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+        <header className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold text-slate-50">Provider not found</h1>
+          {providerId ? (
+            <p className="text-sm text-slate-300">
+              The provider <span className="font-mono text-slate-200">{providerId}</span> is not in
+              the current catalogue.
+            </p>
+          ) : (
+            <p className="text-sm text-slate-300">This provider is not in the current catalogue.</p>
+          )}
         </header>
-        <p className="text-sm text-slate-700">
-          This provider is not in the current Promagen catalogue. Check the URL or choose a provider
-          from the main leaderboard.
-        </p>
-        <p className="mt-3 text-xs text-slate-500">
-          Hint: visit{' '}
-          <Link href="/providers" className="text-sky-600 hover:underline">
-            the providers page
-          </Link>{' '}
-          to see all indexed providers.
-        </p>
+
+        <section className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/providers/leaderboard"
+            className="inline-flex items-center justify-center rounded-full border border-slate-600 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-50 shadow-sm hover:border-slate-400 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
+          >
+            Back to leaderboard
+          </Link>
+        </section>
       </article>
     );
   }
 
-  const full = provider as ProviderWithCopy;
-  const name = provider.name;
-  const description = full.tagline || full.tip || '';
-  const score =
-    typeof provider.score === 'number' && Number.isFinite(provider.score) ? provider.score : null;
-  const trend = provider.trend;
-  const tags = Array.isArray(provider.tags) ? provider.tags : [];
-
-  const externalHref =
-    (provider.affiliateUrl ?? provider.url) && (provider.affiliateUrl ?? provider.url)!.length > 0
-      ? (provider.affiliateUrl ?? provider.url)!
-      : null;
-
-  const requiresDisclosure = provider.requiresDisclosure === true;
+  const officialUrlText = getOfficialUrlText(provider);
+  const outboundHref = providerId ? buildGoHref(providerId, 'provider_detail') : '#';
 
   return (
-    <article
-      aria-label={`Provider detail for ${name}`}
-      className="space-y-4 rounded-2xl bg-white/95 p-5 ring-1 ring-slate-200 shadow-sm"
-    >
-      <header>
-        <p className="text-xs uppercase tracking-wide text-slate-500">AI Provider</p>
-        <h1 className="mt-1 text-2xl font-semibold">{name}</h1>
-        {provider.country && <p className="text-sm text-slate-500">Based in {provider.country}</p>}
-        {description && <p className="mt-2 text-sm text-slate-700">{description}</p>}
-
-        {requiresDisclosure && (
-          <p className="mt-2 inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
-            Affiliate relationship – disclosure required
-          </p>
-        )}
+    <article className="flex w-full flex-col gap-6 rounded-2xl border border-slate-800 bg-slate-950/60 p-6">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold text-slate-50">{providerName}</h1>
+        {provider.tagline ? <p className="text-sm text-slate-300">{provider.tagline}</p> : null}
       </header>
 
-      <section
-        aria-label="Score and trend"
-        className="flex flex-wrap items-baseline justify-between gap-3"
-      >
-        <div className="flex items-baseline gap-2">
-          <p className="text-sm text-slate-600">
-            Promagen score{' '}
-            <span className="tabular-nums text-xl font-semibold">
-              {score !== null ? score : '—'}
-            </span>
-          </p>
-          {trend && (
-            <span
-              aria-label={trendLabel(trend)}
-              className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
-            >
-              <span aria-hidden="true" className="mr-1">
-                {trendGlyph(trend)}
-              </span>
-              {trend}
-            </span>
-          )}
+      <section className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+          <h2 className="text-sm font-semibold text-slate-50">Quick facts</h2>
+          <dl className="mt-3 grid gap-2 text-sm text-slate-300">
+            <div className="flex items-start justify-between gap-2">
+              <dt className="text-slate-500">Provider id</dt>
+              <dd className="font-mono text-xs text-slate-200">{providerId}</dd>
+            </div>
+
+            {officialUrlText ? (
+              <div className="flex items-start justify-between gap-2">
+                <dt className="text-slate-500">Official site</dt>
+                <dd className="text-right">
+                  <a
+                    href={outboundHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="break-all text-sky-300 underline decoration-sky-500/50 underline-offset-4 hover:text-sky-200"
+                  >
+                    {officialUrlText}
+                  </a>
+                </dd>
+              </div>
+            ) : null}
+
+            {provider.country ? (
+              <div className="flex items-start justify-between gap-2">
+                <dt className="text-slate-500">Country</dt>
+                <dd>{provider.country}</dd>
+              </div>
+            ) : null}
+          </dl>
         </div>
 
-        {provider.url && (
-          <p className="text-xs text-slate-500">
-            Official site:{' '}
-            <a
-              href={provider.url}
-              target="_blank"
-              rel="noreferrer"
-              className="break-all text-sky-600 hover:underline"
-            >
-              {provider.url}
-            </a>
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+          <h2 className="text-sm font-semibold text-slate-50">Why it&apos;s on the leaderboard</h2>
+          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            {provider.tip ??
+              'This provider appears in the catalogue. Promagen ranks providers using simple, explainable signals.'}
           </p>
-        )}
+
+          {provider.requiresDisclosure ? (
+            <p className="mt-3 text-xs text-slate-400">
+              This outbound button uses an affiliate link (disclosed).
+            </p>
+          ) : null}
+        </div>
       </section>
 
-      {tags.length > 0 && (
-        <section aria-label="Provider tags" className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
-            >
-              {tag}
-            </span>
-          ))}
-        </section>
-      )}
-
-      <section aria-label="Provider actions" className="flex flex-wrap gap-3">
+      <section className="flex flex-wrap items-center gap-3">
         <Link
-          href={`/providers/${provider.id}/prompt-builder`}
-          className="inline-flex items-center justify-center rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          href={`/providers/${providerId}/prompt-builder`}
+          className="inline-flex items-center justify-center rounded-full border border-slate-600 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-50 shadow-sm hover:border-slate-400 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
         >
-          Craft an image prompt
+          Prompt builder
         </Link>
 
-        {externalHref && (
+        {hasOutboundDestination(provider) ? (
           <a
-            href={externalHref}
+            href={outboundHref}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+            className="inline-flex items-center justify-center rounded-full border border-sky-500/70 bg-sky-600/10 px-4 py-2 text-sm font-medium text-sky-100 hover:bg-sky-500/10 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
           >
             Visit provider site
           </a>
-        )}
+        ) : null}
       </section>
     </article>
   );

@@ -24,6 +24,12 @@ export type FxWinnerArrowProps = {
 
   /** Optional hover explanation (desktop only) */
   hoverText?: string | null;
+
+  /**
+   * Calm Mode (global pause): pause the arrow “life” animation only.
+   * (Decision/timing stays identical; this is visual-only.)
+   */
+  isPaused?: boolean;
 };
 
 function clamp01(n: number): number {
@@ -50,6 +56,7 @@ export function FxWinnerArrow({
   fadeOutMs = 160,
   settleMs = 40,
   hoverText = null,
+  isPaused = false,
 }: FxWinnerArrowProps) {
   const desiredSide = toArrowSide(winnerSide);
   const desiredOpacity = clamp01(opacity);
@@ -132,7 +139,7 @@ export function FxWinnerArrow({
     timers.current.push(t1);
   }, [desiredSide, desiredOpacity, clearTimers, side, fadeOutMs, settleMs, confirmDelayMs]);
 
-  if (side === 'off') return null;
+  const showTooltip = hoverText && canHoverDesktop() && desiredSide !== 'off';
 
   const arrow = (
     <span
@@ -140,14 +147,44 @@ export function FxWinnerArrow({
       className={[
         'fx-winner-arrow',
         isVisible ? 'fx-winner-arrow--on' : 'fx-winner-arrow--off',
-      ].join(' ')}
-      style={{ opacity: isVisible ? liveOpacity : 0 }}
+        isVisible && side !== 'off' ? 'fx-winner-arrow--life' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      style={{
+        opacity: isVisible ? liveOpacity : 0,
+        animationPlayState: isPaused ? 'paused' : 'running',
+      }}
     >
-      ▲
+      {/* Real arrow glyph (shaft + head). Points right by default; rotate for left. */}
+      <svg
+        width="1em"
+        height="1em"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+        style={{ transform: side === 'left' ? 'rotate(180deg)' : undefined }}
+      >
+        <path
+          d="M4 12h13"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M14 6l6 6-6 6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </span>
   );
 
-  if (hoverText && canHoverDesktop()) {
+  if (showTooltip) {
     return (
       <span title={hoverText} aria-label={hoverText}>
         {arrow}

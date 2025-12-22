@@ -22,12 +22,19 @@ Centre: 2.2fr
 Right rail: 0.9fr
 The effect: the centre column visually anchors the page, with the two exchange rails framing it.
 
-On smaller breakpoints:
-The layout can retain three columns while space allows.
-On narrow screens it collapses to a single column, stacking:
-Left rail exchanges
-Centre column content (FX row + AI Providers, later also Commodities + Crypto)
-Right rail exchanges
+Layout behaviour (variable N)
+The FX row uses a stable layout that supports any number of chips, while enforcing a readability floor for typography:
+
+- Wide / desktop: the FX chips render on exactly one line, sharing available width evenly (flex: 1) and remaining visually consistent.
+  Hard rule: the FX chip label font size must never be smaller than 11.5px.
+
+- Snap rule (readability-first): if keeping a single line would require the label font to drop below 11.5px, the FX row must snap to exactly two lines.
+  In two-line mode, the label font size must be as large as possible while still fitting cleanly within two lines (no overflow, no clipped text), keeping alignment and spacing consistent.
+
+- Small / extreme narrow: if even two lines cannot fit cleanly at 11.5px, prefer horizontal scroll rather than reducing the label font below 11.5px.
+
+In all cases the rule remains: render exactly what fx.pairs.json specifies, in SSOT order, regardless of how many FX are selected.
+
 Everything is set up with fluid widths so the layout “snaps” cleanly rather than collapsing awkwardly as the window is moved between different screens and resolutions.
 
 Market Belt in the Centre Column
@@ -331,6 +338,9 @@ FX micro-motion building blocks:
 - Winner-arrow side-change transition: when the winner-arrow moves from left to right (or right to left), it must not “jump”.
   It fades out, repositions, then fades back in.
   Purpose: preserve calmness and avoid visual shock.
+- Winner-arrow “calm life” (when shown): a barely-there glow pulse OR a tiny drift so it feels alive, not static.
+  Rule: purely decorative — must not change winner decision logic, thresholds/hysteresis, or the micro-timing delay.
+  Must pause in Calm Mode (global pause) and must be disabled under prefers-reduced-motion.
 
 Global Behaviour – Finance Ribbon & Live/Paused
 
@@ -477,6 +487,32 @@ Arrow rules (hard rules)
 - Arrow points at the currency that has strengthened over the horizon.
 
 Arrow placement (the “side flip” rule)
+Arrow visual spec (icon + calm “life”)
+
+- Must be a real arrow glyph (shaft + head). Do not use a triangle/chevron glyph (e.g. ▲) as the winner indicator.
+  Arrow visual spec (icon + calm “life”)
+
+- Must be a real arrow glyph (shaft + head). Do not use a triangle/chevron glyph (e.g. ▲) as the winner indicator.
+- Orientation: the arrow points inward towards the winning currency label:
+  - Winning side = left (BASE) → arrow points left.
+  - Winning side = right (QUOTE) → arrow points right.
+- “Life” effect (visual-only, does not change decision/timing):
+  - Choose ONE: gentle glow pulse OR tiny drift (do not stack multiple effects).
+  - Glow pulse: very soft (opacity/blur/shadow), period ~4–7s, tiny amplitude.
+  - Drift: translateY ±1px, period ~6–10s, ease-in-out.
+  - Must pause in Calm Mode and must disable under prefers-reduced-motion.
+- Layout stability: keep a fixed arrow container box so chip width does not shift when the arrow appears/disappears.
+
+- Orientation: the arrow points inward towards the winning currency label:
+  - Winning side = left (BASE) → arrow points left.
+  - Winning side = right (QUOTE) → arrow points right.
+- “Life” effect (visual-only, does not change decision/timing):
+  - Choose ONE: gentle glow pulse OR tiny drift (do not stack multiple effects).
+  - Glow pulse: very soft (opacity/blur/shadow), period ~4–7s, tiny amplitude.
+  - Drift: translateY ±1px, period ~6–10s, ease-in-out.
+  - Must pause in Calm Mode and must disable under prefers-reduced-motion.
+- Layout stability: keep a fixed arrow container box so chip width does not shift when the arrow appears/disappears.
+
 For a pair BASE/QUOTE:
 
 - If BASE is stronger → arrow appears next to BASE (left side).
@@ -561,7 +597,7 @@ Neutral visual behaviour:
 Key behaviours to test:
 The FX row renders exactly N chips, where N is driven by fx.pairs.json (no hard-coded counts).
 SSOT order is preserved end-to-end: fx.pairs.json order → gateway response order → UI render order.
-Global pause stops motion but not data refresh.
+Global pause stops motion and client polling (Calm Mode), but does not change server caching policy.
 Winner arrow always appears at most once per pair and follows the winning currency when the configured orientation changes.
 Winner arrow flips sides correctly (BASE vs QUOTE) and never duplicates.
 Threshold behaviour prevents arrow jitter near neutral boundaries.
@@ -1302,7 +1338,7 @@ Neutral visual behaviour:
 Key behaviours to test:
 The FX row renders exactly N chips, where N is driven by fx.pairs.json (no hard-coded counts).
 SSOT order is preserved end-to-end: fx.pairs.json order → gateway response order → UI render order.
-Global pause stops motion but not data refresh.
+Global pause stops motion and client polling (Calm Mode), but does not change server caching policy.
 Winner arrow always appears at most once per pair and follows the winning currency when the configured orientation changes.
 Winner arrow flips sides correctly (BASE vs QUOTE) and never duplicates.
 Threshold behaviour prevents arrow jitter near neutral boundaries.

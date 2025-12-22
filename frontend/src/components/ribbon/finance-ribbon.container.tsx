@@ -17,7 +17,7 @@ import React, { useMemo, useState } from 'react';
 import FinanceRibbon from '@/components/ribbon/finance-ribbon';
 import FxPairLabel from '@/components/ribbon/fx-pair-label';
 
-import { useFxQuotes, type FxWinnerSide, type FxTickDirection } from '@/hooks/use-fx-quotes';
+import { useFxQuotes, type FxTickDirection, type FxWinnerSide } from '@/hooks/use-fx-quotes';
 import { assertFxPairsSsotValid, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 
 import type { FxApiMode, FxApiQuote } from '@/types/finance-ribbon';
@@ -120,6 +120,8 @@ function readBudgetState(payload: unknown): BudgetState | undefined {
 export function FinanceRibbonContainer() {
   const [isPaused, setIsPaused] = useState(false);
 
+  // Weekend freeze is removed completely: the hook result no longer exposes it,
+  // and the label props no longer accept it.
   const { payload, quotesById, movementById } = useFxQuotes({
     enabled: !isPaused,
     intervalMs: POLL_INTERVAL_MS,

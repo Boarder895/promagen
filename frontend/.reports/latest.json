@@ -8,7 +8,7 @@
                                      "exitCode":  0,
                                      "timedOut":  false
                                  },
-                       "durationMs":  2536
+                       "durationMs":  2740
                    },
                    {
                        "message":  "typecheck ok",
@@ -18,7 +18,7 @@
                                      "exitCode":  0,
                                      "timedOut":  false
                                  },
-                       "durationMs":  2828
+                       "durationMs":  3314
                    },
                    {
                        "message":  "tests ok",
@@ -26,10 +26,10 @@
                        "name":  "tests",
                        "extra":  {
                                      "exitCode":  0,
-                                     "stderr":  "PASS src/__tests__/fx-pairs.test.ts\nPASS src/components/ui/__tests__/tabs.keyboard.test.tsx\nPASS src/__tests__/routes.providers-ribbon.test.tsx\nPASS src/data/exchanges/tests/exchanges.catalog.shape.test.ts\nPASS src/components/providers/__tests__/prompt-builder.smoke.test.tsx\nPASS src/components/providers/__tests__/providers-table.smoke.test.tsx\nPASS src/components/providers/__tests__/provider-detail.smoke.test.tsx\nPASS src/components/providers/__tests__/prompt-finance-toggles.test.tsx\nPASS src/components/ux/__tests__/return-to-last.smoke.test.tsx\nPASS src/components/ui/__tests__/tabs.live.test.tsx\nPASS src/__tests__/exchange-card.weather-badge.test.tsx\nPASS src/components/providers/__tests__/prompt-finance-toggles.analytics.test.tsx\nPASS src/__tests__/a11y.live-region.test.tsx\nPASS src/components/providers/__tests__/prompt-builder.analytics.test.tsx\nPASS src/components/nav/__tests__/tab-list.order.test.tsx\nPASS src/lib/fx/__tests__/providers.normaliseSymbol.test.ts\nPASS src/components/nav/__tests__/tab-list.active.test.tsx\nPASS src/lib/weather/__tests__/weather-client.test.ts\nPASS src/__tests__/currency.integrity.test.ts\nPASS src/__tests__/fx.normalise-symbol.test.ts\nPASS src/lib/fx/__tests__/providers.test.ts\nPASS src/data/emoji/__tests__/emoji.helpers.test.ts\nPASS src/__tests__/finance-ribbon.contracts.test.tsx\nPASS src/data/providers/tests/providers.catalog.shape.test.ts\nPASS src/lib/ribbon/__tests__/selection.test.ts\nPASS src/__tests__/country-currency.integrity.test.ts\nPASS src/data/exchanges/tests/exchanges.selected.shape.test.ts\nPASS src/__tests__/providers.schema.test.ts\nPASS src/data/providers/tests/providers.hints-presets.shape.test.ts\nPASS src/data/commodities/tests/exchange-commodities.map.schema.test.ts\nPASS src/data/commodities/tests/commodities.catalog.schema.test.ts\nPASS src/__tests__/api.weather.route.test.ts\nPASS src/data/exchanges/tests/exchanges.index.test.ts\nPASS src/data/commodities/tests/commodities.index.helpers.test.ts\nPASS src/data/fx/tests/fx-ssot.test.ts\nPASS src/__tests__/fx.eligibility-order.test.ts\nPASS src/data/emoji/tests/emoji-bank.shape.test.ts\nPASS src/data/commodities/tests/exchanges-country-coverage.test.ts\nPASS src/lib/fx/__tests__/providers.summary.test.ts\nPASS src/data/tests/commodities.display-country-codes.contract.test.ts\nPASS src/__tests__/exchange-order.test.ts\nPASS src/data/commodities/tests/country-commodities.ids-coverage.test.ts\nPASS src/lib/tests/flags.test.ts\nPASS src/lib/__tests__/exchange-weather.test.ts\nPASS src/__tests__/schemas.catalogs.test.ts\nPASS src/data/tests/catalogs.shape.test.ts\nPASS src/lib/tests/time.test.ts\nPASS src/__tests__/providers-emoji.integrity.test.ts\nPASS src/__tests__/fx.compute-daily-arrow.test.ts\nPASS src/__tests__/schemas.test.ts\nPASS src/__tests__/format.number.test.ts\nPASS src/data/providers/__tests__/providers.helpers.test.ts\nPASS src/__tests__/plans.matrix.test.ts\nPASS src/__tests__/holiday-detector.test.ts\nPASS src/data/providers/tests/providers.capabilities.shape.test.ts\nPASS src/data/tests/cosmic.shape.test.ts\nPASS src/lib/weather/__tests__/weather.test.ts\n\nTest Suites: 1 skipped, 57 passed, 57 of 58 total\nTests:       4 skipped, 173 passed, 177 total\nSnapshots:   0 total\nTime:        9.349 s, estimated 11 s\nRan all test suites.",
+                                     "stderr":  "PASS src/components/ui/__tests__/tabs.keyboard.test.tsx\nPASS src/__tests__/fx-pairs.test.ts\nPASS src/__tests__/routes.providers-ribbon.test.tsx\nPASS src/components/providers/__tests__/provider-detail.smoke.test.tsx\nPASS src/data/exchanges/tests/exchanges.catalog.shape.test.ts\nPASS src/components/providers/__tests__/providers-table.smoke.test.tsx\nPASS src/components/providers/__tests__/prompt-finance-toggles.test.tsx\nPASS src/components/nav/__tests__/tab-list.active.test.tsx\nPASS src/components/nav/__tests__/tab-list.order.test.tsx\nPASS src/components/ux/__tests__/return-to-last.smoke.test.tsx\nPASS src/components/ui/__tests__/tabs.live.test.tsx\nPASS src/components/providers/__tests__/prompt-finance-toggles.analytics.test.tsx\nPASS src/components/providers/__tests__/prompt-builder.smoke.test.tsx\nPASS src/__tests__/exchange-card.weather-badge.test.tsx\nPASS src/lib/fx/__tests__/providers.test.ts\nPASS src/components/providers/__tests__/prompt-builder.analytics.test.tsx\nPASS src/__tests__/a11y.live-region.test.tsx\nPASS src/lib/weather/__tests__/weather-client.test.ts\nPASS src/lib/fx/__tests__/providers.normaliseSymbol.test.ts\nPASS src/lib/fx/__tests__/providers.summary.test.ts\nPASS src/__tests__/go.outbound.route.test.ts\nPASS src/__tests__/fx.normalise-symbol.test.ts\nPASS src/data/providers/tests/providers.catalog.shape.test.ts\nPASS src/__tests__/format.number.test.ts\nPASS src/lib/ribbon/__tests__/selection.test.ts\nPASS src/data/commodities/tests/exchange-commodities.map.schema.test.ts\nPASS src/data/commodities/tests/commodities.index.helpers.test.ts\nPASS src/__tests__/plans.matrix.test.ts\nPASS src/__tests__/currency.integrity.test.ts\nPASS src/data/providers/__tests__/providers.helpers.test.ts\nPASS src/__tests__/finance-ribbon.contracts.test.tsx\nPASS src/__tests__/fx.eligibility-order.test.ts\nPASS src/data/providers/tests/providers.capabilities.shape.test.ts\nPASS src/data/exchanges/tests/exchanges.index.test.ts\nPASS src/data/emoji/__tests__/emoji.helpers.test.ts\nPASS src/__tests__/providers.schema.test.ts\nPASS src/data/providers/tests/providers.hints-presets.shape.test.ts\nPASS src/data/fx/tests/fx-ssot.test.ts\nPASS src/data/commodities/tests/exchanges-country-coverage.test.ts\nPASS src/__tests__/schemas.test.ts\nPASS src/data/emoji/tests/emoji-bank.shape.test.ts\nPASS src/__tests__/holiday-detector.test.ts\nPASS src/data/exchanges/tests/exchanges.selected.shape.test.ts\nPASS src/data/commodities/tests/commodities.catalog.schema.test.ts\nPASS src/lib/tests/flags.test.ts\nPASS src/data/tests/cosmic.shape.test.ts\nPASS src/__tests__/country-currency.integrity.test.ts\nPASS src/data/commodities/tests/country-commodities.ids-coverage.test.ts\nPASS src/lib/__tests__/exchange-weather.test.ts\nPASS src/data/tests/catalogs.shape.test.ts\nPASS src/__tests__/exchange-order.test.ts\nPASS src/__tests__/api.weather.route.test.ts\nPASS src/lib/weather/__tests__/weather.test.ts\nPASS src/__tests__/fx.compute-daily-arrow.test.ts\nPASS src/lib/tests/time.test.ts\nPASS src/data/tests/commodities.display-country-codes.contract.test.ts\nPASS src/__tests__/schemas.catalogs.test.ts\nPASS src/__tests__/providers-emoji.integrity.test.ts\n\nTest Suites: 1 skipped, 58 passed, 58 of 59 total\nTests:       4 skipped, 179 passed, 183 total\nSnapshots:   0 total\nTime:        9.219 s\nRan all test suites.",
                                      "timedOut":  false
                                  },
-                       "durationMs":  12213
+                       "durationMs":  11985
                    },
                    {
                        "message":  "FX endpoint ok",
@@ -40,7 +40,7 @@
                                      "httpStatus":  200,
                                      "mode":  null
                                  },
-                       "durationMs":  960
+                       "durationMs":  916
                    },
                    {
                        "message":  "ok",
@@ -50,7 +50,7 @@
                                      "exitCode":  0,
                                      "timedOut":  false
                                  },
-                       "durationMs":  4599
+                       "durationMs":  4329
                    },
                    {
                        "message":  "ok",
@@ -60,7 +60,7 @@
                                      "exitCode":  0,
                                      "timedOut":  false
                                  },
-                       "durationMs":  6627
+                       "durationMs":  5845
                    },
                    {
                        "message":  "ok",
@@ -70,35 +70,35 @@
                                      "exitCode":  0,
                                      "timedOut":  false
                                  },
-                       "durationMs":  3364
+                       "durationMs":  2535
                    }
                ],
-    "runId":  "20251221-210922-852",
+    "runId":  "20251222-160552-242",
     "scripts":  [
                     {
                         "path":  "C:\\Users\\Proma\\Projects\\promagen\\tools\\fx-headers-check.ps1",
                         "name":  "fx.headers",
                         "exitCode":  0,
-                        "durationMs":  4599
+                        "durationMs":  4329
                     },
                     {
                         "path":  "C:\\Users\\Proma\\Projects\\promagen\\tools\\fx-calm-check.ps1",
                         "name":  "fx.calm",
                         "exitCode":  0,
-                        "durationMs":  6627
+                        "durationMs":  5845
                     },
                     {
                         "path":  "C:\\Users\\Proma\\Projects\\promagen\\tools\\fx-load-test.ps1",
                         "name":  "fx.load",
                         "exitCode":  0,
-                        "durationMs":  3364
+                        "durationMs":  2535
                     }
                 ],
     "overall":  {
                     "status":  "ok",
                     "banner":  "green",
                     "emoji":  "🟢",
-                    "durationMs":  33446
+                    "durationMs":  32018
                 },
     "urls":  {
                  "trace":  "http://localhost:3000/api/fx/trace",
@@ -106,7 +106,7 @@
                  "base":  "http://localhost:3000"
              },
     "frontendRoot":  "C:\\Users\\Proma\\Projects\\promagen\\frontend",
-    "generatedAt":  "2025-12-21T21:09:22.8529887+00:00",
+    "generatedAt":  "2025-12-22T16:05:52.2426368+00:00",
     "env":  {
                 "machine":  "MARTINYARNOLD",
                 "user":  "Proma",
@@ -114,6 +114,46 @@
                 "nodeEnv":  null
             },
     "runs":  [
+                 {
+                     "at":  "2025-12-22T16:05:52.2426368+00:00",
+                     "emoji":  "🟢",
+                     "runId":  "20251222-160552-242",
+                     "banner":  "green",
+                     "durationMs":  32018,
+                     "status":  "ok"
+                 },
+                 {
+                     "at":  "2025-12-21T22:16:31.2882861+00:00",
+                     "emoji":  "🟢",
+                     "runId":  "20251221-221631-288",
+                     "banner":  "green",
+                     "durationMs":  29818,
+                     "status":  "ok"
+                 },
+                 {
+                     "at":  "2025-12-21T21:52:23.4726705+00:00",
+                     "emoji":  "🟢",
+                     "runId":  "20251221-215223-472",
+                     "banner":  "green",
+                     "durationMs":  33781,
+                     "status":  "ok"
+                 },
+                 {
+                     "at":  "2025-12-21T21:49:20.2794607+00:00",
+                     "emoji":  "🟢",
+                     "runId":  "20251221-214920-279",
+                     "banner":  "green",
+                     "durationMs":  31790,
+                     "status":  "ok"
+                 },
+                 {
+                     "at":  "2025-12-21T21:28:19.0402538+00:00",
+                     "emoji":  "🟢",
+                     "runId":  "20251221-212819-040",
+                     "banner":  "green",
+                     "durationMs":  33680,
+                     "status":  "ok"
+                 },
                  {
                      "at":  "2025-12-21T21:09:22.8529887+00:00",
                      "emoji":  "🟢",
@@ -152,46 +192,6 @@
                      "runId":  "20251221-204446-825",
                      "banner":  "green",
                      "durationMs":  35334,
-                     "status":  "ok"
-                 },
-                 {
-                     "at":  "2025-12-21T20:38:55.9656119+00:00",
-                     "emoji":  "🟢",
-                     "runId":  "20251221-203855-965",
-                     "banner":  "green",
-                     "durationMs":  34467,
-                     "status":  "ok"
-                 },
-                 {
-                     "at":  "2025-12-21T20:36:21.9205897+00:00",
-                     "emoji":  "🟢",
-                     "runId":  "20251221-203621-920",
-                     "banner":  "green",
-                     "durationMs":  33750,
-                     "status":  "ok"
-                 },
-                 {
-                     "at":  "2025-12-21T20:34:48.9121552+00:00",
-                     "emoji":  "🟢",
-                     "runId":  "20251221-203448-912",
-                     "banner":  "green",
-                     "durationMs":  34266,
-                     "status":  "ok"
-                 },
-                 {
-                     "at":  "2025-12-21T20:33:48.0212427+00:00",
-                     "emoji":  "🟢",
-                     "runId":  "20251221-203348-021",
-                     "banner":  "green",
-                     "durationMs":  33614,
-                     "status":  "ok"
-                 },
-                 {
-                     "at":  "2025-12-21T20:24:17.3542120+00:00",
-                     "emoji":  "🟢",
-                     "runId":  "20251221-202417-354",
-                     "banner":  "green",
-                     "durationMs":  33172,
                      "status":  "ok"
                  }
              ],

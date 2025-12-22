@@ -4,50 +4,46 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import ProviderDetail from '../provider-detail';
+
 import type { Provider } from '@/types/providers';
 
 const SAMPLE_PROVIDER: Provider = {
   id: 'midjourney',
   name: 'Midjourney',
-  country: 'United States',
   score: 92,
   trend: 'up',
-  tags: ['images', 'creative'],
-  url: 'https://example.com/midjourney',
-  affiliateUrl: 'https://affiliate.example.com/midjourney',
+  tags: ['images'],
+  website: 'https://example.com/midjourney',
+  tagline: 'Best-in-class images.',
+  tip: 'Try short prompts first, then iterate.',
   requiresDisclosure: true,
-  tagline: 'Leading creative image generator',
-  category: 'images',
-  emoji: '🎨',
 };
 
 describe('ProviderDetail (smoke)', () => {
-  it('renders key provider fields and primary actions', () => {
-    render(<ProviderDetail provider={SAMPLE_PROVIDER} id={SAMPLE_PROVIDER.id} />);
+  it('renders provider details', () => {
+    render(<ProviderDetail provider={SAMPLE_PROVIDER} />);
 
-    // Heading and basic label
-    expect(screen.getByRole('heading', { name: /midjourney/i })).toBeInTheDocument();
-    expect(screen.getByText(/ai provider/i)).toBeInTheDocument();
-
-    // Score + value
-    expect(screen.getByText(/promagen score/i)).toBeInTheDocument();
-    expect(screen.getByText('92')).toBeInTheDocument();
-
-    // Trend pill – assert against the accessible name
-    expect(screen.getByLabelText(/trending up/i)).toBeInTheDocument();
-
-    // Tags rendered as chips
-    expect(screen.getByText('images')).toBeInTheDocument();
-    expect(screen.getByText('creative')).toBeInTheDocument();
-
-    // Primary actions
-    expect(screen.getByRole('link', { name: /craft an image prompt/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /visit provider site/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Midjourney' })).toBeInTheDocument();
+    expect(screen.getByText(/provider id/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /prompt builder/i })).toBeInTheDocument();
   });
 
-  it('renders a friendly fallback when the provider is missing', () => {
-    render(<ProviderDetail provider={null} id="unknown-provider" />);
+  it('routes outbound CTAs via /go (no direct external hrefs)', () => {
+    render(<ProviderDetail provider={SAMPLE_PROVIDER} />);
 
-    expect(screen.getByText(/not in the current promagen catalogue/i)).toBeInTheDocument();
+    const visit = screen.getByRole('link', { name: /visit provider site/i });
+    expect(visit).toHaveAttribute('href', '/go/midjourney?src=provider_detail');
+
+    const officialSite = screen.getByRole('link', {
+      name: /https:\/\/example\.com\/midjourney/i,
+    });
+    expect(officialSite).toHaveAttribute('href', '/go/midjourney?src=provider_detail');
+
+    const allLinks = screen.getAllByRole('link');
+    for (const link of allLinks) {
+      const href = link.getAttribute('href') ?? '';
+      expect(href.startsWith('/')).toBe(true);
+      expect(href.startsWith('http')).toBe(false);
+    }
   });
 });

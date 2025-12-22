@@ -1,108 +1,87 @@
-import React from "react";
-import type { Provider } from "@/types/provider";
+// src/components/providers/providers-table.tsx
+
+import React from 'react';
+import type { Provider } from '@/types/provider';
+import { buildGoHref } from '@/lib/affiliate/outbound';
 
 export type ProvidersTableProps = {
   providers: ReadonlyArray<Provider>;
+
+  /** Optional heading text (some pages render their own headings). */
   title?: string;
+
+  /** Optional caption/description (some pages render their own copy). */
   caption?: string;
-  limit?: number; // default 20
-  showRank?: boolean; // default true
+
+  /** Optional row limit. When set, the table renders at most this many providers. */
+  limit?: number;
+
+  /** Optional rank column toggle (kept for backwards compatibility). */
+  showRank?: boolean;
 };
 
-function trendLabel(t?: Provider["trend"]): string {
-  if (t === "up") return "Trending up";
-  if (t === "down") return "Trending down";
-  return "No change";
+function hasOutboundDestination(provider: Provider): boolean {
+  return Boolean(provider.affiliateUrl ?? provider.url ?? provider.website);
 }
 
-export default function ProvidersTable(props: ProvidersTableProps): JSX.Element {
-  const {
-    providers,
-    title = "AI Providers",
-    caption = "Top providers ranked by Promagen score.",
-    limit = 20,
-    showRank = true,
-  } = props;
+export default function ProvidersTable(props: ProvidersTableProps) {
+  const { providers, limit } = props;
 
-  const rows = providers.slice(0, Math.max(0, limit));
+  const rows =
+    typeof limit === 'number' && Number.isFinite(limit) && limit > 0
+      ? providers.slice(0, Math.floor(limit))
+      : providers;
 
   return (
-    <section aria-labelledby="providers-heading" data-testid="providers-table">
-      <h1 id="providers-heading" className="text-xl font-semibold mb-3">
-        {title}
-      </h1>
-
-      <div className="overflow-x-auto rounded-2xl shadow-sm ring-1 ring-white/10">
-        <table role="table" className="min-w-full divide-y divide-white/10 text-sm">
-          <caption className="sr-only">{caption}</caption>
-          <thead className="bg-white/5">
-            <tr>
-              {showRank && (
-                <th scope="col" className="px-3 py-2 text-left font-medium">
-                  #
-                </th>
-              )}
-              <th scope="col" className="px-3 py-2 text-left font-medium">
-                Provider
-              </th>
-              <th scope="col" className="px-3 py-2 text-left font-medium">
-                Score
-              </th>
-              <th scope="col" className="px-3 py-2 text-left font-medium">
-                Trend
-              </th>
-              <th scope="col" className="px-3 py-2 text-left font-medium">
-                Tags
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/10">
-            {rows.map((p, i) => (
-              <tr key={p.id}>
-                {showRank && (
-                  <th scope="row" className="px-3 py-2 font-normal text-white/70">
-                    {i + 1}
-                  </th>
+    <div className="w-full overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60">
+      <table className="min-w-full text-sm text-slate-200">
+        <thead className="bg-slate-900/60 text-xs uppercase tracking-wide text-slate-400">
+          <tr>
+            <th className="px-4 py-3 text-left">Provider</th>
+            <th className="px-4 py-3 text-right">Score</th>
+            <th className="px-4 py-3 text-right">Trend</th>
+            <th className="px-4 py-3 text-left">Tags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((p) => (
+            <tr key={p.id} className="border-t border-slate-800 hover:bg-slate-900/30">
+              <td className="px-4 py-3 font-medium text-slate-50">
+                {hasOutboundDestination(p) ? (
+                  <a
+                    href={buildGoHref(p.id, 'leaderboard')}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline decoration-slate-600 underline-offset-4 hover:decoration-slate-300"
+                  >
+                    {p.name}
+                  </a>
+                ) : (
+                  <span>{p.name}</span>
                 )}
-                <td className="px-3 py-2">
-                  {p.url ? (
-                    <a
-                      href={p.url}
-                      className="underline underline-offset-2 hover:text-white"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {p.name}
-                    </a>
-                  ) : (
-                    p.name
-                  )}
-                </td>
-                <td className="px-3 py-2 tabular-nums">{p.score ?? "—"}</td>
-                <td className="px-3 py-2" aria-label={trendLabel(p.trend)}>
-                  {p.trend === "up" ? "📈" : p.trend === "down" ? "📉" : "⟷"}
-                </td>
-                <td className="px-3 py-2">
-                  {p.tags && p.tags.length > 0 ? (
-                    <ul className="flex gap-2 flex-wrap">
-                      {p.tags.map((t) => (
-                        <li
-                          key={t}
-                          className="rounded-full px-2 py-0.5 text-xs bg-white/10 text-white/80"
-                        >
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <span className="text-white/50">—</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+              </td>
+              <td className="px-4 py-3 text-right tabular-nums">{p.score ?? '—'}</td>
+              <td className="px-4 py-3 text-right">{p.trend ?? '—'}</td>
+              <td className="px-4 py-3">
+                {p.tags?.length ? (
+                  <div className="flex flex-wrap gap-1">
+                    {p.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-slate-800 px-2 py-0.5 text-[0.65rem] uppercase tracking-wide text-slate-300"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-slate-500">—</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

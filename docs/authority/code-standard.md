@@ -31,6 +31,27 @@ Testable components
 
 Easy to extend without rewrites
 Non-regression by default: When adding or extending features, keep all existing features and external behaviour intact; changes must be additive unless explicitly approved and documented as breaking.
+Scope-of-change rule (no collateral UI changes)
+
+When a request says “change X”, treat X as the only allowed change.
+Everything else is locked unless the request explicitly names it as in-scope — especially:
+layout, colours, spacing, typography, animations, behaviour, data contracts, and performance characteristics.
+
+If X cannot be implemented without changing anything else, you must re-scope it as a multi-feature change and document the collateral changes explicitly (ADD / REPLACE / REMOVE) before proceeding.
+Operational enforcement (UI scope lock)
+
+- Every feature request must include a one-line Scope Lock sentence:
+  “Only change <X>; do not touch layout/colours/spacing/typography.”
+  If it is missing, the assistant must add it explicitly to the task scope before making changes.
+
+- For UI work, every Change List must include a UI invariants checklist:
+  - Colours unchanged: ✅/❌
+  - Layout unchanged: ✅/❌
+  - Spacing unchanged: ✅/❌
+  - Typography unchanged: ✅/❌
+  - Breakpoints unchanged: ✅/❌
+
+If any item is ❌, the change is no longer “change X only” and must be re-scoped as a multi-feature change with collateral changes explicitly listed (ADD / REPLACE / REMOVE) before proceeding.
 
 2. One Truth Rule
 
