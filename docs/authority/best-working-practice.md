@@ -21,6 +21,49 @@ How to use memory:
 
 - “Remember: <rule>” to store a stable preference/process.
 - “Forget: <rule>” to remove it.
+- UI consistency rules (design language invariants: card-only containers, spacing/radius tokens, border/shadow discipline)
+
+UI Consistency (anti-ugly drift): Card-only design language (global)
+
+Purpose:
+Promagen must feel calm and premium. Random container styles make pages feel “cheap” and users leave.
+
+Hard rules (non-negotiable):
+
+1. One box language only
+
+   - Every visible container is a rounded “card” (panel).
+   - Every row/list item inside a container is a smaller rounded “card”.
+   - No ad-hoc panels, stripes, hard-edged boxes, or one-off wrappers.
+   - If you think you need a new container style, you actually need a new _card variant_ (defined once, reused everywhere).
+
+2. Spacing > decoration
+   - Premium is created by consistent padding, consistent gaps, and consistent corner radius — not by extra visual tricks.
+   - Use a single spacing scale (repeat the same p/x/y/gap values across pages).
+   - Use a single radius scale (e.g., outer cards = “large”, inner cards = “medium”, pills/chips = “full”). Do not invent new radii.
+
+Card shell discipline (what every card should look like):
+
+- Shape: rounded rectangle (no sharp corners).
+- Fill: muted charcoal/navy (dark dashboard base).
+- Border: 1px hairline, low-contrast (faint outline only; never loud).
+- Depth: subtle separation only (light shadow OR gentle inner glow — never heavy, never multiple competing effects).
+- Padding: consistent per card type (outer vs inner), never “whatever looks right this time”.
+
+Forbidden patterns (fast way to spot drift):
+
+- Mixing square and rounded containers on the same page.
+- Thick borders, bright outlines, or high-contrast dividers.
+- Random padding/margins between similar components.
+- More than 2–3 visual “depth levels” (page → card → inner card; keep it simple).
+- Any “special case” wrapper that isn’t a card.
+
+Review gate (30-second check before shipping UI):
+
+- Squint test: if you can see more than one box style, you broke the rule.
+- Consistency test: same border weight, same radius family, same spacing rhythm across the page.
+- Nesting test: sections are cards; rows are cards; nothing free-roams.
+
 - “p” means: generate the best possible prompt for the next step (constraints + required inputs + definition of done + output format).
   From now on, when you send me a prompt, I’ll do three things in this order:
 

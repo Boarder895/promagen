@@ -1,5 +1,7 @@
 // C:\Users\Proma\Projects\promagen\frontend\src\__tests__\go.outbound.route.test.ts
 
+import type { NextRequest } from 'next/server';
+
 describe('/go/[providerId] outbound redirect', () => {
   beforeEach(() => {
     jest.resetModules();
@@ -32,7 +34,9 @@ describe('/go/[providerId] outbound redirect', () => {
 
     const { GET } = await import('@/app/go/[providerId]/route');
 
-    const req = new Request('https://promagen.local/go/unknown?src=leaderboard');
+    const req = new Request(
+      'https://promagen.local/go/unknown?src=leaderboard',
+    ) as unknown as NextRequest;
     const res = await GET(req, { params: { providerId: 'unknown' } });
 
     expect(res.status).toBe(404);
@@ -62,7 +66,9 @@ describe('/go/[providerId] outbound redirect', () => {
 
     const { GET } = await import('@/app/go/[providerId]/route');
 
-    const req = new Request('https://promagen.local/go/openai?src=leaderboard');
+    const req = new Request(
+      'https://promagen.local/go/openai?src=leaderboard',
+    ) as unknown as NextRequest;
     const res = await GET(req, { params: { providerId: 'openai' } });
 
     expect(res.status).toBe(302);
@@ -114,7 +120,9 @@ describe('/go/[providerId] outbound redirect', () => {
 
     const { GET } = await import('@/app/go/[providerId]/route');
 
-    const req = new Request('https://promagen.local/go/lexica?src=provider_detail');
+    const req = new Request(
+      'https://promagen.local/go/lexica?src=provider_detail',
+    ) as unknown as NextRequest;
     const res = await GET(req, { params: { providerId: 'lexica' } });
 
     expect(res.status).toBe(302);
@@ -147,7 +155,9 @@ describe('/go/[providerId] outbound redirect', () => {
 
     const { GET } = await import('@/app/go/[providerId]/route');
 
-    const req = new Request('https://promagen.local/go/openart?src=leaderboard');
+    const req = new Request(
+      'https://promagen.local/go/openart?src=leaderboard',
+    ) as unknown as NextRequest;
     const res = await GET(req, { params: { providerId: 'openart' } });
 
     expect(res.status).toBe(302);

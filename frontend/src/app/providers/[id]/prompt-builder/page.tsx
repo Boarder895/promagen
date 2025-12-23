@@ -1,6 +1,5 @@
-// frontend/src/app/providers/[id]/prompt-builder/page.tsx
+// C:\Users\Proma\Projects\promagen\frontend\src\app\providers\[id]\prompt-builder\page.tsx
 
-import React from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
@@ -48,12 +47,16 @@ export function generateMetadata({ params }: PageParams): Metadata {
 // ───────────────────────────────────────────────────────────────────────────────
 
 function toPromptBuilderProvider(provider: Provider): PromptBuilderProvider {
+  // Authority: canonical URL in SSOT is `website` (with `url` as a normalised alias).
+  // PromptBuilder supports both `websiteUrl` and `url` for backwards compatibility.
+  const officialUrl = provider.website;
+  const urlAlias = provider.url ?? provider.website;
+
   return {
     id: provider.id,
     name: provider.name,
-    // Prefer the canonical url field; PromptBuilder also accepts websiteUrl.
-    websiteUrl: provider.url ?? undefined,
-    url: provider.url ?? undefined,
+    websiteUrl: officialUrl,
+    url: urlAlias,
     description: provider.tagline,
     tags: provider.tags,
   };

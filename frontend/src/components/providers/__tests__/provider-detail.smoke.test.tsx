@@ -1,5 +1,3 @@
-// src/components/providers/__tests__/provider-detail.smoke.test.tsx
-
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
@@ -14,6 +12,7 @@ const SAMPLE_PROVIDER: Provider = {
   trend: 'up',
   tags: ['images'],
   website: 'https://example.com/midjourney',
+  affiliateUrl: null,
   tagline: 'Best-in-class images.',
   tip: 'Try short prompts first, then iterate.',
   requiresDisclosure: true,

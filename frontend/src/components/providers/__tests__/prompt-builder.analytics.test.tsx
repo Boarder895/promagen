@@ -1,5 +1,3 @@
-// src/components/providers/__tests__/prompt-builder.analytics.test.tsx
-
 import React from 'react';
 import { render } from '@testing-library/react';
 
@@ -14,10 +12,13 @@ jest.mock('@/lib/analytics/providers', () => ({
 const SAMPLE_PROVIDER: Provider = {
   id: 'midjourney',
   name: 'Midjourney',
+  website: 'https://example.com/midjourney',
+  url: 'https://example.com/midjourney',
+  affiliateUrl: null,
+  requiresDisclosure: false,
   score: 92,
   trend: 'up',
   tags: ['images'],
-  url: 'https://example.com/midjourney',
 };
 
 describe('PromptBuilder analytics', () => {

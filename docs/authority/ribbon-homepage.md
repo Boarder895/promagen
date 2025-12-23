@@ -18,14 +18,24 @@ All core content lives inside a centred container with a maximum width (e.g. max
 Three-column grid
 The main content area is a three-column CSS grid:
 Left rail: 0.9fr
-Centre: 2.2fr
-Right rail: 0.9fr
-The effect: the centre column visually anchors the page, with the two exchange rails framing it.
+Table structure
+Header: “AI Providers Leaderboard”.
+Columns (left → right):
 
-Layout behaviour (variable N)
-The FX row uses a stable layout that supports any number of chips, while enforcing a readability floor for typography:
+Provider (icon + name; rank may appear as a muted prefix)
+Promagen Users
+Sweet Spot
+Visual Styles
+API & Affiliate Programme
+Generation Speed
+Affordability
+Score (includes a small trend indicator inline; Score stays far right)
 
-- Wide / desktop: the FX chips render on exactly one line, sharing available width evenly (flex: 1) and remaining visually consistent.
+Notes:
+
+- Trend is not a standalone column (it lives inside Score).
+- Tags are removed from the homepage leaderboard table.
+
   Hard rule: the FX chip label font size must never be smaller than 11.5px.
 
 - Snap rule (readability-first): if keeping a single line would require the label font to drop below 11.5px, the FX row must snap to exactly two lines.
@@ -242,17 +252,202 @@ AI Providers Leaderboard – Centre Column
 Directly under the market belt (currently under the FX row alone) sits the AI Providers Leaderboard card.
 
 Table structure
-Header: “AI Providers Leaderboard”.
-Columns:
-Rank
-Provider name
-Score
-Trend
-Tags
 
-Rows:
-Sorted by score (highest first).
-Each row occupies the full width of the centre column card.
+Header: “AI Providers Leaderboard”.
+
+Columns (left → right):
+
+- Provider (official icon + name; optional muted rank prefix; click opens provider detail)
+- Promagen Users (top up to 6 country flags + counts; 2·2·2 layout; render nothing if zero; overflow becomes “… +n”)
+- Sweet Spot (max 2 lines; human-readable; UI clamps to 2 lines)
+- Visual Styles (max 2 lines; not tag soup; UI clamps to 2 lines)
+- API & Affiliate Programme (🔌 / 🤝 / 🔌🤝; blank = unknown/not set)
+- Generation Speed (Fast / Medium / Slow / Varies)
+- Affordability (1 line: free tier + rough allowance + price band)
+- Score (0–100; far right; trend indicator inline — no separate Trend column; no Tags column)
+
+  Final header row
+
+Provider | Promagen Users | Sweet Spot | Visual Styles | API & Affiliate Programme | Generation Speed | Affordability | Score
+
+Column definitions (in this exact order)
+
+1. Provider
+
+Provider name (optionally with a tiny icon). 2. Promagen Users
+
+Top up to 6 countries by Promagen usage for that provider.
+
+Hard truth rules
+
+- Show only what is true (analytics-derived).
+- If the provider has zero users, render an empty cell (no “0”, no dashes, no placeholders).
+- If a provider has only 1–2 countries with usage, show only those (do not render empty slots).
+
+Layout (fixed; the cell may grow in height and that is expected)
+
+- Display up to 6 countries in a 2·2·2 layout:
+  - Row 1: 2 countries
+  - Row 2: 2 countries
+  - Row 3: 2 countries
+- Keep each country block compact with a small gap between blocks.
+- Do not allow country blocks to wrap within a row.
+- If there are more than 6 countries, show the top 6 plus a trailing “… +n”
+  (where n = additional countries not shown).
+
+Format (per country block)
+
+- Flag + space + Roman numeral count
+
+Two bullet-proofing upgrades (so it doesn’t become rubbish data)
+
+Anti-gaming + dedupe
+
+- Count unique sessions/users, not raw event volume.
+- Weight “submit/success” more than “click/open” so browsing doesn’t dominate usage.
+- Optionally exclude obvious bots (no JS, impossible event rates, known bot signatures, etc.).
+
+Roman numerals without hurting usability
+
+- Roman numerals are display-only.
+- The underlying Arabic number must be available via hover/tooltip and accessibility text (aria-label),
+  so it stays readable while keeping the UI classy.
+
+- If the provider has zero users, render an empty cell (no “0”, no dashes, no placeholders).
+- If a provider has only 1–2 countries with usage, show only those (do not render empty slots).
+
+Layout (fixed; the cell may grow in height and that is expected)
+
+- Display up to 6 countries in a 2·2·2 layout:
+  - Row 1: 2 countries
+  - Row 2: 2 countries
+  - Row 3: 2 countries
+- Keep each country block compact with a small gap between blocks.
+- Do not allow country blocks to wrap within a row.
+- If there are more than 6 countries, show the top 6 plus a trailing “… +n”
+  (where n = additional countries not shown).
+
+Format (per country block)
+
+- Flag + space + Roman numeral count
+  Example:
+  🇩🇪 I 🇬🇧 II
+  🇺🇸 X 🇫🇷 IV
+  🇪🇸 III 🇯🇵 I
+
+Two bullet-proofing upgrades (so it doesn’t become rubbish data)
+
+Anti-gaming + dedupe
+
+- Count unique sessions/users, not raw event volume.
+- Weight “submit/success” more than “click/open” so browsing doesn’t dominate usage.
+- Optionally exclude obvious bots (no JS, impossible event rates, known bot signatures, etc.).
+
+Roman numerals without hurting usability
+
+- Roman numerals are display-only.
+- The underlying Arabic number must be available via hover/tooltip and accessibility text (aria-label),
+  so it stays readable while keeping the UI classy.
+
+3. Sweet Spot
+
+Max 2 lines: what the platform is best at (human-readable, no jargon). UI clamps to 2 lines.
+
+4. Visual Styles
+
+Max 2 lines: what it excels at visually (not a tag soup). UI clamps to 2 lines.
+
+5. API & Affiliate Programme
+
+Emoji indicators (single cell):
+
+🔌 = API available
+
+🤝 = Affiliate programme available
+
+🔌🤝 = Both
+
+blank = Unknown / not set (no “—”)
+
+(Optional tooltip text: “API available” / “Affiliate programme available”.)
+
+6. Generation Speed
+
+Use exactly one of:
+
+Fast
+
+Medium
+
+Slow
+
+Varies (busy hours)
+
+7. Affordability
+
+A compact summary of:
+
+Free tier (Yes/No)
+
+Rough image allowance (if known)
+
+General price band (e.g., £ / ££ / £££)
+
+Recommended cell format:
+Free tier • ~25/day • ££
+If unknown, leave the unknown parts blank (don’t fill with dashes).
+
+8. Score
+
+0–100, derived from the 7-criteria rubric below. (Score stays far right.)
+
+Score rubric (7 criteria)
+
+Output quality
+
+Prompt obedience
+
+Text-in-image
+
+Editing power (inpaint/outpaint/img2img)
+
+Control (seed/negative/guidance options)
+
+Speed reliability (consistent under load)
+
+Value (free tier + price vs results)
+
+One-liners for each platform (Sweet Spot + Visual Styles)
+Provider Sweet Spot (1 line) Visual Styles (1 line)
+OpenAI DALL·E / GPT-Image Reliable all-rounder for clean, on-brief image generation. Photoreal and product-style visuals; strong clarity and polish.
+Stability AI / Stable Diffusion Tinker-friendly powerhouse for custom workflows and control. Huge range from photo to stylised; great for guided looks.
+Leonardo AI Creator-focused tool for fast iteration and asset-style outputs. Game/concept vibes; punchy stylised art and variants.
+I23RF AI Generator Simple generator for quick concepts without heavy setup. General-purpose looks; best for fast idea sketches.
+Artistly Easy creative generation aimed at quick marketing visuals. Social-ready graphics and stylised artwork.
+Adobe Firefly Business-friendly generator designed for design pipelines. Clean graphic-design styles; brand-friendly compositions.
+Midjourney Best-in-class aesthetics for striking concept imagery. Cinematic, painterly, stylised “wow” images.
+Canva Text-to-Image Quick images that slot straight into Canva designs. Social graphics, simple illustrations, brand assets.
+Bing Image Creator Fast, accessible image generation for everyday needs. General illustration and poster-ish imagery.
+Ideogram The go-to when you need readable text in images. Posters, typography-led designs, logo-like graphics.
+Picsart Mobile-first creation with quick edits and generative tools. Bold social styles, stickers, effects-heavy looks.
+Fotor One-click style generation and light enhancement. Photo effects, basic stylised outputs, quick variations.
+NightCafe Experiment hub for trying different models and styles. Art-forward, stylised, community-trend aesthetics.
+Playground AI Rapid exploration tool for lots of iterations and drafts. Concept-style variations and design explorations.
+Pixlr Lightweight browser editor with quick generation add-ons. Simple edits and effects; practical web-friendly outputs.
+DeepAI Basic generator useful for prototypes and quick tests. Simple outputs; better for utility than wow-factor.
+NovelAI Strong pick for anime and character-focused generation. Anime/manga aesthetics and consistent stylised characters.
+Lexica Great for prompt discovery and quick style exploration. Stable-Diffusion-style aesthetics and inspiration-led outputs.
+
+Keep Sweet Spot and Visual Styles to ~60 characters per line (max 2 lines) so the table stays tidy even with the flags column doing its thing.
+
+Rules:
+
+- Score column is always far right.
+- Rank is not its own column; it’s a small prefix inside the Provider cell.
+- Sorted by score (highest first).
+- Keep the existing dark UI, spacing, and layout; on smaller screens prefer horizontal scroll over wrapping.
+- Outbound behaviour remains unchanged: no direct external URLs in the UI (all outbound via `/go/{id}`).
+- For the full data-field contract (enrichment fields), see: `AI Providers.md`.
 
 Behaviour
 Scrolls vertically as needed.
@@ -292,8 +487,59 @@ Visual Language & Motion
 The homepage look and feel should be:
 Dark, calm, and precise.
 Minimal neon, no “casino” feel.
+6.0 Box Language (Card-Only UI) — Non-Negotiable
 
-6.1 Typography
+Promagen uses ONE visual container language across the entire site: dark, rounded cards with a faint outline.
+If we break this rule, the UI starts to feel messy, “home-made”, and users bounce.
+
+Hard rules (must always be true)
+
+1. One box language only (no exceptions)
+
+- Every visible “box” is a Card.
+- Every section container is a large Card (“Panel Card”).
+- Every list item / row inside a Card is a smaller Card (“Row Card”).
+- No alternative shells: no random rectangles, no sharp-corner boxes, no different panel treatments “just for this page”.
+
+2. The Card Shell spec (the only allowed container treatment)
+   All cards must follow the same shell pattern:
+
+- Shape: rounded rectangle (soft corners only).
+- Stroke: 1px hairline border, low contrast (faint outline; never high-contrast).
+- Fill: muted dark/charcoal surface (no bright blocks).
+- Depth: subtle elevation only (barely-there shadow or inner glow). No heavy drop shadows.
+- Contrast: separation comes from spacing + faint strokes, not loud borders.
+
+3. Nesting rules (cards within cards)
+
+- Panel Card contains Row Cards.
+- Row Cards may contain small “chip/pill” elements, but chip styling must still match the card language (rounded, subtle border, dark fill).
+- Nesting must look intentional: each level is visibly “the same family”, just smaller.
+
+4. Spacing beats decoration (premium comes from rhythm)
+
+- Use a consistent spacing scale everywhere (padding and gaps must come from the same small set of values).
+- Padding is consistent within each card tier (Panel vs Row vs Chip).
+- Gaps between cards are consistent within each section.
+- Never “eyeball” random padding/margins per component — spacing must feel systematic.
+
+5. Radius discipline (no corner-radius chaos)
+
+- Use a small, fixed set of corner radii across the site (e.g. one for Panel Cards and one for Row Cards; chips are allowed to be pill-rounded).
+- Do not introduce new radii for one-off components.
+
+6. Change control (anti-drift enforcement)
+
+- Any new UI container MUST reuse the existing Card primitives/styles.
+- If a new feature needs a new container style, stop: extend the single Card system (globally) rather than creating a one-off.
+- “Third box style” is a hard failure: if a PR introduces a new container look, it must be revised before merge.
+
+Visual fail conditions (easy sniff test)
+
+- Sharp corners, bright outlines, thick borders, heavy shadows, random background panels, or inconsistent padding = NOT ALLOWED.
+- If the page contains more than one “box language”, we’ve violated this contract.
+
+  6.1 Typography
 
 Use a clean sans-serif font throughout.
 FX/Commodities/Crypto labels: mid-weight, small caps or well-spaced uppercase where appropriate.

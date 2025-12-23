@@ -30,7 +30,9 @@ The catalogue is the authoritative list of providers (currently guarded as the �
 
 These flags inform the prompt builder UX and any future integrations.
 
-## Provider catalogue fields (current)
+## Provider catalogue fields
+
+### Implemented fields (current)
 
 Each entry in `providers.json` currently contains:
 
@@ -45,6 +47,23 @@ Each entry in `providers.json` currently contains:
 - `tip: string` — Short instruction to help users take action quickly.
 - `supportsPrefill: boolean` — Whether Promagen can prefill prompts (deep-link or structured transfer).
 
+### Leaderboard enrichment fields (to add)
+
+These exist to make the leaderboard table **high-signal and not boring**. Keep all existing fields; add these:
+
+- `icon: string` — Path to the provider’s **official icon** (favicon/brand mark), stored locally (do not hot-link). Designed to be readable on a dark UI.
+- `sweetSpot: string` — Up to 2 short lines: what the platform is best at (human-readable; UI clamps to 2 lines).
+- `visualStyles: string` — Up to 2 short lines: what it excels at visually (no tag soup; UI clamps to 2 lines).
+- `generationSpeed: fast | medium | slow | varies` — Canonical 4-step scale (varies = busy hours).
+- `affordability: string` — 1 line: free tier + rough image allowance + price band (e.g. “Free tier: yes (~25/day); ££”).
+- `apiAvailable: boolean` — Whether the provider offers an official API.
+- `affiliateProgramme: boolean` — Whether the provider runs an affiliate programme (this is **not** the same as Promagen having an `affiliateUrl` configured).
+
+Notes:
+
+- `Promagen Users` (country flags + counts) is **analytics-derived**, not stored in `providers.json`.
+- Outbound routing rules remain unchanged: UI never links directly to external URLs (all outbound goes via `/go/{id}`).
+
 ## Core routes and pages
 
 ### Leaderboard
@@ -56,6 +75,46 @@ Each entry in `providers.json` currently contains:
 ### Provider detail
 
 - `frontend/src/app/providers/[id]/page.tsx` — shows provider detail and links to the prompt builder.
+
+#### Leaderboard table column contract (UI, non-negotiable)
+
+Column order (left → right):
+
+Provider | Promagen Users | Sweet Spot | Visual Styles | API & Affiliate Programme | Generation Speed | Affordability | Score
+
+Rules:
+
+- **Score column is always the far right.**
+- **Rank is not a dedicated column** (if shown at all, render it as a muted prefix inside the Provider cell, e.g. “1.”).
+- **Trend is not a dedicated column** (trend renders as a small indicator inside the Score cell).
+- **Tags column is removed** (information density comes from Sweet Spot + Visual Styles instead).
+
+Column definitions:
+
+- **Provider** = Provider name with an optional **tiny official icon** (the same icon you see online), aligned left.
+  - Icon guidance: small (e.g. ~16–18px), square, crisp on dark backgrounds, and stored locally (avoid hot-linking for reliability/privacy).
+- **Promagen Users** = top up to 6 country flags + counts for Promagen usage on that provider; rendered in a 2·2·2 layout; show nothing if zero; overflow becomes “... +n”.
+- **Sweet Spot** = what the platform is good at (max 2 lines; UI clamps to 2 lines).
+- **Visual Styles** = what it excels at visually (max 2 lines; UI clamps to 2 lines).
+- **API & Affiliate Programme** = emoji indicators:
+  - 🔌 = API available
+  - 🤝 = Affiliate programme available
+  - 🔌🤝 = Both
+  - blank = Unknown / not set
+- **Generation Speed** = Fast / Medium / Slow / Varies (busy hours).
+- **Affordability** = free tier + rough “how many images” + price band (keep it short and scannable).
+- **Score** = 0–100 (ranked highest first). Include a small trend indicator inline:
+  - up / down / flat (presentation may be an arrow, sparkline, or subtle glyph, but it must not become its own column).
+
+Score rubric (7 criteria, so the number is defendable):
+
+1. Output quality (overall look)
+2. Prompt obedience (follows instructions)
+3. Text-in-image (posters/logos/labels)
+4. Editing power (inpaint/outpaint/img2img)
+5. Control (seed/negative/guidance options)
+6. Speed reliability (consistent under load)
+7. Value (free tier + price vs results)
 
 ### Prompt builder per provider
 
