@@ -4,17 +4,21 @@ import React from 'react';
 import type { Metadata } from 'next';
 
 import ProvidersTable from '@/components/providers/providers-table';
-import { getProviders } from '@/lib/providers/api';
+import { getProvidersWithPromagenUsers } from '@/lib/providers/api';
+
+// Ensure the leaderboard can update after Cron runs (cheap + near-live).
+// Promagen Users displays are guarded by freshness checks in the loader.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'AI Providers Leaderboard • Promagen',
   description:
-    'AI providers leaderboard: sweet spots, visual styles, API/affiliate indicators, speed, affordability, and score.',
+    'The Promagen AI providers leaderboard: sweet spots, visual styles, API/affiliate indicators, speed, affordability, and score.',
   robots: { index: true, follow: true },
 };
 
-export default function ProvidersLeaderboardPage(): JSX.Element {
-  const providers = getProviders(20);
+export default async function ProvidersLeaderboardPage(): Promise<JSX.Element> {
+  const providers = await getProvidersWithPromagenUsers(20);
 
   return (
     <main role="main" className="p-6">

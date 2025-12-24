@@ -46,6 +46,8 @@ Card shell discipline (what every card should look like):
 
 - Shape: rounded rectangle (no sharp corners).
 - Fill: muted charcoal/navy (dark dashboard base).
+- Add a tiny “event taxonomy” section (authoritative) listing allowed `eventType` values and their relative weights, so nobody invents new names later and breaks aggregation.
+- Make the Cron aggregation idempotent + backfillable by design (upsert + protected “run now” trigger), so bugs can be fixed without waiting a day for the next scheduled run.
 - Border: 1px hairline, low-contrast (faint outline only; never loud).
 - Depth: subtle separation only (light shadow OR gentle inner glow — never heavy, never multiple competing effects).
 - Padding: consistent per card type (outer vs inner), never “whatever looks right this time”.
@@ -124,6 +126,7 @@ A doc update is required whenever a change affects any of:
 - Behavioural contracts (API shapes, modes, flags, caching, budgets, trace)
 - SSOT sources/paths, ordering rules, formatting rules (e.g., AUD / GBP label constraints)
 - Analytics/tracking behaviour (events, GTM/GA4 wiring, consent/PII rules)
+- Analytics-derived UI metrics (e.g., Promagen Users flags, Online Now presence): ship the full pipeline (capture → store → aggregate/presence → loader → render) **in the same feature delivery**, with a freshness guard (blank/“—” when stale/unavailable). Deduplicate by sessionId, heartbeat only when page is visible, weight submit/success higher than click/open, and optionally exclude obvious bots.
 - Deployment/runtime policy (Vercel/Fly env vars, secrets, headers, cache behaviour)
 - Provider integrations (rate limits, symbol formats, call limits, quotas, budget guard logic)
 - Testing invariants (new lock-in tests, renamed exports, type shape expectations)

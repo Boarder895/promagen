@@ -88,6 +88,10 @@ components/
 UI components and feature components.
 components/nav/
 Global navigation components and routed tabs.
+
+- Do not invent new `eventType` strings ad-hoc. All analytics-derived metrics must use the authoritative event taxonomy (allowed values + weights) and update the aggregator in the same change.
+- Any scheduled aggregation endpoint must be idempotent + backfillable (upsert + protected “run now” trigger).
+
 components/ui/
 Reusable UI components (buttons, cards, tabs, chips, etc.).
 components/ui/tabs/
@@ -307,6 +311,8 @@ If data is missing, show:
 - retry affordance where sensible
 
 No “fake” values to hide errors.
+
+For analytics-derived metrics: if data fails freshness checks or can’t be trusted, render blank/“—” and log a warning; never show fabricated or stale numbers just to “fill the UI”.
 
 Log errors server-side where appropriate (API routes).
 

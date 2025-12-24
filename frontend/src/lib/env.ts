@@ -1,12 +1,97 @@
-// Centralised environment access with safe defaults.
-// Add keys here as you grow; never read process.env directly elsewhere.
+// frontend/src/lib/env.ts
+//
+// Centralised environment access (server-only).
+// Rule: new server code must read env via this module (not process.env inline).
+// Keep backwards-compatible keys (siteUrl/siteName/siteTagline) because other modules already import them.
 
-export const env = {
-  siteUrl:
-    (process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, '') as string | undefined) ||
-    'http://localhost:3000',
-  siteName: process.env.NEXT_PUBLIC_SITE_NAME || 'Promagen',
-  siteTagline:
-    process.env.NEXT_PUBLIC_SITE_TAGLINE ||
-    'AI creativity + market mood, elegantly visualised.',
-};
+import 'server-only';
+import { z } from 'zod';
+
+function stripTrailingSlashes(url: string): string {
+  return url.replace(/\/+$/, '');
+}
+
+const EnvSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).optional(),
+
+  // Public (safe to expose)
+  NEXT_PUBLIC_SITE_URL: z.string().optional(),
+  NEXT_PUBLIC_SITE_NAME: z.string().optional(),
+  NEXT_PUBLIC_SITE_TAGLINE: z.string().optional(),
+
+  // Option A (Postgres + Cron)
+  DATABASE_URL: z.string().optional(),
+  PROMAGEN_CRON_SECRET: z.string().optional(),
+
+  // Analytics tuning (server-only)
+  PROMAGEN_USERS_WINDOW_DAYS: z.coerce.number().int().positive().max(365).optional(),
+  PROMAGEN_USERS_STALE_AFTER_HOURS: z.coerce.number().int().positive().max(168).optional(),
+
+  // Online Now (presence) tuning (server-only)
+  PROMAGEN_ONLINE_WINDOW_MINUTES: z.coerce.number().int().positive().max(240).optional(),
+  PROMAGEN_ONLINE_HEARTBEAT_SECONDS: z.coerce.number().int().positive().max(600).optional(),
+});
+
+type ParsedEnv = z.infer<typeof EnvSchema>;
+
+function parseEnv(): ParsedEnv {
+  const parsed = EnvSchema.safeParse(process.env);
+  if (!parsed.success) {
+    const msg = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+    throw new Error(`Invalid environment configuration: ${msg}`);
+  }
+  return parsed.data;
+}
+
+const raw = parseEnv();
+
+const siteUrl = stripTrailingSlashes(raw.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000');
+
+export const env = Object.freeze({
+  // Backwards-compatible keys already used by robots.ts / seo.ts
+  siteUrl,
+  siteName: raw.NEXT_PUBLIC_SITE_NAME ?? 'Promagen',
+  siteTagline: raw.NEXT_PUBLIC_SITE_TAGLINE ?? 'AI creativity + market mood, elegantly visualised.',
+
+  nodeEnv: raw.NODE_ENV ?? 'development',
+  isProd: (raw.NODE_ENV ?? 'development') === 'production',
+  isTest: (raw.NODE_ENV ?? 'development') === 'test',
+
+  // Option A (Postgres + Cron)
+  db: {
+    url: raw.DATABASE_URL,
+  },
+  cron: {
+    secret: raw.PROMAGEN_CRON_SECRET,
+  },
+
+  // Promagen Users (30d by default) + freshness guard (48h by default)
+  analytics: {
+    usersWindowDays: raw.PROMAGEN_USERS_WINDOW_DAYS ?? 30,
+    staleAfterHours: raw.PROMAGEN_USERS_STALE_AFTER_HOURS ?? 48,
+  },
+
+  // Online Now definition (30 minutes everywhere)
+  onlineNow: {
+    windowMinutes: raw.PROMAGEN_ONLINE_WINDOW_MINUTES ?? 30,
+    heartbeatSeconds: raw.PROMAGEN_ONLINE_HEARTBEAT_SECONDS ?? 60,
+  },
+});
+
+export function requireDatabaseUrl(): string {
+  const url = env.db.url;
+  if (url && url.trim().length > 0) return url.trim();
+
+  throw new Error(
+    'DATABASE_URL is missing. Set it in .env for local dev and in Vercel Environment Variables for production.',
+  );
+}
+
+export function requireCronSecret(): string {
+  const secret = env.cron.secret;
+  if (secret && secret.trim().length >= 16) return secret.trim();
+
+  throw new Error(
+    'PROMAGEN_CRON_SECRET is missing/too short. Set a strong secret (>= 16 chars) to protect cron endpoints.',
+  );
+}

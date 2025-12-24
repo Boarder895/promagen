@@ -3,6 +3,7 @@
 import React from 'react';
 import type { Provider } from '@/types/provider';
 import { buildGoHref } from '@/lib/affiliate/outbound';
+import { toRomanNumeral } from '@/lib/format/number';
 import { Flag } from '@/components/ui/flag';
 
 export type ProvidersTableProps = {
@@ -36,38 +37,6 @@ type ProviderWithPromagenUsers = Provider & {
 
 function hasOutboundDestination(provider: Provider): boolean {
   return Boolean(provider.affiliateUrl ?? provider.url ?? provider.website);
-}
-
-function toRomanNumeral(value: number): string {
-  const n = Math.floor(value);
-  if (!Number.isFinite(n) || n <= 0) return '';
-  if (n > 3999) return String(n); // display fallback; real number still available via tooltip/aria
-
-  const numerals: Array<{ v: number; s: string }> = [
-    { v: 1000, s: 'M' },
-    { v: 900, s: 'CM' },
-    { v: 500, s: 'D' },
-    { v: 400, s: 'CD' },
-    { v: 100, s: 'C' },
-    { v: 90, s: 'XC' },
-    { v: 50, s: 'L' },
-    { v: 40, s: 'XL' },
-    { v: 10, s: 'X' },
-    { v: 9, s: 'IX' },
-    { v: 5, s: 'V' },
-    { v: 4, s: 'IV' },
-    { v: 1, s: 'I' },
-  ];
-
-  let remaining = n;
-  let out = '';
-  for (const { v, s } of numerals) {
-    while (remaining >= v) {
-      out += s;
-      remaining -= v;
-    }
-  }
-  return out;
 }
 
 function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {

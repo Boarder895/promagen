@@ -120,10 +120,30 @@ click_id=<uuid> (always)
 
 UTMs (defaults, plus allow override from request query)
 
-Write a cookie-free log record to KV keyed by click_id.
+Write a cookie-free log record to Postgres (raw activity events), keyed by click_id.
+(Optional) Mirror to KV keyed by click_id for short-term debugging only.
 
 Return 302 redirect with Cache-Control: no-store.
 Security + privacy headers (recommended)
+#### Event taxonomy (authoritative)
+
+For `/go/...` and any future usage pipeline events, `eventType` must be one of (with default weights):
+
+- `open` (weight 1) — outbound click/open
+- `click` (weight 1) — legacy alias for `open` (avoid introducing new uses)
+- `submit` (weight 3) — user submitted a prompt/form
+- `success` (weight 5) — confirmed success
+
+If you need a new `eventType`, update the taxonomy + aggregation in the same change.
+
+#### Guardrails (truth > vanity)
+
+- Deduplicate by `sessionId` (one person = one session) so refreshing doesn’t create “phantom users”.
+- Only heartbeat when the page is visible (avoids inflated “online” from background tabs).
+- Weight “submit/success” more than “click/open” so browsing doesn’t dominate usage.
+- Optionally exclude obvious bots (no JS, impossible event rates, known bot signatures, etc.).
+- Cron aggregation must be idempotent + backfillable by design (upsert + protected “run now” trigger).
+
 - Add: Referrer-Policy: strict-origin-when-cross-origin
 - Add: X-Robots-Tag: noindex, nofollow
 
@@ -156,6 +176,13 @@ requiresDisclosure (boolean)
 src (string)
 
 createdAt (ISO string)
+eventType (string) — e.g. "click_open" (low-weight activity)
+
+sessionId (string) — random, anonymous, client-generated; not identifying (no IPs)
+
+countryCode (string) — 2-letter ISO from edge geo headers (not an IP)
+
+isBot (boolean, optional) — server-derived flag (store the flag, not raw UA/IP)
 
 destinationHost (string)
 
@@ -174,6 +201,14 @@ IP address
 full user agent
 
 referrer
+How this feeds “Promagen Users” + “Online Now” (truthful metrics)
+
+These guardrails apply to any metric derived from activity events (including future Online Now presence):
+
+- Deduplicate by sessionId (one person = one session) so refresh spam doesn’t inflate counts.
+- Weight “submit/success” more than “click/open” so browsing doesn’t dominate usage.
+- Optionally exclude obvious bots (no JS, impossible event rates, known bot signatures, etc.).
+- If countryCode/sessionId can’t be trusted/derived, the UI must render blank rather than guess.
 
 Traceability model (how money reconciles cleanly)
 Ideal:

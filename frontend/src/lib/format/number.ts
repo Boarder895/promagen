@@ -65,6 +65,7 @@ export type RomanNumeralOptions = {
  * Convert a positive integer to a Roman numeral string.
  * - Returns "" for 0 or negative values (non-strict mode).
  * - Roman numerals are display-only; use the underlying Arabic number for tooltips/aria-label elsewhere.
+ * - For values > 3999, return the Arabic number as a display fallback (avoids silly-long "MMMM...").
  */
 export function toRomanNumeral(value: number, opts: RomanNumeralOptions = {}): string {
   const { strict } = opts;
@@ -77,8 +78,8 @@ export function toRomanNumeral(value: number, opts: RomanNumeralOptions = {}): s
 
   const v = strict ? v0 : Math.floor(v0);
   if (v <= 0) return '';
+  if (v > 3999) return String(v);
 
-  // Standard Roman mapping. For values > 3999 we fall back to repeated "M" for thousands.
   const map: Array<[number, string]> = [
     [1000, 'M'],
     [900, 'CM'],

@@ -131,7 +131,40 @@ function mustGetCell(row: HTMLTableRowElement, headerText: string): HTMLElement 
   return cell;
 }
 
+function parseRelativeHref(href: string): URL {
+  // Hrefs in the UI are relative (e.g. /go/openai?src=leaderboard&sid=...)
+  // Add a base so URL() can parse it.
+  return new URL(href, 'http://test.local');
+}
+
+function expectGoHref(link: HTMLElement, expectedProviderId: string, expectedSrc: string): void {
+  const href = link.getAttribute('href');
+  expect(href).toBeTruthy();
+
+  const url = parseRelativeHref(String(href));
+  expect(url.pathname).toBe(`/go/${expectedProviderId}`);
+  expect(url.searchParams.get('src')).toBe(expectedSrc);
+
+  // sid is optional (client-only), but if present it must be sane.
+  const sid = url.searchParams.get('sid');
+  if (sid !== null) {
+    expect(sid).toMatch(/^[a-zA-Z0-9_-]{8,96}$/);
+  }
+
+  // Contract: UI must not link directly to external provider URLs.
+  expect(String(href)).not.toMatch(/^https?:\/\//i);
+}
+
 describe('ProvidersTable (smoke)', () => {
+  beforeEach(() => {
+    // Keep test isolation (sid may be stored client-side in localStorage).
+    try {
+      window.localStorage.clear();
+    } catch {
+      // ignore
+    }
+  });
+
   it('renders the exact header contract (column order)', () => {
     render(<ProvidersTable providers={baseProviders} />);
 
@@ -160,13 +193,13 @@ describe('ProvidersTable (smoke)', () => {
     render(<ProvidersTable providers={baseProviders} />);
 
     const openaiLink = screen.getByRole('link', { name: /OpenAI DALL·E/i });
-    expect(openaiLink).toHaveAttribute('href', '/go/openai?src=leaderboard');
+    expectGoHref(openaiLink, 'openai', 'leaderboard');
 
     const stabilityLink = screen.getByRole('link', { name: /Stability AI/i });
-    expect(stabilityLink).toHaveAttribute('href', '/go/stability?src=leaderboard');
+    expectGoHref(stabilityLink, 'stability', 'leaderboard');
 
     const mjLink = screen.getByRole('link', { name: /Midjourney/i });
-    expect(mjLink).toHaveAttribute('href', '/go/midjourney?src=leaderboard');
+    expectGoHref(mjLink, 'midjourney', 'leaderboard');
   });
 
   it('renders Promagen Users as flags + Roman numerals, with underlying Arabic numbers available via aria-label', () => {
@@ -185,8 +218,7 @@ describe('ProvidersTable (smoke)', () => {
     expect(within(usersCell).getByLabelText('GB: 2 users')).toBeInTheDocument();
     expect(within(usersCell).getByLabelText('US: 10 users')).toBeInTheDocument();
 
-    // If a provider has only 1–2 countries, show only those (no empty slots).
-    // Here we have exactly 3 country blocks.
+    // Exactly 3 country blocks for this row.
     const blocks = within(usersCell).queryAllByLabelText(/^[A-Z]{2}: \d+ user/);
     expect(blocks).toHaveLength(3);
 

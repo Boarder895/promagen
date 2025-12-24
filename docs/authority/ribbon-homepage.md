@@ -54,6 +54,7 @@ The market belt is now firmly part of the centre column, not a full-width band a
 ## Pair label formatting (test-locked)
 
 The FX pair separator standard is **non-negotiable**.
+- Add a tiny “event taxonomy” section somewhere authoritative listing allowed `eventType` values and weights, so nobody invents new names later and breaks aggregation.
 
 - Use the **ASCII forward slash** `/` (**U+002F**) between ISO-4217 currency codes.
 
@@ -274,46 +275,17 @@ Column definitions (in this exact order)
 
 1. Provider
 
-Provider name (optionally with a tiny icon). 2. Promagen Users
+Provider name (optionally with a tiny icon).
 
-Top up to 6 countries by Promagen usage for that provider.
+2. Promagen Users
+
+Top up to 6 countries by Promagen usage **for that provider** (this is per provider row, not a global total).
 
 Hard truth rules
 
 - Show only what is true (analytics-derived).
 - If the provider has zero users, render an empty cell (no “0”, no dashes, no placeholders).
-- If a provider has only 1–2 countries with usage, show only those (do not render empty slots).
-
-Layout (fixed; the cell may grow in height and that is expected)
-
-- Display up to 6 countries in a 2·2·2 layout:
-  - Row 1: 2 countries
-  - Row 2: 2 countries
-  - Row 3: 2 countries
-- Keep each country block compact with a small gap between blocks.
-- Do not allow country blocks to wrap within a row.
-- If there are more than 6 countries, show the top 6 plus a trailing “… +n”
-  (where n = additional countries not shown).
-
-Format (per country block)
-
-- Flag + space + Roman numeral count
-
-Two bullet-proofing upgrades (so it doesn’t become rubbish data)
-
-Anti-gaming + dedupe
-
-- Count unique sessions/users, not raw event volume.
-- Weight “submit/success” more than “click/open” so browsing doesn’t dominate usage.
-- Optionally exclude obvious bots (no JS, impossible event rates, known bot signatures, etc.).
-
-Roman numerals without hurting usability
-
-- Roman numerals are display-only.
-- The underlying Arabic number must be available via hover/tooltip and accessibility text (aria-label),
-  so it stays readable while keeping the UI classy.
-
-- If the provider has zero users, render an empty cell (no “0”, no dashes, no placeholders).
+- If the provider’s aggregate is stale (updatedAt older than 48 hours), render an empty cell and log a warning (so Vercel logs show it).
 - If a provider has only 1–2 countries with usage, show only those (do not render empty slots).
 
 Layout (fixed; the cell may grow in height and that is expected)
@@ -339,7 +311,12 @@ Two bullet-proofing upgrades (so it doesn’t become rubbish data)
 
 Anti-gaming + dedupe
 
-- Count unique sessions/users, not raw event volume.
+sessionId = random, anonymous, client-generated identifier; not identifying (no IPs).
+
+These guardrails apply to **any metric derived from “activity” events**, including the future **Online Now** presence metric.
+
+- Deduplicate by sessionId (one person = one session) so refreshing doesn’t create “phantom users”.
+- Only heartbeat when the page is visible (avoids inflated “online” from background tabs).
 - Weight “submit/success” more than “click/open” so browsing doesn’t dominate usage.
 - Optionally exclude obvious bots (no JS, impossible event rates, known bot signatures, etc.).
 

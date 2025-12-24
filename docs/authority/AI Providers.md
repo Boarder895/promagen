@@ -27,6 +27,7 @@ The catalogue is the authoritative list of providers (currently guarded as the �
 - `supportsPrefill`
 - `supportsSeed`
 - `supportsSteps`
+- Stage 3 Cron aggregates on a schedule via a protected endpoint; aggregation is idempotent (upsert) and supports a protected “run now” backfill trigger.
 
 These flags inform the prompt builder UX and any future integrations.
 
@@ -45,6 +46,20 @@ Each entry in `providers.json` currently contains:
 - `score: number` — Promagen score, used for ranking (0–100).
 - `trend: up | down | flat` — Trend indicator for the leaderboard.
 - `tip: string` — Short instruction to help users take action quickly.
+- Add a tiny **event taxonomy** section (below) listing allowed `eventType` values + weights, so nobody invents new names later and breaks aggregation.
+- Make the Cron aggregation **idempotent + backfillable** by design (upsert + protected “run now” trigger), so you can fix bugs without waiting a day for reality to catch up.
+
+#### Event taxonomy (authoritative)
+
+Allowed `eventType` values (and default weights for “usage points”):
+
+- `open` (weight 1) — outbound click/open (e.g. `/go/...`)
+- `click` (weight 1) — legacy alias for `open` (avoid introducing new uses)
+- `submit` (weight 3) — user submitted a prompt/form
+- `success` (weight 5) — confirmed success (e.g. provider returned 200 / result created)
+
+If you need a new `eventType`, update this list and the aggregator in the same change.
+
 - `supportsPrefill: boolean` — Whether Promagen can prefill prompts (deep-link or structured transfer).
 
 ### Leaderboard enrichment fields (to add)
@@ -63,6 +78,48 @@ Notes:
 
 - `Promagen Users` (country flags + counts) is **analytics-derived**, not stored in `providers.json`.
 - Outbound routing rules remain unchanged: UI never links directly to external URLs (all outbound goes via `/go/{id}`).
+
+### Analytics-derived metrics (Promagen Users + Online Now)
+
+Option A (recommended): **Postgres + Cron aggregation** (cheap, controlled)
+
+We ship it live as soon as it’s built, but we keep it truthful with a **freshness guard** (blank/“—” if aggregates are stale) so production never shows made-up numbers.
+
+Why “an API” shows up (and how we keep it minimal)
+
+- The UI does **not** need a public API: Next.js pages can read Postgres via an internal server-only loader (a normal TS function).
+- The only bit that practically must be an HTTP endpoint is the **Cron trigger** (Vercel Cron hits a URL). That route is internal and protected by a secret.
+- So: **Loader for UI + protected Cron endpoint for aggregation. No public “analytics API” required.**
+
+“Live as soon as built” without fake data
+
+- Stage 1 starts collecting events immediately after deploy.
+- Stage 3 Cron aggregates on a schedule (hourly if you want “within minutes”, daily if overnight is fine).
+- Stage 5 pages read aggregates and show them only if fresh.
+- The freshness guard makes it self-disabling when the pipeline isn’t genuinely live.
+
+Freshness guard (48h) — the rule
+
+- If `provider_country_usage_30d.updatedAt` is older than 48 hours → render blank (or “—”) and `console.warn`/server-log (so Vercel logs show it).
+- If fresh → render flags + Roman numerals.
+
+Guardrails for any metric derived from “activity” (including Online Now)
+
+- `sessionId` = random, anonymous, client-generated identifier; not identifying (no IPs).
+- Deduplicate by `sessionId` (one person = one session).
+- Only heartbeat when the page is visible (prevents background-tab inflation).
+- Weight “submit/success” more than “click/open” so browsing doesn’t dominate usage.
+- Optionally exclude obvious bots (no JS, impossible event rates, known bot signatures, etc.).
+
+Online Now (30-minute window)
+
+Definition: “Online Now” means active at least once in the last **30 minutes** (page visible + heartbeat).
+
+Cheap implementation: presence keys with **TTL=30 minutes** (KV is ideal). If presence can’t be read, render blank and log a warning (do not guess).
+
+Localhost note (why flags may be blank in dev)
+
+Local dev won’t naturally have Vercel geo headers, so `countryCode` can be unknown. In that case, metrics should render blank rather than lie; country flags become reliable in deployed environments where geo headers exist.
 
 ## Core routes and pages
 

@@ -1,4 +1,8 @@
 GA4 & GTM Configuration in Next.js (Vercel)
+Scope note (don’t power leaderboards from GA4)
+
+GA4/GTM is for marketing/UX analytics and can be blocked by browsers/ad-blockers. Promagen leaderboard metrics like “Promagen Users” (30 days) and “Online Now” (30 minutes) must be computed server-side (Postgres + Cron / KV presence) and must render blank when stale/unavailable, rather than relying on GA4 data.
+
 • Environment variables: Set these in your .env.local (and in Vercel). Next.js only exposes variables prefixed with NEXT*PUBLIC* to the browser[1]. For example:
 
 # .env.local
