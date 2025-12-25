@@ -6,6 +6,13 @@
 // - All outbound links MUST go through: /go/{providerId}?src=<surface>[&sid=<sessionId>]
 // - Logging must be best-effort and must never block the redirect.
 // - Stage 1 writes a raw activity record keyed by click_id (idempotent).
+//
+// Pro posture:
+// - Treat /go/* as a potential bot target (open-redirect probing).
+// - WAF is first line; app rate limiting is second line.
+// - Keep responses no-store and noindex.
+//
+// Existing features preserved: Yes.
 
 import crypto from 'node:crypto';
 import type { NextRequest } from 'next/server';
@@ -13,9 +20,14 @@ import { z } from 'zod';
 
 import rawProviders from '@/data/providers/providers.json';
 import { db, hasDatabaseConfigured } from '@/lib/db';
+import { env } from '@/lib/env';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// Redirects must remain fast.
+export const maxDuration = 10;
 
 const ProviderRecordSchema = z
   .object({
@@ -37,6 +49,12 @@ const ProviderRecordSchema = z
 type ProviderRecord = z.infer<typeof ProviderRecordSchema>;
 
 let providersCache: ProviderRecord[] | null = null;
+
+function getRequestId(request: NextRequest): string {
+  const vercelId = request.headers.get('x-vercel-id');
+  if (vercelId && vercelId.trim()) return vercelId.trim().slice(0, 96);
+  return crypto.randomUUID();
+}
 
 function getProviders(): ProviderRecord[] {
   if (providersCache) return providersCache;
@@ -174,7 +192,6 @@ async function bestEffortInsertActivity(record: {
   src: string;
   sessionId: string | null;
   countryCode: string | null;
-  isAffiliate: boolean;
   destination: string;
 }): Promise<void> {
   if (!hasDatabaseConfigured()) return;
@@ -186,9 +203,9 @@ async function bestEffortInsertActivity(record: {
     // Stage 1: raw events table keyed by click_id (idempotent).
     await db()`
       insert into provider_activity_events
-        (click_id, provider_id, event_type, src, session_id, country_code, is_affiliate, destination, created_at)
+        (click_id, provider_id, event_type, src, session_id, country_code, destination, created_at)
       values
-        (${record.clickId}, ${record.providerId}, ${record.eventType}, ${record.src}, ${record.sessionId}, ${record.countryCode}, ${record.isAffiliate}, ${record.destination}, now())
+        (${record.clickId}, ${record.providerId}, ${record.eventType}, ${record.src}, ${record.sessionId}, ${record.countryCode}, ${record.destination}, now())
       on conflict (click_id) do nothing
     `;
   };
@@ -207,6 +224,46 @@ export async function GET(
   request: NextRequest,
   context: { params: { providerId: string } },
 ): Promise<Response> {
+  const startedAt = Date.now();
+  const requestId = getRequestId(request);
+
+  // App rate limit: keep fairly strict; WAF should also protect /go/*.
+  const decision = rateLimit(request, {
+    keyPrefix: 'go',
+    windowSeconds: 60,
+    max: env.isProd ? 120 : 10_000,
+    keyParts: ['GET', '/go'],
+  });
+
+  if (!decision.allowed) {
+    const durationMs = Date.now() - startedAt;
+
+    console.warn(
+      JSON.stringify({
+        level: 'warn',
+        route: '/go/[providerId]',
+        requestId,
+        event: 'rate_limited',
+        retryAfterSeconds: decision.retryAfterSeconds,
+        durationMs,
+      }),
+    );
+
+    return new Response('Too many requests', {
+      status: 429,
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Retry-After': String(decision.retryAfterSeconds),
+        'X-Robots-Tag': 'noindex, nofollow',
+        'X-RateLimit-Limit': String(decision.limit),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': decision.resetAt,
+        'X-Promagen-Request-Id': requestId,
+      },
+    });
+  }
+
   const providerId = (context?.params?.providerId ?? '').trim();
   const provider = providerId ? findProvider(providerId) : null;
 
@@ -217,6 +274,7 @@ export async function GET(
         'Cache-Control': 'no-store',
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Robots-Tag': 'noindex, nofollow',
+        'X-Promagen-Request-Id': requestId,
       },
     });
   }
@@ -233,6 +291,7 @@ export async function GET(
         'Cache-Control': 'no-store',
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Robots-Tag': 'noindex, nofollow',
+        'X-Promagen-Request-Id': requestId,
       },
     });
   }
@@ -245,6 +304,7 @@ export async function GET(
         'Cache-Control': 'no-store',
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Robots-Tag': 'noindex, nofollow',
+        'X-Promagen-Request-Id': requestId,
       },
     });
   }
@@ -259,9 +319,22 @@ export async function GET(
     src: built.src,
     sessionId: built.sessionId ?? null,
     countryCode,
-    isAffiliate: built.isAffiliate,
     destination: built.destination.toString(),
   });
+
+  const durationMs = Date.now() - startedAt;
+
+  console.debug(
+    JSON.stringify({
+      level: 'info',
+      route: '/go/[providerId]',
+      requestId,
+      event: 'redirect',
+      providerId: provider.id,
+      hasDb: hasDatabaseConfigured(),
+      durationMs,
+    }),
+  );
 
   // IMPORTANT: Response.redirect(...) can yield an immutable Headers guard at runtime.
   // Construct the redirect response with headers set up-front (no post-creation mutation).
@@ -271,7 +344,14 @@ export async function GET(
       Location: built.destination.toString(),
       'Cache-Control': 'no-store',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'X-Content-Type-Options': 'nosniff',
       'X-Robots-Tag': 'noindex, nofollow',
+      'X-Promagen-Request-Id': requestId,
+
+      // Rate limit info (best-effort)
+      'X-RateLimit-Limit': String(decision.limit),
+      'X-RateLimit-Remaining': String(decision.remaining),
+      'X-RateLimit-Reset': decision.resetAt,
     },
   });
 }

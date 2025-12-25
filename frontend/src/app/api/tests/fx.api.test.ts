@@ -1,5 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 
+import { NextRequest } from 'next/server';
+
 import { GET } from '@/app/api/fx/route';
 import { getDefaultFxPairsWithIndexForTier } from '@/data/fx';
 import type { FxApiResponse } from '@/types/finance-ribbon';
@@ -51,9 +53,19 @@ function isFxApiResponse(x: unknown): x is FxApiResponse {
   return true;
 }
 
+function makeRequest(): NextRequest {
+  return new NextRequest('http://localhost/api/fx', {
+    headers: {
+      // Helps your route’s request-id + rate-limit logic behave deterministically in tests.
+      'x-forwarded-for': '127.0.0.1',
+      'user-agent': 'jest',
+    },
+  });
+}
+
 describe('GET /api/fx', () => {
   it('returns the canonical { meta, data, error? } payload shape', async () => {
-    const res = await GET();
+    const res = await GET(makeRequest());
     const json = (await res.json()) as unknown;
 
     expect(isFxApiResponse(json)).toBe(true);
@@ -62,7 +74,7 @@ describe('GET /api/fx', () => {
   it('always returns N quotes in SSOT order (never data:[])', async () => {
     const expectedIds = getDefaultFxPairsWithIndexForTier('free').map((p) => p.id);
 
-    const res = await GET();
+    const res = await GET(makeRequest());
     const json = (await res.json()) as unknown;
 
     if (!isFxApiResponse(json)) {

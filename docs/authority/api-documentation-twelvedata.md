@@ -83,6 +83,12 @@ Authorization: apikey your_api_key
 API key useful information
 Twelve Data’s demo key (apikey=demo) appears in many vendor examples below — treat it as a placeholder and always replace it with your real key; Promagen must never use the demo key in any environment.
 Personal API key required for full access
+
+## Promagen operational note (Vercel Pro)
+
+- Canonical platform hardening: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
+- Treat TwelveData as *paid-upstream*: protect `/api/fx` with WAF + Spend Management thresholds, and enforce TTL caching so you are not paying per visitor.
+- Use kill-switch env vars for emergency response (e.g. `PROMAGEN_DISABLE_TWELVEDATA=1`, `PROMAGEN_SAFE_MODE=1`).
 Premium endpoints and data require higher-tier plans (testable with trial symbols)
 API endpoints
 Service Base URL

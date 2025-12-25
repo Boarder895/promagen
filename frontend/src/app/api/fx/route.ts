@@ -15,15 +15,25 @@
  * IMPORTANT:
  * - Response headers MUST be ASCII (undici/WebIDL ByteString).
  * - Emoji may exist in the JSON body, but MUST NOT be placed into headers.
+ *
+ * Existing features preserved: Yes.
  */
 
+import crypto from 'node:crypto';
+
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { env } from '@/lib/env';
 import { getFxRibbon } from '@/lib/fx/providers';
+import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+// Pro posture: keep the function short, but allow headroom for cold-start priming.
+export const maxDuration = 30;
 
 type FxBudgetState = 'ok' | 'warning' | 'blocked';
 
@@ -39,6 +49,8 @@ type FxApiResponseWithBudget = {
     sourceProvider: string;
     asOf: string;
     budget?: FxApiBudgetMeta;
+    requestId?: string;
+    safeMode?: boolean;
   };
   data: unknown[];
   error?: string;
@@ -79,6 +91,12 @@ function getBuildId(): string {
   return 'local-dev';
 }
 
+function getRequestId(req: NextRequest): string {
+  const vercelId = req.headers.get('x-vercel-id');
+  if (vercelId && vercelId.trim()) return vercelId.trim().slice(0, 96);
+  return crypto.randomUUID();
+}
+
 function normaliseBudgetState(state: unknown): FxBudgetState {
   if (state === 'ok' || state === 'warning' || state === 'blocked') return state;
   return 'ok';
@@ -90,7 +108,12 @@ function normaliseMode(mode: unknown, cached: unknown): FxApiResponseWithBudget[
   return 'live';
 }
 
-function buildEmergencyFallback(message: string): FxApiResponseWithBudget {
+function asOfToMs(asOf: string): number | undefined {
+  const ms = Date.parse(asOf);
+  return Number.isFinite(ms) ? ms : undefined;
+}
+
+function buildEmergencyFallback(message: string, requestId: string): FxApiResponseWithBudget {
   const buildId = getBuildId();
   const asOf = new Date().toISOString();
 
@@ -101,13 +124,55 @@ function buildEmergencyFallback(message: string): FxApiResponseWithBudget {
       sourceProvider: 'fallback',
       asOf,
       budget: { state: 'ok' },
+      requestId,
+      safeMode: env.safeMode.enabled,
     },
     data: [],
     error: message,
   };
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(request: NextRequest): Promise<Response> {
+  const startedAt = Date.now();
+  const requestId = getRequestId(request);
+
+  // App-level rate limiting (defence in depth). Keep generous; WAF is your front line.
+  const decision = rateLimit(request, {
+    keyPrefix: 'fx',
+    windowSeconds: 60,
+    max: env.isProd ? 240 : 10_000,
+    keyParts: ['GET', '/api/fx'],
+  });
+
+  if (!decision.allowed) {
+    const payload = buildEmergencyFallback('Rate limited', requestId);
+    const durationMs = Date.now() - startedAt;
+
+    console.warn(
+      JSON.stringify({
+        level: 'warn',
+        route: '/api/fx',
+        requestId,
+        event: 'rate_limited',
+        retryAfterSeconds: decision.retryAfterSeconds,
+        durationMs,
+      }),
+    );
+
+    return NextResponse.json(payload, {
+      status: 429,
+      headers: {
+        'Cache-Control': 'no-store',
+        'Retry-After': String(decision.retryAfterSeconds),
+        'X-RateLimit-Limit': String(decision.limit),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': decision.resetAt,
+        'X-Promagen-Role': 'fx.ribbon',
+        'X-Promagen-Request-Id': requestId,
+      },
+    });
+  }
+
   try {
     const payload = await getFxRibbon();
 
@@ -143,6 +208,8 @@ export async function GET(): Promise<Response> {
         asOf,
         sourceProvider,
         budget: { state, ...(emoji ? { emoji } : {}) },
+        requestId,
+        safeMode: env.safeMode.enabled,
       },
     };
 
@@ -156,34 +223,81 @@ export async function GET(): Promise<Response> {
 
     const cacheControl = `public, max-age=0, s-maxage=${sMaxAgeSeconds}, stale-while-revalidate=${staleWhileRevalidateSeconds}`;
 
+    const asOfMs = asOfToMs(asOf);
+    const durationMs = Date.now() - startedAt;
+
+    console.debug(
+      JSON.stringify({
+        level: 'info',
+        route: '/api/fx',
+        requestId,
+        event: 'served',
+        mode: apiMode,
+        provider: sourceProvider,
+        budget: state,
+        ttlSeconds,
+        durationMs,
+      }),
+    );
+
     return NextResponse.json(payloadWithBudget, {
       headers: {
         'Cache-Control': cacheControl,
 
-        // Headers MUST be ASCII. Emoji stays in the JSON body only.
+        // Reflective “Brain” headers (ASCII only)
+        'X-Promagen-Role': 'fx.ribbon',
+        'X-Promagen-Mode': apiMode,
+        'X-Promagen-Provider': sourceProvider,
+        ...(asOfMs ? { 'X-Promagen-AsOfMs': String(asOfMs) } : {}),
+        'X-Promagen-Request-Id': requestId,
+
+        // Budget (reflective; computed by Authority)
         'X-Promagen-Fx-Budget': state,
         'X-Promagen-Fx-Budget-State': state,
+
+        // Rate limit info (best-effort)
+        'X-RateLimit-Limit': String(decision.limit),
+        'X-RateLimit-Remaining': String(decision.remaining),
+        'X-RateLimit-Reset': decision.resetAt,
+
+        // Safe mode (Vercel flip-switch)
+        'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
       },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
+    const durationMs = Date.now() - startedAt;
+
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        route: '/api/fx',
+        requestId,
+        event: 'error',
+        message,
+        durationMs,
+      }),
+    );
 
     try {
-      const fallback = buildEmergencyFallback(message);
+      const fallback = buildEmergencyFallback(message, requestId);
       const state = normaliseBudgetState(fallback.meta.budget?.state);
 
       return NextResponse.json(fallback, {
         status: 500,
         headers: {
           'Cache-Control': 'no-store',
+          'X-Promagen-Role': 'fx.ribbon',
+          'X-Promagen-Request-Id': requestId,
           'X-Promagen-Fx-Budget': state,
           'X-Promagen-Fx-Budget-State': state,
+          'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
         },
       });
     } catch {
-      return NextResponse.json(buildEmergencyFallback(message), {
+      return NextResponse.json(buildEmergencyFallback(message, requestId), {
         status: 500,
-        headers: { 'Cache-Control': 'no-store' },
+        headers: { 'Cache-Control': 'no-store', 'X-Promagen-Request-Id': requestId },
       });
     }
   }

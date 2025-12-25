@@ -3,12 +3,24 @@
 // Centralised environment access (server-only).
 // Rule: new server code must read env via this module (not process.env inline).
 // Keep backwards-compatible keys (siteUrl/siteName/siteTagline) because other modules already import them.
+//
+// Pro posture (Vercel):
+// - Prefer “safe mode” switches + provider kill-switches via env vars so you can react instantly from Vercel.
+// - Env parsing stays permissive (mostly optional) so local dev never explodes unless a required helper is called.
 
 import 'server-only';
 import { z } from 'zod';
 
 function stripTrailingSlashes(url: string): string {
   return url.replace(/\/+$/, '');
+}
+
+function parseBool(v: unknown): boolean {
+  if (v === true) return true;
+  if (v === false) return false;
+  if (typeof v !== 'string') return false;
+  const s = v.trim().toLowerCase();
+  return s === '1' || s === 'true' || s === 'yes' || s === 'on';
 }
 
 const EnvSchema = z.object({
@@ -30,6 +42,15 @@ const EnvSchema = z.object({
   // Online Now (presence) tuning (server-only)
   PROMAGEN_ONLINE_WINDOW_MINUTES: z.coerce.number().int().positive().max(240).optional(),
   PROMAGEN_ONLINE_HEARTBEAT_SECONDS: z.coerce.number().int().positive().max(600).optional(),
+
+  // Pro safety switches
+  PROMAGEN_SAFE_MODE: z.string().optional(),
+
+  // Provider kill-switches (defence in depth; WAF is first line, code is second)
+  PROMAGEN_DISABLE_TWELVEDATA: z.string().optional(),
+
+  // Provider secrets (server-only)
+  TWELVEDATA_API_KEY: z.string().optional(),
 });
 
 type ParsedEnv = z.infer<typeof EnvSchema>;
@@ -75,6 +96,17 @@ export const env = Object.freeze({
   onlineNow: {
     windowMinutes: raw.PROMAGEN_ONLINE_WINDOW_MINUTES ?? 30,
     heartbeatSeconds: raw.PROMAGEN_ONLINE_HEARTBEAT_SECONDS ?? 60,
+  },
+
+  // Pro control plane switches
+  safeMode: {
+    enabled: parseBool(raw.PROMAGEN_SAFE_MODE),
+    disableTwelveData: parseBool(raw.PROMAGEN_DISABLE_TWELVEDATA),
+  },
+
+  // Provider secrets
+  providers: {
+    twelveDataApiKey: raw.TWELVEDATA_API_KEY?.trim(),
   },
 });
 

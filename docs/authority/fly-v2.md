@@ -54,6 +54,11 @@ This document explains:
    • Avoid hammering paid APIs for every page view.
    1.4 Escape hatch when serverless is too restrictive
    Vercel is excellent for the frontend and short-lived serverless functions.
+### Promagen note: Vercel Pro as the “front door” (guardrails + spend control)
+
+- Canonical Vercel Pro playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
+- Keep Vercel as the edge/CDN/WAF layer even if some compute moves to Fly.
+- Treat WAF rules + Spend Management as *platform* safety rails; code-level safe-mode/kill-switches are the *second* line of defence.
    However, some Promagen workloads will eventually be too “muscular” for edge/serverless:
    • Long-running tasks.
    • Big JSON transformations.

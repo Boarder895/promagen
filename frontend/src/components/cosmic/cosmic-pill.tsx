@@ -1,18 +1,15 @@
-// src/components/cosmic/cosmic-pill.tsx
-import React from "react";
-import { usePlan } from "@/hooks/usePlan";
+'use client';
 
-export function CosmicPill() {
+import { usePlan } from '@/hooks/user-plan';
+
+export default function CosmicPill() {
   const { plan } = usePlan();
+  const isPaid = plan !== 'free';
 
   return (
-    <span
-      className="text-[10px] rounded-full border px-2 py-0.5"
-      aria-label={`plan ${plan ?? "unknown"}`}
-    >
-      {plan ?? "—"}
-    </span>
+    <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs">
+      <span className="font-medium">Cosmic</span>
+      <span className="text-neutral-600">{isPaid ? 'Pro features enabled' : 'Free mode'}</span>
+    </div>
   );
 }
-
-export default CosmicPill;

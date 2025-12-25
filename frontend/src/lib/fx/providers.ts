@@ -26,6 +26,7 @@
 import { unstable_noStore } from 'next/cache';
 
 import { assertFxRibbonSsotValid, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
+import { env } from '@/lib/env';
 
 export type FxRibbonGroupId = 'A' | 'B';
 
@@ -172,7 +173,9 @@ const BUDGET_EMOJI_WARNING = '🏖️';
 const BUDGET_EMOJI_BLOCKED = '🧳';
 const BUDGET_EMOJI_UNKNOWN = '❓';
 
-const TWELVEDATA_API_KEY = (process.env.TWELVEDATA_API_KEY ?? '').trim();
+const TWELVEDATA_API_KEY = (env.providers.twelveDataApiKey ?? '').trim();
+const TWELVEDATA_DISABLED = env.safeMode.disableTwelveData;
+const SAFE_MODE_ENABLED = env.safeMode.enabled;
 
 // IMPORTANT: TwelveData supports “batch calls” by providing multiple symbols in `symbol=`.
 // We use /price to align with providers.registry.json, and we parse defensively because
@@ -429,6 +432,44 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
   // Budget block: forbid upstream when blocked.
   const budget = ensureBudgetSnapshot(now);
   lastBudgetIndicator = toBudgetIndicator(budget);
+
+  // Pro safety switch: safe mode forces cache/demo only (no upstream), even if budget is otherwise OK.
+  if (SAFE_MODE_ENABLED) {
+    const merged = mergeCaches(now, ssotKey);
+    if (merged.hasValue) {
+      lastDecision = 'safe_mode_cache';
+      lastError = undefined;
+
+      return {
+        meta: {
+          mode: 'stale',
+          buildId: 'local-dev',
+          providerId: 'twelvedata',
+          cached: true,
+          ttlSeconds: BASE_TTL_SECONDS,
+          ssotKey,
+          budget: lastBudgetIndicator,
+        },
+        data: merged.merged,
+      };
+    }
+
+    lastDecision = 'safe_mode_demo';
+    lastError = undefined;
+
+    return {
+      meta: {
+        mode: 'demo',
+        buildId: 'local-dev',
+        providerId: 'twelvedata',
+        cached: false,
+        ttlSeconds: BASE_TTL_SECONDS,
+        ssotKey,
+        budget: lastBudgetIndicator,
+      },
+      data: buildDemoQuotes(ssotKey),
+    };
+  }
 
   if (budget.state === 'blocked') {
     lastDecision = 'blocked_budget_demo';
@@ -1133,6 +1174,7 @@ async function fetchTwelveDataBulk(
 ): Promise<
   { ok: true; ratesBySymbol: Record<string, number | null> } | { ok: false; error: string }
 > {
+  if (TWELVEDATA_DISABLED) return { ok: false, error: 'TwelveData disabled via env' };
   if (!TWELVEDATA_API_KEY) return { ok: false, error: 'Missing TWELVEDATA_API_KEY' };
 
   const costUnits = Math.max(1, requestSymbols.length);

@@ -97,6 +97,12 @@ File:
 
 frontend/src/app/go/[providerId]/route.ts
 
+### Vercel Pro guardrails (affiliate + outbound redirects)
+
+- Canonical playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
+- Treat `/go/*` as a bot magnet: enable WAF rate limiting and add app-level throttling as defence in depth.
+- Ensure `/go/*` responses are `no-store` and `noindex` to avoid caching redirects and polluting SEO.
+
 Behaviour
 Validate providerId exists in registry.
 

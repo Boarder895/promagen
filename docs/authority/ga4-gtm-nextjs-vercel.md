@@ -52,6 +52,13 @@ Configuring GA4 Tag in Google Tag Manager
    • Dependencies: Ensure any needed packages are installed. For example, if you use the Next.js Third-Party components, run npm install @next/third-parties. Likewise, Next’s built-in next/script component is available without extra install. No changes to package.json are typically needed beyond adding these if you use them.
    • Vercel environment: Set the same env var names (NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_GTM_ID, NEXT_PUBLIC_ANALYTICS_ENABLED, NEXT_PUBLIC_ANALYTICS_DEBUG). After setting them, redeploy so the variables take effect.
    • No other Vercel settings: Vercel does not require any special analytics settings (unlike its own Vercel Analytics, which is separate). Just ensure your environment variables are correct and your build uses the public prefix as above.
+### Promagen note: Vercel Pro guardrails (don’t let analytics create spend surprises)
+
+- Canonical platform playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
+- If you ever add server-side tracking endpoints (e.g. `/api/events`), treat them as spend-bearing routes:
+  - Protect with Vercel WAF rate limiting.
+  - Add Spend Management thresholds before enabling in production.
+  - Make responses CDN-cacheable where safe (avoid compute-per-hit).
    Debugging with Chrome DevTools
    • Network tab checks: Open Chrome DevTools (F12) and go to Network. Reload the page. In the filter box, type gtag, gtm.js, or collect. You should see:
    • A request to www.googletagmanager.com/gtm.js?id=GTM-XXXX – this shows the GTM container script loaded.

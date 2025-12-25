@@ -140,6 +140,136 @@ Rules for frontend/generated/
 - src/ is allowed to import from frontend/generated/ when the import is read-only and the generated file is tracked/regenerated reliably.
 
 Environment variable access is centralised; do not read process.env directly inside client components.
+Vercel Pro production guardrails (Promagen):
+
+- Any route capable of incurring upstream spend (start with `/api/fx`) must have platform guardrails:
+  - Spend Management thresholds + monthly cap (cap action: pause production deployments).
+  - WAF rules + rate limiting to prevent bot/traffic-spike spend.
+- Authority: docs/authority/vercel-pro-promagen-playbook.md
+  Pro-strengthening code rules (mandatory for every spend-bearing endpoint file)
+
+Applies to:
+
+- `frontend/src/app/api/*` routes that can incur upstream spend (start with `/api/fx`)
+- outbound redirect routes (e.g. `/go/*`)
+- any future endpoints that can trigger paid vendor/API calls
+
+Authority (platform posture):
+
+- C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md
+
+1. Make caching a first-class “cost control” contract
+
+This is the biggest one for Promagen.
+
+Bake in:
+
+Explicit caching headers on /api/fx responses (and any spend-bearing endpoints) that match your Refresh Gate TTL.
+
+Edge-friendly semantics (public, s-maxage, stale-while-revalidate) where safe.
+
+No-cache/No-store for trace/admin endpoints.
+
+Why this strengthens Pro:
+
+Pro gives you more edge headroom; your code decides whether you actually use the edge or accidentally force compute on every request.
+
+2. Single-flight and request de-duplication (stop stampedes)
+
+Bake in:
+
+A “single-flight” lock so 50 concurrent requests to /api/fx don’t trigger 50 upstream calls.
+
+A short in-memory or shared cache (depending on your architecture) so requests within the TTL return instantly.
+
+A hard block on “force refresh” unless you explicitly allow it.
+
+Why this strengthens Pro:
+
+Even with Pro limits, upstream APIs cost money. De-duping protects spend and stabilises latency.
+
+3. Rate limiting in app (defence in depth)
+
+Even if you also use Pro WAF rate limiting, app-level throttling helps.
+
+Bake in:
+
+A lightweight per-IP/per-token rate limiter for spend-bearing endpoints.
+
+A stricter limiter for /go/\* to stop open-redirect probing and bot storms.
+
+Why this strengthens Pro:
+
+Pro WAF is your front line; app rate limiting is your second line when traffic slips through.
+
+4. Observability hooks that match Pro logging/analytics
+
+Bake in:
+
+Structured logs (JSON-ish) with consistent fields: route, request id, cache status, provider used, fallback used, duration, blocked-by-budget, etc.
+
+Correlation IDs (request id passed through calls).
+
+“Important events” logged once per request, not spammy console noise.
+
+Why this strengthens Pro:
+
+Pro gives you better log retention and observability options; structured logs mean you can actually use that retention to debug quickly.
+
+5. Health endpoints + safe-mode switches
+
+Bake in:
+
+A /api/health that checks app config sanity (not upstream spend).
+
+A “safe mode” env var (e.g., PROMAGEN_SAFE_MODE=1) that forces demo data or blocks paid calls.
+
+A “kill switch” env var for specific providers.
+
+Why this strengthens Pro:
+
+When spend spikes or a provider breaks, you can flip a variable in Vercel and the app behaves safely immediately.
+
+6. Security headers and hardening
+
+Bake in:
+
+Strict security headers (CSP, HSTS, X-Content-Type-Options, etc.) appropriate for Next.js.
+
+Tight input validation for query params (especially /go/\* and any endpoint that accepts user input).
+
+Disable or restrict trace routes in production by default.
+
+Why this strengthens Pro:
+
+Pro WAF helps, but secure defaults reduce attack surface and support the “platform guardrails”.
+
+The Promagen truth: what matters most
+
+If you bake only three things into code, make them these:
+
+Cache headers that reflect your TTL and are CDN honest
+
+Single-flight + caching to prevent upstream stampedes
+
+Safe mode + kill switches via env vars
+
+### If you want, I can make this concrete in your codebase
+
+To do it properly, I need the actual current file contents for the key routes/middleware so I don’t invent structure (your “no hacks; fix properly” rule).
+
+Paste/upload these files (or point me to them in src.zip if you want me to extract):
+
+- frontend/src/app/api/fx/route.ts
+- any /go/ route file (outbound redirect)
+- frontend/src/middleware.ts (if you have it)
+- your cache/refresh gate helper(s) (where TTL and budget are enforced)
+
+Then I’ll return:
+
+- Exact full-file replacements (no snippets)
+- With “Existing features preserved: Yes”
+- And the doc integration pointers updated accordingly
 
 4. TypeScript Standards
 
