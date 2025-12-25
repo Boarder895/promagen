@@ -1,4 +1,3 @@
-// frontend/src/lib/fx/providers.test.ts
 import { normaliseSymbol } from '@/lib/fx/providers';
 
 describe('normaliseSymbol()', () => {

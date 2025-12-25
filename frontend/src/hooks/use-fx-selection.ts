@@ -3,7 +3,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useUserPlan } from '@/hooks/use-user-plan';
+import { useUserPlan } from '@/hooks/useplan';
 import {
   getFxSelectionForPlan,
   setFxSelectionForPlan,

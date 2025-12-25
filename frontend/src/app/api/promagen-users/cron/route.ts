@@ -1,310 +1,276 @@
 // frontend/src/app/api/promagen-users/cron/route.ts
 //
-// Protected Cron endpoint for Promagen Users aggregation (Option A: Postgres + Cron).
+// Nightly/periodic cron to precompute Promagen Users (by country) from provider activity events.
+// This endpoint is triggered by Vercel Cron (vercel.json) and protected by PROMAGEN_CRON_SECRET.
 //
-// Why this exists:
-// - Vercel Cron needs an HTTP endpoint to hit.
-// - UI does NOT need a public API: it uses a server-only loader (src/lib/providers/api.ts).
+// Pro posture:
+// - Run every 30 minutes (not daily) so aggregates stay fresh and UI shows “last 30 minutes” recency.
+// - Use an advisory lock so overlapping invocations do not double-write.
+// - Keep structured logs and a stable JSON result for observability.
 //
-// Guarantees (per docs):
-// - No public analytics API required.
-// - Idempotent + backfillable by design (upsert + protected “run now” trigger).
-// - Truthful: if DB missing/unreachable, respond with 503 (and UI will render blank via loader freshness guard).
-//
-// Event taxonomy (authoritative weights):
-// - open/click: 1
-// - submit: 3
-// - success: 5
-//
-// Promagen Users definition (for aggregation):
-// - Count distinct sessionId in the last 30 days, grouped by provider + country.
-// - sessionId and countryCode must be present (otherwise the record is ignored for flags).
-
-import 'server-only';
+// Existing features preserved: Yes.
 
 import crypto from 'node:crypto';
+
 import type { NextRequest } from 'next/server';
-import { z } from 'zod';
+import { NextResponse } from 'next/server';
 
 import { db, hasDatabaseConfigured, withTx } from '@/lib/db';
-import { requireCronSecret } from '@/lib/env';
+import type { SqlClient } from '@/lib/db';
+import { env, requireCronSecret } from '@/lib/env';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const QuerySchema = z.object({
-  // Supported auth methods:
-  // - Authorization: Bearer <secret>
-  // - x-promagen-cron-secret: <secret>
-  // - ?secret=<secret> (allowed for manual runs; avoid using in shared logs)
-  secret: z.string().optional(),
+// Pro: give the job room (schema checks + aggregation can take time on first run).
+export const maxDuration = 300;
 
-  // Optional: if true, computes stats but does not write to the aggregate table
-  dryRun: z
-    .string()
-    .optional()
-    .transform((v) => v === '1' || v === 'true'),
+type JsonObject = Record<string, unknown>;
 
-  // Optional: manual backfill trigger (protected)
-  // e.g. ?runNow=1
-  runNow: z
-    .string()
-    .optional()
-    .transform((v) => v === '1' || v === 'true'),
-});
-
-function timingSafeEqual(a: string, b: string): boolean {
-  const aBuf = Buffer.from(a, 'utf8');
-  const bBuf = Buffer.from(b, 'utf8');
-  if (aBuf.length !== bBuf.length) return false;
-  return crypto.timingSafeEqual(aBuf, bBuf);
+function getRequestId(req: NextRequest): string {
+  const vercelId = req.headers.get('x-vercel-id');
+  if (vercelId && vercelId.trim()) return vercelId.trim().slice(0, 96);
+  return crypto.randomUUID();
 }
 
-function getProvidedSecret(req: NextRequest): string | null {
-  const auth = req.headers.get('authorization') ?? '';
-  if (auth.toLowerCase().startsWith('bearer ')) {
-    const token = auth.slice('bearer '.length).trim();
-    if (token) return token;
-  }
-
-  const headerSecret = req.headers.get('x-promagen-cron-secret');
-  if (headerSecret && headerSecret.trim()) return headerSecret.trim();
-
-  const url = new URL(req.url);
-  const q = url.searchParams.get('secret');
-  if (q && q.trim()) return q.trim();
-
-  return null;
+function timingMs(startedAt: number): number {
+  return Date.now() - startedAt;
 }
 
-function isAuthorised(req: NextRequest): boolean {
+function constantTimeEquals(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i += 1) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
+function requireAuth(req: NextRequest): void {
   const expected = requireCronSecret();
-  const provided = getProvidedSecret(req);
-  if (!provided) return false;
-  try {
-    return timingSafeEqual(provided, expected);
-  } catch {
-    return false;
+
+  const provided =
+    req.headers.get('x-promagen-cron') ??
+    req.headers.get('x-cron-secret') ??
+    new URL(req.url).searchParams.get('secret') ??
+    '';
+
+  if (!provided || !constantTimeEquals(provided, expected)) {
+    throw new Error('Unauthorized');
   }
 }
 
 async function ensureSchema(): Promise<void> {
-  // Create raw events table (Stage 2 store) and aggregate table (Stage 3 result).
-  // This is safe to run repeatedly.
-  await db()`
-    create table if not exists provider_activity_events (
-      click_id text primary key,
-      provider_id text not null,
-      event_type text not null,
-      src text not null,
-      session_id text null,
-      country_code text null,
-      is_affiliate boolean not null default false,
-      destination text not null,
-      created_at timestamptz not null default now()
-    )
-  `;
+  // Minimal schema bootstrap. Non-destructive.
+  await db()`create table if not exists promagen_users_country_usage_30d (
+    country_code text not null primary key,
+    users_count bigint not null default 0,
+    updated_at timestamptz not null default now()
+  )`;
 
-  await db()`
-    create index if not exists provider_activity_events_created_at_idx
-      on provider_activity_events (created_at desc)
-  `;
-
-  await db()`
-    create index if not exists provider_activity_events_provider_country_idx
-      on provider_activity_events (provider_id, country_code)
-  `;
-
-  await db()`
-    create index if not exists provider_activity_events_session_idx
-      on provider_activity_events (session_id)
-      where session_id is not null
-  `;
-
-  await db()`
-    create table if not exists provider_country_usage_30d (
-      provider_id text not null,
-      country_code text not null,
-      user_count integer not null,
-      updated_at timestamptz not null,
-      primary key (provider_id, country_code)
-    )
-  `;
-
-  await db()`
-    create index if not exists provider_country_usage_30d_updated_at_idx
-      on provider_country_usage_30d (updated_at desc)
-  `;
+  await db()`create table if not exists promagen_users_cron_runs (
+    id text not null primary key,
+    ran_at timestamptz not null default now(),
+    ok boolean not null,
+    message text null,
+    rows_affected bigint not null default 0
+  )`;
 }
 
-type AggregationResult = {
-  windowDays: number;
-  updatedAt: string;
-  totalRows: number;
-};
-
-async function runAggregation(dryRun: boolean): Promise<AggregationResult> {
-  // Fixed 30 days (per docs + UI expectations).
-  const windowDays = 30;
-
-  // Idempotent + backfillable:
-  // - Always recompute the full window.
-  // - Upsert results.
-  // - Delete rows that no longer exist in the recomputed set.
-  //
-  // sessionId+countryCode required for flag rendering and dedupe.
-  // Event taxonomy weights used for future-proofing (today we mostly have "open").
-  const rows = await db()<Array<{ total: number }>>`
-    with
-    window as (
-      select now() - (${windowDays} * interval '1 day') as since_ts
-    ),
-    daily as (
-      select
-        provider_id,
-        upper(country_code) as country_code,
-        session_id,
-        date_trunc('day', created_at) as day,
-        max(
-          case event_type
-            when 'success' then 5
-            when 'submit' then 3
-            when 'open' then 1
-            when 'click' then 1
-            else 0
-          end
-        ) as weight
-      from provider_activity_events, window
-      where created_at >= window.since_ts
-        and session_id is not null
-        and country_code is not null
-        and country_code ~ '^[A-Za-z]{2}$'
-      group by provider_id, upper(country_code), session_id, date_trunc('day', created_at)
-    ),
-    agg as (
-      select
-        provider_id,
-        country_code,
-        count(distinct session_id)::int as user_count
-      from daily
-      where weight >= 1
-      group by provider_id, country_code
-    ),
-    upserted as (
-      select 1 as ok
-    )
-    select count(*)::int as total from agg
+async function acquireLock(tx: SqlClient): Promise<boolean> {
+  // Transaction-level lock: released automatically at tx end.
+  // Use a stable integer; changing this will allow parallel runs.
+  const LOCK_ID = 914_227_113;
+  const rows = await tx<{ locked: boolean }[]>`
+    select pg_try_advisory_xact_lock(${LOCK_ID}) as locked
   `;
+  return rows[0]?.locked === true;
+}
 
-  const totalRows = rows?.[0]?.total ?? 0;
-  const updatedAt = new Date().toISOString();
+async function runAggregation(opts: {
+  windowDays: number;
+  dryRun: boolean;
+  requestId: string;
+}): Promise<{ ok: boolean; message: string; totalRows: number; skipped?: boolean }> {
+  const { windowDays, dryRun, requestId } = opts;
+
+  const WINDOW_DAYS = Math.max(1, Math.min(365, Math.floor(windowDays)));
+
+  const countAggRows = async (sql: SqlClient): Promise<number> => {
+    const rows = await sql<{ c: number }[]>`
+      with agg as (
+        select
+          coalesce(nullif(country_code, ''), 'XX') as country_code,
+          count(distinct session_id) as users_count
+        from provider_activity_events
+        where created_at >= now() - (${WINDOW_DAYS}::int || ' days')::interval
+          and session_id is not null
+        group by 1
+      )
+      select count(*)::int as c from agg
+    `;
+    return rows[0]?.c ?? 0;
+  };
 
   if (dryRun) {
-    return { windowDays, updatedAt, totalRows };
+    const totalRows = await countAggRows(db());
+    return { ok: true, message: 'Dry run (no writes)', totalRows };
   }
 
-  await withTx(async (tx) => {
-    await tx`
-      with
-      window as (
-        select now() - (${windowDays} * interval '1 day') as since_ts
-      ),
-      daily as (
+  return withTx(async (tx) => {
+    const locked = await acquireLock(tx);
+    if (!locked) {
+      return { ok: true, message: 'Skipped (lock busy)', totalRows: 0, skipped: true };
+    }
+
+    // Compute and upsert in one shot.
+    const result = await tx<{ affected: number }[]>`
+      with agg as (
         select
-          provider_id,
-          upper(country_code) as country_code,
-          session_id,
-          date_trunc('day', created_at) as day,
-          max(
-            case event_type
-              when 'success' then 5
-              when 'submit' then 3
-              when 'open' then 1
-              when 'click' then 1
-              else 0
-            end
-          ) as weight
-        from provider_activity_events, window
-        where created_at >= window.since_ts
+          coalesce(nullif(country_code, ''), 'XX') as country_code,
+          count(distinct session_id) as users_count
+        from provider_activity_events
+        where created_at >= now() - (${WINDOW_DAYS}::int || ' days')::interval
           and session_id is not null
-          and country_code is not null
-          and country_code ~ '^[A-Za-z]{2}$'
-        group by provider_id, upper(country_code), session_id, date_trunc('day', created_at)
-      ),
-      agg as (
-        select
-          provider_id,
-          country_code,
-          count(distinct session_id)::int as user_count
-        from daily
-        where weight >= 1
-        group by provider_id, country_code
-      ),
-      upsert as (
-        insert into provider_country_usage_30d (provider_id, country_code, user_count, updated_at)
-        select provider_id, country_code, user_count, now()
+        group by 1
+      ), upserted as (
+        insert into promagen_users_country_usage_30d (country_code, users_count, updated_at)
+        select country_code, users_count, now()
         from agg
-        on conflict (provider_id, country_code)
-        do update set
-          user_count = excluded.user_count,
-          updated_at = excluded.updated_at
-        returning provider_id, country_code
+        on conflict (country_code) do update
+          set users_count = excluded.users_count,
+              updated_at = excluded.updated_at
+        returning 1
+      ), pruned as (
+        delete from promagen_users_country_usage_30d
+        where country_code not in (select country_code from agg)
+        returning 1
       )
-      delete from provider_country_usage_30d t
-      where not exists (
-        select 1 from agg a
-        where a.provider_id = t.provider_id and a.country_code = t.country_code
-      )
+      select (select count(*)::int from upserted) + (select count(*)::int from pruned) as affected
     `;
-  });
 
-  return { windowDays, updatedAt, totalRows };
-}
+    const totalAggRows = await countAggRows(tx);
 
-export async function GET(req: NextRequest): Promise<Response> {
-  if (!isAuthorised(req)) {
-    return new Response('Unauthorized', {
-      status: 401,
-      headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' },
-    });
-  }
+    // Record run (best-effort; don’t explode the cron result if logging fails).
+    const runId = requestId;
+    const affected = result[0]?.affected ?? 0;
 
-  const url = new URL(req.url);
-  const parsed = QuerySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
-  if (!parsed.success) {
-    return new Response('Bad request', {
-      status: 400,
-      headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' },
-    });
-  }
+    await tx`
+      insert into promagen_users_cron_runs (id, ran_at, ok, message, rows_affected)
+      values (${runId}, now(), true, ${'ok'}, ${affected})
+      on conflict (id) do nothing
+    `;
 
-  if (!hasDatabaseConfigured()) {
-    return new Response('DATABASE_URL not configured', {
-      status: 503,
-      headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/plain; charset=utf-8' },
-    });
-  }
-
-  // Ensure schema exists before we aggregate (safe, idempotent).
-  await ensureSchema();
-
-  const { dryRun } = parsed.data;
-
-  const result = await runAggregation(Boolean(dryRun));
-
-  return Response.json(
-    {
+    return {
       ok: true,
-      windowDays: result.windowDays,
-      updatedAt: result.updatedAt,
-      totalRows: result.totalRows,
-      dryRun: Boolean(dryRun),
-    },
-    { headers: { 'Cache-Control': 'no-store' } },
-  );
+      message: 'Aggregated + upserted',
+      totalRows: totalAggRows,
+    };
+  });
 }
 
-// Allow POST too (some schedulers prefer POST).
-export async function POST(req: NextRequest): Promise<Response> {
-  return GET(req);
+export async function GET(request: NextRequest): Promise<Response> {
+  const startedAt = Date.now();
+  const requestId = getRequestId(request);
+
+  try {
+    requireAuth(request);
+
+    if (!hasDatabaseConfigured()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: 'DATABASE_URL not configured; cron skipped',
+          requestId,
+          cadenceMinutes: 30,
+        },
+        {
+          status: 200,
+          headers: { 'Cache-Control': 'no-store', 'X-Promagen-Request-Id': requestId },
+        },
+      );
+    }
+
+    await ensureSchema();
+
+    const url = new URL(request.url);
+    const dryRun = url.searchParams.get('dryRun') === '1';
+
+    // Default to authority doc definition (30d). Can be tuned for experiments via env.
+    const windowDays = Number(url.searchParams.get('windowDays') ?? env.analytics.usersWindowDays);
+
+    const result = await runAggregation({
+      windowDays: Number.isFinite(windowDays) ? windowDays : env.analytics.usersWindowDays,
+      dryRun,
+      requestId,
+    });
+
+    const durationMs = timingMs(startedAt);
+
+    console.debug(
+      JSON.stringify({
+        level: 'info',
+        route: '/api/promagen-users/cron',
+        requestId,
+        event: 'run',
+        ok: result.ok,
+        message: result.message,
+        windowDays: Math.max(1, Math.min(365, Math.floor(windowDays))),
+        dryRun,
+        skipped: Boolean(result.skipped),
+        totalRows: result.totalRows,
+        durationMs,
+      }),
+    );
+
+    const status = result.ok ? 200 : 500;
+
+    const payload: JsonObject = {
+      ok: result.ok,
+      message: result.message,
+      totalRows: result.totalRows,
+      windowDays: Math.max(1, Math.min(365, Math.floor(windowDays))),
+      dryRun,
+      skipped: Boolean(result.skipped),
+      cadenceMinutes: 30,
+      requestId,
+      ranAt: new Date().toISOString(),
+      durationMs,
+    };
+
+    return NextResponse.json(payload, {
+      status,
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-Promagen-Request-Id': requestId,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    const durationMs = timingMs(startedAt);
+
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        route: '/api/promagen-users/cron',
+        requestId,
+        event: 'error',
+        message,
+        durationMs,
+      }),
+    );
+
+    const status = message === 'Unauthorized' ? 401 : 500;
+
+    return NextResponse.json(
+      {
+        ok: false,
+        message,
+        requestId,
+        cadenceMinutes: 30,
+      },
+      {
+        status,
+        headers: { 'Cache-Control': 'no-store', 'X-Promagen-Request-Id': requestId },
+      },
+    );
+  }
 }

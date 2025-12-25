@@ -7,6 +7,7 @@ Authority:
 
 - Canonical truth is the repo: docs/authority/\*\* and the code + tests.
 - Assistant memory must never override repo authority docs or failing tests.
+- Vercel Pro optimisation playbook (spend caps + WAF rules + observability): `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
 
 Limits:
 

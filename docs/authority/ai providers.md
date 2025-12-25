@@ -205,6 +205,13 @@ Recommended behaviour:
 - Outbound opens should use `/go/{id}` not a direct third-party URL.
 - AffiliateBadge should be conditional on `requiresDisclosure`.
 
+
+### Vercel Pro guardrails for outbound links (`/go/*`)
+
+- Canonical playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
+- WAF protect `/go/*` (rate limit + bot filtering) because open-redirect probing is common.
+- Keep app-level throttling as a second line (best-effort rate limiting in code).
+- Logging must stay best-effort and must never block redirects (avoid turning bots into DB spend).
 ### Affiliate badge
 
 - `frontend/src/components/common/affiliate-badge.tsx`

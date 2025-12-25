@@ -1,52 +1,44 @@
-// frontend/jest.config.cjs
 /** @type {import('jest').Config} */
 module.exports = {
-  // Scope to your app code only
-  roots: ['<rootDir>/src'],
-
-  // Browser-like env for component/unit tests
+  // Use jsdom by default. Individual tests can override with @jest-environment node.
   testEnvironment: 'jsdom',
-
-  // Single setup file
   setupFilesAfterEnv: ['<rootDir>/src/setuptests.ts'],
 
-  // Only pick up *.test.* files (NOT *.spec.* → keeps Playwright out)
-  testRegex: '.*\\.test\\.(ts|tsx|js|jsx)$',
+  testMatch: ['<rootDir>/src/**/__tests__/**/*.(test|spec).(ts|tsx|js)'],
 
-  // Keep Jest away from Playwright/e2e + Next build output + API routes
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/.next/',
-    '^/tests/',            // repo-root Playwright folder
-    '/playwright/',        // any playwright artefacts
-    '/e2e/',               // any e2e folder
-    '/src/app/api/'        // App Router API route tests (excluded)
-  ],
-
-  // SWC transformer only (no Babel anywhere)
   transform: {
     '^.+\\.(t|j)sx?$': [
       '@swc/jest',
       {
         jsc: {
-          target: 'es2022',
-          parser: { syntax: 'typescript', tsx: true },
-          transform: { react: { runtime: 'automatic' } }
+          parser: {
+            syntax: 'typescript',
+            tsx: true,
+          },
+          transform: {
+            react: {
+              runtime: 'automatic',
+            },
+          },
         },
-        module: { type: 'commonjs' }
-      }
-    ]
+        module: {
+          type: 'commonjs',
+        },
+      },
+    ],
   },
 
-  // Resolve "@/..." to src/, and stub styles/assets
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '\\.(css|scss|sass|less)$': '<rootDir>/src/__mocks__/style.mock.ts',
-    '\\.(png|jpg|jpeg|gif|svg|webp|avif)$': '<rootDir>/src/__mocks__/file.mock.ts'
+
+    // Centralised Next `server-only` stub for Jest (single place)
+    '^server-only$': '<rootDir>/src/__mocks__/server-only.ts',
+
+    // CSS + asset stubs
+    '\\.(css|less|scss|sass)$': '<rootDir>/src/__mocks__/style.mock.ts',
+    '\\.(gif|ttf|eot|svg|png|jpg|jpeg|webp|avif)$': '<rootDir>/src/__mocks__/file.mock.ts',
   },
 
-  transformIgnorePatterns: ['/node_modules/'],
-
-  cacheDirectory: '<rootDir>/.jest-cache',
-  reporters: ['default']
+  testPathIgnorePatterns: ['/node_modules/', '/.next/', '/dist/', '/src/app/api/'],
+  collectCoverageFrom: ['<rootDir>/src/**/*.{ts,tsx}', '!<rootDir>/src/**/*.d.ts'],
 };

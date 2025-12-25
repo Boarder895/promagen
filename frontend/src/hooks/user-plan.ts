@@ -1,71 +1,47 @@
-// src/lib/user-plan.ts
+'use client';
 
-export type UserPlanId = 'guest' | 'free' | 'pro';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Plan } from '@/types/user';
 
-export interface UserPlan {
-  id: UserPlanId;
-  /**
-   * Human-friendly label if you ever need to show it in the UI.
-   */
-  label: string;
-  /**
-   * Intended FX refresh cadence for this plan, in milliseconds.
-   * (You already have separate polling logic; this is the target SLA.)
-   */
-  fxRefreshMs: number;
+const STORAGE_KEY = 'promagen:plan';
+
+function normalisePlan(raw: string | null): Plan | null {
+  if (raw === 'free' || raw === 'paid') return raw;
+
+  // Back-compat: older UI used "pro" but business logic uses "paid".
+  if (raw === 'pro') return 'paid';
+
+  return null;
 }
 
-/**
- * Canonical plan matrix for Promagen.
- *
- * This is deliberately tiny but centralised so you can:
- * - Keep behaviour consistent across the app.
- * - Extend with more metadata later (limits, flags, etc.).
- */
-export const USER_PLANS: Record<UserPlanId, UserPlan> = {
-  guest: {
-    id: 'guest',
-    label: 'Guest',
-    fxRefreshMs: 5 * 60 * 1000, // 5 minutes target for anonymous visitors
-  },
-  free: {
-    id: 'free',
-    label: 'Free',
-    fxRefreshMs: 3 * 60 * 1000, // 3 minutes target (example)
-  },
-  pro: {
-    id: 'pro',
-    label: 'Pro',
-    fxRefreshMs: 60 * 1000, // 1 minute target (example)
-  },
+type UsePlanState = {
+  plan: Plan;
+  isPaid: boolean;
+  setPlan: (plan: Plan) => void;
 };
 
-const DEFAULT_PLAN_ID: UserPlanId = 'free';
+export function usePlan(): UsePlanState {
+  const [plan, setPlanState] = useState<Plan>('free');
 
-/**
- * Returns the default plan id when nothing is stored / resolved yet.
- * For now, that’s your free tier. You can flip this when you add auth.
- */
-export function getDefaultPlanId(): UserPlanId {
-  return DEFAULT_PLAN_ID;
-}
+  useEffect(() => {
+    try {
+      const stored = normalisePlan(window.localStorage.getItem(STORAGE_KEY));
+      if (stored) setPlanState(stored);
+    } catch {
+      // Ignore: privacy mode / blocked storage / etc.
+    }
+  }, []);
 
-/**
- * Coerce an arbitrary value into a valid UserPlanId.
- * Falls back to the default if the value is unknown.
- */
-export function coercePlanId(value: unknown): UserPlanId {
-  if (value === 'guest' || value === 'free' || value === 'pro') {
-    return value;
-  }
+  const setPlan = useCallback((next: Plan) => {
+    setPlanState(next);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      // Ignore.
+    }
+  }, []);
 
-  return DEFAULT_PLAN_ID;
-}
+  const isPaid = plan === 'paid';
 
-/**
- * Convenience helper if you ever want a non-hook way of checking paid.
- * This is *pure* and does not touch storage or the browser.
- */
-export function isPaidPlan(planId: UserPlanId): boolean {
-  return planId === 'pro';
+  return useMemo(() => ({ plan, isPaid, setPlan }), [plan, isPaid, setPlan]);
 }
