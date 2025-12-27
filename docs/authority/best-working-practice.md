@@ -172,3 +172,23 @@ RULES:
      • Prompt Optimiser:
      o Analysis
      o Rewritten prompt (final)
+   o List missing inputs you would normally need (but do NOT ask questions unless truly blocking)
+   o Rewrite my prompt into the most precise version possible, preserving my intent and constraints
+   CONSTRAINTS (always apply unless I override):
+   • British English
+   • No summarising unless I explicitly ask
+   • No re-ordering or deleting content unless I explicitly mark REMOVE/REPLACE
+   • If documents are involved: word count must be >= current doc word count and include a changelog
+   • If code is involved: full files only, ready to cut-and-paste
+   MY PROMPT:
+   <PASTE MY PROMPT HERE>
+   INPUTS (if relevant):
+   • Current doc / file(s): <paste>
+   • Allowed changes (REMOVE/REPLACE/ADD): <paste>
+   • Truth anchors (must not contradict): <paste>
+   OUTPUT FORMAT:
+   • Main answer
+   • Two improvements
+   • Prompt Optimiser:
+   o Analysis
+   o Rewritten prompt (final)
