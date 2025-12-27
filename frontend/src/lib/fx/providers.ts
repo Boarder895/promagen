@@ -37,11 +37,7 @@ export type FxRibbonBudgetState = 'ok' | 'warning' | 'blocked';
 
 export type FxRibbonBudgetIndicator = {
   state: FxRibbonBudgetState;
-  /**
-   * Optional convenience for UI/trace.
-   * SSOT lookup: when Emoji Bank is misconfigured, omit rather than guessing.
-   */
-  emoji?: string;
+  emoji: string;
 };
 
 export type FxRibbonBudgetSnapshot = {
@@ -158,7 +154,8 @@ type FxRibbonPayload = {
   meta: {
     mode: FxMode;
     buildId: string;
-    providerId: string;
+    sourceProvider: string;
+    asOf: string;
     cached: boolean;
     ttlSeconds: number;
     ssotKey: string;
@@ -167,7 +164,7 @@ type FxRibbonPayload = {
   data: FxRibbonQuote[];
 };
 
-type FxMode = 'live' | 'demo' | 'stale';
+type FxMode = 'live' | 'cached' | 'fallback';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Provider wiring (FX: TwelveData only for now, with robust cache+trace)
@@ -200,7 +197,7 @@ const BUDGET_BLOCK_PCT = 0.95;
 
 // Budget allowances (estimates; you can wire real vendor budget later)
 const BUDGET_DAILY_ALLOWANCE = readEnvInt('FX_RIBBON_BUDGET_DAILY_ALLOWANCE', 800);
-const BUDGET_MINUTE_ALLOWANCE = readEnvInt('FX_RIBBON_BUDGET_MINUTE_ALLOWANCE', 60);
+const BUDGET_MINUTE_ALLOWANCE = readEnvInt('FX_RIBBON_BUDGET_MINUTE_ALLOWANCE', 8);
 const BUDGET_MINUTE_WINDOW_SECONDS = readEnvInt('FX_RIBBON_BUDGET_MINUTE_WINDOW_SECONDS', 60);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -279,10 +276,17 @@ let budgetMinuteWindowStartMs = 0;
 let budgetMinuteUsedInWindow = 0;
 
 // cached indicator for last payload
-let lastBudgetIndicator: FxRibbonBudgetIndicator = (() => {
-  const emoji = getBudgetGuardEmoji('ok');
-  return emoji ? { state: 'ok', emoji } : { state: 'ok' };
-})();
+
+function mustBudgetEmoji(state: FxRibbonBudgetIndicator['state']): string {
+  // Budget indicator emojis MUST come from Emoji Bank SSOT.
+  const emoji = getBudgetGuardEmoji(state);
+  if (emoji) return emoji;
+
+  // If this ever happens, SSOT is misconfigured. Fail loudly (dev/test) rather than showing a "?" to users.
+  throw new Error(`[fx/providers] Missing Emoji Bank entry: budget_guard.${state}`);
+}
+
+let lastBudgetIndicator: FxRibbonBudgetIndicator = { state: 'ok', emoji: mustBudgetEmoji('ok') };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -321,8 +325,11 @@ export function normaliseSymbol(input: string): string {
   return delimited;
 }
 
-export function getFxProviderSummary(mode: FxRibbonUiApiMode | null, providerId: string | null) {
-  const id = (providerId ?? 'twelvedata').trim() || 'twelvedata';
+export function getFxProviderSummary(
+  mode: FxRibbonUiApiMode | null,
+  sourceProvider: string | null,
+) {
+  const id = (sourceProvider ?? 'twelvedata').trim() || 'twelvedata';
   const name =
     id === 'twelvedata'
       ? 'Twelve Data'
@@ -436,18 +443,20 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
   const budget = ensureBudgetSnapshot(now);
   lastBudgetIndicator = toBudgetIndicator(budget);
 
-  // Pro safety switch: safe mode forces cache/demo only (no upstream), even if budget is otherwise OK.
+  // Pro safety switch: safe mode forces cache/fallback only (no upstream), even if budget is otherwise OK.
   if (SAFE_MODE_ENABLED) {
     const merged = mergeCaches(now, ssotKey);
+
     if (merged.hasValue) {
       lastDecision = 'safe_mode_cache';
       lastError = undefined;
 
       return {
         meta: {
-          mode: 'stale',
+          mode: 'cached',
           buildId: 'local-dev',
-          providerId: 'twelvedata',
+          sourceProvider: 'twelvedata',
+          asOf: merged.asOf ?? toIso(now),
           cached: true,
           ttlSeconds: BASE_TTL_SECONDS,
           ssotKey,
@@ -457,52 +466,80 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
       };
     }
 
-    lastDecision = 'safe_mode_demo';
+    lastDecision = 'safe_mode_fallback';
     lastError = undefined;
 
     return {
       meta: {
-        mode: 'demo',
+        mode: 'fallback',
         buildId: 'local-dev',
-        providerId: 'twelvedata',
+        sourceProvider: 'twelvedata',
+        asOf: toIso(now),
         cached: false,
         ttlSeconds: BASE_TTL_SECONDS,
         ssotKey,
         budget: lastBudgetIndicator,
       },
-      data: buildDemoQuotes(ssotKey),
+      data: buildFallbackQuotes(ssotKey),
     };
   }
 
+  // Budget block: forbid upstream when blocked.
+  // IMPORTANT: blocked budget must still serve cache if available.
   if (budget.state === 'blocked') {
-    lastDecision = 'blocked_budget_demo';
+    const merged = mergeCaches(now, ssotKey);
+
+    if (merged.hasValue) {
+      lastDecision = 'blocked_budget_cache';
+      lastError = undefined;
+
+      return {
+        meta: {
+          mode: 'cached',
+          buildId: 'local-dev',
+          sourceProvider: 'twelvedata',
+          asOf: merged.asOf ?? toIso(now),
+          cached: true,
+          ttlSeconds: BASE_TTL_SECONDS,
+          ssotKey,
+          budget: lastBudgetIndicator,
+        },
+        data: merged.merged,
+      };
+    }
+
+    lastDecision = 'blocked_budget_fallback';
     lastError = undefined;
 
     return {
       meta: {
-        mode: 'demo',
+        mode: 'fallback',
         buildId: 'local-dev',
-        providerId: 'twelvedata',
+        sourceProvider: 'twelvedata',
+        asOf: toIso(now),
         cached: false,
         ttlSeconds: BASE_TTL_SECONDS,
         ssotKey,
         budget: lastBudgetIndicator,
       },
-      data: buildDemoQuotes(ssotKey),
+      data: buildFallbackQuotes(ssotKey),
     };
   }
 
-  // If rate-limited, serve cache-only or demo.
+  // If rate-limited, serve cache-only or fallback.
   if (isRateLimited(now)) {
     const merged = mergeCaches(now, ssotKey);
+
     if (merged.hasValue) {
       lastDecision = 'rate_limited_cache';
       lastError = undefined;
+
       return {
         meta: {
-          mode: 'stale',
+          mode: 'cached',
           buildId: 'local-dev',
-          providerId: 'twelvedata',
+          sourceProvider: 'twelvedata',
+          asOf: merged.asOf ?? toIso(now),
           cached: true,
           ttlSeconds: BASE_TTL_SECONDS,
           ssotKey,
@@ -512,20 +549,21 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
       };
     }
 
-    lastDecision = 'rate_limited_demo';
+    lastDecision = 'rate_limited_fallback';
     lastError = undefined;
 
     return {
       meta: {
-        mode: 'demo',
+        mode: 'fallback',
         buildId: 'local-dev',
-        providerId: 'twelvedata',
+        sourceProvider: 'twelvedata',
+        asOf: toIso(now),
         cached: false,
         ttlSeconds: BASE_TTL_SECONDS,
         ssotKey,
         budget: lastBudgetIndicator,
       },
-      data: buildDemoQuotes(ssotKey),
+      data: buildFallbackQuotes(ssotKey),
     };
   }
 
@@ -543,7 +581,8 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
         meta: {
           mode: 'live',
           buildId: 'local-dev',
-          providerId: 'twelvedata',
+          sourceProvider: 'twelvedata',
+          asOf: merged.asOf ?? toIso(now),
           cached: false,
           ttlSeconds: BASE_TTL_SECONDS,
           ssotKey,
@@ -553,19 +592,20 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
       };
     }
 
-    // Priming failed – fall back to any cache (none) -> demo
-    lastDecision = 'cold_start_prime_failed_demo';
+    // Priming failed – fall back to any cache (none) -> fallback
+    lastDecision = 'cold_start_prime_failed_fallback';
     return {
       meta: {
-        mode: 'demo',
+        mode: 'fallback',
         buildId: 'local-dev',
-        providerId: 'twelvedata',
+        sourceProvider: 'twelvedata',
+        asOf: toIso(now),
         cached: false,
         ttlSeconds: BASE_TTL_SECONDS,
         ssotKey,
         budget: lastBudgetIndicator,
       },
-      data: buildDemoQuotes(ssotKey),
+      data: buildFallbackQuotes(ssotKey),
     };
   }
 
@@ -582,7 +622,8 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
         meta: {
           mode: 'live',
           buildId: 'local-dev',
-          providerId: 'twelvedata',
+          sourceProvider: 'twelvedata',
+          asOf: merged.asOf ?? toIso(now),
           cached: false,
           ttlSeconds: BASE_TTL_SECONDS,
           ssotKey,
@@ -593,7 +634,7 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
     }
   }
 
-  // Default: serve merged caches if present; else demo.
+  // Default: serve merged caches if present; else fallback.
   const merged = mergeCaches(now, ssotKey);
   if (merged.hasValue) {
     lastDecision = 'serve_cache';
@@ -601,9 +642,10 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
 
     return {
       meta: {
-        mode: 'stale',
+        mode: 'cached',
         buildId: 'local-dev',
-        providerId: 'twelvedata',
+        sourceProvider: 'twelvedata',
+        asOf: merged.asOf ?? toIso(now),
         cached: true,
         ttlSeconds: BASE_TTL_SECONDS,
         ssotKey,
@@ -613,20 +655,21 @@ export async function getFxRibbon(): Promise<FxRibbonPayload> {
     };
   }
 
-  lastDecision = 'no_cache_demo';
+  lastDecision = 'no_cache_fallback';
   lastError = undefined;
 
   return {
     meta: {
-      mode: 'demo',
+      mode: 'fallback',
       buildId: 'local-dev',
-      providerId: 'twelvedata',
+      sourceProvider: 'twelvedata',
+      asOf: toIso(now),
       cached: false,
       ttlSeconds: BASE_TTL_SECONDS,
       ssotKey,
       budget: lastBudgetIndicator,
     },
-    data: buildDemoQuotes(ssotKey),
+    data: buildFallbackQuotes(ssotKey),
   };
 }
 
@@ -816,8 +859,8 @@ function mergeCaches(now: number, ssotKey: string): FxRibbonMerged {
   };
 }
 
-function buildDemoQuotes(ssotKey: string): FxRibbonQuote[] {
-  // Demo mode is honest: we return SSOT list with null prices (no fake numbers).
+function buildFallbackQuotes(ssotKey: string): FxRibbonQuote[] {
+  // Fallback is honest: we return SSOT list with null prices (no fake numbers).
   const pairs = getFxRibbonPairs();
   assertFxRibbonSsotValid();
 
@@ -1014,8 +1057,10 @@ function recomputeBudgetDerivedFields(snap: BudgetSnapshotInternal): void {
 }
 
 function toBudgetIndicator(snap: FxRibbonBudgetSnapshot): FxRibbonBudgetIndicator {
-  const emoji = getBudgetGuardEmoji(snap.state);
-  return emoji ? { state: snap.state, emoji } : { state: snap.state };
+  if (snap.state === 'ok') return { state: 'ok', emoji: mustBudgetEmoji('ok') };
+  if (snap.state === 'warning') return { state: 'warning', emoji: mustBudgetEmoji('warning') };
+  if (snap.state === 'blocked') return { state: 'blocked', emoji: mustBudgetEmoji('blocked') };
+  return { state: 'ok', emoji: mustBudgetEmoji('ok') };
 }
 
 function dayKeyFromMs(ms: number): string {
@@ -1471,9 +1516,10 @@ function sleep(ms: number): Promise<void> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function toUiApiMode(payload: FxRibbonPayload): FxRibbonUiApiMode {
-  // Keep UI mapping stable
+  // UI mode is a presentational label for /api/fx meta.mode.
+  // Contract: live | cached | fallback.
   if (payload.meta.mode === 'live') return 'live';
-  if (payload.meta.mode === 'stale') return 'cached';
+  if (payload.meta.mode === 'cached') return 'cached';
   return 'fallback';
 }
 

@@ -17,9 +17,9 @@
  */
 
 import { useEffect, useState } from 'react';
+import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
 
 import type { FxRibbonTraceSnapshot } from '@/lib/fx/providers';
-import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
 
 type UseFxTraceOptions = {
   endpoint?: string;
@@ -70,7 +70,7 @@ function buildEmptySnapshot(): FxRibbonTraceSnapshot {
 
     budgetIndicator: {
       state: 'ok',
-      emoji: getBudgetGuardEmoji('ok') ?? undefined,
+      emoji: getBudgetGuardEmoji('ok'),
     },
 
     cache: { hasValue: false },

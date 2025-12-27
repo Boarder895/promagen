@@ -40,8 +40,8 @@ type BudgetState = 'ok' | 'warning' | 'blocked';
 
 type BudgetIndicator = {
   state: BudgetState;
-  // SSOT-first: emoji comes from Emoji Bank and may be null if the bank is misconfigured.
-  emoji: string | null;
+  // SSOT-first: emoji comes from Emoji Bank (budget_guard).
+  emoji: string;
 };
 
 type NoticeLevel = 'warning' | 'violation';
@@ -75,8 +75,7 @@ function normaliseBudgetState(state: unknown): BudgetState {
   return 'ok';
 }
 
-function budgetEmoji(state: BudgetState): string | null {
-  // SSOT: canonical mapping lives in Emoji Bank under budget_guard.
+function budgetEmoji(state: BudgetState): string {
   return getBudgetGuardEmoji(state);
 }
 

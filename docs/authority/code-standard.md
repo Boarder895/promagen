@@ -11,6 +11,13 @@ It ensures the entire project feels like it was built by one engineer, not twent
 
 This document does not contain any API rules. Promagen uses a separate API Brain document for all provider/role/gateway logic.
 This file governs frontend code only: components, hooks, state, styling, tests, analytics wiring, and static data.
+Monetisation authority (SSOT)
+Frontend code must never invent or imply “paid vs free” behaviour in isolation.
+
+All paid/free boundaries are defined only in:
+`C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
+
+Hard rule: if a capability is not explicitly listed in `paid_tier.md`, it is free.
 
 The frontend is allowed to render placeholders (loading, skeletons, empty states).
 The frontend must not invent “demo” market data (fake prices, fake returns, fake movements). If live data is unavailable, we show an honest error/empty state.
@@ -169,6 +176,10 @@ Explicit caching headers on /api/fx responses (and any spend-bearing endpoints) 
 Edge-friendly semantics (public, s-maxage, stale-while-revalidate) where safe.
 
 No-cache/No-store for trace/admin endpoints.
+Client fetch stance (anti-regression)
+
+- For spend-bearing endpoints like `/api/fx`, client-side fetch must not set `cache: 'no-store'` / `reload`, add `Cache-Control: no-cache`, or append cache-busting query params.
+- Use `credentials: 'omit'` unless the endpoint truly needs cookies; cookies can fragment/bypass CDN caching and defeat calming.
 
 Why this strengthens Pro:
 
@@ -516,12 +527,15 @@ All shapes validated by tests (schema or type-shape tests).
 Budget emojis are SSOT (no module-level constants)
 
 Budget guard emojis must live in the Emoji Bank SSOT:
-frontend/src/data/emoji/emoji-bank.json
+
+- File: frontend/src/data/emoji/emoji-bank.json
+- Group key: `budget_guard` (must include `ok`, `warning`, `blocked`)
 
 Rules:
 
 - Do not define budget emojis as local constants inside providers/routes/components.
 - Import them via the emoji helper layer so the UI and server cannot drift.
+- No “unknown/?” fallback budget emoji is allowed; missing mappings must fail tests/builds.
 
 Canonical mapping (non-negotiable):
 

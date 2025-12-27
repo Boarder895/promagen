@@ -23,6 +23,7 @@ import { NextResponse } from 'next/server';
 import { env } from '@/lib/env';
 import { buildFxCacheControl, getFxBuildId, getFxRequestId } from '@/lib/fx/route';
 import { getFxRibbon } from '@/lib/fx/providers';
+import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
 import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -109,6 +110,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         status: 429,
         headers: {
           'Cache-Control': 'no-store',
+          'Content-Type': 'application/json; charset=utf-8',
           'Retry-After': String(rl.retryAfterSeconds),
           'X-RateLimit-Limit': String(rl.limit),
           'X-RateLimit-Remaining': '0',
@@ -183,6 +185,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     return NextResponse.json(enriched, {
       headers: {
         'Cache-Control': cacheControl,
+        'Content-Type': 'application/json; charset=utf-8',
 
         // Budget state is ASCII; emoji stays in JSON if authority includes it.
         'X-Promagen-Fx-Budget': budgetState,
@@ -216,7 +219,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         asOf: isoNow(),
         requestId,
         safeMode: env.safeMode.enabled,
-        budget: { state: 'ok' },
+        budget: { state: 'ok', emoji: getBudgetGuardEmoji('ok') ?? undefined },
       },
       data: [],
       error: {
@@ -232,6 +235,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       status: 200,
       headers: {
         'Cache-Control': cacheControl,
+        'Content-Type': 'application/json; charset=utf-8',
         'X-Promagen-Fx-Budget': 'ok',
         'X-Promagen-Fx-Budget-State': 'ok',
         'X-Promagen-Request-Id': requestId,

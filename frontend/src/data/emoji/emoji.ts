@@ -70,8 +70,13 @@ export function getEmoji(section: EmojiSection, id: string | null | undefined): 
 /**
  * Canonical budget-state emoji lookup (🛫 / 🏖️ / 🧳) from Emoji Bank SSOT.
  */
-export function getBudgetGuardEmoji(state: BudgetGuardState): string | null {
-  return getEmoji('budget_guard', state);
+export function getBudgetGuardEmoji(state: 'ok' | 'warning' | 'blocked'): string {
+  const emoji = getEmoji('budget_guard', state);
+  if (!emoji) {
+    // Integrity tests enforce these entries exist. If this throws, the SSOT is broken.
+    throw new Error(`emoji-bank.json missing budget_guard:${state}`);
+  }
+  return emoji;
 }
 
 export function getTrendEmoji(

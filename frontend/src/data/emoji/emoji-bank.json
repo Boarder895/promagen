@@ -1,4 +1,4 @@
-﻿{
+{
   "trends": [
     {
       "id": "up",
@@ -649,20 +649,6 @@
     {
       "id": "timer",
       "emoji": "⏲️"
-    }
-  ],
-  "budget_guard": [
-    {
-      "id": "ok",
-      "emoji": "🛫"
-    },
-    {
-      "id": "warning",
-      "emoji": "🏖️"
-    },
-    {
-      "id": "blocked",
-      "emoji": "🧳"
     }
   ],
   "alerts": [
@@ -1757,6 +1743,20 @@
     {
       "id": "sym_72",
       "emoji": "🧪"
+    }
+  ],
+  "budget_guard": [
+    {
+      "id": "ok",
+      "emoji": "🛫"
+    },
+    {
+      "id": "warning",
+      "emoji": "🏖️"
+    },
+    {
+      "id": "blocked",
+      "emoji": "🧳"
     }
   ]
 }

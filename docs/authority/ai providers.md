@@ -9,6 +9,13 @@
 This document describes Promagen’s **AI Providers catalogue**, how providers are displayed (Leaderboard + Detail + Prompt Builder), and how provider capabilities and prompts are mapped.
 
 For affiliate/referral outbound linking, see: **AI Providers Affiliate & Links.md**.
+Monetisation scope note
+This document does not define what is free vs paid in Promagen.
+
+All paid/free boundaries are defined only in:
+`C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
+
+Hard rule: if it is not written in `paid_tier.md`, it is free.
 
 ## Canonical data sources (single source of truth)
 
@@ -205,13 +212,13 @@ Recommended behaviour:
 - Outbound opens should use `/go/{id}` not a direct third-party URL.
 - AffiliateBadge should be conditional on `requiresDisclosure`.
 
-
 ### Vercel Pro guardrails for outbound links (`/go/*`)
 
 - Canonical playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
 - WAF protect `/go/*` (rate limit + bot filtering) because open-redirect probing is common.
 - Keep app-level throttling as a second line (best-effort rate limiting in code).
 - Logging must stay best-effort and must never block redirects (avoid turning bots into DB spend).
+
 ### Affiliate badge
 
 - `frontend/src/components/common/affiliate-badge.tsx`
