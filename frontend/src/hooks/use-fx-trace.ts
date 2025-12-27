@@ -20,7 +20,6 @@ import { useEffect, useState } from 'react';
 import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
 
 import type { FxRibbonTraceSnapshot } from '@/lib/fx/providers';
-import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
 
 type UseFxTraceOptions = {
   endpoint?: string;
