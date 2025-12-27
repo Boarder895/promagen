@@ -54,6 +54,7 @@ The market belt is now firmly part of the centre column, not a full-width band a
 ## Pair label formatting (test-locked)
 
 The FX pair separator standard is **non-negotiable**.
+
 - Add a tiny “event taxonomy” section somewhere authoritative listing allowed `eventType` values and weights, so nobody invents new names later and breaks aggregation.
 
 - Use the **ASCII forward slash** `/` (**U+002F**) between ISO-4217 currency codes.
@@ -237,14 +238,21 @@ On wide screens: rails are visible and vertically scrollable as needed.
 On smaller screens: the rails collapse into the main column stack above and below the belt + leaderboard or via a “More exchanges” accordion.
 
 Paid-tier exchange rail rules (homepage side-rails)
-Paid users can choose how many exchange cards appear on the rails: 6, 8, 10, 12, 14, or 16 (even numbers only).
 
-Ordering rule (this is a hard rule, not a suggestion):
+Authority (SSOT): `C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
 
-- Take the chosen set and sort by homeLongitude (east → west; higher longitude first, lower last).
+Paid users can control:
+
+- Reference frame (two options only): my location OR Greenwich (London / 0°). No other time zones exist.
+- Exchange selection (which exchanges are shown).
+- Exchange count (even numbers only): 6, 8, 10, 12, 14, or 16.
+
+Ordering rule (hard rule, never overridden):
+
+- Take the chosen set and sort by homeLongitude so the whole page reads east → west.
 - Split evenly into two halves.
 - Left rail shows the first half top-to-bottom (east → west).
-- Right rail shows the second half top-to-bottom in reverse so that, when you scan the page left-to-right, the whole layout reads east → west.
+- Right rail shows the second half top-to-bottom in reverse order so that, when you scan left-to-right, the full layout reads east → west.
 
 Free tier uses the baked-in default rail set and count; the visual layout remains identical, only the content set differs.
 
@@ -582,6 +590,12 @@ Data contract expectations (Brain v2 alignment):
 - The gateway performs one batched upstream request for all ribbon symbols (comma-separated) rather than one request per pair.
 - The gateway returns quotes in SSOT order, with a clear mode: "live" or "cached" (never “demo”).
 - The UI renders in the order returned (which must match SSOT) and formats using SSOT precision rules.
+  Client fetch stance (do not sabotage edge caching)
+
+- The FX ribbon UI must not use `fetch(..., { cache: 'no-store' })` (or any equivalent cache-busting behaviour) when calling `/api/fx`.
+  That defeats `s-maxage`/TTL calming and turns polling into real origin + upstream traffic.
+- The FX ribbon UI should call `/api/fx` without cookies (use `credentials: 'omit'`) so the CDN cache is not fragmented.
+- `/api/fx/trace` is diagnostics and should be `no-store`; `/api/fx` must remain cacheable.
 
   7.1.1 Hard-wired API savings & guardrails (must stay true)
 
@@ -1038,8 +1052,9 @@ The three budget emojis above are a UX surface, but the mapping must not be hard
 Rules:
 
 - Budget emojis live in the Emoji Bank SSOT: frontend/src/data/emoji/emoji-bank.json
-- The homepage ribbon imports the emojis via the emoji helper layer (src/data/emoji/\*).
-- No “BUDGET*EMOJI*\*” constants are permitted in providers/routes/components.
+- The Emoji Bank group key is `budget_guard` and must contain exactly: `ok`, `warning`, `blocked`.
+- Import via the emoji helper layer (src/data/emoji/*). No local “BUDGET*EMOJI\*” constants are permitted anywhere.
+- No “unknown/?” fallback is allowed for budget emojis; missing mappings must fail tests/builds.
 
 Canonical mapping (non-negotiable):
 
@@ -1326,6 +1341,7 @@ Front-end policy:
 - Protect `/api/fx` with WAF rate limiting and bot rules.
 - Set Spend Management thresholds so a traffic spike can’t become a surprise bill.
 - Keep the ribbon edge-cacheable via TTL-aligned cache headers (this is the difference between “fast” and “expensive”).
+  Budget indicator note:
 Budget indicator note:
 
 - Centralised polling is still important for client/server load, but budget state is not “controlled” by client polling.

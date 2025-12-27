@@ -227,8 +227,6 @@ async function bestEffortInsertActivity(input: {
   ip: string | null;
   country: string | null;
   isAffiliate: boolean;
-  sessionId: string | null;
-  countryCode: string | null;
   destination: string;
   ua: string | null;
 }): Promise<void> {
@@ -267,16 +265,6 @@ async function bestEffortInsertActivity(input: {
         ${input.destination},
         now()
       )
-  // Never block redirect: timebox the write.
-  const TIMEBOX_MS = 250;
-
-  const write = async () => {
-    // Stage 1: raw events table keyed by click_id (idempotent).
-    await db()`
-      insert into provider_activity_events
-        (click_id, provider_id, event_type, src, session_id, country_code, destination, created_at)
-      values
-        (${record.clickId}, ${record.providerId}, ${record.eventType}, ${record.src}, ${record.sessionId}, ${record.countryCode}, ${record.destination}, now())
       on conflict (click_id) do nothing
     `;
   } catch {
@@ -301,20 +289,6 @@ export async function GET(
 
   if (!decision.allowed) {
     return new Response('Too Many Requests', {
-    const durationMs = Date.now() - startedAt;
-
-    console.warn(
-      JSON.stringify({
-        level: 'warn',
-        route: '/go/[providerId]',
-        requestId,
-        event: 'rate_limited',
-        retryAfterSeconds: decision.retryAfterSeconds,
-        durationMs,
-      }),
-    );
-
-    return new Response('Too many requests', {
       status: 429,
       headers: {
         'Cache-Control': 'no-store',
@@ -391,8 +365,6 @@ export async function GET(
     ip,
     country: countryCode,
     isAffiliate: built.isAffiliate,
-    sessionId: built.sessionId ?? null,
-    countryCode,
     destination: built.destination.toString(),
     ua: request.headers.get('user-agent') ?? null,
   });
@@ -412,15 +384,6 @@ export async function GET(
       hasDb: hasDatabaseConfigured(),
       durationMs,
       safeMode: env.safeMode.enabled,
-  console.debug(
-    JSON.stringify({
-      level: 'info',
-      route: '/go/[providerId]',
-      requestId,
-      event: 'redirect',
-      providerId: provider.id,
-      hasDb: hasDatabaseConfigured(),
-      durationMs,
     }),
   );
 

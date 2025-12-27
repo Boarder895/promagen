@@ -276,7 +276,6 @@ async function fetchFxOnce(): Promise<void> {
 
       const res = await fetch('/api/fx', {
         method: 'GET',
-        cache: 'no-store',
         headers: { accept: 'application/json' },
         signal: store.abort?.signal,
       });

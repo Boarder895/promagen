@@ -8,6 +8,11 @@ Authority:
 - Canonical truth is the repo: docs/authority/\*\* and the code + tests.
 - Assistant memory must never override repo authority docs or failing tests.
 - Vercel Pro optimisation playbook (spend caps + WAF rules + observability): `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
+- Monetisation boundary SSOT (what is free vs paid):
+  `C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
+
+  Hard rule: anything not written in `paid_tier.md` is free (standard Promagen).
+  Any change to paid behaviour requires a docs update to `paid_tier.md` in the same PR.
 
 Limits:
 
@@ -147,6 +152,26 @@ RULES:
 3. Then include a section titled “Prompt Optimiser” where you:
    o State the implied assumptions you detected
    - Implementation map (routes + files + delivery approach): see `docs/authority/vercel-pro-promagen-playbook.md` §5.5.
+     o List missing inputs you would normally need (but do NOT ask questions unless truly blocking)
+     o Rewrite my prompt into the most precise version possible, preserving my intent and constraints
+     CONSTRAINTS (always apply unless I override):
+     • British English
+     • No summarising unless I explicitly ask
+     • No re-ordering or deleting content unless I explicitly mark REMOVE/REPLACE
+     • If documents are involved: word count must be >= current doc word count and include a changelog
+     • If code is involved: full files only, ready to cut-and-paste
+     MY PROMPT:
+     <PASTE MY PROMPT HERE>
+     INPUTS (if relevant):
+     • Current doc / file(s): <paste>
+     • Allowed changes (REMOVE/REPLACE/ADD): <paste>
+     • Truth anchors (must not contradict): <paste>
+     OUTPUT FORMAT:
+     • Main answer
+     • Two improvements
+     • Prompt Optimiser:
+     o Analysis
+     o Rewritten prompt (final)
    o List missing inputs you would normally need (but do NOT ask questions unless truly blocking)
    o Rewrite my prompt into the most precise version possible, preserving my intent and constraints
    CONSTRAINTS (always apply unless I override):

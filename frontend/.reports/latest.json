@@ -61,11 +61,11 @@
                        "durationMs":  4371
                    },
                    {
-                       "message":  "ok",
-                       "status":  "ok",
+                       "message":  "failed",
+                       "status":  "fail",
                        "name":  "fx.calm",
                        "extra":  {
-                                     "exitCode":  0,
+                                     "exitCode":  1,
                                      "timedOut":  false
                                  },
                        "durationMs":  6349
@@ -215,26 +215,26 @@
                  {
                      "at":  "2025-12-23T17:23:49.3497062+00:00",
                      "emoji":  "🔴",
-                     "runId":  "20251223-172349-345",
+                     "runId":  "20251227-083450-709",
                      "banner":  "red",
-                     "durationMs":  33474,
+                     "durationMs":  29314,
                      "status":  "fail"
                  },
                  {
-                     "at":  "2025-12-22T20:06:25.5957503+00:00",
-                     "emoji":  "🟢",
-                     "runId":  "20251222-200625-595",
-                     "banner":  "green",
-                     "durationMs":  32350,
-                     "status":  "ok"
+                     "at":  "2025-12-27T07:12:51.9963272+00:00",
+                     "emoji":  "🔴",
+                     "runId":  "20251227-071251-996",
+                     "banner":  "red",
+                     "durationMs":  29263,
+                     "status":  "fail"
                  },
                  {
-                     "at":  "2025-12-22T16:05:52.2426368+00:00",
-                     "emoji":  "🟢",
-                     "runId":  "20251222-160552-242",
-                     "banner":  "green",
-                     "durationMs":  32018,
-                     "status":  "ok"
+                     "at":  "2025-12-27T01:22:52.7793153+00:00",
+                     "emoji":  "🔴",
+                     "runId":  "20251227-012252-779",
+                     "banner":  "red",
+                     "durationMs":  31729,
+                     "status":  "fail"
                  },
                  {
                      "at":  "2025-12-21T22:16:31.2882861+00:00",

@@ -1,6 +1,14 @@
 Promagen API Brain v2 — Registry + Policies (SSOT + Cost-Control)
 
 Purpose: A single, explicit, testable set of rules for how Promagen selects providers, controls spend, caches responses, slices workload, and exposes trace data — without letting UI polling or widget count accidentally drive upstream cost.
+Monetisation scope note (keep docs separated)
+This document defines API authority, provider behaviour, and cost-control.
+
+It does NOT define what users get for free vs paid.
+That contract lives only in:
+`C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
+
+Hard rule: if it is not written in `paid_tier.md`, it is free.
 
 0. Revision notes (why v2 exists)
 
@@ -434,7 +442,9 @@ The budget indicator uses emojis, but the emojis themselves must not be “free-
 Rule:
 
 - The canonical budget emojis live in the Emoji Bank SSOT: frontend/src/data/emoji/emoji-bank.json
-- All consumers (providers.ts, /api routes, hooks, UI components) must import budget emojis from the Emoji Bank helper layer (src/data/emoji/_) and must not define local BUDGET*EMOJI*_ constants.
+- The Emoji Bank group key is `budget_guard` and must contain exactly: `ok`, `warning`, `blocked`.
+- All consumers (providers.ts, /api routes, hooks, UI components, tests) must read these via the emoji helper layer (frontend/src/data/emoji/emoji.ts) and must not define local budget emoji constants.
+- There is no “unknown” budget emoji/state. Missing mappings must fail tests/builds rather than rendering a question mark.
 
 Canonical mapping (non-negotiable):
 
@@ -658,7 +668,25 @@ Avoid headers that imply background revalidation unless you can guarantee it wil
 If you use stale-while-revalidate, it must revalidate against your own server cache, not upstream providers
 
 Cache headers are a promise. Promagen must only promise what the Refresh Gate can keep.
+Client fetch stance (anti-regression)
 
+- `/api/fx` must be cacheable end-to-end. Client code must not set `cache: 'no-store'` / `reload`, add `Cache-Control: no-cache`, or append cache-busting query params.
+- Client requests for `/api/fx` should be cookie-free (use `credentials: 'omit'`) unless the endpoint truly requires auth cookies (cookies fragment/bypass edge caching).
+- `/api/fx/trace` should prefer `Cache-Control: no-store` and must never trigger upstream work.
+
+#### Vercel Pro hardening for `/api/fx` (cost + abuse control)
+
+- Canonical playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
+- Platform guardrails (Pro):
+  - Spend Management thresholds (alerts + pause production deployments at cap).
+  - WAF rules on `/api/fx` (and any paid-upstream endpoints) to block bots and rate-limit bursts.
+- Code guardrails (defence in depth):
+
+  - CDN-honest cache headers aligned with TTL (so edge caching actually happens).
+  - Single-flight / de-dup so concurrent hits do not stampede upstream APIs.
+  - `PROMAGEN_SAFE_MODE=1` to force cache/demo only; provider kill switches (e.g. disable TwelveData) for emergency response.
+
+    15.1 Trace caching (diagnostics must not be misleading)
 #### Vercel Pro hardening for `/api/fx` (cost + abuse control)
 
 - Canonical playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`

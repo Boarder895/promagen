@@ -10,6 +10,12 @@
 ## 0. Why Promagen should care about Pro (even as a 1-person team)
 
 Promagen is a Next.js web app with real runtime behaviour (API routes, caching, cron/background jobs, analytics, outbound redirects) and at least one endpoint that can create **real cost** if traffic spikes (for example, `/api/fx` calling paid upstream market-data APIs).
+Scope clarity (avoid tier confusion)
+This document is about Vercel’s platform plan (Pro) and operational guardrails.
+
+It does NOT define Promagen’s product monetisation (free vs paid users).
+That contract lives only in:
+`C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
 
 On Pro, you gain **adult supervision** controls that matter even more when you’re solo:
 
@@ -333,6 +339,7 @@ Promagen’s `/api/fx` should be treated like a payment endpoint, even though it
 - WAF: restrict, rate limit, challenge suspicious patterns
 - Cache: edge-friendly but honest (no implied background refresh unless it cannot hit upstream)
 - Runtime logs: always check for burst patterns and upstream error storms
+- Client rule: do not ship UI fetches to `/api/fx` with `cache: 'no-store'` or cookies; that defeats edge caching and spikes origin/upstream calls.
 
 ### 5.3 “Trace endpoints must never spend money”
 
@@ -343,9 +350,12 @@ Promagen’s `/api/fx` should be treated like a payment endpoint, even though it
 ### 5.4 Centralised polling (protects spend)
 
 Promagen must ensure multiple widgets do not multiply `/api/fx` calls. This is not optional — it is part of the cost-control contract.
+
 ### 5.5 What “integrate Vercel Pro” means in Promagen (code + dashboard)
 
 To “integrate Vercel Pro” into Promagen properly, we’re really doing two things:
+
+1. Wiring features that need code/config
 
 1) Wiring features that need code/config
 - Caching that is CDN-honest (headers match the Refresh Gate TTL).
@@ -354,6 +364,8 @@ To “integrate Vercel Pro” into Promagen properly, we’re really doing two t
 - Hardened outbound redirects (`/go/*`) + click tracking (no open-redirect nonsense).
 - Structured logging + request IDs (so Pro logs are actually useful).
 - Preview-vs-production behaviour (safe mode, trace lockdown).
+
+2. Switching on Pro controls in the Vercel dashboard
 
 2) Switching on Pro controls in the Vercel dashboard
 - Spend Management thresholds + a “cap action” (pause production deployments).
@@ -425,6 +437,7 @@ To add cron schedules, runtime tweaks, and dependency wiring safely, we also nee
 Best default: 2 passes
 
 Go 1 — Platform wiring (low risk, high leverage)
+
 - `vercel.json` (crons, redirects/rewrites if needed)
 - tighten `middleware.ts` (security headers, request IDs, predictable routing)
 - harden `/go/*` + click tracking (so WAF/rate limiting won’t break it)
@@ -432,6 +445,7 @@ Go 1 — Platform wiring (low risk, high leverage)
 - hook analytics/speed in a controlled way (and keep them out of preview if desired)
 
 Go 2 — Spend-proofing + observability (where the real value is)
+
 - refresh gate: block “force refresh” unless explicitly allowed
 - safe mode behaviour (preview/demo/stale-if-error)
 - structured logs around provider selection + cache hit/miss
