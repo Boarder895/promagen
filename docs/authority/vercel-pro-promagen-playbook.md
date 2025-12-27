@@ -357,6 +357,7 @@ To “integrate Vercel Pro” into Promagen properly, we’re really doing two t
 
 1. Wiring features that need code/config
 
+1) Wiring features that need code/config
 - Caching that is CDN-honest (headers match the Refresh Gate TTL).
 - Cron routes for cache warm-up + health checks (work happens off the request path).
 - Analytics / Speed Insights wiring (kept intentional; avoid event spam).
@@ -366,6 +367,7 @@ To “integrate Vercel Pro” into Promagen properly, we’re really doing two t
 
 2. Switching on Pro controls in the Vercel dashboard
 
+2) Switching on Pro controls in the Vercel dashboard
 - Spend Management thresholds + a “cap action” (pause production deployments).
 - WAF rules + rate limiting for “money endpoints” (`/api/fx` and `/go/*`).
 - Challenge mode / IP blocks when abuse is detected.
@@ -448,6 +450,8 @@ Go 2 — Spend-proofing + observability (where the real value is)
 - safe mode behaviour (preview/demo/stale-if-error)
 - structured logs around provider selection + cache hit/miss
 - cron warm-up + provider health checks (so page views don’t pay the price)
+
+---
 
 ## 6. WAF rule pack (Promagen baseline)
 

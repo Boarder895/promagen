@@ -37,7 +37,11 @@ export type FxRibbonBudgetState = 'ok' | 'warning' | 'blocked';
 
 export type FxRibbonBudgetIndicator = {
   state: FxRibbonBudgetState;
-  emoji: string;
+  /**
+   * Optional convenience for UI/trace.
+   * SSOT lookup: when Emoji Bank is misconfigured, omit rather than guessing.
+   */
+  emoji?: string;
 };
 
 export type FxRibbonBudgetSnapshot = {

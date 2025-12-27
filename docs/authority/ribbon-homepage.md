@@ -1334,6 +1334,7 @@ Front-end policy:
 - Adding more widgets must not multiply /api/fx calls.
 - Pause (“calm mode”) stops motion and client polling, but does not change server-side caching policy.
 
+
 ### Vercel Pro guardrails for the ribbon (cost safety)
 
 - Canonical playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
@@ -1341,6 +1342,7 @@ Front-end policy:
 - Set Spend Management thresholds so a traffic spike can’t become a surprise bill.
 - Keep the ribbon edge-cacheable via TTL-aligned cache headers (this is the difference between “fast” and “expensive”).
   Budget indicator note:
+Budget indicator note:
 
 - Centralised polling is still important for client/server load, but budget state is not “controlled” by client polling.
 - Even if /api/fx is called frequently, upstream spend is governed by the server authority + TTL + budget guard.

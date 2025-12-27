@@ -61,6 +61,9 @@ Configuring GA4 Tag in Google Tag Manager
 
   GA4/GTM events must not “invent” tiers. If you track upgrade/sign-in events, the meaning of “paid feature” must match `paid_tier.md`.
 
+### Promagen note: Vercel Pro guardrails (don’t let analytics create spend surprises)
+
+- Canonical platform playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
 - If you ever add server-side tracking endpoints (e.g. `/api/events`), treat them as spend-bearing routes:
   - Protect with Vercel WAF rate limiting.
   - Add Spend Management thresholds before enabling in production.
@@ -74,6 +77,15 @@ Configuring GA4 Tag in Google Tag Manager
     • Cookies and storage: In DevTools Application > Cookies, verify a cookie named \_ga exists on your domain (GA4 sets it after a pageview). Its presence means GA’s script ran. If cookies are missing, something blocked GA.
     • Verifying in GA: After triggering events on your site, the easiest check is GA4’s Realtime or DebugView (see above). For a quick network sanity check, seeing the collect calls is usually sufficient proof that data is leaving the browser.
     Sources: This guide was built using the official Next.js docs for analytics (Third-Party libraries for GTM/GA)[2][3], Google Tag Manager’s own instructions[15], analytics tutorials[16][17][14], and reports on common blocking issues[6][5] and GA4 best practices[10][11][12]. These references illustrate how GTM acts as a “hub” (with GA4 as a destination)[16] and how to verify end-to-end tracking.
+   Debugging with Chrome DevTools
+   • Network tab checks: Open Chrome DevTools (F12) and go to Network. Reload the page. In the filter box, type gtag, gtm.js, or collect. You should see:
+   • A request to www.googletagmanager.com/gtm.js?id=GTM-XXXX – this shows the GTM container script loaded.
+   • A request to googletagmanager.com/gtag/js?id=G-XXXXX – this is the GA4 script (if used directly).
+   • Critical: look for collect?v=2 in the list. This is the GA4 data-collection endpoint[14]. Clicking it shows your Measurement ID in the query string, confirming a hit was sent. If no collect?v=2 appears after loading a page, GA4 isn’t firing.
+   • Console errors: Check the DevTools Console for any errors (e.g. failed to load script, blocked by CSP or adblock). You can also use the Google Analytics Debugger extension, which logs GA hits to the console. Similarly, use Tag Assistant (Preview mode) to see a summary of fired tags.
+   • Cookies and storage: In DevTools Application > Cookies, verify a cookie named \_ga exists on your domain (GA4 sets it after a pageview). Its presence means GA’s script ran. If cookies are missing, something blocked GA.
+   • Verifying in GA: After triggering events on your site, the easiest check is GA4’s Realtime or DebugView (see above). For a quick network sanity check, seeing the collect calls is usually sufficient proof that data is leaving the browser.
+   Sources: This guide was built using the official Next.js docs for analytics (Third-Party libraries for GTM/GA)[2][3], Google Tag Manager’s own instructions[15], analytics tutorials[16][17][14], and reports on common blocking issues[6][5] and GA4 best practices[10][11][12]. These references illustrate how GTM acts as a “hub” (with GA4 as a destination)[16] and how to verify end-to-end tracking.
 
 ---
 
