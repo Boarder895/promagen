@@ -16,10 +16,14 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { db, hasDatabaseConfigured, withTx } from '@/lib/db';
+import type { SqlClient } from '@/lib/db';
 import { env, requireCronSecret } from '@/lib/env';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// Pro: give the job room (schema checks + aggregation can take time on first run).
+export const maxDuration = 300;
 
 type JsonObject = Record<string, unknown>;
 
@@ -80,6 +84,18 @@ async function ensureSchema(): Promise<void> {
  * Output table:
  * - promagen_users_country_usage_30d(country_code, users_count, updated_at)
  */
+}
+
+async function acquireLock(tx: SqlClient): Promise<boolean> {
+  // Transaction-level lock: released automatically at tx end.
+  // Use a stable integer; changing this will allow parallel runs.
+  const LOCK_ID = 914_227_113;
+  const rows = await tx<{ locked: boolean }[]>`
+    select pg_try_advisory_xact_lock(${LOCK_ID}) as locked
+  `;
+  return rows[0]?.locked === true;
+}
+
 async function runAggregation(opts: {
   windowDays: number;
   dryRun: boolean;
@@ -221,6 +237,121 @@ export async function GET(request: NextRequest): Promise<Response> {
     const totalAggRows = await withTx(async (tx) => countAggRows(tx));
 
     const status = result.ok ? 200 : 500;
+}): Promise<{ ok: boolean; message: string; totalRows: number; skipped?: boolean }> {
+  const { windowDays, dryRun, requestId } = opts;
+
+  const WINDOW_DAYS = Math.max(1, Math.min(365, Math.floor(windowDays)));
+
+  const countAggRows = async (sql: SqlClient): Promise<number> => {
+    const rows = await sql<{ c: number }[]>`
+      with agg as (
+        select
+          coalesce(nullif(country_code, ''), 'XX') as country_code,
+          count(distinct session_id) as users_count
+        from provider_activity_events
+        where created_at >= now() - (${WINDOW_DAYS}::int || ' days')::interval
+          and session_id is not null
+        group by 1
+      )
+      select count(*)::int as c from agg
+    `;
+    return rows[0]?.c ?? 0;
+  };
+
+  if (dryRun) {
+    const totalRows = await countAggRows(db());
+    return { ok: true, message: 'Dry run (no writes)', totalRows };
+  }
+
+  return withTx(async (tx) => {
+    const locked = await acquireLock(tx);
+    if (!locked) {
+      return { ok: true, message: 'Skipped (lock busy)', totalRows: 0, skipped: true };
+    }
+
+    // Compute and upsert in one shot.
+    const result = await tx<{ affected: number }[]>`
+      with agg as (
+        select
+          coalesce(nullif(country_code, ''), 'XX') as country_code,
+          count(distinct session_id) as users_count
+        from provider_activity_events
+        where created_at >= now() - (${WINDOW_DAYS}::int || ' days')::interval
+          and session_id is not null
+        group by 1
+      ), upserted as (
+        insert into promagen_users_country_usage_30d (country_code, users_count, updated_at)
+        select country_code, users_count, now()
+        from agg
+        on conflict (country_code) do update
+          set users_count = excluded.users_count,
+              updated_at = excluded.updated_at
+        returning 1
+      ), pruned as (
+        delete from promagen_users_country_usage_30d
+        where country_code not in (select country_code from agg)
+        returning 1
+      )
+      select (select count(*)::int from upserted) + (select count(*)::int from pruned) as affected
+    `;
+
+    const totalAggRows = await countAggRows(tx);
+
+    // Record run (best-effort; don’t explode the cron result if logging fails).
+    const runId = requestId;
+    const affected = result[0]?.affected ?? 0;
+
+    await tx`
+      insert into promagen_users_cron_runs (id, ran_at, ok, message, rows_affected)
+      values (${runId}, now(), true, ${'ok'}, ${affected})
+      on conflict (id) do nothing
+    `;
+
+    return {
+      ok: true,
+      message: 'Aggregated + upserted',
+      totalRows: totalAggRows,
+    };
+  });
+}
+
+export async function GET(request: NextRequest): Promise<Response> {
+  const startedAt = Date.now();
+  const requestId = getRequestId(request);
+
+  try {
+    requireAuth(request);
+
+    if (!hasDatabaseConfigured()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: 'DATABASE_URL not configured; cron skipped',
+          requestId,
+          cadenceMinutes: 30,
+        },
+        {
+          status: 200,
+          headers: { 'Cache-Control': 'no-store', 'X-Promagen-Request-Id': requestId },
+        },
+      );
+    }
+
+    await ensureSchema();
+
+    const url = new URL(request.url);
+    const dryRun = url.searchParams.get('dryRun') === '1';
+
+    // Default to authority doc definition (30d). Can be tuned for experiments via env.
+    const windowDays = Number(url.searchParams.get('windowDays') ?? env.analytics.usersWindowDays);
+
+    const result = await runAggregation({
+      windowDays: Number.isFinite(windowDays) ? windowDays : env.analytics.usersWindowDays,
+      dryRun,
+      requestId,
+    });
+
+    const durationMs = timingMs(startedAt);
 
     console.debug(
       JSON.stringify({
@@ -237,6 +368,16 @@ export async function GET(request: NextRequest): Promise<Response> {
         safeMode: env.safeMode.enabled,
       }),
     );
+
+        windowDays: Math.max(1, Math.min(365, Math.floor(windowDays))),
+        dryRun,
+        skipped: Boolean(result.skipped),
+        totalRows: result.totalRows,
+        durationMs,
+      }),
+    );
+
+    const status = result.ok ? 200 : 500;
 
     const payload: JsonObject = {
       ok: result.ok,
@@ -258,6 +399,7 @@ export async function GET(request: NextRequest): Promise<Response> {
         'X-Robots-Tag': 'noindex, nofollow',
         'X-Promagen-Request-Id': requestId,
         'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
+        'X-Promagen-Request-Id': requestId,
       },
     });
   } catch (err) {
@@ -278,11 +420,13 @@ export async function GET(request: NextRequest): Promise<Response> {
     const isAuthError = message === 'Unauthorized';
     const status = isAuthError ? 404 : 500;
     const clientMessage = isAuthError ? 'Not Found' : message;
+    const status = message === 'Unauthorized' ? 401 : 500;
 
     return NextResponse.json(
       {
         ok: false,
         message: clientMessage,
+        message,
         requestId,
         cadenceMinutes: 30,
       },
@@ -294,6 +438,7 @@ export async function GET(request: NextRequest): Promise<Response> {
           'X-Promagen-Request-Id': requestId,
           'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
         },
+        headers: { 'Cache-Control': 'no-store', 'X-Promagen-Request-Id': requestId },
       },
     );
   }

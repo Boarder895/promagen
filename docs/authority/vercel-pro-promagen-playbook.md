@@ -437,6 +437,8 @@ Go 2 — Spend-proofing + observability (where the real value is)
 - structured logs around provider selection + cache hit/miss
 - cron warm-up + provider health checks (so page views don’t pay the price)
 
+---
+
 ## 6. WAF rule pack (Promagen baseline)
 
 Start simple and iterate based on WAF events.

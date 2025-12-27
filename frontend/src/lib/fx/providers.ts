@@ -173,6 +173,11 @@ type FxMode = 'live' | 'demo' | 'stale';
 // Provider wiring (FX: TwelveData only for now, with robust cache+trace)
 // ─────────────────────────────────────────────────────────────────────────────
 
+const BUDGET_EMOJI_OK = '🛫';
+const BUDGET_EMOJI_WARNING = '🏖️';
+const BUDGET_EMOJI_BLOCKED = '🧳';
+const BUDGET_EMOJI_UNKNOWN = '❓';
+
 const TWELVEDATA_API_KEY = (env.providers.twelveDataApiKey ?? '').trim();
 const TWELVEDATA_DISABLED = env.safeMode.disableTwelveData;
 const SAFE_MODE_ENABLED = env.safeMode.enabled;
