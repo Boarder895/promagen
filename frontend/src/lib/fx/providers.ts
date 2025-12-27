@@ -27,6 +27,7 @@ import { unstable_noStore } from 'next/cache';
 
 import { assertFxRibbonSsotValid, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 import { env } from '@/lib/env';
+import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
 
 export type FxRibbonGroupId = 'A' | 'B';
 
@@ -36,7 +37,11 @@ export type FxRibbonBudgetState = 'ok' | 'warning' | 'blocked';
 
 export type FxRibbonBudgetIndicator = {
   state: FxRibbonBudgetState;
-  emoji: string;
+  /**
+   * Optional convenience for UI/trace.
+   * SSOT lookup: when Emoji Bank is misconfigured, omit rather than guessing.
+   */
+  emoji?: string;
 };
 
 export type FxRibbonBudgetSnapshot = {
@@ -279,7 +284,10 @@ let budgetMinuteWindowStartMs = 0;
 let budgetMinuteUsedInWindow = 0;
 
 // cached indicator for last payload
-let lastBudgetIndicator: FxRibbonBudgetIndicator = { state: 'ok', emoji: BUDGET_EMOJI_OK };
+let lastBudgetIndicator: FxRibbonBudgetIndicator = (() => {
+  const emoji = getBudgetGuardEmoji('ok');
+  return emoji ? { state: 'ok', emoji } : { state: 'ok' };
+})();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public API
@@ -1011,10 +1019,8 @@ function recomputeBudgetDerivedFields(snap: BudgetSnapshotInternal): void {
 }
 
 function toBudgetIndicator(snap: FxRibbonBudgetSnapshot): FxRibbonBudgetIndicator {
-  if (snap.state === 'ok') return { state: 'ok', emoji: BUDGET_EMOJI_OK };
-  if (snap.state === 'warning') return { state: 'warning', emoji: BUDGET_EMOJI_WARNING };
-  if (snap.state === 'blocked') return { state: 'blocked', emoji: BUDGET_EMOJI_BLOCKED };
-  return { state: 'ok', emoji: BUDGET_EMOJI_UNKNOWN };
+  const emoji = getBudgetGuardEmoji(snap.state);
+  return emoji ? { state: snap.state, emoji } : { state: snap.state };
 }
 
 function dayKeyFromMs(ms: number): string {

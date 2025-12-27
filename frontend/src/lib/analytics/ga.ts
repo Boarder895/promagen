@@ -99,8 +99,7 @@ export function trackEvent<K extends AnalyticsEventName>(
 
   if (!ANALYTICS_ENABLED) {
     if (ANALYTICS_DEBUG) {
-      // eslint-disable-next-line no-console
-      console.info('[analytics] skipped (disabled)', { name, params: finalPayload });
+      console.debug('[analytics] skipped (disabled)', { name, params: finalPayload });
     }
     return;
   }
@@ -109,7 +108,6 @@ export function trackEvent<K extends AnalyticsEventName>(
 
   if (typeof window.gtag !== 'function') {
     if (ANALYTICS_DEBUG) {
-       
       console.warn('[analytics] window.gtag not available for event', {
         name,
         params: finalPayload,
@@ -119,8 +117,7 @@ export function trackEvent<K extends AnalyticsEventName>(
   }
 
   if (ANALYTICS_DEBUG) {
-    // eslint-disable-next-line no-console
-    console.info('[analytics] event', { name, params: finalPayload });
+    console.debug('[analytics] event', { name, params: finalPayload });
   }
 
   window.gtag('event', name, finalPayload);

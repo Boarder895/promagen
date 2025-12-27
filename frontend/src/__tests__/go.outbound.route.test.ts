@@ -1,11 +1,21 @@
 /** @jest-environment node */
 // C:\Users\Proma\Projects\promagen\frontend\src\__tests__\go.outbound.route.test.ts
+//
+// Existing features preserved: Yes.
 
 // server-only throws under Jest because Jest doesn't resolve the `react-server` export condition.
 // We still want the guard in real Next builds, so we stub it here.
 jest.mock('server-only', () => ({}));
 
 import type { NextRequest } from 'next/server';
+
+function expectPromagenResponseHeaders(res: Response): void {
+  // Pro observability hooks: always present (even on errors) for correlation.
+  expect(res.headers.get('X-Promagen-Request-Id')).toBeTruthy();
+
+  const safe = res.headers.get('X-Promagen-Safe-Mode');
+  expect(safe === '0' || safe === '1').toBe(true);
+}
 
 describe('/go/[providerId] outbound redirect', () => {
   beforeEach(() => {
@@ -40,6 +50,7 @@ describe('/go/[providerId] outbound redirect', () => {
     expect(res.status).toBe(400);
     expect(res.headers.get('Cache-Control')).toBe('no-store');
     expect(res.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+    expectPromagenResponseHeaders(res);
   });
 
   test('returns 404 for unknown provider', async () => {
@@ -64,6 +75,7 @@ describe('/go/[providerId] outbound redirect', () => {
     expect(res.status).toBe(404);
     expect(res.headers.get('Cache-Control')).toBe('no-store');
     expect(res.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
+    expectPromagenResponseHeaders(res);
   });
 
   test('prefers affiliateUrl when present and appends click_id + utm_source + utm_medium', async () => {
@@ -84,7 +96,6 @@ describe('/go/[providerId] outbound redirect', () => {
 
     const req = new Request(
       'https://promagen.local/go/openai?src=leaderboard',
-      // no special headers needed for this test
     ) as unknown as NextRequest;
 
     const res = await GET(req, { params: { providerId: 'openai' } });
@@ -104,6 +115,11 @@ describe('/go/[providerId] outbound redirect', () => {
     expect(url.searchParams.get('utm_source')).toBe('promagen');
     // By design: defaults to src unless utm_medium is explicitly passed.
     expect(url.searchParams.get('utm_medium')).toBe('leaderboard');
+
+    expectPromagenResponseHeaders(res);
+    expect(res.headers.get('X-RateLimit-Limit')).toBeTruthy();
+    expect(res.headers.get('X-RateLimit-Remaining')).toBeTruthy();
+    expect(res.headers.get('X-RateLimit-Reset')).toBeTruthy();
   });
 
   test('uses website when affiliateUrl is null; utm_medium defaults to src', async () => {
@@ -137,6 +153,8 @@ describe('/go/[providerId] outbound redirect', () => {
     expect(url.searchParams.get('click_id')).toBeTruthy();
     expect(url.searchParams.get('utm_source')).toBe('promagen');
     expect(url.searchParams.get('utm_medium')).toBe('provider_detail');
+
+    expectPromagenResponseHeaders(res);
   });
 
   test('accepts explicit utm_medium and does not override it', async () => {
@@ -167,6 +185,8 @@ describe('/go/[providerId] outbound redirect', () => {
     const url = new URL(location as string);
     expect(url.hostname).toBe('openart.ai');
     expect(url.searchParams.get('utm_medium')).toBe('email');
+
+    expectPromagenResponseHeaders(res);
   });
 
   test('sets required redirect headers and does not set cookies', async () => {
@@ -177,7 +197,6 @@ describe('/go/[providerId] outbound redirect', () => {
           name: 'OpenArt',
           website: 'https://openart.ai',
           affiliateUrl: null,
-          requiresDisclosure: false,
         },
       ];
     });
@@ -194,5 +213,7 @@ describe('/go/[providerId] outbound redirect', () => {
     expect(res.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
     expect(res.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
     expect(res.headers.get('set-cookie')).toBeNull();
+
+    expectPromagenResponseHeaders(res);
   });
 });

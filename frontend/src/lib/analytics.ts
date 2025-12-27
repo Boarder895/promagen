@@ -17,6 +17,13 @@ type AnalyticsEvent =
 
 function emit(evt: AnalyticsEvent): void {
   if (typeof window === 'undefined') return;
+
+  // Keep this module “observational only” (no fetches):
+  // - Tests can observe the CustomEvent
+  // - Real analytics (GA / Vercel Analytics component) can be layered elsewhere
+  const enabled = process.env.NEXT_PUBLIC_ANALYTICS_ENABLED !== 'false';
+  if (!enabled) return;
+
   window.dispatchEvent(new CustomEvent('promagen:analytics', { detail: evt }));
 }
 
@@ -27,9 +34,15 @@ export function emitTabClicked(payload: TabClickedPayload): void {
 
 /** Generic helper (kept for legacy imports that call track('provider_open_website', …)). */
 export function track(name: string, payload: Record<string, unknown> = {}): void {
-  const safe: AnalyticsEvent =
-    name === 'tab_clicked'
-      ? { type: 'tab_clicked', payload: payload as TabClickedPayload }
-      : { type: 'provider_clicked', payload: (payload as { providerId: string; source?: string }) };
-  emit(safe);
+  if (name === 'tab_clicked') {
+    emit({ type: 'tab_clicked', payload: payload as TabClickedPayload });
+    return;
+  }
+
+  // Legacy behaviour: everything else collapses to “provider_clicked”.
+  // This avoids breaking older call sites that send different event names.
+  emit({
+    type: 'provider_clicked',
+    payload: payload as { providerId: string; source?: string },
+  });
 }

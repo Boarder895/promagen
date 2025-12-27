@@ -39,7 +39,7 @@ const ProviderRecordSchema = z
     affiliate: z
       .object({
         enabled: z.boolean().optional(),
-        subIdParam: z.string().min(1).optional(),
+        subIdParam: z.string().min(1).max(32).optional(),
       })
       .optional()
       .nullable(),
@@ -53,6 +53,10 @@ let providersCache: ProviderRecord[] | null = null;
 function getRequestId(request: NextRequest): string {
   const vercelId = request.headers.get('x-vercel-id');
   if (vercelId && vercelId.trim()) return vercelId.trim().slice(0, 96);
+
+  const reqId = request.headers.get('x-request-id');
+  if (reqId && reqId.trim()) return reqId.trim().slice(0, 96);
+
   return crypto.randomUUID();
 }
 
@@ -75,8 +79,39 @@ function getProviders(): ProviderRecord[] {
 }
 
 function findProvider(providerId: string): ProviderRecord | null {
-  return getProviders().find((p) => p.id === providerId) ?? null;
+  const safe = (providerId ?? '').trim().toLowerCase();
+  if (!safe) return null;
+
+  const providers = getProviders();
+  return providers.find((p) => p.id.toLowerCase() === safe) ?? null;
 }
+
+const QuerySchema = z.object({
+  src: z.string().min(1).max(64),
+  sid: z
+    .string()
+    .min(8)
+    .max(96)
+    .regex(/^[a-zA-Z0-9_-]+$/)
+    .optional(),
+
+  // Optional UTMs (kept minimal; do not accept arbitrary query keys)
+  utm_medium: z.string().max(64).optional(),
+  utm_campaign: z.string().max(96).optional(),
+  utm_content: z.string().max(96).optional(),
+});
+
+type BuiltDestination = {
+  clickId: string;
+  destination: URL;
+  src: string;
+  sid: string | null;
+  isAffiliate: boolean;
+  subIdParam: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+};
 
 function parseUrl(input: string | null | undefined): URL | null {
   if (!input) return null;
@@ -113,47 +148,6 @@ function pickDestination(
   };
 }
 
-function getCountryFromHeaders(headers: Headers): string | null {
-  const raw =
-    headers.get('x-vercel-ip-country') ??
-    headers.get('cf-ipcountry') ??
-    headers.get('x-geo-country') ??
-    headers.get('x-country');
-
-  if (!raw) return null;
-
-  const cc = raw.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(cc)) return null;
-
-  // Common “unknown” placeholders to ignore (defensive).
-  if (cc === 'XX' || cc === 'ZZ') return null;
-
-  return cc;
-}
-
-const QuerySchema = z.object({
-  src: z.string().min(1).max(64),
-  sid: z
-    .string()
-    .min(8)
-    .max(96)
-    .regex(/^[a-zA-Z0-9_-]+$/)
-    .optional(),
-
-  // Optional UTMs (kept minimal; do not accept arbitrary query keys)
-  utm_medium: z.string().max(64).optional(),
-  utm_campaign: z.string().max(96).optional(),
-  utm_content: z.string().max(96).optional(),
-});
-
-type BuiltDestination = {
-  clickId: string;
-  destination: URL;
-  isAffiliate: boolean;
-  src: string;
-  sessionId?: string;
-};
-
 function buildDestination(
   provider: ProviderRecord,
   query: z.infer<typeof QuerySchema>,
@@ -176,26 +170,103 @@ function buildDestination(
   if (query.utm_campaign) dest.searchParams.set('utm_campaign', query.utm_campaign);
   if (query.utm_content) dest.searchParams.set('utm_content', query.utm_content);
 
+  // Keep src/sid in DB only (not on partner URLs unless you explicitly add it later).
   return {
     clickId,
     destination: dest,
-    isAffiliate: picked.isAffiliate,
     src: query.src,
-    sessionId: query.sid,
+    sid: query.sid ?? null,
+    isAffiliate: picked.isAffiliate,
+    subIdParam: picked.subIdParam,
+    utm_medium: query.utm_medium,
+    utm_campaign: query.utm_campaign,
+    utm_content: query.utm_content,
   };
 }
 
-async function bestEffortInsertActivity(record: {
+function getIpFromHeaders(headers: Headers): string | null {
+  const raw =
+    headers.get('x-forwarded-for') ??
+    headers.get('x-real-ip') ??
+    headers.get('cf-connecting-ip') ??
+    headers.get('true-client-ip');
+
+  if (!raw) return null;
+
+  const first = raw.split(',')[0]?.trim() ?? '';
+  if (!first) return null;
+  if (first.length > 128) return null;
+
+  return first;
+}
+
+function getCountryFromHeaders(headers: Headers): string | null {
+  const raw =
+    headers.get('x-vercel-ip-country') ??
+    headers.get('cf-ipcountry') ??
+    headers.get('x-geo-country') ??
+    headers.get('x-country');
+
+  if (!raw) return null;
+
+  const cc = raw.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return null;
+
+  // Common “unknown” placeholders to ignore (defensive).
+  if (cc === 'XX' || cc === 'ZZ') return null;
+
+  return cc;
+}
+
+async function bestEffortInsertActivity(input: {
   clickId: string;
   providerId: string;
   eventType: 'open';
   src: string;
+  sid: string | null;
+  ip: string | null;
+  country: string | null;
+  isAffiliate: boolean;
   sessionId: string | null;
   countryCode: string | null;
   destination: string;
+  ua: string | null;
 }): Promise<void> {
   if (!hasDatabaseConfigured()) return;
 
+  try {
+    const sql = db();
+
+    // Best-effort insert: schema may vary across environments.
+    // We insert the fields your cron expects (country_code + user_id + created_at),
+    // plus useful context. If the table differs, the catch below prevents redirect blocking.
+    await sql`
+      insert into provider_activity_events (
+        click_id,
+        provider_id,
+        event_type,
+        src,
+        user_id,
+        country_code,
+        ip,
+        user_agent,
+        is_affiliate,
+        destination,
+        created_at
+      )
+      values (
+        ${input.clickId},
+        ${input.providerId},
+        ${input.eventType},
+        ${input.src},
+        ${input.sid},
+        ${input.country},
+        ${input.ip},
+        ${input.ua},
+        ${input.isAffiliate},
+        ${input.destination},
+        now()
+      )
   // Never block redirect: timebox the write.
   const TIMEBOX_MS = 250;
 
@@ -208,16 +279,9 @@ async function bestEffortInsertActivity(record: {
         (${record.clickId}, ${record.providerId}, ${record.eventType}, ${record.src}, ${record.sessionId}, ${record.countryCode}, ${record.destination}, now())
       on conflict (click_id) do nothing
     `;
-  };
-
-  await Promise.race([
-    write(),
-    new Promise<void>((resolve) => {
-      setTimeout(resolve, TIMEBOX_MS);
-    }),
-  ]).catch(() => {
-    // Swallow failures; redirect must still succeed. Cron/health will surface issues later.
-  });
+  } catch {
+    // Best-effort means: never block redirect.
+  }
 }
 
 export async function GET(
@@ -236,6 +300,7 @@ export async function GET(
   });
 
   if (!decision.allowed) {
+    return new Response('Too Many Requests', {
     const durationMs = Date.now() - startedAt;
 
     console.warn(
@@ -260,6 +325,7 @@ export async function GET(
         'X-RateLimit-Remaining': '0',
         'X-RateLimit-Reset': decision.resetAt,
         'X-Promagen-Request-Id': requestId,
+        'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
       },
     });
   }
@@ -275,6 +341,7 @@ export async function GET(
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Robots-Tag': 'noindex, nofollow',
         'X-Promagen-Request-Id': requestId,
+        'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
       },
     });
   }
@@ -285,31 +352,34 @@ export async function GET(
   const queryParsed = QuerySchema.safeParse(queryRaw);
 
   if (!queryParsed.success) {
-    return new Response('Bad request', {
+    return new Response('Bad Request', {
       status: 400,
       headers: {
         'Cache-Control': 'no-store',
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Robots-Tag': 'noindex, nofollow',
         'X-Promagen-Request-Id': requestId,
+        'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
       },
     });
   }
 
   const built = buildDestination(provider, queryParsed.data);
   if (!built) {
-    return new Response('No destination available', {
-      status: 422,
+    return new Response('Bad Request', {
+      status: 400,
       headers: {
         'Cache-Control': 'no-store',
         'Content-Type': 'text/plain; charset=utf-8',
         'X-Robots-Tag': 'noindex, nofollow',
         'X-Promagen-Request-Id': requestId,
+        'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
       },
     });
   }
 
   const countryCode = getCountryFromHeaders(request.headers);
+  const ip = getIpFromHeaders(request.headers);
 
   // Stage 1: capture activity (best-effort; never blocks redirect)
   void bestEffortInsertActivity({
@@ -317,13 +387,31 @@ export async function GET(
     providerId: provider.id,
     eventType: 'open',
     src: built.src,
+    sid: built.sid,
+    ip,
+    country: countryCode,
+    isAffiliate: built.isAffiliate,
     sessionId: built.sessionId ?? null,
     countryCode,
     destination: built.destination.toString(),
+    ua: request.headers.get('user-agent') ?? null,
   });
 
   const durationMs = Date.now() - startedAt;
 
+  // Structured ops log (never blocks redirect)
+  console.debug(
+    JSON.stringify({
+      route: '/go/[providerId]',
+      requestId,
+      providerId: provider.id,
+      src: built.src,
+      hasSid: Boolean(built.sid),
+      country: countryCode,
+      isAffiliate: built.isAffiliate,
+      hasDb: hasDatabaseConfigured(),
+      durationMs,
+      safeMode: env.safeMode.enabled,
   console.debug(
     JSON.stringify({
       level: 'info',
@@ -347,6 +435,7 @@ export async function GET(
       'X-Content-Type-Options': 'nosniff',
       'X-Robots-Tag': 'noindex, nofollow',
       'X-Promagen-Request-Id': requestId,
+      'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
 
       // Rate limit info (best-effort)
       'X-RateLimit-Limit': String(decision.limit),

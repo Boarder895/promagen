@@ -18,6 +18,7 @@ import React from 'react';
 import type { FxApiMode } from '@/types/finance-ribbon';
 import type { FinanceRibbonChip } from '@/components/ribbon/finance-ribbon.container';
 import { trackRibbonPause } from '@/lib/analytics/finance';
+import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
 
 type BudgetState = 'ok' | 'warning' | 'blocked';
 
@@ -31,15 +32,9 @@ export interface FinanceRibbonProps {
 }
 
 function budgetEmoji(state: BudgetState): string {
-  switch (state) {
-    case 'warning':
-      return '🏖️';
-    case 'blocked':
-      return '🧳';
-    case 'ok':
-    default:
-      return '🛫';
-  }
+  // SSOT: canonical mapping lives in Emoji Bank under budget_guard.
+  // No hardcoded fallbacks here.
+  return getBudgetGuardEmoji(state) ?? '';
 }
 
 // Snap-fit rules (UI-only; observational).

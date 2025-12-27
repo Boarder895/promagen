@@ -8,8 +8,21 @@ import { PauseProvider } from '@/state/pause';
 import ProvenanceFooter from '@/components/core/provenance-footer';
 import ErrorBoundary from '@/components/error-boundary';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
+import { env } from '@/lib/env';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+// Vercel Pro: Web Analytics + Speed Insights (no visual impact)
+import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+
+const SITE = env.siteUrl;
+
+// Only emit analytics/speed beacons from production deployments.
+// (Previews are for safe iteration and should not burn data points.)
+const IS_VERCEL_PROD = process.env.VERCEL_ENV === 'production';
+
+// Cost-control: sample Speed Insights so you don't spray data points everywhere.
+// 0.2 = 20% of sessions (tune later if you want more/less signal).
+const SPEED_INSIGHTS_SAMPLE_RATE = 0.2;
 
 export const metadata: Metadata = {
   title: 'Promagen',
@@ -56,6 +69,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         {/* Global analytics for every page */}
         <GoogleAnalytics />
+
+        {IS_VERCEL_PROD ? (
+          <>
+            <VercelAnalytics />
+            <SpeedInsights sampleRate={SPEED_INSIGHTS_SAMPLE_RATE} />
+          </>
+        ) : null}
       </body>
     </html>
   );

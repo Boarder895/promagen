@@ -14,6 +14,9 @@
  *
  * IMPORTANT:
  * - Response headers MUST be ASCII (undici/WebIDL ByteString).
+ *   Emojis belong in JSON body only.
+ */
+
  * - Emoji may exist in the JSON body, but MUST NOT be placed into headers.
  *
  * Existing features preserved: Yes.
@@ -25,6 +28,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { env } from '@/lib/env';
+import { buildFxCacheControl, getFxBuildId, getFxRequestId } from '@/lib/fx/route';
 import { getFxRibbon } from '@/lib/fx/providers';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -53,14 +57,13 @@ type FxApiResponseWithBudget = {
     safeMode?: boolean;
   };
   data: unknown[];
-  error?: string;
+  error?: {
+    code: string;
+    message: string;
+  };
 };
 
 type UnknownRecord = Record<string, unknown>;
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === 'object' && value !== null;
-}
 
 function readString(record: UnknownRecord, key: string): string | undefined {
   const value = record[key];
@@ -77,21 +80,11 @@ function readNumber(record: UnknownRecord, key: string): number | undefined {
 }
 
 function getBuildId(): string {
-  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
-  if (typeof sha === 'string' && sha.trim().length > 0) return sha.slice(0, 12);
-
-  const build =
-    process.env.NEXT_PUBLIC_BUILD_ID ??
-    process.env.BUILD_ID ??
-    process.env.VERCEL_GIT_COMMIT_REF ??
-    process.env.VERCEL_ENV;
-
-  if (typeof build === 'string' && build.trim().length > 0) return build.trim();
-
-  return 'local-dev';
+  return getFxBuildId();
 }
 
 function getRequestId(req: NextRequest): string {
+  return getFxRequestId(req);
   const vercelId = req.headers.get('x-vercel-id');
   if (vercelId && vercelId.trim()) return vercelId.trim().slice(0, 96);
   return crypto.randomUUID();
@@ -102,12 +95,13 @@ function normaliseBudgetState(state: unknown): FxBudgetState {
   return 'ok';
 }
 
-function normaliseMode(mode: unknown, cached: unknown): FxApiResponseWithBudget['meta']['mode'] {
-  if (mode === 'live' || mode === 'cached' || mode === 'fallback') return mode;
-  if (cached === true) return 'cached';
-  return 'live';
+function isoNow(): string {
+  return new Date().toISOString();
 }
 
+function asOfToMs(asOf: string): number {
+  const ms = Date.parse(asOf);
+  return Number.isFinite(ms) ? ms : Date.now();
 function asOfToMs(asOf: string): number | undefined {
   const ms = Date.parse(asOf);
   return Number.isFinite(ms) ? ms : undefined;
@@ -135,6 +129,7 @@ function buildEmergencyFallback(message: string, requestId: string): FxApiRespon
 export async function GET(request: NextRequest): Promise<Response> {
   const startedAt = Date.now();
   const requestId = getRequestId(request);
+  const buildId = getBuildId();
 
   // App-level rate limiting (defence in depth). Keep generous; WAF is your front line.
   const decision = rateLimit(request, {
@@ -176,34 +171,64 @@ export async function GET(request: NextRequest): Promise<Response> {
   try {
     const payload = await getFxRibbon();
 
-    const buildId = getBuildId();
+  // App-level rate limiting (defence in depth). WAF is your front line.
+  const rl = rateLimit(request, {
+    keyPrefix: 'fx',
+    windowSeconds: 60,
+    max: env.isProd ? 240 : 10_000,
+    keyParts: ['GET', '/api/fx'],
+  });
 
-    const anyPayload = payload as unknown as UnknownRecord;
-    const rawMeta = isRecord(anyPayload['meta']) ? (anyPayload['meta'] as UnknownRecord) : {};
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'RATE_LIMITED', observedAt: isoNow(), requestId },
+      {
+        status: 429,
+        headers: {
+          'Cache-Control': 'no-store',
+          'Retry-After': String(rl.retryAfterSeconds),
+          'X-RateLimit-Limit': String(rl.limit),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': rl.resetAt,
+          'X-Promagen-Request-Id': requestId,
+          'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
+        },
+      },
+    );
+  }
 
-    // Keep /api/fx contract stable: always emit asOf + sourceProvider in meta.
-    const asOf = readString(rawMeta, 'asOf') ?? new Date().toISOString();
+  let mode: 'live' | 'cached' | 'fallback' = 'cached';
+  let sourceProvider = 'unknown';
+  let asOf = isoNow();
+  let budgetState: FxBudgetState = 'ok';
 
-    const apiMode = normaliseMode(rawMeta['mode'], rawMeta['cached']);
+  try {
+    const ribbon = await getFxRibbon();
 
-    const sourceProvider =
-      apiMode === 'cached'
-        ? 'cache'
-        : readString(rawMeta, 'sourceProvider') ??
-          readString(rawMeta, 'providerId') ??
-          'twelvedata';
+    const rawMeta = (ribbon?.meta ?? {}) as UnknownRecord;
 
-    const budgetRaw = isRecord(rawMeta['budget'])
-      ? (rawMeta['budget'] as UnknownRecord)
-      : undefined;
-    const state = normaliseBudgetState(budgetRaw?.['state']);
-    const emoji = typeof budgetRaw?.['emoji'] === 'string' ? String(budgetRaw.emoji) : undefined;
+    mode = (readString(rawMeta, 'mode') as typeof mode) ?? mode;
+    sourceProvider = readString(rawMeta, 'sourceProvider') ?? sourceProvider;
+    asOf = readString(rawMeta, 'asOf') ?? asOf;
 
-    const payloadWithBudget: FxApiResponseWithBudget = {
-      ...(payload as unknown as Omit<FxApiResponseWithBudget, 'meta'>),
+    const rawBudget = rawMeta['budget'];
+    if (rawBudget && typeof rawBudget === 'object') {
+      const b = rawBudget as UnknownRecord;
+      const st = readString(b, 'state');
+      if (st === 'ok' || st === 'warning' || st === 'blocked') budgetState = st;
+    }
+
+    const enriched: FxApiResponseWithBudget = {
+      ...(ribbon as UnknownRecord),
       meta: {
-        ...(rawMeta as Record<string, unknown>),
+        ...(rawMeta as UnknownRecord),
         buildId,
+        requestId,
+        safeMode: env.safeMode.enabled,
+      } as FxApiResponseWithBudget['meta'],
+      data: Array.isArray((ribbon as UnknownRecord)?.data)
+        ? ((ribbon as UnknownRecord).data as unknown[])
+        : [],
         mode: apiMode,
         asOf,
         sourceProvider,
@@ -218,11 +243,86 @@ export async function GET(request: NextRequest): Promise<Response> {
     // - Edge/CDN: cache for policy TTL
     // - If payload carries an error, cache briefly so we don't amplify failures.
     const ttlSeconds = readNumber(rawMeta, 'ttlSeconds') ?? 1800;
-    const sMaxAgeSeconds = payloadWithBudget.error ? Math.min(60, ttlSeconds) : ttlSeconds;
-    const staleWhileRevalidateSeconds = Math.min(120, ttlSeconds);
+    const cacheControl = buildFxCacheControl(ttlSeconds, Boolean(enriched.error));
 
-    const cacheControl = `public, max-age=0, s-maxage=${sMaxAgeSeconds}, stale-while-revalidate=${staleWhileRevalidateSeconds}`;
+    const asOfMs = asOfToMs(asOf);
+    const durationMs = Date.now() - startedAt;
 
+    // Structured logs: helps debug spend, caching, and budget behaviour.
+    console.debug(
+      JSON.stringify({
+        route: '/api/fx',
+        requestId,
+        buildId,
+        mode,
+        sourceProvider,
+        budget: budgetState,
+        ttlSeconds,
+        durationMs,
+        asOfMs,
+        safeMode: env.safeMode.enabled,
+      }),
+    );
+
+    return NextResponse.json(enriched, {
+      headers: {
+        'Cache-Control': cacheControl,
+
+        // Budget state is ASCII; emoji stays in JSON if authority includes it.
+        'X-Promagen-Fx-Budget': budgetState,
+        'X-Promagen-Fx-Budget-State': budgetState,
+
+        'X-Promagen-Request-Id': requestId,
+        'X-Promagen-Build-Id': buildId,
+        'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
+
+        'X-RateLimit-Limit': String(rl.limit),
+        'X-RateLimit-Remaining': String(rl.remaining),
+        'X-RateLimit-Reset': rl.resetAt,
+      },
+    });
+  } catch (err) {
+    const durationMs = Date.now() - startedAt;
+
+    console.error('[api/fx] error', {
+      requestId,
+      buildId,
+      durationMs,
+      safeMode: env.safeMode.enabled,
+      err: err instanceof Error ? { name: err.name, message: err.message, stack: err.stack } : err,
+    });
+
+    const fallback: FxApiResponseWithBudget = {
+      meta: {
+        buildId,
+        mode: 'fallback',
+        sourceProvider: 'none',
+        asOf: isoNow(),
+        requestId,
+        safeMode: env.safeMode.enabled,
+        budget: { state: 'ok' },
+      },
+      data: [],
+      error: {
+        code: 'FX_ROUTE_ERROR',
+        message: 'FX route failed. See logs for requestId.',
+      },
+    };
+
+    // Errors should not be cached long.
+    const cacheControl = buildFxCacheControl(60, true);
+
+    return NextResponse.json(fallback, {
+      status: 200,
+      headers: {
+        'Cache-Control': cacheControl,
+        'X-Promagen-Fx-Budget': 'ok',
+        'X-Promagen-Fx-Budget-State': 'ok',
+        'X-Promagen-Request-Id': requestId,
+        'X-Promagen-Build-Id': buildId,
+        'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
+      },
+    });
     const asOfMs = asOfToMs(asOf);
     const durationMs = Date.now() - startedAt;
 

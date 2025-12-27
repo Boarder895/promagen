@@ -1,4 +1,7 @@
-// C:\Users\Proma\Projects\promagen\frontend\src\lib\fx\freshness.ts
+// frontend/src/lib/fx/freshness.ts
+//
+// UX helper: buckets FX quotes by age so the UI can degrade gracefully
+// (fresh → ageing → delayed) when CDN caching / WAF challenge mode is active.
 
 import type { FxQuote } from '@/types/finance-ribbon';
 
@@ -27,12 +30,12 @@ export function getFxFreshnessFromTimestamp(
     return 'delayed';
   }
 
-  const ts = Date.parse(asOfIso);
-  if (!Number.isFinite(ts)) {
+  const asOfMs = Date.parse(asOfIso);
+  if (!Number.isFinite(asOfMs)) {
     return 'delayed';
   }
 
-  const ageMs = now.getTime() - ts;
+  const ageMs = now.getTime() - asOfMs;
 
   if (ageMs <= FRESH_MS) {
     return 'fresh';

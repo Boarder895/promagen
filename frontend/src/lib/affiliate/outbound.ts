@@ -20,6 +20,13 @@ export type OutboundQuery = Record<string, OutboundQueryValue>;
 const SRC_MAX_LEN = 48;
 const SRC_PATTERN = /^[a-z0-9._-]+$/;
 
+const ALLOWED_EXTRA_KEYS = new Set(['utm_medium', 'utm_campaign', 'utm_content']);
+const EXTRA_VALUE_LIMITS: Record<string, number> = {
+  utm_medium: 64,
+  utm_campaign: 96,
+  utm_content: 96,
+};
+
 const SID_STORAGE_KEY = 'promagen.sid.v1';
 const SID_MIN_LEN = 8;
 const SID_MAX_LEN = 96;
@@ -112,17 +119,9 @@ export function getOrCreateClientSessionId(): string | null {
   if (!created) return null;
 
   safeWriteLocalStorage(SID_STORAGE_KEY, created);
-
-  // Only return a sid if it actually persisted.
-  // If storage is blocked/disabled, we prefer `null` to avoid emitting an
-  // ephemeral sid that breaks caching and contract tests.
-  return getClientSessionId();
+  return created;
 }
 
-/**
- * Normalises and validates the surface identifier.
- * - If invalid, falls back to "unknown".
- */
 export function normaliseSrc(raw: string): string {
   const v = (raw ?? '').trim().toLowerCase();
   if (v.length === 0) return 'unknown';
@@ -139,9 +138,7 @@ export function normaliseSrc(raw: string): string {
 export function encodeProviderId(providerId: string): string {
   const id = (providerId ?? '').trim();
   if (id.length === 0) {
-    // Fail loudly in dev to catch wiring errors early; safe fallback in production.
-    // Next replaces process.env.NODE_ENV at build time; this is safe in shared modules.
-    if (process.env.NODE_ENV !== 'production') {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
       throw new Error('buildGoHref: providerId is required');
     }
     return 'unknown';
@@ -151,7 +148,7 @@ export function encodeProviderId(providerId: string): string {
 
 /**
  * Builds a /go/{providerId}?src=... href.
- * Overload supports additional query params (e.g. utm_* passthroughs if you decide to allow them).
+ * Overload supports additional query params (utm_* only).
  *
  * By default, when running in the browser, we attach `sid` (anonymous sessionId) unless the caller
  * explicitly provides `sid` in extra.
@@ -179,16 +176,19 @@ export function buildGoHref(providerId: string, src: string, extra?: OutboundQue
       const k = (key ?? '').trim();
       if (!k) continue;
 
-      // Keep keys sane; avoid allowing weird injection via query keys.
-      if (!/^[a-zA-Z0-9._-]+$/.test(k)) continue;
-
-      // Prevent callers from overriding src silently.
+      // Prevent callers from overriding src/sid silently.
       if (k === 'src') continue;
-
-      // sid is handled above (validated + normalised). If caller provided invalid sid, we ignore it.
       if (k === 'sid') continue;
 
-      params.set(k, String(value));
+      // Authority: do not accept arbitrary query keys.
+      if (!ALLOWED_EXTRA_KEYS.has(k)) continue;
+
+      // Clamp value length to match server-side QuerySchema.
+      const raw = String(value);
+      const limit = EXTRA_VALUE_LIMITS[k] ?? 96;
+      if (raw.length === 0 || raw.length > limit) continue;
+
+      params.set(k, raw);
     }
   }
 

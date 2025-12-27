@@ -1,117 +1,92 @@
-// frontend/src/app/api/ribbon/fx/route.ts
+// frontend/src/lib/fx/route.ts
 //
-// /api/ribbon/fx — lightweight FX endpoint for the finance ribbon.
+// Server-only helpers for FX API routes.
 //
-// Shape: FxSnapshot[]
+// Pro posture (Vercel):
+// - Treat /api/fx as spend-bearing: caching headers become a cost-control surface.
+// - Keep /api/fx/trace hidden in Vercel production unless explicitly authorised.
+// - Keep all headers ASCII (undici/WebIDL ByteString).
 //
-// This route is intentionally simple: the client already knows whether it is
-// in live or demo mode, and will fall back to demo data if this route fails.
-// All provider integration and env handling lives on the server.
+// Existing features preserved: Yes.
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const runtime = 'nodejs';
+import 'server-only';
 
-import { NextResponse } from 'next/server';
-import pairsJson from '@/data/pairs.json';
-import { fetchLiveFxSnapshots } from '@/lib/fx/live-source';
-import type { FxSnapshot } from '@/lib/fx/fetch';
-import type { FxPairMeta } from '@/lib/fx/map-api-to-quotes';
+import crypto from 'node:crypto';
+import type { NextRequest } from 'next/server';
 
-type PairConfig = {
-  id: string;
-  base?: string;
-  quote?: string;
-};
+import { env } from '@/lib/env';
 
-const pairs = pairsJson as PairConfig[];
-
-function resolvePairMeta(ids: string[]): FxPairMeta[] {
-  return ids.map((id) => {
-    const config = pairs.find((item) => item.id === id);
-
-    if (!config) {
-      // As a last resort, try to derive base / quote from the id.
-      const normalised = id.replace(/_/g, '-').toUpperCase();
-      const [base, quote] = normalised.split('-');
-
-      if (!base || !quote) {
-        throw new Error(`Unable to resolve FX pair metadata for id "${id}"`);
-      }
-
-      return {
-        id,
-        base,
-        quote,
-        label: `${base} / ${quote}`,
-      };
-    }
-
-    const normalisedBase = (config.base ?? '').toUpperCase();
-    const normalisedQuote = (config.quote ?? '').toUpperCase();
-
-    if (!normalisedBase || !normalisedQuote) {
-      throw new Error(`FX pair "${id}" is missing base or quote in pairs.json`);
-    }
-
-    return {
-      id,
-      base: normalisedBase,
-      quote: normalisedQuote,
-      label: `${normalisedBase} / ${normalisedQuote}`,
-    };
-  });
+function constantTimeEquals(a: string, b: string): boolean {
+  const aa = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  if (aa.length !== bb.length) return false;
+  return crypto.timingSafeEqual(aa, bb);
 }
 
-export async function GET(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const pairsParam = url.searchParams.get('pairs');
+export function getFxBuildId(): string {
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (typeof sha === 'string' && sha.trim().length > 0) return sha.slice(0, 12);
 
-  if (!pairsParam) {
-    return NextResponse.json<FxSnapshot[]>([], {
-      status: 200,
-      headers: {
-        'cache-control': 'no-store',
-      },
-    }) as unknown as Response;
-  }
+  const build =
+    process.env.NEXT_PUBLIC_BUILD_ID ??
+    process.env.BUILD_ID ??
+    process.env.VERCEL_GIT_COMMIT_REF ??
+    process.env.VERCEL_ENV;
 
-  const ids = pairsParam
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
+  if (typeof build === 'string' && build.trim().length > 0) return build.trim();
 
-  if (ids.length === 0) {
-    return NextResponse.json<FxSnapshot[]>([], {
-      status: 200,
-      headers: {
-        'cache-control': 'no-store',
-      },
-    }) as unknown as Response;
-  }
+  return 'local-dev';
+}
 
-  try {
-    const metas = resolvePairMeta(ids);
-    const snapshots = await fetchLiveFxSnapshots(metas);
+export function getFxRequestId(req: NextRequest): string {
+  const vercelId = req.headers.get('x-vercel-id');
+  if (vercelId && vercelId.trim()) return vercelId.trim().slice(0, 96);
 
-    return NextResponse.json<FxSnapshot[]>(snapshots, {
-      status: 200,
-      headers: {
-        'cache-control': 'no-store',
-      },
-    }) as unknown as Response;
-  } catch (error) {
-    // Let the client-side ribbon fall back to demo mode when this fails.
-    console.error('FX ribbon live fetch failed', error);
+  const reqId = req.headers.get('x-request-id');
+  if (reqId && reqId.trim()) return reqId.trim().slice(0, 96);
 
-    return NextResponse.json(
-      { error: 'FX_LIVE_FAILED' },
-      {
-        status: 502,
-        headers: {
-          'cache-control': 'no-store',
-        },
-      },
-    ) as unknown as Response;
-  }
+  return crypto.randomUUID();
+}
+
+export function buildFxCacheControl(ttlSeconds: number, hasError: boolean): string {
+  const ttl = Number.isFinite(ttlSeconds) ? Math.max(0, Math.floor(ttlSeconds)) : 0;
+
+  // CDN-honest caching:
+  // - Browser: do not cache (max-age=0)
+  // - Edge/CDN: cache for policy TTL
+  // - If payload carries an error, cache briefly so we don't amplify failures.
+  const sMaxAgeSeconds = hasError ? Math.min(60, ttl) : ttl;
+  const staleWhileRevalidateSeconds = Math.min(120, ttl);
+
+  return `public, max-age=0, s-maxage=${sMaxAgeSeconds}, stale-while-revalidate=${staleWhileRevalidateSeconds}`;
+}
+
+export function allowFxTrace(req: NextRequest): boolean {
+  // Only lock down in *Vercel production*. Preview deployments are for debugging.
+  const vercelEnv = process.env.VERCEL_ENV ?? '';
+  if (vercelEnv !== 'production') return true;
+
+  const expected = env.cron.secret?.trim() ?? '';
+  if (expected.length < 16) return false;
+
+  const url = new URL(req.url);
+
+  const providedFromHeaders =
+    req.headers.get('x-promagen-cron') ??
+    req.headers.get('x-cron-secret') ??
+    req.headers.get('x-promagen-cron-secret') ??
+    '';
+
+  const providedFromQuery = url.searchParams.get('secret') ?? '';
+
+  const auth = req.headers.get('authorization') ?? '';
+  const providedFromBearer = auth.toLowerCase().startsWith('bearer ')
+    ? auth.slice('bearer '.length).trim()
+    : '';
+
+  const provided = (providedFromHeaders || providedFromBearer || providedFromQuery).trim();
+
+  if (!provided) return false;
+
+  return constantTimeEquals(provided, expected);
 }

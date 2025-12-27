@@ -1,96 +1,115 @@
 // frontend/src/lib/fx/live-source.ts
 //
-// Server-side only: talks to the real FX provider (FastForex) and returns
-// normalised snapshots for a list of FX pairs.
+// Server-side only: returns normalised snapshots for a list of FX pairs.
+//
+// Pro posture (non-negotiable):
+// - This module MUST NOT call third-party FX providers directly.
+// - All upstream spend must pass through the FX Refresh Authority (src/lib/fx/providers.ts).
+// - Keeping the client on /api/fx allows Vercel WAF + rate limiting rules to be surgical.
+//
+// Historical note:
+// This file previously talked directly to FastForex. That is now forbidden by the
+// no-bypass checklist in promagen-api-brain-v2.
 //
 // This module must never be imported from a client component.
 
-import {
-  mapFastForexToSnapshot,
-  type FxPairMeta,
-  type FastForexFetchOneResponse,
-} from './map-api-to-quotes';
+import 'server-only';
+
+import type { FxPairMeta } from './map-api-to-quotes';
 import type { FxSnapshot } from './fetch';
+import { getFxRibbon } from './providers';
 
-const FASTFOREX_BASE_URL = 'https://api.fastforex.io/fetch-one';
-const FX_REQUEST_TIMEOUT_MS = 4_000;
-
-/**
- * Basic timeout wrapper around fetch. Next.js provides the global fetch.
- */
-async function fetchWithTimeout(input: RequestInfo, init?: RequestInit): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), FX_REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(input, {
-      ...init,
-      signal: controller.signal,
-    });
-
-    return response;
-  } finally {
-    clearTimeout(timeout);
-  }
+function normaliseId(id: string): string {
+  return id
+    .trim()
+    .replace(/[_\s]+/g, '-')
+    .toLowerCase();
 }
 
-function getApiKey(): string {
-  const apiKey = process.env.FASTFOREX_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('FASTFOREX_API_KEY is not set; live FX provider cannot be used.');
-  }
-
-  return apiKey;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
-/**
- * Calls the FastForex /fetch-one endpoint for a single pair.
- */
-async function fetchFastForexForPair(meta: FxPairMeta): Promise<FxSnapshot | null> {
-  const apiKey = getApiKey();
-
-  const url = new URL(FASTFOREX_BASE_URL);
-  url.searchParams.set('api_key', apiKey);
-  url.searchParams.set('from', meta.base);
-  url.searchParams.set('to', meta.quote);
-
-  const response = await fetchWithTimeout(url.toString(), {
-    headers: {
-      accept: 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`FastForex responded with ${response.status} for pair ${meta.id}`);
-  }
-
-  const json = (await response.json()) as FastForexFetchOneResponse;
-
-  const now = new Date();
-  return mapFastForexToSnapshot(meta, json, now);
+function readString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
+function readNumber(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+type FxRibbonApiQuote = {
+  id: string;
+  price: number | null;
+};
+
+const lastSeenById = new Map<string, { value: number; asOf: string }>();
+
 /**
- * Fetches live FX snapshots for the requested pairs from FastForex.
+ * Fetch snapshots for a set of FX pairs.
  *
- * Any hard failure (timeout, non-2xx, malformed body) will naturally
- * bubble up to the caller, which decides whether to fall back to demo.
+ * IMPORTANT:
+ * - This never triggers direct upstream calls.
+ * - It reads from the Refresh Authority, which decides live vs cached vs demo.
  */
 export async function fetchLiveFxSnapshots(pairs: FxPairMeta[]): Promise<FxSnapshot[]> {
   if (pairs.length === 0) {
     return [];
   }
 
+  const ribbon = await getFxRibbon();
+
+  const metaAsOf =
+    isRecord(ribbon) && isRecord((ribbon as Record<string, unknown>).meta)
+      ? readString(((ribbon as Record<string, unknown>).meta as Record<string, unknown>).asOf)
+      : null;
+
+  const asOf = metaAsOf ?? new Date().toISOString();
+
+  const dataRaw =
+    isRecord(ribbon) && Array.isArray((ribbon as Record<string, unknown>).data)
+      ? ((ribbon as Record<string, unknown>).data as unknown[])
+      : [];
+
+  const quotesById = new Map<string, FxRibbonApiQuote>();
+
+  for (const item of dataRaw) {
+    if (!isRecord(item)) continue;
+    const id = readString(item.id);
+    if (!id) continue;
+
+    const price = readNumber(item.price);
+    quotesById.set(normaliseId(id), { id: normaliseId(id), price });
+  }
+
   const snapshots: FxSnapshot[] = [];
 
-  // Sequential on purpose; if we want to go parallel later we can add
-  // smarter rate-limit handling.
+  // Sequential mapping on purpose; this is just shaping data, not IO fan-out.
   for (const meta of pairs) {
-    const snapshot = await fetchFastForexForPair(meta);
-    if (snapshot) {
-      snapshots.push(snapshot);
-    }
+    const id = normaliseId(meta.id);
+    if (!id) continue;
+
+    const q = quotesById.get(id);
+    if (!q) continue;
+
+    const value = typeof q.price === 'number' && Number.isFinite(q.price) ? q.price : null;
+    if (value === null) continue;
+
+    const prev = lastSeenById.get(id)?.value ?? value;
+
+    snapshots.push({
+      id,
+      value,
+      prevClose: prev,
+      asOf,
+    });
+
+    lastSeenById.set(id, { value, asOf });
   }
 
   return snapshots;
