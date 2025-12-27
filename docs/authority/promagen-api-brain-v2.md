@@ -687,18 +687,6 @@ Client fetch stance (anti-regression)
   - `PROMAGEN_SAFE_MODE=1` to force cache/demo only; provider kill switches (e.g. disable TwelveData) for emergency response.
 
     15.1 Trace caching (diagnostics must not be misleading)
-#### Vercel Pro hardening for `/api/fx` (cost + abuse control)
-
-- Canonical playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
-- Platform guardrails (Pro):
-  - Spend Management thresholds (alerts + pause production deployments at cap).
-  - WAF rules on `/api/fx` (and any paid-upstream endpoints) to block bots and rate-limit bursts.
-- Code guardrails (defence in depth):
-  - CDN-honest cache headers aligned with TTL (so edge caching actually happens).
-  - Single-flight / de-dup so concurrent hits do not stampede upstream APIs.
-  - `PROMAGEN_SAFE_MODE=1` to force cache/demo only; provider kill switches (e.g. disable TwelveData) for emergency response.
-
-15.1 Trace caching (diagnostics must not be misleading)
 
 When returning /api/fx/trace:
 
