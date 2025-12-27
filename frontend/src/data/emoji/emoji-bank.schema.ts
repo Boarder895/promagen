@@ -1,9 +1,11 @@
 import { z } from 'zod';
 
-export const emojiEntrySchema = z.object({
-  id: z.string().min(1, 'emoji id must be non-empty'),
-  emoji: z.string().min(1, 'emoji glyph must be non-empty'),
-});
+export const emojiEntrySchema = z
+  .object({
+    id: z.string().min(1, 'emoji id must be non-empty'),
+    emoji: z.string().min(1, 'emoji glyph must be non-empty'),
+  })
+  .strict();
 
 export type EmojiEntry = z.infer<typeof emojiEntrySchema>;
 
@@ -14,52 +16,84 @@ export const providerEmojiMapSchema = z.record(
   z.string().min(1, 'provider emoji must be non-empty'),
 );
 
-const baseEmojiBankSchema = z.object({
-  // Required sections – extend here if you add more named sections later.
-  trends: emojiSectionSchema,
-  core: emojiSectionSchema,
-  finance: emojiSectionSchema,
-  symbols: emojiSectionSchema,
-  // Provider → emoji lookup
-  providers: providerEmojiMapSchema,
-});
+const arraySections = [
+  'trends',
+  'core',
+  'finance',
+  'currencies',
+  'weather',
+  'space',
+  'sports',
+  'seasons',
+  'budget_guard',
+  'alerts',
+  'ui',
+  'transport',
+  'science',
+  'tech',
+  'food',
+  'nature',
+  'music',
+  'people',
+  'symbols',
+] as const;
+
+type ArraySection = (typeof arraySections)[number];
 
 /**
  * emojiBankSchema
  *
  * Guarantees:
  * - required sections exist
- * - every entry is { id, emoji }
+ * - each entry is { id, emoji } (strict)
  * - providers is Record<string, string>
- * - no duplicate ids inside a section
+ * - no duplicate ids inside any array section
  */
-export const emojiBankSchema = baseEmojiBankSchema.superRefine((bank, ctx) => {
-  const checkDuplicates = (sectionName: keyof typeof bank) => {
-    const value = bank[sectionName];
+export const emojiBankSchema = z
+  .object({
+    trends: emojiSectionSchema,
+    core: emojiSectionSchema,
+    finance: emojiSectionSchema,
+    currencies: emojiSectionSchema,
+    weather: emojiSectionSchema,
+    space: emojiSectionSchema,
+    sports: emojiSectionSchema,
+    seasons: emojiSectionSchema,
+    budget_guard: emojiSectionSchema,
+    alerts: emojiSectionSchema,
+    ui: emojiSectionSchema,
+    transport: emojiSectionSchema,
+    science: emojiSectionSchema,
+    tech: emojiSectionSchema,
+    food: emojiSectionSchema,
+    nature: emojiSectionSchema,
+    music: emojiSectionSchema,
+    people: emojiSectionSchema,
+    providers: providerEmojiMapSchema,
+    symbols: emojiSectionSchema,
+  })
+  .strict()
+  .superRefine((bank, ctx) => {
+    const checkDuplicates = (sectionName: ArraySection) => {
+      const entries = bank[sectionName];
+      const seen = new Set<string>();
 
-    if (!Array.isArray(value)) {
-      return;
-    }
-
-    const seen = new Set<string>();
-
-    for (const entry of value) {
-      if (seen.has(entry.id)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: [sectionName],
-          message: `Duplicate emoji id "${entry.id}" in section "${String(sectionName)}"`,
-        });
-      } else {
-        seen.add(entry.id);
+      for (const entry of entries) {
+        if (seen.has(entry.id)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [sectionName],
+            message: `Duplicate emoji id "${entry.id}" in section "${sectionName}"`,
+          });
+        } else {
+          seen.add(entry.id);
+        }
       }
-    }
-  };
+    };
 
-  checkDuplicates('trends');
-  checkDuplicates('core');
-  checkDuplicates('finance');
-  checkDuplicates('symbols');
-});
+    for (const sectionName of arraySections) {
+      checkDuplicates(sectionName);
+    }
+  });
 
 export type EmojiBank = z.infer<typeof emojiBankSchema>;

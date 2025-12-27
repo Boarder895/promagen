@@ -17,6 +17,8 @@ Limits:
 Operational rule (anti-drift):
 
 - If the assistant is asked to update a file but the current exact file contents (or required dependencies) are not provided in the chat, the assistant must stop and request the file(s) rather than guessing.
+- When returning a “full file replacement”, it must be the COMPLETE file content (no omissions or shortening).
+- No lines may be deleted or “simplified away” unless the user explicitly approves the change as REMOVE/REPLACE with line ranges.
 
 How to use memory:
 
@@ -144,6 +146,7 @@ RULES:
 2. Then give exactly TWO improvements/extensions.
 3. Then include a section titled “Prompt Optimiser” where you:
    o State the implied assumptions you detected
+   - Implementation map (routes + files + delivery approach): see `docs/authority/vercel-pro-promagen-playbook.md` §5.5.
    o List missing inputs you would normally need (but do NOT ask questions unless truly blocking)
    o Rewrite my prompt into the most precise version possible, preserving my intent and constraints
    CONSTRAINTS (always apply unless I override):

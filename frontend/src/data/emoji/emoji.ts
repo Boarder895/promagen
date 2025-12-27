@@ -1,181 +1,109 @@
 // frontend/src/data/emoji/emoji.ts
 import emojiBankJson from '@/data/emoji/emoji-bank.json';
 
-type IdEmoji = {
+import { emojiBankSchema } from '@/data/emoji/emoji-bank.schema';
+
+export type IdEmoji = {
   id: string;
   emoji: string;
 };
 
-type EmojiBank = {
-  trends?: IdEmoji[];
-  core?: IdEmoji[];
-  finance?: IdEmoji[];
-  currencies?: IdEmoji[];
-  weather?: IdEmoji[];
-  space?: IdEmoji[];
-  sports?: IdEmoji[];
-  seasons?: IdEmoji[];
-  alerts?: IdEmoji[];
-  ui?: IdEmoji[];
-  transport?: IdEmoji[];
-  science?: IdEmoji[];
-  tech?: IdEmoji[];
-  food?: IdEmoji[];
-  nature?: IdEmoji[];
-  music?: IdEmoji[];
-  people?: IdEmoji[];
-  symbols?: IdEmoji[];
-  providers?: Record<string, string>;
-};
+export type BudgetGuardState = 'ok' | 'warning' | 'blocked';
 
-const emojiBank = emojiBankJson as EmojiBank;
+export type ProviderLike = { id: string; emoji?: string };
 
-function toMap(arr: IdEmoji[] | undefined): Record<string, string> {
-  return (arr ?? []).reduce<Record<string, string>>((acc, item) => {
-    acc[item.id] = item.emoji;
-    return acc;
-  }, {});
+const emojiBank = emojiBankSchema.parse(emojiBankJson);
+
+export type EmojiBank = typeof emojiBank;
+
+export type EmojiSection = Exclude<keyof EmojiBank, 'providers'>;
+
+function normaliseId(id: string): string {
+  return id.trim().toLowerCase().replace(/\s+/g, '_').replace(/-+/g, '_').replace(/_+/g, '_');
 }
 
-// Build lookup maps once at module load
-const trendMap = toMap(emojiBank.trends);
-const coreMap = toMap(emojiBank.core);
-const financeMap = toMap(emojiBank.finance);
-const currencyMap = toMap(emojiBank.currencies);
-const weatherMap = toMap(emojiBank.weather);
-const spaceMap = toMap(emojiBank.space);
-const sportsMap = toMap(emojiBank.sports);
-const seasonsMap = toMap(emojiBank.seasons);
-const alertsMap = toMap(emojiBank.alerts);
-const uiMap = toMap(emojiBank.ui);
-const transportMap = toMap(emojiBank.transport);
-const scienceMap = toMap(emojiBank.science);
-const techMap = toMap(emojiBank.tech);
-const foodMap = toMap(emojiBank.food);
-const natureMap = toMap(emojiBank.nature);
-const musicMap = toMap(emojiBank.music);
-const peopleMap = toMap(emojiBank.people);
-const symbolsMap = toMap(emojiBank.symbols);
-
-// Providers are already a flat map in the JSON
-const providerMap: Record<string, string> = emojiBank.providers ?? {};
-
-const SECTION_MAPS = {
-  trends: trendMap,
-  core: coreMap,
-  finance: financeMap,
-  currencies: currencyMap,
-  weather: weatherMap,
-  space: spaceMap,
-  sports: sportsMap,
-  seasons: seasonsMap,
-  alerts: alertsMap,
-  ui: uiMap,
-  transport: transportMap,
-  science: scienceMap,
-  tech: techMap,
-  food: foodMap,
-  nature: natureMap,
-  music: musicMap,
-  people: peopleMap,
-  symbols: symbolsMap,
-  providers: providerMap,
-} as const;
-
-export type EmojiSection = keyof typeof SECTION_MAPS;
-
-function normaliseId(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length ? trimmed : null;
+function toMap(list: ReadonlyArray<IdEmoji>): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const entry of list) {
+    map.set(normaliseId(entry.id), entry.emoji);
+  }
+  return map;
 }
 
-/**
- * Generic lookup by section then id.
- * Returns null if the section/id pair does not exist.
- */
-export function getEmoji(section: EmojiSection, id: unknown): string | null {
-  const safeId = normaliseId(id);
-  if (!safeId) return null;
-
-  const sectionMap = SECTION_MAPS[section];
-  const glyph = sectionMap[safeId];
-
-  return typeof glyph === 'string' && glyph.trim().length > 0 ? glyph : null;
-}
-
-/**
- * Trend-specific helper.
- * For now we only guarantee support for "up" | "down" | "flat".
- */
-export function getTrendEmoji(trend: 'up' | 'down' | 'flat' | null | undefined): string | null {
-  const safeId = normaliseId(trend);
-  if (!safeId) return null;
-
-  const glyph = trendMap[safeId];
-  return typeof glyph === 'string' && glyph.trim().length > 0 ? glyph : null;
-}
-
-export type ProviderLike = {
-  id: string;
-  emoji?: string | null;
-  category?: string | null;
+const SECTION_MAPS: Record<EmojiSection, Map<string, string>> = {
+  trends: toMap(emojiBank.trends),
+  core: toMap(emojiBank.core),
+  finance: toMap(emojiBank.finance),
+  currencies: toMap(emojiBank.currencies),
+  weather: toMap(emojiBank.weather),
+  space: toMap(emojiBank.space),
+  sports: toMap(emojiBank.sports),
+  seasons: toMap(emojiBank.seasons),
+  budget_guard: toMap(emojiBank.budget_guard),
+  alerts: toMap(emojiBank.alerts),
+  ui: toMap(emojiBank.ui),
+  transport: toMap(emojiBank.transport),
+  science: toMap(emojiBank.science),
+  tech: toMap(emojiBank.tech),
+  food: toMap(emojiBank.food),
+  nature: toMap(emojiBank.nature),
+  music: toMap(emojiBank.music),
+  people: toMap(emojiBank.people),
+  symbols: toMap(emojiBank.symbols),
 };
 
 /**
- * Best-effort provider emoji resolution:
- * 1. Use provider.emoji if explicitly set.
- * 2. Fall back to providers map by id.
- * 3. Fall back to core category emoji (e.g. "image", "video").
+ * SSOT emoji lookup.
+ *
+ * Returns null when unknown.
  */
-export function getProviderEmoji(
-  provider: string | ProviderLike | null | undefined,
+export function getEmoji(section: EmojiSection, id: string | null | undefined): string | null {
+  if (!id) return null;
+
+  const key = normaliseId(id);
+  if (!key) return null;
+
+  const map = SECTION_MAPS[section];
+  return map.get(key) ?? null;
+}
+
+/**
+ * Canonical budget-state emoji lookup (🛫 / 🏖️ / 🧳) from Emoji Bank SSOT.
+ */
+export function getBudgetGuardEmoji(state: BudgetGuardState): string | null {
+  return getEmoji('budget_guard', state);
+}
+
+export function getTrendEmoji(
+  trend: 'up' | 'down' | 'flat' | 'rocket' | 'crash' | null | undefined,
 ): string | null {
+  return trend ? getEmoji('trends', trend) : null;
+}
+
+export function getProviderEmoji(
+  provider: ProviderLike | string | null | undefined,
+): string | null {
+  const providersMap = emojiBank.providers;
+
   if (!provider) return null;
 
-  let explicitEmoji: string | null = null;
-  let providerId: string | null = null;
-  let category: string | null = null;
-
   if (typeof provider === 'string') {
-    providerId = normaliseId(provider);
-  } else {
-    providerId = normaliseId(provider.id);
-    category = provider.category ?? null;
-    if (typeof provider.emoji === 'string' && provider.emoji.trim().length) {
-      explicitEmoji = provider.emoji;
-    }
+    const raw = provider.trim();
+    if (!raw) return null;
+    return providersMap[raw] ?? providersMap[normaliseId(raw)] ?? null;
   }
 
-  // 1) explicit emoji on the provider object
-  if (explicitEmoji) {
-    return explicitEmoji;
-  }
+  if (provider.emoji) return provider.emoji;
 
-  // 2) providers map by id
-  if (providerId) {
-    const byId = providerMap[providerId];
-    if (typeof byId === 'string' && byId.trim().length) {
-      return byId;
-    }
-  }
+  const raw = provider.id?.trim();
+  if (!raw) return null;
 
-  // 3) optional category fallback (e.g., "image", "video" live in core)
-  if (category) {
-    const catId = normaliseId(category);
-    if (catId) {
-      const byCategory = coreMap[catId];
-      if (typeof byCategory === 'string' && byCategory.trim().length) {
-        return byCategory;
-      }
-    }
-  }
-
-  return null;
+  return providersMap[raw] ?? providersMap[normaliseId(raw)] ?? null;
 }
 
 export default {
   getEmoji,
+  getBudgetGuardEmoji,
   getTrendEmoji,
   getProviderEmoji,
 };

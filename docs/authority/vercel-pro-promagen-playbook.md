@@ -343,8 +343,99 @@ Promagen’s `/api/fx` should be treated like a payment endpoint, even though it
 ### 5.4 Centralised polling (protects spend)
 
 Promagen must ensure multiple widgets do not multiply `/api/fx` calls. This is not optional — it is part of the cost-control contract.
+### 5.5 What “integrate Vercel Pro” means in Promagen (code + dashboard)
 
----
+To “integrate Vercel Pro” into Promagen properly, we’re really doing two things:
+
+1) Wiring features that need code/config
+- Caching that is CDN-honest (headers match the Refresh Gate TTL).
+- Cron routes for cache warm-up + health checks (work happens off the request path).
+- Analytics / Speed Insights wiring (kept intentional; avoid event spam).
+- Hardened outbound redirects (`/go/*`) + click tracking (no open-redirect nonsense).
+- Structured logging + request IDs (so Pro logs are actually useful).
+- Preview-vs-production behaviour (safe mode, trace lockdown).
+
+2) Switching on Pro controls in the Vercel dashboard
+- Spend Management thresholds + a “cap action” (pause production deployments).
+- WAF rules + rate limiting for “money endpoints” (`/api/fx` and `/go/*`).
+- Challenge mode / IP blocks when abuse is detected.
+
+Dashboard controls don’t require code changes — but your code must be shaped so those controls work cleanly.
+
+#### 5.5.1 Promagen “money endpoints” (treat these like payment routes)
+
+Start with only these two endpoints as “spend-bearing”:
+
+- `/api/fx` (paid upstream market data risk)
+- `/go/*` (public outbound redirect route; attractive to bots)
+
+Everything else can stay “normal” until these are bulletproof.
+
+#### 5.5.2 Repo touchpoints (where Pro actually changes the code)
+
+Spend-bearing FX API + diagnostics
+
+- `frontend/src/app/api/fx/route.ts`
+- `frontend/src/app/api/fx/trace/route.ts`
+- `frontend/src/lib/fx/fetch.ts`
+- `frontend/src/lib/fx/live-source.ts`
+- `frontend/src/lib/fx/route.ts`
+- `frontend/src/lib/fx/freshness.ts`
+
+Outbound affiliate redirects + click tracking
+
+- `frontend/src/app/go/[providerId]/route.ts`
+- `frontend/src/lib/affiliate/outbound.ts`
+- `frontend/src/app/api/track-click/route.ts`
+- `frontend/src/__tests__/go.outbound.route.test.ts`
+
+Edge “front door” shaping (so WAF/rate limiting can be surgical)
+
+- `frontend/src/middleware.ts`
+
+Cron capability (cache warm + health checks off the request path)
+
+- `frontend/src/app/api/promagen-users/cron/route.ts` (or equivalent cron route)
+
+Analytics / Speed Insights wiring
+
+- `frontend/src/app/layout.tsx`
+- `frontend/src/lib/analytics/*` (or `frontend/src/lib/analytics.ts`)
+- `frontend/src/components/analytics/google-analytics.tsx` (if active)
+
+Health endpoint
+
+- `frontend/src/app/api/health/route.ts`
+
+Note: paths are expressed in “code-standard form” (`frontend/src/...`). If you keep your Next.js `src/` at repo root, the same paths apply without the `frontend/` prefix.
+
+#### 5.5.3 Repo-root config required to do this properly (no guessing)
+
+To add cron schedules, runtime tweaks, and dependency wiring safely, we also need the repo-root config in view:
+
+- `package.json`
+- lockfile (`pnpm-lock.yaml` / `package-lock.json` / `yarn.lock`)
+- `next.config.js|mjs|ts`
+- `tsconfig.json`
+- `vercel.json` (or create it if it doesn’t exist)
+- `.env.example` (or wherever env vars are documented)
+
+#### 5.5.4 Delivery approach (fast + safe)
+
+Best default: 2 passes
+
+Go 1 — Platform wiring (low risk, high leverage)
+- `vercel.json` (crons, redirects/rewrites if needed)
+- tighten `middleware.ts` (security headers, request IDs, predictable routing)
+- harden `/go/*` + click tracking (so WAF/rate limiting won’t break it)
+- make `/api/fx` cache-friendly (headers + idempotency)
+- hook analytics/speed in a controlled way (and keep them out of preview if desired)
+
+Go 2 — Spend-proofing + observability (where the real value is)
+- refresh gate: block “force refresh” unless explicitly allowed
+- safe mode behaviour (preview/demo/stale-if-error)
+- structured logs around provider selection + cache hit/miss
+- cron warm-up + provider health checks (so page views don’t pay the price)
 
 ## 6. WAF rule pack (Promagen baseline)
 

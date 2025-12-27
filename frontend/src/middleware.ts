@@ -5,9 +5,42 @@ const CANONICAL_HOST = (process.env['CANONICAL_HOST'] ?? '').toLowerCase().trim(
 const ENFORCE_CANONICAL = (process.env['ENFORCE_CANONICAL'] ?? 'true').toLowerCase() === 'true';
 const VERCEL_ENV = (process.env['VERCEL_ENV'] ?? '').toLowerCase();
 
+const PROMAGEN_SAFE_MODE_RAW = (process.env['PROMAGEN_SAFE_MODE'] ?? '').toLowerCase().trim();
+const PROMAGEN_SAFE_MODE_ENABLED =
+  PROMAGEN_SAFE_MODE_RAW === 'true' ||
+  PROMAGEN_SAFE_MODE_RAW === '1' ||
+  PROMAGEN_SAFE_MODE_RAW === 'yes';
+
 const DEV_HEALTH_ENABLED =
   (process.env['PROMAGEN_DEV_HEALTH_ENABLED'] ?? 'false').toLowerCase() === 'true';
 const DEV_HEALTH_TOKEN = (process.env['PROMAGEN_DEV_HEALTH_TOKEN'] ?? '').trim();
+
+function getPromagenRequestId(req: NextRequest): string {
+  const vercelId = req.headers.get('x-vercel-id');
+  if (vercelId && vercelId.trim()) return vercelId.trim().slice(0, 96);
+
+  const reqId = req.headers.get('x-request-id');
+  if (reqId && reqId.trim()) return reqId.trim().slice(0, 96);
+
+  // Edge runtime: crypto.randomUUID is available on modern platforms.
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof (crypto as unknown as { randomUUID?: () => string }).randomUUID === 'function'
+  ) {
+    return (crypto as unknown as { randomUUID: () => string }).randomUUID().slice(0, 96);
+  }
+
+  // Fallback: random bytes → hex (ASCII).
+  try {
+    const bytes = new Uint8Array(16);
+    (crypto as Crypto).getRandomValues(bytes);
+    let out = '';
+    for (const b of bytes) out += b.toString(16).padStart(2, '0');
+    return out.slice(0, 96);
+  } catch {
+    return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
 
 function buildCsp(isDev: boolean): string {
   // Next dev needs looser script rules (HMR uses eval/inline).
@@ -90,6 +123,7 @@ function applySecurityHeaders(
   res: NextResponse,
   isDev: boolean,
   devHealthMode: boolean,
+  requestId: string,
 ): NextResponse {
   const csp = buildCsp(isDev);
 
@@ -98,10 +132,20 @@ function applySecurityHeaders(
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
+  // Correlation / ops headers (ASCII only)
+  res.headers.set('X-Promagen-Request-Id', requestId);
+  res.headers.set('X-Promagen-Env', VERCEL_ENV || (isDev ? 'development' : 'unknown'));
+  res.headers.set('X-Promagen-Safe-Mode', PROMAGEN_SAFE_MODE_ENABLED ? '1' : '0');
+
   // Keep COOP/COEP off in dev to avoid surprises.
   if (!isDev) {
     res.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
     res.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+  }
+
+  // HSTS only in Vercel production (avoid caching surprises in preview/dev).
+  if (VERCEL_ENV === 'production') {
+    res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
 
   // Preview: report-only. Production: enforce.
@@ -127,13 +171,15 @@ export function middleware(req: NextRequest) {
   const isDev = process.env.NODE_ENV === 'development';
   const devHealthMode = isDevHealthPath(pathname);
 
+  const requestId = getPromagenRequestId(req);
+
   // Gate /dev/health first. Always return 404 when blocked (no hints).
   if (devHealthMode) {
     const allowed = devHealthAllowed(req, url, isDev, VERCEL_ENV);
 
     if (!allowed) {
       const notFound = new NextResponse('Not Found', { status: 404 });
-      return applySecurityHeaders(notFound, isDev, true);
+      return applySecurityHeaders(notFound, isDev, true, requestId);
     }
     // Allowed: continue through canonical redirects + normal headers below.
   }
@@ -141,11 +187,12 @@ export function middleware(req: NextRequest) {
   // Allow localhost without canonical redirects.
   if (host !== 'localhost:3000' && ENFORCE_CANONICAL && CANONICAL_HOST && host !== CANONICAL_HOST) {
     const to = `${url.protocol}//${CANONICAL_HOST}${url.pathname}${url.search}`;
-    return NextResponse.redirect(to, 308);
+    const redirect = NextResponse.redirect(to, 308);
+    return applySecurityHeaders(redirect, isDev, devHealthMode, requestId);
   }
 
   const res = NextResponse.next();
-  return applySecurityHeaders(res, isDev, devHealthMode);
+  return applySecurityHeaders(res, isDev, devHealthMode, requestId);
 }
 
 export const config = {

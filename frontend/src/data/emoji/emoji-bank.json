@@ -651,6 +651,20 @@
       "emoji": "⏲️"
     }
   ],
+  "budget_guard": [
+    {
+      "id": "ok",
+      "emoji": "🛫"
+    },
+    {
+      "id": "warning",
+      "emoji": "🏖️"
+    },
+    {
+      "id": "blocked",
+      "emoji": "🧳"
+    }
+  ],
   "alerts": [
     {
       "id": "warning",

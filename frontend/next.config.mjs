@@ -24,6 +24,9 @@ const redirects = async () => {
 const nextConfig = {
   reactStrictMode: true,
 
+  // Small hardening: avoid broadcasting framework info.
+  poweredByHeader: false,
+
   // Only produce `.next/standalone` when explicitly requested.
   // Flip it on with: NEXT_STANDALONE=true pnpm build
   output: process.env.NEXT_STANDALONE === 'true' ? 'standalone' : undefined,

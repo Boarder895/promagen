@@ -1,11 +1,8 @@
 // frontend/src/data/emoji/emoji-bank.d.ts
 
-export type EmojiEntry = {
-  id: string;
-  emoji: string;
-};
+export type EmojiEntry = { id: string; emoji: string };
 
-export interface EmojiBank {
+export type EmojiBank = {
   trends: EmojiEntry[];
   core: EmojiEntry[];
   finance: EmojiEntry[];
@@ -14,6 +11,7 @@ export interface EmojiBank {
   space: EmojiEntry[];
   sports: EmojiEntry[];
   seasons: EmojiEntry[];
+  budget_guard: EmojiEntry[];
   alerts: EmojiEntry[];
   ui: EmojiEntry[];
   transport: EmojiEntry[];
@@ -23,9 +21,9 @@ export interface EmojiBank {
   nature: EmojiEntry[];
   music: EmojiEntry[];
   people: EmojiEntry[];
-  symbols: EmojiEntry[];
   providers: Record<string, string>;
-}
+  symbols: EmojiEntry[];
+};
 
 declare module '@/data/emoji/emoji-bank.json' {
   const emojiBank: EmojiBank;

@@ -14,26 +14,49 @@
  * - warnings / violations (stable IDs)
  *
  * Cache-Control: diagnostics only → no-store (CDN-honest)
+ *
+ * Pro posture:
+ * - Hidden in Vercel production unless authorised (returns 404 when unauthorised).
+ * - App-level rate limiting is applied as defence in depth (WAF is the front line).
  */
 
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+
+import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
+import { env } from '@/lib/env';
+import { allowFxTrace, getFxRequestId } from '@/lib/fx/route';
 import { getFxRibbonBudgetSnapshot, getFxRibbonTraceSnapshot } from '@/lib/fx/providers';
+import { rateLimit } from '@/lib/rate-limit';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+// Pro posture: keep trace cheap; it must never trigger upstream.
+export const maxDuration = 10;
 
 type BudgetState = 'ok' | 'warning' | 'blocked';
 
 type BudgetIndicator = {
   state: BudgetState;
-  emoji: string;
+  // SSOT-first: emoji comes from Emoji Bank and may be null if the bank is misconfigured.
+  emoji: string | null;
 };
 
-type TraceNoticeLevel = 'warning' | 'violation';
+type NoticeLevel = 'warning' | 'violation';
 
-type TraceNotice = {
+type Notice = {
   id: string;
-  level: TraceNoticeLevel;
-  at: string; // ISO timestamp
+  level: NoticeLevel;
   message: string;
   meta?: Record<string, unknown>;
+};
+
+type NoticesResult = {
+  warnings: Notice[];
+  violations: Notice[];
+  budget: BudgetIndicator;
 };
 
 type TracePayload = {
@@ -52,17 +75,9 @@ function normaliseBudgetState(state: unknown): BudgetState {
   return 'ok';
 }
 
-function budgetEmoji(state: BudgetState): string {
-  // Keep this stable: trace JSON uses this mapping (headers must remain ASCII).
-  switch (state) {
-    case 'warning':
-      return '🏖️';
-    case 'blocked':
-      return '🧳';
-    case 'ok':
-    default:
-      return '🛫';
-  }
+function budgetEmoji(state: BudgetState): string | null {
+  // SSOT: canonical mapping lives in Emoji Bank under budget_guard.
+  return getBudgetGuardEmoji(state);
 }
 
 function getProp(obj: unknown, key: string): unknown | undefined {
@@ -80,26 +95,6 @@ function getNumber(obj: unknown, path: string[]): number | undefined {
   return typeof cur === 'number' && Number.isFinite(cur) ? cur : undefined;
 }
 
-function getString(obj: unknown, path: string[]): string | undefined {
-  if (!obj || typeof obj !== 'object') return undefined;
-  let cur: unknown = obj;
-  for (const key of path) {
-    if (!cur || typeof cur !== 'object') return undefined;
-    cur = (cur as Record<string, unknown>)[key];
-  }
-  return typeof cur === 'string' ? cur : undefined;
-}
-
-function getBool(obj: unknown, path: string[]): boolean | undefined {
-  if (!obj || typeof obj !== 'object') return undefined;
-  let cur: unknown = obj;
-  for (const key of path) {
-    if (!cur || typeof cur !== 'object') return undefined;
-    cur = (cur as Record<string, unknown>)[key];
-  }
-  return typeof cur === 'boolean' ? cur : undefined;
-}
-
 function getUnknownArray(obj: unknown, path: string[]): unknown[] | undefined {
   if (!obj || typeof obj !== 'object') return undefined;
   let cur: unknown = obj;
@@ -112,93 +107,61 @@ function getUnknownArray(obj: unknown, path: string[]): unknown[] | undefined {
 
 function buildNotices(params: {
   observedAt: string;
-  snapshot: unknown;
+  snapshot: TracePayload;
   budgetIndicator: BudgetIndicator;
-}): { warnings: TraceNotice[]; violations: TraceNotice[]; budget: BudgetIndicator } {
-  const warnings: TraceNotice[] = [];
-  const violations: TraceNotice[] = [];
+}): NoticesResult {
+  const warnings: Notice[] = [];
+  const violations: Notice[] = [];
 
-  const add = (n: Omit<TraceNotice, 'at'>) => {
-    const entry: TraceNotice = { ...n, at: params.observedAt };
-    if (entry.level === 'violation') violations.push(entry);
-    else warnings.push(entry);
-  };
+  function add(notice: Notice): void {
+    if (notice.level === 'violation') violations.push(notice);
+    else warnings.push(notice);
+  }
 
-  // Budget sanity (trace must explain budget gating)
-  const dayUsed = getNumber(params.snapshot, ['budget', 'day', 'used']);
-  const dayWarnAt = getNumber(params.snapshot, ['budget', 'day', 'warnAt']);
-  const dayBlockAt = getNumber(params.snapshot, ['budget', 'day', 'blockAt']);
-
-  if (params.budgetIndicator.state === 'blocked') {
+  // Budget stance: surface only.
+  const budgetState = params.budgetIndicator.state;
+  if (budgetState === 'blocked') {
     add({
       id: 'BUDGET_BLOCKED',
       level: 'violation',
-      message: 'Budget is blocked; upstream FX calls should be forbidden.',
+      message: 'Budget is blocked: the authority must refuse upstream refresh.',
+      meta: { observedAt: params.observedAt },
     });
-  } else if (params.budgetIndicator.state === 'warning') {
+  } else if (budgetState === 'warning') {
     add({
       id: 'BUDGET_WARNING',
       level: 'warning',
-      message: 'Budget is in warning range; upstream FX calls should be minimised.',
+      message: 'Budget is in warning: upstream refresh is near limit.',
+      meta: { observedAt: params.observedAt },
     });
   }
 
-  if (typeof dayUsed === 'number' && typeof dayBlockAt === 'number' && dayUsed >= dayBlockAt) {
+  // Basic snapshot sanity checks (observer-only).
+  const ribbonCalls = getNumber(params.snapshot, ['counters', 'ribbonCalls']) ?? 0;
+  const upstreamCalls = getNumber(params.snapshot, ['counters', 'upstreamCalls']) ?? 0;
+
+  if (upstreamCalls > ribbonCalls) {
     add({
-      id: 'DAY_CAP_BLOCKED',
+      id: 'UPSTREAM_CALLS_GT_RIBBON_CALLS',
       level: 'violation',
-      message: 'Daily budget appears at/above block threshold.',
-      meta: { used: dayUsed, blockAt: dayBlockAt },
-    });
-  } else if (typeof dayUsed === 'number' && typeof dayWarnAt === 'number' && dayUsed >= dayWarnAt) {
-    add({
-      id: 'DAY_CAP_WARNING',
-      level: 'warning',
-      message: 'Daily budget is in warning range.',
-      meta: { used: dayUsed, warnAt: dayWarnAt },
+      message: 'Upstream calls exceeded ribbon calls. Possible bypass or counter bug.',
+      meta: { ribbonCalls, upstreamCalls },
     });
   }
 
-  const rateLimitUntilIso =
-    getString(params.snapshot, ['rateLimit', 'until']) ??
-    getString(params.snapshot, ['rateLimitUntil']);
-  if (rateLimitUntilIso) {
+  const ttlSeconds = getNumber(params.snapshot, ['ttlSeconds']);
+  if (typeof ttlSeconds === 'number' && ttlSeconds > 0 && ttlSeconds < 900) {
     add({
-      id: 'RATE_LIMIT_ACTIVE',
+      id: 'TTL_LOW',
       level: 'warning',
-      message: 'Rate-limit cooldown active; serving cache/ride-cache until cooldown expires.',
-      meta: { until: rateLimitUntilIso },
+      message: 'TTL appears low (< 15 minutes). Check FX_RIBBON_TTL_SECONDS / env duplication.',
+      meta: { ttlSeconds },
     });
   }
 
-  // Cold-start / cache sanity
-  const hasCacheValue =
-    getBool(params.snapshot, ['cache', 'hasValue']) ??
-    (getNumber(params.snapshot, ['cache', 'size']) ?? 0) > 0;
-
-  const lastMergedA = getUnknownArray(params.snapshot, ['merged', 'A']);
-  const lastMergedB = getUnknownArray(params.snapshot, ['merged', 'B']);
-
-  const missingA =
-    getUnknownArray(params.snapshot, ['merged', 'missing', 'A'])?.length ??
-    getUnknownArray(params.snapshot, ['missing', 'A'])?.length ??
-    0;
-
-  const missingB =
-    getUnknownArray(params.snapshot, ['merged', 'missing', 'B'])?.length ??
-    getUnknownArray(params.snapshot, ['missing', 'B'])?.length ??
-    0;
-
+  const missingA = getNumber(params.snapshot, ['lastFetch', 'missingA']) ?? 0;
+  const missingB = getNumber(params.snapshot, ['lastFetch', 'missingB']) ?? 0;
   const missingTotal = missingA + missingB;
-
-  if (!hasCacheValue && (!lastMergedA || !lastMergedB)) {
-    add({
-      id: 'COLD_START_NO_CACHE',
-      level: 'warning',
-      message:
-        'Cold start detected (no cache present yet). If upstream is allowed, first live fetch should warm the cache.',
-    });
-  }
 
   if (missingTotal > 0) {
     add({
@@ -215,21 +178,52 @@ function buildNotices(params: {
     });
   }
 
-  // TTL sanity (useful for “why is it 5 mins again?”)
-  const ttlSeconds = getNumber(params.snapshot, ['ttlSeconds']);
-  if (typeof ttlSeconds === 'number' && ttlSeconds > 0 && ttlSeconds < 900) {
-    add({
-      id: 'TTL_LOW',
-      level: 'warning',
-      message: 'TTL appears low (< 15 minutes). Check FX_RIBBON_TTL_SECONDS / env duplication.',
-      meta: { ttlSeconds },
-    });
-  }
-
   return { warnings, violations, budget: params.budgetIndicator };
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(req: NextRequest): Promise<Response> {
+  const requestId = getFxRequestId(req);
+  const vercelEnv = process.env.VERCEL_ENV ?? '';
+  const isVercelProd = vercelEnv === 'production';
+
+  // Production hardening: hide trace unless authorised.
+  if (!allowFxTrace(req)) {
+    return new Response('Not Found', {
+      status: 404,
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-Promagen-Request-Id': requestId,
+        'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
+      },
+    });
+  }
+
+  // App-level rate limiting (defence in depth). WAF is your front line.
+  const rl = rateLimit(req, {
+    keyPrefix: 'fx-trace',
+    windowSeconds: 60,
+    max: isVercelProd ? 240 : 10_000,
+    keyParts: ['GET', '/api/fx/trace'],
+  });
+
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'RATE_LIMITED', observedAt: isoNow(), requestId },
+      {
+        status: 429,
+        headers: {
+          'Cache-Control': 'no-store',
+          'Retry-After': String(rl.retryAfterSeconds),
+          'X-RateLimit-Limit': String(rl.limit),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': rl.resetAt,
+          'X-Promagen-Request-Id': requestId,
+          'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
+        },
+      },
+    );
+  }
+
   // OBSERVER ONLY: read snapshot state; do not trigger upstream/provider calls.
   const snapshot = getFxRibbonTraceSnapshot() as unknown as TracePayload;
 
@@ -251,6 +245,8 @@ export async function GET(): Promise<Response> {
   const payload: TracePayload = {
     ...snapshot,
     observedAt,
+    requestId,
+    safeMode: env.safeMode.enabled,
     budget,
     budgetIndicator,
     warnings: notices.warnings,
@@ -266,6 +262,11 @@ export async function GET(): Promise<Response> {
       // Headers must be ASCII (undici/WebIDL ByteString). Emoji stays in the JSON body.
       'X-Promagen-Fx-Budget': notices.budget.state,
       'X-Promagen-Fx-Budget-State': notices.budget.state,
+      'X-Promagen-Request-Id': requestId,
+      'X-Promagen-Safe-Mode': env.safeMode.enabled ? '1' : '0',
+      'X-RateLimit-Limit': String(rl.limit),
+      'X-RateLimit-Remaining': String(rl.remaining),
+      'X-RateLimit-Reset': rl.resetAt,
     },
   });
 }
