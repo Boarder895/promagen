@@ -134,6 +134,32 @@ The user mentioned potentially moving exchange files to `src/lib/markets/` for o
 
 ---
 
+## 7. UI Fixes ✅ DONE
+
+### 7.1 Exchange Card Consistent Spacing (2025-12-28)
+
+**Problem:** Gap between time/weather columns varied based on content width and screen size.
+
+**Solution:** Changed from `auto` to fixed-width columns:
+
+```tsx
+// Before (variable spacing)
+grid-cols-[1fr_auto_auto]
+
+// After (consistent spacing)
+grid-cols-[1fr_5rem_3rem]
+```
+
+| Column               | Width               | Content             |
+| -------------------- | ------------------- | ------------------- |
+| Left (Exchange Info) | `1fr` (flexible)    | Flag + name + city  |
+| Center (Time/Status) | `5rem` (80px fixed) | Clock + open/closed |
+| Right (Weather)      | `3rem` (48px fixed) | Temp + emoji        |
+
+**File:** `src/components/exchanges/exchange-card.tsx`
+
+---
+
 ## Summary: Files to Delete (8 total)
 
 ```

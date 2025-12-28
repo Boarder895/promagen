@@ -350,6 +350,58 @@ Spacing, typography, and colour use must match existing components.
 
 No hard-coded pixel values unless already used in the system.
 
+Fixed Proportional Column Layout (multi-column cards)
+
+When a card displays multiple data groups (e.g., exchange info | time | weather), use **fixed proportional columns** to ensure vertical alignment across all cards at any screen size.
+
+**The rule:** Define column widths as fixed fractions of the card width. All cards using the same pattern will have their columns align vertically.
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│        50% (2fr)              │     25% (1fr)    │    25% (1fr)           │
+│     LEFT-ALIGNED              │     CENTERED     │    CENTERED            │
+│                               │                  │                        │
+│  New Zealand Exchange (NZX)   │                  │                        │
+│  Wellington           🇳🇿     │    14:23:45      │      18°C              │
+│                      (2x)     │     ● Open       │       ☀️               │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+**Implementation (CSS Grid with fr units):**
+
+```tsx
+// 50%/25%/25% split using fractional units
+<div className="grid grid-cols-[2fr_1fr_1fr]">
+  <div>Exchange Info (left-aligned)</div>
+  <div className="flex flex-col items-center">Time (centered)</div>
+  <div className="flex flex-col items-center">Weather (centered)</div>
+</div>
+```
+
+**Why this works:**
+- `2fr` = 50% of available width
+- `1fr` = 25% of available width each
+- Proportions stay constant regardless of card width
+- All cards align vertically (Time columns stack, Weather columns stack)
+
+**Column alignment rules:**
+- First column (content-heavy): left-aligned text
+- Subsequent columns (data): centered within their column
+- Long text wraps within its column rather than truncating
+
+**Forbidden patterns:**
+- `justify-between` with flexible content (pushes content to edges unpredictably)
+- `auto` columns for alignment-critical layouts (widths vary per card)
+- Fixed pixel widths (break at different screen sizes)
+
+**When to apply:**
+- Exchange cards (info | time | weather)
+- Any card with 3+ distinct data groups
+- Lists where vertical alignment aids scanning
+
+**Compliance check:**
+View multiple cards stacked. If the Time columns don't align vertically, the component violates this rule.
+
 7. Accessibility Rules
 
 All interactive elements must be keyboard accessible.

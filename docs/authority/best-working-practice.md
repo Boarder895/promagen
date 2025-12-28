@@ -62,6 +62,14 @@ Hard rules (non-negotiable):
    - Use a single spacing scale (repeat the same p/x/y/gap values across pages).
    - Use a single radius scale (e.g., outer cards = “large”, inner cards = “medium”, pills/chips = “full”). Do not invent new radii.
 
+3. Fixed Proportional Column Layout (multi-column cards)
+   - When a card has multiple data groups (e.g., info | time | weather), use **fixed proportional columns** (e.g., 50%/25%/25%).
+   - All cards using the same pattern will have their columns align vertically at any screen size.
+   - First column (content-heavy): left-aligned. Subsequent columns (data): centered.
+   - Long text wraps within its column rather than truncating.
+   - Implementation: `grid-cols-[2fr_1fr_1fr]` for 50%/25%/25% split.
+   - Authority for implementation details: `docs/authority/code-standard.md` §6 (Fixed Proportional Column Layout).
+
 Card shell discipline (what every card should look like):
 
 - Shape: rounded rectangle (no sharp corners).
@@ -79,12 +87,14 @@ Forbidden patterns (fast way to spot drift):
 - Random padding/margins between similar components.
 - More than 2–3 visual “depth levels” (page → card → inner card; keep it simple).
 - Any “special case” wrapper that isn’t a card.
+- Multi-column cards where columns do not align vertically across all cards (use fixed proportional columns).
 
 Review gate (30-second check before shipping UI):
 
 - Squint test: if you can see more than one box style, you broke the rule.
 - Consistency test: same border weight, same radius family, same spacing rhythm across the page.
 - Nesting test: sections are cards; rows are cards; nothing free-roams.
+- Alignment test: stack multiple cards; if data columns (time, weather) do not align vertically, fix before shipping.
 
 - “p” means: generate the best possible prompt for the next step (constraints + required inputs + definition of done + output format).
   From now on, when you send me a prompt, I’ll do three things in this order:

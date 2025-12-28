@@ -16,8 +16,6 @@ export { ExchangeClock } from './time/exchange-clock';
 export type { ExchangeClockProps } from './time/exchange-clock';
 export { AnalogClock } from './time/analog-clock';
 export type { AnalogClockProps } from './time/analog-clock';
-export { LedClock } from './time/led-clock';
-export type { LedClockProps } from './time/led-clock';
 export { MarketStatusIndicator } from './time/market-status';
 export type { MarketStatusProps } from './time/market-status';
 

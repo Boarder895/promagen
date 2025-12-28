@@ -1721,39 +1721,45 @@ Everything else on the page remains unchanged: rails and leaderboard stay put, a
 
 The homepage includes a grid of stock exchange cards, arranged **east → west** by longitude (invariant).
 
-### Card Structure (3-Column Layout)
+### Card Structure (Fixed Proportional 3-Column Layout)
 
-Each exchange card is a unified component with **double height** (`py-4`) and a **3-column grid** layout (no visible dividers):
+Each exchange card is a unified component with **double height** (`py-4`) and a **fixed proportional 3-column grid** layout (50%/25%/25%):
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│  LEFT COLUMN         │  CENTER COLUMN       │  RIGHT COLUMN         │
-│  (Exchange Info)     │  (Time & Status)     │  (Weather)            │
-│                      │                      │                       │
-│  🇳🇿 New Zealand     │    14:23:45          │       18°C            │
-│     Exchange (NZX)   │    ● Open            │        ☀️             │
-│     Wellington       │                      │                       │
-└─────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│        50% (2fr)              │     25% (1fr)    │    25% (1fr)           │
+│     LEFT-ALIGNED              │     CENTERED     │    CENTERED            │
+│                               │                  │                        │
+│  New Zealand Exchange (NZX)   │                  │                        │
+│  Wellington           🇳🇿     │    14:23:45      │      18°C              │
+│                      (2x)     │     ● Open       │       ☀️               │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Left Column (Exchange Info)
+#### Left Column (50%) — Exchange Info, LEFT-ALIGNED
 
-- **Flag** (derived from `iso2` field)
-- **Exchange name** (full name, wraps if needed)
-- **City**
+- **Exchange name** (full name, wraps to 2-3 lines if needed, font size unchanged)
+- **City + Flag row:**
+  - City name (left)
+  - Flag (right of city, 2x size = 24px, small gap between)
+  - Flag derived from `iso2` field
 
-#### Center Column (Time & Status) — 2 rows
+#### Center Column (25%) — Time & Status, CENTERED
 
-- **Row 1:** Live local time clock (`HH:MM:SS`, 24-hour format)
+- **Row 1:** Minimalist analog clock (SVG, 44px diameter)
+  - 3 hands: hour (short, thick), minute (medium), second (thin, red)
+  - 12 tick marks (thicker at 12, 3, 6, 9)
+  - Smooth hand movement (no snapping)
   - Updates every second using client-side timezone conversion
   - Uses `Intl.DateTimeFormat` with exchange's `tz` field (IANA timezone)
+  - Respects `prefers-reduced-motion` (hides second hand)
 - **Row 2:** Market status indicator
   - **Open**: Emerald dot (`bg-emerald-500`) + "Open"
   - **Closed**: Rose dot (`bg-rose-500`) + "Closed"
   - Status derived from simple time-based logic using exchange's `tz` and `hoursTemplate`
   - Future: API-driven status including holidays, lunch breaks, special events
 
-#### Right Column (Weather) — 2 rows
+#### Right Column (25%) — Weather, CENTERED
 
 - **Row 1:** Temperature in Celsius (e.g., `18°C`)
 - **Row 2:** Weather condition emoji (e.g., ☀️ 🌧️ ❄️ 💨)
@@ -1769,9 +1775,11 @@ All exchange card components live in:
 ```
 src/components/exchanges/
 ├── exchange-card.tsx          # Main unified card component
+├── index.ts                   # Public exports
 ├── types.ts                   # Unified ExchangeCardData type
 ├── time/
-│   ├── exchange-clock.tsx     # Live ticking clock
+│   ├── analog-clock.tsx       # Minimalist SVG analog clock (3 hands)
+│   ├── exchange-clock.tsx     # Digital clock (legacy, still exported)
 │   └── market-status.tsx      # Open/closed indicator
 ├── weather/
 │   ├── exchange-temp.tsx      # Temperature display
@@ -1823,14 +1831,79 @@ Available weather emojis:
 - **Clock format:** Always 24-hour (`HH:MM:SS`)
 - **Temperature:** Always Celsius
 - **No demo data:** Weather shows `—` for temp when API unavailable (never fake temperatures)
-- **Layout:** 3-column grid, double height (`py-4`), no visible column dividers
+- **Layout:** CSS Grid with fixed proportional columns (50%/25%/25%), double height (`py-4`), no visible column dividers
+- **Column alignment:** Left column left-aligned, center and right columns centered
+- **Flag size:** 2x default (24px), positioned right of city
 - **Status colours:** Emerald (open), Rose (closed) — from existing palette
+
+### Layout Strategy (Fixed Proportional Columns)
+
+The exchange card uses **CSS Grid with fixed proportional columns** to ensure vertical alignment across all cards:
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│        50% (2fr)              │     25% (1fr)    │    25% (1fr)           │
+│     LEFT-ALIGNED              │     CENTERED     │    CENTERED            │
+│                               │                  │                        │
+│  New Zealand Exchange (NZX)   │                  │                        │
+│  Wellington           🇳🇿     │    14:23:45      │      18°C              │
+│                      (2x)     │     ● Open       │       ☀️               │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key insight:** Fixed proportional columns (2fr/1fr/1fr = 50%/25%/25%) ensure that:
+- All Time columns align vertically across all cards
+- All Weather columns align vertically across all cards
+- Proportions stay constant regardless of card width or screen size
+
+**CSS implementation:**
+
+```tsx
+// Fixed proportional grid: 50%/25%/25%
+<div className="grid grid-cols-[2fr_1fr_1fr] items-center ...">
+  {/* Column 1 (50%): Exchange info - LEFT ALIGNED */}
+  <div className="min-w-0 pr-2">
+    <p>Exchange Name (wraps if long)</p>
+    <div className="flex items-center gap-2">
+      <span>City</span>
+      <Flag size={24} />  {/* 2x size, right of city */}
+    </div>
+  </div>
+
+  {/* Column 2 (25%): Time - CENTERED */}
+  <div className="flex flex-col items-center">
+    <AnalogClock tz={tz} size={44} />  {/* Minimalist SVG clock */}
+    <MarketStatusIndicator />
+  </div>
+
+  {/* Column 3 (25%): Weather - CENTERED */}
+  <div className="flex flex-col items-center">
+    <ExchangeTemp />
+    <ExchangeCondition />
+  </div>
+</div>
+```
+
+**Why this works:**
+- `2fr` = 50% of card width (always)
+- `1fr` = 25% of card width each (always)
+- Proportions are fixed, so columns stack perfectly across all cards
+- Long exchange names wrap within their 50% allocation
+
+**Previous approaches (broken):**
+- `justify-between` pushed content to edges, gaps varied based on content width
+- `auto` columns caused columns to be different widths per card
+- `grid-cols-[auto_1fr_auto_1fr_auto]` equal-gap approach still had misaligned columns
+
+Authority: `docs/authority/code-standard.md` §6 (Fixed Proportional Column Layout)
 
 ### Performance Notes
 
 - **Clock update:** Every second (via `setInterval`)
+- **Clock rendering:** Pure SVG, zero external dependencies
 - **Battery impact:** Negligible (~0.5% per hour)
 - **Server load:** Zero (clocks are client-side)
+- **Reduced motion:** Second hand hidden when `prefers-reduced-motion` is set
 - **Network calls:** Weather via API when implemented
 
 ### Unified Exchange Type
