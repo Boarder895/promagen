@@ -3,28 +3,28 @@ Scope note (don’t power leaderboards from GA4)
 
 GA4/GTM is for marketing/UX analytics and can be blocked by browsers/ad-blockers. Promagen leaderboard metrics like “Promagen Users” (30 days) and “Online Now” (30 minutes) must be computed server-side (Postgres + Cron / KV presence) and must render blank when stale/unavailable, rather than relying on GA4 data.
 
-• Environment variables: Set these in your .env.local (and in Vercel). Next.js only exposes variables prefixed with NEXT*PUBLIC* to the browser[1]. For example:
+- Environment variables: set in `.env.local` (local) and Vercel → Project Settings → Environment Variables (prod).
+  Next.js only exposes variables prefixed with `NEXT_PUBLIC_` to the browser.
 
-# .env.local
+  ```env
+  NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+  NEXT_PUBLIC_GTM_ID=GTM-YYYYYYYYY
+  ```
 
-NEXT*PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-NEXT_PUBLIC_GTM_ID=GTM-YYYYYYYYY
-Ensure you restart/redeploy after adding them. Next.js only inlines vars prefixed with NEXT_PUBLIC* into the browser[1].
-• Layout setup: Install the Next.js third-party library and include the GTM and GA components in your root layout. For example, in app/layout.tsx:
+- Layout setup: install `@next/third-parties` and wire it in `frontend/src/app/layout.tsx`:
 
-import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google'
-import { publicConfig } from '@/lib/config/public'
+  ```tsx
+  import { GoogleTagManager, GoogleAnalytics } from '@next/third-parties/google'
+  import { publicConfig } from '@/lib/config/public'
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-return (
+  // inside <body> (or equivalent)
+  <GoogleTagManager gtmId={publicConfig.gtmId} />
+  <GoogleAnalytics gaId={publicConfig.gaMeasurementId} />
+  ```
 
-<html lang="en">
-<GoogleTagManager gtmId={publicConfig.gtmId} />
-<body>{children}</body>
-<GoogleAnalytics gaId={publicConfig.gaMeasurementId} />
-</html>
-)
-}
+- Critical note: if you ever add **server-side** tracking later, keep it behind `/api/*` and apply API calming
+  (caching + single-flight + rate-limits) as per `docs/authority/promagen-api-brain-v2.md`.
+
 This injects GTM and GA4 scripts on every page[2][3]. If you are not using @next/third-parties/google, read the GA Measurement ID via publicConfig (backed by NEXT_PUBLIC_GA_MEASUREMENT_ID) and load gtag.js manually (do not read process.env in components).
 • Avoid double loading: If you use GTM as the central hub, do not also load the GA4 snippet separately, as this causes duplicate hits[4]. In a GTM-driven setup, include only the GTM snippet (above) and configure the GA4 tag inside GTM (see next section). Likewise, if you load GA4 directly (with GoogleAnalytics), you should remove any separate GTM snippet to prevent sending each pageview twice[4].
 Browser Privacy and Ad-Blockers
@@ -53,41 +53,14 @@ Configuring GA4 Tag in Google Tag Manager
    • Vercel environment: Set the same env var names (NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_GTM_ID, NEXT_PUBLIC_ANALYTICS_ENABLED, NEXT_PUBLIC_ANALYTICS_DEBUG). After setting them, redeploy so the variables take effect.
    • No other Vercel settings: Vercel does not require any special analytics settings (unlike its own Vercel Analytics, which is separate). Just ensure your environment variables are correct and your build uses the public prefix as above.
 
-### Promagen note: Vercel Pro guardrails (don’t let analytics create spend surprises)
+### Promagen note: Vercel Pro guardrails
 
-- Canonical platform playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
-- Product monetisation SSOT (free vs paid):
-  `C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
+This doc is about analytics wiring only. It must not weaken your operational guardrails.
 
-  GA4/GTM events must not “invent” tiers. If you track upgrade/sign-in events, the meaning of “paid feature” must match `paid_tier.md`.
-
-### Promagen note: Vercel Pro guardrails (don’t let analytics create spend surprises)
-
-- Canonical platform playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
-- If you ever add server-side tracking endpoints (e.g. `/api/events`), treat them as spend-bearing routes:
-  - Protect with Vercel WAF rate limiting.
-  - Add Spend Management thresholds before enabling in production.
-  - Make responses CDN-cacheable where safe (avoid compute-per-hit).
-    Debugging with Chrome DevTools
-    • Network tab checks: Open Chrome DevTools (F12) and go to Network. Reload the page. In the filter box, type gtag, gtm.js, or collect. You should see:
-    • A request to www.googletagmanager.com/gtm.js?id=GTM-XXXX – this shows the GTM container script loaded.
-    • A request to googletagmanager.com/gtag/js?id=G-XXXXX – this is the GA4 script (if used directly).
-    • Critical: look for collect?v=2 in the list. This is the GA4 data-collection endpoint[14]. Clicking it shows your Measurement ID in the query string, confirming a hit was sent. If no collect?v=2 appears after loading a page, GA4 isn’t firing.
-    • Console errors: Check the DevTools Console for any errors (e.g. failed to load script, blocked by CSP or adblock). You can also use the Google Analytics Debugger extension, which logs GA hits to the console. Similarly, use Tag Assistant (Preview mode) to see a summary of fired tags.
-    • Cookies and storage: In DevTools Application > Cookies, verify a cookie named \_ga exists on your domain (GA4 sets it after a pageview). Its presence means GA’s script ran. If cookies are missing, something blocked GA.
-    • Verifying in GA: After triggering events on your site, the easiest check is GA4’s Realtime or DebugView (see above). For a quick network sanity check, seeing the collect calls is usually sufficient proof that data is leaving the browser.
-    Sources: This guide was built using the official Next.js docs for analytics (Third-Party libraries for GTM/GA)[2][3], Google Tag Manager’s own instructions[15], analytics tutorials[16][17][14], and reports on common blocking issues[6][5] and GA4 best practices[10][11][12]. These references illustrate how GTM acts as a “hub” (with GA4 as a destination)[16] and how to verify end-to-end tracking.
-   Debugging with Chrome DevTools
-   • Network tab checks: Open Chrome DevTools (F12) and go to Network. Reload the page. In the filter box, type gtag, gtm.js, or collect. You should see:
-   • A request to www.googletagmanager.com/gtm.js?id=GTM-XXXX – this shows the GTM container script loaded.
-   • A request to googletagmanager.com/gtag/js?id=G-XXXXX – this is the GA4 script (if used directly).
-   • Critical: look for collect?v=2 in the list. This is the GA4 data-collection endpoint[14]. Clicking it shows your Measurement ID in the query string, confirming a hit was sent. If no collect?v=2 appears after loading a page, GA4 isn’t firing.
-   • Console errors: Check the DevTools Console for any errors (e.g. failed to load script, blocked by CSP or adblock). You can also use the Google Analytics Debugger extension, which logs GA hits to the console. Similarly, use Tag Assistant (Preview mode) to see a summary of fired tags.
-   • Cookies and storage: In DevTools Application > Cookies, verify a cookie named \_ga exists on your domain (GA4 sets it after a pageview). Its presence means GA’s script ran. If cookies are missing, something blocked GA.
-   • Verifying in GA: After triggering events on your site, the easiest check is GA4’s Realtime or DebugView (see above). For a quick network sanity check, seeing the collect calls is usually sufficient proof that data is leaving the browser.
-   Sources: This guide was built using the official Next.js docs for analytics (Third-Party libraries for GTM/GA)[2][3], Google Tag Manager’s own instructions[15], analytics tutorials[16][17][14], and reports on common blocking issues[6][5] and GA4 best practices[10][11][12]. These references illustrate how GTM acts as a “hub” (with GA4 as a destination)[16] and how to verify end-to-end tracking.
-
----
+- Put **all** tracking config behind env vars (no hard-coded IDs).
+- Keep “trace/diagnostics” endpoints free of paid-upstream calls.
+- If you add server-side tracking later, do it via `/api/*` with API calming, caching, and (where relevant) budget guards.
+- Monetisation boundaries are defined only in `docs/authority/paid_tier.md` (do not invent tier rules here).
 
 [1] Guides: Environment Variables | Next.js
 https://nextjs.org/docs/app/guides/environment-variables

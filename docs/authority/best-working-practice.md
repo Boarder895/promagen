@@ -24,6 +24,18 @@ Operational rule (anti-drift):
 - If the assistant is asked to update a file but the current exact file contents (or required dependencies) are not provided in the chat, the assistant must stop and request the file(s) rather than guessing.
 - When returning a “full file replacement”, it must be the COMPLETE file content (no omissions or shortening).
 - No lines may be deleted or “simplified away” unless the user explicitly approves the change as REMOVE/REPLACE with line ranges.
+  Git safety gate (anti-panic):
+
+- No branch switching, merging, rebasing, resetting, or deleting until you have a safety point:
+  - Either stash everything (tracked + untracked): `git stash push -u -m "SAFETY: before git surgery"`
+  - Or create + push a rescue branch at the exact commit SHA: `git branch rescue/<name> <sha>` then `git push -u origin rescue/<name>`
+- One move at a time: run `git status` and `git branch -vv` before and after every Git operation (no chaining commands).
+- No guessing branch names or SHAs: copy/paste from `git branch -a`, `git log --oneline --decorate -n 20`, or the GitHub UI.
+- Generated artefacts are volatile: do not “merge by hand” for these during conflict resolution:
+  - `frontend/tsconfig.tsbuildinfo`
+  - `frontend/.reports/latest.json`
+    Pick one side (normally `main`) or remove them from tracking later.
+- Conflict rule: never commit or run linters with conflict markers present. If any file contains `<<<<<<<`, stop and resolve first.
 
 How to use memory:
 
@@ -100,16 +112,24 @@ Stop drift. If the docs are the authority, then code must never be produced “i
 Hard rule:
 Before any new code or new files can be written, the assistant must read the current authority docs set, decide whether any doc needs updating, and (if needed) provide a paste-ready doc update plan first.
 
-Authority docs set (must be read before code output):
+Keep these filenames _exactly_ as written (GitHub is case-sensitive):
 
-- C:\Users\Proma\Desktop\Promagen Files\GA4 & GTM Configuration in Next.js (Vercel).md
-- C:\Users\Proma\Desktop\Promagen Files\Best_Working_Practice.md
-- C:\Users\Proma\Desktop\Promagen Files\Best_Working_Practice.docx
-- C:\Users\Proma\Desktop\Promagen Files\Ribbon \_Homepage.md
-- C:\Users\Proma\Desktop\Promagen Files\promagen-api-brain-v2.md
-- C:\Users\Proma\Desktop\Promagen Files\code-standard.md
-- C:\Users\Proma\Desktop\Promagen Files\API_Documentation_Twelvedata.md
-- C:\Users\Proma\Desktop\Promagen Files\Fly.v2.md
+- `docs/authority/code-standard.md`
+- `docs/authority/best-working-practice.md`
+- `docs/authority/promagen-api-brain-v2.md`
+- `docs/authority/paid_tier.md`
+- `docs/authority/ribbon-homepage.md`
+- `docs/authority/ai providers.md`
+- `docs/authority/ai providers affiliate & links.md`
+- `docs/authority/ga4-gtm-nextjs-vercel.md`
+- `docs/authority/vercel-pro-promagen-playbook.md`
+- `docs/authority/fly-v2.md`
+- `docs/authority/api-documentation-twelvedata.md` (vendor reference snapshot; treat as read-only)
+
+Frontend companion docs:
+
+- `frontend/docs/env.md`
+- `frontend/docs/promagen-global-standard.md`
 
 No-duplication rule (prevents doc bloat):
 
@@ -138,6 +158,47 @@ A doc update is required whenever a change affects any of:
 - Deployment/runtime policy (Vercel/Fly env vars, secrets, headers, cache behaviour)
 - Provider integrations (rate limits, symbol formats, call limits, quotas, budget guard logic)
 - Testing invariants (new lock-in tests, renamed exports, type shape expectations)
+
+## Git safety protocol (no-lost-work rule)
+
+When Git says **“your local changes would be overwritten”**, do **not** try random merges, deletes, or “reset hard”.
+Do this every time, in this order:
+
+1. **Make a safety snapshot (pick one)**
+
+- Option A (stash, includes untracked): `git stash push -u -m "SAFETY: before merge/pull"`
+- Option B (rescue branch): `git checkout -b rescue/<short-name>` then `git commit -am "WIP: safety snapshot"`
+
+2. **Update `main` safely**
+
+- `git checkout main`
+- `git pull --ff-only origin main`
+
+3. **Bring your work back**
+
+- If you had a branch: `git checkout <your-branch>` then `git merge origin/main`
+- If you only have a commit hash: `git checkout -b recover/<name> <hash>` then `git push -u origin recover/<name>`
+
+4. **Resolve conflicts properly**
+
+- Remove **all** conflict markers: `<<<<<<<`, `=======`, `>>>>>>>` (never commit them)
+- Prefer **incoming** when `main` has a rename/refactor you must align to
+- Prefer **current** when it’s your intentional behaviour change you want to keep
+- Use **both** only when changes are additive and non-overlapping
+
+5. **Verify before pushing**
+
+- From repo root: `pnpm -C frontend lint`
+- From repo root: `pnpm -C frontend typecheck`
+- From repo root: `pnpm -C frontend test:ci`
+
+6. **Never run these when you’re stressed**
+
+- `git reset --hard`
+- `git clean -fd`
+- deleting remote branches
+
+Rule of thumb: _if you can’t explain what a command does to HEAD + working tree, don’t run it._
 
 Prompt Optimiser
 Prompt analysis (what makes answers go wrong):
@@ -172,23 +233,14 @@ RULES:
      • Prompt Optimiser:
      o Analysis
      o Rewritten prompt (final)
-   o List missing inputs you would normally need (but do NOT ask questions unless truly blocking)
-   o Rewrite my prompt into the most precise version possible, preserving my intent and constraints
-   CONSTRAINTS (always apply unless I override):
-   • British English
-   • No summarising unless I explicitly ask
-   • No re-ordering or deleting content unless I explicitly mark REMOVE/REPLACE
-   • If documents are involved: word count must be >= current doc word count and include a changelog
-   • If code is involved: full files only, ready to cut-and-paste
-   MY PROMPT:
-   <PASTE MY PROMPT HERE>
-   INPUTS (if relevant):
-   • Current doc / file(s): <paste>
-   • Allowed changes (REMOVE/REPLACE/ADD): <paste>
-   • Truth anchors (must not contradict): <paste>
-   OUTPUT FORMAT:
-   • Main answer
-   • Two improvements
-   • Prompt Optimiser:
-   o Analysis
-   o Rewritten prompt (final)
+     o List missing inputs you would normally need (but do NOT ask questions unless truly blocking)
+     o Rewrite my prompt into the most precise version possible, preserving my intent and constraints
+     CONSTRAINTS (always apply unless I override):
+     • British English
+     • No summarising unless I explicitly ask
+     • No re-ordering or deleting content unless I explicitly mark REMOVE/REPLACE
+     • If documents are involved: word count must be >= current doc word count and include a changelog
+     • If code is involved: full files only, ready to cut-and-paste
+     Changelog:
+
+- 2025-12-27: Added “Git safety gate (anti-panic)” rules (stash-first / rescue-branch / no-guessing / generated artefact handling / no-conflict-marker commits).

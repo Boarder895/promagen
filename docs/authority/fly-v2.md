@@ -1,25 +1,39 @@
-Promagen Fly.io Brain – Deployment & Cost Model (v2) 0. Goal
-Promagen needs somewhere for its backend logic to live: API routes, background jobs, caching, and quota enforcement.
-Fly.io is not a market-data provider. It doesn’t replace Twelve Data, FMP, CoinGecko, or any of your other finance APIs. Instead, it is the infrastructure where your API-calling code runs, your keys live, and your background jobs execute.
-Promagen’s “telescope lenses” are the external APIs.
-Fly.io is the observatory building that holds them.
-This document explains:
-• How Fly.io fits into Promagen’s architecture.
-• What workloads you’ll run there.
-• How the cost structure behaves as Promagen grows.
+# Promagen Fly.io Brain – Deployment & Cost Model (v2)
 
----
+## Authority scope (read first)
+
+- Primary deploy target for the **frontend** is Vercel.
+- Fly.io is **optional** infrastructure for backend/gateway/worker workloads.
+- Monetisation boundaries live only in `docs/authority/paid_tier.md`.
+- API calming, caching, and budget guards are defined in `docs/authority/promagen-api-brain-v2.md`.
+- Vercel Pro operational guardrails are defined in `docs/authority/vercel-pro-promagen-playbook.md`.
+
+## 0. Goal
+
+Promagen needs somewhere for its backend logic to live—if we want to do anything truly “big boy” (API orchestration, caching, provider fallback, auth, payments, job queues), we need a proper server or worker runtime.
+
+Fly.io is ideal because:
+
+- Cheap, always-on
+- Deploy from Docker easily
+- Full Linux server control
+- Can scale from small to monstrous
+
+This document defines:
+
+- What runs on Vercel vs Fly
+- How cost scales
 
 1. Fly.io’s role in Promagen
    1.1 Home for backend API routes
    Your Next.js project already has backend routes under something like:
-   • /frontend/src/app/api/_
+   • frontend/src/app/api/\* (Next.js App Router API routes)
    In local development, these behave as server endpoints. In production, they need a real server platform.
    Fly.io provides the container that runs those backend routes so they can:
    • Proxy external APIs (Twelve Data, FMP, OilPriceAPI, etc.).
    • Normalise responses into Promagen’s internal shapes.
    • Enforce paid-tier rules and feature flags.
-   • Serve your /api/_ endpoints to the frontend.
+   • Serve your /api/\_ endpoints to the frontend.
    Example routes Promagen might expose via Fly.io:
    • /api/fx – hitting your primary FX provider for fx.ribbon (no cross-provider fallback; cache/ride-cache handled server-side).
    • /api/holidays/check – calling a calendar/market-holidays API.
@@ -54,33 +68,34 @@ This document explains:
    • Avoid hammering paid APIs for every page view.
    1.4 Escape hatch when serverless is too restrictive
    Vercel is excellent for the frontend and short-lived serverless functions.
+
 ### Promagen note: Vercel Pro as the “front door” (guardrails + spend control)
 
 - Canonical Vercel Pro playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
 - Keep Vercel as the edge/CDN/WAF layer even if some compute moves to Fly.
-- Treat WAF rules + Spend Management as *platform* safety rails; code-level safe-mode/kill-switches are the *second* line of defence.
-   However, some Promagen workloads will eventually be too “muscular” for edge/serverless:
-   • Long-running tasks.
-   • Big JSON transformations.
-   • Background queues and fan-out calls.
-   • Scripts that exceed typical edge timeouts.
-   Fly.io gives you full Linux machines (still small and cost-controlled) without those constraints.
-   Promagen will grow naturally into work that needs:
-   • Continuous processes.
-   • State across invocations.
-   • Richer scheduling than “run for a few seconds and die”.
-   Fly.io is the platform for that class of work.
-   1.5 The glue between Promagen and many external APIs
-   Fly.io does not provide FX/crypto/commodities data. It:
-   • Stores your private API keys.
-   • Runs your “rate collector” and normalisation logic.
-   • Produces your internal, Promagen-shaped JSON.
-   • Protects users from hitting third-party rate limits directly.
-   • Protects your wallet from API overuse.
-   • Makes it easy to swap providers without UI changes.
-   In plain language:
-   • External API providers give you the data.
-   • Fly.io hosts the logic that collects, normalises, caches, and serves that data to your frontend.
+- Treat WAF rules + Spend Management as _platform_ safety rails; code-level safe-mode/kill-switches are the _second_ line of defence.
+  However, some Promagen workloads will eventually be too “muscular” for edge/serverless:
+  • Long-running tasks.
+  • Big JSON transformations.
+  • Background queues and fan-out calls.
+  • Scripts that exceed typical edge timeouts.
+  Fly.io gives you full Linux machines (still small and cost-controlled) without those constraints.
+  Promagen will grow naturally into work that needs:
+  • Continuous processes.
+  • State across invocations.
+  • Richer scheduling than “run for a few seconds and die”.
+  Fly.io is the platform for that class of work.
+  1.5 The glue between Promagen and many external APIs
+  Fly.io does not provide FX/crypto/commodities data. It:
+  • Stores your private API keys.
+  • Runs your “rate collector” and normalisation logic.
+  • Produces your internal, Promagen-shaped JSON.
+  • Protects users from hitting third-party rate limits directly.
+  • Protects your wallet from API overuse.
+  • Makes it easy to swap providers without UI changes.
+  In plain language:
+  • External API providers give you the data.
+  • Fly.io hosts the logic that collects, normalises, caches, and serves that data to your frontend.
 
 ---
 
@@ -241,8 +256,8 @@ FX_RIBBON_BUDGET_MINUTE_WINDOW_SECONDS — window size for the minute allowance.
 
 Note: Twelve Data credit usage is per symbol.
 
-fly-v2
-SSOT for what the UI shows (including FX pair metadata, ribbon selection, and ordering) lives under src/data/fx/, with ribbon defaults defined in src/data/fx/fx.pairs.json.
+SSOT for what the UI shows (including FX pair metadata and ribbon defaults) lives in `frontend/src/data/fx/fx.pairs.json` and `docs/authority/ribbon-homepage.md`.
+
 Fly.io hosts:
 the gateway runtime that loads the Brain JSON files and resolves a role to its provider list,
 the worker logic that performs the HTTP call(s) and hands payloads to the adapter layer for normalisation,

@@ -1,41 +1,34 @@
 // frontend/src/lib/exchange-order.ts
-// Exchange ordering + rail split (strict, no 'any', SSR-safe)
+// ============================================================================
+// Exchange Ordering + Rail Split Logic
+// ============================================================================
+// Provides east-to-west ordering of exchanges for the homepage rails.
+// Uses the canonical Exchange type from @/data/exchanges.
+// ============================================================================
 
-import RAW_EXCHANGES, { type Exchange as RawExchange } from '@/data/exchanges';
+import EXCHANGES from '@/data/exchanges';
+import type { Exchange } from '@/data/exchanges/types';
 import EXCHANGES_SELECTED_RAW from '@/data/exchanges/exchanges.selected.json';
-import EXCHANGES_CATALOG_RAW from '@/data/exchanges/exchanges.catalog.json';
-import type { Exchange as UiExchange } from '@/lib/exchanges';
+
+// Re-export the canonical Exchange type for backward compatibility
+export type { Exchange } from '@/data/exchanges/types';
 
 /**
- * Public shape used by the homepage rails.
- * This extends the base UiExchange with a guaranteed longitude,
- * which is used for both ordering and display.
+ * Left and right rails for the homepage exchange display.
  */
-export type Exchange = UiExchange & {
-  /** Geographic longitude in decimal degrees; east positive, west negative. */
-  longitude: number;
+export type Rails = {
+  left: Exchange[];
+  right: Exchange[];
 };
 
-export type Rails = { left: Exchange[]; right: Exchange[] };
+// ============================================================================
+// Internal Helpers
+// ============================================================================
 
 type SelectedJson = { ids?: unknown };
 
-type CatalogRow = {
-  id?: unknown;
-  longitude?: unknown;
-};
-
 /**
- * Convert a loose value into a finite number, or fall back.
- */
-function toFinite(value: unknown, fallback = 0): number {
-  const n = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-/**
- * Normalised list of selected ids from the JSON config.
- * Ignores invalid and empty entries.
+ * Extract selected exchange IDs from the JSON config.
  */
 function getSelectedIds(raw: unknown): string[] {
   if (!raw || typeof raw !== 'object' || !('ids' in (raw as Record<string, unknown>))) {
@@ -49,105 +42,24 @@ function getSelectedIds(raw: unknown): string[] {
 }
 
 /**
- * Longitude lookup table built from exchanges.catalog.json.
- * We treat this as the single source of truth for co-ordinates.
- */
-function buildLongitudeIndex(): Map<string, number> {
-  const rows = Array.isArray(EXCHANGES_CATALOG_RAW) ? (EXCHANGES_CATALOG_RAW as unknown[]) : [];
-
-  const map = new Map<string, number>();
-
-  for (const row of rows) {
-    const entry = row as CatalogRow;
-    const id = String(entry.id ?? '').trim();
-    if (!id || map.has(id)) continue;
-
-    map.set(id, toFinite(entry.longitude, 0));
-  }
-
-  return map;
-}
-
-let longitudeIndex: Map<string, number> | null = null;
-
-function ensureLongitudeIndex(): Map<string, number> {
-  if (!longitudeIndex) {
-    longitudeIndex = buildLongitudeIndex();
-  }
-  return longitudeIndex;
-}
-
-/**
- * Safe longitude lookup by id, with a numeric fallback.
- */
-function longitudeForId(id: string, fallback = 0): number {
-  const index = ensureLongitudeIndex();
-  const value = index.get(id);
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
-}
-
-/**
- * Map the raw catalog exchange into the richer Exchange shape.
- * We only fill the required fields; the rest stay optional on UiExchange.
- */
-function mapRawToUi(raw: RawExchange): Exchange {
-  const id = String(raw.id ?? '').trim();
-
-  const nameSource = (raw as { name?: string }).name ?? (raw.exchange as string | undefined) ?? id;
-
-  const name = String(nameSource).trim();
-
-  const country = String(raw.country ?? '').trim();
-  const countryCode = String(raw.iso2 ?? '')
-    .trim()
-    .toUpperCase();
-  const city = raw.city ? String(raw.city).trim() : undefined;
-  const tz = String(raw.tz ?? '').trim();
-
-  // Prefer a numeric longitude on the raw record if present, but fall back
-  // to the catalog index so we always have a stable, finite value.
-  const rawLongitude = (raw as { longitude?: unknown }).longitude;
-  const longitude =
-    typeof rawLongitude === 'number' && Number.isFinite(rawLongitude)
-      ? rawLongitude
-      : longitudeForId(id, 0);
-
-  const ui: Exchange = {
-    id,
-    name,
-    city,
-    country,
-    countryCode,
-    tz,
-    longitude,
-  };
-
-  return ui;
-}
-
-/**
- * Build a map of id → Exchange from the raw dataset.
- * Duplicate ids are ignored after the first occurrence.
+ * Build a map of id → Exchange from the catalog.
  */
 function buildExchangeIndex(): Map<string, Exchange> {
-  const list = Array.isArray(RAW_EXCHANGES) ? (RAW_EXCHANGES as unknown as RawExchange[]) : [];
-
   const map = new Map<string, Exchange>();
 
-  for (const raw of list) {
-    const id = String(raw.id ?? '').trim();
-    if (!id || map.has(id)) continue;
-
-    map.set(id, mapRawToUi(raw));
+  for (const exchange of EXCHANGES) {
+    const id = exchange.id?.trim();
+    if (id && !map.has(id)) {
+      map.set(id, exchange);
+    }
   }
 
   return map;
 }
 
 /**
- * Load the selected exchanges (by id) and resolve them to Exchange objects.
- * If an id is configured but missing from data/exchanges, we create a
- * minimal placeholder so the homepage can still render in dev.
+ * Load the selected exchanges by ID, resolving from the catalog.
+ * Missing IDs get a minimal placeholder so the UI doesn't break.
  */
 function loadSelectedExchanges(): Exchange[] {
   const selectedIds = getSelectedIds(EXCHANGES_SELECTED_RAW as unknown);
@@ -157,14 +69,13 @@ function loadSelectedExchanges(): Exchange[] {
   const result: Exchange[] = [];
 
   for (const id of selectedIds) {
-    const base = byId.get(id);
+    const exchange = byId.get(id);
 
-    if (base) {
-      result.push(base);
+    if (exchange) {
+      result.push(exchange);
     } else {
-      // Fallback when an id is in selected but missing from data/exchanges.
-      // This uses safe defaults and a zero longitude so ordering still works.
-      const placeholder = mapRawToUi({
+      // Fallback placeholder for missing exchanges
+      const placeholder: Exchange = {
         id,
         city: '',
         exchange: id,
@@ -176,46 +87,46 @@ function loadSelectedExchanges(): Exchange[] {
         hoursTemplate: '',
         holidaysRef: '',
         hemisphere: '',
-      } as unknown as RawExchange);
-
+      };
       result.push(placeholder);
-    }
-  }
 
-  if (process.env.NODE_ENV !== 'production') {
-    const missing = selectedIds.filter((value) => !byId.has(value));
-    if (missing.length) {
-      // Dev-only insight so you can keep the config honest.
-      // This is intentionally noisy only in development.
-      console.warn('[exchange-order] Selected ids missing from data/exchanges:', missing);
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[exchange-order] Selected id "${id}" not found in catalog`);
+      }
     }
   }
 
   return result;
 }
 
-// We treat higher positive longitudes as "further east".
+/**
+ * Sort exchanges from east to west by longitude.
+ * Higher positive longitude = further east (sorted first).
+ */
 function sortEastToWest(exchanges: Exchange[]): Exchange[] {
-  const copy = exchanges.slice();
-
-  copy.sort((a, b) => {
-    const ax = longitudeForId(a.id, a.longitude);
-    const bx = longitudeForId(b.id, b.longitude);
-
-    // Descending: largest (most east) first, most negative (west) last.
-    return bx - ax;
-  });
-
-  return copy;
+  return exchanges.slice().sort((a, b) => b.longitude - a.longitude);
 }
+
+// ============================================================================
+// Public API
+// ============================================================================
 
 /**
  * Returns the left/right rails for the homepage:
  * - Loads the selected exchanges
  * - Orders them east→west using longitude
- * - Splits them into two rails, with the left rail containing the
- *   more easterly half (ceil) and the right containing the more
- *   westerly half (reversed for visual symmetry).
+ * - Splits into two rails:
+ *   - Left rail: more easterly half (ceil)
+ *   - Right rail: more westerly half (reversed for visual symmetry)
+ *
+ * @returns Object with left and right exchange arrays
+ *
+ * @example
+ * ```ts
+ * const { left, right } = getRailsForHomepage();
+ * // left = [Tokyo, Sydney, ...] (eastern)
+ * // right = [New York, Chicago, ...] (western, reversed)
+ * ```
  */
 export function getRailsForHomepage(): Rails {
   const selected = loadSelectedExchanges();
@@ -231,24 +142,29 @@ export function getRailsForHomepage(): Rails {
 }
 
 /**
- * Convenience helper that returns the full east→west list of exchanges
- * for the homepage, reconstructed from the rails.
+ * Returns the full east→west list of homepage exchanges.
+ * Reconstructed from the rails for convenience.
+ *
+ * @returns Array of exchanges sorted east to west
  */
 export function getHomepageExchanges(): Exchange[] {
   const { left, right } = getRailsForHomepage();
   if (!left.length && !right.length) return [];
-  // `ordered` was `[...left, ...rightOriginal]` before the right rail
-  // was reversed for display, so undo that reversal here.
+
+  // Undo the reversal applied to the right rail
   return [...left, ...right.slice().reverse()];
 }
 
-// Legacy helper used in tests for id-only splitting.
+// ============================================================================
+// Legacy Helpers (for tests)
+// ============================================================================
+
 export type ExchangeRef = { id: string };
 export type ExchangeIds = { ids: string[] } | string[];
 
 /**
- * Split a list of exchange ids into left/right "rails" purely by position.
- * This keeps tests loosely coupled to the full Exchange shape.
+ * Split a list of exchange IDs into left/right "rails" by position.
+ * Used in tests that don't need full Exchange objects.
  */
 export function splitIds(exchanges: ExchangeIds): { left: ExchangeRef[]; right: ExchangeRef[] } {
   const ids = Array.isArray(exchanges) ? exchanges.slice() : (exchanges?.ids ?? []).slice();

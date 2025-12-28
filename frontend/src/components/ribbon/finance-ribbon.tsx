@@ -276,10 +276,11 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
 
         <div className="shrink-0 flex items-center gap-1">
           {showBudget ? (
+            // CHANGE: remove the circular “window” around the emoji (no bg, no border, no forced 24px circle)
             <span
               data-testid="finance-ribbon-budget"
               data-budget-state={budgetStateSafe}
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[12px]"
+              className="inline-flex items-center justify-center text-[24px] leading-none"
               aria-label="FX upstream budget state"
             >
               <span className="sr-only">

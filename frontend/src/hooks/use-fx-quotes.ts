@@ -277,6 +277,7 @@ async function fetchFxOnce(): Promise<void> {
       const res = await fetch('/api/fx', {
         method: 'GET',
         headers: { accept: 'application/json' },
+        credentials: 'omit', // calming: cookie-free fetch avoids CDN cache fragmentation
         signal: store.abort?.signal,
       });
 

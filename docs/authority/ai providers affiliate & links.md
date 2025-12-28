@@ -14,19 +14,16 @@ This document defines the single outbound linking system so it is:
 - Privacy-minimal (no cookies required for click logging)
 - Rock-solid traceable (server click_id + immutable log record)
 - Secure (open-redirect resistant)
-  Monetisation scope note
-  This document defines outbound linking compliance and tracking.
 
-It does not define what is free vs paid in Promagen.
-That contract lives only in:
-`C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
+## Monetisation scope note
 
-Monetisation scope note
 This document defines outbound linking compliance and tracking.
 
-It does not define what is free vs paid in Promagen.
+It does **not** define what is free vs paid in Promagen.
 That contract lives only in:
-`C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
+
+- `docs/authority/paid_tier.md` (repo; case-sensitive)
+- `C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md` (local)
 
 ## UK compliance requirements (plain English)
 

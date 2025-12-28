@@ -10,12 +10,15 @@
 ## 0. Why Promagen should care about Pro (even as a 1-person team)
 
 Promagen is a Next.js web app with real runtime behaviour (API routes, caching, cron/background jobs, analytics, outbound redirects) and at least one endpoint that can create **real cost** if traffic spikes (for example, `/api/fx` calling paid upstream market-data APIs).
-Scope clarity (avoid tier confusion)
-This document is about Vercel’s platform plan (Pro) and operational guardrails.
 
-It does NOT define Promagen’s product monetisation (free vs paid users).
-That contract lives only in:
-`C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
+## Scope clarity (avoid tier confusion)
+
+This doc defines **Vercel Pro guardrails and deployment discipline**.
+
+Monetisation is **not** defined here. It is defined only in:
+
+- `docs/authority/paid_tier.md` (repo; case-sensitive)
+- `C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md` (local)
 
 On Pro, you gain **adult supervision** controls that matter even more when you’re solo:
 

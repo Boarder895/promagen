@@ -432,7 +432,7 @@ Rules:
 - Sorted by score (highest first).
 - Keep the existing dark UI, spacing, and layout; on smaller screens prefer horizontal scroll over wrapping.
 - Outbound behaviour remains unchanged: no direct external URLs in the UI (all outbound via `/go/{id}`).
-- For the full data-field contract (enrichment fields), see: `AI Providers.md`.
+- For the full data-field contract (enrichment fields), see: `docs/authority/ai providers.md`.
 
 Behaviour
 Scrolls vertically as needed.
@@ -1716,3 +1716,154 @@ End result:
 Free = SSOT default FX set (currently 8 by content).
 Paid = user-curated FX set (count and composition still defined by SSOT).
 Everything else on the page remains unchanged: rails and leaderboard stay put, and the three-column layout remains calm and predictable.
+
+## Stock Exchange Cards (Free Tier Default)
+
+The homepage includes a grid of stock exchange cards, arranged **east → west** by longitude (invariant).
+
+### Card Structure (3-Column Layout)
+
+Each exchange card is a unified component with **double height** (`py-4`) and a **3-column grid** layout (no visible dividers):
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  LEFT COLUMN         │  CENTER COLUMN       │  RIGHT COLUMN         │
+│  (Exchange Info)     │  (Time & Status)     │  (Weather)            │
+│                      │                      │                       │
+│  🇳🇿 New Zealand     │    14:23:45          │       18°C            │
+│     Exchange (NZX)   │    ● Open            │        ☀️             │
+│     Wellington       │                      │                       │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### Left Column (Exchange Info)
+
+- **Flag** (derived from `iso2` field)
+- **Exchange name** (full name, wraps if needed)
+- **City**
+
+#### Center Column (Time & Status) — 2 rows
+
+- **Row 1:** Live local time clock (`HH:MM:SS`, 24-hour format)
+  - Updates every second using client-side timezone conversion
+  - Uses `Intl.DateTimeFormat` with exchange's `tz` field (IANA timezone)
+- **Row 2:** Market status indicator
+  - **Open**: Emerald dot (`bg-emerald-500`) + "Open"
+  - **Closed**: Rose dot (`bg-rose-500`) + "Closed"
+  - Status derived from simple time-based logic using exchange's `tz` and `hoursTemplate`
+  - Future: API-driven status including holidays, lunch breaks, special events
+
+#### Right Column (Weather) — 2 rows
+
+- **Row 1:** Temperature in Celsius (e.g., `18°C`)
+- **Row 2:** Weather condition emoji (e.g., ☀️ 🌧️ ❄️ 💨)
+- Data source: API (wired in later; no demo mode)
+- When weather data unavailable:
+  - Temperature shows `—`
+  - Emoji shows random weather emoji from SSOT (`emoji-bank.json` → `weather` group)
+
+### Component Location
+
+All exchange card components live in:
+
+```
+src/components/exchanges/
+├── exchange-card.tsx          # Main unified card component
+├── types.ts                   # Unified ExchangeCardData type
+├── time/
+│   ├── exchange-clock.tsx     # Live ticking clock
+│   └── market-status.tsx      # Open/closed indicator
+├── weather/
+│   ├── exchange-temp.tsx      # Temperature display
+│   └── exchange-condition.tsx # Weather emoji display
+└── __tests__/
+    ├── exchange-clock.test.tsx
+    └── exchange-card.test.tsx
+```
+
+### Data Source
+
+Exchange cards are driven by:
+
+- **Free tier:** `src/data/exchanges/exchanges.selected.json` (12 exchanges)
+- **Paid tier:** User-selected exchanges from `exchanges.catalog.json`
+
+### Weather Emoji SSOT
+
+Weather condition emojis are sourced from `src/data/emoji/emoji-bank.json` under the `weather` key.
+When API weather is unavailable, a random emoji from this group is displayed.
+
+Available weather emojis:
+
+- sunny: ☀️
+- partly_cloudy: ⛅
+- cloudy: ☁️
+- rain: 🌧️
+- thunder: ⛈️
+- drizzle: 🌦️
+- snow: 🌨️
+- wind: 💨
+- fog: 🌫️
+- tornado: 🌪️
+- hail: 🧊
+- hot: 🥵
+- cold: 🥶
+- umbrella: ☔
+- barometer: 🌡️
+- rainbow: 🌈
+- sunrise: 🌅
+- sunset: 🌇
+- moon: 🌙
+- stars: 🌟
+- eclipse: 🌒
+
+### Invariants (apply to all users)
+
+- **Ordering:** Always by longitude (east → west)
+- **Clock format:** Always 24-hour (`HH:MM:SS`)
+- **Temperature:** Always Celsius
+- **No demo data:** Weather shows `—` for temp when API unavailable (never fake temperatures)
+- **Layout:** 3-column grid, double height (`py-4`), no visible column dividers
+- **Status colours:** Emerald (open), Rose (closed) — from existing palette
+
+### Performance Notes
+
+- **Clock update:** Every second (via `setInterval`)
+- **Battery impact:** Negligible (~0.5% per hour)
+- **Server load:** Zero (clocks are client-side)
+- **Network calls:** Weather via API when implemented
+
+### Unified Exchange Type
+
+```typescript
+export type ExchangeCardData = {
+  id: string;
+  name: string;
+  city: string;
+  countryCode: string;
+  tz: string;
+  hoursTemplate?: string;
+  // Weather (optional, from API)
+  weather?: {
+    tempC: number | null;
+    emoji: string | null;
+  } | null;
+};
+```
+
+### Symmetry & Uniformity
+
+Every exchange card has **identical structure**. No special cases, no exceptions.
+This maintains visual symmetry and follows the principle: _"Uniformity over customization."_
+
+### Files to Delete (after migration)
+
+After the unified component is deployed, these files should be deleted:
+
+- `src/components/home/rails/exchange-card.tsx`
+- `src/components/ribbon/exchange-card.tsx`
+
+Update imports in:
+
+- `src/components/home/rails/exchange-column.tsx`
+- `src/components/ribbon/exchange-rail.tsx`

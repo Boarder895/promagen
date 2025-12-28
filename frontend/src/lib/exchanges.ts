@@ -1,76 +1,41 @@
 // frontend/src/lib/exchanges.ts
+// ============================================================================
+// Exchange Utilities - Re-exports + Helper Functions
+// ============================================================================
+// This file re-exports the canonical Exchange type from @/data/exchanges
+// and provides helper functions for exchange display.
+//
+// NOTE: The canonical Exchange type lives in src/data/exchanges/types.ts
+// This file exists for backward compatibility and helper utilities.
+// ============================================================================
 
-export type ExchangeStatus = "active" | "inactive";
+// Re-export canonical types from SSOT location
+export type { Exchange, ExchangeStatus, ExchangeRegion, Hemisphere } from '@/data/exchanges/types';
 
-export type ExchangeRegion = "APAC" | "EMEA" | "AMERICAS";
+// Re-export type guard
+export { isExchange } from '@/data/exchanges/types';
 
-export type Exchange = {
-  /**
-   * Stable identifier for the exchange, e.g. "NZX", "ASX", "TSE".
-   */
-  id: string;
+// Re-export the exchanges catalog
+export { default as EXCHANGES } from '@/data/exchanges';
 
-  /**
-   * Full display name, e.g. "Tokyo Stock Exchange".
-   */
-  name: string;
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
-  /**
-   * City where the primary market is located, e.g. "Tokyo".
-   */
-  city?: string;
-
-  /**
-   * Country name, e.g. "Japan".
-   */
-  country: string;
-
-  /**
-   * ISO-3166 alpha-2 country code, e.g. "JP", "GB".
-   * Required for flags and some future grouping.
-   */
-  countryCode: string;
-
-  /**
-   * IANA timezone identifier, e.g. "Asia/Tokyo", "Europe/London".
-   */
-  tz: string;
-
-  /**
-   * Optional pre-computed offset from GMT, in minutes, e.g. 540 for GMT+9.
-   * This is used only for the small "GMT+09:00" label. It is safe to omit.
-   */
-  offsetMinutes?: number | null;
-
-  /**
-   * Broad region grouping used for internal analytics and future filters.
-   */
-  region?: ExchangeRegion;
-
-  /**
-   * Trading currency code, e.g. "JPY", "GBP".
-   */
-  tradingCurrency?: string;
-
-  /**
-   * Marks whether the exchange is active in the app.
-   */
-  status?: ExchangeStatus;
-
-  /**
-   * Optional MIC code or other identifiers. Kept flexible for future use.
-   */
-  micCode?: string;
-
-  /**
-   * Optional free-form notes, e.g. "Part of JPX Group".
-   */
-  notes?: string;
-};
+import type { Exchange } from '@/data/exchanges/types';
 
 /**
- * Helper to create a compact "City · ShortName" label.
- * Falls back sensibly if some fields are missing.
+ * Creates a compact display label for an exchange.
+ * Format: "City · ID" or just "ID" if city is missing.
+ *
+ * @param exchange - The exchange to create a label for
+ * @returns Formatted label string
+ *
+ * @example
+ * ```ts
+ * getExchangeShortLabel({ city: 'Tokyo', id: 'TSE', ... }) // "Tokyo · TSE"
+ * getExchangeShortLabel({ city: '', id: 'UNKNOWN', ... })  // "UNKNOWN"
+ * ```
  */
 export function getExchangeShortLabel(exchange: Exchange): string {
   const city = exchange.city?.trim();
@@ -78,4 +43,26 @@ export function getExchangeShortLabel(exchange: Exchange): string {
     return `${city} · ${exchange.id}`;
   }
   return exchange.id;
+}
+
+/**
+ * Gets the display name for an exchange.
+ * Prefers the 'exchange' field, falls back to 'name' then 'id'.
+ *
+ * @param exchange - The exchange to get the name for
+ * @returns Display name string
+ */
+export function getExchangeDisplayName(exchange: Exchange): string {
+  return exchange.exchange || exchange.name || exchange.id;
+}
+
+/**
+ * Gets the country code for an exchange.
+ * Prefers 'iso2', falls back to 'countryCode'.
+ *
+ * @param exchange - The exchange to get the country code for
+ * @returns ISO-3166 alpha-2 country code (uppercase)
+ */
+export function getExchangeCountryCode(exchange: Exchange): string {
+  return (exchange.iso2 || exchange.countryCode || '').toUpperCase();
 }

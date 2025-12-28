@@ -42,6 +42,19 @@ No personalisation, no memory, no gating.
 
 ---
 
+### 2.1 Free features (explicit list)
+
+The following features are available to all users without sign-in:
+
+- **Stock exchange cards** – Default selection of 12 exchanges
+- **Live local time clocks** – Each exchange card displays the current local time in that exchange's timezone
+- **Market status indicators** – Open/closed status for each exchange
+- **FX ribbon** – Real-time foreign exchange data (subject to API budget rules)
+- **Weather badges** – Current weather for each exchange city
+
+These features define the baseline experience.
+They are complete and honest.
+
 ## 3. Sign-in (not paid): memory, not access
 
 After v1 is stable, **sign-in is introduced**.
@@ -160,7 +173,7 @@ This document does **not** redefine or duplicate:
 
 Authority for those lives elsewhere:
 
-- FX behaviour and SSOT rules → `Ribbon_Homepage.md`
+- FX behaviour and SSOT rules → `docs/authority/ribbon-homepage.md`
 - Cost control and provider authority → `promagen-api-brain-v2.md`
 - Platform and spend guardrails → `vercel-pro-promagen-playbook.md`
 

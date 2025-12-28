@@ -8,7 +8,8 @@
 
 This document describes Promagen’s **AI Providers catalogue**, how providers are displayed (Leaderboard + Detail + Prompt Builder), and how provider capabilities and prompts are mapped.
 
-For affiliate/referral outbound linking, see: **AI Providers Affiliate & Links.md**.
+For affiliate and referral outbound linking, see: **ai providers affiliate & links.md** (`docs/authority/ai providers affiliate & links.md`).
+
 Monetisation scope note
 This document does not define what is free vs paid in Promagen.
 

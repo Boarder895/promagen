@@ -1,3 +1,18 @@
+<!-- Promagen note (reference snapshot) -->
+
+# Twelve Data documentation (reference snapshot)
+
+This file is kept in-repo as a raw vendor reference so Promagen work can continue offline.
+It is **not** Promagen authority.
+
+Promagen authority lives in:
+
+- `docs/authority/promagen-api-brain-v2.md` (provider behaviour, API calming, budgets)
+- `docs/authority/ai providers.md` (provider policy)
+- `docs/authority/paid_tier.md` (monetisation SSOT)
+
+---
+
 Overview
 Welcome to Twelve Data developer docs — your gateway to comprehensive financial market data through a powerful and easy-to-use API. Twelve Data provides access to financial markets across over 50 global countries, covering more than 1 million public instruments, including stocks, forex, ETFs, mutual funds, commodities, and cryptocurrencies.
 
@@ -87,21 +102,21 @@ Personal API key required for full access
 ## Promagen operational note (Vercel Pro)
 
 - Canonical platform hardening: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
-- Treat TwelveData as *paid-upstream*: protect `/api/fx` with WAF + Spend Management thresholds, and enforce TTL caching so you are not paying per visitor.
+- Treat TwelveData as _paid-upstream_: protect `/api/fx` with WAF + Spend Management thresholds, and enforce TTL caching so you are not paying per visitor.
 - Use kill-switch env vars for emergency response (e.g. `PROMAGEN_DISABLE_TWELVEDATA=1`, `PROMAGEN_SAFE_MODE=1`).
-Premium endpoints and data require higher-tier plans (testable with trial symbols)
-API endpoints
-Service Base URL
-REST API https://api.twelvedata.com
-WebSocket wss://ws.twelvedata.com
-Parameter guidelines
-Separator: Use & to separate multiple parameters
-Case sensitivity: Parameter names are case-insensitive
-symbol=AAPL = symbol=aapl
-Multiple values: Separate with commas where supported
-Response handling
-Default format
-All responses return JSON format by default unless otherwise specified.
+  Premium endpoints and data require higher-tier plans (testable with trial symbols)
+  API endpoints
+  Service Base URL
+  REST API https://api.twelvedata.com
+  WebSocket wss://ws.twelvedata.com
+  Parameter guidelines
+  Separator: Use & to separate multiple parameters
+  Case sensitivity: Parameter names are case-insensitive
+  symbol=AAPL = symbol=aapl
+  Multiple values: Separate with commas where supported
+  Response handling
+  Default format
+  All responses return JSON format by default unless otherwise specified.
 
 Null values
 Important: Some response fields may contain null values when data is unavailable for specific metrics. This is expected behavior, not an error.

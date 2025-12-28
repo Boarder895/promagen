@@ -463,6 +463,56 @@ UI should never crash on malformed data:
 - guard optional fields
 - default safely
 
+### 11.1 Time & Clock Components
+
+#### Clock component rules
+
+- All time display components must use `Intl.DateTimeFormat` for timezone conversion (zero dependencies)
+- Clock components must clean up `setInterval` on unmount (use `useEffect` return function)
+- Default update frequency: Every second (1000ms)
+- Clock format: 24-hour (HH:MM:SS) unless explicitly configured otherwise
+- All clocks must handle invalid timezones gracefully (fallback to `--:--:--`)
+
+#### Timezone handling
+
+- Timezone identifiers must be IANA format (e.g. `America/New_York`, `Asia/Tokyo`)
+- Read timezone data from SSOT (e.g. `exchanges.catalog.json`)
+- Never hardcode timezone strings in components
+- Use `lib/clock.ts` utilities for timezone conversions
+
+#### Performance considerations
+
+- Use `React.memo` for clock components to prevent unnecessary parent re-renders
+- Consider `requestAnimationFrame` for high-frequency updates if battery becomes an issue
+- Document any `setInterval` usage in component comments
+
+#### Example structure
+
+```typescript
+'use client';
+import { useState, useEffect } from 'react';
+import { formatClockInTZ } from '@/lib/clock';
+
+export function ExchangeClock({ tz }: { tz: string }) {
+  const [time, setTime] = useState<string>('--:--:--');
+
+  useEffect(() => {
+    const update = () => setTime(formatClockInTZ(tz));
+    update(); // Initial
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval); // Cleanup
+  }, [tz]);
+
+  return <span aria-live="off">{time}</span>;
+}
+```
+
+**Key principles:**
+
+- No external timezone libraries (`date-fns-tz`, `luxon`) unless absolutely necessary
+- Prefer platform APIs (`Intl.DateTimeFormat`) for longevity and zero bundle size
+- Always clean up intervals to prevent memory leaks
+
 12. Testing Rules
 
 Jest config lives at repo root:
@@ -616,8 +666,6 @@ Every feature change set must include a short Change List using ADD / REPLACE / 
 
 Any feature addition that touches existing behaviour must include at least one lock-in proof: a focused test, or a before/after behaviour note demonstrating identical external behaviour.
 
-Every feature change set must include a short Change List using ADD / REPLACE / REMOVE bullets and a line stating “Existing features preserved: Yes/No” (Yes is the default expectation).
-Any feature addition that touches existing behaviour must include at least one lock-in proof: a focused test, or a before/after behaviour note showing the existing feature still behaves identically.
 New tabs must follow the global tab architecture.
 New pages must follow route organisation and analytics conventions.
 
