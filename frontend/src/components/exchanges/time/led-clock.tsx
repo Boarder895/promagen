@@ -84,7 +84,8 @@ type SevenSegmentDigitProps = {
  * ViewBox assumes each digit is 24 units wide, 44 units tall.
  */
 function SevenSegmentDigit({ digit, x }: SevenSegmentDigitProps) {
-  const segments = DIGIT_SEGMENTS[digit] ?? DIGIT_SEGMENTS['8'];
+  // DIGIT_SEGMENTS['8'] is guaranteed to exist as a fallback
+  const segments = DIGIT_SEGMENTS[digit] ?? DIGIT_SEGMENTS['8']!;
 
   // Segment paths (relative to digit origin)
   // Each segment is a small polygon/path
@@ -108,7 +109,7 @@ function SevenSegmentDigit({ digit, x }: SevenSegmentDigitProps) {
   return (
     <>
       {segmentPaths.map((d, i) => (
-        <Segment key={i} on={segments[i]} d={d} />
+        <Segment key={i} on={segments[i] ?? false} d={d} />
       ))}
     </>
   );

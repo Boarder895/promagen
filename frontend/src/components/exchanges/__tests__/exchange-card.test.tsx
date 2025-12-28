@@ -134,8 +134,8 @@ describe('ExchangeCard', () => {
 
     render(<ExchangeCard exchange={exchangeNoTz} />);
 
-    // Should show placeholder time
-    expect(screen.getByText('--:--:--')).toBeInTheDocument();
+    // Should show placeholder time (HH:MM format, no seconds since showSeconds=false)
+    expect(screen.getByText('--:--')).toBeInTheDocument();
   });
 });
 

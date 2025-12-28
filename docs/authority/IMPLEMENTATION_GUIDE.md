@@ -1,197 +1,172 @@
 # Exchange Clock Implementation Guide
 
-## 📦 Files Created/Modified
+## 📦 Files Overview
 
-### Modified Files
-1. **`frontend/src/lib/clock.ts`** ✅
-   - Enhanced with new `formatClockInTZ()` function
-   - Existing `nowInTZ()` and `formatClock()` preserved
-   - Uses native `Intl.DateTimeFormat` (zero dependencies)
+### Clock Components (Time Display)
 
-### New Files Created
-2. **`frontend/src/components/exchanges/exchange-clock.tsx`** ✨
-   - Reusable clock component for any timezone
-   - Updates every second via `setInterval`
-   - Memoized with `React.memo` for performance
-   - Full TypeScript types
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `LedClock` | `components/exchanges/time/led-clock.tsx` | 7-segment LED display clock (primary) |
+| `ExchangeClock` | `components/exchanges/time/exchange-clock.tsx` | Text-based clock (fallback) |
+| `HybridClock` | `components/exchanges/time/hybrid-clock.tsx` | Analog + digital combo |
+| `AnalogClock` | `components/exchanges/time/analog-clock.tsx` | SVG analog clock face |
+| `MarketStatusIndicator` | `components/exchanges/time/market-status.tsx` | Open/Closed status badge |
 
-3. **`frontend/src/lib/__tests__/clock.test.ts`** 🧪
-   - Comprehensive tests for clock utilities
-   - Tests timezone handling, formatting, edge cases
+### Supporting Files
 
-4. **`frontend/src/components/exchanges/__tests__/exchange-clock.test.tsx`** 🧪
-   - Component tests with React Testing Library
-   - Tests rendering, updates, cleanup, memoization
+| File | Purpose |
+|------|---------|
+| `lib/clock.ts` | Timezone utilities (`formatClockInTZ`, `nowInTZ`) |
+| `lib/__tests__/clock.test.ts` | Unit tests for clock utilities |
+| `components/exchanges/__tests__/exchange-clock.test.tsx` | Component tests |
 
 ---
 
-## 🚀 Quick Start
+## 🎯 Primary Component: LedClock
+
+The `LedClock` component is a retro 7-segment LED display clock used in exchange cards.
+
+### Features
+
+- **7-segment display** – Classic LCD/LED aesthetic with green (emerald-400) digits
+- **Dim segments** – "Off" segments are visible at 10% opacity for authentic LED look
+- **Blinking colon** – Blinks every second (on even seconds, off on odd)
+- **Optional seconds** – `showSeconds={true}` for HH:MM:SS, default is HH:MM
+- **Timezone-aware** – Uses native `Intl.DateTimeFormat` (zero dependencies)
+- **Memoized** – `React.memo` prevents unnecessary re-renders
+
+### Props
+
+```typescript
+type LedClockProps = {
+  tz: string;           // IANA timezone (e.g. "Asia/Tokyo")
+  showSeconds?: boolean; // Show seconds (default: false)
+  className?: string;    // CSS class for wrapper
+  ariaLabel?: string;    // Accessibility label (default: "Local time")
+};
+```
 
 ### Example Usage
 
 ```tsx
-import ExchangeClock from '@/components/exchanges/exchange-clock';
+import { LedClock } from '@/components/exchanges/time/led-clock';
 
-// Basic usage
-<ExchangeClock tz="Asia/Tokyo" />
+// Basic (HH:MM format)
+<LedClock tz="Asia/Tokyo" />
 
-// With custom styling
-<ExchangeClock 
-  tz="Europe/London" 
-  className="text-lg font-mono text-blue-500" 
-/>
+// With seconds (HH:MM:SS format)
+<LedClock tz="Europe/London" showSeconds />
 
 // With custom aria-label
-<ExchangeClock 
+<LedClock 
   tz="America/New_York" 
-  ariaLabel="New York time" 
+  ariaLabel="New York local time" 
 />
 ```
 
-### Integration with Exchange Cards
+### Fallback Behavior
 
-Here's how to integrate the clock into your exchange cards:
-
-```tsx
-import ExchangeClock from '@/components/exchanges/exchange-clock';
-import type { Exchange } from '@/types/exchange';
-
-function ExchangeCard({ exchange }: { exchange: Exchange }) {
-  return (
-    <div className="border rounded-lg p-4">
-      {/* Exchange name + flag */}
-      <h3 className="text-lg font-semibold">
-        {getFlagEmoji(exchange.iso2)} {exchange.exchange}
-      </h3>
-      
-      {/* Live clock - immediately below name */}
-      <div className="mt-2 flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">🕐</span>
-        <ExchangeClock 
-          tz={exchange.tz} 
-          className="font-mono text-sm"
-          ariaLabel={`${exchange.city} local time`}
-        />
-      </div>
-      
-      {/* Market status */}
-      <div className="mt-2">
-        <span className="text-sm">● Open</span>
-      </div>
-      
-      {/* Market data */}
-      <div className="mt-4">
-        {/* Your market data here */}
-      </div>
-    </div>
-  );
-}
-```
+When timezone is empty or invalid:
+- `showSeconds={false}` → displays `--:--`
+- `showSeconds={true}` → displays `--:--:--`
 
 ---
 
-## 📁 File Locations (Where to place files in your project)
+## 🏗️ Integration with ExchangeCard
 
-Copy files to these exact locations:
+The `ExchangeCard` component uses `LedClock` for time display:
+
+```tsx
+// From exchange-card.tsx (lines 77-87)
+{tz ? (
+  <LedClock
+    tz={tz}
+    showSeconds={false}
+    ariaLabel={`Local time in ${city || name}`}
+  />
+) : (
+  <div className="...">
+    <span className="font-mono text-sm text-slate-500">--:--</span>
+  </div>
+)}
+```
+
+**Key integration points:**
+- Default format: HH:MM (no seconds) for cleaner exchange card layout
+- Fallback placeholder matches clock format (`--:--` without seconds)
+- ARIA label includes city/exchange name for accessibility
+
+---
+
+## 📁 File Locations
 
 ```
-C:\Users\Proma\Projects\promagen\frontend\src\
-├── lib\
-│   ├── clock.ts                          ← Replace this file
-│   └── __tests__\
-│       └── clock.test.ts                 ← Create this file
+frontend/src/
+├── lib/
+│   ├── clock.ts                           ← Timezone utilities
+│   └── __tests__/
+│       └── clock.test.ts                  ← Unit tests
 │
-└── components\
-    └── exchanges\
-        ├── exchange-clock.tsx            ← Create this file
-        └── __tests__\
-            └── exchange-clock.test.tsx   ← Create this file
+└── components/
+    └── exchanges/
+        ├── exchange-card.tsx              ← Uses LedClock
+        ├── time/
+        │   ├── led-clock.tsx              ← 7-segment LED display ★
+        │   ├── exchange-clock.tsx         ← Text-based clock
+        │   ├── hybrid-clock.tsx           ← Analog + digital
+        │   ├── analog-clock.tsx           ← SVG analog
+        │   └── market-status.tsx          ← Open/Closed badge
+        └── __tests__/
+            ├── exchange-card.test.tsx     ← Card tests
+            └── exchange-clock.test.tsx    ← Clock tests
 ```
 
 ---
 
 ## ✅ Verification Steps
 
-### Step 1: Lint & Type Check (PowerShell - Frontend folder)
+### Step 1: Lint & Type Check (PowerShell – Frontend folder)
 
 ```powershell
-# Navigate to frontend folder
 cd C:\Users\Proma\Projects\promagen\frontend
 
-# Run TypeScript type checking
-npm run typecheck
+# TypeScript check
+pnpm run typecheck
 # Expected: No errors
 
-# Run ESLint
-npm run lint
+# ESLint
+pnpm run lint
 # Expected: No errors
 ```
 
-### Step 2: Run Tests (PowerShell - Frontend folder)
+### Step 2: Run Tests (PowerShell – Frontend folder)
 
 ```powershell
 # Run all tests
-npm test
+pnpm run test:ci
 
-# Run only clock-related tests
-npm test clock
+# Run only exchange-related tests
+pnpm test -- --testPathPattern="exchange"
 
-# Expected output:
-# ✓ lib/clock > formatClock > should format a Date object as HH:MM:SS
-# ✓ lib/clock > formatClockInTZ > should format current time in a valid timezone
-# ✓ lib/clock > formatClockInTZ > should return "--:--:--" for invalid timezone
-# ✓ ExchangeClock > should render with default props
-# ✓ ExchangeClock > should update time when setInterval fires
-# ✓ ExchangeClock > should clean up interval on unmount
-# ... (all tests passing)
+# Expected: All tests pass
 ```
 
 ### Step 3: Manual Testing (Browser)
 
-1. **Start dev server:**
-   ```powershell
-   npm run dev
-   ```
-
-2. **Create a test page** (`frontend/src/app/test-clock/page.tsx`):
-   ```tsx
-   import ExchangeClock from '@/components/exchanges/exchange-clock';
-   
-   export default function TestClockPage() {
-     return (
-       <div className="p-8 space-y-4">
-         <h1 className="text-2xl font-bold">Clock Test</h1>
-         
-         <div className="space-y-2">
-           <div>Tokyo: <ExchangeClock tz="Asia/Tokyo" /></div>
-           <div>London: <ExchangeClock tz="Europe/London" /></div>
-           <div>New York: <ExchangeClock tz="America/New_York" /></div>
-           <div>Sydney: <ExchangeClock tz="Australia/Sydney" /></div>
-           <div>Invalid: <ExchangeClock tz="Invalid/Timezone" /></div>
-         </div>
-       </div>
-     );
-   }
-   ```
-
-3. **Visit:** `http://localhost:3000/test-clock`
-
-4. **Expected behavior:**
-   - ✅ All clocks display in HH:MM:SS format (24-hour)
-   - ✅ Clocks update every second
+1. Start dev server: `pnpm dev`
+2. Navigate to exchange rails or macro page
+3. Verify:
+   - ✅ LED clocks display in HH:MM format (green digits)
+   - ✅ Colons blink every second
    - ✅ Different timezones show different times
-   - ✅ Invalid timezone shows `--:--:--`
+   - ✅ Dim segments visible when "off"
    - ✅ No console errors
 
-### Step 4: Production Build Test (PowerShell - Frontend folder)
+### Step 4: Production Build
 
 ```powershell
-# Build for production
-npm run build
-
+pnpm run build
 # Expected: Build succeeds with no errors
-# Expected: No TypeScript errors
-# Expected: No ESLint errors
 ```
 
 ---
@@ -201,54 +176,41 @@ npm run build
 ### ✅ Successful Integration Checklist
 
 - [ ] TypeScript compilation succeeds with no errors
-- [ ] ESLint passes with no warnings
-- [ ] All tests pass (100% of clock tests)
+- [ ] ESLint passes with no warnings  
+- [ ] All tests pass (including exchange-card.test.tsx)
 - [ ] Production build succeeds
-- [ ] Clocks update smoothly every second in the browser
-- [ ] Invalid timezones show fallback `--:--:--`
+- [ ] LED clocks display correctly with green 7-segment digits
+- [ ] Colons blink every second
+- [ ] Invalid/missing timezones show placeholder (`--:--`)
 - [ ] No console errors or warnings
-- [ ] Memory leak test: Navigate away from clock page → no warnings
 
 ### ✅ Performance Checklist
 
 - [ ] CPU usage stays low (<1% per clock on modern desktop)
 - [ ] No visible jank or stutter in updates
-- [ ] Component is memoized (verified in tests)
-- [ ] Interval cleanup happens on unmount (verified in tests)
+- [ ] Component is memoized (uses React.memo)
+- [ ] Interval cleanup happens on unmount
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Issue: "Module not found: Can't resolve '@/lib/clock'"
+### Issue: TypeScript error "segments[i] is possibly undefined"
 
-**Solution:** Check your `tsconfig.json` has the path alias configured:
-
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
-}
+**Solution:** The fix uses nullish coalescing:
+```typescript
+<Segment key={i} on={segments[i] ?? false} d={d} />
 ```
 
-### Issue: Tests fail with "Cannot find module '@/lib/clock'"
+### Issue: Test expects `--:--:--` but component shows `--:--`
 
-**Solution:** Check your `jest.config.js` has moduleNameMapper:
+**Cause:** Test expectation doesn't match component behavior when `showSeconds={false}`.
 
-```javascript
-module.exports = {
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-  },
-};
-```
+**Solution:** Update test to expect `--:--` (the correct placeholder format).
 
 ### Issue: Clock shows wrong time
 
-**Solution:** Verify the timezone string is a valid IANA timezone:
+**Solution:** Verify timezone string is valid IANA format:
 - ✅ Correct: `"Asia/Tokyo"`, `"Europe/London"`
 - ❌ Wrong: `"Tokyo"`, `"GMT"`, `"EST"`
 
@@ -256,83 +218,32 @@ module.exports = {
 
 ## 📊 Implementation Summary
 
-### What Was Changed
+### LedClock Component
 
-1. **`lib/clock.ts`**
-   - **Added:** `formatClockInTZ()` function (new)
-   - **Preserved:** `nowInTZ()` and `formatClock()` (unchanged)
-   - **Dependencies:** Zero (uses native `Intl.DateTimeFormat`)
+- **Type:** Client component (`'use client'`)
+- **Props:** `tz`, `showSeconds`, `className`, `ariaLabel`
+- **Performance:** Memoized with `React.memo`
+- **Accessibility:** ARIA-compliant, screen reader friendly
+- **Cleanup:** Properly cleans up `setInterval` on unmount
+- **Dependencies:** Zero (uses native `Intl.DateTimeFormat`)
 
-2. **New Component:** `ExchangeClock`
-   - **Type:** Client component (`'use client'`)
-   - **Props:** `tz`, `className`, `ariaLabel`
-   - **Performance:** Memoized with `React.memo`
-   - **Accessibility:** ARIA-compliant, screen reader friendly
-   - **Cleanup:** Properly cleans up `setInterval` on unmount
+### Design Decisions
 
-3. **Tests:** 100% coverage of new functionality
-   - Unit tests for `formatClockInTZ()`
-   - Integration tests for `ExchangeClock` component
-   - Edge case handling (invalid timezones, cleanup, updates)
-
----
-
-## 🎨 Design Decisions
-
-### Why `Intl.DateTimeFormat` instead of a library?
-
-1. **Zero bundle size** – No external dependencies
-2. **Native performance** – Fastest possible implementation
-3. **永久 (eternal)** – Part of ECMAScript standard, will never be deprecated
-4. **97%+ browser support** – Works in all modern browsers
-5. **Aligns with existing code** – Your `lib/clock.ts` already uses this pattern
-
-### Why update every second?
-
-1. **User expectation** – Financial apps show "live" data
-2. **Minimal battery impact** – <0.5% per hour on mobile
-3. **Professional appearance** – Reinforces real-time nature of the app
-4. **Desktop-first** – Your primary use case (mobile is secondary)
-
-### Why `React.memo`?
-
-Prevents unnecessary re-renders when parent components update. Since clocks update frequently internally, memoization ensures they don't cause parent re-renders.
-
----
-
-## 🚦 Next Steps
-
-1. **Copy files to your project** (see "File Locations" section above)
-2. **Run verification steps** (lint, typecheck, test, build)
-3. **Integrate into exchange cards** (see "Integration with Exchange Cards" example)
-4. **Test in browser** (create test page or integrate directly)
-5. **Commit changes:**
-
-```powershell
-git add frontend/src/lib/clock.ts
-git add frontend/src/components/exchanges/exchange-clock.tsx
-git add frontend/src/lib/__tests__/clock.test.ts
-git add frontend/src/components/exchanges/__tests__/exchange-clock.test.tsx
-
-git commit -m "feat: add live exchange clocks with timezone support
-
-- Add formatClockInTZ() to lib/clock.ts (native Intl API)
-- Create ExchangeClock component (memoized, auto-updating)
-- Add comprehensive tests for clock utilities and component
-- Zero dependencies, 24-hour format, graceful fallback"
-```
+1. **7-segment display** – Professional financial app aesthetic
+2. **Green digits** – Classic LED look (emerald-400)
+3. **Dim "off" segments** – Authentic LCD feel at 10% opacity
+4. **HH:MM default** – Cleaner layout, seconds optional
+5. **SVG-based** – Crisp at any scale, small bundle size
 
 ---
 
 ## 📝 Notes
 
-- **Existing features preserved:** Yes (all existing functions in `lib/clock.ts` are unchanged)
+- **Existing features preserved:** Yes
 - **Breaking changes:** None
 - **Dependencies added:** None (uses native browser APIs)
-- **Bundle size impact:** +2KB (component + utilities)
+- **Bundle size impact:** ~3KB (SVG paths + component logic)
 
 ---
 
-**Implementation complete!** ✅
-
-All files are ready for integration. Follow the verification steps to ensure everything works correctly.
+**Documentation updated:** December 2024
