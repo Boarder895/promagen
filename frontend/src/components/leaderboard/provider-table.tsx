@@ -1,7 +1,5 @@
 'use client';
 
-import { buildGoHref } from '@/lib/affiliate/outbound';
-
 type ProviderRow = {
   id: string;
   name: string;
@@ -38,10 +36,10 @@ export default function ProviderTable({ rows }: { rows: ProviderRow[] }) {
           </div>
           <div className="pt-3">
             <a
-              href={buildGoHref(r.id, 'leaderboard_table')}
+              href={`/providers/${encodeURIComponent(r.id)}`}
               className="text-sm underline opacity-90"
             >
-              Try ?
+              Open prompt builder →
             </a>
           </div>
         </div>

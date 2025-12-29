@@ -57,7 +57,9 @@ function safeTrack<K extends AnalyticsEventName>(name: K, payload: AnalyticsEven
 const USAGE_WEIGHT = {
   provider_click: 1,
   provider_outbound: 1,
+  provider_launch: 2,
   prompt_builder_open: 1,
+  prompt_copy: 2,
   prompt_submit: 3,
   prompt_success: 5,
 } as const;
@@ -188,5 +190,53 @@ export function trackPromptSuccess(params: TrackPromptSuccessParams): void {
     provider_id: providerId,
     ...normaliseSurface('prompt_builder'),
     usage_weight: USAGE_WEIGHT.prompt_success,
+  });
+}
+
+export interface TrackPromptCopyParams {
+  providerId: string;
+  /** Length of the copied prompt text */
+  promptLength?: number;
+}
+
+/**
+ * trackPromptCopy
+ *
+ * Fired when a user copies a prompt to clipboard.
+ * Authority: docs/authority/prompt-builder-page.md § Analytics events
+ */
+export function trackPromptCopy(params: TrackPromptCopyParams): void {
+  const { providerId, promptLength } = params;
+
+  safeTrack('prompt_copy', {
+    provider_id: providerId,
+    prompt_length: promptLength,
+    ...normaliseSurface('prompt_builder'),
+    usage_weight: USAGE_WEIGHT.prompt_copy,
+  });
+}
+
+export interface TrackProviderLaunchParams {
+  providerId: string;
+  providerName?: string;
+  /** Source context for the launch action */
+  src?: string;
+}
+
+/**
+ * trackProviderLaunch
+ *
+ * Fired when the user clicks the launch button to open the provider platform.
+ * Authority: docs/authority/prompt-builder-page.md § Analytics events
+ */
+export function trackProviderLaunch(params: TrackProviderLaunchParams): void {
+  const { providerId, providerName, src } = params;
+
+  safeTrack('provider_launch', {
+    provider_id: providerId,
+    provider_name: providerName,
+    src,
+    ...normaliseSurface('prompt_builder'),
+    usage_weight: USAGE_WEIGHT.provider_launch,
   });
 }

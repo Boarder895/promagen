@@ -261,7 +261,7 @@ SSOT for what the UI shows (including FX pair metadata and ribbon defaults) live
 Fly.io hosts:
 the gateway runtime that loads the Brain JSON files and resolves a role to its provider list,
 the worker logic that performs the HTTP call(s) and hands payloads to the adapter layer for normalisation,
-the cache layer that keeps data warm for your ribbons and mini widgets (and returns mode: "cached" when serving within TTL).
+the cache layer that keeps data warm for your ribbons (and returns mode: "cached" when serving within TTL).
 In the current operating model there is one live provider (Twelve Data) and no synthetic/demo mode. The only active modes are live and cached; fallback is reserved for the future when backup providers are reintroduced.
 Promagen on Fly.io becomes:
 “Promagen: powered by many APIs under one unified logic layer, running on an infrastructure platform that you control.”

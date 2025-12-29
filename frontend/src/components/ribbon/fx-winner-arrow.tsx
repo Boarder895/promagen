@@ -26,7 +26,7 @@ export type FxWinnerArrowProps = {
   hoverText?: string | null;
 
   /**
-   * Calm Mode (global pause): pause the arrow “life” animation only.
+   * Calm Mode (global pause): pause the arrow "life" animation only.
    * (Decision/timing stays identical; this is visual-only.)
    */
   isPaused?: boolean;
@@ -86,7 +86,7 @@ export function FxWinnerArrow({
   }, [clearTimers]);
 
   React.useEffect(() => {
-    // On first render, render immediately (no “confirmation delay” on initial load)
+    // On first render, render immediately (no "confirmation delay" on initial load)
     if (firstRender.current) {
       firstRender.current = false;
       setSide(desiredSide);
@@ -99,7 +99,7 @@ export function FxWinnerArrow({
       return;
     }
 
-    // If side doesn’t change, just update opacity (confidence) smoothly
+    // If side doesn't change, just update opacity (confidence) smoothly
     if (side === desiredSide) {
       const nextOpacity = desiredSide !== 'off' ? desiredOpacity : 0;
       setLiveOpacity(nextOpacity);
@@ -109,7 +109,7 @@ export function FxWinnerArrow({
 
     clearTimers();
 
-    // 1) Confirmation delay (feels “earned”, not twitchy)
+    // 1) Confirmation delay (feels "earned", not twitchy)
     const t1 = window.setTimeout(() => {
       // 2) Fade out
       setIsVisible(false);
@@ -141,6 +141,8 @@ export function FxWinnerArrow({
 
   const showTooltip = hoverText && canHoverDesktop() && desiredSide !== 'off';
 
+  // Upward-pointing arrow SVG (spec: green arrow pointing up next to winning currency)
+  // The arrow always points UP — it indicates "this currency strengthened"
   const arrow = (
     <span
       aria-hidden="true"
@@ -156,27 +158,28 @@ export function FxWinnerArrow({
         animationPlayState: isPaused ? 'paused' : 'running',
       }}
     >
-      {/* Real arrow glyph (shaft + head). Points right by default; rotate for left. */}
+      {/* Upward-pointing arrow: indicates the adjacent currency has strengthened */}
       <svg
-        width="1em"
-        height="1em"
+        width="0.75em"
+        height="0.75em"
         viewBox="0 0 24 24"
         aria-hidden="true"
         focusable="false"
-        style={{ transform: side === 'left' ? 'rotate(180deg)' : undefined }}
       >
+        {/* Arrow shaft (vertical) */}
         <path
-          d="M4 12h13"
+          d="M12 19V6"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5"
           strokeLinecap="round"
         />
+        {/* Arrow head (pointing up) */}
         <path
-          d="M14 6l6 6-6 6"
+          d="M5 12l7-7 7 7"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />

@@ -617,7 +617,7 @@ These are hard requirements (not “nice ideas”):
 Front-end policy:
 
 - There is exactly one client poller for FX quotes.
-- All components (ribbon, mini widgets, cards) read from the same shared store/context.
+- All components (ribbon, cards) read from the same shared store/context.
 - Adding more widgets must not multiply /api/fx calls.
 - Pause (“calm mode”) stops motion and client polling, but does not change server-side caching policy.
 
@@ -1330,7 +1330,7 @@ Budget guardrail (New, must stay true)
 Front-end policy:
 
 - There is exactly one client poller for FX quotes.
-- All components (ribbon, mini widgets, cards) read from the same shared store/context.
+- All components (ribbon, cards) read from the same shared store/context.
 - Adding more widgets must not multiply /api/fx calls.
 - Pause (“calm mode”) stops motion and client polling, but does not change server-side caching policy.
 

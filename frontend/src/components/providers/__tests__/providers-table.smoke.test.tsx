@@ -8,8 +8,13 @@ import ProvidersTable from '../providers-table';
  * Smoke/contract tests for the AI Providers leaderboard table.
  *
  * Scope lock:
- * - Enforces the “Promagen Users” column contract + outbound /go routing + header order.
+ * - Enforces the "Promagen Users" column contract + internal navigation + header order.
  * - Does NOT assert colours/spacing/typography (visual styling is locked elsewhere).
+ *
+ * Architecture note:
+ * The table links to the internal provider detail/prompt builder page (/providers/{id}),
+ * NOT directly to the external outbound route (/go/{id}). Outbound routing happens
+ * from the LaunchPanel component on the provider detail page.
  */
 
 type PromagenUsersCountryUsage = { countryCode: string; count: number };
@@ -60,7 +65,7 @@ const baseProviders: ReadonlyArray<TestProvider> = [
     generationSpeed: 'varies',
     affordability: 'Free tier: limited; £',
 
-    // Hard truth: zero users => render empty cell (no “0”, no “—”, no placeholders).
+    // Hard truth: zero users => render empty cell (no "0", no "—", no placeholders).
     promagenUsers: [],
   },
   {
@@ -73,13 +78,13 @@ const baseProviders: ReadonlyArray<TestProvider> = [
     score: 90,
     trend: 'flat',
     sweetSpot: 'Best-in-class aesthetics for striking concept imagery.',
-    visualStyles: 'Cinematic, painterly, stylised “wow” images.',
+    visualStyles: 'Cinematic, painterly, stylised "wow" images.',
     apiAvailable: false,
     affiliateProgramme: false,
     generationSpeed: 'medium',
     affordability: 'Paid; £££',
 
-    // 8 countries => show top 6 + trailing “… +2”
+    // 8 countries => show top 6 + trailing "… +2"
     promagenUsers: [
       { countryCode: 'US', count: 10 },
       { countryCode: 'GB', count: 9 },
@@ -109,7 +114,7 @@ function mustGetColumnIndex(table: HTMLTableElement, headerText: string): number
 }
 
 function mustGetRowByProviderName(name: RegExp): HTMLTableRowElement {
-  // Provider cell is an outbound /go link (authority rule: no direct external links in UI).
+  // Provider cell is an internal link to the prompt builder page.
   const el = screen.queryByRole('link', { name }) ?? screen.getByText(name);
   const row = el.closest('tr') as HTMLTableRowElement | null;
   if (!row) throw new Error(`Could not find table row for provider: ${String(name)}`);
@@ -131,25 +136,16 @@ function mustGetCell(row: HTMLTableRowElement, headerText: string): HTMLElement 
   return cell;
 }
 
-function parseRelativeHref(href: string): URL {
-  // Hrefs in the UI are relative (e.g. /go/openai?src=leaderboard&sid=...)
-  // Add a base so URL() can parse it.
-  return new URL(href, 'http://test.local');
-}
-
-function expectGoHref(link: HTMLElement, expectedProviderId: string, expectedSrc: string): void {
+/**
+ * Verify that a link points to the internal provider detail page.
+ * Contract: table links go to /providers/{id}, not external URLs.
+ */
+function expectProviderPageHref(link: HTMLElement, expectedProviderId: string): void {
   const href = link.getAttribute('href');
   expect(href).toBeTruthy();
 
-  const url = parseRelativeHref(String(href));
-  expect(url.pathname).toBe(`/go/${expectedProviderId}`);
-  expect(url.searchParams.get('src')).toBe(expectedSrc);
-
-  // sid is optional (client-only), but if present it must be sane.
-  const sid = url.searchParams.get('sid');
-  if (sid !== null) {
-    expect(sid).toMatch(/^[a-zA-Z0-9_-]{8,96}$/);
-  }
+  // Internal link to provider detail/prompt builder page
+  expect(href).toBe(`/providers/${expectedProviderId}`);
 
   // Contract: UI must not link directly to external provider URLs.
   expect(String(href)).not.toMatch(/^https?:\/\//i);
@@ -189,17 +185,19 @@ describe('ProvidersTable (smoke)', () => {
     expect(screen.queryByText('Tags')).toBeNull();
   });
 
-  it('routes outbound provider links via /go/{id}?src=leaderboard (no direct external URLs in the UI)', () => {
+  it('routes provider links to internal prompt builder page (no direct external URLs in the UI)', () => {
     render(<ProvidersTable providers={baseProviders} />);
 
+    // Table links go to the internal provider detail/prompt builder page.
+    // Outbound routing to external sites happens from the LaunchPanel on that page.
     const openaiLink = screen.getByRole('link', { name: /OpenAI DALL·E/i });
-    expectGoHref(openaiLink, 'openai', 'leaderboard');
+    expectProviderPageHref(openaiLink, 'openai');
 
     const stabilityLink = screen.getByRole('link', { name: /Stability AI/i });
-    expectGoHref(stabilityLink, 'stability', 'leaderboard');
+    expectProviderPageHref(stabilityLink, 'stability');
 
     const mjLink = screen.getByRole('link', { name: /Midjourney/i });
-    expectGoHref(mjLink, 'midjourney', 'leaderboard');
+    expectProviderPageHref(mjLink, 'midjourney');
   });
 
   it('renders Promagen Users as flags + Roman numerals, with underlying Arabic numbers available via aria-label', () => {
@@ -238,16 +236,16 @@ describe('ProvidersTable (smoke)', () => {
     expect(normaliseText(usersCell.textContent)).toBe('');
   });
 
-  it('shows only the top 6 countries, then adds a trailing “… +n” when more exist', () => {
+  it('shows only the top 6 countries, then adds a trailing "… +n" when more exist', () => {
     render(<ProvidersTable providers={baseProviders} />);
 
     const providerRow = mustGetRowByProviderName(/Midjourney/i);
     const usersCell = mustGetCell(providerRow, 'Promagen Users');
 
-    // 8 total -> show 6 + “… +2”
+    // 8 total -> show 6 + "… +2"
     expect(within(usersCell).getByText(/… \+2/)).toBeInTheDocument();
 
-    // The two “extra” countries must not be rendered as country blocks.
+    // The two "extra" countries must not be rendered as country blocks.
     expect(within(usersCell).queryByLabelText('IT: 4 users')).toBeNull();
     expect(within(usersCell).queryByLabelText('CA: 3 users')).toBeNull();
 

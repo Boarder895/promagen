@@ -664,29 +664,9 @@ Event idea:
 o provider_id
 o provider_name
 o tier (free/paid)
-o has_finance_widgets (true/false)
+
 That gives you “Who actually uses the studio, not just lands on the homepage”.
 
----
-
-c) finance_toggle
-For the paid studio mini-widgets:
-• Event name: finance_toggle
-• Params:
-o asset_class: 'fx' | 'commodities' | 'crypto'
-o state: 'on' | 'off'
-o provider_id (which AI provider’s studio they’re in)
-So in your toggle handler you’d do:
-trackEvent('finance_toggle', {
-asset_class: 'fx',
-state: enabled ? 'on' : 'off',
-provider_id: providerId,
-});
-Now you can answer questions like:
-• “Do people actually want FX in the prompt builder, or is it mostly crypto?”
-• “Do paid users of Provider X behave differently from Provider Y?”
-
----
 
 4. Why this pattern is powerful for you
    For Promagen specifically, this gives you three big wins:

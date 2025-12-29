@@ -13,48 +13,12 @@
 
 import { trackEvent, type AnalyticsEventName, type AnalyticsEventParams } from '@/lib/analytics/ga';
 
-export type FinanceAssetClass = 'fx' | 'commodities' | 'crypto';
-
-export type FinanceToggleState = 'on' | 'off';
-
-export interface FinanceToggleParams {
-  /**
-   * Optional provider context if the toggle lives inside a provider page.
-   */
-  providerId?: string;
-  /**
-   * Which asset class is being toggled.
-   */
-  assetClass: FinanceAssetClass;
-  /**
-   * New state of the toggle.
-   */
-  state: FinanceToggleState;
-}
-
 function safeTrack<K extends AnalyticsEventName>(name: K, payload?: AnalyticsEventParams<K>): void {
   try {
     trackEvent(name, payload);
   } catch {
     // Analytics is never allowed to break product behaviour.
   }
-}
-
-/**
- * trackFinanceToggle
- *
- * Fired when a finance toggle is changed (FX / commodities / crypto).
- * Observational only.
- */
-export function trackFinanceToggle({ providerId, assetClass, state }: FinanceToggleParams): void {
-  const enabled = state === 'on';
-
-  safeTrack('finance_toggle', {
-    widget: assetClass,
-    enabled,
-    // Optional dimension:
-    provider_id: providerId,
-  });
 }
 
 export interface RibbonPauseParams {

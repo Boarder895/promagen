@@ -2,7 +2,6 @@
 
 import React from 'react';
 import type { Provider } from '@/types/provider';
-import { buildGoHref } from '@/lib/affiliate/outbound';
 import { toRomanNumeral } from '@/lib/format/number';
 import { Flag } from '@/components/ui/flag';
 
@@ -112,7 +111,7 @@ function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCount
             );
           })}
 
-          {/* Trailing “… +n” when more than 6 countries */}
+          {/* Trailing "… +n" when more than 6 countries */}
           {idx === rows.length - 1 && remaining > 0 ? (
             <span
               className="text-slate-500"
@@ -210,9 +209,7 @@ export default function ProvidersTable(props: ProvidersTableProps) {
 
                     {hasOutboundDestination(p) ? (
                       <a
-                        href={buildGoHref(p.id, 'leaderboard')}
-                        target="_blank"
-                        rel="noreferrer"
+                        href={`/providers/${encodeURIComponent(p.id)}`}
                         className="underline decoration-slate-600 underline-offset-4 hover:decoration-slate-300"
                       >
                         {p.name}

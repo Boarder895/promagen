@@ -16,8 +16,8 @@ export interface FxPairLabelProps {
 
   /**
    * Direction logic:
-   * - base stronger => arrow on the LEFT (near base)
-   * - quote stronger => arrow on the RIGHT (near quote)
+   * - base stronger => green ↑ arrow next to base currency
+   * - quote stronger => green ↑ arrow next to quote currency
    * - neutral => no arrow
    */
   winnerSide?: FxWinnerSide;
@@ -31,23 +31,6 @@ export interface FxPairLabelProps {
    * 24h delta (percentage), used only for hover copy.
    */
   deltaPct?: number | null;
-}
-
-function CurrencyWithFlag({
-  currencyCode,
-  countryCode,
-}: {
-  currencyCode: string;
-  countryCode?: string | null;
-}) {
-  const code = (currencyCode ?? '').trim().toUpperCase();
-
-  return (
-    <span className="inline-flex items-center gap-1">
-      <span>{code}</span>
-      <Flag countryCode={countryCode} />
-    </span>
-  );
 }
 
 function formatSignedPct(deltaPct: number | null | undefined): string | null {
@@ -79,24 +62,38 @@ export function FxPairLabel({
         } over 24h (${pct})`
       : null;
 
+  // Arrow component - only rendered once, position determined by winner
+  const winnerArrow =
+    baseWins || quoteWins ? (
+      <FxWinnerArrow winnerSide={winnerSide} opacity={winnerOpacity} hoverText={hoverText} />
+    ) : null;
+
+  // Spec: "A single green winner arrow may appear next to one side of the pair label,
+  // pointing at the currency that has strengthened."
+  // Layout: arrow appears immediately adjacent to the winning currency.
+  // - Base wins: "AUD ↑ 🇦🇺 / GBP 🇬🇧" (arrow after base code, before base flag)
+  // - Quote wins: "AUD 🇦🇺 / ↑ GBP 🇬🇧" (arrow before quote code)
+
   return (
     <span className={className ?? 'inline-flex items-center gap-1'}>
-      {/* One arrow total. Side indicates winner. Always green (CSS). */}
-      {baseWins ? (
-        <FxWinnerArrow winnerSide="base" opacity={winnerOpacity} hoverText={hoverText} />
-      ) : null}
+      {/* Base currency with optional winner arrow */}
+      <span className="inline-flex items-center gap-0.5">
+        <span>{base.trim().toUpperCase()}</span>
+        {baseWins && winnerArrow}
+        <Flag countryCode={baseCountryCode} />
+      </span>
 
-      <CurrencyWithFlag currencyCode={base} countryCode={baseCountryCode} />
-
+      {/* Separator */}
       <span aria-hidden="true" className="text-slate-500">
         {separator}
       </span>
 
-      <CurrencyWithFlag currencyCode={quote} countryCode={quoteCountryCode} />
-
-      {quoteWins ? (
-        <FxWinnerArrow winnerSide="quote" opacity={winnerOpacity} hoverText={hoverText} />
-      ) : null}
+      {/* Quote currency with optional winner arrow */}
+      <span className="inline-flex items-center gap-0.5">
+        {quoteWins && winnerArrow}
+        <span>{quote.trim().toUpperCase()}</span>
+        <Flag countryCode={quoteCountryCode} />
+      </span>
     </span>
   );
 }

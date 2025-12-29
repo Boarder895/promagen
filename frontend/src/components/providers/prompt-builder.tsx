@@ -3,7 +3,7 @@
 'use client';
 
 import React from 'react';
-import { trackPromptBuilderOpen } from '@/lib/analytics/providers';
+import { trackPromptBuilderOpen, trackPromptCopy } from '@/lib/analytics/providers';
 
 export interface PromptBuilderProvider {
   id?: string;
@@ -60,6 +60,14 @@ export function PromptBuilder(props: PromptBuilderProps) {
 
     const value = textarea.value ?? '';
     if (!value) return;
+
+    // Fire analytics event with prompt length
+    if (provider.id) {
+      trackPromptCopy({
+        providerId: provider.id,
+        promptLength: value.length,
+      });
+    }
 
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(value).catch(() => {

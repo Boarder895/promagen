@@ -29,22 +29,22 @@ export const dynamic = 'force-dynamic';
 // Redirects must remain fast.
 export const maxDuration = 10;
 
-const ProviderRecordSchema = z
-  .object({
-    id: z.string().min(1),
-    name: z.string().min(1),
-    website: z.string().url(),
-    affiliateUrl: z.string().url().optional().nullable(),
-    requiresDisclosure: z.boolean().optional(),
-    affiliate: z
-      .object({
-        enabled: z.boolean().optional(),
-        subIdParam: z.string().min(1).max(32).optional(),
-      })
-      .optional()
-      .nullable(),
-  })
-  .strict();
+// FIX: Removed .strict() — providers.json has additional fields (sweetSpot, visualStyles, etc.)
+// that are valid but not needed for outbound. The code normalizes at lines 69-77 anyway.
+const ProviderRecordSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  website: z.string().url(),
+  affiliateUrl: z.string().url().optional().nullable(),
+  requiresDisclosure: z.boolean().optional(),
+  affiliate: z
+    .object({
+      enabled: z.boolean().optional(),
+      subIdParam: z.string().min(1).max(32).optional(),
+    })
+    .optional()
+    .nullable(),
+});
 
 type ProviderRecord = z.infer<typeof ProviderRecordSchema>;
 
@@ -212,7 +212,7 @@ function getCountryFromHeaders(headers: Headers): string | null {
   const cc = raw.trim().toUpperCase();
   if (!/^[A-Z]{2}$/.test(cc)) return null;
 
-  // Common “unknown” placeholders to ignore (defensive).
+  // Common "unknown" placeholders to ignore (defensive).
   if (cc === 'XX' || cc === 'ZZ') return null;
 
   return cc;

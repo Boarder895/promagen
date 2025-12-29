@@ -9,13 +9,12 @@ type ProvidersLayoutProps = {
 /**
  * Shared layout wrapper for all /providers routes.
  *
- * This keeps spacing and max-width consistent across:
- * - /providers
- * - /providers/[id]
- * - /providers/... subroutes (prompt builder, trends, etc.)
+ * Pass-through layout: individual pages handle their own layout needs.
+ * - /providers/[id] uses HomepageGrid (full-page layout)
+ * - Other pages have their own <main> wrappers
  *
  * Background + min-height are handled by the root layout + globals.css.
  */
 export default function ProvidersLayout({ children }: ProvidersLayoutProps): JSX.Element {
-  return <div className="mx-auto w-full max-w-7xl px-4 py-6 md:px-6">{children}</div>;
+  return <>{children}</>;
 }

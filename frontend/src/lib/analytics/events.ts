@@ -41,7 +41,9 @@ export type ProviderSurface = 'leaderboard' | 'detail' | 'prompt_builder' | stri
 export type AnalyticsEventName =
   | 'provider_click'
   | 'provider_outbound'
+  | 'provider_launch'
   | 'prompt_builder_open'
+  | 'prompt_copy'
   | 'prompt_submit'
   | 'prompt_success'
   | 'finance_toggle'
@@ -84,12 +86,35 @@ export interface AnalyticsEventPayloads {
     usage_weight?: number;
   };
 
+  provider_launch: {
+    provider_id: string;
+    provider_name?: string;
+    /**
+     * Source context for the launch action (e.g. 'prompt_builder').
+     */
+    src?: string;
+    surface?: ProviderSurface;
+    source?: ProviderSurface;
+    usage_weight?: number;
+  };
+
   prompt_builder_open: {
     provider_id: string;
     /**
      * Where the prompt builder was opened from (route context).
      */
     location?: 'leaderboard' | 'providers_page' | 'deeplink' | string;
+    surface?: ProviderSurface;
+    source?: ProviderSurface;
+    usage_weight?: number;
+  };
+
+  prompt_copy: {
+    provider_id: string;
+    /**
+     * Length of the copied prompt (for analytics insights).
+     */
+    prompt_length?: number;
     surface?: ProviderSurface;
     source?: ProviderSurface;
     usage_weight?: number;

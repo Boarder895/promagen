@@ -1,11 +1,11 @@
-// C:\Users\Proma\Projects\promagen\frontend\src\app\providers\[id]\prompt-builder\page.tsx
+// src/app/providers/[id]/prompt-builder/page.tsx
+//
+// DEPRECATED: This route has been merged into /providers/[id].
+// This file exists only to redirect old links.
+//
+// Authority: docs/authority/prompt-builder-page.md
 
-import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-
-import PromptBuilder, { type PromptBuilderProvider } from '@/components/providers/prompt-builder';
-import { getProviderById } from '@/data/providers';
-import type { Provider } from '@/types/providers';
+import { redirect } from 'next/navigation';
 
 interface PageParams {
   params: {
@@ -13,71 +13,7 @@ interface PageParams {
   };
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
-// Metadata
-// ───────────────────────────────────────────────────────────────────────────────
-
-export function generateMetadata({ params }: PageParams): Metadata {
-  const provider = getProviderById(params.id);
-
-  const baseTitle = 'Prompt builder · Promagen';
-  const title = provider ? `Prompt builder · ${provider.name} · Promagen` : baseTitle;
-
-  const description =
-    provider?.tagline ??
-    'Prompt builder studio for Promagen – craft prompts for AI image providers with live market context.';
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-    },
-    twitter: {
-      title,
-      description,
-      card: 'summary',
-    },
-  };
-}
-
-// ───────────────────────────────────────────────────────────────────────────────
-// Mapping helpers
-// ───────────────────────────────────────────────────────────────────────────────
-
-function toPromptBuilderProvider(provider: Provider): PromptBuilderProvider {
-  // Authority: canonical URL in SSOT is `website` (with `url` as a normalised alias).
-  // PromptBuilder supports both `websiteUrl` and `url` for backwards compatibility.
-  const officialUrl = provider.website;
-  const urlAlias = provider.url ?? provider.website;
-
-  return {
-    id: provider.id,
-    name: provider.name,
-    websiteUrl: officialUrl,
-    url: urlAlias,
-    description: provider.tagline,
-    tags: provider.tags,
-  };
-}
-
-// ───────────────────────────────────────────────────────────────────────────────
-// Page
-// ───────────────────────────────────────────────────────────────────────────────
-
-export default function PromptBuilderPage({ params }: PageParams) {
-  const provider = getProviderById(params.id);
-
-  if (!provider) {
-    notFound();
-  }
-
-  const builderProvider = toPromptBuilderProvider(provider);
-
-  return (
-    <main aria-label={`Prompt builder for ${builderProvider.name}`} className="flex flex-col gap-6">
-      <PromptBuilder provider={builderProvider} />
-    </main>
-  );
+export default function PromptBuilderRedirect({ params }: PageParams) {
+  // Permanent redirect to the new location
+  redirect(`/providers/${encodeURIComponent(params.id)}`);
 }

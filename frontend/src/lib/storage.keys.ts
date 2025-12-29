@@ -20,13 +20,6 @@ export const KEYS = {
      */
     planV1: 'promagen.user.plan.v1',
   },
-  studio: {
-    /**
-     * Prompt-studio finance widget toggles (FX / Commodities / Crypto),
-     * stored as a small versioned JSON blob.
-     */
-    financeWidgetsV1: 'promagen.studio.financeWidgets.v1',
-  },
 } as const;
 
 /** Legacy keys retained solely for forward migration. */
