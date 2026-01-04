@@ -1,0 +1,553 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Semantic type classifications for prompt options. Maps each option to a type that contributes composition hints. Used by the dynamic composition engine.",
+    "updated": "2026-01-04",
+    "authority": "docs/authority/prompt-builder-page.md"
+  },
+  "subjectTypes": {
+    "single-figure": {
+      "description": "Individual human or humanoid character",
+      "keywords": [
+        "portrait of a woman", "portrait of a man", "elderly person", "child playing",
+        "teenager", "baby", "knight in armour", "astronaut in space suit", "cyberpunk hacker",
+        "samurai warrior", "Victorian detective", "jazz musician", "ballerina dancing",
+        "chef cooking", "scientist in lab", "pirate captain", "angel with wings",
+        "ninja", "monk meditating", "geisha", "gladiator", "viking warrior",
+        "Egyptian pharaoh", "Greek god", "Roman soldier", "medieval king", "queen on throne",
+        "princess", "prince", "jester", "blacksmith", "farmer", "fisherman", "hunter",
+        "explorer", "archaeologist", "pilot", "race car driver", "surfer", "skateboarder",
+        "rock climber", "yoga practitioner", "martial artist", "boxer", "fencer", "archer",
+        "sniper", "soldier", "nurse", "doctor", "firefighter", "police officer", "teacher",
+        "student", "librarian", "artist painting", "musician performing", "elf archer",
+        "wizard", "witch", "vampire", "werewolf", "zombie", "ghost", "skeleton warrior"
+      ],
+      "compositionHints": {
+        "placement": ["figure as focal point", "subject anchor"],
+        "space": ["action space around subject", "breathing room"],
+        "depth": ["figure-ground separation", "subject isolation"]
+      }
+    },
+    "creature": {
+      "description": "Non-human creatures, monsters, mythical beings",
+      "keywords": [
+        "robot android", "dragon", "mermaid", "demon creature", "mythical creature",
+        "alien being", "phoenix rising", "unicorn", "griffin", "centaur", "fairy"
+      ],
+      "compositionHints": {
+        "placement": ["creature dominates composition", "dynamic positioning"],
+        "space": ["environment interaction space", "scale reference"],
+        "depth": ["creature-environment integration", "fantasy depth"]
+      }
+    },
+    "animal": {
+      "description": "Real-world animals",
+      "keywords": [
+        "wolf", "cat", "owl", "horse", "butterfly", "eagle soaring", "lion", "tiger",
+        "elephant", "dolphin", "whale"
+      ],
+      "compositionHints": {
+        "placement": ["animal as subject", "natural positioning"],
+        "space": ["habitat context", "movement space"],
+        "depth": ["wildlife photography depth", "environmental integration"]
+      }
+    },
+    "landscape": {
+      "description": "Natural environments and vistas",
+      "keywords": [
+        "mountain landscape", "forest scene", "ocean view", "desert landscape",
+        "tropical beach", "waterfall"
+      ],
+      "compositionHints": {
+        "placement": ["horizon line placement", "thirds division"],
+        "space": ["expansive negative space", "scale reference"],
+        "depth": ["foreground-midground-background layers", "atmospheric perspective"]
+      }
+    },
+    "architecture": {
+      "description": "Buildings and structures",
+      "keywords": [
+        "castle", "cottage", "cityscape"
+      ],
+      "compositionHints": {
+        "placement": ["structural leading lines", "geometric anchor"],
+        "space": ["perspective depth", "converging lines"],
+        "depth": ["architectural depth planes", "structural layers"]
+      }
+    },
+    "vehicle": {
+      "description": "Transportation and machines",
+      "keywords": [
+        "vintage car", "spaceship"
+      ],
+      "compositionHints": {
+        "placement": ["vehicle as hero", "dynamic angle"],
+        "space": ["motion space", "environment context"],
+        "depth": ["vehicle-environment separation", "speed suggestion"]
+      }
+    },
+    "object": {
+      "description": "Objects, plants, still life",
+      "keywords": [
+        "flower bouquet", "single rose", "tree of life"
+      ],
+      "compositionHints": {
+        "placement": ["object isolation", "centred focus"],
+        "space": ["clean negative space", "product-style framing"],
+        "depth": ["object-background separation", "focus stack"]
+      }
+    },
+    "superhero": {
+      "description": "Superheroes and powered characters",
+      "keywords": ["superhero"],
+      "compositionHints": {
+        "placement": ["heroic positioning", "power pose framing"],
+        "space": ["action impact space", "dramatic staging"],
+        "depth": ["hero-environment contrast", "dramatic depth"]
+      }
+    }
+  },
+  "actionTypes": {
+    "static": {
+      "description": "Still, posed, or minimal movement",
+      "keywords": [
+        "standing confidently", "sitting relaxed", "sleeping soundly", "reading intently",
+        "looking away", "looking at camera", "profile view", "back turned", "arms crossed",
+        "hands in pockets", "leaning against wall", "meditating peacefully"
+      ],
+      "compositionHints": {
+        "movement": ["stable composition", "grounded framing"],
+        "tension": ["calm visual weight", "balanced energy"],
+        "space": ["contemplative negative space"]
+      }
+    },
+    "dynamic": {
+      "description": "Active movement and action",
+      "keywords": [
+        "running fast", "jumping high", "flying through air", "fighting fiercely",
+        "mid-leap", "lunging forward", "dodging attack", "blocking blow", "swinging sword",
+        "drawing bow", "throwing punch", "kicking high", "spinning around"
+      ],
+      "compositionHints": {
+        "movement": ["motion direction space", "action trajectory"],
+        "tension": ["dynamic diagonal lines", "movement anticipation"],
+        "space": ["action follow-through space", "impact zone"]
+      }
+    },
+    "flowing": {
+      "description": "Graceful, smooth movement",
+      "keywords": [
+        "walking slowly", "dancing gracefully", "twirling dress", "floating weightlessly",
+        "swimming underwater"
+      ],
+      "compositionHints": {
+        "movement": ["fluid motion path", "graceful arc"],
+        "tension": ["gentle visual flow", "smooth energy"],
+        "space": ["flowing negative space", "movement continuation"]
+      }
+    },
+    "magical": {
+      "description": "Supernatural or magical actions",
+      "keywords": [
+        "casting spell", "conjuring magic", "summoning spirits", "channeling energy",
+        "transforming shape", "teleporting", "levitating objects", "creating illusion",
+        "breathing fire"
+      ],
+      "compositionHints": {
+        "movement": ["energy emanation", "magical focal point"],
+        "tension": ["supernatural tension", "power concentration"],
+        "space": ["magic effect space", "energy field"]
+      }
+    },
+    "interactive": {
+      "description": "Interacting with objects or environment",
+      "keywords": [
+        "reaching out", "holding weapon", "playing instrument", "embracing someone",
+        "climbing up", "falling down", "painting canvas", "sculpting clay", "writing notes",
+        "typing keyboard", "cooking food", "eating meal", "drinking tea", "pouring wine"
+      ],
+      "compositionHints": {
+        "movement": ["interaction focal point", "object relationship"],
+        "tension": ["engagement energy", "connection emphasis"],
+        "space": ["interaction space", "object proximity"]
+      }
+    },
+    "expressive": {
+      "description": "Emotional expression and communication",
+      "keywords": [
+        "laughing heartily", "crying softly", "screaming loudly", "whispering secret",
+        "singing song", "bowing deeply", "saluting", "waving hand", "pointing finger",
+        "making peace sign", "thumbs up", "praying hands", "covering face", "wiping tears"
+      ],
+      "compositionHints": {
+        "movement": ["expression emphasis", "emotional focal"],
+        "tension": ["emotional energy", "feeling direction"],
+        "space": ["emotional breathing room", "intimate framing"]
+      }
+    }
+  },
+  "styleTypes": {
+    "cinematic": {
+      "description": "Film and movie aesthetics",
+      "keywords": [
+        "cinematic style", "movie still", "film screenshot", "film noir", "neo-noir",
+        "noir style", "blockbuster look"
+      ],
+      "compositionHints": {
+        "mood": ["theatrical staging", "cinematic depth"],
+        "framing": ["film aspect awareness", "dramatic angles"],
+        "lighting": ["cinematic light direction", "mood lighting"]
+      }
+    },
+    "painterly": {
+      "description": "Traditional painting styles",
+      "keywords": [
+        "oil painting", "watercolor painting", "acrylic painting", "impressionist",
+        "expressionist", "baroque style", "renaissance style", "art nouveau", "art deco"
+      ],
+      "compositionHints": {
+        "mood": ["painterly depth", "classical balance"],
+        "framing": ["artistic composition", "golden ratio tendency"],
+        "lighting": ["painted light", "atmospheric perspective"]
+      }
+    },
+    "photographic": {
+      "description": "Photography and photo-realistic styles",
+      "keywords": [
+        "photorealistic", "hyperrealistic", "documentary style", "editorial style",
+        "fashion photography", "portrait photography", "landscape photography",
+        "macro photography", "architectural photography", "product photography",
+        "food photography", "wildlife photography", "street photography",
+        "fine art photography", "studio photography"
+      ],
+      "compositionHints": {
+        "mood": ["natural framing", "authentic perspective"],
+        "framing": ["photographic rules", "realistic depth of field"],
+        "lighting": ["natural light awareness", "realistic shadows"]
+      }
+    },
+    "digital": {
+      "description": "Digital art and rendering",
+      "keywords": [
+        "digital painting", "concept art", "matte painting", "3D render", "CGI",
+        "Unreal Engine", "Octane render", "ray tracing"
+      ],
+      "compositionHints": {
+        "mood": ["digital precision", "rendered clarity"],
+        "framing": ["technical composition", "precise staging"],
+        "lighting": ["rendered lighting", "global illumination"]
+      }
+    },
+    "illustrated": {
+      "description": "Illustration and graphic styles",
+      "keywords": [
+        "illustration", "comic book style", "manga style", "anime style", "cartoon style",
+        "pixel art", "voxel art", "low poly", "isometric", "vector art", "line art",
+        "sketch style", "charcoal drawing", "pencil drawing", "ink wash"
+      ],
+      "compositionHints": {
+        "mood": ["stylized framing", "graphic emphasis"],
+        "framing": ["illustrative composition", "stylized depth"],
+        "lighting": ["graphic lighting", "stylized shadows"]
+      }
+    },
+    "genre": {
+      "description": "Genre-specific aesthetics",
+      "keywords": [
+        "steampunk", "cyberpunk", "dieselpunk", "solarpunk", "biopunk", "gothic style",
+        "dark fantasy", "high fantasy", "sword and sorcery", "sci-fi", "space opera",
+        "post-apocalyptic", "utopian", "dystopian"
+      ],
+      "compositionHints": {
+        "mood": ["genre-appropriate staging", "world-building depth"],
+        "framing": ["genre conventions", "thematic framing"],
+        "lighting": ["genre-specific atmosphere", "mood reinforcement"]
+      }
+    },
+    "aesthetic": {
+      "description": "Internet aesthetics and movements",
+      "keywords": [
+        "vaporwave", "synthwave", "outrun", "dreamcore", "weirdcore", "liminal space",
+        "cottagecore", "dark academia", "light academia", "ethereal", "whimsical",
+        "magical realism", "Y2K aesthetic"
+      ],
+      "compositionHints": {
+        "mood": ["aesthetic-specific atmosphere", "mood-driven composition"],
+        "framing": ["aesthetic conventions", "vibe-appropriate framing"],
+        "lighting": ["aesthetic lighting", "mood enhancement"]
+      }
+    },
+    "minimal": {
+      "description": "Minimalist and clean styles",
+      "keywords": ["minimalist"],
+      "compositionHints": {
+        "mood": ["extreme simplicity", "reduction to essence"],
+        "framing": ["maximum negative space", "single focal point"],
+        "lighting": ["clean lighting", "uncluttered"]
+      }
+    },
+    "maximal": {
+      "description": "Maximalist and detailed styles",
+      "keywords": ["maximalist"],
+      "compositionHints": {
+        "mood": ["rich detail everywhere", "visual abundance"],
+        "framing": ["filled frame", "layered complexity"],
+        "lighting": ["detailed lighting", "multiple sources"]
+      }
+    }
+  },
+  "environmentTypes": {
+    "interior": {
+      "description": "Indoor spaces and rooms",
+      "keywords": [
+        "modern penthouse", "rustic cabin", "library interior", "bookshop", "coffee shop",
+        "restaurant", "bar interior", "nightclub", "concert venue", "theater stage",
+        "art gallery", "museum hall", "grand ballroom", "throne room", "dungeon",
+        "prison cell", "courtroom", "classroom", "gymnasium", "swimming pool",
+        "spa interior", "bedroom", "living room", "kitchen", "bathroom", "attic",
+        "basement", "garage", "workshop", "artist studio", "photography studio",
+        "recording studio", "TV studio", "spaceship interior", "bridge of starship",
+        "engine room", "cargo hold", "control room", "server room", "bunker"
+      ],
+      "compositionHints": {
+        "environment": ["interior framing", "room context"],
+        "depth": ["indoor depth layers", "architectural lines"],
+        "lighting": ["interior light sources", "window light awareness"]
+      }
+    },
+    "exterior-nature": {
+      "description": "Natural outdoor environments",
+      "keywords": [
+        "enchanted forest", "dark forest", "misty mountains", "snowy peaks",
+        "volcanic landscape", "desert oasis", "tropical jungle", "bamboo forest",
+        "cherry blossom garden", "zen garden", "English garden", "wild meadow",
+        "sunflower field", "lavender field", "wheat field", "vineyard", "orchard",
+        "farm countryside", "rolling hills", "cliff edge", "rocky coastline",
+        "sandy beach", "coral reef", "deep ocean", "river delta", "waterfall pool",
+        "hot springs", "ice cave", "crystal cavern"
+      ],
+      "compositionHints": {
+        "environment": ["natural framing", "organic lines"],
+        "depth": ["natural depth perspective", "atmospheric depth"],
+        "lighting": ["natural light direction", "environmental mood"]
+      }
+    },
+    "exterior-urban": {
+      "description": "Urban and built outdoor environments",
+      "keywords": [
+        "futuristic city", "cyberpunk streets", "city rooftop", "skyscraper interior",
+        "office building", "warehouse", "factory floor", "train station",
+        "airport terminal", "subway station"
+      ],
+      "compositionHints": {
+        "environment": ["urban framing", "architectural context"],
+        "depth": ["city depth layers", "building perspective"],
+        "lighting": ["urban light mix", "artificial lighting"]
+      }
+    },
+    "historical": {
+      "description": "Historical and period environments",
+      "keywords": [
+        "ancient temple", "medieval castle", "Gothic cathedral", "Victorian manor",
+        "haunted mansion", "lighthouse", "windmill"
+      ],
+      "compositionHints": {
+        "environment": ["period-appropriate framing", "historical context"],
+        "depth": ["historical architecture depth", "era-specific details"],
+        "lighting": ["period lighting", "historical atmosphere"]
+      }
+    },
+    "fantastical": {
+      "description": "Fantasy and sci-fi environments",
+      "keywords": [
+        "space station", "alien planet", "underwater kingdom", "underground city",
+        "abandoned mine", "treehouse", "escape pod"
+      ],
+      "compositionHints": {
+        "environment": ["fantastical staging", "world-building context"],
+        "depth": ["fantasy depth", "otherworldly perspective"],
+        "lighting": ["magical/alien lighting", "atmosphere enhancement"]
+      }
+    },
+    "action": {
+      "description": "Action and conflict environments",
+      "keywords": [
+        "military base", "battlefield", "arena", "colosseum", "laboratory",
+        "hospital ward"
+      ],
+      "compositionHints": {
+        "environment": ["action staging", "tension environment"],
+        "depth": ["dynamic environment depth", "action context"],
+        "lighting": ["dramatic environment lighting", "tension atmosphere"]
+      }
+    }
+  },
+  "lightingTypes": {
+    "soft-ambient": {
+      "description": "Soft, diffused, ambient lighting",
+      "keywords": [
+        "natural light", "overcast light", "cloudy diffused", "window light", "skylight",
+        "soft shadows", "diffused light", "even lighting", "ambient fill"
+      ],
+      "compositionHints": {
+        "contrast": ["gentle tonal transitions", "soft gradients"],
+        "mood": ["calm atmosphere", "gentle mood"],
+        "depth": ["subtle depth definition", "soft separation"]
+      }
+    },
+    "dramatic-directional": {
+      "description": "High contrast, directional lighting",
+      "keywords": [
+        "dramatic shadows", "hard shadows", "chiaroscuro", "Rembrandt lighting",
+        "split lighting", "low key lighting", "spotlight", "cinematic lighting",
+        "theatrical lighting", "contrasty lighting"
+      ],
+      "compositionHints": {
+        "contrast": ["high contrast zones", "light-shadow interplay"],
+        "mood": ["dramatic atmosphere", "tension through light"],
+        "depth": ["strong depth separation", "light-defined planes"]
+      }
+    },
+    "golden-hour": {
+      "description": "Warm, golden natural light",
+      "keywords": [
+        "golden hour", "magic hour", "sunrise light", "sunset light",
+        "color temperature warm", "golden glow"
+      ],
+      "compositionHints": {
+        "contrast": ["warm tonal range", "golden highlights"],
+        "mood": ["warm romantic atmosphere", "nostalgic feeling"],
+        "depth": ["warm depth layers", "long shadows"]
+      }
+    },
+    "cool-blue": {
+      "description": "Cool, blue-toned lighting",
+      "keywords": [
+        "blue hour", "moonlight", "color temperature cool", "blue cast"
+      ],
+      "compositionHints": {
+        "contrast": ["cool tonal range", "blue shadows"],
+        "mood": ["mysterious atmosphere", "night feeling"],
+        "depth": ["cool depth separation", "moonlit depth"]
+      }
+    },
+    "rim-separation": {
+      "description": "Rim and backlight for subject separation",
+      "keywords": [
+        "backlight", "rim light", "hair light", "kicker light", "silhouette framing"
+      ],
+      "compositionHints": {
+        "contrast": ["edge definition", "subject outline"],
+        "mood": ["ethereal atmosphere", "subject emphasis"],
+        "depth": ["strong subject-background separation", "halo effect"]
+      }
+    },
+    "neon-artificial": {
+      "description": "Neon and artificial lighting",
+      "keywords": [
+        "neon lights", "LED lighting", "fluorescent light", "strobe light"
+      ],
+      "compositionHints": {
+        "contrast": ["colored light zones", "artificial contrast"],
+        "mood": ["urban/tech atmosphere", "contemporary feeling"],
+        "depth": ["neon depth planes", "colored separation"]
+      }
+    },
+    "volumetric": {
+      "description": "Volumetric and atmospheric lighting",
+      "keywords": [
+        "volumetric lighting", "god rays", "crepuscular rays", "light rays",
+        "lens flare", "light leak", "light bloom"
+      ],
+      "compositionHints": {
+        "contrast": ["light beam definition", "atmospheric contrast"],
+        "mood": ["ethereal atmosphere", "divine feeling"],
+        "depth": ["volumetric depth", "ray-defined space"]
+      }
+    },
+    "practical": {
+      "description": "Practical and motivated lighting",
+      "keywords": [
+        "candlelight", "firelight", "torchlight", "lantern light",
+        "practical lighting", "motivated lighting"
+      ],
+      "compositionHints": {
+        "contrast": ["natural falloff", "source-motivated contrast"],
+        "mood": ["intimate atmosphere", "authentic feeling"],
+        "depth": ["light source depth", "natural depth"]
+      }
+    }
+  },
+  "cameraTypes": {
+    "wide-capture": {
+      "description": "Wide angle and environmental lenses",
+      "keywords": [
+        "wide angle lens", "ultra wide lens", "fisheye lens", "14mm lens", "24mm lens"
+      ],
+      "compositionHints": {
+        "perspective": ["environmental context", "space exaggeration"],
+        "distortion": ["wide perspective distortion", "curved lines"],
+        "depth": ["deep depth of field", "environment emphasis"]
+      }
+    },
+    "standard": {
+      "description": "Standard and normal lenses",
+      "keywords": [
+        "50mm lens", "35mm lens", "eye level", "DSLR quality", "mirrorless quality"
+      ],
+      "compositionHints": {
+        "perspective": ["natural perspective", "true-to-eye view"],
+        "distortion": ["minimal distortion", "natural proportions"],
+        "depth": ["natural depth", "comfortable framing"]
+      }
+    },
+    "portrait-lens": {
+      "description": "Portrait and telephoto for subject isolation",
+      "keywords": [
+        "portrait lens", "85mm lens", "135mm lens", "telephoto lens", "200mm lens",
+        "shallow depth of field", "bokeh effect", "creamy bokeh", "f/1.4 aperture",
+        "f/1.8 aperture", "f/2.8 aperture"
+      ],
+      "compositionHints": {
+        "perspective": ["compressed perspective", "subject emphasis"],
+        "distortion": ["flattering proportions", "subject isolation"],
+        "depth": ["shallow depth", "background blur"]
+      }
+    },
+    "macro": {
+      "description": "Macro and close-up photography",
+      "keywords": [
+        "macro lens", "microscopic view", "extreme close-up"
+      ],
+      "compositionHints": {
+        "perspective": ["intimate detail view", "micro world"],
+        "distortion": ["detail emphasis", "scale distortion"],
+        "depth": ["extremely shallow depth", "detail isolation"]
+      }
+    },
+    "cinematic": {
+      "description": "Cinematic and film cameras",
+      "keywords": [
+        "anamorphic lens", "cinema camera", "IMAX quality", "RED camera", "ARRI Alexa",
+        "35mm film", "16mm film"
+      ],
+      "compositionHints": {
+        "perspective": ["cinematic framing", "film aspect"],
+        "distortion": ["anamorphic characteristics", "film quality"],
+        "depth": ["cinematic depth", "professional look"]
+      }
+    },
+    "dynamic-angle": {
+      "description": "Dynamic and unusual camera angles",
+      "keywords": [
+        "low angle", "high angle", "overhead shot", "ground level", "aerial view",
+        "drone shot", "bird's eye view", "worm's eye view", "Dutch angle"
+      ],
+      "compositionHints": {
+        "perspective": ["dramatic angle", "power dynamics"],
+        "distortion": ["intentional perspective shift", "angle impact"],
+        "depth": ["angle-enhanced depth", "dramatic layering"]
+      }
+    }
+  }
+}

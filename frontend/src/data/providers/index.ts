@@ -3,7 +3,10 @@
 
 import providersJson from './providers.json';
 import capabilitiesJson from './providers.capabilities.json';
+import promptOptionsJson from './prompt-options.json';
+import platformFormatsJson from './platform-formats.json';
 import type { Provider } from '@/types/providers';
+import type { PromptOptions, PlatformFormats } from '@/types/prompt-builder';
 
 export type { Provider } from '@/types/providers';
 
@@ -70,5 +73,36 @@ export const PROVIDER_CAPABILITIES: Record<string, ProviderCapabilityFlags> = Ob
  */
 export const getProviderCapabilities = (id: string): ProviderCapabilityFlags =>
   PROVIDER_CAPABILITIES[id] ?? DEFAULT_CAPABILITIES;
+
+// ============================================================================
+// Prompt Builder Exports
+// ============================================================================
+
+/**
+ * Prompt options: 30 curated options per category (uniform across all platforms)
+ */
+export const PROMPT_OPTIONS = promptOptionsJson as PromptOptions;
+
+/**
+ * Platform formats: assembly rules per platform
+ */
+export const PLATFORM_FORMATS = platformFormatsJson as PlatformFormats;
+
+/**
+ * Get all available prompt categories
+ */
+export const getPromptCategories = () => Object.keys(PROMPT_OPTIONS.categories);
+
+/**
+ * Get options for a specific category
+ */
+export const getPromptCategoryOptions = (category: string) =>
+  PROMPT_OPTIONS.categories[category as keyof typeof PROMPT_OPTIONS.categories]?.options ?? [];
+
+/**
+ * Get platform format configuration
+ */
+export const getPlatformFormatConfig = (platformId: string) =>
+  PLATFORM_FORMATS.platforms[platformId] ?? PLATFORM_FORMATS._defaults;
 
 export default PROVIDERS;

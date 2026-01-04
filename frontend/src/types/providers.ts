@@ -1,15 +1,60 @@
-// C:\Users\Proma\Projects\promagen\frontend\src\types\providers.ts
+// src/types/providers.ts
+// Updated: January 2026 - Added community voting/ranking fields
 
 export type ProviderTrend = 'up' | 'down' | 'flat';
 
 export type ProviderGenerationSpeed = 'fast' | 'medium' | 'slow' | 'varies';
 
+/**
+ * Quality tier for providers not covered by external benchmarks.
+ * Used as fallback when no ELO data is available.
+ */
+export type ProviderQualityTier = 
+  | 'top-tier'      // Best-in-class quality
+  | 'mid-tier'      // Good quality, competitive
+  | 'entry-tier'    // Basic quality, accessible
+  | 'specialized'   // Niche use case (anime, editing, etc.)
+  | 'utility';      // Not primarily generative (background removal, etc.)
+
+/**
+ * Community ranking data for a provider.
+ * Populated by user votes and recalculated hourly.
+ */
+export type ProviderRanking = {
+  /** Seed ELO from Artificial Analysis (null if not benchmarked) */
+  seedElo: number | null;
+  
+  /** Manual tier assignment for providers without external benchmarks */
+  seedTier: ProviderQualityTier;
+  
+  /** Bayesian score calculated from community votes (null until sufficient votes) */
+  bayesianScore: number | null;
+  
+  /** Community-derived rank 1-N (null until calculated) */
+  communityRank: number | null;
+  
+  /** Total weighted votes received */
+  totalVotes: number;
+  
+  /** Breakdown of vote signals */
+  signals: {
+    imageUploads: number;
+    imageLikes: number;
+    comments: number;
+    cardLikes: number;
+  };
+  
+  /** ISO timestamp of last ranking calculation */
+  lastCalculated: string | null;
+};
+
 export type Provider = {
   id: string;
   name: string;
-  country?: string;
+  country?: string; // DEPRECATED: Use countryCode instead
+  countryCode?: string; // ISO 3166-1 alpha-2 (e.g., "US", "GB", "DE")
 
-  score?: number;
+  score?: number; // Overall score 0-100
   trend?: ProviderTrend;
   tags?: string[];
 
@@ -27,12 +72,29 @@ export type Provider = {
 
   // Leaderboard enrichment fields (UI contract – optional until populated)
   icon?: string;
-  sweetSpot?: string;
+  localIcon?: string; // Local icon path (e.g., "/icons/providers/midjourney.png")
+  
+  // Leaderboard: HQ location and support
+  hqCity?: string; // Headquarters city (e.g., "San Francisco", "London")
+  timezone?: string; // IANA timezone (e.g., "America/Los_Angeles", "Europe/London")
+  supportHours?: string; // Human-readable (e.g., "24/7", "Mon-Fri 9AM-6PM PT")
+  
+  // Leaderboard: Image quality and scoring
+  imageQualityRank?: number; // Ordinal rank (1 = best quality, 2 = second best, etc.)
+  incumbentAdjustment?: boolean; // True if -5 Big Tech adjustment applies
+  
+  // Leaderboard: Visual styles and capabilities
   visualStyles?: string;
   apiAvailable?: boolean;
   affiliateProgramme?: boolean;
-  generationSpeed?: ProviderGenerationSpeed;
-  affordability?: string;
+  
+  // Community ranking (optional - populated when voting is enabled)
+  ranking?: ProviderRanking;
+  
+  // DEPRECATED fields (kept for backwards compatibility)
+  sweetSpot?: string; // DEPRECATED: Removed from new leaderboard
+  generationSpeed?: ProviderGenerationSpeed; // DEPRECATED: Removed from new leaderboard
+  affordability?: string; // DEPRECATED: Removed from new leaderboard
 
   // Prompt builder UX
   supportsPrefill?: boolean;

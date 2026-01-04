@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "id": "nzx-wellington",
     "city": "Wellington",
@@ -33,7 +33,7 @@
     "iso2": "JP",
     "tz": "Asia/Tokyo",
     "longitude": 139.6503,
-    "hoursTemplate": "asia-break",
+    "hoursTemplate": "asia-tokyo",
     "holidaysRef": "tse-tokyo",
     "latitude": 35.6762,
     "hemisphere": "NE"
@@ -46,7 +46,7 @@
     "iso2": "JP",
     "tz": "Asia/Tokyo",
     "longitude": 135.5023,
-    "hoursTemplate": "asia-short",
+    "hoursTemplate": "asia-tokyo",
     "holidaysRef": "ose-osaka",
     "latitude": 34.6937,
     "hemisphere": "NE"
@@ -59,7 +59,7 @@
     "iso2": "KR",
     "tz": "Asia/Seoul",
     "longitude": 126.978,
-    "hoursTemplate": "asia-break",
+    "hoursTemplate": "asia-korea",
     "holidaysRef": "krx-seoul",
     "latitude": 37.5665,
     "hemisphere": "NE"
@@ -72,7 +72,7 @@
     "iso2": "TW",
     "tz": "Asia/Taipei",
     "longitude": 121.5654,
-    "hoursTemplate": "asia-short",
+    "hoursTemplate": "asia-taiwan",
     "holidaysRef": "twse-taipei",
     "latitude": 25.033,
     "hemisphere": "NE"
@@ -85,7 +85,7 @@
     "iso2": "HK",
     "tz": "Asia/Hong_Kong",
     "longitude": 114.1694,
-    "hoursTemplate": "hk-break",
+    "hoursTemplate": "asia-hk",
     "holidaysRef": "hkex-hong-kong",
     "latitude": 22.3193,
     "hemisphere": "NE"
@@ -98,7 +98,7 @@
     "iso2": "CN",
     "tz": "Asia/Shanghai",
     "longitude": 121.4737,
-    "hoursTemplate": "asia-break",
+    "hoursTemplate": "asia-china",
     "holidaysRef": "sse-shanghai",
     "latitude": 31.2304,
     "hemisphere": "NE"
@@ -111,7 +111,7 @@
     "iso2": "CN",
     "tz": "Asia/Shanghai",
     "longitude": 114.0579,
-    "hoursTemplate": "asia-break",
+    "hoursTemplate": "asia-china",
     "holidaysRef": "szse-shenzhen",
     "latitude": 22.5431,
     "hemisphere": "NE"
@@ -124,7 +124,7 @@
     "iso2": "SG",
     "tz": "Asia/Singapore",
     "longitude": 103.8198,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-singapore",
     "holidaysRef": "sgx-singapore",
     "latitude": 1.3521,
     "hemisphere": "NE"
@@ -137,7 +137,7 @@
     "iso2": "MY",
     "tz": "Asia/Kuala_Lumpur",
     "longitude": 101.6869,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-malaysia",
     "holidaysRef": "bursa-kuala-lumpur",
     "latitude": 3.139,
     "hemisphere": "NE"
@@ -150,7 +150,7 @@
     "iso2": "ID",
     "tz": "Asia/Jakarta",
     "longitude": 106.8456,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-indonesia",
     "holidaysRef": "idx-jakarta",
     "latitude": -6.2088,
     "hemisphere": "SE"
@@ -163,7 +163,7 @@
     "iso2": "TH",
     "tz": "Asia/Bangkok",
     "longitude": 100.5018,
-    "hoursTemplate": "asia-break",
+    "hoursTemplate": "asia-thailand",
     "holidaysRef": "set-bangkok",
     "latitude": 13.7563,
     "hemisphere": "NE"
@@ -176,7 +176,7 @@
     "iso2": "PH",
     "tz": "Asia/Manila",
     "longitude": 120.9842,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-philippines",
     "holidaysRef": "pse-manila",
     "latitude": 14.5995,
     "hemisphere": "NE"
@@ -189,7 +189,7 @@
     "iso2": "VN",
     "tz": "Asia/Ho_Chi_Minh",
     "longitude": 106.6297,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-vietnam",
     "holidaysRef": "hose-ho-chi-minh",
     "latitude": 10.8231,
     "hemisphere": "NE"
@@ -202,7 +202,7 @@
     "iso2": "IN",
     "tz": "Asia/Kolkata",
     "longitude": 72.8777,
-    "hoursTemplate": "india-nse",
+    "hoursTemplate": "asia-india",
     "holidaysRef": "bse-mumbai",
     "latitude": 19.076,
     "hemisphere": "NE"
@@ -215,7 +215,7 @@
     "iso2": "IN",
     "tz": "Asia/Kolkata",
     "longitude": 72.8777,
-    "hoursTemplate": "india-nse",
+    "hoursTemplate": "asia-india",
     "holidaysRef": "nse-mumbai",
     "latitude": 19.076,
     "hemisphere": "NE"
@@ -228,7 +228,7 @@
     "iso2": "BD",
     "tz": "Asia/Dhaka",
     "longitude": 90.4125,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-bangladesh",
     "holidaysRef": "dse-dhaka",
     "latitude": 23.8103,
     "hemisphere": "NE"
@@ -241,7 +241,7 @@
     "iso2": "PK",
     "tz": "Asia/Karachi",
     "longitude": 67.0011,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-pakistan",
     "holidaysRef": "psx-karachi",
     "latitude": 24.8607,
     "hemisphere": "NE"
@@ -254,7 +254,7 @@
     "iso2": "LK",
     "tz": "Asia/Colombo",
     "longitude": 79.8612,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-srilanka",
     "holidaysRef": "cse-colombo",
     "latitude": 6.9271,
     "hemisphere": "NE"
@@ -267,7 +267,7 @@
     "iso2": "AE",
     "tz": "Asia/Dubai",
     "longitude": 55.2708,
-    "hoursTemplate": "gulf-halfday",
+    "hoursTemplate": "gulf-uae",
     "holidaysRef": "dfm-dubai",
     "latitude": 25.2048,
     "hemisphere": "NE"
@@ -280,7 +280,7 @@
     "iso2": "AE",
     "tz": "Asia/Dubai",
     "longitude": 54.3773,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "gulf-uae",
     "holidaysRef": "adx-abu-dhabi",
     "latitude": 24.4539,
     "hemisphere": "NE"
@@ -293,7 +293,7 @@
     "iso2": "SA",
     "tz": "Asia/Riyadh",
     "longitude": 46.6753,
-    "hoursTemplate": "gulf-halfday",
+    "hoursTemplate": "gulf-saudi",
     "holidaysRef": "tadawul-riyadh",
     "latitude": 24.7136,
     "hemisphere": "NE"
@@ -306,7 +306,7 @@
     "iso2": "IL",
     "tz": "Asia/Jerusalem",
     "longitude": 34.7818,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "gulf-israel",
     "holidaysRef": "tase-tel-aviv",
     "latitude": 32.0853,
     "hemisphere": "NE"
@@ -319,7 +319,7 @@
     "iso2": "IR",
     "tz": "Asia/Tehran",
     "longitude": 51.389,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "asia-singapore",
     "holidaysRef": "tse-tehran",
     "latitude": 35.6892,
     "hemisphere": "NE"
@@ -332,7 +332,7 @@
     "iso2": "TR",
     "tz": "Europe/Istanbul",
     "longitude": 28.9784,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-turkey",
     "holidaysRef": "bist-istanbul",
     "latitude": 41.0082,
     "hemisphere": "NE"
@@ -345,7 +345,7 @@
     "iso2": "RU",
     "tz": "Europe/Moscow",
     "longitude": 37.6173,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-russia",
     "holidaysRef": "moex-moscow",
     "latitude": 55.7558,
     "hemisphere": "NE"
@@ -358,7 +358,7 @@
     "iso2": "GR",
     "tz": "Europe/Athens",
     "longitude": 23.7275,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-greece",
     "holidaysRef": "athex-athens",
     "latitude": 37.9838,
     "hemisphere": "NE"
@@ -371,7 +371,7 @@
     "iso2": "PL",
     "tz": "Europe/Warsaw",
     "longitude": 21.0122,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-poland",
     "holidaysRef": "gpw-warsaw",
     "latitude": 52.2297,
     "hemisphere": "NE"
@@ -384,7 +384,7 @@
     "iso2": "AT",
     "tz": "Europe/Vienna",
     "longitude": 16.3738,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-austria",
     "holidaysRef": "wbag-vienna",
     "latitude": 48.2082,
     "hemisphere": "NE"
@@ -397,7 +397,7 @@
     "iso2": "CH",
     "tz": "Europe/Zurich",
     "longitude": 8.5417,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-swiss",
     "holidaysRef": "six-zurich",
     "latitude": 47.3769,
     "hemisphere": "NE"
@@ -410,7 +410,7 @@
     "iso2": "DE",
     "tz": "Europe/Berlin",
     "longitude": 8.6821,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-germany",
     "holidaysRef": "xetra-frankfurt",
     "latitude": 50.1109,
     "hemisphere": "NE"
@@ -423,7 +423,7 @@
     "iso2": "FR",
     "tz": "Europe/Paris",
     "longitude": 2.3522,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-euronext",
     "holidaysRef": "euronext-paris",
     "latitude": 48.8566,
     "hemisphere": "NE"
@@ -436,7 +436,7 @@
     "iso2": "NL",
     "tz": "Europe/Amsterdam",
     "longitude": 4.9041,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-euronext",
     "holidaysRef": "euronext-amsterdam",
     "latitude": 52.3676,
     "hemisphere": "NE"
@@ -449,7 +449,7 @@
     "iso2": "BE",
     "tz": "Europe/Brussels",
     "longitude": 4.3517,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-euronext",
     "holidaysRef": "euronext-brussels",
     "latitude": 50.8503,
     "hemisphere": "NE"
@@ -462,7 +462,7 @@
     "iso2": "IT",
     "tz": "Europe/Rome",
     "longitude": 9.19,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-italy",
     "holidaysRef": "borsa-italiana-milan",
     "latitude": 45.4642,
     "hemisphere": "NE"
@@ -475,7 +475,7 @@
     "iso2": "ES",
     "tz": "Europe/Madrid",
     "longitude": -3.7038,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-spain",
     "holidaysRef": "bme-madrid",
     "latitude": 40.4168,
     "hemisphere": "NW"
@@ -501,7 +501,7 @@
     "iso2": "IE",
     "tz": "Europe/Dublin",
     "longitude": -6.2603,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-ireland",
     "holidaysRef": "euronext-dublin",
     "latitude": 53.3498,
     "hemisphere": "NW"
@@ -514,7 +514,7 @@
     "iso2": "SE",
     "tz": "Europe/Stockholm",
     "longitude": 18.0686,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "europe-nordic",
     "holidaysRef": "nasdaq-stockholm",
     "latitude": 59.3293,
     "hemisphere": "NE"
@@ -527,7 +527,7 @@
     "iso2": "DK",
     "tz": "Europe/Copenhagen",
     "longitude": 12.5683,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "europe-nordic",
     "holidaysRef": "nasdaq-copenhagen",
     "latitude": 55.6761,
     "hemisphere": "NE"
@@ -540,7 +540,7 @@
     "iso2": "FI",
     "tz": "Europe/Helsinki",
     "longitude": 24.9384,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "europe-nordic",
     "holidaysRef": "nasdaq-helsinki",
     "latitude": 60.1699,
     "hemisphere": "NE"
@@ -553,7 +553,7 @@
     "iso2": "NO",
     "tz": "Europe/Oslo",
     "longitude": 10.7522,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-euronext",
     "holidaysRef": "oslo-bors",
     "latitude": 59.9139,
     "hemisphere": "NE"
@@ -566,7 +566,7 @@
     "iso2": "ZA",
     "tz": "Africa/Johannesburg",
     "longitude": 28.0473,
-    "hoursTemplate": "africa-standard",
+    "hoursTemplate": "africa-south",
     "holidaysRef": "jse-johannesburg",
     "latitude": -26.2041,
     "hemisphere": "SE"
@@ -579,7 +579,7 @@
     "iso2": "KE",
     "tz": "Africa/Nairobi",
     "longitude": 36.8219,
-    "hoursTemplate": "india-nse",
+    "hoursTemplate": "africa-kenya",
     "holidaysRef": "nse-nairobi",
     "latitude": -1.2921,
     "hemisphere": "SE"
@@ -592,7 +592,7 @@
     "iso2": "NG",
     "tz": "Africa/Lagos",
     "longitude": 3.3792,
-    "hoursTemplate": "africa-standard",
+    "hoursTemplate": "africa-nigeria",
     "holidaysRef": "ngx-lagos",
     "latitude": 6.5244,
     "hemisphere": "NE"
@@ -605,7 +605,7 @@
     "iso2": "MA",
     "tz": "Africa/Casablanca",
     "longitude": -7.5898,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "africa-morocco",
     "holidaysRef": "cse-casablanca",
     "latitude": 33.5731,
     "hemisphere": "NW"
@@ -618,7 +618,7 @@
     "iso2": "EG",
     "tz": "Africa/Cairo",
     "longitude": 31.2357,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "africa-egypt",
     "holidaysRef": "egx-cairo",
     "latitude": 30.0444,
     "hemisphere": "NE"
@@ -631,7 +631,7 @@
     "iso2": "BR",
     "tz": "America/Sao_Paulo",
     "longitude": -46.6333,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "latam-brazil",
     "holidaysRef": "b3-sao-paulo",
     "latitude": -23.5505,
     "hemisphere": "SW"
@@ -644,7 +644,7 @@
     "iso2": "AR",
     "tz": "America/Argentina/Buenos_Aires",
     "longitude": -58.3816,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "latam-argentina",
     "holidaysRef": "bcba-buenos-aires",
     "latitude": -34.6037,
     "hemisphere": "SW"
@@ -657,7 +657,7 @@
     "iso2": "CL",
     "tz": "America/Santiago",
     "longitude": -70.6693,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "latam-chile",
     "holidaysRef": "sse-santiago",
     "latitude": -33.4489,
     "hemisphere": "SW"
@@ -670,7 +670,7 @@
     "iso2": "PE",
     "tz": "America/Lima",
     "longitude": -77.0428,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "latam-peru",
     "holidaysRef": "bvl-lima",
     "latitude": -12.0464,
     "hemisphere": "SW"
@@ -683,7 +683,7 @@
     "iso2": "MX",
     "tz": "America/Mexico_City",
     "longitude": -99.1332,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "latam-mexico",
     "holidaysRef": "bmv-mexico-city",
     "latitude": 19.4326,
     "hemisphere": "NW"
@@ -696,7 +696,7 @@
     "iso2": "MX",
     "tz": "America/Mexico_City",
     "longitude": -99.1332,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "latam-mexico",
     "holidaysRef": "biva-mexico-city",
     "latitude": 19.4326,
     "hemisphere": "NW"
@@ -709,7 +709,7 @@
     "iso2": "CA",
     "tz": "America/Toronto",
     "longitude": -79.3832,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "canada-tsx",
     "holidaysRef": "tsx-toronto",
     "latitude": 43.6532,
     "hemisphere": "NW"
@@ -761,7 +761,7 @@
     "iso2": "CO",
     "tz": "America/Bogota",
     "longitude": -74.0721,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "latam-colombia",
     "holidaysRef": "bvc-bogota",
     "latitude": 4.711,
     "hemisphere": "NW"
@@ -774,7 +774,7 @@
     "iso2": "JM",
     "tz": "America/Jamaica",
     "longitude": -76.7936,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "us-standard",
     "holidaysRef": "jse-kingston",
     "latitude": 17.9714,
     "hemisphere": "NW"
@@ -787,7 +787,7 @@
     "iso2": "UY",
     "tz": "America/Montevideo",
     "longitude": -56.1645,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "us-standard",
     "holidaysRef": "bvcv-montevideo",
     "latitude": -34.9011,
     "hemisphere": "SW"
@@ -800,7 +800,7 @@
     "iso2": "PY",
     "tz": "America/Asuncion",
     "longitude": -57.5759,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "us-standard",
     "holidaysRef": "bvp-asuncion",
     "latitude": -25.2637,
     "hemisphere": "SW"
@@ -813,7 +813,7 @@
     "iso2": "PA",
     "tz": "America/Panama",
     "longitude": -79.5199,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "us-standard",
     "holidaysRef": "bvp-panama-city",
     "latitude": 8.9824,
     "hemisphere": "NW"
@@ -839,7 +839,7 @@
     "iso2": "TT",
     "tz": "America/Port_of_Spain",
     "longitude": -61.5086,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "us-standard",
     "holidaysRef": "ttse-port-of-spain",
     "latitude": 10.66,
     "hemisphere": "NW"
@@ -852,7 +852,7 @@
     "iso2": "MA",
     "tz": "Africa/Casablanca",
     "longitude": -7.5898,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "africa-morocco",
     "holidaysRef": "casablanca-alt-cse",
     "latitude": 33.5731,
     "hemisphere": "NW"
@@ -865,7 +865,7 @@
     "iso2": "TN",
     "tz": "Africa/Tunis",
     "longitude": 10.1815,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "africa-south",
     "holidaysRef": "tunis-bvmt",
     "latitude": 36.8065,
     "hemisphere": "NE"
@@ -878,7 +878,7 @@
     "iso2": "CM",
     "tz": "Africa/Douala",
     "longitude": 9.7679,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "africa-south",
     "holidaysRef": "bvmac-douala",
     "latitude": 4.0511,
     "hemisphere": "NE"
@@ -891,7 +891,7 @@
     "iso2": "CI",
     "tz": "Africa/Abidjan",
     "longitude": -4.0244,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "africa-south",
     "holidaysRef": "brvm-abidjan",
     "latitude": 5.3453,
     "hemisphere": "NW"
@@ -904,7 +904,7 @@
     "iso2": "PL",
     "tz": "Europe/Warsaw",
     "longitude": 21.0122,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-poland",
     "holidaysRef": "wse-warsaw-newconnect",
     "latitude": 52.2297,
     "hemisphere": "NE"
@@ -917,7 +917,7 @@
     "iso2": "CZ",
     "tz": "Europe/Prague",
     "longitude": 14.4378,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-czech",
     "holidaysRef": "prague-pse",
     "latitude": 50.0755,
     "hemisphere": "NE"
@@ -930,7 +930,7 @@
     "iso2": "HU",
     "tz": "Europe/Budapest",
     "longitude": 19.0402,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-hungary",
     "holidaysRef": "budapest-bet",
     "latitude": 47.4979,
     "hemisphere": "NE"
@@ -943,7 +943,7 @@
     "iso2": "RO",
     "tz": "Europe/Bucharest",
     "longitude": 26.1025,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-romania",
     "holidaysRef": "bucharest-bvb",
     "latitude": 44.4268,
     "hemisphere": "NE"
@@ -956,7 +956,7 @@
     "iso2": "BG",
     "tz": "Europe/Sofia",
     "longitude": 23.3219,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-euronext",
     "holidaysRef": "sofia-bse",
     "latitude": 42.6977,
     "hemisphere": "NE"
@@ -969,7 +969,7 @@
     "iso2": "GR",
     "tz": "Europe/Athens",
     "longitude": 23.7275,
-    "hoursTemplate": "europe-core",
+    "hoursTemplate": "europe-greece",
     "holidaysRef": "athens-en-ae",
     "latitude": 37.9838,
     "hemisphere": "NE"
@@ -982,7 +982,7 @@
     "iso2": "IS",
     "tz": "Atlantic/Reykjavik",
     "longitude": -21.9426,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "europe-iceland",
     "holidaysRef": "reykjavik-nasdaq-iceland",
     "latitude": 64.1466,
     "hemisphere": "NW"
@@ -995,7 +995,7 @@
     "iso2": "LT",
     "tz": "Europe/Vilnius",
     "longitude": 25.2797,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "europe-baltic",
     "holidaysRef": "vilnius-nasdaq-baltic",
     "latitude": 54.6872,
     "hemisphere": "NE"
@@ -1008,7 +1008,7 @@
     "iso2": "LV",
     "tz": "Europe/Riga",
     "longitude": 24.1052,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "europe-baltic",
     "holidaysRef": "riga-nasdaq-baltic",
     "latitude": 56.9496,
     "hemisphere": "NE"
@@ -1021,7 +1021,7 @@
     "iso2": "EE",
     "tz": "Europe/Tallinn",
     "longitude": 24.7536,
-    "hoursTemplate": "us-standard",
+    "hoursTemplate": "europe-baltic",
     "holidaysRef": "tallinn-nasdaq-baltic",
     "latitude": 59.437,
     "hemisphere": "NE"

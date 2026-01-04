@@ -9,7 +9,7 @@
 import React from 'react';
 import type { Metadata } from 'next';
 
-import ExchangeRail from '@/components/ribbon/exchange-rail';
+import ExchangeList from '@/components/ribbon/exchange-list';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ProviderWorkspace from '@/components/providers/provider-workspace';
 import { getProviders } from '@/lib/providers/api';
@@ -104,13 +104,11 @@ export default function ProviderPage({ params }: { params: Params }): JSX.Elemen
 
   const providerName = provider?.name ?? id;
 
-  // Left rail: Eastern exchanges
-  const leftRail = (
-    <ExchangeRail
+  // Left rail content: Eastern exchanges (cards only, wrapper handled by HomepageGrid)
+  const leftExchanges = (
+    <ExchangeList
       exchanges={left}
       weatherByExchange={weatherIndex}
-      ariaLabel="Eastern exchanges"
-      testId="rail-east"
       emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
     />
   );
@@ -122,13 +120,11 @@ export default function ProviderPage({ params }: { params: Params }): JSX.Elemen
     <ProviderNotFound id={id} />
   );
 
-  // Right rail: Western exchanges
-  const rightRail = (
-    <ExchangeRail
+  // Right rail content: Western exchanges (cards only, wrapper handled by HomepageGrid)
+  const rightExchanges = (
+    <ExchangeList
       exchanges={right}
       weatherByExchange={weatherIndex}
-      ariaLabel="Western exchanges"
-      testId="rail-west"
       emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
     />
   );
@@ -136,9 +132,9 @@ export default function ProviderPage({ params }: { params: Params }): JSX.Elemen
   return (
     <HomepageGrid
       mainLabel={`Prompt builder for ${providerName}`}
-      left={leftRail}
+      leftContent={leftExchanges}
       centre={centreContent}
-      right={rightRail}
+      rightContent={rightExchanges}
       showFinanceRibbon
     />
   );

@@ -1,4 +1,4 @@
-﻿﻿/* Promagen Global Styles — single source of truth
+/* Promagen Global Styles — single source of truth
    - Tailwind import (v4-friendly)
    - Light, calm gradient background
    - Reduced motion hook
@@ -6,7 +6,7 @@
    - Card utility + tabular numerals
    - Ribbon shimmer utility
 
-   Enhancements (FX “alive” language):
+   Enhancements (FX "alive" language):
    - Winner arrow micro-transition
    - Neutral breath pulse (slow, subtle)
    - Tick nudge (1–2px)
@@ -39,7 +39,11 @@
 /* ------------------------------ Document baseline ------------------------ */
 html,
 body {
-  min-height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden !important; /* CRITICAL: NO page scroll - all scrolling in containers */
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -49,6 +53,63 @@ body {
   color-scheme: light;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   text-rendering: optimizeLegibility;
+}
+/* =============================================================================
+   Prompt Builder Scroll Wrapper
+   Matches providers-table-scroll-wrapper styling for uniform scrollbars
+   ============================================================================= */
+
+.prompt-builder-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0; /* Critical for flex children to shrink */
+}
+
+.prompt-builder-scroll-wrapper {
+  flex: 1;
+  min-height: 0; /* Critical for flex children to shrink */
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar - matches providers table */
+.prompt-builder-scroll-wrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.prompt-builder-scroll-wrapper::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.3);
+  border-radius: 6px;
+}
+
+.prompt-builder-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.6);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.prompt-builder-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+  background-clip: padding-box;
+}
+
+.prompt-builder-scroll-wrapper::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar support */
+.prompt-builder-scroll-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.6) rgba(30, 41, 59, 0.3);
+}
+
+.prompt-builder-scroll-wrapper:hover {
+  scrollbar-color: rgba(100, 116, 139, 0.9) rgba(30, 41, 59, 0.3);
 }
 
 /* ------------------------------ Links & focus ---------------------------- */
@@ -102,7 +163,7 @@ a:hover {
 }
 
 /* ======================================================================== */
-/* FX “alive” micro-motion                                                   */
+/* FX "alive" micro-motion                                                   */
 /* ======================================================================== */
 
 /* Winner arrow — single green arrow with micro fade */
@@ -209,4 +270,979 @@ a:hover {
 
 .fx-whisper-down {
   animation: fx-whisper-down 260ms ease-out 1;
+}
+
+/* ========================================================================== */
+/* Promagen Provider Leaderboard Styles                                       */
+/* Updated: December 31, 2025                                                 */
+/* ========================================================================== */
+
+/* Container - flex layout to fill available space (no fixed heights) */
+.providers-table-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0; /* Critical for flex children to shrink */
+}
+
+/* Scroll wrapper - fills container, scrolls internally
+   No fixed max-height — parent controls available space */
+.providers-table-scroll-wrapper {
+  flex: 1;
+  min-height: 0; /* Critical for flex children to shrink */
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 1rem;
+  border: 1px solid rgba(30, 41, 59, 1);
+  background: rgba(2, 6, 23, 0.6);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for the table wrapper */
+.providers-table-scroll-wrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.providers-table-scroll-wrapper::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.3);
+  border-radius: 6px;
+}
+
+.providers-table-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.6);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.providers-table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.9);
+  background-clip: padding-box;
+}
+
+.providers-table-scroll-wrapper::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Table styling */
+.providers-table {
+  width: 100%;
+  min-width: 100%;
+  text-align: left;
+  font-size: 0.875rem;
+  color: rgba(226, 232, 240, 1);
+  border-collapse: collapse;
+}
+
+/* Sticky header */
+.providers-table-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(15, 23, 42, 0.98);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(148, 163, 184, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+}
+
+.providers-table-header th {
+  border-bottom: 1px solid rgba(30, 41, 59, 1);
+  background: inherit;
+}
+
+/* ========================================================================== */
+/* Provider Cell — Breathable, beautiful layout for creatives                 */
+/* ========================================================================== */
+
+.provider-cell-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem; /* 6px breathing room between name and location */
+}
+
+/* Row 1: Rank + Provider name + action icons */
+.provider-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem; /* 5px between elements (reduced from 10px) */
+}
+
+/* Provider rank number (1. 2. 3. etc.) */
+.provider-rank {
+  font-weight: 500;
+  font-size: 0.875rem; /* 14px */
+  color: #64748b; /* slate-500 */
+  min-width: 1.75rem; /* Fixed width for alignment (handles 1-99) */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+.provider-name {
+  font-weight: 600;
+  font-size: 0.9375rem; /* 15px - slightly larger for prominence */
+  color: #f1f5f9; /* slate-100 */
+  letter-spacing: -0.01em;
+}
+
+/* Provider name as hyperlink to homepage */
+.provider-name-link {
+  font-weight: 600;
+  font-size: 0.9375rem; /* 15px - slightly larger for prominence */
+  color: #f1f5f9; /* slate-100 */
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.provider-name-link:hover {
+  color: #22d3ee; /* cyan-400 — core accent */
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.provider-name-link:focus {
+  outline: 2px solid rgba(34, 211, 238, 0.5);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.provider-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem; /* 6px between icons */
+}
+
+/* Provider icon links (🏠 🎨) */
+.provider-icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem; /* 16px */
+  text-decoration: none;
+  opacity: 0.5;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.provider-icon-link:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.provider-icon-link:focus {
+  opacity: 1;
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Provider logo icon link (replaces 🏠) — clickable favicon */
+.provider-logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+  margin-left: 0.375rem; /* 6px gap after provider name */
+}
+
+.provider-logo-link:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.provider-logo-link:focus {
+  opacity: 1;
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* The actual provider logo image */
+.provider-logo-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: contain;
+  /* Subtle outline for icons with transparent backgrounds */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Emoji fallback icon (🏠) for providers without downloadable favicon */
+.provider-emoji-icon {
+  font-size: 1rem; /* 16px */
+  line-height: 1;
+}
+
+/* Prompt builder link (🎨 + text) — on time line, spaced after time */
+.provider-prompt-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem; /* 4px gap between emoji and text */
+  text-decoration: none;
+  cursor: pointer;
+  /* 2 "spacebar clicks" ≈ 16px spacing after time */
+  margin-left: 1rem;
+  opacity: 0.9;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.provider-prompt-link:hover {
+  opacity: 1;
+}
+
+.provider-prompt-link:hover .provider-prompt-emoji {
+  transform: scale(1.15);
+  filter: brightness(1.5) saturate(1.25);
+}
+
+.provider-prompt-link:hover .provider-prompt-text {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.provider-prompt-link:focus {
+  opacity: 1;
+  outline: 2px solid rgba(34, 211, 238, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Prompt builder emoji (🎨) */
+.provider-prompt-emoji {
+  font-size: 1.25rem; /* 20px — 0.5 size bigger than original 16px */
+  line-height: 1;
+  filter: brightness(1.25) saturate(1.15);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+/* Prompt builder text label */
+.provider-prompt-text {
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  color: #22d3ee; /* cyan-400 — core accent colour */
+  white-space: nowrap;
+  transition: text-decoration 0.2s ease;
+}
+
+/* Location block: Flag + City on line 1, Time on line 2 */
+.provider-location {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem; /* 2px tight vertical rhythm */
+}
+
+/* Flag + City row — increased sizes */
+.provider-city-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem; /* 6px between flag and city */
+  font-size: 0.875rem; /* 14px (increased from 12px) */
+  color: #94a3b8; /* slate-400 */
+}
+
+.provider-city-line:hover {
+  color: #cbd5e1; /* slate-300 - subtle hover feedback */
+}
+
+.provider-city {
+  /* City text can wrap naturally on very narrow screens */
+}
+
+/* Time + 🎨 sit side by side, indented to align under the city text */
+.provider-time-line {
+  display: flex;
+  align-items: center;
+  padding-left: 1.5rem; /* Indent to align under city (16px flag width + 6px gap ≈ 22px) */
+}
+
+/* ========================================================================== */
+/* Provider Clock — Live heartbeat                                            */
+/* ========================================================================== */
+
+.provider-time {
+  font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9375rem; /* 15px (increased from 13px) */
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  white-space: nowrap; /* Time NEVER wraps */
+}
+
+.provider-time-bright {
+  color: rgba(226, 232, 240, 0.95); /* slate-200 */
+}
+
+.provider-time-dim {
+  color: rgba(100, 116, 139, 0.7); /* slate-500 dimmed */
+}
+
+/* Blinking colon — fixed width prevents layout shift */
+.provider-clock-colon {
+  display: inline-block;
+  width: 0.5ch;
+  text-align: center;
+  transition: opacity 0.12s ease-out;
+}
+
+/* ========================================================================== */
+/* Score & Misc Styles                                                        */
+/* ========================================================================== */
+
+/* Adjusted score asterisk (Big Tech penalty indicator) */
+.score-adjusted {
+  position: relative;
+}
+
+.score-adjusted::after {
+  content: '*';
+  font-size: 0.65em;
+  opacity: 0.6;
+  vertical-align: super;
+  margin-left: 2px;
+}
+
+/* Hover effect for cursor-help (tooltips) */
+.cursor-help {
+  cursor: help;
+}
+
+/* ========================================================================== */
+/* Exchange Rail Scrollbar Utilities                                          */
+/* Thin, subtle scrollbars for exchange rails                                 */
+/* ========================================================================== */
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.hover\:scrollbar-thumb-white\/30:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Firefox scrollbar support */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.scrollbar-thin:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* ========================================================================== */
+/* Responsive adjustments                                                     */
+/* ========================================================================== */
+
+@media (max-width: 1024px) {
+  .provider-name {
+    font-size: 0.875rem; /* 14px on tablets */
+  }
+
+  .provider-rank {
+    font-size: 0.8125rem; /* 13px on tablets */
+    min-width: 1.5rem;
+  }
+
+  .provider-city-line {
+    font-size: 0.8125rem; /* 13px on tablets */
+  }
+
+  .provider-time {
+    font-size: 0.875rem; /* 14px on tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .providers-table {
+    font-size: 0.8rem;
+  }
+
+  .providers-table th,
+  .providers-table td {
+    padding: 0.5rem !important;
+  }
+
+  .provider-name {
+    font-size: 0.8125rem; /* 13px on mobile */
+  }
+
+  .provider-rank {
+    font-size: 0.75rem; /* 12px on mobile */
+    min-width: 1.25rem;
+  }
+
+  .provider-city-line {
+    font-size: 0.75rem; /* 12px on mobile */
+  }
+
+  .provider-time {
+    font-size: 0.8125rem; /* 13px on mobile */
+  }
+
+  .provider-time-line {
+    padding-left: 1.25rem; /* Slightly smaller indent on mobile */
+  }
+
+  .provider-prompt-link {
+    margin-left: 0.75rem; /* Reduced spacing on mobile */
+  }
+
+  .provider-prompt-emoji {
+    font-size: 1.125rem; /* 18px on mobile */
+  }
+
+  .provider-prompt-text {
+    font-size: 0.75rem; /* 12px on mobile */
+  }
+
+  .provider-name-link {
+    font-size: 0.8125rem; /* 13px on mobile */
+  }
+}
+
+/* Loading state (for future async loading) */
+.providers-table-loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ========================================================================== */
+/* Exchange Rail Scrollbar Utilities                                          */
+/* Thin, subtle scrollbars for synchronized exchange rails                    */
+/* ========================================================================== */
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.hover\:scrollbar-thumb-white\/30:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Firefox scrollbar support */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.scrollbar-thin:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+/* ==========================================================================
+ * MARKET PULSE v2.0 - Flowing Energy Stream
+ * ==========================================================================
+ * 
+ * "The bridge comes alive when markets move."
+ * 
+ * Features:
+ * - Row breathing effect during pre-open/pre-close
+ * - Row flash effect during opening/closing events
+ * - Continent-specific colors via CSS variable
+ * - Reduced motion support
+ * 
+ * Updated: Jan 2026
+ * ========================================================================== */
+
+/* ==========================================================================
+ * Market Pulse Row Effects
+ * ========================================================================== */
+
+/* Base state for pulse-connected rows */
+.market-pulse-row-glow {
+  position: relative;
+  transition: box-shadow 0.3s ease-out, background-color 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Subtle breathing animation for pre-open/pre-close states */
+@keyframes market-pulse-row-breathe {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent;
+    background-color: transparent;
+  }
+  50% {
+    box-shadow: inset 0 0 20px 2px
+        color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent),
+      0 0 10px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 10%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 5%, transparent);
+  }
+}
+
+.market-pulse-row-breathing {
+  animation: market-pulse-row-breathe 3s ease-in-out infinite;
+}
+
+/* Opening event - warm flash */
+@keyframes market-pulse-row-flash-open {
+  0% {
+    box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent;
+    background-color: transparent;
+    transform: scale(1);
+  }
+  15% {
+    box-shadow: inset 0 0 40px 8px
+        color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 40%, transparent),
+      0 0 25px 5px color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 30%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 15%, transparent);
+    transform: scale(1.005);
+  }
+  40% {
+    box-shadow: inset 0 0 25px 4px
+        color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 25%, transparent),
+      0 0 15px 3px color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 15%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 8%, transparent);
+    transform: scale(1.002);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent;
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+.market-pulse-row-opening {
+  animation: market-pulse-row-flash-open 1.5s ease-out forwards;
+}
+
+/* Closing event - cool flash */
+@keyframes market-pulse-row-flash-close {
+  0% {
+    box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent;
+    background-color: transparent;
+    transform: scale(1);
+  }
+  15% {
+    box-shadow: inset 0 0 40px 8px
+        color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 40%, transparent),
+      0 0 25px 5px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 30%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent);
+    transform: scale(1.005);
+  }
+  40% {
+    box-shadow: inset 0 0 25px 4px
+        color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 25%, transparent),
+      0 0 15px 3px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 8%, transparent);
+    transform: scale(1.002);
+  }
+  100% {
+    box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent;
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+.market-pulse-row-closing {
+  animation: market-pulse-row-flash-close 1.5s ease-out forwards;
+}
+
+/* ==========================================================================
+ * Market Pulse Reduced Motion - Respect user preference
+ * ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .market-pulse-row-breathing,
+  .market-pulse-row-opening,
+  .market-pulse-row-closing {
+    animation: none;
+  }
+
+  /* Show static highlight instead */
+  .market-pulse-row-breathing {
+    box-shadow: inset 0 0 15px 2px
+      color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 5%, transparent);
+  }
+
+  .market-pulse-row-opening,
+  .market-pulse-row-closing {
+    box-shadow: inset 0 0 25px 4px
+      color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 25%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 10%, transparent);
+  }
+}
+
+/* ==========================================================================
+ * Exchange Card Pulse Ring (optional enhancement)
+ * ========================================================================== */
+
+.exchange-card-pulse-active {
+  position: relative;
+}
+
+.exchange-card-pulse-active::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: exchange-pulse-ring 1.5s ease-out forwards;
+}
+
+@keyframes exchange-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 50%, transparent);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 0 15px transparent;
+    opacity: 0;
+  }
+}
+/* ==========================================================================
+ * IMAGE QUALITY VOTE BUTTON STYLES
+ * ==========================================================================
+ * 
+ * Add this to globals.css after the existing provider table styles.
+ * 
+ * States:
+ * - Default (outline): Not voted, can vote
+ * - Voted (filled): Already voted within 24h
+ * - Disabled: Daily limit reached or not authenticated
+ * - Animating: Bounce on successful vote
+ * 
+ * Updated: January 2026
+ * ========================================================================== */
+
+/* Base vote thumb button */
+.vote-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(203, 213, 225, 1); /* slate-300 full opacity — doubled brightness */
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 200ms ease, transform 200ms ease, background-color 200ms ease;
+  flex-shrink: 0;
+}
+
+/* Hover state - only when interactive */
+.vote-thumb:not(.vote-thumb--disabled):not(.vote-thumb--voted):hover {
+  color: rgba(52, 211, 153, 0.9); /* emerald-400 */
+  background-color: rgba(52, 211, 153, 0.1);
+}
+
+/* Focus visible for accessibility */
+.vote-thumb:focus-visible {
+  outline: 2px solid var(--focus, #38bdf8);
+  outline-offset: 2px;
+}
+
+/* Voted state - filled thumb with accent color */
+.vote-thumb--voted {
+  color: rgba(52, 211, 153, 1); /* emerald-400 solid */
+  cursor: default;
+}
+
+.vote-thumb--voted:hover {
+  color: rgba(52, 211, 153, 1); /* Keep solid on hover */
+  background-color: transparent;
+}
+
+/* Disabled state - dimmed, no interaction */
+.vote-thumb--disabled {
+  color: rgba(148, 163, 184, 0.8); /* slate-400 at 80% — doubled from 40% */
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Loading state - subtle pulse */
+.vote-thumb--loading {
+  color: rgba(148, 163, 184, 0.6); /* slate-400 at 60% — doubled from 30% */
+  animation: vote-thumb-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes vote-thumb-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Bounce animation on successful vote */
+@keyframes vote-thumb-bounce {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.3);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+  75% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.vote-thumb--animating {
+  animation: vote-thumb-bounce 400ms ease-out;
+  color: rgba(52, 211, 153, 1); /* emerald-400 during animation */
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .vote-thumb {
+    transition: none;
+  }
+
+  .vote-thumb--animating {
+    animation: none;
+    /* Still show the voted state instantly */
+    color: rgba(52, 211, 153, 1);
+  }
+
+  .vote-thumb--loading {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ==========================================================================
+ * RESPONSIVE ADJUSTMENTS
+ * ========================================================================== */
+
+@media (max-width: 768px) {
+  .vote-thumb {
+    width: 24px;
+    height: 24px;
+  }
+
+  .vote-thumb svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .vote-thumb {
+    /* Larger touch target on mobile */
+    width: 36px;
+    height: 36px;
+  }
+
+  /* No hover effects on touch devices */
+  .vote-thumb:not(.vote-thumb--disabled):not(.vote-thumb--voted):hover {
+    color: rgba(203, 213, 225, 1); /* Match brighter base color */
+    background-color: transparent;
+  }
+
+  /* Active state for touch feedback */
+  .vote-thumb:not(.vote-thumb--disabled):not(.vote-thumb--voted):active {
+    color: rgba(52, 211, 153, 0.9);
+    background-color: rgba(52, 211, 153, 0.1);
+    transform: scale(0.95);
+  }
+}
+
+/* =============================================================================
+   PROMPT BUILDER LOCK STATE STYLES
+   Added: January 2026
+   Authority: docs/authority/paid_tier.md §3.2, docs/authority/prompt-builder-page.md
+   =============================================================================
+   
+   Lock States:
+   - not_authenticated: User not signed in
+   - quota_reached: Free user has used 30 prompts today
+   
+   Visual Treatment:
+   - Purple-pink gradient for individual locked comboboxes
+   - Usage counter with progress bar
+   - Paid badge and CTA button styling
+   ============================================================================= */
+
+/* ==========================================================================
+ * COMBOBOX LOCK GRADIENT
+ * Applied to locked comboboxes to indicate they require authentication
+ * ========================================================================== */
+
+.prompt-lock-gradient {
+  position: relative;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%);
+  border-radius: 0.5rem;
+}
+
+/* Lock overlay for individual comboboxes */
+.prompt-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-weight: 500;
+  border-radius: inherit;
+  z-index: 50;
+  backdrop-filter: blur(2px);
+}
+
+/* ==========================================================================
+ * USAGE COUNTER STYLES
+ * Shows remaining prompts for free users
+ * ========================================================================== */
+
+.usage-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.usage-counter--warning {
+  color: rgb(251, 146, 60); /* orange-400 */
+}
+
+.usage-counter--caution {
+  color: rgb(250, 204, 21); /* yellow-400 */
+}
+
+.usage-counter--normal {
+  color: rgb(52, 211, 153); /* emerald-400 */
+}
+
+/* Progress bar for usage */
+.usage-progress {
+  height: 0.375rem;
+  width: 4rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgba(51, 65, 85, 1); /* slate-700 */
+}
+
+.usage-progress-bar {
+  height: 100%;
+  transition: width 0.3s ease-out, background-color 0.3s ease-out;
+}
+
+.usage-progress-bar--warning {
+  background: rgb(249, 115, 22); /* orange-500 */
+}
+
+.usage-progress-bar--caution {
+  background: rgb(234, 179, 8); /* yellow-500 */
+}
+
+.usage-progress-bar--normal {
+  background: rgb(16, 185, 129); /* emerald-500 */
+}
+
+/* ==========================================================================
+ * PAID USER BADGE
+ * Shows enhanced limits are active
+ * ========================================================================== */
+
+.paid-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(216, 180, 254); /* purple-300 */
+  background: rgba(147, 51, 234, 0.2); /* purple-600/20 */
+  border-radius: 9999px;
+  border: 1px solid rgba(168, 85, 247, 0.3); /* purple-500/30 */
+}
+
+.paid-badge svg {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+/* ==========================================================================
+ * LOCK BUTTON STYLES
+ * CTA buttons within lock overlays
+ * ========================================================================== */
+
+.lock-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, rgb(147, 51, 234) 0%, rgb(236, 72, 153) 100%);
+  border: 1px solid rgba(192, 132, 252, 1); /* purple-400 */
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px -3px rgba(147, 51, 234, 0.3);
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.lock-cta-button:hover {
+  background: linear-gradient(135deg, rgb(168, 85, 247) 0%, rgb(244, 114, 182) 100%);
+  box-shadow: 0 10px 25px -3px rgba(147, 51, 234, 0.4);
+  transform: translateY(-1px);
+}
+
+.lock-cta-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(192, 132, 252, 1), 0 0 0 4px rgba(15, 23, 42, 1);
+}
+
+.lock-cta-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ==========================================================================
+ * REDUCED MOTION SUPPORT
+ * Respect user preference for reduced motion
+ * ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .lock-cta-button {
+    transition: none;
+  }
+
+  .lock-cta-button:hover {
+    transform: none;
+  }
+
+  .usage-progress-bar {
+    transition: none;
+  }
 }

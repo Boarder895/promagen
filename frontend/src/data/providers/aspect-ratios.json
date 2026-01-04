@@ -1,0 +1,232 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Aspect ratio definitions with composition packs for AI image platforms. Static packs provide predictable output; dynamic engine assembles context-aware compositions.",
+    "updated": "2026-01-04",
+    "authority": "docs/authority/prompt-builder-page.md"
+  },
+  "ratios": {
+    "1:1": {
+      "id": "1:1",
+      "label": "Square",
+      "width": 1,
+      "height": 1,
+      "orientation": "square",
+      "useCase": "Social posts, avatars, album covers, icons",
+      "useCasePlatforms": ["Instagram profile", "Spotify", "App icons", "LinkedIn"],
+      "staticPack": "centred composition, symmetrical framing, balanced negative space",
+      "dynamicHints": {
+        "placement": ["centred", "symmetrical"],
+        "framing": ["tight crop", "balanced margins"],
+        "depth": ["minimal depth layers", "flat focus plane"],
+        "emphasis": ["single focal point", "equal visual weight"]
+      }
+    },
+    "4:5": {
+      "id": "4:5",
+      "label": "Portrait (Social)",
+      "width": 4,
+      "height": 5,
+      "orientation": "portrait",
+      "useCase": "Instagram feed, product shots, mobile-first",
+      "useCasePlatforms": ["Instagram feed", "Facebook", "Product photography"],
+      "staticPack": "portrait framing, full-body, subject fills frame, clean background",
+      "dynamicHints": {
+        "placement": ["subject centred vertically", "head near top third"],
+        "framing": ["full-body or three-quarter", "minimal side margins"],
+        "depth": ["subject-background separation", "shallow depth"],
+        "emphasis": ["subject dominates frame", "background simplified"]
+      }
+    },
+    "3:4": {
+      "id": "3:4",
+      "label": "Portrait (Classic)",
+      "width": 3,
+      "height": 4,
+      "orientation": "portrait",
+      "useCase": "Phone wallpapers, editorial portraits, classic photography",
+      "useCasePlatforms": ["Mobile wallpaper", "Print portrait", "Editorial"],
+      "staticPack": "vertical portrait composition, three-quarter body, balanced headroom",
+      "dynamicHints": {
+        "placement": ["classical portrait positioning", "face in upper third"],
+        "framing": ["three-quarter body", "breathing room above head"],
+        "depth": ["traditional portrait depth", "background softness"],
+        "emphasis": ["face and expression focus", "elegant proportions"]
+      }
+    },
+    "2:3": {
+      "id": "2:3",
+      "label": "Tall Portrait",
+      "width": 2,
+      "height": 3,
+      "orientation": "portrait",
+      "useCase": "Posters, fashion editorial, movie posters",
+      "useCasePlatforms": ["Movie posters", "Fashion magazines", "Pinterest"],
+      "staticPack": "tall vertical poster layout, full-body with breathing room, editorial framing",
+      "dynamicHints": {
+        "placement": ["full figure with space above", "poster-style positioning"],
+        "framing": ["full-body with context", "dramatic vertical emphasis"],
+        "depth": ["layered vertical depth", "environmental context"],
+        "emphasis": ["dramatic presence", "editorial impact"]
+      }
+    },
+    "3:2": {
+      "id": "3:2",
+      "label": "Landscape (Classic)",
+      "width": 3,
+      "height": 2,
+      "orientation": "landscape",
+      "useCase": "Photography prints, DSLR output, classic landscape",
+      "useCasePlatforms": ["Print photography", "Photo frames", "Galleries"],
+      "staticPack": "horizontal landscape composition, subject with environment context",
+      "dynamicHints": {
+        "placement": ["subject on thirds", "horizon placement considered"],
+        "framing": ["subject plus environment", "breathing room sides"],
+        "depth": ["foreground-midground-background", "natural depth"],
+        "emphasis": ["subject-environment relationship", "contextual storytelling"]
+      }
+    },
+    "4:3": {
+      "id": "4:3",
+      "label": "Landscape (Standard)",
+      "width": 4,
+      "height": 3,
+      "orientation": "landscape",
+      "useCase": "Presentations, web banners, standard monitors",
+      "useCasePlatforms": ["PowerPoint", "Web headers", "Traditional displays"],
+      "staticPack": "classic landscape framing, balanced subject and background",
+      "dynamicHints": {
+        "placement": ["centred or rule of thirds", "comfortable margins"],
+        "framing": ["subject with context", "balanced composition"],
+        "depth": ["moderate depth layers", "clear subject separation"],
+        "emphasis": ["clear focal hierarchy", "professional balance"]
+      }
+    },
+    "16:9": {
+      "id": "16:9",
+      "label": "Widescreen",
+      "width": 16,
+      "height": 9,
+      "orientation": "landscape",
+      "useCase": "YouTube thumbnails, presentations, desktop wallpapers, cinematic",
+      "useCasePlatforms": ["YouTube", "Desktop wallpaper", "Presentations", "TV"],
+      "staticPack": "wide establishing shot, cinematic framing, subject on rule of thirds, deep background",
+      "dynamicHints": {
+        "placement": ["subject on power third", "action space opposite"],
+        "framing": ["wide establishing", "cinematic bars implied"],
+        "depth": ["layered depth planes", "foreground-mid-background"],
+        "emphasis": ["theatrical staging", "environmental scale"]
+      }
+    },
+    "9:16": {
+      "id": "9:16",
+      "label": "Vertical Video",
+      "width": 9,
+      "height": 16,
+      "orientation": "portrait",
+      "useCase": "Stories, TikTok, Reels, mobile-first video",
+      "useCasePlatforms": ["TikTok", "Instagram Stories", "YouTube Shorts", "Snapchat"],
+      "staticPack": "vertical video framing, full-height subject, mobile-first composition",
+      "dynamicHints": {
+        "placement": ["subject fills height", "centred horizontally"],
+        "framing": ["full-height portrait", "minimal side context"],
+        "depth": ["stacked vertical layers", "top-to-bottom flow"],
+        "emphasis": ["immediate impact", "scroll-stopping presence"]
+      }
+    },
+    "21:9": {
+      "id": "21:9",
+      "label": "Ultrawide",
+      "width": 21,
+      "height": 9,
+      "orientation": "landscape",
+      "useCase": "Cinematic, panoramic, ultra-wide banners, film",
+      "useCasePlatforms": ["Cinema 2.39:1", "Ultrawide monitors", "Hero banners"],
+      "staticPack": "panoramic ultrawide composition, sweeping vista, small subject for scale",
+      "dynamicHints": {
+        "placement": ["subject small in vast frame", "extreme horizontal thirds"],
+        "framing": ["sweeping panoramic", "letterbox aesthetic"],
+        "depth": ["epic depth of field", "vast environmental scale"],
+        "emphasis": ["environment dominates", "subject provides scale reference"]
+      }
+    }
+  },
+  "platformSupport": {
+    "midjourney": {
+      "nativeSupport": true,
+      "supportedRatios": ["1:1", "4:5", "3:4", "2:3", "3:2", "4:3", "16:9", "9:16", "21:9"],
+      "syntax": "--ar {width}:{height}",
+      "defaultRatio": "1:1",
+      "notes": "Full AR support via --ar parameter"
+    },
+    "bluewillow": {
+      "nativeSupport": true,
+      "supportedRatios": ["1:1", "2:3", "3:2"],
+      "syntax": "--ar {width}:{height}",
+      "defaultRatio": "1:1",
+      "notes": "Limited AR support - unsupported ratios fallback to composition text"
+    },
+    "nijijourney": {
+      "nativeSupport": true,
+      "supportedRatios": ["1:1", "4:5", "3:4", "2:3", "3:2", "4:3", "16:9", "9:16", "21:9"],
+      "syntax": "--ar {width}:{height}",
+      "defaultRatio": "1:1",
+      "notes": "Same as Midjourney"
+    },
+    "ideogram": {
+      "nativeSupport": false,
+      "supportedRatios": [],
+      "syntax": null,
+      "defaultRatio": null,
+      "notes": "No native AR - uses composition text"
+    },
+    "openai": {
+      "nativeSupport": false,
+      "supportedRatios": [],
+      "syntax": null,
+      "defaultRatio": null,
+      "notes": "DALL-E has separate size controls, not prompt-based AR"
+    },
+    "stability": {
+      "nativeSupport": false,
+      "supportedRatios": [],
+      "syntax": null,
+      "defaultRatio": null,
+      "notes": "Uses width/height API parameters, not prompt text"
+    },
+    "leonardo": {
+      "nativeSupport": false,
+      "supportedRatios": [],
+      "syntax": null,
+      "defaultRatio": null,
+      "notes": "Uses UI dimension controls"
+    },
+    "flux": {
+      "nativeSupport": false,
+      "supportedRatios": [],
+      "syntax": null,
+      "defaultRatio": null,
+      "notes": "Uses API dimension parameters"
+    },
+    "adobe-firefly": {
+      "nativeSupport": false,
+      "supportedRatios": [],
+      "syntax": null,
+      "defaultRatio": null,
+      "notes": "Uses UI aspect ratio selector"
+    },
+    "_default": {
+      "nativeSupport": false,
+      "supportedRatios": [],
+      "syntax": null,
+      "defaultRatio": null,
+      "notes": "Default: composition text injection for AR context"
+    }
+  },
+  "defaultsByPlatform": {
+    "midjourney": "1:1",
+    "bluewillow": "1:1",
+    "nijijourney": "1:1",
+    "_default": null
+  }
+}

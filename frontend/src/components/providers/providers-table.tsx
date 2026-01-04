@@ -1,24 +1,26 @@
 // src/components/providers/providers-table.tsx
+// Updated: January 2026 - Added image quality vote button
 
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import type { Provider } from '@/types/provider';
+import { ProviderCell } from './provider-cell';
+import { ImageQualityVoteButton } from './image-quality-vote-button';
 import { toRomanNumeral } from '@/lib/format/number';
 import { Flag } from '@/components/ui/flag';
+import Tooltip from '@/components/ui/tooltip';
 
 export type ProvidersTableProps = {
   providers: ReadonlyArray<Provider>;
-
-  /** Optional heading text (some pages render their own headings). */
   title?: string;
-
-  /** Optional caption/description (some pages render their own copy). */
   caption?: string;
-
-  /** Optional row limit. When set, the table renders at most this many providers. */
   limit?: number;
-
-  /** Optional rank column toggle (kept for backwards compatibility). */
-  showRank?: boolean;
+  showRank?: boolean; // Kept for backwards compatibility (no longer used)
+  /** Whether user is authenticated (required for voting) */
+  isAuthenticated?: boolean;
+  /** Optional callback to register provider IDs for market pulse */
+  onProvidersChange?: (providerIds: string[]) => void;
 };
 
 type PromagenUsersCountryUsage = {
@@ -27,16 +29,10 @@ type PromagenUsersCountryUsage = {
 };
 
 type ProviderWithPromagenUsers = Provider & {
-  /**
-   * Analytics-derived (MUST NOT come from providers.json).
-   * Sorted highest-first by count.
-   */
   promagenUsers?: ReadonlyArray<PromagenUsersCountryUsage>;
 };
 
-function hasOutboundDestination(provider: Provider): boolean {
-  return Boolean(provider.affiliateUrl ?? provider.url ?? provider.website);
-}
+type SortColumn = 'score' | 'imageQuality';
 
 function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {
   const out: Array<ReadonlyArray<T>> = [];
@@ -47,25 +43,28 @@ function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {
 }
 
 function renderApiAffiliateCell(p: Provider): React.ReactNode {
-  const api = (p as Provider & { apiAvailable?: boolean }).apiAvailable;
-  const aff = (p as Provider & { affiliateProgramme?: boolean }).affiliateProgramme;
+  const api = p.apiAvailable;
+  const aff = p.affiliateProgramme;
 
-  const icons = `${api ? '🔌' : ''}${aff ? '🤝' : ''}`.trim();
-  if (!icons) return null;
+  if (!api && !aff) return <span className="text-slate-500">—</span>;
 
-  return <span aria-label="API and affiliate availability">{icons}</span>;
-}
-
-function formatSpeed(value: unknown): string {
-  if (value === 'fast') return 'Fast';
-  if (value === 'medium') return 'Medium';
-  if (value === 'slow') return 'Slow';
-  if (value === 'varies') return 'Varies';
-  return '';
+  return (
+    <span className="inline-flex items-center gap-1">
+      {api && (
+        <Tooltip text="API available">
+          <span aria-label="API available">🔌</span>
+        </Tooltip>
+      )}
+      {aff && (
+        <Tooltip text="Affiliate programme available">
+          <span aria-label="Affiliate programme">🤝</span>
+        </Tooltip>
+      )}
+    </span>
+  );
 }
 
 function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCountryUsage> }) {
-  // Hard truth rules: show only what is true; if zero users, render empty cell.
   const cleaned = (usage ?? [])
     .filter(
       (u) =>
@@ -80,13 +79,11 @@ function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCount
     .sort((a, b) => b.count - a.count);
 
   if (cleaned.length === 0) {
-    return null;
+    return null; // Empty cell when no users (not even a dash)
   }
 
   const top = cleaned.slice(0, 6);
   const remaining = Math.max(0, cleaned.length - top.length);
-
-  // Fixed layout (2·2·2), but do not render empty slots.
   const rows = chunkPairs(top).filter((r) => r.length > 0);
 
   return (
@@ -111,7 +108,6 @@ function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCount
             );
           })}
 
-          {/* Trailing "… +n" when more than 6 countries */}
           {idx === rows.length - 1 && remaining > 0 ? (
             <span
               className="text-slate-500"
@@ -127,97 +123,165 @@ function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCount
   );
 }
 
+/**
+ * Image Quality cell with rank display and vote button.
+ * Layout: "2nd 👍" where rank is on left, thumb on right.
+ */
+function ImageQualityCell({
+  rank,
+  providerId,
+  isAuthenticated,
+}: {
+  rank?: number;
+  providerId: string;
+  isAuthenticated: boolean;
+}) {
+  if (!rank || rank < 1) {
+    return (
+      <span className="inline-flex items-center gap-3">
+        <span className="text-slate-500">—</span>
+        <ImageQualityVoteButton
+          providerId={providerId}
+          isAuthenticated={isAuthenticated}
+        />
+      </span>
+    );
+  }
+
+  const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
+  const ordinal =
+    rank === 1 ? '1st' : rank === 2 ? '2nd' : rank === 3 ? '3rd' : `${rank}th`;
+
+  return (
+    <span className="inline-flex items-center gap-3">
+      <span className="inline-flex items-center gap-2">
+        <span className="font-medium">{ordinal}</span>
+        {medal && <span aria-label={`Medal: ${ordinal}`}>{medal}</span>}
+      </span>
+      <ImageQualityVoteButton
+        providerId={providerId}
+        isAuthenticated={isAuthenticated}
+      />
+    </span>
+  );
+}
+
+function OverallScoreCell({ provider }: { provider: Provider }) {
+  const rawScore = provider.score;
+  if (typeof rawScore !== 'number' || !Number.isFinite(rawScore)) {
+    return <span className="text-slate-500">—</span>;
+  }
+
+  const adjustedScore = provider.incumbentAdjustment ? rawScore - 5 : rawScore;
+  const trend = provider.trend;
+
+  const trendGlyph =
+    trend === 'up' ? (
+      <span className="text-emerald-400" aria-label="Trending up" title="Trending up">
+        ↑
+      </span>
+    ) : trend === 'down' ? (
+      <span className="text-rose-400" aria-label="Trending down" title="Trending down">
+        ↓
+      </span>
+    ) : trend === 'flat' ? (
+      <span className="text-slate-400" aria-label="Flat" title="Flat">
+        ●
+      </span>
+    ) : null;
+
+  return (
+    <span className="inline-flex items-center justify-end gap-2 tabular-nums">
+      {provider.incumbentAdjustment ? (
+        <Tooltip text={`Adjusted for Big Tech advantage (${rawScore} - 5 = ${adjustedScore})`}>
+          <span className="score-adjusted">{adjustedScore}*</span>
+        </Tooltip>
+      ) : (
+        <span>{rawScore}</span>
+      )}
+      {trendGlyph}
+    </span>
+  );
+}
+
 export default function ProvidersTable(props: ProvidersTableProps) {
-  const { providers, limit, showRank } = props;
+  const { providers, limit, isAuthenticated = false, onProvidersChange } = props;
+  const [sortBy, setSortBy] = useState<SortColumn>('score');
 
   const sliced =
     typeof limit === 'number' && Number.isFinite(limit) && limit > 0
       ? providers.slice(0, Math.floor(limit))
       : providers;
 
-  const rows = sliced as ReadonlyArray<ProviderWithPromagenUsers>;
+  // Sort providers based on selected column
+  const sorted = React.useMemo(() => {
+    const arr = [...sliced] as ProviderWithPromagenUsers[];
+    
+    if (sortBy === 'imageQuality') {
+      return arr.sort((a, b) => {
+        const aRank = a.imageQualityRank ?? 999;
+        const bRank = b.imageQualityRank ?? 999;
+        return aRank - bRank; // Lower rank number = better quality
+      });
+    }
+    
+    // Default: sort by overall score DESC
+    return arr.sort((a, b) => {
+      const aScore = (a.score ?? 0) - (a.incumbentAdjustment ? 5 : 0);
+      const bScore = (b.score ?? 0) - (b.incumbentAdjustment ? 5 : 0);
+      return bScore - aScore; // Higher score = better
+    });
+  }, [sliced, sortBy]);
+
+  // Notify parent of displayed provider IDs (for market pulse)
+  useEffect(() => {
+    if (onProvidersChange) {
+      onProvidersChange(sorted.map((p) => p.id));
+    }
+  }, [sorted, onProvidersChange]);
 
   return (
-    <div className="w-full overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60">
-      <table className="min-w-full text-sm text-slate-200">
-        <thead className="bg-slate-900/60 text-xs uppercase tracking-wide text-slate-400">
-          <tr>
-            <th className="px-4 py-3 text-left">Provider</th>
-            <th className="px-4 py-3 text-left">Promagen Users</th>
-            <th className="px-4 py-3 text-left">Sweet Spot</th>
-            <th className="px-4 py-3 text-left">Visual Styles</th>
-            <th className="px-4 py-3 text-left">API &amp; Affiliate Programme</th>
-            <th className="px-4 py-3 text-left">Generation Speed</th>
-            <th className="px-4 py-3 text-left">Affordability</th>
-            <th className="px-4 py-3 text-right">Score</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {rows.map((p, idx) => {
-            const score = typeof p.score === 'number' && Number.isFinite(p.score) ? p.score : null;
-            const trend = p.trend;
-
-            const trendGlyph =
-              trend === 'up' ? (
-                <span
-                  className="text-emerald-400"
-                  aria-label="Score trending up"
-                  title="Trending up"
-                >
-                  ↑
+    <div className="providers-table-container">
+      <div className="providers-table-scroll-wrapper" data-testid="providers-scroll">
+        <table className="providers-table">
+          <thead className="providers-table-header">
+            <tr>
+              <th className="px-4 py-3 text-left">Provider</th>
+              <th className="px-4 py-3 text-left">Promagen Users</th>
+              <th
+                className="px-4 py-3 text-left cursor-pointer hover:text-slate-200 transition-colors"
+                onClick={() => setSortBy('imageQuality')}
+                title="Click to sort by image quality"
+              >
+                <span className="inline-flex items-center gap-1">
+                  Image Quality
+                  {sortBy === 'imageQuality' && <span className="text-emerald-400">●</span>}
                 </span>
-              ) : trend === 'down' ? (
-                <span
-                  className="text-rose-400"
-                  aria-label="Score trending down"
-                  title="Trending down"
-                >
-                  ↓
+              </th>
+              <th className="px-4 py-3 text-left">Visual Styles</th>
+              <th className="px-4 py-3 text-center">API/Affiliate</th>
+              <th
+                className="px-4 py-3 text-right cursor-pointer hover:text-slate-200 transition-colors"
+                onClick={() => setSortBy('score')}
+                title="Click to sort by overall score"
+              >
+                <span className="inline-flex items-center gap-1">
+                  Overall Score
+                  {sortBy === 'score' && <span className="text-emerald-400">●</span>}
                 </span>
-              ) : trend === 'flat' ? (
-                <span className="text-slate-400" aria-label="Score flat" title="Flat">
-                  →
-                </span>
-              ) : null;
+              </th>
+            </tr>
+          </thead>
 
-            const speed = formatSpeed(
-              (p as Provider & { generationSpeed?: unknown }).generationSpeed,
-            );
-            const affordability = (p as Provider & { affordability?: string }).affordability;
-
-            return (
-              <tr key={p.id} className="border-t border-slate-800 hover:bg-slate-900/30">
-                <td className="px-4 py-3 font-medium text-slate-50">
-                  <div className="flex items-center gap-2">
-                    {showRank ? (
-                      <span className="text-slate-500 tabular-nums">{idx + 1}.</span>
-                    ) : null}
-
-                    {typeof (p as Provider & { icon?: string }).icon === 'string' &&
-                    (p as Provider & { icon?: string }).icon ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={(p as Provider & { icon?: string }).icon as string}
-                        alt=""
-                        width={18}
-                        height={18}
-                        loading="lazy"
-                        className="h-[18px] w-[18px] rounded-sm"
-                      />
-                    ) : null}
-
-                    {hasOutboundDestination(p) ? (
-                      <a
-                        href={`/providers/${encodeURIComponent(p.id)}`}
-                        className="underline decoration-slate-600 underline-offset-4 hover:decoration-slate-300"
-                      >
-                        {p.name}
-                      </a>
-                    ) : (
-                      <span>{p.name}</span>
-                    )}
-                  </div>
+          <tbody>
+            {sorted.map((p, index) => (
+              <tr
+                key={p.id}
+                data-provider-id={p.id}
+                className="border-t border-slate-800 hover:bg-slate-900/30 transition-colors market-pulse-target"
+              >
+                <td className="px-4 py-3">
+                  <ProviderCell provider={p} rank={index + 1} />
                 </td>
 
                 <td className="px-4 py-3">
@@ -225,11 +289,11 @@ export default function ProvidersTable(props: ProvidersTableProps) {
                 </td>
 
                 <td className="px-4 py-3">
-                  {p.sweetSpot ? (
-                    <span className="block line-clamp-2">{p.sweetSpot}</span>
-                  ) : (
-                    <span className="text-slate-500">—</span>
-                  )}
+                  <ImageQualityCell
+                    rank={p.imageQualityRank}
+                    providerId={p.id}
+                    isAuthenticated={isAuthenticated}
+                  />
                 </td>
 
                 <td className="px-4 py-3">
@@ -240,33 +304,18 @@ export default function ProvidersTable(props: ProvidersTableProps) {
                   )}
                 </td>
 
-                <td className="px-4 py-3">
-                  {renderApiAffiliateCell(p) ?? <span className="text-slate-500">—</span>}
+                <td className="px-4 py-3 text-center">
+                  {renderApiAffiliateCell(p)}
                 </td>
 
-                <td className="px-4 py-3">
-                  {speed ? <span>{speed}</span> : <span className="text-slate-500">—</span>}
-                </td>
-
-                <td className="px-4 py-3">
-                  {affordability ? (
-                    <span className="block truncate">{affordability}</span>
-                  ) : (
-                    <span className="text-slate-500">—</span>
-                  )}
-                </td>
-
-                <td className="px-4 py-3 text-right tabular-nums">
-                  <span className="inline-flex items-center justify-end gap-2">
-                    <span>{score !== null ? score : '—'}</span>
-                    {trendGlyph}
-                  </span>
+                <td className="px-4 py-3 text-right">
+                  <OverallScoreCell provider={p} />
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

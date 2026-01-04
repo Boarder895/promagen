@@ -37,8 +37,11 @@ export type ExchangeRailProps = {
 /**
  * ExchangeRail - Shared exchange rail used on the homepage and provider-detail route.
  *
- * It stays "dumb": receives pre-sorted exchanges and an optional weather
- * index, and renders a vertical column of cards or a friendly empty state.
+ * Layout:
+ * - Card wrapper matches AI providers table styling (rounded, dark bg, ring border)
+ * - Fills available height from parent (flex-1)
+ * - Scrolls internally when exchanges overflow
+ * - Subtle thin scrollbar styling
  */
 export default function ExchangeRail({
   exchanges,
@@ -52,14 +55,14 @@ export default function ExchangeRail({
       <section
         role="complementary"
         aria-label={ariaLabel}
-        className="space-y-3"
+        className="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
         data-testid={testId}
       >
         <div
-          className="rounded-2xl bg-white/60 p-4 ring-1 ring-slate-200"
+          className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10"
           aria-live="polite"
         >
-          <p className="text-sm text-slate-600">{emptyMessage}</p>
+          <p className="text-sm text-slate-400">{emptyMessage}</p>
         </div>
       </section>
     );
@@ -69,18 +72,21 @@ export default function ExchangeRail({
     <section
       role="complementary"
       aria-label={ariaLabel}
-      className="space-y-3"
+      className="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
       data-testid={testId}
     >
-      {exchanges.map((exchange) => {
-        const weather = weatherByExchange?.get(exchange.id) ?? null;
-        return (
-          <ExchangeCard
-            key={exchange.id}
-            exchange={toCardData(exchange, weather)}
-          />
-        );
-      })}
+      {/* Scrollable container - fills available height, scrolls when needed */}
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+        {exchanges.map((exchange) => {
+          const weather = weatherByExchange?.get(exchange.id) ?? null;
+          return (
+            <ExchangeCard
+              key={exchange.id}
+              exchange={toCardData(exchange, weather)}
+            />
+          );
+        })}
+      </div>
     </section>
   );
 }

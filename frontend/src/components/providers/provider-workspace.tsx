@@ -1,7 +1,7 @@
 // src/components/providers/provider-workspace.tsx
 //
 // ProviderWorkspace: the centre panel of the prompt builder page.
-// Vertically stacks PromptBuilder (top ~60%) and LaunchPanel (bottom ~40%).
+// Contains only the PromptBuilder — fills full height to align with exchange rails.
 //
 // Authority: docs/authority/prompt-builder-page.md
 
@@ -10,7 +10,6 @@
 import React from 'react';
 
 import PromptBuilder from '@/components/providers/prompt-builder';
-import LaunchPanel from '@/components/providers/launch-panel';
 import type { Provider } from '@/types/providers';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,40 +40,20 @@ function toPromptBuilderProvider(provider: Provider) {
   };
 }
 
-/**
- * Maps the canonical Provider type to the shape LaunchPanel expects.
- */
-function toLaunchPanelProvider(provider: Provider) {
-  return {
-    id: provider.id,
-    name: provider.name,
-    requiresDisclosure: provider.requiresDisclosure,
-    tagline: provider.tagline,
-  };
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function ProviderWorkspace({ provider }: ProviderWorkspaceProps) {
   const builderProvider = toPromptBuilderProvider(provider);
-  const launchProvider = toLaunchPanelProvider(provider);
 
   return (
     <div
-      className="flex flex-col gap-4"
+      className="flex h-full min-h-0 flex-col"
       data-testid="provider-workspace"
     >
-      {/* Top section (~60%): Prompt builder with textarea and copy button */}
-      <div className="flex-[3]">
-        <PromptBuilder provider={builderProvider} />
-      </div>
-
-      {/* Bottom section (~40%): Launch panel with CTA and affiliate disclosure */}
-      <div className="flex-[2]">
-        <LaunchPanel provider={launchProvider} />
-      </div>
+      {/* PromptBuilder fills entire height — aligns with exchange rails */}
+      <PromptBuilder provider={builderProvider} />
     </div>
   );
 }

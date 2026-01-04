@@ -199,9 +199,7 @@ API Surface Index (derived from frontend/src/app/api/\*\*/route.ts):
 | /api/audit/[id]/csv                | audit               | No (audit)            | varies                   | No                            | Audit log / verification           |
 | /api/audit/[id]                    | audit               | No (audit)            | varies                   | No                            | Audit log / verification           |
 | /api/audit/[id]/verify             | audit               | No (audit)            | varies                   | No                            | Audit log / verification           |
-| /api/auth/login                    | auth                | No (auth)             | no-store                 | No                            | Authentication                     |
-| /api/auth/logout                   | auth                | No (auth)             | no-store                 | No                            | Authentication                     |
-| /api/auth/me                       | auth                | No (auth)             | no-store                 | No                            | Authentication                     |
+| /api/auth/*                        | auth                | No (Clerk)            | no-store                 | No                            | DEPRECATED: Handled by Clerk       |
 | /api/consent                       | consent             | No                    | no-store                 | No                            | Consent preferences                |
 | /api/exchanges                     | exchanges.index     | No (exchanges)        | varies                   | No                            | Exchange list                      |
 | /api/fx                            | fx.ribbon           | Yes (Refresh Gate)    | 30m (server TTL)         | Yes (trace via sibling route) | FX ribbon bulk quotes (A/B cached) |
@@ -789,6 +787,10 @@ Normative security rules:
 
 Auth-bearing routes (login/logout/me) are a separate security subsystem.
 They must never be wired into the Brain in a way that would allow a role policy change to affect authentication behaviour.
+
+> **Note (Jan 2026):** Authentication is now handled by **Clerk**. The legacy `/api/auth/*` routes are deprecated.
+> Clerk middleware (`clerkMiddleware`) handles session validation and route protection.
+> See `docs/authority/clerk-auth.md` for implementation details.
 
 17. Addendum: Runtime Contract (FX ribbon role)
 

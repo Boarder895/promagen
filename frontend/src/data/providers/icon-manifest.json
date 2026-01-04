@@ -1,0 +1,296 @@
+[
+  {
+    "id": "midjourney",
+    "name": "Midjourney",
+    "domain": "www.midjourney.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.midjourney.com&sz=64",
+    "save_as": "midjourney.png"
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI DALL\u00c2\u00b7E",
+    "domain": "openai.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=openai.com&sz=64",
+    "save_as": "openai.png"
+  },
+  {
+    "id": "google-imagen",
+    "name": "Google Imagen",
+    "domain": "deepmind.google",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=deepmind.google&sz=64",
+    "save_as": "google-imagen.png"
+  },
+  {
+    "id": "leonardo",
+    "name": "Leonardo AI",
+    "domain": "leonardo.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=leonardo.ai&sz=64",
+    "save_as": "leonardo.png"
+  },
+  {
+    "id": "flux",
+    "name": "Flux (Black Forest Labs)",
+    "domain": "blackforestlabs.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=blackforestlabs.ai&sz=64",
+    "save_as": "flux.png"
+  },
+  {
+    "id": "stability",
+    "name": "Stability AI / Stable Diffusion",
+    "domain": "stability.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=stability.ai&sz=64",
+    "save_as": "stability.png"
+  },
+  {
+    "id": "adobe-firefly",
+    "name": "Adobe Firefly",
+    "domain": "firefly.adobe.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=firefly.adobe.com&sz=64",
+    "save_as": "adobe-firefly.png"
+  },
+  {
+    "id": "ideogram",
+    "name": "Ideogram",
+    "domain": "ideogram.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=ideogram.ai&sz=64",
+    "save_as": "ideogram.png"
+  },
+  {
+    "id": "playground",
+    "name": "Playground AI",
+    "domain": "playground.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=playground.com&sz=64",
+    "save_as": "playground.png"
+  },
+  {
+    "id": "microsoft-designer",
+    "name": "Microsoft Designer",
+    "domain": "designer.microsoft.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=designer.microsoft.com&sz=64",
+    "save_as": "microsoft-designer.png"
+  },
+  {
+    "id": "novelai",
+    "name": "NovelAI",
+    "domain": "novelai.net",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=novelai.net&sz=64",
+    "save_as": "novelai.png"
+  },
+  {
+    "id": "lexica",
+    "name": "Lexica",
+    "domain": "lexica.art",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=lexica.art&sz=64",
+    "save_as": "lexica.png"
+  },
+  {
+    "id": "openart",
+    "name": "OpenArt",
+    "domain": "openart.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=openart.ai&sz=64",
+    "save_as": "openart.png"
+  },
+  {
+    "id": "123rf",
+    "name": "123RF AI Generator",
+    "domain": "www.123rf.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.123rf.com&sz=64",
+    "save_as": "123rf.png"
+  },
+  {
+    "id": "canva",
+    "name": "Canva Magic Media",
+    "domain": "www.canva.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.canva.com&sz=64",
+    "save_as": "canva.png"
+  },
+  {
+    "id": "bing",
+    "name": "Bing Image Creator",
+    "domain": "www.bing.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.bing.com&sz=64",
+    "save_as": "bing.png"
+  },
+  {
+    "id": "nightcafe",
+    "name": "NightCafe",
+    "domain": "nightcafe.studio",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=nightcafe.studio&sz=64",
+    "save_as": "nightcafe.png"
+  },
+  {
+    "id": "picsart",
+    "name": "Picsart",
+    "domain": "picsart.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=picsart.com&sz=64",
+    "save_as": "picsart.png"
+  },
+  {
+    "id": "artistly",
+    "name": "Artistly",
+    "domain": "artistly.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=artistly.ai&sz=64",
+    "save_as": "artistly.png"
+  },
+  {
+    "id": "fotor",
+    "name": "Fotor",
+    "domain": "www.fotor.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.fotor.com&sz=64",
+    "save_as": "fotor.png"
+  },
+  {
+    "id": "pixlr",
+    "name": "Pixlr",
+    "domain": "pixlr.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=pixlr.com&sz=64",
+    "save_as": "pixlr.png"
+  },
+  {
+    "id": "deepai",
+    "name": "DeepAI",
+    "domain": "deepai.org",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=deepai.org&sz=64",
+    "save_as": "deepai.png"
+  },
+  {
+    "id": "craiyon",
+    "name": "Craiyon",
+    "domain": "www.craiyon.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.craiyon.com&sz=64",
+    "save_as": "craiyon.png"
+  },
+  {
+    "id": "bluewillow",
+    "name": "BlueWillow",
+    "domain": "www.bluewillow.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.bluewillow.ai&sz=64",
+    "save_as": "bluewillow.png"
+  },
+  {
+    "id": "dreamstudio",
+    "name": "DreamStudio",
+    "domain": "dreamstudio.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=dreamstudio.ai&sz=64",
+    "save_as": "dreamstudio.png"
+  },
+  {
+    "id": "artbreeder",
+    "name": "Artbreeder",
+    "domain": "www.artbreeder.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.artbreeder.com&sz=64",
+    "save_as": "artbreeder.png"
+  },
+  {
+    "id": "jasper-art",
+    "name": "Jasper Art",
+    "domain": "www.jasper.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.jasper.ai&sz=64",
+    "save_as": "jasper-art.png"
+  },
+  {
+    "id": "runway",
+    "name": "Runway ML",
+    "domain": "runwayml.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=runwayml.com&sz=64",
+    "save_as": "runway.png"
+  },
+  {
+    "id": "freepik",
+    "name": "Freepik AI",
+    "domain": "www.freepik.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.freepik.com&sz=64",
+    "save_as": "freepik.png"
+  },
+  {
+    "id": "simplified",
+    "name": "Simplified",
+    "domain": "simplified.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=simplified.com&sz=64",
+    "save_as": "simplified.png"
+  },
+  {
+    "id": "photoleap",
+    "name": "Photoleap",
+    "domain": "www.photoleapapp.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.photoleapapp.com&sz=64",
+    "save_as": "photoleap.png"
+  },
+  {
+    "id": "vistacreate",
+    "name": "VistaCreate",
+    "domain": "create.vista.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=create.vista.com&sz=64",
+    "save_as": "vistacreate.png"
+  },
+  {
+    "id": "artguru",
+    "name": "Artguru",
+    "domain": "www.artguru.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.artguru.ai&sz=64",
+    "save_as": "artguru.png"
+  },
+  {
+    "id": "myedit",
+    "name": "MyEdit (CyberLink)",
+    "domain": "myedit.online",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=myedit.online&sz=64",
+    "save_as": "myedit.png"
+  },
+  {
+    "id": "visme",
+    "name": "Visme AI",
+    "domain": "www.visme.co",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.visme.co&sz=64",
+    "save_as": "visme.png"
+  },
+  {
+    "id": "hotpot",
+    "name": "Hotpot.ai",
+    "domain": "hotpot.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=hotpot.ai&sz=64",
+    "save_as": "hotpot.png"
+  },
+  {
+    "id": "picwish",
+    "name": "PicWish",
+    "domain": "picwish.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=picwish.com&sz=64",
+    "save_as": "picwish.png"
+  },
+  {
+    "id": "clipdrop",
+    "name": "Clipdrop",
+    "domain": "clipdrop.co",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=clipdrop.co&sz=64",
+    "save_as": "clipdrop.png"
+  },
+  {
+    "id": "getimg",
+    "name": "Getimg.ai",
+    "domain": "getimg.ai",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=getimg.ai&sz=64",
+    "save_as": "getimg.png"
+  },
+  {
+    "id": "imagine-meta",
+    "name": "Imagine (Meta)",
+    "domain": "imagine.meta.com",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=imagine.meta.com&sz=64",
+    "save_as": "imagine-meta.png"
+  },
+  {
+    "id": "dreamlike",
+    "name": "Dreamlike.art",
+    "domain": "dreamlike.art",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=dreamlike.art&sz=64",
+    "save_as": "dreamlike.png"
+  },
+  {
+    "id": "remove-bg",
+    "name": "Remove.bg (Kaleido AI)",
+    "domain": "www.remove.bg",
+    "favicon_url": "https://www.google.com/s2/favicons?domain=www.remove.bg&sz=64",
+    "save_as": "remove-bg.png"
+  }
+]

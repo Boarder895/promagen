@@ -64,12 +64,18 @@ function parseProviders(): Provider[] {
  * Base provider list (synchronous).
  * NOTE: This does NOT enrich promagenUsers; pages that want Promagen Users should call
  * getProvidersWithPromagenUsers() and await it (Stage 5 wiring).
+ *
+ * @param limit - Number of providers to return. If 0 or negative, returns ALL providers.
  */
-export function getProviders(limit = 20): Provider[] {
+export function getProviders(limit = 0): Provider[] {
   const providers = parseProviders();
 
-  const safeLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 20;
-  if (safeLimit <= 0) return [];
+  const safeLimit = Number.isFinite(limit) ? Math.floor(limit) : 0;
+
+  // limit <= 0 means "no limit" — return all providers
+  if (safeLimit <= 0) {
+    return providers;
+  }
 
   return providers.slice(0, safeLimit);
 }
@@ -105,13 +111,13 @@ function isUsageFresh(updatedAt: Date | null): boolean {
 }
 
 async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> {
-  // If DB is not configured, treat as “no data” and keep UI truthful (blank).
+  // If DB is not configured, treat as "no data" and keep UI truthful (blank).
   if (!hasDatabaseConfigured()) {
     return { updatedAt: null, byProvider: new Map() };
   }
 
   // 1) Global freshness check.
-  // Data is “fresh” if the aggregate table has been updated recently.
+  // Data is "fresh" if the aggregate table has been updated recently.
   let updatedAt: Date | null = null;
   try {
     const rows = await db()<Array<{ updatedAt: Date | null }>>`
@@ -202,9 +208,11 @@ async function getUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> {
  * Truth rules:
  * - If DB not configured or aggregates stale/unavailable -> returns base providers (no promagenUsers field).
  * - If provider has no users -> returns base provider (no promagenUsers field) so UI renders blank.
+ *
+ * @param limit - Number of providers to return. If 0 or negative, returns ALL providers.
  */
 export async function getProvidersWithPromagenUsers(
-  limit = 20,
+  limit = 0,
 ): Promise<ProviderWithPromagenUsers[]> {
   const base = getProviders(limit);
   if (base.length === 0) return [];

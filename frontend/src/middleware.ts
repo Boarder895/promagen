@@ -1,200 +1,206 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-const CANONICAL_HOST = (process.env['CANONICAL_HOST'] ?? '').toLowerCase().trim();
-const ENFORCE_CANONICAL = (process.env['ENFORCE_CANONICAL'] ?? 'true').toLowerCase() === 'true';
-const VERCEL_ENV = (process.env['VERCEL_ENV'] ?? '').toLowerCase();
+const CANONICAL_HOST = (process.env.NEXT_PUBLIC_CANONICAL_HOST ?? '').trim().toLowerCase();
+const ENFORCE_CANONICAL = (process.env.NEXT_PUBLIC_ENFORCE_CANONICAL ?? '').trim() === '1';
+const DEV_HEALTH_TOKEN = (process.env.PROMAGEN_DEV_HEALTH_TOKEN ?? '').trim();
 
-const PROMAGEN_SAFE_MODE_RAW = (process.env['PROMAGEN_SAFE_MODE'] ?? '').toLowerCase().trim();
-const PROMAGEN_SAFE_MODE_ENABLED =
-  PROMAGEN_SAFE_MODE_RAW === 'true' ||
-  PROMAGEN_SAFE_MODE_RAW === '1' ||
-  PROMAGEN_SAFE_MODE_RAW === 'yes';
+const DEV_HEALTH_PATHS = new Set<string>(['/dev/health', '/api/health', '/health-check']);
 
-const DEV_HEALTH_ENABLED =
-  (process.env['PROMAGEN_DEV_HEALTH_ENABLED'] ?? 'false').toLowerCase() === 'true';
-const DEV_HEALTH_TOKEN = (process.env['PROMAGEN_DEV_HEALTH_TOKEN'] ?? '').trim();
+const CSP_REPORT_URI = '/api/meta/csp-report';
+const REPORT_TO = JSON.stringify({
+  group: 'csp-endpoint',
+  max_age: 10886400,
+  endpoints: [{ url: CSP_REPORT_URI }],
+});
+
+// Protect only “private” surfaces (public site stays public)
+const isProtectedRoute = createRouteMatcher([
+  '/admin(.*)',
+  '/settings(.*)',
+  '/saved(.*)',
+  '/test(.*)',
+  '/api/admin(.*)',
+  '/api/tests(.*)',
+]);
 
 function getPromagenRequestId(req: NextRequest): string {
-  const vercelId = req.headers.get('x-vercel-id');
-  if (vercelId && vercelId.trim()) return vercelId.trim().slice(0, 96);
-
-  const reqId = req.headers.get('x-request-id');
-  if (reqId && reqId.trim()) return reqId.trim().slice(0, 96);
-
-  // Edge runtime: crypto.randomUUID is available on modern platforms.
-  if (
-    typeof crypto !== 'undefined' &&
-    typeof (crypto as unknown as { randomUUID?: () => string }).randomUUID === 'function'
-  ) {
-    return (crypto as unknown as { randomUUID: () => string }).randomUUID().slice(0, 96);
-  }
-
-  // Fallback: random bytes → hex (ASCII).
-  try {
-    const bytes = new Uint8Array(16);
-    (crypto as Crypto).getRandomValues(bytes);
-    let out = '';
-    for (const b of bytes) out += b.toString(16).padStart(2, '0');
-    return out.slice(0, 96);
-  } catch {
-    return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-  }
-}
-
-function buildCsp(isDev: boolean): string {
-  // Next dev needs looser script rules (HMR uses eval/inline).
-  if (isDev) {
-    return [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
-      "font-src 'self' data:",
-      "connect-src 'self' http: https: ws: wss:",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join('; ');
-  }
-
-  // Production CSP (compatible with Next's inline bootstrapping scripts)
-  return [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' blob:",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
-    "font-src 'self' data:",
-    "connect-src 'self' https:",
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-  ].join('; ');
+  return (
+    req.headers.get('x-promagen-request-id') ??
+    req.headers.get('x-vercel-id') ??
+    crypto.randomUUID()
+  );
 }
 
 function isDevHealthPath(pathname: string): boolean {
-  return pathname === '/dev/health' || pathname.startsWith('/dev/health/');
+  if (DEV_HEALTH_PATHS.has(pathname)) return true;
+  if (pathname.startsWith('/dev/health/')) return true;
+  if (pathname.startsWith('/api/health')) return true;
+  if (pathname.startsWith('/health-check')) return true;
+  return false;
 }
 
-function isProdLike(vercelEnv: string, isDev: boolean): boolean {
-  if (isDev) return false;
-  // Treat preview like production for safety (preview URLs get shared).
-  return vercelEnv === 'production' || vercelEnv === 'preview';
+function isPromagenInternalHost(host: string): boolean {
+  if (!host) return false;
+  const h = host.toLowerCase();
+  return h.includes('promagen');
 }
 
-function getPresentedDevHealthToken(req: NextRequest, url: URL): string {
-  // Prefer header token (lower leakage risk than query strings).
-  const fromHeader =
-    req.headers.get('x-promagen-dev-health-token') ??
-    req.headers.get('x-promagen-dev-token') ??
-    req.headers.get('x-dev-health-token');
-
-  if (fromHeader && fromHeader.trim()) return fromHeader.trim();
-
-  // Optional fallback: query token (convenient, but more leak-prone).
-  const fromQuery = url.searchParams.get('token');
-  if (fromQuery && fromQuery.trim()) return fromQuery.trim();
-
-  return '';
+function getClerkFapiUrl(): string | null {
+  // Optional but useful: lets you keep CSP tight by explicitly allowing your Clerk Frontend API host
+  // (NEXT_PUBLIC_CLERK_FAPI or CLERK_FAPI).
+  const raw = (process.env.NEXT_PUBLIC_CLERK_FAPI ?? process.env.CLERK_FAPI ?? '').trim();
+  if (!raw) return null;
+  if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+  return `https://${raw}`;
 }
 
-function devHealthAllowed(req: NextRequest, url: URL, isDev: boolean, vercelEnv: string): boolean {
-  // Default OFF everywhere unless explicitly enabled.
-  if (!DEV_HEALTH_ENABLED) return false;
+function buildCsp(isDev: boolean, isPreview: boolean): string {
+  const clerkFapi = getClerkFapiUrl();
 
-  // Dev: frictionless (no token).
-  if (isDev) return true;
+  // If you set NEXT_PUBLIC_CLERK_FAPI / CLERK_FAPI we allow it explicitly;
+  // otherwise allow Clerk hosted domains so auth still works.
+  const clerkHostedFallback = 'https://*.clerk.accounts.dev https://*.clerk.com';
+  const clerkScriptSrc = clerkFapi ? `${clerkFapi} ${clerkHostedFallback}` : clerkHostedFallback;
+  const clerkConnectSrc = clerkFapi ? `${clerkFapi}` : clerkHostedFallback;
 
-  // Preview/prod: require token (defence in depth).
-  if (!isProdLike(vercelEnv, isDev)) {
-    // Non-dev but not preview/prod (rare): still require token to be safe.
-    // (e.g., custom staging env)
+  const directives: string[] = [];
+
+  directives.push(`default-src 'self'`);
+
+  // Clerk requires script-src to include your FAPI hostname + Cloudflare challenges host.
+  directives.push(
+    `script-src 'self' 'unsafe-inline'${
+      isDev ? " 'unsafe-eval'" : ''
+    } blob: ${clerkScriptSrc} https://challenges.cloudflare.com`,
+  );
+
+  // Clerk requires unsafe-inline for runtime CSS-in-JS.
+  directives.push(`style-src 'self' 'unsafe-inline' https:`);
+
+  // Clerk images (avatars) come from img.clerk.com.
+  directives.push(`img-src 'self' data: blob: https://img.clerk.com`);
+
+  directives.push(`font-src 'self' data:`);
+
+  // Keep your existing “safe-but-practical” connect-src, plus explicit Clerk FAPI if set.
+  directives.push(`connect-src 'self' https:${isDev ? ' http: ws: wss:' : ''} ${clerkConnectSrc}`);
+
+  // Clerk requires workers from self + blob:.
+  directives.push(`worker-src 'self' blob:`);
+
+  // Cloudflare bot protection iframe host.
+  directives.push(`frame-src 'self' https://challenges.cloudflare.com`);
+
+  directives.push(`base-uri 'self'`);
+  directives.push(`form-action 'self'`);
+  directives.push(`frame-ancestors 'none'`);
+  directives.push(`object-src 'none'`);
+
+  // Only send reports in preview builds (report-only header below)
+  if (isPreview) {
+    directives.push(`report-uri ${CSP_REPORT_URI}`);
+    directives.push(`report-to csp-endpoint`);
   }
 
-  if (!DEV_HEALTH_TOKEN) return false;
-
-  const presented = getPresentedDevHealthToken(req, url);
-  if (!presented) return false;
-
-  return presented === DEV_HEALTH_TOKEN;
+  return directives.join('; ');
 }
 
 function applySecurityHeaders(
-  res: NextResponse,
+  response: NextResponse,
   isDev: boolean,
-  devHealthMode: boolean,
+  isDevHealth: boolean,
   requestId: string,
 ): NextResponse {
-  const csp = buildCsp(isDev);
+  const isPreview =
+    (process.env.VERCEL_ENV ?? '').toLowerCase() === 'preview' ||
+    (process.env.NEXT_PUBLIC_VERCEL_ENV ?? '').toLowerCase() === 'preview';
 
-  res.headers.set('X-Frame-Options', 'DENY');
-  res.headers.set('X-Content-Type-Options', 'nosniff');
-  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  const csp = buildCsp(isDev, isPreview);
 
-  // Correlation / ops headers (ASCII only)
-  res.headers.set('X-Promagen-Request-Id', requestId);
-  res.headers.set('X-Promagen-Env', VERCEL_ENV || (isDev ? 'development' : 'unknown'));
-  res.headers.set('X-Promagen-Safe-Mode', PROMAGEN_SAFE_MODE_ENABLED ? '1' : '0');
-
-  // Keep COOP/COEP off in dev to avoid surprises.
-  if (!isDev) {
-    res.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-    res.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
-  }
-
-  // HSTS only in Vercel production (avoid caching surprises in preview/dev).
-  if (VERCEL_ENV === 'production') {
-    res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  }
-
-  // Preview: report-only. Production: enforce.
-  if (VERCEL_ENV === 'preview') {
-    res.headers.set('Content-Security-Policy-Report-Only', csp);
+  if (isPreview) {
+    response.headers.set('Content-Security-Policy-Report-Only', csp);
+    response.headers.set('Report-To', REPORT_TO);
   } else {
-    res.headers.set('Content-Security-Policy', csp);
+    response.headers.set('Content-Security-Policy', csp);
   }
 
-  // Ensure internal dashboards never get indexed (even if someone exposes them by mistake).
-  if (devHealthMode) {
-    res.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('X-Frame-Options', 'DENY');
+
+  response.headers.set(
+    'Cross-Origin-Opener-Policy',
+    isDev ? 'same-origin-allow-popups' : 'same-origin',
+  );
+  response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+
+  if (!isDev) {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload',
+    );
   }
 
-  return res;
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+  );
+
+  response.headers.set('x-promagen-request-id', requestId);
+
+  if (isDevHealth) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+    response.headers.set('Cache-Control', 'no-store');
+  }
+
+  return response;
 }
 
-export function middleware(req: NextRequest) {
-  const url = new URL(req.url);
+export default clerkMiddleware(async (auth, req) => {
+  const url = req.nextUrl;
   const host = url.host.toLowerCase();
   const pathname = url.pathname;
 
   const isDev = process.env.NODE_ENV === 'development';
-  const devHealthMode = isDevHealthPath(pathname);
-
+  const isDevHealth = isDevHealthPath(pathname);
   const requestId = getPromagenRequestId(req);
 
-  // Gate /dev/health first. Always return 404 when blocked (no hints).
-  if (devHealthMode) {
-    const allowed = devHealthAllowed(req, url, isDev, VERCEL_ENV);
+  // 1) Dev/health gate (token OR internal host) — keep BEFORE auth
+  if (isDevHealth) {
+    const token = req.headers.get('x-promagen-health-token') ?? '';
+    const allowed =
+      (DEV_HEALTH_TOKEN && token === DEV_HEALTH_TOKEN) || isPromagenInternalHost(host);
 
     if (!allowed) {
-      const notFound = new NextResponse('Not Found', { status: 404 });
-      return applySecurityHeaders(notFound, isDev, true, requestId);
+      const res = NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return applySecurityHeaders(res, isDev, true, requestId);
     }
-    // Allowed: continue through canonical redirects + normal headers below.
   }
 
-  // Allow localhost without canonical redirects.
+  // 2) Canonical host enforcement
   if (host !== 'localhost:3000' && ENFORCE_CANONICAL && CANONICAL_HOST && host !== CANONICAL_HOST) {
     const to = `${url.protocol}//${CANONICAL_HOST}${url.pathname}${url.search}`;
-    const redirect = NextResponse.redirect(to, 308);
-    return applySecurityHeaders(redirect, isDev, devHealthMode, requestId);
+    const res = NextResponse.redirect(to, 308);
+    return applySecurityHeaders(res, isDev, isDevHealth, requestId);
   }
 
+  // 3) Clerk protection for private areas
+  if (isProtectedRoute(req)) {
+    await auth.protect();
+  }
+
+  // 4) Continue
   const res = NextResponse.next();
-  return applySecurityHeaders(res, isDev, devHealthMode, requestId);
-}
+  return applySecurityHeaders(res, isDev, isDevHealth, requestId);
+});
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)'],
+  matcher: [
+    // Skip Next.js internals and common static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
+  ],
 };

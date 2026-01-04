@@ -1,7 +1,7 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 28 December 2025  
-**Version:** 2.0 (9.5/10 upgrade)  
+**Last updated:** 3 January 2026  
+**Version:** 2.2 (Pro Promagen + button styling)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
 ---
@@ -39,6 +39,13 @@ All paid/free boundaries are defined only in:
 **Hard rule:** if a capability is not explicitly listed in `paid_tier.md`, it is free.
 
 The frontend is allowed to render placeholders (loading, skeletons, empty states). The frontend must not invent "demo" market data (fake prices, fake returns, fake movements). If live data is unavailable, we show an honest error/empty state.
+
+### Terminology
+
+| Term | Definition |
+|------|------------|
+| **Pro Promagen** | The paid subscription tier. Always use "Pro Promagen" in user-facing text, never "paid", "premium", "plus", or other terms. Internal code may use `isPaidUser` or `userTier === 'paid'` for brevity, but UI labels, tooltips, CTAs, and prompts must say "Pro Promagen". |
+| **Standard Promagen** | The free tier. If not explicitly listed in `paid_tier.md`, a feature is Standard Promagen (free). |
 
 ### Principles
 
@@ -324,6 +331,34 @@ When a card displays multiple data groups (e.g., exchange info | time | weather)
 
 **Compliance check:** View multiple cards stacked. If the Time columns don't align vertically, the component violates this rule.
 
+### § 6.1 Canonical Button Styling
+
+**Purpose:** All buttons in Promagen use a single, consistent design language. The Sign In button is the canonical reference.
+
+**Default button style (use for ALL buttons unless explicitly told otherwise):**
+
+```tsx
+className="inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80"
+```
+
+**Breakdown:**
+
+| Property | Value | Purpose |
+|----------|-------|---------|
+| Shape | `rounded-full` | Pill-shaped button |
+| Border | `border border-purple-500/70` | Subtle purple outline |
+| Background | `bg-gradient-to-r from-purple-600/20 to-pink-600/20` | Purple-pink gradient at 20% opacity |
+| Text | `text-sm font-medium text-purple-100` | Small, medium-weight, light purple |
+| Padding | `px-4 py-1.5` | Horizontal 16px, vertical 6px |
+| Hover | `hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400` | Intensify gradient and border |
+| Focus | `focus-visible:ring focus-visible:ring-purple-400/80` | Purple focus ring |
+
+**When to deviate:**
+
+Only deviate from this style if the user explicitly requests a different style. Document the deviation with a comment explaining why.
+
+**Reference implementation:** `src/components/auth/auth-button.tsx`
+
 ---
 
 ## 7. Accessibility Rules
@@ -347,6 +382,107 @@ Animations must respect `prefers-reduced-motion`.
 When there is dynamic status (loading, errors, changes), use:
 - `aria-live` regions
 - SR-only updates where appropriate
+
+---
+
+## 7.1 Tooltip Standards (Uniform UI)
+
+**Purpose:** Ensure consistent, accessible, concise tooltip experience across all Promagen surfaces.
+
+### Component
+
+**Canonical component:** `@/components/ui/tooltip`
+
+```tsx
+import Tooltip from '@/components/ui/tooltip';
+
+<Tooltip text="Support: 24/7">
+  <span className="flag">🇺🇸</span>
+</Tooltip>
+```
+
+**Current implementation:** Uses native HTML `title` attribute (simple, accessible, works everywhere).
+
+**Future:** May upgrade to Radix UI or shadcn tooltip for richer interactions, but API remains identical.
+
+### Tooltip Content Rules
+
+**1. Keep it concise** - Maximum 80 characters, one line strongly preferred
+
+**2. No jargon** - Use plain language accessible to all users
+
+**3. Show data** - Include actual numbers/values when relevant (e.g., "87 - 5 = 82")
+
+**4. Desktop only** - Tooltips are hover-only; mobile has no hover, so design must work without tooltips
+
+**5. Never block interaction** - Tooltip must not interfere with clicking the element
+
+### Examples
+
+**Good tooltips:**
+```tsx
+// Short, clear, data-driven
+<Tooltip text="Support: 24/7">🇺🇸</Tooltip>
+<Tooltip text="Visit midjourney.com">🏠</Tooltip>
+<Tooltip text="Try prompt builder">🎨</Tooltip>
+<Tooltip text="Adjusted for Big Tech advantage (87 - 5 = 82)">82* ↓</Tooltip>
+<Tooltip text="API available">🔌</Tooltip>
+```
+
+**Bad tooltips:**
+```tsx
+// Too long, too wordy
+<Tooltip text="This platform receives an adjustment because it is backed by Big Tech and has distribution advantages">82</Tooltip>
+
+// No information
+<Tooltip text="Adjusted">82</Tooltip>
+
+// Jargon-heavy
+<Tooltip text="Incumbent distribution advantage adjustment per 2-of-3 heuristic">82</Tooltip>
+```
+
+### Accessibility Requirements
+
+**Screen reader support:**
+```tsx
+<Tooltip text="Visit Midjourney website (opens in new tab)">
+  <a 
+    href="https://midjourney.com"
+    target="_blank"
+    aria-label="Visit Midjourney website (opens in new tab)"
+  >
+    <span aria-hidden="true">🏠</span>
+  </a>
+</Tooltip>
+```
+
+**Keyboard navigation:**
+- Tooltips must appear on both hover AND focus
+- Tooltip content must be accessible via `title` attribute or `aria-describedby`
+
+### When to Use Tooltips
+
+**Use tooltips for:**
+- Icon-only buttons/links (explain what clicking does)
+- Abbreviated data (expand acronyms or show full values)
+- Contextual help (explain adjusted scores, support hours, etc.)
+- Flag emojis (show support hours or country name)
+
+**Don't use tooltips for:**
+- Critical information (must be visible without hover)
+- Long explanations (use proper help text or modal)
+- Repetitive content (if every item has same tooltip, make it visible)
+- Mobile-primary interactions (no hover on touch devices)
+
+### Implementation Checklist
+
+When adding tooltips:
+- [ ] Content is ≤80 characters
+- [ ] Uses plain language (no jargon)
+- [ ] Includes relevant data/numbers
+- [ ] Works with keyboard (focus shows tooltip)
+- [ ] Has proper aria-label on interactive elements
+- [ ] Design works without tooltip (mobile-friendly)
 
 ---
 
@@ -831,5 +967,318 @@ When addressing ESLint, TypeScript typecheck, or test failures, apply the smalle
 
 ## Changelog
 
+- **30 Dec 2025:** Added § 7.1 Tooltip Standards (uniform UI guidelines for consistent, accessible tooltips across all surfaces).
 - **28 Dec 2025 (v2.0):** Major upgrade to 9.5/10. Added Quick Reference, schema consolidation rule, type entry points, error boundary placement, component organisation, API route naming, dependency discipline, docs-first gate cross-reference. Renumbered sections for consistency.
 - **15 Dec 2025 (v1.0):** Initial version with core rules, Vercel Pro guardrails, clock components.
+- **31 Dec 2025:** Added § 8.1 Scrollbar Utilities, § 8.2 Synchronized Scroll Pattern, § 8.3 Viewport-Locked Layout, § 8.4 Prompt Builder Patterns (category dropdown system, platform-specific assembly, full-height layout).
+
+---
+
+## 8. Layout Patterns (Added Dec 31, 2025)
+
+### § 8.1 Scrollbar Utilities
+
+Promagen uses thin, subtle scrollbars for internal scroll containers on dark UI surfaces.
+
+**Utility Classes (globals.css)**
+
+```css
+/* Webkit (Chrome, Safari, Edge) */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.hover\:scrollbar-thumb-white\/30:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Firefox fallback */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+```
+
+**Usage Pattern**
+
+```tsx
+<div className="overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+  {/* Scrollable content */}
+</div>
+```
+
+**Rules**
+1. Always use `overflow-y: auto` (not `scroll`) — scrollbar only appears when needed
+2. Apply all four scrollbar classes together for consistent styling
+3. Never use browser-default scrollbars in dark UI areas
+
+---
+
+### § 8.2 Synchronized Scroll Pattern
+
+When two containers must scroll in sync (e.g., exchange rails on homepage):
+
+**Implementation**
+
+```tsx
+'use client';
+
+import { useRef, useCallback } from 'react';
+
+export function SyncedScrollContainers() {
+  const leftRef = useRef<HTMLDivElement>(null);
+  const rightRef = useRef<HTMLDivElement>(null);
+  const isSyncing = useRef(false);
+
+  const syncScroll = useCallback((source: HTMLDivElement, target: HTMLDivElement) => {
+    if (isSyncing.current) return;
+    isSyncing.current = true;
+
+    // Calculate scroll percentage (handles different content heights)
+    const maxScroll = source.scrollHeight - source.clientHeight;
+    const scrollPercent = maxScroll > 0 ? source.scrollTop / maxScroll : 0;
+
+    // Apply to target
+    const targetMaxScroll = target.scrollHeight - target.clientHeight;
+    target.scrollTop = scrollPercent * targetMaxScroll;
+
+    requestAnimationFrame(() => {
+      isSyncing.current = false;
+    });
+  }, []);
+
+  const handleLeftScroll = useCallback(() => {
+    if (leftRef.current && rightRef.current) {
+      syncScroll(leftRef.current, rightRef.current);
+    }
+  }, [syncScroll]);
+
+  const handleRightScroll = useCallback(() => {
+    if (rightRef.current && leftRef.current) {
+      syncScroll(rightRef.current, leftRef.current);
+    }
+  }, [syncScroll]);
+
+  return (
+    <>
+      <div ref={leftRef} onScroll={handleLeftScroll} className="overflow-y-auto">
+        {/* Left content */}
+      </div>
+      <div ref={rightRef} onScroll={handleRightScroll} className="overflow-y-auto">
+        {/* Right content */}
+      </div>
+    </>
+  );
+}
+```
+
+**Key Points**
+
+1. **Percentage-based sync** — handles containers with different content heights
+2. **`isSyncing` guard** — prevents infinite scroll loops
+3. **`requestAnimationFrame`** — ensures smooth updates without jank
+4. **Client component required** — uses refs and event handlers
+
+---
+
+### § 8.3 Viewport-Locked Layout
+
+The homepage uses a viewport-locked layout where the page fills exactly 100dvh with no page-level scroll.
+
+**CSS Requirements (globals.css)**
+
+```css
+html,
+body {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden !important;
+  margin: 0;
+  padding: 0;
+}
+```
+
+**Layout Structure**
+
+```tsx
+// Root layout — constrained to viewport
+<body className="h-dvh overflow-hidden">
+  {children}
+</body>
+
+// Homepage grid — fills viewport, internal scroll only
+<div className="flex h-dvh flex-col overflow-hidden">
+  <main className="flex min-h-0 flex-1 flex-col">
+    {/* Hero section: shrink-0 (fixed height) */}
+    {/* Three-column grid: flex-1 min-h-0 (fills remaining space) */}
+  </main>
+  <footer className="shrink-0">
+    {/* Footer: fixed height at bottom */}
+  </footer>
+</div>
+```
+
+**Critical Classes**
+
+| Class | Purpose |
+|-------|---------|
+| `h-dvh` | Exactly 100dvh (dynamic viewport height) |
+| `overflow-hidden` | NO page scroll |
+| `flex-1` | Fill available space |
+| `min-h-0` | Allow flex children to shrink below content size |
+| `shrink-0` | Prevent shrinking (fixed-height sections) |
+
+**Common Mistakes**
+
+❌ `min-h-dvh` — allows content to exceed viewport
+❌ `overflow-auto` on body — creates page scrollbar
+❌ Missing `min-h-0` — flex children won't scroll properly
+❌ Footer outside main flex container — breaks viewport lock
+
+---
+
+### § 8.4 Prompt Builder Patterns (Added Dec 31, 2025)
+
+The prompt builder uses a 9-category dropdown system with platform-specific optimization for 42 AI image generation providers.
+
+#### Category Dropdown System
+
+**Data Location:**
+- Options: `src/data/providers/prompt-options.json`
+- Platform formats: `src/data/providers/platform-formats.json`
+- Types: `src/types/prompt-builder.ts`
+- Logic: `src/lib/prompt-builder.ts` (763 lines)
+
+**Category Schema:**
+
+```typescript
+type PromptCategory =
+  | 'subject' | 'medium' | 'style' | 'lighting' | 'colour'
+  | 'composition' | 'mood' | 'camera' | 'negative';
+
+interface CategoryConfig {
+  label: string;
+  description: string;
+  options: string[];  // Exactly 30 options per category
+}
+```
+
+**9 Categories × 30 Options:**
+
+| Category | Description | Max Selections |
+|----------|-------------|----------------|
+| Subject | Main focus of image | 5 |
+| Medium | Artistic technique | 5 |
+| Style / Genre | Visual style | 5 |
+| Lighting | Light conditions | 5 |
+| Colour Scheme | Palette/tones | 5 |
+| Composition | Framing/angle | 5 |
+| Mood | Emotional tone | 5 |
+| Camera Details | Lens effects | 5 |
+| Negative Prompt | What to exclude | 10 |
+
+#### Platform-Specific Assembly
+
+Different AI platforms require different prompt syntax. The assembler routes to platform-specific functions:
+
+```typescript
+function assemblePrompt(platformId: string, selections: PromptSelections): AssembledPrompt {
+  const family = getPlatformFamily(platformId);
+  switch (family) {
+    case 'midjourney': return assembleMidjourney(selections);
+    case 'stable-diffusion': return assembleStableDiffusion(selections);
+    case 'leonardo': return assembleLeonardo(selections);
+    case 'flux': return assembleFlux(selections);
+    case 'novelai': return assembleNovelAI(selections);
+    case 'ideogram': return assembleIdeogram(selections);
+    default: return assembleNatural(selections, platformId);
+  }
+}
+```
+
+**7 Platform Families:**
+
+| Family | Platforms | Syntax Style |
+|--------|-----------|--------------|
+| Midjourney | midjourney, bluewillow | `subject, style --no negative` |
+| Stable Diffusion | stability, dreamstudio, lexica, etc. (10) | `masterpiece, (term:1.1)` + separate neg |
+| Leonardo | leonardo | `term::1.1` weighting syntax |
+| Flux | flux | Keywords + quality suffix |
+| NovelAI | novelai | `{{{emphasis}}}` braces |
+| Ideogram | ideogram | `without X` inline negatives |
+| Natural | openai, dall-e, canva, etc. (26) | Flowing sentences |
+
+#### Combobox Component Pattern
+
+Multi-select dropdowns with custom entry follow this pattern:
+
+```tsx
+<Combobox
+  id="category-subject"
+  label="Subject"
+  description="The main focus of the image"
+  options={categoryOptions}
+  selected={selectedValues}
+  customValue={customInput}
+  onSelectChange={(selected) => handleSelect(selected)}
+  onCustomChange={(value) => handleCustom(value)}
+  placeholder="Select subject..."
+  maxSelections={5}
+/>
+```
+
+**Accessibility Requirements:**
+- `role="combobox"` on input
+- `aria-expanded` indicates dropdown state
+- `aria-controls` links to listbox
+- Chip remove buttons have `aria-label`
+- Full keyboard navigation (Tab, Enter, Escape, Arrow keys)
+
+#### Full-Height Layout
+
+The prompt builder fills the entire centre column height, aligning with exchange rails:
+
+```tsx
+// ProviderWorkspace
+<div className="flex h-full min-h-0 flex-col">
+  <PromptBuilder provider={provider} />
+</div>
+
+// PromptBuilder structure
+<section className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 ring-1 ring-white/10">
+  <header className="shrink-0">...</header>
+  <section className="min-h-0 flex-1 overflow-y-auto scrollbar-thin ...">...</section>
+  <footer className="shrink-0">...</footer>
+</section>
+```
+
+**Critical Classes:**
+- `h-full min-h-0` — fills parent, allows shrinking
+- `flex-col` — vertical layout
+- `shrink-0` — fixed-height header/footer
+- `flex-1 overflow-y-auto` — scrollable content area
+
+#### Uniform Scrollbar Rule
+
+All prompt builder scroll areas MUST use identical scrollbar styling to exchange rails:
+
+```tsx
+className="overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+```
+
+**Never use:**
+- Browser default scrollbars
+- Different scrollbar widths
+- Different track/thumb colours
+
+This ensures visual consistency across exchange rails, providers table, and prompt builder.

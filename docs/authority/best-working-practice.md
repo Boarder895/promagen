@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 28 December 2025
+**Last updated:** 3 January 2026
 
 ---
 
@@ -22,6 +22,51 @@ Memory is used only for stable working preferences and process rules (e.g., "one
 
 - Memory does not store your repo or file contents.
 - In a new chat, the assistant may not have access to previous uploads; upload/paste the current file(s) when requesting edits.
+
+---
+
+## Terminology (Paid Tier Naming)
+
+| Term | Definition |
+|------|------------|
+| **Pro Promagen** | The paid subscription tier. Always use "Pro Promagen" in user-facing text, never "paid", "premium", "plus", or other terms. |
+| **Standard Promagen** | The free tier. If not explicitly listed in `paid_tier.md`, a feature is Standard Promagen (free). |
+
+**UI usage:**
+- CTAs: "Upgrade to Pro Promagen"
+- Badges: "Pro Promagen" or "Pro"
+- Tooltips: "Pro Promagen feature"
+- Lock messages: "🔒 Pro Promagen Feature"
+
+**Code usage:**
+- Internal variables may use `isPaidUser`, `userTier === 'paid'` for brevity
+- User-facing strings must always say "Pro Promagen"
+
+---
+
+## Security-First Development
+
+**Purpose:** All code delivered must be as secure and unhackable as possible.
+
+**Scope:** This applies to files that are **part of the current request**. The assistant should not audit the entire codebase uninvited.
+
+**Hard rules:**
+
+1. **Secure the work you're doing** — When modifying a file as part of a request, ensure that file is as secure as possible (input validation, sanitisation, proper auth checks, no secrets exposed).
+
+2. **Don't audit uninvited** — Do not go through the entire src.zip looking for security issues in files that aren't part of the request. Stay focused on the task at hand.
+
+3. **Flag obvious risks** — If you notice a glaring security issue in a file you're reviewing for context (not modifying), mention it but don't fix it unless asked.
+
+4. **Validation at boundaries** — All user input, API responses, and external data must be validated before use.
+
+5. **No secrets in code** — Never hardcode API keys, passwords, or tokens. Use environment variables.
+
+6. **Auth checks on protected routes** — Every API route that should be protected must verify authentication server-side.
+
+7. **Sanitise output** — Prevent XSS by properly escaping user-generated content.
+
+**In short:** Make the code you're delivering bulletproof. Don't scope-creep into security auditing files outside the request.
 
 ---
 
@@ -188,6 +233,7 @@ When you ask "does anything need updating in the docs?" or "tell me which lines 
 - `docs/authority/vercel-pro-promagen-playbook.md` ← Vercel Pro guardrails
 - `docs/authority/fly-v2.md` ← Fly.io deployment
 - `docs/authority/api-documentation-twelvedata.md` ← Vendor reference snapshot (read-only)
+- `docs/authority/TODO-api-integration.md` ← Deferred work and activation tasks
 
 **Frontend companion docs:**
 
@@ -223,6 +269,8 @@ A doc update is required whenever a change affects any of:
 - Deployment/runtime policy (Vercel/Fly env vars, secrets, headers, cache behaviour)
 - Provider integrations (rate limits, symbol formats, call limits, quotas, budget guard logic)
 - Testing invariants (new lock-in tests, renamed exports, type shape expectations)
+- Prompt builder category options or platform format rules changed
+- Voting system mechanics or activation requirements changed
 
 ---
 
@@ -317,5 +365,10 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **3 Jan 2026:** Added "Pro Promagen" terminology section (paid tier naming convention). Added "Security-First Development" section (secure code for files in current request only).
+- **2 Jan 2026:** Added TODO-api-integration.md to authority docs list. Added "Voting system mechanics" to doc update triggers. Community voting system fully implemented with activation requirements documented.
+- **1 Jan 2026:** Prompt builder expanded to 11 categories with selection limits (1/2/5). Added 🎲 Randomise button. Implemented negative-to-positive conversion for natural language platforms (30 mappings). Fixed Artistly platform family. Added dropdown auto-close and 50-char custom entry limit. Updated `prompt-builder-page.md` authority doc.
+- **31 Dec 2025:** Added prompt builder data sources to documentation. Cross-reference to `prompt-builder-page.md` for 9-category dropdown system and platform-specific optimization. Viewport-locked layout and scrollbar utilities documented in code-standard.md § 8.1-8.4.
+- **30 Dec 2025:** No content changes (tooltip standards added to code-standard.md § 7.1 instead of here to avoid duplication).
 - **28 Dec 2025:** Added Schema and Type Consolidation Rules section. Added `prompt-builder-page.md` to authority docs list. Added "Schema or type definitions" to doc update triggers. Updated memory policy for Claude. Improved formatting consistency.
 - **27 Dec 2025:** Added "Git safety gate (anti-panic)" rules (stash-first / rescue-branch / no-guessing / generated artefact handling / no-conflict-marker commits).

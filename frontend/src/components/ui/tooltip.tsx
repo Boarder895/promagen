@@ -6,6 +6,3 @@ export function Tooltip({ children, text }: { children: React.ReactNode; text: s
   return <span title={text} className="cursor-help">{children}</span>;
 }
 export default Tooltip;
-
-
-

@@ -1,36 +1,193 @@
 # Prompt Builder Page
 
-**Last updated:** 28 December 2025  
+**Last updated:** 4 January 2026  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).
 
+---
+
 ## Purpose
 
-When a user clicks a provider row in the Leaderboard, they navigate to a dedicated page for that provider. This page reuses the Homepage layout (exchange rails + finance ribbon) but replaces the centre leaderboard with a **two-row prompt workspace**.
+When a user clicks a provider row in the Leaderboard, they navigate to a dedicated page for that provider. This page reuses the Homepage layout (exchange rails + finance ribbon) but replaces the centre leaderboard with a **full-height prompt builder workspace**.
 
 The design philosophy: Promagen is a bridge between markets and imagination. The prompt builder page is where users craft prompts before launching into the AI provider platform.
 
-## Page architecture
+**Authentication approach:** Anonymous users get 5 free prompts per day (resets at midnight) before sign-in required. This allows users to experience the product before committing to an account, driving higher quality sign-ups.
+
+---
+
+## Authentication & Access Control
+
+### Lock States
+
+The prompt builder has five distinct lock states with different visual treatments:
+
+#### 1. Anonymous - Under Limit (0-4 prompts used today)
+- **Visual treatment:** Normal dropdowns, fully functional
+- **Usage counter:** "X/5 free prompts today" in header
+- **Behaviour:** Full access to all 12 categories with standard selection limits
+- **Storage:** localStorage v2 with tamper detection and daily reset tracking
+
+#### 2. Anonymous - Limit Reached (5 prompts used today)
+- **Visual treatment:** All dropdowns display **disabled styling only** (purple-tinted, reduced opacity)
+- **Overlay:** Centred overlay at TOP of prompt builder section, button at top of overlay
+- **Call-to-action:** "Sign in to continue" button (at top of overlay)
+- **Message:** "You've used your 5 free prompts today"
+- **Benefits list:** 30 prompts/day, location-based ordering, votes count
+- **Behaviour:** All dropdowns disabled with purple tint, **NO overlay text on individual dropdowns**
+- **Reset:** Counter resets at midnight in user's local timezone (same as authenticated users)
+
+#### 3. Free User - Under Quota (0-29 prompts/day)
+- **Visual treatment:** Normal dropdowns, fully functional
+- **Usage counter:** Discrete counter showing "X/30 prompts today" 
+- **Behaviour:** Full access to all 12 categories with standard selection limits
+- **Reset:** Counter resets at midnight in user's timezone
+
+#### 4. Free User - Quota Reached (30/30 used)
+- **Visual treatment:** All dropdowns display **disabled styling only** (purple-tinted, reduced opacity)
+- **Overlay:** Centred overlay at TOP of prompt builder section, button at top of overlay
+- **Call-to-action:** "Go Pro for unlimited" button (at top of overlay)
+- **Message:** "Daily limit reached" + reset countdown
+- **Behaviour:** All dropdowns disabled with purple tint, **NO overlay text on individual dropdowns**
+
+#### 5. Paid User
+- **Visual treatment:** Normal dropdowns, fully functional
+- **No usage counter:** Unlimited daily usage
+- **Enhanced limits:** Style, Lighting, and Fidelity categories allow 2 selections instead of 1
+- **Behaviour:** Never locks due to usage
+
+### Lock State Component Behaviour (v5.0.0)
+
+When locked, the following component behaviours apply:
+
+| Component | Locked Behaviour |
+|-----------|-----------------|
+| **Combobox dropdowns** | Disabled styling (purple tint, `opacity-50`), NO overlay text, lock icon in label only |
+| **Dropdown arrows** | Hidden when locked |
+| **Dropdown input** | Shows empty placeholder, cannot type |
+| **Randomise button** | Disabled (`cursor-not-allowed`, muted colors) |
+| **Free text input** | Disabled, cannot type in any category |
+| **Aspect ratio selector** | Disabled buttons with `opacity-50`, NO overlay text |
+| **Copy prompt button** | Shows appropriate CTA based on lock reason |
+
+**Critical UX rule:** Individual dropdowns do NOT show "Sign in to continue" or other overlay text. Lock messaging appears ONLY in the central overlay at the top of the prompt builder section. This keeps the UI clean and non-repetitive.
+
+### Usage Tracking System
+
+**Trigger event:** "Copy prompt" button click
+- This represents the moment users extract value from Promagen's curation work
+- Most accurate measure of actual prompt usage
+- Cleaner than tracking AI provider submissions
+
+**Anonymous tracking (localStorage v2):**
+- 5 prompts per day (resets at midnight local time)
+- Key: `promagen:anonymous:usage`
+- Schema version: 2 (includes daily reset tracking)
+- Structure: `{ count, firstUse, lastUse, lastResetDate, version, checksum }`
+- Tamper detection via checksum validation
+- Daily reset: if `lastResetDate !== today`, count resets to 0
+
+**Anonymous storage schema v2:**
+```typescript
+interface AnonymousUsageData {
+  count: number;           // Prompt copy count (resets daily)
+  firstUse: string;        // First use timestamp (ISO)
+  lastUse: string;         // Last use timestamp (ISO)
+  lastResetDate: string;   // Date of last reset (YYYY-MM-DD)
+  version: 2;              // Schema version
+  checksum: string;        // Tamper detection hash
+}
+
+interface AnonymousUsageState {
+  count: number;           // Current usage count
+  limit: number;           // Maximum allowed (5)
+  remaining: number;       // Remaining prompts
+  isAtLimit: boolean;      // Whether limit is reached
+  resetTime: string | null; // Midnight tonight (ISO)
+}
+```
+
+**Migration from v1:** Previous v1 data (without `lastResetDate`) is invalidated on read, triggering a fresh start with v2 schema.
+
+**Authenticated tracking (Vercel KV):**
+- Store daily usage in Vercel KV (consistent with voting system)
+- Key format: `usage:${userId}:${date}` where date is YYYY-MM-DD in user's timezone
+- Reset logic: Check if current date > stored date, reset counter if true
+- Timezone detection: Use browser `Intl.DateTimeFormat().resolvedOptions().timeZone`
+
+**Usage quota structure:**
+```typescript
+interface DailyUsage {
+  userId: string;
+  date: string; // YYYY-MM-DD in user's timezone
+  promptCount: number;
+  timezone: string; // For midnight reset calculation
+}
+```
+
+---
+
+## Page Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     Finance Ribbon (FX/Crypto)                      │
-├────────────────┬────────────────────────────────┬───────────────────┤
-│                │           TOP HALF              │                   │
-│   Exchange     │   PromptBuilder component       │    Exchange       │
-│   Rail         │   - Provider name + tagline     │    Rail           │
-│   (East)       │   - Textarea (image prompt)     │    (West)         │
-│                │   - Copy prompt button          │                   │
-│                ├────────────────────────────────┤                   │
-│                │          BOTTOM HALF            │                   │
-│                │   LaunchPanel component         │                   │
-│                │   - Large branded button        │                   │
-│                │   - "Open [Provider] ↗"         │                   │
-│                │   - Affiliate disclosure        │                   │
-└────────────────┴────────────────────────────────┴───────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          Finance Ribbon (FX/Crypto)                          │
+├─────────────────┬───────────────────────────────────────────────────┬───────┤
+│                 │              PROMPT BUILDER                      │       │
+│   Exchange      │  ┌───────────────────────────────────────────────┐ │    Ex-│
+│   Rail          │  │ Header: Provider · Prompt builder           │ │   change │
+│   (East)        │  │ (clean header, no badges or tags)           │ │   Rail   │
+│                 │  ├───────────────────────────────────────────────┤ │   (West) │
+│   • NZX         │  │ LOCK STATE CHECK                             │ │   • Cboe │
+│   • ASX         │  │ ┌─────────────────────────────────────────────┐│ │   • B3   │
+│   • TSE         │  │ │ IF ANONYMOUS & UNDER 5:                    ││ │   • LSE  │
+│   • HKEX        │  │ │   Normal dropdowns + "X/5 free today"     ││ │   • JSE  │
+│   • SET         │  │ │ IF ANONYMOUS & 5 USED TODAY:               ││ │   • MOEX │
+│   • NSE         │  │ │   Central overlay (button at top)         ││ │   • DFM  │
+│   (synced       │  │ │   Dropdowns: disabled styling, NO text    ││ │  (synced │
+│    scroll)      │  │ │   "Sign in to continue" + benefits        ││ │   scroll)│
+│                 │  │ │ IF SIGNED IN & UNDER QUOTA:               ││ │          │
+│                 │  │ │   Normal dropdowns + "X/30" counter       ││ │          │
+│                 │  │ │ IF SIGNED IN & OVER QUOTA:                ││ │          │
+│                 │  │ │   Central overlay (button at top)         ││ │          │
+│                 │  │ │   Dropdowns: disabled styling, NO text    ││ │          │
+│                 │  │ │ IF PAID USER:                             ││ │          │
+│                 │  │ │   Normal dropdowns + enhanced limits      ││ │          │
+│                 │  │ └─────────────────────────────────────────────┘│ │          │
+│                 │  │ 12-Category Dropdown Grid                    │ │          │
+│                 │  │ Subject (1) | Action (1)    | Style (2)      │ │          │
+│                 │  │ Environment(1)| Composition(1)| Camera (1)    │ │          │
+│                 │  │ Lighting (2)| Colour (1)   | Atmosphere (1)   │ │          │
+│                 │  │ Materials(1)| Fidelity (2) |                  │ │          │
+│                 │  │ Negative (5) [full width]                    │ │          │
+│                 │  ├───────────────────────────────────────────────┤ │          │
+│                 │  │ Platform Tips (contextual)                   │ │          │
+│                 │  ├───────────────────────────────────────────────┤ │          │
+│                 │  │ Assembled Prompt Preview         [Clear all] │ │          │
+│                 │  │ (positive prompt only, no separator)         │ │          │
+│                 │  ├───────────────────────────────────────────────┤ │          │
+│                 │  │ [Copy] [🎲 Randomise] [Done] [Open in ↗]     │ │          │
+│                 │  └───────────────────────────────────────────────┘ │          │
+├─────────────────┴───────────────────────────────────────────────────┴───────┤
+│                              Provenance Footer                               │
+└───────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Route structure
+**Key visual features:**
+- Prompt builder fills **full height** of centre column (aligns with exchange rails)
+- Same `rounded-3xl` corners as exchange rails
+- Same `bg-slate-950/70` background as exchange rails
+- Same `ring-1 ring-white/10` border as exchange rails
+- **Identical scrollbar styling** across all three columns
+- **Disabled styling on locked dropdowns** (purple tint, no overlay text)
+- **Central overlay only** for lock messaging (not per-dropdown)
+- **No platform family badge** (removed — adds no value)
+- **No provider tags** (removed — adds no value)
+- **Clean assembled prompt output** (no "Negative prompt:" separator)
+
+---
+
+## Route Structure
 
 **Primary route:** `/providers/[id]`
 
@@ -39,175 +196,600 @@ The design philosophy: Promagen is a bridge between markets and imagination. The
 
 **File location:** `frontend/src/app/providers/[id]/page.tsx`
 
-## Layout contract
+**Deprecated route:** `/providers/[id]/prompt-builder` redirects to `/providers/[id]`
+
+---
+
+## Layout Contract
 
 The page MUST use `HomepageGrid` to maintain visual consistency with the homepage:
 
 ```typescript
 <HomepageGrid
   mainLabel={`Prompt builder for ${provider.name}`}
-  left={<ExchangeRail ... />}
+  leftContent={<ExchangeList exchanges={left} ... />}
   centre={<ProviderWorkspace provider={provider} />}
-  right={<ExchangeRail ... />}
-  showFinanceRibbon  // Optional: show FX ribbon at top
+  rightContent={<ExchangeList exchanges={right} ... />}
+  showFinanceRibbon
 />
 ```
 
-**Centre panel structure:**
+**Centre panel:** `ProviderWorkspace` wraps `PromptBuilder` in a full-height container.
 
-The centre panel is split into two vertically stacked sections:
+---
 
-1. **Top half (60%):** PromptBuilder component
-2. **Bottom half (40%):** LaunchPanel component
+## Component Specifications
 
-Both sections are wrapped in the standard card container (rounded, dark fill, hairline border).
+### ProviderWorkspace
 
-## Component specifications
+**File:** `frontend/src/components/providers/provider-workspace.tsx`
 
-### PromptBuilder (top half)
+**Purpose:** Container that passes provider data to PromptBuilder with full-height layout and authentication checking.
+
+```typescript
+export function ProviderWorkspace({ provider }: ProviderWorkspaceProps) {
+  return (
+    <div className="flex h-full min-h-0 flex-col" data-testid="provider-workspace">
+      <PromptBuilder provider={toPromptBuilderProvider(provider)} />
+    </div>
+  );
+}
+```
+
+**Note:** LaunchPanel has been removed — PromptBuilder now fills the entire centre column.
+
+---
+
+### PromptBuilder
 
 **File:** `frontend/src/components/providers/prompt-builder.tsx`
+**Version:** 6.4.0
 
-**Purpose:** Allow users to craft an image generation prompt before copying/launching.
+**Purpose:** Full-featured prompt crafting interface with platform-specific optimization and authentication-gated access.
 
-**Required elements:**
+**New authentication requirements:**
+- Must use `usePromagenAuth()` hook to check authentication state
+- Must check daily usage quota and user tier
+- Must apply appropriate lock states based on authentication/quota status
+- Must track "Copy prompt" button clicks for usage counting
+- Must NOT pass `lockMessage` prop to Combobox or AspectRatioSelector (v6.4.0 change)
 
-1. **Header**
-   - Provider name (h2)
-   - Provider tagline (if available)
-   - Provider tags (pills, if available)
+#### Authentication Integration
 
-2. **Prompt editor**
-   - Accessible textarea with label "Image prompt editor"
-   - Placeholder: "Write a prompt to run on [Provider]…"
-   - Minimum 6 rows visible
-   - ARIA: `aria-label="Prompt editor"` on the containing section
+```typescript
+import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 
-3. **Copy prompt button**
-   - Label: "Copy prompt"
-   - Copies textarea content to clipboard
-   - Toast feedback on success (optional)
+export function PromptBuilder({ provider }: PromptBuilderProps) {
+  const { 
+    isAuthenticated, 
+    isLoading, 
+    userTier, 
+    dailyUsage 
+  } = usePromagenAuth();
 
-4. **Future enhancements (not MVP)**
-   - Preset templates
-   - Prompt history
+  // Lock state logic
+  const isLocked = !isAuthenticated || 
+    (userTier === 'free' && dailyUsage.count >= dailyUsage.limit);
 
-### LaunchPanel (bottom half)
+  // NOTE: lockMessage is NO LONGER passed to Combobox components
+  // Lock messaging appears only in central overlay
 
-**File:** `frontend/src/components/providers/launch-panel.tsx` (NEW)
+  // Rest of component...
+}
+```
 
-**Purpose:** Provide a clear, branded call-to-action to open the provider's platform.
+#### Structure
 
-**Required elements:**
+```
+┌───────────────────────────────────────────────────────────────┐
+│ HEADER (shrink-0)                                               │
+│ • Provider name · Prompt builder                                │
+│ • "Build your prompt by selecting from the criteria below..."   │
+│ • (NO badge, NO tags — clean header only)                       │
+├───────────────────────────────────────────────────────────────┤
+│ AUTHENTICATION LAYER (conditional)                             │
+│ • Usage counter (if free user): "X/30 prompts today"           │
+│ • Central lock overlay (if not authenticated or over quota)    │
+├───────────────────────────────────────────────────────────────┤
+│ SCROLLABLE CONTENT (flex-1, overflow-y-auto)                    │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ 12-Category Dropdown Grid (3 columns on desktop)            │ │
+│ │ Row 1: Subject (1)   | Action (1)      | Style (2*)         │ │
+│ │ Row 2: Environment(1)| Composition (1) | Camera (1)         │ │
+│ │ Row 3: Lighting (2*) | Colour (1)      | Atmosphere (1)     │ │
+│ │ Row 4: Materials (1) | Fidelity (2*)   | [empty]            │ │
+│ │ Row 5: Constraints/Negative (5) [full width]                │ │
+│ │ * = Paid users get enhanced limits                          │ │
+│ │ When locked: disabled styling only, NO overlay text         │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ Platform Tips (contextual, sky-coloured box)                │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ Assembled Prompt Preview                      [Clear all]   │ │
+│ │ • Shows positive prompt ONLY (no separator, no neg label)   │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+├───────────────────────────────────────────────────────────────┤
+│ FOOTER (shrink-0)                                               │
+│ [📋 Copy prompt*] [🎲 Randomise**] [✓ Done] [↗ Open in Provider] │
+│ * = Usage tracking trigger                                      │
+│ ** = Disabled when locked                                       │
+└───────────────────────────────────────────────────────────────┘
+```
 
-1. **Launch button**
-   - Large, prominent button (full width or centred)
-   - Label: "Open [Provider] ↗" or "Launch [Provider] ↗"
-   - Opens `/go/[id]?src=prompt_builder` in new tab
-   - Uses provider brand colour if available (future)
+#### Required Elements
 
-2. **Affiliate disclosure**
-   - Render `AffiliateBadge` if `provider.requiresDisclosure === true`
-   - Position: below the button, muted styling
+1. **Header** (fixed at top)
+   - Provider name + "Prompt builder" (h2)
+   - Subtitle with gradient: "Build your prompt by selecting from the criteria below. Not every field is required, but the more detail you provide, the better your results will be. Custom entries accepted."
+   - ~~Platform family badge~~ **REMOVED** — adds no value
+   - ~~Provider tags~~ **REMOVED** — adds no value
 
-3. **Provider info (optional)**
-   - One-liner about what makes this provider special
-   - Link to provider's official site (via `/go/[id]`)
+2. **Authentication Layer** (conditional)
+   - Usage counter for free users (discrete, non-intrusive)
+   - Central lock overlay for unauthenticated or over-quota users
+   - **NO per-dropdown lock overlay text** (v5.0.0+ change)
 
-**Button routing rules (non-negotiable):**
+3. **Category Dropdowns** (12 categories with auth-aware limits)
+   - Multi-select comboboxes with custom entry support
+   - Grid layout: 3 columns on desktop, 2 on tablet, 1 on mobile
+   - Negative prompt spans full width
+   - **~100 options per positive category**
+   - **~1000 options for negative category**
+   - **Enhanced limits for Pro Promagen users:** Style (2), Lighting (2), Fidelity (2)
+   - **When locked:** disabled styling only, no text overlay
 
-- All outbound links go through `/go/[id]?src=prompt_builder`
-- Never link directly to external URLs
-- Authority: `docs/authority/ai providers affiliate & links.md`
+4. **Platform Tips** (contextual)
+   - Shows platform-specific guidance when relevant
+   - Sky-blue bordered box with 💡 icon
 
-## Workflow (user journey)
+5. **Assembled Prompt Preview**
+   - Shows the compiled **positive prompt only**
+   - **NO separator line** (removed)
+   - **NO "Negative prompt:" label** (removed)
+   - Clear all button with **Core Colours gradient** (`from-sky-400 via-emerald-300 to-indigo-400`)
+   - Scrollable if prompt is long
 
-1. User clicks provider row in Leaderboard → navigates to `/providers/[id]`
-2. Page renders with exchange rails (familiar context) + prompt workspace (new focus)
-3. User writes prompt in textarea
-4. User clicks "Copy prompt" → prompt copied to clipboard
-5. User clicks "Open [Provider]" → new tab opens to provider platform
-6. User pastes prompt into provider UI
+6. **Footer** (fixed at bottom)
+   - **Copy prompt button** (usage tracking trigger)
+   - 🎲 Randomise button (purple gradient) — **disabled when locked**
+   - Done button
+   - Open in Provider button (links to `/go/[id]`)
 
-**Future (API-enabled providers):**
+---
 
-1. User writes prompt
-2. User clicks "Generate" (instead of Copy + Launch)
-3. Image generates directly on Promagen (no tab switch)
-4. Image appears in result panel (replaces LaunchPanel)
+## 12-Category Dropdown System
 
-## Styling contract
+### Category Order (Optimized for Prompt Construction)
 
-Follow the card-only design language (authority: `docs/authority/best-working-practice.md`):
+Categories are ordered for optimal AI token weighting — most important terms appear first:
 
-- Outer container: rounded card (large radius)
-- Inner sections (PromptBuilder, LaunchPanel): rounded cards (medium radius)
-- Spacing: consistent padding (use existing spacing scale)
-- Typography: match existing provider detail styles
+| # | Category | Label | Standard | Pro Promagen | Rationale |
+|---|----------|-------|----------|--------------|-----------|
+| 1 | `subject` | Subject | 1 | 1 | Core identity — one main subject |
+| 2 | `action` | Action / Pose | 1 | 1 | Core identity — one primary action |
+| 3 | `style` | Style / Rendering | 1 | **2** | Styles combine well (e.g., "oil painting" + "impressionist") |
+| 4 | `environment` | Environment | 1 | 1 | Core identity — one setting |
+| 5 | `composition` | Composition / Framing | 1 | 1 | One framing approach |
+| 6 | `camera` | Camera | 1 | 1 | One lens/angle |
+| 7 | `lighting` | Lighting | 1 | **2** | Primary + accent lighting is a real technique |
+| 8 | `colour` | Colour / Grade | 1 | 1 | One palette/grade |
+| 9 | `atmosphere` | Atmosphere | 1 | 1 | One mood |
+| 10 | `materials` | Materials / Texture | 1 | 1 | One texture |
+| 11 | `fidelity` | Fidelity | 1 | **2** | Quality boosters stack without conflict |
+| 12 | `negative` | Constraints / Negative | 5 | 5 | Comprehensive exclusions |
 
-**Colour guidance:**
+**Pro Promagen upgrade:** Style, Lighting, and Fidelity allow 2 selections for Pro Promagen users (see `docs/authority/paid_tier.md` §5.5).
 
-- Background: slate-950/60 (dark, translucent)
-- Border: slate-700 or slate-800 (hairline, low-contrast)
-- Text: slate-50 (headings), slate-300 (body)
-- Accent: sky-500/sky-600 for interactive elements
+### Authentication-Aware Selection Limits
 
-## Analytics events
+```typescript
+// Selection limits based on authentication and tier
+const getSelectionLimits = (userTier: 'free' | 'paid') => ({
+  subject: 1,
+  action: 1,
+  style: userTier === 'paid' ? 2 : 1,
+  environment: 1,
+  composition: 1,
+  camera: 1,
+  lighting: userTier === 'paid' ? 2 : 1,
+  colour: 1,
+  atmosphere: 1,
+  materials: 1,
+  fidelity: userTier === 'paid' ? 2 : 1,
+  negative: 5
+});
+```
 
-Track these events via the centralised analytics layer (`@/lib/analytics`):
+### Options Per Category
 
-| Event | Trigger | Properties |
-|-------|---------|------------|
-| `prompt_builder_open` | Page mount | `providerId`, `location: 'providers_page'` |
-| `prompt_copy` | Copy button clicked | `providerId`, `promptLength` |
-| `provider_launch` | Launch button clicked | `providerId`, `src: 'prompt_builder'` |
+| Category | Option Count | Notes |
+|----------|--------------|-------|
+| Subject | ~100 | People, creatures, objects, scenes |
+| Action | ~100 | Poses, movements, activities |
+| Style | ~100 | Art styles, rendering approaches |
+| Environment | ~100 | Locations, settings, backgrounds |
+| Composition | ~100 | Framing, perspective, layout |
+| Camera | ~100 | Lenses, angles, technical settings |
+| Lighting | ~100 | Light sources, directions, qualities |
+| Colour | ~100 | Palettes, grades, tonal treatments |
+| Atmosphere | ~100 | Environmental effects, mood |
+| Materials | ~100 | Textures, surfaces, materials |
+| Fidelity | ~100 | Quality boosters, resolution enhancers |
+| **Negative** | **~1000** | Comprehensive exclusions by category |
 
-Authority: `docs/authority/ai providers.md` § Event taxonomy
+**Total: ~2,100 curated prompt terms**
 
-## Accessibility requirements
+Options are stored in: `frontend/src/data/providers/prompt-options.json`
 
-- Textarea must have an associated `<label>`
-- Copy button must have clear focus states
-- Launch button must indicate external link (↗ icon + `aria-label`)
-- Live region for copy confirmation (optional but recommended)
-- Keyboard navigation: Tab through all interactive elements
+### Custom Entry Support
 
-## Testing requirements
+- Users can type custom values in any dropdown
+- Pressing Enter adds the custom value as a chip
+- **50 character limit** for custom entries
+- Spell check enabled on input
+- Pink character counter (`text-pink-500`)
+- **Conditional free text for Negative category** (see below)
+- **Disabled when locked** (cannot type in any category)
 
-### Smoke tests
+### Conditional Free Text for Negative Category
 
-- Page renders for valid provider ID
-- Page renders "not found" state for invalid ID
-- PromptBuilder section present with textarea
-- LaunchPanel section present with button
+The Negative category's free text input is **platform-dependent**:
 
-### Interaction tests
+| Platform Type | Free Text? | Reason |
+|---------------|------------|--------|
+| **Native negative support** (14 platforms) | ✅ Shown | Custom terms work directly |
+| **Converted negatives** (28 platforms) | ❌ Hidden | Only pre-mapped terms convert |
 
-- Copy button copies textarea value to clipboard
-- Launch button href matches `/go/[id]?src=prompt_builder`
+**Platforms with native negative support:**
+- Inline: Midjourney, BlueWillow, Ideogram (use `--no` or `without`)
+- Separate field: Stability, Leonardo, Flux, NovelAI, Playground, NightCafe, Lexica, OpenArt, DreamStudio, Getimg, Dreamlike
 
-### Accessibility tests
+**Platforms without native support (dropdown only):**
+- DALL-E, Adobe Firefly, Bing, Microsoft Designer, Meta Imagine, Canva, Jasper Art, Google Imagen, and 20+ others
+
+For these 28 platforms, custom negative text would be ignored anyway — only the pre-mapped dropdown terms work (they convert to positive equivalents).
+
+---
+
+## Combobox Component
+
+**File:** `frontend/src/components/ui/combobox.tsx`
+**Version:** 5.0.0
+
+### Enhanced Features for Authentication
+
+- Multi-select with chips
+- Searchable dropdown
+- Custom entry on Enter (if `allowFreeText=true`)
+- **Authentication-aware disabling**
+- **Clean disabled styling** (no overlay text)
+- Auto-close when max selections reached
+- Tooltip on focus (shows guidance, auto-hides after 4s)
+- Pink character counter for custom text
+
+### Props Interface
+
+```typescript
+interface ComboboxProps {
+  id: string;
+  label: string;
+  description?: string;
+  tooltipGuidance?: string;
+  options: string[];
+  selected: string[];
+  customValue: string;
+  onSelectChange: (selected: string[]) => void;
+  onCustomChange: (value: string) => void;
+  placeholder?: string;
+  maxSelections?: number;
+  maxCustomChars?: number;
+  allowFreeText?: boolean;
+  isLocked?: boolean;
+  lockMessage?: string;  // NOTE: Accepted but NOT displayed in v5.0.0+
+}
+```
+
+### Auto-Close Behaviour
+
+The dropdown **closes immediately** when the selection limit is reached:
+- Max 1: Closes after first selection
+- Max 2: Closes after second selection (paid users for certain categories)
+- Max 5: Closes after fifth selection
+
+### Lock State Visual Treatment (v5.0.0)
+
+When `isLocked=true`:
+- **Disabled styling:** Purple-tinted background, reduced opacity
+- **Lock icon:** Appears in label only (small, unobtrusive)
+- **Dropdown arrow:** Hidden when locked
+- **Input:** Shows empty placeholder, cannot type
+- **NO overlay text:** The `lockMessage` prop is accepted for compatibility but NOT displayed
+- **NO "Sign in to continue" text** in dropdown area
+
+**Why no overlay text?** Showing "Sign in to continue" on every single dropdown was ugly and repetitive UX. Lock messaging now appears ONLY in the central overlay at the top of the prompt builder section.
+
+---
+
+## AspectRatioSelector Component
+
+**File:** `frontend/src/components/providers/aspect-ratio-selector.tsx`
+**Version:** 1.2.0
+
+### Lock State Visual Treatment (v1.2.0)
+
+When `disabled=true`:
+- **Disabled buttons:** `opacity-50`, `cursor-not-allowed`
+- **NO overlay text:** Clean disabled appearance
+- **NO "Sign in to continue" text**
+
+---
+
+## Usage Tracking Implementation
+
+### Copy Prompt Button Enhancement
+
+The "Copy prompt" button must be enhanced to track usage:
+
+```typescript
+const handleCopyPrompt = async () => {
+  // Existing copy functionality
+  await navigator.clipboard.writeText(assembledPrompt);
+  
+  // Track usage for authenticated free users
+  if (isAuthenticated && userTier === 'free') {
+    try {
+      await trackPromptUsage(userId);
+      updateDailyUsage(current => ({
+        ...current,
+        count: current.count + 1
+      }));
+    } catch (error) {
+      console.error('Failed to track usage:', error);
+    }
+  }
+  
+  // Track for anonymous users (localStorage)
+  if (!isAuthenticated) {
+    incrementAnonymousCount();
+  }
+  
+  showNotification('Prompt copied to clipboard');
+};
+```
+
+### Randomise Button Lock State
+
+The 🎲 Randomise button must be disabled when locked:
+
+```typescript
+<button
+  type="button"
+  onClick={handleRandomise}
+  disabled={isLocked}  // Disabled when locked
+  className={`... ${
+    isLocked
+      ? 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
+      : 'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 ...'
+  }`}
+>
+  <span>🎲</span>
+  Randomise
+</button>
+```
+
+### Usage Tracking API
+
+**Endpoint:** `POST /api/usage/track`
+**Purpose:** Increment daily usage count for authenticated users
+
+**Request:**
+```typescript
+{
+  action: 'prompt_copy'
+}
+```
+
+**Response:**
+```typescript
+{
+  success: boolean;
+  usage: {
+    count: number;
+    limit: number | null;
+    resetTime: string; // ISO timestamp
+  }
+}
+```
+
+---
+
+## File Structure
+
+```
+frontend/src/
+├── app/providers/[id]/
+│   ├── page.tsx                    # Provider prompt builder page (auth-aware)
+│   └── prompt-builder/
+│       └── page.tsx                # Redirect to /providers/[id]
+├── components/providers/
+│   ├── prompt-builder.tsx          # Main prompt builder component v6.4.0 (~800 lines)
+│   ├── aspect-ratio-selector.tsx   # Aspect ratio selector v1.2.0 (no lock overlay)
+│   └── provider-workspace.tsx      # Full-height wrapper
+├── components/ui/
+│   └── combobox.tsx                # Multi-select combobox v5.0.0 (~425 lines)
+├── hooks/
+│   └── use-promagen-auth.ts        # Authentication hook
+├── data/providers/
+│   ├── prompt-options.json         # 12 categories (~2100 options, ~2200 lines)
+│   └── platform-formats.json       # 42 platform assembly rules
+├── lib/
+│   ├── prompt-builder.ts           # Assembly logic (~1050 lines)
+│   │   ├── NEGATIVE_TO_POSITIVE    # 30-entry conversion map
+│   │   ├── convertNegativesToPositives()
+│   │   ├── supportsNativeNegative()  # Check for native negative support
+│   │   ├── formatPromptForCopy()     # Returns positive only
+│   │   ├── assembleNatural()         # Natural language assembly
+│   │   ├── assembleMidjourney()      # Midjourney assembly
+│   │   ├── assembleStableDiffusion()
+│   │   └── ... (7 platform families)
+│   └── usage/
+│       ├── anonymous-storage.ts    # Anonymous tracking v2.0.0 (daily reset)
+│       ├── constants.ts            # Usage limits
+│       └── index.ts                # Re-exports
+└── types/
+    └── prompt-builder.ts           # TypeScript types
+        ├── PromptCategory          # 12 categories
+        ├── CATEGORY_ORDER          # Optimal order for prompt construction
+        ├── CATEGORY_LIMITS         # Selection limits per category
+        ├── PLATFORMS_WITH_NATIVE_NEGATIVE  # 14 platforms
+        └── ComboboxProps           # Includes allowFreeText
+```
+
+---
+
+## Implementation Checklist
+
+- [x] PromptBuilder with 12-category dropdown system
+- [x] Selection limits: Free tier (all 1 except negative 5), Paid tier (style/lighting/fidelity get 2)
+- [x] Platform-specific prompt optimization (7 families)
+- [x] Negative-to-positive conversion (30 mappings)
+- [x] Custom negative handling ("without X")
+- [x] Combobox component with multi-select + custom entry
+- [x] 50-char custom entry limit
+- [x] Auto-close dropdown when max reached
+- [x] 🎲 Randomise button with purple gradient
+- [x] Randomise fills ALL 12 categories (including negative)
+- [x] **Randomise disabled when locked** (v6.4.0)
+- [x] Full-height layout aligned with exchange rails
+- [x] Uniform scrollbar styling
+- [x] Copy prompt functionality
+- [x] Open in Provider functionality
+- [x] Analytics events wired
+- [x] ~~Platform family badge display~~ **REMOVED**
+- [x] ~~Provider tags display~~ **REMOVED**
+- [x] Platform tips display
+- [x] Artistly uses natural family (not SD)
+- [x] LaunchPanel removed (no longer needed)
+- [x] **Fidelity category added** (position #11)
+- [x] **~100 options per positive category**
+- [x] **~1000 negative options**
+- [x] **Clean assembled prompt output (no separator)**
+- [x] **Core Colours gradient on Clear all button**
+- [x] **Conditional free text for negative (platform-dependent)**
+- [x] **supportsNativeNegative() function added**
+- [x] **Dropdown shows ALL options (no artificial limit)**
+- [x] **Anonymous 5-try feature** (localStorage tracking)
+- [x] **Anonymous daily reset** (v2.0.0 - resets at midnight)
+- [x] **Authentication integration** (Clerk)
+- [x] **Lock state visual treatment** (disabled styling only, NO dropdown overlay text)
+- [x] **Usage tracking on Copy prompt**
+- [x] **Daily quota enforcement** (30/day Standard, unlimited Pro Promagen)
+- [x] **Combobox v5.0.0** (no lock message overlay)
+- [x] **AspectRatioSelector v1.2.0** (no lock overlay)
+- [x] **Prompt builder v6.4.0** (removed lockMessage props)
+- [x] **Enhanced limits for Pro Promagen users** (style/lighting/fidelity get 2)
+
+---
+
+## Test Requirements
+
+### Authentication Tests
+
+- Anonymous user sees usage counter (X/5 free prompts today)
+- Anonymous user at limit sees central lock overlay only
+- Anonymous user lock resets at midnight (daily reset)
+- Free user sees usage counter (X/30 prompts today)
+- Free user at quota sees central lock overlay only
+- Pro Promagen user has no usage counter
+- Pro Promagen user has enhanced selection limits
+- **Dropdowns show disabled styling when locked, NOT overlay text**
+- **Randomise button disabled when locked**
+- **Free text input disabled when locked**
+
+### Usage Tracking Tests
+
+- Copy prompt increments usage for free users
+- Copy prompt increments anonymous localStorage
+- Anonymous localStorage resets at midnight
+- Usage counter updates after copy
+- Lock state triggers correctly at quota boundary
+
+### UI Consistency Tests
+
+- Lock overlay appears at top of prompt builder only
+- **NO "Sign in to continue" text on individual dropdowns**
+- **Purple-pink gradient applied consistently in lock states**
+- Clear all resets all selections
+- Randomise populates ALL 12 categories
+- Randomise fills negative with 2-3 options
+- Open in Provider href matches `/go/[id]?src=provider_detail`
+- Dropdowns close when max selections reached
+- Negative category free text hidden for non-native platforms
+
+### Platform-Specific Tests
+
+- Artistly outputs natural language (not SD keywords)
+- Known negatives convert to positives for natural platforms
+- Custom negatives use "without X" for natural platforms
+- Midjourney uses `--no` syntax
+- Stability uses separate negative field
+- Negative free text shown for native-negative platforms
+- Negative free text hidden for converted-negative platforms
+
+### Accessibility Tests
 
 - All interactive elements keyboard accessible
 - Proper ARIA roles and labels
+- Combobox announces selected items
+- Lock state messages accessible via screen readers
 
 **Test file:** `frontend/src/app/providers/[id]/__tests__/page.test.tsx`
 
-## Implementation checklist
+---
 
-- [ ] Create `LaunchPanel` component
-- [ ] Update `/providers/[id]/page.tsx` to use two-row centre layout
-- [ ] Wire analytics events
-- [ ] Add smoke tests
-- [ ] Update this doc with any deviations
+## Non-Regression Rule
 
-## Non-regression rule
-
-When implementing the prompt builder page:
+When modifying the prompt builder page:
 
 - Do not modify the Leaderboard page layout or behaviour
 - Do not modify `HomepageGrid` unless adding new props (additive only)
 - Do not modify exchange rail components
 - Preserve all existing provider detail functionality
+- Maintain identical scrollbar styling across all containers
+- Do not change platform family mappings without updating docs
+- **Preserve all existing prompt building functionality for authenticated users**
+- **Do not break lock states or authentication flows**
+- **Do not reintroduce lock message overlay text on dropdowns**
 
 **Existing features preserved:** Yes (required for every change)
+
+---
+
+## Removed Features (Historical)
+
+These features were removed as they added no value:
+
+| Feature | Removed Date | Reason |
+|---------|--------------|--------|
+| Platform family badge | 1 Jan 2026 | Added visual clutter, no user value |
+| Provider tags display | 1 Jan 2026 | Redundant with provider page |
+| "Negative prompt:" separator | 1 Jan 2026 | Confused users, cluttered preview |
+| LaunchPanel | 31 Dec 2025 | Replaced by full-height prompt builder |
+| 30-item dropdown limit | 1 Jan 2026 | Artificially hid curated options |
+| **Dropdown lock message overlay** | 4 Jan 2026 | Ugly UX, repetitive text on every dropdown |
+
+---
+
+## Changelog
+
+- **4 Jan 2026 (v6.4.0):** **LOCK STATE UX CLEANUP** — Removed "Sign in to continue" text overlay from individual Combobox dropdowns. Lock messaging now appears ONLY in the central overlay at top of prompt builder section. Combobox v5.0.0: accepts `lockMessage` prop but does NOT display it. AspectRatioSelector v1.2.0: no lock overlay. PromptBuilder v6.4.0: removed `lockMessage` prop from all Combobox and AspectRatioSelector instances. Randomise button disabled when locked. This is a UX improvement — showing the same text on every dropdown was ugly and cluttered.
+- **4 Jan 2026 (v2.0.0 anonymous-storage):** **ANONYMOUS DAILY RESET** — Anonymous users now get 5 prompts per day (resets at midnight local time), matching the authenticated user experience. Previously was 5 prompts total lifetime. Anonymous storage upgraded to v2 schema with `lastResetDate` field. Migration: v1 data invalidated on read, triggers fresh v2 start.
+- **3 Jan 2026 (v4.2):** **TERMINOLOGY UPDATE** — Renamed "paid" to "Pro Promagen" and "free" to "Standard Promagen" in user-facing references. Updated category table headers. Updated test descriptions. Internal code still uses `'paid'` for brevity.
+- **3 Jan 2026 (v4.1):** **ANONYMOUS 5-TRY UPDATE** — Added 5 free prompts for anonymous users before sign-in required. Lock states expanded from 4 to 5 states. Lock overlay UI redesign: CTA button at top (no lock icon), centred layout, benefits list. Anonymous usage stored in localStorage with tamper detection. Updated architecture diagram.
+- **2 Jan 2026 (v4.0):** **MAJOR AUTHENTICATION UPDATE** — Added prompt builder authentication requirements. Lock states for unauthenticated users. Daily usage quotas (30/day for Standard, unlimited for Pro Promagen). Usage tracking on "Copy prompt" clicks. Purple-pink gradient lock styling. Enhanced selection limits for Pro Promagen users. Midnight reset in user's timezone. Updated testing requirements for authentication flows.
+- **1 Jan 2026 (v3.1):** Updated selection limits for tiered access. Standard Promagen: all categories limit 1 (except negative at 5). Pro Promagen: style, lighting, and fidelity upgraded to limit 2. See `paid_tier.md` §5.5. Removed artificial 30/100-item dropdown cap — now shows ALL options (scrollable). Removed "Type to filter X more options" message.
+- **1 Jan 2026 (v3.0):** Major update. Added Fidelity category (now 12 total). Expanded to ~100 options per category and ~1000 negative options. Removed platform family badge. Removed provider tags. Removed "Negative prompt:" separator from output. Added Core Colours gradient to Clear all button. Randomise now fills ALL 12 categories including negative (2-3 options). Added conditional free text for negative category (platform-dependent). Added `supportsNativeNegative()` function. Updated category order for optimal prompt construction.
+- **1 Jan 2026:** Expanded to 11 categories (added Action, Environment, Materials). Added selection limits (1/2/5). Added 🎲 Randomise button. Implemented negative-to-positive conversion for natural language platforms. Fixed Artistly platform family mapping. Added dropdown auto-close. Removed max badge from tooltips. Added 50-char custom entry limit.
+- **31 Dec 2025:** Major rewrite. Removed LaunchPanel, PromptBuilder fills full height. Added 9-category dropdown system with 30 options each. Added platform-specific optimization (7 families, 42 platforms). Uniform scrollbar styling.
+- **28 Dec 2025:** Initial version with two-panel layout (PromptBuilder + LaunchPanel).

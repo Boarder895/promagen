@@ -10,10 +10,43 @@ Everything is centred, balanced, and responsive. On larger screens the layout ke
 
 1.1 Overall Structure & Responsiveness
 
-Page canvas
+Page canvas (viewport-locked layout — implemented Dec 31, 2025)
+
 Background: deep, subtle dark gradient.
-min-height: 100vh so the page always covers the full viewport.
+Height: exactly 100dvh — page fills viewport precisely, no more, no less.
+Overflow: hidden on html/body — NO page-level scrollbar ever appears.
+
+All scrolling happens inside individual containers:
+
+- Providers table: scrolls vertically when content exceeds available space
+- Exchange rails: scroll vertically and are synchronized (scroll one, both move)
+- Each container uses `overflow-y: auto` so scrollbars only appear when needed
+
 All core content lives inside a centred container with a maximum width (e.g. max-w-6xl or similar on desktop) so the layout never becomes absurdly wide on big monitors.
+
+Layout structure (flex-based):
+
+```
+<body class="h-dvh overflow-hidden">
+  <div class="flex h-dvh flex-col overflow-hidden">
+    <main class="flex min-h-0 flex-1 flex-col">
+      <!-- Hero section: shrink-0 (fixed height) -->
+      <!-- Three-column grid: flex-1 min-h-0 (fills remaining space) -->
+    </main>
+    <footer class="shrink-0">
+      <!-- Footer: fixed height at bottom -->
+    </footer>
+  </div>
+</body>
+```
+
+Critical CSS classes:
+
+- `h-dvh` — exactly 100dvh (dynamic viewport height, accounts for mobile browser chrome)
+- `overflow-hidden` — prevents page scroll
+- `flex-1` — fills available space
+- `min-h-0` — allows flex children to shrink below their content size (required for internal scroll)
+- `shrink-0` — prevents shrinking (for fixed-height sections like hero and footer)
 
 Three-column grid
 The main content area is a three-column CSS grid:
@@ -22,18 +55,16 @@ Table structure
 Header: “AI Providers Leaderboard”.
 Columns (left → right):
 
-Provider (icon + name; rank may appear as a muted prefix)
+Provider (icon + name; rank may appear as a muted prefix; flag + city + HH:MM clock)
 Promagen Users
-Sweet Spot
+Image Quality (ordinal rank: 1st, 2nd, etc.)
 Visual Styles
-API & Affiliate Programme
-Generation Speed
-Affordability
-Score (includes a small trend indicator inline; Score stays far right)
+API/Affiliate
+Overall Score (includes a small trend indicator inline; Overall Score stays far right)
 
 Notes:
 
-- Trend is not a standalone column (it lives inside Score).
+- Trend is not a standalone column (it lives inside Overall Score).
 - Tags are removed from the homepage leaderboard table.
 
   Hard rule: the FX chip label font size must never be smaller than 11.5px.
@@ -239,6 +270,40 @@ On smaller screens: the rails collapse into the main column stack above and belo
 
 Paid-tier exchange rail rules (homepage side-rails)
 
+### Synchronized Rail Scrolling (Implemented Dec 31, 2025)
+
+The left and right exchange rails scroll in perfect sync. When the user scrolls either rail, both rails move together.
+
+**Behavior:**
+
+- Scroll left rail → right rail moves in sync
+- Scroll right rail → left rail moves in sync
+- Providers table scrolls independently (not synced to rails)
+- Sync uses scroll percentage, not absolute pixels (handles different content heights)
+
+**Technical Implementation:**
+
+- `HomepageGrid` is a client component (`'use client'`)
+- Uses `useRef` for scroll container references
+- Percentage-based sync algorithm:
+  1. Calculate scroll percentage from source container
+  2. Apply same percentage to target container
+  3. `requestAnimationFrame` prevents infinite loops
+  4. `isSyncing` ref guard prevents recursive scroll events
+
+**When Scrolling Activates:**
+
+- Rails only scroll when content exceeds container height
+- If all exchange cards fit in the viewport, no scrollbar appears
+- `overflow-y: auto` — scrollbar appears only when needed
+
+**Scrollbar Styling:**
+
+- Width: 6px (thin, unobtrusive)
+- Track: transparent
+- Thumb: white at 20% opacity, 30% on hover
+- Firefox fallback: `scrollbar-width: thin`
+
 Authority (SSOT): `C:\Users\Proma\Projects\promagen\docs\authority\paid_tier.md`
 
 Paid users can control:
@@ -266,24 +331,40 @@ Header: “AI Providers Leaderboard”.
 
 Columns (left → right):
 
-- Provider (official icon + name; optional muted rank prefix; click opens provider detail)
+- Provider (official icon + name; optional muted rank prefix; flag + city + HH:MM clock; click opens provider detail)
 - Promagen Users (top up to 6 country flags + counts; 2·2·2 layout; render nothing if zero; overflow becomes “… +n”)
-- Sweet Spot (max 2 lines; human-readable; UI clamps to 2 lines)
+- Image Quality (ordinal rank: 1st, 2nd, 3rd, etc. + vote button — derived from imageQualityRank field)
 - Visual Styles (max 2 lines; not tag soup; UI clamps to 2 lines)
-- API & Affiliate Programme (🔌 / 🤝 / 🔌🤝; blank = unknown/not set)
-- Generation Speed (Fast / Medium / Slow / Varies)
-- Affordability (1 line: free tier + rough allowance + price band)
-- Score (0–100; far right; trend indicator inline — no separate Trend column; no Tags column)
+- API/Affiliate (🔌 / 🤝 / 🔌🤝; blank = unknown/not set)
+- Overall Score (0–100; far right; trend indicator inline — no separate Trend column; no Tags column)
 
   Final header row
 
-Provider | Promagen Users | Sweet Spot | Visual Styles | API & Affiliate Programme | Generation Speed | Affordability | Score
+Provider | Promagen Users | Image Quality | Visual Styles | API/Affiliate | Overall Score ▼
 
 Column definitions (in this exact order)
 
 1. Provider
 
-Provider name (optionally with a tiny icon).
+Three-line layout per cell (updated Jan 1, 2026):
+
+**Line 1:** Rank prefix + Provider name (hyperlinked) + Provider icon (PNG)
+
+- Rank: muted prefix ("1.", "2.", etc.)
+- Name: hyperlinked to `/go/{id}?src=leaderboard_homepage` → opens provider website in new tab
+- Icon: local PNG from `/icons/providers/{id}.png` (18×18px), also hyperlinked to homepage
+  - Fallback: `fallback.png` on load error
+  - Exception: DreamStudio uses 🏠 emoji
+
+**Line 2:** Flag + City
+
+- Country flag (16px) from `countryCode`
+- HQ city from `hqCity`
+
+**Line 3:** Clock + Prompt builder link
+
+- Live clock from `timezone` field
+- 🎨 + "Prompt builder" (cyan text), links to `/providers/{id}/prompt-builder`
 
 2. Promagen Users
 
@@ -334,15 +415,47 @@ Roman numerals without hurting usability
 - The underlying Arabic number must be available via hover/tooltip and accessibility text (aria-label),
   so it stays readable while keeping the UI classy.
 
-3. Sweet Spot
+3. Image Quality
 
-Max 2 lines: what the platform is best at (human-readable, no jargon). UI clamps to 2 lines.
+Ordinal rank derived from the `imageQualityRank` field in providers.json, plus a community vote button.
+
+**Layout:** `2nd 🥈 👍` (rank + medal + vote button)
+
+**Rank display:**
+- Format: "1st", "2nd", "3rd", "4th", etc.
+- Top 3 show medal emoji: 🥇 🥈 🥉
+- This represents the provider's ranking for raw output quality compared to other providers.
+
+**Vote button (Added Jan 2, 2026):**
+- Thumbs-up icon positioned to the right of rank/medal
+- Outline thumb: Not yet voted (highlights green on hover)
+- Filled emerald thumb: Already voted (within 24 hours)
+- Dimmed outline: Daily limit reached (3 providers) or not authenticated
+- Bounce animation (400ms) on successful vote
+- Requires authentication to vote
+- Silent limits (no counters or error messages shown)
+
+**Community voting rules:**
+- Max 3 providers per user per day
+- 1 vote per provider per 24-hour rolling window
+- Votes persist across sessions via localStorage
+- Paid users receive 1.5× vote weight (server-side, not disclosed)
+- Rankings recalculate hourly via cron job
+
+**Implementation:**
+- Button: `src/components/providers/image-quality-vote-button.tsx`
+- Hook: `src/hooks/use-image-quality-vote.ts`
+- Storage: `src/lib/vote-storage.ts`
+- API: `src/app/api/providers/vote/route.ts`
+
+Authority for voting mechanics: `docs/authority/ai providers.md` (Community Voting System section)
+Authority for paid weight multiplier: `docs/authority/paid_tier.md` (§5.6)
 
 4. Visual Styles
 
 Max 2 lines: what it excels at visually (not a tag soup). UI clamps to 2 lines.
 
-5. API & Affiliate Programme
+5. API/Affiliate
 
 Emoji indicators (single cell):
 
@@ -356,35 +469,9 @@ blank = Unknown / not set (no “—”)
 
 (Optional tooltip text: “API available” / “Affiliate programme available”.)
 
-6. Generation Speed
+6. Overall Score
 
-Use exactly one of:
-
-Fast
-
-Medium
-
-Slow
-
-Varies (busy hours)
-
-7. Affordability
-
-A compact summary of:
-
-Free tier (Yes/No)
-
-Rough image allowance (if known)
-
-General price band (e.g., £ / ££ / £££)
-
-Recommended cell format:
-Free tier • ~25/day • ££
-If unknown, leave the unknown parts blank (don’t fill with dashes).
-
-8. Score
-
-0–100, derived from the 7-criteria rubric below. (Score stays far right.)
+0–100, derived from the 7-criteria rubric below. (Overall Score stays far right.)
 
 Score rubric (7 criteria)
 
@@ -402,8 +489,8 @@ Speed reliability (consistent under load)
 
 Value (free tier + price vs results)
 
-One-liners for each platform (Sweet Spot + Visual Styles)
-Provider Sweet Spot (1 line) Visual Styles (1 line)
+One-liners for Visual Styles
+Provider Visual Styles
 OpenAI DALL·E / GPT-Image Reliable all-rounder for clean, on-brief image generation. Photoreal and product-style visuals; strong clarity and polish.
 Stability AI / Stable Diffusion Tinker-friendly powerhouse for custom workflows and control. Huge range from photo to stylised; great for guided looks.
 Leonardo AI Creator-focused tool for fast iteration and asset-style outputs. Game/concept vibes; punchy stylised art and variants.
@@ -423,11 +510,11 @@ DeepAI Basic generator useful for prototypes and quick tests. Simple outputs; be
 NovelAI Strong pick for anime and character-focused generation. Anime/manga aesthetics and consistent stylised characters.
 Lexica Great for prompt discovery and quick style exploration. Stable-Diffusion-style aesthetics and inspiration-led outputs.
 
-Keep Sweet Spot and Visual Styles to ~60 characters per line (max 2 lines) so the table stays tidy even with the flags column doing its thing.
+Keep Visual Styles to ~60 characters per line (max 2 lines) so the table stays tidy.
 
 Rules:
 
-- Score column is always far right.
+- Overall Score column is always far right.
 - Rank is not its own column; it’s a small prefix inside the Provider cell.
 - Sorted by score (highest first).
 - Keep the existing dark UI, spacing, and layout; on smaller screens prefer horizontal scroll over wrapping.
@@ -710,6 +797,8 @@ Provider health indicator (now + future-proofing)
 
 Each FX chip can display a single green arrow pointing at the “winning” side of the pair.
 
+**⚠️ KEY CONCEPT: The arrow is VERTICAL (always points upward ↑), indicating "strengthened". The arrow does NOT rotate or point left/right. What changes is the arrow's POSITION (left side vs right side of the pair), NOT its direction.**
+
 Meaning
 We answer: “Which currency has strengthened over our look-back horizon?”
 Current decision:
@@ -727,22 +816,16 @@ Arrow placement (the “side flip” rule)
 Arrow visual spec (icon + calm “life”)
 
 - Must be a real arrow glyph (shaft + head). Do not use a triangle/chevron glyph (e.g. ▲) as the winner indicator.
-  Arrow visual spec (icon + calm “life”)
 
-- Must be a real arrow glyph (shaft + head). Do not use a triangle/chevron glyph (e.g. ▲) as the winner indicator.
-- Orientation: the arrow points inward towards the winning currency label:
-  - Winning side = left (BASE) → arrow points left.
-  - Winning side = right (QUOTE) → arrow points right.
-- “Life” effect (visual-only, does not change decision/timing):
-  - Choose ONE: gentle glow pulse OR tiny drift (do not stack multiple effects).
-  - Glow pulse: very soft (opacity/blur/shadow), period ~4–7s, tiny amplitude.
-  - Drift: translateY ±1px, period ~6–10s, ease-in-out.
-  - Must pause in Calm Mode and must disable under prefers-reduced-motion.
-- Layout stability: keep a fixed arrow container box so chip width does not shift when the arrow appears/disappears.
-
-- Orientation: the arrow points inward towards the winning currency label:
-  - Winning side = left (BASE) → arrow points left.
-  - Winning side = right (QUOTE) → arrow points right.
+- **Arrow is ALWAYS upward-pointing (vertical ↑)**, indicating "this currency strengthened"
+- **What changes is the arrow's POSITION** (left or right side), NOT its direction
+- Arrow placement:
+  - **BASE wins** → arrow appears on **LEFT side** (after BASE code, before BASE flag)
+  - **QUOTE wins** → arrow appears on **RIGHT side** (before QUOTE code)
+- Visual examples:
+  - BASE stronger: `EUR ↑ 🇪🇺 / USD 🇺🇸` (arrow on left)
+  - QUOTE stronger: `EUR 🇪🇺 / ↑ USD 🇺🇸` (arrow on right)
+  - Neutral: `EUR 🇪🇺 / USD 🇺🇸` (no arrow)
 - “Life” effect (visual-only, does not change decision/timing):
   - Choose ONE: gentle glow pulse OR tiny drift (do not stack multiple effects).
   - Glow pulse: very soft (opacity/blur/shadow), period ~4–7s, tiny amplitude.
@@ -938,9 +1021,18 @@ Everything is centred, balanced, and responsive. On larger screens the layout ke
 
 1.1 Overall Structure & Responsiveness
 
-Page canvas
+Page canvas (viewport-locked layout — implemented Dec 31, 2025)
+
 Background: deep, subtle dark gradient.
-min-height: 100vh so the page always covers the full viewport.
+Height: exactly 100dvh — page fills viewport precisely, no more, no less.
+Overflow: hidden on html/body — NO page-level scrollbar ever appears.
+
+All scrolling happens inside individual containers:
+
+- Providers table: scrolls vertically when content exceeds available space
+- Exchange rails: scroll vertically and are synchronized (scroll one, both move)
+- Each container uses `overflow-y: auto` so scrollbars only appear when needed
+
 All core content lives inside a centred container with a maximum width (e.g. max-w-6xl or similar on desktop) so the layout never becomes absurdly wide on big monitors.
 
 Three-column grid
@@ -1179,15 +1271,16 @@ Directly under the market belt (currently under the FX row alone) sits the AI Pr
 
 Table structure
 Header: “AI Providers Leaderboard”.
-Columns:
-Rank
-Provider name
-Score
-Trend
-Tags
+Columns (left → right):
+Provider (icon + name; flag + city + HH:MM clock)
+Promagen Users
+Image Quality
+Visual Styles
+API/Affiliate
+Overall Score
 
 Rows:
-Sorted by score (highest first).
+Sorted by Overall Score (highest first).
 Each row occupies the full width of the centre column card.
 
 Behaviour
@@ -1481,6 +1574,8 @@ Budget indicator vs provider-health indicator (New clarification)
   7.4 FX Winner Arrow Logic (production spec)
 
 Each FX chip can display a single green arrow pointing at the “winning” side of the pair.
+
+**⚠️ KEY CONCEPT: The arrow is VERTICAL (always points upward ↑), indicating "strengthened". The arrow does NOT rotate or point left/right. What changes is the arrow's POSITION (left side vs right side of the pair), NOT its direction.**
 
 Meaning
 We answer: “Which currency has strengthened over our look-back horizon?”
@@ -1852,6 +1947,7 @@ The exchange card uses **CSS Grid with fixed proportional columns** to ensure ve
 ```
 
 **Key insight:** Fixed proportional columns (2fr/1fr/1fr = 50%/25%/25%) ensure that:
+
 - All Time columns align vertically across all cards
 - All Weather columns align vertically across all cards
 - Proportions stay constant regardless of card width or screen size
@@ -1866,13 +1962,13 @@ The exchange card uses **CSS Grid with fixed proportional columns** to ensure ve
     <p>Exchange Name (wraps if long)</p>
     <div className="flex items-center gap-2">
       <span>City</span>
-      <Flag size={24} />  {/* 2x size, right of city */}
+      <Flag size={24} /> {/* 2x size, right of city */}
     </div>
   </div>
 
   {/* Column 2 (25%): Time - CENTERED */}
   <div className="flex flex-col items-center">
-    <AnalogClock tz={tz} size={44} />  {/* Minimalist SVG clock */}
+    <AnalogClock tz={tz} size={44} /> {/* Minimalist SVG clock */}
     <MarketStatusIndicator />
   </div>
 
@@ -1885,12 +1981,14 @@ The exchange card uses **CSS Grid with fixed proportional columns** to ensure ve
 ```
 
 **Why this works:**
+
 - `2fr` = 50% of card width (always)
 - `1fr` = 25% of card width each (always)
 - Proportions are fixed, so columns stack perfectly across all cards
 - Long exchange names wrap within their 50% allocation
 
 **Previous approaches (broken):**
+
 - `justify-between` pushed content to edges, gaps varied based on content width
 - `auto` columns caused columns to be different widths per card
 - `grid-cols-[auto_1fr_auto_1fr_auto]` equal-gap approach still had misaligned columns
@@ -1940,3 +2038,404 @@ Update imports in:
 
 - `src/components/home/rails/exchange-column.tsx`
 - `src/components/ribbon/exchange-rail.tsx`
+
+---
+
+## Component Architecture Update (Dec 31, 2025)
+
+### Layout Components
+
+| Component                                   | Type       | Purpose                                                            |
+| ------------------------------------------- | ---------- | ------------------------------------------------------------------ |
+| `src/app/layout.tsx`                        | Server     | Root layout — viewport-locked (`h-dvh overflow-hidden`), no footer |
+| `src/components/layout/homepage-grid.tsx`   | **Client** | Three-column grid with scroll sync, contains footer                |
+| `src/components/core/provenance-footer.tsx` | Server     | Footer — now rendered inside HomepageGrid                          |
+
+### Key Implementation Files
+
+| File                                      | Purpose                                                            |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| `src/app/globals.css`                     | Viewport lock (`overflow: hidden !important`), scrollbar utilities |
+| `src/components/ribbon/exchange-list.tsx` | Exchange cards list (server component)                             |
+
+### Scrollbar Utility Classes (globals.css)
+
+```css
+/* Webkit (Chrome, Safari, Edge) */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.hover\:scrollbar-thumb-white\/30:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Firefox fallback */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+```
+
+### Why HomepageGrid is a Client Component
+
+The synchronized scroll feature requires browser APIs that are only available in client components:
+
+- `useRef` — for DOM element references
+- `onScroll` — for scroll event handlers
+- `requestAnimationFrame` — for smooth sync updates
+
+Server components cannot use these hooks, so `HomepageGrid` must be a client component.
+
+### Footer Placement Change
+
+**Before:** Footer in `layout.tsx` outside main content
+**After:** Footer inside `HomepageGrid` as final flex item
+
+This change was required because:
+
+1. Viewport lock (`h-dvh overflow-hidden`) requires all content in one container
+2. Footer outside the container would push content beyond viewport
+3. Footer inside can use `shrink-0` to maintain fixed height at bottom
+
+---
+
+## Market Pulse v2.0 Feature (Updated Jan 2, 2026)
+
+### Overview
+
+**Tagline:** _"The bridge comes alive when markets move."_
+
+Market Pulse is a visual animation layer that connects stock exchanges to AI providers headquartered in the same city. Unlike static diagrams, it only appears during market transition events. When markets are dormant, the interface is clean and quiet. When markets are transitioning, the bridge between them literally lights up with flowing energy particles.
+
+**Purpose:** Reinforces Promagen's core concept — "a bridge between markets and imagination" — with live visual feedback that appears only when meaningful.
+
+### Core Philosophy
+
+- **Dormant by default**: Clean interface for ~99% of the day
+- **Event-driven activation**: Visual effects only appear ±1 minute around market opens/closes
+- **Multi-session support**: Exchanges with lunch breaks (Tokyo, Hong Kong) fire 4 events per day
+- **Continent-specific theming**: Each connection uses colors based on the exchange's continent
+
+### Visual Elements
+
+| Element                      | Description                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| **Bezier Connection Curves** | Smooth SVG curves connecting exchange cards to provider rows                    |
+| **Flowing Energy Particles** | Tiny glowing dots that travel along the curves (like electricity through wires) |
+| **Row Ambient Glow**         | Subtle breathing effect on provider rows during event windows                   |
+
+### State Machine (5 States)
+
+| State         | Timing                               | Duration     | Visual Behavior                                                                               |
+| ------------- | ------------------------------------ | ------------ | --------------------------------------------------------------------------------------------- |
+| **Dormant**   | Market closed, outside event windows | ~23h 56m/day | Nothing visible. No curves, no particles, no glow. Clean interface.                           |
+| **Pre-Open**  | 1 minute before market opens         | 60 seconds   | Curves fade in (0%→60% opacity). Slow particles flow exchange→provider. Row breathing starts. |
+| **Opening**   | Market opens (T=0)                   | ~10 seconds  | BURST: 8-10 rapid particles, curve blazes 100%, row FLASHES with continent color.             |
+| **Pre-Close** | 1 minute before market closes        | 60 seconds   | Curves reappear. Particles flow slowly in reverse (provider→exchange). Row breathing resumes. |
+| **Closing**   | Market closes (T=0)                  | ~10 seconds  | Reverse burst, cooler glow, row FLASHES, then all fades out → Dormant.                        |
+
+**Important:** During normal trading hours (between opening event and pre-close window), nothing is visible. The feature only activates around transitions.
+
+### Detailed State Behavior
+
+#### DORMANT (Default — Most of the Day)
+
+- Curves: Not rendered (invisible, zero overhead)
+- Particles: None
+- Provider row: Completely normal appearance
+- Vibe: Clean interface
+
+#### PRE-OPEN (T−1 minute)
+
+- Curves: Fade in from 0% to 60% opacity over 5 seconds
+- Particles:
+  - Speed: Slow (1 particle every 2 seconds)
+  - Size: Small (4px)
+  - Brightness: 50%
+  - Direction: Exchange → Provider
+- Provider row:
+  - Subtle breathing begins (opacity oscillates 0.95→1.0 over 3 seconds)
+  - Faint border glow (continent color at 15% opacity)
+- Vibe: Anticipation. Something is about to happen.
+
+#### OPENING EVENT (T=0)
+
+- Curves: Flash to 100% opacity, solid line (no dashes), outer glow intensifies
+- Particles:
+  - BURST: 8-10 particles released in rapid succession (80ms apart)
+  - Speed: Fast (travel full curve in ~800ms)
+  - Size: Large (8px with 16px glow halo)
+  - Brightness: 100%
+- Provider row:
+  - FLASH: Background floods with continent color (30% opacity)
+  - Flash duration: 600ms ease-out
+  - After flash: settles into gentle breathing
+- Duration: Peak intensity ~2 seconds, then rapid fade over 8 seconds
+- Vibe: The market is OPEN. Energy flows.
+
+#### PRE-CLOSE (T−1 minute to close)
+
+- Curves: Fade in from 0% to 60% opacity
+- Particles:
+  - Direction: **REVERSED** (Provider → Exchange — energy returning)
+  - Speed: Slow
+  - Color: Slightly cooler tone
+- Provider row: Subtle breathing, cooler border glow
+- Vibe: The day is ending. Energy winding down.
+
+#### CLOSING EVENT (T=0)
+
+- Curves: Flash to 100% opacity (cooler color)
+- Particles:
+  - BURST: 8-10 particles in rapid succession
+  - Direction: **REVERSED** (provider → exchange)
+  - Color: Cooler tone (blue shift)
+- Provider row: FLASH with cooler continent color
+- Post-event: All effects fade out over 5 seconds → DORMANT
+- Vibe: Market closed. The bridge goes dark.
+
+### City Connections (Complete Map)
+
+The following exchanges and AI providers share the same city:
+
+| City          | Exchange                       | Exchange ID             | AI Provider(s)                           | Provider ID(s)                          |
+| ------------- | ------------------------------ | ----------------------- | ---------------------------------------- | --------------------------------------- |
+| **Sydney**    | Australian Securities Exchange | `asx-sydney`            | Leonardo AI                              | `leonardo`                              |
+| **Hong Kong** | Hong Kong Exchanges            | `hkex-hong-kong`        | Fotor, Artguru, PicWish                  | `fotor`, `artguru`, `picwish`           |
+| **London**    | London Stock Exchange          | `lse-london`            | Stability AI, DreamStudio, Dreamlike.art | `stability`, `dreamstudio`, `dreamlike` |
+| **Chicago**   | Cboe Global Markets            | `cboe-chicago`          | 123RF AI Generator                       | `123rf`                                 |
+| **New York**  | NYSE                           | `nyse-new-york`         | Runway ML, Artbreeder                    | `runway`, `artbreeder`                  |
+| **New York**  | NASDAQ                         | `nasdaq-new-york`       | Runway ML, Artbreeder                    | `runway`, `artbreeder`                  |
+| **Paris**     | Euronext Paris                 | `euronext-paris`        | Clipdrop                                 | `clipdrop`                              |
+| **Toronto**   | Toronto Stock Exchange         | `tsx-toronto`           | Ideogram                                 | `ideogram`                              |
+| **Taipei**    | Taiwan Stock Exchange          | `twse-taipei`           | MyEdit (CyberLink)                       | `myedit`                                |
+| **Vienna**    | Wiener Börse                   | `wbag-vienna`           | Remove.bg (Kaleido AI)                   | `remove-bg`                             |
+| **Warsaw**    | GPW Main Market                | `gpw-warsaw`            | Getimg.ai                                | `getimg`                                |
+| **Warsaw**    | WSE NewConnect                 | `wse-warsaw-newconnect` | Getimg.ai                                | `getimg`                                |
+
+**Total:** 19 connections across 10 cities
+
+**Free Tier:** Sydney, Hong Kong, London, Chicago (4 exchanges)  
+**Paid Tier:** + New York (×2), Paris, Toronto, Taipei, Vienna, Warsaw (×2) (8 additional exchanges)
+
+### Multi-Session Exchanges
+
+Some exchanges have **lunch breaks** and therefore fire **4 events per day** instead of 2:
+
+| Exchange             | Morning Open | Lunch Close | Afternoon Open | Final Close |
+| -------------------- | ------------ | ----------- | -------------- | ----------- |
+| **Hong Kong (HKEX)** | 09:30        | 12:00       | 13:00          | 16:00       |
+| **Tokyo (TSE)**      | 09:00        | 11:30       | 12:30          | 15:00       |
+| **China (SSE/SZSE)** | 09:30        | 11:30       | 13:00          | 15:00       |
+
+Each session boundary triggers its own ±1 minute event window with full particle effects.
+
+### Continent Color Palette
+
+| Continent       | Primary Color     | Glow Color                | CSS Variable              |
+| --------------- | ----------------- | ------------------------- | ------------------------- |
+| **Oceania**     | Cyan `#22d3ee`    | `rgba(34, 211, 238, 0.6)` | `--pulse-continent-color` |
+| **Asia**        | Gold `#fbbf24`    | `rgba(251, 191, 36, 0.6)` | `--pulse-continent-color` |
+| **Europe**      | Blue `#3b82f6`    | `rgba(59, 130, 246, 0.6)` | `--pulse-continent-color` |
+| **Americas**    | Emerald `#10b981` | `rgba(16, 185, 129, 0.6)` | `--pulse-continent-color` |
+| **Africa**      | Orange `#f97316`  | `rgba(249, 115, 22, 0.6)` | `--pulse-continent-color` |
+| **Middle East** | Purple `#a855f7`  | `rgba(168, 85, 247, 0.6)` | `--pulse-continent-color` |
+
+### Multi-Provider / Multi-Exchange Behavior
+
+**One exchange, multiple providers** (e.g., London → Stability, DreamStudio, Dreamlike):
+
+- All three curves appear simultaneously
+- Particles staggered by 150ms for cascade effect
+- All three rows flash in sequence
+
+**Multiple exchanges, same provider** (e.g., NYSE + NASDAQ → Runway):
+
+- If both exchanges open at the same time: two curves fire, one row receives both bursts
+- If staggered: each event triggers independently
+
+### Technical Architecture
+
+**Three-layer system:**
+
+1. **Data Layer:** `src/data/city-connections.ts`
+
+   - `CITY_CONNECTIONS` array mapping exchangeId → providerId
+   - `CONTINENT_COLORS` color definitions
+   - Helper functions: `getConnectionsForExchange()`, `getConnectionsForProvider()`
+
+2. **Detection Layer:** `src/hooks/use-market-pulse.ts` _(v2.0)_
+
+   - Checks market status every 1 second for accuracy
+   - Detects ±1 minute event windows around all session opens/closes
+   - Returns `pulseContexts` Map with state and progress for each exchange
+   - Returns `activeExchangeIds` array (exchanges not in dormant state)
+   - Fires `onBurst` callback when opening/closing events occur
+
+3. **Rendering Layer:** `src/components/market-pulse/market-pulse-overlay.tsx`
+   - Single SVG overlay with `pointer-events: none`
+   - Calculates positions using `getBoundingClientRect()`
+   - Generates smooth bezier curves between elements
+   - Animates particles using `requestAnimationFrame`
+   - Applies row glow classes dynamically
+
+**DOM requirements:**
+
+- Exchange cards must have `data-exchange-id="{id}"` attribute
+- Provider rows must have `data-provider-id="{id}"` attribute
+
+### CSS Classes (globals.css)
+
+```css
+/* Base state for pulse-connected rows */
+.market-pulse-row-glow {
+  position: relative;
+  transition: box-shadow 0.3s ease-out, background-color 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Subtle breathing animation for pre-open/pre-close states */
+@keyframes market-pulse-row-breathe {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent;
+    background-color: transparent;
+  }
+  50% {
+    box-shadow: inset 0 0 20px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent),
+      0 0 10px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 10%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 5%, transparent);
+  }
+}
+
+.market-pulse-row-breathing {
+  animation: market-pulse-row-breathe 3s ease-in-out infinite;
+}
+
+/* Opening event flash */
+.market-pulse-row-opening {
+  animation: market-pulse-row-flash-open 1.5s ease-out forwards;
+}
+
+/* Closing event flash */
+.market-pulse-row-closing {
+  animation: market-pulse-row-flash-close 1.5s ease-out forwards;
+}
+
+/* Reduced motion: static highlight instead of animation */
+@media (prefers-reduced-motion: reduce) {
+  .market-pulse-row-breathing,
+  .market-pulse-row-opening,
+  .market-pulse-row-closing {
+    animation: none;
+    box-shadow: inset 0 0 15px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 5%, transparent);
+  }
+}
+```
+
+### Integration with HomepageGrid
+
+```tsx
+// src/components/layout/homepage-grid.tsx
+import { useMarketPulse } from '@/hooks/use-market-pulse';
+import { MarketPulseOverlay } from '@/components/market-pulse';
+
+export default function HomepageGrid({
+  exchanges = [],
+  displayedProviderIds = [],
+}: HomepageGridProps) {
+  const selectedExchangeIds = exchanges.map((e) => e.id);
+
+  // Market Pulse v2.0 hook
+  const { pulseContexts, activeExchangeIds } = useMarketPulse({
+    exchanges,
+    onBurst: (context) => {
+      console.log(`${context.exchangeId} is ${context.state}`);
+    },
+  });
+
+  return (
+    <div ref={containerRef} className="relative">
+      {/* ... layout ... */}
+      <MarketPulseOverlay
+        containerRef={containerRef}
+        leftRailRef={leftRef}
+        rightRailRef={rightRef}
+        providersRef={providersRef}
+        selectedExchangeIds={selectedExchangeIds}
+        displayedProviderIds={displayedProviderIds}
+        pulseContexts={pulseContexts}
+        activeExchangeIds={activeExchangeIds}
+      />
+    </div>
+  );
+}
+```
+
+### Market Hours Templates
+
+Market Pulse relies on accurate exchange schedules defined in `src/data/markets/market-hours.templates.json`. Version 2.0 includes 50+ templates covering all major regions:
+
+| Region          | Templates                                                                                                                                                                                                                                                                                                        | Notes                  |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **Oceania**     | `australasia-standard`, `australia-standard`                                                                                                                                                                                                                                                                     | Single session         |
+| **Asia**        | `asia-tokyo`, `asia-korea`, `asia-china`, `asia-hk`, `asia-taiwan`, `asia-singapore`, `asia-malaysia`, `asia-indonesia`, `asia-thailand`, `asia-philippines`, `asia-vietnam`, `asia-india`, `asia-pakistan`, `asia-bangladesh`, `asia-srilanka`                                                                  | Many have lunch breaks |
+| **Middle East** | `gulf-uae`, `gulf-saudi`, `gulf-israel`                                                                                                                                                                                                                                                                          | Some use Sun-Thu week  |
+| **Europe**      | `europe-uk`, `europe-euronext`, `europe-germany`, `europe-swiss`, `europe-nordic`, `europe-spain`, `europe-italy`, `europe-austria`, `europe-poland`, `europe-russia`, `europe-turkey`, `europe-greece`, `europe-baltic`, `europe-iceland`, `europe-ireland`, `europe-czech`, `europe-hungary`, `europe-romania` | Mostly continuous      |
+| **Africa**      | `africa-south`, `africa-nigeria`, `africa-kenya`, `africa-egypt`, `africa-morocco`                                                                                                                                                                                                                               | Various schedules      |
+| **Americas**    | `us-standard`, `us-chicago`, `canada-tsx`, `latam-brazil`, `latam-mexico`, `latam-argentina`, `latam-chile`, `latam-colombia`, `latam-peru`                                                                                                                                                                      | Americas patterns      |
+
+### What Was Removed in v2.0
+
+| Removed Element                                                                                       | Reason                                                     |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| **City connection badges** (`🔗 London`)                                                              | Static, boring, looked like metadata not magic             |
+| **Demo mode**                                                                                         | No longer needed — feature activates on real market events |
+| **Persistent idle lines**                                                                             | Created visual noise; dormant should mean invisible        |
+| **Always-on breathing**                                                                               | Distracting; breathing only during event windows           |
+| **Old hook** (`use-market-transition.ts`)                                                             | Replaced by `use-market-pulse.ts` with event windows       |
+| **Old CSS classes** (`.market-pulse-glow-open`, `.market-pulse-glow-close`, `.city-connection-badge`) | Replaced with v2.0 row effect classes                      |
+
+### Accessibility
+
+- **Reduced motion**: Users with `prefers-reduced-motion` see instant state changes with static highlights instead of particles
+- **Aria-hidden**: All visual effects are decorative and hidden from screen readers (`aria-hidden="true"`)
+- **No seizure risk**: Maximum flash rate well below 3Hz threshold
+
+### Performance Notes
+
+- Single SVG overlay for all connections (not one per line)
+- Particles use `requestAnimationFrame` for smooth 60fps
+- Path calculations cached, recalculated only on scroll/resize
+- Curves not rendered when dormant (zero overhead for ~99% of the day)
+- Status checks every 1 second (minimal CPU impact)
+
+### A Day in the Life (Example: London)
+
+| Time (UTC) | State     | Visual                                                                                 |
+| ---------- | --------- | -------------------------------------------------------------------------------------- |
+| 06:59      | Dormant   | No curves visible. Provider rows normal.                                               |
+| 07:59      | Pre-Open  | Curves fade in toward Stability, DreamStudio, Dreamlike. Slow particles. Rows breathe. |
+| 08:00      | Opening   | LSE OPENS. Burst of particles. Curves blaze. Three rows flash blue.                    |
+| 08:01      | Dormant   | Event window ends. Curves fade. Interface clean.                                       |
+| 15:29      | Pre-Close | Curves reappear. Particles flow in reverse. Rows breathe.                              |
+| 16:30      | Closing   | LSE CLOSES. Reverse burst. Cool flash. Curves fade to black.                           |
+| 16:31      | Dormant   | Clean interface until tomorrow.                                                        |
+
+---
+
+Last updated: January 2, 2026
+
+**Changelog:**
+- **2 Jan 2026:** Added vote button to Image Quality column. Added community voting rules and implementation references.

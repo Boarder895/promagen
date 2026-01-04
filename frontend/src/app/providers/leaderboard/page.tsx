@@ -18,7 +18,8 @@ export const metadata: Metadata = {
 };
 
 export default async function ProvidersLeaderboardPage(): Promise<JSX.Element> {
-  const providers = await getProvidersWithPromagenUsers(20);
+  // No limit — shows all providers from SSOT (providers.json)
+  const providers = await getProvidersWithPromagenUsers();
 
   return (
     <main role="main" className="p-6">
@@ -26,7 +27,6 @@ export default async function ProvidersLeaderboardPage(): Promise<JSX.Element> {
         providers={providers}
         title="AI Providers Leaderboard"
         caption="Score stays far right; other columns follow the display contract."
-        limit={20}
         showRank
       />
     </main>

@@ -23,21 +23,13 @@ import { ExchangeCondition } from './weather/exchange-condition';
  * │                               │     ● Open       │                        │
  * └───────────────────────────────────────────────────────────────────────────┘
  *
- * This is the Promagen "Fixed Proportional Column Layout" pattern.
- * See code-standard.md §6 (Styling Rules).
- *
- * Column breakdown:
- * - Column 1 (50%): Exchange name (wraps if long), city + enlarged flag (2x)
- * - Column 2 (25%): LED clock (7-segment display) + market status, centered
- * - Column 3 (25%): Temperature + weather emoji, centered
- *
  * Features:
+ * - Fixed height (h-[76px]) ensures uniform card sizes for rail alignment
  * - Fixed proportions ensure vertical alignment across all cards
  * - Exchange name wraps to 2-3 lines if needed (font size unchanged)
  * - Flag is 2x size (24px), positioned right of city with small gap
  * - Retro 7-segment LED clock with green digits
  * - Time and weather columns are centered
- * - Double height (py-4)
  * - Market open/closed status
  * - Weather temp + condition emoji
  * - Graceful fallbacks when data unavailable
@@ -50,7 +42,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
 
   return (
     <div
-      className={`grid grid-cols-[2fr_1fr_1fr] items-center rounded-lg bg-white/5 px-4 py-4 text-sm shadow-sm ring-1 ring-white/10 ${className}`}
+      className={`grid h-[76px] grid-cols-[2fr_1fr_1fr] items-center rounded-lg bg-white/5 px-4 text-sm shadow-sm ring-1 ring-white/10 ${className}`}
       role="group"
       aria-label={`${name} stock exchange`}
       data-exchange-id={id}
@@ -59,7 +51,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
       {/* COLUMN 1 (50%): Exchange Info - LEFT ALIGNED */}
       <div className="min-w-0 pr-2">
         {/* Exchange name (wraps if long) */}
-        <p className="font-medium leading-tight text-slate-100">{name}</p>
+        <p className="font-medium leading-tight text-slate-100 line-clamp-2">{name}</p>
         {/* City + Flag row */}
         <div className="mt-1 flex items-center gap-2">
           <span className="truncate text-xs text-slate-400">{city}</span>

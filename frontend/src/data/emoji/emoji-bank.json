@@ -1467,7 +1467,29 @@
     "flux": "🚀",
     "adobe-firefly": "✨",
     "i23rf": "🗂️",
-    "artistly": "✍️"
+    "artistly": "✍️",
+    "google-imagen": "🔮",
+    "microsoft-designer": "💼",
+    "craiyon": "🖍️",
+    "bluewillow": "🌀",
+    "dreamstudio": "💫",
+    "artbreeder": "🧬",
+    "jasper-art": "💎",
+    "runway": "🎬",
+    "freepik": "🎨",
+    "simplified": "⚡",
+    "photoleap": "📷",
+    "vistacreate": "🎪",
+    "artguru": "🎴",
+    "myedit": "✂️",
+    "visme": "📊",
+    "hotpot": "🔥",
+    "picwish": "🪄",
+    "clipdrop": "✂️",
+    "getimg": "🖼️",
+    "imagine-meta": "🌐",
+    "dreamlike": "💭",
+    "remove-bg": "🎯"
   },
   "symbols": [
     {
@@ -1757,20 +1779,6 @@
     {
       "id": "sym_72",
       "emoji": "🧪"
-    }
-  ],
-  "budget_guard": [
-    {
-      "id": "ok",
-      "emoji": "🛫"
-    },
-    {
-      "id": "warning",
-      "emoji": "🏖️"
-    },
-    {
-      "id": "blocked",
-      "emoji": "🧳"
     }
   ]
 }

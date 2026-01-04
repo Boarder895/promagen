@@ -1,6 +1,6 @@
 # AI Providers
 
-**Last updated:** 28 December 2025  
+**Last updated:** 2 January 2026  
 **Owner:** Promagen  
 **Existing features preserved:** Yes
 
@@ -27,7 +27,7 @@ Hard rule: if it is not written in `paid_tier.md`, it is free.
 - `frontend/src/data/providers/providers.json`
 - `frontend/src/data/providers/index.ts`
 
-The catalogue is the authoritative list of providers (currently guarded as the "canonical 20").
+The catalogue is the authoritative list of providers (currently 42 providers across 16 countries).
 
 ### Provider type (TypeScript)
 
@@ -44,6 +44,89 @@ import type { Provider } from '@/types/provider';
 - Defining ad-hoc Provider types in components or routes
 - Using `z.infer<typeof SomeSchema>` as the Provider type in UI code
 
+### Provider type definition (Updated Jan 2, 2026)
+
+```typescript
+// src/types/providers.ts
+
+export type ProviderTrend = 'up' | 'down' | 'flat';
+export type ProviderGenerationSpeed = 'fast' | 'medium' | 'slow' | 'varies';
+
+/**
+ * Quality tier for providers not covered by external benchmarks.
+ */
+export type ProviderQualityTier = 
+  | 'top-tier'      // Best-in-class quality
+  | 'mid-tier'      // Good quality, competitive
+  | 'entry-tier'    // Basic quality, accessible
+  | 'specialized'   // Niche use case (anime, editing, etc.)
+  | 'utility';      // Not primarily generative
+
+/**
+ * Community ranking data for a provider.
+ */
+export type ProviderRanking = {
+  seedElo: number | null;           // From Artificial Analysis (null if not benchmarked)
+  seedTier: ProviderQualityTier;    // Manual tier for providers without ELO
+  bayesianScore: number | null;     // Calculated from community votes
+  communityRank: number | null;     // Derived rank 1-N
+  totalVotes: number;               // Total weighted votes
+  signals: {
+    imageUploads: number;
+    imageLikes: number;
+    comments: number;
+    cardLikes: number;
+  };
+  lastCalculated: string | null;    // ISO timestamp
+};
+
+export type Provider = {
+  id: string;
+  name: string;
+  country?: string;      // DEPRECATED: Use countryCode
+  countryCode?: string;  // ISO 3166-1 alpha-2
+  
+  score?: number;        // Overall score 0-100
+  trend?: ProviderTrend;
+  tags?: string[];
+  
+  website: string;
+  url?: string;          // Legacy alias
+  
+  affiliateUrl: string | null;
+  requiresDisclosure: boolean;
+  
+  tagline?: string;
+  tip?: string;
+  
+  icon?: string;
+  localIcon?: string;
+  
+  hqCity?: string;
+  timezone?: string;
+  supportHours?: string;
+  
+  imageQualityRank?: number;
+  incumbentAdjustment?: boolean;
+  
+  visualStyles?: string;
+  apiAvailable?: boolean;
+  affiliateProgramme?: boolean;
+  
+  // Community ranking (populated when voting is enabled)
+  ranking?: ProviderRanking;
+  
+  // DEPRECATED fields
+  sweetSpot?: string;
+  generationSpeed?: ProviderGenerationSpeed;
+  affordability?: string;
+  
+  supportsPrefill?: boolean;
+  group?: string;
+  tier?: string;
+};
+```
+
 ### Provider schema (Zod validation)
 
 **Canonical schema location:** `frontend/src/data/providers/providers.schema.ts`
@@ -55,57 +138,6 @@ This is the ONE authoritative Zod schema for validating `providers.json`. It mus
 1. **Strict validation at the source** — The schema validates all fields when loading `providers.json`
 2. **Other code trusts the data** — Once validated at load time, downstream code does not re-validate
 3. **No `.strict()` on local schemas** — Route-specific schemas may define subsets but must use `.passthrough()` or default mode (not `.strict()`) to allow extra fields
-
-**Canonical schema structure:**
-
-```typescript
-// frontend/src/data/providers/providers.schema.ts
-import { z } from 'zod';
-
-export const ProviderTrendSchema = z.enum(['up', 'down', 'flat']);
-export const ProviderGenerationSpeedSchema = z.enum(['fast', 'medium', 'slow', 'varies']);
-
-export const ProviderSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  country: z.string().length(2).optional(),
-
-  score: z.number().int().min(0).max(100).optional(),
-  trend: ProviderTrendSchema.optional(),
-  tags: z.array(z.string()).optional(),
-
-  // Canonical URL field
-  website: z.string().url(),
-  url: z.string().url().optional(), // Legacy alias only
-
-  // Affiliate / disclosure
-  affiliateUrl: z.string().url().nullable(),
-  requiresDisclosure: z.boolean(),
-
-  // Short marketing copy
-  tagline: z.string().optional(),
-  tip: z.string().optional(),
-
-  // Leaderboard enrichment fields
-  icon: z.string().optional(),
-  sweetSpot: z.string().optional(),
-  visualStyles: z.string().optional(),
-  apiAvailable: z.boolean().optional(),
-  affiliateProgramme: z.boolean().optional(),
-  generationSpeed: ProviderGenerationSpeedSchema.optional(),
-  affordability: z.string().optional(),
-
-  // Prompt builder UX
-  supportsPrefill: z.boolean().optional(),
-
-  // Future categorisation
-  group: z.string().optional(),
-  tier: z.string().optional(),
-});
-
-export const ProvidersArraySchema = z.array(ProviderSchema);
-export type ProviderFromSchema = z.infer<typeof ProviderSchema>;
-```
 
 **Files to remove after consolidation:**
 
@@ -128,9 +160,196 @@ These duplicate schemas should be removed or converted to imports:
 - `supportsPrefill`
 - `supportsSeed`
 - `supportsSteps`
-- Stage 3 Cron aggregates on a schedule via a protected endpoint; aggregation is idempotent (upsert) and supports a protected "run now" backfill trigger.
 
 These flags inform the prompt builder UX and any future integrations.
+
+### Prompt builder data sources
+
+The prompt builder system uses two additional SSOT JSON files:
+
+**Prompt options:**
+- Location: `frontend/src/data/providers/prompt-options.json`
+- Schema: `frontend/src/types/prompt-builder.ts` (PromptOptions interface)
+- Content: 11 categories × 30 curated options = 330 total options
+
+**Platform formats:**
+- Location: `frontend/src/data/providers/platform-formats.json`
+- Schema: `frontend/src/types/prompt-builder.ts` (PlatformFormats interface)
+- Content: Assembly rules for 42 platforms across 7 families
+
+**Assembly logic:**
+- Location: `frontend/src/lib/prompt-builder.ts`
+- Exports: `assemblePrompt()`, `formatPromptForCopy()`, `getCategoryConfig()`
+
+**Type definitions:**
+- Location: `frontend/src/types/prompt-builder.ts`
+- Key types: `PromptCategory`, `PlatformFormat`, `AssembledPrompt`
+
+For full prompt builder architecture, see: **prompt-builder-page.md**
+
+## Community Voting System (Added Jan 2, 2026)
+
+### Overview
+
+The community voting system allows users to influence the Image Quality ranking through thumbs-up votes. This creates a community-driven signal that blends with editorial rankings over time.
+
+### Core Mechanics
+
+| Feature | Implementation |
+|---------|----------------|
+| Vote button location | Image Quality column, right of rank display |
+| Daily limit | 3 providers max per user |
+| Per-provider limit | 1 vote per provider per 24 hours |
+| Reset timing | Rolling 24h from vote timestamp |
+| Animation | Thumb bounce (400ms) on successful vote |
+| Voted state | Filled thumb icon |
+| Authentication | Required to vote |
+| Session persistence | Yes, via localStorage |
+
+### Vote Weighting
+
+| Signal Type | Base Weight | Paid Weight (1.5×) |
+|-------------|-------------|-------------------|
+| Image upload tagged to platform | 1 | 1.5 |
+| Like on image | 2 | 3 |
+| Favorable comment | 2 | 3 |
+| Direct provider card like | 3 | 4.5 |
+
+**Note:** Paid users receive a 1.5× multiplier on all vote weights. This is applied server-side and not disclosed in the UI.
+
+### Ranking Algorithm
+
+**Bayesian Average with Time Decay**
+
+Prevents gaming through:
+- Low sample size (new provider with 2 votes won't beat one with 500)
+- Recency bias (old votes decay ~50% after 70 days)
+
+Formula:
+```
+score = (v / (v + m)) × R + (m / (v + m)) × C
+
+Where:
+  v = total votes for provider
+  m = minimum votes threshold (25)
+  R = provider's raw average
+  C = global average across all providers
+```
+
+### Image Quality Score Blending
+
+Community votes gradually influence the Image Quality criterion as vote volume increases:
+
+| Vote Count | Seed Weight | Community Weight |
+|------------|-------------|------------------|
+| 0-24 votes | 100% | 0% |
+| 25-49 votes | 75% | 25% |
+| 50-99 votes | 50% | 50% |
+| 100+ votes | 30% | 70% |
+
+**Important:** Community votes affect ONLY the Image Quality criterion (10% of overall 0-100 score). The other 6 criteria (Adoption, Speed, Cost, Trust, Automation, Ethics) remain 90% of the total score. Maximum community influence: ±10 points on the 100-point scale.
+
+### Seed Data (Initial Rankings)
+
+Providers are seeded using Artificial Analysis ELO scores where available:
+
+| Provider | Seed ELO |
+|----------|----------|
+| Flux (Black Forest Labs) | 1143 |
+| Ideogram v2 | 1102 |
+| Midjourney | 1093 |
+| Stability AI SD3 | 1084 |
+| OpenAI DALL·E 3 | 984 |
+
+Providers without external benchmarks are assigned manual tiers:
+- **Top-tier:** Adobe Firefly, Runway ML
+- **Mid-tier:** Canva, Lexica, OpenArt, NightCafe, Jasper Art, Freepik
+- **Entry-tier:** Craiyon, DeepAI, Hotpot
+- **Specialized:** NovelAI (anime), Remove.bg (utility), Clipdrop (editing)
+
+### Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `src/components/providers/image-quality-vote-button.tsx` | Animated thumbs-up button |
+| `src/components/providers/providers-table.tsx` | Table with vote integration |
+| `src/hooks/use-image-quality-vote.ts` | Vote state management hook |
+| `src/lib/vote-storage.ts` | localStorage vote tracking |
+| `src/app/api/providers/vote/route.ts` | Vote API endpoint |
+
+### Visual States
+
+| State | Appearance |
+|-------|------------|
+| Not voted, can vote | Outline thumb, highlights on hover |
+| Already voted | Filled emerald thumb |
+| Daily limit reached | Outline thumb, dimmed, no interaction |
+| Animating | Bounce + fill transition (400ms) |
+| Not authenticated | Outline thumb, dimmed, no interaction |
+
+### Anti-Gaming Measures
+
+1. **Authentication required** — Anonymous votes not accepted
+2. **Paid multiplier** — Makes bot farming expensive
+3. **3 votes/day limit** — Prevents spam
+4. **Rolling 24h window** — Prevents midnight gaming
+5. **Bayesian formula** — Skeptical of low-sample providers
+6. **Time decay** — Reduces impact of old coordinated attacks
+7. **Silent enforcement** — No counters or limits shown to users
+
+### CSS Classes
+
+```css
+/* Base vote thumb button */
+.vote-thumb { ... }
+.vote-thumb--voted { color: emerald-400 }
+.vote-thumb--disabled { opacity: 0.4, no interaction }
+.vote-thumb--animating { bounce animation 400ms }
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .vote-thumb--animating { animation: none }
+}
+```
+
+### API Contract
+
+**POST /api/providers/vote**
+
+Request:
+```json
+{
+  "providerId": "midjourney",
+  "signalType": "card_like"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "vote": {
+    "providerId": "midjourney",
+    "weight": 3
+  }
+}
+```
+
+**GET /api/providers/vote?providerId=midjourney**
+
+Response:
+```json
+{
+  "providerId": "midjourney",
+  "totalVotes": 127,
+  "signals": {
+    "imageUploads": 12,
+    "imageLikes": 45,
+    "comments": 23,
+    "cardLikes": 47
+  }
+}
+```
 
 ## Provider catalogue fields
 
@@ -147,8 +366,7 @@ Each entry in `providers.json` currently contains:
 - `score: number` — Promagen score, used for ranking (0–100).
 - `trend: up | down | flat` — Trend indicator for the leaderboard.
 - `tip: string` — Short instruction to help users take action quickly.
-- Add a tiny **event taxonomy** section (below) listing allowed `eventType` values + weights, so nobody invents new names later and breaks aggregation.
-- Make the Cron aggregation **idempotent + backfillable** by design (upsert + protected "run now" trigger), so you can fix bugs without waiting a day for reality to catch up.
+- `supportsPrefill: boolean` — Whether Promagen can prefill prompts.
 
 #### Event taxonomy (authoritative)
 
@@ -158,69 +376,20 @@ Allowed `eventType` values (and default weights for "usage points"):
 - `click` (weight 1) — legacy alias for `open` (avoid introducing new uses)
 - `submit` (weight 3) — user submitted a prompt/form
 - `success` (weight 5) — confirmed success (e.g. provider returned 200 / result created)
+- `vote` (weight 3) — user voted for provider image quality (added Jan 2, 2026)
 
 If you need a new `eventType`, update this list and the aggregator in the same change.
 
-- `supportsPrefill: boolean` — Whether Promagen can prefill prompts (deep-link or structured transfer).
-
-### Leaderboard enrichment fields (to add)
-
-These exist to make the leaderboard table **high-signal and not boring**. Keep all existing fields; add these:
-
-- `icon: string` — Path to the provider's **official icon** (favicon/brand mark), stored locally (do not hot-link). Designed to be readable on a dark UI.
-- `sweetSpot: string` — Up to 2 short lines: what the platform is best at (human-readable; UI clamps to 2 lines).
-- `visualStyles: string` — Up to 2 short lines: what it excels at visually (no tag soup; UI clamps to 2 lines).
-- `generationSpeed: fast | medium | slow | varies` — Canonical 4-step scale (varies = busy hours).
-- `affordability: string` — 1 line: free tier + rough image allowance + price band (e.g. "Free tier: yes (~25/day); ££").
-- `apiAvailable: boolean` — Whether the provider offers an official API.
-- `affiliateProgramme: boolean` — Whether the provider runs an affiliate programme (this is **not** the same as Promagen having an `affiliateUrl` configured).
-
-Notes:
-
-- `Promagen Users` (country flags + counts) is **analytics-derived**, not stored in `providers.json`.
-- Outbound routing rules remain unchanged: UI never links directly to external URLs (all outbound goes via `/go/{id}`).
-
 ### Analytics-derived metrics (Promagen Users + Online Now)
 
-Option A (recommended): **Postgres + Cron aggregation** (cheap, controlled)
+**Postgres + Cron aggregation** (cheap, controlled)
 
 We ship it live as soon as it's built, but we keep it truthful with a **freshness guard** (blank/"—" if aggregates are stale) so production never shows made-up numbers.
 
-Why "an API" shows up (and how we keep it minimal)
-
-- The UI does **not** need a public API: Next.js pages can read Postgres via an internal server-only loader (a normal TS function).
-- The only bit that practically must be an HTTP endpoint is the **Cron trigger** (Vercel Cron hits a URL). That route is internal and protected by a secret.
-- So: **Loader for UI + protected Cron endpoint for aggregation. No public "analytics API" required.**
-
-"Live as soon as built" without fake data
-
-- Stage 1 starts collecting events immediately after deploy.
-- Stage 3 Cron aggregates on a schedule (hourly if you want "within minutes", daily if overnight is fine).
-- Stage 5 pages read aggregates and show them only if fresh.
-- The freshness guard makes it self-disabling when the pipeline isn't genuinely live.
-
 Freshness guard (48h) — the rule
 
-- If `provider_country_usage_30d.updatedAt` is older than 48 hours → render blank (or "—") and `console.warn`/server-log (so Vercel logs show it).
+- If `provider_country_usage_30d.updatedAt` is older than 48 hours → render blank (or "—") and `console.warn`/server-log.
 - If fresh → render flags + Roman numerals.
-
-Guardrails for any metric derived from "activity" (including Online Now)
-
-- `sessionId` = random, anonymous, client-generated identifier; not identifying (no IPs).
-- Deduplicate by `sessionId` (one person = one session).
-- Only heartbeat when the page is visible (prevents background-tab inflation).
-- Weight "submit/success" more than "click/open" so browsing doesn't dominate usage.
-- Optionally exclude obvious bots (no JS, impossible event rates, known bot signatures, etc.).
-
-Online Now (30-minute window)
-
-Definition: "Online Now" means active at least once in the last **30 minutes** (page visible + heartbeat).
-
-Cheap implementation: presence keys with **TTL=30 minutes** (KV is ideal). If presence can't be read, render blank and log a warning (do not guess).
-
-Localhost note (why flags may be blank in dev)
-
-Local dev won't naturally have Vercel geo headers, so `countryCode` can be unknown. In that case, metrics should render blank rather than lie; country flags become reliable in deployed environments where geo headers exist.
 
 ## Core routes and pages
 
@@ -237,87 +406,74 @@ Local dev won't naturally have Vercel geo headers, so `countryCode` can be unkno
 
 #### Leaderboard table column contract (UI, non-negotiable)
 
+**Provider count:** 42 platforms representing 16 countries
+
 Column order (left → right):
 
-Provider | Promagen Users | Sweet Spot | Visual Styles | API & Affiliate Programme | Generation Speed | Affordability | Score
+Provider | Promagen Users | Image Quality | Visual Styles | API/Affiliate | Overall Score
 
 Rules:
 
-- **Score column is always the far right.**
-- **Rank is not a dedicated column** (if shown at all, render it as a muted prefix inside the Provider cell, e.g. "1.").
-- **Trend is not a dedicated column** (trend renders as a small indicator inside the Score cell).
-- **Tags column is removed** (information density comes from Sweet Spot + Visual Styles instead).
+- **Overall Score column is always the far right.**
+- **Rank is not a dedicated column** (table is sorted by Overall Score DESC by default).
+- **Trend is not a dedicated column** (trend renders as a small indicator inside the Overall Score cell).
+- **Tags column is removed** (information density comes from Visual Styles).
+- **Sweet Spot, Generation Speed, and Affordability columns removed** (streamlined for clarity).
 
 Column definitions:
 
-- **Provider** = Provider name with an optional **tiny official icon** (the same icon you see online), aligned left.
-  - Icon guidance: small (e.g. ~16–18px), square, crisp on dark backgrounds, and stored locally (avoid hot-linking for reliability/privacy).
-- **Promagen Users** = top up to 6 country flags + counts for Promagen usage on that provider; rendered in a 2·2·2 layout; show nothing if zero; overflow becomes "... +n".
-- **Sweet Spot** = what the platform is good at (max 2 lines; UI clamps to 2 lines).
-- **Visual Styles** = what it excels at visually (max 2 lines; UI clamps to 2 lines).
-- **API & Affiliate Programme** = emoji indicators:
-  - 🔌 = API available
-  - 🤝 = Affiliate programme available
-  - 🔌🤝 = Both
-  - blank = Unknown / not set
-- **Generation Speed** = Fast / Medium / Slow / Varies (busy hours).
-- **Affordability** = free tier + rough "how many images" + price band (keep it short and scannable).
-- **Score** = 0–100 (ranked highest first). Include a small trend indicator inline:
-  - up / down / flat (presentation may be an arrow, sparkline, or subtle glyph, but it must not become its own column).
+- **Provider** = Provider name + icon links + location/time (multi-line cell)
+  - **Line 1:** Rank + Provider name (hyperlinked to homepage) + Provider icon (hyperlinked)
+  - **Line 2:** 🏁 Country flag + City name
+  - **Line 3:** HH:MM clock + 🎨 "Prompt builder" link
+- **Promagen Users** = top up to 6 country flags + counts; 2×2×2 layout; blank if zero.
+- **Image Quality** = Ordinal ranking (1st, 2nd, 3rd...) + Vote button
+  - Top 3 show medal emoji: 🥇 🥈 🥉
+  - **Vote button:** Thumbs-up icon to the right of rank
+  - Sortable column: Users can click header to re-sort table by quality rank
+- **Visual Styles** = what it excels at visually (max 2 lines).
+- **API/Affiliate** = emoji indicators (🔌 = API, 🤝 = Affiliate).
+- **Overall Score** = 0–100 composite score with trend indicator (↑/↓/●).
 
-Score rubric (7 criteria, so the number is defendable):
+Score calculation (7 weighted criteria):
 
-1. Output quality (overall look)
-2. Prompt obedience (follows instructions)
-3. Text-in-image (posters/logos/labels)
-4. Editing power (inpaint/outpaint/img2img)
-5. Control (seed/negative/guidance options)
-6. Speed (generation time)
-7. Value (price vs output quality)
+1. **Adoption/Ecosystem** (20%) - User base, integrations, community
+2. **Image Quality** (10%) - Pure visual output quality (community-influenced)
+3. **Speed/Uptime** (15%) - Generation time, reliability
+4. **Cost/Free Tier** (15%) - Value for money, free tier generosity
+5. **Trust/Safety** (15%) - Content policy, filtering, copyright
+6. **Automation/Innovation** (15%) - API, features, iteration speed
+7. **Ethical/Environmental** (10%) - Energy transparency, artist compensation
 
-### Outbound links (Leaderboard)
+**Incumbent adjustment (-5 points):**
 
-**Current behaviour:** outbound provider links are routed through `/go/{id}?src=leaderboard` (no direct external URLs in the UI). The catalogue uses `website` as the canonical field; the data layer normalises `url := website` for backwards compatibility.
+Platforms meeting **2 or more** of these criteria receive a -5 point adjustment:
 
-Recommended behaviour (documented):
+1. **Big Tech backing:** Owned by or bundled into company with >$10B market cap OR >100M users in core product
+2. **Mainstream user base:** >10M registered users OR >50% brand recognition in general population
+3. **Mature product line:** <3 major features per quarter OR enterprise/stability focus over rapid innovation
 
-- Leaderboard outbound clicks go through `/go/{id}` (see affiliate doc).
-- Provider Detail outbound CTAs go through `/go/{id}?src=provider_detail`.
-- Prompt Builder launch button goes through `/go/{id}?src=prompt_builder`.
+### Provider Cell Structure
 
-### Provider detail card
+The Provider cell in the leaderboard displays a three-line layout:
 
-- `frontend/src/components/providers/provider-detail.tsx`
+**Line 1: Rank + Name (hyperlinked) + Provider Icon**
+**Line 2: Flag + City**
+**Line 3: Time + Prompt Builder Link**
 
-**Current behaviour:** it resolves the "Official site" URL from `provider.website` (treating `provider.url` as a legacy alias only) and routes outbound CTAs through `/go/{id}?src=provider_detail` (no direct external URLs in the UI).
+**Outbound link routing:**
 
-### Outbound button component
-
-- `frontend/src/components/providers/copy-open-button.tsx`
-
-Recommended behaviour:
-
-- Outbound opens should use `/go/{id}` not a direct third-party URL.
-- AffiliateBadge should be conditional on `requiresDisclosure`.
-
-### Vercel Pro guardrails for outbound links (`/go/*`)
-
-- Canonical playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
-- WAF protect `/go/*` (rate limit + bot filtering) because open-redirect probing is common.
-- Keep app-level throttling as a second line (best-effort rate limiting in code).
-- Logging must stay best-effort and must never block redirects (avoid turning bots into DB spend).
-
-### Affiliate badge
-
-- `frontend/src/components/common/affiliate-badge.tsx`
+| Element | Destination | Opens In |
+|---------|-------------|----------|
+| Provider name | `/go/{id}?src=leaderboard_homepage` → provider website | New tab |
+| Provider icon | `/go/{id}?src=leaderboard_homepage` → provider website | New tab |
+| 🎨 Prompt builder | `/providers/{id}/prompt-builder` | Same tab |
 
 ## Provider APIs
 
 ### Providers list API
 
 - `frontend/src/app/api/providers/route.ts`
-
-Returns providers by loading `@/data/providers` with a runtime-safe import helper.
 
 ### Provider resolve API
 
@@ -327,14 +483,11 @@ Returns providers by loading `@/data/providers` with a runtime-safe import helpe
 
 - `frontend/src/app/api/providers/leaderboard/bulk/route.ts`
 
-## Prompt building architecture
+### Provider vote API (Added Jan 2, 2026)
 
-Promagen includes a provider-specific prompt mapping layer:
-
-- `frontend/src/lib/providers/config.ts` — defines `ProviderId` union and `PROVIDER_BUILDERS` mapping `PromptInputs` → `BuiltPrompt`.
-- `frontend/src/lib/providers/deeplinks.ts` — deep-link builder; default passthrough, special mappings can be added per provider id.
-
-These layers allow Promagen to produce prompts that fit each platform's UX (e.g. Midjourney flags, Stability positive/negative formats) while keeping the UI consistent.
+- `frontend/src/app/api/providers/vote/route.ts`
+- POST: Record a vote
+- GET: Retrieve vote statistics
 
 ## Testing and lock-in proofs
 
@@ -348,8 +501,6 @@ Guards list length, required fields, types, and uniqueness.
 
 - `frontend/src/__tests__/providers.schema.test.ts`
 
-**RESOLVED:** The canonical schema at `frontend/src/data/providers/providers.schema.ts` now includes all provider fields. Shape tests validate against this single schema.
-
 ### Provider detail tests
 
 - `frontend/src/components/providers/__tests__/provider-detail.smoke.test.tsx`
@@ -359,27 +510,21 @@ Guards list length, required fields, types, and uniqueness.
 Adding a provider is an intentional change and must be lock‑tested.
 
 1. Add entry to `frontend/src/data/providers/providers.json`
-
    - Must include: `id`, `name`, `website`, `score`, `trend`, `tagline`, `tip`, `supportsPrefill`.
    - Decide `affiliateUrl` and `requiresDisclosure` (default: null/false until approved).
 
 2. Update `providers.capabilities.json`
-
    - Add overrides if needed for `supportsNegative`, `supportsPrefill`, `supportsSeed`, `supportsSteps`.
 
 3. Update prompt builder mapping
-
    - Add provider id to `frontend/src/lib/providers/config.ts` `ProviderId` union.
    - Add a builder entry in `PROVIDER_BUILDERS`.
 
 4. Update any duplicated provider id sets
-
    - `frontend/src/lib/affiliates.ts` currently hard-codes provider ids; keep in sync or consolidate.
 
 5. Update tests
-
-   - If the canonical list size changes from 20, update the shape test intentionally.
-   - Update any UI expectations (rows, titles, etc.).
+   - If the canonical list size changes from 42, update the shape test intentionally.
 
 6. Ensure affiliate links do not affect scoring
    - Provider score/rank must be independent of monetisation fields.
@@ -389,79 +534,39 @@ Adding a provider is an intentional change and must be lock‑tested.
 ### 1) Canonical URL field: `website` (legacy alias: `url`)
 
 - Catalogue uses `website` as canonical.
-- `url` is treated as a legacy alias only for backwards compatibility (do not add it to new provider records).
-- UI components should resolve `officialUrl := provider.website ?? provider.url` (fallback only) and route outbound via `/go/{id}?src=...`.
-
-Resolution strategy:
-
-- Keep `website` as the single source of truth in `providers.json`.
-- Optionally remove `url` later via an intentional breaking change + lock-in tests.
+- `url` is treated as a legacy alias only for backwards compatibility.
 
 **Status:** Documented, not yet removed.
 
 ### 2) Canonical Provider type import
 
-- Use `@/types/provider` as the single canonical import for the `Provider` type across UI and routes.
-
-Resolution strategy:
-
-- Keep a single entry-point type file (it may re-export from `providers.ts` if needed).
-- Avoid parallel type files that drift.
+- Use `@/types/provider` as the single canonical import.
 
 **Status:** RESOLVED — `@/types/provider.ts` created as canonical entry point.
 
 ### 3) Duplicated schemas for providers
 
-Provider schemas existed in multiple places with different shapes.
-
-Resolution strategy:
-
-- Pick one schema as authority for validating `providers.json` and import it consistently.
-- Remove duplicate schemas.
-
-**Status:** RESOLVED — Canonical schema at `frontend/src/data/providers/providers.schema.ts`. See "Provider schema (Zod validation)" section above for migration table.
+**Status:** RESOLVED — Canonical schema at `frontend/src/data/providers/providers.schema.ts`.
 
 ### 4) Affiliate configuration duplication
-
-Affiliate-related data exists in both:
-
-- `providers.json` (`affiliateUrl`, `requiresDisclosure`)
-- `frontend/src/lib/affiliates.ts` (parallel map)
-
-Resolution strategy:
-
-- Make `providers.json` the single source of truth.
-- Remove or auto-generate the `AFFILIATES` map, or replace it with selectors that read the catalogue.
 
 **Status:** Documented, not yet consolidated.
 
 ### 5) Consent model inconsistency (cookie vs localStorage)
 
-- `frontend/src/hooks/use-consent.ts` reads localStorage key `promagen.consent.v1`
-- `frontend/src/app/api/consent/route.ts` reads cookie `promagen_consent`
-
-Resolution strategy:
-
-- Choose one consent source of truth and apply it consistently.
-- Gate analytics injection behind consent, if used.
-
 **Status:** Documented, not yet resolved.
 
 ### 6) GA4 injection appears unconditional
-
-`frontend/src/components/analytics/google-analytics.tsx` injects GA script without checking consent and includes a default measurement ID fallback.
-
-Resolution strategy:
-
-- Remove default measurement ID fallback.
-- Only load GA when consent is granted.
 
 **Status:** Documented, not yet resolved.
 
 ## Changelog
 
-- **28 Dec 2025:** Added schema consolidation rules (§ Provider schema), marked gaps 2 and 3 as RESOLVED, added pointer to `prompt-builder-page.md`.
-- **22 Dec 2025:** Initial version with leaderboard column contract, event taxonomy, analytics-derived metrics.
+- **2 Jan 2026:** Added Community Voting System section. Updated Provider type with `ProviderRanking` fields. Documented vote button in Image Quality column. Added vote API endpoint. Updated event taxonomy with `vote` type. Updated score calculation weights (Image Quality reduced from 25% to 10% to accommodate community influence cap).
+- **1 Jan 2026:** Provider Cell redesign: replaced 🏠 emoji with local PNG icons, provider name now hyperlinked to homepage, three-line layout.
+- **30 Dec 2025:** Leaderboard redesign: 42 providers (16 countries), new column structure.
+- **28 Dec 2025:** Added schema consolidation rules, marked gaps 2 and 3 as RESOLVED.
+- **22 Dec 2025:** Initial version with leaderboard column contract, event taxonomy.
 
 ## Non-regression rule (Promagen discipline)
 
