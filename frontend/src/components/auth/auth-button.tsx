@@ -4,15 +4,16 @@
 // Shows "Sign in" when logged out, user avatar when logged in.
 // Styled to match the Randomise button (purple-pink gradient).
 //
-// FIXED: 
-// - Added timeout fallback when Clerk fails to load (e.g., prod keys on localhost)
-// - Fixed sign-out button disappearing by using useAuth() for explicit state control
-// - Added Facebook OAuth hash fragment cleanup
+// FIXES:
+// - Timeout fallback when Clerk fails to load (prod keys on localhost)
+// - Sign-out button disappearing - uses useUser() for reliable state
+// - Facebook OAuth #_=_ hash cleanup
+// - Post-OAuth "Loading..." stuck state - uses useUser() + session detection
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { SignInButton, UserButton, useAuth, useClerk } from '@clerk/nextjs';
+import { useEffect, useState, useCallback } from 'react';
+import { SignInButton, UserButton, useUser, useClerk } from '@clerk/nextjs';
 
 // Timeout in ms before showing Sign In button even if Clerk hasn't loaded
 const CLERK_LOAD_TIMEOUT_MS = 3000;
@@ -22,46 +23,53 @@ const CLERK_LOAD_TIMEOUT_MS = 3000;
  *
  * Logged out: Shows a "Sign in" button styled to match Randomise button
  * Logged in: Shows Clerk's UserButton (avatar with dropdown menu)
- *
- * Features:
- * - If Clerk doesn't load within 3 seconds (e.g., wrong keys for domain),
- *   shows Sign In button anyway with link to /sign-in page.
- * - Uses useAuth() for reliable state detection after sign-out
- * - Cleans up Facebook OAuth's #_=_ hash fragment
  */
 export function AuthButton() {
-  const { loaded } = useClerk();
-  const { isLoaded, isSignedIn } = useAuth();
+  const clerk = useClerk();
+  const { isLoaded, isSignedIn, user } = useUser();
   const [mounted, setMounted] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
 
+  // Clean up Facebook's #_=_ hash fragment
+  const cleanupOAuthHash = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash === '#_=_' || hash === '#') {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     setMounted(true);
-
-    // Clean up Facebook's #_=_ hash fragment after OAuth redirect
-    if (typeof window !== 'undefined' && window.location.hash === '#_=_') {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
+    cleanupOAuthHash();
 
     // Fallback timeout - if Clerk doesn't load in 3s, show button anyway
     const timeout = setTimeout(() => {
-      if (!loaded && !isLoaded) {
+      if (!isLoaded && !clerk.loaded) {
         console.warn('[AuthButton] Clerk did not load within timeout, showing fallback button');
         setTimedOut(true);
       }
     }, CLERK_LOAD_TIMEOUT_MS);
 
     return () => clearTimeout(timeout);
-  }, [loaded, isLoaded]);
+  }, [isLoaded, clerk.loaded, cleanupOAuthHash]);
 
   // Clear timeout flag if Clerk eventually loads
   useEffect(() => {
-    if ((loaded || isLoaded) && timedOut) {
+    if (isLoaded && timedOut) {
       setTimedOut(false);
     }
-  }, [loaded, isLoaded, timedOut]);
+  }, [isLoaded, timedOut]);
 
-  // Shared button styles
+  // Also clean hash when user state changes (post-OAuth)
+  useEffect(() => {
+    if (isSignedIn) {
+      cleanupOAuthHash();
+    }
+  }, [isSignedIn, cleanupOAuthHash]);
+
+  // Shared styles
   const signInButtonStyles =
     'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
 
@@ -127,7 +135,9 @@ export function AuthButton() {
   }
 
   // 3. Clerk still loading and not timed out yet - show loading
-  if (!isLoaded) {
+  //    BUT: If we already have a user object, skip to signed-in state
+  //    This handles the OAuth redirect case where user exists before isLoaded=true
+  if (!isLoaded && !user) {
     return (
       <button type="button" disabled className={loadingButtonStyles}>
         <LoadingIcon />
@@ -137,11 +147,12 @@ export function AuthButton() {
   }
 
   // ─────────────────────────────────────────────────────────────────
-  // CLERK LOADED - Show appropriate auth state
+  // CLERK LOADED (or user already available) - Show appropriate state
   // ─────────────────────────────────────────────────────────────────
 
   // 4. User is signed in - show avatar
-  if (isSignedIn) {
+  //    Check both isSignedIn AND user object for robustness
+  if (isSignedIn || user) {
     return (
       <UserButton
         appearance={{
@@ -161,7 +172,7 @@ export function AuthButton() {
 
   // 5. User is signed out - show Sign In button
   return (
-    <SignInButton mode="modal">
+    <SignInButton mode="modal" forceRedirectUrl="/">
       <button type="button" className={signInButtonStyles}>
         <UserIcon />
         Sign in
