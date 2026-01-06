@@ -59,11 +59,19 @@ function getClerkFapiUrl(): string | null {
 function buildCsp(isDev: boolean, isPreview: boolean): string {
   const clerkFapi = getClerkFapiUrl();
 
-  // If you set NEXT_PUBLIC_CLERK_FAPI / CLERK_FAPI we allow it explicitly;
-  // otherwise allow Clerk hosted domains so auth still works.
-  const clerkHostedFallback = 'https://*.clerk.accounts.dev https://*.clerk.com';
+  // ============================================================================
+  // CLERK CSP DOMAINS
+  // ============================================================================
+  // Allow Clerk's default hosted domains PLUS custom promagen.com subdomains:
+  // - clerk.promagen.com (Frontend API / script loading)
+  // - accounts.promagen.com (Account Portal)
+  // ============================================================================
+  const clerkHostedFallback =
+    'https://*.clerk.accounts.dev https://*.clerk.com https://clerk.promagen.com https://accounts.promagen.com';
   const clerkScriptSrc = clerkFapi ? `${clerkFapi} ${clerkHostedFallback}` : clerkHostedFallback;
-  const clerkConnectSrc = clerkFapi ? `${clerkFapi}` : clerkHostedFallback;
+  const clerkConnectSrc = clerkFapi
+    ? `${clerkFapi} ${clerkHostedFallback}`
+    : clerkHostedFallback;
 
   const directives: string[] = [];
 
@@ -80,7 +88,7 @@ function buildCsp(isDev: boolean, isPreview: boolean): string {
   directives.push(`style-src 'self' 'unsafe-inline' https:`);
 
   // Clerk images (avatars) come from img.clerk.com.
-  directives.push(`img-src 'self' data: blob: https://img.clerk.com`);
+  directives.push(`img-src 'self' data: blob: https://img.clerk.com https://img.clerk.dev`);
 
   directives.push(`font-src 'self' data:`);
 
