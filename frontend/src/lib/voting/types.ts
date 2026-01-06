@@ -72,6 +72,9 @@ export type VoteMetadata = {
   
   /** Idempotency key to prevent replay */
   idempotencyKey: string;
+  
+  /** Request fingerprint (truncated) for fraud detection */
+  fingerprint?: string;
 };
 
 /**

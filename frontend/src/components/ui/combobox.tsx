@@ -1,16 +1,30 @@
 // src/components/ui/combobox.tsx
 // Enhanced multi-select combobox with lock states and proper auto-close
-// Version 5.0.0 - Cleaner lock state: disabled styling only, no overlay text
+// Version 6.3.0 - BULLETPROOF auto-close fix
+// 
+// CRITICAL FIX in v6.3.0:
+// - Single-select (limit=1): Closes IMMEDIATELY on click, BEFORE state update
+// - Multi-select: Closes when newSelected.length >= maxSelections
+// - Uses local ref to prevent double-click race condition
+// - Disabled state applied immediately to prevent rapid clicks
+//
 // Features:
 // - Lock state shows disabled styling (purple tint) but NO overlay text
 // - When locked: shows placeholder, dropdown arrow hidden, can't interact
-// - Dropdown closes immediately for limit 1
+// - Auto-close when maxSelections reached (works for ALL values: 1, 2, 3, 8, etc.)
+// - Done button in dropdown for multi-select (maxSelections >= 2)
 // - Tooltip has z-[9999] and reserved space (pt-8) to avoid clipping
-// - "Type to add custom entry" in tooltip (only if allowFreeText=true)
 // - Bright pink char counter (text-pink-500)
 // - spellCheck="true" on input
 // - allowFreeText prop: when false, hides free text input
 // - Shows ALL options in scrollable dropdown (no artificial limit)
+// - v6.0.0: Taller dropdown (max-h-80 = 320px, was 240px)
+// - v6.0.0: 2-column grid layout when >12 options (better visual density)
+// - v6.0.0: Truncate + title tooltip for long option text
+// - v6.1.0: Classy tooltip style (border, backdrop-blur, arrow)
+// - v6.1.0: Removed pink "Type to add custom entry" from tooltips
+// - v6.2.0: Done button for multi-select dropdowns (limit >= 2)
+// - v6.2.0: Selection counter shows "X of Y selected"
 
 'use client';
 
@@ -60,6 +74,9 @@ export function Combobox({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Ref to track if we're currently processing a selection (prevents double-click)
+  const isSelectingRef = useRef(false);
 
   // Filter options based on input (exclude already selected and empty first option)
   const filteredOptions = options
@@ -88,24 +105,54 @@ export function Combobox({
     };
   }, []);
 
-  // Auto-close logic based on selection limits
+  // Handle Done button click - close dropdown
+  const handleDone = useCallback(() => {
+    setIsOpen(false);
+    setShowTooltip(false);
+    setFilter('');
+  }, []);
+
+  // BULLETPROOF auto-close logic
   const handleSelect = useCallback(
     (option: string) => {
+      // Prevent if locked
       if (isLocked) return;
-      if (selected.length >= maxSelections) return;
-
+      
+      // Prevent double-click race condition
+      if (isSelectingRef.current) return;
+      
+      // Check current selection count from prop
+      const currentCount = selected.length;
+      
+      // Don't allow if already at limit
+      if (currentCount >= maxSelections) return;
+      
+      // Mark as selecting to prevent race condition
+      isSelectingRef.current = true;
+      
+      // Calculate what the new count will be
+      const newCount = currentCount + 1;
       const newSelected = [...selected, option];
-      onSelectChange(newSelected);
-      setFilter('');
-
-      // Auto-close behavior: close immediately when limit reached
-      if (newSelected.length >= maxSelections) {
+      
+      // CRITICAL: For single-select OR when reaching limit, close BEFORE state update
+      if (maxSelections === 1 || newCount >= maxSelections) {
         setIsOpen(false);
         setShowTooltip(false);
       }
-
+      
+      // Clear filter
+      setFilter('');
+      
+      // Now update parent state
+      onSelectChange(newSelected);
+      
+      // Reset selecting flag after a short delay
+      setTimeout(() => {
+        isSelectingRef.current = false;
+      }, 100);
+      
       // Keep focus on input for continued interaction if not closed
-      if (newSelected.length < maxSelections) {
+      if (newCount < maxSelections) {
         inputRef.current?.focus();
       }
     },
@@ -141,15 +188,17 @@ export function Combobox({
       // Add custom value as selection if not already selected and within limit
       if (!selected.includes(filter.trim()) && selected.length < maxSelections) {
         const newSelected = [...selected, filter.trim()];
-        onSelectChange(newSelected);
-        setFilter('');
-        onCustomChange('');
-
-        // Auto-close when limit reached
-        if (newSelected.length >= maxSelections) {
+        const newCount = newSelected.length;
+        
+        // Close if reaching limit
+        if (maxSelections === 1 || newCount >= maxSelections) {
           setIsOpen(false);
           setShowTooltip(false);
         }
+        
+        onSelectChange(newSelected);
+        setFilter('');
+        onCustomChange('');
       }
     } else if (e.key === 'Backspace' && !filter && selected.length > 0) {
       // Remove last chip on backspace when input is empty
@@ -210,25 +259,26 @@ export function Combobox({
   const listboxId = `${id}-listbox`;
   const charCount = filter.length;
 
+  // Determine if this is a multi-select dropdown (show Done button)
+  const isMultiSelect = maxSelections >= 2;
+  const canSelectMore = selected.length < maxSelections;
+
   // Lock state styling classes
   const lockClasses = isLocked ? 'prompt-lock-gradient cursor-not-allowed' : '';
 
   return (
     <div ref={containerRef} className={`relative flex flex-col gap-1 pt-8 ${lockClasses}`}>
-      {/* Tooltip above label - HIGH z-index, NO max badge */}
+      {/* Tooltip above label - classy style matching site tooltips */}
       {showTooltip && !isLocked && (
         <div
-          className="absolute -top-0.5 left-0 right-0 z-[9999] rounded-lg bg-slate-800 px-3 py-2 text-xs text-slate-200 shadow-xl ring-1 ring-white/20"
+          className="absolute -top-0.5 left-0 right-0 z-[9999] rounded-lg border border-slate-700 bg-slate-800/95 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
           style={{ pointerEvents: 'none' }}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-slate-300">{getTooltipText()}</span>
-            {allowFreeText && (
-              <>
-                <span className="text-slate-500">·</span>
-                <span className="text-pink-400">Type to add custom entry</span>
-              </>
-            )}
+          {/* Tooltip arrow */}
+          <div className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 border-l border-t border-slate-700 bg-slate-800/95" />
+          {/* Tooltip content */}
+          <div className="relative whitespace-pre-line leading-relaxed text-slate-300">
+            {getTooltipText()}
           </div>
         </div>
       )}
@@ -347,7 +397,7 @@ export function Combobox({
           aria-expanded={isOpen}
           aria-controls={listboxId}
           aria-autocomplete="list"
-          disabled={isLocked || selected.length >= maxSelections}
+          disabled={isLocked || !canSelectMore}
         />
 
         {/* Dropdown indicator */}
@@ -402,31 +452,57 @@ export function Combobox({
         </p>
       )}
 
-      {/* Dropdown listbox - shows ALL options, scrollable (only when not locked) */}
-      {isOpen && !isLocked && filteredOptions.length > 0 && (
-        <ul
-          id={listboxId}
-          role="listbox"
-          className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-60 overflow-auto rounded-lg border border-slate-700 bg-slate-900 py-1 shadow-lg scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+      {/* Dropdown listbox - taller with 2-column grid for visual density */}
+      {isOpen && !isLocked && (filteredOptions.length > 0 || (isMultiSelect && selected.length > 0)) && (
+        <div
+          className="absolute left-0 right-0 top-full z-[100] mt-1 rounded-lg border border-slate-700 bg-slate-900 shadow-lg"
         >
-          {/* Show ALL filtered options - no slice limit */}
-          {filteredOptions.map((option) => (
-            <li
-              key={option}
-              role="option"
-              aria-selected={false}
-              className="px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800 focus-within:bg-slate-800"
+          {/* Options list */}
+          {filteredOptions.length > 0 && (
+            <ul
+              id={listboxId}
+              role="listbox"
+              className={`max-h-80 overflow-auto py-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 ${
+                filteredOptions.length > 12 ? 'grid grid-cols-2 gap-x-1' : ''
+              }`}
             >
+              {/* Show ALL filtered options - 2-column grid when many options */}
+              {filteredOptions.map((option) => (
+                <li
+                  key={option}
+                  role="option"
+                  aria-selected={false}
+                  className="px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800 focus-within:bg-slate-800 rounded"
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(option)}
+                    disabled={!canSelectMore}
+                    className={`w-full text-left focus:outline-none truncate ${
+                      !canSelectMore ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                    title={option}
+                  >
+                    {option}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Done button for multi-select (when at least 1 selection made) */}
+          {isMultiSelect && selected.length > 0 && (
+            <div className="border-t border-slate-700 px-3 py-2">
               <button
                 type="button"
-                onClick={() => handleSelect(option)}
-                className="w-full text-left focus:outline-none"
+                onClick={handleDone}
+                className="w-full rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors"
               >
-                {option}
+                Done ({selected.length}/{maxSelections})
               </button>
-            </li>
-          ))}
-        </ul>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Empty state when filtering - for custom entry (only if allowFreeText and not locked) */}

@@ -11,12 +11,18 @@
 // - Free signed-in: User's location (no choice)
 // - Paid signed-in: Toggle between user location and Greenwich
 //
+// VOTING INTEGRATION:
+// - Wires isAuthenticated to ProvidersTable for vote buttons
+// - Vote buttons enabled when user is signed in
+// - Vote data persisted via Clerk-authenticated API
+//
 // Authority: docs/authority/paid_tier.md §3.4, §5.2
+// Authority: docs/authority/clerk-auth.md §14
 // ============================================================================
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import ProvidersTable from '@/components/providers/providers-table';
@@ -44,13 +50,13 @@ export interface HomepageClientProps {
 // ============================================================================
 
 /**
- * HomepageClient - Client wrapper for dynamic exchange ordering.
+ * HomepageClient - Client wrapper for dynamic exchange ordering and auth.
  *
  * Handles:
  * 1. User location detection (via usePromagenAuth)
  * 2. Exchange ordering relative to reference point
  * 3. Reference frame toggle for paid users
- * 4. Wiring auth state to providers table
+ * 4. Wiring auth state to providers table for voting
  */
 export default function HomepageClient({
   exchanges,
@@ -59,10 +65,14 @@ export default function HomepageClient({
 }: HomepageClientProps) {
   const {
     isAuthenticated,
+    isLoading: isAuthLoading,
     userTier,
     locationInfo,
     setReferenceFrame,
   } = usePromagenAuth();
+
+  // Track displayed provider IDs for market pulse connections
+  const [displayedProviderIds, setDisplayedProviderIds] = useState<string[]>([]);
 
   // ============================================================================
   // DYNAMIC EXCHANGE ORDERING
@@ -80,14 +90,20 @@ export default function HomepageClient({
     return [...left, ...right.slice().reverse()];
   }, [left, right]);
 
-  // Get provider IDs for market pulse
+  // Get initial provider IDs for market pulse
   const providerIds = useMemo(() => providers.map((p) => p.id), [providers]);
+
+  // Callback when ProvidersTable changes displayed providers (sorting)
+  const handleProvidersChange = useCallback((ids: string[]) => {
+    setDisplayedProviderIds(ids);
+  }, []);
 
   // ============================================================================
   // UI CONTENT
   // ============================================================================
 
   // Centre rail: flex container that fills available height
+  // IMPORTANT: Pass isAuthenticated to enable voting
   const centreRail = (
     <section
       aria-label="AI providers leaderboard"
@@ -99,6 +115,11 @@ export default function HomepageClient({
         title="AI Providers Leaderboard"
         caption="Scores and trends are illustrative while external APIs are being wired."
         showRank
+        // =====================================================
+        // VOTING INTEGRATION: Wire auth state to enable votes
+        // =====================================================
+        isAuthenticated={isAuthenticated}
+        onProvidersChange={handleProvidersChange}
       />
     </section>
   );
@@ -128,12 +149,12 @@ export default function HomepageClient({
       rightContent={rightExchanges}
       showFinanceRibbon
       exchanges={allOrderedExchanges}
-      displayedProviderIds={providerIds}
+      displayedProviderIds={displayedProviderIds.length > 0 ? displayedProviderIds : providerIds}
       isPaidUser={userTier === 'paid'}
       isAuthenticated={isAuthenticated}
       referenceFrame={locationInfo.referenceFrame}
       onReferenceFrameChange={setReferenceFrame}
-      isLocationLoading={locationInfo.isLoading}
+      isLocationLoading={locationInfo.isLoading || isAuthLoading}
       cityName={locationInfo.cityName}
     />
   );

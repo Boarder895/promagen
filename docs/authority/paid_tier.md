@@ -116,7 +116,7 @@ Sign-in methods:
 
 **Free tier prompt access (after sign-in):**
 - **Full access to all 12 categories** with ~2,100 curated prompt terms
-- **Selection limits per category** as documented in prompt-builder-page.md
+- **Platform-aware selection limits** as documented in §5.5 and prompt-builder-page.md
 - **30 prompts per day** — tracked on "Copy prompt" button clicks
 - **Daily reset at midnight** in user's local timezone
 - When quota reached: dropdowns lock with "Upgrade to Pro Promagen for unlimited" message
@@ -233,10 +233,11 @@ await clerkClient.users.updateUser(userId, {
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 
 function Component() {
-  const { userTier, voteWeight } = usePromagenAuth();
+  const { userTier, categoryLimits, platformTier } = usePromagenAuth({ platformId });
   // userTier: 'free' | 'paid' (internal)
   // UI should display: "Standard Promagen" | "Pro Promagen"
-  // voteWeight: 1.0 (Standard) | 1.5 (Pro Promagen)
+  // categoryLimits: Platform-aware limits for current provider
+  // platformTier: 1 | 2 | 3 | 4
 }
 ```
 
@@ -305,29 +306,104 @@ This constraint is intentional and enforced.
 
 ---
 
-### 5.5 Prompt builder selection limits (precision control)
+### 5.5 Prompt builder selection limits (platform-aware precision control)
 
-Pro Promagen users may select **multiple options** in categories where stacking improves output quality.
+Selection limits are **platform-aware** — different AI platforms handle prompt complexity differently. The system assigns each of Promagen's 42 supported platforms to one of four tiers based on their prompt handling capabilities.
 
-| Category     | Standard | Pro Promagen | Rationale                                                    |
-| ------------ | -------- | ------------ | ------------------------------------------------------------ |
-| Subject      | 1        | 1            | Core identity — must be singular                             |
-| Action       | 1        | 1            | Core identity — one action                                   |
-| Environment  | 1        | 1            | Core identity — one setting                                  |
-| **Style**    | 1        | **2**        | Styles combine well (e.g., "oil painting" + "impressionist") |
-| Composition  | 1        | 1            | One framing approach                                         |
-| Camera       | 1        | 1            | One lens/angle                                               |
-| **Lighting** | 1        | **2**        | Primary + accent lighting is a real technique                |
-| Colour       | 1        | 1            | One palette/grade                                            |
-| Atmosphere   | 1        | 1            | One mood                                                     |
-| Materials    | 1        | 1            | One texture                                                  |
-| **Fidelity** | 1        | **2**        | Quality boosters stack without conflict                      |
-| Negative     | 5        | 5            | Exclusions need variety                                      |
+#### Platform Tier Philosophy
+
+| Tier | Name | Prompt Style | Platforms |
+|------|------|--------------|-----------|
+| **Tier 1** | CLIP-Based | Tokenized keywords, high stacking tolerance | 13 platforms |
+| **Tier 2** | Midjourney Family | Parameter-rich, very high tolerance | 2 platforms |
+| **Tier 3** | Natural Language | Conversational prompts, medium tolerance | 10 platforms |
+| **Tier 4** | Plain Language | Simple prompts work best, low tolerance | 17 platforms |
+
+#### Selection Limits by Platform Tier (Standard Promagen)
+
+| Category | Tier 1 (CLIP) | Tier 2 (MJ) | Tier 3 (NatLang) | Tier 4 (Plain) |
+|----------|---------------|-------------|------------------|----------------|
+| Subject | 1 | 1 | 1 | 1 |
+| Action | 1 | 1 | 1 | 1 |
+| **Style** | 2 | 3 | 2 | 1 |
+| Environment | 1 | 1 | 1 | 1 |
+| Composition | 1 | 1 | 1 | 1 |
+| Camera | 1 | 1 | 1 | 1 |
+| **Lighting** | 2 | 3 | 2 | 1 |
+| **Colour** | 2 | 2 | 1 | 1 |
+| **Atmosphere** | 2 | 2 | 1 | 1 |
+| **Materials** | 2 | 2 | 1 | 1 |
+| **Fidelity** | 2 | 3 | 2 | 1 |
+| **Negative** | 5 | 8 | 3 | 2 |
+
+#### Pro Promagen Bonus (+1 on stackable categories)
+
+Pro Promagen users receive **+1 selection** on categories that benefit from stacking:
+
+| Category | Tier 1 | Tier 2 | Tier 3 | Tier 4 |
+|----------|--------|--------|--------|--------|
+| Subject | 1 | 1 | 1 | 1 |
+| Action | 1 | 1 | 1 | 1 |
+| **Style** | **3** | **4** | **3** | **2** |
+| Environment | 1 | 1 | 1 | 1 |
+| Composition | 1 | 1 | 1 | 1 |
+| Camera | 1 | 1 | 1 | 1 |
+| **Lighting** | **3** | **4** | **3** | **2** |
+| **Colour** | **3** | **3** | **2** | **2** |
+| **Atmosphere** | **3** | **3** | **2** | **2** |
+| **Materials** | **3** | **3** | **2** | **2** |
+| **Fidelity** | **3** | **4** | **3** | **2** |
+| **Negative** | **6** | **9** | **4** | **3** |
+
+**Stackable categories:** Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative
+
+**Non-stackable categories (always 1):** Subject, Action, Environment, Composition, Camera
+
+#### Platform Tier Assignments (All 42 Platforms)
+
+**Tier 1 — CLIP-Based (13 platforms):**
+`stability`, `leonardo`, `clipdrop`, `nightcafe`, `dreamstudio`, `lexica`, `novelai`, `dreamlike`, `getimg`, `openart`, `playground`, `artguru`, `jasper-art`
+
+**Tier 2 — Midjourney Family (2 platforms):**
+`midjourney`, `bluewillow`
+
+**Tier 3 — Natural Language (10 platforms):**
+`openai`, `adobe-firefly`, `ideogram`, `runway`, `microsoft-designer`, `bing`, `flux`, `google-imagen`, `imagine-meta`, `hotpot`
+
+**Tier 4 — Plain Language (17 platforms):**
+`canva`, `craiyon`, `deepai`, `pixlr`, `picwish`, `fotor`, `visme`, `vistacreate`, `myedit`, `simplified`, `freepik`, `picsart`, `photoleap`, `artbreeder`, `123rf`, `remove-bg`, `artistly`
+
+#### Research Rationale
+
+| Tier | Why These Limits? |
+|------|-------------------|
+| **Tier 1 (CLIP)** | CLIP tokenizes efficiently — stacking 2-3 styles/lights produces coherent results |
+| **Tier 2 (MJ)** | Midjourney was built for complex prompts — handles 3+ styles, `--no` with 8+ terms |
+| **Tier 3 (NatLang)** | Conversational models prefer focused prompts — too many terms cause confusion |
+| **Tier 4 (Plain)** | Consumer-focused tools work best with simple prompts — one style, one mood |
+
+#### Auto-Trim Behaviour
+
+When a user switches platforms, selection limits may change. The system **silently trims** excess selections:
+
+- Selections trimmed from end (keeps first N)
+- No notification shown (clean UX)
+- User can re-select different options if desired
+
+**Example:** User on Midjourney (Tier 2) with 3 styles → switches to Artistly (Tier 4) → 2 styles automatically removed, 1 remains.
+
+#### Dynamic Tooltip Guidance
+
+Tooltips dynamically reflect the actual limit for the current platform:
+
+- Artistly (Tier 4): "Pick 1 style. Keep it focused."
+- Midjourney (Tier 2): "Pick up to 3 complementary styles. Avoid conflicting aesthetics."
 
 Rules:
 
 - Standard Promagen users have full access to all prompt options (after sign-in)
 - Pro Promagen users gain **precision**, not **access**
+- Selection limits adapt to each platform's capabilities
 - The prompt builder remains complete and honest at all tiers
 
 Authority for implementation: `docs/authority/prompt-builder-page.md`
@@ -471,6 +547,7 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **5 Jan 2026:** **PLATFORM-AWARE CATEGORY LIMITS v8.2.0** — Complete rewrite of §5.5. Selection limits are now platform-aware with 4 tiers (CLIP, Midjourney, Natural Language, Plain Language). Each of the 42 platforms assigned to appropriate tier. Pro Promagen users get +1 on stackable categories (style, lighting, colour, atmosphere, materials, fidelity, negative). Auto-trim on platform switch. Dynamic tooltip guidance shows actual limits. See prompt-builder-page.md for implementation details.
 - **4 Jan 2026:** **ANONYMOUS DAILY RESET** — Anonymous users now get 5 prompts **per day** (resets at midnight local time), matching the authenticated user experience. Previously was 5 prompts total lifetime. Updated §3.2 and §3.3 with new behavior. Anonymous storage upgraded to v2 schema with `lastResetDate` field. Migration: v1 data invalidated on read, triggers fresh v2 start.
 - **4 Jan 2026:** **LOCK STATE UX CLEANUP** — Lock state visual treatment now uses disabled styling only on dropdowns and aspect ratio selector. **Removed "Sign in to continue" text from individual dropdown overlays** (was ugly/cluttered UX). Lock icon only appears in dropdown labels. Updated §3.2 with detailed component behavior. Authority: prompt-builder-page.md.
 - **3 Jan 2026:** **TERMINOLOGY UPDATE** — Renamed paid tier to "Pro Promagen" throughout. Added §1.1 Terminology section defining "Pro Promagen" and "Standard Promagen". Updated all user-facing references. Internal code variables remain `'paid'` for brevity.

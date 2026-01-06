@@ -7,6 +7,8 @@
  * 
  * Note: Some exports are server-only (use crypto).
  * Client components should only import types.
+ * 
+ * Updated: January 2026 - Clerk integration, enhanced security
  */
 
 // Types (safe for client)
@@ -59,24 +61,38 @@ export type {
   ValidatedProviderStats,
 } from './validation';
 
-// Security (SERVER ONLY - uses crypto)
+// Security (SERVER ONLY - uses crypto and Clerk)
 export {
+  // Hashing utilities
   sha256,
   hmacSign,
   safeCompare,
   generateVoteId,
   hashIp,
   hashUserAgent,
+  
+  // Request utilities
   getClientIp,
   validateOrigin,
   isBlockedUserAgent,
   isValidIdempotencyKey,
   isValidProviderId,
+  
+  // Security checks
   performSecurityChecks,
   createRequestFingerprint,
+  
+  // Clerk integration (server-side auth)
   extractUserId,
   checkPaidStatus,
+  getUserHash,
+  
+  // Cron auth
   validateCronAuth,
+  
+  // CSRF (optional)
+  generateCsrfToken,
+  validateCsrfToken,
 } from './security';
 
 export type { SecurityCheckResult } from './security';
@@ -117,7 +133,11 @@ export {
   resetRateLimits,
 } from './rate-limiter';
 
-export type { RateLimitResult, RateLimitCode } from './rate-limiter';
+export type { 
+  RateLimitResult, 
+  RateLimitCode,
+  SuspiciousActivityResult,
+} from './rate-limiter';
 
 // Bayesian Scoring
 export {

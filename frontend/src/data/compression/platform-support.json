@@ -1,0 +1,652 @@
+{
+  "$schema": "./platform-support.schema.json",
+  "version": "2.1.0",
+  "lastUpdated": "2026-01-04",
+  "meta": {
+    "description": "Platform-specific shorthand support matrix for AI image generation platforms",
+    "totalPlatforms": 42,
+    "authorityDoc": "docs/authority/prompt-builder-page.md"
+  },
+  "tiers": {
+    "1": {
+      "name": "Full Shorthand (CLIP-based)",
+      "description": "Supports full CLIP weight syntax, tags, brackets, and all shorthand",
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "supports": [
+        "fillers",
+        "redundancy",
+        "universal",
+        "photography",
+        "art",
+        "phrases",
+        "lighting",
+        "style",
+        "quality",
+        "camera",
+        "atmosphere",
+        "environment",
+        "materials",
+        "subject",
+        "action",
+        "colour",
+        "sdWeighted",
+        "booruTags",
+        "redundantModifiers",
+        "impliedTerms",
+        "abbreviations",
+        "progressiveShedding"
+      ],
+      "syntaxFeatures": {
+        "weightBrackets": true,
+        "weightSyntax": "(term:1.2)",
+        "negativeWeights": "[term]",
+        "tagFormat": "comma-separated",
+        "supportsNegativePrompt": true,
+        "negativeField": "separate"
+      },
+      "platforms": [
+        "stability",
+        "leonardo",
+        "dreamstudio",
+        "clipdrop",
+        "dreamlike",
+        "getimg",
+        "lexica",
+        "nightcafe",
+        "novelai",
+        "openart",
+        "playground",
+        "artguru",
+        "jasper-art"
+      ]
+    },
+    "2": {
+      "name": "Midjourney Family",
+      "description": "Supports Midjourney-specific weight syntax and parameters",
+      "architecture": "proprietary",
+      "shorthandLevel": "HIGH",
+      "supports": [
+        "fillers",
+        "redundancy",
+        "universal",
+        "photography",
+        "art",
+        "phrases",
+        "lighting",
+        "style",
+        "quality",
+        "camera",
+        "atmosphere",
+        "environment",
+        "materials",
+        "subject",
+        "action",
+        "colour",
+        "midjourneySpecific",
+        "redundantModifiers",
+        "impliedTerms",
+        "abbreviations",
+        "negativeConsolidation",
+        "progressiveShedding"
+      ],
+      "syntaxFeatures": {
+        "weightBrackets": false,
+        "weightSyntax": "term::2",
+        "negativeWeights": false,
+        "tagFormat": "comma-separated",
+        "supportsNegativePrompt": true,
+        "negativeField": "inline",
+        "negativeSyntax": "--no"
+      },
+      "notSupported": [
+        "sdWeighted",
+        "booruTags"
+      ],
+      "platforms": [
+        "midjourney",
+        "bluewillow"
+      ]
+    },
+    "3": {
+      "name": "Natural Language + Universal",
+      "description": "Supports natural language and universal abbreviations only",
+      "architecture": "transformer",
+      "shorthandLevel": "MEDIUM",
+      "supports": [
+        "fillers",
+        "redundancy",
+        "universal",
+        "phrases",
+        "lighting",
+        "style",
+        "quality",
+        "camera",
+        "atmosphere",
+        "environment",
+        "materials",
+        "subject",
+        "action",
+        "colour",
+        "negativeToPositive",
+        "redundantModifiers",
+        "impliedTerms",
+        "abbreviations",
+        "progressiveShedding"
+      ],
+      "syntaxFeatures": {
+        "weightBrackets": false,
+        "weightSyntax": false,
+        "negativeWeights": false,
+        "tagFormat": "natural-language",
+        "supportsNegativePrompt": "varies",
+        "negativeField": "varies"
+      },
+      "notSupported": [
+        "photography",
+        "art",
+        "sdWeighted",
+        "midjourneySpecific",
+        "booruTags"
+      ],
+      "platforms": [
+        "openai",
+        "bing",
+        "flux",
+        "google-imagen",
+        "adobe-firefly",
+        "ideogram",
+        "imagine-meta",
+        "runway",
+        "microsoft-designer",
+        "hotpot"
+      ]
+    },
+    "4": {
+      "name": "Plain Language Only",
+      "description": "Supports only natural language descriptions, no shorthand",
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "supports": [
+        "fillers",
+        "redundancy",
+        "phrases",
+        "lighting",
+        "style",
+        "quality",
+        "camera",
+        "atmosphere",
+        "environment",
+        "materials",
+        "subject",
+        "action",
+        "colour",
+        "negativeToPositive",
+        "redundantModifiers",
+        "impliedTerms",
+        "abbreviations",
+        "progressiveShedding"
+      ],
+      "syntaxFeatures": {
+        "weightBrackets": false,
+        "weightSyntax": false,
+        "negativeWeights": false,
+        "tagFormat": "natural-language",
+        "supportsNegativePrompt": false,
+        "negativeField": "none"
+      },
+      "notSupported": [
+        "universal",
+        "photography",
+        "art",
+        "sdWeighted",
+        "midjourneySpecific",
+        "booruTags"
+      ],
+      "platforms": [
+        "canva",
+        "craiyon",
+        "deepai",
+        "pixlr",
+        "picwish",
+        "fotor",
+        "visme",
+        "vistacreate",
+        "myedit",
+        "simplified",
+        "freepik",
+        "picsart",
+        "photoleap",
+        "artbreeder",
+        "123rf",
+        "remove-bg",
+        "artistly"
+      ]
+    }
+  },
+  "platforms": {
+    "123rf": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Consumer-focused stock platform"
+    },
+    "adobe-firefly": {
+      "tier": 3,
+      "architecture": "proprietary",
+      "shorthandLevel": "LOW",
+      "negativeSupport": "none",
+      "notes": "Handles descriptive prompts well"
+    },
+    "artbreeder": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Mixing-focused platform"
+    },
+    "artguru": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "Anime-focused SD variant"
+    },
+    "artistly": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Consumer-focused, uses natural language"
+    },
+    "bing": {
+      "tier": 3,
+      "architecture": "transformer",
+      "shorthandLevel": "LOW",
+      "negativeSupport": "none",
+      "notes": "DALL-E 3 backend"
+    },
+    "bluewillow": {
+      "tier": 2,
+      "architecture": "proprietary",
+      "shorthandLevel": "HIGH",
+      "negativeSupport": "inline",
+      "negativeSyntax": "--no",
+      "notes": "Midjourney-like architecture"
+    },
+    "canva": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Consumer design tool, simple prompts only"
+    },
+    "clipdrop": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "Stability AI platform"
+    },
+    "craiyon": {
+      "tier": 4,
+      "architecture": "transformer",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "DALL-E Mini successor, very short prompts"
+    },
+    "deepai": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Basic API-first generator"
+    },
+    "dreamlike": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "SD-based platform"
+    },
+    "dreamstudio": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "Stability AI flagship"
+    },
+    "flux": {
+      "tier": 3,
+      "architecture": "transformer",
+      "shorthandLevel": "MEDIUM",
+      "negativeSupport": "separate",
+      "tokenLimit": 256,
+      "notes": "T5 encoder, handles longer prompts"
+    },
+    "fotor": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Lightweight consumer tool"
+    },
+    "freepik": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Stock-focused generator"
+    },
+    "getimg": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "API-first with multiple SD models"
+    },
+    "google-imagen": {
+      "tier": 3,
+      "architecture": "transformer",
+      "shorthandLevel": "LOW",
+      "negativeSupport": "none",
+      "notes": "Natural language preferred"
+    },
+    "hotpot": {
+      "tier": 3,
+      "architecture": "proprietary",
+      "shorthandLevel": "LOW",
+      "negativeSupport": "none",
+      "notes": "Marketing graphics focus"
+    },
+    "ideogram": {
+      "tier": 3,
+      "architecture": "proprietary",
+      "shorthandLevel": "MEDIUM",
+      "negativeSupport": "inline",
+      "negativeSyntax": "without",
+      "notes": "Excels at text-in-image"
+    },
+    "imagine-meta": {
+      "tier": 3,
+      "architecture": "transformer",
+      "shorthandLevel": "MEDIUM",
+      "negativeSupport": "none",
+      "notes": "Llama-based natural language"
+    },
+    "jasper-art": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "Marketing-focused SD variant"
+    },
+    "leonardo": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "SD-based with fine-tuned models"
+    },
+    "lexica": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "Aperture model (SD-based)"
+    },
+    "microsoft-designer": {
+      "tier": 3,
+      "architecture": "transformer",
+      "shorthandLevel": "LOW",
+      "negativeSupport": "none",
+      "notes": "Template-first workflow"
+    },
+    "midjourney": {
+      "tier": 2,
+      "architecture": "proprietary",
+      "shorthandLevel": "HIGH",
+      "negativeSupport": "inline",
+      "negativeSyntax": "--no",
+      "notes": "Front tokens weighted more heavily"
+    },
+    "myedit": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "CyberLink consumer tool"
+    },
+    "nightcafe": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "Multiple SD model options"
+    },
+    "novelai": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "weightSyntax": "{}",
+      "notes": "Anime-optimized, uses {} for weights, booru tags"
+    },
+    "openai": {
+      "tier": 3,
+      "architecture": "transformer",
+      "shorthandLevel": "LOW",
+      "negativeSupport": "none",
+      "notes": "DALL-E 3, GPT-4 preprocessing"
+    },
+    "openart": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "Multiple SD models"
+    },
+    "photoleap": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Mobile-first editing app"
+    },
+    "picsart": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Mobile-first platform"
+    },
+    "picwish": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Enhancement-focused utility"
+    },
+    "pixlr": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Lightweight editor"
+    },
+    "playground": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "SD-based architecture"
+    },
+    "remove-bg": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Background removal utility"
+    },
+    "runway": {
+      "tier": 3,
+      "architecture": "proprietary",
+      "shorthandLevel": "MEDIUM",
+      "negativeSupport": "none",
+      "notes": "Multi-modal platform"
+    },
+    "simplified": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Marketing-focused design tool"
+    },
+    "stability": {
+      "tier": 1,
+      "architecture": "clip-based",
+      "shorthandLevel": "FULL",
+      "negativeSupport": "separate",
+      "tokenLimit": 77,
+      "notes": "CLIP 77-token hard limit"
+    },
+    "visme": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Presentation-focused tool"
+    },
+    "vistacreate": {
+      "tier": 4,
+      "architecture": "proprietary",
+      "shorthandLevel": "MINIMAL",
+      "negativeSupport": "none",
+      "notes": "Template-based design tool"
+    }
+  },
+  "compressionStrategies": {
+    "tier1": {
+      "order": [
+        "fillers",
+        "redundantModifiers",
+        "impliedTerms",
+        "progressiveShedding",
+        "redundancy",
+        "abbreviations",
+        "phrases",
+        "universal",
+        "photography",
+        "art",
+        "lighting",
+        "style",
+        "quality",
+        "camera",
+        "atmosphere",
+        "environment",
+        "materials",
+        "subject",
+        "action",
+        "colour",
+        "sdWeighted",
+        "booruTags"
+      ],
+      "targetRange": "idealMin-idealMax from prompt-limits.json",
+      "weightSyntax": "(term:weight)",
+      "negativeHandling": "separate field"
+    },
+    "tier2": {
+      "order": [
+        "fillers",
+        "redundantModifiers",
+        "impliedTerms",
+        "progressiveShedding",
+        "redundancy",
+        "abbreviations",
+        "phrases",
+        "universal",
+        "photography",
+        "art",
+        "lighting",
+        "style",
+        "quality",
+        "camera",
+        "atmosphere",
+        "environment",
+        "materials",
+        "subject",
+        "action",
+        "colour",
+        "midjourneySpecific",
+        "negativeConsolidation"
+      ],
+      "targetRange": "idealMin-idealMax from prompt-limits.json",
+      "weightSyntax": "term::weight",
+      "negativeHandling": "--no syntax inline"
+    },
+    "tier3": {
+      "order": [
+        "fillers",
+        "redundantModifiers",
+        "impliedTerms",
+        "progressiveShedding",
+        "redundancy",
+        "abbreviations",
+        "phrases",
+        "universal",
+        "lighting",
+        "style",
+        "quality",
+        "camera",
+        "atmosphere",
+        "environment",
+        "materials",
+        "subject",
+        "action",
+        "colour",
+        "negativeToPositive"
+      ],
+      "targetRange": "idealMin-idealMax from prompt-limits.json",
+      "weightSyntax": null,
+      "negativeHandling": "convert to positive equivalents"
+    },
+    "tier4": {
+      "order": [
+        "fillers",
+        "redundantModifiers",
+        "impliedTerms",
+        "progressiveShedding",
+        "redundancy",
+        "abbreviations",
+        "phrases",
+        "lighting",
+        "style",
+        "quality",
+        "camera",
+        "atmosphere",
+        "environment",
+        "materials",
+        "subject",
+        "action",
+        "colour",
+        "negativeToPositive"
+      ],
+      "targetRange": "idealMin-idealMax from prompt-limits.json",
+      "weightSyntax": null,
+      "negativeHandling": "convert to positive equivalents"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 # Prompt Builder Page
 
-**Last updated:** 4 January 2026  
+**Last updated:** 5 January 2026  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).
 
@@ -53,7 +53,7 @@ The prompt builder has five distinct lock states with different visual treatment
 #### 5. Paid User
 - **Visual treatment:** Normal dropdowns, fully functional
 - **No usage counter:** Unlimited daily usage
-- **Enhanced limits:** Style, Lighting, and Fidelity categories allow 2 selections instead of 1
+- **Platform-aware enhanced limits:** +1 bonus on stackable categories (style, lighting, colour, atmosphere, materials, fidelity, negative) — see §12-Category Dropdown System for full tier matrix
 - **Behaviour:** Never locks due to usage
 
 ### Lock State Component Behaviour (v5.0.0)
@@ -243,16 +243,17 @@ export function ProviderWorkspace({ provider }: ProviderWorkspaceProps) {
 ### PromptBuilder
 
 **File:** `frontend/src/components/providers/prompt-builder.tsx`
-**Version:** 6.4.0
+**Version:** 8.2.0
 
-**Purpose:** Full-featured prompt crafting interface with platform-specific optimization and authentication-gated access.
+**Purpose:** Full-featured prompt crafting interface with platform-specific optimization, platform-aware category limits, and authentication-gated access.
 
 **New authentication requirements:**
-- Must use `usePromagenAuth()` hook to check authentication state
+- Must use `usePromagenAuth({ platformId })` hook to check authentication state and get platform-aware limits
 - Must check daily usage quota and user tier
 - Must apply appropriate lock states based on authentication/quota status
 - Must track "Copy prompt" button clicks for usage counting
 - Must NOT pass `lockMessage` prop to Combobox or AspectRatioSelector (v6.4.0 change)
+- Must auto-trim selections when switching platforms (v8.0.0+)
 
 #### Authentication Integration
 
@@ -260,12 +261,16 @@ export function ProviderWorkspace({ provider }: ProviderWorkspaceProps) {
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 
 export function PromptBuilder({ provider }: PromptBuilderProps) {
+  const platformId = provider.id ?? 'default';
+  
   const { 
     isAuthenticated, 
     isLoading, 
-    userTier, 
+    userTier,
+    categoryLimits,    // Platform-aware limits
+    platformTier,      // 1 | 2 | 3 | 4
     dailyUsage 
-  } = usePromagenAuth();
+  } = usePromagenAuth({ platformId });
 
   // Lock state logic
   const isLocked = !isAuthenticated || 
@@ -273,6 +278,9 @@ export function PromptBuilder({ provider }: PromptBuilderProps) {
 
   // NOTE: lockMessage is NO LONGER passed to Combobox components
   // Lock messaging appears only in central overlay
+  
+  // categoryLimits now reflects platform capabilities
+  // e.g., Midjourney (Tier 2): style=3, Artistly (Tier 4): style=1
 
   // Rest of component...
 }
@@ -294,12 +302,12 @@ export function PromptBuilder({ provider }: PromptBuilderProps) {
 │ SCROLLABLE CONTENT (flex-1, overflow-y-auto)                    │
 │ ┌─────────────────────────────────────────────────────────────┐ │
 │ │ 12-Category Dropdown Grid (3 columns on desktop)            │ │
-│ │ Row 1: Subject (1)   | Action (1)      | Style (2*)         │ │
+│ │ Row 1: Subject (1)   | Action (1)      | Style (1-4*)       │ │
 │ │ Row 2: Environment(1)| Composition (1) | Camera (1)         │ │
-│ │ Row 3: Lighting (2*) | Colour (1)      | Atmosphere (1)     │ │
-│ │ Row 4: Materials (1) | Fidelity (2*)   | [empty]            │ │
-│ │ Row 5: Constraints/Negative (5) [full width]                │ │
-│ │ * = Paid users get enhanced limits                          │ │
+│ │ Row 3: Lighting (1-4*)| Colour (1-3*)  | Atmosphere (1-3*)  │ │
+│ │ Row 4: Materials(1-3*)| Fidelity (1-4*)| [empty]            │ │
+│ │ Row 5: Constraints/Negative (2-9*) [full width]             │ │
+│ │ * = Platform-aware: varies by platform tier + user tier     │ │
 │ │ When locked: disabled styling only, NO overlay text         │ │
 │ └─────────────────────────────────────────────────────────────┘ │
 │ ┌─────────────────────────────────────────────────────────────┐ │
@@ -330,13 +338,14 @@ export function PromptBuilder({ provider }: PromptBuilderProps) {
    - Central lock overlay for unauthenticated or over-quota users
    - **NO per-dropdown lock overlay text** (v5.0.0+ change)
 
-3. **Category Dropdowns** (12 categories with auth-aware limits)
+3. **Category Dropdowns** (12 categories with platform-aware limits)
    - Multi-select comboboxes with custom entry support
    - Grid layout: 3 columns on desktop, 2 on tablet, 1 on mobile
    - Negative prompt spans full width
    - **~100 options per positive category**
    - **~1000 options for negative category**
-   - **Enhanced limits for Pro Promagen users:** Style (2), Lighting (2), Fidelity (2)
+   - **Platform-aware limits:** Different platforms get different selection counts (see §12-Category Dropdown System)
+   - **Pro Promagen bonus:** +1 on stackable categories
    - **When locked:** disabled styling only, no text overlay
 
 4. **Platform Tips** (contextual)
@@ -364,41 +373,120 @@ export function PromptBuilder({ provider }: PromptBuilderProps) {
 
 Categories are ordered for optimal AI token weighting — most important terms appear first:
 
-| # | Category | Label | Standard | Pro Promagen | Rationale |
-|---|----------|-------|----------|--------------|-----------|
-| 1 | `subject` | Subject | 1 | 1 | Core identity — one main subject |
-| 2 | `action` | Action / Pose | 1 | 1 | Core identity — one primary action |
-| 3 | `style` | Style / Rendering | 1 | **2** | Styles combine well (e.g., "oil painting" + "impressionist") |
-| 4 | `environment` | Environment | 1 | 1 | Core identity — one setting |
-| 5 | `composition` | Composition / Framing | 1 | 1 | One framing approach |
-| 6 | `camera` | Camera | 1 | 1 | One lens/angle |
-| 7 | `lighting` | Lighting | 1 | **2** | Primary + accent lighting is a real technique |
-| 8 | `colour` | Colour / Grade | 1 | 1 | One palette/grade |
-| 9 | `atmosphere` | Atmosphere | 1 | 1 | One mood |
-| 10 | `materials` | Materials / Texture | 1 | 1 | One texture |
-| 11 | `fidelity` | Fidelity | 1 | **2** | Quality boosters stack without conflict |
-| 12 | `negative` | Constraints / Negative | 5 | 5 | Comprehensive exclusions |
+| # | Category | Label | Description |
+|---|----------|-------|-------------|
+| 1 | `subject` | Subject | Core identity — one main subject |
+| 2 | `action` | Action / Pose | Core identity — one primary action |
+| 3 | `style` | Style / Rendering | Art styles, rendering approaches |
+| 4 | `environment` | Environment | Core identity — one setting |
+| 5 | `composition` | Composition / Framing | One framing approach |
+| 6 | `camera` | Camera | One lens/angle |
+| 7 | `lighting` | Lighting | Light sources, directions, qualities |
+| 8 | `colour` | Colour / Grade | Palettes, grades, tonal treatments |
+| 9 | `atmosphere` | Atmosphere | Environmental effects, mood |
+| 10 | `materials` | Materials / Texture | Textures, surfaces, materials |
+| 11 | `fidelity` | Fidelity | Quality boosters, resolution enhancers |
+| 12 | `negative` | Constraints / Negative | Comprehensive exclusions |
 
-**Pro Promagen upgrade:** Style, Lighting, and Fidelity allow 2 selections for Pro Promagen users (see `docs/authority/paid_tier.md` §5.5).
+### Platform-Aware Selection Limits (v8.2.0)
 
-### Authentication-Aware Selection Limits
+Selection limits are **platform-aware** — different AI platforms handle prompt complexity differently. Each of the 42 supported platforms is assigned to one of four tiers.
+
+#### Platform Tier Philosophy
+
+| Tier | Name | Prompt Style | Why These Limits? |
+|------|------|--------------|-------------------|
+| **1** | CLIP-Based | Tokenized keywords | CLIP tokenizes efficiently — stacking 2-3 styles/lights produces coherent results |
+| **2** | Midjourney Family | Parameter-rich | Built for complex prompts — handles 3+ styles, `--no` with 8+ terms |
+| **3** | Natural Language | Conversational | Prefers focused prompts — too many terms cause confusion |
+| **4** | Plain Language | Simple prompts | Consumer-focused — one style, one mood works best |
+
+#### Selection Limits Matrix (Standard Promagen)
+
+| Category | Tier 1 (CLIP) | Tier 2 (MJ) | Tier 3 (NatLang) | Tier 4 (Plain) |
+|----------|---------------|-------------|------------------|----------------|
+| Subject | 1 | 1 | 1 | 1 |
+| Action | 1 | 1 | 1 | 1 |
+| **Style** | 2 | 3 | 2 | 1 |
+| Environment | 1 | 1 | 1 | 1 |
+| Composition | 1 | 1 | 1 | 1 |
+| Camera | 1 | 1 | 1 | 1 |
+| **Lighting** | 2 | 3 | 2 | 1 |
+| **Colour** | 2 | 2 | 1 | 1 |
+| **Atmosphere** | 2 | 2 | 1 | 1 |
+| **Materials** | 2 | 2 | 1 | 1 |
+| **Fidelity** | 2 | 3 | 2 | 1 |
+| **Negative** | 5 | 8 | 3 | 2 |
+
+#### Pro Promagen Bonus (+1 on stackable categories)
+
+| Category | Tier 1 | Tier 2 | Tier 3 | Tier 4 |
+|----------|--------|--------|--------|--------|
+| Subject | 1 | 1 | 1 | 1 |
+| Action | 1 | 1 | 1 | 1 |
+| **Style** | **3** | **4** | **3** | **2** |
+| Environment | 1 | 1 | 1 | 1 |
+| Composition | 1 | 1 | 1 | 1 |
+| Camera | 1 | 1 | 1 | 1 |
+| **Lighting** | **3** | **4** | **3** | **2** |
+| **Colour** | **3** | **3** | **2** | **2** |
+| **Atmosphere** | **3** | **3** | **2** | **2** |
+| **Materials** | **3** | **3** | **2** | **2** |
+| **Fidelity** | **3** | **4** | **3** | **2** |
+| **Negative** | **6** | **9** | **4** | **3** |
+
+**Stackable categories:** Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative  
+**Non-stackable categories (always 1):** Subject, Action, Environment, Composition, Camera
+
+#### Platform Tier Assignments (All 42 Platforms)
+
+**Tier 1 — CLIP-Based (13 platforms):**
+`stability`, `leonardo`, `clipdrop`, `nightcafe`, `dreamstudio`, `lexica`, `novelai`, `dreamlike`, `getimg`, `openart`, `playground`, `artguru`, `jasper-art`
+
+**Tier 2 — Midjourney Family (2 platforms):**
+`midjourney`, `bluewillow`
+
+**Tier 3 — Natural Language (10 platforms):**
+`openai`, `adobe-firefly`, `ideogram`, `runway`, `microsoft-designer`, `bing`, `flux`, `google-imagen`, `imagine-meta`, `hotpot`
+
+**Tier 4 — Plain Language (17 platforms):**
+`canva`, `craiyon`, `deepai`, `pixlr`, `picwish`, `fotor`, `visme`, `vistacreate`, `myedit`, `simplified`, `freepik`, `picsart`, `photoleap`, `artbreeder`, `123rf`, `remove-bg`, `artistly`
+
+#### Auto-Trim Behaviour
+
+When a user switches platforms, selection limits may change. The system **silently trims** excess selections:
+
+- Selections trimmed from end (keeps first N)
+- No notification shown (clean UX)
+- User can re-select different options if desired
+
+**Example:** User on Midjourney (Tier 2) with 3 styles → switches to Artistly (Tier 4) → 2 styles automatically removed, 1 remains.
+
+#### Dynamic Tooltip Guidance
+
+Tooltips dynamically reflect the actual limit for the current platform with proper singular/plural grammar:
+
+- Artistly (Tier 4): "Pick 1 style. Keep it focused."
+- Midjourney (Tier 2): "Pick up to 3 complementary styles. Avoid conflicting aesthetics."
+
+### Implementation
 
 ```typescript
-// Selection limits based on authentication and tier
-const getSelectionLimits = (userTier: 'free' | 'paid') => ({
-  subject: 1,
-  action: 1,
-  style: userTier === 'paid' ? 2 : 1,
-  environment: 1,
-  composition: 1,
-  camera: 1,
-  lighting: userTier === 'paid' ? 2 : 1,
-  colour: 1,
-  atmosphere: 1,
-  materials: 1,
-  fidelity: userTier === 'paid' ? 2 : 1,
-  negative: 5
-});
+import { usePromagenAuth } from '@/hooks/use-promagen-auth';
+
+// Platform tier is determined automatically from provider.id
+const { categoryLimits, platformTier } = usePromagenAuth({ platformId: provider.id });
+
+// categoryLimits is now platform-aware
+// e.g., { style: 3, lighting: 3, negative: 8 } for Midjourney
+// e.g., { style: 1, lighting: 1, negative: 2 } for Artistly
+
+// Use in Combobox
+<Combobox
+  maxSelections={categoryLimits[category] ?? 1}
+  tooltipGuidance={getDynamicTooltipGuidance(category, categoryLimits[category])}
+  ...
+/>
 ```
 
 ### Options Per Category
@@ -455,7 +543,7 @@ For these 28 platforms, custom negative text would be ignored anyway — only th
 ## Combobox Component
 
 **File:** `frontend/src/components/ui/combobox.tsx`
-**Version:** 5.0.0
+**Version:** 6.3.0
 
 ### Enhanced Features for Authentication
 
@@ -464,9 +552,11 @@ For these 28 platforms, custom negative text would be ignored anyway — only th
 - Custom entry on Enter (if `allowFreeText=true`)
 - **Authentication-aware disabling**
 - **Clean disabled styling** (no overlay text)
-- Auto-close when max selections reached
+- **Bulletproof auto-close** when max selections reached (v6.3.0)
+- **Done button** for multi-select dropdowns (limit ≥ 2)
 - Tooltip on focus (shows guidance, auto-hides after 4s)
 - Pink character counter for custom text
+- **Double-click protection** via ref guard (v6.3.0)
 
 ### Props Interface
 
@@ -490,12 +580,22 @@ interface ComboboxProps {
 }
 ```
 
-### Auto-Close Behaviour
+### Auto-Close Behaviour (v6.3.0)
 
 The dropdown **closes immediately** when the selection limit is reached:
-- Max 1: Closes after first selection
-- Max 2: Closes after second selection (paid users for certain categories)
-- Max 5: Closes after fifth selection
+
+- **Single-select (limit 1):** Closes IMMEDIATELY on click, BEFORE state update
+- **Multi-select (limit 2+):** Closes when `newSelected.length >= maxSelections`
+- **Done button:** Available for multi-select to close before reaching max
+- **Double-click protection:** Uses ref guard to prevent race conditions
+
+```typescript
+// CRITICAL: Close FIRST for single-select or when limit reached
+if (maxSelections === 1 || newCount >= maxSelections) {
+  setIsOpen(false);  // Happens IMMEDIATELY
+}
+onSelectChange(newSelected);  // State update happens AFTER close
+```
 
 ### Lock State Visual Treatment (v5.0.0)
 
@@ -651,7 +751,15 @@ frontend/src/
 ## Implementation Checklist
 
 - [x] PromptBuilder with 12-category dropdown system
-- [x] Selection limits: Free tier (all 1 except negative 5), Paid tier (style/lighting/fidelity get 2)
+- [x] ~~Selection limits: Free tier (all 1 except negative 5), Paid tier (style/lighting/fidelity get 2)~~ **REPLACED by platform-aware limits**
+- [x] **Platform-aware category limits** (v8.0.0) — 4 tiers with different selection counts
+- [x] **Platform tier assignments** — All 42 platforms mapped to tiers 1-4
+- [x] **Pro Promagen +1 bonus** on stackable categories
+- [x] **Auto-trim on platform switch** — Silently removes excess selections
+- [x] **Dynamic tooltip guidance** (v8.1.0) — Shows actual limit per platform
+- [x] **Bulletproof auto-close** (v6.3.0) — Closes BEFORE state update for single-select
+- [x] **Done button** for multi-select dropdowns (limit ≥ 2)
+- [x] **Double-click protection** via ref guard
 - [x] Platform-specific prompt optimization (7 families)
 - [x] Negative-to-positive conversion (30 mappings)
 - [x] Custom negative handling ("without X")
@@ -685,10 +793,9 @@ frontend/src/
 - [x] **Lock state visual treatment** (disabled styling only, NO dropdown overlay text)
 - [x] **Usage tracking on Copy prompt**
 - [x] **Daily quota enforcement** (30/day Standard, unlimited Pro Promagen)
-- [x] **Combobox v5.0.0** (no lock message overlay)
+- [x] **Combobox v6.3.0** (bulletproof auto-close, Done button, double-click protection)
 - [x] **AspectRatioSelector v1.2.0** (no lock overlay)
-- [x] **Prompt builder v6.4.0** (removed lockMessage props)
-- [x] **Enhanced limits for Pro Promagen users** (style/lighting/fidelity get 2)
+- [x] **Prompt builder v8.2.0** (platform-aware limits, dynamic tooltips, auto-trim)
 
 ---
 
@@ -702,10 +809,23 @@ frontend/src/
 - Free user sees usage counter (X/30 prompts today)
 - Free user at quota sees central lock overlay only
 - Pro Promagen user has no usage counter
-- Pro Promagen user has enhanced selection limits
+- Pro Promagen user has platform-aware enhanced limits (+1 on stackable)
 - **Dropdowns show disabled styling when locked, NOT overlay text**
 - **Randomise button disabled when locked**
 - **Free text input disabled when locked**
+
+### Platform-Aware Limits Tests (v8.2.0)
+
+- Artistly (Tier 4): Style limit = 1, Negative limit = 2
+- Midjourney (Tier 2): Style limit = 3, Negative limit = 8
+- DALL-E (Tier 3): Style limit = 2, Negative limit = 3
+- Stability (Tier 1): Style limit = 2, Negative limit = 5
+- **Pro Promagen on Tier 4:** Style = 2, Negative = 3
+- **Pro Promagen on Tier 2:** Style = 4, Negative = 9
+- **Platform switch triggers auto-trim** (excess selections removed)
+- **Tooltip shows actual limit** ("Pick 1 style" vs "Pick up to 3 styles")
+- **Single-select closes immediately** (no double-click possible)
+- **Done button visible for multi-select** (limit ≥ 2)
 
 ### Usage Tracking Tests
 
@@ -783,6 +903,7 @@ These features were removed as they added no value:
 
 ## Changelog
 
+- **5 Jan 2026 (v8.2.0):** **PLATFORM-AWARE CATEGORY LIMITS** — Complete overhaul of selection limits system. Limits now vary by platform tier (Tier 1: CLIP-based, Tier 2: Midjourney, Tier 3: Natural Language, Tier 4: Plain Language). All 42 platforms assigned to appropriate tier. Pro Promagen users get +1 on stackable categories. Auto-trim on platform switch silently removes excess selections. Dynamic tooltip guidance shows actual limits with proper singular/plural grammar. Combobox v6.3.0: bulletproof auto-close (closes BEFORE state update for single-select), Done button for multi-select, double-click protection. PromptBuilder v8.2.0 with platform-aware usePromagenAuth({ platformId }) hook. See paid_tier.md §5.5 for full tier matrix.
 - **4 Jan 2026 (v6.4.0):** **LOCK STATE UX CLEANUP** — Removed "Sign in to continue" text overlay from individual Combobox dropdowns. Lock messaging now appears ONLY in the central overlay at top of prompt builder section. Combobox v5.0.0: accepts `lockMessage` prop but does NOT display it. AspectRatioSelector v1.2.0: no lock overlay. PromptBuilder v6.4.0: removed `lockMessage` prop from all Combobox and AspectRatioSelector instances. Randomise button disabled when locked. This is a UX improvement — showing the same text on every dropdown was ugly and cluttered.
 - **4 Jan 2026 (v2.0.0 anonymous-storage):** **ANONYMOUS DAILY RESET** — Anonymous users now get 5 prompts per day (resets at midnight local time), matching the authenticated user experience. Previously was 5 prompts total lifetime. Anonymous storage upgraded to v2 schema with `lastResetDate` field. Migration: v1 data invalidated on read, triggers fresh v2 start.
 - **3 Jan 2026 (v4.2):** **TERMINOLOGY UPDATE** — Renamed "paid" to "Pro Promagen" and "free" to "Standard Promagen" in user-facing references. Updated category table headers. Updated test descriptions. Internal code still uses `'paid'` for brevity.

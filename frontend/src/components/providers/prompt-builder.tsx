@@ -1,7 +1,33 @@
 // src/components/providers/prompt-builder.tsx
 // ============================================================================
-// ENHANCED PROMPT BUILDER v7.1.0 — Text Length Optimizer with Preview
+// ENHANCED PROMPT BUILDER v8.2.0 — BULLETPROOF Auto-Close Fix
 // ============================================================================
+// CRITICAL FIX in v8.2.0:
+// - Single-select dropdowns close IMMEDIATELY on click (before state update)
+// - Prevents double-click race condition with ref guard
+// - Proper singular/plural grammar in tooltips ("Pick 1 style" not "styles")
+//
+// NEW in v8.1.0:
+// - Dynamic tooltip guidance: Shows actual limit per platform tier
+// - "Pick 1 style" for Tier 4, "Pick up to 3 complementary styles" for Tier 2
+// - Tooltips always match actual maxSelections (no more mismatch)
+// - Category-specific guidance suffixes maintained
+//
+// NEW in v8.0.0:
+// - Platform-aware category limits: Different platforms get different selection counts
+// - Tier 1 (CLIP): High multi-select tolerance (Stability, Leonardo, NightCafe)
+// - Tier 2 (MJ): Very high tolerance (Midjourney, BlueWillow) - style:3, lighting:3
+// - Tier 3 (NatLang): Medium tolerance (DALL-E, Firefly, Ideogram)
+// - Tier 4 (Plain): Low tolerance (Canva, Craiyon) - most categories: 1
+// - Paid users get +1 on stackable categories (style, lighting, colour, etc.)
+// - Silent auto-trim when switching platforms (excess selections removed)
+// - Platform tier passed to usePromagenAuth for dynamic limits
+//
+// FIXES in v7.1.1:
+// - Fixed optimized preview visibility: now shows when ANY change occurs
+//   (compression OR trimming), not just when categories are trimmed
+// - Condition changed from wasTrimmed to length comparison
+//
 // FIXES in v7.1.0:
 // - Shows optimized prompt text in preview box (same styling as Assembled prompt)
 // - Layout: Info bar → Optimized preview → Length indicator
@@ -121,6 +147,55 @@ const pickMultipleRandom = <T,>(arr: T[], count: number): T[] => {
 };
 
 // ============================================================================
+// Dynamic Tooltip Guidance (v8.1.0)
+// ============================================================================
+
+/**
+ * Category-specific guidance - separate singular and plural forms
+ */
+const CATEGORY_GUIDANCE: Record<string, { singular: string; plural: string }> = {
+  subject: { singular: 'subject as your focal point.', plural: 'subjects as focal points.' },
+  action: { singular: 'action for dynamic energy.', plural: 'actions for dynamic energy.' },
+  style: { singular: 'style. Keep it focused.', plural: 'complementary styles. Avoid conflicting aesthetics.' },
+  environment: { singular: 'setting for context.', plural: 'settings for context.' },
+  composition: { singular: 'technique for visual structure.', plural: 'techniques for visual structure.' },
+  camera: { singular: 'camera setting for precision.', plural: 'camera settings for precision.' },
+  lighting: { singular: 'lighting setup for mood.', plural: 'lighting setups for mood and dimension.' },
+  colour: { singular: 'colour treatment for harmony.', plural: 'colour treatments for visual harmony.' },
+  atmosphere: { singular: 'atmospheric effect for mood.', plural: 'atmospheric effects for depth and mood.' },
+  materials: { singular: 'material texture for realism.', plural: 'material textures for tactile realism.' },
+  fidelity: { singular: 'quality booster for detail.', plural: 'quality boosters for maximum detail.' },
+  negative: { singular: 'term to exclude.', plural: 'terms to exclude from your image.' },
+};
+
+/**
+ * Generate dynamic tooltip guidance based on actual maxSelections.
+ * This ensures the tooltip always matches the platform's actual limit.
+ *
+ * @param category - The prompt category
+ * @param maxSelections - The actual limit for this platform/tier
+ * @param baseGuidance - Optional base guidance from config (fallback)
+ * @returns Dynamic tooltip text with correct limit and grammar
+ */
+function getDynamicTooltipGuidance(
+  category: string,
+  maxSelections: number,
+  _baseGuidance?: string,
+): string {
+  const guidance = CATEGORY_GUIDANCE[category];
+  
+  if (!guidance) {
+    return maxSelections === 1 ? 'Pick 1 option.' : `Pick up to ${maxSelections} options.`;
+  }
+
+  if (maxSelections === 1) {
+    return `Pick 1 ${guidance.singular}`;
+  }
+
+  return `Pick up to ${maxSelections} ${guidance.plural}`;
+}
+
+// ============================================================================
 // Composition Injection Helper
 // ============================================================================
 
@@ -219,20 +294,44 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
               </p>
               <ul className="mt-0.1 text-left text-xs text-purple-300 space-y-1">
                 <li className="flex items-center gap-2">
-                  <svg className="h-3.5 w-3.5 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  <svg
+                    className="h-3.5 w-3.5 text-emerald-400 shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   <span>30 prompts per day (resets at midnight)</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="h-3.5 w-3.5 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  <svg
+                    className="h-3.5 w-3.5 text-emerald-400 shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   <span>Dynamic composition packs</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="h-3.5 w-3.5 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  <svg
+                    className="h-3.5 w-3.5 text-emerald-400 shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   <span>Exchanges arranged by your location</span>
                 </li>
@@ -244,17 +343,32 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
         {isQuotaReached && (
           <>
             <button type="button" className="lock-cta-button translate-y-2">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
               </svg>
               Upgrade to Pro
             </button>
             <div className="flex flex-col gap-2">
               <h3 className="text-lg font-semibold text-white">Daily limit reached</h3>
               <p className="text-sm text-purple-200">
-                {getTimeUntilReset() ? `Resets in ${getTimeUntilReset()}` : 'Resets at midnight in your timezone'}
+                {getTimeUntilReset()
+                  ? `Resets in ${getTimeUntilReset()}`
+                  : 'Resets at midnight in your timezone'}
               </p>
-              <p className="text-xs text-slate-400">Upgrade to Pro Promagen for unlimited prompts.</p>
+              <p className="text-xs text-slate-400">
+                Upgrade to Pro Promagen for unlimited prompts.
+              </p>
             </div>
           </>
         )}
@@ -290,6 +404,12 @@ function DailyCounter({ count, limit }: { count: number; limit: number }) {
 
 export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: PromptBuilderProps) {
   // ============================================================================
+  // Platform ID (computed first for hook dependency)
+  // ============================================================================
+
+  const platformId = provider.id ?? 'default';
+
+  // ============================================================================
   // Hooks
   // ============================================================================
 
@@ -300,8 +420,9 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
     anonymousUsage,
     dailyUsage,
     categoryLimits,
+    platformTier,
     trackPromptCopy: trackUsageCallback,
-  } = usePromagenAuth();
+  } = usePromagenAuth({ platformId });
 
   const { compositionMode, setCompositionMode, aspectRatio, setAspectRatio } = useCompositionMode();
 
@@ -319,14 +440,40 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
   }, []);
 
   // ============================================================================
+  // Auto-Trim Effect (Silent Platform Switch)
+  // ============================================================================
+
+  // When categoryLimits change (platform switch), silently trim excess selections
+  useEffect(() => {
+    setCategoryState((prev) => {
+      let hasChanges = false;
+      const newState = { ...prev };
+
+      for (const [category, state] of Object.entries(prev) as [PromptCategory, CategoryState][]) {
+        const limit = categoryLimits[category] ?? 1;
+        if (state.selected.length > limit) {
+          // Trim to new limit (keep first N selections)
+          newState[category] = {
+            ...state,
+            selected: state.selected.slice(0, limit),
+          };
+          hasChanges = true;
+        }
+      }
+
+      return hasChanges ? newState : prev;
+    });
+  }, [categoryLimits]);
+
+  // ============================================================================
   // Computed Values
   // ============================================================================
 
-  const platformId = provider.id ?? 'default';
   const isLocked = promptLockState !== 'unlocked';
   const allowNegativeFreeText = supportsNativeNegative(platformId);
   const _hasNativeAR = platformSupportsAR(platformId, aspectRatio ?? '1:1');
   const isMjFamily = MIDJOURNEY_FAMILY.includes(platformId.toLowerCase());
+  const _platformTier = platformTier; // For potential UI display
 
   // Build selections object from category state
   const selections = useMemo<PromptSelections>(() => {
@@ -390,6 +537,9 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
   });
 
   const optimizedResult = useMemo(() => getOptimizedPrompt(), [getOptimizedPrompt]);
+
+  // Computed: did optimization change the prompt? (compression OR trimming)
+  const wasOptimized = optimizedResult.originalLength !== optimizedResult.optimizedLength;
 
   const displayCategories = useMemo(() => CATEGORY_ORDER as PromptCategory[], []);
 
@@ -533,7 +683,7 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
               <h2 className="text-lg font-semibold text-slate-50">
                 {provider.name} · Prompt builder
               </h2>
-              
+
               {/* Composition mode toggle */}
               <CompositionModeToggle
                 compositionMode={compositionMode}
@@ -543,7 +693,9 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
               />
 
               {/* Divider */}
-              <span className="text-slate-600" aria-hidden="true">│</span>
+              <span className="text-slate-600" aria-hidden="true">
+                │
+              </span>
 
               {/* Text Length Optimizer toggle */}
               <TextLengthOptimizer
@@ -579,7 +731,11 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
           {userTier === 'paid' && (
             <span className="inline-flex items-center gap-1 self-start rounded-full bg-purple-600/20 px-2 py-0.5 text-xs font-medium text-purple-300 ring-1 ring-purple-500/30">
               <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
               Pro: Enhanced limits active
             </span>
@@ -595,6 +751,13 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
         }`}
       >
         <div className="flex flex-col gap-4">
+          {/* Instruction text - green style */}
+          <p className="text-xs text-slate-500">
+            <span className="text-emerald-400">
+              Press Done or click away to close dropdowns. Type in any field to add custom entries.
+            </span>
+          </p>
+
           {/* Category dropdowns grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayCategories.map((category) => {
@@ -606,13 +769,20 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
               const maxSelections = categoryLimits[category] ?? 1;
               const allowFreeText = isNegative ? allowNegativeFreeText : true;
 
+              // Generate dynamic tooltip based on actual platform limit
+              const dynamicTooltip = getDynamicTooltipGuidance(
+                category,
+                maxSelections,
+                config.tooltipGuidance,
+              );
+
               return (
                 <div key={category} className={isNegative ? 'sm:col-span-2 lg:col-span-4' : ''}>
                   <Combobox
                     id={`${id}-${category}`}
                     label={config.label}
                     description={undefined}
-                    tooltipGuidance={config.tooltipGuidance || config.description}
+                    tooltipGuidance={dynamicTooltip}
                     options={config.options}
                     selected={state.selected}
                     customValue={state.customValue}
@@ -680,7 +850,7 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
                 )}
               </div>
             </div>
-            
+
             {/* Original prompt preview box */}
             <div
               className={`
@@ -700,9 +870,10 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
             </div>
 
             {/* ============================================================ */}
-            {/* Optimization Section - Only when enabled AND will trim */}
+            {/* Optimization Section - Shows when enabled AND prompt was changed */}
+            {/* FIX v7.1.1: Changed from wasTrimmed to wasOptimized (length comparison) */}
             {/* ============================================================ */}
-            {hasContent && isOptimizerEnabled && optimizedResult.wasTrimmed && (
+            {hasContent && isOptimizerEnabled && wasOptimized && (
               <div className="flex flex-col gap-2 mt-2">
                 {/* Info bar: "Optimizing on copy: X → Y chars" */}
                 <div className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2">
@@ -729,9 +900,7 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
                     {optimizedResult.optimizedLength} chars
                   </span>
                 </div>
-                <div
-                  className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
-                >
+                <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
                   <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
                     {optimizedResult.optimized}
                   </pre>
@@ -740,18 +909,18 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
                 {/* Length indicator with status */}
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-400">
-                    Original: {optimizedResult.originalLength} → Optimized: {optimizedResult.optimizedLength}
+                    Original: {optimizedResult.originalLength} → Optimized:{' '}
+                    {optimizedResult.optimizedLength}
                   </span>
-                  <span className="text-amber-400">Will trim</span>
+                  <span className="text-amber-400">Will optimize</span>
                 </div>
-                <p className="text-[10px] text-amber-400/70">
-                  ↓ Prompt will be optimized on copy
-                </p>
+                <p className="text-[10px] text-amber-400/70">↓ Prompt will be optimized on copy</p>
               </div>
             )}
 
-            {/* Length indicator when optimizer enabled but NOT trimming */}
-            {hasContent && isOptimizerEnabled && !optimizedResult.wasTrimmed && (
+            {/* Length indicator when optimizer enabled but NO changes made */}
+            {/* FIX v7.1.1: Changed from !wasTrimmed to !wasOptimized */}
+            {hasContent && isOptimizerEnabled && !wasOptimized && (
               <div className="mt-1">
                 <LengthIndicator
                   analysis={analysis}
@@ -789,19 +958,39 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
           >
             {copied ? (
               <>
-                <svg className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="h-4 w-4 text-green-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 Copied!
               </>
             ) : (
               <>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
                 </svg>
-                {isOptimizerEnabled && optimizedResult.wasTrimmed
-                  ? 'Copy optimized prompt'
-                  : 'Copy prompt'}
+                {isOptimizerEnabled && wasOptimized ? 'Copy optimized prompt' : 'Copy prompt'}
               </>
             )}
           </button>
@@ -827,8 +1016,19 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
             onClick={handleDone}
             className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-600 bg-slate-800 px-5 py-2 text-sm font-medium text-slate-100 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-700 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             Done
           </button>
@@ -841,8 +1041,19 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
               rel="noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-sky-500/70 bg-sky-600/10 px-4 py-2 text-sm font-medium text-sky-100 hover:bg-sky-500/20 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
               </svg>
               Open in {provider.name}
             </a>

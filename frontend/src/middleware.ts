@@ -15,7 +15,7 @@ const REPORT_TO = JSON.stringify({
   endpoints: [{ url: CSP_REPORT_URI }],
 });
 
-// Protect only “private” surfaces (public site stays public)
+// Protect only "private" surfaces (public site stays public)
 const isProtectedRoute = createRouteMatcher([
   '/admin(.*)',
   '/settings(.*)',
@@ -84,7 +84,7 @@ function buildCsp(isDev: boolean, isPreview: boolean): string {
 
   directives.push(`font-src 'self' data:`);
 
-  // Keep your existing “safe-but-practical” connect-src, plus explicit Clerk FAPI if set.
+  // Keep your existing "safe-but-practical" connect-src, plus explicit Clerk FAPI if set.
   directives.push(`connect-src 'self' https:${isDev ? ' http: ws: wss:' : ''} ${clerkConnectSrc}`);
 
   // Clerk requires workers from self + blob:.
@@ -134,7 +134,9 @@ function applySecurityHeaders(
     'Cross-Origin-Opener-Policy',
     isDev ? 'same-origin-allow-popups' : 'same-origin',
   );
-  response.headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+
+  // COEP 'require-corp' blocks Clerk scripts - use 'unsafe-none' to allow third-party auth
+  response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
 
   if (!isDev) {
     response.headers.set(

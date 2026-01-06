@@ -1,8 +1,17 @@
 // src/hooks/use-promagen-auth.ts
 //
-// Promagen authentication hook.
+// Promagen authentication hook v2.0.0 - Platform-Aware Category Limits
+//
 // Wraps Clerk's useAuth/useUser to provide a simplified interface
 // for Promagen's features (voting, saved prompts, prompt builder, etc.)
+//
+// NEW in v2.0.0:
+// - Platform-aware category limits: Pass platformId to get tier-specific limits
+// - Tier 1 (CLIP): High multi-select tolerance
+// - Tier 2 (MJ): Very high tolerance (style:3, lighting:3, negative:8)
+// - Tier 3 (NatLang): Medium tolerance
+// - Tier 4 (Plain): Low tolerance (most categories: 1)
+// - Paid users get +1 on stackable categories
 //
 // Lock State Progression:
 // 1. anonymous_limit: Anonymous user has used 5 free prompts → Sign in CTA
@@ -15,7 +24,7 @@
 // - Paid signed-in: Toggle between "user" and "greenwich"
 //
 // Usage:
-//   const { isAuthenticated, userId, userTier, promptLockState, referenceFrame } = usePromagenAuth();
+//   const { categoryLimits, platformTier } = usePromagenAuth({ platformId: 'midjourney' });
 //
 // Authority: docs/authority/clerk-auth.md, docs/authority/paid_tier.md
 //
@@ -23,13 +32,16 @@
 'use client';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { useDailyUsage } from './use-daily-usage';
 import { useUserLocation } from './use-user-location';
 import {
   ANONYMOUS_FREE_LIMIT,
-  getCategoryLimitsForTier,
+  getCategoryLimitsForPlatformTier,
+  DEFAULT_PLATFORM_TIER,
 } from '@/lib/usage';
+import { getPlatformConfiguration } from '@/data/compression';
+import type { CompressionTier } from '@/types/compression';
 import {
   type ReferenceFrame,
   type GeoCoordinates,
@@ -121,8 +133,10 @@ export interface PromagenAuthState {
   dailyUsage: DailyUsageInfo | null;
   /** Anonymous usage info (null if authenticated) */
   anonymousUsage: AnonymousUsageInfo | null;
-  /** Category selection limits based on tier */
+  /** Category selection limits based on platform tier + user tier */
   categoryLimits: Record<string, number>;
+  /** Current platform tier (1-4) for UI display */
+  platformTier: CompressionTier;
   /** Track a prompt copy (returns true if allowed) */
   trackPromptCopy: (providerId?: string) => Promise<boolean>;
   /** Location and reference frame info */
@@ -136,6 +150,14 @@ export interface PromagenAuthState {
 // ============================================================================
 
 /**
+ * Hook options for usePromagenAuth.
+ */
+export interface UsePromagenAuthOptions {
+  /** Platform ID for platform-aware category limits */
+  platformId?: string;
+}
+
+/**
  * usePromagenAuth - Get current authentication state
  *
  * Provides a unified interface for auth-dependent features:
@@ -144,6 +166,7 @@ export interface PromagenAuthState {
  * - Tier-based features (uses userTier)
  * - Prompt builder access (uses promptLockState)
  * - Exchange ordering (uses locationInfo)
+ * - Platform-aware category limits (uses platformId)
  *
  * Lock State Logic:
  * 1. If not authenticated AND anonymous limit reached → 'anonymous_limit'
@@ -155,21 +178,27 @@ export interface PromagenAuthState {
  * - Free signed-in: Detect location, use as reference (no toggle)
  * - Paid signed-in: Use stored preference (default: 'user')
  *
+ * Platform-Aware Limits (v2.0.0):
+ * - Tier 1 (CLIP): High multi-select tolerance
+ * - Tier 2 (MJ): Very high multi-select tolerance
+ * - Tier 3 (NatLang): Medium multi-select tolerance
+ * - Tier 4 (Plain): Low multi-select tolerance
+ * - Paid users get +1 on stackable categories
+ *
+ * @param options - Hook options including optional platformId
+ *
  * @example
  * ```tsx
- * function Homepage() {
- *   const { locationInfo, isAuthenticated } = usePromagenAuth();
- *
- *   const { left, right } = useMemo(
- *     () => getRailsRelative(exchanges, locationInfo.coordinates),
- *     [exchanges, locationInfo.coordinates]
- *   );
- *
- *   return <HomepageGrid left={left} right={right} />;
+ * function PromptBuilder({ provider }) {
+ *   const { categoryLimits, platformTier } = usePromagenAuth({
+ *     platformId: provider.id
+ *   });
+ *   // categoryLimits now reflects platform capabilities
  * }
  * ```
  */
-export function usePromagenAuth(): PromagenAuthState {
+export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenAuthState {
+  const { platformId } = options;
   const { isLoaded, isSignedIn, userId } = useAuth();
   const { user } = useUser();
 
@@ -299,12 +328,22 @@ export function usePromagenAuth(): PromagenAuthState {
   // Paid users are always unlocked
 
   // ============================================================================
-  // CATEGORY LIMITS
+  // CATEGORY LIMITS (Platform-Aware v2.0.0)
   // ============================================================================
 
-  // Category selection limits based on tier
-  // Note: Anonymous users get free tier limits
-  const categoryLimits = getCategoryLimitsForTier(userTier);
+  // Determine platform tier from platformId
+  const platformTier: CompressionTier = useMemo(() => {
+    if (!platformId) return DEFAULT_PLATFORM_TIER;
+    const config = getPlatformConfiguration(platformId);
+    return config?.tier ?? DEFAULT_PLATFORM_TIER;
+  }, [platformId]);
+
+  // Category selection limits based on platform tier + user tier
+  // Anonymous users get free tier limits
+  const categoryLimits = useMemo(
+    () => getCategoryLimitsForPlatformTier(platformTier, userTier),
+    [platformTier, userTier]
+  );
 
   // ============================================================================
   // USAGE INFO FOR UI
@@ -355,6 +394,7 @@ export function usePromagenAuth(): PromagenAuthState {
     dailyUsage,
     anonymousUsage,
     categoryLimits,
+    platformTier,
     trackPromptCopy: trackUsage,
     locationInfo,
     setReferenceFrame,

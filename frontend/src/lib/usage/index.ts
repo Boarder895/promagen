@@ -1,6 +1,8 @@
 /**
  * @file src/lib/usage/index.ts
  * @description Public exports for usage tracking module
+ *
+ * v2.0.0 - Added platform-aware category limits
  */
 
 // Constants
@@ -11,9 +13,21 @@ export {
   USAGE_NAMESPACE,
   USAGE_KV_KEYS,
   USAGE_LOCAL_KEYS,
+  // Legacy (deprecated)
   FREE_CATEGORY_LIMITS,
   PAID_CATEGORY_LIMITS,
   getCategoryLimitsForTier,
+  // NEW v2.0.0: Platform-aware limits
+  TIER_1_CATEGORY_LIMITS,
+  TIER_2_CATEGORY_LIMITS,
+  TIER_3_CATEGORY_LIMITS,
+  TIER_4_CATEGORY_LIMITS,
+  PLATFORM_TIER_LIMITS,
+  PLATFORM_TIER_LIMITS_PAID,
+  DEFAULT_PLATFORM_TIER,
+  getCategoryLimitsForPlatformTier,
+  getMaxCategoryLimit,
+  categorySupportsMultipleSelections,
 } from './constants';
 
 // Server-side storage (Vercel KV)

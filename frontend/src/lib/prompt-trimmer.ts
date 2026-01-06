@@ -1,22 +1,27 @@
 // src/lib/prompt-trimmer.ts
 // ============================================================================
-// PROMPT TRIMMER
+// PROMPT TRIMMER (WITH COMPRESSION) v2.0.0
 // ============================================================================
 // Core logic for analyzing and optimizing prompt length.
-// Provides secure, deterministic trimming based on category priority.
+// Now includes intelligent compression BEFORE trimming for maximum preservation.
+//
+// FIX v2.0.0:
+// - applyCategoryTrimming now REMOVES text from prompt instead of rebuilding
+// - Preserves composition pack content, AR parameters, and other injected text
+// - Only removes the specific selection values from each category
+//
+// Algorithm:
+// 1. Calculate current length vs platform limits
+// 2. If over ideal, FIRST apply compression (synonym substitution)
+// 3. If still over after compression, apply category trimming
+// 4. Never touch protected categories (subject, style)
+// 5. If still over after both passes, truncate with warning
 //
 // Security:
 // - No user-provided code execution
 // - All inputs validated against whitelists
 // - Deterministic output for auditability
 // - Type-safe throughout
-//
-// Algorithm:
-// 1. Calculate current length vs platform limits
-// 2. If over ideal, identify excess
-// 3. Trim lowest-priority categories first (TRIM_PRIORITY order)
-// 4. Never touch protected categories (subject, style)
-// 5. If still over after trimming, truncate with warning
 //
 // Authority: docs/authority/prompt-builder-page.md
 // ============================================================================
@@ -36,6 +41,10 @@ import {
 
 import type { PromptSelections, PromptCategory } from '@/types/prompt-builder';
 import { CATEGORY_ORDER } from '@/types/prompt-builder';
+
+// Import compression engine
+import { compressPrompt } from '@/lib/compress';
+import type { CompressionResult, CompressionOptions } from '@/types/compression';
 
 // Import prompt limits data
 import promptLimitsData from '@/data/providers/prompt-limits.json';
@@ -205,12 +214,85 @@ export function analyzePromptLength(
 }
 
 // ============================================================================
-// PROMPT TRIMMING
+// TEXT-BASED TRIMMING HELPERS (NEW in v2.0.0)
+// ============================================================================
+
+/**
+ * Escape special regex characters in a string.
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Remove a specific phrase from a prompt string.
+ * Handles various comma/space patterns and cleans up formatting.
+ *
+ * @param prompt - The prompt string to modify
+ * @param phrase - The phrase to remove
+ * @returns The modified prompt with the phrase removed
+ */
+function removePhraseFromPrompt(prompt: string, phrase: string): string {
+  if (!phrase || !prompt) return prompt;
+
+  const escaped = escapeRegex(phrase);
+
+  // Try different patterns to remove the phrase with surrounding punctuation
+  const patterns = [
+    // "phrase, " at start or middle
+    new RegExp(`${escaped}\\s*,\\s*`, 'gi'),
+    // ", phrase" at end or middle (not followed by more text that starts with comma)
+    new RegExp(`,\\s*${escaped}(?=\\s*(?:,|$|\\s+--))`, 'gi'),
+    // ", phrase" anywhere
+    new RegExp(`,\\s*${escaped}(?![a-zA-Z])`, 'gi'),
+    // Standalone phrase with word boundaries
+    new RegExp(`\\b${escaped}\\b`, 'gi'),
+  ];
+
+  let result = prompt;
+
+  for (const pattern of patterns) {
+    const before = result;
+    result = result.replace(pattern, '');
+    if (result !== before) {
+      // Successfully removed, clean up and return
+      break;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Clean up prompt formatting after removals.
+ * Fixes double commas, extra spaces, leading/trailing punctuation.
+ */
+function cleanupPromptFormatting(prompt: string): string {
+  return prompt
+    // Remove double/triple commas
+    .replace(/,\s*,+/g, ',')
+    // Remove leading comma
+    .replace(/^\s*,\s*/, '')
+    // Remove trailing comma (but not before --)
+    .replace(/\s*,\s*$/, '')
+    // Remove comma before --
+    .replace(/\s*,\s*(--)/g, ' $1')
+    // Collapse multiple spaces
+    .replace(/\s{2,}/g, ' ')
+    // Clean up space before comma
+    .replace(/\s+,/g, ',')
+    // Ensure space after comma
+    .replace(/,([^\s])/g, ', $1')
+    .trim();
+}
+
+// ============================================================================
+// PROMPT TRIMMING (CATEGORY REMOVAL) - FIXED v2.0.0
 // ============================================================================
 
 /**
  * Rebuild prompt from modified selections.
- * Preserves category order and comma separation.
+ * LEGACY: Kept for backward compatibility but not used by new trimming.
  */
 function rebuildPrompt(
   selections: PromptSelections,
@@ -251,22 +333,272 @@ function extractMidjourneyNegative(prompt: string): { positive: string; negative
 }
 
 /**
- * Optimize prompt by trimming to platform limits.
+ * Extract AR parameter from prompt (e.g., "--ar 16:9").
+ * Returns the parameter and the prompt without it.
+ */
+function extractARParameter(prompt: string): { promptWithoutAR: string; arParam: string | null } {
+  // Match --ar X:Y or --aspect X:Y patterns
+  const arPattern = /\s*(--(?:ar|aspect)\s+\d+:\d+)\s*/i;
+  const match = prompt.match(arPattern);
+
+  if (match && match[1]) {
+    return {
+      promptWithoutAR: prompt.replace(arPattern, ' ').trim(),
+      arParam: match[1],
+    };
+  }
+
+  return { promptWithoutAR: prompt, arParam: null };
+}
+
+/**
+ * Apply category trimming to bring prompt within target.
+ * FIXED v2.0.0: Now REMOVES text from prompt instead of rebuilding.
+ * Preserves composition pack content, AR parameters, and other injected text.
+ *
+ * @param prompt - The full prompt string (including composition pack, etc.)
+ * @param targetLength - Target character length
+ * @param selections - Category selections (to know what text to look for)
+ * @param platformFamily - 'midjourney' | 'other' for negative handling
+ * @returns Trimmed prompt and list of removed categories
+ */
+function applyCategoryTrimming(
+  prompt: string,
+  targetLength: number,
+  selections: PromptSelections,
+  platformFamily: 'midjourney' | 'other',
+): { trimmed: string; removedCategories: string[] } {
+  // Extract negative section for Midjourney family (preserve it)
+  const { positive, negative } = platformFamily === 'midjourney'
+    ? extractMidjourneyNegative(prompt)
+    : { positive: prompt, negative: null };
+
+  // Extract AR parameter (preserve it)
+  const { promptWithoutAR, arParam } = extractARParameter(positive);
+
+  // Calculate target for positive section (accounting for negative + AR)
+  const negativeLength = negative ? ` --no ${negative}`.length : 0;
+  const arLength = arParam ? ` ${arParam}`.length : 0;
+  const targetPositiveLength = targetLength - negativeLength - arLength;
+
+  // If already within target, return as-is
+  if (promptWithoutAR.length <= targetPositiveLength) {
+    return { trimmed: prompt, removedCategories: [] };
+  }
+
+  // Work with the positive section, removing specific phrases
+  let working = promptWithoutAR;
+  const removedCategories: string[] = [];
+
+  // Trim categories in priority order by REMOVING their text from the prompt
+  for (const category of TRIM_PRIORITY) {
+    // Check current length
+    if (working.length <= targetPositiveLength) {
+      break; // Within target, stop trimming
+    }
+
+    // Skip if category not present in selections
+    const catKey = category as PromptCategory;
+    const values = selections[catKey];
+    if (!values || values.length === 0) {
+      continue;
+    }
+
+    // Remove each value from the prompt string
+    let categoryRemoved = false;
+    const _workingBefore = working; // Debug: console.log(`Trimmed: ${_workingBefore.length} → ${working.length}`)
+
+    for (const value of values) {
+      const before = working;
+      working = removePhraseFromPrompt(working, value);
+
+      if (working !== before) {
+        categoryRemoved = true;
+      }
+    }
+
+    // Clean up formatting after removals
+    if (categoryRemoved) {
+      working = cleanupPromptFormatting(working);
+      removedCategories.push(category);
+    }
+  }
+
+  // Final cleanup
+  working = cleanupPromptFormatting(working);
+
+  // If still over target, hard truncate as last resort
+  if (working.length > targetPositiveLength) {
+    const truncateAt = Math.max(0, targetPositiveLength - 3);
+    // Find last comma before truncation point
+    const lastComma = working.lastIndexOf(',', truncateAt);
+    if (lastComma > truncateAt * 0.5) {
+      working = working.slice(0, lastComma).trim();
+    } else {
+      working = working.slice(0, truncateAt).trim() + '...';
+    }
+    working = cleanupPromptFormatting(working);
+  }
+
+  // Reassemble: positive + AR + negative
+  let trimmed = working;
+  if (arParam) {
+    trimmed = `${trimmed} ${arParam}`;
+  }
+  if (negative) {
+    trimmed = `${trimmed} --no ${negative}`;
+  }
+
+  return { trimmed, removedCategories };
+}
+
+// ============================================================================
+// MAIN OPTIMIZATION FUNCTION (COMPRESSION + TRIMMING)
+// ============================================================================
+
+/**
+ * Extended optimization result with compression metrics.
+ */
+export interface OptimizedPromptExtended extends OptimizedPrompt {
+  /** Compression result (if compression was applied) */
+  readonly compressionResult?: CompressionResult;
+
+  /** Whether compression was applied */
+  readonly wasCompressed: boolean;
+
+  /** Characters saved by compression (before trimming) */
+  readonly compressionCharsSaved: number;
+
+  /** Characters saved by trimming (after compression) */
+  readonly trimmingCharsSaved: number;
+}
+
+/**
+ * Optimize prompt using compression FIRST, then trimming if needed.
  *
  * Algorithm:
- * 1. Check if trimming needed
- * 2. Parse current selections
- * 3. Remove categories in TRIM_PRIORITY order (lowest first)
- * 4. Stop when within target
- * 5. If still over, truncate with ellipsis
+ * 1. Check if optimization needed
+ * 2. Apply compression (synonym substitution - preserves meaning)
+ * 3. Check if within target after compression
+ * 4. If still over, apply category trimming (removes content)
+ * 5. Return optimized prompt with metrics
  *
  * @param originalPrompt - The original assembled prompt
  * @param platformId - Platform identifier
  * @param selections - Current category selections
  * @param platformFamily - 'midjourney' | 'other' for negative handling
+ * @param compressionOptions - Options for compression pass
  * @returns Optimized prompt with metadata
  */
 export function optimizePrompt(
+  originalPrompt: string,
+  platformId: string,
+  selections: PromptSelections,
+  platformFamily: 'midjourney' | 'other' = 'other',
+  compressionOptions: CompressionOptions = {},
+): OptimizedPromptExtended {
+  // Handle empty input
+  if (!originalPrompt || originalPrompt.trim().length === 0) {
+    return {
+      original: originalPrompt ?? '',
+      optimized: originalPrompt ?? '',
+      originalLength: 0,
+      optimizedLength: 0,
+      wasTrimmed: false,
+      wasCompressed: false,
+      compressionCharsSaved: 0,
+      trimmingCharsSaved: 0,
+      removedCategories: [],
+      status: 'under',
+    };
+  }
+
+  const limit = getPromptLimit(platformId);
+  const originalLength = originalPrompt.length;
+
+  // Check if optimization needed
+  if (originalLength <= limit.idealMax) {
+    const status = determineLengthStatus(originalLength, limit);
+    return {
+      original: originalPrompt,
+      optimized: originalPrompt,
+      originalLength,
+      optimizedLength: originalLength,
+      wasTrimmed: false,
+      wasCompressed: false,
+      compressionCharsSaved: 0,
+      trimmingCharsSaved: 0,
+      removedCategories: [],
+      status,
+    };
+  }
+
+  // =========================================================================
+  // PHASE 1: COMPRESSION (preserves 100% semantic meaning)
+  // =========================================================================
+
+  const compressionResult = compressPrompt(originalPrompt, platformId, {
+    ...compressionOptions,
+    targetLength: limit.idealMax, // Target the ideal max, not middle
+  });
+
+  const workingPrompt = compressionResult.compressed;
+  const compressionCharsSaved = compressionResult.charsSaved;
+
+  // Check if compression alone achieved target
+  if (workingPrompt.length <= limit.idealMax) {
+    const status = determineLengthStatus(workingPrompt.length, limit);
+    return {
+      original: originalPrompt,
+      optimized: workingPrompt,
+      originalLength,
+      optimizedLength: workingPrompt.length,
+      wasTrimmed: false,
+      wasCompressed: compressionCharsSaved > 0,
+      compressionCharsSaved,
+      trimmingCharsSaved: 0,
+      removedCategories: [],
+      status,
+      compressionResult,
+    };
+  }
+
+  // =========================================================================
+  // PHASE 2: CATEGORY TRIMMING (removes content as last resort)
+  // FIXED v2.0.0: Now uses text-based removal, not rebuild
+  // =========================================================================
+
+  const { trimmed, removedCategories } = applyCategoryTrimming(
+    workingPrompt,
+    limit.idealMax,
+    selections,
+    platformFamily,
+  );
+
+  const trimmingCharsSaved = workingPrompt.length - trimmed.length;
+  const optimizedLength = trimmed.length;
+  const status = determineLengthStatus(optimizedLength, limit);
+
+  return {
+    original: originalPrompt,
+    optimized: trimmed,
+    originalLength,
+    optimizedLength,
+    wasTrimmed: removedCategories.length > 0 || trimmingCharsSaved > 0,
+    wasCompressed: compressionCharsSaved > 0,
+    compressionCharsSaved,
+    trimmingCharsSaved,
+    removedCategories,
+    status,
+    compressionResult,
+  };
+}
+
+/**
+ * Legacy optimize function (without compression).
+ * Maintained for backward compatibility.
+ */
+export function optimizePromptLegacy(
   originalPrompt: string,
   platformId: string,
   selections: PromptSelections,
@@ -302,64 +634,20 @@ export function optimizePrompt(
     };
   }
 
-  // Extract negative section for Midjourney family
-  const { negative } = platformFamily === 'midjourney'
-    ? extractMidjourneyNegative(originalPrompt)
-    : { negative: null };
+  // Apply category trimming directly (no compression)
+  const { trimmed, removedCategories } = applyCategoryTrimming(
+    originalPrompt,
+    limit.idealMax,
+    selections,
+    platformFamily,
+  );
 
-  // Calculate target (accounting for negative section if present)
-  const negativeLength = negative ? ` --no ${negative}`.length : 0;
-  const targetPositiveLength = limit.idealMax - negativeLength;
-
-  // Create working copy of selections
-  const workingSelections: PromptSelections = { ...selections };
-  const removedCategories: string[] = [];
-
-  // Trim categories in priority order
-  for (const category of TRIM_PRIORITY) {
-    // Check current length
-    const currentPrompt = rebuildPrompt(workingSelections, new Set(removedCategories));
-    if (currentPrompt.length <= targetPositiveLength) {
-      break; // Within target, stop trimming
-    }
-
-    // Skip if category not present
-    const catKey = category as PromptCategory;
-    if (!workingSelections[catKey] || workingSelections[catKey]!.length === 0) {
-      continue;
-    }
-
-    // Remove this category
-    removedCategories.push(category);
-    delete workingSelections[catKey];
-  }
-
-  // Rebuild optimized prompt
-  let optimizedPositive = rebuildPrompt(workingSelections, new Set(removedCategories));
-
-  // If still over target, hard truncate with ellipsis
-  if (optimizedPositive.length > targetPositiveLength) {
-    const truncateAt = Math.max(0, targetPositiveLength - 3);
-    // Find last comma before truncation point
-    const lastComma = optimizedPositive.lastIndexOf(',', truncateAt);
-    if (lastComma > truncateAt * 0.5) {
-      optimizedPositive = optimizedPositive.slice(0, lastComma).trim();
-    } else {
-      optimizedPositive = optimizedPositive.slice(0, truncateAt).trim() + '...';
-    }
-  }
-
-  // Reassemble with negative section
-  const optimized = negative
-    ? `${optimizedPositive} --no ${negative}`
-    : optimizedPositive;
-
-  const optimizedLength = optimized.length;
+  const optimizedLength = trimmed.length;
   const status = determineLengthStatus(optimizedLength, limit);
 
   return {
     original: originalPrompt,
-    optimized,
+    optimized: trimmed,
     originalLength,
     optimizedLength,
     wasTrimmed: true,
@@ -444,4 +732,21 @@ export {
   countWords,
   determineLengthStatus,
   suggestCategories,
+  rebuildPrompt,
+  extractMidjourneyNegative,
+  applyCategoryTrimming,
+  // New v2.0.0 exports
+  escapeRegex,
+  removePhraseFromPrompt,
+  cleanupPromptFormatting,
+  extractARParameter,
 };
+
+// Re-export compression utilities
+export {
+  compressPrompt,
+  getPlatformTier,
+  analyzeCompression,
+  supportsFullShorthand,
+  supportsMidjourneySyntax,
+} from '@/lib/compress';
