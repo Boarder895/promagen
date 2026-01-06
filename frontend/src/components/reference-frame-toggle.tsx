@@ -152,12 +152,22 @@ export function ReferenceFrameToggle({
   // ============================================================================
 
   // Base classes matching Sign In button
+  // Cursor logic:
+  // - disabled/loading → cursor-not-allowed (greyed out)
+  // - locked (non-paid) → cursor-default (shows tooltip on hover, not clickable)
+  // - paid user → cursor-pointer (fully interactive)
+  const getCursorClass = () => {
+    if (disabled || isLocationLoading) return 'opacity-50 cursor-not-allowed';
+    if (isLocked) return 'cursor-default';
+    return 'cursor-pointer';
+  };
+
   const buttonClasses = `
     inline-flex items-center justify-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium shadow-sm transition-all
     focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80
     border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100
     hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400
-    ${disabled || isLocationLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+    ${getCursorClass()}
   `;
 
   // ============================================================================

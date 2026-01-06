@@ -28,21 +28,14 @@
     "playwright": "playwright test",
     "generate:flags-manifest": "ts-node scripts/generate-flags-manifest.ts",
     "generate:emoji-icons": "ts-node scripts/generate-emoji-icons.ts",
-    "api:config-report": "ts-node scripts/api-config-report.ts",
-    "api:config-dashboard": "ts-node scripts/api-config-dashboard.ts",
     "api:schedule-plan": "ts-node scripts/fly-api-worker.ts",
-    "api-config-report": "pnpm run api:config-report",
-    "api-config-dashboard": "pnpm run api-config-dashboard",
-    "api-schedule-plan": "pnpm run api:schedule-plan",
     "api:doctor": "jest --config jest.config.cjs src/lib/api/tests",
     "test:lh": "node ./scripts/run-lighthouse.cjs",
     "test:accept:all": "pnpm run test:accept && pnpm run test:lh",
     "verify:tests": "pwsh -File ./scripts/verify-test-layout.ps1",
     "pretest:ci": "pwsh -File ./scripts/verify-test-layout.ps1",
     "validate:data": "jest --config jest.config.cjs src/data/commodities/tests",
-    "check:all": "pnpm run lint && pnpm run typecheck && pnpm api:build-catalogues && pnpm api:config-report && pnpm api:doctor && pnpm run test:ci",
-    "api:split-providers": "ts-node scripts/api-split-providers.ts",
-    "api:build-catalogues": "ts-node scripts/api-build-catalogues.ts"
+    "check:all": "pnpm run lint && pnpm run typecheck && pnpm api:doctor && pnpm run test:ci"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,cjs,mjs}": [

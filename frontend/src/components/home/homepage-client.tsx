@@ -11,10 +11,8 @@
 // - Free signed-in: User's location (no choice)
 // - Paid signed-in: Toggle between user location and Greenwich
 //
-// VOTING INTEGRATION:
-// - Wires isAuthenticated to ProvidersTable for vote buttons
-// - Vote buttons enabled when user is signed in
-// - Vote data persisted via Clerk-authenticated API
+// FIXED: Location loading no longer blocks UI when auth is loading.
+// Anonymous users and failed auth both show "Greenwich Meridian" immediately.
 //
 // Authority: docs/authority/paid_tier.md §3.4, §5.2
 // Authority: docs/authority/clerk-auth.md §14
@@ -65,7 +63,6 @@ export default function HomepageClient({
 }: HomepageClientProps) {
   const {
     isAuthenticated,
-    isLoading: isAuthLoading,
     userTier,
     locationInfo,
     setReferenceFrame,
@@ -141,6 +138,17 @@ export default function HomepageClient({
     />
   );
 
+  // ============================================================================
+  // Location loading logic
+  // ============================================================================
+  // Only show "Detecting..." when authenticated AND actually detecting location
+  //   - Anonymous users → immediately shows "Greenwich Meridian"
+  //   - Auth failed/loading → immediately shows "Greenwich Meridian"
+  //   - Authenticated users detecting → shows "Detecting..."
+  //   - Authenticated users done → shows their city name
+  // ============================================================================
+  const effectiveLocationLoading = isAuthenticated && locationInfo.isLoading;
+
   return (
     <HomepageGrid
       mainLabel="Promagen home"
@@ -154,7 +162,7 @@ export default function HomepageClient({
       isAuthenticated={isAuthenticated}
       referenceFrame={locationInfo.referenceFrame}
       onReferenceFrameChange={setReferenceFrame}
-      isLocationLoading={locationInfo.isLoading || isAuthLoading}
+      isLocationLoading={effectiveLocationLoading}
       cityName={locationInfo.cityName}
     />
   );
