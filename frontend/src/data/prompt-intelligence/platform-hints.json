@@ -1,0 +1,567 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-01-07",
+  "platforms": {
+    "midjourney": {
+      "tier": 1,
+      "prefersEarlierTokens": true,
+      "prefersKeywords": true,
+      "weightSyntax": "::1.5",
+      "negativeSyntax": "--no",
+      "separateNegative": false,
+      "hints": [
+        "Midjourney weights earlier tokens more heavily",
+        "Use :: for emphasis (e.g., 'cyberpunk::1.5')",
+        "Keep prompts under 60 words for best results",
+        "Style references work exceptionally well"
+      ],
+      "strongCategories": ["style", "lighting", "atmosphere"],
+      "trimPriority": ["materials", "fidelity", "camera"]
+    },
+    "openai": {
+      "tier": 1,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "negativeSyntax": "without",
+      "separateNegative": false,
+      "hints": [
+        "DALL·E prefers natural, descriptive sentences",
+        "Avoid keyword lists; use flowing descriptions",
+        "Be specific about what you want, not just style terms",
+        "Excellent at following precise instructions"
+      ],
+      "strongCategories": ["subject", "environment", "action"],
+      "trimPriority": ["fidelity", "camera", "materials"]
+    },
+    "google-imagen": {
+      "tier": 1,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Imagen excels at photorealistic scenes",
+        "Natural language descriptions work best",
+        "Strong at faces and human subjects",
+        "Good for naturalistic scenes"
+      ],
+      "strongCategories": ["subject", "environment", "lighting"],
+      "trimPriority": ["materials", "fidelity", "atmosphere"]
+    },
+    "leonardo": {
+      "tier": 1,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "separateNegative": true,
+      "hints": [
+        "Leonardo responds well to style keywords",
+        "Use variants for rapid iteration",
+        "Strong for game art and concept art",
+        "Negative prompt field is powerful"
+      ],
+      "strongCategories": ["style", "subject", "lighting"],
+      "trimPriority": ["atmosphere", "materials", "fidelity"]
+    },
+    "flux": {
+      "tier": 1,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "separateNegative": true,
+      "hints": [
+        "Flux is fast with high quality output",
+        "Works well with both keywords and descriptions",
+        "Great for rapid prototyping",
+        "Strong photographic and artistic styles"
+      ],
+      "strongCategories": ["style", "lighting", "fidelity"],
+      "trimPriority": ["atmosphere", "materials", "action"]
+    },
+    "stability": {
+      "tier": 1,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "weightSyntax": "(term:1.3)",
+      "separateNegative": true,
+      "hints": [
+        "Stable Diffusion responds well to weighted terms",
+        "Use (term:1.1) to (term:1.5) for emphasis",
+        "Negative prompt is separate and powerful",
+        "Great for reproducible results with seeds"
+      ],
+      "strongCategories": ["style", "lighting", "fidelity"],
+      "trimPriority": ["atmosphere", "action"]
+    },
+    "adobe-firefly": {
+      "tier": 2,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Firefly is designed for commercial use",
+        "Natural language descriptions work best",
+        "Strong for brand-safe, clean compositions",
+        "Good for design-oriented outputs"
+      ],
+      "strongCategories": ["style", "composition", "colour"],
+      "trimPriority": ["atmosphere", "materials", "fidelity"]
+    },
+    "ideogram": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "negativeSyntax": "--no",
+      "separateNegative": false,
+      "hints": [
+        "Ideogram excels at text in images",
+        "Keyword-style prompts work well",
+        "Strong for logos and typography",
+        "Good poster and graphic design output"
+      ],
+      "strongCategories": ["style", "subject", "composition"],
+      "trimPriority": ["atmosphere", "materials", "fidelity"]
+    },
+    "imagine-meta": {
+      "tier": 2,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Meta's Imagine prefers conversational prompts",
+        "Good for social media content",
+        "Simple, clear descriptions work best"
+      ],
+      "strongCategories": ["subject", "style", "environment"],
+      "trimPriority": ["fidelity", "materials", "camera"]
+    },
+    "nightcafe": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "separateNegative": true,
+      "hints": [
+        "NightCafe supports multiple AI models",
+        "Keyword prompts work well",
+        "Good community and style presets",
+        "Negative prompt available"
+      ],
+      "strongCategories": ["style", "lighting", "atmosphere"],
+      "trimPriority": ["materials", "fidelity", "camera"]
+    },
+    "playground": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "separateNegative": true,
+      "hints": [
+        "Playground AI is fast and accessible",
+        "Supports negative prompts",
+        "Good for experimentation",
+        "Multiple model options available"
+      ],
+      "strongCategories": ["style", "subject", "lighting"],
+      "trimPriority": ["materials", "fidelity", "atmosphere"]
+    },
+    "novelai": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "weightSyntax": "{term}",
+      "separateNegative": true,
+      "hints": [
+        "NovelAI specializes in anime/manga styles",
+        "Use {curly braces} for emphasis",
+        "Strong for character art",
+        "Separate negative prompt field"
+      ],
+      "strongCategories": ["style", "subject", "action"],
+      "trimPriority": ["environment", "materials", "fidelity"]
+    },
+    "lexica": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "separateNegative": true,
+      "hints": [
+        "Lexica offers prompt search alongside generation",
+        "Good for finding inspiration",
+        "Keyword prompts work well"
+      ],
+      "strongCategories": ["style", "subject", "lighting"],
+      "trimPriority": ["materials", "fidelity", "atmosphere"]
+    },
+    "openart": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "separateNegative": true,
+      "hints": [
+        "OpenArt supports multiple models",
+        "Keyword-style prompts work best",
+        "Good for exploring different styles"
+      ],
+      "strongCategories": ["style", "subject", "lighting"],
+      "trimPriority": ["materials", "fidelity", "atmosphere"]
+    },
+    "dreamstudio": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "weightSyntax": "(term:1.3)",
+      "separateNegative": true,
+      "hints": [
+        "DreamStudio is Stability AI's flagship interface",
+        "Supports weighted terms like Stable Diffusion",
+        "Strong negative prompt support",
+        "Good for fine control"
+      ],
+      "strongCategories": ["style", "lighting", "fidelity"],
+      "trimPriority": ["atmosphere", "materials", "action"]
+    },
+    "getimg": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "separateNegative": true,
+      "hints": [
+        "GetImg offers multiple model options",
+        "Keyword prompts work well",
+        "Good for batch generation"
+      ],
+      "strongCategories": ["style", "subject", "lighting"],
+      "trimPriority": ["materials", "fidelity", "atmosphere"]
+    },
+    "dreamlike": {
+      "tier": 2,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "separateNegative": true,
+      "hints": [
+        "Dreamlike focuses on artistic outputs",
+        "Keyword prompts work well",
+        "Strong for dreamy, surreal styles"
+      ],
+      "strongCategories": ["style", "atmosphere", "lighting"],
+      "trimPriority": ["materials", "fidelity", "camera"]
+    },
+    "bluewillow": {
+      "tier": 3,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": true,
+      "negativeSyntax": "--no",
+      "separateNegative": false,
+      "hints": [
+        "BlueWillow has Midjourney-like syntax",
+        "Use --no for negatives",
+        "Discord-based interface"
+      ],
+      "strongCategories": ["style", "subject", "lighting"],
+      "trimPriority": ["materials", "fidelity", "atmosphere"]
+    },
+    "canva": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Canva Magic is integrated into design workflow",
+        "Simple, clear prompts work best",
+        "Good for quick design assets"
+      ],
+      "strongCategories": ["subject", "style", "composition"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "bing": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Bing Image Creator uses DALL·E",
+        "Natural language works best",
+        "Free tier has daily limits"
+      ],
+      "strongCategories": ["subject", "environment", "action"],
+      "trimPriority": ["fidelity", "materials", "camera"]
+    },
+    "microsoft-designer": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Designer is integrated with Microsoft tools",
+        "Simple prompts work well",
+        "Good for quick design work"
+      ],
+      "strongCategories": ["subject", "style", "composition"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "picsart": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Picsart is mobile-friendly",
+        "Simple prompts work best",
+        "Good for social media content"
+      ],
+      "strongCategories": ["subject", "style", "colour"],
+      "trimPriority": ["fidelity", "materials", "camera"]
+    },
+    "pixlr": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Pixlr integrates AI generation with editing",
+        "Simple prompts work best",
+        "Good for photo enhancement workflow"
+      ],
+      "strongCategories": ["subject", "style", "lighting"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "fotor": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Fotor combines editing with AI generation",
+        "Simple prompts work best",
+        "Good for quick edits and generation"
+      ],
+      "strongCategories": ["subject", "style", "lighting"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "deepai": {
+      "tier": 3,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "DeepAI offers simple API access",
+        "Basic prompts work fine",
+        "Good for experimentation"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere", "camera"]
+    },
+    "craiyon": {
+      "tier": 4,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Craiyon (formerly DALL-E mini) is free",
+        "Simple prompts work best",
+        "Good for quick, fun generations"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere", "camera"]
+    },
+    "artguru": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "ArtGuru focuses on artistic styles",
+        "Simple prompts work well"
+      ],
+      "strongCategories": ["style", "subject"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "artistly": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Artistly focuses on artistic transformations",
+        "Simple prompts work well"
+      ],
+      "strongCategories": ["style", "subject"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "artbreeder": {
+      "tier": 3,
+      "prefersKeywords": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Artbreeder specializes in blending images",
+        "Good for character and portrait creation",
+        "Uses sliders more than text prompts"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere", "camera"]
+    },
+    "hotpot": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Hotpot offers multiple AI tools",
+        "Simple prompts work well"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "jasper-art": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Jasper Art integrates with Jasper's writing tools",
+        "Natural language prompts work best",
+        "Good for marketing content"
+      ],
+      "strongCategories": ["subject", "style", "composition"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "runway": {
+      "tier": 2,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Runway excels at video and motion",
+        "Natural language works well",
+        "Strong for creative workflows"
+      ],
+      "strongCategories": ["subject", "style", "action"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "clipdrop": {
+      "tier": 2,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Clipdrop is by Stability AI",
+        "Natural language prompts work well",
+        "Great for product photography"
+      ],
+      "strongCategories": ["subject", "lighting", "composition"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "123rf": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "123RF AI integrates with stock library",
+        "Commercial-friendly outputs",
+        "Simple prompts work well"
+      ],
+      "strongCategories": ["subject", "style", "composition"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "freepik": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Freepik AI is designed for designers",
+        "Simple prompts work well",
+        "Good for graphic design assets"
+      ],
+      "strongCategories": ["style", "subject", "composition"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "simplified": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Simplified combines AI with design tools",
+        "Simple prompts work best",
+        "Good for marketing content"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "visme": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Visme integrates AI with presentation design",
+        "Simple prompts work well",
+        "Good for business graphics"
+      ],
+      "strongCategories": ["subject", "style", "composition"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "vistacreate": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "VistaCreate has built-in AI tools",
+        "Simple prompts work well",
+        "Good for social media content"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "remove-bg": {
+      "tier": 4,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Remove.bg specializes in background removal",
+        "Not a text-to-image generator",
+        "Use for editing workflows"
+      ],
+      "strongCategories": ["subject"],
+      "trimPriority": ["all"]
+    },
+    "photoleap": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "Photoleap is mobile-first",
+        "Simple prompts work best",
+        "Good for quick mobile edits"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "picwish": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "PicWish focuses on photo enhancement",
+        "Simple prompts work well"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    },
+    "myedit": {
+      "tier": 3,
+      "prefersNaturalLanguage": true,
+      "prefersEarlierTokens": false,
+      "separateNegative": false,
+      "hints": [
+        "MyEdit combines editing with AI generation",
+        "Simple prompts work well"
+      ],
+      "strongCategories": ["subject", "style"],
+      "trimPriority": ["fidelity", "materials", "atmosphere"]
+    }
+  }
+}

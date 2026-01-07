@@ -1,0 +1,432 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-01-07",
+  "families": {
+    "sci-fi": {
+      "displayName": "Science Fiction",
+      "description": "Futuristic, technological, speculative worlds",
+      "members": [
+        "cyberpunk",
+        "futuristic",
+        "neon",
+        "holographic",
+        "chrome",
+        "dystopian",
+        "space station",
+        "alien world",
+        "robot android",
+        "astronaut in space suit",
+        "spaceship",
+        "digital art",
+        "glitch art"
+      ],
+      "related": ["cyberpunk", "neon", "tech", "urban"],
+      "opposes": ["rustic", "vintage", "pastoral", "organic", "medieval"],
+      "mood": "intense",
+      "suggestedColours": ["neon pink", "electric blue", "chrome", "holographic", "cyan"],
+      "suggestedLighting": ["neon glow", "harsh artificial", "rim lighting", "volumetric"],
+      "suggestedAtmosphere": ["foggy", "hazy", "particle effects", "rain"]
+    },
+    "cyberpunk": {
+      "displayName": "Cyberpunk",
+      "description": "Neon-lit dystopian urban futures",
+      "members": [
+        "cyberpunk",
+        "cyberpunk hacker",
+        "neon",
+        "neon lights",
+        "neon glow",
+        "dystopian",
+        "rain",
+        "night city",
+        "holographic"
+      ],
+      "related": ["sci-fi", "neon", "urban", "tech", "dark-moody"],
+      "opposes": ["vintage", "pastoral", "rustic", "bright", "cheerful"],
+      "mood": "intense",
+      "suggestedColours": ["neon pink", "electric blue", "magenta", "cyan", "purple"],
+      "suggestedLighting": ["neon glow", "rim lighting", "dramatic shadows"],
+      "suggestedAtmosphere": ["rain", "foggy", "smog", "atmospheric"]
+    },
+    "retro": {
+      "displayName": "Retro / Vintage",
+      "description": "Nostalgic, classic, historical aesthetics",
+      "members": [
+        "vintage",
+        "retro",
+        "art deco",
+        "50s",
+        "60s",
+        "70s",
+        "80s",
+        "film grain",
+        "sepia",
+        "polaroid",
+        "Victorian",
+        "Victorian detective",
+        "antique"
+      ],
+      "related": ["nostalgic", "warm", "analog", "classic"],
+      "opposes": ["cyberpunk", "futuristic", "minimalist", "digital", "neon"],
+      "mood": "calm",
+      "suggestedColours": ["sepia", "warm tones", "muted", "faded", "cream"],
+      "suggestedLighting": ["soft daylight", "tungsten", "golden hour", "warm"],
+      "suggestedAtmosphere": ["nostalgic", "dreamy", "soft focus"]
+    },
+    "dark-moody": {
+      "displayName": "Dark & Moody",
+      "description": "Dramatic, atmospheric, intense imagery",
+      "members": [
+        "noir",
+        "gothic",
+        "dramatic",
+        "cinematic",
+        "moody",
+        "dark fantasy",
+        "horror",
+        "vampire",
+        "ghost",
+        "demon creature",
+        "skeleton warrior"
+      ],
+      "related": ["cinematic", "dramatic", "atmospheric", "gothic"],
+      "opposes": ["cheerful", "bright", "minimal", "cute", "pastel"],
+      "mood": "intense",
+      "suggestedColours": ["desaturated", "cold", "high contrast", "dark", "muted"],
+      "suggestedLighting": ["dramatic shadows", "low key", "rim lighting", "chiaroscuro"],
+      "suggestedAtmosphere": ["foggy", "misty", "stormy", "ominous"]
+    },
+    "organic": {
+      "displayName": "Organic / Natural",
+      "description": "Nature-inspired, soft, living elements",
+      "members": [
+        "botanical",
+        "floral",
+        "earthy",
+        "natural",
+        "pastoral",
+        "forest scene",
+        "flower bouquet",
+        "single rose",
+        "tree of life",
+        "butterfly",
+        "garden"
+      ],
+      "related": ["soft", "natural", "warm", "pastoral"],
+      "opposes": ["cyberpunk", "industrial", "chrome", "neon", "digital"],
+      "mood": "calm",
+      "suggestedColours": ["earth tones", "green", "warm brown", "natural"],
+      "suggestedLighting": ["natural daylight", "dappled light", "soft", "golden hour"],
+      "suggestedAtmosphere": ["peaceful", "serene", "fresh", "morning mist"]
+    },
+    "fantasy": {
+      "displayName": "Fantasy",
+      "description": "Magical, mythical, otherworldly",
+      "members": [
+        "fantasy",
+        "magical",
+        "mythical",
+        "dragon",
+        "unicorn",
+        "phoenix rising",
+        "griffin",
+        "centaur",
+        "fairy",
+        "elf archer",
+        "wizard",
+        "witch",
+        "mermaid",
+        "castle",
+        "enchanted forest"
+      ],
+      "related": ["magical", "epic", "dramatic", "medieval"],
+      "opposes": ["realistic", "documentary", "minimal", "corporate"],
+      "mood": "dramatic",
+      "suggestedColours": ["rich", "saturated", "jewel tones", "mystical"],
+      "suggestedLighting": ["magical glow", "ethereal", "dramatic", "volumetric"],
+      "suggestedAtmosphere": ["mystical", "enchanted", "ethereal", "sparkles"]
+    },
+    "minimal": {
+      "displayName": "Minimal / Clean",
+      "description": "Simple, clean, uncluttered aesthetics",
+      "members": [
+        "minimalist",
+        "minimal",
+        "clean",
+        "simple",
+        "white space",
+        "geometric",
+        "modern",
+        "Scandinavian"
+      ],
+      "related": ["modern", "clean", "simple", "geometric"],
+      "opposes": ["baroque", "ornate", "maximalist", "cluttered", "busy"],
+      "mood": "calm",
+      "suggestedColours": ["monochromatic", "neutral", "white", "muted"],
+      "suggestedLighting": ["soft", "even", "diffused", "natural"],
+      "suggestedAtmosphere": ["clean", "airy", "open", "serene"]
+    },
+    "cinematic": {
+      "displayName": "Cinematic",
+      "description": "Movie-like, dramatic, storytelling imagery",
+      "members": [
+        "cinematic",
+        "film still",
+        "movie scene",
+        "dramatic lighting",
+        "widescreen",
+        "anamorphic",
+        "blockbuster",
+        "epic"
+      ],
+      "related": ["dramatic", "dark-moody", "epic", "storytelling"],
+      "opposes": ["flat", "amateur", "snapshot"],
+      "mood": "dramatic",
+      "suggestedColours": ["cinematic grade", "teal and orange", "dramatic"],
+      "suggestedLighting": ["dramatic", "three-point", "volumetric", "rim lighting"],
+      "suggestedAtmosphere": ["atmospheric", "epic", "moody"]
+    },
+    "portrait": {
+      "displayName": "Portrait",
+      "description": "People-focused, character studies",
+      "members": [
+        "portrait",
+        "headshot",
+        "close-up",
+        "portrait of a woman",
+        "portrait of a man",
+        "elderly person",
+        "character study",
+        "fashion portrait"
+      ],
+      "related": ["fashion", "beauty", "character"],
+      "opposes": ["landscape", "architecture", "abstract"],
+      "mood": "neutral",
+      "suggestedColours": ["skin tones", "complementary", "warm"],
+      "suggestedLighting": ["portrait lighting", "Rembrandt", "soft", "beauty dish"],
+      "suggestedAtmosphere": ["intimate", "focused", "clean background"]
+    },
+    "landscape": {
+      "displayName": "Landscape",
+      "description": "Scenic vistas, nature, environments",
+      "members": [
+        "landscape",
+        "mountain landscape",
+        "ocean view",
+        "desert landscape",
+        "tropical beach",
+        "waterfall",
+        "forest scene",
+        "cityscape",
+        "panorama"
+      ],
+      "related": ["nature", "scenic", "travel", "environment"],
+      "opposes": ["portrait", "macro", "close-up", "interior"],
+      "mood": "calm",
+      "suggestedColours": ["natural", "earth tones", "sky blue", "vibrant"],
+      "suggestedLighting": ["golden hour", "blue hour", "natural", "dramatic sky"],
+      "suggestedAtmosphere": ["vast", "open", "serene", "epic"]
+    },
+    "anime": {
+      "displayName": "Anime / Manga",
+      "description": "Japanese animation and comic art styles",
+      "members": [
+        "anime",
+        "manga",
+        "Studio Ghibli",
+        "chibi",
+        "kawaii",
+        "cel shading",
+        "Japanese animation"
+      ],
+      "related": ["illustration", "cartoon", "japanese"],
+      "opposes": ["photorealistic", "documentary", "realistic"],
+      "mood": "joyful",
+      "suggestedColours": ["vibrant", "saturated", "pastel", "bold"],
+      "suggestedLighting": ["anime lighting", "cel shaded", "soft gradients"],
+      "suggestedAtmosphere": ["dynamic", "expressive", "stylized"]
+    },
+    "watercolour": {
+      "displayName": "Watercolour",
+      "description": "Soft, flowing, painterly watercolour aesthetics",
+      "members": [
+        "watercolour",
+        "watercolor",
+        "wet on wet",
+        "soft edges",
+        "bleeding colours",
+        "wash",
+        "transparent layers"
+      ],
+      "related": ["painterly", "soft", "artistic", "traditional"],
+      "opposes": ["digital", "sharp", "photorealistic", "harsh"],
+      "mood": "calm",
+      "suggestedColours": ["soft", "pastel", "transparent", "bleeding"],
+      "suggestedLighting": ["soft", "diffused", "natural"],
+      "suggestedAtmosphere": ["dreamy", "soft", "ethereal", "gentle"]
+    },
+    "oil-painting": {
+      "displayName": "Oil Painting",
+      "description": "Classical oil painting techniques and aesthetics",
+      "members": [
+        "oil painting",
+        "impasto",
+        "brushstrokes",
+        "classical painting",
+        "Renaissance",
+        "Baroque",
+        "Old Masters"
+      ],
+      "related": ["classical", "traditional", "fine art", "painterly"],
+      "opposes": ["digital", "flat", "minimalist", "vector"],
+      "mood": "dramatic",
+      "suggestedColours": ["rich", "deep", "classical", "earth tones"],
+      "suggestedLighting": ["chiaroscuro", "Rembrandt", "dramatic", "classical"],
+      "suggestedAtmosphere": ["classical", "timeless", "refined"]
+    },
+    "photorealistic": {
+      "displayName": "Photorealistic",
+      "description": "Hyper-realistic, photograph-like quality",
+      "members": [
+        "photorealistic",
+        "hyperrealistic",
+        "realistic",
+        "photograph",
+        "DSLR",
+        "8K",
+        "RAW photo",
+        "unedited"
+      ],
+      "related": ["realistic", "photography", "detailed"],
+      "opposes": ["abstract", "stylized", "cartoon", "anime"],
+      "mood": "neutral",
+      "suggestedColours": ["natural", "realistic", "accurate"],
+      "suggestedLighting": ["natural", "studio", "realistic"],
+      "suggestedAtmosphere": ["realistic", "natural", "authentic"]
+    },
+    "abstract": {
+      "displayName": "Abstract",
+      "description": "Non-representational, conceptual art",
+      "members": [
+        "abstract",
+        "non-representational",
+        "geometric abstract",
+        "colour field",
+        "expressionist",
+        "Kandinsky",
+        "Mondrian"
+      ],
+      "related": ["modern art", "conceptual", "experimental"],
+      "opposes": ["realistic", "photorealistic", "representational"],
+      "mood": "neutral",
+      "suggestedColours": ["bold", "contrasting", "vibrant", "experimental"],
+      "suggestedLighting": ["flat", "even", "artistic"],
+      "suggestedAtmosphere": ["experimental", "dynamic", "expressive"]
+    },
+    "horror": {
+      "displayName": "Horror",
+      "description": "Dark, scary, unsettling imagery",
+      "members": [
+        "horror",
+        "scary",
+        "creepy",
+        "nightmare",
+        "dark",
+        "zombie",
+        "ghost",
+        "demon creature",
+        "vampire",
+        "werewolf",
+        "haunted"
+      ],
+      "related": ["dark-moody", "gothic", "supernatural"],
+      "opposes": ["cheerful", "cute", "bright", "pastel", "kawaii"],
+      "mood": "eerie",
+      "suggestedColours": ["desaturated", "dark", "sickly green", "blood red"],
+      "suggestedLighting": ["low key", "harsh shadows", "flickering", "moonlight"],
+      "suggestedAtmosphere": ["foggy", "ominous", "decaying", "oppressive"]
+    },
+    "steampunk": {
+      "displayName": "Steampunk",
+      "description": "Victorian-era meets steam-powered technology",
+      "members": [
+        "steampunk",
+        "Victorian",
+        "brass",
+        "gears",
+        "clockwork",
+        "airship",
+        "goggles",
+        "industrial Victorian"
+      ],
+      "related": ["retro", "industrial", "mechanical", "victorian"],
+      "opposes": ["digital", "minimal", "futuristic", "clean"],
+      "mood": "intense",
+      "suggestedColours": ["brass", "copper", "brown", "sepia", "bronze"],
+      "suggestedLighting": ["warm", "gas lamp", "industrial", "dramatic"],
+      "suggestedAtmosphere": ["smoky", "industrial", "mechanical", "foggy"]
+    },
+    "ethereal": {
+      "displayName": "Ethereal / Dreamy",
+      "description": "Soft, dreamlike, otherworldly beauty",
+      "members": [
+        "ethereal",
+        "dreamy",
+        "soft focus",
+        "heavenly",
+        "angelic",
+        "angel with wings",
+        "fairy",
+        "soft glow",
+        "luminous"
+      ],
+      "related": ["soft", "fantasy", "romantic", "magical"],
+      "opposes": ["harsh", "gritty", "dark", "industrial"],
+      "mood": "calm",
+      "suggestedColours": ["soft", "pastel", "white", "light", "iridescent"],
+      "suggestedLighting": ["soft glow", "backlit", "ethereal", "diffused"],
+      "suggestedAtmosphere": ["dreamy", "misty", "heavenly", "soft particles"]
+    },
+    "urban": {
+      "displayName": "Urban / Street",
+      "description": "City life, street scenes, metropolitan",
+      "members": [
+        "urban",
+        "street",
+        "city",
+        "cityscape",
+        "metropolitan",
+        "graffiti",
+        "street art",
+        "night city"
+      ],
+      "related": ["modern", "gritty", "documentary", "contemporary"],
+      "opposes": ["rural", "pastoral", "nature", "fantasy"],
+      "mood": "intense",
+      "suggestedColours": ["concrete grey", "neon", "graffiti colours", "desaturated"],
+      "suggestedLighting": ["street lights", "neon signs", "harsh", "mixed"],
+      "suggestedAtmosphere": ["busy", "gritty", "atmospheric", "rain"]
+    },
+    "medieval": {
+      "displayName": "Medieval",
+      "description": "Middle Ages, castles, knights, feudal era",
+      "members": [
+        "medieval",
+        "Middle Ages",
+        "castle",
+        "knight in armour",
+        "medieval king",
+        "queen on throne",
+        "samurai warrior",
+        "viking warrior",
+        "gladiator"
+      ],
+      "related": ["fantasy", "historical", "epic", "dramatic"],
+      "opposes": ["modern", "futuristic", "digital", "minimal"],
+      "mood": "dramatic",
+      "suggestedColours": ["rich", "earth tones", "gold", "deep red", "forest green"],
+      "suggestedLighting": ["torch light", "candlelight", "dramatic", "natural"],
+      "suggestedAtmosphere": ["epic", "historic", "atmospheric", "smoky"]
+    }
+  }
+}

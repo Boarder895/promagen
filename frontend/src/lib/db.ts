@@ -64,9 +64,13 @@ export function hasDatabaseConfigured(): boolean {
 /**
  * Small helper for running a function inside a transaction.
  * Uses postgres `begin()` which provides a scoped `tx` client.
+ *
+ * Note: The transaction client from postgres.begin() is typed as TransactionSql
+ * but behaves identically to Sql for query purposes. We cast to SqlClient
+ * for ergonomics since callers use the same tagged template syntax.
  */
 export async function withTx<T>(fn: (tx: SqlClient) => T): Promise<TxResult<T>> {
-  return db().begin((tx) => fn(tx));
+  return db().begin((tx) => fn(tx as unknown as SqlClient));
 }
 
 /**

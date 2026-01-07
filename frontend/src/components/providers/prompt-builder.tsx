@@ -82,6 +82,22 @@ import type { PromptCategory, PromptSelections, CategoryState } from '@/types/pr
 import { CATEGORY_ORDER } from '@/types/prompt-builder';
 import { VALID_ASPECT_RATIOS } from '@/types/composition';
 
+// Prompt Intelligence imports
+import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
+import {
+  DNABar,
+  ConflictWarning,
+  SuggestionChips,
+  HealthBadge,
+  MarketMoodToggle,
+} from '@/components/prompt-intelligence';
+import type { SuggestedOption, ScoredOption, MarketState } from '@/lib/prompt-intelligence/types';
+import { reorderByRelevance, generateCoherentPrompt } from '@/lib/prompt-intelligence';
+
+// Save to Library imports
+import { useSavedPrompts } from '@/hooks/use-saved-prompts';
+import { SavePromptModal, type SavePromptData } from '@/components/prompts/save-prompt-modal';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -101,25 +117,6 @@ export interface PromptBuilderProps {
   onDone?: () => void;
 }
 
-// Categories to randomise - ALL categories now (except we handle negative specially)
-const CORE_CATEGORIES: PromptCategory[] = [
-  'subject',
-  'action',
-  'style',
-  'environment',
-  'lighting',
-  'camera',
-  'colour',
-];
-
-// Secondary categories (always included in randomise now)
-const SECONDARY_CATEGORIES: PromptCategory[] = [
-  'composition',
-  'atmosphere',
-  'materials',
-  'fidelity',
-];
-
 // Platforms that use --no inline for negatives
 const MIDJOURNEY_FAMILY = ['midjourney', 'bluewillow', 'nijijourney'];
 
@@ -133,17 +130,10 @@ const createInitialState = (): Record<PromptCategory, CategoryState> => {
   return state as Record<PromptCategory, CategoryState>;
 };
 
-// Helper: pick random item from array
+// Helper: pick random item from array (used for aspect ratio)
 const pickRandom = <T,>(arr: T[]): T | undefined => {
   if (arr.length === 0) return undefined;
   return arr[Math.floor(Math.random() * arr.length)];
-};
-
-// Helper: pick multiple random items from array (no duplicates)
-const pickMultipleRandom = <T,>(arr: T[], count: number): T[] => {
-  if (arr.length === 0 || count <= 0) return [];
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, arr.length));
 };
 
 // ============================================================================
@@ -434,10 +424,171 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
     useState<Record<PromptCategory, CategoryState>>(createInitialState());
   const [copied, setCopied] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [savedConfirmation, setSavedConfirmation] = useState(false);
+  const [isMarketMoodEnabled, setIsMarketMoodEnabled] = useState(false);
+
+  // Save to Library hook
+  const { savePrompt } = useSavedPrompts();
+
+  // ============================================================================
+  // Market Mood State (placeholder - will connect to live data)
+  // ============================================================================
+
+  // Generate a demo market state based on current time for preview
+  // In production, this would come from useMarketMood hook with live FX data
+  const demoMarketState: MarketState | null = useMemo(() => {
+    if (!isMarketMoodEnabled) return null;
+    
+    // Generate a deterministic but time-varying market state for demo
+    const hour = new Date().getHours();
+    const states: Array<{ type: MarketState['type']; intensity: number }> = [
+      { type: 'low_volatility', intensity: 0.3 },
+      { type: 'high_volatility', intensity: 0.7 },
+      { type: 'gold_rising', intensity: 0.5 },
+      { type: 'crypto_pumping', intensity: 0.6 },
+      { type: 'currency_strength_usd', intensity: 0.4 },
+      { type: 'market_opening', intensity: 0.5 },
+    ];
+    const stateIndex = hour % states.length;
+    const selected = states[stateIndex];
+    
+    // Safety check for undefined
+    if (!selected) {
+      return {
+        type: 'neutral' as const,
+        intensity: 0.3,
+        isMarketOpen: false,
+      };
+    }
+    
+    // Market is "open" during business hours (8-18)
+    const isMarketOpen = hour >= 8 && hour < 18;
+    
+    return {
+      type: selected.type,
+      intensity: selected.intensity,
+      isMarketOpen,
+    };
+  }, [isMarketMoodEnabled]);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // ============================================================================
+  // Load Explore Terms from SessionStorage
+  // ============================================================================
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    try {
+      const storedTerms = sessionStorage.getItem('promagen_explore_terms');
+      if (storedTerms) {
+        const terms: string[] = JSON.parse(storedTerms);
+        
+        if (Array.isArray(terms) && terms.length > 0) {
+          // Map terms to appropriate categories based on what they likely are
+          // From explore: suggestedColours, suggestedLighting, suggestedAtmosphere
+          setCategoryState((prev) => {
+            const newState = { ...prev };
+            
+            // Add first term to colour (usually a colour suggestion)
+            if (terms[0] && prev.colour) {
+              const limit = categoryLimits.colour ?? 1;
+              const current = [...prev.colour.selected];
+              if (!current.includes(terms[0]) && current.length < limit) {
+                newState.colour = { ...prev.colour, selected: [...current, terms[0]] };
+              }
+            }
+            
+            // Add second term to lighting (usually a lighting suggestion)
+            if (terms[1] && prev.lighting) {
+              const limit = categoryLimits.lighting ?? 1;
+              const current = [...prev.lighting.selected];
+              if (!current.includes(terms[1]) && current.length < limit) {
+                newState.lighting = { ...prev.lighting, selected: [...current, terms[1]] };
+              }
+            }
+            
+            // Add third term to atmosphere (usually an atmosphere suggestion)
+            if (terms[2] && prev.atmosphere) {
+              const limit = categoryLimits.atmosphere ?? 1;
+              const current = [...prev.atmosphere.selected];
+              if (!current.includes(terms[2]) && current.length < limit) {
+                newState.atmosphere = { ...prev.atmosphere, selected: [...current, terms[2]] };
+              }
+            }
+            
+            return newState;
+          });
+        }
+        
+        // Clear after reading so it doesn't persist across navigations
+        sessionStorage.removeItem('promagen_explore_terms');
+      }
+    } catch {
+      // Silently ignore parse errors
+    }
+  }, [isMounted, categoryLimits]);
+
+  // ============================================================================
+  // Load Saved Prompt from Library (SessionStorage)
+  // ============================================================================
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    try {
+      const storedPrompt = sessionStorage.getItem('promagen_load_prompt');
+      if (storedPrompt) {
+        const prompt = JSON.parse(storedPrompt) as {
+          selections?: Record<PromptCategory, string[]>;
+          customValues?: Record<PromptCategory, string>;
+        };
+        
+        if (prompt.selections || prompt.customValues) {
+          setCategoryState((prev) => {
+            const newState = { ...prev };
+            
+            // Load selections
+            if (prompt.selections) {
+              for (const [cat, selected] of Object.entries(prompt.selections)) {
+                const category = cat as PromptCategory;
+                if (newState[category]) {
+                  newState[category] = {
+                    ...newState[category],
+                    selected: selected || [],
+                  };
+                }
+              }
+            }
+            
+            // Load custom values
+            if (prompt.customValues) {
+              for (const [cat, value] of Object.entries(prompt.customValues)) {
+                const category = cat as PromptCategory;
+                if (newState[category]) {
+                  newState[category] = {
+                    ...newState[category],
+                    customValue: value || '',
+                  };
+                }
+              }
+            }
+            
+            return newState;
+          });
+        }
+        
+        // Clear after reading
+        sessionStorage.removeItem('promagen_load_prompt');
+      }
+    } catch {
+      // Silently ignore parse errors
+    }
+  }, [isMounted]);
 
   // ============================================================================
   // Auto-Trim Effect (Silent Platform Switch)
@@ -538,6 +689,115 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
 
   const optimizedResult = useMemo(() => getOptimizedPrompt(), [getOptimizedPrompt]);
 
+  // ============================================================================
+  // Prompt Intelligence Hook
+  // ============================================================================
+
+  // Build negatives array from category state
+  const negativesArray = useMemo(() => {
+    const negState = categoryState['negative'];
+    const arr = [...(negState?.selected ?? [])];
+    if (negState?.customValue?.trim()) {
+      arr.push(negState.customValue.trim());
+    }
+    return arr;
+  }, [categoryState]);
+
+  // Get prompt analysis (conflicts, DNA, suggestions, health)
+  const {
+    analysis: promptAnalysis,
+    healthScore,
+    hasHardConflicts,
+    conflictCount,
+  } = usePromptAnalysis(
+    {
+      subject: categoryState['subject']?.customValue ?? '',
+      selections,
+      negatives: negativesArray,
+      platformId,
+    },
+    {
+      enabled: hasContent,
+      debounceMs: 200,
+    }
+  );
+
+  // Handler for suggestion chip clicks
+  const handleSuggestionClick = useCallback((suggestion: SuggestedOption) => {
+    const category = suggestion.category;
+    setCategoryState((prev) => {
+      const currentSelected = prev[category]?.selected ?? [];
+      const maxAllowed = categoryLimits[category] ?? 1;
+      
+      // Don't add if already selected or at max
+      if (currentSelected.includes(suggestion.option)) return prev;
+      if (currentSelected.length >= maxAllowed) return prev;
+      
+      return {
+        ...prev,
+        [category]: {
+          ...prev[category],
+          selected: [...currentSelected, suggestion.option],
+        },
+      };
+    });
+  }, [categoryLimits]);
+
+  // Compute top suggestions from analysis
+  const topSuggestions = useMemo(() => {
+    if (!promptAnalysis?.suggestions?.suggestions) return [];
+    
+    const all: SuggestedOption[] = [];
+    for (const categorySuggestions of Object.values(promptAnalysis.suggestions.suggestions)) {
+      if (categorySuggestions) {
+        all.push(...categorySuggestions);
+      }
+    }
+    
+    // Sort by score descending and take top 6
+    all.sort((a, b) => b.score - a.score);
+    return all.slice(0, 6);
+  }, [promptAnalysis]);
+
+  // Compute reordered options for all categories (smart dropdown ordering)
+  const reorderedOptionsMap = useMemo(() => {
+    const map = new Map<PromptCategory, ScoredOption[]>();
+    
+    // Only reorder if there's content (context to base ordering on)
+    if (!hasContent) return map;
+    
+    const categories = getAllCategories();
+    for (const category of categories) {
+      if (category === 'negative') continue; // Skip negative, doesn't benefit from reorder
+      
+      const config = getCategoryConfig(category);
+      if (!config || config.options.length === 0) continue;
+      
+      // Reorder options based on current selections
+      const scoredOptions = reorderByRelevance(
+        config.options,
+        category,
+        selections,
+        false, // marketMoodEnabled - could be connected later
+        null   // marketState
+      );
+      
+      map.set(category, scoredOptions);
+    }
+    
+    return map;
+  }, [hasContent, selections]);
+
+  // Helper to get options for a category (reordered if available)
+  const getOptionsForCategory = useCallback((category: PromptCategory, originalOptions: string[]): string[] => {
+    const scored = reorderedOptionsMap.get(category);
+    if (scored && scored.length > 0) {
+      // Return just the option strings, already sorted by relevance
+      return scored.map(s => s.option);
+    }
+    return originalOptions;
+  }, [reorderedOptionsMap]);
+
   // Computed: did optimization change the prompt? (compression OR trimming)
   const wasOptimized = optimizedResult.originalLength !== optimizedResult.optimizedLength;
 
@@ -581,49 +841,36 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
   const handleRandomise = useCallback(() => {
     if (isLocked) return;
 
+    // Get user's typed subject if present (to preserve it)
+    const userSubject = categoryState.subject?.customValue?.trim() || undefined;
+
+    // Generate coherent prompt using style families
+    const result = generateCoherentPrompt({
+      preserveSubject: userSubject,
+      categoryLimits,
+    });
+
+    // Build new state from result
     const newState = createInitialState();
-
-    for (const category of CORE_CATEGORIES) {
-      const config = getCategoryConfig(category);
-      if (config && config.options.length > 0) {
-        const validOptions = config.options.filter((opt) => opt.trim() !== '');
-        const randomOption = pickRandom(validOptions);
-        if (randomOption) {
-          newState[category] = { selected: [randomOption], customValue: '' };
-        }
-      }
-    }
-
-    for (const category of SECONDARY_CATEGORIES) {
-      const config = getCategoryConfig(category);
-      if (config && config.options.length > 0) {
-        const validOptions = config.options.filter((opt) => opt.trim() !== '');
-        const randomOption = pickRandom(validOptions);
-        if (randomOption) {
-          newState[category] = { selected: [randomOption], customValue: '' };
-        }
-      }
-    }
-
-    const negativeConfig = getCategoryConfig('negative');
-    if (negativeConfig && negativeConfig.options.length > 0) {
-      const validNegatives = negativeConfig.options.filter((opt) => opt.trim() !== '');
-      const count = Math.floor(Math.random() * 2) + 2;
-      const randomNegatives = pickMultipleRandom(validNegatives, count);
-      if (randomNegatives.length > 0) {
-        newState['negative'] = { selected: randomNegatives, customValue: '' };
-      }
+    
+    for (const [cat, selected] of Object.entries(result.selections)) {
+      const category = cat as PromptCategory;
+      newState[category] = {
+        selected: selected || [],
+        customValue: result.customValues[category] || '',
+      };
     }
 
     setCategoryState(newState);
 
+    // Random aspect ratio (50% chance)
     if (Math.random() > 0.5) {
       const randomAR = pickRandom([...VALID_ASPECT_RATIOS]);
       if (randomAR) setAspectRatio(randomAR);
     } else {
       setAspectRatio(null);
     }
-  }, [isLocked, setAspectRatio]);
+  }, [isLocked, setAspectRatio, categoryState.subject?.customValue, categoryLimits]);
 
   const handleClear = useCallback(() => {
     if (isLocked) return;
@@ -654,6 +901,85 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
   const handleDone = useCallback(() => {
     onDone?.();
   }, [onDone]);
+
+  // Handle save to library
+  const handleSavePrompt = useCallback((data: SavePromptData) => {
+    if (!hasContent) return;
+
+    // Get analysis data for the saved prompt
+    const coherenceScore = promptAnalysis?.dna?.coherenceScore ?? 75;
+    const dominantFamily = promptAnalysis?.dna?.dominantFamily ?? null;
+    const dominantMood = promptAnalysis?.dna?.dominantMood ?? 'neutral';
+    
+    // Extract families from selections
+    const families: string[] = [];
+    if (dominantFamily) families.push(dominantFamily);
+
+    // Build custom values
+    const customValues: Partial<Record<PromptCategory, string>> = {};
+    for (const [cat, state] of Object.entries(categoryState)) {
+      if (state.customValue.trim()) {
+        customValues[cat as PromptCategory] = state.customValue.trim();
+      }
+    }
+
+    const result = savePrompt({
+      name: data.name,
+      platformId,
+      platformName: provider.name,
+      positivePrompt: optimizedResult.optimized,
+      negativePrompt: negativesArray.length > 0 ? negativesArray.join(', ') : undefined,
+      selections,
+      customValues,
+      families,
+      mood: dominantMood as 'calm' | 'intense' | 'neutral',
+      coherenceScore,
+      characterCount: optimizedResult.optimizedLength,
+      notes: data.notes,
+      tags: data.tags,
+    });
+
+    if (result) {
+      setShowSaveModal(false);
+      setSavedConfirmation(true);
+      setTimeout(() => setSavedConfirmation(false), 2000);
+    }
+  }, [
+    hasContent, 
+    promptAnalysis, 
+    categoryState, 
+    savePrompt, 
+    platformId, 
+    provider.name, 
+    optimizedResult, 
+    negativesArray, 
+    selections
+  ]);
+
+  // Generate suggested name from selections
+  const suggestedSaveName = useMemo(() => {
+    const parts: string[] = [];
+    
+    // Add subject if present
+    const subject = categoryState.subject?.customValue?.trim();
+    if (subject && subject.length < 30) {
+      parts.push(subject);
+    }
+    
+    // Add first style
+    const style = categoryState.style?.selected[0];
+    if (style) parts.push(style);
+    
+    // Add first atmosphere
+    const atmosphere = categoryState.atmosphere?.selected[0];
+    if (atmosphere && parts.length < 2) parts.push(atmosphere);
+    
+    if (parts.length > 0) {
+      return parts.join(' · ');
+    }
+    
+    return '';
+  }, [categoryState]);
 
   // ============================================================================
   // Render
@@ -708,10 +1034,45 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
                 analysis={hasContent ? analysis : null}
                 compact
               />
+
+              {/* Divider */}
+              <span className="text-slate-600 hidden sm:inline" aria-hidden="true">
+                │
+              </span>
+
+              {/* Market Mood Toggle */}
+              <MarketMoodToggle
+                isEnabled={isMarketMoodEnabled}
+                onToggle={setIsMarketMoodEnabled}
+                marketState={demoMarketState}
+                disabled={isLocked}
+                compact
+              />
             </div>
 
-            {/* Right side: Usage counter */}
+            {/* Right side: Intelligence badges + Usage counter */}
             <div className="flex items-center gap-3">
+              {/* Prompt Intelligence indicators */}
+              {hasContent && promptAnalysis && (
+                <div className="flex items-center gap-2">
+                  {/* Conflict warning */}
+                  {conflictCount > 0 && (
+                    <ConflictWarning
+                      conflicts={promptAnalysis.conflicts.conflicts}
+                      hasHardConflicts={hasHardConflicts}
+                      variant="badge"
+                    />
+                  )}
+                  {/* Health badge */}
+                  <HealthBadge
+                    score={healthScore}
+                    hasConflicts={conflictCount > 0}
+                    hasHardConflicts={hasHardConflicts}
+                    variant="score"
+                  />
+                </div>
+              )}
+              
               {isMounted && !isAuthenticated && anonymousUsage && (
                 <AnonymousCounter count={anonymousUsage.count} limit={anonymousUsage.limit} />
               )}
@@ -783,7 +1144,7 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
                     label={config.label}
                     description={undefined}
                     tooltipGuidance={dynamicTooltip}
-                    options={config.options}
+                    options={getOptionsForCategory(category, config.options)}
                     selected={state.selected}
                     customValue={state.customValue}
                     onSelectChange={(selected) => handleSelectChange(category, selected)}
@@ -798,6 +1159,19 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
               );
             })}
           </div>
+
+          {/* Prompt Intelligence Suggestions */}
+          {hasContent && topSuggestions.length > 0 && (
+            <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 px-3 py-2">
+              <SuggestionChips
+                suggestions={topSuggestions}
+                onSelect={handleSuggestionClick}
+                maxChips={6}
+                showScore
+                size="sm"
+              />
+            </div>
+          )}
 
           {/* Aspect Ratio Selector - 13th row */}
           <div className="border-t border-slate-800/50 pt-4">
@@ -831,7 +1205,18 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
           <div className="flex flex-col gap-2 mt-2">
             {/* Header row: "Assembled prompt" + char count + Clear all */}
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-300">Assembled prompt</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-medium text-slate-300">Assembled prompt</span>
+                {/* DNA Bar - shows category fill status */}
+                {hasContent && promptAnalysis && (
+                  <DNABar
+                    dna={promptAnalysis.dna}
+                    showCoherence
+                    showTooltips
+                    size="sm"
+                  />
+                )}
+              </div>
               <div className="flex items-center gap-3">
                 {/* Char count inline */}
                 {hasContent && (
@@ -1010,6 +1395,36 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
             Randomise
           </button>
 
+          {/* Save to Library button */}
+          <button
+            type="button"
+            onClick={() => setShowSaveModal(true)}
+            disabled={!hasContent || isLocked}
+            className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-emerald-400/80 ${
+              hasContent && !isLocked
+                ? savedConfirmation
+                  ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300'
+                  : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400'
+                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
+            }`}
+          >
+            {savedConfirmation ? (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Saved!
+              </>
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                Save
+              </>
+            )}
+          </button>
+
           {/* Done button */}
           <button
             type="button"
@@ -1060,6 +1475,16 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
           )}
         </div>
       </footer>
+
+      {/* Save Prompt Modal */}
+      <SavePromptModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={handleSavePrompt}
+        promptPreview={optimizedResult.optimized.slice(0, 200)}
+        platformName={provider.name}
+        suggestedName={suggestedSaveName}
+      />
     </section>
   );
 }

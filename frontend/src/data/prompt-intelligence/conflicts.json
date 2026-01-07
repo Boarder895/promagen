@@ -1,0 +1,877 @@
+{
+  "version": "2.0.0",
+  "updated": "2026-01-07",
+  "description": "Comprehensive conflict definitions for prompt coherence detection",
+  "conflicts": [
+    {
+      "terms": ["vintage", "cyberpunk"],
+      "reason": "Conflicting eras: vintage evokes the past while cyberpunk is futuristic",
+      "suggestion": "Choose one era. Try 'retro-futurism' if you want elements of both.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["vintage", "futuristic"],
+      "reason": "Conflicting time periods: vintage (past) vs futuristic (future)",
+      "suggestion": "Pick a dominant era for coherent results.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["vintage", "neon"],
+      "reason": "Neon aesthetic is typically modern/futuristic, not vintage",
+      "suggestion": "Try 'warm tungsten' for vintage lighting instead.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["vintage", "holographic"],
+      "reason": "Holographic effects are futuristic, not vintage",
+      "suggestion": "Try 'film grain' or 'sepia' for vintage feel instead.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["vintage", "chrome"],
+      "reason": "Chrome is sleek/modern, vintage prefers brass/copper",
+      "suggestion": "Try 'antique bronze' or 'aged metal' for vintage.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["retro", "cyberpunk"],
+      "reason": "Retro looks back, cyberpunk looks forward",
+      "suggestion": "Try 'retrofuturism' or 'synthwave' for a blend.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["Victorian", "futuristic"],
+      "reason": "Different historical periods",
+      "suggestion": "Try 'steampunk' if you want Victorian + technology.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["medieval", "futuristic"],
+      "reason": "Opposing historical eras",
+      "suggestion": "Try 'sci-fi fantasy' for a deliberate blend.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["medieval", "cyberpunk"],
+      "reason": "Medieval is historical, cyberpunk is near-future",
+      "suggestion": "Choose one era or try 'fantasy cyberpunk'.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["medieval", "neon"],
+      "reason": "Neon lighting didn't exist in medieval times",
+      "suggestion": "Try 'candlelight' or 'torchlight' for medieval.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["art deco", "cyberpunk"],
+      "reason": "Art deco is 1920s-30s, cyberpunk is near-future",
+      "suggestion": "Both can work in 'retrofuturism' style.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["minimalist", "baroque"],
+      "reason": "Opposing philosophies: minimalist (simple) vs baroque (ornate)",
+      "suggestion": "These styles have fundamentally different approaches.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["minimalist", "maximalist"],
+      "reason": "Direct opposites: minimalist removes, maximalist adds",
+      "suggestion": "Choose one approach.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["minimalist", "ornate"],
+      "reason": "Minimalist avoids decoration, ornate embraces it",
+      "suggestion": "Choose simple or decorative.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["minimalist", "busy"],
+      "reason": "Minimalist uses negative space, busy fills it",
+      "suggestion": "Choose your visual density.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["minimalist", "cluttered"],
+      "reason": "Minimalist is clean, cluttered is chaotic",
+      "suggestion": "Choose organized or chaotic.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["clean", "gritty"],
+      "reason": "Opposing aesthetic approaches",
+      "suggestion": "Choose polished or raw aesthetics.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["clean", "weathered"],
+      "reason": "Clean is pristine, weathered shows age/use",
+      "suggestion": "Choose new or aged appearance.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["elegant", "chaotic"],
+      "reason": "Opposing aesthetics: refined vs disordered",
+      "suggestion": "Choose your visual approach.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["elegant", "grungy"],
+      "reason": "Elegant is refined, grungy is rough",
+      "suggestion": "Choose polished or raw aesthetic.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["cheerful", "noir"],
+      "reason": "Conflicting moods: cheerful (bright) vs noir (dark, cynical)",
+      "suggestion": "Pick a dominant mood for coherent results.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["cheerful", "horror"],
+      "reason": "Conflicting moods: cheerful vs scary",
+      "suggestion": "Unless intentionally ironic, choose one mood.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["cheerful", "melancholic"],
+      "reason": "Opposing emotional tones",
+      "suggestion": "Choose your emotional direction.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["cheerful", "ominous"],
+      "reason": "Cheerful is bright/happy, ominous is threatening",
+      "suggestion": "Choose your mood direction.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["serene", "chaotic"],
+      "reason": "Opposing atmospheres: peaceful vs turbulent",
+      "suggestion": "Pick a dominant atmosphere.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["serene", "intense"],
+      "reason": "Serene is calm, intense is high energy",
+      "suggestion": "Choose your energy level.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["peaceful", "intense"],
+      "reason": "Conflicting energy levels",
+      "suggestion": "Choose the mood you want to convey.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["peaceful", "dramatic"],
+      "reason": "Peaceful is quiet, dramatic is heightened",
+      "suggestion": "Choose calm or heightened emotions.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["calm", "explosive"],
+      "reason": "Opposing energy states",
+      "suggestion": "Choose stillness or action.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["tranquil", "stormy"],
+      "reason": "Opposing weather/mood states",
+      "suggestion": "Choose your atmospheric mood.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["kawaii", "horror"],
+      "reason": "Opposing aesthetics: cute vs scary",
+      "suggestion": "Unless intentionally subversive, choose one.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["kawaii", "gritty"],
+      "reason": "Kawaii is cute/clean, gritty is rough/dirty",
+      "suggestion": "Choose your aesthetic approach.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["kawaii", "noir"],
+      "reason": "Kawaii is cute/bright, noir is dark/cynical",
+      "suggestion": "These aesthetics don't typically mix.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["cute", "terrifying"],
+      "reason": "Opposing emotional impacts",
+      "suggestion": "Choose adorable or frightening.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["whimsical", "serious"],
+      "reason": "Whimsical is playful, serious is grave",
+      "suggestion": "Choose your tone.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["soft lighting", "harsh shadows"],
+      "reason": "Conflicting lighting approaches",
+      "suggestion": "Choose one lighting mood.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["soft lighting", "dramatic shadows"],
+      "reason": "Soft lighting minimises shadows, dramatic shadows need hard light",
+      "suggestion": "Try 'diffused dramatic' for a middle ground.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["soft lighting", "high contrast"],
+      "reason": "Soft light reduces contrast, high contrast needs hard light",
+      "suggestion": "Choose your contrast level.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["golden hour", "midnight"],
+      "reason": "Golden hour is near sunset/sunrise, not midnight",
+      "suggestion": "Try 'moonlight' for night scenes.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["golden hour", "harsh midday sun"],
+      "reason": "Golden hour has soft warm light, midday is harsh",
+      "suggestion": "Choose your time of day.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["golden hour", "blue hour"],
+      "reason": "Different times: golden is warm sunset, blue is cool twilight",
+      "suggestion": "Both are beautiful but different colour temperatures.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["natural light", "neon glow"],
+      "reason": "Natural light is from sun/sky, neon is artificial",
+      "suggestion": "Choose natural or artificial lighting.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["natural light", "studio lighting"],
+      "reason": "Natural is environmental, studio is controlled",
+      "suggestion": "Choose your lighting setup.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["daylight", "night"],
+      "reason": "Different times of day with different light",
+      "suggestion": "Choose your time setting.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["daytime", "night"],
+      "reason": "Different times of day",
+      "suggestion": "Choose your time setting.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["sunrise", "sunset"],
+      "reason": "Different times though similar light quality",
+      "suggestion": "Both have golden light but different contexts.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["bright", "dark"],
+      "reason": "Opposing luminosity levels",
+      "suggestion": "Choose your brightness level.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["overexposed", "underexposed"],
+      "reason": "Opposing exposure issues",
+      "suggestion": "Unless intentional, avoid both.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["candlelight", "harsh fluorescent"],
+      "reason": "Warm intimate vs cold clinical light",
+      "suggestion": "Choose your light source mood.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["rim lighting", "flat lighting"],
+      "reason": "Rim creates edges, flat eliminates dimension",
+      "suggestion": "Choose dimensional or flat.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["photorealistic", "anime"],
+      "reason": "Fundamentally different rendering styles",
+      "suggestion": "Choose realistic or stylized, not both.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["photorealistic", "cartoon"],
+      "reason": "Opposing art styles: realistic vs stylized",
+      "suggestion": "Pick one rendering approach.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["photorealistic", "watercolour"],
+      "reason": "Different mediums with distinct aesthetics",
+      "suggestion": "Choose photography or painterly style.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["photorealistic", "abstract"],
+      "reason": "Realistic depicts reality, abstract departs from it",
+      "suggestion": "Choose representational or non-representational.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["photorealistic", "impressionist"],
+      "reason": "Photo-real is precise, impressionist is loose",
+      "suggestion": "Choose detailed or suggestive.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["photorealistic", "sketch"],
+      "reason": "Photo-real is finished, sketch is preliminary",
+      "suggestion": "Choose complete or rough aesthetic.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["realistic", "abstract"],
+      "reason": "Opposing representation styles",
+      "suggestion": "Choose representational or non-representational.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["realistic", "surreal"],
+      "reason": "Realistic follows reality, surreal distorts it",
+      "suggestion": "Choose grounded or dreamlike.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["hyperdetailed", "impressionist"],
+      "reason": "Hyperdetailed is precise, impressionist is loose",
+      "suggestion": "Choose detailed or suggestive rendering.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["hyperdetailed", "minimalist"],
+      "reason": "Hyperdetailed adds information, minimalist reduces it",
+      "suggestion": "Choose your level of detail.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["Studio Ghibli", "realistic"],
+      "reason": "Ghibli has a distinct animated style",
+      "suggestion": "Choose animation or realism.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["Studio Ghibli", "photorealistic"],
+      "reason": "Ghibli is stylized animation",
+      "suggestion": "Choose anime or photo-real.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["anime", "oil painting"],
+      "reason": "Different artistic traditions",
+      "suggestion": "Choose Japanese animation or Western painting.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["cartoon", "photorealistic"],
+      "reason": "Cartoon simplifies, photo-real captures all detail",
+      "suggestion": "Choose stylized or realistic.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["pixel art", "photorealistic"],
+      "reason": "Pixel art is low-res by design",
+      "suggestion": "Choose retro digital or modern realistic.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["monochromatic", "vibrant colours"],
+      "reason": "Monochromatic limits colour, vibrant expands it",
+      "suggestion": "Choose your colour approach.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["monochromatic", "rainbow"],
+      "reason": "Monochromatic is one hue, rainbow is all hues",
+      "suggestion": "Choose limited or full colour palette.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["desaturated", "vibrant"],
+      "reason": "Opposing saturation levels",
+      "suggestion": "Pick your colour intensity.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["desaturated", "neon"],
+      "reason": "Neon colours are highly saturated",
+      "suggestion": "Choose muted or bright colours.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["warm tones", "cold tones"],
+      "reason": "Conflicting colour temperatures",
+      "suggestion": "Choose a dominant colour temperature.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["warm tones", "cool tones"],
+      "reason": "Opposing colour temperatures",
+      "suggestion": "Choose warm or cool palette.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["pastel", "neon"],
+      "reason": "Pastel is soft/muted, neon is bright/saturated",
+      "suggestion": "Choose soft or intense colours.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["pastel", "high contrast"],
+      "reason": "Pastels are low contrast by nature",
+      "suggestion": "Choose soft or punchy aesthetics.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["muted colours", "saturated"],
+      "reason": "Opposing saturation approaches",
+      "suggestion": "Choose your colour intensity.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["sepia", "vibrant"],
+      "reason": "Sepia is monochromatic warm, vibrant is full colour",
+      "suggestion": "Choose vintage or modern colour.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["black and white", "colourful"],
+      "reason": "B&W removes colour, colourful emphasizes it",
+      "suggestion": "Choose monochrome or colour.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["sharp focus", "soft focus"],
+      "reason": "Opposing focus approaches",
+      "suggestion": "Choose your focus style.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["sharp focus", "motion blur"],
+      "reason": "Sharp focus freezes, motion blur shows movement",
+      "suggestion": "Choose static or dynamic.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["sharp focus", "bokeh"],
+      "reason": "Both can coexist - sharp subject with bokeh background",
+      "suggestion": "These can work together if applied to different areas.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["tack sharp", "dreamy"],
+      "reason": "Tack sharp is crisp, dreamy is soft",
+      "suggestion": "Choose crisp or ethereal.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["in focus", "out of focus"],
+      "reason": "Opposing focus states",
+      "suggestion": "Choose clear or blurred.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["8K", "lo-fi"],
+      "reason": "8K is high fidelity, lo-fi is intentionally low quality",
+      "suggestion": "Choose your quality aesthetic.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["8K", "film grain"],
+      "reason": "8K is digital perfection, film grain adds texture",
+      "suggestion": "Both can work but represent different aesthetics.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["highly detailed", "simple"],
+      "reason": "Detailed adds complexity, simple reduces it",
+      "suggestion": "Choose your detail level.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["intricate", "minimalist"],
+      "reason": "Intricate has many details, minimalist has few",
+      "suggestion": "Choose complex or simple.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["professional", "amateur"],
+      "reason": "Opposing quality descriptors",
+      "suggestion": "Choose your intended quality level.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["polished", "rough"],
+      "reason": "Polished is refined, rough is unfinished",
+      "suggestion": "Choose finished or raw aesthetic.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["portrait", "wide angle"],
+      "reason": "Wide angle distorts facial features in portraits",
+      "suggestion": "Try 85mm or 50mm lens for flattering portraits.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["portrait", "landscape orientation"],
+      "reason": "Portraits typically use portrait orientation",
+      "suggestion": "Consider portrait orientation for better framing.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["macro", "wide angle"],
+      "reason": "Macro is extreme close-up, wide angle is for broad scenes",
+      "suggestion": "Choose the scale you want to capture.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["macro", "panorama"],
+      "reason": "Macro is tiny details, panorama is vast scenes",
+      "suggestion": "Choose intimate or expansive.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["close-up", "panorama"],
+      "reason": "Opposing scales: intimate vs expansive",
+      "suggestion": "Choose your framing.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["close-up", "establishing shot"],
+      "reason": "Close-up is intimate, establishing is contextual",
+      "suggestion": "Choose detail or context.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["symmetrical", "asymmetrical"],
+      "reason": "Opposing composition approaches",
+      "suggestion": "Choose your balance.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["centred composition", "rule of thirds"],
+      "reason": "Different compositional approaches",
+      "suggestion": "Both can work, but choose one for consistency.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["birds eye view", "worms eye view"],
+      "reason": "Opposing camera angles",
+      "suggestion": "Choose looking down or looking up.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["overhead", "low angle"],
+      "reason": "Opposing vertical perspectives",
+      "suggestion": "Choose your camera height.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["static pose", "dynamic action"],
+      "reason": "Opposing energy in pose",
+      "suggestion": "Choose stillness or movement.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["still", "action"],
+      "reason": "Still is frozen, action implies movement",
+      "suggestion": "Choose your energy level.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["rustic", "chrome"],
+      "reason": "Rustic is natural/weathered, chrome is sleek/industrial",
+      "suggestion": "These materials convey different eras.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["rustic", "futuristic"],
+      "reason": "Rustic evokes the past, futuristic the future",
+      "suggestion": "Try 'weathered sci-fi' for a blend.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["rustic", "high-tech"],
+      "reason": "Rustic is traditional, high-tech is modern",
+      "suggestion": "Choose traditional or modern.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["matte", "glossy"],
+      "reason": "Opposing surface finishes",
+      "suggestion": "Choose one surface treatment.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["matte", "reflective"],
+      "reason": "Matte absorbs light, reflective bounces it",
+      "suggestion": "Choose your surface quality.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["organic shapes", "geometric"],
+      "reason": "Different form languages",
+      "suggestion": "Choose natural or mathematical forms.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["organic", "mechanical"],
+      "reason": "Natural vs manufactured forms",
+      "suggestion": "Choose living or constructed.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["smooth", "textured"],
+      "reason": "Opposing surface qualities",
+      "suggestion": "Choose your surface feel.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["polished metal", "rusted"],
+      "reason": "New vs aged metal states",
+      "suggestion": "Choose pristine or weathered.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["sparse", "busy"],
+      "reason": "Opposing composition density",
+      "suggestion": "Choose empty space or filled frame.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["indoor", "outdoor"],
+      "reason": "Different environments",
+      "suggestion": "Choose your setting.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["interior", "exterior"],
+      "reason": "Different spatial contexts",
+      "suggestion": "Choose inside or outside.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["underwater", "aerial"],
+      "reason": "Opposing environments",
+      "suggestion": "Choose your environment.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["urban", "rural"],
+      "reason": "City vs countryside settings",
+      "suggestion": "Choose your setting type.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["crowded", "isolated"],
+      "reason": "Many people vs solitude",
+      "suggestion": "Choose your population density.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["Renaissance", "modern art"],
+      "reason": "Different art historical periods",
+      "suggestion": "Choose your art movement reference.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["Renaissance", "abstract"],
+      "reason": "Renaissance is representational, abstract is not",
+      "suggestion": "Choose classical or modern approach.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["impressionist", "hyperrealist"],
+      "reason": "Impressionist suggests, hyperrealist depicts exactly",
+      "suggestion": "Choose loose or precise rendering.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["pop art", "Renaissance"],
+      "reason": "Different art movements with different values",
+      "suggestion": "Choose your artistic reference.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["hand-drawn", "digital render"],
+      "reason": "Different creation methods with distinct aesthetics",
+      "suggestion": "Choose your medium.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["hand-painted", "CGI"],
+      "reason": "Traditional vs digital creation",
+      "suggestion": "Choose your medium.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["studio lighting", "natural light only"],
+      "reason": "Different lighting setups",
+      "suggestion": "Choose artificial or natural light.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["posed", "candid"],
+      "reason": "Staged vs spontaneous capture",
+      "suggestion": "Choose formal or natural.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["symmetry", "chaos"],
+      "reason": "Order vs disorder",
+      "suggestion": "Choose balanced or chaotic.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["perfect", "imperfect"],
+      "reason": "Flawless vs flawed aesthetic",
+      "suggestion": "Choose pristine or wabi-sabi.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["new", "ancient"],
+      "reason": "Different age states",
+      "suggestion": "Choose your temporal setting.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["pristine", "decayed"],
+      "reason": "Perfect vs deteriorated condition",
+      "suggestion": "Choose preserved or ruined.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["luxury", "poverty"],
+      "reason": "Opposing economic contexts",
+      "suggestion": "Choose your socioeconomic setting.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["opulent", "sparse"],
+      "reason": "Rich decoration vs empty space",
+      "suggestion": "Choose lavish or minimal.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["tiny", "massive"],
+      "reason": "Opposing scales",
+      "suggestion": "Choose your scale.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["miniature", "colossal"],
+      "reason": "Extreme scale difference",
+      "suggestion": "Choose your size reference.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["fast", "slow"],
+      "reason": "Opposing implied speeds",
+      "suggestion": "Choose your sense of motion.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["frozen", "flowing"],
+      "reason": "Still vs moving states",
+      "suggestion": "Choose static or dynamic.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["angular", "curved"],
+      "reason": "Different shape languages",
+      "suggestion": "Choose sharp or soft forms.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["heavy", "light"],
+      "reason": "Opposing visual weight",
+      "suggestion": "Choose your weight impression.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["dense", "airy"],
+      "reason": "Opposing density feelings",
+      "suggestion": "Choose compact or spacious.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["realistic lighting", "flat colour"],
+      "reason": "3D vs 2D rendering approach",
+      "suggestion": "Choose dimensional or graphic.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["volumetric lighting", "flat lighting"],
+      "reason": "Volumetric adds atmosphere, flat removes dimension",
+      "suggestion": "Choose atmospheric or clean.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["film photography", "digital art"],
+      "reason": "Analog vs digital aesthetic",
+      "suggestion": "Choose your medium character.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["documentary", "fantasy"],
+      "reason": "Real vs imagined content",
+      "suggestion": "Choose factual or fictional.",
+      "severity": "hard"
+    },
+    {
+      "terms": ["editorial", "fine art"],
+      "reason": "Commercial vs artistic intent",
+      "suggestion": "Choose your purpose.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["commercial", "experimental"],
+      "reason": "Safe vs boundary-pushing",
+      "suggestion": "Choose conventional or avant-garde.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["traditional", "avant-garde"],
+      "reason": "Established vs experimental",
+      "suggestion": "Choose classic or innovative.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["formal", "casual"],
+      "reason": "Structured vs relaxed",
+      "suggestion": "Choose your formality level.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["serious", "playful"],
+      "reason": "Grave vs lighthearted tone",
+      "suggestion": "Choose your tone.",
+      "severity": "soft"
+    },
+    {
+      "terms": ["sombre", "joyful"],
+      "reason": "Sad vs happy mood",
+      "suggestion": "Choose your emotional tone.",
+      "severity": "hard"
+    }
+  ]
+}

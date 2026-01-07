@@ -161,15 +161,12 @@ export default function HomepageGrid({
     (frame: ReferenceFrame) => {
       onReferenceFrameChange?.(frame);
     },
-    [onReferenceFrameChange]
+    [onReferenceFrameChange],
   );
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-slate-950/95 text-slate-50">
-      <main
-        aria-labelledby="page-main-heading"
-        className="flex min-h-0 flex-1 flex-col"
-      >
+      <main aria-labelledby="page-main-heading" className="flex min-h-0 flex-1 flex-col">
         <h1 id="page-main-heading" className="sr-only">
           {mainLabel}
         </h1>
@@ -215,8 +212,8 @@ export default function HomepageGrid({
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-slate-300 sm:text-base">
               <span className="whitespace-nowrap">
-                Track what&apos;s happening out there, then turn those movements into prompts, content
-                and tools in here.
+                Track what&apos;s happening out there, then turn those movements into prompts,
+                content and tools in here.
               </span>
             </p>
 
@@ -269,7 +266,9 @@ export default function HomepageGrid({
                 <FinanceRibbon />
               </div>
             )}
-            <div ref={providersRef} className="min-h-0 flex-1">{centre}</div>
+            <div ref={providersRef} className="min-h-0 flex-1">
+              {centre}
+            </div>
           </div>
 
           {/* Right rail (Western exchanges) — synced scroll */}

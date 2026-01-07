@@ -1,0 +1,113 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-01-07",
+  "moods": {
+    "market_opening": {
+      "trigger": "Exchange opening within ±2 minutes",
+      "boost": {
+        "atmosphere": ["awakening", "fresh", "energetic", "optimistic", "vibrant", "dynamic"],
+        "lighting": ["morning light", "dawn", "golden hour", "soft daylight", "rising sun"],
+        "colour": ["warm tones", "golden", "vibrant", "fresh", "bright"],
+        "style": ["dynamic", "energetic", "bold", "confident"]
+      },
+      "boostWeight": 1.3
+    },
+    "market_closing": {
+      "trigger": "Exchange closing within ±2 minutes",
+      "boost": {
+        "atmosphere": ["reflective", "calm", "contemplative", "peaceful", "serene", "twilight"],
+        "lighting": ["golden hour", "dusk", "sunset", "warm", "fading light"],
+        "colour": ["warm tones", "muted", "golden", "amber", "soft"],
+        "style": ["cinematic", "nostalgic", "reflective", "elegant"]
+      },
+      "boostWeight": 1.3
+    },
+    "high_volatility": {
+      "trigger": "FX pair volatility exceeds 1.5x daily average",
+      "boost": {
+        "atmosphere": ["chaotic", "dynamic", "turbulent", "intense", "electric", "stormy", "dramatic"],
+        "lighting": ["dramatic", "harsh", "high contrast", "flickering", "lightning"],
+        "colour": ["bold", "saturated", "contrasting", "electric", "vivid"],
+        "style": ["dramatic", "intense", "bold", "expressive", "dynamic"]
+      },
+      "boostWeight": 1.4
+    },
+    "low_volatility": {
+      "trigger": "FX pair volatility below 0.5x daily average",
+      "boost": {
+        "atmosphere": ["calm", "serene", "balanced", "peaceful", "stable", "tranquil", "still"],
+        "lighting": ["soft", "even", "diffused", "gentle", "ambient"],
+        "colour": ["muted", "harmonious", "monochromatic", "pastel", "subtle"],
+        "style": ["minimal", "clean", "balanced", "elegant", "refined"]
+      },
+      "boostWeight": 1.2
+    },
+    "currency_strength_usd": {
+      "trigger": "USD strengthening >0.5% against basket",
+      "boost": {
+        "colour": ["green", "gold", "emerald", "rich"],
+        "style": ["corporate", "powerful", "bold", "confident", "professional"],
+        "atmosphere": ["powerful", "dominant", "confident"],
+        "materials": ["gold", "metallic", "polished", "premium"]
+      },
+      "boostWeight": 1.15
+    },
+    "currency_strength_gbp": {
+      "trigger": "GBP strengthening >0.5% against basket",
+      "boost": {
+        "colour": ["royal blue", "gold", "deep red", "burgundy"],
+        "style": ["elegant", "classical", "refined", "prestigious", "Victorian"],
+        "atmosphere": ["stately", "refined", "prestigious"],
+        "materials": ["velvet", "brass", "mahogany", "leather"]
+      },
+      "boostWeight": 1.15
+    },
+    "currency_strength_eur": {
+      "trigger": "EUR strengthening >0.5% against basket",
+      "boost": {
+        "colour": ["blue", "gold", "navy", "sophisticated"],
+        "style": ["modern", "sophisticated", "clean", "continental", "refined"],
+        "atmosphere": ["cosmopolitan", "sophisticated", "cultured"],
+        "materials": ["glass", "steel", "marble", "modern"]
+      },
+      "boostWeight": 1.15
+    },
+    "gold_rising": {
+      "trigger": "Gold price rising >1% in session",
+      "boost": {
+        "colour": ["golden", "warm", "amber", "honey", "brass", "bronze"],
+        "atmosphere": ["opulent", "rich", "prestigious", "luxurious", "warm"],
+        "materials": ["gold", "metallic", "gilded", "luxurious", "ornate"],
+        "style": ["luxurious", "elegant", "rich", "baroque", "opulent"],
+        "lighting": ["warm", "golden", "glowing", "rich"]
+      },
+      "boostWeight": 1.25
+    },
+    "gold_falling": {
+      "trigger": "Gold price falling >1% in session",
+      "boost": {
+        "colour": ["silver", "cool", "steel", "grey", "muted"],
+        "atmosphere": ["industrial", "modern", "stark", "minimal"],
+        "materials": ["silver", "chrome", "steel", "industrial"],
+        "style": ["modern", "industrial", "minimal", "stark"]
+      },
+      "boostWeight": 1.15
+    },
+    "crypto_pumping": {
+      "trigger": "BTC/ETH rising >5% in 24h",
+      "boost": {
+        "colour": ["neon", "electric blue", "orange", "cyber"],
+        "atmosphere": ["electric", "futuristic", "dynamic", "digital", "cyber"],
+        "style": ["cyberpunk", "futuristic", "digital", "tech", "dynamic"],
+        "lighting": ["neon glow", "digital", "holographic", "electric"],
+        "materials": ["holographic", "digital", "chrome", "glitch"]
+      },
+      "boostWeight": 1.3
+    },
+    "neutral": {
+      "trigger": "Default state when no significant market events",
+      "boost": {},
+      "boostWeight": 1.0
+    }
+  }
+}

@@ -1,9 +1,9 @@
 # clerk-auth.md — Promagen Authentication Authority
 
 **Status:** Authoritative  
-**Scope:** Authentication architecture, Clerk integration, user management  
+**Scope:** Authentication architecture, Clerk integration, OAuth providers, user management  
 **Created:** 2 January 2026  
-**Last Updated:** 4 January 2026
+**Last Updated:** 6 January 2026
 
 ---
 
@@ -12,7 +12,7 @@
 Promagen uses **Clerk** as its identity provider (IdP). Clerk handles:
 
 - User sign-up and sign-in
-- Social OAuth (Google, Apple, Facebook)
+- Social OAuth (Microsoft, Google, Facebook)
 - Email/password authentication
 - Session management
 - User metadata storage
@@ -97,8 +97,8 @@ src/
 
 ```env
 # Clerk Authentication (required)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx...
-CLERK_SECRET_KEY=sk_test_xxx...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_xxx...
+CLERK_SECRET_KEY=sk_live_xxx...
 ```
 
 ### 4.2 Optional (Clerk URLs)
@@ -225,52 +225,233 @@ function VotingComponent() {
 
 ---
 
-## 8. UI Components
+## 8. OAuth Provider Configuration
 
-### 8.1 AuthButton
+### 8.1 Clerk Dashboard Setup
 
-Location: Header (top-right, aligned with right exchange rail)
+**Location:** Clerk Dashboard → Configure → SSO connections
 
-| State | Display |
-|-------|---------|
-| Signed out | Purple-pink gradient "Sign in" button |
-| Signed in | User avatar with dropdown menu |
+| Provider | Status | Notes |
+|----------|--------|-------|
+| Microsoft | ✅ Enabled | Azure AD application |
+| Google | ✅ Enabled | Google Cloud Console OAuth |
+| Facebook | ✅ Enabled | Meta Developer Console |
 
-Styling matches the "Randomise" button in prompt builder.
+### 8.2 Clerk Custom Domain
 
-### 8.2 Sign-in/Sign-up Pages
+Production uses a custom domain for authentication:
 
-Dark-themed Clerk hosted UI with:
+| Setting | Value |
+|---------|-------|
+| Application domain mode | "application domain" |
+| Custom domain | `clerk.promagen.com` |
+| Accounts domain | `accounts.promagen.com` |
+| OAuth callback URL | `https://clerk.promagen.com/v1/oauth_callback` |
 
-- Social providers: Google, Apple, Facebook
-- Email/password option
-- Promagen colour scheme (slate, purple accents)
+**DNS Records Required:**
+
+| Type | Name | Value |
+|------|------|-------|
+| CNAME | clerk | `frontend.clerk.accounts.dev` |
+| CNAME | accounts | `accounts.clerk.accounts.dev` |
+
+### 8.3 Microsoft OAuth
+
+**Azure Portal Configuration:**
+
+1. Go to Azure Portal → App registrations → Promagen
+2. Authentication → Platform configurations → Add Web
+
+| Setting | Value |
+|---------|-------|
+| Redirect URI | `https://clerk.promagen.com/v1/oauth_callback` |
+| Supported account types | Accounts in any organizational directory and personal Microsoft accounts |
+
+**Clerk Dashboard → Microsoft:**
+
+| Field | Value |
+|-------|-------|
+| Client ID | (from Azure App Registration) |
+| Client Secret | (from Azure App Registration → Certificates & secrets) |
+
+### 8.4 Google OAuth
+
+**Google Cloud Console Configuration:**
+
+1. Go to Google Cloud Console → APIs & Services → Credentials
+2. Create OAuth 2.0 Client ID (Web application)
+
+| Setting | Value |
+|---------|-------|
+| Authorized JavaScript origins | `https://promagen.com`, `https://clerk.promagen.com` |
+| Authorized redirect URIs | `https://clerk.promagen.com/v1/oauth_callback` |
+
+**OAuth Consent Screen (Branding):**
+
+| Field | Value |
+|-------|-------|
+| Application home page | `https://promagen.com` |
+| Application privacy policy link | `https://promagen.com/privacy` |
+| Application terms of service link | `https://promagen.com/terms` |
+| Authorized domains | `promagen.com` |
+
+**Clerk Dashboard → Google:**
+
+| Field | Value |
+|-------|-------|
+| Client ID | (from Google Cloud Console, starts with numbers) |
+| Client Secret | (from Google Cloud Console, starts with `GOCSPX-`) |
+
+⚠️ **Important:** Client Secret starts with `GOCSPX-`, NOT the same as Client ID.
+
+### 8.5 Facebook OAuth
+
+**Meta Developer Console Configuration:**
+
+1. Go to Meta Developer Console → Promagen app
+2. Use cases → Authenticate and request data → Customize → Settings
+
+| Setting | Value |
+|---------|-------|
+| Valid OAuth Redirect URIs | `https://clerk.promagen.com/v1/oauth_callback` |
+| Allowed Domains for JavaScript SDK | `promagen.com` |
+| App Domains (in Basic settings) | `promagen.com` |
+
+**Client OAuth Settings (Toggles):**
+
+| Setting | Value |
+|---------|-------|
+| Client OAuth login | ✅ ON |
+| Web OAuth login | ✅ ON |
+| Enforce HTTPS | ✅ ON |
+| Force Web OAuth reauthentication | ❌ OFF |
+| Embedded browser OAuth login | ❌ OFF |
+| Use Strict Mode for redirect URIs | ✅ ON |
+
+**Permissions:**
+
+| Permission | Status |
+|------------|--------|
+| email | ✅ Ready to use (no review required) |
+| public_profile | ✅ Ready to use (no review required) |
+
+**Clerk Dashboard → Facebook:**
+
+| Field | Value |
+|-------|-------|
+| Client ID | (App ID from Meta Developer Console) |
+| Client Secret | (App Secret from Meta Developer Console) |
+
+**Facebook App Review:**
+
+| User Type | Can Use? |
+|-----------|----------|
+| Developer (you) | ✅ Yes |
+| Testers (added in App Roles) | ✅ Yes |
+| Public users | ❌ Requires App Review |
+
+For public launch, submit for App Review in Meta Developer Console.
 
 ---
 
-## 9. CSP (Content Security Policy)
+## 9. AuthButton Component
 
-Clerk requires specific CSP directives. These are configured in `middleware.ts`:
+### 9.1 Features
+
+The `AuthButton` component (`src/components/auth/auth-button.tsx`) handles:
+
+| Feature | Implementation |
+|---------|----------------|
+| Signed out state | Purple-pink gradient "Sign in" button |
+| Signed in state | Clerk UserButton with avatar |
+| Loading state | Dimmed loading indicator |
+| Clerk load timeout | Fallback to `/sign-in` link after 3s |
+| OAuth redirect handling | Direct Clerk client state polling |
+| Facebook hash cleanup | Removes `#_=_` from URL after OAuth |
+| Stuck state recovery | Auto-reload if session cookie exists but Clerk stuck |
+
+### 9.2 State Detection
+
+The component uses direct Clerk client state checking for reliability:
 
 ```typescript
-// script-src: Clerk FAPI + Cloudflare challenges
-script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com
+const clerk = useClerk();
 
-// img-src: Clerk avatars
-img-src 'self' data: blob: https://img.clerk.com
+const checkSessionState = useCallback(() => {
+  if (!clerk.loaded) return 'loading';
+  if (clerk.user) return 'signed-in';
+  if (clerk.session) return 'signed-in';
+  return 'signed-out';
+}, [clerk]);
+```
 
-// connect-src: Clerk API
-connect-src 'self' https: https://*.clerk.accounts.dev https://*.clerk.com
+### 9.3 Auto-Recovery
 
-// frame-src: Cloudflare bot protection
-frame-src 'self' https://challenges.cloudflare.com
+If Clerk hooks fail to sync after OAuth redirect (shows "Loading..." indefinitely):
+
+1. Component polls Clerk client state every 500ms
+2. After 3 seconds, checks for session cookies (`__session`, `__client`, `__clerk`)
+3. If cookies exist but state still loading, triggers one page reload
+4. Uses sessionStorage flag to prevent reload loops
+
+### 9.4 Facebook Hash Cleanup
+
+Facebook OAuth appends `#_=_` to redirect URLs. The component cleans this:
+
+```typescript
+const cleanupOAuthHash = useCallback(() => {
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash;
+    if (hash === '#_=_' || hash === '#') {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }
+}, []);
 ```
 
 ---
 
-## 10. Clerk Dashboard Configuration
+## 10. CSP (Content Security Policy)
 
-### 10.1 Application Settings
+Clerk requires specific CSP directives. These are configured in `middleware.ts`:
+
+### 10.1 Required Domains
+
+```typescript
+// Clerk custom domain (production)
+'clerk.promagen.com',
+'accounts.promagen.com',
+
+// Clerk shared infrastructure
+'*.clerk.accounts.dev',
+'*.clerk.com',
+'img.clerk.com',
+
+// Cloudflare bot protection
+'challenges.cloudflare.com',
+```
+
+### 10.2 Full CSP Configuration
+
+```typescript
+// script-src
+script-src 'self' 'unsafe-inline' https://clerk.promagen.com https://accounts.promagen.com https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com
+
+// img-src
+img-src 'self' data: blob: https://img.clerk.com
+
+// connect-src
+connect-src 'self' https: https://clerk.promagen.com https://accounts.promagen.com https://*.clerk.accounts.dev https://*.clerk.com
+
+// frame-src
+frame-src 'self' https://challenges.cloudflare.com https://clerk.promagen.com https://accounts.promagen.com
+```
+
+---
+
+## 11. Clerk Dashboard Configuration
+
+### 11.1 Application Settings
 
 | Setting | Value |
 |---------|-------|
@@ -278,29 +459,31 @@ frame-src 'self' https://challenges.cloudflare.com
 | Theme | Dark |
 | Primary colour | `#9333ea` (purple-600) |
 
-### 10.2 Sign-in Options
+### 11.2 Sign-in Options
 
-Enable:
-- ✅ Email address
-- ✅ Google OAuth
-- ✅ Apple OAuth
-- ✅ Facebook OAuth
+| Provider | Status |
+|----------|--------|
+| Email address | ✅ Enabled |
+| Microsoft OAuth | ✅ Enabled |
+| Google OAuth | ✅ Enabled |
+| Facebook OAuth | ✅ Enabled |
 
-### 10.3 Production Checklist
+### 11.3 Production Checklist
 
-Before going live:
-
-- [ ] Rename application to "Promagen"
-- [ ] Configure Google OAuth credentials
-- [ ] Configure Apple OAuth credentials
-- [ ] Configure Facebook OAuth credentials
-- [ ] Add production domain (`promagen.com`)
-- [ ] Switch to production mode
-- [ ] Update environment variables with `pk_live_` / `sk_live_` keys
+- [x] Rename application to "Promagen"
+- [x] Configure custom domain (`clerk.promagen.com`)
+- [x] Configure Microsoft OAuth credentials
+- [x] Configure Google OAuth credentials
+- [x] Configure Facebook OAuth credentials
+- [x] Add production domain (`promagen.com`)
+- [x] Switch to production mode
+- [x] Update environment variables with `pk_live_` / `sk_live_` keys
+- [x] Update CSP in middleware.ts for custom domain
+- [ ] Submit Facebook app for App Review (for public users)
 
 ---
 
-## 11. Dependencies
+## 12. Dependencies
 
 | Package | Version | Purpose |
 |---------|---------|---------|
@@ -314,9 +497,9 @@ pnpm add @clerk/nextjs
 
 ---
 
-## 12. Security Boundaries
+## 13. Security Boundaries
 
-### 12.1 Auth is Separate from Brain
+### 13.1 Auth is Separate from Brain
 
 Auth routes are **not** governed by the Brain (API cost-control system):
 
@@ -327,22 +510,23 @@ Brain subsystem: /api/fx/* (cost-controlled)
 
 These must never be mixed. Auth behaviour must not be affected by rate limits, TTL, or budget rules.
 
-### 12.2 Server-Only Secrets
+### 13.2 Server-Only Secrets
 
 | Secret | Location | Never Expose To |
 |--------|----------|-----------------|
 | `CLERK_SECRET_KEY` | Server only | Client bundle |
 | User `privateMetadata` | Server only | Client bundle |
+| OAuth Client Secrets | Clerk Dashboard only | Client bundle |
 
 Only `publicMetadata` (e.g., `tier`) is safe to read client-side.
 
 ---
 
-## 13. Anonymous Usage Tracking
+## 14. Anonymous Usage Tracking
 
 Anonymous users (not signed in) have limited access to the prompt builder with client-side tracking.
 
-### 13.1 Anonymous Storage (v2.0.0)
+### 14.1 Anonymous Storage (v2.0.0)
 
 **File:** `src/lib/usage/anonymous-storage.ts`
 
@@ -365,7 +549,7 @@ interface AnonymousUsageData {
 
 **Migration:** v1 data (without `lastResetDate`) is invalidated, triggering fresh v2 start.
 
-### 13.2 Anonymous Limits
+### 14.2 Anonymous Limits
 
 | Metric | Value |
 |--------|-------|
@@ -374,7 +558,7 @@ interface AnonymousUsageData {
 | Storage | localStorage |
 | Tamper protection | Checksum validation |
 
-### 13.3 Transition to Authenticated
+### 14.3 Transition to Authenticated
 
 When anonymous user signs in:
 - localStorage tracking continues until limit reached
@@ -385,7 +569,59 @@ Authority for anonymous usage rules: `docs/authority/paid_tier.md` §3.2-3.3
 
 ---
 
-## 14. Wiring Voting (Next Step)
+## 15. Troubleshooting
+
+### 15.1 Sign-in Modal Blank
+
+**Cause:** CSP blocking Clerk domains
+
+**Fix:** Add to `middleware.ts` CSP:
+```typescript
+'clerk.promagen.com',
+'accounts.promagen.com',
+```
+
+### 15.2 OAuth "Unable to complete action"
+
+**Cause:** Redirect URI mismatch or missing permissions
+
+**Fix:**
+1. Check OAuth provider console for correct redirect URI: `https://clerk.promagen.com/v1/oauth_callback`
+2. Ensure required permissions are enabled (email, profile)
+3. Verify Client ID and Client Secret in Clerk Dashboard
+
+### 15.3 Google "Invalid Scopes: email"
+
+**Cause:** Email permission not enabled in Google Cloud Console
+
+**Fix:** Already enabled by default for basic OAuth - check OAuth consent screen is configured
+
+### 15.4 Google OAuth Failing
+
+**Cause:** Wrong Client Secret in Clerk Dashboard
+
+**Fix:** 
+- Client ID starts with numbers (e.g., `238625941474-...`)
+- Client Secret starts with `GOCSPX-` (NOT the same as Client ID)
+
+### 15.5 Auth Button Stuck on "Loading..."
+
+**Cause:** Clerk hooks not syncing after OAuth redirect
+
+**Fix:** AuthButton v5 includes auto-recovery:
+1. Polls Clerk client state every 500ms
+2. If session cookies exist but stuck after 3s, triggers page reload
+3. Uses sessionStorage flag to prevent reload loops
+
+### 15.6 Facebook URL Shows `#_=_`
+
+**Cause:** Facebook OAuth quirk - appends hash to redirect
+
+**Fix:** AuthButton cleans this automatically on mount and session change
+
+---
+
+## 16. Wiring Voting (Next Step)
 
 The voting system is ready but requires auth wiring:
 
@@ -404,7 +640,7 @@ See: `docs/authority/TODO-api-integration.md` §1.1
 
 ---
 
-## 15. Related Authority Documents
+## 17. Related Authority Documents
 
 | Document | Relationship |
 |----------|--------------|
@@ -418,6 +654,7 @@ See: `docs/authority/TODO-api-integration.md` §1.1
 
 ## Changelog
 
-- **4 Jan 2026:** Added §13 Anonymous Usage Tracking documenting localStorage v2.0.0 schema with daily reset. Added reference to anonymous storage file location and migration behavior.
+- **6 Jan 2026:** Major update. Added §8 OAuth Provider Configuration (Microsoft, Google, Facebook). Added §9 AuthButton Component with state detection, auto-recovery, and Facebook hash cleanup. Updated §10 CSP with custom domain. Added §15 Troubleshooting. Updated production checklist in §11.3.
+- **4 Jan 2026:** Added §14 (previously §13) Anonymous Usage Tracking documenting localStorage v2.0.0 schema with daily reset. Added reference to anonymous storage file location and migration behavior.
 - **3 Jan 2026:** Added Pro Promagen terminology notes in §6 (User Tiers). Internal code uses 'paid', UI displays "Pro Promagen".
 - **2 Jan 2026:** Initial version. Clerk integration complete. Auth button in header. Sign-in/sign-up pages created. CSP configured. usePromagenAuth hook created.
