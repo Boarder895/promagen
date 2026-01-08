@@ -1,6 +1,6 @@
 # AI Providers
 
-**Last updated:** 2 January 2026  
+**Last updated:** 8 January 2026  
 **Owner:** Promagen  
 **Existing features preserved:** Yes
 
@@ -126,6 +126,96 @@ export type Provider = {
   tier?: string;
 };
 ```
+
+### Provider `hqCity` Field and Market Pulse Connections (Added Jan 8, 2026)
+
+The `hqCity` field is **critical** for the Market Pulse feature. It enables dynamic city connections between AI providers and stock exchanges.
+
+#### How It Works
+
+Market Pulse v2.1 dynamically connects providers to exchanges by matching:
+```
+provider.hqCity (normalized) === exchange.city (normalized)
+```
+
+**No hardcoded mappings** — add or update `hqCity` in `providers.json` and connections auto-update.
+
+#### City Normalization
+
+Some providers use suburb names or alternative city names. The system normalizes these:
+
+| Provider `hqCity` Value | Normalized To | Provider Example |
+|-------------------------|---------------|------------------|
+| `Surry Hills` | `Sydney` | Canva |
+| `Mountain View` | `San Francisco` | Google (Imagen) |
+| `Menlo Park` | `San Francisco` | Meta (Imagine) |
+| `Palo Alto` | `San Francisco` | Hotpot |
+| `San Jose` | `San Francisco` | Adobe |
+| `Redmond` | `Seattle` | Microsoft |
+
+**Source:** `src/data/city-connections.ts` → `CITY_ALIASES`
+
+#### Current Provider Cities (42 providers)
+
+| City | Providers |
+|------|-----------|
+| **San Francisco** | OpenAI, Anthropic, Midjourney, Replicate, Stability AI (US), xAI, Civitai |
+| **London** | Stability AI (UK), DreamStudio, Dreamlike.art |
+| **Sydney** | Leonardo AI |
+| **Surry Hills** (→ Sydney) | Canva |
+| **Hong Kong** | Fotor, Artguru, PicWish |
+| **Toronto** | Ideogram |
+| **Paris** | Clipdrop |
+| **Taipei** | MyEdit |
+| **Vienna** | Remove.bg |
+| **Warsaw** | Getimg.ai |
+| **New York** | Runway ML, Artbreeder |
+| **Mountain View** (→ SF) | Google (Imagen) |
+| **Menlo Park** (→ SF) | Meta (Imagine) |
+| **Palo Alto** (→ SF) | Hotpot |
+| **San Jose** (→ SF) | Adobe |
+| **Redmond** (→ Seattle) | Microsoft (Designer, Bing) |
+
+#### Adding a New Provider with City Connection
+
+To enable Market Pulse for a new provider:
+
+1. Add `hqCity` to the provider entry in `providers.json`:
+```json
+{
+  "id": "new-provider",
+  "name": "New AI",
+  "hqCity": "Melbourne",
+  ...
+}
+```
+
+2. If the city name is non-standard, add an alias to `CITY_ALIASES` in `city-connections.ts`
+
+3. No other code changes needed — connections derive automatically
+
+#### API for City Connections
+
+```typescript
+import { 
+  getConnectionsForProvider,
+  getProviderConnectionInfo,
+  isProviderConnected 
+} from '@/data/city-connections';
+
+// Check if provider connects to any exchange
+const connected = isProviderConnected('leonardo'); // true (Sydney)
+
+// Get connection details for UI
+const info = getProviderConnectionInfo('leonardo');
+// { city: 'Sydney', continent: 'oceania', color: '#22d3ee' }
+
+// Get all exchange connections
+const connections = getConnectionsForProvider('leonardo');
+// [{ exchangeId: 'asx-sydney', providerId: 'leonardo', city: 'Sydney', continent: 'oceania' }]
+```
+
+See **ribbon-homepage.md** → "Market Pulse v2.1" for full architecture documentation.
 
 ### Provider schema (Zod validation)
 
@@ -562,6 +652,7 @@ Adding a provider is an intentional change and must be lock‑tested.
 
 ## Changelog
 
+- **8 Jan 2026:** Added `hqCity` field documentation for Market Pulse v2.1 city connections. Documented city normalization (aliases), provider city mapping, and connection API functions.
 - **2 Jan 2026:** Added Community Voting System section. Updated Provider type with `ProviderRanking` fields. Documented vote button in Image Quality column. Added vote API endpoint. Updated event taxonomy with `vote` type. Updated score calculation weights (Image Quality reduced from 25% to 10% to accommodate community influence cap).
 - **1 Jan 2026:** Provider Cell redesign: replaced 🏠 emoji with local PNG icons, provider name now hyperlinked to homepage, three-line layout.
 - **30 Dec 2025:** Leaderboard redesign: 42 providers (16 countries), new column structure.

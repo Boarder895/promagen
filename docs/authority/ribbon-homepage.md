@@ -2110,15 +2110,26 @@ This change was required because:
 
 ---
 
-## Market Pulse v2.0 Feature (Updated Jan 2, 2026)
+## Market Pulse v2.1 Feature (Updated Jan 8, 2026)
 
 ### Overview
 
 **Tagline:** _"The bridge comes alive when markets move."_
 
-Market Pulse is a visual animation layer that connects stock exchanges to AI providers headquartered in the same city. Unlike static diagrams, it only appears during market transition events. When markets are dormant, the interface is clean and quiet. When markets are transitioning, the bridge between them literally lights up with flowing energy particles.
+Market Pulse is a visual animation layer that connects stock exchanges to AI providers headquartered in the same city. Unlike static diagrams, it only appears during market transition events. When markets are dormant, the interface is clean and quiet. When markets are transitioning, the bridge between them literally lights up with flowing energy.
 
 **Purpose:** Reinforces Promagen's core concept — "a bridge between markets and imagination" — with live visual feedback that appears only when meaningful.
+
+### What's New in v2.1 (Jan 8, 2026)
+
+| Change | Before (v2.0) | After (v2.1) |
+|--------|---------------|--------------|
+| **Connection system** | Hardcoded `CITY_CONNECTIONS` array | Dynamic: derived from `exchange.city === provider.hqCity` |
+| **City matching** | Exact string match only | Normalized matching with aliases (Surry Hills → Sydney) |
+| **Visual effects** | Bezier curves + particles | **Option 3+4 Combined**: Card glow + traveling balls |
+| **Animation speed** | ~2s crossing | ~4s crossing (half speed, more elegant) |
+| **Overlay system** | SVG with path elements | DOM-based with absolute positioning |
+| **CSS class** | Multiple row classes | Single `.market-pulse-active` class |
 
 ### Core Philosophy
 
@@ -2126,157 +2137,185 @@ Market Pulse is a visual animation layer that connects stock exchanges to AI pro
 - **Event-driven activation**: Visual effects only appear ±1 minute around market opens/closes
 - **Multi-session support**: Exchanges with lunch breaks (Tokyo, Hong Kong) fire 4 events per day
 - **Continent-specific theming**: Each connection uses colors based on the exchange's continent
+- **Zero hardcoding**: Add providers/exchanges to JSON files and connections auto-update
 
-### Visual Elements
+### Visual Effects (Option 3+4 Combined)
 
-| Element                      | Description                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------- |
-| **Bezier Connection Curves** | Smooth SVG curves connecting exchange cards to provider rows                    |
-| **Flowing Energy Particles** | Tiny glowing dots that travel along the curves (like electricity through wires) |
-| **Row Ambient Glow**         | Subtle breathing effect on provider rows during event windows                   |
+#### Option 3: Synchronized Card Glow
 
-### State Machine (5 States)
+When an exchange is within ±1 minute of open/close:
+- Exchange cards receive `.market-pulse-active` class
+- Connected provider rows receive `.market-pulse-active` class
+- Both elements glow with continent-appropriate color
+- Indicator dots appear on card edges (via CSS `::after` pseudo-element)
 
-| State         | Timing                               | Duration     | Visual Behavior                                                                               |
-| ------------- | ------------------------------------ | ------------ | --------------------------------------------------------------------------------------------- |
-| **Dormant**   | Market closed, outside event windows | ~23h 56m/day | Nothing visible. No curves, no particles, no glow. Clean interface.                           |
-| **Pre-Open**  | 1 minute before market opens         | 60 seconds   | Curves fade in (0%→60% opacity). Slow particles flow exchange→provider. Row breathing starts. |
-| **Opening**   | Market opens (T=0)                   | ~10 seconds  | BURST: 8-10 rapid particles, curve blazes 100%, row FLASHES with continent color.             |
-| **Pre-Close** | 1 minute before market closes        | 60 seconds   | Curves reappear. Particles flow slowly in reverse (provider→exchange). Row breathing resumes. |
-| **Closing**   | Market closes (T=0)                  | ~10 seconds  | Reverse burst, cooler glow, row FLASHES, then all fades out → Dormant.                        |
+#### Option 4: Traveling Balls
 
-**Important:** During normal trading hours (between opening event and pre-close window), nothing is visible. The feature only activates around transitions.
+Glowing energy balls travel between connected exchanges and providers:
+- **Spawn rate**: Every 400ms during active window
+- **Travel time**: ~4 seconds crossing (0.0125 progress per 20ms frame)
+- **Direction**: Random (50% exchange→provider, 50% provider→exchange)
+- **Max concurrent**: 20 dots (older dots removed)
+- **Fade zones**: 8% at each end for smooth appear/disappear
 
-### Detailed State Behavior
+**Ball anatomy:**
+```
+┌─────────────────────────────────────────────┐
+│  ╭───╮                                      │
+│  │ ● │ ═══════════ (trail)                  │
+│  ╰───╯                                      │
+│    │                                        │
+│    ├── Outer glow (radial gradient, 60% α)  │
+│    ├── Ball core (16px, solid continent)    │
+│    ├── Inner glow (box-shadow)              │
+│    └── White hot center (8px, 80% opacity)  │
+└─────────────────────────────────────────────┘
+```
 
-#### DORMANT (Default — Most of the Day)
+### Dynamic City Connections (v2.1 Architecture)
 
-- Curves: Not rendered (invisible, zero overhead)
-- Particles: None
-- Provider row: Completely normal appearance
-- Vibe: Clean interface
+**CRITICAL CHANGE:** City connections are no longer hardcoded. They are derived at runtime.
 
-#### PRE-OPEN (T−1 minute)
+#### How It Works
 
-- Curves: Fade in from 0% to 60% opacity over 5 seconds
-- Particles:
-  - Speed: Slow (1 particle every 2 seconds)
-  - Size: Small (4px)
-  - Brightness: 50%
-  - Direction: Exchange → Provider
-- Provider row:
-  - Subtle breathing begins (opacity oscillates 0.95→1.0 over 3 seconds)
-  - Faint border glow (continent color at 15% opacity)
-- Vibe: Anticipation. Something is about to happen.
+```
+Exchange (exchanges.catalog.json)     Provider (providers.json)
+┌──────────────────────────────┐     ┌──────────────────────────────┐
+│ {                            │     │ {                            │
+│   "id": "asx-sydney",        │     │   "id": "canva",             │
+│   "city": "Sydney",          │ ══► │   "hqCity": "Surry Hills",   │
+│   "iso2": "AU"               │     │   ...                        │
+│ }                            │     │ }                            │
+└──────────────────────────────┘     └──────────────────────────────┘
+                │                                    │
+                │         normalizeCity()           │
+                │      "Surry Hills" → "Sydney"     │
+                │                                   │
+                └─────────────► MATCH ◄─────────────┘
+```
 
-#### OPENING EVENT (T=0)
+#### City Normalization (Aliases)
 
-- Curves: Flash to 100% opacity, solid line (no dashes), outer glow intensifies
-- Particles:
-  - BURST: 8-10 particles released in rapid succession (80ms apart)
-  - Speed: Fast (travel full curve in ~800ms)
-  - Size: Large (8px with 16px glow halo)
-  - Brightness: 100%
-- Provider row:
-  - FLASH: Background floods with continent color (30% opacity)
-  - Flash duration: 600ms ease-out
-  - After flash: settles into gentle breathing
-- Duration: Peak intensity ~2 seconds, then rapid fade over 8 seconds
-- Vibe: The market is OPEN. Energy flows.
+The system handles city name variations through normalization:
 
-#### PRE-CLOSE (T−1 minute to close)
+| Provider City | Normalized To | Reason |
+|---------------|---------------|--------|
+| `Surry Hills` | `Sydney` | Canva uses suburb name |
+| `Mountain View` | `San Francisco` | Google HQ (Bay Area) |
+| `Menlo Park` | `San Francisco` | Meta HQ (Bay Area) |
+| `Palo Alto` | `San Francisco` | Hotpot HQ (Bay Area) |
+| `San Jose` | `San Francisco` | Adobe HQ (Bay Area) |
+| `Redmond` | `Seattle` | Microsoft HQ (kept separate) |
 
-- Curves: Fade in from 0% to 60% opacity
-- Particles:
-  - Direction: **REVERSED** (Provider → Exchange — energy returning)
-  - Speed: Slow
-  - Color: Slightly cooler tone
-- Provider row: Subtle breathing, cooler border glow
-- Vibe: The day is ending. Energy winding down.
+**Source:** `src/data/city-connections.ts` → `CITY_ALIASES`
 
-#### CLOSING EVENT (T=0)
+#### Dynamic Connection Generation
 
-- Curves: Flash to 100% opacity (cooler color)
-- Particles:
-  - BURST: 8-10 particles in rapid succession
-  - Direction: **REVERSED** (provider → exchange)
-  - Color: Cooler tone (blue shift)
-- Provider row: FLASH with cooler continent color
-- Post-event: All effects fade out over 5 seconds → DORMANT
-- Vibe: Market closed. The bridge goes dark.
+```typescript
+// src/data/city-connections.ts
 
-### City Connections (Complete Map)
+export function getConnectionsForExchange(exchangeId: string): CityConnection[] {
+  const exchange = EXCHANGES.find((e) => e.id === exchangeId);
+  if (!exchange) return [];
 
-The following exchanges and AI providers share the same city:
+  const providers = getProvidersInCity(exchange.city);
+  if (providers.length === 0) return [];
 
-| City          | Exchange                       | Exchange ID             | AI Provider(s)                           | Provider ID(s)                          |
-| ------------- | ------------------------------ | ----------------------- | ---------------------------------------- | --------------------------------------- |
-| **Sydney**    | Australian Securities Exchange | `asx-sydney`            | Leonardo AI                              | `leonardo`                              |
-| **Hong Kong** | Hong Kong Exchanges            | `hkex-hong-kong`        | Fotor, Artguru, PicWish                  | `fotor`, `artguru`, `picwish`           |
-| **London**    | London Stock Exchange          | `lse-london`            | Stability AI, DreamStudio, Dreamlike.art | `stability`, `dreamstudio`, `dreamlike` |
-| **Chicago**   | Cboe Global Markets            | `cboe-chicago`          | 123RF AI Generator                       | `123rf`                                 |
-| **New York**  | NYSE                           | `nyse-new-york`         | Runway ML, Artbreeder                    | `runway`, `artbreeder`                  |
-| **New York**  | NASDAQ                         | `nasdaq-new-york`       | Runway ML, Artbreeder                    | `runway`, `artbreeder`                  |
-| **Paris**     | Euronext Paris                 | `euronext-paris`        | Clipdrop                                 | `clipdrop`                              |
-| **Toronto**   | Toronto Stock Exchange         | `tsx-toronto`           | Ideogram                                 | `ideogram`                              |
-| **Taipei**    | Taiwan Stock Exchange          | `twse-taipei`           | MyEdit (CyberLink)                       | `myedit`                                |
-| **Vienna**    | Wiener Börse                   | `wbag-vienna`           | Remove.bg (Kaleido AI)                   | `remove-bg`                             |
-| **Warsaw**    | GPW Main Market                | `gpw-warsaw`            | Getimg.ai                                | `getimg`                                |
-| **Warsaw**    | WSE NewConnect                 | `wse-warsaw-newconnect` | Getimg.ai                                | `getimg`                                |
+  const continent = getContinentFromCountryCode(exchange.iso2);
 
-**Total:** 19 connections across 10 cities
+  return providers.map((provider) => ({
+    exchangeId,
+    providerId: provider.id,
+    city: exchange.city,
+    continent,
+  }));
+}
+```
 
-**Free Tier:** Sydney, Hong Kong, London, Chicago (4 exchanges)  
-**Paid Tier:** + New York (×2), Paris, Toronto, Taipei, Vienna, Warsaw (×2) (8 additional exchanges)
+**Key functions:**
+- `getConnectionsForExchange(exchangeId)` — Returns all providers in same city
+- `getConnectionsForProvider(providerId)` — Returns all exchanges in same city
+- `getProvidersInCity(city)` — Returns providers with matching `hqCity`
+- `isProviderConnected(providerId)` — Boolean check for connection existence
+- `getProviderConnectionInfo(providerId)` — Returns city, continent, and color
+
+### Current City Connections (Dynamic — as of Jan 8, 2026)
+
+Connections are **derived at runtime**. This table shows known matches based on current data:
+
+| City | Continent | Exchange(s) | AI Provider(s) |
+|------|-----------|-------------|----------------|
+| **Sydney** | Oceania | ASX, Chi-X Australia, NSX | Leonardo AI, Canva (via Surry Hills alias) |
+| **London** | Europe | LSE, Aquis, LSEG | Stability AI, DreamStudio, Dreamlike.art |
+| **New York** | Americas | NYSE, NASDAQ | Runway ML, Artbreeder |
+| **San Francisco** | Americas | — | OpenAI, Anthropic, Midjourney, Replicate, etc. (via Bay Area aliases) |
+| **Hong Kong** | Asia | HKEX | Fotor, Artguru, PicWish |
+| **Toronto** | Americas | TSX | Ideogram |
+| **Paris** | Europe | Euronext Paris, SBF | Clipdrop |
+| **Taipei** | Asia | TWSE | MyEdit (CyberLink) |
+| **Vienna** | Europe | Wiener Börse (×2) | Remove.bg (Kaleido AI) |
+| **Warsaw** | Europe | GPW, WSE NewConnect | Getimg.ai |
+
+**Note:** San Francisco has no direct exchange but Bay Area providers connect via aliases when a San Francisco exchange is added.
+
+### Adding New Connections
+
+**To add a new city connection:**
+
+1. **If adding an exchange:** Add to `exchanges.catalog.json` with correct `city` field
+2. **If adding a provider:** Add to `providers.json` with correct `hqCity` field
+3. **If city name varies:** Add alias to `CITY_ALIASES` in `city-connections.ts`
+4. **No code changes needed** — connections derive automatically
+
+**Example: Adding a Melbourne provider**
+```json
+// providers.json
+{
+  "id": "new-provider",
+  "name": "Melbourne AI",
+  "hqCity": "Melbourne",
+  ...
+}
+```
+→ Automatically connects to any exchanges with `city: "Melbourne"`
+
+### Continent Color Palette
+
+| Continent | Primary Color | Glow Color | CSS Variable |
+|-----------|---------------|------------|--------------|
+| **Oceania** | Cyan `#22d3ee` | `rgba(34, 211, 238, 0.6)` | `--pulse-color` |
+| **Asia** | Gold `#fbbf24` | `rgba(251, 191, 36, 0.6)` | `--pulse-color` |
+| **Europe** | Blue `#3b82f6` | `rgba(59, 130, 246, 0.6)` | `--pulse-color` |
+| **Americas** | Emerald `#10b981` | `rgba(16, 185, 129, 0.6)` | `--pulse-color` |
+| **Africa** | Orange `#f97316` | `rgba(249, 115, 22, 0.6)` | `--pulse-color` |
+| **Middle East** | Purple `#a855f7` | `rgba(168, 85, 247, 0.6)` | `--pulse-color` |
+
+**Country → Continent mapping:** `src/data/city-connections.ts` → `COUNTRY_TO_CONTINENT`
 
 ### Multi-Session Exchanges
 
 Some exchanges have **lunch breaks** and therefore fire **4 events per day** instead of 2:
 
-| Exchange             | Morning Open | Lunch Close | Afternoon Open | Final Close |
-| -------------------- | ------------ | ----------- | -------------- | ----------- |
-| **Hong Kong (HKEX)** | 09:30        | 12:00       | 13:00          | 16:00       |
-| **Tokyo (TSE)**      | 09:00        | 11:30       | 12:30          | 15:00       |
-| **China (SSE/SZSE)** | 09:30        | 11:30       | 13:00          | 15:00       |
+| Exchange | Morning Open | Lunch Close | Afternoon Open | Final Close |
+|----------|--------------|-------------|----------------|-------------|
+| **Hong Kong (HKEX)** | 09:30 | 12:00 | 13:00 | 16:00 |
+| **Tokyo (TSE)** | 09:00 | 11:30 | 12:30 | 15:00 |
+| **China (SSE/SZSE)** | 09:30 | 11:30 | 13:00 | 15:00 |
 
-Each session boundary triggers its own ±1 minute event window with full particle effects.
+Each session boundary triggers its own ±1 minute event window with full visual effects.
 
-### Continent Color Palette
-
-| Continent       | Primary Color     | Glow Color                | CSS Variable              |
-| --------------- | ----------------- | ------------------------- | ------------------------- |
-| **Oceania**     | Cyan `#22d3ee`    | `rgba(34, 211, 238, 0.6)` | `--pulse-continent-color` |
-| **Asia**        | Gold `#fbbf24`    | `rgba(251, 191, 36, 0.6)` | `--pulse-continent-color` |
-| **Europe**      | Blue `#3b82f6`    | `rgba(59, 130, 246, 0.6)` | `--pulse-continent-color` |
-| **Americas**    | Emerald `#10b981` | `rgba(16, 185, 129, 0.6)` | `--pulse-continent-color` |
-| **Africa**      | Orange `#f97316`  | `rgba(249, 115, 22, 0.6)` | `--pulse-continent-color` |
-| **Middle East** | Purple `#a855f7`  | `rgba(168, 85, 247, 0.6)` | `--pulse-continent-color` |
-
-### Multi-Provider / Multi-Exchange Behavior
-
-**One exchange, multiple providers** (e.g., London → Stability, DreamStudio, Dreamlike):
-
-- All three curves appear simultaneously
-- Particles staggered by 150ms for cascade effect
-- All three rows flash in sequence
-
-**Multiple exchanges, same provider** (e.g., NYSE + NASDAQ → Runway):
-
-- If both exchanges open at the same time: two curves fire, one row receives both bursts
-- If staggered: each event triggers independently
-
-### Technical Architecture
+### Technical Architecture (v2.1)
 
 **Three-layer system:**
 
 1. **Data Layer:** `src/data/city-connections.ts`
-
-   - `CITY_CONNECTIONS` array mapping exchangeId → providerId
+   - Dynamic connection generator (no hardcoding)
+   - City normalization via `CITY_ALIASES`
    - `CONTINENT_COLORS` color definitions
-   - Helper functions: `getConnectionsForExchange()`, `getConnectionsForProvider()`
+   - Helper functions: `getConnectionsForExchange()`, `getProvidersInCity()`, etc.
+   - `COUNTRY_TO_CONTINENT` mapping (60+ countries)
 
-2. **Detection Layer:** `src/hooks/use-market-pulse.ts` _(v2.0)_
-
+2. **Detection Layer:** `src/hooks/use-market-pulse.ts`
    - Checks market status every 1 second for accuracy
    - Detects ±1 minute event windows around all session opens/closes
    - Returns `pulseContexts` Map with state and progress for each exchange
@@ -2284,62 +2323,104 @@ Each session boundary triggers its own ±1 minute event window with full particl
    - Fires `onBurst` callback when opening/closing events occur
 
 3. **Rendering Layer:** `src/components/market-pulse/market-pulse-overlay.tsx`
-   - Single SVG overlay with `pointer-events: none`
+   - Fixed overlay with `pointer-events: none`
    - Calculates positions using `getBoundingClientRect()`
-   - Generates smooth bezier curves between elements
-   - Animates particles using `requestAnimationFrame`
-   - Applies row glow classes dynamically
+   - Spawns traveling dots every 400ms
+   - Animates dots using `requestAnimationFrame`
+   - Applies `.market-pulse-active` class dynamically
 
 **DOM requirements:**
-
 - Exchange cards must have `data-exchange-id="{id}"` attribute
 - Provider rows must have `data-provider-id="{id}"` attribute
+
+### Component Props Interface
+
+```typescript
+// src/components/market-pulse/market-pulse-overlay.tsx
+
+export type MarketPulseOverlayProps = {
+  containerRef: RefObject<HTMLDivElement | null>;
+  leftRailRef: RefObject<HTMLDivElement | null>;
+  rightRailRef: RefObject<HTMLDivElement | null>;
+  providersRef: RefObject<HTMLDivElement | null>;
+  selectedExchangeIds: string[];
+  displayedProviderIds: string[];
+  pulseContexts: Map<string, ExchangePulseContext>;
+  activeExchangeIds: string[];
+};
+```
 
 ### CSS Classes (globals.css)
 
 ```css
-/* Base state for pulse-connected rows */
-.market-pulse-row-glow {
-  position: relative;
-  transition: box-shadow 0.3s ease-out, background-color 0.3s ease-out, transform 0.3s ease-out;
-}
-
-/* Subtle breathing animation for pre-open/pre-close states */
-@keyframes market-pulse-row-breathe {
-  0%,
-  100% {
-    box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent;
-    background-color: transparent;
+/* Card glow animation */
+@keyframes market-pulse-card-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 transparent;
   }
   50% {
-    box-shadow: inset 0 0 20px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent),
-      0 0 10px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 10%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 5%, transparent);
+    box-shadow: 0 0 20px 4px var(--pulse-color, #3b82f6);
   }
 }
 
-.market-pulse-row-breathing {
-  animation: market-pulse-row-breathe 3s ease-in-out infinite;
+/* Indicator dot glow */
+@keyframes market-pulse-dot-glow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Opening event flash */
-.market-pulse-row-opening {
-  animation: market-pulse-row-flash-open 1.5s ease-out forwards;
+/* Active pulse state for cards and rows */
+.market-pulse-active {
+  position: relative;
+  --pulse-color: #3b82f6; /* Default blue, overridden per continent */
+  animation: market-pulse-card-glow 3s ease-in-out infinite;
 }
 
-/* Closing event flash */
-.market-pulse-row-closing {
-  animation: market-pulse-row-flash-close 1.5s ease-out forwards;
+/* Indicator dot on exchange cards (right edge) */
+.market-pulse-active[data-exchange-id]::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--pulse-color);
+  animation: market-pulse-dot-glow 3s ease-in-out infinite;
 }
 
-/* Reduced motion: static highlight instead of animation */
+/* Indicator dot on provider rows (left edge) */
+.market-pulse-active[data-provider-id]::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--pulse-color);
+  animation: market-pulse-dot-glow 3s ease-in-out infinite;
+}
+
+/* Reduced motion: static glow instead of animation */
 @media (prefers-reduced-motion: reduce) {
-  .market-pulse-row-breathing,
-  .market-pulse-row-opening,
-  .market-pulse-row-closing {
+  .market-pulse-active {
     animation: none;
-    box-shadow: inset 0 0 15px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 5%, transparent);
+    box-shadow: 0 0 15px 2px var(--pulse-color, #3b82f6);
+  }
+  .market-pulse-active[data-exchange-id]::after,
+  .market-pulse-active[data-provider-id]::before {
+    animation: none;
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
   }
 }
 ```
@@ -2357,7 +2438,7 @@ export default function HomepageGrid({
 }: HomepageGridProps) {
   const selectedExchangeIds = exchanges.map((e) => e.id);
 
-  // Market Pulse v2.0 hook
+  // Market Pulse v2.0 hook (detection layer)
   const { pulseContexts, activeExchangeIds } = useMarketPulse({
     exchanges,
     onBurst: (context) => {
@@ -2383,59 +2464,47 @@ export default function HomepageGrid({
 }
 ```
 
-### Market Hours Templates
+### What Was Removed/Changed in v2.1
 
-Market Pulse relies on accurate exchange schedules defined in `src/data/markets/market-hours.templates.json`. Version 2.0 includes 50+ templates covering all major regions:
-
-| Region          | Templates                                                                                                                                                                                                                                                                                                        | Notes                  |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| **Oceania**     | `australasia-standard`, `australia-standard`                                                                                                                                                                                                                                                                     | Single session         |
-| **Asia**        | `asia-tokyo`, `asia-korea`, `asia-china`, `asia-hk`, `asia-taiwan`, `asia-singapore`, `asia-malaysia`, `asia-indonesia`, `asia-thailand`, `asia-philippines`, `asia-vietnam`, `asia-india`, `asia-pakistan`, `asia-bangladesh`, `asia-srilanka`                                                                  | Many have lunch breaks |
-| **Middle East** | `gulf-uae`, `gulf-saudi`, `gulf-israel`                                                                                                                                                                                                                                                                          | Some use Sun-Thu week  |
-| **Europe**      | `europe-uk`, `europe-euronext`, `europe-germany`, `europe-swiss`, `europe-nordic`, `europe-spain`, `europe-italy`, `europe-austria`, `europe-poland`, `europe-russia`, `europe-turkey`, `europe-greece`, `europe-baltic`, `europe-iceland`, `europe-ireland`, `europe-czech`, `europe-hungary`, `europe-romania` | Mostly continuous      |
-| **Africa**      | `africa-south`, `africa-nigeria`, `africa-kenya`, `africa-egypt`, `africa-morocco`                                                                                                                                                                                                                               | Various schedules      |
-| **Americas**    | `us-standard`, `us-chicago`, `canada-tsx`, `latam-brazil`, `latam-mexico`, `latam-argentina`, `latam-chile`, `latam-colombia`, `latam-peru`                                                                                                                                                                      | Americas patterns      |
-
-### What Was Removed in v2.0
-
-| Removed Element                                                                                       | Reason                                                     |
-| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| **City connection badges** (`🔗 London`)                                                              | Static, boring, looked like metadata not magic             |
-| **Demo mode**                                                                                         | No longer needed — feature activates on real market events |
-| **Persistent idle lines**                                                                             | Created visual noise; dormant should mean invisible        |
-| **Always-on breathing**                                                                               | Distracting; breathing only during event windows           |
-| **Old hook** (`use-market-transition.ts`)                                                             | Replaced by `use-market-pulse.ts` with event windows       |
-| **Old CSS classes** (`.market-pulse-glow-open`, `.market-pulse-glow-close`, `.city-connection-badge`) | Replaced with v2.0 row effect classes                      |
+| Element | v2.0 | v2.1 | Reason |
+|---------|------|------|--------|
+| **`CITY_CONNECTIONS` array** | Hardcoded static array | `[]` (empty, deprecated) | Dynamic generation preferred |
+| **Bezier curves** | SVG path elements | Removed | Replaced by traveling dots |
+| **SVG overlay** | `<svg>` element | `<div>` element | Simpler DOM-based approach |
+| **Row breathing classes** | `.market-pulse-row-breathing` | `.market-pulse-active` | Single unified class |
+| **Flash classes** | `.market-pulse-row-opening/closing` | Removed | Card glow handles transitions |
 
 ### Accessibility
 
-- **Reduced motion**: Users with `prefers-reduced-motion` see instant state changes with static highlights instead of particles
-- **Aria-hidden**: All visual effects are decorative and hidden from screen readers (`aria-hidden="true"`)
-- **No seizure risk**: Maximum flash rate well below 3Hz threshold
+- **Reduced motion**: Users with `prefers-reduced-motion` see static glows instead of animations
+- **Aria-hidden**: All visual effects are decorative (`aria-hidden="true"`)
+- **No seizure risk**: Maximum animation rate well below 3Hz threshold
+- **No content dependency**: Feature is purely decorative; no information is lost if disabled
 
 ### Performance Notes
 
-- Single SVG overlay for all connections (not one per line)
-- Particles use `requestAnimationFrame` for smooth 60fps
-- Path calculations cached, recalculated only on scroll/resize
-- Curves not rendered when dormant (zero overhead for ~99% of the day)
+- Fixed overlay instead of per-element animations
+- Dots use `requestAnimationFrame` for smooth 60fps
+- Position calculations cached, recalculated only on scroll/resize
+- Nothing rendered when dormant (zero overhead for ~99% of the day)
+- Max 20 concurrent dots (oldest removed when limit reached)
 - Status checks every 1 second (minimal CPU impact)
 
-### A Day in the Life (Example: London)
+### A Day in the Life (Example: Sydney)
 
-| Time (UTC) | State     | Visual                                                                                 |
-| ---------- | --------- | -------------------------------------------------------------------------------------- |
-| 06:59      | Dormant   | No curves visible. Provider rows normal.                                               |
-| 07:59      | Pre-Open  | Curves fade in toward Stability, DreamStudio, Dreamlike. Slow particles. Rows breathe. |
-| 08:00      | Opening   | LSE OPENS. Burst of particles. Curves blaze. Three rows flash blue.                    |
-| 08:01      | Dormant   | Event window ends. Curves fade. Interface clean.                                       |
-| 15:29      | Pre-Close | Curves reappear. Particles flow in reverse. Rows breathe.                              |
-| 16:30      | Closing   | LSE CLOSES. Reverse burst. Cool flash. Curves fade to black.                           |
-| 16:31      | Dormant   | Clean interface until tomorrow.                                                        |
+| Time (AEDT) | State | Visual |
+|-------------|-------|--------|
+| 09:59 | Pre-Open | Cards start glowing cyan. Indicator dots appear. Slow balls travel. |
+| 10:00 | Opening | ASX OPENS. Glow intensifies. Balls spawn rapidly. |
+| 10:01 | Dormant | Event window ends. Glow fades. Interface clean. |
+| 15:59 | Pre-Close | Cards glow again. Balls travel in both directions. |
+| 16:00 | Closing | ASX CLOSES. Final burst. All effects fade out. |
+| 16:01 | Dormant | Clean interface until tomorrow. |
 
 ---
 
-Last updated: January 2, 2026
+**Last updated:** January 8, 2026
 
 **Changelog:**
+- **8 Jan 2026:** Market Pulse v2.1 — Dynamic city connections (no hardcoding), Option 3+4 combined visual effects, city normalization with aliases, unified `.market-pulse-active` CSS class.
 - **2 Jan 2026:** Added vote button to Image Quality column. Added community voting rules and implementation references.
