@@ -2,7 +2,7 @@
 
 ## Created: 2025-12-28
 
-## Last Updated: 2026-01-02
+## Last Updated: 2026-01-08
 
 This document tracks deferred work for API integration, cleanup tasks, and activation requirements.
 
@@ -121,6 +121,55 @@ After all items are configured:
 
 ---
 
+## 1.5 Gateway TypeScript & Security Fixes ✅ DONE
+
+**Completed:** 8 January 2026
+
+**Problem:** Gateway had 12 TypeScript errors preventing compilation:
+- `Cannot find module 'zod'` - Zod not installed
+- `Parameter 'p' implicitly has an 'any' type` - forEach callbacks
+- `Property 'length' does not exist on type '{}'` - Type narrowing issues
+
+**Solution:** Two options provided:
+
+**Option A - Install Zod (recommended):**
+```powershell
+cd C:\Users\Proma\Projects\promagen\gateway
+pnpm add zod
+```
+
+**Option B - Manual type guards (Zod-free):**
+Replaced Zod schemas with equivalent manual type guards in `lib/schemas.ts`.
+
+**Files modified:**
+- `gateway/lib/schemas.ts` — Zod schemas OR manual type guards (v2.1.0)
+- `gateway/index.ts` — Updated validation calls, explicit types (v2.1.0)
+- `gateway/adapters/twelvedata.fx.ts` — Explicit forEach types (v2.1.0)
+
+**Key fix pattern:**
+```typescript
+// BEFORE (implicit any - TS7006 error):
+req.requestedPairs.forEach((p, idx) => { ... });
+
+// AFTER (explicit types):
+req.requestedPairs.forEach((p: FxRibbonPair, idx: number) => { ... });
+```
+
+**Security score:** 10/10 maintained
+- All external data validated at runtime
+- No unsafe `as T` type assertions
+- Graceful degradation on validation failures
+
+**Verification:**
+```powershell
+cd C:\Users\Proma\Projects\promagen\gateway
+pnpm run typecheck  # Should pass with 0 errors
+pnpm run lint       # Should pass
+```
+
+---
+
+
 ## 2. Prompt Builder Authentication Lock (Added Jan 2, 2026)
 
 **Priority: CRITICAL**
@@ -135,7 +184,7 @@ The prompt builder must be locked behind authentication with usage quotas for fr
 
 **Key Requirements:**
 - Track on "Copy prompt" button clicks
-- 30 prompts/day for free users, unlimited for paid
+- 10 prompts/day for free users, unlimited for paid
 - Daily reset at midnight in user's local timezone
 - Purple-pink gradient lock styling matching brand buttons
 
@@ -190,82 +239,181 @@ interface DailyUsage {
 **Task:** Implement purple-pink gradient lock styling
 
 **Visual Requirements:**
-- Same gradient as Randomise and Sign In buttons
-- Consistent across all 12 category dropdowns
-- Overlay messages: "Sign in to unlock" / "Go Pro for unlimited"
-- Disable all interactions when locked
+- Lock icon overlay on prompt builder dropdowns
+- Purple-pink gradient matches `AuthButton`
+- Semi-transparent backdrop with blur effect
+- Clear call-to-action button centered in lock overlay
+- Disabled state styling for individual dropdowns (not lock overlay on each)
 
-**Files to modify:**
-- `src/components/providers/prompt-builder.tsx` - Main component logic
-- `src/components/ui/combobox.tsx` - Add lock state props and styling
-- `src/app/globals.css` - Add lock state gradient classes
-
-**CSS Implementation:**
+**CSS tokens (already in globals.css):**
 ```css
-/* Purple-pink gradient lock state */
-.prompt-lock-gradient {
-  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
-  pointer-events: none;
-  position: relative;
-}
-
-.prompt-lock-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-weight: 600;
-  border-radius: inherit;
-  z-index: 10;
-}
+--gradient-purple-pink: linear-gradient(135deg, theme('colors.purple.500'), theme('colors.pink.500'));
 ```
 
-### 2.3 Enhanced User Tier Integration
+### 2.3 Verification Checklist
 
-**Task:** Extend paid user benefits to prompt builder
+- [ ] Anonymous user sees usage counter (X/5 free prompts today)
+- [ ] Anonymous user at limit sees central lock overlay
+- [ ] Anonymous user lock resets at midnight (daily reset)
+- [ ] Free user sees usage counter (X/10 prompts today)
+- [ ] Free user at quota sees central lock overlay
+- [ ] Paid user has no usage counter
+- [ ] Usage increments on "Copy prompt" click
+- [ ] Usage persists after page refresh
 
-**Enhanced limits for paid users:**
-- Style category: 2 selections (was 1)
-- Lighting category: 2 selections (was 1)  
-- Fidelity category: 2 selections (was 1)
-- No daily usage limits
+---
 
-**Implementation:**
-```typescript
-const getSelectionLimits = (userTier: 'free' | 'paid') => ({
-  subject: 1,
-  action: 1,
-  style: userTier === 'paid' ? 2 : 1,
-  environment: 1,
-  composition: 1,
-  camera: 1,
-  lighting: userTier === 'paid' ? 2 : 1,
-  colour: 1,
-  atmosphere: 1,
-  materials: 1,
-  fidelity: userTier === 'paid' ? 2 : 1,
-  negative: 5
-});
+## 2.4 "Ask Promagen" — LLM-Powered Suggestion Feature (Added Jan 8, 2026)
+
+**Priority: MEDIUM (deferred)**
+
+**Status:** Planned — to be implemented after core features stable
+
+### Overview
+
+"Ask Promagen" is a server-side LLM interpretation feature that complements the planned client-side Prompt Intelligence system. They serve different purposes:
+
+| Layer | What It Does | Cost |
+|-------|--------------|------|
+| **Ask Promagen** (this feature) | Natural language → structured dropdown selections via LLM | ~$0.001/call |
+| **Prompt Intelligence** (planned, see `prompt-intelligence.md`) | Client-side semantic scoring, reordering, conflict detection | Free (client-side) |
+
+Both enhance the same prompt builder UI without changing its layout.
+
+### User Flow
+
+```
+User types: "cozy winter scene, nostalgic feeling"
+                    │
+                    ▼
+            ┌───────────────┐
+            │  Claude Haiku │  (~$0.001)
+            │  or GPT-4o-mini│
+            └───────┬───────┘
+                    │
+                    ▼
+         ┌─────────────────────┐
+         │ Structured Response │
+         │ {                   │
+         │   subject: "cabin", │
+         │   environment: "snowy forest", │
+         │   lighting: "warm firelight", │
+         │   atmosphere: "cozy", │
+         │   colour: "warm tones", │
+         │   style: "nostalgic film" │
+         │ }                   │
+         └──────────┬──────────┘
+                    │
+                    ▼
+    ┌───────────────────────────────┐
+    │ Match to existing dropdown    │
+    │ options (fuzzy match against  │
+    │ 2,056 curated terms)          │
+    └───────────────────────────────┘
+                    │
+                    ▼
+         Auto-populate dropdowns
+         + Show "Promagen selected:" chips
 ```
 
-### 2.4 Verification Checklist
+### UI Position
 
-After implementation:
+Between header and dropdowns — prominent but skippable:
 
-- [ ] Prompt builder locked for unauthenticated users
-- [ ] Purple-pink gradient applied to locked dropdowns
-- [ ] "Sign in to unlock" message displays correctly
-- [ ] Free users see usage counter (X/30 prompts today)
-- [ ] Copy prompt button tracks usage for free users
-- [ ] Quota enforcement at 30 prompts/day for free users
-- [ ] "Go Pro for unlimited" message when quota exceeded
-- [ ] Paid users never see usage limits or lock states
-- [ ] Enhanced selection limits active for paid users
-- [ ] Daily reset at midnight in user's timezone
-- [ ] Usage data persists in Vercel KV
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ [▼ Midjourney] · Prompt builder    [Dynamic] [Optimize] [📈]   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  💬 Describe what you want...                      [Suggest →]  │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ A cozy winter scene that feels nostalgic                │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  Subject ▼    Action ▼    Style ▼    Environment ▼   ...       │
+```
+
+### Educational Output
+
+After suggestions populate, show what was selected and why:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ ✨ Promagen selected:                                           │
+│                                                                 │
+│ Subject: "cabin in woods" — Your focal point                    │
+│ Environment: "snowy forest" — Sets the winter scene             │
+│ Lighting: "warm firelight" — Creates cozy contrast              │
+│ Atmosphere: "peaceful" — Nostalgic, calm mood                   │
+│ Colour: "warm muted tones" — Vintage film look                  │
+│                                                                 │
+│ [Accept All]  [Edit Selections]  [Clear]                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+Users learn what each category does by seeing the reasoning.
+
+### Tier Limits
+
+See `paid_tier.md` §5.8 for authoritative limits:
+
+| Tier | Daily Ask Promagen Limit |
+|------|--------------------------|
+| Anonymous | 5 suggestions/day |
+| Standard Promagen | 10 suggestions/day |
+| Pro Promagen | Unlimited |
+
+### Proposed File Structure
+
+```
+src/
+├── components/providers/
+│   ├── prompt-builder.tsx          # Add <AskPromagen> slot above dropdowns
+│   └── ask-promagen.tsx            # NEW: Input + suggestion chips UI
+├── app/api/promagen/
+│   └── suggest/route.ts            # NEW: Server route → LLM
+├── lib/promagen/
+│   └── suggest.ts                  # NEW: Fuzzy match + LLM prompt assembly
+└── hooks/
+    └── use-ask-promagen.ts         # NEW: State + debounce + tier limits
+```
+
+### Technical Decisions (to resolve before implementation)
+
+1. **LLM Provider:** Claude Haiku ($0.25/1M input) or GPT-4o-mini? Single provider or fallback chain?
+
+2. **Caching:** Cache identical queries (Vercel KV) for 24h to reduce costs?
+
+3. **Fuzzy Matching:** Use existing `semantic-tags.json` (when built) or simple string matching for now?
+
+4. **Error Handling:** Toast fallback when LLM fails → "Try selecting manually"?
+
+5. **Rate Limiting:** Per-user daily limits stored in Vercel KV (same as usage tracking)?
+
+### Cost Control
+
+| Aspect | Approach |
+|--------|----------|
+| Rate limit | 5/day anonymous, 10/day free, unlimited paid |
+| Model | Claude Haiku ($0.25/1M input) or GPT-4o-mini |
+| Caching | Cache identical queries (Redis/KV) for 24h |
+| Debounce | 500ms debounce on input, only call on [Suggest →] click |
+
+### Fallback Chain
+
+```
+1. Try Claude Haiku API
+   ↓ fails
+2. Try GPT-4o-mini API (if configured)
+   ↓ fails  
+3. Show toast: "Suggestion unavailable — try the dropdowns below"
+   (existing rule-based system works fine)
+```
+
+### Implementation NOT Started
+
+This feature is documented for future implementation. All files listed above are proposals only.
 
 ---
 
@@ -273,121 +421,64 @@ After implementation:
 
 **Priority: MEDIUM**
 
-Implement user location-based exchange ordering for authenticated users.
+Location-aware exchange ordering provides a personalised view based on the user's geographic position.
 
-### 3.1 Location Detection System
+### 3.1 Location Detection
 
-**Task:** Implement user location detection
+**Task:** Implement browser geolocation with IP fallback
 
-**Approach:** Browser geolocation API (free) with IP geolocation fallback
+**Current State:**
+- No location detection implemented
+- All users see same default ordering (12 exchanges)
 
 **Implementation:**
+```typescript
+// src/hooks/use-user-location.ts
+interface UserLocation {
+  longitude: number;
+  latitude: number;
+  source: 'gps' | 'ip' | 'default';
+  accuracy: 'high' | 'medium' | 'low';
+}
+```
 
-1. **Create location hook:**
-   - `src/hooks/use-user-location.ts` - Location detection and management
-   - Browser geolocation API with permission handling
-   - IP geolocation fallback using free tier API (ipapi.co or ipgeolocation.io)
-   - Store location in localStorage for session persistence
+**Detection order:**
+1. Browser Geolocation API (high accuracy, requires permission)
+2. IP Geolocation via free service (medium accuracy, no permission)
+3. Default center (0° longitude - Greenwich) if both fail
 
-2. **Location detection flow:**
-   ```typescript
-   interface UserLocation {
-     latitude: number;
-     longitude: number;
-     source: 'gps' | 'ip' | 'default';
-     timestamp: number;
-   }
-   
-   const detectLocation = async (): Promise<UserLocation> => {
-     try {
-       // Try browser geolocation first
-       const position = await getCurrentPosition();
-       return {
-         latitude: position.coords.latitude,
-         longitude: position.coords.longitude,
-         source: 'gps',
-         timestamp: Date.now()
-       };
-     } catch {
-       // Fallback to IP geolocation
-       const ipLocation = await getIPLocation();
-       return ipLocation;
-     }
-   };
-   ```
+### 3.2 Relative Ordering
 
-**Cost analysis:**
-- Browser geolocation API: **Free**
-- IP geolocation fallback: **Free tier** (1000 requests/day)
-- No additional API costs
-
-### 3.2 Relative Exchange Ordering
-
-**Task:** Update exchange ordering logic for location-relative sorting
-
-**Current:** Absolute longitude-based ordering (east → west)
-**New:** Relative ordering based on user's location or Greenwich reference
-
-**Files to modify:**
-- `src/lib/exchange-order.ts` - Core ordering logic
-- `src/components/layout/homepage-grid.tsx` - Apply ordering to rails
-- `src/hooks/use-promagen-auth.ts` - Add reference frame state
+**Task:** Implement east→west ordering relative to user's longitude
 
 **Algorithm:**
-```typescript
-const orderExchangesRelative = (
-  exchanges: Exchange[],
-  referencePoint: { lat: number; lng: number },
-  referenceFrame: 'user' | 'greenwich'
-) => {
-  const reference = referenceFrame === 'greenwich' 
-    ? { lat: 51.4769, lng: 0 } // Greenwich
-    : referencePoint;
-    
-  return exchanges
-    .map(exchange => ({
-      ...exchange,
-      relativeBearing: calculateBearing(reference, exchange)
-    }))
-    .sort((a, b) => a.relativeBearing - b.relativeBearing);
-};
-```
+1. Get user's longitude
+2. Sort all exchanges by longitudinal distance from user
+3. Split into left rail (east of user) and right rail (west of user)
+4. Display east-to-west within each rail
 
-### 3.3 Reference Frame Toggle (Paid Users)
+**File:** `src/lib/rails/order-exchanges.ts` (exists, needs enhancement)
 
-**Task:** Add reference frame toggle for paid users
+### 3.3 Reference Frame Toggle
 
-**Toggle options:**
-- "My Location" - relative to detected user location
-- "Greenwich" - relative to Greenwich meridian (0°)
+**Task:** Add reference frame preference for signed-in users
 
-**UI Implementation:**
-- Settings toggle in user menu (paid users only)
-- Persist preference in Clerk user metadata
-- Immediate re-ordering when changed
+**UI:**
+- Toggle in header or settings
+- Options: "My Location" (default) vs "Greenwich (UTC)"
+- Preference persists in localStorage/Clerk metadata
 
-**Implementation:**
-```typescript
-// Store in Clerk publicMetadata
-{
-  "tier": "paid",
-  "referenceFrame": "user" | "greenwich"
-}
-
-// Default for all users: user location (free users have no choice)
-// Paid users can toggle between "user" and "greenwich"
-```
+**Current State:**
+- `src/components/reference-frame-toggle.tsx` - Component exists (stub) ✅
+- `src/lib/exchange-order.ts` - Has `splitEastWest()` but fixed reference ✅
 
 ### 3.4 Verification Checklist
 
-After implementation:
-
-- [ ] Location permission prompt on first visit (authenticated users)
-- [ ] IP geolocation fallback works without GPS permission  
-- [ ] Exchange rails re-order based on user's location
-- [ ] Free users see location-relative ordering (no choice)
-- [ ] Paid users can toggle between "My Location" and "Greenwich"
-- [ ] Greenwich reference works as universal baseline
+- [ ] Browser geolocation prompt appears (first visit)
+- [ ] IP fallback works when geolocation denied
+- [ ] Default ordering works when both fail
+- [ ] Exchanges reorder based on user longitude
+- [ ] Reference frame toggle visible for signed-in users
 - [ ] Reference frame preference persists across sessions
 - [ ] Exchange ordering remains east→west relative to chosen reference
 - [ ] Performance acceptable (no blocking on location detection)
@@ -611,10 +702,18 @@ src/lib/usage-tracking.ts                 # Usage tracking utilities
 src/lib/location-utils.ts                 # Geographic calculation utilities
 ```
 
+### Ask Promagen (when implemented):
+```
+src/components/providers/ask-promagen.tsx # NEW: Input + suggestion chips UI
+src/app/api/promagen/suggest/route.ts     # NEW: Server route → LLM
+src/lib/promagen/suggest.ts               # NEW: Fuzzy match + LLM prompt assembly
+src/hooks/use-ask-promagen.ts             # NEW: State + debounce + tier limits
+```
+
 ### Enhanced Components:
 ```
 src/components/ui/combobox.tsx             # Enhanced with lock states
-src/components/providers/prompt-builder.tsx # Enhanced with auth
+src/components/providers/prompt-builder.tsx # Enhanced with auth + Ask Promagen slot
 src/hooks/use-promagen-auth.ts            # Enhanced with usage data
 ```
 
@@ -622,6 +721,10 @@ src/hooks/use-promagen-auth.ts            # Enhanced with usage data
 
 ## Changelog
 
+- **8 Jan 2026:** Updated §2.1 and §2.3 — Changed Standard Promagen daily prompt limit from 30/day to **10/day**. Clean tier progression: Anonymous 5/day → Free 10/day → Paid unlimited.
+
+- **8 Jan 2026:** Added §2.4 "Ask Promagen" — LLM-Powered Suggestion Feature. Documents server-side LLM interpretation feature complementing client-side Prompt Intelligence. Includes tier limits (Anonymous: 5, Standard: 10, Pro: Unlimited), UI mockups, technical decisions to resolve, file structure proposal. Status: planned/deferred.
+- **8 Jan 2026:** Added §1.5 Gateway TypeScript & Security Fixes (DONE). Fixed 12 TypeScript errors: installed Zod dependency, added explicit types to forEach callbacks, fixed type narrowing issues. Gateway v2.1.0 with 10/10 security score.
 - **2 Jan 2026:** **MAJOR UPDATE** — Added §2 Prompt Builder Authentication Lock (usage tracking, lock states, visual treatment). Added §3 Geographic Exchange Ordering (location detection, relative ordering, reference frame toggle). Updated verification checklists and implementation requirements. Added new file creation list.
 - **2 Jan 2026:** Marked §1.1 Login Integration as DONE. Added Clerk integration details. Added §7.4 auth routes to delete list. Added §9.3 Auth Button Header Layout fix. Updated verification checklist.
 - **2 Jan 2026:** Added §1 Community Voting System Activation (login integration, Vercel KV, cron secret). Added §9.2 Vote Button Brightness fix.

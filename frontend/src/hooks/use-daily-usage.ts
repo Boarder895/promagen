@@ -11,7 +11,7 @@
  *
  * Flow:
  * - Anonymous users: localStorage tracking (5 cumulative limit)
- * - Free authenticated: Vercel KV tracking (30/day limit)
+ * - Free authenticated: Vercel KV tracking (10/day limit)
  * - Paid authenticated: No tracking (unlimited)
  *
  * Authority: docs/authority/paid_tier.md §3.2, §3.3
@@ -136,7 +136,7 @@ function createInitialState(isAuthenticated: boolean, userTier: 'free' | 'paid')
  *
  * Handles three user states:
  * 1. Anonymous: localStorage tracking (5 cumulative prompts)
- * 2. Free authenticated: Server tracking (30/day)
+ * 2. Free authenticated: Server tracking (10/day)
  * 3. Paid authenticated: No limits
  */
 export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageReturn {

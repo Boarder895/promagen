@@ -1,9 +1,14 @@
 // src/hooks/use-prompt-optimization.ts
 // ============================================================================
-// USE PROMPT OPTIMIZATION HOOK
+// USE PROMPT OPTIMIZATION HOOK v2.0.0
 // ============================================================================
 // React hook managing Text Length Optimizer state and logic.
 // Provides real-time length analysis and optimization on copy.
+//
+// NEW in v2.0.0:
+// - Integrates with Intelligence Preferences for smart trim control
+// - When smartTrimEnabled=true: trims by semantic relevance (lowest scores first)
+// - When smartTrimEnabled=false: trims by position (dumb trim, last items first)
 //
 // Features:
 // - Always starts OFF (no persistence)
@@ -37,6 +42,10 @@ import {
   getStatusIcon,
   getStatusColorClass,
 } from '@/lib/prompt-trimmer';
+
+// Import prompt intelligence for smart trim
+import { smartTrimAssembledPrompt } from '@/lib/prompt-intelligence';
+import { useIntelligencePreferences } from '@/hooks/use-intelligence-preferences';
 
 // ============================================================================
 // TYPES
@@ -139,11 +148,14 @@ export function usePromptOptimization({
   compositionMode = 'dynamic',
 }: UsePromptOptimizationOptions): UsePromptOptimizationReturn {
   // ============================================================================
-  // STATE
+  // STATE & PREFERENCES
   // ============================================================================
 
   // Optimizer always starts OFF, no persistence between sessions
   const [isOptimizerEnabled, setOptimizerEnabled] = useState(false);
+  
+  // Get intelligence preferences for smart trim control
+  const { preferences: intelligencePrefs } = useIntelligencePreferences();
 
   // ============================================================================
   // COMPUTED VALUES
@@ -220,7 +232,7 @@ export function usePromptOptimization({
 
   /**
    * Get optimized prompt for copying.
-   * Only optimizes if enabled; otherwise returns original.
+   * Uses smart trim (by relevance) or dumb trim (by position) based on preferences.
    */
   const getOptimizedPrompt = useCallback((): OptimizedPrompt => {
     // If optimizer not enabled, return original
@@ -236,14 +248,45 @@ export function usePromptOptimization({
       };
     }
 
-    // Optimize the prompt
+    // Use smart trim if enabled in preferences
+    if (intelligencePrefs.smartTrimEnabled) {
+      // Smart trim: uses semantic relevance to decide what to remove
+      const smartResult = smartTrimAssembledPrompt({
+        promptText,
+        selections,
+        platformId,
+        targetLength: limits.idealMax,
+        preserveSubject: true, // Always protect subject
+      });
+      
+      return {
+        original: promptText,
+        optimized: smartResult.optimized,
+        originalLength: promptText.length,
+        optimizedLength: smartResult.optimized.length,
+        wasTrimmed: smartResult.wasTrimmed,
+        removedCategories: [...new Set(smartResult.removedTerms.map(t => t.category))],
+        status: analysis.status,
+      };
+    }
+
+    // Dumb trim: uses position-based category trimming (default/legacy)
     return optimizePrompt(
       promptText,
       platformId,
       selections,
       isMjFamily ? 'midjourney' : 'other',
     );
-  }, [isOptimizerEnabled, promptText, platformId, selections, isMjFamily, analysis.status]);
+  }, [
+    isOptimizerEnabled,
+    promptText,
+    platformId,
+    selections,
+    isMjFamily,
+    analysis.status,
+    intelligencePrefs.smartTrimEnabled,
+    limits.idealMax,
+  ]);
 
   // ============================================================================
   // RETURN

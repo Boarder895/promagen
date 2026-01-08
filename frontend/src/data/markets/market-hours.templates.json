@@ -1,13 +1,13 @@
 {
   "$schema": "https://promagen/schemas/market-hours.templates.schema.json",
-  "version": 2,
-  "_comment": "Market Pulse v2.0 - Comprehensive exchange hours with multi-session support",
-  "_updated": "2026-01-02",
+  "version": 3,
+  "_comment": "Market Pulse v3.0 - Comprehensive exchange hours with multi-session support (130 exchanges)",
+  "_updated": "2026-01-08",
   "templates": {
     "australasia-standard": {
       "label": "Australasia Standard",
       "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "16:45" }],
-      "notes": "NZX Wellington"
+      "notes": "NZX Wellington, PNGX Port Moresby, SPX Fiji"
     },
     "australia-standard": {
       "label": "Australia Standard",
@@ -20,7 +20,7 @@
         { "days": "Mon-Fri", "open": "09:00", "close": "11:30" },
         { "days": "Mon-Fri", "open": "12:30", "close": "15:00" }
       ],
-      "notes": "TSE with lunch break 11:30-12:30"
+      "notes": "TSE/OSE with lunch break 11:30-12:30"
     },
     "asia-korea": {
       "label": "Korea Exchange",
@@ -33,7 +33,7 @@
         { "days": "Mon-Fri", "open": "09:30", "close": "11:30" },
         { "days": "Mon-Fri", "open": "13:00", "close": "15:00" }
       ],
-      "notes": "SSE/SZSE with lunch break 11:30-13:00"
+      "notes": "SSE Shanghai, SZSE Shenzhen with lunch break 11:30-13:00"
     },
     "asia-hk": {
       "label": "Hong Kong Exchange",
@@ -51,7 +51,7 @@
     "asia-singapore": {
       "label": "Singapore Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:00" }],
-      "notes": "SGX continuous session"
+      "notes": "SGX continuous session, Tehran TSE"
     },
     "asia-malaysia": {
       "label": "Bursa Malaysia",
@@ -67,7 +67,7 @@
         { "days": "Mon-Fri", "open": "09:00", "close": "12:00" },
         { "days": "Mon-Fri", "open": "13:30", "close": "16:00" }
       ],
-      "notes": "IDX with lunch break"
+      "notes": "IDX Jakarta with lunch break"
     },
     "asia-thailand": {
       "label": "Stock Exchange of Thailand",
@@ -75,7 +75,7 @@
         { "days": "Mon-Fri", "open": "10:00", "close": "12:30" },
         { "days": "Mon-Fri", "open": "14:30", "close": "16:30" }
       ],
-      "notes": "SET with lunch break"
+      "notes": "SET Bangkok with lunch break"
     },
     "asia-philippines": {
       "label": "Philippine Stock Exchange",
@@ -83,67 +83,115 @@
         { "days": "Mon-Fri", "open": "09:30", "close": "12:00" },
         { "days": "Mon-Fri", "open": "13:30", "close": "15:30" }
       ],
-      "notes": "PSE with lunch break"
+      "notes": "PSE Manila with lunch break"
     },
     "asia-vietnam": {
-      "label": "Vietnam Stock Exchange",
+      "label": "Vietnam Stock Exchanges",
       "session": [
         { "days": "Mon-Fri", "open": "09:00", "close": "11:30" },
         { "days": "Mon-Fri", "open": "13:00", "close": "15:00" }
       ],
-      "notes": "HOSE/HNX with lunch break"
+      "notes": "HOSE Ho Chi Minh, HNX Hanoi with lunch break"
+    },
+    "asia-indochina": {
+      "label": "Indochina Exchanges",
+      "session": [
+        { "days": "Mon-Fri", "open": "09:00", "close": "11:30" },
+        { "days": "Mon-Fri", "open": "14:00", "close": "15:00" }
+      ],
+      "notes": "Cambodia CSX, Laos LSX (ICT timezone +07:00)"
     },
     "asia-india": {
       "label": "India NSE/BSE",
       "session": [{ "days": "Mon-Fri", "open": "09:15", "close": "15:30" }],
-      "notes": "NSE/BSE continuous session"
+      "notes": "NSE/BSE Mumbai continuous session"
+    },
+    "asia-nepal": {
+      "label": "Nepal Stock Exchange",
+      "session": [{ "days": "Sun-Thu", "open": "11:00", "close": "15:00" }],
+      "notes": "NEPSE Kathmandu Sunday-Thursday (NPT +05:45)"
     },
     "asia-pakistan": {
       "label": "Pakistan Stock Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "15:30" }],
-      "notes": "PSX continuous session"
+      "notes": "PSX Karachi continuous session"
     },
     "asia-bangladesh": {
       "label": "Dhaka Stock Exchange",
       "session": [{ "days": "Sun-Thu", "open": "10:00", "close": "14:30" }],
-      "notes": "DSE Sunday-Thursday (Islamic week)"
+      "notes": "DSE Dhaka Sunday-Thursday"
     },
     "asia-srilanka": {
       "label": "Colombo Stock Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "14:30" }],
-      "notes": "CSE continuous session"
+      "notes": "CSE Colombo continuous session"
+    },
+    "asia-mongolia": {
+      "label": "Mongolian Stock Exchange",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "13:00" }],
+      "notes": "MSE Ulaanbaatar short session (ULAT +08:00)"
     },
     "gulf-uae": {
       "label": "UAE Exchanges",
       "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "14:00" }],
-      "notes": "DFM/ADX continuous session"
+      "notes": "DFM Dubai, ADX Abu Dhabi"
     },
     "gulf-saudi": {
       "label": "Saudi Exchange",
       "session": [{ "days": "Sun-Thu", "open": "10:00", "close": "15:00" }],
-      "notes": "Tadawul Sunday-Thursday"
+      "notes": "Tadawul Riyadh Sunday-Thursday"
+    },
+    "gulf-qatar": {
+      "label": "Qatar Stock Exchange",
+      "session": [{ "days": "Sun-Thu", "open": "09:30", "close": "13:00" }],
+      "notes": "QSE Doha Sunday-Thursday (AST +03:00)"
+    },
+    "gulf-kuwait": {
+      "label": "Boursa Kuwait",
+      "session": [{ "days": "Sun-Thu", "open": "09:00", "close": "13:00" }],
+      "notes": "Kuwait City Sunday-Thursday (AST +03:00)"
+    },
+    "gulf-bahrain": {
+      "label": "Bahrain Bourse",
+      "session": [{ "days": "Sun-Thu", "open": "09:30", "close": "13:00" }],
+      "notes": "BHB Manama Sunday-Thursday (AST +03:00)"
+    },
+    "gulf-oman": {
+      "label": "Muscat Stock Exchange",
+      "session": [{ "days": "Sun-Thu", "open": "10:00", "close": "13:00" }],
+      "notes": "MSM Muscat Sunday-Thursday (GST +04:00)"
+    },
+    "gulf-jordan": {
+      "label": "Amman Stock Exchange",
+      "session": [{ "days": "Sun-Thu", "open": "10:00", "close": "12:30" }],
+      "notes": "ASE Amman Sunday-Thursday (EET +02:00/+03:00)"
     },
     "gulf-israel": {
       "label": "Tel Aviv Stock Exchange",
       "session": [{ "days": "Sun-Thu", "open": "09:00", "close": "17:25" }],
-      "notes": "TASE Sunday-Thursday"
+      "notes": "TASE Tel Aviv Sunday-Thursday"
     },
     "europe-uk": {
       "label": "London Stock Exchange",
       "session": [{ "days": "Mon-Fri", "open": "08:00", "close": "16:30" }],
-      "notes": "LSE continuous session"
+      "notes": "LSE, LCH Clearnet continuous session"
+    },
+    "europe-ireland": {
+      "label": "Euronext Dublin",
+      "session": [{ "days": "Mon-Fri", "open": "08:00", "close": "16:30" }],
+      "notes": "Irish Stock Exchange"
     },
     "europe-euronext": {
       "label": "Euronext",
       "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:30" }],
-      "notes": "Paris/Amsterdam/Brussels/Lisbon"
+      "notes": "Paris/Amsterdam/Brussels/Lisbon, Ljubljana, Zagreb, Bratislava, Belgrade"
     },
     "europe-germany": {
       "label": "Deutsche Börse",
       "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:30" }],
       "notes": "XETRA Frankfurt"
     },
-    "europe-swiss": {
+    "europe-switzerland": {
       "label": "SIX Swiss Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:30" }],
       "notes": "SIX Zurich"
@@ -151,7 +199,17 @@
     "europe-nordic": {
       "label": "Nasdaq Nordic",
       "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:30" }],
-      "notes": "Stockholm/Copenhagen/Helsinki"
+      "notes": "Stockholm/Copenhagen/Helsinki/Oslo"
+    },
+    "europe-iceland": {
+      "label": "Nasdaq Iceland",
+      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "15:30" }],
+      "notes": "Reykjavík (GMT timezone, no DST)"
+    },
+    "europe-baltic": {
+      "label": "Nasdaq Baltic",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "16:00" }],
+      "notes": "Vilnius/Riga/Tallinn (EET +02:00/+03:00)"
     },
     "europe-spain": {
       "label": "BME Spanish Exchanges",
@@ -171,37 +229,7 @@
     "europe-poland": {
       "label": "Warsaw Stock Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:00" }],
-      "notes": "GPW Warsaw"
-    },
-    "europe-russia": {
-      "label": "Moscow Exchange",
-      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "18:50" }],
-      "notes": "MOEX continuous session"
-    },
-    "europe-turkey": {
-      "label": "Borsa Istanbul",
-      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "18:00" }],
-      "notes": "BIST continuous session"
-    },
-    "europe-greece": {
-      "label": "Athens Stock Exchange",
-      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "17:20" }],
-      "notes": "ATHEX continuous session"
-    },
-    "europe-baltic": {
-      "label": "Nasdaq Baltic",
-      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "16:00" }],
-      "notes": "Vilnius/Riga/Tallinn"
-    },
-    "europe-iceland": {
-      "label": "Nasdaq Iceland",
-      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "15:30" }],
-      "notes": "Reykjavik (GMT timezone)"
-    },
-    "europe-ireland": {
-      "label": "Euronext Dublin",
-      "session": [{ "days": "Mon-Fri", "open": "08:00", "close": "16:30" }],
-      "notes": "Irish Stock Exchange"
+      "notes": "GPW Warsaw, NewConnect"
     },
     "europe-czech": {
       "label": "Prague Stock Exchange",
@@ -218,75 +246,140 @@
       "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "17:45" }],
       "notes": "BVB Bucharest"
     },
+    "europe-russia": {
+      "label": "Moscow Exchange",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "18:50" }],
+      "notes": "MOEX continuous session"
+    },
+    "europe-turkey": {
+      "label": "Borsa Istanbul",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "18:00" }],
+      "notes": "BIST continuous session"
+    },
+    "europe-greece": {
+      "label": "Athens Stock Exchange",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "17:20" }],
+      "notes": "ATHEX, EN.A alternative market"
+    },
+    "europe-core": {
+      "label": "Atlantic/Bermuda",
+      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "16:00" }],
+      "notes": "BSX Hamilton (AST -04:00)"
+    },
     "africa-south": {
-      "label": "Johannesburg Stock Exchange",
+      "label": "West/Central African Exchanges",
+      "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "15:30" }],
+      "notes": "BRVM Abidjan, BVMAC Douala, BVMT Tunis"
+    },
+    "africa-standard": {
+      "label": "Southern/East African Standard",
       "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "17:00" }],
-      "notes": "JSE continuous session"
+      "notes": "JSE Johannesburg, BSE Gaborone, ZSE Harare, LuSE Lusaka, NSX Windhoek (CAT +02:00)"
+    },
+    "africa-east": {
+      "label": "East African Exchanges",
+      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "15:00" }],
+      "notes": "DSE Dar es Salaam, USE Kampala, RSE Kigali (EAT +03:00)"
     },
     "africa-nigeria": {
       "label": "Nigerian Exchange",
       "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "14:30" }],
-      "notes": "NGX Lagos"
+      "notes": "NGX Lagos (WAT +01:00)"
     },
     "africa-kenya": {
       "label": "Nairobi Securities Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "15:00" }],
-      "notes": "NSE Nairobi"
+      "notes": "NSE Nairobi (EAT +03:00)"
     },
-    "africa-egypt": {
-      "label": "Egyptian Exchange",
-      "session": [{ "days": "Sun-Thu", "open": "10:00", "close": "14:30" }],
-      "notes": "EGX Cairo Sunday-Thursday"
+    "africa-ghana": {
+      "label": "Ghana Stock Exchange",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "15:00" }],
+      "notes": "GSE Accra (GMT +00:00)"
     },
     "africa-morocco": {
       "label": "Casablanca Stock Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "15:30" }],
       "notes": "CSE Casablanca"
     },
+    "africa-egypt": {
+      "label": "Egyptian Exchange",
+      "session": [{ "days": "Sun-Thu", "open": "10:00", "close": "14:30" }],
+      "notes": "EGX Cairo Sunday-Thursday (EET +02:00)"
+    },
+    "africa-mauritius": {
+      "label": "Stock Exchange of Mauritius",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "14:30" }],
+      "notes": "SEM Port Louis (MUT +04:00)"
+    },
+    "americas-us": {
+      "label": "US Exchanges",
+      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "16:00" }],
+      "notes": "NYSE, NASDAQ, CBOE New York, CME Chicago"
+    },
     "us-standard": {
-      "label": "US Cash Equities",
+      "label": "US Standard",
       "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "16:00" }],
-      "notes": "NYSE/NASDAQ/CBOE"
+      "notes": "Jamaica JSE, Trinidad TTSE, Panama BVP, Paraguay, Uruguay (ET aligned)"
     },
-    "us-chicago": {
-      "label": "Chicago Markets",
-      "session": [{ "days": "Mon-Fri", "open": "08:30", "close": "15:00" }],
-      "notes": "CBOE Chicago time (CST/CDT)"
+    "americas-brazil": {
+      "label": "B3 Brasil",
+      "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "17:00" }],
+      "notes": "B3 São Paulo (BRT -03:00)"
     },
-    "canada-tsx": {
-      "label": "Toronto Stock Exchange",
+    "americas-caribbean": {
+      "label": "Caribbean Exchanges",
+      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "15:00" }],
+      "notes": "BSE Barbados, ECSE Basseterre (AST -04:00)"
+    },
+    "americas-ecuador": {
+      "label": "Ecuador Stock Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "16:00" }],
-      "notes": "TSX Toronto"
+      "notes": "BVQ Quito (ECT -05:00)"
+    },
+    "americas-venezuela": {
+      "label": "Caracas Stock Exchange",
+      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "13:00" }],
+      "notes": "BVC Caracas short session (VET -04:00)"
     },
     "latam-brazil": {
       "label": "B3 Brasil",
       "session": [{ "days": "Mon-Fri", "open": "10:00", "close": "17:00" }],
-      "notes": "B3 São Paulo"
+      "notes": "B3 São Paulo (alias for americas-brazil)"
     },
     "latam-mexico": {
       "label": "BMV Mexico",
       "session": [{ "days": "Mon-Fri", "open": "08:30", "close": "15:00" }],
-      "notes": "BMV Mexico City"
+      "notes": "BMV/BIVA Mexico City (CST -06:00)"
     },
     "latam-argentina": {
       "label": "BYMA Argentina",
       "session": [{ "days": "Mon-Fri", "open": "11:00", "close": "17:00" }],
-      "notes": "BYMA Buenos Aires"
+      "notes": "BYMA/BCBA Buenos Aires (ART -03:00)"
     },
     "latam-chile": {
       "label": "Santiago Stock Exchange",
       "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "16:00" }],
-      "notes": "BCS Santiago"
+      "notes": "SSE Santiago (CLT -04:00/-03:00)"
     },
     "latam-colombia": {
       "label": "BVC Colombia",
       "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "16:00" }],
-      "notes": "BVC Bogotá"
+      "notes": "BVC Bogotá (COT -05:00)"
     },
     "latam-peru": {
       "label": "BVL Peru",
       "session": [{ "days": "Mon-Fri", "open": "09:00", "close": "16:00" }],
-      "notes": "BVL Lima"
+      "notes": "BVL Lima (PET -05:00)"
+    },
+    "us-chicago": {
+      "label": "Chicago Markets",
+      "session": [{ "days": "Mon-Fri", "open": "08:30", "close": "15:00" }],
+      "notes": "CBOE Chicago local time (CST/CDT)"
+    },
+    "canada-tsx": {
+      "label": "Toronto Stock Exchange",
+      "session": [{ "days": "Mon-Fri", "open": "09:30", "close": "16:00" }],
+      "notes": "TSX Toronto (EST/EDT)"
     }
   }
 }

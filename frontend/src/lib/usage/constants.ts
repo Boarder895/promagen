@@ -33,9 +33,10 @@ export const ANONYMOUS_FREE_LIMIT = 5;
 
 /**
  * Maximum prompt copies per day for free authenticated users.
- * Generous enough for experimentation, restrictive enough to drive conversions.
+ * Low enough to encourage upgrades, high enough to love the product.
+ * Tier progression: Anonymous 5/day → Free 10/day → Paid unlimited
  */
-export const FREE_DAILY_LIMIT = 30;
+export const FREE_DAILY_LIMIT = 10;
 
 /**
  * Paid users have unlimited daily prompt copies.

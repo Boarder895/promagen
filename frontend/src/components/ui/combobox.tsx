@@ -1,7 +1,15 @@
 // src/components/ui/combobox.tsx
 // Enhanced multi-select combobox with lock states and proper auto-close
-// Version 6.3.0 - BULLETPROOF auto-close fix
+// Version 6.5.0 - Added singleColumn prop for single-column dropdown layout
 // 
+// NEW in v6.5.0:
+// - singleColumn prop: Forces single-column layout (disables 2-column grid)
+// - Used for provider selectors where alphabetical scanning is easier in one column
+//
+// NEW in v6.4.0:
+// - compact prop: Hides label, tooltip, and pt-8 padding
+// - Used for inline header selectors (e.g., Playground provider selector)
+//
 // CRITICAL FIX in v6.3.0:
 // - Single-select (limit=1): Closes IMMEDIATELY on click, BEFORE state update
 // - Multi-select: Closes when newSelected.length >= maxSelections
@@ -49,6 +57,10 @@ export interface ComboboxProps {
   isLocked?: boolean;
   /** Message to show when locked */
   lockMessage?: string;
+  /** Compact mode: hides label, tooltip, and extra padding (for header use) */
+  compact?: boolean;
+  /** Single column mode: forces single-column layout even with many options */
+  singleColumn?: boolean;
 }
 
 export function Combobox({
@@ -67,6 +79,8 @@ export function Combobox({
   allowFreeText = true,
   isLocked = false,
   lockMessage: _lockMessage,
+  compact = false,
+  singleColumn = false,
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -266,10 +280,14 @@ export function Combobox({
   // Lock state styling classes
   const lockClasses = isLocked ? 'prompt-lock-gradient cursor-not-allowed' : '';
 
+  // Determine if we should use 2-column grid layout
+  // Use single column when: singleColumn prop is true, OR options <= 12
+  const useGridLayout = !singleColumn && filteredOptions.length > 12;
+
   return (
-    <div ref={containerRef} className={`relative flex flex-col gap-1 pt-8 ${lockClasses}`}>
-      {/* Tooltip above label - classy style matching site tooltips */}
-      {showTooltip && !isLocked && (
+    <div ref={containerRef} className={`relative flex flex-col gap-1 ${compact ? '' : 'pt-8'} ${lockClasses}`}>
+      {/* Tooltip above label - classy style matching site tooltips (hidden in compact mode) */}
+      {!compact && showTooltip && !isLocked && (
         <div
           className="absolute -top-0.5 left-0 right-0 z-[9999] rounded-lg border border-slate-700 bg-slate-800/95 px-3 py-2 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
           style={{ pointerEvents: 'none' }}
@@ -283,47 +301,49 @@ export function Combobox({
         </div>
       )}
 
-      {/* Label - clickable to show tooltip */}
-      <button
-        type="button"
-        onClick={handleLabelClick}
-        disabled={isLocked}
-        className={`flex items-center gap-1.5 text-left text-xs font-medium transition-colors ${
-          isLocked ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-slate-100'
-        }`}
-      >
-        <span>{label}</span>
-        {!isLocked && (
-          <svg
-            className="h-3.5 w-3.5 text-slate-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-        )}
-        {isLocked && (
-          <svg
-            className="h-3.5 w-3.5 text-purple-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-            />
-          </svg>
-        )}
-      </button>
+      {/* Label - clickable to show tooltip (hidden in compact mode) */}
+      {!compact && (
+        <button
+          type="button"
+          onClick={handleLabelClick}
+          disabled={isLocked}
+          className={`flex items-center gap-1.5 text-left text-xs font-medium transition-colors ${
+            isLocked ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-slate-100'
+          }`}
+        >
+          <span>{label}</span>
+          {!isLocked && (
+            <svg
+              className="h-3.5 w-3.5 text-slate-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          )}
+          {isLocked && (
+            <svg
+              className="h-3.5 w-3.5 text-purple-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          )}
+        </button>
+      )}
 
       {/* Input container with chips - click focuses input */}
       <div
@@ -452,7 +472,7 @@ export function Combobox({
         </p>
       )}
 
-      {/* Dropdown listbox - taller with 2-column grid for visual density */}
+      {/* Dropdown listbox - taller with optional 2-column grid for visual density */}
       {isOpen && !isLocked && (filteredOptions.length > 0 || (isMultiSelect && selected.length > 0)) && (
         <div
           className="absolute left-0 right-0 top-full z-[100] mt-1 rounded-lg border border-slate-700 bg-slate-900 shadow-lg"
@@ -463,10 +483,10 @@ export function Combobox({
               id={listboxId}
               role="listbox"
               className={`max-h-80 overflow-auto py-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 ${
-                filteredOptions.length > 12 ? 'grid grid-cols-2 gap-x-1' : ''
+                useGridLayout ? 'grid grid-cols-2 gap-x-1' : ''
               }`}
             >
-              {/* Show ALL filtered options - 2-column grid when many options */}
+              {/* Show ALL filtered options - 2-column grid when many options (unless singleColumn) */}
               {filteredOptions.map((option) => (
                 <li
                   key={option}

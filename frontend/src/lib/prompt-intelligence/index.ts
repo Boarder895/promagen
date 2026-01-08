@@ -78,6 +78,9 @@ import type {
   PlatformHint,
 } from './types';
 
+// Import reorderByRelevance for local use in smartTrimAssembledPrompt
+import { reorderByRelevance as _reorderByRelevance } from './engines';
+
 // ============================================================================
 // Family Functions
 // ============================================================================
@@ -369,3 +372,142 @@ export {
   type CombineResult,
   type ConsolidationSuggestion,
 } from './combine';
+
+// ============================================================================
+// Smart Trim Assembled Prompt (Full Prompt Trimming)
+// ============================================================================
+
+import type { PromptSelections, PromptCategory } from '@/types/prompt-builder';
+
+/**
+ * Input for smart trimming an assembled prompt.
+ */
+export interface SmartTrimAssembledInput {
+  /** The assembled prompt text */
+  promptText: string;
+  /** Current category selections */
+  selections: PromptSelections;
+  /** Platform ID for context */
+  platformId: string;
+  /** Target character length */
+  targetLength: number;
+  /** Whether to always preserve subject (default: true) */
+  preserveSubject?: boolean;
+}
+
+/**
+ * Result of smart trimming an assembled prompt.
+ */
+export interface SmartTrimAssembledResult {
+  /** The trimmed prompt text */
+  optimized: string;
+  /** Whether any trimming occurred */
+  wasTrimmed: boolean;
+  /** Terms that were removed */
+  removedTerms: Array<{ term: string; category: PromptCategory; score: number }>;
+  /** Original length */
+  originalLength: number;
+  /** New length */
+  optimizedLength: number;
+}
+
+/**
+ * Smart trim an assembled prompt by removing lowest-relevance terms first.
+ * Uses semantic scoring to decide which terms to remove.
+ * 
+ * Algorithm:
+ * 1. Extract all terms from selections
+ * 2. Score each term by semantic relevance to context
+ * 3. Sort by score (lowest first = remove first)
+ * 4. Remove terms until within target length
+ * 5. Rebuild prompt without removed terms
+ */
+export function smartTrimAssembledPrompt(input: SmartTrimAssembledInput): SmartTrimAssembledResult {
+  const {
+    promptText,
+    selections,
+    targetLength,
+    preserveSubject = true,
+  } = input;
+  
+  // If already within target, return original
+  if (promptText.length <= targetLength) {
+    return {
+      optimized: promptText,
+      wasTrimmed: false,
+      removedTerms: [],
+      originalLength: promptText.length,
+      optimizedLength: promptText.length,
+    };
+  }
+  
+  // Get all terms with their categories
+  const allTerms: Array<{ term: string; category: PromptCategory }> = [];
+  for (const [category, terms] of Object.entries(selections)) {
+    if (terms && Array.isArray(terms)) {
+      for (const term of terms) {
+        allTerms.push({ term, category: category as PromptCategory });
+      }
+    }
+  }
+  
+  // Score each term by relevance
+  const scoredTerms = allTerms.map(({ term, category }) => {
+    // Protect subject if requested
+    if (preserveSubject && category === 'subject') {
+      return { term, category, score: 1000 }; // Very high score = keep
+    }
+    
+    // Score by relevance using existing scoring
+    const scored = _reorderByRelevance([term], category, selections, false, null);
+    const score = scored[0]?.score ?? 50;
+    
+    return { term, category, score };
+  });
+  
+  // Sort by score ASCENDING (lowest scores = remove first)
+  scoredTerms.sort((a, b) => a.score - b.score);
+  
+  // Remove terms until within target
+  let workingPrompt = promptText;
+  const removedTerms: Array<{ term: string; category: PromptCategory; score: number }> = [];
+  
+  for (const { term, category, score } of scoredTerms) {
+    if (workingPrompt.length <= targetLength) break;
+    if (score >= 1000) continue; // Protected
+    
+    // Remove this term from the prompt
+    const termPattern = new RegExp(
+      `(^|,\\s*)${escapeRegexChars(term)}(\\s*,|$)`,
+      'gi'
+    );
+    
+    const newPrompt = workingPrompt
+      .replace(termPattern, '$1')
+      .replace(/,\s*,/g, ',') // Clean double commas
+      .replace(/^\s*,\s*/, '') // Clean leading comma
+      .replace(/\s*,\s*$/, '') // Clean trailing comma
+      .trim();
+    
+    // Only count as removed if prompt actually changed
+    if (newPrompt !== workingPrompt) {
+      workingPrompt = newPrompt;
+      removedTerms.push({ term, category, score });
+    }
+  }
+  
+  return {
+    optimized: workingPrompt,
+    wasTrimmed: removedTerms.length > 0,
+    removedTerms,
+    originalLength: promptText.length,
+    optimizedLength: workingPrompt.length,
+  };
+}
+
+/**
+ * Escape special regex characters.
+ */
+function escapeRegexChars(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

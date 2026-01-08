@@ -439,7 +439,7 @@ export function getAnonymousUsageDisplay(): {
 
   let message: string;
   if (state.isAtLimit) {
-    message = 'Daily limit reached. Sign in for 30 prompts/day, or wait until midnight.';
+    message = 'Daily limit reached. Sign in for 10 prompts/day, or wait until midnight.';
   } else if (state.remaining === 1) {
     message = '1 free prompt remaining today';
   } else {

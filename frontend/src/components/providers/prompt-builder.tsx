@@ -47,7 +47,7 @@
 // - Dynamic mode indicator in header
 // - Context-aware composition pack assembly
 // - Anonymous users get 5 free prompts, then must sign in
-// - Free authenticated users get 30/day
+// - Free authenticated users get 10/day
 // - Paid users get unlimited + enhanced category limits
 // - Lock states with purple-pink gradient (matches brand)
 // - 🎲 Randomise button fills ALL categories including AR and negative
@@ -84,6 +84,8 @@ import { VALID_ASPECT_RATIOS } from '@/types/composition';
 
 // Prompt Intelligence imports
 import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
+import { useIntelligencePreferences } from '@/hooks/use-intelligence-preferences';
+import { useMarketMoodLive } from '@/hooks/use-market-mood-live';
 import {
   DNABar,
   ConflictWarning,
@@ -115,6 +117,8 @@ export interface PromptBuilderProps {
   id?: string;
   provider: PromptBuilderProvider;
   onDone?: () => void;
+  /** Optional: Custom element to replace the static provider title (e.g., dropdown selector) */
+  providerSelector?: React.ReactNode;
 }
 
 // Platforms that use --no inline for negatives
@@ -280,7 +284,7 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
                 You&apos;ve used your 5 free prompts
               </h3>
               <p className="text-sm text-purple-200">
-                Sign in to unlock 30 prompts per day — free forever.
+                Sign in to unlock 10 prompts per day — free forever.
               </p>
               <ul className="mt-0.1 text-left text-xs text-purple-300 space-y-1">
                 <li className="flex items-center gap-2">
@@ -295,7 +299,7 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span>30 prompts per day (resets at midnight)</span>
+                  <span>10 prompts per day (resets at midnight)</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -392,7 +396,12 @@ function DailyCounter({ count, limit }: { count: number; limit: number }) {
 // Main Component
 // ============================================================================
 
-export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: PromptBuilderProps) {
+export function PromptBuilder({ 
+  id = 'prompt-builder', 
+  provider, 
+  onDone,
+  providerSelector,
+}: PromptBuilderProps) {
   // ============================================================================
   // Platform ID (computed first for hook dependency)
   // ============================================================================
@@ -416,6 +425,9 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
 
   const { compositionMode, setCompositionMode, aspectRatio, setAspectRatio } = useCompositionMode();
 
+  // Prompt Intelligence Preferences
+  const { preferences: intelligencePrefs, setPreference: setIntelligencePref } = useIntelligencePreferences();
+
   // ============================================================================
   // Local State
   // ============================================================================
@@ -426,21 +438,39 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
   const [isMounted, setIsMounted] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
-  const [isMarketMoodEnabled, setIsMarketMoodEnabled] = useState(false);
+  
+  // Market mood uses preference as source of truth
+  const isMarketMoodEnabled = intelligencePrefs.marketMoodEnabled;
+  const setIsMarketMoodEnabled = useCallback((enabled: boolean) => {
+    setIntelligencePref('marketMoodEnabled', enabled);
+  }, [setIntelligencePref]);
+  
+  // Live market mood hook - fetches real FX data when enabled
+  const {
+    marketState: liveMarketState,
+    isLoading: _isMarketMoodLoading,
+    error: _marketMoodError,
+    dataMode: _marketDataMode,
+  } = useMarketMoodLive(isMarketMoodEnabled);
 
   // Save to Library hook
   const { savePrompt } = useSavedPrompts();
 
   // ============================================================================
-  // Market Mood State (placeholder - will connect to live data)
+  // Market Mood State (Live FX data with demo fallback)
   // ============================================================================
 
-  // Generate a demo market state based on current time for preview
-  // In production, this would come from useMarketMood hook with live FX data
-  const demoMarketState: MarketState | null = useMemo(() => {
+  // Use live market state when available, otherwise fall back to demo
+  const marketState: MarketState | null = useMemo(() => {
     if (!isMarketMoodEnabled) return null;
     
-    // Generate a deterministic but time-varying market state for demo
+    // Use live data if available
+    if (liveMarketState) {
+      return liveMarketState;
+    }
+    
+    // Fallback to demo state while loading or on error
+    // This ensures the toggle still works even without live data
     const hour = new Date().getHours();
     const states: Array<{ type: MarketState['type']; intensity: number }> = [
       { type: 'low_volatility', intensity: 0.3 },
@@ -453,7 +483,6 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
     const stateIndex = hour % states.length;
     const selected = states[stateIndex];
     
-    // Safety check for undefined
     if (!selected) {
       return {
         type: 'neutral' as const,
@@ -462,7 +491,6 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
       };
     }
     
-    // Market is "open" during business hours (8-18)
     const isMarketOpen = hour >= 8 && hour < 18;
     
     return {
@@ -470,7 +498,7 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
       intensity: selected.intensity,
       isMarketOpen,
     };
-  }, [isMarketMoodEnabled]);
+  }, [isMarketMoodEnabled, liveMarketState]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -763,6 +791,9 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
   const reorderedOptionsMap = useMemo(() => {
     const map = new Map<PromptCategory, ScoredOption[]>();
     
+    // Skip if live reorder is disabled in preferences
+    if (!intelligencePrefs.liveReorderEnabled) return map;
+    
     // Only reorder if there's content (context to base ordering on)
     if (!hasContent) return map;
     
@@ -773,20 +804,20 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
       const config = getCategoryConfig(category);
       if (!config || config.options.length === 0) continue;
       
-      // Reorder options based on current selections
+      // Reorder options based on current selections + live market mood
       const scoredOptions = reorderByRelevance(
         config.options,
         category,
         selections,
-        false, // marketMoodEnabled - could be connected later
-        null   // marketState
+        isMarketMoodEnabled,
+        marketState
       );
       
       map.set(category, scoredOptions);
     }
     
     return map;
-  }, [hasContent, selections]);
+  }, [hasContent, selections, intelligencePrefs.liveReorderEnabled, isMarketMoodEnabled, marketState]);
 
   // Helper to get options for a category (reordered if available)
   const getOptionsForCategory = useCallback((category: PromptCategory, originalOptions: string[]): string[] => {
@@ -1004,11 +1035,19 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
         <div className="flex flex-col gap-1">
           {/* Title row with toggles (left) and counter (right) */}
           <div className="flex items-center justify-between gap-2">
-            {/* Left side: Title + Toggles */}
+            {/* Left side: Title/Selector + Toggles */}
             <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold text-slate-50">
-                {provider.name} · Prompt builder
-              </h2>
+              {/* Provider selector (Playground) or static title (Provider page) */}
+              {providerSelector ? (
+                <div className="flex items-center gap-2">
+                  {providerSelector}
+                  <span className="text-sm text-slate-400">· Prompt builder</span>
+                </div>
+              ) : (
+                <h2 className="text-lg font-semibold text-slate-50">
+                  {provider.name} · Prompt builder
+                </h2>
+              )}
 
               {/* Composition mode toggle */}
               <CompositionModeToggle
@@ -1044,7 +1083,7 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
               <MarketMoodToggle
                 isEnabled={isMarketMoodEnabled}
                 onToggle={setIsMarketMoodEnabled}
-                marketState={demoMarketState}
+                marketState={marketState}
                 disabled={isLocked}
                 compact
               />
@@ -1055,21 +1094,23 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
               {/* Prompt Intelligence indicators */}
               {hasContent && promptAnalysis && (
                 <div className="flex items-center gap-2">
-                  {/* Conflict warning */}
-                  {conflictCount > 0 && (
+                  {/* Conflict warning - only if enabled in preferences */}
+                  {intelligencePrefs.conflictWarningsEnabled && conflictCount > 0 && (
                     <ConflictWarning
                       conflicts={promptAnalysis.conflicts.conflicts}
                       hasHardConflicts={hasHardConflicts}
                       variant="badge"
                     />
                   )}
-                  {/* Health badge */}
-                  <HealthBadge
-                    score={healthScore}
-                    hasConflicts={conflictCount > 0}
-                    hasHardConflicts={hasHardConflicts}
-                    variant="score"
-                  />
+                  {/* Health badge - only if enabled in preferences */}
+                  {intelligencePrefs.showCoherenceScore && (
+                    <HealthBadge
+                      score={healthScore}
+                      hasConflicts={conflictCount > 0}
+                      hasHardConflicts={hasHardConflicts}
+                      variant="score"
+                    />
+                  )}
                 </div>
               )}
               
@@ -1160,14 +1201,14 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
             })}
           </div>
 
-          {/* Prompt Intelligence Suggestions */}
-          {hasContent && topSuggestions.length > 0 && (
+          {/* Prompt Intelligence Suggestions - only if enabled in preferences */}
+          {intelligencePrefs.suggestionsEnabled && hasContent && topSuggestions.length > 0 && (
             <div className="rounded-lg border border-slate-800/50 bg-slate-900/30 px-3 py-2">
               <SuggestionChips
                 suggestions={topSuggestions}
                 onSelect={handleSuggestionClick}
-                maxChips={6}
-                showScore
+                maxChips={intelligencePrefs.compactSuggestions ? 4 : 6}
+                showScore={!intelligencePrefs.compactSuggestions}
                 size="sm"
               />
             </div>
@@ -1207,12 +1248,12 @@ export function PromptBuilder({ id = 'prompt-builder', provider, onDone }: Promp
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-slate-300">Assembled prompt</span>
-                {/* DNA Bar - shows category fill status */}
-                {hasContent && promptAnalysis && (
+                {/* DNA Bar - shows category fill status (only if enabled in preferences) */}
+                {intelligencePrefs.showDNABar && hasContent && promptAnalysis && (
                   <DNABar
                     dna={promptAnalysis.dna}
-                    showCoherence
-                    showTooltips
+                    showCoherence={intelligencePrefs.showCoherenceScore}
+                    showTooltips={intelligencePrefs.showWhyThisTooltips}
                     size="sm"
                   />
                 )}

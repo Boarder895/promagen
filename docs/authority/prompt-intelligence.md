@@ -1,6 +1,6 @@
 # Prompt Intelligence
 
-**Last updated:** 7 January 2026  
+**Last updated:** 8 January 2026  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture, data structures, and implementation plan for the Prompt Intelligence system.
 
@@ -717,6 +717,8 @@ function intelligentRandomise(
 src/app/prompts/
 ├── layout.tsx              # Shared prompts section layout
 ├── page.tsx                # /prompts → redirects to /prompts/library
+├── playground/
+│   └── page.tsx            # Standalone prompt builder with provider selector
 ├── library/
 │   └── page.tsx            # Saved prompts grid
 ├── explore/
@@ -756,10 +758,50 @@ Synchronized rail scrolling
 Footer
 
 What Changes:
-RouteCentre Content/AI Providers Leaderboard/providers/[id]Prompt Builder/prompts/librarySaved Prompts Grid/prompts/exploreStyle Family Browser/prompts/learnEducation Content/prompts/trendingCommunity Trends
+
+| Route | Centre Content |
+|-------|----------------|
+| `/` | AI Providers Leaderboard |
+| `/providers/[id]` | Prompt Builder (provider pre-selected) |
+| `/prompts/playground` | Prompt Builder (provider dropdown selector) |
+| `/prompts/library` | Saved Prompts Grid |
+| `/prompts/explore` | Style Family Browser |
+| `/prompts/learn` | Education Content |
+| `/prompts/trending` | Community Trends |
+
 Non-Regression Rule: New pages must not modify HomepageGrid, exchange rails, Finance Ribbon, or footer. Only pass new centre content.
 
 ### 9.2 Page Definitions
+
+#### `/prompts/playground` — Prompt Playground
+
+| Aspect       | Detail                                                                                |
+| ------------ | ------------------------------------------------------------------------------------- |
+| Purpose      | Builder-first entry: Create prompts without pre-selecting a provider                  |
+| Content      | Full Prompt Builder with provider dropdown selector in header                         |
+| Features     | Provider switching (instant reformat); All intelligence features; Live comparison     |
+| Entry points | Direct bookmark; Site nav; "Build a prompt" CTAs                                      |
+| Exit points  | "Open in X" launches provider; Save → Library; Copy to clipboard                      |
+
+**Key Difference from `/providers/[id]`:**
+
+| Aspect | `/providers/[id]` | `/prompts/playground` |
+|--------|-------------------|----------------------|
+| Header | Static: "Midjourney · Prompt builder" | Dropdown: "[▼ Select Provider...] · Prompt builder" |
+| Provider | Pre-selected from URL | User selects from all 42 |
+| Use case | "I want to use Midjourney" | "I want to build a prompt" |
+| Switching | Navigate to different URL | Instant dropdown change |
+
+**Provider Switching Behaviour:**
+- Selections persist when switching providers
+- Prompt auto-reformats for new provider's syntax
+- Character limits adjust (excess auto-trimmed)
+- "Open in X" button updates to selected provider
+
+**Implementation:**
+- Uses `PlaygroundWorkspace` component (client)
+- Passes `providerSelector` prop to `PromptBuilder`
+- Uses `Combobox` component with `compact` mode for header selector
 
 #### `/prompts/library` — Your Saved Prompts
 
@@ -807,9 +849,10 @@ Non-Regression Rule: New pages must not modify HomepageGrid, exchange rails, Fin
 PROMAGEN
 ├── Homepage (/)
 ├── Providers (/providers)
-│   └── [Provider] Prompt Builder (/providers/[id])  ← UNCHANGED
+│   └── [Provider] Prompt Builder (/providers/[id])  ← Provider-first flow
 │
 ├── Prompts (/prompts)  ← NEW SECTION
+│   ├── Playground (/prompts/playground)  ← Builder-first flow
 │   ├── Library (/prompts/library)
 │   ├── Explore (/prompts/explore)
 │   ├── Learn (/prompts/learn)
@@ -827,19 +870,21 @@ PROMAGEN
 │                            /                                     │
 └─────────────────────────────┬───────────────────────────────────┘
                               │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      PROVIDERS TABLE                             │
-│                        /providers                                │
-│                                                                  │
-│   Click provider row ──────────────────────────────┐            │
-└────────────────────────────────────────────────────┼────────────┘
-                                                     │
-                                                     ▼
+              ┌───────────────┴───────────────┐
+              │                               │
+              ▼                               ▼
+┌─────────────────────────────┐   ┌─────────────────────────────┐
+│      PROVIDERS TABLE        │   │        PLAYGROUND           │
+│        /providers           │   │    /prompts/playground      │
+│                             │   │                             │
+│  Click provider row ────┐   │   │  Provider-first: Click row  │
+└─────────────────────────┼───┘   │  Builder-first: Dropdown    │
+                          │       └──────────────┬──────────────┘
+                          │                      │
+                          ▼                      │
 ┌─────────────────────────────────────────────────────────────────┐
 │                     PROMPT BUILDER                               │
-│                    /providers/[id]                               │
-│                    (LAYOUT UNCHANGED)                            │
+│         /providers/[id]  OR  /prompts/playground                │
 │                                                                  │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
 │   │ 💾 Save     │  │ 🎨 Explore  │  │ ❓ Help     │            │
@@ -860,7 +905,7 @@ PROMAGEN
                            ▼
                   ┌────────────────┐
                   │ PROMPT BUILDER │
-                  │ /providers/[id]│
+                  │ (either route) │
                   └────────────────┘
 ```
 

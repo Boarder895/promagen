@@ -1,13 +1,17 @@
 {
   "name": "gateway",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "commonjs",
   "main": "index.ts",
   "scripts": {
     "lint": "eslint . --ext .ts --cache --cache-location .eslintcache --format stylish",
     "lint:fix": "eslint . --ext .ts --cache --cache-location .eslintcache --format stylish --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -15,6 +19,7 @@
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
     "typescript": "^5.6.3",
-    "typescript-eslint": "^8.46.3"
+    "typescript-eslint": "^8.46.3",
+    "vitest": "^3.0.0"
   }
 }

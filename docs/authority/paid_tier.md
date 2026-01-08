@@ -117,7 +117,7 @@ Sign-in methods:
 **Free tier prompt access (after sign-in):**
 - **Full access to all 12 categories** with ~2,100 curated prompt terms
 - **Platform-aware selection limits** as documented in §5.5 and prompt-builder-page.md
-- **30 prompts per day** — tracked on "Copy prompt" button clicks
+- **10 prompts per day** — tracked on "Copy prompt" button clicks
 - **Daily reset at midnight** in user's local timezone
 - When quota reached: dropdowns lock with "Upgrade to Pro Promagen for unlimited" message
 
@@ -147,7 +147,7 @@ interface AnonymousUsageData {
 **Migration from v1:** Previous v1 data (without `lastResetDate`) is invalidated on read, triggering a fresh start with v2 schema. This gives existing anonymous users a clean slate with the new daily reset behavior.
 
 **Authenticated tracking (Vercel KV):**
-- Free users: 30 prompt copies per day
+- Free users: 10 prompt copies per day
 - Paid users: Unlimited prompt copies
 - Counter resets at midnight in user's detected timezone
 - Storage: Vercel KV (consistent with voting system)
@@ -155,8 +155,8 @@ interface AnonymousUsageData {
 **Lock state progression:**
 1. **Anonymous (0-4 uses):** Full access + "X/5 free prompts today" counter
 2. **Anonymous (5+ uses):** LOCKED + "Sign in to continue" button at top of overlay
-3. **Free signed-in (0-29):** Full access + "X/30 prompts today" counter
-4. **Free signed-in (30):** LOCKED + "Upgrade to Pro Promagen" button at top of overlay
+3. **Free signed-in (0-9):** Full access + "X/10 prompts today" counter
+4. **Free signed-in (10):** LOCKED + "Upgrade to Pro Promagen" button at top of overlay
 5. **Pro Promagen:** Always enabled + expanded selection limits, no counter
 
 **Lock state component behavior:**
@@ -474,6 +474,78 @@ Authority for implementation: `docs/authority/ai providers.md` (Community Voting
 
 ---
 
+### 5.8 Ask Promagen — LLM-powered suggestions (daily limits)
+
+"Ask Promagen" uses server-side LLM calls to interpret natural language descriptions and auto-populate prompt builder dropdowns. This incurs real API costs (~$0.001 per suggestion).
+
+#### Daily Suggestion Limits
+
+| Tier | Daily Ask Promagen Limit |
+|------|--------------------------|
+| **Anonymous** | 5 suggestions/day |
+| **Standard Promagen** | 10 suggestions/day |
+| **Pro Promagen** | Unlimited |
+
+#### Tracking
+
+- **Anonymous:** Tracked in localStorage (same pattern as prompt usage, separate counter)
+- **Authenticated:** Tracked in Vercel KV with key `ask:${userId}:${date}`
+- **Reset:** Midnight in user's local timezone (consistent with prompt usage)
+
+#### Lock State Behaviour
+
+When limit reached:
+
+- "Suggest" button becomes disabled (same purple-tint treatment as other locked UI)
+- Tooltip shows: "Daily limit reached. Sign in for more." (anonymous) or "Upgrade to Pro Promagen for unlimited." (free)
+- Dropdown manual selection remains fully functional
+- User can still build prompts manually
+
+#### Cost Control
+
+| Aspect | Approach |
+|--------|----------|
+| Rate limit | Per-user daily limits (above) |
+| Model | Claude Haiku (~$0.25/1M input tokens) or GPT-4o-mini |
+| Caching | Identical queries cached in Vercel KV for 24h |
+| Debounce | 500ms debounce, only calls on [Suggest →] button click |
+
+#### Fallback
+
+If LLM call fails:
+
+1. Show toast: "Suggestion unavailable — try the dropdowns below"
+2. Log error for monitoring
+3. Do **not** count against user's daily limit
+
+#### Storage Schema
+
+```typescript
+// Anonymous localStorage
+interface AnonymousAskUsage {
+  count: number;           // Daily suggestion count
+  lastResetDate: string;   // YYYY-MM-DD
+  version: 1;
+  checksum: string;
+}
+
+// Authenticated (Vercel KV)
+// Key: `ask:${userId}:${date}`
+interface AuthenticatedAskUsage {
+  userId: string;
+  date: string;            // YYYY-MM-DD in user's timezone
+  suggestionCount: number;
+  timezone: string;
+  lastUpdated: string;     // ISO timestamp
+}
+```
+
+**Status:** Planned feature — see `TODO-api-integration.md` §2.4 for implementation details.
+
+Authority for implementation: `docs/authority/TODO-api-integration.md`
+
+---
+
 ## 6. Invariants (apply to everyone, always)
 
 These rules are **never overridden**, including for paid users:
@@ -504,6 +576,7 @@ This document does **not** redefine or duplicate:
 - Community voting mechanics (only weight multiplier is defined here)
 - Authentication implementation details
 - Prompt builder architecture details
+- Ask Promagen implementation details (only limits defined here)
 
 Authority for those lives elsewhere:
 
@@ -514,6 +587,7 @@ Authority for those lives elsewhere:
 - Prompt builder architecture → `docs/authority/prompt-builder-page.md`
 - Community voting system → `docs/authority/ai providers.md`
 - Authentication architecture → `docs/authority/clerk-auth.md`
+- Ask Promagen implementation → `docs/authority/TODO-api-integration.md`
 
 This document only defines **who can control what**, and **when**.
 
@@ -547,6 +621,8 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **8 Jan 2026:** **FREE TIER LIMIT REDUCED** — Changed Standard Promagen daily prompt limit from 30/day to **10/day**. Clean progression: Anonymous 5/day → Free 10/day → Paid unlimited. Rationale: 30/day meant only power users hit friction; 10/day creates upgrade motivation for regular creators while remaining generous enough to love the product.
+- **8 Jan 2026:** Added §5.8 Ask Promagen — LLM-powered suggestions (daily limits). Anonymous: 5/day, Standard: 10/day, Pro: Unlimited. Includes storage schema, lock state behaviour, cost control approach, and fallback handling. Status: planned feature.
 - **5 Jan 2026:** **PLATFORM-AWARE CATEGORY LIMITS v8.2.0** — Complete rewrite of §5.5. Selection limits are now platform-aware with 4 tiers (CLIP, Midjourney, Natural Language, Plain Language). Each of the 42 platforms assigned to appropriate tier. Pro Promagen users get +1 on stackable categories (style, lighting, colour, atmosphere, materials, fidelity, negative). Auto-trim on platform switch. Dynamic tooltip guidance shows actual limits. See prompt-builder-page.md for implementation details.
 - **4 Jan 2026:** **ANONYMOUS DAILY RESET** — Anonymous users now get 5 prompts **per day** (resets at midnight local time), matching the authenticated user experience. Previously was 5 prompts total lifetime. Updated §3.2 and §3.3 with new behavior. Anonymous storage upgraded to v2 schema with `lastResetDate` field. Migration: v1 data invalidated on read, triggers fresh v2 start.
 - **4 Jan 2026:** **LOCK STATE UX CLEANUP** — Lock state visual treatment now uses disabled styling only on dropdowns and aspect ratio selector. **Removed "Sign in to continue" text from individual dropdown overlays** (was ugly/cluttered UX). Lock icon only appears in dropdown labels. Updated §3.2 with detailed component behavior. Authority: prompt-builder-page.md.

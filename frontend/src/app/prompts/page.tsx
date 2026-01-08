@@ -197,6 +197,12 @@ export default function PromptsIndexPage() {
             >
               View Saved Prompts
             </Link>
+            <Link
+              href="/settings/prompt-intelligence"
+              className="px-4 py-2 text-sm rounded-xl bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all ring-1 ring-white/10"
+            >
+              ⚙️ Intelligence Settings
+            </Link>
           </div>
         </div>
       </main>

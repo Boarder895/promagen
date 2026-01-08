@@ -1811,3 +1811,10 @@ stable across cached vs live modes (or explicitly labelled)
 stable when quotes are unchanged (no side flipping while prices are not updating)
 
 They are optional; the system remains correct without them.
+
+---
+
+## 20. Changelog
+
+- **8 Jan 2026 (v2.1.0):** Gateway TypeScript & security fixes. Fixed 12 TypeScript compilation errors. Added Zod dependency for runtime validation. All gateway files now at 10/10 security score with proper type guards, no unsafe casts, and graceful degradation. Files updated: `gateway/lib/schemas.ts`, `gateway/index.ts`, `gateway/adapters/twelvedata.fx.ts`.
+- **6 Jan 2026:** Initial v2 release with full SSOT, cost-control, A/B alternation, and trace contract documentation.

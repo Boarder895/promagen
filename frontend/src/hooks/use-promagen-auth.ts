@@ -16,7 +16,7 @@
 // Lock State Progression:
 // 1. anonymous_limit: Anonymous user has used 5 free prompts → Sign in CTA
 // 2. unlocked: Anonymous under limit OR authenticated with quota OR paid
-// 3. quota_reached: Free authenticated user has used 30/day → Go Pro CTA
+// 3. quota_reached: Free authenticated user has used 10/day → Go Pro CTA
 //
 // Reference Frame:
 // - Anonymous: Greenwich (no location detection)
@@ -61,12 +61,12 @@ export type UserTier = 'free' | 'paid';
  * State progression:
  * - anonymous_limit: Anonymous user hit 5-prompt limit → "Sign in to continue"
  * - unlocked: Full access (anonymous under limit, OR authenticated under quota, OR paid)
- * - quota_reached: Free authenticated user hit 30/day → "Go Pro for unlimited"
+ * - quota_reached: Free authenticated user hit 10/day → "Go Pro for unlimited"
  */
 export type PromptLockState =
   | 'unlocked'           // Full access
   | 'anonymous_limit'    // Anonymous user has used 5 free prompts
-  | 'quota_reached';     // Free authenticated user has used 30 prompts today
+  | 'quota_reached';     // Free authenticated user has used 10 prompts today
 
 /**
  * Usage information for anonymous users.
@@ -322,7 +322,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     }
     // Otherwise unlocked (anonymous with remaining prompts)
   } else if (userTier === 'free' && isAtLimit) {
-    // Authenticated free user hit 30/day limit
+    // Authenticated free user hit 10/day limit
     promptLockState = 'quota_reached';
   }
   // Paid users are always unlocked
