@@ -1,142 +1,53 @@
-// src/components/market-pulse/market-pulse-overlay.tsx
-// ============================================================================
-// MARKET PULSE OVERLAY v2.0 - Flowing Energy Stream
-// ============================================================================
-// "The bridge comes alive when markets move."
-//
-// Features:
-// - Dormant state: Nothing visible (clean interface)
-// - Pre-open/close: Curves fade in, slow particles begin flowing
-// - Opening/Closing: BURST of particles, curve blazes, row flashes
-// - Multi-session support: Fires on ALL opens/closes (lunch breaks too)
-// - Continent-specific colors
-// ============================================================================
-
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  CITY_CONNECTIONS,
-  CONTINENT_COLORS,
-  type CityConnection,
-} from '@/data/city-connections';
+/**
+ * Market Pulse Overlay - Option 3+4 Combined
+ * 
+ * Visual effect showing connections between exchanges and AI providers in the same city.
+ * - Option 3: Cards pulse with synchronized glow, indicator dots on edges
+ * - Option 4: Glowing balls travel between connected pairs (half speed ~4s crossing)
+ * 
+ * Triggers during market open/close events (±1 minute window).
+ */
+
+import { useEffect, useState, useCallback, useRef, type RefObject } from 'react';
 import type { ExchangePulseContext } from '@/hooks/use-market-pulse';
+import { 
+  getConnectionsForExchange, 
+  CONTINENT_COLORS,
+  type CityConnection 
+} from '@/data/city-connections';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type Point = { x: number; y: number };
-
-type ConnectionPath = {
-  connection: CityConnection;
-  startPoint: Point;
-  endPoint: Point;
-  pathD: string;
-  pathLength: number;
-};
-
-type Particle = {
-  id: string;
-  connectionKey: string;
-  progress: number; // 0-1 along the path
-  speed: number; // Progress per frame
-  size: number;
-  opacity: number;
-  reverse: boolean; // True for closing (provider → exchange)
-};
-
 export type MarketPulseOverlayProps = {
-  /** Ref to the container element for position calculations */
-  containerRef: React.RefObject<HTMLElement>;
-  /** Ref to the left rail element */
-  leftRailRef: React.RefObject<HTMLElement>;
-  /** Ref to the right rail element */
-  rightRailRef: React.RefObject<HTMLElement>;
-  /** Ref to the providers table element */
-  providersRef: React.RefObject<HTMLElement>;
-  /** Currently selected exchange IDs */
+  containerRef: RefObject<HTMLDivElement | null>;
+  leftRailRef: RefObject<HTMLDivElement | null>;
+  rightRailRef: RefObject<HTMLDivElement | null>;
+  providersRef: RefObject<HTMLDivElement | null>;
   selectedExchangeIds: string[];
-  /** Currently displayed provider IDs */
   displayedProviderIds: string[];
-  /** Pulse contexts from useMarketPulse hook */
   pulseContexts: Map<string, ExchangePulseContext>;
-  /** Active exchange IDs (not dormant) */
   activeExchangeIds: string[];
 };
 
-// ============================================================================
-// Constants
-// ============================================================================
-
-// Particle settings
-const IDLE_PARTICLE_INTERVAL = 2000; // One particle every 2 seconds in pre-* states
-const BURST_PARTICLE_COUNT = 10; // Particles released during burst
-const BURST_PARTICLE_STAGGER = 80; // ms between burst particles
-
-// Particle sizes
-const PARTICLE_SIZE_IDLE = 4;
-const PARTICLE_SIZE_BURST = 8;
-
-// Particle speeds (progress per ms)
-const PARTICLE_SPEED_IDLE = 0.0003; // ~3.3 seconds to traverse
-const PARTICLE_SPEED_BURST = 0.001; // ~1 second to traverse
-
-// Line settings
-const LINE_WIDTH_IDLE = 2;
-const LINE_WIDTH_ACTIVE = 3;
-
-// ============================================================================
-// Utility Functions
-// ============================================================================
-
-/**
- * Generate a smooth bezier curve path between two points.
- */
-function generateBezierPath(start: Point, end: Point): string {
-  const midX = (start.x + end.x) / 2;
-  const cp1x = midX;
-  const cp1y = start.y;
-  const cp2x = midX;
-  const cp2y = end.y;
-  return `M ${start.x} ${start.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${end.x} ${end.y}`;
+interface TravelingDot {
+  id: number;
+  connectionIndex: number;
+  exchangeId: string;
+  providerId: string;
+  color: string;
+  progress: number;
+  direction: 1 | -1;
 }
 
-/**
- * Get approximate path length for a bezier curve
- */
-function approximatePathLength(start: Point, end: Point): number {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  // Bezier is longer than straight line, approximate with 1.2x
-  return Math.sqrt(dx * dx + dy * dy) * 1.2;
-}
-
-/**
- * Get position along a bezier curve at parameter t (0-1).
- */
-function getPointOnBezier(start: Point, end: Point, t: number): Point {
-  const midX = (start.x + end.x) / 2;
-  const cp1 = { x: midX, y: start.y };
-  const cp2 = { x: midX, y: end.y };
-
-  const t2 = t * t;
-  const t3 = t2 * t;
-  const mt = 1 - t;
-  const mt2 = mt * mt;
-  const mt3 = mt2 * mt;
-
-  return {
-    x: mt3 * start.x + 3 * mt2 * t * cp1.x + 3 * mt * t2 * cp2.x + t3 * end.x,
-    y: mt3 * start.y + 3 * mt2 * t * cp1.y + 3 * mt * t2 * cp2.y + t3 * end.y,
-  };
-}
-
-/**
- * Create a unique connection key
- */
-function connectionKey(c: CityConnection): string {
-  return `${c.exchangeId}-${c.providerId}`;
+interface ConnectionPosition {
+  connection: CityConnection;
+  color: string;
+  exchangeRect: DOMRect | null;
+  providerRect: DOMRect | null;
 }
 
 // ============================================================================
@@ -144,397 +55,269 @@ function connectionKey(c: CityConnection): string {
 // ============================================================================
 
 export function MarketPulseOverlay({
-  containerRef,
-  leftRailRef,
-  rightRailRef,
-  providersRef,
-  selectedExchangeIds,
-  displayedProviderIds,
-  pulseContexts,
+  containerRef: _containerRef,
+  leftRailRef: _leftRailRef,
+  rightRailRef: _rightRailRef,
+  providersRef: _providersRef,
+  selectedExchangeIds: _selectedExchangeIds,
+  displayedProviderIds: _displayedProviderIds,
+  pulseContexts: _pulseContexts,
   activeExchangeIds,
 }: MarketPulseOverlayProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const [paths, setPaths] = useState<ConnectionPath[]>([]);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [particles, setParticles] = useState<Particle[]>([]);
-  
-  const lastParticleSpawnRef = useRef<Map<string, number>>(new Map());
-  const animationFrameRef = useRef<number>();
+  const [dots, setDots] = useState<TravelingDot[]>([]);
+  const [positions, setPositions] = useState<ConnectionPosition[]>([]);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const spawnIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Filter connections to only those with active exchanges AND visible providers
-  const activeConnections = useMemo(() => {
-    return CITY_CONNECTIONS.filter(
-      (c) =>
-        activeExchangeIds.includes(c.exchangeId) &&
-        selectedExchangeIds.includes(c.exchangeId) &&
-        displayedProviderIds.includes(c.providerId)
-    );
-  }, [activeExchangeIds, selectedExchangeIds, displayedProviderIds]);
+  const isActive = activeExchangeIds.length > 0;
 
-  // Calculate path positions
-  const calculatePaths = useCallback(() => {
-    if (!containerRef.current || !leftRailRef.current || !rightRailRef.current || !providersRef.current) {
+  // Build connections list from active exchanges with colors
+  const activeConnections = useCallback((): Array<CityConnection & { color: string }> => {
+    const connections: Array<CityConnection & { color: string }> = [];
+    for (const exchangeId of activeExchangeIds) {
+      const exchangeConnections = getConnectionsForExchange(exchangeId);
+      for (const conn of exchangeConnections) {
+        const color = CONTINENT_COLORS[conn.continent]?.primary ?? '#3b82f6';
+        connections.push({ ...conn, color });
+      }
+    }
+    return connections;
+  }, [activeExchangeIds]);
+
+  // Update element positions
+  const updatePositions = useCallback(() => {
+    const connections = activeConnections();
+    const newPositions: ConnectionPosition[] = connections.map(conn => {
+      const exchangeEl = document.querySelector(`[data-exchange-id="${conn.exchangeId}"]`);
+      const providerEl = document.querySelector(`[data-provider-id="${conn.providerId}"]`);
+      
+      return {
+        connection: conn,
+        color: conn.color,
+        exchangeRect: exchangeEl?.getBoundingClientRect() ?? null,
+        providerRect: providerEl?.getBoundingClientRect() ?? null,
+      };
+    });
+    setPositions(newPositions);
+  }, [activeConnections]);
+
+  // Apply pulse classes to cards (Option 3: synchronized glow)
+  useEffect(() => {
+    if (!isActive) return;
+
+    const connections = activeConnections();
+    const exchangeIds = new Set(connections.map(c => c.exchangeId));
+    const providerIds = new Set(connections.map(c => c.providerId));
+
+    // Add pulse class to exchange cards
+    exchangeIds.forEach(id => {
+      const el = document.querySelector(`[data-exchange-id="${id}"]`);
+      if (el) {
+        el.classList.add('market-pulse-active');
+        const conn = connections.find(c => c.exchangeId === id);
+        if (conn) {
+          (el as HTMLElement).style.setProperty('--pulse-color', conn.color);
+        }
+      }
+    });
+
+    // Add pulse class to provider rows
+    providerIds.forEach(id => {
+      const el = document.querySelector(`[data-provider-id="${id}"]`);
+      if (el) {
+        el.classList.add('market-pulse-active');
+        const conn = connections.find(c => c.providerId === id);
+        if (conn) {
+          (el as HTMLElement).style.setProperty('--pulse-color', conn.color);
+        }
+      }
+    });
+
+    return () => {
+      // Remove classes on cleanup
+      exchangeIds.forEach(id => {
+        const el = document.querySelector(`[data-exchange-id="${id}"]`);
+        el?.classList.remove('market-pulse-active');
+      });
+      providerIds.forEach(id => {
+        const el = document.querySelector(`[data-provider-id="${id}"]`);
+        el?.classList.remove('market-pulse-active');
+      });
+    };
+  }, [isActive, activeConnections]);
+
+  // Spawn new dots (Option 4: traveling balls)
+  useEffect(() => {
+    if (!isActive) {
+      setDots([]);
+      if (spawnIntervalRef.current) {
+        clearInterval(spawnIntervalRef.current);
+        spawnIntervalRef.current = null;
+      }
       return;
     }
 
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const newPaths: ConnectionPath[] = [];
+    const connections = activeConnections();
+    if (connections.length === 0) return;
 
-    for (const connection of activeConnections) {
-      const exchangeCard = document.querySelector(
-        `[data-exchange-id="${connection.exchangeId}"]`
-      ) as HTMLElement | null;
-
-      const providerRow = document.querySelector(
-        `[data-provider-id="${connection.providerId}"]`
-      ) as HTMLElement | null;
-
-      if (!exchangeCard || !providerRow) continue;
-
-      const exchangeRect = exchangeCard.getBoundingClientRect();
-      const providerRect = providerRow.getBoundingClientRect();
-
-      // Calculate positions relative to container
-      const startPoint: Point = {
-        x: exchangeRect.right - containerRect.left,
-        y: exchangeRect.top + exchangeRect.height / 2 - containerRect.top,
-      };
-
-      const endPoint: Point = {
-        x: providerRect.left - containerRect.left,
-        y: providerRect.top + providerRect.height / 2 - containerRect.top,
-      };
-
-      // Check if exchange is on left or right rail
-      const leftRailRect = leftRailRef.current.getBoundingClientRect();
-      const isLeftRail = exchangeRect.left < leftRailRect.right;
-
-      if (isLeftRail) {
-        startPoint.x = exchangeRect.right - containerRect.left;
-      } else {
-        startPoint.x = exchangeRect.left - containerRect.left;
-        endPoint.x = providerRect.right - containerRect.left;
-      }
-
-      const pathD = generateBezierPath(startPoint, endPoint);
-      const pathLength = approximatePathLength(startPoint, endPoint);
-
-      newPaths.push({
-        connection,
-        startPoint,
-        endPoint,
-        pathD,
-        pathLength,
-      });
-    }
-
-    setPaths(newPaths);
-    setDimensions({
-      width: containerRect.width,
-      height: containerRect.height,
-    });
-  }, [activeConnections, containerRef, leftRailRef, rightRailRef, providersRef]);
-
-  // Recalculate paths on layout changes
-  useEffect(() => {
-    calculatePaths();
-
-    const resizeObserver = new ResizeObserver(() => {
-      calculatePaths();
-    });
-
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    window.addEventListener('scroll', calculatePaths, true);
+    spawnIntervalRef.current = setInterval(() => {
+      const connectionIndex = Math.floor(Math.random() * connections.length);
+      const conn = connections[connectionIndex];
+      if (!conn) return;
+      
+      const reverse = Math.random() > 0.5;
+      
+      setDots(prev => [...prev.slice(-20), {
+        id: Date.now() + Math.random(),
+        connectionIndex,
+        exchangeId: conn.exchangeId,
+        providerId: conn.providerId,
+        color: conn.color,
+        progress: reverse ? 1 : 0,
+        direction: reverse ? -1 : 1,
+      }]);
+    }, 400);
 
     return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('scroll', calculatePaths, true);
+      if (spawnIntervalRef.current) {
+        clearInterval(spawnIntervalRef.current);
+        spawnIntervalRef.current = null;
+      }
     };
-  }, [calculatePaths, containerRef]);
+  }, [isActive, activeConnections]);
 
-  // Particle spawning and animation
+  // Animate dots - half speed (0.0125 per frame = ~4s crossing)
   useEffect(() => {
-    const lastSpawn = lastParticleSpawnRef.current;
-    let lastFrameTime = performance.now();
+    if (!isActive) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      return;
+    }
 
+    let lastTime = performance.now();
+    
     const animate = (currentTime: number) => {
-      const deltaMs = currentTime - lastFrameTime;
-      lastFrameTime = currentTime;
-
-      setParticles((prev) => {
-        const updated: Particle[] = [];
-
-        // Update existing particles
-        for (const particle of prev) {
-          const newProgress = particle.progress + particle.speed * deltaMs;
-          
-          // Remove particles that have completed their journey
-          if (newProgress > 1) continue;
-          if (newProgress < 0) continue;
-
-          updated.push({
-            ...particle,
-            progress: newProgress,
-          });
-        }
-
-        // Spawn new particles for active connections
-        for (const path of paths) {
-          const key = connectionKey(path.connection);
-          const context = pulseContexts.get(path.connection.exchangeId);
-          
-          if (!context || context.state === 'dormant') continue;
-
-          const lastSpawnTime = lastSpawn.get(key) ?? 0;
-          const isBurstState = context.state === 'opening' || context.state === 'closing';
-          const isReverse = context.state === 'closing' || context.state === 'pre-close';
-
-          if (isBurstState && context.progress < 0.3) {
-            // Burst mode: spawn multiple particles rapidly
-            const burstInterval = BURST_PARTICLE_STAGGER;
-            if (currentTime - lastSpawnTime > burstInterval) {
-              const particleCount = Math.min(
-                BURST_PARTICLE_COUNT,
-                Math.floor((currentTime - lastSpawnTime) / burstInterval)
-              );
-              
-              for (let i = 0; i < particleCount; i++) {
-                updated.push({
-                  id: `${key}-${currentTime}-${i}`,
-                  connectionKey: key,
-                  progress: isReverse ? 1 : 0,
-                  speed: (isReverse ? -1 : 1) * PARTICLE_SPEED_BURST * (0.8 + Math.random() * 0.4),
-                  size: PARTICLE_SIZE_BURST * (0.8 + Math.random() * 0.4),
-                  opacity: 0.9 + Math.random() * 0.1,
-                  reverse: isReverse,
-                });
-              }
-              lastSpawn.set(key, currentTime);
-            }
-          } else if (context.state === 'pre-open' || context.state === 'pre-close') {
-            // Idle mode: spawn single particles slowly
-            if (currentTime - lastSpawnTime > IDLE_PARTICLE_INTERVAL) {
-              updated.push({
-                id: `${key}-${currentTime}`,
-                connectionKey: key,
-                progress: isReverse ? 1 : 0,
-                speed: (isReverse ? -1 : 1) * PARTICLE_SPEED_IDLE,
-                size: PARTICLE_SIZE_IDLE,
-                opacity: 0.6,
-                reverse: isReverse,
-              });
-              lastSpawn.set(key, currentTime);
-            }
-          }
-        }
-
-        return updated;
-      });
-
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [paths, pulseContexts]);
-
-  // Apply row glow classes
-  useEffect(() => {
-    // Remove all existing pulse classes
-    document.querySelectorAll('.market-pulse-row-glow').forEach((el) => {
-      el.classList.remove(
-        'market-pulse-row-glow',
-        'market-pulse-row-opening',
-        'market-pulse-row-closing',
-        'market-pulse-row-breathing'
-      );
-      (el as HTMLElement).style.removeProperty('--pulse-continent-color');
-    });
-
-    // Add classes to active rows
-    for (const path of paths) {
-      const context = pulseContexts.get(path.connection.exchangeId);
-      if (!context || context.state === 'dormant') continue;
-
-      const row = document.querySelector(
-        `[data-provider-id="${path.connection.providerId}"]`
-      ) as HTMLElement | null;
-
-      if (!row) continue;
-
-      const colors = CONTINENT_COLORS[path.connection.continent];
-      row.style.setProperty('--pulse-continent-color', colors.primary);
-      row.classList.add('market-pulse-row-glow');
-
-      if (context.state === 'opening') {
-        row.classList.add('market-pulse-row-opening');
-      } else if (context.state === 'closing') {
-        row.classList.add('market-pulse-row-closing');
-      } else {
-        row.classList.add('market-pulse-row-breathing');
-      }
-    }
-
-    return () => {
-      document.querySelectorAll('.market-pulse-row-glow').forEach((el) => {
-        el.classList.remove(
-          'market-pulse-row-glow',
-          'market-pulse-row-opening',
-          'market-pulse-row-closing',
-          'market-pulse-row-breathing'
+      const deltaTime = currentTime - lastTime;
+      
+      // Update every ~20ms for smooth animation
+      if (deltaTime >= 20) {
+        lastTime = currentTime;
+        setDots(prev => prev
+          .map(d => ({ ...d, progress: d.progress + (d.direction * 0.0125) }))
+          .filter(d => d.progress >= 0 && d.progress <= 1)
         );
-        (el as HTMLElement).style.removeProperty('--pulse-continent-color');
-      });
+        updatePositions();
+      }
+      
+      animationRef.current = requestAnimationFrame(animate);
     };
-  }, [paths, pulseContexts]);
 
-  // Respect reduced motion
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    animationRef.current = requestAnimationFrame(animate);
 
-  // Nothing to render if no active connections
-  if (paths.length === 0) return null;
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    };
+  }, [isActive, updatePositions]);
+
+  // Update positions on scroll/resize
+  useEffect(() => {
+    if (!isActive) return;
+
+    const handleUpdate = () => updatePositions();
+    
+    window.addEventListener('scroll', handleUpdate, { passive: true });
+    window.addEventListener('resize', handleUpdate, { passive: true });
+    
+    // Initial position update
+    updatePositions();
+
+    return () => {
+      window.removeEventListener('scroll', handleUpdate);
+      window.removeEventListener('resize', handleUpdate);
+    };
+  }, [isActive, updatePositions]);
+
+  if (!isActive) return null;
 
   return (
-    <svg
-      ref={svgRef}
-      className="pointer-events-none absolute inset-0 z-10"
-      width={dimensions.width}
-      height={dimensions.height}
+    <div 
+      ref={overlayRef}
+      className="fixed inset-0 pointer-events-none z-50"
       aria-hidden="true"
     >
-      <defs>
-        {/* Glow filters for each continent */}
-        {Object.entries(CONTINENT_COLORS).map(([continent, colors]) => (
-          <React.Fragment key={continent}>
-            {/* Line glow */}
-            <filter
-              id={`pulse-line-glow-${continent}`}
-              x="-50%"
-              y="-50%"
-              width="200%"
-              height="200%"
-            >
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feFlood floodColor={colors.primary} floodOpacity="0.6" />
-              <feComposite in2="blur" operator="in" />
-              <feMerge>
-                <feMergeNode />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-
-            {/* Particle glow */}
-            <filter
-              id={`pulse-particle-glow-${continent}`}
-              x="-200%"
-              y="-200%"
-              width="500%"
-              height="500%"
-            >
-              <feGaussianBlur stdDeviation="6" result="blur" />
-              <feFlood floodColor={colors.primary} floodOpacity="1" />
-              <feComposite in2="blur" operator="in" />
-              <feMerge>
-                <feMergeNode />
-                <feMergeNode />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </React.Fragment>
-        ))}
-      </defs>
-
-      {/* Connection lines */}
-      {paths.map((path) => {
-        const context = pulseContexts.get(path.connection.exchangeId);
-        const state = context?.state ?? 'dormant';
-        const colors = CONTINENT_COLORS[path.connection.continent];
+      {/* Render traveling dots */}
+      {dots.map(dot => {
+        const posData = positions.find(p => 
+          p.connection.exchangeId === dot.exchangeId && 
+          p.connection.providerId === dot.providerId
+        );
         
-        const isActive = state === 'opening' || state === 'closing';
-        const lineOpacity = isActive ? 0.8 : state !== 'dormant' ? 0.4 + (context?.progress ?? 0) * 0.3 : 0;
-        const lineWidth = isActive ? LINE_WIDTH_ACTIVE : LINE_WIDTH_IDLE;
+        if (!posData?.exchangeRect || !posData?.providerRect) return null;
+
+        // Calculate start and end positions
+        const startX = posData.exchangeRect.right;
+        const startY = posData.exchangeRect.top + posData.exchangeRect.height / 2;
+        const endX = posData.providerRect.left;
+        const endY = posData.providerRect.top + posData.providerRect.height / 2;
+
+        // Interpolate position
+        const x = startX + (endX - startX) * dot.progress;
+        const y = startY + (endY - startY) * dot.progress;
+
+        // Fade in/out at edges
+        const opacity = dot.progress < 0.08 ? dot.progress / 0.08 : 
+                       dot.progress > 0.92 ? (1 - dot.progress) / 0.08 : 1;
 
         return (
-          <g key={connectionKey(path.connection)}>
-            {/* Glow layer */}
-            <path
-              d={path.pathD}
-              fill="none"
-              stroke={colors.primary}
-              strokeWidth={lineWidth + 2}
-              opacity={lineOpacity * 0.5}
-              filter={`url(#pulse-line-glow-${path.connection.continent})`}
-              strokeLinecap="round"
+          <div
+            key={dot.id}
+            className="absolute"
+            style={{
+              left: x,
+              top: y,
+              transform: 'translate(-50%, -50%)',
+              opacity,
+            }}
+          >
+            {/* Outer glow */}
+            <div 
+              className="absolute -inset-4 rounded-full"
+              style={{
+                background: `radial-gradient(circle, ${dot.color}60 0%, transparent 70%)`,
+              }}
             />
-            {/* Main line */}
-            <path
-              d={path.pathD}
-              fill="none"
-              stroke={colors.primary}
-              strokeWidth={lineWidth}
-              opacity={lineOpacity}
-              strokeLinecap="round"
-              strokeDasharray={isActive ? 'none' : '8 4'}
-              className="transition-all duration-300"
+            {/* Trail */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 h-2 rounded-full"
+              style={{
+                width: 30,
+                left: dot.direction > 0 ? -28 : 6,
+                background: `linear-gradient(${dot.direction > 0 ? '90deg' : '270deg'}, transparent, ${dot.color})`,
+              }}
             />
-          </g>
+            {/* Ball core */}
+            <div 
+              className="w-4 h-4 rounded-full"
+              style={{
+                backgroundColor: dot.color,
+                boxShadow: `0 0 8px ${dot.color}, 0 0 16px ${dot.color}`,
+              }}
+            />
+            {/* White hot center */}
+            <div 
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-white"
+              style={{ opacity: 0.8 }}
+            />
+          </div>
         );
       })}
-
-      {/* Particles */}
-      {!prefersReducedMotion &&
-        particles.map((particle) => {
-          const path = paths.find((p) => connectionKey(p.connection) === particle.connectionKey);
-          if (!path) return null;
-
-          const position = getPointOnBezier(
-            path.startPoint,
-            path.endPoint,
-            particle.progress
-          );
-          const colors = CONTINENT_COLORS[path.connection.continent];
-
-          return (
-            <g key={particle.id}>
-              {/* Outer glow */}
-              <circle
-                cx={position.x}
-                cy={position.y}
-                r={particle.size * 2}
-                fill={colors.glow}
-                opacity={particle.opacity * 0.4}
-              />
-              {/* Inner core */}
-              <circle
-                cx={position.x}
-                cy={position.y}
-                r={particle.size}
-                fill={colors.primary}
-                opacity={particle.opacity}
-                filter={`url(#pulse-particle-glow-${path.connection.continent})`}
-              />
-              {/* White hot center */}
-              <circle
-                cx={position.x}
-                cy={position.y}
-                r={particle.size * 0.3}
-                fill="white"
-                opacity={particle.opacity}
-              />
-            </g>
-          );
-        })}
-    </svg>
+    </div>
   );
 }
 

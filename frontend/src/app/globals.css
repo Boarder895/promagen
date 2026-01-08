@@ -890,6 +890,83 @@ a:hover {
 }
 
 /* ==========================================================================
+ * Market Pulse Active - Option 3 Synchronized Glow
+ * Applied dynamically via JS when market events are active
+ * ========================================================================== */
+
+@keyframes market-pulse-card-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 transparent, inset 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 40px -10px var(--pulse-color, #3b82f6),
+                inset 0 0 30px -15px var(--pulse-color, #3b82f6);
+  }
+}
+
+@keyframes market-pulse-dot-glow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+.market-pulse-active {
+  position: relative;
+  border-color: var(--pulse-color, #3b82f6) !important;
+  background-color: color-mix(in srgb, var(--pulse-color, #3b82f6) 10%, transparent);
+  animation: market-pulse-card-glow 3s ease-in-out infinite;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+/* Indicator dot on exchange cards (right side) */
+.market-pulse-active[data-exchange-id]::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--pulse-color, #3b82f6);
+  box-shadow: 0 0 12px var(--pulse-color, #3b82f6);
+  animation: market-pulse-dot-glow 3s ease-in-out infinite;
+}
+
+/* Indicator dot on provider rows (left side) */
+.market-pulse-active[data-provider-id]::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--pulse-color, #3b82f6);
+  box-shadow: 0 0 12px var(--pulse-color, #3b82f6);
+  animation: market-pulse-dot-glow 3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-pulse-active {
+    animation: none;
+    box-shadow: 0 0 20px -5px var(--pulse-color, #3b82f6),
+                inset 0 0 15px -8px var(--pulse-color, #3b82f6);
+  }
+  
+  .market-pulse-active[data-exchange-id]::after,
+  .market-pulse-active[data-provider-id]::before {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
  * Exchange Card Pulse Ring (optional enhancement)
  * ========================================================================== */
 

@@ -1,12 +1,22 @@
 // src/data/city-connections.ts
 // ============================================================================
-// CITY CONNECTIONS - Maps exchanges to AI providers in the same city
+// CITY CONNECTIONS - Dynamic Exchange ↔ AI Provider Mapping
 // ============================================================================
-// This is the Single Source of Truth for market-to-provider connections.
-// Used by the Market Pulse feature to draw animated connection lines.
+// Fully dynamic: connections are derived at runtime by matching
+// exchange.city === provider.hqCity
 //
-// Total: 19 connections across 10 cities (2 cities have multiple exchanges)
-// Last updated: January 1, 2026
+// NO HARDCODED MAPPINGS — add/remove providers or exchanges in their
+// respective JSON files and connections auto-update.
+//
+// Last updated: January 2026
+// ============================================================================
+
+import EXCHANGES from '@/data/exchanges';
+import { PROVIDERS } from '@/data/providers';
+import type { Provider } from '@/data/providers';
+
+// ============================================================================
+// TYPES
 // ============================================================================
 
 /**
@@ -28,11 +38,15 @@ export type CityConnection = {
   exchangeId: string;
   /** Provider ID from providers.json */
   providerId: string;
-  /** Normalized city name (for display) */
+  /** City name (shared by exchange and provider) */
   city: string;
   /** Continent for color theming */
   continent: Continent;
 };
+
+// ============================================================================
+// CONTINENT COLORS (UI Theming)
+// ============================================================================
 
 /**
  * Continent color palette for pulse animations.
@@ -71,190 +85,230 @@ export const CONTINENT_COLORS: Record<Continent, { primary: string; glow: string
   },
 };
 
+// ============================================================================
+// COUNTRY → CONTINENT MAPPING
+// ============================================================================
+
 /**
- * Complete list of city connections.
- *
- * Derived from matching providers.json hqCity to exchanges_catalog.json city.
- *
- * Multi-exchange cities: New York (2), Warsaw (2)
- * When ANY exchange in a city triggers, ALL providers in that city receive pulses.
- *
- * Summary:
- * | City       | Exchange(s)                      | Provider(s)                               |
- * |------------|----------------------------------|-------------------------------------------|
- * | Sydney     | asx-sydney                       | Leonardo AI                               |
- * | London     | lse-london                       | Stability AI, DreamStudio, Dreamlike.art  |
- * | Hong Kong  | hkex-hong-kong                   | Fotor, Artguru, PicWish                   |
- * | Chicago    | cboe-chicago                     | 123RF AI Generator                        |
- * | New York   | nyse-new-york, nasdaq-new-york   | Runway ML, Artbreeder                     |
- * | Paris      | euronext-paris                   | Clipdrop                                  |
- * | Toronto    | tsx-toronto                      | Ideogram                                  |
- * | Taipei     | twse-taipei                      | MyEdit (CyberLink)                        |
- * | Vienna     | wbag-vienna                      | Remove.bg (Kaleido AI)                    |
- * | Warsaw     | gpw-warsaw, wse-warsaw-newconnect| Getimg.ai                                 |
+ * Maps ISO2 country codes to continents.
+ * Used to determine pulse animation colors.
  */
-export const CITY_CONNECTIONS: CityConnection[] = [
-  // ═══════════════════════════════════════════════════════════════════════════
-  // OCEANIA
-  // ═══════════════════════════════════════════════════════════════════════════
+const COUNTRY_TO_CONTINENT: Record<string, Continent> = {
+  // Oceania
+  AU: 'oceania',
+  NZ: 'oceania',
+  FJ: 'oceania',
+  PG: 'oceania',
 
-  // Sydney — 1 exchange, 1 provider
-  {
-    exchangeId: 'asx-sydney',
-    providerId: 'leonardo',
-    city: 'Sydney',
-    continent: 'oceania',
-  },
+  // Asia
+  JP: 'asia',
+  CN: 'asia',
+  HK: 'asia',
+  TW: 'asia',
+  KR: 'asia',
+  SG: 'asia',
+  MY: 'asia',
+  TH: 'asia',
+  VN: 'asia',
+  ID: 'asia',
+  PH: 'asia',
+  IN: 'asia',
+  PK: 'asia',
+  BD: 'asia',
+  NP: 'asia',
+  LK: 'asia',
+  KZ: 'asia',
+  UZ: 'asia',
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // ASIA
-  // ═══════════════════════════════════════════════════════════════════════════
+  // Middle East
+  AE: 'middle-east',
+  SA: 'middle-east',
+  QA: 'middle-east',
+  KW: 'middle-east',
+  BH: 'middle-east',
+  OM: 'middle-east',
+  JO: 'middle-east',
+  LB: 'middle-east',
+  IL: 'middle-east',
+  TR: 'middle-east',
+  IR: 'middle-east',
+  IQ: 'middle-east',
 
-  // Hong Kong — 1 exchange, 3 providers
-  {
-    exchangeId: 'hkex-hong-kong',
-    providerId: 'fotor',
-    city: 'Hong Kong',
-    continent: 'asia',
-  },
-  {
-    exchangeId: 'hkex-hong-kong',
-    providerId: 'artguru',
-    city: 'Hong Kong',
-    continent: 'asia',
-  },
-  {
-    exchangeId: 'hkex-hong-kong',
-    providerId: 'picwish',
-    city: 'Hong Kong',
-    continent: 'asia',
-  },
+  // Europe
+  GB: 'europe',
+  DE: 'europe',
+  FR: 'europe',
+  IT: 'europe',
+  ES: 'europe',
+  PT: 'europe',
+  NL: 'europe',
+  BE: 'europe',
+  CH: 'europe',
+  AT: 'europe',
+  SE: 'europe',
+  NO: 'europe',
+  DK: 'europe',
+  FI: 'europe',
+  PL: 'europe',
+  CZ: 'europe',
+  HU: 'europe',
+  RO: 'europe',
+  GR: 'europe',
+  IE: 'europe',
+  RU: 'europe',
+  UA: 'europe',
+  CY: 'europe',
 
-  // Taipei — 1 exchange, 1 provider
-  {
-    exchangeId: 'twse-taipei',
-    providerId: 'myedit',
-    city: 'Taipei',
-    continent: 'asia',
-  },
+  // Africa
+  ZA: 'africa',
+  EG: 'africa',
+  NG: 'africa',
+  KE: 'africa',
+  MA: 'africa',
+  TN: 'africa',
+  GH: 'africa',
+  MU: 'africa',
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // EUROPE
-  // ═══════════════════════════════════════════════════════════════════════════
+  // Americas
+  US: 'americas',
+  CA: 'americas',
+  MX: 'americas',
+  BR: 'americas',
+  AR: 'americas',
+  CL: 'americas',
+  CO: 'americas',
+  PE: 'americas',
+  VE: 'americas',
+  TT: 'americas',
+  JM: 'americas',
+  PA: 'americas',
+};
 
-  // London — 1 exchange, 3 providers
-  {
-    exchangeId: 'lse-london',
-    providerId: 'stability',
-    city: 'London',
-    continent: 'europe',
-  },
-  {
-    exchangeId: 'lse-london',
-    providerId: 'dreamstudio',
-    city: 'London',
-    continent: 'europe',
-  },
-  {
-    exchangeId: 'lse-london',
-    providerId: 'dreamlike',
-    city: 'London',
-    continent: 'europe',
-  },
+/**
+ * Derive continent from a country code.
+ * Falls back to 'europe' if unknown (conservative default).
+ */
+function getContinentFromCountryCode(iso2: string): Continent {
+  return COUNTRY_TO_CONTINENT[iso2] ?? 'europe';
+}
 
-  // Paris — 1 exchange, 1 provider
-  {
-    exchangeId: 'euronext-paris',
-    providerId: 'clipdrop',
-    city: 'Paris',
-    continent: 'europe',
-  },
+// ============================================================================
+// CITY NORMALIZATION
+// ============================================================================
 
-  // Vienna — 1 exchange, 1 provider
-  {
-    exchangeId: 'wbag-vienna',
-    providerId: 'remove-bg',
-    city: 'Vienna',
-    continent: 'europe',
-  },
+/**
+ * City name aliases to handle variations.
+ * Key: variant spelling, Value: canonical name
+ *
+ * This handles cases where providers and exchanges might use
+ * slightly different city names for the same location.
+ */
+const CITY_ALIASES: Record<string, string> = {
+  // Sydney variants
+  'Surry Hills': 'Sydney', // Canva uses suburb name
 
-  // Warsaw — 2 exchanges, 1 provider (2 connections)
-  {
-    exchangeId: 'gpw-warsaw',
-    providerId: 'getimg',
-    city: 'Warsaw',
-    continent: 'europe',
-  },
-  {
-    exchangeId: 'wse-warsaw-newconnect',
-    providerId: 'getimg',
-    city: 'Warsaw',
-    continent: 'europe',
-  },
+  // Bay Area normalization — all map to San Francisco for matching
+  'Mountain View': 'San Francisco', // Google
+  'Menlo Park': 'San Francisco', // Meta
+  'Palo Alto': 'San Francisco', // Hotpot
+  'San Jose': 'San Francisco', // Adobe
+  'Redmond': 'Seattle', // Microsoft — keep separate, different exchange region
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // AMERICAS
-  // ═══════════════════════════════════════════════════════════════════════════
+  // Other normalizations can be added here as needed
+};
 
-  // Chicago — 1 exchange, 1 provider
-  {
-    exchangeId: 'cboe-chicago',
-    providerId: '123rf',
-    city: 'Chicago',
-    continent: 'americas',
-  },
+/**
+ * Normalize a city name to its canonical form.
+ */
+function normalizeCity(city: string | undefined): string {
+  if (!city) return '';
+  return CITY_ALIASES[city] ?? city;
+}
 
-  // New York — 2 exchanges, 2 providers (4 connections)
-  {
-    exchangeId: 'nyse-new-york',
-    providerId: 'runway',
-    city: 'New York',
-    continent: 'americas',
-  },
-  {
-    exchangeId: 'nyse-new-york',
-    providerId: 'artbreeder',
-    city: 'New York',
-    continent: 'americas',
-  },
-  {
-    exchangeId: 'nasdaq-new-york',
-    providerId: 'runway',
-    city: 'New York',
-    continent: 'americas',
-  },
-  {
-    exchangeId: 'nasdaq-new-york',
-    providerId: 'artbreeder',
-    city: 'New York',
-    continent: 'americas',
-  },
+// ============================================================================
+// DYNAMIC CONNECTION GENERATOR
+// ============================================================================
 
-  // Toronto — 1 exchange, 1 provider
-  {
-    exchangeId: 'tsx-toronto',
-    providerId: 'ideogram',
-    city: 'Toronto',
-    continent: 'americas',
-  },
-];
+/**
+ * Build a map of normalized city names → providers in that city.
+ * Cached on first access.
+ */
+let providersByCityCache: Map<string, Provider[]> | null = null;
 
-// ═══════════════════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════════
+function getProvidersByCity(): Map<string, Provider[]> {
+  if (providersByCityCache) return providersByCityCache;
+
+  const map = new Map<string, Provider[]>();
+  for (const provider of PROVIDERS) {
+    if (!provider.hqCity) continue; // Skip providers without hqCity
+    const normalizedCity = normalizeCity(provider.hqCity);
+    if (!normalizedCity) continue;
+    const existing = map.get(normalizedCity) ?? [];
+    existing.push(provider);
+    map.set(normalizedCity, existing);
+  }
+  providersByCityCache = map;
+  return map;
+}
+
+/**
+ * Get all providers headquartered in a city (or its normalized equivalent).
+ */
+export function getProvidersInCity(city: string): Provider[] {
+  const normalizedCity = normalizeCity(city);
+  return getProvidersByCity().get(normalizedCity) ?? [];
+}
 
 /**
  * Get all connections for a specific exchange.
+ * This is the main entry point for the Market Pulse feature.
+ *
+ * @param exchangeId - Exchange ID from exchanges.catalog.json
+ * @returns Array of connections to providers in the same city
  */
 export function getConnectionsForExchange(exchangeId: string): CityConnection[] {
-  return CITY_CONNECTIONS.filter((c) => c.exchangeId === exchangeId);
+  const exchange = EXCHANGES.find((e) => e.id === exchangeId);
+  if (!exchange) return [];
+
+  const providers = getProvidersInCity(exchange.city);
+  if (providers.length === 0) return [];
+
+  const continent = getContinentFromCountryCode(exchange.iso2);
+
+  return providers.map((provider) => ({
+    exchangeId,
+    providerId: provider.id,
+    city: exchange.city,
+    continent,
+  }));
 }
 
 /**
  * Get all connections for a specific provider.
+ *
+ * @param providerId - Provider ID from providers.json
+ * @returns Array of connections to exchanges in the same city
  */
 export function getConnectionsForProvider(providerId: string): CityConnection[] {
-  return CITY_CONNECTIONS.filter((c) => c.providerId === providerId);
+  const provider = PROVIDERS.find((p) => p.id === providerId);
+  if (!provider || !provider.hqCity) return [];
+
+  const normalizedCity = normalizeCity(provider.hqCity);
+  if (!normalizedCity) return [];
+
+  // Find all exchanges in this city (or its canonical equivalent)
+  const matchingExchanges = EXCHANGES.filter(
+    (e) => normalizeCity(e.city) === normalizedCity
+  );
+
+  if (matchingExchanges.length === 0) return [];
+
+  return matchingExchanges.map((exchange) => ({
+    exchangeId: exchange.id,
+    providerId,
+    city: exchange.city,
+    continent: getContinentFromCountryCode(exchange.iso2),
+  }));
 }
 
 /**
@@ -262,14 +316,15 @@ export function getConnectionsForProvider(providerId: string): CityConnection[] 
  * Returns the first connection found, or undefined if none.
  */
 export function getProviderConnection(providerId: string): CityConnection | undefined {
-  return CITY_CONNECTIONS.find((c) => c.providerId === providerId);
+  const connections = getConnectionsForProvider(providerId);
+  return connections[0];
 }
 
 /**
  * Check if a provider is connected to any exchange.
  */
 export function isProviderConnected(providerId: string): boolean {
-  return CITY_CONNECTIONS.some((c) => c.providerId === providerId);
+  return getConnectionsForProvider(providerId).length > 0;
 }
 
 /**
@@ -283,7 +338,7 @@ export function getProviderConnectionInfo(providerId: string): {
 } | undefined {
   const connection = getProviderConnection(providerId);
   if (!connection) return undefined;
-  
+
   return {
     city: connection.city,
     continent: connection.continent,
@@ -292,41 +347,50 @@ export function getProviderConnectionInfo(providerId: string): {
 }
 
 /**
+ * Check if an exchange has any provider connections.
+ */
+export function hasConnections(exchangeId: string): boolean {
+  return getConnectionsForExchange(exchangeId).length > 0;
+}
+
+/**
  * Get all unique exchange IDs that have connections.
+ * Note: This iterates all exchanges, use sparingly.
  */
 export function getConnectedExchangeIds(): string[] {
-  return [...new Set(CITY_CONNECTIONS.map((c) => c.exchangeId))];
+  return EXCHANGES.filter((e) => hasConnections(e.id)).map((e) => e.id);
 }
 
 /**
  * Get all unique provider IDs that have connections.
+ * Note: This iterates all providers, use sparingly.
  */
 export function getConnectedProviderIds(): string[] {
-  return [...new Set(CITY_CONNECTIONS.map((c) => c.providerId))];
+  return PROVIDERS.filter((p) => isProviderConnected(p.id)).map((p) => p.id);
 }
 
 /**
- * Check if an exchange has any provider connections.
+ * Get all connections grouped by city.
+ * Useful for debugging or admin views.
  */
-export function hasConnections(exchangeId: string): boolean {
-  return CITY_CONNECTIONS.some((c) => c.exchangeId === exchangeId);
-}
-
-/**
- * Get connections grouped by city.
- */
-export function getConnectionsByCity(): Map<string, CityConnection[]> {
+export function getAllConnectionsByCity(): Map<string, CityConnection[]> {
   const map = new Map<string, CityConnection[]>();
-  for (const c of CITY_CONNECTIONS) {
-    const existing = map.get(c.city) ?? [];
-    existing.push(c);
-    map.set(c.city, existing);
+
+  for (const exchange of EXCHANGES) {
+    const connections = getConnectionsForExchange(exchange.id);
+    if (connections.length > 0) {
+      const existing = map.get(exchange.city) ?? [];
+      existing.push(...connections);
+      map.set(exchange.city, existing);
+    }
   }
+
   return map;
 }
 
 /**
  * Get summary statistics.
+ * Useful for debugging or admin views.
  */
 export function getConnectionStats(): {
   totalConnections: number;
@@ -334,10 +398,26 @@ export function getConnectionStats(): {
   uniqueExchanges: number;
   uniqueProviders: number;
 } {
+  const allConnections = getAllConnectionsByCity();
+  const allConnectionsFlat = Array.from(allConnections.values()).flat();
+
   return {
-    totalConnections: CITY_CONNECTIONS.length,
-    uniqueCities: new Set(CITY_CONNECTIONS.map((c) => c.city)).size,
-    uniqueExchanges: getConnectedExchangeIds().length,
-    uniqueProviders: getConnectedProviderIds().length,
+    totalConnections: allConnectionsFlat.length,
+    uniqueCities: allConnections.size,
+    uniqueExchanges: new Set(allConnectionsFlat.map((c) => c.exchangeId)).size,
+    uniqueProviders: new Set(allConnectionsFlat.map((c) => c.providerId)).size,
   };
 }
+
+// ============================================================================
+// LEGACY COMPATIBILITY
+// ============================================================================
+
+/**
+ * @deprecated Use getConnectionsForExchange() or getConnectionsForProvider() instead.
+ *
+ * This empty array is kept for backward compatibility with code that
+ * might have imported CITY_CONNECTIONS directly. The static array
+ * approach is deprecated in favor of dynamic runtime lookups.
+ */
+export const CITY_CONNECTIONS: CityConnection[] = [];

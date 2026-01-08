@@ -5,14 +5,16 @@
     "tse-tokyo",
     "hkex-hong-kong",
     "set-bangkok",
+    "dse-dhaka",
     "nepse-kathmandu",
+    "psx-karachi",
     "nse-mumbai",
     "dfm-dubai",
-    "tse-tehran",
-    "moex-moscow",
+    "tadawul-riyadh",
     "jse-johannesburg",
     "lse-london",
     "b3-sao-paulo",
-    "cboe-chicago"
+    "cboe-chicago",
+    "nasdaq-san-francisco"
   ]
 }
