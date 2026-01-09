@@ -5,7 +5,7 @@
 // Re-exports types from schemas.ts for backwards compatibility.
 // New code should import directly from schemas.ts.
 //
-// DEPRECATED: Import from './schemas' instead.
+// DEPRECATED: Import from './schemas.js' instead.
 // ============================================================================
 
 // Re-export all types from schemas for backwards compatibility
@@ -16,7 +16,7 @@ export type {
   FxRibbonResult,
   FxAdapterRequest,
   FxAdapterResponse,
-} from './schemas';
+} from './schemas.js';
 
 // Re-export FxMode for backwards compatibility
 export type FxMode = 'live' | 'cached';

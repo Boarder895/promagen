@@ -1,7 +1,7 @@
 // gateway/lib/http.ts
 
-import type { ProviderEndpointConfig } from './config';
-import { logError, logInfo } from './logging';
+import type { ProviderEndpointConfig } from './config.js';
+import { logError, logInfo } from './logging.js';
 
 export type FetchJsonOptions = {
   providerId: string;

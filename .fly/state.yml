@@ -1,0 +1,8 @@
+channel: latest
+last_checked_at: 2025-12-05T09:33:05.4720729Z
+latest_release:
+    version: v0.3.229
+    prerelease: false
+    download_url: https://github.com/superfly/flyctl/releases/download/v0.3.229/flyctl_0.3.229_Windows_x86_64.zip
+    timestamp: 2025-12-04T19:11:00Z
+invalidver: null

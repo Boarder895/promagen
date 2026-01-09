@@ -1,14 +1,30 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "paths": {
+      "@/lib/*": ["./lib/*"],
+      "@/data/*": ["./data/*"]
+    },
+    "baseUrl": "."
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "__tests__", "**/*.test.ts", "**/*.spec.ts"]
+  "include": ["src/**/*", "lib/**/*"],
+  "exclude": ["node_modules", "dist", "data"]
 }

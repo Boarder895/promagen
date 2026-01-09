@@ -1,8 +1,8 @@
 // gateway/lib/roles.ts
 
-import type { RoleAdapter } from './adapters';
-import { getApiBrain, getRoleOrThrow, resolveEndpointForProvider } from './config';
-import { logError, logInfo } from './logging';
+import type { RoleAdapter } from './adapters.js';
+import { getApiBrain, getRoleOrThrow, resolveEndpointForProvider } from './config.js';
+import { logError, logInfo } from './logging.js';
 
 export type ResolvedRole = {
   roleId: string;

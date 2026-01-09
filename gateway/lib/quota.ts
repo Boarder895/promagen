@@ -17,7 +17,7 @@
 // - Added quota status reporting
 // ============================================================================
 
-import { logInfo, logWarn } from './logging';
+import { logInfo, logWarn } from './logging.js';
 
 // ============================================================================
 // TYPES
@@ -40,6 +40,11 @@ type ProviderWindow = {
   lastCleanup: number;
 };
 
+type ProviderLimits = {
+  perMinute: number;
+  perDay: number;
+};
+
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
@@ -50,7 +55,7 @@ type ProviderWindow = {
  * TwelveData free tier: 800/day, 8/min
  * TwelveData basic: 800/day, 8/min (same)
  */
-const PROVIDER_QUOTAS: Record<string, { perMinute: number; perDay: number }> = {
+const PROVIDER_QUOTAS: Record<string, ProviderLimits> = {
   twelvedata: {
     perMinute: 6, // 8/min limit, 6 safe (75% headroom)
     perDay: 700,  // 800/day limit, 700 safe (87.5% headroom)
@@ -63,11 +68,12 @@ const PROVIDER_QUOTAS: Record<string, { perMinute: number; perDay: number }> = {
     perMinute: 10,
     perDay: 500,
   },
-  // Default for unknown providers (conservative)
-  _default: {
-    perMinute: 2,
-    perDay: 100,
-  },
+};
+
+// Default limits for unknown providers (conservative)
+const DEFAULT_LIMITS: ProviderLimits = {
+  perMinute: 2,
+  perDay: 100,
 };
 
 // Window durations in milliseconds
@@ -92,8 +98,8 @@ const providerWindows = new Map<string, ProviderWindow>();
 // HELPERS
 // ============================================================================
 
-function getProviderLimits(providerId: string) {
-  return PROVIDER_QUOTAS[providerId] ?? PROVIDER_QUOTAS._default;
+function getProviderLimits(providerId: string): ProviderLimits {
+  return PROVIDER_QUOTAS[providerId] ?? DEFAULT_LIMITS;
 }
 
 function getOrCreateWindow(providerId: string): ProviderWindow {
@@ -220,7 +226,7 @@ export function applyQuotaAllowance(
 export function getQuotaStatus(providerId: string): {
   usedPerMinute: number;
   usedPerDay: number;
-  limits: { perMinute: number; perDay: number };
+  limits: ProviderLimits;
 } {
   const now = Date.now();
   const limits = getProviderLimits(providerId);

@@ -1,6 +1,6 @@
 // gateway/lib/adapters.ts
 
-import type { FxMode, FxRibbonPair, FxRibbonQuote } from './types';
+import type { FxMode, FxRibbonPair, FxRibbonQuote } from './types.js';
 
 export type FxAdapterRequest = {
   roleId: string;

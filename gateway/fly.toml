@@ -1,0 +1,43 @@
+# fly.toml - Promagen API Gateway
+# Deploys to: promagen-api.fly.dev
+# Region: lhr (London)
+
+app = "promagen-api"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  LOG_LEVEL = "info"
+  # Budget defaults (can override via secrets)
+  FX_RIBBON_BUDGET_DAILY_ALLOWANCE = "800"
+  FX_RIBBON_BUDGET_MINUTE_ALLOWANCE = "8"
+  FX_RIBBON_TTL_SECONDS = "300"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false  # Keep always-on for cache persistence
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 200
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+  cpus = 1

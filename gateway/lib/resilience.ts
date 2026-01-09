@@ -1,6 +1,6 @@
 // C:\Users\Proma\Projects\promagen\gateway\lib\resilience.ts
 
-import { logError, logInfo } from './logging';
+import { logError, logInfo } from './logging.js';
 
 export type ResilienceOptions = {
   providerId: string;
