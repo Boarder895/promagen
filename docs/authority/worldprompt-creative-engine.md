@@ -1,6 +1,6 @@
 # WorldPrompt — The Global Creative Engine
 
-**Last updated:** 5 January 2026  
+**Last updated:** 9 January 2026  
 **Owner:** Promagen  
 **Status:** Vision Document — Ready for Implementation  
 **Authority:** This document defines the philosophy, architecture, and data requirements for Promagen's ambient global creativity system.
@@ -988,6 +988,383 @@ Returns: Any active special events (World Cup, etc.)
 
 ---
 
+## Part 13: WorldPrompt Live Background — Visual Implementation
+
+### 13.1 Concept
+
+WorldPrompt Live Background is the **visual payoff** of the entire WorldPrompt system. Instead of just generating text prompts, Promagen now shows the image.
+
+The homepage background becomes a living canvas — an AI-generated scene derived from the current WorldPrompt context. As the rotation moves around the globe, the background transforms: Sydney at dawn, Tokyo at dusk, London in morning rain, São Paulo in afternoon sunshine.
+
+**This is what makes Promagen truly alive.**
+
+### 13.2 Tier Gating
+
+| Tier | Background | Context Bar | Fullscreen |
+|------|------------|-------------|------------|
+| Standard Promagen | Static dark gradient | Hidden | N/A |
+| Pro Promagen | AI-generated scene | Visible | Available |
+
+Standard users see the existing dark UI. Pro users see the world.
+
+### 13.3 Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        WORLDPROMPT LIVE BACKGROUND                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  Existing Data Sources (no new APIs)                                        │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │   Weather   │ │  Exchange   │ │  FX Ribbon  │ │   Country   │           │
+│  │   Badges    │ │   Status    │ │   Movement  │ │   Profile   │           │
+│  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘           │
+│         │               │               │               │                   │
+│         └───────────────┴───────────────┴───────────────┘                   │
+│                                   │                                         │
+│                                   ▼                                         │
+│                    ┌─────────────────────────────┐                          │
+│                    │    WorldPromptContext       │                          │
+│                    │    (existing from Part 8)   │                          │
+│                    └──────────────┬──────────────┘                          │
+│                                   │                                         │
+│                                   ▼                                         │
+│                    ┌─────────────────────────────┐                          │
+│                    │    generateWorldPrompt()    │                          │
+│                    │    → text prompt            │                          │
+│                    └──────────────┬──────────────┘                          │
+│                                   │                                         │
+│                                   ▼                                         │
+│                    ┌─────────────────────────────┐                          │
+│                    │    /api/worldprompt/image   │                          │
+│                    │    → Check cache            │                          │
+│                    │    → Generate if miss       │                          │
+│                    │    → Return URL             │                          │
+│                    └──────────────┬──────────────┘                          │
+│                                   │                                         │
+│                                   ▼                                         │
+│                    ┌─────────────────────────────┐                          │
+│                    │    WorldPromptBackground    │                          │
+│                    │    → Display image          │                          │
+│                    │    → Handle transitions     │                          │
+│                    └─────────────────────────────┘                          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 13.4 Image Generation Triggers
+
+The system doesn't regenerate images constantly. It responds to **meaningful changes**:
+
+| Trigger | When | Why |
+|---------|------|-----|
+| **City rotation** | Every 30 minutes | Core WorldPrompt cycle |
+| **Time-of-day shift** | Dawn, morning, afternoon, evening, night | Light quality changes dramatically |
+| **Market open/close** | ±1 minute window | Energy state changes (aligns with Market Pulse) |
+| **Weather condition change** | Sunny → Rain, etc. | Atmosphere shift |
+| **Significant FX move** | >1% change in lead pair | Mood indicator |
+
+**Example day for Sydney:**
+- 05:30 AEDT → Dawn image (warm amber, first light)
+- 09:00 AEDT → Morning image (bright, ASX about to open)
+- 10:00 AEDT → Market open flash (energy spike)
+- 13:00 AEDT → Afternoon image (harsh noon, full sun)
+- 16:00 AEDT → Market close flash
+- 17:30 AEDT → Evening image (golden hour)
+- 20:00 AEDT → Night image (city lights)
+
+That's 7 potential images per day for one city. With caching, the same prompt = same cached image.
+
+### 13.5 Prompt-to-Image Mapping
+
+The existing `generateWorldPrompt()` function produces text. That text becomes the image prompt.
+
+**Example context:**
+- City: Sydney
+- Time: 06:15 local (dawn)
+- Weather: 24°C, partly cloudy
+- Market: ASX pre-open
+- FX: AUD/USD +0.3%
+- Season: Summer
+
+**Generated text prompt:**
+```
+Sydney Harbour at dawn, warm amber light breaking through scattered clouds,
+Opera House silhouette against pink-gold sky, sailboats on calm water,
+early morning energy before the markets open, summer warmth in the air,
+optimistic atmosphere as currencies rise, photorealistic
+```
+
+**Image API call:**
+```typescript
+const response = await openai.images.generate({
+  model: "dall-e-3",
+  prompt: generatedPrompt,
+  size: "1792x1024",
+  quality: "standard",
+  n: 1
+});
+```
+
+### 13.6 Visual Layer Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  VIEWPORT                                                                   │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  z-index: -2                                                          │  │
+│  │  BACKGROUND IMAGE                                                     │  │
+│  │  position: fixed; inset: 0; object-fit: cover;                       │  │
+│  │                                                                       │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐ │  │
+│  │  │  z-index: -1                                                    │ │  │
+│  │  │  DARK OVERLAY                                                   │ │  │
+│  │  │  position: fixed; inset: 0; background: rgba(0,0,0,0.7);       │ │  │
+│  │  │                                                                 │ │  │
+│  │  │  ┌───────────────────────────────────────────────────────────┐ │ │  │
+│  │  │  │  z-index: 0+                                              │ │ │  │
+│  │  │  │  EXISTING UI                                              │ │ │  │
+│  │  │  │  FX Ribbon, Exchange Cards, Providers Table, etc.        │ │ │  │
+│  │  │  │                                                           │ │ │  │
+│  │  │  └───────────────────────────────────────────────────────────┘ │ │  │
+│  │  │                                                                 │ │  │
+│  │  └─────────────────────────────────────────────────────────────────┘ │  │
+│  │                                                                       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  z-index: 10                                                          │  │
+│  │  CONTEXT BAR                                                          │  │
+│  │  position: fixed; bottom: 0;                                          │  │
+│  │  ● Sydney, Australia • ASX Open • 24°C ☀️ • AUD/USD +0.3%  [Expand]  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 13.7 Image Transitions
+
+When a new image arrives:
+
+```typescript
+// Transition sequence
+1. newImage.onload = () => {
+2.   newImage.classList.add('worldprompt-bg--entering');
+3.   await nextFrame();
+4.   oldImage.classList.add('worldprompt-bg--exiting');
+5.   newImage.classList.remove('worldprompt-bg--entering');
+6.   newImage.classList.add('worldprompt-bg--active');
+7.   await sleep(2000); // Crossfade duration
+8.   oldImage.remove();
+9. }
+```
+
+CSS:
+```css
+.worldprompt-bg {
+  transition: opacity 2s ease-in-out;
+}
+
+.worldprompt-bg--entering {
+  opacity: 0;
+}
+
+.worldprompt-bg--active {
+  opacity: 1;
+}
+
+.worldprompt-bg--exiting {
+  opacity: 0;
+}
+
+/* Reduced motion: instant swap */
+@media (prefers-reduced-motion: reduce) {
+  .worldprompt-bg {
+    transition: none;
+  }
+}
+```
+
+### 13.8 Context Bar Design
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ● Sydney, Australia • ASX Open • 24°C ☀️ • AUD/USD +0.3%        [Expand ⛶] │
+└──────────────────────────────────────────────────────────────────────────────┘
+  │ │                   │        │       │                              │
+  │ │                   │        │       │                              └─ Expand
+  │ │                   │        │       └─ Lead FX pair + movement         button
+  │ │                   │        └─ Weather (temp + emoji)
+  │ │                   └─ Market status
+  │ └─ City + Country
+  └─ Pulsing dot (live indicator)
+```
+
+Styling:
+- Background: `rgba(0,0,0,0.6)` with `backdrop-filter: blur(8px)`
+- Text: White, `text-sm`
+- Height: 40px
+- Border-top: `1px solid rgba(255,255,255,0.1)`
+
+### 13.9 Fullscreen Mode
+
+When user clicks **[Expand ⛶]**:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                                                                             │
+│                                                                             │
+│           [FULL RESOLUTION IMAGE — NO OVERLAY]                              │
+│                                                                             │
+│                                                                             │
+│                                                                             │
+│                                                                             │
+│                                                                             │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Sydney, Australia • 06:15 AEDT • 24°C Partly Cloudy               │   │
+│  │                                                                     │   │
+│  │ "Sydney Harbour at dawn, warm amber light breaking through         │   │
+│  │ scattered clouds, Opera House silhouette against pink-gold sky..." │   │
+│  │                                                       [Copy Prompt] │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                     [✕]    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+Features:
+- Full-bleed image, no dark overlay
+- Semi-transparent info panel in bottom-left
+- Generated prompt visible (educational + copyable)
+- Copy Prompt button for users who want to recreate
+- Close button (✕) + ESC key + click outside
+
+**Screensaver potential:** This fullscreen mode is the "screensaver" feature. Users can leave it open as an ambient display.
+
+### 13.10 Cost Control
+
+| Measure | Implementation |
+|---------|----------------|
+| **Caching** | Hash(prompt) → Vercel KV key → 24h TTL |
+| **Deduplication** | Same prompt = cached image, no regeneration |
+| **Rate limiting** | Max 1 generation per city per trigger event |
+| **Resolution** | 1792×1024 (large enough for most screens, not excessive) |
+| **Model** | DALL-E 3 standard quality (~$0.04/image) |
+
+**Daily cost estimate:**
+- 12 active cities × 4 time-of-day shifts = 48 potential images
+- With caching (same weather, same FX mood) = ~30 unique images
+- 30 × $0.04 = **~$1.20/day**
+
+**Monthly estimate:** ~$36/month for the entire platform (not per-user).
+
+### 13.11 Fallback Hierarchy
+
+| Condition | Behaviour |
+|-----------|-----------|
+| Image loading | Subtle shimmer animation on dark background |
+| Image generation failed | Keep previous image, log error, retry in 5 mins |
+| Cache miss + API error | Fall back to static gradient |
+| API quota exceeded | Disable feature for remainder of day |
+| User is Standard Promagen | No image, no context bar |
+
+### 13.12 Implementation Files
+
+```
+src/
+├── components/worldprompt-live/
+│   ├── index.ts                       # Barrel export
+│   ├── worldprompt-background.tsx     # Fixed background layer
+│   ├── worldprompt-overlay.tsx        # Dark overlay for readability
+│   ├── worldprompt-context-bar.tsx    # Bottom info strip
+│   ├── worldprompt-fullscreen.tsx     # Modal for expanded view
+│   └── worldprompt-shimmer.tsx        # Loading state
+├── hooks/
+│   └── use-worldprompt-image.ts       # Fetch + cache management
+└── app/api/worldprompt/
+    └── image/
+        └── route.ts                   # Image generation endpoint
+```
+
+### 13.13 API Endpoint
+
+```typescript
+// src/app/api/worldprompt/image/route.ts
+
+import { kv } from '@vercel/kv';
+import OpenAI from 'openai';
+import { generateWorldPrompt, getCurrentWorldPromptContext } from '@/lib/worldprompt';
+import { createHash } from 'crypto';
+
+const openai = new OpenAI();
+
+export async function GET(request: Request) {
+  // 1. Get current WorldPrompt context
+  const context = await getCurrentWorldPromptContext();
+  
+  // 2. Generate prompt text
+  const promptText = generateWorldPrompt(context);
+  
+  // 3. Create cache key from prompt hash
+  const hash = createHash('sha256').update(promptText).digest('hex').slice(0, 16);
+  const cacheKey = `worldprompt:image:${hash}`;
+  
+  // 4. Check cache
+  const cached = await kv.get<string>(cacheKey);
+  if (cached) {
+    return Response.json({ 
+      imageUrl: cached, 
+      cached: true,
+      context: {
+        city: context.country.name,
+        timeOfDay: context.timeOfDay,
+        weather: context.weather.condition,
+        prompt: promptText
+      }
+    });
+  }
+  
+  // 5. Generate image
+  const response = await openai.images.generate({
+    model: "dall-e-3",
+    prompt: promptText,
+    size: "1792x1024",
+    quality: "standard",
+    n: 1
+  });
+  
+  const imageUrl = response.data[0].url;
+  
+  // 6. Cache for 24 hours
+  await kv.set(cacheKey, imageUrl, { ex: 86400 });
+  
+  // 7. Return
+  return Response.json({ 
+    imageUrl, 
+    cached: false,
+    context: {
+      city: context.country.name,
+      timeOfDay: context.timeOfDay,
+      weather: context.weather.condition,
+      prompt: promptText
+    }
+  });
+}
+```
+
+### 13.14 Success Criteria
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Pro user engagement | +20% time on homepage | Analytics comparison |
+| "Wow" factor | Qualitative | User feedback, social shares |
+| Performance | <100ms context bar render | Core Web Vitals |
+| Reliability | 99% image availability | Error rate monitoring |
+| Cost efficiency | <$50/month | API billing |
+
+---
+
 ## Appendix A: Country Profile Dataset Request
 
 To build the complete `country-profiles.json`, the following countries need profiles:
@@ -1034,6 +1411,7 @@ All other countries for comprehensive global coverage.
 
 ## Changelog
 
+- **9 Jan 2026:** **WORLDPROMPT LIVE BACKGROUND** — Added Part 13: WorldPrompt Live Background — Visual Implementation. Pro Promagen exclusive feature. Homepage background becomes AI-generated scene from WorldPrompt data. Includes: visual layer architecture, image generation triggers, context bar design, fullscreen mode, cost control (~$1.20/day), API endpoint specification, component structure. Authority for tier gating: `paid_tier.md` §5.11.
 - **5 Jan 2026:** Initial document created. Captures complete WorldPrompt vision including philosophy, AI leaderboard as stock board, WorldPrompt feature, contextual whispers, Inspire Me, seasonal events, Santa Protocol, World Cup mode, country profiles schema, prompt generation engine, and implementation roadmap.
 
 ---

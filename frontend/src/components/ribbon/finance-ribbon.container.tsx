@@ -39,7 +39,7 @@ export interface FinanceRibbonChip {
 
 type BudgetState = 'ok' | 'warning' | 'blocked';
 
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 300_000; // 5 minutes - prevents API quota exhaustion
 
 function safeFiniteNumber(value: unknown): number | null {
   const n = typeof value === 'number' ? value : Number(value);

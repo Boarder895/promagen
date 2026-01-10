@@ -1,7 +1,7 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 3 January 2026  
-**Version:** 2.2 (Pro Promagen + button styling)  
+**Last updated:** 9 January 2026  
+**Version:** 2.3 (Console logging standards)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
 ---
@@ -42,10 +42,10 @@ The frontend is allowed to render placeholders (loading, skeletons, empty states
 
 ### Terminology
 
-| Term | Definition |
-|------|------------|
-| **Pro Promagen** | The paid subscription tier. Always use "Pro Promagen" in user-facing text, never "paid", "premium", "plus", or other terms. Internal code may use `isPaidUser` or `userTier === 'paid'` for brevity, but UI labels, tooltips, CTAs, and prompts must say "Pro Promagen". |
-| **Standard Promagen** | The free tier. If not explicitly listed in `paid_tier.md`, a feature is Standard Promagen (free). |
+| Term                  | Definition                                                                                                                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Pro Promagen**      | The paid subscription tier. Always use "Pro Promagen" in user-facing text, never "paid", "premium", "plus", or other terms. Internal code may use `isPaidUser` or `userTier === 'paid'` for brevity, but UI labels, tooltips, CTAs, and prompts must say "Pro Promagen". |
+| **Standard Promagen** | The free tier. If not explicitly listed in `paid_tier.md`, a feature is Standard Promagen (free).                                                                                                                                                                        |
 
 ### Principles
 
@@ -67,11 +67,13 @@ If X cannot be implemented without changing anything else, you must re-scope it 
 ### Operational enforcement (UI scope lock)
 
 Every feature request must include a one-line Scope Lock sentence:
+
 > "Only change <X>; do not touch layout/colours/spacing/typography."
 
 If it is missing, the assistant must add it explicitly to the task scope before making changes.
 
 For UI work, every Change List must include a UI invariants checklist:
+
 - Colours unchanged: ✅/❌
 - Layout unchanged: ✅/❌
 - Spacing unchanged: ✅/❌
@@ -108,10 +110,10 @@ If you need to add/remove/reorder entries, you should be able to do it by editin
 
 **Canonical schema locations:**
 
-| Data file | Schema file |
-|-----------|-------------|
-| `data/providers/providers.json` | `data/providers/providers.schema.ts` |
-| `data/fx/fx.pairs.json` | `data/fx/fx.schema.ts` |
+| Data file                               | Schema file                          |
+| --------------------------------------- | ------------------------------------ |
+| `data/providers/providers.json`         | `data/providers/providers.schema.ts` |
+| `data/fx/fx-pairs.json`                 | `data/fx/fx.schema.ts`               |
 | `data/exchanges/exchanges.catalog.json` | `data/exchanges/exchanges.schema.ts` |
 
 ---
@@ -126,22 +128,22 @@ Choose one routing style for the project and keep it consistent. The app router 
 
 ### Canonical folders (frontend/src/)
 
-| Folder | Purpose |
-|--------|---------|
-| `app/` | Route segments, page/layout/error/loading files |
-| `components/` | UI components and feature components |
-| `components/nav/` | Global navigation components and routed tabs |
-| `components/ui/` | Reusable UI primitives (buttons, cards, tabs, chips) |
-| `components/ui/tabs/` | In-page tab systems (content swap, same route) |
-| `components/layout/` | Layout components (grids, containers, wrappers) |
-| `data/` | SSOT-driven static configuration and lists |
-| `hooks/` | Custom hooks |
-| `lib/` | Shared helpers, pure logic, analytics, route helpers, formatters |
-| `lib/analytics/` | Centralised analytics helpers and event catalogue |
-| `lib/routes/` | Centralised route definitions and helpers |
-| `styles/` | Global styles and CSS modules (only when Tailwind is not enough) |
-| `types/` | TypeScript type definitions and entry points |
-| `utils/` | Small pure helpers (if not already under `lib/`) |
+| Folder                | Purpose                                                          |
+| --------------------- | ---------------------------------------------------------------- |
+| `app/`                | Route segments, page/layout/error/loading files                  |
+| `components/`         | UI components and feature components                             |
+| `components/nav/`     | Global navigation components and routed tabs                     |
+| `components/ui/`      | Reusable UI primitives (buttons, cards, tabs, chips)             |
+| `components/ui/tabs/` | In-page tab systems (content swap, same route)                   |
+| `components/layout/`  | Layout components (grids, containers, wrappers)                  |
+| `data/`               | SSOT-driven static configuration and lists                       |
+| `hooks/`              | Custom hooks                                                     |
+| `lib/`                | Shared helpers, pure logic, analytics, route helpers, formatters |
+| `lib/analytics/`      | Centralised analytics helpers and event catalogue                |
+| `lib/routes/`         | Centralised route definitions and helpers                        |
+| `styles/`             | Global styles and CSS modules (only when Tailwind is not enough) |
+| `types/`              | TypeScript type definitions and entry points                     |
+| `utils/`              | Small pure helpers (if not already under `lib/`)                 |
 
 Shared test setup for the frontend: `frontend/src/setupTests.ts`
 
@@ -166,6 +168,7 @@ Shared test setup for the frontend: `frontend/src/setupTests.ts`
 Generated artefacts are allowed, but only under a single, clearly marked folder: `frontend/generated/`
 
 Rules for `frontend/generated/`:
+
 - Contains build outputs consumed by the app (e.g., manifests, derived lookup tables).
 - Must be deterministic (same inputs → same outputs).
 - Must never be edited by hand.
@@ -191,9 +194,11 @@ Prefer discriminated unions for variants and states.
 Use named types and interfaces for all component props.
 
 Prefer:
+
 ```typescript
-type ProviderMode = "live" | "cached" | "unavailable";
+type ProviderMode = 'live' | 'cached' | 'unavailable';
 ```
+
 over: `string`
 
 Avoid enums unless you truly need them.
@@ -208,18 +213,20 @@ All JSON SSOT must have a TypeScript type.
 
 For major domain types, create a singular entry-point file that re-exports:
 
-| Entry point | Re-exports from |
-|-------------|-----------------|
+| Entry point           | Re-exports from  |
+| --------------------- | ---------------- |
 | `@/types/provider.ts` | `./providers.ts` |
 | `@/types/exchange.ts` | `./exchanges.ts` |
-| `@/types/fx-pair.ts` | `./fx.ts` |
+| `@/types/fx-pair.ts`  | `./fx.ts`        |
 
 **All UI/route code imports from the singular entry point.** This prevents:
+
 - Import path confusion (singular vs plural)
 - Parallel type definitions that drift
 - Broken imports when internal files are refactored
 
 **Example:**
+
 ```typescript
 // ✅ Correct
 import type { Provider } from '@/types/provider';
@@ -236,18 +243,23 @@ import type { Provider } from '@/data/providers/providers.schema';
 All JSON SSOT must have exactly ONE Zod validation schema (see §2).
 
 When a route needs only a subset of fields:
+
 ```typescript
 // ✅ Correct — allows extra fields
-const SubsetSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-}).passthrough();
+const SubsetSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+  })
+  .passthrough();
 
 // ❌ Wrong — rejects extra fields, causes 500s
-const SubsetSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-}).strict();
+const SubsetSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+  })
+  .strict();
 ```
 
 ---
@@ -267,6 +279,7 @@ Use functional components.
 Always name components.
 
 Avoid unnecessary re-renders:
+
 - Memoise derived values with `useMemo` where it matters.
 - Memoise callbacks with `useCallback` where it matters.
 - Do not over-memoise trivial values.
@@ -320,11 +333,13 @@ When a card displays multiple data groups (e.g., exchange info | time | weather)
 ```
 
 **Column alignment rules:**
+
 - First column (content-heavy): left-aligned text
 - Subsequent columns (data): centered within their column
 - Long text wraps within its column rather than truncating
 
 **Forbidden patterns:**
+
 - `justify-between` with flexible content (pushes content to edges unpredictably)
 - `auto` columns for alignment-critical layouts (widths vary per card)
 - Fixed pixel widths (break at different screen sizes)
@@ -338,20 +353,21 @@ When a card displays multiple data groups (e.g., exchange info | time | weather)
 **Default button style (use for ALL buttons unless explicitly told otherwise):**
 
 ```tsx
-className="inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80"
+className =
+  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
 ```
 
 **Breakdown:**
 
-| Property | Value | Purpose |
-|----------|-------|---------|
-| Shape | `rounded-full` | Pill-shaped button |
-| Border | `border border-purple-500/70` | Subtle purple outline |
-| Background | `bg-gradient-to-r from-purple-600/20 to-pink-600/20` | Purple-pink gradient at 20% opacity |
-| Text | `text-sm font-medium text-purple-100` | Small, medium-weight, light purple |
-| Padding | `px-4 py-1.5` | Horizontal 16px, vertical 6px |
-| Hover | `hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400` | Intensify gradient and border |
-| Focus | `focus-visible:ring focus-visible:ring-purple-400/80` | Purple focus ring |
+| Property   | Value                                                                   | Purpose                             |
+| ---------- | ----------------------------------------------------------------------- | ----------------------------------- |
+| Shape      | `rounded-full`                                                          | Pill-shaped button                  |
+| Border     | `border border-purple-500/70`                                           | Subtle purple outline               |
+| Background | `bg-gradient-to-r from-purple-600/20 to-pink-600/20`                    | Purple-pink gradient at 20% opacity |
+| Text       | `text-sm font-medium text-purple-100`                                   | Small, medium-weight, light purple  |
+| Padding    | `px-4 py-1.5`                                                           | Horizontal 16px, vertical 6px       |
+| Hover      | `hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400` | Intensify gradient and border       |
+| Focus      | `focus-visible:ring focus-visible:ring-purple-400/80`                   | Purple focus ring                   |
 
 **When to deviate:**
 
@@ -366,12 +382,14 @@ Only deviate from this style if the user explicitly requests a different style. 
 All interactive elements must be keyboard accessible.
 
 All tab lists must have:
+
 - proper roles
 - arrow navigation
 - Home/End behaviour
 - focus management
 
 All icons must have:
+
 - `aria-hidden` if decorative
 - `aria-label` if meaningful
 
@@ -380,6 +398,7 @@ All images must have alt text (or empty alt if decorative).
 Animations must respect `prefers-reduced-motion`.
 
 When there is dynamic status (loading, errors, changes), use:
+
 - `aria-live` regions
 - SR-only updates where appropriate
 
@@ -398,7 +417,7 @@ import Tooltip from '@/components/ui/tooltip';
 
 <Tooltip text="Support: 24/7">
   <span className="flag">🇺🇸</span>
-</Tooltip>
+</Tooltip>;
 ```
 
 **Current implementation:** Uses native HTML `title` attribute (simple, accessible, works everywhere).
@@ -420,6 +439,7 @@ import Tooltip from '@/components/ui/tooltip';
 ### Examples
 
 **Good tooltips:**
+
 ```tsx
 // Short, clear, data-driven
 <Tooltip text="Support: 24/7">🇺🇸</Tooltip>
@@ -430,6 +450,7 @@ import Tooltip from '@/components/ui/tooltip';
 ```
 
 **Bad tooltips:**
+
 ```tsx
 // Too long, too wordy
 <Tooltip text="This platform receives an adjustment because it is backed by Big Tech and has distribution advantages">82</Tooltip>
@@ -444,9 +465,10 @@ import Tooltip from '@/components/ui/tooltip';
 ### Accessibility Requirements
 
 **Screen reader support:**
+
 ```tsx
 <Tooltip text="Visit Midjourney website (opens in new tab)">
-  <a 
+  <a
     href="https://midjourney.com"
     target="_blank"
     aria-label="Visit Midjourney website (opens in new tab)"
@@ -457,18 +479,21 @@ import Tooltip from '@/components/ui/tooltip';
 ```
 
 **Keyboard navigation:**
+
 - Tooltips must appear on both hover AND focus
 - Tooltip content must be accessible via `title` attribute or `aria-describedby`
 
 ### When to Use Tooltips
 
 **Use tooltips for:**
+
 - Icon-only buttons/links (explain what clicking does)
 - Abbreviated data (expand acronyms or show full values)
 - Contextual help (explain adjusted scores, support hours, etc.)
 - Flag emojis (show support hours or country name)
 
 **Don't use tooltips for:**
+
 - Critical information (must be visible without hover)
 - Long explanations (use proper help text or modal)
 - Repetitive content (if every item has same tooltip, make it visible)
@@ -477,6 +502,7 @@ import Tooltip from '@/components/ui/tooltip';
 ### Implementation Checklist
 
 When adding tooltips:
+
 - [ ] Content is ≤80 characters
 - [ ] Uses plain language (no jargon)
 - [ ] Includes relevant data/numbers
@@ -491,12 +517,14 @@ When adding tooltips:
 Promagen uses a gold standard tabs architecture:
 
 **Routed tabs:**
+
 - `components/nav/`
 - Each tab is a route segment
 - Active tab is determined by URL
 - JSON-driven tab order
 
 **In-page tabs:**
+
 - `components/ui/tabs/`
 - Tabs / InpageTab / TabPanel pattern
 - Tab data comes from `src/data/tabs/*.json` (single source of truth)
@@ -515,6 +543,7 @@ Do not hardcode tab labels or tab order in components.
 When adding paid tier tabs, ordering and visibility rules must be JSON-driven and type-safe.
 
 Any routing changes must update:
+
 - route helpers in `lib/routes`
 - analytics wiring in `lib/analytics`
 - tests for active route highlighting and keyboard behaviour
@@ -550,6 +579,7 @@ Do not call upstream providers from the frontend. That is gateway/API Brain terr
 Use caching and server-side TTL at the API route level, not ad-hoc in components.
 
 Client-side polling must be deliberate:
+
 - Not by default
 - Not every render
 - Not multiple components doing the same poll
@@ -561,6 +591,7 @@ Client-side polling must be deliberate:
 Fail honestly.
 
 If data is missing, show:
+
 - a clean empty state
 - a "data unavailable" message
 - retry affordance where sensible
@@ -572,6 +603,7 @@ For analytics-derived metrics: if data fails freshness checks or can't be truste
 Log errors server-side where appropriate (API routes).
 
 UI should never crash on malformed data:
+
 - validate inputs
 - guard optional fields
 - default safely
@@ -584,6 +616,7 @@ UI should never crash on malformed data:
 - Error boundaries should offer retry affordance where sensible
 
 **File structure example:**
+
 ```
 app/
   providers/
@@ -640,6 +673,7 @@ export function ExchangeClock({ tz }: { tz: string }) {
 ```
 
 **Key principles:**
+
 - No external timezone libraries (`date-fns-tz`, `luxon`) unless absolutely necessary
 - Prefer platform APIs (`Intl.DateTimeFormat`) for longevity and zero bundle size
 - Always clean up intervals to prevent memory leaks
@@ -661,12 +695,14 @@ Tests must be stable. No timing hacks.
 Avoid brittle snapshots for dynamic UI.
 
 When testing tab UIs:
+
 - Arrow keys move focus correctly
 - Home/End works
 - Active tab updates properly
 - Live region updates when relevant
 
 Contract tests for `/api/*` routes must validate:
+
 - expected shape
 - caching headers (where relevant)
 - error mode behaviour
@@ -676,6 +712,7 @@ Contract tests for `/api/*` routes must validate:
 Any user-visible "meaning glyph" (emoji/icon) that represents a system state must be pinned by a tiny test so refactors cannot silently swap it.
 
 Budget guard emoji lock-in (required):
+
 - ok🛫 / warning🏖️ / blocked🧳
 - The test must assert the mapping from SSOT (`emoji-bank.json`), not from ad-hoc constants in modules.
 
@@ -702,15 +739,18 @@ All shapes validated by tests (schema or type-shape tests).
 ### Budget emojis are SSOT (no module-level constants)
 
 Budget guard emojis must live in the Emoji Bank SSOT:
+
 - File: `frontend/src/data/emoji/emoji-bank.json`
 - Group key: `budget_guard` (must include `ok`, `warning`, `blocked`)
 
 Rules:
+
 - Do not define budget emojis as local constants inside providers/routes/components.
 - Import them via the emoji helper layer so the UI and server cannot drift.
 - No "unknown/?" fallback budget emoji is allowed; missing mappings must fail tests/builds.
 
 Canonical mapping (non-negotiable):
+
 - ok 🛫
 - warning 🏖️
 - blocked 🧳
@@ -721,7 +761,7 @@ No API provider config lives here – that is handled exclusively by the API Bra
 
 ### FX-specific SSOT reminder
 
-The FX ribbon's pair list and ordering must come from `frontend/src/data/fx/fx.pairs.json` (or the equivalent canonical file for the feature). Do not hard-code pair arrays in components, routes, or tests — tests must read the same file.
+The FX ribbon's pair list and ordering must come from `frontend/src/data/fx/fx-pairs.json` (or the equivalent canonical file for the feature). Do not hard-code pair arrays in components, routes, or tests — tests must read the same file.
 
 ---
 
@@ -735,10 +775,13 @@ The FX ribbon's pair list and ordering must come from `frontend/src/data/fx/fx.p
 No abbreviations unless universally known (fx, ui, utc).
 
 Avoid suffix noise. Prefer:
+
 ```
 fx-pair-label.tsx
 ```
+
 over:
+
 ```
 fxPairLabelComponent.tsx
 ```
@@ -753,7 +796,33 @@ No "temporary" code without a removal plan.
 
 **Anti-deletion rule:** Do not remove, stub, bypass, or "simplify away" working logic to make a new feature fit; if behaviour must change, treat it as a deliberate breaking change and document the impact.
 
-No `console.log` in committed code (use proper logging in server code where appropriate).
+### Console Logging Standards
+
+**ESLint rule:** `no-console` is configured to block `console.log` but allow `console.debug`, `console.warn`, and `console.error`.
+
+| Method          | Use For                                   | Example                                                              |
+| --------------- | ----------------------------------------- | -------------------------------------------------------------------- |
+| `console.error` | Actual errors, exceptions, failures       | `console.error('[fx-sync] Clerk sync failed:', error);`              |
+| `console.warn`  | Deprecations, fallbacks, potential issues | `console.warn('[fx-sync] Using fallback pairs - SSOT unavailable');` |
+| `console.debug` | Development debugging, internal state     | `console.debug('[fx-sync] Selection saved:', pairIds);`              |
+
+**Banned:** `console.log` — blocked by ESLint, pollutes production logs, not filterable.
+
+**Why `console.debug` over `console.log`:**
+
+1. **Filterable** — hidden by default in browser DevTools (under "Verbose" level)
+2. **Strippable** — build tools can remove `console.debug` from production bundles
+3. **Semantic** — clearly indicates "developer-only" information
+
+**Prefix convention:** Always prefix with `[module-name]` for easy filtering:
+
+```typescript
+console.debug('[fx-selection] Pairs loaded:', pairs.length);
+console.warn('[clerk-sync] Resolution conflict, clerk wins');
+console.error('[gateway] API request failed:', error.message);
+```
+
+**Server-side (API routes, gateway):** Use structured logging where appropriate (see §19.4 Observability hooks).
 
 No unused imports.
 
@@ -771,13 +840,13 @@ Prefer pure functions in `lib/` over inline logic in components.
 
 ### Route patterns
 
-| Pattern | Example | Purpose |
-|---------|---------|---------|
-| `/api/{resource}` | `/api/providers` | Resource collection |
-| `/api/{resource}/{id}` | `/api/providers/midjourney` | Single resource |
-| `/api/{resource}/{action}` | `/api/providers/resolve` | Resource action |
-| `/api/{resource}/{id}/{sub}` | `/api/providers/midjourney/stats` | Nested resource |
-| `/api/admin/{resource}` | `/api/admin/catalog` | Admin-only routes |
+| Pattern                      | Example                           | Purpose             |
+| ---------------------------- | --------------------------------- | ------------------- |
+| `/api/{resource}`            | `/api/providers`                  | Resource collection |
+| `/api/{resource}/{id}`       | `/api/providers/midjourney`       | Single resource     |
+| `/api/{resource}/{action}`   | `/api/providers/resolve`          | Resource action     |
+| `/api/{resource}/{id}/{sub}` | `/api/providers/midjourney/stats` | Nested resource     |
+| `/api/admin/{resource}`      | `/api/admin/catalog`              | Admin-only routes   |
 
 ### Internal/cron routes
 
@@ -803,6 +872,7 @@ Before adding a new dependency:
 **Zero-dependency preference:** Use `Intl.DateTimeFormat` over `date-fns-tz`. Use native `fetch` over `axios`. Use built-in Node APIs where possible.
 
 **Forbidden without explicit approval:**
+
 - Moment.js (use `Intl` or `date-fns`)
 - Lodash for single utilities (write the 3-line function)
 - jQuery (obviously)
@@ -838,6 +908,7 @@ Before any new code or files: read authority docs, decide if they need updating,
 **Authority:** `docs/authority/best-working-practice.md` § "Docs-first gate"
 
 Required "Doc Delta" preface (must appear before any code/files are produced):
+
 - Docs read: Yes (list the authority docs read)
 - Doc updates required: Yes/No
 - If Yes: Target doc, Reason, Exact insertion point, Paste-ready text
@@ -859,6 +930,7 @@ No auto-generated runtime files inside `src/`.
 All generated artefacts must live in: `frontend/generated/`
 
 Requirements:
+
 - Deterministic generation (same inputs → same outputs).
 - Never edit generated files by hand.
 - Generation scripts live under `frontend/scripts/` and are run via pnpm scripts.
@@ -869,6 +941,7 @@ Requirements:
 ## 19. Vercel Pro Production Guardrails
 
 Any route capable of incurring upstream spend (starting with `/api/fx`) must have platform guardrails:
+
 - Spend Management thresholds + monthly cap (cap action: pause production deployments).
 - WAF rules + rate limiting to prevent bot/traffic-spike spend.
 
@@ -877,6 +950,7 @@ Any route capable of incurring upstream spend (starting with `/api/fx`) must hav
 ### Pro-strengthening code rules (mandatory for every spend-bearing endpoint file)
 
 Applies to:
+
 - `frontend/src/app/api/*` routes that can incur upstream spend
 - outbound redirect routes (e.g. `/go/*`)
 - any future endpoints that can trigger paid vendor/API calls
@@ -884,17 +958,20 @@ Applies to:
 ### 19.1 Make caching a first-class "cost control" contract
 
 Bake in:
+
 - Explicit caching headers on `/api/fx` responses (and any spend-bearing endpoints) that match your Refresh Gate TTL.
 - Edge-friendly semantics (`public`, `s-maxage`, `stale-while-revalidate`) where safe.
 - `No-cache`/`No-store` for trace/admin endpoints.
 
 Client fetch stance (anti-regression):
+
 - For spend-bearing endpoints like `/api/fx`, client-side fetch must not set `cache: 'no-store'` / `reload`, add `Cache-Control: no-cache`, or append cache-busting query params.
 - Use `credentials: 'omit'` unless the endpoint truly needs cookies.
 
 ### 19.2 Single-flight and request de-duplication (stop stampedes)
 
 Bake in:
+
 - A "single-flight" lock so 50 concurrent requests to `/api/fx` don't trigger 50 upstream calls.
 - A short in-memory or shared cache so requests within the TTL return instantly.
 - A hard block on "force refresh" unless explicitly allowed.
@@ -902,12 +979,14 @@ Bake in:
 ### 19.3 Rate limiting in app (defence in depth)
 
 Bake in:
+
 - A lightweight per-IP/per-token rate limiter for spend-bearing endpoints.
 - A stricter limiter for `/go/*` to stop open-redirect probing and bot storms.
 
 ### 19.4 Observability hooks that match Pro logging/analytics
 
 Bake in:
+
 - Structured logs (JSON-ish) with consistent fields: route, request id, cache status, provider used, fallback used, duration, blocked-by-budget, etc.
 - Correlation IDs (request id passed through calls).
 - "Important events" logged once per request, not spammy console noise.
@@ -915,6 +994,7 @@ Bake in:
 ### 19.5 Health endpoints + safe-mode switches
 
 Bake in:
+
 - A `/api/health` that checks app config sanity (not upstream spend).
 - A "safe mode" env var (`PROMAGEN_SAFE_MODE=1`) that forces demo data or blocks paid calls.
 - A "kill switch" env var for specific providers.
@@ -922,6 +1002,7 @@ Bake in:
 ### 19.6 Security headers and hardening
 
 Bake in:
+
 - Strict security headers (CSP, HSTS, X-Content-Type-Options, etc.) appropriate for Next.js.
 - Tight input validation for query params (especially `/go/*` and any endpoint that accepts user input).
 - Disable or restrict trace routes in production by default.
@@ -929,6 +1010,7 @@ Bake in:
 ### The Promagen truth: what matters most
 
 If you bake only three things into code, make them these:
+
 1. Cache headers that reflect your TTL and are CDN honest
 2. Single-flight + caching to prevent upstream stampedes
 3. Safe mode + kill switches via env vars
@@ -938,6 +1020,7 @@ If you bake only three things into code, make them these:
 ## 20. What This Code Standard Does Not Cover
 
 This document does not define:
+
 - API providers
 - API roles
 - API gateway behaviour
@@ -967,6 +1050,8 @@ When addressing ESLint, TypeScript typecheck, or test failures, apply the smalle
 
 ## Changelog
 
+- **10 Jan 2026 (v2.4):** Updated FX SSOT file references from `fx.pairs.json` to unified `fx-pairs.json` in §3 and §13 SSOT sections.
+- **9 Jan 2026 (v2.3):** Added Console Logging Standards section in §15 Code Quality Rules. Specifies `console.debug` over `console.log`, prefix convention `[module-name]`, and method hierarchy (error/warn/debug).
 - **30 Dec 2025:** Added § 7.1 Tooltip Standards (uniform UI guidelines for consistent, accessible tooltips across all surfaces).
 - **28 Dec 2025 (v2.0):** Major upgrade to 9.5/10. Added Quick Reference, schema consolidation rule, type entry points, error boundary placement, component organisation, API route naming, dependency discipline, docs-first gate cross-reference. Renumbered sections for consistency.
 - **15 Dec 2025 (v1.0):** Initial version with core rules, Vercel Pro guardrails, clock components.
@@ -1018,6 +1103,7 @@ Promagen uses thin, subtle scrollbars for internal scroll containers on dark UI 
 ```
 
 **Rules**
+
 1. Always use `overflow-y: auto` (not `scroll`) — scrollbar only appears when needed
 2. Apply all four scrollbar classes together for consistent styling
 3. Never use browser-default scrollbars in dark UI areas
@@ -1130,13 +1216,13 @@ body {
 
 **Critical Classes**
 
-| Class | Purpose |
-|-------|---------|
-| `h-dvh` | Exactly 100dvh (dynamic viewport height) |
-| `overflow-hidden` | NO page scroll |
-| `flex-1` | Fill available space |
-| `min-h-0` | Allow flex children to shrink below content size |
-| `shrink-0` | Prevent shrinking (fixed-height sections) |
+| Class             | Purpose                                          |
+| ----------------- | ------------------------------------------------ |
+| `h-dvh`           | Exactly 100dvh (dynamic viewport height)         |
+| `overflow-hidden` | NO page scroll                                   |
+| `flex-1`          | Fill available space                             |
+| `min-h-0`         | Allow flex children to shrink below content size |
+| `shrink-0`        | Prevent shrinking (fixed-height sections)        |
 
 **Common Mistakes**
 
@@ -1154,6 +1240,7 @@ The prompt builder uses a 9-category dropdown system with platform-specific opti
 #### Category Dropdown System
 
 **Data Location:**
+
 - Options: `src/data/providers/prompt-options.json`
 - Platform formats: `src/data/providers/platform-formats.json`
 - Types: `src/types/prompt-builder.ts`
@@ -1163,29 +1250,36 @@ The prompt builder uses a 9-category dropdown system with platform-specific opti
 
 ```typescript
 type PromptCategory =
-  | 'subject' | 'medium' | 'style' | 'lighting' | 'colour'
-  | 'composition' | 'mood' | 'camera' | 'negative';
+  | 'subject'
+  | 'medium'
+  | 'style'
+  | 'lighting'
+  | 'colour'
+  | 'composition'
+  | 'mood'
+  | 'camera'
+  | 'negative';
 
 interface CategoryConfig {
   label: string;
   description: string;
-  options: string[];  // Exactly 30 options per category
+  options: string[]; // Exactly 30 options per category
 }
 ```
 
 **9 Categories × 30 Options:**
 
-| Category | Description | Max Selections |
-|----------|-------------|----------------|
-| Subject | Main focus of image | 5 |
-| Medium | Artistic technique | 5 |
-| Style / Genre | Visual style | 5 |
-| Lighting | Light conditions | 5 |
-| Colour Scheme | Palette/tones | 5 |
-| Composition | Framing/angle | 5 |
-| Mood | Emotional tone | 5 |
-| Camera Details | Lens effects | 5 |
-| Negative Prompt | What to exclude | 10 |
+| Category        | Description         | Max Selections |
+| --------------- | ------------------- | -------------- |
+| Subject         | Main focus of image | 5              |
+| Medium          | Artistic technique  | 5              |
+| Style / Genre   | Visual style        | 5              |
+| Lighting        | Light conditions    | 5              |
+| Colour Scheme   | Palette/tones       | 5              |
+| Composition     | Framing/angle       | 5              |
+| Mood            | Emotional tone      | 5              |
+| Camera Details  | Lens effects        | 5              |
+| Negative Prompt | What to exclude     | 10             |
 
 #### Platform-Specific Assembly
 
@@ -1195,28 +1289,35 @@ Different AI platforms require different prompt syntax. The assembler routes to 
 function assemblePrompt(platformId: string, selections: PromptSelections): AssembledPrompt {
   const family = getPlatformFamily(platformId);
   switch (family) {
-    case 'midjourney': return assembleMidjourney(selections);
-    case 'stable-diffusion': return assembleStableDiffusion(selections);
-    case 'leonardo': return assembleLeonardo(selections);
-    case 'flux': return assembleFlux(selections);
-    case 'novelai': return assembleNovelAI(selections);
-    case 'ideogram': return assembleIdeogram(selections);
-    default: return assembleNatural(selections, platformId);
+    case 'midjourney':
+      return assembleMidjourney(selections);
+    case 'stable-diffusion':
+      return assembleStableDiffusion(selections);
+    case 'leonardo':
+      return assembleLeonardo(selections);
+    case 'flux':
+      return assembleFlux(selections);
+    case 'novelai':
+      return assembleNovelAI(selections);
+    case 'ideogram':
+      return assembleIdeogram(selections);
+    default:
+      return assembleNatural(selections, platformId);
   }
 }
 ```
 
 **7 Platform Families:**
 
-| Family | Platforms | Syntax Style |
-|--------|-----------|--------------|
-| Midjourney | midjourney, bluewillow | `subject, style --no negative` |
+| Family           | Platforms                                 | Syntax Style                             |
+| ---------------- | ----------------------------------------- | ---------------------------------------- |
+| Midjourney       | midjourney, bluewillow                    | `subject, style --no negative`           |
 | Stable Diffusion | stability, dreamstudio, lexica, etc. (10) | `masterpiece, (term:1.1)` + separate neg |
-| Leonardo | leonardo | `term::1.1` weighting syntax |
-| Flux | flux | Keywords + quality suffix |
-| NovelAI | novelai | `{{{emphasis}}}` braces |
-| Ideogram | ideogram | `without X` inline negatives |
-| Natural | openai, dall-e, canva, etc. (26) | Flowing sentences |
+| Leonardo         | leonardo                                  | `term::1.1` weighting syntax             |
+| Flux             | flux                                      | Keywords + quality suffix                |
+| NovelAI          | novelai                                   | `{{{emphasis}}}` braces                  |
+| Ideogram         | ideogram                                  | `without X` inline negatives             |
+| Natural          | openai, dall-e, canva, etc. (26)          | Flowing sentences                        |
 
 #### Combobox Component Pattern
 
@@ -1238,6 +1339,7 @@ Multi-select dropdowns with custom entry follow this pattern:
 ```
 
 **Accessibility Requirements:**
+
 - `role="combobox"` on input
 - `aria-expanded` indicates dropdown state
 - `aria-controls` links to listbox
@@ -1263,6 +1365,7 @@ The prompt builder fills the entire centre column height, aligning with exchange
 ```
 
 **Critical Classes:**
+
 - `h-full min-h-0` — fills parent, allows shrinking
 - `flex-col` — vertical layout
 - `shrink-0` — fixed-height header/footer
@@ -1273,10 +1376,12 @@ The prompt builder fills the entire centre column height, aligning with exchange
 All prompt builder scroll areas MUST use identical scrollbar styling to exchange rails:
 
 ```tsx
-className="overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+className =
+  'overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30';
 ```
 
 **Never use:**
+
 - Browser default scrollbars
 - Different scrollbar widths
 - Different track/thumb colours

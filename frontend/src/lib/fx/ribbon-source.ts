@@ -3,12 +3,14 @@
 // Client-side entry point for the finance ribbon's FX row.
 //
 // IMPORTANT:
-// - Default pair list comes from SSOT (fx.pairs.json via fx-pairs.ts).
+// - Default pair list comes from SSOT (fx-pairs.json via fx-pairs.ts).
 // - No hard slice(0, 5). The number of default FREE pairs is SSOT-driven.
+//
+// UPDATED: Now uses unified fx-pairs.json — single source of truth.
 
 'use client';
 
-import pairsJson from '@/data/fx/pairs.json';
+import fxPairsJson from '@/data/fx/fx-pairs.json';
 import { getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 import { buildDemoSnapshots } from './demo-walk';
 import type { FxSnapshot } from './fetch';
@@ -22,7 +24,7 @@ type PairConfig = {
   precision?: number;
 };
 
-const pairs = pairsJson as PairConfig[];
+const pairs = fxPairsJson as PairConfig[];
 
 export type FxRibbonMode = 'live' | 'demo';
 
@@ -67,8 +69,7 @@ function dedupeKeepOrder(ids: string[]): string[] {
 
 /**
  * Default FREE ids come from SSOT:
- * - frontend/src/data/fx/fx.pairs.json (isDefaultFree)
- * - joined with pairs.json for metadata
+ * - frontend/src/data/fx/fx-pairs.json (isDefaultFree)
  */
 function getFreeDefaultPairIds(): string[] {
   const metas = getFxRibbonPairs({ tier: 'free', order: 'ssot' });

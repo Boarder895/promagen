@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 3 January 2026
+**Last updated:** 9 January 2026
 
 ---
 
@@ -91,7 +91,7 @@ Every JSON SSOT file has exactly ONE Zod validation schema adjacent to it:
 | Data file | Schema file |
 |-----------|-------------|
 | `data/providers/providers.json` | `data/providers/providers.schema.ts` |
-| `data/fx/fx.pairs.json` | `data/fx/fx.schema.ts` |
+| `data/fx/fx-pairs.json` | `data/fx/fx.schema.ts` |
 | `data/exchanges/exchanges.catalog.json` | `data/exchanges/exchanges.schema.ts` |
 
 Routes and loaders import from this canonical schema, never define their own.
@@ -319,6 +319,86 @@ Rule of thumb: _if you can't explain what a command does to HEAD + working tree,
 
 ---
 
+## Deployment Resilience (zero-downtime for active users)
+
+**Purpose:**
+Ensure users browsing Promagen during a Vercel deployment don't experience errors or broken UI due to stale JS bundles.
+
+**Problem:**
+When Vercel deploys a new version, active users still have old JS bundles cached in their browser. If they navigate (client-side) and Next.js tries to lazy-load a chunk that was renamed or removed in the new deployment, they get a `ChunkLoadError` (404 for the missing chunk).
+
+### Two-layer protection (belt and suspenders)
+
+| Layer | Mechanism | What it does |
+|-------|-----------|--------------|
+| **1. Vercel Skew Protection** | `vercel.json` config | Keeps old deployment assets available for 7 days after new deploy |
+| **2. ChunkErrorBoundary** | React error boundary | Catches chunk load failures and auto-reloads the page |
+
+Both layers should be active. Skew Protection prevents most issues; the error boundary catches edge cases and provides graceful recovery.
+
+### Skew Protection configuration
+
+**File:** `frontend/vercel.json`
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "skewProtection": "7d"
+}
+```
+
+**How it works:**
+- Vercel keeps previous deployment assets available for the specified duration
+- Users with old bundles can still load chunks from the previous deployment
+- No code changes required — purely platform-level protection
+
+**Requirement:** Vercel Pro plan (Promagen has this)
+
+### ChunkErrorBoundary component
+
+**File:** `frontend/src/components/chunk-error-boundary.tsx`
+
+**Usage:** Wrap in root layout or around lazy-loaded sections:
+
+```tsx
+// frontend/src/app/layout.tsx
+import { ChunkErrorBoundary } from '@/components/chunk-error-boundary';
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <ChunkErrorBoundary>
+          {children}
+        </ChunkErrorBoundary>
+      </body>
+    </html>
+  );
+}
+```
+
+**Behaviour:**
+- Detects `ChunkLoadError`, "Loading chunk failed", and similar errors
+- Logs warning to console for observability
+- Auto-reloads the page after 100ms delay
+- Users see a brief flash, then the new deployment loads correctly
+
+### What "good" looks like
+
+- No `ChunkLoadError` in production error logs
+- Users browsing during deployment see no errors
+- At worst, users see a brief page reload (transparent recovery)
+
+### Testing deployment resilience
+
+1. Open Promagen in browser, navigate to any page
+2. Deploy a new version to Vercel
+3. Without refreshing, click around using client-side navigation
+4. Expected: either seamless navigation (Skew Protection) or brief auto-reload (ChunkErrorBoundary)
+5. Never: broken UI, 404 errors, or stuck states
+
+---
+
 ## Prompt Optimiser
 
 **Prompt analysis (what makes answers go wrong):**
@@ -365,6 +445,8 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **10 Jan 2026:** Updated FX SSOT file reference from `fx.pairs.json` to unified `fx-pairs.json` (schema table).
+- **9 Jan 2026:** Added "Deployment Resilience" section (Vercel Skew Protection + ChunkErrorBoundary). Zero-downtime deployment strategy for active users.
 - **3 Jan 2026:** Added "Pro Promagen" terminology section (paid tier naming convention). Added "Security-First Development" section (secure code for files in current request only).
 - **2 Jan 2026:** Added TODO-api-integration.md to authority docs list. Added "Voting system mechanics" to doc update triggers. Community voting system fully implemented with activation requirements documented.
 - **1 Jan 2026:** Prompt builder expanded to 11 categories with selection limits (1/2/5). Added 🎲 Randomise button. Implemented negative-to-positive conversion for natural language platforms (30 mappings). Fixed Artistly platform family. Added dropdown auto-close and 50-char custom entry limit. Updated `prompt-builder-page.md` authority doc.

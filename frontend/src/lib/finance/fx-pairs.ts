@@ -2,9 +2,8 @@
 //
 // FX ribbon pairs — SSOT access layer.
 //
-// SSOT sources (your repo):
-//   - src/data/fx/pairs.json     (canonical pair metadata: base, quote, label, precision, demo, etc.)
-//   - src/data/fx/fx.pairs.json  (index of defaults + flags + optional homeLongitude; references pairs by id)
+// SSOT source (UNIFIED):
+//   - src/data/fx/fx-pairs.json (all pair data in one file)
 //
 // This module provides:
 //  - getFxRibbonPairs(): default tier pairs used in the homepage ribbon (count is SSOT-driven)
@@ -12,9 +11,10 @@
 //  - buildPairCode(), buildSlashPair()
 //  - getClientLongitudeHint(): permission-free user longitude hint (timezone-based)
 //  - strict runtime validation (so "missing data" fails loudly during dev/build)
+//
+// UPDATED: Now uses unified fx-pairs.json — no more join between two files.
 
-import pairsCatalogJson from '@/data/fx/pairs.json';
-import fxPairsIndexJson from '@/data/fx/fx.pairs.json';
+import fxPairsJson from '@/data/fx/fx-pairs.json';
 
 export type FxTier = 'free' | 'paid';
 
@@ -24,9 +24,9 @@ export interface FxRibbonPairsOptions {
   tier?: FxTier;
   /**
    * Ordering strategy:
-   *  - "ssot"            → preserve fx.pairs.json file order (default; stable for server/caching)
+   *  - "ssot"            → preserve fx-pairs.json file order (default; stable for server/caching)
    *  - "homeLongitude"   → sort by homeLongitude east→west (descending longitude)
-   *  - "relativeToUser"  → sort by longitude relative to the user’s estimated longitude (east→west)
+   *  - "relativeToUser"  → sort by longitude relative to the user's estimated longitude (east→west)
    */
   order?: FxRibbonOrder;
   /**
@@ -45,29 +45,33 @@ export interface FxRibbonPairMeta {
   emoji?: string;
   precision?: number;
   homeLongitude?: number;
-  // Optional country/region codes used to render flags alongside currency codes.
-  // These live ONLY in src/data/fx/fx.pairs.json (index metadata), not pairs.json.
+  // Country/region codes used to render flags alongside currency codes.
   baseCountryCode?: string;
   quoteCountryCode?: string;
 }
 
-type FxPairCatalogEntry = {
+/**
+ * Unified FX pair entry from fx-pairs.json.
+ */
+type FxPairEntry = {
   id: string;
   base: string;
   quote: string;
   label?: string;
-  precision?: number;
-  demo?: unknown;
-};
-
-type FxPairIndexEntry = {
-  id: string;
   baseCountryCode?: string;
   quoteCountryCode?: string;
+  countryLabel?: string;
+  precision?: number;
+  category?: string;
+  rank?: number;
   isDefaultFree?: boolean;
   isDefaultPaid?: boolean;
   group?: string;
-  homeLongitude?: number;
+  homeLongitude?: number | null;
+  demo?: {
+    value: number;
+    prevClose: number;
+  };
 };
 
 function isNonEmptyString(value: unknown): value is string {
@@ -101,18 +105,14 @@ export function buildSlashPair(base: string, quote: string): string {
   return `${normaliseCurrency(base)}/${normaliseCurrency(quote)}`;
 }
 
-function getCatalog(): FxPairCatalogEntry[] {
-  return pairsCatalogJson as FxPairCatalogEntry[];
+function getPairs(): FxPairEntry[] {
+  return fxPairsJson as FxPairEntry[];
 }
 
-function getIndex(): FxPairIndexEntry[] {
-  return fxPairsIndexJson as FxPairIndexEntry[];
-}
+function getPairsMap(): Map<string, FxPairEntry> {
+  const map = new Map<string, FxPairEntry>();
 
-function getCatalogMap(): Map<string, FxPairCatalogEntry> {
-  const map = new Map<string, FxPairCatalogEntry>();
-
-  for (const p of getCatalog()) {
+  for (const p of getPairs()) {
     if (!p || typeof p !== 'object') continue;
     if (!isNonEmptyString(p.id)) continue;
 
@@ -140,7 +140,7 @@ function relativeLongitude(targetLon: number, originLon: number): number {
 }
 
 /**
- * Permission-free “where on Earth are you” guess.
+ * Permission-free "where on Earth are you" guess.
  *
  * We do NOT ask for geolocation permission; instead we approximate longitude from the browser
  * timezone offset:
@@ -206,15 +206,14 @@ function sortPairs(
   });
 }
 
-function pickIndexForTier(index: FxPairIndexEntry[], tier: FxTier): FxPairIndexEntry[] {
+function pickPairsForTier(pairs: FxPairEntry[], tier: FxTier): FxPairEntry[] {
   const flag = tier === 'paid' ? 'isDefaultPaid' : 'isDefaultFree';
-  return index.filter((e) => Boolean(e && (e as FxPairIndexEntry)[flag]));
+  return pairs.filter((e) => Boolean(e && e[flag]));
 }
 
 /**
  * The ribbon list:
- * - take default tier entries from fx.pairs.json
- * - join against pairs.json to get base/quote/label/precision
+ * - filter by tier (isDefaultFree/isDefaultPaid)
  * - optionally sort by longitude (runtime) instead of file order
  *
  * Count is SSOT-driven: number of isDefaultFree entries = number of chips.
@@ -222,14 +221,11 @@ function pickIndexForTier(index: FxPairIndexEntry[], tier: FxTier): FxPairIndexE
 export function getFxRibbonPairs(options?: FxRibbonPairsOptions): FxRibbonPairMeta[] {
   const tier = options?.tier ?? 'free';
 
-  const index = getIndex();
-  const catalogById = getCatalogMap();
+  const allPairs = getPairs();
+  const picked = pickPairsForTier(allPairs, tier);
 
-  const picked = pickIndexForTier(index, tier);
-
-  const joined: FxRibbonPairMeta[] = picked.map((e) => {
+  const metas: FxRibbonPairMeta[] = picked.map((e) => {
     const id = normalisePairId(String(e.id));
-    const cat = catalogById.get(id);
 
     const homeLongitude = isFiniteNumber(e.homeLongitude)
       ? normaliseLongitude(e.homeLongitude)
@@ -244,10 +240,10 @@ export function getFxRibbonPairs(options?: FxRibbonPairsOptions): FxRibbonPairMe
 
     return {
       id,
-      base: cat?.base ? normaliseCurrency(cat.base) : '',
-      quote: cat?.quote ? normaliseCurrency(cat.quote) : '',
-      label: cat?.label ?? (cat?.base && cat?.quote ? `${cat.base} / ${cat.quote}` : id),
-      precision: cat?.precision,
+      base: e.base ? normaliseCurrency(e.base) : '',
+      quote: e.quote ? normaliseCurrency(e.quote) : '',
+      label: e.label ?? (e.base && e.quote ? `${e.base} / ${e.quote}` : id),
+      precision: e.precision,
       category: 'fx',
       baseCountryCode,
       quoteCountryCode,
@@ -255,7 +251,7 @@ export function getFxRibbonPairs(options?: FxRibbonPairsOptions): FxRibbonPairMe
     };
   });
 
-  return sortPairs(joined, options);
+  return sortPairs(metas, options);
 }
 
 export function getFxRibbonPairCodes(options?: FxRibbonPairsOptions): string[] {
@@ -270,46 +266,41 @@ export function getFxRibbonPairCodes(options?: FxRibbonPairsOptions): string[] {
  * but this gives fast feedback during local dev and API route execution.)
  */
 export function assertFxRibbonSsotValid(): void {
-  const index = getIndex();
-  const catalog = getCatalog();
+  const pairs = getPairs();
 
-  if (!Array.isArray(index) || index.length === 0) {
-    throw new Error('FX SSOT: src/data/fx/fx.pairs.json must be a non-empty array.');
+  if (!Array.isArray(pairs) || pairs.length === 0) {
+    throw new Error('FX SSOT: src/data/fx/fx-pairs.json must be a non-empty array.');
   }
 
-  if (!Array.isArray(catalog) || catalog.length === 0) {
-    throw new Error('FX SSOT: src/data/fx/pairs.json must be a non-empty array.');
-  }
+  const pairsById = getPairsMap();
 
-  const catalogById = getCatalogMap();
-
-  // Invariant: every id in fx.pairs.json exists in pairs.json
-  for (const row of index) {
+  // Invariant: every pair must have id, base, quote
+  for (const row of pairs) {
     const rawId = row?.id;
 
     if (!isNonEmptyString(rawId)) {
-      throw new Error('FX SSOT: every index row must have a non-empty string "id".');
+      throw new Error('FX SSOT: every row must have a non-empty string "id".');
     }
 
     const id = normalisePairId(rawId);
-    const cat = catalogById.get(id);
+    const pair = pairsById.get(id);
 
-    if (!cat) {
-      throw new Error(`FX SSOT: pair id "${rawId}" exists in fx.pairs.json but not in pairs.json.`);
+    if (!pair) {
+      throw new Error(`FX SSOT: pair id "${rawId}" not found in lookup.`);
     }
 
-    if (!isNonEmptyString(cat.base) || !isNonEmptyString(cat.quote)) {
-      throw new Error(`FX SSOT: pair "${id}" must have base and quote in pairs.json.`);
+    if (!isNonEmptyString(pair.base) || !isNonEmptyString(pair.quote)) {
+      throw new Error(`FX SSOT: pair "${id}" must have base and quote.`);
     }
 
-    const base = normaliseCurrency(cat.base);
-    const quote = normaliseCurrency(cat.quote);
+    const base = normaliseCurrency(pair.base);
+    const quote = normaliseCurrency(pair.quote);
 
     if (base.length !== 3 || quote.length !== 3) {
       throw new Error(`FX SSOT: pair "${id}" base/quote must be 3-letter currency codes.`);
     }
 
-    if (row.homeLongitude !== undefined && !isFiniteNumber(row.homeLongitude)) {
+    if (row.homeLongitude !== undefined && row.homeLongitude !== null && !isFiniteNumber(row.homeLongitude)) {
       throw new Error(`FX SSOT: pair "${id}" homeLongitude must be a finite number (degrees).`);
     }
 
@@ -355,12 +346,12 @@ export function assertFxRibbonSsotValid(): void {
       throw new Error('FX SSOT: ribbon pair id must be a non-empty string.');
     }
 
-    const cat = catalogById.get(p.id);
-    if (!cat) {
-      throw new Error(`FX SSOT: pair id "${p.id}" exists in fx.pairs.json but not in pairs.json.`);
+    const pair = pairsById.get(p.id);
+    if (!pair) {
+      throw new Error(`FX SSOT: pair id "${p.id}" not found.`);
     }
 
-    const code = buildPairCode(cat.base, cat.quote);
+    const code = buildPairCode(pair.base, pair.quote);
     if (seenCodes.has(code)) {
       throw new Error(`FX SSOT: duplicate ribbon currency pair code "${code}".`);
     }

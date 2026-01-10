@@ -15,7 +15,8 @@ primary_region = "lhr"
   # Budget defaults (can override via secrets)
   FX_RIBBON_BUDGET_DAILY_ALLOWANCE = "800"
   FX_RIBBON_BUDGET_MINUTE_ALLOWANCE = "8"
-  FX_RIBBON_TTL_SECONDS = "300"
+  # TTL: 30 minutes (1800 seconds) - CRITICAL for API budget
+  FX_RIBBON_TTL_SECONDS = "1800"
 
 [http_service]
   internal_port = 8080

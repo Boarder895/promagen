@@ -21,9 +21,11 @@
  * - Randomise
  * - Read env vars
  * - React to traffic or time
+ *
+ * UPDATED: Now uses unified fx-pairs.json (single source of truth).
  */
 
-import fxPairs from './fx.pairs.json';
+import fxPairs from './fx-pairs.json';
 import countryCurrencyMap from './country-currency.map.json';
 
 export type FxTier = 'free' | 'paid';
@@ -105,7 +107,7 @@ function normalisePair(raw: any, index: number): FxPairSSOT {
  */
 export function getDefaultFxPairsWithIndexForTier(tier: FxTier): FxPairSSOT[] {
   if (!Array.isArray(fxPairs)) {
-    throw new Error('fx.pairs.json must export an array');
+    throw new Error('fx-pairs.json must export an array');
   }
 
   // Step 1: normalise + index in declared order

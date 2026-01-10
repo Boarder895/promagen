@@ -145,13 +145,23 @@ const isProtectedRoute = createRouteMatcher([
 
 ## 6. User Tiers (Clerk Metadata)
 
-User subscription tier is stored in Clerk's `publicMetadata`:
+User subscription tier and Pro Promagen selections are stored in Clerk's `publicMetadata`:
 
 ```json
 {
-  "tier": "free" | "paid"
+  "tier": "free" | "paid",
+  "fxSelection": {
+    "pairIds": ["eur-usd", "gbp-usd", "usd-jpy", ...],
+    "updatedAt": "2026-01-09T12:00:00Z"
+  },
+  "exchangeSelection": {
+    "exchangeIds": ["tse-tokyo", "nyse-new-york", ...],
+    "updatedAt": "2026-01-09T12:00:00Z"
+  }
 }
 ```
+
+**Note:** `fxSelection` and `exchangeSelection` are only populated for Pro Promagen users. Free users use SSOT defaults. Both fields are optional.
 
 **Terminology note:**
 - Internal code uses `'free'` and `'paid'` for brevity

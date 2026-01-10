@@ -1,0 +1,2042 @@
+[
+  {
+    "id": "eur-usd",
+    "base": "EUR",
+    "quote": "USD",
+    "label": "EUR/USD",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "US",
+    "countryLabel": "Eurozone / United States",
+    "precision": 4,
+    "category": "major",
+    "rank": 1,
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 8.68,
+    "demo": {
+      "value": 1.0842,
+      "prevClose": 1.0835
+    }
+  },
+  {
+    "id": "usd-jpy",
+    "base": "USD",
+    "quote": "JPY",
+    "label": "USD/JPY",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "JP",
+    "countryLabel": "United States / Japan",
+    "precision": 2,
+    "category": "major",
+    "rank": 2,
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 139.69,
+    "demo": {
+      "value": 157.92,
+      "prevClose": 157.45
+    }
+  },
+  {
+    "id": "gbp-usd",
+    "base": "GBP",
+    "quote": "USD",
+    "label": "GBP/USD",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "US",
+    "countryLabel": "United Kingdom / United States",
+    "precision": 4,
+    "category": "major",
+    "rank": 3,
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 0,
+    "demo": {
+      "value": 1.255,
+      "prevClose": 1.253
+    }
+  },
+  {
+    "id": "aud-usd",
+    "base": "AUD",
+    "quote": "USD",
+    "label": "AUD/USD",
+    "baseCountryCode": "AU",
+    "quoteCountryCode": "US",
+    "countryLabel": "Australia / United States",
+    "precision": 4,
+    "category": "major",
+    "rank": 4,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.6215,
+      "prevClose": 0.6198
+    }
+  },
+  {
+    "id": "nzd-usd",
+    "base": "NZD",
+    "quote": "USD",
+    "label": "NZD/USD",
+    "baseCountryCode": "NZ",
+    "quoteCountryCode": "US",
+    "countryLabel": "New Zealand / United States",
+    "precision": 4,
+    "category": "major",
+    "rank": 5,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.5605,
+      "prevClose": 0.559
+    }
+  },
+  {
+    "id": "usd-cad",
+    "base": "USD",
+    "quote": "CAD",
+    "label": "USD/CAD",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "CA",
+    "countryLabel": "United States / Canada",
+    "precision": 4,
+    "category": "major",
+    "rank": 6,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.438,
+      "prevClose": 1.4365
+    }
+  },
+  {
+    "id": "usd-chf",
+    "base": "USD",
+    "quote": "CHF",
+    "label": "USD/CHF",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "CH",
+    "countryLabel": "United States / Switzerland",
+    "precision": 4,
+    "category": "major",
+    "rank": 7,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.9105,
+      "prevClose": 0.9092
+    }
+  },
+  {
+    "id": "usd-cnh",
+    "base": "USD",
+    "quote": "CNH",
+    "label": "USD/CNH",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "CN",
+    "countryLabel": "United States / China (Offshore)",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 8,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 7.3285,
+      "prevClose": 7.319
+    }
+  },
+  {
+    "id": "usd-cny",
+    "base": "USD",
+    "quote": "CNY",
+    "label": "USD/CNY",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "CN",
+    "countryLabel": "United States / China",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 9,
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 121.47,
+    "demo": {
+      "value": 7.2985,
+      "prevClose": 7.2895
+    }
+  },
+  {
+    "id": "usd-hkd",
+    "base": "USD",
+    "quote": "HKD",
+    "label": "USD/HKD",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "HK",
+    "countryLabel": "United States / Hong Kong",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 10,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 7.785,
+      "prevClose": 7.7842
+    }
+  },
+  {
+    "id": "usd-sgd",
+    "base": "USD",
+    "quote": "SGD",
+    "label": "USD/SGD",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "SG",
+    "countryLabel": "United States / Singapore",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 11,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.3625,
+      "prevClose": 1.361
+    }
+  },
+  {
+    "id": "usd-krw",
+    "base": "USD",
+    "quote": "KRW",
+    "label": "USD/KRW",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "KR",
+    "countryLabel": "United States / South Korea",
+    "precision": 2,
+    "category": "emerging",
+    "rank": 12,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1465.5,
+      "prevClose": 1462.8
+    }
+  },
+  {
+    "id": "usd-sek",
+    "base": "USD",
+    "quote": "SEK",
+    "label": "USD/SEK",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "SE",
+    "countryLabel": "United States / Sweden",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 13,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 11.085,
+      "prevClose": 11.0625
+    }
+  },
+  {
+    "id": "usd-nok",
+    "base": "USD",
+    "quote": "NOK",
+    "label": "USD/NOK",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "NO",
+    "countryLabel": "United States / Norway",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 14,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 11.425,
+      "prevClose": 11.405
+    }
+  },
+  {
+    "id": "usd-dkk",
+    "base": "USD",
+    "quote": "DKK",
+    "label": "USD/DKK",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "DK",
+    "countryLabel": "United States / Denmark",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 15,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 7.145,
+      "prevClose": 7.138
+    }
+  },
+  {
+    "id": "usd-inr",
+    "base": "USD",
+    "quote": "INR",
+    "label": "USD/INR",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "IN",
+    "countryLabel": "United States / India",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 16,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 85.85,
+      "prevClose": 85.78
+    }
+  },
+  {
+    "id": "usd-twd",
+    "base": "USD",
+    "quote": "TWD",
+    "label": "USD/TWD",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "TW",
+    "countryLabel": "United States / Taiwan",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 17,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 32.85,
+      "prevClose": 32.78
+    }
+  },
+  {
+    "id": "usd-thb",
+    "base": "USD",
+    "quote": "THB",
+    "label": "USD/THB",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "TH",
+    "countryLabel": "United States / Thailand",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 18,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 34.25,
+      "prevClose": 34.18
+    }
+  },
+  {
+    "id": "usd-myr",
+    "base": "USD",
+    "quote": "MYR",
+    "label": "USD/MYR",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "MY",
+    "countryLabel": "United States / Malaysia",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 19,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 4.475,
+      "prevClose": 4.468
+    }
+  },
+  {
+    "id": "usd-idr",
+    "base": "USD",
+    "quote": "IDR",
+    "label": "USD/IDR",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "ID",
+    "countryLabel": "United States / Indonesia",
+    "precision": 0,
+    "category": "emerging",
+    "rank": 20,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 16285,
+      "prevClose": 16250
+    }
+  },
+  {
+    "id": "usd-php",
+    "base": "USD",
+    "quote": "PHP",
+    "label": "USD/PHP",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "PH",
+    "countryLabel": "United States / Philippines",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 21,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 58.45,
+      "prevClose": 58.38
+    }
+  },
+  {
+    "id": "usd-vnd",
+    "base": "USD",
+    "quote": "VND",
+    "label": "USD/VND",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "VN",
+    "countryLabel": "United States / Vietnam",
+    "precision": 0,
+    "category": "emerging",
+    "rank": 22,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 25485,
+      "prevClose": 25450
+    }
+  },
+  {
+    "id": "usd-mxn",
+    "base": "USD",
+    "quote": "MXN",
+    "label": "USD/MXN",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "MX",
+    "countryLabel": "United States / Mexico",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 23,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 20.485,
+      "prevClose": 20.425
+    }
+  },
+  {
+    "id": "usd-brl",
+    "base": "USD",
+    "quote": "BRL",
+    "label": "USD/BRL",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "BR",
+    "countryLabel": "United States / Brazil",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 24,
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": -46.63,
+    "demo": {
+      "value": 6.185,
+      "prevClose": 6.165
+    }
+  },
+  {
+    "id": "usd-zar",
+    "base": "USD",
+    "quote": "ZAR",
+    "label": "USD/ZAR",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "ZA",
+    "countryLabel": "United States / South Africa",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 25,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 18.725,
+      "prevClose": 18.685
+    }
+  },
+  {
+    "id": "usd-try",
+    "base": "USD",
+    "quote": "TRY",
+    "label": "USD/TRY",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "TR",
+    "countryLabel": "United States / Turkey",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 26,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 35.285,
+      "prevClose": 35.225
+    }
+  },
+  {
+    "id": "usd-pln",
+    "base": "USD",
+    "quote": "PLN",
+    "label": "USD/PLN",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "PL",
+    "countryLabel": "United States / Poland",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 27,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 4.125,
+      "prevClose": 4.118
+    }
+  },
+  {
+    "id": "usd-czk",
+    "base": "USD",
+    "quote": "CZK",
+    "label": "USD/CZK",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "CZ",
+    "countryLabel": "United States / Czech Republic",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 28,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 24.185,
+      "prevClose": 24.15
+    }
+  },
+  {
+    "id": "usd-huf",
+    "base": "USD",
+    "quote": "HUF",
+    "label": "USD/HUF",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "HU",
+    "countryLabel": "United States / Hungary",
+    "precision": 2,
+    "category": "emerging",
+    "rank": 29,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 398.5,
+      "prevClose": 397.8
+    }
+  },
+  {
+    "id": "usd-ron",
+    "base": "USD",
+    "quote": "RON",
+    "label": "USD/RON",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "RO",
+    "countryLabel": "United States / Romania",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 30,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 4.765,
+      "prevClose": 4.758
+    }
+  },
+  {
+    "id": "usd-ils",
+    "base": "USD",
+    "quote": "ILS",
+    "label": "USD/ILS",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "IL",
+    "countryLabel": "United States / Israel",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 31,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 3.645,
+      "prevClose": 3.638
+    }
+  },
+  {
+    "id": "usd-aed",
+    "base": "USD",
+    "quote": "AED",
+    "label": "USD/AED",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "AE",
+    "countryLabel": "United States / UAE",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 32,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 3.6725,
+      "prevClose": 3.6725
+    }
+  },
+  {
+    "id": "usd-sar",
+    "base": "USD",
+    "quote": "SAR",
+    "label": "USD/SAR",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "SA",
+    "countryLabel": "United States / Saudi Arabia",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 33,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 3.75,
+      "prevClose": 3.75
+    }
+  },
+  {
+    "id": "usd-qar",
+    "base": "USD",
+    "quote": "QAR",
+    "label": "USD/QAR",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "QA",
+    "countryLabel": "United States / Qatar",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 34,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 3.64,
+      "prevClose": 3.64
+    }
+  },
+  {
+    "id": "usd-kwd",
+    "base": "USD",
+    "quote": "KWD",
+    "label": "USD/KWD",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "KW",
+    "countryLabel": "United States / Kuwait",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 35,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.3075,
+      "prevClose": 0.3072
+    }
+  },
+  {
+    "id": "usd-clp",
+    "base": "USD",
+    "quote": "CLP",
+    "label": "USD/CLP",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "CL",
+    "countryLabel": "United States / Chile",
+    "precision": 2,
+    "category": "emerging",
+    "rank": 36,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 998.5,
+      "prevClose": 995.8
+    }
+  },
+  {
+    "id": "usd-cop",
+    "base": "USD",
+    "quote": "COP",
+    "label": "USD/COP",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "CO",
+    "countryLabel": "United States / Colombia",
+    "precision": 2,
+    "category": "emerging",
+    "rank": 37,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 4385.5,
+      "prevClose": 4378
+    }
+  },
+  {
+    "id": "usd-pen",
+    "base": "USD",
+    "quote": "PEN",
+    "label": "USD/PEN",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "PE",
+    "countryLabel": "United States / Peru",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 38,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 3.725,
+      "prevClose": 3.718
+    }
+  },
+  {
+    "id": "eur-gbp",
+    "base": "EUR",
+    "quote": "GBP",
+    "label": "EUR/GBP",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "GB",
+    "countryLabel": "Eurozone / United Kingdom",
+    "precision": 4,
+    "category": "cross",
+    "rank": 39,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.8638,
+      "prevClose": 0.8625
+    }
+  },
+  {
+    "id": "eur-jpy",
+    "base": "EUR",
+    "quote": "JPY",
+    "label": "EUR/JPY",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Eurozone / Japan",
+    "precision": 2,
+    "category": "cross",
+    "rank": 40,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 171.25,
+      "prevClose": 170.85
+    }
+  },
+  {
+    "id": "eur-chf",
+    "base": "EUR",
+    "quote": "CHF",
+    "label": "EUR/CHF",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "CH",
+    "countryLabel": "Eurozone / Switzerland",
+    "precision": 4,
+    "category": "cross",
+    "rank": 41,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.9872,
+      "prevClose": 0.9858
+    }
+  },
+  {
+    "id": "eur-cad",
+    "base": "EUR",
+    "quote": "CAD",
+    "label": "EUR/CAD",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "CA",
+    "countryLabel": "Eurozone / Canada",
+    "precision": 4,
+    "category": "cross",
+    "rank": 42,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.5585,
+      "prevClose": 1.5562
+    }
+  },
+  {
+    "id": "eur-aud",
+    "base": "EUR",
+    "quote": "AUD",
+    "label": "EUR/AUD",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "AU",
+    "countryLabel": "Eurozone / Australia",
+    "precision": 4,
+    "category": "cross",
+    "rank": 43,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.7445,
+      "prevClose": 1.7418
+    }
+  },
+  {
+    "id": "eur-nzd",
+    "base": "EUR",
+    "quote": "NZD",
+    "label": "EUR/NZD",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "NZ",
+    "countryLabel": "Eurozone / New Zealand",
+    "precision": 4,
+    "category": "cross",
+    "rank": 44,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.9342,
+      "prevClose": 1.9305
+    }
+  },
+  {
+    "id": "eur-sek",
+    "base": "EUR",
+    "quote": "SEK",
+    "label": "EUR/SEK",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "SE",
+    "countryLabel": "Eurozone / Sweden",
+    "precision": 4,
+    "category": "cross",
+    "rank": 45,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 12.0185,
+      "prevClose": 11.995
+    }
+  },
+  {
+    "id": "eur-nok",
+    "base": "EUR",
+    "quote": "NOK",
+    "label": "EUR/NOK",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "NO",
+    "countryLabel": "Eurozone / Norway",
+    "precision": 4,
+    "category": "cross",
+    "rank": 46,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 12.385,
+      "prevClose": 12.358
+    }
+  },
+  {
+    "id": "eur-dkk",
+    "base": "EUR",
+    "quote": "DKK",
+    "label": "EUR/DKK",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "DK",
+    "countryLabel": "Eurozone / Denmark",
+    "precision": 4,
+    "category": "cross",
+    "rank": 47,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 7.4585,
+      "prevClose": 7.4578
+    }
+  },
+  {
+    "id": "eur-pln",
+    "base": "EUR",
+    "quote": "PLN",
+    "label": "EUR/PLN",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "PL",
+    "countryLabel": "Eurozone / Poland",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 48,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 4.4725,
+      "prevClose": 4.465
+    }
+  },
+  {
+    "id": "eur-czk",
+    "base": "EUR",
+    "quote": "CZK",
+    "label": "EUR/CZK",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "CZ",
+    "countryLabel": "Eurozone / Czech Republic",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 49,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 26.215,
+      "prevClose": 26.18
+    }
+  },
+  {
+    "id": "eur-huf",
+    "base": "EUR",
+    "quote": "HUF",
+    "label": "EUR/HUF",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "HU",
+    "countryLabel": "Eurozone / Hungary",
+    "precision": 2,
+    "category": "emerging",
+    "rank": 50,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 432.15,
+      "prevClose": 431.5
+    }
+  },
+  {
+    "id": "eur-ron",
+    "base": "EUR",
+    "quote": "RON",
+    "label": "EUR/RON",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "RO",
+    "countryLabel": "Eurozone / Romania",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 51,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 4.9765,
+      "prevClose": 4.9758
+    }
+  },
+  {
+    "id": "eur-try",
+    "base": "EUR",
+    "quote": "TRY",
+    "label": "EUR/TRY",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "TR",
+    "countryLabel": "Eurozone / Turkey",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 52,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 38.265,
+      "prevClose": 38.185
+    }
+  },
+  {
+    "id": "eur-zar",
+    "base": "EUR",
+    "quote": "ZAR",
+    "label": "EUR/ZAR",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "ZA",
+    "countryLabel": "Eurozone / South Africa",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 53,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 20.295,
+      "prevClose": 20.235
+    }
+  },
+  {
+    "id": "eur-mxn",
+    "base": "EUR",
+    "quote": "MXN",
+    "label": "EUR/MXN",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "MX",
+    "countryLabel": "Eurozone / Mexico",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 54,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 22.215,
+      "prevClose": 22.145
+    }
+  },
+  {
+    "id": "eur-brl",
+    "base": "EUR",
+    "quote": "BRL",
+    "label": "EUR/BRL",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "BR",
+    "countryLabel": "Eurozone / Brazil",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 55,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 6.705,
+      "prevClose": 6.685
+    }
+  },
+  {
+    "id": "eur-cnh",
+    "base": "EUR",
+    "quote": "CNH",
+    "label": "EUR/CNH",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "CN",
+    "countryLabel": "Eurozone / China (Offshore)",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 56,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 7.945,
+      "prevClose": 7.9285
+    }
+  },
+  {
+    "id": "eur-cny",
+    "base": "EUR",
+    "quote": "CNY",
+    "label": "EUR/CNY",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "CN",
+    "countryLabel": "Eurozone / China",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 57,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 7.9125,
+      "prevClose": 7.895
+    }
+  },
+  {
+    "id": "eur-sgd",
+    "base": "EUR",
+    "quote": "SGD",
+    "label": "EUR/SGD",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "SG",
+    "countryLabel": "Eurozone / Singapore",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 58,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.4772,
+      "prevClose": 1.4745
+    }
+  },
+  {
+    "id": "eur-hkd",
+    "base": "EUR",
+    "quote": "HKD",
+    "label": "EUR/HKD",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "HK",
+    "countryLabel": "Eurozone / Hong Kong",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 59,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 8.4385,
+      "prevClose": 8.425
+    }
+  },
+  {
+    "id": "eur-inr",
+    "base": "EUR",
+    "quote": "INR",
+    "label": "EUR/INR",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "IN",
+    "countryLabel": "Eurozone / India",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 60,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 93.085,
+      "prevClose": 92.925
+    }
+  },
+  {
+    "id": "eur-ils",
+    "base": "EUR",
+    "quote": "ILS",
+    "label": "EUR/ILS",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "IL",
+    "countryLabel": "Eurozone / Israel",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 61,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 3.9525,
+      "prevClose": 3.945
+    }
+  },
+  {
+    "id": "eur-aed",
+    "base": "EUR",
+    "quote": "AED",
+    "label": "EUR/AED",
+    "baseCountryCode": "EU",
+    "quoteCountryCode": "AE",
+    "countryLabel": "Eurozone / UAE",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 62,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 3.9825,
+      "prevClose": 3.9785
+    }
+  },
+  {
+    "id": "gbp-jpy",
+    "base": "GBP",
+    "quote": "JPY",
+    "label": "GBP/JPY",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "JP",
+    "countryLabel": "United Kingdom / Japan",
+    "precision": 2,
+    "category": "cross",
+    "rank": 63,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 198.25,
+      "prevClose": 197.45
+    }
+  },
+  {
+    "id": "aud-jpy",
+    "base": "AUD",
+    "quote": "JPY",
+    "label": "AUD/JPY",
+    "baseCountryCode": "AU",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Australia / Japan",
+    "precision": 2,
+    "category": "cross",
+    "rank": 64,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 98.12,
+      "prevClose": 97.65
+    }
+  },
+  {
+    "id": "cad-jpy",
+    "base": "CAD",
+    "quote": "JPY",
+    "label": "CAD/JPY",
+    "baseCountryCode": "CA",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Canada / Japan",
+    "precision": 2,
+    "category": "cross",
+    "rank": 65,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 109.85,
+      "prevClose": 109.52
+    }
+  },
+  {
+    "id": "chf-jpy",
+    "base": "CHF",
+    "quote": "JPY",
+    "label": "CHF/JPY",
+    "baseCountryCode": "CH",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Switzerland / Japan",
+    "precision": 2,
+    "category": "cross",
+    "rank": 66,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 173.45,
+      "prevClose": 173.12
+    }
+  },
+  {
+    "id": "nzd-jpy",
+    "base": "NZD",
+    "quote": "JPY",
+    "label": "NZD/JPY",
+    "baseCountryCode": "NZ",
+    "quoteCountryCode": "JP",
+    "countryLabel": "New Zealand / Japan",
+    "precision": 2,
+    "category": "cross",
+    "rank": 67,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 88.52,
+      "prevClose": 88.15
+    }
+  },
+  {
+    "id": "sek-jpy",
+    "base": "SEK",
+    "quote": "JPY",
+    "label": "SEK/JPY",
+    "baseCountryCode": "SE",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Sweden / Japan",
+    "precision": 3,
+    "category": "cross",
+    "rank": 68,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 14.25,
+      "prevClose": 14.225
+    }
+  },
+  {
+    "id": "nok-jpy",
+    "base": "NOK",
+    "quote": "JPY",
+    "label": "NOK/JPY",
+    "baseCountryCode": "NO",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Norway / Japan",
+    "precision": 3,
+    "category": "cross",
+    "rank": 69,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 13.825,
+      "prevClose": 13.795
+    }
+  },
+  {
+    "id": "dkk-jpy",
+    "base": "DKK",
+    "quote": "JPY",
+    "label": "DKK/JPY",
+    "baseCountryCode": "DK",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Denmark / Japan",
+    "precision": 3,
+    "category": "cross",
+    "rank": 70,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 22.105,
+      "prevClose": 22.075
+    }
+  },
+  {
+    "id": "pln-jpy",
+    "base": "PLN",
+    "quote": "JPY",
+    "label": "PLN/JPY",
+    "baseCountryCode": "PL",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Poland / Japan",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 71,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 38.285,
+      "prevClose": 38.215
+    }
+  },
+  {
+    "id": "czk-jpy",
+    "base": "CZK",
+    "quote": "JPY",
+    "label": "CZK/JPY",
+    "baseCountryCode": "CZ",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Czech Republic / Japan",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 72,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 6.528,
+      "prevClose": 6.515
+    }
+  },
+  {
+    "id": "huf-jpy",
+    "base": "HUF",
+    "quote": "JPY",
+    "label": "HUF/JPY",
+    "baseCountryCode": "HU",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Hungary / Japan",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 73,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.3962,
+      "prevClose": 0.3955
+    }
+  },
+  {
+    "id": "try-jpy",
+    "base": "TRY",
+    "quote": "JPY",
+    "label": "TRY/JPY",
+    "baseCountryCode": "TR",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Turkey / Japan",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 74,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 4.475,
+      "prevClose": 4.465
+    }
+  },
+  {
+    "id": "zar-jpy",
+    "base": "ZAR",
+    "quote": "JPY",
+    "label": "ZAR/JPY",
+    "baseCountryCode": "ZA",
+    "quoteCountryCode": "JP",
+    "countryLabel": "South Africa / Japan",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 75,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 8.435,
+      "prevClose": 8.418
+    }
+  },
+  {
+    "id": "mxn-jpy",
+    "base": "MXN",
+    "quote": "JPY",
+    "label": "MXN/JPY",
+    "baseCountryCode": "MX",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Mexico / Japan",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 76,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 7.708,
+      "prevClose": 7.695
+    }
+  },
+  {
+    "id": "sgd-jpy",
+    "base": "SGD",
+    "quote": "JPY",
+    "label": "SGD/JPY",
+    "baseCountryCode": "SG",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Singapore / Japan",
+    "precision": 2,
+    "category": "emerging",
+    "rank": 77,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 115.92,
+      "prevClose": 115.65
+    }
+  },
+  {
+    "id": "hkd-jpy",
+    "base": "HKD",
+    "quote": "JPY",
+    "label": "HKD/JPY",
+    "baseCountryCode": "HK",
+    "quoteCountryCode": "JP",
+    "countryLabel": "Hong Kong / Japan",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 78,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 20.285,
+      "prevClose": 20.255
+    }
+  },
+  {
+    "id": "cnh-jpy",
+    "base": "CNH",
+    "quote": "JPY",
+    "label": "CNH/JPY",
+    "baseCountryCode": "CN",
+    "quoteCountryCode": "JP",
+    "countryLabel": "China (Offshore) / Japan",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 79,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 21.552,
+      "prevClose": 21.515
+    }
+  },
+  {
+    "id": "inr-jpy",
+    "base": "INR",
+    "quote": "JPY",
+    "label": "INR/JPY",
+    "baseCountryCode": "IN",
+    "quoteCountryCode": "JP",
+    "countryLabel": "India / Japan",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 80,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.8395,
+      "prevClose": 1.8365
+    }
+  },
+  {
+    "id": "gbp-chf",
+    "base": "GBP",
+    "quote": "CHF",
+    "label": "GBP/CHF",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "CH",
+    "countryLabel": "United Kingdom / Switzerland",
+    "precision": 4,
+    "category": "cross",
+    "rank": 81,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.1428,
+      "prevClose": 1.1405
+    }
+  },
+  {
+    "id": "gbp-cad",
+    "base": "GBP",
+    "quote": "CAD",
+    "label": "GBP/CAD",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "CA",
+    "countryLabel": "United Kingdom / Canada",
+    "precision": 4,
+    "category": "cross",
+    "rank": 82,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.8045,
+      "prevClose": 1.8012
+    }
+  },
+  {
+    "id": "gbp-aud",
+    "base": "GBP",
+    "quote": "AUD",
+    "label": "GBP/AUD",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "AU",
+    "countryLabel": "United Kingdom / Australia",
+    "precision": 4,
+    "category": "cross",
+    "rank": 83,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 2.0195,
+      "prevClose": 2.0162
+    }
+  },
+  {
+    "id": "gbp-nzd",
+    "base": "GBP",
+    "quote": "NZD",
+    "label": "GBP/NZD",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "NZ",
+    "countryLabel": "United Kingdom / New Zealand",
+    "precision": 4,
+    "category": "cross",
+    "rank": 84,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 2.2385,
+      "prevClose": 2.2345
+    }
+  },
+  {
+    "id": "gbp-sek",
+    "base": "GBP",
+    "quote": "SEK",
+    "label": "GBP/SEK",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "SE",
+    "countryLabel": "United Kingdom / Sweden",
+    "precision": 4,
+    "category": "cross",
+    "rank": 85,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 13.9125,
+      "prevClose": 13.885
+    }
+  },
+  {
+    "id": "gbp-nok",
+    "base": "GBP",
+    "quote": "NOK",
+    "label": "GBP/NOK",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "NO",
+    "countryLabel": "United Kingdom / Norway",
+    "precision": 4,
+    "category": "cross",
+    "rank": 86,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 14.3385,
+      "prevClose": 14.305
+    }
+  },
+  {
+    "id": "gbp-dkk",
+    "base": "GBP",
+    "quote": "DKK",
+    "label": "GBP/DKK",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "DK",
+    "countryLabel": "United Kingdom / Denmark",
+    "precision": 4,
+    "category": "cross",
+    "rank": 87,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 8.6325,
+      "prevClose": 8.625
+    }
+  },
+  {
+    "id": "gbp-pln",
+    "base": "GBP",
+    "quote": "PLN",
+    "label": "GBP/PLN",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "PL",
+    "countryLabel": "United Kingdom / Poland",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 88,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 5.1785,
+      "prevClose": 5.165
+    }
+  },
+  {
+    "id": "gbp-czk",
+    "base": "GBP",
+    "quote": "CZK",
+    "label": "GBP/CZK",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "CZ",
+    "countryLabel": "United Kingdom / Czech Republic",
+    "precision": 3,
+    "category": "emerging",
+    "rank": 89,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 30.355,
+      "prevClose": 30.285
+    }
+  },
+  {
+    "id": "gbp-huf",
+    "base": "GBP",
+    "quote": "HUF",
+    "label": "GBP/HUF",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "HU",
+    "countryLabel": "United Kingdom / Hungary",
+    "precision": 2,
+    "category": "emerging",
+    "rank": 90,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 500.25,
+      "prevClose": 499.15
+    }
+  },
+  {
+    "id": "gbp-try",
+    "base": "GBP",
+    "quote": "TRY",
+    "label": "GBP/TRY",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "TR",
+    "countryLabel": "United Kingdom / Turkey",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 91,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 44.285,
+      "prevClose": 44.165
+    }
+  },
+  {
+    "id": "gbp-zar",
+    "base": "GBP",
+    "quote": "ZAR",
+    "label": "GBP/ZAR",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "ZA",
+    "countryLabel": "United Kingdom / South Africa",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 92,
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 28.05,
+    "demo": {
+      "value": 23.505,
+      "prevClose": 23.425
+    }
+  },
+  {
+    "id": "gbp-sgd",
+    "base": "GBP",
+    "quote": "SGD",
+    "label": "GBP/SGD",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "SG",
+    "countryLabel": "United Kingdom / Singapore",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 93,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.7105,
+      "prevClose": 1.7072
+    }
+  },
+  {
+    "id": "gbp-hkd",
+    "base": "GBP",
+    "quote": "HKD",
+    "label": "GBP/HKD",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "HK",
+    "countryLabel": "United Kingdom / Hong Kong",
+    "precision": 4,
+    "category": "emerging",
+    "rank": 94,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 9.7705,
+      "prevClose": 9.7545
+    }
+  },
+  {
+    "id": "aud-cad",
+    "base": "AUD",
+    "quote": "CAD",
+    "label": "AUD/CAD",
+    "baseCountryCode": "AU",
+    "quoteCountryCode": "CA",
+    "countryLabel": "Australia / Canada",
+    "precision": 4,
+    "category": "cross",
+    "rank": 95,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.8938,
+      "prevClose": 0.8918
+    }
+  },
+  {
+    "id": "aud-nzd",
+    "base": "AUD",
+    "quote": "NZD",
+    "label": "AUD/NZD",
+    "baseCountryCode": "AU",
+    "quoteCountryCode": "NZ",
+    "countryLabel": "Australia / New Zealand",
+    "precision": 4,
+    "category": "cross",
+    "rank": 96,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 1.1088,
+      "prevClose": 1.1075
+    }
+  },
+  {
+    "id": "cad-chf",
+    "base": "CAD",
+    "quote": "CHF",
+    "label": "CAD/CHF",
+    "baseCountryCode": "CA",
+    "quoteCountryCode": "CH",
+    "countryLabel": "Canada / Switzerland",
+    "precision": 4,
+    "category": "cross",
+    "rank": 97,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.6332,
+      "prevClose": 0.6325
+    }
+  },
+  {
+    "id": "aud-chf",
+    "base": "AUD",
+    "quote": "CHF",
+    "label": "AUD/CHF",
+    "baseCountryCode": "AU",
+    "quoteCountryCode": "CH",
+    "countryLabel": "Australia / Switzerland",
+    "precision": 4,
+    "category": "cross",
+    "rank": 98,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.5658,
+      "prevClose": 0.5645
+    }
+  },
+  {
+    "id": "nzd-cad",
+    "base": "NZD",
+    "quote": "CAD",
+    "label": "NZD/CAD",
+    "baseCountryCode": "NZ",
+    "quoteCountryCode": "CA",
+    "countryLabel": "New Zealand / Canada",
+    "precision": 4,
+    "category": "cross",
+    "rank": 99,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.8062,
+      "prevClose": 0.8048
+    }
+  },
+  {
+    "id": "nzd-chf",
+    "base": "NZD",
+    "quote": "CHF",
+    "label": "NZD/CHF",
+    "baseCountryCode": "NZ",
+    "quoteCountryCode": "CH",
+    "countryLabel": "New Zealand / Switzerland",
+    "precision": 4,
+    "category": "cross",
+    "rank": 100,
+    "isDefaultFree": false,
+    "isDefaultPaid": false,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.5105,
+      "prevClose": 0.5092
+    }
+  },
+  {
+    "id": "aud-gbp",
+    "base": "AUD",
+    "quote": "GBP",
+    "label": "AUD/GBP",
+    "baseCountryCode": "AU",
+    "quoteCountryCode": "GB",
+    "countryLabel": "Australia / United Kingdom",
+    "precision": 4,
+    "category": "cross",
+    "rank": 101,
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 151.21,
+    "demo": {
+      "value": 0.4952,
+      "prevClose": 0.494
+    }
+  },
+  {
+    "id": "gbp-eur",
+    "base": "GBP",
+    "quote": "EUR",
+    "label": "GBP/EUR",
+    "baseCountryCode": "GB",
+    "quoteCountryCode": "EU",
+    "countryLabel": "United Kingdom / Eurozone",
+    "precision": 4,
+    "category": "cross",
+    "rank": 102,
+    "isDefaultFree": true,
+    "isDefaultPaid": true,
+    "group": "core",
+    "homeLongitude": 0,
+    "demo": {
+      "value": 1.1578,
+      "prevClose": 1.1565
+    }
+  }
+]

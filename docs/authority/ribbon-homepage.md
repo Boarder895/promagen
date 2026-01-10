@@ -74,7 +74,7 @@ Notes:
 
 - Small / extreme narrow: if even two lines cannot fit cleanly at 11.5px, prefer horizontal scroll rather than reducing the label font below 11.5px.
 
-In all cases the rule remains: render exactly what fx.pairs.json specifies, in SSOT order, regardless of how many FX are selected.
+In all cases the rule remains: render exactly what fx-pairs.json specifies, in SSOT order, regardless of how many FX are selected.
 
 Everything is set up with fluid widths so the layout “snaps” cleanly rather than collapsing awkwardly as the window is moved between different screens and resolutions.
 
@@ -148,7 +148,7 @@ The FX row is the first strip of the market belt, sitting inside the centre colu
 
 Core rule (hard rule)
 The homepage FX row is entirely driven by:
-C:\Users\Proma\Projects\promagen\frontend\src\data\fx\fx.pairs.json
+C:\Users\Proma\Projects\promagen\frontend\src\data\fx\fx-pairs.json
 
 This means:
 
@@ -157,7 +157,7 @@ This means:
 - To change the homepage FX set (count, order, orientation, paid/free defaults), you edit that single file only.
 
 Default configuration (current)
-The current homepage defaults are set to 8 FX chips. This is a content choice controlled in fx.pairs.json, not a UI limitation. You can increase or reduce the count freely by editing fx.pairs.json and the homepage will reflect it.
+The current homepage defaults are set to 8 FX chips. This is a content choice controlled in fx-pairs.json, not a UI limitation. You can increase or reduce the count freely by editing fx-pairs.json and the homepage will reflect it.
 
 Chip contents
 Each FX chip shows:
@@ -177,7 +177,7 @@ cached → data is served from cache within TTL (banner/tooltip shows “Cached 
 
 Orientation (no ribbon inversion)
 The ribbon does not provide an “invert” control.
-The direction displayed is the direction defined by the selected pair entry in fx.pairs.json.
+The direction displayed is the direction defined by the selected pair entry in fx-pairs.json.
 If you want the opposite direction on the ribbon, you do it via SSOT (by selecting the opposite-direction pair entry if it exists in your catalogue, or by changing the configured entry according to your catalogue rules).
 
 Layout behaviour (variable N)
@@ -185,7 +185,7 @@ The FX row uses a stable layout that supports any number of chips:
 
 - Desktop: chips share the available width evenly (flex: 1) and remain visually consistent.
 - Medium screens: chips compress but keep alignment.
-- Small screens: the row can switch to wrapping or horizontal scroll (implementation choice), but the rule remains: render exactly what fx.pairs.json specifies, in SSOT order.
+- Small screens: the row can switch to wrapping or horizontal scroll (implementation choice), but the rule remains: render exactly what fx-pairs.json specifies, in SSOT order.
 
 Paid tier behaviour (SSOT-first)
 For paid users, the layout stays identical; the difference is the chosen FX set.
@@ -310,7 +310,7 @@ Paid users can control:
 
 - Reference frame (two options only): my location OR Greenwich (London / 0°). No other time zones exist.
 - Exchange selection (which exchanges are shown).
-- Exchange count (even numbers only): 6, 8, 10, 12, 14, or 16.
+- Exchange count: any integer from **6 to 16** (odd or even).
 
 Ordering rule (hard rule, never overridden):
 
@@ -533,7 +533,7 @@ The visual layout of the homepage is identical for free and paid tiers; only the
 5.1 Free Tier
 
 Centre column stack (target state):
-FX row – SSOT-driven (defaults currently set to 8; can be any number via fx.pairs.json).
+FX row – SSOT-driven (defaults currently set to 8; can be any number via fx-pairs.json).
 Commodities row – fixed 7.
 Crypto row – fixed 5.
 AI Providers Leaderboard.
@@ -542,7 +542,7 @@ Rails (free vs paid)
 The rails use the same visual shell for free and paid tiers.
 
 - Free tier: uses the baked-in default exchange list and default card count.
-- Paid tier: uses the user’s chosen exchange list and chosen card count (6/8/10/12/14/16), following the strict longitude ordering rule defined above.
+- Paid tier: uses the user’s chosen exchange list and chosen card count (6–16, any integer), following the strict longitude ordering rule defined above.
 
   5.2 Paid Tier
 
@@ -667,7 +667,7 @@ The Finance Ribbon is the conceptual home of the belt logic.
 7.1 Data Flow
 
 The ribbon reads from a small set of hooks/stores:
-FX selection comes from SSOT (fx.pairs.json), which defines what appears on the homepage.
+FX selection comes from SSOT (fx-pairs.json), which defines what appears on the homepage.
 Future: Commodities and Crypto use the same SSOT philosophy (one file, single source).
 useLiveStatus – whether global live mode is on or paused (motion only, not data refresh).
 
@@ -915,8 +915,8 @@ Neutral visual behaviour:
   7.5 Tests (High Level)
 
 Key behaviours to test:
-The FX row renders exactly N chips, where N is driven by fx.pairs.json (no hard-coded counts).
-SSOT order is preserved end-to-end: fx.pairs.json order → gateway response order → UI render order.
+The FX row renders exactly N chips, where N is driven by fx-pairs.json (no hard-coded counts).
+SSOT order is preserved end-to-end: fx-pairs.json order → gateway response order → UI render order.
 Global pause stops motion and client polling (Calm Mode), but does not change server caching policy.
 Winner arrow always appears at most once per pair and follows the winning currency when the configured orientation changes.
 Winner arrow flips sides correctly (BASE vs QUOTE) and never duplicates.
@@ -933,8 +933,72 @@ The paid experience introduces a proper configuration UI to adjust the homepage 
 - The homepage ribbon remains a pure consumer: it renders whatever SSOT says, in SSOT order, at whatever count SSOT defines.
 
 This keeps the mental model brutally simple:
-Edit fx.pairs.json (or the paid picker that writes SSOT) → refresh → homepage updates.
-No extra hidden files, no “magic” hard-coded numbers.
+Edit fx-pairs.json (or the paid picker that writes SSOT) → refresh → homepage updates.
+No extra hidden files, no "magic" hard-coded numbers.
+
+### FX Picker Limits (Authority: paid_tier.md §5.5)
+
+| Aspect | Value |
+|--------|-------|
+| **Minimum pairs** | 6 |
+| **Maximum pairs** | 16 |
+| **Allowed counts** | Any integer from 6 to 16 |
+| **Full catalog** | 3,192 pairs |
+| **Available to** | Pro Promagen users only |
+
+### FX Selection Storage (Hybrid Architecture)
+
+FX selection uses **localStorage + Clerk metadata** for fast reads with cross-device sync:
+
+1. **Immediate write:** User selection → localStorage (`promagen:fx:selection`)
+2. **Async sync:** localStorage → Clerk metadata (debounced 2s)
+3. **On login:** Clerk → localStorage (Clerk wins on conflict)
+
+**localStorage schema:**
+```typescript
+interface FxSelectionLocal {
+  pairIds: string[];        // Max 16 items
+  updatedAt: string;        // ISO timestamp
+  syncedAt: string | null;  // Last Clerk sync
+  version: 1;
+}
+```
+
+**Clerk metadata addition:**
+```typescript
+interface ClerkPublicMetadata {
+  tier: 'free' | 'paid';
+  fxSelection?: {
+    pairIds: string[];
+    updatedAt: string;
+  };
+}
+```
+
+### Gateway Request Format
+
+Pro users send selection via POST body:
+
+```typescript
+POST /fx
+Content-Type: application/json
+
+{
+  "pairIds": ["eur-usd", "gbp-usd", ...],
+  "tier": "paid"
+}
+```
+
+**Server-side validation:**
+- Reject `pairIds.length > 16` (400 Bad Request)
+- Reject `pairIds.length < 6` (400 Bad Request)
+- Reject unknown pair IDs (not in SSOT catalog)
+- Default to SSOT if validation fails
+
+### Invariant Reminder
+
+FX selection controls **which pairs** appear, never **how they're ordered**.
+Longitude-based ordering remains invariant for all users.
 
 What Happens When APIs Die (Live → Cached → Unavailable Rule)
 
@@ -1000,7 +1064,7 @@ A full file for the configuration UI (FX picker drawer) later.
 A FinanceRibbon that:
 Stays centred.
 Always live-first.
-Always renders from SSOT (fx.pairs.json).
+Always renders from SSOT (fx-pairs.json).
 Never uses synthetic/demo prices.
 Never relies on a hard-coded chip count.
 
@@ -1074,7 +1138,7 @@ The FX row is the first strip of the market belt, sitting inside the centre colu
 
 Core rule (hard rule)
 The homepage FX row is entirely driven by:
-C:\Users\Proma\Projects\promagen\frontend\src\data\fx\fx.pairs.json
+C:\Users\Proma\Projects\promagen\frontend\src\data\fx\fx-pairs.json
 
 This means:
 
@@ -1083,7 +1147,7 @@ This means:
 - To change the homepage FX set (count, order, orientation, paid/free defaults), you edit that single file only.
 
 Default configuration (current)
-The current homepage defaults are set to 8 FX chips. This is a content choice controlled in fx.pairs.json, not a UI limitation. You can increase or reduce the count freely by editing fx.pairs.json and the homepage will reflect it.
+The current homepage defaults are set to 8 FX chips. This is a content choice controlled in fx-pairs.json, not a UI limitation. You can increase or reduce the count freely by editing fx-pairs.json and the homepage will reflect it.
 
 Chip contents
 Each FX chip shows:
@@ -1103,7 +1167,7 @@ cached → data is served from cache within TTL (banner/tooltip shows “Cached 
 
 Orientation (no ribbon inversion)
 The ribbon does not provide an “invert” control.
-The direction displayed is the direction defined by the selected pair entry in fx.pairs.json.
+The direction displayed is the direction defined by the selected pair entry in fx-pairs.json.
 If you want the opposite direction on the ribbon, you do it via SSOT (by selecting the opposite-direction pair entry if it exists in your catalogue, or by changing the configured entry according to your catalogue rules).
 
 Layout behaviour (variable N)
@@ -1111,7 +1175,7 @@ The FX row uses a stable layout that supports any number of chips:
 
 - Desktop: chips share the available width evenly (flex: 1) and remain visually consistent.
 - Medium screens: chips compress but keep alignment.
-- Small screens: the row can switch to wrapping or horizontal scroll (implementation choice), but the rule remains: render exactly what fx.pairs.json specifies, in SSOT order.
+- Small screens: the row can switch to wrapping or horizontal scroll (implementation choice), but the rule remains: render exactly what fx-pairs.json specifies, in SSOT order.
 
 Paid tier behaviour (SSOT-first)
 For paid users, the layout stays identical; the difference is the chosen FX set.
@@ -1254,7 +1318,7 @@ On wide screens: rails are visible and vertically scrollable as needed.
 On smaller screens: the rails collapse into the main column stack above and below the belt + leaderboard or via a “More exchanges” accordion.
 
 Paid-tier exchange rail rules (homepage side-rails)
-Paid users can choose how many exchange cards appear on the rails: 6, 8, 10, 12, 14, or 16 (even numbers only).
+Paid users can choose how many exchange cards appear on the rails: any integer from 6 to 16 (odd or even).
 
 Ordering rule (this is a hard rule, not a suggestion):
 
@@ -1295,7 +1359,7 @@ The visual layout of the homepage is identical for free and paid tiers; only the
 5.1 Free Tier
 
 Centre column stack (target state):
-FX row – SSOT-driven (defaults currently set to 8; can be any number via fx.pairs.json).
+FX row – SSOT-driven (defaults currently set to 8; can be any number via fx-pairs.json).
 Commodities row – fixed 7.
 Crypto row – fixed 5.
 AI Providers Leaderboard.
@@ -1304,7 +1368,7 @@ Rails (free vs paid)
 The rails use the same visual shell for free and paid tiers.
 
 - Free tier: uses the baked-in default exchange list and default card count.
-- Paid tier: uses the user’s chosen exchange list and chosen card count (6/8/10/12/14/16), following the strict longitude ordering rule defined above.
+- Paid tier: uses the user’s chosen exchange list and chosen card count (6–16, any integer), following the strict longitude ordering rule defined above.
 
   5.2 Paid Tier
 
@@ -1375,7 +1439,7 @@ The Finance Ribbon is the conceptual home of the belt logic.
 7.1 Data Flow
 
 The ribbon reads from a small set of hooks/stores:
-FX selection comes from SSOT (fx.pairs.json), which defines what appears on the homepage.
+FX selection comes from SSOT (fx-pairs.json), which defines what appears on the homepage.
 Future: Commodities and Crypto use the same SSOT philosophy (one file, single source).
 useLiveStatus – whether global live mode is on or paused (motion only, not data refresh).
 
@@ -1675,8 +1739,8 @@ Neutral visual behaviour:
   7.5 Tests (High Level)
 
 Key behaviours to test:
-The FX row renders exactly N chips, where N is driven by fx.pairs.json (no hard-coded counts).
-SSOT order is preserved end-to-end: fx.pairs.json order → gateway response order → UI render order.
+The FX row renders exactly N chips, where N is driven by fx-pairs.json (no hard-coded counts).
+SSOT order is preserved end-to-end: fx-pairs.json order → gateway response order → UI render order.
 Global pause stops motion and client polling (Calm Mode), but does not change server caching policy.
 Winner arrow always appears at most once per pair and follows the winning currency when the configured orientation changes.
 Winner arrow flips sides correctly (BASE vs QUOTE) and never duplicates.
@@ -1706,8 +1770,72 @@ The paid experience introduces a proper configuration UI to adjust the homepage 
 - The homepage ribbon remains a pure consumer: it renders whatever SSOT says, in SSOT order, at whatever count SSOT defines.
 
 This keeps the mental model brutally simple:
-Edit fx.pairs.json (or the paid picker that writes SSOT) → refresh → homepage updates.
-No extra hidden files, no “magic” hard-coded numbers.
+Edit fx-pairs.json (or the paid picker that writes SSOT) → refresh → homepage updates.
+No extra hidden files, no "magic" hard-coded numbers.
+
+### FX Picker Limits (Authority: paid_tier.md §5.5)
+
+| Aspect | Value |
+|--------|-------|
+| **Minimum pairs** | 6 |
+| **Maximum pairs** | 16 |
+| **Allowed counts** | Any integer from 6 to 16 |
+| **Full catalog** | 3,192 pairs |
+| **Available to** | Pro Promagen users only |
+
+### FX Selection Storage (Hybrid Architecture)
+
+FX selection uses **localStorage + Clerk metadata** for fast reads with cross-device sync:
+
+1. **Immediate write:** User selection → localStorage (`promagen:fx:selection`)
+2. **Async sync:** localStorage → Clerk metadata (debounced 2s)
+3. **On login:** Clerk → localStorage (Clerk wins on conflict)
+
+**localStorage schema:**
+```typescript
+interface FxSelectionLocal {
+  pairIds: string[];        // Max 16 items
+  updatedAt: string;        // ISO timestamp
+  syncedAt: string | null;  // Last Clerk sync
+  version: 1;
+}
+```
+
+**Clerk metadata addition:**
+```typescript
+interface ClerkPublicMetadata {
+  tier: 'free' | 'paid';
+  fxSelection?: {
+    pairIds: string[];
+    updatedAt: string;
+  };
+}
+```
+
+### Gateway Request Format
+
+Pro users send selection via POST body:
+
+```typescript
+POST /fx
+Content-Type: application/json
+
+{
+  "pairIds": ["eur-usd", "gbp-usd", ...],
+  "tier": "paid"
+}
+```
+
+**Server-side validation:**
+- Reject `pairIds.length > 16` (400 Bad Request)
+- Reject `pairIds.length < 6` (400 Bad Request)
+- Reject unknown pair IDs (not in SSOT catalog)
+- Default to SSOT if validation fails
+
+### Invariant Reminder
+
+FX selection controls **which pairs** appear, never **how they're ordered**.
+Longitude-based ordering remains invariant for all users.
 
 What Happens When APIs Die (Live → Cached → Unavailable Rule)
 
@@ -1796,7 +1924,7 @@ A full file for the configuration UI (FX picker drawer) later.
 A FinanceRibbon that:
 Stays centred.
 Always live-first.
-Always renders from SSOT (fx.pairs.json).
+Always renders from SSOT (fx-pairs.json).
 Never uses synthetic/demo prices.
 Never relies on a hard-coded chip count.
 
@@ -1888,7 +2016,7 @@ src/components/exchanges/
 
 Exchange cards are driven by:
 
-- **Free tier:** `src/data/exchanges/exchanges.selected.json` (12 exchanges)
+- **Free tier:** `src/data/exchanges/exchanges.selected.json` (16 exchanges)
 - **Paid tier:** User-selected exchanges from `exchanges.catalog.json`
 
 ### Weather Emoji SSOT
@@ -2503,8 +2631,10 @@ export default function HomepageGrid({
 
 ---
 
-**Last updated:** January 8, 2026
+**Last updated:** January 10, 2026
 
 **Changelog:**
+- **10 Jan 2026:** FX SSOT Consolidated — Merged `fx.pairs.json` and `pairs.json` into single unified `fx-pairs.json`. All references updated throughout document. Single file now contains: pair IDs, base/quote currencies, country codes, labels, precision, demo prices, tier flags, longitude. One file to maintain.
+- **9 Jan 2026:** Added Gateway SSOT Integration section under §2.1 FX Row. Gateway now fetches pairs from frontend `/api/fx/config` endpoint on startup instead of hardcoding. True SSOT: one file, both systems update. See `fly-v2.md` §8 and `promagen-api-brain-v2.md` §20 for implementation details.
 - **8 Jan 2026:** Market Pulse v2.1 — Dynamic city connections (no hardcoding), Option 3+4 combined visual effects, city normalization with aliases, unified `.market-pulse-active` CSS class.
 - **2 Jan 2026:** Added vote button to Image Quality column. Added community voting rules and implementation references.

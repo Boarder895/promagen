@@ -53,7 +53,7 @@ If this authority does not exist (or is bypassable), everything else becomes wis
 
 The FX ribbon pair list is SSOT and lives at:
 
-frontend/src/data/fx/fx.pairs.json
+frontend/src/data/fx/fx-pairs.json
 
 This file is SSOT for:
 
@@ -142,7 +142,7 @@ Provider chain (normative)
 
 FX ribbon specifics (normative; v2 default is primary-only and no cross-provider fallback)
 
-- SSOT source path (fx.pairs.json)
+- SSOT source path (fx-pairs.json)
 - A/B split rule (even/odd indices)
 - alternation rule (A then B then A…)
 - cold-start priming enabled (true/false; default true for fx.ribbon)
@@ -641,7 +641,7 @@ To honour SSOT as the single source of truth, caching must be SSOT-aware.
 
 Promagen must ensure cache keys incorporate the SSOT ribbon set identity, so that:
 
-Changing src/data/fx/fx.pairs.json invalidates the cached ribbon result immediately
+Changing src/data/fx/fx-pairs.json invalidates the cached ribbon result immediately
 
 You never have to wait for TTL to see a config change reflected
 
@@ -1002,7 +1002,7 @@ Upstream auth strictly server-side
 
 SSOT and output guarantees:
 
-SSOT-keyed cache invalidation (pairs.json change forces new cache)
+SSOT-keyed cache invalidation (fx-pairs.json change forces new cache)
 
 Merged A+B response (always show full ribbon set)
 
@@ -1784,7 +1784,7 @@ Trace should never cause state changes.
 
 19.6 SSOT change behaviour
 
-Changing pairs.json updates what is displayed.
+Changing fx-pairs.json updates what is displayed.
 
 Server must treat it as a new cache identity.
 
@@ -1814,7 +1814,179 @@ They are optional; the system remains correct without them.
 
 ---
 
-## 20. Changelog
+## 20. Gateway SSOT Fetch Architecture (Added Jan 9, 2026)
 
+### 20.1 The Problem: Hardcoded Duplication
+
+The gateway previously had a hardcoded `FX_PAIRS` array in `src/server.ts`. This duplicated what's in `frontend/src/data/fx/fx-pairs.json`:
+
+```
+❌ Two places to maintain = Drift guaranteed
+frontend/src/data/fx/fx-pairs.json  ← File 1 (SSOT)
+gateway/src/server.ts (hardcoded)   ← File 2 (duplicate)
+```
+
+### 20.2 The Solution: Runtime SSOT Fetch
+
+The gateway now **fetches pairs from the frontend on startup**:
+
+```
+✅ TRUE SSOT
+frontend/src/data/fx/fx-pairs.json   ← THE ONE AND ONLY SOURCE
+              ↓
+frontend/api/fx/config               ← Exposes SSOT as API
+              ↓
+gateway fetches on startup           ← Reads from frontend
+              ↓
+gateway serves FX quotes             ← Uses fetched pairs
+```
+
+### 20.3 Frontend SSOT Endpoint
+
+**Location:** `frontend/src/app/api/fx/config/route.ts`
+
+**Response format:**
+```json
+{
+  "version": 1,
+  "ssot": "frontend/src/data/fx/fx-pairs.json",
+  "generatedAt": "2026-01-09T02:00:00.000Z",
+  "pairs": [
+    { "id": "eur-usd", "base": "EUR", "quote": "USD" },
+    { "id": "gbp-usd", "base": "GBP", "quote": "USD" },
+    { "id": "usd-jpy", "base": "USD", "quote": "JPY" }
+  ]
+}
+```
+
+**Behaviour:**
+- Reads `fx-pairs.json` (unified catalog with all pair data, flags, demo values)
+- Returns only `isDefaultFree=true` pairs for free tier
+- Cached for 1 hour (config rarely changes)
+
+### 20.4 Gateway Startup Sequence
+
+```typescript
+// Environment variable
+const FX_CONFIG_URL = process.env['FX_CONFIG_URL'] ?? 'https://promagen.com/api/fx/config';
+
+// Fallback pairs (only if frontend unreachable)
+const FALLBACK_FX_PAIRS: FxPair[] = [...];
+
+// Runtime state
+let activeFxPairs: FxPair[] = [];
+let ssotSource: 'frontend' | 'fallback' = 'fallback';
+
+async function initFxPairs(): Promise<void> {
+  const ssotPairs = await fetchSsotConfig();
+  if (ssotPairs && ssotPairs.length > 0) {
+    activeFxPairs = ssotPairs;
+    ssotSource = 'frontend';
+    log('info', 'Using SSOT pairs from frontend', { count: activeFxPairs.length });
+  } else {
+    activeFxPairs = FALLBACK_FX_PAIRS;
+    ssotSource = 'fallback';
+    log('warn', 'Using FALLBACK pairs - frontend SSOT unavailable');
+  }
+}
+
+async function start(): Promise<void> {
+  await initFxPairs();  // SSOT fetch FIRST
+  // ... then start HTTP server
+}
+```
+
+### 20.5 SSOT Metadata in Responses
+
+**Health endpoint (`/health`):**
+```json
+{
+  "status": "ok",
+  "ssot": {
+    "source": "frontend",
+    "configUrl": "https://promagen.com/api/fx/config",
+    "pairCount": 8,
+    "pairs": ["eur-usd", "gbp-usd", ...]
+  }
+}
+```
+
+**FX endpoint (`/fx`) meta field:**
+```json
+{
+  "meta": {
+    "mode": "live",
+    "ssotSource": "frontend",
+    "budget": { ... }
+  },
+  "data": [...]
+}
+```
+
+### 20.6 Deployment Order (Critical)
+
+**Always deploy frontend first:**
+
+1. Deploy frontend → Vercel creates `/api/fx/config` endpoint
+2. Deploy gateway → Fly.io fetches from the new endpoint
+
+If you deploy gateway first, it will fall back to hardcoded pairs because the endpoint doesn't exist yet.
+
+```powershell
+# Step 1: Frontend
+cd C:\Users\Proma\Projects\promagen\frontend
+git push
+
+# Step 2: Wait for Vercel deployment
+
+# Step 3: Gateway
+cd C:\Users\Proma\Projects\promagen\gateway
+fly deploy
+```
+
+### 20.7 Verification
+
+```powershell
+# Check frontend SSOT endpoint
+Invoke-RestMethod -Uri "https://promagen.com/api/fx/config"
+
+# Check gateway loaded from SSOT
+Invoke-RestMethod -Uri "https://promagen-api.fly.dev/health"
+```
+
+**Expected /health response:**
+```json
+{
+  "ssot": {
+    "source": "frontend"   // ← SSOT working
+  }
+}
+```
+
+If `"source": "fallback"`, the gateway couldn't reach frontend.
+
+### 20.8 Changing FX Pairs (The SSOT Way)
+
+1. Edit **ONE file**: `frontend/src/data/fx/fx-pairs.json`
+2. Deploy frontend: `git push`
+3. Restart gateway: `fly apps restart promagen-api`
+
+**One file. Both systems update. No drift.**
+
+### 20.9 Pair Count Is Variable
+
+From `ribbon-homepage.md`:
+
+> The ribbon does not hard-code "5" or "8" anywhere.
+> The number of FX chips shown is simply the number of entries with `isDefaultFree: true` in fx-pairs.json.
+
+The gateway respects whatever the SSOT says — could be 5, 8, 12, or any number.
+
+---
+
+## 21. Changelog
+
+- **10 Jan 2026 (v2.3.0):** FX SSOT Consolidated — Updated all references from separate `fx.pairs.json` + `pairs.json` files to unified `fx-pairs.json`. Single file now contains all FX pair data: IDs, currencies, country codes, labels, precision, demo prices, tier flags, and longitude. Updated §20.3 behaviour description.
+- **9 Jan 2026 (v2.2.0):** Added §20 Gateway SSOT Fetch Architecture. Gateway now fetches FX pairs from frontend `/api/fx/config` on startup instead of hardcoding. True SSOT: one file, both systems update. Added SSOT metadata to /health and /fx responses. Fixed TypeScript import errors (NodeNext requires .js extensions). Files updated: `gateway/src/server.ts`, `frontend/src/app/api/fx/config/route.ts`, `gateway/lib/*.ts`.
 - **8 Jan 2026 (v2.1.0):** Gateway TypeScript & security fixes. Fixed 12 TypeScript compilation errors. Added Zod dependency for runtime validation. All gateway files now at 10/10 security score with proper type guards, no unsafe casts, and graceful degradation. Files updated: `gateway/lib/schemas.ts`, `gateway/index.ts`, `gateway/adapters/twelvedata.fx.ts`.
 - **6 Jan 2026:** Initial v2 release with full SSOT, cost-control, A/B alternation, and trace contract documentation.

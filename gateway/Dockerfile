@@ -1,6 +1,6 @@
 # Dockerfile - Promagen API Gateway
 # Multi-stage build for small, secure image
-# Version 2.3.0 - SSOT support for FX pairs
+# Version 2.3.1 - SSOT support for FX pairs (runtime fetch from frontend)
 
 # Stage 1: Build
 FROM node:20-alpine AS builder
@@ -37,8 +37,8 @@ RUN npm install --omit=dev && npm cache clean --force
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-# Copy SSOT data files (JSON, not compiled)
-COPY data ./data
+# Note: Gateway fetches SSOT from frontend at runtime
+# No local data directory needed
 
 # Set ownership
 RUN chown -R gateway:nodejs /app

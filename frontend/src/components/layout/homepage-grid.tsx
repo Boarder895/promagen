@@ -6,17 +6,23 @@
 // Synchronized scrolling between exchange rails
 // Market Pulse: Flowing energy streams connect exchanges to providers
 // Auth: Sign in button in header (right), Reference toggle (left, paid only)
+//
+// UPDATED: Added demoMode and demoPairs props for Pro Promagen preview page.
+// When demoMode=true, renders DemoFinanceRibbon with static data instead of
+// live API ribbon.
 // ============================================================================
 
 'use client';
 
 import React, { useRef, useCallback, type ReactNode } from 'react';
 import FinanceRibbon from '@/components/ribbon/finance-ribbon.container';
+import DemoFinanceRibbon from '@/components/ribbon/demo-finance-ribbon';
 import ProvenanceFooter from '@/components/core/provenance-footer';
 import AuthButton from '@/components/auth/auth-button';
 import ReferenceFrameToggle from '@/components/reference-frame-toggle';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ReferenceFrame } from '@/lib/location';
+import type { FxPairCatalogEntry } from '@/lib/pro-promagen/types';
 import { useMarketPulse } from '@/hooks/use-market-pulse';
 import { MarketPulseOverlay } from '@/components/market-pulse';
 
@@ -41,6 +47,16 @@ export type HomepageGridProps = {
    * Whether to show the FinanceRibbon at the top of the centre column.
    */
   showFinanceRibbon?: boolean;
+  /**
+   * Demo mode: render static DemoFinanceRibbon instead of live API ribbon.
+   * Used on /pro-promagen page for preview.
+   */
+  demoMode?: boolean;
+  /**
+   * FX pairs with demo data for DemoFinanceRibbon.
+   * Only used when demoMode=true.
+   */
+  demoPairs?: FxPairCatalogEntry[];
   /**
    * All exchanges (left + right rails combined).
    * Required for market pulse feature.
@@ -96,6 +112,8 @@ export default function HomepageGrid({
   centre,
   rightContent,
   showFinanceRibbon = false,
+  demoMode = false,
+  demoPairs = [],
   exchanges = [],
   displayedProviderIds = [],
   isPaidUser = false,
@@ -163,6 +181,25 @@ export default function HomepageGrid({
     },
     [onReferenceFrameChange],
   );
+
+  // Render the appropriate finance ribbon based on mode
+  const renderFinanceRibbon = () => {
+    if (!showFinanceRibbon) return null;
+
+    if (demoMode) {
+      return (
+        <div className="shrink-0">
+          <DemoFinanceRibbon pairs={demoPairs} />
+        </div>
+      );
+    }
+
+    return (
+      <div className="shrink-0">
+        <FinanceRibbon />
+      </div>
+    );
+  };
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-slate-950/95 text-slate-50">
@@ -261,11 +298,7 @@ export default function HomepageGrid({
 
           {/* Centre column (Finance ribbon + Providers table) */}
           <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="rail-centre">
-            {showFinanceRibbon && (
-              <div className="shrink-0">
-                <FinanceRibbon />
-              </div>
-            )}
+            {renderFinanceRibbon()}
             <div ref={providersRef} className="min-h-0 flex-1">
               {centre}
             </div>

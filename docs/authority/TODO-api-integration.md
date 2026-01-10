@@ -2,7 +2,7 @@
 
 ## Created: 2025-12-28
 
-## Last Updated: 2026-01-08
+## Last Updated: 2026-01-09
 
 This document tracks deferred work for API integration, cleanup tasks, and activation requirements.
 
@@ -169,6 +169,234 @@ pnpm run lint       # Should pass
 
 ---
 
+## 1.6 FX SSOT Gateway Integration ✅ DONE
+
+**Completed:** 9 January 2026
+
+**Problem:** The gateway had a hardcoded FX_PAIRS array duplicating what's in `frontend/src/data/fx/fx-pairs.json`. This violated SSOT — two places to maintain = drift guaranteed.
+
+**Solution:** TRUE SSOT architecture — gateway fetches pairs from frontend on startup.
+
+### Architecture (Option A - Runtime SSOT)
+
+```
+frontend/src/data/fx/fx-pairs.json   ← THE ONE AND ONLY SOURCE
+              ↓
+frontend/api/fx/config               ← NEW: Exposes it as API
+              ↓
+gateway fetches on startup           ← UPDATED: Gets config from frontend
+              ↓
+gateway serves FX quotes             ← Uses fetched pairs
+```
+
+### Files Created
+
+**Frontend:**
+- `src/app/api/fx/config/route.ts` — NEW endpoint exposing fx-pairs.json
+
+**Response format:**
+```json
+{
+  "version": 1,
+  "ssot": "frontend/src/data/fx/fx-pairs.json",
+  "generatedAt": "2026-01-09T02:00:00.000Z",
+  "pairs": [
+    { "id": "eur-usd", "base": "EUR", "quote": "USD" },
+    { "id": "gbp-usd", "base": "GBP", "quote": "USD" }
+  ]
+}
+```
+
+### Files Modified
+
+**Gateway:**
+- `src/server.ts` — Complete rewrite for SSOT fetch
+
+**Key changes:**
+```typescript
+// NEW: Environment variable for SSOT endpoint
+const FX_CONFIG_URL = process.env['FX_CONFIG_URL'] ?? 'https://promagen.com/api/fx/config';
+
+// NEW: Fallback pairs (only used if frontend unreachable)
+const FALLBACK_FX_PAIRS: FxPair[] = [...];
+
+// NEW: Runtime state
+let activeFxPairs: FxPair[] = [];
+let ssotSource: 'frontend' | 'fallback' = 'fallback';
+
+// NEW: Fetch from SSOT on startup
+async function initFxPairs(): Promise<void> {
+  const ssotPairs = await fetchSsotConfig();
+  if (ssotPairs && ssotPairs.length > 0) {
+    activeFxPairs = ssotPairs;
+    ssotSource = 'frontend';
+  } else {
+    activeFxPairs = FALLBACK_FX_PAIRS;
+    ssotSource = 'fallback';
+  }
+}
+
+// Startup sequence
+async function start(): Promise<void> {
+  await initFxPairs();  // Fetch SSOT first
+  // ... then start server
+}
+```
+
+### API Responses Include SSOT Metadata
+
+**Health endpoint (`/health`):**
+```json
+{
+  "status": "ok",
+  "ssot": {
+    "source": "frontend",
+    "configUrl": "https://promagen.com/api/fx/config",
+    "pairCount": 8,
+    "pairs": ["eur-usd", "gbp-usd", ...]
+  }
+}
+```
+
+**FX endpoint (`/fx`) meta field:**
+```json
+{
+  "meta": {
+    "mode": "live",
+    "ssotSource": "frontend",
+    ...
+  }
+}
+```
+
+### Cleanup Required (From Previous Bad Attempt)
+
+**DELETE these files/folders from gateway if they exist:**
+
+```powershell
+# Run from: C:\Users\Proma\Projects\promagen\gateway
+Remove-Item -Recurse -Force ".\lib\ssot" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force ".\data" -ErrorAction SilentlyContinue
+```
+
+These were created in a failed attempt that duplicated fx-pairs.json instead of implementing true SSOT.
+
+### Deployment Order
+
+1. **Deploy frontend first** (so /api/fx/config exists):
+   ```powershell
+   # Run from: C:\Users\Proma\Projects\promagen\frontend
+   git add .
+   git commit -m "feat: add /api/fx/config SSOT endpoint"
+   git push  # Vercel auto-deploys
+   ```
+
+2. **Then deploy gateway:**
+   ```powershell
+   # Run from: C:\Users\Proma\Projects\promagen\gateway
+   fly deploy
+   ```
+
+### Verification
+
+```powershell
+# 1. Check frontend SSOT endpoint
+Invoke-RestMethod -Uri "https://promagen.com/api/fx/config"
+
+# 2. Check gateway loaded from SSOT
+Invoke-RestMethod -Uri "https://promagen-api.fly.dev/health"
+```
+
+**Expected /health response:**
+```json
+{
+  "ssot": {
+    "source": "frontend"    // ← This means TRUE SSOT is working
+  }
+}
+```
+
+If `"source": "fallback"`, the gateway couldn't reach frontend on startup.
+
+### How to Change FX Pairs (TRUE SSOT)
+
+1. Edit **ONE file**: `frontend/src/data/fx/fx-pairs.json`
+2. Deploy frontend: `git push`
+3. Restart gateway: `fly apps restart promagen-api`
+
+**That's it. One file. Both systems update.**
+
+---
+
+## 1.7 Gateway lib/*.ts TypeScript Import Fixes ✅ DONE
+
+**Completed:** 9 January 2026
+
+**Problem:** 18 TypeScript errors in gateway lib/*.ts files:
+- NodeNext module resolution requires `.js` extensions on imports
+- `limits` possibly undefined in quota.ts
+
+**Files Fixed:**
+| File | Fix |
+|------|-----|
+| `lib/adapters.ts` | `'./types'` → `'./types.js'` |
+| `lib/http.ts` | `'./config'` → `'./config.js'`, `'./logging'` → `'./logging.js'` |
+| `lib/quota.ts` | Import fix + extracted `DEFAULT_LIMITS` with explicit type |
+| `lib/resilience.ts` | `'./logging'` → `'./logging.js'` |
+| `lib/roles.ts` | All 3 imports fixed with `.js` |
+| `lib/types.ts` | `'./schemas'` → `'./schemas.js'` |
+
+**Key pattern:**
+```typescript
+// BEFORE (TS2835 error):
+import { logInfo } from './logging';
+
+// AFTER:
+import { logInfo } from './logging.js';
+```
+
+**Verification:**
+```powershell
+# Run from: C:\Users\Proma\Projects\promagen\gateway
+npx tsc --noEmit  # Should pass with 0 errors
+```
+
+---
+
+## 1.8 pnpm Monorepo Lockfile Sync
+
+**Issue:** Vercel deployment failed with `ERR_PNPM_OUTDATED_LOCKFILE`
+
+**Root cause:** pnpm workspace has `frontend/` and `gateway/` packages, but `pnpm-lock.yaml` was out of sync with `gateway/package.json`.
+
+**Solution:**
+```powershell
+# Run from: C:\Users\Proma\Projects\promagen (monorepo root)
+pnpm install
+git add pnpm-lock.yaml
+git commit -m "chore: update pnpm-lock.yaml"
+git push
+```
+
+**Monorepo structure:**
+```
+promagen/
+├── pnpm-workspace.yaml    # Defines workspace packages
+├── pnpm-lock.yaml         # Shared lockfile for all packages
+├── frontend/              # Next.js app (deploys to Vercel)
+│   └── package.json
+└── gateway/               # Fly.io gateway
+    └── package.json
+```
+
+**pnpm-workspace.yaml:**
+```yaml
+packages:
+  - frontend
+  - gateway
+```
+
+---
 
 ## 2. Prompt Builder Authentication Lock (Added Jan 2, 2026)
 
@@ -429,7 +657,7 @@ Location-aware exchange ordering provides a personalised view based on the user'
 
 **Current State:**
 - No location detection implemented
-- All users see same default ordering (12 exchanges)
+- All users see same default ordering (16 exchanges)
 
 **Implementation:**
 ```typescript
@@ -576,6 +804,20 @@ Consolidated 3 Exchange types into 1 canonical type:
 
 **Note:** These stub routes are now obsolete. Clerk handles all authentication.
 
+### 7.5 `gateway/lib/ssot/` - DELETE (Bad SSOT attempt)
+
+| File/Folder | Reason |
+| ----------- | ------ |
+| `lib/ssot/` | Entire folder from failed SSOT implementation. Gateway now fetches from frontend. |
+| `data/` | If exists, delete. Gateway has no local data files - fetches from frontend SSOT. |
+
+**Cleanup command:**
+```powershell
+# Run from: C:\Users\Proma\Projects\promagen\gateway
+Remove-Item -Recurse -Force ".\lib\ssot" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force ".\data" -ErrorAction SilentlyContinue
+```
+
 ---
 
 ## 8. Verification Commands
@@ -673,9 +915,10 @@ The user mentioned potentially moving exchange files to `src/lib/markets/` for o
 
 ---
 
-## Summary: Files to Delete (11 total)
+## Summary: Files to Delete (14 total)
 
 ```
+# Frontend
 src/lib/weather/provider.ts
 src/lib/weather/types.ts
 src/lib/markets/layout.ts
@@ -687,11 +930,21 @@ src/lib/market-status.ts
 src/app/api/auth/login/route.ts
 src/app/api/auth/logout/route.ts
 src/app/api/auth/me/route.ts
+
+# Gateway (cleanup from bad SSOT attempt)
+gateway/lib/ssot/                    # Entire folder
+gateway/data/                        # Entire folder (if exists)
 ```
 
 ---
 
-## Summary: New Files to Create
+## Summary: New Files Created (Jan 9, 2026)
+
+### FX SSOT Integration:
+```
+frontend/src/app/api/fx/config/route.ts   # NEW: SSOT API endpoint
+gateway/src/server.ts                      # UPDATED: Fetches from frontend SSOT
+```
 
 ### Prompt Builder Authentication:
 ```
@@ -720,6 +973,8 @@ src/hooks/use-promagen-auth.ts            # Enhanced with usage data
 ---
 
 ## Changelog
+
+- **9 Jan 2026:** Added §1.6 FX SSOT Gateway Integration (DONE). True SSOT architecture: frontend exposes `/api/fx/config`, gateway fetches on startup. Removes hardcoded FX_PAIRS duplication. Added §1.7 Gateway lib/*.ts TypeScript Import Fixes. Added §1.8 pnpm Monorepo Lockfile Sync. Added §7.5 gateway cleanup for bad SSOT attempt files.
 
 - **8 Jan 2026:** Updated §2.1 and §2.3 — Changed Standard Promagen daily prompt limit from 30/day to **10/day**. Clean tier progression: Anonymous 5/day → Free 10/day → Paid unlimited.
 

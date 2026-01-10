@@ -36,8 +36,7 @@ const LOG_LEVEL = process.env['LOG_LEVEL'] ?? 'info';
 const TWELVEDATA_API_KEY = process.env['TWELVEDATA_API_KEY'] ?? '';
 
 // SSOT endpoint - frontend exposes fx.pairs.json here
-const FX_CONFIG_URL =
-  process.env['FX_CONFIG_URL'] ?? 'https://promagen.com/api/fx/config';
+const FX_CONFIG_URL = process.env['FX_CONFIG_URL'] ?? 'https://promagen.com/api/fx/config';
 
 // Budget configuration
 const BUDGET_DAILY_ALLOWANCE = parseInt(
@@ -48,7 +47,7 @@ const BUDGET_MINUTE_ALLOWANCE = parseInt(
   process.env['FX_RIBBON_BUDGET_MINUTE_ALLOWANCE'] ?? '8',
   10,
 );
-const CACHE_TTL_SECONDS = parseInt(process.env['FX_RIBBON_TTL_SECONDS'] ?? '300', 10);
+const CACHE_TTL_SECONDS = parseInt(process.env['FX_RIBBON_TTL_SECONDS'] ?? '1800', 10);
 
 // CORS
 const ALLOWED_ORIGINS = (
@@ -101,8 +100,129 @@ interface GatewayResponse {
       minuteUsed: number;
       minuteLimit: number;
     };
+    /** For Pro requests: which pairs were requested */
+    requestedPairs?: string[];
   };
   data: FxQuote[];
+}
+
+// =============================================================================
+// FX SELECTION VALIDATION (Pro users)
+// Authority: docs/authority/paid_tier.md §5.5
+// =============================================================================
+
+const FX_SELECTION_LIMITS = {
+  MIN_PAIRS: 6,
+  MAX_PAIRS: 16,
+} as const;
+
+interface FxSelectionRequest {
+  pairIds: string[];
+  tier: 'free' | 'paid';
+}
+
+interface FxSelectionValidation {
+  valid: boolean;
+  errors: string[];
+  allowedPairIds: string[];
+}
+
+/**
+ * ISO 4217 currency code format: exactly 3 uppercase letters
+ */
+const CURRENCY_CODE_REGEX = /^[A-Z]{3}$/;
+
+/**
+ * Valid pair ID format: base-quote where both are 3-letter codes
+ * Examples: "eur-usd", "gbp-jpy", "aud-cad"
+ */
+function isValidPairIdFormat(id: string): boolean {
+  const parts = id.toUpperCase().split('-');
+  if (parts.length !== 2) return false;
+  const [base, quote] = parts;
+  return (
+    CURRENCY_CODE_REGEX.test(base ?? '') && CURRENCY_CODE_REGEX.test(quote ?? '') && base !== quote // Cannot have same currency on both sides
+  );
+}
+
+/**
+ * Validates FX selection from Pro user POST request
+ *
+ * Validation strategy (defense in depth):
+ * 1. Frontend validates against full 3,192-pair catalog
+ * 2. Gateway validates format + count limits (security layer)
+ * 3. TwelveData returns null for non-existent pairs (graceful handling)
+ *
+ * This avoids gateway needing to load/maintain full catalog.
+ */
+function validateFxSelection(request: FxSelectionRequest): FxSelectionValidation {
+  const errors: string[] = [];
+
+  // Tier check
+  if (request.tier !== 'paid') {
+    return {
+      valid: false,
+      errors: ['FX selection requires Pro tier'],
+      allowedPairIds: [],
+    };
+  }
+
+  // Must have pairIds array
+  if (!Array.isArray(request.pairIds)) {
+    return {
+      valid: false,
+      errors: ['pairIds must be an array'],
+      allowedPairIds: [],
+    };
+  }
+
+  // Normalize and dedupe
+  const normalizedIds = [
+    ...new Set(
+      request.pairIds
+        .filter((id): id is string => typeof id === 'string')
+        .map((id) => id.toLowerCase().trim()),
+    ),
+  ];
+
+  // Check count limits
+  if (normalizedIds.length < FX_SELECTION_LIMITS.MIN_PAIRS) {
+    errors.push(
+      `Minimum ${FX_SELECTION_LIMITS.MIN_PAIRS} pairs required, got ${normalizedIds.length}`,
+    );
+  }
+
+  if (normalizedIds.length > FX_SELECTION_LIMITS.MAX_PAIRS) {
+    errors.push(
+      `Maximum ${FX_SELECTION_LIMITS.MAX_PAIRS} pairs allowed, got ${normalizedIds.length}`,
+    );
+  }
+
+  // Validate format (defense layer - frontend already validated catalog)
+  const allowedPairIds: string[] = [];
+  const malformedIds: string[] = [];
+
+  for (const id of normalizedIds) {
+    if (isValidPairIdFormat(id)) {
+      allowedPairIds.push(id);
+    } else {
+      malformedIds.push(id);
+    }
+  }
+
+  if (malformedIds.length > 0) {
+    errors.push(
+      `Malformed pair IDs (expected format: xxx-yyy): ${malformedIds.slice(0, 5).join(', ')}${
+        malformedIds.length > 5 ? '...' : ''
+      }`,
+    );
+  }
+
+  return {
+    valid: errors.length === 0 && allowedPairIds.length >= FX_SELECTION_LIMITS.MIN_PAIRS,
+    errors,
+    allowedPairIds: allowedPairIds.slice(0, FX_SELECTION_LIMITS.MAX_PAIRS),
+  };
 }
 
 // =============================================================================
@@ -141,6 +261,8 @@ const FALLBACK_FX_PAIRS: FxPair[] = [
 // Runtime state - populated on startup
 let activeFxPairs: FxPair[] = [];
 let ssotSource: 'frontend' | 'fallback' = 'fallback';
+// Note: Removed catalogPairIds - Pro validation now uses format checks
+// Frontend validates catalog, gateway validates format as defense layer
 
 /**
  * Fetches FX pairs config from frontend SSOT endpoint.
@@ -179,9 +301,7 @@ async function fetchSsotConfig(): Promise<FxPair[] | null> {
     const pairs: FxPair[] = json.pairs
       .filter(
         (p): p is { id: string; base: string; quote: string } =>
-          typeof p.id === 'string' &&
-          typeof p.base === 'string' &&
-          typeof p.quote === 'string',
+          typeof p.id === 'string' && typeof p.base === 'string' && typeof p.quote === 'string',
       )
       .map((p) => ({
         id: p.id.toLowerCase(),
@@ -226,6 +346,14 @@ async function initFxPairs(): Promise<void> {
       count: activeFxPairs.length,
     });
   }
+
+  // Note: Pro user validation now uses format-based checks instead of catalog
+  // Frontend validates against full 3,192-pair catalog before sending to gateway
+  // Gateway validates format (xxx-yyy) as defense layer
+  log('info', 'FX pairs initialized', {
+    pairCount: activeFxPairs.length,
+    ssotSource,
+  });
 }
 
 // =============================================================================
@@ -640,14 +768,228 @@ function startBackgroundRefresh(): void {
 function setCorsHeaders(res: ServerResponse, origin: string | undefined): void {
   const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   res.setHeader('Access-Control-Allow-Origin', allowedOrigin ?? '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Max-Age', '86400');
 }
 
 function sendJson(res: ServerResponse, status: number, data: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(data));
+}
+
+/**
+ * Parse JSON body from incoming request
+ */
+async function parseJsonBody(req: IncomingMessage): Promise<Record<string, unknown> | null> {
+  return new Promise((resolve) => {
+    const chunks: Buffer[] = [];
+
+    req.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
+      // Limit body size to 10KB
+      if (Buffer.concat(chunks).length > 10240) {
+        resolve(null);
+      }
+    });
+
+    req.on('end', () => {
+      try {
+        const body = Buffer.concat(chunks).toString('utf-8');
+        if (!body.trim()) {
+          resolve(null);
+          return;
+        }
+        const parsed = JSON.parse(body) as Record<string, unknown>;
+        resolve(parsed);
+      } catch {
+        resolve(null);
+      }
+    });
+
+    req.on('error', () => {
+      resolve(null);
+    });
+  });
+}
+
+/**
+ * Fetch FX data for specific pair IDs (Pro user custom selection)
+ */
+async function getFxDataForPairs(pairIds: string[]): Promise<GatewayResponse> {
+  const budgetCheck = checkAndUpdateBudget();
+  const ttlMs = CACHE_TTL_SECONDS * 1000;
+
+  // Build pairs array from IDs
+  const pairs: FxPair[] = pairIds.map((id) => {
+    const [base, quote] = id.split('-');
+    return {
+      id,
+      base: base?.toUpperCase() ?? '',
+      quote: quote?.toUpperCase() ?? '',
+    };
+  });
+
+  // Check budget/circuit
+  if (!budgetCheck.allowed || isCircuitOpen()) {
+    log('info', 'Custom FX fetch blocked (budget/circuit)');
+    return {
+      meta: {
+        mode: 'error',
+        provider: 'none',
+        ssotSource,
+        budget: {
+          state: budgetCheck.state,
+          dailyUsed: budget.dailyUsed,
+          dailyLimit: BUDGET_DAILY_ALLOWANCE,
+          minuteUsed: budget.minuteUsed,
+          minuteLimit: BUDGET_MINUTE_ALLOWANCE,
+        },
+      },
+      data: pairs.map((p) => ({
+        id: p.id,
+        base: p.base,
+        quote: p.quote,
+        price: null,
+        symbol: `${p.base}/${p.quote}`,
+      })),
+    };
+  }
+
+  // Fetch from TwelveData
+  try {
+    const quotes = await fetchCustomPairsFromTwelveData(pairs);
+
+    return {
+      meta: {
+        mode: 'live',
+        cachedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + ttlMs).toISOString(),
+        provider: 'twelvedata',
+        ssotSource,
+        budget: {
+          state: budgetCheck.state,
+          dailyUsed: budget.dailyUsed,
+          dailyLimit: BUDGET_DAILY_ALLOWANCE,
+          minuteUsed: budget.minuteUsed,
+          minuteLimit: BUDGET_MINUTE_ALLOWANCE,
+        },
+      },
+      data: quotes,
+    };
+  } catch (err) {
+    log('error', 'Custom FX fetch failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+
+    return {
+      meta: {
+        mode: 'error',
+        provider: 'none',
+        ssotSource,
+        budget: {
+          state: budgetCheck.state,
+          dailyUsed: budget.dailyUsed,
+          dailyLimit: BUDGET_DAILY_ALLOWANCE,
+          minuteUsed: budget.minuteUsed,
+          minuteLimit: BUDGET_MINUTE_ALLOWANCE,
+        },
+      },
+      data: pairs.map((p) => ({
+        id: p.id,
+        base: p.base,
+        quote: p.quote,
+        price: null,
+        symbol: `${p.base}/${p.quote}`,
+      })),
+    };
+  }
+}
+
+/**
+ * Fetch custom pairs from TwelveData (for Pro users)
+ */
+async function fetchCustomPairsFromTwelveData(pairs: FxPair[]): Promise<FxQuote[]> {
+  if (!TWELVEDATA_API_KEY) {
+    throw new Error('TWELVEDATA_API_KEY not configured');
+  }
+
+  const symbols = pairs.map((p) => `${p.base}/${p.quote}`).join(',');
+
+  const url = `https://api.twelvedata.com/price?symbol=${encodeURIComponent(
+    symbols,
+  )}&apikey=${encodeURIComponent(TWELVEDATA_API_KEY)}`;
+
+  log('info', 'Fetching custom pairs from TwelveData', { pairCount: pairs.length });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (res.status === 429) {
+      tripCircuit(60_000, '429 rate limit (custom)');
+      throw new Error('TwelveData rate limited (429)');
+    }
+
+    if (res.status >= 500) {
+      tripCircuit(30_000, `5xx error: ${res.status} (custom)`);
+      throw new Error(`TwelveData server error: ${res.status}`);
+    }
+
+    if (!res.ok) {
+      throw new Error(`TwelveData error: ${res.status} ${res.statusText}`);
+    }
+
+    const json = (await res.json()) as Record<string, unknown>;
+    recordApiCall();
+
+    // Parse response
+    const quotes: FxQuote[] = [];
+
+    for (const pair of pairs) {
+      const symbol = `${pair.base}/${pair.quote}`;
+      const entry = json[symbol] as Record<string, unknown> | undefined;
+
+      let price: number | null = null;
+
+      if (entry && typeof entry['price'] === 'string') {
+        const parsed = parseFloat(entry['price']);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          price = parsed;
+        }
+      } else if (entry && typeof entry['price'] === 'number') {
+        if (Number.isFinite(entry['price']) && entry['price'] > 0) {
+          price = entry['price'];
+        }
+      }
+
+      quotes.push({
+        id: pair.id,
+        base: pair.base,
+        quote: pair.quote,
+        price,
+        symbol,
+      });
+    }
+
+    log('info', 'Custom pairs fetch success', {
+      quotesWithPrice: quotes.filter((q) => q.price !== null).length,
+      total: quotes.length,
+    });
+
+    return quotes;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
 }
 
 async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -663,16 +1005,14 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
     return;
   }
 
-  // Only allow GET
-  if (req.method !== 'GET') {
-    sendJson(res, 405, { error: 'Method not allowed' });
-    return;
-  }
-
   const path = url.pathname;
 
-  // Health check endpoint
+  // Health check endpoint (GET only)
   if (path === '/health') {
+    if (req.method !== 'GET') {
+      sendJson(res, 405, { error: 'Method not allowed' });
+      return;
+    }
     sendJson(res, 200, {
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -689,19 +1029,73 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         minuteLimit: BUDGET_MINUTE_ALLOWANCE,
       },
       circuitOpen: isCircuitOpen(),
+      // Note: catalogSize removed - using format validation instead
     });
     return;
   }
 
-  // FX endpoint
+  // FX endpoint - supports GET (free) and POST (Pro custom selection)
   if (path === '/fx' || path === '/api/fx') {
     try {
-      const data = await getFxData();
+      // GET: Return SSOT default pairs
+      if (req.method === 'GET') {
+        const data = await getFxData();
+        res.setHeader('Cache-Control', `public, s-maxage=60, stale-while-revalidate=300`);
+        sendJson(res, 200, data);
+        return;
+      }
 
-      // Set cache headers for CDN (Technique #6 - Edge caching)
-      res.setHeader('Cache-Control', `public, s-maxage=60, stale-while-revalidate=300`);
+      // POST: Pro user custom selection
+      if (req.method === 'POST') {
+        // Parse request body
+        const body = await parseJsonBody(req);
 
-      sendJson(res, 200, data);
+        if (!body) {
+          sendJson(res, 400, { error: 'Invalid JSON body' });
+          return;
+        }
+
+        // Validate and cast body properties
+        const rawPairIds = body['pairIds'];
+        const rawTier = body['tier'];
+
+        const selectionRequest: FxSelectionRequest = {
+          pairIds: Array.isArray(rawPairIds)
+            ? rawPairIds.filter((id): id is string => typeof id === 'string')
+            : [],
+          tier: rawTier === 'paid' ? 'paid' : 'free',
+        };
+
+        // Validate selection
+        const validation = validateFxSelection(selectionRequest);
+
+        if (!validation.valid) {
+          sendJson(res, 400, {
+            error: 'Validation failed',
+            validationErrors: validation.errors,
+          });
+          return;
+        }
+
+        // Fetch quotes for the validated pairs
+        const data = await getFxDataForPairs(validation.allowedPairIds);
+
+        // Don't cache custom selections at CDN level
+        res.setHeader('Cache-Control', 'private, no-cache');
+
+        sendJson(res, 200, {
+          ...data,
+          meta: {
+            ...data.meta,
+            requestedPairs: validation.allowedPairIds,
+          },
+        });
+        return;
+      }
+
+      // Other methods not allowed
+      sendJson(res, 405, { error: 'Method not allowed' });
+      return;
     } catch (err) {
       log('error', 'FX endpoint error', {
         error: err instanceof Error ? err.message : String(err),

@@ -5,6 +5,7 @@ import './globals.css';
 
 import { PauseProvider } from '@/state/pause';
 import ErrorBoundary from '@/components/error-boundary';
+import { ChunkErrorBoundary } from '@/components/chunk-error-boundary';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { env } from '@/lib/env';
 
@@ -62,7 +63,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="h-dvh overflow-hidden antialiased text-slate-900">
         <ClerkProvider>
           <PauseProvider>
-            <ErrorBoundary>{children}</ErrorBoundary>
+            <ErrorBoundary>
+              {/*
+                ChunkErrorBoundary: Catches stale deployment chunk errors.
+                When a user has old JS bundles and navigates after a new deploy,
+                this catches the ChunkLoadError and auto-reloads to get fresh assets.
+                Works alongside Vercel Skew Protection (vercel.json: "skewProtection": "7d").
+                @see docs/authority/best-working-practice.md § Deployment Resilience
+              */}
+              <ChunkErrorBoundary>{children}</ChunkErrorBoundary>
+            </ErrorBoundary>
           </PauseProvider>
 
           {/* Global analytics for every page */}

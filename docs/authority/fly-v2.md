@@ -10,7 +10,7 @@
 
 ## 0. Goal
 
-Promagen needs somewhere for its backend logic to live—if we want to do anything truly “big boy” (API orchestration, caching, provider fallback, auth, payments, job queues), we need a proper server or worker runtime.
+Promagen needs somewhere for its backend logic to live—if we want to do anything truly "big boy" (API orchestration, caching, provider fallback, auth, payments, job queues), we need a proper server or worker runtime.
 
 Fly.io is ideal because:
 
@@ -24,14 +24,14 @@ This document defines:
 - What runs on Vercel vs Fly
 - How cost scales
 
-1. Fly.io’s role in Promagen
+1. Fly.io's role in Promagen
    1.1 Home for backend API routes
    Your Next.js project already has backend routes under something like:
    • frontend/src/app/api/\* (Next.js App Router API routes)
    In local development, these behave as server endpoints. In production, they need a real server platform.
    Fly.io provides the container that runs those backend routes so they can:
    • Proxy external APIs (Twelve Data, FMP, OilPriceAPI, etc.).
-   • Normalise responses into Promagen’s internal shapes.
+   • Normalise responses into Promagen's internal shapes.
    • Enforce paid-tier rules and feature flags.
    • Serve your /api/\_ endpoints to the frontend.
    Example routes Promagen might expose via Fly.io:
@@ -46,15 +46,15 @@ This document defines:
    • Environment variables / secret storage for API keys.
    • Choice of regions (e.g. London) for low-latency calls to providers.
    • Autoscaling / machine sizing so you can grow gradually.
-   • Long-lived containers that behave like “tiny Linux workstations in the sky”.
-   Promagen’s backend uses this to:
+   • Long-lived containers that behave like "tiny Linux workstations in the sky".
+   Promagen's backend uses this to:
    • Call external APIs securely.
    • Aggregate data server-side.
    • Apply quota and caching rules centrally.
    • Send only the necessary data down to the UI.
    1.3 Scheduler for background jobs
    Promagen has several background tasks that make far more sense on a persistent backend than inside request/response handlers:
-   • “Warm cache” jobs for FX rates.
+   • "Warm cache" jobs for FX rates.
    • Real-time crypto buffers.
    • Daily commodity synchronisation.
    • Hourly exchange metadata updates.
@@ -69,12 +69,12 @@ This document defines:
    1.4 Escape hatch when serverless is too restrictive
    Vercel is excellent for the frontend and short-lived serverless functions.
 
-### Promagen note: Vercel Pro as the “front door” (guardrails + spend control)
+### Promagen note: Vercel Pro as the "front door" (guardrails + spend control)
 
 - Canonical Vercel Pro playbook: `C:\Users\Proma\Projects\promagen\docs\authority\vercel-pro-promagen-playbook.md`
 - Keep Vercel as the edge/CDN/WAF layer even if some compute moves to Fly.
 - Treat WAF rules + Spend Management as _platform_ safety rails; code-level safe-mode/kill-switches are the _second_ line of defence.
-  However, some Promagen workloads will eventually be too “muscular” for edge/serverless:
+  However, some Promagen workloads will eventually be too "muscular" for edge/serverless:
   • Long-running tasks.
   • Big JSON transformations.
   • Background queues and fan-out calls.
@@ -83,12 +83,12 @@ This document defines:
   Promagen will grow naturally into work that needs:
   • Continuous processes.
   • State across invocations.
-  • Richer scheduling than “run for a few seconds and die”.
+  • Richer scheduling than "run for a few seconds and die".
   Fly.io is the platform for that class of work.
   1.5 The glue between Promagen and many external APIs
   Fly.io does not provide FX/crypto/commodities data. It:
   • Stores your private API keys.
-  • Runs your “rate collector” and normalisation logic.
+  • Runs your "rate collector" and normalisation logic.
   • Produces your internal, Promagen-shaped JSON.
   • Protects users from hitting third-party rate limits directly.
   • Protects your wallet from API overuse.
@@ -114,8 +114,8 @@ This document defines:
 1. Support / service tiers
    o Optional standard support plans (e.g. around $29/month) for additional guarantees and help.
 1. Legacy vs new billing
-   o Older accounts may have access to a legacy “free tier” or low flat plans; newer accounts are primarily usage-based.
-   Promagen’s cost is therefore a function of:
+   o Older accounts may have access to a legacy "free tier" or low flat plans; newer accounts are primarily usage-based.
+   Promagen's cost is therefore a function of:
    • How many machines you run, where, and at what size.
    • How much persistent storage you attach.
    • How much data you send out (API responses, dashboards, websockets).
@@ -130,9 +130,9 @@ This document defines:
    o Multiple regions = multiple sets of machines and cost per region.
 1. Storage
    o Persistent volumes for:
-    Caching rates.
-    User-related data (if stored server-side).
-    Logs and historical metrics.
+    Caching rates.
+    User-related data (if stored server-side).
+    Logs and historical metrics.
    o Volume size × price/GB/month.
 1. Bandwidth / egress
    o Data sent from Fly.io to your users (dashboards, live updates).
@@ -148,7 +148,7 @@ This document defines:
 
 ---
 
-4. Example “ball-park” stack
+4. Example "ball-park" stack
    A simple, concrete example (not tied yet to a specific user count):
    • One backend VM in London, 2 GB RAM, always on: roughly $20–40/month.
    • Storage: 50 GB persistent cache at ~$0.15/GB-month → around $7.50/month.
@@ -191,7 +191,7 @@ This document defines:
    • Bandwidth (500–1,000 GB): £10–£20.
    • Internal routing / overhead: £5–£10.
    • Optional support: ~£20.
-   Ballpark total (pricing varies — verify against Fly.io pricing): £100–£180/month. This is when Promagen feels “alive” and responsive for a global-ish audience.
+   Ballpark total (pricing varies — verify against Fly.io pricing): £100–£180/month. This is when Promagen feels "alive" and responsive for a global-ish audience.
    5.3 Stage 3 – Fully Scaled Global
    Promagen is popular, with users across Asia, Europe, and the Americas. High-frequency FX, commodities, and crypto traffic, plus richer analytics and heavier caching.
    Assumptions
@@ -215,10 +215,10 @@ This document defines:
 6. Cost optimisation and guardrails
    To avoid surprises:
    • Monitor egress volumes carefully – especially if your dashboards ever include video or heavy real-time charts.
-   • Use auto-scaling / idle shutdown so machines don’t run at full cost during quiet periods.
+   • Use auto-scaling / idle shutdown so machines don't run at full cost during quiet periods.
    • Keep region count sensible – every region adds its own machines and costs.
-   • Lean on caching and rate-limiting so the backend doesn’t spam external APIs or dump unnecessary data to clients.
-   • Build cost monitoring and alerting early so you don’t discover a nasty bill after the fact.
+   • Lean on caching and rate-limiting so the backend doesn't spam external APIs or dump unnecessary data to clients.
+   • Build cost monitoring and alerting early so you don't discover a nasty bill after the fact.
    The nicest property of Fly.io for Promagen is:
    • You start tiny.
    • You only scale cost when real traffic forces you to.
@@ -228,12 +228,12 @@ This document defines:
 
 7. How this ties back to the API Brain (v2)
    Fly.io is where the API Brain becomes a running organism:
-   src/data/api/providers.registry.json tells your Fly workers which upstream providers exist, how to authenticate (via environment variables), and which adapter should normalise each provider’s payload.
+   src/data/api/providers.registry.json tells your Fly workers which upstream providers exist, how to authenticate (via environment variables), and which adapter should normalise each provider's payload.
    src/data/api/roles.policies.json tells them which provider powers each role (feature) and what cache TTL applies (for example, the FX ribbon role uses Twelve Data with a 30-minute cache).
    Budget guardrails (FX ribbon)
    Budget guardrails (FX ribbon)
 
-The FX ribbon enforces a soft “budget” model to avoid accidental overuse of paid market-data APIs.
+The FX ribbon enforces a soft "budget" model to avoid accidental overuse of paid market-data APIs.
 
 Configure these via environment variables (so limits match your provider plan without code changes):
 
@@ -244,7 +244,7 @@ FX_RIBBON_BUDGET_MINUTE_ALLOWANCE — per-minute allowance (optional; use if you
 FX_RIBBON_BUDGET_MINUTE_WINDOW_SECONDS — window size for the minute allowance.
 
 Note: Twelve Data credit usage is per symbol.
-The FX ribbon enforces a soft “budget” model to avoid accidental overuse of paid market-data APIs.
+The FX ribbon enforces a soft "budget" model to avoid accidental overuse of paid market-data APIs.
 
 Configure these via environment variables (so limits match your provider plan without code changes):
 
@@ -256,7 +256,7 @@ FX_RIBBON_BUDGET_MINUTE_WINDOW_SECONDS — window size for the minute allowance.
 
 Note: Twelve Data credit usage is per symbol.
 
-SSOT for what the UI shows (including FX pair metadata and ribbon defaults) lives in `frontend/src/data/fx/fx.pairs.json` and `docs/authority/ribbon-homepage.md`.
+SSOT for what the UI shows (including FX pair metadata and ribbon defaults) lives in `frontend/src/data/fx/fx-pairs.json` and `docs/authority/ribbon-homepage.md`.
 
 Fly.io hosts:
 the gateway runtime that loads the Brain JSON files and resolves a role to its provider list,
@@ -264,4 +264,247 @@ the worker logic that performs the HTTP call(s) and hands payloads to the adapte
 the cache layer that keeps data warm for your ribbons (and returns mode: "cached" when serving within TTL).
 In the current operating model there is one live provider (Twelve Data) and no synthetic/demo mode. The only active modes are live and cached; fallback is reserved for the future when backup providers are reintroduced.
 Promagen on Fly.io becomes:
-“Promagen: powered by many APIs under one unified logic layer, running on an infrastructure platform that you control.”
+"Promagen: powered by many APIs under one unified logic layer, running on an infrastructure platform that you control."
+
+---
+
+## 8. FX Pairs SSOT Architecture (Added Jan 9, 2026)
+
+### 8.1 The Problem: Duplication = Drift
+
+Before this architecture, the gateway had **hardcoded FX pairs** in `src/server.ts`. This duplicated what's in `frontend/src/data/fx/fx-pairs.json`, violating SSOT:
+
+```
+❌ BAD: Two places to maintain
+frontend/src/data/fx/fx-pairs.json  ← File 1
+gateway/src/server.ts (hardcoded)   ← File 2
+```
+
+If you added a pair to the frontend JSON, the gateway wouldn't know about it. If you changed the gateway, the frontend wouldn't match. **Drift guaranteed.**
+
+### 8.2 The Solution: Runtime SSOT Fetch
+
+The gateway now **fetches pairs from the frontend** on startup:
+
+```
+✅ GOOD: One source of truth
+frontend/src/data/fx/fx-pairs.json   ← THE ONE AND ONLY SOURCE
+              ↓
+frontend/api/fx/config               ← NEW: Exposes it as API
+              ↓
+gateway fetches on startup           ← Reads from frontend
+              ↓
+gateway serves FX quotes             ← Uses fetched pairs
+```
+
+### 8.3 Implementation Details
+
+**Frontend endpoint:** `src/app/api/fx/config/route.ts`
+
+```typescript
+// Reads unified fx-pairs.json (single source of truth)
+// Returns only isDefaultFree=true pairs
+// Response:
+{
+  "version": 1,
+  "ssot": "frontend/src/data/fx/fx-pairs.json",
+  "generatedAt": "2026-01-09T02:00:00.000Z",
+  "pairs": [
+    { "id": "eur-usd", "base": "EUR", "quote": "USD" },
+    { "id": "gbp-usd", "base": "GBP", "quote": "USD" },
+    // ... all isDefaultFree pairs
+  ]
+}
+```
+
+**Gateway startup:** `src/server.ts`
+
+```typescript
+// Environment variable for SSOT endpoint
+const FX_CONFIG_URL = process.env['FX_CONFIG_URL'] ?? 'https://promagen.com/api/fx/config';
+
+// Fallback pairs (only if frontend unreachable)
+const FALLBACK_FX_PAIRS: FxPair[] = [...];
+
+// Runtime state
+let activeFxPairs: FxPair[] = [];
+let ssotSource: 'frontend' | 'fallback' = 'fallback';
+
+// Fetch from SSOT on startup
+async function initFxPairs(): Promise<void> {
+  const ssotPairs = await fetchSsotConfig();
+  if (ssotPairs && ssotPairs.length > 0) {
+    activeFxPairs = ssotPairs;
+    ssotSource = 'frontend';
+  } else {
+    activeFxPairs = FALLBACK_FX_PAIRS;
+    ssotSource = 'fallback';
+  }
+}
+
+// Start sequence
+async function start(): Promise<void> {
+  await initFxPairs();  // SSOT fetch FIRST
+  // ... then start HTTP server
+}
+```
+
+### 8.4 Gateway Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FX_CONFIG_URL` | `https://promagen.com/api/fx/config` | Frontend SSOT endpoint |
+| `TWELVEDATA_API_KEY` | (required) | TwelveData API key |
+| `FX_RIBBON_BUDGET_DAILY_ALLOWANCE` | `800` | Daily API credit budget |
+| `FX_RIBBON_BUDGET_MINUTE_ALLOWANCE` | `8` | Per-minute API credit cap |
+| `FX_RIBBON_TTL_SECONDS` | `1800` | Cache TTL (30 minutes) |
+
+### 8.5 Verifying SSOT Is Working
+
+**Check /health endpoint:**
+
+```powershell
+Invoke-RestMethod -Uri "https://promagen-api.fly.dev/health"
+```
+
+**Expected response:**
+```json
+{
+  "status": "ok",
+  "ssot": {
+    "source": "frontend",           // ← This means SSOT is working
+    "configUrl": "https://promagen.com/api/fx/config",
+    "pairCount": 8,
+    "pairs": ["eur-usd", "gbp-usd", "usd-jpy", ...]
+  }
+}
+```
+
+If `"source": "fallback"`, the gateway couldn't reach the frontend on startup.
+
+### 8.6 Changing FX Pairs (The SSOT Way)
+
+**Before (bad):** Edit two files, hope they stay in sync.
+
+**Now (correct):**
+
+1. Edit **ONE file**: `frontend/src/data/fx/fx-pairs.json`
+2. Deploy frontend: `git push` (Vercel auto-deploys)
+3. Restart gateway: `fly apps restart promagen-api`
+
+**That's it.** One file. Both systems update. No drift.
+
+### 8.7 Pair Count Is Variable
+
+**Hard rule from `ribbon-homepage.md`:**
+
+> The ribbon does not hard-code "5" or "8" anywhere.
+> The number of FX chips shown on the homepage is simply the number of entries you designate for the homepage in that JSON.
+
+The current default is 8 pairs (as set in fx-pairs.json with `isDefaultFree: true`), but this can be any number. The gateway respects whatever the SSOT says.
+
+### 8.8 Deployment Order
+
+**Always deploy frontend first:**
+
+```powershell
+# Step 1: Deploy frontend (so /api/fx/config exists)
+cd C:\Users\Proma\Projects\promagen\frontend
+git add .
+git commit -m "feat: add /api/fx/config SSOT endpoint"
+git push
+
+# Step 2: Wait for Vercel to finish deploying
+
+# Step 3: Deploy gateway
+cd C:\Users\Proma\Projects\promagen\gateway
+fly deploy
+```
+
+If you deploy gateway first, it will fall back to hardcoded pairs (because /api/fx/config doesn't exist yet).
+
+### 8.9 Files to Delete (Cleanup)
+
+A previous attempt created duplicate files in the gateway. **Delete these:**
+
+```powershell
+# Run from: C:\Users\Proma\Projects\promagen\gateway
+Remove-Item -Recurse -Force ".\lib\ssot" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force ".\data" -ErrorAction SilentlyContinue
+```
+
+The gateway should have NO local fx-pairs.json or data files — it fetches everything from the frontend SSOT.
+
+---
+
+## 9. Gateway TypeScript Configuration
+
+### 9.1 Module Resolution
+
+The gateway uses `NodeNext` module resolution, which requires `.js` extensions on all relative imports:
+
+```typescript
+// ❌ WRONG (TS2835 error):
+import { logInfo } from './logging';
+
+// ✅ CORRECT:
+import { logInfo } from './logging.js';
+```
+
+**Files that require .js extensions:**
+- `lib/adapters.ts`
+- `lib/http.ts`
+- `lib/quota.ts`
+- `lib/resilience.ts`
+- `lib/roles.ts`
+- `lib/types.ts`
+
+### 9.2 Verification
+
+```powershell
+# Run from: C:\Users\Proma\Projects\promagen\gateway
+npx tsc --noEmit  # Should pass with 0 errors
+```
+
+---
+
+## 10. Monorepo Structure
+
+Promagen uses a pnpm workspace monorepo:
+
+```
+promagen/
+├── pnpm-workspace.yaml    # Defines workspace packages
+├── pnpm-lock.yaml         # Shared lockfile for all packages
+├── frontend/              # Next.js app → deploys to Vercel
+│   └── package.json
+└── gateway/               # Fly.io gateway → deploys to Fly
+    └── package.json
+```
+
+**pnpm-workspace.yaml:**
+```yaml
+packages:
+  - frontend
+  - gateway
+```
+
+**Important:** When you modify `gateway/package.json`, you must regenerate the lockfile from the monorepo root:
+
+```powershell
+# Run from: C:\Users\Proma\Projects\promagen (root)
+pnpm install
+git add pnpm-lock.yaml
+git commit -m "chore: update pnpm-lock.yaml"
+git push
+```
+
+Otherwise Vercel will fail with `ERR_PNPM_OUTDATED_LOCKFILE`.
+
+---
+
+**Last updated:** 10 January 2026
+
+**Changelog:**
+- **10 Jan 2026:** FX SSOT Consolidated — Updated §8 to reflect unified `fx-pairs.json` file (merged from separate `fx.pairs.json` and `pairs.json`). Single file contains all FX pair data including demo prices, tier flags, and country codes.
+- **9 Jan 2026:** Added §8 FX Pairs SSOT Architecture (runtime fetch from frontend). Added §9 Gateway TypeScript Configuration (.js extensions). Added §10 Monorepo Structure (pnpm workspace).

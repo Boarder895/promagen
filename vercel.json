@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "skewProtection": "7d",
   "crons": [
     {
       "path": "/api/promagen-users/cron",
