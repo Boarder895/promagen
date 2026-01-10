@@ -1,7 +1,7 @@
 // frontend/src/lib/finance/client.ts
 // Tiny client helper to read demo or live based on flags.
 
-import pairs from "@/data/fx/pairs.json";
+import pairs from "@/data/fx/fx-pairs.json";
 
 export type FxRate = {
   id: string;

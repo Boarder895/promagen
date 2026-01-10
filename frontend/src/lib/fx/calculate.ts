@@ -5,7 +5,7 @@
 // pair metadata in src/data/fx/pairs.json so that everything is driven by
 // data files rather than hard-coded logic.
 
-import pairsJson from '@/data/fx/pairs.json';
+import pairsJson from '@/data/fx/fx-pairs.json';
 
 type PairConfig = {
   id: string;

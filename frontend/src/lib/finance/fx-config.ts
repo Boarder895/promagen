@@ -2,16 +2,15 @@
 //
 // FX configuration helpers for the ribbon and any mini widgets.
 //
-// - Drives from src/data/fx/finance.config.json + src/data/fx/pairs.json
-// - Uses src/data/selected/fx.pairs.free.json for the free-tier subset
+// - Drives from src/data/fx/finance.config.json + src/data/fx/fx-pairs.json
+// - Free-tier pairs derived from isDefaultFree flag in fx-pairs.json (TRUE SSOT)
 //
 // Rule: components and hooks should import from this file (or from
 // lib/finance/fx-pairs if you add a higher-level helper), never from JSON
 // directly.
 
 import financeConfigJson from '@/data/fx/finance.config.json';
-import pairsJson from '@/data/fx/pairs.json';
-import freePairIdsJson from '@/data/selected/fx.pairs.free.json';
+import pairsJson from '@/data/fx/fx-pairs.json';
 import type { FxPair } from '@/types/fx';
 
 type FxPairId = string;
@@ -28,6 +27,14 @@ type FinanceConfig = {
   pairs: FinancePairsConfig;
 };
 
+// ───────────────────────────────────────────────────────────────────────────────
+// Internal helpers (must be defined before usage)
+// ───────────────────────────────────────────────────────────────────────────────
+
+function normaliseId(id: string): string {
+  return id.trim().toLowerCase();
+}
+
 // Canonical full catalogue of FX pairs (data-driven).
 const ALL_FX_PAIRS_INTERNAL = pairsJson as FxPair[];
 
@@ -36,19 +43,18 @@ const ALL_FX_PAIRS_BY_ID_INTERNAL = new Map<string, FxPair>(
   ALL_FX_PAIRS_INTERNAL.map((pair) => [normaliseId(pair.id), pair]),
 );
 
-// Free-tier ids come from src/data/selected/fx.pairs.free.json.
-const FREE_FX_PAIR_IDS_INTERNAL = (freePairIdsJson as FxPairId[]).map(normaliseId);
+// Free-tier ids derived from isDefaultFree flag in fx-pairs.json (TRUE SSOT).
+// No separate file needed - change fx-pairs.json to update free tier.
+const FREE_FX_PAIR_IDS_INTERNAL = ALL_FX_PAIRS_INTERNAL
+  .filter((pair) => (pair as FxPair & { isDefaultFree?: boolean }).isDefaultFree === true)
+  .map((pair) => normaliseId(pair.id));
 
 // Finance config is allowed to be more expressive later; we treat it as typed.
 const financeConfig = financeConfigJson as FinanceConfig;
 
 // ───────────────────────────────────────────────────────────────────────────────
-// Internal helpers
+// More internal helpers
 // ───────────────────────────────────────────────────────────────────────────────
-
-function normaliseId(id: string): string {
-  return id.trim().toLowerCase();
-}
 
 function resolveConfigIds(config: FinancePairsConfig | undefined): FxPairId[] {
   // Default: if config is missing or "*", we allow every known pair in
@@ -105,7 +111,7 @@ export function getAllFxPairsOrdered(): FxPair[] {
 }
 
 /**
- * Free-tier FX pair ids – as stored in src/data/selected/fx.pairs.free.json.
+ * Free-tier FX pair ids – derived from isDefaultFree flag in fx-pairs.json.
  *
  * Returned as a fresh array so callers can sort / slice without mutating
  * the internal state.
@@ -117,7 +123,7 @@ export function getFreeFxPairIds(): FxPairId[] {
 /**
  * Free-tier FX pairs metadata.
  *
- * Uses the ids from src/data/selected/fx.pairs.free.json and orders them
+ * Uses pairs with isDefaultFree=true from fx-pairs.json and orders them
  * to be consistent with getAllFxPairsOrdered().
  */
 export function getFreeFxPairs(): FxPair[] {

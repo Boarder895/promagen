@@ -41,23 +41,23 @@ interface FxPairCatalogEntry {
 
 /**
  * Load valid pair IDs from SSOT - FULL CATALOG
- * 
+ *
  * FIX: Previously loaded fx.pairs.json (8 default pairs).
  * Now loads pairs.json (3,192 full catalog) per paid_tier.md §5.5:
  * "Catalog access: Full catalog (3,192 pairs)"
  */
 async function loadValidPairIds(): Promise<Set<string>> {
   try {
-    // pairs.json is the FULL catalog: [{id: "eur-usd", base: "EUR", quote: "USD", ...}, ...]
+    // fx-pairs.json is the FULL catalog: [{id: "eur-usd", base: "EUR", quote: "USD", ...}, ...]
     // This is the 3,192-pair catalog, not the 8-pair defaults
-    const pairsCatalogModule = await import('@/data/fx/pairs.json');
-    
+    const pairsCatalogModule = await import('@/data/fx/fx-pairs.json');
+
     // Handle both default export and direct import
     const pairsCatalog: FxPairCatalogEntry[] = Array.isArray(pairsCatalogModule.default)
       ? (pairsCatalogModule.default as FxPairCatalogEntry[])
       : Array.isArray(pairsCatalogModule)
-        ? (pairsCatalogModule as unknown as FxPairCatalogEntry[])
-        : [];
+      ? (pairsCatalogModule as unknown as FxPairCatalogEntry[])
+      : [];
 
     return new Set(
       pairsCatalog
@@ -174,10 +174,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Return errors if any
     if (validationErrors.length > 0) {
-      return NextResponse.json(
-        { error: 'Validation failed', validationErrors },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Validation failed', validationErrors }, { status: 400 });
     }
 
     // Update Clerk publicMetadata

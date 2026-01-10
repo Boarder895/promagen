@@ -7,7 +7,7 @@
 // - Returns FxSnapshot objects, the same shape used by live-source.ts and
 //   fetchFxSnapshot, so demo and live can be swapped freely.
 
-import pairsJson from '@/data/fx/pairs.json';
+import pairsJson from '@/data/fx/fx-pairs.json';
 import type { FxSnapshot } from './fetch';
 import { seededStep, type WalkParams } from './randomwalk';
 

@@ -4,7 +4,7 @@
  */
 import type { FxPair } from "@/lib/fx/eligibility";
 import determineEligibilityOrder from "@/lib/fx/eligibility";
-import pairs from "@/data/fx/pairs.json";
+import pairs from "@/data/fx/fx-pairs.json";
 
 test("order is deterministic east→west weighted", () => {
   const ordered = determineEligibilityOrder(pairs as FxPair[]);

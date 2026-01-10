@@ -11,8 +11,8 @@
 
 import { NextResponse } from 'next/server';
 
-import fxPairsIndex from '@/data/fx/fx.pairs.json';
-import pairsCatalog from '@/data/fx/pairs.json';
+import fxPairsIndex from '@/data/fx/fx-pairs.json';
+import pairsCatalog from '@/data/fx/fx-pairs.json';
 
 export const runtime = 'edge';
 export const revalidate = 3600; // Cache for 1 hour

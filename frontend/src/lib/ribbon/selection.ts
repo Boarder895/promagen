@@ -9,8 +9,8 @@
 // single-source-of-truth data under src/data.
 // -----------------------------------------------------------------------------
 
-import fxPairsJson from '@/data/fx/pairs.json';
-import fxPairsIndexJson from '@/data/fx/fx.pairs.json';
+import fxPairsJson from '@/data/fx/fx-pairs.json';
+import fxPairsIndexJson from '@/data/fx/fx-pairs.json';
 import commoditiesCatalogJson from '@/data/commodities/commodities.catalog.json';
 import cryptoWhitelistJson from '@/data/crypto/whitelist.json';
 
