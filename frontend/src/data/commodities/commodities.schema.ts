@@ -13,6 +13,8 @@ export const commoditySubGroups = [
   'lng',
   'coal',
   'biofuels',
+  'power',
+  'emissions',
   // Agriculture
   'grains',
   'softs',
@@ -30,6 +32,9 @@ export type CommoditySubGroup = (typeof commoditySubGroups)[number];
 
 export const quoteCurrencies = ['USD', 'EUR', 'GBP'] as const;
 export type QuoteCurrency = (typeof quoteCurrencies)[number];
+
+export const commodityGeoLevels = ['country', 'region', 'multi_country'] as const;
+export type CommodityGeoLevel = (typeof commodityGeoLevels)[number];
 
 export const commoditySchema = z.object({
   id: z.string().min(1, 'id is required'),
@@ -65,6 +70,24 @@ export const commoditySchema = z.object({
 
   ribbonLabel: z.string().min(1, 'ribbonLabel is required'),
   ribbonSubtext: z.string().min(1, 'ribbonSubtext is required'),
+
+  geoLevel: z.enum(commodityGeoLevels, {
+    description: 'Geographic grouping used for the ribbon map / flags',
+  }),
+
+  displayCountryCodes: z
+    .array(z.string().regex(/^[A-Z]{2}$/, 'displayCountryCodes must be ISO-3166-1 alpha-2'))
+    .min(1, 'displayCountryCodes must contain at least one country code'),
+
+  // Tooltip fields (optional)
+  yearFirstTraded: z
+    .number()
+    .int('yearFirstTraded must be an integer')
+    .min(1800, 'yearFirstTraded must be 1800 or later')
+    .max(2030, 'yearFirstTraded must be 2030 or earlier')
+    .optional(),
+
+  fact: z.string().max(150, 'fact must be 150 characters or less').optional(),
 });
 
 export type Commodity = z.infer<typeof commoditySchema>;

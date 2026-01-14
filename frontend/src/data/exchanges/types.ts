@@ -1,4 +1,4 @@
-// frontend/src/data/exchanges/types.ts
+// src/data/exchanges/types.ts
 // ============================================================================
 // CANONICAL EXCHANGE TYPE - Single Source of Truth
 // ============================================================================
@@ -27,6 +27,23 @@ export type ExchangeRegion = 'APAC' | 'EMEA' | 'AMERICAS';
 export type Hemisphere = 'NE' | 'NW' | 'SE' | 'SW' | '';
 
 /**
+ * Marketstack configuration for benchmark index data.
+ */
+export interface MarketstackConfig {
+  /**
+   * Marketstack benchmark key for /v2/indexinfo endpoint.
+   * @example "nikkei_225", "sp500", "ftse_100"
+   */
+  benchmark: string;
+
+  /**
+   * Human-readable index name.
+   * @example "Nikkei 225", "S&P 500", "FTSE 100"
+   */
+  indexName: string;
+}
+
+/**
  * Canonical Exchange type representing a stock exchange.
  *
  * This is the Single Source of Truth for exchange data shapes across Promagen.
@@ -47,6 +64,12 @@ export type Hemisphere = 'NE' | 'NW' | 'SE' | 'SW' | '';
  *   hoursTemplate: 'asia-break',
  *   holidaysRef: 'tse-tokyo',
  *   hemisphere: 'NE',
+ *   ribbonLabel: 'Tokyo (TSE)',
+ *   marketstack: {
+ *     benchmark: 'nikkei_225',
+ *     indexName: 'Nikkei 225',
+ *   },
+ *   hoverColor: '#FF3B5C',
  * };
  * ```
  */
@@ -127,9 +150,32 @@ export type Exchange = {
    */
   hemisphere: Hemisphere;
 
+  /**
+   * Marketstack API configuration for index data.
+   * Links exchange to its benchmark index.
+   */
+  marketstack: MarketstackConfig;
+
+  /**
+   * Vibrant hover color for exchange card UI.
+   * Hex format, unique per exchange.
+   * Applied when cursor enters the exchange card.
+   * @example "#FF3B5C", "#3B82F6", "#10B981"
+   */
+  hoverColor: string;
+
   // =========================================================================
   // Optional fields (UI/display convenience, future expansion)
   // =========================================================================
+
+  /**
+   * Short display name for space-constrained UI (ribbon, cards).
+   * Should be 2-3 words max for reliable line-clamp behavior.
+   * Falls back to 'exchange' if not provided.
+   *
+   * @example "Tokyo (TSE)", "ASX Sydney", "HKEX", "JSE"
+   */
+  ribbonLabel?: string;
 
   /**
    * Alternative name field.
@@ -201,6 +247,11 @@ export function isExchange(value: unknown): value is Exchange {
     typeof record.latitude === 'number' &&
     typeof record.hoursTemplate === 'string' &&
     typeof record.holidaysRef === 'string' &&
-    typeof record.hemisphere === 'string'
+    typeof record.hemisphere === 'string' &&
+    typeof record.marketstack === 'object' &&
+    record.marketstack !== null &&
+    typeof (record.marketstack as Record<string, unknown>).benchmark === 'string' &&
+    typeof (record.marketstack as Record<string, unknown>).indexName === 'string' &&
+    typeof record.hoverColor === 'string'
   );
 }

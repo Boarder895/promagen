@@ -1,18 +1,32 @@
 // src/data/commodities/commodities.catalog.d.ts
 
-export type CommodityGroup = 'energy' | 'metals' | 'agriculture';
+export type CommodityGroup = 'energy' | 'agriculture' | 'metals';
 
 export type CommoditySubGroup =
+  // Energy
   | 'crude_oil'
   | 'natural_gas'
   | 'refined_products'
+  | 'distillates'
+  | 'gasoline'
+  | 'lng'
+  | 'coal'
+  | 'biofuels'
+  // Agriculture
+  | 'grains'
+  | 'softs'
+  | 'livestock'
+  | 'oilseeds'
+  | 'oilseeds_products'
+  | 'fertilisers'
+  // Metals
   | 'precious'
   | 'base'
-  | 'grains'
-  | 'oilseeds_products'
-  | 'oilseeds'
-  | 'softs'
-  | 'livestock';
+  | 'battery_metals';
+
+export type QuoteCurrency = 'USD' | 'EUR' | 'GBP';
+
+export type CommodityGeoLevel = 'country' | 'region' | 'multi_country';
 
 export interface Commodity {
   /**
@@ -31,13 +45,12 @@ export interface Commodity {
   shortName: string;
 
   /**
-   * Vendor-agnostic symbol or canonical code,
-   * e.g. "BRENT", "XAU", "W"
+   * Vendor-agnostic symbol or canonical code, e.g. "BRENT", "XAU"
    */
   symbol: string;
 
   /**
-   * Top-level group: energy | metals | agriculture
+   * Top-level group: energy | agriculture | metals
    */
   group: CommodityGroup;
 
@@ -52,10 +65,9 @@ export interface Commodity {
   emoji: string;
 
   /**
-   * Quote currency used for pricing on the Ribbon,
-   * typically "USD" (or "EUR" for TTF, etc.)
+   * Quote currency used for pricing on the Ribbon, typically USD (or EUR for TTF, etc.)
    */
-  quoteCurrency: string;
+  quoteCurrency: QuoteCurrency;
 
   /**
    * Whether this commodity is currently active in Promagen.
@@ -71,27 +83,45 @@ export interface Commodity {
 
   /**
    * Whether this is part of the default free-tier set.
-   * Free tier: exactly one per group (Energy, Metals, Agriculture).
+   * Free tier: exactly 7 commodities, in a 2–3–2 group pattern.
    */
   isDefaultFree: boolean;
 
   /**
-   * Whether this is part of the suggested paid-tier pattern.
-   * Paid tier: total of five instruments, 2 + 2 + 1 across the groups.
+   * Whether this is part of the default paid-tier set.
+   * Paid tier: currently mirrors free until Pro defaults are explicitly defined.
    */
   isDefaultPaid: boolean;
 
   /**
-   * Sort priority within a group.
-   * 1 = top / headline instrument.
+   * Sort priority within a group. 1 = most important.
    */
   priority: number;
 
   /**
-   * Flexible tagging for future filtering and UI rules,
-   * e.g. ["energy", "headline", "high_liquidity"].
+   * Flexible tagging for future filtering and UI rules.
    */
   tags: string[];
+
+  /**
+   * Primary text shown on the Ribbon.
+   */
+  ribbonLabel: string;
+
+  /**
+   * Secondary text shown on the Ribbon.
+   */
+  ribbonSubtext: string;
+
+  /**
+   * How the commodity should be presented geographically.
+   */
+  geoLevel: CommodityGeoLevel;
+
+  /**
+   * ISO-3166-1 alpha-2 country codes used for flag display.
+   */
+  displayCountryCodes: string[];
 }
 
 /**

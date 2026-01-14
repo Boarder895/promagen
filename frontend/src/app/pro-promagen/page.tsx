@@ -8,17 +8,18 @@
 // Server responsibilities:
 // - Load exchange catalog
 // - Load FX pairs catalog (UNIFIED fx-pairs.json)
+// - Build indices catalog from exchanges with marketstack data
 // - Load SSOT defaults
 // - Build demo weather index
 // - SEO metadata
 //
 // Client responsibilities (ProPromagenClient):
-// - Display comparison table with embedded dropdowns
+// - Display comparison table with embedded dropdowns (FX, Exchanges, Indices)
 // - Show FX ribbon with demo prices
 // - Show exchange rails with real clocks, demo weather
 // - Save preferences (paid users)
 //
-// UPDATED: Now uses unified fx-pairs.json — single source of truth for FX data.
+// UPDATED: Added indices catalog for stock index selection.
 //
 // Authority: docs/authority/paid_tier.md §5.10
 // ============================================================================
@@ -31,7 +32,11 @@ import exchangesCatalog from '@/data/exchanges/exchanges.catalog.json';
 import exchangesSelected from '@/data/exchanges/exchanges.selected.json';
 import fxPairsCatalog from '@/data/fx/fx-pairs.json';
 import { DEMO_EXCHANGE_WEATHER, type ExchangeWeather } from '@/lib/weather/exchange-weather';
-import type { FxPairCatalogEntry, ExchangeCatalogEntry } from '@/lib/pro-promagen/types';
+import {
+  type FxPairCatalogEntry,
+  type ExchangeCatalogEntry,
+  buildIndicesCatalog,
+} from '@/lib/pro-promagen/types';
 
 // ============================================================================
 // METADATA (SEO)
@@ -40,11 +45,11 @@ import type { FxPairCatalogEntry, ExchangeCatalogEntry } from '@/lib/pro-promage
 export const metadata: Metadata = {
   title: 'Pro Promagen — Customize Your Market View',
   description:
-    'Unlock personalized FX pairs, exchange selection, unlimited prompts, and more with Pro Promagen.',
+    'Unlock personalized FX pairs, exchange selection, stock indices display, unlimited prompts, and more with Pro Promagen.',
   openGraph: {
     title: 'Pro Promagen — Customize Your Market View',
     description:
-      'Unlock personalized FX pairs, exchange selection, unlimited prompts, and more.',
+      'Unlock personalized FX pairs, exchange selection, stock indices, and more.',
     type: 'website',
   },
 };
@@ -75,6 +80,20 @@ function getDefaultFxPairIds(
     .map((p) => p.id);
 }
 
+/**
+ * Get default indices IDs - all selected exchanges that have marketstack data.
+ * By default, all exchanges show their index.
+ */
+function getDefaultIndicesIds(
+  selectedExchangeIds: string[],
+  exchangeCatalog: ExchangeCatalogEntry[]
+): string[] {
+  return selectedExchangeIds.filter((id) => {
+    const exchange = exchangeCatalog.find((e) => e.id === id);
+    return exchange?.marketstack?.benchmark && exchange?.marketstack?.indexName;
+  });
+}
+
 // ============================================================================
 // PAGE COMPONENT
 // ============================================================================
@@ -84,11 +103,18 @@ export default function ProPromagenPage() {
   const exchangeCatalog = exchangesCatalog as unknown as ExchangeCatalogEntry[];
   const fxCatalog = fxPairsCatalog as unknown as FxPairCatalogEntry[];
 
+  // Build indices catalog from exchanges with marketstack data
+  const indicesCatalog = buildIndicesCatalog(exchangeCatalog);
+
   // Extract default IDs from SSOT
   // exchanges.selected.json has shape: { ids: string[] }
   const defaultExchangeIds = (exchangesSelected as { ids: string[] }).ids;
+  
   // FX defaults come from the unified catalog (isDefaultFree === true)
   const defaultFxPairIds = getDefaultFxPairIds(fxCatalog);
+  
+  // Indices defaults: all selected exchanges with marketstack data
+  const defaultIndicesIds = getDefaultIndicesIds(defaultExchangeIds, exchangeCatalog);
 
   // Build demo weather index for exchange cards
   // Shows placeholder weather data (no API cost)
@@ -98,8 +124,10 @@ export default function ProPromagenPage() {
     <ProPromagenClient
       exchangeCatalog={exchangeCatalog}
       fxCatalog={fxCatalog}
+      indicesCatalog={indicesCatalog}
       defaultExchangeIds={defaultExchangeIds}
       defaultFxPairIds={defaultFxPairIds}
+      defaultIndicesIds={defaultIndicesIds}
       demoWeatherIndex={demoWeatherIndex}
     />
   );

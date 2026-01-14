@@ -584,6 +584,57 @@ Client-side polling must be deliberate:
 - Not every render
 - Not multiple components doing the same poll
 
+### 10.1 Data Polling Hooks (Centralised Pattern)
+
+Promagen uses centralised polling hooks for all data feeds. Each feed has ONE hook that manages polling globally.
+
+**Canonical hooks:**
+
+| Hook | Feed | Slots | TTL | Provider |
+|------|------|-------|-----|----------|
+| `use-fx-quotes.ts` | FX | :00, :30 | 30 min | TwelveData |
+| `use-indices-quotes.ts` | Indices | :05, :35 | 2 hr | Marketstack |
+| `use-commodities-quotes.ts` | Commodities | :10, :40 | 30 min | TwelveData |
+| `use-crypto-quotes.ts` | Crypto | :20, :50 | 30 min | TwelveData |
+
+**Pattern (all hooks follow this structure):**
+
+```typescript
+// 1. Calculate time to next slot
+function getMsUntilNextSlot(): number {
+  const now = new Date();
+  const minute = now.getMinutes();
+  const targets = [5, 35]; // Feed-specific slots
+  // ... return ms until next target
+}
+
+// 2. Single useEffect with cleanup
+useEffect(() => {
+  const fetchData = async () => { /* ... */ };
+  
+  // Initial fetch
+  fetchData();
+  
+  // Schedule next fetch at slot time
+  const timeToNext = getMsUntilNextSlot();
+  const timer = setTimeout(/* ... */);
+  
+  return () => clearTimeout(timer);
+}, [/* dependencies */]);
+
+// 3. Return data + loading state
+return { data, isLoading, error };
+```
+
+**Rules:**
+
+- ONE hook instance per feed globally (via container component)
+- Polling aligns to clock slots (prevents per-minute rate limits)
+- Visibility-aware: pause when tab hidden
+- Return loading/error state for UI handling
+
+**Location:** `frontend/src/hooks/`
+
 ---
 
 ## 11. Error Handling Rules
@@ -1050,6 +1101,7 @@ When addressing ESLint, TypeScript typecheck, or test failures, apply the smalle
 
 ## Changelog
 
+- **13 Jan 2026 (v2.5):** Added §10.1 Data Polling Hooks (centralised pattern). Documents all four polling hooks (FX, Indices, Commodities, Crypto) with slot schedules, TTLs, and providers. Standard pattern for visibility-aware, slot-aligned polling.
 - **10 Jan 2026 (v2.4):** Updated FX SSOT file references from `fx.pairs.json` to unified `fx-pairs.json` in §3 and §13 SSOT sections.
 - **9 Jan 2026 (v2.3):** Added Console Logging Standards section in §15 Code Quality Rules. Specifies `console.debug` over `console.log`, prefix convention `[module-name]`, and method hierarchy (error/warn/debug).
 - **30 Dec 2025:** Added § 7.1 Tooltip Standards (uniform UI guidelines for consistent, accessible tooltips across all surfaces).

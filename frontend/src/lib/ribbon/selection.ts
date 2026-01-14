@@ -10,7 +10,7 @@
 // -----------------------------------------------------------------------------
 
 import fxPairsJson from '@/data/fx/fx-pairs.json';
-import fxPairsIndexJson from '@/data/fx/fx-pairs.json';
+// (Removed) FX index split-file import: unified SSOT uses fx-pairs.json
 import commoditiesCatalogJson from '@/data/commodities/commodities.catalog.json';
 import cryptoWhitelistJson from '@/data/crypto/whitelist.json';
 
@@ -114,14 +114,7 @@ export function selectForRibbon<TItem, TId extends string | number = string>(opt
 // FX helpers – powered by src/data/fx
 // ---------------------------------------------------------------------------
 
-type FxPairsIndexEntry = {
-  id: FxPairId;
-  isDefaultFree?: boolean;
-  isDefaultPaid?: boolean;
-};
-
 const FX_UNIVERSE: FxPair[] = fxPairsJson as FxPair[];
-const FX_INDEX: FxPairsIndexEntry[] = fxPairsIndexJson as FxPairsIndexEntry[];
 
 export type FxSelectionWithMode = SelectionResult<FxPair, FxPairId> & {
   mode: 'free' | 'paid' | 'freeFallback' | 'invalid';
@@ -131,8 +124,8 @@ export type FxSelectionWithMode = SelectionResult<FxPair, FxPairId> & {
  * Default free-tier FX selection – all pairs flagged isDefaultFree in the canonical index.
  */
 export function getFreeFxSelection(): SelectionResult<FxPair, FxPairId> {
-  const requestedIds: FxPairId[] = FX_INDEX.filter((entry) => entry.isDefaultFree).map(
-    (entry) => entry.id,
+  const requestedIds: FxPairId[] = FX_UNIVERSE.filter((pair) => pair.isDefaultFree === true).map(
+    (pair) => pair.id,
   );
 
   return selectForRibbon<FxPair, FxPairId>({

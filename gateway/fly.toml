@@ -1,6 +1,6 @@
 # fly.toml - Promagen API Gateway
+# Modular Monolith Architecture v2.0
 # Deploys to: promagen-api.fly.dev
-# Region: lhr (London)
 
 app = "promagen-api"
 primary_region = "lhr"
@@ -12,16 +12,25 @@ primary_region = "lhr"
   NODE_ENV = "production"
   PORT = "8080"
   LOG_LEVEL = "info"
-  # Budget defaults (can override via secrets)
+  # FX Budget (TwelveData - shared with Crypto)
   FX_RIBBON_BUDGET_DAILY_ALLOWANCE = "800"
   FX_RIBBON_BUDGET_MINUTE_ALLOWANCE = "8"
-  # TTL: 30 minutes (1800 seconds) - CRITICAL for API budget
   FX_RIBBON_TTL_SECONDS = "1800"
+  # Crypto Budget (same pool as FX)
+  CRYPTO_RIBBON_BUDGET_DAILY_ALLOWANCE = "800"
+  CRYPTO_RIBBON_BUDGET_MINUTE_ALLOWANCE = "8"
+  CRYPTO_RIBBON_TTL_SECONDS = "1800"
+  # Indices Budget (Marketstack - separate)
+  INDICES_RIBBON_BUDGET_DAILY_ALLOWANCE = "250"
+  INDICES_RIBBON_BUDGET_MINUTE_ALLOWANCE = "3"
+  INDICES_RIBBON_TTL_SECONDS = "7200"
+  # Commodities (no provider currently)
+  COMMODITIES_RIBBON_TTL_SECONDS = "1800"
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = false  # Keep always-on for cache persistence
+  auto_stop_machines = false
   auto_start_machines = true
   min_machines_running = 1
   processes = ["app"]
@@ -32,10 +41,10 @@ primary_region = "lhr"
     soft_limit = 200
 
 [[http_service.checks]]
-  grace_period = "10s"
+  grace_period = "30s"
   interval = "30s"
   method = "GET"
-  timeout = "5s"
+  timeout = "10s"
   path = "/health"
 
 [[vm]]

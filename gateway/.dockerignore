@@ -1,9 +1,8 @@
 node_modules
 dist
+*.log
 .git
 .gitignore
+README.md
 *.md
-*.log
 .env*
-.fly
-fly.toml.local

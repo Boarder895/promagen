@@ -231,19 +231,7 @@ This document defines:
    src/data/api/providers.registry.json tells your Fly workers which upstream providers exist, how to authenticate (via environment variables), and which adapter should normalise each provider's payload.
    src/data/api/roles.policies.json tells them which provider powers each role (feature) and what cache TTL applies (for example, the FX ribbon role uses Twelve Data with a 30-minute cache).
    Budget guardrails (FX ribbon)
-   Budget guardrails (FX ribbon)
 
-The FX ribbon enforces a soft "budget" model to avoid accidental overuse of paid market-data APIs.
-
-Configure these via environment variables (so limits match your provider plan without code changes):
-
-FX_RIBBON_BUDGET_DAILY_ALLOWANCE — daily credit allowance for the ribbon (set this to your plan, e.g. 800).
-
-FX_RIBBON_BUDGET_MINUTE_ALLOWANCE — per-minute allowance (optional; use if you want a hard minute cap).
-
-FX_RIBBON_BUDGET_MINUTE_WINDOW_SECONDS — window size for the minute allowance.
-
-Note: Twelve Data credit usage is per symbol.
 The FX ribbon enforces a soft "budget" model to avoid accidental overuse of paid market-data APIs.
 
 Configure these via environment variables (so limits match your provider plan without code changes):
@@ -349,15 +337,15 @@ async function start(): Promise<void> {
 }
 ```
 
-### 8.4 Gateway Environment Variables
+### 8.4 Gateway Environment Variables (TwelveData)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `FX_CONFIG_URL` | `https://promagen.com/api/fx/config` | Frontend SSOT endpoint |
+| `FX_CONFIG_URL` | `https://promagen.com/api/fx/config` | Frontend FX SSOT endpoint |
 | `TWELVEDATA_API_KEY` | (required) | TwelveData API key |
-| `FX_RIBBON_BUDGET_DAILY_ALLOWANCE` | `800` | Daily API credit budget |
-| `FX_RIBBON_BUDGET_MINUTE_ALLOWANCE` | `8` | Per-minute API credit cap |
-| `FX_RIBBON_TTL_SECONDS` | `1800` | Cache TTL (30 minutes) |
+| `FX_RIBBON_BUDGET_DAILY_ALLOWANCE` | `800` | TwelveData daily credit budget |
+| `FX_RIBBON_BUDGET_MINUTE_ALLOWANCE` | `8` | TwelveData per-minute credit cap |
+| `FX_RIBBON_TTL_SECONDS` | `1800` | FX cache TTL (30 minutes) |
 
 ### 8.5 Verifying SSOT Is Working
 
@@ -503,8 +491,260 @@ Otherwise Vercel will fail with `ERR_PNPM_OUTDATED_LOCKFILE`.
 
 ---
 
-**Last updated:** 10 January 2026
+## 11. Indices SSOT Architecture (Added Jan 13, 2026)
+
+The gateway `/indices` endpoint provides stock exchange index data (e.g., Nikkei 225, S&P 500) for Exchange Cards.
+
+### 11.1 Provider: Marketstack (Separate from TwelveData)
+
+| Provider | Feeds | Daily Limit | TTL |
+|----------|-------|-------------|-----|
+| TwelveData | FX, Crypto | 800 credits | 30 min |
+| **Marketstack** | **Indices** | **250 credits** | **2 hours** |
+
+Indices uses a **separate provider and budget** — it doesn't compete with TwelveData feeds.
+
+### 11.2 SSOT: Exchange Catalog
+
+The frontend catalog is the single source of truth for index benchmarks:
+
+```
+frontend/src/data/exchanges/exchanges.catalog.json  ← THE ONE AND ONLY SOURCE
+              ↓
+frontend/api/indices/config                         ← Exposes as API
+              ↓
+gateway fetches on startup                          ← Reads from frontend
+              ↓
+gateway serves /indices                             ← Uses fetched benchmarks
+```
+
+**Catalog entry example:**
+
+```json
+{
+  "id": "tse-tokyo",
+  "city": "Tokyo",
+  "exchange": "Tokyo Stock Exchange (TSE)",
+  "marketstack": {
+    "benchmark": "nikkei_225",
+    "indexName": "Nikkei 225"
+  }
+}
+```
+
+### 11.3 Gateway Environment Variables (Marketstack)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `INDICES_CONFIG_URL` | `https://promagen.com/api/indices/config` | Frontend Indices SSOT endpoint |
+| `MARKETSTACK_API_KEY` | (required) | Marketstack API key (Fly.io secret) |
+| `INDICES_RIBBON_BUDGET_DAILY_ALLOWANCE` | `250` | Marketstack daily credit budget |
+| `INDICES_RIBBON_BUDGET_MINUTE_ALLOWANCE` | `3` | Marketstack per-minute credit cap |
+| `INDICES_RIBBON_TTL_SECONDS` | `7200` | Indices cache TTL (2 hours) |
+
+### 11.4 API Timing Stagger
+
+Indices refresh at :05 and :35 each hour (5-minute offset from FX):
+
+```
+┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
+│:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
+├────┼────┼────┼────┼────┼────┼────┼────┼────┤
+│ FX │IDX │    │CRY │ FX │IDX │    │CRY │ FX │
+└────┴────┴────┴────┴────┴────┴────┴────┴────┘
+```
+
+### 11.5 Verifying Indices Is Working
+
+```powershell
+# Check /indices endpoint
+Invoke-RestMethod -Uri "https://promagen-api.fly.dev/indices"
+
+# Check /trace for Marketstack budget
+(Invoke-RestMethod "https://promagen-api.fly.dev/trace").indicesBudget
+# Expected: { dailyUsed: <number>, dailyLimit: 250, state: "ok" }
+```
+
+### 11.6 Files (Frontend)
+
+| File | Purpose |
+|------|---------|
+| `src/data/exchanges/exchanges.catalog.json` | Benchmark mappings (48 exchanges) |
+| `src/data/exchanges/exchanges.selected.json` | Default 16 exchange IDs |
+| `src/app/api/indices/config/route.ts` | SSOT endpoint for gateway |
+| `src/app/api/indices/route.ts` | Proxy to gateway `/indices` |
+| `src/hooks/use-indices-quotes.ts` | Polling hook (:05, :35 schedule) |
+| `src/components/exchanges/exchange-card.tsx` | IndexRow component |
+
+### 11.7 Changing Default Exchanges (The SSOT Way)
+
+1. Edit **ONE file**: `frontend/src/data/exchanges/exchanges.selected.json`
+2. Deploy frontend: `git push` (Vercel auto-deploys)
+3. Restart gateway: `fly apps restart promagen-api`
+
+**Cross-reference:** See `MARKETSTACK-ACTION-PLAN.md` for full implementation details.
+
+---
+
+## 12. Provider-Based Gateway Architecture (Added Jan 14, 2026)
+
+### 12.1 Why Provider-Based?
+
+The gateway was refactored from a **4,002-line monolithic server.ts** to a **provider-based modular architecture**.
+
+**Problem with old structure:**
+- TwelveData budget logic scattered across multiple files
+- Scheduler logic for same provider in multiple files
+- Hard to debug "why is TwelveData over budget?"
+- Adding a new feed = copy 800 lines
+
+**Solution: Organize by provider, not by feed:**
+- Each provider gets its own folder
+- Budget, scheduler, adapter co-located
+- Adding new feed to existing provider = one config file
+
+### 12.2 File Structure
+
+```
+gateway/src/
+├── server.ts                    # ~250 lines: routes + startup ONLY
+│
+├── lib/                         # Shared infrastructure (provider-agnostic)
+│   ├── types.ts                 # All shared type definitions
+│   ├── cache.ts                 # GenericCache<T> class
+│   ├── circuit.ts               # CircuitBreaker class
+│   ├── dedup.ts                 # RequestDeduplicator<T> class
+│   ├── feed-handler.ts          # createFeedHandler() factory
+│   └── logging.ts               # Structured logging utilities
+│
+├── twelvedata/                  # ← Everything TwelveData in ONE place
+│   ├── index.ts                 # Exports fxHandler, cryptoHandler
+│   ├── adapter.ts               # TwelveData API fetch logic
+│   ├── budget.ts                # Shared 800/day budget (ONE instance)
+│   ├── scheduler.ts             # Clock-aligned slots (:00/:30 FX, :20/:50 Crypto)
+│   ├── fx.ts                    # FX feed config
+│   └── crypto.ts                # Crypto feed config
+│
+├── marketstack/                 # ← Everything Marketstack in ONE place
+│   ├── index.ts                 # Exports indicesHandler
+│   ├── adapter.ts               # Marketstack API fetch logic
+│   ├── budget.ts                # Separate 250/day budget (ONE instance)
+│   ├── scheduler.ts             # Clock-aligned slots (:05/:35)
+│   └── indices.ts               # Indices feed config
+│
+└── fallback/                    # ← Feeds with no provider
+    └── commodities.ts           # Returns demo prices only
+```
+
+### 12.3 Key Benefits
+
+| Aspect | Before (Monolithic) | After (Provider-Based) |
+|--------|---------------------|------------------------|
+| **server.ts** | 4,002 lines | ~250 lines |
+| **Debug TwelveData** | Search entire file | Look in `twelvedata/` |
+| **Budget location** | Scattered | One file per provider |
+| **Scheduler location** | Scattered | One file per provider |
+| **Add TwelveData feed** | Copy 800 lines | Add one config file |
+| **Test in isolation** | Impossible | Import provider module |
+
+### 12.4 Provider Module Structure
+
+Each provider folder follows the same pattern:
+
+```
+{provider}/
+├── index.ts      # Clean exports for server.ts
+├── adapter.ts    # API fetch + response normalization
+├── budget.ts     # Budget manager instance (ONE per provider)
+├── scheduler.ts  # Clock-aligned refresh slots
+└── {feed}.ts     # Feed-specific config (one per feed)
+```
+
+### 12.5 Clock-Aligned Scheduler
+
+**Why clock-aligned (not 90% TTL)?**
+
+```typescript
+// ❌ BAD: 90% of TTL creates drift
+setInterval(() => refresh(), config.ttlSeconds * 1000 * 0.9);
+// FX at :00 → :27 → :54 → :21...
+// Crypto at :15 → :42 → :09...
+// Eventually they COLLIDE!
+
+// ✅ GOOD: Clock-aligned slots, never drift
+setTimeout(() => {
+  refresh();
+  setInterval(() => refresh(), 30 * 60 * 1000);
+}, getMsUntilNextSlot('fx'));
+// FX ALWAYS at :00, :30
+// Crypto ALWAYS at :20, :50
+// NEVER collide!
+```
+
+**Schedule:**
+
+```
+Hour timeline (repeats every hour):
+┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
+│:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
+├────┼────┼────┼────┼────┼────┼────┼────┼────┤
+│ FX │IDX │    │CRY │ FX │IDX │    │CRY │ FX │
+└────┴────┴────┴────┴────┴────┴────┴────┴────┘
+  ↑    ↑         ↑    ↑    ↑         ↑
+  TD   MS        TD   TD   MS        TD
+
+TD = TwelveData (800/day shared)
+MS = Marketstack (250/day separate)
+```
+
+### 12.6 Environment Variables (All Providers)
+
+| Variable | Provider | Default | Description |
+|----------|----------|---------|-------------|
+| `TWELVEDATA_API_KEY` | TwelveData | (required) | API key |
+| `TWELVEDATA_BUDGET_DAILY` | TwelveData | `800` | Daily credit limit |
+| `TWELVEDATA_BUDGET_MINUTE` | TwelveData | `8` | Per-minute limit |
+| `FX_RIBBON_TTL_SECONDS` | TwelveData | `1800` | FX cache TTL |
+| `CRYPTO_RIBBON_TTL_SECONDS` | TwelveData | `1800` | Crypto cache TTL |
+| `MARKETSTACK_API_KEY` | Marketstack | (required) | API key |
+| `MARKETSTACK_BUDGET_DAILY` | Marketstack | `250` | Daily credit limit |
+| `MARKETSTACK_BUDGET_MINUTE` | Marketstack | `3` | Per-minute limit |
+| `INDICES_RIBBON_TTL_SECONDS` | Marketstack | `7200` | Indices cache TTL |
+
+### 12.7 Migration from Old Structure
+
+**Old files to delete:**
+```powershell
+# Run from: C:\Users\Proma\Projects\promagen\gateway
+Remove-Item -Recurse -Force ".\src\feeds" -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force ".\src\lib\shared-budgets.ts" -ErrorAction SilentlyContinue
+```
+
+**Verification after migration:**
+```powershell
+# TypeScript compiles
+npx tsc --noEmit  # 0 errors
+
+# All endpoints work
+(Invoke-RestMethod "https://promagen-api.fly.dev/health").status  # "ok"
+(Invoke-RestMethod "https://promagen-api.fly.dev/fx").data.Count  # 8
+(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").data.Count  # 8
+(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data.Count  # 16
+
+# Budgets tracked correctly
+$trace = Invoke-RestMethod "https://promagen-api.fly.dev/trace"
+$trace.budget.state  # "ok" (TwelveData)
+$trace.indicesBudget.state  # "ok" (Marketstack)
+```
+
+**Cross-reference:** See `GATEWAY-REFACTOR.md` for full migration blueprint.
+
+---
+
+**Last updated:** 14 January 2026
 
 **Changelog:**
-- **10 Jan 2026:** FX SSOT Consolidated — Updated §8 to reflect unified `fx-pairs.json` file (merged from separate `fx.pairs.json` and `pairs.json`). Single file contains all FX pair data including demo prices, tier flags, and country codes.
-- **9 Jan 2026:** Added §8 FX Pairs SSOT Architecture (runtime fetch from frontend). Added §9 Gateway TypeScript Configuration (.js extensions). Added §10 Monorepo Structure (pnpm workspace).
+- **14 Jan 2026:** Added §12 Provider-Based Gateway Architecture (provider folders, clock-aligned scheduler, migration from monolithic)
+- **13 Jan 2026:** Added §11 Indices SSOT Architecture (Marketstack provider, 2-hour TTL, :05/:35 stagger)
+- **10 Jan 2026:** FX SSOT Consolidated — Updated §8 to reflect unified `fx-pairs.json` file
+- **9 Jan 2026:** Added §8 FX Pairs SSOT Architecture, §9 Gateway TypeScript Configuration, §10 Monorepo Structure

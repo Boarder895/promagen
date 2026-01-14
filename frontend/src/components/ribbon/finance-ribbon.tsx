@@ -6,10 +6,13 @@
 // - UI cannot trigger upstream, cannot decide time, cannot mutate FX state.
 //
 // Enhancement:
-// - Subtle “alive” micro-motion on price:
+// - Subtle "alive" micro-motion on price:
 //   * neutral breath pulse
 //   * tick nudge on update
 //   * whisper tint (very faint)
+//
+// Existing features preserved: Yes
+// Removed: Pause button, budget emoji indicator (no longer needed)
 
 'use client';
 
@@ -17,24 +20,11 @@ import React from 'react';
 
 import type { FxApiMode } from '@/types/finance-ribbon';
 import type { FinanceRibbonChip } from '@/components/ribbon/finance-ribbon.container';
-import { trackRibbonPause } from '@/lib/analytics/finance';
-import { getBudgetGuardEmoji } from '@/data/emoji/emoji';
-
-type BudgetState = 'ok' | 'warning' | 'blocked';
 
 export interface FinanceRibbonProps {
   buildId: string;
   mode: FxApiMode;
   chips: FinanceRibbonChip[];
-  isPaused: boolean;
-  onPauseToggle: () => void;
-  budgetState?: BudgetState; // optional, renderer-only
-}
-
-function budgetEmoji(state: BudgetState): string {
-  // SSOT: canonical mapping lives in Emoji Bank under budget_guard.
-  // No hardcoded fallbacks here.
-  return getBudgetGuardEmoji(state) ?? '';
 }
 
 // Snap-fit rules (UI-only; observational).
@@ -43,7 +33,7 @@ function budgetEmoji(state: BudgetState): string {
 // - Font snaps in 0.5px steps (largest that fits).
 const MIN_FONT_PX = 11.5;
 const STEP_PX = 0.5;
-// Conservative cap so ultra-wide screens don’t produce comically huge chips.
+// Conservative cap so ultra-wide screens don't produce comically huge chips.
 const MAX_FONT_PX = 16.5;
 
 type SnapRows = 1 | 2;
@@ -63,9 +53,6 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
   buildId,
   mode,
   chips,
-  isPaused,
-  onPauseToggle,
-  budgetState,
 }) => {
   const hostRef = React.useRef<HTMLDivElement | null>(null);
   const measurerRef = React.useRef<HTMLUListElement | null>(null);
@@ -77,27 +64,6 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
   );
 
   const [snap, setSnap] = React.useState<SnapState>({ rows: 1, fontPx: MIN_FONT_PX });
-
-  const handlePause = () => {
-    const nextPaused = !isPaused;
-
-    // Always toggle first; analytics must never block behaviour.
-    onPauseToggle();
-
-    // Analytics is observational only; never allow it to throw or affect UX.
-    try {
-      trackRibbonPause({ isPaused: nextPaused, source: 'homepage_ribbon' });
-    } catch {
-      // no-op
-    }
-  };
-
-  const pauseLabel = isPaused ? 'Resume live FX updates' : 'Pause live FX updates';
-
-  const showBudget = typeof budgetState === 'string';
-  const budgetStateSafe: BudgetState =
-    budgetState === 'warning' || budgetState === 'blocked' ? budgetState : 'ok';
-  const emoji = showBudget ? budgetEmoji(budgetStateSafe) : '';
 
   const columnsForTwoRows = React.useMemo(() => Math.max(1, Math.ceil(chips.length / 2)), [chips]);
 
@@ -114,7 +80,7 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
       const hostWidth = host.clientWidth;
       if (!Number.isFinite(hostWidth) || hostWidth <= 0) return;
 
-      // Set the measurer width to exactly the chips host width (controls are outside this host).
+      // Set the measurer width to exactly the chips host width.
       measurer.style.width = `${hostWidth}px`;
 
       const candidates = buildFontCandidates(MAX_FONT_PX, MIN_FONT_PX, STEP_PX);
@@ -247,64 +213,29 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
       data-build-id={buildId}
       className="w-full overflow-hidden rounded-2xl bg-slate-950/55 px-3 py-2 text-xs text-slate-50 shadow-md ring-1 ring-slate-800"
     >
-      {/* IMPORTANT: chips host is flex-1 min-w-0, controls are shrink-0, so budget/pause never get clipped */}
-      <div className="flex items-center gap-2">
-        {/* Chips host: takes available width (excluding right-side controls) */}
-        <div ref={hostRef} className="relative min-w-0 flex-1 overflow-hidden">
-          <ul
-            aria-label="Foreign exchange pairs"
-            data-testid="fx-row"
-            className={rowClassName}
-            style={rowStyle}
-          >
-            {chips.map((chip) => renderChip(chip))}
-          </ul>
+      {/* Chips host */}
+      <div ref={hostRef} className="relative w-full overflow-hidden">
+        <ul
+          aria-label="Foreign exchange pairs"
+          data-testid="fx-row"
+          className={rowClassName}
+          style={rowStyle}
+        >
+          {chips.map((chip) => renderChip(chip))}
+        </ul>
 
-          {/* Offscreen measurer: same markup, used to compute best-fit without visible thrash */}
-          <ul
-            ref={measurerRef}
-            aria-hidden="true"
-            className="pointer-events-none absolute left-[-99999px] top-0 gap-2 opacity-0"
-            style={{
-              // Width + display/layout mode + font var are applied imperatively during measurement.
-              ['--fx-chip-font' as unknown as string]: `${snap.fontPx}px`,
-            }}
-          >
-            {chips.map((chip) => renderChip(chip, 'measure'))}
-          </ul>
-        </div>
-
-        <div className="shrink-0 flex items-center gap-1">
-          {showBudget ? (
-            // CHANGE: remove the circular “window” around the emoji (no bg, no border, no forced 24px circle)
-            <span
-              data-testid="finance-ribbon-budget"
-              data-budget-state={budgetStateSafe}
-              className="inline-flex items-center justify-center text-[24px] leading-none"
-              aria-label="FX upstream budget state"
-            >
-              <span className="sr-only">
-                {budgetStateSafe === 'blocked'
-                  ? 'Blocked'
-                  : budgetStateSafe === 'warning'
-                  ? 'Warning'
-                  : 'OK'}
-              </span>
-              <span aria-hidden="true">{emoji}</span>
-            </span>
-          ) : null}
-
-          <button
-            type="button"
-            data-testid="finance-ribbon-pause"
-            aria-label={pauseLabel}
-            aria-pressed={isPaused}
-            onClick={handlePause}
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-[10px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
-          >
-            <span aria-hidden="true">{isPaused ? '▶' : 'Ⅱ'}</span>
-          </button>
-        </div>
+        {/* Offscreen measurer: same markup, used to compute best-fit without visible thrash */}
+        <ul
+          ref={measurerRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute left-[-99999px] top-0 gap-2 opacity-0"
+          style={{
+            // Width + display/layout mode + font var are applied imperatively during measurement.
+            ['--fx-chip-font' as unknown as string]: `${snap.fontPx}px`,
+          }}
+        >
+          {chips.map((chip) => renderChip(chip, 'measure'))}
+        </ul>
       </div>
     </section>
   );

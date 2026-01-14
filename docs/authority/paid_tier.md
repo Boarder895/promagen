@@ -71,7 +71,8 @@ The following features are available to all users without sign-in:
 - **Stock exchange cards** — Default selection of 16 exchanges (SSOT-defined)
 - **Live local time clocks** — Each exchange card displays the current local time in that exchange's timezone
 - **Market status indicators** — Open/closed status for each exchange
-- **FX ribbon** — Real-time foreign exchange data (subject to API budget rules)
+- **Stock index data** — Each exchange card displays its benchmark index (e.g., Nikkei 225, S&P 500) with live price, change, and percent change (subject to Marketstack API budget rules)
+- **FX ribbon** — Real-time foreign exchange data (subject to TwelveData API budget rules)
 - **Weather badges** — Current weather for each exchange city
 - **AI Providers Leaderboard** — Browse and compare all 42 AI image generation providers
 - **Market Pulse (4 cities)** — Visual connection animations for Sydney, Hong Kong, London, and Chicago
@@ -1170,6 +1171,7 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **13 Jan 2026:** **STOCK INDEX DATA ON EXCHANGE CARDS** — Added "Stock index data" to §2.1 free features list. Each exchange card now displays its benchmark index (e.g., Nikkei 225, S&P 500) with live price, day change, and percent change. Data sourced from Marketstack API (separate budget from TwelveData). Index row always visible on card — shows index name immediately (from catalog), price shows skeleton until API data arrives.
 - **10 Jan 2026:** **FX DATA SSOT CONSOLIDATION** — Merged `fx.pairs.json` (defaults, country codes, longitude) and `pairs.json` (catalog metadata, demo prices) into single unified `fx-pairs.json`. Now only ONE file to maintain for FX data. Updated §5.5 catalog reference (102 pairs), §5.10 demo data source. Minimum count changed from 6 to 0 (allows "start fresh" workflow).
 - **9 Jan 2026:** **WORLDPROMPT LIVE BACKGROUND** — Added §5.11 WorldPrompt Live Background (Pro Promagen exclusive). Homepage background becomes AI-generated scene derived from WorldPrompt data (weather, time, market status, FX mood). Includes context bar, fullscreen mode, 2-second crossfade transitions. Cost-controlled with 24h cache, ~48 images/day max. Added worldprompt-creative-engine.md Part 13 to §7 authority references.
 - **10 Jan 2026:** **PRO PROMAGEN CONFIG PAGE SIMPLIFIED** — Rewrote §5.10 to use standard homepage layout (identical FX ribbon, exchange cards). Dropdowns for FX Pairs and Exchanges embedded in comparison table (not separate panels). Removed Vote Weight and Market Pulse from display (internal features). Alphabetical dropdown order with colorful styling. Demo weather placeholder shown. Reuses existing components: `HomepageGrid`, `FxRibbon`, `ExchangeCard`, `Combobox`.

@@ -4,14 +4,15 @@
 // ============================================================================
 // Type definitions for the /pro-promagen feature showcase/configuration page.
 //
-// UPDATED: FxPairCatalogEntry now matches the unified fx-pairs.json schema.
+// UPDATED: Added indices selection limits for stock index display on cards.
 //
 // Authority: docs/authority/paid_tier.md §5.10
 // ============================================================================
 
 /**
  * Selection limits for Pro Promagen features.
- * UPDATED: Min changed to 0 to allow "start fresh" workflow.
+ * UPDATED: Added INDICES limits for stock index selection.
+ * Min changed to 0 to allow "start fresh" workflow.
  * Users can deselect all, then build their selection from scratch.
  */
 export const PRO_SELECTION_LIMITS = {
@@ -19,15 +20,18 @@ export const PRO_SELECTION_LIMITS = {
   FX_MAX: 16,
   EXCHANGE_MIN: 0,
   EXCHANGE_MAX: 16,
+  INDICES_MIN: 0,
+  INDICES_MAX: 16,
 } as const;
 
 /**
  * Free tier defaults (SSOT).
- * UPDATED: Exchanges now 16 (was 12).
+ * UPDATED: Added INDICES default count.
  */
 export const FREE_TIER_DEFAULTS = {
   FX_PAIRS: 8,
   EXCHANGES: 16,
+  INDICES: 16, // All selected exchanges show their index by default
   MARKET_PULSE_CITIES: 4,
   DAILY_PROMPTS: 10,
   VOTE_WEIGHT: 1.0,
@@ -35,13 +39,15 @@ export const FREE_TIER_DEFAULTS = {
 
 /**
  * Pro tier features.
- * UPDATED: Min changed to 0 to allow "start fresh" workflow.
+ * UPDATED: Added indices selection range.
  */
 export const PRO_TIER_FEATURES = {
   FX_PAIRS_MIN: 0,
   FX_PAIRS_MAX: 16,
   EXCHANGES_MIN: 0,
   EXCHANGES_MAX: 16,
+  INDICES_MIN: 0,
+  INDICES_MAX: 16,
   MARKET_PULSE_CITIES: 16,
   DAILY_PROMPTS: Infinity,
   VOTE_WEIGHT: 1.5,
@@ -86,10 +92,12 @@ export interface FeatureComparison {
 
 /**
  * Pro Promagen page state.
+ * UPDATED: Added selectedIndices for index display control.
  */
 export interface ProPromagenState {
   selectedFxPairs: string[];
   selectedExchanges: string[];
+  selectedIndices: string[];
   referenceFrame: 'user' | 'greenwich';
   region: 'global' | 'east' | 'west';
 }
@@ -142,6 +150,7 @@ export interface FxPairCatalogEntry {
 /**
  * Exchange from catalog.
  * hemisphere uses Promagen's 4-quadrant system: NE, NW, SE, SW
+ * UPDATED: Added marketstack field for index data.
  */
 export interface ExchangeCatalogEntry {
   id: string;
@@ -155,6 +164,33 @@ export interface ExchangeCatalogEntry {
   hemisphere: string; // 'NE' | 'NW' | 'SE' | 'SW' | ''
   hoursTemplate: string;
   holidaysRef: string;
+  /** Marketstack benchmark data for stock indices */
+  marketstack?: {
+    benchmark: string;
+    indexName: string;
+    status?: 'active' | 'coming-soon' | 'unavailable';
+  };
+  /** Vibrant hover color for exchange card UI */
+  hoverColor?: string;
+}
+
+/**
+ * Index catalog entry for dropdown selection.
+ * Derived from exchanges that have marketstack benchmarks.
+ */
+export interface IndicesCatalogEntry {
+  /** Exchange ID this index belongs to */
+  id: string;
+  /** Index name, e.g. "Nikkei 225" */
+  indexName: string;
+  /** Marketstack benchmark symbol */
+  benchmark: string;
+  /** Exchange name for context */
+  exchangeName: string;
+  /** Country for sub-label */
+  country: string;
+  /** Whether data is available (active) or coming soon */
+  status: 'active' | 'coming-soon' | 'unavailable';
 }
 
 // ============================================================================
@@ -266,4 +302,24 @@ export function deriveCountryCodes(base: string, quote: string): {
     baseCountryCode: getCountryCodeForCurrency(base),
     quoteCountryCode: getCountryCodeForCurrency(quote),
   };
+}
+
+/**
+ * Build indices catalog from exchange catalog.
+ * Filters exchanges that have marketstack benchmarks.
+ */
+export function buildIndicesCatalog(
+  exchanges: ExchangeCatalogEntry[]
+): IndicesCatalogEntry[] {
+  return exchanges
+    .filter((e) => e.marketstack?.benchmark && e.marketstack?.indexName)
+    .map((e) => ({
+      id: e.id,
+      indexName: e.marketstack!.indexName,
+      benchmark: e.marketstack!.benchmark,
+      exchangeName: e.exchange,
+      country: e.country,
+      status: e.marketstack?.status ?? 'active',
+    }))
+    .sort((a, b) => a.indexName.localeCompare(b.indexName));
 }

@@ -127,6 +127,13 @@ export interface FxPair {
   baseCountryCode?: string;
   quoteCountryCode?: string;
 
+  /**
+   * Defaults are part of the SSOT catalogue (src/data/fx/fx-pairs.json).
+   * They are used by selection helpers to build the free-tier set.
+   */
+  isDefaultFree?: boolean;
+  isDefaultPaid?: boolean;
+
   group?: string;
   homeLongitude?: number;
 

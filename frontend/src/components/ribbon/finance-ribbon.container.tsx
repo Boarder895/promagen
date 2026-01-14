@@ -4,15 +4,18 @@
 // - Calls the centralised FX hook (polling is client-only; authority remains server-side).
 // - Joins SSOT pair metadata + API payload into presentational chips.
 // - Preserves SSOT order end-to-end (no re-sorting).
-// - No freshness inference, no “helpful” refresh logic, no upstream/provider knowledge.
+// - No freshness inference, no "helpful" refresh logic, no upstream/provider knowledge.
 //
 // Spec anchors:
 // - SSOT order must be preserved end-to-end. (See Ribbon_Homepage.md)
 // - UI is a renderer; it must not decide TTL/A-B/providers/costs. (See API Brain v2)
+//
+// Existing features preserved: Yes
+// Removed: Pause functionality, budget state indicator (no longer needed)
 
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import FinanceRibbon from '@/components/ribbon/finance-ribbon';
 import FxPairLabel from '@/components/ribbon/fx-pair-label';
@@ -27,7 +30,7 @@ export interface FinanceRibbonChip {
   label: React.ReactNode;
   priceText: string;
 
-  // Presentational “alive” language inputs
+  // Presentational "alive" language inputs
   tick: FxTickDirection;
   isNeutral: boolean;
 
@@ -36,8 +39,6 @@ export interface FinanceRibbonChip {
   winnerOpacity: number;
   deltaPct: number | null;
 }
-
-type BudgetState = 'ok' | 'warning' | 'blocked';
 
 const POLL_INTERVAL_MS = 300_000; // 5 minutes - prevents API quota exhaustion
 
@@ -69,7 +70,7 @@ function winnerOpacityFromDelta(deltaPct: number | null, base: string, quote: st
 
   const abs = Math.abs(deltaPct);
 
-  // These values align with the “appear” thresholds used by the FX motion rules.
+  // These values align with the "appear" thresholds used by the FX motion rules.
   // Majors are tighter; volatile/EM are wider.
   const appearThreshold = isMajorPairByCodes(base, quote) ? 0.03 : 0.075;
 
@@ -94,36 +95,11 @@ function formatPrice(price: number | null, precision?: number): string {
   });
 }
 
-function normaliseBudgetState(value: unknown): BudgetState | undefined {
-  if (value === 'ok' || value === 'warning' || value === 'blocked') return value;
-  return undefined;
-}
-
-/**
- * Read-only passthrough: budget state is computed server-side (Refresh Authority),
- * surfaced via /api/fx meta, and simply forwarded into the presentational ribbon.
- * No thresholds, no inference, no extra calls.
- */
-function readBudgetState(payload: unknown): BudgetState | undefined {
-  if (!payload || typeof payload !== 'object') return undefined;
-
-  const meta = (payload as Record<string, unknown>).meta;
-  if (!meta || typeof meta !== 'object') return undefined;
-
-  const budget = (meta as Record<string, unknown>).budget;
-  if (!budget || typeof budget !== 'object') return undefined;
-
-  const state = (budget as Record<string, unknown>).state;
-  return normaliseBudgetState(state);
-}
-
 export function FinanceRibbonContainer() {
-  const [isPaused, setIsPaused] = useState(false);
-
   // Weekend freeze is removed completely: the hook result no longer exposes it,
   // and the label props no longer accept it.
   const { payload, quotesById, movementById } = useFxQuotes({
-    enabled: !isPaused,
+    enabled: true,
     intervalMs: POLL_INTERVAL_MS,
   });
 
@@ -135,9 +111,6 @@ export function FinanceRibbonContainer() {
 
   const buildId = payload?.meta?.buildId ?? 'unknown';
   const mode: FxApiMode = payload?.meta?.mode ?? 'cached';
-
-  // Read-only passthrough for emoji indicator beside Pause (renderer-only).
-  const budgetState = readBudgetState(payload);
 
   const chips: FinanceRibbonChip[] = useMemo(() => {
     return pairs.map((p) => {
@@ -184,9 +157,6 @@ export function FinanceRibbonContainer() {
       buildId={buildId}
       mode={mode}
       chips={chips}
-      isPaused={isPaused}
-      onPauseToggle={() => setIsPaused((v) => !v)}
-      budgetState={budgetState}
     />
   );
 }

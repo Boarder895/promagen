@@ -1,90 +1,67 @@
 // src/app/api/fx/config/route.ts
-// =============================================================================
-// FX PAIRS CONFIG API - SINGLE SOURCE OF TRUTH ENDPOINT
-// =============================================================================
-//
-// This endpoint exposes fx.pairs.json to external consumers (gateway).
-// The gateway fetches from here on startup to get the SSOT pairs.
-//
-// SSOT FILE: frontend/src/data/fx/fx.pairs.json
-// =============================================================================
+/**
+ * /api/fx/config — SSOT endpoint for gateway FX feed initialization.
+ *
+ * Returns FX pairs catalog with default pairs for the ribbon.
+ * Gateway fetches this on startup to know which pairs to query.
+ *
+ * Data source: frontend/src/data/fx/fx-pairs.json
+ */
 
 import { NextResponse } from 'next/server';
 
-import fxPairsIndex from '@/data/fx/fx-pairs.json';
-import pairsCatalog from '@/data/fx/fx-pairs.json';
+import fxPairsJson from '@/data/fx/fx-pairs.json';
 
-export const runtime = 'edge';
-export const revalidate = 3600; // Cache for 1 hour
-
-interface FxPairIndexEntry {
-  id: string;
-  baseCountryCode?: string;
-  quoteCountryCode?: string;
-  isDefaultFree?: boolean;
-  isDefaultPaid?: boolean;
-  group?: string;
-  homeLongitude?: number;
-}
-
-interface FxCatalogEntry {
-  id: string;
-  base?: string;
-  quote?: string;
-  label?: string;
-  precision?: number;
-}
-
-export interface FxPairConfig {
+// Type for FX pair from catalog
+interface FxPairCatalog {
   id: string;
   base: string;
   quote: string;
+  symbol?: string;
+  isActive?: boolean;
+  isDefaultFree?: boolean;
+  isDefaultPaid?: boolean;
+  demoPrice?: number;
+  demo?: { value: number; prevClose: number };
+  priority?: number;
 }
 
+export const runtime = 'edge';
+export const revalidate = 3600; // 1 hour cache
+
 export async function GET(): Promise<Response> {
-  try {
-    // Build catalog lookup for base/quote
-    const catalogById = new Map<string, FxCatalogEntry>();
-    for (const entry of pairsCatalog as FxCatalogEntry[]) {
-      if (entry && typeof entry.id === 'string') {
-        catalogById.set(entry.id.toLowerCase(), entry);
-      }
-    }
+  const allPairs = fxPairsJson as FxPairCatalog[];
 
-    // Filter to isDefaultFree pairs and join with catalog
-    const pairs: FxPairConfig[] = (fxPairsIndex as FxPairIndexEntry[])
-      .filter((p) => p && p.isDefaultFree === true)
-      .map((p) => {
-        const id = String(p.id).toLowerCase();
-        const meta = catalogById.get(id);
+  // Filter active pairs only
+  const activePairs = allPairs.filter((p) => p.isActive !== false);
 
-        // Derive base/quote from catalog or from ID
-        const parts = id.split('-');
-        const base = meta?.base?.toUpperCase() ?? parts[0]?.toUpperCase() ?? '';
-        const quote = meta?.quote?.toUpperCase() ?? parts[1]?.toUpperCase() ?? '';
+  // Get default pairs (isDefaultFree = true)
+  const defaultPairIds = activePairs.filter((p) => p.isDefaultFree === true).map((p) => p.id);
 
-        return { id, base, quote };
-      })
-      .filter((p) => p.id && p.base && p.quote);
+  // Build response format expected by gateway
+  const pairs = activePairs.map((p) => ({
+    id: p.id,
+    base: p.base,
+    quote: p.quote,
+    symbol: p.symbol ?? `${p.base}/${p.quote}`,
+    isDefaultFree: p.isDefaultFree ?? false,
+    isDefaultPaid: p.isDefaultPaid ?? false,
+    demoPrice: p.demoPrice ?? p.demo?.value ?? null,
+    priority: p.priority ?? null,
+  }));
 
-    return NextResponse.json(
-      {
-        version: 1,
-        ssot: 'frontend/src/data/fx/fx.pairs.json',
-        generatedAt: new Date().toISOString(),
-        pairs,
+  return NextResponse.json(
+    {
+      version: 1,
+      ssot: 'frontend/src/data/fx/fx-pairs.json',
+      generatedAt: new Date().toISOString(),
+      defaultPairIds,
+      pairs,
+    },
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
       },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-        },
-      },
-    );
-  } catch (err) {
-    console.error('[api/fx/config] Error:', err);
-    return NextResponse.json(
-      { error: 'Failed to load FX config' },
-      { status: 500 },
-    );
-  }
+    },
+  );
 }

@@ -4,6 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
+    "types": ["node"],
     "outDir": "./dist",
     "rootDir": ".",
     "strict": true,
@@ -11,20 +12,14 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
     "sourceMap": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "paths": {
-      "@/lib/*": ["./lib/*"],
-      "@/data/*": ["./data/*"]
-    },
-    "baseUrl": "."
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "include": ["src/**/*", "lib/**/*"],
-  "exclude": ["node_modules", "dist", "data"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

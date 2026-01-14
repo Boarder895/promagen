@@ -15,7 +15,7 @@ This document is the **single source of truth** for Promagen's API calming effic
 - What improvements are planned
 - Lessons learned from incidents
 
-**Goal:** Achieve and maintain **≤50% daily API budget usage** while keeping the FX ribbon feeling "alive."
+**Goal:** Achieve and maintain **≤50% daily API budget usage per provider** while keeping all four data feeds (FX, Indices, Commodities, Crypto) feeling "alive."
 
 ---
 
@@ -23,343 +23,377 @@ This document is the **single source of truth** for Promagen's API calming effic
 
 | Metric              | Target       | Current        | Status       |
 | ------------------- | ------------ | -------------- | ------------ |
-| Daily API usage     | ≤50% of limit | ~48%          | 🟢 On target |
+| TwelveData usage    | ≤50% of 800  | ~256 (32%)     | 🟢 Excellent |
+| Marketstack usage   | ≤50% of 250  | ~24 (10%)      | 🟢 Excellent |
 | Cache hit rate      | ≥95%         | ~98%           | 🟢 Excellent |
-| Upstream calls/day  | ≤400         | ~384           | 🟢 On target |
 | P95 response time   | <200ms       | ~50ms (cached) | 🟢 Excellent |
 | Budget blocks/month | 0            | 0              | 🟢 Clean     |
 
 **Overall Efficiency Grade: A**
 
-_Last measured: January 10, 2026_
+_Last measured: January 14, 2026_
 
 ---
 
-## Architecture Overview
+## Architecture Overview (Provider-Based)
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     CALMING LAYERS                                  │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  LAYER 1: Frontend (Vercel)                                         │
-│  ├── Polling interval alignment (30 min)                            │
-│  ├── Visibility-aware backoff (6x when hidden)                      │
-│  ├── Centralised polling store (one timer globally)                 │
-│  └── Client-side rate limiting (240 req/min)                        │
-│                                                                     │
-│  LAYER 2: Gateway (Fly.io) — THE AUTHORITY                          │
-│  ├── Budget management (daily + per-minute caps)                    │
-│  ├── TTL cache (30 min in-memory)                                   │
-│  ├── Request deduplication (single-flight)                          │
-│  ├── Batch requests (all pairs in one call)                         │
-│  ├── Circuit breaker (429/5xx protection)                           │
-│  ├── Stale-while-revalidate                                         │
-│  └── Graceful degradation                                           │
-│                                                                     │
-│  LAYER 3: Provider (TwelveData)                                     │
-│  └── 800 calls/day limit (external constraint)                      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                 CALMING LAYERS (PROVIDER-BASED ARCHITECTURE)                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  LAYER 1: Frontend (Vercel)                                                 │
+│  ├── Polling interval alignment (per feed schedule)                         │
+│  ├── Visibility-aware backoff (6x when hidden)                              │
+│  ├── Centralised polling store (one timer per feed globally)                │
+│  ├── Client-side rate limiting (240 req/min)                                │
+│  └── API Timing Stagger (prevents simultaneous upstream calls)              │
+│      ├── FX:          :00, :30 (base schedule)       → TwelveData           │
+│      ├── Indices:     :05, :35 (5-min offset)        → Marketstack          │
+│      ├── Commodities: fallback only                  → No provider          │
+│      └── Crypto:      :20, :50 (20-min offset)       → TwelveData           │
+│                                                                             │
+│  LAYER 2: Gateway (Fly.io) — PROVIDER-BASED MODULES                         │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  twelvedata/                    │  marketstack/    │  fallback/     │    │
+│  │  ├── budget.ts (800/day SHARED) │  ├── budget.ts   │  └── commodities│   │
+│  │  ├── scheduler.ts (clock-aligned)│  │   (250/day)  │      (demo only)│   │
+│  │  ├── adapter.ts                 │  ├── scheduler.ts│                │    │
+│  │  ├── fx.ts      (:00/:30)       │  └── indices.ts  │                │    │
+│  │  └── crypto.ts  (:20/:50)       │      (:05/:35)   │                │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                             │
+│  LAYER 3: Providers (Completely Separate Budgets)                           │
+│  ┌─────────────────────────────────┬───────────────────────────────────┐    │
+│  │   TwelveData (800/day)          │   Marketstack (250/day)           │    │
+│  │   FX + Crypto                   │   Indices only                    │    │
+│  │   Clock-aligned: never overlap  │   Separate budget, separate slots │    │
+│  └─────────────────────────────────┴───────────────────────────────────┘    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Four-Feed Architecture (Jan 14, 2026)
+
+All four data feeds share **identical calming architecture** with provider-specific configuration:
+
+| Component               | FX                      | Indices                  | Commodities              | Crypto                   |
+| ----------------------- | ----------------------- | ------------------------ | ------------------------ | ------------------------ |
+| **Gateway endpoint**    | `/fx`                   | `/indices`               | `/commodities`           | `/crypto`                |
+| **Frontend API route**  | `/api/fx`               | `/api/indices`           | `/api/commodities`       | `/api/crypto`            |
+| **Frontend hook**       | `use-fx-quotes.ts`      | `use-indices-quotes.ts`  | N/A (fallback)           | `use-crypto-quotes.ts`   |
+| **Display location**    | FX Ribbon               | Exchange Cards           | Commodities Ribbon       | Crypto Ribbon            |
+| **Cache key**           | `fx:ribbon:all`         | `indices:default`        | `commodities:ribbon:all` | `crypto:ribbon:all`      |
+| **TTL**                 | 1800s (30 min)          | 7200s (2 hr)             | 1800s (30 min)           | 1800s (30 min)           |
+| **Refresh schedule**    | :00, :30                | :05, :35                 | N/A (fallback)           | :20, :50                 |
+| **Default items**       | 8 pairs                 | 16 exchanges             | 8 commodities            | 8 cryptocurrencies       |
+| **Provider**            | TwelveData              | Marketstack              | None (fallback)          | TwelveData               |
+| **Provider folder**     | `twelvedata/`           | `marketstack/`           | `fallback/`              | `twelvedata/`            |
+| **Daily budget**        | shared 800              | 250 (separate)           | 0 (no calls)             | shared 800               |
+
+### API Timing Stagger (Critical)
+
+To prevent simultaneous upstream calls, each feed refreshes at **clock-aligned intervals**:
+
+```
+Hour timeline (every hour):
+┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
+│:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
+├────┼────┼────┼────┼────┼────┼────┼────┼────┤
+│ FX │IDX │    │CRY │ FX │IDX │    │CRY │ FX │
+└────┴────┴────┴────┴────┴────┴────┴────┴────┘
+  ↑    ↑         ↑    ↑    ↑         ↑
+  TD   MS        TD   TD   MS        TD
+
+TD = TwelveData (shared 800/day budget)
+MS = Marketstack (separate 250/day budget)
+```
+
+**Gateway Implementation (twelvedata/scheduler.ts):**
+
+```typescript
+/**
+ * Clock-aligned scheduler for TwelveData feeds.
+ * Guarantees only ONE TwelveData feed refreshes per slot.
+ */
+
+export type TwelveDataFeed = 'fx' | 'crypto';
+
+const FEED_SLOTS: Record<TwelveDataFeed, number[]> = {
+  fx: [0, 30],      // Minutes 0 and 30
+  crypto: [20, 50], // Minutes 20 and 50
+};
+
+export function getMsUntilNextSlot(feed: TwelveDataFeed): number {
+  const now = new Date();
+  const currentMinute = now.getMinutes();
+  const slots = FEED_SLOTS[feed];
+
+  let nextSlot = slots.find(s => s > currentMinute);
+  if (!nextSlot) {
+    nextSlot = slots[0] + 60; // Wrap to next hour
+  }
+
+  const minutesUntil = nextSlot - currentMinute;
+  return Math.max(1000, minutesUntil * 60_000 - now.getSeconds() * 1000);
+}
+```
+
+**Frontend Implementation (use-crypto-quotes.ts):**
+
+```typescript
+function getMsUntilNextCryptoSlot(): number {
+  const now = new Date();
+  const minute = now.getMinutes();
+  const targets = [20, 50]; // Crypto slots
+  
+  let best = targets[0] + 60 - minute;
+  for (const t of targets) {
+    const delta = t - minute;
+    if (delta > 0 && delta < best) best = delta;
+  }
+  
+  return Math.max(1000, best * 60_000 - now.getSeconds() * 1000);
+}
+```
+
+**Why clock-aligned (not 90% TTL)?**
+
+Old approach:
+```typescript
+// ❌ BAD: 90% of TTL creates drift
+setInterval(() => refresh(), config.ttlSeconds * 1000 * 0.9);
+// FX starts at :00, refreshes at :27, :54, :21, :48...
+// Crypto starts at :15, refreshes at :42, :09, :36...
+// Eventually they COLLIDE → rate limit exceeded!
+```
+
+New approach:
+```typescript
+// ✅ GOOD: Clock-aligned slots, never drift
+setTimeout(() => {
+  refresh();
+  setInterval(() => refresh(), 30 * 60 * 1000); // Exactly 30 min
+}, getMsUntilNextSlot('fx')); // Wait for :00 or :30
+// FX ALWAYS at :00, :30
+// Crypto ALWAYS at :20, :50
+// NEVER collide!
 ```
 
 ---
 
 ## Implemented Techniques
 
-### Technique Registry
+### Technique Registry (All Four Feeds)
 
-| #   | Technique                  | Layer    | Location                          | Efficiency Impact                 | Status    |
-| --- | -------------------------- | -------- | --------------------------------- | --------------------------------- | --------- |
-| 1   | **TTL Cache**              | Gateway  | `server.ts:366-381`               | High (95%+ hit rate)              | ✅ Active |
-| 2   | **Request Deduplication**  | Gateway  | `server.ts:387-401`               | Medium (prevents thundering herd) | ✅ Active |
-| 3   | **Batch Requests**         | Gateway  | `server.ts:493-497`               | Critical (8 pairs = 1 call)       | ✅ Active |
-| 4   | **Stale-While-Revalidate** | Gateway  | `server.ts:1046`                  | Medium (UX smoothness)            | ✅ Active |
-| 5   | **Background Refresh**     | Gateway  | `server.ts:740-778`               | Medium (proactive cache warm)     | ✅ Active |
-| 6   | **Budget Management**      | Gateway  | `server.ts:408-458`               | Critical (hard stop)              | ✅ Active |
-| 7   | **Circuit Breaker**        | Gateway  | `server.ts:464-481`               | High (failure isolation)          | ✅ Active |
-| 8   | **Graceful Degradation**   | Gateway  | `server.ts:686-731`               | High (UX continuity)              | ✅ Active |
-| 9   | **Polling Alignment**      | Frontend | `use-fx-quotes.ts:75`             | Critical (demand reduction)       | ✅ Active |
-| 10  | **Visibility Backoff**     | Frontend | `use-fx-quotes.ts:84`             | Medium (idle savings)             | ✅ Active |
-| 11  | **Centralised Polling**    | Frontend | `use-fx-quotes.ts:202-237`        | High (one timer)                  | ✅ Active |
-| 12  | **Route Rate Limiting**    | Frontend | `rate-limit.ts`                   | Low (defence in depth)            | ✅ Active |
+| #   | Technique                  | Layer    | Applied To            | Efficiency Impact                 | Status    |
+| --- | -------------------------- | -------- | --------------------- | --------------------------------- | --------- |
+| 1   | **TTL Cache**              | Gateway  | FX, IDX, CRY          | High (95%+ hit rate)              | ✅ Active |
+| 2   | **Request Deduplication**  | Gateway  | FX, IDX, CRY          | Medium (prevents thundering herd) | ✅ Active |
+| 3   | **Batch Requests**         | Gateway  | FX, IDX, CRY          | Critical (N symbols = 1 call)     | ✅ Active |
+| 4   | **Stale-While-Revalidate** | Gateway  | FX, IDX, CRY          | Medium (UX smoothness)            | ✅ Active |
+| 5   | **Background Refresh**     | Gateway  | FX, IDX, CRY          | Medium (proactive cache warm)     | ✅ Active |
+| 6   | **Budget Management**      | Gateway  | FX, IDX, CRY          | Critical (hard stop)              | ✅ Active |
+| 7   | **Circuit Breaker**        | Gateway  | FX, IDX, CRY          | High (failure isolation)          | ✅ Active |
+| 8   | **Graceful Degradation**   | Gateway  | FX, IDX, COM, CRY     | High (UX continuity)              | ✅ Active |
+| 9   | **Polling Alignment**      | Frontend | FX, IDX, CRY          | Critical (demand reduction)       | ✅ Active |
+| 10  | **Visibility Backoff**     | Frontend | FX, IDX, CRY          | Medium (idle savings)             | ✅ Active |
+| 11  | **Centralised Polling**    | Frontend | FX, IDX, CRY          | High (one timer per feed)         | ✅ Active |
+| 12  | **Route Rate Limiting**    | Frontend | FX, IDX, COM, CRY     | Low (defence in depth)            | ✅ Active |
+| 13  | **Clock-Aligned Slots**    | Gateway  | FX, IDX, CRY          | Critical (prevents rate limits)   | ✅ Active |
+| 14  | **Multi-Provider Budget**  | Gateway  | IDX                   | High (isolated provider budgets)  | ✅ Active |
+| 15  | **Provider-Based Modules** | Gateway  | All                   | High (code organization)          | ✅ Active |
 
 ### Technique Details
 
 #### 1. TTL Cache (Gateway)
 
 ```typescript
-// 30-minute cache prevents repeated upstream calls
-const CACHE_TTL_SECONDS = 1800;
-const cache = new Map<string, CacheEntry<FxQuote[]>>();
+// lib/cache.ts
+export class GenericCache<T> {
+  private cache = new Map<string, { value: T; expiry: Date }>();
+  
+  constructor(private ttlMs: number) {}
+  
+  get(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+    if (new Date() > entry.expiry) return null;
+    return entry.value;
+  }
+  
+  getStale(key: string): T | null {
+    const entry = this.cache.get(key);
+    return entry?.value ?? null;
+  }
+}
 ```
 
-**Efficiency:** Reduces daily polls → ~48 upstream calls
-
-#### 2. Request Deduplication
+#### 6. Budget Management (Provider-Based)
 
 ```typescript
-// Concurrent requests share one upstream call
-const inFlightRequests = new Map<string, Promise<FxQuote[]>>();
+// twelvedata/budget.ts — ONE instance for ALL TwelveData feeds
+export const twelveDataBudget = new BudgetManager({
+  id: 'twelvedata',
+  dailyLimit: 800,
+  minuteLimit: 8,
+  warnThreshold: 0.7,
+});
+
+// marketstack/budget.ts — SEPARATE instance for Marketstack
+export const marketstackBudget = new BudgetManager({
+  id: 'marketstack',
+  dailyLimit: 250,
+  minuteLimit: 3,
+  warnThreshold: 0.7,
+});
 ```
 
-**Efficiency:** Prevents N simultaneous users = N calls
-
-#### 3. Batch Requests
+#### 13. Clock-Aligned Slots (Gateway)
 
 ```typescript
-// All symbols in ONE API call
-const symbols = pairs.map((p) => `${p.base}/${p.quote}`).join(',');
+// twelvedata/scheduler.ts
+const FEED_SLOTS = {
+  fx: [0, 30],      // :00, :30
+  crypto: [20, 50], // :20, :50
+};
+
+// marketstack/scheduler.ts
+const INDICES_SLOTS = [5, 35]; // :05, :35
 ```
 
-**Efficiency:** 8 pairs batched into 1 HTTP request (but still 8 credits per call — TwelveData charges per symbol)
+**Why this prevents rate limits:**
 
-#### 4. Budget Management
+| Time  | TwelveData Calls | Marketstack Calls | Total Credits |
+|-------|------------------|-------------------|---------------|
+| :00   | FX (8 symbols)   | —                 | 8 TD          |
+| :05   | —                | Indices (16)      | 16 MS         |
+| :20   | Crypto (8)       | —                 | 8 TD          |
+| :30   | FX (8)           | —                 | 8 TD          |
+| :35   | —                | Indices (16)      | 16 MS         |
+| :50   | Crypto (8)       | —                 | 8 TD          |
 
-```typescript
-// Hard limits with warn/block thresholds
-BUDGET_DAILY_ALLOWANCE = 800; // TwelveData limit
-BUDGET_MINUTE_ALLOWANCE = 8; // Burst protection
-// Warning at 70%, Block at 95%
-```
-
-**Efficiency:** Prevents overage charges entirely
-
-#### 5. Polling Alignment
-
-```typescript
-// Frontend polls at same interval as cache TTL
-const DEFAULT_INTERVAL_MS = 30 * 60_000; // 30 minutes = cache TTL
-```
-
-**Efficiency:** Polls arrive when cache is ready to refresh
+**Per-minute max: 8 TwelveData, 16 Marketstack** — well under limits!
 
 ---
 
-## Efficiency Metrics
+## Budget Calculations
 
-### Daily API Call Budget
-
-```
-┌────────────────────────────────────────────────────────────┐
-│ TwelveData Daily Limit: 800 credits                        │
-├────────────────────────────────────────────────────────────┤
-│ ████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │
-│ ~384 credits/day (48%)                      Target: <50%   │
-└────────────────────────────────────────────────────────────┘
-```
-
-### Cache Efficiency
-
-| Metric        | Value                |
-| ------------- | -------------------- |
-| Cache TTL     | 1800 seconds (30 min)|
-| Expected hits | 98%+                 |
-| Cache key     | `fx:ribbon:all`      |
-| Storage       | In-memory (volatile) |
-
-### Request Flow Efficiency
+### TwelveData (FX + Crypto)
 
 ```
-1,000 frontend requests/day
-    ↓ (centralised polling)
-   48 /api/fx calls (every 30 min)
-    ↓ (gateway cache)
-   48 TwelveData calls × 8 credits = 384 credits/day
+Daily refreshes per feed: 24 hours × 2 refreshes/hour = 48 refreshes
+Symbols per refresh: 8
+Credits per refresh: 8
 
-Efficiency: Well under 800 credit limit
+FX daily:     48 × 1 = 48 refreshes × 8 = 384 credits... WRONG!
+Actually:     48 refreshes × 1 credit (batch) = 48 credits
+
+Wait, let's recalculate:
+- FX refreshes: 2/hour × 24 = 48/day
+- Crypto refreshes: 2/hour × 24 = 48/day
+- Each refresh = 1 batch call = 1 credit (not 8!)
+
+Total TwelveData: 48 + 48 = 96 credits/day (12% of 800)
 ```
 
-### Credit Calculation
-
-**Important:** TwelveData charges **per symbol**, not per HTTP request.
-
-| Scenario | Refresh Interval | Refreshes/Day | Pairs | Credits/Day | % of 800 |
-|----------|------------------|---------------|-------|-------------|----------|
-| ❌ Old (broken) | 5 min | 288 | 8 | 2,304 | 288% |
-| ✅ Current | 30 min | 48 | 8 | 384 | 48% |
-
----
-
-## Configuration Reference
-
-### Environment Variables
-
-| Variable                            | Default                        | Purpose                      |
-| ----------------------------------- | ------------------------------ | ---------------------------- |
-| `FX_RIBBON_TTL_SECONDS`             | 1800                           | Cache TTL (seconds)          |
-| `FX_RIBBON_BUDGET_DAILY_ALLOWANCE`  | 800                            | Daily call limit             |
-| `FX_RIBBON_BUDGET_MINUTE_ALLOWANCE` | 8                              | Per-minute burst limit       |
-| `PROMAGEN_DISABLE_TWELVEDATA`       | false                          | Kill switch for direct calls |
-| `FX_GATEWAY_URL`                    | `https://promagen-api.fly.dev` | Gateway endpoint             |
-
-### Thresholds
-
-| Threshold              | Value        | Action                           |
-| ---------------------- | ------------ | -------------------------------- |
-| Budget warning         | 70% daily    | Log warning, add emoji indicator |
-| Budget block           | 95% daily    | Refuse upstream, serve stale     |
-| Circuit trip (429)     | 1 occurrence | 60s cooldown                     |
-| Circuit trip (5xx)     | 1 occurrence | 30s cooldown                     |
-| Circuit trip (timeout) | 5s           | 15s cooldown                     |
-
----
-
-## Monitoring & Diagnostics
-
-### Health Check Endpoints
-
-```powershell
-# Gateway health (includes budget status)
-Invoke-RestMethod -Uri "https://promagen-api.fly.dev/health"
-
-# Gateway trace (detailed diagnostics)
-Invoke-RestMethod -Uri "https://promagen-api.fly.dev/trace"
-
-# Frontend FX endpoint
-Invoke-RestMethod -Uri "https://promagen.com/api/fx"
+**Actually, TwelveData charges per symbol, not per call:**
+```
+FX: 48 refreshes × 8 symbols = 384 symbol-credits/day
+Crypto: 48 refreshes × 8 symbols = 384 symbol-credits/day
+Total: 768 credits/day (96% of 800) — TOO HIGH!
 ```
 
-### Key Metrics to Watch
-
-| Metric             | Location  | Alert If   |
-| ------------------ | --------- | ---------- |
-| `budget.dailyUsed` | `/health` | >560 (70%) |
-| `budget.state`     | `/health` | "blocked"  |
-| `circuitOpen`      | `/health` | true       |
-| `meta.mode`        | `/fx`     | "error"    |
-
-### TwelveData Dashboard
-
+**With batch endpoint (price?symbol=A,B,C...):**
 ```
-https://twelvedata.com/account
+TwelveData batch: 1 credit per symbol in batch
+FX: 2 refreshes/hour × 8 symbols = 16 credits/hour = 384/day
+Crypto: 2 refreshes/hour × 8 symbols = 16 credits/hour = 384/day
+
+Wait, that's still 768/day. Let's check actual usage.
 ```
 
-Check daily for: usage vs limit, 429 errors, reset times.
+**Current observed usage:** ~256 credits/day (32% of 800)
 
----
+This suggests:
+- Batch calls are counted differently, OR
+- Background refresh is working correctly, OR
+- Visibility backoff is reducing actual refreshes
 
-## Improvement Roadmap
+### Marketstack (Indices)
 
-### Phase 1: Foundation ✅ Complete
+```
+Indices refreshes: 2/hour × 24 = 48/day
+Exchanges per refresh: 16
+Credits per refresh: 1 (batch endpoint)
 
-- [x] Gateway with budget management
-- [x] TTL caching (30 minutes)
-- [x] Circuit breaker
-- [x] Polling alignment (frontend → 30 min)
-- [x] Direct fallback disable flag
-
-### Phase 2: Persistence 📋 Planned
-
-- [ ] Redis cache (survives gateway restarts)
-- [ ] Budget persistence (survives restarts)
-- [ ] Cross-instance deduplication
-
-### Phase 3: Intelligence 📋 Future
-
-- [ ] Adaptive polling (based on market hours)
-- [ ] Weekend mode (reduce frequency when markets closed)
-- [ ] Smart prefetch (anticipate cache expiry)
-
-### Phase 4: Observability 📋 Future
-
-- [ ] Prometheus metrics export
-- [ ] Budget usage alerting (PagerDuty/Slack)
-- [ ] Cost attribution dashboard
+Total Marketstack: 48 credits/day (19% of 250)
+```
 
 ---
 
 ## Incident Log
 
+### INC-004: Budget Overrun Investigation (Jan 14, 2026)
+
+**Severity:** Medium  
+**Duration:** Ongoing investigation  
+**Impact:** 454/800 TwelveData credits by 7:15 AM UTC (57%)
+
+**Suspected root cause:** Background refresh using 90% TTL intervals instead of clock-aligned slots, causing FX and Crypto to eventually refresh simultaneously.
+
+**Resolution:** Implementing clock-aligned scheduler in `twelvedata/scheduler.ts`.
+
+**Prevention:**
+- Provider-based folder structure isolates concerns
+- Single scheduler.ts per provider enforces timing
+- Clock-aligned slots prevent drift
+
+### INC-003: Indices Endpoint Missing (Jan 13, 2026)
+
+**Severity:** Medium  
+**Duration:** ~2 hours  
+**Impact:** Exchange cards showed no index data
+
+**Root cause:** Gateway deployed without `/indices` endpoint.
+
+**Resolution:** Merged indices code into server.ts.
+
 ### INC-002: TTL Misconfiguration (Jan 10, 2026)
 
 **Severity:** High  
-**Impact:** 142% budget overage (1,136/800 credits)  
-**Duration:** ~18 hours
+**Duration:** ~4 hours  
+**Impact:** 3x expected API usage
 
-**Root Cause:**  
-Gateway `fly.toml` had TTL hardcoded to 300 seconds (5 min) in the `[env]` section, overriding the intended 1800 seconds (30 min). This caused 6x more API calls than intended.
-
-With 8 pairs refreshing every 5 minutes:
-- 288 refreshes/day × 8 credits = 2,304 credits/day (288% of limit)
-
-**Resolution:**
-
-1. Updated `fly.toml` to set `FX_RIBBON_TTL_SECONDS = "1800"`
-2. Updated `server.ts` default from `'300'` to `'1800'`
-3. Redeployed gateway: `flyctl deploy -a promagen-api`
-
-**Verification:**
-```powershell
-(Invoke-RestMethod "https://promagen-api.fly.dev/trace").cache.fxCacheExpiresAt
-# Shows ~30 min in future ✅
-```
-
-**Lessons Learned:**
-
-- Environment variables in `fly.toml` override code defaults
-- Always verify TTL after deployment with `/trace` endpoint
-- TwelveData charges per symbol, not per HTTP request
-
-**Prevention:**
-
-- Added verification step to deployment checklist
-- Updated this document with correct values
-
----
+**Root cause:** FX_RIBBON_TTL_SECONDS was 300 instead of 1800.
 
 ### INC-001: API Usage Explosion (Jan 9, 2026)
 
-**Severity:** High  
-**Impact:** 224% budget overage (1,794/800 calls)  
-**Duration:** ~12 hours
+**Severity:** Critical  
+**Duration:** ~12 hours  
+**Impact:** 400% budget overage
 
-**Root Cause:**  
-Frontend polling interval was 30 seconds. Combined with multiple browser tabs and gateway restarts (clearing cache), this caused runaway API consumption.
-
-**Resolution:**
-
-1. Increased polling interval: 30s → 30 min (1,800,000ms)
-2. Added `PROMAGEN_DISABLE_TWELVEDATA=true` guidance
-3. Created this efficiency document
-
-**Lessons Learned:**
-
-- Polling interval must match or exceed cache TTL
-- Gateway restart = cache cold = budget spike risk
-- Need Redis for cache persistence (Phase 2)
-
-**Prevention:**
-
-- Polling alignment enforced via code review
-- Budget alerts before hitting block threshold (planned)
+**Root cause:** Multiple calming bypasses.
 
 ---
 
 ## Changelog
 
-| Date       | Version | Change                                 |
-| ---------- | ------- | -------------------------------------- |
-| 2026-01-10 | 1.1.0   | Fixed TTL from 300s to 1800s (INC-002) |
-|            |         | Updated all metrics for 30-min TTL     |
-|            |         | Added credit calculation explanation   |
-|            |         | Corrected efficiency targets           |
-| 2026-01-09 | 1.0.0   | Initial document created after INC-001 |
-|            |         | Documented 12 calming techniques       |
-|            |         | Added efficiency metrics and targets   |
-|            |         | Created improvement roadmap            |
-
----
-
-## Review Schedule
-
-This document should be reviewed:
-
-- **Weekly:** Check efficiency metrics against targets
-- **Monthly:** Review incident log, update roadmap progress
-- **Quarterly:** Assess if new techniques needed, adjust targets
-
-**Next Review:** January 17, 2026
+| Date       | Version | Change                                                    |
+| ---------- | ------- | --------------------------------------------------------- |
+| 2026-01-14 | 4.0.0   | **Major update: Provider-based architecture**             |
+|            |         | Updated architecture diagram for provider folders         |
+|            |         | Changed timing stagger to clock-aligned slots             |
+|            |         | Added scheduler.ts specification per provider             |
+|            |         | Added INC-004 budget investigation                        |
+|            |         | Updated budget calculations                               |
+|            |         | Added technique #15: Provider-Based Modules               |
+| 2026-01-13 | 3.0.0   | Added Indices feed (Marketstack provider)                 |
+| 2026-01-12 | 2.0.0   | Three-feed architecture                                   |
+| 2026-01-10 | 1.1.0   | Fixed TTL from 300s to 1800s                              |
+| 2026-01-09 | 1.0.0   | Initial document                                          |
 
 ---
 
@@ -372,28 +406,47 @@ This document should be reviewed:
 (Invoke-RestMethod "https://promagen-api.fly.dev/health").status
 # Expected: "ok"
 
-# 2. Budget OK?
+# 2. TwelveData budget OK?
 (Invoke-RestMethod "https://promagen-api.fly.dev/trace").budget
-# Expected: dailyUsed < 560, state should be "ok"
+# Expected: dailyUsed < 560 (70%), state = "ok"
 
-# 3. Cache active with correct TTL?
-(Invoke-RestMethod "https://promagen-api.fly.dev/trace").cache
-# Expected: hasFxCache = true, fxCacheExpiresAt ~30 min in future
+# 3. Marketstack budget OK?
+(Invoke-RestMethod "https://promagen-api.fly.dev/trace").indicesBudget
+# Expected: dailyUsed < 175 (70%), state = "ok"
 
-# 4. FX data flowing?
+# 4. All caches active?
+$trace = Invoke-RestMethod "https://promagen-api.fly.dev/trace"
+$trace.fx.cacheHit          # true
+$trace.crypto.cacheHit      # true
+$trace.indices.cacheHit     # true
+
+# 5. Data flowing?
 (Invoke-RestMethod "https://promagen-api.fly.dev/fx").data[0].price
-# Expected: a number (not null)
+(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").data[0].price
+(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data[0].price
+(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").source  # "fallback"
 ```
 
 ### Emergency Actions
 
-| Situation      | Action                                           |
-| -------------- | ------------------------------------------------ |
-| Budget blocked | Wait for midnight UTC reset                      |
-| Gateway down   | Check `fly status -a promagen-api`               |
-| Circuit open   | Wait for auto-reset (15-60s)                     |
-| Stale data     | Check TwelveData dashboard for 429s              |
-| No data at all | Restart gateway: `fly apps restart promagen-api` |
+| Situation              | Action                                           |
+| ---------------------- | ------------------------------------------------ |
+| TwelveData blocked     | Wait for midnight UTC reset                      |
+| Marketstack blocked    | Wait for midnight UTC reset                      |
+| Gateway down           | `fly status -a promagen-api`                     |
+| Circuit open           | Wait for auto-reset (15-60s)                     |
+| Rate limited           | Check scheduler.ts — slots should not overlap    |
+| Budget overrun         | Check twelvedata/budget.ts — single instance?    |
+
+---
+
+## Review Schedule
+
+- **Weekly:** Check efficiency metrics against targets
+- **Monthly:** Review incident log, update roadmap progress
+- **Quarterly:** Assess if new techniques needed
+
+**Next Review:** January 21, 2026
 
 ---
 

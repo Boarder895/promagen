@@ -3,7 +3,7 @@
 // COMPARISON TABLE WITH CHIPS + ADD LIST DROPDOWNS
 // ============================================================================
 // Standard vs Pro Promagen comparison table.
-// FX Pairs and Exchanges rows have interactive multi-select dropdowns.
+// FX Pairs, Exchanges, and Stock Indices rows have interactive multi-select dropdowns.
 //
 // Dropdown Design (Chips + Add List):
 // - Current selections shown as removable chips at top
@@ -16,9 +16,12 @@
 // - Type "South Africa" to find ZAR pairs
 // - Type "Loonie" to find CAD pairs
 //
-// Selection Rules (UPDATED):
+// Selection Rules:
 // - FX: 0-16 pairs (can deselect all to start fresh)
 // - Exchanges: 0-16 exchanges (can deselect all to start fresh)
+// - Indices: 0-16 indices (can deselect all to hide index data on cards)
+//
+// UPDATED: Added indices dropdown for stock index selection.
 //
 // Authority: docs/authority/paid_tier.md §5.10
 // ============================================================================
@@ -40,6 +43,8 @@ export interface SelectionItem {
   label: string;
   /** Optional secondary label (e.g., country names for FX pairs) */
   subLabel?: string;
+  /** Optional status badge (e.g., "coming-soon" for indices) */
+  status?: 'active' | 'coming-soon' | 'unavailable';
 }
 
 export interface ComparisonTableProps {
@@ -47,14 +52,20 @@ export interface ComparisonTableProps {
   fxOptions: SelectionItem[];
   /** Exchange options for dropdown */
   exchangeOptions: SelectionItem[];
+  /** Indices options for dropdown */
+  indicesOptions: SelectionItem[];
   /** Currently selected FX pair IDs */
   selectedFxPairs: string[];
   /** Currently selected exchange IDs */
   selectedExchanges: string[];
+  /** Currently selected indices (exchange IDs with index display enabled) */
+  selectedIndices: string[];
   /** Callback when FX selection changes */
   onFxChange: (ids: string[]) => void;
   /** Callback when exchange selection changes */
   onExchangeChange: (ids: string[]) => void;
+  /** Callback when indices selection changes */
+  onIndicesChange: (ids: string[]) => void;
   /** Whether user is paid tier (enables interaction) */
   isPaidUser: boolean;
 }
@@ -147,6 +158,36 @@ function InfoTooltip({ content }: InfoTooltipProps) {
 }
 
 // ============================================================================
+// STATUS BADGE COMPONENT
+// ============================================================================
+
+interface StatusBadgeProps {
+  status: 'active' | 'coming-soon' | 'unavailable';
+}
+
+function StatusBadge({ status }: StatusBadgeProps) {
+  if (status === 'active') return null;
+
+  const styles = {
+    'coming-soon': 'bg-amber-500/20 text-amber-400 ring-amber-500/30',
+    unavailable: 'bg-slate-500/20 text-slate-400 ring-slate-500/30',
+  };
+
+  const labels = {
+    'coming-soon': 'Soon',
+    unavailable: 'N/A',
+  };
+
+  return (
+    <span
+      className={`ml-2 px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ${styles[status]}`}
+    >
+      {labels[status]}
+    </span>
+  );
+}
+
+// ============================================================================
 // CHIPS + ADD LIST DROPDOWN (PORTAL VERSION)
 // ============================================================================
 
@@ -165,6 +206,8 @@ interface ChipsDropdownProps {
   useCurrencySearch?: boolean;
   /** Show sub-labels (country names) in the list */
   showSubLabels?: boolean;
+  /** Show status badges (for indices) */
+  showStatusBadges?: boolean;
 }
 
 interface DropdownPosition {
@@ -186,6 +229,7 @@ function ChipsDropdown({
   tooltipText,
   useCurrencySearch = false,
   showSubLabels = false,
+  showStatusBadges = false,
 }: ChipsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -402,121 +446,126 @@ function ChipsDropdown({
                     setIsOpen(false);
                     setFilter('');
                   }}
-                  className="px-3 py-1.5 rounded-md bg-slate-700 text-sm font-medium text-white hover:bg-slate-600 transition-colors"
+                  className="px-3 py-1 text-xs font-medium rounded-md bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors"
                 >
                   Done
                 </button>
               </div>
 
-              {/* State help text - if applicable */}
-              {stateHelpText && (
-                <div
-                  className={`px-3 py-2 border-b border-white/10 ${
-                    selected.length === 0 ? 'bg-sky-500/10' : 'bg-amber-500/10'
-                  }`}
-                >
-                  <p
-                    className={`text-xs font-medium ${
-                      selected.length === 0 ? 'text-sky-400' : 'text-amber-400'
-                    }`}
-                  >
-                    {stateHelpText}
-                  </p>
-                </div>
-              )}
-
               {/* Selected chips section */}
-              <div className="px-3 py-2.5 border-b border-white/10 bg-slate-800/30">
-                <div className="text-xs font-medium text-white/60 mb-2 uppercase tracking-wide">
-                  Your Selections ({selectedItems.length})
-                </div>
-                <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
-                  {selectedItems.length === 0 ? (
-                    <span className="text-sm text-slate-500 italic">
-                      None selected — add items below
-                    </span>
-                  ) : (
-                    selectedItems.map((item) => (
+              <div className="px-3 py-2.5 border-b border-white/10 max-h-[160px] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+                {selectedItems.length === 0 ? (
+                  <p className="text-xs text-white/40 italic">
+                    No items selected. Use the list below to add items.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedItems.map((item) => (
                       <span
                         key={item.id}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 text-sm font-medium"
+                        className={`
+                          inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+                          bg-white/10 text-white/90 ring-1 ring-white/20
+                          ${canRemoveItem ? 'hover:bg-red-500/20 hover:ring-red-500/30' : ''}
+                          transition-colors group
+                        `}
                       >
-                        <span className="truncate max-w-[140px]">{item.label}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(item.id)}
-                          disabled={!canRemoveItem}
-                          className={`
-                      w-4 h-4 rounded-full flex items-center justify-center transition-colors
-                      ${
-                        canRemoveItem
-                          ? 'bg-sky-500/30 hover:bg-rose-500/50 hover:text-rose-200 cursor-pointer'
-                          : 'bg-slate-700/50 text-slate-600 cursor-not-allowed'
-                      }
-                    `}
-                          aria-label={`Remove ${item.label}`}
-                          title={`Remove ${item.label}`}
-                        >
-                          <svg
-                            className="w-2.5 h-2.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                        {item.label}
+                        {showStatusBadges && item.status && item.status !== 'active' && (
+                          <StatusBadge status={item.status} />
+                        )}
+                        {canRemoveItem && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemove(item.id)}
+                            className="w-4 h-4 rounded-full flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/20 transition-colors"
+                            aria-label={`Remove ${item.label}`}
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={3}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2.5}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M6 18L18 6M6 6l12 12"
+                              />
+                            </svg>
+                          </button>
+                        )}
                       </span>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Search input */}
-              <div className="p-2.5 border-b border-white/10">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  placeholder={placeholder}
-                  className="
-              w-full px-3 py-2 rounded-md
-              bg-slate-800/80 text-sm text-slate-100
-              placeholder:text-slate-500
-              border border-slate-700/50
-              focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/30
-              font-medium
-            "
-                />
-                {useCurrencySearch && (
-                  <div className="text-xs text-white/40 mt-1.5 px-1">
-                    💡 Search by pair, country, or slang: &quot;South Africa&quot;,
-                    &quot;Loonie&quot;, &quot;Cable&quot;
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Available items section header */}
-              <div className="px-3 py-2 bg-slate-800/20">
-                <div className="text-xs font-medium text-white/60 uppercase tracking-wide">
-                  Available to Add ({filteredUnselected.length})
+              {/* Search input */}
+              <div className="px-3 py-2 border-b border-white/10">
+                <div className="relative">
+                  <svg
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-slate-800/50 rounded-lg text-white placeholder:text-white/40 border border-white/10 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20"
+                  />
+                  {filter && (
+                    <button
+                      type="button"
+                      onClick={() => setFilter('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white/20 text-white/60 hover:bg-white/30 hover:text-white flex items-center justify-center"
+                    >
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* State help text */}
+              {stateHelpText && (
+                <div className="px-3 py-2 border-b border-white/5">
+                  <p className="text-xs text-white/50">{stateHelpText}</p>
+                </div>
+              )}
 
               {/* Available items list */}
               <ul
                 id={`${id}-listbox`}
                 role="listbox"
-                className="max-h-80 overflow-y-auto py-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20"
+                aria-label="Available items"
+                className="max-h-[220px] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20"
               >
                 {filteredUnselected.length === 0 ? (
-                  <li className="px-3 py-3 text-sm text-slate-500 text-center">
+                  <li className="px-3 py-4 text-sm text-white/40 text-center italic">
                     {filter ? 'No matches found' : 'All items selected'}
                   </li>
                 ) : (
@@ -553,14 +602,17 @@ function ChipsDropdown({
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                           </svg>
                         </span>
-                        {/* Label with optional sub-label */}
-                        <div className="flex flex-col min-w-0">
+                        {/* Label with optional sub-label and status badge */}
+                        <div className="flex flex-col min-w-0 flex-1">
                           <span
-                            className={`text-sm font-medium truncate ${
+                            className={`text-sm font-medium truncate flex items-center ${
                               canAddItem ? 'text-slate-200' : 'text-slate-500'
                             }`}
                           >
                             {item.label}
+                            {showStatusBadges && item.status && item.status !== 'active' && (
+                              <StatusBadge status={item.status} />
+                            )}
                           </span>
                           {showSubLabels && item.subLabel && (
                             <span className="text-xs text-slate-500 truncate">{item.subLabel}</span>
@@ -630,10 +682,13 @@ function ChipsDropdown({
 export function ComparisonTable({
   fxOptions,
   exchangeOptions,
+  indicesOptions,
   selectedFxPairs,
   selectedExchanges,
+  selectedIndices,
   onFxChange,
   onExchangeChange,
+  onIndicesChange,
   isPaidUser,
 }: ComparisonTableProps) {
   // Render the Pro column value - either static text or dropdown
@@ -672,6 +727,26 @@ export function ComparisonTable({
           tooltipText="Select 0 to 16 exchanges. You can clear all and build from scratch."
           useCurrencySearch={false}
           showSubLabels={true}
+        />
+      );
+    }
+
+    if (row.hasDropdown === 'indices') {
+      return (
+        <ChipsDropdown
+          id="indices-dropdown"
+          options={indicesOptions}
+          selected={selectedIndices}
+          onChange={onIndicesChange}
+          min={PRO_SELECTION_LIMITS.INDICES_MIN}
+          max={PRO_SELECTION_LIMITS.INDICES_MAX}
+          disabled={false}
+          gradient="from-cyan-500 via-blue-500 to-indigo-500"
+          placeholder="Search indices..."
+          tooltipText="Select which exchanges show stock index data on their cards. You can clear all to hide indices."
+          useCurrencySearch={false}
+          showSubLabels={true}
+          showStatusBadges={true}
         />
       );
     }

@@ -8,10 +8,11 @@
 // - Sign-out button disappearing
 // - Facebook OAuth #_=_ hash cleanup
 // - Post-OAuth "Loading..." stuck - direct client state check + auto-reload
+// - 2025-01-14: Fixed infinite re-render loop (pollCount dependency removed)
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { SignInButton, UserButton, useClerk } from '@clerk/nextjs';
 
 // Timeout in ms before showing Sign In button even if Clerk hasn't loaded
@@ -24,18 +25,38 @@ const MAX_POLL_TIME_MS = 5000;
 // Icon components with display names
 function UserIcon() {
   return (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+      />
     </svg>
   );
 }
 
 function LoadingIcon() {
   return (
-    <svg className="h-4 w-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+    <svg
+      className="h-4 w-4 animate-pulse"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+      />
     </svg>
   );
 }
@@ -49,17 +70,22 @@ const loadingButtonStyles =
 
 /**
  * AuthButton - Adaptive authentication UI
- * 
+ *
  * Uses direct Clerk client state checking to avoid hook synchronization issues
  * that can occur after OAuth redirects.
  */
 export function AuthButton() {
   const clerk = useClerk();
-  
+
   const [mounted, setMounted] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
-  const [sessionState, setSessionState] = useState<'loading' | 'signed-in' | 'signed-out'>('loading');
-  const [pollCount, setPollCount] = useState(0);
+  const [sessionState, setSessionState] = useState<'loading' | 'signed-in' | 'signed-out'>(
+    'loading',
+  );
+
+  // FIX: Use ref instead of state for poll count to avoid infinite re-render loop
+  // The bug was: pollCount in dependencies + setPollCount inside effect = infinite loop
+  const pollCountRef = useRef(0);
 
   // Clean up OAuth hash fragments
   const cleanupOAuthHash = useCallback(() => {
@@ -74,11 +100,11 @@ export function AuthButton() {
   // Check session state directly from Clerk client
   const checkSessionState = useCallback((): 'loading' | 'signed-in' | 'signed-out' => {
     if (!clerk.loaded) return 'loading';
-    
+
     // Direct check on clerk client
     if (clerk.user) return 'signed-in';
     if (clerk.session) return 'signed-in';
-    
+
     return 'signed-out';
   }, [clerk]);
 
@@ -89,16 +115,17 @@ export function AuthButton() {
   }, [cleanupOAuthHash]);
 
   // Poll for session state changes after OAuth redirect
+  // FIX: Removed pollCount from dependencies - use ref instead
   useEffect(() => {
     if (!mounted) return;
 
     const pollSession = () => {
       const state = checkSessionState();
       setSessionState(state);
-      
-      // If still loading, continue polling
+
+      // Track poll count via ref (doesn't trigger re-render)
       if (state === 'loading') {
-        setPollCount(c => c + 1);
+        pollCountRef.current += 1;
       }
     };
 
@@ -107,13 +134,14 @@ export function AuthButton() {
 
     // Set up polling interval
     const interval = setInterval(() => {
-      if (pollCount * SESSION_POLL_INTERVAL_MS < MAX_POLL_TIME_MS) {
+      // Check against ref, not state
+      if (pollCountRef.current * SESSION_POLL_INTERVAL_MS < MAX_POLL_TIME_MS) {
         pollSession();
       }
     }, SESSION_POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [mounted, checkSessionState, pollCount]);
+  }, [mounted, checkSessionState]); // FIX: Removed pollCount from deps
 
   // Update session state when clerk changes
   useEffect(() => {
@@ -155,13 +183,14 @@ export function AuthButton() {
 
     const stuckTimer = setTimeout(() => {
       // Check if we have session cookies but still showing loading
-      const hasCookie = typeof document !== 'undefined' && 
-        (document.cookie.includes('__session') || 
-         document.cookie.includes('__client') ||
-         document.cookie.includes('__clerk'));
-      
-      const alreadyReloaded = typeof sessionStorage !== 'undefined' && 
-        sessionStorage.getItem('clerk_auth_reload');
+      const hasCookie =
+        typeof document !== 'undefined' &&
+        (document.cookie.includes('__session') ||
+          document.cookie.includes('__client') ||
+          document.cookie.includes('__clerk'));
+
+      const alreadyReloaded =
+        typeof sessionStorage !== 'undefined' && sessionStorage.getItem('clerk_auth_reload');
 
       if (hasCookie && !alreadyReloaded) {
         console.warn('[AuthButton] Detected stuck state with session cookie - reloading');

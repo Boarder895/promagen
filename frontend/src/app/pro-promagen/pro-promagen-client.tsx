@@ -1,6 +1,6 @@
 // src/app/pro-promagen/pro-promagen-client.tsx
 // ============================================================================
-// PRO PROMAGEN CLIENT - SIMPLIFIED VERSION
+// PRO PROMAGEN CLIENT - WITH INDICES SELECTION
 // ============================================================================
 // Client component for the /pro-promagen configuration page.
 // Uses SAME layout as homepage (HomepageGrid + ExchangeCard + FxRibbon).
@@ -12,10 +12,8 @@
 // - Centre column shows comparison table instead of providers table
 // - Paid users can save selections; free users preview only
 //
-// FIXES APPLIED:
-// - State initialization no longer depends on isPaidUser (was causing reset bug)
-// - Uses DemoFinanceRibbon instead of live API ribbon
-// - Empty array [] is properly persisted and restored
+// UPDATED: Added indices selection for controlling which exchange cards
+// display stock index data (e.g., "Nikkei 225: 38,945.72 ▲ +312.45").
 //
 // Authority: docs/authority/paid_tier.md §5.10
 // ============================================================================
@@ -32,6 +30,7 @@ import {
   PRO_SELECTION_LIMITS,
   type FxPairCatalogEntry,
   type ExchangeCatalogEntry,
+  type IndicesCatalogEntry,
 } from '@/lib/pro-promagen/types';
 import type { Exchange, Hemisphere } from '@/data/exchanges/types';
 import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
@@ -45,10 +44,14 @@ export interface ProPromagenClientProps {
   exchangeCatalog: ExchangeCatalogEntry[];
   /** Full FX pairs catalog */
   fxCatalog: FxPairCatalogEntry[];
+  /** Indices catalog (exchanges with marketstack benchmarks) */
+  indicesCatalog: IndicesCatalogEntry[];
   /** Default selected exchanges (SSOT) */
   defaultExchangeIds: string[];
   /** Default selected FX pairs (SSOT) */
   defaultFxPairIds: string[];
+  /** Default selected indices (same as exchanges by default) */
+  defaultIndicesIds: string[];
   /** Demo weather data for exchanges */
   demoWeatherIndex: Map<string, ExchangeWeather>;
 }
@@ -60,6 +63,7 @@ export interface ProPromagenClientProps {
 const STORAGE_KEYS = {
   FX_SELECTION: 'promagen:pro:fx-selection',
   EXCHANGE_SELECTION: 'promagen:pro:exchange-selection',
+  INDICES_SELECTION: 'promagen:pro:indices-selection',
 } as const;
 
 // ============================================================================
@@ -112,6 +116,8 @@ function catalogToExchange(
     hemisphere: entry.hemisphere as Hemisphere,
     hoursTemplate: entry.hoursTemplate,
     holidaysRef: entry.holidaysRef,
+    marketstack: entry.marketstack ?? { benchmark: '', indexName: '' },
+    hoverColor: entry.hoverColor ?? '#6366F1',
   };
 }
 
@@ -122,8 +128,10 @@ function catalogToExchange(
 export default function ProPromagenClient({
   exchangeCatalog,
   fxCatalog,
+  indicesCatalog,
   defaultExchangeIds,
   defaultFxPairIds,
+  defaultIndicesIds,
   demoWeatherIndex,
 }: ProPromagenClientProps) {
   const {
@@ -142,10 +150,12 @@ export default function ProPromagenClient({
   // Initialize with defaults first (SSR-safe)
   const [selectedFxPairs, setSelectedFxPairs] = useState<string[]>(defaultFxPairIds);
   const [selectedExchanges, setSelectedExchanges] = useState<string[]>(defaultExchangeIds);
+  const [selectedIndices, setSelectedIndices] = useState<string[]>(defaultIndicesIds);
   
   // Track if we've loaded from storage (to detect changes)
   const [initialFx, setInitialFx] = useState<string[]>(defaultFxPairIds);
   const [initialExchanges, setInitialExchanges] = useState<string[]>(defaultExchangeIds);
+  const [initialIndices, setInitialIndices] = useState<string[]>(defaultIndicesIds);
   const [hydrated, setHydrated] = useState(false);
 
   // Load from localStorage after hydration (client-side only)
@@ -154,6 +164,7 @@ export default function ProPromagenClient({
     
     const storedFx = loadArrayFromStorage(STORAGE_KEYS.FX_SELECTION);
     const storedExchanges = loadArrayFromStorage(STORAGE_KEYS.EXCHANGE_SELECTION);
+    const storedIndices = loadArrayFromStorage(STORAGE_KEYS.INDICES_SELECTION);
     
     // If storage has values (including empty array), use them
     // Otherwise keep defaults
@@ -164,6 +175,10 @@ export default function ProPromagenClient({
     if (storedExchanges !== null) {
       setSelectedExchanges(storedExchanges);
       setInitialExchanges(storedExchanges);
+    }
+    if (storedIndices !== null) {
+      setSelectedIndices(storedIndices);
+      setInitialIndices(storedIndices);
     }
     
     setHydrated(true);
@@ -178,8 +193,11 @@ export default function ProPromagenClient({
     const exchChanged =
       JSON.stringify([...selectedExchanges].sort()) !==
       JSON.stringify([...initialExchanges].sort());
-    return fxChanged || exchChanged;
-  }, [selectedFxPairs, selectedExchanges, initialFx, initialExchanges, hydrated]);
+    const indicesChanged =
+      JSON.stringify([...selectedIndices].sort()) !==
+      JSON.stringify([...initialIndices].sort());
+    return fxChanged || exchChanged || indicesChanged;
+  }, [selectedFxPairs, selectedExchanges, selectedIndices, initialFx, initialExchanges, initialIndices, hydrated]);
 
   // ============================================================================
   // DERIVED DATA - Dropdown options with country labels
@@ -202,6 +220,44 @@ export default function ProPromagenClient({
       subLabel: exch.country,
     }));
   }, [exchangeCatalog]);
+
+  // Indices options for dropdown with exchange name as subLabel
+  // Only show indices for currently selected exchanges
+  const indicesOptions = useMemo(() => {
+    // Filter to only exchanges that are currently selected AND have marketstack data
+    const availableIndices = indicesCatalog.filter((idx) =>
+      selectedExchanges.includes(idx.id)
+    );
+
+    return availableIndices.map((idx) => ({
+      id: idx.id,
+      label: idx.indexName,
+      subLabel: `${idx.exchangeName} — ${idx.country}`,
+      status: idx.status,
+    }));
+  }, [indicesCatalog, selectedExchanges]);
+
+  // ============================================================================
+  // SYNC INDICES WHEN EXCHANGES CHANGE
+  // ============================================================================
+  // When an exchange is removed, also remove it from indices selection
+  // When exchanges change, filter indices to only include valid exchanges
+
+  useEffect(() => {
+    if (!hydrated) return;
+
+    // Filter indices to only include exchanges that are still selected
+    const validIndices = selectedIndices.filter((id) =>
+      selectedExchanges.includes(id) &&
+      indicesCatalog.some((idx) => idx.id === id)
+    );
+
+    // Only update if there's a change
+    if (validIndices.length !== selectedIndices.length) {
+      setSelectedIndices(validIndices);
+      saveToStorage(STORAGE_KEYS.INDICES_SELECTION, validIndices);
+    }
+  }, [selectedExchanges, indicesCatalog, hydrated, selectedIndices]);
 
   // ============================================================================
   // DEMO FX DATA - Filter catalog to selected pairs for ribbon
@@ -262,18 +318,31 @@ export default function ProPromagenClient({
     saveToStorage(STORAGE_KEYS.EXCHANGE_SELECTION, ids);
   }, []);
 
+  const handleIndicesChange = useCallback((ids: string[]) => {
+    // Validate count (allows 0 to max)
+    if (ids.length < PRO_SELECTION_LIMITS.INDICES_MIN || ids.length > PRO_SELECTION_LIMITS.INDICES_MAX) {
+      return;
+    }
+    setSelectedIndices(ids);
+    // Auto-save to localStorage on every change
+    saveToStorage(STORAGE_KEYS.INDICES_SELECTION, ids);
+  }, []);
+
   const handleSave = useCallback(async () => {
     // Save is already done on each change, but this confirms to user
     saveToStorage(STORAGE_KEYS.FX_SELECTION, selectedFxPairs);
     saveToStorage(STORAGE_KEYS.EXCHANGE_SELECTION, selectedExchanges);
+    saveToStorage(STORAGE_KEYS.INDICES_SELECTION, selectedIndices);
     
     // Update initial state to reflect saved state
     setInitialFx(selectedFxPairs);
     setInitialExchanges(selectedExchanges);
+    setInitialIndices(selectedIndices);
 
     // TODO: Sync to Clerk metadata (debounced)
+    // TODO: POST to /api/indices with { exchangeIds: selectedIndices, tier: 'paid' }
     await new Promise((resolve) => setTimeout(resolve, 500));
-  }, [selectedFxPairs, selectedExchanges]);
+  }, [selectedFxPairs, selectedExchanges, selectedIndices]);
 
   // ============================================================================
   // CENTRE CONTENT - Comparison table with dropdowns
@@ -325,13 +394,33 @@ export default function ProPromagenClient({
         <ComparisonTable
           fxOptions={fxOptions}
           exchangeOptions={exchangeOptions}
+          indicesOptions={indicesOptions}
           selectedFxPairs={selectedFxPairs}
           selectedExchanges={selectedExchanges}
+          selectedIndices={selectedIndices}
           onFxChange={handleFxChange}
           onExchangeChange={handleExchangeChange}
+          onIndicesChange={handleIndicesChange}
           isPaidUser={isPaidUser}
         />
       </div>
+
+      {/* Indices Preview Summary */}
+      {selectedIndices.length > 0 && (
+        <div className="shrink-0 mb-4 px-3 py-2 rounded-lg bg-cyan-500/10 ring-1 ring-cyan-500/20">
+          <p className="text-xs text-cyan-400">
+            <span className="font-medium">📊 {selectedIndices.length} indices enabled:</span>{' '}
+            <span className="text-cyan-400/70">
+              {selectedIndices
+                .slice(0, 5)
+                .map((id) => indicesCatalog.find((idx) => idx.id === id)?.indexName)
+                .filter(Boolean)
+                .join(', ')}
+              {selectedIndices.length > 5 && ` +${selectedIndices.length - 5} more`}
+            </span>
+          </p>
+        </div>
+      )}
 
       {/* CTA Button */}
       <div className="shrink-0 mt-auto pt-4">

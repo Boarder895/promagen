@@ -16,6 +16,8 @@
 
 import React, { useRef, useCallback, type ReactNode } from 'react';
 import FinanceRibbon from '@/components/ribbon/finance-ribbon.container';
+import CommoditiesRibbon from '@/components/ribbon/commodities-ribbon.container';
+import CryptoRibbon from '@/components/ribbon/crypto-ribbon.container';
 import DemoFinanceRibbon from '@/components/ribbon/demo-finance-ribbon';
 import ProvenanceFooter from '@/components/core/provenance-footer';
 import AuthButton from '@/components/auth/auth-button';
@@ -105,6 +107,8 @@ export type HomepageGridProps = {
  * - Centre column: providers table scrolls independently
  * - Footer: fixed at bottom
  * - Market Pulse v2.0: Flowing energy streams when markets transition
+ * - Auth: Sign in button in header (right), Reference toggle (left, paid only)
+ * - Market Pulse: Flowing energy streams connect exchanges to providers
  */
 export default function HomepageGrid({
   mainLabel,
@@ -195,8 +199,10 @@ export default function HomepageGrid({
     }
 
     return (
-      <div className="shrink-0">
+      <div className="shrink-0 space-y-4">
         <FinanceRibbon />
+        <CommoditiesRibbon />
+        <CryptoRibbon />
       </div>
     );
   };

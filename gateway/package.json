@@ -1,26 +1,40 @@
 {
   "name": "promagen-gateway",
-  "version": "1.0.0",
-  "description": "Promagen API Gateway - FX, Commodities, Crypto data with caching",
-  "main": "dist/server.js",
+  "version": "2.1.0",
+  "description": "Promagen API Gateway - Provider-Based Modular Architecture",
   "type": "module",
+  "main": "dist/src/server.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src/ --config eslint.config.cjs",
+    "lint:fix": "eslint src/ --config eslint.config.cjs --fix",
+    "lint:cycles": "eslint src/ --config eslint.config.cjs --rule 'import/no-cycle: error'",
+    "clean": "rm -rf dist",
+    "verify": "npm run typecheck && npm run lint:cycles"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20"
   },
   "dependencies": {},
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "typescript": "^5.3.0",
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-import-resolver-typescript": "^3.6.0",
+    "eslint-plugin-import": "^2.29.0",
     "tsx": "^4.7.0",
-    "eslint": "^8.56.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0"
-  }
+    "typescript": "^5.7.3"
+  },
+  "keywords": [
+    "api",
+    "gateway",
+    "financial-data",
+    "twelvedata",
+    "marketstack"
+  ],
+  "private": true
 }

@@ -87,6 +87,8 @@ function loadSelectedExchanges(): Exchange[] {
         hoursTemplate: '',
         holidaysRef: '',
         hemisphere: '',
+        marketstack: { benchmark: '', indexName: '' },
+        hoverColor: '#6366F1',
       };
       result.push(placeholder);
 

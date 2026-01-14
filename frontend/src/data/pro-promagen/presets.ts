@@ -4,6 +4,9 @@
 // ============================================================================
 // Quick selection presets for exchanges and FX pairs.
 // Provides one-click sensible defaults for regional focus.
+//
+// UPDATED: Added Stock Indices row to FEATURE_COMPARISON with dropdown.
+//
 // Authority: docs/authority/paid_tier.md §5.10
 // ============================================================================
 
@@ -241,8 +244,9 @@ export const FX_PRESETS: FxPreset[] = [
 // FEATURE COMPARISON TABLE DATA
 // ============================================================================
 // Authority: docs/authority/paid_tier.md §5.10
-// Only 5 rows shown. Vote Weight, Market Pulse removed (internal features).
-// Commodities, Crypto removed (coming soon, not user-configurable yet).
+//
+// UPDATED: Added Stock Indices row with interactive dropdown.
+// Indices selection controls which exchange cards show benchmark data.
 // ============================================================================
 
 export interface FeatureRow {
@@ -255,23 +259,30 @@ export interface FeatureRow {
   /** Whether to highlight this row */
   highlight: boolean;
   /** Whether this row has an interactive dropdown in Pro column */
-  hasDropdown?: 'fx' | 'exchange';
+  hasDropdown?: 'fx' | 'exchange' | 'indices';
 }
 
 export const FEATURE_COMPARISON: FeatureRow[] = [
   {
     feature: 'FX Pairs',
     standard: '8 fixed',
-    pro: '6–16, your choice',
+    pro: '0–16, your choice',
     highlight: true,
     hasDropdown: 'fx',
   },
   {
     feature: 'Exchanges',
     standard: '16 fixed',
-    pro: '6–16, your choice',
+    pro: '0–16, your choice',
     highlight: true,
     hasDropdown: 'exchange',
+  },
+  {
+    feature: 'Stock Indices',
+    standard: 'All exchanges',
+    pro: '0–16, your choice',
+    highlight: true,
+    hasDropdown: 'indices',
   },
   {
     feature: 'Reference Frame',

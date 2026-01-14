@@ -1,6 +1,6 @@
 # Dockerfile - Promagen API Gateway
-# Multi-stage build for small, secure image
-# Version 2.3.1 - SSOT support for FX pairs (runtime fetch from frontend)
+# Modular Monolith Architecture v2.0
+# All source in src/ folder (lib + feeds + server)
 
 # Stage 1: Build
 FROM node:20-alpine AS builder
@@ -16,9 +16,8 @@ RUN npm install
 # Copy TypeScript config and source files
 COPY tsconfig.json ./
 COPY src ./src
-COPY lib ./lib
 
-# Build TypeScript (compiles src/ and lib/ to dist/)
+# Build TypeScript (compiles src/ to dist/src/)
 RUN npm run build
 
 # Stage 2: Production
@@ -37,9 +36,6 @@ RUN npm install --omit=dev && npm cache clean --force
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
-# Note: Gateway fetches SSOT from frontend at runtime
-# No local data directory needed
-
 # Set ownership
 RUN chown -R gateway:nodejs /app
 
@@ -51,8 +47,8 @@ ENV PORT=8080
 
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+# Health check - increased start period for feed initialization
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 CMD ["node", "dist/src/server.js"]

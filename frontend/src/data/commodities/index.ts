@@ -1,3 +1,5 @@
+// src/data/commodities/index.ts
+
 import commoditiesCatalogJson from './commodities.catalog.json';
 import {
   commoditiesCatalogSchema,
@@ -7,6 +9,7 @@ import {
 import countryCommodityMapJson from './country-commodities.map.json';
 import type { CountryCommodityMapEntry } from './country-commodities.map';
 import commodityExchangeMapJson from './exchange-commodities.map.json';
+import exchangesCatalogJson from '../exchanges/exchanges.catalog.json';
 
 export type CommodityTier = 'free' | 'paid';
 
@@ -116,6 +119,15 @@ export type GetExchangeMarketStatus = (
 ) => ExchangeMarketStatus | undefined;
 
 /**
+ * Returned by the routing helpers.
+ */
+export interface CommodityExchangeSelection {
+  commodityId: string;
+  exchangeId: string;
+  isPrimary: boolean;
+}
+
+/**
  * Utility: normalise a country display name into a simple key for matching.
  */
 function normaliseCountryName(name: string): string {
@@ -202,383 +214,25 @@ export function getCommodityImportance(commodityId: string): number | undefined 
 }
 
 /**
- * Return the default commodity set for a given subscription tier,
- * ordered from most to least important using the importance score.
- *
- * This is a great starting point for:
- *  - deciding which commodities appear in the ribbon for each tier
- *  - picking a subset for "headline" widgets
- */
-const DEFAULT_FREE_COMMODITY_IDS: string[] = [
-  'brent_crude',
-  'gold',
-  'wheat',
-  'corn',
-  'silver',
-  'wti_crude',
-  'soybeans',
-  'coffee',
-  'sugar',
-];
-
-const DEFAULT_PAID_COMMODITY_IDS: string[] = [
-  'brent_crude',
-  'gold',
-  'wheat',
-  'corn',
-  'soybeans',
-  'copper',
-];
-
-/**
  * Return the default commodity set for a given subscription tier.
  *
- * The order is curated to give a sensible "importance" ranking for
- * the homepage ribbon and prompt-builder defaults. The contract is
- * locked in by commodities.index.helpers.test.ts.
+ * SSOT rules:
+ * - Membership is defined by isDefaultFree / isDefaultPaid flags in commodities.catalog.json.
+ * - Order is preserved from commodities.catalog.json (NO sorting).
+ * - We only include active commodities.
  */
 export function getDefaultCommoditiesForTier(tier: CommodityTier): Commodity[] {
-  const ids = tier === 'free' ? DEFAULT_FREE_COMMODITY_IDS : DEFAULT_PAID_COMMODITY_IDS;
+  const isDefault = (c: Commodity): boolean =>
+    tier === 'free' ? c.isDefaultFree === true : c.isDefaultPaid === true;
 
-  return ids
-    .map((id) => commodityById.get(id))
-    .filter((commodity): commodity is Commodity => Boolean(commodity));
+  return commoditiesCatalog.filter((c) => c.isActive === true && isDefault(c));
 }
 
 /**
- * Simple helper to choose a primary exchange for a commodity,
- * with a hook for tier-aware routing.
- *
- * - Free tier: always use the primary exchange
- * - Paid tier: respect any preferred exchanges where possible
- */
-export function getPrimaryExchangeForCommodity(
-  commodityId: string,
-  tier: CommodityTier,
-  preferredExchangeIds?: string[],
-):
-  | {
-      commodityId: string;
-      exchangeId: string;
-      isPrimary: boolean;
-      secondaryCandidates: string[];
-      extraCandidates: string[];
-    }
-  | undefined {
-  const mapping = exchangeMapByCommodityId.get(commodityId);
-
-  if (!mapping) {
-    return undefined;
-  }
-
-  const { primaryExchangeId, secondaryExchangeIds, extraExchangeIds } = mapping;
-
-  const candidates = [primaryExchangeId, ...secondaryExchangeIds, ...extraExchangeIds];
-
-  if (tier === 'paid' && preferredExchangeIds && preferredExchangeIds.length > 0) {
-    const preferredSet = new Set(preferredExchangeIds);
-
-    const preferredMatch = candidates.find((exchangeId) => preferredSet.has(exchangeId));
-
-    if (preferredMatch) {
-      return {
-        commodityId,
-        exchangeId: preferredMatch,
-        isPrimary: preferredMatch === primaryExchangeId,
-        secondaryCandidates: secondaryExchangeIds,
-        extraCandidates: extraExchangeIds,
-      };
-    }
-  }
-
-  return {
-    commodityId,
-    exchangeId: primaryExchangeId,
-    isPrimary: true,
-    secondaryCandidates: secondaryExchangeIds,
-    extraCandidates: extraExchangeIds,
-  };
-}
-
-/**
- * Given a coarse region / time-zone hint, return a set of exchanges
- * that should be preferred when routing for that user.
- *
- * This is intentionally heuristic – we just need something stable,
- * predictable and testable.
- */
-export function getPreferredExchangeIdsForRegionOrTimeZone(
-  regionOrTimeZoneHint?: string | null,
-): string[] {
-  if (!regionOrTimeZoneHint) {
-    return [];
-  }
-
-  const value = regionOrTimeZoneHint.toLowerCase().replace(/[^a-z0-9_/+-]+/g, '_');
-
-  // UK / London / GBP-centric
-  if (
-    value === 'uk' ||
-    value === 'gb' ||
-    value.includes('london') ||
-    value.includes('europe/london')
-  ) {
-    return ['lse-london', 'ice-futures-europe', 'eurex-frankfurt'];
-  }
-
-  // US / NY / Chicago / Eastern / Central
-  if (
-    value === 'us' ||
-    value === 'usa' ||
-    value.includes('new_york') ||
-    value.includes('new-york') ||
-    value.includes('america/new_york') ||
-    value.includes('chicago') ||
-    value.includes('america/chicago')
-  ) {
-    return ['nyse-new-york', 'cme-chicago', 'cboe-chicago'];
-  }
-
-  // Continental Europe (non-UK)
-  if (
-    value === 'eu' ||
-    value === 'europe' ||
-    value === 'eurozone' ||
-    value.includes('frankfurt') ||
-    value.includes('paris') ||
-    value.includes('amsterdam') ||
-    value.includes('brussels') ||
-    value.includes('europe/berlin') ||
-    value.includes('europe/paris')
-  ) {
-    return ['eurex-frankfurt', 'euronext-paris', 'euronext-amsterdam', 'euronext-brussels'];
-  }
-
-  // Asia-Pacific: JP / HK / SG / AU / NZ
-  if (
-    value === 'apac' ||
-    value === 'asia_pacific' ||
-    value.includes('tokyo') ||
-    value.includes('osaka') ||
-    value.includes('hong_kong') ||
-    value.includes('hong-kong') ||
-    value.includes('singapore') ||
-    value.includes('sydney') ||
-    value.includes('melbourne') ||
-    value.includes('australia') ||
-    value.includes('new_zealand') ||
-    value.includes('nz')
-  ) {
-    return [
-      'tse-tokyo',
-      'ose-osaka',
-      'hkex-hong-kong',
-      'sgx-singapore',
-      'asx-sydney',
-      'nzsx-new-zealand',
-    ];
-  }
-
-  // Latin America
-  if (
-    value === 'latam' ||
-    value === 'latin_america' ||
-    value === 'latin-america' ||
-    value === 'brazil' ||
-    value === 'br' ||
-    value === 'argentina' ||
-    value === 'ar' ||
-    value === 'chile' ||
-    value === 'cl' ||
-    value === 'peru' ||
-    value === 'pe' ||
-    value === 'mexico'
-  ) {
-    return [
-      'b3-sao-paulo',
-      'bcba-buenos-aires',
-      'sse-santiago',
-      'bvl-lima',
-      'bmv-mexico-city',
-      'biva-mexico-city',
-    ];
-  }
-
-  // Middle East & North Africa
-  if (
-    value === 'mena' ||
-    value === 'middle_east' ||
-    value === 'me' ||
-    value === 'sa' ||
-    value === 'saudi_arabia' ||
-    value === 'ae' ||
-    value === 'uae' ||
-    value === 'ma' ||
-    value === 'morocco' ||
-    value === 'tn' ||
-    value === 'tunisia'
-  ) {
-    return ['dfm-dubai', 'tadawul-riyadh', 'cse-casablanca', 'casablanca-alt-cse', 'tunis-bvmt'];
-  }
-
-  // Sub-Saharan Africa
-  if (
-    value === 'africa' ||
-    value === 'sub_saharan_africa' ||
-    value === 'sub-saharan-africa' ||
-    value === 'ng' ||
-    value === 'nigeria' ||
-    value === 'za' ||
-    value === 'south_africa' ||
-    value === 'ke' ||
-    value === 'kenya'
-  ) {
-    return ['jse-johannesburg', 'nse-lagos', 'nairobi-securities-exchange'];
-  }
-
-  // Fall back to no strong preferences – primary venue will be used.
-  return [];
-}
-
-/**
- * Rank candidate venues for a commodity, combining:
- *  - market session state (open / preopen / closed / holiday / unknown)
- *  - region / time-zone preferences
- *  - primary vs non-primary
- *  - optional latency information (paid tier only)
- */
-export function selectBestExchangeForCommodity(
-  commodityId: string,
-  context: CommodityRoutingContext,
-  getExchangeMarketStatus: GetExchangeMarketStatus,
-):
-  | {
-      exchangeId: string;
-      isPrimary: boolean;
-    }
-  | undefined {
-  const mapping = exchangeMapByCommodityId.get(commodityId);
-
-  if (!mapping) {
-    return undefined;
-  }
-
-  const { primaryExchangeId, secondaryExchangeIds, extraExchangeIds } = mapping;
-  const now = context.now ?? new Date();
-
-  const candidateExchangeIds = [primaryExchangeId, ...secondaryExchangeIds, ...extraExchangeIds];
-
-  const preferredExchangeIds = new Set(
-    getPreferredExchangeIdsForRegionOrTimeZone(context.userTimeZone ?? context.userRegionHint),
-  );
-
-  const scores = candidateExchangeIds.map((exchangeId) => {
-    const status = getExchangeMarketStatus(exchangeId, now) ?? {
-      exchangeId,
-      sessionState: 'unknown' as MarketSessionState,
-    };
-
-    const rawLatency = context.latencyByExchangeId?.[exchangeId];
-    const latency = typeof rawLatency === 'number' && rawLatency >= 0 ? rawLatency : undefined;
-
-    let score = 0;
-
-    // Market session weighting – lower is better
-    switch (status.sessionState) {
-      case 'open':
-        score += 0;
-        break;
-      case 'preopen':
-        score += 2;
-        break;
-      case 'closed':
-        score += 5;
-        break;
-      case 'holiday':
-        score += 7;
-        break;
-      case 'unknown':
-      default:
-        score += 10;
-        break;
-    }
-
-    // Region preference
-    if (!preferredExchangeIds.has(exchangeId) && preferredExchangeIds.size > 0) {
-      score += 3;
-    }
-
-    const isPrimary = exchangeId === primaryExchangeId;
-
-    // Prefer primary if all else equal
-    if (!isPrimary) {
-      score += 1;
-    }
-
-    // For paid tier, fold in latency where available.
-    if (context.tier === 'paid' && typeof latency === 'number') {
-      const clampedLatency = Math.max(0, Math.min(latency, 2000));
-      score += clampedLatency / 200; // 0–10 range
-    }
-
-    return {
-      exchangeId,
-      isPrimary,
-      score,
-    };
-  });
-
-  // Pick the lowest score; stable across runs.
-  scores.sort((a, b) => {
-    if (a.score !== b.score) {
-      return a.score - b.score;
-    }
-
-    if (a.isPrimary !== b.isPrimary) {
-      return a.isPrimary ? -1 : 1;
-    }
-
-    return a.exchangeId.localeCompare(b.exchangeId);
-  });
-
-  const best = scores[0];
-
-  if (!best) {
-    return undefined;
-  }
-
-  return {
-    exchangeId: best.exchangeId,
-    isPrimary: best.isPrimary,
-  };
-}
-
-/**
- * Convenience: given a commodity ID and region/time-zone hint,
- * route to the best primary exchange for that user.
- */
-export function getPrimaryExchangeForCommodityWithUserLocation(
-  commodityId: string,
-  tier: CommodityTier,
-  regionOrTimeZoneHint?: string | null,
-):
-  | {
-      commodityId: string;
-      exchangeId: string;
-      isPrimary: boolean;
-      secondaryCandidates: string[];
-      extraCandidates: string[];
-    }
-  | undefined {
-  const preferredExchangeIds = getPreferredExchangeIdsForRegionOrTimeZone(regionOrTimeZoneHint);
-  return getPrimaryExchangeForCommodity(commodityId, tier, preferredExchangeIds);
-}
-
-/**
- * Return the list of commodities appropriate for the given tier.
+ * Return the default commodity ids for a given subscription tier.
  */
 export function getDefaultCommoditiesForTierIds(tier: CommodityTier): string[] {
-  return getDefaultCommoditiesForTier(tier).map((commodity) => commodity.id);
+  return getDefaultCommoditiesForTier(tier).map((commodity: Commodity) => commodity.id);
 }
 
 /**
@@ -628,4 +282,256 @@ export function pickTopCommoditiesForRealTimeQuotes(
 
   const defaults = getDefaultCommoditiesForTier(tier);
   return defaults.slice(0, limit);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Exchange routing helpers (used by tests and API selection logic)
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ExchangeCatalogLite = {
+  id: string;
+  iso2: string;
+  tz: string;
+  country: string;
+};
+
+const exchangeCatalog: ExchangeCatalogLite[] = exchangesCatalogJson as ExchangeCatalogLite[];
+
+function normaliseHint(input: string): string {
+  return input.trim().toLowerCase();
+}
+
+function uniqueInOrder(ids: string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+function allowedExchangeIdsForCommodity(mapping: ExchangeCommodityMapping): string[] {
+  return uniqueInOrder([
+    mapping.primaryExchangeId,
+    ...mapping.secondaryExchangeIds,
+    ...mapping.extraExchangeIds,
+  ]);
+}
+
+/**
+ * Derive a sensible list of preferred exchanges from either:
+ * - an IANA time-zone string (e.g. "Europe/London")
+ * - a region hint (e.g. "uk", "us", "eu")
+ *
+ * Returned order is stable and taken from exchanges.catalog.json.
+ */
+export function getPreferredExchangeIdsForRegionOrTimeZone(regionOrTimeZone: string): string[] {
+  const hint = normaliseHint(regionOrTimeZone);
+  if (!hint) return [];
+
+  // If it looks like an IANA tz, try direct tz matches first.
+  if (hint.includes('/')) {
+    const tzMatches = exchangeCatalog
+      .filter((ex) => ex.tz.toLowerCase() === hint)
+      .map((ex) => ex.id);
+    if (tzMatches.length > 0) return uniqueInOrder(tzMatches);
+  }
+
+  // Common region synonyms → ISO2
+  const iso2 =
+    hint === 'uk' || hint === 'gb' || hint.includes('united kingdom') || hint.includes('britain')
+      ? 'GB'
+      : hint === 'us' || hint === 'usa' || hint.includes('united states')
+      ? 'US'
+      : hint === 'eu' || hint.includes('europe') || hint === 'emea'
+      ? 'EU'
+      : '';
+
+  if (iso2 === 'EU') {
+    // Coarse EU/Europe hint: include Europe/* exchanges first.
+    const europe = exchangeCatalog
+      .filter((ex) => ex.tz.toLowerCase().startsWith('europe/'))
+      .map((ex) => ex.id);
+
+    // Ensure London appears in the set if present.
+    return uniqueInOrder(europe);
+  }
+
+  if (iso2) {
+    return uniqueInOrder(exchangeCatalog.filter((ex) => ex.iso2 === iso2).map((ex) => ex.id));
+  }
+
+  // Last resort: if someone passes "london" / "new york" etc, do a light match.
+  const fuzzy = exchangeCatalog
+    .filter((ex) => ex.id.toLowerCase().includes(hint) || ex.country.toLowerCase().includes(hint))
+    .map((ex) => ex.id);
+
+  return uniqueInOrder(fuzzy);
+}
+
+/**
+ * Return the "primary" exchange for a commodity.
+ *
+ * Paid tier can optionally override to a preferred exchange id, but only if
+ * that exchange is allowed for that commodity.
+ */
+export function getPrimaryExchangeForCommodity(
+  commodityId: string,
+  tier: CommodityTier,
+  preferredExchangeIds?: string[],
+): CommodityExchangeSelection | undefined {
+  const mapping = exchangeMapByCommodityId.get(commodityId);
+  if (!mapping) return undefined;
+
+  // Free tier: always primary.
+  if (tier === 'free') {
+    return {
+      commodityId,
+      exchangeId: mapping.primaryExchangeId,
+      isPrimary: true,
+    };
+  }
+
+  // Paid tier: honour preferred exchanges if they are valid for this commodity.
+  const preferred = (preferredExchangeIds ?? []).filter((id) => id && id.length > 0);
+  if (preferred.length > 0) {
+    const allowed = new Set(allowedExchangeIdsForCommodity(mapping));
+    const chosen = preferred.find((id) => allowed.has(id));
+    if (chosen) {
+      return {
+        commodityId,
+        exchangeId: chosen,
+        isPrimary: chosen === mapping.primaryExchangeId,
+      };
+    }
+  }
+
+  return {
+    commodityId,
+    exchangeId: mapping.primaryExchangeId,
+    isPrimary: true,
+  };
+}
+
+/**
+ * Convenience wrapper: derive preferred exchanges from user location hints and route.
+ */
+export function getPrimaryExchangeForCommodityWithUserLocation(
+  commodityId: string,
+  tier: CommodityTier,
+  userRegionOrTimeZoneHint?: string,
+): CommodityExchangeSelection | undefined {
+  const preferred = userRegionOrTimeZoneHint
+    ? getPreferredExchangeIdsForRegionOrTimeZone(userRegionOrTimeZoneHint)
+    : [];
+
+  return getPrimaryExchangeForCommodity(commodityId, tier, preferred);
+}
+
+function sessionScore(state: MarketSessionState): number {
+  switch (state) {
+    case 'open':
+      return 3;
+    case 'preopen':
+      return 2;
+    case 'unknown':
+      return 1;
+    case 'closed':
+    case 'holiday':
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Best-effort exchange selection for a commodity.
+ *
+ * Rules (simple + test-driven):
+ * - Free tier: always primary.
+ * - Paid tier: consider preferred venues first (region/timezone hint).
+ * - Prefer "open" over "closed" even if the open venue is secondary.
+ * - Break ties with latencyByExchangeId when supplied (paid tier only).
+ */
+export function selectBestExchangeForCommodity(
+  commodityId: string,
+  context: CommodityRoutingContext,
+  getExchangeMarketStatus?: GetExchangeMarketStatus,
+): CommodityExchangeSelection | undefined {
+  const mapping = exchangeMapByCommodityId.get(commodityId);
+  if (!mapping) return undefined;
+
+  if (context.tier === 'free') {
+    return {
+      commodityId,
+      exchangeId: mapping.primaryExchangeId,
+      isPrimary: true,
+    };
+  }
+
+  const now = context.now ?? new Date();
+
+  const preferredFromUser =
+    context.userTimeZone && context.userTimeZone.length > 0
+      ? getPreferredExchangeIdsForRegionOrTimeZone(context.userTimeZone)
+      : context.userRegionHint && context.userRegionHint.length > 0
+      ? getPreferredExchangeIdsForRegionOrTimeZone(context.userRegionHint)
+      : [];
+
+  const allowed = allowedExchangeIdsForCommodity(mapping);
+  const allowedSet = new Set(allowed);
+
+  const preferredAllowed = preferredFromUser.filter((id) => allowedSet.has(id));
+
+  const candidates = uniqueInOrder([
+    ...preferredAllowed,
+    mapping.primaryExchangeId,
+    ...mapping.secondaryExchangeIds,
+    ...mapping.extraExchangeIds,
+  ]);
+
+  // If no market-hours function is provided, just return the best candidate in order.
+  if (!getExchangeMarketStatus) {
+    const top = candidates[0] ?? mapping.primaryExchangeId;
+    return {
+      commodityId,
+      exchangeId: top,
+      isPrimary: top === mapping.primaryExchangeId,
+    };
+  }
+
+  let best: { id: string; score: number; latency: number } | undefined;
+
+  for (const id of candidates) {
+    const status = getExchangeMarketStatus(id, now);
+    const score = sessionScore(status?.sessionState ?? 'unknown');
+
+    const latency =
+      context.latencyByExchangeId && typeof context.latencyByExchangeId[id] === 'number'
+        ? context.latencyByExchangeId[id]
+        : Number.POSITIVE_INFINITY;
+
+    if (!best) {
+      best = { id, score, latency };
+      continue;
+    }
+
+    if (score > best.score) {
+      best = { id, score, latency };
+      continue;
+    }
+
+    if (score === best.score && latency < best.latency) {
+      best = { id, score, latency };
+    }
+  }
+
+  const chosen = best?.id ?? mapping.primaryExchangeId;
+
+  return {
+    commodityId,
+    exchangeId: chosen,
+    isPrimary: chosen === mapping.primaryExchangeId,
+  };
 }

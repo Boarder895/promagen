@@ -1,4 +1,18 @@
 // frontend/src/hooks/use-fx-quotes.ts
+/**
+ * Centralised polling for FX quotes.
+ *
+ * OFFSET SCHEDULE (15 min apart, twice per hour):
+ * - FX:          :00, :30 (base - 0 min offset)
+ * - Crypto:      :15, :45 (15 min offset from FX)
+ * - Commodities: :05, :35 (5 min offset - aligned with Indices)
+ * - Indices:     :05, :35 (5 min offset)
+ *
+ * This prevents all asset types hitting APIs simultaneously.
+ * Initial fetch is DELAYED to align with schedule (no immediate fetch on page load).
+ *
+ * Existing features preserved: Yes
+ */
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -32,7 +46,7 @@ export type FxMovement = {
   tick: FxTickDirection;
 
   /**
-   * Back-compat “confidence” (0..1) for simple opacity-style UIs.
+   * Back-compat "confidence" (0..1) for simple opacity-style UIs.
    * This is purely visual and MUST NOT be used to infer refresh permission.
    */
   confidence: number;
@@ -74,14 +88,17 @@ export interface UseFxQuotesResult {
 
 const DEFAULT_INTERVAL_MS = 30 * 60_000;
 
-// Keep the server calm. Centralised polling means “one timer”, but we also
-// clamp the maximum poll frequency so on a busy page you can’t accidentally
-// hammer /api/fx. This does NOT control upstream refresh; it’s purely client traffic.
+// Keep the server calm. Centralised polling means "one timer", but we also
+// clamp the maximum poll frequency so on a busy page you can't accidentally
+// hammer /api/fx. This does NOT control upstream refresh; it's purely client traffic.
 const MIN_INTERVAL_MS = 5_000;
 
 // When hidden, back off aggressively. This avoids useless traffic and aligns with
-// “calm UI” intent without changing server authority behaviour.
+// "calm UI" intent without changing server authority behaviour.
 const HIDDEN_VISIBILITY_MULTIPLIER = 6;
+
+// OFFSET: FX refreshes at minutes :00 and :30 (base schedule)
+const FX_REFRESH_MINUTE_OFFSET = 0;
 
 const MAJOR_CURRENCIES = new Set(['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD']);
 
@@ -122,7 +139,7 @@ function computeDeltaPct(prev: FxApiQuote | undefined, next: FxApiQuote): number
 }
 
 function confidenceFromAbsDelta(absDeltaPct: number, appearThreshold: number): number {
-  // Map abs delta into [0.75..1.0] once it’s beyond the appear threshold.
+  // Map abs delta into [0.75..1.0] once it's beyond the appear threshold.
   const t = Math.max(0, Math.min(1, (absDeltaPct - appearThreshold) / appearThreshold));
   return 0.75 + 0.25 * t;
 }
@@ -206,6 +223,7 @@ type Store = {
   enabledCount: number;
 
   timer: number | null;
+  initialTimer: number | null; // Separate timer for initial delayed fetch
 
   // Client single-flight.
   inFlight: Promise<void> | null;
@@ -214,6 +232,9 @@ type Store = {
   // Per-consumer interval preferences (the effective interval is the minimum).
   consumerIntervals: Map<number, number>;
   nextConsumerId: number;
+
+  // Track if initial fetch has been scheduled/completed
+  initialFetchDone: boolean;
 };
 
 const emptyState: UseFxQuotesResult = {
@@ -230,10 +251,12 @@ const store: Store = {
   listeners: new Set(),
   enabledCount: 0,
   timer: null,
+  initialTimer: null,
   inFlight: null,
   abort: null,
   consumerIntervals: new Map(),
   nextConsumerId: 1,
+  initialFetchDone: false,
 };
 
 function emit() {
@@ -252,6 +275,13 @@ function clearTimer() {
   }
 }
 
+function clearInitialTimer() {
+  if (store.initialTimer !== null) {
+    window.clearTimeout(store.initialTimer);
+    store.initialTimer = null;
+  }
+}
+
 function getEffectiveIntervalMs(): number {
   const values = Array.from(store.consumerIntervals.values());
   const want = values.length ? Math.min(...values) : DEFAULT_INTERVAL_MS;
@@ -262,6 +292,35 @@ function getPollingIntervalForVisibility(baseMs: number): number {
   if (typeof document === 'undefined') return baseMs;
   if (document.visibilityState === 'hidden') return baseMs * HIDDEN_VISIBILITY_MULTIPLIER;
   return baseMs;
+}
+
+/**
+ * Calculate ms until the next offset-aligned refresh slot.
+ * FX uses :00 and :30 minute marks (base schedule).
+ */
+function getMsUntilNextFxSlot(): number {
+  const now = new Date();
+  const currentMinute = now.getMinutes();
+  const currentSecond = now.getSeconds();
+  const currentMs = now.getMilliseconds();
+
+  // Target minutes: 0 and 30 (FX base schedule)
+  const targets = [FX_REFRESH_MINUTE_OFFSET, FX_REFRESH_MINUTE_OFFSET + 30];
+
+  const nowMsIntoHour = (currentMinute * 60 + currentSecond) * 1000 + currentMs;
+
+  let bestDelta = 60 * 60 * 1000; // 1 hour max
+  for (const m of targets) {
+    let targetMsIntoHour = m * 60 * 1000;
+    if (targetMsIntoHour <= nowMsIntoHour) {
+      targetMsIntoHour += 60 * 60 * 1000; // next hour
+    }
+    const delta = targetMsIntoHour - nowMsIntoHour;
+    if (delta < bestDelta) bestDelta = delta;
+  }
+
+  // Avoid immediate run races; minimum 1 second
+  return Math.max(1000, bestDelta);
 }
 
 async function fetchFxOnce(): Promise<void> {
@@ -304,7 +363,7 @@ async function fetchFxOnce(): Promise<void> {
       if (err instanceof DOMException && err.name === 'AbortError') return;
 
       // If we already have a last-good payload, keep it visible and just record the error.
-      // This prevents jittery “error” UI when the gate is doing its job.
+      // This prevents jittery "error" UI when the gate is doing its job.
       setState({
         error: err,
         status: store.state.payload ? 'ready' : 'error',
@@ -319,9 +378,34 @@ async function fetchFxOnce(): Promise<void> {
 
 function clearTimerAndAbort() {
   clearTimer();
+  clearInitialTimer();
   store.abort?.abort();
   store.abort = null;
   store.inFlight = null;
+}
+
+/**
+ * Schedule the initial fetch to align with the offset schedule.
+ * This prevents all asset types from fetching simultaneously on page load.
+ */
+function scheduleInitialFetch() {
+  if (store.initialFetchDone) return;
+  if (store.initialTimer !== null) return; // Already scheduled
+
+  const delayMs = getMsUntilNextFxSlot();
+
+  // Log for debugging (use console.debug for filtering)
+  if (typeof console !== 'undefined') {
+    const nextSlot = new Date(Date.now() + delayMs);
+    console.debug(`[use-fx-quotes] Initial fetch scheduled in ${Math.round(delayMs / 1000)}s at ${nextSlot.toISOString()}`);
+  }
+
+  store.initialTimer = window.setTimeout(async () => {
+    store.initialTimer = null;
+    store.initialFetchDone = true;
+    await fetchFxOnce();
+    scheduleNext();
+  }, delayMs);
 }
 
 function scheduleNext() {
@@ -329,8 +413,9 @@ function scheduleNext() {
 
   if (store.enabledCount <= 0) return;
 
-  const baseInterval = getEffectiveIntervalMs();
-  const interval = getPollingIntervalForVisibility(baseInterval);
+  // Use offset-aligned scheduling
+  const delayMs = getMsUntilNextFxSlot();
+  const interval = getPollingIntervalForVisibility(delayMs);
 
   store.timer = window.setTimeout(async () => {
     // One shared heartbeat. Server authority decides whether upstream work is allowed.
@@ -395,12 +480,11 @@ export function useFxQuotes(options?: UseFxQuotesOptions): UseFxQuotesResult {
     if (enabled) {
       store.enabledCount += 1;
 
-      // First enable triggers an immediate fetch (best effort).
+      // First enable schedules a DELAYED fetch aligned to offset schedule
+      // (no immediate fetch - prevents simultaneous API calls on page load)
       if (store.enabledCount === 1) {
-        void fetchFxOnce();
+        scheduleInitialFetch();
       }
-
-      scheduleNext();
     }
 
     return () => {
@@ -422,7 +506,7 @@ export function useFxQuotes(options?: UseFxQuotesOptions): UseFxQuotesResult {
     if (!enabled) return;
 
     store.consumerIntervals.set(id, Math.max(MIN_INTERVAL_MS, intervalMs));
-    scheduleNext();
+    // Don't reschedule here - let the existing timer run
   }, [enabled, intervalMs]);
 
   return store.state;
@@ -439,5 +523,7 @@ export function getFxQuotesDebugSnapshot() {
     consumerIntervals: Array.from(store.consumerIntervals.values()),
     effectiveIntervalMs: getEffectiveIntervalMs(),
     visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
+    initialFetchDone: store.initialFetchDone,
+    msUntilNextSlot: getMsUntilNextFxSlot(),
   };
 }

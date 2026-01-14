@@ -38,21 +38,21 @@ export function getActiveCommodities(): Commodity[] {
 }
 
 /**
- * Default free-tier commodities, ordered by `priority` then name.
+ * Default free-tier commodities.
+ *
+ * SSOT rule: order MUST match commodities.catalog.json (no sorting).
  */
 export function getDefaultFreeCommodities(): Commodity[] {
-  return getActiveCommodities()
-    .filter((item) => item.isDefaultFree)
-    .sort(byPriorityThenName);
+  return getActiveCommodities().filter((item) => item.isDefaultFree);
 }
 
 /**
- * Default paid-tier commodities, ordered by `priority` then name.
+ * Default paid-tier commodities.
+ *
+ * SSOT rule: order MUST match commodities.catalog.json (no sorting).
  */
 export function getDefaultPaidCommodities(): Commodity[] {
-  return getActiveCommodities()
-    .filter((item) => item.isDefaultPaid)
-    .sort(byPriorityThenName);
+  return getActiveCommodities().filter((item) => item.isDefaultPaid);
 }
 
 /**
@@ -79,17 +79,6 @@ export function getCommodityById(id: string): Commodity | undefined {
 // ───────────────────────────────────────────────────────────────────────────────
 // Internal helpers
 // ───────────────────────────────────────────────────────────────────────────────
-
-function byPriorityThenName(a: Commodity, b: Commodity): number {
-  const aPriority = a.priority ?? Number.MAX_SAFE_INTEGER;
-  const bPriority = b.priority ?? Number.MAX_SAFE_INTEGER;
-
-  if (aPriority !== bPriority) {
-    return aPriority - bPriority;
-  }
-
-  return a.name.localeCompare(b.name, 'en-GB');
-}
 
 // Re-export for any other helpers that want direct access.
 export const ALL_COMMODITIES: CommoditiesCatalog = ALL_COMMODITIES_INTERNAL;

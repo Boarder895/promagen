@@ -1,4 +1,11 @@
 // frontend/src/components/exchanges/index.ts
+// ============================================================================
+// EXCHANGE COMPONENTS - Barrel Export
+// ============================================================================
+// UPDATED: Added IndexQuoteData export for index row on cards.
+//
+// Existing features preserved: Yes
+// ============================================================================
 
 // Main card component
 export { ExchangeCard, default } from './exchange-card';
@@ -8,6 +15,7 @@ export type {
   ExchangeCardData,
   ExchangeCardProps,
   ExchangeWeatherData,
+  IndexQuoteData,
   MarketStatus,
 } from './types';
 

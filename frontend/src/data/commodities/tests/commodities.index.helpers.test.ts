@@ -13,18 +13,24 @@ describe('commodities index helpers', () => {
     const freeIds = getDefaultCommoditiesForTier('free').map((commodity) => commodity.id);
     expect(freeIds).toEqual([
       'brent_crude',
-      'gold',
-      'wheat',
-      'corn',
-      'silver',
-      'wti_crude',
-      'soybeans',
+      'ttf_natural_gas',
       'coffee',
       'sugar',
+      'orange_juice',
+      'iron_ore',
+      'gold',
     ]);
 
     const paidIds = getDefaultCommoditiesForTier('paid').map((commodity) => commodity.id);
-    expect(paidIds).toEqual(['brent_crude', 'gold', 'wheat', 'corn', 'soybeans', 'copper']);
+    expect(paidIds).toEqual([
+      'brent_crude',
+      'ttf_natural_gas',
+      'coffee',
+      'sugar',
+      'orange_juice',
+      'iron_ore',
+      'gold',
+    ]);
   });
 
   it('routes to the primary exchange when no preferred exchanges are provided', () => {

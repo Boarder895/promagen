@@ -647,6 +647,44 @@ a:hover {
 }
 
 /* ========================================================================== */
+/* Ribbon Chip Label - Line-clamp safety net                                  */
+/* Used for exchange names, asset names, and other ribbon text that may       */
+/* overflow. Curated ribbonLabel values should fit in 1-2 lines, but this     */
+/* provides a CSS safety net for any edge cases.                              */
+/*                                                                            */
+/* Added: January 2026                                                        */
+/* ========================================================================== */
+
+.ribbon-chip-label {
+  /* Line-clamp to exactly 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  /* Consistent line height for predictable height */
+  line-height: 1.3;
+  max-height: 2.6em; /* line-height × 2 lines */
+
+  /* Width constraints for ribbon chips */
+  min-width: 60px;
+  max-width: 180px;
+}
+
+/* Fallback for browsers without -webkit-box support */
+@supports not (display: -webkit-box) {
+  .ribbon-chip-label {
+    display: block;
+    max-height: 2.6em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+/* ========================================================================== */
 /* Responsive adjustments                                                     */
 /* ========================================================================== */
 
