@@ -109,7 +109,7 @@ export const cryptoDefaultsSchema = z
   .object({
     ids: z
       .array(cryptoIdSchema)
-      .length(8, 'defaults.json must contain exactly 8 crypto ids for the ribbon'),
+      .length(8, 'crypto.selected.json must contain exactly 8 crypto ids for the ribbon'),
   })
   .passthrough()
   .superRefine((value, ctx) => {

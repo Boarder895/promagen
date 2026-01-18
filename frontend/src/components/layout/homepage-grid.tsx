@@ -5,9 +5,13 @@
 // Layout: Left rail | Centre (Finance ribbon + Providers) | Right rail
 // Synchronized scrolling between exchange rails
 // Market Pulse: Flowing energy streams connect exchanges to providers
-// Auth: Sign in button in header (right), Reference toggle (left, paid only)
+// Auth: Sign in button in header (right), Home + Studio buttons below
 //
-// UPDATED: Added demoMode and demoPairs props for Pro Promagen preview page.
+// UPDATED: Added Home button to header for navigation back to homepage.
+// UPDATED: Added z-index to header to ensure buttons are always clickable.
+// UPDATED: Fixed header row height to properly contain absolutely positioned buttons.
+// UPDATED: Studio button now links to /studio (was /prompts).
+// UPDATED: Removed unused Link import (using native <a> tags for reliability).
 // When demoMode=true, renders DemoFinanceRibbon with static data instead of
 // live API ribbon.
 // ============================================================================
@@ -15,6 +19,7 @@
 'use client';
 
 import React, { useRef, useCallback, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import FinanceRibbon from '@/components/ribbon/finance-ribbon.container';
 import CommoditiesRibbon from '@/components/ribbon/commodities-ribbon.container';
 import CryptoRibbon from '@/components/ribbon/crypto-ribbon.container';
@@ -27,6 +32,78 @@ import type { ReferenceFrame } from '@/lib/location';
 import type { FxPairCatalogEntry } from '@/lib/pro-promagen/types';
 import { useMarketPulse } from '@/hooks/use-market-pulse';
 import { MarketPulseOverlay } from '@/components/market-pulse';
+
+// ============================================================================
+// ICONS
+// ============================================================================
+
+function WandIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"
+      />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+      />
+    </svg>
+  );
+}
+
+function ProIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
+      />
+    </svg>
+  );
+}
+
+// ============================================================================
+// SHARED STYLES
+// ============================================================================
+
+const navButtonStyles =
+  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
+
+// ============================================================================
+// TYPES
+// ============================================================================
 
 export type HomepageGridProps = {
   /**
@@ -100,14 +177,14 @@ export type HomepageGridProps = {
  *
  * Layout architecture:
  * - Page fills exactly 100dvh — NO page scroll
- * - Header row: Toggle (left, paid only) + PROMAGEN (centred) + Sign In (right)
+ * - Header row: Toggle (left, paid only) + PROMAGEN (centred) + Sign In + Home + Studio (right)
  * - Hero section: tagline and subtitle centred
  * - Three-column grid: fills remaining space (flex-1)
  * - Left/right rails: synchronized scrolling (scroll one, both move)
  * - Centre column: providers table scrolls independently
  * - Footer: fixed at bottom
  * - Market Pulse v2.0: Flowing energy streams when markets transition
- * - Auth: Sign in button in header (right), Reference toggle (left, paid only)
+ * - Auth: Sign in button in header (right), Home + Studio buttons below
  * - Market Pulse: Flowing energy streams connect exchanges to providers
  */
 export default function HomepageGrid({
@@ -132,6 +209,10 @@ export default function HomepageGrid({
   const rightRef = useRef<HTMLDivElement>(null);
   const providersRef = useRef<HTMLDivElement>(null);
   const isSyncing = useRef(false);
+
+  // Get current pathname to determine if we're on the homepage
+  const pathname = usePathname();
+  const isHomepage = pathname === '/';
 
   // Get selected exchange IDs
   const selectedExchangeIds = exchanges.map((e) => e.id);
@@ -217,12 +298,13 @@ export default function HomepageGrid({
         {/* Hero: Promagen – a bridge between markets and imagination */}
         <section
           aria-label="Promagen overview"
-          className="w-full shrink-0 border-b border-slate-900/70 bg-gradient-to-b from-slate-950 via-slate-950/95 to-slate-950"
+          className="relative z-20 w-full shrink-0 border-b border-slate-900/70 bg-gradient-to-b from-slate-950 via-slate-950/95 to-slate-950"
         >
-          {/* Header row: Toggle (left) + PROMAGEN (centred) + Sign In (right) */}
-          <div className="relative mx-auto w-full px-4 pt-4">
-            {/* Reference frame toggle - absolutely positioned to left (paid users only) */}
-            <div className="absolute left-4 top-4 flex items-center">
+          {/* Header row: Toggle (left) + PROMAGEN (centred) + Sign In + Home + Studio (right) */}
+          {/* FIXED: Added min-h-[60px] to ensure header row has proper height for buttons */}
+          <div className="relative mx-auto flex min-h-[60px] w-full items-start px-4 pt-4">
+            {/* Reference frame toggle + Pro Promagen - absolutely positioned to left, stacked vertically */}
+            <div className="absolute left-4 top-4 flex flex-col items-start gap-2">
               <ReferenceFrameToggle
                 referenceFrame={referenceFrame}
                 onReferenceFrameChange={handleReferenceFrameChange}
@@ -231,18 +313,34 @@ export default function HomepageGrid({
                 isLocationLoading={isLocationLoading}
                 cityName={cityName}
               />
+              <a href="/pro-promagen" className={navButtonStyles}>
+                <ProIcon />
+                Pro Promagen
+              </a>
             </div>
 
             {/* PROMAGEN label - absolutely centred */}
-            <div className="flex items-center justify-center">
+            <div className="flex flex-1 items-center justify-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-sky-400/80">
                 Promagen
               </p>
             </div>
 
-            {/* Auth button - absolutely positioned to right, same baseline */}
-            <div className="absolute right-4 top-4 flex items-center">
+            {/* Auth + Home + Studio buttons - absolutely positioned to right, stacked vertically */}
+            {/* Using native <a> tags instead of Next.js Link to ensure navigation works */}
+            <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
               <AuthButton />
+              {/* Show Home button on all pages EXCEPT the actual homepage */}
+              {!isHomepage && (
+                <a href="/" className={navButtonStyles}>
+                  <HomeIcon />
+                  Home
+                </a>
+              )}
+              <a href="/studio" className={navButtonStyles}>
+                <WandIcon />
+                Studio
+              </a>
             </div>
           </div>
 

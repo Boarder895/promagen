@@ -4,6 +4,13 @@
 // ============================================================================
 // Fetches index data from /api/indices.
 //
+// UPDATED (2026-01-17): Now tier-aware!
+// - FREE users: GET /api/indices (uses SSOT defaults)
+// - PAID users: POST /api/indices with custom exchangeIds
+//
+// When exchangeIds changes (e.g., user customizes selection), the hook
+// automatically re-fetches with the new selection.
+//
 // FIXED (2026-01-13): Removed delayed initial fetch - now fetches IMMEDIATELY
 // on first consumer mount. Users shouldn't wait 30+ minutes to see data.
 //
@@ -13,7 +20,7 @@
 // ============================================================================
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 
 import type { IndexQuote, IndexTick } from '@/types/index-quote';
 
@@ -28,6 +35,17 @@ export interface UseIndicesQuotesOptions {
   enabled?: boolean;
   /** Polling interval in ms. Default: 30 minutes (indices update slowly) */
   intervalMs?: number;
+  /**
+   * Custom exchange IDs to fetch (for paid users).
+   * If provided, uses POST /api/indices with these IDs.
+   * If undefined/empty, uses GET /api/indices (SSOT defaults).
+   */
+  exchangeIds?: string[];
+  /**
+   * User tier for authorization. Required when exchangeIds is provided.
+   * Default: 'free'
+   */
+  userTier?: 'free' | 'paid';
 }
 
 export type IndicesBudgetState = 'ok' | 'warning' | 'blocked';
@@ -71,6 +89,10 @@ export interface UseIndicesQuotesResult {
   quotesById: Map<string, IndexQuote>;
   /** Movement data by exchange ID */
   movementById: Map<string, IndicesMovement>;
+  /** Currently requested exchange IDs */
+  requestedExchangeIds: string[];
+  /** Trigger immediate refresh */
+  refresh: () => Promise<void>;
 }
 
 // ============================================================================
@@ -90,7 +112,7 @@ const HIDDEN_VISIBILITY_MULTIPLIER = 6;
 const MOVEMENT_APPEAR_THRESHOLD = 0.1; // 0.1% change
 
 // Debug flag - set to true to see all console logs
-const DEBUG_INDICES = true;
+const DEBUG_INDICES = process.env.NODE_ENV !== 'production';
 
 // ============================================================================
 // DEBUG LOGGER
@@ -192,28 +214,42 @@ function processPayload(payload: IndicesApiResponse): {
   return { quotesById, movementById };
 }
 
+/**
+ * Generate a cache key for the current exchange selection.
+ * Different selections should not share cache entries.
+ */
+function getSelectionKey(exchangeIds: string[] | undefined): string {
+  if (!exchangeIds || exchangeIds.length === 0) return 'default';
+  // Sort for consistent key regardless of order
+  return [...exchangeIds].sort().join(',');
+}
+
 // ============================================================================
-// STORE (Centralized polling - single timer for all consumers)
+// STORE (Centralized polling - keyed by selection)
 // ============================================================================
 
-type Store = {
-  state: UseIndicesQuotesResult;
-  listeners: Set<() => void>;
-
-  enabledCount: number;
-
-  timer: number | null;
-
-  inFlight: Promise<void> | null;
-  abort: AbortController | null;
-
-  consumerIntervals: Map<number, number>;
-  nextConsumerId: number;
-
-  initialFetchDone: boolean;
+type StoreState = {
+  status: IndicesQuotesStatus;
+  error: unknown;
+  payload: IndicesApiResponse | null;
+  quotesById: Map<string, IndexQuote>;
+  movementById: Map<string, IndicesMovement>;
 };
 
-const emptyState: UseIndicesQuotesResult = {
+type StoreEntry = {
+  state: StoreState;
+  listeners: Set<() => void>;
+  enabledCount: number;
+  timer: number | null;
+  inFlight: Promise<void> | null;
+  abort: AbortController | null;
+  consumerIntervals: Map<number, number>;
+  lastFetchTime: number;
+  exchangeIds: string[] | undefined;
+  userTier: 'free' | 'paid';
+};
+
+const emptyState: StoreState = {
   status: 'idle',
   error: null,
   payload: null,
@@ -221,35 +257,55 @@ const emptyState: UseIndicesQuotesResult = {
   movementById: new Map(),
 };
 
-const store: Store = {
-  state: emptyState,
-  listeners: new Set(),
-  enabledCount: 0,
-  timer: null,
-  inFlight: null,
-  abort: null,
-  consumerIntervals: new Map(),
-  nextConsumerId: 1,
-  initialFetchDone: false,
-};
+// Map of selection key → store entry (supports multiple independent selections)
+const stores = new Map<string, StoreEntry>();
 
-function emit() {
+let nextConsumerId = 1;
+
+function getOrCreateStore(
+  selectionKey: string,
+  exchangeIds: string[] | undefined,
+  userTier: 'free' | 'paid',
+): StoreEntry {
+  let entry = stores.get(selectionKey);
+  if (!entry) {
+    entry = {
+      state: { ...emptyState, quotesById: new Map(), movementById: new Map() },
+      listeners: new Set(),
+      enabledCount: 0,
+      timer: null,
+      inFlight: null,
+      abort: null,
+      consumerIntervals: new Map(),
+      lastFetchTime: 0,
+      exchangeIds,
+      userTier,
+    };
+    stores.set(selectionKey, entry);
+    debugLog('Created new store entry', { selectionKey, exchangeCount: exchangeIds?.length ?? 0 });
+  }
+  // Update tier in case it changed
+  entry.userTier = userTier;
+  return entry;
+}
+
+function emit(store: StoreEntry) {
   for (const l of store.listeners) l();
 }
 
-function setState(next: Partial<UseIndicesQuotesResult>) {
+function setState(store: StoreEntry, next: Partial<StoreState>) {
   store.state = { ...store.state, ...next };
-  emit();
+  emit(store);
 }
 
-function clearTimer() {
+function clearTimer(store: StoreEntry) {
   if (store.timer !== null) {
     window.clearTimeout(store.timer);
     store.timer = null;
   }
 }
 
-function getEffectiveIntervalMs(): number {
+function getEffectiveIntervalMs(store: StoreEntry): number {
   const values = Array.from(store.consumerIntervals.values());
   const want = values.length ? Math.min(...values) : DEFAULT_INTERVAL_MS;
   return Math.max(MIN_INTERVAL_MS, want);
@@ -261,7 +317,7 @@ function getPollingIntervalForVisibility(baseMs: number): number {
   return baseMs;
 }
 
-async function fetchIndicesOnce(): Promise<void> {
+async function fetchIndicesOnce(store: StoreEntry): Promise<void> {
   if (store.inFlight) {
     debugLog('Fetch skipped - already in flight');
     return store.inFlight;
@@ -270,25 +326,56 @@ async function fetchIndicesOnce(): Promise<void> {
   store.abort?.abort();
   store.abort = new AbortController();
 
-  debugLog('Starting fetch...', { currentStatus: store.state.status });
+  const exchangeIds = store.exchangeIds;
+  const userTier = store.userTier;
+  const usePost = userTier === 'paid' && exchangeIds && exchangeIds.length > 0;
+
+  debugLog('Starting fetch...', {
+    currentStatus: store.state.status,
+    method: usePost ? 'POST' : 'GET',
+    exchangeCount: exchangeIds?.length ?? 'default',
+    userTier,
+  });
 
   store.inFlight = (async () => {
     try {
-      setState({ status: store.state.status === 'idle' ? 'loading' : store.state.status });
+      setState(store, { status: store.state.status === 'idle' ? 'loading' : store.state.status });
 
       const startTime = Date.now();
-      const res = await fetch('/api/indices', {
-        method: 'GET',
-        headers: { accept: 'application/json' },
-        credentials: 'omit', // Cookie-free for CDN caching
-        signal: store.abort?.signal,
-      });
+
+      let res: Response;
+
+      if (usePost) {
+        // POST request for paid users with custom selection
+        res = await fetch('/api/indices', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'same-origin', // Include auth cookies
+          signal: store.abort?.signal,
+          body: JSON.stringify({
+            exchangeIds,
+            tier: userTier,
+          }),
+        });
+      } else {
+        // GET request for free users (SSOT defaults)
+        res = await fetch('/api/indices', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+          credentials: 'omit', // Cookie-free for CDN caching
+          signal: store.abort?.signal,
+        });
+      }
 
       const elapsed = Date.now() - startTime;
       debugLog('Fetch response', {
         status: res.status,
         ok: res.ok,
         elapsedMs: elapsed,
+        method: usePost ? 'POST' : 'GET',
       });
 
       if (!res.ok) {
@@ -307,7 +394,9 @@ async function fetchIndicesOnce(): Promise<void> {
 
       const derived = processPayload(json);
 
-      setState({
+      store.lastFetchTime = Date.now();
+
+      setState(store, {
         payload: json,
         error: null,
         status: 'ready',
@@ -326,7 +415,7 @@ async function fetchIndicesOnce(): Promise<void> {
         error: err instanceof Error ? err.message : String(err),
       });
 
-      setState({
+      setState(store, {
         error: err,
         status: store.state.payload ? 'ready' : 'error',
       });
@@ -338,44 +427,22 @@ async function fetchIndicesOnce(): Promise<void> {
   return store.inFlight;
 }
 
-function clearTimerAndAbort() {
-  clearTimer();
+function clearTimerAndAbort(store: StoreEntry) {
+  clearTimer(store);
   store.abort?.abort();
   store.abort = null;
   store.inFlight = null;
 }
 
-/**
- * FIXED: Fetch immediately on first consumer mount.
- * No more waiting for schedule alignment.
- */
-function startPolling() {
-  debugLog('startPolling called', {
-    initialFetchDone: store.initialFetchDone,
-    enabledCount: store.enabledCount,
-  });
-
-  // Fetch immediately if not done yet
-  if (!store.initialFetchDone) {
-    store.initialFetchDone = true;
-    debugLog('Triggering IMMEDIATE initial fetch');
-    fetchIndicesOnce().then(() => {
-      scheduleNext();
-    });
-  } else {
-    scheduleNext();
-  }
-}
-
-function scheduleNext() {
-  clearTimer();
+function scheduleNext(store: StoreEntry) {
+  clearTimer(store);
 
   if (store.enabledCount <= 0) {
     debugLog('scheduleNext: no enabled consumers, not scheduling');
     return;
   }
 
-  const intervalMs = getEffectiveIntervalMs();
+  const intervalMs = getEffectiveIntervalMs(store);
   const adjustedInterval = getPollingIntervalForVisibility(intervalMs);
 
   debugLog('Scheduling next fetch', {
@@ -386,28 +453,44 @@ function scheduleNext() {
 
   store.timer = window.setTimeout(async () => {
     debugLog('Timer fired, fetching...');
-    await fetchIndicesOnce();
-    scheduleNext();
+    await fetchIndicesOnce(store);
+    scheduleNext(store);
   }, adjustedInterval);
 }
 
-function subscribe(listener: () => void): () => void {
+function startPolling(store: StoreEntry) {
+  debugLog('startPolling called', {
+    enabledCount: store.enabledCount,
+    lastFetchTime: store.lastFetchTime,
+  });
+
+  // Always trigger one immediate fetch when polling starts
+  debugLog('Triggering IMMEDIATE startup fetch');
+  fetchIndicesOnce(store).then(() => {
+    scheduleNext(store);
+  });
+}
+
+function subscribe(store: StoreEntry, listener: () => void): () => void {
   store.listeners.add(listener);
   return () => store.listeners.delete(listener);
 }
 
+// Global visibility listener (shared across all stores)
+let visibilityListenerAttached = false;
+
 function ensureVisibilityListener() {
   if (typeof document === 'undefined') return;
-
-  const key = '__indices_quotes_visibility_listener_attached__';
-  const anyDoc = document as unknown as Record<string, unknown>;
-  if (anyDoc[key]) return;
-  anyDoc[key] = true;
+  if (visibilityListenerAttached) return;
+  visibilityListenerAttached = true;
 
   document.addEventListener('visibilitychange', () => {
-    if (store.enabledCount <= 0) return;
-    debugLog('Visibility changed', { state: document.visibilityState });
-    scheduleNext();
+    // Reschedule all active stores
+    for (const store of stores.values()) {
+      if (store.enabledCount <= 0) continue;
+      debugLog('Visibility changed, rescheduling', { state: document.visibilityState });
+      scheduleNext(store);
+    }
   });
 }
 
@@ -418,20 +501,33 @@ function ensureVisibilityListener() {
 export function useIndicesQuotes(options?: UseIndicesQuotesOptions): UseIndicesQuotesResult {
   const enabled = options?.enabled ?? true;
   const intervalMs = options?.intervalMs ?? DEFAULT_INTERVAL_MS;
+  const exchangeIds = options?.exchangeIds;
+  const userTier = options?.userTier ?? 'free';
+
+  // Memoize the selection key to prevent unnecessary re-renders
+  const selectionKey = useMemo(() => getSelectionKey(exchangeIds), [exchangeIds]);
 
   const consumerIdRef = useRef<number | null>(null);
+  const storeRef = useRef<StoreEntry | null>(null);
   const [, setTick] = useState(0);
+
+  // Get or create the store for this selection
+  const store = useMemo(() => {
+    const s = getOrCreateStore(selectionKey, exchangeIds, userTier);
+    storeRef.current = s;
+    return s;
+  }, [selectionKey, exchangeIds, userTier]);
 
   // Setup: runs once on mount, cleanup on unmount
   useEffect(() => {
     ensureVisibilityListener();
 
-    const id = store.nextConsumerId++;
+    const id = nextConsumerId++;
     consumerIdRef.current = id;
 
-    debugLog('Consumer mounted', { id });
+    debugLog('Consumer mounted', { id, selectionKey });
 
-    const unsub = subscribe(() => setTick((v) => v + 1));
+    const unsub = subscribe(store, () => setTick((v) => v + 1));
 
     return () => {
       debugLog('Consumer unmounting', { id });
@@ -439,7 +535,7 @@ export function useIndicesQuotes(options?: UseIndicesQuotesOptions): UseIndicesQ
       store.consumerIntervals.delete(id);
       consumerIdRef.current = null;
     };
-  }, []);
+  }, [store, selectionKey]);
 
   // Enable/disable polling based on options
   useEffect(() => {
@@ -453,7 +549,7 @@ export function useIndicesQuotes(options?: UseIndicesQuotesOptions): UseIndicesQ
       debugLog('Consumer enabled', { id, enabledCount: store.enabledCount });
 
       if (store.enabledCount === 1) {
-        startPolling();
+        startPolling(store);
       }
     }
 
@@ -463,13 +559,13 @@ export function useIndicesQuotes(options?: UseIndicesQuotesOptions): UseIndicesQ
         debugLog('Consumer disabled', { id, enabledCount: store.enabledCount });
 
         if (store.enabledCount <= 0) {
-          clearTimerAndAbort();
+          clearTimerAndAbort(store);
         } else {
-          scheduleNext();
+          scheduleNext(store);
         }
       }
     };
-  }, [enabled, intervalMs]);
+  }, [enabled, intervalMs, store]);
 
   // Update interval when it changes
   useEffect(() => {
@@ -478,28 +574,70 @@ export function useIndicesQuotes(options?: UseIndicesQuotesOptions): UseIndicesQ
     if (!enabled) return;
 
     store.consumerIntervals.set(id, Math.max(MIN_INTERVAL_MS, intervalMs));
-  }, [enabled, intervalMs]);
+  }, [enabled, intervalMs, store]);
 
-  return store.state;
+  // Re-fetch when selection changes (for paid users)
+  useEffect(() => {
+    if (!enabled) return;
+    if (store.enabledCount <= 0) return;
+
+    // If we already have data and selection changed, trigger a new fetch
+    if (store.state.status === 'ready' || store.state.status === 'error') {
+      debugLog('Selection changed, triggering re-fetch', { selectionKey });
+      fetchIndicesOnce(store);
+    }
+  }, [selectionKey, enabled, store]);
+
+  // Manual refresh function
+  const refresh = useMemo(
+    () => async () => {
+      debugLog('Manual refresh triggered');
+      await fetchIndicesOnce(store);
+    },
+    [store],
+  );
+
+  return {
+    status: store.state.status,
+    error: store.state.error,
+    payload: store.state.payload,
+    quotesById: store.state.quotesById,
+    movementById: store.state.movementById,
+    requestedExchangeIds: exchangeIds ?? [],
+    refresh,
+  };
 }
 
 // ============================================================================
 // DEBUG HELPERS
 // ============================================================================
 
-export function getIndicesQuotesDebugSnapshot() {
+export function getIndicesQuotesDebugSnapshot(selectionKey?: string) {
+  const targetKey = selectionKey ?? 'default';
+  const store = stores.get(targetKey);
+
+  if (!store) {
+    return {
+      error: `No store found for key: ${targetKey}`,
+      availableKeys: Array.from(stores.keys()),
+    };
+  }
+
   const s = store.state;
   return {
     at: toIso(nowMs()),
+    selectionKey: targetKey,
     status: s.status,
     hasPayload: Boolean(s.payload),
     quoteCount: s.quotesById.size,
     quotesWithPrice: Array.from(s.quotesById.values()).filter((q) => q.price !== null).length,
     enabledCount: store.enabledCount,
     consumerIntervals: Array.from(store.consumerIntervals.values()),
-    effectiveIntervalMs: getEffectiveIntervalMs(),
+    effectiveIntervalMs: getEffectiveIntervalMs(store),
     visibilityState: typeof document !== 'undefined' ? document.visibilityState : 'unknown',
-    initialFetchDone: store.initialFetchDone,
+    lastFetchTime: store.lastFetchTime ? toIso(store.lastFetchTime) : null,
+    exchangeIds: store.exchangeIds,
+    userTier: store.userTier,
     meta: s.payload?.meta ?? null,
   };
 }
@@ -509,14 +647,30 @@ export function getIndicesQuotesDebugSnapshot() {
  * Call from browser console: window.__forceIndicesRefresh()
  */
 if (typeof window !== 'undefined') {
-  (window as unknown as Record<string, unknown>).__forceIndicesRefresh = async () => {
+  (window as unknown as Record<string, unknown>).__forceIndicesRefresh = async (
+    selectionKey?: string,
+  ) => {
+    const targetKey = selectionKey ?? 'default';
+    const store = stores.get(targetKey);
+    if (!store) {
+      console.error(`No store found for key: ${targetKey}`);
+      return null;
+    }
     debugLog('MANUAL REFRESH TRIGGERED');
-    store.initialFetchDone = true;
-    await fetchIndicesOnce();
-    return getIndicesQuotesDebugSnapshot();
+    await fetchIndicesOnce(store);
+    return getIndicesQuotesDebugSnapshot(targetKey);
   };
 
-  (window as unknown as Record<string, unknown>).__getIndicesDebug = () => {
-    return getIndicesQuotesDebugSnapshot();
+  (window as unknown as Record<string, unknown>).__getIndicesDebug = (selectionKey?: string) => {
+    return getIndicesQuotesDebugSnapshot(selectionKey);
+  };
+
+  (window as unknown as Record<string, unknown>).__listIndicesStores = () => {
+    return Array.from(stores.entries()).map(([key, store]) => ({
+      key,
+      status: store.state.status,
+      enabledCount: store.enabledCount,
+      exchangeCount: store.exchangeIds?.length ?? 'default',
+    }));
   };
 }

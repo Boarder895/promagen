@@ -10,14 +10,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "priority": 1,
-    "tags": ["energy", "crude_oil", "headline", "high_liquidity"],
+    "tags": [
+      "energy",
+      "crude_oil",
+      "headline",
+      "high_liquidity"
+    ],
     "ribbonLabel": "Brent Crude (North Sea)",
     "ribbonSubtext": "London",
     "geoLevel": "country",
-    "displayCountryCodes": ["GB", "NO"],
+    "displayCountryCodes": [
+      "GB",
+      "NO"
+    ],
     "yearFirstTraded": 1988,
     "fact": "Named after the Brent oil field; global benchmark for 2/3 of world's oil"
   },
@@ -32,14 +38,19 @@
     "quoteCurrency": "EUR",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "priority": 7,
-    "tags": ["energy", "natural_gas", "europe_benchmark"],
+    "tags": [
+      "energy",
+      "natural_gas",
+      "europe_benchmark"
+    ],
     "ribbonLabel": "TTF Gas (Europe)",
     "ribbonSubtext": "Netherlands (EU)",
     "geoLevel": "country",
-    "displayCountryCodes": ["NL", "DE"],
+    "displayCountryCodes": [
+      "NL",
+      "DE"
+    ],
     "yearFirstTraded": 2003,
     "fact": "Title Transfer Facility in Netherlands; Europe's main gas benchmark"
   },
@@ -54,14 +65,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "priority": 33,
-    "tags": ["agriculture", "softs"],
+    "tags": [
+      "agriculture",
+      "softs"
+    ],
     "ribbonLabel": "Coffee (Arabica/Robusta)",
     "ribbonSubtext": "Latin America & Africa",
     "geoLevel": "region",
-    "displayCountryCodes": ["BR", "ET"],
+    "displayCountryCodes": [
+      "BR",
+      "ET"
+    ],
     "yearFirstTraded": 1882,
     "fact": "Second most traded commodity after oil; discovered in Ethiopia ~850 AD"
   },
@@ -76,14 +91,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "priority": 35,
-    "tags": ["agriculture", "softs"],
+    "tags": [
+      "agriculture",
+      "softs"
+    ],
     "ribbonLabel": "Sugar (Global)",
     "ribbonSubtext": "Brazil & India",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["BR", "IN"],
+    "displayCountryCodes": [
+      "BR",
+      "IN"
+    ],
     "yearFirstTraded": 1914,
     "fact": "Brazil produces 22% of world's sugar; was once worth more than gold"
   },
@@ -98,14 +117,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "priority": 37,
-    "tags": ["agriculture", "softs"],
+    "tags": [
+      "agriculture",
+      "softs"
+    ],
     "ribbonLabel": "Orange Juice (Frozen)",
     "ribbonSubtext": "Latin America",
     "geoLevel": "region",
-    "displayCountryCodes": ["BR", "MX"],
+    "displayCountryCodes": [
+      "BR",
+      "MX"
+    ],
     "yearFirstTraded": 1966,
     "fact": "FCOJ (Frozen Concentrated); made famous by the film Trading Places"
   },
@@ -120,14 +143,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "priority": 23,
-    "tags": ["metals", "base", "steel_input"],
+    "tags": [
+      "metals",
+      "base",
+      "steel_input"
+    ],
     "ribbonLabel": "Iron Ore (Steel Input)",
     "ribbonSubtext": "China & Australia",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["CN", "AU"],
+    "displayCountryCodes": [
+      "CN",
+      "AU"
+    ],
     "yearFirstTraded": 2008,
     "fact": "World's most mined metal; China consumes 70% of global seaborne supply"
   },
@@ -142,14 +170,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "priority": 13,
-    "tags": ["metals", "precious", "safe_haven", "headline"],
+    "tags": [
+      "metals",
+      "precious",
+      "safe_haven",
+      "headline"
+    ],
     "ribbonLabel": "Gold (Spot)",
     "ribbonSubtext": "London & New York",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["GB", "US"],
+    "displayCountryCodes": [
+      "GB",
+      "US"
+    ],
     "yearFirstTraded": 1919,
     "fact": "London Gold Fix started 1919; all gold ever mined fits in 3 Olympic pools"
   },
@@ -164,14 +198,21 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 2,
-    "tags": ["energy", "crude_oil", "headline", "high_liquidity", "us_benchmark"],
+    "tags": [
+      "energy",
+      "crude_oil",
+      "headline",
+      "high_liquidity",
+      "us_benchmark"
+    ],
     "ribbonLabel": "WTI Crude (US Benchmark)",
     "ribbonSubtext": "New York",
     "geoLevel": "country",
-    "displayCountryCodes": ["US", "CA"],
+    "displayCountryCodes": [
+      "US",
+      "CA"
+    ],
     "yearFirstTraded": 1983,
     "fact": "West Texas Intermediate; delivered to Cushing, Oklahoma storage hub"
   },
@@ -186,14 +227,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 3,
-    "tags": ["energy", "natural_gas", "us_benchmark", "north_america"],
+    "tags": [
+      "energy",
+      "natural_gas",
+      "us_benchmark",
+      "north_america"
+    ],
     "ribbonLabel": "Natural Gas (Henry Hub)",
     "ribbonSubtext": "North America",
     "geoLevel": "region",
-    "displayCountryCodes": ["US", "CA"],
+    "displayCountryCodes": [
+      "US",
+      "CA"
+    ],
     "yearFirstTraded": 1990,
     "fact": "Named after Louisiana pipeline hub; US natural gas benchmark"
   },
@@ -208,14 +255,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 4,
-    "tags": ["energy", "distillates", "refined_products"],
+    "tags": [
+      "energy",
+      "distillates",
+      "refined_products"
+    ],
     "ribbonLabel": "Heating Oil (US Gulf)",
     "ribbonSubtext": "Gulf Coast",
     "geoLevel": "country",
-    "displayCountryCodes": ["US", "MX"],
+    "displayCountryCodes": [
+      "US",
+      "MX"
+    ],
     "yearFirstTraded": 1978,
     "fact": "Also called No. 2 fuel oil; closely tracks diesel prices"
   },
@@ -230,14 +282,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 5,
-    "tags": ["energy", "gasoline", "refined_products"],
+    "tags": [
+      "energy",
+      "gasoline",
+      "refined_products"
+    ],
     "ribbonLabel": "Gasoline (RBOB)",
     "ribbonSubtext": "New York Harbor",
     "geoLevel": "country",
-    "displayCountryCodes": ["US", "CA"],
+    "displayCountryCodes": [
+      "US",
+      "CA"
+    ],
     "yearFirstTraded": 2006,
     "fact": "Reformulated Blendstock for Oxygenate Blending; replaced unleaded in 2006"
   },
@@ -252,14 +309,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 6,
-    "tags": ["energy", "distillates", "europe_benchmark"],
+    "tags": [
+      "energy",
+      "distillates",
+      "europe_benchmark"
+    ],
     "ribbonLabel": "Gasoil / ULSD (Europe)",
     "ribbonSubtext": "US & Europe",
     "geoLevel": "region",
-    "displayCountryCodes": ["US", "DE"],
+    "displayCountryCodes": [
+      "US",
+      "DE"
+    ],
     "yearFirstTraded": 1981,
     "fact": "Ultra Low Sulfur Diesel; Europe's diesel benchmark"
   },
@@ -274,14 +336,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 8,
-    "tags": ["energy", "crude_oil", "middle_east", "pricing_benchmark"],
+    "tags": [
+      "energy",
+      "crude_oil",
+      "middle_east",
+      "pricing_benchmark"
+    ],
     "ribbonLabel": "Dubai Crude (Gulf)",
     "ribbonSubtext": "Dubai – Gulf region",
     "geoLevel": "region",
-    "displayCountryCodes": ["AE", "SA"],
+    "displayCountryCodes": [
+      "AE",
+      "SA"
+    ],
     "yearFirstTraded": 1987,
     "fact": "Benchmark for Middle East crude exports to Asia"
   },
@@ -296,14 +364,19 @@
     "quoteCurrency": "GBP",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 9,
-    "tags": ["energy", "natural_gas", "uk_benchmark"],
+    "tags": [
+      "energy",
+      "natural_gas",
+      "uk_benchmark"
+    ],
     "ribbonLabel": "NBP Gas (UK)",
     "ribbonSubtext": "United Kingdom",
     "geoLevel": "country",
-    "displayCountryCodes": ["GB", "IE"],
+    "displayCountryCodes": [
+      "GB",
+      "IE"
+    ],
     "yearFirstTraded": 1996,
     "fact": "National Balancing Point; UK's virtual trading location for gas"
   },
@@ -318,14 +391,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 10,
-    "tags": ["energy", "lng", "asia_benchmark"],
+    "tags": [
+      "energy",
+      "lng",
+      "asia_benchmark"
+    ],
     "ribbonLabel": "LNG (Japan-Korea Marker)",
     "ribbonSubtext": "East Asia",
     "geoLevel": "region",
-    "displayCountryCodes": ["JP", "KR"],
+    "displayCountryCodes": [
+      "JP",
+      "KR"
+    ],
     "yearFirstTraded": 2009,
     "fact": "Japan-Korea Marker; Asia's LNG spot price benchmark"
   },
@@ -340,14 +418,19 @@
     "quoteCurrency": "EUR",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 11,
-    "tags": ["energy", "power", "europe"],
+    "tags": [
+      "energy",
+      "power",
+      "europe"
+    ],
     "ribbonLabel": "Electricity (EU Baseload)",
     "ribbonSubtext": "Germany (benchmark)",
     "geoLevel": "region",
-    "displayCountryCodes": ["DE", "FR"],
+    "displayCountryCodes": [
+      "DE",
+      "FR"
+    ],
     "yearFirstTraded": 1999,
     "fact": "German baseload power; Europe's most liquid electricity market"
   },
@@ -362,14 +445,19 @@
     "quoteCurrency": "EUR",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 12,
-    "tags": ["energy", "emissions", "environment"],
+    "tags": [
+      "energy",
+      "emissions",
+      "environment"
+    ],
     "ribbonLabel": "Carbon (EU Allowances)",
     "ribbonSubtext": "EU ETS",
     "geoLevel": "region",
-    "displayCountryCodes": ["DE", "FR"],
+    "displayCountryCodes": [
+      "DE",
+      "FR"
+    ],
     "yearFirstTraded": 2005,
     "fact": "EU Emissions Trading System; world's largest carbon market"
   },
@@ -384,14 +472,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 14,
-    "tags": ["metals", "precious", "industrial"],
+    "tags": [
+      "metals",
+      "precious",
+      "industrial"
+    ],
     "ribbonLabel": "Silver (Spot)",
     "ribbonSubtext": "London & New York",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["GB", "US"],
+    "displayCountryCodes": [
+      "GB",
+      "US"
+    ],
     "yearFirstTraded": 1897,
     "fact": "50% goes to industry; Hunt brothers tried to corner market in 1980"
   },
@@ -406,14 +499,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 15,
-    "tags": ["metals", "precious", "automotive"],
+    "tags": [
+      "metals",
+      "precious",
+      "automotive"
+    ],
     "ribbonLabel": "Platinum (Spot)",
     "ribbonSubtext": "London & Johannesburg",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["ZA", "GB"],
+    "displayCountryCodes": [
+      "ZA",
+      "GB"
+    ],
     "yearFirstTraded": 1973,
     "fact": "80% from South Africa; 30× rarer than gold in Earth's crust"
   },
@@ -428,14 +526,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 16,
-    "tags": ["metals", "precious", "automotive"],
+    "tags": [
+      "metals",
+      "precious",
+      "automotive"
+    ],
     "ribbonLabel": "Palladium (Spot)",
     "ribbonSubtext": "Russia & South Africa",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["RU", "ZA"],
+    "displayCountryCodes": [
+      "RU",
+      "ZA"
+    ],
     "yearFirstTraded": 1999,
     "fact": "40% from Russia; used in catalytic converters for gasoline cars"
   },
@@ -450,14 +553,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 17,
-    "tags": ["metals", "base", "industrial"],
+    "tags": [
+      "metals",
+      "base",
+      "industrial"
+    ],
     "ribbonLabel": "Copper (LME Grade A)",
     "ribbonSubtext": "London Metal Exchange",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["GB", "CL"],
+    "displayCountryCodes": [
+      "GB",
+      "CL"
+    ],
     "yearFirstTraded": 1877,
     "fact": "Called 'Dr. Copper'; prices predict economic health"
   },
@@ -472,14 +580,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 18,
-    "tags": ["metals", "base", "industrial"],
+    "tags": [
+      "metals",
+      "base",
+      "industrial"
+    ],
     "ribbonLabel": "Aluminium (LME Primary)",
     "ribbonSubtext": "London Metal Exchange",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["GB", "CN"],
+    "displayCountryCodes": [
+      "GB",
+      "CN"
+    ],
     "yearFirstTraded": 1978,
     "fact": "Most produced non-ferrous metal; China produces 60% of global supply"
   },
@@ -494,14 +607,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 19,
-    "tags": ["metals", "base", "industrial"],
+    "tags": [
+      "metals",
+      "base",
+      "industrial"
+    ],
     "ribbonLabel": "Zinc (LME SHG)",
     "ribbonSubtext": "London Metal Exchange",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["GB", "AU"],
+    "displayCountryCodes": [
+      "GB",
+      "AU"
+    ],
     "yearFirstTraded": 1920,
     "fact": "50% used for galvanising steel; also in brass alloys"
   },
@@ -516,14 +634,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 20,
-    "tags": ["metals", "base", "battery_metals", "ev"],
+    "tags": [
+      "metals",
+      "base",
+      "battery_metals",
+      "ev"
+    ],
     "ribbonLabel": "Nickel (LME Primary)",
     "ribbonSubtext": "London Metal Exchange",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["GB", "ID"],
+    "displayCountryCodes": [
+      "GB",
+      "ID"
+    ],
     "yearFirstTraded": 1979,
     "fact": "Critical for EV batteries; 2022 squeeze caused trading halt"
   },
@@ -538,14 +662,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 21,
-    "tags": ["metals", "base", "electronics"],
+    "tags": [
+      "metals",
+      "base",
+      "electronics"
+    ],
     "ribbonLabel": "Tin (LME)",
     "ribbonSubtext": "London Metal Exchange",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["GB", "CN"],
+    "displayCountryCodes": [
+      "GB",
+      "CN"
+    ],
     "yearFirstTraded": 1877,
     "fact": "Essential for solder in electronics; 50% from China and Indonesia"
   },
@@ -560,14 +689,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 22,
-    "tags": ["metals", "base", "batteries"],
+    "tags": [
+      "metals",
+      "base",
+      "batteries"
+    ],
     "ribbonLabel": "Lead (LME SHG)",
     "ribbonSubtext": "London Metal Exchange",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["GB", "CN"],
+    "displayCountryCodes": [
+      "GB",
+      "CN"
+    ],
     "yearFirstTraded": 1903,
     "fact": "80% used in lead-acid batteries; most recycled metal in the world"
   },
@@ -582,14 +716,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 24,
-    "tags": ["metals", "base", "battery_metals", "ev"],
+    "tags": [
+      "metals",
+      "base",
+      "battery_metals",
+      "ev"
+    ],
     "ribbonLabel": "Lithium (Carbonate)",
     "ribbonSubtext": "Chile, China & Australia",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["CL", "AU"],
+    "displayCountryCodes": [
+      "CL",
+      "AU"
+    ],
     "yearFirstTraded": 2010,
     "fact": "Called 'white petroleum'; demand up 500% since 2015 due to EVs"
   },
@@ -604,14 +744,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 25,
-    "tags": ["metals", "base", "technology", "strategic"],
+    "tags": [
+      "metals",
+      "base",
+      "technology",
+      "strategic"
+    ],
     "ribbonLabel": "Rare Earths (Basket)",
     "ribbonSubtext": "China & Scandinavia",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["CN", "SE"],
+    "displayCountryCodes": [
+      "CN",
+      "SE"
+    ],
     "yearFirstTraded": 2011,
     "fact": "17 elements; China controls 60% of mining and 90% of processing"
   },
@@ -626,14 +772,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 31,
-    "tags": ["agriculture", "grains", "staple"],
+    "tags": [
+      "agriculture",
+      "grains",
+      "staple"
+    ],
     "ribbonLabel": "Wheat (CBOT)",
     "ribbonSubtext": "US & Black Sea",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["US", "UA"],
+    "displayCountryCodes": [
+      "US",
+      "UA"
+    ],
     "yearFirstTraded": 1877,
     "fact": "Most widely cultivated crop; Ukraine conflict spiked prices 50%+"
   },
@@ -648,14 +799,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 32,
-    "tags": ["agriculture", "grains", "staple"],
+    "tags": [
+      "agriculture",
+      "grains",
+      "staple"
+    ],
     "ribbonLabel": "Corn (CBOT)",
     "ribbonSubtext": "US Midwest",
     "geoLevel": "country",
-    "displayCountryCodes": ["US", "BR"],
+    "displayCountryCodes": [
+      "US",
+      "BR"
+    ],
     "yearFirstTraded": 1877,
     "fact": "World's most produced grain; 40% of US corn becomes ethanol"
   },
@@ -670,14 +826,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 34,
-    "tags": ["agriculture", "oilseeds"],
+    "tags": [
+      "agriculture",
+      "oilseeds"
+    ],
     "ribbonLabel": "Soybeans (CBOT)",
     "ribbonSubtext": "US & Brazil",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["US", "BR"],
+    "displayCountryCodes": [
+      "US",
+      "BR"
+    ],
     "yearFirstTraded": 1936,
     "fact": "China imports 60% of global soybean trade for animal feed"
   },
@@ -692,14 +852,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 36,
-    "tags": ["agriculture", "softs", "textiles"],
+    "tags": [
+      "agriculture",
+      "softs",
+      "textiles"
+    ],
     "ribbonLabel": "Cotton (ICE No. 2)",
     "ribbonSubtext": "US & India",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["US", "IN"],
+    "displayCountryCodes": [
+      "US",
+      "IN"
+    ],
     "yearFirstTraded": 1870,
     "fact": "Natural fibre used for 7,000+ years; India largest producer"
   },
@@ -714,14 +879,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 38,
-    "tags": ["agriculture", "softs"],
+    "tags": [
+      "agriculture",
+      "softs"
+    ],
     "ribbonLabel": "Cocoa (ICE)",
     "ribbonSubtext": "West Africa",
     "geoLevel": "region",
-    "displayCountryCodes": ["CI", "GH"],
+    "displayCountryCodes": [
+      "CI",
+      "GH"
+    ],
     "yearFirstTraded": 1925,
     "fact": "Ivory Coast & Ghana produce 60%; prices hit record highs in 2024"
   },
@@ -736,14 +905,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 39,
-    "tags": ["agriculture", "oilseeds"],
+    "tags": [
+      "agriculture",
+      "oilseeds"
+    ],
     "ribbonLabel": "Palm Oil (BMD)",
     "ribbonSubtext": "Malaysia & Indonesia",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["MY", "ID"],
+    "displayCountryCodes": [
+      "MY",
+      "ID"
+    ],
     "yearFirstTraded": 1980,
     "fact": "World's most consumed vegetable oil; in 50% of supermarket products"
   },
@@ -758,14 +931,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 40,
-    "tags": ["agriculture", "grains", "staple"],
+    "tags": [
+      "agriculture",
+      "grains",
+      "staple"
+    ],
     "ribbonLabel": "Rice (Asia Export)",
     "ribbonSubtext": "Asia – Exporters",
     "geoLevel": "region",
-    "displayCountryCodes": ["TH", "VN"],
+    "displayCountryCodes": [
+      "TH",
+      "VN"
+    ],
     "yearFirstTraded": 1994,
     "fact": "Staple for 3.5 billion people; 90% grown and consumed in Asia"
   },
@@ -780,14 +958,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 41,
-    "tags": ["agriculture", "grains", "feed"],
+    "tags": [
+      "agriculture",
+      "grains",
+      "feed"
+    ],
     "ribbonLabel": "Barley (Feed)",
     "ribbonSubtext": "Europe & Middle East",
     "geoLevel": "region",
-    "displayCountryCodes": ["FR", "SA"],
+    "displayCountryCodes": [
+      "FR",
+      "SA"
+    ],
     "yearFirstTraded": 1885,
     "fact": "4th most produced grain; 70% goes to animal feed, 20% to beer"
   },
@@ -802,14 +985,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 42,
-    "tags": ["energy", "coal", "power_generation"],
+    "tags": [
+      "energy",
+      "coal",
+      "power_generation"
+    ],
     "ribbonLabel": "Coal (Thermal)",
     "ribbonSubtext": "China, India & South Africa",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["CN", "IN", "ZA"],
+    "displayCountryCodes": [
+      "CN",
+      "IN",
+      "ZA"
+    ],
     "yearFirstTraded": 2001,
     "fact": "Still generates 36% of world's electricity despite green transition"
   },
@@ -824,14 +1013,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 43,
-    "tags": ["energy", "biofuels"],
+    "tags": [
+      "energy",
+      "biofuels"
+    ],
     "ribbonLabel": "Ethanol (Biofuel)",
     "ribbonSubtext": "US & Brazil",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["US", "BR"],
+    "displayCountryCodes": [
+      "US",
+      "BR"
+    ],
     "yearFirstTraded": 2005,
     "fact": "Blended into 98% of US gasoline; Brazil uses sugarcane-based"
   },
@@ -846,14 +1039,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 44,
-    "tags": ["agriculture", "grains", "feed"],
+    "tags": [
+      "agriculture",
+      "grains",
+      "feed"
+    ],
     "ribbonLabel": "Sorghum (Feed Grain)",
     "ribbonSubtext": "US & Africa",
     "geoLevel": "region",
-    "displayCountryCodes": ["US", "NG"],
+    "displayCountryCodes": [
+      "US",
+      "NG"
+    ],
     "yearFirstTraded": 1959,
     "fact": "5th most important cereal; drought-resistant alternative to corn"
   },
@@ -868,14 +1066,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 45,
-    "tags": ["agriculture", "grains", "staple"],
+    "tags": [
+      "agriculture",
+      "grains",
+      "staple"
+    ],
     "ribbonLabel": "Millet (Staple Grain)",
     "ribbonSubtext": "Asia & Africa",
     "geoLevel": "region",
-    "displayCountryCodes": ["IN", "NG"],
+    "displayCountryCodes": [
+      "IN",
+      "NG"
+    ],
     "yearFirstTraded": 2000,
     "fact": "Ancient grain from 5000 BC; 2023 was UN Year of Millets"
   },
@@ -890,14 +1093,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 46,
-    "tags": ["agriculture", "softs"],
+    "tags": [
+      "agriculture",
+      "softs"
+    ],
     "ribbonLabel": "Dates (Gulf & North Africa)",
     "ribbonSubtext": "Gulf & North Africa",
     "geoLevel": "region",
-    "displayCountryCodes": ["SA", "EG"],
+    "displayCountryCodes": [
+      "SA",
+      "EG"
+    ],
     "yearFirstTraded": 1990,
     "fact": "Cultivated for 6,000+ years; Egypt is world's largest producer"
   },
@@ -912,14 +1119,18 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 47,
-    "tags": ["agriculture", "softs"],
+    "tags": [
+      "agriculture",
+      "softs"
+    ],
     "ribbonLabel": "Tea (Global)",
     "ribbonSubtext": "Kenya & Asia",
     "geoLevel": "region",
-    "displayCountryCodes": ["KE", "IN"],
+    "displayCountryCodes": [
+      "KE",
+      "IN"
+    ],
     "yearFirstTraded": 1991,
     "fact": "World's most consumed beverage after water; Kenya is top exporter"
   },
@@ -934,14 +1145,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 23,
-    "tags": ["metals", "base", "battery_metals", "ev"],
+    "tags": [
+      "metals",
+      "base",
+      "battery_metals",
+      "ev"
+    ],
     "ribbonLabel": "Cobalt (Battery Metals)",
     "ribbonSubtext": "Central Africa & China",
     "geoLevel": "region",
-    "displayCountryCodes": ["CD", "CN"],
+    "displayCountryCodes": [
+      "CD",
+      "CN"
+    ],
     "yearFirstTraded": 2010,
     "fact": "70% from DRC; critical for EV batteries despite ethical concerns"
   },
@@ -956,14 +1173,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 26,
-    "tags": ["metals", "base", "aluminium_input"],
+    "tags": [
+      "metals",
+      "base",
+      "aluminium_input"
+    ],
     "ribbonLabel": "Bauxite (Aluminium Ore)",
     "ribbonSubtext": "Australia & Brazil",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["AU", "BR"],
+    "displayCountryCodes": [
+      "AU",
+      "BR"
+    ],
     "yearFirstTraded": 2015,
     "fact": "Named after Les Baux, France; 4-5 tonnes makes 1 tonne aluminium"
   },
@@ -978,14 +1200,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 27,
-    "tags": ["metals", "base", "energy"],
+    "tags": [
+      "metals",
+      "base",
+      "energy"
+    ],
     "ribbonLabel": "Uranium (Nuclear Fuel)",
     "ribbonSubtext": "Canada, Australia & Kazakhstan",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["CA", "AU", "KZ"],
+    "displayCountryCodes": [
+      "CA",
+      "AU",
+      "KZ"
+    ],
     "yearFirstTraded": 2007,
     "fact": "1kg uranium = 20,000kg coal in energy; Kazakhstan produces 43%"
   },
@@ -1000,14 +1228,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 28,
-    "tags": ["metals", "base", "industrial"],
+    "tags": [
+      "metals",
+      "base",
+      "industrial"
+    ],
     "ribbonLabel": "Chromium (Industrial)",
     "ribbonSubtext": "South Africa & Türkiye",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["ZA", "TR"],
+    "displayCountryCodes": [
+      "ZA",
+      "TR"
+    ],
     "yearFirstTraded": 2008,
     "fact": "Essential for stainless steel; South Africa has 70% of reserves"
   },
@@ -1022,14 +1255,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 29,
-    "tags": ["agriculture", "fertiliser", "soil_nutrients"],
+    "tags": [
+      "agriculture",
+      "fertiliser",
+      "soil_nutrients"
+    ],
     "ribbonLabel": "Potash (Fertiliser)",
     "ribbonSubtext": "Canada & Russia",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["CA", "RU"],
+    "displayCountryCodes": [
+      "CA",
+      "RU"
+    ],
     "yearFirstTraded": 2008,
     "fact": "Potassium fertiliser; Canada has 30% of world reserves"
   },
@@ -1044,14 +1282,19 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 30,
-    "tags": ["agriculture", "fertiliser", "soil_nutrients"],
+    "tags": [
+      "agriculture",
+      "fertiliser",
+      "soil_nutrients"
+    ],
     "ribbonLabel": "Phosphates (Fertiliser)",
     "ribbonSubtext": "Morocco & North Africa",
     "geoLevel": "region",
-    "displayCountryCodes": ["MA", "EG"],
+    "displayCountryCodes": [
+      "MA",
+      "EG"
+    ],
     "yearFirstTraded": 2008,
     "fact": "Morocco holds 70% of world reserves; essential for food production"
   },
@@ -1066,14 +1309,20 @@
     "quoteCurrency": "USD",
     "isActive": true,
     "isSelectableInRibbon": true,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "priority": 29,
-    "tags": ["metals", "base", "aerospace", "industrial"],
+    "tags": [
+      "metals",
+      "base",
+      "aerospace",
+      "industrial"
+    ],
     "ribbonLabel": "Titanium Ore (Industrial)",
     "ribbonSubtext": "South Africa & Norway",
     "geoLevel": "multi_country",
-    "displayCountryCodes": ["ZA", "NO"],
+    "displayCountryCodes": [
+      "ZA",
+      "NO"
+    ],
     "yearFirstTraded": 2010,
     "fact": "As strong as steel at half the weight; critical for aerospace"
   }

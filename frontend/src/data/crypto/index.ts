@@ -1,7 +1,7 @@
 // src/data/crypto/index.ts
 
 import assetsCatalogJson from './assets.catalog.json';
-import defaultsJson from './defaults.json';
+import selectedJson from './crypto.selected.json';
 import {
   cryptoAssetsCatalogSchema,
   cryptoDefaultsSchema,
@@ -21,7 +21,7 @@ export const assetsCatalog: CryptoAssetsCatalog =
 /**
  * Default free-tier crypto selection for the homepage ribbon (exactly 8 ids).
  */
-export const cryptoDefaults: CryptoDefaults = cryptoDefaultsSchema.parse(defaultsJson);
+export const cryptoDefaults: CryptoDefaults = cryptoDefaultsSchema.parse(selectedJson);
 
 // ---------------------------------------------------------------------------
 // Cross-file integrity checks (defence in depth)
@@ -32,7 +32,7 @@ const missingDefaults = cryptoDefaults.ids.filter((id) => !idSet.has(id));
 
 if (missingDefaults.length > 0) {
   throw new Error(
-    `crypto SSOT integrity error: defaults.json contains ids not present in assets.catalog.json: ${missingDefaults.join(
+    `crypto SSOT integrity error: crypto.selected.json contains ids not present in assets.catalog.json: ${missingDefaults.join(
       ', ',
     )}`,
   );

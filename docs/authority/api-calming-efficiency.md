@@ -2,7 +2,8 @@
 
 > **Authority Document** | Living reference for API cost control and efficiency  
 > **Location:** `docs/authority/api-calming-efficiency.md`  
-> **Companion:** `promagen-api-brain-v2.md` (architecture spec)
+> **Companion:** `promagen-api-brain-v2.md` (architecture spec)  
+> **Last updated:** 14 January 2026 (PM) — All feeds verified LIVE
 
 ---
 
@@ -16,6 +17,17 @@ This document is the **single source of truth** for Promagen's API calming effic
 - Lessons learned from incidents
 
 **Goal:** Achieve and maintain **≤50% daily API budget usage per provider** while keeping all four data feeds (FX, Indices, Commodities, Crypto) feeling "alive."
+
+---
+
+## Current Feed Status (Jan 14, 2026 PM)
+
+| Feed            | Status      | Provider    | Mode     | Data |
+| --------------- | ----------- | ----------- | -------- | ---- |
+| **FX**          | ✅ **LIVE** | TwelveData  | `cached` | Real prices |
+| **Indices**     | ✅ **LIVE** | Marketstack | `live`   | Real prices |
+| **Crypto**      | ✅ **LIVE** | TwelveData  | `cached` | Real prices |
+| **Commodities** | ⏸️ PARKED   | None        | `fallback` | null (—) |
 
 ---
 
@@ -48,25 +60,25 @@ _Last measured: January 14, 2026_
 │  ├── Centralised polling store (one timer per feed globally)                │
 │  ├── Client-side rate limiting (240 req/min)                                │
 │  └── API Timing Stagger (prevents simultaneous upstream calls)              │
-│      ├── FX:          :00, :30 (base schedule)       → TwelveData           │
-│      ├── Indices:     :05, :35 (5-min offset)        → Marketstack          │
-│      ├── Commodities: fallback only                  → No provider          │
-│      └── Crypto:      :20, :50 (20-min offset)       → TwelveData           │
+│      ├── FX:          :00, :30 (base schedule)       → TwelveData ✅        │
+│      ├── Indices:     :05, :35 (5-min offset)        → Marketstack ✅       │
+│      ├── Commodities: parked (no calls)              → None ⏸️              │
+│      └── Crypto:      :20, :50 (20-min offset)       → TwelveData ✅        │
 │                                                                             │
 │  LAYER 2: Gateway (Fly.io) — PROVIDER-BASED MODULES                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │  twelvedata/                    │  marketstack/    │  fallback/     │    │
 │  │  ├── budget.ts (800/day SHARED) │  ├── budget.ts   │  └── commodities│   │
-│  │  ├── scheduler.ts (clock-aligned)│  │   (250/day)  │      (demo only)│   │
+│  │  ├── scheduler.ts (clock-aligned)│  │   (250/day)  │      (null only)│   │
 │  │  ├── adapter.ts                 │  ├── scheduler.ts│                │    │
-│  │  ├── fx.ts      (:00/:30)       │  └── indices.ts  │                │    │
-│  │  └── crypto.ts  (:20/:50)       │      (:05/:35)   │                │    │
+│  │  ├── fx.ts ✅ LIVE              │  └── indices.ts  │                │    │
+│  │  └── crypto.ts ✅ LIVE          │      ✅ LIVE     │                │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
 │  LAYER 3: Providers (Completely Separate Budgets)                           │
 │  ┌─────────────────────────────────┬───────────────────────────────────┐    │
 │  │   TwelveData (800/day)          │   Marketstack (250/day)           │    │
-│  │   FX + Crypto                   │   Indices only                    │    │
+│  │   FX + Crypto ✅ LIVE           │   Indices only ✅ LIVE            │    │
 │  │   Clock-aligned: never overlap  │   Separate budget, separate slots │    │
 │  └─────────────────────────────────┴───────────────────────────────────┘    │
 │                                                                             │
@@ -81,15 +93,16 @@ All four data feeds share **identical calming architecture** with provider-speci
 
 | Component               | FX                      | Indices                  | Commodities              | Crypto                   |
 | ----------------------- | ----------------------- | ------------------------ | ------------------------ | ------------------------ |
+| **Status**              | ✅ LIVE                 | ✅ LIVE                  | ⏸️ PARKED                | ✅ LIVE                  |
 | **Gateway endpoint**    | `/fx`                   | `/indices`               | `/commodities`           | `/crypto`                |
 | **Frontend API route**  | `/api/fx`               | `/api/indices`           | `/api/commodities`       | `/api/crypto`            |
-| **Frontend hook**       | `use-fx-quotes.ts`      | `use-indices-quotes.ts`  | N/A (fallback)           | `use-crypto-quotes.ts`   |
+| **Frontend hook**       | `use-fx-quotes.ts`      | `use-indices-quotes.ts`  | N/A (parked)             | `use-crypto-quotes.ts`   |
 | **Display location**    | FX Ribbon               | Exchange Cards           | Commodities Ribbon       | Crypto Ribbon            |
 | **Cache key**           | `fx:ribbon:all`         | `indices:default`        | `commodities:ribbon:all` | `crypto:ribbon:all`      |
-| **TTL**                 | 1800s (30 min)          | 7200s (2 hr)             | 1800s (30 min)           | 1800s (30 min)           |
-| **Refresh schedule**    | :00, :30                | :05, :35                 | N/A (fallback)           | :20, :50                 |
+| **TTL**                 | 1800s (30 min)          | 7200s (2 hr)             | N/A                      | 1800s (30 min)           |
+| **Refresh schedule**    | :00, :30                | :05, :35                 | N/A (parked)             | :20, :50                 |
 | **Default items**       | 8 pairs                 | 16 exchanges             | 8 commodities            | 8 cryptocurrencies       |
-| **Provider**            | TwelveData              | Marketstack              | None (fallback)          | TwelveData               |
+| **Provider**            | TwelveData              | Marketstack              | None (parked)            | TwelveData               |
 | **Provider folder**     | `twelvedata/`           | `marketstack/`           | `fallback/`              | `twelvedata/`            |
 | **Daily budget**        | shared 800              | 250 (separate)           | 0 (no calls)             | shared 800               |
 
@@ -141,24 +154,6 @@ export function getMsUntilNextSlot(feed: TwelveDataFeed): number {
 }
 ```
 
-**Frontend Implementation (use-crypto-quotes.ts):**
-
-```typescript
-function getMsUntilNextCryptoSlot(): number {
-  const now = new Date();
-  const minute = now.getMinutes();
-  const targets = [20, 50]; // Crypto slots
-  
-  let best = targets[0] + 60 - minute;
-  for (const t of targets) {
-    const delta = t - minute;
-    if (delta > 0 && delta < best) best = delta;
-  }
-  
-  return Math.max(1000, best * 60_000 - now.getSeconds() * 1000);
-}
-```
-
 **Why clock-aligned (not 90% TTL)?**
 
 Old approach:
@@ -184,6 +179,22 @@ setTimeout(() => {
 
 ---
 
+## CRITICAL: No Demo Prices Ever
+
+**This is a hard rule documented in memory:**
+
+> "There is no synthetic demo market data on the homepage ribbon."
+> "Fallback must return null (renders as '—')."
+
+When live API data is unavailable, the gateway returns:
+```typescript
+price: null  // NEVER demo prices
+```
+
+The frontend renders `null` as `—` (em dash). This is intentional and correct.
+
+---
+
 ## Implemented Techniques
 
 ### Technique Registry (All Four Feeds)
@@ -196,155 +207,49 @@ setTimeout(() => {
 | 4   | **Stale-While-Revalidate** | Gateway  | FX, IDX, CRY          | Medium (UX smoothness)            | ✅ Active |
 | 5   | **Background Refresh**     | Gateway  | FX, IDX, CRY          | Medium (proactive cache warm)     | ✅ Active |
 | 6   | **Budget Management**      | Gateway  | FX, IDX, CRY          | Critical (hard stop)              | ✅ Active |
-| 7   | **Circuit Breaker**        | Gateway  | FX, IDX, CRY          | High (failure isolation)          | ✅ Active |
-| 8   | **Graceful Degradation**   | Gateway  | FX, IDX, COM, CRY     | High (UX continuity)              | ✅ Active |
-| 9   | **Polling Alignment**      | Frontend | FX, IDX, CRY          | Critical (demand reduction)       | ✅ Active |
-| 10  | **Visibility Backoff**     | Frontend | FX, IDX, CRY          | Medium (idle savings)             | ✅ Active |
-| 11  | **Centralised Polling**    | Frontend | FX, IDX, CRY          | High (one timer per feed)         | ✅ Active |
-| 12  | **Route Rate Limiting**    | Frontend | FX, IDX, COM, CRY     | Low (defence in depth)            | ✅ Active |
-| 13  | **Clock-Aligned Slots**    | Gateway  | FX, IDX, CRY          | Critical (prevents rate limits)   | ✅ Active |
-| 14  | **Multi-Provider Budget**  | Gateway  | IDX                   | High (isolated provider budgets)  | ✅ Active |
-| 15  | **Provider-Based Modules** | Gateway  | All                   | High (code organization)          | ✅ Active |
-
-### Technique Details
-
-#### 1. TTL Cache (Gateway)
-
-```typescript
-// lib/cache.ts
-export class GenericCache<T> {
-  private cache = new Map<string, { value: T; expiry: Date }>();
-  
-  constructor(private ttlMs: number) {}
-  
-  get(key: string): T | null {
-    const entry = this.cache.get(key);
-    if (!entry) return null;
-    if (new Date() > entry.expiry) return null;
-    return entry.value;
-  }
-  
-  getStale(key: string): T | null {
-    const entry = this.cache.get(key);
-    return entry?.value ?? null;
-  }
-}
-```
-
-#### 6. Budget Management (Provider-Based)
-
-```typescript
-// twelvedata/budget.ts — ONE instance for ALL TwelveData feeds
-export const twelveDataBudget = new BudgetManager({
-  id: 'twelvedata',
-  dailyLimit: 800,
-  minuteLimit: 8,
-  warnThreshold: 0.7,
-});
-
-// marketstack/budget.ts — SEPARATE instance for Marketstack
-export const marketstackBudget = new BudgetManager({
-  id: 'marketstack',
-  dailyLimit: 250,
-  minuteLimit: 3,
-  warnThreshold: 0.7,
-});
-```
-
-#### 13. Clock-Aligned Slots (Gateway)
-
-```typescript
-// twelvedata/scheduler.ts
-const FEED_SLOTS = {
-  fx: [0, 30],      // :00, :30
-  crypto: [20, 50], // :20, :50
-};
-
-// marketstack/scheduler.ts
-const INDICES_SLOTS = [5, 35]; // :05, :35
-```
-
-**Why this prevents rate limits:**
-
-| Time  | TwelveData Calls | Marketstack Calls | Total Credits |
-|-------|------------------|-------------------|---------------|
-| :00   | FX (8 symbols)   | —                 | 8 TD          |
-| :05   | —                | Indices (16)      | 16 MS         |
-| :20   | Crypto (8)       | —                 | 8 TD          |
-| :30   | FX (8)           | —                 | 8 TD          |
-| :35   | —                | Indices (16)      | 16 MS         |
-| :50   | Crypto (8)       | —                 | 8 TD          |
-
-**Per-minute max: 8 TwelveData, 16 Marketstack** — well under limits!
-
----
-
-## Budget Calculations
-
-### TwelveData (FX + Crypto)
-
-```
-Daily refreshes per feed: 24 hours × 2 refreshes/hour = 48 refreshes
-Symbols per refresh: 8
-Credits per refresh: 8
-
-FX daily:     48 × 1 = 48 refreshes × 8 = 384 credits... WRONG!
-Actually:     48 refreshes × 1 credit (batch) = 48 credits
-
-Wait, let's recalculate:
-- FX refreshes: 2/hour × 24 = 48/day
-- Crypto refreshes: 2/hour × 24 = 48/day
-- Each refresh = 1 batch call = 1 credit (not 8!)
-
-Total TwelveData: 48 + 48 = 96 credits/day (12% of 800)
-```
-
-**Actually, TwelveData charges per symbol, not per call:**
-```
-FX: 48 refreshes × 8 symbols = 384 symbol-credits/day
-Crypto: 48 refreshes × 8 symbols = 384 symbol-credits/day
-Total: 768 credits/day (96% of 800) — TOO HIGH!
-```
-
-**With batch endpoint (price?symbol=A,B,C...):**
-```
-TwelveData batch: 1 credit per symbol in batch
-FX: 2 refreshes/hour × 8 symbols = 16 credits/hour = 384/day
-Crypto: 2 refreshes/hour × 8 symbols = 16 credits/hour = 384/day
-
-Wait, that's still 768/day. Let's check actual usage.
-```
-
-**Current observed usage:** ~256 credits/day (32% of 800)
-
-This suggests:
-- Batch calls are counted differently, OR
-- Background refresh is working correctly, OR
-- Visibility backoff is reducing actual refreshes
-
-### Marketstack (Indices)
-
-```
-Indices refreshes: 2/hour × 24 = 48/day
-Exchanges per refresh: 16
-Credits per refresh: 1 (batch endpoint)
-
-Total Marketstack: 48 credits/day (19% of 250)
-```
+| 7   | **Circuit Breaker**        | Gateway  | FX, IDX, CRY          | High (429/5xx protection)         | ✅ Active |
+| 8   | **Clock-Aligned Refresh**  | Both     | FX, IDX, CRY          | Critical (no drift collisions)    | ✅ Active |
+| 9   | **Visibility Backoff**     | Frontend | FX, IDX, CRY          | Medium (6x slower when hidden)    | ✅ Active |
+| 10  | **Centralised Polling**    | Frontend | FX, IDX, CRY          | High (one timer globally)         | ✅ Active |
+| 11  | **Client Rate Limiting**   | Frontend | All                   | Low (defence in depth)            | ✅ Active |
+| 12  | **SSOT Config**            | Both     | All                   | Medium (no stale config)          | ✅ Active |
+| 13  | **Provider Isolation**     | Gateway  | All                   | High (separate budgets)           | ✅ Active |
+| 14  | **Null Fallback**          | Gateway  | All                   | N/A (no demo prices)              | ✅ Active |
+| 15  | **Provider-Based Modules** | Gateway  | All                   | High (clear ownership)            | ✅ Active |
 
 ---
 
 ## Incident Log
 
+### INC-005: Benchmark Mapping Mismatch (Jan 14, 2026)
+
+**Severity:** Medium  
+**Duration:** ~2 hours  
+**Impact:** 3 exchanges showing "···" instead of prices
+
+**Root cause:** Frontend catalog used `djia`, `tsx`, `russell_2000` as benchmark keys. Gateway only mapped `dow_jones`, `tsx_composite`, and didn't have `russell_2000` at all.
+
+**Resolution:** Added aliases to `gateway/src/marketstack/adapter.ts`:
+```typescript
+djia: 'DJI.INDX',           // Alias for dow_jones
+tsx: 'GSPTSE.INDX',         // Alias for tsx_composite  
+russell_2000: 'RUT.INDX',   // New mapping
+```
+
+**Prevention:**
+- Document all benchmark mappings in `EXPECTED-INDICES-REFERENCE.md`
+- Test all selected exchanges against gateway mappings before deploy
+- Add validation that checks catalog keys exist in gateway
+
 ### INC-004: Budget Overrun Investigation (Jan 14, 2026)
 
 **Severity:** Medium  
-**Duration:** Ongoing investigation  
+**Duration:** Resolved  
 **Impact:** 454/800 TwelveData credits by 7:15 AM UTC (57%)
 
-**Suspected root cause:** Background refresh using 90% TTL intervals instead of clock-aligned slots, causing FX and Crypto to eventually refresh simultaneously.
+**Root cause:** Background refresh using 90% TTL intervals instead of clock-aligned slots, causing FX and Crypto to eventually refresh simultaneously.
 
-**Resolution:** Implementing clock-aligned scheduler in `twelvedata/scheduler.ts`.
+**Resolution:** Implemented clock-aligned scheduler in `twelvedata/scheduler.ts`.
 
 **Prevention:**
 - Provider-based folder structure isolates concerns
@@ -379,10 +284,57 @@ Total Marketstack: 48 credits/day (19% of 250)
 
 ---
 
+## Quick Reference
+
+### "Is it working?" Checklist
+
+```powershell
+# 1. Gateway healthy?
+(Invoke-RestMethod "https://promagen-api.fly.dev/health").status
+# Expected: "ok"
+
+# 2. All feeds returning data?
+(Invoke-RestMethod "https://promagen-api.fly.dev/fx").meta.mode          # "cached" or "live"
+(Invoke-RestMethod "https://promagen-api.fly.dev/indices").meta.mode     # "live"
+(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").meta.mode      # "cached" or "live"
+(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").meta.mode # "fallback"
+
+# 3. Data counts?
+(Invoke-RestMethod "https://promagen-api.fly.dev/fx").data.Count          # 8
+(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data.Count     # 8-16
+(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").data.Count      # 8
+
+# 4. Prices flowing?
+(Invoke-RestMethod "https://promagen-api.fly.dev/fx").data[0].price       # number
+(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").data[0].price   # number
+(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data | Select-Object id, price | Format-Table
+```
+
+### Emergency Actions
+
+| Situation              | Action                                           |
+| ---------------------- | ------------------------------------------------ |
+| TwelveData blocked     | Wait for midnight UTC reset                      |
+| Marketstack blocked    | Wait for midnight UTC reset                      |
+| Gateway down           | `fly status -a promagen-api`                     |
+| Circuit open           | Wait for auto-reset (15-60s)                     |
+| Rate limited           | Check scheduler.ts — slots should not overlap    |
+| Budget overrun         | Check twelvedata/budget.ts — single instance?    |
+| Missing prices         | Check benchmark mapping in adapter.ts            |
+
+---
+
 ## Changelog
 
 | Date       | Version | Change                                                    |
 | ---------- | ------- | --------------------------------------------------------- |
+| 2026-01-14 | 5.0.0   | **PM: All feeds verified LIVE**                           |
+|            |         | FX: TwelveData → mode: cached ✅                          |
+|            |         | Indices: Marketstack → mode: live ✅                      |
+|            |         | Crypto: TwelveData → mode: cached ✅                      |
+|            |         | Commodities: Parked → mode: fallback (null prices)        |
+|            |         | Added INC-005 benchmark mapping incident                  |
+|            |         | Updated status tables to show LIVE                        |
 | 2026-01-14 | 4.0.0   | **Major update: Provider-based architecture**             |
 |            |         | Updated architecture diagram for provider folders         |
 |            |         | Changed timing stagger to clock-aligned slots             |
@@ -397,49 +349,6 @@ Total Marketstack: 48 credits/day (19% of 250)
 
 ---
 
-## Quick Reference
-
-### "Is it working?" Checklist
-
-```powershell
-# 1. Gateway healthy?
-(Invoke-RestMethod "https://promagen-api.fly.dev/health").status
-# Expected: "ok"
-
-# 2. TwelveData budget OK?
-(Invoke-RestMethod "https://promagen-api.fly.dev/trace").budget
-# Expected: dailyUsed < 560 (70%), state = "ok"
-
-# 3. Marketstack budget OK?
-(Invoke-RestMethod "https://promagen-api.fly.dev/trace").indicesBudget
-# Expected: dailyUsed < 175 (70%), state = "ok"
-
-# 4. All caches active?
-$trace = Invoke-RestMethod "https://promagen-api.fly.dev/trace"
-$trace.fx.cacheHit          # true
-$trace.crypto.cacheHit      # true
-$trace.indices.cacheHit     # true
-
-# 5. Data flowing?
-(Invoke-RestMethod "https://promagen-api.fly.dev/fx").data[0].price
-(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").data[0].price
-(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data[0].price
-(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").source  # "fallback"
-```
-
-### Emergency Actions
-
-| Situation              | Action                                           |
-| ---------------------- | ------------------------------------------------ |
-| TwelveData blocked     | Wait for midnight UTC reset                      |
-| Marketstack blocked    | Wait for midnight UTC reset                      |
-| Gateway down           | `fly status -a promagen-api`                     |
-| Circuit open           | Wait for auto-reset (15-60s)                     |
-| Rate limited           | Check scheduler.ts — slots should not overlap    |
-| Budget overrun         | Check twelvedata/budget.ts — single instance?    |
-
----
-
 ## Review Schedule
 
 - **Weekly:** Check efficiency metrics against targets
@@ -451,3 +360,5 @@ $trace.indices.cacheHit     # true
 ---
 
 _This is a living document. Update it whenever calming techniques change or incidents occur._
+
+_**Critical rule:** NEVER use demo/synthetic prices. Fallback returns null, renders as "—"._

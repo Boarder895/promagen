@@ -2,8 +2,13 @@
 // ============================================================================
 // LEARN CLIENT
 // ============================================================================
-// Client component for the /prompts/learn page.
-// Uses HomepageGrid layout with exchange rails.
+// Client component for the /studio/learn page.
+// Features:
+// - AI Platform dropdown (42 platforms, 123rf last)
+// - "Explore Styles" button → /studio/explore
+// - "Build with [Platform]" button (conditional) → /providers/[id]
+// - 12 guides (1:1 with Prompt Builder categories)
+// - 4 tier info boxes (all shown if no platform, 1 shown if platform selected)
 // Authority: docs/authority/prompt-intelligence.md §9.3
 // ============================================================================
 
@@ -18,11 +23,13 @@ import { LearnFilters } from './learn-filters';
 import { GuideCard } from './guide-card';
 import { GuideDetailPanel } from './guide-detail-panel';
 import { QuickTipCard } from './quick-tip-card';
+import { TierInfoBoxes } from './tier-info-boxes';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
 import type { LearnGuide, QuickTip, LearnFilters as Filters } from '@/types/learn-content';
 import { DEFAULT_LEARN_FILTERS } from '@/types/learn-content';
 import { getGuideById } from '@/data/learn-guides';
+import { getPlatformTier } from '@/data/platform-tiers';
 
 // ============================================================================
 // TYPES
@@ -37,6 +44,8 @@ export interface LearnClientProps {
   guides: LearnGuide[];
   /** Quick tips */
   tips: QuickTip[];
+  /** All available platforms */
+  platforms: Array<{ id: string; name: string }>;
 }
 
 // ============================================================================
@@ -45,16 +54,6 @@ export interface LearnClientProps {
 
 function filterGuides(guides: LearnGuide[], filters: Filters): LearnGuide[] {
   return guides.filter((guide) => {
-    // Category filter
-    if (filters.category !== 'all' && guide.category !== filters.category) {
-      return false;
-    }
-
-    // Difficulty filter
-    if (filters.difficulty !== 'all' && guide.difficulty !== filters.difficulty) {
-      return false;
-    }
-
     // Search query
     if (filters.searchQuery.trim()) {
       const query = filters.searchQuery.toLowerCase();
@@ -85,6 +84,7 @@ export default function LearnClient({
   weatherIndex,
   guides,
   tips,
+  platforms,
 }: LearnClientProps) {
   const {
     isAuthenticated,
@@ -96,8 +96,23 @@ export default function LearnClient({
   // Filter state
   const [filters, setFilters] = useState<Filters>(DEFAULT_LEARN_FILTERS);
 
+  // Selected platform for tier-specific content
+  const [selectedPlatformId, setSelectedPlatformId] = useState<string | null>(null);
+
   // Selected guide for detail view
   const [selectedGuide, setSelectedGuide] = useState<LearnGuide | null>(null);
+
+  // ============================================================================
+  // PLATFORM NAME MAP
+  // ============================================================================
+
+  const platformNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of platforms) {
+      map.set(p.id, p.name);
+    }
+    return map;
+  }, [platforms]);
 
   // ============================================================================
   // EXCHANGE ORDERING
@@ -120,6 +135,14 @@ export default function LearnClient({
   }, [guides, filters]);
 
   // ============================================================================
+  // SELECTED PLATFORM TIER
+  // ============================================================================
+
+  const selectedTier = useMemo(() => {
+    return selectedPlatformId ? getPlatformTier(selectedPlatformId) : null;
+  }, [selectedPlatformId]);
+
+  // ============================================================================
   // HANDLERS
   // ============================================================================
 
@@ -129,6 +152,10 @@ export default function LearnClient({
 
   const handleResetFilters = useCallback(() => {
     setFilters(DEFAULT_LEARN_FILTERS);
+  }, []);
+
+  const handlePlatformChange = useCallback((platformId: string | null) => {
+    setSelectedPlatformId(platformId);
   }, []);
 
   const handleSelectGuide = useCallback((guide: LearnGuide) => {
@@ -163,6 +190,9 @@ export default function LearnClient({
           guide={selectedGuide}
           onClose={handleCloseDetail}
           onRelatedClick={handleRelatedClick}
+          selectedTier={selectedTier}
+          selectedPlatformId={selectedPlatformId}
+          platformNames={platformNames}
         />
       ) : (
         // Grid view
@@ -172,18 +202,18 @@ export default function LearnClient({
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-lg font-semibold text-white">Learn Prompt Engineering</h2>
               <a
-                href="/prompts"
+                href="/studio"
                 className="text-xs text-white/40 hover:text-white/60 transition-colors"
               >
-                ← Back to Prompts
+                ← Back to Studio
               </a>
             </div>
             <p className="text-sm text-white/50">
-              Master the art of crafting effective AI image prompts
+              Master the art of crafting effective AI image prompts.
             </p>
           </header>
 
-          {/* Filters */}
+          {/* Filters - Platform selector, buttons, search */}
           <div className="shrink-0 mb-4">
             <LearnFilters
               filters={filters}
@@ -191,13 +221,16 @@ export default function LearnClient({
               filteredCount={filteredGuides.length}
               onFiltersChange={handleFiltersChange}
               onReset={handleResetFilters}
+              platforms={platforms}
+              selectedPlatformId={selectedPlatformId}
+              onPlatformChange={handlePlatformChange}
             />
           </div>
 
           {/* Content - scrollable */}
           <div className="min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
-            {/* Quick Tips - Only show on first page with no filters */}
-            {!filters.searchQuery && filters.category === 'all' && filters.difficulty === 'all' && (
+            {/* Quick Tips - Only show when no search query */}
+            {!filters.searchQuery && (
               <div className="mb-6">
                 <h3 className="text-xs font-medium text-white/50 uppercase tracking-wide mb-3">
                   Quick Tips
@@ -214,6 +247,11 @@ export default function LearnClient({
             <div className="mb-4">
               <h3 className="text-xs font-medium text-white/50 uppercase tracking-wide mb-3">
                 Guides
+                {selectedTier && (
+                  <span className="ml-2 text-white/30 normal-case">
+                    • Tips optimized for {selectedTier.name}
+                  </span>
+                )}
               </h3>
               {filteredGuides.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -236,7 +274,7 @@ export default function LearnClient({
                     No guides found
                   </h3>
                   <p className="text-sm text-white/40 max-w-xs">
-                    Try adjusting your filters or search query.
+                    Try adjusting your search query.
                   </p>
                 </div>
               ) : (
@@ -246,11 +284,18 @@ export default function LearnClient({
                       key={guide.id}
                       guide={guide}
                       onSelect={handleSelectGuide}
+                      selectedTier={selectedTier}
                     />
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Platform Tier Info Boxes */}
+            <TierInfoBoxes
+              selectedPlatformId={selectedPlatformId}
+              platformNames={platformNames}
+            />
           </div>
         </>
       )}

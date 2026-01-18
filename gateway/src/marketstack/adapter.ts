@@ -46,14 +46,19 @@ const MAX_SYMBOLS_PER_REQUEST = 100;
  * If you add new indices, add them here first.
  */
 export const BENCHMARK_TO_MARKETSTACK: Record<string, string> = {
+  // ==========================================================================
   // Major US Indices
+  // ==========================================================================
   sp500: 'GSPC.INDX',
   dow_jones: 'DJI.INDX',
-  djia: 'DJI.INDX', // Alias for dow_jones (catalog uses djia)
+  djia: 'DJI.INDX', // Alias: catalog uses 'djia'
   nasdaq_composite: 'IXIC.INDX',
-  russell_2000: 'RUT.INDX', // Russell 2000 Small Cap
+  nasdaq: 'IXIC.INDX', // Alias: catalog uses 'nasdaq' for nasdaq-new-york
+  russell_2000: 'RUT.INDX',
 
+  // ==========================================================================
   // European Indices
+  // ==========================================================================
   ftse_100: 'FTSE.INDX',
   dax: 'GDAXI.INDX',
   cac_40: 'FCHI.INDX',
@@ -62,15 +67,31 @@ export const BENCHMARK_TO_MARKETSTACK: Record<string, string> = {
   aex: 'AEX.INDX',
   smi: 'SSMI.INDX',
   atx: 'ATX.INDX',
+  // Belgium
   bel20: 'BFX.INDX',
+  bel_20: 'BFX.INDX', // Alias: catalog uses 'bel_20' for euronext-brussels
+  // Portugal
   psi20: 'PSI20.INDX',
+  psi_20: 'PSI20.INDX', // Alias: catalog uses 'psi_20' for euronext-lisbon
+  // Nordics
   omx_stockholm_30: 'OMXS30.INDX',
   omx_copenhagen_20: 'OMXC20.INDX',
   omx_helsinki_25: 'OMXH25.INDX',
   osebx: 'OSEAX.INDX',
+  // Poland
   wig20: 'WIG20.INDX',
+  wig_20: 'WIG20.INDX', // Alias: catalog uses 'wig_20' for gpw-warsaw
+  // Hungary (Budapest)
+  bux: 'BUX.INDX', // Budapest Stock Exchange - catalog uses 'bux' for budapest-bet
+  // Greece, Romania, Russia, Turkey
+  athex: 'GD.INDX',
+  bet: 'BET.INDX',
+  moex: 'IMOEX.INDX',
+  bist_100: 'XU100.INDX',
 
+  // ==========================================================================
   // Asia-Pacific Indices
+  // ==========================================================================
   nikkei_225: 'N225.INDX',
   hang_seng: 'HSI.INDX',
   sse_composite: '000001.INDX',
@@ -84,17 +105,24 @@ export const BENCHMARK_TO_MARKETSTACK: Record<string, string> = {
   sti: 'STI.INDX',
   klci: 'KLSE.INDX',
   set: 'SET.INDX',
+  // Indonesia
   jci: 'JKSE.INDX',
+  idx_composite: 'JKSE.INDX', // Alias: catalog uses 'idx_composite' for idx-jakarta
   psei: 'PSEI.INDX',
+  aspi: 'CSE.INDX',
 
-  // Americas
+  // ==========================================================================
+  // Americas (excl. US)
+  // ==========================================================================
   tsx_composite: 'GSPTSE.INDX',
-  tsx: 'GSPTSE.INDX', // Alias for tsx_composite (catalog uses tsx)
+  tsx: 'GSPTSE.INDX', // Alias: catalog uses 'tsx' for tsx-toronto
   ibovespa: 'BVSP.INDX',
   merval: 'MERV.INDX',
   ipsa: 'IPSA.INDX',
 
+  // ==========================================================================
   // Middle East & Africa
+  // ==========================================================================
   ta_35: 'TA35.INDX',
   tasi: 'TASI.INDX',
   dfm_general: 'DFMGI.INDX',
@@ -102,13 +130,6 @@ export const BENCHMARK_TO_MARKETSTACK: Record<string, string> = {
   qe_general: 'QSI.INDX',
   egx_30: 'EGX30.INDX',
   jse_all_share: 'J203.INDX',
-
-  // Others
-  bist_100: 'XU100.INDX',
-  moex: 'IMOEX.INDX',
-  athex: 'GD.INDX',
-  bet: 'BET.INDX',
-  aspi: 'CSE.INDX',
   ase: 'AMMAN.INDX',
 };
 

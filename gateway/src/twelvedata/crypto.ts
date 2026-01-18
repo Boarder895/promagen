@@ -13,19 +13,20 @@
  */
 
 import { createFeedHandler } from '../lib/feed-handler.js';
+import { logDebug } from '../lib/logging.js';
 import type {
   FeedConfig,
   CryptoCatalogItem,
   CryptoQuote,
   FeedHandler,
 } from '../lib/types.js';
-import { logDebug } from '../lib/logging.js';
-import { cryptoScheduler } from './scheduler.js';
+
 import {
   fetchTwelveDataPrices,
   parseCryptoPriceResponse,
   buildCryptoSymbol,
 } from './adapter.js';
+import { cryptoScheduler } from './scheduler.js';
 
 // =============================================================================
 // CONFIGURATION
@@ -45,81 +46,6 @@ const CRYPTO_BUDGET_MINUTE = parseInt(
   process.env['CRYPTO_RIBBON_BUDGET_MINUTE_ALLOWANCE'] ?? '8',
   10,
 );
-
-// =============================================================================
-// FALLBACK DATA
-// =============================================================================
-
-/**
- * Fallback crypto catalog - used ONLY if frontend SSOT is unreachable.
- * Top 8 cryptocurrencies by market cap.
- */
-const FALLBACK_CRYPTO_CATALOG: CryptoCatalogItem[] = [
-  {
-    id: 'btc',
-    symbol: 'BTC',
-    name: 'Bitcoin',
-    rankHint: 1,
-    isActive: true,
-    demoPrice: 95000,
-  },
-  {
-    id: 'eth',
-    symbol: 'ETH',
-    name: 'Ethereum',
-    rankHint: 2,
-    isActive: true,
-    demoPrice: 3200,
-  },
-  {
-    id: 'usdt',
-    symbol: 'USDT',
-    name: 'Tether USDt',
-    rankHint: 3,
-    isActive: true,
-    demoPrice: 1.0,
-  },
-  {
-    id: 'bnb',
-    symbol: 'BNB',
-    name: 'BNB',
-    rankHint: 4,
-    isActive: true,
-    demoPrice: 680,
-  },
-  {
-    id: 'sol',
-    symbol: 'SOL',
-    name: 'Solana',
-    rankHint: 5,
-    isActive: true,
-    demoPrice: 185,
-  },
-  {
-    id: 'usdc',
-    symbol: 'USDC',
-    name: 'USD Coin',
-    rankHint: 6,
-    isActive: true,
-    demoPrice: 1.0,
-  },
-  {
-    id: 'xrp',
-    symbol: 'XRP',
-    name: 'XRP',
-    rankHint: 7,
-    isActive: true,
-    demoPrice: 2.35,
-  },
-  {
-    id: 'doge',
-    symbol: 'DOGE',
-    name: 'Dogecoin',
-    rankHint: 8,
-    isActive: true,
-    demoPrice: 0.32,
-  },
-];
 
 // =============================================================================
 // FEED CONFIGURATION
@@ -146,7 +72,7 @@ const cryptoConfig: FeedConfig<CryptoCatalogItem, CryptoQuote> = {
    */
   parseCatalog(data: unknown): CryptoCatalogItem[] {
     if (!data || typeof data !== 'object') {
-      return FALLBACK_CRYPTO_CATALOG;
+      throw new Error('Invalid Crypto SSOT payload');
     }
 
     const obj = data as Record<string, unknown>;
@@ -207,25 +133,38 @@ const cryptoConfig: FeedConfig<CryptoCatalogItem, CryptoQuote> = {
           typeof r['isSelectableInRibbon'] === 'boolean'
             ? r['isSelectableInRibbon']
             : true,
-        demoPrice:
-          typeof r['demoPrice'] === 'number' && r['demoPrice'] >= 0
-            ? r['demoPrice']
-            : undefined,
+        // Demo/synthetic prices are intentionally NOT consumed by the gateway.
       });
     }
 
-    return items.length > 0 ? items : FALLBACK_CRYPTO_CATALOG;
+    if (items.length === 0) {
+      throw new Error('Crypto SSOT payload contained no valid assets');
+    }
+
+    return items;
   },
 
   /**
    * Get default item IDs from catalog.
    */
-  getDefaults(catalog: CryptoCatalogItem[]): string[] {
-    // Take first 8 active items
-    return catalog
-      .filter((c) => c.isActive !== false)
-      .slice(0, 8)
-      .map((c) => c.id);
+  getDefaults(catalog: CryptoCatalogItem[], ssotPayload: unknown): string[] {
+    const payload = ssotPayload && typeof ssotPayload === 'object' ? (ssotPayload as Record<string, unknown>) : null;
+
+    // Prefer explicit ordered default IDs if provided
+    const candidates = ['defaultCryptoIds', 'defaultAssetIds', 'defaultIds', 'assetIds', 'cryptoIds'];
+    for (const key of candidates) {
+      const v = payload ? payload[key] : undefined;
+      if (Array.isArray(v)) {
+        const ids = v
+          .filter((x): x is string => typeof x === 'string')
+          .map((s) => s.toLowerCase().trim());
+        const set = new Set(catalog.map((c) => c.id));
+        const filtered = ids.filter((id) => set.has(id));
+        if (filtered.length > 0) return filtered;
+      }
+    }
+
+    throw new Error('Crypto defaults not defined in SSOT (no default IDs or isDefaultFree flags)');
   },
 
   /**
@@ -314,3 +253,78 @@ const cryptoConfig: FeedConfig<CryptoCatalogItem, CryptoQuote> = {
  */
 export const cryptoHandler: FeedHandler<CryptoCatalogItem, CryptoQuote> =
   createFeedHandler(cryptoConfig);
+
+// =============================================================================
+// SELECTION VALIDATION (Pro users)
+// =============================================================================
+
+const CRYPTO_SELECTION_LIMITS = {
+  MIN_ASSETS: 6,
+  MAX_ASSETS: 16,
+} as const;
+
+/**
+ * Validate crypto selection from Pro user request.
+ *
+ * Rules:
+ * - Paid tier only
+ * - IDs must exist in the current SSOT catalog (no silent fallback)
+ * - Order preserved
+ */
+export function validateCryptoSelection(
+  assetIds: string[],
+  tier: 'free' | 'paid',
+  catalogMap: Map<string, CryptoCatalogItem>,
+): {
+  valid: boolean;
+  errors: string[];
+  allowedAssetIds: string[];
+} {
+  const errors: string[] = [];
+
+  if (tier !== 'paid') {
+    return { valid: false, errors: ['Crypto selection requires Pro tier'], allowedAssetIds: [] };
+  }
+
+  if (!Array.isArray(assetIds)) {
+    return { valid: false, errors: ['assetIds must be an array'], allowedAssetIds: [] };
+  }
+
+  // Normalise, dedupe (preserve first-seen order)
+  const seen = new Set<string>();
+  const normalised: string[] = [];
+  for (const raw of assetIds) {
+    if (typeof raw !== 'string') continue;
+    const id = raw.toLowerCase().trim().slice(0, 32);
+    if (!id) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    normalised.push(id);
+  }
+
+  if (normalised.length < CRYPTO_SELECTION_LIMITS.MIN_ASSETS) {
+    errors.push(`Minimum ${CRYPTO_SELECTION_LIMITS.MIN_ASSETS} assets required, got ${normalised.length}`);
+  }
+  if (normalised.length > CRYPTO_SELECTION_LIMITS.MAX_ASSETS) {
+    errors.push(`Maximum ${CRYPTO_SELECTION_LIMITS.MAX_ASSETS} assets allowed, got ${normalised.length}`);
+  }
+
+  const allowed: string[] = [];
+  const unknown: string[] = [];
+  for (const id of normalised) {
+    if (catalogMap.has(id)) allowed.push(id);
+    else unknown.push(id);
+  }
+
+  if (unknown.length > 0) {
+    errors.push(
+      `Unknown crypto IDs (not in SSOT catalog): ${unknown.slice(0, 5).join(', ')}${unknown.length > 5 ? '...' : ''}`,
+    );
+  }
+
+  return {
+    valid: errors.length === 0 && allowed.length >= CRYPTO_SELECTION_LIMITS.MIN_ASSETS,
+    errors,
+    allowedAssetIds: allowed.slice(0, CRYPTO_SELECTION_LIMITS.MAX_ASSETS),
+  };
+}

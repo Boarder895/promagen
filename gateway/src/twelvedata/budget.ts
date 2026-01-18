@@ -13,13 +13,13 @@
  * @module twelvedata/budget
  */
 
+import { logInfo, logWarn } from '../lib/logging.js';
 import type {
   BudgetManagerInterface,
   BudgetSnapshot,
   BudgetResponse,
   BudgetState,
 } from '../lib/types.js';
-import { logInfo, logWarn } from '../lib/logging.js';
 
 // =============================================================================
 // CONFIGURATION

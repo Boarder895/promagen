@@ -180,7 +180,7 @@ export const indicesScheduler = createMarketstackScheduler('indices');
  * @param feed - The feed type
  * @returns Description like "in 12 minutes (at :35)"
  */
-export function getNextRefreshDescription(feed: MarketstackFeed): string {
+export function getNextRefreshDescription(_feed: MarketstackFeed): string {
   const scheduler = indicesScheduler; // Currently only indices
 
   const msUntil = scheduler.getMsUntilNextSlot();

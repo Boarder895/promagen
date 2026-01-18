@@ -2,32 +2,51 @@
 /**
  * /api/fx/config — SSOT endpoint for gateway FX feed initialization.
  *
- * Returns FX pairs catalog with default pairs for the ribbon.
- * Gateway fetches this on startup to know which pairs to query.
+ * OPTION A (selected.json):
+ * - fx-pairs.json is the FX catalogue (universe)
+ * - fx.selected.json is the ordered default selection for the free ribbon
  *
- * Data source: frontend/src/data/fx/fx-pairs.json
+ * Gateway fetches this on startup to know which pairs to query.
  */
 
 import { NextResponse } from 'next/server';
 
 import fxPairsJson from '@/data/fx/fx-pairs.json';
+import fxSelectedJson from '@/data/fx/fx.selected.json';
 
-// Type for FX pair from catalog
 interface FxPairCatalog {
   id: string;
   base: string;
   quote: string;
   symbol?: string;
   isActive?: boolean;
-  isDefaultFree?: boolean;
-  isDefaultPaid?: boolean;
-  demoPrice?: number;
-  demo?: { value: number; prevClose: number };
   priority?: number;
+}
+
+interface FxSelected {
+  version?: number;
+  ssot?: string;
+  selectedIds?: unknown;
 }
 
 export const runtime = 'edge';
 export const revalidate = 3600; // 1 hour cache
+
+function readSelectedIds(): string[] {
+  const parsed = fxSelectedJson as unknown as FxSelected;
+  const raw = parsed?.selectedIds;
+
+  if (!Array.isArray(raw)) {
+    throw new Error('fx.selected.json must contain a selectedIds array');
+  }
+
+  const ids = raw.map((v) => String(v));
+  if (!ids.length) {
+    throw new Error('fx.selected.json selectedIds must not be empty');
+  }
+
+  return ids;
+}
 
 export async function GET(): Promise<Response> {
   const allPairs = fxPairsJson as FxPairCatalog[];
@@ -35,18 +54,22 @@ export async function GET(): Promise<Response> {
   // Filter active pairs only
   const activePairs = allPairs.filter((p) => p.isActive !== false);
 
-  // Get default pairs (isDefaultFree = true)
-  const defaultPairIds = activePairs.filter((p) => p.isDefaultFree === true).map((p) => p.id);
+  // Defaults are defined ONLY by fx.selected.json (order is explicit)
+  const defaultPairIds = readSelectedIds();
 
-  // Build response format expected by gateway
+  // Validate that selected IDs exist in the active catalogue
+  const activeIdSet = new Set(activePairs.map((p) => p.id));
+  const missing = defaultPairIds.filter((id) => !activeIdSet.has(id));
+  if (missing.length) {
+    throw new Error(`fx.selected.json references unknown or inactive IDs: ${missing.join(', ')}`);
+  }
+
+  // Build response format expected by the gateway
   const pairs = activePairs.map((p) => ({
     id: p.id,
     base: p.base,
     quote: p.quote,
     symbol: p.symbol ?? `${p.base}/${p.quote}`,
-    isDefaultFree: p.isDefaultFree ?? false,
-    isDefaultPaid: p.isDefaultPaid ?? false,
-    demoPrice: p.demoPrice ?? p.demo?.value ?? null,
     priority: p.priority ?? null,
   }));
 

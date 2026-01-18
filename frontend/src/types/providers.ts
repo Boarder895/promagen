@@ -1,7 +1,28 @@
 // src/types/providers.ts
 // Updated: January 2026 - Added community voting/ranking fields
+// Updated: January 2026 - Added social media links (Support column)
+// Updated: January 18, 2026 - Added pinterest and x (Twitter) to socials
 
 export type ProviderTrend = 'up' | 'down' | 'flat';
+
+/**
+ * Social media links for a provider.
+ * Only official accounts - all fields are optional.
+ * 
+ * Platform order in UI:
+ * LinkedIn → Instagram → Facebook → YouTube → Discord → Reddit → TikTok → Pinterest → X
+ */
+export type ProviderSocials = {
+  linkedin?: string;
+  instagram?: string;
+  facebook?: string;
+  youtube?: string;
+  discord?: string;
+  reddit?: string;
+  tiktok?: string;
+  pinterest?: string;
+  x?: string;
+};
 
 export type ProviderGenerationSpeed = 'fast' | 'medium' | 'slow' | 'varies';
 
@@ -87,6 +108,9 @@ export type Provider = {
   visualStyles?: string;
   apiAvailable?: boolean;
   affiliateProgramme?: boolean;
+  
+  // Social media links (Support column)
+  socials?: ProviderSocials | null;
   
   // Community ranking (optional - populated when voting is enabled)
   ranking?: ProviderRanking;

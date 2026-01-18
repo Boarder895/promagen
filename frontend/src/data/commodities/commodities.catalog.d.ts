@@ -12,6 +12,8 @@ export type CommoditySubGroup =
   | 'lng'
   | 'coal'
   | 'biofuels'
+  | 'power'
+  | 'emissions'
   // Agriculture
   | 'grains'
   | 'softs'
@@ -30,68 +32,54 @@ export type CommodityGeoLevel = 'country' | 'region' | 'multi_country';
 
 export interface Commodity {
   /**
-   * Stable machine identifier, e.g. "brent_crude"
+   * Stable identifier (SSOT key). Used for selection lists and quote mapping.
    */
   id: string;
 
   /**
-   * Full display name, e.g. "Brent Crude"
+   * Canonical full name.
    */
   name: string;
 
   /**
-   * Short label for tight UI, e.g. "Brent", "Gold", "Wheat"
+   * Shorter display name where space is tight.
    */
   shortName: string;
 
   /**
-   * Vendor-agnostic symbol or canonical code, e.g. "BRENT", "XAU"
+   * Provider-facing symbol (e.g. "XAU/USD", "BRENT", etc.).
    */
   symbol: string;
 
   /**
-   * Top-level group: energy | agriculture | metals
+   * Top-level grouping used for filtering and UI sections.
    */
   group: CommodityGroup;
 
   /**
-   * Finer classification within the group
+   * More granular grouping.
    */
   subGroup: CommoditySubGroup;
 
   /**
-   * Emoji used in the Ribbon and other UI hints
+   * Emoji used in the ribbon chip.
    */
   emoji: string;
 
   /**
-   * Quote currency used for pricing on the Ribbon, typically USD (or EUR for TTF, etc.)
+   * Quote currency used for display conventions.
    */
   quoteCurrency: QuoteCurrency;
 
   /**
-   * Whether this commodity is currently active in Promagen.
-   * Lets you soft-delete without losing history.
+   * Whether this commodity is active in the catalogue.
    */
   isActive: boolean;
 
   /**
-   * Whether this commodity can be selected for the Ribbon.
-   * You can keep some contracts in the catalogue but not expose them.
+   * Whether this commodity may appear in user ribbon selection.
    */
   isSelectableInRibbon: boolean;
-
-  /**
-   * Whether this is part of the default free-tier set.
-   * Free tier: exactly 7 commodities, in a 2–3–2 group pattern.
-   */
-  isDefaultFree: boolean;
-
-  /**
-   * Whether this is part of the default paid-tier set.
-   * Paid tier: currently mirrors free until Pro defaults are explicitly defined.
-   */
-  isDefaultPaid: boolean;
 
   /**
    * Sort priority within a group. 1 = most important.
@@ -122,6 +110,16 @@ export interface Commodity {
    * ISO-3166-1 alpha-2 country codes used for flag display.
    */
   displayCountryCodes: string[];
+
+  /**
+   * Optional tooltip metadata.
+   */
+  yearFirstTraded?: number;
+
+  /**
+   * Optional short "did you know" fact (kept compact for tooltips).
+   */
+  fact?: string;
 }
 
 /**

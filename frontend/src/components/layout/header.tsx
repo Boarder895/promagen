@@ -4,6 +4,7 @@ import Link from "next/link";
 
 // Keep the header lean and independent of app context for now.
 // If you want a live status indicator later, we can wire it to real health data.
+// UPDATED: Studio link now points to /studio (was /prompts).
 
 export default function Header() {
   return (
@@ -17,8 +18,8 @@ export default function Header() {
           <Link href="/providers" className="opacity-80 hover:opacity-100">
             Providers
           </Link>
-          <Link href="/prompts" className="opacity-80 hover:opacity-100">
-            Prompts
+          <Link href="/studio" className="opacity-80 hover:opacity-100">
+            Studio
           </Link>
 
           {/* Static green dot for now */}
@@ -31,4 +32,3 @@ export default function Header() {
     </header>
   );
 }
-

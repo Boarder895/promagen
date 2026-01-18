@@ -58,8 +58,6 @@ export const commoditySchema = z.object({
 
   isActive: z.boolean(),
   isSelectableInRibbon: z.boolean(),
-  isDefaultFree: z.boolean(),
-  isDefaultPaid: z.boolean(),
 
   priority: z
     .number()

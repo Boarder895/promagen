@@ -4,13 +4,14 @@ It is built around:
 A three-column market layout (left rail, centre column, right rail).
 A market belt in the centre column:
 Today: Three stacked ribbon rows are LIVE:
+
 - FX row (8 chips by default)
 - Commodities row (8 chips by default)
 - Crypto row (8 chips by default)
-A central AI Providers Leaderboard panel, directly under the ribbons.
-Everything is centred, balanced, and responsive. On larger screens the layout keeps three columns with generous breathing room around the rails; on smaller screens the layout gracefully collapses.
+  A central AI Providers Leaderboard panel, directly under the ribbons.
+  Everything is centred, balanced, and responsive. On larger screens the layout keeps three columns with generous breathing room around the rails; on smaller screens the layout gracefully collapses.
 
-1.1 Overall Structure & Responsiveness
+  1.1 Overall Structure & Responsiveness
 
 Page canvas (viewport-locked layout — implemented Dec 31, 2025)
 
@@ -60,7 +61,7 @@ Columns (left → right):
 Provider (icon + name; rank may appear as a muted prefix; flag + city + HH:MM clock)
 Promagen Users
 Image Quality (ordinal rank: 1st, 2nd, etc.)
-Visual Styles
+Support (social media icons with glowing tooltips — includes Pinterest & X, 2-row layout for 5+ icons)
 API/Affiliate
 Overall Score (includes a small trend indicator inline; Overall Score stays far right)
 
@@ -206,16 +207,20 @@ The Commodities row sits directly beneath the FX row in the centre column.
 The Commodities ribbon is now fully operational with identical architecture to FX.
 
 ### Structure (Current)
+
 8 chips total, displaying key commodities:
+
 - Precious metals: Gold (XAU/USD), Silver (XAG/USD)
 - Energy: Brent Crude, WTI Crude, Natural Gas
 - Agricultural: Coffee, Sugar
 - Industrial metals: Copper
 
 ### SSOT
+
 Commodities SSOT file: `frontend/src/data/commodities/commodities-catalog.json`
 
 Each commodity entry includes:
+
 - `id`: Unique identifier
 - `symbol`: TwelveData symbol (e.g., "XAU/USD")
 - `name`: Short name for API/display
@@ -224,6 +229,7 @@ Each commodity entry includes:
 - `brandColor`: Hex color for visual identity
 
 ### RibbonLabel Field (NEW - Jan 12, 2026)
+
 The `ribbonLabel` field provides full, descriptive names for ribbon display:
 
 ```json
@@ -238,37 +244,43 @@ The `ribbonLabel` field provides full, descriptive names for ribbon display:
 ```
 
 **Display logic:**
+
 - Primary: Use `ribbonLabel` if present
 - Fallback: Use `name` if `ribbonLabel` is missing
 - Safety net: CSS `line-clamp-1` prevents overflow on long labels
 
 ### Brand Colors (Commodities)
+
 Optimized for visibility on dark backgrounds:
 
-| Commodity     | Color    | Hex       | Rationale                      |
-|--------------|----------|-----------|--------------------------------|
-| Gold         | Gold     | #FFD700   | Traditional gold representation |
-| Silver       | Silver   | #C0C0C0   | Traditional silver              |
-| Brent Crude  | Red      | #EF4444   | Energy/oil association          |
-| WTI Crude    | Orange   | #F97316   | Distinguishes from Brent        |
-| Natural Gas  | Blue     | #3B82F6   | Gas flame association           |
-| Coffee       | Red      | #DC2626   | Bold, visible on dark           |
-| Sugar        | Purple   | #A855F7   | Distinctive, avoids cream/white |
-| Copper       | Orange   | #F97316   | Copper metal tone               |
+| Commodity   | Color  | Hex     | Rationale                       |
+| ----------- | ------ | ------- | ------------------------------- |
+| Gold        | Gold   | #FFD700 | Traditional gold representation |
+| Silver      | Silver | #C0C0C0 | Traditional silver              |
+| Brent Crude | Red    | #EF4444 | Energy/oil association          |
+| WTI Crude   | Orange | #F97316 | Distinguishes from Brent        |
+| Natural Gas | Blue   | #3B82F6 | Gas flame association           |
+| Coffee      | Red    | #DC2626 | Bold, visible on dark           |
+| Sugar       | Purple | #A855F7 | Distinctive, avoids cream/white |
+| Copper      | Orange | #F97316 | Copper metal tone               |
 
 ### Price Formatting
+
 Commodities use `formatCommodityPrice()`:
+
 ```typescript
 // Examples:
-"$2,630.50 /oz"  // Gold, Silver
-"$74.30 /bbl"    // Oil
-"$2.85 /lb"      // Coffee
+'$2,630.50 /oz'; // Gold, Silver
+'$74.30 /bbl'; // Oil
+'$2.85 /lb'; // Coffee
 ```
 
 Format: `${currencySymbol}${formattedPrice} ${unit}`
 
 ### Calming Architecture
+
 Commodities use identical calming to FX:
+
 - Gateway endpoint: `/commodities`
 - Frontend API route: `/api/commodities`
 - Frontend hook: `use-commodities-quotes.ts`
@@ -276,15 +288,19 @@ Commodities use identical calming to FX:
 - Cache key: `commodities:ribbon:all`
 
 ### API Timing Stagger
+
 Commodities refresh at **:10 and :40** (10-minute offset from FX):
+
 ```
 FX:          :00, :30 (base)
-Commodities: :10, :40 (10-min offset) ← 
+Commodities: :10, :40 (10-min offset) ←
 Crypto:      :20, :50 (20-min offset)
 ```
 
 ### Rich Tooltip (NEW - Jan 12, 2026)
+
 Hovering a commodity chip displays a rich tooltip with:
+
 - Full commodity name (from `ribbonLabel`)
 - Historical data (year established, interesting fact)
 - Brand color glow effect
@@ -292,9 +308,11 @@ Hovering a commodity chip displays a rich tooltip with:
 See §2.5 Rich Tooltip Implementation for details.
 
 ### Free tier
+
 Fixed 8-item set, defined in SSOT.
 
 ### Paid tier (target)
+
 Paid users can tune composition (still 8 total to keep the belt visually stable).
 
 ---
@@ -308,7 +326,9 @@ Crypto row sits beneath Commodities in the final layout.
 The Crypto ribbon is now fully operational with identical architecture to FX and Commodities.
 
 ### Structure (Current)
+
 8 chips total, displaying major cryptocurrencies:
+
 - Bitcoin (BTC)
 - Ethereum (ETH)
 - XRP
@@ -319,9 +339,11 @@ The Crypto ribbon is now fully operational with identical architecture to FX and
 - Aptos (APT)
 
 ### SSOT
+
 Crypto SSOT file: `frontend/src/data/crypto/crypto-catalog.json`
 
 Each crypto entry includes:
+
 - `id`: Unique identifier
 - `symbol`: TwelveData symbol (e.g., "BTC/USD")
 - `name`: Short name for display
@@ -332,6 +354,7 @@ Each crypto entry includes:
 - `fact`: Interesting historical fact
 
 ### RibbonLabel Field (NEW - Jan 12, 2026)
+
 The `ribbonLabel` field provides full names for ribbon display:
 
 ```json
@@ -348,36 +371,41 @@ The `ribbonLabel` field provides full names for ribbon display:
 ```
 
 ### Brand Colors (Crypto)
+
 Optimized for visibility on dark backgrounds:
 
-| Crypto   | Color    | Hex       | Rationale                          |
-|----------|----------|-----------|-----------------------------------|
-| Bitcoin  | Orange   | #F7931A   | Official Bitcoin brand color       |
-| Ethereum | Purple   | #627EEA   | Official Ethereum brand color      |
-| XRP      | Green    | #22C55E   | Vibrant (was dark silver)          |
-| Solana   | Purple   | #9945FF   | Official Solana brand color        |
-| Cardano  | Blue     | #0033AD   | Official Cardano brand color       |
-| Stellar  | Teal     | #14B8A6   | Vibrant (was black, invisible)     |
-| Cosmos   | Indigo   | #6366F1   | Vibrant (was dark blue)            |
-| Aptos    | Cyan     | #06B6D4   | Vibrant (was black, invisible)     |
-| NEAR     | Green    | #00EC97   | Vibrant (was black, invisible)     |
-| Algorand | Mint     | #00D4A4   | Vibrant (was black, invisible)     |
+| Crypto   | Color  | Hex     | Rationale                      |
+| -------- | ------ | ------- | ------------------------------ |
+| Bitcoin  | Orange | #F7931A | Official Bitcoin brand color   |
+| Ethereum | Purple | #627EEA | Official Ethereum brand color  |
+| XRP      | Green  | #22C55E | Vibrant (was dark silver)      |
+| Solana   | Purple | #9945FF | Official Solana brand color    |
+| Cardano  | Blue   | #0033AD | Official Cardano brand color   |
+| Stellar  | Teal   | #14B8A6 | Vibrant (was black, invisible) |
+| Cosmos   | Indigo | #6366F1 | Vibrant (was dark blue)        |
+| Aptos    | Cyan   | #06B6D4 | Vibrant (was black, invisible) |
+| NEAR     | Green  | #00EC97 | Vibrant (was black, invisible) |
+| Algorand | Mint   | #00D4A4 | Vibrant (was black, invisible) |
 
 **Important:** Several crypto brand colors were updated on Jan 12, 2026 because the official brand colors (often black or very dark) were invisible on the dark ribbon background.
 
 ### Price Formatting
+
 Crypto uses `formatCryptoPrice()`:
+
 ```typescript
 // Examples:
-"$92,098.00 ea"  // Bitcoin
-"$3,245.67 ea"   // Ethereum
-"$2.34 ea"       // XRP
+'$92,098.00 ea'; // Bitcoin
+'$3,245.67 ea'; // Ethereum
+'$2.34 ea'; // XRP
 ```
 
 Format: `${currencySymbol}${formattedPrice} ea`
 
 ### Calming Architecture
+
 Crypto uses identical calming to FX:
+
 - Gateway endpoint: `/crypto`
 - Frontend API route: `/api/crypto`
 - Frontend hook: `use-crypto-quotes.ts`
@@ -385,7 +413,9 @@ Crypto uses identical calming to FX:
 - Cache key: `crypto:ribbon:all`
 
 ### API Timing Stagger
+
 Crypto refreshes at **:20 and :50** (20-minute offset from FX):
+
 ```
 FX:          :00, :30 (base)
 Commodities: :10, :40 (10-min offset)
@@ -393,7 +423,9 @@ Crypto:      :20, :50 (20-min offset) ←
 ```
 
 ### Rich Tooltip (NEW - Jan 12, 2026)
+
 Hovering a crypto chip displays a rich tooltip with:
+
 - Full cryptocurrency name (from `ribbonLabel`)
 - Year founded
 - Founder/creator
@@ -403,9 +435,11 @@ Hovering a crypto chip displays a rich tooltip with:
 See §2.5 Rich Tooltip Implementation for details.
 
 ### Free tier
+
 Fixed 8-item set, defined in SSOT.
 
 ### Paid tier (target)
+
 Still 8 total to preserve vertical rhythm.
 User can swap in other coins from the crypto catalogue via SSOT-driven configuration.
 
@@ -429,9 +463,11 @@ All rows left-align with the centre column grid, so chips line up neatly with th
 All three ribbon types (FX, Commodities, Crypto) now feature rich tooltips that display contextual information on hover.
 
 ### Component
+
 File: `src/components/ui/rich-tooltip.tsx`
 
 ### Features
+
 - **Edge-aware positioning**: Tooltips automatically adjust when near screen edges
 - **Brand color glow**: Subtle glow effect using the asset's brand color
 - **Historical data**: Year founded, founder, interesting facts
@@ -439,9 +475,10 @@ File: `src/components/ui/rich-tooltip.tsx`
 - **High z-index**: z-index 9999 ensures tooltip appears above all content
 
 ### Edge Detection (Symmetric Thresholds)
+
 ```typescript
-const LEFT_EDGE_THRESHOLD = 0.35;   // 35% from left edge
-const RIGHT_EDGE_THRESHOLD = 0.35;  // 35% from right edge
+const LEFT_EDGE_THRESHOLD = 0.35; // 35% from left edge
+const RIGHT_EDGE_THRESHOLD = 0.35; // 35% from right edge
 
 // Position logic:
 // - If trigger is in left 35%: align tooltip to left edge of trigger
@@ -450,6 +487,7 @@ const RIGHT_EDGE_THRESHOLD = 0.35;  // 35% from right edge
 ```
 
 ### Visual Styling
+
 ```css
 /* Tooltip container */
 background: rgba(23, 23, 23, 0.98);
@@ -463,6 +501,7 @@ filter: drop-shadow(0 0 8px ${brandColor}40);
 ```
 
 ### Content Structure (Crypto Example)
+
 ```
 ┌─────────────────────────────────┐
 │ Bitcoin                          │  ← ribbonLabel (bold)
@@ -474,6 +513,7 @@ filter: drop-shadow(0 0 8px ${brandColor}40);
 ```
 
 ### Content Structure (Commodities Example)
+
 ```
 ┌─────────────────────────────────┐
 │ Brent Crude Oil                  │  ← ribbonLabel (bold)
@@ -483,7 +523,9 @@ filter: drop-shadow(0 0 8px ${brandColor}40);
 ```
 
 ### Line-Clamp Safety Net
+
 Long labels use CSS line-clamp as a safety net:
+
 ```css
 .ribbon-label {
   display: -webkit-box;
@@ -500,6 +542,7 @@ Long labels use CSS line-clamp as a safety net:
 To prevent simultaneous API calls that would exceed TwelveData's per-minute rate limit, each ribbon refreshes at staggered intervals.
 
 ### Schedule
+
 ```
 Hour timeline (repeats every hour):
 ┌────┬────┬────┬────┬────┬────┬────┐
@@ -514,12 +557,14 @@ Crypto:      Minutes 20 and 50 (20-minute offset)
 ```
 
 ### Rationale
+
 - TwelveData has a per-minute rate limit of 8 credits
 - Each ribbon refresh uses 8 credits (8 symbols × 1 credit each)
 - Without stagger: 3 ribbons × 8 = 24 credits at :00 and :30 → **rate limited**
 - With stagger: 8 credits at each slot → **safe**
 
 ### Implementation
+
 Each hook calculates the time until its next refresh slot:
 
 ```typescript
@@ -528,13 +573,13 @@ function getMsUntilNextCommoditiesSlot(): number {
   const now = new Date();
   const minute = now.getMinutes();
   const targets = [10, 40]; // Commodities refresh slots
-  
+
   let best = targets[0] + 60 - minute;
   for (const t of targets) {
     const delta = t - minute;
     if (delta > 0 && delta < best) best = delta;
   }
-  
+
   return Math.max(1000, best * 60_000 - now.getSeconds() * 1000);
 }
 
@@ -548,7 +593,9 @@ function getMsUntilNextCryptoSlot(): number {
 ```
 
 ### Comments in Code
+
 Container components document the schedule:
+
 ```typescript
 // Refresh schedule (coordinated with FX and Commodities):
 // - FX:          :00, :30 (base)
@@ -565,17 +612,20 @@ Container components document the schedule:
 The global "Calm Mode" pause button has been **removed** from all ribbon containers.
 
 **What was removed:**
+
 - Pause button component from ribbon containers
 - `useLiveStatus` hook references in ribbons
 - "Calm mode" terminology from UI
 
 **Rationale:**
+
 - Analytics showed near-zero user engagement with pause functionality
 - Ribbons already respect `prefers-reduced-motion` automatically
 - Visibility backoff (6x when tab hidden) handles idle scenarios
 - Simplifies ribbon UI to focus on data display
 
 **What remains (motion control still works):**
+
 - `prefers-reduced-motion` CSS media query support
 - Visibility-aware polling backoff
 - Individual chip animations (subtle, non-intrusive)
@@ -585,21 +635,438 @@ The global "Calm Mode" pause button has been **removed** from all ribbon contain
 The emoji budget indicator (🛫/🏖️/🧳) that appeared beside the pause button has been **removed**.
 
 **What was removed:**
+
 - `emoji-bank.json` budget_guard group
 - Budget emoji rendering in ribbon containers
 - Budget state passthrough in API responses (meta.budget.emoji removed)
 
 **Rationale:**
+
 - Added visual clutter to a clean ribbon design
 - Budget state is operational concern, not user-facing
 - Monitoring via `/health` and `/trace` endpoints is sufficient
 - Conflicts with the minimal, professional ribbon aesthetic
 
 **What remains (budget protection still works):**
+
 - Server-side budget tracking (unchanged)
 - Budget warnings/blocks in gateway logs (unchanged)
 - `/health` endpoint budget status (unchanged)
 - Automatic graceful degradation when budget is exhausted
+
+---
+
+## 2.8 Support Icons Implementation (Updated Jan 18, 2026)
+
+The Support column displays clickable social media icons for each AI provider, replacing the static Visual Styles text.
+
+### Component
+
+File: `src/components/providers/support-icons-cell.tsx`
+
+### Type Definition
+
+File: `src/types/providers.ts`
+
+```typescript
+/**
+ * Social media links for a provider.
+ * Only official accounts - all fields are optional.
+ *
+ * Platform order in UI:
+ * LinkedIn → Instagram → Facebook → YouTube → Discord → Reddit → TikTok → Pinterest → X
+ */
+export type ProviderSocials = {
+  linkedin?: string;
+  instagram?: string;
+  facebook?: string;
+  youtube?: string;
+  discord?: string;
+  reddit?: string;
+  tiktok?: string;
+  pinterest?: string; // NEW Jan 18, 2026
+  x?: string; // NEW Jan 18, 2026
+};
+```
+
+### SSOT
+
+Data source: `src/data/providers/providers.json`
+
+Each provider has an optional `socials` field:
+
+```json
+{
+  "id": "canva",
+  "name": "Canva Magic Media",
+  "socials": {
+    "linkedin": "https://www.linkedin.com/company/canva/",
+    "instagram": "https://www.instagram.com/canva/",
+    "facebook": "https://www.facebook.com/canva/",
+    "youtube": "https://www.youtube.com/@Canva",
+    "tiktok": "https://www.tiktok.com/@canva",
+    "x": "https://x.com/canva",
+    "pinterest": "https://au.pinterest.com/canva/"
+  }
+}
+```
+
+### Platform Display Order
+
+Icons always render in this fixed order (if present):
+
+| Position | Platform  | Notes                        |
+| -------- | --------- | ---------------------------- |
+| 1        | LinkedIn  | Professional networking      |
+| 2        | Instagram | Visual social                |
+| 3        | Facebook  | General social               |
+| 4        | YouTube   | Video content                |
+| 5        | Discord   | Community chat               |
+| 6        | Reddit    | Community forums             |
+| 7        | TikTok    | Short-form video             |
+| 8        | Pinterest | Visual discovery (NEW)       |
+| 9        | X         | Twitter/X (NEW, always last) |
+
+### Brand Colors
+
+Each platform uses its official brand color (vibrant, full color — never greyscale):
+
+| Platform  | Label     | Hex       | Visual                     | Glow Color              |
+| --------- | --------- | --------- | -------------------------- | ----------------------- |
+| LinkedIn  | LinkedIn  | `#0A66C2` | 🔵 Professional blue       | `#0A66C2`               |
+| Instagram | Instagram | `#E4405F` | 🔴 Gradient pink/red       | `#E4405F`               |
+| Facebook  | Facebook  | `#1877F2` | 🔵 Facebook blue           | `#1877F2`               |
+| YouTube   | YouTube   | `#FF0000` | 🔴 YouTube red             | `#FF0000`               |
+| Discord   | Discord   | `#5865F2` | 🟣 Blurple                 | `#5865F2`               |
+| Reddit    | Reddit    | `#FF4500` | 🟠 Reddit orange           | `#FF4500`               |
+| TikTok    | TikTok    | `#00F2EA` | 🔵 Cyan/teal               | `#00F2EA`               |
+| Pinterest | Pinterest | `#E60023` | 🔴 Pinterest red (NEW)     | `#E60023`               |
+| X         | X         | `#FFFFFF` | ⚪ White with dark outline | `rgba(255,255,255,0.6)` |
+
+### X/Twitter Icon Visibility
+
+The X icon requires special treatment for dark background visibility:
+
+```typescript
+// X Icon uses white fill with dark outline for contrast
+function XIcon({ size, color }: { size: number; color: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      {/* Dark outline for contrast on dark backgrounds */}
+      <path
+        d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"
+        fill="none"
+        stroke="rgba(0,0,0,0.6)"
+        strokeWidth="1.5"
+      />
+      {/* White fill on top */}
+      <path
+        d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"
+        fill={color}
+      />
+    </svg>
+  );
+}
+```
+
+**Key decisions for X icon:**
+
+- White (`#FFFFFF`) matches X's own dark mode branding
+- Dark outline (`rgba(0,0,0,0.6)`) provides contrast on dark backgrounds
+- Subtle white glow on hover: `rgba(255,255,255,0.6)`
+
+### Icon Specifications
+
+| Property        | Value            | Notes                            |
+| --------------- | ---------------- | -------------------------------- |
+| Size            | 18×18px          | 1.5× the 12px flag size          |
+| Gap             | 8px (0.5rem)     | Between icons                    |
+| Row gap         | 4px (0.25rem)    | Between rows when 2-row layout   |
+| Color           | Full brand color | Never greyscale                  |
+| Default opacity | 70%              | Slightly dimmed when not hovered |
+| Hover opacity   | 100%             | Full brightness on hover         |
+| Hover scale     | 1.15             | Subtle growth on hover           |
+| Hover glow      | drop-shadow      | Platform color glow              |
+| Transition      | 200ms ease       | Smooth hover transitions         |
+
+### 2-Row Layout (Smart Wrapping)
+
+When a provider has 5 or more social icons, the cell splits into two rows to prevent horizontal overflow:
+
+```
+THRESHOLD: More than 4 icons triggers 2-row layout
+
+Single row (≤4 icons):
+┌──────────────────────────────────┐
+│ [in] [📷] [f] [▶]                │  ← All tooltips open ABOVE
+└──────────────────────────────────┘
+
+Two rows (5+ icons):
+┌──────────────────────────────────┐
+│ [in] [📷] [f] [▶]                │  ← Row 1: First 4, tooltips ABOVE ↑
+│ [🎮] [♪] [📌] [X]                │  ← Row 2: Remaining, tooltips BELOW ↓
+└──────────────────────────────────┘
+```
+
+**Implementation:**
+
+```typescript
+const ICONS_PER_ROW = 4;
+
+const needsTwoRows = activePlatforms.length > ICONS_PER_ROW;
+
+if (!needsTwoRows) {
+  // Single row - all tooltips open above
+  return (
+    <div className="support-icons-cell flex items-center gap-2">
+      {activePlatforms.map((platform) => (
+        <SocialIconLink ... tooltipDirection="above" />
+      ))}
+    </div>
+  );
+}
+
+// Two rows layout
+const row1Platforms = activePlatforms.slice(0, ICONS_PER_ROW);  // First 4 icons
+const row2Platforms = activePlatforms.slice(ICONS_PER_ROW);     // Remaining icons
+
+return (
+  <div className="support-icons-cell flex flex-col gap-1">
+    {/* Row 1: tooltips open ABOVE */}
+    <div className="flex items-center gap-2">
+      {row1Platforms.map((platform) => (
+        <SocialIconLink ... tooltipDirection="above" />
+      ))}
+    </div>
+    {/* Row 2: tooltips open BELOW */}
+    <div className="flex items-center gap-2">
+      {row2Platforms.map((platform) => (
+        <SocialIconLink ... tooltipDirection="below" />
+      ))}
+    </div>
+  </div>
+);
+```
+
+**Providers affected by 2-row layout:**
+
+| Provider           | Total Icons | Row 1                                  | Row 2                |
+| ------------------ | ----------- | -------------------------------------- | -------------------- |
+| Canva              | 7           | LinkedIn, Instagram, Facebook, YouTube | TikTok, X, Pinterest |
+| Adobe Firefly      | 6           | LinkedIn, Instagram, Facebook, YouTube | TikTok, X            |
+| Microsoft Designer | 6           | LinkedIn, Instagram, Facebook, YouTube | TikTok, X            |
+| Imagine (Meta)     | 6           | LinkedIn, Instagram, Facebook, YouTube | TikTok, X            |
+| Google Imagen      | 6           | LinkedIn, Instagram, Facebook, YouTube | TikTok, X            |
+| Leonardo AI        | 6           | LinkedIn, Instagram, Facebook, YouTube | Discord, X           |
+
+### Tooltip Implementation
+
+Tooltips display "{Provider} on {Platform}" with platform-colored glow:
+
+```typescript
+function SocialIconLink({
+  platform,
+  url,
+  providerName,
+  tooltipDirection = 'above',
+}: {
+  platform: keyof ProviderSocials;
+  url: string;
+  providerName: string;
+  tooltipDirection?: 'above' | 'below';
+}) {
+  const tooltipText = `${providerName} on ${label}`;
+  // Example: "Midjourney on Discord"
+
+  // Tooltip positioning based on direction
+  const tooltipPositionClasses = tooltipDirection === 'above'
+    ? 'bottom-full mb-2'  // Opens above
+    : 'top-full mt-2';    // Opens below
+
+  // Arrow positioning based on direction
+  const arrowClasses = tooltipDirection === 'above'
+    ? 'top-full border-t-slate-900'  // Arrow points down (tooltip above)
+    : 'bottom-full border-b-slate-900'; // Arrow points up (tooltip below)
+
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" ...>
+      <span className="support-icon-wrapper" style={{
+        opacity: isHovered ? 1 : 0.7,
+        transform: isHovered ? 'scale(1.15)' : 'scale(1)',
+        filter: isHovered
+          ? `drop-shadow(0 0 4px ${iconGlowRgba}) drop-shadow(0 0 8px ${iconGlowRgba})`
+          : 'none',
+      }}>
+        <IconComponent size={18} color={color} />
+      </span>
+
+      {/* Tooltip with platform-colored glow */}
+      {isHovered && (
+        <span
+          className={`absolute left-1/2 -translate-x-1/2 ${tooltipPositionClasses} ...`}
+          style={{
+            boxShadow: `0 0 8px ${tooltipGlowRgba}, 0 0 16px ${tooltipGlowRgba}`,
+            border: `1px solid ${hexToRgba(glowColor, 0.3)}`,
+          }}
+        >
+          {tooltipText}
+          <span className={`absolute left-1/2 -translate-x-1/2 ${arrowClasses} ...`} />
+        </span>
+      )}
+    </a>
+  );
+}
+```
+
+### Empty State
+
+Providers without any social links render a single em-dash:
+
+```tsx
+if (activePlatforms.length === 0) {
+  return <span className="text-slate-500">—</span>;
+}
+```
+
+This is intentionally informative — an empty cell tells users the provider has limited community/support reach.
+
+### Hover Behavior Summary
+
+| State   | Opacity | Scale | Glow                | Tooltip |
+| ------- | ------- | ----- | ------------------- | ------- |
+| Default | 70%     | 1.0   | None                | Hidden  |
+| Hover   | 100%    | 1.15  | Platform color glow | Visible |
+
+### CSS Classes
+
+```css
+/* Container - single row */
+.support-icons-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Container - two rows */
+.support-icons-cell.two-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Individual icon link */
+.support-icon-link {
+  display: inline-flex;
+  position: relative;
+  transition: transform 0.2s ease-out;
+}
+
+.support-icon-link:focus {
+  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Icon wrapper with hover effects */
+.support-icon-wrapper {
+  transition: all 0.2s ease;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .support-icon-link,
+  .support-icon-wrapper {
+    transition: none;
+  }
+  .support-icon-wrapper {
+    filter: none !important;
+    transform: none !important;
+  }
+}
+```
+
+### Accessibility
+
+- Each icon is wrapped in an `<a>` element
+- `aria-label` provides full context: `"{Provider} on {Platform}"`
+- `target="_blank"` opens in new tab
+- `rel="noopener noreferrer"` for security
+- Focus ring visible on keyboard navigation
+- Respects `prefers-reduced-motion` media query
+- Tooltips positioned to avoid viewport clipping (above/below based on row)
+
+### Data Coverage (Jan 18, 2026)
+
+| Metric                      | Count |
+| --------------------------- | ----- |
+| Total providers             | 42    |
+| Providers with X (Twitter)  | 37    |
+| Providers with Pinterest    | 1     |
+| Providers with no X account | 5     |
+
+**Providers without X account:**
+
+- MyEdit
+- Artistly
+- Hotpot.ai
+- Pixlr
+- PicWish
+
+**Provider with Pinterest:**
+
+- Canva (`https://au.pinterest.com/canva/`)
+
+### X URLs by Provider (Complete List)
+
+| Provider           | X URL                           |
+| ------------------ | ------------------------------- |
+| Midjourney         | `https://x.com/midjourney`      |
+| OpenAI             | `https://x.com/openai`          |
+| Flux               | `https://x.com/bfl_ml`          |
+| Leonardo           | `https://x.com/LeonardoAi_`     |
+| Google Imagen      | `https://x.com/GoogleAI`        |
+| Runway             | `https://x.com/runwayml`        |
+| Stability          | `https://x.com/StabilityAI`     |
+| DreamStudio        | `https://x.com/StabilityAI`     |
+| Adobe Firefly      | `https://x.com/Adobe`           |
+| Ideogram           | `https://x.com/ideogram_ai`     |
+| Playground         | `https://x.com/playgroundai`    |
+| Microsoft Designer | `https://x.com/Microsoft`       |
+| Imagine (Meta)     | `https://x.com/Meta`            |
+| NovelAI            | `https://x.com/novelaiofficial` |
+| Clipdrop           | `https://x.com/clipdropapp`     |
+| Photoleap          | `https://x.com/PhotoleapApp`    |
+| Lexica             | `https://x.com/lexica_art`      |
+| OpenArt            | `https://x.com/openart_ai`      |
+| Jasper Art         | `https://x.com/heyjasperai`     |
+| 123RF              | `https://x.com/123rf`           |
+| Freepik            | `https://x.com/freepik`         |
+| Getimg             | `https://x.com/getimg_ai`       |
+| Canva              | `https://x.com/canva`           |
+| ArtGuru            | `https://x.com/ArtGuruOfficial` |
+| Artbreeder         | `https://x.com/Artbreeder`      |
+| Bing               | `https://x.com/Microsoft`       |
+| Simplified         | `https://x.com/sosimplified`    |
+| NightCafe          | `https://x.com/NightCafeStudio` |
+| BlueWillow         | `https://x.com/BlueWillow_AI`   |
+| Picsart            | `https://x.com/picsart`         |
+| Dreamlike          | `https://x.com/dreamlike_art`   |
+| VistaCreate        | `https://x.com/VistaCreate`     |
+| Visme              | `https://x.com/VismeApp`        |
+| Fotor              | `https://x.com/Fotor20`         |
+| Remove.bg          | `https://x.com/remove_bg`       |
+| DeepAI             | `https://x.com/DeepAI`          |
+| Craiyon            | `https://x.com/craiyonAI`       |
+
+### Data Verification
+
+Social links sourced from official provider pages (verified Jan 18, 2026):
+
+- ✅ All URLs manually verified against official websites
+- ✅ "Not found" entries in source data render as no icon
+- ✅ Corporate parent socials used where product is subsidiary (e.g., Adobe Firefly uses Adobe socials)
+- ✅ X URLs verified for 37 providers
+- ✅ Pinterest URL verified for Canva
 
 ---
 
@@ -643,30 +1110,29 @@ Each exchange card displays a two-section layout:
 
 **Top Section (3-column grid):**
 
-| Column | Width | Content |
-|--------|-------|---------|
-| Left | 50% | Exchange name (ribbonLabel), City + Flag |
-| Centre | 25% | LED Clock, Market Status (● Open / ○ Closed) |
-| Right | 25% | Temperature (°C), Weather condition emoji |
+| Column | Width | Content                                      |
+| ------ | ----- | -------------------------------------------- |
+| Left   | 50%   | Exchange name (ribbonLabel), City + Flag     |
+| Centre | 25%   | LED Clock, Market Status (● Open / ○ Closed) |
+| Right  | 25%   | Temperature (°C), Weather condition emoji    |
 
 **Bottom Section (Index Row):**
 
 The index row displays the exchange's benchmark index with live market data:
 
-| Element | Position | Content |
-|---------|----------|---------|
-| Index Name | Left | From catalog `marketstack.indexName` (e.g., "Nikkei 225") |
-| Price | Right | Current value with thousands separators (e.g., "38,945.72") |
-| Change | Right | Direction arrow + absolute change + percent (e.g., "▲ +312.45 (+0.81%)") |
+| Element    | Position | Content                                                                  |
+| ---------- | -------- | ------------------------------------------------------------------------ |
+| Index Name | Left     | From catalog `marketstack.indexName` (e.g., "Nikkei 225")                |
+| Price      | Right    | Current value with thousands separators (e.g., "38,945.72")              |
+| Change     | Right    | Direction arrow + absolute change + percent (e.g., "▲ +312.45 (+0.81%)") |
 
 **Index Row States:**
 
 1. **Loading (No API data yet):**
    - Index name visible (from catalog SSOT)
    - Price shows animated `···` placeholder
-   
 2. **Live (API data available):**
-   - Full display: "Nikkei 225  38,945.72  ▲ +312.45 (+0.81%)"
+   - Full display: "Nikkei 225 38,945.72 ▲ +312.45 (+0.81%)"
    - Up: ▲ green (`text-emerald-400`)
    - Down: ▼ red (`text-rose-400`)
    - Flat: • grey (`text-slate-400`)
@@ -678,11 +1144,13 @@ The index row displays the exchange's benchmark index with live market data:
 **Key Design Principle:** The index row is ALWAYS visible. The index name comes from the catalog (SSOT), so it appears immediately on page load. Only the price/change data waits for the API response. This prevents the card from "growing" when data arrives.
 
 **Data Source:**
+
 - Index name: `exchanges.catalog.json` → `marketstack.indexName`
 - Price/change: Gateway `/indices` → Marketstack API
 - Refresh: Every 30 minutes at :05 and :35 (staggered from other feeds)
 
 **Component Files:**
+
 - `src/components/exchanges/exchange-card.tsx` — ExchangeCard, IndexRowWithData, IndexRowSkeleton
 - `src/components/exchanges/types.ts` — IndexQuoteData, ExchangeCardData.indexName
 - `src/components/exchanges/adapters.ts` — toCardData() passes indexName from catalog
@@ -764,13 +1232,13 @@ Columns (left → right):
 - Provider (official icon + name; optional muted rank prefix; flag + city + HH:MM clock; click opens provider detail)
 - Promagen Users (top up to 6 country flags + counts; 2·2·2 layout; render nothing if zero; overflow becomes "… +n")
 - Image Quality (ordinal rank: 1st, 2nd, 3rd, etc. + vote button — derived from imageQualityRank field)
-- Visual Styles (max 2 lines; not tag soup; UI clamps to 2 lines)
+- Support (social media icons with glowing tooltips — NEW Jan 18, 2026; replaces Visual Styles)
 - API/Affiliate (🔌 / 🤝 / 🔌🤝; blank = unknown/not set)
 - Overall Score (0–100; far right; trend indicator inline — no separate Trend column; no Tags column)
 
   Final header row
 
-Provider | Promagen Users | Image Quality | Visual Styles | API/Affiliate | Overall Score ▼
+Provider | Promagen Users | Image Quality | Support | API/Affiliate | Overall Score ▼
 
 Column definitions (in this exact order)
 
@@ -833,11 +1301,88 @@ Display: ordinal rank (1st, 2nd, 3rd, etc.) + vote button
 - Top 3 show medal emoji: 🥇 🥈 🥉
 - Vote button allows community voting (see voting rules in community documentation)
 
-4. Visual Styles
+4. Support (NEW - Jan 18, 2026)
 
-Maximum 2 lines of text.
-UI clamps to 2 lines (ellipsis on overflow).
-Not "tag soup" — clean, readable text.
+**Replaces:** Visual Styles column (removed)
+
+**Purpose:** Actionable social media links answering "How do I get help or follow this provider?"
+
+**Display:** Row of clickable social media icons (7 platforms supported)
+
+| Platform  | Icon Color | Brand Hex |
+| --------- | ---------- | --------- |
+| LinkedIn  | Blue       | #0A66C2   |
+| Instagram | Pink/Red   | #E4405F   |
+| Facebook  | Blue       | #1877F2   |
+| YouTube   | Red        | #FF0000   |
+| Discord   | Purple     | #5865F2   |
+| Reddit    | Orange     | #FF4500   |
+| TikTok    | Cyan       | #00F2EA   |
+
+**Icon specifications:**
+
+- Size: 18×18px (1.5× the 12px flag size)
+- Color: Always full brand color (never greyscale)
+- Hover: Glows brighter via `drop-shadow` + scale(1.15)
+- Click: Opens official page in new tab (`target="_blank"`)
+
+**Tooltip:**
+
+- Format: `{Provider} on {Platform}` (e.g., "Midjourney on Discord")
+- Style: Glowing colorful tooltip matching crypto/commodities rich tooltips
+- Glow color: Uses platform's brand color
+- Background: `rgba(15, 23, 42, 0.97)` with brand-color border
+- Box-shadow: Multi-layer glow effect
+
+**Empty state:**
+
+- Providers without any social links show "—" (em-dash)
+- This is informative: tells user the provider has limited community reach
+
+**Data source:** `socials` field in `providers.json`
+
+```json
+{
+  "id": "midjourney",
+  "socials": {
+    "instagram": "https://www.instagram.com/midjourney/",
+    "discord": "https://discord.gg/midjourney"
+  }
+}
+```
+
+**Coverage (as of Jan 18, 2026):**
+
+- 28 providers have at least one social link
+- 14 providers have no social links (shows "—")
+
+**Example coverage by provider:**
+
+| Provider      | LinkedIn | Instagram | Facebook | YouTube | Discord | Reddit | TikTok |
+| ------------- | -------- | --------- | -------- | ------- | ------- | ------ | ------ |
+| Midjourney    | —        | ✅        | —        | —       | ✅      | —      | —      |
+| OpenAI        | ✅       | ✅        | —        | ✅      | —       | —      | —      |
+| Google Imagen | ✅       | ✅        | ✅       | ✅      | —       | —      | ✅     |
+| Stability AI  | ✅       | —         | —        | —       | ✅      | —      | —      |
+| Leonardo      | —        | —         | —        | —       | —       | —      | —      |
+| Adobe Firefly | ✅       | ✅        | ✅       | ✅      | —       | —      | ✅     |
+| Canva         | ✅       | ✅        | ✅       | ✅      | —       | —      | ✅     |
+
+**Why this replaces Visual Styles:**
+
+| Aspect          | Visual Styles (old) | Support (new)                   |
+| --------------- | ------------------- | ------------------------------- |
+| Actionable?     | ❌ No (dead text)   | ✅ Yes — click to follow        |
+| Scannable?      | ❌ Requires reading | ✅ Icons are instant            |
+| Differentiates? | ⚠️ Weakly           | ✅ Discord presence matters!    |
+| Width needed    | ~200px              | ~100px                          |
+| User value      | Low                 | High — "How do I contact them?" |
+
+**Accessibility:**
+
+- Each icon wrapped in `<a>` with `aria-label="{Provider} on {Platform}"`
+- Focus ring: 2px indigo outline
+- Respects `prefers-reduced-motion` (disables scale/glow animations)
 
 5. API/Affiliate
 
@@ -882,9 +1427,11 @@ Category tags can use subtle differentiated hues (FX vs Commodities vs Crypto).
 **FX:** No brand colors (uses standard chip styling)
 
 **Commodities:** See §2.2 for full color table
+
 - Gold, Silver, Energy (red/orange), Agricultural (red/purple), Industrial (orange)
 
 **Crypto:** See §2.3 for full color table
+
 - Official brand colors where visible on dark; vibrant alternatives where official colors are too dark
 
 ## 6.3 Motion
@@ -929,11 +1476,13 @@ The Finance Ribbon is the conceptual home of the belt logic.
 ## 7.1 Data Flow
 
 The ribbon reads from a small set of hooks/stores:
+
 - FX selection comes from SSOT (fx-pairs.json), which defines what appears on the homepage.
 - Commodities selection comes from SSOT (commodities-catalog.json).
 - Crypto selection comes from SSOT (crypto-catalog.json).
 
 Each ribbon has its own dedicated hook:
+
 - `use-fx-quotes.ts` → FX ribbon
 - `use-commodities-quotes.ts` → Commodities ribbon
 - `use-crypto-quotes.ts` → Crypto ribbon
@@ -1031,10 +1580,12 @@ Notes:
 ## 7.3 Finance Ribbon Architecture
 
 The Finance Ribbon contains:
+
 - The market belt (FX, Commodities, Crypto rows — all LIVE)
 - Motion respects `prefers-reduced-motion` media query
 
 Implementation notes:
+
 - Each ribbon row has its own container component
 - Each container uses its dedicated quotes hook
 - Motion animations are CSS-based and respond to user preferences
@@ -1163,6 +1714,7 @@ Neutral visual behaviour:
 ## 7.5 Tests (High Level)
 
 Key behaviours to test:
+
 - The FX row renders exactly N chips, where N is driven by fx-pairs.json (no hard-coded counts).
 - The Commodities row renders chips driven by commodities-catalog.json.
 - The Crypto row renders chips driven by crypto-catalog.json.
@@ -1175,6 +1727,18 @@ Key behaviours to test:
 - Centralised polling ensures multiple widgets do not multiply API requests.
 - API timing stagger ensures FX, Commodities, and Crypto refresh at different times.
 - Rich tooltips display correct content and position correctly at screen edges.
+- Support icons render only for platforms with valid URLs in provider's `socials` field.
+- Support icons display in consistent order (LinkedIn → Instagram → Facebook → YouTube → Discord → Reddit → TikTok → Pinterest → X).
+- Support icons show full brand color (never greyscale).
+- Support icon hover shows glowing tooltip with provider name and platform.
+- Support column shows "—" for providers with no social links.
+- Support icon links open in new tab with `rel="noopener noreferrer"`.
+- Support icon animations respect `prefers-reduced-motion` media query.
+- X icon renders with dark outline for visibility on dark backgrounds.
+- Pinterest icon renders in correct red (#E60023) brand color.
+- 2-row layout triggers when provider has 5+ social icons.
+- Row 1 tooltips open above, Row 2 tooltips open below.
+- Tooltip arrow direction matches tooltip position (down arrow for above, up arrow for below).
 
 ---
 
@@ -1200,10 +1764,32 @@ No extra hidden files, no "magic" hard-coded numbers.
 
 ---
 
-**Last updated:** January 12, 2026
+**Last updated:** January 18, 2026
 
 **Changelog:**
 
+- **18 Jan 2026 (PM):** Support column major update - Pinterest, X, 2-row layout
+  - NEW: Pinterest platform added (`#E60023` red)
+  - NEW: X (Twitter) platform added (`#FFFFFF` white with dark outline)
+  - NEW: 2-row layout when provider has 5+ icons (4 icons per row)
+  - NEW: Smart tooltip direction (Row 1: above, Row 2: below)
+  - NEW: X icon uses dark outline for visibility on dark backgrounds
+  - Data: 37 providers now have X URLs
+  - Data: Canva has Pinterest URL
+  - Platform order extended: LinkedIn → Instagram → Facebook → YouTube → Discord → Reddit → TikTok → Pinterest → X
+  - Type: `ProviderSocials` updated with `pinterest?: string` and `x?: string`
+  - Hover behavior: 70% opacity default → 100% + scale(1.15) + glow on hover
+- **18 Jan 2026 (AM):** Support column replaces Visual Styles
+  - NEW: Support column with clickable social media icons (LinkedIn, Instagram, Facebook, YouTube, Discord, Reddit, TikTok)
+  - Icons display in full brand color (never greyscale)
+  - Hover effect: glow brighter + scale(1.15)
+  - Glowing colorful tooltips: "{Provider} on {Platform}"
+  - 18×18px icons (1.5× flag size)
+  - SSOT: `socials` field added to providers.json
+  - Component: `src/components/providers/support-icons-cell.tsx`
+  - Type: `ProviderSocials` added to `src/types/providers.ts`
+  - 28 providers have social data; 14 show "—" (informative absence)
+  - Respects `prefers-reduced-motion` media query
 - **12 Jan 2026:** Major ribbon update
   - Commodities ribbon now LIVE (was "not yet live")
   - Crypto ribbon now LIVE (was "not yet live")

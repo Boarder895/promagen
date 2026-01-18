@@ -1,100 +1,81 @@
 // src/app/api/crypto/config/route.ts
 /**
- * /api/crypto/config — SSOT endpoint for gateway Crypto feed initialization.
+ * /api/crypto/config — SSOT endpoint for gateway Crypto feed initialisation.
  *
- * Returns cryptocurrency catalog with default cryptos for the ribbon.
- * Gateway fetches this on startup to know which cryptos to query.
+ * Option A (selected.json list):
+ * - Free-tier defaults come ONLY from src/data/crypto/crypto.selected.json (ordered).
+ * - Paid users may select any IDs from src/data/crypto/assets.catalog.json (validated in gateway).
  *
- * Data source: frontend/src/data/crypto/assets.catalog.json
+ * Strict SSOT rules:
+ * - No demo/synthetic prices are emitted.
+ * - Defaults must be a subset of the catalogue; if not, this route throws.
  */
 
 import { NextResponse } from 'next/server';
 
 import cryptoCatalogJson from '@/data/crypto/assets.catalog.json';
+import cryptoSelectedJson from '@/data/crypto/crypto.selected.json';
 
-// Type for crypto from catalog
-interface CryptoCatalog {
+type CryptoCatalogItem = {
   id: string;
   symbol: string;
   name: string;
   ribbonLabel?: string;
-  brandColor?: string;
   rankHint?: number;
   isActive?: boolean;
   isSelectableInRibbon?: boolean;
-  isDefaultFree?: boolean;
-  isDefaultPaid?: boolean;
-  demoPrice?: number;
-  priority?: number;
-}
+};
 
-// Demo prices for top cryptos (used when live data unavailable)
-const DEMO_PRICES: Record<string, number> = {
-  btc: 95000,
-  eth: 3200,
-  usdt: 1.0,
-  bnb: 680,
-  sol: 185,
-  usdc: 1.0,
-  xrp: 2.35,
-  ton: 5.5,
-  doge: 0.32,
-  ada: 0.95,
-  trx: 0.24,
-  avax: 35,
-  link: 22,
-  shib: 0.000022,
-  dot: 7.5,
-  bch: 450,
-  ltc: 105,
-  xlm: 0.42,
+type CryptoSelected = {
+  ids: string[];
 };
 
 export const runtime = 'edge';
 export const revalidate = 3600; // 1 hour cache
 
 export async function GET(): Promise<Response> {
-  const allCryptos = cryptoCatalogJson as CryptoCatalog[];
+  const all = cryptoCatalogJson as CryptoCatalogItem[];
+  const selected = cryptoSelectedJson as CryptoSelected;
 
-  // Filter active cryptos only
-  const activeCryptos = allCryptos.filter((c) => c.isActive !== false);
+  const active = all.filter((c) => c.isActive !== false);
 
-  // Default cryptos: first 8 by rankHint (top market cap)
-  // Use isDefaultFree if set, otherwise take first 8 active
-  let defaultCryptoIds = activeCryptos.filter((c) => c.isDefaultFree === true).map((c) => c.id);
+  const idSet = new Set(active.map((c) => c.id));
+  const defaultCryptoIds = Array.isArray(selected.ids) ? selected.ids : [];
 
-  // If no explicit defaults, use first 8 by rank
-  if (defaultCryptoIds.length === 0) {
-    defaultCryptoIds = activeCryptos
-      .sort((a, b) => (a.rankHint ?? 999) - (b.rankHint ?? 999))
-      .slice(0, 8)
-      .map((c) => c.id);
+  if (defaultCryptoIds.length !== 8) {
+    throw new Error(
+      `crypto SSOT integrity error: crypto.selected.json must contain exactly 8 ids (got ${defaultCryptoIds.length})`,
+    );
   }
 
-  // Build response format expected by gateway
-  // NOTE: Key must be 'crypto' (not 'cryptos') for gateway compatibility
-  const crypto = activeCryptos.map((c) => ({
+  const missing = defaultCryptoIds.filter((id) => !idSet.has(id));
+  if (missing.length > 0) {
+    throw new Error(
+      `crypto SSOT integrity error: crypto.selected.json contains ids not present in assets.catalog.json: ${missing.join(', ')}`,
+    );
+  }
+
+  const crypto = active.map((c) => ({
     id: c.id,
     symbol: c.symbol,
     name: c.name,
     ribbonLabel: c.ribbonLabel ?? c.name,
-    brandColor: c.brandColor ?? '#FFFFFF',
     rankHint: c.rankHint ?? null,
     isActive: c.isActive ?? true,
     isSelectableInRibbon: c.isSelectableInRibbon ?? true,
-    isDefaultFree: c.isDefaultFree ?? defaultCryptoIds.includes(c.id),
-    isDefaultPaid: c.isDefaultPaid ?? false,
-    demoPrice: c.demoPrice ?? DEMO_PRICES[c.id] ?? null,
-    priority: c.priority ?? c.rankHint ?? null,
+    priority: c.rankHint ?? null,
   }));
 
   return NextResponse.json(
     {
       version: 1,
-      ssot: 'frontend/src/data/crypto/assets.catalog.json',
+      ssot: {
+        catalog: 'frontend/src/data/crypto/assets.catalog.json',
+        selected: 'frontend/src/data/crypto/crypto.selected.json',
+      },
       generatedAt: new Date().toISOString(),
       defaultCryptoIds,
-      crypto, // Gateway expects 'crypto' not 'cryptos'
+      crypto,
     },
     {
       headers: {

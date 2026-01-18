@@ -2,9 +2,10 @@
 // ============================================================================
 // LIBRARY CLIENT
 // ============================================================================
-// Client component for the /prompts/library page.
+// Client component for the /studio/library page.
 // Uses HomepageGrid layout with exchange rails.
 // Authority: docs/authority/prompt-intelligence.md §9.2
+// UPDATED: Back link now points to /studio (was /prompts).
 // ============================================================================
 
 'use client';
@@ -152,10 +153,10 @@ export default function LibraryClient({
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-semibold text-white">Your Saved Prompts</h2>
           <a
-            href="/prompts"
+            href="/studio"
             className="text-xs text-white/40 hover:text-white/60 transition-colors"
           >
-            ← Back to Prompts
+            ← Back to Studio
           </a>
         </div>
         <p className="text-sm text-white/50">

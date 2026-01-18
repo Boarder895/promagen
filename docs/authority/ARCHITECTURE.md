@@ -2,7 +2,7 @@
 
 > **30-Second Guide** | Start here to understand Promagen's data architecture  
 > **Location:** `docs/authority/ARCHITECTURE.md`  
-> **Last updated:** 14 January 2026
+> **Last updated:** 14 January 2026 (PM) — All feeds verified LIVE
 
 ---
 
@@ -18,13 +18,14 @@ Promagen displays live financial data across **four feeds**, served through a **
 │   USER BROWSER                                                              │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
 │   │  FX Ribbon    │  Exchange Cards  │  Commodities   │  Crypto Ribbon │   │
-│   │  (8 pairs)    │  (16 exchanges)  │  (fallback)    │  (8 coins)     │   │
+│   │  (8 pairs)    │  (16 exchanges)  │  (parked)      │  (8 coins)     │   │
+│   │  ✅ LIVE      │  ✅ LIVE         │  ⏸️ PARKED     │  ✅ LIVE       │   │
 │   └───────┬───────┴────────┬─────────┴───────┬────────┴────────┬───────┘   │
 │           │                │                 │                 │           │
 │   LAYER 1: FRONTEND (Vercel)                                               │
 │   ┌───────▼───────┬────────▼─────────┬───────▼────────┬────────▼───────┐   │
 │   │  /api/fx      │  /api/indices    │ /api/commodities│  /api/crypto  │   │
-│   │  :00, :30     │  :05, :35        │  (fallback)    │  :20, :50     │   │
+│   │  :00, :30     │  :05, :35        │  (parked)      │  :20, :50     │   │
 │   └───────┬───────┴────────┬─────────┴───────┬────────┴────────┬───────┘   │
 │           │                │                 │                 │           │
 │   LAYER 2: GATEWAY (Fly.io) — PROVIDER-BASED MODULES                       │
@@ -32,22 +33,42 @@ Promagen displays live financial data across **four feeds**, served through a **
 │   │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐      │   │
 │   │  │  twelvedata/    │  │  marketstack/   │  │  fallback/      │      │   │
 │   │  │  ├── budget.ts  │  │  ├── budget.ts  │  │  └── commodities│      │   │
-│   │  │  ├── scheduler  │  │  ├── scheduler  │  │                 │      │   │
-│   │  │  ├── fx.ts      │  │  └── indices.ts │  │                 │      │   │
-│   │  │  └── crypto.ts  │  │                 │  │                 │      │   │
+│   │  │  ├── scheduler  │  │  ├── scheduler  │  │     (null only) │      │   │
+│   │  │  ├── fx.ts ✅   │  │  └── indices.ts │  │                 │      │   │
+│   │  │  └── crypto.ts✅│  │      ✅ LIVE    │  │                 │      │   │
 │   │  │  (800/day)      │  │  (250/day)      │  │  (0 calls)      │      │   │
 │   │  └─────────────────┘  └─────────────────┘  └─────────────────┘      │   │
 │   └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 │   LAYER 3: PROVIDERS (Completely Separate Budgets)                         │
-│   ┌─────────────────────────────┬───────────────────────────────────────┐   │
-│   │   TwelveData (800/day)      │   Marketstack (250/day)               │   │
-│   │   FX + Crypto               │   Indices only                        │   │
-│   │   Clock-aligned: :00/:30 FX │   Clock-aligned: :05/:35              │   │
-│   │                 :20/:50 CRY │                                       │   │
-│   └─────────────────────────────┴───────────────────────────────────────┘   │
+│   ┌─────────────────────────────────┬───────────────────────────────────┐   │
+│   │   TwelveData (800/day)          │   Marketstack (250/day)           │   │
+│   │   FX + Crypto ✅ LIVE           │   Indices only ✅ LIVE            │   │
+│   │   Clock-aligned: :00/:30 FX     │   Clock-aligned: :05/:35          │   │
+│   │                 :20/:50 CRY     │                                   │   │
+│   └─────────────────────────────────┴───────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Current Feed Status (Jan 14, 2026 PM)
+
+| Feed            | Status      | Provider    | Mode     | Verified |
+| --------------- | ----------- | ----------- | -------- | -------- |
+| **FX**          | ✅ **LIVE** | TwelveData  | `cached` | Yes      |
+| **Indices**     | ✅ **LIVE** | Marketstack | `live`   | Yes      |
+| **Crypto**      | ✅ **LIVE** | TwelveData  | `cached` | Yes      |
+| **Commodities** | ⏸️ PARKED   | None        | `null`   | Yes      |
+
+**Verification Command:**
+```powershell
+# All feeds returning data?
+(Invoke-RestMethod "https://promagen-api.fly.dev/fx").meta.mode          # "cached" or "live"
+(Invoke-RestMethod "https://promagen-api.fly.dev/indices").meta.mode     # "live"
+(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").meta.mode      # "cached" or "live"
+(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").meta.mode # "fallback"
 ```
 
 ---
@@ -58,13 +79,34 @@ Promagen displays live financial data across **four feeds**, served through a **
 | --------------- | --------------------- | ----------- | ------------ | --------- | ------------- | -------------- |
 | **FX**          | Ribbon (homepage top) | TwelveData  | 800 shared   | 30 min    | :00, :30      | `twelvedata/`  |
 | **Indices**     | Exchange Cards        | Marketstack | 250 separate | 2 hours   | :05, :35      | `marketstack/` |
-| **Commodities** | Ribbon (homepage)     | None        | 0 (fallback) | 30 min    | N/A           | `fallback/`    |
+| **Commodities** | Ribbon (homepage)     | None        | 0 (parked)   | N/A       | N/A           | `fallback/`    |
 | **Crypto**      | Ribbon (homepage)     | TwelveData  | 800 shared   | 30 min    | :20, :50      | `twelvedata/`  |
 
 **Key insights:**
 - Indices uses a **separate provider and budget** — it doesn't compete with TwelveData feeds
-- Commodities returns **fallback/demo data** — no API calls until new provider is integrated
+- Commodities is **PARKED** — returns `null` prices (renders as "—"), NO demo data ever
 - FX and Crypto **share one TwelveData budget** but never refresh simultaneously
+
+---
+
+## CRITICAL: No Demo Prices Ever
+
+**This is a hard rule documented in memory:**
+
+> "There is no synthetic demo market data on the homepage ribbon."
+> "Fallback must return null (renders as '—')."
+
+When live API data is unavailable, the gateway returns:
+```typescript
+price: null  // NEVER demo prices
+```
+
+The frontend renders `null` as `—` (em dash). This is intentional and correct.
+
+**Why no demo prices?**
+- Users expect real data from a financial platform
+- Demo prices create false impressions
+- The "—" clearly communicates "data unavailable"
 
 ---
 
@@ -89,18 +131,18 @@ gateway/src/
 │   ├── adapter.ts               # TwelveData API fetch logic
 │   ├── budget.ts                # Shared 800/day budget (ONE instance)
 │   ├── scheduler.ts             # Clock-aligned slots (:00/:30 FX, :20/:50 Crypto)
-│   ├── fx.ts                    # FX feed config
-│   └── crypto.ts                # Crypto feed config
+│   ├── fx.ts                    # FX feed config ✅ LIVE
+│   └── crypto.ts                # Crypto feed config ✅ LIVE
 │
 ├── marketstack/                 # ← Everything Marketstack in ONE place
 │   ├── index.ts                 # Exports indicesHandler
-│   ├── adapter.ts               # Marketstack API fetch logic
+│   ├── adapter.ts               # Marketstack API fetch logic + benchmark mapping
 │   ├── budget.ts                # Separate 250/day budget (ONE instance)
 │   ├── scheduler.ts             # Clock-aligned slots (:05/:35)
-│   └── indices.ts               # Indices feed config
+│   └── indices.ts               # Indices feed config ✅ LIVE
 │
 └── fallback/                    # ← Feeds with no provider
-    └── commodities.ts           # Returns demo prices only
+    └── commodities.ts           # Returns NULL prices only (parked)
 ```
 
 **Why provider-based?**
@@ -141,7 +183,7 @@ Each feed has ONE authoritative data file:
 | ----------- | ---------------------------------------------------- | -------------------------------- |
 | FX          | `frontend/src/data/fx/fx-pairs.json`                 | 102 pairs, defaults, precision   |
 | Indices     | `frontend/src/data/exchanges/exchanges.catalog.json` | 48 exchanges, benchmark mappings |
-| Commodities | `frontend/src/data/commodities/commodities.json`     | Commodity metadata               |
+| Commodities | `frontend/src/data/commodities/commodities.json`     | Commodity metadata (parked)      |
 | Crypto      | `frontend/src/data/crypto/crypto.json`               | Cryptocurrency metadata          |
 
 **Gateway fetches from frontend on startup** — no hardcoded data in the gateway.
@@ -171,15 +213,38 @@ Every active feed uses the same 7 core techniques:
 
 # All four feeds returning data?
 (Invoke-RestMethod "https://promagen-api.fly.dev/fx").data.Count          # 8
-(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data.Count     # 16
-(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").source     # "fallback"
+(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data.Count     # 8-16
+(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").meta.mode  # "fallback"
 (Invoke-RestMethod "https://promagen-api.fly.dev/crypto").data.Count      # 8
 
 # Budget status (SEPARATE per provider)?
 $trace = Invoke-RestMethod "https://promagen-api.fly.dev/trace"
-$trace.budget          # TwelveData: dailyUsed < 560 (70%)
-$trace.indicesBudget   # Marketstack: dailyUsed < 175 (70%)
+$trace.fx | Select-Object mode, ssotSource
+$trace.indices | Select-Object mode, ssotSource
+$trace.crypto | Select-Object mode, ssotSource
 ```
+
+---
+
+## Fixes Applied (Jan 14, 2026)
+
+### 1. Demo Prices Removed
+All `getFallback()` functions now return `price: null` instead of demo prices.
+
+### 2. Benchmark Mapping Aliases
+Added missing aliases in `gateway/src/marketstack/adapter.ts`:
+
+| Catalog Uses | Gateway Mapping | Marketstack Symbol |
+|--------------|-----------------|-------------------|
+| `djia`       | → `dow_jones`   | `DJI.INDX`        |
+| `tsx`        | → `tsx_composite`| `GSPTSE.INDX`    |
+| `russell_2000`| (new)          | `RUT.INDX`        |
+
+### 3. Crypto Route Key Fix
+Fixed `frontend/src/app/api/crypto/config/route.ts` to export `crypto` key (was `cryptos`).
+
+### 4. FX Symbol Encoding
+Fixed `encodeURIComponent()` for FX symbols containing `/`.
 
 ---
 
@@ -214,11 +279,18 @@ $trace.indicesBudget   # Marketstack: dailyUsed < 175 (70%)
 
 | Date       | Change                                                |
 | ---------- | ----------------------------------------------------- |
+| 2026-01-14 | **PM: All feeds verified LIVE**                       |
+|            | FX: TwelveData → mode: cached ✅                      |
+|            | Indices: Marketstack → mode: live ✅                  |
+|            | Crypto: TwelveData → mode: cached ✅                  |
+|            | Commodities: Parked → returns null (no demo ever)     |
+|            | Fixed benchmark aliases (djia, tsx, russell_2000)     |
+|            | Fixed crypto route key mismatch                       |
+|            | Removed ALL demo prices from gateway                  |
 | 2026-01-14 | Added provider-based gateway architecture             |
 |            | Updated diagram to show provider folders              |
 |            | Added gateway file structure section                  |
 |            | Added clock-aligned scheduler explanation             |
-|            | Noted Commodities as fallback-only (no provider)      |
 | 2026-01-13 | Initial architecture overview document                |
 
 ---
@@ -226,3 +298,5 @@ $trace.indicesBudget   # Marketstack: dailyUsed < 175 (70%)
 _This document is the entry point. For details, follow the deep dive links above._
 
 _**Key principle:** Always update docs FIRST before writing any code. Docs are the single source of truth._
+
+_**Critical rule:** NEVER use demo/synthetic prices. Fallback returns null, renders as "—"._

@@ -8,7 +8,8 @@
  * - Crypto:      :20, :50 (20 min offset)
  *
  * This prevents all three asset types hitting TwelveData simultaneously.
- * Initial fetch is DELAYED to align with schedule (no immediate fetch on page load).
+ * Initial fetch is IMMEDIATE on first mount (so the UI isn't blank), then
+ * subsequent polling is offset-aligned to the schedule.
  *
  * Existing features preserved: Yes
  */
@@ -266,30 +267,22 @@ function clearTimerAndAbort() {
   store.abort?.abort();
   store.abort = null;
   store.inFlight = null;
+  store.initialFetchDone = false;
 }
 
 /**
- * Schedule the initial fetch to align with the offset schedule.
- * This prevents all asset types from fetching simultaneously on page load.
+ * Run an immediate first fetch so the ribbon has data on load, then switch to
+ * offset-aligned polling for the calm, staggered schedule.
  */
-function scheduleInitialFetch() {
+function runImmediateFirstFetchAndSchedule(): void {
   if (store.initialFetchDone) return;
-  if (store.initialTimer !== null) return; // Already scheduled
 
-  const delayMs = getMsUntilNextCommoditiesSlot();
+  clearInitialTimer();
+  store.initialFetchDone = true;
 
-  // Log for debugging (use console.debug for filtering)
-  if (typeof console !== 'undefined') {
-    const nextSlot = new Date(Date.now() + delayMs);
-    console.debug(`[use-commodities-quotes] Initial fetch scheduled in ${Math.round(delayMs / 1000)}s at ${nextSlot.toISOString()}`);
-  }
-
-  store.initialTimer = window.setTimeout(async () => {
-    store.initialTimer = null;
-    store.initialFetchDone = true;
-    await fetchCommoditiesOnce();
-    scheduleNext();
-  }, delayMs);
+  void fetchCommoditiesOnce().finally(() => {
+    if (store.enabledCount > 0) scheduleNext();
+  });
 }
 
 function scheduleNext() {
@@ -369,10 +362,10 @@ export function useCommoditiesQuotes(options?: UseCommoditiesQuotesOptions): Use
     if (enabled) {
       store.enabledCount += 1;
 
-      // First enable schedules a DELAYED fetch aligned to offset schedule
-      // (no immediate fetch - prevents simultaneous API calls on page load)
+      // First enable runs an IMMEDIATE fetch so the ribbon is populated on load,
+      // then switches to the offset-aligned schedule for calm polling.
       if (store.enabledCount === 1) {
-        scheduleInitialFetch();
+        runImmediateFirstFetchAndSchedule();
       }
     }
 

@@ -3,18 +3,24 @@
 // FX ribbon pairs — SSOT access layer.
 //
 // SSOT source (UNIFIED):
-//   - src/data/fx/fx-pairs.json (all pair data in one file)
+//   - src/data/fx/fx-pairs.json (all pair data - PAID tier = full catalogue)
+//   - src/data/fx/fx.selected.json (selectedIds for FREE tier)
 //
 // This module provides:
-//  - getFxRibbonPairs(): default tier pairs used in the homepage ribbon (count is SSOT-driven)
+//  - getFxRibbonPairs(): tier-specific pairs used in the homepage ribbon
 //  - getFxRibbonPairCodes(): provider symbols like "GBPUSD"
 //  - buildPairCode(), buildSlashPair()
 //  - getClientLongitudeHint(): permission-free user longitude hint (timezone-based)
 //  - strict runtime validation (so "missing data" fails loudly during dev/build)
 //
-// UPDATED: Now uses unified fx-pairs.json — no more join between two files.
+// TIER LOGIC:
+//   - FREE: returns pairs whose IDs are in fx.selected.json (selectedIds)
+//   - PAID: returns ALL pairs from fx-pairs.json (full catalogue)
+//
+// UPDATED: Uses fx.selected.json for free tier, full catalogue for paid tier.
 
 import fxPairsJson from '@/data/fx/fx-pairs.json';
+import fxSelectedJson from '@/data/fx/fx.selected.json';
 
 export type FxTier = 'free' | 'paid';
 
@@ -64,14 +70,21 @@ type FxPairEntry = {
   precision?: number;
   category?: string;
   rank?: number;
-  isDefaultFree?: boolean;
-  isDefaultPaid?: boolean;
   group?: string;
   homeLongitude?: number | null;
   demo?: {
     value: number;
     prevClose: number;
   };
+};
+
+/**
+ * Structure of fx.selected.json
+ */
+type FxSelectedJson = {
+  version?: number;
+  ssot?: string;
+  selectedIds?: string[];
 };
 
 function isNonEmptyString(value: unknown): value is string {
@@ -107,6 +120,14 @@ export function buildSlashPair(base: string, quote: string): string {
 
 function getPairs(): FxPairEntry[] {
   return fxPairsJson as FxPairEntry[];
+}
+
+function getSelectedIds(): string[] {
+  const selected = fxSelectedJson as FxSelectedJson;
+  if (!Array.isArray(selected?.selectedIds)) {
+    throw new Error('fx.selected.json must contain a selectedIds array');
+  }
+  return selected.selectedIds;
 }
 
 function getPairsMap(): Map<string, FxPairEntry> {
@@ -206,17 +227,67 @@ function sortPairs(
   });
 }
 
-function pickPairsForTier(pairs: FxPairEntry[], tier: FxTier): FxPairEntry[] {
-  const flag = tier === 'paid' ? 'isDefaultPaid' : 'isDefaultFree';
-  return pairs.filter((e) => Boolean(e && e[flag]));
+/**
+ * Pick pairs for tier:
+ * - FREE: only pairs whose IDs are in fx.selected.json (preserves selection order)
+ * - PAID: all pairs from fx-pairs.json (full catalogue)
+ */
+function pickPairsForTier(allPairs: FxPairEntry[], tier: FxTier): FxPairEntry[] {
+  if (tier === 'paid') {
+    // Paid tier gets full catalogue
+    return allPairs;
+  }
+
+  // Free tier: filter to selectedIds, preserving selection order
+  const selectedIds = getSelectedIds();
+  const pairsMap = getPairsMap();
+
+  const result: FxPairEntry[] = [];
+  for (const id of selectedIds) {
+    const normalised = normalisePairId(id);
+    const pair = pairsMap.get(normalised);
+    if (pair) {
+      result.push(pair);
+    }
+  }
+
+  return result;
+}
+
+function pairEntryToMeta(e: FxPairEntry): FxRibbonPairMeta {
+  const id = normalisePairId(String(e.id));
+
+  const homeLongitude = isFiniteNumber(e.homeLongitude)
+    ? normaliseLongitude(e.homeLongitude)
+    : undefined;
+
+  const baseCountryCode = isNonEmptyString(e.baseCountryCode)
+    ? normaliseCountryCode(e.baseCountryCode)
+    : undefined;
+  const quoteCountryCode = isNonEmptyString(e.quoteCountryCode)
+    ? normaliseCountryCode(e.quoteCountryCode)
+    : undefined;
+
+  return {
+    id,
+    base: e.base ? normaliseCurrency(e.base) : '',
+    quote: e.quote ? normaliseCurrency(e.quote) : '',
+    label: e.label ?? (e.base && e.quote ? `${e.base} / ${e.quote}` : id),
+    precision: e.precision,
+    category: 'fx',
+    baseCountryCode,
+    quoteCountryCode,
+    homeLongitude,
+  };
 }
 
 /**
  * The ribbon list:
- * - filter by tier (isDefaultFree/isDefaultPaid)
+ * - FREE tier: pairs from fx.selected.json (selectedIds)
+ * - PAID tier: all pairs from fx-pairs.json
  * - optionally sort by longitude (runtime) instead of file order
  *
- * Count is SSOT-driven: number of isDefaultFree entries = number of chips.
+ * Count is SSOT-driven: number of selectedIds entries = number of free chips.
  */
 export function getFxRibbonPairs(options?: FxRibbonPairsOptions): FxRibbonPairMeta[] {
   const tier = options?.tier ?? 'free';
@@ -224,32 +295,7 @@ export function getFxRibbonPairs(options?: FxRibbonPairsOptions): FxRibbonPairMe
   const allPairs = getPairs();
   const picked = pickPairsForTier(allPairs, tier);
 
-  const metas: FxRibbonPairMeta[] = picked.map((e) => {
-    const id = normalisePairId(String(e.id));
-
-    const homeLongitude = isFiniteNumber(e.homeLongitude)
-      ? normaliseLongitude(e.homeLongitude)
-      : undefined;
-
-    const baseCountryCode = isNonEmptyString(e.baseCountryCode)
-      ? normaliseCountryCode(e.baseCountryCode)
-      : undefined;
-    const quoteCountryCode = isNonEmptyString(e.quoteCountryCode)
-      ? normaliseCountryCode(e.quoteCountryCode)
-      : undefined;
-
-    return {
-      id,
-      base: e.base ? normaliseCurrency(e.base) : '',
-      quote: e.quote ? normaliseCurrency(e.quote) : '',
-      label: e.label ?? (e.base && e.quote ? `${e.base} / ${e.quote}` : id),
-      precision: e.precision,
-      category: 'fx',
-      baseCountryCode,
-      quoteCountryCode,
-      homeLongitude,
-    };
-  });
+  const metas: FxRibbonPairMeta[] = picked.map(pairEntryToMeta);
 
   return sortPairs(metas, options);
 }
@@ -332,6 +378,15 @@ export function assertFxRibbonSsotValid(): void {
     }
   }
 
+  // Invariant: free tier selectedIds must reference existing pairs
+  const selectedIds = getSelectedIds();
+  for (const id of selectedIds) {
+    const normalised = normalisePairId(id);
+    if (!pairsById.has(normalised)) {
+      throw new Error(`FX SSOT: fx.selected.json references unknown pair id "${id}".`);
+    }
+  }
+
   // Invariant: default free ribbon must contain at least 1 pair, and no duplicates.
   const ribbon = getFxRibbonPairs({ tier: 'free', order: 'ssot' });
 
@@ -368,6 +423,6 @@ export const getFxPairs = getFxRibbonPairs;
 export const getFxPairCodes = getFxRibbonPairCodes;
 
 // Legacy constants some older code may reference
-export const ALL_FX_PAIRS: FxRibbonPairMeta[] = getFxRibbonPairs();
-export const DEFAULT_FREE_FX_PAIR_IDS: string[] = getFxRibbonPairCodes();
-export const FREE_TIER_FX_PAIRS: FxRibbonPairMeta[] = ALL_FX_PAIRS;
+export const ALL_FX_PAIRS: FxRibbonPairMeta[] = getFxRibbonPairs({ tier: 'paid' });
+export const DEFAULT_FREE_FX_PAIR_IDS: string[] = getFxRibbonPairCodes({ tier: 'free' });
+export const FREE_TIER_FX_PAIRS: FxRibbonPairMeta[] = getFxRibbonPairs({ tier: 'free' });

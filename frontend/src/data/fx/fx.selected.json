@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "ssot": "frontend/src/data/fx/fx.selected.json",
+  "selectedIds": [
+    "eur-usd",
+    "usd-jpy",
+    "gbp-usd",
+    "usd-cny",
+    "usd-brl",
+    "gbp-zar",
+    "aud-gbp",
+    "gbp-eur"
+  ]
+}

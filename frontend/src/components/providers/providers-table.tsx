@@ -1,5 +1,6 @@
 // src/components/providers/providers-table.tsx
 // Updated: January 2026 - Added image quality vote button
+// Updated: January 2026 - Replaced Visual Styles with Support column (social icons)
 
 'use client';
 
@@ -7,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import type { Provider } from '@/types/provider';
 import { ProviderCell } from './provider-cell';
 import { ImageQualityVoteButton } from './image-quality-vote-button';
+import { SupportIconsCell } from './support-icons-cell';
 import { toRomanNumeral } from '@/lib/format/number';
 import { Flag } from '@/components/ui/flag';
 import Tooltip from '@/components/ui/tooltip';
@@ -258,7 +260,7 @@ export default function ProvidersTable(props: ProvidersTableProps) {
                   {sortBy === 'imageQuality' && <span className="text-emerald-400">●</span>}
                 </span>
               </th>
-              <th className="px-4 py-3 text-left">Visual Styles</th>
+              <th className="px-4 py-3 text-left">Support</th>
               <th className="px-4 py-3 text-center">API/Affiliate</th>
               <th
                 className="px-4 py-3 text-right cursor-pointer hover:text-slate-200 transition-colors"
@@ -297,11 +299,10 @@ export default function ProvidersTable(props: ProvidersTableProps) {
                 </td>
 
                 <td className="px-4 py-3">
-                  {p.visualStyles ? (
-                    <span className="block line-clamp-2">{p.visualStyles}</span>
-                  ) : (
-                    <span className="text-slate-500">—</span>
-                  )}
+                  <SupportIconsCell
+                    providerName={p.name}
+                    socials={p.socials}
+                  />
                 </td>
 
                 <td className="px-4 py-3 text-center">

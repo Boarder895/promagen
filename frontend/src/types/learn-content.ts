@@ -2,9 +2,11 @@
 // ============================================================================
 // LEARN CONTENT TYPES
 // ============================================================================
-// Types for the /prompts/learn education hub.
-// Authority: docs/authority/prompt-intelligence.md §9.3
+// Types for the /studio/learn education hub.
+// Updated to support platform tier system and simplified filters.
 // ============================================================================
+
+import type { PromptCategory } from '@/types/prompt-builder';
 
 /**
  * A learning guide or article
@@ -28,6 +30,8 @@ export interface LearnGuide {
   related: string[];
   /** Tags for filtering */
   tags: string[];
+  /** Maps to Prompt Builder category (null for overview guides) */
+  promptBuilderCategory?: PromptCategory | null;
 }
 
 /**
@@ -59,18 +63,22 @@ export interface QuickTip {
 
 /**
  * Filter options for Learn page
+ * Simplified: only search query, platform filter handled separately
  */
 export interface LearnFilters {
-  category: 'all' | 'fundamentals' | 'advanced' | 'platform-specific' | 'tips';
-  difficulty: 'all' | 'beginner' | 'intermediate' | 'advanced';
+  /** Text search query */
   searchQuery: string;
+  /** Category filter (kept for backward compat, not shown in UI) */
+  category: 'all' | 'fundamentals' | 'advanced' | 'platform-specific' | 'tips';
+  /** Difficulty filter (kept for backward compat, not shown in UI) */
+  difficulty: 'all' | 'beginner' | 'intermediate' | 'advanced';
 }
 
 /**
  * Default filters
  */
 export const DEFAULT_LEARN_FILTERS: LearnFilters = {
+  searchQuery: '',
   category: 'all',
   difficulty: 'all',
-  searchQuery: '',
 };

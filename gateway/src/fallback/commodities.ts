@@ -46,91 +46,11 @@ const COMMODITIES_BUDGET_DAILY = 0;
 const COMMODITIES_BUDGET_MINUTE = 0;
 
 // =============================================================================
-// FALLBACK DATA (Demo prices until provider found)
+// PURE SSOT (No embedded fallback catalogue)
 // =============================================================================
 
-const FALLBACK_COMMODITIES_CATALOG: CommodityCatalogItem[] = [
-  // Energy (2)
-  {
-    id: 'brent_crude',
-    name: 'Brent Crude',
-    shortName: 'Brent',
-    symbol: 'BRENT',
-    group: 'energy',
-    quoteCurrency: 'USD',
-    isDefaultFree: true,
-    isActive: true,
-    demoPrice: 78.5,
-  },
-  {
-    id: 'ttf_natural_gas',
-    name: 'TTF Natural Gas',
-    shortName: 'TTF Gas',
-    symbol: 'TTF_GAS',
-    group: 'energy',
-    quoteCurrency: 'EUR',
-    isDefaultFree: true,
-    isActive: true,
-    demoPrice: 42.3,
-  },
-  // Agriculture (3)
-  {
-    id: 'coffee',
-    name: 'Coffee',
-    shortName: 'Coffee',
-    symbol: 'COFFEE',
-    group: 'agriculture',
-    quoteCurrency: 'USD',
-    isDefaultFree: true,
-    isActive: true,
-    demoPrice: 312.5,
-  },
-  {
-    id: 'sugar',
-    name: 'Sugar',
-    shortName: 'Sugar',
-    symbol: 'SUGAR',
-    group: 'agriculture',
-    quoteCurrency: 'USD',
-    isDefaultFree: true,
-    isActive: true,
-    demoPrice: 21.45,
-  },
-  {
-    id: 'orange_juice',
-    name: 'Orange Juice',
-    shortName: 'OJ',
-    symbol: 'OJUICE',
-    group: 'agriculture',
-    quoteCurrency: 'USD',
-    isDefaultFree: true,
-    isActive: true,
-    demoPrice: 485.2,
-  },
-  // Metals (2)
-  {
-    id: 'gold',
-    name: 'Gold',
-    shortName: 'Gold',
-    symbol: 'GOLD',
-    group: 'metals',
-    quoteCurrency: 'USD',
-    isDefaultFree: true,
-    isActive: true,
-    demoPrice: 2650.0,
-  },
-  {
-    id: 'iron_ore',
-    name: 'Iron Ore',
-    shortName: 'Iron Ore',
-    symbol: 'IRONORE',
-    group: 'metals',
-    quoteCurrency: 'USD',
-    isDefaultFree: true,
-    isActive: true,
-    demoPrice: 108.75,
-  },
-];
+// IMPORTANT: The gateway never hardcodes a catalogue or defaults.
+// The only fallback allowed is a previously saved SSOT snapshot.
 
 // =============================================================================
 // FEED CONFIGURATION (No Provider - Clock-Aligned)
@@ -150,7 +70,7 @@ const commoditiesConfig: FeedConfig<CommodityCatalogItem, CommodityQuote> = {
 
   parseCatalog(data: unknown): CommodityCatalogItem[] {
     if (!data || typeof data !== 'object') {
-      return FALLBACK_COMMODITIES_CATALOG;
+      throw new Error('Invalid Commodities SSOT payload');
     }
 
     const obj = data as Record<string, unknown>;
@@ -198,34 +118,38 @@ const commoditiesConfig: FeedConfig<CommodityCatalogItem, CommodityQuote> = {
           typeof r['isSelectableInRibbon'] === 'boolean'
             ? r['isSelectableInRibbon']
             : true,
-        demoPrice: typeof r['demoPrice'] === 'number' ? r['demoPrice'] : undefined,
+        // Demo/synthetic prices are intentionally NOT consumed by the gateway.
       });
     }
 
-    return items.length > 0 ? items : FALLBACK_COMMODITIES_CATALOG;
+    if (items.length === 0) {
+      throw new Error('Commodities SSOT payload contained no valid items');
+    }
+    return items;
   },
 
-  getDefaults(catalog: CommodityCatalogItem[]): string[] {
-    const defaults = catalog
-      .filter((c) => c.isDefaultFree === true)
-      .map((c) => c.id);
+  getDefaults(catalog: CommodityCatalogItem[], ssotPayload: unknown): string[] {
+    const payload = ssotPayload && typeof ssotPayload === 'object' ? (ssotPayload as Record<string, unknown>) : null;
 
-    if (defaults.length === 7) {
-      return defaults;
+    // Prefer explicit ordered defaults if provided
+    const candidates = ['defaultCommodityIds', 'defaultIds', 'commodityIds', 'selectedCommodityIds'];
+    for (const key of candidates) {
+      const v = payload ? payload[key] : undefined;
+      if (Array.isArray(v)) {
+        const ids = v
+          .filter((x): x is string => typeof x === 'string')
+          .map((s) => s.toLowerCase().trim());
+        const set = new Set(catalog.map((c) => c.id));
+        const filtered = ids.filter((id) => set.has(id));
+        if (filtered.length > 0) return filtered;
+      }
     }
 
-    // Ensure 2-3-2 split (energy/agriculture/metals)
-    const byGroup = {
-      energy: catalog.filter((c) => c.group === 'energy').slice(0, 2),
-      agriculture: catalog.filter((c) => c.group === 'agriculture').slice(0, 3),
-      metals: catalog.filter((c) => c.group === 'metals').slice(0, 2),
-    };
+    // Otherwise use flags (order preserved)
+    const flagged = catalog.filter((c) => c.isDefaultFree === true).map((c) => c.id);
+    if (flagged.length > 0) return flagged;
 
-    return [
-      ...byGroup.energy.map((c) => c.id),
-      ...byGroup.agriculture.map((c) => c.id),
-      ...byGroup.metals.map((c) => c.id),
-    ].slice(0, 7);
+    throw new Error('Commodities defaults not defined in SSOT (no default IDs and no isDefaultFree flags)');
   },
 
   parseQuotes(_data: unknown, catalog: CommodityCatalogItem[]): CommodityQuote[] {

@@ -1,6 +1,8 @@
 // src/data/commodities/index.ts
 
 import commoditiesCatalogJson from './commodities.catalog.json';
+import freeSelectedJson from './commodities.selected.json';
+import paidSelectedJson from './commodities.paid.selected.json';
 import {
   commoditiesCatalogSchema,
   type CommoditiesCatalog,
@@ -216,16 +218,42 @@ export function getCommodityImportance(commodityId: string): number | undefined 
 /**
  * Return the default commodity set for a given subscription tier.
  *
- * SSOT rules:
- * - Membership is defined by isDefaultFree / isDefaultPaid flags in commodities.catalog.json.
- * - Order is preserved from commodities.catalog.json (NO sorting).
- * - We only include active commodities.
+ * Option A (selected.json list):
+ * - Membership + order comes from a dedicated selected list file.
+ * - The catalogue is the universe; selected IDs must exist in it.
  */
 export function getDefaultCommoditiesForTier(tier: CommodityTier): Commodity[] {
-  const isDefault = (c: Commodity): boolean =>
-    tier === 'free' ? c.isDefaultFree === true : c.isDefaultPaid === true;
+  const selected = (tier === 'free' ? (freeSelectedJson as { ids: string[] }) : (paidSelectedJson as { ids: string[] }))
+    .ids;
 
-  return commoditiesCatalog.filter((c) => c.isActive === true && isDefault(c));
+  if (!Array.isArray(selected) || selected.length === 0) {
+    throw new Error(`commodities SSOT integrity error: ${tier} selected list is missing or empty`);
+  }
+
+  const missing: string[] = [];
+  const out: Commodity[] = [];
+
+  for (const id of selected) {
+    const item = commodityById.get(id);
+    if (!item) {
+      missing.push(id);
+      continue;
+    }
+    if (item.isActive !== true) {
+      // Selected lists must only point at active items.
+      missing.push(id);
+      continue;
+    }
+    out.push(item);
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `commodities SSOT integrity error: ${tier} selected list contains ids not present/active in commodities.catalog.json: ${missing.join(', ')}`,
+    );
+  }
+
+  return out;
 }
 
 /**

@@ -27,7 +27,7 @@ export { fxHandler, validateFxSelection } from './fx.js';
  * - Schedule: :20 and :50 (clock-aligned)
  * - Budget: Shared 800/day
  */
-export { cryptoHandler } from './crypto.js';
+export { cryptoHandler, validateCryptoSelection } from './crypto.js';
 
 // =============================================================================
 // SHARED INFRASTRUCTURE

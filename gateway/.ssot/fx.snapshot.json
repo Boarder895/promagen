@@ -1,0 +1,534 @@
+{
+  "schemaVersion": 1,
+  "feedId": "fx",
+  "ssotUrl": "http://localhost:3000/api/fx/config",
+  "ssotSource": "frontend",
+  "provenance": {
+    "ssotVersion": 1,
+    "ssotHash": "d9248731dc9ec4593b6aa0c23a452c7c3f9e839ef25892806a55e4f6676981fd",
+    "ssotFingerprint": "d9248731dc9e",
+    "snapshotAt": "2026-01-16T09:41:20.624Z"
+  },
+  "catalog": [
+    {
+      "id": "eur-usd",
+      "base": "EUR",
+      "quote": "USD"
+    },
+    {
+      "id": "usd-jpy",
+      "base": "USD",
+      "quote": "JPY"
+    },
+    {
+      "id": "gbp-usd",
+      "base": "GBP",
+      "quote": "USD"
+    },
+    {
+      "id": "aud-usd",
+      "base": "AUD",
+      "quote": "USD"
+    },
+    {
+      "id": "nzd-usd",
+      "base": "NZD",
+      "quote": "USD"
+    },
+    {
+      "id": "usd-cad",
+      "base": "USD",
+      "quote": "CAD"
+    },
+    {
+      "id": "usd-chf",
+      "base": "USD",
+      "quote": "CHF"
+    },
+    {
+      "id": "usd-cnh",
+      "base": "USD",
+      "quote": "CNH"
+    },
+    {
+      "id": "usd-cny",
+      "base": "USD",
+      "quote": "CNY"
+    },
+    {
+      "id": "usd-hkd",
+      "base": "USD",
+      "quote": "HKD"
+    },
+    {
+      "id": "usd-sgd",
+      "base": "USD",
+      "quote": "SGD"
+    },
+    {
+      "id": "usd-krw",
+      "base": "USD",
+      "quote": "KRW"
+    },
+    {
+      "id": "usd-sek",
+      "base": "USD",
+      "quote": "SEK"
+    },
+    {
+      "id": "usd-nok",
+      "base": "USD",
+      "quote": "NOK"
+    },
+    {
+      "id": "usd-dkk",
+      "base": "USD",
+      "quote": "DKK"
+    },
+    {
+      "id": "usd-inr",
+      "base": "USD",
+      "quote": "INR"
+    },
+    {
+      "id": "usd-twd",
+      "base": "USD",
+      "quote": "TWD"
+    },
+    {
+      "id": "usd-thb",
+      "base": "USD",
+      "quote": "THB"
+    },
+    {
+      "id": "usd-myr",
+      "base": "USD",
+      "quote": "MYR"
+    },
+    {
+      "id": "usd-idr",
+      "base": "USD",
+      "quote": "IDR"
+    },
+    {
+      "id": "usd-php",
+      "base": "USD",
+      "quote": "PHP"
+    },
+    {
+      "id": "usd-vnd",
+      "base": "USD",
+      "quote": "VND"
+    },
+    {
+      "id": "usd-mxn",
+      "base": "USD",
+      "quote": "MXN"
+    },
+    {
+      "id": "usd-brl",
+      "base": "USD",
+      "quote": "BRL"
+    },
+    {
+      "id": "usd-zar",
+      "base": "USD",
+      "quote": "ZAR"
+    },
+    {
+      "id": "usd-try",
+      "base": "USD",
+      "quote": "TRY"
+    },
+    {
+      "id": "usd-pln",
+      "base": "USD",
+      "quote": "PLN"
+    },
+    {
+      "id": "usd-czk",
+      "base": "USD",
+      "quote": "CZK"
+    },
+    {
+      "id": "usd-huf",
+      "base": "USD",
+      "quote": "HUF"
+    },
+    {
+      "id": "usd-ron",
+      "base": "USD",
+      "quote": "RON"
+    },
+    {
+      "id": "usd-ils",
+      "base": "USD",
+      "quote": "ILS"
+    },
+    {
+      "id": "usd-aed",
+      "base": "USD",
+      "quote": "AED"
+    },
+    {
+      "id": "usd-sar",
+      "base": "USD",
+      "quote": "SAR"
+    },
+    {
+      "id": "usd-qar",
+      "base": "USD",
+      "quote": "QAR"
+    },
+    {
+      "id": "usd-kwd",
+      "base": "USD",
+      "quote": "KWD"
+    },
+    {
+      "id": "usd-clp",
+      "base": "USD",
+      "quote": "CLP"
+    },
+    {
+      "id": "usd-cop",
+      "base": "USD",
+      "quote": "COP"
+    },
+    {
+      "id": "usd-pen",
+      "base": "USD",
+      "quote": "PEN"
+    },
+    {
+      "id": "eur-gbp",
+      "base": "EUR",
+      "quote": "GBP"
+    },
+    {
+      "id": "eur-jpy",
+      "base": "EUR",
+      "quote": "JPY"
+    },
+    {
+      "id": "eur-chf",
+      "base": "EUR",
+      "quote": "CHF"
+    },
+    {
+      "id": "eur-cad",
+      "base": "EUR",
+      "quote": "CAD"
+    },
+    {
+      "id": "eur-aud",
+      "base": "EUR",
+      "quote": "AUD"
+    },
+    {
+      "id": "eur-nzd",
+      "base": "EUR",
+      "quote": "NZD"
+    },
+    {
+      "id": "eur-sek",
+      "base": "EUR",
+      "quote": "SEK"
+    },
+    {
+      "id": "eur-nok",
+      "base": "EUR",
+      "quote": "NOK"
+    },
+    {
+      "id": "eur-dkk",
+      "base": "EUR",
+      "quote": "DKK"
+    },
+    {
+      "id": "eur-pln",
+      "base": "EUR",
+      "quote": "PLN"
+    },
+    {
+      "id": "eur-czk",
+      "base": "EUR",
+      "quote": "CZK"
+    },
+    {
+      "id": "eur-huf",
+      "base": "EUR",
+      "quote": "HUF"
+    },
+    {
+      "id": "eur-ron",
+      "base": "EUR",
+      "quote": "RON"
+    },
+    {
+      "id": "eur-try",
+      "base": "EUR",
+      "quote": "TRY"
+    },
+    {
+      "id": "eur-zar",
+      "base": "EUR",
+      "quote": "ZAR"
+    },
+    {
+      "id": "eur-mxn",
+      "base": "EUR",
+      "quote": "MXN"
+    },
+    {
+      "id": "eur-brl",
+      "base": "EUR",
+      "quote": "BRL"
+    },
+    {
+      "id": "eur-cnh",
+      "base": "EUR",
+      "quote": "CNH"
+    },
+    {
+      "id": "eur-cny",
+      "base": "EUR",
+      "quote": "CNY"
+    },
+    {
+      "id": "eur-sgd",
+      "base": "EUR",
+      "quote": "SGD"
+    },
+    {
+      "id": "eur-hkd",
+      "base": "EUR",
+      "quote": "HKD"
+    },
+    {
+      "id": "eur-inr",
+      "base": "EUR",
+      "quote": "INR"
+    },
+    {
+      "id": "eur-ils",
+      "base": "EUR",
+      "quote": "ILS"
+    },
+    {
+      "id": "eur-aed",
+      "base": "EUR",
+      "quote": "AED"
+    },
+    {
+      "id": "gbp-jpy",
+      "base": "GBP",
+      "quote": "JPY"
+    },
+    {
+      "id": "aud-jpy",
+      "base": "AUD",
+      "quote": "JPY"
+    },
+    {
+      "id": "cad-jpy",
+      "base": "CAD",
+      "quote": "JPY"
+    },
+    {
+      "id": "chf-jpy",
+      "base": "CHF",
+      "quote": "JPY"
+    },
+    {
+      "id": "nzd-jpy",
+      "base": "NZD",
+      "quote": "JPY"
+    },
+    {
+      "id": "sek-jpy",
+      "base": "SEK",
+      "quote": "JPY"
+    },
+    {
+      "id": "nok-jpy",
+      "base": "NOK",
+      "quote": "JPY"
+    },
+    {
+      "id": "dkk-jpy",
+      "base": "DKK",
+      "quote": "JPY"
+    },
+    {
+      "id": "pln-jpy",
+      "base": "PLN",
+      "quote": "JPY"
+    },
+    {
+      "id": "czk-jpy",
+      "base": "CZK",
+      "quote": "JPY"
+    },
+    {
+      "id": "huf-jpy",
+      "base": "HUF",
+      "quote": "JPY"
+    },
+    {
+      "id": "try-jpy",
+      "base": "TRY",
+      "quote": "JPY"
+    },
+    {
+      "id": "zar-jpy",
+      "base": "ZAR",
+      "quote": "JPY"
+    },
+    {
+      "id": "mxn-jpy",
+      "base": "MXN",
+      "quote": "JPY"
+    },
+    {
+      "id": "sgd-jpy",
+      "base": "SGD",
+      "quote": "JPY"
+    },
+    {
+      "id": "hkd-jpy",
+      "base": "HKD",
+      "quote": "JPY"
+    },
+    {
+      "id": "cnh-jpy",
+      "base": "CNH",
+      "quote": "JPY"
+    },
+    {
+      "id": "inr-jpy",
+      "base": "INR",
+      "quote": "JPY"
+    },
+    {
+      "id": "gbp-chf",
+      "base": "GBP",
+      "quote": "CHF"
+    },
+    {
+      "id": "gbp-cad",
+      "base": "GBP",
+      "quote": "CAD"
+    },
+    {
+      "id": "gbp-aud",
+      "base": "GBP",
+      "quote": "AUD"
+    },
+    {
+      "id": "gbp-nzd",
+      "base": "GBP",
+      "quote": "NZD"
+    },
+    {
+      "id": "gbp-sek",
+      "base": "GBP",
+      "quote": "SEK"
+    },
+    {
+      "id": "gbp-nok",
+      "base": "GBP",
+      "quote": "NOK"
+    },
+    {
+      "id": "gbp-dkk",
+      "base": "GBP",
+      "quote": "DKK"
+    },
+    {
+      "id": "gbp-pln",
+      "base": "GBP",
+      "quote": "PLN"
+    },
+    {
+      "id": "gbp-czk",
+      "base": "GBP",
+      "quote": "CZK"
+    },
+    {
+      "id": "gbp-huf",
+      "base": "GBP",
+      "quote": "HUF"
+    },
+    {
+      "id": "gbp-try",
+      "base": "GBP",
+      "quote": "TRY"
+    },
+    {
+      "id": "gbp-zar",
+      "base": "GBP",
+      "quote": "ZAR"
+    },
+    {
+      "id": "gbp-sgd",
+      "base": "GBP",
+      "quote": "SGD"
+    },
+    {
+      "id": "gbp-hkd",
+      "base": "GBP",
+      "quote": "HKD"
+    },
+    {
+      "id": "aud-cad",
+      "base": "AUD",
+      "quote": "CAD"
+    },
+    {
+      "id": "aud-nzd",
+      "base": "AUD",
+      "quote": "NZD"
+    },
+    {
+      "id": "cad-chf",
+      "base": "CAD",
+      "quote": "CHF"
+    },
+    {
+      "id": "aud-chf",
+      "base": "AUD",
+      "quote": "CHF"
+    },
+    {
+      "id": "nzd-cad",
+      "base": "NZD",
+      "quote": "CAD"
+    },
+    {
+      "id": "nzd-chf",
+      "base": "NZD",
+      "quote": "CHF"
+    },
+    {
+      "id": "aud-gbp",
+      "base": "AUD",
+      "quote": "GBP"
+    },
+    {
+      "id": "gbp-eur",
+      "base": "GBP",
+      "quote": "EUR"
+    }
+  ],
+  "defaults": [
+    "eur-usd",
+    "usd-jpy",
+    "gbp-usd",
+    "usd-cny",
+    "usd-brl",
+    "gbp-zar",
+    "aud-gbp",
+    "gbp-eur"
+  ]
+}

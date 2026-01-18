@@ -1,23 +1,68 @@
-// src/app/prompts/page.tsx
+// src/app/studio/studio-page-client.tsx
 // ============================================================================
-// PROMPTS INDEX PAGE
+// STUDIO PAGE CLIENT COMPONENT
 // ============================================================================
-// Hub for all prompt-related features: Library, Explore, Learn.
+// Client component for the /studio page.
+// Handles Clerk auth UI and navigation buttons.
 // Authority: docs/authority/prompt-intelligence.md §9.3
+//
+// UPDATED: Renamed from /prompts to /studio. All internal links updated.
 // ============================================================================
+
+'use client';
 
 import React from 'react';
-import type { Metadata } from 'next';
 import Link from 'next/link';
+import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
 
 // ============================================================================
-// METADATA (SEO)
+// ICONS
 // ============================================================================
 
-export const metadata: Metadata = {
-  title: 'Prompts — Promagen',
-  description: 'Build, save, and explore AI image prompts with intelligent suggestions.',
-};
+function HomeIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+      />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+      />
+    </svg>
+  );
+}
+
+// ============================================================================
+// SHARED STYLES
+// ============================================================================
+
+const navButtonStyles =
+  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
 
 // ============================================================================
 // PAGE SECTIONS
@@ -25,7 +70,7 @@ export const metadata: Metadata = {
 
 const sections = [
   {
-    href: '/prompts/library',
+    href: '/studio/library',
     title: 'Your Library',
     description: 'Save, organise, and reload your favourite prompts.',
     icon: (
@@ -38,7 +83,7 @@ const sections = [
     available: true,
   },
   {
-    href: '/prompts/explore',
+    href: '/studio/explore',
     title: 'Explore Styles',
     description: 'Discover style families and find inspiration for your next prompt.',
     icon: (
@@ -51,7 +96,7 @@ const sections = [
     available: true,
   },
   {
-    href: '/prompts/learn',
+    href: '/studio/learn',
     title: 'Learn Prompting',
     description: 'Master the art of prompt engineering with guides and examples.',
     icon: (
@@ -64,7 +109,7 @@ const sections = [
     available: true,
   },
   {
-    href: '/prompts/playground',
+    href: '/studio/playground',
     title: 'Playground',
     description: 'Test and experiment with prompts in real-time.',
     icon: (
@@ -80,24 +125,85 @@ const sections = [
 ];
 
 // ============================================================================
+// AUTH BUTTON COMPONENT
+// ============================================================================
+
+function StudioAuthButton() {
+  const { isSignedIn, isLoaded } = useUser();
+
+  // Not loaded yet
+  if (!isLoaded) {
+    return (
+      <button type="button" disabled className={`${navButtonStyles} opacity-50`}>
+        <UserIcon />
+        Loading...
+      </button>
+    );
+  }
+
+  // Signed in - show avatar
+  if (isSignedIn) {
+    return (
+      <UserButton
+        appearance={{
+          elements: {
+            avatarBox: 'h-8 w-8 ring-2 ring-purple-500/50 hover:ring-purple-400',
+            userButtonPopoverCard: 'bg-slate-900 border border-slate-800',
+            userButtonPopoverActionButton: 'text-slate-300 hover:bg-slate-800',
+            userButtonPopoverActionButtonText: 'text-slate-300',
+            userButtonPopoverActionButtonIcon: 'text-slate-400',
+            userButtonPopoverFooter: 'hidden',
+          },
+        }}
+        afterSignOutUrl="/studio"
+      />
+    );
+  }
+
+  // Signed out - show sign in button
+  return (
+    <SignInButton mode="modal">
+      <button type="button" className={navButtonStyles}>
+        <UserIcon />
+        Sign in
+      </button>
+    </SignInButton>
+  );
+}
+
+// ============================================================================
 // PAGE COMPONENT
 // ============================================================================
 
-export default function PromptsIndexPage() {
+export default function StudioPageClient() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
       {/* Header */}
       <header className="border-b border-white/5">
         <div className="max-w-4xl mx-auto px-6 py-8">
-          <Link
-            href="/"
-            className="text-xs text-white/40 hover:text-white/60 transition-colors mb-4 inline-block"
-          >
-            ← Back to Home
-          </Link>
+          {/* Navigation row: Back link (left) + Home/Sign In buttons (right) */}
+          <div className="flex items-center justify-between mb-4">
+            <Link
+              href="/"
+              className="text-xs text-white/40 hover:text-white/60 transition-colors"
+            >
+              ← Back to Home
+            </Link>
+            
+            {/* Navigation buttons - right side */}
+            <div className="flex items-center gap-3">
+              <Link href="/" className={navButtonStyles}>
+                <HomeIcon />
+                Home
+              </Link>
+              <StudioAuthButton />
+            </div>
+          </div>
+          
+          {/* Page title and description */}
           <h1 className="text-3xl font-semibold mb-2">
             <span className="bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
-              Prompts
+              Studio
             </span>
           </h1>
           <p className="text-white/50 max-w-xl">
@@ -192,7 +298,7 @@ export default function PromptsIndexPage() {
               Go to Prompt Builder
             </Link>
             <Link
-              href="/prompts/library"
+              href="/studio/library"
               className="px-4 py-2 text-sm rounded-xl bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all ring-1 ring-white/10"
             >
               View Saved Prompts
@@ -209,7 +315,3 @@ export default function PromptsIndexPage() {
     </div>
   );
 }
-
-
-
-

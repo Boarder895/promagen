@@ -1,12 +1,14 @@
 // src/app/api/commodities/catalog/route.ts
 /**
- * /api/commodities/catalog — Expose the commodities catalogue (SSOT).
+ * /api/commodities/catalog — Expose the commodities catalogue (SSOT universe).
  *
  * Used by:
  * - Pro picker UI (future)
- * - Gateway symbol resolution (Drop B)
+ * - Gateway symbol resolution (future)
  *
- * Data is public, but remains SSOT-driven and filtered.
+ * Strict SSOT rules:
+ * - This endpoint exposes the catalogue (universe) only.
+ * - Free-tier defaults are defined separately in commodities.selected.json.
  */
 
 import { NextResponse } from 'next/server';
@@ -28,11 +30,12 @@ export async function GET(): Promise<Response> {
     group: c.group ?? null,
     subGroup: c.subGroup ?? null,
     emoji: c.emoji ?? null,
+    quoteCurrency: c.quoteCurrency ?? null,
     isSelectableInRibbon: c.isSelectableInRibbon ?? true,
-    isDefaultFree: c.isDefaultFree ?? false,
-    isDefaultPaid: c.isDefaultPaid ?? false,
     priority: c.priority ?? null,
     tags: c.tags ?? null,
+    ribbonLabel: c.ribbonLabel ?? c.name,
+    ribbonSubtext: c.ribbonSubtext ?? null,
   }));
 
   return NextResponse.json(

@@ -1,4 +1,4 @@
-// src/app/prompts/playground/page.tsx
+// src/app/studio/playground/page.tsx
 // ============================================================================
 // PROMPT PLAYGROUND PAGE - Server Component
 // ============================================================================
@@ -17,6 +17,7 @@
 // - All intelligence features
 //
 // Authority: docs/authority/prompt-intelligence.md §9
+// UPDATED: Route moved from /prompts/playground to /studio/playground
 // ============================================================================
 
 import React from 'react';

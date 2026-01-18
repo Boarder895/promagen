@@ -1,0 +1,824 @@
+{
+  "schemaVersion": 1,
+  "feedId": "crypto",
+  "ssotUrl": "http://localhost:3000/api/crypto/config",
+  "ssotSource": "frontend",
+  "provenance": {
+    "ssotVersion": 1,
+    "ssotHash": "2bd5f4cd9cedfab001646b5c1d375fe83eca77ce94de2a63199bba6ceea06ada",
+    "ssotFingerprint": "2bd5f4cd9ced",
+    "snapshotAt": "2026-01-15T18:12:48.614Z"
+  },
+  "catalog": [
+    {
+      "id": "btc",
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "rankHint": 1,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "eth",
+      "symbol": "ETH",
+      "name": "Ethereum",
+      "rankHint": 2,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "usdt",
+      "symbol": "USDT",
+      "name": "Tether USDt",
+      "rankHint": 3,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "bnb",
+      "symbol": "BNB",
+      "name": "BNB",
+      "rankHint": 4,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "sol",
+      "symbol": "SOL",
+      "name": "Solana",
+      "rankHint": 5,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "usdc",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "rankHint": 6,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "xrp",
+      "symbol": "XRP",
+      "name": "XRP",
+      "rankHint": 7,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "ton",
+      "symbol": "TON",
+      "name": "Toncoin",
+      "rankHint": 8,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "doge",
+      "symbol": "DOGE",
+      "name": "Dogecoin",
+      "rankHint": 9,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "ada",
+      "symbol": "ADA",
+      "name": "Cardano",
+      "rankHint": 10,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "avax",
+      "symbol": "AVAX",
+      "name": "Avalanche",
+      "rankHint": 11,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "trx",
+      "symbol": "TRX",
+      "name": "TRON",
+      "rankHint": 12,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "dot",
+      "symbol": "DOT",
+      "name": "Polkadot",
+      "rankHint": 13,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "ltc",
+      "symbol": "LTC",
+      "name": "Litecoin",
+      "rankHint": 14,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "matic",
+      "symbol": "MATIC",
+      "name": "Polygon",
+      "rankHint": 15,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "uni",
+      "symbol": "UNI",
+      "name": "Uniswap",
+      "rankHint": 16,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "link",
+      "symbol": "LINK",
+      "name": "Chainlink",
+      "rankHint": 17,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "bch",
+      "symbol": "BCH",
+      "name": "Bitcoin Cash",
+      "rankHint": 18,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "xlm",
+      "symbol": "XLM",
+      "name": "Stellar",
+      "rankHint": 19,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "atom",
+      "symbol": "ATOM",
+      "name": "Cosmos",
+      "rankHint": 20,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "etc",
+      "symbol": "ETC",
+      "name": "Ethereum Classic",
+      "rankHint": 21,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "xmr",
+      "symbol": "XMR",
+      "name": "Monero",
+      "rankHint": 22,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "inj",
+      "symbol": "INJ",
+      "name": "Injective",
+      "rankHint": 23,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "op",
+      "symbol": "OP",
+      "name": "Optimism",
+      "rankHint": 24,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "arb",
+      "symbol": "ARB",
+      "name": "Arbitrum",
+      "rankHint": 25,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "sei",
+      "symbol": "SEI",
+      "name": "Sei",
+      "rankHint": 26,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "hbar",
+      "symbol": "HBAR",
+      "name": "Hedera",
+      "rankHint": 27,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "apt",
+      "symbol": "APT",
+      "name": "Aptos",
+      "rankHint": 28,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "ldo",
+      "symbol": "LDO",
+      "name": "Lido DAO",
+      "rankHint": 29,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "sui",
+      "symbol": "SUI",
+      "name": "Sui",
+      "rankHint": 30,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "rune",
+      "symbol": "RUNE",
+      "name": "THORChain",
+      "rankHint": 31,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "near",
+      "symbol": "NEAR",
+      "name": "NEAR Protocol",
+      "rankHint": 32,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "stx",
+      "symbol": "STX",
+      "name": "Stacks",
+      "rankHint": 33,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "aave",
+      "symbol": "AAVE",
+      "name": "Aave",
+      "rankHint": 34,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "mkr",
+      "symbol": "MKR",
+      "name": "Maker",
+      "rankHint": 35,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "rpl",
+      "symbol": "RPL",
+      "name": "Rocket Pool",
+      "rankHint": 36,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "pepe",
+      "symbol": "PEPE",
+      "name": "Pepe",
+      "rankHint": 37,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "floki",
+      "symbol": "FLOKI",
+      "name": "Floki",
+      "rankHint": 38,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "bonk",
+      "symbol": "BONK",
+      "name": "Bonk",
+      "rankHint": 39,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "wif",
+      "symbol": "WIF",
+      "name": "dogwifhat",
+      "rankHint": 40,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "wbtc",
+      "symbol": "WBTC",
+      "name": "Wrapped Bitcoin",
+      "rankHint": 41,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "strk",
+      "symbol": "STRK",
+      "name": "Starknet",
+      "rankHint": 42,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "imx",
+      "symbol": "IMX",
+      "name": "Immutable",
+      "rankHint": 43,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "ron",
+      "symbol": "RON",
+      "name": "Ronin",
+      "rankHint": 44,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "vet",
+      "symbol": "VET",
+      "name": "VeChain",
+      "rankHint": 45,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "algo",
+      "symbol": "ALGO",
+      "name": "Algorand",
+      "rankHint": 46,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "fil",
+      "symbol": "FIL",
+      "name": "Filecoin",
+      "rankHint": 47,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "egld",
+      "symbol": "EGLD",
+      "name": "MultiversX (Elrond)",
+      "rankHint": 48,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "grt",
+      "symbol": "GRT",
+      "name": "The Graph",
+      "rankHint": 49,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "gmt",
+      "symbol": "GMT",
+      "name": "STEPN",
+      "rankHint": 50,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "shib",
+      "symbol": "SHIB",
+      "name": "Shiba Inu",
+      "rankHint": 51,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "icp",
+      "symbol": "ICP",
+      "name": "Internet Computer",
+      "rankHint": 52,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "dai",
+      "symbol": "DAI",
+      "name": "Dai",
+      "rankHint": 53,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "xtz",
+      "symbol": "XTZ",
+      "name": "Tezos",
+      "rankHint": 54,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "mnt",
+      "symbol": "MNT",
+      "name": "Mantle",
+      "rankHint": 55,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "kas",
+      "symbol": "KAS",
+      "name": "Kaspa",
+      "rankHint": 56,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "tia",
+      "symbol": "TIA",
+      "name": "Celestia",
+      "rankHint": 57,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "rndr",
+      "symbol": "RNDR",
+      "name": "Render",
+      "rankHint": 58,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "ar",
+      "symbol": "AR",
+      "name": "Arweave",
+      "rankHint": 59,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "ftm",
+      "symbol": "FTM",
+      "name": "Fantom",
+      "rankHint": 60,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "theta",
+      "symbol": "THETA",
+      "name": "Theta Network",
+      "rankHint": 61,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "sand",
+      "symbol": "SAND",
+      "name": "The Sandbox",
+      "rankHint": 62,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "mana",
+      "symbol": "MANA",
+      "name": "Decentraland",
+      "rankHint": 63,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "gala",
+      "symbol": "GALA",
+      "name": "Gala",
+      "rankHint": 64,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "axs",
+      "symbol": "AXS",
+      "name": "Axie Infinity",
+      "rankHint": 65,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "eos",
+      "symbol": "EOS",
+      "name": "EOS",
+      "rankHint": 66,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "klay",
+      "symbol": "KLAY",
+      "name": "Klaytn",
+      "rankHint": 67,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "flow",
+      "symbol": "FLOW",
+      "name": "Flow",
+      "rankHint": 68,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "mina",
+      "symbol": "MINA",
+      "name": "Mina",
+      "rankHint": 69,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "chz",
+      "symbol": "CHZ",
+      "name": "Chiliz",
+      "rankHint": 70,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "enj",
+      "symbol": "ENJ",
+      "name": "Enjin Coin",
+      "rankHint": 71,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "crv",
+      "symbol": "CRV",
+      "name": "Curve DAO Token",
+      "rankHint": 72,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "snx",
+      "symbol": "SNX",
+      "name": "Synthetix",
+      "rankHint": 73,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "comp",
+      "symbol": "COMP",
+      "name": "Compound",
+      "rankHint": 74,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "lrc",
+      "symbol": "LRC",
+      "name": "Loopring",
+      "rankHint": 75,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "zec",
+      "symbol": "ZEC",
+      "name": "Zcash",
+      "rankHint": 76,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "dash",
+      "symbol": "DASH",
+      "name": "Dash",
+      "rankHint": 77,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "bat",
+      "symbol": "BAT",
+      "name": "Basic Attention Token",
+      "rankHint": 78,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "zil",
+      "symbol": "ZIL",
+      "name": "Zilliqa",
+      "rankHint": 79,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "kava",
+      "symbol": "KAVA",
+      "name": "Kava",
+      "rankHint": 80,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "ray",
+      "symbol": "RAY",
+      "name": "Raydium",
+      "rankHint": 81,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "cake",
+      "symbol": "CAKE",
+      "name": "PancakeSwap",
+      "rankHint": 82,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "paxg",
+      "symbol": "PAXG",
+      "name": "PAX Gold",
+      "rankHint": 83,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "tusd",
+      "symbol": "TUSD",
+      "name": "TrueUSD",
+      "rankHint": 84,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "fdusd",
+      "symbol": "FDUSD",
+      "name": "First Digital USD",
+      "rankHint": 85,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "busd",
+      "symbol": "BUSD",
+      "name": "Binance USD",
+      "rankHint": 86,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "wld",
+      "symbol": "WLD",
+      "name": "Worldcoin",
+      "rankHint": 87,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "jup",
+      "symbol": "JUP",
+      "name": "Jupiter",
+      "rankHint": 88,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "pyth",
+      "symbol": "PYTH",
+      "name": "Pyth Network",
+      "rankHint": 89,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "hnt",
+      "symbol": "HNT",
+      "name": "Helium",
+      "rankHint": 90,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "rose",
+      "symbol": "ROSE",
+      "name": "Oasis Network",
+      "rankHint": 91,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "celo",
+      "symbol": "CELO",
+      "name": "Celo",
+      "rankHint": 92,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "oneinch",
+      "symbol": "1INCH",
+      "name": "1inch",
+      "rankHint": 93,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "sfp",
+      "symbol": "SFP",
+      "name": "SafePal",
+      "rankHint": 94,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "qtum",
+      "symbol": "QTUM",
+      "name": "Qtum",
+      "rankHint": 95,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "iota",
+      "symbol": "IOTA",
+      "name": "IOTA",
+      "rankHint": 96,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "neo",
+      "symbol": "NEO",
+      "name": "Neo",
+      "rankHint": 97,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "waves",
+      "symbol": "WAVES",
+      "name": "Waves",
+      "rankHint": 98,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "gno",
+      "symbol": "GNO",
+      "name": "Gnosis",
+      "rankHint": 99,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    },
+    {
+      "id": "uma",
+      "symbol": "UMA",
+      "name": "UMA",
+      "rankHint": 100,
+      "isActive": true,
+      "isSelectableInRibbon": true
+    }
+  ],
+  "defaults": [
+    "btc",
+    "eth",
+    "usdt",
+    "bnb",
+    "sol",
+    "usdc",
+    "xrp",
+    "ton"
+  ]
+}

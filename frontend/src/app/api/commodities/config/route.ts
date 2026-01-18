@@ -1,22 +1,26 @@
 // src/app/api/commodities/config/route.ts
 /**
- * /api/commodities/config — SSOT endpoint for gateway Commodities feed initialization.
+ * /api/commodities/config — SSOT endpoint for gateway Commodities feed initialisation.
  *
- * Returns commodities catalog with default items for the ribbon.
- * Gateway fetches this on startup to know which commodities to query.
+ * Option A (selected.json list):
+ * - Free-tier defaults come ONLY from src/data/commodities/commodities.selected.json (ordered).
+ * - Paid users may select any IDs from src/data/commodities/commodities.catalog.json (validated in gateway).
  *
- * Note: Commodities provider is currently TBD (TwelveData removed Jan 2026).
- * This endpoint still exists so gateway fallback works correctly.
+ * Strict SSOT rules:
+ * - No demo/synthetic prices are emitted.
+ * - Defaults must be a subset of the catalogue; if not, this route throws.
  *
- * Data source: frontend/src/data/commodities/commodities.catalog.json
+ * Data sources:
+ * - frontend/src/data/commodities/commodities.catalog.json
+ * - frontend/src/data/commodities/commodities.selected.json
  */
 
 import { NextResponse } from 'next/server';
 
 import commoditiesCatalogJson from '@/data/commodities/commodities.catalog.json';
+import commoditiesSelectedJson from '@/data/commodities/commodities.selected.json';
 
-// Type for commodity from catalog
-interface CommodityCatalog {
+type CommodityCatalogItem = {
   id: string;
   name: string;
   shortName?: string;
@@ -24,30 +28,41 @@ interface CommodityCatalog {
   group?: string;
   subGroup?: string;
   emoji?: string;
+  quoteCurrency?: string;
   isActive?: boolean;
-  isDefaultFree?: boolean;
-  isDefaultPaid?: boolean;
   isSelectableInRibbon?: boolean;
-  demoPrice?: number;
   priority?: number;
-}
+  ribbonLabel?: string;
+  ribbonSubtext?: string;
+};
+
+type CommoditiesSelected = {
+  ids: string[];
+};
 
 export const runtime = 'edge';
 export const revalidate = 3600; // 1 hour cache
 
 export async function GET(): Promise<Response> {
-  const allCommodities = commoditiesCatalogJson as CommodityCatalog[];
+  const all = commoditiesCatalogJson as CommodityCatalogItem[];
+  const selected = commoditiesSelectedJson as CommoditiesSelected;
 
-  // Filter active commodities only
-  const activeCommodities = allCommodities.filter((c) => c.isActive !== false);
+  const active = all.filter((c) => c.isActive !== false);
 
-  // Get default commodities (isDefaultFree = true)
-  const defaultCommodityIds = activeCommodities
-    .filter((c) => c.isDefaultFree === true)
-    .map((c) => c.id);
+  const defaultCommodityIds = Array.isArray(selected.ids) ? selected.ids : [];
 
-  // Build response format expected by gateway
-  const commodities = activeCommodities.map((c) => ({
+  const idSet = new Set(active.map((c) => c.id));
+  const missing = defaultCommodityIds.filter((id) => !idSet.has(id));
+
+  if (missing.length > 0) {
+    throw new Error(
+      `commodities SSOT integrity error: commodities.selected.json contains ids not present in commodities.catalog.json: ${missing.join(
+        ', ',
+      )}`,
+    );
+  }
+
+  const commodities = active.map((c) => ({
     id: c.id,
     name: c.name,
     shortName: c.shortName ?? null,
@@ -55,17 +70,21 @@ export async function GET(): Promise<Response> {
     group: c.group ?? null,
     subGroup: c.subGroup ?? null,
     emoji: c.emoji ?? null,
-    isDefaultFree: c.isDefaultFree ?? false,
-    isDefaultPaid: c.isDefaultPaid ?? false,
+    quoteCurrency: c.quoteCurrency ?? null,
+    isActive: c.isActive ?? true,
     isSelectableInRibbon: c.isSelectableInRibbon ?? true,
-    demoPrice: c.demoPrice ?? null,
     priority: c.priority ?? null,
+    ribbonLabel: c.ribbonLabel ?? c.name,
+    ribbonSubtext: c.ribbonSubtext ?? null,
   }));
 
   return NextResponse.json(
     {
       version: 1,
-      ssot: 'frontend/src/data/commodities/commodities.catalog.json',
+      ssot: {
+        catalog: 'frontend/src/data/commodities/commodities.catalog.json',
+        selected: 'frontend/src/data/commodities/commodities.selected.json',
+      },
       generatedAt: new Date().toISOString(),
       defaultCommodityIds,
       commodities,

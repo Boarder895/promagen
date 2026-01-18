@@ -11,7 +11,10 @@
     "imageQualityRank": 1,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Aesthetics", "Concept Art"],
+    "tags": [
+      "Aesthetics",
+      "Concept Art"
+    ],
     "website": "https://www.midjourney.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -21,7 +24,14 @@
     "visualStyles": "Cinematic, painterly, stylised 'wow' images",
     "apiAvailable": false,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/midjourney.png"
+    "localIcon": "/icons/providers/midjourney.png",
+    "socials": {
+      "instagram": "https://www.instagram.com/midjourney/",
+      "facebook": "https://www.facebook.com/groups/officialmidjourney",
+      "discord": "https://discord.gg/midjourney",
+      "reddit": "https://www.reddit.com/r/midjourney",
+      "x": "https://x.com/midjourney"
+    }
   },
   {
     "id": "openai",
@@ -35,7 +45,11 @@
     "imageQualityRank": 4,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Text-to-Image", "Editing", "API"],
+    "tags": [
+      "Text-to-Image",
+      "Editing",
+      "API"
+    ],
     "website": "https://openai.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -45,7 +59,13 @@
     "visualStyles": "Photoreal and product-style visuals; strong clarity",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/openai.png"
+    "localIcon": "/icons/providers/openai.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/openai/",
+      "instagram": "https://www.instagram.com/openai/",
+      "youtube": "https://www.youtube.com/@OpenAI",
+      "x": "https://x.com/openai"
+    }
   },
   {
     "id": "google-imagen",
@@ -59,7 +79,10 @@
     "imageQualityRank": 3,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": ["Photoreal", "Google AI"],
+    "tags": [
+      "Photoreal",
+      "Google AI"
+    ],
     "website": "https://deepmind.google/technologies/imagen/",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -69,7 +92,15 @@
     "visualStyles": "Clean, safe, photorealistic outputs",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/google-imagen.png"
+    "localIcon": "/icons/providers/google-imagen.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/google/",
+      "instagram": "https://www.instagram.com/google/",
+      "facebook": "https://www.facebook.com/Google/",
+      "youtube": "https://www.youtube.com/@Google",
+      "tiktok": "https://www.tiktok.com/@google",
+      "x": "https://x.com/GoogleAI"
+    }
   },
   {
     "id": "leonardo",
@@ -83,7 +114,11 @@
     "imageQualityRank": 5,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Fast Iteration", "Assets", "Creator"],
+    "tags": [
+      "Fast Iteration",
+      "Assets",
+      "Creator"
+    ],
     "website": "https://leonardo.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -93,7 +128,15 @@
     "visualStyles": "Game/concept vibes; punchy stylised art",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/leonardo.png"
+    "localIcon": "/icons/providers/leonardo.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/leonardo-ai/",
+      "instagram": "https://www.instagram.com/leonardoaiofficial/",
+      "facebook": "https://www.facebook.com/groups/1818159608569854",
+      "youtube": "https://www.youtube.com/@leonardo.ai_community",
+      "discord": "https://discord.gg/leonardo-ai",
+      "x": "https://x.com/LeonardoAi_"
+    }
   },
   {
     "id": "flux",
@@ -107,7 +150,11 @@
     "imageQualityRank": 2,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Speed", "Quality", "Open Source"],
+    "tags": [
+      "Speed",
+      "Quality",
+      "Open Source"
+    ],
     "website": "https://blackforestlabs.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -117,7 +164,11 @@
     "visualStyles": "Sharp, detailed, photographic and artistic",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/flux.png"
+    "localIcon": "/icons/providers/flux.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/blackforestlabs/",
+      "x": "https://x.com/bfl_ml"
+    }
   },
   {
     "id": "stability",
@@ -131,7 +182,11 @@
     "imageQualityRank": 8,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Control", "Open Models", "API"],
+    "tags": [
+      "Control",
+      "Open Models",
+      "API"
+    ],
     "website": "https://stability.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -141,7 +196,12 @@
     "visualStyles": "Huge range from photo to stylised; customizable",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/stability.png"
+    "localIcon": "/icons/providers/stability.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/stability-ai/",
+      "discord": "https://discord.gg/stablediffusion",
+      "x": "https://x.com/StabilityAI"
+    }
   },
   {
     "id": "adobe-firefly",
@@ -155,7 +215,11 @@
     "imageQualityRank": 6,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": ["Design", "Brand", "Commercial"],
+    "tags": [
+      "Design",
+      "Brand",
+      "Commercial"
+    ],
     "website": "https://firefly.adobe.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -165,7 +229,15 @@
     "visualStyles": "Clean graphic-design styles; brand-friendly",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/adobe-firefly.png"
+    "localIcon": "/icons/providers/adobe-firefly.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/adobe/",
+      "instagram": "https://www.instagram.com/adobe/",
+      "facebook": "https://www.facebook.com/adobe/",
+      "youtube": "https://www.youtube.com/@Adobe",
+      "tiktok": "https://www.tiktok.com/@adobe",
+      "x": "https://x.com/Adobe"
+    }
   },
   {
     "id": "ideogram",
@@ -179,7 +251,10 @@
     "imageQualityRank": 9,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Text-in-Image", "Posters"],
+    "tags": [
+      "Text-in-Image",
+      "Posters"
+    ],
     "website": "https://ideogram.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -189,7 +264,11 @@
     "visualStyles": "Posters, typography-led designs, logo graphics",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/ideogram.png"
+    "localIcon": "/icons/providers/ideogram.png",
+    "socials": {
+      "linkedin": "https://ca.linkedin.com/company/ideogram-ai",
+      "x": "https://x.com/ideogram_ai"
+    }
   },
   {
     "id": "playground",
@@ -203,7 +282,10 @@
     "imageQualityRank": 11,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Drafts", "Iteration"],
+    "tags": [
+      "Drafts",
+      "Iteration"
+    ],
     "website": "https://playground.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -213,7 +295,10 @@
     "visualStyles": "Concept-style variations and design explorations",
     "apiAvailable": false,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/playground.png"
+    "localIcon": "/icons/providers/playground.png",
+    "socials": {
+      "x": "https://x.com/playgroundai"
+    }
   },
   {
     "id": "microsoft-designer",
@@ -227,7 +312,11 @@
     "imageQualityRank": 12,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": ["Templates", "Microsoft", "Social"],
+    "tags": [
+      "Templates",
+      "Microsoft",
+      "Social"
+    ],
     "website": "https://designer.microsoft.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -237,7 +326,15 @@
     "visualStyles": "Social media graphics, clean templates",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/microsoft-designer.png"
+    "localIcon": "/icons/providers/microsoft-designer.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/microsoft/",
+      "instagram": "https://www.instagram.com/microsoft/",
+      "facebook": "https://www.facebook.com/Microsoft/",
+      "youtube": "https://www.youtube.com/@Microsoft",
+      "tiktok": "https://www.tiktok.com/@microsoft",
+      "x": "https://x.com/Microsoft"
+    }
   },
   {
     "id": "novelai",
@@ -251,7 +348,10 @@
     "imageQualityRank": 13,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Anime", "Characters"],
+    "tags": [
+      "Anime",
+      "Characters"
+    ],
     "website": "https://novelai.net",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -261,7 +361,10 @@
     "visualStyles": "Anime/manga aesthetics and stylised characters",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/novelai.png"
+    "localIcon": "/icons/providers/novelai.png",
+    "socials": {
+      "x": "https://x.com/novelaiofficial"
+    }
   },
   {
     "id": "lexica",
@@ -275,7 +378,10 @@
     "imageQualityRank": 7,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Prompt Discovery", "Explore"],
+    "tags": [
+      "Prompt Discovery",
+      "Explore"
+    ],
     "website": "https://lexica.art",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -285,7 +391,10 @@
     "visualStyles": "Stable-Diffusion aesthetics, inspiration-led",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/lexica.png"
+    "localIcon": "/icons/providers/lexica.png",
+    "socials": {
+      "x": "https://x.com/lexica_art"
+    }
   },
   {
     "id": "openart",
@@ -299,7 +408,10 @@
     "imageQualityRank": 14,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Community", "Models"],
+    "tags": [
+      "Community",
+      "Models"
+    ],
     "website": "https://openart.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -309,7 +421,12 @@
     "visualStyles": "Community-sourced styles, wide variety",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/openart.png"
+    "localIcon": "/icons/providers/openart.png",
+    "socials": {
+      "youtube": "https://www.youtube.com/@openart_ai",
+      "discord": "https://discord.com/invite/openart-ai",
+      "x": "https://x.com/openart_ai"
+    }
   },
   {
     "id": "123rf",
@@ -323,7 +440,10 @@
     "imageQualityRank": 18,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Simple", "Quick Concepts"],
+    "tags": [
+      "Simple",
+      "Quick Concepts"
+    ],
     "website": "https://www.123rf.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -333,7 +453,13 @@
     "visualStyles": "General-purpose looks; fast idea sketches",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/123rf.png"
+    "localIcon": "/icons/providers/123rf.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/123rf-com/",
+      "instagram": "https://www.instagram.com/123rf/",
+      "facebook": "https://www.facebook.com/123RF",
+      "x": "https://x.com/123rf"
+    }
   },
   {
     "id": "canva",
@@ -347,7 +473,11 @@
     "imageQualityRank": 16,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": ["Design", "Templates", "Easy"],
+    "tags": [
+      "Design",
+      "Templates",
+      "Easy"
+    ],
     "website": "https://www.canva.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -357,7 +487,16 @@
     "visualStyles": "Social graphics, simple illustrations, brand assets",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/canva.png"
+    "localIcon": "/icons/providers/canva.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/canva/",
+      "instagram": "https://www.instagram.com/canva/",
+      "facebook": "https://www.facebook.com/canva/",
+      "youtube": "https://www.youtube.com/@Canva",
+      "tiktok": "https://www.tiktok.com/@canva",
+      "x": "https://x.com/canva",
+      "pinterest": "https://au.pinterest.com/canva/"
+    }
   },
   {
     "id": "bing",
@@ -371,7 +510,10 @@
     "imageQualityRank": 17,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Fast", "Accessible"],
+    "tags": [
+      "Fast",
+      "Accessible"
+    ],
     "website": "https://www.bing.com/images/create",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -381,7 +523,15 @@
     "visualStyles": "General illustration and poster-ish imagery",
     "apiAvailable": false,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/bing.png"
+    "localIcon": "/icons/providers/bing.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/microsoft/",
+      "instagram": "https://www.instagram.com/microsoft/",
+      "facebook": "https://www.facebook.com/Microsoft/",
+      "youtube": "https://www.youtube.com/@Microsoft",
+      "tiktok": "https://www.tiktok.com/@microsoft",
+      "x": "https://x.com/Microsoft"
+    }
   },
   {
     "id": "nightcafe",
@@ -395,7 +545,10 @@
     "imageQualityRank": 19,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Community", "Experiment"],
+    "tags": [
+      "Community",
+      "Experiment"
+    ],
     "website": "https://nightcafe.studio",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -405,7 +558,10 @@
     "visualStyles": "Art-forward, stylised, community-trend aesthetics",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/nightcafe.png"
+    "localIcon": "/icons/providers/nightcafe.png",
+    "socials": {
+      "x": "https://x.com/NightCafeStudio"
+    }
   },
   {
     "id": "picsart",
@@ -419,7 +575,11 @@
     "imageQualityRank": 20,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Mobile", "Edits", "Effects"],
+    "tags": [
+      "Mobile",
+      "Edits",
+      "Effects"
+    ],
     "website": "https://picsart.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -429,7 +589,15 @@
     "visualStyles": "Bold social styles, stickers, effects-heavy",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/picsart.png"
+    "localIcon": "/icons/providers/picsart.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/picsart/",
+      "instagram": "https://www.instagram.com/picsart/",
+      "facebook": "https://www.facebook.com/picsart/",
+      "youtube": "https://www.youtube.com/@Picsart",
+      "tiktok": "https://www.tiktok.com/@picsart",
+      "x": "https://x.com/picsart"
+    }
   },
   {
     "id": "artistly",
@@ -443,7 +611,10 @@
     "imageQualityRank": 21,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Marketing", "Easy"],
+    "tags": [
+      "Marketing",
+      "Easy"
+    ],
     "website": "https://artistly.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -453,7 +624,8 @@
     "visualStyles": "Social-ready graphics and stylised artwork",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/artistly.png"
+    "localIcon": "/icons/providers/artistly.png",
+    "socials": null
   },
   {
     "id": "fotor",
@@ -467,7 +639,10 @@
     "imageQualityRank": 10,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["One-Click", "Enhance"],
+    "tags": [
+      "One-Click",
+      "Enhance"
+    ],
     "website": "https://www.fotor.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -477,7 +652,12 @@
     "visualStyles": "Photo effects, basic stylised outputs",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/fotor.png"
+    "localIcon": "/icons/providers/fotor.png",
+    "socials": {
+      "linkedin": "https://hk.linkedin.com/company/fotor.com",
+      "facebook": "https://www.facebook.com/fotorapp",
+      "x": "https://x.com/Fotor20"
+    }
   },
   {
     "id": "pixlr",
@@ -491,7 +671,10 @@
     "imageQualityRank": 22,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Editor", "Browser"],
+    "tags": [
+      "Editor",
+      "Browser"
+    ],
     "website": "https://pixlr.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -501,7 +684,10 @@
     "visualStyles": "Simple edits and effects; practical outputs",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/pixlr.png"
+    "localIcon": "/icons/providers/pixlr.png",
+    "socials": {
+      "linkedin": "https://sg.linkedin.com/company/pixlr"
+    }
   },
   {
     "id": "deepai",
@@ -515,7 +701,10 @@
     "imageQualityRank": 35,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Prototype", "Utility"],
+    "tags": [
+      "Prototype",
+      "Utility"
+    ],
     "website": "https://deepai.org",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -525,7 +714,11 @@
     "visualStyles": "Simple outputs; better for utility than wow-factor",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/deepai.png"
+    "localIcon": "/icons/providers/deepai.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/deepai/",
+      "x": "https://x.com/DeepAI"
+    }
   },
   {
     "id": "craiyon",
@@ -539,7 +732,10 @@
     "imageQualityRank": 38,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Free", "Casual"],
+    "tags": [
+      "Free",
+      "Casual"
+    ],
     "website": "https://www.craiyon.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -549,7 +745,10 @@
     "visualStyles": "Simple, often grainy; fun experimental looks",
     "apiAvailable": false,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/craiyon.png"
+    "localIcon": "/icons/providers/craiyon.png",
+    "socials": {
+      "x": "https://x.com/craiyonAI"
+    }
   },
   {
     "id": "bluewillow",
@@ -563,7 +762,11 @@
     "imageQualityRank": 23,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Discord", "Free", "Community"],
+    "tags": [
+      "Discord",
+      "Free",
+      "Community"
+    ],
     "website": "https://www.bluewillow.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -573,7 +776,11 @@
     "visualStyles": "Stylised art across various genres",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/bluewillow.png"
+    "localIcon": "/icons/providers/bluewillow.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/bluewillowai/",
+      "x": "https://x.com/BlueWillow_AI"
+    }
   },
   {
     "id": "dreamstudio",
@@ -587,7 +794,10 @@
     "imageQualityRank": 15,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Stable Diffusion", "Control"],
+    "tags": [
+      "Stable Diffusion",
+      "Control"
+    ],
     "website": "https://dreamstudio.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -597,7 +807,12 @@
     "visualStyles": "Full Stable Diffusion range; highly customizable",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/dreamstudio.png"
+    "localIcon": "/icons/providers/dreamstudio.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/stability-ai/",
+      "discord": "https://discord.gg/stablediffusion",
+      "x": "https://x.com/StabilityAI"
+    }
   },
   {
     "id": "artbreeder",
@@ -611,7 +826,10 @@
     "imageQualityRank": 24,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Portraits", "Mixing"],
+    "tags": [
+      "Portraits",
+      "Mixing"
+    ],
     "website": "https://www.artbreeder.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -621,7 +839,11 @@
     "visualStyles": "Realistic portraits, landscapes, abstract mixing",
     "apiAvailable": false,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/artbreeder.png"
+    "localIcon": "/icons/providers/artbreeder.png",
+    "socials": {
+      "instagram": "https://www.instagram.com/madewithartbreeder/",
+      "x": "https://x.com/Artbreeder"
+    }
   },
   {
     "id": "jasper-art",
@@ -635,7 +857,10 @@
     "imageQualityRank": 25,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Marketing", "Content"],
+    "tags": [
+      "Marketing",
+      "Content"
+    ],
     "website": "https://www.jasper.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -645,7 +870,11 @@
     "visualStyles": "Clean marketing visuals, blog-ready graphics",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/jasper-art.png"
+    "localIcon": "/icons/providers/jasper-art.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/heyjasperai/",
+      "x": "https://x.com/heyjasperai"
+    }
   },
   {
     "id": "runway",
@@ -659,7 +888,10 @@
     "imageQualityRank": 26,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Video", "Creative Tools"],
+    "tags": [
+      "Video",
+      "Creative Tools"
+    ],
     "website": "https://runwayml.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -669,7 +901,11 @@
     "visualStyles": "Professional creative outputs, video-first",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/runway.png"
+    "localIcon": "/icons/providers/runway.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/runwayml/",
+      "x": "https://x.com/runwayml"
+    }
   },
   {
     "id": "freepik",
@@ -683,7 +919,10 @@
     "imageQualityRank": 27,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Stock", "Templates"],
+    "tags": [
+      "Stock",
+      "Templates"
+    ],
     "website": "https://www.freepik.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -693,7 +932,15 @@
     "visualStyles": "Stock photo aesthetics, template-ready",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/freepik.png"
+    "localIcon": "/icons/providers/freepik.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/freepik-corp/",
+      "instagram": "https://www.instagram.com/freepik/",
+      "facebook": "https://www.facebook.com/Freepik",
+      "youtube": "https://www.youtube.com/@Freepik",
+      "tiktok": "https://www.tiktok.com/@freepik",
+      "x": "https://x.com/freepik"
+    }
   },
   {
     "id": "simplified",
@@ -707,7 +954,10 @@
     "imageQualityRank": 28,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Marketing", "Social"],
+    "tags": [
+      "Marketing",
+      "Social"
+    ],
     "website": "https://simplified.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -717,7 +967,10 @@
     "visualStyles": "Social media graphics, marketing visuals",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/simplified.png"
+    "localIcon": "/icons/providers/simplified.png",
+    "socials": {
+      "x": "https://x.com/sosimplified"
+    }
   },
   {
     "id": "photoleap",
@@ -731,7 +984,11 @@
     "imageQualityRank": 29,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Mobile", "Professional", "Editing"],
+    "tags": [
+      "Mobile",
+      "Professional",
+      "Editing"
+    ],
     "website": "https://www.photoleapapp.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -741,7 +998,11 @@
     "visualStyles": "Mobile-optimized, Instagram-ready, professional",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/photoleap.png"
+    "localIcon": "/icons/providers/photoleap.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/lightricks/",
+      "x": "https://x.com/PhotoleapApp"
+    }
   },
   {
     "id": "vistacreate",
@@ -755,7 +1016,11 @@
     "imageQualityRank": 30,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Templates", "Design", "Social"],
+    "tags": [
+      "Templates",
+      "Design",
+      "Social"
+    ],
     "website": "https://create.vista.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -765,7 +1030,12 @@
     "visualStyles": "Template-based graphics, social media ready",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/vistacreate.png"
+    "localIcon": "/icons/providers/vistacreate.png",
+    "socials": {
+      "instagram": "https://www.instagram.com/vistacreate/",
+      "facebook": "https://www.facebook.com/vistacreateofficial/",
+      "x": "https://x.com/VistaCreate"
+    }
   },
   {
     "id": "artguru",
@@ -779,7 +1049,10 @@
     "imageQualityRank": 31,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Anime", "Asian Market"],
+    "tags": [
+      "Anime",
+      "Asian Market"
+    ],
     "website": "https://www.artguru.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -789,7 +1062,10 @@
     "visualStyles": "Anime, manga, Japanese illustration styles",
     "apiAvailable": false,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/artguru.png"
+    "localIcon": "/icons/providers/artguru.png",
+    "socials": {
+      "x": "https://x.com/ArtGuruOfficial"
+    }
   },
   {
     "id": "myedit",
@@ -803,7 +1079,11 @@
     "imageQualityRank": 32,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Quick", "Easy", "Web"],
+    "tags": [
+      "Quick",
+      "Easy",
+      "Web"
+    ],
     "website": "https://myedit.online",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -813,7 +1093,10 @@
     "visualStyles": "Quick edits, practical web-friendly outputs",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/myedit.png"
+    "localIcon": "/icons/providers/myedit.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/cyberlink/"
+    }
   },
   {
     "id": "visme",
@@ -827,7 +1110,10 @@
     "imageQualityRank": 33,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Presentations", "Infographics"],
+    "tags": [
+      "Presentations",
+      "Infographics"
+    ],
     "website": "https://www.visme.co",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -837,7 +1123,10 @@
     "visualStyles": "Business graphics, infographic-ready",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/visme.png"
+    "localIcon": "/icons/providers/visme.png",
+    "socials": {
+      "x": "https://x.com/VismeApp"
+    }
   },
   {
     "id": "hotpot",
@@ -851,7 +1140,10 @@
     "imageQualityRank": 34,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Marketing", "Graphics"],
+    "tags": [
+      "Marketing",
+      "Graphics"
+    ],
     "website": "https://hotpot.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -861,7 +1153,8 @@
     "visualStyles": "Marketing graphics, device mockups",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/hotpot.png"
+    "localIcon": "/icons/providers/hotpot.png",
+    "socials": null
   },
   {
     "id": "picwish",
@@ -875,7 +1168,10 @@
     "imageQualityRank": 36,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Photo Editing", "Enhancement"],
+    "tags": [
+      "Photo Editing",
+      "Enhancement"
+    ],
     "website": "https://picwish.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -885,7 +1181,8 @@
     "visualStyles": "Photo enhancements, practical edits",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/picwish.png"
+    "localIcon": "/icons/providers/picwish.png",
+    "socials": null
   },
   {
     "id": "clipdrop",
@@ -899,7 +1196,10 @@
     "imageQualityRank": 37,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["Editing", "Cleanup"],
+    "tags": [
+      "Editing",
+      "Cleanup"
+    ],
     "website": "https://clipdrop.co",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -909,7 +1209,11 @@
     "visualStyles": "Photo editing, background removal, cleanup",
     "apiAvailable": true,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/clipdrop.png"
+    "localIcon": "/icons/providers/clipdrop.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/clipdrop/",
+      "x": "https://x.com/clipdropapp"
+    }
   },
   {
     "id": "getimg",
@@ -923,7 +1227,10 @@
     "imageQualityRank": 39,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": ["API", "Custom Models"],
+    "tags": [
+      "API",
+      "Custom Models"
+    ],
     "website": "https://getimg.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -933,7 +1240,10 @@
     "visualStyles": "Wide range via custom models",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/getimg.png"
+    "localIcon": "/icons/providers/getimg.png",
+    "socials": {
+      "x": "https://x.com/getimg_ai"
+    }
   },
   {
     "id": "imagine-meta",
@@ -947,7 +1257,10 @@
     "imageQualityRank": 40,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": ["Meta", "Social"],
+    "tags": [
+      "Meta",
+      "Social"
+    ],
     "website": "https://imagine.meta.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -957,7 +1270,15 @@
     "visualStyles": "Social-optimized, Meta ecosystem",
     "apiAvailable": false,
     "affiliateProgramme": false,
-    "localIcon": "/icons/providers/imagine-meta.png"
+    "localIcon": "/icons/providers/imagine-meta.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/meta/",
+      "instagram": "https://www.instagram.com/meta/",
+      "facebook": "https://www.facebook.com/meta/",
+      "youtube": "https://www.youtube.com/@Meta",
+      "tiktok": "https://www.tiktok.com/@meta",
+      "x": "https://x.com/Meta"
+    }
   },
   {
     "id": "dreamlike",
@@ -971,7 +1292,10 @@
     "imageQualityRank": 41,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Stable Diffusion", "Web"],
+    "tags": [
+      "Stable Diffusion",
+      "Web"
+    ],
     "website": "https://dreamlike.art",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -981,7 +1305,11 @@
     "visualStyles": "Stable Diffusion range, web-friendly",
     "apiAvailable": false,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/dreamlike.png"
+    "localIcon": "/icons/providers/dreamlike.png",
+    "socials": {
+      "discord": "https://discord.gg/QyGR2FxsKU",
+      "x": "https://x.com/dreamlike_art"
+    }
   },
   {
     "id": "remove-bg",
@@ -995,7 +1323,10 @@
     "imageQualityRank": 42,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": ["Background Removal", "Utility"],
+    "tags": [
+      "Background Removal",
+      "Utility"
+    ],
     "website": "https://www.remove.bg",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -1005,6 +1336,10 @@
     "visualStyles": "Utility tool, not generative",
     "apiAvailable": true,
     "affiliateProgramme": true,
-    "localIcon": "/icons/providers/remove-bg.png"
+    "localIcon": "/icons/providers/remove-bg.png",
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/kaleido-ai/",
+      "x": "https://x.com/remove_bg"
+    }
   }
 ]

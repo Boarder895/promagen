@@ -10,8 +10,6 @@
     "precision": 4,
     "category": "major",
     "rank": 1,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "group": "core",
     "homeLongitude": 8.68,
     "demo": {
@@ -30,8 +28,6 @@
     "precision": 2,
     "category": "major",
     "rank": 2,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "group": "core",
     "homeLongitude": 139.69,
     "demo": {
@@ -50,8 +46,6 @@
     "precision": 4,
     "category": "major",
     "rank": 3,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "group": "core",
     "homeLongitude": 0,
     "demo": {
@@ -70,8 +64,6 @@
     "precision": 4,
     "category": "major",
     "rank": 4,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -90,8 +82,6 @@
     "precision": 4,
     "category": "major",
     "rank": 5,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -110,8 +100,6 @@
     "precision": 4,
     "category": "major",
     "rank": 6,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -130,8 +118,6 @@
     "precision": 4,
     "category": "major",
     "rank": 7,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -150,8 +136,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 8,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -170,8 +154,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 9,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "group": "core",
     "homeLongitude": 121.47,
     "demo": {
@@ -190,8 +172,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 10,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -210,8 +190,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 11,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -230,8 +208,6 @@
     "precision": 2,
     "category": "emerging",
     "rank": 12,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -250,8 +226,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 13,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -270,8 +244,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 14,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -290,8 +262,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 15,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -310,8 +280,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 16,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -330,8 +298,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 17,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -350,8 +316,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 18,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -370,8 +334,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 19,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -390,8 +352,6 @@
     "precision": 0,
     "category": "emerging",
     "rank": 20,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -410,8 +370,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 21,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -430,8 +388,6 @@
     "precision": 0,
     "category": "emerging",
     "rank": 22,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -450,8 +406,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 23,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -470,8 +424,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 24,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "group": "core",
     "homeLongitude": -46.63,
     "demo": {
@@ -490,8 +442,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 25,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -510,8 +460,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 26,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -530,8 +478,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 27,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -550,8 +496,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 28,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -570,8 +514,6 @@
     "precision": 2,
     "category": "emerging",
     "rank": 29,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -590,8 +532,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 30,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -610,8 +550,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 31,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -630,8 +568,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 32,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -650,8 +586,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 33,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -670,8 +604,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 34,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -690,8 +622,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 35,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -710,8 +640,6 @@
     "precision": 2,
     "category": "emerging",
     "rank": 36,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -730,8 +658,6 @@
     "precision": 2,
     "category": "emerging",
     "rank": 37,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -750,8 +676,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 38,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -770,8 +694,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 39,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -790,8 +712,6 @@
     "precision": 2,
     "category": "cross",
     "rank": 40,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -810,8 +730,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 41,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -830,8 +748,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 42,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -850,8 +766,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 43,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -870,8 +784,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 44,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -890,8 +802,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 45,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -910,8 +820,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 46,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -930,8 +838,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 47,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -950,8 +856,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 48,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -970,8 +874,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 49,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -990,8 +892,6 @@
     "precision": 2,
     "category": "emerging",
     "rank": 50,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1010,8 +910,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 51,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1030,8 +928,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 52,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1050,8 +946,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 53,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1070,8 +964,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 54,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1090,8 +982,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 55,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1110,8 +1000,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 56,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1130,8 +1018,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 57,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1150,8 +1036,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 58,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1170,8 +1054,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 59,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1190,8 +1072,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 60,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1210,8 +1090,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 61,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1230,8 +1108,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 62,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1250,8 +1126,6 @@
     "precision": 2,
     "category": "cross",
     "rank": 63,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1270,8 +1144,6 @@
     "precision": 2,
     "category": "cross",
     "rank": 64,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1290,8 +1162,6 @@
     "precision": 2,
     "category": "cross",
     "rank": 65,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1310,8 +1180,6 @@
     "precision": 2,
     "category": "cross",
     "rank": 66,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1330,8 +1198,6 @@
     "precision": 2,
     "category": "cross",
     "rank": 67,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1350,8 +1216,6 @@
     "precision": 3,
     "category": "cross",
     "rank": 68,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1370,8 +1234,6 @@
     "precision": 3,
     "category": "cross",
     "rank": 69,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1390,8 +1252,6 @@
     "precision": 3,
     "category": "cross",
     "rank": 70,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1410,8 +1270,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 71,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1430,8 +1288,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 72,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1450,8 +1306,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 73,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1470,8 +1324,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 74,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1490,8 +1342,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 75,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1510,8 +1360,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 76,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1530,8 +1378,6 @@
     "precision": 2,
     "category": "emerging",
     "rank": 77,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1550,8 +1396,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 78,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1570,8 +1414,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 79,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1590,8 +1432,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 80,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1610,8 +1450,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 81,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1630,8 +1468,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 82,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1650,8 +1486,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 83,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1670,8 +1504,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 84,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1690,8 +1522,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 85,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1710,8 +1540,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 86,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1730,8 +1558,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 87,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1750,8 +1576,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 88,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1770,8 +1594,6 @@
     "precision": 3,
     "category": "emerging",
     "rank": 89,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1790,8 +1612,6 @@
     "precision": 2,
     "category": "emerging",
     "rank": 90,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1810,8 +1630,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 91,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1830,8 +1648,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 92,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "group": "core",
     "homeLongitude": 28.05,
     "demo": {
@@ -1850,8 +1666,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 93,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1870,8 +1684,6 @@
     "precision": 4,
     "category": "emerging",
     "rank": 94,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1890,8 +1702,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 95,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1910,8 +1720,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 96,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1930,8 +1738,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 97,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1950,8 +1756,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 98,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1970,8 +1774,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 99,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -1990,8 +1792,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 100,
-    "isDefaultFree": false,
-    "isDefaultPaid": false,
     "group": "catalog",
     "homeLongitude": null,
     "demo": {
@@ -2010,8 +1810,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 101,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "group": "core",
     "homeLongitude": 151.21,
     "demo": {
@@ -2030,8 +1828,6 @@
     "precision": 4,
     "category": "cross",
     "rank": 102,
-    "isDefaultFree": true,
-    "isDefaultPaid": true,
     "group": "core",
     "homeLongitude": 0,
     "demo": {

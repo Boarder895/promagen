@@ -1,26 +1,15 @@
-// src/types/index-quote.ts
+// frontend/src/types/index-quote.ts
 // ============================================================================
-// INDEX QUOTE TYPE - Live stock market index data
+// INDEX QUOTE TYPE - Live stock market index data (gateway response shape)
 // ============================================================================
-// Represents real-time index data from Marketstack API.
-// Used by exchange cards to display headline index performance.
+// Important: gateway can legitimately return nulls for prices/changes (provider
+// downtime, closed markets, budget blocks, etc.). This file matches that reality.
 // ============================================================================
 
 /**
- * Represents a single index quote from Marketstack.
+ * Represents a single index quote from the gateway (Marketstack-backed).
  *
- * @example
- * ```ts
- * const nikkei: IndexQuote = {
- *   id: 'tse-tokyo',
- *   benchmark: 'nikkei_225',
- *   indexName: 'Nikkei 225',
- *   price: 38945.72,
- *   change: 312.45,
- *   percentChange: 0.81,
- *   asOf: '2025-01-13T14:23:45Z',
- * };
- * ```
+ * Note: price/change/percentChange/asOf can be null.
  */
 export interface IndexQuote {
   /**
@@ -32,7 +21,6 @@ export interface IndexQuote {
 
   /**
    * Marketstack benchmark key.
-   * Used to fetch data from /v2/indexinfo endpoint.
    * @example "nikkei_225", "sp500", "ftse_100"
    */
   benchmark: string;
@@ -44,29 +32,24 @@ export interface IndexQuote {
   indexName: string;
 
   /**
-   * Current index price/value.
-   * @example 38945.72
+   * Current index price/value (nullable).
    */
-  price: number;
+  price: number | null;
 
   /**
-   * Day change in points.
-   * Positive = up, negative = down.
-   * @example 312.45 or -156.20
+   * Day change in points (nullable).
    */
-  change: number;
+  change: number | null;
 
   /**
-   * Day change as percentage.
-   * @example 0.81 for +0.81%
+   * Day change as percentage (nullable).
    */
-  percentChange: number;
+  percentChange: number | null;
 
   /**
-   * ISO 8601 timestamp of when this quote was fetched.
-   * @example "2025-01-13T14:23:45Z"
+   * ISO 8601 timestamp of quote (nullable).
    */
-  asOf: string;
+  asOf: string | null;
 }
 
 /**
@@ -75,20 +58,28 @@ export interface IndexQuote {
 export type IndexTick = 'up' | 'down' | 'flat';
 
 /**
- * Derive tick direction from change value.
+ * Derive tick direction from change/percentChange (nullable-safe).
  */
-export function getIndexTick(change: number): IndexTick {
-  if (change > 0) return 'up';
-  if (change < 0) return 'down';
+export function getIndexTick(change: number | null, percentChange?: number | null): IndexTick {
+  const c = change ?? null;
+  const p = percentChange ?? null;
+
+  if (c === null && p === null) return 'flat';
+
+  // Prefer percentChange if present; otherwise use change.
+  const signal = p !== null ? p : c !== null ? c : 0;
+
+  if (signal > 0) return 'up';
+  if (signal < 0) return 'down';
   return 'flat';
 }
 
 /**
  * Format index price with locale-aware thousands separators.
- * @example formatIndexPrice(38945.72) => "38,945.72"
  */
-export function formatIndexPrice(price: number): string {
-  return price.toLocaleString('en-US', {
+export function formatIndexPrice(price: number | null): string {
+  if (price === null || !Number.isFinite(price)) return '—';
+  return price.toLocaleString('en-GB', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -96,12 +87,11 @@ export function formatIndexPrice(price: number): string {
 
 /**
  * Format change with sign and locale-aware formatting.
- * @example formatIndexChange(312.45) => "+312.45"
- * @example formatIndexChange(-156.20) => "-156.20"
  */
-export function formatIndexChange(change: number): string {
+export function formatIndexChange(change: number | null): string {
+  if (change === null || !Number.isFinite(change)) return '—';
   const sign = change >= 0 ? '+' : '';
-  return `${sign}${change.toLocaleString('en-US', {
+  return `${sign}${change.toLocaleString('en-GB', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -109,10 +99,9 @@ export function formatIndexChange(change: number): string {
 
 /**
  * Format percentage change with sign.
- * @example formatIndexPercent(0.81) => "+0.81%"
- * @example formatIndexPercent(-0.45) => "-0.45%"
  */
-export function formatIndexPercent(percent: number): string {
+export function formatIndexPercent(percent: number | null): string {
+  if (percent === null || !Number.isFinite(percent)) return '—';
   const sign = percent >= 0 ? '+' : '';
   return `${sign}${percent.toFixed(2)}%`;
 }

@@ -1,4 +1,4 @@
-// src/app/prompts/explore/page.tsx
+// src/app/studio/explore/page.tsx
 // ============================================================================
 // EXPLORE PAGE - Server Component
 // ============================================================================
@@ -17,6 +17,7 @@
 // - Navigate to builder with suggestions
 //
 // Authority: docs/authority/prompt-intelligence.md §9.2
+// UPDATED: Route moved from /prompts/explore to /studio/explore
 // ============================================================================
 
 import React from 'react';

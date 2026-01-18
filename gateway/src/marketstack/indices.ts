@@ -13,20 +13,20 @@
  */
 
 import { createFeedHandler } from '../lib/feed-handler.js';
+import { logDebug, logWarn } from '../lib/logging.js';
 import type {
   FeedConfig,
   IndexCatalogItem,
   IndexQuote,
   FeedHandler,
 } from '../lib/types.js';
-import { logDebug, logWarn } from '../lib/logging.js';
-import { indicesScheduler } from './scheduler.js';
+
 import {
   fetchMarketstackIndices,
   parseMarketstackResponse,
-  BENCHMARK_TO_MARKETSTACK,
   hasMarketstackMapping,
 } from './adapter.js';
+import { indicesScheduler } from './scheduler.js';
 
 // =============================================================================
 // CONFIGURATION
@@ -46,104 +46,6 @@ const INDICES_BUDGET_MINUTE = parseInt(
   process.env['INDICES_RIBBON_BUDGET_MINUTE_ALLOWANCE'] ?? '3',
   10,
 );
-
-// =============================================================================
-// FALLBACK DATA
-// =============================================================================
-
-/**
- * Fallback indices catalog - used ONLY if frontend SSOT is unreachable.
- * Top 8 global exchanges.
- */
-const FALLBACK_INDICES_CATALOG: IndexCatalogItem[] = [
-  {
-    id: 'tse-tokyo',
-    benchmark: 'nikkei_225',
-    indexName: 'Nikkei 225',
-    city: 'Tokyo',
-    country: 'Japan',
-    tz: 'Asia/Tokyo',
-  },
-  {
-    id: 'cboe-chicago',
-    benchmark: 'sp500',
-    indexName: 'S&P 500',
-    city: 'Chicago',
-    country: 'United States',
-    tz: 'America/Chicago',
-  },
-  {
-    id: 'lse-london',
-    benchmark: 'ftse_100',
-    indexName: 'FTSE 100',
-    city: 'London',
-    country: 'United Kingdom',
-    tz: 'Europe/London',
-  },
-  {
-    id: 'hkex-hong-kong',
-    benchmark: 'hang_seng',
-    indexName: 'Hang Seng Index',
-    city: 'Hong Kong',
-    country: 'Hong Kong',
-    tz: 'Asia/Hong_Kong',
-  },
-  {
-    id: 'asx-sydney',
-    benchmark: 'asx200',
-    indexName: 'S&P/ASX 200',
-    city: 'Sydney',
-    country: 'Australia',
-    tz: 'Australia/Sydney',
-  },
-  {
-    id: 'euronext-paris',
-    benchmark: 'cac_40',
-    indexName: 'CAC 40',
-    city: 'Paris',
-    country: 'France',
-    tz: 'Europe/Paris',
-  },
-  {
-    id: 'xetra-frankfurt',
-    benchmark: 'dax',
-    indexName: 'DAX',
-    city: 'Frankfurt',
-    country: 'Germany',
-    tz: 'Europe/Berlin',
-  },
-  {
-    id: 'tsx-toronto',
-    benchmark: 'tsx_composite',
-    indexName: 'S&P/TSX Composite',
-    city: 'Toronto',
-    country: 'Canada',
-    tz: 'America/Toronto',
-  },
-];
-
-const FALLBACK_INDICES_DEFAULTS = [
-  'tse-tokyo',
-  'cboe-chicago',
-  'lse-london',
-  'hkex-hong-kong',
-  'asx-sydney',
-  'euronext-paris',
-  'xetra-frankfurt',
-  'tsx-toronto',
-];
-
-/** Demo prices for fallback (when API unavailable) */
-const DEMO_INDEX_PRICES: Record<string, number> = {
-  nikkei_225: 38500,
-  sp500: 5950,
-  ftse_100: 8200,
-  hang_seng: 19800,
-  asx200: 8350,
-  cac_40: 7450,
-  dax: 20100,
-  tsx_composite: 24500,
-};
 
 // =============================================================================
 // FEED CONFIGURATION
@@ -170,14 +72,14 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
    */
   parseCatalog(data: unknown): IndexCatalogItem[] {
     if (!data || typeof data !== 'object') {
-      return FALLBACK_INDICES_CATALOG;
+      throw new Error('Invalid Indices SSOT payload');
     }
 
     const obj = data as Record<string, unknown>;
     const exchanges = obj['exchanges'];
 
     if (!Array.isArray(exchanges)) {
-      return FALLBACK_INDICES_CATALOG;
+      throw new Error('Indices SSOT payload missing exchanges[]');
     }
 
     const items: IndexCatalogItem[] = [];
@@ -193,10 +95,10 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
           : '';
 
       // Validate benchmark key
-      const benchmark =
-        typeof r['benchmark'] === 'string'
-          ? r['benchmark'].trim().slice(0, 50)
-          : '';
+      const benchmarkFromRoot = typeof r['benchmark'] === 'string' ? r['benchmark'] : '';
+      const marketstackObj = r['marketstack'] && typeof r['marketstack'] === 'object' ? (r['marketstack'] as Record<string, unknown>) : null;
+      const benchmarkFromNested = marketstackObj && typeof marketstackObj['benchmark'] === 'string' ? (marketstackObj['benchmark'] as string) : '';
+      const benchmark = (benchmarkFromRoot || benchmarkFromNested).trim().slice(0, 50);
 
       // Validate index name
       const indexName =
@@ -228,25 +130,35 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
       });
     }
 
-    return items.length > 0 ? items : FALLBACK_INDICES_CATALOG;
+    if (items.length === 0) {
+      throw new Error('Indices SSOT payload contained no valid exchanges');
+    }
+
+    return items;
   },
 
   /**
    * Get default item IDs from catalog.
    */
-  getDefaults(catalog: IndexCatalogItem[]): string[] {
-    // Try to match fallback defaults with catalog
-    const catalogIds = new Set(catalog.map((c) => c.id));
-    const defaults = FALLBACK_INDICES_DEFAULTS.filter((id) =>
-      catalogIds.has(id),
-    );
+  getDefaults(catalog: IndexCatalogItem[], ssotPayload: unknown): string[] {
+    const payload = ssotPayload && typeof ssotPayload === 'object' ? (ssotPayload as Record<string, unknown>) : null;
 
-    if (defaults.length >= 8) {
-      return defaults.slice(0, 16);
+    // Prefer explicit ordered defaults from SSOT (exchanges.selected.json via config endpoint)
+    const candidates = ['defaultExchangeIds', 'selectedExchangeIds', 'defaultIds', 'exchangeIds'];
+    for (const key of candidates) {
+      const v = payload ? payload[key] : undefined;
+      if (Array.isArray(v)) {
+        const ids = v
+          .filter((x): x is string => typeof x === 'string')
+          .map((s) => s.toLowerCase().trim());
+        const set = new Set(catalog.map((c) => c.id));
+        const filtered = ids.filter((id) => set.has(id));
+        if (filtered.length > 0) return filtered;
+      }
     }
 
-    // Fall back to first 16 from catalog
-    return catalog.slice(0, 16).map((c) => c.id);
+    // Pure SSOT: no hardcoded or "first N" defaults
+    throw new Error('Indices defaults not defined in SSOT (no defaultExchangeIds and no isDefaultFree flags)');
   },
 
   /**

@@ -260,9 +260,17 @@ function formatLogEntry(
 /**
  * Log a debug message (verbose, development only).
  */
+function writeStdout(line: string): void {
+  process.stdout.write(`${line}\n`);
+}
+
+function writeStderr(line: string): void {
+  process.stderr.write(`${line}\n`);
+}
+
 export function logDebug(message: string, context?: Record<string, unknown>): void {
   if (currentLevel > LOG_LEVELS.debug) return;
-  console.log(formatLogEntry('debug', message, context));
+  writeStdout(formatLogEntry('debug', message, context));
 }
 
 /**
@@ -270,7 +278,7 @@ export function logDebug(message: string, context?: Record<string, unknown>): vo
  */
 export function logInfo(message: string, context?: Record<string, unknown>): void {
   if (currentLevel > LOG_LEVELS.info) return;
-  console.log(formatLogEntry('info', message, context));
+  writeStdout(formatLogEntry('info', message, context));
 }
 
 /**
@@ -278,7 +286,7 @@ export function logInfo(message: string, context?: Record<string, unknown>): voi
  */
 export function logWarn(message: string, context?: Record<string, unknown>): void {
   if (currentLevel > LOG_LEVELS.warn) return;
-  console.warn(formatLogEntry('warn', message, context));
+  writeStderr(formatLogEntry('warn', message, context));
 }
 
 /**
@@ -290,7 +298,7 @@ export function logError(message: string, context?: Record<string, unknown>): vo
   const { shouldLog, suppressedCount } = shouldLogError(message);
   if (!shouldLog) return;
 
-  console.error(formatLogEntry('error', message, context, suppressedCount));
+  writeStderr(formatLogEntry('error', message, context, suppressedCount));
 }
 
 /**

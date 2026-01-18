@@ -38,8 +38,10 @@ const selectedIds: string[] = (exchangesSelected as ExchangesSelectedJson).ids ?
 const CATALOG = exchangesCatalog as ExchangeCatalogRow[];
 
 /**
- * Map the selected id list to full exchange objects, sorted by longitude
- * from east → west (smallest → largest).
+ * Map the selected id list to full exchange objects.
+ *
+ * SSOT rule (Option A): the order in exchanges.selected.json is authoritative.
+ * We therefore preserve that exact order (do NOT sort here).
  */
 function getSelectedExchanges(): ExchangeSummary[] {
   const byId = new Map<string, ExchangeCatalogRow>(CATALOG.map((row) => [row.id, row]));
@@ -48,7 +50,10 @@ function getSelectedExchanges(): ExchangeSummary[] {
 
   for (const id of selectedIds) {
     const src = byId.get(id);
-    if (!src) continue;
+    if (!src) {
+      // If SSOT references an unknown ID, fail loudly so it is fixed at the source.
+      throw new Error(`[exchanges] SSOT selected id not found in catalog: ${id}`);
+    }
 
     rows.push({
       id: src.id,
@@ -62,8 +67,6 @@ function getSelectedExchanges(): ExchangeSummary[] {
       hemisphere: src.hemisphere,
     });
   }
-
-  rows.sort((a, b) => a.longitude - b.longitude);
 
   return rows;
 }

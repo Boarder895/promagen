@@ -373,6 +373,14 @@ export interface BaseResponseMeta {
   readonly expiresAt?: string;
   readonly provider: ProviderId;
   readonly ssotSource: SsotSource;
+  /** SSOT version number (from frontend, or 0 for fallback) */
+  readonly ssotVersion?: number;
+  /** Deterministic SHA-256 hash of the parsed SSOT snapshot */
+  readonly ssotHash?: string;
+  /** Short fingerprint (first 12 chars of ssotHash) */
+  readonly ssotFingerprint?: string;
+  /** When the currently active SSOT snapshot was taken */
+  readonly ssotSnapshotAt?: string;
   readonly budget: BudgetResponse;
 }
 
@@ -448,8 +456,13 @@ export interface FeedConfig<TCatalog, TQuote> {
   /** Parse catalog response from SSOT */
   readonly parseCatalog: (data: unknown) => TCatalog[];
 
-  /** Get default item IDs from catalog */
-  readonly getDefaults: (catalog: TCatalog[]) => string[];
+  /**
+   * Get default item IDs.
+   *
+   * IMPORTANT: Defaults must come from the frontend SSOT payload (or flags
+   * contained within it) and MUST preserve order.
+   */
+  readonly getDefaults: (catalog: TCatalog[], ssotPayload: unknown) => string[];
 
   /** Parse API response to quotes */
   readonly parseQuotes: (data: unknown, catalog: TCatalog[]) => TQuote[];
@@ -482,6 +495,10 @@ export interface FeedTraceInfo {
   readonly feedId: FeedId;
   readonly ssotSource: SsotSource;
   readonly ssotUrl: string;
+  readonly ssotVersion?: number;
+  readonly ssotHash?: string;
+  readonly ssotFingerprint?: string;
+  readonly ssotSnapshotAt?: string;
   readonly catalogCount: number;
   readonly defaultCount: number;
   readonly defaults: readonly string[];

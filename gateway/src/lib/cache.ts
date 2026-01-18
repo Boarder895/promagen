@@ -301,14 +301,21 @@ export function createCache<T>(ttlSeconds: number, maxSize?: number): GenericCac
   return new GenericCache<T>(ttlSeconds * 1000, maxSize);
 }
 
+export type FeedCaches = {
+  fx: GenericCache<unknown>;
+  commodities: GenericCache<unknown>;
+  crypto: GenericCache<unknown>;
+  indices: GenericCache<unknown>;
+};
+
 /**
  * Create caches for all feed types with appropriate TTLs.
  */
-export function createFeedCaches() {
+export function createFeedCaches(): FeedCaches {
   return {
-    fx: createCache(1800),        // 30 minutes
-    commodities: createCache(1800),
-    crypto: createCache(1800),
-    indices: createCache(7200),   // 2 hours
+    fx: createCache<unknown>(1800),        // 30 minutes
+    commodities: createCache<unknown>(1800),
+    crypto: createCache<unknown>(1800),
+    indices: createCache<unknown>(7200),   // 2 hours
   };
 }

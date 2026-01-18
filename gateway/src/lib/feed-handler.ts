@@ -35,6 +35,12 @@
  * @module lib/feed-handler
  */
 
+import { GenericCache } from './cache.js';
+import { CircuitBreaker } from './circuit.js';
+import { RequestDeduplicator } from './dedup.js';
+import { logInfo, logWarn, logError, logDebug, logFeedInit } from './logging.js';
+import { getSharedBudget } from './shared-budgets.js';
+import { computeSsotHash, loadSsotSnapshot, saveSsotSnapshot } from './ssot-snapshot.js';
 import type {
   FeedConfig,
   FeedHandler,
@@ -44,11 +50,6 @@ import type {
   DataMode,
   SsotSource,
 } from './types.js';
-import { GenericCache } from './cache.js';
-import { CircuitBreaker } from './circuit.js';
-import { RequestDeduplicator } from './dedup.js';
-import { getSharedBudget } from './shared-budgets.js';
-import { logInfo, logWarn, logError, logDebug, logFeedInit } from './logging.js';
 
 // =============================================================================
 // FEED HANDLER IMPLEMENTATION
@@ -101,6 +102,12 @@ export function createFeedHandler<TCatalog, TQuote>(
   /** Whether SSOT was loaded from frontend or using fallback */
   let ssotSource: SsotSource = 'fallback';
 
+  /** SSOT provenance (Chunk 1) */
+  let ssotVersion: number = 0;
+  let ssotHash: string | undefined;
+  let ssotFingerprint: string | undefined;
+  let ssotSnapshotAt: string | undefined;
+
   /** Whether handler is initialized */
   let ready = false;
 
@@ -148,6 +155,36 @@ export function createFeedHandler<TCatalog, TQuote>(
       hasScheduler: !!config.scheduler,
     });
 
+    // 1) Load snapshot FIRST (no live dependency)
+    const existingSnapshot = await loadSsotSnapshot<TCatalog>(config.id);
+    if (existingSnapshot) {
+      catalog = [...existingSnapshot.catalog] as TCatalog[];
+      defaults = [...existingSnapshot.defaults];
+      ssotSource = existingSnapshot.ssotSource;
+      ssotVersion = existingSnapshot.provenance.ssotVersion;
+      ssotHash = existingSnapshot.provenance.ssotHash;
+      ssotFingerprint = existingSnapshot.provenance.ssotFingerprint;
+      ssotSnapshotAt = existingSnapshot.provenance.snapshotAt;
+
+      logFeedInit(config.id, existingSnapshot.ssotSource, catalog.length);
+    }
+
+    // 2) If no snapshot exists, we MUST load from frontend SSOT.
+    // Pure SSOT rule: the ONLY fallback is a previously saved snapshot.
+    if (!existingSnapshot) {
+      await refreshSsotFromFrontend({ throwOnFailure: true });
+    }
+
+    ready = true;
+
+    // 3) Refresh snapshot from frontend in background.
+    void refreshSsotFromFrontend({ throwOnFailure: false });
+  }
+
+  /**
+   * Refresh SSOT from frontend. On failure, keep last-known-good snapshot.
+   */
+  async function refreshSsotFromFrontend(opts: { throwOnFailure: boolean }): Promise<void> {
     try {
       const response = await fetch(config.ssotUrl, {
         headers: { Accept: 'application/json' },
@@ -159,26 +196,58 @@ export function createFeedHandler<TCatalog, TQuote>(
       }
 
       const data: unknown = await response.json();
-      catalog = config.parseCatalog(data);
-      defaults = config.getDefaults(catalog);
+      const nextCatalog = config.parseCatalog(data);
+      const nextDefaults = config.getDefaults(nextCatalog, data);
+
+      // Determine SSOT version if provided
+      const versionFromPayload =
+        data && typeof data === 'object' && typeof (data as Record<string, unknown>)['version'] === 'number'
+          ? ((data as Record<string, unknown>)['version'] as number)
+          : 1;
+
+      const { hash, fingerprint } = computeSsotHash({ catalog: nextCatalog, defaults: nextDefaults });
+
+      // No change
+      if (hash === ssotHash) {
+        return;
+      }
+
+      // Swap in new snapshot (LKG is the previous in-memory state)
+      catalog = nextCatalog;
+      defaults = nextDefaults;
       ssotSource = 'frontend';
+      ssotVersion = versionFromPayload;
+      ssotHash = hash;
+      ssotFingerprint = fingerprint;
+      ssotSnapshotAt = new Date().toISOString();
+
+      await saveSsotSnapshot<TCatalog>({
+        schemaVersion: 1,
+        feedId: config.id,
+        ssotUrl: config.ssotUrl,
+        ssotSource: 'frontend',
+        provenance: {
+          ssotVersion,
+          ssotHash: ssotHash,
+          ssotFingerprint: ssotFingerprint,
+          snapshotAt: ssotSnapshotAt,
+        },
+        catalog,
+        defaults,
+      });
 
       logFeedInit(config.id, 'frontend', catalog.length);
     } catch (error) {
-      logWarn(`SSOT fetch failed, using fallback: ${config.id}`, {
+      // Keep LKG (do not modify catalog/defaults/provenance)
+      logWarn(`SSOT refresh failed; keeping last-known-good: ${config.id}`, {
         feedId: config.id,
         error: error instanceof Error ? error.message : String(error),
       });
 
-      // Use parseCatalog with null to trigger fallback
-      catalog = config.parseCatalog(null);
-      defaults = config.getDefaults(catalog);
-      ssotSource = 'fallback';
-
-      logFeedInit(config.id, 'fallback', catalog.length);
+      if (opts.throwOnFailure) {
+        throw error;
+      }
     }
-
-    ready = true;
   }
 
   // ===========================================================================
@@ -203,6 +272,7 @@ export function createFeedHandler<TCatalog, TQuote>(
     data: TQuote[];
   }> {
     const cacheKey = getCacheKey(ids);
+    const requestedCatalog = getRequestedCatalog(ids);
 
     // 1. Check cache first
     const cached = cache.get(cacheKey);
@@ -226,7 +296,7 @@ export function createFeedHandler<TCatalog, TQuote>(
       }
 
       // No stale data - return fallback
-      const fallback = config.getFallback(catalog);
+      const fallback = config.getFallback(requestedCatalog);
       return {
         meta: buildMeta('fallback'),
         data: fallback,
@@ -252,7 +322,7 @@ export function createFeedHandler<TCatalog, TQuote>(
       }
 
       // No stale data - return fallback
-      const fallback = config.getFallback(catalog);
+      const fallback = config.getFallback(requestedCatalog);
       return {
         meta: buildMeta('fallback'),
         data: fallback,
@@ -262,7 +332,7 @@ export function createFeedHandler<TCatalog, TQuote>(
     // 4. Fetch with deduplication
     try {
       const quotes = await dedup.dedupe(cacheKey, async () => {
-        return await fetchFromProvider(ids);
+        return await fetchFromProvider(ids, requestedCatalog);
       });
 
       // Cache the result
@@ -290,7 +360,7 @@ export function createFeedHandler<TCatalog, TQuote>(
       }
 
       // Return fallback
-      const fallback = config.getFallback(catalog);
+      const fallback = config.getFallback(requestedCatalog);
       return {
         meta: buildMeta('error'),
         data: fallback,
@@ -304,13 +374,13 @@ export function createFeedHandler<TCatalog, TQuote>(
    * FIXED: API key is now fetched DYNAMICALLY at fetch time, not once at module load.
    * This ensures env vars are available even if they weren't when the module loaded.
    */
-  async function fetchFromProvider(ids: string[]): Promise<TQuote[]> {
+  async function fetchFromProvider(ids: string[], requestedCatalog: TCatalog[]): Promise<TQuote[]> {
     // No provider configured - return fallback
     if (config.provider === 'none') {
       logDebug(`No provider configured for ${config.id}, returning fallback`, {
         feedId: config.id,
       });
-      return config.getFallback(catalog);
+      return config.getFallback(requestedCatalog);
     }
 
     // CRITICAL FIX: Get API key DYNAMICALLY at fetch time
@@ -322,13 +392,13 @@ export function createFeedHandler<TCatalog, TQuote>(
         provider: config.provider,
         envVar: config.provider === 'twelvedata' ? 'TWELVEDATA_API_KEY' : 'MARKETSTACK_API_KEY',
       });
-      return config.getFallback(catalog);
+      return config.getFallback(requestedCatalog);
     }
 
     // Get symbols for the requested IDs
     const symbols: string[] = [];
     for (const id of ids) {
-      const item = config.getById(catalog, id);
+      const item = config.getById(requestedCatalog, id);
       if (item) {
         symbols.push(config.getSymbol(item));
       }
@@ -339,7 +409,7 @@ export function createFeedHandler<TCatalog, TQuote>(
         feedId: config.id,
         requestedIds: ids.slice(0, 5),
       });
-      return config.getFallback(catalog);
+      return config.getFallback(requestedCatalog);
     }
 
     // Spend budget (SHARED across all feeds using this provider)
@@ -355,7 +425,7 @@ export function createFeedHandler<TCatalog, TQuote>(
     try {
       const rawData = await config.fetchQuotes(symbols, apiKey);
       circuit.recordSuccess();
-      return config.parseQuotes(rawData, catalog);
+      return config.parseQuotes(rawData, requestedCatalog);
     } catch (error) {
       circuit.recordFailure();
       throw error;
@@ -500,7 +570,8 @@ export function createFeedHandler<TCatalog, TQuote>(
 
     try {
       const quotes = await dedup.dedupe(`refresh:${cacheKey}`, async () => {
-        return await fetchFromProvider(defaults);
+        const requestedCatalog = getRequestedCatalog(defaults);
+        return await fetchFromProvider(defaults, requestedCatalog);
       });
 
       cache.set(cacheKey, quotes);
@@ -524,13 +595,26 @@ export function createFeedHandler<TCatalog, TQuote>(
    * Generate cache key for a set of IDs.
    */
   function getCacheKey(ids: string[]): string {
-    // Sort for consistent keys
-    const sortedIds = [...ids].sort();
-    if (sortedIds.length === defaults.length && sortedIds.every((id, i) => id === defaults[i])) {
-      return `${config.cacheKey}:default`;
+    const fp = ssotFingerprint ?? 'no-ssot';
+    // IMPORTANT: Order matters (SSOT + user selections).
+    // We DO NOT sort IDs; caller is responsible for a stable order.
+    if (ids.length === defaults.length && ids.every((id, i) => id === defaults[i])) {
+      return `${config.cacheKey}:${fp}:default`;
     }
-    // For custom selections, hash the IDs
-    return `${config.cacheKey}:custom:${sortedIds.join(',')}`;
+    return `${config.cacheKey}:${fp}:custom:${ids.join(',')}`;
+  }
+
+  /**
+   * Build a requested catalog subset in the exact requested order.
+   * Unknown IDs are ignored here (they should be rejected by route validation).
+   */
+  function getRequestedCatalog(ids: string[]): TCatalog[] {
+    const out: TCatalog[] = [];
+    for (const id of ids) {
+      const item = config.getById(catalog, id);
+      if (item) out.push(item);
+    }
+    return out;
   }
 
   /**
@@ -543,6 +627,10 @@ export function createFeedHandler<TCatalog, TQuote>(
       expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
       provider: config.provider,
       ssotSource,
+      ssotVersion,
+      ssotHash,
+      ssotFingerprint,
+      ssotSnapshotAt,
       budget: budget.getResponse(),
     };
   }
@@ -562,6 +650,10 @@ export function createFeedHandler<TCatalog, TQuote>(
       feedId: config.id,
       ssotSource,
       ssotUrl: config.ssotUrl,
+      ssotVersion,
+      ssotHash,
+      ssotFingerprint,
+      ssotSnapshotAt,
       catalogCount: catalog.length,
       defaultCount: defaults.length,
       defaults: [...defaults],

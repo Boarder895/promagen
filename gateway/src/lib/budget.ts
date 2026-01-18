@@ -20,8 +20,8 @@
  * @module lib/budget
  */
 
-import type { BudgetSnapshot, BudgetState, BudgetResponse } from './types.js';
 import { logInfo, logWarn } from './logging.js';
+import type { BudgetSnapshot, BudgetState, BudgetResponse } from './types.js';
 
 // =============================================================================
 // CONFIGURATION

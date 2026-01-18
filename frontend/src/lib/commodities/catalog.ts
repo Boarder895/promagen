@@ -1,16 +1,15 @@
 // frontend/src/lib/commodities/catalog.ts
 //
-// Typed helper layer over src/data/commodities/commodities.catalog.json.
+// Typed helper layer over src/data/commodities SSOT.
 //
-// Goal:
-//   - Keep components away from JSON imports.
-//   - Provide a small, predictable API for common use-cases:
-//       * full catalogue
-//       * active only
-//       * default free / paid sets
-//       * lookups by id / group / subgroup
+// Option A (selected.json list):
+// - commodities.catalog.json defines the universe (metadata).
+// - commodities.selected.json defines the free default ordered list.
+// - commodities.paid.selected.json defines the paid default ordered list (optional, used for internal helpers).
 
 import commoditiesJson from '@/data/commodities/commodities.catalog.json';
+import freeSelectedJson from '@/data/commodities/commodities.selected.json';
+import paidSelectedJson from '@/data/commodities/commodities.paid.selected.json';
 import type {
   Commodity,
   CommoditiesCatalog,
@@ -18,8 +17,35 @@ import type {
   CommoditySubGroup,
 } from '@/data/commodities/commodities.catalog';
 
+type SelectedList = { ids: string[] };
+
 // Canonical in-memory catalogue.
 const ALL_COMMODITIES_INTERNAL = commoditiesJson as CommoditiesCatalog;
+const BY_ID = new Map<string, Commodity>(ALL_COMMODITIES_INTERNAL.map((c) => [c.id, c]));
+
+function resolveSelected(ids: string[], label: string): Commodity[] {
+  const out: Commodity[] = [];
+  const missing: string[] = [];
+
+  for (const id of ids) {
+    const item = BY_ID.get(id);
+    if (!item || !item.isActive) {
+      missing.push(id);
+      continue;
+    }
+    out.push(item);
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `commodities SSOT integrity error: ${label} contains ids not present/active in commodities.catalog.json: ${missing.join(
+        ', ',
+      )}`,
+    );
+  }
+
+  return out;
+}
 
 /**
  * Return the raw commodities catalogue exactly as stored in JSON.
@@ -40,19 +66,21 @@ export function getActiveCommodities(): Commodity[] {
 /**
  * Default free-tier commodities.
  *
- * SSOT rule: order MUST match commodities.catalog.json (no sorting).
+ * SSOT rule: order MUST match commodities.selected.json.
  */
 export function getDefaultFreeCommodities(): Commodity[] {
-  return getActiveCommodities().filter((item) => item.isDefaultFree);
+  const ids = (freeSelectedJson as SelectedList).ids;
+  return resolveSelected(ids, 'commodities.selected.json');
 }
 
 /**
  * Default paid-tier commodities.
  *
- * SSOT rule: order MUST match commodities.catalog.json (no sorting).
+ * SSOT rule: order MUST match commodities.paid.selected.json.
  */
 export function getDefaultPaidCommodities(): Commodity[] {
-  return getActiveCommodities().filter((item) => item.isDefaultPaid);
+  const ids = (paidSelectedJson as SelectedList).ids;
+  return resolveSelected(ids, 'commodities.paid.selected.json');
 }
 
 /**
@@ -73,12 +101,8 @@ export function getCommoditiesBySubGroup(subGroup: CommoditySubGroup): Commodity
  * Lookup a commodity by id.
  */
 export function getCommodityById(id: string): Commodity | undefined {
-  return ALL_COMMODITIES_INTERNAL.find((item) => item.id === id);
+  return BY_ID.get(id);
 }
-
-// ───────────────────────────────────────────────────────────────────────────────
-// Internal helpers
-// ───────────────────────────────────────────────────────────────────────────────
 
 // Re-export for any other helpers that want direct access.
 export const ALL_COMMODITIES: CommoditiesCatalog = ALL_COMMODITIES_INTERNAL;

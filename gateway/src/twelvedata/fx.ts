@@ -13,10 +13,11 @@
  */
 
 import { createFeedHandler } from '../lib/feed-handler.js';
-import type { FeedConfig, FxPair, FxQuote, FeedHandler } from '../lib/types.js';
 import { logDebug } from '../lib/logging.js';
-import { fxScheduler } from './scheduler.js';
+import type { FeedConfig, FxPair, FxQuote, FeedHandler } from '../lib/types.js';
+
 import { fetchTwelveDataPrices, parseFxPriceResponse, buildFxSymbol } from './adapter.js';
+import { fxScheduler } from './scheduler.js';
 
 // =============================================================================
 // CONFIGURATION
@@ -28,23 +29,10 @@ const FX_BUDGET_DAILY = parseInt(process.env['FX_RIBBON_BUDGET_DAILY_ALLOWANCE']
 const FX_BUDGET_MINUTE = parseInt(process.env['FX_RIBBON_BUDGET_MINUTE_ALLOWANCE'] ?? '8', 10);
 
 // =============================================================================
-// FALLBACK DATA
+// PURE SSOT NOTE
 // =============================================================================
-
-/**
- * Fallback FX pairs - used ONLY if frontend SSOT is unreachable.
- * These match the user's selected exotic pairs for the ribbon.
- */
-const FALLBACK_FX_PAIRS: FxPair[] = [
-  { id: 'eur-usd', base: 'EUR', quote: 'USD', demoPrice: 1.0842, isDefaultFree: true },
-  { id: 'usd-jpy', base: 'USD', quote: 'JPY', demoPrice: 157.92, isDefaultFree: true },
-  { id: 'gbp-usd', base: 'GBP', quote: 'USD', demoPrice: 1.255, isDefaultFree: true },
-  { id: 'usd-cny', base: 'USD', quote: 'CNY', demoPrice: 7.2985, isDefaultFree: true },
-  { id: 'usd-brl', base: 'USD', quote: 'BRL', demoPrice: 6.125, isDefaultFree: true },
-  { id: 'gbp-zar', base: 'GBP', quote: 'ZAR', demoPrice: 23.505, isDefaultFree: true },
-  { id: 'aud-gbp', base: 'AUD', quote: 'GBP', demoPrice: 0.4952, isDefaultFree: true },
-  { id: 'gbp-eur', base: 'GBP', quote: 'EUR', demoPrice: 1.1578, isDefaultFree: true },
-];
+// This gateway must not embed fallback catalogs or demo prices.
+// The ONLY allowed fallback is a previously saved SSOT snapshot.
 
 // =============================================================================
 // FEED CONFIGURATION
@@ -70,9 +58,7 @@ const fxConfig: FeedConfig<FxPair, FxQuote> = {
    * Parse SSOT catalog response.
    */
   parseCatalog(data: unknown): FxPair[] {
-    if (!data || typeof data !== 'object') {
-      return FALLBACK_FX_PAIRS;
-    }
+    if (!data || typeof data !== 'object') throw new Error('Invalid FX SSOT payload');
 
     const obj = data as Record<string, unknown>;
     let pairsArray: unknown[] = [];
@@ -116,28 +102,39 @@ const fxConfig: FeedConfig<FxPair, FxQuote> = {
             : undefined,
         isDefaultFree: typeof raw['isDefaultFree'] === 'boolean' ? raw['isDefaultFree'] : undefined,
         isDefaultPaid: typeof raw['isDefaultPaid'] === 'boolean' ? raw['isDefaultPaid'] : undefined,
-        demoPrice:
-          typeof raw['demoPrice'] === 'number' && raw['demoPrice'] > 0
-            ? raw['demoPrice']
-            : undefined,
+        // Demo/synthetic prices are intentionally NOT consumed by the gateway.
       });
     }
 
-    return pairs.length > 0 ? pairs : FALLBACK_FX_PAIRS;
+    if (pairs.length === 0) throw new Error('FX SSOT payload contained no valid pairs');
+    return pairs;
   },
 
   /**
    * Get default pair IDs from catalog.
    */
-  getDefaults(catalog: FxPair[]): string[] {
-    const defaults = catalog.filter((p) => p.isDefaultFree === true).map((p) => p.id);
-
-    // If no defaults flagged, use first 8
-    if (defaults.length === 0) {
-      return catalog.slice(0, 8).map((p) => p.id);
+  getDefaults(catalog: FxPair[], ssotPayload: unknown): string[] {
+    // Prefer explicit ordered default IDs if the frontend provides them
+    const payload = ssotPayload && typeof ssotPayload === 'object' ? (ssotPayload as Record<string, unknown>) : null;
+    const candidates = ['defaultPairIds', 'defaultPairs', 'defaultIds', 'pairIds'];
+    for (const key of candidates) {
+      const v = payload ? payload[key] : undefined;
+      if (Array.isArray(v)) {
+        const ids = v
+          .filter((x): x is string => typeof x === 'string')
+          .map((s) => s.toLowerCase().trim());
+        const set = new Set(catalog.map((p) => p.id));
+        const filtered = ids.filter((id) => set.has(id));
+        if (filtered.length > 0) return filtered;
+      }
     }
 
-    return defaults;
+    // Otherwise use SSOT flags in catalog (order preserved)
+    const flagged = catalog.filter((p) => p.isDefaultFree === true).map((p) => p.id);
+    if (flagged.length > 0) return flagged;
+
+    // Pure SSOT: no hardcoded or "first N" defaults
+    throw new Error('FX defaults not defined in SSOT (no default IDs or isDefaultFree flags)');
   },
 
   /**
@@ -262,6 +259,7 @@ function isValidPairIdFormat(id: string): boolean {
 export function validateFxSelection(
   pairIds: string[],
   tier: 'free' | 'paid',
+  catalogMap: Map<string, FxPair>,
 ): {
   valid: boolean;
   errors: string[];
@@ -310,13 +308,18 @@ export function validateFxSelection(
     );
   }
 
-  // Validate format
+  // Validate format + SSOT membership
   const allowedPairIds: string[] = [];
   const malformedIds: string[] = [];
+  const unknownIds: string[] = [];
 
   for (const id of normalizedIds) {
     if (isValidPairIdFormat(id)) {
-      allowedPairIds.push(id);
+      if (catalogMap.has(id)) {
+        allowedPairIds.push(id);
+      } else {
+        unknownIds.push(id);
+      }
     } else {
       malformedIds.push(id);
     }
@@ -326,6 +329,14 @@ export function validateFxSelection(
     errors.push(
       `Malformed pair IDs (expected format: xxx-yyy): ${malformedIds.slice(0, 5).join(', ')}${
         malformedIds.length > 5 ? '...' : ''
+      }`,
+    );
+  }
+
+  if (unknownIds.length > 0) {
+    errors.push(
+      `Unknown pair IDs (not in SSOT catalog): ${unknownIds.slice(0, 5).join(', ')}${
+        unknownIds.length > 5 ? '...' : ''
       }`,
     );
   }

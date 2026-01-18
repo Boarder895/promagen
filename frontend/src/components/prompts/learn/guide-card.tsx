@@ -3,39 +3,95 @@
 // GUIDE CARD
 // ============================================================================
 // Card component for displaying learning guides.
-// Design: DNA Helix + Ethereal Glow hybrid
+// Design: DNA Helix + Ethereal Glow hybrid (matches Explore page family-card.tsx)
 // Authority: docs/authority/prompt-intelligence.md §9.3
+// UPDATED: Each guide has its own unique color scheme (12 distinct colors)
+// UPDATED: Tags use simple single-color styling matching family-card.tsx
 // ============================================================================
 
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
 import type { LearnGuide } from '@/types/learn-content';
+import type { PlatformTier } from '@/data/platform-tiers';
 
 // ============================================================================
-// CATEGORY COLOUR MAPPING
+// GUIDE COLOUR MAPPING - 12 unique colors for 12 guides
+// Each guide gets its own distinct color scheme like the Explore page
 // ============================================================================
 
-const CATEGORY_COLOURS: Record<string, { gradient: string; glow: string; accent: string }> = {
-  'fundamentals': {
-    gradient: 'from-sky-500 via-blue-500 to-indigo-500',
+const GUIDE_COLOURS: Record<string, { gradient: string; glow: string; accent: string }> = {
+  // 1. Prompt Engineering Fundamentals - Sky/Blue (foundational, overview)
+  'prompt-fundamentals': {
+    gradient: 'from-sky-400 via-blue-500 to-indigo-500',
     glow: 'rgba(56, 189, 248, 0.15)',
     accent: 'text-sky-400',
   },
-  'advanced': {
-    gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
+  // 2. Crafting Your Subject - Rose/Pink (portrait-like, about subjects)
+  'crafting-subject': {
+    gradient: 'from-rose-400 via-pink-400 to-red-400',
+    glow: 'rgba(251, 113, 133, 0.15)',
+    accent: 'text-rose-400',
+  },
+  // 3. Action, Pose & Movement - Orange/Amber (dynamic, energetic)
+  'action-pose': {
+    gradient: 'from-orange-400 via-amber-500 to-yellow-500',
+    glow: 'rgba(251, 146, 60, 0.15)',
+    accent: 'text-orange-400',
+  },
+  // 4. Mastering Style Modifiers - Violet/Purple (artistic, creative)
+  'style-modifiers': {
+    gradient: 'from-violet-400 via-purple-500 to-fuchsia-500',
     glow: 'rgba(139, 92, 246, 0.15)',
     accent: 'text-violet-400',
   },
-  'platform-specific': {
-    gradient: 'from-amber-500 via-orange-500 to-red-500',
+  // 5. Environments & Settings - Emerald/Green (organic, natural)
+  'environments-settings': {
+    gradient: 'from-emerald-400 via-green-500 to-teal-500',
+    glow: 'rgba(16, 185, 129, 0.15)',
+    accent: 'text-emerald-400',
+  },
+  // 6. Composition & Framing - Cyan/Teal (structural, composed)
+  'composition-framing': {
+    gradient: 'from-cyan-400 via-teal-500 to-emerald-500',
+    glow: 'rgba(34, 211, 238, 0.15)',
+    accent: 'text-cyan-400',
+  },
+  // 7. Camera & Lens Techniques - Slate/Gray (technical, neutral)
+  'camera-lens': {
+    gradient: 'from-slate-400 via-gray-500 to-zinc-500',
+    glow: 'rgba(148, 163, 184, 0.12)',
+    accent: 'text-slate-300',
+  },
+  // 8. Lighting & Atmosphere - Amber/Yellow (warm, golden)
+  'lighting-atmosphere': {
+    gradient: 'from-amber-400 via-yellow-500 to-orange-400',
     glow: 'rgba(245, 158, 11, 0.15)',
     accent: 'text-amber-400',
   },
-  'tips': {
-    gradient: 'from-emerald-500 via-green-500 to-teal-500',
-    glow: 'rgba(16, 185, 129, 0.15)',
-    accent: 'text-emerald-400',
+  // 9. Colour in AI Prompts - Fuchsia/Pink (colorful, vibrant)
+  'colour-theory': {
+    gradient: 'from-fuchsia-400 via-pink-500 to-rose-500',
+    glow: 'rgba(232, 121, 249, 0.15)',
+    accent: 'text-fuchsia-400',
+  },
+  // 10. Materials, Textures & Surfaces - Stone/Brown (earthy, tactile)
+  'materials-textures': {
+    gradient: 'from-stone-400 via-amber-600 to-yellow-700',
+    glow: 'rgba(168, 162, 158, 0.15)',
+    accent: 'text-stone-400',
+  },
+  // 11. Fidelity & Quality Boosters - Indigo/Blue (precise, technical)
+  'fidelity-quality': {
+    gradient: 'from-indigo-400 via-blue-500 to-violet-500',
+    glow: 'rgba(99, 102, 241, 0.15)',
+    accent: 'text-indigo-400',
+  },
+  // 12. Using Negative Prompts - Red/Rose (constraints, negatives)
+  'negative-prompts': {
+    gradient: 'from-red-400 via-rose-500 to-pink-500',
+    glow: 'rgba(248, 113, 113, 0.15)',
+    accent: 'text-red-400',
   },
 };
 
@@ -52,19 +108,21 @@ const DEFAULT_COLOURS = {
 export interface GuideCardProps {
   guide: LearnGuide;
   onSelect: (guide: LearnGuide) => void;
+  /** Selected platform tier for tier-specific styling */
+  selectedTier?: PlatformTier | null;
 }
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-export function GuideCard({ guide, onSelect }: GuideCardProps) {
+export function GuideCard({ guide, onSelect, selectedTier }: GuideCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Get colours based on category
+  // Get colours based on guide ID (each guide has unique colors)
   const colours = useMemo(() => {
-    return CATEGORY_COLOURS[guide.category] ?? DEFAULT_COLOURS;
-  }, [guide.category]);
+    return GUIDE_COLOURS[guide.id] ?? DEFAULT_COLOURS;
+  }, [guide.id]);
 
   // Generate DNA bar pattern
   const dnaPattern = useMemo(() => {
@@ -89,20 +147,6 @@ export function GuideCard({ guide, onSelect }: GuideCardProps) {
     },
     [onSelect, guide]
   );
-
-  // Difficulty badge colour
-  const difficultyColour = useMemo(() => {
-    switch (guide.difficulty) {
-      case 'beginner':
-        return 'bg-emerald-500/10 text-emerald-400';
-      case 'intermediate':
-        return 'bg-amber-500/10 text-amber-400';
-      case 'advanced':
-        return 'bg-red-500/10 text-red-400';
-      default:
-        return 'bg-slate-500/10 text-slate-400';
-    }
-  }, [guide.difficulty]);
 
   return (
     <div
@@ -156,19 +200,16 @@ export function GuideCard({ guide, onSelect }: GuideCardProps) {
           ))}
         </div>
 
-        {/* Header */}
-        <div className="flex items-start justify-between gap-2 mb-2">
+        {/* Header - Title only (removed difficulty badge) */}
+        <div className="mb-2">
           <h3
-            className="text-base font-semibold text-white truncate transition-all duration-300 flex-1"
+            className="text-base font-semibold text-white truncate transition-all duration-300"
             style={{
               textShadow: isHovered ? `0 0 15px ${colours.glow}` : 'none',
             }}
           >
             {guide.title}
           </h3>
-          <span className={`shrink-0 px-2 py-0.5 text-[10px] uppercase tracking-wide rounded ${difficultyColour}`}>
-            {guide.difficulty}
-          </span>
         </div>
 
         {/* Description */}
@@ -176,23 +217,7 @@ export function GuideCard({ guide, onSelect }: GuideCardProps) {
           {guide.description}
         </p>
 
-        {/* Stats Row */}
-        <div className="flex items-center gap-3 mb-3 text-xs">
-          {/* Read time */}
-          <div className="flex items-center gap-1.5">
-            <svg className="w-3 h-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-white/50">{guide.readTime} min read</span>
-          </div>
-
-          {/* Sections count */}
-          <span className="text-white/30">
-            {guide.sections.length} sections
-          </span>
-        </div>
-
-        {/* Tags */}
+        {/* Tags - Simple single-color styling matching family-card.tsx */}
         <div className="flex flex-wrap gap-1 mb-3">
           {guide.tags.slice(0, 4).map((tag) => (
             <span
@@ -206,7 +231,14 @@ export function GuideCard({ guide, onSelect }: GuideCardProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-white/5">
-          <span className="text-[10px] text-white/30 capitalize">{guide.category.replace('-', ' ')}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-white/30 capitalize">{guide.category.replace('-', ' ')}</span>
+            {selectedTier && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/40">
+                {selectedTier.shortName} tips
+              </span>
+            )}
+          </div>
           <span
             className={`text-[10px] ${colours.accent} transition-all duration-300`}
             style={{

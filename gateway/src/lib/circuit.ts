@@ -22,8 +22,8 @@
  * @module lib/circuit
  */
 
-import type { CircuitState, CircuitSnapshot } from './types.js';
 import { logInfo, logWarn } from './logging.js';
+import type { CircuitState, CircuitSnapshot } from './types.js';
 
 // =============================================================================
 // CONFIGURATION
@@ -294,10 +294,15 @@ export function createCircuitBreaker(id: string, config?: {
   });
 }
 
+export type ProviderCircuits = {
+  twelvedata: CircuitBreaker;
+  marketstack: CircuitBreaker;
+};
+
 /**
- * Create circuit breakers for all providers.
+ * Create circuit breakers for providers.
  */
-export function createProviderCircuits() {
+export function createProviderCircuits(): ProviderCircuits {
   return {
     twelvedata: createCircuitBreaker('twelvedata'),
     marketstack: createCircuitBreaker('marketstack'),
