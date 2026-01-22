@@ -1,0 +1,586 @@
+{
+  "$schema": "./schemas/intelligence.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "intelligence",
+    "category": "platform-hints",
+    "label": "Platform Hints",
+    "description": "Platform-specific prompt syntax, formatting, and optimization hints",
+    "totalPlatforms": 15,
+    "updated": "2026-01-21"
+  },
+  "platforms": {
+    "stable-diffusion": {
+      "id": "stable-diffusion",
+      "name": "Stable Diffusion",
+      "tier": "free",
+      "promptStyle": "technical",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": "(term:weight)",
+        "weightingExample": "(masterpiece:1.3), (highly detailed:1.2)",
+        "negativePromptSupport": true,
+        "negativePrefix": null,
+        "maxLength": 77,
+        "tokenBased": true
+      },
+      "bestPractices": [
+        "Front-load important terms for CLIP attention",
+        "Use quality boosters: masterpiece, best quality, highly detailed",
+        "Specify aspect ratio in generation settings, not prompt",
+        "Use parentheses with weights (1.0-1.5 range typical)",
+        "Negative prompts are crucial - always include quality negatives",
+        "Artist names work well: 'by artgerm, by greg rutkowski'",
+        "Combine multiple artists for style blending",
+        "Use specific camera/lens terms for photorealistic results"
+      ],
+      "qualityBoosters": [
+        "masterpiece",
+        "best quality", 
+        "highly detailed",
+        "8k resolution",
+        "trending on artstation",
+        "sharp focus",
+        "intricate details"
+      ],
+      "recommendedNegatives": [
+        "worst quality",
+        "low quality",
+        "blurry",
+        "bad anatomy",
+        "bad hands",
+        "extra fingers",
+        "missing fingers",
+        "deformed",
+        "ugly",
+        "watermark",
+        "signature",
+        "text"
+      ],
+      "termTransforms": {
+        "photorealistic": "photorealistic, RAW photo, realistic skin texture",
+        "cinematic": "cinematic lighting, film grain, movie still",
+        "anime": "anime style, cel shaded, anime key visual",
+        "painting": "oil painting, visible brushstrokes, canvas texture"
+      },
+      "avoidTerms": [
+        "please",
+        "I want",
+        "create",
+        "make me",
+        "can you"
+      ]
+    },
+    "midjourney": {
+      "id": "midjourney",
+      "name": "Midjourney",
+      "tier": "paid",
+      "promptStyle": "natural",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": "term::weight",
+        "weightingExample": "dragon::2 castle::1",
+        "negativePromptSupport": true,
+        "negativePrefix": "--no",
+        "maxLength": 6000,
+        "tokenBased": false
+      },
+      "parameters": {
+        "--ar": "Aspect ratio (e.g., --ar 16:9)",
+        "--v": "Version (e.g., --v 6)",
+        "--s": "Stylize (0-1000, default 100)",
+        "--c": "Chaos (0-100, variety)",
+        "--q": "Quality (.25, .5, 1)",
+        "--no": "Negative prompt",
+        "--style": "Style preset (raw, cute, scenic)",
+        "--tile": "Seamless tiling",
+        "--seed": "Reproducibility seed"
+      },
+      "bestPractices": [
+        "Use natural language descriptions",
+        "Be specific about mood, lighting, and atmosphere",
+        "Reference specific artists or art styles",
+        "Use --ar for aspect ratio, not in prompt",
+        "Lower --s values for more prompt adherence",
+        "Higher --s values for more artistic interpretation",
+        "Use --c for more varied results",
+        "Include medium (photograph, oil painting, etc.)",
+        "Describe the scene, not just objects"
+      ],
+      "qualityBoosters": [
+        "highly detailed",
+        "intricate",
+        "sharp focus",
+        "professional",
+        "award winning",
+        "trending on artstation",
+        "8k",
+        "octane render"
+      ],
+      "stylePresets": {
+        "raw": "Less stylized, more literal",
+        "cute": "Adorable, kawaii aesthetic",
+        "scenic": "Dramatic landscapes",
+        "expressive": "Emotional, artistic"
+      },
+      "versionDifferences": {
+        "v5": "Photorealistic focus, natural language",
+        "v5.1": "Improved hands, more stylized",
+        "v5.2": "Better aesthetics, --stylize changes",
+        "v6": "Natural language, detailed prompts, text support"
+      },
+      "avoidTerms": [
+        "4k",
+        "8k",
+        "unreal engine",
+        "realistic"
+      ]
+    },
+    "dall-e": {
+      "id": "dall-e",
+      "name": "DALL·E",
+      "tier": "paid",
+      "promptStyle": "conversational",
+      "syntax": {
+        "separator": ". ",
+        "weightingSyntax": null,
+        "weightingExample": null,
+        "negativePromptSupport": false,
+        "negativePrefix": null,
+        "maxLength": 4000,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Use complete sentences and natural descriptions",
+        "Be specific about style, medium, and technique",
+        "Describe the scene as if explaining to an artist",
+        "Include context and background information",
+        "Specify lighting conditions explicitly",
+        "Use adjectives liberally",
+        "Avoid technical jargon",
+        "Don't use weighting or special syntax"
+      ],
+      "qualityBoosters": [
+        "detailed",
+        "high quality",
+        "professional",
+        "well-lit",
+        "clear",
+        "sharp"
+      ],
+      "styleSpecifiers": [
+        "in the style of",
+        "reminiscent of",
+        "inspired by",
+        "a photograph of",
+        "a painting of",
+        "an illustration of",
+        "a digital art of"
+      ],
+      "safetyConsiderations": [
+        "Cannot generate realistic faces of real people",
+        "Content policy restrictions on violence, adult content",
+        "May refuse certain artistic styles or subjects"
+      ],
+      "avoidTerms": [
+        "masterpiece",
+        "best quality",
+        "trending on artstation",
+        "octane render",
+        "unreal engine"
+      ]
+    },
+    "leonardo": {
+      "id": "leonardo",
+      "name": "Leonardo.ai",
+      "tier": "freemium",
+      "promptStyle": "technical",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": "(term)",
+        "weightingExample": "(detailed face), (sharp focus)",
+        "negativePromptSupport": true,
+        "negativePrefix": null,
+        "maxLength": 1000,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Choose appropriate model for your subject",
+        "Use their fine-tuned models for specific styles",
+        "Combine base prompt with model-specific keywords",
+        "Utilize their negative prompt presets",
+        "Experiment with guidance scale",
+        "Use alchemy for enhanced quality"
+      ],
+      "modelRecommendations": {
+        "photoreal": ["Leonardo Diffusion XL", "PhotoReal"],
+        "anime": ["Anime Pastel Dream", "DreamShaper"],
+        "concept": ["Leonardo Creative", "RPG 4.0"],
+        "illustration": ["Illustration", "3D Animation Style"]
+      },
+      "alchemyFeatures": [
+        "High Resolution",
+        "Smooth Mode",
+        "Raw Mode",
+        "Photo Real"
+      ]
+    },
+    "playground": {
+      "id": "playground",
+      "name": "Playground AI",
+      "tier": "freemium",
+      "promptStyle": "mixed",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": "(term)",
+        "weightingExample": "(masterpiece), (detailed)",
+        "negativePromptSupport": true,
+        "negativePrefix": null,
+        "maxLength": 500,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Select filter that matches desired style",
+        "Use their preset styles as starting points",
+        "Combine multiple filters for unique looks",
+        "Leverage their prompt expansion feature",
+        "Use negative prompts for quality control"
+      ],
+      "filterCategories": [
+        "Cinematic",
+        "Anime",
+        "Photorealistic",
+        "Artistic",
+        "3D",
+        "Product"
+      ]
+    },
+    "firefly": {
+      "id": "firefly",
+      "name": "Adobe Firefly",
+      "tier": "paid",
+      "promptStyle": "conversational",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": null,
+        "weightingExample": null,
+        "negativePromptSupport": false,
+        "negativePrefix": null,
+        "maxLength": 2000,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Use natural language descriptions",
+        "Leverage content type selection",
+        "Use style references from their library",
+        "Take advantage of their aspect ratio presets",
+        "Utilize effects and style matching features",
+        "Works well with simple, clear prompts"
+      ],
+      "contentTypes": [
+        "Photo",
+        "Graphic", 
+        "Art"
+      ],
+      "styleModifiers": [
+        "Styles reference images",
+        "Color and tone adjustments",
+        "Lighting presets",
+        "Camera angle suggestions"
+      ]
+    },
+    "canva": {
+      "id": "canva",
+      "name": "Canva AI",
+      "tier": "freemium",
+      "promptStyle": "simple",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": null,
+        "weightingExample": null,
+        "negativePromptSupport": false,
+        "negativePrefix": null,
+        "maxLength": 500,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Keep prompts simple and clear",
+        "Use their style presets",
+        "Describe the main subject first",
+        "Include basic style descriptors",
+        "Good for quick social media content"
+      ],
+      "styleOptions": [
+        "Photo",
+        "Drawing",
+        "Painting",
+        "3D",
+        "Pattern"
+      ]
+    },
+    "bing-image-creator": {
+      "id": "bing-image-creator",
+      "name": "Bing Image Creator",
+      "tier": "free",
+      "promptStyle": "conversational",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": null,
+        "weightingExample": null,
+        "negativePromptSupport": false,
+        "negativePrefix": null,
+        "maxLength": 480,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Use natural, descriptive language",
+        "Be specific about style and medium",
+        "Include context and setting",
+        "Simpler prompts often work better",
+        "Avoid complex technical terms"
+      ],
+      "qualityBoosters": [
+        "detailed",
+        "high quality",
+        "professional",
+        "artistic"
+      ]
+    },
+    "ideogram": {
+      "id": "ideogram",
+      "name": "Ideogram",
+      "tier": "freemium",
+      "promptStyle": "natural",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": null,
+        "weightingExample": null,
+        "negativePromptSupport": true,
+        "negativePrefix": "Negative:",
+        "maxLength": 2000,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Excellent for text in images",
+        "Use quotes around text you want generated",
+        "Specify typography details if needed",
+        "Good with logos and typography",
+        "Natural language works well",
+        "Magic prompt feature expands prompts automatically"
+      ],
+      "specialFeatures": [
+        "Text generation in images",
+        "Typography control",
+        "Logo generation",
+        "Magic prompt expansion"
+      ]
+    },
+    "flux": {
+      "id": "flux",
+      "name": "FLUX",
+      "tier": "freemium",
+      "promptStyle": "technical",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": "(term:weight)",
+        "weightingExample": "(detailed:1.2), (sharp:1.1)",
+        "negativePromptSupport": true,
+        "negativePrefix": null,
+        "maxLength": 2000,
+        "tokenBased": true
+      },
+      "bestPractices": [
+        "Similar syntax to Stable Diffusion",
+        "Good at following complex prompts",
+        "Handles text in images well",
+        "Natural language friendly",
+        "Excellent photorealism capabilities"
+      ],
+      "variants": {
+        "flux.1-pro": "Best quality, commercial use",
+        "flux.1-dev": "Development/research",
+        "flux.1-schnell": "Fastest, lower quality"
+      }
+    },
+    "imagen": {
+      "id": "imagen",
+      "name": "Google Imagen",
+      "tier": "paid",
+      "promptStyle": "conversational",
+      "syntax": {
+        "separator": ". ",
+        "weightingSyntax": null,
+        "weightingExample": null,
+        "negativePromptSupport": false,
+        "negativePrefix": null,
+        "maxLength": 4000,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Use natural, descriptive sentences",
+        "Be specific about visual details",
+        "Include style and medium in description",
+        "Good at understanding context",
+        "Handles complex scenes well"
+      ],
+      "accessNotes": "Available through Vertex AI and Google Cloud"
+    },
+    "nightcafe": {
+      "id": "nightcafe",
+      "name": "NightCafe",
+      "tier": "freemium",
+      "promptStyle": "mixed",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": null,
+        "weightingExample": null,
+        "negativePromptSupport": true,
+        "negativePrefix": null,
+        "maxLength": 1000,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Choose algorithm based on desired output",
+        "Use their style presets",
+        "Combine modifiers for unique styles",
+        "Daily free credits available",
+        "Good for artistic/painterly styles"
+      ],
+      "algorithms": [
+        "SDXL",
+        "Stable Diffusion",
+        "DALL-E",
+        "CLIP-Guided",
+        "Neural Style Transfer"
+      ]
+    },
+    "craiyon": {
+      "id": "craiyon",
+      "name": "Craiyon (DALL-E mini)",
+      "tier": "free",
+      "promptStyle": "simple",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": null,
+        "weightingExample": null,
+        "negativePromptSupport": true,
+        "negativePrefix": "Negative words:",
+        "maxLength": 200,
+        "tokenBased": false
+      },
+      "bestPractices": [
+        "Keep prompts short and simple",
+        "Clear, direct descriptions work best",
+        "Don't expect photorealism",
+        "Good for quick concepts",
+        "Embrace the aesthetic quirks"
+      ],
+      "limitations": [
+        "Lower quality than other options",
+        "Best for simple concepts",
+        "Distinctive 'Craiyon style'"
+      ]
+    },
+    "dreamstudio": {
+      "id": "dreamstudio",
+      "name": "DreamStudio",
+      "tier": "paid",
+      "promptStyle": "technical",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": "(term:weight)",
+        "weightingExample": "(detailed:1.3), (masterpiece:1.2)",
+        "negativePromptSupport": true,
+        "negativePrefix": null,
+        "maxLength": 2000,
+        "tokenBased": true
+      },
+      "bestPractices": [
+        "Official Stability AI platform",
+        "Same syntax as Stable Diffusion",
+        "Use quality boosters",
+        "Leverage negative prompts",
+        "Adjust CFG scale for adherence",
+        "Multiple model options available"
+      ],
+      "modelOptions": [
+        "SDXL 1.0",
+        "SDXL Turbo",
+        "SD 3.0",
+        "SD 2.1"
+      ]
+    },
+    "comfyui": {
+      "id": "comfyui",
+      "name": "ComfyUI",
+      "tier": "free",
+      "promptStyle": "technical",
+      "syntax": {
+        "separator": ", ",
+        "weightingSyntax": "(term:weight)",
+        "weightingExample": "(masterpiece:1.3), (highly detailed:1.2)",
+        "negativePromptSupport": true,
+        "negativePrefix": null,
+        "maxLength": "varies by model",
+        "tokenBased": true
+      },
+      "bestPractices": [
+        "Node-based workflow for maximum control",
+        "Use CLIP text encode nodes",
+        "Combine multiple prompts with conditioning",
+        "Supports complex prompt scheduling",
+        "Can use LoRA, embeddings, and more",
+        "Advanced: use attention couple for regional prompts"
+      ],
+      "advancedFeatures": [
+        "Prompt scheduling",
+        "Regional prompting",
+        "LoRA integration",
+        "Custom node workflows",
+        "ControlNet support"
+      ]
+    }
+  },
+  "tierOptimization": {
+    "free": {
+      "platforms": ["stable-diffusion", "bing-image-creator", "craiyon", "comfyui"],
+      "promptStrategy": "Focus on quality boosters and clear subject description",
+      "lengthAdvice": "Keep prompts concise due to token limits",
+      "recommendedTerms": ["detailed", "high quality", "sharp focus", "clear"],
+      "avoidTerms": ["complex technical terms", "excessive modifiers"]
+    },
+    "freemium": {
+      "platforms": ["leonardo", "playground", "ideogram", "nightcafe", "flux", "canva"],
+      "promptStrategy": "Balance between technical and natural language",
+      "lengthAdvice": "Can use longer, more descriptive prompts",
+      "recommendedTerms": ["highly detailed", "professional quality", "artistic"],
+      "avoidTerms": ["overly complex weighting", "excessive negatives"]
+    },
+    "paid": {
+      "platforms": ["midjourney", "dall-e", "firefly", "dreamstudio", "imagen"],
+      "promptStrategy": "Use full natural language for best results",
+      "lengthAdvice": "Longer, more detailed prompts typically perform better",
+      "recommendedTerms": ["specific style references", "detailed scene descriptions", "mood and atmosphere"],
+      "avoidTerms": ["basic quality terms", "technical syntax where not supported"]
+    }
+  },
+  "universalGuidelines": {
+    "structureRecommendation": [
+      "1. Subject (who/what)",
+      "2. Action/pose (what they're doing)",
+      "3. Environment (where)",
+      "4. Style (artistic approach)",
+      "5. Lighting (illumination)",
+      "6. Quality modifiers (detail level)"
+    ],
+    "termOrderImportance": "Earlier terms typically have more influence",
+    "specificitAdvice": "More specific = more predictable results",
+    "commonMistakes": [
+      "Using platform-specific syntax on wrong platform",
+      "Conflicting style descriptors",
+      "Too many competing subjects",
+      "Ignoring negative prompts where supported",
+      "Using conversational language on technical platforms"
+    ]
+  }
+}

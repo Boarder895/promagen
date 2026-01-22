@@ -34,6 +34,7 @@ import {
 } from '@/lib/pro-promagen/types';
 import type { Exchange, Hemisphere } from '@/data/exchanges/types';
 import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
+import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 
 // ============================================================================
 // TYPES
@@ -64,6 +65,7 @@ const STORAGE_KEYS = {
   FX_SELECTION: 'promagen:pro:fx-selection',
   EXCHANGE_SELECTION: 'promagen:pro:exchange-selection',
   INDICES_SELECTION: 'promagen:pro:indices-selection',
+  PROMPT_TIER: 'promagen:pro:prompt-tier',
 } as const;
 
 // ============================================================================
@@ -151,6 +153,7 @@ export default function ProPromagenClient({
   const [selectedFxPairs, setSelectedFxPairs] = useState<string[]>(defaultFxPairIds);
   const [selectedExchanges, setSelectedExchanges] = useState<string[]>(defaultExchangeIds);
   const [selectedIndices, setSelectedIndices] = useState<string[]>(defaultIndicesIds);
+  const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
   
   // Track if we've loaded from storage (to detect changes)
   const [initialFx, setInitialFx] = useState<string[]>(defaultFxPairIds);
@@ -165,6 +168,19 @@ export default function ProPromagenClient({
     const storedFx = loadArrayFromStorage(STORAGE_KEYS.FX_SELECTION);
     const storedExchanges = loadArrayFromStorage(STORAGE_KEYS.EXCHANGE_SELECTION);
     const storedIndices = loadArrayFromStorage(STORAGE_KEYS.INDICES_SELECTION);
+    
+    // Load prompt tier (single value, not array)
+    try {
+      const storedTier = localStorage.getItem(STORAGE_KEYS.PROMPT_TIER);
+      if (storedTier !== null) {
+        const parsed = JSON.parse(storedTier) as number;
+        if ([1, 2, 3, 4].includes(parsed)) {
+          setSelectedPromptTier(parsed as PromptTier);
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
     
     // If storage has values (including empty array), use them
     // Otherwise keep defaults
@@ -328,6 +344,12 @@ export default function ProPromagenClient({
     saveToStorage(STORAGE_KEYS.INDICES_SELECTION, ids);
   }, []);
 
+  const handlePromptTierChange = useCallback((tier: PromptTier) => {
+    setSelectedPromptTier(tier);
+    // Auto-save to localStorage on every change
+    saveToStorage(STORAGE_KEYS.PROMPT_TIER, tier);
+  }, []);
+
   const handleSave = useCallback(async () => {
     // Save is already done on each change, but this confirms to user
     saveToStorage(STORAGE_KEYS.FX_SELECTION, selectedFxPairs);
@@ -398,9 +420,11 @@ export default function ProPromagenClient({
           selectedFxPairs={selectedFxPairs}
           selectedExchanges={selectedExchanges}
           selectedIndices={selectedIndices}
+          selectedPromptTier={selectedPromptTier}
           onFxChange={handleFxChange}
           onExchangeChange={handleExchangeChange}
           onIndicesChange={handleIndicesChange}
+          onPromptTierChange={handlePromptTierChange}
           isPaidUser={isPaidUser}
         />
       </div>

@@ -1,0 +1,204 @@
+{
+  "$schema": "./schemas/humidity.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "weather",
+    "category": "humidity",
+    "totalPhrases": 90,
+    "description": "Humidity-based atmospheric texture phrases. 9 ranges × 10 phrases each.",
+    "range": { "min": 0, "max": 100, "unit": "%" },
+    "updated": "2026-01-21"
+  },
+  "ranges": {
+    "bone_dry": {
+      "min": 0,
+      "max": 19,
+      "label": "Bone Dry",
+      "phrases": [
+        "bone-dry parched air",
+        "desert-dry atmosphere",
+        "arid crisp clarity",
+        "dehydrating dryness",
+        "static-electric dry",
+        "cracked-earth aridity",
+        "dust-devil dryness",
+        "sandpaper atmosphere",
+        "lip-cracking air",
+        "skin-tightening parched"
+      ]
+    },
+    "very_dry": {
+      "min": 20,
+      "max": 29,
+      "label": "Very Dry",
+      "phrases": [
+        "very dry crisp air",
+        "arid fresh atmosphere",
+        "low-humidity clarity",
+        "pleasantly dry conditions",
+        "skin-tightening dryness",
+        "wine-cellar atmosphere",
+        "museum-quality air",
+        "preservation-perfect dryness",
+        "archival conditions",
+        "crystal-clear aridity"
+      ]
+    },
+    "dry": {
+      "min": 30,
+      "max": 39,
+      "label": "Dry",
+      "phrases": [
+        "dry comfortable air",
+        "crisp dry atmosphere",
+        "refreshingly dry",
+        "optimal low humidity",
+        "clear dry conditions",
+        "high-altitude freshness",
+        "mountain-air clarity",
+        "colorado-style dryness",
+        "southwest atmosphere",
+        "mediterranean aridity"
+      ]
+    },
+    "comfortable": {
+      "min": 40,
+      "max": 49,
+      "label": "Comfortable",
+      "phrases": [
+        "comfortable fresh air",
+        "balanced atmosphere",
+        "ideal humidity level",
+        "pleasant moisture balance",
+        "perfect breathing conditions",
+        "goldilocks humidity",
+        "just-right moisture",
+        "optimal comfort zone",
+        "wellness-promoting air",
+        "health-ideal conditions"
+      ]
+    },
+    "pleasant": {
+      "min": 50,
+      "max": 59,
+      "label": "Pleasant Moisture",
+      "phrases": [
+        "comfortable moist air",
+        "pleasant humidity",
+        "soft atmospheric moisture",
+        "gentle humid freshness",
+        "breathable moist conditions",
+        "skin-friendly humidity",
+        "dewy-fresh atmosphere",
+        "morning-mist quality",
+        "garden-fresh moisture",
+        "spring-rain aftermath"
+      ]
+    },
+    "humid": {
+      "min": 60,
+      "max": 69,
+      "label": "Humid",
+      "phrases": [
+        "humid fresh air",
+        "moist atmosphere",
+        "noticeable humidity",
+        "damp-feeling conditions",
+        "moisture-laden air",
+        "greenhouse atmosphere",
+        "botanical-garden humidity",
+        "conservatory conditions",
+        "rainforest-edge moisture",
+        "jungle-approach dampness"
+      ]
+    },
+    "very_humid": {
+      "min": 70,
+      "max": 79,
+      "label": "Very Humid",
+      "phrases": [
+        "humid damp air",
+        "heavy moisture",
+        "tropical humidity feel",
+        "sticky atmospheric moisture",
+        "perspiration-inducing damp",
+        "amazon-basin humidity",
+        "equatorial moisture",
+        "monsoon-season dampness",
+        "steam-room atmosphere",
+        "turkish-bath conditions"
+      ]
+    },
+    "oppressive": {
+      "min": 80,
+      "max": 89,
+      "label": "Oppressive Humidity",
+      "phrases": [
+        "very humid thick air",
+        "tropical heavy moisture",
+        "oppressive dampness",
+        "sweat-drenching humidity",
+        "sauna-like moisture",
+        "suffocating dampness",
+        "breathing-difficult humidity",
+        "weight-of-air heaviness",
+        "blanket-of-moisture feeling",
+        "inescapable mugginess"
+      ]
+    },
+    "saturated": {
+      "min": 90,
+      "max": 100,
+      "label": "Saturated",
+      "phrases": [
+        "extreme humid saturation",
+        "monsoon-like moisture",
+        "near-rain humidity",
+        "fog-forming dampness",
+        "visibility-reducing moisture",
+        "precipitation-imminent air",
+        "cloud-level humidity",
+        "condensation-creating atmosphere",
+        "dewpoint-reached conditions",
+        "water-suspended air"
+      ]
+    }
+  },
+  "contextual": {
+    "hot": [
+      "sweltering humid oppression",
+      "heat-amplifying moisture",
+      "tropical steam bath",
+      "sun-baked humidity",
+      "furnace-with-steam feeling"
+    ],
+    "cold": [
+      "damp bone-chilling cold",
+      "moisture-penetrating freeze",
+      "wet-cold discomfort",
+      "clammy freezing air",
+      "raw humid chill"
+    ],
+    "rainy": [
+      "rain-saturated atmosphere",
+      "precipitation-heavy air",
+      "storm-moisture density",
+      "downpour humidity",
+      "deluge-surrounding dampness"
+    ],
+    "coastal": [
+      "sea-spray moisture",
+      "ocean-breeze humidity",
+      "salt-air dampness",
+      "maritime atmosphere",
+      "coastal mist quality"
+    ],
+    "forest": [
+      "canopy-trapped moisture",
+      "undergrowth humidity",
+      "forest-floor dampness",
+      "woodland atmospheric moisture",
+      "tree-breathing humidity"
+    ]
+  }
+}

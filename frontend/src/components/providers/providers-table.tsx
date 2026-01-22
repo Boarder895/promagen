@@ -1,6 +1,18 @@
 // src/components/providers/providers-table.tsx
 // Updated: January 2026 - Added image quality vote button
 // Updated: January 2026 - Replaced Visual Styles with Support column (social icons)
+// Updated: 20 Jan 2026 - Added fixed column widths (w-[Xpx] min-w-[Xpx]) to prevent layout shift
+//                      - Added table-fixed class for consistent column sizing
+// Updated: 22 Jan 2026 - Added vertical grid lines between columns
+//                      - Centred header text for all columns
+//                      - Removed API/Affiliate column (emojis moved to Provider cell)
+//                      - Table now has 5 columns instead of 6
+// Updated: 22 Jan 2026 - Switched from fixed px widths to proportional % widths
+//                      - Enables fluid auto-scaling on large screens
+//                      - Added mobile card view for small screens
+// Updated: 22 Jan 2026 - Professional sortable headers with always-visible arrows
+//                      - Underline on hover, glow on active
+//                      - Bloomberg-style sort indicators
 
 'use client';
 
@@ -35,6 +47,50 @@ type ProviderWithPromagenUsers = Provider & {
 };
 
 type SortColumn = 'score' | 'imageQuality';
+type SortDirection = 'asc' | 'desc';
+
+/**
+ * Professional sortable header component.
+ * Features:
+ * - Always-visible sort arrows (↕ inactive, ▼/▲ active)
+ * - Underline on hover
+ * - Glow effect when active
+ * - Smooth transitions
+ */
+function SortableHeader({
+  label,
+  column,
+  currentSort,
+  currentDirection,
+  onSort,
+}: {
+  label: string;
+  column: SortColumn;
+  currentSort: SortColumn;
+  currentDirection: SortDirection;
+  onSort: (col: SortColumn) => void;
+}) {
+  const isActive = currentSort === column;
+  const isAsc = currentDirection === 'asc';
+
+  // Determine which arrow to show
+  const arrow = isActive ? (isAsc ? '▲' : '▼') : '⇅';
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(column)}
+      className={`sortable-header ${isActive ? 'sortable-header-active' : ''}`}
+      aria-label={`Sort by ${label}${isActive ? (isAsc ? ', currently ascending' : ', currently descending') : ''}`}
+      title={`Click to sort by ${label}`}
+    >
+      <span className="sortable-header-label">{label}</span>
+      <span className={`sortable-header-arrow ${isActive ? 'sortable-header-arrow-active' : ''}`}>
+        {arrow}
+      </span>
+    </button>
+  );
+}
 
 function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {
   const out: Array<ReadonlyArray<T>> = [];
@@ -42,28 +98,6 @@ function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {
     out.push(items.slice(i, i + 2));
   }
   return out;
-}
-
-function renderApiAffiliateCell(p: Provider): React.ReactNode {
-  const api = p.apiAvailable;
-  const aff = p.affiliateProgramme;
-
-  if (!api && !aff) return <span className="text-slate-500">—</span>;
-
-  return (
-    <span className="inline-flex items-center gap-1">
-      {api && (
-        <Tooltip text="API available">
-          <span aria-label="API available">🔌</span>
-        </Tooltip>
-      )}
-      {aff && (
-        <Tooltip text="Affiliate programme available">
-          <span aria-label="Affiliate programme">🤝</span>
-        </Tooltip>
-      )}
-    </span>
-  );
 }
 
 function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCountryUsage> }) {
@@ -89,7 +123,7 @@ function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCount
   const rows = chunkPairs(top).filter((r) => r.length > 0);
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="providers-users-cell flex flex-col gap-1">
       {rows.map((pair, idx) => (
         <div key={`row-${idx}`} className="flex gap-3 whitespace-nowrap">
           {pair.map((c) => {
@@ -140,30 +174,27 @@ function ImageQualityCell({
 }) {
   if (!rank || rank < 1) {
     return (
-      <span className="inline-flex items-center gap-3">
+      <span className="providers-quality-cell inline-flex items-center justify-center gap-3">
         <span className="text-slate-500">—</span>
-        <ImageQualityVoteButton
-          providerId={providerId}
-          isAuthenticated={isAuthenticated}
-        />
+        <ImageQualityVoteButton providerId={providerId} isAuthenticated={isAuthenticated} />
       </span>
     );
   }
 
   const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
-  const ordinal =
-    rank === 1 ? '1st' : rank === 2 ? '2nd' : rank === 3 ? '3rd' : `${rank}th`;
+  const ordinal = rank === 1 ? '1st' : rank === 2 ? '2nd' : rank === 3 ? '3rd' : `${rank}th`;
 
   return (
-    <span className="inline-flex items-center gap-3">
+    <span className="providers-quality-cell inline-flex items-center justify-center gap-3">
       <span className="inline-flex items-center gap-2">
         <span className="font-medium">{ordinal}</span>
-        {medal && <span aria-label={`Medal: ${ordinal}`}>{medal}</span>}
+        {medal && (
+          <span className="providers-medal" aria-label={`Medal: ${ordinal}`}>
+            {medal}
+          </span>
+        )}
       </span>
-      <ImageQualityVoteButton
-        providerId={providerId}
-        isAuthenticated={isAuthenticated}
-      />
+      <ImageQualityVoteButton providerId={providerId} isAuthenticated={isAuthenticated} />
     </span>
   );
 }
@@ -179,21 +210,29 @@ function OverallScoreCell({ provider }: { provider: Provider }) {
 
   const trendGlyph =
     trend === 'up' ? (
-      <span className="text-emerald-400" aria-label="Trending up" title="Trending up">
+      <span
+        className="providers-trend text-emerald-400"
+        aria-label="Trending up"
+        title="Trending up"
+      >
         ↑
       </span>
     ) : trend === 'down' ? (
-      <span className="text-rose-400" aria-label="Trending down" title="Trending down">
+      <span
+        className="providers-trend text-rose-400"
+        aria-label="Trending down"
+        title="Trending down"
+      >
         ↓
       </span>
     ) : trend === 'flat' ? (
-      <span className="text-slate-400" aria-label="Flat" title="Flat">
+      <span className="providers-trend text-slate-400" aria-label="Flat" title="Flat">
         ●
       </span>
     ) : null;
 
   return (
-    <span className="inline-flex items-center justify-end gap-2 tabular-nums">
+    <span className="providers-score-cell inline-flex items-center justify-center gap-2 tabular-nums">
       {provider.incumbentAdjustment ? (
         <Tooltip text={`Adjusted for Big Tech advantage (${rawScore} - 5 = ${adjustedScore})`}>
           <span className="score-adjusted">{adjustedScore}*</span>
@@ -209,31 +248,47 @@ function OverallScoreCell({ provider }: { provider: Provider }) {
 export default function ProvidersTable(props: ProvidersTableProps) {
   const { providers, limit, isAuthenticated = false, onProvidersChange } = props;
   const [sortBy, setSortBy] = useState<SortColumn>('score');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Handle sort toggle: if same column, flip direction; else switch column with default direction
+  const handleSort = (column: SortColumn) => {
+    if (sortBy === column) {
+      // Toggle direction
+      setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+    } else {
+      // Switch to new column with default direction
+      setSortBy(column);
+      // Image quality: lower rank = better, so default to asc
+      // Score: higher = better, so default to desc
+      setSortDirection(column === 'imageQuality' ? 'asc' : 'desc');
+    }
+  };
 
   const sliced =
     typeof limit === 'number' && Number.isFinite(limit) && limit > 0
       ? providers.slice(0, Math.floor(limit))
       : providers;
 
-  // Sort providers based on selected column
+  // Sort providers based on selected column and direction
   const sorted = React.useMemo(() => {
     const arr = [...sliced] as ProviderWithPromagenUsers[];
-    
+    const dir = sortDirection === 'asc' ? 1 : -1;
+
     if (sortBy === 'imageQuality') {
       return arr.sort((a, b) => {
         const aRank = a.imageQualityRank ?? 999;
         const bRank = b.imageQualityRank ?? 999;
-        return aRank - bRank; // Lower rank number = better quality
+        return (aRank - bRank) * dir; // Lower rank = better quality
       });
     }
-    
-    // Default: sort by overall score DESC
+
+    // Default: sort by overall score
     return arr.sort((a, b) => {
       const aScore = (a.score ?? 0) - (a.incumbentAdjustment ? 5 : 0);
       const bScore = (b.score ?? 0) - (b.incumbentAdjustment ? 5 : 0);
-      return bScore - aScore; // Higher score = better
+      return (bScore - aScore) * dir; // Higher score = better
     });
-  }, [sliced, sortBy]);
+  }, [sliced, sortBy, sortDirection]);
 
   // Notify parent of displayed provider IDs (for market pulse)
   useEffect(() => {
@@ -243,34 +298,43 @@ export default function ProvidersTable(props: ProvidersTableProps) {
   }, [sorted, onProvidersChange]);
 
   return (
-    <div className="providers-table-container">
-      <div className="providers-table-scroll-wrapper" data-testid="providers-scroll">
-        <table className="providers-table">
+    <div className="providers-table-container leaderboard-glow-frame">
+      {/* Desktop table view — hidden on mobile via CSS */}
+      <div
+        className="providers-table-scroll-wrapper providers-table-desktop"
+        data-testid="providers-scroll"
+      >
+        <table className="providers-table w-full">
+          {/* Proportional column widths — auto-scale with viewport */}
+          {/* 5 columns: Provider (30%) | Promagen Users (18%) | Image Quality (18%) | Support (18%) | Overall Score (16%) */}
           <thead className="providers-table-header">
             <tr>
-              <th className="px-4 py-3 text-left">Provider</th>
-              <th className="px-4 py-3 text-left">Promagen Users</th>
-              <th
-                className="px-4 py-3 text-left cursor-pointer hover:text-slate-200 transition-colors"
-                onClick={() => setSortBy('imageQuality')}
-                title="Click to sort by image quality"
-              >
-                <span className="inline-flex items-center gap-1">
-                  Image Quality
-                  {sortBy === 'imageQuality' && <span className="text-emerald-400">●</span>}
-                </span>
+              <th className="providers-table-th px-4 py-3 text-center w-[30%] border-r border-white/5">
+                Provider
               </th>
-              <th className="px-4 py-3 text-left">Support</th>
-              <th className="px-4 py-3 text-center">API/Affiliate</th>
-              <th
-                className="px-4 py-3 text-right cursor-pointer hover:text-slate-200 transition-colors"
-                onClick={() => setSortBy('score')}
-                title="Click to sort by overall score"
-              >
-                <span className="inline-flex items-center gap-1">
-                  Overall Score
-                  {sortBy === 'score' && <span className="text-emerald-400">●</span>}
-                </span>
+              <th className="providers-table-th px-4 py-3 text-center w-[18%] border-r border-white/5">
+                Promagen Users
+              </th>
+              <th className="providers-table-th providers-table-th-sortable px-4 py-3 text-center w-[18%] border-r border-white/5">
+                <SortableHeader
+                  label="Image Quality"
+                  column="imageQuality"
+                  currentSort={sortBy}
+                  currentDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              </th>
+              <th className="providers-table-th px-4 py-3 text-center w-[18%] border-r border-white/5">
+                Support
+              </th>
+              <th className="providers-table-th providers-table-th-sortable px-4 py-3 text-center w-[16%]">
+                <SortableHeader
+                  label="Overall Score"
+                  column="score"
+                  currentSort={sortBy}
+                  currentDirection={sortDirection}
+                  onSort={handleSort}
+                />
               </th>
             </tr>
           </thead>
@@ -280,17 +344,17 @@ export default function ProvidersTable(props: ProvidersTableProps) {
               <tr
                 key={p.id}
                 data-provider-id={p.id}
-                className="border-t border-slate-800 hover:bg-slate-900/30 transition-colors market-pulse-target"
+                className="providers-table-row border-t border-slate-800 hover:bg-slate-900/30 transition-colors market-pulse-target"
               >
-                <td className="px-4 py-3">
+                <td className="providers-table-td px-4 py-3 w-[30%] border-r border-white/5">
                   <ProviderCell provider={p} rank={index + 1} />
                 </td>
 
-                <td className="px-4 py-3">
+                <td className="providers-table-td px-4 py-3 w-[18%] border-r border-white/5">
                   <PromagenUsersCell usage={p.promagenUsers} />
                 </td>
 
-                <td className="px-4 py-3">
+                <td className="providers-table-td px-4 py-3 w-[18%] text-center border-r border-white/5">
                   <ImageQualityCell
                     rank={p.imageQualityRank}
                     providerId={p.id}
@@ -298,24 +362,69 @@ export default function ProvidersTable(props: ProvidersTableProps) {
                   />
                 </td>
 
-                <td className="px-4 py-3">
-                  <SupportIconsCell
-                    providerName={p.name}
-                    socials={p.socials}
-                  />
+                <td className="providers-table-td px-4 py-3 w-[18%] border-r border-white/5">
+                  <SupportIconsCell providerName={p.name} socials={p.socials} />
                 </td>
 
-                <td className="px-4 py-3 text-center">
-                  {renderApiAffiliateCell(p)}
-                </td>
-
-                <td className="px-4 py-3 text-right">
+                <td className="providers-table-td px-4 py-3 text-center w-[16%]">
                   <OverallScoreCell provider={p} />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile card view — hidden on desktop, shown on mobile via CSS */}
+      <div className="providers-mobile-cards" data-testid="providers-mobile">
+        {sorted.map((p, index) => (
+          <div
+            key={p.id}
+            data-provider-id={p.id}
+            className="providers-mobile-card market-pulse-target"
+          >
+            {/* Row 1: Rank + Name + Score */}
+            <div className="providers-mobile-header">
+              <span className="providers-mobile-rank">{index + 1}.</span>
+              <a
+                href={`/go/${encodeURIComponent(p.id)}?src=leaderboard_mobile`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="providers-mobile-name"
+              >
+                {p.name}
+              </a>
+              {p.apiAvailable && <span className="providers-mobile-emoji">🔌</span>}
+              {p.affiliateProgramme && <span className="providers-mobile-emoji">🤝</span>}
+              <span className="providers-mobile-score">
+                {p.incumbentAdjustment ? (p.score ?? 0) - 5 : (p.score ?? '—')}
+                {p.trend === 'up' && <span className="text-emerald-400 ml-1">↑</span>}
+                {p.trend === 'down' && <span className="text-rose-400 ml-1">↓</span>}
+              </span>
+            </div>
+
+            {/* Row 2: Location + Quality */}
+            <div className="providers-mobile-details">
+              {p.countryCode && p.hqCity && (
+                <span className="providers-mobile-location">
+                  <Flag countryCode={p.countryCode} size={14} decorative />
+                  <span>{p.hqCity}</span>
+                </span>
+              )}
+              {p.imageQualityRank && (
+                <span className="providers-mobile-quality">
+                  {p.imageQualityRank === 1
+                    ? '1st 🥇'
+                    : p.imageQualityRank === 2
+                      ? '2nd 🥈'
+                      : p.imageQualityRank === 3
+                        ? '3rd 🥉'
+                        : `${p.imageQualityRank}th`}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -65,9 +65,10 @@ import { trackPromptBuilderOpen, trackPromptCopy } from '@/lib/analytics/provide
 import {
   assemblePrompt,
   formatPromptForCopy,
-  getCategoryConfig,
+  getEnhancedCategoryConfig,
   getAllCategories,
   supportsNativeNegative,
+  getCategoryChips,
 } from '@/lib/prompt-builder';
 import { assembleCompositionPack, platformSupportsAR } from '@/lib/composition-engine';
 import { Combobox } from '@/components/ui/combobox';
@@ -150,15 +151,36 @@ const pickRandom = <T,>(arr: T[]): T | undefined => {
 const CATEGORY_GUIDANCE: Record<string, { singular: string; plural: string }> = {
   subject: { singular: 'subject as your focal point.', plural: 'subjects as focal points.' },
   action: { singular: 'action for dynamic energy.', plural: 'actions for dynamic energy.' },
-  style: { singular: 'style. Keep it focused.', plural: 'complementary styles. Avoid conflicting aesthetics.' },
+  style: {
+    singular: 'style. Keep it focused.',
+    plural: 'complementary styles. Avoid conflicting aesthetics.',
+  },
   environment: { singular: 'setting for context.', plural: 'settings for context.' },
-  composition: { singular: 'technique for visual structure.', plural: 'techniques for visual structure.' },
+  composition: {
+    singular: 'technique for visual structure.',
+    plural: 'techniques for visual structure.',
+  },
   camera: { singular: 'camera setting for precision.', plural: 'camera settings for precision.' },
-  lighting: { singular: 'lighting setup for mood.', plural: 'lighting setups for mood and dimension.' },
-  colour: { singular: 'colour treatment for harmony.', plural: 'colour treatments for visual harmony.' },
-  atmosphere: { singular: 'atmospheric effect for mood.', plural: 'atmospheric effects for depth and mood.' },
-  materials: { singular: 'material texture for realism.', plural: 'material textures for tactile realism.' },
-  fidelity: { singular: 'quality booster for detail.', plural: 'quality boosters for maximum detail.' },
+  lighting: {
+    singular: 'lighting setup for mood.',
+    plural: 'lighting setups for mood and dimension.',
+  },
+  colour: {
+    singular: 'colour treatment for harmony.',
+    plural: 'colour treatments for visual harmony.',
+  },
+  atmosphere: {
+    singular: 'atmospheric effect for mood.',
+    plural: 'atmospheric effects for depth and mood.',
+  },
+  materials: {
+    singular: 'material texture for realism.',
+    plural: 'material textures for tactile realism.',
+  },
+  fidelity: {
+    singular: 'quality booster for detail.',
+    plural: 'quality boosters for maximum detail.',
+  },
   negative: { singular: 'term to exclude.', plural: 'terms to exclude from your image.' },
 };
 
@@ -177,7 +199,7 @@ function getDynamicTooltipGuidance(
   _baseGuidance?: string,
 ): string {
   const guidance = CATEGORY_GUIDANCE[category];
-  
+
   if (!guidance) {
     return maxSelections === 1 ? 'Pick 1 option.' : `Pick up to ${maxSelections} options.`;
   }
@@ -396,9 +418,9 @@ function DailyCounter({ count, limit }: { count: number; limit: number }) {
 // Main Component
 // ============================================================================
 
-export function PromptBuilder({ 
-  id = 'prompt-builder', 
-  provider, 
+export function PromptBuilder({
+  id = 'prompt-builder',
+  provider,
   onDone,
   providerSelector,
 }: PromptBuilderProps) {
@@ -426,7 +448,8 @@ export function PromptBuilder({
   const { compositionMode, setCompositionMode, aspectRatio, setAspectRatio } = useCompositionMode();
 
   // Prompt Intelligence Preferences
-  const { preferences: intelligencePrefs, setPreference: setIntelligencePref } = useIntelligencePreferences();
+  const { preferences: intelligencePrefs, setPreference: setIntelligencePref } =
+    useIntelligencePreferences();
 
   // ============================================================================
   // Local State
@@ -438,13 +461,16 @@ export function PromptBuilder({
   const [isMounted, setIsMounted] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
-  
+
   // Market mood uses preference as source of truth
   const isMarketMoodEnabled = intelligencePrefs.marketMoodEnabled;
-  const setIsMarketMoodEnabled = useCallback((enabled: boolean) => {
-    setIntelligencePref('marketMoodEnabled', enabled);
-  }, [setIntelligencePref]);
-  
+  const setIsMarketMoodEnabled = useCallback(
+    (enabled: boolean) => {
+      setIntelligencePref('marketMoodEnabled', enabled);
+    },
+    [setIntelligencePref],
+  );
+
   // Live market mood hook - fetches real FX data when enabled
   const {
     marketState: liveMarketState,
@@ -463,12 +489,12 @@ export function PromptBuilder({
   // Use live market state when available, otherwise fall back to demo
   const marketState: MarketState | null = useMemo(() => {
     if (!isMarketMoodEnabled) return null;
-    
+
     // Use live data if available
     if (liveMarketState) {
       return liveMarketState;
     }
-    
+
     // Fallback to demo state while loading or on error
     // This ensures the toggle still works even without live data
     const hour = new Date().getHours();
@@ -482,7 +508,7 @@ export function PromptBuilder({
     ];
     const stateIndex = hour % states.length;
     const selected = states[stateIndex];
-    
+
     if (!selected) {
       return {
         type: 'neutral' as const,
@@ -490,9 +516,9 @@ export function PromptBuilder({
         isMarketOpen: false,
       };
     }
-    
+
     const isMarketOpen = hour >= 8 && hour < 18;
-    
+
     return {
       type: selected.type,
       intensity: selected.intensity,
@@ -515,13 +541,13 @@ export function PromptBuilder({
       const storedTerms = sessionStorage.getItem('promagen_explore_terms');
       if (storedTerms) {
         const terms: string[] = JSON.parse(storedTerms);
-        
+
         if (Array.isArray(terms) && terms.length > 0) {
           // Map terms to appropriate categories based on what they likely are
           // From explore: suggestedColours, suggestedLighting, suggestedAtmosphere
           setCategoryState((prev) => {
             const newState = { ...prev };
-            
+
             // Add first term to colour (usually a colour suggestion)
             if (terms[0] && prev.colour) {
               const limit = categoryLimits.colour ?? 1;
@@ -530,7 +556,7 @@ export function PromptBuilder({
                 newState.colour = { ...prev.colour, selected: [...current, terms[0]] };
               }
             }
-            
+
             // Add second term to lighting (usually a lighting suggestion)
             if (terms[1] && prev.lighting) {
               const limit = categoryLimits.lighting ?? 1;
@@ -539,7 +565,7 @@ export function PromptBuilder({
                 newState.lighting = { ...prev.lighting, selected: [...current, terms[1]] };
               }
             }
-            
+
             // Add third term to atmosphere (usually an atmosphere suggestion)
             if (terms[2] && prev.atmosphere) {
               const limit = categoryLimits.atmosphere ?? 1;
@@ -548,11 +574,11 @@ export function PromptBuilder({
                 newState.atmosphere = { ...prev.atmosphere, selected: [...current, terms[2]] };
               }
             }
-            
+
             return newState;
           });
         }
-        
+
         // Clear after reading so it doesn't persist across navigations
         sessionStorage.removeItem('promagen_explore_terms');
       }
@@ -575,11 +601,11 @@ export function PromptBuilder({
           selections?: Record<PromptCategory, string[]>;
           customValues?: Record<PromptCategory, string>;
         };
-        
+
         if (prompt.selections || prompt.customValues) {
           setCategoryState((prev) => {
             const newState = { ...prev };
-            
+
             // Load selections
             if (prompt.selections) {
               for (const [cat, selected] of Object.entries(prompt.selections)) {
@@ -592,7 +618,7 @@ export function PromptBuilder({
                 }
               }
             }
-            
+
             // Load custom values
             if (prompt.customValues) {
               for (const [cat, value] of Object.entries(prompt.customValues)) {
@@ -605,11 +631,11 @@ export function PromptBuilder({
                 }
               }
             }
-            
+
             return newState;
           });
         }
-        
+
         // Clear after reading
         sessionStorage.removeItem('promagen_load_prompt');
       }
@@ -747,41 +773,44 @@ export function PromptBuilder({
     {
       enabled: hasContent,
       debounceMs: 200,
-    }
+    },
   );
 
   // Handler for suggestion chip clicks
-  const handleSuggestionClick = useCallback((suggestion: SuggestedOption) => {
-    const category = suggestion.category;
-    setCategoryState((prev) => {
-      const currentSelected = prev[category]?.selected ?? [];
-      const maxAllowed = categoryLimits[category] ?? 1;
-      
-      // Don't add if already selected or at max
-      if (currentSelected.includes(suggestion.option)) return prev;
-      if (currentSelected.length >= maxAllowed) return prev;
-      
-      return {
-        ...prev,
-        [category]: {
-          ...prev[category],
-          selected: [...currentSelected, suggestion.option],
-        },
-      };
-    });
-  }, [categoryLimits]);
+  const handleSuggestionClick = useCallback(
+    (suggestion: SuggestedOption) => {
+      const category = suggestion.category;
+      setCategoryState((prev) => {
+        const currentSelected = prev[category]?.selected ?? [];
+        const maxAllowed = categoryLimits[category] ?? 1;
+
+        // Don't add if already selected or at max
+        if (currentSelected.includes(suggestion.option)) return prev;
+        if (currentSelected.length >= maxAllowed) return prev;
+
+        return {
+          ...prev,
+          [category]: {
+            ...prev[category],
+            selected: [...currentSelected, suggestion.option],
+          },
+        };
+      });
+    },
+    [categoryLimits],
+  );
 
   // Compute top suggestions from analysis
   const topSuggestions = useMemo(() => {
     if (!promptAnalysis?.suggestions?.suggestions) return [];
-    
+
     const all: SuggestedOption[] = [];
     for (const categorySuggestions of Object.values(promptAnalysis.suggestions.suggestions)) {
       if (categorySuggestions) {
         all.push(...categorySuggestions);
       }
     }
-    
+
     // Sort by score descending and take top 6
     all.sort((a, b) => b.score - a.score);
     return all.slice(0, 6);
@@ -790,44 +819,53 @@ export function PromptBuilder({
   // Compute reordered options for all categories (smart dropdown ordering)
   const reorderedOptionsMap = useMemo(() => {
     const map = new Map<PromptCategory, ScoredOption[]>();
-    
+
     // Skip if live reorder is disabled in preferences
     if (!intelligencePrefs.liveReorderEnabled) return map;
-    
+
     // Only reorder if there's content (context to base ordering on)
     if (!hasContent) return map;
-    
+
     const categories = getAllCategories();
     for (const category of categories) {
       if (category === 'negative') continue; // Skip negative, doesn't benefit from reorder
-      
-      const config = getCategoryConfig(category);
+
+      const config = getEnhancedCategoryConfig(category);
       if (!config || config.options.length === 0) continue;
-      
+
       // Reorder options based on current selections + live market mood
       const scoredOptions = reorderByRelevance(
         config.options,
         category,
         selections,
         isMarketMoodEnabled,
-        marketState
+        marketState,
       );
-      
+
       map.set(category, scoredOptions);
     }
-    
+
     return map;
-  }, [hasContent, selections, intelligencePrefs.liveReorderEnabled, isMarketMoodEnabled, marketState]);
+  }, [
+    hasContent,
+    selections,
+    intelligencePrefs.liveReorderEnabled,
+    isMarketMoodEnabled,
+    marketState,
+  ]);
 
   // Helper to get options for a category (reordered if available)
-  const getOptionsForCategory = useCallback((category: PromptCategory, originalOptions: string[]): string[] => {
-    const scored = reorderedOptionsMap.get(category);
-    if (scored && scored.length > 0) {
-      // Return just the option strings, already sorted by relevance
-      return scored.map(s => s.option);
-    }
-    return originalOptions;
-  }, [reorderedOptionsMap]);
+  const getOptionsForCategory = useCallback(
+    (category: PromptCategory, originalOptions: string[]): string[] => {
+      const scored = reorderedOptionsMap.get(category);
+      if (scored && scored.length > 0) {
+        // Return just the option strings, already sorted by relevance
+        return scored.map((s) => s.option);
+      }
+      return originalOptions;
+    },
+    [reorderedOptionsMap],
+  );
 
   // Computed: did optimization change the prompt? (compression OR trimming)
   const wasOptimized = optimizedResult.originalLength !== optimizedResult.optimizedLength;
@@ -883,7 +921,7 @@ export function PromptBuilder({
 
     // Build new state from result
     const newState = createInitialState();
-    
+
     for (const [cat, selected] of Object.entries(result.selections)) {
       const category = cat as PromptCategory;
       newState[category] = {
@@ -934,81 +972,84 @@ export function PromptBuilder({
   }, [onDone]);
 
   // Handle save to library
-  const handleSavePrompt = useCallback((data: SavePromptData) => {
-    if (!hasContent) return;
+  const handleSavePrompt = useCallback(
+    (data: SavePromptData) => {
+      if (!hasContent) return;
 
-    // Get analysis data for the saved prompt
-    const coherenceScore = promptAnalysis?.dna?.coherenceScore ?? 75;
-    const dominantFamily = promptAnalysis?.dna?.dominantFamily ?? null;
-    const dominantMood = promptAnalysis?.dna?.dominantMood ?? 'neutral';
-    
-    // Extract families from selections
-    const families: string[] = [];
-    if (dominantFamily) families.push(dominantFamily);
+      // Get analysis data for the saved prompt
+      const coherenceScore = promptAnalysis?.dna?.coherenceScore ?? 75;
+      const dominantFamily = promptAnalysis?.dna?.dominantFamily ?? null;
+      const dominantMood = promptAnalysis?.dna?.dominantMood ?? 'neutral';
 
-    // Build custom values
-    const customValues: Partial<Record<PromptCategory, string>> = {};
-    for (const [cat, state] of Object.entries(categoryState)) {
-      if (state.customValue.trim()) {
-        customValues[cat as PromptCategory] = state.customValue.trim();
+      // Extract families from selections
+      const families: string[] = [];
+      if (dominantFamily) families.push(dominantFamily);
+
+      // Build custom values
+      const customValues: Partial<Record<PromptCategory, string>> = {};
+      for (const [cat, state] of Object.entries(categoryState)) {
+        if (state.customValue.trim()) {
+          customValues[cat as PromptCategory] = state.customValue.trim();
+        }
       }
-    }
 
-    const result = savePrompt({
-      name: data.name,
+      const result = savePrompt({
+        name: data.name,
+        platformId,
+        platformName: provider.name,
+        positivePrompt: optimizedResult.optimized,
+        negativePrompt: negativesArray.length > 0 ? negativesArray.join(', ') : undefined,
+        selections,
+        customValues,
+        families,
+        mood: dominantMood as 'calm' | 'intense' | 'neutral',
+        coherenceScore,
+        characterCount: optimizedResult.optimizedLength,
+        notes: data.notes,
+        tags: data.tags,
+      });
+
+      if (result) {
+        setShowSaveModal(false);
+        setSavedConfirmation(true);
+        setTimeout(() => setSavedConfirmation(false), 2000);
+      }
+    },
+    [
+      hasContent,
+      promptAnalysis,
+      categoryState,
+      savePrompt,
       platformId,
-      platformName: provider.name,
-      positivePrompt: optimizedResult.optimized,
-      negativePrompt: negativesArray.length > 0 ? negativesArray.join(', ') : undefined,
+      provider.name,
+      optimizedResult,
+      negativesArray,
       selections,
-      customValues,
-      families,
-      mood: dominantMood as 'calm' | 'intense' | 'neutral',
-      coherenceScore,
-      characterCount: optimizedResult.optimizedLength,
-      notes: data.notes,
-      tags: data.tags,
-    });
-
-    if (result) {
-      setShowSaveModal(false);
-      setSavedConfirmation(true);
-      setTimeout(() => setSavedConfirmation(false), 2000);
-    }
-  }, [
-    hasContent, 
-    promptAnalysis, 
-    categoryState, 
-    savePrompt, 
-    platformId, 
-    provider.name, 
-    optimizedResult, 
-    negativesArray, 
-    selections
-  ]);
+    ],
+  );
 
   // Generate suggested name from selections
   const suggestedSaveName = useMemo(() => {
     const parts: string[] = [];
-    
+
     // Add subject if present
     const subject = categoryState.subject?.customValue?.trim();
     if (subject && subject.length < 30) {
       parts.push(subject);
     }
-    
+
     // Add first style
     const style = categoryState.style?.selected[0];
     if (style) parts.push(style);
-    
+
     // Add first atmosphere
     const atmosphere = categoryState.atmosphere?.selected[0];
     if (atmosphere && parts.length < 2) parts.push(atmosphere);
-    
+
     if (parts.length > 0) {
       return parts.join(' · ');
     }
-    
+
     return '';
   }, [categoryState]);
 
@@ -1113,7 +1154,7 @@ export function PromptBuilder({
                   )}
                 </div>
               )}
-              
+
               {isMounted && !isAuthenticated && anonymousUsage && (
                 <AnonymousCounter count={anonymousUsage.count} limit={anonymousUsage.limit} />
               )}
@@ -1163,7 +1204,7 @@ export function PromptBuilder({
           {/* Category dropdowns grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayCategories.map((category) => {
-              const config = getCategoryConfig(category);
+              const config = getEnhancedCategoryConfig(category);
               if (!config) return null;
 
               const state = categoryState[category];
@@ -1195,6 +1236,8 @@ export function PromptBuilder({
                     maxCustomChars={50}
                     allowFreeText={allowFreeText}
                     isLocked={isLocked}
+                    chipOptions={getCategoryChips(category, state.selected, state.customValue)}
+                    chipSectionLabel="More options"
                   />
                 </div>
               );
@@ -1452,14 +1495,24 @@ export function PromptBuilder({
             {savedConfirmation ? (
               <>
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 Saved!
               </>
             ) : (
               <>
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                  />
                 </svg>
                 Save
               </>

@@ -338,55 +338,239 @@ Maps live market states to suggestion boosts.
 }
 ```
 
-### 4.5 platform-hints.json
+## 4.5 Gallery Mode Integration (NEW v2.1.0)
 
-Platform-specific intelligence adjustments.
+The Prompt Intelligence system powers Gallery Mode's automatic prompt generation. Market moods, semantic tags, and the 4-tier platform system work together to create city-specific prompts.
+
+### How Gallery Mode Uses Prompt Intelligence
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     GALLERY MODE PROMPT PIPELINE                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐                  │
+│  │ THEME ENGINE │    │ MARKET MOOD  │    │ PROMPT       │                  │
+│  │              │───▶│ ENGINE       │───▶│ BUILDER      │                  │
+│  │ • City data  │    │              │    │              │                  │
+│  │ • Local time │    │ • FX data    │    │ • Scene Brief│                  │
+│  │ • Season     │    │ • Crypto     │    │ • Caps check │                  │
+│  │ • Weather    │    │ • Commodities│    │ • 4 variants │                  │
+│  └──────────────┘    └──────────────┘    └──────────────┘                  │
+│         │                   │                   │                          │
+│         └───────────────────┼───────────────────┘                          │
+│                             ▼                                              │
+│                    ┌──────────────────┐                                    │
+│                    │ semantic-tags.json│  ◀── Tags, families, conflicts    │
+│                    │ market-moods.json │  ◀── Mood triggers & boosts       │
+│                    │ platform-hints.json│ ◀── 4-tier syntax rules          │
+│                    └──────────────────┘                                    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### CitySnapshot → Scene Brief Pipeline
+
+Gallery Mode builds a `CitySnapshot` for each exchange, then converts it to a `SceneBrief`:
+
+````typescript
+// Step 1: Build CitySnapshot from exchange data
+interface CitySnapshot {
+  exchangeId: string;
+  city: string;
+  country: string;
+  localTime: Date;
+  timeOfDay: 'dawn' | 'morning' | 'midday' | 'afternoon' | 'dusk' | 'night';
+  season: 'spring' | 'summer' | 'autumn' | 'winter';
+  isMarketOpen: boolean;
+  weather?: { conditions: string; temperatureC: number };
+  mood: MarketMoodResult;
+}
+
+// Step 2: Convert to Scene Brief using Prompt Intelligence
+interface SceneBrief {
+  anchor: string; // City landmark (from semantic-tags)
+  lighting: string; // Single descriptor
+  style: string; // Single profile
+  camera: string; // Single angle
+  atmosphere: string[]; // Max 3 (mood + weather + time)
+  hook?: string; // Cosmic event, cultural moment
+  motifs: string[]; // Max 2 (seasonal, cultural)
+  constraints: string; // "No text, no logos"
+  negativePrompt: string; // Platform-appropriate
+}
+
+### Market Mood → Prompt Influence
+
+When Gallery Mode detects a market mood, it uses the boosts from `market-moods.json`:
+
+```typescript
+function applyMoodToSceneBrief(brief: Partial<SceneBrief>, mood: MarketMoodResult): SceneBrief {
+  // Mood boosts have higher priority than base values
+  const moodAtmosphere = mood.boosts.atmosphere || [];
+  const moodLighting = mood.boosts.lighting?.[0];
+  const moodColour = mood.boosts.colour || [];
+
+  // Combine with existing atmosphere (caps enforced)
+  const atmosphere = dedupeAndCap(
+    [
+      ...moodAtmosphere, // Highest priority
+      ...(brief.atmosphere || []), // Time-based
+      ...weatherAtmosphere, // Weather-based
+    ],
+    3,
+  ); // Max 3 atmosphere terms
+
+  return {
+    ...brief,
+    atmosphere,
+    lighting: moodLighting || brief.lighting,
+    // Mood colours influence materials/style where applicable
+  };
+}
+````
+
+### Weather → Atmosphere Mapping
+
+Gallery Mode converts weather conditions to atmosphere terms:
+
+```typescript
+// Maps weather conditions to semantic-tags atmosphere values
+const WEATHER_ATMOSPHERE_MAP: Record<string, string[]> = {
+  storm: ['dramatic', 'intense', 'electric'],
+  thunder: ['dramatic', 'intense', 'electric'],
+  rain: ['moody', 'reflective', 'glistening'],
+  drizzle: ['moody', 'reflective', 'glistening'],
+  snow: ['serene', 'pristine', 'cold'],
+  fog: ['mysterious', 'ethereal', 'diffused'],
+  mist: ['mysterious', 'ethereal', 'diffused'],
+  cloud: ['overcast', 'soft light'],
+  clear: ['vibrant', 'bright', 'warm'],
+  sunny: ['vibrant', 'bright', 'warm'],
+};
+
+function weatherToAtmosphere(conditions: string): string[] {
+  const lower = conditions.toLowerCase();
+  for (const [key, atmosphere] of Object.entries(WEATHER_ATMOSPHERE_MAP)) {
+    if (lower.includes(key)) return atmosphere;
+  }
+  return ['vibrant', 'bright', 'warm']; // Default: clear
+}
+```
+
+### 4-Tier Prompt Rendering for Gallery
+
+Scene Brief renders to 4 deterministic prompts using `platform-hints.json`:
+
+```typescript
+function renderSceneBrief(brief: SceneBrief): Record<PromptTier, string> {
+  return {
+    tier1: renderTier1(brief), // CLIP-Based: weights, parentheses
+    tier2: renderTier2(brief), // Midjourney: --ar, --no
+    tier3: renderTier3(brief), // Natural Language: sentences
+    tier4: renderTier4(brief), // Plain Language: simple
+  };
+}
+
+// Example output for Tokyo at twilight with gold_rising mood:
+{
+  tier1: "Tokyo skyline at twilight::1.3, golden hour light, opulent, warm, serene, cherry blossom motifs, (Mount Fuji:1.2), cinematic photography, wide angle --no text logos",
+
+  tier2: "Tokyo skyline at twilight, golden hour light, opulent warm serene atmosphere, cherry blossom season, Mount Fuji background, cinematic photography, wide angle --ar 16:9 --no text logos watermarks",
+
+  tier3: "A serene photograph of the Tokyo skyline at twilight during cherry blossom season. The scene is bathed in warm golden hour light with an opulent, prestigious atmosphere. Mount Fuji is visible in the background. Shot in a cinematic style with a wide angle lens. No text or logos.",
+
+  tier4: "Tokyo skyline at sunset with cherry blossoms, warm golden light, Mount Fuji in background, elegant mood, wide angle photo"
+}
+```
+
+### Caps Enforcement in Gallery Mode
+
+Gallery Mode enforces stricter caps than manual prompt building:
+
+| Category       | Manual Builder | Gallery Mode | Rationale               |
+| -------------- | -------------- | ------------ | ----------------------- |
+| Anchor         | 1              | 1            | Single city focal point |
+| Lighting       | 1              | 1            | Consistent mood         |
+| Style          | 1              | 1            | Coherent aesthetic      |
+| Camera         | 1              | 1            | Single perspective      |
+| **Atmosphere** | 2-3            | **3 max**    | Mood + weather + time   |
+| Hook           | 1              | **0-1**      | Only if cosmic event    |
+| Motifs         | 2              | **2 max**    | Seasonal + cultural     |
+
+### Conflict Avoidance
+
+Gallery Mode uses `conflicts.json` to prevent incoherent prompts:
+
+```typescript
+function validateSceneBrief(brief: SceneBrief): ValidationResult {
+  const allTerms = [brief.lighting, brief.style, ...brief.atmosphere, ...brief.motifs].filter(
+    Boolean,
+  );
+
+  // Check against conflicts.json
+  const conflicts = detectConflicts(allTerms);
+
+  if (conflicts.length > 0) {
+    // Remove lowest-priority conflicting term
+    return removeLowestPriorityConflict(brief, conflicts);
+  }
+
+  return { valid: true, brief };
+}
+```
+
+### Negative Prompts
+
+Gallery Mode always includes platform-appropriate negatives:
+
+```typescript
+const GALLERY_NEGATIVE_PROMPTS = {
+  universal: 'text, logos, watermarks, words, letters, signatures',
+  safety: 'political symbols, gore, explicit content, nudity, real people',
+  quality: 'distorted faces, extra limbs, blurry, low quality, artifacts',
+};
+
+function getNegativePrompt(tier: PromptTier): string {
+  const parts = [GALLERY_NEGATIVE_PROMPTS.universal, GALLERY_NEGATIVE_PROMPTS.safety];
+
+  // Add quality negatives for CLIP-based platforms
+  if (tier === 'tier1' || tier === 'tier2') {
+    parts.push(GALLERY_NEGATIVE_PROMPTS.quality);
+  }
+
+  return parts.join(', ');
+}
+```
+
+### City Anchors (Semantic Tags)
+
+Gallery Mode uses pre-defined city anchors from semantic-tags:
 
 ```json
 {
-  "version": "1.0.0",
-  "platforms": {
-    "midjourney": {
-      "tier": 2,
-      "prefersEarlierTokens": true,
-      "weightSyntax": "::1.5",
-      "negativeSyntax": "--no",
-      "hints": [
-        "Midjourney weights earlier terms more heavily",
-        "Use :: for emphasis (e.g., 'cyberpunk::1.5')",
-        "Keep prompts under 60 words for best results"
-      ],
-      "strongCategories": ["style", "lighting", "atmosphere"],
-      "trimPriority": ["materials", "fidelity", "camera"]
-    },
-    "dall-e": {
-      "tier": 3,
-      "prefersNaturalLanguage": true,
-      "negativeSyntax": "without",
-      "hints": [
-        "DALL-E prefers natural, descriptive sentences",
-        "Avoid keyword lists; use flowing descriptions",
-        "Be specific about what you want, not just style terms"
-      ],
-      "strongCategories": ["subject", "environment", "action"],
-      "trimPriority": ["fidelity", "camera", "materials"]
-    },
-    "stable-diffusion": {
-      "tier": 1,
-      "prefersKeywords": true,
-      "weightSyntax": "(term:1.3)",
-      "separateNegative": true,
-      "hints": [
-        "Stable Diffusion responds well to weighted terms",
-        "Use (term:1.1) to (term:1.5) for emphasis",
-        "Negative prompt is separate and powerful"
-      ],
-      "strongCategories": ["style", "lighting", "fidelity"],
-      "trimPriority": ["atmosphere", "action"]
-    }
+  "cityAnchors": {
+    "Tokyo": ["Tokyo skyline", "Shibuya crossing", "Tokyo Tower silhouette"],
+    "London": ["London skyline", "Tower Bridge", "Big Ben silhouette"],
+    "New York": ["Manhattan skyline", "Brooklyn Bridge", "Central Park"],
+    "Sydney": ["Sydney harbour", "Opera House silhouette", "Harbour Bridge"],
+    "Hong Kong": ["Victoria Harbour", "Hong Kong skyline", "neon-lit streets"]
+    // ... 79 cities total
   }
 }
 ```
+
+### Integration Files
+
+| File                  | Gallery Mode Use                               |
+| --------------------- | ---------------------------------------------- |
+| `semantic-tags.json`  | City anchors, atmosphere terms, style profiles |
+| `market-moods.json`   | Mood triggers and boost values                 |
+| `platform-hints.json` | 4-tier syntax rules, character limits          |
+| `conflicts.json`      | Prevent incoherent term combinations           |
+| `families.json`       | Style family coherence validation              |
+
+Authority for Gallery Mode implementation: `docs/authority/gallery-mode-master.md`
 
 ---
 
@@ -759,15 +943,15 @@ Footer
 
 What Changes:
 
-| Route | Centre Content |
-|-------|----------------|
-| `/` | AI Providers Leaderboard |
-| `/providers/[id]` | Prompt Builder (provider pre-selected) |
+| Route                 | Centre Content                              |
+| --------------------- | ------------------------------------------- |
+| `/`                   | AI Providers Leaderboard                    |
+| `/providers/[id]`     | Prompt Builder (provider pre-selected)      |
 | `/prompts/playground` | Prompt Builder (provider dropdown selector) |
-| `/prompts/library` | Saved Prompts Grid |
-| `/prompts/explore` | Style Family Browser |
-| `/prompts/learn` | Education Content |
-| `/prompts/trending` | Community Trends |
+| `/prompts/library`    | Saved Prompts Grid                          |
+| `/prompts/explore`    | Style Family Browser                        |
+| `/prompts/learn`      | Education Content                           |
+| `/prompts/trending`   | Community Trends                            |
 
 Non-Regression Rule: New pages must not modify HomepageGrid, exchange rails, Finance Ribbon, or footer. Only pass new centre content.
 
@@ -775,30 +959,32 @@ Non-Regression Rule: New pages must not modify HomepageGrid, exchange rails, Fin
 
 #### `/prompts/playground` — Prompt Playground
 
-| Aspect       | Detail                                                                                |
-| ------------ | ------------------------------------------------------------------------------------- |
-| Purpose      | Builder-first entry: Create prompts without pre-selecting a provider                  |
-| Content      | Full Prompt Builder with provider dropdown selector in header                         |
-| Features     | Provider switching (instant reformat); All intelligence features; Live comparison     |
-| Entry points | Direct bookmark; Site nav; "Build a prompt" CTAs                                      |
-| Exit points  | "Open in X" launches provider; Save → Library; Copy to clipboard                      |
+| Aspect       | Detail                                                                            |
+| ------------ | --------------------------------------------------------------------------------- |
+| Purpose      | Builder-first entry: Create prompts without pre-selecting a provider              |
+| Content      | Full Prompt Builder with provider dropdown selector in header                     |
+| Features     | Provider switching (instant reformat); All intelligence features; Live comparison |
+| Entry points | Direct bookmark; Site nav; "Build a prompt" CTAs                                  |
+| Exit points  | "Open in X" launches provider; Save → Library; Copy to clipboard                  |
 
 **Key Difference from `/providers/[id]`:**
 
-| Aspect | `/providers/[id]` | `/prompts/playground` |
-|--------|-------------------|----------------------|
-| Header | Static: "Midjourney · Prompt builder" | Dropdown: "[▼ Select Provider...] · Prompt builder" |
-| Provider | Pre-selected from URL | User selects from all 42 |
-| Use case | "I want to use Midjourney" | "I want to build a prompt" |
-| Switching | Navigate to different URL | Instant dropdown change |
+| Aspect    | `/providers/[id]`                     | `/prompts/playground`                               |
+| --------- | ------------------------------------- | --------------------------------------------------- |
+| Header    | Static: "Midjourney · Prompt builder" | Dropdown: "[▼ Select Provider...] · Prompt builder" |
+| Provider  | Pre-selected from URL                 | User selects from all 42                            |
+| Use case  | "I want to use Midjourney"            | "I want to build a prompt"                          |
+| Switching | Navigate to different URL             | Instant dropdown change                             |
 
 **Provider Switching Behaviour:**
+
 - Selections persist when switching providers
 - Prompt auto-reformats for new provider's syntax
 - Character limits adjust (excess auto-trimmed)
 - "Open in X" button updates to selected provider
 
 **Implementation:**
+
 - Uses `PlaygroundWorkspace` component (client)
 - Passes `providerSelector` prop to `PromptBuilder`
 - Uses `Combobox` component with `compact` mode for header selector

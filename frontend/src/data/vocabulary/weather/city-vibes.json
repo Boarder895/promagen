@@ -1,0 +1,981 @@
+{
+  "$schema": "./schemas/city-vibes.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "weather",
+    "category": "city-vibes",
+    "totalPhrases": 640,
+    "description": "City-specific atmospheric vibes and landmarks. 64 cities × 10 vibes each.",
+    "coverage": "Major financial centers, exchanges, and global cities",
+    "updated": "2026-01-21"
+  },
+  "cities": {
+    "tokyo": {
+      "country": "JP",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "neon-lit streets of Shibuya",
+        "towering Shinjuku skyscrapers",
+        "serene Senso-ji temple grounds",
+        "bustling Ginza district",
+        "electric Akihabara energy",
+        "Harajuku fashion chaos",
+        "tranquil Meiji Shrine gardens",
+        "Tokyo Tower silhouette",
+        "Odaiba futuristic waterfront",
+        "cherry blossom Ueno Park"
+      ]
+    },
+    "new york": {
+      "country": "US",
+      "region": "Americas",
+      "phrases": [
+        "Manhattan skyline majesty",
+        "Times Square brilliance",
+        "Central Park serenity",
+        "Brooklyn bridge views",
+        "Fifth Avenue elegance",
+        "Wall Street power corridor",
+        "Empire State grandeur",
+        "Greenwich Village charm",
+        "Hudson River sunset",
+        "Statue of Liberty backdrop"
+      ]
+    },
+    "london": {
+      "country": "GB",
+      "region": "Europe",
+      "phrases": [
+        "Victorian architecture grandeur",
+        "Thames river reflections",
+        "Big Ben silhouette",
+        "red double-decker charm",
+        "royal palace backdrop",
+        "Tower Bridge majesty",
+        "Piccadilly Circus energy",
+        "Hyde Park tranquility",
+        "Canary Wharf modernity",
+        "Westminster heritage"
+      ]
+    },
+    "paris": {
+      "country": "FR",
+      "region": "Europe",
+      "phrases": [
+        "Haussmann boulevards",
+        "Eiffel Tower silhouette",
+        "Seine riverside beauty",
+        "Montmartre artistic spirit",
+        "Champs-Élysées glamour",
+        "Notre-Dame gothic majesty",
+        "Louvre pyramid contrast",
+        "Marais cobblestone charm",
+        "Luxembourg Gardens peace",
+        "Sacré-Cœur hilltop views"
+      ]
+    },
+    "sydney": {
+      "country": "AU",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "harbour bridge icon",
+        "Opera House curves",
+        "Bondi beach vibes",
+        "harbour ferry views",
+        "coastal city sparkle",
+        "Circular Quay energy",
+        "Darling Harbour modernity",
+        "Manly beach serenity",
+        "Royal Botanic Gardens",
+        "sunset harbour glow"
+      ]
+    },
+    "hong kong": {
+      "country": "HK",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "dense urban towers",
+        "Victoria Peak panorama",
+        "neon-soaked streets",
+        "harbor skyline drama",
+        "vertical city energy",
+        "Star Ferry crossing",
+        "Central district power",
+        "Kowloon night markets",
+        "tram-climbing streets",
+        "Symphony of Lights"
+      ]
+    },
+    "singapore": {
+      "country": "SG",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "modern cityscape",
+        "Marina Bay splendor",
+        "garden city greenery",
+        "futuristic architecture",
+        "tropical urban blend",
+        "Supertree Grove magic",
+        "Orchard Road glamour",
+        "Clarke Quay nightlife",
+        "Sentosa island escape",
+        "Merlion guardian presence"
+      ]
+    },
+    "dubai": {
+      "country": "AE",
+      "region": "Middle East",
+      "phrases": [
+        "futuristic skyscrapers",
+        "Burj Khalifa majesty",
+        "desert luxury towers",
+        "Palm Jumeirah views",
+        "gold-touched architecture",
+        "Dubai Mall grandeur",
+        "creek dhow heritage",
+        "Marina yacht lifestyle",
+        "desert safari contrast",
+        "fountain show spectacle"
+      ]
+    },
+    "shanghai": {
+      "country": "CN",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "Pudong skyline drama",
+        "Oriental Pearl tower",
+        "Bund historic contrast",
+        "neon river reflections",
+        "mega-city ambition",
+        "Yu Garden tranquility",
+        "Nanjing Road bustle",
+        "French Concession charm",
+        "Lujiazui financial power",
+        "Huangpu River views"
+      ]
+    },
+    "mumbai": {
+      "country": "IN",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "bustling streets energy",
+        "Gateway of India backdrop",
+        "Bollywood city spirit",
+        "Arabian Sea views",
+        "colonial architecture mix",
+        "Marine Drive sunset",
+        "Elephanta Caves mystery",
+        "Dharavi resilience",
+        "Colaba Causeway charm",
+        "monsoon drama intensity"
+      ]
+    },
+    "delhi": {
+      "country": "IN",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "historic monuments",
+        "India Gate grandeur",
+        "old-new city contrast",
+        "vibrant market energy",
+        "Mughal heritage backdrop",
+        "Red Fort majesty",
+        "Qutub Minar tower",
+        "Chandni Chowk chaos",
+        "Connaught Place geometry",
+        "Lotus Temple serenity"
+      ]
+    },
+    "frankfurt": {
+      "country": "DE",
+      "region": "Europe",
+      "phrases": [
+        "financial district towers",
+        "Main river skyline",
+        "European banking hub",
+        "modern glass architecture",
+        "old town contrast",
+        "Römer square heritage",
+        "Zeil shopping energy",
+        "Sachsenhausen charm",
+        "ECB headquarters power",
+        "apple wine traditions"
+      ]
+    },
+    "zurich": {
+      "country": "CH",
+      "region": "Europe",
+      "phrases": [
+        "alpine city views",
+        "pristine lake shores",
+        "Swiss precision architecture",
+        "banking district elegance",
+        "mountain backdrop majesty",
+        "Bahnhofstrasse luxury",
+        "old town cobblestones",
+        "Limmat river beauty",
+        "clock tower heritage",
+        "chocolate-box perfection"
+      ]
+    },
+    "seoul": {
+      "country": "KR",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "modern K-city blend",
+        "Gangnam district style",
+        "palace-meets-skyscraper",
+        "Han River panorama",
+        "neon pop culture energy",
+        "Bukchon hanok village",
+        "Namsan Tower views",
+        "Myeongdong shopping frenzy",
+        "K-pop street culture",
+        "Hongdae creative district"
+      ]
+    },
+    "toronto": {
+      "country": "CA",
+      "region": "Americas",
+      "phrases": [
+        "CN Tower skyline",
+        "multicultural city energy",
+        "lakefront views",
+        "downtown glass towers",
+        "diverse urban spirit",
+        "Distillery District charm",
+        "Queen Street West art",
+        "Kensington Market vibes",
+        "Rogers Centre action",
+        "Toronto Islands escape"
+      ]
+    },
+    "bangkok": {
+      "country": "TH",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "temple spires and towers",
+        "Chao Phraya river life",
+        "golden Buddha shrines",
+        "rooftop bar skyline",
+        "street food energy",
+        "Wat Pho serenity",
+        "Khao San Road chaos",
+        "floating market charm",
+        "tuk-tuk adventure",
+        "Grand Palace magnificence"
+      ]
+    },
+    "jakarta": {
+      "country": "ID",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "tropical megacity",
+        "modern tower clusters",
+        "bustling street life",
+        "Indonesian capital energy",
+        "diverse urban tapestry",
+        "Monas monument pride",
+        "Old Town heritage",
+        "SCBD modernity",
+        "Ancol waterfront escape",
+        "traffic river flow"
+      ]
+    },
+    "taipei": {
+      "country": "TW",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "Taipei 101 cityscape",
+        "night market energy",
+        "mountain-ringed basin",
+        "modern Asian metropolis",
+        "temple-tech contrast",
+        "Ximending youth culture",
+        "hot spring escapes",
+        "bubble tea origins",
+        "MRT efficiency",
+        "Elephant Mountain views"
+      ]
+    },
+    "manila": {
+      "country": "PH",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "bay city skyline",
+        "historic Intramuros",
+        "tropical urban energy",
+        "Makati district towers",
+        "island capital spirit",
+        "Manila Ocean Park",
+        "Rizal Park heritage",
+        "BGC modernity",
+        "jeepney culture",
+        "sunset bay views"
+      ]
+    },
+    "kuala lumpur": {
+      "country": "MY",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "Petronas Towers icon",
+        "modern Islamic architecture",
+        "tropical city greenery",
+        "diverse cultural blend",
+        "Malaysian capital pride",
+        "Batu Caves drama",
+        "KLCC park oasis",
+        "Bukit Bintang energy",
+        "Merdeka Square heritage",
+        "skybridge crossing"
+      ]
+    },
+    "istanbul": {
+      "country": "TR",
+      "region": "Europe/Asia",
+      "phrases": [
+        "minarets and Bosphorus",
+        "Blue Mosque silhouette",
+        "two-continent city",
+        "bazaar maze energy",
+        "Ottoman grandeur",
+        "Hagia Sophia wonder",
+        "Galata Tower views",
+        "spice market aromas",
+        "ferry-crossing life",
+        "Sultanahmet historic heart"
+      ]
+    },
+    "moscow": {
+      "country": "RU",
+      "region": "Europe",
+      "phrases": [
+        "Red Square grandeur",
+        "Kremlin fortress walls",
+        "onion dome skyline",
+        "Soviet-modern contrast",
+        "vast city expanse",
+        "St Basil's cathedral",
+        "Moscow City towers",
+        "metro palace stations",
+        "Arbat Street charm",
+        "Bolshoi Theatre elegance"
+      ]
+    },
+    "chicago": {
+      "country": "US",
+      "region": "Americas",
+      "phrases": [
+        "lakefront skyline",
+        "architectural innovation",
+        "river canyon towers",
+        "Windy City energy",
+        "Midwest metropolis pride",
+        "Magnificent Mile shopping",
+        "Willis Tower heights",
+        "Navy Pier entertainment",
+        "deep dish traditions",
+        "Blues and jazz soul"
+      ]
+    },
+    "los angeles": {
+      "country": "US",
+      "region": "Americas",
+      "phrases": [
+        "palm-lined boulevards",
+        "Hollywood hill views",
+        "beach city sprawl",
+        "sunset strip glamour",
+        "entertainment capital glow",
+        "Santa Monica pier",
+        "Griffith Observatory",
+        "Venice Beach culture",
+        "downtown revival",
+        "freeway river flow"
+      ]
+    },
+    "san francisco": {
+      "country": "US",
+      "region": "Americas",
+      "phrases": [
+        "Golden Gate vista",
+        "cable car charm",
+        "bay bridge beauty",
+        "Victorian painted ladies",
+        "tech hub innovation",
+        "Fisherman's Wharf",
+        "Alcatraz mystery",
+        "Chinatown heritage",
+        "fog-rolling hills",
+        "Castro rainbow pride"
+      ]
+    },
+    "mexico city": {
+      "country": "MX",
+      "region": "Americas",
+      "phrases": [
+        "aztec modern fusion",
+        "Zócalo plaza grandeur",
+        "Chapultepec green oasis",
+        "vibrant street art",
+        "colonial-contemporary mix",
+        "Coyoacán bohemian charm",
+        "Angel of Independence",
+        "Polanco elegance",
+        "UNAM campus art",
+        "mariachi spirit"
+      ]
+    },
+    "buenos aires": {
+      "country": "AR",
+      "region": "Americas",
+      "phrases": [
+        "European-style avenues",
+        "tango city spirit",
+        "colorful La Boca",
+        "Recoleta elegance",
+        "passionate capital energy",
+        "Palermo park charm",
+        "Casa Rosada pink",
+        "San Telmo antiques",
+        "steak house culture",
+        "café life traditions"
+      ]
+    },
+    "rio": {
+      "country": "BR",
+      "region": "Americas",
+      "phrases": [
+        "Sugarloaf mountain views",
+        "Copacabana beach curve",
+        "Christ Redeemer watch",
+        "carnival city spirit",
+        "tropical metropolis beauty",
+        "Ipanema golden sand",
+        "samba rhythm soul",
+        "favela hillside drama",
+        "Maracanã passion",
+        "Tijuca forest escape"
+      ]
+    },
+    "cairo": {
+      "country": "EG",
+      "region": "Middle East/Africa",
+      "phrases": [
+        "Nile river cityscape",
+        "pyramid backdrop",
+        "ancient-modern layers",
+        "Islamic architecture richness",
+        "pharaonic heritage",
+        "Khan el-Khalili bazaar",
+        "Tahrir Square history",
+        "Citadel commanding views",
+        "felucca sunset sails",
+        "Giza plateau wonder"
+      ]
+    },
+    "cape town": {
+      "country": "ZA",
+      "region": "Africa",
+      "phrases": [
+        "Table Mountain backdrop",
+        "waterfront beauty",
+        "Atlantic coast views",
+        "African metropolis charm",
+        "natural wonder setting",
+        "Bo-Kaap colorful streets",
+        "Camps Bay glamour",
+        "V&A Waterfront life",
+        "Cape Point drama",
+        "wine region gateway"
+      ]
+    },
+    "abu dhabi": {
+      "country": "AE",
+      "region": "Middle East",
+      "phrases": [
+        "desert luxury towers",
+        "Sheikh Zayed Mosque",
+        "Louvre dome architecture",
+        "oil wealth grandeur",
+        "futuristic Arabian city",
+        "Corniche waterfront",
+        "Yas Island entertainment",
+        "mangrove kayaking",
+        "falcon heritage",
+        "pearl diving legacy"
+      ]
+    },
+    "riyadh": {
+      "country": "SA",
+      "region": "Middle East",
+      "phrases": [
+        "modern Arabian city",
+        "Kingdom Tower skyline",
+        "desert capital ambition",
+        "Saudi architectural vision",
+        "tradition-meets-future",
+        "Al-Masmak fortress",
+        "Diriyah heritage",
+        "financial district rise",
+        "NEOM gateway",
+        "oasis city heritage"
+      ]
+    },
+    "tel aviv": {
+      "country": "IL",
+      "region": "Middle East",
+      "phrases": [
+        "Mediterranean beach city",
+        "Bauhaus white city",
+        "startup hub energy",
+        "beachfront promenade",
+        "modern Middle East",
+        "Jaffa ancient port",
+        "Rothschild Boulevard",
+        "Carmel Market bustle",
+        "nightlife intensity",
+        "tech nation pride"
+      ]
+    },
+    "vienna": {
+      "country": "AT",
+      "region": "Europe",
+      "phrases": [
+        "imperial baroque streets",
+        "Ringstrasse grandeur",
+        "coffee house culture",
+        "classical music heritage",
+        "Habsburg elegance",
+        "Schönbrunn Palace",
+        "St. Stephen's spire",
+        "Prater wheel iconic",
+        "opera house prestige",
+        "waltz city romance"
+      ]
+    },
+    "prague": {
+      "country": "CZ",
+      "region": "Europe",
+      "phrases": [
+        "gothic spires old town",
+        "Charles Bridge romance",
+        "castle hill views",
+        "astronomical clock square",
+        "Bohemian historic beauty",
+        "Vltava river curves",
+        "Kafka's city mystery",
+        "beer hall traditions",
+        "art nouveau elegance",
+        "medieval maze charm"
+      ]
+    },
+    "warsaw": {
+      "country": "PL",
+      "region": "Europe",
+      "phrases": [
+        "modern phoenix city",
+        "old town reconstruction",
+        "Vistula river views",
+        "communist-era contrast",
+        "resilient capital spirit",
+        "Palace of Culture",
+        "Chopin heritage",
+        "Lazienki Park beauty",
+        "uprising memorial",
+        "new skyscraper ambition"
+      ]
+    },
+    "stockholm": {
+      "country": "SE",
+      "region": "Europe",
+      "phrases": [
+        "Nordic waterfront beauty",
+        "island city archipelago",
+        "Scandinavian design",
+        "Gamla Stan cobblestones",
+        "Baltic sea views",
+        "royal palace grandeur",
+        "ABBA museum nostalgia",
+        "Vasa ship history",
+        "Djurgården green escape",
+        "fika culture warmth"
+      ]
+    },
+    "oslo": {
+      "country": "NO",
+      "region": "Europe",
+      "phrases": [
+        "fjord city architecture",
+        "Nordic modernism",
+        "Viking heritage backdrop",
+        "sustainable urban design",
+        "waterfront renewal",
+        "Munch museum art",
+        "opera house roof",
+        "Vigeland sculpture park",
+        "Holmenkollen views",
+        "aurora gateway"
+      ]
+    },
+    "copenhagen": {
+      "country": "DK",
+      "region": "Europe",
+      "phrases": [
+        "colorful harbour Nyhavn",
+        "Nordic design capital",
+        "cycling city spirit",
+        "hygge atmosphere",
+        "Scandinavian livability",
+        "Tivoli Gardens magic",
+        "Little Mermaid",
+        "Christiania freedom",
+        "new Nordic cuisine",
+        "bridge-linked islands"
+      ]
+    },
+    "helsinki": {
+      "country": "FI",
+      "region": "Europe",
+      "phrases": [
+        "Nordic design capital",
+        "Baltic sea waterfront",
+        "sauna city culture",
+        "art nouveau architecture",
+        "Finnish modernism",
+        "Suomenlinna fortress",
+        "Senate Square grandeur",
+        "Temppeliaukio rock church",
+        "midnight sun city",
+        "design district innovation"
+      ]
+    },
+    "dublin": {
+      "country": "IE",
+      "region": "Europe",
+      "phrases": [
+        "Georgian architecture",
+        "Temple Bar spirit",
+        "Liffey river views",
+        "literary city heritage",
+        "Celtic capital charm",
+        "Trinity College history",
+        "Guinness birthplace",
+        "pub music culture",
+        "Phoenix Park expanse",
+        "tech hub modernity"
+      ]
+    },
+    "lisbon": {
+      "country": "PT",
+      "region": "Europe",
+      "phrases": [
+        "hillside tram streets",
+        "pastel building facades",
+        "Tagus river views",
+        "fado music spirit",
+        "maritime heritage",
+        "Belém Tower sentinel",
+        "Alfama labyrinth",
+        "tile-covered walls",
+        "pastel de nata warmth",
+        "sunset miradouros"
+      ]
+    },
+    "barcelona": {
+      "country": "ES",
+      "region": "Europe",
+      "phrases": [
+        "Gaudí modernist city",
+        "Mediterranean beach blend",
+        "Gothic Quarter maze",
+        "Ramblas promenade energy",
+        "Catalan architectural pride",
+        "Sagrada Família wonder",
+        "Park Güell whimsy",
+        "Barceloneta beach life",
+        "tapas bar crawl",
+        "Camp Nou passion"
+      ]
+    },
+    "rome": {
+      "country": "IT",
+      "region": "Europe",
+      "phrases": [
+        "ancient eternal city",
+        "Colosseum grandeur",
+        "Vatican proximity",
+        "fountain-dotted piazzas",
+        "empire ruins backdrop",
+        "Trevi Fountain wishes",
+        "Spanish Steps drama",
+        "Trastevere night charm",
+        "gelato street life",
+        "Renaissance art everywhere"
+      ]
+    },
+    "athens": {
+      "country": "GR",
+      "region": "Europe",
+      "phrases": [
+        "Acropolis backdrop",
+        "ancient democracy birthplace",
+        "white marble heritage",
+        "Mediterranean light",
+        "classical civilization",
+        "Parthenon silhouette",
+        "Plaka taverna charm",
+        "Monastiraki market bustle",
+        "sunset Lycabettus views",
+        "olive grove history"
+      ]
+    },
+    "brussels": {
+      "country": "BE",
+      "region": "Europe",
+      "phrases": [
+        "Grand Place splendor",
+        "art nouveau treasures",
+        "European Union hub",
+        "chocolate city sweetness",
+        "Belgian capital charm",
+        "Atomium futurism",
+        "Manneken Pis humor",
+        "waffle street vendors",
+        "comic strip murals",
+        "beer café culture"
+      ]
+    },
+    "amsterdam": {
+      "country": "NL",
+      "region": "Europe",
+      "phrases": [
+        "canal-side streets",
+        "bicycle city culture",
+        "gabled house rows",
+        "museum quarter richness",
+        "Dutch golden age heritage",
+        "Anne Frank history",
+        "Van Gogh artistry",
+        "tulip market color",
+        "red light district",
+        "houseboat living"
+      ]
+    },
+    "sao paulo": {
+      "country": "BR",
+      "region": "Americas",
+      "phrases": [
+        "sprawling metropolis",
+        "Avenida Paulista towers",
+        "South American megacity",
+        "cultural melting pot",
+        "Brazilian economic engine",
+        "Ibirapuera Park green",
+        "Pinheiros creativity",
+        "street art explosion",
+        "food scene diversity",
+        "night never ends"
+      ]
+    },
+    "johannesburg": {
+      "country": "ZA",
+      "region": "Africa",
+      "phrases": [
+        "African cityscape",
+        "gold mining heritage",
+        "Mandela legacy",
+        "urban renewal energy",
+        "rainbow nation hub",
+        "Apartheid Museum memory",
+        "Sandton wealth",
+        "Maboneng arts district",
+        "Constitution Hill",
+        "Soweto township spirit"
+      ]
+    },
+    "wellington": {
+      "country": "NZ",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "harbour capital beauty",
+        "windy city character",
+        "film industry creativity",
+        "compact waterfront",
+        "New Zealand governance",
+        "Te Papa museum",
+        "Cuba Street quirk",
+        "cable car climb",
+        "craft beer scene",
+        "Middle-earth gateway"
+      ]
+    },
+    "auckland": {
+      "country": "NZ",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "Sky Tower waterfront",
+        "city of sails",
+        "volcanic isthmus setting",
+        "Pacific gateway",
+        "Kiwi urban spirit",
+        "Waitemata Harbour",
+        "Viaduct Basin life",
+        "Ponsonby dining",
+        "Rangitoto backdrop",
+        "America's Cup heritage"
+      ]
+    },
+    "milan": {
+      "country": "IT",
+      "region": "Europe",
+      "phrases": [
+        "fashion capital elegance",
+        "Duomo gothic splendor",
+        "design week energy",
+        "La Scala prestige",
+        "Galleria Vittorio Emanuele",
+        "Navigli canal charm",
+        "aperitivo culture",
+        "Brera art quarter",
+        "vertical forest innovation",
+        "expo legacy modernity"
+      ]
+    },
+    "madrid": {
+      "country": "ES",
+      "region": "Europe",
+      "phrases": [
+        "royal palace grandeur",
+        "Prado museum treasures",
+        "Gran Vía Broadway",
+        "Retiro Park escape",
+        "Puerta del Sol heartbeat",
+        "Plaza Mayor history",
+        "tapas bar hopping",
+        "flamenco passion",
+        "late night culture",
+        "football cathedral rivalry"
+      ]
+    },
+    "doha": {
+      "country": "QA",
+      "region": "Middle East",
+      "phrases": [
+        "Pearl Island luxury",
+        "Museum of Islamic Art",
+        "Souq Waqif traditions",
+        "World Cup legacy",
+        "desert-meets-sea city",
+        "skyline ambition",
+        "Corniche promenade",
+        "Katara cultural village",
+        "falcon heritage",
+        "LNG wealth showcase"
+      ]
+    },
+    "shenzhen": {
+      "country": "CN",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "tech manufacturing hub",
+        "special economic zone",
+        "innovation city energy",
+        "window to China",
+        "rapid urbanization showcase",
+        "Ping An tower height",
+        "electronics market buzz",
+        "startup ecosystem",
+        "OCT creative park",
+        "border city dynamism"
+      ]
+    },
+    "beijing": {
+      "country": "CN",
+      "region": "Asia-Pacific",
+      "phrases": [
+        "Forbidden City majesty",
+        "Tiananmen Square expanse",
+        "Great Wall gateway",
+        "hutong neighborhood charm",
+        "Temple of Heaven serenity",
+        "CCTV headquarters bold",
+        "Olympic legacy venues",
+        "Peking duck culture",
+        "imperial history layers",
+        "modern China capital"
+      ]
+    },
+    "montreal": {
+      "country": "CA",
+      "region": "Americas",
+      "phrases": [
+        "French-Canadian charm",
+        "Old Montreal cobblestones",
+        "Mont Royal views",
+        "festival city energy",
+        "underground city innovation",
+        "bagel vs smoked meat",
+        "jazz festival spirit",
+        "Notre-Dame Basilica",
+        "Plateau-Mont-Royal hip",
+        "winter carnival warmth"
+      ]
+    },
+    "vancouver": {
+      "country": "CA",
+      "region": "Americas",
+      "phrases": [
+        "mountain-meets-ocean",
+        "Stanley Park seawall",
+        "Gastown steam clock",
+        "ski-to-sea lifestyle",
+        "diverse cultural mosaic",
+        "glass tower reflections",
+        "Granville Island arts",
+        "Capilano suspension thrill",
+        "sushi city excellence",
+        "rainforest urban edge"
+      ]
+    },
+    "munich": {
+      "country": "DE",
+      "region": "Europe",
+      "phrases": [
+        "Bavarian tradition meets tech",
+        "Marienplatz glockenspiel",
+        "beer hall culture",
+        "BMW headquarters",
+        "Oktoberfest spirit",
+        "English Garden expanse",
+        "alpine gateway city",
+        "Nymphenburg Palace elegance",
+        "art museum richness",
+        "FC Bayern passion"
+      ]
+    }
+  },
+  "contextual": {
+    "financial_centers": [
+      "trading floor intensity",
+      "market opening energy",
+      "bull and bear sentiment",
+      "portfolio management focus",
+      "investment banking power"
+    ],
+    "tech_hubs": [
+      "startup ecosystem buzz",
+      "innovation district creativity",
+      "tech campus modernity",
+      "venture capital energy",
+      "disruption mindset"
+    ],
+    "historic_cities": [
+      "ancient heritage backdrop",
+      "preserved architectural beauty",
+      "living museum atmosphere",
+      "centuries-old traditions",
+      "timeless charm"
+    ]
+  }
+}

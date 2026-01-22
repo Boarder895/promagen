@@ -5,6 +5,12 @@
 // Market Pulse v2.0: City connection badges REMOVED.
 // Visual connection now shown via flowing energy particles in SVG overlay.
 // ============================================================================
+// Updated: January 22, 2026
+// - Removed prompt builder link (🎨 + "Prompt builder" text)
+// - Added API (🔌) and Affiliate (🤝) emoji links in its place
+// - 🔌 links to provider's API documentation
+// - 🤝 links to provider's affiliate/partner program
+// ============================================================================
 
 'use client';
 
@@ -12,6 +18,7 @@ import React from 'react';
 import type { Provider } from '@/types/provider';
 import { ProviderClock } from './provider-clock';
 import { Flag } from '@/components/ui/flag';
+import Tooltip from '@/components/ui/tooltip';
 
 export type ProviderCellProps = {
   provider: Provider;
@@ -25,10 +32,77 @@ const FALLBACK_ICON = '/icons/providers/fallback.png';
 /** Providers that should use 🏠 emoji instead of icon */
 const EMOJI_FALLBACK_PROVIDERS = ['dreamstudio'];
 
+/**
+ * Renders API and Affiliate emoji links.
+ * - 🔌 API: Links to API docs if available, static otherwise
+ * - 🤝 Affiliate: Links to affiliate program if available, static otherwise
+ */
+function ApiAffiliateEmojis({ provider }: { provider: Provider }) {
+  const hasApi = provider.apiAvailable;
+  const hasAffiliate = provider.affiliateProgramme;
+
+  // Get URLs from provider data
+  const apiUrl = provider.apiDocsUrl;
+  const affiliateUrl = provider.affiliateUrl;
+
+  // If neither API nor affiliate, render nothing
+  if (!hasApi && !hasAffiliate) {
+    return null;
+  }
+
+  return (
+    <span className="provider-api-affiliate-icons">
+      {/* API emoji - links to docs if URL available */}
+      {hasApi &&
+        (apiUrl ? (
+          <Tooltip text="API documentation">
+            <a
+              href={apiUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="provider-api-link"
+              aria-label={`${provider.name} API documentation (opens in new tab)`}
+            >
+              <span aria-hidden="true">🔌</span>
+            </a>
+          </Tooltip>
+        ) : (
+          <Tooltip text="API available">
+            <span className="provider-api-static" aria-label="API available">
+              🔌
+            </span>
+          </Tooltip>
+        ))}
+
+      {/* Affiliate emoji - links to program if URL available */}
+      {hasAffiliate &&
+        (affiliateUrl ? (
+          <Tooltip text="Affiliate programme">
+            <a
+              href={affiliateUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="provider-affiliate-link"
+              aria-label={`${provider.name} affiliate programme (opens in new tab)`}
+            >
+              <span aria-hidden="true">🤝</span>
+            </a>
+          </Tooltip>
+        ) : (
+          <Tooltip text="Affiliate programme available">
+            <span className="provider-affiliate-static" aria-label="Affiliate programme available">
+              🤝
+            </span>
+          </Tooltip>
+        ))}
+    </span>
+  );
+}
+
 export function ProviderCell({ provider, rank }: ProviderCellProps) {
   // Check if this provider should use emoji fallback
   const useEmojiIcon = EMOJI_FALLBACK_PROVIDERS.includes(provider.id);
-  
+
   // Local icon path: /icons/providers/{id}.png
   const iconPath = provider.localIcon || `/icons/providers/${provider.id}.png`;
 
@@ -39,10 +113,8 @@ export function ProviderCell({ provider, rank }: ProviderCellProps) {
     <div className="provider-cell-container">
       {/* Line 1: Rank + Provider name (linked) + provider logo icon */}
       <div className="provider-name-row">
-        {typeof rank === 'number' && rank > 0 && (
-          <span className="provider-rank">{rank}.</span>
-        )}
-        
+        {typeof rank === 'number' && rank > 0 && <span className="provider-rank">{rank}.</span>}
+
         {/* Provider name — hyperlinked to homepage */}
         <a
           href={homepageUrl}
@@ -63,7 +135,9 @@ export function ProviderCell({ provider, rank }: ProviderCellProps) {
           aria-label={`Visit ${provider.name} website (opens in new tab)`}
         >
           {useEmojiIcon ? (
-            <span className="provider-emoji-icon" aria-hidden="true">🏠</span>
+            <span className="provider-emoji-icon" aria-hidden="true">
+              🏠
+            </span>
           ) : (
             /* eslint-disable-next-line @next/next/no-img-element -- 
                Using <img> for onError fallback handling which next/image doesn't support well.
@@ -84,7 +158,7 @@ export function ProviderCell({ provider, rank }: ProviderCellProps) {
         </a>
       </div>
 
-      {/* Line 2 & 3: Location block — Flag + City, then Time + Prompt builder below */}
+      {/* Line 2 & 3: Location block — Flag + City, then Time + API/Affiliate emojis below */}
       {provider.countryCode && provider.hqCity && provider.timezone ? (
         <div className="provider-location">
           {/* Flag + City */}
@@ -93,22 +167,12 @@ export function ProviderCell({ provider, rank }: ProviderCellProps) {
             <span className="provider-city">{provider.hqCity}</span>
           </div>
 
-          {/* Time + Prompt builder (🎨 + text) on same line */}
+          {/* Time + API/Affiliate emojis on same line */}
           <div className="provider-time-line">
-            <ProviderClock
-              timezone={provider.timezone}
-              supportHours={provider.supportHours}
-            />
+            <ProviderClock timezone={provider.timezone} supportHours={provider.supportHours} />
 
-            {/* Prompt builder link — emoji + text, both clickable */}
-            <a
-              href={`/providers/${encodeURIComponent(provider.id)}/prompt-builder`}
-              className="provider-prompt-link"
-              aria-label={`Open ${provider.name} Prompt Generator`}
-            >
-              <span className="provider-prompt-emoji" aria-hidden="true">🎨</span>
-              <span className="provider-prompt-text">Prompt builder</span>
-            </a>
+            {/* API and Affiliate emoji links — replace prompt builder */}
+            <ApiAffiliateEmojis provider={provider} />
           </div>
         </div>
       ) : null}

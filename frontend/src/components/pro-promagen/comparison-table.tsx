@@ -3,25 +3,11 @@
 // COMPARISON TABLE WITH CHIPS + ADD LIST DROPDOWNS
 // ============================================================================
 // Standard vs Pro Promagen comparison table.
-// FX Pairs, Exchanges, and Stock Indices rows have interactive multi-select dropdowns.
+// FX Pairs, Exchanges, Stock Indices, and Weather Prompt Tier rows have
+// interactive multi-select or single-select dropdowns.
 //
-// Dropdown Design (Chips + Add List):
-// - Current selections shown as removable chips at top
-// - Available (unselected) items shown in scrollable list below
-// - Click chip ✕ to remove, click list item to add
-// - No tick/untick confusion
-//
-// Smart Search:
-// - FX pairs searchable by country name and trader slang
-// - Type "South Africa" to find ZAR pairs
-// - Type "Loonie" to find CAD pairs
-//
-// Selection Rules:
-// - FX: 0-16 pairs (can deselect all to start fresh)
-// - Exchanges: 0-16 exchanges (can deselect all to start fresh)
-// - Indices: 0-16 indices (can deselect all to hide index data on cards)
-//
-// UPDATED: Added indices dropdown for stock index selection.
+// UPDATED: Added Weather Prompt Tier dropdown for Pro users.
+// Free users see "Plain Language (Tier 4)" locked.
 //
 // Authority: docs/authority/paid_tier.md §5.10
 // ============================================================================
@@ -30,9 +16,14 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { FEATURE_COMPARISON, type FeatureRow } from '@/data/pro-promagen/presets';
+import { 
+  FEATURE_COMPARISON, 
+  WEATHER_PROMPT_TIER_OPTIONS,
+  type FeatureRow 
+} from '@/data/pro-promagen/presets';
 import { PRO_SELECTION_LIMITS } from '@/lib/pro-promagen/types';
 import { pairMatchesSearch } from '@/data/pro-promagen/currency-search-data';
+import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 
 // ============================================================================
 // TYPES
@@ -60,12 +51,16 @@ export interface ComparisonTableProps {
   selectedExchanges: string[];
   /** Currently selected indices (exchange IDs with index display enabled) */
   selectedIndices: string[];
+  /** Currently selected weather prompt tier */
+  selectedPromptTier: PromptTier;
   /** Callback when FX selection changes */
   onFxChange: (ids: string[]) => void;
   /** Callback when exchange selection changes */
   onExchangeChange: (ids: string[]) => void;
   /** Callback when indices selection changes */
   onIndicesChange: (ids: string[]) => void;
+  /** Callback when weather prompt tier changes */
+  onPromptTierChange: (tier: PromptTier) => void;
   /** Whether user is paid tier (enables interaction) */
   isPaidUser: boolean;
 }
@@ -128,7 +123,7 @@ function Tooltip({ content, children }: TooltipProps) {
 }
 
 // ============================================================================
-// INFO ICON WITH TOOLTIP - PROMINENT AND VISIBLE
+// INFO ICON WITH TOOLTIP
 // ============================================================================
 
 interface InfoTooltipProps {
@@ -188,7 +183,139 @@ function StatusBadge({ status }: StatusBadgeProps) {
 }
 
 // ============================================================================
-// CHIPS + ADD LIST DROPDOWN (PORTAL VERSION)
+// WEATHER PROMPT TIER DROPDOWN (Single Select)
+// ============================================================================
+
+interface TierDropdownProps {
+  selectedTier: PromptTier;
+  onChange: (tier: PromptTier) => void;
+  disabled?: boolean;
+}
+
+function TierDropdown({ selectedTier, onChange, disabled = false }: TierDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 280 });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Calculate dropdown position
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: Math.max(rect.width, 280),
+      });
+    }
+  }, [isOpen]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  const selectedOption = WEATHER_PROMPT_TIER_OPTIONS.find(o => o.tier === selectedTier);
+
+  const dropdownPanel = isOpen && mounted
+    ? createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[9999] rounded-xl bg-slate-900/98 ring-1 ring-white/10 shadow-2xl backdrop-blur-sm overflow-hidden"
+          style={{
+            top: position.top,
+            left: position.left,
+            width: position.width,
+          }}
+        >
+          <div className="p-2">
+            {WEATHER_PROMPT_TIER_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  onChange(option.tier);
+                  setIsOpen(false);
+                }}
+                className={`
+                  w-full flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-lg
+                  text-left transition-colors
+                  ${option.tier === selectedTier 
+                    ? 'bg-emerald-500/20 text-emerald-400' 
+                    : 'text-slate-200 hover:bg-white/5'
+                  }
+                `}
+              >
+                <span className="text-sm font-medium">{option.label}</span>
+                <span className="text-xs text-slate-400">{option.subLabel}</span>
+                <span className="text-[10px] text-slate-500">{option.platforms}</span>
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <div className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`
+          flex items-center justify-between gap-2 w-full min-w-[160px]
+          px-3 py-2 rounded-lg text-sm font-medium
+          transition-all duration-200
+          ${disabled
+            ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed'
+            : isOpen
+            ? 'bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white shadow-lg'
+            : 'bg-slate-800/80 text-slate-200 hover:bg-slate-700/80 ring-1 ring-white/10'
+          }
+        `}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+      >
+        <span className="truncate">
+          {selectedOption ? `Tier ${selectedOption.tier}` : 'Select tier'}
+        </span>
+        <svg
+          className={`w-4 h-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {dropdownPanel}
+    </div>
+  );
+}
+
+// ============================================================================
+// CHIPS + ADD LIST DROPDOWN (Multi-Select - for FX, Exchanges, Indices)
 // ============================================================================
 
 interface ChipsDropdownProps {
@@ -202,11 +329,8 @@ interface ChipsDropdownProps {
   gradient: string;
   placeholder: string;
   tooltipText: string;
-  /** Use smart currency search (for FX pairs) */
   useCurrencySearch?: boolean;
-  /** Show sub-labels (country names) in the list */
   showSubLabels?: boolean;
-  /** Show status badges (for indices) */
   showStatusBadges?: boolean;
 }
 
@@ -226,7 +350,7 @@ function ChipsDropdown({
   disabled = false,
   gradient,
   placeholder,
-  tooltipText,
+  tooltipText: _tooltipText,
   useCurrencySearch = false,
   showSubLabels = false,
   showStatusBadges = false,
@@ -240,101 +364,35 @@ function ChipsDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Track if component is mounted (for portal)
   useEffect(() => {
     setMounted(true);
-    return () => setMounted(false);
   }, []);
 
-  // Get selected items as objects (sorted alphabetically for display)
-  const selectedItems = useMemo(() => {
-    return selected
-      .map((id) => options.find((o) => o.id === id))
-      .filter((item): item is SelectionItem => item !== undefined)
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [selected, options]);
-
-  // Get unselected items (sorted alphabetically)
-  const unselectedItems = useMemo(() => {
-    return options
-      .filter((o) => !selected.includes(o.id))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [options, selected]);
-
-  // Filter unselected items based on search
-  const filteredUnselected = useMemo(() => {
-    const lowerFilter = filter.toLowerCase().trim();
-    if (!lowerFilter) return unselectedItems;
-
-    return unselectedItems.filter((item) => {
-      // Standard label match
-      if (item.label.toLowerCase().includes(lowerFilter)) return true;
-
-      // Sub-label (country name) match
-      if (item.subLabel && item.subLabel.toLowerCase().includes(lowerFilter)) return true;
-
-      // Smart currency search for FX pairs
-      if (useCurrencySearch) {
-        return pairMatchesSearch(item.id, filter);
+  // Calculate dropdown position
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const dropdownHeight = Math.min(400, options.length * 60 + 100);
+      
+      let top = rect.bottom + 8;
+      if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+        top = rect.top - dropdownHeight - 8;
       }
 
-      return false;
-    });
-  }, [unselectedItems, filter, useCurrencySearch]);
-
-  // Calculate dropdown position when opening
-  const updatePosition = useCallback(() => {
-    if (!buttonRef.current) return;
-
-    const rect = buttonRef.current.getBoundingClientRect();
-    const dropdownHeight = 520; // Approximate max height
-    const viewportHeight = window.innerHeight;
-
-    // Check if dropdown would go below viewport
-    const spaceBelow = viewportHeight - rect.bottom - 8;
-    const spaceAbove = rect.top - 8;
-
-    let top: number;
-    if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
-      top = rect.bottom + 4;
-    } else {
-      top = rect.top - dropdownHeight - 4;
+      setPosition({
+        top,
+        left: rect.left,
+        width: Math.max(rect.width, 320),
+      });
     }
-
-    // Center dropdown on button, but keep within viewport
-    const dropdownWidth = 360;
-    let left = rect.left + rect.width / 2 - dropdownWidth / 2;
-
-    const padding = 8;
-    if (left < padding) left = padding;
-    if (left + dropdownWidth > window.innerWidth - padding) {
-      left = window.innerWidth - dropdownWidth - padding;
-    }
-
-    setPosition({ top, left, width: dropdownWidth });
-  }, []);
-
-  // Update position when opening and on scroll/resize
-  useEffect(() => {
-    if (!isOpen) return;
-
-    updatePosition();
-
-    const handleScrollOrResize = () => updatePosition();
-
-    window.addEventListener('scroll', handleScrollOrResize, true);
-    window.addEventListener('resize', handleScrollOrResize);
-
-    return () => {
-      window.removeEventListener('scroll', handleScrollOrResize, true);
-      window.removeEventListener('resize', handleScrollOrResize);
-    };
-  }, [isOpen, updatePosition]);
+  }, [isOpen, options.length]);
 
   // Focus input when dropdown opens
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 10);
+      inputRef.current.focus();
     }
   }, [isOpen]);
 
@@ -342,255 +400,159 @@ function ChipsDropdown({
   useEffect(() => {
     if (!isOpen) return;
 
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      const clickedButton = buttonRef.current?.contains(target);
-      const clickedDropdown = dropdownRef.current?.contains(target);
-
-      if (!clickedButton && !clickedDropdown) {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
         setFilter('');
       }
-    };
+    }
 
-    const timer = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 10);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // Check if removal is allowed
-  const canRemove = useCallback(() => {
-    return selected.length > min;
-  }, [selected.length, min]);
-
-  // Check if addition is allowed
-  const canAdd = useCallback(() => {
-    return selected.length < max;
-  }, [selected.length, max]);
-
-  // Handle removing a chip
-  const handleRemove = useCallback(
-    (itemId: string) => {
-      if (disabled) return;
-      if (!canRemove()) return;
-
-      const newSelection = selected.filter((id) => id !== itemId);
-      onChange(newSelection);
-    },
-    [selected, onChange, disabled, canRemove],
+  // Selected and available items
+  const selectedItems = useMemo(
+    () => options.filter((o) => selected.includes(o.id)),
+    [options, selected]
   );
 
-  // Handle adding an item
-  const handleAdd = useCallback(
-    (itemId: string) => {
-      if (disabled) return;
-      if (!canAdd()) return;
-
-      const newSelection = [...selected, itemId];
-      onChange(newSelection);
-    },
-    [selected, onChange, disabled, canAdd],
-  );
-
-  // Generate help text for current state
-  const getStateHelpText = () => {
-    if (selected.length === 0) {
-      return 'No selections yet. Add items to build your custom view.';
+  const availableItems = useMemo(() => {
+    let items = options.filter((o) => !selected.includes(o.id));
+    
+    if (filter.trim()) {
+      const lowerFilter = filter.toLowerCase();
+      items = items.filter((item) => {
+        // Basic label match
+        if (item.label.toLowerCase().includes(lowerFilter)) return true;
+        if (item.subLabel?.toLowerCase().includes(lowerFilter)) return true;
+        
+        // Smart currency search
+        if (useCurrencySearch) {
+          return pairMatchesSearch(item.id, filter);
+        }
+        
+        return false;
+      });
     }
-    if (selected.length >= max) {
-      return `Maximum ${max} reached. Remove some to add more.`;
-    }
-    return null;
-  };
+    
+    return items;
+  }, [options, selected, filter, useCurrencySearch]);
 
-  const stateHelpText = getStateHelpText();
-  const canRemoveItem = canRemove();
-  const canAddItem = canAdd();
+  // Handlers
+  const handleAdd = useCallback((itemId: string) => {
+    if (selected.length >= max) return;
+    onChange([...selected, itemId]);
+  }, [selected, max, onChange]);
 
-  // Dropdown panel content (rendered via portal)
-  const dropdownPanel =
-    isOpen && !disabled && mounted
-      ? createPortal(
-          <div
-            ref={dropdownRef}
-            style={{
-              position: 'fixed',
-              top: position.top,
-              left: position.left,
-              width: position.width,
-              zIndex: 9999,
-            }}
-            className={`
-        rounded-xl overflow-hidden
-        bg-gradient-to-br ${gradient}
-        shadow-2xl ring-1 ring-white/20
-        animate-in fade-in-0 zoom-in-95 duration-150
-      `}
-          >
-            {/* Inner container with dark background */}
-            <div className="m-[2px] rounded-[10px] bg-slate-900/95 backdrop-blur-sm">
-              {/* Header with count and done button */}
-              <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
-                <span className="text-sm font-medium text-white flex items-center">
-                  {selected.length} of {max} selected
-                  <InfoTooltip content={tooltipText} />
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    setFilter('');
-                  }}
-                  className="px-3 py-1 text-xs font-medium rounded-md bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors"
-                >
-                  Done
-                </button>
-              </div>
+  const handleRemove = useCallback((itemId: string) => {
+    if (selected.length <= min) return;
+    onChange(selected.filter((id: string) => id !== itemId));
+  }, [selected, min, onChange]);
 
-              {/* Selected chips section */}
-              <div className="px-3 py-2.5 border-b border-white/10 max-h-[160px] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
-                {selectedItems.length === 0 ? (
-                  <p className="text-xs text-white/40 italic">
-                    No items selected. Use the list below to add items.
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedItems.map((item) => (
-                      <span
-                        key={item.id}
-                        className={`
-                          inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
-                          bg-white/10 text-white/90 ring-1 ring-white/20
-                          ${canRemoveItem ? 'hover:bg-red-500/20 hover:ring-red-500/30' : ''}
-                          transition-colors group
-                        `}
-                      >
-                        {item.label}
-                        {showStatusBadges && item.status && item.status !== 'active' && (
-                          <StatusBadge status={item.status} />
-                        )}
-                        {canRemoveItem && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemove(item.id)}
-                            className="w-4 h-4 rounded-full flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/20 transition-colors"
-                            aria-label={`Remove ${item.label}`}
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2.5}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+  const canAddMore = selected.length < max;
+  const canRemoveMore = selected.length > min;
 
-              {/* Search input */}
-              <div className="px-3 py-2 border-b border-white/10">
-                <div className="relative">
-                  <svg
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-slate-800/50 rounded-lg text-white placeholder:text-white/40 border border-white/10 focus:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/20"
-                  />
-                  {filter && (
-                    <button
-                      type="button"
-                      onClick={() => setFilter('')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white/20 text-white/60 hover:bg-white/30 hover:text-white flex items-center justify-center"
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* State help text */}
-              {stateHelpText && (
-                <div className="px-3 py-2 border-b border-white/5">
-                  <p className="text-xs text-white/50">{stateHelpText}</p>
-                </div>
+  // Dropdown panel
+  const dropdownPanel = isOpen && mounted
+    ? createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[9999] rounded-xl bg-slate-900/98 ring-1 ring-white/10 shadow-2xl backdrop-blur-sm overflow-hidden"
+          style={{
+            top: position.top,
+            left: position.left,
+            width: position.width,
+            maxHeight: '400px',
+          }}
+        >
+          {/* Header with count */}
+          <div className="px-3 py-2 border-b border-white/10 bg-slate-800/50">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-slate-400">
+                {selected.length} of {max} selected
+              </span>
+              {selected.length >= max && (
+                <span className="text-[10px] text-amber-400">Maximum reached</span>
               )}
+            </div>
+            
+            {/* Search input */}
+            <input
+              ref={inputRef}
+              type="text"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder={placeholder}
+              className="w-full px-3 py-2 text-sm bg-slate-800 rounded-lg text-slate-200 placeholder:text-slate-500 ring-1 ring-white/10 focus:ring-white/30 focus:outline-none"
+            />
+          </div>
 
-              {/* Available items list */}
-              <ul
-                id={`${id}-listbox`}
-                role="listbox"
-                aria-label="Available items"
-                className="max-h-[220px] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20"
-              >
-                {filteredUnselected.length === 0 ? (
-                  <li className="px-3 py-4 text-sm text-white/40 text-center italic">
-                    {filter ? 'No matches found' : 'All items selected'}
-                  </li>
-                ) : (
-                  filteredUnselected.map((item) => (
-                    <li key={item.id} role="option" aria-selected={false}>
+          {/* Selected chips */}
+          {selectedItems.length > 0 && (
+            <div className="px-3 py-2 border-b border-white/5">
+              <div className="flex flex-wrap gap-1.5">
+                {selectedItems.map((item) => (
+                  <span
+                    key={item.id}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                  >
+                    {item.label}
+                    {canRemoveMore && (
                       <button
                         type="button"
-                        onClick={() => handleAdd(item.id)}
+                        onClick={() => handleRemove(item.id)}
+                        className="hover:text-white transition-colors"
+                        aria-label={`Remove ${item.label}`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Available items list */}
+          <div className="max-h-[240px] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+            <ul className="p-2">
+              {availableItems.length === 0 ? (
+                <li className="px-3 py-4 text-center text-sm text-slate-500">
+                  {filter ? 'No matches found' : 'All items selected'}
+                </li>
+              ) : (
+                availableItems.map((item) => {
+                  const canAddItem = canAddMore && item.status !== 'unavailable';
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => canAddItem && handleAdd(item.id)}
                         disabled={!canAddItem}
                         className={`
-                    w-full px-3 py-2 text-left flex items-center gap-2.5
-                    transition-colors
-                    ${canAddItem ? 'hover:bg-emerald-500/20' : 'cursor-not-allowed opacity-50'}
-                  `}
+                          w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left
+                          transition-colors
+                          ${canAddItem
+                            ? 'hover:bg-white/5 cursor-pointer'
+                            : 'opacity-50 cursor-not-allowed'
+                          }
+                        `}
                       >
-                        {/* Plus icon */}
+                        {/* Add icon */}
                         <span
                           className={`
-                    w-5 h-5 rounded border-2 flex items-center justify-center shrink-0
-                    ${
-                      canAddItem
-                        ? 'border-emerald-500/50 text-emerald-500'
-                        : 'border-slate-700 text-slate-700'
-                    }
-                  `}
+                            w-5 h-5 flex items-center justify-center rounded
+                            ${canAddItem
+                              ? 'border border-emerald-500/50 text-emerald-400'
+                              : 'border-slate-700 text-slate-700'
+                            }
+                          `}
                         >
                           <svg
                             className="w-3 h-3"
@@ -602,7 +564,8 @@ function ChipsDropdown({
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                           </svg>
                         </span>
-                        {/* Label with optional sub-label and status badge */}
+                        
+                        {/* Label */}
                         <div className="flex flex-col min-w-0 flex-1">
                           <span
                             className={`text-sm font-medium truncate flex items-center ${
@@ -620,36 +583,32 @@ function ChipsDropdown({
                         </div>
                       </button>
                     </li>
-                  ))
-                )}
-              </ul>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
+                  );
+                })
+              )}
+            </ul>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
 
   return (
     <div className="relative">
-      {/* Trigger button */}
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => {
-          if (disabled) return;
-          setIsOpen(!isOpen);
-        }}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
           flex items-center justify-between gap-2 w-full min-w-[160px]
           px-3 py-2 rounded-lg text-sm font-medium
           transition-all duration-200
-          ${
-            disabled
-              ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed'
-              : isOpen
-              ? `bg-gradient-to-r ${gradient} text-white shadow-lg`
-              : 'bg-slate-800/80 text-slate-200 hover:bg-slate-700/80 ring-1 ring-white/10'
+          ${disabled
+            ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed'
+            : isOpen
+            ? `bg-gradient-to-r ${gradient} text-white shadow-lg`
+            : 'bg-slate-800/80 text-slate-200 hover:bg-slate-700/80 ring-1 ring-white/10'
           }
         `}
         aria-expanded={isOpen}
@@ -668,8 +627,6 @@ function ChipsDropdown({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-
-      {/* Dropdown rendered via portal */}
       {dropdownPanel}
     </div>
   );
@@ -686,9 +643,11 @@ export function ComparisonTable({
   selectedFxPairs,
   selectedExchanges,
   selectedIndices,
+  selectedPromptTier,
   onFxChange,
   onExchangeChange,
   onIndicesChange,
+  onPromptTierChange,
   isPaidUser,
 }: ComparisonTableProps) {
   // Render the Pro column value - either static text or dropdown
@@ -751,6 +710,16 @@ export function ComparisonTable({
       );
     }
 
+    if (row.hasDropdown === 'weather-prompt-tier') {
+      return (
+        <TierDropdown
+          selectedTier={selectedPromptTier}
+          onChange={onPromptTierChange}
+          disabled={false}
+        />
+      );
+    }
+
     // Static value
     return (
       <span
@@ -794,15 +763,19 @@ export function ComparisonTable({
                 key={row.feature}
                 className={`
                   border-b border-white/5 transition-colors
-                  ${
-                    row.highlight
-                      ? 'bg-gradient-to-r from-sky-500/5 via-transparent to-emerald-500/5'
-                      : ''
+                  ${row.highlight
+                    ? 'bg-gradient-to-r from-sky-500/5 via-transparent to-emerald-500/5'
+                    : ''
                   }
                   hover:bg-white/5
                 `}
               >
-                <td className="px-4 py-3 text-sm font-medium text-white/80">{row.feature}</td>
+                <td className="px-4 py-3 text-sm font-medium text-white/80">
+                  <span className="flex items-center">
+                    {row.feature}
+                    {row.tooltip && <InfoTooltip content={row.tooltip} />}
+                  </span>
+                </td>
                 <td className="px-4 py-3 text-center text-sm font-medium text-white/40">
                   {row.standard}
                 </td>

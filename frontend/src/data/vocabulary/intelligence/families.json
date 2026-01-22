@@ -1,0 +1,828 @@
+{
+  "$schema": "./schemas/intelligence.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "intelligence",
+    "category": "families",
+    "label": "Style Families",
+    "description": "Grouped styles that work well together and share aesthetic DNA",
+    "totalFamilies": 45,
+    "updated": "2026-01-21"
+  },
+  "families": [
+    {
+      "id": "impressionism",
+      "name": "Impressionism Family",
+      "description": "Emphasis on light, color, and movement over precise detail",
+      "coreTraits": ["visible brushstrokes", "light emphasis", "outdoor scenes", "color over line"],
+      "members": [
+        "impressionist",
+        "monet style",
+        "renoir style",
+        "degas style",
+        "pissarro style",
+        "sisley style",
+        "morisot style",
+        "caillebotte style"
+      ],
+      "relatedFamilies": ["post-impressionism", "plein-air"],
+      "bestWith": ["natural lighting", "golden hour", "outdoor scenes", "soft focus"],
+      "avoidWith": ["sharp edges", "hard lighting", "digital precision"]
+    },
+    {
+      "id": "post-impressionism",
+      "name": "Post-Impressionism Family",
+      "description": "Building on impressionism with more structure and emotion",
+      "coreTraits": ["bold color", "geometric forms", "emotional expression", "visible technique"],
+      "members": [
+        "post-impressionist",
+        "van gogh style",
+        "cezanne style",
+        "gauguin style",
+        "seurat style",
+        "pointillism",
+        "divisionism",
+        "signac style"
+      ],
+      "relatedFamilies": ["impressionism", "expressionism", "fauvism"],
+      "bestWith": ["bold colors", "emotional mood", "swirling patterns"],
+      "avoidWith": ["photorealistic", "minimal color"]
+    },
+    {
+      "id": "expressionism",
+      "name": "Expressionism Family",
+      "description": "Emotional and psychological truth over realistic depiction",
+      "coreTraits": ["distorted forms", "intense color", "emotional impact", "subjective reality"],
+      "members": [
+        "expressionist",
+        "munch style",
+        "kirchner style",
+        "kandinsky early",
+        "nolde style",
+        "schiele style",
+        "kokoschka style",
+        "german expressionism",
+        "die brücke",
+        "der blaue reiter"
+      ],
+      "relatedFamilies": ["post-impressionism", "fauvism", "abstract-expressionism"],
+      "bestWith": ["dramatic lighting", "moody atmosphere", "psychological themes"],
+      "avoidWith": ["calm", "serene", "realistic proportions"]
+    },
+    {
+      "id": "surrealism",
+      "name": "Surrealism Family",
+      "description": "Dream logic, unconscious imagery, and impossible juxtapositions",
+      "coreTraits": ["dreamlike", "impossible scenes", "symbolic imagery", "subconscious"],
+      "members": [
+        "surrealist",
+        "dali style",
+        "magritte style",
+        "ernst style",
+        "tanguy style",
+        "miro style",
+        "remedios varo style",
+        "leonora carrington style",
+        "de chirico style",
+        "metaphysical painting"
+      ],
+      "relatedFamilies": ["dada", "magic-realism", "visionary-art"],
+      "bestWith": ["dreamlike atmosphere", "impossible architecture", "symbolic objects"],
+      "avoidWith": ["documentary style", "realistic logic"]
+    },
+    {
+      "id": "cubism",
+      "name": "Cubism Family",
+      "description": "Multiple perspectives, geometric fragmentation, flattened space",
+      "coreTraits": ["fragmented forms", "multiple viewpoints", "geometric shapes", "flattened depth"],
+      "members": [
+        "cubist",
+        "picasso cubism",
+        "braque style",
+        "analytical cubism",
+        "synthetic cubism",
+        "juan gris style",
+        "leger style",
+        "orphism",
+        "delaunay style"
+      ],
+      "relatedFamilies": ["futurism", "constructivism", "geometric-abstraction"],
+      "bestWith": ["geometric patterns", "muted earth tones", "multiple angles"],
+      "avoidWith": ["realistic depth", "single perspective", "soft organic forms"]
+    },
+    {
+      "id": "art-nouveau",
+      "name": "Art Nouveau Family",
+      "description": "Organic flowing lines, natural forms, decorative elegance",
+      "coreTraits": ["organic curves", "natural motifs", "decorative", "elegant lines"],
+      "members": [
+        "art nouveau",
+        "mucha style",
+        "klimt style",
+        "gaudi style",
+        "tiffany style",
+        "jugendstil",
+        "secession style",
+        "beardsley style",
+        "mackintosh style",
+        "lalique style"
+      ],
+      "relatedFamilies": ["art-deco", "symbolism", "arts-crafts"],
+      "bestWith": ["flowing hair", "floral elements", "gold accents", "elegant figures"],
+      "avoidWith": ["industrial", "harsh angles", "brutalist"]
+    },
+    {
+      "id": "art-deco",
+      "name": "Art Deco Family",
+      "description": "Geometric elegance, luxury materials, bold symmetry",
+      "coreTraits": ["geometric patterns", "luxury aesthetic", "bold symmetry", "metallic accents"],
+      "members": [
+        "art deco",
+        "gatsby era",
+        "1920s style",
+        "tamara de lempicka style",
+        "erté style",
+        "chrysler building style",
+        "jazz age aesthetic",
+        "streamline moderne"
+      ],
+      "relatedFamilies": ["art-nouveau", "modernism", "retro-futurism"],
+      "bestWith": ["gold accents", "geometric patterns", "luxury materials", "dramatic lighting"],
+      "avoidWith": ["rustic", "natural organic", "minimalist"]
+    },
+    {
+      "id": "pop-art",
+      "name": "Pop Art Family",
+      "description": "Mass culture imagery, bold colors, graphic impact",
+      "coreTraits": ["bold primary colors", "mass culture references", "graphic style", "irony"],
+      "members": [
+        "pop art",
+        "warhol style",
+        "lichtenstein style",
+        "haring style",
+        "rosenquist style",
+        "wesselmann style",
+        "oldenburg style",
+        "indiana style",
+        "neo-pop"
+      ],
+      "relatedFamilies": ["graphic-design", "comic-art", "neo-expressionism"],
+      "bestWith": ["bright colors", "halftone dots", "consumer products", "celebrities"],
+      "avoidWith": ["muted tones", "classical", "traditional"]
+    },
+    {
+      "id": "abstract-expressionism",
+      "name": "Abstract Expressionism Family",
+      "description": "Emotional abstraction, gestural marks, color fields",
+      "coreTraits": ["non-representational", "emotional expression", "large scale", "gestural"],
+      "members": [
+        "abstract expressionist",
+        "pollock style",
+        "rothko style",
+        "de kooning style",
+        "kline style",
+        "motherwell style",
+        "still style",
+        "newman style",
+        "action painting",
+        "color field painting"
+      ],
+      "relatedFamilies": ["expressionism", "minimalism", "lyrical-abstraction"],
+      "bestWith": ["abstract", "emotional", "large canvas", "texture"],
+      "avoidWith": ["figurative", "detailed", "precise"]
+    },
+    {
+      "id": "minimalism",
+      "name": "Minimalism Family",
+      "description": "Reduction to essential forms, geometric simplicity",
+      "coreTraits": ["simple forms", "limited palette", "clean lines", "negative space"],
+      "members": [
+        "minimalist",
+        "judd style",
+        "stella style",
+        "andre style",
+        "flavin style",
+        "lewitt style",
+        "agnes martin style",
+        "hard edge painting",
+        "color field"
+      ],
+      "relatedFamilies": ["geometric-abstraction", "de-stijl", "bauhaus"],
+      "bestWith": ["clean backgrounds", "simple shapes", "monochrome", "zen"],
+      "avoidWith": ["ornate", "busy", "cluttered", "baroque"]
+    },
+    {
+      "id": "baroque",
+      "name": "Baroque Family",
+      "description": "Dramatic grandeur, rich detail, emotional intensity",
+      "coreTraits": ["dramatic lighting", "rich detail", "emotional intensity", "grandeur"],
+      "members": [
+        "baroque",
+        "caravaggio style",
+        "rembrandt style",
+        "vermeer style",
+        "rubens style",
+        "velazquez style",
+        "bernini style",
+        "tenebrism",
+        "chiaroscuro master"
+      ],
+      "relatedFamilies": ["renaissance", "rococo", "dutch-masters"],
+      "bestWith": ["dramatic lighting", "rich fabrics", "emotional scenes", "religious themes"],
+      "avoidWith": ["flat lighting", "minimal", "modern"]
+    },
+    {
+      "id": "renaissance",
+      "name": "Renaissance Family",
+      "description": "Classical revival, perspective mastery, humanism",
+      "coreTraits": ["linear perspective", "classical ideals", "anatomical accuracy", "balanced composition"],
+      "members": [
+        "renaissance",
+        "da vinci style",
+        "michelangelo style",
+        "raphael style",
+        "botticelli style",
+        "titian style",
+        "high renaissance",
+        "early renaissance",
+        "northern renaissance",
+        "mannerism"
+      ],
+      "relatedFamilies": ["baroque", "neoclassicism", "academic-art"],
+      "bestWith": ["classical architecture", "religious themes", "balanced composition", "sfumato"],
+      "avoidWith": ["abstract", "modern", "distorted forms"]
+    },
+    {
+      "id": "romantic",
+      "name": "Romanticism Family",
+      "description": "Emotion over reason, sublime nature, individualism",
+      "coreTraits": ["dramatic nature", "emotional intensity", "sublime landscapes", "individualism"],
+      "members": [
+        "romantic",
+        "turner style",
+        "friedrich style",
+        "delacroix style",
+        "constable style",
+        "cole style",
+        "bierstadt style",
+        "gericault style",
+        "blake style"
+      ],
+      "relatedFamilies": ["impressionism", "hudson-river-school", "symbolism"],
+      "bestWith": ["dramatic skies", "vast landscapes", "emotional lighting", "nature"],
+      "avoidWith": ["urban", "industrial", "clinical"]
+    },
+    {
+      "id": "symbolism",
+      "name": "Symbolism Family",
+      "description": "Mystical imagery, dreamlike quality, hidden meanings",
+      "coreTraits": ["symbolic imagery", "mystical themes", "dreamlike quality", "allegory"],
+      "members": [
+        "symbolist",
+        "moreau style",
+        "redon style",
+        "puvis de chavannes style",
+        "böcklin style",
+        "khnopff style",
+        "rops style",
+        "pre-raphaelite"
+      ],
+      "relatedFamilies": ["art-nouveau", "surrealism", "romantic"],
+      "bestWith": ["mystical lighting", "mythological subjects", "dreamlike atmosphere"],
+      "avoidWith": ["realistic", "mundane", "documentary"]
+    },
+    {
+      "id": "ukiyo-e",
+      "name": "Ukiyo-e Family",
+      "description": "Japanese woodblock printing tradition",
+      "coreTraits": ["flat color areas", "bold outlines", "compositional asymmetry", "nature motifs"],
+      "members": [
+        "ukiyo-e",
+        "hokusai style",
+        "hiroshige style",
+        "utamaro style",
+        "sharaku style",
+        "kuniyoshi style",
+        "japanese woodblock",
+        "shin-hanga",
+        "sosaku-hanga"
+      ],
+      "relatedFamilies": ["japanese-art", "art-nouveau", "graphic-design"],
+      "bestWith": ["waves", "mount fuji", "cherry blossoms", "kabuki", "nature"],
+      "avoidWith": ["realistic shadows", "western perspective", "3D rendering"]
+    },
+    {
+      "id": "anime-manga",
+      "name": "Anime/Manga Family",
+      "description": "Japanese animation and comic art styles",
+      "coreTraits": ["large eyes", "stylized proportions", "dynamic poses", "expressive faces"],
+      "members": [
+        "anime style",
+        "manga style",
+        "studio ghibli",
+        "miyazaki style",
+        "makoto shinkai style",
+        "shonen style",
+        "shoujo style",
+        "seinen style",
+        "mecha anime",
+        "chibi style"
+      ],
+      "relatedFamilies": ["japanese-art", "comic-art", "animation"],
+      "bestWith": ["dynamic poses", "colorful", "expressive", "fantasy elements"],
+      "avoidWith": ["photorealistic", "western comic", "documentary"]
+    },
+    {
+      "id": "cyberpunk-aesthetic",
+      "name": "Cyberpunk Aesthetic Family",
+      "description": "High tech, low life, neon-soaked dystopia",
+      "coreTraits": ["neon lights", "rain", "urban decay", "high tech", "corporate dystopia"],
+      "members": [
+        "cyberpunk",
+        "blade runner style",
+        "ghost in the shell style",
+        "akira style",
+        "tech noir",
+        "neo-tokyo",
+        "night city aesthetic",
+        "syd mead style",
+        "outrun aesthetic"
+      ],
+      "relatedFamilies": ["sci-fi", "synthwave", "noir"],
+      "bestWith": ["neon lighting", "rain", "night scenes", "urban environment", "holograms"],
+      "avoidWith": ["pastoral", "natural", "daylight", "rustic"]
+    },
+    {
+      "id": "steampunk-aesthetic",
+      "name": "Steampunk Aesthetic Family",
+      "description": "Victorian era meets steam-powered technology",
+      "coreTraits": ["brass and copper", "gears", "steam power", "victorian fashion", "goggles"],
+      "members": [
+        "steampunk",
+        "victorian sci-fi",
+        "clockwork",
+        "brass age",
+        "steam-powered",
+        "jules verne style",
+        "hg wells style",
+        "dieselpunk",
+        "atompunk"
+      ],
+      "relatedFamilies": ["victorian", "retro-futurism", "fantasy"],
+      "bestWith": ["brass", "copper", "gears", "goggles", "airships", "victorian clothing"],
+      "avoidWith": ["modern tech", "digital", "minimalist", "clean"]
+    },
+    {
+      "id": "gothic-aesthetic",
+      "name": "Gothic Aesthetic Family",
+      "description": "Dark romanticism, medieval influence, macabre beauty",
+      "coreTraits": ["dark atmosphere", "architectural grandeur", "macabre elements", "romantic decay"],
+      "members": [
+        "gothic",
+        "gothic horror",
+        "dark romanticism",
+        "victorian gothic",
+        "southern gothic",
+        "gothic revival",
+        "dark fantasy",
+        "gothic cathedral",
+        "beksinski style"
+      ],
+      "relatedFamilies": ["horror", "romantic", "dark-academia"],
+      "bestWith": ["dark lighting", "fog", "ravens", "candles", "gothic architecture"],
+      "avoidWith": ["bright", "cheerful", "sunny", "minimal"]
+    },
+    {
+      "id": "vaporwave-aesthetic",
+      "name": "Vaporwave Aesthetic Family",
+      "description": "90s nostalgia, glitch art, consumer culture critique",
+      "coreTraits": ["pink and cyan", "glitch effects", "90s nostalgia", "greek statues", "retro tech"],
+      "members": [
+        "vaporwave",
+        "synthwave",
+        "outrun",
+        "retrowave",
+        "future funk",
+        "mallsoft",
+        "frutiger aero",
+        "y2k aesthetic",
+        "liminal space"
+      ],
+      "relatedFamilies": ["retro", "cyberpunk-aesthetic", "glitch-art"],
+      "bestWith": ["pink and blue gradient", "greek statues", "palm trees", "old computers", "sunset"],
+      "avoidWith": ["realistic", "natural", "traditional"]
+    },
+    {
+      "id": "dark-academia",
+      "name": "Dark Academia Family",
+      "description": "Scholarly aesthetic with gothic undertones",
+      "coreTraits": ["libraries", "classical literature", "autumn colors", "vintage scholarly"],
+      "members": [
+        "dark academia",
+        "light academia",
+        "old money aesthetic",
+        "ivy league",
+        "oxford aesthetic",
+        "scholarly",
+        "vintage collegiate",
+        "preppy gothic"
+      ],
+      "relatedFamilies": ["gothic-aesthetic", "vintage", "cottagecore"],
+      "bestWith": ["libraries", "books", "autumn", "tweed", "candlelight", "rain"],
+      "avoidWith": ["modern", "neon", "bright colors", "tech"]
+    },
+    {
+      "id": "cottagecore",
+      "name": "Cottagecore Family",
+      "description": "Romanticized rural life, nature, simplicity",
+      "coreTraits": ["pastoral", "floral", "handmade", "nature", "simple living"],
+      "members": [
+        "cottagecore",
+        "farmcore",
+        "goblincore",
+        "fairycore",
+        "grandmacore",
+        "pastoral",
+        "rustic charm",
+        "countryside aesthetic"
+      ],
+      "relatedFamilies": ["romantic", "folk-art", "vintage"],
+      "bestWith": ["flowers", "meadows", "cottages", "baking", "gardens", "soft lighting"],
+      "avoidWith": ["urban", "industrial", "tech", "dark"]
+    },
+    {
+      "id": "horror-aesthetic",
+      "name": "Horror Aesthetic Family",
+      "description": "Fear, dread, and the macabre",
+      "coreTraits": ["unsettling imagery", "darkness", "fear elements", "supernatural"],
+      "members": [
+        "horror",
+        "cosmic horror",
+        "lovecraftian",
+        "body horror",
+        "folk horror",
+        "psychological horror",
+        "slasher aesthetic",
+        "junji ito style",
+        "creepypasta"
+      ],
+      "relatedFamilies": ["gothic-aesthetic", "surrealism", "dark-fantasy"],
+      "bestWith": ["dark lighting", "fog", "shadows", "decay", "monsters"],
+      "avoidWith": ["bright", "cheerful", "cute", "wholesome"]
+    },
+    {
+      "id": "sci-fi",
+      "name": "Science Fiction Family",
+      "description": "Speculative futures, technology, space exploration",
+      "coreTraits": ["futuristic technology", "space", "aliens", "advanced civilization"],
+      "members": [
+        "sci-fi",
+        "space opera",
+        "hard sci-fi",
+        "soft sci-fi",
+        "military sci-fi",
+        "biopunk",
+        "solarpunk",
+        "retro-futurism",
+        "star wars style",
+        "star trek style"
+      ],
+      "relatedFamilies": ["cyberpunk-aesthetic", "retro-futurism", "fantasy"],
+      "bestWith": ["spaceships", "planets", "futuristic cities", "robots", "aliens"],
+      "avoidWith": ["medieval", "primitive", "historical"]
+    },
+    {
+      "id": "fantasy-art",
+      "name": "Fantasy Art Family",
+      "description": "Magical worlds, mythical creatures, epic adventures",
+      "coreTraits": ["magic", "mythical creatures", "epic scale", "otherworldly"],
+      "members": [
+        "fantasy art",
+        "high fantasy",
+        "dark fantasy",
+        "sword and sorcery",
+        "frazetta style",
+        "tolkien inspired",
+        "dungeons and dragons style",
+        "magic the gathering style",
+        "fairy tale illustration"
+      ],
+      "relatedFamilies": ["romantic", "medieval", "mythological"],
+      "bestWith": ["dragons", "castles", "wizards", "magical lighting", "epic landscapes"],
+      "avoidWith": ["modern", "realistic", "mundane", "urban"]
+    },
+    {
+      "id": "concept-art",
+      "name": "Concept Art Family",
+      "description": "Pre-production visualization for games and film",
+      "coreTraits": ["dynamic composition", "atmospheric", "storytelling", "mood focused"],
+      "members": [
+        "concept art",
+        "environment concept",
+        "character concept",
+        "vehicle concept",
+        "creature design",
+        "matte painting",
+        "keyframe illustration",
+        "production design"
+      ],
+      "relatedFamilies": ["digital-art", "sci-fi", "fantasy-art"],
+      "bestWith": ["atmospheric lighting", "dynamic angles", "storytelling elements"],
+      "avoidWith": ["finished polish", "over-rendered", "static"]
+    },
+    {
+      "id": "digital-art",
+      "name": "Digital Art Family",
+      "description": "Art created primarily with digital tools",
+      "coreTraits": ["clean lines", "vibrant colors", "layered composition", "digital texture"],
+      "members": [
+        "digital painting",
+        "digital illustration",
+        "3D render",
+        "CGI",
+        "vector art",
+        "pixel art",
+        "voxel art",
+        "generative art",
+        "AI art collaboration"
+      ],
+      "relatedFamilies": ["concept-art", "graphic-design", "animation"],
+      "bestWith": ["vibrant colors", "clean edges", "layered effects"],
+      "avoidWith": ["traditional texture", "canvas grain", "brush impasto"]
+    },
+    {
+      "id": "photorealism",
+      "name": "Photorealism Family",
+      "description": "Achieving photographic accuracy in art",
+      "coreTraits": ["extreme detail", "accurate lighting", "realistic materials", "no visible brushwork"],
+      "members": [
+        "photorealistic",
+        "hyperrealistic",
+        "super realistic",
+        "trompe l'oeil",
+        "photo-accurate",
+        "lifelike rendering",
+        "close style",
+        "estes style"
+      ],
+      "relatedFamilies": ["digital-art", "academic-art"],
+      "bestWith": ["sharp focus", "accurate shadows", "realistic materials", "high detail"],
+      "avoidWith": ["stylized", "cartoon", "abstract", "impressionistic"]
+    },
+    {
+      "id": "street-art",
+      "name": "Street Art Family",
+      "description": "Urban art culture, graffiti, public art",
+      "coreTraits": ["bold graphics", "urban context", "spray paint", "stencil work"],
+      "members": [
+        "street art",
+        "graffiti",
+        "banksy style",
+        "obey style",
+        "shepard fairey style",
+        "stencil art",
+        "wheat paste",
+        "mural art",
+        "urban art"
+      ],
+      "relatedFamilies": ["pop-art", "graphic-design", "contemporary"],
+      "bestWith": ["urban walls", "spray paint texture", "bold colors", "social commentary"],
+      "avoidWith": ["classical", "refined", "traditional gallery"]
+    },
+    {
+      "id": "comic-art",
+      "name": "Comic Art Family",
+      "description": "Sequential art and graphic novel styles",
+      "coreTraits": ["bold outlines", "dynamic poses", "action lines", "panel composition"],
+      "members": [
+        "comic book style",
+        "marvel style",
+        "dc style",
+        "indie comics",
+        "graphic novel",
+        "franco-belgian comics",
+        "manga style",
+        "webtoon style",
+        "underground comics"
+      ],
+      "relatedFamilies": ["pop-art", "anime-manga", "illustration"],
+      "bestWith": ["dynamic poses", "bold outlines", "action scenes", "speech bubbles"],
+      "avoidWith": ["photorealistic", "subtle", "painterly"]
+    },
+    {
+      "id": "illustration",
+      "name": "Illustration Family",
+      "description": "Visual storytelling and editorial art",
+      "coreTraits": ["narrative clarity", "stylization", "color harmony", "concept communication"],
+      "members": [
+        "editorial illustration",
+        "book illustration",
+        "children's book illustration",
+        "fashion illustration",
+        "scientific illustration",
+        "technical illustration",
+        "spot illustration",
+        "rockwell style"
+      ],
+      "relatedFamilies": ["graphic-design", "comic-art", "concept-art"],
+      "bestWith": ["clear narrative", "stylized forms", "appealing color"],
+      "avoidWith": ["abstract", "non-representational", "purely decorative"]
+    },
+    {
+      "id": "photography-fine-art",
+      "name": "Fine Art Photography Family",
+      "description": "Photography as artistic expression",
+      "coreTraits": ["artistic intent", "composition mastery", "emotional resonance", "unique vision"],
+      "members": [
+        "fine art photography",
+        "conceptual photography",
+        "portrait photography",
+        "landscape photography",
+        "street photography",
+        "documentary photography",
+        "fashion photography",
+        "ansel adams style",
+        "annie leibovitz style"
+      ],
+      "relatedFamilies": ["photorealism", "documentary", "portrait"],
+      "bestWith": ["intentional composition", "meaningful lighting", "emotional subject"],
+      "avoidWith": ["snapshot", "casual", "unintentional"]
+    },
+    {
+      "id": "3d-rendering",
+      "name": "3D Rendering Family",
+      "description": "Computer-generated three-dimensional imagery",
+      "coreTraits": ["volumetric forms", "realistic lighting", "material accuracy", "depth"],
+      "members": [
+        "3D render",
+        "Unreal Engine",
+        "Unity render",
+        "Octane render",
+        "Blender cycles",
+        "Arnold render",
+        "V-Ray",
+        "Cinema 4D",
+        "ray traced",
+        "path traced"
+      ],
+      "relatedFamilies": ["digital-art", "photorealism", "concept-art"],
+      "bestWith": ["volumetric lighting", "realistic materials", "depth of field"],
+      "avoidWith": ["2D flat", "hand-drawn", "traditional media"]
+    },
+    {
+      "id": "traditional-painting",
+      "name": "Traditional Painting Family",
+      "description": "Classic physical painting media and techniques",
+      "coreTraits": ["visible brushwork", "canvas texture", "paint buildup", "physical medium"],
+      "members": [
+        "oil painting",
+        "acrylic painting",
+        "watercolor",
+        "gouache",
+        "tempera",
+        "fresco",
+        "encaustic",
+        "alla prima",
+        "glazing technique"
+      ],
+      "relatedFamilies": ["academic-art", "impressionism", "expressionism"],
+      "bestWith": ["visible brushstrokes", "canvas texture", "traditional subjects"],
+      "avoidWith": ["digital clean", "pixel perfect", "CGI"]
+    },
+    {
+      "id": "asian-art",
+      "name": "Asian Art Traditions Family",
+      "description": "Traditional art styles from Asia",
+      "coreTraits": ["brush techniques", "ink work", "nature themes", "philosophical depth"],
+      "members": [
+        "chinese ink painting",
+        "japanese sumi-e",
+        "korean minhwa",
+        "persian miniature",
+        "indian mughal painting",
+        "thai traditional",
+        "tibetan thangka",
+        "chinese gongbi",
+        "literati painting"
+      ],
+      "relatedFamilies": ["ukiyo-e", "calligraphy", "spiritual-art"],
+      "bestWith": ["nature themes", "brush textures", "contemplative mood"],
+      "avoidWith": ["western realism", "oil painting texture", "modern tech"]
+    },
+    {
+      "id": "folk-art",
+      "name": "Folk Art Family",
+      "description": "Traditional and indigenous art forms",
+      "coreTraits": ["cultural symbols", "handmade quality", "traditional patterns", "community themes"],
+      "members": [
+        "folk art",
+        "naive art",
+        "outsider art",
+        "american folk",
+        "mexican folk art",
+        "russian folk art",
+        "scandinavian folk",
+        "african tribal art",
+        "aboriginal art"
+      ],
+      "relatedFamilies": ["primitive", "tribal", "craft"],
+      "bestWith": ["traditional patterns", "bright colors", "cultural symbols"],
+      "avoidWith": ["academic precision", "photorealistic", "digital"]
+    },
+    {
+      "id": "noir",
+      "name": "Film Noir Family",
+      "description": "Dark, cynical crime drama aesthetic",
+      "coreTraits": ["high contrast", "shadows", "urban night", "moral ambiguity"],
+      "members": [
+        "film noir",
+        "neo-noir",
+        "tech noir",
+        "nordic noir",
+        "hardboiled detective",
+        "femme fatale aesthetic",
+        "venetian blind shadows",
+        "chiaroscuro noir"
+      ],
+      "relatedFamilies": ["gothic-aesthetic", "cyberpunk-aesthetic", "expressionism"],
+      "bestWith": ["high contrast", "shadows", "rain", "night city", "cigarette smoke"],
+      "avoidWith": ["bright", "colorful", "cheerful", "daylight"]
+    },
+    {
+      "id": "art-brut",
+      "name": "Art Brut / Outsider Art Family",
+      "description": "Art outside mainstream culture and training",
+      "coreTraits": ["unconventional", "raw expression", "self-taught", "intense personal vision"],
+      "members": [
+        "art brut",
+        "outsider art",
+        "visionary art",
+        "self-taught art",
+        "basquiat style",
+        "dubuffet style",
+        "henry darger style",
+        "raw art"
+      ],
+      "relatedFamilies": ["expressionism", "folk-art", "neo-expressionism"],
+      "bestWith": ["raw texture", "unconventional composition", "intense color"],
+      "avoidWith": ["polished", "academic", "refined"]
+    },
+    {
+      "id": "constructivism",
+      "name": "Constructivism Family",
+      "description": "Geometric abstraction serving social purpose",
+      "coreTraits": ["geometric forms", "industrial materials", "social purpose", "dynamic composition"],
+      "members": [
+        "constructivism",
+        "russian constructivism",
+        "el lissitzky style",
+        "rodchenko style",
+        "tatlin style",
+        "suprematism",
+        "de stijl",
+        "bauhaus"
+      ],
+      "relatedFamilies": ["minimalism", "geometric-abstraction", "modernism"],
+      "bestWith": ["geometric shapes", "red black white", "dynamic angles", "industrial"],
+      "avoidWith": ["organic", "decorative", "traditional"]
+    },
+    {
+      "id": "dada",
+      "name": "Dada Family",
+      "description": "Anti-art movement, absurdist, provocative",
+      "coreTraits": ["absurdist", "collage", "found objects", "anti-establishment"],
+      "members": [
+        "dada",
+        "duchamp style",
+        "man ray style",
+        "hannah höch style",
+        "kurt schwitters style",
+        "photomontage",
+        "ready-made",
+        "anti-art"
+      ],
+      "relatedFamilies": ["surrealism", "pop-art", "conceptual-art"],
+      "bestWith": ["collage elements", "absurd juxtaposition", "text elements"],
+      "avoidWith": ["traditional beauty", "classical", "refined"]
+    },
+    {
+      "id": "visionary-art",
+      "name": "Visionary Art Family",
+      "description": "Spiritual, psychedelic, transcendent imagery",
+      "coreTraits": ["spiritual themes", "intricate detail", "transcendent imagery", "consciousness exploration"],
+      "members": [
+        "visionary art",
+        "alex grey style",
+        "android jones style",
+        "psychedelic art",
+        "sacred geometry",
+        "mystical art",
+        "entheogenic art",
+        "fractal art"
+      ],
+      "relatedFamilies": ["surrealism", "symbolism", "spiritual-art"],
+      "bestWith": ["sacred geometry", "intricate patterns", "spiritual symbols", "vibrant colors"],
+      "avoidWith": ["mundane", "realistic", "everyday subjects"]
+    }
+  ]
+}

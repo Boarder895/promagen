@@ -1,0 +1,201 @@
+{
+  "$schema": "./schemas/wind.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "weather",
+    "category": "wind",
+    "totalPhrases": 80,
+    "description": "Wind-based energy and movement phrases. 10 ranges × 8 phrases each.",
+    "range": { "min": 0, "max": 100, "unit": "km/h" },
+    "updated": "2026-01-21"
+  },
+  "ranges": {
+    "calm": {
+      "min": 0,
+      "max": 4,
+      "label": "Calm",
+      "phrases": [
+        "perfectly still calm",
+        "motionless tranquil air",
+        "windless serenity",
+        "absolute stillness",
+        "mirror-lake calm",
+        "smoke-rising-straight stillness",
+        "flag-hanging quiet",
+        "leaf-motionless peace"
+      ]
+    },
+    "light_air": {
+      "min": 5,
+      "max": 11,
+      "label": "Light Air",
+      "phrases": [
+        "gentle light breeze",
+        "soft whisper wind",
+        "delicate air movement",
+        "subtle rustling",
+        "barely-felt breeze",
+        "face-touching gentle",
+        "hair-stirring softness",
+        "candle-flickering movement"
+      ]
+    },
+    "light_breeze": {
+      "min": 12,
+      "max": 19,
+      "label": "Light Breeze",
+      "phrases": [
+        "moderate steady breeze",
+        "pleasant wind flow",
+        "comfortable air movement",
+        "refreshing gusts",
+        "leaf-rustling breeze",
+        "flag-stirring wind",
+        "wind-chime tinkling",
+        "grass-bending airflow"
+      ]
+    },
+    "gentle_breeze": {
+      "min": 20,
+      "max": 29,
+      "label": "Gentle Breeze",
+      "phrases": [
+        "brisk gusty wind",
+        "energetic breeze",
+        "invigorating wind",
+        "hair-tousling gusts",
+        "small-branch moving",
+        "paper-lifting breeze",
+        "dust-raising wind",
+        "light-flag extending"
+      ]
+    },
+    "moderate_breeze": {
+      "min": 30,
+      "max": 39,
+      "label": "Moderate Breeze",
+      "phrases": [
+        "strong powerful wind",
+        "forceful gusting breeze",
+        "robust wind energy",
+        "flag-snapping gusts",
+        "small-tree swaying",
+        "wave-forming wind",
+        "umbrella-challenging breeze",
+        "hat-holding weather"
+      ]
+    },
+    "fresh_breeze": {
+      "min": 40,
+      "max": 49,
+      "label": "Fresh Breeze",
+      "phrases": [
+        "very strong fierce wind",
+        "intense gusting force",
+        "tree-bending breeze",
+        "walking-challenging wind",
+        "white-cap forming",
+        "wire-whistling gusts",
+        "resistance-meeting walking",
+        "clothing-pressing force"
+      ]
+    },
+    "strong_breeze": {
+      "min": 50,
+      "max": 61,
+      "label": "Strong Breeze",
+      "phrases": [
+        "gale-force strong wind",
+        "severe wind intensity",
+        "umbrella-destroying gusts",
+        "debris-moving force",
+        "large-branch breaking",
+        "sign-shaking wind",
+        "difficult-walking conditions",
+        "structural-creaking gusts"
+      ]
+    },
+    "near_gale": {
+      "min": 62,
+      "max": 74,
+      "label": "Near Gale",
+      "phrases": [
+        "storm-force violent wind",
+        "dangerous wind power",
+        "damage-causing gusts",
+        "structural-testing force",
+        "whole-tree motion",
+        "inconvenient-walking wind",
+        "roof-tile threatening",
+        "fence-panel testing"
+      ]
+    },
+    "gale": {
+      "min": 75,
+      "max": 88,
+      "label": "Gale",
+      "phrases": [
+        "severe storm wind",
+        "destructive wind force",
+        "hurricane-adjacent gusts",
+        "emergency-level power",
+        "tree-uprooting potential",
+        "building-damage risk",
+        "travel-impossible conditions",
+        "shelter-seeking urgency"
+      ]
+    },
+    "hurricane": {
+      "min": 89,
+      "max": 100,
+      "label": "Hurricane Force",
+      "phrases": [
+        "hurricane-force extreme wind",
+        "catastrophic wind power",
+        "life-threatening gusts",
+        "apocalyptic wind force",
+        "total-devastation potential",
+        "civilization-pausing wind",
+        "nature-fury unleashed",
+        "unstoppable atmospheric violence"
+      ]
+    }
+  },
+  "contextual": {
+    "stormy": [
+      "driving storm wind",
+      "relentless tempest gusts",
+      "punishing storm-front wind",
+      "thunder-accompanying force",
+      "lightning-paired gusts"
+    ],
+    "rainy": [
+      "rain-laden breeze",
+      "wet-wind slapping",
+      "precipitation-carrying gusts",
+      "sideways-rain driving",
+      "umbrella-inverting force"
+    ],
+    "cold": [
+      "biting cold wind",
+      "cutting icy breeze",
+      "bone-chilling gusts",
+      "wind-chill factor",
+      "freezing wind exposure"
+    ],
+    "hot": [
+      "warm desert wind",
+      "dry scorching breeze",
+      "furnace-blast gusts",
+      "heat-wave carrying",
+      "sirocco-like warmth"
+    ],
+    "coastal": [
+      "sea-breeze freshness",
+      "offshore wind pattern",
+      "salt-spray carrying",
+      "maritime gusting",
+      "coastal gale energy"
+    ]
+  }
+}

@@ -5,8 +5,12 @@
 // Keep backwards-compatible keys (siteUrl/siteName/siteTagline) because other modules already import them.
 //
 // Pro posture (Vercel):
-// - Prefer “safe mode” switches + provider kill-switches via env vars so you can react instantly from Vercel.
+// - Prefer "safe mode" switches + provider kill-switches via env vars so you can react instantly from Vercel.
 // - Env parsing stays permissive (mostly optional) so local dev never explodes unless a required helper is called.
+//
+// Updated: January 22, 2026 - Added POSTGRES_URL fallback for Neon/Vercel integration
+//
+// Existing features preserved: Yes.
 
 import 'server-only';
 import { z } from 'zod';
@@ -32,7 +36,9 @@ const EnvSchema = z.object({
   NEXT_PUBLIC_SITE_TAGLINE: z.string().optional(),
 
   // Option A (Postgres + Cron)
+  // DATABASE_URL is the canonical name; POSTGRES_URL is set by Vercel/Neon integration
   DATABASE_URL: z.string().optional(),
+  POSTGRES_URL: z.string().optional(),
   PROMAGEN_CRON_SECRET: z.string().optional(),
 
   // Analytics tuning (server-only)
@@ -68,6 +74,9 @@ const raw = parseEnv();
 
 const siteUrl = stripTrailingSlashes(raw.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000');
 
+// Resolve database URL: prefer DATABASE_URL, fall back to POSTGRES_URL (Vercel/Neon sets this)
+const resolvedDatabaseUrl = raw.DATABASE_URL || raw.POSTGRES_URL || undefined;
+
 export const env = Object.freeze({
   // Backwards-compatible keys already used by robots.ts / seo.ts
   siteUrl,
@@ -80,7 +89,7 @@ export const env = Object.freeze({
 
   // Option A (Postgres + Cron)
   db: {
-    url: raw.DATABASE_URL,
+    url: resolvedDatabaseUrl,
   },
   cron: {
     secret: raw.PROMAGEN_CRON_SECRET,
@@ -115,7 +124,7 @@ export function requireDatabaseUrl(): string {
   if (url && url.trim().length > 0) return url.trim();
 
   throw new Error(
-    'DATABASE_URL is missing. Set it in .env for local dev and in Vercel Environment Variables for production.',
+    'DATABASE_URL (or POSTGRES_URL) is missing. Set it in .env for local dev and in Vercel Environment Variables for production.',
   );
 }
 

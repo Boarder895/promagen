@@ -6,6 +6,7 @@
 // Provides one-click sensible defaults for regional focus.
 //
 // UPDATED: Added Stock Indices row to FEATURE_COMPARISON with dropdown.
+// UPDATED: Added Weather Prompt Format row for Pro users.
 //
 // Authority: docs/authority/paid_tier.md §5.10
 // ============================================================================
@@ -246,6 +247,7 @@ export const FX_PRESETS: FxPreset[] = [
 // Authority: docs/authority/paid_tier.md §5.10
 //
 // UPDATED: Added Stock Indices row with interactive dropdown.
+// UPDATED: Added Weather Prompt Format row for tier selection.
 // Indices selection controls which exchange cards show benchmark data.
 // ============================================================================
 
@@ -259,7 +261,9 @@ export interface FeatureRow {
   /** Whether to highlight this row */
   highlight: boolean;
   /** Whether this row has an interactive dropdown in Pro column */
-  hasDropdown?: 'fx' | 'exchange' | 'indices';
+  hasDropdown?: 'fx' | 'exchange' | 'indices' | 'weather-prompt-tier';
+  /** Optional tooltip explanation */
+  tooltip?: string;
 }
 
 export const FEATURE_COMPARISON: FeatureRow[] = [
@@ -285,6 +289,14 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
     hasDropdown: 'indices',
   },
   {
+    feature: 'Weather Prompt Format',
+    standard: 'Plain Language (Tier 4)',
+    pro: 'Select any tier (1–4)',
+    highlight: true,
+    hasDropdown: 'weather-prompt-tier',
+    tooltip: 'Choose prompt format matching your AI platform: CLIP-Based, Midjourney, Natural Language, or Plain Language',
+  },
+  {
     feature: 'Reference Frame',
     standard: 'Your location',
     pro: 'Toggle: You / Greenwich',
@@ -301,5 +313,48 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
     standard: 'Base limits',
     pro: '+1 on 7 categories',
     highlight: false,
+  },
+];
+
+// ============================================================================
+// WEATHER PROMPT TIER OPTIONS (for dropdown)
+// ============================================================================
+
+export interface WeatherPromptTierOption {
+  id: string;
+  tier: 1 | 2 | 3 | 4;
+  label: string;
+  subLabel: string;
+  platforms: string;
+}
+
+export const WEATHER_PROMPT_TIER_OPTIONS: WeatherPromptTierOption[] = [
+  {
+    id: 'tier-1',
+    tier: 1,
+    label: 'Tier 1: CLIP-Based',
+    subLabel: 'Weighted keywords with emphasis',
+    platforms: 'Stable Diffusion, Leonardo, Flux',
+  },
+  {
+    id: 'tier-2',
+    tier: 2,
+    label: 'Tier 2: Midjourney',
+    subLabel: 'Natural flow with parameter flags',
+    platforms: 'Midjourney, BlueWillow, Niji',
+  },
+  {
+    id: 'tier-3',
+    tier: 3,
+    label: 'Tier 3: Natural Language',
+    subLabel: 'Full descriptive sentences',
+    platforms: 'DALL·E, Imagen, Adobe Firefly',
+  },
+  {
+    id: 'tier-4',
+    tier: 4,
+    label: 'Tier 4: Plain Language',
+    subLabel: 'Simple, minimal prompts (FREE default)',
+    platforms: 'Canva, Craiyon, Artistly',
   },
 ];

@@ -1,0 +1,740 @@
+{
+  "$schema": "./schemas/intelligence.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "intelligence",
+    "category": "conflicts",
+    "label": "Term Conflicts",
+    "description": "Terms that clash aesthetically or logically - avoid combining",
+    "totalConflictGroups": 85,
+    "updated": "2026-01-21"
+  },
+  "conflictGroups": [
+    {
+      "id": "era-vintage-future",
+      "type": "era",
+      "severity": "high",
+      "terms": ["vintage", "retro", "antique", "old-fashioned", "nostalgic"],
+      "conflictsWith": ["futuristic", "cyberpunk", "sci-fi", "modern", "contemporary", "cutting-edge"],
+      "reason": "Temporal aesthetic clash - past vs future",
+      "exception": "retrofuturism, steampunk, dieselpunk explicitly blend these"
+    },
+    {
+      "id": "era-medieval-scifi",
+      "type": "era",
+      "severity": "high",
+      "terms": ["medieval", "renaissance", "baroque", "gothic", "ancient"],
+      "conflictsWith": ["cyberpunk", "sci-fi", "space opera", "futuristic", "neon"],
+      "reason": "Historical period clash",
+      "exception": "science fantasy, technomancer themes"
+    },
+    {
+      "id": "style-photo-cartoon",
+      "type": "style",
+      "severity": "critical",
+      "terms": ["photorealistic", "hyperrealistic", "photo", "realistic", "lifelike"],
+      "conflictsWith": ["cartoon", "anime", "manga", "comic book", "pixel art", "low poly"],
+      "reason": "Fundamental rendering approach conflict",
+      "exception": "None - these are mutually exclusive"
+    },
+    {
+      "id": "style-minimal-maximal",
+      "type": "style",
+      "severity": "high",
+      "terms": ["minimalist", "simple", "clean", "sparse", "zen"],
+      "conflictsWith": ["maximalist", "ornate", "baroque", "rococo", "busy", "cluttered", "detailed"],
+      "reason": "Opposing design philosophies",
+      "exception": "Intentional contrast compositions"
+    },
+    {
+      "id": "mood-dark-bright",
+      "type": "mood",
+      "severity": "high",
+      "terms": ["dark", "moody", "gloomy", "sinister", "ominous", "noir"],
+      "conflictsWith": ["bright", "cheerful", "sunny", "vibrant", "joyful", "whimsical"],
+      "reason": "Opposing emotional tones",
+      "exception": "Contrast lighting, chiaroscuro"
+    },
+    {
+      "id": "mood-serene-chaotic",
+      "type": "mood",
+      "severity": "medium",
+      "terms": ["serene", "peaceful", "calm", "tranquil", "meditative"],
+      "conflictsWith": ["chaotic", "dynamic", "explosive", "turbulent", "violent", "intense"],
+      "reason": "Opposing energy levels",
+      "exception": "Eye of the storm compositions"
+    },
+    {
+      "id": "lighting-harsh-soft",
+      "type": "lighting",
+      "severity": "medium",
+      "terms": ["harsh lighting", "hard light", "direct sunlight", "spotlight"],
+      "conflictsWith": ["soft lighting", "diffused light", "overcast", "ambient"],
+      "reason": "Contradictory light quality",
+      "exception": "Mixed lighting setups with clear motivation"
+    },
+    {
+      "id": "lighting-day-night",
+      "type": "lighting",
+      "severity": "high",
+      "terms": ["daylight", "sunny", "midday sun", "bright day"],
+      "conflictsWith": ["night", "moonlight", "starlight", "midnight", "nocturnal"],
+      "reason": "Time of day conflict",
+      "exception": "Twilight, dawn, dusk transitional moments"
+    },
+    {
+      "id": "colour-warm-cool",
+      "type": "colour",
+      "severity": "medium",
+      "terms": ["warm tones", "orange", "red", "yellow", "golden"],
+      "conflictsWith": ["cool tones", "blue", "cyan", "teal", "icy"],
+      "reason": "Color temperature clash",
+      "exception": "Teal and orange cinematic grade, complementary schemes"
+    },
+    {
+      "id": "colour-mono-vibrant",
+      "type": "colour",
+      "severity": "high",
+      "terms": ["monochrome", "black and white", "grayscale", "desaturated"],
+      "conflictsWith": ["vibrant", "saturated", "colorful", "rainbow", "neon colors"],
+      "reason": "Saturation level conflict",
+      "exception": "Selective color splash technique"
+    },
+    {
+      "id": "colour-sepia-modern",
+      "type": "colour",
+      "severity": "medium",
+      "terms": ["sepia", "aged photo", "faded", "vintage color"],
+      "conflictsWith": ["HDR", "vivid", "punchy colors", "modern color grade"],
+      "reason": "Color treatment era clash",
+      "exception": "Intentional anachronistic styling"
+    },
+    {
+      "id": "aesthetic-cyber-nature",
+      "type": "aesthetic",
+      "severity": "medium",
+      "terms": ["cyberpunk", "tech noir", "digital", "synthetic", "chrome"],
+      "conflictsWith": ["cottagecore", "pastoral", "rustic", "natural", "organic"],
+      "reason": "Tech vs nature aesthetic clash",
+      "exception": "Solarpunk, biopunk explicitly blend these"
+    },
+    {
+      "id": "aesthetic-gothic-pastel",
+      "type": "aesthetic",
+      "severity": "high",
+      "terms": ["gothic", "dark academia", "victorian horror", "macabre"],
+      "conflictsWith": ["pastel", "kawaii", "cute", "soft aesthetic", "cottagecore"],
+      "reason": "Dark vs light aesthetic clash",
+      "exception": "Pastel goth subculture"
+    },
+    {
+      "id": "aesthetic-steam-cyber",
+      "type": "aesthetic",
+      "severity": "medium",
+      "terms": ["steampunk", "victorian", "brass", "clockwork", "steam-powered"],
+      "conflictsWith": ["cyberpunk", "neon", "holographic", "digital", "LED"],
+      "reason": "Different punk aesthetic eras",
+      "exception": "Rarely combined in crossover art"
+    },
+    {
+      "id": "material-organic-synthetic",
+      "type": "material",
+      "severity": "low",
+      "terms": ["wood", "stone", "leather", "natural fiber", "organic material"],
+      "conflictsWith": ["plastic", "chrome", "synthetic", "neon", "LED"],
+      "reason": "Material aesthetic clash",
+      "exception": "Mixed media, contrast compositions"
+    },
+    {
+      "id": "material-rough-polished",
+      "type": "material",
+      "severity": "low",
+      "terms": ["rough texture", "weathered", "distressed", "worn", "rustic"],
+      "conflictsWith": ["polished", "sleek", "smooth", "pristine", "immaculate"],
+      "reason": "Surface finish conflict",
+      "exception": "Intentional juxtaposition"
+    },
+    {
+      "id": "composition-symmetry-chaos",
+      "type": "composition",
+      "severity": "medium",
+      "terms": ["symmetrical", "balanced", "centered", "orderly", "geometric"],
+      "conflictsWith": ["chaotic", "random", "scattered", "asymmetrical extreme", "disorderly"],
+      "reason": "Composition philosophy clash",
+      "exception": "Controlled chaos, dynamic balance"
+    },
+    {
+      "id": "composition-tight-wide",
+      "type": "composition",
+      "severity": "medium",
+      "terms": ["extreme close-up", "macro", "tight crop", "detail shot"],
+      "conflictsWith": ["wide shot", "panoramic", "establishing shot", "landscape"],
+      "reason": "Framing scale conflict",
+      "exception": "Split compositions, picture-in-picture"
+    },
+    {
+      "id": "camera-shallow-deep",
+      "type": "camera",
+      "severity": "high",
+      "terms": ["shallow depth of field", "bokeh", "f/1.4", "blurred background"],
+      "conflictsWith": ["deep focus", "everything sharp", "f/16", "infinite focus"],
+      "reason": "Mutually exclusive focus techniques",
+      "exception": "Focus stacking in post"
+    },
+    {
+      "id": "camera-static-motion",
+      "type": "camera",
+      "severity": "medium",
+      "terms": ["static", "locked off", "tripod stable", "frozen moment"],
+      "conflictsWith": ["motion blur", "panning", "dynamic movement", "action blur"],
+      "reason": "Motion treatment conflict",
+      "exception": "Subject sharp with background blur"
+    },
+    {
+      "id": "genre-horror-comedy",
+      "type": "genre",
+      "severity": "medium",
+      "terms": ["horror", "terrifying", "nightmare", "creepy", "disturbing"],
+      "conflictsWith": ["comedy", "funny", "whimsical", "lighthearted", "silly"],
+      "reason": "Tone and genre clash",
+      "exception": "Horror comedy is a valid subgenre"
+    },
+    {
+      "id": "genre-realistic-fantasy",
+      "type": "genre",
+      "severity": "low",
+      "terms": ["documentary", "realistic", "authentic", "true to life"],
+      "conflictsWith": ["fantasy", "magical", "surreal", "impossible", "dreamlike"],
+      "reason": "Reality vs imagination",
+      "exception": "Magical realism genre"
+    },
+    {
+      "id": "subject-human-abstract",
+      "type": "subject",
+      "severity": "low",
+      "terms": ["portrait", "human figure", "person", "face", "body"],
+      "conflictsWith": ["abstract", "non-representational", "geometric pattern", "pure form"],
+      "reason": "Figurative vs abstract",
+      "exception": "Abstract portraits, cubist figures"
+    },
+    {
+      "id": "fidelity-detailed-simple",
+      "type": "fidelity",
+      "severity": "high",
+      "terms": ["highly detailed", "intricate", "complex", "elaborate", "ornate"],
+      "conflictsWith": ["simple", "minimal", "basic", "clean lines", "uncluttered"],
+      "reason": "Detail level conflict",
+      "exception": "Detailed subject on minimal background"
+    },
+    {
+      "id": "render-2d-3d",
+      "type": "render",
+      "severity": "medium",
+      "terms": ["flat design", "2D", "vector art", "illustration"],
+      "conflictsWith": ["3D render", "volumetric", "ray traced", "physically based"],
+      "reason": "Dimensional rendering conflict",
+      "exception": "2.5D, isometric, mixed media"
+    },
+    {
+      "id": "art-traditional-digital",
+      "type": "art",
+      "severity": "low",
+      "terms": ["oil painting", "watercolor", "canvas texture", "brush strokes visible"],
+      "conflictsWith": ["CGI", "Unreal Engine", "ray traced", "perfectly smooth"],
+      "reason": "Medium aesthetic conflict",
+      "exception": "Digital painting mimicking traditional"
+    },
+    {
+      "id": "period-prehistoric-space",
+      "type": "period",
+      "severity": "high",
+      "terms": ["prehistoric", "caveman", "stone age", "dinosaur era"],
+      "conflictsWith": ["space age", "interstellar", "far future", "post-human"],
+      "reason": "Extreme temporal gap",
+      "exception": "Time travel narratives, anachronistic art"
+    },
+    {
+      "id": "culture-east-west",
+      "type": "culture",
+      "severity": "low",
+      "terms": ["japanese", "chinese", "asian aesthetic", "eastern"],
+      "conflictsWith": ["western", "european", "american", "occidental"],
+      "reason": "Cultural aesthetic mixing requires care",
+      "exception": "Fusion styles, global contemporary"
+    },
+    {
+      "id": "scale-micro-macro",
+      "type": "scale",
+      "severity": "medium",
+      "terms": ["microscopic", "cellular", "atomic", "nano scale"],
+      "conflictsWith": ["cosmic", "galactic", "planetary", "universe scale"],
+      "reason": "Extreme scale difference",
+      "exception": "Powers of ten, scale comparison art"
+    },
+    {
+      "id": "weather-sunny-stormy",
+      "type": "weather",
+      "severity": "high",
+      "terms": ["sunny", "clear sky", "cloudless", "perfect weather"],
+      "conflictsWith": ["stormy", "thunderstorm", "hurricane", "tornado", "heavy rain"],
+      "reason": "Contradictory weather conditions",
+      "exception": "Storm approaching, weather transition"
+    },
+    {
+      "id": "weather-hot-cold",
+      "type": "weather",
+      "severity": "high",
+      "terms": ["tropical", "desert heat", "scorching", "summer"],
+      "conflictsWith": ["arctic", "frozen", "blizzard", "winter", "icy"],
+      "reason": "Temperature extreme conflict",
+      "exception": "Climate contrast, seasonal transition"
+    },
+    {
+      "id": "emotion-joy-sorrow",
+      "type": "emotion",
+      "severity": "medium",
+      "terms": ["joyful", "happy", "ecstatic", "celebratory", "elated"],
+      "conflictsWith": ["sorrowful", "sad", "grieving", "melancholic", "depressed"],
+      "reason": "Opposing emotional states",
+      "exception": "Bittersweet, complex emotions"
+    },
+    {
+      "id": "emotion-calm-angry",
+      "type": "emotion",
+      "severity": "medium",
+      "terms": ["calm", "peaceful", "serene", "relaxed", "zen"],
+      "conflictsWith": ["angry", "furious", "raging", "violent", "aggressive"],
+      "reason": "Opposing emotional energy",
+      "exception": "Calm before the storm, suppressed rage"
+    },
+    {
+      "id": "movement-static-dynamic",
+      "type": "movement",
+      "severity": "medium",
+      "terms": ["still", "static", "motionless", "frozen", "stationary"],
+      "conflictsWith": ["dynamic", "moving", "action", "kinetic", "energetic"],
+      "reason": "Motion state conflict",
+      "exception": "Implied motion in still image"
+    },
+    {
+      "id": "age-youth-elderly",
+      "type": "age",
+      "severity": "medium",
+      "terms": ["young", "youthful", "child", "baby", "teenager"],
+      "conflictsWith": ["elderly", "aged", "ancient", "weathered face", "wrinkled"],
+      "reason": "Age representation conflict for single subject",
+      "exception": "Age progression, multi-generational scenes"
+    },
+    {
+      "id": "body-thin-heavy",
+      "type": "body",
+      "severity": "medium",
+      "terms": ["thin", "slender", "skinny", "lean", "petite"],
+      "conflictsWith": ["heavy", "large", "plus-size", "bulky", "massive"],
+      "reason": "Body type conflict for single subject",
+      "exception": "Multiple subjects with different body types"
+    },
+    {
+      "id": "hair-bald-long",
+      "type": "hair",
+      "severity": "low",
+      "terms": ["bald", "shaved head", "hairless", "smooth scalp"],
+      "conflictsWith": ["long hair", "flowing hair", "waist-length hair", "braided"],
+      "reason": "Hair state conflict",
+      "exception": "Partially shaved styles, wigs"
+    },
+    {
+      "id": "clothing-nude-armored",
+      "type": "clothing",
+      "severity": "medium",
+      "terms": ["nude", "naked", "unclothed", "bare"],
+      "conflictsWith": ["armored", "heavily clothed", "full plate", "covered"],
+      "reason": "Clothing state conflict",
+      "exception": "Partial armor, artistic nude with accessories"
+    },
+    {
+      "id": "clothing-formal-casual",
+      "type": "clothing",
+      "severity": "low",
+      "terms": ["formal", "suit", "tuxedo", "ball gown", "elegant dress"],
+      "conflictsWith": ["casual", "jeans", "t-shirt", "streetwear", "loungewear"],
+      "reason": "Dress code conflict",
+      "exception": "Dressed down formal, elevated casual"
+    },
+    {
+      "id": "pose-relaxed-tense",
+      "type": "pose",
+      "severity": "low",
+      "terms": ["relaxed pose", "lounging", "reclining", "at ease"],
+      "conflictsWith": ["tense", "alert", "ready to strike", "defensive stance"],
+      "reason": "Body tension conflict",
+      "exception": "Deceptively relaxed, hidden tension"
+    },
+    {
+      "id": "expression-smile-frown",
+      "type": "expression",
+      "severity": "medium",
+      "terms": ["smiling", "grinning", "laughing", "beaming"],
+      "conflictsWith": ["frowning", "scowling", "grimacing", "snarling"],
+      "reason": "Facial expression conflict",
+      "exception": "Complex expressions, asymmetrical face"
+    },
+    {
+      "id": "gaze-camera-away",
+      "type": "gaze",
+      "severity": "low",
+      "terms": ["looking at camera", "direct gaze", "eye contact", "staring at viewer"],
+      "conflictsWith": ["looking away", "averted gaze", "profile", "eyes closed"],
+      "reason": "Gaze direction conflict",
+      "exception": "One eye toward camera"
+    },
+    {
+      "id": "environment-indoor-outdoor",
+      "type": "environment",
+      "severity": "medium",
+      "terms": ["indoor", "interior", "inside", "room", "enclosed space"],
+      "conflictsWith": ["outdoor", "exterior", "outside", "open air", "nature"],
+      "reason": "Location type conflict",
+      "exception": "Doorways, windows, transitional spaces"
+    },
+    {
+      "id": "environment-urban-rural",
+      "type": "environment",
+      "severity": "medium",
+      "terms": ["urban", "city", "metropolis", "downtown", "skyscrapers"],
+      "conflictsWith": ["rural", "countryside", "farm", "wilderness", "untouched nature"],
+      "reason": "Setting type conflict",
+      "exception": "City edge, urban parks, suburbs"
+    },
+    {
+      "id": "environment-dry-wet",
+      "type": "environment",
+      "severity": "medium",
+      "terms": ["desert", "arid", "dry", "parched", "drought"],
+      "conflictsWith": ["underwater", "ocean", "rain", "flooded", "swamp"],
+      "reason": "Moisture level conflict",
+      "exception": "Oasis, desert rain, flash flood"
+    },
+    {
+      "id": "time-ancient-modern",
+      "type": "time",
+      "severity": "high",
+      "terms": ["ancient", "prehistoric", "primordial", "timeless past"],
+      "conflictsWith": ["modern", "contemporary", "present day", "current"],
+      "reason": "Time period conflict",
+      "exception": "Ancient artifacts in modern setting"
+    },
+    {
+      "id": "quality-pristine-decayed",
+      "type": "quality",
+      "severity": "medium",
+      "terms": ["pristine", "perfect", "immaculate", "flawless", "new"],
+      "conflictsWith": ["decayed", "ruined", "destroyed", "crumbling", "rotting"],
+      "reason": "Object state conflict",
+      "exception": "Decay juxtaposition, before/after"
+    },
+    {
+      "id": "density-sparse-crowded",
+      "type": "density",
+      "severity": "low",
+      "terms": ["sparse", "empty", "minimal elements", "isolated", "alone"],
+      "conflictsWith": ["crowded", "packed", "busy", "teeming", "overwhelming"],
+      "reason": "Scene density conflict",
+      "exception": "Focal isolation in crowd"
+    },
+    {
+      "id": "speed-slow-fast",
+      "type": "speed",
+      "severity": "low",
+      "terms": ["slow motion", "frozen time", "still moment", "paused"],
+      "conflictsWith": ["fast motion", "speed blur", "racing", "rushing"],
+      "reason": "Time perception conflict",
+      "exception": "Selective speed, bullet time"
+    },
+    {
+      "id": "sound-silent-loud",
+      "type": "sound",
+      "severity": "low",
+      "terms": ["silent", "quiet", "peaceful", "hushed", "muted"],
+      "conflictsWith": ["loud", "noisy", "explosive", "screaming", "cacophonous"],
+      "reason": "Implied sound conflict",
+      "exception": "Visual contrast of sound levels"
+    },
+    {
+      "id": "reality-real-surreal",
+      "type": "reality",
+      "severity": "medium",
+      "terms": ["realistic", "naturalistic", "true to life", "authentic"],
+      "conflictsWith": ["surreal", "impossible", "dreamlike", "absurd", "illogical"],
+      "reason": "Reality treatment conflict",
+      "exception": "Magical realism, surreal elements in real setting"
+    },
+    {
+      "id": "gravity-grounded-floating",
+      "type": "gravity",
+      "severity": "medium",
+      "terms": ["grounded", "standing on ground", "gravity normal", "earthbound"],
+      "conflictsWith": ["floating", "levitating", "zero gravity", "flying", "suspended"],
+      "reason": "Gravity state conflict for same subject",
+      "exception": "Jumping, falling, transitional moment"
+    },
+    {
+      "id": "transparency-opaque-transparent",
+      "type": "transparency",
+      "severity": "medium",
+      "terms": ["opaque", "solid", "dense", "impenetrable"],
+      "conflictsWith": ["transparent", "see-through", "glass-like", "ghostly"],
+      "reason": "Material transparency conflict",
+      "exception": "Partially transparent, ghosting effect"
+    },
+    {
+      "id": "texture-smooth-rough",
+      "type": "texture",
+      "severity": "low",
+      "terms": ["smooth", "polished", "glassy", "silky"],
+      "conflictsWith": ["rough", "textured", "bumpy", "coarse", "grainy"],
+      "reason": "Surface texture conflict",
+      "exception": "Contrasting textures in composition"
+    },
+    {
+      "id": "sharpness-sharp-blurry",
+      "type": "sharpness",
+      "severity": "high",
+      "terms": ["sharp", "crisp", "tack sharp", "in focus", "detailed"],
+      "conflictsWith": ["blurry", "soft", "out of focus", "hazy", "fuzzy"],
+      "reason": "Focus quality conflict",
+      "exception": "Selective focus, intentional blur"
+    },
+    {
+      "id": "contrast-high-low",
+      "type": "contrast",
+      "severity": "medium",
+      "terms": ["high contrast", "dramatic contrast", "stark", "bold"],
+      "conflictsWith": ["low contrast", "flat", "muted", "subtle", "soft"],
+      "reason": "Tonal contrast conflict",
+      "exception": "Localized contrast variations"
+    },
+    {
+      "id": "saturation-vivid-muted",
+      "type": "saturation",
+      "severity": "medium",
+      "terms": ["vivid", "saturated", "intense colors", "vibrant", "punchy"],
+      "conflictsWith": ["muted", "desaturated", "faded", "washed out", "pastel"],
+      "reason": "Color saturation conflict",
+      "exception": "Selective saturation, color pop"
+    },
+    {
+      "id": "value-light-dark",
+      "type": "value",
+      "severity": "medium",
+      "terms": ["bright", "light", "high key", "luminous", "glowing"],
+      "conflictsWith": ["dark", "shadow", "low key", "shadowy", "dim"],
+      "reason": "Overall value conflict",
+      "exception": "Chiaroscuro, dramatic lighting"
+    },
+    {
+      "id": "aspect-portrait-landscape",
+      "type": "aspect",
+      "severity": "high",
+      "terms": ["portrait orientation", "vertical", "tall format"],
+      "conflictsWith": ["landscape orientation", "horizontal", "wide format"],
+      "reason": "Aspect ratio conflict - mutually exclusive",
+      "exception": "Square format, custom ratios"
+    },
+    {
+      "id": "perspective-close-distant",
+      "type": "perspective",
+      "severity": "medium",
+      "terms": ["close up", "intimate", "near", "tight framing"],
+      "conflictsWith": ["distant", "far away", "wide shot", "aerial view"],
+      "reason": "Camera distance conflict",
+      "exception": "Telephoto compression, forced perspective"
+    },
+    {
+      "id": "angle-above-below",
+      "type": "angle",
+      "severity": "medium",
+      "terms": ["bird's eye view", "overhead", "looking down", "aerial"],
+      "conflictsWith": ["worm's eye view", "looking up", "low angle", "ground level"],
+      "reason": "Camera angle conflict",
+      "exception": "Dutch angle, transitional angles"
+    },
+    {
+      "id": "format-photo-painting",
+      "type": "format",
+      "severity": "high",
+      "terms": ["photograph", "photo", "camera shot", "captured"],
+      "conflictsWith": ["painting", "painted", "brush strokes", "canvas"],
+      "reason": "Medium format conflict",
+      "exception": "Photo manipulation, painted over photo"
+    },
+    {
+      "id": "artist-monet-warhol",
+      "type": "artist",
+      "severity": "high",
+      "terms": ["monet style", "impressionist", "soft brushwork", "natural light"],
+      "conflictsWith": ["warhol style", "pop art", "bold colors", "screen print"],
+      "reason": "Distinct artist style conflict",
+      "exception": "Mashup art, style blending experiments"
+    },
+    {
+      "id": "artist-giger-disney",
+      "type": "artist",
+      "severity": "critical",
+      "terms": ["hr giger", "biomechanical", "alien aesthetic", "dark surreal"],
+      "conflictsWith": ["disney style", "family friendly", "cute", "wholesome"],
+      "reason": "Extreme tonal conflict",
+      "exception": "Subversive parody art"
+    },
+    {
+      "id": "artist-miyazaki-burton",
+      "type": "artist",
+      "severity": "medium",
+      "terms": ["miyazaki style", "studio ghibli", "gentle", "nature spirits"],
+      "conflictsWith": ["tim burton style", "gothic", "angular", "quirky dark"],
+      "reason": "Different animation aesthetics",
+      "exception": "Style fusion experiments"
+    },
+    {
+      "id": "negative-quality-fidelity",
+      "type": "negative",
+      "severity": "critical",
+      "terms": ["blurry", "low quality", "bad anatomy", "deformed"],
+      "conflictsWith": ["highly detailed", "masterpiece", "best quality", "sharp"],
+      "reason": "Negative prompts conflict with positive fidelity",
+      "exception": "These should be in separate prompt sections"
+    },
+    {
+      "id": "render-engine-conflict",
+      "type": "render",
+      "severity": "medium",
+      "terms": ["unreal engine", "UE5", "unreal render"],
+      "conflictsWith": ["unity", "blender cycles", "octane render", "arnold"],
+      "reason": "Specify one render engine",
+      "exception": "Comparison renders"
+    },
+    {
+      "id": "game-style-conflict",
+      "type": "game",
+      "severity": "low",
+      "terms": ["fortnite style", "cell shaded game"],
+      "conflictsWith": ["call of duty style", "realistic military"],
+      "reason": "Different game aesthetics",
+      "exception": "Crossover fan art"
+    },
+    {
+      "id": "anime-style-conflict",
+      "type": "anime",
+      "severity": "low",
+      "terms": ["shonen style", "action anime", "dynamic poses"],
+      "conflictsWith": ["shoujo style", "romance anime", "soft features"],
+      "reason": "Different anime demographics",
+      "exception": "Genre-blending anime"
+    },
+    {
+      "id": "comic-style-conflict",
+      "type": "comic",
+      "severity": "low",
+      "terms": ["marvel comics", "superhero style", "dynamic action"],
+      "conflictsWith": ["indie comics", "alternative comics", "experimental"],
+      "reason": "Different comic traditions",
+      "exception": "Style parody"
+    },
+    {
+      "id": "photography-style-conflict",
+      "type": "photography",
+      "severity": "medium",
+      "terms": ["fashion photography", "studio lighting", "glamour"],
+      "conflictsWith": ["documentary photography", "candid", "unstaged"],
+      "reason": "Different photography approaches",
+      "exception": "Documentary fashion"
+    },
+    {
+      "id": "architecture-conflict",
+      "type": "architecture",
+      "severity": "medium",
+      "terms": ["brutalist architecture", "concrete", "massive", "raw"],
+      "conflictsWith": ["art nouveau architecture", "organic", "decorative", "flowing"],
+      "reason": "Opposing architectural philosophies",
+      "exception": "Architectural evolution, renovation"
+    },
+    {
+      "id": "nature-conflict",
+      "type": "nature",
+      "severity": "medium",
+      "terms": ["forest", "trees", "woodland", "dense vegetation"],
+      "conflictsWith": ["desert", "barren", "sand dunes", "no vegetation"],
+      "reason": "Biome conflict",
+      "exception": "Oasis, desert edge, biome transition"
+    },
+    {
+      "id": "water-state-conflict",
+      "type": "water",
+      "severity": "high",
+      "terms": ["ice", "frozen", "glacial", "solid water"],
+      "conflictsWith": ["boiling", "steam", "vapor", "hot water"],
+      "reason": "Water state conflict",
+      "exception": "Phase transition, ice in hot springs"
+    },
+    {
+      "id": "fire-water-conflict",
+      "type": "element",
+      "severity": "medium",
+      "terms": ["fire", "flames", "burning", "inferno"],
+      "conflictsWith": ["water", "ocean", "rain", "flooding"],
+      "reason": "Elemental opposition",
+      "exception": "Steam, underwater volcanos, elemental battle"
+    },
+    {
+      "id": "vehicle-conflict",
+      "type": "vehicle",
+      "severity": "low",
+      "terms": ["car", "automobile", "road vehicle"],
+      "conflictsWith": ["spaceship", "starship", "spacecraft"],
+      "reason": "Vehicle type for single subject",
+      "exception": "Flying car, sci-fi hybrid vehicles"
+    },
+    {
+      "id": "weapon-conflict",
+      "type": "weapon",
+      "severity": "low",
+      "terms": ["sword", "blade", "melee weapon"],
+      "conflictsWith": ["gun", "rifle", "firearm", "laser weapon"],
+      "reason": "Weapon era conflict for single character",
+      "exception": "Multi-weapon character, hybrid weapons"
+    },
+    {
+      "id": "creature-conflict",
+      "type": "creature",
+      "severity": "medium",
+      "terms": ["dragon", "reptilian", "scaled"],
+      "conflictsWith": ["angel", "feathered", "divine being"],
+      "reason": "Creature type conflict for single entity",
+      "exception": "Hybrid creatures, dragon-angel fusion"
+    },
+    {
+      "id": "mythology-conflict",
+      "type": "mythology",
+      "severity": "low",
+      "terms": ["greek mythology", "olympian gods", "classical"],
+      "conflictsWith": ["norse mythology", "viking gods", "nordic"],
+      "reason": "Different mythological traditions",
+      "exception": "Mythology crossover, comparative mythology"
+    },
+    {
+      "id": "religion-conflict",
+      "type": "religion",
+      "severity": "medium",
+      "terms": ["christian imagery", "angels", "crosses"],
+      "conflictsWith": ["buddhist imagery", "buddha", "lotus"],
+      "reason": "Different religious iconography",
+      "exception": "Interfaith art, spiritual fusion"
+    }
+  ],
+  "severityLevels": {
+    "critical": "Never combine - will produce nonsensical results",
+    "high": "Strongly avoid - creates confusion or contradiction",
+    "medium": "Use with caution - may work with skilled prompting",
+    "low": "Generally fine to combine with intentional contrast"
+  }
+}

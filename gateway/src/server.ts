@@ -15,6 +15,7 @@
  * - twelvedata/ contains FX + Crypto (Phase 1 ✅)
  * - marketstack/ contains Indices (Phase 2 ✅)
  * - fallback/ contains Commodities (Phase 3 ✅)
+ * - openweathermap/ contains Weather (Phase 4 ✅)
  * - server.ts is routes + startup only
  *
  * GUARDRAIL G2: server.ts imports from provider index files.
@@ -29,6 +30,14 @@ import { logError, logInfo, logWarn, logStartup } from './lib/logging.js';
 import type { FxPair } from './lib/types.js';
 import { indicesHandler, validateIndicesSelection } from './marketstack/index.js';
 import {
+  initWeatherHandler,
+  getWeatherData,
+  getWeatherTraceInfo,
+  resetWeatherHandler,
+  startBackgroundRefresh as startWeatherRefresh,
+  stopBackgroundRefresh as stopWeatherRefresh,
+} from './openweathermap/index.js';
+import {
   cryptoHandler,
   fxHandler,
   validateFxSelection,
@@ -40,6 +49,7 @@ import {
 // =============================================================================
 const twelveDataKey = process.env['TWELVEDATA_API_KEY'] ?? '';
 const marketstackKey = process.env['MARKETSTACK_API_KEY'] ?? '';
+const openWeatherMapKey = process.env['OPENWEATHERMAP_API_KEY'] ?? '';
 
 // NOTE: Avoid logging any part of the actual key (even a prefix).
 logInfo('[ENV] Provider API key status at startup', {
@@ -47,6 +57,8 @@ logInfo('[ENV] Provider API key status at startup', {
   twelveDataLength: twelveDataKey.length,
   marketstackPresent: Boolean(marketstackKey),
   marketstackLength: marketstackKey.length,
+  openWeatherMapPresent: Boolean(openWeatherMapKey),
+  openWeatherMapLength: openWeatherMapKey.length,
 });
 
 if (!twelveDataKey) {
@@ -54,6 +66,9 @@ if (!twelveDataKey) {
 }
 if (!marketstackKey) {
   logWarn('MARKETSTACK_API_KEY is missing; Indices will return fallback (null prices).');
+}
+if (!openWeatherMapKey) {
+  logWarn('OPENWEATHERMAP_API_KEY is missing; Weather will return empty data.');
 }
 
 // =============================================================================
@@ -125,6 +140,87 @@ function parseJson(body: string): unknown {
   }
 }
 
+function isRunningOnFly(): boolean {
+  return Boolean(process.env['FLY_APP_NAME'] || process.env['FLY_REGION']);
+}
+
+function getDefaultFrontendBaseUrl(): string {
+  const explicit = process.env['FRONTEND_BASE_URL'];
+  if (explicit && explicit.trim()) {
+    return explicit.trim().replace(/\/+$/, '');
+  }
+
+  const isProd = process.env.NODE_ENV === 'production' || isRunningOnFly();
+  return isProd ? 'https://promagen.com' : 'http://localhost:3000';
+}
+
+function getDefaultWeatherConfigUrl(): string {
+  return `${getDefaultFrontendBaseUrl()}/api/weather/config`;
+}
+
+function isPlaceholderUrl(url: string): boolean {
+  const u = url.toLowerCase();
+  return (
+    u.includes('your-frontend-domain') ||
+    u.includes('example.com') ||
+    u.includes('replace-me') ||
+    u.includes('<your')
+  );
+}
+
+/**
+ * Single-source SSOT base URL.
+ *
+ * - Dev default: http://localhost:3000
+ * - Prod default (Fly or NODE_ENV=production): https://promagen.com
+ */
+function resolveFrontendBaseUrl(): string {
+  const base = getDefaultFrontendBaseUrl();
+  return base.replace(/\/+$/, '');
+}
+
+/**
+ * Derive all *CONFIG_URL env vars from FRONTEND_BASE_URL (unless explicitly provided).
+ * Also fails fast if placeholder URLs are detected.
+ */
+function bootstrapFrontendConfigUrls(): void {
+  const base = resolveFrontendBaseUrl();
+
+  // Persist derived base for /trace visibility
+  if (!process.env['FRONTEND_BASE_URL']) {
+    process.env['FRONTEND_BASE_URL'] = base;
+  }
+
+  if (isPlaceholderUrl(base)) {
+    throw new Error(
+      `FRONTEND_BASE_URL contains a placeholder value: ${base}. Set it to http://localhost:3000 (dev) or https://promagen.com (prod).`,
+    );
+  }
+
+  const derived = {
+    FX_CONFIG_URL: `${base}/api/fx/config`,
+    CRYPTO_CONFIG_URL: `${base}/api/crypto/config`,
+    INDICES_CONFIG_URL: `${base}/api/indices/config`,
+    COMMODITIES_CONFIG_URL: `${base}/api/commodities/config`,
+    WEATHER_CONFIG_URL: `${base}/api/weather/config`,
+  } as const;
+
+  for (const [k, v] of Object.entries(derived)) {
+    const current = process.env[k] ?? '';
+    if (!current) {
+      process.env[k] = v;
+    }
+    if (isPlaceholderUrl(process.env[k] ?? '')) {
+      throw new Error(
+        `${k} contains a placeholder value: ${process.env[k]}. Remove it or set FRONTEND_BASE_URL correctly.`,
+      );
+    }
+  }
+}
+
+// Ensure config URLs are derived early (before any handler init runs)
+bootstrapFrontendConfigUrls();
+
 // =============================================================================
 // ENV CHECK HELPER (for /trace endpoint)
 // =============================================================================
@@ -132,6 +228,9 @@ function parseJson(body: string): unknown {
 function getEnvStatus(): Record<string, unknown> {
   const tdKey = process.env['TWELVEDATA_API_KEY'] ?? '';
   const msKey = process.env['MARKETSTACK_API_KEY'] ?? '';
+  const owmKey = process.env['OPENWEATHERMAP_API_KEY'] ?? '';
+
+  const base = process.env['FRONTEND_BASE_URL'] ?? getDefaultFrontendBaseUrl();
 
   return {
     TWELVEDATA_API_KEY: tdKey
@@ -140,12 +239,62 @@ function getEnvStatus(): Record<string, unknown> {
     MARKETSTACK_API_KEY: msKey
       ? { status: 'present', length: msKey.length }
       : { status: 'MISSING', length: 0 },
-    FX_CONFIG_URL: process.env['FX_CONFIG_URL'] ?? '(default: https://promagen.com/api/fx/config)',
-    CRYPTO_CONFIG_URL:
-      process.env['CRYPTO_CONFIG_URL'] ?? '(default: https://promagen.com/api/crypto/config)',
+    OPENWEATHERMAP_API_KEY: owmKey
+      ? { status: 'present', length: owmKey.length }
+      : { status: 'MISSING', length: 0 },
+
+    FRONTEND_BASE_URL: base,
+
+    FX_CONFIG_URL: process.env['FX_CONFIG_URL'] ?? `(derived: ${base}/api/fx/config)`,
+    CRYPTO_CONFIG_URL: process.env['CRYPTO_CONFIG_URL'] ?? `(derived: ${base}/api/crypto/config)`,
     INDICES_CONFIG_URL:
-      process.env['INDICES_CONFIG_URL'] ?? '(default: https://promagen.com/api/indices/config)',
+      process.env['INDICES_CONFIG_URL'] ?? `(derived: ${base}/api/indices/config)`,
+    COMMODITIES_CONFIG_URL:
+      process.env['COMMODITIES_CONFIG_URL'] ?? `(derived: ${base}/api/commodities/config)`,
+    WEATHER_CONFIG_URL:
+      process.env['WEATHER_CONFIG_URL'] ?? `(derived: ${base}/api/weather/config)`,
   };
+}
+
+// =============================================================================
+// WEATHER CONFIG FETCHER
+// =============================================================================
+
+/**
+ * Fetch weather config from frontend SSOT and initialize handler.
+ */
+async function initWeatherFromConfig(): Promise<void> {
+  const configUrl = process.env['WEATHER_CONFIG_URL'] ?? getDefaultWeatherConfigUrl();
+
+  try {
+    const response = await fetch(configUrl, {
+      headers: { 'User-Agent': 'Promagen-Gateway/1.0' },
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch weather config: HTTP ${response.status}`);
+    }
+
+    const config = (await response.json()) as {
+      cities: Array<{ id: string; city: string; lat: number; lon: number }>;
+      selectedExchangeIds: string[];
+    };
+
+    initWeatherHandler(config.cities, config.selectedExchangeIds);
+
+    logInfo('Weather handler initialized from config', {
+      cityCount: config.cities.length,
+      selectedCount: config.selectedExchangeIds.length,
+    });
+  } catch (error) {
+    logError('Weather config fetch failed', {
+      error: error instanceof Error ? error.message : String(error),
+      configUrl,
+    });
+    // Leave handler uninitialised ("no demo" behaviour). Frontend should render an empty/unavailable state.
+    resetWeatherHandler();
+  }
 }
 
 // =============================================================================
@@ -177,6 +326,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         crypto: cryptoHandler.isReady(),
         indices: indicesHandler.isReady(),
         commodities: commoditiesHandler.isReady(),
+        weather: true, // Weather is always "ready" - returns empty if no data
       },
     });
     return;
@@ -184,15 +334,15 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
   // ==========================================================================
   // REFRESH ENDPOINT (Manual API call trigger for testing)
-  // Usage: GET /refresh?feed=fx|crypto|indices
+  // Usage: GET /refresh?feed=fx|crypto|indices|weather
   // ==========================================================================
   if (path === '/refresh') {
     const feed = url.searchParams.get('feed');
 
-    if (!feed || !['fx', 'crypto', 'indices'].includes(feed)) {
+    if (!feed || !['fx', 'crypto', 'indices', 'weather'].includes(feed)) {
       sendJson(res, 400, {
         error: 'Missing or invalid feed parameter',
-        usage: 'GET /refresh?feed=fx|crypto|indices',
+        usage: 'GET /refresh?feed=fx|crypto|indices|weather',
         example: 'http://localhost:8080/refresh?feed=fx',
       });
       return;
@@ -211,6 +361,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
           break;
         case 'indices':
           data = await indicesHandler.getData();
+          break;
+        case 'weather':
+          data = await getWeatherData();
           break;
       }
 
@@ -454,6 +607,39 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   }
 
   // ==========================================================================
+  // WEATHER ENDPOINT (OpenWeatherMap - Phase 4)
+  // ==========================================================================
+  if (path === '/weather' || path === '/api/weather') {
+    if (method === 'GET') {
+      try {
+        const data = await getWeatherData();
+
+        // Cache based on mode
+        if (data.meta.mode === 'live' || data.meta.mode === 'cached') {
+          res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+        } else {
+          res.setHeader('Cache-Control', 'public, max-age=60');
+        }
+
+        sendJson(res, 200, data);
+      } catch (error) {
+        logError('Weather endpoint error', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        sendJson(res, 500, {
+          error: 'Weather data unavailable',
+          meta: { mode: 'error' },
+          data: [],
+        });
+      }
+      return;
+    }
+
+    sendJson(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+
+  // ==========================================================================
   // TRACE ENDPOINT (Enhanced Diagnostics)
   // ==========================================================================
   if (path === '/trace' || path === '/api/fx/trace') {
@@ -466,6 +652,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         phase1: 'twelvedata (FX + Crypto) ✅',
         phase2: 'marketstack (Indices) ✅',
         phase3: 'fallback (Commodities) ✅',
+        phase4: 'openweathermap (Weather) ✅',
         status: 'COMPLETE - All feeds operational',
       },
       environment: getEnvStatus(),
@@ -473,6 +660,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       crypto: cryptoHandler.getTraceInfo(),
       indices: indicesHandler.getTraceInfo(),
       commodities: commoditiesHandler.getTraceInfo(),
+      weather: getWeatherTraceInfo(),
     });
     return;
   }
@@ -517,6 +705,7 @@ async function start(): Promise<void> {
       commoditiesHandler
         .init()
         .catch((e) => logError('Commodities init failed', { error: String(e) })),
+      initWeatherFromConfig().catch((e) => logError('Weather init failed', { error: String(e) })),
     ]).then(() => {
       logInfo('All feeds initialized');
 
@@ -535,12 +724,12 @@ async function start(): Promise<void> {
       //
       // Timeline (minutes past hour):
       // :00  :05  :10  :20  :30  :35  :40  :50
-      //  FX  IDX  CMD  CRY  FX  IDX  CMD  CRY
-      //  TD   MS   --   TD   TD   MS   --   TD
+      //  FX  IDX  WTH  CRY  FX  IDX  WTH  CRY
+      //  TD   MS  OWM   TD   TD   MS  OWM   TD
       //
-      // TD = TwelveData (shared 800/day budget)
-      // MS = Marketstack (separate 250/day budget)
-      // -- = Fallback (no API, no budget)
+      // TD  = TwelveData (shared 800/day budget)
+      // MS  = Marketstack (separate 250/day budget)
+      // OWM = OpenWeatherMap (separate 1000/day budget)
       //
       // Staggered startup offsets to avoid simultaneous first calls:
       //
@@ -563,6 +752,11 @@ async function start(): Promise<void> {
         cryptoHandler.startBackgroundRefresh();
         logInfo('Background refresh started: Crypto (clock-aligned :20/:50)');
       }, 20_000);
+
+      setTimeout(() => {
+        startWeatherRefresh();
+        logInfo('Background refresh started: Weather (clock-aligned :10/:40)');
+      }, 25_000);
     });
   });
 
@@ -573,6 +767,7 @@ async function start(): Promise<void> {
     cryptoHandler.stopBackgroundRefresh();
     indicesHandler.stopBackgroundRefresh();
     commoditiesHandler.stopBackgroundRefresh();
+    stopWeatherRefresh();
     server.close(() => {
       logInfo('Server closed');
       process.exit(0);

@@ -31,7 +31,8 @@
       "discord": "https://discord.gg/midjourney",
       "reddit": "https://www.reddit.com/r/midjourney",
       "x": "https://x.com/midjourney"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "openai",
@@ -65,7 +66,8 @@
       "instagram": "https://www.instagram.com/openai/",
       "youtube": "https://www.youtube.com/@OpenAI",
       "x": "https://x.com/openai"
-    }
+    },
+    "apiDocsUrl": "https://platform.openai.com/docs/guides/images"
   },
   {
     "id": "google-imagen",
@@ -100,7 +102,8 @@
       "youtube": "https://www.youtube.com/@Google",
       "tiktok": "https://www.tiktok.com/@google",
       "x": "https://x.com/GoogleAI"
-    }
+    },
+    "apiDocsUrl": "https://cloud.google.com/vertex-ai/docs/generative-ai/image/overview"
   },
   {
     "id": "leonardo",
@@ -120,7 +123,7 @@
       "Creator"
     ],
     "website": "https://leonardo.ai",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://leonardo.ai/ai-affiliate-program/",
     "requiresDisclosure": false,
     "tagline": "Fast iteration and asset creation for creatives.",
     "tip": "Use variants to explore style quickly.",
@@ -136,7 +139,8 @@
       "youtube": "https://www.youtube.com/@leonardo.ai_community",
       "discord": "https://discord.gg/leonardo-ai",
       "x": "https://x.com/LeonardoAi_"
-    }
+    },
+    "apiDocsUrl": "https://docs.leonardo.ai/"
   },
   {
     "id": "flux",
@@ -168,7 +172,8 @@
     "socials": {
       "linkedin": "https://www.linkedin.com/company/blackforestlabs/",
       "x": "https://x.com/bfl_ml"
-    }
+    },
+    "apiDocsUrl": "https://docs.bfl.ml/"
   },
   {
     "id": "stability",
@@ -201,7 +206,8 @@
       "linkedin": "https://www.linkedin.com/company/stability-ai/",
       "discord": "https://discord.gg/stablediffusion",
       "x": "https://x.com/StabilityAI"
-    }
+    },
+    "apiDocsUrl": "https://platform.stability.ai/docs"
   },
   {
     "id": "adobe-firefly",
@@ -221,7 +227,7 @@
       "Commercial"
     ],
     "website": "https://firefly.adobe.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.adobe.com/affiliates.html",
     "requiresDisclosure": false,
     "tagline": "Business-friendly generation for design pipelines.",
     "tip": "Great when you need clean, brand-safe compositions.",
@@ -237,7 +243,8 @@
       "youtube": "https://www.youtube.com/@Adobe",
       "tiktok": "https://www.tiktok.com/@adobe",
       "x": "https://x.com/Adobe"
-    }
+    },
+    "apiDocsUrl": "https://developer.adobe.com/firefly-services/docs/"
   },
   {
     "id": "ideogram",
@@ -256,7 +263,7 @@
       "Posters"
     ],
     "website": "https://ideogram.ai",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://ideogram.ai/features/creators-club",
     "requiresDisclosure": false,
     "tagline": "The go-to for readable text inside images.",
     "tip": "Use short phrases; keep typography explicit.",
@@ -267,8 +274,11 @@
     "localIcon": "/icons/providers/ideogram.png",
     "socials": {
       "linkedin": "https://ca.linkedin.com/company/ideogram-ai",
-      "x": "https://x.com/ideogram_ai"
-    }
+      "x": "https://x.com/ideogram_ai",
+      "discord": "https://discord.com/invite/ideogram",
+      "instagram": "https://www.instagram.com/ideogram.ai/"
+    },
+    "apiDocsUrl": "https://developer.ideogram.ai/docs"
   },
   {
     "id": "playground",
@@ -297,8 +307,11 @@
     "affiliateProgramme": false,
     "localIcon": "/icons/providers/playground.png",
     "socials": {
-      "x": "https://x.com/playgroundai"
-    }
+      "x": "https://x.com/playgroundai",
+      "linkedin": "https://www.linkedin.com/company/adobe/",
+      "instagram": "https://www.instagram.com/playgroundai/"
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "microsoft-designer",
@@ -318,7 +331,7 @@
       "Social"
     ],
     "website": "https://designer.microsoft.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.microsoft.com/en-us/microsoft-365/business/microsoft-365-affiliate-program",
     "requiresDisclosure": false,
     "tagline": "Template-first design with AI image generation.",
     "tip": "Best when starting from Designer templates.",
@@ -334,7 +347,8 @@
       "youtube": "https://www.youtube.com/@Microsoft",
       "tiktok": "https://www.tiktok.com/@microsoft",
       "x": "https://x.com/Microsoft"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "novelai",
@@ -363,8 +377,12 @@
     "affiliateProgramme": false,
     "localIcon": "/icons/providers/novelai.png",
     "socials": {
-      "x": "https://x.com/novelaiofficial"
-    }
+      "x": "https://x.com/novelaiofficial",
+      "youtube": "https://www.youtube.com/@NovelAIOfficial",
+      "discord": "https://discord.com/invite/novelai",
+      "reddit": "https://www.reddit.com/r/NovelAi/"
+    },
+    "apiDocsUrl": "https://docs.novelai.net/"
   },
   {
     "id": "lexica",
@@ -393,8 +411,10 @@
     "affiliateProgramme": false,
     "localIcon": "/icons/providers/lexica.png",
     "socials": {
-      "x": "https://x.com/lexica_art"
-    }
+      "x": "https://x.com/lexica_art",
+      "instagram": "https://www.instagram.com/lexica.art/"
+    },
+    "apiDocsUrl": "https://lexica.art/docs"
   },
   {
     "id": "openart",
@@ -413,7 +433,7 @@
       "Models"
     ],
     "website": "https://openart.ai",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://openart.ai/affiliates",
     "requiresDisclosure": false,
     "tagline": "Community-driven model discovery and creation.",
     "tip": "Try different community models for niche styles.",
@@ -426,7 +446,8 @@
       "youtube": "https://www.youtube.com/@openart_ai",
       "discord": "https://discord.com/invite/openart-ai",
       "x": "https://x.com/openart_ai"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "123rf",
@@ -445,7 +466,7 @@
       "Quick Concepts"
     ],
     "website": "https://www.123rf.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.123rf.com/affiliate.php",
     "requiresDisclosure": false,
     "tagline": "Quick concepts without heavy setup.",
     "tip": "Best for rapid brainstorming rather than final art.",
@@ -459,7 +480,8 @@
       "instagram": "https://www.instagram.com/123rf/",
       "facebook": "https://www.facebook.com/123RF",
       "x": "https://x.com/123rf"
-    }
+    },
+    "apiDocsUrl": "https://www.123rf.com/apihelp/"
   },
   {
     "id": "canva",
@@ -479,7 +501,7 @@
       "Easy"
     ],
     "website": "https://www.canva.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.canva.com/affiliates/",
     "requiresDisclosure": false,
     "tagline": "Quick images that drop straight into designs.",
     "tip": "Best used inside Canva with your brand kit.",
@@ -496,7 +518,8 @@
       "tiktok": "https://www.tiktok.com/@canva",
       "x": "https://x.com/canva",
       "pinterest": "https://au.pinterest.com/canva/"
-    }
+    },
+    "apiDocsUrl": "https://www.canva.dev/"
   },
   {
     "id": "bing",
@@ -531,7 +554,8 @@
       "youtube": "https://www.youtube.com/@Microsoft",
       "tiktok": "https://www.tiktok.com/@microsoft",
       "x": "https://x.com/Microsoft"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "nightcafe",
@@ -550,7 +574,7 @@
       "Experiment"
     ],
     "website": "https://nightcafe.studio",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://nightcafe.studio/pages/partner-program",
     "requiresDisclosure": false,
     "tagline": "An experiment hub with lots of styles/models.",
     "tip": "Explore community trends and remix workflows.",
@@ -561,7 +585,8 @@
     "localIcon": "/icons/providers/nightcafe.png",
     "socials": {
       "x": "https://x.com/NightCafeStudio"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "picsart",
@@ -581,7 +606,7 @@
       "Effects"
     ],
     "website": "https://picsart.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://picsart.com/affiliates",
     "requiresDisclosure": false,
     "tagline": "Mobile-first creation with quick edits.",
     "tip": "Great for social formats and fast post-processing.",
@@ -597,7 +622,8 @@
       "youtube": "https://www.youtube.com/@Picsart",
       "tiktok": "https://www.tiktok.com/@picsart",
       "x": "https://x.com/picsart"
-    }
+    },
+    "apiDocsUrl": "https://picsart.io/"
   },
   {
     "id": "artistly",
@@ -616,7 +642,7 @@
       "Easy"
     ],
     "website": "https://artistly.ai",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://artistly.ai/affiliates",
     "requiresDisclosure": false,
     "tagline": "Easy marketing-friendly image generation.",
     "tip": "Use short prompts with a clear subject and style.",
@@ -625,7 +651,11 @@
     "apiAvailable": false,
     "affiliateProgramme": true,
     "localIcon": "/icons/providers/artistly.png",
-    "socials": null
+    "socials": {
+      "facebook": "https://www.facebook.com/groups/1182413563548673",
+      "youtube": "https://www.youtube.com/watch?v=YRRVKKeynBo"
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "fotor",
@@ -644,7 +674,7 @@
       "Enhance"
     ],
     "website": "https://www.fotor.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.fotor.com/affiliate/",
     "requiresDisclosure": false,
     "tagline": "One-click style and enhancement tools.",
     "tip": "Good for quick variations rather than deep control.",
@@ -657,7 +687,8 @@
       "linkedin": "https://hk.linkedin.com/company/fotor.com",
       "facebook": "https://www.facebook.com/fotorapp",
       "x": "https://x.com/Fotor20"
-    }
+    },
+    "apiDocsUrl": "https://www.fotor.com/api/"
   },
   {
     "id": "pixlr",
@@ -676,7 +707,7 @@
       "Browser"
     ],
     "website": "https://pixlr.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://pixlr.com/affiliate/",
     "requiresDisclosure": false,
     "tagline": "Lightweight browser editor with gen add-ons.",
     "tip": "Good for practical, web-friendly edits.",
@@ -686,8 +717,13 @@
     "affiliateProgramme": true,
     "localIcon": "/icons/providers/pixlr.png",
     "socials": {
-      "linkedin": "https://sg.linkedin.com/company/pixlr"
-    }
+      "linkedin": "https://sg.linkedin.com/company/pixlr",
+      "instagram": "https://www.instagram.com/pixlr/",
+      "facebook": "https://www.facebook.com/pixlr/",
+      "youtube": "https://www.youtube.com/user/PixlrStream",
+      "x": "https://x.com/pixlr"
+    },
+    "apiDocsUrl": "https://pixlr.com/api/"
   },
   {
     "id": "deepai",
@@ -717,8 +753,11 @@
     "localIcon": "/icons/providers/deepai.png",
     "socials": {
       "linkedin": "https://www.linkedin.com/company/deepai/",
-      "x": "https://x.com/DeepAI"
-    }
+      "x": "https://x.com/DeepAI",
+      "instagram": "https://www.instagram.com/deepai_org/",
+      "facebook": "https://www.facebook.com/DeepAI.org/"
+    },
+    "apiDocsUrl": "https://deepai.org/docs"
   },
   {
     "id": "craiyon",
@@ -747,8 +786,11 @@
     "affiliateProgramme": false,
     "localIcon": "/icons/providers/craiyon.png",
     "socials": {
-      "x": "https://x.com/craiyonAI"
-    }
+      "x": "https://x.com/craiyonAI",
+      "instagram": "https://www.instagram.com/craiyonai/",
+      "reddit": "https://www.reddit.com/r/craiyon/      "
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "bluewillow",
@@ -768,7 +810,7 @@
       "Community"
     ],
     "website": "https://www.bluewillow.ai",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.bluewillow.ai/affiliate",
     "requiresDisclosure": false,
     "tagline": "Free Discord-based Midjourney alternative.",
     "tip": "Good variety, but lacks fine detail of premium tools.",
@@ -780,7 +822,8 @@
     "socials": {
       "linkedin": "https://www.linkedin.com/company/bluewillowai/",
       "x": "https://x.com/BlueWillow_AI"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "dreamstudio",
@@ -812,7 +855,8 @@
       "linkedin": "https://www.linkedin.com/company/stability-ai/",
       "discord": "https://discord.gg/stablediffusion",
       "x": "https://x.com/StabilityAI"
-    }
+    },
+    "apiDocsUrl": "https://platform.stability.ai/docs"
   },
   {
     "id": "artbreeder",
@@ -842,8 +886,11 @@
     "localIcon": "/icons/providers/artbreeder.png",
     "socials": {
       "instagram": "https://www.instagram.com/madewithartbreeder/",
-      "x": "https://x.com/Artbreeder"
-    }
+      "x": "https://x.com/Artbreeder",
+      "tiktok": "https://www.tiktok.com/@artbreeder_app",
+      "discord": "https://discord.com/invite/WK5RhJB"
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "jasper-art",
@@ -862,7 +909,7 @@
       "Content"
     ],
     "website": "https://www.jasper.ai",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.jasper.ai/partners",
     "requiresDisclosure": false,
     "tagline": "Marketing-focused AI image generation.",
     "tip": "Best for blog headers and social media.",
@@ -873,8 +920,11 @@
     "localIcon": "/icons/providers/jasper-art.png",
     "socials": {
       "linkedin": "https://www.linkedin.com/company/heyjasperai/",
-      "x": "https://x.com/heyjasperai"
-    }
+      "x": "https://x.com/heyjasperai",
+      "instagram": "https://www.instagram.com/heyjasperai/",
+      "youtube": "https://www.youtube.com/@JasperAI"
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "runway",
@@ -893,7 +943,7 @@
       "Creative Tools"
     ],
     "website": "https://runwayml.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://runwayml.com/creative-partners-program",
     "requiresDisclosure": false,
     "tagline": "Creative suite with video and image generation.",
     "tip": "Strong for video-to-image and creative workflows.",
@@ -904,8 +954,13 @@
     "localIcon": "/icons/providers/runway.png",
     "socials": {
       "linkedin": "https://www.linkedin.com/company/runwayml/",
-      "x": "https://x.com/runwayml"
-    }
+      "x": "https://x.com/runwayml",
+      "tiktok": "https://www.tiktok.com/@runwayml",
+      "instagram": "https://www.instagram.com/runwayapp/",
+      "facebook": "https://www.facebook.com/runwayml/",
+      "youtube": "https://www.youtube.com/runwayml"
+    },
+    "apiDocsUrl": "https://docs.runwayml.com/"
   },
   {
     "id": "freepik",
@@ -924,7 +979,7 @@
       "Templates"
     ],
     "website": "https://www.freepik.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.freepik.com/affiliate-program",
     "requiresDisclosure": false,
     "tagline": "Stock-friendly AI generation with templates.",
     "tip": "Great for design projects needing stock-like assets.",
@@ -940,7 +995,8 @@
       "youtube": "https://www.youtube.com/@Freepik",
       "tiktok": "https://www.tiktok.com/@freepik",
       "x": "https://x.com/freepik"
-    }
+    },
+    "apiDocsUrl": "https://developers.freepik.com/"
   },
   {
     "id": "simplified",
@@ -959,7 +1015,7 @@
       "Social"
     ],
     "website": "https://simplified.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://simplified.com/affiliates",
     "requiresDisclosure": false,
     "tagline": "All-in-one marketing tool with AI generation.",
     "tip": "Best for social media content creation.",
@@ -969,8 +1025,14 @@
     "affiliateProgramme": true,
     "localIcon": "/icons/providers/simplified.png",
     "socials": {
-      "x": "https://x.com/sosimplified"
-    }
+      "x": "https://x.com/sosimplified",
+      "linkedin": "https://www.linkedin.com/company/simplifiedhq/",
+      "instagram": "https://www.instagram.com/simplifiedhq/",
+      "facebook": "https://www.facebook.com/simplifiedhq/",
+      "youtube": "https://www.youtube.com/@SimplifiedAI",
+      "tiktok": "https://www.tiktok.com/@simplifiedhq"
+    },
+    "apiDocsUrl": "https://developers.simplified.com/"
   },
   {
     "id": "photoleap",
@@ -990,7 +1052,7 @@
       "Editing"
     ],
     "website": "https://www.photoleapapp.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.lightricks.com/partners",
     "requiresDisclosure": false,
     "tagline": "Mobile-first professional photo editing with AI.",
     "tip": "Excellent for mobile creators and Instagram.",
@@ -1002,7 +1064,8 @@
     "socials": {
       "linkedin": "https://www.linkedin.com/company/lightricks/",
       "x": "https://x.com/PhotoleapApp"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "vistacreate",
@@ -1022,7 +1085,7 @@
       "Social"
     ],
     "website": "https://create.vista.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://create.vista.com/affiliate/",
     "requiresDisclosure": false,
     "tagline": "Template-first design with AI assistance.",
     "tip": "Great for quick social media and marketing graphics.",
@@ -1035,7 +1098,8 @@
       "instagram": "https://www.instagram.com/vistacreate/",
       "facebook": "https://www.facebook.com/vistacreateofficial/",
       "x": "https://x.com/VistaCreate"
-    }
+    },
+    "apiDocsUrl": "https://developers.vista.com/"
   },
   {
     "id": "artguru",
@@ -1064,8 +1128,12 @@
     "affiliateProgramme": false,
     "localIcon": "/icons/providers/artguru.png",
     "socials": {
-      "x": "https://x.com/ArtGuruOfficial"
-    }
+      "x": "https://x.com/ArtGuruOfficial",
+      "tiktok": "https://www.tiktok.com/@artguru_ai",
+      "instagram": "https://www.instagram.com/artguru_ai/",
+      "facebook": "https://www.facebook.com/ArtguruAI.Official/"
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "myedit",
@@ -1085,7 +1153,7 @@
       "Web"
     ],
     "website": "https://myedit.online",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.cyberlink.com/partner/affiliates/",
     "requiresDisclosure": false,
     "tagline": "Fast web-based editing with AI generation.",
     "tip": "Excellent speed for quick concepts.",
@@ -1095,8 +1163,12 @@
     "affiliateProgramme": true,
     "localIcon": "/icons/providers/myedit.png",
     "socials": {
-      "linkedin": "https://www.linkedin.com/company/cyberlink/"
-    }
+      "linkedin": "https://www.linkedin.com/company/cyberlink/",
+      "facebook": "https://www.facebook.com/cyberlink/",
+      "youtube": "https://www.youtube.com/user/CyberLinkChannel",
+      "x": "https://x.com/CyberLink"
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "visme",
@@ -1115,7 +1187,7 @@
       "Infographics"
     ],
     "website": "https://www.visme.co",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.visme.co/affiliates/",
     "requiresDisclosure": false,
     "tagline": "Presentation and infographic tool with AI.",
     "tip": "Best for business presentations and data viz.",
@@ -1125,8 +1197,13 @@
     "affiliateProgramme": true,
     "localIcon": "/icons/providers/visme.png",
     "socials": {
-      "x": "https://x.com/VismeApp"
-    }
+      "x": "https://x.com/VismeApp",
+      "linkedin": "https://www.linkedin.com/company/visme/",
+      "instagram": "https://www.instagram.com/vismeapp/",
+      "facebook": "https://www.facebook.com/vismeapp/",
+      "youtube": "https://www.youtube.com/@VismeApp"
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "hotpot",
@@ -1154,7 +1231,11 @@
     "apiAvailable": true,
     "affiliateProgramme": false,
     "localIcon": "/icons/providers/hotpot.png",
-    "socials": null
+    "socials": {
+      "x": "https://x.com/HotpotHelper",
+      "linkedin": "https://www.linkedin.com/company/hotpotai/"
+    },
+    "apiDocsUrl": "https://hotpot.ai/docs"
   },
   {
     "id": "picwish",
@@ -1173,7 +1254,7 @@
       "Enhancement"
     ],
     "website": "https://picwish.com",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://picwish.com/affiliate",
     "requiresDisclosure": false,
     "tagline": "Photo editing and enhancement with AI.",
     "tip": "Good for basic photo fixes and enhancements.",
@@ -1182,7 +1263,13 @@
     "apiAvailable": true,
     "affiliateProgramme": true,
     "localIcon": "/icons/providers/picwish.png",
-    "socials": null
+    "socials": {
+      "instagram": "https://www.instagram.com/picwish_official/",
+      "facebook": "https://www.facebook.com/PicWish/",
+      "youtube": "https://www.youtube.com/@picwish5089",
+      "tiktok": "https://www.tiktok.com/@picwish_official"
+    },
+    "apiDocsUrl": "https://picwish.com/api"
   },
   {
     "id": "clipdrop",
@@ -1212,8 +1299,11 @@
     "localIcon": "/icons/providers/clipdrop.png",
     "socials": {
       "linkedin": "https://www.linkedin.com/company/clipdrop/",
-      "x": "https://x.com/clipdropapp"
-    }
+      "x": "https://x.com/clipdropapp",
+      "instagram": "https://www.instagram.com/clipdropapp/",
+      "facebook": "https://www.facebook.com/clipdropapp/"
+    },
+    "apiDocsUrl": "https://clipdrop.co/apis"
   },
   {
     "id": "getimg",
@@ -1232,7 +1322,7 @@
       "Custom Models"
     ],
     "website": "https://getimg.ai",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://getimg.ai/affiliates",
     "requiresDisclosure": false,
     "tagline": "API-first platform with custom model support.",
     "tip": "Great for developers needing API access.",
@@ -1242,8 +1332,12 @@
     "affiliateProgramme": true,
     "localIcon": "/icons/providers/getimg.png",
     "socials": {
-      "x": "https://x.com/getimg_ai"
-    }
+      "x": "https://x.com/getimg_ai",
+      "tiktok": "https://www.tiktok.com/@getimg_ai",
+      "instagram": "https://www.instagram.com/getimg.ai/",
+      "discord": "https://discord.com/invite/5KsUXSzVwS"
+    },
+    "apiDocsUrl": "https://docs.getimg.ai/"
   },
   {
     "id": "imagine-meta",
@@ -1278,7 +1372,8 @@
       "youtube": "https://www.youtube.com/@Meta",
       "tiktok": "https://www.tiktok.com/@meta",
       "x": "https://x.com/Meta"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "dreamlike",
@@ -1297,7 +1392,7 @@
       "Web"
     ],
     "website": "https://dreamlike.art",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://dreamlike.art/affiliate",
     "requiresDisclosure": false,
     "tagline": "User-friendly Stable Diffusion interface.",
     "tip": "Good for exploring SD models easily.",
@@ -1309,7 +1404,8 @@
     "socials": {
       "discord": "https://discord.gg/QyGR2FxsKU",
       "x": "https://x.com/dreamlike_art"
-    }
+    },
+    "apiDocsUrl": null
   },
   {
     "id": "remove-bg",
@@ -1328,7 +1424,7 @@
       "Utility"
     ],
     "website": "https://www.remove.bg",
-    "affiliateUrl": null,
+    "affiliateUrl": "https://www.remove.bg/affiliate",
     "requiresDisclosure": false,
     "tagline": "Specialized background removal tool.",
     "tip": "Best-in-class for removing backgrounds.",
@@ -1338,8 +1434,13 @@
     "affiliateProgramme": true,
     "localIcon": "/icons/providers/remove-bg.png",
     "socials": {
-      "linkedin": "https://www.linkedin.com/company/kaleido-ai/",
-      "x": "https://x.com/remove_bg"
-    }
+      "linkedin": "https://www.linkedin.com/showcase/remove-bg/",
+      "x": "https://x.com/remove_bg",
+      "instagram": "https://www.instagram.com/removebg.official/",
+      "facebook": "https://www.facebook.com/removebg/",
+      "youtube": "https://www.youtube.com/@removebg.official",
+      "tiktok": "https://www.tiktok.com/@meta"
+    },
+    "apiDocsUrl": "https://www.remove.bg/api"
   }
 ]

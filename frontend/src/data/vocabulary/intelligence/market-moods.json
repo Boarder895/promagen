@@ -1,0 +1,345 @@
+{
+  "$schema": "./schemas/intelligence.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "intelligence",
+    "category": "market-moods",
+    "label": "Market Moods",
+    "description": "Maps financial market conditions to visual mood and atmosphere suggestions",
+    "totalMappings": 60,
+    "updated": "2026-01-21",
+    "promagenSpecific": true
+  },
+  "marketStates": {
+    "bullish": {
+      "label": "Bullish Market",
+      "description": "Strong upward momentum, positive sentiment",
+      "indicators": ["price rising", "green candles", "high volume up", "breaking resistance"],
+      "moodSuggestions": {
+        "primary": ["triumphant", "ascending", "golden", "powerful", "victorious"],
+        "secondary": ["energetic", "confident", "optimistic", "radiant", "dynamic"],
+        "atmospheric": ["sunrise", "golden hour", "clear skies", "mountain peak", "soaring"]
+      },
+      "colorPalette": {
+        "dominant": ["gold", "green", "white", "bright yellow"],
+        "accent": ["emerald", "lime", "champagne", "warm white"],
+        "avoid": ["red", "dark grey", "black", "muted tones"]
+      },
+      "lightingSuggestions": ["golden hour", "bright sunlight", "upward lighting", "rim light", "radiant glow"],
+      "subjectSuggestions": ["eagle soaring", "bull charging", "rocket launching", "sun rising", "phoenix rising"],
+      "environmentSuggestions": ["mountain summit", "sunrise vista", "clear horizon", "open sky", "golden fields"]
+    },
+    "bearish": {
+      "label": "Bearish Market",
+      "description": "Strong downward momentum, negative sentiment",
+      "indicators": ["price falling", "red candles", "high volume down", "breaking support"],
+      "moodSuggestions": {
+        "primary": ["dramatic", "intense", "powerful", "transformative", "cathartic"],
+        "secondary": ["stormy", "turbulent", "dynamic", "raw", "elemental"],
+        "atmospheric": ["thunderstorm", "dark clouds", "descending", "deep waters", "cave depths"]
+      },
+      "colorPalette": {
+        "dominant": ["deep red", "dark blue", "charcoal", "burgundy"],
+        "accent": ["blood red", "steel grey", "midnight blue", "rust"],
+        "avoid": ["bright green", "gold", "pastel", "cheerful colors"]
+      },
+      "lightingSuggestions": ["dramatic shadows", "low key", "storm light", "descending beams", "moody atmosphere"],
+      "subjectSuggestions": ["bear prowling", "storm clouds", "waterfall descending", "deep ocean", "cave entrance"],
+      "environmentSuggestions": ["stormy sea", "dark forest", "canyon depths", "thunderstorm", "descending stairs"]
+    },
+    "volatile": {
+      "label": "Volatile Market",
+      "description": "Rapid price swings, uncertain direction",
+      "indicators": ["wild swings", "high VIX", "unpredictable", "breaking both directions"],
+      "moodSuggestions": {
+        "primary": ["chaotic", "electric", "unpredictable", "dynamic", "energetic"],
+        "secondary": ["fractured", "kaleidoscopic", "shifting", "turbulent", "explosive"],
+        "atmospheric": ["lightning storm", "aurora", "prismatic", "swirling", "glitching"]
+      },
+      "colorPalette": {
+        "dominant": ["electric blue", "hot pink", "neon green", "purple"],
+        "accent": ["cyan", "magenta", "yellow flash", "white spark"],
+        "avoid": ["muted", "monochrome", "calm colors", "earth tones"]
+      },
+      "lightingSuggestions": ["lightning flash", "strobe effect", "neon glow", "prismatic", "flickering"],
+      "subjectSuggestions": ["lightning bolt", "tornado", "kaleidoscope", "shattered mirror", "aurora borealis"],
+      "environmentSuggestions": ["electrical storm", "neon city", "fractal dimension", "glitch space", "aurora sky"]
+    },
+    "consolidating": {
+      "label": "Consolidating Market",
+      "description": "Sideways movement, building energy",
+      "indicators": ["range-bound", "decreasing volume", "tight range", "coiling"],
+      "moodSuggestions": {
+        "primary": ["contemplative", "patient", "coiled", "potential", "anticipation"],
+        "secondary": ["still", "balanced", "watchful", "meditative", "gathering"],
+        "atmospheric": ["calm before storm", "dawn waiting", "held breath", "spring loaded"]
+      },
+      "colorPalette": {
+        "dominant": ["grey", "silver", "muted blue", "neutral"],
+        "accent": ["subtle gold", "soft cyan", "pale purple", "quiet green"],
+        "avoid": ["extreme contrast", "neon", "very saturated"]
+      },
+      "lightingSuggestions": ["soft ambient", "overcast", "diffused", "pre-dawn", "neutral studio"],
+      "subjectSuggestions": ["coiled spring", "sleeping dragon", "calm water surface", "closed bud", "waiting predator"],
+      "environmentSuggestions": ["still lake", "fog bank", "quiet forest", "empty stage", "meditation space"]
+    },
+    "breakout": {
+      "label": "Breakout",
+      "description": "Price breaking key levels with momentum",
+      "indicators": ["resistance break", "support break", "volume spike", "trend start"],
+      "moodSuggestions": {
+        "primary": ["explosive", "breakthrough", "liberation", "momentum", "unleashed"],
+        "secondary": ["powerful", "decisive", "accelerating", "bursting", "emerging"],
+        "atmospheric": ["chains breaking", "barriers shattering", "eruption", "emergence"]
+      },
+      "colorPalette": {
+        "dominant": ["bright white", "electric blue", "vivid green", "intense gold"],
+        "accent": ["spark yellow", "plasma blue", "energy cyan", "burst orange"],
+        "avoid": ["muted", "dark", "contained", "subtle"]
+      },
+      "lightingSuggestions": ["burst of light", "explosion", "breakthrough rays", "dramatic reveal", "flash"],
+      "subjectSuggestions": ["chains breaking", "rocket launch", "butterfly emerging", "dam breaking", "sprint start"],
+      "environmentSuggestions": ["shattering barrier", "erupting volcano", "dawn breakthrough", "portal opening", "wave cresting"]
+    },
+    "recovery": {
+      "label": "Recovery",
+      "description": "Bouncing back from lows, healing",
+      "indicators": ["bounce from support", "green after red", "improving sentiment", "gradual rise"],
+      "moodSuggestions": {
+        "primary": ["hopeful", "healing", "resilient", "renewing", "rising"],
+        "secondary": ["gentle strength", "rebuilding", "growing", "dawn", "restoration"],
+        "atmospheric": ["spring morning", "clearing storm", "new growth", "first light"]
+      },
+      "colorPalette": {
+        "dominant": ["soft green", "morning gold", "gentle blue", "warm white"],
+        "accent": ["spring green", "peach", "soft yellow", "healing blue"],
+        "avoid": ["harsh red", "dark black", "aggressive colors"]
+      },
+      "lightingSuggestions": ["morning light", "gentle sunrise", "healing glow", "soft warmth", "clearing clouds"],
+      "subjectSuggestions": ["seedling sprouting", "phoenix reborn", "sunrise", "flower blooming", "patient healing"],
+      "environmentSuggestions": ["spring meadow", "clearing storm", "new dawn", "garden renewal", "hospital garden"]
+    },
+    "euphoria": {
+      "label": "Euphoric Market",
+      "description": "Extreme greed, irrational exuberance",
+      "indicators": ["parabolic rise", "extreme greed", "FOMO", "record highs"],
+      "moodSuggestions": {
+        "primary": ["ecstatic", "dizzying", "transcendent", "peak", "otherworldly"],
+        "secondary": ["intoxicated", "floating", "surreal", "dreamlike", "heavenly"],
+        "atmospheric": ["stratosphere", "clouds parting", "ascension", "golden palace"]
+      },
+      "colorPalette": {
+        "dominant": ["brilliant gold", "platinum", "blinding white", "ethereal blue"],
+        "accent": ["diamond sparkle", "champagne", "celestial purple", "cloud white"],
+        "avoid": ["earth tones", "grey", "muted", "grounding colors"]
+      },
+      "lightingSuggestions": ["heavenly rays", "golden glow", "transcendent light", "sparkle", "halo effect"],
+      "subjectSuggestions": ["deity ascending", "diamond throne", "floating palace", "golden crown", "angel wings"],
+      "environmentSuggestions": ["cloud kingdom", "golden city", "crystal palace", "heavenly realm", "stratosphere"]
+    },
+    "capitulation": {
+      "label": "Capitulation",
+      "description": "Extreme fear, mass selling",
+      "indicators": ["extreme fear", "panic selling", "volume spike down", "support collapse"],
+      "moodSuggestions": {
+        "primary": ["surrender", "release", "purging", "cleansing", "bottom"],
+        "secondary": ["exhaustion", "emptying", "final", "cathartic", "transformative"],
+        "atmospheric": ["flood waters", "cleansing fire", "emptying vessel", "final battle"]
+      },
+      "colorPalette": {
+        "dominant": ["deep crimson", "blood red", "dark purple", "black"],
+        "accent": ["fire orange", "ash grey", "void black", "bruise purple"],
+        "avoid": ["cheerful", "bright", "optimistic colors"]
+      },
+      "lightingSuggestions": ["fire glow", "red light", "dramatic shadows", "void darkness", "final sunset"],
+      "subjectSuggestions": ["flood waters", "forest fire", "emptying vessel", "last stand", "phoenix death"],
+      "environmentSuggestions": ["burning city", "flood plain", "scorched earth", "empty battlefield", "volcanic destruction"]
+    },
+    "accumulation": {
+      "label": "Accumulation",
+      "description": "Smart money buying, building positions",
+      "indicators": ["quiet buying", "support holding", "volume building", "institutional interest"],
+      "moodSuggestions": {
+        "primary": ["strategic", "patient", "gathering", "preparation", "foundation"],
+        "secondary": ["quiet strength", "methodical", "deliberate", "building", "collecting"],
+        "atmospheric": ["treasure vault", "granary filling", "library growing", "foundation laying"]
+      },
+      "colorPalette": {
+        "dominant": ["deep gold", "rich brown", "vault grey", "stable blue"],
+        "accent": ["treasure gold", "old leather", "brass", "aged wood"],
+        "avoid": ["flashy", "unstable", "volatile colors"]
+      },
+      "lightingSuggestions": ["warm interior", "vault lighting", "stable ambient", "focused spot", "measured light"],
+      "subjectSuggestions": ["treasure chest filling", "library growing", "foundation building", "grain harvest", "collector examining"],
+      "environmentSuggestions": ["treasure vault", "wine cellar", "library archive", "harvest barn", "museum storage"]
+    },
+    "distribution": {
+      "label": "Distribution",
+      "description": "Smart money selling, transferring positions",
+      "indicators": ["quiet selling", "resistance holding", "volume at highs", "insider selling"],
+      "moodSuggestions": {
+        "primary": ["dispersing", "transitioning", "ending", "passing", "releasing"],
+        "secondary": ["careful", "measured", "strategic exit", "handoff", "completion"],
+        "atmospheric": ["leaves falling", "tide receding", "sunset transition", "baton passing"]
+      },
+      "colorPalette": {
+        "dominant": ["autumn gold", "fading orange", "sunset red", "twilight purple"],
+        "accent": ["falling leaf", "harvest gold", "evening amber", "dusk pink"],
+        "avoid": ["spring green", "morning colors", "beginning colors"]
+      },
+      "lightingSuggestions": ["golden hour fading", "sunset glow", "evening light", "lantern warm", "fireplace"],
+      "subjectSuggestions": ["autumn leaves falling", "sunset over water", "torch passing", "harvest complete", "ship departing"],
+      "environmentSuggestions": ["autumn forest", "sunset beach", "harvest field", "departure dock", "closing ceremony"]
+    }
+  },
+  "exchangeContextModifiers": {
+    "pre-market": {
+      "label": "Pre-Market",
+      "moodModifier": ["anticipation", "preparation", "quiet energy"],
+      "lightingModifier": ["pre-dawn", "first light", "awakening"],
+      "colorModifier": ["cool tones", "soft gradients", "emerging warmth"]
+    },
+    "market-open": {
+      "label": "Market Open",
+      "moodModifier": ["energetic", "starting", "fresh", "dynamic"],
+      "lightingModifier": ["morning light", "bright start", "clear daylight"],
+      "colorModifier": ["crisp colors", "clear palette", "vivid tones"]
+    },
+    "midday": {
+      "label": "Midday Session",
+      "moodModifier": ["steady", "established", "flowing", "consistent"],
+      "lightingModifier": ["overhead light", "full daylight", "even illumination"],
+      "colorModifier": ["stable colors", "balanced tones", "neutral midtones"]
+    },
+    "power-hour": {
+      "label": "Power Hour",
+      "moodModifier": ["intense", "urgent", "climactic", "decisive"],
+      "lightingModifier": ["dramatic angle", "golden hour approaching", "dynamic shadows"],
+      "colorModifier": ["intensified", "warmer tones", "building contrast"]
+    },
+    "market-close": {
+      "label": "Market Close",
+      "moodModifier": ["concluding", "settling", "reflection", "summary"],
+      "lightingModifier": ["golden hour", "sunset glow", "warm evening"],
+      "colorModifier": ["warm palette", "evening tones", "soft transitions"]
+    },
+    "after-hours": {
+      "label": "After Hours",
+      "moodModifier": ["quiet", "exclusive", "subdued", "private"],
+      "lightingModifier": ["evening light", "artificial warm", "dim ambient"],
+      "colorModifier": ["muted tones", "warm accents", "low saturation"]
+    },
+    "overnight": {
+      "label": "Overnight Session",
+      "moodModifier": ["mysterious", "global", "continuous", "watching"],
+      "lightingModifier": ["night lighting", "screen glow", "city lights"],
+      "colorModifier": ["cool tones", "neon accents", "dark base"]
+    },
+    "weekend": {
+      "label": "Weekend Closed",
+      "moodModifier": ["resting", "reflecting", "preparing", "studying"],
+      "lightingModifier": ["soft ambient", "relaxed lighting", "natural indoor"],
+      "colorModifier": ["calm palette", "muted", "restful tones"]
+    }
+  },
+  "sectorMoodModifiers": {
+    "tech": {
+      "label": "Technology Sector",
+      "aestheticLean": ["futuristic", "digital", "innovative", "sleek"],
+      "colorInfluence": ["electric blue", "neon cyan", "matrix green", "chrome"],
+      "environmentInfluence": ["data center", "silicon valley", "startup office", "circuit board"]
+    },
+    "finance": {
+      "label": "Financial Sector",
+      "aestheticLean": ["classical", "powerful", "established", "prestigious"],
+      "colorInfluence": ["gold", "navy blue", "mahogany", "marble white"],
+      "environmentInfluence": ["wall street", "bank vault", "trading floor", "boardroom"]
+    },
+    "energy": {
+      "label": "Energy Sector",
+      "aestheticLean": ["powerful", "industrial", "elemental", "transformative"],
+      "colorInfluence": ["oil black", "flame orange", "electric yellow", "nuclear green"],
+      "environmentInfluence": ["oil rig", "power plant", "solar farm", "pipeline"]
+    },
+    "healthcare": {
+      "label": "Healthcare Sector",
+      "aestheticLean": ["clean", "scientific", "hopeful", "precise"],
+      "colorInfluence": ["clinical white", "healing blue", "life green", "lab coat"],
+      "environmentInfluence": ["hospital", "laboratory", "research center", "pharmacy"]
+    },
+    "consumer": {
+      "label": "Consumer Sector",
+      "aestheticLean": ["vibrant", "appealing", "lifestyle", "trendy"],
+      "colorInfluence": ["brand colors", "lifestyle tones", "retail bright", "packaging"],
+      "environmentInfluence": ["shopping mall", "lifestyle scene", "retail store", "home interior"]
+    },
+    "industrial": {
+      "label": "Industrial Sector",
+      "aestheticLean": ["strong", "mechanical", "productive", "foundational"],
+      "colorInfluence": ["steel grey", "construction yellow", "industrial orange", "concrete"],
+      "environmentInfluence": ["factory floor", "construction site", "warehouse", "shipping port"]
+    },
+    "crypto": {
+      "label": "Cryptocurrency",
+      "aestheticLean": ["decentralized", "digital", "futuristic", "volatile"],
+      "colorInfluence": ["bitcoin orange", "ethereum blue", "blockchain purple", "neon green"],
+      "environmentInfluence": ["cyber space", "digital realm", "mining farm", "virtual world"]
+    }
+  },
+  "percentageChangeIntensity": {
+    "massive_gain": {
+      "range": "> +10%",
+      "intensityLevel": 10,
+      "moodIntensifier": ["explosive", "parabolic", "historic", "legendary"],
+      "visualIntensifier": ["blinding", "overwhelming", "maximum", "supernova"]
+    },
+    "large_gain": {
+      "range": "+5% to +10%",
+      "intensityLevel": 8,
+      "moodIntensifier": ["powerful", "surging", "commanding", "triumphant"],
+      "visualIntensifier": ["brilliant", "intense", "striking", "radiant"]
+    },
+    "moderate_gain": {
+      "range": "+2% to +5%",
+      "intensityLevel": 6,
+      "moodIntensifier": ["strong", "confident", "advancing", "positive"],
+      "visualIntensifier": ["bright", "clear", "vivid", "defined"]
+    },
+    "small_gain": {
+      "range": "+0.5% to +2%",
+      "intensityLevel": 4,
+      "moodIntensifier": ["gentle", "steady", "encouraging", "mild"],
+      "visualIntensifier": ["soft glow", "gentle", "subtle warmth", "light"]
+    },
+    "flat": {
+      "range": "-0.5% to +0.5%",
+      "intensityLevel": 2,
+      "moodIntensifier": ["neutral", "balanced", "stable", "calm"],
+      "visualIntensifier": ["even", "balanced", "neutral", "measured"]
+    },
+    "small_loss": {
+      "range": "-2% to -0.5%",
+      "intensityLevel": 4,
+      "moodIntensifier": ["cautious", "retreating", "cooling", "fading"],
+      "visualIntensifier": ["dimming", "cooling", "receding", "softening"]
+    },
+    "moderate_loss": {
+      "range": "-5% to -2%",
+      "intensityLevel": 6,
+      "moodIntensifier": ["declining", "pressured", "weakening", "stressed"],
+      "visualIntensifier": ["darkening", "shadow", "muted", "fading"]
+    },
+    "large_loss": {
+      "range": "-10% to -5%",
+      "intensityLevel": 8,
+      "moodIntensifier": ["plunging", "crashing", "collapsing", "severe"],
+      "visualIntensifier": ["dark", "stormy", "dramatic", "heavy"]
+    },
+    "massive_loss": {
+      "range": "< -10%",
+      "intensityLevel": 10,
+      "moodIntensifier": ["catastrophic", "devastating", "apocalyptic", "historic crash"],
+      "visualIntensifier": ["void", "abyss", "total darkness", "annihilation"]
+    }
+  }
+}

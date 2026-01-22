@@ -348,13 +348,12 @@ export default function HomepageGrid({
           <div className="mx-auto flex w-full max-w-4xl flex-col items-center px-4 pt-1 pb-1 text-center sm:px-6">
             <h2 className="mt-1 text-xl font-semibold leading-tight sm:text-2xl md:text-3xl">
               <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
-                Promagen – a bridge between markets and imagination
+                Intelligent Prompt Builder
               </span>
             </h2>
             <p className="mt-1 max-w-3xl text-sm text-slate-300 sm:text-base">
               <span className="whitespace-nowrap">
-                Track what&apos;s happening out there, then turn those movements into prompts,
-                content and tools in here.
+                Context-driven prompts built from live exchanges, FX, commodities, crypto & weather.
               </span>
             </p>
 

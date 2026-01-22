@@ -1,6 +1,6 @@
 // src/lib/prompt-builder.ts
 // Platform-optimized prompt assembler for AI image platforms
-// Version 3.0.0 - Added Fidelity category, supportsNativeNegative function
+// Version 3.1.0 - Vocabulary loader integration for intelligent suggestions
 // Features:
 // - 12 categories support (added Fidelity)
 // - Silent token/word limit optimization per platform
@@ -9,6 +9,7 @@
 // - Negative-to-positive conversion for natural language platforms
 //   (e.g., "blurry" → "sharp focus", "noisy" → "pristine clarity")
 // - supportsNativeNegative() for conditional free text in negative combobox
+// - Vocabulary-driven options with intelligent context-aware suggestions
 
 import type {
   PromptCategory,
@@ -22,9 +23,50 @@ import type {
 import promptOptionsData from '@/data/providers/prompt-options.json';
 import platformFormatsData from '@/data/providers/platform-formats.json';
 
+// Vocabulary loader for enhanced options and intelligent suggestions
+import {
+  loadCategoryVocabulary,
+  detectDominantFamily,
+  getChipDisplayOptions,
+  searchCategoryVocabulary,
+  type VocabularyContext,
+  type CategoryVocabulary,
+  type CategoryKey,
+} from '@/lib/vocabulary/vocabulary-loader';
+
 // Type assertions for JSON imports
 const promptOptions = promptOptionsData as PromptOptions;
 const platformFormats = platformFormatsData as PlatformFormats;
+
+// ============================================================================
+// Enhanced Category Config Types (Vocabulary Integration)
+// ============================================================================
+
+/**
+ * Enhanced category configuration with vocabulary-driven options
+ */
+export interface EnhancedCategoryConfig {
+  /** Category label for display */
+  label: string;
+  /** Category description */
+  description: string;
+  /** Tooltip guidance text */
+  tooltipGuidance: string;
+  /** Top 100 options for dropdown display */
+  options: string[];
+  /** All available options for chip display */
+  allOptions: string[];
+  /** Context-aware suggestion pool */
+  suggestions: string[];
+  /** Total available terms in vocabulary */
+  totalAvailable: number;
+}
+
+/**
+ * Context for intelligent vocabulary loading
+ * Re-exported from vocabulary-loader for convenience
+ */
+export type { VocabularyContext, CategoryVocabulary };
 
 // ============================================================================
 // Platform Family Definitions
@@ -844,17 +886,158 @@ export function getPlatformFormat(platformId: string): PlatformFormat {
 }
 
 /**
- * Get all available options for a category
+ * Get dropdown options for a category (top 100, vocabulary-driven)
+ * @param category - The prompt category
+ * @param context - Optional context for intelligent sorting
  */
-export function getCategoryOptions(category: PromptCategory): string[] {
-  return promptOptions.categories[category]?.options ?? [];
+export function getCategoryOptions(
+  category: PromptCategory,
+  context?: VocabularyContext
+): string[] {
+  try {
+    const vocab = loadCategoryVocabulary(category as CategoryKey, context);
+    return vocab.dropdownOptions;
+  } catch {
+    // Fallback to legacy options if vocabulary fails
+    return promptOptions.categories[category]?.options ?? [];
+  }
+}
+
+/**
+ * Get ALL available options for a category (for chip display)
+ * @param category - The prompt category
+ */
+export function getAllCategoryOptions(category: PromptCategory): string[] {
+  try {
+    const vocab = loadCategoryVocabulary(category as CategoryKey);
+    return vocab.allOptions;
+  } catch {
+    // Fallback to legacy options
+    return promptOptions.categories[category]?.options ?? [];
+  }
 }
 
 /**
  * Get category configuration (label, description, options, tooltipGuidance)
+ * Returns legacy format for backward compatibility
  */
 export function getCategoryConfig(category: PromptCategory) {
   return promptOptions.categories[category];
+}
+
+/**
+ * Get enhanced category configuration with vocabulary-driven options
+ * Includes: dropdown options (100), all options (~300), suggestions (20)
+ * 
+ * @param category - The prompt category
+ * @param context - Optional context for intelligent sorting
+ * 
+ * @example
+ * // Basic usage
+ * const config = getEnhancedCategoryConfig('style');
+ * 
+ * @example
+ * // With intelligence context
+ * const config = getEnhancedCategoryConfig('lighting', {
+ *   selectedTerms: ['cyberpunk', 'neon'],
+ *   dominantFamily: 'cyberpunk',
+ *   marketMood: 'bullish'
+ * });
+ */
+export function getEnhancedCategoryConfig(
+  category: PromptCategory,
+  context?: VocabularyContext
+): EnhancedCategoryConfig {
+  const legacy = promptOptions.categories[category];
+  
+  try {
+    const vocab = loadCategoryVocabulary(category as CategoryKey, context);
+    
+    return {
+      label: vocab.meta.label || legacy?.label || category,
+      description: vocab.meta.description || legacy?.description || '',
+      tooltipGuidance: vocab.meta.tooltipGuidance || legacy?.tooltipGuidance || '',
+      options: vocab.dropdownOptions,
+      allOptions: vocab.allOptions,
+      suggestions: vocab.suggestionPool,
+      totalAvailable: vocab.meta.totalAvailable,
+    };
+  } catch {
+    // Fallback to legacy config
+    return {
+      label: legacy?.label || category,
+      description: legacy?.description || '',
+      tooltipGuidance: legacy?.tooltipGuidance || '',
+      options: legacy?.options ?? [],
+      allOptions: legacy?.options ?? [],
+      suggestions: (legacy?.options ?? []).slice(0, 20),
+      totalAvailable: legacy?.options?.length ?? 0,
+    };
+  }
+}
+
+/**
+ * Get context-aware suggestions for a category
+ * 
+ * @param category - The prompt category
+ * @param context - Context including selected terms and detected family
+ */
+export function getCategorySuggestions(
+  category: PromptCategory,
+  context: VocabularyContext
+): string[] {
+  try {
+    const vocab = loadCategoryVocabulary(category as CategoryKey, context);
+    return vocab.suggestionPool;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get chips for free-text area (excludes selected, search-filtered)
+ * 
+ * @param category - The prompt category  
+ * @param selectedTerms - Currently selected terms to exclude
+ * @param searchQuery - Optional search filter
+ */
+export function getCategoryChips(
+  category: PromptCategory,
+  selectedTerms: string[],
+  searchQuery?: string
+): string[] {
+  try {
+    return getChipDisplayOptions(category as CategoryKey, selectedTerms, searchQuery);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Search within a category's vocabulary
+ * Returns matches with type indicator (exact, startsWith, contains)
+ */
+export function searchCategoryOptions(
+  category: PromptCategory,
+  query: string
+): Array<{ term: string; matchType: 'exact' | 'startsWith' | 'contains' }> {
+  try {
+    return searchCategoryVocabulary(category as CategoryKey, query);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Detect dominant style family from selected terms
+ * Useful for context-aware suggestions
+ */
+export function detectStyleFamily(selectedTerms: string[]): string | null {
+  try {
+    return detectDominantFamily(selectedTerms);
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -1,0 +1,304 @@
+{
+  "$schema": "./schemas/shared.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "shared",
+    "category": "adjectives",
+    "label": "Descriptive Adjectives",
+    "description": "Universal descriptive words for enhancing any prompt element",
+    "totalOptions": 420,
+    "updated": "2026-01-21"
+  },
+  "categories": {
+    "size": {
+      "label": "Size & Scale",
+      "description": "Physical dimensions and scale",
+      "options": [
+        "tiny", "minuscule", "microscopic", "small", "little", "petite", "compact", "miniature",
+        "medium", "moderate", "average", "standard", "normal",
+        "large", "big", "substantial", "considerable", "sizable",
+        "huge", "enormous", "massive", "gigantic", "colossal", "immense", "vast", "monumental",
+        "towering", "looming", "sprawling", "expansive", "boundless", "infinite"
+      ]
+    },
+    "age": {
+      "label": "Age & Time",
+      "description": "Temporal qualities and age",
+      "options": [
+        "ancient", "primordial", "prehistoric", "antique", "archaic", "timeless", "eternal",
+        "old", "aged", "weathered", "worn", "vintage", "classic", "historic", "bygone",
+        "mature", "seasoned", "established", "traditional",
+        "contemporary", "current", "present-day", "modern", "recent",
+        "new", "fresh", "nascent", "emerging", "budding", "newborn",
+        "futuristic", "cutting-edge", "avant-garde", "next-generation", "innovative"
+      ]
+    },
+    "temperature": {
+      "label": "Temperature",
+      "description": "Thermal qualities",
+      "options": [
+        "freezing", "frigid", "icy", "frosty", "glacial", "arctic", "frozen", "bitter",
+        "cold", "chilly", "cool", "crisp", "brisk", "fresh",
+        "mild", "temperate", "comfortable", "pleasant", "moderate",
+        "warm", "cozy", "toasty", "balmy", "tepid", "lukewarm",
+        "hot", "heated", "searing", "scorching", "blazing", "fiery", "burning", "molten",
+        "sweltering", "tropical", "sultry", "torrid", "blistering"
+      ]
+    },
+    "texture": {
+      "label": "Texture & Surface",
+      "description": "Tactile and surface qualities",
+      "options": [
+        "smooth", "silky", "satiny", "velvety", "sleek", "polished", "glossy", "slick",
+        "soft", "plush", "fluffy", "downy", "feathery", "cushiony", "pillowy",
+        "rough", "coarse", "grainy", "gritty", "sandy", "pebbly", "gravelly",
+        "bumpy", "lumpy", "uneven", "textured", "ribbed", "ridged", "corrugated",
+        "sharp", "jagged", "spiky", "prickly", "thorny", "barbed", "serrated",
+        "cracked", "fractured", "shattered", "splintered", "weathered", "eroded",
+        "sticky", "tacky", "gooey", "slimy", "oily", "greasy", "waxy",
+        "crusty", "flaky", "scaly", "leathery", "papery", "brittle", "crumbly"
+      ]
+    },
+    "shape": {
+      "label": "Shape & Form",
+      "description": "Geometric and organic forms",
+      "options": [
+        "round", "circular", "spherical", "globular", "orb-like", "cylindrical",
+        "square", "rectangular", "cubic", "boxy", "blocky", "angular",
+        "triangular", "pyramidal", "conical", "wedge-shaped", "pointed",
+        "oval", "elliptical", "oblong", "elongated", "stretched",
+        "curved", "arched", "bowed", "crescent", "serpentine", "sinuous", "wavy",
+        "spiral", "coiled", "helical", "twisted", "winding", "meandering",
+        "irregular", "asymmetrical", "organic", "amorphous", "fluid", "flowing",
+        "geometric", "symmetrical", "balanced", "proportional", "harmonious",
+        "fragmented", "fractured", "shattered", "broken", "scattered"
+      ]
+    },
+    "weight": {
+      "label": "Weight & Density",
+      "description": "Mass and density qualities",
+      "options": [
+        "weightless", "floating", "buoyant", "airy", "ethereal", "gossamer",
+        "light", "lightweight", "featherlight", "delicate", "wispy", "flimsy",
+        "moderate", "balanced", "stable", "grounded",
+        "heavy", "weighty", "substantial", "solid", "dense", "compact",
+        "massive", "ponderous", "leaden", "crushing", "oppressive",
+        "thick", "chunky", "bulky", "hefty", "stocky", "stout"
+      ]
+    },
+    "brightness": {
+      "label": "Brightness & Luminosity",
+      "description": "Light levels and luminous qualities",
+      "options": [
+        "dark", "pitch-black", "inky", "shadowy", "dim", "murky", "gloomy", "tenebrous",
+        "dusky", "twilight", "crepuscular", "subdued", "muted", "soft",
+        "moderate", "balanced", "natural", "ambient",
+        "bright", "vivid", "vibrant", "luminous", "radiant", "brilliant",
+        "glowing", "gleaming", "shining", "sparkling", "twinkling", "glittering",
+        "dazzling", "blinding", "blazing", "incandescent", "phosphorescent",
+        "iridescent", "opalescent", "pearlescent", "lustrous", "shimmering"
+      ]
+    },
+    "color_quality": {
+      "label": "Color Quality",
+      "description": "Saturation and color characteristics",
+      "options": [
+        "monochrome", "grayscale", "black-and-white", "achromatic",
+        "muted", "desaturated", "faded", "washed-out", "bleached", "pale",
+        "subtle", "soft", "pastel", "gentle", "delicate", "understated",
+        "natural", "earthy", "organic", "neutral", "balanced",
+        "rich", "deep", "saturated", "intense", "vivid", "bold",
+        "vibrant", "brilliant", "striking", "eye-catching", "punchy",
+        "neon", "fluorescent", "electric", "psychedelic", "kaleidoscopic",
+        "metallic", "chromatic", "prismatic", "rainbow", "multicolored"
+      ]
+    },
+    "mood_positive": {
+      "label": "Positive Moods",
+      "description": "Uplifting emotional qualities",
+      "options": [
+        "happy", "joyful", "cheerful", "merry", "gleeful", "jubilant", "elated",
+        "peaceful", "serene", "tranquil", "calm", "placid", "restful", "soothing",
+        "hopeful", "optimistic", "encouraging", "uplifting", "inspiring", "heartening",
+        "warm", "cozy", "inviting", "welcoming", "friendly", "approachable",
+        "playful", "whimsical", "lighthearted", "carefree", "spirited", "lively",
+        "magical", "enchanting", "wondrous", "miraculous", "fantastical", "dreamlike",
+        "romantic", "passionate", "loving", "tender", "affectionate", "intimate",
+        "triumphant", "victorious", "glorious", "majestic", "regal", "noble"
+      ]
+    },
+    "mood_negative": {
+      "label": "Negative Moods",
+      "description": "Dark or intense emotional qualities",
+      "options": [
+        "sad", "melancholic", "sorrowful", "mournful", "grieving", "woeful",
+        "dark", "gloomy", "somber", "bleak", "desolate", "forlorn", "dreary",
+        "mysterious", "enigmatic", "cryptic", "obscure", "arcane", "occult",
+        "ominous", "foreboding", "threatening", "menacing", "sinister", "malevolent",
+        "eerie", "uncanny", "unsettling", "disturbing", "haunting", "ghostly",
+        "terrifying", "horrifying", "nightmarish", "macabre", "grotesque", "ghastly",
+        "angry", "furious", "wrathful", "fierce", "savage", "violent",
+        "lonely", "isolated", "abandoned", "forsaken", "desolate", "empty"
+      ]
+    },
+    "mood_neutral": {
+      "label": "Neutral Moods",
+      "description": "Balanced or contemplative qualities",
+      "options": [
+        "contemplative", "thoughtful", "pensive", "reflective", "meditative",
+        "mysterious", "intriguing", "curious", "puzzling", "ambiguous",
+        "neutral", "balanced", "objective", "impartial", "detached",
+        "stoic", "reserved", "restrained", "understated", "subtle",
+        "surreal", "dreamlike", "otherworldly", "ethereal", "transcendent",
+        "nostalgic", "wistful", "bittersweet", "poignant", "evocative",
+        "tense", "suspenseful", "anticipatory", "expectant", "charged"
+      ]
+    },
+    "energy": {
+      "label": "Energy & Movement",
+      "description": "Dynamic and kinetic qualities",
+      "options": [
+        "still", "static", "motionless", "frozen", "suspended", "paused",
+        "calm", "quiet", "peaceful", "restful", "tranquil", "serene",
+        "gentle", "soft", "slow", "gradual", "leisurely", "unhurried",
+        "steady", "constant", "rhythmic", "flowing", "continuous",
+        "active", "lively", "animated", "spirited", "energetic", "vivacious",
+        "dynamic", "kinetic", "moving", "flowing", "sweeping", "rushing",
+        "fast", "quick", "rapid", "swift", "speedy", "fleet",
+        "explosive", "bursting", "erupting", "violent", "chaotic", "turbulent",
+        "electric", "crackling", "pulsing", "throbbing", "vibrating", "oscillating"
+      ]
+    },
+    "complexity": {
+      "label": "Complexity & Detail",
+      "description": "Intricacy and detail levels",
+      "options": [
+        "simple", "basic", "plain", "minimal", "unadorned", "austere", "sparse",
+        "clean", "clear", "streamlined", "sleek", "refined", "elegant",
+        "moderate", "balanced", "measured", "considered", "thoughtful",
+        "detailed", "intricate", "elaborate", "complex", "sophisticated",
+        "ornate", "decorative", "embellished", "adorned", "fancy", "baroque",
+        "layered", "textured", "multifaceted", "nuanced", "rich",
+        "chaotic", "busy", "cluttered", "overwhelming", "maximalist"
+      ]
+    },
+    "quality": {
+      "label": "Quality & Condition",
+      "description": "State and condition descriptors",
+      "options": [
+        "pristine", "immaculate", "flawless", "perfect", "impeccable", "mint",
+        "excellent", "superb", "outstanding", "exceptional", "magnificent",
+        "fine", "quality", "premium", "superior", "first-rate", "top-notch",
+        "good", "decent", "respectable", "adequate", "satisfactory",
+        "worn", "used", "weathered", "aged", "vintage", "distressed",
+        "damaged", "broken", "cracked", "chipped", "scratched", "dented",
+        "ruined", "destroyed", "decayed", "rotting", "crumbling", "dilapidated",
+        "rusty", "corroded", "tarnished", "faded", "discolored", "stained"
+      ]
+    },
+    "authenticity": {
+      "label": "Authenticity & Style",
+      "description": "Originality and style qualities",
+      "options": [
+        "authentic", "genuine", "real", "true", "original", "legitimate",
+        "natural", "organic", "unprocessed", "raw", "pure", "unadulterated",
+        "handmade", "handcrafted", "artisanal", "bespoke", "custom", "unique",
+        "traditional", "classic", "timeless", "heritage", "vintage", "retro",
+        "modern", "contemporary", "current", "trendy", "fashionable", "stylish",
+        "futuristic", "avant-garde", "experimental", "innovative", "cutting-edge",
+        "artificial", "synthetic", "manufactured", "processed", "fabricated",
+        "fake", "imitation", "replica", "counterfeit", "simulated"
+      ]
+    },
+    "spatial": {
+      "label": "Spatial & Position",
+      "description": "Location and spatial qualities",
+      "options": [
+        "central", "centered", "middle", "focal", "prominent", "dominant",
+        "peripheral", "marginal", "edge", "border", "fringe", "outlying",
+        "foreground", "front", "forward", "leading", "approaching",
+        "background", "rear", "back", "distant", "receding", "retreating",
+        "elevated", "raised", "high", "lofty", "towering", "soaring",
+        "lowered", "sunken", "deep", "subterranean", "underground", "buried",
+        "floating", "hovering", "suspended", "airborne", "levitating",
+        "grounded", "anchored", "rooted", "stable", "fixed", "planted",
+        "scattered", "dispersed", "spread", "distributed", "arranged", "organized"
+      ]
+    },
+    "material_quality": {
+      "label": "Material Quality",
+      "description": "Physical material characteristics",
+      "options": [
+        "transparent", "clear", "crystalline", "glassy", "see-through",
+        "translucent", "frosted", "hazy", "milky", "cloudy", "foggy",
+        "opaque", "solid", "dense", "impenetrable", "thick",
+        "reflective", "mirrored", "shiny", "polished", "gleaming",
+        "matte", "flat", "non-reflective", "dull", "subdued",
+        "metallic", "chrome", "golden", "silver", "bronze", "copper",
+        "wooden", "timber", "oak", "mahogany", "bamboo", "wicker",
+        "stone", "marble", "granite", "concrete", "brick", "slate",
+        "fabric", "woven", "knitted", "embroidered", "quilted", "stitched"
+      ]
+    }
+  },
+  "flatOptions": [
+    "abandoned", "abstract", "abundant", "active", "adorable", "adventurous",
+    "aged", "aggressive", "airy", "alien", "alive", "alluring", "alone",
+    "amazing", "ambitious", "ancient", "angelic", "angry", "animated",
+    "antique", "apocalyptic", "aquatic", "arcane", "architectural", "arctic",
+    "aristocratic", "armored", "aromatic", "artistic", "ascending", "astral",
+    "atmospheric", "atomic", "austere", "authentic", "automated", "autumnal",
+    "avant-garde", "awakening", "awesome", "azure", "balanced", "barbaric",
+    "baroque", "beautiful", "beloved", "bewildering", "bizarre", "blazing",
+    "bleak", "blessed", "blinding", "blissful", "bloody", "blooming",
+    "bold", "bountiful", "brave", "breathtaking", "bright", "brilliant",
+    "broken", "brutal", "burning", "bustling", "calm", "camouflaged",
+    "captivating", "carefree", "careful", "carved", "cascading", "casual",
+    "catastrophic", "celestial", "ceremonial", "chaotic", "charming", "chilling",
+    "cinematic", "circular", "classic", "clean", "clear", "clever",
+    "cloudy", "coastal", "cold", "colorful", "colossal", "comfortable",
+    "commanding", "complex", "composed", "concealed", "concentrated", "conceptual",
+    "concrete", "confident", "confused", "consuming", "contemplative", "contemporary",
+    "contrasting", "controlled", "controversial", "cool", "cosmic", "cozy",
+    "cracked", "crafted", "crazy", "creative", "creepy", "crimson",
+    "crisp", "critical", "crooked", "crowded", "cruel", "crumbling",
+    "crushed", "crystalline", "cultural", "cunning", "curious", "curling",
+    "cursed", "curved", "cute", "cybernetic", "cyclopean", "damaged",
+    "damp", "dangerous", "daring", "dark", "dazzling", "dead",
+    "deadly", "decadent", "decayed", "deceiving", "deep", "defiant",
+    "delicate", "delightful", "demonic", "dense", "derelict", "descending",
+    "desolate", "desperate", "destroyed", "detailed", "determined", "devastating",
+    "devoted", "different", "difficult", "dignified", "dim", "diplomatic",
+    "dirty", "disastrous", "discarded", "disguised", "distant", "distorted",
+    "disturbing", "diverse", "divine", "dizzy", "dominant", "dormant",
+    "dramatic", "dreadful", "dreamy", "dried", "dripping", "driven",
+    "drowning", "dry", "dual", "dull", "dusty", "dynamic",
+    "eager", "early", "earthy", "easy", "eccentric", "echoing",
+    "eclectic", "ecological", "edgy", "eerie", "effervescent", "efficient",
+    "elaborate", "electric", "elegant", "elemental", "elevated", "elite",
+    "elongated", "elusive", "emanating", "embedded", "embroidered", "emerging",
+    "emotional", "empty", "enchanted", "enchanting", "enclosed", "endless",
+    "energetic", "engulfed", "enigmatic", "enormous", "epic", "ephemeral",
+    "eroded", "erotic", "essential", "established", "eternal", "ethereal",
+    "euphoric", "everlasting", "everyday", "evil", "evolving", "exact",
+    "exaggerated", "excellent", "exceptional", "excited", "exciting", "exclusive",
+    "exhausted", "exotic", "expanding", "experimental", "exploding", "explosive",
+    "exposed", "expressive", "exquisite", "extended", "exterior", "extinct",
+    "extraordinary", "extreme", "exuberant", "fabled", "fabulous", "faded",
+    "failed", "faint", "fair", "faithful", "falling", "false",
+    "familiar", "famous", "fancy", "fantastic", "far", "fascinating",
+    "fashionable", "fast", "fatal", "fated", "fearful", "fearless",
+    "feathered", "feeble", "feminine", "feral", "fertile", "festive",
+    "fiery", "fighting", "filthy", "final", "fine", "finished",
+    "finite", "firelit", "firm", "first", "fixed", "flaming",
+    "flashy", "flat", "flawless", "fleeting", "flexible", "flickering",
+    "floating", "flourishing", "flowing", "fluffy", "fluid", "fluorescent",
+    "flying", "focused", "foggy", "folkloric", "forbidden", "forced",
+    "foreign", "forested", "forever", "forged", "forgotten", "formal",
+    "formidable", "forsaken", "fortified", "fortunate", "fossilized", "foul",
+    "fractured", "fragile", "fragmented", "fragrant", "frantic", "free",
+    "freezing", "fresh", "friendly", "frightening", "frigid", "frosty",
+    "frozen", "fruitful", "frustrated", "full", "fuming", "functional",
+    "fundamental", "funeral", "furious", "fused", "futuristic", "fuzzy"
+  ]
+}

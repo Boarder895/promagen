@@ -1,6 +1,6 @@
 // src/lib/weather/weather.ts
 
-import type { ExchangeWeather } from './exchange-weather';
+import type { ExchangeWeather } from '@/data/weather/exchange-weather.demo';
 
 /**
  * Normalised shape for weather shown in the UI.
@@ -10,12 +10,12 @@ import type { ExchangeWeather } from './exchange-weather';
  */
 export type MarketWeather = {
   /**
-   * Exchange id (e.g. "lse-london") – must match exchanges.catalog.json.
+   * Exchange id (e.g. "lse-london") — must match exchanges.catalog.json.
    */
   id: string;
 
   /**
-   * Human-readable city name – e.g. "London".
+   * Human-readable city name — e.g. "London".
    *
    * This is passed in from the exchanges catalog so weather does not need to
    * know about geo logic.
@@ -100,7 +100,7 @@ export function resolveFeelsLike(tempC: number, feelsLikeC: number | undefined):
 export function projectDemoToMarketWeather(
   exchange: ExchangeWeather,
   city: string,
-  updatedISO: string = new Date().toISOString(),
+  updatedISO: string = new Date().toISOString()
 ): MarketWeather {
   return {
     id: exchange.exchange,

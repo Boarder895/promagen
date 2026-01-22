@@ -14,12 +14,14 @@
 // - 2-row layout: If 5+ icons, splits into rows of 4
 //   - Row 1 (top): tooltip opens above
 //   - Row 2 (bottom): tooltip opens below
+// - Icons are centered within the cell
 //
 // Platform order: LinkedIn → Instagram → Facebook → YouTube → Discord → Reddit → TikTok → Pinterest → X
 //
 // Updated: Jan 18, 2026 - Added Pinterest and X, restored tooltip with colored glow, added scale(1.15)
 // Updated: Jan 18, 2026 - Added 2-row layout with smart tooltip direction (4 icons per row)
 // Updated: Jan 18, 2026 - Fixed X icon visibility with dark outline
+// Updated: Jan 22, 2026 - Centered icons within cell (justify-center)
 // Existing features preserved: Yes
 
 'use client';
@@ -227,9 +229,9 @@ export function SupportIconsCell({ providerName, socials }: SupportIconsCellProp
   const needsTwoRows = activePlatforms.length > ICONS_PER_ROW;
 
   if (!needsTwoRows) {
-    // Single row - all tooltips open above
+    // Single row - all tooltips open above, centered
     return (
-      <div className="support-icons-cell flex items-center gap-2">
+      <div className="support-icons-cell flex items-center justify-center gap-2">
         {activePlatforms.map((platform) => (
           <SocialIconLink
             key={platform}
@@ -248,9 +250,9 @@ export function SupportIconsCell({ providerName, socials }: SupportIconsCellProp
   const row2Platforms = activePlatforms.slice(ICONS_PER_ROW);     // Remaining icons
 
   return (
-    <div className="support-icons-cell flex flex-col gap-1">
-      {/* Row 1: First 4 icons - tooltips open ABOVE */}
-      <div className="flex items-center gap-2">
+    <div className="support-icons-cell flex flex-col items-center gap-1">
+      {/* Row 1: First 4 icons - tooltips open ABOVE, centered */}
+      <div className="flex items-center justify-center gap-2">
         {row1Platforms.map((platform) => (
           <SocialIconLink
             key={platform}
@@ -261,8 +263,8 @@ export function SupportIconsCell({ providerName, socials }: SupportIconsCellProp
           />
         ))}
       </div>
-      {/* Row 2: Remaining icons - tooltips open BELOW */}
-      <div className="flex items-center gap-2">
+      {/* Row 2: Remaining icons - tooltips open BELOW, centered */}
+      <div className="flex items-center justify-center gap-2">
         {row2Platforms.map((platform) => (
           <SocialIconLink
             key={platform}

@@ -3,7 +3,9 @@
 // EXCHANGE CARD TYPES
 // ============================================================================
 // Unified types for exchange card components.
-// UPDATED: Added indexName (from catalog) for always-visible index row.
+// UPDATED: Extended weather data for prompt generation.
+// UPDATED: Added promptTier and isPro for weather tooltip.
+// UPDATED (19 Jan 2026): Added railPosition for tooltip direction control.
 //
 // Security: 10/10
 // - All types are strict
@@ -15,15 +17,25 @@
 
 /**
  * Unified weather data shape for exchange cards.
- * Source: API (when implemented) or null (fallback to SSOT emoji).
+ * Extended to include all fields needed for prompt generation.
  */
 export type ExchangeWeatherData = {
   /** Temperature in Celsius; null if unavailable */
   tempC: number | null;
+  /** Temperature in Fahrenheit; null if unavailable */
+  tempF?: number | null;
   /** Weather condition emoji; null triggers SSOT fallback */
   emoji: string | null;
   /** Optional condition text for accessibility */
   condition?: string | null;
+  /** Humidity percentage (for display and prompt) */
+  humidity?: number | null;
+  /** Wind speed in km/h (for display and prompt) */
+  windKmh?: number | null;
+  /** Wind speed in km/h (alternative field name from API) */
+  windSpeedKmh?: number | null;
+  /** Full weather description (for prompt generation) */
+  description?: string | null;
 };
 
 /**
@@ -67,7 +79,7 @@ export type ExchangeCardData = {
   tz: string;
   /** Reference to market hours template for open/closed status */
   hoursTemplate?: string;
-  /** Optional weather data from API */
+  /** Optional weather data from API (extended for prompts) */
   weather?: ExchangeWeatherData | null;
   /**
    * Index name from catalog (always available).
@@ -92,6 +104,13 @@ export type ExchangeCardData = {
 export type MarketStatus = 'open' | 'closed';
 
 /**
+ * Rail position for tooltip direction control.
+ * - 'left': Card is in the left rail (eastern exchanges) → tooltip opens right
+ * - 'right': Card is in the right rail (western exchanges) → tooltip opens left
+ */
+export type RailPosition = 'left' | 'right';
+
+/**
  * Props for the unified ExchangeCard component.
  */
 export type ExchangeCardProps = {
@@ -99,4 +118,14 @@ export type ExchangeCardProps = {
   exchange: ExchangeCardData;
   /** Optional className for the card container */
   className?: string;
+  /** Prompt tier for weather tooltip (1-4). Default: 4 (free) */
+  promptTier?: 1 | 2 | 3 | 4;
+  /** Whether user is Pro tier */
+  isPro?: boolean;
+  /**
+   * Which rail the card is in - controls tooltip direction.
+   * - 'left' (default): Tooltip opens to the RIGHT
+   * - 'right': Tooltip opens to the LEFT (to prevent viewport clipping)
+   */
+  railPosition?: RailPosition;
 };

@@ -1,0 +1,331 @@
+{
+  "$schema": "./schemas/shared.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "shared",
+    "category": "connectors",
+    "label": "Prompt Connectors",
+    "description": "Linking words and phrases that connect prompt elements together",
+    "totalOptions": 280,
+    "updated": "2026-01-21"
+  },
+  "byFunction": {
+    "featuring": {
+      "label": "Featuring / Including",
+      "description": "Introduces subjects or elements",
+      "options": [
+        "featuring", "with", "including", "containing", "showing",
+        "depicting", "displaying", "presenting", "showcasing", "highlighting",
+        "starring", "centered on", "focused on", "emphasizing", "spotlighting",
+        "incorporating", "integrating", "comprising", "consisting of"
+      ],
+      "usage": "Connect main subject to secondary elements",
+      "example": "portrait of a woman [featuring] flowing red hair"
+    },
+    "style_reference": {
+      "label": "Style Reference",
+      "description": "References artistic styles or artists",
+      "options": [
+        "in the style of", "styled like", "inspired by", "influenced by",
+        "reminiscent of", "evocative of", "channeling", "echoing",
+        "in the manner of", "after", "following", "à la",
+        "paying homage to", "referencing", "drawing from", "borrowing from",
+        "in the tradition of", "in the vein of", "akin to", "similar to",
+        "modeled after", "patterned after", "based on", "derived from"
+      ],
+      "usage": "Link subject to artistic style or artist reference",
+      "example": "landscape [in the style of] Monet"
+    },
+    "location": {
+      "label": "Location / Setting",
+      "description": "Places subjects in environments",
+      "options": [
+        "in", "inside", "within", "at", "on", "upon",
+        "against", "before", "beside", "near", "by", "next to",
+        "surrounded by", "amidst", "among", "amongst", "between",
+        "overlooking", "facing", "toward", "towards",
+        "set in", "placed in", "situated in", "located in", "positioned in",
+        "standing in", "sitting in", "lying in", "floating in", "emerging from",
+        "entering", "exiting", "passing through", "crossing"
+      ],
+      "usage": "Place subject in an environment",
+      "example": "warrior [standing in] ancient ruins"
+    },
+    "background": {
+      "label": "Background / Backdrop",
+      "description": "Describes background elements",
+      "options": [
+        "against a backdrop of", "with a background of", "before a",
+        "set against", "framed by", "backed by", "silhouetted against",
+        "contrasted with", "complemented by", "accented by",
+        "with distant", "with far-off", "with looming", "with towering",
+        "beneath", "under", "below", "above", "over",
+        "in front of", "behind", "beyond"
+      ],
+      "usage": "Describe what's behind the subject",
+      "example": "portrait [against a backdrop of] stormy skies"
+    },
+    "lighting": {
+      "label": "Lighting Connectors",
+      "description": "Introduces lighting conditions",
+      "options": [
+        "lit by", "illuminated by", "bathed in", "drenched in", "soaked in",
+        "glowing with", "radiating", "emanating", "casting",
+        "under", "beneath", "in the light of", "by the light of",
+        "with dramatic", "with soft", "with harsh", "with natural",
+        "catching the light", "reflecting", "refracting", "diffracting",
+        "backlit by", "sidelit by", "rimlit by", "spotlit by"
+      ],
+      "usage": "Connect subject to lighting conditions",
+      "example": "figure [bathed in] golden sunlight"
+    },
+    "atmosphere": {
+      "label": "Atmosphere / Mood",
+      "description": "Introduces atmospheric conditions",
+      "options": [
+        "shrouded in", "enveloped in", "wrapped in", "cloaked in",
+        "emerging from", "fading into", "dissolving into", "melting into",
+        "through", "piercing through", "cutting through", "breaking through",
+        "with an atmosphere of", "with a sense of", "evoking", "conveying",
+        "exuding", "radiating", "projecting", "emanating"
+      ],
+      "usage": "Add atmospheric or mood elements",
+      "example": "castle [shrouded in] mysterious fog"
+    },
+    "wearing": {
+      "label": "Wearing / Clothing",
+      "description": "Describes what subjects are wearing",
+      "options": [
+        "wearing", "dressed in", "clothed in", "clad in", "adorned in",
+        "draped in", "wrapped in", "covered in", "outfitted in",
+        "sporting", "donning", "bearing", "carrying",
+        "with", "having", "possessing", "equipped with",
+        "accessorized with", "decorated with", "embellished with", "ornamented with"
+      ],
+      "usage": "Describe clothing and accessories",
+      "example": "woman [dressed in] flowing silk gown"
+    },
+    "action": {
+      "label": "Action / Movement",
+      "description": "Describes what subjects are doing",
+      "options": [
+        "while", "as", "in the act of", "in the process of", "in the midst of",
+        "caught", "frozen", "captured", "depicted",
+        "performing", "executing", "doing", "engaged in", "occupied with",
+        "about to", "preparing to", "ready to", "poised to",
+        "just finished", "having completed", "after"
+      ],
+      "usage": "Describe actions and poses",
+      "example": "dancer [caught] mid-leap"
+    },
+    "temporal": {
+      "label": "Time / Period",
+      "description": "Introduces time-related context",
+      "options": [
+        "during", "at", "in", "throughout", "across",
+        "from the era of", "from the time of", "from the age of",
+        "set during", "taking place in", "occurring in",
+        "before", "after", "following", "preceding",
+        "at the moment of", "at the instant of", "capturing the",
+        "in the golden age of", "in the heyday of", "in the twilight of"
+      ],
+      "usage": "Add temporal context",
+      "example": "street scene [during] the 1920s"
+    },
+    "comparison": {
+      "label": "Comparison / Similarity",
+      "description": "Draws comparisons",
+      "options": [
+        "like", "as if", "as though", "resembling", "similar to",
+        "akin to", "comparable to", "reminiscent of", "evocative of",
+        "mirroring", "echoing", "reflecting", "channeling",
+        "suggestive of", "hinting at", "alluding to", "referencing",
+        "blending", "merging", "fusing", "combining", "mixing"
+      ],
+      "usage": "Create comparisons and references",
+      "example": "city [resembling] a circuit board"
+    },
+    "contrast": {
+      "label": "Contrast / Opposition",
+      "description": "Creates contrast between elements",
+      "options": [
+        "contrasted with", "juxtaposed with", "opposed to", "versus",
+        "against", "alongside", "paired with", "coupled with",
+        "balanced by", "offset by", "counterbalanced by",
+        "despite", "in spite of", "notwithstanding",
+        "yet", "but", "however", "although", "though",
+        "simultaneously", "at once", "both... and"
+      ],
+      "usage": "Create visual or conceptual contrast",
+      "example": "light [contrasted with] shadow"
+    },
+    "addition": {
+      "label": "Addition / Enhancement",
+      "description": "Adds elements to the composition",
+      "options": [
+        "and", "with", "plus", "along with", "together with",
+        "as well as", "in addition to", "accompanied by", "joined by",
+        "enhanced by", "augmented by", "supplemented by", "complemented by",
+        "enriched by", "embellished with", "adorned with", "decorated with",
+        "accented by", "highlighted by", "punctuated by", "emphasized by"
+      ],
+      "usage": "Add additional elements",
+      "example": "forest [enhanced by] magical particles"
+    },
+    "technique": {
+      "label": "Technique / Method",
+      "description": "Describes artistic techniques",
+      "options": [
+        "rendered in", "created with", "made with", "produced using",
+        "executed in", "realized in", "achieved through", "accomplished via",
+        "painted in", "drawn in", "sketched in", "illustrated in",
+        "photographed with", "captured with", "shot with", "filmed with",
+        "digitally created", "traditionally crafted", "hand-painted", "computer-generated"
+      ],
+      "usage": "Specify artistic technique",
+      "example": "portrait [rendered in] oil paint"
+    },
+    "quality": {
+      "label": "Quality / Standard",
+      "description": "Specifies quality levels",
+      "options": [
+        "at", "with", "in", "to",
+        "rendered at", "output at", "generated at", "produced at",
+        "quality of", "standard of", "level of", "caliber of",
+        "worthy of", "suitable for", "appropriate for", "perfect for",
+        "meeting the standards of", "exceeding expectations of"
+      ],
+      "usage": "Specify quality standards",
+      "example": "image [rendered at] 8K resolution"
+    },
+    "perspective": {
+      "label": "Perspective / View",
+      "description": "Describes viewing angle",
+      "options": [
+        "seen from", "viewed from", "observed from", "witnessed from",
+        "from the perspective of", "from the viewpoint of", "from the angle of",
+        "looking up at", "looking down at", "looking across at",
+        "approaching", "receding from", "passing by", "circling around",
+        "through the eyes of", "as seen by", "as perceived by"
+      ],
+      "usage": "Specify viewing perspective",
+      "example": "city [seen from] bird's eye view"
+    },
+    "composition": {
+      "label": "Composition / Arrangement",
+      "description": "Describes compositional relationships",
+      "options": [
+        "arranged in", "organized in", "composed of", "structured as",
+        "forming", "creating", "establishing", "defining",
+        "leading to", "guiding toward", "directing attention to",
+        "balanced with", "symmetrical with", "asymmetrical to",
+        "dominating", "subordinate to", "supporting", "framing"
+      ],
+      "usage": "Describe compositional elements",
+      "example": "elements [arranged in] golden ratio"
+    }
+  },
+  "platformOptimized": {
+    "stable_diffusion": {
+      "label": "Stable Diffusion Optimized",
+      "description": "Works best with CLIP-based models",
+      "preferred": [
+        ",", ", ", "by", "in the style of", "trending on",
+        "highly detailed", "8k", "masterpiece"
+      ],
+      "avoid": [
+        "please", "I want", "can you make", "create me"
+      ]
+    },
+    "midjourney": {
+      "label": "Midjourney Optimized",
+      "description": "Natural language connectors for MJ",
+      "preferred": [
+        "with", "featuring", "showing", "depicting", "in the style of",
+        "reminiscent of", "inspired by", "bathed in", "surrounded by"
+      ],
+      "avoid": [
+        "4k", "8k", "ultra realistic", "octane render"
+      ]
+    },
+    "dalle": {
+      "label": "DALL-E Optimized",
+      "description": "Conversational connectors for DALL-E",
+      "preferred": [
+        "a", "an", "the", "with", "and", "featuring", "showing",
+        "in the style of", "that looks like", "reminiscent of"
+      ],
+      "avoid": [
+        "masterpiece", "trending on artstation", "4k", "8k"
+      ]
+    }
+  },
+  "promptTemplates": {
+    "basic_portrait": {
+      "template": "[subject] [wearing] [clothing], [location] [environment], [lighting] [light_type], [style_reference] [artist/style]",
+      "example": "woman dressed in Victorian gown, standing in misty garden, bathed in golden hour light, in the style of John Singer Sargent"
+    },
+    "action_scene": {
+      "template": "[subject] [action] [action_verb], [location] [environment], [atmosphere] [mood], [technique] [medium]",
+      "example": "warrior caught mid-battle, set against crumbling castle walls, shrouded in smoke and fire, rendered in dramatic oil paint"
+    },
+    "landscape": {
+      "template": "[environment] [location] [details], [temporal] [time], [atmosphere] [weather], [style_reference] [style]",
+      "example": "mountain valley with cascading waterfalls, during golden sunset, enveloped in soft mist, in the style of Caspar David Friedrich"
+    },
+    "concept_art": {
+      "template": "[subject] [comparison] [reference], [featuring] [key_elements], [atmosphere] [mood], [quality] [standard]",
+      "example": "spacecraft resembling ancient temple, featuring organic curves and bioluminescent panels, radiating mysterious energy, rendered at concept art quality"
+    },
+    "stylized": {
+      "template": "[subject], [style_reference] [artist], [technique] [medium], [quality] [standard]",
+      "example": "cyberpunk samurai, in the style of Syd Mead, executed in detailed line art, at illustration quality"
+    }
+  },
+  "sentenceStarters": {
+    "subject_first": [
+      "A", "An", "The", "Portrait of", "Scene of", "View of",
+      "Depiction of", "Illustration of", "Photograph of", "Painting of",
+      "Concept art of", "Digital art of", "Study of", "Rendering of"
+    ],
+    "style_first": [
+      "In the style of", "Inspired by", "Reminiscent of", "Channeling",
+      "Following", "After", "À la", "In the manner of"
+    ],
+    "medium_first": [
+      "Oil painting of", "Watercolor of", "Digital painting of", "Photograph of",
+      "Sketch of", "Illustration of", "3D render of", "Concept art of"
+    ],
+    "mood_first": [
+      "Dramatic", "Peaceful", "Mysterious", "Vibrant", "Dark", "Bright",
+      "Serene", "Chaotic", "Ethereal", "Gritty"
+    ]
+  },
+  "punctuationGuide": {
+    "comma": {
+      "usage": "Separates distinct elements",
+      "example": "portrait, dramatic lighting, oil painting",
+      "platforms": ["stable-diffusion", "midjourney", "leonardo"]
+    },
+    "period": {
+      "usage": "Separates complete thoughts (DALL-E)",
+      "example": "A portrait of a woman. She has flowing red hair. The lighting is dramatic.",
+      "platforms": ["dall-e", "firefly"]
+    },
+    "semicolon": {
+      "usage": "Groups related elements",
+      "example": "face, eyes, expression; lighting, shadows, highlights; background, environment",
+      "platforms": ["stable-diffusion"]
+    },
+    "double_colon": {
+      "usage": "Midjourney weight syntax",
+      "example": "dragon::2 castle::1",
+      "platforms": ["midjourney"]
+    },
+    "parentheses": {
+      "usage": "Emphasis/weighting in SD",
+      "example": "(masterpiece:1.3), (detailed:1.2)",
+      "platforms": ["stable-diffusion", "comfyui"]
+    }
+  }
+}

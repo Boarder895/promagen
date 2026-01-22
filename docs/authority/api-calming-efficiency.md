@@ -22,24 +22,24 @@ This document is the **single source of truth** for Promagen's API calming effic
 
 ## Current Feed Status (Jan 14, 2026 PM)
 
-| Feed            | Status      | Provider    | Mode     | Data |
-| --------------- | ----------- | ----------- | -------- | ---- |
-| **FX**          | ✅ **LIVE** | TwelveData  | `cached` | Real prices |
-| **Indices**     | ✅ **LIVE** | Marketstack | `live`   | Real prices |
-| **Crypto**      | ✅ **LIVE** | TwelveData  | `cached` | Real prices |
-| **Commodities** | ⏸️ PARKED   | None        | `fallback` | null (—) |
+| Feed            | Status      | Provider    | Mode       | Data        |
+| --------------- | ----------- | ----------- | ---------- | ----------- |
+| **FX**          | ✅ **LIVE** | TwelveData  | `cached`   | Real prices |
+| **Indices**     | ✅ **LIVE** | Marketstack | `live`     | Real prices |
+| **Crypto**      | ✅ **LIVE** | TwelveData  | `cached`   | Real prices |
+| **Commodities** | ⏸️ PARKED   | None        | `fallback` | null (—)    |
 
 ---
 
 ## Current Efficiency Score
 
-| Metric              | Target       | Current        | Status       |
-| ------------------- | ------------ | -------------- | ------------ |
-| TwelveData usage    | ≤50% of 800  | ~256 (32%)     | 🟢 Excellent |
-| Marketstack usage   | ≤50% of 250  | ~24 (10%)      | 🟢 Excellent |
-| Cache hit rate      | ≥95%         | ~98%           | 🟢 Excellent |
-| P95 response time   | <200ms       | ~50ms (cached) | 🟢 Excellent |
-| Budget blocks/month | 0            | 0              | 🟢 Clean     |
+| Metric              | Target      | Current        | Status       |
+| ------------------- | ----------- | -------------- | ------------ |
+| TwelveData usage    | ≤50% of 800 | ~256 (32%)     | 🟢 Excellent |
+| Marketstack usage   | ≤50% of 250 | ~24 (10%)      | 🟢 Excellent |
+| Cache hit rate      | ≥95%        | ~98%           | 🟢 Excellent |
+| P95 response time   | <200ms      | ~50ms (cached) | 🟢 Excellent |
+| Budget blocks/month | 0           | 0              | 🟢 Clean     |
 
 **Overall Efficiency Grade: A**
 
@@ -91,20 +91,20 @@ _Last measured: January 14, 2026_
 
 All four data feeds share **identical calming architecture** with provider-specific configuration:
 
-| Component               | FX                      | Indices                  | Commodities              | Crypto                   |
-| ----------------------- | ----------------------- | ------------------------ | ------------------------ | ------------------------ |
-| **Status**              | ✅ LIVE                 | ✅ LIVE                  | ⏸️ PARKED                | ✅ LIVE                  |
-| **Gateway endpoint**    | `/fx`                   | `/indices`               | `/commodities`           | `/crypto`                |
-| **Frontend API route**  | `/api/fx`               | `/api/indices`           | `/api/commodities`       | `/api/crypto`            |
-| **Frontend hook**       | `use-fx-quotes.ts`      | `use-indices-quotes.ts`  | N/A (parked)             | `use-crypto-quotes.ts`   |
-| **Display location**    | FX Ribbon               | Exchange Cards           | Commodities Ribbon       | Crypto Ribbon            |
-| **Cache key**           | `fx:ribbon:all`         | `indices:default`        | `commodities:ribbon:all` | `crypto:ribbon:all`      |
-| **TTL**                 | 1800s (30 min)          | 7200s (2 hr)             | N/A                      | 1800s (30 min)           |
-| **Refresh schedule**    | :00, :30                | :05, :35                 | N/A (parked)             | :20, :50                 |
-| **Default items**       | 8 pairs                 | 16 exchanges             | 8 commodities            | 8 cryptocurrencies       |
-| **Provider**            | TwelveData              | Marketstack              | None (parked)            | TwelveData               |
-| **Provider folder**     | `twelvedata/`           | `marketstack/`           | `fallback/`              | `twelvedata/`            |
-| **Daily budget**        | shared 800              | 250 (separate)           | 0 (no calls)             | shared 800               |
+| Component              | FX                 | Indices                 | Commodities              | Crypto                 |
+| ---------------------- | ------------------ | ----------------------- | ------------------------ | ---------------------- |
+| **Status**             | ✅ LIVE            | ✅ LIVE                 | ⏸️ PARKED                | ✅ LIVE                |
+| **Gateway endpoint**   | `/fx`              | `/indices`              | `/commodities`           | `/crypto`              |
+| **Frontend API route** | `/api/fx`          | `/api/indices`          | `/api/commodities`       | `/api/crypto`          |
+| **Frontend hook**      | `use-fx-quotes.ts` | `use-indices-quotes.ts` | N/A (parked)             | `use-crypto-quotes.ts` |
+| **Display location**   | FX Ribbon          | Exchange Cards          | Commodities Ribbon       | Crypto Ribbon          |
+| **Cache key**          | `fx:ribbon:all`    | `indices:default`       | `commodities:ribbon:all` | `crypto:ribbon:all`    |
+| **TTL**                | 1800s (30 min)     | 7200s (2 hr)            | N/A                      | 1800s (30 min)         |
+| **Refresh schedule**   | :00, :30           | :05, :35                | N/A (parked)             | :20, :50               |
+| **Default items**      | 8 pairs            | 16 exchanges            | 8 commodities            | 8 cryptocurrencies     |
+| **Provider**           | TwelveData         | Marketstack             | None (parked)            | TwelveData             |
+| **Provider folder**    | `twelvedata/`      | `marketstack/`          | `fallback/`              | `twelvedata/`          |
+| **Daily budget**       | shared 800         | 250 (separate)          | 0 (no calls)             | shared 800             |
 
 ### API Timing Stagger (Critical)
 
@@ -135,7 +135,7 @@ MS = Marketstack (separate 250/day budget)
 export type TwelveDataFeed = 'fx' | 'crypto';
 
 const FEED_SLOTS: Record<TwelveDataFeed, number[]> = {
-  fx: [0, 30],      // Minutes 0 and 30
+  fx: [0, 30], // Minutes 0 and 30
   crypto: [20, 50], // Minutes 20 and 50
 };
 
@@ -144,7 +144,7 @@ export function getMsUntilNextSlot(feed: TwelveDataFeed): number {
   const currentMinute = now.getMinutes();
   const slots = FEED_SLOTS[feed];
 
-  let nextSlot = slots.find(s => s > currentMinute);
+  let nextSlot = slots.find((s) => s > currentMinute);
   if (!nextSlot) {
     nextSlot = slots[0] + 60; // Wrap to next hour
   }
@@ -157,6 +157,7 @@ export function getMsUntilNextSlot(feed: TwelveDataFeed): number {
 **Why clock-aligned (not 90% TTL)?**
 
 Old approach:
+
 ```typescript
 // ❌ BAD: 90% of TTL creates drift
 setInterval(() => refresh(), config.ttlSeconds * 1000 * 0.9);
@@ -166,6 +167,7 @@ setInterval(() => refresh(), config.ttlSeconds * 1000 * 0.9);
 ```
 
 New approach:
+
 ```typescript
 // ✅ GOOD: Clock-aligned slots, never drift
 setTimeout(() => {
@@ -187,8 +189,9 @@ setTimeout(() => {
 > "Fallback must return null (renders as '—')."
 
 When live API data is unavailable, the gateway returns:
+
 ```typescript
-price: null  // NEVER demo prices
+price: null; // NEVER demo prices
 ```
 
 The frontend renders `null` as `—` (em dash). This is intentional and correct.
@@ -199,23 +202,23 @@ The frontend renders `null` as `—` (em dash). This is intentional and correct.
 
 ### Technique Registry (All Four Feeds)
 
-| #   | Technique                  | Layer    | Applied To            | Efficiency Impact                 | Status    |
-| --- | -------------------------- | -------- | --------------------- | --------------------------------- | --------- |
-| 1   | **TTL Cache**              | Gateway  | FX, IDX, CRY          | High (95%+ hit rate)              | ✅ Active |
-| 2   | **Request Deduplication**  | Gateway  | FX, IDX, CRY          | Medium (prevents thundering herd) | ✅ Active |
-| 3   | **Batch Requests**         | Gateway  | FX, IDX, CRY          | Critical (N symbols = 1 call)     | ✅ Active |
-| 4   | **Stale-While-Revalidate** | Gateway  | FX, IDX, CRY          | Medium (UX smoothness)            | ✅ Active |
-| 5   | **Background Refresh**     | Gateway  | FX, IDX, CRY          | Medium (proactive cache warm)     | ✅ Active |
-| 6   | **Budget Management**      | Gateway  | FX, IDX, CRY          | Critical (hard stop)              | ✅ Active |
-| 7   | **Circuit Breaker**        | Gateway  | FX, IDX, CRY          | High (429/5xx protection)         | ✅ Active |
-| 8   | **Clock-Aligned Refresh**  | Both     | FX, IDX, CRY          | Critical (no drift collisions)    | ✅ Active |
-| 9   | **Visibility Backoff**     | Frontend | FX, IDX, CRY          | Medium (6x slower when hidden)    | ✅ Active |
-| 10  | **Centralised Polling**    | Frontend | FX, IDX, CRY          | High (one timer globally)         | ✅ Active |
-| 11  | **Client Rate Limiting**   | Frontend | All                   | Low (defence in depth)            | ✅ Active |
-| 12  | **SSOT Config**            | Both     | All                   | Medium (no stale config)          | ✅ Active |
-| 13  | **Provider Isolation**     | Gateway  | All                   | High (separate budgets)           | ✅ Active |
-| 14  | **Null Fallback**          | Gateway  | All                   | N/A (no demo prices)              | ✅ Active |
-| 15  | **Provider-Based Modules** | Gateway  | All                   | High (clear ownership)            | ✅ Active |
+| #   | Technique                  | Layer    | Applied To   | Efficiency Impact                 | Status    |
+| --- | -------------------------- | -------- | ------------ | --------------------------------- | --------- |
+| 1   | **TTL Cache**              | Gateway  | FX, IDX, CRY | High (95%+ hit rate)              | ✅ Active |
+| 2   | **Request Deduplication**  | Gateway  | FX, IDX, CRY | Medium (prevents thundering herd) | ✅ Active |
+| 3   | **Batch Requests**         | Gateway  | FX, IDX, CRY | Critical (N symbols = 1 call)     | ✅ Active |
+| 4   | **Stale-While-Revalidate** | Gateway  | FX, IDX, CRY | Medium (UX smoothness)            | ✅ Active |
+| 5   | **Background Refresh**     | Gateway  | FX, IDX, CRY | Medium (proactive cache warm)     | ✅ Active |
+| 6   | **Budget Management**      | Gateway  | FX, IDX, CRY | Critical (hard stop)              | ✅ Active |
+| 7   | **Circuit Breaker**        | Gateway  | FX, IDX, CRY | High (429/5xx protection)         | ✅ Active |
+| 8   | **Clock-Aligned Refresh**  | Both     | FX, IDX, CRY | Critical (no drift collisions)    | ✅ Active |
+| 9   | **Visibility Backoff**     | Frontend | FX, IDX, CRY | Medium (6x slower when hidden)    | ✅ Active |
+| 10  | **Centralised Polling**    | Frontend | FX, IDX, CRY | High (one timer globally)         | ✅ Active |
+| 11  | **Client Rate Limiting**   | Frontend | All          | Low (defence in depth)            | ✅ Active |
+| 12  | **SSOT Config**            | Both     | All          | Medium (no stale config)          | ✅ Active |
+| 13  | **Provider Isolation**     | Gateway  | All          | High (separate budgets)           | ✅ Active |
+| 14  | **Null Fallback**          | Gateway  | All          | N/A (no demo prices)              | ✅ Active |
+| 15  | **Provider-Based Modules** | Gateway  | All          | High (clear ownership)            | ✅ Active |
 
 ---
 
@@ -230,13 +233,15 @@ The frontend renders `null` as `—` (em dash). This is intentional and correct.
 **Root cause:** Frontend catalog used `djia`, `tsx`, `russell_2000` as benchmark keys. Gateway only mapped `dow_jones`, `tsx_composite`, and didn't have `russell_2000` at all.
 
 **Resolution:** Added aliases to `gateway/src/marketstack/adapter.ts`:
+
 ```typescript
 djia: 'DJI.INDX',           // Alias for dow_jones
-tsx: 'GSPTSE.INDX',         // Alias for tsx_composite  
+tsx: 'GSPTSE.INDX',         // Alias for tsx_composite
 russell_2000: 'RUT.INDX',   // New mapping
 ```
 
 **Prevention:**
+
 - Document all benchmark mappings in `EXPECTED-INDICES-REFERENCE.md`
 - Test all selected exchanges against gateway mappings before deploy
 - Add validation that checks catalog keys exist in gateway
@@ -252,6 +257,7 @@ russell_2000: 'RUT.INDX',   // New mapping
 **Resolution:** Implemented clock-aligned scheduler in `twelvedata/scheduler.ts`.
 
 **Prevention:**
+
 - Provider-based folder structure isolates concerns
 - Single scheduler.ts per provider enforces timing
 - Clock-aligned slots prevent drift
@@ -312,40 +318,40 @@ russell_2000: 'RUT.INDX',   // New mapping
 
 ### Emergency Actions
 
-| Situation              | Action                                           |
-| ---------------------- | ------------------------------------------------ |
-| TwelveData blocked     | Wait for midnight UTC reset                      |
-| Marketstack blocked    | Wait for midnight UTC reset                      |
-| Gateway down           | `fly status -a promagen-api`                     |
-| Circuit open           | Wait for auto-reset (15-60s)                     |
-| Rate limited           | Check scheduler.ts — slots should not overlap    |
-| Budget overrun         | Check twelvedata/budget.ts — single instance?    |
-| Missing prices         | Check benchmark mapping in adapter.ts            |
+| Situation           | Action                                        |
+| ------------------- | --------------------------------------------- |
+| TwelveData blocked  | Wait for midnight UTC reset                   |
+| Marketstack blocked | Wait for midnight UTC reset                   |
+| Gateway down        | `fly status -a promagen-api`                  |
+| Circuit open        | Wait for auto-reset (15-60s)                  |
+| Rate limited        | Check scheduler.ts — slots should not overlap |
+| Budget overrun      | Check twelvedata/budget.ts — single instance? |
+| Missing prices      | Check benchmark mapping in adapter.ts         |
 
 ---
 
 ## Changelog
 
-| Date       | Version | Change                                                    |
-| ---------- | ------- | --------------------------------------------------------- |
-| 2026-01-14 | 5.0.0   | **PM: All feeds verified LIVE**                           |
-|            |         | FX: TwelveData → mode: cached ✅                          |
-|            |         | Indices: Marketstack → mode: live ✅                      |
-|            |         | Crypto: TwelveData → mode: cached ✅                      |
-|            |         | Commodities: Parked → mode: fallback (null prices)        |
-|            |         | Added INC-005 benchmark mapping incident                  |
-|            |         | Updated status tables to show LIVE                        |
-| 2026-01-14 | 4.0.0   | **Major update: Provider-based architecture**             |
-|            |         | Updated architecture diagram for provider folders         |
-|            |         | Changed timing stagger to clock-aligned slots             |
-|            |         | Added scheduler.ts specification per provider             |
-|            |         | Added INC-004 budget investigation                        |
-|            |         | Updated budget calculations                               |
-|            |         | Added technique #15: Provider-Based Modules               |
-| 2026-01-13 | 3.0.0   | Added Indices feed (Marketstack provider)                 |
-| 2026-01-12 | 2.0.0   | Three-feed architecture                                   |
-| 2026-01-10 | 1.1.0   | Fixed TTL from 300s to 1800s                              |
-| 2026-01-09 | 1.0.0   | Initial document                                          |
+| Date       | Version | Change                                             |
+| ---------- | ------- | -------------------------------------------------- |
+| 2026-01-14 | 5.0.0   | **PM: All feeds verified LIVE**                    |
+|            |         | FX: TwelveData → mode: cached ✅                   |
+|            |         | Indices: Marketstack → mode: live ✅               |
+|            |         | Crypto: TwelveData → mode: cached ✅               |
+|            |         | Commodities: Parked → mode: fallback (null prices) |
+|            |         | Added INC-005 benchmark mapping incident           |
+|            |         | Updated status tables to show LIVE                 |
+| 2026-01-14 | 4.0.0   | **Major update: Provider-based architecture**      |
+|            |         | Updated architecture diagram for provider folders  |
+|            |         | Changed timing stagger to clock-aligned slots      |
+|            |         | Added scheduler.ts specification per provider      |
+|            |         | Added INC-004 budget investigation                 |
+|            |         | Updated budget calculations                        |
+|            |         | Added technique #15: Provider-Based Modules        |
+| 2026-01-13 | 3.0.0   | Added Indices feed (Marketstack provider)          |
+| 2026-01-12 | 2.0.0   | Three-feed architecture                            |
+| 2026-01-10 | 1.1.0   | Fixed TTL from 300s to 1800s                       |
+| 2026-01-09 | 1.0.0   | Initial document                                   |
 
 ---
 
@@ -361,4 +367,4 @@ russell_2000: 'RUT.INDX',   // New mapping
 
 _This is a living document. Update it whenever calming techniques change or incidents occur._
 
-_**Critical rule:** NEVER use demo/synthetic prices. Fallback returns null, renders as "—"._
+_**Critical rule:** NEVER use demo/synthetic prices. When API fails, return last-known-good (stale) data. Only return null (renders as "—") when no data has ever been cached._

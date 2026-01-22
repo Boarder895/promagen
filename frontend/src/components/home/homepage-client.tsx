@@ -5,6 +5,10 @@
 // Client component that handles dynamic exchange ordering based on user
 // location and reference frame preference.
 //
+// UPDATED (2026-01-19): Weather data now comes from gateway API!
+// - weatherIndex now uses ExchangeWeatherData type (matches card expectations)
+// - Emoji updates based on actual weather conditions
+//
 // UPDATED (2026-01-17): Now tier-aware indices fetching!
 // - Uses useExchangeSelection to get user's exchange selection
 // - Passes exchangeIds to useIndicesQuotes for dynamic API calls
@@ -34,11 +38,11 @@ import ProvidersTable from '@/components/providers/providers-table';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
 import { useExchangeSelection } from '@/hooks/use-exchange-selection';
+import { useWeather } from '@/hooks/use-weather';
 import { getRailsRelative } from '@/lib/location';
 import type { Exchange } from '@/data/exchanges/types';
-import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
+import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
-import type { IndexQuoteData } from '@/components/exchanges/types';
 
 // ============================================================================
 // TYPES
@@ -47,8 +51,8 @@ import type { IndexQuoteData } from '@/components/exchanges/types';
 export interface HomepageClientProps {
   /** All exchanges to display (server provides these) */
   exchanges: ReadonlyArray<Exchange>;
-  /** Weather data indexed by exchange ID */
-  weatherIndex: Map<string, ExchangeWeather>;
+  /** Weather data indexed by exchange ID (from gateway API) */
+  weatherIndex: Map<string, ExchangeWeatherData>;
   /** All AI providers */
   providers: Provider[];
 }
@@ -148,6 +152,33 @@ export default function HomepageClient({
 }: HomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
+  // Live weather (client) — no demo fallback.
+  // We use this to update cards after hydration.
+  const {
+    weather: liveWeatherById,
+    meta: _weatherMeta,
+    isLoading: _isWeatherLoading,
+    error: _weatherError,
+  } = useWeather();
+
+  const liveWeatherIndex = useMemo(() => {
+    const map = new Map<string, ExchangeWeatherData>();
+    for (const [id, w] of Object.entries(liveWeatherById)) {
+      map.set(id, {
+        tempC: w.temperatureC,
+        tempF: w.temperatureF,
+        emoji: w.emoji,
+        condition: w.conditions,
+        humidity: w.humidity,
+        windKmh: w.windSpeedKmh,
+        description: w.description,
+      });
+    }
+    return map;
+  }, [liveWeatherById]);
+
+  const effectiveWeatherIndex = liveWeatherIndex.size ? liveWeatherIndex : weatherIndex;
+
   // Get user's exchange selection (tier-aware)
   const {
     exchangeIds: selectedExchangeIds,
@@ -192,9 +223,17 @@ export default function HomepageClient({
         selectedCount: selectedExchangeIds.length,
         indicesStatus,
         quotesCount: quotesById.size,
+        weatherCount: effectiveWeatherIndex.size,
       });
     }
-  }, [userTier, isCustomSelection, selectedExchangeIds, indicesStatus, quotesById.size]);
+  }, [
+    userTier,
+    isCustomSelection,
+    selectedExchangeIds,
+    indicesStatus,
+    quotesById.size,
+    effectiveWeatherIndex.size,
+  ]);
 
   // ============================================================================
   // DYNAMIC EXCHANGE ORDERING
@@ -272,21 +311,25 @@ export default function HomepageClient({
   // Exchange list content (cards only, wrapper handled by HomepageGrid)
   // Now passes indexByExchange for index quote display
   const leftExchanges = (
-    <ExchangeList
-      exchanges={left}
-      weatherByExchange={weatherIndex}
-      indexByExchange={indexByExchange}
-      emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
-    />
+    <div className="space-y-2">
+      <ExchangeList
+        exchanges={left}
+        weatherByExchange={effectiveWeatherIndex}
+        indexByExchange={indexByExchange}
+        emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
+      />
+    </div>
   );
 
   const rightExchanges = (
-    <ExchangeList
-      exchanges={right}
-      weatherByExchange={weatherIndex}
-      indexByExchange={indexByExchange}
-      emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
-    />
+    <div className="space-y-2">
+      <ExchangeList
+        exchanges={right}
+        weatherByExchange={effectiveWeatherIndex}
+        indexByExchange={indexByExchange}
+        emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
+      />
+    </div>
   );
 
   // ============================================================================

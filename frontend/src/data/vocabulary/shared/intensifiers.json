@@ -1,0 +1,276 @@
+{
+  "$schema": "./schemas/shared.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "shared",
+    "category": "intensifiers",
+    "label": "Intensity Modifiers",
+    "description": "Words that modify the strength, degree, or emphasis of other terms",
+    "totalOptions": 220,
+    "updated": "2026-01-21"
+  },
+  "byStrength": {
+    "minimal": {
+      "label": "Minimal / Barely",
+      "description": "Reduces intensity to near-nothing",
+      "strengthValue": 0.1,
+      "options": [
+        "barely", "hardly", "scarcely", "faintly", "imperceptibly",
+        "subtly", "almost invisibly", "trace of", "hint of", "whisper of",
+        "mere", "slight", "merest", "tiniest", "smallest",
+        "just a touch of", "the slightest", "a suggestion of"
+      ],
+      "usage": "Creates understated, subtle effects"
+    },
+    "slight": {
+      "label": "Slight / Minor",
+      "description": "Mild reduction in intensity",
+      "strengthValue": 0.3,
+      "options": [
+        "slightly", "somewhat", "a little", "a bit", "marginally",
+        "mildly", "gently", "softly", "lightly", "delicately",
+        "moderately", "reasonably", "fairly", "rather", "quite",
+        "to some degree", "to a limited extent", "in a small way",
+        "partially", "partly", "semi", "half"
+      ],
+      "usage": "Tones down effects for subtle refinement"
+    },
+    "moderate": {
+      "label": "Moderate / Standard",
+      "description": "Neutral or balanced intensity",
+      "strengthValue": 0.5,
+      "options": [
+        "moderately", "adequately", "sufficiently", "reasonably",
+        "fairly", "pretty", "quite", "rather", "decently",
+        "notably", "noticeably", "appreciably", "measurably",
+        "clearly", "distinctly", "definitely", "certainly", "surely",
+        "undoubtedly", "obviously", "evidently", "visibly", "plainly"
+      ],
+      "usage": "Standard emphasis without extreme effects"
+    },
+    "strong": {
+      "label": "Strong / High",
+      "description": "Significant increase in intensity",
+      "strengthValue": 0.7,
+      "options": [
+        "very", "really", "truly", "genuinely", "actually",
+        "highly", "greatly", "strongly", "deeply", "profoundly",
+        "remarkably", "strikingly", "impressively", "notably", "significantly",
+        "considerably", "substantially", "extensively", "broadly",
+        "particularly", "especially", "specifically", "explicitly",
+        "decidedly", "distinctly", "markedly", "pronounced"
+      ],
+      "usage": "Creates emphasis and visual impact"
+    },
+    "intense": {
+      "label": "Intense / Very High",
+      "description": "High intensity emphasis",
+      "strengthValue": 0.85,
+      "options": [
+        "extremely", "exceedingly", "exceptionally", "extraordinarily",
+        "incredibly", "unbelievably", "amazingly", "astonishingly",
+        "remarkably", "stunningly", "breathtakingly", "strikingly",
+        "intensely", "fiercely", "powerfully", "forcefully", "potently",
+        "tremendously", "immensely", "enormously", "massively", "vastly",
+        "hugely", "monumentally", "spectacularly", "magnificently"
+      ],
+      "usage": "For dramatic, eye-catching effects"
+    },
+    "maximum": {
+      "label": "Maximum / Extreme",
+      "description": "Highest possible intensity",
+      "strengthValue": 1.0,
+      "options": [
+        "absolutely", "completely", "totally", "utterly", "entirely",
+        "perfectly", "purely", "wholly", "fully", "thoroughly",
+        "supremely", "ultimately", "infinitely", "boundlessly", "limitlessly",
+        "overwhelmingly", "overpoweringly", "all-consumingly",
+        "incomparably", "unparalleled", "unsurpassed", "unmatched", "unrivaled",
+        "impossibly", "indescribably", "ineffably", "transcendently",
+        "mind-blowingly", "jaw-droppingly", "earth-shatteringly"
+      ],
+      "usage": "Maximum visual impact and emphasis"
+    }
+  },
+  "byEffect": {
+    "emphasis": {
+      "label": "Emphasis & Importance",
+      "description": "Highlights importance or prominence",
+      "options": [
+        "primarily", "mainly", "chiefly", "principally", "predominantly",
+        "essentially", "fundamentally", "basically", "inherently", "intrinsically",
+        "crucially", "critically", "vitally", "centrally", "pivotally",
+        "importantly", "significantly", "meaningfully", "substantially",
+        "notably", "remarkably", "conspicuously", "prominently", "distinctively"
+      ]
+    },
+    "precision": {
+      "label": "Precision & Accuracy",
+      "description": "Emphasizes exactness and accuracy",
+      "options": [
+        "precisely", "exactly", "specifically", "particularly", "explicitly",
+        "accurately", "correctly", "properly", "appropriately", "suitably",
+        "meticulously", "carefully", "painstakingly", "scrupulously", "rigorously",
+        "perfectly", "flawlessly", "impeccably", "faultlessly", "immaculately",
+        "technically", "scientifically", "mathematically", "geometrically"
+      ]
+    },
+    "authenticity": {
+      "label": "Authenticity & Truth",
+      "description": "Emphasizes genuineness and reality",
+      "options": [
+        "truly", "genuinely", "authentically", "legitimately", "really",
+        "actually", "literally", "factually", "honestly", "sincerely",
+        "naturally", "organically", "inherently", "innately", "essentially",
+        "faithfully", "accurately", "truthfully", "realistically", "believably",
+        "undeniably", "unquestionably", "indisputably", "incontrovertibly"
+      ]
+    },
+    "temporal": {
+      "label": "Temporal & Duration",
+      "description": "Modifies time-related aspects",
+      "options": [
+        "eternally", "permanently", "perpetually", "endlessly", "infinitely",
+        "continuously", "constantly", "persistently", "steadily", "consistently",
+        "temporarily", "momentarily", "briefly", "fleetingly", "transiently",
+        "gradually", "progressively", "incrementally", "slowly", "steadily",
+        "suddenly", "instantly", "immediately", "abruptly", "rapidly",
+        "periodically", "intermittently", "occasionally", "sporadically"
+      ]
+    },
+    "spatial": {
+      "label": "Spatial & Coverage",
+      "description": "Modifies extent and coverage",
+      "options": [
+        "everywhere", "throughout", "all over", "across", "spanning",
+        "widely", "broadly", "extensively", "comprehensively", "universally",
+        "locally", "regionally", "centrally", "peripherally", "marginally",
+        "deeply", "profoundly", "thoroughly", "penetratingly", "pervasively",
+        "superficially", "lightly", "barely", "thinly", "sparingly"
+      ]
+    },
+    "quality": {
+      "label": "Quality & Excellence",
+      "description": "Modifies quality level",
+      "options": [
+        "beautifully", "gorgeously", "magnificently", "splendidly", "superbly",
+        "exquisitely", "elegantly", "gracefully", "tastefully", "artfully",
+        "masterfully", "expertly", "skillfully", "professionally", "competently",
+        "poorly", "badly", "terribly", "horribly", "awfully",
+        "crudely", "roughly", "clumsily", "awkwardly", "ineptly"
+      ]
+    },
+    "emotional": {
+      "label": "Emotional Intensity",
+      "description": "Modifies emotional impact",
+      "options": [
+        "hauntingly", "movingly", "touchingly", "poignantly", "evocatively",
+        "chillingly", "disturbingly", "unsettlingly", "eerily", "creepily",
+        "warmly", "lovingly", "tenderly", "affectionately", "fondly",
+        "passionately", "intensely", "fervently", "ardently", "zealously",
+        "coldly", "icily", "harshly", "brutally", "savagely"
+      ]
+    }
+  },
+  "promptSpecific": {
+    "detail_modifiers": {
+      "label": "Detail Level Modifiers",
+      "description": "For AI prompt detail specification",
+      "options": [
+        "highly detailed", "extremely detailed", "incredibly detailed", "ultra detailed",
+        "hyper detailed", "insanely detailed", "obsessively detailed", "meticulously detailed",
+        "intricately detailed", "elaborately detailed", "finely detailed", "richly detailed",
+        "exquisitely detailed", "painstakingly detailed", "thoroughly detailed",
+        "minimally detailed", "simply detailed", "cleanly detailed", "elegantly detailed"
+      ]
+    },
+    "quality_modifiers": {
+      "label": "Quality Level Modifiers",
+      "description": "For AI prompt quality specification",
+      "options": [
+        "best quality", "highest quality", "top quality", "premium quality",
+        "exceptional quality", "outstanding quality", "superb quality", "excellent quality",
+        "professional quality", "studio quality", "masterwork quality", "museum quality",
+        "cinematic quality", "photographic quality", "publication quality", "award-winning quality",
+        "4K quality", "8K quality", "ultra HD quality", "crystal clear quality"
+      ]
+    },
+    "style_strength": {
+      "label": "Style Strength Modifiers",
+      "description": "For emphasizing artistic styles",
+      "options": [
+        "in the style of", "heavily inspired by", "strongly influenced by", "reminiscent of",
+        "in the manner of", "after the fashion of", "following the tradition of",
+        "pure", "classic", "quintessential", "archetypal", "definitive", "iconic",
+        "extreme", "exaggerated", "amplified", "enhanced", "intensified"
+      ]
+    },
+    "realism_modifiers": {
+      "label": "Realism Level Modifiers",
+      "description": "For photo-realism specification",
+      "options": [
+        "photorealistic", "hyperrealistic", "ultra realistic", "extremely realistic",
+        "lifelike", "true to life", "indistinguishable from reality", "photograph-like",
+        "RAW photo", "DSLR quality", "professional photograph", "studio photograph",
+        "documentary style", "candid style", "journalistic style"
+      ]
+    },
+    "artistic_modifiers": {
+      "label": "Artistic Intensity Modifiers",
+      "description": "For artistic interpretation",
+      "options": [
+        "highly stylized", "extremely stylized", "boldly stylized", "dramatically stylized",
+        "artistically rendered", "expressively rendered", "creatively interpreted",
+        "loosely interpreted", "freely interpreted", "abstractly rendered",
+        "impressionistically rendered", "expressionistically rendered"
+      ]
+    }
+  },
+  "weightingGuide": {
+    "stableDiffusion": {
+      "description": "How to apply weights in Stable Diffusion syntax",
+      "examples": [
+        { "intensifier": "slightly", "weight": "0.8", "example": "(term:0.8)" },
+        { "intensifier": "moderately", "weight": "1.0", "example": "(term:1.0)" },
+        { "intensifier": "very", "weight": "1.2", "example": "(term:1.2)" },
+        { "intensifier": "extremely", "weight": "1.4", "example": "(term:1.4)" },
+        { "intensifier": "absolutely", "weight": "1.5", "example": "(term:1.5)" }
+      ]
+    },
+    "midjourney": {
+      "description": "How to apply weights in Midjourney syntax",
+      "examples": [
+        { "intensifier": "slightly", "weight": "0.5", "example": "term::0.5" },
+        { "intensifier": "moderately", "weight": "1", "example": "term::1" },
+        { "intensifier": "very", "weight": "1.5", "example": "term::1.5" },
+        { "intensifier": "extremely", "weight": "2", "example": "term::2" },
+        { "intensifier": "absolutely", "weight": "3", "example": "term::3" }
+      ]
+    }
+  },
+  "combinations": {
+    "double_intensifiers": {
+      "label": "Double Intensifiers",
+      "description": "Combining intensifiers for maximum effect",
+      "examples": [
+        "absolutely incredibly",
+        "completely utterly",
+        "truly exceptionally",
+        "genuinely extraordinarily",
+        "perfectly beautifully"
+      ],
+      "warning": "Use sparingly - can appear over-the-top"
+    },
+    "contrasting_pairs": {
+      "label": "Contrasting Intensifiers",
+      "description": "For nuanced, complex descriptions",
+      "examples": [
+        "subtly yet powerfully",
+        "gently but firmly",
+        "quietly dramatic",
+        "softly intense",
+        "delicately bold"
+      ]
+    }
+  }
+}

@@ -1,0 +1,257 @@
+{
+  "$schema": "./schemas/intelligence.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "intelligence",
+    "category": "semantic-tags",
+    "label": "Semantic Tags",
+    "description": "Categorization metadata for filtering and smart suggestions",
+    "totalTags": 180,
+    "updated": "2026-01-21"
+  },
+  "tagCategories": {
+    "era": {
+      "label": "Time Period",
+      "description": "Historical or temporal setting",
+      "tags": [
+        { "id": "prehistoric", "label": "Prehistoric", "keywords": ["caveman", "dinosaur", "stone age", "primitive"] },
+        { "id": "ancient", "label": "Ancient", "keywords": ["egyptian", "greek", "roman", "mesopotamian", "biblical"] },
+        { "id": "medieval", "label": "Medieval", "keywords": ["knight", "castle", "feudal", "crusade", "dark ages"] },
+        { "id": "renaissance", "label": "Renaissance", "keywords": ["da vinci", "michelangelo", "humanist", "rebirth"] },
+        { "id": "baroque", "label": "Baroque", "keywords": ["ornate", "dramatic", "caravaggio", "rembrandt"] },
+        { "id": "victorian", "label": "Victorian", "keywords": ["19th century", "industrial", "steampunk", "gas lamp"] },
+        { "id": "art-nouveau-era", "label": "Art Nouveau Era", "keywords": ["1890s", "1900s", "belle epoque", "mucha"] },
+        { "id": "art-deco-era", "label": "Art Deco Era", "keywords": ["1920s", "1930s", "gatsby", "jazz age"] },
+        { "id": "mid-century", "label": "Mid-Century", "keywords": ["1950s", "1960s", "atomic age", "space age"] },
+        { "id": "retro-70s", "label": "1970s Retro", "keywords": ["disco", "psychedelic", "groovy", "earth tones"] },
+        { "id": "retro-80s", "label": "1980s Retro", "keywords": ["neon", "synthwave", "miami vice", "arcade"] },
+        { "id": "retro-90s", "label": "1990s Retro", "keywords": ["grunge", "rave", "early internet", "vaporwave"] },
+        { "id": "y2k", "label": "Y2K Era", "keywords": ["2000s", "millennium", "futuristic chrome", "cyber"] },
+        { "id": "contemporary", "label": "Contemporary", "keywords": ["modern", "current", "present day", "now"] },
+        { "id": "near-future", "label": "Near Future", "keywords": ["2030s", "emerging tech", "next decade"] },
+        { "id": "far-future", "label": "Far Future", "keywords": ["sci-fi", "space age", "post-human", "singularity"] }
+      ]
+    },
+    "mood": {
+      "label": "Emotional Mood",
+      "description": "Emotional tone and atmosphere",
+      "tags": [
+        { "id": "joyful", "label": "Joyful", "keywords": ["happy", "cheerful", "uplifting", "celebratory"] },
+        { "id": "serene", "label": "Serene", "keywords": ["peaceful", "calm", "tranquil", "zen"] },
+        { "id": "romantic", "label": "Romantic", "keywords": ["love", "passionate", "intimate", "tender"] },
+        { "id": "melancholic", "label": "Melancholic", "keywords": ["sad", "nostalgic", "bittersweet", "wistful"] },
+        { "id": "mysterious", "label": "Mysterious", "keywords": ["enigmatic", "secretive", "unknown", "hidden"] },
+        { "id": "ominous", "label": "Ominous", "keywords": ["threatening", "foreboding", "dark", "sinister"] },
+        { "id": "epic", "label": "Epic", "keywords": ["grand", "heroic", "monumental", "legendary"] },
+        { "id": "whimsical", "label": "Whimsical", "keywords": ["playful", "fantastical", "quirky", "magical"] },
+        { "id": "dramatic", "label": "Dramatic", "keywords": ["intense", "theatrical", "powerful", "striking"] },
+        { "id": "ethereal", "label": "Ethereal", "keywords": ["otherworldly", "dreamy", "spiritual", "transcendent"] },
+        { "id": "gritty", "label": "Gritty", "keywords": ["raw", "harsh", "realistic", "unpolished"] },
+        { "id": "nostalgic", "label": "Nostalgic", "keywords": ["retro", "vintage", "memory", "past"] },
+        { "id": "tense", "label": "Tense", "keywords": ["suspenseful", "anxious", "nervous", "edge"] },
+        { "id": "rebellious", "label": "Rebellious", "keywords": ["punk", "defiant", "counter-culture", "anarchic"] },
+        { "id": "contemplative", "label": "Contemplative", "keywords": ["thoughtful", "reflective", "meditative", "introspective"] }
+      ]
+    },
+    "genre": {
+      "label": "Genre",
+      "description": "Artistic or narrative genre",
+      "tags": [
+        { "id": "fantasy", "label": "Fantasy", "keywords": ["magic", "dragons", "wizards", "mythical"] },
+        { "id": "sci-fi-genre", "label": "Science Fiction", "keywords": ["space", "technology", "aliens", "future"] },
+        { "id": "horror-genre", "label": "Horror", "keywords": ["scary", "creepy", "monsters", "fear"] },
+        { "id": "romance-genre", "label": "Romance", "keywords": ["love", "couples", "passion", "hearts"] },
+        { "id": "action", "label": "Action", "keywords": ["fighting", "explosions", "chase", "combat"] },
+        { "id": "adventure", "label": "Adventure", "keywords": ["exploration", "journey", "discovery", "quest"] },
+        { "id": "mystery-genre", "label": "Mystery", "keywords": ["detective", "crime", "clues", "investigation"] },
+        { "id": "comedy-genre", "label": "Comedy", "keywords": ["funny", "humor", "satire", "parody"] },
+        { "id": "drama-genre", "label": "Drama", "keywords": ["emotional", "conflict", "relationships", "human"] },
+        { "id": "thriller", "label": "Thriller", "keywords": ["suspense", "tension", "danger", "chase"] },
+        { "id": "western", "label": "Western", "keywords": ["cowboy", "frontier", "desert", "gunslinger"] },
+        { "id": "noir-genre", "label": "Noir", "keywords": ["detective", "shadows", "crime", "cynical"] },
+        { "id": "historical", "label": "Historical", "keywords": ["period", "accurate", "past events", "documentary"] },
+        { "id": "slice-of-life", "label": "Slice of Life", "keywords": ["everyday", "mundane", "realistic", "ordinary"] },
+        { "id": "surreal-genre", "label": "Surreal", "keywords": ["dreamlike", "absurd", "impossible", "subconscious"] }
+      ]
+    },
+    "subject-type": {
+      "label": "Subject Type",
+      "description": "Primary subject category",
+      "tags": [
+        { "id": "portrait", "label": "Portrait", "keywords": ["face", "person", "headshot", "bust"] },
+        { "id": "figure", "label": "Figure", "keywords": ["body", "pose", "human form", "full body"] },
+        { "id": "group", "label": "Group", "keywords": ["crowd", "multiple people", "gathering", "ensemble"] },
+        { "id": "landscape", "label": "Landscape", "keywords": ["nature", "scenery", "vista", "environment"] },
+        { "id": "cityscape", "label": "Cityscape", "keywords": ["urban", "buildings", "skyline", "architecture"] },
+        { "id": "still-life", "label": "Still Life", "keywords": ["objects", "arrangement", "inanimate", "composition"] },
+        { "id": "animal", "label": "Animal", "keywords": ["creature", "wildlife", "pet", "beast"] },
+        { "id": "vehicle", "label": "Vehicle", "keywords": ["car", "ship", "aircraft", "transportation"] },
+        { "id": "architecture", "label": "Architecture", "keywords": ["building", "structure", "interior", "exterior"] },
+        { "id": "abstract-subject", "label": "Abstract", "keywords": ["non-representational", "shapes", "forms", "conceptual"] },
+        { "id": "food", "label": "Food", "keywords": ["cuisine", "dish", "ingredients", "culinary"] },
+        { "id": "fashion", "label": "Fashion", "keywords": ["clothing", "style", "outfit", "accessories"] },
+        { "id": "product", "label": "Product", "keywords": ["commercial", "item", "merchandise", "packaging"] },
+        { "id": "character", "label": "Character", "keywords": ["persona", "fictional", "designed", "original"] },
+        { "id": "creature-design", "label": "Creature Design", "keywords": ["monster", "alien", "mythical beast", "original creature"] }
+      ]
+    },
+    "style-approach": {
+      "label": "Style Approach",
+      "description": "Overall artistic approach",
+      "tags": [
+        { "id": "realistic", "label": "Realistic", "keywords": ["accurate", "lifelike", "naturalistic", "true to life"] },
+        { "id": "stylized", "label": "Stylized", "keywords": ["exaggerated", "interpreted", "artistic license", "designed"] },
+        { "id": "abstract-approach", "label": "Abstract", "keywords": ["non-representational", "geometric", "conceptual"] },
+        { "id": "minimalist-approach", "label": "Minimalist", "keywords": ["simple", "clean", "reduced", "essential"] },
+        { "id": "maximalist-approach", "label": "Maximalist", "keywords": ["ornate", "busy", "detailed", "overwhelming"] },
+        { "id": "impressionistic-approach", "label": "Impressionistic", "keywords": ["loose", "light focused", "atmospheric"] },
+        { "id": "expressionistic-approach", "label": "Expressionistic", "keywords": ["emotional", "distorted", "subjective"] },
+        { "id": "graphic", "label": "Graphic", "keywords": ["bold", "flat", "vector-like", "clean lines"] },
+        { "id": "painterly", "label": "Painterly", "keywords": ["brushwork", "texture", "traditional media feel"] },
+        { "id": "photographic", "label": "Photographic", "keywords": ["camera-like", "captured moment", "lens-based"] },
+        { "id": "illustrative", "label": "Illustrative", "keywords": ["narrative", "story-telling", "editorial"] },
+        { "id": "decorative", "label": "Decorative", "keywords": ["ornamental", "pattern-based", "aesthetic focused"] }
+      ]
+    },
+    "medium": {
+      "label": "Medium",
+      "description": "Art medium or technique",
+      "tags": [
+        { "id": "oil-paint", "label": "Oil Paint", "keywords": ["canvas", "traditional", "rich texture"] },
+        { "id": "watercolor-medium", "label": "Watercolor", "keywords": ["transparent", "fluid", "paper"] },
+        { "id": "acrylic", "label": "Acrylic", "keywords": ["versatile", "fast drying", "modern"] },
+        { "id": "digital-medium", "label": "Digital", "keywords": ["computer", "software", "tablet"] },
+        { "id": "3d-render-medium", "label": "3D Render", "keywords": ["CGI", "modeling", "ray tracing"] },
+        { "id": "pencil", "label": "Pencil", "keywords": ["graphite", "sketch", "drawing"] },
+        { "id": "ink-medium", "label": "Ink", "keywords": ["pen", "brush", "line work"] },
+        { "id": "pastel", "label": "Pastel", "keywords": ["chalk", "soft", "blendable"] },
+        { "id": "charcoal", "label": "Charcoal", "keywords": ["dark", "smudgy", "dramatic"] },
+        { "id": "photography-medium", "label": "Photography", "keywords": ["camera", "lens", "exposure"] },
+        { "id": "mixed-media", "label": "Mixed Media", "keywords": ["collage", "combined", "experimental"] },
+        { "id": "sculpture", "label": "Sculpture", "keywords": ["3D", "physical", "carved", "molded"] },
+        { "id": "printmaking", "label": "Printmaking", "keywords": ["etching", "lithograph", "woodcut", "screen print"] }
+      ]
+    },
+    "color-treatment": {
+      "label": "Color Treatment",
+      "description": "How color is used",
+      "tags": [
+        { "id": "vibrant-colors", "label": "Vibrant", "keywords": ["saturated", "bold", "intense", "vivid"] },
+        { "id": "muted-colors", "label": "Muted", "keywords": ["desaturated", "subtle", "soft", "toned down"] },
+        { "id": "monochromatic", "label": "Monochromatic", "keywords": ["single hue", "tonal", "one color"] },
+        { "id": "black-white", "label": "Black & White", "keywords": ["grayscale", "achromatic", "b&w"] },
+        { "id": "warm-palette", "label": "Warm Palette", "keywords": ["reds", "oranges", "yellows", "warm tones"] },
+        { "id": "cool-palette", "label": "Cool Palette", "keywords": ["blues", "greens", "purples", "cool tones"] },
+        { "id": "pastel-colors", "label": "Pastel", "keywords": ["soft", "light", "gentle", "pale"] },
+        { "id": "neon-colors", "label": "Neon", "keywords": ["fluorescent", "glowing", "electric", "bright"] },
+        { "id": "earth-tones", "label": "Earth Tones", "keywords": ["brown", "ochre", "natural", "organic"] },
+        { "id": "jewel-tones", "label": "Jewel Tones", "keywords": ["rich", "deep", "gem colors", "luxurious"] },
+        { "id": "limited-palette", "label": "Limited Palette", "keywords": ["few colors", "restricted", "harmonious"] },
+        { "id": "complementary-scheme", "label": "Complementary", "keywords": ["opposite colors", "contrast", "vibrant"] }
+      ]
+    },
+    "lighting-type": {
+      "label": "Lighting Type",
+      "description": "Light source and quality",
+      "tags": [
+        { "id": "natural-light", "label": "Natural Light", "keywords": ["sunlight", "daylight", "outdoor", "ambient"] },
+        { "id": "studio-light", "label": "Studio Light", "keywords": ["controlled", "artificial", "professional"] },
+        { "id": "golden-hour-light", "label": "Golden Hour", "keywords": ["sunset", "warm", "magic hour", "soft"] },
+        { "id": "blue-hour-light", "label": "Blue Hour", "keywords": ["twilight", "cool", "dusk", "dawn"] },
+        { "id": "dramatic-light", "label": "Dramatic Light", "keywords": ["chiaroscuro", "contrast", "shadows"] },
+        { "id": "soft-light", "label": "Soft Light", "keywords": ["diffused", "gentle", "even", "flattering"] },
+        { "id": "hard-light", "label": "Hard Light", "keywords": ["direct", "sharp shadows", "contrast"] },
+        { "id": "backlight", "label": "Backlight", "keywords": ["rim light", "silhouette", "contre-jour"] },
+        { "id": "neon-light", "label": "Neon Light", "keywords": ["electric", "colored", "artificial", "urban"] },
+        { "id": "candlelight", "label": "Candlelight", "keywords": ["warm", "flickering", "intimate", "low light"] },
+        { "id": "moonlight", "label": "Moonlight", "keywords": ["night", "cool", "silver", "nocturnal"] },
+        { "id": "volumetric-light", "label": "Volumetric", "keywords": ["god rays", "beams", "atmospheric", "fog"] }
+      ]
+    },
+    "composition-type": {
+      "label": "Composition Type",
+      "description": "Compositional approach",
+      "tags": [
+        { "id": "centered-comp", "label": "Centered", "keywords": ["symmetrical", "balanced", "focal point"] },
+        { "id": "rule-of-thirds-comp", "label": "Rule of Thirds", "keywords": ["offset", "dynamic", "intersection"] },
+        { "id": "diagonal-comp", "label": "Diagonal", "keywords": ["dynamic", "movement", "tension"] },
+        { "id": "symmetrical-comp", "label": "Symmetrical", "keywords": ["mirror", "balanced", "formal"] },
+        { "id": "asymmetrical-comp", "label": "Asymmetrical", "keywords": ["unbalanced", "dynamic", "tension"] },
+        { "id": "radial-comp", "label": "Radial", "keywords": ["circular", "emanating", "central point"] },
+        { "id": "layered-comp", "label": "Layered", "keywords": ["depth", "foreground", "background", "planes"] },
+        { "id": "minimal-comp", "label": "Minimal", "keywords": ["negative space", "simple", "clean"] },
+        { "id": "complex-comp", "label": "Complex", "keywords": ["busy", "detailed", "many elements"] },
+        { "id": "panoramic-comp", "label": "Panoramic", "keywords": ["wide", "expansive", "landscape format"] },
+        { "id": "close-up-comp", "label": "Close-Up", "keywords": ["tight", "detail", "macro", "intimate"] }
+      ]
+    },
+    "cultural-origin": {
+      "label": "Cultural Origin",
+      "description": "Cultural or geographic influence",
+      "tags": [
+        { "id": "western-art", "label": "Western", "keywords": ["european", "american", "occidental"] },
+        { "id": "eastern-art", "label": "Eastern", "keywords": ["asian", "oriental", "far east"] },
+        { "id": "japanese-art", "label": "Japanese", "keywords": ["japan", "nippon", "nihon"] },
+        { "id": "chinese-art", "label": "Chinese", "keywords": ["china", "sino", "han"] },
+        { "id": "african-art", "label": "African", "keywords": ["africa", "tribal", "indigenous"] },
+        { "id": "middle-eastern-art", "label": "Middle Eastern", "keywords": ["arabic", "persian", "islamic"] },
+        { "id": "indian-art", "label": "Indian", "keywords": ["india", "hindu", "mughal", "south asian"] },
+        { "id": "latin-american-art", "label": "Latin American", "keywords": ["mexican", "brazilian", "aztec", "mayan"] },
+        { "id": "nordic-art", "label": "Nordic", "keywords": ["scandinavian", "viking", "norse"] },
+        { "id": "mediterranean-art", "label": "Mediterranean", "keywords": ["greek", "italian", "spanish", "coastal"] },
+        { "id": "oceanic-art", "label": "Oceanic", "keywords": ["polynesian", "australian", "pacific islands"] }
+      ]
+    },
+    "technical-quality": {
+      "label": "Technical Quality",
+      "description": "Technical execution level",
+      "tags": [
+        { "id": "highly-detailed", "label": "Highly Detailed", "keywords": ["intricate", "fine", "precise", "complex"] },
+        { "id": "photorealistic-quality", "label": "Photorealistic", "keywords": ["lifelike", "accurate", "realistic"] },
+        { "id": "stylized-quality", "label": "Stylized", "keywords": ["simplified", "artistic", "interpreted"] },
+        { "id": "rough-sketch", "label": "Rough Sketch", "keywords": ["loose", "gestural", "unfinished"] },
+        { "id": "polished-finish", "label": "Polished", "keywords": ["refined", "finished", "professional"] },
+        { "id": "experimental-quality", "label": "Experimental", "keywords": ["unconventional", "innovative", "boundary-pushing"] },
+        { "id": "masterwork", "label": "Masterwork", "keywords": ["exceptional", "museum quality", "virtuoso"] }
+      ]
+    },
+    "use-case": {
+      "label": "Use Case",
+      "description": "Intended purpose or application",
+      "tags": [
+        { "id": "social-media", "label": "Social Media", "keywords": ["instagram", "twitter", "tiktok", "post"] },
+        { "id": "print-art", "label": "Print Art", "keywords": ["poster", "canvas", "wall art", "gallery"] },
+        { "id": "book-cover", "label": "Book Cover", "keywords": ["novel", "publication", "editorial"] },
+        { "id": "album-art", "label": "Album Art", "keywords": ["music", "cover", "single", "EP"] },
+        { "id": "game-art", "label": "Game Art", "keywords": ["video game", "mobile game", "gaming"] },
+        { "id": "concept-design", "label": "Concept Design", "keywords": ["pre-production", "development", "ideation"] },
+        { "id": "marketing", "label": "Marketing", "keywords": ["advertising", "promotion", "commercial"] },
+        { "id": "personal-art", "label": "Personal Art", "keywords": ["hobby", "self-expression", "portfolio"] },
+        { "id": "nft-art", "label": "NFT Art", "keywords": ["crypto", "blockchain", "digital collectible"] },
+        { "id": "merchandise", "label": "Merchandise", "keywords": ["t-shirt", "mug", "product design"] }
+      ]
+    }
+  },
+  "termMappings": [
+    { "term": "cyberpunk", "tags": ["near-future", "gritty", "sci-fi-genre", "neon-colors", "neon-light", "urban"] },
+    { "term": "steampunk", "tags": ["victorian", "whimsical", "fantasy", "warm-palette", "dramatic-light"] },
+    { "term": "vaporwave", "tags": ["retro-90s", "nostalgic", "abstract-subject", "neon-colors", "digital-medium"] },
+    { "term": "cottagecore", "tags": ["victorian", "serene", "landscape", "warm-palette", "natural-light"] },
+    { "term": "dark academia", "tags": ["victorian", "melancholic", "portrait", "muted-colors", "candlelight"] },
+    { "term": "anime", "tags": ["contemporary", "dramatic", "character", "vibrant-colors", "digital-medium", "japanese-art"] },
+    { "term": "oil painting", "tags": ["renaissance", "painterly", "portrait", "rich-palette", "oil-paint"] },
+    { "term": "watercolor", "tags": ["impressionistic-approach", "soft-light", "watercolor-medium", "pastel-colors"] },
+    { "term": "3D render", "tags": ["contemporary", "realistic", "3d-render-medium", "studio-light"] },
+    { "term": "concept art", "tags": ["contemporary", "dramatic", "stylized", "digital-medium", "concept-design"] },
+    { "term": "photorealistic", "tags": ["contemporary", "realistic", "photorealistic-quality", "photography-medium"] },
+    { "term": "minimalist", "tags": ["contemporary", "serene", "minimalist-approach", "limited-palette", "minimal-comp"] },
+    { "term": "baroque", "tags": ["baroque", "dramatic", "maximalist-approach", "warm-palette", "dramatic-light"] },
+    { "term": "impressionist", "tags": ["art-nouveau-era", "serene", "impressionistic-approach", "vibrant-colors", "natural-light"] },
+    { "term": "surrealist", "tags": ["art-deco-era", "mysterious", "surreal-genre", "stylized", "dramatic-light"] },
+    { "term": "gothic", "tags": ["medieval", "ominous", "horror-genre", "muted-colors", "dramatic-light"] },
+    { "term": "art nouveau", "tags": ["art-nouveau-era", "romantic", "decorative", "warm-palette", "natural-light"] },
+    { "term": "art deco", "tags": ["art-deco-era", "dramatic", "graphic", "jewel-tones", "studio-light"] },
+    { "term": "pop art", "tags": ["mid-century", "rebellious", "graphic", "vibrant-colors", "studio-light"] },
+    { "term": "ukiyo-e", "tags": ["baroque", "serene", "graphic", "limited-palette", "soft-light", "japanese-art"] }
+  ]
+}

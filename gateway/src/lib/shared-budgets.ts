@@ -3,11 +3,14 @@
  * ==========================================
  * CRITICAL: TwelveData has ONE pool of 800 credits/day shared by FX + Crypto + Commodities.
  * Marketstack has a separate pool of 250 credits/day for Indices.
+ * OpenWeatherMap has a separate pool of 1000 credits/day for Weather.
  * Each feed must use this SHARED manager, not create their own.
  *
  * FIXED (2026-01-13): Lazy initialization to ensure env vars are loaded before
  * creating budget managers. Previous version created instances at module load
  * time, which resulted in 0 limits if env vars weren't ready.
+ *
+ * UPDATED (2026-01-19): Added OpenWeatherMap budget manager for weather feed.
  *
  * @module lib/shared-budgets
  */
@@ -21,13 +24,15 @@ import { logInfo } from './logging.js';
 
 let twelveDataBudgetInstance: BudgetManager | null = null;
 let marketstackBudgetInstance: BudgetManager | null = null;
+let openWeatherMapBudgetInstance: BudgetManager | null = null;
 let noBudgetInstance: BudgetManager | null = null;
 
 /**
  * Get TwelveData daily limit from env or default.
  */
 function getTwelveDataDailyLimit(): number {
-  const val = process.env['TWELVEDATA_BUDGET_DAILY'] ??
+  const val =
+    process.env['TWELVEDATA_BUDGET_DAILY'] ??
     process.env['FX_RIBBON_BUDGET_DAILY_ALLOWANCE'] ??
     '800';
   const parsed = parseInt(val, 10);
@@ -38,7 +43,8 @@ function getTwelveDataDailyLimit(): number {
  * Get TwelveData minute limit from env or default.
  */
 function getTwelveDataMinuteLimit(): number {
-  const val = process.env['TWELVEDATA_BUDGET_MINUTE'] ??
+  const val =
+    process.env['TWELVEDATA_BUDGET_MINUTE'] ??
     process.env['FX_RIBBON_BUDGET_MINUTE_ALLOWANCE'] ??
     '8';
   const parsed = parseInt(val, 10);
@@ -49,7 +55,8 @@ function getTwelveDataMinuteLimit(): number {
  * Get Marketstack daily limit from env or default.
  */
 function getMarketstackDailyLimit(): number {
-  const val = process.env['MARKETSTACK_BUDGET_DAILY'] ??
+  const val =
+    process.env['MARKETSTACK_BUDGET_DAILY'] ??
     process.env['INDICES_RIBBON_BUDGET_DAILY_ALLOWANCE'] ??
     '250';
   const parsed = parseInt(val, 10);
@@ -60,11 +67,30 @@ function getMarketstackDailyLimit(): number {
  * Get Marketstack minute limit from env or default.
  */
 function getMarketstackMinuteLimit(): number {
-  const val = process.env['MARKETSTACK_BUDGET_MINUTE'] ??
+  const val =
+    process.env['MARKETSTACK_BUDGET_MINUTE'] ??
     process.env['INDICES_RIBBON_BUDGET_MINUTE_ALLOWANCE'] ??
     '3';
   const parsed = parseInt(val, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
+}
+
+/**
+ * Get OpenWeatherMap daily limit from env or default.
+ */
+function getOpenWeatherMapDailyLimit(): number {
+  const val = process.env['OPENWEATHERMAP_BUDGET_DAILY'] ?? '1000';
+  const parsed = parseInt(val, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1000;
+}
+
+/**
+ * Get OpenWeatherMap minute limit from env or default.
+ */
+function getOpenWeatherMapMinuteLimit(): number {
+  const val = process.env['OPENWEATHERMAP_BUDGET_MINUTE'] ?? '60';
+  const parsed = parseInt(val, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
 }
 
 // =============================================================================
@@ -79,12 +105,12 @@ function getTwelveDataBudget(): BudgetManager {
   if (!twelveDataBudgetInstance) {
     const dailyLimit = getTwelveDataDailyLimit();
     const minuteLimit = getTwelveDataMinuteLimit();
-    
+
     logInfo('Creating TwelveData shared budget', {
       dailyLimit,
       minuteLimit,
     });
-    
+
     twelveDataBudgetInstance = new BudgetManager({
       id: 'twelvedata-shared',
       dailyLimit,
@@ -102,12 +128,12 @@ function getMarketstackBudget(): BudgetManager {
   if (!marketstackBudgetInstance) {
     const dailyLimit = getMarketstackDailyLimit();
     const minuteLimit = getMarketstackMinuteLimit();
-    
+
     logInfo('Creating Marketstack shared budget', {
       dailyLimit,
       minuteLimit,
     });
-    
+
     marketstackBudgetInstance = new BudgetManager({
       id: 'marketstack-shared',
       dailyLimit,
@@ -115,6 +141,29 @@ function getMarketstackBudget(): BudgetManager {
     });
   }
   return marketstackBudgetInstance;
+}
+
+/**
+ * Get SHARED OpenWeatherMap budget manager.
+ * Used by: Weather only (separate 1000/day pool)
+ */
+function getOpenWeatherMapBudget(): BudgetManager {
+  if (!openWeatherMapBudgetInstance) {
+    const dailyLimit = getOpenWeatherMapDailyLimit();
+    const minuteLimit = getOpenWeatherMapMinuteLimit();
+
+    logInfo('Creating OpenWeatherMap shared budget', {
+      dailyLimit,
+      minuteLimit,
+    });
+
+    openWeatherMapBudgetInstance = new BudgetManager({
+      id: 'openweathermap-shared',
+      dailyLimit,
+      minuteLimit,
+    });
+  }
+  return openWeatherMapBudgetInstance;
 }
 
 /**
@@ -145,6 +194,8 @@ export function getSharedBudget(provider: string): BudgetManager {
       return getTwelveDataBudget();
     case 'marketstack':
       return getMarketstackBudget();
+    case 'openweathermap':
+      return getOpenWeatherMapBudget();
     case 'none':
       return getNoBudget();
     default:
@@ -162,5 +213,26 @@ export function getSharedBudget(provider: string): BudgetManager {
 export function resetSharedBudgets(): void {
   twelveDataBudgetInstance = null;
   marketstackBudgetInstance = null;
+  openWeatherMapBudgetInstance = null;
   noBudgetInstance = null;
+}
+
+// =============================================================================
+// BUDGET SUMMARY
+// =============================================================================
+
+/**
+ * Get summary of all budget states.
+ * Useful for /trace endpoint.
+ */
+export function getAllBudgetStates(): {
+  twelvedata: ReturnType<BudgetManager['getState']> | null;
+  marketstack: ReturnType<BudgetManager['getState']> | null;
+  openweathermap: ReturnType<BudgetManager['getState']> | null;
+} {
+  return {
+    twelvedata: twelveDataBudgetInstance?.getState() ?? null,
+    marketstack: marketstackBudgetInstance?.getState() ?? null,
+    openweathermap: openWeatherMapBudgetInstance?.getState() ?? null,
+  };
 }

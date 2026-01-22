@@ -1,13 +1,23 @@
 // src/app/page.tsx
 // ============================================================================
-// HOMEPAGE - Server Component
+// HOMEPAGE - Server Component (Dynamic)
 // ============================================================================
 // Loads data on the server, passes to client component for dynamic ordering.
+//
+// UPDATED (2026-01-19): Now fetches LIVE weather from gateway!
+// - Uses getWeatherIndex() which calls gateway /weather endpoint
+// - Returns empty data if gateway unavailable
+// - Emoji now reflects actual weather conditions ☀️🌧❄️
+//
+// UPDATED (2026-01-22): Made dynamic to avoid stale weather at build time
+// - Homepage now renders at request time, not build time
+// - Weather data is always fresh (not baked in during build)
+// - Build no longer depends on gateway availability
 //
 // Server responsibilities:
 // - Load providers from data files
 // - Load all exchanges from catalog
-// - Build weather index
+// - Fetch weather from gateway (with demo fallback)
 // - SEO metadata
 //
 // Client responsibilities (HomepageClient):
@@ -22,10 +32,13 @@
 import React from 'react';
 import type { Metadata } from 'next';
 
+// Force dynamic rendering - homepage needs live weather data
+export const dynamic = 'force-dynamic';
+
 import HomepageClient from '@/components/home/homepage-client';
 import { getProviders } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
-import { DEMO_EXCHANGE_WEATHER, type ExchangeWeather } from '@/lib/weather/exchange-weather';
+import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 
 // ============================================================================
 // METADATA (SEO)
@@ -35,17 +48,6 @@ export const metadata: Metadata = {
   title: 'Promagen — Calm, data-rich AI providers overview',
   description: 'Live exchange rails and an AI providers leaderboard.',
 };
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Build a simple lookup so ExchangeList can resolve weather quickly.
- */
-function buildWeatherIndex(rows: ReadonlyArray<ExchangeWeather>): Map<string, ExchangeWeather> {
-  return new Map(rows.map((entry) => [entry.exchange, entry]));
-}
 
 // ============================================================================
 // PAGE COMPONENT
@@ -59,17 +61,15 @@ function buildWeatherIndex(rows: ReadonlyArray<ExchangeWeather>): Map<string, Ex
  * - Dynamic exchange ordering based on location
  * - Reference frame toggle for paid users
  */
-export default function HomePage() {
-  // Load data on server
-  const providers = getProviders();
-  const allExchanges = getHomepageExchanges();
-  const weatherIndex = buildWeatherIndex(DEMO_EXCHANGE_WEATHER);
+export default async function HomePage() {
+  // Load data on server (parallel fetches)
+  const [providers, allExchanges, weatherIndex] = await Promise.all([
+    Promise.resolve(getProviders()),
+    Promise.resolve(getHomepageExchanges()),
+    getWeatherIndex(), // Now fetches LIVE data from gateway!
+  ]);
 
   return (
-    <HomepageClient
-      exchanges={allExchanges}
-      weatherIndex={weatherIndex}
-      providers={providers}
-    />
+    <HomepageClient exchanges={allExchanges} weatherIndex={weatherIndex} providers={providers} />
   );
 }

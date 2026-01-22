@@ -235,17 +235,17 @@ User tier is stored in **Clerk's publicMetadata**:
 **Setting tier programmatically:**
 
 ```typescript
-import { clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from '@clerk/nextjs/server';
 
 await clerkClient.users.updateUser(userId, {
-  publicMetadata: { tier: "paid" },
+  publicMetadata: { tier: 'paid' },
 });
 ```
 
 **Reading tier in components:**
 
 ```typescript
-import { usePromagenAuth } from "@/hooks/use-promagen-auth";
+import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 
 function Component() {
   const { userTier, categoryLimits, platformTier } = usePromagenAuth({
@@ -407,12 +407,12 @@ Pro Promagen users may choose which FX pairs appear on their homepage ribbon.
 
 #### Tier Comparison
 
-| Aspect           | Standard Promagen          | Pro Promagen               |
-| ---------------- | -------------------------- | -------------------------- |
-| FX pairs shown   | SSOT default (currently 8) | User-curated selection     |
-| Pair count       | Fixed by SSOT              | **0 to 16**                |
+| Aspect           | Standard Promagen          | Pro Promagen             |
+| ---------------- | -------------------------- | ------------------------ |
+| FX pairs shown   | SSOT default (currently 8) | User-curated selection   |
+| Pair count       | Fixed by SSOT              | **0 to 16**              |
 | Catalog access   | N/A                        | Full catalog (102 pairs) |
-| Configuration UI | None                       | FX Picker drawer           |
+| Configuration UI | None                       | FX Picker drawer         |
 
 #### Allowed Pair Counts
 
@@ -494,7 +494,7 @@ interface FxSelectionLocal {
 ```typescript
 // In Clerk publicMetadata
 interface ClerkPublicMetadata {
-  tier: "free" | "paid";
+  tier: 'free' | 'paid';
   fxSelection?: {
     pairIds: string[]; // Max 16 items
     updatedAt: string; // ISO timestamp
@@ -866,7 +866,7 @@ Dropdowns use the **same combobox component as Prompt Builder** (`@/components/u
 
 | Data Type        | Source                       | Display                  |
 | ---------------- | ---------------------------- | ------------------------ |
-| FX ribbon prices | `fx-pairs.json` demo values     | Shows demo prices        |
+| FX ribbon prices | `fx-pairs.json` demo values  | Shows demo prices        |
 | Exchange clocks  | Client `Intl.DateTimeFormat` | Real local time          |
 | Market status    | Client calculation           | Open/Closed              |
 | Weather badges   | Demo placeholder             | Shows "—" or static icon |
@@ -1091,6 +1091,273 @@ Rules:
 - Fullscreen mode provides screensaver-like ambient experience
 
 Authority for implementation: `docs/authority/worldprompt-creative-engine.md` (Part 13)
+
+### 5.12 Gallery Mode (Pro Promagen exclusive) — NEW v2.1.0
+
+Gallery Mode transforms Promagen from a "dashboard that shows market data" into a "living artefact where the markets literally paint." It's a Pro-only screensaver experience.
+
+#### What Gallery Mode Does
+
+1. **Cycles through 79 exchange cities** on a 10-minute cadence (~13h before repeating)
+2. **Generates AI images** reflecting city mood, time-of-day, season, and market sentiment
+3. **Educates users** by exposing 4 prompt variants (one per AI provider tier) with copy buttons
+4. **Stores everything** in an image library with full reproducibility metadata
+5. **Allows filtering** via AI Provider Selector (Pro only, 1–3 providers in Gallery)
+
+#### Tier Comparison
+
+| Aspect              | Standard Promagen | Pro Promagen                     |
+| ------------------- | ----------------- | -------------------------------- |
+| Gallery toggle      | ❌ Hidden         | ✅ Visible (Providers ↔ Gallery) |
+| AI-generated images | Blurred preview   | Full resolution                  |
+| Prompt variants     | Hidden            | 4 copy buttons (one per tier)    |
+| Image library       | No access         | Full access with filters         |
+| Provider selector   | N/A               | 1–3 providers selectable         |
+| Screensaver mode    | N/A               | Fullscreen ambient view          |
+
+#### Visual Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Toggle: [Providers] [Gallery ✨]           Pro Promagen only   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │                                                           │ │
+│  │           AI-Generated City Scene                         │ │
+│  │           (Tokyo skyline at twilight)                     │ │
+│  │                                                           │ │
+│  │  ┌─────────────────────────────────────────────────────┐ │ │
+│  │  │ 🇯🇵 Tokyo • TSE • 17:42 JST • Market Closing       │ │ │
+│  │  │ Season: Winter • Mood: Reflective • 🌤️ 12°C        │ │ │
+│  │  └─────────────────────────────────────────────────────┘ │ │
+│  │                                                           │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  Copy Prompts:                                                  │
+│  [Tier 1: CLIP] [Tier 2: Midjourney] [Tier 3: DALL·E] [Tier 4] │
+│                                                                 │
+│  [▼ Filter: Midjourney, DALL·E (2)]     [⛶ Fullscreen]         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### World Tour Rotation
+
+- 79 exchanges × 10 minutes = **~13 hours** before repetition
+- With enrichments (time-of-day, season, mood), same city looks different each cycle
+- Rotation follows SSOT order (MVP) or East-to-West (Phase 2)
+- Pro users see their selected exchanges if using Exchange Picker
+
+#### Theme Engine (What Influences Images)
+
+Each city snapshot combines:
+
+| Data Source       | Effect on Image                                                 |
+| ----------------- | --------------------------------------------------------------- |
+| **Local time**    | Time-of-day lighting (dawn/morning/midday/afternoon/dusk/night) |
+| **Season**        | Hemisphere-aware seasonal motifs                                |
+| **Weather**       | Atmosphere terms (rain→moody, snow→serene, clear→vibrant)       |
+| **Market status** | Opening/closing events affect mood                              |
+| **Market mood**   | FX/crypto/gold trends boost colors and atmosphere               |
+
+#### Weather API Integration (90% Built)
+
+Weather affects atmosphere selection:
+
+| Weather Condition | Atmosphere Boost               |
+| ----------------- | ------------------------------ |
+| Rain, Drizzle     | moody, reflective, glistening  |
+| Storm, Thunder    | dramatic, intense, electric    |
+| Snow              | serene, pristine, cold         |
+| Fog, Mist         | mysterious, ethereal, diffused |
+| Clear, Sunny      | vibrant, bright, warm          |
+| Cloudy            | overcast, soft light           |
+
+**Implementation status:** Visual Crossing client exists, demo mode working. Enable live mode with:
+
+- `WEATHER_MODE=live`
+- `VISUAL_CROSSING_API_KEY=<key>`
+
+**Cost:** $0/month (free tier 1,000 calls/day, Gallery needs ~144/day)
+
+#### Market Mood Engine (Data Ready, Logic Needed)
+
+11 mood types defined in `market-moods.json`:
+
+| Mood                  | Trigger               | Effect                        |
+| --------------------- | --------------------- | ----------------------------- |
+| market_opening        | Exchange opens ±2min  | awakening, fresh, energetic   |
+| market_closing        | Exchange closes ±2min | reflective, calm, golden hour |
+| high_volatility       | FX volatility spike   | chaotic, dynamic, intense     |
+| low_volatility        | FX calm               | serene, balanced, peaceful    |
+| gold_rising           | Gold >1% up           | golden, warm, opulent         |
+| gold_falling          | Gold >1% down         | cool, reserved, muted         |
+| crypto_pumping        | BTC/ETH >5% up        | electric, neon, dynamic       |
+| currency_strength_usd | USD strengthening     | green, corporate, powerful    |
+| currency_strength_gbp | GBP strengthening     | royal, heritage, refined      |
+| currency_strength_eur | EUR strengthening     | sophisticated, architectural  |
+| neutral               | Default               | balanced, calm                |
+
+**Data sources:** All exist (`/api/fx`, `/api/crypto`, `/api/commodities`)
+
+#### AI Provider Selector (Gallery Mode Specific)
+
+Pro users can filter which providers appear in Gallery Mode:
+
+| Rule                             | Value                           |
+| -------------------------------- | ------------------------------- |
+| Max selections in Gallery        | 1–3 providers                   |
+| Max selections in Providers view | Unlimited (42)                  |
+| Sort order                       | Alphabetical, 123rf always last |
+| Persistence                      | localStorage + Clerk metadata   |
+
+**Truncation behaviour:** If switching to Gallery with >3 selected, truncate to first 3 alphabetically with toast notification.
+
+#### 4-Tier Prompt Variants
+
+Each generated image includes 4 copyable prompts:
+
+| Tier  | Platform Style   | Syntax Features               |
+| ----- | ---------------- | ----------------------------- |
+| **1** | CLIP-Based       | `::1.3` weights, `(term:1.2)` |
+| **2** | Midjourney       | `--ar`, `--no`, parameters    |
+| **3** | Natural Language | Full sentences                |
+| **4** | Plain Language   | Simple, focused               |
+
+**Copy buttons:** Each tier has a dedicated copy button. Users learn prompt engineering by seeing how the same scene translates to different platforms.
+
+#### Image Library (Gallery Archive)
+
+All generated images are stored with full metadata:
+
+```typescript
+interface GalleryEntry {
+  id: string;
+  imageUrl: string;
+  city: string;
+  exchangeId: string;
+  generatedAt: string;
+  localTime: string;
+  timeOfDay: 'dawn' | 'morning' | 'midday' | 'afternoon' | 'dusk' | 'night';
+  season: 'spring' | 'summer' | 'autumn' | 'winter';
+  weather?: { conditions: string; temperatureC: number };
+  mood: string;
+  prompts: {
+    tier1: string;
+    tier2: string;
+    tier3: string;
+    tier4: string;
+  };
+  sceneBrief: SceneBrief;
+}
+```
+
+**Filters available:**
+
+- By city
+- By season
+- By mood
+- By time-of-day
+
+#### Cost Control
+
+| Component                 | Monthly Cost    |
+| ------------------------- | --------------- |
+| DALL·E 3 (144 images/day) | ~$173           |
+| R2 Storage                | $0 (free tier)  |
+| Weather API               | $0 (free tier)  |
+| **Total**                 | **~$175/month** |
+
+**Break-even:** 20 Pro subscribers at $9/month
+
+#### Screensaver Mode
+
+Fullscreen mode for ambient display:
+
+- No UI chrome
+- Crossfade transitions (2s)
+- Context info in corner (semi-transparent)
+- ESC to exit
+- Reduced motion: instant swap (no crossfade)
+
+#### API Endpoints
+
+| Endpoint                     | Purpose                  | Rate Limit     |
+| ---------------------------- | ------------------------ | -------------- |
+| `GET /api/gallery/current`   | Current image + metadata | 60/min per IP  |
+| `GET /api/gallery/library`   | Paginated archive        | 30/min per IP  |
+| `POST /api/gallery/generate` | Manual trigger (admin)   | 1/10min global |
+
+#### Upsell for Free Users
+
+Free users see Gallery toggle but get:
+
+- Blurred preview image
+- "Watch the markets paint the world" messaging
+- Feature benefits list
+- Upgrade CTA button
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     🎨 Gallery Mode                              │
+│                                                                 │
+│     Watch the markets paint the world.                          │
+│                                                                 │
+│     ✓ Live AI-generated city scenes                            │
+│     ✓ 4 copyable prompt variants                               │
+│     ✓ Learn prompt engineering passively                       │
+│     ✓ Full image library access                                │
+│                                                                 │
+│              [Upgrade to Pro — $9/month]                        │
+│                                                                 │
+│     [Preview: blurred image with watermark]                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Implementation Files
+
+| File                                                    | Purpose                       |
+| ------------------------------------------------------- | ----------------------------- |
+| `src/lib/gallery/rotation-engine.ts`                    | Playlist + pointer management |
+| `src/lib/gallery/theme-engine.ts`                       | CitySnapshot builder          |
+| `src/lib/gallery/prompt-builder.ts`                     | Scene Brief → 4 variants      |
+| `src/lib/gallery/market-mood-engine.ts`                 | Live mood detection           |
+| `src/lib/gallery/generator.ts`                          | DALL·E API + fallback         |
+| `src/lib/gallery/storage.ts`                            | R2 + database                 |
+| `src/components/gallery/gallery-toggle.tsx`             | Providers/Gallery switcher    |
+| `src/components/gallery/gallery-slideshow.tsx`          | Image display + crossfade     |
+| `src/components/providers/provider-filter-selector.tsx` | Pro selector dropdown         |
+
+#### Implementation Timeline
+
+| Phase   | Duration  | Focus                                               |
+| ------- | --------- | --------------------------------------------------- |
+| Phase 1 | 2-3 weeks | MVP: Rotation → Theme → Prompt → Generate → Display |
+| Phase 2 | 1 week    | Weather + Market Mood Engine                        |
+| Phase 3 | 1 week    | AI Provider Selector                                |
+| Phase 4 | 1 week    | Library + Polish                                    |
+
+**Total:** ~5-6 weeks
+
+#### Security Considerations
+
+- API keys (OPENAI, VISUAL_CROSSING) server-side only
+- Rate limiting on all public endpoints
+- Zod validation on all inputs
+- DALL·E content safety filter always enabled
+- No real people in prompts (safe city anchors only)
+
+Rules:
+
+- Standard Promagen users see Gallery toggle but get upsell
+- Pro Promagen users get full Gallery experience
+- Images derive from existing market data (no new external APIs for MVP)
+- Prompts never contain financial terminology (artistic abstraction only)
+- Screensaver mode designed for ambient/passive viewing
+
+Authority for implementation: `docs/authority/gallery-mode-master.md`
 
 ---
 

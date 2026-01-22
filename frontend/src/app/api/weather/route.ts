@@ -1,218 +1,152 @@
-// src/app/api/weather/route.ts
+/**
+ * Promagen Frontend - Weather Route
+ * ===================================
+ * Proxy to the Fly.io gateway /weather endpoint.
+ * 
+ * Path: /api/weather
+ * Method: GET
+ * 
+ * Weather data is public (same for all users), so no auth/tier checking needed.
+ * Simply proxies to the gateway and returns the response.
+ *
+ * @module app/api/weather/route
+ */
 
 import { NextResponse } from 'next/server';
-import { listExchangeWeather } from '@/lib/weather/exchange-weather';
-import { resolveFeelsLike, type MarketWeather } from '@/lib/weather/weather';
-import { getOrFetchMarketWeather } from '@/lib/weather/weather-client';
 
-// Data: exchanges catalogue + selected set
-import exchangesSelected from '@/data/exchanges/exchanges.selected.json';
-import exchangesCatalog from '@/data/exchanges/exchanges.catalog.json';
+// =============================================================================
+// CONFIGURATION
+// =============================================================================
 
-type WeatherMode = 'demo' | 'live';
+const GATEWAY_URL = process.env['GATEWAY_URL'] ?? 'https://promagen-api.fly.dev';
 
-const WEATHER_MODE: WeatherMode =
-  ((process.env.WEATHER_MODE as WeatherMode) ?? 'demo') === 'live' ? 'live' : 'demo';
+// =============================================================================
+// TYPES
+// =============================================================================
 
-type ExchangeCatalogRow = {
+interface WeatherData {
   id: string;
   city: string;
-  latitude: number;
-  longitude: number;
-};
-
-type ExchangesSelectedJson = {
-  ids?: string[];
-};
-
-type WeatherApiExchange = {
-  id: string;
-  city: string;
-  latitude: number;
-  longitude: number;
-};
-
-const selectedIds: string[] = (exchangesSelected as ExchangesSelectedJson).ids ?? [];
-
-const EXCHANGE_BY_ID = new Map<string, ExchangeCatalogRow>(
-  (exchangesCatalog as ExchangeCatalogRow[]).map((row) => [row.id, row]),
-);
-
-/**
- * Clamp a number into [min, max].
- */
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
+  temperatureC: number;
+  temperatureF: number;
+  conditions: string;
+  description: string;
+  humidity: number;
+  windSpeedKmh: number;
+  emoji: string;
+  asOf: string;
 }
 
-/**
- * Apply a small deterministic wobble in DEMO mode so values are not static.
- */
-function applyDemoDrift(baseTempC: number, now: Date): number {
-  const minutes = now.getUTCMinutes();
-  const phase = (minutes / 60) * 2 * Math.PI;
-  const wobble = Math.sin(phase) * 1.5; // ±1.5 °C
-  const drifted = baseTempC + wobble;
-  return Math.round(drifted * 10) / 10;
+interface WeatherMeta {
+  mode: 'live' | 'cached' | 'stale' | 'fallback';
+  cachedAt?: string;
+  expiresAt?: string;
+  provider: string;
+  currentBatch: 'A' | 'B';
+  batchARefreshedAt?: string;
+  batchBRefreshedAt?: string;
+  budget: {
+    state: string;
+    dailyUsed: number;
+    dailyLimit: number;
+    minuteUsed: number;
+    minuteLimit: number;
+  };
 }
 
-/**
- * Exchanges we will fetch weather for – currently exchanges.selected.json.
- */
-function getSelectedExchangeConfigs(): WeatherApiExchange[] {
-  return selectedIds
-    .map((id) => {
-      const entry = EXCHANGE_BY_ID.get(id);
-      if (!entry) return null;
-
-      return {
-        id: entry.id,
-        city: entry.city,
-        latitude: entry.latitude,
-        longitude: entry.longitude,
-      } satisfies WeatherApiExchange;
-    })
-    .filter((value): value is WeatherApiExchange => value !== null);
+interface WeatherGatewayResponse {
+  meta: WeatherMeta;
+  data: WeatherData[];
 }
 
-/**
- * DEMO pipeline: synthesise MarketWeather[] from in-repo demo data.
- *
- * We *keep* emoji from the demo dataset (honouring iconOverride) so tests
- * can rely on predictable values like '🌧️'.
- */
-async function buildDemoPayload(now: Date): Promise<(MarketWeather & { emoji: string })[]> {
-  const demoEntries = listExchangeWeather();
-  const configs = getSelectedExchangeConfigs();
+interface ErrorResponse {
+  error: string;
+  meta?: { mode: string };
+  data?: never[];
+}
 
-  const byId = new Map<string, WeatherApiExchange>(configs.map((cfg) => [cfg.id, cfg]));
+// =============================================================================
+// HANDLER
+// =============================================================================
 
-  const projected: (MarketWeather & { emoji: string })[] = [];
-
-  for (const entry of demoEntries) {
-    const cfg = byId.get(entry.exchange);
-    if (!cfg) continue;
-
-    const tempC = applyDemoDrift(entry.tempC, now);
-    const feelsLikeC = resolveFeelsLike(tempC, entry.feelsLikeC);
-
-    const emoji =
-      entry.iconOverride && entry.iconOverride.trim().length > 0 ? entry.iconOverride : entry.emoji;
-
-    projected.push({
-      id: cfg.id,
-      city: cfg.city,
-      temperatureC: tempC,
-      feelsLikeC,
-      conditions: entry.condition,
-      emoji,
-      updatedISO: now.toISOString(),
+export async function GET(): Promise<NextResponse<WeatherGatewayResponse | ErrorResponse>> {
+  try {
+    const response = await fetch(`${GATEWAY_URL}/weather`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'Promagen-Frontend/1.0',
+      },
+      // Short timeout - don't block the UI
+      signal: AbortSignal.timeout(10_000),
+      // Allow caching at CDN level
+      next: { revalidate: 300 }, // 5 minutes
     });
-  }
 
-  return projected;
-}
+    if (!response.ok) {
+      console.error(`[Weather] Gateway returned ${response.status}`);
+      
+      return NextResponse.json(
+        {
+          error: 'Weather data unavailable',
+          meta: { mode: 'error' },
+          data: [],
+        },
+        {
+          status: 502,
+          headers: {
+            'Cache-Control': 'no-store',
+          },
+        }
+      );
+    }
 
-/**
- * LIVE pipeline: call the Visual Crossing client per exchange.
- *
- * Here we derive an emoji from the free-form conditions string so the
- * shape matches demo mode.
- */
-async function buildLivePayload(): Promise<(MarketWeather & { emoji: string })[]> {
-  const configs = getSelectedExchangeConfigs();
+    const data = (await response.json()) as WeatherGatewayResponse;
 
-  const results: (MarketWeather & { emoji: string })[] = [];
+    // Set cache headers based on data mode
+    let cacheControl = 'public, max-age=60';
+    
+    if (data.meta.mode === 'live' || data.meta.mode === 'cached') {
+      cacheControl = 'public, max-age=300, stale-while-revalidate=600';
+    }
 
-  for (const cfg of configs) {
-    const snapshot = await getOrFetchMarketWeather(cfg.id, cfg.city, cfg.latitude, cfg.longitude);
-
-    const tempC =
-      typeof snapshot.temperatureC === 'number' && Number.isFinite(snapshot.temperatureC)
-        ? snapshot.temperatureC
-        : 0;
-
-    const feelsLikeC = resolveFeelsLike(tempC, snapshot.feelsLikeC);
-    const conditions = snapshot.conditions ?? 'Unknown';
-    const emoji = conditionsToEmoji(conditions);
-
-    results.push({
-      id: cfg.id,
-      city: cfg.city,
-      temperatureC: tempC,
-      feelsLikeC,
-      conditions,
-      emoji,
-      updatedISO: snapshot.updatedISO,
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': cacheControl,
+      },
     });
+  } catch (error) {
+    console.error('[Weather] Proxy error:', error instanceof Error ? error.message : error);
+
+    // Handle timeout
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      return NextResponse.json(
+        {
+          error: 'Weather request timeout',
+          meta: { mode: 'error' },
+          data: [],
+        },
+        {
+          status: 504,
+          headers: {
+            'Cache-Control': 'no-store',
+          },
+        }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        error: 'Weather data unavailable',
+        meta: { mode: 'error' },
+        data: [],
+      },
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
   }
-
-  return results;
-}
-
-/**
- * GET /api/weather
- *
- * Returns a JSON array of MarketWeather objects (with an extra `emoji`
- * field). Tests explicitly expect `Array.isArray(body) === true`.
- */
-export async function GET(): Promise<Response> {
-  const now = new Date();
-
-  const payload = WEATHER_MODE === 'live' ? await buildLivePayload() : await buildDemoPayload(now);
-
-  const normalised = payload.map((entry) => ({
-    ...entry,
-    temperatureC: clamp(entry.temperatureC, -60, 60),
-    feelsLikeC: clamp(
-      typeof entry.feelsLikeC === 'number' ? entry.feelsLikeC : entry.temperatureC,
-      -60,
-      60,
-    ),
-  }));
-
-  // IMPORTANT: body is a bare array – tests expect Array.isArray(body) === true.
-  return NextResponse.json(normalised);
-}
-
-/**
- * POST behaves exactly like GET for now.
- */
-export async function POST(): Promise<Response> {
-  return GET();
-}
-
-/**
- * Simple, defensive mapping from a free-form conditions string
- * to an emoji. Used only in LIVE mode.
- */
-function conditionsToEmoji(conditions: string): string {
-  const lower = conditions.toLowerCase();
-
-  if (lower.includes('storm') || lower.includes('thunder')) {
-    return '⛈️';
-  }
-
-  if (lower.includes('snow') || lower.includes('sleet')) {
-    return '❄️';
-  }
-
-  if (lower.includes('rain') || lower.includes('drizzle')) {
-    return '🌧️';
-  }
-
-  if (lower.includes('cloud')) {
-    return '⛅';
-  }
-
-  if (lower.includes('wind')) {
-    return '🌬️';
-  }
-
-  if (lower.includes('fog') || lower.includes('mist') || lower.includes('haze')) {
-    return '🌫️';
-  }
-
-  // Default: assume decent weather.
-  return '☀️';
 }
