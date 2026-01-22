@@ -5,6 +5,10 @@
 // Fetches live weather data from the gateway for server components.
 // Falls back to demo data if gateway unavailable.
 //
+// FIXED (2026-01-22): Now maps ALL weather fields from gateway!
+// - Added tempF, humidity, windKmh, description
+// - Previously only mapped tempC, emoji, condition (causing 0% humidity, 0 km/h wind)
+//
 // Usage in server components (page.tsx):
 // ```typescript
 // import { getWeatherIndex } from '@/lib/weather/fetch-weather';
@@ -16,6 +20,7 @@
 // - Graceful fallback to demo data
 // - Type-safe transformations
 //
+// Existing features preserved: Yes
 // @module lib/weather/fetch-weather
 // ============================================================================
 
@@ -65,12 +70,19 @@ interface GatewayWeatherResponse {
 
 /**
  * Convert gateway weather item to ExchangeWeatherData for cards.
+ *
+ * FIXED: Now maps ALL fields from gateway response.
+ * Previously only mapped tempC, emoji, condition - causing 0% humidity, 0 km/h wind.
  */
 function toWeatherData(item: GatewayWeatherItem): ExchangeWeatherData {
   return {
     tempC: item.temperatureC,
+    tempF: item.temperatureF,
     emoji: item.emoji,
     condition: item.conditions,
+    humidity: item.humidity,
+    windKmh: item.windSpeedKmh,
+    description: item.description,
   };
 }
 
@@ -82,6 +94,10 @@ function demoToWeatherData(item: ExchangeWeather): ExchangeWeatherData {
     tempC: item.tempC,
     emoji: item.iconOverride ?? item.emoji,
     condition: item.condition,
+    // Demo data doesn't have these, so leave undefined
+    humidity: undefined,
+    windKmh: undefined,
+    description: undefined,
   };
 }
 
