@@ -13,7 +13,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "adx_general",
-      "indexName": "ADX General Index"
+      "indexName": "ADX General"
     },
     "hoverColor": "#FFB347"
   },
@@ -31,7 +31,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "ase",
-      "indexName": "ASE General Index"
+      "indexName": "ASE General"
     },
     "hoverColor": "#D4A574"
   },
@@ -50,7 +50,7 @@
     "ribbonLabel": "ASX Sydney",
     "marketstack": {
       "benchmark": "asx200",
-      "indexName": "S&P/ASX 200"
+      "indexName": "ASX 200"
     },
     "hoverColor": "#10B981"
   },
@@ -105,7 +105,7 @@
     "hemisphere": "SW",
     "marketstack": {
       "benchmark": "merval",
-      "indexName": "S&P MERVAL"
+      "indexName": "MERVAL"
     },
     "hoverColor": "#87CEEB"
   },
@@ -177,7 +177,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "sensex",
-      "indexName": "S&P BSE SENSEX"
+      "indexName": "SENSEX"
     },
     "hoverColor": "#F97316"
   },
@@ -213,7 +213,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "klci",
-      "indexName": "FTSE Bursa Malaysia KLCI"
+      "indexName": "KLCI"
     },
     "hoverColor": "#FBBF24"
   },
@@ -232,7 +232,7 @@
     "ribbonLabel": "Cboe Chicago",
     "marketstack": {
       "benchmark": "djia",
-      "indexName": "Dow Jones Industrial Average"
+      "indexName": "Dow Jones"
     },
     "hoverColor": "#3B82F6"
   },
@@ -250,7 +250,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "aspi",
-      "indexName": "CSE All Share Price Index"
+      "indexName": "CSE All Share"
     },
     "hoverColor": "#FB923C"
   },
@@ -269,7 +269,7 @@
     "ribbonLabel": "DFM Dubai",
     "marketstack": {
       "benchmark": "dfm_general",
-      "indexName": "DFM General Index"
+      "indexName": "DFM General"
     },
     "hoverColor": "#FFD700"
   },
@@ -396,7 +396,7 @@
     "ribbonLabel": "HKEX",
     "marketstack": {
       "benchmark": "hang_seng",
-      "indexName": "Hang Seng Index"
+      "indexName": "Hang Seng"
     },
     "hoverColor": "#FF3B5C"
   },
@@ -488,7 +488,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "moex",
-      "indexName": "MOEX Russia Index"
+      "indexName": "MOEX"
     },
     "hoverColor": "#EF4444"
   },
@@ -506,7 +506,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "omx_copenhagen_20",
-      "indexName": "OMX Copenhagen 20"
+      "indexName": "OMX Copenhagen"
     },
     "hoverColor": "#38BDF8"
   },
@@ -524,7 +524,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "omx_helsinki_25",
-      "indexName": "OMX Helsinki 25"
+      "indexName": "OMX Helsinki"
     },
     "hoverColor": "#0EA5E9"
   },
@@ -542,7 +542,7 @@
     "hemisphere": "NW",
     "marketstack": {
       "benchmark": "nasdaq",
-      "indexName": "NASDAQ Composite"
+      "indexName": "NASDAQ"
     },
     "hoverColor": "#06B6D4"
   },
@@ -579,7 +579,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "omx_stockholm_30",
-      "indexName": "OMX Stockholm 30"
+      "indexName": "OMX Stockholm"
     },
     "hoverColor": "#14B8A6"
   },
@@ -635,7 +635,7 @@
     "ribbonLabel": "NZX Wellington",
     "marketstack": {
       "benchmark": "nzx_50",
-      "indexName": "S&P/NZX 50"
+      "indexName": "NZX 50"
     },
     "hoverColor": "#00FF7F"
   },
@@ -653,7 +653,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "psei",
-      "indexName": "PSEi Composite"
+      "indexName": "PSEi"
     },
     "hoverColor": "#FF7F50"
   },
@@ -671,7 +671,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "qe_general",
-      "indexName": "QE General Index"
+      "indexName": "QE General"
     },
     "hoverColor": "#8B008B"
   },
@@ -690,7 +690,7 @@
     "ribbonLabel": "SET Bangkok",
     "marketstack": {
       "benchmark": "set",
-      "indexName": "SET Index"
+      "indexName": "SET"
     },
     "hoverColor": "#D946EF"
   },
@@ -708,7 +708,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "sti",
-      "indexName": "Straits Times Index"
+      "indexName": "Straits Times"
     },
     "hoverColor": "#E879F9"
   },
@@ -726,7 +726,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "smi",
-      "indexName": "Swiss Market Index"
+      "indexName": "SMI"
     },
     "hoverColor": "#C084FC"
   },
@@ -744,7 +744,7 @@
     "hemisphere": "SW",
     "marketstack": {
       "benchmark": "ipsa",
-      "indexName": "S&P IPSA"
+      "indexName": "IPSA"
     },
     "hoverColor": "#00CED1"
   },
@@ -761,8 +761,8 @@
     "holidaysRef": "sse-shanghai",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "sse_composite",
-      "indexName": "SSE Composite Index"
+      "benchmark": "shanghai_composite",
+      "indexName": "SSE Composite"
     },
     "hoverColor": "#FF1493"
   },
@@ -780,7 +780,7 @@
     "hemisphere": "NE",
     "marketstack": {
       "benchmark": "szse_component",
-      "indexName": "SZSE Component Index"
+      "indexName": "SZSE Component"
     },
     "hoverColor": "#FF69B4"
   },
@@ -798,8 +798,8 @@
     "hemisphere": "NE",
     "ribbonLabel": "Tadawul",
     "marketstack": {
-      "benchmark": "tasi",
-      "indexName": "Tadawul All Share Index"
+      "benchmark": "tadawul",
+      "indexName": "TASI"
     },
     "hoverColor": "#DAA520"
   },
@@ -854,7 +854,7 @@
     "hemisphere": "NW",
     "marketstack": {
       "benchmark": "tsx",
-      "indexName": "S&P/TSX Composite"
+      "indexName": "TSX Composite"
     },
     "hoverColor": "#7B68EE"
   },

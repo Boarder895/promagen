@@ -5,9 +5,9 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 1,
-    "ssotHash": "2f917febc97439de6d3066284badd0d1b6146a141cbdd5e75a6f88a9369ec1e6",
-    "ssotFingerprint": "2f917febc974",
-    "snapshotAt": "2026-01-15T18:12:48.610Z"
+    "ssotHash": "e79d49ec0aa1dab0fc0e310d99dbf9791fd1ee768bd60e2d87ca12c2f82455fd",
+    "ssotFingerprint": "e79d49ec0aa1",
+    "snapshotAt": "2026-01-23T09:43:14.806Z"
   },
   "catalog": [
     {
@@ -17,8 +17,6 @@
       "symbol": "BRENT",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -28,9 +26,7 @@
       "shortName": "TTF Natural Gas",
       "symbol": "TTF_GAS",
       "group": "energy",
-      "quoteCurrency": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true,
+      "quoteCurrency": "EUR",
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -41,8 +37,6 @@
       "symbol": "COFFEE",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -53,8 +47,6 @@
       "symbol": "SUGAR",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -65,8 +57,6 @@
       "symbol": "OJUICE",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -77,8 +67,6 @@
       "symbol": "IRONORE",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -89,8 +77,6 @@
       "symbol": "GAU/USD",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -101,8 +87,6 @@
       "symbol": "WTI",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -113,8 +97,6 @@
       "symbol": "NATGAS_HH",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -125,8 +107,6 @@
       "symbol": "HEATOIL",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -137,8 +117,6 @@
       "symbol": "RBOB",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -149,8 +127,6 @@
       "symbol": "GASOIL",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -161,8 +137,6 @@
       "symbol": "DUBAI",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -172,9 +146,7 @@
       "shortName": "NBP Gas",
       "symbol": "NBP_GAS",
       "group": "energy",
-      "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
+      "quoteCurrency": "GBP",
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -185,8 +157,6 @@
       "symbol": "LNG_JKM",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -196,9 +166,7 @@
       "shortName": "Power (EU)",
       "symbol": "POWER_EU",
       "group": "energy",
-      "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
+      "quoteCurrency": "EUR",
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -208,9 +176,7 @@
       "shortName": "Carbon (EU)",
       "symbol": "EUA",
       "group": "energy",
-      "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
+      "quoteCurrency": "EUR",
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -221,8 +187,6 @@
       "symbol": "XAG/USD",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -233,8 +197,6 @@
       "symbol": "XPT/USD",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -245,8 +207,6 @@
       "symbol": "XPD/USD",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -257,8 +217,6 @@
       "symbol": "COPPER",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -269,8 +227,6 @@
       "symbol": "ALUMINIUM",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -281,8 +237,6 @@
       "symbol": "ZINC",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -293,8 +247,6 @@
       "symbol": "NICKEL",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -305,8 +257,6 @@
       "symbol": "TIN",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -317,8 +267,6 @@
       "symbol": "LEAD",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -329,8 +277,6 @@
       "symbol": "LITHIUM",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -341,8 +287,6 @@
       "symbol": "RAREEARTH",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -353,8 +297,6 @@
       "symbol": "WHEAT",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -365,8 +307,6 @@
       "symbol": "CORN",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -377,8 +317,6 @@
       "symbol": "SOYBEANS",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -389,8 +327,6 @@
       "symbol": "COTTON",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -401,8 +337,6 @@
       "symbol": "COCOA",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -413,8 +347,6 @@
       "symbol": "PALMOIL",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -425,8 +357,6 @@
       "symbol": "RICE",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -437,8 +367,6 @@
       "symbol": "BARLEY",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -449,8 +377,6 @@
       "symbol": "COAL",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -461,8 +387,6 @@
       "symbol": "ETHANOL",
       "group": "energy",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -473,8 +397,6 @@
       "symbol": "SORGHUM",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -485,8 +407,6 @@
       "symbol": "MILLET",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -497,8 +417,6 @@
       "symbol": "DATES",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -509,8 +427,6 @@
       "symbol": "TEA",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -521,8 +437,6 @@
       "symbol": "COBALT",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -533,8 +447,6 @@
       "symbol": "BAUXITE",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -545,8 +457,6 @@
       "symbol": "URANIUM",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -557,8 +467,6 @@
       "symbol": "CHROMIUM",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -569,8 +477,6 @@
       "symbol": "POTASH",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -581,8 +487,6 @@
       "symbol": "PHOSPHATES",
       "group": "agriculture",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     },
@@ -593,8 +497,6 @@
       "symbol": "TITANIUM",
       "group": "metals",
       "quoteCurrency": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false,
       "isActive": true,
       "isSelectableInRibbon": true
     }

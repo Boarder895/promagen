@@ -13,6 +13,9 @@
 // Updated: 22 Jan 2026 - Professional sortable headers with always-visible arrows
 //                      - Underline on hover, glow on active
 //                      - Bloomberg-style sort indicators
+// Updated: 22 Jan 2026 - BUGFIX: Fixed inverted sort direction
+//                      - 'desc' now correctly shows highest scores first
+//                      - Separate dir calculation for score vs imageQuality
 
 'use client';
 
@@ -258,8 +261,8 @@ export default function ProvidersTable(props: ProvidersTableProps) {
     } else {
       // Switch to new column with default direction
       setSortBy(column);
-      // Image quality: lower rank = better, so default to asc
-      // Score: higher = better, so default to desc
+      // Image quality: lower rank = better, so default to asc (shows rank 1 first)
+      // Score: higher = better, so default to desc (shows highest first)
       setSortDirection(column === 'imageQuality' ? 'asc' : 'desc');
     }
   };
@@ -270,23 +273,31 @@ export default function ProvidersTable(props: ProvidersTableProps) {
       : providers;
 
   // Sort providers based on selected column and direction
+  // BUGFIX: Each sort type calculates dir based on its natural ordering
   const sorted = React.useMemo(() => {
     const arr = [...sliced] as ProviderWithPromagenUsers[];
-    const dir = sortDirection === 'asc' ? 1 : -1;
 
     if (sortBy === 'imageQuality') {
+      // For imageQuality: lower rank = better
+      // 'asc' (default) → show rank 1, 2, 3... (best first) → natural order
+      // 'desc' → show worst first → inverted
+      const dir = sortDirection === 'asc' ? 1 : -1;
       return arr.sort((a, b) => {
         const aRank = a.imageQualityRank ?? 999;
         const bRank = b.imageQualityRank ?? 999;
-        return (aRank - bRank) * dir; // Lower rank = better quality
+        return (aRank - bRank) * dir;
       });
     }
 
     // Default: sort by overall score
+    // For score: higher = better
+    // 'desc' (default) → show highest first → natural order for (bScore - aScore)
+    // 'asc' → show lowest first → inverted
+    const dir = sortDirection === 'desc' ? 1 : -1;
     return arr.sort((a, b) => {
       const aScore = (a.score ?? 0) - (a.incumbentAdjustment ? 5 : 0);
       const bScore = (b.score ?? 0) - (b.incumbentAdjustment ? 5 : 0);
-      return (bScore - aScore) * dir; // Higher score = better
+      return (bScore - aScore) * dir;
     });
   }, [sliced, sortBy, sortDirection]);
 

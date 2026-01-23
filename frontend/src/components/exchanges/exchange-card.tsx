@@ -1,27 +1,24 @@
 // frontend/src/components/exchanges/exchange-card.tsx
 // ============================================================================
-// EXCHANGE CARD - WITH RIGHT-SIDE BOX FOR WEATHER + COSMIC EVENTS
+// EXCHANGE CARD - WITH AUTO-FIT TEXT
 // ============================================================================
 // Unified exchange card component with:
+// - FitText component: measures container and scales text to fit
 // - Left section: Exchange info + Clock (top) | Index quote row (bottom)
-// - Right section: Full-height box with weather (top) + empty space (future cosmic)
-// - Horizontal divider under exchange name row (stops at vertical line)
-// - Vertical divider runs full height from top to bottom
+// - Right section: Weather box
 //
-// UPDATES (20 Jan 2026):
-// - Full-height vertical divider creates right-side box
-// - Horizontal line under exchange name only (NOT under weather)
-// - Weather stays in top of right box
-// - Empty space below weather reserved for future cosmic events
-// - Both rails: tooltips open LEFT and CAN EXTEND OUTSIDE card boundary
-// - Removed overflow-hidden from card to allow tooltip overflow
+// UPDATES (23 Jan 2026 - AUTO-FIT):
+// - NEW: FitText component for true auto-sizing text
+// - Text scales based on actual container width (measured in pixels)
+// - Uses ResizeObserver to respond to container/screen size changes
+// - Min/max font sizes prevent text being too tiny or huge
 //
 // Existing features preserved: Yes
 // ============================================================================
 'use client';
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { ExchangeCardProps, IndexQuoteData } from './types';
 import Flag from '@/components/ui/flag';
 import { LedClock } from './time/led-clock';
@@ -31,10 +28,103 @@ import type { ExchangeWeatherDisplay } from '@/lib/weather/weather-types';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 
 // ============================================================================
+// FIT TEXT COMPONENT - Auto-scales text to fit container width
+// ============================================================================
+// How it works:
+// 1. Renders text at max font size in a hidden measurement span
+// 2. Compares text width to container width
+// 3. Scales font-size down until text fits (or hits minimum)
+// 4. Re-measures on container resize via ResizeObserver
+// ============================================================================
+
+interface FitTextProps {
+  children: React.ReactNode;
+  /** Minimum font size in pixels */
+  min?: number;
+  /** Maximum font size in pixels */
+  max?: number;
+  /** Additional CSS classes */
+  className?: string;
+}
+
+const FitText = React.memo(function FitText({
+  children,
+  min = 10,
+  max = 24,
+  className = '',
+}: FitTextProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [fontSize, setFontSize] = useState(max);
+
+  const calculateFit = useCallback(() => {
+    if (!containerRef.current || !textRef.current) return;
+
+    const container = containerRef.current;
+    const text = textRef.current;
+
+    // Get available width (container width minus any padding)
+    const containerWidth = container.clientWidth;
+    if (containerWidth === 0) return;
+
+    // Binary search for optimal font size
+    let low = min;
+    let high = max;
+    let bestFit = min;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      text.style.fontSize = `${mid}px`;
+
+      // Check if text fits
+      if (text.scrollWidth <= containerWidth) {
+        bestFit = mid;
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    setFontSize(bestFit);
+  }, [min, max]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // Initial calculation
+    calculateFit();
+
+    // Re-calculate on resize
+    const resizeObserver = new ResizeObserver(() => {
+      calculateFit();
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, [calculateFit, children]);
+
+  return (
+    <div ref={containerRef} className="w-full overflow-hidden">
+      <span
+        ref={textRef}
+        className={className}
+        style={{
+          fontSize: `${fontSize}px`,
+          display: 'block',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {children}
+      </span>
+    </div>
+  );
+});
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
-/** Extended weather data that may include additional fields beyond the base type */
 interface ExtendedWeatherData {
   tempC?: number | null;
   tempF?: number | null;
@@ -52,10 +142,6 @@ interface ExtendedWeatherData {
 
 const DEFAULT_HOVER_COLOR = '#A855F7';
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
-
-// Consistent emoji size class
-const EMOJI_SIZE_CLASS = 'inline-flex items-center justify-center w-5 h-5 text-base leading-none';
-const EMOJI_SIZE_CLASS_SM = 'inline-flex items-center justify-center w-4 h-4 text-sm leading-none';
 
 // ============================================================================
 // HELPERS
@@ -103,8 +189,25 @@ function formatPercent(percent: number): string {
   return `${sign}${percent.toFixed(2)}%`;
 }
 
+/**
+ * Returns wind emoji based on wind speed (Beaufort scale inspired)
+ * 🍃 Calm (0-5 km/h) - leaves barely move
+ * 🌬️ Light breeze (6-19 km/h) - gentle wind
+ * 💨 Moderate wind (20-39 km/h) - noticeable wind
+ * 🌪️ Strong wind (40-61 km/h) - strong gusts
+ * 🌀 Gale/Storm (62+ km/h) - dangerous winds
+ */
+function getWindEmoji(windKmh: number | null | undefined): string {
+  const speed = windKmh ?? 0;
+  if (speed <= 5) return '🍃'; // Calm
+  if (speed <= 19) return '🌬️'; // Light breeze
+  if (speed <= 39) return '💨'; // Moderate wind
+  if (speed <= 61) return '🌪️'; // Strong wind
+  return '🌀'; // Gale/Storm
+}
+
 // ============================================================================
-// INDEX ROW COMPONENT - WITH DATA (TIGHTER SPACING)
+// INDEX ROW COMPONENT - WITH DATA
 // ============================================================================
 
 interface IndexRowWithDataProps {
@@ -124,23 +227,18 @@ const IndexRowWithData = React.memo(function IndexRowWithData({ quote }: IndexRo
   )})`;
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2.5" role="group" aria-label={srText}>
-      {/* Index name - left aligned */}
-      <span className="shrink-0 text-xs font-medium text-slate-300">{indexName}</span>
-
-      {/* Price and change - directly after index name with small gap */}
-      <div className="flex items-center gap-2 text-xs">
-        <span className="tabular-nums font-semibold text-slate-100">{formatPrice(price)}</span>
-
-        <span className={`flex items-center gap-1 tabular-nums ${tickColorClass}`}>
-          <span className="text-[10px]" aria-hidden="true">
+    <div className="w-full px-4 py-2.5" role="group" aria-label={srText}>
+      {/* All index data on ONE line - auto-fit */}
+      <FitText min={10} max={20} className="font-medium text-slate-300">
+        <span>{indexName}: </span>
+        <span className="ml-1 font-semibold text-slate-100">{formatPrice(price)}</span>
+        <span className={tickColorClass}>
+          <span className={`text-[0.8em] ml-1.5 ${tick !== 'flat' ? 'tick-arrow' : ''}`}>
             {tickArrow}
-          </span>
-          <span>
-            {formatChange(change)} ({formatPercent(percentChange)})
-          </span>
+          </span>{' '}
+          {formatChange(change)} ({formatPercent(percentChange)})
         </span>
-      </div>
+      </FitText>
     </div>
   );
 });
@@ -158,21 +256,21 @@ const IndexRowPlaceholder = React.memo(function IndexRowPlaceholder({
 }: IndexRowPlaceholderProps) {
   return (
     <div
-      className="flex items-center gap-2 px-4 py-2.5"
+      className="w-full px-4 py-2.5"
       role="group"
       aria-label={`${indexName}: awaiting price data`}
     >
-      <span className="shrink-0 text-xs font-medium text-slate-300">{indexName}</span>
-
-      <div className="flex items-center gap-3 text-xs">
-        <span className="tabular-nums font-semibold text-slate-500 animate-pulse">···</span>
-      </div>
+      {/* Index name + placeholder on ONE line */}
+      <FitText min={10} max={16} className="font-medium text-slate-300">
+        <span>{indexName}: </span>
+        <span className="text-slate-500 animate-pulse">···</span>
+      </FitText>
     </div>
   );
 });
 
 // ============================================================================
-// WEATHER SECTION COMPONENT - FOR RIGHT BOX (TOP)
+// WEATHER SECTION COMPONENT
 // ============================================================================
 
 interface WeatherSectionProps {
@@ -181,70 +279,52 @@ interface WeatherSectionProps {
   weather: ExchangeWeatherDisplay;
   promptTier?: PromptTier;
   isPro?: boolean;
-  /** Which rail the card is in - controls tooltip direction */
   railPosition?: 'left' | 'right';
 }
 
 const WeatherSection = React.memo(function WeatherSection({
-  city,
-  tz,
+  city: _city,
+  tz: _tz,
   weather,
-  promptTier = 4,
-  isPro = false,
+  promptTier: _promptTier = 4,
+  isPro: _isPro = false,
   railPosition: _railPosition = 'left',
 }: WeatherSectionProps) {
   const { tempC, tempF, emoji, humidity, windKmh } = weather;
 
-  // No weather data
   if (tempC === null) {
     return (
-      <div className="flex flex-col items-center justify-center gap-0.5 text-slate-500">
+      <div className="flex flex-col items-center justify-center gap-0.5 text-slate-500 w-full">
         <span className="text-sm">—</span>
       </div>
     );
   }
 
+  // Get dynamic wind emoji based on speed
+  const windEmoji = getWindEmoji(windKmh);
+
   return (
-    <div className="flex flex-col items-center gap-1">
-      {/* Line 1: Temp + Emoji with tooltip - text-xs for consistency */}
-      <div className="flex items-center gap-2 text-xs">
-        <span className="tabular-nums text-slate-200">
-          {Math.round(tempC)}°C / {Math.round(tempF ?? (tempC * 9) / 5 + 32)}°F
-        </span>
-        {emoji && (
-          <WeatherPromptTooltip
-            city={city}
-            tz={tz}
-            weather={weather}
-            tier={promptTier}
-            isPro={isPro}
-            tooltipPosition="left"
-          >
-            <span
-              className={EMOJI_SIZE_CLASS}
-              role="img"
-              aria-label={weather.condition ?? 'Weather'}
-            >
-              {emoji}
-            </span>
-          </WeatherPromptTooltip>
-        )}
+    <div className="flex flex-col gap-2 w-full px-1">
+      {/* Row 1: Temperature + Weather emoji - centered */}
+      <div className="text-center">
+        <FitText min={10} max={15} className="tabular-nums text-slate-200">
+          {Math.round(tempC)}°C / {Math.round(tempF ?? (tempC * 9) / 5 + 32)}°F{' '}
+          <span className="text-xl">{emoji || ''}</span>
+        </FitText>
       </div>
 
-      {/* Line 2: Wind + Humidity - SAME SIZE as row 1 (text-xs) */}
-      <div className="flex items-center gap-2 text-xs text-slate-400">
-        <span className="flex items-center gap-0.5" title={`Wind: ${windKmh ?? 0} km/h`}>
-          <span className={EMOJI_SIZE_CLASS_SM} aria-hidden="true">
-            💨
-          </span>
-          <span className="tabular-nums">{windKmh ?? 0}km/h</span>
-        </span>
-        <span className="flex items-center gap-0.5" title={`Humidity: ${humidity ?? 0}%`}>
-          <span className={EMOJI_SIZE_CLASS_SM} aria-hidden="true">
-            💧
-          </span>
-          <span className="tabular-nums">{humidity ?? 0}%</span>
-        </span>
+      {/* Row 2: Wind - full width, left-aligned */}
+      <div className="flex items-center justify-between text-slate-400">
+        <FitText min={9} max={15} className="tabular-nums">
+          {windEmoji} {windKmh ?? 0} km/h
+        </FitText>
+      </div>
+
+      {/* Row 3: Humidity - full width, right-aligned */}
+      <div className="flex items-center justify-between text-slate-400">
+        <FitText min={9} max={15} className="tabular-nums">
+          💧 {humidity ?? 0}%
+        </FitText>
       </div>
     </div>
   );
@@ -260,13 +340,9 @@ type LegacyExchangeShape = {
   marketstack?: { indexName?: string } | null;
 };
 
-// Extended props for weather prompt tier and rail position
 interface ExtendedExchangeCardProps extends ExchangeCardProps {
-  /** Prompt tier for weather tooltip (1-4). Default: 4 (free) */
   promptTier?: PromptTier;
-  /** Whether user is Pro tier */
   isPro?: boolean;
-  /** Which rail the card is in - controls tooltip direction */
   railPosition?: 'left' | 'right';
 }
 
@@ -279,7 +355,6 @@ export const ExchangeCard = React.memo(function ExchangeCard({
 }: ExtendedExchangeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Support both the unified card shape and the SSOT catalogue shape.
   const ex = exchange as typeof exchange & LegacyExchangeShape;
 
   const id = ex.id;
@@ -314,7 +389,6 @@ export const ExchangeCard = React.memo(function ExchangeCard({
     transition: 'all 200ms ease-out',
   };
 
-  // Convert old weather format to new display format
   const extWeather = weather as ExtendedWeatherData | null;
   const weatherDisplay: ExchangeWeatherDisplay = extWeather
     ? {
@@ -371,21 +445,38 @@ export const ExchangeCard = React.memo(function ExchangeCard({
       />
 
       {/* ================================================================== */}
-      {/* MAIN LAYOUT: Left section + Vertical Divider + Right Box          */}
+      {/* MAIN LAYOUT                                                        */}
       {/* ================================================================== */}
       <div className="relative z-10 flex">
-        {/* LEFT SECTION: Exchange info (top) + Index row (bottom) */}
-        <div className="flex-1 flex flex-col">
+        {/* LEFT SECTION */}
+        <div className="flex-[3] flex flex-col min-w-0">
           {/* TOP ROW: Exchange Name + Clock */}
           <div className="grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-3">
             {/* Exchange Name + City + Flag */}
             <div className="min-w-0">
-              <p className="ribbon-chip-label font-medium leading-tight text-slate-100 truncate">
+              {/* Exchange name - auto-fit */}
+              <FitText min={12} max={24} className="font-medium leading-tight text-slate-100">
                 {displayName}
-              </p>
+              </FitText>
+
               <div className="mt-1 flex items-center gap-2">
-                <span className="truncate text-xs text-slate-400">{city}</span>
-                <Flag countryCode={countryCode} size={24} decorative={false} className="shrink-0" />
+                {/* City name + Flag on same line */}
+                <span className="text-base text-slate-400 truncate">{city}</span>
+                <WeatherPromptTooltip
+                  city={city}
+                  tz={tz}
+                  weather={weatherDisplay}
+                  tier={promptTier}
+                  isPro={isPro}
+                  tooltipPosition={railPosition}
+                >
+                  <Flag
+                    countryCode={countryCode}
+                    size={28}
+                    decorative={false}
+                    className="shrink-0 cursor-help"
+                  />
+                </WeatherPromptTooltip>
               </div>
             </div>
 
@@ -395,14 +486,14 @@ export const ExchangeCard = React.memo(function ExchangeCard({
                 <LedClock tz={tz} showSeconds={false} ariaLabel={`Local time in ${city || name}`} />
               ) : (
                 <div className="inline-flex items-center justify-center rounded bg-slate-900/80 px-2 py-1.5 ring-1 ring-slate-700/50">
-                  <span className="font-mono text-sm text-slate-500">--:--</span>
+                  <span className="font-mono text-base text-slate-500">--:--</span>
                 </div>
               )}
               <MarketStatusIndicator tz={tz} hoursTemplate={hoursTemplate} />
             </div>
           </div>
 
-          {/* HORIZONTAL DIVIDER: Under exchange name row (stops at vertical line) */}
+          {/* HORIZONTAL DIVIDER */}
           <div className="border-t border-white/5" aria-hidden="true" />
 
           {/* BOTTOM ROW: Index Quote */}
@@ -417,13 +508,12 @@ export const ExchangeCard = React.memo(function ExchangeCard({
           </div>
         </div>
 
-        {/* VERTICAL DIVIDER: Full height from top to bottom */}
+        {/* VERTICAL DIVIDER */}
         <div className="w-px bg-white/10 self-stretch" aria-hidden="true" />
 
-        {/* RIGHT BOX: Weather (top) + Empty space for cosmic (bottom) */}
-        <div className="w-[130px] flex flex-col">
-          {/* Weather Section - Top of right box */}
-          <div className="flex items-center justify-center px-3 py-3">
+        {/* RIGHT BOX: Weather */}
+        <div className="flex-1 flex flex-col min-w-[100px] max-w-[140px]">
+          <div className="flex-1 flex items-start justify-center px-1 py-3">
             <WeatherSection
               city={city}
               tz={tz}
@@ -433,9 +523,6 @@ export const ExchangeCard = React.memo(function ExchangeCard({
               railPosition={railPosition}
             />
           </div>
-
-          {/* Empty space below weather - reserved for future cosmic events */}
-          <div className="flex-1 min-h-[40px]" aria-hidden="true" />
         </div>
       </div>
     </div>

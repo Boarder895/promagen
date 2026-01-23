@@ -74,7 +74,7 @@ const CLOSE_DELAY_MS = 400;
 const TOOLTIP_GAP = 8;
 
 /** Tooltip dimensions for positioning calculations */
-const TOOLTIP_WIDTH = 280;
+const TOOLTIP_WIDTH = 450;
 
 // ============================================================================
 // HELPERS
@@ -215,8 +215,8 @@ function TooltipContent({
       role="tooltip"
       className="
         fixed
-        rounded-xl px-4 py-3
-        text-xs text-slate-100
+        rounded-xl px-6 py-4
+        text-sm text-slate-100
       "
       style={{
         top: position.top,
@@ -228,7 +228,7 @@ function TooltipContent({
         boxShadow: `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`,
         width: `${TOOLTIP_WIDTH}px`,
         maxWidth: `${TOOLTIP_WIDTH}px`,
-        minWidth: '220px',
+        minWidth: '300px',
         pointerEvents: 'auto',
       }}
       onMouseEnter={onMouseEnter}
@@ -252,11 +252,11 @@ function TooltipContent({
       />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col gap-2">
+      <div className="relative z-10 flex flex-col gap-3">
         {/* Header with Pro badge */}
         <div className="flex items-center justify-between gap-2 mb-1">
           <span
-            className="text-xs font-semibold text-white"
+            className="text-base font-semibold text-white"
             style={{
               textShadow: `0 0 12px ${glowRgba}`,
             }}
@@ -264,28 +264,28 @@ function TooltipContent({
             {city} • Image Prompt
           </span>
           {isPro && (
-            <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
+            <span className="px-2 py-1 text-xs font-medium rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
               PRO
             </span>
           )}
         </div>
 
         {/* Tier indicator */}
-        <span className="text-[10px] text-slate-500 -mt-1">
+        <span className="text-xs text-slate-500 -mt-1">
           Tier {tier}:{' '}
           {tier === 1 ? 'CLIP' : tier === 2 ? 'Midjourney' : tier === 3 ? 'DALL·E' : 'Plain'}
         </span>
 
         {/* Prompt text */}
         <p
-          className="text-[11px] leading-relaxed text-slate-200 whitespace-pre-wrap break-words"
-          style={{ maxWidth: '260px' }}
+          className="text-sm leading-relaxed text-slate-200 whitespace-pre-wrap break-words"
+          style={{ maxWidth: '420px' }}
         >
           {prompt}
         </p>
 
         {/* Copy button row */}
-        <div className="flex justify-end mt-1 pt-2 border-t border-white/10">
+        <div className="flex justify-end mt-2 pt-3 border-t border-white/10">
           <CopyIcon onClick={onCopy} copied={copied} />
         </div>
       </div>
@@ -314,7 +314,7 @@ export function WeatherPromptTooltip({
   weather,
   tier = getDefaultTier(),
   isPro = false,
-  tooltipPosition: _tooltipPosition = 'left',
+  tooltipPosition = 'left',
 }: WeatherPromptTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -365,21 +365,29 @@ export function WeatherPromptTooltip({
 
   /**
    * Calculate tooltip position based on trigger's viewport position.
-   * Positions tooltip to the LEFT of the trigger, vertically centered.
+   * - Left rail (tooltipPosition='left'): opens to RIGHT of trigger
+   * - Right rail (tooltipPosition='right'): opens to LEFT of trigger
    */
   const calculatePosition = useCallback(() => {
     if (!triggerRef.current) return;
 
     const rect = triggerRef.current.getBoundingClientRect();
 
-    // Position to the LEFT of trigger
-    const left = rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP;
+    let left: number;
+    
+    if (tooltipPosition === 'left') {
+      // Left rail: tooltip opens to the RIGHT
+      left = rect.right + TOOLTIP_GAP;
+    } else {
+      // Right rail: tooltip opens to the LEFT
+      left = rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP;
+    }
 
     // Vertically center relative to trigger
     const top = rect.top + rect.height / 2;
 
     setTooltipCoords({ top, left });
-  }, []);
+  }, [tooltipPosition]);
 
   /**
    * Clear any pending close timeout.

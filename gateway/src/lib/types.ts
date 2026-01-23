@@ -60,8 +60,8 @@ export type TickDirection = 'up' | 'down' | 'flat';
 /** User tier */
 export type UserTier = 'free' | 'paid';
 
-/** SSOT source */
-export type SsotSource = 'frontend' | 'fallback';
+/** SSOT source - indicates where the SSOT configuration was loaded from */
+export type SsotSource = 'frontend' | 'fallback' | 'snapshot-fallback';
 
 /** Feed identifier */
 export type FeedId = 'fx' | 'commodities' | 'crypto' | 'indices';
@@ -616,10 +616,10 @@ export const SELECTION_LIMITS = {
 
 /** Default TTL values in seconds */
 export const DEFAULT_TTL = {
-  fx: 1800,        // 30 minutes
+  fx: 1800, // 30 minutes
   commodities: 1800,
   crypto: 1800,
-  indices: 7200,   // 2 hours
+  indices: 7200, // 2 hours
 } as const;
 
 /** Default budget limits */
@@ -633,6 +633,6 @@ export const DEFAULT_BUDGET = {
  * FX and Crypto NEVER overlap to prevent rate limit violations.
  */
 export const TWELVEDATA_SLOTS = {
-  fx: [0, 30] as const,      // Minutes :00 and :30
+  fx: [0, 30] as const, // Minutes :00 and :30
   crypto: [20, 50] as const, // Minutes :20 and :50
 } as const;

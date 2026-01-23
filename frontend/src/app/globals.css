@@ -278,6 +278,55 @@ a:hover {
 }
 
 /* ========================================================================== */
+/* TICK ARROW PULSE ANIMATION - Exchange Card Index Row                       */
+/* Added: 23 Jan 2026                                                         */
+/* ========================================================================== */
+/* 
+ * Purpose: Animate ▲/▼ tick arrows on index quote rows
+ * Controls:
+ *   - BRIGHTNESS: Adjust opacity values in @keyframes tick-pulse (0.7 → 1)
+ *   - SCALE: Adjust scale values in @keyframes tick-pulse (1 → 1.15)
+ *   - SPEED: Adjust animation duration in .tick-arrow (1.5s)
+ *   - TIMING: Adjust ease function (ease-in-out)
+ * 
+ * Applied to: exchange-card.tsx line ~143 (IndexRowWithData component)
+ *   <span className={`text-[10px] ${tick !== 'flat' ? 'tick-arrow' : ''}`}>
+ */
+
+/* Pulse animation for tick arrows (▲ up / ▼ down) */
+@keyframes tick-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4); /* ADJUST: Increase for larger pulse */
+    opacity: 2; /* ADJUST: Decrease for more dimming */
+  }
+}
+
+/* Tick arrow base class - applies pulse animation */
+.tick-arrow {
+  display: inline-block;
+  animation: tick-pulse 1.5s ease-in-out infinite; /* ADJUST: Change 1.5s for speed */
+  will-change: transform, opacity;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .tick-arrow {
+    animation: none;
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ========================================================================== */
+/* END TICK ARROW PULSE ANIMATION                                             */
+/* ========================================================================== */
+
+/* ========================================================================== */
 /* Promagen Provider Leaderboard Styles                                       */
 /* Updated: December 31, 2025                                                 */
 /* ========================================================================== */

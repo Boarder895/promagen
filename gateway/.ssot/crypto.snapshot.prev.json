@@ -5,9 +5,9 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 1,
-    "ssotHash": "2bd5f4cd9cedfab001646b5c1d375fe83eca77ce94de2a63199bba6ceea06ada",
-    "ssotFingerprint": "2bd5f4cd9ced",
-    "snapshotAt": "2026-01-15T18:12:48.614Z"
+    "ssotHash": "26ef80143e730350dc904f192e310f82f8d820ad9d650e4809e0b90ad05b6ef7",
+    "ssotFingerprint": "26ef80143e73",
+    "snapshotAt": "2026-01-23T09:43:14.530Z"
   },
   "catalog": [
     {
@@ -819,6 +819,6 @@
     "sol",
     "usdc",
     "xrp",
-    "ton"
+    "doge"
   ]
 }

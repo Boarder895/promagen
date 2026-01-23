@@ -5,724 +5,520 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 1,
-    "ssotHash": "ce61c0cb60f7a79cd15f556580910fef87ce01101fecebfd22b7893826ad5e65",
-    "ssotFingerprint": "ce61c0cb60f7",
-    "snapshotAt": "2026-01-15T18:12:48.608Z"
+    "ssotHash": "d9248731dc9ec4593b6aa0c23a452c7c3f9e839ef25892806a55e4f6676981fd",
+    "ssotFingerprint": "d9248731dc9e",
+    "snapshotAt": "2026-01-23T09:43:14.630Z"
   },
   "catalog": [
     {
       "id": "eur-usd",
       "base": "EUR",
-      "quote": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true
+      "quote": "USD"
     },
     {
       "id": "usd-jpy",
       "base": "USD",
-      "quote": "JPY",
-      "isDefaultFree": true,
-      "isDefaultPaid": true
+      "quote": "JPY"
     },
     {
       "id": "gbp-usd",
       "base": "GBP",
-      "quote": "USD",
-      "isDefaultFree": true,
-      "isDefaultPaid": true
+      "quote": "USD"
     },
     {
       "id": "aud-usd",
       "base": "AUD",
-      "quote": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "USD"
     },
     {
       "id": "nzd-usd",
       "base": "NZD",
-      "quote": "USD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "USD"
     },
     {
       "id": "usd-cad",
       "base": "USD",
-      "quote": "CAD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CAD"
     },
     {
       "id": "usd-chf",
       "base": "USD",
-      "quote": "CHF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CHF"
     },
     {
       "id": "usd-cnh",
       "base": "USD",
-      "quote": "CNH",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CNH"
     },
     {
       "id": "usd-cny",
       "base": "USD",
-      "quote": "CNY",
-      "isDefaultFree": true,
-      "isDefaultPaid": true
+      "quote": "CNY"
     },
     {
       "id": "usd-hkd",
       "base": "USD",
-      "quote": "HKD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "HKD"
     },
     {
       "id": "usd-sgd",
       "base": "USD",
-      "quote": "SGD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "SGD"
     },
     {
       "id": "usd-krw",
       "base": "USD",
-      "quote": "KRW",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "KRW"
     },
     {
       "id": "usd-sek",
       "base": "USD",
-      "quote": "SEK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "SEK"
     },
     {
       "id": "usd-nok",
       "base": "USD",
-      "quote": "NOK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "NOK"
     },
     {
       "id": "usd-dkk",
       "base": "USD",
-      "quote": "DKK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "DKK"
     },
     {
       "id": "usd-inr",
       "base": "USD",
-      "quote": "INR",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "INR"
     },
     {
       "id": "usd-twd",
       "base": "USD",
-      "quote": "TWD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "TWD"
     },
     {
       "id": "usd-thb",
       "base": "USD",
-      "quote": "THB",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "THB"
     },
     {
       "id": "usd-myr",
       "base": "USD",
-      "quote": "MYR",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "MYR"
     },
     {
       "id": "usd-idr",
       "base": "USD",
-      "quote": "IDR",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "IDR"
     },
     {
       "id": "usd-php",
       "base": "USD",
-      "quote": "PHP",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "PHP"
     },
     {
       "id": "usd-vnd",
       "base": "USD",
-      "quote": "VND",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "VND"
     },
     {
       "id": "usd-mxn",
       "base": "USD",
-      "quote": "MXN",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "MXN"
     },
     {
       "id": "usd-brl",
       "base": "USD",
-      "quote": "BRL",
-      "isDefaultFree": true,
-      "isDefaultPaid": true
+      "quote": "BRL"
     },
     {
       "id": "usd-zar",
       "base": "USD",
-      "quote": "ZAR",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "ZAR"
     },
     {
       "id": "usd-try",
       "base": "USD",
-      "quote": "TRY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "TRY"
     },
     {
       "id": "usd-pln",
       "base": "USD",
-      "quote": "PLN",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "PLN"
     },
     {
       "id": "usd-czk",
       "base": "USD",
-      "quote": "CZK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CZK"
     },
     {
       "id": "usd-huf",
       "base": "USD",
-      "quote": "HUF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "HUF"
     },
     {
       "id": "usd-ron",
       "base": "USD",
-      "quote": "RON",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "RON"
     },
     {
       "id": "usd-ils",
       "base": "USD",
-      "quote": "ILS",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "ILS"
     },
     {
       "id": "usd-aed",
       "base": "USD",
-      "quote": "AED",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "AED"
     },
     {
       "id": "usd-sar",
       "base": "USD",
-      "quote": "SAR",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "SAR"
     },
     {
       "id": "usd-qar",
       "base": "USD",
-      "quote": "QAR",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "QAR"
     },
     {
       "id": "usd-kwd",
       "base": "USD",
-      "quote": "KWD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "KWD"
     },
     {
       "id": "usd-clp",
       "base": "USD",
-      "quote": "CLP",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CLP"
     },
     {
       "id": "usd-cop",
       "base": "USD",
-      "quote": "COP",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "COP"
     },
     {
       "id": "usd-pen",
       "base": "USD",
-      "quote": "PEN",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "PEN"
     },
     {
       "id": "eur-gbp",
       "base": "EUR",
-      "quote": "GBP",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "GBP"
     },
     {
       "id": "eur-jpy",
       "base": "EUR",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "eur-chf",
       "base": "EUR",
-      "quote": "CHF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CHF"
     },
     {
       "id": "eur-cad",
       "base": "EUR",
-      "quote": "CAD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CAD"
     },
     {
       "id": "eur-aud",
       "base": "EUR",
-      "quote": "AUD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "AUD"
     },
     {
       "id": "eur-nzd",
       "base": "EUR",
-      "quote": "NZD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "NZD"
     },
     {
       "id": "eur-sek",
       "base": "EUR",
-      "quote": "SEK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "SEK"
     },
     {
       "id": "eur-nok",
       "base": "EUR",
-      "quote": "NOK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "NOK"
     },
     {
       "id": "eur-dkk",
       "base": "EUR",
-      "quote": "DKK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "DKK"
     },
     {
       "id": "eur-pln",
       "base": "EUR",
-      "quote": "PLN",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "PLN"
     },
     {
       "id": "eur-czk",
       "base": "EUR",
-      "quote": "CZK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CZK"
     },
     {
       "id": "eur-huf",
       "base": "EUR",
-      "quote": "HUF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "HUF"
     },
     {
       "id": "eur-ron",
       "base": "EUR",
-      "quote": "RON",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "RON"
     },
     {
       "id": "eur-try",
       "base": "EUR",
-      "quote": "TRY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "TRY"
     },
     {
       "id": "eur-zar",
       "base": "EUR",
-      "quote": "ZAR",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "ZAR"
     },
     {
       "id": "eur-mxn",
       "base": "EUR",
-      "quote": "MXN",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "MXN"
     },
     {
       "id": "eur-brl",
       "base": "EUR",
-      "quote": "BRL",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "BRL"
     },
     {
       "id": "eur-cnh",
       "base": "EUR",
-      "quote": "CNH",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CNH"
     },
     {
       "id": "eur-cny",
       "base": "EUR",
-      "quote": "CNY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CNY"
     },
     {
       "id": "eur-sgd",
       "base": "EUR",
-      "quote": "SGD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "SGD"
     },
     {
       "id": "eur-hkd",
       "base": "EUR",
-      "quote": "HKD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "HKD"
     },
     {
       "id": "eur-inr",
       "base": "EUR",
-      "quote": "INR",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "INR"
     },
     {
       "id": "eur-ils",
       "base": "EUR",
-      "quote": "ILS",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "ILS"
     },
     {
       "id": "eur-aed",
       "base": "EUR",
-      "quote": "AED",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "AED"
     },
     {
       "id": "gbp-jpy",
       "base": "GBP",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "aud-jpy",
       "base": "AUD",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "cad-jpy",
       "base": "CAD",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "chf-jpy",
       "base": "CHF",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "nzd-jpy",
       "base": "NZD",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "sek-jpy",
       "base": "SEK",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "nok-jpy",
       "base": "NOK",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "dkk-jpy",
       "base": "DKK",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "pln-jpy",
       "base": "PLN",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "czk-jpy",
       "base": "CZK",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "huf-jpy",
       "base": "HUF",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "try-jpy",
       "base": "TRY",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "zar-jpy",
       "base": "ZAR",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "mxn-jpy",
       "base": "MXN",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "sgd-jpy",
       "base": "SGD",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "hkd-jpy",
       "base": "HKD",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "cnh-jpy",
       "base": "CNH",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "inr-jpy",
       "base": "INR",
-      "quote": "JPY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "JPY"
     },
     {
       "id": "gbp-chf",
       "base": "GBP",
-      "quote": "CHF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CHF"
     },
     {
       "id": "gbp-cad",
       "base": "GBP",
-      "quote": "CAD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CAD"
     },
     {
       "id": "gbp-aud",
       "base": "GBP",
-      "quote": "AUD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "AUD"
     },
     {
       "id": "gbp-nzd",
       "base": "GBP",
-      "quote": "NZD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "NZD"
     },
     {
       "id": "gbp-sek",
       "base": "GBP",
-      "quote": "SEK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "SEK"
     },
     {
       "id": "gbp-nok",
       "base": "GBP",
-      "quote": "NOK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "NOK"
     },
     {
       "id": "gbp-dkk",
       "base": "GBP",
-      "quote": "DKK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "DKK"
     },
     {
       "id": "gbp-pln",
       "base": "GBP",
-      "quote": "PLN",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "PLN"
     },
     {
       "id": "gbp-czk",
       "base": "GBP",
-      "quote": "CZK",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CZK"
     },
     {
       "id": "gbp-huf",
       "base": "GBP",
-      "quote": "HUF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "HUF"
     },
     {
       "id": "gbp-try",
       "base": "GBP",
-      "quote": "TRY",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "TRY"
     },
     {
       "id": "gbp-zar",
       "base": "GBP",
-      "quote": "ZAR",
-      "isDefaultFree": true,
-      "isDefaultPaid": true
+      "quote": "ZAR"
     },
     {
       "id": "gbp-sgd",
       "base": "GBP",
-      "quote": "SGD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "SGD"
     },
     {
       "id": "gbp-hkd",
       "base": "GBP",
-      "quote": "HKD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "HKD"
     },
     {
       "id": "aud-cad",
       "base": "AUD",
-      "quote": "CAD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CAD"
     },
     {
       "id": "aud-nzd",
       "base": "AUD",
-      "quote": "NZD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "NZD"
     },
     {
       "id": "cad-chf",
       "base": "CAD",
-      "quote": "CHF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CHF"
     },
     {
       "id": "aud-chf",
       "base": "AUD",
-      "quote": "CHF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CHF"
     },
     {
       "id": "nzd-cad",
       "base": "NZD",
-      "quote": "CAD",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CAD"
     },
     {
       "id": "nzd-chf",
       "base": "NZD",
-      "quote": "CHF",
-      "isDefaultFree": false,
-      "isDefaultPaid": false
+      "quote": "CHF"
     },
     {
       "id": "aud-gbp",
       "base": "AUD",
-      "quote": "GBP",
-      "isDefaultFree": true,
-      "isDefaultPaid": true
+      "quote": "GBP"
     },
     {
       "id": "gbp-eur",
       "base": "GBP",
-      "quote": "EUR",
-      "isDefaultFree": true,
-      "isDefaultPaid": true
+      "quote": "EUR"
     }
   ],
   "defaults": [

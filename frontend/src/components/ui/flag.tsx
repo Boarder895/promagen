@@ -24,12 +24,16 @@ export type FlagProps = {
    * If false, we expose a stable label for accessibility.
    */
   decorative?: boolean;
+  /** Custom tooltip text. If not provided, uses country name from flagAriaLabel. */
+  title?: string;
 };
 
-export function Flag({ countryCode, size = 12, className, decorative = true }: FlagProps) {
+export function Flag({ countryCode, size = 12, className, decorative = true, title: customTitle }: FlagProps) {
   const src = flagSrc(countryCode);
   const emoji = countryCodeToFlagEmoji(countryCode);
   const label = countryCode ? flagAriaLabel(countryCode) : undefined;
+  // Use custom title if provided, otherwise fall back to label
+  const tooltipText = customTitle ?? label;
 
   // Nothing to show.
   if (!src && !emoji) return null;
@@ -49,11 +53,11 @@ export function Flag({ countryCode, size = 12, className, decorative = true }: F
           width={size}
           height={size}
           alt={decorative ? '' : label ?? 'Flag'}
-          title={label}
+          title={tooltipText}
           className="block"
         />
       ) : (
-        <span title={label}>{emoji}</span>
+        <span title={tooltipText}>{emoji}</span>
       )}
     </span>
   );

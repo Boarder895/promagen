@@ -12,6 +12,10 @@
  * - Caching:
  *     - Free/anonymous: public caching OK (cookie-free callers).
  *     - Paid: private, no-store (user-specific).
+ *
+ * Updated: 22 Jan 2026 - Added comprehensive try-catch error handling
+ *                      - Proper status codes for different failure modes
+ *                      - Server-side logging for debugging
  */
 
 import { NextResponse } from 'next/server';
@@ -174,107 +178,186 @@ async function proxyGatewayJson(
 }
 
 // ---------------------------------------------------------------------------
+// ERROR RESPONSE HELPERS
+// ---------------------------------------------------------------------------
+
+function errorResponse(
+  status: number,
+  message: string,
+  details?: Record<string, unknown>,
+): Response {
+  return NextResponse.json(
+    {
+      error: message,
+      ...details,
+      timestamp: new Date().toISOString(),
+    },
+    {
+      status,
+      headers: { 'Cache-Control': 'private, no-store' },
+    },
+  );
+}
+
+// ---------------------------------------------------------------------------
 // ROUTE
 // ---------------------------------------------------------------------------
 
 export async function GET(): Promise<Response> {
-  // Allowed IDs come from SSOT catalog.
-  const catalog = ExchangesCatalogSchema.parse(exchangesCatalogJson);
-  const allowedIds = new Set(catalog.map((c) => c.id.toLowerCase().trim()));
+  try {
+    // Allowed IDs come from SSOT catalog.
+    let catalog: z.infer<typeof ExchangesCatalogSchema>;
+    try {
+      catalog = ExchangesCatalogSchema.parse(exchangesCatalogJson);
+    } catch (catalogError) {
+      console.error('[/api/indices] Catalog parse error:', catalogError);
+      return errorResponse(500, 'Server configuration error: invalid exchange catalog');
+    }
 
-  const gatewayBase = getGatewayBaseUrl();
-  const gatewayIndicesUrl = `${gatewayBase}/indices`;
+    const allowedIds = new Set(catalog.map((c) => c.id.toLowerCase().trim()));
 
-  // Determine user (if any)
-  const user = await currentUser();
+    const gatewayBase = getGatewayBaseUrl();
+    const gatewayIndicesUrl = `${gatewayBase}/indices`;
 
-  // Anonymous users: always free path, public caching.
-  if (!user) {
-    const upstream = await proxyGatewayJson(gatewayIndicesUrl, {
-      method: 'GET',
-      headers: { accept: 'application/json' },
-    });
+    // Determine user (if any)
+    let user: Awaited<ReturnType<typeof currentUser>> = null;
+    try {
+      user = await currentUser();
+    } catch (authError) {
+      // Clerk unavailable — treat as anonymous (free path)
+      console.warn('[/api/indices] Clerk auth check failed, treating as anonymous:', authError);
+      // Continue with user = null (free path)
+    }
 
-    return NextResponse.json(upstream.json, {
-      status: upstream.status,
-      headers: {
-        // Mirror gateway semantics for free feed (public caching).
-        'Cache-Control': 'public, max-age=120, stale-while-revalidate=600',
-      },
-    });
+    // Anonymous users: always free path, public caching.
+    if (!user) {
+      try {
+        const upstream = await proxyGatewayJson(gatewayIndicesUrl, {
+          method: 'GET',
+          headers: { accept: 'application/json' },
+        });
+
+        return NextResponse.json(upstream.json, {
+          status: upstream.status,
+          headers: {
+            // Mirror gateway semantics for free feed (public caching).
+            'Cache-Control': 'public, max-age=120, stale-while-revalidate=600',
+          },
+        });
+      } catch (fetchError) {
+        // Handle fetch errors (timeout, network issues)
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          console.error('[/api/indices] Gateway timeout (anonymous)');
+          return errorResponse(504, 'Gateway timeout');
+        }
+        console.error('[/api/indices] Gateway fetch error (anonymous):', fetchError);
+        return errorResponse(502, 'Gateway unavailable');
+      }
+    }
+
+    // Signed-in user: tier derived server-side from Clerk metadata.
+    let md: z.infer<typeof PublicMetadataSchema>;
+    try {
+      md = PublicMetadataSchema.parse((user.publicMetadata ?? {}) as unknown);
+    } catch (metadataError) {
+      console.error('[/api/indices] User metadata parse error:', metadataError);
+      // Treat as free user if metadata is malformed
+      md = { tier: 'free' };
+    }
+
+    const tier = md.tier === 'paid' ? 'paid' : 'free';
+
+    // Free signed-in users still use gateway GET.
+    // We keep this private to avoid any cookie-based shared caching surprises.
+    if (tier !== 'paid') {
+      try {
+        const upstream = await proxyGatewayJson(gatewayIndicesUrl, {
+          method: 'GET',
+          headers: { accept: 'application/json' },
+        });
+
+        return NextResponse.json(upstream.json, {
+          status: upstream.status,
+          headers: {
+            'Cache-Control': 'private, no-store',
+          },
+        });
+      } catch (fetchError) {
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          console.error('[/api/indices] Gateway timeout (free user)');
+          return errorResponse(504, 'Gateway timeout');
+        }
+        console.error('[/api/indices] Gateway fetch error (free user):', fetchError);
+        return errorResponse(502, 'Gateway unavailable');
+      }
+    }
+
+    // Paid users: selection comes ONLY from Clerk metadata.
+    const exchangeIdsRaw = md.exchangeSelection?.exchangeIds;
+
+    if (!exchangeIdsRaw || !Array.isArray(exchangeIdsRaw) || exchangeIdsRaw.length === 0) {
+      return NextResponse.json(
+        {
+          error: 'Paid user has no exchange selection configured',
+          hint: 'Set publicMetadata.exchangeSelection.exchangeIds in Clerk for this user.',
+        },
+        { status: 400, headers: { 'Cache-Control': 'private, no-store' } },
+      );
+    }
+
+    const validated = normaliseAndValidateExchangeIds(exchangeIdsRaw, allowedIds);
+    if (!validated.ok) {
+      return NextResponse.json(
+        { error: validated.error, errors: validated.errors ?? [] },
+        { status: 400, headers: { 'Cache-Control': 'private, no-store' } },
+      );
+    }
+
+    const secret = getGatewaySecret();
+    if (!secret) {
+      console.error('[/api/indices] PROMAGEN_GATEWAY_SECRET is not set');
+      return NextResponse.json(
+        { error: 'Server misconfiguration: PROMAGEN_GATEWAY_SECRET is not set' },
+        { status: 500, headers: { 'Cache-Control': 'private, no-store' } },
+      );
+    }
+
+    // Server-to-server POST to gateway (secret header).
+    try {
+      const upstream = await proxyGatewayJson(gatewayIndicesUrl, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'x-promagen-gateway-secret': secret,
+        },
+        body: JSON.stringify({
+          tier: 'paid',
+          exchangeIds: validated.value,
+        }),
+      });
+
+      return NextResponse.json(upstream.json, {
+        status: upstream.status,
+        headers: {
+          // User-specific: never cache in shared/CDN caches.
+          'Cache-Control': 'private, no-store',
+          Vary: 'Cookie',
+        },
+      });
+    } catch (fetchError) {
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.error('[/api/indices] Gateway timeout (paid user)');
+        return errorResponse(504, 'Gateway timeout');
+      }
+      console.error('[/api/indices] Gateway fetch error (paid user):', fetchError);
+      return errorResponse(502, 'Gateway unavailable');
+    }
+  } catch (unexpectedError) {
+    // Catch-all for any unexpected errors
+    console.error('[/api/indices] Unexpected error:', unexpectedError);
+    return errorResponse(500, 'Internal server error');
   }
-
-  // Signed-in user: tier derived server-side from Clerk metadata.
-  const md = PublicMetadataSchema.parse((user.publicMetadata ?? {}) as unknown);
-  const tier = md.tier === 'paid' ? 'paid' : 'free';
-
-  // Free signed-in users still use gateway GET.
-  // We keep this private to avoid any cookie-based shared caching surprises.
-  if (tier !== 'paid') {
-    const upstream = await proxyGatewayJson(gatewayIndicesUrl, {
-      method: 'GET',
-      headers: { accept: 'application/json' },
-    });
-
-    return NextResponse.json(upstream.json, {
-      status: upstream.status,
-      headers: {
-        'Cache-Control': 'private, no-store',
-      },
-    });
-  }
-
-  // Paid users: selection comes ONLY from Clerk metadata.
-  const exchangeIdsRaw = md.exchangeSelection?.exchangeIds;
-
-  if (!exchangeIdsRaw || !Array.isArray(exchangeIdsRaw) || exchangeIdsRaw.length === 0) {
-    return NextResponse.json(
-      {
-        error: 'Paid user has no exchange selection configured',
-        hint: 'Set publicMetadata.exchangeSelection.exchangeIds in Clerk for this user.',
-      },
-      { status: 400, headers: { 'Cache-Control': 'private, no-store' } },
-    );
-  }
-
-  const validated = normaliseAndValidateExchangeIds(exchangeIdsRaw, allowedIds);
-  if (!validated.ok) {
-    return NextResponse.json(
-      { error: validated.error, errors: validated.errors ?? [] },
-      { status: 400, headers: { 'Cache-Control': 'private, no-store' } },
-    );
-  }
-
-  const secret = getGatewaySecret();
-  if (!secret) {
-    return NextResponse.json(
-      { error: 'Server misconfiguration: PROMAGEN_GATEWAY_SECRET is not set' },
-      { status: 500, headers: { 'Cache-Control': 'private, no-store' } },
-    );
-  }
-
-  // Server-to-server POST to gateway (secret header).
-  const upstream = await proxyGatewayJson(gatewayIndicesUrl, {
-    method: 'POST',
-    headers: {
-      accept: 'application/json',
-      'content-type': 'application/json',
-      'x-promagen-gateway-secret': secret,
-    },
-    body: JSON.stringify({
-      tier: 'paid',
-      exchangeIds: validated.value,
-    }),
-  });
-
-  return NextResponse.json(upstream.json, {
-    status: upstream.status,
-    headers: {
-      // User-specific: never cache in shared/CDN caches.
-      'Cache-Control': 'private, no-store',
-      Vary: 'Cookie',
-    },
-  });
 }
 
 // Hard-disable POST from the browser.

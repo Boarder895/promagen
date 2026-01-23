@@ -15,6 +15,12 @@
  * When a scheduler is provided in config, uses getMsUntilNextSlot() for timing
  * instead of 90% TTL. This prevents TwelveData rate limit violations.
  *
+ * CRITICAL FIX (2026-01-23): TRUE SSOT implementation.
+ * Frontend is ALWAYS the single source of truth. On init:
+ * 1. ALWAYS try frontend first (synchronous await)
+ * 2. Only fall back to snapshot if frontend is unreachable
+ * 3. Clear cache when SSOT changes to prevent serving stale data
+ *
  * Security: 10/10
  * - Input validation at all entry points
  * - Rate limiting via budget manager
@@ -146,6 +152,11 @@ export function createFeedHandler<TCatalog, TQuote>(
 
   /**
    * Initialize handler by fetching SSOT catalog from frontend.
+   *
+   * TRUE SSOT BEHAVIOR (2026-01-23):
+   * 1. ALWAYS try frontend FIRST (synchronous await, not fire-and-forget)
+   * 2. Only fall back to snapshot if frontend is unreachable
+   * 3. Never serve stale SSOT when frontend is available
    */
   async function init(): Promise<void> {
     logInfo(`Initializing feed: ${config.id}`, {
@@ -155,34 +166,60 @@ export function createFeedHandler<TCatalog, TQuote>(
       hasScheduler: !!config.scheduler,
     });
 
-    // 1) Load snapshot FIRST (no live dependency)
-    const existingSnapshot = await loadSsotSnapshot<TCatalog>(config.id);
-    if (existingSnapshot) {
-      catalog = [...existingSnapshot.catalog] as TCatalog[];
-      defaults = [...existingSnapshot.defaults];
-      ssotSource = existingSnapshot.ssotSource;
-      ssotVersion = existingSnapshot.provenance.ssotVersion;
-      ssotHash = existingSnapshot.provenance.ssotHash;
-      ssotFingerprint = existingSnapshot.provenance.ssotFingerprint;
-      ssotSnapshotAt = existingSnapshot.provenance.snapshotAt;
+    // TRUE SSOT: Always try frontend FIRST
+    let frontendSuccess = false;
 
-      logFeedInit(config.id, existingSnapshot.ssotSource, catalog.length);
-    }
-
-    // 2) If no snapshot exists, we MUST load from frontend SSOT.
-    // Pure SSOT rule: the ONLY fallback is a previously saved snapshot.
-    if (!existingSnapshot) {
+    try {
       await refreshSsotFromFrontend({ throwOnFailure: true });
+      frontendSuccess = true;
+      logInfo(`SSOT loaded from frontend: ${config.id}`, {
+        feedId: config.id,
+        catalogCount: catalog.length,
+        defaultCount: defaults.length,
+        defaults: defaults.slice(0, 5),
+      });
+    } catch (error) {
+      // Frontend unavailable - try snapshot as fallback
+      logWarn(`Frontend SSOT unavailable, trying snapshot: ${config.id}`, {
+        feedId: config.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      const existingSnapshot = await loadSsotSnapshot<TCatalog>(config.id);
+
+      if (existingSnapshot) {
+        catalog = [...existingSnapshot.catalog] as TCatalog[];
+        defaults = [...existingSnapshot.defaults];
+        ssotSource = 'snapshot-fallback'; // Clearly mark as fallback
+        ssotVersion = existingSnapshot.provenance.ssotVersion;
+        ssotHash = existingSnapshot.provenance.ssotHash;
+        ssotFingerprint = existingSnapshot.provenance.ssotFingerprint;
+        ssotSnapshotAt = existingSnapshot.provenance.snapshotAt;
+
+        logWarn(`Using snapshot fallback (frontend down): ${config.id}`, {
+          feedId: config.id,
+          snapshotAt: ssotSnapshotAt,
+          catalogCount: catalog.length,
+          defaultCount: defaults.length,
+        });
+      } else {
+        // No snapshot and no frontend - fatal error
+        throw new Error(
+          `SSOT unavailable: frontend unreachable and no snapshot exists for ${config.id}`,
+        );
+      }
     }
 
     ready = true;
-
-    // 3) Refresh snapshot from frontend in background.
-    void refreshSsotFromFrontend({ throwOnFailure: false });
+    logFeedInit(config.id, frontendSuccess ? 'frontend' : 'snapshot-fallback', catalog.length);
   }
 
   /**
-   * Refresh SSOT from frontend. On failure, keep last-known-good snapshot.
+   * Refresh SSOT from frontend.
+   *
+   * TRUE SSOT BEHAVIOR:
+   * - On success: Update catalog/defaults AND clear cache (prevent stale data)
+   * - On failure: Keep last-known-good (caller decides whether to throw)
    */
   async function refreshSsotFromFrontend(opts: { throwOnFailure: boolean }): Promise<void> {
     try {
@@ -201,18 +238,35 @@ export function createFeedHandler<TCatalog, TQuote>(
 
       // Determine SSOT version if provided
       const versionFromPayload =
-        data && typeof data === 'object' && typeof (data as Record<string, unknown>)['version'] === 'number'
+        data &&
+        typeof data === 'object' &&
+        typeof (data as Record<string, unknown>)['version'] === 'number'
           ? ((data as Record<string, unknown>)['version'] as number)
           : 1;
 
-      const { hash, fingerprint } = computeSsotHash({ catalog: nextCatalog, defaults: nextDefaults });
+      const { hash, fingerprint } = computeSsotHash({
+        catalog: nextCatalog,
+        defaults: nextDefaults,
+      });
 
-      // No change
-      if (hash === ssotHash) {
-        return;
+      // Check if SSOT actually changed
+      const ssotChanged = hash !== ssotHash;
+
+      if (ssotChanged) {
+        logInfo(`SSOT changed, updating: ${config.id}`, {
+          feedId: config.id,
+          oldFingerprint: ssotFingerprint,
+          newFingerprint: fingerprint,
+          oldDefaults: defaults.slice(0, 5),
+          newDefaults: nextDefaults.slice(0, 5),
+        });
+
+        // CRITICAL: Clear cache when SSOT changes to prevent serving stale data
+        // with old defaults/catalog
+        cache.clear();
       }
 
-      // Swap in new snapshot (LKG is the previous in-memory state)
+      // Swap in new snapshot
       catalog = nextCatalog;
       defaults = nextDefaults;
       ssotSource = 'frontend';
@@ -221,6 +275,7 @@ export function createFeedHandler<TCatalog, TQuote>(
       ssotFingerprint = fingerprint;
       ssotSnapshotAt = new Date().toISOString();
 
+      // Persist snapshot for future fallback (if frontend goes down)
       await saveSsotSnapshot<TCatalog>({
         schemaVersion: 1,
         feedId: config.id,
@@ -236,7 +291,9 @@ export function createFeedHandler<TCatalog, TQuote>(
         defaults,
       });
 
-      logFeedInit(config.id, 'frontend', catalog.length);
+      if (ssotChanged) {
+        logFeedInit(config.id, 'frontend', catalog.length);
+      }
     } catch (error) {
       // Keep LKG (do not modify catalog/defaults/provenance)
       logWarn(`SSOT refresh failed; keeping last-known-good: ${config.id}`, {

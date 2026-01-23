@@ -5,9 +5,9 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 1,
-    "ssotHash": "356ca03705df7d807b2dea3ec115be2889cb936422248dce63bba60d86542d3e",
-    "ssotFingerprint": "356ca03705df",
-    "snapshotAt": "2026-01-16T11:04:47.456Z"
+    "ssotHash": "d004bf237beedf2371b95d7d3c1642a60444c8cbc24fb3372cca65ffe864c557",
+    "ssotFingerprint": "d004bf237bee",
+    "snapshotAt": "2026-01-23T09:43:14.722Z"
   },
   "catalog": [
     {
@@ -339,28 +339,12 @@
       "tz": "America/Santiago"
     },
     {
-      "id": "sse-shanghai",
-      "benchmark": "sse_composite",
-      "indexName": "SSE Composite Index",
-      "city": "Shanghai",
-      "country": "China",
-      "tz": "Asia/Shanghai"
-    },
-    {
       "id": "szse-shenzhen",
       "benchmark": "szse_component",
       "indexName": "SZSE Component Index",
       "city": "Shenzhen",
       "country": "China",
       "tz": "Asia/Shanghai"
-    },
-    {
-      "id": "tadawul-riyadh",
-      "benchmark": "tasi",
-      "indexName": "Tadawul All Share Index",
-      "city": "Riyadh",
-      "country": "Saudi Arabia",
-      "tz": "Asia/Riyadh"
     },
     {
       "id": "tase-tel-aviv",
@@ -407,8 +391,8 @@
     "jse-johannesburg",
     "lse-london",
     "b3-sao-paulo",
-    "bcba-buenos-aires",
-    "sse-santiago",
+    "euronext-paris",
+    "twse-taipei",
     "cboe-chicago",
     "tsx-toronto",
     "nasdaq-san-francisco"
