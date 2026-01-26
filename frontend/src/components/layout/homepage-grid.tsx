@@ -1,19 +1,23 @@
 // src/components/layout/homepage-grid.tsx
 // ============================================================================
-// HOMEPAGE GRID - Three-column layout with Market Pulse v2.0
+// HOMEPAGE GRID - Three-column layout with Market Pulse v2.1
 // ============================================================================
 // Layout: Left rail | Centre (Finance ribbon + Providers) | Right rail
 // Synchronized scrolling between exchange rails
 // Market Pulse: Flowing energy streams connect exchanges to providers
 // Auth: Sign in button in header (right), Home + Studio buttons below
 //
-// UPDATED: Added Home button to header for navigation back to homepage.
-// UPDATED: Added z-index to header to ensure buttons are always clickable.
-// UPDATED: Fixed header row height to properly contain absolutely positioned buttons.
-// UPDATED: Studio button now links to /studio (was /prompts).
-// UPDATED: Removed unused Link import (using native <a> tags for reliability).
-// When demoMode=true, renders DemoFinanceRibbon with static data instead of
-// live API ribbon.
+// UPDATED v2.3: Studio page support
+// - Added isStudioPage prop to pass to Mission Control
+// - Mission Control shows Home button instead of Studio on /studio page
+// - All other functionality unchanged
+//
+// UPDATED v2.2: Control Dock integration
+// - Control Dock centered BETWEEN "PROMAGEN" label and "Intelligent Prompt Builder"
+// - Houses Reference Frame Toggle (and future controls)
+// - Visible on all viewport sizes (desktop + mobile)
+// - Engine Bay + Mission Control panel synchronization maintained
+// - Fallback nav still shows when MissionControl is completely hidden
 // ============================================================================
 
 'use client';
@@ -26,18 +30,22 @@ import CryptoRibbon from '@/components/ribbon/crypto-ribbon.container';
 import DemoFinanceRibbon from '@/components/ribbon/demo-finance-ribbon';
 import ProvenanceFooter from '@/components/core/provenance-footer';
 import AuthButton from '@/components/auth/auth-button';
-import ReferenceFrameToggle from '@/components/reference-frame-toggle';
+import ControlDock from '@/components/home/control-dock';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ReferenceFrame } from '@/lib/location';
 import type { FxPairCatalogEntry } from '@/lib/pro-promagen/types';
 import { useMarketPulse } from '@/hooks/use-market-pulse';
 import { MarketPulseOverlay } from '@/components/market-pulse';
+import EngineBay from '@/components/home/engine-bay';
+import MissionControl from '@/components/home/mission-control';
+import type { Provider } from '@/types/providers';
+import type { ExchangeWeatherData } from '@/components/exchanges/types';
 
 // ============================================================================
-// ICONS
+// ICONS (for fallback nav only)
 // ============================================================================
 
-function WandIcon() {
+function WandIcon(): React.ReactElement {
   return (
     <svg
       className="h-4 w-4"
@@ -56,7 +64,7 @@ function WandIcon() {
   );
 }
 
-function HomeIcon() {
+function HomeIcon(): React.ReactElement {
   return (
     <svg
       className="h-4 w-4"
@@ -75,7 +83,7 @@ function HomeIcon() {
   );
 }
 
-function ProIcon() {
+function ProIcon(): React.ReactElement {
   return (
     <svg
       className="h-4 w-4"
@@ -106,87 +114,37 @@ const navButtonStyles =
 // ============================================================================
 
 export type HomepageGridProps = {
-  /**
-   * Main accessible label for the page content.
-   */
   mainLabel: string;
-  /**
-   * Content for the left (Eastern) exchange rail.
-   */
   leftContent: ReactNode;
-  /**
-   * Content for the centre column (providers table).
-   */
   centre: ReactNode;
-  /**
-   * Content for the right (Western) exchange rail.
-   */
   rightContent: ReactNode;
-  /**
-   * Whether to show the FinanceRibbon at the top of the centre column.
-   */
   showFinanceRibbon?: boolean;
-  /**
-   * Demo mode: render static DemoFinanceRibbon instead of live API ribbon.
-   * Used on /pro-promagen page for preview.
-   */
   demoMode?: boolean;
-  /**
-   * FX pairs with demo data for DemoFinanceRibbon.
-   * Only used when demoMode=true.
-   */
   demoPairs?: FxPairCatalogEntry[];
-  /**
-   * All exchanges (left + right rails combined).
-   * Required for market pulse feature.
-   */
   exchanges?: ReadonlyArray<Exchange>;
-  /**
-   * Provider IDs currently displayed in the table.
-   * Required for market pulse feature.
-   */
   displayedProviderIds?: string[];
-  /**
-   * Whether user is paid tier (for showing reference toggle).
-   */
   isPaidUser?: boolean;
-  /**
-   * Current reference frame for exchange ordering.
-   */
   referenceFrame?: ReferenceFrame;
-  /**
-   * Callback when reference frame changes (paid users only).
-   */
   onReferenceFrameChange?: (frame: ReferenceFrame) => void;
-  /**
-   * Whether location is loading.
-   */
   isLocationLoading?: boolean;
-  /**
-   * User's city name (if detected).
-   */
   cityName?: string;
-  /**
-   * Whether user is authenticated (signed in).
-   */
+  countryCode?: string;
   isAuthenticated?: boolean;
+  providers?: Provider[];
+  showEngineBay?: boolean;
+  showMissionControl?: boolean;
+  weatherIndex?: Map<string, ExchangeWeatherData>;
+  nearestExchangeId?: string;
+  /** Hide the Control Dock (e.g., for pages that don't need it) */
+  hideControlDock?: boolean;
+  /** When true, Mission Control shows Home button instead of Studio button */
+  isStudioPage?: boolean;
 };
 
-/**
- * HomepageGrid - Three-column layout with synchronized exchange rail scrolling.
- *
- * Layout architecture:
- * - Page fills exactly 100dvh — NO page scroll
- * - Header row: Toggle (left, paid only) + PROMAGEN (centred) + Sign In + Home + Studio (right)
- * - Hero section: tagline and subtitle centred
- * - Three-column grid: fills remaining space (flex-1)
- * - Left/right rails: synchronized scrolling (scroll one, both move)
- * - Centre column: providers table scrolls independently
- * - Footer: fixed at bottom
- * - Market Pulse v2.0: Flowing energy streams when markets transition
- * - Auth: Sign in button in header (right), Home + Studio buttons below
- * - Market Pulse: Flowing energy streams connect exchanges to providers
- */
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
 export default function HomepageGrid({
   mainLabel,
   leftContent,
@@ -202,36 +160,36 @@ export default function HomepageGrid({
   onReferenceFrameChange,
   isLocationLoading = false,
   cityName,
+  // countryCode - available in props but unused in this component
   isAuthenticated = false,
-}: HomepageGridProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  providers = [],
+  showEngineBay = false,
+  showMissionControl = false,
+  weatherIndex,
+  nearestExchangeId,
+  hideControlDock = false,
+  isStudioPage = false,
+}: HomepageGridProps): React.ReactElement {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
-  const providersRef = useRef<HTMLDivElement>(null);
   const isSyncing = useRef(false);
-
-  // Get current pathname to determine if we're on the homepage
+  const containerRef = useRef<HTMLDivElement>(null);
+  const providersRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const isHomepage = pathname === '/';
 
-  // Get selected exchange IDs
-  const selectedExchangeIds = exchanges.map((e) => e.id);
-
-  // Use Market Pulse v2.0 hook - detects ±1 min around opens/closes
-  const { pulseContexts, activeExchangeIds } = useMarketPulse({
-    exchanges,
+  const { activeExchangeIds, pulseContexts } = useMarketPulse({
+    exchanges: exchanges as Exchange[],
     onBurst: (context) => {
-      // Optional: Log burst events for debugging
       if (process.env.NODE_ENV === 'development') {
-        console.debug(`[Market Pulse] ${context.exchangeId} is ${context.state}`);
+        console.debug('[market-pulse] Event:', context);
       }
     },
   });
 
-  /**
-   * Synchronize scroll position from source to target.
-   * Uses scrollTop percentage to handle different content heights.
-   */
+  // Selected exchanges derived from active ones for now
+  const selectedExchangeIds = activeExchangeIds;
+
   const syncScroll = useCallback((source: HTMLDivElement, target: HTMLDivElement) => {
     if (isSyncing.current) return;
     isSyncing.current = true;
@@ -259,7 +217,6 @@ export default function HomepageGrid({
     }
   }, [syncScroll]);
 
-  // Handle reference frame change
   const handleReferenceFrameChange = useCallback(
     (frame: ReferenceFrame) => {
       onReferenceFrameChange?.(frame);
@@ -267,8 +224,7 @@ export default function HomepageGrid({
     [onReferenceFrameChange],
   );
 
-  // Render the appropriate finance ribbon based on mode
-  const renderFinanceRibbon = () => {
+  const renderFinanceRibbon = (): React.ReactNode => {
     if (!showFinanceRibbon) return null;
 
     if (demoMode) {
@@ -295,82 +251,134 @@ export default function HomepageGrid({
           {mainLabel}
         </h1>
 
-        {/* Hero: Promagen – a bridge between markets and imagination */}
+        {/* Hero section */}
         <section
           aria-label="Promagen overview"
           className="relative z-20 w-full shrink-0 border-b border-slate-900/70 bg-gradient-to-b from-slate-950 via-slate-950/95 to-slate-950"
         >
-          {/* Header row: Toggle (left) + PROMAGEN (centred) + Sign In + Home + Studio (right) */}
-          {/* FIXED: Added min-h-[60px] to ensure header row has proper height for buttons */}
+          {/* Header row */}
           <div className="relative mx-auto flex min-h-[60px] w-full items-start px-4 pt-4">
-            {/* Reference frame toggle + Pro Promagen - absolutely positioned to left, stacked vertically */}
-            <div className="absolute left-4 top-4 flex flex-col items-start gap-2">
-              <ReferenceFrameToggle
-                referenceFrame={referenceFrame}
-                onReferenceFrameChange={handleReferenceFrameChange}
-                isPaidUser={isPaidUser}
-                isAuthenticated={isAuthenticated}
-                isLocationLoading={isLocationLoading}
-                cityName={cityName}
-              />
-              <a href="/pro-promagen" className={navButtonStyles}>
-                <ProIcon />
-                Pro Promagen
-              </a>
-            </div>
+            {/* 
+              ENGINE BAY v4.2.0 - Width LOCKED to exchange rail OUTER width
+              Uses shared CSS variables for panel synchronization
+            */}
+            {showEngineBay && providers.length > 0 && (
+              <div
+                className="absolute left-4 top-4 z-20 hidden xl:block"
+                style={{
+                  width: 'calc((100vw - 80px) * 0.225)',
+                }}
+              >
+                <EngineBay providers={providers} />
+              </div>
+            )}
 
-            {/* PROMAGEN label - absolutely centred */}
+            {/* PROMAGEN label - centred */}
             <div className="flex flex-1 items-center justify-center">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-sky-400/80">
                 Promagen
               </p>
             </div>
 
-            {/* Auth + Home + Studio buttons - absolutely positioned to right, stacked vertically */}
-            {/* Using native <a> tags instead of Next.js Link to ensure navigation works */}
-            <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
-              <AuthButton />
-              {/* Show Home button on all pages EXCEPT the actual homepage */}
-              {!isHomepage && (
-                <a href="/" className={navButtonStyles}>
-                  <HomeIcon />
-                  Home
+            {/* 
+              MISSION CONTROL v3.0.0 - Width LOCKED to exchange rail OUTER width
+              Uses shared CSS variables for panel synchronization
+              Now contains nav buttons (Studio/Home, Pro, Sign in)
+              NEW: isStudioPage prop swaps Studio button for Home button
+            */}
+            {showMissionControl && (
+              <div
+                className="absolute right-4 top-4 z-20 hidden xl:block"
+                style={{
+                  width: 'calc((100vw - 80px) * 0.225)',
+                }}
+              >
+                <MissionControl
+                  providers={providers}
+                  exchanges={exchanges}
+                  weatherIndex={weatherIndex}
+                  nearestExchangeId={nearestExchangeId}
+                  isAuthenticated={isAuthenticated}
+                  isStudioPage={isStudioPage}
+                />
+              </div>
+            )}
+
+            {/* 
+              Fallback nav buttons - ONLY shown when Mission Control is hidden
+              This covers: mobile view, and when showMissionControl=false
+            */}
+            {!showMissionControl && (
+              <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
+                <AuthButton />
+                {!isHomepage && (
+                  <a href="/" className={navButtonStyles}>
+                    <HomeIcon />
+                    Home
+                  </a>
+                )}
+                {!isStudioPage && (
+                  <a href="/studio" className={navButtonStyles}>
+                    <WandIcon />
+                    Studio
+                  </a>
+                )}
+                <a href="/pro-promagen" className={navButtonStyles}>
+                  <ProIcon />
+                  Pro Promagen
                 </a>
-              )}
-              <a href="/studio" className={navButtonStyles}>
-                <WandIcon />
-                Studio
-              </a>
-            </div>
+              </div>
+            )}
           </div>
 
-          {/* Hero content - centred tagline and subtitle */}
-          <div className="mx-auto flex w-full max-w-4xl flex-col items-center px-4 pt-1 pb-1 text-center sm:px-6">
-            <h2 className="mt-1 text-xl font-semibold leading-tight sm:text-2xl md:text-3xl">
+          {/* 
+            Hero content - Layout order:
+            1. PROMAGEN label (above, in header row)
+            2. Control Dock (Reference Frame Toggle)
+            3. "Intelligent Prompt Builder" heading
+            4. Tagline
+          */}
+          <div className="mx-auto flex w-full max-w-4xl flex-col items-center px-4 pt-1 pb-3 text-center sm:px-6">
+            {/* 
+              CONTROL DOCK - Centered BETWEEN "PROMAGEN" and "Intelligent Prompt Builder"
+              Houses Reference Frame Toggle (and future controls)
+              Always visible (desktop + mobile)
+            */}
+            {!hideControlDock && (
+              <ControlDock
+                referenceFrame={referenceFrame}
+                onReferenceFrameChange={handleReferenceFrameChange}
+                isPaidUser={isPaidUser}
+                isAuthenticated={isAuthenticated}
+                isLocationLoading={isLocationLoading}
+                cityName={cityName}
+                className="mb-2"
+              />
+            )}
+
+            <h2 className="text-xl font-semibold leading-tight sm:text-2xl md:text-3xl">
               <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
                 Intelligent Prompt Builder
               </span>
             </h2>
+
             <p className="mt-1 max-w-3xl text-sm text-slate-300 sm:text-base">
               <span className="whitespace-nowrap">
                 Context-driven prompts built from live exchanges, FX, commodities, crypto & weather.
               </span>
             </p>
-
-            {/* Soft market glow - reduced margin */}
             <div className="pointer-events-none mt-1 flex w-full justify-center">
               <div className="h-6 w-full max-w-md rounded-full bg-gradient-to-r from-sky-500/18 via-emerald-400/14 to-indigo-500/18 blur-2xl md:h-8" />
             </div>
           </div>
         </section>
 
-        {/* Three-column market layout — reduced top padding (was pt-4, now pt-2) */}
+        {/* Three-column grid */}
         <section
           ref={containerRef}
           aria-label="Market overview layout"
           className="relative mx-auto flex min-h-0 w-full flex-1 flex-col gap-4 px-4 pb-2 pt-2 md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)] md:items-stretch md:gap-6 md:pt-2"
         >
-          {/* Market Pulse v2.0 SVG Overlay - Flowing energy streams */}
           <MarketPulseOverlay
             containerRef={containerRef}
             leftRailRef={leftRef}
@@ -382,11 +390,11 @@ export default function HomepageGrid({
             activeExchangeIds={activeExchangeIds}
           />
 
-          {/* Left rail (Eastern exchanges) — synced scroll */}
+          {/* Left rail */}
           <section
             role="complementary"
             aria-label="Eastern exchanges"
-            className="flex min-h-0 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+            className="flex min-h-0 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10 mt-16"
             data-testid="rail-east-wrapper"
           >
             <div
@@ -399,7 +407,7 @@ export default function HomepageGrid({
             </div>
           </section>
 
-          {/* Centre column (Finance ribbon + Providers table) */}
+          {/* Centre column */}
           <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="rail-centre">
             {renderFinanceRibbon()}
             <div ref={providersRef} className="min-h-0 flex-1">
@@ -407,11 +415,11 @@ export default function HomepageGrid({
             </div>
           </div>
 
-          {/* Right rail (Western exchanges) — synced scroll */}
+          {/* Right rail */}
           <section
             role="complementary"
             aria-label="Western exchanges"
-            className="flex min-h-0 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+            className="flex min-h-0 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10 mt-16"
             data-testid="rail-west-wrapper"
           >
             <div
@@ -426,7 +434,7 @@ export default function HomepageGrid({
         </section>
       </main>
 
-      {/* Footer - fixed height at bottom */}
+      {/* Footer */}
       <div className="shrink-0 pb-2">
         <ProvenanceFooter />
       </div>

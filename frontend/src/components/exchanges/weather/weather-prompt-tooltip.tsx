@@ -7,16 +7,22 @@
 // - Temperature-based glow color (cold=blue, hot=red)
 // - Copy icon to copy prompt to clipboard
 // - Uses React Portal to render at document.body (escapes all containers)
-// - 1-second hover persistence for easy copy access
+// - 400ms hover persistence for easy copy access
 // - Tier-based prompt format (Free: Tier 4, Pro: Selectable 1-4)
+//
+// UPDATES (26 Jan 2026):
+// - REMOVED: Country/city name from tooltip header (flag is sufficient)
+// - REMOVED: cursor-help (now cursor-pointer per best-working-practice.md)
+// - FIXED: Tooltip position comment to match actual behavior
 //
 // UPDATES (20 Jan 2026):
 // - Uses createPortal to render tooltip at document.body level
 // - This allows tooltip to overflow into header space (no parent clipping)
-// - 1000ms close delay (configurable at line 65: CLOSE_DELAY_MS)
+// - 400ms close delay (configurable: CLOSE_DELAY_MS)
 // - Tooltip stays open when hovering trigger OR tooltip itself
 //
 // Authority: docs/authority/ai_providers.md §4-Tier Prompt System
+// Authority: docs/authority/best-working-practice.md §Tooltip Standards
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -40,9 +46,9 @@ import {
 // ============================================================================
 
 export interface WeatherPromptTooltipProps {
-  /** Trigger element (usually the weather emoji) */
+  /** Trigger element (usually the flag image) */
   children: React.ReactNode;
-  /** City name for prompt context */
+  /** City name for prompt generation (not displayed in tooltip header) */
   city: string;
   /** Timezone for deriving local hour */
   tz: string;
@@ -53,11 +59,17 @@ export interface WeatherPromptTooltipProps {
   /** Whether user is Pro (for styling) */
   isPro?: boolean;
   /**
-   * Which side the tooltip should appear on.
-   * Note: Both 'left' and 'right' now result in LEFT-opening tooltip.
-   * This prop is kept for API compatibility but both values open LEFT.
+   * Which rail the trigger is on — determines tooltip open direction.
+   * - 'left' = trigger is on left rail → tooltip opens to the RIGHT
+   * - 'right' = trigger is on right rail → tooltip opens to the LEFT
    */
   tooltipPosition?: 'left' | 'right';
+  /**
+   * Vertical alignment of tooltip relative to trigger.
+   * 'center' = vertically centered on trigger (default)
+   * 'below' = positioned below the trigger
+   */
+  verticalPosition?: 'center' | 'below';
 }
 
 // ============================================================================
@@ -66,7 +78,7 @@ export interface WeatherPromptTooltipProps {
 
 /**
  * Delay before tooltip closes after mouse leaves (ms).
- * LINE 65 - Change this value to adjust hover persistence.
+ * Allows user to move cursor from trigger to tooltip for copy action.
  */
 const CLOSE_DELAY_MS = 400;
 
@@ -182,12 +194,12 @@ function CopyIcon({ onClick, copied }: CopyIconProps) {
 // ============================================================================
 
 interface TooltipContentProps {
-  city: string;
   prompt: string;
   tier: PromptTier;
   isPro: boolean;
   tempColor: string;
   position: { top: number; left: number };
+  verticalPosition: 'center' | 'below';
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onCopy: () => void;
@@ -195,12 +207,12 @@ interface TooltipContentProps {
 }
 
 function TooltipContent({
-  city,
   prompt,
   tier,
   isPro,
   tempColor,
   position,
+  verticalPosition,
   onMouseEnter,
   onMouseLeave,
   onCopy,
@@ -221,7 +233,7 @@ function TooltipContent({
       style={{
         top: position.top,
         left: position.left,
-        transform: 'translateY(-50%)',
+        transform: verticalPosition === 'below' ? 'none' : 'translateY(-50%)',
         zIndex: 99999,
         background: 'rgba(15, 23, 42, 0.97)',
         border: `1px solid ${glowBorder}`,
@@ -253,7 +265,7 @@ function TooltipContent({
 
       {/* Content */}
       <div className="relative z-10 flex flex-col gap-3">
-        {/* Header with Pro badge */}
+        {/* Header with Pro badge — NO city/country name (flag is sufficient) */}
         <div className="flex items-center justify-between gap-2 mb-1">
           <span
             className="text-base font-semibold text-white"
@@ -261,7 +273,7 @@ function TooltipContent({
               textShadow: `0 0 12px ${glowRgba}`,
             }}
           >
-            {city} • Image Prompt
+            Image Prompt
           </span>
           {isPro && (
             <span className="px-2 py-1 text-xs font-medium rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
@@ -299,13 +311,15 @@ function TooltipContent({
 
 /**
  * Weather prompt tooltip with dynamic image prompt generation.
- * Shows on hover over weather emoji with temperature-based glow.
+ * Shows on hover over flag with temperature-based glow.
  *
  * IMPORTANT:
  * - Tooltip uses React Portal to render at document.body
  * - This ensures it can overflow into header space (no parent clipping)
- * - 1-second close delay allows user to move cursor into tooltip to copy
+ * - 400ms close delay allows user to move cursor into tooltip to copy
  * - Hovering either trigger OR tooltip keeps it open
+ * - NO question mark cursor (cursor-pointer only)
+ * - NO country/city name in header (flag image is sufficient)
  */
 export function WeatherPromptTooltip({
   children,
@@ -315,6 +329,7 @@ export function WeatherPromptTooltip({
   tier = getDefaultTier(),
   isPro = false,
   tooltipPosition = 'left',
+  verticalPosition = 'center',
 }: WeatherPromptTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -367,6 +382,8 @@ export function WeatherPromptTooltip({
    * Calculate tooltip position based on trigger's viewport position.
    * - Left rail (tooltipPosition='left'): opens to RIGHT of trigger
    * - Right rail (tooltipPosition='right'): opens to LEFT of trigger
+   * - verticalPosition='center': vertically centered on trigger
+   * - verticalPosition='below': positioned below the trigger
    */
   const calculatePosition = useCallback(() => {
     if (!triggerRef.current) return;
@@ -374,7 +391,7 @@ export function WeatherPromptTooltip({
     const rect = triggerRef.current.getBoundingClientRect();
 
     let left: number;
-    
+
     if (tooltipPosition === 'left') {
       // Left rail: tooltip opens to the RIGHT
       left = rect.right + TOOLTIP_GAP;
@@ -383,11 +400,18 @@ export function WeatherPromptTooltip({
       left = rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP;
     }
 
-    // Vertically center relative to trigger
-    const top = rect.top + rect.height / 2;
+    // Vertical positioning
+    let top: number;
+    if (verticalPosition === 'below') {
+      // Position below the trigger
+      top = rect.bottom + TOOLTIP_GAP;
+    } else {
+      // Vertically center relative to trigger
+      top = rect.top + rect.height / 2;
+    }
 
     setTooltipCoords({ top, left });
-  }, [tooltipPosition]);
+  }, [tooltipPosition, verticalPosition]);
 
   /**
    * Clear any pending close timeout.
@@ -458,10 +482,10 @@ export function WeatherPromptTooltip({
 
   return (
     <>
-      {/* Trigger element */}
+      {/* Trigger element — cursor-pointer (NOT cursor-help) */}
       <span
         ref={triggerRef}
-        className="relative inline-flex cursor-help"
+        className="relative inline-flex cursor-pointer"
         onMouseEnter={handleTriggerEnter}
         onMouseLeave={handleTriggerLeave}
       >
@@ -473,12 +497,12 @@ export function WeatherPromptTooltip({
         isVisible &&
         createPortal(
           <TooltipContent
-            city={city}
             prompt={prompt}
             tier={tier}
             isPro={isPro}
             tempColor={tempColor}
             position={tooltipCoords}
+            verticalPosition={verticalPosition}
             onMouseEnter={handleTooltipEnter}
             onMouseLeave={handleTooltipLeave}
             onCopy={handleCopy}

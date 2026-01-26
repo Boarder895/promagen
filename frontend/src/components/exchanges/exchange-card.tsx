@@ -7,6 +7,11 @@
 // - Left section: Exchange info + Clock (top) | Index quote row (bottom)
 // - Right section: Weather box
 //
+// UPDATES (26 Jan 2026 - FIX #2):
+// - FIXED: Flag wrapped with title="" to suppress native browser tooltip
+//   (removes "United States flag" / "Canada flag" text overlay)
+// - FIXED: cursor-pointer on flag (not cursor-help)
+//
 // UPDATES (23 Jan 2026 - AUTO-FIT):
 // - NEW: FitText component for true auto-sizing text
 // - Text scales based on actual container width (measured in pixels)
@@ -229,7 +234,7 @@ const IndexRowWithData = React.memo(function IndexRowWithData({ quote }: IndexRo
   return (
     <div className="w-full px-4 py-2.5" role="group" aria-label={srText}>
       {/* All index data on ONE line - auto-fit */}
-      <FitText min={10} max={20} className="font-medium text-slate-300">
+      <FitText min={12} max={20} className="font-medium text-slate-300">
         <span>{indexName}: </span>
         <span className="ml-1 font-semibold text-slate-100">{formatPrice(price)}</span>
         <span className={tickColorClass}>
@@ -455,7 +460,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
             {/* Exchange Name + City + Flag */}
             <div className="min-w-0">
               {/* Exchange name - auto-fit */}
-              <FitText min={12} max={24} className="font-medium leading-tight text-slate-100">
+              <FitText min={12} max={20} className="font-medium leading-tight text-slate-100">
                 {displayName}
               </FitText>
 
@@ -470,12 +475,18 @@ export const ExchangeCard = React.memo(function ExchangeCard({
                   isPro={isPro}
                   tooltipPosition={railPosition}
                 >
-                  <Flag
-                    countryCode={countryCode}
-                    size={28}
-                    decorative={false}
-                    className="shrink-0 cursor-help"
-                  />
+                  {/* 
+                    Flag wrapper: title="" suppresses native browser tooltip
+                    This prevents "United States flag" / "Canada flag" text from showing
+                  */}
+                  <span title="">
+                    <Flag
+                      countryCode={countryCode}
+                      size={28}
+                      decorative={false}
+                      className="shrink-0 cursor-pointer"
+                    />
+                  </span>
                 </WeatherPromptTooltip>
               </div>
             </div>

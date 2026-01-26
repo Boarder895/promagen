@@ -5,6 +5,10 @@
 // Renders exchange cards with optional weather and index quote data.
 // Used inside SyncedExchangeRails for synchronized scrolling.
 //
+// UPDATED (26 Jan 2026):
+// - FIXED: Added `side` prop to control tooltip direction
+// - Passes `railPosition={side}` to ExchangeCard so right rail opens LEFT
+//
 // UPDATED: Added indexByExchange prop for index quote data.
 //
 // Security: 10/10
@@ -41,6 +45,14 @@ export type ExchangeListProps = {
    * Message to show when no exchanges are available.
    */
   emptyMessage: string;
+
+  /**
+   * Which side of the homepage this list is on.
+   * Controls tooltip direction:
+   * - 'left' = tooltips open RIGHT
+   * - 'right' = tooltips open LEFT
+   */
+  side?: 'left' | 'right';
 };
 
 /**
@@ -51,19 +63,18 @@ export type ExchangeListProps = {
  * - exchanges: SSOT catalog data
  * - weatherByExchange: Weather API data (optional)
  * - indexByExchange: Gateway index quotes (optional)
+ * - side: Controls tooltip open direction (left=open right, right=open left)
  */
 export default function ExchangeList({
   exchanges,
   weatherByExchange,
   indexByExchange,
   emptyMessage,
+  side = 'left',
 }: ExchangeListProps): JSX.Element {
   if (!exchanges.length) {
     return (
-      <div
-        className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10"
-        aria-live="polite"
-      >
+      <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10" aria-live="polite">
         <p className="text-sm text-slate-400">{emptyMessage}</p>
       </div>
     );
@@ -78,6 +89,7 @@ export default function ExchangeList({
           <ExchangeCard
             key={exchange.id}
             exchange={toCardData(exchange, weather, indexQuote)}
+            railPosition={side}
           />
         );
       })}

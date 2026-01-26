@@ -55,6 +55,85 @@ Three-column grid
 The main content area is a three-column CSS grid:
 Left rail: 0.9fr
 
+## Hero Section Layout (Engine Bay + Mission Control)
+
+The hero section contains two symmetrical CTA panels positioned above the exchange rails:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              HERO SECTION                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────┐                              ┌──────────────────┐  │
+│  │   ENGINE BAY     │        PROMAGEN              │ MISSION CONTROL  │  │
+│  │   (Left CTA)     │   Intelligent Prompt         │   (Right CTA)    │  │
+│  │                  │        Builder               │                  │  │
+│  │  Platform icons  │                              │  Location badge  │  │
+│  │  Launch button   │   Context-driven prompts     │  Prompt preview  │  │
+│  │                  │   built from live data       │  Action buttons  │  │
+│  └──────────────────┘                              └──────────────────┘  │
+│                                                                          │
+│         width: calc((100vw - 80px) * 0.225)        (same formula)        │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Engine Bay (Left)
+
+- Primary CTA for launching the Prompt Builder
+- Shows top 10 AI provider icons (responsive grid)
+- Dropdown platform selector
+- Gradient "Launch Platform Builder" button
+- **Authority:** `docs/authority/ignition.md`
+
+### Mission Control (Right)
+
+- User location reference with flag + city
+- Dynamic weather-driven prompt preview (London default)
+- Interactive SVG flags with weather tooltips
+- Action buttons: Sign in, Studio, Pro Promagen
+- **Authority:** `docs/authority/mission-control.md`
+
+### Width Synchronization
+
+Both panels use identical CSS calc formula to match exchange rail width:
+
+```css
+width: calc((100vw - 80px) * 0.225);
+```
+
+**File:** `src/components/layout/homepage-grid.tsx` — Lines 256 (Engine Bay), 289 (Mission Control)
+
+### Responsive Behaviour
+
+| Breakpoint | Engine Bay | Mission Control |
+| ---------- | ---------- | --------------- |
+| Desktop    | Visible    | Visible         |
+| Tablet     | Visible    | Visible         |
+| Mobile     | Hidden     | Hidden          |
+
+On mobile (< md), both panels are hidden. Fallback navigation buttons appear in the header.
+
+````
+
+## WITH THIS:
+
+```markdown
+### Responsive Behaviour (Updated 26 Jan 2026)
+
+| Breakpoint | Viewport    | Engine Bay | Mission Control |
+| ---------- | ----------- | ---------- | --------------- |
+| Desktop XL | ≥1280px     | Visible    | Visible         |
+| Desktop    | 1024-1279px | Hidden     | Hidden          |
+| Tablet     | 768-1023px  | Hidden     | Hidden          |
+| Mobile     | <768px      | Hidden     | Hidden          |
+
+**Note:** Panels use `xl:block` breakpoint (≥1280px) to prevent overlap with the leaderboard at narrower viewport widths. Changed from `md:block` on 26 Jan 2026.
+
+**File:** `src/components/layout/homepage-grid.tsx` — Lines 255 (Engine Bay), 278 (Mission Control)
+
+---
+
 ## Table structure (Updated 22 Jan 2026)
 
 Header: "AI Providers Leaderboard".
@@ -111,7 +190,7 @@ That means:
 - **Canonical machine form:** `BASE/QUOTE` → `EUR/USD`, `AUD/GBP`
 - **Canonical display form:** `BASE / QUOTE` (spaces around slash) → `AUD / GBP`
 
-This UI spacing is part of the contract and is protected by tests  
+This UI spacing is part of the contract and is protected by tests
 (see: `frontend/src/__tests__/fx-pairs.test.ts`).
 
 **Hard rules**
@@ -124,8 +203,8 @@ This UI spacing is part of the contract and is protected by tests
 
 **Normalisation at the borders**
 
-- Accept common inbound variants:  
-  `EURUSD`, `EUR-USD`, `EUR_USD`, `EUR:USD`, `EUR\USD`, `EUR/USD`  
+- Accept common inbound variants:
+  `EURUSD`, `EUR-USD`, `EUR_USD`, `EUR:USD`, `EUR\USD`, `EUR/USD`
   → normalise to `EUR/USD`.
 - Store `base` and `quote` separately as the **Single Source of Truth (SSOT)**; strings are renderings only.
 
@@ -254,7 +333,7 @@ The `ribbonLabel` field provides full, descriptive names for ribbon display:
   "unit": "/bbl",
   "brandColor": "#EF4444"
 }
-```
+````
 
 **Display logic:**
 
@@ -942,6 +1021,7 @@ Top up to 6 countries by Promagen usage **for that provider** (this is per provi
 - Example: 🇺🇸 XLII 🇬🇧 XVII
 
 > **Implementation details:** See **cron_jobs.md** § Promagen Users Aggregation for:
+>
 > - Database schema (`provider_activity_events`, `provider_country_usage_30d`)
 > - Cron route (`/api/promagen-users/cron`)
 > - Library helpers (`src/lib/promagen-users/index.ts`)
@@ -1251,3 +1331,36 @@ No extra hidden files, no "magic" hard-coded numbers.
 - **9 Jan 2026:** Added Gateway SSOT Integration section under §2.1 FX Row. Gateway now fetches pairs from frontend `/api/fx/config` endpoint on startup instead of hardcoding.
 - **8 Jan 2026:** Market Pulse v2.1 — Dynamic city connections (no hardcoding), Option 3+4 combined visual effects, city normalization with aliases, unified `.market-pulse-active` CSS class.
 - **2 Jan 2026:** Added vote button to Image Quality column. Added community voting rules and implementation references.
+
+# ribbon-homepage.md Update (Lines 107-116)
+
+## REPLACE THIS SECTION:
+
+```markdown
+### Responsive Behaviour
+
+| Breakpoint | Engine Bay | Mission Control |
+| ---------- | ---------- | --------------- |
+| Desktop    | Visible    | Visible         |
+| Tablet     | Visible    | Visible         |
+| Mobile     | Hidden     | Hidden          |
+
+On mobile (< md), both panels are hidden. Fallback navigation buttons appear in the header.
+```
+
+## WITH THIS:
+
+```markdown
+### Responsive Behaviour (Updated 26 Jan 2026)
+
+| Breakpoint | Viewport    | Engine Bay | Mission Control |
+| ---------- | ----------- | ---------- | --------------- |
+| Desktop XL | ≥1280px     | Visible    | Visible         |
+| Desktop    | 1024-1279px | Hidden     | Hidden          |
+| Tablet     | 768-1023px  | Hidden     | Hidden          |
+| Mobile     | <768px      | Hidden     | Hidden          |
+
+**Note:** Panels use `xl:block` breakpoint (≥1280px) to prevent overlap with the leaderboard at narrower viewport widths. Changed from `md:block` on 26 Jan 2026.
+
+**File:** `src/components/layout/homepage-grid.tsx` — Lines 255 (Engine Bay), 278 (Mission Control)
+```

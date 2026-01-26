@@ -63,6 +63,7 @@ Promagen displays live financial data across **four feeds**, served through a **
 | **Commodities** | ⏸️ PARKED   | None        | `null`   | Yes      |
 
 **Verification Command:**
+
 ```powershell
 # All feeds returning data?
 (Invoke-RestMethod "https://promagen-api.fly.dev/fx").meta.mode          # "cached" or "live"
@@ -83,6 +84,7 @@ Promagen displays live financial data across **four feeds**, served through a **
 | **Crypto**      | Ribbon (homepage)     | TwelveData  | 800 shared   | 30 min    | :20, :50      | `twelvedata/`  |
 
 **Key insights:**
+
 - Indices uses a **separate provider and budget** — it doesn't compete with TwelveData feeds
 - Commodities is **PARKED** — returns `null` prices (renders as "—"), NO demo data ever
 - FX and Crypto **share one TwelveData budget** but never refresh simultaneously
@@ -97,13 +99,15 @@ Promagen displays live financial data across **four feeds**, served through a **
 > "Fallback must return null (renders as '—')."
 
 When live API data is unavailable, the gateway returns:
+
 ```typescript
-price: null  // NEVER demo prices
+price: null; // NEVER demo prices
 ```
 
 The frontend renders `null` as `—` (em dash). This is intentional and correct.
 
 **Why no demo prices?**
+
 - Users expect real data from a financial platform
 - Demo prices create false impressions
 - The "—" clearly communicates "data unavailable"
@@ -146,6 +150,7 @@ gateway/src/
 ```
 
 **Why provider-based?**
+
 - Debug TwelveData issues → look in **one folder**
 - Add new TwelveData feed → add **one config file**
 - Budget tracked per provider → **no confusion**
@@ -229,38 +234,44 @@ $trace.crypto | Select-Object mode, ssotSource
 ## Fixes Applied (Jan 14, 2026)
 
 ### 1. Demo Prices Removed
+
 All `getFallback()` functions now return `price: null` instead of demo prices.
 
 ### 2. Benchmark Mapping Aliases
+
 Added missing aliases in `gateway/src/marketstack/adapter.ts`:
 
-| Catalog Uses | Gateway Mapping | Marketstack Symbol |
-|--------------|-----------------|-------------------|
-| `djia`       | → `dow_jones`   | `DJI.INDX`        |
-| `tsx`        | → `tsx_composite`| `GSPTSE.INDX`    |
-| `russell_2000`| (new)          | `RUT.INDX`        |
+| Catalog Uses   | Gateway Mapping   | Marketstack Symbol |
+| -------------- | ----------------- | ------------------ |
+| `djia`         | → `dow_jones`     | `DJI.INDX`         |
+| `tsx`          | → `tsx_composite` | `GSPTSE.INDX`      |
+| `russell_2000` | (new)             | `RUT.INDX`         |
 
 ### 3. Crypto Route Key Fix
+
 Fixed `frontend/src/app/api/crypto/config/route.ts` to export `crypto` key (was `cryptos`).
 
 ### 4. FX Symbol Encoding
+
 Fixed `encodeURIComponent()` for FX symbols containing `/`.
 
 ---
 
 ## Deep Dive Documents
 
-| Topic                        | Document                        |
-| ---------------------------- | ------------------------------- |
-| Gateway refactor blueprint   | `GATEWAY-REFACTOR.md`           |
-| Calming techniques & metrics | `api-calming-efficiency.md`     |
-| Gateway architecture         | `promagen-api-brain-v2.md`      |
-| Fly.io deployment            | `fly-v2.md`                     |
-| Exchange cards & ribbons     | `ribbon-homepage.md`            |
-| Marketstack integration      | `MARKETSTACK-ACTION-PLAN.md`    |
-| Benchmark mappings           | `EXPECTED-INDICES-REFERENCE.md` |
-| Free vs paid features        | `paid_tier.md`                  |
-| Frontend code standards      | `code-standard.md`              |
+| Topic                           | Document                        |
+| ------------------------------- | ------------------------------- |
+| Gateway refactor blueprint      | `GATEWAY-REFACTOR.md`           |
+| Calming techniques & metrics    | `api-calming-efficiency.md`     |
+| Gateway architecture            | `promagen-api-brain-v2.md`      |
+| Fly.io deployment               | `fly-v2.md`                     |
+| Exchange cards & ribbons        | `ribbon-homepage.md`            |
+| **Engine Bay (left CTA)**       | `ignition.md`                   |
+| **Mission Control (right CTA)** | `mission-control.md`            |
+| Marketstack integration         | `MARKETSTACK-ACTION-PLAN.md`    |
+| Benchmark mappings              | `EXPECTED-INDICES-REFERENCE.md` |
+| Free vs paid features           | `paid_tier.md`                  |
+| Frontend code standards         | `code-standard.md`              |
 
 ---
 
@@ -277,21 +288,21 @@ Fixed `encodeURIComponent()` for FX symbols containing `/`.
 
 ## Changelog
 
-| Date       | Change                                                |
-| ---------- | ----------------------------------------------------- |
-| 2026-01-14 | **PM: All feeds verified LIVE**                       |
-|            | FX: TwelveData → mode: cached ✅                      |
-|            | Indices: Marketstack → mode: live ✅                  |
-|            | Crypto: TwelveData → mode: cached ✅                  |
-|            | Commodities: Parked → returns null (no demo ever)     |
-|            | Fixed benchmark aliases (djia, tsx, russell_2000)     |
-|            | Fixed crypto route key mismatch                       |
-|            | Removed ALL demo prices from gateway                  |
-| 2026-01-14 | Added provider-based gateway architecture             |
-|            | Updated diagram to show provider folders              |
-|            | Added gateway file structure section                  |
-|            | Added clock-aligned scheduler explanation             |
-| 2026-01-13 | Initial architecture overview document                |
+| Date       | Change                                            |
+| ---------- | ------------------------------------------------- |
+| 2026-01-14 | **PM: All feeds verified LIVE**                   |
+|            | FX: TwelveData → mode: cached ✅                  |
+|            | Indices: Marketstack → mode: live ✅              |
+|            | Crypto: TwelveData → mode: cached ✅              |
+|            | Commodities: Parked → returns null (no demo ever) |
+|            | Fixed benchmark aliases (djia, tsx, russell_2000) |
+|            | Fixed crypto route key mismatch                   |
+|            | Removed ALL demo prices from gateway              |
+| 2026-01-14 | Added provider-based gateway architecture         |
+|            | Updated diagram to show provider folders          |
+|            | Added gateway file structure section              |
+|            | Added clock-aligned scheduler explanation         |
+| 2026-01-13 | Initial architecture overview document            |
 
 ---
 

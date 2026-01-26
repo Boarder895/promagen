@@ -48,9 +48,10 @@ function ProviderNotFound({ id }: { id: string }) {
 // Dynamic per-provider metadata
 // ─────────────────────────────────────────────────────────────────────────────
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
+  const { id } = await params;
   const providers = getProviders();
-  const provider = providers.find((p) => p.id === params.id);
+  const provider = providers.find((p) => p.id === id);
 
   if (!provider) {
     return {
@@ -88,8 +89,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function ProviderPage({ params }: { params: Params }): JSX.Element {
-  const { id } = params;
+export default async function ProviderPage({ params }: { params: Promise<Params> }): Promise<JSX.Element> {
+  const { id } = await params;
 
   const providers = getProviders();
   const provider: Provider | undefined = providers.find((p) => p.id === id);

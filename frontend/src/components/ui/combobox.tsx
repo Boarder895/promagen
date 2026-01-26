@@ -472,7 +472,7 @@ export function Combobox({
             isLocked ? '' : selected.length === 0 ? placeholder : allowFreeText ? '' : 'Filter...'
           }
           spellCheck="true"
-          className={`min-w-[80px] flex-1 bg-transparent text-sm outline-none ${
+          className={`min-w-[80px] flex-1 bg-transparent text-xl outline-none ${
             isLocked
               ? 'text-purple-200 placeholder:text-purple-400 cursor-not-allowed'
               : 'text-slate-100 placeholder:text-slate-500'
@@ -556,7 +556,7 @@ export function Combobox({
                     key={option}
                     role="option"
                     aria-selected={false}
-                    className="px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800 focus-within:bg-slate-800 rounded"
+                    className="px-3 py-1.5 text-base text-slate-200 hover:bg-slate-800 focus-within:bg-slate-800 rounded"
                   >
                     <button
                       type="button"

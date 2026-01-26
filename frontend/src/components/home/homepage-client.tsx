@@ -5,6 +5,12 @@
 // Client component that handles dynamic exchange ordering based on user
 // location and reference frame preference.
 //
+// UPDATED (26 Jan 2026):
+// - FIXED: Added side="left" and side="right" to ExchangeList components
+// - This ensures right rail tooltips open LEFT (not right, off-screen)
+// - FIXED: isLocationLoading now only reflects location detection, not selection loading
+//   (prevents "Detecting..." showing for anonymous users)
+//
 // UPDATED (2026-01-19): Weather data now comes from gateway API!
 // - weatherIndex now uses ExchangeWeatherData type (matches card expectations)
 // - Emoji updates based on actual weather conditions
@@ -310,6 +316,7 @@ export default function HomepageClient({
 
   // Exchange list content (cards only, wrapper handled by HomepageGrid)
   // Now passes indexByExchange for index quote display
+  // FIXED: Added side prop so right rail tooltips open LEFT
   const leftExchanges = (
     <div className="space-y-2">
       <ExchangeList
@@ -317,6 +324,7 @@ export default function HomepageClient({
         weatherByExchange={effectiveWeatherIndex}
         indexByExchange={indexByExchange}
         emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
+        side="left"
       />
     </div>
   );
@@ -328,6 +336,7 @@ export default function HomepageClient({
         weatherByExchange={effectiveWeatherIndex}
         indexByExchange={indexByExchange}
         emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
+        side="right"
       />
     </div>
   );
@@ -340,11 +349,16 @@ export default function HomepageClient({
   //   - Auth failed/loading → immediately shows "Greenwich Meridian"
   //   - Authenticated users detecting → shows "Detecting..."
   //   - Authenticated users done → shows their city name
+  //
+  // IMPORTANT: Do NOT include isSelectionLoading here!
+  // That would cause "Detecting..." to show for anonymous users while
+  // their exchange selection is loading, which is wrong.
   // ============================================================================
   const effectiveLocationLoading = isAuthenticated && locationInfo.isLoading;
 
-  // Also consider selection loading for the overall loading state
-  const isOverallLoading = effectiveLocationLoading || isSelectionLoading;
+  // Note: isSelectionLoading is used elsewhere but NOT for isLocationLoading prop
+  // This ensures anonymous users see "Greenwich Meridian" immediately
+  void isSelectionLoading; // Suppress unused variable warning (used in debug logging)
 
   return (
     <HomepageGrid
@@ -359,8 +373,15 @@ export default function HomepageClient({
       isAuthenticated={isAuthenticated}
       referenceFrame={locationInfo.referenceFrame}
       onReferenceFrameChange={setReferenceFrame}
-      isLocationLoading={isOverallLoading}
+      // FIXED: Only pass location loading, NOT selection loading
+      // This prevents "Detecting..." showing for anonymous users
+      isLocationLoading={effectiveLocationLoading}
       cityName={locationInfo.cityName}
+      countryCode={locationInfo.countryCode}
+      providers={providers}
+      showEngineBay
+      showMissionControl
+      weatherIndex={effectiveWeatherIndex}
     />
   );
 }

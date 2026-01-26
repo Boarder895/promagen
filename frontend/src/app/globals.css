@@ -24,6 +24,27 @@
   --bg-west: #0f172a; /* slate-900 */
 
   --focus: #38bdf8; /* sky-400 */
+
+  /* ==========================================================================
+   * PANEL SYNCHRONIZATION TOKENS (v1.0.0)
+   * Shared height variables for Engine Bay ↔ Mission Control alignment
+   * ========================================================================== */
+
+  /* Content Zone: Icon grid / Prompt preview box */
+  --panel-content-min-height: 100px;
+  --panel-content-max-height: 140px;
+
+  /* Action Zone: Launch button / Nav buttons row */
+  --panel-action-height: 56px;
+
+  /* Shared internal padding */
+  --panel-zone-padding: 0.5rem;
+  --panel-zone-gap: 0.75rem;
+
+  /* Sub-window styling (inner boxes) */
+  --panel-subwindow-bg: rgba(15, 23, 42, 0.5);
+  --panel-subwindow-border: rgba(51, 65, 85, 0.5);
+  --panel-subwindow-radius: 0.75rem;
 }
 
 /* Respect users who prefer reduced motion */
@@ -1300,8 +1321,19 @@ a:hover {
   }
 }
 
+/* ==========================================================================
+ * BUGFIX (24 Jan 2026): Provider row layout shift during Market Pulse
+ * 
+ * Problem: When .market-pulse-active was applied to <tr> elements, the
+ * ::before pseudo-element caused content to shift right. This happened
+ * because HTML table rows don't reliably support position: relative and
+ * pseudo-elements across browsers.
+ *
+ * Fix: Move the indicator dot from tr::before to td:first-child::before.
+ * Table cells properly support positioned pseudo-elements.
+ * ========================================================================== */
+
 .market-pulse-active {
-  position: relative;
   border-color: var(--pulse-color, #3b82f6) !important;
   background-color: color-mix(in srgb, var(--pulse-color, #3b82f6) 10%, transparent);
   animation: market-pulse-card-glow 3s ease-in-out infinite;
@@ -1310,7 +1342,12 @@ a:hover {
     background-color 0.3s ease;
 }
 
-/* Indicator dot on exchange cards (right side) */
+/* Exchange cards (non-table elements) can use position: relative */
+.market-pulse-active[data-exchange-id] {
+  position: relative;
+}
+
+/* Indicator dot on exchange cards (right side) - unchanged */
 .market-pulse-active[data-exchange-id]::after {
   content: '';
   position: absolute;
@@ -1325,8 +1362,13 @@ a:hover {
   animation: market-pulse-dot-glow 3s ease-in-out infinite;
 }
 
-/* Indicator dot on provider rows (left side) */
-.market-pulse-active[data-provider-id]::before {
+/* Provider rows: first cell gets position context for indicator dot */
+.market-pulse-active[data-provider-id] > td:first-child {
+  position: relative;
+}
+
+/* FIXED: Indicator dot now anchored to first td, not tr */
+.market-pulse-active[data-provider-id] > td:first-child::before {
   content: '';
   position: absolute;
   left: -8px;
@@ -1338,6 +1380,8 @@ a:hover {
   background-color: var(--pulse-color, #3b82f6);
   box-shadow: 0 0 12px var(--pulse-color, #3b82f6);
   animation: market-pulse-dot-glow 3s ease-in-out infinite;
+  z-index: 1;
+  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1349,7 +1393,7 @@ a:hover {
   }
 
   .market-pulse-active[data-exchange-id]::after,
-  .market-pulse-active[data-provider-id]::before {
+  .market-pulse-active[data-provider-id] > td:first-child::before {
     animation: none;
   }
 }
@@ -1778,6 +1822,105 @@ a:hover {
   }
 }
 
+/* =============================================================================
+   Panel Sub-Window Styles (Engine Bay + Mission Control)
+   Consistent styling for internal content zones
+   Added: 25 Jan 2026
+   ============================================================================= */
+
+.panel-subwindow {
+  background: var(--panel-subwindow-bg);
+  border: 1px solid var(--panel-subwindow-border);
+  border-radius: var(--panel-subwindow-radius);
+  padding: var(--panel-zone-padding);
+}
+
+/* Content Zone - scrollable area with fixed height range */
+.panel-content-zone {
+  min-height: var(--panel-content-min-height);
+  max-height: var(--panel-content-max-height);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar for content zone */
+.panel-content-zone::-webkit-scrollbar {
+  width: 6px;
+}
+
+.panel-content-zone::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-content-zone::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.panel-content-zone::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Firefox */
+.panel-content-zone {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Action Zone - fixed height */
+.panel-action-zone {
+  height: var(--panel-action-height);
+  min-height: var(--panel-action-height);
+  max-height: var(--panel-action-height);
+}
+
+/* ==========================================================================
+ * ENGINE BAY ANIMATIONS (v4.0.0)
+ * Primary CTA animations for the Prompt Builder launch button
+ * 
+ * Gradient colors match "Intelligent Prompt Builder" heading:
+ *   sky-400 (#38bdf8) → emerald-300 (#6ee7b7) → indigo-400 (#818cf8)
+ * ========================================================================== */
+
+/* Pulse animation — breathing glow effect on active launch button */
+.engine-bay-active {
+  animation: engine-bay-pulse 1s ease-in-out infinite;
+}
+
+@keyframes engine-bay-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px rgba(56, 189, 248, 0.3),
+      0 0 40px rgba(52, 211, 153, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(56, 189, 248, 0.5),
+      0 0 60px rgba(52, 211, 153, 0.4);
+  }
+}
+
+/* Shimmer animation — light sweep across button on hover */
+.engine-bay-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: engine-bay-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes engine-bay-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* ==========================================================================
  * REDUCED MOTION SUPPORT
  * Respect user preference for reduced motion
@@ -1801,5 +1944,18 @@ a:hover {
   .leaderboard-glow-frame::after {
     animation: none;
     opacity: 0.85;
+  }
+
+  /* Disable Engine Bay animations for users who prefer reduced motion */
+  .engine-bay-active {
+    animation: none;
+    box-shadow:
+      0 0 25px rgba(56, 189, 248, 0.4),
+      0 0 50px rgba(52, 211, 153, 0.3);
+  }
+
+  .engine-bay-shimmer {
+    animation: none;
+    opacity: 0 !important;
   }
 }

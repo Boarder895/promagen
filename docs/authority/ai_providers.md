@@ -42,6 +42,7 @@ import type { Provider } from '@/types/provider';
 ```
 
 **Forbidden patterns:**
+
 - Importing from `@/types/providers` directly (use the entry point)
 - Defining ad-hoc Provider types in components or routes
 - Using `z.infer<typeof SomeSchema>` as the Provider type in UI code
@@ -57,72 +58,72 @@ export type ProviderGenerationSpeed = 'fast' | 'medium' | 'slow' | 'varies';
 /**
  * Quality tier for providers not covered by external benchmarks.
  */
-export type ProviderQualityTier = 
-  | 'top-tier'      // Best-in-class quality
-  | 'mid-tier'      // Good quality, competitive
-  | 'entry-tier'    // Basic quality, accessible
-  | 'specialized'   // Niche use case (anime, editing, etc.)
-  | 'utility';      // Not primarily generative
+export type ProviderQualityTier =
+  | 'top-tier' // Best-in-class quality
+  | 'mid-tier' // Good quality, competitive
+  | 'entry-tier' // Basic quality, accessible
+  | 'specialized' // Niche use case (anime, editing, etc.)
+  | 'utility'; // Not primarily generative
 
 /**
  * Community ranking data for a provider.
  */
 export type ProviderRanking = {
-  seedElo: number | null;           // From Artificial Analysis (null if not benchmarked)
-  seedTier: ProviderQualityTier;    // Manual tier for providers without ELO
-  bayesianScore: number | null;     // Calculated from community votes
-  communityRank: number | null;     // Derived rank 1-N
-  totalVotes: number;               // Total weighted votes
+  seedElo: number | null; // From Artificial Analysis (null if not benchmarked)
+  seedTier: ProviderQualityTier; // Manual tier for providers without ELO
+  bayesianScore: number | null; // Calculated from community votes
+  communityRank: number | null; // Derived rank 1-N
+  totalVotes: number; // Total weighted votes
   signals: {
     imageUploads: number;
     imageLikes: number;
     comments: number;
     cardLikes: number;
   };
-  lastCalculated: string | null;    // ISO timestamp
+  lastCalculated: string | null; // ISO timestamp
 };
 
 export type Provider = {
   id: string;
   name: string;
-  country?: string;      // DEPRECATED: Use countryCode
-  countryCode?: string;  // ISO 3166-1 alpha-2
-  
-  score?: number;        // Overall score 0-100
+  country?: string; // DEPRECATED: Use countryCode
+  countryCode?: string; // ISO 3166-1 alpha-2
+
+  score?: number; // Overall score 0-100
   trend?: ProviderTrend;
   tags?: string[];
-  
+
   website: string;
-  url?: string;          // Legacy alias
-  
+  url?: string; // Legacy alias
+
   affiliateUrl: string | null;
   requiresDisclosure: boolean;
-  
+
   tagline?: string;
   tip?: string;
-  
+
   icon?: string;
   localIcon?: string;
-  
+
   hqCity?: string;
   timezone?: string;
   supportHours?: string;
-  
+
   imageQualityRank?: number;
   incumbentAdjustment?: boolean;
-  
+
   visualStyles?: string;
   apiAvailable?: boolean;
   affiliateProgramme?: boolean;
-  
+
   // Community ranking (populated when voting is enabled)
   ranking?: ProviderRanking;
-  
+
   // DEPRECATED fields
   sweetSpot?: string;
   generationSpeed?: ProviderGenerationSpeed;
   affordability?: string;
-  
+
   supportsPrefill?: boolean;
   group?: string;
   tier?: string;
@@ -136,6 +137,7 @@ The `hqCity` field is **critical** for the Market Pulse feature. It enables dyna
 #### How It Works
 
 Market Pulse v2.1 dynamically connects providers to exchanges by matching:
+
 ```
 provider.hqCity (normalized) === exchange.city (normalized)
 ```
@@ -146,43 +148,44 @@ provider.hqCity (normalized) === exchange.city (normalized)
 
 Some providers use suburb names or alternative city names. The system normalizes these:
 
-| Provider `hqCity` Value | Normalized To | Provider Example |
-|-------------------------|---------------|------------------|
-| `Surry Hills` | `Sydney` | Canva |
-| `Mountain View` | `San Francisco` | Google (Imagen) |
-| `Menlo Park` | `San Francisco` | Meta (Imagine) |
-| `Palo Alto` | `San Francisco` | Hotpot |
-| `San Jose` | `San Francisco` | Adobe |
-| `Redmond` | `Seattle` | Microsoft |
+| Provider `hqCity` Value | Normalized To   | Provider Example |
+| ----------------------- | --------------- | ---------------- |
+| `Surry Hills`           | `Sydney`        | Canva            |
+| `Mountain View`         | `San Francisco` | Google (Imagen)  |
+| `Menlo Park`            | `San Francisco` | Meta (Imagine)   |
+| `Palo Alto`             | `San Francisco` | Hotpot           |
+| `San Jose`              | `San Francisco` | Adobe            |
+| `Redmond`               | `Seattle`       | Microsoft        |
 
 **Source:** `src/data/city-connections.ts` → `CITY_ALIASES`
 
 #### Current Provider Cities (42 providers)
 
-| City | Providers |
-|------|-----------|
-| **San Francisco** | OpenAI, Anthropic, Midjourney, Replicate, Stability AI (US), xAI, Civitai |
-| **London** | Stability AI (UK), DreamStudio, Dreamlike.art |
-| **Sydney** | Leonardo AI |
-| **Surry Hills** (→ Sydney) | Canva |
-| **Hong Kong** | Fotor, Artguru, PicWish |
-| **Toronto** | Ideogram |
-| **Paris** | Clipdrop |
-| **Taipei** | MyEdit |
-| **Vienna** | Remove.bg |
-| **Warsaw** | Getimg.ai |
-| **New York** | Runway ML, Artbreeder |
-| **Mountain View** (→ SF) | Google (Imagen) |
-| **Menlo Park** (→ SF) | Meta (Imagine) |
-| **Palo Alto** (→ SF) | Hotpot |
-| **San Jose** (→ SF) | Adobe |
-| **Redmond** (→ Seattle) | Microsoft (Designer, Bing) |
+| City                       | Providers                                                                 |
+| -------------------------- | ------------------------------------------------------------------------- |
+| **San Francisco**          | OpenAI, Anthropic, Midjourney, Replicate, Stability AI (US), xAI, Civitai |
+| **London**                 | Stability AI (UK), DreamStudio, Dreamlike.art                             |
+| **Sydney**                 | Leonardo AI                                                               |
+| **Surry Hills** (→ Sydney) | Canva                                                                     |
+| **Hong Kong**              | Fotor, Artguru, PicWish                                                   |
+| **Toronto**                | Ideogram                                                                  |
+| **Paris**                  | Clipdrop                                                                  |
+| **Taipei**                 | MyEdit                                                                    |
+| **Vienna**                 | Remove.bg                                                                 |
+| **Warsaw**                 | Getimg.ai                                                                 |
+| **New York**               | Runway ML, Artbreeder                                                     |
+| **Mountain View** (→ SF)   | Google (Imagen)                                                           |
+| **Menlo Park** (→ SF)      | Meta (Imagine)                                                            |
+| **Palo Alto** (→ SF)       | Hotpot                                                                    |
+| **San Jose** (→ SF)        | Adobe                                                                     |
+| **Redmond** (→ Seattle)    | Microsoft (Designer, Bing)                                                |
 
 #### Adding a New Provider with City Connection
 
 To enable Market Pulse for a new provider:
 
 1. Add `hqCity` to the provider entry in `providers.json`:
+
 ```json
 {
   "id": "new-provider",
@@ -199,10 +202,10 @@ To enable Market Pulse for a new provider:
 #### API for City Connections
 
 ```typescript
-import { 
+import {
   getProvidersInCity,
   getExchangesInCity,
-  getCityConnections 
+  getCityConnections,
 } from '@/data/city-connections';
 
 // Get all providers headquartered in Sydney
@@ -241,7 +244,7 @@ function sortProvidersForSelector(providers: Provider[]): Provider[] {
     // 123rf always goes last
     if (a.id === '123rf' || a.id === 'i23rf') return 1;
     if (b.id === '123rf' || b.id === 'i23rf') return -1;
-    
+
     // Alphabetical by name
     return a.name.localeCompare(b.name);
   });
@@ -249,6 +252,7 @@ function sortProvidersForSelector(providers: Provider[]): Provider[] {
 ```
 
 **Result order example:**
+
 1. Adobe Firefly
 2. Artbreeder
 3. Bing Image Creator
@@ -264,6 +268,7 @@ function sortProvidersForSelector(providers: Provider[]): Provider[] {
 **Location:** Above the Providers Table, aligned left
 
 **Component:** Uses existing `Combobox` component with these props:
+
 - `singleColumn={true}` — Forces alphabetical scanning (no grid)
 - `maxSelections` — Dynamic based on Gallery Mode state
 - `compact={true}` — Fits in header area
@@ -280,10 +285,10 @@ function sortProvidersForSelector(providers: Provider[]): Provider[] {
 
 ### Selection Limits
 
-| Context | Max Selections | Rationale |
-|---------|----------------|-----------|
-| **Gallery Mode** | 1–3 | Gallery focuses on a few providers; prevents "all providers" clutter |
-| **Providers View** | Unlimited (42) | Full flexibility when not in Gallery |
+| Context            | Max Selections | Rationale                                                            |
+| ------------------ | -------------- | -------------------------------------------------------------------- |
+| **Gallery Mode**   | 1–3            | Gallery focuses on a few providers; prevents "all providers" clutter |
+| **Providers View** | Unlimited (42) | Full flexibility when not in Gallery                                 |
 
 **Gallery Mode enforcement:**
 
@@ -305,38 +310,39 @@ const maxProviderSelections = isGalleryMode ? 3 : 42;
 ```
 
 **Gallery Mode truncation behaviour:**
+
 - If user had >3 selected when switching to Gallery Mode: truncate to first 3 alphabetically
 - Show toast: "Gallery Mode limits to 3 providers"
 - Display hint in dropdown: "(max 3 in Gallery)"
 
 ### Pro Gating
 
-| User Tier | Selector Visible | Table Behaviour |
-|-----------|------------------|-----------------|
-| Free | ❌ Hidden | Shows full leaderboard |
-| Pro | ✅ Visible | Filters to selected providers |
+| User Tier | Selector Visible | Table Behaviour               |
+| --------- | ---------------- | ----------------------------- |
+| Free      | ❌ Hidden        | Shows full leaderboard        |
+| Pro       | ✅ Visible       | Filters to selected providers |
 
 **Conditional rendering:**
 
 ```tsx
-{isPro && (
-  <ProviderFilterSelector
-    providers={providers}
-    selected={selectedProviders}
-    onChange={setSelectedProviders}
-    isGalleryMode={isGalleryMode}
-  />
-)}
+{
+  isPro && (
+    <ProviderFilterSelector
+      providers={providers}
+      selected={selectedProviders}
+      onChange={setSelectedProviders}
+      isGalleryMode={isGalleryMode}
+    />
+  );
+}
 
-<ProvidersTable
-  providers={providers}
-  filterIds={isPro ? selectedProviders : undefined}
-/>
+<ProvidersTable providers={providers} filterIds={isPro ? selectedProviders : undefined} />;
 ```
 
 ### Persistence
 
 Selected providers persist in:
+
 1. **Local storage** — For immediate recall
 2. **Clerk user metadata** — For cross-device sync (Pro only)
 
@@ -348,8 +354,8 @@ Selected providers persist in:
 // src/lib/providers/filter-prefs.ts
 
 interface ProviderFilterPrefs {
-  selected: string[];  // Provider IDs
-  updatedAt: string;   // ISO timestamp
+  selected: string[]; // Provider IDs
+  updatedAt: string; // ISO timestamp
 }
 
 const STORAGE_KEY = 'promagen:provider-filter';
@@ -377,12 +383,14 @@ function saveProviderFilter(selected: string[]): void {
 ### Empty State
 
 If user selects 0 providers (clears all):
+
 - Show full leaderboard
 - Dropdown shows "All providers"
 
 ### Gallery Mode Integration
 
 When in Gallery Mode:
+
 1. Dropdown limit enforced to 3
 2. If user had >3 selected, truncate to first 3 with toast
 3. Prompt copy buttons show only for selected provider tiers
@@ -390,29 +398,29 @@ When in Gallery Mode:
 
 ### Accessibility
 
-| Requirement | Implementation |
-|-------------|----------------|
-| Keyboard navigation | Full arrow key + Enter support (from Combobox) |
-| Screen reader | `aria-label="Filter AI providers"` |
-| Focus management | Returns focus to trigger after selection |
-| Selection announcement | Live region announces changes |
+| Requirement            | Implementation                                 |
+| ---------------------- | ---------------------------------------------- |
+| Keyboard navigation    | Full arrow key + Enter support (from Combobox) |
+| Screen reader          | `aria-label="Filter AI providers"`             |
+| Focus management       | Returns focus to trigger after selection       |
+| Selection announcement | Live region announces changes                  |
 
 ### Component Files
 
 **New files:**
 
-| File | Purpose |
-|------|---------|
-| `src/lib/providers/sort.ts` | Alphabetical sort with 123rf last |
-| `src/lib/providers/filter-prefs.ts` | localStorage + Clerk persistence |
-| `src/components/providers/provider-filter-selector.tsx` | Dropdown component |
+| File                                                    | Purpose                           |
+| ------------------------------------------------------- | --------------------------------- |
+| `src/lib/providers/sort.ts`                             | Alphabetical sort with 123rf last |
+| `src/lib/providers/filter-prefs.ts`                     | localStorage + Clerk persistence  |
+| `src/components/providers/provider-filter-selector.tsx` | Dropdown component                |
 
 **Modified files:**
 
-| File | Changes |
-|------|---------|
-| `src/components/providers/providers-table.tsx` | Add `filterIds` prop |
-| `src/app/providers/page.tsx` | Integrate selector for Pro users |
+| File                                           | Changes                          |
+| ---------------------------------------------- | -------------------------------- |
+| `src/components/providers/providers-table.tsx` | Add `filterIds` prop             |
+| `src/app/providers/page.tsx`                   | Integrate selector for Pro users |
 
 ### Authority Cross-Reference
 
@@ -427,12 +435,12 @@ The provider catalogue maps each platform to one of **four prompt tiers** based 
 
 ### Tier Definitions
 
-| Tier | Name | Prompt Style | Examples |
-|------|------|--------------|----------|
-| **1** | CLIP-Based | Tokenized keywords, high stacking tolerance | Stable Diffusion, Flux, Leonardo |
-| **2** | Midjourney Family | Parameter-rich, very high tolerance | Midjourney, Niji, BlueWillow |
-| **3** | Natural Language | Conversational prompts, medium tolerance | DALL·E, Imagen, Firefly |
-| **4** | Plain Language | Simple prompts work best, low tolerance | Craiyon, Canva, Artbreeder |
+| Tier  | Name              | Prompt Style                                | Examples                         |
+| ----- | ----------------- | ------------------------------------------- | -------------------------------- |
+| **1** | CLIP-Based        | Tokenized keywords, high stacking tolerance | Stable Diffusion, Flux, Leonardo |
+| **2** | Midjourney Family | Parameter-rich, very high tolerance         | Midjourney, Niji, BlueWillow     |
+| **3** | Natural Language  | Conversational prompts, medium tolerance    | DALL·E, Imagen, Firefly          |
+| **4** | Plain Language    | Simple prompts work best, low tolerance     | Craiyon, Canva, Artbreeder       |
 
 ### Platform Tier Assignments (All 42 Platforms)
 
@@ -456,16 +464,16 @@ Gallery Mode generates **4 prompt variants** for each image — one per tier:
 // Scene Brief → 4 deterministic prompt renderings
 
 // Tier 1 (CLIP-Based):
-"Tokyo skyline at twilight::1.3, golden hour light, serene, contemplative, peaceful, cherry blossom season, (Mount Fuji background:1.2), cinematic photography style, wide angle lens --no text logos watermarks"
+'Tokyo skyline at twilight::1.3, golden hour light, serene, contemplative, peaceful, cherry blossom season, (Mount Fuji background:1.2), cinematic photography style, wide angle lens --no text logos watermarks';
 
 // Tier 2 (Midjourney):
-"Tokyo skyline at twilight, golden hour light, serene contemplative peaceful atmosphere, cherry blossom season, Mount Fuji in background, cinematic photography, wide angle --ar 16:9 --no text logos watermarks"
+'Tokyo skyline at twilight, golden hour light, serene contemplative peaceful atmosphere, cherry blossom season, Mount Fuji in background, cinematic photography, wide angle --ar 16:9 --no text logos watermarks';
 
 // Tier 3 (Natural Language):
-"A serene photograph of the Tokyo skyline at twilight during cherry blossom season. The scene is bathed in golden hour light with Mount Fuji visible in the background. The atmosphere is contemplative and peaceful. Shot in a cinematic style with a wide angle lens. No text or logos."
+'A serene photograph of the Tokyo skyline at twilight during cherry blossom season. The scene is bathed in golden hour light with Mount Fuji visible in the background. The atmosphere is contemplative and peaceful. Shot in a cinematic style with a wide angle lens. No text or logos.';
 
 // Tier 4 (Plain Language):
-"Tokyo skyline at sunset with cherry blossoms, golden light, Mount Fuji in background, peaceful mood, wide angle photo"
+'Tokyo skyline at sunset with cherry blossoms, golden light, Mount Fuji in background, peaceful mood, wide angle photo';
 ```
 
 ---
@@ -478,12 +486,12 @@ Users can vote for their favourite provider's image quality. Votes influence the
 
 **Signal types and weights:**
 
-| Signal | Standard Weight | Pro Weight |
-|--------|-----------------|------------|
-| Image upload | 1 | 1.5 |
-| Image like | 2 | 3 |
-| Comment | 2 | 3 |
-| Card like | 3 | 4.5 |
+| Signal       | Standard Weight | Pro Weight |
+| ------------ | --------------- | ---------- |
+| Image upload | 1               | 1.5        |
+| Image like   | 2               | 3          |
+| Comment      | 2               | 3          |
+| Card like    | 3               | 4.5        |
 
 ### Bayesian Ranking Formula
 
@@ -501,13 +509,14 @@ where:
 
 From Artificial Analysis ELO scores (Nov 2024):
 
-| Provider | Seed ELO |
-|----------|----------|
-| Midjourney | 1093 |
-| Stability AI SD3 | 1084 |
-| OpenAI DALL·E 3 | 984 |
+| Provider         | Seed ELO |
+| ---------------- | -------- |
+| Midjourney       | 1093     |
+| Stability AI SD3 | 1084     |
+| OpenAI DALL·E 3  | 984      |
 
 Providers without external benchmarks are assigned manual tiers:
+
 - **Top-tier:** Adobe Firefly, Runway ML
 - **Mid-tier:** Canva, Lexica, OpenArt, NightCafe, Jasper Art, Freepik
 - **Entry-tier:** Craiyon, DeepAI, Hotpot
@@ -515,23 +524,23 @@ Providers without external benchmarks are assigned manual tiers:
 
 ### Implementation Files
 
-| File | Purpose |
-|------|---------|
-| `src/components/providers/image-quality-vote-button.tsx` | Animated thumbs-up button |
-| `src/components/providers/providers-table.tsx` | Table with vote integration |
-| `src/hooks/use-image-quality-vote.ts` | Vote state management hook |
-| `src/lib/vote-storage.ts` | localStorage vote tracking |
-| `src/app/api/providers/vote/route.ts` | Vote API endpoint |
+| File                                                     | Purpose                     |
+| -------------------------------------------------------- | --------------------------- |
+| `src/components/providers/image-quality-vote-button.tsx` | Animated thumbs-up button   |
+| `src/components/providers/providers-table.tsx`           | Table with vote integration |
+| `src/hooks/use-image-quality-vote.ts`                    | Vote state management hook  |
+| `src/lib/vote-storage.ts`                                | localStorage vote tracking  |
+| `src/app/api/providers/vote/route.ts`                    | Vote API endpoint           |
 
 ### Visual States
 
-| State | Appearance |
-|-------|------------|
-| Not voted, can vote | Outline thumb, highlights on hover |
-| Already voted | Filled emerald thumb |
+| State               | Appearance                            |
+| ------------------- | ------------------------------------- |
+| Not voted, can vote | Outline thumb, highlights on hover    |
+| Already voted       | Filled emerald thumb                  |
 | Daily limit reached | Outline thumb, dimmed, no interaction |
-| Animating | Bounce + fill transition (400ms) |
-| Not authenticated | Outline thumb, dimmed, no interaction |
+| Animating           | Bounce + fill transition (400ms)      |
+| Not authenticated   | Outline thumb, dimmed, no interaction |
 
 ### Anti-Gaming Measures
 
@@ -548,6 +557,7 @@ Providers without external benchmarks are assigned manual tiers:
 **POST /api/providers/vote**
 
 Request:
+
 ```json
 {
   "providerId": "midjourney",
@@ -556,6 +566,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -569,6 +580,7 @@ Response:
 **GET /api/providers/vote?providerId=midjourney**
 
 Response:
+
 ```json
 {
   "providerId": "midjourney",
@@ -698,11 +710,11 @@ The Provider cell in the leaderboard displays a three-line layout:
 
 **Outbound link routing:**
 
-| Element | Destination | Opens In |
-|---------|-------------|----------|
-| Provider name | `/go/{id}?src=leaderboard_homepage` → provider website | New tab |
-| Provider icon | `/go/{id}?src=leaderboard_homepage` → provider website | New tab |
-| 🎨 Prompt builder | `/providers/{id}/prompt-builder` | Same tab |
+| Element           | Destination                                            | Opens In |
+| ----------------- | ------------------------------------------------------ | -------- |
+| Provider name     | `/go/{id}?src=leaderboard_homepage` → provider website | New tab  |
+| Provider icon     | `/go/{id}?src=leaderboard_homepage` → provider website | New tab  |
+| 🎨 Prompt builder | `/providers/{id}/prompt-builder`                       | Same tab |
 
 ---
 
@@ -824,3 +836,49 @@ When adding features to AI Providers:
 - Maintain existing UI layout, colours, and current behaviour unless explicitly changing a specific feature.
 - Include lock‑in proof (test or explicit before/after behaviour note).
 - Always state: **Existing features preserved: Yes/No** (Yes is the default expectation).
+
+# ai_providers.md Update
+
+**Target file:** `docs/authority/ai_providers.md`
+
+---
+
+## Change 1: Update "Last updated" date
+
+**REPLACE line 3:**
+
+```
+**Last updated:** 8 January 2026
+```
+
+**WITH:**
+
+```
+**Last updated:** 24 January 2026
+```
+
+---
+
+## Change 2: Add cross-reference to ignition.md
+
+**ADD after line 13** (after the prompt-builder-page.md reference):
+
+```markdown
+For the Engine Bay (Ignition) homepage CTA, see: **ignition.md** (`docs/authority/ignition.md`).
+```
+
+---
+
+## Full context (lines 9-15 after changes):
+
+```markdown
+This document describes Promagen's **AI Providers catalogue**, how providers are displayed (Leaderboard + Detail + Prompt Builder), and how provider capabilities and prompts are mapped.
+
+For affiliate and referral outbound linking, see: **ai providers affiliate & links.md** (`docs/authority/ai providers affiliate & links.md`).
+
+For the prompt builder page architecture, see: **prompt-builder-page.md** (`docs/authority/prompt-builder-page.md`).
+
+For the Engine Bay (Ignition) homepage CTA, see: **ignition.md** (`docs/authority/ignition.md`).
+
+Monetisation scope note
+```

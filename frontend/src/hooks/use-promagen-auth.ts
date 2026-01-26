@@ -106,6 +106,8 @@ export interface LocationInfo {
   isLoading: boolean;
   /** User's city name (if detected) */
   cityName?: string;
+  /** User's country code (if detected) */
+  countryCode?: string;
   /** Whether using fallback location */
   isFallback: boolean;
 }
@@ -378,6 +380,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     coordinates: effectiveCoordinates,
     isLoading: isAuthenticated && isLocationLoading,
     cityName: location?.city,
+    countryCode: location?.countryCode,
     isFallback: !isAuthenticated || isFallback,
   };
 

@@ -27,18 +27,20 @@ Memory is used only for stable working preferences and process rules (e.g., "one
 
 ## Terminology (Paid Tier Naming)
 
-| Term | Definition |
-|------|------------|
-| **Pro Promagen** | The paid subscription tier. Always use "Pro Promagen" in user-facing text, never "paid", "premium", "plus", or other terms. |
-| **Standard Promagen** | The free tier. If not explicitly listed in `paid_tier.md`, a feature is Standard Promagen (free). |
+| Term                  | Definition                                                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Pro Promagen**      | The paid subscription tier. Always use "Pro Promagen" in user-facing text, never "paid", "premium", "plus", or other terms. |
+| **Standard Promagen** | The free tier. If not explicitly listed in `paid_tier.md`, a feature is Standard Promagen (free).                           |
 
 **UI usage:**
+
 - CTAs: "Upgrade to Pro Promagen"
 - Badges: "Pro Promagen" or "Pro"
 - Tooltips: "Pro Promagen feature"
 - Lock messages: "🔒 Pro Promagen Feature"
 
 **Code usage:**
+
 - Internal variables may use `isPaidUser`, `userTier === 'paid'` for brevity
 - User-facing strings must always say "Pro Promagen"
 
@@ -88,10 +90,10 @@ These rules prevent the "5 duplicate schemas" problem that caused 500 errors:
 
 Every JSON SSOT file has exactly ONE Zod validation schema adjacent to it:
 
-| Data file | Schema file |
-|-----------|-------------|
-| `data/providers/providers.json` | `data/providers/providers.schema.ts` |
-| `data/fx/fx-pairs.json` | `data/fx/fx.schema.ts` |
+| Data file                               | Schema file                          |
+| --------------------------------------- | ------------------------------------ |
+| `data/providers/providers.json`         | `data/providers/providers.schema.ts` |
+| `data/fx/fx-pairs.json`                 | `data/fx/fx.schema.ts`               |
 | `data/exchanges/exchanges.catalog.json` | `data/exchanges/exchanges.schema.ts` |
 
 Routes and loaders import from this canonical schema, never define their own.
@@ -100,11 +102,11 @@ Routes and loaders import from this canonical schema, never define their own.
 
 For major domain types, create a singular entry-point file that re-exports:
 
-| Entry point | Re-exports from |
-|-------------|-----------------|
+| Entry point           | Re-exports from  |
+| --------------------- | ---------------- |
 | `@/types/provider.ts` | `./providers.ts` |
 | `@/types/exchange.ts` | `./exchanges.ts` |
-| `@/types/fx-pair.ts` | `./fx.ts` |
+| `@/types/fx-pair.ts`  | `./fx.ts`        |
 
 All UI/route code imports from the singular entry point.
 
@@ -132,8 +134,9 @@ const SubsetSchema = z.object({ id: z.string(), name: z.string() }).strict();
 - Generated artefacts are volatile: do not "merge by hand" for these during conflict resolution:
   - `frontend/tsconfig.tsbuildinfo`
   - `frontend/.reports/latest.json`
-  
+
   Pick one side (normally `main`) or remove them from tracking later.
+
 - Conflict rule: never commit or run linters with conflict markers present. If any file contains `<<<<<<<`, stop and resolve first.
 
 ---
@@ -329,10 +332,10 @@ When Vercel deploys a new version, active users still have old JS bundles cached
 
 ### Two-layer protection (belt and suspenders)
 
-| Layer | Mechanism | What it does |
-|-------|-----------|--------------|
+| Layer                         | Mechanism            | What it does                                                      |
+| ----------------------------- | -------------------- | ----------------------------------------------------------------- |
 | **1. Vercel Skew Protection** | `vercel.json` config | Keeps old deployment assets available for 7 days after new deploy |
-| **2. ChunkErrorBoundary** | React error boundary | Catches chunk load failures and auto-reloads the page |
+| **2. ChunkErrorBoundary**     | React error boundary | Catches chunk load failures and auto-reloads the page             |
 
 Both layers should be active. Skew Protection prevents most issues; the error boundary catches edge cases and provides graceful recovery.
 
@@ -348,6 +351,7 @@ Both layers should be active. Skew Protection prevents most issues; the error bo
 ```
 
 **How it works:**
+
 - Vercel keeps previous deployment assets available for the specified duration
 - Users with old bundles can still load chunks from the previous deployment
 - No code changes required — purely platform-level protection
@@ -368,9 +372,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <ChunkErrorBoundary>
-          {children}
-        </ChunkErrorBoundary>
+        <ChunkErrorBoundary>{children}</ChunkErrorBoundary>
       </body>
     </html>
   );
@@ -378,6 +380,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 ```
 
 **Behaviour:**
+
 - Detects `ChunkLoadError`, "Loading chunk failed", and similar errors
 - Logs warning to console for observability
 - Auto-reloads the page after 100ms delay
@@ -454,3 +457,59 @@ OUTPUT FORMAT:
 - **30 Dec 2025:** No content changes (tooltip standards added to code-standard.md § 7.1 instead of here to avoid duplication).
 - **28 Dec 2025:** Added Schema and Type Consolidation Rules section. Added `prompt-builder-page.md` to authority docs list. Added "Schema or type definitions" to doc update triggers. Updated memory policy for Claude. Improved formatting consistency.
 - **27 Dec 2025:** Added "Git safety gate (anti-panic)" rules (stash-first / rescue-branch / no-guessing / generated artefact handling / no-conflict-marker commits).
+
+# best-working-practice.md Update
+
+**Target file:** `docs/authority/best-working-practice.md`
+
+---
+
+## Change 1: Update "Last updated" date
+
+**REPLACE line 3:**
+
+```
+**Last updated:** 9 January 2026
+```
+
+**WITH:**
+
+```
+**Last updated:** 24 January 2026
+```
+
+---
+
+## Change 2: Add ignition.md to authority docs list
+
+**ADD after line 231** (after prompt-builder-page.md entry):
+
+```markdown
+- `docs/authority/ignition.md` ← Engine Bay (Ignition) homepage CTA
+```
+
+---
+
+## Change 3: Add changelog entry
+
+**ADD at the end of the Changelog section** (before the last entry):
+
+```markdown
+- **24 Jan 2026:** Added `ignition.md` to authority docs list (Engine Bay homepage CTA feature).
+```
+
+---
+
+## Full context (lines 229-237 after changes):
+
+```markdown
+- `docs/authority/ai providers.md` ← AI providers catalogue and leaderboard
+- `docs/authority/ai providers affiliate & links.md` ← Affiliate and referral rules
+- `docs/authority/prompt-builder-page.md` ← Prompt builder page architecture
+- `docs/authority/ignition.md` ← Engine Bay (Ignition) homepage CTA
+- `docs/authority/ga4-gtm-nextjs-vercel.md` ← Analytics integration
+- `docs/authority/vercel-pro-promagen-playbook.md` ← Vercel Pro guardrails
+- `docs/authority/fly-v2.md` ← Fly.io deployment
+- `docs/authority/api-documentation-twelvedata.md` ← Vendor reference snapshot (read-only)
+- `docs/authority/TODO-api-integration.md` ← Deferred work and activation tasks
+```
