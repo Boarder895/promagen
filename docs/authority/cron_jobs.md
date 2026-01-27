@@ -594,8 +594,4 @@ curl "https://promagen.vercel.app/api/index-rating/cron?secret=$PROMAGEN_CRON_SE
   - Full section 2 with data flow, schema, route, testing
   - Documented all event types and their tracking status
   - Added environment variables reference
-
-curl "http://localhost:3000/api/index-rating/cron?secret=S9W5q-BIVVJO_ZL95K6pvqQTqDo3NwOt5JUxdQHReEQ"
-
-curl "http://localhost:3000/api/promagen-users/cron?secret=S9W5q-BIVVJO_ZL95K6pvqQTqDo3NwOt5JUxdQHReEQ"
 ````
