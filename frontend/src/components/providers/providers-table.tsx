@@ -16,17 +16,34 @@
 // Updated: 22 Jan 2026 - BUGFIX: Fixed inverted sort direction
 //                      - 'desc' now correctly shows highest scores first
 //                      - Separate dir calculation for score vs imageQuality
+// Updated: 27 Jan 2026 - Replaced "Overall Score" column with "Index Rating"
+//                      - Integrated IndexRatingCell component for live ratings
+//                      - Added client-side fetching of Index Rating data
+//                      - Sorting now uses Index Rating instead of static score
+// Updated: 27 Jan 2026 - Added hasRankUp prop to ProviderCell for green arrow display
+//                      - Added isUnderdog/isNewcomer calculation from market-power.json
+//                      - Imported market power data and MPI calculation
 
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import type { Provider } from '@/types/provider';
+import type { ProviderRating, DisplayRating } from '@/types/index-rating';
 import { ProviderCell } from './provider-cell';
 import { ImageQualityVoteButton } from './image-quality-vote-button';
 import { SupportIconsCell } from './support-icons-cell';
+import { IndexRatingCell } from './index-rating-cell';
 import { toRomanNumeral } from '@/lib/format/number';
 import { Flag } from '@/components/ui/flag';
 import Tooltip from '@/components/ui/tooltip';
+
+// Market power data for MPI calculation
+import marketPowerData from '@/data/providers/market-power.json';
+import { calculateMPI } from '@/lib/index-rating/calculations';
+import type { MarketPowerData, ProviderMarketPower } from '@/lib/index-rating';
+
+// Cast market power data to typed version
+const typedMarketPowerData = marketPowerData as MarketPowerData;
 
 export type ProvidersTableProps = {
   providers: ReadonlyArray<Provider>;
@@ -45,12 +62,143 @@ type PromagenUsersCountryUsage = {
   count: number;
 };
 
-type ProviderWithPromagenUsers = Provider & {
+type ProviderWithExtras = Provider & {
   promagenUsers?: ReadonlyArray<PromagenUsersCountryUsage>;
+  indexRating?: DisplayRating;
 };
 
-type SortColumn = 'score' | 'imageQuality';
+type SortColumn = 'indexRating' | 'imageQuality';
 type SortDirection = 'asc' | 'desc';
+
+// =============================================================================
+// MARKET POWER HELPERS
+// =============================================================================
+
+/**
+ * Calculate if provider is an underdog (MPI < 3.0)
+ */
+function isProviderUnderdog(providerId: string): boolean {
+  const marketPower = typedMarketPowerData.providers || {};
+  const providerData = marketPower[providerId] as ProviderMarketPower | undefined;
+  
+  if (!providerData) {
+    // Unknown provider — default MPI is 3.0, so NOT underdog
+    return false;
+  }
+  
+  const mpi = calculateMPI(providerData);
+  return mpi < 3.0;
+}
+
+/**
+ * Calculate if provider is a newcomer (founded < 12 months ago)
+ */
+function isProviderNewcomer(providerId: string): boolean {
+  const marketPower = typedMarketPowerData.providers || {};
+  const providerData = marketPower[providerId] as ProviderMarketPower | undefined;
+  
+  if (!providerData || !providerData.foundingYear) {
+    return false;
+  }
+  
+  const currentYear = new Date().getFullYear();
+  const providerAge = currentYear - providerData.foundingYear;
+  
+  // Newcomer = less than 1 year old (founded this year or last year within 12 months)
+  // For simplicity, we check if founded in current year
+  return providerAge < 1;
+}
+
+// =============================================================================
+// INDEX RATING HELPERS
+// =============================================================================
+
+/**
+ * Fetch Index Ratings from API for given provider IDs
+ */
+async function fetchIndexRatings(providerIds: string[]): Promise<Map<string, ProviderRating>> {
+  try {
+    const response = await fetch('/api/index-rating/ratings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ providerIds }),
+    });
+
+    if (!response.ok) {
+      console.warn('[ProvidersTable] Failed to fetch index ratings:', response.status);
+      return new Map();
+    }
+
+    const data = await response.json();
+    const ratings = new Map<string, ProviderRating>();
+
+    if (data.ratings && typeof data.ratings === 'object') {
+      for (const [id, rating] of Object.entries(data.ratings)) {
+        ratings.set(id, rating as ProviderRating);
+      }
+    }
+
+    return ratings;
+  } catch (error) {
+    console.error('[ProvidersTable] Error fetching index ratings:', error);
+    return new Map();
+  }
+}
+
+/**
+ * Convert database rating to display rating
+ */
+function toDisplayRating(provider: Provider, dbRating: ProviderRating | undefined): DisplayRating {
+  const providerId = provider.id.toLowerCase();
+  
+  if (dbRating) {
+    // Determine state from changePercent
+    let state: 'gain' | 'loss' | 'flat' | 'fallback' = 'flat';
+    if (dbRating.changePercent > 0.1) {
+      state = 'gain';
+    } else if (dbRating.changePercent < -0.1) {
+      state = 'loss';
+    }
+
+    // Check for recent rank up (within 24 hours)
+    const hasRankUp = dbRating.rankChangedAt
+      ? Date.now() - new Date(dbRating.rankChangedAt).getTime() < 24 * 60 * 60 * 1000
+      : false;
+
+    // Calculate underdog/newcomer from market power data
+    const isUnderdog = isProviderUnderdog(providerId);
+    const isNewcomer = isProviderNewcomer(providerId);
+
+    return {
+      rating: dbRating.currentRating,
+      change: dbRating.change,
+      changePercent: dbRating.changePercent,
+      state,
+      source: 'database',
+      rank: dbRating.currentRank,
+      hasRankUp,
+      isUnderdog,
+      isNewcomer,
+    };
+  }
+
+  // Fallback: use static score × 20 (or null if no score)
+  return {
+    rating: typeof provider.score === 'number' ? provider.score * 20 : null,
+    change: null,
+    changePercent: null,
+    state: 'fallback',
+    source: 'fallback',
+    rank: null,
+    hasRankUp: false,
+    isUnderdog: isProviderUnderdog(providerId),
+    isNewcomer: isProviderNewcomer(providerId),
+  };
+}
+
+// =============================================================================
+// SORTABLE HEADER COMPONENT
+// =============================================================================
 
 /**
  * Professional sortable header component.
@@ -66,12 +214,14 @@ function SortableHeader({
   currentSort,
   currentDirection,
   onSort,
+  infoTooltip,
 }: {
   label: string;
   column: SortColumn;
   currentSort: SortColumn;
   currentDirection: SortDirection;
   onSort: (col: SortColumn) => void;
+  infoTooltip?: string;
 }) {
   const isActive = currentSort === column;
   const isAsc = currentDirection === 'asc';
@@ -80,20 +230,36 @@ function SortableHeader({
   const arrow = isActive ? (isAsc ? '▲' : '▼') : '⇅';
 
   return (
-    <button
-      type="button"
-      onClick={() => onSort(column)}
-      className={`sortable-header ${isActive ? 'sortable-header-active' : ''}`}
-      aria-label={`Sort by ${label}${isActive ? (isAsc ? ', currently ascending' : ', currently descending') : ''}`}
-      title={`Click to sort by ${label}`}
-    >
-      <span className="sortable-header-label">{label}</span>
-      <span className={`sortable-header-arrow ${isActive ? 'sortable-header-arrow-active' : ''}`}>
-        {arrow}
-      </span>
-    </button>
+    <div className="flex items-center justify-center gap-1">
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className={`sortable-header ${isActive ? 'sortable-header-active' : ''}`}
+        aria-label={`Sort by ${label}${isActive ? (isAsc ? ', currently ascending' : ', currently descending') : ''}`}
+        title={`Click to sort by ${label}`}
+      >
+        <span className="sortable-header-label">{label}</span>
+        <span className={`sortable-header-arrow ${isActive ? 'sortable-header-arrow-active' : ''}`}>
+          {arrow}
+        </span>
+      </button>
+      {infoTooltip && (
+        <Tooltip text={infoTooltip}>
+          <span
+            className="text-muted-foreground hover:text-foreground transition-colors cursor-help text-xs"
+            aria-label={`${label} information`}
+          >
+            ℹ
+          </span>
+        </Tooltip>
+      )}
+    </div>
   );
 }
+
+// =============================================================================
+// HELPER COMPONENTS
+// =============================================================================
 
 function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {
   const out: Array<ReadonlyArray<T>> = [];
@@ -103,59 +269,28 @@ function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {
   return out;
 }
 
+/**
+ * Promagen Users cell: 2×2×2 grid of flags + Roman numeral counts
+ */
 function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCountryUsage> }) {
-  const cleaned = (usage ?? [])
-    .filter(
-      (u) =>
-        Boolean(u) &&
-        typeof u.countryCode === 'string' &&
-        u.countryCode.trim().length === 2 &&
-        typeof u.count === 'number' &&
-        Number.isFinite(u.count) &&
-        u.count > 0,
-    )
-    .map((u) => ({ countryCode: u.countryCode.trim().toUpperCase(), count: Math.floor(u.count) }))
-    .sort((a, b) => b.count - a.count);
-
-  if (cleaned.length === 0) {
-    return null; // Empty cell when no users (not even a dash)
+  if (!usage || usage.length === 0) {
+    return <span className="text-slate-600 text-xs">—</span>;
   }
 
-  const top = cleaned.slice(0, 6);
-  const remaining = Math.max(0, cleaned.length - top.length);
-  const rows = chunkPairs(top).filter((r) => r.length > 0);
+  // Take top 6
+  const top6 = usage.slice(0, 6);
+  const rows = chunkPairs(top6);
 
   return (
-    <div className="providers-users-cell flex flex-col gap-1">
-      {rows.map((pair, idx) => (
-        <div key={`row-${idx}`} className="flex gap-3 whitespace-nowrap">
-          {pair.map((c) => {
-            const roman = toRomanNumeral(c.count);
-            const aria = `${c.countryCode}: ${c.count} user${c.count === 1 ? '' : 's'}`;
-            const title = `${c.count} user${c.count === 1 ? '' : 's'}`;
-
-            return (
-              <span
-                key={`${c.countryCode}-${c.count}`}
-                className="inline-flex items-center gap-1"
-                title={title}
-                aria-label={aria}
-              >
-                <Flag countryCode={c.countryCode} decorative />
-                <span className="tabular-nums">{roman}</span>
-              </span>
-            );
-          })}
-
-          {idx === rows.length - 1 && remaining > 0 ? (
-            <span
-              className="text-slate-500"
-              title={`${remaining} more countries`}
-              aria-label={`${remaining} more countries`}
-            >
-              … +{remaining}
+    <div className="promagen-users-cell flex flex-col gap-1">
+      {rows.map((row, rowIdx) => (
+        <div key={rowIdx} className="flex items-center justify-center gap-2">
+          {row.map((item) => (
+            <span key={item.countryCode} className="inline-flex items-center gap-0.5">
+              <Flag countryCode={item.countryCode} size={14} decorative />
+              <span className="text-xs text-slate-400">{toRomanNumeral(item.count)}</span>
             </span>
-          ) : null}
+          ))}
         </div>
       ))}
     </div>
@@ -163,95 +298,80 @@ function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCount
 }
 
 /**
- * Image Quality cell with rank display and vote button.
- * Layout: "2nd 👍" where rank is on left, thumb on right.
+ * Image Quality cell: rank (ordinal), medal emoji (top 3), vote button
  */
 function ImageQualityCell({
   rank,
   providerId,
   isAuthenticated,
 }: {
-  rank?: number;
+  rank?: number | null;
   providerId: string;
-  isAuthenticated: boolean;
+  isAuthenticated?: boolean;
 }) {
-  if (!rank || rank < 1) {
-    return (
-      <span className="providers-quality-cell inline-flex items-center justify-center gap-3">
-        <span className="text-slate-500">—</span>
-        <ImageQualityVoteButton providerId={providerId} isAuthenticated={isAuthenticated} />
-      </span>
-    );
+  if (!rank) {
+    return <span className="text-slate-600 text-xs">—</span>;
   }
 
-  const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : null;
-  const ordinal = rank === 1 ? '1st' : rank === 2 ? '2nd' : rank === 3 ? '3rd' : `${rank}th`;
+  // Medal for top 3
+  let medal = '';
+  if (rank === 1) medal = '🥇';
+  else if (rank === 2) medal = '🥈';
+  else if (rank === 3) medal = '🥉';
+
+  // Ordinal suffix
+  const ordinal =
+    rank === 1
+      ? '1st'
+      : rank === 2
+        ? '2nd'
+        : rank === 3
+          ? '3rd'
+          : `${rank}th`;
 
   return (
-    <span className="providers-quality-cell inline-flex items-center justify-center gap-3">
-      <span className="inline-flex items-center gap-2">
-        <span className="font-medium">{ordinal}</span>
-        {medal && (
-          <span className="providers-medal" aria-label={`Medal: ${ordinal}`}>
-            {medal}
-          </span>
-        )}
+    <div className="flex items-center justify-center gap-2">
+      <span className="text-sm">
+        {ordinal} {medal}
       </span>
-      <ImageQualityVoteButton providerId={providerId} isAuthenticated={isAuthenticated} />
-    </span>
+      <ImageQualityVoteButton
+        providerId={providerId}
+        isAuthenticated={isAuthenticated}
+      />
+    </div>
   );
 }
 
-function OverallScoreCell({ provider }: { provider: Provider }) {
-  const rawScore = provider.score;
-  if (typeof rawScore !== 'number' || !Number.isFinite(rawScore)) {
-    return <span className="text-slate-500">—</span>;
-  }
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
 
-  const adjustedScore = provider.incumbentAdjustment ? rawScore - 5 : rawScore;
-  const trend = provider.trend;
-
-  const trendGlyph =
-    trend === 'up' ? (
-      <span
-        className="providers-trend text-emerald-400"
-        aria-label="Trending up"
-        title="Trending up"
-      >
-        ↑
-      </span>
-    ) : trend === 'down' ? (
-      <span
-        className="providers-trend text-rose-400"
-        aria-label="Trending down"
-        title="Trending down"
-      >
-        ↓
-      </span>
-    ) : trend === 'flat' ? (
-      <span className="providers-trend text-slate-400" aria-label="Flat" title="Flat">
-        ●
-      </span>
-    ) : null;
-
-  return (
-    <span className="providers-score-cell inline-flex items-center justify-center gap-2 tabular-nums">
-      {provider.incumbentAdjustment ? (
-        <Tooltip text={`Adjusted for Big Tech advantage (${rawScore} - 5 = ${adjustedScore})`}>
-          <span className="score-adjusted">{adjustedScore}*</span>
-        </Tooltip>
-      ) : (
-        <span>{rawScore}</span>
-      )}
-      {trendGlyph}
-    </span>
-  );
-}
-
-export default function ProvidersTable(props: ProvidersTableProps) {
-  const { providers, limit, isAuthenticated = false, onProvidersChange } = props;
-  const [sortBy, setSortBy] = useState<SortColumn>('score');
+export function ProvidersTable({
+  providers,
+  title: _title,
+  caption: _caption,
+  limit,
+  isAuthenticated = false,
+  onProvidersChange,
+}: ProvidersTableProps) {
+  // Sort state: default to Index Rating descending (highest first)
+  const [sortBy, setSortBy] = useState<SortColumn>('indexRating');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Index Rating data from database
+  const [indexRatings, setIndexRatings] = useState<Map<string, ProviderRating>>(new Map());
+  const [_ratingsLoaded, setRatingsLoaded] = useState(false);
+
+  // Fetch Index Ratings on mount
+  useEffect(() => {
+    const providerIds = providers.map((p) => p.id);
+    if (providerIds.length === 0) return;
+
+    fetchIndexRatings(providerIds).then((ratings) => {
+      setIndexRatings(ratings);
+      setRatingsLoaded(true);
+    });
+  }, [providers]);
 
   // Handle sort toggle: if same column, flip direction; else switch column with default direction
   const handleSort = (column: SortColumn) => {
@@ -262,7 +382,7 @@ export default function ProvidersTable(props: ProvidersTableProps) {
       // Switch to new column with default direction
       setSortBy(column);
       // Image quality: lower rank = better, so default to asc (shows rank 1 first)
-      // Score: higher = better, so default to desc (shows highest first)
+      // Index Rating: higher = better, so default to desc (shows highest first)
       setSortDirection(column === 'imageQuality' ? 'asc' : 'desc');
     }
   };
@@ -272,10 +392,15 @@ export default function ProvidersTable(props: ProvidersTableProps) {
       ? providers.slice(0, Math.floor(limit))
       : providers;
 
+  // Enrich providers with Index Rating display data
+  const enriched: ProviderWithExtras[] = sliced.map((p) => ({
+    ...p,
+    indexRating: toDisplayRating(p, indexRatings.get(p.id.toLowerCase())),
+  }));
+
   // Sort providers based on selected column and direction
-  // BUGFIX: Each sort type calculates dir based on its natural ordering
   const sorted = React.useMemo(() => {
-    const arr = [...sliced] as ProviderWithPromagenUsers[];
+    const arr = [...enriched];
 
     if (sortBy === 'imageQuality') {
       // For imageQuality: lower rank = better
@@ -289,17 +414,17 @@ export default function ProvidersTable(props: ProvidersTableProps) {
       });
     }
 
-    // Default: sort by overall score
-    // For score: higher = better
-    // 'desc' (default) → show highest first → natural order for (bScore - aScore)
+    // Default: sort by Index Rating
+    // For indexRating: higher = better
+    // 'desc' (default) → show highest first → natural order for (bRating - aRating)
     // 'asc' → show lowest first → inverted
     const dir = sortDirection === 'desc' ? 1 : -1;
     return arr.sort((a, b) => {
-      const aScore = (a.score ?? 0) - (a.incumbentAdjustment ? 5 : 0);
-      const bScore = (b.score ?? 0) - (b.incumbentAdjustment ? 5 : 0);
-      return (bScore - aScore) * dir;
+      const aRating = a.indexRating?.rating ?? 0;
+      const bRating = b.indexRating?.rating ?? 0;
+      return (bRating - aRating) * dir;
     });
-  }, [sliced, sortBy, sortDirection]);
+  }, [enriched, sortBy, sortDirection]);
 
   // Notify parent of displayed provider IDs (for market pulse)
   useEffect(() => {
@@ -317,7 +442,7 @@ export default function ProvidersTable(props: ProvidersTableProps) {
       >
         <table className="providers-table w-full">
           {/* Proportional column widths — auto-scale with viewport */}
-          {/* 5 columns: Provider (30%) | Promagen Users (18%) | Image Quality (18%) | Support (18%) | Overall Score (16%) */}
+          {/* 5 columns: Provider (30%) | Promagen Users (18%) | Image Quality (18%) | Support (18%) | Index Rating (16%) */}
           <thead className="providers-table-header">
             <tr>
               <th className="providers-table-th px-4 py-3 text-center w-[30%] border-r border-white/5">
@@ -340,8 +465,8 @@ export default function ProvidersTable(props: ProvidersTableProps) {
               </th>
               <th className="providers-table-th providers-table-th-sortable px-4 py-3 text-center w-[16%]">
                 <SortableHeader
-                  label="Overall Score"
-                  column="score"
+                  label="Index Rating"
+                  column="indexRating"
                   currentSort={sortBy}
                   currentDirection={sortDirection}
                   onSort={handleSort}
@@ -358,7 +483,11 @@ export default function ProvidersTable(props: ProvidersTableProps) {
                 className="providers-table-row border-t border-slate-800 hover:bg-slate-900/30 transition-colors market-pulse-target"
               >
                 <td className="providers-table-td px-4 py-3 w-[30%] border-r border-white/5">
-                  <ProviderCell provider={p} rank={index + 1} />
+                  <ProviderCell 
+                    provider={p} 
+                    rank={index + 1} 
+                    hasRankUp={p.indexRating?.hasRankUp ?? false}
+                  />
                 </td>
 
                 <td className="providers-table-td px-4 py-3 w-[18%] border-r border-white/5">
@@ -374,11 +503,19 @@ export default function ProvidersTable(props: ProvidersTableProps) {
                 </td>
 
                 <td className="providers-table-td px-4 py-3 w-[18%] border-r border-white/5">
-                  <SupportIconsCell providerName={p.name} socials={p.socials} />
+                  <SupportIconsCell 
+                    providerName={p.name} 
+                    socials={p.socials}
+                    providerId={p.id}
+                  />
                 </td>
 
                 <td className="providers-table-td px-4 py-3 text-center w-[16%]">
-                  <OverallScoreCell provider={p} />
+                  {p.indexRating ? (
+                    <IndexRatingCell rating={p.indexRating} />
+                  ) : (
+                    <span className="text-slate-500">—</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -394,7 +531,7 @@ export default function ProvidersTable(props: ProvidersTableProps) {
             data-provider-id={p.id}
             className="providers-mobile-card market-pulse-target"
           >
-            {/* Row 1: Rank + Name + Score */}
+            {/* Row 1: Rank + Name + Index Rating */}
             <div className="providers-mobile-header">
               <span className="providers-mobile-rank">{index + 1}.</span>
               <a
@@ -407,10 +544,13 @@ export default function ProvidersTable(props: ProvidersTableProps) {
               </a>
               {p.apiAvailable && <span className="providers-mobile-emoji">🔌</span>}
               {p.affiliateProgramme && <span className="providers-mobile-emoji">🤝</span>}
+              {p.indexRating?.hasRankUp && <span className="rank-up-arrow">⬆</span>}
               <span className="providers-mobile-score">
-                {p.incumbentAdjustment ? (p.score ?? 0) - 5 : (p.score ?? '—')}
-                {p.trend === 'up' && <span className="text-emerald-400 ml-1">↑</span>}
-                {p.trend === 'down' && <span className="text-rose-400 ml-1">↓</span>}
+                {p.indexRating?.rating ? Math.round(p.indexRating.rating).toLocaleString() : '—'}
+                {p.indexRating?.state === 'gain' && (
+                  <span className="text-emerald-400 ml-1">▲</span>
+                )}
+                {p.indexRating?.state === 'loss' && <span className="text-rose-400 ml-1">▼</span>}
               </span>
             </div>
 
@@ -440,3 +580,5 @@ export default function ProvidersTable(props: ProvidersTableProps) {
     </div>
   );
 }
+
+export default ProvidersTable;

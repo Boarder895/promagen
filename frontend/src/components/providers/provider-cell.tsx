@@ -11,6 +11,10 @@
 // - 🔌 links to provider's API documentation
 // - 🤝 links to provider's affiliate/partner program
 // ============================================================================
+// Updated: January 27, 2026
+// - Added RankUpArrow for providers that climbed in rankings (green ⬆ with glow)
+// - Added hasRankUp prop to ProviderCellProps
+// ============================================================================
 
 'use client';
 
@@ -19,11 +23,14 @@ import type { Provider } from '@/types/provider';
 import { ProviderClock } from './provider-clock';
 import { Flag } from '@/components/ui/flag';
 import Tooltip from '@/components/ui/tooltip';
+import { RankUpArrow } from './index-rating-cell';
 
 export type ProviderCellProps = {
   provider: Provider;
   /** Display rank (1, 2, 3…) — reflects current sort order */
   rank?: number;
+  /** Whether this provider climbed in rank position within last 24h */
+  hasRankUp?: boolean;
 };
 
 /** Fallback icon path if provider icon fails to load */
@@ -99,7 +106,7 @@ function ApiAffiliateEmojis({ provider }: { provider: Provider }) {
   );
 }
 
-export function ProviderCell({ provider, rank }: ProviderCellProps) {
+export function ProviderCell({ provider, rank, hasRankUp = false }: ProviderCellProps) {
   // Check if this provider should use emoji fallback
   const useEmojiIcon = EMOJI_FALLBACK_PROVIDERS.includes(provider.id);
 
@@ -111,7 +118,7 @@ export function ProviderCell({ provider, rank }: ProviderCellProps) {
 
   return (
     <div className="provider-cell-container">
-      {/* Line 1: Rank + Provider name (linked) + provider logo icon */}
+      {/* Line 1: Rank + Provider name (linked) + provider logo icon + API/Affiliate + RankUp arrow */}
       <div className="provider-name-row">
         {typeof rank === 'number' && rank > 0 && <span className="provider-rank">{rank}.</span>}
 
@@ -156,9 +163,15 @@ export function ProviderCell({ provider, rank }: ProviderCellProps) {
             />
           )}
         </a>
+
+        {/* API and Affiliate emoji links */}
+        <ApiAffiliateEmojis provider={provider} />
+
+        {/* Green rank-up arrow — shows when provider climbed in rankings (24h) */}
+        <RankUpArrow show={hasRankUp} className="rank-up-arrow" />
       </div>
 
-      {/* Line 2 & 3: Location block — Flag + City, then Time + API/Affiliate emojis below */}
+      {/* Line 2 & 3: Location block — Flag + City, then Time below */}
       {provider.countryCode && provider.hqCity && provider.timezone ? (
         <div className="provider-location">
           {/* Flag + City */}
@@ -167,12 +180,9 @@ export function ProviderCell({ provider, rank }: ProviderCellProps) {
             <span className="provider-city">{provider.hqCity}</span>
           </div>
 
-          {/* Time + API/Affiliate emojis on same line */}
+          {/* Time */}
           <div className="provider-time-line">
             <ProviderClock timezone={provider.timezone} supportHours={provider.supportHours} />
-
-            {/* API and Affiliate emoji links — replace prompt builder */}
-            <ApiAffiliateEmojis provider={provider} />
           </div>
         </div>
       ) : null}

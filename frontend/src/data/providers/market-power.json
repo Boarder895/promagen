@@ -1,0 +1,468 @@
+{
+  "$schema": "./market-power.schema.json",
+  "lastResearched": "2026-01-27",
+  "researchNotes": "Data compiled from official sources, Wikipedia, Tracxn, Crunchbase, SimilarWeb, and company announcements. Social followers are approximate and may fluctuate. Estimated users represents monthly active users where available.",
+  "providers": {
+    "midjourney": {
+      "foundingYear": 2021,
+      "socialReach": {
+        "youtube": 0,
+        "x": 350,
+        "instagram": 1200000,
+        "facebook": 500000,
+        "discord": 21000000,
+        "reddit": 1700000
+      },
+      "estimatedUsers": 20000000,
+      "notes": "Founded Aug 2021, Discord-first platform. 21M Discord members (largest server), 1.7M Reddit. $500M revenue 2025. Minimal X presence - communicates via Discord."
+    },
+    "openai": {
+      "foundingYear": 2015,
+      "socialReach": {
+        "youtube": 2500000,
+        "x": 4500000,
+        "instagram": 1800000,
+        "linkedin": 5000000
+      },
+      "estimatedUsers": 700000000,
+      "notes": "OpenAI founded 2015, DALL-E launched Jan 2021, DALL-E 3 Oct 2023. Now integrated into ChatGPT (700M users). Parent company valuation $300B."
+    },
+    "google-imagen": {
+      "foundingYear": 1998,
+      "socialReach": {
+        "youtube": 33000000,
+        "x": 28000000,
+        "instagram": 17000000,
+        "facebook": 32000000,
+        "linkedin": 30000000
+      },
+      "estimatedUsers": 100000000,
+      "notes": "Google founded 1998, Imagen launched 2022. Part of Google's massive ecosystem. Available via Gemini and Vertex AI. Incumbent giant."
+    },
+    "leonardo": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 45000,
+        "x": 180000,
+        "instagram": 85000,
+        "facebook": 50000,
+        "discord": 2000000
+      },
+      "estimatedUsers": 19000000,
+      "notes": "Founded late 2022 Sydney. Acquired by Canva Jul 2024 for $320M. 19M users, 1B+ images generated. Strong Discord community."
+    },
+    "flux": {
+      "foundingYear": 2024,
+      "socialReach": {
+        "youtube": 0,
+        "x": 35000,
+        "linkedin": 5000
+      },
+      "estimatedUsers": 5000000,
+      "notes": "Black Forest Labs founded Aug 2024 by ex-Stability AI (Stable Diffusion creators). $300M funding at $3.25B valuation. Open-source focus, used by Grok, Adobe."
+    },
+    "stability": {
+      "foundingYear": 2019,
+      "socialReach": {
+        "youtube": 25000,
+        "x": 450000,
+        "discord": 500000,
+        "linkedin": 50000
+      },
+      "estimatedUsers": 10000000,
+      "notes": "Founded 2019, Stable Diffusion launched Aug 2022. 80% of all AI images globally use SD-based models. 10M+ direct users, billions via ecosystem."
+    },
+    "adobe-firefly": {
+      "foundingYear": 1982,
+      "socialReach": {
+        "youtube": 2200000,
+        "x": 1100000,
+        "instagram": 3500000,
+        "facebook": 15000000,
+        "linkedin": 8000000,
+        "tiktok": 2500000
+      },
+      "estimatedUsers": 32500000,
+      "notes": "Adobe founded 1982, Firefly launched Mar 2023. 24B+ assets generated. 45% of Creative Cloud subscribers use it. 29% market share. Incumbent giant."
+    },
+    "ideogram": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 5000,
+        "x": 95000,
+        "discord": 150000
+      },
+      "estimatedUsers": 3000000,
+      "notes": "Founded 2022 Toronto by ex-Google Brain researchers. Known for excellent text rendering in images. Rapid growth in creative community."
+    },
+    "playground": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 15000,
+        "x": 45000,
+        "discord": 100000
+      },
+      "estimatedUsers": 2000000,
+      "notes": "Founded 2022. Consumer-friendly interface. Strong free tier. $40M Series A 2023."
+    },
+    "microsoft-designer": {
+      "foundingYear": 1975,
+      "socialReach": {
+        "youtube": 1100000,
+        "x": 15000000,
+        "instagram": 3500000,
+        "facebook": 15000000,
+        "linkedin": 20000000
+      },
+      "estimatedUsers": 50000000,
+      "notes": "Microsoft founded 1975, Designer launched Oct 2022. Uses DALL-E 3. Part of Microsoft 365 ecosystem. Incumbent giant."
+    },
+    "novelai": {
+      "foundingYear": 2021,
+      "socialReach": {
+        "youtube": 5000,
+        "x": 180000,
+        "discord": 300000,
+        "reddit": 150000
+      },
+      "estimatedUsers": 500000,
+      "notes": "Founded 2021. Anime/manga focus. Strong loyal community. Subscription-based model."
+    },
+    "lexica": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 2000,
+        "x": 25000,
+        "discord": 50000
+      },
+      "estimatedUsers": 1000000,
+      "notes": "Founded 2022. Search engine for AI art + generation. Popular for prompt discovery."
+    },
+    "openart": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 8000,
+        "x": 35000,
+        "discord": 80000
+      },
+      "estimatedUsers": 1500000,
+      "notes": "Founded 2022. Multi-model platform. Strong custom training features."
+    },
+    "123rf": {
+      "foundingYear": 2005,
+      "socialReach": {
+        "youtube": 15000,
+        "x": 35000,
+        "instagram": 45000,
+        "facebook": 850000
+      },
+      "estimatedUsers": 5000000,
+      "notes": "Founded 2005 as stock media. Added AI generation 2023. Established player in stock imagery."
+    },
+    "canva": {
+      "foundingYear": 2013,
+      "socialReach": {
+        "youtube": 1500000,
+        "x": 500000,
+        "instagram": 2200000,
+        "facebook": 4500000,
+        "tiktok": 1800000
+      },
+      "estimatedUsers": 220000000,
+      "notes": "Founded 2013 Australia. 220M MAU, $3B revenue, $42B valuation. Acquired Leonardo AI 2024. Magic Media AI features. Massive incumbent."
+    },
+    "bing": {
+      "foundingYear": 2009,
+      "socialReach": {
+        "youtube": 100000,
+        "x": 2500000,
+        "facebook": 5000000
+      },
+      "estimatedUsers": 100000000,
+      "notes": "Bing founded 2009 (Microsoft). Image Creator uses DALL-E 3. Part of Copilot ecosystem. Incumbent giant."
+    },
+    "nightcafe": {
+      "foundingYear": 2019,
+      "socialReach": {
+        "youtube": 20000,
+        "x": 85000,
+        "instagram": 150000,
+        "facebook": 200000,
+        "discord": 250000
+      },
+      "estimatedUsers": 5000000,
+      "notes": "Founded 2019 Australia. Early AI art pioneer. 23% market share (third largest). Strong community features."
+    },
+    "picsart": {
+      "foundingYear": 2011,
+      "socialReach": {
+        "youtube": 1200000,
+        "x": 350000,
+        "instagram": 3000000,
+        "facebook": 8000000,
+        "tiktok": 5000000
+      },
+      "estimatedUsers": 150000000,
+      "notes": "Founded 2011 Armenia. 150M MAU. Added AI features 2022. Uses Flux for generation. Major mobile-first platform."
+    },
+    "artistly": {
+      "foundingYear": 2023,
+      "socialReach": {
+        "youtube": 1000,
+        "x": 5000,
+        "instagram": 8000
+      },
+      "estimatedUsers": 100000,
+      "notes": "Founded 2023. Newer entrant. Art-focused generation platform."
+    },
+    "fotor": {
+      "foundingYear": 2012,
+      "socialReach": {
+        "youtube": 50000,
+        "x": 25000,
+        "instagram": 100000,
+        "facebook": 2500000
+      },
+      "estimatedUsers": 20000000,
+      "notes": "Founded 2012 China. 20M+ users. Photo editing with AI generation added 2022. Freemium model."
+    },
+    "pixlr": {
+      "foundingYear": 2008,
+      "socialReach": {
+        "youtube": 100000,
+        "x": 45000,
+        "instagram": 150000,
+        "facebook": 3500000
+      },
+      "estimatedUsers": 15000000,
+      "notes": "Founded 2008 Sweden. Acquired by 123RF parent (Inmagine) 2017. Browser-based photo editor with AI."
+    },
+    "deepai": {
+      "foundingYear": 2016,
+      "socialReach": {
+        "youtube": 5000,
+        "x": 15000,
+        "linkedin": 8000
+      },
+      "estimatedUsers": 2000000,
+      "notes": "Founded 2016. Early AI API provider. Multiple generator tools. Developer-focused."
+    },
+    "craiyon": {
+      "foundingYear": 2021,
+      "socialReach": {
+        "youtube": 3000,
+        "x": 50000,
+        "reddit": 50000
+      },
+      "estimatedUsers": 3000000,
+      "notes": "Founded 2021 (originally DALL-E Mini). Free tier focus. High accessibility, lower quality tier."
+    },
+    "bluewillow": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 5000,
+        "x": 25000,
+        "discord": 400000
+      },
+      "estimatedUsers": 1000000,
+      "notes": "Founded 2022. Discord-based like Midjourney. Free alternative positioning."
+    },
+    "dreamstudio": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 10000,
+        "x": 30000
+      },
+      "estimatedUsers": 2000000,
+      "notes": "Stability AI's official interface for Stable Diffusion. Launched 2022. Credit-based system."
+    },
+    "artbreeder": {
+      "foundingYear": 2018,
+      "socialReach": {
+        "youtube": 8000,
+        "x": 45000,
+        "instagram": 60000,
+        "discord": 100000
+      },
+      "estimatedUsers": 3000000,
+      "notes": "Founded 2018 (originally Ganbreeder). Collaborative/remix focus. Character creation specialty."
+    },
+    "jasper-art": {
+      "foundingYear": 2021,
+      "socialReach": {
+        "youtube": 50000,
+        "x": 85000,
+        "linkedin": 100000,
+        "facebook": 50000
+      },
+      "estimatedUsers": 1000000,
+      "notes": "Jasper founded 2021. Added art generation 2022. Marketing/content focus. Part of Jasper AI suite."
+    },
+    "runway": {
+      "foundingYear": 2018,
+      "socialReach": {
+        "youtube": 250000,
+        "x": 200000,
+        "instagram": 150000,
+        "discord": 100000
+      },
+      "estimatedUsers": 5000000,
+      "notes": "Founded 2018. Co-created Stable Diffusion. Strong video AI (Gen-2, Gen-3). $4B valuation."
+    },
+    "freepik": {
+      "foundingYear": 2010,
+      "socialReach": {
+        "youtube": 100000,
+        "x": 150000,
+        "instagram": 800000,
+        "facebook": 2000000
+      },
+      "estimatedUsers": 50000000,
+      "notes": "Founded 2010 Spain. 50M users. Major stock resource. Added AI Pikaso generator 2023."
+    },
+    "simplified": {
+      "foundingYear": 2020,
+      "socialReach": {
+        "youtube": 30000,
+        "x": 25000,
+        "instagram": 40000,
+        "facebook": 50000
+      },
+      "estimatedUsers": 2000000,
+      "notes": "Founded 2020 India. All-in-one marketing platform. AI image generation included."
+    },
+    "photoleap": {
+      "foundingYear": 2020,
+      "socialReach": {
+        "youtube": 20000,
+        "x": 15000,
+        "instagram": 200000,
+        "tiktok": 500000
+      },
+      "estimatedUsers": 10000000,
+      "notes": "By Lightricks (founded 2013). Photoleap launched 2020. Mobile-first. Strong social/influencer presence."
+    },
+    "vistacreate": {
+      "foundingYear": 2016,
+      "socialReach": {
+        "youtube": 80000,
+        "x": 20000,
+        "instagram": 100000,
+        "facebook": 500000
+      },
+      "estimatedUsers": 5000000,
+      "notes": "Founded 2016 (formerly Crello). Acquired by Cimpress 2021. Canva competitor with AI features."
+    },
+    "artguru": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 5000,
+        "x": 10000,
+        "instagram": 25000
+      },
+      "estimatedUsers": 500000,
+      "notes": "Founded 2022. Avatar and portrait focus. Freemium mobile app."
+    },
+    "myedit": {
+      "foundingYear": 2021,
+      "socialReach": {
+        "youtube": 15000,
+        "x": 8000,
+        "facebook": 30000
+      },
+      "estimatedUsers": 2000000,
+      "notes": "By CyberLink (founded 1996). MyEdit is web-based editor with AI generation. Established software company."
+    },
+    "visme": {
+      "foundingYear": 2013,
+      "socialReach": {
+        "youtube": 200000,
+        "x": 50000,
+        "instagram": 40000,
+        "facebook": 150000,
+        "linkedin": 100000
+      },
+      "estimatedUsers": 3000000,
+      "notes": "Founded 2013. Presentation and infographic focus. Added AI image generation. B2B focus."
+    },
+    "hotpot": {
+      "foundingYear": 2020,
+      "socialReach": {
+        "youtube": 2000,
+        "x": 5000,
+        "linkedin": 3000
+      },
+      "estimatedUsers": 500000,
+      "notes": "Founded 2020 Palo Alto. AI graphics tools suite. Marketing and mockup focus."
+    },
+    "picwish": {
+      "foundingYear": 2020,
+      "socialReach": {
+        "youtube": 15000,
+        "instagram": 20000,
+        "facebook": 50000,
+        "tiktok": 25000
+      },
+      "estimatedUsers": 5000000,
+      "notes": "Founded 2020 China (Apowersoft). Photo editing focus. Background removal specialty."
+    },
+    "clipdrop": {
+      "foundingYear": 2020,
+      "socialReach": {
+        "youtube": 10000,
+        "x": 80000,
+        "instagram": 50000,
+        "facebook": 30000
+      },
+      "estimatedUsers": 3000000,
+      "notes": "Founded 2020 Paris. Acquired by Stability AI 2023. Editing tools + Stable Diffusion generation."
+    },
+    "getimg": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 3000,
+        "x": 20000,
+        "instagram": 15000,
+        "discord": 30000,
+        "tiktok": 10000
+      },
+      "estimatedUsers": 1000000,
+      "notes": "Founded 2022 Poland. API-first platform. Custom model training. Developer-focused."
+    },
+    "imagine-meta": {
+      "foundingYear": 2004,
+      "socialReach": {
+        "youtube": 900000,
+        "x": 14000000,
+        "instagram": 65000000,
+        "facebook": 90000000,
+        "tiktok": 8000000
+      },
+      "estimatedUsers": 50000000,
+      "notes": "Meta (Facebook) founded 2004. Imagine launched 2023. Part of Meta AI ecosystem. Emu model. Incumbent giant."
+    },
+    "dreamlike": {
+      "foundingYear": 2022,
+      "socialReach": {
+        "youtube": 2000,
+        "x": 15000,
+        "discord": 50000
+      },
+      "estimatedUsers": 500000,
+      "notes": "Founded 2022 UK. Stable Diffusion web interface. User-friendly for SD exploration."
+    },
+    "remove-bg": {
+      "foundingYear": 2018,
+      "socialReach": {
+        "youtube": 25000,
+        "x": 20000,
+        "instagram": 30000,
+        "facebook": 100000,
+        "linkedin": 15000,
+        "tiktok": 50000
+      },
+      "estimatedUsers": 10000000,
+      "notes": "Founded 2018 Vienna (Kaleido AI). Specialized background removal. Acquired by Canva 2021. Utility tool, not generative."
+    }
+  }
+}

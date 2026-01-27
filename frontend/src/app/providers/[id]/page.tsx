@@ -4,7 +4,8 @@
 // When a user clicks a provider row in the Leaderboard, they navigate here
 // to craft prompts before launching into the AI provider platform.
 //
-// Authority: docs/authority/prompt-builder-page.md
+// Updated: 27 Jan 2026 - Added prompt_builder_open tracking via ProviderPageTracker
+// Authority: docs/authority/prompt-builder-page.md, docs/authority/index-rating.md
 
 import React from 'react';
 import type { Metadata } from 'next';
@@ -12,6 +13,7 @@ import type { Metadata } from 'next';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ProviderWorkspace from '@/components/providers/provider-workspace';
+import { ProviderPageTracker } from '@/components/providers/provider-page-tracker';
 import { getProviders } from '@/lib/providers/api';
 import { getRailsForHomepage } from '@/lib/exchange-order';
 import { DEMO_EXCHANGE_WEATHER, type ExchangeWeather } from '@/lib/weather/exchange-weather';
@@ -115,8 +117,11 @@ export default async function ProviderPage({ params }: { params: Promise<Params>
   );
 
   // Centre: Prompt workspace (PromptBuilder + LaunchPanel) or not-found state
+  // Wrapped in ProviderPageTracker for prompt_builder_open event tracking
   const centreContent = provider ? (
-    <ProviderWorkspace provider={provider} />
+    <ProviderPageTracker providerId={provider.id}>
+      <ProviderWorkspace provider={provider} />
+    </ProviderPageTracker>
   ) : (
     <ProviderNotFound id={id} />
   );

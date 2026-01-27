@@ -29,6 +29,7 @@ Promagen uses Vercel Cron to run scheduled background jobs. All cron endpoints a
 ### Cron Security
 
 All cron endpoints require authentication via one of:
+
 - Header: `x-promagen-cron: <secret>`
 - Header: `x-cron-secret: <secret>`
 - Query param: `?secret=<secret>`
@@ -61,11 +62,13 @@ The **Promagen Users** feature shows usage statistics per AI provider in the lea
 **UI Location:** AI Providers Leaderboard → "Promagen Users" column
 
 **Visual format:**
+
 - 2×2×2 grid layout (6 countries max)
 - Flag + Roman numeral count per country
 - Example: 🇺🇸 XLII 🇬🇧 XVII
 
 **Truth rules:**
+
 - Show only analytics-derived data (no synthetic/demo)
 - Empty cell if zero users
 - Empty cell if data is stale (>48 hours)
@@ -128,8 +131,8 @@ ON provider_activity_events (provider_id, country_code, created_at);
 
 **Event taxonomy:**
 
-| eventType | Weight | Description |
-|-----------|--------|-------------|
+| eventType | Weight | Description               |
+| --------- | ------ | ------------------------- |
 | `open`    | 1      | Click to provider website |
 
 #### Table: `provider_country_usage_30d`
@@ -182,11 +185,11 @@ GET /api/promagen-users/cron?secret=YOUR_SECRET&dryRun=1
 GET /api/promagen-users/cron?secret=YOUR_SECRET&windowDays=7
 ```
 
-| Param | Default | Description |
-|-------|---------|-------------|
-| `secret` | required | PROMAGEN_CRON_SECRET |
-| `dryRun` | `0` | If `1`, count only, no writes |
-| `windowDays` | `30` | Aggregation window in days |
+| Param        | Default  | Description                   |
+| ------------ | -------- | ----------------------------- |
+| `secret`     | required | PROMAGEN_CRON_SECRET          |
+| `dryRun`     | `0`      | If `1`, count only, no writes |
+| `windowDays` | `30`     | Aggregation window in days    |
 
 #### Response
 
@@ -242,8 +245,8 @@ The cron uses a Postgres advisory lock (`pg_try_advisory_lock(42_4242)`) to prev
 #### Constants
 
 ```typescript
-export const MAX_COUNTRIES_PER_PROVIDER = 6;  // Top 6 countries per provider
-export const STALE_THRESHOLD_HOURS = 48;      // Data older than this is stale
+export const MAX_COUNTRIES_PER_PROVIDER = 6; // Top 6 countries per provider
+export const STALE_THRESHOLD_HOURS = 48; // Data older than this is stale
 ```
 
 #### `isStale(updatedAt: Date | null | undefined): boolean`
@@ -253,6 +256,7 @@ Returns `true` if the timestamp is null or older than `STALE_THRESHOLD_HOURS`.
 #### `normalizeCountryCode(code: string | null | undefined): string | null`
 
 Validates and normalizes country codes:
+
 - Trims whitespace
 - Converts to uppercase
 - Returns `null` for invalid codes (length ≠ 2, non-alpha, `XX`, `ZZ`)
@@ -260,6 +264,7 @@ Validates and normalizes country codes:
 #### `getPromagenUsersForProvider(providerId: string): Promise<PromagenUsersCountryUsage[]>`
 
 Fetches usage data for a single provider. Returns empty array if:
+
 - Database not configured
 - No data exists
 - Data is stale
@@ -275,6 +280,7 @@ Returns info about the most recent cron run for observability.
 #### `checkAggregationHealth(): Promise<AggregationHealth>`
 
 Returns table stats for debugging:
+
 - `tableExists`: boolean
 - `rowCount`: number
 - `providerCount`: number
@@ -289,8 +295,8 @@ Returns table stats for debugging:
 
 ```typescript
 export type PromagenUsersCountryUsage = {
-  countryCode: string;  // ISO 3166-1 alpha-2
-  count: number;        // Distinct users in window
+  countryCode: string; // ISO 3166-1 alpha-2
+  count: number; // Distinct users in window
 };
 ```
 
@@ -314,11 +320,11 @@ import { getPromagenUsersForProviders } from '@/lib/promagen-users';
 
 async function enrichWithPromagenUsers(providers: Provider[]): Promise<Provider[]> {
   if (!hasDatabaseConfigured()) return providers;
-  
-  const providerIds = providers.map(p => p.id);
+
+  const providerIds = providers.map((p) => p.id);
   const usageMap = await getPromagenUsersForProviders(providerIds);
-  
-  return providers.map(provider => {
+
+  return providers.map((provider) => {
     const usage = usageMap.get(provider.id.toLowerCase());
     if (usage && usage.length > 0) {
       return { ...provider, promagenUsers: usage };
@@ -336,15 +342,15 @@ Renders the 2×2×2 grid with flags and Roman numeral counts.
 
 ### 1.7 Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes* | — | Postgres connection string |
-| `POSTGRES_URL` | Yes* | — | Neon/Vercel sets this (fallback) |
-| `PROMAGEN_CRON_SECRET` | Yes | — | Min 16 chars, protects cron endpoints |
-| `PROMAGEN_USERS_WINDOW_DAYS` | No | `30` | Aggregation window |
-| `PROMAGEN_USERS_STALE_AFTER_HOURS` | No | `48` | Staleness threshold |
+| Variable                           | Required | Default | Description                           |
+| ---------------------------------- | -------- | ------- | ------------------------------------- |
+| `DATABASE_URL`                     | Yes\*    | —       | Postgres connection string            |
+| `POSTGRES_URL`                     | Yes\*    | —       | Neon/Vercel sets this (fallback)      |
+| `PROMAGEN_CRON_SECRET`             | Yes      | —       | Min 16 chars, protects cron endpoints |
+| `PROMAGEN_USERS_WINDOW_DAYS`       | No       | `30`    | Aggregation window                    |
+| `PROMAGEN_USERS_STALE_AFTER_HOURS` | No       | `48`    | Staleness threshold                   |
 
-*At least one of `DATABASE_URL` or `POSTGRES_URL` must be set.
+\*At least one of `DATABASE_URL` or `POSTGRES_URL` must be set.
 
 ### 1.8 Observability
 
@@ -353,6 +359,7 @@ Renders the 2×2×2 grid with flags and Roman numeral counts.
 **Path:** `/api/promagen-users/debug?secret=YOUR_SECRET`
 
 Returns comprehensive health check:
+
 - Database connectivity
 - Aggregation table stats
 - Last cron run info
@@ -388,12 +395,191 @@ All operations use structured JSON logging:
 **File:** `src/__tests__/promagen-users.aggregation.test.ts`
 
 Unit tests for:
+
 - `isStale()` function
 - `normalizeCountryCode()` function
 - Data shape validation
 - Edge cases (zero count, large counts, invalid codes)
 
 ---
+
+## 2. Index Rating Cron
+
+### 2.1 Purpose
+
+The **Index Rating** cron job calculates daily Elo-style competitive rankings for all AI providers. It processes engagement events, applies Market Power Index handicapping, and updates the `provider_ratings` table.
+
+**UI Location:** AI Providers Leaderboard → "Index Rating" column
+
+**Visual format:**
+
+- Two-line display: Rating value + change indicator
+- Colors: Green (▲ gain), Red (▼ loss), Gray (● flat/fallback)
+- Example: `1,847` / `▲ +23 (+1.26%)`
+
+### 2.2 Schedule
+
+| Cron Job     | Schedule    | Time (UTC)  | Purpose                           |
+| ------------ | ----------- | ----------- | --------------------------------- |
+| Index Rating | `5 0 * * *` | 00:05 daily | Calculate ratings, ranks, changes |
+
+**Why 00:05 not 00:00?** Gives 5 minutes buffer after midnight for timezone edge cases.
+
+### 2.3 Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      INDEX RATING CRON                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  providers.json │     │ market-power.   │     │provider_activity│
+│  (42 providers) │     │    json         │     │    _events      │
+└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
+         │                       │                       │
+         └───────────────┬───────┴───────────────────────┘
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │   Cron Route        │
+              │ /api/index-rating/  │
+              │     cron            │
+              └──────────┬──────────┘
+                         │
+         ┌───────────────┼───────────────┐
+         ▼               ▼               ▼
+   ┌───────────┐   ┌───────────┐   ┌───────────┐
+   │ Calculate │   │ Calculate │   │  Update   │
+   │   MPI     │   │    Elo    │   │   Ranks   │
+   └─────┬─────┘   └─────┬─────┘   └─────┬─────┘
+         │               │               │
+         └───────────────┼───────────────┘
+                         ▼
+              ┌─────────────────────┐
+              │  provider_ratings   │
+              │      (DB)           │
+              └─────────────────────┘
+```
+
+### 2.4 Database Schema
+
+```sql
+-- Provider ratings (updated daily by cron)
+CREATE TABLE IF NOT EXISTS provider_ratings (
+  id SERIAL PRIMARY KEY,
+  provider_id TEXT NOT NULL UNIQUE,
+  current_rating NUMERIC(10,4) NOT NULL DEFAULT 1500,
+  previous_rating NUMERIC(10,4),
+  change NUMERIC(10,4) DEFAULT 0,
+  change_percent NUMERIC(10,4) DEFAULT 0,
+  current_rank INTEGER,
+  previous_rank INTEGER,
+  rank_changed_at TIMESTAMPTZ,
+  total_events INTEGER DEFAULT 0,
+  calculated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Cron run logs
+CREATE TABLE IF NOT EXISTS index_rating_cron_runs (
+  id SERIAL PRIMARY KEY,
+  run_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  providers_updated INTEGER NOT NULL DEFAULT 0,
+  providers_seeded INTEGER NOT NULL DEFAULT 0,
+  duration_ms INTEGER,
+  success BOOLEAN NOT NULL DEFAULT TRUE,
+  error_message TEXT
+);
+```
+
+### 2.5 Cron Route
+
+**File:** `src/app/api/index-rating/cron/route.ts`
+
+```typescript
+// Key imports
+import providers from '@/data/providers/providers.json';
+import marketPowerData from '@/data/providers/market-power.json';
+import { calculateMPI, calculateTotalEloChange } from '@/lib/index-rating/calculations';
+
+// Authentication check
+const secret =
+  request.headers.get('x-promagen-cron') ||
+  request.headers.get('x-cron-secret') ||
+  searchParams.get('secret');
+
+if (secret !== env.PROMAGEN_CRON_SECRET) {
+  return NextResponse.json({ error: 'Not found' }, { status: 404 });
+}
+
+// Advisory lock prevents concurrent runs
+await db.query('SELECT pg_try_advisory_lock(12345)');
+```
+
+### 2.6 Event Types Processed
+
+| Event Type            | Base Points | K-Factor | Status     |
+| --------------------- | ----------- | -------- | ---------- |
+| `vote`                | 5           | 32       | ✅ Tracked |
+| `prompt_submit`       | 5           | 24       | ✅ Tracked |
+| `prompt_builder_open` | 3           | 16       | ✅ Tracked |
+| `open` / `click`      | 2           | 16       | ✅ Tracked |
+| `social_click`        | 1           | 8        | ✅ Tracked |
+
+### 2.7 Environment Variables
+
+| Variable                    | Required | Default | Description                |
+| --------------------------- | -------- | ------- | -------------------------- |
+| `DATABASE_URL`              | Yes\*    | —       | Postgres connection string |
+| `PROMAGEN_CRON_SECRET`      | Yes      | —       | Protects cron endpoint     |
+| `INDEX_RATING_BASELINE`     | No       | `1500`  | Elo baseline               |
+| `INDEX_RATING_DECAY_LAMBDA` | No       | `0.02`  | Time decay rate            |
+| `INDEX_RATING_STALE_HOURS`  | No       | `48`    | Staleness threshold        |
+
+### 2.8 Response Format
+
+**Success:**
+
+```json
+{
+  "ok": true,
+  "message": "Index rating calculation completed",
+  "providersUpdated": 42,
+  "providersSeeded": 0,
+  "durationMs": 1234
+}
+```
+
+**Error (auth):**
+
+```json
+{ "error": "Not found" }
+```
+
+Status: 404
+
+### 2.9 Testing
+
+**Manual test command:**
+
+```powershell
+# Run from: Any directory
+
+# Local (dev server running)
+curl "http://localhost:3000/api/index-rating/cron?secret=S9W5q-BIVVJO_ZL95K6pvqQTqDo3NwOt5JUxdQHReEQ"
+
+# Production
+curl "https://promagen.vercel.app/api/index-rating/cron?secret=$PROMAGEN_CRON_SECRET"
+```
+
+**Verification:**
+
+- Response should show `providersUpdated: 42`
+- Check `provider_ratings` table has 42 rows
+- Check `index_rating_cron_runs` has new entry
+
+````
 
 ## Changelog
 
@@ -403,3 +589,13 @@ Unit tests for:
   - Created debug endpoint for observability
   - Integrated with providers API
   - Added comprehensive tests
+```markdown
+- **27 Jan 2026:** Added Index Rating cron documentation
+  - Full section 2 with data flow, schema, route, testing
+  - Documented all event types and their tracking status
+  - Added environment variables reference
+
+curl "http://localhost:3000/api/index-rating/cron?secret=S9W5q-BIVVJO_ZL95K6pvqQTqDo3NwOt5JUxdQHReEQ"
+
+curl "http://localhost:3000/api/promagen-users/cron?secret=S9W5q-BIVVJO_ZL95K6pvqQTqDo3NwOt5JUxdQHReEQ"
+````

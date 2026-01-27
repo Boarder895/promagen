@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/rankings",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/index-rating/cron",
+      "schedule": "5 0 * * *"
     }
   ],
   "headers": [

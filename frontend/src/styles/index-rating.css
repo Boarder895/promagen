@@ -1,0 +1,61 @@
+/**
+ * Index Rating Styles
+ * 
+ * Add to your globals.css or component styles.
+ * 
+ * @see docs/authority/index-rating.md
+ */
+
+/* =============================================================================
+   RANK UP ARROW ANIMATION
+   ============================================================================= */
+
+@keyframes rank-up-glow {
+  0%,
+  100% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 6px #22c55e);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 12px #22c55e);
+  }
+}
+
+.rank-up-arrow {
+  color: #22c55e;
+  animation: rank-up-glow 2s ease-in-out infinite;
+  font-size: 0.875rem;
+  line-height: 1;
+  display: inline-block;
+}
+
+/* =============================================================================
+   INDEX RATING COLORS
+   ============================================================================= */
+
+.index-rating-gain {
+  color: #22c55e;
+}
+
+.index-rating-loss {
+  color: #ef4444;
+}
+
+.index-rating-flat {
+  color: #6b7280;
+}
+
+.index-rating-fallback {
+  color: #6b7280;
+}
+
+/* =============================================================================
+   MOBILE COMPACT FORMAT
+   ============================================================================= */
+
+@media (max-width: 640px) {
+  .index-rating-percent {
+    display: none;
+  }
+}

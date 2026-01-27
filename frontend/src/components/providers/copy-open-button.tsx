@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import AffiliateBadge from "@/components/common/affiliate-badge"; // default export ?
 import { KEYS } from "@/lib/storage.keys";
 import { writeSchema, readSchema } from "@/lib/storage";
+import { useIndexRatingEvents } from "@/hooks/use-index-rating-events";
 
 type Props = {
   providerId: string;
@@ -20,6 +21,9 @@ const V = 1; // storage schema version
  * - Opens the provider URL in a new tab (noopener, noreferrer).
  * - Persists the last visited provider using versioned localStorage.
  * - Shows a tiny helper state on success (no toasts; calm UI).
+ * - TRACKS prompt_submit event for Index Rating system.
+ * 
+ * Updated: 27 Jan 2026 - Added prompt_submit tracking for Index Rating
  */
 export default function CopyOpenButton({
   providerId,
@@ -30,6 +34,9 @@ export default function CopyOpenButton({
 }: Props) {
   const [opening, setOpening] = useState(false);
   const [lastProviderId, setLastProviderId] = useState<string | null>(null);
+  
+  // Event tracking hook
+  const { trackPromptSubmit } = useIndexRatingEvents();
 
   // Read the last known provider id on mount (for subtle UI hints if desired)
   useEffect(() => {
@@ -52,6 +59,9 @@ export default function CopyOpenButton({
     setOpening(true);
 
     try {
+      // Track the prompt submit event for Index Rating
+      trackPromptSubmit(providerId);
+      
       // Persist last provider id (versioned)
       writeSchema<string | null>(KEYS.providers.lastV1, V, providerId);
 
@@ -78,7 +88,7 @@ export default function CopyOpenButton({
         data-testid="copy-open-button"
       >
         <span className="i-lucide-external-link" aria-hidden />
-        <span>{opening ? "Opening…" : `Open ${providerName}`}</span>
+        <span>{opening ? "Opening\x85" : `Open ${providerName}`}</span>
         {isRepeat && (
           <span className="ml-1 text-xs text-emerald-400/90" aria-hidden>
             (last)

@@ -1,6 +1,6 @@
 # Buttons Authority Document
 
-**Last updated:** 25 January 2026  
+**Last updated:** 26 January 2026  
 **Version:** 1.1.0  
 **Owner:** Promagen  
 **Authority:** This document defines ALL button behaviour, styling, wiring, and code locations across Promagen.
@@ -16,7 +16,6 @@ This document is the single source of truth for every interactive button in Prom
 - How it's implemented (component, mechanism)
 - Exact file locations and line numbers
 - Canonical styling rules
-- **Critical implementation patterns (especially Clerk authentication)**
 
 **Hard rule:** Before adding, modifying, or debugging any button, consult this document first.
 
@@ -24,18 +23,22 @@ This document is the single source of truth for every interactive button in Prom
 
 ## Quick Reference: All Buttons
 
-| Location        | Button         | Destination       | Mechanism             |
-| --------------- | -------------- | ----------------- | --------------------- |
-| Mission Control | Sign in        | Clerk modal       | `<SignInButton>`      |
-| Mission Control | Studio         | `/studio`         | `<a href>`            |
-| Mission Control | Pro            | `/pro-promagen`   | `<a href>`            |
-| Mission Control | Copy           | Clipboard         | `navigator.clipboard` |
-| Engine Bay      | Launch         | `/providers/{id}` | `<a href>`            |
-| Engine Bay      | Provider icons | State update      | `onClick`             |
-| Fallback Nav    | AuthButton     | Clerk modal       | `<SignInButton>`      |
-| Fallback Nav    | Home           | `/`               | `<a href>`            |
-| Fallback Nav    | Studio         | `/studio`         | `<a href>`            |
-| Fallback Nav    | Pro Promagen   | `/pro-promagen`   | `<a href>`            |
+| Location              | Button         | Destination         | Mechanism             |
+| --------------------- | -------------- | ------------------- | --------------------- |
+| Mission Control       | Sign in        | Clerk modal         | `<SignInButton>`      |
+| Mission Control       | Studio / Home  | `/studio` or `/`    | `<Link>`              |
+| Mission Control       | Pro            | `/pro-promagen`     | `<Link>`              |
+| Mission Control       | Copy           | Clipboard           | `navigator.clipboard` |
+| Engine Bay            | Launch         | `/providers/{id}`   | `<a href>`            |
+| Engine Bay            | Provider icons | State update        | `onClick`             |
+| Fallback Nav          | AuthButton     | Clerk modal         | `<SignInButton>`      |
+| Fallback Nav          | Home           | `/`                 | `<a href>`            |
+| Fallback Nav          | Studio         | `/studio`           | `<a href>`            |
+| Fallback Nav          | Pro Promagen   | `/pro-promagen`     | `<a href>`            |
+| **Studio Feature Cards** | Library     | `/studio/library`   | `<a href>`            |
+| **Studio Feature Cards** | Explore     | `/studio/explore`   | `<a href>`            |
+| **Studio Feature Cards** | Learn       | `/studio/learn`     | `<a href>`            |
+| **Studio Feature Cards** | Playground  | `/studio/playground`| `<a href>`            |
 
 ---
 
@@ -43,46 +46,39 @@ This document is the single source of truth for every interactive button in Prom
 
 **Authority:** `code-standard.md` §6.1
 
-All buttons in Promagen use a single, consistent design language. There are TWO canonical styles:
+All buttons in Promagen use a single, consistent design language. The Sign In button is the canonical reference.
 
-### 1.1 Header Button Style (Horizontal - AuthButton)
+### 1.1 Default Button Style
 
-Used in navigation headers. Horizontal layout with icon beside text.
+```tsx
+const buttonStyles =
+  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
+```
+
+### 1.2 Style Breakdown
+
+| Property   | Value                                                                            | Purpose                             |
+| ---------- | -------------------------------------------------------------------------------- | ----------------------------------- |
+| Layout     | `inline-flex items-center justify-center gap-2`                                  | Centered content with icon gap      |
+| Shape      | `rounded-full`                                                                   | Pill-shaped button                  |
+| Border     | `border border-purple-500/70`                                                    | Subtle purple outline (70% opacity) |
+| Background | `bg-gradient-to-r from-purple-600/20 to-pink-600/20`                             | Purple→pink gradient at 20% opacity |
+| Text       | `text-sm font-medium text-purple-100`                                            | 14px, medium weight, light purple   |
+| Padding    | `px-4 py-1.5`                                                                    | 16px horizontal, 6px vertical       |
+| Shadow     | `shadow-sm`                                                                      | Subtle drop shadow                  |
+| Transition | `transition-all`                                                                 | Smooth state changes                |
+| Hover      | `hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400`          | Intensify gradient and border       |
+| Focus      | `focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80` | Purple focus ring                   |
+
+### 1.3 Reference Implementation
+
+**File:** `src/components/auth/auth-button.tsx`  
+**Line:** 65-66
 
 ```tsx
 const signInButtonStyles =
   'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
 ```
-
-**File:** `src/components/auth/auth-button.tsx` (lines 65-66)
-
-### 1.2 Mission Control Button Style (Vertical - Action Buttons)
-
-Used in Mission Control action zone. Vertical layout with icon above text.
-
-```tsx
-const actionButtonBase =
-  'inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-xl border px-4 py-3 text-center text-sm font-semibold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80';
-
-const actionButtonActive =
-  'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer';
-
-const actionButtonLoading =
-  'border-slate-600/50 bg-slate-800/30 text-slate-400 cursor-wait opacity-70';
-```
-
-**File:** `src/components/home/mission-control.tsx` (lines 68-76)
-
-### 1.3 Style Comparison
-
-| Property  | Header (AuthButton)         | Mission Control        |
-| --------- | --------------------------- | ---------------------- |
-| Layout    | `items-center` (horizontal) | `flex-col` (vertical)  |
-| Shape     | `rounded-full` (pill)       | `rounded-xl` (rounded) |
-| Width     | Auto                        | `w-full` (grid cell)   |
-| Gap       | `gap-2`                     | `gap-0.5`              |
-| Padding   | `px-4 py-1.5`               | `px-4 py-3`            |
-| Icon size | `h-4 w-4`                   | `h-5 w-5`              |
 
 ### 1.4 Deviation Rules
 
@@ -96,395 +92,653 @@ Only deviate from canonical styling if:
 
 ### 1.5 Approved Deviations
 
-| Component         | Deviation                   | Reason                        | Lines                    |
-| ----------------- | --------------------------- | ----------------------------- | ------------------------ |
-| Engine Bay Launch | Sky/emerald/indigo gradient | Visual hierarchy, primary CTA | `engine-bay.tsx:329-333` |
+| Component                  | Deviation                     | Reason                        | Lines                         |
+| -------------------------- | ----------------------------- | ----------------------------- | ----------------------------- |
+| Engine Bay Launch          | Sky/emerald/indigo gradient   | Visual hierarchy, primary CTA | `engine-bay.tsx:329-333`      |
+| Mission Control (optional) | `py-2 min-h-[40px]`           | Improved touch target         | `mission-control.tsx:410-411` |
+| Studio Feature Cards       | Rounded-2xl, slate background | Card-based navigation         | `studio-page-client.tsx`      |
 
 ---
 
-## 2. CRITICAL: Clerk SignInButton Implementation
-
-**⚠️ THIS SECTION CONTAINS CRITICAL IMPLEMENTATION DETAILS. FAILURE TO FOLLOW THESE PATTERNS WILL RESULT IN NON-FUNCTIONAL BUTTONS.**
-
-### 2.1 The Problem
-
-`<SignInButton>` from `@clerk/nextjs` will NOT work if rendered before Clerk has finished loading. The button will appear but clicking it does nothing.
-
-**Root cause:** SignInButton attaches click handlers only after Clerk client initializes. If rendered during SSR or before `clerk.loaded === true`, the button is inert.
-
-### 2.2 The Solution: State Machine Pattern
-
-**ALWAYS** use this pattern when implementing SignInButton anywhere in the application:
-
-```tsx
-import { SignInButton, useClerk } from '@clerk/nextjs';
-import { useState, useEffect, useMemo } from 'react';
-
-const CLERK_LOAD_TIMEOUT_MS = 3000;
-
-function MyComponent() {
-  const clerk = useClerk();
-  const [mounted, setMounted] = useState(false);
-  const [timedOut, setTimedOut] = useState(false);
-
-  // 1. Track client-side mount (prevents SSR hydration issues)
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // 2. Timeout fallback (if Clerk doesn't load in 3s)
-  useEffect(() => {
-    if (mounted && !clerk.loaded) {
-      const timeout = setTimeout(() => {
-        if (!clerk.loaded) {
-          console.warn('[Component] Clerk did not load within timeout');
-          setTimedOut(true);
-        }
-      }, CLERK_LOAD_TIMEOUT_MS);
-      return () => clearTimeout(timeout);
-    }
-  }, [mounted, clerk.loaded]);
-
-  // 3. Determine auth state
-  const authState = useMemo(() => {
-    if (!mounted) return 'ssr';
-    if (clerk.loaded) return 'ready';
-    if (timedOut) return 'timeout';
-    return 'loading';
-  }, [mounted, clerk.loaded, timedOut]);
-
-  // 4. Render based on state
-  switch (authState) {
-    case 'ssr':
-    case 'loading':
-      return <span className="...loading styles...">Loading...</span>;
-    case 'timeout':
-      return (
-        <a href="/sign-in" className="...">
-          Sign in
-        </a>
-      );
-    case 'ready':
-      return (
-        <SignInButton mode="modal">
-          <button type="button" className="...">
-            Sign in
-          </button>
-        </SignInButton>
-      );
-  }
-}
-```
-
-### 2.3 State Machine States
-
-| State     | Condition                               | Renders                        |
-| --------- | --------------------------------------- | ------------------------------ |
-| `ssr`     | `!mounted`                              | Loading placeholder            |
-| `loading` | `mounted && !clerk.loaded && !timedOut` | Loading placeholder (animated) |
-| `timeout` | `timedOut` (after 3s)                   | Fallback `<a href="/sign-in">` |
-| `ready`   | `clerk.loaded`                          | `<SignInButton mode="modal">`  |
-
-### 2.4 Why Each State Matters
-
-1. **`ssr`**: Prevents React hydration mismatch errors. Server renders loading state, client picks up same state initially.
-
-2. **`loading`**: Shows user feedback while Clerk JavaScript loads and initializes.
-
-3. **`timeout`**: Fallback if Clerk fails to load (network issues, ad blockers, etc.). Links to `/sign-in` page instead of modal.
-
-4. **`ready`**: Only NOW is it safe to render SignInButton. Clerk will attach click handlers correctly.
-
-### 2.5 Reference Implementations
-
-**AuthButton (Header):**  
-File: `src/components/auth/auth-button.tsx`  
-Pattern: Full state machine with session polling, OAuth hash cleanup, stuck state detection
-
-**Mission Control (Homepage):**  
-File: `src/components/home/mission-control.tsx`  
-Pattern: Simplified state machine (mounted → loading → ready/timeout)
-Lines: 84-118 (state logic), 198-248 (renderSignInButton function)
-
-### 2.6 Common Mistakes That Break SignInButton
-
-| Mistake                                      | Why It Breaks                       | Fix                                 |
-| -------------------------------------------- | ----------------------------------- | ----------------------------------- |
-| Rendering SignInButton immediately           | Clerk not loaded, no click handlers | Use state machine pattern           |
-| Using `flex-1` on button inside SignInButton | Breaks click event propagation      | Use `w-full` with CSS Grid parent   |
-| Wrapping SignInButton in `<Link>`            | Conflicting click handlers          | Never wrap, use SignInButton alone  |
-| Using `<div>` or `<a>` as child              | Clerk expects `<button>`            | Always use `<button type="button">` |
-| Checking `clerk.loaded` without `mounted`    | SSR hydration mismatch              | Always check `mounted` first        |
-
-### 2.7 CSS Layout Constraints
-
-**NEVER use `flex-1` on a button inside SignInButton.**
-
-SignInButton creates an intermediate wrapper element. When the child button has `flex-1`, click events don't propagate correctly through this wrapper.
-
-**Instead, use CSS Grid for equal-width buttons:**
-
-```tsx
-// ❌ BROKEN: flex with flex-1
-<div className="flex gap-3">
-  <a className="flex-1">Studio</a>
-  <SignInButton>
-    <button className="flex-1">Sign in</button>  {/* Won't work! */}
-  </SignInButton>
-</div>
-
-// ✅ WORKING: grid with w-full
-<div className="grid grid-cols-3 gap-3">
-  <a className="w-full">Studio</a>
-  <SignInButton mode="modal">
-    <button className="w-full">Sign in</button>  {/* Works! */}
-  </SignInButton>
-</div>
-```
-
-### 2.8 Environment Variables
-
-SignInButton requires Clerk to be properly configured:
-
-**Development (localhost):**
-
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxx
-CLERK_SECRET_KEY=sk_test_xxxxx
-```
-
-**Production (promagen.com):**
-
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_xxxxx
-CLERK_SECRET_KEY=sk_live_xxxxx
-```
-
-**⚠️ Production keys (`pk_live_`) only work on the registered domain. Using production keys on localhost will cause Clerk to fail silently.**
-
-Console error to watch for:
-
-```
-Clerk: Production keys are only allowed for domain 'promagen.com'
-```
-
----
-
-## 3. Mission Control Buttons
+## 2. Mission Control Buttons
 
 **File:** `src/components/home/mission-control.tsx`  
 **Authority:** `mission-control.md` §5 Action Buttons Row  
-**Version:** v3.2.11
+**Visibility:** Desktop XL only (`hidden xl:block` — ≥1280px)
 
-### 3.1 Button Grid Layout
+### 2.1 Button Grid Layout
 
 ```tsx
-<div className="grid grid-cols-3 gap-3">
-  {/* Studio */}
-  {/* Pro */}
-  {/* Sign In (rendered via state machine) */}
-</div>
+{
+  /* Action Buttons Row */
+}
+<div className="grid grid-cols-3 gap-2">
+  {/* Sign In / Signed In */}
+  {/* Studio or Home (context-dependent) */}
+  {/* Pro / Pro Badge */}
+</div>;
 ```
 
-**Lines:** 310-350
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 575-637
 
-**Key points:**
-
-- Uses CSS Grid (`grid-cols-3`) NOT Flexbox
-- All buttons use `w-full` NOT `flex-1`
-- Gap of `gap-3` (12px)
-
-### 3.2 Sign In Button
+### 2.2 Sign In Button
 
 **Purpose:** Open Clerk authentication modal
 
 **States:**
 
-| State   | Visual                    | Behaviour             |
-| ------- | ------------------------- | --------------------- |
-| Loading | Grey, "Loading...", pulse | Disabled, cursor-wait |
-| Timeout | Purple, "Sign in"         | Links to `/sign-in`   |
-| Ready   | Purple, "Sign in"         | Opens Clerk modal     |
+| State           | Visual        | Behaviour            |
+| --------------- | ------------- | -------------------- |
+| Unauthenticated | `👤 Sign in`  | Opens Clerk modal    |
+| Authenticated   | `✓ Signed in` | Disabled, greyed out |
 
-**Implementation:**
+**Implementation (Unauthenticated):**
 
 ```tsx
-const renderSignInButton = () => {
-  switch (authState) {
-    case 'ssr':
-    case 'loading':
-      return (
-        <span className={`${actionButtonBase} ${actionButtonLoading}`}>
-          <svg className="h-5 w-5 animate-pulse">...</svg>
-          <span>Loading...</span>
-        </span>
-      );
-    case 'timeout':
-      return (
-        <a href="/sign-in" className={`${actionButtonBase} ${actionButtonActive}`}>
-          <svg className="h-5 w-5">...</svg>
-          <span>Sign in</span>
-        </a>
-      );
-    case 'ready':
-      return (
-        <SignInButton mode="modal">
-          <button type="button" className={`${actionButtonBase} ${actionButtonActive}`}>
-            <svg className="h-5 w-5">...</svg>
-            <span>Sign in</span>
-          </button>
-        </SignInButton>
-      );
-  }
-};
+<SignInButton mode="modal">
+  <button type="button" className={actionButtonStyles} aria-label="Sign in to your account">
+    <UserIcon />
+    <span>Sign in</span>
+  </button>
+</SignInButton>
 ```
 
-**Lines:** 198-248
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 588-597
 
-### 3.3 Studio Button
-
-**Purpose:** Navigate to Prompt Studio  
-**Destination:** `/studio`
-
-**Implementation:**
+**Implementation (Authenticated):**
 
 ```tsx
-<a
-  href="/studio"
-  className={`${actionButtonBase} ${actionButtonActive}`}
-  aria-label="Open Prompt Studio"
+<div
+  className={actionButtonStyles}
+  style={{ opacity: 0.6, cursor: 'default' }}
+  aria-disabled="true"
 >
-  <svg className="h-5 w-5">/* Wand icon */</svg>
-  <span>Studio</span>
-</a>
+  <span className="text-emerald-400">✓</span>
+  <span>Signed in</span>
+</div>
 ```
 
-**Lines:** 312-323
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 579-586
 
-### 3.4 Pro Button
+**Key points:**
 
-**Purpose:** Navigate to Pro Promagen page  
-**Destination:** `/pro-promagen`
+- Uses `<SignInButton mode="modal">` from `@clerk/nextjs`
+- Wraps a `<button type="button">` (required by Clerk)
+- Does NOT use `<Link>` — Clerk handles the modal
+- Authenticated state uses `<div>` not `<button>` (non-interactive)
+
+### 2.3 Studio / Home Button (Context-Dependent)
+
+**Purpose:** Navigate to Prompt Studio OR Homepage (context-dependent)
+
+**Behaviour (v1.1.0):**
+
+| Context         | Button Label | Destination | Prop                 |
+| --------------- | ------------ | ----------- | -------------------- |
+| Homepage (`/`)  | Studio       | `/studio`   | `isStudioPage=false` |
+| Studio (`/studio`) | Home      | `/`         | `isStudioPage=true`  |
 
 **Implementation:**
 
 ```tsx
-<a
+<Link
+  href={isStudioPage ? '/' : '/studio'}
+  className={actionButtonStyles}
+  prefetch={false}
+  aria-label={isStudioPage ? 'Return to homepage' : 'Open Prompt Studio'}
+>
+  {isStudioPage ? <HomeIcon /> : <WandIcon />}
+  <span>{isStudioPage ? 'Home' : 'Studio'}</span>
+</Link>
+```
+
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 600-609
+
+**Route files:**
+- `/studio` → `src/app/studio/page.tsx`
+- `/` → `src/app/page.tsx`
+
+**Key points:**
+
+- Uses Next.js `<Link>` component
+- `prefetch={false}` prevents unnecessary preloading
+- `isStudioPage` prop passed from `HomepageGrid` determines behaviour
+- Swaps icon and label based on context
+
+### 2.4 Pro Button
+
+**Purpose:** Navigate to Pro Promagen page (free users) or show badge (paid users)
+
+**Destination:** `/pro-promagen` (free users only)
+
+**States:**
+
+| State     | Visual                   | Behaviour                |
+| --------- | ------------------------ | ------------------------ |
+| Free user | `⭐ Pro` (purple border) | Links to `/pro-promagen` |
+| Paid user | `⭐ Pro` (golden badge)  | Disabled, shows badge    |
+
+**Implementation (Free User):**
+
+```tsx
+<Link
   href="/pro-promagen"
-  className={`${actionButtonBase} ${actionButtonActive}`}
+  className={actionButtonStyles}
+  style={{ borderColor: 'rgba(168, 85, 247, 0.3)' }}
+  prefetch={false}
   aria-label="View Pro Promagen features"
 >
-  <svg className="h-5 w-5">/* Sparkles icon */</svg>
+  <StarIcon />
   <span>Pro</span>
-</a>
+</Link>
 ```
 
-**Lines:** 326-337
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 626-635
 
-### 3.5 Copy Button
+**Implementation (Paid User):**
 
-**Purpose:** Copy weather prompt to clipboard  
-**Location:** Content zone header (right side)
+```tsx
+<div
+  className={actionButtonStyles}
+  style={{
+    borderColor: 'rgba(234, 179, 8, 0.3)',
+    background: 'rgba(234, 179, 8, 0.1)',
+    cursor: 'default',
+  }}
+  aria-label="Pro user badge"
+>
+  <span className="text-amber-400">⭐</span>
+  <span className="text-amber-400">Pro</span>
+</div>
+```
+
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 613-624
+
+**Route file:** `src/app/pro-promagen/page.tsx`
+
+**Key points:**
+
+- Free users: `<Link>` to `/pro-promagen`
+- Paid users: Static `<div>` with golden styling (amber-400)
+- `isPaidUser` prop determines which renders
+
+### 2.5 Copy Button
+
+**Purpose:** Copy weather prompt to clipboard
+
+**Implementation:**
+
+```tsx
+const handleCopy = useCallback(async () => {
+  if (!promptPreview?.prompt) return;
+  try {
+    await navigator.clipboard.writeText(promptPreview.prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  } catch (err) {
+    console.error('Failed to copy prompt:', err);
+  }
+}, [promptPreview?.prompt]);
+```
+
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 398-406 (handler), 530-566 (button UI)
+
+**Visual states:**
+
+- Default: Clipboard icon
+- Copied: Checkmark icon (1.5s timeout)
+
+### 2.6 Action Button Styles Variable
+
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 408-411
+
+```tsx
+const actionButtonStyles =
+  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-2 min-h-[40px] text-sm font-medium text-purple-100 shadow-sm transition-all cursor-pointer hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80 active:scale-95';
+```
+
+**Deviations from canonical §6.1:**
+
+- `py-1.5` → `py-2` (larger vertical padding)
+- Added `min-h-[40px]` (minimum height for touch targets)
+- Added `cursor-pointer` (explicit cursor)
+- Added `active:scale-95` (click feedback)
+- `focus-visible:ring` → `focus-visible:ring-2` (thicker ring)
+
+---
+
+## 3. Engine Bay Buttons
+
+**File:** `src/components/home/engine-bay.tsx`  
+**Authority:** `ignition.md`  
+**Visibility:** Desktop XL only (`hidden xl:block` — ≥1280px)
+
+### 3.1 Launch Platform Builder Button
+
+**Purpose:** Navigate to provider's prompt builder page
+
+**Destination:** `/providers/{selected.id}`
+
+**States:**
+
+| State             | Visual                   | Behaviour              |
+| ----------------- | ------------------------ | ---------------------- |
+| No selection      | Greyed out, disabled     | No navigation          |
+| Platform selected | Glowing gradient, active | Links to provider page |
+
+**Implementation:**
+
+```tsx
+<a
+  href={selected ? `/providers/${encodeURIComponent(selected.id)}` : '#'}
+  onClick={(e) => {
+    if (!selected) e.preventDefault();
+  }}
+  aria-disabled={!selected}
+  aria-label={
+    selected ? `Launch ${selected.name} prompt builder` : 'Select a platform first'
+  }
+  className={`group relative inline-flex w-1/2 items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 py-3 text-center text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 no-underline ${
+    selected
+      ? 'engine-bay-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 text-white cursor-pointer'
+      : 'border-slate-600/50 bg-slate-800/50 text-slate-500 cursor-not-allowed'
+  }`}
+>
+```
+
+**File:** `src/components/home/engine-bay.tsx`  
+**Lines:** 320-333
+
+**Route file:** `src/app/providers/[id]/page.tsx`
+
+**Key points:**
+
+- Uses `<a href>` not `<Link>` (simpler for conditional href)
+- `onClick` prevents navigation when no selection
+- `encodeURIComponent()` sanitizes provider ID
+- Special gradient styling (sky/emerald/indigo) — NOT canonical purple
+- Has shimmer animation on hover when active
+
+**Active state CSS class:**
+
+```css
+.engine-bay-active {
+  animation: engine-bay-pulse 2s ease-in-out infinite;
+}
+```
+
+**File:** `src/app/globals.css`  
+**Lines:** 1813-1829
+
+### 3.2 Provider Icon Buttons
+
+**Purpose:** Select/deselect AI platform
 
 **Implementation:**
 
 ```tsx
 <button
   type="button"
-  onClick={handleCopy}
-  className={`inline-flex h-6 w-6 ... ${copied ? 'bg-emerald-500/20' : 'bg-white/5'}`}
+  onClick={() => handleIconClick(provider)}
+  className={`flex flex-col items-center gap-1 rounded-lg p-1 transition-all duration-200 hover:scale-105 ${
+    isSelected ? 'ring-2 ring-offset-1 ring-offset-slate-950' : ''
+  }`}
+  style={isSelected ? { '--tw-ring-color': color } as React.CSSProperties : undefined}
+  aria-pressed={isSelected}
+  aria-label={`Select ${provider.name}`}
+  title={provider.name}
 >
-  {copied ? <CheckIcon /> : <CopyIcon />}
-</button>
 ```
 
-**Lines:** 275-295
+**File:** `src/components/home/engine-bay.tsx`  
+**Lines:** 262-277
+
+**Handler:**
+
+```tsx
+const handleIconClick = useCallback((provider: Provider) => {
+  setSelected((prev) => (prev?.id === provider.id ? null : provider));
+}, []);
+```
+
+**File:** `src/components/home/engine-bay.tsx`  
+**Lines:** 178-180
+
+**Key points:**
+
+- Uses `<button>` not `<a>` (state change, not navigation)
+- Toggle behaviour (click again to deselect)
+- Dynamic ring colour based on provider brand
+- Hover scale effect
 
 ---
 
-## 4. AuthButton (Fallback Navigation)
+## 4. Fallback Navigation Buttons
 
-**File:** `src/components/auth/auth-button.tsx`  
-**Purpose:** Authentication button for site header/fallback nav
+**File:** `src/components/layout/homepage-grid.tsx`  
+**Visibility:** Shows when Mission Control/Engine Bay are hidden (below xl breakpoint)
 
-### 4.1 Full State Machine
+### 4.1 Overview
 
-AuthButton implements the complete Clerk state machine with additional features:
+Fallback nav buttons appear in the mobile/tablet navigation bar when the desktop panels are hidden:
 
-- Session polling after OAuth redirect
-- OAuth hash fragment cleanup (`#_=_`)
-- Stuck state detection with auto-reload
-- Clerk event listener for session changes
-
-### 4.2 States
-
-| State      | Visual            | Behaviour              |
-| ---------- | ----------------- | ---------------------- |
-| Loading    | "Loading..." grey | Disabled               |
-| Timeout    | "Sign in" purple  | Links to `/sign-in`    |
-| Signed Out | "Sign in" purple  | Opens Clerk modal      |
-| Signed In  | User avatar       | Opens Clerk UserButton |
-
-### 4.3 Key Implementation Details
-
-```tsx
-// Session state polling (handles OAuth redirect)
-const checkSessionState = useCallback(() => {
-  if (!clerk.loaded) return 'loading';
-  if (clerk.user || clerk.session) return 'signed-in';
-  return 'signed-out';
-}, [clerk]);
-
-// Clerk event listener
-useEffect(() => {
-  if (!clerk.loaded) return;
-  const unsubscribe = clerk.addListener(() => {
-    const state = checkSessionState();
-    setSessionState(state);
-  });
-  return () => unsubscribe();
-}, [clerk, checkSessionState]);
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  [AuthButton]   [Home]   [Studio]   [Pro Promagen]              │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Lines:** 100-175
+### 4.2 AuthButton
+
+**Component:** `src/components/auth/auth-button.tsx`
+
+Handles sign-in via Clerk modal when unauthenticated, shows user avatar when authenticated.
+
+### 4.3 Home Button (Conditional)
+
+**Purpose:** Navigate to homepage  
+**Visibility:** Only shows on non-homepage routes
+
+**Implementation:**
+
+```tsx
+<a
+  href="/"
+  className="inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
+  aria-label="Go to homepage"
+>
+  <HomeIcon />
+  <span>Home</span>
+</a>
+```
+
+**File:** `src/components/layout/homepage-grid.tsx`  
+**Lines:** 310-318
+
+### 4.4 Studio Button
+
+**Purpose:** Navigate to Prompt Studio
+
+**Implementation:**
+
+```tsx
+<a
+  href="/studio"
+  className="inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
+  aria-label="Open Prompt Studio"
+>
+  <WandIcon />
+  <span>Studio</span>
+</a>
+```
+
+**File:** `src/components/layout/homepage-grid.tsx`  
+**Lines:** 320-328
+
+### 4.5 Pro Promagen Button
+
+**Purpose:** Navigate to Pro features page
+
+**Implementation:**
+
+```tsx
+<a
+  href="/pro-promagen"
+  className="inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
+  aria-label="View Pro Promagen features"
+>
+  <StarIcon />
+  <span>Pro Promagen</span>
+</a>
+```
+
+**File:** `src/components/layout/homepage-grid.tsx`  
+**Lines:** 330-338
+
+**Key points for all fallback buttons:**
+
+- Uses `<a href>` not `<Link>` — simpler, more reliable
+- Same canonical styling as Mission Control buttons
+- Always visible below xl breakpoint
 
 ---
 
-## 5. Engine Bay Launch Button
+## 5. Studio Page Feature Cards (NEW - 26 Jan 2026)
 
-**File:** `src/components/home/engine-bay.tsx`
+**File:** `src/app/studio/studio-page-client.tsx`  
+**Authority:** `prompt-intelligence.md` §9 New Pages  
+**Visibility:** All viewports (responsive 2-column grid on sm+)
 
-### 5.1 States
+### 5.1 Overview
 
-| State    | Visual                        | Behaviour              |
-| -------- | ----------------------------- | ---------------------- |
-| Disabled | Grey, no animation            | Cursor not-allowed     |
-| Active   | Sky/emerald gradient, pulsing | Links to provider page |
+The Studio hub page (`/studio`) displays 4 feature cards that navigate to sub-sections:
 
-### 5.2 Implementation
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ┌───────────────────────┐  ┌───────────────────────┐          │
+│  │ 📚 Library            │  │ 🔍 Explore            │          │
+│  │ Your saved prompts    │  │ Style families        │          │
+│  │ Explore →             │  │ Explore →             │          │
+│  └───────────────────────┘  └───────────────────────┘          │
+│  ┌───────────────────────┐  ┌───────────────────────┐          │
+│  │ 🎓 Learn              │  │ 🎮 Playground         │          │
+│  │ Prompt engineering    │  │ Experiment freely     │          │
+│  │ Explore →             │  │ Explore →             │          │
+│  └───────────────────────┘  └───────────────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 5.2 Card Definitions
+
+| Card       | Icon       | Title       | Description                    | Destination           |
+| ---------- | ---------- | ----------- | ------------------------------ | --------------------- |
+| Library    | 📚 (Book)  | Library     | Your saved prompts             | `/studio/library`     |
+| Explore    | 🔍 (Search)| Explore     | Browse style families          | `/studio/explore`     |
+| Learn      | 🎓 (Grad)  | Learn       | Master prompt engineering      | `/studio/learn`       |
+| Playground | 🎮 (Game)  | Playground  | Experiment freely              | `/studio/playground`  |
+
+### 5.3 Navigation Implementation
+
+**CRITICAL:** Cards use native `<a>` tags, NOT Next.js `<Link>` components.
+
+**Why native `<a>` tags:**
+- Next.js `<Link>` components were failing to navigate (click events not firing)
+- Root cause: Complex z-index stacking contexts with glow effects
+- Native `<a>` tags are the most reliable form of navigation
+- Full page reload is acceptable for this navigation pattern
+
+**Implementation:**
 
 ```tsx
-{
-  selectedProvider ? (
-    <a
-      href={`/providers/${selectedProvider.id}`}
-      className="... bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 ..."
-    >
-      <span>Launch Platform</span>
+{studioSections.map((section) => {
+  const CardContent = (
+    <div className="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 cursor-pointer hover:ring-1 hover:ring-white/20">
+      {/* Glow effect */}
+      <div className="absolute inset-0 ... pointer-events-none" />
+      
+      {/* Content wrapper - z-10 ensures content is above glow */}
+      <div className="relative z-10">
+        {/* Icon */}
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br ...">
+          {section.icon}
+        </div>
+        
+        {/* Title */}
+        <h3 className="text-base font-semibold text-white ...">
+          {section.title}
+        </h3>
+        
+        {/* Description */}
+        <p className="text-sm text-white/50 ...">
+          {section.description}
+        </p>
+        
+        {/* Arrow CTA */}
+        <div className="mt-3 text-white/30 ...">
+          <span className="text-sm">Explore →</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  return section.available ? (
+    <a key={section.href} href={section.href}>
+      {CardContent}
     </a>
   ) : (
-    <span className="... bg-slate-700/50 text-slate-500 cursor-not-allowed ...">
-      <span>Select Platform</span>
-    </span>
+    <div key={section.href} className="opacity-60 cursor-not-allowed">
+      {CardContent}
+    </div>
   );
-}
+})}
 ```
 
-**Lines:** 320-365
+**File:** `src/app/studio/studio-page-client.tsx`  
+**Lines:** 380-450 (approx)
+
+### 5.4 Route Files
+
+All destination routes must exist:
+
+| Route               | File                                  | Component            |
+| ------------------- | ------------------------------------- | -------------------- |
+| `/studio/library`   | `src/app/studio/library/page.tsx`     | `LibraryClient`      |
+| `/studio/explore`   | `src/app/studio/explore/page.tsx`     | `ExploreClient`      |
+| `/studio/learn`     | `src/app/studio/learn/page.tsx`       | `LearnClient`        |
+| `/studio/playground`| `src/app/studio/playground/page.tsx`  | `PlaygroundWorkspace`|
+
+### 5.5 Styling
+
+**Card container:**
+
+```tsx
+className="group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 cursor-pointer hover:ring-1 hover:ring-white/20"
+style={{
+  background: 'rgba(15, 23, 42, 0.7)',
+  border: '1px solid rgba(255,255,255,0.1)',
+}}
+```
+
+**Glow effect:**
+
+```tsx
+<div 
+  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+  style={{
+    background: `radial-gradient(circle at 50% 50%, ${section.glow}, transparent 70%)`,
+  }}
+/>
+```
+
+**Content wrapper (CRITICAL):**
+
+```tsx
+<div className="relative z-10">
+  {/* All card content here - z-10 ensures it's clickable above glow */}
+</div>
+```
+
+### 5.6 Test IDs
+
+Each card has a test ID for automated testing:
+
+```tsx
+data-testid={`studio-card-${section.href.split('/').pop()}`}
+```
+
+Results in:
+- `studio-card-library`
+- `studio-card-explore`
+- `studio-card-learn`
+- `studio-card-playground`
+
+### 5.7 Debugging Navigation Issues
+
+If cards stop navigating:
+
+1. **Check DevTools Console** — Look for JavaScript errors
+2. **Check Network tab** — Click card, see if request fires
+3. **Inspect element** — Verify `<a href="/studio/library">` exists
+4. **Check z-index** — Content must have `z-10`, glow must have `pointer-events-none`
+5. **Check for overlays** — No elements should be blocking clicks
+
+**Key principle:** Native `<a>` tags cannot fail unless something is intercepting them or the element isn't rendering.
 
 ---
 
-## 6. Route Verification Table
+## 6. AuthButton Component (Canonical Sign In)
+
+**File:** `src/components/auth/auth-button.tsx`  
+**Authority:** `code-standard.md` §6.1
+
+### 6.1 States
+
+| State             | Visual                    | Implementation |
+| ----------------- | ------------------------- | -------------- |
+| SSR / Not mounted | `Loading...` (disabled)   | Lines 217-224  |
+| Clerk loading     | `Loading...` (disabled)   | Lines 237-244  |
+| Timed out         | `Sign in` (link fallback) | Lines 227-234  |
+| Signed out        | `Sign in` (Clerk modal)   | Lines 266-273  |
+| Signed in         | User avatar               | Lines 247-263  |
+
+### 6.2 Clerk Integration
+
+```tsx
+import { SignInButton, UserButton, useClerk } from '@clerk/nextjs';
+```
+
+**SignInButton usage:**
+
+```tsx
+<SignInButton mode="modal">
+  <button type="button" className={signInButtonStyles}>
+    <UserIcon />
+    Sign in
+  </button>
+</SignInButton>
+```
+
+**UserButton usage (signed in):**
+
+```tsx
+<UserButton
+  appearance={{
+    elements: {
+      avatarBox: 'h-8 w-8 ring-2 ring-purple-500/50 hover:ring-purple-400',
+      // ... styling
+    },
+  }}
+  afterSignOutUrl="/"
+/>
+```
+
+### 6.3 Timeout Fallback
+
+If Clerk doesn't load within 3 seconds, shows a direct link:
+
+```tsx
+<a href="/sign-in" className={signInButtonStyles}>
+  <UserIcon />
+  Sign in
+</a>
+```
+
+**File:** `src/components/auth/auth-button.tsx`  
+**Lines:** 227-234
+
+---
+
+## 7. Route Reference
+
+All button destinations must have corresponding route files.
 
 | Route                | File                                      | Purpose                 |
 | -------------------- | ----------------------------------------- | ----------------------- |
@@ -501,109 +755,73 @@ useEffect(() => {
 
 ---
 
-## 7. Icon Components
+## 8. Icon Components
 
-### 7.1 Mission Control Icons
+Buttons use inline SVG icons for consistency. Each icon component returns a `<svg>` element.
 
-**File:** `src/components/home/mission-control.tsx`
+### 8.1 Icon Reference
 
-Icons are inline SVG paths, not separate components. All use `h-5 w-5` size.
+| Icon       | Component       | Used In                          | File                              |
+| ---------- | --------------- | -------------------------------- | --------------------------------- |
+| User       | `<UserIcon />`  | Sign in button                   | `auth-button.tsx`, inline         |
+| Wand       | `<WandIcon />`  | Studio button                    | `mission-control.tsx`, inline     |
+| Star       | `<StarIcon />`  | Pro button                       | `mission-control.tsx`, inline     |
+| Clipboard  | `<ClipboardIcon />` | Copy button                  | `mission-control.tsx`, inline     |
+| Check      | `<CheckIcon />` | Copy success                     | `mission-control.tsx`, inline     |
+| Home       | `<HomeIcon />`  | Home button (fallback/context)   | `homepage-grid.tsx`, inline       |
+| Book       | `<BookIcon />`  | Library card                     | `studio-page-client.tsx`, inline  |
+| Search     | `<SearchIcon />` | Explore card                    | `studio-page-client.tsx`, inline  |
+| GraduationCap | `<GraduationCapIcon />` | Learn card         | `studio-page-client.tsx`, inline  |
+| Gamepad    | `<GamepadIcon />`| Playground card                 | `studio-page-client.tsx`, inline  |
 
-| Icon     | SVG Path Variable | Purpose        |
-| -------- | ----------------- | -------------- |
-| User     | `userIconPath`    | Sign in button |
-| Wand     | Inline            | Studio button  |
-| Sparkles | Inline            | Pro button     |
+### 8.2 Icon Standards
 
-**User icon path (line 79):**
-
-```tsx
-const userIconPath =
-  'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z';
-```
-
-### 7.2 Auth Button Icons
-
-**File:** `src/components/auth/auth-button.tsx`
-
-| Icon          | Lines | Purpose        |
-| ------------- | ----- | -------------- |
-| `UserIcon`    | 26-43 | Sign in button |
-| `LoadingIcon` | 45-62 | Loading state  |
-
-**Icon styling standard:**
-
-```tsx
-<svg
-  className="h-5 w-5"  // Mission Control
-  // or
-  className="h-4 w-4"  // AuthButton header
-  fill="none"
-  stroke="currentColor"
-  viewBox="0 0 24 24"
-  aria-hidden="true"
->
-```
+- Size: 16×16px default (`h-4 w-4`), 20×20px for cards (`h-5 w-5`)
+- Stroke: `currentColor` (inherits text colour)
+- Stroke width: 1.5 or 2
+- No fill (outline icons only)
 
 ---
 
-## 8. Accessibility Requirements
+## 9. Debugging Guide
 
-### 8.1 Keyboard Navigation
+### 9.1 Button Not Clicking
 
-- All buttons focusable via Tab
-- Enter/Space activates button
-- Focus ring visible on `:focus-visible`
+**Check:**
 
-### 8.2 ARIA Attributes
+1. `onClick` handler exists and isn't `undefined`
+2. No overlay covering button (`pointer-events-none` on overlays)
+3. Button isn't disabled (`aria-disabled`, `disabled` attribute)
+4. Z-index stacking context (content should be `z-10` above decorative elements)
 
-| Attribute            | Usage                                                  |
-| -------------------- | ------------------------------------------------------ |
-| `aria-label`         | Describe button action when text alone is insufficient |
-| `aria-disabled`      | Indicate disabled state (not just visual)              |
-| `aria-hidden="true"` | Decorative icons                                       |
+### 9.2 Navigation Not Working
 
-### 8.3 Focus Styling
+**Check:**
 
-```css
-focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80
-```
+1. Route exists (`src/app/{route}/page.tsx`)
+2. Using correct mechanism:
+   - `<Link>` for internal routes (client-side navigation)
+   - `<a href>` for reliable navigation (full page reload)
+3. `prefetch` issues — Try `prefetch={false}`
+4. `href` value — Console.log the href
 
----
+**If `<Link>` fails, use `<a href>` instead** — native anchors are more reliable.
 
-## 9. Common Issues & Debugging
+### 9.3 Clerk Modal Not Opening
 
-### 9.1 SignInButton Not Working (Most Common)
+**Check:**
 
-**Symptoms:** Button appears but clicking does nothing. No Clerk modal opens.
+1. `<SignInButton>` wraps a `<button>`, not `<a>` or `<div>`
+2. Clerk provider is in `layout.tsx`
+3. Environment variables set (`NEXT_PUBLIC_CLERK_*`)
 
-**Causes & Fixes:**
+### 9.4 Styling Not Applying
 
-| Cause                        | How to Identify                                    | Fix                                 |
-| ---------------------------- | -------------------------------------------------- | ----------------------------------- |
-| Clerk not loaded             | No state machine pattern                           | Implement full state machine (§2.2) |
-| Production keys on localhost | Console: "Production keys only allowed for domain" | Use `pk_test_` keys in `.env.local` |
-| `flex-1` on button           | Button inside SignInButton has `flex-1` class      | Use CSS Grid + `w-full` instead     |
-| Missing `mounted` check      | Hydration errors in console                        | Add `mounted` state (§2.2)          |
-| Wrong child element          | Using `<div>` or `<a>` as SignInButton child       | Use `<button type="button">`        |
+**Check:**
 
-### 9.2 Button Appears Empty / Wrong Size
-
-**Cause:** CSS Grid/Flex conflict or missing `w-full`.
-
-**Fix:** Ensure parent is `grid grid-cols-3` and button has `w-full`.
-
-### 9.3 Hydration Mismatch Errors
-
-**Cause:** Server renders different state than client initial render.
-
-**Fix:** Use `mounted` state pattern. Only render interactive content after `mounted === true`.
-
-### 9.4 Clerk Modal Opens on Wrong Page But Not Homepage
-
-**Cause:** AuthButton uses full state machine, your component doesn't.
-
-**Fix:** Copy the state machine pattern from AuthButton or Mission Control (§2.2).
+1. Tailwind classes spelled correctly
+2. Not conflicting with parent styles
+3. CSS specificity (use browser dev tools)
 
 ---
 
@@ -611,80 +829,82 @@ focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80
 
 ### 10.1 Mission Control Buttons
 
-- [ ] Sign in shows "Loading..." initially
-- [ ] Sign in transitions to clickable button
-- [ ] Sign in opens Clerk modal (not page navigation)
-- [ ] Studio navigates to `/studio`
-- [ ] Pro navigates to `/pro-promagen`
+- [ ] Sign in opens Clerk modal (unauthenticated)
+- [ ] Sign in shows "✓ Signed in" disabled (authenticated)
+- [ ] Studio navigates to `/studio` (from homepage)
+- [ ] Home navigates to `/` (from Studio page)
+- [ ] Pro navigates to `/pro-promagen` (free user)
+- [ ] Pro shows golden badge (paid user)
 - [ ] Copy button copies prompt to clipboard
 - [ ] Copy shows checkmark feedback
 
-### 10.2 Sign In Button States
-
-- [ ] `ssr` → Shows loading (grey, disabled)
-- [ ] `loading` → Shows "Loading..." with pulse animation
-- [ ] `timeout` → Shows "Sign in" linking to `/sign-in` (after 3s if Clerk fails)
-- [ ] `ready` → Shows "Sign in" opening Clerk modal
-
-### 10.3 Engine Bay Button
+### 10.2 Engine Bay Button
 
 - [ ] Launch disabled when no platform selected
 - [ ] Launch enabled when platform selected
 - [ ] Launch navigates to `/providers/{id}`
+- [ ] Pulse animation runs when active
+- [ ] Shimmer appears on hover when active
 
-### 10.4 Fallback Navigation (AuthButton)
+### 10.3 Fallback Navigation
 
-- [ ] Shows "Loading..." during Clerk init
-- [ ] Shows "Sign in" when signed out
-- [ ] Shows user avatar when signed in
-- [ ] Sign out works correctly
+- [ ] AuthButton shows Sign in / Avatar correctly
+- [ ] Home button appears on non-homepage pages
+- [ ] Studio navigates to `/studio`
+- [ ] Pro Promagen navigates to `/pro-promagen`
 
-### 10.5 Environment Testing
+### 10.4 Studio Feature Cards (NEW)
 
-- [ ] Works on localhost with `pk_test_` keys
-- [ ] Works on promagen.com with `pk_live_` keys
-- [ ] No console errors about "Production keys only allowed for domain"
+- [ ] Library card navigates to `/studio/library`
+- [ ] Explore card navigates to `/studio/explore`
+- [ ] Learn card navigates to `/studio/learn`
+- [ ] Playground card navigates to `/studio/playground`
+- [ ] Hover glow effect visible on all cards
+- [ ] Cards use native `<a>` tags (not `<Link>`)
+
+### 10.5 Accessibility
+
+- [ ] All buttons keyboard focusable
+- [ ] Focus ring visible on focus
+- [ ] Screen reader announces button labels
+- [ ] Disabled buttons have `aria-disabled`
 
 ---
 
 ## 11. File Location Summary
 
-| Component               | File                                      | Key Lines |
-| ----------------------- | ----------------------------------------- | --------- |
-| Mission Control buttons | `src/components/home/mission-control.tsx` | 310-350   |
-| Mission Control styles  | `src/components/home/mission-control.tsx` | 68-76     |
-| Mission Control state   | `src/components/home/mission-control.tsx` | 84-118    |
-| Mission Control render  | `src/components/home/mission-control.tsx` | 198-248   |
-| Engine Bay launch       | `src/components/home/engine-bay.tsx`      | 320-365   |
-| AuthButton              | `src/components/auth/auth-button.tsx`     | Full file |
-| Fallback nav            | `src/components/layout/homepage-grid.tsx` | 307-333   |
+| Component                  | File                                      | Key Lines            |
+| -------------------------- | ----------------------------------------- | -------------------- |
+| Mission Control buttons    | `src/components/home/mission-control.tsx` | 575-637              |
+| Mission Control styles     | `src/components/home/mission-control.tsx` | 408-411              |
+| Mission Control icons      | `src/components/home/mission-control.tsx` | 236-291              |
+| Engine Bay launch          | `src/components/home/engine-bay.tsx`      | 320-365              |
+| Engine Bay icons           | `src/components/home/engine-bay.tsx`      | 262-296              |
+| Engine Bay animations      | `src/app/globals.css`                     | 1812-1889            |
+| AuthButton                 | `src/components/auth/auth-button.tsx`     | Full file            |
+| Fallback nav               | `src/components/layout/homepage-grid.tsx` | 307-333              |
+| **Studio feature cards**   | `src/app/studio/studio-page-client.tsx`   | 380-450              |
+| Canonical button style     | `code-standard.md`                        | §6.1 (lines 349-377) |
 
 ---
 
 ## 12. Related Documents
 
-| Topic           | Document             |
-| --------------- | -------------------- |
-| Mission Control | `mission-control.md` |
-| Engine Bay      | `ignition.md`        |
-| Homepage layout | `ribbon-homepage.md` |
-| Code standards  | `code-standard.md`   |
-| Authentication  | `clerk-auth.md`      |
-| Paid tier logic | `paid_tier.md`       |
+| Topic           | Document                     |
+| --------------- | ---------------------------- |
+| Mission Control | `mission-control.md`         |
+| Engine Bay      | `ignition.md`                |
+| Homepage layout | `ribbon-homepage.md`         |
+| Code standards  | `code-standard.md` §6.1      |
+| Authentication  | `clerk-auth.md`              |
+| Paid tier logic | `paid_tier.md`               |
+| Studio routes   | `prompt-intelligence.md` §9  |
 
 ---
 
 ## Changelog
 
-- **25 Jan 2026 (v1.1.0):** Major update - Clerk SignInButton implementation
-  - Added §2 "CRITICAL: Clerk SignInButton Implementation" with full state machine pattern
-  - Documented root cause of non-functional SignInButton (Clerk not loaded)
-  - Added CSS layout constraints (flex-1 breaks SignInButton, use Grid)
-  - Added environment variable requirements (pk*test* vs pk*live*)
-  - Updated Mission Control to v3.2.11 implementation details
-  - Updated Quick Reference table (Mission Control uses `<a href>` not `<Link>`)
-  - Added common debugging scenarios specific to Clerk issues
-  - Added environment testing checklist
+- **26 Jan 2026 (v1.1.0):** **STUDIO FEATURE CARDS** — Added Section 5 documenting the 4 Studio hub navigation cards (Library, Explore, Learn, Playground). Cards use native `<a>` tags instead of Next.js `<Link>` components due to navigation failures caused by z-index stacking contexts with glow effects. Added `isStudioPage` prop to Mission Control that swaps Studio↔Home button based on context. Updated Quick Reference table with new buttons. Added testing checklist for Studio cards.
 
 - **25 Jan 2026 (v1.0.0):** Initial document
   - Comprehensive button inventory across all components
@@ -701,5 +921,3 @@ focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80
 _This document is the authority for ALL buttons in Promagen. Update this document FIRST before modifying any button behaviour._
 
 _**Key principle:** Always update docs FIRST before writing any code. Docs are the single source of truth._
-
-_**Critical reminder:** SignInButton MUST use the state machine pattern (§2.2). Rendering it without checking `clerk.loaded` will result in a non-functional button._

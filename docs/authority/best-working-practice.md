@@ -178,6 +178,52 @@ Promagen must feel calm and premium. Random container styles make pages feel "ch
 - Implementation: `grid-cols-[2fr_1fr_1fr]` for 50%/25%/25% split.
 - Authority for implementation details: `docs/authority/code-standard.md` §6 (Fixed Proportional Column Layout).
 
+**4. Fluid Typography with `clamp()` (responsive text)**
+
+- All UI text must scale smoothly across screen sizes using CSS `clamp()`.
+- Never use fixed `px` font sizes alone — they don't adapt to viewport.
+- Never use `vw` alone — text becomes unreadable on small screens or massive on ultrawides.
+
+**The pattern:**
+
+```css
+font-size: clamp(MIN, PREFERRED, MAX);
+```
+
+| Parameter   | Purpose                                    | Example |
+| ----------- | ------------------------------------------ | ------- |
+| `MIN`       | Floor — never smaller than this (readable) | `12px`  |
+| `PREFERRED` | Scales with viewport width                 | `1vw`   |
+| `MAX`       | Ceiling — never larger than this           | `16px`  |
+
+**Standard scales (use these):**
+
+| Element         | clamp value                         | Notes       |
+| --------------- | ----------------------------------- | ----------- |
+| Body text       | `clamp(0.875rem, 1vw, 1rem)`        | 14px → 16px |
+| Table text      | `clamp(0.8125rem, 1vw, 1rem)`       | 13px → 16px |
+| Small/secondary | `clamp(0.6875rem, 0.9vw, 0.875rem)` | 11px → 14px |
+| Headings        | `clamp(1.25rem, 2vw, 1.75rem)`      | 20px → 28px |
+| Data/monospace  | `clamp(0.75rem, 1vw, 0.875rem)`     | 12px → 14px |
+
+**Hard rules:**
+
+1. New text styles must use `clamp()` — no exceptions.
+2. Existing fixed sizes should be migrated to `clamp()` when touched.
+3. Minimum font size for body text: `12px` (accessibility floor).
+4. Minimum font size for secondary text: `10px` (absolute floor).
+
+**Existing example (exchange cards):**
+
+```css
+/* globals.css line 409 */
+.providers-table {
+  font-size: clamp(0.8125rem, 1vw, 1rem); /* 13px → 16px */
+}
+```
+
+**Authority:** `docs/authority/code-standard.md` §6 (Styling Rules)
+
 ### Card shell discipline (what every card should look like)
 
 - Shape: rounded rectangle (no sharp corners).

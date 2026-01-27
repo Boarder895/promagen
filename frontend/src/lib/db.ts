@@ -38,8 +38,8 @@ function createSqlClient(): SqlClient {
     max: env.isProd ? 5 : 3,
     idle_timeout: 20,
     connect_timeout: 10,
-    // postgres (porsager) will use TLS automatically for some URLs; we force a conservative stance in prod.
-    ssl: env.isProd ? 'require' : undefined,
+    // Neon (and most cloud Postgres) requires SSL always - don't disable in dev
+    ssl: 'require',
   });
 }
 

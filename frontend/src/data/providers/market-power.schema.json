@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Market Power Data",
+  "description": "Market Power data for AI image providers used in Index Rating calculations",
+  "type": "object",
+  "required": ["lastResearched", "providers"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Schema reference"
+    },
+    "lastResearched": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when data was last researched (YYYY-MM-DD)"
+    },
+    "researchNotes": {
+      "type": "string",
+      "description": "Notes about research methodology and sources"
+    },
+    "providers": {
+      "type": "object",
+      "description": "Provider-keyed market power data",
+      "additionalProperties": {
+        "$ref": "#/definitions/ProviderMarketPower"
+      }
+    }
+  },
+  "definitions": {
+    "ProviderMarketPower": {
+      "type": "object",
+      "required": ["foundingYear", "estimatedUsers"],
+      "properties": {
+        "foundingYear": {
+          "type": "integer",
+          "minimum": 1970,
+          "maximum": 2030,
+          "description": "Year the company/product was founded"
+        },
+        "socialReach": {
+          "type": "object",
+          "description": "Social media follower counts",
+          "properties": {
+            "youtube": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "YouTube subscribers"
+            },
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "X (Twitter) followers"
+            },
+            "instagram": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Instagram followers"
+            },
+            "facebook": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Facebook page likes/followers"
+            },
+            "discord": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Discord server members"
+            },
+            "reddit": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Reddit subreddit members"
+            },
+            "linkedin": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "LinkedIn followers"
+            },
+            "tiktok": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "TikTok followers"
+            }
+          },
+          "additionalProperties": false
+        },
+        "estimatedUsers": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Estimated monthly active users"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional context about the provider"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

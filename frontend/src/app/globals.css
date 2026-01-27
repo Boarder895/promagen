@@ -1821,141 +1821,106 @@ a:hover {
     opacity: 1;
   }
 }
+/* ========================================================================== */
+/* Index Rating Cell - Fluid Typography with clamp()                          */
+/* REPLACE lines 1962-2006 in globals.css with this                           */
+/* ========================================================================== */
 
-/* =============================================================================
-   Panel Sub-Window Styles (Engine Bay + Mission Control)
-   Consistent styling for internal content zones
-   Added: 25 Jan 2026
-   ============================================================================= */
-
-.panel-subwindow {
-  background: var(--panel-subwindow-bg);
-  border: 1px solid var(--panel-subwindow-border);
-  border-radius: var(--panel-subwindow-radius);
-  padding: var(--panel-zone-padding);
+.index-rating-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  gap: 2px;
 }
 
-/* Content Zone - scrollable area with fixed height range */
-.panel-content-zone {
-  min-height: var(--panel-content-min-height);
-  max-height: var(--panel-content-max-height);
-  overflow-y: auto;
-  overflow-x: hidden;
+.index-rating-value {
+  font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  /* clamp(MIN, PREFERRED, MAX) - scales smoothly with viewport */
+  /* Small screen: 12px | Scales with 1.2vw | Large screen: 16px */
+  font-size: clamp(10px, 1.2vw, 20px);
+  font-weight: 600;
+  color: #f1f5f9 !important; /* slate-100 - matches exchange card price */
+  font-variant-numeric: tabular-nums;
 }
 
-/* Custom scrollbar for content zone */
-.panel-content-zone::-webkit-scrollbar {
-  width: 6px;
+.index-rating-change {
+  font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
+  /* Small screen: 10px | Scales with 1vw | Large screen: 13px */
+  font-size: clamp(10px, 1.2vw, 20px);
+  font-variant-numeric: tabular-nums;
 }
 
-.panel-content-zone::-webkit-scrollbar-track {
-  background: transparent;
+.index-rating-percent {
+  margin-left: 4px;
 }
 
-.panel-content-zone::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+/* COLORS - must use !important to override .providers-table color rule */
+.index-rating-gain {
+  color: #34d399 !important; /* emerald-400 - matches exchange card */
 }
 
-.panel-content-zone::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+.index-rating-loss {
+  color: #f87171 !important; /* rose-400 - matches exchange card */
 }
 
-/* Firefox */
-.panel-content-zone {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+.index-rating-flat {
+  color: #94a3b8 !important; /* slate-400 */
 }
+/* ========================================================================== */
+/* INDEX RATING FEATURES - Add to globals.css after line 2005               */
+/* ========================================================================== */
 
-/* Action Zone - fixed height */
-.panel-action-zone {
-  height: var(--panel-action-height);
-  min-height: var(--panel-action-height);
-  max-height: var(--panel-action-height);
-}
+/* -------------------------------------------------------------------------- */
+/* Rank Up Arrow - Glowing green arrow for providers that climbed in rankings */
+/* -------------------------------------------------------------------------- */
+/* Spec: docs/authority/index-rating.md § Rank Change Indicator               */
+/* Symbol: ⬆ (U+2B06)                                                         */
+/* Color: Bright green #22c55e                                                */
+/* Animation: Subtle pulse (opacity 0.85 → 1.0), 2-second cycle               */
+/* Duration: 24 hours from moment of rank change (handled in JS)              */
+/* -------------------------------------------------------------------------- */
 
-/* ==========================================================================
- * ENGINE BAY ANIMATIONS (v4.0.0)
- * Primary CTA animations for the Prompt Builder launch button
- * 
- * Gradient colors match "Intelligent Prompt Builder" heading:
- *   sky-400 (#38bdf8) → emerald-300 (#6ee7b7) → indigo-400 (#818cf8)
- * ========================================================================== */
-
-/* Pulse animation — breathing glow effect on active launch button */
-.engine-bay-active {
-  animation: engine-bay-pulse 1s ease-in-out infinite;
-}
-
-@keyframes engine-bay-pulse {
+@keyframes rank-up-glow {
   0%,
   100% {
-    box-shadow:
-      0 0 20px rgba(56, 189, 248, 0.3),
-      0 0 40px rgba(52, 211, 153, 0.2);
+    opacity: 0.85;
+    filter: drop-shadow(0 0 6px #22c55e);
   }
   50% {
-    box-shadow:
-      0 0 30px rgba(56, 189, 248, 0.5),
-      0 0 60px rgba(52, 211, 153, 0.4);
+    opacity: 1;
+    filter: drop-shadow(0 0 12px #22c55e);
   }
 }
 
-/* Shimmer animation — light sweep across button on hover */
-.engine-bay-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.3) 50%,
-    transparent 100%
-  );
-  animation: engine-bay-shimmer 1.5s ease-in-out infinite;
+.rank-up-arrow {
+  color: #22c55e !important;
+  animation: rank-up-glow 2s ease-in-out infinite;
+  margin-left: 4px;
+  font-size: 0.875rem; /* 14px */
 }
 
-@keyframes engine-bay-shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+/* Mobile view rank-up arrow (slightly smaller) */
+.providers-mobile-card .rank-up-arrow {
+  font-size: 0.75rem; /* 12px */
+  margin-left: 2px;
 }
 
-/* ==========================================================================
- * REDUCED MOTION SUPPORT
- * Respect user preference for reduced motion
- * ========================================================================== */
+/* -------------------------------------------------------------------------- */
+/* Underdog Badge - For providers with MPI < 3.0 (rising platforms)           */
+/* -------------------------------------------------------------------------- */
 
-@media (prefers-reduced-motion: reduce) {
-  .lock-cta-button {
-    transition: none;
-  }
+.underdog-badge {
+  margin-left: 4px;
+  font-size: 0.875rem;
+}
 
-  .lock-cta-button:hover {
-    transform: none;
-  }
+/* -------------------------------------------------------------------------- */
+/* Newcomer Badge - For providers less than 12 months old                     */
+/* -------------------------------------------------------------------------- */
 
-  .usage-progress-bar {
-    transition: none;
-  }
-
-  /* Disable glow pulse for users who prefer reduced motion */
-  .leaderboard-glow-frame::before,
-  .leaderboard-glow-frame::after {
-    animation: none;
-    opacity: 0.85;
-  }
-
-  /* Disable Engine Bay animations for users who prefer reduced motion */
-  .engine-bay-active {
-    animation: none;
-    box-shadow:
-      0 0 25px rgba(56, 189, 248, 0.4),
-      0 0 50px rgba(52, 211, 153, 0.3);
-  }
-
-  .engine-bay-shimmer {
-    animation: none;
-    opacity: 0 !important;
-  }
+.newcomer-badge {
+  margin-left: 4px;
+  font-size: 0.875rem;
 }

@@ -15,6 +15,7 @@
 //   - Row 1 (top): tooltip opens above
 //   - Row 2 (bottom): tooltip opens below
 // - Icons are centered within the cell
+// - TRACKS social_click events for Index Rating system
 //
 // Platform order: LinkedIn → Instagram → Facebook → YouTube → Discord → Reddit → TikTok → Pinterest → X
 //
@@ -22,16 +23,20 @@
 // Updated: Jan 18, 2026 - Added 2-row layout with smart tooltip direction (4 icons per row)
 // Updated: Jan 18, 2026 - Fixed X icon visibility with dark outline
 // Updated: Jan 22, 2026 - Centered icons within cell (justify-center)
+// Updated: Jan 27, 2026 - Added social_click tracking for Index Rating events
 // Existing features preserved: Yes
 
 'use client';
 
 import React, { useState } from 'react';
 import type { ProviderSocials } from '@/types/providers';
+import { useIndexRatingEvents } from '@/hooks/use-index-rating-events';
 
 export interface SupportIconsCellProps {
   providerName: string;
   socials?: ProviderSocials | null;
+  /** Provider ID for event tracking */
+  providerId?: string;
 }
 
 // Number of icons per row before wrapping to second row
@@ -129,17 +134,20 @@ function hexToRgba(hex: string, alpha: number): string {
 /**
  * Individual social icon with hover glow effect and tooltip
  * @param tooltipDirection - 'above' for row 1, 'below' for row 2
+ * @param onTrackClick - callback to track click event
  */
 function SocialIconLink({
   platform,
   url,
   providerName,
   tooltipDirection = 'above',
+  onTrackClick,
 }: {
   platform: keyof ProviderSocials;
   url: string;
   providerName: string;
   tooltipDirection?: 'above' | 'below';
+  onTrackClick?: () => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -167,6 +175,13 @@ function SocialIconLink({
     ? { borderTopColor: 'rgb(15 23 42)' }   // slate-900
     : { borderBottomColor: 'rgb(15 23 42)' }; // slate-900
 
+  const handleClick = () => {
+    // Track the social click event
+    if (onTrackClick) {
+      onTrackClick();
+    }
+  };
+
   return (
     <a
       href={url}
@@ -175,6 +190,7 @@ function SocialIconLink({
       className="support-icon-link relative inline-flex"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
       aria-label={ariaLabel}
     >
       {/* Icon with dimmed default, bright on hover with glow + scale */}
@@ -195,14 +211,17 @@ function SocialIconLink({
           className={`support-icon-tooltip absolute left-1/2 -translate-x-1/2 ${tooltipPositionClasses} px-2 py-1 text-xs font-medium text-white bg-slate-900 rounded whitespace-nowrap pointer-events-none z-50 transition-opacity duration-150`}
           style={{
             boxShadow: `0 0 8px ${tooltipGlowRgba}, 0 0 16px ${tooltipGlowRgba}`,
-            border: `1px solid ${hexToRgba(glowColor, 0.3)}`,
           }}
         >
           {tooltipText}
           {/* Tooltip arrow */}
           <span
-            className={`absolute left-1/2 -translate-x-1/2 border-4 border-transparent ${arrowClasses}`}
-            style={arrowStyle}
+            className={`absolute left-1/2 -translate-x-1/2 ${arrowClasses} w-0 h-0 border-l-4 border-r-4 border-l-transparent border-r-transparent`}
+            style={{
+              ...arrowStyle,
+              borderTopWidth: tooltipDirection === 'above' ? '4px' : '0',
+              borderBottomWidth: tooltipDirection === 'below' ? '4px' : '0',
+            }}
           />
         </span>
       )}
@@ -210,26 +229,31 @@ function SocialIconLink({
   );
 }
 
-/**
- * Support icons cell - displays social media icons for a provider
- * Uses 2-row layout with smart tooltip direction if 5+ icons
- */
-export function SupportIconsCell({ providerName, socials }: SupportIconsCellProps) {
-  // Filter to only platforms with valid URLs
-  const activePlatforms = PLATFORM_ORDER.filter((platform) => {
-    const url = socials?.[platform];
-    return typeof url === 'string' && url.trim().length > 0;
-  });
+export function SupportIconsCell({ providerName, socials, providerId }: SupportIconsCellProps) {
+  // Event tracking hook
+  const { trackSocialClick } = useIndexRatingEvents();
 
-  if (activePlatforms.length === 0) {
-    return <span className="text-slate-500">—</span>;
+  if (!socials) {
+    return <span className="text-slate-600 text-xs">—</span>;
   }
 
-  // Check if we need 2 rows (5+ icons means we split)
-  const needsTwoRows = activePlatforms.length > ICONS_PER_ROW;
+  // Get active platforms in order
+  const activePlatforms = PLATFORM_ORDER.filter(
+    (platform) => socials[platform] && socials[platform]!.trim() !== ''
+  );
 
-  if (!needsTwoRows) {
-    // Single row - all tooltips open above, centered
+  if (activePlatforms.length === 0) {
+    return <span className="text-slate-600 text-xs">—</span>;
+  }
+
+  // Create tracking callback for each platform
+  const createTrackCallback = (platform: string) => {
+    if (!providerId) return undefined;
+    return () => trackSocialClick(providerId, platform);
+  };
+
+  // Single row if 4 or fewer icons
+  if (activePlatforms.length <= ICONS_PER_ROW) {
     return (
       <div className="support-icons-cell flex items-center justify-center gap-2">
         {activePlatforms.map((platform) => (
@@ -239,6 +263,7 @@ export function SupportIconsCell({ providerName, socials }: SupportIconsCellProp
             url={socials![platform]!}
             providerName={providerName}
             tooltipDirection="above"
+            onTrackClick={createTrackCallback(platform)}
           />
         ))}
       </div>
@@ -260,6 +285,7 @@ export function SupportIconsCell({ providerName, socials }: SupportIconsCellProp
             url={socials![platform]!}
             providerName={providerName}
             tooltipDirection="above"
+            onTrackClick={createTrackCallback(platform)}
           />
         ))}
       </div>
@@ -272,6 +298,7 @@ export function SupportIconsCell({ providerName, socials }: SupportIconsCellProp
             url={socials![platform]!}
             providerName={providerName}
             tooltipDirection="below"
+            onTrackClick={createTrackCallback(platform)}
           />
         ))}
       </div>
