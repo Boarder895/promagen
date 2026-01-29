@@ -1,13 +1,20 @@
 // src/app/studio/explore/page.tsx
 // ============================================================================
-// EXPLORE PAGE - Server Component
+// EXPLORE PAGE - Server Component (Dynamic)
 // ============================================================================
 // Browse style families and find inspiration for prompts.
 //
+// UPDATED (28 Jan 2026): Full integration with Engine Bay & Mission Control
+// - Now fetches providers and live weather like homepage
+// - Passes showEngineBay, showMissionControl, weatherIndex to client
+// - Uses isStudioSubPage for 4-button Mission Control layout
+// - Force dynamic rendering for live weather data
+//
 // Server responsibilities:
+// - Load all providers from catalog
 // - Load all exchanges from catalog
 // - Load all style families
-// - Build weather index
+// - Fetch weather from gateway (with demo fallback)
 // - SEO metadata
 //
 // Client responsibilities (ExploreClient):
@@ -17,15 +24,18 @@
 // - Navigate to builder with suggestions
 //
 // Authority: docs/authority/prompt-intelligence.md §9.2
-// UPDATED: Route moved from /prompts/explore to /studio/explore
 // ============================================================================
 
 import React from 'react';
 import type { Metadata } from 'next';
 
+// Force dynamic rendering - page needs live weather data
+export const dynamic = 'force-dynamic';
+
 import ExploreClient from '@/components/prompts/explore/explore-client';
+import { getProviders } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
-import { DEMO_EXCHANGE_WEATHER, type ExchangeWeather } from '@/lib/weather/exchange-weather';
+import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 import { getFamilies } from '@/lib/prompt-intelligence/get-families';
 
 // ============================================================================
@@ -38,27 +48,23 @@ export const metadata: Metadata = {
 };
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-function buildWeatherIndex(rows: ReadonlyArray<ExchangeWeather>): Map<string, ExchangeWeather> {
-  return new Map(rows.map((entry) => [entry.exchange, entry]));
-}
-
-// ============================================================================
 // PAGE COMPONENT
 // ============================================================================
 
-export default function ExplorePage() {
-  // Load data on server
-  const allExchanges = getHomepageExchanges();
-  const weatherIndex = buildWeatherIndex(DEMO_EXCHANGE_WEATHER);
-  const families = getFamilies();
+export default async function ExplorePage() {
+  // Load data on server (parallel fetches) - same pattern as homepage
+  const [providers, allExchanges, weatherIndex, families] = await Promise.all([
+    Promise.resolve(getProviders()),
+    Promise.resolve(getHomepageExchanges()),
+    getWeatherIndex(), // Fetches LIVE data from gateway
+    Promise.resolve(getFamilies()),
+  ]);
 
   return (
     <ExploreClient
       exchanges={allExchanges}
       weatherIndex={weatherIndex}
+      providers={providers}
       families={families}
     />
   );

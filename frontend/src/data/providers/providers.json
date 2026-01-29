@@ -11,10 +11,7 @@
     "imageQualityRank": 1,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Aesthetics",
-      "Concept Art"
-    ],
+    "tags": ["Aesthetics", "Concept Art"],
     "website": "https://www.midjourney.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -46,11 +43,7 @@
     "imageQualityRank": 4,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Text-to-Image",
-      "Editing",
-      "API"
-    ],
+    "tags": ["Text-to-Image", "Editing", "API"],
     "website": "https://openai.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -81,10 +74,7 @@
     "imageQualityRank": 3,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": [
-      "Photoreal",
-      "Google AI"
-    ],
+    "tags": ["Photoreal", "Google AI"],
     "website": "https://deepmind.google/technologies/imagen/",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -117,11 +107,7 @@
     "imageQualityRank": 5,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Fast Iteration",
-      "Assets",
-      "Creator"
-    ],
+    "tags": ["Fast Iteration", "Assets", "Creator"],
     "website": "https://leonardo.ai",
     "affiliateUrl": "https://leonardo.ai/ai-affiliate-program/",
     "requiresDisclosure": false,
@@ -154,11 +140,7 @@
     "imageQualityRank": 2,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Speed",
-      "Quality",
-      "Open Source"
-    ],
+    "tags": ["Speed", "Quality", "Open Source"],
     "website": "https://blackforestlabs.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -187,11 +169,7 @@
     "imageQualityRank": 8,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Control",
-      "Open Models",
-      "API"
-    ],
+    "tags": ["Control", "Open Models", "API"],
     "website": "https://stability.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -221,11 +199,7 @@
     "imageQualityRank": 6,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": [
-      "Design",
-      "Brand",
-      "Commercial"
-    ],
+    "tags": ["Design", "Brand", "Commercial"],
     "website": "https://firefly.adobe.com",
     "affiliateUrl": "https://www.adobe.com/affiliates.html",
     "requiresDisclosure": false,
@@ -258,10 +232,7 @@
     "imageQualityRank": 9,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Text-in-Image",
-      "Posters"
-    ],
+    "tags": ["Text-in-Image", "Posters"],
     "website": "https://ideogram.ai",
     "affiliateUrl": "https://ideogram.ai/features/creators-club",
     "requiresDisclosure": false,
@@ -292,10 +263,7 @@
     "imageQualityRank": 11,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Drafts",
-      "Iteration"
-    ],
+    "tags": ["Drafts", "Iteration"],
     "website": "https://playground.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -325,11 +293,7 @@
     "imageQualityRank": 12,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": [
-      "Templates",
-      "Microsoft",
-      "Social"
-    ],
+    "tags": ["Templates", "Microsoft", "Social"],
     "website": "https://designer.microsoft.com",
     "affiliateUrl": "https://www.microsoft.com/en-us/microsoft-365/business/microsoft-365-affiliate-program",
     "requiresDisclosure": false,
@@ -362,10 +326,7 @@
     "imageQualityRank": 13,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Anime",
-      "Characters"
-    ],
+    "tags": ["Anime", "Characters"],
     "website": "https://novelai.net",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -396,10 +357,7 @@
     "imageQualityRank": 7,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Prompt Discovery",
-      "Explore"
-    ],
+    "tags": ["Prompt Discovery", "Explore"],
     "website": "https://lexica.art",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -428,10 +386,7 @@
     "imageQualityRank": 14,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Community",
-      "Models"
-    ],
+    "tags": ["Community", "Models"],
     "website": "https://openart.ai",
     "affiliateUrl": "https://openart.ai/affiliates",
     "requiresDisclosure": false,
@@ -461,10 +416,7 @@
     "imageQualityRank": 18,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Simple",
-      "Quick Concepts"
-    ],
+    "tags": ["Simple", "Quick Concepts"],
     "website": "https://www.123rf.com",
     "affiliateUrl": "https://www.123rf.com/affiliate.php",
     "requiresDisclosure": false,
@@ -495,11 +447,7 @@
     "imageQualityRank": 16,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": [
-      "Design",
-      "Templates",
-      "Easy"
-    ],
+    "tags": ["Design", "Templates", "Easy"],
     "website": "https://www.canva.com",
     "affiliateUrl": "https://www.canva.com/affiliates/",
     "requiresDisclosure": false,
@@ -533,10 +481,7 @@
     "imageQualityRank": 17,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Fast",
-      "Accessible"
-    ],
+    "tags": ["Fast", "Accessible"],
     "website": "https://www.bing.com/images/create",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -569,10 +514,7 @@
     "imageQualityRank": 19,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Community",
-      "Experiment"
-    ],
+    "tags": ["Community", "Experiment"],
     "website": "https://nightcafe.studio",
     "affiliateUrl": "https://nightcafe.studio/pages/partner-program",
     "requiresDisclosure": false,
@@ -600,11 +542,7 @@
     "imageQualityRank": 20,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Mobile",
-      "Edits",
-      "Effects"
-    ],
+    "tags": ["Mobile", "Edits", "Effects"],
     "website": "https://picsart.com",
     "affiliateUrl": "https://picsart.com/affiliates",
     "requiresDisclosure": false,
@@ -637,10 +575,7 @@
     "imageQualityRank": 21,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Marketing",
-      "Easy"
-    ],
+    "tags": ["Marketing", "Easy"],
     "website": "https://artistly.ai",
     "affiliateUrl": "https://artistly.ai/affiliates",
     "requiresDisclosure": false,
@@ -669,10 +604,7 @@
     "imageQualityRank": 10,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "One-Click",
-      "Enhance"
-    ],
+    "tags": ["One-Click", "Enhance"],
     "website": "https://www.fotor.com",
     "affiliateUrl": "https://www.fotor.com/affiliate/",
     "requiresDisclosure": false,
@@ -702,10 +634,7 @@
     "imageQualityRank": 22,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Editor",
-      "Browser"
-    ],
+    "tags": ["Editor", "Browser"],
     "website": "https://pixlr.com",
     "affiliateUrl": "https://pixlr.com/affiliate/",
     "requiresDisclosure": false,
@@ -737,10 +666,7 @@
     "imageQualityRank": 35,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Prototype",
-      "Utility"
-    ],
+    "tags": ["Prototype", "Utility"],
     "website": "https://deepai.org",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -771,10 +697,7 @@
     "imageQualityRank": 38,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Free",
-      "Casual"
-    ],
+    "tags": ["Free", "Casual"],
     "website": "https://www.craiyon.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -804,11 +727,7 @@
     "imageQualityRank": 23,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Discord",
-      "Free",
-      "Community"
-    ],
+    "tags": ["Discord", "Free", "Community"],
     "website": "https://www.bluewillow.ai",
     "affiliateUrl": "https://www.bluewillow.ai/affiliate",
     "requiresDisclosure": false,
@@ -837,10 +756,7 @@
     "imageQualityRank": 15,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Stable Diffusion",
-      "Control"
-    ],
+    "tags": ["Stable Diffusion", "Control"],
     "website": "https://dreamstudio.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -870,10 +786,7 @@
     "imageQualityRank": 24,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Portraits",
-      "Mixing"
-    ],
+    "tags": ["Portraits", "Mixing"],
     "website": "https://www.artbreeder.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -904,10 +817,7 @@
     "imageQualityRank": 25,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Marketing",
-      "Content"
-    ],
+    "tags": ["Marketing", "Content"],
     "website": "https://www.jasper.ai",
     "affiliateUrl": "https://www.jasper.ai/partners",
     "requiresDisclosure": false,
@@ -938,10 +848,7 @@
     "imageQualityRank": 26,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Video",
-      "Creative Tools"
-    ],
+    "tags": ["Video", "Creative Tools"],
     "website": "https://runwayml.com",
     "affiliateUrl": "https://runwayml.com/creative-partners-program",
     "requiresDisclosure": false,
@@ -974,10 +881,7 @@
     "imageQualityRank": 27,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Stock",
-      "Templates"
-    ],
+    "tags": ["Stock", "Templates"],
     "website": "https://www.freepik.com",
     "affiliateUrl": "https://www.freepik.com/affiliate-program",
     "requiresDisclosure": false,
@@ -1010,10 +914,7 @@
     "imageQualityRank": 28,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Marketing",
-      "Social"
-    ],
+    "tags": ["Marketing", "Social"],
     "website": "https://simplified.com",
     "affiliateUrl": "https://simplified.com/affiliates",
     "requiresDisclosure": false,
@@ -1046,11 +947,7 @@
     "imageQualityRank": 29,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Mobile",
-      "Professional",
-      "Editing"
-    ],
+    "tags": ["Mobile", "Professional", "Editing"],
     "website": "https://www.photoleapapp.com",
     "affiliateUrl": "https://www.lightricks.com/partners",
     "requiresDisclosure": false,
@@ -1079,11 +976,7 @@
     "imageQualityRank": 30,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Templates",
-      "Design",
-      "Social"
-    ],
+    "tags": ["Templates", "Design", "Social"],
     "website": "https://create.vista.com",
     "affiliateUrl": "https://create.vista.com/affiliate/",
     "requiresDisclosure": false,
@@ -1113,10 +1006,7 @@
     "imageQualityRank": 31,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Anime",
-      "Asian Market"
-    ],
+    "tags": ["Anime", "Asian Market"],
     "website": "https://www.artguru.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -1147,11 +1037,7 @@
     "imageQualityRank": 32,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Quick",
-      "Easy",
-      "Web"
-    ],
+    "tags": ["Quick", "Easy", "Web"],
     "website": "https://myedit.online",
     "affiliateUrl": "https://www.cyberlink.com/partner/affiliates/",
     "requiresDisclosure": false,
@@ -1182,10 +1068,7 @@
     "imageQualityRank": 33,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Presentations",
-      "Infographics"
-    ],
+    "tags": ["Presentations", "Infographics"],
     "website": "https://www.visme.co",
     "affiliateUrl": "https://www.visme.co/affiliates/",
     "requiresDisclosure": false,
@@ -1217,10 +1100,7 @@
     "imageQualityRank": 34,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Marketing",
-      "Graphics"
-    ],
+    "tags": ["Marketing", "Graphics"],
     "website": "https://hotpot.ai",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -1249,10 +1129,7 @@
     "imageQualityRank": 36,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Photo Editing",
-      "Enhancement"
-    ],
+    "tags": ["Photo Editing", "Enhancement"],
     "website": "https://picwish.com",
     "affiliateUrl": "https://picwish.com/affiliate",
     "requiresDisclosure": false,
@@ -1283,10 +1160,7 @@
     "imageQualityRank": 37,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "Editing",
-      "Cleanup"
-    ],
+    "tags": ["Editing", "Cleanup"],
     "website": "https://clipdrop.co",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -1317,10 +1191,7 @@
     "imageQualityRank": 39,
     "incumbentAdjustment": false,
     "trend": "up",
-    "tags": [
-      "API",
-      "Custom Models"
-    ],
+    "tags": ["API", "Custom Models"],
     "website": "https://getimg.ai",
     "affiliateUrl": "https://getimg.ai/affiliates",
     "requiresDisclosure": false,
@@ -1351,10 +1222,7 @@
     "imageQualityRank": 40,
     "incumbentAdjustment": true,
     "trend": "up",
-    "tags": [
-      "Meta",
-      "Social"
-    ],
+    "tags": ["Meta", "Social"],
     "website": "https://imagine.meta.com",
     "affiliateUrl": null,
     "requiresDisclosure": false,
@@ -1387,10 +1255,7 @@
     "imageQualityRank": 41,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Stable Diffusion",
-      "Web"
-    ],
+    "tags": ["Stable Diffusion", "Web"],
     "website": "https://dreamlike.art",
     "affiliateUrl": "https://dreamlike.art/affiliate",
     "requiresDisclosure": false,
@@ -1419,10 +1284,7 @@
     "imageQualityRank": 42,
     "incumbentAdjustment": false,
     "trend": "flat",
-    "tags": [
-      "Background Removal",
-      "Utility"
-    ],
+    "tags": ["Background Removal", "Utility"],
     "website": "https://www.remove.bg",
     "affiliateUrl": "https://www.remove.bg/affiliate",
     "requiresDisclosure": false,

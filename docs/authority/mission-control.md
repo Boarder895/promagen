@@ -1,7 +1,7 @@
 # Mission Control Authority Document
 
-**Last updated:** 26 January 2026  
-**Version:** 1.1.0  
+**Last updated:** 28 January 2026  
+**Version:** 2.0.0  
 **Owner:** Promagen  
 **Authority:** This document defines the Mission Control component behaviour, design, and edit locations.
 
@@ -9,32 +9,91 @@
 
 ## Purpose
 
-Mission Control is the right-side CTA panel on the homepage and Studio page, mirroring Engine Bay on the left for visual symmetry. It provides:
+Mission Control is the right-side CTA panel on the homepage, Studio page, and provider pages, mirroring Engine Bay on the left for visual symmetry. It provides:
 
 - User location reference with interactive tooltip
 - Live weather-driven prompt preview (London default)
 - Quick access to authentication, Studio/Home, and Pro Promagen
 - Context-aware navigation (Studio↔Home button swap)
+- 4-button layout for provider pages (Home | Studio | Pro | Sign in)
 
 ---
 
 ## Version History
 
-| Version | Date        | Changes                                                                 |
-| ------- | ----------- | ----------------------------------------------------------------------- |
-| 1.1.0   | 26 Jan 2026 | Added `isStudioPage` prop for context-aware Studio↔Home button swap     |
-| 1.0.0   | 24 Jan 2026 | Initial implementation with weather tooltips, SVG flags, dynamic prompts |
+| Version | Date        | Changes                                                                                                                                             |
+| ------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.0.0   | 28 Jan 2026 | **CRITICAL FIX:** Text/icon colour inheritance. Added `isStudioSubPage` prop for 4-button layout. Animations now in `<style jsx>` within component. |
+| 1.1.0   | 26 Jan 2026 | Added `isStudioPage` prop for context-aware Studio↔Home button swap                                                                                 |
+| 1.0.0   | 24 Jan 2026 | Initial implementation with weather tooltips, SVG flags, dynamic prompts                                                                            |
 
 ---
 
 ## File Locations
 
-| File                                                        | Purpose                    | Lines of Interest |
-| ----------------------------------------------------------- | -------------------------- | ----------------- |
-| `src/components/home/mission-control.tsx`                   | Main component             | Full file         |
-| `src/components/layout/homepage-grid.tsx`                   | Layout integration         | Lines 285-305     |
-| `src/components/exchanges/weather/weather-prompt-tooltip.tsx` | Shared tooltip component   | Full file         |
-| `docs/authority/mission-control.md`                         | This document              | —                 |
+| File                                                          | Purpose                  | Lines of Interest     |
+| ------------------------------------------------------------- | ------------------------ | --------------------- |
+| `src/components/home/mission-control.tsx`                     | Main component           | Full file (697 lines) |
+| `src/components/layout/homepage-grid.tsx`                     | Layout integration       | Lines 285-305         |
+| `src/components/exchanges/weather/weather-prompt-tooltip.tsx` | Shared tooltip component | Full file             |
+| `docs/authority/mission-control.md`                           | This document            | —                     |
+| `docs/authority/buttons.md`                                   | Button styling authority | §1 Colour Inheritance |
+
+---
+
+## CRITICAL: Text & Icon Colour Inheritance (v2.0.0)
+
+### The Problem
+
+Promagen's `globals.css` has:
+
+```css
+body {
+  color: #020617; /* slate-950 — BLACK */
+}
+
+a {
+  color: inherit;
+}
+```
+
+This causes `<a>` tag buttons to have **BLACK text/icons** because children inherit from body, not from the parent's Tailwind colour class.
+
+### The Solution — MANDATORY
+
+**All Mission Control buttons using `<a>` tags MUST have explicit `text-purple-100` on child `<svg>` and `<span>` elements:**
+
+```tsx
+// ❌ WRONG — Text and icon appear BLACK
+<a className="... text-purple-100">
+  <svg className="h-5 w-5">...</svg>
+  <span>Home</span>
+</a>
+
+// ✅ CORRECT — Text and icon appear purple
+<a className="... text-purple-100">
+  <svg className="h-5 w-5 text-purple-100">...</svg>
+  <span className="text-purple-100">Home</span>
+</a>
+```
+
+### Affected Buttons
+
+| Button                     | Element  | Required Class    |
+| -------------------------- | -------- | ----------------- |
+| Home                       | `<svg>`  | `text-purple-100` |
+| Home                       | `<span>` | `text-purple-100` |
+| Studio                     | `<svg>`  | `text-purple-100` |
+| Studio                     | `<span>` | `text-purple-100` |
+| Pro                        | `<svg>`  | `text-purple-100` |
+| Pro                        | `<span>` | `text-purple-100` |
+| Sign in (timeout fallback) | `<svg>`  | `text-purple-100` |
+| Sign in (timeout fallback) | `<span>` | `text-purple-100` |
+| Sign in (ready state)      | `<svg>`  | `text-purple-100` |
+| Sign in (ready state)      | `<span>` | `text-purple-100` |
+
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 453-513 (button render functions)
 
 ---
 
@@ -42,18 +101,16 @@ Mission Control is the right-side CTA panel on the homepage and Studio page, mir
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  ● Mission Control                        [🇬🇧 London]      │  ← Header row
-├─────────────────────────────────────────────────────────────────┤
-│  Context-driven prompts built from live stock exchanges,    │
-│  FX, commodities & weather. Hover over the 🇬🇧 on exchange  │  ← Description
-│  cards for dynamic, ever-changing prompts.                  │
+│  ● MISSION CONTROL                                              │  ← Header row
+│  Smart Dynamic Automated Prompts                                │  ← Gradient title
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │  🇬🇧 London • Image Prompt                    [📋]  │    │  ← Preview header
-│  │  "A misty London morning with golden hour light..." │    │  ← Dynamic prompt
+│  │  🇬🇧 London Real Time Text Prompt              [▼]  │    │  ← Content zone (84px)
+│  │  Select a platform...                              │    │
 │  └─────────────────────────────────────────────────────────┘    │
 ├─────────────────────────────────────────────────────────────────┤
-│  [👤 Sign in]    [✨ Studio/🏠 Home]    [⭐ Pro]            │  ← Action buttons
+│  3-button: [🏠 Home/✨ Studio]  [⭐ Pro/🏠 Home]  [👤 Sign in]  │  ← Action buttons
+│  4-button: [🏠 Home] [✨ Studio] [⭐ Pro] [👤 Sign in]          │  ← isStudioSubPage
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -63,379 +120,372 @@ Mission Control is the right-side CTA panel on the homepage and Studio page, mir
 
 ```typescript
 export interface MissionControlProps {
-  /** User's detected location info */
-  locationInfo: {
-    isLoading: boolean;
-    cityName?: string;
-    countryCode?: string;
-  };
-  /** Whether user is authenticated */
-  isAuthenticated: boolean;
-  /** Whether user has paid tier */
-  isPaidUser: boolean;
   /** All exchanges (to find nearest for preview) */
   exchanges?: ReadonlyArray<Exchange>;
   /** Weather data indexed by exchange ID */
   weatherIndex?: Map<string, ExchangeWeatherData>;
   /** User's detected nearest exchange ID (optional) */
   nearestExchangeId?: string;
-  /** Whether component is rendered on Studio page (swaps Studio↔Home button) */
+  /** Whether component is rendered on Studio page (swaps Studio↔Home in first slot) */
   isStudioPage?: boolean;
+  /** Whether component is rendered on Pro Promagen page (swaps Pro↔Home in second slot) */
+  isProPromagenPage?: boolean;
+  /** Whether component is on a Studio sub-page (4-button layout: Home|Studio|Pro|Sign in) */
+  isStudioSubPage?: boolean;
 }
 ```
 
-### isStudioPage Prop (v1.1.0)
+### Props Explained
 
-**Purpose:** Enables context-aware navigation button that changes based on current page.
+| Prop                | Type      | Default | Effect                                   |
+| ------------------- | --------- | ------- | ---------------------------------------- |
+| `isStudioPage`      | `boolean` | `false` | First button: Studio → Home              |
+| `isProPromagenPage` | `boolean` | `false` | Second button: Pro → Home                |
+| `isStudioSubPage`   | `boolean` | `false` | 4-button layout with all buttons visible |
 
-| Value   | Button Label | Icon        | Destination | Use Case              |
-| ------- | ------------ | ----------- | ----------- | --------------------- |
-| `false` | Studio       | ✨ (Wand)   | `/studio`   | Shown on homepage     |
-| `true`  | Home         | 🏠 (House)  | `/`         | Shown on Studio page  |
+### Button Layout Logic
 
-**Passed from:** `HomepageGrid` component
+**3-button layout (default):**
 
-**File:** `src/components/layout/homepage-grid.tsx`  
-**Lines:** 285-305
-
-```tsx
-<MissionControl
-  locationInfo={locationInfo}
-  isAuthenticated={isAuthenticated}
-  isPaidUser={isPaidUser}
-  exchanges={exchanges}
-  weatherIndex={weatherIndex}
-  nearestExchangeId={nearestExchangeId}
-  isStudioPage={isStudioPage}  // ← NEW v1.1.0
-/>
 ```
+[First Button] [Second Button] [Sign in]
+```
+
+| Page                           | First Button       | Second Button         |
+| ------------------------------ | ------------------ | --------------------- |
+| Homepage (`/`)                 | Studio → `/studio` | Pro → `/pro-promagen` |
+| Studio (`/studio`)             | Home → `/`         | Pro → `/pro-promagen` |
+| Pro Promagen (`/pro-promagen`) | Studio → `/studio` | Home → `/`            |
+
+**4-button layout (`isStudioSubPage=true`):**
+
+```
+[Home] [Studio] [Pro] [Sign in]
+```
+
+Used on: Provider pages (`/providers/[id]`), Studio sub-pages
 
 ---
 
-## Data Flow
-
-### Exchange Selection Priority
-
-The component selects a "preview exchange" for the prompt preview box:
-
-1. **First:** User's nearest exchange (if `nearestExchangeId` provided and has weather data)
-2. **Second:** London (LSE) — ID: `lse-london`
-3. **Third:** Any exchange with weather data
-4. **Fourth:** First exchange in array
+## Button Styles (v2.0.0)
 
 **File:** `src/components/home/mission-control.tsx`  
-**Lines:** 221-246
+**Lines:** 203-210
 
-```typescript
-// Priority order for preview exchange selection
-if (nearestExchangeId) { /* try nearest first */ }
-const london = exchanges.find((e) => e.id === 'lse-london' || e.city?.toLowerCase() === 'london');
-const withWeather = exchanges.find((e) => weatherIndex?.has(e.id));
+```tsx
+const actionButtonBase =
+  'inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-xl border px-4 py-3 text-center text-sm font-semibold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80';
+
+const actionButtonActive =
+  'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer';
+
+const actionButtonLoading =
+  'border-slate-600/50 bg-slate-800/30 text-slate-400 cursor-wait opacity-70';
 ```
 
-### Prompt Generation
+### Style Breakdown
 
-Uses `generateWeatherPrompt()` from weather-prompt-generator with:
-- City name from preview exchange
-- Weather data from `weatherIndex`
-- Local hour derived from exchange timezone
-- Default prompt tier (Tier 4 for free users)
-
-**File:** `src/components/home/mission-control.tsx`  
-**Lines:** 249-284
+| Property   | Value                                                     | Purpose                           |
+| ---------- | --------------------------------------------------------- | --------------------------------- |
+| Layout     | `inline-flex w-full flex-col items-center justify-center` | Vertical, centered, full width    |
+| Shape      | `rounded-xl`                                              | Rounded corners                   |
+| Gap        | `gap-0.5`                                                 | Minimal gap between icon and text |
+| Padding    | `px-4 py-3`                                               | 16px horizontal, 12px vertical    |
+| Font       | `text-sm font-semibold`                                   | 14px, semibold weight             |
+| Border     | `border-purple-500/70`                                    | Purple outline (70% opacity)      |
+| Background | `bg-gradient-to-r from-purple-600/20 to-pink-600/20`      | Purple→pink gradient              |
+| Text       | `text-purple-100`                                         | Light purple (parent only!)       |
 
 ---
 
-## Interactive Elements
+## Button Implementations (v2.0.0)
 
-### 1. Location Badge (Top Right)
-
-**Behaviour:**
-- Shows "📍 Detecting..." while `locationInfo.isLoading === true`
-- Shows flag emoji + city name when location detected
-- Hover reveals tooltip explaining east→west exchange ordering
+### Home Button
 
 **File:** `src/components/home/mission-control.tsx`  
-**Lines:** 341-370
-
-### 2. Prompt Preview Box
-
-**Components:**
-- Flag emoji (hoverable) — shows full weather tooltip
-- City name
-- "Image Prompt" label
-- Dynamic prompt text (from weather generator)
-- Copy button (top right)
-
-**Tooltip behaviour:**
-- Opens LEFT + DOWN from flag (uses `horizontalPosition="left"` and `verticalPosition="below"`)
-- Shows full weather context (temperature, humidity, conditions)
-
-**File:** `src/components/home/mission-control.tsx`  
-**Lines:** 471-566
-
-### 3. Copy Button
-
-**States:**
-- Default: Clipboard icon
-- Success: Checkmark icon (1.5 second timeout)
-
-**Handler:**
-
-```typescript
-const handleCopy = useCallback(async () => {
-  if (!promptPreview?.prompt) return;
-  try {
-    await navigator.clipboard.writeText(promptPreview.prompt);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  } catch (err) {
-    console.error('Failed to copy prompt:', err);
-  }
-}, [promptPreview?.prompt]);
-```
-
-**File:** `src/components/home/mission-control.tsx`  
-**Lines:** 398-406
-
----
-
-## Action Buttons Row (v1.1.0)
-
-**Layout:**
+**Lines:** 453-466
 
 ```tsx
-<div className="grid grid-cols-3 gap-2">
-  {/* Sign In / Signed In */}
-  {/* Studio or Home (context-dependent) */}
-  {/* Pro / Pro Badge */}
-</div>
+const renderHomeButton = () => (
+  <a href="/" className={`${actionButtonBase} ${actionButtonActive}`} aria-label="Go to Homepage">
+    <svg
+      className="h-5 w-5 text-purple-100" // ← CRITICAL: explicit colour
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={homeIconPath} />
+    </svg>
+    <span className="text-purple-100">Home</span> {/* ← CRITICAL: explicit colour */}
+  </a>
+);
 ```
 
-**File:** `src/components/home/mission-control.tsx`  
-**Lines:** 575-637
-
-### Sign In Button
-
-| State           | Visual        | Behaviour            |
-| --------------- | ------------- | -------------------- |
-| Unauthenticated | `👤 Sign in`  | Opens Clerk modal    |
-| Authenticated   | `✓ Signed in` | Disabled, greyed out |
+### Studio Button
 
 **File:** `src/components/home/mission-control.tsx`  
-**Lines:** 579-597
-
-### Studio / Home Button (Context-Dependent)
-
-**NEW in v1.1.0:** Button changes based on `isStudioPage` prop.
-
-| Context              | Prop Value         | Button  | Destination |
-| -------------------- | ------------------ | ------- | ----------- |
-| Homepage (`/`)       | `isStudioPage=false` | Studio  | `/studio`   |
-| Studio page (`/studio`) | `isStudioPage=true` | Home   | `/`         |
-
-**Implementation:**
+**Lines:** 471-491
 
 ```tsx
-<Link
-  href={isStudioPage ? '/' : '/studio'}
-  className={actionButtonStyles}
-  prefetch={false}
-  aria-label={isStudioPage ? 'Return to homepage' : 'Open Prompt Studio'}
->
-  {isStudioPage ? <HomeIcon /> : <WandIcon />}
-  <span>{isStudioPage ? 'Home' : 'Studio'}</span>
-</Link>
+const renderStudioButton = () => (
+  <a
+    href="/studio"
+    className={`${actionButtonBase} ${actionButtonActive}`}
+    aria-label="Open Prompt Studio"
+  >
+    <svg
+      className="h-5 w-5 text-purple-100" // ← CRITICAL: explicit colour
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={studioIconPath} />
+    </svg>
+    <span className="text-purple-100">Studio</span> {/* ← CRITICAL: explicit colour */}
+  </a>
+);
 ```
-
-**File:** `src/components/home/mission-control.tsx`  
-**Lines:** 600-609
 
 ### Pro Button
 
-| State     | Visual                   | Behaviour                |
-| --------- | ------------------------ | ------------------------ |
-| Free user | `⭐ Pro` (purple border) | Links to `/pro-promagen` |
-| Paid user | `⭐ Pro` (golden badge)  | Disabled, shows badge    |
-
 **File:** `src/components/home/mission-control.tsx`  
-**Lines:** 613-635
-
----
-
-## Styling
-
-### Container
+**Lines:** 496-513
 
 ```tsx
-className="flex flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+const renderProButton = () => (
+  <a
+    href="/pro-promagen"
+    className={`${actionButtonBase} ${actionButtonActive}`}
+    aria-label="View Pro Promagen features"
+  >
+    <svg
+      className="h-5 w-5 text-purple-100" // ← CRITICAL: explicit colour
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={proIconPath} />
+    </svg>
+    <span className="text-purple-100">Pro</span> {/* ← CRITICAL: explicit colour */}
+  </a>
+);
 ```
 
+### Sign In Button
+
 **File:** `src/components/home/mission-control.tsx`  
-**Line:** 413
+**Lines:** 365-448
 
-### Width Calculation
+Has three states:
 
-Uses same CSS calc formula as Engine Bay:
+1. **Loading:** Shows "Loading..." with loading styles
+2. **Timeout (fallback):** Uses `<a href="/sign-in">` with explicit colours
+3. **Ready:** Uses `<SignInButton>` wrapper with `<button>` inside
 
 ```tsx
-style={{
-  width: 'calc((100vw - 80px) * 0.225)',
-}}
+// Ready state (Clerk loaded)
+<SignInButton mode="modal">
+  <button
+    type="button"
+    className={`${actionButtonBase} ${actionButtonActive}`}
+    aria-label="Sign in to your account"
+  >
+    <svg
+      className="h-5 w-5 text-purple-100" // ← CRITICAL: explicit colour
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={userIconPath} />
+    </svg>
+    <span className="text-purple-100">Sign in</span> {/* ← CRITICAL: explicit colour */}
+  </button>
+</SignInButton>
 ```
 
-**File:** `src/components/layout/homepage-grid.tsx`  
-**Lines:** 278-280
+---
 
-**Formula Breakdown:**
+## Icon Paths
 
-| Component | Value | Explanation |
-|-----------|-------|-------------|
-| Viewport | `100vw` | Full viewport width |
-| Container padding | `32px` | `px-4` = 16px × 2 sides |
-| Grid gaps | `48px` | `gap-6` = 24px × 2 gaps |
-| **Subtracted** | `80px` | 32px + 48px |
-| Rail fraction | `0.225` | 0.9fr ÷ 4.0fr total |
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 213-226
 
-### Action Button Style
+```tsx
+const userIconPath =
+  'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z';
 
-From `code-standard.md` §6.1:
+const homeIconPath =
+  'M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25';
 
-```typescript
-const actionButtonStyles =
-  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-2 min-h-[40px] text-sm font-medium text-purple-100 shadow-sm transition-all cursor-pointer hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80 active:scale-95';
+const studioIconPath =
+  'M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59';
+
+const proIconPath =
+  'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z';
 ```
 
-**File:** `src/components/home/mission-control.tsx`  
-**Lines:** 408-411
-
 ---
 
-## Layout Symmetry with Engine Bay (v1.1.0)
-
-Mission Control mirrors Engine Bay for perfect visual alignment:
-
-### Vertical Spacing Pattern
-
-| Element | Engine Bay | Mission Control | Class | Status |
-|---------|------------|-----------------|-------|--------|
-| Container padding | 16px | 16px | `p-4` | ✅ Match |
-| Header margin-bottom | 16px | 16px | `mb-4` | ✅ Match |
-| Middle section margin-bottom | 16px | 16px | `mb-4` | ✅ Match |
-| Middle section height | 84px | 84px | `h-[84px]` | ✅ Match |
-| Button row gap | 12px | 12px | `gap-3` | ✅ Match |
-| Button padding | 12px 16px | 12px 16px | `px-4 py-3` | ✅ Match |
-
-### Height Calculation (84px)
-
-Engine Bay's icon grid: `ICON_CELL_SIZE` (64px) + label space (20px) = **84px**
-
-Mission Control's content zone uses `h-[84px]` to match exactly.
-
----
-
-## Responsive Behaviour (v1.1.0)
-
-| Screen Size | Viewport   | Visibility | Notes                              |
-| ----------- | ---------- | ---------- | ---------------------------------- |
-| Desktop XL  | ≥1280px    | Visible    | Full panel in right header area    |
-| Desktop     | 1024-1279px| Hidden     | Panel hidden to prevent overlap    |
-| Tablet      | 768-1023px | Hidden     | Panel hidden                       |
-| Mobile      | <768px     | Hidden     | Fallback nav shown instead         |
-
-**File:** `src/components/layout/homepage-grid.tsx`  
-**Line:** 278
-
-**Note (v1.1.0):** Breakpoint changed from `md:block` (≥768px) to `xl:block` (≥1280px) to prevent panel overlap with the leaderboard at narrower viewport widths.
-
----
-
-## SVG Flag Implementation
-
-Uses inline SVG flags (not emoji) for consistent rendering across platforms.
+## Grid Layout
 
 **File:** `src/components/home/mission-control.tsx`  
-**Lines:** 293-340
+**Lines:** 544, 670-693
 
-**Flag files:** `public/flags/{countryCode}.svg`
+```tsx
+// Determine grid columns based on context
+const gridCols = isStudioSubPage ? 'grid-cols-4' : 'grid-cols-3';
 
-**Fallback:** Unknown country codes render as 🌐 (globe)
+// Render grid
+<div className={`grid ${gridCols} gap-3`}>
+  {isStudioSubPage ? (
+    // 4-button layout: Home | Studio | Pro | Sign in
+    <>
+      {renderHomeButton()}
+      {renderStudioButton()}
+      {renderProButton()}
+      {renderSignInButton()}
+    </>
+  ) : (
+    // 3-button layout: First | Second | Sign in
+    <>
+      {renderFirstButton()}
+      {renderSecondButton()}
+      {renderSignInButton()}
+    </>
+  )}
+</div>;
+```
 
 ---
 
-## Testing Checklist
+## Content Zone
 
-### Visual
+**File:** `src/components/home/mission-control.tsx`  
+**Lines:** 573-668
 
-- [ ] Mission Control aligns with Engine Bay (symmetric positioning)
-- [ ] Width matches exchange rail width exactly
-- [ ] Green status dot pulses continuously
-- [ ] SVG flags render correctly (not emoji)
+Height locked to `84px` to match Engine Bay icon grid height.
 
-### Location Badge
+```tsx
+<div
+  ref={contentZoneRef}
+  className="mb-4 flex h-[84px] flex-col rounded-xl border border-slate-700/50 bg-slate-900/50 p-3"
+>
+  {/* Flag with WeatherPromptTooltip */}
+  {/* Platform selector dropdown */}
+  {/* Description text */}
+</div>
+```
 
-- [ ] Shows "Detecting..." while loading
-- [ ] Shows correct flag + city when detected
-- [ ] Tooltip appears on hover with location explanation
+---
 
-### Prompt Preview
+## Responsive Behaviour
 
-- [ ] Shows London weather prompt by default
-- [ ] Prompt updates when weather data changes
-- [ ] Flag hover shows full weather tooltip (opens LEFT + DOWN)
-- [ ] Copy button copies prompt to clipboard
-- [ ] Checkmark animation shows after copy
+| Screen Size | Viewport    | Visibility | Notes                           |
+| ----------- | ----------- | ---------- | ------------------------------- |
+| Desktop XL  | ≥1280px     | Visible    | Full panel in right header area |
+| Desktop     | 1024-1279px | Hidden     | Panel hidden to prevent overlap |
+| Tablet      | 768-1023px  | Hidden     | Panel hidden                    |
+| Mobile      | <768px      | Hidden     | Fallback nav shown instead      |
 
-### Action Buttons
+**Breakpoint:** `xl:block` (≥1280px)
 
-- [ ] Sign in opens Clerk modal (unauthenticated)
-- [ ] Sign in shows "✓ Signed in" (authenticated)
-- [ ] **Studio links to `/studio` (from homepage, `isStudioPage=false`)**
-- [ ] **Home links to `/` (from Studio page, `isStudioPage=true`)**
-- [ ] Pro links to `/pro-promagen` (free user)
-- [ ] Pro shows golden badge (paid user)
+---
+
+## Common Mistakes to Avoid
+
+### 1. Black Text/Icons on Buttons
+
+**Symptom:** Button text and icons appear black instead of purple.
+
+**Cause:** Child elements (`<svg>`, `<span>`) inherit colour from body (`#020617`) instead of parent's `text-purple-100`.
+
+**Fix:** Add explicit `text-purple-100` to all child `<svg>` and `<span>` elements inside `<a>` tags.
+
+### 2. Missing Colours on Timeout Fallback
+
+**Symptom:** Sign in button looks correct initially, but after 3-second timeout shows black text.
+
+**Cause:** Timeout fallback uses `<a href="/sign-in">` which has same inheritance issue.
+
+**Fix:** Ensure timeout fallback also has explicit colours on children.
+
+### 3. Button Layout Wrong
+
+**Symptom:** 4 buttons appear when 3 expected, or vice versa.
+
+**Cause:** Wrong prop passed to component.
+
+**Fix:** Check `isStudioSubPage` prop is correct for the page context.
+
+---
+
+## Testing Checklist (v2.0.0)
+
+### Text/Icon Colours (CRITICAL)
+
+- [ ] Home button: text and icon are purple-100 (NOT black)
+- [ ] Studio button: text and icon are purple-100 (NOT black)
+- [ ] Pro button: text and icon are purple-100 (NOT black)
+- [ ] Sign in button: text and icon are purple-100 (NOT black)
+- [ ] Sign in timeout fallback: text and icon are purple-100 (NOT black)
+
+### Button Layout
+
+- [ ] Homepage (`/`): 3 buttons — Studio | Pro | Sign in
+- [ ] Studio page (`/studio`): 3 buttons — Home | Pro | Sign in
+- [ ] Pro Promagen (`/pro-promagen`): 3 buttons — Studio | Home | Sign in
+- [ ] Provider pages (`/providers/[id]`): 4 buttons — Home | Studio | Pro | Sign in
+
+### Navigation
+
+- [ ] Home button navigates to `/`
+- [ ] Studio button navigates to `/studio`
+- [ ] Pro button navigates to `/pro-promagen`
+- [ ] Sign in opens Clerk modal
 
 ### Responsive
 
 - [ ] Hidden below xl breakpoint (< 1280px)
-- [ ] Fallback nav buttons appear when hidden
+- [ ] Visible at ≥1280px
 
 ---
 
 ## Related Documents
 
-| Topic                      | Document                          |
-| -------------------------- | --------------------------------- |
-| Engine Bay (left panel)    | `ignition.md`                     |
-| Homepage layout            | `ribbon-homepage.md`              |
-| Weather prompt system      | `worldprompt-creative-engine.md`  |
-| Prompt tiers               | `ai_providers.md` §4              |
-| Button styling             | `code-standard.md` §6.1           |
-| Auth patterns              | `clerk-auth.md`                   |
-| **All buttons reference**  | `buttons.md`                      |
+| Topic                   | Document                         |
+| ----------------------- | -------------------------------- |
+| Engine Bay (left panel) | `ignition.md`                    |
+| Homepage layout         | `ribbon-homepage.md`             |
+| Weather prompt system   | `worldprompt-creative-engine.md` |
+| Button styling          | `buttons.md` (CRITICAL)          |
+| Auth patterns           | `clerk-auth.md`                  |
 
 ---
 
 ## Changelog
 
+- **28 Jan 2026 (v2.0.0):** **CRITICAL COLOUR FIX**
+  - Added Section: Text & Icon Colour Inheritance
+  - All button children (`<svg>`, `<span>`) now have explicit `text-purple-100`
+  - Documented the root cause (body colour + `a { color: inherit }`)
+  - Added `isStudioSubPage` prop for 4-button layout on provider pages
+  - Updated line numbers to match current codebase (697 lines)
+  - Added Common Mistakes to Avoid section
+  - Added colour testing checklist
+
 - **26 Jan 2026 (v1.1.0):** Context-aware navigation
-  - Added `isStudioPage` prop to swap Studio↔Home button based on current page
-  - Homepage shows "Studio" button → `/studio`
-  - Studio page shows "Home" button → `/`
-  - Updated visual layout diagram to reflect context-dependent button
-  - Updated testing checklist with context-aware scenarios
-  - Added `buttons.md` to related documents
+  - Added `isStudioPage` prop to swap Studio↔Home button
 
 - **24 Jan 2026 (v1.0.0):** Initial implementation
-  - Mirrors Engine Bay on right side for symmetry
-  - Dynamic weather prompt preview (London default)
-  - Interactive SVG flags with WeatherPromptTooltip
-  - Location badge with east→west explanation tooltip
-  - Action buttons: Sign in, Studio, Pro Promagen
-  - Added `verticalPosition` prop to WeatherPromptTooltip for correct positioning
 
 ---
 
 _This document is the authority for Mission Control. For Engine Bay, see `ignition.md`._
 
 _**Key principle:** Always update docs FIRST before writing any code. Docs are the single source of truth._
+
+_**Critical rule:** All `<a>` tag buttons MUST have explicit text colour on child `<svg>` and `<span>` elements._

@@ -1551,7 +1551,7 @@ export function PromptBuilder({
               className="inline-flex items-center justify-center gap-2 rounded-full border border-sky-500/70 bg-sky-600/10 px-4 py-2 text-sm font-medium text-sky-100 hover:bg-sky-500/20 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
             >
               <svg
-                className="h-4 w-4"
+                className="h-4 w-4 text-sky-100"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -1564,7 +1564,7 @@ export function PromptBuilder({
                   d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                 />
               </svg>
-              Open in {provider.name}
+              <span className="text-sky-100">Open in {provider.name}</span>
             </a>
           )}
         </div>

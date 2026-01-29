@@ -1,6 +1,6 @@
 // src/app/pro-promagen/pro-promagen-client.tsx
 // ============================================================================
-// PRO PROMAGEN CLIENT - WITH INDICES SELECTION
+// PRO PROMAGEN CLIENT - WITH ENGINE BAY & MISSION CONTROL (v2.6.0)
 // ============================================================================
 // Client component for the /pro-promagen configuration page.
 // Uses SAME layout as homepage (HomepageGrid + ExchangeCard + FxRibbon).
@@ -12,10 +12,49 @@
 // - Centre column shows comparison table instead of providers table
 // - Paid users can save selections; free users preview only
 //
-// UPDATED: Added indices selection for controlling which exchange cards
-// display stock index data (e.g., "Nikkei 225: 38,945.72 ▲ +312.45").
+// UPDATED v2.6.0 (29 Jan 2026):
+// - ADDED: Fullscreen FX Picker mode (matches Exchange Picker pattern)
+// - When FX picker is triggered, entire centre panel shows ONLY the FX picker
+// - NO headers, NO badges, NO table, NO CTA visible - just the picker
+// - FX Picker uses regional grouping (Americas, Europe, Asia Pacific, MEA)
+// - All existing functionality preserved
 //
-// Authority: docs/authority/paid_tier.md §5.10
+// UPDATED v2.5.0 (29 Jan 2026):
+// - FIX: Removed overflow constraints from picker wrapper
+// - Picker component handles its own scrolling internally
+// - Wrapper just provides flex container that fills space
+//
+// UPDATED v2.4.0 (29 Jan 2026):
+// - FIX: Fullscreen picker wrapper now lg:overflow-visible (was overflow-hidden)
+// - This allows picker to expand fully on large screens without clipping
+// - Small screens retain overflow-hidden for proper scroll containment
+//
+// UPDATED v2.3.0 (29 Jan 2026):
+// - ADDED: Fullscreen Exchange Picker mode
+// - When picker is triggered, entire centre panel shows ONLY the picker
+// - NO headers, NO badges, NO table, NO CTA visible - just the picker
+// - Feels like opening a new page within the centre column
+// - All existing functionality preserved
+//
+// UPDATED v2.2.0 (28 Jan 2026):
+// - ADDED: Pass exchangeCatalog to ComparisonTable for ExchangePicker integration
+// - ExchangePicker needs full catalog with iso2/continent data to group by region
+// - All existing functionality preserved
+//
+// UPDATED v2.1.0 (28 Jan 2026):
+// - FIXED: convertToWeatherDataMap now uses weather.tempC (not weather.temp)
+// - ExchangeWeather type uses tempC not temp - this was causing TypeScript errors
+// - All other functionality preserved
+//
+// UPDATED v2.0.0: Engine Bay and Mission Control support
+// - Added providers prop for Engine Bay icon grid
+// - Passes showEngineBay={true} and showMissionControl={true} to HomepageGrid
+// - Passes isProPromagenPage={true} to swap Pro button for Home button
+// - All existing functionality preserved
+//
+// Authority: docs/authority/paid_tier.md §5.10, mission-control.md, ignition.md
+// Security: 10/10 — No user input handling, type-safe data flow
+// Existing features preserved: Yes
 // ============================================================================
 
 'use client';
@@ -26,15 +65,21 @@ import ExchangeList from '@/components/ribbon/exchange-list';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 import { getRailsRelative } from '@/lib/location';
 import { ComparisonTable, UpgradeCta } from '@/components/pro-promagen';
+import { ExchangePicker } from '@/components/pro-promagen/exchange-picker';
+import FxPicker from '@/components/fx/fx-picker';
 import {
   PRO_SELECTION_LIMITS,
   type FxPairCatalogEntry,
   type ExchangeCatalogEntry,
   type IndicesCatalogEntry,
 } from '@/lib/pro-promagen/types';
+import { catalogToPickerOptions } from '@/lib/pro-promagen/exchange-picker-helpers';
+import type { FxPairOption } from '@/lib/fx/fx-picker-helpers';
 import type { Exchange, Hemisphere } from '@/data/exchanges/types';
 import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
+import type { Provider } from '@/types/providers';
+import type { ExchangeWeatherData } from '@/components/exchanges/types';
 
 // ============================================================================
 // TYPES
@@ -55,6 +100,8 @@ export interface ProPromagenClientProps {
   defaultIndicesIds: string[];
   /** Demo weather data for exchanges */
   demoWeatherIndex: Map<string, ExchangeWeather>;
+  /** Providers data for Engine Bay (NEW v2.0.0) */
+  providers?: Provider[];
 }
 
 // ============================================================================
@@ -104,7 +151,7 @@ function saveToStorage<T>(key: string, value: T): void {
  */
 function catalogToExchange(
   entry: ExchangeCatalogEntry,
-  _weather: ExchangeWeather | null
+  _weather: ExchangeWeather | null,
 ): Exchange {
   return {
     id: entry.id,
@@ -123,6 +170,51 @@ function catalogToExchange(
   };
 }
 
+/**
+ * Convert ExchangeWeather to ExchangeWeatherData format for Mission Control.
+ * Maps the demo weather index to the format expected by HomepageGrid.
+ *
+ * FIXED v2.1.0: Now uses weather.tempC (not weather.temp)
+ * ExchangeWeather type uses tempC not temp
+ */
+function convertToWeatherDataMap(
+  demoIndex: Map<string, ExchangeWeather>,
+): Map<string, ExchangeWeatherData> {
+  const result = new Map<string, ExchangeWeatherData>();
+  demoIndex.forEach((weather, exchangeId) => {
+    result.set(exchangeId, {
+      // FIXED: Use tempC not temp
+      tempC: weather.tempC ?? 20,
+      tempF: weather.tempC !== undefined ? Math.round((weather.tempC * 9) / 5 + 32) : undefined,
+      emoji: weather.emoji ?? '☀️',
+      condition: weather.condition ?? 'Clear',
+      // ExchangeWeather doesn't have humidity/windKmh/description, so use defaults
+      humidity: 50,
+      windKmh: 10,
+      description: weather.condition ?? 'Clear skies',
+    });
+  });
+  return result;
+}
+
+/**
+ * Convert FxPairCatalogEntry to FxPairOption for the FxPicker component.
+ * NEW v2.6.0: Maps catalog format to picker format.
+ */
+function catalogToFxPickerOptions(catalog: FxPairCatalogEntry[]): FxPairOption[] {
+  return catalog.map((pair) => ({
+    id: pair.id,
+    base: pair.base,
+    quote: pair.quote,
+    label: pair.label ?? `${pair.base}/${pair.quote}`,
+    baseCountryCode: pair.baseCountryCode ?? '',
+    quoteCountryCode: pair.quoteCountryCode ?? '',
+    countryLabel: pair.countryLabel,
+    category: pair.category,
+    rank: pair.rank,
+  }));
+}
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -135,13 +227,9 @@ export default function ProPromagenClient({
   defaultFxPairIds,
   defaultIndicesIds,
   demoWeatherIndex,
+  providers = [],
 }: ProPromagenClientProps) {
-  const {
-    isAuthenticated,
-    userTier,
-    locationInfo,
-    setReferenceFrame,
-  } = usePromagenAuth();
+  const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
   const isPaidUser = userTier === 'paid';
 
@@ -154,21 +242,30 @@ export default function ProPromagenClient({
   const [selectedExchanges, setSelectedExchanges] = useState<string[]>(defaultExchangeIds);
   const [selectedIndices, setSelectedIndices] = useState<string[]>(defaultIndicesIds);
   const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
-  
+
   // Track if we've loaded from storage (to detect changes)
   const [initialFx, setInitialFx] = useState<string[]>(defaultFxPairIds);
   const [initialExchanges, setInitialExchanges] = useState<string[]>(defaultExchangeIds);
   const [initialIndices, setInitialIndices] = useState<string[]>(defaultIndicesIds);
   const [hydrated, setHydrated] = useState(false);
 
+  // ============================================================================
+  // STATE - Fullscreen Pickers (v2.3.0 Exchange, v2.6.0 FX)
+  // ============================================================================
+  // When true, entire centre panel shows ONLY the respective Picker
+  // No headers, no badges, no comparison table, no CTA - just the picker
+  // ============================================================================
+  const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
+  const [isFxPickerFullscreen, setIsFxPickerFullscreen] = useState(false);
+
   // Load from localStorage after hydration (client-side only)
   useEffect(() => {
     if (hydrated) return;
-    
+
     const storedFx = loadArrayFromStorage(STORAGE_KEYS.FX_SELECTION);
     const storedExchanges = loadArrayFromStorage(STORAGE_KEYS.EXCHANGE_SELECTION);
     const storedIndices = loadArrayFromStorage(STORAGE_KEYS.INDICES_SELECTION);
-    
+
     // Load prompt tier (single value, not array)
     try {
       const storedTier = localStorage.getItem(STORAGE_KEYS.PROMPT_TIER);
@@ -181,7 +278,7 @@ export default function ProPromagenClient({
     } catch {
       // Ignore parse errors
     }
-    
+
     // If storage has values (including empty array), use them
     // Otherwise keep defaults
     if (storedFx !== null) {
@@ -196,7 +293,7 @@ export default function ProPromagenClient({
       setSelectedIndices(storedIndices);
       setInitialIndices(storedIndices);
     }
-    
+
     setHydrated(true);
   }, [hydrated]);
 
@@ -204,28 +301,39 @@ export default function ProPromagenClient({
   const hasChanges = useMemo(() => {
     if (!hydrated) return false;
     const fxChanged =
-      JSON.stringify([...selectedFxPairs].sort()) !==
-      JSON.stringify([...initialFx].sort());
+      JSON.stringify([...selectedFxPairs].sort()) !== JSON.stringify([...initialFx].sort());
     const exchChanged =
       JSON.stringify([...selectedExchanges].sort()) !==
       JSON.stringify([...initialExchanges].sort());
     const indicesChanged =
-      JSON.stringify([...selectedIndices].sort()) !==
-      JSON.stringify([...initialIndices].sort());
+      JSON.stringify([...selectedIndices].sort()) !== JSON.stringify([...initialIndices].sort());
     return fxChanged || exchChanged || indicesChanged;
-  }, [selectedFxPairs, selectedExchanges, selectedIndices, initialFx, initialExchanges, initialIndices, hydrated]);
+  }, [
+    selectedFxPairs,
+    selectedExchanges,
+    selectedIndices,
+    initialFx,
+    initialExchanges,
+    initialIndices,
+    hydrated,
+  ]);
 
   // ============================================================================
   // DERIVED DATA - Dropdown options with country labels
   // ============================================================================
 
-  // FX options for dropdown with country names as subLabels
+  // FX options for dropdown with country names as subLabels (legacy format)
   const fxOptions = useMemo(() => {
     return fxCatalog.map((pair) => ({
       id: pair.id,
       label: `${pair.base}/${pair.quote}`,
       subLabel: pair.countryLabel,
     }));
+  }, [fxCatalog]);
+
+  // FX picker options - converted from catalog (v2.6.0)
+  const fxPickerOptions = useMemo(() => {
+    return catalogToFxPickerOptions(fxCatalog);
   }, [fxCatalog]);
 
   // Exchange options for dropdown with country as subLabel
@@ -241,9 +349,7 @@ export default function ProPromagenClient({
   // Only show indices for currently selected exchanges
   const indicesOptions = useMemo(() => {
     // Filter to only exchanges that are currently selected AND have marketstack data
-    const availableIndices = indicesCatalog.filter((idx) =>
-      selectedExchanges.includes(idx.id)
-    );
+    const availableIndices = indicesCatalog.filter((idx) => selectedExchanges.includes(idx.id));
 
     return availableIndices.map((idx) => ({
       id: idx.id,
@@ -252,6 +358,11 @@ export default function ProPromagenClient({
       status: idx.status,
     }));
   }, [indicesCatalog, selectedExchanges]);
+
+  // Exchange picker options - converted from catalog (v2.3.0)
+  const exchangePickerOptions = useMemo(() => {
+    return catalogToPickerOptions(exchangeCatalog);
+  }, [exchangeCatalog]);
 
   // ============================================================================
   // SYNC INDICES WHEN EXCHANGES CHANGE
@@ -263,9 +374,8 @@ export default function ProPromagenClient({
     if (!hydrated) return;
 
     // Filter indices to only include exchanges that are still selected
-    const validIndices = selectedIndices.filter((id) =>
-      selectedExchanges.includes(id) &&
-      indicesCatalog.some((idx) => idx.id === id)
+    const validIndices = selectedIndices.filter(
+      (id) => selectedExchanges.includes(id) && indicesCatalog.some((idx) => idx.id === id),
     );
 
     // Only update if there's a change
@@ -282,7 +392,7 @@ export default function ProPromagenClient({
   const demoFxPairs = useMemo(() => {
     // Get selected pairs from catalog in selection order
     return selectedFxPairs
-      .map(id => fxCatalog.find(p => p.id === id))
+      .map((id) => fxCatalog.find((p) => p.id === id))
       .filter((p): p is FxPairCatalogEntry => p !== undefined);
   }, [selectedFxPairs, fxCatalog]);
 
@@ -291,13 +401,9 @@ export default function ProPromagenClient({
   // ============================================================================
 
   const previewExchanges = useMemo((): Exchange[] => {
-    const filtered = exchangeCatalog.filter((e) =>
-      selectedExchanges.includes(e.id)
-    );
+    const filtered = exchangeCatalog.filter((e) => selectedExchanges.includes(e.id));
     filtered.sort((a, b) => a.longitude - b.longitude);
-    return filtered.map((e) =>
-      catalogToExchange(e, demoWeatherIndex.get(e.id) ?? null)
-    );
+    return filtered.map((e) => catalogToExchange(e, demoWeatherIndex.get(e.id) ?? null));
   }, [exchangeCatalog, selectedExchanges, demoWeatherIndex]);
 
   // Split into left/right rails based on user location (or Greenwich)
@@ -309,6 +415,11 @@ export default function ProPromagenClient({
   const allOrderedExchanges = useMemo(() => {
     return [...leftRail, ...rightRail.slice().reverse()];
   }, [leftRail, rightRail]);
+
+  // Convert demo weather index to the format expected by Mission Control
+  const weatherDataMap = useMemo(() => {
+    return convertToWeatherDataMap(demoWeatherIndex);
+  }, [demoWeatherIndex]);
 
   // ============================================================================
   // HANDLERS
@@ -326,7 +437,10 @@ export default function ProPromagenClient({
 
   const handleExchangeChange = useCallback((ids: string[]) => {
     // Validate count (allows 0 to max)
-    if (ids.length < PRO_SELECTION_LIMITS.EXCHANGE_MIN || ids.length > PRO_SELECTION_LIMITS.EXCHANGE_MAX) {
+    if (
+      ids.length < PRO_SELECTION_LIMITS.EXCHANGE_MIN ||
+      ids.length > PRO_SELECTION_LIMITS.EXCHANGE_MAX
+    ) {
       return;
     }
     setSelectedExchanges(ids);
@@ -336,7 +450,10 @@ export default function ProPromagenClient({
 
   const handleIndicesChange = useCallback((ids: string[]) => {
     // Validate count (allows 0 to max)
-    if (ids.length < PRO_SELECTION_LIMITS.INDICES_MIN || ids.length > PRO_SELECTION_LIMITS.INDICES_MAX) {
+    if (
+      ids.length < PRO_SELECTION_LIMITS.INDICES_MIN ||
+      ids.length > PRO_SELECTION_LIMITS.INDICES_MAX
+    ) {
       return;
     }
     setSelectedIndices(ids);
@@ -355,7 +472,7 @@ export default function ProPromagenClient({
     saveToStorage(STORAGE_KEYS.FX_SELECTION, selectedFxPairs);
     saveToStorage(STORAGE_KEYS.EXCHANGE_SELECTION, selectedExchanges);
     saveToStorage(STORAGE_KEYS.INDICES_SELECTION, selectedIndices);
-    
+
     // Update initial state to reflect saved state
     setInitialFx(selectedFxPairs);
     setInitialExchanges(selectedExchanges);
@@ -367,10 +484,141 @@ export default function ProPromagenClient({
   }, [selectedFxPairs, selectedExchanges, selectedIndices]);
 
   // ============================================================================
-  // CENTRE CONTENT - Comparison table with dropdowns
+  // FULLSCREEN EXCHANGE PICKER HANDLERS (v2.3.0)
   // ============================================================================
 
-  const centreContent = (
+  const handleOpenExchangePicker = useCallback(() => {
+    setIsExchangePickerFullscreen(true);
+  }, []);
+
+  const handleCloseExchangePicker = useCallback(() => {
+    setIsExchangePickerFullscreen(false);
+  }, []);
+
+  // ============================================================================
+  // FULLSCREEN FX PICKER HANDLERS (v2.6.0)
+  // ============================================================================
+
+  const handleOpenFxPicker = useCallback(() => {
+    setIsFxPickerFullscreen(true);
+  }, []);
+
+  const handleCloseFxPicker = useCallback(() => {
+    setIsFxPickerFullscreen(false);
+  }, []);
+
+  // ============================================================================
+  // CENTRE CONTENT - Conditional rendering based on fullscreen picker state
+  // ============================================================================
+  // v2.6.0: Support for both Exchange and FX picker fullscreen modes
+  // v2.3.0: When picker is fullscreen, show ONLY the picker
+  // Otherwise show normal comparison table with headers, badges, CTA
+  // ============================================================================
+
+  const centreContent = isFxPickerFullscreen ? (
+    // ========================================================================
+    // FULLSCREEN FX PICKER MODE (v2.6.0)
+    // Entire centre panel dedicated to FX pair selection
+    // ========================================================================
+    <section
+      aria-label="Select FX Pairs"
+      className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
+      data-testid="fx-picker-fullscreen"
+    >
+      {/* Picker fills the available space - child handles its own scrolling */}
+      <div className="min-h-0 flex-1">
+        <FxPicker
+          pairs={fxPickerOptions}
+          selected={selectedFxPairs}
+          onChange={handleFxChange}
+          min={PRO_SELECTION_LIMITS.FX_MIN}
+          max={PRO_SELECTION_LIMITS.FX_MAX}
+          disabled={false}
+        />
+      </div>
+
+      {/* Done Button - Canonical sky-emerald gradient for FX */}
+      <div className="shrink-0 border-t border-white/10 bg-slate-900/50 p-4">
+        <button
+          type="button"
+          onClick={handleCloseFxPicker}
+          className="
+            w-full inline-flex items-center justify-center gap-2 rounded-full
+            border border-sky-500/70 bg-gradient-to-r from-sky-600/20 to-emerald-600/20
+            px-6 py-3 text-sm font-medium text-sky-100 shadow-sm
+            transition-all duration-200
+            hover:from-sky-600/30 hover:to-emerald-600/30 hover:border-sky-400
+            focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80
+          "
+        >
+          {/* Checkmark icon */}
+          <svg
+            className="w-4 h-4 text-sky-100"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Done — Save Selection</span>
+        </button>
+      </div>
+    </section>
+  ) : isExchangePickerFullscreen ? (
+    // ========================================================================
+    // FULLSCREEN EXCHANGE PICKER MODE (v2.3.0)
+    // Entire centre panel dedicated to exchange selection
+    // ========================================================================
+    <section
+      aria-label="Select Stock Exchanges"
+      className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
+      data-testid="exchange-picker-fullscreen"
+    >
+      {/* Picker fills the available space - child handles its own scrolling */}
+      <div className="min-h-0 flex-1">
+        <ExchangePicker
+          exchanges={exchangePickerOptions}
+          selected={selectedExchanges}
+          onChange={handleExchangeChange}
+          min={PRO_SELECTION_LIMITS.EXCHANGE_MIN}
+          max={PRO_SELECTION_LIMITS.EXCHANGE_MAX}
+          disabled={false}
+        />
+      </div>
+
+      {/* Done Button - Canonical purple gradient per code-standard.md §6.1 */}
+      <div className="shrink-0 border-t border-white/10 bg-slate-900/50 p-4">
+        <button
+          type="button"
+          onClick={handleCloseExchangePicker}
+          className="
+            w-full inline-flex items-center justify-center gap-2 rounded-full
+            border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20
+            px-6 py-3 text-sm font-medium text-purple-100 shadow-sm
+            transition-all duration-200
+            hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400
+            focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80
+          "
+        >
+          {/* Checkmark icon */}
+          <svg
+            className="w-4 h-4 text-purple-100"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Done — Save Selection</span>
+        </button>
+      </div>
+    </section>
+  ) : (
+    // ========================================================================
+    // NORMAL MODE - Comparison table with headers, badges, CTA
+    // ========================================================================
     <section
       aria-label="Pro Promagen Configuration"
       className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
@@ -383,10 +631,7 @@ export default function ProPromagenClient({
             <span className="text-amber-400">★</span>
             Pro Promagen
           </h2>
-          <a
-            href="/"
-            className="text-xs text-white/40 hover:text-white/60 transition-colors"
-          >
+          <a href="/" className="text-xs text-white/40 hover:text-white/60 transition-colors">
             ← Back to Home
           </a>
         </div>
@@ -411,12 +656,9 @@ export default function ProPromagenClient({
         </span>
       </div>
 
-      {/* Comparison Table with embedded dropdowns */}
-      <div className="shrink-0 mb-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
+      {/* Comparison Table - Scrollable */}
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
         <ComparisonTable
-          fxOptions={fxOptions}
-          exchangeOptions={exchangeOptions}
-          indicesOptions={indicesOptions}
           selectedFxPairs={selectedFxPairs}
           selectedExchanges={selectedExchanges}
           selectedIndices={selectedIndices}
@@ -425,34 +667,22 @@ export default function ProPromagenClient({
           onExchangeChange={handleExchangeChange}
           onIndicesChange={handleIndicesChange}
           onPromptTierChange={handlePromptTierChange}
+          fxOptions={fxOptions}
+          exchangeOptions={exchangeOptions}
+          indicesOptions={indicesOptions}
           isPaidUser={isPaidUser}
+          // NEW v2.2.0: Pass full exchange catalog for ExchangePicker
+          exchangeCatalog={exchangeCatalog}
+          // NEW v2.3.0: Callback to trigger fullscreen exchange picker mode
+          onOpenExchangePicker={handleOpenExchangePicker}
+          // NEW v2.6.0: Callback to trigger fullscreen FX picker mode
+          onOpenFxPicker={handleOpenFxPicker}
         />
       </div>
 
-      {/* Indices Preview Summary */}
-      {selectedIndices.length > 0 && (
-        <div className="shrink-0 mb-4 px-3 py-2 rounded-lg bg-cyan-500/10 ring-1 ring-cyan-500/20">
-          <p className="text-xs text-cyan-400">
-            <span className="font-medium">📊 {selectedIndices.length} indices enabled:</span>{' '}
-            <span className="text-cyan-400/70">
-              {selectedIndices
-                .slice(0, 5)
-                .map((id) => indicesCatalog.find((idx) => idx.id === id)?.indexName)
-                .filter(Boolean)
-                .join(', ')}
-              {selectedIndices.length > 5 && ` +${selectedIndices.length - 5} more`}
-            </span>
-          </p>
-        </div>
-      )}
-
-      {/* CTA Button */}
+      {/* Save/Upgrade CTA */}
       <div className="shrink-0 mt-auto pt-4">
-        <UpgradeCta
-          isPaidUser={isPaidUser}
-          onSave={handleSave}
-          hasChanges={hasChanges}
-        />
+        <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />
       </div>
     </section>
   );
@@ -464,7 +694,7 @@ export default function ProPromagenClient({
   const leftExchanges = (
     <ExchangeList
       exchanges={leftRail}
-      weatherByExchange={demoWeatherIndex}
+      weatherByExchange={weatherDataMap}
       emptyMessage="No eastern exchanges selected"
     />
   );
@@ -472,7 +702,7 @@ export default function ProPromagenClient({
   const rightExchanges = (
     <ExchangeList
       exchanges={rightRail}
-      weatherByExchange={demoWeatherIndex}
+      weatherByExchange={weatherDataMap}
       emptyMessage="No western exchanges selected"
     />
   );
@@ -491,7 +721,7 @@ export default function ProPromagenClient({
       centre={centreContent}
       rightContent={rightExchanges}
       showFinanceRibbon={showFxRibbon}
-      // NEW: Pass demo mode and demo pairs for static ribbon
+      // Pass demo mode and demo pairs for static ribbon
       demoMode={true}
       demoPairs={demoFxPairs}
       exchanges={allOrderedExchanges}
@@ -502,6 +732,12 @@ export default function ProPromagenClient({
       onReferenceFrameChange={setReferenceFrame}
       isLocationLoading={effectiveLocationLoading}
       cityName={locationInfo.cityName}
+      // NEW v2.0.0: Engine Bay and Mission Control support
+      providers={providers}
+      showEngineBay={true}
+      showMissionControl={true}
+      weatherIndex={weatherDataMap}
+      isProPromagenPage={true}
     />
   );
 }

@@ -250,6 +250,28 @@ font-size: clamp(MIN, PREFERRED, MAX);
 
 ---
 
+### Animation placement (component-first rule)
+
+**Purpose:** Keep `globals.css` lean. Animations are almost always component-specific.
+
+**Gold standard: Animations belong in the component file unless explicitly told otherwise.**
+
+| Approach                                              | When to Use                                                                                                                                        |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Inline in file (Tailwind classes / inline styles)** | Component-specific animations used only in that one component. Keeps everything self-contained, easier to maintain, no hunting through globals.css |
+| **globals.css**                                       | Shared animations used across multiple components, or complex keyframes that Tailwind cannot express easily                                        |
+
+**Default rule:** Always put animations in the component file itself unless the user explicitly says otherwise. `globals.css` is already too big.
+
+**Quick decision:**
+
+- "Is this animation used in 3+ places?" → globals.css
+- "Is this animation unique to this component?" → keep it in the file
+
+**Authority:** `docs/authority/code-standard.md` § 6.2 (Animation Placement Standard)
+
+````
+
 ## Docs-first gate (no code until docs are read + doc-delta captured)
 
 **Purpose:**
@@ -356,7 +378,7 @@ When Git says **"your local changes would be overwritten"**, do **not** try rand
 pnpm -C frontend lint
 pnpm -C frontend typecheck
 pnpm -C frontend test:ci
-```
+````
 
 **6. Never run these when you're stressed**
 
@@ -558,4 +580,15 @@ OUTPUT FORMAT:
 - `docs/authority/fly-v2.md` ← Fly.io deployment
 - `docs/authority/api-documentation-twelvedata.md` ← Vendor reference snapshot (read-only)
 - `docs/authority/TODO-api-integration.md` ← Deferred work and activation tasks
+
+# best-working-practice.md Update
+
+**Target file:** `C:\Users\Proma\Projects\promagen\docs\authority\best-working-practice.md`
+
+## Summary
+
+- Date updated to 28 January 2026
+- New "Animation placement" subsection under UI Consistency
+- Cross-references code-standard.md § 6.2
+- Changelog updated
 ```

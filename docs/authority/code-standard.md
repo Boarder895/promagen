@@ -375,6 +375,70 @@ Only deviate from this style if the user explicitly requests a different style. 
 
 **Reference implementation:** `src/components/auth/auth-button.tsx`
 
+### § 6.2 Animation Placement Standard
+
+**Purpose:** Keep animations self-contained and maintainable. Avoid bloating `globals.css` with single-use animations.
+
+**Gold standard: Animations belong in the component file unless explicitly told otherwise.**
+
+| Approach                                              | When to Use                                                                                                                                        |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Inline in file (Tailwind classes / inline styles)** | Component-specific animations used only in that one component. Keeps everything self-contained, easier to maintain, no hunting through globals.css |
+| **globals.css**                                       | Shared animations used across multiple components, or complex keyframes that Tailwind cannot express easily                                        |
+
+**Default rule:** Always put animations in the component file itself unless:
+
+1. The animation is reused in 3+ components
+2. The user explicitly requests globals.css placement
+3. Tailwind genuinely cannot express the animation (rare)
+
+**Why this matters:** `globals.css` is already large. Adding single-use animations there creates:
+
+- Maintenance burden (hunting through 2000+ lines to find/fix an animation)
+- Namespace pollution (risk of class name collisions)
+- Harder debugging (animation definition far from usage)
+
+**Implementation patterns:**
+
+**1. Tailwind animation utilities (preferred):**
+
+```tsx
+// Pulse effect using Tailwind
+<button className="animate-pulse hover:animate-none">Launch</button>
+```
+
+**2. Inline keyframes (for component-specific effects):**
+
+```tsx
+// Component-local animation
+<style jsx>{`
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .shimmer-effect {
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+`}</style>
+
+<div className="shimmer-effect">...</div>
+```
+
+**3. Inline style with CSS variables:**
+
+```tsx
+<div
+  style={{
+    animation: 'pulse 2s ease-in-out infinite',
+    boxShadow: '0 0 20px rgba(56, 189, 248, 0.3)',
+  }}
+>
+  ...
+</div>
+```
+
+**Compliance check:** When adding an animation, ask: "Is this used anywhere else?" If no, keep it in the file.
+
 ---
 
 ## 7. Accessibility Rules
@@ -590,12 +654,12 @@ Promagen uses centralised polling hooks for all data feeds. Each feed has ONE ho
 
 **Canonical hooks:**
 
-| Hook | Feed | Slots | TTL | Provider |
-|------|------|-------|-----|----------|
-| `use-fx-quotes.ts` | FX | :00, :30 | 30 min | TwelveData |
-| `use-indices-quotes.ts` | Indices | :05, :35 | 2 hr | Marketstack |
-| `use-commodities-quotes.ts` | Commodities | :10, :40 | 30 min | TwelveData |
-| `use-crypto-quotes.ts` | Crypto | :20, :50 | 30 min | TwelveData |
+| Hook                        | Feed        | Slots    | TTL    | Provider    |
+| --------------------------- | ----------- | -------- | ------ | ----------- |
+| `use-fx-quotes.ts`          | FX          | :00, :30 | 30 min | TwelveData  |
+| `use-indices-quotes.ts`     | Indices     | :05, :35 | 2 hr   | Marketstack |
+| `use-commodities-quotes.ts` | Commodities | :10, :40 | 30 min | TwelveData  |
+| `use-crypto-quotes.ts`      | Crypto      | :20, :50 | 30 min | TwelveData  |
 
 **Pattern (all hooks follow this structure):**
 
@@ -609,18 +673,25 @@ function getMsUntilNextSlot(): number {
 }
 
 // 2. Single useEffect with cleanup
-useEffect(() => {
-  const fetchData = async () => { /* ... */ };
-  
-  // Initial fetch
-  fetchData();
-  
-  // Schedule next fetch at slot time
-  const timeToNext = getMsUntilNextSlot();
-  const timer = setTimeout(/* ... */);
-  
-  return () => clearTimeout(timer);
-}, [/* dependencies */]);
+useEffect(
+  () => {
+    const fetchData = async () => {
+      /* ... */
+    };
+
+    // Initial fetch
+    fetchData();
+
+    // Schedule next fetch at slot time
+    const timeToNext = getMsUntilNextSlot();
+    const timer = setTimeout(/* ... */);
+
+    return () => clearTimeout(timer);
+  },
+  [
+    /* dependencies */
+  ],
+);
 
 // 3. Return data + loading state
 return { data, isLoading, error };
@@ -1439,3 +1510,60 @@ className =
 - Different track/thumb colours
 
 This ensures visual consistency across exchange rails, providers table, and prompt builder.
+
+# code-standard.md Update
+
+**Target file:** `C:\Users\Proma\Projects\promagen\docs\authority\code-standard.md`
+
+---
+
+## Change 1: Update version and date
+
+**REPLACE lines 3-4:**
+
+```
+**Last updated:** 9 January 2026
+**Version:** 2.3 (Console logging standards)
+```
+
+**WITH:**
+
+```
+**Last updated:** 28 January 2026
+**Version:** 2.4 (Animation placement standard)
+```
+
+---
+
+## Change 2: Add § 6.2 Animation Placement Standard
+
+**ADD after line 377** (after the closing `---` of § 6.1 Canonical Button Styling, before `## 7. Accessibility Rules`):
+
+```markdown
+### § 6.2 Animation Placement Standard
+
+**Purpose:** Keep animations self-contained and maintainable. Avoid bloating `globals.css` with single-use animations.
+
+**Gold standard: Animations belong in the component file unless explicitly told otherwise.**
+
+| Approach                                              | When to Use                                                                                                                                        |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Inline in file (Tailwind classes / inline styles)** | Component-specific animations used only in that one component. Keeps everything self-contained, easier to maintain, no hunting through globals.css |
+| **globals.css**                                       | Shared animations used across multiple components, or complex keyframes that Tailwind cannot express easily                                        |
+
+**Default rule:** Always put animations in the component file itself unless:
+
+1. The animation is reused in 3+ components
+2. The user explicitly requests globals.css placement
+3. Tailwind genuinely cannot express the animation (rare)
+
+**Why this matters:** `globals.css` is already large. Adding single-use animations there creates:
+
+- Maintenance burden (hunting through 2000+ lines to find/fix an animation)
+- Namespace pollution (risk of class name collisions)
+- Harder debugging (animation definition far from usage)
+- Version bumped to 2.4
+- New § 6.2 establishes "animations in component file" as default
+- Clear decision table for when to use globals.css vs inline
+- Implementation patterns provided
+```

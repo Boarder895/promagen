@@ -1,15 +1,21 @@
 // src/components/prompts/learn/learn-client.tsx
 // ============================================================================
-// LEARN CLIENT
+// LEARN CLIENT (v2.0.0)
 // ============================================================================
 // Client component for the /studio/learn page.
-// Features:
-// - AI Platform dropdown (42 platforms, 123rf last)
-// - "Explore Styles" button → /studio/explore
-// - "Build with [Platform]" button (conditional) → /providers/[id]
-// - 12 guides (1:1 with Prompt Builder categories)
-// - 4 tier info boxes (all shown if no platform, 1 shown if platform selected)
+// Uses HomepageGrid layout with exchange rails, Engine Bay, and Mission Control.
+//
+// UPDATED v2.0.0 (28 Jan 2026): Full Engine Bay & Mission Control integration
+// - Added providers prop for Engine Bay icon grid
+// - Passes showEngineBay={true} and showMissionControl={true} to HomepageGrid
+// - Passes isStudioSubPage={true} for 4-button Mission Control layout
+// - Uses live weather from gateway (ExchangeWeatherData type)
+// - Added useWeather hook for client-side weather updates
+// - All existing functionality preserved
+//
 // Authority: docs/authority/prompt-intelligence.md §9.3
+// Security: 10/10 — All external data validated, type-safe transformations
+// Existing features preserved: Yes
 // ============================================================================
 
 'use client';
@@ -18,6 +24,9 @@ import React, { useMemo, useCallback, useState } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
+import { useExchangeSelection } from '@/hooks/use-exchange-selection';
+import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
+import { useWeather } from '@/hooks/use-weather';
 import { getRailsRelative } from '@/lib/location';
 import { LearnFilters } from './learn-filters';
 import { GuideCard } from './guide-card';
@@ -25,11 +34,12 @@ import { GuideDetailPanel } from './guide-detail-panel';
 import { QuickTipCard } from './quick-tip-card';
 import { TierInfoBoxes } from './tier-info-boxes';
 import type { Exchange } from '@/data/exchanges/types';
-import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
+import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
 import type { LearnGuide, QuickTip, LearnFilters as Filters } from '@/types/learn-content';
 import { DEFAULT_LEARN_FILTERS } from '@/types/learn-content';
 import { getGuideById } from '@/data/learn-guides';
 import { getPlatformTier } from '@/data/platform-tiers';
+import type { Provider } from '@/types/providers';
 
 // ============================================================================
 // TYPES
@@ -38,8 +48,10 @@ import { getPlatformTier } from '@/data/platform-tiers';
 export interface LearnClientProps {
   /** All exchanges to display (server provides these) */
   exchanges: ReadonlyArray<Exchange>;
-  /** Weather data indexed by exchange ID */
-  weatherIndex: Map<string, ExchangeWeather>;
+  /** Weather data indexed by exchange ID (from gateway API) */
+  weatherIndex: Map<string, ExchangeWeatherData>;
+  /** All AI providers for Engine Bay */
+  providers: Provider[];
   /** All learning guides */
   guides: LearnGuide[];
   /** Quick tips */
@@ -51,6 +63,71 @@ export interface LearnClientProps {
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+/**
+ * Filter exchanges to only include selected ones.
+ */
+function filterToSelected(
+  allExchanges: ReadonlyArray<Exchange>,
+  selectedIds: string[],
+): Exchange[] {
+  if (!selectedIds.length) return [...allExchanges];
+
+  const byId = new Map(allExchanges.map((e) => [e.id, e]));
+  const result: Exchange[] = [];
+
+  for (const id of selectedIds) {
+    const exchange = byId.get(id);
+    if (exchange) {
+      result.push(exchange);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Convert IndexQuote from hook to IndexQuoteData for card display.
+ */
+function toIndexQuoteData(
+  quote:
+    | {
+        indexName?: string | null;
+        price?: number | null;
+        change?: number | null;
+        percentChange?: number | null;
+      }
+    | null
+    | undefined,
+  movement:
+    | {
+        tick?: 'up' | 'down' | 'flat';
+      }
+    | null
+    | undefined,
+): IndexQuoteData | null {
+  if (!quote) return null;
+
+  const indexName = typeof quote.indexName === 'string' ? quote.indexName : null;
+  const price =
+    typeof quote.price === 'number' && Number.isFinite(quote.price) ? quote.price : null;
+  const change =
+    typeof quote.change === 'number' && Number.isFinite(quote.change) ? quote.change : null;
+  const percentChange =
+    typeof quote.percentChange === 'number' && Number.isFinite(quote.percentChange)
+      ? quote.percentChange
+      : null;
+
+  if (!indexName || price === null) return null;
+
+  return {
+    indexName,
+    price,
+    change: change ?? 0,
+    percentChange: percentChange ?? 0,
+    tick: movement?.tick ?? 'flat',
+  };
+}
 
 function filterGuides(guides: LearnGuide[], filters: Filters): LearnGuide[] {
   return guides.filter((guide) => {
@@ -82,6 +159,7 @@ function filterGuides(guides: LearnGuide[], filters: Filters): LearnGuide[] {
 export default function LearnClient({
   exchanges,
   weatherIndex,
+  providers,
   guides,
   tips,
   platforms,
@@ -92,6 +170,44 @@ export default function LearnClient({
     locationInfo,
     setReferenceFrame,
   } = usePromagenAuth();
+
+  // Live weather (client) — updates after hydration
+  const { weather: liveWeatherById } = useWeather();
+
+  const liveWeatherIndex = useMemo(() => {
+    const map = new Map<string, ExchangeWeatherData>();
+    for (const [id, w] of Object.entries(liveWeatherById)) {
+      map.set(id, {
+        tempC: w.temperatureC,
+        tempF: w.temperatureF,
+        emoji: w.emoji,
+        condition: w.conditions,
+        humidity: w.humidity,
+        windKmh: w.windSpeedKmh,
+        description: w.description,
+      });
+    }
+    return map;
+  }, [liveWeatherById]);
+
+  const effectiveWeatherIndex = liveWeatherIndex.size ? liveWeatherIndex : weatherIndex;
+
+  // Get user's exchange selection (tier-aware)
+  const {
+    exchangeIds: selectedExchangeIds,
+    isCustomSelection,
+    isLoading: isSelectionLoading,
+  } = useExchangeSelection();
+
+  // Fetch index quotes with user's selection
+  const { quotesById, movementById } = useIndicesQuotes({
+    enabled: true,
+    exchangeIds: userTier === 'paid' && isCustomSelection ? selectedExchangeIds : undefined,
+    userTier,
+  });
+
+  // Track displayed provider IDs for market pulse
+  const [displayedProviderIds, setDisplayedProviderIds] = useState<string[]>([]);
 
   // Filter state
   const [filters, setFilters] = useState<Filters>(DEFAULT_LEARN_FILTERS);
@@ -115,16 +231,38 @@ export default function LearnClient({
   }, [platforms]);
 
   // ============================================================================
-  // EXCHANGE ORDERING
+  // EXCHANGE FILTERING & ORDERING
   // ============================================================================
 
+  const selectedExchanges = useMemo(() => {
+    return filterToSelected(exchanges, selectedExchangeIds);
+  }, [exchanges, selectedExchangeIds]);
+
   const { left, right } = useMemo(() => {
-    return getRailsRelative(exchanges, locationInfo.coordinates);
-  }, [exchanges, locationInfo.coordinates]);
+    return getRailsRelative(selectedExchanges, locationInfo.coordinates);
+  }, [selectedExchanges, locationInfo.coordinates]);
 
   const allOrderedExchanges = useMemo(() => {
     return [...left, ...right.slice().reverse()];
   }, [left, right]);
+
+  // ============================================================================
+  // INDEX DATA MAP
+  // ============================================================================
+
+  const indexByExchange = useMemo(() => {
+    const map = new Map<string, IndexQuoteData>();
+
+    for (const [exchangeId, quote] of quotesById.entries()) {
+      const movement = movementById.get(exchangeId);
+      const data = toIndexQuoteData(quote, movement);
+      if (data) {
+        map.set(exchangeId, data);
+      }
+    }
+
+    return map;
+  }, [quotesById, movementById]);
 
   // ============================================================================
   // FILTERED GUIDES
@@ -143,11 +281,17 @@ export default function LearnClient({
   }, [selectedPlatformId]);
 
   // ============================================================================
-  // HANDLERS
+  // CALLBACKS
   // ============================================================================
 
+  const providerIds = useMemo(() => providers.map((p) => p.id), [providers]);
+
+  // Suppress unused variable warnings
+  void setDisplayedProviderIds;
+  void isSelectionLoading;
+
   const handleFiltersChange = useCallback((newFilters: Partial<Filters>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
+    setFilters((prev: Filters) => ({ ...prev, ...newFilters }));
   }, []);
 
   const handleResetFilters = useCallback(() => {
@@ -302,21 +446,29 @@ export default function LearnClient({
     </section>
   );
 
-  // Exchange lists
+  // Exchange lists with live weather and index data
   const leftExchanges = (
-    <ExchangeList
-      exchanges={left}
-      weatherByExchange={weatherIndex}
-      emptyMessage="No eastern exchanges selected yet."
-    />
+    <div className="space-y-2">
+      <ExchangeList
+        exchanges={left}
+        weatherByExchange={effectiveWeatherIndex}
+        indexByExchange={indexByExchange}
+        emptyMessage="No eastern exchanges selected yet."
+        side="left"
+      />
+    </div>
   );
 
   const rightExchanges = (
-    <ExchangeList
-      exchanges={right}
-      weatherByExchange={weatherIndex}
-      emptyMessage="No western exchanges selected yet."
-    />
+    <div className="space-y-2">
+      <ExchangeList
+        exchanges={right}
+        weatherByExchange={effectiveWeatherIndex}
+        indexByExchange={indexByExchange}
+        emptyMessage="No western exchanges selected yet."
+        side="right"
+      />
+    </div>
   );
 
   // Location loading
@@ -330,13 +482,19 @@ export default function LearnClient({
       rightContent={rightExchanges}
       showFinanceRibbon
       exchanges={allOrderedExchanges}
-      displayedProviderIds={[]}
+      displayedProviderIds={displayedProviderIds.length > 0 ? displayedProviderIds : providerIds}
       isPaidUser={userTier === 'paid'}
       isAuthenticated={isAuthenticated}
       referenceFrame={locationInfo.referenceFrame}
       onReferenceFrameChange={setReferenceFrame}
       isLocationLoading={effectiveLocationLoading}
       cityName={locationInfo.cityName}
+      countryCode={locationInfo.countryCode}
+      providers={providers}
+      showEngineBay
+      showMissionControl
+      weatherIndex={effectiveWeatherIndex}
+      isStudioSubPage
     />
   );
 }

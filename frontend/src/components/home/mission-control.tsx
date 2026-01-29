@@ -1,8 +1,21 @@
 // src/components/home/mission-control.tsx
 // ============================================================================
-// MISSION CONTROL - Smart Automated Prompts Panel (v3.3.0)
+// MISSION CONTROL - Smart Automated Prompts Panel (v3.5.1)
 // ============================================================================
 // Right-side panel with weather-driven prompt preview.
+//
+// v3.5.1 CHANGES:
+// - ADDED: isStudioSubPage prop for 4-button layout on Studio sub-pages
+// - When isStudioSubPage=true, shows Home | Studio | Pro | Sign in (4 buttons)
+// - Grid changes from grid-cols-3 to grid-cols-4
+// - Studio button links to /studio (the hub page)
+// - Added separate renderHomeButton, renderStudioButton, renderProButton functions
+// - All other functionality unchanged
+//
+// v3.4.0 CHANGES:
+// - ADDED: isProPromagenPage prop to swap Pro button for Home button
+// - When isProPromagenPage=true, shows Home button instead of Pro button
+// - Added renderSecondButton function for Pro/Home toggle
 //
 // v3.3.0 CHANGES:
 // - ADDED: isStudioPage prop to swap Studio button for Home button
@@ -157,8 +170,12 @@ export interface MissionControlProps {
   weatherIndex?: Map<string, ExchangeWeatherData>;
   nearestExchangeId?: string;
   isAuthenticated?: boolean;
-  /** When true, shows Home button instead of Studio button */
+  /** When true, shows Home button instead of Studio button (for /studio page) */
   isStudioPage?: boolean;
+  /** When true, shows Home button instead of Pro button (for /pro-promagen page) */
+  isProPromagenPage?: boolean;
+  /** When true, shows 4 buttons: Home | Studio | Pro | Sign in (for /studio/* sub-pages) */
+  isStudioSubPage?: boolean;
 }
 
 // ============================================================================
@@ -204,6 +221,10 @@ const homeIconPath =
 const studioIconPath =
   'M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59';
 
+// Pro/Star icon path
+const proIconPath =
+  'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z';
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -213,6 +234,8 @@ export default function MissionControl({
   weatherIndex,
   nearestExchangeId,
   isStudioPage = false,
+  isProPromagenPage = false,
+  isStudioSubPage = false,
 }: MissionControlProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const contentZoneRef = useRef<HTMLDivElement>(null);
@@ -328,7 +351,8 @@ export default function MissionControl({
   }, [promptText]);
 
   const cityName = previewExchange?.city ?? 'London';
-  const countryCode = previewExchange?.countryCode ?? 'GB';
+  // Use iso2 as primary source (countryCode is a deprecated alias)
+  const countryCode = previewExchange?.iso2 ?? previewExchange?.countryCode ?? 'GB';
   const timezone = previewExchange?.tz ?? 'Europe/London';
   const hasWeatherData = weatherData !== null && weatherData.tempC !== null;
 
@@ -373,7 +397,7 @@ export default function MissionControl({
             aria-label="Sign in to your account"
           >
             <svg
-              className="h-5 w-5"
+              className="h-5 w-5 text-purple-100"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -386,7 +410,7 @@ export default function MissionControl({
                 d={userIconPath}
               />
             </svg>
-            <span>Sign in</span>
+            <span className="text-purple-100">Sign in</span>
           </a>
         );
 
@@ -400,7 +424,7 @@ export default function MissionControl({
               aria-label="Sign in to your account"
             >
               <svg
-                className="h-5 w-5"
+                className="h-5 w-5 text-purple-100"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -413,7 +437,7 @@ export default function MissionControl({
                   d={userIconPath}
                 />
               </svg>
-              <span>Sign in</span>
+              <span className="text-purple-100">Sign in</span>
             </button>
           </SignInButton>
         );
@@ -424,51 +448,100 @@ export default function MissionControl({
   };
 
   // ══════════════════════════════════════════════════════════════════════════
+  // RENDER HOME BUTTON — Always links to /
+  // ══════════════════════════════════════════════════════════════════════════
+  const renderHomeButton = () => (
+    <a href="/" className={`${actionButtonBase} ${actionButtonActive}`} aria-label="Go to Homepage">
+      <svg
+        className="h-5 w-5 text-purple-100"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={homeIconPath} />
+      </svg>
+      <span className="text-purple-100">Home</span>
+    </a>
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // RENDER STUDIO BUTTON — Always links to /studio
+  // ══════════════════════════════════════════════════════════════════════════
+  const renderStudioButton = () => (
+    <a
+      href="/studio"
+      className={`${actionButtonBase} ${actionButtonActive}`}
+      aria-label="Open Prompt Studio"
+    >
+      <svg
+        className="h-5 w-5 text-purple-100"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={studioIconPath} />
+      </svg>
+      <span className="text-purple-100">Studio</span>
+    </a>
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // RENDER PRO BUTTON — Always links to /pro-promagen
+  // ══════════════════════════════════════════════════════════════════════════
+  const renderProButton = () => (
+    <a
+      href="/pro-promagen"
+      className={`${actionButtonBase} ${actionButtonActive}`}
+      aria-label="View Pro Promagen features"
+    >
+      <svg
+        className="h-5 w-5 text-purple-100"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={proIconPath} />
+      </svg>
+      <span className="text-purple-100">Pro</span>
+    </a>
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
   // RENDER FIRST BUTTON — Home or Studio depending on isStudioPage
   // ══════════════════════════════════════════════════════════════════════════
   const renderFirstButton = () => {
     if (isStudioPage) {
       // On Studio page: show Home button
-      return (
-        <a
-          href="/"
-          className={`${actionButtonBase} ${actionButtonActive}`}
-          aria-label="Go to Homepage"
-        >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={homeIconPath} />
-          </svg>
-          <span>Home</span>
-        </a>
-      );
+      return renderHomeButton();
     }
 
-    // On Homepage (default): show Studio button
-    return (
-      <a
-        href="/studio"
-        className={`${actionButtonBase} ${actionButtonActive}`}
-        aria-label="Open Prompt Studio"
-      >
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={studioIconPath} />
-        </svg>
-        <span>Studio</span>
-      </a>
-    );
+    // On Homepage or Pro Promagen page (default): show Studio button
+    return renderStudioButton();
   };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // RENDER SECOND BUTTON — Home or Pro depending on isProPromagenPage
+  // NEW in v3.4.0: Pro/Home toggle for /pro-promagen page
+  // ══════════════════════════════════════════════════════════════════════════
+  const renderSecondButton = () => {
+    if (isProPromagenPage) {
+      // On Pro Promagen page: show Home button
+      return renderHomeButton();
+    }
+
+    // On Homepage or Studio page (default): show Pro button
+    return renderProButton();
+  };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // DETERMINE GRID LAYOUT
+  // - isStudioSubPage: 4 columns (Home | Studio | Pro | Sign in)
+  // - Default: 3 columns
+  // ══════════════════════════════════════════════════════════════════════════
+  const gridCols = isStudioSubPage ? 'grid-cols-4' : 'grid-cols-3';
 
   // ══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -594,36 +667,29 @@ export default function MissionControl({
         </div>
       </div>
 
-      {/* ACTION ZONE — Grid layout */}
-      <div className="grid grid-cols-3 gap-3">
-        {/* First Button: Home (on Studio page) or Studio (on Homepage) */}
-        {renderFirstButton()}
+      {/* ACTION ZONE — Grid layout (3 or 4 columns) */}
+      <div className={`grid ${gridCols} gap-3`}>
+        {isStudioSubPage ? (
+          // 4-button layout for Studio sub-pages: Home | Studio | Pro | Sign in
+          <>
+            {renderHomeButton()}
+            {renderStudioButton()}
+            {renderProButton()}
+            {renderSignInButton()}
+          </>
+        ) : (
+          // 3-button layout (default): First | Second | Sign in
+          <>
+            {/* First Button: Home (on Studio page) or Studio (on Homepage/Pro Promagen) */}
+            {renderFirstButton()}
 
-        {/* Pro Button */}
-        <a
-          href="/pro-promagen"
-          className={`${actionButtonBase} ${actionButtonActive}`}
-          aria-label="View Pro Promagen features"
-        >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
-            />
-          </svg>
-          <span>Pro</span>
-        </a>
+            {/* Second Button: Home (on Pro Promagen page) or Pro (on Homepage/Studio) */}
+            {renderSecondButton()}
 
-        {/* Sign In Button — AuthButton-style state machine */}
-        {renderSignInButton()}
+            {/* Third Button: Sign In */}
+            {renderSignInButton()}
+          </>
+        )}
       </div>
     </div>
   );

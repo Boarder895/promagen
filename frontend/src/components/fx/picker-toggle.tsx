@@ -47,12 +47,27 @@ const FxPicker = React.lazy(() => import('./fx-picker'));
 export default function FxPickerToggle({
   catalog,
   defaultPairIds,
-  onSelectionChange: _onSelectionChange,
+  onSelectionChange,
   trigger,
 }: FxPickerToggleProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isMounted, setIsMounted] = React.useState(false);
+  const [selectedPairs, setSelectedPairs] = React.useState<string[]>(defaultPairIds);
   const { canAccess, isLoading, tier } = useCanAccessFxPicker();
+
+  // Sync selectedPairs when defaultPairIds changes
+  React.useEffect(() => {
+    setSelectedPairs(defaultPairIds);
+  }, [defaultPairIds]);
+
+  // Handle selection change from picker
+  const handleSelectionChange = React.useCallback(
+    (newSelection: string[]) => {
+      setSelectedPairs(newSelection);
+      onSelectionChange?.(newSelection);
+    },
+    [onSelectionChange],
+  );
 
   // Track if component is mounted (for portal)
   React.useEffect(() => {
@@ -87,40 +102,31 @@ export default function FxPickerToggle({
   }, [isOpen]);
 
   // Handle backdrop click - only close if clicking the backdrop itself
-  const handleBackdropClick = React.useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-        setIsOpen(false);
-      }
-    },
-    [],
-  );
+  const handleBackdropClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      setIsOpen(false);
+    }
+  }, []);
 
   // Handle backdrop keyboard - only close if pressing Enter/Space on backdrop
-  const handleBackdropKeyDown = React.useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        setIsOpen(false);
-      }
-    },
-    [],
-  );
+  const handleBackdropKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      setIsOpen(false);
+    }
+  }, []);
 
   // Handle trigger click/keyboard
   const handleTriggerClick = React.useCallback(() => {
     setIsOpen(true);
   }, []);
 
-  const handleTriggerKeyDown = React.useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        setIsOpen(true);
-      }
-    },
-    [],
-  );
+  const handleTriggerKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsOpen(true);
+    }
+  }, []);
 
   // Default trigger button
   const defaultTrigger = (
@@ -131,13 +137,9 @@ export default function FxPickerToggle({
       className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-50"
     >
       <span>FX Pairs</span>
-      <span className="rounded bg-white/10 px-1.5 py-0.5 text-xs">
-        {defaultPairIds.length}
-      </span>
+      <span className="rounded bg-white/10 px-1.5 py-0.5 text-xs">{selectedPairs.length}</span>
       {!canAccess && tier === 'free' && (
-        <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-xs text-amber-400">
-          Pro
-        </span>
+        <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-xs text-amber-400">Pro</span>
       )}
     </button>
   );
@@ -160,11 +162,7 @@ export default function FxPickerToggle({
             </div>
           }
         >
-          <FxPicker
-            catalog={catalog}
-            defaultPairIds={defaultPairIds}
-            onClose={() => setIsOpen(false)}
-          />
+          <FxPicker pairs={catalog} selected={selectedPairs} onChange={handleSelectionChange} />
         </React.Suspense>
       </div>
     </div>
@@ -196,11 +194,17 @@ export default function FxPickerToggle({
 export function FxPickerCompactToggle({
   catalog,
   defaultPairIds,
-  onSelectionChange: _onSelectionChange,
+  onSelectionChange,
 }: FxPickerToggleProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isMounted, setIsMounted] = React.useState(false);
+  const [selectedPairs, setSelectedPairs] = React.useState<string[]>(defaultPairIds);
   const { canAccess } = useCanAccessFxPicker();
+
+  // Sync selectedPairs when defaultPairIds changes
+  React.useEffect(() => {
+    setSelectedPairs(defaultPairIds);
+  }, [defaultPairIds]);
 
   // Track if component is mounted (for portal)
   React.useEffect(() => {
@@ -234,26 +238,29 @@ export function FxPickerCompactToggle({
     };
   }, [isOpen]);
 
-  // Handle backdrop click - only close if clicking the backdrop itself
-  const handleBackdropClick = React.useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-        setIsOpen(false);
-      }
+  // Handle selection change from picker
+  const handleSelectionChange = React.useCallback(
+    (newSelection: string[]) => {
+      setSelectedPairs(newSelection);
+      onSelectionChange?.(newSelection);
     },
-    [],
+    [onSelectionChange],
   );
 
+  // Handle backdrop click - only close if clicking the backdrop itself
+  const handleBackdropClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      setIsOpen(false);
+    }
+  }, []);
+
   // Handle backdrop keyboard - only close if pressing Enter/Space on backdrop
-  const handleBackdropKeyDown = React.useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        setIsOpen(false);
-      }
-    },
-    [],
-  );
+  const handleBackdropKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      setIsOpen(false);
+    }
+  }, []);
 
   const modalContent = isOpen ? (
     <div
@@ -272,11 +279,7 @@ export function FxPickerCompactToggle({
             </div>
           }
         >
-          <FxPicker
-            catalog={catalog}
-            defaultPairIds={defaultPairIds}
-            onClose={() => setIsOpen(false)}
-          />
+          <FxPicker pairs={catalog} selected={selectedPairs} onChange={handleSelectionChange} />
         </React.Suspense>
       </div>
     </div>

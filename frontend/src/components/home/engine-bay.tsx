@@ -346,17 +346,17 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
             Line 2: Platform Builder
           */}
           <div className="relative z-10 flex flex-col items-center gap-0.5">
-            <span className="flex items-center gap-1.5 text-sm font-semibold">
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
               <span>✦</span>
               <span>Launch</span>
             </span>
-            <span className="text-sm font-semibold">Platform Builder</span>
+            <span className="text-sm font-semibold text-white">Platform Builder</span>
           </div>
 
           {/* Arrow when selected */}
           {selected && (
             <svg
-              className="relative z-10 h-4 w-4 shrink-0"
+              className="relative z-10 h-4 w-4 shrink-0 text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -371,6 +371,59 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
           )}
         </a>
       </div>
+
+      {/* Animation keyframes - injected via style tag */}
+      <style jsx>{`
+        @keyframes engine-bay-pulse {
+          0%,
+          100% {
+            box-shadow:
+              0 0 20px rgba(56, 189, 248, 0.3),
+              0 0 40px rgba(52, 211, 153, 0.2);
+          }
+          50% {
+            box-shadow:
+              0 0 30px rgba(56, 189, 248, 0.5),
+              0 0 60px rgba(52, 211, 153, 0.4);
+          }
+        }
+
+        @keyframes engine-bay-shimmer-sweep {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+
+        .engine-bay-active {
+          animation: engine-bay-pulse 2s ease-in-out infinite;
+        }
+
+        .engine-bay-shimmer {
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.3) 50%,
+            transparent 100%
+          );
+          animation: engine-bay-shimmer-sweep 1.5s ease-in-out infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .engine-bay-active {
+            animation: none;
+            box-shadow:
+              0 0 25px rgba(56, 189, 248, 0.4),
+              0 0 50px rgba(52, 211, 153, 0.3);
+          }
+          .engine-bay-shimmer {
+            animation: none;
+            opacity: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

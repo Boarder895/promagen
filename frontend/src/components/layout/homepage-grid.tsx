@@ -1,11 +1,22 @@
 // src/components/layout/homepage-grid.tsx
 // ============================================================================
-// HOMEPAGE GRID - Three-column layout with Market Pulse v2.1
+// HOMEPAGE GRID - Three-column layout with Market Pulse v2.5
 // ============================================================================
 // Layout: Left rail | Centre (Finance ribbon + Providers) | Right rail
 // Synchronized scrolling between exchange rails
 // Market Pulse: Flowing energy streams connect exchanges to providers
 // Auth: Sign in button in header (right), Home + Studio buttons below
+//
+// UPDATED v2.5: Studio sub-page support
+// - Added isStudioSubPage prop to pass to Mission Control
+// - Mission Control shows 4 buttons (Home | Studio | Pro | Sign in) on Studio sub-pages
+// - All other functionality unchanged
+//
+// UPDATED v2.4: Pro Promagen page support
+// - Added isProPromagenPage prop to pass to Mission Control
+// - Mission Control shows Home button instead of Pro on /pro-promagen page
+// - Updated fallback nav to conditionally show Pro Promagen button
+// - All other functionality unchanged
 //
 // UPDATED v2.3: Studio page support
 // - Added isStudioPage prop to pass to Mission Control
@@ -139,6 +150,10 @@ export type HomepageGridProps = {
   hideControlDock?: boolean;
   /** When true, Mission Control shows Home button instead of Studio button */
   isStudioPage?: boolean;
+  /** When true, Mission Control shows Home button instead of Pro button */
+  isProPromagenPage?: boolean;
+  /** When true, Mission Control shows 4 buttons: Home | Studio | Pro | Sign in */
+  isStudioSubPage?: boolean;
 };
 
 // ============================================================================
@@ -169,6 +184,8 @@ export default function HomepageGrid({
   nearestExchangeId,
   hideControlDock = false,
   isStudioPage = false,
+  isProPromagenPage = false,
+  isStudioSubPage = false,
 }: HomepageGridProps): React.ReactElement {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
@@ -190,32 +207,43 @@ export default function HomepageGrid({
   // Selected exchanges derived from active ones for now
   const selectedExchangeIds = activeExchangeIds;
 
-  const syncScroll = useCallback((source: HTMLDivElement, target: HTMLDivElement) => {
-    if (isSyncing.current) return;
+  // ============================================================================
+  // SYNCHRONIZED SCROLLING
+  // ============================================================================
+
+  const handleLeftScroll = useCallback(() => {
+    if (isSyncing.current || !leftRef.current || !rightRef.current) return;
+
     isSyncing.current = true;
+    const left = leftRef.current;
+    const right = rightRef.current;
 
-    const maxScroll = source.scrollHeight - source.clientHeight;
-    const scrollPercent = maxScroll > 0 ? source.scrollTop / maxScroll : 0;
-
-    const targetMaxScroll = target.scrollHeight - target.clientHeight;
-    target.scrollTop = scrollPercent * targetMaxScroll;
+    const leftRatio = left.scrollTop / (left.scrollHeight - left.clientHeight || 1);
+    right.scrollTop = leftRatio * (right.scrollHeight - right.clientHeight);
 
     requestAnimationFrame(() => {
       isSyncing.current = false;
     });
   }, []);
 
-  const handleLeftScroll = useCallback(() => {
-    if (leftRef.current && rightRef.current) {
-      syncScroll(leftRef.current, rightRef.current);
-    }
-  }, [syncScroll]);
-
   const handleRightScroll = useCallback(() => {
-    if (rightRef.current && leftRef.current) {
-      syncScroll(rightRef.current, leftRef.current);
-    }
-  }, [syncScroll]);
+    if (isSyncing.current || !leftRef.current || !rightRef.current) return;
+
+    isSyncing.current = true;
+    const left = leftRef.current;
+    const right = rightRef.current;
+
+    const rightRatio = right.scrollTop / (right.scrollHeight - right.clientHeight || 1);
+    left.scrollTop = rightRatio * (left.scrollHeight - left.clientHeight);
+
+    requestAnimationFrame(() => {
+      isSyncing.current = false;
+    });
+  }, []);
+
+  // ============================================================================
+  // REFERENCE FRAME CHANGE HANDLER
+  // ============================================================================
 
   const handleReferenceFrameChange = useCallback(
     (frame: ReferenceFrame) => {
@@ -224,29 +252,34 @@ export default function HomepageGrid({
     [onReferenceFrameChange],
   );
 
-  const renderFinanceRibbon = (): React.ReactNode => {
+  // ============================================================================
+  // FINANCE RIBBON RENDERING
+  // ============================================================================
+
+  const renderFinanceRibbon = useCallback(() => {
     if (!showFinanceRibbon) return null;
 
-    if (demoMode) {
-      return (
-        <div className="shrink-0">
-          <DemoFinanceRibbon pairs={demoPairs} />
-        </div>
-      );
+    if (demoMode && demoPairs.length > 0) {
+      return <DemoFinanceRibbon pairs={demoPairs} />;
     }
 
     return (
-      <div className="shrink-0 space-y-4">
+      <>
         <FinanceRibbon />
         <CommoditiesRibbon />
         <CryptoRibbon />
-      </div>
+      </>
     );
-  };
+  }, [showFinanceRibbon, demoMode, demoPairs]);
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-slate-950/95 text-slate-50">
-      <main aria-labelledby="page-main-heading" className="flex min-h-0 flex-1 flex-col">
+    <div className="flex h-dvh flex-col overflow-hidden bg-slate-950">
+      <main className="flex min-h-0 flex-1 flex-col">
+        {/* Visually hidden heading for screen readers */}
         <h1 id="page-main-heading" className="sr-only">
           {mainLabel}
         </h1>
@@ -281,10 +314,12 @@ export default function HomepageGrid({
             </div>
 
             {/* 
-              MISSION CONTROL v3.0.0 - Width LOCKED to exchange rail OUTER width
+              MISSION CONTROL v3.5.0 - Width LOCKED to exchange rail OUTER width
               Uses shared CSS variables for panel synchronization
-              Now contains nav buttons (Studio/Home, Pro, Sign in)
-              NEW: isStudioPage prop swaps Studio button for Home button
+              Now contains nav buttons (Studio/Home, Pro/Home, Sign in)
+              NEW v2.3: isStudioPage prop swaps Studio button for Home button
+              NEW v2.4: isProPromagenPage prop swaps Pro button for Home button
+              NEW v2.5: isStudioSubPage prop enables 4-button layout
             */}
             {showMissionControl && (
               <div
@@ -300,6 +335,8 @@ export default function HomepageGrid({
                   nearestExchangeId={nearestExchangeId}
                   isAuthenticated={isAuthenticated}
                   isStudioPage={isStudioPage}
+                  isProPromagenPage={isProPromagenPage}
+                  isStudioSubPage={isStudioSubPage}
                 />
               </div>
             )}
@@ -307,6 +344,7 @@ export default function HomepageGrid({
             {/* 
               Fallback nav buttons - ONLY shown when Mission Control is hidden
               This covers: mobile view, and when showMissionControl=false
+              v2.4: Conditionally show Pro Promagen button (hidden on /pro-promagen page)
             */}
             {!showMissionControl && (
               <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
@@ -317,16 +355,18 @@ export default function HomepageGrid({
                     Home
                   </a>
                 )}
-                {!isStudioPage && (
+                {!isStudioPage && !isStudioSubPage && (
                   <a href="/studio" className={navButtonStyles}>
                     <WandIcon />
                     Studio
                   </a>
                 )}
-                <a href="/pro-promagen" className={navButtonStyles}>
-                  <ProIcon />
-                  Pro Promagen
-                </a>
+                {!isProPromagenPage && (
+                  <a href="/pro-promagen" className={navButtonStyles}>
+                    <ProIcon />
+                    Pro Promagen
+                  </a>
+                )}
               </div>
             )}
           </div>

@@ -1,9 +1,15 @@
 // src/app/pro-promagen/page.tsx
 // ============================================================================
-// PRO PROMAGEN PAGE - Server Component
+// PRO PROMAGEN PAGE - Server Component (v2.0.0)
 // ============================================================================
 // Feature showcase and configuration page for Pro Promagen.
 // Dual-purpose: Preview mode (free users) + Configuration mode (paid users).
+//
+// UPDATED v2.0.0: Added Engine Bay and Mission Control support
+// - Now fetches providers data for Engine Bay icon grid
+// - Passes providers to client for HomepageGrid integration
+// - Mission Control shows Home button instead of Pro button
+// - All existing functionality preserved
 //
 // Server responsibilities:
 // - Load exchange catalog
@@ -11,17 +17,19 @@
 // - Build indices catalog from exchanges with marketstack data
 // - Load SSOT defaults
 // - Build demo weather index
+// - Load providers data (NEW v2.0.0)
 // - SEO metadata
 //
 // Client responsibilities (ProPromagenClient):
 // - Display comparison table with embedded dropdowns (FX, Exchanges, Indices)
 // - Show FX ribbon with demo prices
 // - Show exchange rails with real clocks, demo weather
+// - Show Engine Bay (left panel) and Mission Control (right panel) (NEW v2.0.0)
 // - Save preferences (paid users)
 //
-// UPDATED: Added indices catalog for stock index selection.
-//
 // Authority: docs/authority/paid_tier.md §5.10
+// Security: 10/10 — No user input handling, server-side data loading only
+// Existing features preserved: Yes
 // ============================================================================
 
 import React from 'react';
@@ -32,6 +40,7 @@ import exchangesCatalog from '@/data/exchanges/exchanges.catalog.json';
 import exchangesSelected from '@/data/exchanges/exchanges.selected.json';
 import fxPairsCatalog from '@/data/fx/fx-pairs.json';
 import { DEMO_EXCHANGE_WEATHER, type ExchangeWeather } from '@/lib/weather/exchange-weather';
+import { getProviders } from '@/lib/providers/api';
 import {
   type FxPairCatalogEntry,
   type ExchangeCatalogEntry,
@@ -120,6 +129,9 @@ export default function ProPromagenPage() {
   // Shows placeholder weather data (no API cost)
   const demoWeatherIndex = buildDemoWeatherIndex(DEMO_EXCHANGE_WEATHER);
 
+  // Load providers data for Engine Bay (NEW v2.0.0)
+  const providers = getProviders();
+
   return (
     <ProPromagenClient
       exchangeCatalog={exchangeCatalog}
@@ -129,6 +141,7 @@ export default function ProPromagenPage() {
       defaultFxPairIds={defaultFxPairIds}
       defaultIndicesIds={defaultIndicesIds}
       demoWeatherIndex={demoWeatherIndex}
+      providers={providers}
     />
   );
 }

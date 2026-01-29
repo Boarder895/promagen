@@ -1,21 +1,26 @@
 // src/components/pro-promagen/index.ts
 // ============================================================================
-// PRO PROMAGEN COMPONENTS - Barrel Export
-// ============================================================================
-// Simplified exports for revised Pro Promagen page.
-// Authority: docs/authority/paid_tier.md §5.10
-//
-// REMOVED (no longer used):
-// - PresetCard (dropdowns now in comparison table)
-// - SelectionPanel (replaced by inline dropdowns)
-// - ProgressBar (removed from design)
-// - ComingSoonPanel (Commodities/Crypto removed from display)
-// - PerksPanel (Vote Weight/Market Pulse removed from display)
-// - PreviewExchangeCard (now uses real ExchangeCard)
+// PRO PROMAGEN COMPONENT EXPORTS
 // ============================================================================
 
-export { ComparisonTable } from './comparison-table';
-export type { ComparisonTableProps, SelectionItem } from './comparison-table';
+// Exchange Picker
+export {
+  ExchangePicker,
+  type ExchangePickerProps,
+} from './exchange-picker';
 
-export { UpgradeCta } from './upgrade-cta';
-export type { UpgradeCtaProps } from './upgrade-cta';
+// Re-export ExchangeOption type from helpers (avoids circular imports)
+export type { ExchangeOption } from '@/lib/pro-promagen/exchange-picker-helpers';
+
+// Comparison Table
+export {
+  ComparisonTable,
+  type ComparisonTableProps,
+  type SelectionItem,
+} from './comparison-table';
+
+// Upgrade CTA
+export {
+  UpgradeCta,
+  type UpgradeCtaProps,
+} from './upgrade-cta';

@@ -132,121 +132,84 @@ Sign-in methods:
 
 **Trigger event:** "Copy prompt" button click — the moment users extract value from Promagen's curation work
 
-**Anonymous tracking (localStorage v2):**
+**Why "Copy prompt" and not "Generate"?**
 
-- 5 prompts per day (resets at midnight local time)
-- Key: `promagen:anonymous:usage`
-- Schema version: 2 (includes daily reset tracking)
-- Tamper detection: checksum validation prevents manipulation
-- Daily reset: `lastResetDate` field tracks when counter last reset
+- Promagen doesn't generate images — it crafts prompts
+- The copy action is when curation value transfers to the user
+- Clicking "Copy" = extracting a finished, curated prompt
+- This aligns with Promagen's role as a prompt curator, not an image generator
 
-**Anonymous storage schema v2:**
+**Counter mechanics:**
+
+| Event                    | Counter behaviour               |
+| ------------------------ | ------------------------------- |
+| User copies prompt       | Increment by 1                  |
+| User copies same prompt  | Increment by 1 (no dedup)       |
+| Page refresh             | Counter persists                |
+| Midnight (local)         | Counter resets to 0             |
+| User clears localStorage | Counter resets (anonymous only) |
+| New device login         | Clerk count restored            |
+
+**Storage:**
+
+- Anonymous: localStorage with tamper detection (see below)
+- Authenticated free: Vercel KV keyed by `userId:date`
+- Pro Promagen: No tracking (unlimited)
+
+**Anonymous tamper detection:**
 
 ```typescript
-interface AnonymousUsageData {
-  count: number; // Prompt copy count (resets daily)
-  firstUse: string; // First use timestamp (ISO)
-  lastUse: string; // Last use timestamp (ISO)
-  lastResetDate: string; // Date of last reset (YYYY-MM-DD)
+interface AnonymousUsage {
+  count: number; // Current prompt count (0-5)
+  lastResetDate: string; // YYYY-MM-DD for daily reset
   version: 2; // Schema version
-  checksum: string; // Tamper detection hash
+  checksum: string; // HMAC of count + lastResetDate + version
 }
 ```
 
-**Migration from v1:** Previous v1 data (without `lastResetDate`) is invalidated on read, triggering a fresh start with v2 schema. This gives existing anonymous users a clean slate with the new daily reset behavior.
+If checksum validation fails, counter resets to 0 and user is shown a gentle message: "Usage data was reset. You have 5 prompts remaining today."
 
-**Authenticated tracking (Vercel KV):**
+### 3.4 Geographic ordering (reference frame)
 
-- Free users: 10 prompt copies per day
-- Paid users: Unlimited prompt copies
-- Counter resets at midnight in user's detected timezone
-- Storage: Vercel KV (consistent with voting system)
+**Standard Promagen:**
 
-**Lock state progression:**
+- Reference frame = user's detected location
+- Exchanges ordered relative to user's longitude
+- Automatic, no configuration needed
 
-1. **Anonymous (0-4 uses):** Full access + "X/5 free prompts today" counter
-2. **Anonymous (5+ uses):** LOCKED + "Sign in to continue" button at top of overlay
-3. **Free signed-in (0-9):** Full access + "X/10 prompts today" counter
-4. **Free signed-in (10):** LOCKED + "Upgrade to Pro Promagen" button at top of overlay
-5. **Pro Promagen:** Always enabled + expanded selection limits, no counter
+**Detection method:**
 
-**Lock state component behavior:**
+1. IP-based geolocation via Vercel headers (`x-vercel-ip-longitude`)
+2. Fallback: browser Geolocation API (with permission)
+3. Final fallback: Greenwich Meridian (0° longitude)
 
-- Combobox dropdowns: Disabled styling (purple tint, opacity reduced), NO overlay text
-- Dropdown arrows: Hidden when locked
-- Randomise button: Disabled when locked
-- Free text input: Disabled when locked (cannot type)
-- Copy prompt button: Shows "Sign in to continue" or "Upgrade" as appropriate
-- Aspect ratio selector: Disabled buttons with reduced opacity, NO overlay text
-
-### 3.4 Geographic exchange ordering (requires sign-in)
-
-When a user signs in:
-
-- **Location detection:** Browser geolocation API (free) with IP geolocation fallback (free tier)
-- Stock exchanges arranged **east → west relative to user's location**
-- Exchange rails split based on relative geographic position to user
-- **Standard Promagen users:** Location detection + relative ordering (no choice)
-- **Pro Promagen users:** Toggle between "My Location" and "Greenwich Meridian" reference frames
-
-### 3.5 Additional sign-in benefits (still free tier)
-
-When a user signs in:
-
-- **Image Quality votes are tracked** and persisted to account
-- **Geographic context** — exchanges positioned relative to user's location
-- **Usage memory** — daily prompt quota tracking
-
-### 3.6 Explicit exclusions at sign-in stage
-
-The following do **not** exist:
-
-- No arbitrary time zone selection
-- No city pickers
-- No custom exchange ordering
-- No drag-and-drop ordering
-- No favourites-first behaviour
-
-Sign-in unlocks **context and access**, not customisation.
+**No prompt for location:** The system uses available signals silently. If all signals fail, Greenwich Meridian becomes the default reference.
 
 ---
 
-## 4. Pro Promagen tier: control within invariant rules
+## 4. Technical implementation
 
-Pro Promagen users do **not** gain the ability to rewrite reality.
+### 4.1 Tier detection (Clerk metadata)
 
-They gain **controlled freedom within physical and logical invariants**.
+User tier is stored in Clerk's `publicMetadata`:
 
-### 4.1 Technical implementation
-
-User tier is stored in **Clerk's publicMetadata**:
-
-```json
-{
-  "tier": "free" | "paid"
+```typescript
+interface ClerkPublicMetadata {
+  tier: 'free' | 'paid';
+  exchangeSelection?: {
+    exchangeIds: string[];
+    updatedAt: string;
+  };
+  fxSelection?: {
+    pairIds: string[];
+    updatedAt: string;
+  };
 }
 ```
 
-**Setting tier via Clerk Dashboard:**
-
-1. Users → Select user → Edit Public Metadata
-2. Add: `{ "tier": "paid" }`
-
-**Setting tier programmatically:**
+**Hook usage:**
 
 ```typescript
-import { clerkClient } from '@clerk/nextjs/server';
-
-await clerkClient.users.updateUser(userId, {
-  publicMetadata: { tier: 'paid' },
-});
-```
-
-**Reading tier in components:**
-
-```typescript
-import { usePromagenAuth } from '@/hooks/use-promagen-auth';
-
 function Component() {
   const { userTier, categoryLimits, platformTier } = usePromagenAuth({
     platformId,
@@ -304,20 +267,89 @@ Rules:
 - Maximum 16 exchanges (aligns with FX pair ceiling, controls display density)
 - **Any count allowed** — odd or even (e.g., 7, 9, 11, 13, 15 are all valid)
 
-#### Exchange Picker UI
+#### Exchange Picker UI (v2.5.0 — Fullscreen Continental Accordion)
 
-Pro Promagen users access the Exchange Picker via:
+Pro Promagen users access the Exchange Picker via the `/pro-promagen` configuration page.
 
-- `/pro-promagen` configuration page
-- Quick presets for regional selection (Asia Pacific, Americas, Europe & Middle East, etc.)
+**Current Implementation (29 Jan 2026):**
 
-The picker displays:
+- Exchanges row in comparison table shows **purple gradient trigger button**: "Select Stock Exchanges [3/16]"
+- Click button → **entire centre panel becomes the picker** (fullscreen mode)
+- Only the Done button visible at bottom — NO headers, NO badges, NO table
+- Continental accordion groups show all 130 exchanges by 7 regions
+- "Done — Save Selection" button (purple gradient) closes picker and returns to table
 
-- Full 130-exchange catalog grouped by region
+**Visual Flow:**
+
+```
+NORMAL STATE:
+┌─────────────────────────────────────────────────────────────────────┐
+│  Feature          │ Standard    │ Pro Promagen                      │
+├───────────────────┼─────────────┼───────────────────────────────────┤
+│  FX Pairs         │ 8 fixed     │ [💱 Select FX Pairs        2/16]  │ ← EMERALD BUTTON
+├───────────────────┼─────────────┼───────────────────────────────────┤
+│  Exchanges        │ 16 fixed    │ [🌐 Select Stock Exchanges 11/16] │ ← PURPLE BUTTON
+├───────────────────┼─────────────┼───────────────────────────────────┤
+│  Stock Indices    │ 16 fixed    │ [0 of 16 selected ▼]              │
+├───────────────────┼─────────────┼───────────────────────────────────┤
+│  ... other rows                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+         ↓ CLICK EXCHANGE BUTTON ↓
+
+FULLSCREEN PICKER MODE:
+┌─────────────────────────────────────────────────────────────────────┐
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  🌐 YOUR SELECTION (11/16)                        [Reset]   │    │
+│  │  [🇯🇵 TSE ✕] [🇭🇰 HKEX ✕] [🇸🇬 SGX ✕] [🇺🇸 NYSE ✕] ...     │    │
+│  │  ════════════════════════════════════════ (progress bar)    │    │
+│  ├─────────────────────────────────────────────────────────────┤    │
+│  │  🔍 Search by exchange, city, or country...                 │    │
+│  ├─────────────────────────────────────────────────────────────┤    │
+│  │  ► 🌏 Asia (5 selected)                                     │    │
+│  │  ► 🌊 Oceania (0 selected)                                  │    │
+│  │  ► 🏰 Europe (3 selected)                                   │    │
+│  │  ► 🏜️ Africa (1 selected)                                   │    │
+│  │  ► 🕌 Middle East (0 selected)                              │    │
+│  │  ► 🗽 North America (2 selected)                            │    │
+│  │  ► 🌴 South America (0 selected)                            │    │
+│  ├─────────────────────────────────────────────────────────────┤    │
+│  │           [ ✓ Done — Save Selection ]                       │    │ ← PURPLE GRADIENT
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Picker Features:**
+
+- Sticky selection tray at top (selected exchanges always visible with remove buttons)
+- Progress bar showing selection count (color-coded: emerald → amber → orange)
 - Search/filter by exchange name, city, or country
-- Current selection count vs. limit (progress bar)
-- Regional presets for one-click selection
-- "Reset to default" option
+- 7 continental accordion groups (all closed by default)
+- SVG flags from `/public/flags/{iso2}.svg` (263 flags available)
+- Regional "Select All" buttons per continent
+- Ethereal glow effects matching Promagen design system
+- Responsive scroll: `max-h-[400px]` on mobile, fills space on desktop
+
+**Scroll Behaviour (v2.5.0):**
+
+- Small screens: `max-h-[400px]` with `overflow-y-auto`
+- Large screens: Fills available space, scrolls when expanded continents exceed viewport
+- Scrollbar styling: `scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20`
+
+**Components:**
+
+- Trigger button: `ExchangePickerTrigger` (canonical purple gradient per code-standard.md §6.1)
+- Picker: `ExchangePicker` (continental accordion, full 130-exchange catalog)
+- Done button: Closes picker, returns to table
+
+**Files:**
+
+| File                                               | Purpose                                | Version |
+| -------------------------------------------------- | -------------------------------------- | ------- |
+| `src/components/pro-promagen/comparison-table.tsx` | Contains trigger + fullscreen callback | v2.4.0  |
+| `src/components/pro-promagen/exchange-picker.tsx`  | Continental accordion component        | v2.5.0  |
+| `src/app/pro-promagen/pro-promagen-client.tsx`     | Manages fullscreen state               | v2.6.0  |
+| `src/lib/geo/continents.ts`                        | Continent definitions and configs      | v1.0.0  |
 
 #### Storage Architecture (Hybrid localStorage + Clerk)
 
@@ -407,12 +439,12 @@ Pro Promagen users may choose which FX pairs appear on their homepage ribbon.
 
 #### Tier Comparison
 
-| Aspect           | Standard Promagen          | Pro Promagen             |
-| ---------------- | -------------------------- | ------------------------ |
-| FX pairs shown   | SSOT default (currently 8) | User-curated selection   |
-| Pair count       | Fixed by SSOT              | **0 to 16**              |
-| Catalog access   | N/A                        | Full catalog (102 pairs) |
-| Configuration UI | None                       | FX Picker drawer         |
+| Aspect           | Standard Promagen          | Pro Promagen                           |
+| ---------------- | -------------------------- | -------------------------------------- |
+| FX pairs shown   | SSOT default (currently 8) | User-curated selection                 |
+| Pair count       | Fixed by SSOT              | **0 to 16**                            |
+| Catalog access   | N/A                        | Full catalog (102 pairs)               |
+| Configuration UI | None                       | FX Picker (Regional Fullscreen v2.0.0) |
 
 #### Allowed Pair Counts
 
@@ -423,19 +455,256 @@ Rules:
 - Minimum 0 pairs (allows "start fresh" workflow)
 - Maximum 16 pairs (aligns with exchange count ceiling, controls API budget)
 
-#### FX Picker UI
+#### FX Picker UI (v2.0.0 — Regional Fullscreen Accordion)
 
-Pro Promagen users access the FX Picker via:
+**CONFIRMED DESIGN (29 Jan 2026):**
 
-- Settings drawer on homepage
-- "Customise FX" button on ribbon (visible only to Pro users)
+The FX Picker mirrors the Exchange Picker UX but uses **4 regional groups based on BASE currency**:
 
-The picker displays:
+**Grouping Rule (Option A — Confirmed):**
 
-- Full 102-pair catalog grouped by region/currency
-- Search/filter by currency code
-- Current selection count vs. limit
-- "Reset to default" option
+| Pair Example | Region Displayed     | Reason                          |
+| ------------ | -------------------- | ------------------------------- |
+| EUR/USD      | Europe               | EUR is base, EUR → Europe       |
+| USD/JPY      | Americas             | USD is base, USD → Americas     |
+| GBP/ZAR      | Europe               | GBP is base, GBP → Europe       |
+| AUD/NZD      | Asia Pacific         | AUD is base, AUD → Asia Pacific |
+| ZAR/JPY      | Middle East & Africa | ZAR is base, ZAR → MEA          |
+
+**4 Regional Groups:**
+
+| Region               | Emoji | Gradient           | Currencies Mapped                                   |
+| -------------------- | ----- | ------------------ | --------------------------------------------------- |
+| Americas             | 🌎    | sky-blue-indigo    | USD, CAD, MXN, BRL, ARS, CLP, COP, PEN...           |
+| Europe               | 🏰    | blue-indigo-violet | EUR, GBP, CHF, SEK, NOK, DKK, PLN, CZK, HUF, TRY... |
+| Asia Pacific         | 🌏    | rose-orange-amber  | JPY, CNH, HKD, SGD, KRW, INR, AUD, NZD, THB, MYR... |
+| Middle East & Africa | 🌍    | emerald-green-lime | AED, SAR, ILS, ZAR, QAR, KWD, EGP, NGN, KES...      |
+
+**Visual Flow:**
+
+```
+NORMAL STATE:
+┌─────────────────────────────────────────────────────────────────────┐
+│  Feature          │ Standard    │ Pro Promagen                      │
+├───────────────────┼─────────────┼───────────────────────────────────┤
+│  FX Pairs         │ 8 fixed     │ [💱 Select FX Pairs        2/16]  │ ← EMERALD BUTTON
+├───────────────────┼─────────────┼───────────────────────────────────┤
+│  Exchanges        │ 16 fixed    │ [🌐 Select Stock Exchanges 11/16] │
+└─────────────────────────────────────────────────────────────────────┘
+
+         ↓ CLICK FX BUTTON ↓
+
+FULLSCREEN FX PICKER MODE:
+┌─────────────────────────────────────────────────────────────────────┐
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  💱 YOUR SELECTION (2/16)                         [Reset]   │    │
+│  │  [🇪🇺🇺🇸 EUR/USD ✕] [🇬🇧🇺🇸 GBP/USD ✕]                       │    │
+│  │  ════════ (emerald progress bar)                            │    │
+│  ├─────────────────────────────────────────────────────────────┤    │
+│  │  🔍 Search by pair, currency, or country...                 │    │
+│  ├─────────────────────────────────────────────────────────────┤    │
+│  │  ► 🌎 Americas (0 selected)                                 │    │
+│  │  ► 🏰 Europe (2 selected)                                   │    │
+│  │  ► 🌏 Asia Pacific (0 selected)                             │    │
+│  │  ► 🌍 Middle East & Africa (0 selected)                     │    │
+│  ├─────────────────────────────────────────────────────────────┤    │
+│  │           [ ✓ Done — Save Selection ]                       │    │ ← EMERALD GRADIENT
+│  └─────────────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Expanded Region View (when accordion open):**
+
+```
+│  ▼ 🏰 Europe (2 selected)                          [Select All]   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ [🇪🇺🇺🇸] EUR/USD    Eurozone / United States     [MAJOR] ☑️  │   │
+│  │ [🇪🇺🇬🇧] EUR/GBP    Eurozone / United Kingdom    [MAJOR] ☐   │   │
+│  │ [🇪🇺🇯🇵] EUR/JPY    Eurozone / Japan             [MAJOR] ☐   │   │
+│  │ [🇬🇧🇺🇸] GBP/USD    United Kingdom / United States [MAJOR] ☑️│   │
+│  │ [🇬🇧🇯🇵] GBP/JPY    United Kingdom / Japan        [CROSS] ☐  │   │
+│  │ [🇨🇭🇯🇵] CHF/JPY    Switzerland / Japan          [CROSS] ☐   │   │
+│  │ ...                                                          │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+```
+
+**Dual Flag Display:**
+
+Each FX pair shows **two overlapping SVG flags** (base currency + quote currency):
+
+- Base flag: Full visibility, z-index 10
+- Quote flag: Slightly overlapped (`-ml-1`), 90% opacity, z-index 0
+- Both flags from `/public/flags/{iso2}.svg` (263 flags available)
+- Flag size in list: 20px, in chips: 14px
+
+**Picker Features:**
+
+- Sticky selection tray at top (selected pairs always visible with dual flags)
+- Progress bar showing 0-16 count (color-coded: red → emerald → amber → orange)
+- Search/filter by pair label, base code, quote code, or country names
+- 4 regional accordion groups (all closed by default)
+- Category badges: MAJOR (amber), CROSS (slate), EMERGING (emerald)
+- Regional "Select All" buttons per region
+- Pairs sorted by rank (liquidity) within each region
+- Responsive scroll: `max-h-[400px]` on mobile, fills space on desktop
+
+**Progress Bar Colors:**
+
+| Count         | Color   | Meaning           |
+| ------------- | ------- | ----------------- |
+| 0 (below min) | Red     | Below minimum     |
+| 1-12          | Emerald | Healthy selection |
+| 13-15         | Amber   | Approaching limit |
+| 16            | Orange  | At maximum        |
+
+**Scroll Behaviour:**
+
+- Small screens: `max-h-[400px]` with `overflow-y-auto`
+- Large screens: Fills available space, scrolls when expanded regions exceed viewport
+- Scrollbar styling: `scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20`
+
+**Components:**
+
+- Trigger button: `FxPickerTrigger` (emerald-sky gradient, currency exchange icon)
+- Picker: `FxPicker` (regional accordion, full 102-pair catalog)
+- Done button: Closes picker, returns to table (emerald-sky gradient)
+
+**Files:**
+
+| File                                               | Purpose                                     | Version |
+| -------------------------------------------------- | ------------------------------------------- | ------- |
+| `src/components/fx/fx-picker.tsx`                  | Regional FX Picker component                | v2.0.0  |
+| `src/lib/fx/fx-regions.ts`                         | Currency → Region mapping (100+ currencies) | v1.0.0  |
+| `src/lib/fx/fx-picker-helpers.ts`                  | Grouping, search, validation utilities      | v1.0.0  |
+| `src/components/pro-promagen/comparison-table.tsx` | FxPickerTrigger + callback                  | v2.4.0  |
+| `src/app/pro-promagen/pro-promagen-client.tsx`     | Fullscreen FX mode state                    | v2.6.0  |
+
+**Currency-to-Region Mapping (Comprehensive):**
+
+```typescript
+// Americas (18 currencies)
+(USD, CAD, MXN, BRL, ARS, CLP, COP, PEN, UYU, DOP, JMD, TTD, BSD, BBD, PAB, CRC, GTQ, HNL);
+
+// Europe (25 currencies)
+(EUR,
+  GBP,
+  CHF,
+  SEK,
+  NOK,
+  DKK,
+  PLN,
+  CZK,
+  HUF,
+  RON,
+  BGN,
+  HRK,
+  RUB,
+  UAH,
+  TRY,
+  ISK,
+  RSD,
+  MKD,
+  ALL,
+  BAM,
+  MDL,
+  BYN,
+  GEL,
+  AMD,
+  AZN);
+
+// Asia Pacific (28 currencies)
+(JPY,
+  CNY,
+  CNH,
+  HKD,
+  SGD,
+  KRW,
+  TWD,
+  INR,
+  THB,
+  MYR,
+  IDR,
+  PHP,
+  VND,
+  PKR,
+  BDT,
+  LKR,
+  NPR,
+  MMK,
+  KHR,
+  LAK,
+  BND,
+  MNT,
+  KZT,
+  UZS,
+  AUD,
+  NZD,
+  FJD,
+  PGK);
+
+// Middle East & Africa (34 currencies)
+(AED,
+  SAR,
+  ILS,
+  QAR,
+  KWD,
+  BHD,
+  OMR,
+  JOD,
+  LBP,
+  IRR,
+  IQD,
+  SYP,
+  YER,
+  EGP,
+  ZAR,
+  NGN,
+  KES,
+  MAD,
+  TND,
+  GHS,
+  MUR,
+  BWP,
+  NAD,
+  ZWL,
+  TZS,
+  UGX,
+  ETB,
+  XOF,
+  XAF,
+  DZD,
+  LYD,
+  AOA,
+  MZN,
+  RWF,
+  ZMW,
+  MWK);
+```
+
+**Data Flow:**
+
+```
+fx-pairs.json (102 pairs, with base/quote country codes)
+     ↓
+fxCatalog prop → ProPromagenClient
+     ↓
+catalogToPickerOptions() → FxPairOption[] (adds region based on base currency)
+     ↓
+groupByRegion() → Map<FxRegion, FxPairOption[]>
+     ↓
+FX Picker UI renders regional accordion
+```
+
+**When `fx-pairs.json` is updated:**
+
+- ✅ Add new pair → Appears automatically in correct region
+- ✅ Remove pair → Disappears automatically
+- ✅ Change category/rank → Grouping/ordering updates
+- ✅ No code changes needed
+
+**Note on Africa & Middle East Region:**
+
+This region may show fewer pairs than others because fx-pairs.json currently has limited pairs where currencies like ZAR, AED, SAR are the **base** currency. To add more pairs to this region, add entries to fx-pairs.json where MEA currencies are the base (e.g., `ZAR/JPY`, `AED/USD`, `SAR/EUR`).
 
 #### Storage Architecture (Hybrid localStorage + Clerk)
 
@@ -566,140 +835,76 @@ Selection limits are **platform-aware** — different AI platforms handle prompt
 
 #### Platform Tier Philosophy
 
-| Tier       | Name              | Prompt Style                                | Platforms    |
-| ---------- | ----------------- | ------------------------------------------- | ------------ |
-| **Tier 1** | CLIP-Based        | Tokenized keywords, high stacking tolerance | 13 platforms |
-| **Tier 2** | Midjourney Family | Parameter-rich, very high tolerance         | 2 platforms  |
-| **Tier 3** | Natural Language  | Conversational prompts, medium tolerance    | 10 platforms |
-| **Tier 4** | Plain Language    | Simple prompts work best, low tolerance     | 17 platforms |
+| Tier | Name             | Max Terms | Philosophy                             |
+| ---- | ---------------- | --------- | -------------------------------------- |
+| 1    | CLIP             | 3         | Token-limited, embedding-based         |
+| 2    | Midjourney       | 4         | Structured parameters, moderate length |
+| 3    | Natural Language | 5         | Handles complex multi-term prompts     |
+| 4    | Plain Language   | 6         | Full natural language understanding    |
 
-#### Selection Limits by Platform Tier (Standard Promagen)
+#### Category Limits by Tier
 
-| Category       | Tier 1 (CLIP) | Tier 2 (MJ) | Tier 3 (NatLang) | Tier 4 (Plain) |
-| -------------- | ------------- | ----------- | ---------------- | -------------- |
-| Subject        | 1             | 1           | 1                | 1              |
-| Action         | 1             | 1           | 1                | 1              |
-| **Style**      | 2             | 3           | 2                | 1              |
-| Environment    | 1             | 1           | 1                | 1              |
-| Composition    | 1             | 1           | 1                | 1              |
-| Camera         | 1             | 1           | 1                | 1              |
-| **Lighting**   | 2             | 3           | 2                | 1              |
-| **Colour**     | 2             | 2           | 1                | 1              |
-| **Atmosphere** | 2             | 2           | 1                | 1              |
-| **Materials**  | 2             | 2           | 1                | 1              |
-| **Fidelity**   | 2             | 3           | 2                | 1              |
-| **Negative**   | 5             | 8           | 3                | 2              |
+| Category       | Tier 1 | Tier 2 | Tier 3 | Tier 4 | Pro Bonus |
+| -------------- | ------ | ------ | ------ | ------ | --------- |
+| Subject        | 1      | 1      | 1      | 1      | —         |
+| Action         | 1      | 1      | 1      | 1      | —         |
+| Environment    | 1      | 1      | 1      | 1      | —         |
+| Time           | 1      | 1      | 1      | 1      | —         |
+| Composition    | 1      | 1      | 1      | 1      | —         |
+| **Style**      | 1      | 2      | 3      | 4      | **+1**    |
+| **Lighting**   | 1      | 2      | 2      | 3      | **+1**    |
+| **Colour**     | 1      | 2      | 2      | 3      | **+1**    |
+| **Atmosphere** | 1      | 1      | 2      | 2      | **+1**    |
+| **Materials**  | 1      | 1      | 2      | 2      | **+1**    |
+| **Fidelity**   | 1      | 1      | 2      | 2      | **+1**    |
+| **Negative**   | 1      | 2      | 3      | 4      | **+1**    |
 
-#### Pro Promagen Bonus (+1 on stackable categories)
+**Stackable categories** (bold above) get **+1 selection for Pro Promagen users**.
 
-Pro Promagen users receive **+1 selection** on categories that benefit from stacking:
+#### Platform Assignments
 
-| Category       | Tier 1 | Tier 2 | Tier 3 | Tier 4 |
-| -------------- | ------ | ------ | ------ | ------ |
-| Subject        | 1      | 1      | 1      | 1      |
-| Action         | 1      | 1      | 1      | 1      |
-| **Style**      | **3**  | **4**  | **3**  | **2**  |
-| Environment    | 1      | 1      | 1      | 1      |
-| Composition    | 1      | 1      | 1      | 1      |
-| Camera         | 1      | 1      | 1      | 1      |
-| **Lighting**   | **3**  | **4**  | **3**  | **2**  |
-| **Colour**     | **3**  | **3**  | **2**  | **2**  |
-| **Atmosphere** | **3**  | **3**  | **2**  | **2**  |
-| **Materials**  | **3**  | **3**  | **2**  | **2**  |
-| **Fidelity**   | **3**  | **4**  | **3**  | **2**  |
-| **Negative**   | **6**  | **9**  | **4**  | **3**  |
+**Tier 1 (CLIP-based):**
+DALL·E 2, VQGAN+CLIP, CLIP-Guided Diffusion, Big Sleep, DiscoDiffusion, Artbreeder
 
-**Stackable categories:** Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative
+**Tier 2 (Midjourney-like):**
+Midjourney, Niji Journey, BlueWillow, Playground AI, Leonardo AI, Lexica Aperture, Dreamlike, NightCafe, Craiyon, StarryAI, Deep Dream Generator, Jasper Art
 
-**Non-stackable categories (always 1):** Subject, Action, Environment, Composition, Camera
+**Tier 3 (Natural Language):**
+DALL·E 3, Stable Diffusion 1.5, Stable Diffusion 2.1, Stable Diffusion XL, Kandinsky, IF by DeepFloyd, PixArt-α, Imagen (Google), Muse, SDXL Turbo, SD3, Kolors
 
-#### Platform Tier Assignments (All 42 Platforms)
+**Tier 4 (Plain Language):**
+Firefly (Adobe), Ideogram, Recraft, Flux, Krea AI, Freepik AI, Tensor Art, SeaArt, Shakker AI, Pika Labs, RunwayML, Bing Image Creator, Canva AI, Clipdrop
 
-**Tier 1 — CLIP-Based (13 platforms):**
-`stability`, `leonardo`, `clipdrop`, `nightcafe`, `dreamstudio`, `lexica`, `novelai`, `dreamlike`, `getimg`, `openart`, `playground`, `artguru`, `jasper-art`
+#### Behaviour on Platform Switch
 
-**Tier 2 — Midjourney Family (2 platforms):**
-`midjourney`, `bluewillow`
+When user switches to a platform with lower limits:
 
-**Tier 3 — Natural Language (10 platforms):**
-`openai`, `adobe-firefly`, `ideogram`, `runway`, `microsoft-designer`, `bing`, `flux`, `google-imagen`, `imagine-meta`, `hotpot`
-
-**Tier 4 — Plain Language (17 platforms):**
-`canva`, `craiyon`, `deepai`, `pixlr`, `picwish`, `fotor`, `visme`, `vistacreate`, `myedit`, `simplified`, `freepik`, `picsart`, `photoleap`, `artbreeder`, `123rf`, `remove-bg`, `artistly`
-
-#### Research Rationale
-
-| Tier                 | Why These Limits?                                                                  |
-| -------------------- | ---------------------------------------------------------------------------------- |
-| **Tier 1 (CLIP)**    | CLIP tokenizes efficiently — stacking 2-3 styles/lights produces coherent results  |
-| **Tier 2 (MJ)**      | Midjourney was built for complex prompts — handles 3+ styles, `--no` with 8+ terms |
-| **Tier 3 (NatLang)** | Conversational models prefer focused prompts — too many terms cause confusion      |
-| **Tier 4 (Plain)**   | Consumer-focused tools work best with simple prompts — one style, one mood         |
-
-#### Auto-Trim Behaviour
-
-When a user switches platforms, selection limits may change. The system **silently trims** excess selections:
-
-- Selections trimmed from end (keeps first N)
-- No notification shown (clean UX)
-- User can re-select different options if desired
-
-**Example:** User on Midjourney (Tier 2) with 3 styles → switches to Artistly (Tier 4) → 2 styles automatically removed, 1 remains.
-
-#### Dynamic Tooltip Guidance
-
-Tooltips dynamically reflect the actual limit for the current platform:
-
-- Artistly (Tier 4): "Pick 1 style. Keep it focused."
-- Midjourney (Tier 2): "Pick up to 3 complementary styles. Avoid conflicting aesthetics."
-
-Rules:
-
-- Standard Promagen users have full access to all prompt options (after sign-in)
-- Pro Promagen users gain **precision**, not **access**
-- Selection limits adapt to each platform's capabilities
-- The prompt builder remains complete and honest at all tiers
-
-Authority for implementation: `docs/authority/prompt-builder-page.md`
+1. Auto-trim excess selections (most recently added removed first)
+2. Show toast: "Selection trimmed to fit [Platform] limits"
+3. Preserve user's preference order where possible
 
 ---
 
-### 5.7 Market Pulse city connections (expanded scope)
+### 5.7 Market Pulse city connections
 
-Market Pulse v2.0 visualises connections between stock exchanges and AI providers in the same city. The feature only activates during market open/close events (±1 minute windows).
+Standard Promagen: **4 cities** — Sydney, Hong Kong, London, Chicago
 
-**Standard Promagen (4 cities):**
+Pro Promagen: **16 cities** — All 4 free cities plus:
 
-| City      | Exchange | AI Provider(s)                           |
-| --------- | -------- | ---------------------------------------- |
-| Sydney    | ASX      | Leonardo AI                              |
-| Hong Kong | HKEX     | Fotor, Artguru, PicWish                  |
-| London    | LSE      | Stability AI, DreamStudio, Dreamlike.art |
-| Chicago   | Cboe     | 123RF AI Generator                       |
+- Singapore (SGX)
+- Tokyo (TSE)
+- Frankfurt (Xetra)
+- Paris (Euronext Paris)
+- Amsterdam (Euronext Amsterdam)
+- Zürich (SIX)
+- Toronto (TSX)
+- New York (NYSE)
+- Mumbai (BSE)
+- São Paulo (B3)
+- Johannesburg (JSE)
+- Dubai (DFM)
 
-**Pro Promagen adds (12 additional cities, 16 total):**
-
-| City      | Exchange       | AI Provider(s)         |
-| --------- | -------------- | ---------------------- |
-| New York  | NYSE           | Runway ML, Artbreeder  |
-| New York  | NASDAQ         | Runway ML, Artbreeder  |
-| Paris     | Euronext       | Clipdrop               |
-| Toronto   | TSX            | Ideogram               |
-| Taipei    | TWSE           | MyEdit (CyberLink)     |
-| Vienna    | Wiener Börse   | Remove.bg (Kaleido AI) |
-| Warsaw    | GPW            | Getimg.ai              |
-| Warsaw    | WSE NewConnect | Getimg.ai              |
-| Singapore | SGX            | (future connections)   |
-| Tokyo     | TSE            | (future connections)   |
-| Mumbai    | BSE            | (future connections)   |
-| São Paulo | B3             | (future connections)   |
-
-Rules:
-
-- Standard Promagen users see pulse animations for **4 cities** (7 provider connections)
-- Pro Promagen users see pulse animations for **16 cities** (current + future connections)
-- The animation behaviour is identical at both tiers — only scope differs
-- Multi-session exchanges (Hong Kong) fire on all session boundaries at both tiers
+Market Pulse animations show connection lines between trading hubs.
 
 Authority for implementation: `docs/authority/ribbon-homepage.md` (Market Pulse v2.0 section)
 
@@ -707,66 +912,55 @@ Authority for implementation: `docs/authority/ribbon-homepage.md` (Market Pulse 
 
 ### 5.8 Image Quality vote weight multiplier
 
-Pro Promagen users receive a **1.5× multiplier** on all Image Quality votes.
+When voting on AI provider image quality, Pro Promagen users' votes count **2×**.
 
-| Signal Type                     | Standard Weight | Pro Promagen Weight |
-| ------------------------------- | --------------- | ------------------- |
-| Image upload tagged to platform | 1               | 1.5                 |
-| Like on image                   | 2               | 3                   |
-| Favorable comment               | 2               | 3                   |
-| Direct provider card like       | 3               | 4.5                 |
+| User Type         | Vote Weight |
+| ----------------- | ----------- |
+| Standard Promagen | 1×          |
+| Pro Promagen      | 2×          |
 
-Rules:
+This acknowledges that Pro users are likely more invested in prompt quality and image generation outcomes.
 
-- The multiplier is applied **server-side** and is not disclosed in the UI
-- Both Standard and Pro Promagen users have the same **3 votes per day** limit
-- Both Standard and Pro Promagen users have the same **1 vote per provider per 24 hours** limit
-- The multiplier affects vote **weight**, not vote **count**
-- This is a silent quality-of-influence enhancement, not a gating mechanism
-
-**Rationale:** Pro Promagen users have demonstrated investment in the platform. Their quality assessments carry slightly more weight in aggregate rankings, creating an economic barrier to bot-farm manipulation while rewarding engaged users.
-
-**Transparency policy:** If directly asked, Promagen will confirm that "rankings are based on community engagement signals" (truthful). The specific multiplier value is not disclosed to prevent gaming calculations.
-
-Authority for implementation: `docs/authority/ai providers.md` (Community Voting System section)
+Authority for implementation: `docs/authority/ai providers.md` (voting system section)
 
 ---
 
-### 5.9 Ask Promagen — LLM-powered suggestions (daily limits)
+### 5.9 Ask Promagen (LLM-powered suggestions)
 
-"Ask Promagen" uses server-side LLM calls to interpret natural language descriptions and auto-populate prompt builder dropdowns. This incurs real API costs (~$0.001 per suggestion).
+"Ask Promagen" allows users to describe what they want in natural language and receive curated prompt suggestions.
 
-#### Daily Suggestion Limits
+#### Tier Comparison
 
-| Tier                  | Daily Ask Promagen Limit |
-| --------------------- | ------------------------ |
-| **Anonymous**         | 5 suggestions/day        |
-| **Standard Promagen** | 10 suggestions/day       |
-| **Pro Promagen**      | Unlimited                |
+| Aspect      | Anonymous       | Standard Promagen | Pro Promagen |
+| ----------- | --------------- | ----------------- | ------------ |
+| Daily limit | 5 suggestions   | 10 suggestions    | Unlimited    |
+| Reset time  | Midnight local  | Midnight local    | N/A          |
+| Storage     | localStorage    | Vercel KV         | N/A          |
+| Lock state  | Sign-in overlay | Upgrade overlay   | Never locked |
 
-#### Tracking
+#### Example Interaction
 
-- **Anonymous:** Tracked in localStorage (same pattern as prompt usage, separate counter)
-- **Authenticated:** Tracked in Vercel KV with key `ask:${userId}:${date}`
-- **Reset:** Midnight in user's local timezone (consistent with prompt usage)
+**User input:** "I want a cyberpunk city at night with neon lights"
 
-#### Lock State Behaviour
+**Promagen response:**
 
-When limit reached:
-
-- "Suggest" button becomes disabled (same purple-tint treatment as other locked UI)
-- Tooltip shows: "Daily limit reached. Sign in for more." (anonymous) or "Upgrade to Pro Promagen for unlimited." (free)
-- Dropdown manual selection remains fully functional
-- User can still build prompts manually
+```
+Subject: Futuristic cityscape
+Environment: Urban metropolis
+Time: Night
+Lighting: Neon glow, artificial lighting
+Atmosphere: Dystopian, electric
+Style: Cyberpunk, sci-fi
+Colours: Electric blue, hot pink, purple
+```
 
 #### Cost Control
 
-| Aspect     | Approach                                               |
-| ---------- | ------------------------------------------------------ |
-| Rate limit | Per-user daily limits (above)                          |
-| Model      | Claude Haiku (~$0.25/1M input tokens) or GPT-4o-mini   |
-| Caching    | Identical queries cached in Vercel KV for 24h          |
-| Debounce   | 500ms debounce, only calls on [Suggest →] button click |
+| Aspect   | Implementation                                         |
+| -------- | ------------------------------------------------------ |
+| Model    | Claude Haiku (~$0.25/1M input tokens) or GPT-4o-mini   |
+| Caching  | Identical queries cached in Vercel KV for 24h          |
+| Debounce | 500ms debounce, only calls on [Suggest →] button click |
 
 #### Fallback
 
@@ -810,10 +1004,10 @@ The `/pro-promagen` route allows Pro users to configure their FX pairs and excha
 
 #### Page Purpose
 
-| User Type | Mode          | Behaviour                                                                       |
-| --------- | ------------- | ------------------------------------------------------------------------------- |
-| Free user | Preview       | Interactive dropdowns, no persistence, demo data, "Upgrade to Pro Promagen" CTA |
-| Paid user | Configuration | Interactive dropdowns, saves to localStorage + Clerk, "Save Preferences" CTA    |
+| User Type | Mode          | Behaviour                                                                     |
+| --------- | ------------- | ----------------------------------------------------------------------------- |
+| Free user | Preview       | Interactive pickers, no persistence, demo data, "Upgrade to Pro Promagen" CTA |
+| Paid user | Configuration | Interactive pickers, saves to localStorage + Clerk, "Save Preferences" CTA    |
 
 #### Page Layout (Identical to Homepage)
 
@@ -826,8 +1020,8 @@ The `/pro-promagen` route allows Pro users to configure their FX pairs and excha
 │ Cards    │  ┌─────────────────────────────────┐   │  Cards         │
 │ (left)   │  │ Feature        │ Std  │ Pro     │   │  (right)       │
 │          │  ├────────────────┼──────┼─────────┤   │                │
-│ SAME     │  │ FX Pairs       │ 8    │ [▼ dropdown] │  SAME         │
-│ STYLING  │  │ Exchanges      │ 16   │ [▼ dropdown] │  STYLING      │
+│ SAME     │  │ FX Pairs       │ 8    │ [Picker]│   │  SAME         │
+│ STYLING  │  │ Exchanges      │ 16   │ [Picker]│   │  STYLING      │
 │ AS       │  │ Reference Frame│ You  │ Toggle  │   │  AS           │
 │ HOMEPAGE │  │ Daily Prompts  │ 10   │ Unlimited│   │  HOMEPAGE     │
 │          │  │ Prompt Stacking│ Base │ +1      │   │                │
@@ -840,27 +1034,47 @@ The `/pro-promagen` route allows Pro users to configure their FX pairs and excha
 
 #### Comparison Table (Centre Column)
 
-The comparison table shows Standard vs Pro features. **Only FX Pairs and Exchanges have dropdowns** — other rows are read-only display.
+The comparison table shows Standard vs Pro features. **FX Pairs and Exchanges open fullscreen pickers** — other rows are read-only display.
 
-| Feature         | Standard      | Pro                                 |
-| --------------- | ------------- | ----------------------------------- |
-| **FX Pairs**    | 8 fixed       | **[▼ Dropdown]** 0–16, alphabetical |
-| **Exchanges**   | 16 fixed      | **[▼ Dropdown]** 0–16, alphabetical |
-| Reference Frame | Your location | Toggle: You / Greenwich             |
-| Daily Prompts   | 10 per day    | Unlimited                           |
-| Prompt Stacking | Base limits   | +1 on 7 categories                  |
+| Feature         | Standard      | Pro                                           |
+| --------------- | ------------- | --------------------------------------------- |
+| **FX Pairs**    | 8 fixed       | **[💱 FX Picker Trigger]** → Fullscreen       |
+| **Exchanges**   | 16 fixed      | **[🌐 Exchange Picker Trigger]** → Fullscreen |
+| Stock Indices   | 16 fixed      | [▼ Dropdown] — ChipsDropdown                  |
+| Reference Frame | Your location | Toggle: You / Greenwich                       |
+| Daily Prompts   | 10 per day    | Unlimited                                     |
+| Prompt Stacking | Base limits   | +1 on 7 categories                            |
 
 **Not shown in table:** Vote Weight, Market Pulse (internal features, no user control needed).
 
-#### Dropdown Styling
+#### Picker Trigger Styling
 
-Dropdowns use the **same combobox component as Prompt Builder** (`@/components/ui/combobox`):
+| Picker    | Trigger Style                                              | Done Button Style |
+| --------- | ---------------------------------------------------------- | ----------------- |
+| Exchanges | Purple-pink gradient (`from-purple-600/20 to-pink-600/20`) | Purple gradient   |
+| FX Pairs  | Emerald-sky gradient (`from-emerald-600/20 to-sky-600/20`) | Emerald gradient  |
 
-- Items listed in **alphabetical order**
-- **Colorful gradient backgrounds** when open (emerald, sky, violet, amber)
-- Search/filter functionality
-- Multi-select with visual count indicator
-- Same styling as rest of website
+#### Fullscreen Picker Mode
+
+When a picker trigger is clicked:
+
+1. **Entire centre panel becomes the picker** (no headers, no badges, no table)
+2. Picker fills the available space with its accordion interface
+3. Done button at bottom returns to comparison table view
+4. Only ONE picker can be open at a time
+
+**State Management:**
+
+```typescript
+// In pro-promagen-client.tsx
+type FullscreenPickerMode = 'none' | 'exchange' | 'fx';
+
+const [fullscreenPickerMode, setFullscreenPickerMode] = useState<FullscreenPickerMode>('none');
+
+// When 'exchange': Show ExchangePicker fullscreen
+// When 'fx': Show FxPicker fullscreen
+// When 'none': Show normal comparison table
+```
 
 #### Demo Mode (Zero API Cost)
 
@@ -876,39 +1090,49 @@ Dropdowns use the **same combobox component as Prompt Builder** (`@/components/u
 
 #### Component Reuse
 
-| Component      | Source                                 | Notes                    |
-| -------------- | -------------------------------------- | ------------------------ |
-| `HomepageGrid` | `@/components/layout/homepage-grid`    | Standard 3-column layout |
-| `FxRibbon`     | `@/components/fx/fx-ribbon`            | Fed demo prices          |
-| `ExchangeCard` | `@/components/exchanges/exchange-card` | Fed demo weather         |
-| `Combobox`     | `@/components/ui/combobox`             | Same as Prompt Builder   |
+| Component        | Source                                      | Notes                    |
+| ---------------- | ------------------------------------------- | ------------------------ |
+| `HomepageGrid`   | `@/components/layout/homepage-grid`         | Standard 3-column layout |
+| `FxRibbon`       | `@/components/fx/fx-ribbon`                 | Fed demo prices          |
+| `ExchangeCard`   | `@/components/exchanges/exchange-card`      | Fed demo weather         |
+| `ExchangePicker` | `@/components/pro-promagen/exchange-picker` | Continental accordion    |
+| `FxPicker`       | `@/components/fx/fx-picker`                 | Regional accordion       |
 
 #### Data Flow
 
 1. Page loads → show SSOT defaults
-2. User selects FX pairs/exchanges from dropdowns
-3. FX ribbon + exchange rails update instantly (demo data)
-4. **Paid users:** Save → localStorage + Clerk metadata
-5. **Free users:** Preview only, CTA → `/upgrade`
+2. User clicks FX or Exchange picker trigger
+3. Fullscreen picker opens with current selection
+4. User makes selections in accordion
+5. "Done" → returns to table, selection state updated
+6. **Paid users:** Save → localStorage + Clerk metadata
+7. **Free users:** Preview only, CTA → `/upgrade`
 
-#### File Structure (Minimal)
+#### File Structure
 
 ```
 frontend/src/
 ├── app/pro-promagen/
 │   ├── page.tsx                    # Server component
-│   ├── pro-promagen-client.tsx     # Client orchestrator
+│   ├── pro-promagen-client.tsx     # Client orchestrator (v2.6.0)
 │   ├── error.tsx                   # Error boundary
 │   └── loading.tsx                 # Loading skeleton
-└── components/pro-promagen/
-    ├── comparison-table.tsx        # Table with embedded dropdowns
-    └── upgrade-cta.tsx             # Mode-aware button
+├── components/pro-promagen/
+│   ├── comparison-table.tsx        # Table with picker triggers (v2.4.0)
+│   ├── exchange-picker.tsx         # Continental accordion (v2.5.0)
+│   └── upgrade-cta.tsx             # Mode-aware button
+├── components/fx/
+│   ├── fx-picker.tsx               # Regional FX accordion (v2.0.0)
+│   └── picker-toggle.tsx           # Picker toggle utilities
+└── lib/fx/
+    ├── fx-regions.ts               # Currency → Region mapping (v1.0.0)
+    └── fx-picker-helpers.ts        # Grouping/search utilities (v1.0.0)
 ```
 
 #### Validation Rules
 
-- FX pairs: 6 ≤ count ≤ 16, all IDs must exist in SSOT catalog
-- Exchanges: 6 ≤ count ≤ 16, all IDs must exist in SSOT catalog
+- FX pairs: 0 ≤ count ≤ 16, all IDs must exist in SSOT catalog
+- Exchanges: 0 ≤ count ≤ 16, all IDs must exist in SSOT catalog
 
 Rules:
 
@@ -965,389 +1189,75 @@ WorldPrompt Live Background transforms the homepage into a living canvas. The ba
 
 #### Layer System
 
-| Layer            | Purpose                          | CSS                                                                   |
-| ---------------- | -------------------------------- | --------------------------------------------------------------------- |
-| Background image | Full viewport coverage           | `position: fixed; inset: 0; object-fit: cover; z-index: -2`           |
-| Dark overlay     | Ensures UI readability           | `position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: -1` |
-| Existing UI      | All current components unchanged | `z-index: 0+`                                                         |
-| Context bar      | Shows current WorldPrompt focus  | `position: fixed; bottom: 0; z-index: 10`                             |
+| Layer       | Z-Index | Content                                      |
+| ----------- | ------- | -------------------------------------------- |
+| Background  | 0       | AI-generated image (blurred edges, vignette) |
+| Overlay     | 1       | Semi-transparent gradient for readability    |
+| Content     | 2       | FX ribbon, exchange cards, providers table   |
+| Context bar | 3       | City info, expand button (fixed bottom)      |
 
-#### Context Bar (Bottom Strip)
-
-Always visible for Pro Promagen users. Shows what's driving the current image:
+#### Image Generation Pipeline
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ ● Sydney, Australia • ASX Open • 24°C ☀️ • AUD/USD +0.3%     [Expand ⛶] │
-└──────────────────────────────────────────────────────────────────────────┘
+WorldPrompt Rotation (30 min)
+        │
+        ▼
+┌─────────────────┐
+│ Active City     │ (Sydney, Hong Kong, London, Chicago)
+│ + Weather Data  │ (temp, conditions, time of day)
+│ + FX Mood       │ (AUD/USD direction for Sydney, etc.)
+│ + Market Status │ (ASX open/closed)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Prompt Assembly │ (worldprompt-creative-engine.md rules)
+│ - No financials │ (artistic abstraction only)
+│ - Safe anchors  │ (landmarks, not people)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ DALL·E 3 API   │
+│ - 1024×1024    │
+│ - Natural style │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Cache (24h)     │ (Vercel KV, ~48 images/day max)
+└─────────────────┘
 ```
 
-Elements:
+#### Cost Control
 
-- **Pulsing dot** — indicates live/updating
-- **City + Country** — current WorldPrompt focus
-- **Market status** — from existing exchange data
-- **Weather** — from existing weather badges
-- **Lead FX pair** — movement from FX ribbon
-- **Expand button** — opens fullscreen mode
+| Constraint     | Limit     | Rationale                        |
+| -------------- | --------- | -------------------------------- |
+| Images per day | ~48       | 4 cities × 2 images/hour         |
+| Cache TTL      | 24 hours  | Reuse images for same conditions |
+| Resolution     | 1024×1024 | Standard DALL·E 3                |
+| Style          | Natural   | Consistent aesthetic             |
 
-#### Image Generation Triggers
+#### Context Bar
 
-Images regenerate when data changes meaningfully:
+Shows at bottom of viewport (fixed):
 
-| Trigger             | Example             | Frequency                |
-| ------------------- | ------------------- | ------------------------ |
-| City rotation       | Sydney → Tokyo      | Every 30 mins            |
-| Time-of-day shift   | Morning → Afternoon | ~4× per city             |
-| Market event        | ASX opens           | Aligns with Market Pulse |
-| Weather change      | Sunny → Rain        | As condition changes     |
-| Significant FX move | >1% change          | Mood shift               |
+```
+● [City Flag] Sydney, Australia • ASX Open • 24°C ☀️ • AUD/USD +0.3%  [⛶ Expand]
+```
 
-**Cache rule:** Same prompt text = reuse cached image (24h TTL).
-
-**Estimated images per day:** ~48 max (12 cities × 4 time shifts), likely fewer with caching.
-
-#### Image Transition
-
-When new image arrives:
-
-1. New image loads in hidden `<img>` element
-2. On load complete, crossfade over 2 seconds
-3. Old image removed from DOM
-4. Context bar updates simultaneously
-
-**Reduced motion:** Instant swap, no crossfade.
+- City flag: SVG from `/public/flags/`
+- Market status: Derived from exchange hours
+- Weather: From Visual Crossing API
+- FX mood: Direction of city's primary currency pair
+- Expand: Opens fullscreen screensaver mode
 
 #### Fullscreen Mode
 
-Pro users click **[Expand ⛶]** → modal overlay:
-
-- Image at full resolution, no dark overlay
-- Context info in bottom-left corner (semi-transparent)
-- Generated text prompt shown (user can copy)
-- ESC or click outside to close
-
-#### Cost Control
-
-| Control             | Value                  |
-| ------------------- | ---------------------- |
-| Cache TTL           | 24 hours               |
-| Max generations/day | ~48 (with rotation)    |
-| Model               | DALL-E 3 or equivalent |
-| Resolution          | 1792×1024 (landscape)  |
-| Estimated cost      | ~$2/day at $0.04/image |
-
-#### Fallback States
-
-| State              | Behaviour                                       |
-| ------------------ | ----------------------------------------------- |
-| Image loading      | Subtle shimmer on existing dark background      |
-| Image failed       | Keep previous image, log error, retry in 5 mins |
-| API quota exceeded | Fall back to gradient, hide context bar         |
-| User not Pro       | No image, no context bar, existing dark UI      |
-
-#### Component Structure
-
-```
-src/components/worldprompt-live/
-├── worldprompt-background.tsx     # Fixed background image layer
-├── worldprompt-overlay.tsx        # Dark overlay for readability
-├── worldprompt-context-bar.tsx    # Bottom info strip
-├── worldprompt-fullscreen.tsx     # Expanded view modal
-├── use-worldprompt-image.ts       # Hook: fetches/caches generated image
-└── index.ts                       # Public exports
-```
-
-#### API Route
-
-```typescript
-// src/app/api/worldprompt/image/route.ts
-
-export async function GET(request: Request) {
-  // 1. Get current WorldPrompt context
-  // 2. Generate prompt text (existing engine)
-  // 3. Hash prompt → cache key
-  // 4. Check Vercel KV for cached image URL
-  // 5. If miss: call image API, store result, return URL
-  // 6. If hit: return cached URL
-}
-```
-
-#### Accessibility
-
-| Concern          | Solution                                              |
-| ---------------- | ----------------------------------------------------- |
-| Decorative image | `aria-hidden="true"` on background                    |
-| Reduced motion   | Instant swap, no crossfade                            |
-| Screen readers   | Context bar has `aria-live="polite"` for city changes |
-| Contrast         | 70% overlay ensures WCAG AA on all UI text            |
-
-Rules:
-
-- Standard Promagen users see existing dark gradient background
-- Pro Promagen users see AI-generated scenes from WorldPrompt data
-- Images derive from existing data sources (no new APIs required)
-- Feature is purely visual — no information is gated behind Pro tier
-- Fullscreen mode provides screensaver-like ambient experience
-
-Authority for implementation: `docs/authority/worldprompt-creative-engine.md` (Part 13)
-
-### 5.12 Gallery Mode (Pro Promagen exclusive) — NEW v2.1.0
-
-Gallery Mode transforms Promagen from a "dashboard that shows market data" into a "living artefact where the markets literally paint." It's a Pro-only screensaver experience.
-
-#### What Gallery Mode Does
-
-1. **Cycles through 79 exchange cities** on a 10-minute cadence (~13h before repeating)
-2. **Generates AI images** reflecting city mood, time-of-day, season, and market sentiment
-3. **Educates users** by exposing 4 prompt variants (one per AI provider tier) with copy buttons
-4. **Stores everything** in an image library with full reproducibility metadata
-5. **Allows filtering** via AI Provider Selector (Pro only, 1–3 providers in Gallery)
-
-#### Tier Comparison
-
-| Aspect              | Standard Promagen | Pro Promagen                     |
-| ------------------- | ----------------- | -------------------------------- |
-| Gallery toggle      | ❌ Hidden         | ✅ Visible (Providers ↔ Gallery) |
-| AI-generated images | Blurred preview   | Full resolution                  |
-| Prompt variants     | Hidden            | 4 copy buttons (one per tier)    |
-| Image library       | No access         | Full access with filters         |
-| Provider selector   | N/A               | 1–3 providers selectable         |
-| Screensaver mode    | N/A               | Fullscreen ambient view          |
-
-#### Visual Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  Toggle: [Providers] [Gallery ✨]           Pro Promagen only   │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌───────────────────────────────────────────────────────────┐ │
-│  │                                                           │ │
-│  │           AI-Generated City Scene                         │ │
-│  │           (Tokyo skyline at twilight)                     │ │
-│  │                                                           │ │
-│  │  ┌─────────────────────────────────────────────────────┐ │ │
-│  │  │ 🇯🇵 Tokyo • TSE • 17:42 JST • Market Closing       │ │ │
-│  │  │ Season: Winter • Mood: Reflective • 🌤️ 12°C        │ │ │
-│  │  └─────────────────────────────────────────────────────┘ │ │
-│  │                                                           │ │
-│  └───────────────────────────────────────────────────────────┘ │
-│                                                                 │
-│  Copy Prompts:                                                  │
-│  [Tier 1: CLIP] [Tier 2: Midjourney] [Tier 3: DALL·E] [Tier 4] │
-│                                                                 │
-│  [▼ Filter: Midjourney, DALL·E (2)]     [⛶ Fullscreen]         │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### World Tour Rotation
-
-- 79 exchanges × 10 minutes = **~13 hours** before repetition
-- With enrichments (time-of-day, season, mood), same city looks different each cycle
-- Rotation follows SSOT order (MVP) or East-to-West (Phase 2)
-- Pro users see their selected exchanges if using Exchange Picker
-
-#### Theme Engine (What Influences Images)
-
-Each city snapshot combines:
-
-| Data Source       | Effect on Image                                                 |
-| ----------------- | --------------------------------------------------------------- |
-| **Local time**    | Time-of-day lighting (dawn/morning/midday/afternoon/dusk/night) |
-| **Season**        | Hemisphere-aware seasonal motifs                                |
-| **Weather**       | Atmosphere terms (rain→moody, snow→serene, clear→vibrant)       |
-| **Market status** | Opening/closing events affect mood                              |
-| **Market mood**   | FX/crypto/gold trends boost colors and atmosphere               |
-
-#### Weather API Integration (90% Built)
-
-Weather affects atmosphere selection:
-
-| Weather Condition | Atmosphere Boost               |
-| ----------------- | ------------------------------ |
-| Rain, Drizzle     | moody, reflective, glistening  |
-| Storm, Thunder    | dramatic, intense, electric    |
-| Snow              | serene, pristine, cold         |
-| Fog, Mist         | mysterious, ethereal, diffused |
-| Clear, Sunny      | vibrant, bright, warm          |
-| Cloudy            | overcast, soft light           |
-
-**Implementation status:** Visual Crossing client exists, demo mode working. Enable live mode with:
-
-- `WEATHER_MODE=live`
-- `VISUAL_CROSSING_API_KEY=<key>`
-
-**Cost:** $0/month (free tier 1,000 calls/day, Gallery needs ~144/day)
-
-#### Market Mood Engine (Data Ready, Logic Needed)
-
-11 mood types defined in `market-moods.json`:
-
-| Mood                  | Trigger               | Effect                        |
-| --------------------- | --------------------- | ----------------------------- |
-| market_opening        | Exchange opens ±2min  | awakening, fresh, energetic   |
-| market_closing        | Exchange closes ±2min | reflective, calm, golden hour |
-| high_volatility       | FX volatility spike   | chaotic, dynamic, intense     |
-| low_volatility        | FX calm               | serene, balanced, peaceful    |
-| gold_rising           | Gold >1% up           | golden, warm, opulent         |
-| gold_falling          | Gold >1% down         | cool, reserved, muted         |
-| crypto_pumping        | BTC/ETH >5% up        | electric, neon, dynamic       |
-| currency_strength_usd | USD strengthening     | green, corporate, powerful    |
-| currency_strength_gbp | GBP strengthening     | royal, heritage, refined      |
-| currency_strength_eur | EUR strengthening     | sophisticated, architectural  |
-| neutral               | Default               | balanced, calm                |
-
-**Data sources:** All exist (`/api/fx`, `/api/crypto`, `/api/commodities`)
-
-#### AI Provider Selector (Gallery Mode Specific)
-
-Pro users can filter which providers appear in Gallery Mode:
-
-| Rule                             | Value                           |
-| -------------------------------- | ------------------------------- |
-| Max selections in Gallery        | 1–3 providers                   |
-| Max selections in Providers view | Unlimited (42)                  |
-| Sort order                       | Alphabetical, 123rf always last |
-| Persistence                      | localStorage + Clerk metadata   |
-
-**Truncation behaviour:** If switching to Gallery with >3 selected, truncate to first 3 alphabetically with toast notification.
-
-#### 4-Tier Prompt Variants
-
-Each generated image includes 4 copyable prompts:
-
-| Tier  | Platform Style   | Syntax Features               |
-| ----- | ---------------- | ----------------------------- |
-| **1** | CLIP-Based       | `::1.3` weights, `(term:1.2)` |
-| **2** | Midjourney       | `--ar`, `--no`, parameters    |
-| **3** | Natural Language | Full sentences                |
-| **4** | Plain Language   | Simple, focused               |
-
-**Copy buttons:** Each tier has a dedicated copy button. Users learn prompt engineering by seeing how the same scene translates to different platforms.
-
-#### Image Library (Gallery Archive)
-
-All generated images are stored with full metadata:
-
-```typescript
-interface GalleryEntry {
-  id: string;
-  imageUrl: string;
-  city: string;
-  exchangeId: string;
-  generatedAt: string;
-  localTime: string;
-  timeOfDay: 'dawn' | 'morning' | 'midday' | 'afternoon' | 'dusk' | 'night';
-  season: 'spring' | 'summer' | 'autumn' | 'winter';
-  weather?: { conditions: string; temperatureC: number };
-  mood: string;
-  prompts: {
-    tier1: string;
-    tier2: string;
-    tier3: string;
-    tier4: string;
-  };
-  sceneBrief: SceneBrief;
-}
-```
-
-**Filters available:**
-
-- By city
-- By season
-- By mood
-- By time-of-day
-
-#### Cost Control
-
-| Component                 | Monthly Cost    |
-| ------------------------- | --------------- |
-| DALL·E 3 (144 images/day) | ~$173           |
-| R2 Storage                | $0 (free tier)  |
-| Weather API               | $0 (free tier)  |
-| **Total**                 | **~$175/month** |
-
-**Break-even:** 20 Pro subscribers at $9/month
-
-#### Screensaver Mode
-
-Fullscreen mode for ambient display:
-
-- No UI chrome
-- Crossfade transitions (2s)
-- Context info in corner (semi-transparent)
-- ESC to exit
-- Reduced motion: instant swap (no crossfade)
-
-#### API Endpoints
-
-| Endpoint                     | Purpose                  | Rate Limit     |
-| ---------------------------- | ------------------------ | -------------- |
-| `GET /api/gallery/current`   | Current image + metadata | 60/min per IP  |
-| `GET /api/gallery/library`   | Paginated archive        | 30/min per IP  |
-| `POST /api/gallery/generate` | Manual trigger (admin)   | 1/10min global |
-
-#### Upsell for Free Users
-
-Free users see Gallery toggle but get:
-
-- Blurred preview image
-- "Watch the markets paint the world" messaging
-- Feature benefits list
-- Upgrade CTA button
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     🎨 Gallery Mode                              │
-│                                                                 │
-│     Watch the markets paint the world.                          │
-│                                                                 │
-│     ✓ Live AI-generated city scenes                            │
-│     ✓ 4 copyable prompt variants                               │
-│     ✓ Learn prompt engineering passively                       │
-│     ✓ Full image library access                                │
-│                                                                 │
-│              [Upgrade to Pro — $9/month]                        │
-│                                                                 │
-│     [Preview: blurred image with watermark]                     │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### Implementation Files
-
-| File                                                    | Purpose                       |
-| ------------------------------------------------------- | ----------------------------- |
-| `src/lib/gallery/rotation-engine.ts`                    | Playlist + pointer management |
-| `src/lib/gallery/theme-engine.ts`                       | CitySnapshot builder          |
-| `src/lib/gallery/prompt-builder.ts`                     | Scene Brief → 4 variants      |
-| `src/lib/gallery/market-mood-engine.ts`                 | Live mood detection           |
-| `src/lib/gallery/generator.ts`                          | DALL·E API + fallback         |
-| `src/lib/gallery/storage.ts`                            | R2 + database                 |
-| `src/components/gallery/gallery-toggle.tsx`             | Providers/Gallery switcher    |
-| `src/components/gallery/gallery-slideshow.tsx`          | Image display + crossfade     |
-| `src/components/providers/provider-filter-selector.tsx` | Pro selector dropdown         |
-
-#### Implementation Timeline
-
-| Phase   | Duration  | Focus                                               |
-| ------- | --------- | --------------------------------------------------- |
-| Phase 1 | 2-3 weeks | MVP: Rotation → Theme → Prompt → Generate → Display |
-| Phase 2 | 1 week    | Weather + Market Mood Engine                        |
-| Phase 3 | 1 week    | AI Provider Selector                                |
-| Phase 4 | 1 week    | Library + Polish                                    |
-
-**Total:** ~5-6 weeks
-
-#### Security Considerations
-
-- API keys (OPENAI, VISUAL_CROSSING) server-side only
-- Rate limiting on all public endpoints
-- Zod validation on all inputs
-- DALL·E content safety filter always enabled
-- No real people in prompts (safe city anchors only)
+- Removes all UI except image and context bar
+- 2-second crossfade between images
+- Press Escape or click to exit
+- Designed for ambient/passive viewing
 
 Rules:
 
@@ -1438,6 +1348,9 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **29 Jan 2026:** **FX PICKER REGIONAL FULLSCREEN REDESIGN (v2.0.0)** — Complete rewrite of §5.5 FX Picker UI. Implemented fullscreen regional accordion (matches Exchange Picker UX). 4 regions based on BASE currency: Americas (🌎), Europe (🏰), Asia Pacific (🌏), Middle East & Africa (🌍). Features: dual SVG flags per pair (base+quote), sticky selection tray, progress bar (0-16), search across all regions, category badges (MAJOR/CROSS/EMERGING). Files: `fx-picker.tsx` v2.0.0, `fx-regions.ts` v1.0.0 (100+ currency mappings), `fx-picker-helpers.ts` v1.0.0. Updated §5.10 to reflect fullscreen picker modes. Trigger button: emerald-sky gradient with currency exchange icon. Note: MEA region shows fewer pairs because fx-pairs.json has limited BASE currency entries for that region.
+- **29 Jan 2026:** **EXCHANGE PICKER SCROLL FIX (v2.5.0)** — Fixed large screen scroll behavior in Exchange Picker. Now uses `overflow-y-auto` on all screen sizes with `max-h-[400px] lg:max-h-none`. Removed `lg:overflow-visible` which broke scrolling entirely. All continents closed by default. Updated §5.3 with current implementation details.
+- **29 Jan 2026:** **PRO PROMAGEN CONFIG PAGE FULLSCREEN PICKERS (v2.6.0)** — Updated §5.10 to reflect fullscreen picker mode. When FX or Exchange picker is triggered, entire centre panel becomes the picker (no headers, no badges, no table). State managed via `fullscreenPickerMode: 'none' | 'exchange' | 'fx'`. Files updated: `pro-promagen-client.tsx` v2.6.0, `comparison-table.tsx` v2.4.0.
 - **13 Jan 2026:** **STOCK INDEX DATA ON EXCHANGE CARDS** — Added "Stock index data" to §2.1 free features list. Each exchange card now displays its benchmark index (e.g., Nikkei 225, S&P 500) with live price, day change, and percent change. Data sourced from Marketstack API (separate budget from TwelveData). Index row always visible on card — shows index name immediately (from catalog), price shows skeleton until API data arrives.
 - **10 Jan 2026:** **FX DATA SSOT CONSOLIDATION** — Merged `fx.pairs.json` (defaults, country codes, longitude) and `pairs.json` (catalog metadata, demo prices) into single unified `fx-pairs.json`. Now only ONE file to maintain for FX data. Updated §5.5 catalog reference (102 pairs), §5.10 demo data source. Minimum count changed from 6 to 0 (allows "start fresh" workflow).
 - **9 Jan 2026:** **WORLDPROMPT LIVE BACKGROUND** — Added §5.11 WorldPrompt Live Background (Pro Promagen exclusive). Homepage background becomes AI-generated scene derived from WorldPrompt data (weather, time, market status, FX mood). Includes context bar, fullscreen mode, 2-second crossfade transitions. Cost-controlled with 24h cache, ~48 images/day max. Added worldprompt-creative-engine.md Part 13 to §7 authority references.

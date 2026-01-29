@@ -1,22 +1,40 @@
 // src/app/providers/[id]/page.tsx
-//
-// Provider prompt builder page.
+// ============================================================================
+// PROVIDER PROMPT BUILDER PAGE (v2.0.0)
+// ============================================================================
 // When a user clicks a provider row in the Leaderboard, they navigate here
 // to craft prompts before launching into the AI provider platform.
 //
-// Updated: 27 Jan 2026 - Added prompt_builder_open tracking via ProviderPageTracker
+// v2.0.0 CHANGES:
+// - Added Engine Bay and Mission Control panels (same as homepage)
+// - Switched from DEMO_EXCHANGE_WEATHER to live getWeatherIndex()
+// - Added force-dynamic for fresh weather data on each request
+// - Added isStudioSubPage=true for 4-button Mission Control layout
+// - Passes providers, weatherIndex, showEngineBay, showMissionControl to HomepageGrid
+// - Exchange rails now have live weather data
+//
+// v1.0.0:
+// - Added prompt_builder_open tracking via ProviderPageTracker
+//
 // Authority: docs/authority/prompt-builder-page.md, docs/authority/index-rating.md
+// Security: 10/10 — Type-safe, server-side data fetching
+// Existing features preserved: Yes
+// ============================================================================
 
 import React from 'react';
 import type { Metadata } from 'next';
+
+// Force dynamic rendering - provider pages need live weather data
+export const dynamic = 'force-dynamic';
 
 import ExchangeList from '@/components/ribbon/exchange-list';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ProviderWorkspace from '@/components/providers/provider-workspace';
 import { ProviderPageTracker } from '@/components/providers/provider-page-tracker';
 import { getProviders } from '@/lib/providers/api';
-import { getRailsForHomepage } from '@/lib/exchange-order';
-import { DEMO_EXCHANGE_WEATHER, type ExchangeWeather } from '@/lib/weather/exchange-weather';
+import { getHomepageExchanges } from '@/lib/exchange-order';
+import { getWeatherIndex } from '@/lib/weather/fetch-weather';
+import { getRailsRelative, GREENWICH } from '@/lib/location';
 import type { Provider } from '@/types/providers';
 
 type Params = { id: string };
@@ -94,25 +112,27 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 export default async function ProviderPage({ params }: { params: Promise<Params> }): Promise<JSX.Element> {
   const { id } = await params;
 
-  const providers = getProviders();
+  // Parallel data fetching for optimal performance
+  const [providers, allExchanges, weatherIndex] = await Promise.all([
+    Promise.resolve(getProviders()),
+    Promise.resolve(getHomepageExchanges()),
+    getWeatherIndex(), // Live weather from gateway
+  ]);
+
   const provider: Provider | undefined = providers.find((p) => p.id === id);
 
-  const { left, right } = getRailsForHomepage();
-
-  // Build weather index for exchange cards
-  const weatherIndex = new Map<string, ExchangeWeather>();
-  for (const entry of DEMO_EXCHANGE_WEATHER) {
-    weatherIndex.set(entry.exchange, entry);
-  }
+  // Order exchanges relative to Greenwich (server-side, no user location)
+  const { left, right } = getRailsRelative(allExchanges, GREENWICH);
 
   const providerName = provider?.name ?? id;
 
-  // Left rail content: Eastern exchanges (cards only, wrapper handled by HomepageGrid)
+  // Left rail content: Eastern exchanges with live weather
   const leftExchanges = (
     <ExchangeList
       exchanges={left}
       weatherByExchange={weatherIndex}
       emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
+      side="left"
     />
   );
 
@@ -126,12 +146,13 @@ export default async function ProviderPage({ params }: { params: Promise<Params>
     <ProviderNotFound id={id} />
   );
 
-  // Right rail content: Western exchanges (cards only, wrapper handled by HomepageGrid)
+  // Right rail content: Western exchanges with live weather
   const rightExchanges = (
     <ExchangeList
       exchanges={right}
       weatherByExchange={weatherIndex}
       emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
+      side="right"
     />
   );
 
@@ -142,6 +163,16 @@ export default async function ProviderPage({ params }: { params: Promise<Params>
       centre={centreContent}
       rightContent={rightExchanges}
       showFinanceRibbon
+      // ========================================================================
+      // ENGINE BAY + MISSION CONTROL — Same as homepage
+      // ========================================================================
+      providers={providers}
+      showEngineBay
+      showMissionControl
+      weatherIndex={weatherIndex}
+      exchanges={allExchanges}
+      // 4-button layout: Home | Studio | Pro | Sign in
+      isStudioSubPage
     />
   );
 }
