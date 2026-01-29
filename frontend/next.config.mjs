@@ -37,8 +37,7 @@ const nextConfig = {
   },
 
   // NOTE: ESLint config removed - Next.js 16 no longer supports `eslint` key.
-  // ESLint is now configured via eslint.config.mjs and run separately via Husky + GitHub Actions.
-  // To skip ESLint during build, use: NEXT_LINT_SKIP=1 or run lint separately.
+  // ESLint runs via Husky + GitHub Actions. To skip during build use: next build --no-lint
 
   // Minor perf: keep this small and focused.
   experimental: {

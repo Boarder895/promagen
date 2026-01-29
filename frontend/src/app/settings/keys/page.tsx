@@ -5,7 +5,8 @@ type HealthBody = { status?: unknown } & Record<string, unknown>;
 
 export default async function KeysPage() {
   // Build absolute origin for server-side fetch
-  const h = headers();
+  // Next.js 15+ requires await on headers()
+  const h = await headers();
   const proto = h.get("x-forwarded-proto") ?? "http";
   const host = h.get("host") ?? "localhost:3000";
   const origin = `${proto}://${host}`;
@@ -17,17 +18,10 @@ export default async function KeysPage() {
 
   return (
     <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <h1>Settings ? Keys</h1>
+      <h1>Settings → Keys</h1>
       <p>
-        API health: {res.status} ({res.statusText}) ? {status}
+        API health: {res.status} ({res.statusText}) → {status}
       </p>
     </main>
   );
 }
-
-
-
-
-
-
-

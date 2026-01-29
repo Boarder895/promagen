@@ -6,7 +6,7 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "strict": true,
@@ -49,7 +49,8 @@
     "src",
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    "tests"
+    "tests",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

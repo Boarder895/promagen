@@ -3,10 +3,10 @@
 import { ImageResponse } from "next/og";
 
 // Run this only on the edge runtime (what @vercel/og expects)
-export const runtime = "edge" as const;
+export const runtime = "edge";
 
 // Tell Next this route is fully dynamic – do NOT prerender at build.
-export const dynamic = "force-dynamic" as const;
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 // OG metadata
