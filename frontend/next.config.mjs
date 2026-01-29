@@ -36,12 +36,9 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
-  // We run ESLint via Husky + GitHub Actions.
-  // Skip Next.js' built-in lint during `next build` to avoid
-  // incompatibility with ESLint v9.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // NOTE: ESLint config removed - Next.js 16 no longer supports `eslint` key.
+  // ESLint is now configured via eslint.config.mjs and run separately via Husky + GitHub Actions.
+  // To skip ESLint during build, use: NEXT_LINT_SKIP=1 or run lint separately.
 
   // Minor perf: keep this small and focused.
   experimental: {
