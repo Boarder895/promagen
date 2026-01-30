@@ -14,6 +14,7 @@ import React, {
   useRef,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react';
 import type { Exchange } from '@/data/exchanges/types';
@@ -98,9 +99,16 @@ export function MarketPulseProvider({
     setDisplayedProviderIds((prev) => prev.filter((id) => id !== providerId));
   }, []);
 
+  // Memoize filtered exchanges to prevent infinite re-renders
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const filteredExchanges = useMemo(
+    () => exchanges.filter((e) => selectedExchangeIds.includes(e.id)),
+    [exchanges, selectedExchangeIds.join(',')]
+  );
+
   // Market Pulse v2.0 hook - detects ±1 min around opens/closes
   const { pulseContexts, activeExchangeIds } = useMarketPulse({
-    exchanges: exchanges.filter((e) => selectedExchangeIds.includes(e.id)),
+    exchanges: filteredExchanges,
   });
 
   const triggerPulse = useCallback((_exchangeId: string, _transition: 'opening' | 'closing') => {

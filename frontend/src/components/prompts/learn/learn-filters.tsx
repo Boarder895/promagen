@@ -91,12 +91,12 @@ export function LearnFilters({
 
   // Selected platform name for the combobox
   const selectedPlatformName = selectedPlatformId
-    ? platformIdToName.get(selectedPlatformId) ?? null
+    ? (platformIdToName.get(selectedPlatformId) ?? null)
     : null;
 
   // Get display name for selected platform (with fallback)
   const selectedPlatformDisplayName = selectedPlatformId
-    ? platformIdToName.get(selectedPlatformId) ?? 'Platform'
+    ? (platformIdToName.get(selectedPlatformId) ?? 'Platform')
     : null;
 
   // ============================================================================
@@ -189,7 +189,12 @@ export function LearnFilters({
             href="/studio/explore"
             className="inline-flex items-center justify-center gap-2 rounded-full border border-sky-400/50 bg-gradient-to-r from-sky-400/20 via-emerald-300/20 to-indigo-400/20 px-4 py-1.5 text-sm font-medium text-sky-100 shadow-sm transition-all hover:from-sky-400/30 hover:via-emerald-300/30 hover:to-indigo-400/30 hover:border-sky-300 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80 cursor-pointer no-underline"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              className="w-4 h-4 text-sky-100"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -197,7 +202,7 @@ export function LearnFilters({
                 d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
               />
             </svg>
-            Explore Styles
+            <span className="text-sky-100">Explore Styles</span>
           </a>
 
           {/* Build with Platform Button - Only when platform selected */}
@@ -206,7 +211,12 @@ export function LearnFilters({
               href={`/providers/${selectedPlatformId}`}
               className="inline-flex items-center justify-center gap-2 rounded-full border border-sky-400/50 bg-gradient-to-r from-sky-400/20 via-emerald-300/20 to-indigo-400/20 px-4 py-1.5 text-sm font-medium text-sky-100 shadow-sm transition-all hover:from-sky-400/30 hover:via-emerald-300/30 hover:to-indigo-400/30 hover:border-sky-300 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80 cursor-pointer no-underline"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="w-4 h-4 text-sky-100"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -214,8 +224,13 @@ export function LearnFilters({
                   d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
                 />
               </svg>
-              Build with {selectedPlatformDisplayName}
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <span className="text-sky-100">Build with {selectedPlatformDisplayName}</span>
+              <svg
+                className="w-3 h-3 text-sky-100"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

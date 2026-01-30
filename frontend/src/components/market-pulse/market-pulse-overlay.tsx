@@ -10,7 +10,7 @@
  * Triggers during market open/close events (±1 minute window).
  */
 
-import { useEffect, useState, useCallback, useRef, type RefObject } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo, type RefObject } from 'react';
 import type { ExchangePulseContext } from '@/hooks/use-market-pulse';
 import { 
   getConnectionsForExchange, 
@@ -72,10 +72,18 @@ export function MarketPulseOverlay({
 
   const isActive = activeExchangeIds.length > 0;
 
+  // Stabilize activeExchangeIds to prevent infinite re-renders
+  // Only recreate when the actual IDs change, not the array reference
+  const stableExchangeIds = useMemo(
+    () => activeExchangeIds,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeExchangeIds.join(',')]
+  );
+
   // Build connections list from active exchanges with colors
   const activeConnections = useCallback((): Array<CityConnection & { color: string }> => {
     const connections: Array<CityConnection & { color: string }> = [];
-    for (const exchangeId of activeExchangeIds) {
+    for (const exchangeId of stableExchangeIds) {
       const exchangeConnections = getConnectionsForExchange(exchangeId);
       for (const conn of exchangeConnections) {
         const color = CONTINENT_COLORS[conn.continent]?.primary ?? '#3b82f6';
@@ -83,7 +91,7 @@ export function MarketPulseOverlay({
       }
     }
     return connections;
-  }, [activeExchangeIds]);
+  }, [stableExchangeIds]);
 
   // Update element positions
   const updatePositions = useCallback(() => {

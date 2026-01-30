@@ -195,13 +195,19 @@ export default function HomepageGrid({
   const pathname = usePathname();
   const isHomepage = pathname === '/';
 
-  const { activeExchangeIds, pulseContexts } = useMarketPulse({
-    exchanges: exchanges as Exchange[],
-    onBurst: (context) => {
+  // Memoize onBurst to prevent infinite re-renders in useMarketPulse
+  const handleMarketBurst = useCallback(
+    (context: import('@/hooks/use-market-pulse').ExchangePulseContext) => {
       if (process.env.NODE_ENV === 'development') {
         console.debug('[market-pulse] Event:', context);
       }
     },
+    [],
+  );
+
+  const { activeExchangeIds, pulseContexts } = useMarketPulse({
+    exchanges: exchanges as Exchange[],
+    onBurst: handleMarketBurst,
   });
 
   // Selected exchanges derived from active ones for now
