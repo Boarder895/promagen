@@ -100,11 +100,12 @@ export function MarketPulseProvider({
   }, []);
 
   // Memoize filtered exchanges to prevent infinite re-renders
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const filteredExchanges = useMemo(
-    () => exchanges.filter((e) => selectedExchangeIds.includes(e.id)),
-    [exchanges, selectedExchangeIds.join(',')]
-  );
+  // Use stable string key derived from array contents (avoids reference comparison issues)
+  const selectedIdsKey = selectedExchangeIds.join(',');
+  const filteredExchanges = useMemo(() => {
+    const idsSet = new Set(selectedIdsKey.split(',').filter(Boolean));
+    return exchanges.filter((e) => idsSet.has(e.id));
+  }, [exchanges, selectedIdsKey]);
 
   // Market Pulse v2.0 hook - detects ±1 min around opens/closes
   const { pulseContexts, activeExchangeIds } = useMarketPulse({

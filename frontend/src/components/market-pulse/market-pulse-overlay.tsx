@@ -73,11 +73,11 @@ export function MarketPulseOverlay({
   const isActive = activeExchangeIds.length > 0;
 
   // Stabilize activeExchangeIds to prevent infinite re-renders
-  // Only recreate when the actual IDs change, not the array reference
+  // Use stable string key derived from array contents
+  const activeIdsKey = activeExchangeIds.join(',');
   const stableExchangeIds = useMemo(
-    () => activeExchangeIds,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeExchangeIds.join(',')]
+    () => activeIdsKey.split(',').filter(Boolean),
+    [activeIdsKey]
   );
 
   // Build connections list from active exchanges with colors
