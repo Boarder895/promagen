@@ -49,7 +49,7 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { SignInButton, useClerk } from '@clerk/nextjs';
+import { SignInButton, UserButton, useClerk } from '@clerk/nextjs';
 import {
   generateWeatherPrompt,
   getDefaultTier,
@@ -266,13 +266,17 @@ export default function MissionControl({
     }
   }, [mounted, clerk.loaded]);
 
-  // Determine auth button state
+  // Determine auth button state - FIX: Check if user is signed in
   const authState = useMemo(() => {
     if (!mounted) return 'ssr';
-    if (clerk.loaded) return 'ready';
+    if (clerk.loaded) {
+      // Check if user is signed in
+      if (clerk.user || clerk.session) return 'signed-in';
+      return 'ready'; // Loaded but not signed in
+    }
     if (timedOut) return 'timeout';
     return 'loading';
-  }, [mounted, clerk.loaded, timedOut]);
+  }, [mounted, clerk.loaded, clerk.user, clerk.session, timedOut]);
 
   // ══════════════════════════════════════════════════════════════════════════
   // WEATHER & PROMPT LOGIC — Uses same data source as LSE London exchange card
@@ -412,6 +416,24 @@ export default function MissionControl({
             </svg>
             <span className="text-purple-100">Sign in</span>
           </a>
+        );
+
+      case 'signed-in':
+        // User is signed in - show UserButton for sign out
+        return (
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: 'h-8 w-8 ring-2 ring-purple-500/50 hover:ring-purple-400',
+                userButtonPopoverCard: 'bg-slate-900 border border-slate-800',
+                userButtonPopoverActionButton: 'text-slate-300 hover:bg-slate-800',
+                userButtonPopoverActionButtonText: 'text-slate-300',
+                userButtonPopoverActionButtonIcon: 'text-slate-400',
+                userButtonPopoverFooter: 'hidden',
+              },
+            }}
+            afterSignOutUrl="/"
+          />
         );
 
       case 'ready':
