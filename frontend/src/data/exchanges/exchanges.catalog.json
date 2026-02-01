@@ -1,5 +1,1275 @@
 [
   {
+    "id": "b3-sao-paulo",
+    "city": "São Paulo",
+    "exchange": "B3 — Brasil Bolsa Balcão",
+    "country": "Brazil",
+    "iso2": "BR",
+    "tz": "America/Sao_Paulo",
+    "longitude": -46.6333,
+    "latitude": -23.5505,
+    "hoursTemplate": "americas-brazil",
+    "holidaysRef": "b3-sao-paulo",
+    "hemisphere": "SW",
+    "ribbonLabel": "B3 São Paulo",
+    "marketstack": {
+      "defaultBenchmark": "ibovespa",
+      "defaultIndexName": "IBOVESPA",
+      "availableIndices": [
+        {
+          "benchmark": "ibovespa",
+          "indexName": "IBOVESPA"
+        },
+        {
+          "benchmark": "ibc",
+          "indexName": "IBrX 100"
+        }
+      ]
+    },
+    "hoverColor": "#10B981"
+  },
+  {
+    "id": "bcba-buenos-aires",
+    "city": "Buenos Aires",
+    "exchange": "Bolsa de Comercio de Buenos Aires (BCBA)",
+    "country": "Argentina",
+    "iso2": "AR",
+    "tz": "America/Argentina/Buenos_Aires",
+    "longitude": -58.3816,
+    "latitude": -34.6037,
+    "hoursTemplate": "latam-argentina",
+    "holidaysRef": "bcba-buenos-aires",
+    "hemisphere": "SW",
+    "marketstack": {
+      "defaultBenchmark": "merval",
+      "defaultIndexName": "MERVAL",
+      "availableIndices": [
+        {
+          "benchmark": "merval",
+          "indexName": "MERVAL"
+        }
+      ]
+    },
+    "hoverColor": "#F97316"
+  },
+  {
+    "id": "bist-istanbul",
+    "city": "Istanbul",
+    "exchange": "Borsa Istanbul (BIST)",
+    "country": "Turkey",
+    "iso2": "TR",
+    "tz": "Europe/Istanbul",
+    "longitude": 28.9784,
+    "latitude": 41.0082,
+    "hoursTemplate": "europe-turkey",
+    "holidaysRef": "bist-istanbul",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "bist_100",
+      "defaultIndexName": "BIST 100",
+      "availableIndices": [
+        {
+          "benchmark": "bist_100",
+          "indexName": "BIST 100"
+        }
+      ]
+    },
+    "hoverColor": "#F43F5E"
+  },
+  {
+    "id": "bme-madrid",
+    "city": "Madrid",
+    "exchange": "BME - Bolsas y Mercados Españoles (BMEX)",
+    "country": "Spain",
+    "iso2": "ES",
+    "tz": "Europe/Madrid",
+    "longitude": -3.7038,
+    "latitude": 40.4168,
+    "hoursTemplate": "europe-spain",
+    "holidaysRef": "bme-madrid",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "es35",
+      "defaultIndexName": "IBEX 35",
+      "availableIndices": [
+        {
+          "benchmark": "es35",
+          "indexName": "IBEX 35"
+        },
+        {
+          "benchmark": "eu350",
+          "indexName": "Euro Stoxx 350"
+        },
+        {
+          "benchmark": "euro_stoxx_banks",
+          "indexName": "Euro Stoxx Banks"
+        }
+      ]
+    },
+    "hoverColor": "#FCD34D"
+  },
+  {
+    "id": "borsa-italiana-milan",
+    "city": "Milan",
+    "exchange": "Borsa Italiana (Milan)",
+    "country": "Italy",
+    "iso2": "IT",
+    "tz": "Europe/Rome",
+    "longitude": 9.19,
+    "latitude": 45.4642,
+    "hoursTemplate": "europe-italy",
+    "holidaysRef": "borsa-italiana-milan",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "it40",
+      "defaultIndexName": "FTSE MIB 40",
+      "availableIndices": [
+        {
+          "benchmark": "it40",
+          "indexName": "FTSE MIB 40"
+        },
+        {
+          "benchmark": "eu350",
+          "indexName": "Euro Stoxx 350"
+        },
+        {
+          "benchmark": "euro_stoxx_banks",
+          "indexName": "Euro Stoxx Banks"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "bse-mumbai",
+    "city": "Mumbai",
+    "exchange": "Bombay Stock Exchange (BSE)",
+    "country": "India",
+    "iso2": "IN",
+    "tz": "Asia/Kolkata",
+    "longitude": 72.8777,
+    "latitude": 19.076,
+    "hoursTemplate": "asia-india",
+    "holidaysRef": "bse-mumbai",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "sensex",
+      "defaultIndexName": "Sensex",
+      "availableIndices": [
+        {
+          "benchmark": "sensex",
+          "indexName": "Sensex"
+        }
+      ]
+    },
+    "hoverColor": "#FB7185"
+  },
+  {
+    "id": "egx-cairo",
+    "city": "Cairo",
+    "exchange": "Egyptian Exchange (EGX / XCAI)",
+    "country": "Egypt",
+    "iso2": "EG",
+    "tz": "Africa/Cairo",
+    "longitude": 31.2357,
+    "latitude": 30.0444,
+    "hoursTemplate": "africa-standard",
+    "holidaysRef": "egx-cairo",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "egx_30",
+      "defaultIndexName": "EGX 30",
+      "availableIndices": [
+        {
+          "benchmark": "egx_30",
+          "indexName": "EGX 30"
+        }
+      ]
+    },
+    "hoverColor": "#F59E0B"
+  },
+  {
+    "id": "euronext-amsterdam",
+    "city": "Amsterdam",
+    "exchange": "Euronext Amsterdam",
+    "country": "Netherlands",
+    "iso2": "NL",
+    "tz": "Europe/Amsterdam",
+    "longitude": 4.9041,
+    "latitude": 52.3676,
+    "hoursTemplate": "europe-euronext",
+    "holidaysRef": "euronext-amsterdam",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "nl25",
+      "defaultIndexName": "AEX 25",
+      "availableIndices": [
+        {
+          "benchmark": "nl25",
+          "indexName": "AEX 25"
+        },
+        {
+          "benchmark": "eu50",
+          "indexName": "Euro Stoxx 50"
+        },
+        {
+          "benchmark": "eu100",
+          "indexName": "Euro Stoxx 100"
+        },
+        {
+          "benchmark": "eu600",
+          "indexName": "STOXX Europe 600"
+        },
+        {
+          "benchmark": "eu350",
+          "indexName": "Euro Stoxx 350"
+        },
+        {
+          "benchmark": "euro_stoxx_banks",
+          "indexName": "Euro Stoxx Banks"
+        }
+      ]
+    },
+    "hoverColor": "#34D399"
+  },
+  {
+    "id": "euronext-brussels",
+    "city": "Brussels",
+    "exchange": "Euronext Brussels",
+    "country": "Belgium",
+    "iso2": "BE",
+    "tz": "Europe/Brussels",
+    "longitude": 4.3517,
+    "latitude": 50.8503,
+    "hoursTemplate": "europe-euronext",
+    "holidaysRef": "euronext-brussels",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "be20",
+      "defaultIndexName": "BEL 20",
+      "availableIndices": [
+        {
+          "benchmark": "be20",
+          "indexName": "BEL 20"
+        },
+        {
+          "benchmark": "eu50",
+          "indexName": "Euro Stoxx 50"
+        },
+        {
+          "benchmark": "eu100",
+          "indexName": "Euro Stoxx 100"
+        },
+        {
+          "benchmark": "eu600",
+          "indexName": "STOXX Europe 600"
+        },
+        {
+          "benchmark": "eu350",
+          "indexName": "Euro Stoxx 350"
+        },
+        {
+          "benchmark": "euro_stoxx_banks",
+          "indexName": "Euro Stoxx Banks"
+        }
+      ]
+    },
+    "hoverColor": "#22C55E"
+  },
+  {
+    "id": "euronext-lisbon",
+    "city": "Lisbon",
+    "exchange": "Euronext Lisbon",
+    "country": "Portugal",
+    "iso2": "PT",
+    "tz": "Europe/Lisbon",
+    "longitude": -9.1393,
+    "latitude": 38.7223,
+    "hoursTemplate": "europe-euronext",
+    "holidaysRef": "euronext-lisbon",
+    "hemisphere": "NW",
+    "marketstack": {
+      "defaultBenchmark": "psi_20",
+      "defaultIndexName": "PSI 20",
+      "availableIndices": [
+        {
+          "benchmark": "psi_20",
+          "indexName": "PSI 20"
+        },
+        {
+          "benchmark": "psi",
+          "indexName": "PSI General"
+        },
+        {
+          "benchmark": "psi_geral",
+          "indexName": "PSI Geral"
+        }
+      ]
+    },
+    "hoverColor": "#84CC16"
+  },
+  {
+    "id": "euronext-paris",
+    "city": "Paris",
+    "exchange": "Euronext Paris",
+    "country": "France",
+    "iso2": "FR",
+    "tz": "Europe/Paris",
+    "longitude": 2.3522,
+    "latitude": 48.8566,
+    "hoursTemplate": "europe-euronext",
+    "holidaysRef": "euronext-paris",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "fr40",
+      "defaultIndexName": "CAC 40",
+      "availableIndices": [
+        {
+          "benchmark": "fr40",
+          "indexName": "CAC 40"
+        },
+        {
+          "benchmark": "eu50",
+          "indexName": "Euro Stoxx 50"
+        },
+        {
+          "benchmark": "eu100",
+          "indexName": "Euro Stoxx 100"
+        },
+        {
+          "benchmark": "eu600",
+          "indexName": "STOXX Europe 600"
+        },
+        {
+          "benchmark": "eu350",
+          "indexName": "Euro Stoxx 350"
+        },
+        {
+          "benchmark": "euro_stoxx_banks",
+          "indexName": "Euro Stoxx Banks"
+        }
+      ]
+    },
+    "hoverColor": "#16A34A"
+  },
+  {
+    "id": "hkex-hong-kong",
+    "city": "Hong Kong",
+    "exchange": "Hong Kong Exchanges & Clearing (HKEX)",
+    "country": "Hong Kong",
+    "iso2": "HK",
+    "tz": "Asia/Hong_Kong",
+    "longitude": 114.1694,
+    "latitude": 22.3193,
+    "hoursTemplate": "asia-hk",
+    "holidaysRef": "hkex-hong-kong",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "hk50",
+      "defaultIndexName": "Hang Seng",
+      "availableIndices": [
+        {
+          "benchmark": "hk50",
+          "indexName": "Hang Seng"
+        }
+      ]
+    },
+    "hoverColor": "#DC2626",
+    "ribbonLabel": "HKEX"
+  },
+  {
+    "id": "idx-jakarta",
+    "city": "Jakarta",
+    "exchange": "Indonesia Stock Exchange (IDX)",
+    "country": "Indonesia",
+    "iso2": "ID",
+    "tz": "Asia/Jakarta",
+    "longitude": 106.8456,
+    "latitude": -6.2088,
+    "hoursTemplate": "asia-indonesia",
+    "holidaysRef": "idx-jakarta",
+    "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "jci",
+      "defaultIndexName": "JCI",
+      "availableIndices": [
+        {
+          "benchmark": "jci",
+          "indexName": "JCI"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "jse-johannesburg",
+    "city": "Johannesburg",
+    "exchange": "Johannesburg Stock Exchange (JSE)",
+    "country": "South Africa",
+    "iso2": "ZA",
+    "tz": "Africa/Johannesburg",
+    "longitude": 28.0473,
+    "latitude": -26.2041,
+    "hoursTemplate": "africa-south-africa",
+    "holidaysRef": "jse-johannesburg",
+    "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "jse",
+      "defaultIndexName": "JSE All Share",
+      "availableIndices": [
+        {
+          "benchmark": "jse",
+          "indexName": "JSE All Share"
+        },
+        {
+          "benchmark": "sa40",
+          "indexName": "FTSE/JSE Top 40"
+        },
+        {
+          "benchmark": "saall",
+          "indexName": "JSE All Share (Alt)"
+        }
+      ]
+    },
+    "hoverColor": "#EAB308"
+  },
+  {
+    "id": "lse-london",
+    "city": "London",
+    "exchange": "London Stock Exchange (LSE)",
+    "country": "United Kingdom",
+    "iso2": "GB",
+    "tz": "Europe/London",
+    "longitude": -0.1276,
+    "latitude": 51.5074,
+    "hoursTemplate": "europe-uk",
+    "holidaysRef": "lse-london",
+    "hemisphere": "NW",
+    "marketstack": {
+      "defaultBenchmark": "gb100",
+      "defaultIndexName": "FTSE 100",
+      "availableIndices": [
+        {
+          "benchmark": "gb100",
+          "indexName": "FTSE 100"
+        },
+        {
+          "benchmark": "eu600",
+          "indexName": "STOXX Europe 600"
+        }
+      ]
+    },
+    "hoverColor": "#DC2626"
+  },
+  {
+    "id": "misx-moscow",
+    "city": "Moscow",
+    "exchange": "Moscow Exchange (MISX)",
+    "country": "Russia",
+    "iso2": "RU",
+    "tz": "Europe/Moscow",
+    "longitude": 37.6173,
+    "latitude": 55.7558,
+    "hoursTemplate": "europe-russia",
+    "holidaysRef": "misx-moscow",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "moex",
+      "defaultIndexName": "MOEX Russia",
+      "availableIndices": [
+        {
+          "benchmark": "moex",
+          "indexName": "MOEX Russia"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "moex-moscow",
+    "city": "Moscow",
+    "exchange": "Moscow Exchange (MOEX)",
+    "country": "Russia",
+    "iso2": "RU",
+    "tz": "Europe/Moscow",
+    "longitude": 37.6173,
+    "latitude": 55.7558,
+    "hoursTemplate": "europe-russia",
+    "holidaysRef": "moex-moscow",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "moex",
+      "defaultIndexName": "MOEX Russia",
+      "availableIndices": [
+        {
+          "benchmark": "moex",
+          "indexName": "MOEX Russia"
+        }
+      ]
+    },
+    "hoverColor": "#F43F5E"
+  },
+  {
+    "id": "nasdaq-copenhagen",
+    "city": "Copenhagen",
+    "exchange": "Nasdaq Copenhagen",
+    "country": "Denmark",
+    "iso2": "DK",
+    "tz": "Europe/Copenhagen",
+    "longitude": 12.5683,
+    "latitude": 55.6761,
+    "hoursTemplate": "europe-nordic",
+    "holidaysRef": "nasdaq-copenhagen",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "copenhagen",
+      "defaultIndexName": "OMX Copenhagen 20",
+      "availableIndices": [
+        {
+          "benchmark": "copenhagen",
+          "indexName": "OMX Copenhagen 20"
+        }
+      ]
+    },
+    "hoverColor": "#F472B6"
+  },
+  {
+    "id": "nasdaq-helsinki",
+    "city": "Helsinki",
+    "exchange": "Nasdaq Helsinki",
+    "country": "Finland",
+    "iso2": "FI",
+    "tz": "Europe/Helsinki",
+    "longitude": 24.9384,
+    "latitude": 60.1699,
+    "hoursTemplate": "europe-nordic",
+    "holidaysRef": "nasdaq-helsinki",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "helsinki_25",
+      "defaultIndexName": "OMX Helsinki 25",
+      "availableIndices": [
+        {
+          "benchmark": "helsinki_25",
+          "indexName": "OMX Helsinki 25"
+        },
+        {
+          "benchmark": "helsinki",
+          "indexName": "OMX Helsinki"
+        }
+      ]
+    },
+    "hoverColor": "#6366F1"
+  },
+  {
+    "id": "qse-doha",
+    "city": "Doha",
+    "exchange": "Qatar Stock Exchange (QSE)",
+    "country": "Qatar",
+    "iso2": "QA",
+    "tz": "Asia/Qatar",
+    "longitude": 51.5074,
+    "latitude": 25.2854,
+    "hoursTemplate": "gulf-qatar",
+    "holidaysRef": "qse-doha",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "qe",
+      "defaultIndexName": "QE Index",
+      "availableIndices": [
+        {
+          "benchmark": "qe",
+          "indexName": "QE Index"
+        }
+      ]
+    },
+    "hoverColor": "#7C3AED"
+  },
+  {
+    "id": "six-zurich",
+    "city": "Zurich",
+    "exchange": "SIX Swiss Exchange",
+    "country": "Switzerland",
+    "iso2": "CH",
+    "tz": "Europe/Zurich",
+    "longitude": 8.5417,
+    "latitude": 47.3769,
+    "hoursTemplate": "europe-switzerland",
+    "holidaysRef": "six-zurich",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "ch20",
+      "defaultIndexName": "SMI",
+      "availableIndices": [
+        {
+          "benchmark": "ch20",
+          "indexName": "SMI"
+        },
+        {
+          "benchmark": "ch50",
+          "indexName": "SMI Mid"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "sse-santiago",
+    "city": "Santiago",
+    "exchange": "Santiago Stock Exchange",
+    "country": "Chile",
+    "iso2": "CL",
+    "tz": "America/Santiago",
+    "longitude": -70.6693,
+    "latitude": -33.4489,
+    "hoursTemplate": "latam-chile",
+    "holidaysRef": "sse-santiago",
+    "hemisphere": "SW",
+    "marketstack": {
+      "defaultBenchmark": "igpa",
+      "defaultIndexName": "IGPA",
+      "availableIndices": [
+        {
+          "benchmark": "igpa",
+          "indexName": "IGPA"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "sse-shanghai",
+    "city": "Shanghai",
+    "exchange": "Shanghai Stock Exchange (SSE)",
+    "country": "China",
+    "iso2": "CN",
+    "tz": "Asia/Shanghai",
+    "longitude": 121.4737,
+    "latitude": 31.2304,
+    "hoursTemplate": "asia-china",
+    "holidaysRef": "sse-shanghai",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "csi_300",
+      "defaultIndexName": "CSI 300",
+      "availableIndices": [
+        {
+          "benchmark": "csi_300",
+          "indexName": "CSI 300"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "szse-shenzhen",
+    "city": "Shenzhen",
+    "exchange": "Shenzhen Stock Exchange (SZSE)",
+    "country": "China",
+    "iso2": "CN",
+    "tz": "Asia/Shanghai",
+    "longitude": 114.0579,
+    "latitude": 22.5431,
+    "hoursTemplate": "asia-china",
+    "holidaysRef": "szse-shenzhen",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "csi_300",
+      "defaultIndexName": "CSI 300",
+      "availableIndices": [
+        {
+          "benchmark": "csi_300",
+          "indexName": "CSI 300"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "xbah-manama",
+    "city": "Manama",
+    "exchange": "Bahrain Bourse",
+    "country": "Bahrain",
+    "iso2": "BH",
+    "tz": "Asia/Bahrain",
+    "longitude": 50.5832,
+    "latitude": 26.2285,
+    "hoursTemplate": "gulf-bahrain",
+    "holidaysRef": "xbah-manama",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "estirad",
+      "defaultIndexName": "Bahrain All Share",
+      "availableIndices": [
+        {
+          "benchmark": "estirad",
+          "indexName": "Bahrain All Share"
+        },
+        {
+          "benchmark": "bsx",
+          "indexName": "BSX"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "xbel-belgrade",
+    "city": "Belgrade",
+    "exchange": "Belgrade Stock Exchange (BELEX)",
+    "country": "Serbia",
+    "iso2": "RS",
+    "tz": "Europe/Belgrade",
+    "longitude": 20.4489,
+    "latitude": 44.7866,
+    "hoursTemplate": "europe-serbia",
+    "holidaysRef": "xbel-belgrade",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "belex_15",
+      "defaultIndexName": "BELEX 15",
+      "availableIndices": [
+        {
+          "benchmark": "belex_15",
+          "indexName": "BELEX 15"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "xbog-bogota",
+    "city": "Bogota",
+    "exchange": "Bolsa de Valores de Colombia (BVC)",
+    "country": "Colombia",
+    "iso2": "CO",
+    "tz": "America/Bogota",
+    "longitude": -74.0721,
+    "latitude": 4.711,
+    "hoursTemplate": "latam-colombia",
+    "holidaysRef": "xbog-bogota",
+    "hemisphere": "NW",
+    "marketstack": {
+      "defaultBenchmark": "colcap",
+      "defaultIndexName": "COLCAP",
+      "availableIndices": [
+        {
+          "benchmark": "colcap",
+          "indexName": "COLCAP"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
+  },
+  {
+    "id": "xbom-mumbai",
+    "city": "Mumbai",
+    "exchange": "BSE Ltd (Bombay)",
+    "country": "India",
+    "iso2": "IN",
+    "tz": "Asia/Kolkata",
+    "longitude": 72.8777,
+    "latitude": 19.076,
+    "hoursTemplate": "asia-india",
+    "holidaysRef": "xbom-mumbai",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "sensex",
+      "defaultIndexName": "Sensex",
+      "availableIndices": [
+        {
+          "benchmark": "sensex",
+          "indexName": "Sensex"
+        }
+      ]
+    },
+    "hoverColor": "#F97316"
+  },
+  {
+    "id": "xetra-frankfurt",
+    "city": "Frankfurt",
+    "exchange": "Deutsche Börse Xetra",
+    "country": "Germany",
+    "iso2": "DE",
+    "tz": "Europe/Berlin",
+    "longitude": 8.6821,
+    "latitude": 50.1109,
+    "hoursTemplate": "europe-germany",
+    "holidaysRef": "xetra-frankfurt",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "de40",
+      "defaultIndexName": "DAX 40",
+      "availableIndices": [
+        {
+          "benchmark": "de40",
+          "indexName": "DAX 40"
+        },
+        {
+          "benchmark": "mdax",
+          "indexName": "MDAX"
+        },
+        {
+          "benchmark": "sdax",
+          "indexName": "SDAX"
+        },
+        {
+          "benchmark": "de_mid",
+          "indexName": "DAX Mid-Cap"
+        },
+        {
+          "benchmark": "de_small",
+          "indexName": "DAX Small-Cap"
+        },
+        {
+          "benchmark": "eu50",
+          "indexName": "Euro Stoxx 50"
+        },
+        {
+          "benchmark": "eu600",
+          "indexName": "STOXX Europe 600"
+        },
+        {
+          "benchmark": "eu350",
+          "indexName": "Euro Stoxx 350"
+        },
+        {
+          "benchmark": "euro_stoxx_banks",
+          "indexName": "Euro Stoxx Banks"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
+  },
+  {
+    "id": "xfka-fukuoka",
+    "city": "Fukuoka",
+    "exchange": "Fukuoka Stock Exchange",
+    "country": "Japan",
+    "iso2": "JP",
+    "tz": "Asia/Tokyo",
+    "longitude": 130.4017,
+    "latitude": 33.5904,
+    "hoursTemplate": "asia-tokyo",
+    "holidaysRef": "xfka-fukuoka",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "jp225",
+      "defaultIndexName": "Nikkei 225",
+      "availableIndices": [
+        {
+          "benchmark": "jp225",
+          "indexName": "Nikkei 225"
+        },
+        {
+          "benchmark": "jpvix",
+          "indexName": "Japan VIX"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "xfra-frankfurt",
+    "city": "Frankfurt",
+    "exchange": "Deutsche Börse (XFRA)",
+    "country": "Germany",
+    "iso2": "DE",
+    "tz": "Europe/Berlin",
+    "longitude": 8.6821,
+    "latitude": 50.1109,
+    "hoursTemplate": "europe-germany",
+    "holidaysRef": "xfra-frankfurt",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "de40",
+      "defaultIndexName": "DAX 40",
+      "availableIndices": [
+        {
+          "benchmark": "de40",
+          "indexName": "DAX 40"
+        },
+        {
+          "benchmark": "mdax",
+          "indexName": "MDAX"
+        },
+        {
+          "benchmark": "sdax",
+          "indexName": "SDAX"
+        },
+        {
+          "benchmark": "de_mid",
+          "indexName": "DAX Mid-Cap"
+        },
+        {
+          "benchmark": "de_small",
+          "indexName": "DAX Small-Cap"
+        },
+        {
+          "benchmark": "eu50",
+          "indexName": "Euro Stoxx 50"
+        },
+        {
+          "benchmark": "eu600",
+          "indexName": "STOXX Europe 600"
+        },
+        {
+          "benchmark": "eu350",
+          "indexName": "Euro Stoxx 350"
+        },
+        {
+          "benchmark": "euro_stoxx_banks",
+          "indexName": "Euro Stoxx Banks"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
+  },
+  {
+    "id": "xice-reykjavik",
+    "city": "Reykjavik",
+    "exchange": "Nasdaq Iceland (ICEX)",
+    "country": "Iceland",
+    "iso2": "IS",
+    "tz": "Atlantic/Reykjavik",
+    "longitude": -21.8174,
+    "latitude": 64.1466,
+    "hoursTemplate": "europe-iceland",
+    "holidaysRef": "xice-reykjavik",
+    "hemisphere": "NW",
+    "marketstack": {
+      "defaultBenchmark": "icex",
+      "defaultIndexName": "ICEX",
+      "availableIndices": [
+        {
+          "benchmark": "icex",
+          "indexName": "ICEX"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "xlim-lima",
+    "city": "Lima",
+    "exchange": "Bolsa de Valores de Lima (BVL)",
+    "country": "Peru",
+    "iso2": "PE",
+    "tz": "America/Lima",
+    "longitude": -77.0428,
+    "latitude": -12.0464,
+    "hoursTemplate": "latam-peru",
+    "holidaysRef": "xlim-lima",
+    "hemisphere": "SW",
+    "marketstack": {
+      "defaultBenchmark": "peru_general",
+      "defaultIndexName": "S&P/BVL Peru General",
+      "availableIndices": [
+        {
+          "benchmark": "peru_general",
+          "indexName": "S&P/BVL Peru General"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "xmex-mexico-city",
+    "city": "Mexico City",
+    "exchange": "Bolsa Mexicana de Valores (BMV)",
+    "country": "Mexico",
+    "iso2": "MX",
+    "tz": "America/Mexico_City",
+    "longitude": -99.1332,
+    "latitude": 19.4326,
+    "hoursTemplate": "latam-mexico",
+    "holidaysRef": "xmex-mexico-city",
+    "hemisphere": "NW",
+    "marketstack": {
+      "defaultBenchmark": "ipc",
+      "defaultIndexName": "IPC",
+      "availableIndices": [
+        {
+          "benchmark": "ipc",
+          "indexName": "IPC"
+        }
+      ]
+    },
+    "hoverColor": "#10B981"
+  },
+  {
+    "id": "xngo-nagoya",
+    "city": "Nagoya",
+    "exchange": "Nagoya Stock Exchange",
+    "country": "Japan",
+    "iso2": "JP",
+    "tz": "Asia/Tokyo",
+    "longitude": 136.9066,
+    "latitude": 35.1815,
+    "hoursTemplate": "asia-tokyo",
+    "holidaysRef": "xngo-nagoya",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "jp225",
+      "defaultIndexName": "Nikkei 225",
+      "availableIndices": [
+        {
+          "benchmark": "jp225",
+          "indexName": "Nikkei 225"
+        },
+        {
+          "benchmark": "jpvix",
+          "indexName": "Japan VIX"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "xnsa-lagos",
+    "city": "Lagos",
+    "exchange": "Nigerian Stock Exchange (NSE)",
+    "country": "Nigeria",
+    "iso2": "NG",
+    "tz": "Africa/Lagos",
+    "longitude": 3.3792,
+    "latitude": 6.5244,
+    "hoursTemplate": "africa-nigeria",
+    "holidaysRef": "xnsa-lagos",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "nse_all_share",
+      "defaultIndexName": "NSE All-Share",
+      "availableIndices": [
+        {
+          "benchmark": "nse_all_share",
+          "indexName": "NSE All-Share"
+        },
+        {
+          "benchmark": "nse-all_share",
+          "indexName": "NSE All-Share"
+        }
+      ]
+    },
+    "hoverColor": "#10B981"
+  },
+  {
+    "id": "xnse-mumbai",
+    "city": "Mumbai",
+    "exchange": "National Stock Exchange of India (NSE)",
+    "country": "India",
+    "iso2": "IN",
+    "tz": "Asia/Kolkata",
+    "longitude": 72.8777,
+    "latitude": 19.076,
+    "hoursTemplate": "asia-india",
+    "holidaysRef": "xnse-mumbai",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "nifty_50",
+      "defaultIndexName": "NIFTY 50",
+      "availableIndices": [
+        {
+          "benchmark": "nifty_50",
+          "indexName": "NIFTY 50"
+        }
+      ]
+    },
+    "hoverColor": "#F97316"
+  },
+  {
+    "id": "xnze-auckland",
+    "city": "Auckland",
+    "exchange": "New Zealand Exchange (NZX)",
+    "country": "New Zealand",
+    "iso2": "NZ",
+    "tz": "Pacific/Auckland",
+    "longitude": 174.7633,
+    "latitude": -36.8485,
+    "hoursTemplate": "australasia-standard",
+    "holidaysRef": "xnze-auckland",
+    "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "nzx_50",
+      "defaultIndexName": "NZX 50",
+      "availableIndices": [
+        {
+          "benchmark": "nzx_50",
+          "indexName": "NZX 50"
+        }
+      ]
+    },
+    "hoverColor": "#10B981"
+  },
+  {
+    "id": "xosl-oslo",
+    "city": "Oslo",
+    "exchange": "Oslo Børs",
+    "country": "Norway",
+    "iso2": "NO",
+    "tz": "Europe/Oslo",
+    "longitude": 10.7522,
+    "latitude": 59.9139,
+    "hoursTemplate": "europe-nordic",
+    "holidaysRef": "xosl-oslo",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "oslo",
+      "defaultIndexName": "Oslo Børs",
+      "availableIndices": [
+        {
+          "benchmark": "oslo",
+          "indexName": "Oslo Børs"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "xris-riga",
+    "city": "Riga",
+    "exchange": "Nasdaq Riga",
+    "country": "Latvia",
+    "iso2": "LV",
+    "tz": "Europe/Riga",
+    "longitude": 24.1052,
+    "latitude": 56.9496,
+    "hoursTemplate": "europe-baltic",
+    "holidaysRef": "xris-riga",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "riga",
+      "defaultIndexName": "OMX Riga",
+      "availableIndices": [
+        {
+          "benchmark": "riga",
+          "indexName": "OMX Riga"
+        }
+      ]
+    },
+    "hoverColor": "#7C3AED"
+  },
+  {
+    "id": "xsap-sapporo",
+    "city": "Sapporo",
+    "exchange": "Sapporo Securities Exchange",
+    "country": "Japan",
+    "iso2": "JP",
+    "tz": "Asia/Tokyo",
+    "longitude": 141.3545,
+    "latitude": 43.0618,
+    "hoursTemplate": "asia-tokyo",
+    "holidaysRef": "xsap-sapporo",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "jp225",
+      "defaultIndexName": "Nikkei 225",
+      "availableIndices": [
+        {
+          "benchmark": "jp225",
+          "indexName": "Nikkei 225"
+        },
+        {
+          "benchmark": "jpvix",
+          "indexName": "Japan VIX"
+        }
+      ]
+    },
+    "hoverColor": "#60A5FA"
+  },
+  {
+    "id": "xstc-ho-chi-minh-city",
+    "city": "Ho Chi Minh City",
+    "exchange": "Ho Chi Minh Stock Exchange (HOSE)",
+    "country": "Vietnam",
+    "iso2": "VN",
+    "tz": "Asia/Ho_Chi_Minh",
+    "longitude": 106.6297,
+    "latitude": 10.8231,
+    "hoursTemplate": "asia-vietnam",
+    "holidaysRef": "xstc-ho-chi-minh-city",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "hnx",
+      "defaultIndexName": "HNX Index",
+      "availableIndices": [
+        {
+          "benchmark": "hnx",
+          "indexName": "HNX Index"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "xstu-stuttgart",
+    "city": "Stuttgart",
+    "exchange": "Börse Stuttgart",
+    "country": "Germany",
+    "iso2": "DE",
+    "tz": "Europe/Berlin",
+    "longitude": 9.1829,
+    "latitude": 48.7758,
+    "hoursTemplate": "europe-germany",
+    "holidaysRef": "xstu-stuttgart",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "de40",
+      "defaultIndexName": "DAX 40",
+      "availableIndices": [
+        {
+          "benchmark": "de40",
+          "indexName": "DAX 40"
+        },
+        {
+          "benchmark": "mdax",
+          "indexName": "MDAX"
+        },
+        {
+          "benchmark": "sdax",
+          "indexName": "SDAX"
+        },
+        {
+          "benchmark": "eu350",
+          "indexName": "Euro Stoxx 350"
+        },
+        {
+          "benchmark": "euro_stoxx_banks",
+          "indexName": "Euro Stoxx Banks"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
+  },
+  {
+    "id": "xswx-zurich",
+    "city": "Zurich",
+    "exchange": "SIX Swiss Exchange",
+    "country": "Switzerland",
+    "iso2": "CH",
+    "tz": "Europe/Zurich",
+    "longitude": 8.5417,
+    "latitude": 47.3769,
+    "hoursTemplate": "europe-switzerland",
+    "holidaysRef": "six-zurich",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "ch20",
+      "defaultIndexName": "SMI",
+      "availableIndices": [
+        {
+          "benchmark": "ch20",
+          "indexName": "SMI"
+        },
+        {
+          "benchmark": "ch50",
+          "indexName": "SMI Mid"
+        }
+      ]
+    },
+    "hoverColor": "#1E40AF"
+  },
+  {
     "id": "adx-abu-dhabi",
     "city": "Abu Dhabi",
     "exchange": "Abu Dhabi Securities Exchange (ADX)",
@@ -12,8 +1282,14 @@
     "holidaysRef": "adx-abu-dhabi",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "adx_general",
-      "indexName": "ADX General"
+      "defaultBenchmark": "adx_general",
+      "defaultIndexName": "ADX General",
+      "availableIndices": [
+        {
+          "benchmark": "adx_general",
+          "indexName": "ADX General"
+        }
+      ]
     },
     "hoverColor": "#FFB347"
   },
@@ -30,8 +1306,14 @@
     "holidaysRef": "ase-amman",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "ase",
-      "indexName": "ASE General"
+      "defaultBenchmark": "ase",
+      "defaultIndexName": "ASE General",
+      "availableIndices": [
+        {
+          "benchmark": "ase",
+          "indexName": "ASE General"
+        }
+      ]
     },
     "hoverColor": "#D4A574"
   },
@@ -49,8 +1331,26 @@
     "hemisphere": "SE",
     "ribbonLabel": "ASX Sydney",
     "marketstack": {
-      "benchmark": "asx200",
-      "indexName": "ASX 200"
+      "defaultBenchmark": "asx200",
+      "defaultIndexName": "ASX 200",
+      "availableIndices": [
+        {
+          "benchmark": "asx200",
+          "indexName": "ASX 200"
+        },
+        {
+          "benchmark": "asx_all_share",
+          "indexName": "ASX All Share"
+        },
+        {
+          "benchmark": "au50",
+          "indexName": "S&P/ASX 50"
+        },
+        {
+          "benchmark": "australia_all_ordinaries",
+          "indexName": "All Ordinaries"
+        }
+      ]
     },
     "hoverColor": "#10B981"
   },
@@ -67,119 +1367,16 @@
     "holidaysRef": "athex-athens",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "athex",
-      "indexName": "ATHEX Composite"
+      "defaultBenchmark": "athens_general",
+      "defaultIndexName": "Athens General",
+      "availableIndices": [
+        {
+          "benchmark": "athens_general",
+          "indexName": "Athens General"
+        }
+      ]
     },
     "hoverColor": "#60A5FA"
-  },
-  {
-    "id": "b3-sao-paulo",
-    "city": "São Paulo",
-    "exchange": "B3 — Brasil Bolsa Balcão",
-    "country": "Brazil",
-    "iso2": "BR",
-    "tz": "America/Sao_Paulo",
-    "longitude": -46.6333,
-    "latitude": -23.5505,
-    "hoursTemplate": "americas-brazil",
-    "holidaysRef": "b3-sao-paulo",
-    "hemisphere": "SW",
-    "ribbonLabel": "B3 São Paulo",
-    "marketstack": {
-      "benchmark": "ibovespa",
-      "indexName": "Ibovespa"
-    },
-    "hoverColor": "#22C55E"
-  },
-  {
-    "id": "bcba-buenos-aires",
-    "city": "Buenos Aires",
-    "exchange": "Bolsa de Comercio de Buenos Aires (BCBA)",
-    "country": "Argentina",
-    "iso2": "AR",
-    "tz": "America/Argentina/Buenos_Aires",
-    "longitude": -58.3816,
-    "latitude": -34.6037,
-    "hoursTemplate": "latam-argentina",
-    "holidaysRef": "bcba-buenos-aires",
-    "hemisphere": "SW",
-    "marketstack": {
-      "benchmark": "merval",
-      "indexName": "MERVAL"
-    },
-    "hoverColor": "#87CEEB"
-  },
-  {
-    "id": "bist-istanbul",
-    "city": "Istanbul",
-    "exchange": "Borsa Istanbul (BIST)",
-    "country": "Türkiye",
-    "iso2": "TR",
-    "tz": "Europe/Istanbul",
-    "longitude": 28.9784,
-    "latitude": 41.0082,
-    "hoursTemplate": "europe-turkey",
-    "holidaysRef": "bist-istanbul",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "bist_100",
-      "indexName": "BIST 100"
-    },
-    "hoverColor": "#FF6B6B"
-  },
-  {
-    "id": "bme-madrid",
-    "city": "Madrid",
-    "exchange": "BME Spanish Exchanges (Madrid)",
-    "country": "Spain",
-    "iso2": "ES",
-    "tz": "Europe/Madrid",
-    "longitude": -3.7038,
-    "latitude": 40.4168,
-    "hoursTemplate": "europe-spain",
-    "holidaysRef": "bme-madrid",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "ibex_35",
-      "indexName": "IBEX 35"
-    },
-    "hoverColor": "#FCD34D"
-  },
-  {
-    "id": "borsa-italiana-milan",
-    "city": "Milan",
-    "exchange": "Borsa Italiana (Milan)",
-    "country": "Italy",
-    "iso2": "IT",
-    "tz": "Europe/Rome",
-    "longitude": 9.19,
-    "latitude": 45.4642,
-    "hoursTemplate": "europe-italy",
-    "holidaysRef": "borsa-italiana-milan",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "ftse_mib",
-      "indexName": "FTSE MIB"
-    },
-    "hoverColor": "#34D399"
-  },
-  {
-    "id": "bse-mumbai",
-    "city": "Mumbai",
-    "exchange": "Bombay Stock Exchange (BSE)",
-    "country": "India",
-    "iso2": "IN",
-    "tz": "Asia/Kolkata",
-    "longitude": 72.8777,
-    "latitude": 19.076,
-    "hoursTemplate": "asia-india",
-    "holidaysRef": "bse-mumbai",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "sensex",
-      "indexName": "SENSEX"
-    },
-    "hoverColor": "#F97316"
   },
   {
     "id": "budapest-bet",
@@ -194,8 +1391,18 @@
     "holidaysRef": "budapest-bet",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "bux",
-      "indexName": "BUX"
+      "defaultBenchmark": "bux",
+      "defaultIndexName": "BUX",
+      "availableIndices": [
+        {
+          "benchmark": "bux",
+          "indexName": "BUX"
+        },
+        {
+          "benchmark": "bet",
+          "indexName": "BET"
+        }
+      ]
     },
     "hoverColor": "#A78BFA"
   },
@@ -212,29 +1419,16 @@
     "holidaysRef": "bursa-kuala-lumpur",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "klci",
-      "indexName": "KLCI"
+      "defaultBenchmark": "fklci",
+      "defaultIndexName": "FTSE Bursa KLCI",
+      "availableIndices": [
+        {
+          "benchmark": "fklci",
+          "indexName": "FTSE Bursa KLCI"
+        }
+      ]
     },
     "hoverColor": "#FBBF24"
-  },
-  {
-    "id": "cboe-chicago",
-    "city": "Chicago",
-    "exchange": "Cboe Global Markets",
-    "country": "United States",
-    "iso2": "US",
-    "tz": "America/Chicago",
-    "longitude": -87.6298,
-    "latitude": 41.8781,
-    "hoursTemplate": "americas-us",
-    "holidaysRef": "cboe-chicago",
-    "hemisphere": "NW",
-    "ribbonLabel": "Cboe Chicago",
-    "marketstack": {
-      "benchmark": "djia",
-      "indexName": "Dow Jones"
-    },
-    "hoverColor": "#3B82F6"
   },
   {
     "id": "cse-colombo",
@@ -249,8 +1443,18 @@
     "holidaysRef": "cse-colombo",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "aspi",
-      "indexName": "CSE All Share"
+      "defaultBenchmark": "aspi",
+      "defaultIndexName": "CSE All Share",
+      "availableIndices": [
+        {
+          "benchmark": "aspi",
+          "indexName": "CSE All Share"
+        },
+        {
+          "benchmark": "cse_general",
+          "indexName": "CSE General"
+        }
+      ]
     },
     "hoverColor": "#FB923C"
   },
@@ -268,320 +1472,16 @@
     "hemisphere": "NE",
     "ribbonLabel": "DFM Dubai",
     "marketstack": {
-      "benchmark": "dfm_general",
-      "indexName": "DFM General"
+      "defaultBenchmark": "dfm_general",
+      "defaultIndexName": "DFM General",
+      "availableIndices": [
+        {
+          "benchmark": "dfm_general",
+          "indexName": "DFM General"
+        }
+      ]
     },
     "hoverColor": "#FFD700"
-  },
-  {
-    "id": "egx-cairo",
-    "city": "Cairo",
-    "exchange": "Egyptian Exchange (EGX)",
-    "country": "Egypt",
-    "iso2": "EG",
-    "tz": "Africa/Cairo",
-    "longitude": 31.2357,
-    "latitude": 30.0444,
-    "hoursTemplate": "africa-standard",
-    "holidaysRef": "egx-cairo",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "egx_30",
-      "indexName": "EGX 30"
-    },
-    "hoverColor": "#C4A35A"
-  },
-  {
-    "id": "euronext-amsterdam",
-    "city": "Amsterdam",
-    "exchange": "Euronext Amsterdam",
-    "country": "Netherlands",
-    "iso2": "NL",
-    "tz": "Europe/Amsterdam",
-    "longitude": 4.9041,
-    "latitude": 52.3676,
-    "hoursTemplate": "europe-euronext",
-    "holidaysRef": "euronext-amsterdam",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "aex",
-      "indexName": "AEX"
-    },
-    "hoverColor": "#F472B6"
-  },
-  {
-    "id": "euronext-brussels",
-    "city": "Brussels",
-    "exchange": "Euronext Brussels",
-    "country": "Belgium",
-    "iso2": "BE",
-    "tz": "Europe/Brussels",
-    "longitude": 4.3517,
-    "latitude": 50.8503,
-    "hoursTemplate": "europe-euronext",
-    "holidaysRef": "euronext-brussels",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "bel_20",
-      "indexName": "BEL 20"
-    },
-    "hoverColor": "#818CF8"
-  },
-  {
-    "id": "euronext-lisbon",
-    "city": "Lisbon",
-    "exchange": "Euronext Lisbon",
-    "country": "Portugal",
-    "iso2": "PT",
-    "tz": "Europe/Lisbon",
-    "longitude": -9.1393,
-    "latitude": 38.7223,
-    "hoursTemplate": "europe-euronext",
-    "holidaysRef": "euronext-lisbon",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "psi_20",
-      "indexName": "PSI 20"
-    },
-    "hoverColor": "#2DD4BF"
-  },
-  {
-    "id": "euronext-paris",
-    "city": "Paris",
-    "exchange": "Euronext Paris",
-    "country": "France",
-    "iso2": "FR",
-    "tz": "Europe/Paris",
-    "longitude": 2.3522,
-    "latitude": 48.8566,
-    "hoursTemplate": "europe-euronext",
-    "holidaysRef": "euronext-paris",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "cac_40",
-      "indexName": "CAC 40"
-    },
-    "hoverColor": "#6366F1"
-  },
-  {
-    "id": "gpw-warsaw",
-    "city": "Warsaw",
-    "exchange": "Warsaw Stock Exchange (GPW)",
-    "country": "Poland",
-    "iso2": "PL",
-    "tz": "Europe/Warsaw",
-    "longitude": 21.0122,
-    "latitude": 52.2297,
-    "hoursTemplate": "europe-poland",
-    "holidaysRef": "gpw-warsaw",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "wig_20",
-      "indexName": "WIG 20"
-    },
-    "hoverColor": "#DC2626"
-  },
-  {
-    "id": "hkex-hong-kong",
-    "city": "Hong Kong",
-    "exchange": "Hong Kong Exchanges & Clearing (HKEX)",
-    "country": "Hong Kong",
-    "iso2": "HK",
-    "tz": "Asia/Hong_Kong",
-    "longitude": 114.1694,
-    "latitude": 22.3193,
-    "hoursTemplate": "asia-hk",
-    "holidaysRef": "hkex-hong-kong",
-    "hemisphere": "NE",
-    "ribbonLabel": "HKEX",
-    "marketstack": {
-      "benchmark": "hang_seng",
-      "indexName": "Hang Seng"
-    },
-    "hoverColor": "#FF3B5C"
-  },
-  {
-    "id": "idx-jakarta",
-    "city": "Jakarta",
-    "exchange": "Indonesia Stock Exchange (IDX)",
-    "country": "Indonesia",
-    "iso2": "ID",
-    "tz": "Asia/Jakarta",
-    "longitude": 106.8456,
-    "latitude": -6.2088,
-    "hoursTemplate": "asia-indonesia",
-    "holidaysRef": "idx-jakarta",
-    "hemisphere": "SE",
-    "marketstack": {
-      "benchmark": "idx_composite",
-      "indexName": "IDX Composite"
-    },
-    "hoverColor": "#4ADE80"
-  },
-  {
-    "id": "jse-johannesburg",
-    "city": "Johannesburg",
-    "exchange": "Johannesburg Stock Exchange (JSE)",
-    "country": "South Africa",
-    "iso2": "ZA",
-    "tz": "Africa/Johannesburg",
-    "longitude": 28.0473,
-    "latitude": -26.2041,
-    "hoursTemplate": "africa-standard",
-    "holidaysRef": "jse-johannesburg",
-    "hemisphere": "SE",
-    "ribbonLabel": "JSE",
-    "marketstack": {
-      "benchmark": "jse_all_share",
-      "indexName": "JSE All Share"
-    },
-    "hoverColor": "#F59E0B"
-  },
-  {
-    "id": "krx-seoul",
-    "city": "Seoul",
-    "exchange": "Korea Exchange (KRX)",
-    "country": "South Korea",
-    "iso2": "KR",
-    "tz": "Asia/Seoul",
-    "longitude": 126.978,
-    "latitude": 37.5665,
-    "hoursTemplate": "asia-korea",
-    "holidaysRef": "krx-seoul",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "kospi",
-      "indexName": "KOSPI"
-    },
-    "hoverColor": "#EC4899"
-  },
-  {
-    "id": "lse-london",
-    "city": "London",
-    "exchange": "London Stock Exchange (LSE)",
-    "country": "United Kingdom",
-    "iso2": "GB",
-    "tz": "Europe/London",
-    "longitude": -0.1276,
-    "latitude": 51.5074,
-    "hoursTemplate": "europe-uk",
-    "holidaysRef": "lse-london",
-    "hemisphere": "NE",
-    "ribbonLabel": "LSE London",
-    "marketstack": {
-      "benchmark": "ftse_100",
-      "indexName": "FTSE 100"
-    },
-    "hoverColor": "#8B5CF6"
-  },
-  {
-    "id": "moex-moscow",
-    "city": "Moscow",
-    "exchange": "Moscow Exchange (MOEX)",
-    "country": "Russia",
-    "iso2": "RU",
-    "tz": "Europe/Moscow",
-    "longitude": 37.6173,
-    "latitude": 55.7558,
-    "hoursTemplate": "europe-russia",
-    "holidaysRef": "moex-moscow",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "moex",
-      "indexName": "MOEX"
-    },
-    "hoverColor": "#EF4444"
-  },
-  {
-    "id": "nasdaq-copenhagen",
-    "city": "Copenhagen",
-    "exchange": "Nasdaq Copenhagen",
-    "country": "Denmark",
-    "iso2": "DK",
-    "tz": "Europe/Copenhagen",
-    "longitude": 12.5683,
-    "latitude": 55.6761,
-    "hoursTemplate": "europe-nordic",
-    "holidaysRef": "nasdaq-copenhagen",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "omx_copenhagen_20",
-      "indexName": "OMX Copenhagen"
-    },
-    "hoverColor": "#38BDF8"
-  },
-  {
-    "id": "nasdaq-helsinki",
-    "city": "Helsinki",
-    "exchange": "Nasdaq Helsinki",
-    "country": "Finland",
-    "iso2": "FI",
-    "tz": "Europe/Helsinki",
-    "longitude": 24.9384,
-    "latitude": 60.1699,
-    "hoursTemplate": "europe-nordic",
-    "holidaysRef": "nasdaq-helsinki",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "omx_helsinki_25",
-      "indexName": "OMX Helsinki"
-    },
-    "hoverColor": "#0EA5E9"
-  },
-  {
-    "id": "nasdaq-new-york",
-    "city": "New York",
-    "exchange": "NASDAQ",
-    "country": "United States",
-    "iso2": "US",
-    "tz": "America/New_York",
-    "longitude": -74.006,
-    "latitude": 40.7128,
-    "hoursTemplate": "americas-us",
-    "holidaysRef": "nasdaq-new-york",
-    "hemisphere": "NW",
-    "marketstack": {
-      "benchmark": "nasdaq",
-      "indexName": "NASDAQ"
-    },
-    "hoverColor": "#06B6D4"
-  },
-  {
-    "id": "nasdaq-san-francisco",
-    "city": "San Francisco",
-    "exchange": "Nasdaq Private Market (SF)",
-    "country": "United States",
-    "iso2": "US",
-    "tz": "America/Los_Angeles",
-    "longitude": -122.4194,
-    "latitude": 37.7749,
-    "hoursTemplate": "americas-us",
-    "holidaysRef": "nasdaq-san-francisco",
-    "hemisphere": "NW",
-    "ribbonLabel": "Russell 2000",
-    "marketstack": {
-      "benchmark": "russell_2000",
-      "indexName": "Russell 2000"
-    },
-    "hoverColor": "#22D3EE"
-  },
-  {
-    "id": "nasdaq-stockholm",
-    "city": "Stockholm",
-    "exchange": "Nasdaq Stockholm",
-    "country": "Sweden",
-    "iso2": "SE",
-    "tz": "Europe/Stockholm",
-    "longitude": 18.0686,
-    "latitude": 59.3293,
-    "hoursTemplate": "europe-nordic",
-    "holidaysRef": "nasdaq-stockholm",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "omx_stockholm_30",
-      "indexName": "OMX Stockholm"
-    },
-    "hoverColor": "#14B8A6"
   },
   {
     "id": "nse-mumbai",
@@ -597,28 +1497,16 @@
     "hemisphere": "NE",
     "ribbonLabel": "NSE India",
     "marketstack": {
-      "benchmark": "nifty_50",
-      "indexName": "NIFTY 50"
+      "defaultBenchmark": "nifty_50",
+      "defaultIndexName": "NIFTY 50",
+      "availableIndices": [
+        {
+          "benchmark": "nifty_50",
+          "indexName": "NIFTY 50"
+        }
+      ]
     },
     "hoverColor": "#FF8C00"
-  },
-  {
-    "id": "nyse-new-york",
-    "city": "New York",
-    "exchange": "New York Stock Exchange (NYSE)",
-    "country": "United States",
-    "iso2": "US",
-    "tz": "America/New_York",
-    "longitude": -74.006,
-    "latitude": 40.7128,
-    "hoursTemplate": "americas-us",
-    "holidaysRef": "nyse-new-york",
-    "hemisphere": "NW",
-    "marketstack": {
-      "benchmark": "sp500",
-      "indexName": "S&P 500"
-    },
-    "hoverColor": "#2563EB"
   },
   {
     "id": "nzx-wellington",
@@ -634,8 +1522,14 @@
     "hemisphere": "SE",
     "ribbonLabel": "NZX Wellington",
     "marketstack": {
-      "benchmark": "nzx_50",
-      "indexName": "NZX 50"
+      "defaultBenchmark": "nzx_50",
+      "defaultIndexName": "NZX 50",
+      "availableIndices": [
+        {
+          "benchmark": "nzx_50",
+          "indexName": "NZX 50"
+        }
+      ]
     },
     "hoverColor": "#00FF7F"
   },
@@ -652,174 +1546,16 @@
     "holidaysRef": "pse-manila",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "psei",
-      "indexName": "PSEi"
+      "defaultBenchmark": "psei",
+      "defaultIndexName": "PSEi",
+      "availableIndices": [
+        {
+          "benchmark": "psei",
+          "indexName": "PSEi"
+        }
+      ]
     },
     "hoverColor": "#FF7F50"
-  },
-  {
-    "id": "qse-doha",
-    "city": "Doha",
-    "exchange": "Qatar Stock Exchange (QSE)",
-    "country": "Qatar",
-    "iso2": "QA",
-    "tz": "Asia/Qatar",
-    "longitude": 51.531,
-    "latitude": 25.2854,
-    "hoursTemplate": "gulf-qatar",
-    "holidaysRef": "qse-doha",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "qe_general",
-      "indexName": "QE General"
-    },
-    "hoverColor": "#8B008B"
-  },
-  {
-    "id": "set-bangkok",
-    "city": "Bangkok",
-    "exchange": "Stock Exchange of Thailand (SET)",
-    "country": "Thailand",
-    "iso2": "TH",
-    "tz": "Asia/Bangkok",
-    "longitude": 100.5018,
-    "latitude": 13.7563,
-    "hoursTemplate": "asia-thailand",
-    "holidaysRef": "set-bangkok",
-    "hemisphere": "NE",
-    "ribbonLabel": "SET Bangkok",
-    "marketstack": {
-      "benchmark": "set",
-      "indexName": "SET"
-    },
-    "hoverColor": "#D946EF"
-  },
-  {
-    "id": "sgx-singapore",
-    "city": "Singapore",
-    "exchange": "Singapore Exchange (SGX)",
-    "country": "Singapore",
-    "iso2": "SG",
-    "tz": "Asia/Singapore",
-    "longitude": 103.8198,
-    "latitude": 1.3521,
-    "hoursTemplate": "asia-singapore",
-    "holidaysRef": "sgx-singapore",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "sti",
-      "indexName": "Straits Times"
-    },
-    "hoverColor": "#E879F9"
-  },
-  {
-    "id": "six-zurich",
-    "city": "Zurich",
-    "exchange": "SIX Swiss Exchange",
-    "country": "Switzerland",
-    "iso2": "CH",
-    "tz": "Europe/Zurich",
-    "longitude": 8.5417,
-    "latitude": 47.3769,
-    "hoursTemplate": "europe-switzerland",
-    "holidaysRef": "six-zurich",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "smi",
-      "indexName": "SMI"
-    },
-    "hoverColor": "#C084FC"
-  },
-  {
-    "id": "sse-santiago",
-    "city": "Santiago",
-    "exchange": "Santiago Stock Exchange",
-    "country": "Chile",
-    "iso2": "CL",
-    "tz": "America/Santiago",
-    "longitude": -70.6693,
-    "latitude": -33.4489,
-    "hoursTemplate": "latam-chile",
-    "holidaysRef": "sse-santiago",
-    "hemisphere": "SW",
-    "marketstack": {
-      "benchmark": "ipsa",
-      "indexName": "IPSA"
-    },
-    "hoverColor": "#00CED1"
-  },
-  {
-    "id": "sse-shanghai",
-    "city": "Shanghai",
-    "exchange": "Shanghai Stock Exchange (SSE)",
-    "country": "China",
-    "iso2": "CN",
-    "tz": "Asia/Shanghai",
-    "longitude": 121.4737,
-    "latitude": 31.2304,
-    "hoursTemplate": "asia-china",
-    "holidaysRef": "sse-shanghai",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "shanghai_composite",
-      "indexName": "SSE Composite"
-    },
-    "hoverColor": "#FF1493"
-  },
-  {
-    "id": "szse-shenzhen",
-    "city": "Shenzhen",
-    "exchange": "Shenzhen Stock Exchange (SZSE)",
-    "country": "China",
-    "iso2": "CN",
-    "tz": "Asia/Shanghai",
-    "longitude": 114.0579,
-    "latitude": 22.5431,
-    "hoursTemplate": "asia-china",
-    "holidaysRef": "szse-shenzhen",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "szse_component",
-      "indexName": "SZSE Component"
-    },
-    "hoverColor": "#FF69B4"
-  },
-  {
-    "id": "tadawul-riyadh",
-    "city": "Riyadh",
-    "exchange": "Saudi Exchange (Tadawul)",
-    "country": "Saudi Arabia",
-    "iso2": "SA",
-    "tz": "Asia/Riyadh",
-    "longitude": 46.6753,
-    "latitude": 24.7136,
-    "hoursTemplate": "gulf-saudi",
-    "holidaysRef": "tadawul-riyadh",
-    "hemisphere": "NE",
-    "ribbonLabel": "Tadawul",
-    "marketstack": {
-      "benchmark": "tadawul",
-      "indexName": "TASI"
-    },
-    "hoverColor": "#DAA520"
-  },
-  {
-    "id": "tase-tel-aviv",
-    "city": "Tel Aviv",
-    "exchange": "Tel Aviv Stock Exchange (TASE)",
-    "country": "Israel",
-    "iso2": "IL",
-    "tz": "Asia/Jerusalem",
-    "longitude": 34.7818,
-    "latitude": 32.0853,
-    "hoursTemplate": "gulf-israel",
-    "holidaysRef": "tase-tel-aviv",
-    "hemisphere": "NE",
-    "marketstack": {
-      "benchmark": "ta_35",
-      "indexName": "TA-35"
-    },
-    "hoverColor": "#00BFFF"
   },
   {
     "id": "tse-tokyo",
@@ -835,10 +1571,704 @@
     "hemisphere": "NE",
     "ribbonLabel": "Tokyo (TSE)",
     "marketstack": {
-      "benchmark": "nikkei_225",
-      "indexName": "Nikkei 225"
+      "defaultBenchmark": "jp225",
+      "defaultIndexName": "Nikkei 225 (Alt)",
+      "availableIndices": [
+        {
+          "benchmark": "jp225",
+          "indexName": "Nikkei 225 (Alt)"
+        },
+        {
+          "benchmark": "jpvix",
+          "indexName": "Japan VIX"
+        }
+      ]
     },
     "hoverColor": "#FF4500"
+  },
+  {
+    "id": "wbag-vienna",
+    "city": "Vienna",
+    "exchange": "Vienna Stock Exchange (Wiener Börse)",
+    "country": "Austria",
+    "iso2": "AT",
+    "tz": "Europe/Vienna",
+    "longitude": 16.3738,
+    "latitude": 48.2082,
+    "hoursTemplate": "europe-austria",
+    "holidaysRef": "wbag-vienna",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "atx",
+      "defaultIndexName": "ATX",
+      "availableIndices": [
+        {
+          "benchmark": "atx",
+          "indexName": "ATX"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "ise-dublin",
+    "city": "Dublin",
+    "exchange": "Irish Stock Exchange (Euronext Dublin)",
+    "country": "Ireland",
+    "iso2": "IE",
+    "tz": "Europe/Dublin",
+    "longitude": -6.2603,
+    "latitude": 53.3498,
+    "hoursTemplate": "europe-ireland",
+    "holidaysRef": "ise-dublin",
+    "hemisphere": "NW",
+    "marketstack": {
+      "defaultBenchmark": "iseq",
+      "defaultIndexName": "ISEQ Overall",
+      "availableIndices": [
+        {
+          "benchmark": "iseq",
+          "indexName": "ISEQ Overall"
+        }
+      ]
+    },
+    "hoverColor": "#22C55E"
+  },
+  {
+    "id": "pse-prague",
+    "city": "Prague",
+    "exchange": "Prague Stock Exchange (PSE)",
+    "country": "Czech Republic",
+    "iso2": "CZ",
+    "tz": "Europe/Prague",
+    "longitude": 14.4378,
+    "latitude": 50.0755,
+    "hoursTemplate": "europe-czech",
+    "holidaysRef": "pse-prague",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "px",
+      "defaultIndexName": "PX Index",
+      "availableIndices": [
+        {
+          "benchmark": "px",
+          "indexName": "PX Index"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "ljse-ljubljana",
+    "city": "Ljubljana",
+    "exchange": "Ljubljana Stock Exchange (LJSE)",
+    "country": "Slovenia",
+    "iso2": "SI",
+    "tz": "Europe/Ljubljana",
+    "longitude": 14.5058,
+    "latitude": 46.0569,
+    "hoursTemplate": "europe-slovenia",
+    "holidaysRef": "ljse-ljubljana",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "sbitop",
+      "defaultIndexName": "SBI TOP",
+      "availableIndices": [
+        {
+          "benchmark": "sbitop",
+          "indexName": "SBI TOP"
+        }
+      ]
+    },
+    "hoverColor": "#10B981"
+  },
+  {
+    "id": "zse-zagreb",
+    "city": "Zagreb",
+    "exchange": "Zagreb Stock Exchange (ZSE)",
+    "country": "Croatia",
+    "iso2": "HR",
+    "tz": "Europe/Zagreb",
+    "longitude": 15.9819,
+    "latitude": 45.815,
+    "hoursTemplate": "europe-croatia",
+    "holidaysRef": "zse-zagreb",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "crobex",
+      "defaultIndexName": "CROBEX",
+      "availableIndices": [
+        {
+          "benchmark": "crobex",
+          "indexName": "CROBEX"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "bcpb-bratislava",
+    "city": "Bratislava",
+    "exchange": "Bratislava Stock Exchange (BCPB)",
+    "country": "Slovakia",
+    "iso2": "SK",
+    "tz": "Europe/Bratislava",
+    "longitude": 17.1077,
+    "latitude": 48.1486,
+    "hoursTemplate": "europe-slovakia",
+    "holidaysRef": "bcpb-bratislava",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "sax",
+      "defaultIndexName": "SAX Index",
+      "availableIndices": [
+        {
+          "benchmark": "sax",
+          "indexName": "SAX Index"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "luxse-luxembourg",
+    "city": "Luxembourg",
+    "exchange": "Luxembourg Stock Exchange (LuxSE)",
+    "country": "Luxembourg",
+    "iso2": "LU",
+    "tz": "Europe/Luxembourg",
+    "longitude": 6.1319,
+    "latitude": 49.6117,
+    "hoursTemplate": "europe-luxembourg",
+    "holidaysRef": "luxse-luxembourg",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "luxx",
+      "defaultIndexName": "LuxX Index",
+      "availableIndices": [
+        {
+          "benchmark": "luxx",
+          "indexName": "LuxX Index"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "mse-skopje",
+    "city": "Skopje",
+    "exchange": "Macedonian Stock Exchange (MSE)",
+    "country": "North Macedonia",
+    "iso2": "MK",
+    "tz": "Europe/Skopje",
+    "longitude": 21.4314,
+    "latitude": 41.9981,
+    "hoursTemplate": "europe-macedonia",
+    "holidaysRef": "mse-skopje",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "mbi_10",
+      "defaultIndexName": "MBI 10",
+      "availableIndices": [
+        {
+          "benchmark": "mbi_10",
+          "indexName": "MBI 10"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
+  },
+  {
+    "id": "mnse-podgorica",
+    "city": "Podgorica",
+    "exchange": "Montenegro Stock Exchange (MNSE)",
+    "country": "Montenegro",
+    "iso2": "ME",
+    "tz": "Europe/Podgorica",
+    "longitude": 19.2636,
+    "latitude": 42.4304,
+    "hoursTemplate": "europe-montenegro",
+    "holidaysRef": "mnse-podgorica",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "monex",
+      "defaultIndexName": "MONEX",
+      "availableIndices": [
+        {
+          "benchmark": "monex",
+          "indexName": "MONEX"
+        }
+      ]
+    },
+    "hoverColor": "#F97316"
+  },
+  {
+    "id": "sase-sarajevo",
+    "city": "Sarajevo",
+    "exchange": "Sarajevo Stock Exchange (SASE)",
+    "country": "Bosnia and Herzegovina",
+    "iso2": "BA",
+    "tz": "Europe/Sarajevo",
+    "longitude": 18.4131,
+    "latitude": 43.8563,
+    "hoursTemplate": "europe-bosnia",
+    "holidaysRef": "sase-sarajevo",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "sasx_10",
+      "defaultIndexName": "SASX-10",
+      "availableIndices": [
+        {
+          "benchmark": "sasx_10",
+          "indexName": "SASX-10"
+        },
+        {
+          "benchmark": "sasx-10",
+          "indexName": "SASX-10"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "pfts-kyiv",
+    "city": "Kyiv",
+    "exchange": "PFTS Stock Exchange (Ukraine)",
+    "country": "Ukraine",
+    "iso2": "UA",
+    "tz": "Europe/Kyiv",
+    "longitude": 30.5234,
+    "latitude": 50.4501,
+    "hoursTemplate": "europe-ukraine",
+    "holidaysRef": "pfts-kyiv",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "pfts",
+      "defaultIndexName": "PFTS Index",
+      "availableIndices": [
+        {
+          "benchmark": "pfts",
+          "indexName": "PFTS Index"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
+  },
+  {
+    "id": "bse-beirut",
+    "city": "Beirut",
+    "exchange": "Beirut Stock Exchange (BSE)",
+    "country": "Lebanon",
+    "iso2": "LB",
+    "tz": "Asia/Beirut",
+    "longitude": 35.5018,
+    "latitude": 33.8938,
+    "hoursTemplate": "gulf-lebanon",
+    "holidaysRef": "bse-beirut",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "blom",
+      "defaultIndexName": "BLOM Stock Index",
+      "availableIndices": [
+        {
+          "benchmark": "blom",
+          "indexName": "BLOM Stock Index"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "kse-kuwait",
+    "city": "Kuwait City",
+    "exchange": "Boursa Kuwait",
+    "country": "Kuwait",
+    "iso2": "KW",
+    "tz": "Asia/Kuwait",
+    "longitude": 47.9774,
+    "latitude": 29.3759,
+    "hoursTemplate": "gulf-kuwait",
+    "holidaysRef": "kse-kuwait",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "kuwait_all_share",
+      "defaultIndexName": "Kuwait All Share",
+      "availableIndices": [
+        {
+          "benchmark": "kuwait_all_share",
+          "indexName": "Kuwait All Share"
+        }
+      ]
+    },
+    "hoverColor": "#22C55E"
+  },
+  {
+    "id": "msm-muscat",
+    "city": "Muscat",
+    "exchange": "Muscat Securities Market (MSM)",
+    "country": "Oman",
+    "iso2": "OM",
+    "tz": "Asia/Muscat",
+    "longitude": 58.5922,
+    "latitude": 23.588,
+    "hoursTemplate": "gulf-oman",
+    "holidaysRef": "msm-muscat",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "msm_30",
+      "defaultIndexName": "MSM 30",
+      "availableIndices": [
+        {
+          "benchmark": "msm_30",
+          "indexName": "MSM 30"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "kase-almaty",
+    "city": "Almaty",
+    "exchange": "Kazakhstan Stock Exchange (KASE)",
+    "country": "Kazakhstan",
+    "iso2": "KZ",
+    "tz": "Asia/Almaty",
+    "longitude": 76.9286,
+    "latitude": 43.222,
+    "hoursTemplate": "asia-kazakhstan",
+    "holidaysRef": "kase-almaty",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "kase",
+      "defaultIndexName": "KASE Index",
+      "availableIndices": [
+        {
+          "benchmark": "kase",
+          "indexName": "KASE Index"
+        }
+      ]
+    },
+    "hoverColor": "#22D3EE"
+  },
+  {
+    "id": "psx-karachi",
+    "city": "Karachi",
+    "exchange": "Pakistan Stock Exchange (PSX)",
+    "country": "Pakistan",
+    "iso2": "PK",
+    "tz": "Asia/Karachi",
+    "longitude": 67.0011,
+    "latitude": 24.8607,
+    "hoursTemplate": "asia-pakistan",
+    "holidaysRef": "psx-karachi",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "kse_100",
+      "defaultIndexName": "KSE 100",
+      "availableIndices": [
+        {
+          "benchmark": "kse_100",
+          "indexName": "KSE 100"
+        }
+      ]
+    },
+    "hoverColor": "#22C55E"
+  },
+  {
+    "id": "dse-dhaka",
+    "city": "Dhaka",
+    "exchange": "Dhaka Stock Exchange (DSE)",
+    "country": "Bangladesh",
+    "iso2": "BD",
+    "tz": "Asia/Dhaka",
+    "longitude": 90.4125,
+    "latitude": 23.8103,
+    "hoursTemplate": "asia-bangladesh",
+    "holidaysRef": "dse-dhaka",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "dse_broad",
+      "defaultIndexName": "DSE Broad",
+      "availableIndices": [
+        {
+          "benchmark": "dse_broad",
+          "indexName": "DSE Broad"
+        }
+      ]
+    },
+    "hoverColor": "#10B981"
+  },
+  {
+    "id": "mse-ulaanbaatar",
+    "city": "Ulaanbaatar",
+    "exchange": "Mongolian Stock Exchange (MSE)",
+    "country": "Mongolia",
+    "iso2": "MN",
+    "tz": "Asia/Ulaanbaatar",
+    "longitude": 106.9057,
+    "latitude": 47.9184,
+    "hoursTemplate": "asia-mongolia",
+    "holidaysRef": "mse-ulaanbaatar",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "mse_20",
+      "defaultIndexName": "MSE Top 20",
+      "availableIndices": [
+        {
+          "benchmark": "mse_20",
+          "indexName": "MSE Top 20"
+        },
+        {
+          "benchmark": "mse",
+          "indexName": "MSE Index"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "lsx-vientiane",
+    "city": "Vientiane",
+    "exchange": "Lao Securities Exchange (LSX)",
+    "country": "Laos",
+    "iso2": "LA",
+    "tz": "Asia/Vientiane",
+    "longitude": 102.6331,
+    "latitude": 17.9757,
+    "hoursTemplate": "asia-laos",
+    "holidaysRef": "lsx-vientiane",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "lsx_composite",
+      "defaultIndexName": "LSX Composite",
+      "availableIndices": [
+        {
+          "benchmark": "lsx_composite",
+          "indexName": "LSX Composite"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "nse-nairobi",
+    "city": "Nairobi",
+    "exchange": "Nairobi Securities Exchange (NSE)",
+    "country": "Kenya",
+    "iso2": "KE",
+    "tz": "Africa/Nairobi",
+    "longitude": 36.8219,
+    "latitude": -1.2921,
+    "hoursTemplate": "africa-kenya",
+    "holidaysRef": "nse-nairobi",
+    "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "nairobi_all_share",
+      "defaultIndexName": "NSE All Share",
+      "availableIndices": [
+        {
+          "benchmark": "nairobi_all_share",
+          "indexName": "NSE All Share"
+        },
+        {
+          "benchmark": "nairobi_20",
+          "indexName": "NSE 20"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "gse-accra",
+    "city": "Accra",
+    "exchange": "Ghana Stock Exchange (GSE)",
+    "country": "Ghana",
+    "iso2": "GH",
+    "tz": "Africa/Accra",
+    "longitude": -0.187,
+    "latitude": 5.6037,
+    "hoursTemplate": "africa-ghana",
+    "holidaysRef": "gse-accra",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "ggseci",
+      "defaultIndexName": "GSE Composite",
+      "availableIndices": [
+        {
+          "benchmark": "ggseci",
+          "indexName": "GSE Composite"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
+  },
+  {
+    "id": "cse-casablanca",
+    "city": "Casablanca",
+    "exchange": "Casablanca Stock Exchange (CSE)",
+    "country": "Morocco",
+    "iso2": "MA",
+    "tz": "Africa/Casablanca",
+    "longitude": -7.5898,
+    "latitude": 33.5731,
+    "hoursTemplate": "africa-morocco",
+    "holidaysRef": "cse-casablanca",
+    "hemisphere": "NW",
+    "marketstack": {
+      "defaultBenchmark": "cfg_25",
+      "defaultIndexName": "CFG 25",
+      "availableIndices": [
+        {
+          "benchmark": "cfg_25",
+          "indexName": "CFG 25"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "bse-gaborone",
+    "city": "Gaborone",
+    "exchange": "Botswana Stock Exchange (BSE)",
+    "country": "Botswana",
+    "iso2": "BW",
+    "tz": "Africa/Gaborone",
+    "longitude": 25.9231,
+    "latitude": -24.6282,
+    "hoursTemplate": "africa-botswana",
+    "holidaysRef": "bse-gaborone",
+    "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "gaborone",
+      "defaultIndexName": "BSE DCI",
+      "availableIndices": [
+        {
+          "benchmark": "gaborone",
+          "indexName": "BSE DCI"
+        }
+      ]
+    },
+    "hoverColor": "#60A5FA"
+  },
+  {
+    "id": "nsx-windhoek",
+    "city": "Windhoek",
+    "exchange": "Namibian Stock Exchange (NSX)",
+    "country": "Namibia",
+    "iso2": "NA",
+    "tz": "Africa/Windhoek",
+    "longitude": 17.0658,
+    "latitude": -22.5609,
+    "hoursTemplate": "africa-namibia",
+    "holidaysRef": "nsx-windhoek",
+    "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "nsx_overall",
+      "defaultIndexName": "NSX Overall",
+      "availableIndices": [
+        {
+          "benchmark": "nsx_overall",
+          "indexName": "NSX Overall"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "dse-dar-es-salaam",
+    "city": "Dar es Salaam",
+    "exchange": "Dar es Salaam Stock Exchange (DSE)",
+    "country": "Tanzania",
+    "iso2": "TZ",
+    "tz": "Africa/Dar_es_Salaam",
+    "longitude": 39.2083,
+    "latitude": -6.7924,
+    "hoursTemplate": "africa-tanzania",
+    "holidaysRef": "dse-dar-es-salaam",
+    "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "dsei",
+      "defaultIndexName": "DSE Index",
+      "availableIndices": [
+        {
+          "benchmark": "dsei",
+          "indexName": "DSE Index"
+        }
+      ]
+    },
+    "hoverColor": "#22C55E"
+  },
+  {
+    "id": "sem-port-louis",
+    "city": "Port Louis",
+    "exchange": "Stock Exchange of Mauritius (SEM)",
+    "country": "Mauritius",
+    "iso2": "MU",
+    "tz": "Indian/Mauritius",
+    "longitude": 57.4989,
+    "latitude": -20.1609,
+    "hoursTemplate": "africa-mauritius",
+    "holidaysRef": "sem-port-louis",
+    "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "semdex",
+      "defaultIndexName": "SEMDEX",
+      "availableIndices": [
+        {
+          "benchmark": "semdex",
+          "indexName": "SEMDEX"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444"
+  },
+  {
+    "id": "bvc-caracas",
+    "city": "Caracas",
+    "exchange": "Caracas Stock Exchange (BVC)",
+    "country": "Venezuela",
+    "iso2": "VE",
+    "tz": "America/Caracas",
+    "longitude": -66.9036,
+    "latitude": 10.4806,
+    "hoursTemplate": "latam-venezuela",
+    "holidaysRef": "bvc-caracas",
+    "hemisphere": "NW",
+    "marketstack": {
+      "defaultBenchmark": "bvpsi",
+      "defaultIndexName": "IBC Index",
+      "availableIndices": [
+        {
+          "benchmark": "bvpsi",
+          "indexName": "IBC Index"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
+  },
+  {
+    "id": "bvq-quito",
+    "city": "Quito",
+    "exchange": "Quito Stock Exchange (BVQ)",
+    "country": "Ecuador",
+    "iso2": "EC",
+    "tz": "America/Guayaquil",
+    "longitude": -78.4678,
+    "latitude": -0.1807,
+    "hoursTemplate": "latam-ecuador",
+    "holidaysRef": "bvq-quito",
+    "hemisphere": "SW",
+    "marketstack": {
+      "defaultBenchmark": "ecuador_general",
+      "defaultIndexName": "Ecuador General",
+      "availableIndices": [
+        {
+          "benchmark": "ecuador_general",
+          "indexName": "Ecuador General"
+        }
+      ]
+    },
+    "hoverColor": "#FBBF24"
   },
   {
     "id": "tsx-toronto",
@@ -853,10 +2283,16 @@
     "holidaysRef": "tsx-toronto",
     "hemisphere": "NW",
     "marketstack": {
-      "benchmark": "tsx",
-      "indexName": "TSX Composite"
+      "defaultBenchmark": "tsx",
+      "defaultIndexName": "TSX Composite",
+      "availableIndices": [
+        {
+          "benchmark": "tsx",
+          "indexName": "TSX Composite"
+        }
+      ]
     },
-    "hoverColor": "#7B68EE"
+    "hoverColor": "#EF4444"
   },
   {
     "id": "twse-taipei",
@@ -871,9 +2307,113 @@
     "holidaysRef": "twse-taipei",
     "hemisphere": "NE",
     "marketstack": {
-      "benchmark": "taiex",
-      "indexName": "TAIEX"
+      "defaultBenchmark": "taiwan_stock_market_index",
+      "defaultIndexName": "Taiwan Weighted",
+      "availableIndices": [
+        {
+          "benchmark": "taiwan_stock_market_index",
+          "indexName": "Taiwan Weighted"
+        }
+      ]
     },
-    "hoverColor": "#9370DB"
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "set-bangkok",
+    "city": "Bangkok",
+    "exchange": "Stock Exchange of Thailand (SET)",
+    "country": "Thailand",
+    "iso2": "TH",
+    "tz": "Asia/Bangkok",
+    "longitude": 100.5018,
+    "latitude": 13.7563,
+    "hoursTemplate": "asia-thailand",
+    "holidaysRef": "set-bangkok",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "set_50",
+      "defaultIndexName": "SET 50",
+      "availableIndices": [
+        {
+          "benchmark": "set_50",
+          "indexName": "SET 50"
+        }
+      ]
+    },
+    "hoverColor": "#2DD4BF"
+  },
+  {
+    "id": "nyse-new-york",
+    "city": "New York",
+    "exchange": "New York Stock Exchange (NYSE)",
+    "country": "United States",
+    "iso2": "US",
+    "tz": "America/New_York",
+    "longitude": -74.006,
+    "latitude": 40.7128,
+    "hoursTemplate": "americas-us",
+    "holidaysRef": "nyse-new-york",
+    "hemisphere": "NW",
+    "ribbonLabel": "NYSE",
+    "marketstack": {
+      "defaultBenchmark": "us500",
+      "defaultIndexName": "S&P 500",
+      "availableIndices": [
+        {
+          "benchmark": "us500",
+          "indexName": "S&P 500"
+        },
+        {
+          "benchmark": "us30",
+          "indexName": "Dow Jones 30"
+        },
+        {
+          "benchmark": "us100",
+          "indexName": "NASDAQ 100"
+        },
+        {
+          "benchmark": "us1000",
+          "indexName": "Russell 1000"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
+  },
+  {
+    "id": "cboe-chicago",
+    "city": "Chicago",
+    "exchange": "Cboe Global Markets",
+    "country": "United States",
+    "iso2": "US",
+    "tz": "America/Chicago",
+    "longitude": -87.6298,
+    "latitude": 41.8781,
+    "hoursTemplate": "americas-us",
+    "holidaysRef": "cboe-chicago",
+    "hemisphere": "NW",
+    "ribbonLabel": "Cboe Chicago",
+    "marketstack": {
+      "defaultBenchmark": "us30",
+      "defaultIndexName": "Dow Jones 30",
+      "availableIndices": [
+        {
+          "benchmark": "us30",
+          "indexName": "Dow Jones 30"
+        },
+        {
+          "benchmark": "us500",
+          "indexName": "S&P 500"
+        },
+        {
+          "benchmark": "us100",
+          "indexName": "NASDAQ 100"
+        },
+        {
+          "benchmark": "us1000",
+          "indexName": "Russell 1000"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6"
   }
 ]

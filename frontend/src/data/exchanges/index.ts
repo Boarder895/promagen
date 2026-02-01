@@ -77,9 +77,12 @@ export function getExchangeById(id: string): Exchange | undefined {
 /**
  * Get all benchmark keys for Marketstack API.
  * Used by gateway to validate benchmark requests.
+ * Now collects all available indices (not just defaults) for Pro Promagen.
  */
 export function getAllBenchmarks(): string[] {
-  return EXCHANGES.map((e) => e.marketstack.benchmark);
+  return EXCHANGES.flatMap((e) => 
+    e.marketstack.availableIndices.map((idx) => idx.benchmark)
+  );
 }
 
 /**

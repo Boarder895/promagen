@@ -14,12 +14,7 @@
 
 import { createFeedHandler } from '../lib/feed-handler.js';
 import { logDebug, logWarn } from '../lib/logging.js';
-import type {
-  FeedConfig,
-  IndexCatalogItem,
-  IndexQuote,
-  FeedHandler,
-} from '../lib/types.js';
+import type { FeedConfig, IndexCatalogItem, IndexQuote, FeedHandler } from '../lib/types.js';
 
 import {
   fetchMarketstackIndices,
@@ -34,10 +29,7 @@ import { indicesScheduler } from './scheduler.js';
 
 const INDICES_CONFIG_URL =
   process.env['INDICES_CONFIG_URL'] ?? 'https://promagen.com/api/indices/config';
-const INDICES_TTL_SECONDS = parseInt(
-  process.env['INDICES_RIBBON_TTL_SECONDS'] ?? '7200',
-  10,
-); // 2 hours
+const INDICES_TTL_SECONDS = parseInt(process.env['INDICES_RIBBON_TTL_SECONDS'] ?? '7200', 10); // 2 hours
 const INDICES_BUDGET_DAILY = parseInt(
   process.env['INDICES_RIBBON_BUDGET_DAILY_ALLOWANCE'] ?? '250',
   10,
@@ -89,22 +81,23 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
       const r = raw as Record<string, unknown>;
 
       // Validate and sanitize ID
-      const id =
-        typeof r['id'] === 'string'
-          ? r['id'].toLowerCase().trim().slice(0, 30)
-          : '';
+      const id = typeof r['id'] === 'string' ? r['id'].toLowerCase().trim().slice(0, 30) : '';
 
       // Validate benchmark key
       const benchmarkFromRoot = typeof r['benchmark'] === 'string' ? r['benchmark'] : '';
-      const marketstackObj = r['marketstack'] && typeof r['marketstack'] === 'object' ? (r['marketstack'] as Record<string, unknown>) : null;
-      const benchmarkFromNested = marketstackObj && typeof marketstackObj['benchmark'] === 'string' ? (marketstackObj['benchmark'] as string) : '';
+      const marketstackObj =
+        r['marketstack'] && typeof r['marketstack'] === 'object'
+          ? (r['marketstack'] as Record<string, unknown>)
+          : null;
+      const benchmarkFromNested =
+        marketstackObj && typeof marketstackObj['benchmark'] === 'string'
+          ? (marketstackObj['benchmark'] as string)
+          : '';
       const benchmark = (benchmarkFromRoot || benchmarkFromNested).trim().slice(0, 50);
 
       // Validate index name
       const indexName =
-        typeof r['indexName'] === 'string'
-          ? r['indexName'].trim().slice(0, 100)
-          : '';
+        typeof r['indexName'] === 'string' ? r['indexName'].trim().slice(0, 100) : '';
 
       // Skip invalid entries
       if (!id || !benchmark || !indexName) continue;
@@ -119,14 +112,9 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
         id,
         benchmark,
         indexName,
-        city:
-          typeof r['city'] === 'string' ? r['city'].trim().slice(0, 50) : '',
-        country:
-          typeof r['country'] === 'string'
-            ? r['country'].trim().slice(0, 50)
-            : '',
-        tz:
-          typeof r['tz'] === 'string' ? r['tz'].trim().slice(0, 50) : 'UTC',
+        city: typeof r['city'] === 'string' ? r['city'].trim().slice(0, 50) : '',
+        country: typeof r['country'] === 'string' ? r['country'].trim().slice(0, 50) : '',
+        tz: typeof r['tz'] === 'string' ? r['tz'].trim().slice(0, 50) : 'UTC',
       });
     }
 
@@ -141,7 +129,10 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
    * Get default item IDs from catalog.
    */
   getDefaults(catalog: IndexCatalogItem[], ssotPayload: unknown): string[] {
-    const payload = ssotPayload && typeof ssotPayload === 'object' ? (ssotPayload as Record<string, unknown>) : null;
+    const payload =
+      ssotPayload && typeof ssotPayload === 'object'
+        ? (ssotPayload as Record<string, unknown>)
+        : null;
 
     // Prefer explicit ordered defaults from SSOT (exchanges.selected.json via config endpoint)
     const candidates = ['defaultExchangeIds', 'selectedExchangeIds', 'defaultIds', 'exchangeIds'];
@@ -158,7 +149,9 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
     }
 
     // Pure SSOT: no hardcoded or "first N" defaults
-    throw new Error('Indices defaults not defined in SSOT (no defaultExchangeIds and no isDefaultFree flags)');
+    throw new Error(
+      'Indices defaults not defined in SSOT (no defaultExchangeIds and no isDefaultFree flags)',
+    );
   },
 
   /**
@@ -195,10 +188,7 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
         benchmark: catalogItem.benchmark,
         indexName: catalogItem.indexName,
         price: entry.close,
-        change:
-          change !== null && Number.isFinite(change)
-            ? Math.round(change * 100) / 100
-            : null,
+        change: change !== null && Number.isFinite(change) ? Math.round(change * 100) / 100 : null,
         percentChange:
           percentChange !== null && Number.isFinite(percentChange)
             ? Math.round(percentChange * 100) / 100
@@ -257,10 +247,7 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
   /**
    * Get item by ID.
    */
-  getById(
-    catalog: IndexCatalogItem[],
-    id: string,
-  ): IndexCatalogItem | undefined {
+  getById(catalog: IndexCatalogItem[], id: string): IndexCatalogItem | undefined {
     const normalizedId = id.toLowerCase().trim();
     return catalog.find((c) => c.id === normalizedId);
   },
@@ -407,9 +394,7 @@ export function validateIndicesSelection(
   }
 
   return {
-    valid:
-      errors.length === 0 &&
-      allowedIds.length >= INDICES_SELECTION_LIMITS.MIN_EXCHANGES,
+    valid: errors.length === 0 && allowedIds.length >= INDICES_SELECTION_LIMITS.MIN_EXCHANGES,
     errors,
     allowedExchangeIds: allowedIds.slice(0, INDICES_SELECTION_LIMITS.MAX_EXCHANGES),
   };

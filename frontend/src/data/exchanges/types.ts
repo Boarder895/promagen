@@ -5,6 +5,11 @@
 // All exchange type definitions consolidated here.
 // Other files (src/lib/exchanges.ts, src/lib/exchange-order.ts) re-export from here.
 // Data source: ./exchanges.catalog.json
+//
+// UPDATED v2.0.0 (30 Jan 2026):
+// - Multi-index support: exchanges can now have multiple available indices
+// - MarketstackConfig restructured with defaultBenchmark + availableIndices
+// - Backward compatible: getActiveBenchmark() helper for existing code
 // ============================================================================
 
 /**
@@ -27,20 +32,71 @@ export type ExchangeRegion = 'APAC' | 'EMEA' | 'AMERICAS';
 export type Hemisphere = 'NE' | 'NW' | 'SE' | 'SW' | '';
 
 /**
- * Marketstack configuration for benchmark index data.
+ * Single index option within an exchange.
+ * @example { benchmark: "de40", indexName: "DAX 40" }
  */
-export interface MarketstackConfig {
+export interface IndexOption {
   /**
    * Marketstack benchmark key for /v2/indexinfo endpoint.
-   * @example "nikkei_225", "sp500", "ftse_100"
+   * @example "nikkei_225", "de40", "us500"
    */
   benchmark: string;
 
   /**
    * Human-readable index name.
-   * @example "Nikkei 225", "S&P 500", "FTSE 100"
+   * @example "Nikkei 225", "DAX 40", "S&P 500"
    */
   indexName: string;
+}
+
+/**
+ * Marketstack configuration for benchmark index data.
+ * Supports multiple indices per exchange (Pro Promagen feature).
+ *
+ * @example
+ * ```ts
+ * // Single index exchange
+ * const tokyo: MarketstackConfig = {
+ *   defaultBenchmark: 'nikkei_225',
+ *   defaultIndexName: 'Nikkei 225',
+ *   availableIndices: [
+ *     { benchmark: 'nikkei_225', indexName: 'Nikkei 225' }
+ *   ]
+ * };
+ *
+ * // Multi-index exchange
+ * const frankfurt: MarketstackConfig = {
+ *   defaultBenchmark: 'de40',
+ *   defaultIndexName: 'DAX 40',
+ *   availableIndices: [
+ *     { benchmark: 'de40', indexName: 'DAX 40' },
+ *     { benchmark: 'mdax', indexName: 'MDAX' },
+ *     { benchmark: 'sdax', indexName: 'SDAX' },
+ *     { benchmark: 'eu50', indexName: 'Euro Stoxx 50' }
+ *   ]
+ * };
+ * ```
+ */
+export interface MarketstackConfig {
+  /**
+   * Default benchmark key used when no user preference is set.
+   * Always the first/primary index for this exchange.
+   * @example "nikkei_225", "de40", "us500"
+   */
+  defaultBenchmark: string;
+
+  /**
+   * Default index display name matching defaultBenchmark.
+   * @example "Nikkei 225", "DAX 40", "S&P 500"
+   */
+  defaultIndexName: string;
+
+  /**
+   * All available indices for this exchange.
+   * Pro users can choose which index to display.
+   * Array always contains at least the default index.
+   */
+  availableIndices: IndexOption[];
 }
 
 /**
@@ -66,8 +122,13 @@ export interface MarketstackConfig {
  *   hemisphere: 'NE',
  *   ribbonLabel: 'Tokyo (TSE)',
  *   marketstack: {
- *     benchmark: 'nikkei_225',
- *     indexName: 'Nikkei 225',
+ *     defaultBenchmark: 'nikkei_225',
+ *     defaultIndexName: 'Nikkei 225',
+ *     availableIndices: [
+ *       { benchmark: 'nikkei_225', indexName: 'Nikkei 225' },
+ *       { benchmark: 'jp225', indexName: 'Nikkei 225 (Alt)' },
+ *       { benchmark: 'jpvix', indexName: 'Japan VIX' }
+ *     ]
  *   },
  *   hoverColor: '#FF3B5C',
  * };
@@ -152,7 +213,8 @@ export type Exchange = {
 
   /**
    * Marketstack API configuration for index data.
-   * Links exchange to its benchmark index.
+   * Links exchange to its benchmark indices.
+   * Supports multiple indices per exchange (Pro Promagen).
    */
   marketstack: MarketstackConfig;
 
@@ -227,31 +289,124 @@ export type Exchange = {
   notes?: string;
 };
 
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Check if an exchange has multiple indices available.
+ * Pro users can switch between indices for multi-index exchanges.
+ *
+ * @param exchange - The exchange to check
+ * @returns true if exchange has more than one available index
+ */
+export function hasMultipleIndices(exchange: Exchange): boolean {
+  return exchange.marketstack.availableIndices.length > 1;
+}
+
+/**
+ * Get the active benchmark for an exchange.
+ * Uses user preference if set, otherwise returns default.
+ *
+ * @param exchange - The exchange
+ * @param userPreference - Optional user-selected benchmark
+ * @returns The benchmark to use for API calls
+ */
+export function getActiveBenchmark(
+  exchange: Exchange,
+  userPreference?: string,
+): string {
+  if (userPreference) {
+    // Validate user preference exists in available indices
+    const isValid = exchange.marketstack.availableIndices.some(
+      (idx) => idx.benchmark === userPreference,
+    );
+    if (isValid) return userPreference;
+  }
+  return exchange.marketstack.defaultBenchmark;
+}
+
+/**
+ * Get the active index name for display.
+ * Uses user preference if set, otherwise returns default.
+ *
+ * @param exchange - The exchange
+ * @param userPreference - Optional user-selected benchmark
+ * @returns The index name to display
+ */
+export function getActiveIndexName(
+  exchange: Exchange,
+  userPreference?: string,
+): string {
+  const activeBenchmark = getActiveBenchmark(exchange, userPreference);
+  const index = exchange.marketstack.availableIndices.find(
+    (idx) => idx.benchmark === activeBenchmark,
+  );
+  return index?.indexName ?? exchange.marketstack.defaultIndexName;
+}
+
 /**
  * Type guard to check if an unknown value is a valid Exchange.
- * Validates required fields only.
+ * Validates required fields including new multi-index structure.
  */
 export function isExchange(value: unknown): value is Exchange {
   if (typeof value !== 'object' || value === null) return false;
 
   const record = value as Record<string, unknown>;
 
+  // Basic field checks
+  if (
+    typeof record.id !== 'string' ||
+    typeof record.city !== 'string' ||
+    typeof record.exchange !== 'string' ||
+    typeof record.country !== 'string' ||
+    typeof record.iso2 !== 'string' ||
+    typeof record.tz !== 'string' ||
+    typeof record.longitude !== 'number' ||
+    typeof record.latitude !== 'number' ||
+    typeof record.hoursTemplate !== 'string' ||
+    typeof record.holidaysRef !== 'string' ||
+    typeof record.hemisphere !== 'string' ||
+    typeof record.hoverColor !== 'string'
+  ) {
+    return false;
+  }
+
+  // Marketstack config check
+  if (typeof record.marketstack !== 'object' || record.marketstack === null) {
+    return false;
+  }
+
+  const ms = record.marketstack as Record<string, unknown>;
+
+  // Check for new multi-index structure
+  if (
+    typeof ms.defaultBenchmark === 'string' &&
+    typeof ms.defaultIndexName === 'string' &&
+    Array.isArray(ms.availableIndices)
+  ) {
+    // Validate availableIndices array
+    return ms.availableIndices.every(
+      (idx: unknown) =>
+        typeof idx === 'object' &&
+        idx !== null &&
+        typeof (idx as Record<string, unknown>).benchmark === 'string' &&
+        typeof (idx as Record<string, unknown>).indexName === 'string',
+    );
+  }
+
+  // Legacy check (backward compatibility) - single benchmark/indexName
   return (
-    typeof record.id === 'string' &&
-    typeof record.city === 'string' &&
-    typeof record.exchange === 'string' &&
-    typeof record.country === 'string' &&
-    typeof record.iso2 === 'string' &&
-    typeof record.tz === 'string' &&
-    typeof record.longitude === 'number' &&
-    typeof record.latitude === 'number' &&
-    typeof record.hoursTemplate === 'string' &&
-    typeof record.holidaysRef === 'string' &&
-    typeof record.hemisphere === 'string' &&
-    typeof record.marketstack === 'object' &&
-    record.marketstack !== null &&
-    typeof (record.marketstack as Record<string, unknown>).benchmark === 'string' &&
-    typeof (record.marketstack as Record<string, unknown>).indexName === 'string' &&
-    typeof record.hoverColor === 'string'
+    typeof ms.benchmark === 'string' &&
+    typeof ms.indexName === 'string'
   );
+}
+
+/**
+ * Type guard to check if MarketstackConfig has multiple indices.
+ */
+export function isMultiIndexConfig(
+  config: MarketstackConfig,
+): config is MarketstackConfig & { availableIndices: IndexOption[] } {
+  return Array.isArray(config.availableIndices) && config.availableIndices.length > 1;
 }

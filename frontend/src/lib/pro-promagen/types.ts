@@ -150,7 +150,7 @@ export interface FxPairCatalogEntry {
 /**
  * Exchange from catalog.
  * hemisphere uses Promagen's 4-quadrant system: NE, NW, SE, SW
- * UPDATED: Added marketstack field for index data.
+ * UPDATED v2.1.0: marketstack supports both legacy and multi-index formats.
  */
 export interface ExchangeCatalogEntry {
   id: string;
@@ -164,14 +164,44 @@ export interface ExchangeCatalogEntry {
   hemisphere: string; // 'NE' | 'NW' | 'SE' | 'SW' | ''
   hoursTemplate: string;
   holidaysRef: string;
-  /** Marketstack benchmark data for stock indices */
-  marketstack?: {
+  /** 
+   * Marketstack benchmark data for stock indices.
+   * Supports both legacy (benchmark/indexName) and new multi-index format.
+   */
+  marketstack?: LegacyMarketstackConfig | MultiIndexMarketstackConfig;
+  /** Vibrant hover color for exchange card UI */
+  hoverColor?: string;
+}
+
+/**
+ * Legacy marketstack format (single index).
+ */
+export interface LegacyMarketstackConfig {
+  benchmark: string;
+  indexName: string;
+  status?: 'active' | 'coming-soon' | 'unavailable';
+}
+
+/**
+ * New multi-index marketstack format.
+ */
+export interface MultiIndexMarketstackConfig {
+  defaultBenchmark: string;
+  defaultIndexName: string;
+  availableIndices: Array<{
     benchmark: string;
     indexName: string;
     status?: 'active' | 'coming-soon' | 'unavailable';
-  };
-  /** Vibrant hover color for exchange card UI */
-  hoverColor?: string;
+  }>;
+}
+
+/**
+ * Type guard to check if marketstack config is multi-index format.
+ */
+export function isMultiIndexConfig(
+  config: LegacyMarketstackConfig | MultiIndexMarketstackConfig | undefined
+): config is MultiIndexMarketstackConfig {
+  return config !== undefined && 'availableIndices' in config;
 }
 
 /**
@@ -307,19 +337,40 @@ export function deriveCountryCodes(base: string, quote: string): {
 /**
  * Build indices catalog from exchange catalog.
  * Filters exchanges that have marketstack benchmarks.
+ * Handles both legacy and multi-index formats.
  */
 export function buildIndicesCatalog(
   exchanges: ExchangeCatalogEntry[]
 ): IndicesCatalogEntry[] {
-  return exchanges
-    .filter((e) => e.marketstack?.benchmark && e.marketstack?.indexName)
-    .map((e) => ({
-      id: e.id,
-      indexName: e.marketstack!.indexName,
-      benchmark: e.marketstack!.benchmark,
-      exchangeName: e.exchange,
-      country: e.country,
-      status: e.marketstack?.status ?? 'active',
-    }))
-    .sort((a, b) => a.indexName.localeCompare(b.indexName));
+  const result: IndicesCatalogEntry[] = [];
+  
+  for (const e of exchanges) {
+    if (!e.marketstack) continue;
+    
+    if (isMultiIndexConfig(e.marketstack)) {
+      // New multi-index format - add all available indices
+      for (const idx of e.marketstack.availableIndices) {
+        result.push({
+          id: e.id,
+          indexName: idx.indexName,
+          benchmark: idx.benchmark,
+          exchangeName: e.exchange,
+          country: e.country,
+          status: idx.status ?? 'active',
+        });
+      }
+    } else {
+      // Legacy single-index format
+      result.push({
+        id: e.id,
+        indexName: e.marketstack.indexName,
+        benchmark: e.marketstack.benchmark,
+        exchangeName: e.exchange,
+        country: e.country,
+        status: e.marketstack.status ?? 'active',
+      });
+    }
+  }
+  
+  return result.sort((a, b) => a.indexName.localeCompare(b.indexName));
 }

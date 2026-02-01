@@ -5,11 +5,363 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 1,
-    "ssotHash": "d68daf7ec4162b82b7e1d4c6b83f64c29d1fac6751d23fad251779ac3adb8d11",
-    "ssotFingerprint": "d68daf7ec416",
-    "snapshotAt": "2026-01-27T23:00:59.305Z"
+    "ssotHash": "9b464d8b9a4243ec0c24946b60baf09fd13b69be5113d08c0e6bf414544490e6",
+    "ssotFingerprint": "9b464d8b9a42",
+    "snapshotAt": "2026-02-01T09:03:38.113Z"
   },
   "catalog": [
+    {
+      "id": "b3-sao-paulo",
+      "benchmark": "ibovespa",
+      "indexName": "IBOVESPA",
+      "city": "São Paulo",
+      "country": "Brazil",
+      "tz": "America/Sao_Paulo"
+    },
+    {
+      "id": "bcba-buenos-aires",
+      "benchmark": "merval",
+      "indexName": "MERVAL",
+      "city": "Buenos Aires",
+      "country": "Argentina",
+      "tz": "America/Argentina/Buenos_Aires"
+    },
+    {
+      "id": "bist-istanbul",
+      "benchmark": "bist_100",
+      "indexName": "BIST 100",
+      "city": "Istanbul",
+      "country": "Turkey",
+      "tz": "Europe/Istanbul"
+    },
+    {
+      "id": "bme-madrid",
+      "benchmark": "es35",
+      "indexName": "IBEX 35",
+      "city": "Madrid",
+      "country": "Spain",
+      "tz": "Europe/Madrid"
+    },
+    {
+      "id": "borsa-italiana-milan",
+      "benchmark": "it40",
+      "indexName": "FTSE MIB 40",
+      "city": "Milan",
+      "country": "Italy",
+      "tz": "Europe/Rome"
+    },
+    {
+      "id": "bse-mumbai",
+      "benchmark": "sensex",
+      "indexName": "Sensex",
+      "city": "Mumbai",
+      "country": "India",
+      "tz": "Asia/Kolkata"
+    },
+    {
+      "id": "egx-cairo",
+      "benchmark": "egx_30",
+      "indexName": "EGX 30",
+      "city": "Cairo",
+      "country": "Egypt",
+      "tz": "Africa/Cairo"
+    },
+    {
+      "id": "euronext-amsterdam",
+      "benchmark": "nl25",
+      "indexName": "AEX 25",
+      "city": "Amsterdam",
+      "country": "Netherlands",
+      "tz": "Europe/Amsterdam"
+    },
+    {
+      "id": "euronext-brussels",
+      "benchmark": "be20",
+      "indexName": "BEL 20",
+      "city": "Brussels",
+      "country": "Belgium",
+      "tz": "Europe/Brussels"
+    },
+    {
+      "id": "euronext-lisbon",
+      "benchmark": "psi_20",
+      "indexName": "PSI 20",
+      "city": "Lisbon",
+      "country": "Portugal",
+      "tz": "Europe/Lisbon"
+    },
+    {
+      "id": "euronext-paris",
+      "benchmark": "fr40",
+      "indexName": "CAC 40",
+      "city": "Paris",
+      "country": "France",
+      "tz": "Europe/Paris"
+    },
+    {
+      "id": "hkex-hong-kong",
+      "benchmark": "hk50",
+      "indexName": "Hang Seng",
+      "city": "Hong Kong",
+      "country": "Hong Kong",
+      "tz": "Asia/Hong_Kong"
+    },
+    {
+      "id": "idx-jakarta",
+      "benchmark": "jci",
+      "indexName": "JCI",
+      "city": "Jakarta",
+      "country": "Indonesia",
+      "tz": "Asia/Jakarta"
+    },
+    {
+      "id": "jse-johannesburg",
+      "benchmark": "jse",
+      "indexName": "JSE All Share",
+      "city": "Johannesburg",
+      "country": "South Africa",
+      "tz": "Africa/Johannesburg"
+    },
+    {
+      "id": "lse-london",
+      "benchmark": "gb100",
+      "indexName": "FTSE 100",
+      "city": "London",
+      "country": "United Kingdom",
+      "tz": "Europe/London"
+    },
+    {
+      "id": "misx-moscow",
+      "benchmark": "moex",
+      "indexName": "MOEX Russia",
+      "city": "Moscow",
+      "country": "Russia",
+      "tz": "Europe/Moscow"
+    },
+    {
+      "id": "moex-moscow",
+      "benchmark": "moex",
+      "indexName": "MOEX Russia",
+      "city": "Moscow",
+      "country": "Russia",
+      "tz": "Europe/Moscow"
+    },
+    {
+      "id": "nasdaq-copenhagen",
+      "benchmark": "copenhagen",
+      "indexName": "OMX Copenhagen 20",
+      "city": "Copenhagen",
+      "country": "Denmark",
+      "tz": "Europe/Copenhagen"
+    },
+    {
+      "id": "nasdaq-helsinki",
+      "benchmark": "helsinki_25",
+      "indexName": "OMX Helsinki 25",
+      "city": "Helsinki",
+      "country": "Finland",
+      "tz": "Europe/Helsinki"
+    },
+    {
+      "id": "qse-doha",
+      "benchmark": "qe",
+      "indexName": "QE Index",
+      "city": "Doha",
+      "country": "Qatar",
+      "tz": "Asia/Qatar"
+    },
+    {
+      "id": "six-zurich",
+      "benchmark": "ch20",
+      "indexName": "SMI",
+      "city": "Zurich",
+      "country": "Switzerland",
+      "tz": "Europe/Zurich"
+    },
+    {
+      "id": "sse-santiago",
+      "benchmark": "igpa",
+      "indexName": "IGPA",
+      "city": "Santiago",
+      "country": "Chile",
+      "tz": "America/Santiago"
+    },
+    {
+      "id": "sse-shanghai",
+      "benchmark": "csi_300",
+      "indexName": "CSI 300",
+      "city": "Shanghai",
+      "country": "China",
+      "tz": "Asia/Shanghai"
+    },
+    {
+      "id": "szse-shenzhen",
+      "benchmark": "csi_300",
+      "indexName": "CSI 300",
+      "city": "Shenzhen",
+      "country": "China",
+      "tz": "Asia/Shanghai"
+    },
+    {
+      "id": "xbah-manama",
+      "benchmark": "estirad",
+      "indexName": "Bahrain All Share",
+      "city": "Manama",
+      "country": "Bahrain",
+      "tz": "Asia/Bahrain"
+    },
+    {
+      "id": "xbel-belgrade",
+      "benchmark": "belex_15",
+      "indexName": "BELEX 15",
+      "city": "Belgrade",
+      "country": "Serbia",
+      "tz": "Europe/Belgrade"
+    },
+    {
+      "id": "xbog-bogota",
+      "benchmark": "colcap",
+      "indexName": "COLCAP",
+      "city": "Bogota",
+      "country": "Colombia",
+      "tz": "America/Bogota"
+    },
+    {
+      "id": "xbom-mumbai",
+      "benchmark": "sensex",
+      "indexName": "Sensex",
+      "city": "Mumbai",
+      "country": "India",
+      "tz": "Asia/Kolkata"
+    },
+    {
+      "id": "xetra-frankfurt",
+      "benchmark": "de40",
+      "indexName": "DAX 40",
+      "city": "Frankfurt",
+      "country": "Germany",
+      "tz": "Europe/Berlin"
+    },
+    {
+      "id": "xfka-fukuoka",
+      "benchmark": "jp225",
+      "indexName": "Nikkei 225",
+      "city": "Fukuoka",
+      "country": "Japan",
+      "tz": "Asia/Tokyo"
+    },
+    {
+      "id": "xfra-frankfurt",
+      "benchmark": "de40",
+      "indexName": "DAX 40",
+      "city": "Frankfurt",
+      "country": "Germany",
+      "tz": "Europe/Berlin"
+    },
+    {
+      "id": "xice-reykjavik",
+      "benchmark": "icex",
+      "indexName": "ICEX",
+      "city": "Reykjavik",
+      "country": "Iceland",
+      "tz": "Atlantic/Reykjavik"
+    },
+    {
+      "id": "xlim-lima",
+      "benchmark": "peru_general",
+      "indexName": "S&P/BVL Peru General",
+      "city": "Lima",
+      "country": "Peru",
+      "tz": "America/Lima"
+    },
+    {
+      "id": "xmex-mexico-city",
+      "benchmark": "ipc",
+      "indexName": "IPC",
+      "city": "Mexico City",
+      "country": "Mexico",
+      "tz": "America/Mexico_City"
+    },
+    {
+      "id": "xngo-nagoya",
+      "benchmark": "jp225",
+      "indexName": "Nikkei 225",
+      "city": "Nagoya",
+      "country": "Japan",
+      "tz": "Asia/Tokyo"
+    },
+    {
+      "id": "xnsa-lagos",
+      "benchmark": "nse_all_share",
+      "indexName": "NSE All-Share",
+      "city": "Lagos",
+      "country": "Nigeria",
+      "tz": "Africa/Lagos"
+    },
+    {
+      "id": "xnse-mumbai",
+      "benchmark": "nifty_50",
+      "indexName": "NIFTY 50",
+      "city": "Mumbai",
+      "country": "India",
+      "tz": "Asia/Kolkata"
+    },
+    {
+      "id": "xnze-auckland",
+      "benchmark": "nzx_50",
+      "indexName": "NZX 50",
+      "city": "Auckland",
+      "country": "New Zealand",
+      "tz": "Pacific/Auckland"
+    },
+    {
+      "id": "xosl-oslo",
+      "benchmark": "oslo",
+      "indexName": "Oslo Børs",
+      "city": "Oslo",
+      "country": "Norway",
+      "tz": "Europe/Oslo"
+    },
+    {
+      "id": "xris-riga",
+      "benchmark": "riga",
+      "indexName": "OMX Riga",
+      "city": "Riga",
+      "country": "Latvia",
+      "tz": "Europe/Riga"
+    },
+    {
+      "id": "xsap-sapporo",
+      "benchmark": "jp225",
+      "indexName": "Nikkei 225",
+      "city": "Sapporo",
+      "country": "Japan",
+      "tz": "Asia/Tokyo"
+    },
+    {
+      "id": "xstc-ho-chi-minh-city",
+      "benchmark": "hnx",
+      "indexName": "HNX Index",
+      "city": "Ho Chi Minh City",
+      "country": "Vietnam",
+      "tz": "Asia/Ho_Chi_Minh"
+    },
+    {
+      "id": "xstu-stuttgart",
+      "benchmark": "de40",
+      "indexName": "DAX 40",
+      "city": "Stuttgart",
+      "country": "Germany",
+      "tz": "Europe/Berlin"
+    },
+    {
+      "id": "xswx-zurich",
+      "benchmark": "ch20",
+      "indexName": "SMI",
+      "city": "Zurich",
+      "country": "Switzerland",
+      "tz": "Europe/Zurich"
+    },
     {
       "id": "adx-abu-dhabi",
       "benchmark": "adx_general",
@@ -36,59 +388,11 @@
     },
     {
       "id": "athex-athens",
-      "benchmark": "athex",
-      "indexName": "ATHEX Composite",
+      "benchmark": "athens_general",
+      "indexName": "Athens General",
       "city": "Athens",
       "country": "Greece",
       "tz": "Europe/Athens"
-    },
-    {
-      "id": "b3-sao-paulo",
-      "benchmark": "ibovespa",
-      "indexName": "Ibovespa",
-      "city": "São Paulo",
-      "country": "Brazil",
-      "tz": "America/Sao_Paulo"
-    },
-    {
-      "id": "bcba-buenos-aires",
-      "benchmark": "merval",
-      "indexName": "MERVAL",
-      "city": "Buenos Aires",
-      "country": "Argentina",
-      "tz": "America/Argentina/Buenos_Aires"
-    },
-    {
-      "id": "bist-istanbul",
-      "benchmark": "bist_100",
-      "indexName": "BIST 100",
-      "city": "Istanbul",
-      "country": "Türkiye",
-      "tz": "Europe/Istanbul"
-    },
-    {
-      "id": "bme-madrid",
-      "benchmark": "ibex_35",
-      "indexName": "IBEX 35",
-      "city": "Madrid",
-      "country": "Spain",
-      "tz": "Europe/Madrid"
-    },
-    {
-      "id": "borsa-italiana-milan",
-      "benchmark": "ftse_mib",
-      "indexName": "FTSE MIB",
-      "city": "Milan",
-      "country": "Italy",
-      "tz": "Europe/Rome"
-    },
-    {
-      "id": "bse-mumbai",
-      "benchmark": "sensex",
-      "indexName": "SENSEX",
-      "city": "Mumbai",
-      "country": "India",
-      "tz": "Asia/Kolkata"
     },
     {
       "id": "budapest-bet",
@@ -100,19 +404,11 @@
     },
     {
       "id": "bursa-kuala-lumpur",
-      "benchmark": "klci",
-      "indexName": "KLCI",
+      "benchmark": "fklci",
+      "indexName": "FTSE Bursa KLCI",
       "city": "Kuala Lumpur",
       "country": "Malaysia",
       "tz": "Asia/Kuala_Lumpur"
-    },
-    {
-      "id": "cboe-chicago",
-      "benchmark": "djia",
-      "indexName": "Dow Jones",
-      "city": "Chicago",
-      "country": "United States",
-      "tz": "America/Chicago"
     },
     {
       "id": "cse-colombo",
@@ -131,156 +427,12 @@
       "tz": "Asia/Dubai"
     },
     {
-      "id": "egx-cairo",
-      "benchmark": "egx_30",
-      "indexName": "EGX 30",
-      "city": "Cairo",
-      "country": "Egypt",
-      "tz": "Africa/Cairo"
-    },
-    {
-      "id": "euronext-amsterdam",
-      "benchmark": "aex",
-      "indexName": "AEX",
-      "city": "Amsterdam",
-      "country": "Netherlands",
-      "tz": "Europe/Amsterdam"
-    },
-    {
-      "id": "euronext-brussels",
-      "benchmark": "bel_20",
-      "indexName": "BEL 20",
-      "city": "Brussels",
-      "country": "Belgium",
-      "tz": "Europe/Brussels"
-    },
-    {
-      "id": "euronext-lisbon",
-      "benchmark": "psi_20",
-      "indexName": "PSI 20",
-      "city": "Lisbon",
-      "country": "Portugal",
-      "tz": "Europe/Lisbon"
-    },
-    {
-      "id": "euronext-paris",
-      "benchmark": "cac_40",
-      "indexName": "CAC 40",
-      "city": "Paris",
-      "country": "France",
-      "tz": "Europe/Paris"
-    },
-    {
-      "id": "gpw-warsaw",
-      "benchmark": "wig_20",
-      "indexName": "WIG 20",
-      "city": "Warsaw",
-      "country": "Poland",
-      "tz": "Europe/Warsaw"
-    },
-    {
-      "id": "hkex-hong-kong",
-      "benchmark": "hang_seng",
-      "indexName": "Hang Seng",
-      "city": "Hong Kong",
-      "country": "Hong Kong",
-      "tz": "Asia/Hong_Kong"
-    },
-    {
-      "id": "idx-jakarta",
-      "benchmark": "idx_composite",
-      "indexName": "IDX Composite",
-      "city": "Jakarta",
-      "country": "Indonesia",
-      "tz": "Asia/Jakarta"
-    },
-    {
-      "id": "jse-johannesburg",
-      "benchmark": "jse_all_share",
-      "indexName": "JSE All Share",
-      "city": "Johannesburg",
-      "country": "South Africa",
-      "tz": "Africa/Johannesburg"
-    },
-    {
-      "id": "krx-seoul",
-      "benchmark": "kospi",
-      "indexName": "KOSPI",
-      "city": "Seoul",
-      "country": "South Korea",
-      "tz": "Asia/Seoul"
-    },
-    {
-      "id": "lse-london",
-      "benchmark": "ftse_100",
-      "indexName": "FTSE 100",
-      "city": "London",
-      "country": "United Kingdom",
-      "tz": "Europe/London"
-    },
-    {
-      "id": "moex-moscow",
-      "benchmark": "moex",
-      "indexName": "MOEX",
-      "city": "Moscow",
-      "country": "Russia",
-      "tz": "Europe/Moscow"
-    },
-    {
-      "id": "nasdaq-copenhagen",
-      "benchmark": "omx_copenhagen_20",
-      "indexName": "OMX Copenhagen",
-      "city": "Copenhagen",
-      "country": "Denmark",
-      "tz": "Europe/Copenhagen"
-    },
-    {
-      "id": "nasdaq-helsinki",
-      "benchmark": "omx_helsinki_25",
-      "indexName": "OMX Helsinki",
-      "city": "Helsinki",
-      "country": "Finland",
-      "tz": "Europe/Helsinki"
-    },
-    {
-      "id": "nasdaq-new-york",
-      "benchmark": "nasdaq",
-      "indexName": "NASDAQ",
-      "city": "New York",
-      "country": "United States",
-      "tz": "America/New_York"
-    },
-    {
-      "id": "nasdaq-san-francisco",
-      "benchmark": "russell_2000",
-      "indexName": "Russell 2000",
-      "city": "San Francisco",
-      "country": "United States",
-      "tz": "America/Los_Angeles"
-    },
-    {
-      "id": "nasdaq-stockholm",
-      "benchmark": "omx_stockholm_30",
-      "indexName": "OMX Stockholm",
-      "city": "Stockholm",
-      "country": "Sweden",
-      "tz": "Europe/Stockholm"
-    },
-    {
       "id": "nse-mumbai",
       "benchmark": "nifty_50",
       "indexName": "NIFTY 50",
       "city": "Mumbai",
       "country": "India",
       "tz": "Asia/Kolkata"
-    },
-    {
-      "id": "nyse-new-york",
-      "benchmark": "sp500",
-      "indexName": "S&P 500",
-      "city": "New York",
-      "country": "United States",
-      "tz": "America/New_York"
     },
     {
       "id": "nzx-wellington",
@@ -299,68 +451,236 @@
       "tz": "Asia/Manila"
     },
     {
-      "id": "qse-doha",
-      "benchmark": "qe_general",
-      "indexName": "QE General",
-      "city": "Doha",
-      "country": "Qatar",
-      "tz": "Asia/Qatar"
-    },
-    {
-      "id": "set-bangkok",
-      "benchmark": "set",
-      "indexName": "SET",
-      "city": "Bangkok",
-      "country": "Thailand",
-      "tz": "Asia/Bangkok"
-    },
-    {
-      "id": "sgx-singapore",
-      "benchmark": "sti",
-      "indexName": "Straits Times",
-      "city": "Singapore",
-      "country": "Singapore",
-      "tz": "Asia/Singapore"
-    },
-    {
-      "id": "six-zurich",
-      "benchmark": "smi",
-      "indexName": "SMI",
-      "city": "Zurich",
-      "country": "Switzerland",
-      "tz": "Europe/Zurich"
-    },
-    {
-      "id": "sse-santiago",
-      "benchmark": "ipsa",
-      "indexName": "IPSA",
-      "city": "Santiago",
-      "country": "Chile",
-      "tz": "America/Santiago"
-    },
-    {
-      "id": "szse-shenzhen",
-      "benchmark": "szse_component",
-      "indexName": "SZSE Component",
-      "city": "Shenzhen",
-      "country": "China",
-      "tz": "Asia/Shanghai"
-    },
-    {
-      "id": "tase-tel-aviv",
-      "benchmark": "ta_35",
-      "indexName": "TA-35",
-      "city": "Tel Aviv",
-      "country": "Israel",
-      "tz": "Asia/Jerusalem"
-    },
-    {
       "id": "tse-tokyo",
-      "benchmark": "nikkei_225",
-      "indexName": "Nikkei 225",
+      "benchmark": "jp225",
+      "indexName": "Nikkei 225 (Alt)",
       "city": "Tokyo",
       "country": "Japan",
       "tz": "Asia/Tokyo"
+    },
+    {
+      "id": "wbag-vienna",
+      "benchmark": "atx",
+      "indexName": "ATX",
+      "city": "Vienna",
+      "country": "Austria",
+      "tz": "Europe/Vienna"
+    },
+    {
+      "id": "ise-dublin",
+      "benchmark": "iseq",
+      "indexName": "ISEQ Overall",
+      "city": "Dublin",
+      "country": "Ireland",
+      "tz": "Europe/Dublin"
+    },
+    {
+      "id": "pse-prague",
+      "benchmark": "px",
+      "indexName": "PX Index",
+      "city": "Prague",
+      "country": "Czech Republic",
+      "tz": "Europe/Prague"
+    },
+    {
+      "id": "ljse-ljubljana",
+      "benchmark": "sbitop",
+      "indexName": "SBI TOP",
+      "city": "Ljubljana",
+      "country": "Slovenia",
+      "tz": "Europe/Ljubljana"
+    },
+    {
+      "id": "zse-zagreb",
+      "benchmark": "crobex",
+      "indexName": "CROBEX",
+      "city": "Zagreb",
+      "country": "Croatia",
+      "tz": "Europe/Zagreb"
+    },
+    {
+      "id": "bcpb-bratislava",
+      "benchmark": "sax",
+      "indexName": "SAX Index",
+      "city": "Bratislava",
+      "country": "Slovakia",
+      "tz": "Europe/Bratislava"
+    },
+    {
+      "id": "luxse-luxembourg",
+      "benchmark": "luxx",
+      "indexName": "LuxX Index",
+      "city": "Luxembourg",
+      "country": "Luxembourg",
+      "tz": "Europe/Luxembourg"
+    },
+    {
+      "id": "mse-skopje",
+      "benchmark": "mbi_10",
+      "indexName": "MBI 10",
+      "city": "Skopje",
+      "country": "North Macedonia",
+      "tz": "Europe/Skopje"
+    },
+    {
+      "id": "mnse-podgorica",
+      "benchmark": "monex",
+      "indexName": "MONEX",
+      "city": "Podgorica",
+      "country": "Montenegro",
+      "tz": "Europe/Podgorica"
+    },
+    {
+      "id": "sase-sarajevo",
+      "benchmark": "sasx_10",
+      "indexName": "SASX-10",
+      "city": "Sarajevo",
+      "country": "Bosnia and Herzegovina",
+      "tz": "Europe/Sarajevo"
+    },
+    {
+      "id": "pfts-kyiv",
+      "benchmark": "pfts",
+      "indexName": "PFTS Index",
+      "city": "Kyiv",
+      "country": "Ukraine",
+      "tz": "Europe/Kyiv"
+    },
+    {
+      "id": "bse-beirut",
+      "benchmark": "blom",
+      "indexName": "BLOM Stock Index",
+      "city": "Beirut",
+      "country": "Lebanon",
+      "tz": "Asia/Beirut"
+    },
+    {
+      "id": "kse-kuwait",
+      "benchmark": "kuwait_all_share",
+      "indexName": "Kuwait All Share",
+      "city": "Kuwait City",
+      "country": "Kuwait",
+      "tz": "Asia/Kuwait"
+    },
+    {
+      "id": "msm-muscat",
+      "benchmark": "msm_30",
+      "indexName": "MSM 30",
+      "city": "Muscat",
+      "country": "Oman",
+      "tz": "Asia/Muscat"
+    },
+    {
+      "id": "kase-almaty",
+      "benchmark": "kase",
+      "indexName": "KASE Index",
+      "city": "Almaty",
+      "country": "Kazakhstan",
+      "tz": "Asia/Almaty"
+    },
+    {
+      "id": "psx-karachi",
+      "benchmark": "kse_100",
+      "indexName": "KSE 100",
+      "city": "Karachi",
+      "country": "Pakistan",
+      "tz": "Asia/Karachi"
+    },
+    {
+      "id": "dse-dhaka",
+      "benchmark": "dse_broad",
+      "indexName": "DSE Broad",
+      "city": "Dhaka",
+      "country": "Bangladesh",
+      "tz": "Asia/Dhaka"
+    },
+    {
+      "id": "mse-ulaanbaatar",
+      "benchmark": "mse_20",
+      "indexName": "MSE Top 20",
+      "city": "Ulaanbaatar",
+      "country": "Mongolia",
+      "tz": "Asia/Ulaanbaatar"
+    },
+    {
+      "id": "lsx-vientiane",
+      "benchmark": "lsx_composite",
+      "indexName": "LSX Composite",
+      "city": "Vientiane",
+      "country": "Laos",
+      "tz": "Asia/Vientiane"
+    },
+    {
+      "id": "nse-nairobi",
+      "benchmark": "nairobi_all_share",
+      "indexName": "NSE All Share",
+      "city": "Nairobi",
+      "country": "Kenya",
+      "tz": "Africa/Nairobi"
+    },
+    {
+      "id": "gse-accra",
+      "benchmark": "ggseci",
+      "indexName": "GSE Composite",
+      "city": "Accra",
+      "country": "Ghana",
+      "tz": "Africa/Accra"
+    },
+    {
+      "id": "cse-casablanca",
+      "benchmark": "cfg_25",
+      "indexName": "CFG 25",
+      "city": "Casablanca",
+      "country": "Morocco",
+      "tz": "Africa/Casablanca"
+    },
+    {
+      "id": "bse-gaborone",
+      "benchmark": "gaborone",
+      "indexName": "BSE DCI",
+      "city": "Gaborone",
+      "country": "Botswana",
+      "tz": "Africa/Gaborone"
+    },
+    {
+      "id": "nsx-windhoek",
+      "benchmark": "nsx_overall",
+      "indexName": "NSX Overall",
+      "city": "Windhoek",
+      "country": "Namibia",
+      "tz": "Africa/Windhoek"
+    },
+    {
+      "id": "dse-dar-es-salaam",
+      "benchmark": "dsei",
+      "indexName": "DSE Index",
+      "city": "Dar es Salaam",
+      "country": "Tanzania",
+      "tz": "Africa/Dar_es_Salaam"
+    },
+    {
+      "id": "sem-port-louis",
+      "benchmark": "semdex",
+      "indexName": "SEMDEX",
+      "city": "Port Louis",
+      "country": "Mauritius",
+      "tz": "Indian/Mauritius"
+    },
+    {
+      "id": "bvc-caracas",
+      "benchmark": "bvpsi",
+      "indexName": "IBC Index",
+      "city": "Caracas",
+      "country": "Venezuela",
+      "tz": "America/Caracas"
+    },
+    {
+      "id": "bvq-quito",
+      "benchmark": "ecuador_general",
+      "indexName": "Ecuador General",
+      "city": "Quito",
+      "country": "Ecuador",
+      "tz": "America/Guayaquil"
     },
     {
       "id": "tsx-toronto",
@@ -372,11 +692,35 @@
     },
     {
       "id": "twse-taipei",
-      "benchmark": "taiex",
-      "indexName": "TAIEX",
+      "benchmark": "taiwan_stock_market_index",
+      "indexName": "Taiwan Weighted",
       "city": "Taipei",
       "country": "Taiwan",
       "tz": "Asia/Taipei"
+    },
+    {
+      "id": "set-bangkok",
+      "benchmark": "set_50",
+      "indexName": "SET 50",
+      "city": "Bangkok",
+      "country": "Thailand",
+      "tz": "Asia/Bangkok"
+    },
+    {
+      "id": "nyse-new-york",
+      "benchmark": "us500",
+      "indexName": "S&P 500",
+      "city": "New York",
+      "country": "United States",
+      "tz": "America/New_York"
+    },
+    {
+      "id": "cboe-chicago",
+      "benchmark": "us30",
+      "indexName": "Dow Jones 30",
+      "city": "Chicago",
+      "country": "United States",
+      "tz": "America/Chicago"
     }
   ],
   "defaults": [
@@ -395,6 +739,6 @@
     "twse-taipei",
     "cboe-chicago",
     "tsx-toronto",
-    "nasdaq-san-francisco"
+    "nyse-new-york"
   ]
 }

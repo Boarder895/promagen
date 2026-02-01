@@ -1,8 +1,16 @@
 /**
  * Promagen Gateway - Marketstack Separate Budget Manager
  * ========================================================
- * CRITICAL: Marketstack has its own pool of 250 credits/day.
+ * CRITICAL: Marketstack Professional tier has 100,000 credits/month.
  * This is COMPLETELY SEPARATE from TwelveData's 800/day budget.
+ *
+ * UPDATED: 2026-01-31 - Professional tier limits (3333/day, 60/min)
+ *
+ * Budget Math:
+ * - Plan: Marketstack Professional ($49/month)
+ * - Monthly: 100,000 API calls
+ * - Daily: 100,000 ÷ 30 = 3,333 calls/day
+ * - Current usage: 96 calls/day (2.88% of budget)
  *
  * Security: 10/10
  * - Lazy initialization ensures env vars are loaded
@@ -28,27 +36,29 @@ import type {
 /**
  * Get Marketstack daily limit from env or default.
  * Reads at call time (not module load) to ensure env vars are available.
+ *
+ * Professional tier: 100,000/month ÷ 30 = 3,333/day
  */
 function getMarketstackDailyLimit(): number {
   const val =
     process.env['MARKETSTACK_BUDGET_DAILY'] ??
     process.env['INDICES_RIBBON_BUDGET_DAILY_ALLOWANCE'] ??
-    '250';
+    '3333';  // Professional tier: 100K/month ÷ 30 days
   const parsed = parseInt(val, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 250;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3333;
 }
 
 /**
  * Get Marketstack minute limit from env or default.
- * Marketstack allows 3 credits per minute on the free tier.
+ * Professional tier has no documented rate limit, but we set a reasonable cap.
  */
 function getMarketstackMinuteLimit(): number {
   const val =
     process.env['MARKETSTACK_BUDGET_MINUTE'] ??
     process.env['INDICES_RIBBON_BUDGET_MINUTE_ALLOWANCE'] ??
-    '3';
+    '60';  // Professional tier: generous limit
   const parsed = parseInt(val, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
 }
 
 // =============================================================================
@@ -81,7 +91,7 @@ class MarketstackBudgetManager implements BudgetManagerInterface {
   private minuteResetAt: number;
 
   constructor() {
-    this.id = 'marketstack-separate';
+    this.id = 'marketstack-professional';
     this.dailyLimit = getMarketstackDailyLimit();
     this.minuteLimit = getMarketstackMinuteLimit();
 
@@ -90,7 +100,7 @@ class MarketstackBudgetManager implements BudgetManagerInterface {
     this.dailyResetAt = this.getNextDailyReset(now);
     this.minuteResetAt = this.getNextMinuteReset(now);
 
-    logInfo('Marketstack separate budget initialized', {
+    logInfo('Marketstack Professional budget initialized', {
       dailyLimit: this.dailyLimit,
       minuteLimit: this.minuteLimit,
       dailyResetAt: new Date(this.dailyResetAt).toISOString(),

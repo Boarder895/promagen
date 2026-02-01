@@ -4,6 +4,10 @@
 // ============================================================================
 // Validates exchanges.catalog.json and API responses.
 // Ensures type safety at runtime, especially for external data.
+//
+// UPDATED v2.0.0 (30 Jan 2026):
+// - Multi-index support: MarketstackConfigSchema now validates availableIndices
+// - Backward compatible with legacy single benchmark format
 // ============================================================================
 
 import { z } from 'zod';
@@ -14,22 +18,72 @@ import { z } from 'zod';
 export const HemisphereSchema = z.enum(['NE', 'NW', 'SE', 'SW', '']);
 
 /**
- * Marketstack configuration for an exchange.
- * Links exchange to its benchmark index in Marketstack API.
+ * Single index option schema.
+ * Represents one available index for an exchange.
  */
-export const MarketstackConfigSchema = z.object({
+export const IndexOptionSchema = z.object({
   /**
    * Marketstack benchmark key for /v2/indexinfo endpoint.
-   * @example "nikkei_225", "sp500", "ftse_100"
+   * @example "nikkei_225", "de40", "us500"
    */
-  benchmark: z.string().regex(/^[a-z0-9_]+$/, 'Benchmark must be lowercase alphanumeric with underscores'),
+  benchmark: z.string().regex(/^[a-z0-9_-]+$/, 'Benchmark must be lowercase alphanumeric with underscores/hyphens'),
 
   /**
    * Human-readable index name.
-   * @example "Nikkei 225", "S&P 500", "FTSE 100"
+   * @example "Nikkei 225", "DAX 40", "S&P 500"
    */
   indexName: z.string().min(1),
 });
+
+/**
+ * Marketstack configuration schema for an exchange.
+ * Links exchange to its benchmark indices in Marketstack API.
+ * Supports multiple indices per exchange (Pro Promagen feature).
+ */
+export const MarketstackConfigSchema = z.object({
+  /**
+   * Default benchmark key used when no user preference is set.
+   * Always the first/primary index for this exchange.
+   * @example "nikkei_225", "de40", "us500"
+   */
+  defaultBenchmark: z.string().regex(/^[a-z0-9_-]+$/, 'Benchmark must be lowercase alphanumeric with underscores/hyphens'),
+
+  /**
+   * Default index display name matching defaultBenchmark.
+   * @example "Nikkei 225", "DAX 40", "S&P 500"
+   */
+  defaultIndexName: z.string().min(1),
+
+  /**
+   * All available indices for this exchange.
+   * Pro users can choose which index to display.
+   * Array must contain at least one index (the default).
+   */
+  availableIndices: z.array(IndexOptionSchema).min(1, 'At least one index must be available'),
+});
+
+/**
+ * Legacy Marketstack config schema for backward compatibility.
+ * Used for data that hasn't been migrated to multi-index format.
+ * @deprecated Use MarketstackConfigSchema for new data
+ */
+export const LegacyMarketstackConfigSchema = z.object({
+  benchmark: z.string().regex(/^[a-z0-9_-]+$/, 'Benchmark must be lowercase alphanumeric with underscores/hyphens'),
+  indexName: z.string().min(1),
+});
+
+/**
+ * Union schema that accepts both new and legacy formats.
+ * Transforms legacy format to new format for consistency.
+ */
+export const MarketstackConfigUnionSchema = z.union([
+  MarketstackConfigSchema,
+  LegacyMarketstackConfigSchema.transform((legacy) => ({
+    defaultBenchmark: legacy.benchmark,
+    defaultIndexName: legacy.indexName,
+    availableIndices: [{ benchmark: legacy.benchmark, indexName: legacy.indexName }],
+  })),
+]);
 
 /**
  * Full Exchange schema matching exchanges.catalog.json structure.
@@ -48,8 +102,8 @@ export const ExchangeSchema = z.object({
   holidaysRef: z.string().min(1),
   hemisphere: HemisphereSchema,
 
-  // Marketstack integration (required for index data)
-  marketstack: MarketstackConfigSchema,
+  // Marketstack integration (supports both new and legacy format)
+  marketstack: MarketstackConfigUnionSchema,
 
   // Hover color for UI (required - unique per exchange)
   hoverColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be valid hex color'),
@@ -72,7 +126,30 @@ export const ExchangeSchema = z.object({
 export const ExchangeCatalogSchema = z.array(ExchangeSchema);
 
 /**
- * Selected exchanges configuration.
+ * Selected exchanges configuration with index preferences.
+ * Pro Promagen: each selection can include a benchmark preference.
+ */
+export const ExchangeSelectionSchema = z.object({
+  /**
+   * Exchange ID.
+   */
+  exchangeId: z.string().regex(/^[a-z0-9-]+$/),
+
+  /**
+   * User's chosen benchmark for this exchange.
+   * If not set, uses exchange's defaultBenchmark.
+   */
+  benchmark: z.string().regex(/^[a-z0-9_-]+$/).optional(),
+});
+
+/**
+ * Array of exchange selections with index preferences.
+ */
+export const ExchangeSelectionsSchema = z.array(ExchangeSelectionSchema);
+
+/**
+ * Legacy selected exchanges configuration (IDs only).
+ * @deprecated Use ExchangeSelectionsSchema for new code
  */
 export const ExchangeSelectedSchema = z.object({
   ids: z.array(z.string().regex(/^[a-z0-9-]+$/)),
@@ -113,10 +190,16 @@ export const IndicesResponseSchema = z.object({
     .optional(),
 });
 
-// Type exports derived from schemas
+// ============================================================================
+// TYPE EXPORTS
+// ============================================================================
+
+export type IndexOption = z.infer<typeof IndexOptionSchema>;
 export type MarketstackConfig = z.infer<typeof MarketstackConfigSchema>;
 export type ExchangeFromSchema = z.infer<typeof ExchangeSchema>;
 export type ExchangeCatalog = z.infer<typeof ExchangeCatalogSchema>;
+export type ExchangeSelection = z.infer<typeof ExchangeSelectionSchema>;
+export type ExchangeSelections = z.infer<typeof ExchangeSelectionsSchema>;
 export type ExchangeSelected = z.infer<typeof ExchangeSelectedSchema>;
 export type IndexQuoteResponse = z.infer<typeof IndexQuoteResponseSchema>;
 export type IndicesResponse = z.infer<typeof IndicesResponseSchema>;

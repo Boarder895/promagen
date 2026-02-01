@@ -1,6 +1,6 @@
 // src/app/pro-promagen/pro-promagen-client.tsx
 // ============================================================================
-// PRO PROMAGEN CLIENT - WITH ENGINE BAY & MISSION CONTROL (v2.6.0)
+// PRO PROMAGEN CLIENT - WITH ENGINE BAY & MISSION CONTROL (v2.8.0)
 // ============================================================================
 // Client component for the /pro-promagen configuration page.
 // Uses SAME layout as homepage (HomepageGrid + ExchangeCard + FxRibbon).
@@ -11,6 +11,14 @@
 // - Exchange cards show real clocks but DEMO weather (placeholder)
 // - Centre column shows comparison table instead of providers table
 // - Paid users can save selections; free users preview only
+//
+// UPDATED v2.8.0 (01 Feb 2026):
+// - FIX: Hydration error — v2.7.0's lazy useState read localStorage on client
+//   while server used defaults → mismatch → React discarded server HTML → flash.
+//   Now: useState(defaults) again (SSR-safe), useEffect reads localStorage after
+//   mount, exchange rails show skeleton until hydrated. No mismatch, no flash.
+// - KEPT: Weather merge — live overlays demo, not replaces.
+// - KEPT: Indices GET — always use GET (POST is 405).
 //
 // UPDATED v2.6.0 (29 Jan 2026):
 // - ADDED: Fullscreen FX Picker mode (matches Exchange Picker pattern)
@@ -63,6 +71,8 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
+import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
+import { useWeather } from '@/hooks/use-weather';
 import { getRailsRelative } from '@/lib/location';
 import { ComparisonTable, UpgradeCta } from '@/components/pro-promagen';
 import { ExchangePicker } from '@/components/pro-promagen/exchange-picker';
@@ -71,7 +81,7 @@ import {
   PRO_SELECTION_LIMITS,
   type FxPairCatalogEntry,
   type ExchangeCatalogEntry,
-  type IndicesCatalogEntry,
+  isMultiIndexConfig,
 } from '@/lib/pro-promagen/types';
 import { catalogToPickerOptions } from '@/lib/pro-promagen/exchange-picker-helpers';
 import type { FxPairOption } from '@/lib/fx/fx-picker-helpers';
@@ -79,7 +89,7 @@ import type { Exchange, Hemisphere } from '@/data/exchanges/types';
 import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 import type { Provider } from '@/types/providers';
-import type { ExchangeWeatherData } from '@/components/exchanges/types';
+import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
 
 // ============================================================================
 // TYPES
@@ -90,14 +100,10 @@ export interface ProPromagenClientProps {
   exchangeCatalog: ExchangeCatalogEntry[];
   /** Full FX pairs catalog */
   fxCatalog: FxPairCatalogEntry[];
-  /** Indices catalog (exchanges with marketstack benchmarks) */
-  indicesCatalog: IndicesCatalogEntry[];
   /** Default selected exchanges (SSOT) */
   defaultExchangeIds: string[];
   /** Default selected FX pairs (SSOT) */
   defaultFxPairIds: string[];
-  /** Default selected indices (same as exchanges by default) */
-  defaultIndicesIds: string[];
   /** Demo weather data for exchanges */
   demoWeatherIndex: Map<string, ExchangeWeather>;
   /** Providers data for Engine Bay (NEW v2.0.0) */
@@ -111,7 +117,6 @@ export interface ProPromagenClientProps {
 const STORAGE_KEYS = {
   FX_SELECTION: 'promagen:pro:fx-selection',
   EXCHANGE_SELECTION: 'promagen:pro:exchange-selection',
-  INDICES_SELECTION: 'promagen:pro:indices-selection',
   PROMPT_TIER: 'promagen:pro:prompt-tier',
 } as const;
 
@@ -148,11 +153,34 @@ function saveToStorage<T>(key: string, value: T): void {
 
 /**
  * Convert catalog entry to Exchange type for rails.
+ * Handles both legacy and multi-index marketstack formats.
  */
 function catalogToExchange(
   entry: ExchangeCatalogEntry,
   _weather: ExchangeWeather | null,
 ): Exchange {
+  // Convert marketstack to the MarketstackConfig format expected by Exchange
+  const ms = entry.marketstack;
+  let marketstack: Exchange['marketstack'];
+
+  if (!ms) {
+    marketstack = {
+      defaultBenchmark: '',
+      defaultIndexName: '',
+      availableIndices: [],
+    };
+  } else if (isMultiIndexConfig(ms)) {
+    // Already in new format
+    marketstack = ms;
+  } else {
+    // Convert legacy format to new format
+    marketstack = {
+      defaultBenchmark: ms.benchmark,
+      defaultIndexName: ms.indexName,
+      availableIndices: [{ benchmark: ms.benchmark, indexName: ms.indexName }],
+    };
+  }
+
   return {
     id: entry.id,
     city: entry.city,
@@ -165,7 +193,7 @@ function catalogToExchange(
     hemisphere: entry.hemisphere as Hemisphere,
     hoursTemplate: entry.hoursTemplate,
     holidaysRef: entry.holidaysRef,
-    marketstack: entry.marketstack ?? { benchmark: '', indexName: '' },
+    marketstack,
     hoverColor: entry.hoverColor ?? '#6366F1',
   };
 }
@@ -222,10 +250,8 @@ function catalogToFxPickerOptions(catalog: FxPairCatalogEntry[]): FxPairOption[]
 export default function ProPromagenClient({
   exchangeCatalog,
   fxCatalog,
-  indicesCatalog,
   defaultExchangeIds,
   defaultFxPairIds,
-  defaultIndicesIds,
   demoWeatherIndex,
   providers = [],
 }: ProPromagenClientProps) {
@@ -234,20 +260,51 @@ export default function ProPromagenClient({
   const isPaidUser = userTier === 'paid';
 
   // ============================================================================
-  // STATE - Selection (Fixed initialization)
+  // STATE - Selection (v2.8.0: SSR-safe init + hydration gate)
+  // ============================================================================
+  // Strategy: Initialize with SSOT defaults (matches server render → no hydration
+  // error). Then useEffect reads localStorage after mount and sets hydrated=true.
+  // Exchange rails show a skeleton pulse until hydrated, so the user never sees
+  // wrong content flash — they see skeleton → correct content.
   // ============================================================================
 
-  // Initialize with defaults first (SSR-safe)
   const [selectedFxPairs, setSelectedFxPairs] = useState<string[]>(defaultFxPairIds);
   const [selectedExchanges, setSelectedExchanges] = useState<string[]>(defaultExchangeIds);
-  const [selectedIndices, setSelectedIndices] = useState<string[]>(defaultIndicesIds);
   const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
 
-  // Track if we've loaded from storage (to detect changes)
+  // Track initial state for change detection
   const [initialFx, setInitialFx] = useState<string[]>(defaultFxPairIds);
   const [initialExchanges, setInitialExchanges] = useState<string[]>(defaultExchangeIds);
-  const [initialIndices, setInitialIndices] = useState<string[]>(defaultIndicesIds);
+
+  // Hydration gate — false until useEffect reads localStorage
   const [hydrated, setHydrated] = useState(false);
+
+  // Read localStorage after mount (client-only, runs once)
+  useEffect(() => {
+    const storedFx = loadArrayFromStorage(STORAGE_KEYS.FX_SELECTION);
+    if (storedFx) {
+      setSelectedFxPairs(storedFx);
+      setInitialFx(storedFx);
+    }
+
+    const storedExch = loadArrayFromStorage(STORAGE_KEYS.EXCHANGE_SELECTION);
+    if (storedExch) {
+      setSelectedExchanges(storedExch);
+      setInitialExchanges(storedExch);
+    }
+
+    try {
+      const storedTier = localStorage.getItem(STORAGE_KEYS.PROMPT_TIER);
+      if (storedTier !== null) {
+        const parsed = JSON.parse(storedTier) as number;
+        if ([1, 2, 3, 4].includes(parsed)) setSelectedPromptTier(parsed as PromptTier);
+      }
+    } catch {
+      /* ignore */
+    }
+
+    setHydrated(true);
+  }, []);
 
   // ============================================================================
   // STATE - Fullscreen Pickers (v2.3.0 Exchange, v2.6.0 FX)
@@ -258,45 +315,6 @@ export default function ProPromagenClient({
   const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
   const [isFxPickerFullscreen, setIsFxPickerFullscreen] = useState(false);
 
-  // Load from localStorage after hydration (client-side only)
-  useEffect(() => {
-    if (hydrated) return;
-
-    const storedFx = loadArrayFromStorage(STORAGE_KEYS.FX_SELECTION);
-    const storedExchanges = loadArrayFromStorage(STORAGE_KEYS.EXCHANGE_SELECTION);
-    const storedIndices = loadArrayFromStorage(STORAGE_KEYS.INDICES_SELECTION);
-
-    // Load prompt tier (single value, not array)
-    try {
-      const storedTier = localStorage.getItem(STORAGE_KEYS.PROMPT_TIER);
-      if (storedTier !== null) {
-        const parsed = JSON.parse(storedTier) as number;
-        if ([1, 2, 3, 4].includes(parsed)) {
-          setSelectedPromptTier(parsed as PromptTier);
-        }
-      }
-    } catch {
-      // Ignore parse errors
-    }
-
-    // If storage has values (including empty array), use them
-    // Otherwise keep defaults
-    if (storedFx !== null) {
-      setSelectedFxPairs(storedFx);
-      setInitialFx(storedFx);
-    }
-    if (storedExchanges !== null) {
-      setSelectedExchanges(storedExchanges);
-      setInitialExchanges(storedExchanges);
-    }
-    if (storedIndices !== null) {
-      setSelectedIndices(storedIndices);
-      setInitialIndices(storedIndices);
-    }
-
-    setHydrated(true);
-  }, [hydrated]);
-
   // Detect changes from initial state
   const hasChanges = useMemo(() => {
     if (!hydrated) return false;
@@ -305,16 +323,12 @@ export default function ProPromagenClient({
     const exchChanged =
       JSON.stringify([...selectedExchanges].sort()) !==
       JSON.stringify([...initialExchanges].sort());
-    const indicesChanged =
-      JSON.stringify([...selectedIndices].sort()) !== JSON.stringify([...initialIndices].sort());
-    return fxChanged || exchChanged || indicesChanged;
+    return fxChanged || exchChanged;
   }, [
     selectedFxPairs,
     selectedExchanges,
-    selectedIndices,
     initialFx,
     initialExchanges,
-    initialIndices,
     hydrated,
   ]);
 
@@ -347,43 +361,10 @@ export default function ProPromagenClient({
 
   // Indices options for dropdown with exchange name as subLabel
   // Only show indices for currently selected exchanges
-  const indicesOptions = useMemo(() => {
-    // Filter to only exchanges that are currently selected AND have marketstack data
-    const availableIndices = indicesCatalog.filter((idx) => selectedExchanges.includes(idx.id));
-
-    return availableIndices.map((idx) => ({
-      id: idx.id,
-      label: idx.indexName,
-      subLabel: `${idx.exchangeName} — ${idx.country}`,
-      status: idx.status,
-    }));
-  }, [indicesCatalog, selectedExchanges]);
-
   // Exchange picker options - converted from catalog (v2.3.0)
   const exchangePickerOptions = useMemo(() => {
     return catalogToPickerOptions(exchangeCatalog);
   }, [exchangeCatalog]);
-
-  // ============================================================================
-  // SYNC INDICES WHEN EXCHANGES CHANGE
-  // ============================================================================
-  // When an exchange is removed, also remove it from indices selection
-  // When exchanges change, filter indices to only include valid exchanges
-
-  useEffect(() => {
-    if (!hydrated) return;
-
-    // Filter indices to only include exchanges that are still selected
-    const validIndices = selectedIndices.filter(
-      (id) => selectedExchanges.includes(id) && indicesCatalog.some((idx) => idx.id === id),
-    );
-
-    // Only update if there's a change
-    if (validIndices.length !== selectedIndices.length) {
-      setSelectedIndices(validIndices);
-      saveToStorage(STORAGE_KEYS.INDICES_SELECTION, validIndices);
-    }
-  }, [selectedExchanges, indicesCatalog, hydrated, selectedIndices]);
 
   // ============================================================================
   // DEMO FX DATA - Filter catalog to selected pairs for ribbon
@@ -422,6 +403,81 @@ export default function ProPromagenClient({
   }, [demoWeatherIndex]);
 
   // ============================================================================
+  // LIVE DATA — Index quotes + Weather (same pattern as homepage)
+  // ============================================================================
+
+  // Fetch live index quotes for selected exchanges
+  // FIX v2.7.0: Always use GET (exchangeIds: undefined). The /api/indices route
+  // blocks POST (405) — paid user selection is derived server-side from Clerk
+  // publicMetadata.exchangeSelection.exchangeIds. Passing exchangeIds here would
+  // trigger the hook's POST path, which the API rejects.
+  const { quotesById, movementById } = useIndicesQuotes({
+    enabled: true,
+    exchangeIds: undefined,
+    userTier: isPaidUser ? 'paid' : 'free',
+  });
+
+  // Build indexByExchange map (same helper logic as homepage-client)
+  const indexByExchange = useMemo(() => {
+    const map = new Map<string, IndexQuoteData>();
+    for (const [exchangeId, quote] of quotesById.entries()) {
+      if (!quote) continue;
+      const indexName = typeof quote.indexName === 'string' ? quote.indexName : null;
+      const price =
+        typeof quote.price === 'number' && Number.isFinite(quote.price) ? quote.price : null;
+      if (!indexName || price === null) continue;
+
+      const movement = movementById.get(exchangeId);
+      map.set(exchangeId, {
+        indexName,
+        price,
+        change:
+          typeof quote.change === 'number' && Number.isFinite(quote.change) ? quote.change : 0,
+        percentChange:
+          typeof quote.percentChange === 'number' && Number.isFinite(quote.percentChange)
+            ? quote.percentChange
+            : 0,
+        tick: movement?.tick ?? 'flat',
+      });
+    }
+    return map;
+  }, [quotesById, movementById]);
+
+  // Fetch live weather (same hook as homepage)
+  const { weather: liveWeatherById } = useWeather();
+
+  // Convert live weather to ExchangeWeatherData map
+  const liveWeatherMap = useMemo(() => {
+    const map = new Map<string, ExchangeWeatherData>();
+    for (const [id, w] of Object.entries(liveWeatherById)) {
+      map.set(id, {
+        tempC: w.temperatureC,
+        tempF: w.temperatureF,
+        emoji: w.emoji,
+        condition: w.conditions,
+        humidity: w.humidity,
+        windKmh: w.windSpeedKmh,
+        description: w.description,
+      });
+    }
+    return map;
+  }, [liveWeatherById]);
+
+  // FIX v2.7.0: Merge live weather OVER demo weather (not replace).
+  // Previously: liveWeatherMap.size > 0 ? liveWeatherMap : weatherDataMap
+  // That discarded demo weather the moment ANY live weather arrived.
+  // If live weather covered 10 of 16 exchanges, the other 6 lost their data.
+  // Now: start with demo as base, overlay live on top. Live always wins per-exchange.
+  const effectiveWeatherMap = useMemo(() => {
+    if (liveWeatherMap.size === 0) return weatherDataMap;
+    const merged = new Map(weatherDataMap);
+    for (const [id, data] of liveWeatherMap.entries()) {
+      merged.set(id, data);
+    }
+    return merged;
+  }, [liveWeatherMap, weatherDataMap]);
+
+  // ============================================================================
   // HANDLERS
   // ============================================================================
 
@@ -448,19 +504,6 @@ export default function ProPromagenClient({
     saveToStorage(STORAGE_KEYS.EXCHANGE_SELECTION, ids);
   }, []);
 
-  const handleIndicesChange = useCallback((ids: string[]) => {
-    // Validate count (allows 0 to max)
-    if (
-      ids.length < PRO_SELECTION_LIMITS.INDICES_MIN ||
-      ids.length > PRO_SELECTION_LIMITS.INDICES_MAX
-    ) {
-      return;
-    }
-    setSelectedIndices(ids);
-    // Auto-save to localStorage on every change
-    saveToStorage(STORAGE_KEYS.INDICES_SELECTION, ids);
-  }, []);
-
   const handlePromptTierChange = useCallback((tier: PromptTier) => {
     setSelectedPromptTier(tier);
     // Auto-save to localStorage on every change
@@ -471,17 +514,14 @@ export default function ProPromagenClient({
     // Save is already done on each change, but this confirms to user
     saveToStorage(STORAGE_KEYS.FX_SELECTION, selectedFxPairs);
     saveToStorage(STORAGE_KEYS.EXCHANGE_SELECTION, selectedExchanges);
-    saveToStorage(STORAGE_KEYS.INDICES_SELECTION, selectedIndices);
 
     // Update initial state to reflect saved state
     setInitialFx(selectedFxPairs);
     setInitialExchanges(selectedExchanges);
-    setInitialIndices(selectedIndices);
 
     // TODO: Sync to Clerk metadata (debounced)
-    // TODO: POST to /api/indices with { exchangeIds: selectedIndices, tier: 'paid' }
     await new Promise((resolve) => setTimeout(resolve, 500));
-  }, [selectedFxPairs, selectedExchanges, selectedIndices]);
+  }, [selectedFxPairs, selectedExchanges]);
 
   // ============================================================================
   // FULLSCREEN EXCHANGE PICKER HANDLERS (v2.3.0)
@@ -661,15 +701,12 @@ export default function ProPromagenClient({
         <ComparisonTable
           selectedFxPairs={selectedFxPairs}
           selectedExchanges={selectedExchanges}
-          selectedIndices={selectedIndices}
           selectedPromptTier={selectedPromptTier}
           onFxChange={handleFxChange}
           onExchangeChange={handleExchangeChange}
-          onIndicesChange={handleIndicesChange}
           onPromptTierChange={handlePromptTierChange}
           fxOptions={fxOptions}
           exchangeOptions={exchangeOptions}
-          indicesOptions={indicesOptions}
           isPaidUser={isPaidUser}
           // NEW v2.2.0: Pass full exchange catalog for ExchangePicker
           exchangeCatalog={exchangeCatalog}
@@ -679,6 +716,18 @@ export default function ProPromagenClient({
           onOpenFxPicker={handleOpenFxPicker}
         />
       </div>
+
+      {/* Demo Data Disclaimer */}
+      {!isPaidUser && (
+        <div className="shrink-0 mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 text-center">
+          <p className="text-sm font-medium text-white/70">
+            ⚠ All data shown is for demonstration purposes only
+          </p>
+          <p className="text-xs text-white/40 mt-1">
+            Upgrade to Pro Promagen to access real-time market data
+          </p>
+        </div>
+      )}
 
       {/* Save/Upgrade CTA */}
       <div className="shrink-0 mt-auto pt-4">
@@ -691,20 +740,44 @@ export default function ProPromagenClient({
   // EXCHANGE RAILS
   // ============================================================================
 
-  const leftExchanges = (
-    <ExchangeList
-      exchanges={leftRail}
-      weatherByExchange={weatherDataMap}
-      emptyMessage="No eastern exchanges selected"
-    />
+  // ============================================================================
+  // EXCHANGE RAILS (gated on hydration to prevent flash)
+  // ============================================================================
+  // Before hydration: show skeleton pulse (matches server render = no mismatch)
+  // After hydration: show actual exchange cards with correct localStorage selection
+  // ============================================================================
+
+  const railSkeleton = (
+    <div className="space-y-3" aria-busy="true">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div
+          key={i}
+          className="h-[140px] rounded-lg bg-white/5 animate-pulse ring-1 ring-white/10"
+        />
+      ))}
+    </div>
   );
 
-  const rightExchanges = (
+  const leftExchanges = hydrated ? (
+    <ExchangeList
+      exchanges={leftRail}
+      weatherByExchange={effectiveWeatherMap}
+      indexByExchange={indexByExchange}
+      emptyMessage="No eastern exchanges selected"
+    />
+  ) : (
+    railSkeleton
+  );
+
+  const rightExchanges = hydrated ? (
     <ExchangeList
       exchanges={rightRail}
-      weatherByExchange={weatherDataMap}
+      weatherByExchange={effectiveWeatherMap}
+      indexByExchange={indexByExchange}
       emptyMessage="No western exchanges selected"
     />
+  ) : (
+    railSkeleton
   );
 
   // ============================================================================
@@ -736,7 +809,7 @@ export default function ProPromagenClient({
       providers={providers}
       showEngineBay={true}
       showMissionControl={true}
-      weatherIndex={weatherDataMap}
+      weatherIndex={effectiveWeatherMap}
       isProPromagenPage={true}
     />
   );

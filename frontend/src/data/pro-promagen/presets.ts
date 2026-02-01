@@ -261,7 +261,7 @@ export interface FeatureRow {
   /** Whether to highlight this row */
   highlight: boolean;
   /** Whether this row has an interactive dropdown in Pro column */
-  hasDropdown?: 'fx' | 'exchange' | 'indices' | 'weather-prompt-tier';
+  hasDropdown?: 'fx' | 'exchange' | 'weather-prompt-tier';
   /** Optional tooltip explanation */
   tooltip?: string;
 }
@@ -280,13 +280,6 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
     pro: '0–16, your choice',
     highlight: true,
     hasDropdown: 'exchange',
-  },
-  {
-    feature: 'Stock Indices',
-    standard: 'All exchanges',
-    pro: '0–16, your choice',
-    highlight: true,
-    hasDropdown: 'indices',
   },
   {
     feature: 'Weather Prompt Format',

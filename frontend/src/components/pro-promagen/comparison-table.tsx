@@ -9,6 +9,7 @@
 // - ADDED: FxPickerTrigger component (matches ExchangePickerTrigger pattern)
 // - ADDED: onOpenFxPicker callback prop
 // - REMOVED: ChipsDropdown usage for FX (replaced with trigger button)
+// - REMOVED: ChipsDropdown component entirely (indices dropdown removed)
 //
 // UPDATED v2.3.0 (29 Jan 2026):
 // - CHANGED: Exchange picker now opens in fullscreen mode via parent callback
@@ -29,7 +30,7 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   FEATURE_COMPARISON,
@@ -37,7 +38,6 @@ import {
   type FeatureRow,
 } from '@/data/pro-promagen/presets';
 import { PRO_SELECTION_LIMITS, type ExchangeCatalogEntry } from '@/lib/pro-promagen/types';
-import { pairMatchesSearch } from '@/data/pro-promagen/currency-search-data';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 
 // ============================================================================
@@ -58,24 +58,18 @@ export interface ComparisonTableProps {
   fxOptions: SelectionItem[];
   /** Exchange options for dropdown (legacy, kept for compatibility) */
   exchangeOptions: SelectionItem[];
-  /** Indices options for dropdown */
-  indicesOptions: SelectionItem[];
   /** Full exchange catalog with iso2/continent data (for ExchangePicker) */
   exchangeCatalog?: ExchangeCatalogEntry[];
   /** Currently selected FX pair IDs */
   selectedFxPairs: string[];
   /** Currently selected exchange IDs */
   selectedExchanges: string[];
-  /** Currently selected indices (exchange IDs with index display enabled) */
-  selectedIndices: string[];
   /** Currently selected weather prompt tier */
   selectedPromptTier: PromptTier;
   /** Callback when FX selection changes */
   onFxChange: (ids: string[]) => void;
   /** Callback when exchange selection changes */
   onExchangeChange: (ids: string[]) => void;
-  /** Callback when indices selection changes */
-  onIndicesChange: (ids: string[]) => void;
   /** Callback when weather prompt tier changes */
   onPromptTierChange: (tier: PromptTier) => void;
   /** Whether user is paid tier (enables interaction) */
@@ -170,34 +164,6 @@ function InfoTooltip({ content }: InfoTooltipProps) {
         </svg>
       </span>
     </Tooltip>
-  );
-}
-
-// ============================================================================
-// STATUS BADGE COMPONENT
-// ============================================================================
-
-interface StatusBadgeProps {
-  status: 'active' | 'coming-soon' | 'unavailable';
-}
-
-function StatusBadge({ status }: StatusBadgeProps) {
-  if (status === 'active') return null;
-
-  const styles = {
-    'coming-soon': 'bg-amber-500/20 text-amber-400 ring-amber-500/30',
-    unavailable: 'bg-slate-500/20 text-slate-400 ring-slate-500/30',
-  };
-
-  const labels = {
-    'coming-soon': 'Soon',
-    unavailable: 'N/A',
-  };
-
-  return (
-    <span className={`ml-2 px-1.5 py-0.5 text-[10px] font-medium rounded ring-1 ${styles[status]}`}>
-      {labels[status]}
-    </span>
   );
 }
 
@@ -467,355 +433,18 @@ function TierDropdown({ selectedTier, onChange, disabled = false }: TierDropdown
 }
 
 // ============================================================================
-// CHIPS + ADD LIST DROPDOWN (Multi-Select - for Indices only now)
-// ============================================================================
-
-interface ChipsDropdownProps {
-  id: string;
-  options: SelectionItem[];
-  selected: string[];
-  onChange: (ids: string[]) => void;
-  min: number;
-  max: number;
-  disabled?: boolean;
-  gradient: string;
-  placeholder: string;
-  tooltipText: string;
-  useCurrencySearch?: boolean;
-  showSubLabels?: boolean;
-  showStatusBadges?: boolean;
-}
-
-interface DropdownPosition {
-  top: number;
-  left: number;
-  width: number;
-}
-
-function ChipsDropdown({
-  id,
-  options,
-  selected,
-  onChange,
-  min,
-  max,
-  disabled = false,
-  gradient,
-  placeholder,
-  tooltipText: _tooltipText,
-  useCurrencySearch = false,
-  showSubLabels = false,
-  showStatusBadges = false,
-}: ChipsDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [filter, setFilter] = useState('');
-  const [position, setPosition] = useState<DropdownPosition>({ top: 0, left: 0, width: 360 });
-  const [mounted, setMounted] = useState(false);
-
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Calculate dropdown position
-  useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - rect.bottom;
-      const dropdownHeight = Math.min(400, options.length * 60 + 100);
-
-      let top = rect.bottom + 8;
-      if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
-        top = rect.top - dropdownHeight - 8;
-      }
-
-      setPosition({
-        top,
-        left: rect.left,
-        width: Math.max(rect.width, 320),
-      });
-    }
-  }, [isOpen, options.length]);
-
-  // Focus input when dropdown opens
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen]);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!isOpen) return;
-
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-        setFilter('');
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  // Selected and available items
-  const selectedItems = useMemo(
-    () => options.filter((o) => selected.includes(o.id)),
-    [options, selected],
-  );
-
-  const availableItems = useMemo(() => {
-    let items = options.filter((o) => !selected.includes(o.id));
-
-    if (filter.trim()) {
-      const lowerFilter = filter.toLowerCase();
-      items = items.filter((item) => {
-        // Basic label match
-        if (item.label.toLowerCase().includes(lowerFilter)) return true;
-        if (item.subLabel?.toLowerCase().includes(lowerFilter)) return true;
-
-        // Smart currency search
-        if (useCurrencySearch) {
-          return pairMatchesSearch(item.id, filter);
-        }
-
-        return false;
-      });
-    }
-
-    return items;
-  }, [options, selected, filter, useCurrencySearch]);
-
-  // Handlers
-  const handleAdd = useCallback(
-    (itemId: string) => {
-      if (selected.length >= max) return;
-      onChange([...selected, itemId]);
-    },
-    [selected, max, onChange],
-  );
-
-  const handleRemove = useCallback(
-    (itemId: string) => {
-      if (selected.length <= min) return;
-      onChange(selected.filter((sid: string) => sid !== itemId));
-    },
-    [selected, min, onChange],
-  );
-
-  const canAddMore = selected.length < max;
-  const canRemoveMore = selected.length > min;
-
-  // Dropdown panel
-  const dropdownPanel =
-    isOpen && mounted
-      ? createPortal(
-          <div
-            ref={dropdownRef}
-            className="fixed z-[9999] rounded-xl bg-slate-900/98 ring-1 ring-white/10 shadow-2xl backdrop-blur-sm overflow-hidden"
-            style={{
-              top: position.top,
-              left: position.left,
-              width: position.width,
-              maxHeight: '400px',
-            }}
-          >
-            {/* Header with count */}
-            <div className="px-3 py-2 border-b border-white/10 bg-slate-800/50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-slate-400">
-                  {selected.length} of {max} selected
-                </span>
-                {selected.length >= max && (
-                  <span className="text-[10px] text-amber-400">Maximum reached</span>
-                )}
-              </div>
-
-              {/* Search input */}
-              <input
-                ref={inputRef}
-                type="text"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                placeholder={placeholder}
-                className="w-full px-3 py-2 text-sm bg-slate-800 rounded-lg text-slate-200 placeholder:text-slate-500 ring-1 ring-white/10 focus:ring-white/30 focus:outline-none"
-              />
-            </div>
-
-            {/* Selected chips */}
-            {selectedItems.length > 0 && (
-              <div className="px-3 py-2 border-b border-white/5">
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedItems.map((item) => (
-                    <span
-                      key={item.id}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                    >
-                      {item.label}
-                      {canRemoveMore && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemove(item.id)}
-                          className="hover:text-white transition-colors"
-                          aria-label={`Remove ${item.label}`}
-                        >
-                          ×
-                        </button>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Available items list */}
-            <div className="max-h-[240px] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
-              <ul className="p-2">
-                {availableItems.length === 0 ? (
-                  <li className="px-3 py-4 text-center text-sm text-slate-500">
-                    {filter ? 'No matches found' : 'All items selected'}
-                  </li>
-                ) : (
-                  availableItems.map((item) => {
-                    const canAddItem = canAddMore && item.status !== 'unavailable';
-                    return (
-                      <li key={item.id}>
-                        <button
-                          type="button"
-                          onClick={() => canAddItem && handleAdd(item.id)}
-                          disabled={!canAddItem}
-                          className={`
-                          w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left
-                          transition-colors
-                          ${
-                            canAddItem
-                              ? 'hover:bg-white/5 cursor-pointer'
-                              : 'opacity-50 cursor-not-allowed'
-                          }
-                        `}
-                        >
-                          {/* Add icon */}
-                          <span
-                            className={`
-                            w-5 h-5 flex items-center justify-center rounded
-                            ${
-                              canAddItem
-                                ? 'border border-emerald-500/50 text-emerald-400'
-                                : 'border-slate-700 text-slate-700'
-                            }
-                          `}
-                          >
-                            <svg
-                              className="w-3 h-3"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2.5}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M12 4v16m8-8H4"
-                              />
-                            </svg>
-                          </span>
-
-                          {/* Label */}
-                          <div className="flex flex-col min-w-0 flex-1">
-                            <span
-                              className={`text-sm font-medium truncate flex items-center ${
-                                canAddItem ? 'text-slate-200' : 'text-slate-500'
-                              }`}
-                            >
-                              {item.label}
-                              {showStatusBadges && item.status && item.status !== 'active' && (
-                                <StatusBadge status={item.status} />
-                              )}
-                            </span>
-                            {showSubLabels && item.subLabel && (
-                              <span className="text-xs text-slate-500 truncate">
-                                {item.subLabel}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      </li>
-                    );
-                  })
-                )}
-              </ul>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
-
-  return (
-    <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`
-          flex items-center justify-between gap-2 w-full min-w-[160px]
-          px-3 py-2 rounded-lg text-sm font-medium
-          transition-all duration-200
-          ${
-            disabled
-              ? 'bg-slate-800/50 text-slate-500 cursor-not-allowed'
-              : isOpen
-                ? `bg-gradient-to-r ${gradient} text-white shadow-lg`
-                : 'bg-slate-800/80 text-slate-200 hover:bg-slate-700/80 ring-1 ring-white/10'
-          }
-        `}
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        aria-controls={`${id}-listbox`}
-      >
-        <span className="truncate">
-          {selected.length === 0 ? 'None selected' : `${selected.length} of ${max} selected`}
-        </span>
-        <svg
-          className={`w-4 h-4 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {dropdownPanel}
-    </div>
-  );
-}
-
-// ============================================================================
 // COMPARISON TABLE COMPONENT
 // ============================================================================
 
 export function ComparisonTable({
   fxOptions: _fxOptions, // Keep for type compat - now using fullscreen picker
   exchangeOptions: _exchangeOptions, // Keep for type compat
-  indicesOptions,
   exchangeCatalog: _exchangeCatalog, // Keep for type compat
   selectedFxPairs,
   selectedExchanges,
-  selectedIndices,
   selectedPromptTier,
   onFxChange: _onFxChange, // Handled by parent via fullscreen picker
   onExchangeChange: _onExchangeChange, // Handled by parent via fullscreen picker
-  onIndicesChange,
   onPromptTierChange,
   isPaidUser,
   onOpenExchangePicker,
@@ -843,26 +472,6 @@ export function ComparisonTable({
           maxCount={PRO_SELECTION_LIMITS.EXCHANGE_MAX}
           onClick={() => onOpenExchangePicker?.()}
           disabled={false}
-        />
-      );
-    }
-
-    if (row.hasDropdown === 'indices') {
-      return (
-        <ChipsDropdown
-          id="indices-dropdown"
-          options={indicesOptions}
-          selected={selectedIndices}
-          onChange={onIndicesChange}
-          min={PRO_SELECTION_LIMITS.INDICES_MIN}
-          max={PRO_SELECTION_LIMITS.INDICES_MAX}
-          disabled={false}
-          gradient="from-cyan-500 via-blue-500 to-indigo-500"
-          placeholder="Search indices..."
-          tooltipText="Select which exchanges show stock index data on their cards. You can clear all to hide indices."
-          useCurrencySearch={false}
-          showSubLabels={true}
-          showStatusBadges={true}
         />
       );
     }

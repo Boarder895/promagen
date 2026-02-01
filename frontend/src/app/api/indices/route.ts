@@ -34,6 +34,8 @@ const DEFAULT_GATEWAY_BASE_URL = 'https://promagen-api.fly.dev';
 
 function getGatewayBaseUrl(): string {
   const raw =
+    process.env['GATEWAY_URL'] ??
+    process.env['NEXT_PUBLIC_GATEWAY_URL'] ??
     process.env['PROMAGEN_GATEWAY_URL'] ??
     process.env['PROMAGEN_API_URL'] ??
     process.env['NEXT_PUBLIC_PROMAGEN_GATEWAY_URL'] ??

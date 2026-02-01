@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 const { spawn } = require('node:child_process');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000/';

@@ -3,15 +3,24 @@
  * ========================================================
  * Implements clock-aligned scheduling for Marketstack feeds.
  *
+ * UPDATED: 2026-01-31 - Changed to 15-minute refresh (4×/hour)
+ *
  * Security: 10/10
  * - No external inputs (pure time-based logic)
  * - Immutable slot configurations
  * - Deterministic behavior
  *
- * CRITICAL: Indices refresh at :05 and :35, staggered from TwelveData feeds.
- * - FX:      :00, :30 (TwelveData)
- * - Indices: :05, :35 (Marketstack) ← THIS FILE
- * - Crypto:  :20, :50 (TwelveData)
+ * CRITICAL: Indices refresh at :05, :20, :35, :50 (every 15 min)
+ * Staggered from TwelveData feeds to avoid collision.
+ *
+ * Timeline (minutes past hour):
+ * ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
+ * │:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
+ * ├────┼────┼────┼────┼────┼────┼────┼────┼────┤
+ * │ FX │IDX │WTH │IDX │ FX │IDX │WTH │IDX │ FX │
+ * └────┴────┴────┴────┴────┴────┴────┴────┴────┘
+ *       ↑        ↑        ↑        ↑
+ *       MS       MS       MS       MS (every 15 min)
  *
  * @module marketstack/scheduler
  */
@@ -35,10 +44,15 @@ const MIN_WAIT_MS = 1000; // 1 second
 
 /**
  * Slot schedules for Marketstack feeds.
- * Indices: :05 and :35 (5 minutes after FX slots)
+ * Indices: :05, :20, :35, :50 (every 15 minutes, staggered from FX/Crypto)
+ *
+ * API Budget Math (Professional tier - 100K/month):
+ * - 4 calls/hour × 24 hours = 96 calls/day
+ * - 96 calls/day × 30 days = 2,880 calls/month
+ * - Usage: 2.88% of 100,000 budget
  */
 const MARKETSTACK_SLOTS = {
-  indices: [5, 35] as const, // Minutes :05 and :35
+  indices: [5, 20, 35, 50] as const, // Every 15 minutes
 } as const;
 
 /** Marketstack feed type */
@@ -166,7 +180,8 @@ export function createMarketstackScheduler(feed: MarketstackFeed): FeedScheduler
 // =============================================================================
 
 /**
- * Indices feed scheduler (clock-aligned to :05 and :35).
+ * Indices feed scheduler (clock-aligned to :05, :20, :35, :50).
+ * Refreshes every 15 minutes for fresher market data.
  */
 export const indicesScheduler = createMarketstackScheduler('indices');
 

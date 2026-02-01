@@ -51,7 +51,7 @@ export function toCardData(
     hoursTemplate: exchange.hoursTemplate || undefined,
     weather: weather ?? null,
     // Index name from catalog - always available for display
-    indexName: exchange.marketstack?.indexName ?? undefined,
+    indexName: exchange.marketstack?.defaultIndexName ?? undefined,
     indexQuote: indexQuote ?? null,
     // Pass through hoverColor from catalog
     hoverColor: exchange.hoverColor,
@@ -92,9 +92,14 @@ export function fromCatalogEntry(
   entry: Record<string, unknown>,
   weather?: ExchangeWeatherData | null
 ): ExchangeCardData {
-  // Extract marketstack indexName if present
+  // Extract marketstack indexName - handle both legacy and new formats
   const marketstack = entry.marketstack as Record<string, unknown> | undefined;
-  const indexName = typeof marketstack?.indexName === 'string' ? marketstack.indexName : undefined;
+  // New format uses defaultIndexName, legacy uses indexName
+  const indexName = typeof marketstack?.defaultIndexName === 'string' 
+    ? marketstack.defaultIndexName 
+    : typeof marketstack?.indexName === 'string' 
+      ? marketstack.indexName 
+      : undefined;
 
   return {
     id: String(entry.id ?? ''),

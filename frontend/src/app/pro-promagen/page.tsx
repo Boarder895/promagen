@@ -44,7 +44,6 @@ import { getProviders } from '@/lib/providers/api';
 import {
   type FxPairCatalogEntry,
   type ExchangeCatalogEntry,
-  buildIndicesCatalog,
 } from '@/lib/pro-promagen/types';
 
 // ============================================================================
@@ -57,8 +56,7 @@ export const metadata: Metadata = {
     'Unlock personalized FX pairs, exchange selection, stock indices display, unlimited prompts, and more with Pro Promagen.',
   openGraph: {
     title: 'Pro Promagen — Customize Your Market View',
-    description:
-      'Unlock personalized FX pairs, exchange selection, stock indices, and more.',
+    description: 'Unlock personalized FX pairs, exchange selection, stock indices, and more.',
     type: 'website',
   },
 };
@@ -71,9 +69,7 @@ export const metadata: Metadata = {
  * Build a lookup map for demo weather data.
  * Used by ExchangeList to resolve weather for each exchange card.
  */
-function buildDemoWeatherIndex(
-  rows: ReadonlyArray<ExchangeWeather>
-): Map<string, ExchangeWeather> {
+function buildDemoWeatherIndex(rows: ReadonlyArray<ExchangeWeather>): Map<string, ExchangeWeather> {
   return new Map(rows.map((entry) => [entry.exchange, entry]));
 }
 
@@ -82,25 +78,9 @@ function buildDemoWeatherIndex(
  * Filters pairs where isDefaultFree === true.
  */
 function getDefaultFxPairIds(
-  pairs: ReadonlyArray<{ id: string; isDefaultFree?: boolean }>
+  pairs: ReadonlyArray<{ id: string; isDefaultFree?: boolean }>,
 ): string[] {
-  return pairs
-    .filter((p) => p.isDefaultFree === true)
-    .map((p) => p.id);
-}
-
-/**
- * Get default indices IDs - all selected exchanges that have marketstack data.
- * By default, all exchanges show their index.
- */
-function getDefaultIndicesIds(
-  selectedExchangeIds: string[],
-  exchangeCatalog: ExchangeCatalogEntry[]
-): string[] {
-  return selectedExchangeIds.filter((id) => {
-    const exchange = exchangeCatalog.find((e) => e.id === id);
-    return exchange?.marketstack?.benchmark && exchange?.marketstack?.indexName;
-  });
+  return pairs.filter((p) => p.isDefaultFree === true).map((p) => p.id);
 }
 
 // ============================================================================
@@ -112,18 +92,12 @@ export default function ProPromagenPage() {
   const exchangeCatalog = exchangesCatalog as unknown as ExchangeCatalogEntry[];
   const fxCatalog = fxPairsCatalog as unknown as FxPairCatalogEntry[];
 
-  // Build indices catalog from exchanges with marketstack data
-  const indicesCatalog = buildIndicesCatalog(exchangeCatalog);
-
   // Extract default IDs from SSOT
   // exchanges.selected.json has shape: { ids: string[] }
   const defaultExchangeIds = (exchangesSelected as { ids: string[] }).ids;
-  
+
   // FX defaults come from the unified catalog (isDefaultFree === true)
   const defaultFxPairIds = getDefaultFxPairIds(fxCatalog);
-  
-  // Indices defaults: all selected exchanges with marketstack data
-  const defaultIndicesIds = getDefaultIndicesIds(defaultExchangeIds, exchangeCatalog);
 
   // Build demo weather index for exchange cards
   // Shows placeholder weather data (no API cost)
@@ -136,10 +110,8 @@ export default function ProPromagenPage() {
     <ProPromagenClient
       exchangeCatalog={exchangeCatalog}
       fxCatalog={fxCatalog}
-      indicesCatalog={indicesCatalog}
       defaultExchangeIds={defaultExchangeIds}
       defaultFxPairIds={defaultFxPairIds}
-      defaultIndicesIds={defaultIndicesIds}
       demoWeatherIndex={demoWeatherIndex}
       providers={providers}
     />

@@ -1,6 +1,6 @@
 // src/components/pro-promagen/exchange-picker.tsx
 // ============================================================================
-// CONTINENTAL EXCHANGE PICKER - Pro Promagen Configuration (v1.2.0)
+// CONTINENTAL EXCHANGE PICKER - Pro Promagen Configuration (v2.1.0)
 // ============================================================================
 // A premium exchange selection interface organised by continents.
 //
@@ -11,22 +11,12 @@
 // - Progress bar showing selection count (6-16)
 // - Regional "Select All" buttons
 // - Ethereal glow effects matching Promagen design system
+// - Index dropdown for multi-index exchanges (in list only)
 //
-// UPDATED v1.3.0 (29 Jan 2026):
-// - FIX: Large screens now scroll properly when content exceeds space
-// - Small screens: max-h-[400px] with scroll (unchanged)
-// - Large screens: fills available space, scrolls when expanded content overflows
-// - Removed lg:overflow-visible which broke scrolling entirely
-//
-// UPDATED v1.2.0 (29 Jan 2026):
-// - FIX: Large screens NO scroll - fills available space completely
-// - Small screens: max-h-[400px] with scroll (unchanged)
-// - Large screens: lg:max-h-none lg:overflow-visible - NO scrolling
-// - All continents closed by default (from v1.1.0)
-//
-// UPDATED v1.1.0 (29 Jan 2026):
-// - All continents closed by default (was: Asia open)
-// - Responsive scroll behavior
+// UPDATED v2.1.0 (30 Jan 2026):
+// - Selection chips simplified: Flag + Exchange Name + X only
+// - Removed scroll from selection tray (expands naturally)
+// - Index selection only available in exchange list below
 //
 // COMPLIANCE:
 // - Error boundaries for malformed data (§11)
@@ -35,7 +25,7 @@
 // - Purple focus rings per buttons.md §2.1
 //
 // Authority: docs/authority/paid_tier.md §5.3
-// Version: 1.2.0
+// Version: 2.1.0
 // ============================================================================
 
 'use client';
@@ -45,6 +35,8 @@ import Image from 'next/image';
 import { CONTINENT_CONFIGS, type Continent, type ContinentConfig } from '@/lib/geo/continents';
 import {
   type ExchangeOption,
+  type IndexPreferences,
+  type ExchangeSelection,
   PRO_SELECTION_LIMITS,
   groupByContinent,
   searchExchanges,
@@ -52,8 +44,8 @@ import {
   getExchangesByIds,
 } from '@/lib/pro-promagen/exchange-picker-helpers';
 
-// Re-export type for consumers
-export type { ExchangeOption };
+// Re-export types for consumers
+export type { ExchangeOption, ExchangeSelection, IndexPreferences };
 
 // ============================================================================
 // TYPES
@@ -66,6 +58,10 @@ export interface ExchangePickerProps {
   selected: string[];
   /** Callback when selection changes */
   onChange: (ids: string[]) => void;
+  /** Index preferences map (exchangeId -> benchmark) */
+  indexPreferences?: IndexPreferences;
+  /** Callback when index preference changes */
+  onIndexChange?: (exchangeId: string, benchmark: string) => void;
   /** Minimum selections allowed (default: 6 per paid_tier.md) */
   min?: number;
   /** Maximum selections allowed (default: 16 per paid_tier.md) */
@@ -119,7 +115,143 @@ const Flag = React.memo(function Flag({ iso2, size = 20, className = '' }: FlagP
 });
 
 // ============================================================================
-// SELECTION CHIP COMPONENT
+// INDEX SELECTOR DROPDOWN
+// ============================================================================
+
+interface IndexSelectorProps {
+  exchange: ExchangeOption;
+  currentBenchmark: string;
+  onSelect: (benchmark: string) => void;
+  disabled?: boolean;
+  compact?: boolean;
+}
+
+const IndexSelector = React.memo(function IndexSelector({
+  exchange,
+  currentBenchmark,
+  onSelect,
+  disabled = false,
+  compact = false,
+}: IndexSelectorProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  const currentIndex = exchange.availableIndices.find((idx) => idx.benchmark === currentBenchmark);
+  const displayName = currentIndex?.indexName ?? exchange.defaultIndexName;
+
+  if (!exchange.hasMultipleIndices) {
+    // Single index - just show label, no dropdown
+    return <span className={`text-xs text-slate-400 ${compact ? '' : 'ml-2'}`}>{displayName}</span>;
+  }
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!disabled) setIsOpen(!isOpen);
+        }}
+        disabled={disabled}
+        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium
+                    transition-all duration-150
+                    ${
+                      isOpen
+                        ? 'bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/50'
+                        : 'bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 hover:text-slate-200'
+                    }
+                    focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
+                    disabled:cursor-not-allowed disabled:opacity-50`}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-label={`Select index for ${exchange.label}`}
+      >
+        <span className="max-w-[100px] truncate">{displayName}</span>
+        <svg
+          className={`h-9 w-9 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute left-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden
+                     rounded-lg border border-white/10 bg-slate-800 shadow-xl"
+          role="listbox"
+          aria-label={`Available indices for ${exchange.label}`}
+        >
+          <div
+            className="max-h-48 overflow-y-auto py-1
+                          scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20"
+          >
+            {exchange.availableIndices.map((idx) => {
+              const isSelected = idx.benchmark === currentBenchmark;
+              return (
+                <button
+                  key={idx.benchmark}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect(idx.benchmark);
+                    setIsOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm
+                              transition-colors duration-100
+                              ${
+                                isSelected
+                                  ? 'bg-purple-500/20 text-purple-300'
+                                  : 'text-slate-300 hover:bg-slate-700/50'
+                              }`}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  {isSelected && (
+                    <svg
+                      className="h-3.5 w-3.5 text-purple-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                  {!isSelected && <span className="w-3.5" />}
+                  <span className="flex-1">{idx.indexName}</span>
+                  <span className="text-[10px] text-slate-500 font-mono">{idx.benchmark}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+// ============================================================================
+// SELECTION CHIP COMPONENT (simple: Flag + Exchange Name + X)
 // ============================================================================
 
 interface SelectionChipProps {
@@ -137,16 +269,14 @@ const SelectionChip = React.memo(function SelectionChip({
     return null;
   }
 
-  const shortLabel = exchange.label.replace(/\s*\([^)]*\)/, '').split(' ')[0];
-
   return (
     <div
-      className="group relative inline-flex items-center gap-1.5 rounded-lg bg-slate-800/80 
+      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800/80 
                  px-2.5 py-1.5 ring-1 ring-white/10 transition-all duration-200
                  hover:bg-slate-700/80 hover:ring-emerald-500/30"
     >
-      <Flag iso2={exchange.iso2} size={16} className="shrink-0" />
-      <span className="max-w-[80px] truncate text-xs font-medium text-slate-200">{shortLabel}</span>
+      <Flag iso2={exchange.iso2} size={30} className="shrink-0" />
+      <span className="text-base font-medium text-slate-200">{exchange.label}</span>
       <button
         type="button"
         onClick={onRemove}
@@ -273,10 +403,10 @@ const AccordionHeader = React.memo(function AccordionHeader({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        <span className="text-lg" aria-hidden="true">
+        <span className="text-3xl" aria-hidden="true">
           {config.emoji}
         </span>
-        <span className="text-sm font-medium text-slate-200">{config.label}</span>
+        <span className="text-base font-medium text-slate-200">{config.label}</span>
         <span
           className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
             selectedCount > 0
@@ -315,20 +445,24 @@ const AccordionHeader = React.memo(function AccordionHeader({
 });
 
 // ============================================================================
-// EXCHANGE LIST ITEM COMPONENT
+// EXCHANGE LIST ITEM COMPONENT (updated with index selector)
 // ============================================================================
 
 interface ExchangeListItemProps {
   exchange: ExchangeOption;
   isSelected: boolean;
+  currentBenchmark: string;
   onToggle: () => void;
+  onIndexChange: (benchmark: string) => void;
   disabled: boolean;
 }
 
 const ExchangeListItem = React.memo(function ExchangeListItem({
   exchange,
   isSelected,
+  currentBenchmark,
   onToggle,
+  onIndexChange,
   disabled,
 }: ExchangeListItemProps) {
   if (!exchange || !exchange.id) {
@@ -336,49 +470,79 @@ const ExchangeListItem = React.memo(function ExchangeListItem({
   }
 
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={disabled && !isSelected}
-      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-all duration-150
-                  focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
+    <div
+      className={`flex w-full items-center gap-3 px-4 py-2.5 transition-all duration-150
                   ${
                     isSelected
                       ? 'border-l-2 border-emerald-500 bg-emerald-500/10'
                       : disabled
-                        ? 'cursor-not-allowed border-l-2 border-transparent opacity-50'
+                        ? 'border-l-2 border-transparent opacity-50'
                         : 'border-l-2 border-transparent hover:bg-slate-800/50'
                   }`}
-      aria-pressed={isSelected}
     >
-      <span
-        className={`flex h-5 w-5 items-center justify-center rounded border transition-all ${
-          isSelected
-            ? 'border-emerald-500 bg-emerald-500 text-white'
-            : 'border-slate-600 bg-slate-800/50'
-        }`}
-        aria-hidden="true"
+      {/* Checkbox button */}
+      <button
+        type="button"
+        onClick={onToggle}
+        disabled={disabled && !isSelected}
+        className="flex items-center gap-3 text-left
+                   focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
+                   disabled:cursor-not-allowed"
+        aria-pressed={isSelected}
       >
-        {isSelected && (
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-          </svg>
-        )}
-      </span>
-      <Flag iso2={exchange.iso2} size={20} className="shrink-0" />
+        <span
+          className={`flex h-5 w-5 items-center justify-center rounded border transition-all ${
+            isSelected
+              ? 'border-emerald-500 bg-emerald-500 text-white'
+              : 'border-slate-600 bg-slate-800/50'
+          }`}
+          aria-hidden="true"
+        >
+          {isSelected && (
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={3}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          )}
+        </span>
+        <Flag iso2={exchange.iso2} size={30} className="shrink-0" />
+      </button>
+
+      {/* Exchange info */}
       <div className="min-w-0 flex-1">
         <p
-          className={`truncate text-sm font-medium ${isSelected ? 'text-emerald-300' : 'text-slate-200'}`}
+          className={`truncate text-base font-medium ${isSelected ? 'text-emerald-300' : 'text-slate-200'}`}
         >
           {exchange.label}
         </p>
-        <p className="truncate text-xs text-slate-500">
+        <p className="truncate text-sm text-slate-500">
           {exchange.city}
           {exchange.city && exchange.country ? ', ' : ''}
           {exchange.country}
         </p>
       </div>
-    </button>
+
+      {/* Index selector (only shown for selected multi-index exchanges) */}
+      {isSelected && exchange.hasMultipleIndices && (
+        <IndexSelector
+          exchange={exchange}
+          currentBenchmark={currentBenchmark}
+          onSelect={onIndexChange}
+          disabled={disabled}
+        />
+      )}
+
+      {/* Single index badge (shown for non-multi-index when selected) */}
+      {isSelected && !exchange.hasMultipleIndices && (
+        <span className="rounded-md bg-slate-700/50 px-2 py-0.5 text-base text-slate-400">
+          {exchange.defaultIndexName}
+        </span>
+      )}
+    </div>
   );
 });
 
@@ -390,67 +554,98 @@ export function ExchangePicker({
   exchanges,
   selected,
   onChange,
+  indexPreferences: externalPreferences,
+  onIndexChange,
   min = PRO_SELECTION_LIMITS.EXCHANGE_MIN,
   max = PRO_SELECTION_LIMITS.EXCHANGE_MAX,
   disabled = false,
 }: ExchangePickerProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  // v1.1.0: All continents closed by default
   const [expandedContinents, setExpandedContinents] = useState<Set<Continent>>(new Set());
   const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Internal index preferences (used if external not provided)
+  const [internalPreferences, setInternalPreferences] = useState<IndexPreferences>(new Map());
+
+  // Use external preferences if provided, otherwise internal
+  const indexPreferences = externalPreferences ?? internalPreferences;
+
+  // Handle hydration mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // ========================================================================
-  // DEFENSIVE GUARDS
-  // ========================================================================
-
-  const safeExchanges = useMemo(() => {
-    if (!exchanges || !Array.isArray(exchanges)) {
-      console.warn('[exchange-picker] Invalid exchanges prop, using empty array');
-      return [];
-    }
-    return exchanges.filter((ex) => ex && typeof ex.id === 'string');
-  }, [exchanges]);
-
+  // Ensure selected is always an array
   const safeSelected = useMemo(() => {
-    if (!selected || !Array.isArray(selected)) {
-      console.warn('[exchange-picker] Invalid selected prop, using empty array');
-      return [];
-    }
-    return selected.filter((id) => typeof id === 'string');
+    if (!Array.isArray(selected)) return [];
+    return selected.filter((id) => typeof id === 'string' && id.length > 0);
   }, [selected]);
 
-  // ========================================================================
-  // COMPUTED VALUES
-  // ========================================================================
+  // Memoize exchange grouping by continent
+  const exchangesByContinent = useMemo(() => groupByContinent(exchanges), [exchanges]);
 
-  const exchangesByContinent = useMemo(() => {
-    return groupByContinent(safeExchanges);
-  }, [safeExchanges]);
-
+  // Filter exchanges based on search query
   const filteredExchanges = useMemo(() => {
     if (!searchQuery.trim()) return exchangesByContinent;
-    const allFiltered = searchExchanges(safeExchanges, searchQuery);
-    return groupByContinent(allFiltered);
-  }, [exchangesByContinent, safeExchanges, searchQuery]);
 
-  const selectedExchanges = useMemo(() => {
-    return getExchangesByIds(safeExchanges, safeSelected);
-  }, [safeExchanges, safeSelected]);
+    const filtered = searchExchanges(exchanges, searchQuery);
+    return groupByContinent(filtered);
+  }, [exchanges, exchangesByContinent, searchQuery]);
 
+  // Get selected exchange objects
+  const selectedExchanges = useMemo(
+    () => getExchangesByIds(exchanges, safeSelected),
+    [exchanges, safeSelected],
+  );
+
+  // Validation state
+  const validation = useMemo(
+    () => validateSelection(safeSelected, min, max),
+    [safeSelected, min, max],
+  );
+
+  // Can select more?
   const canSelectMore = safeSelected.length < max;
 
-  const validation = useMemo(() => {
-    return validateSelection(safeSelected, min, max);
-  }, [safeSelected, min, max]);
+  // Handlers
+  const handleIndexChange = useCallback(
+    (exchangeId: string, benchmark: string) => {
+      if (onIndexChange) {
+        onIndexChange(exchangeId, benchmark);
+      } else {
+        setInternalPreferences((prev) => {
+          const next = new Map(prev);
+          next.set(exchangeId, benchmark);
+          return next;
+        });
+      }
+    },
+    [onIndexChange],
+  );
 
-  // ========================================================================
-  // HANDLERS
-  // ========================================================================
+  const toggleExchange = useCallback(
+    (id: string) => {
+      if (disabled) return;
+
+      const isCurrentlySelected = safeSelected.includes(id);
+
+      if (isCurrentlySelected) {
+        onChange(safeSelected.filter((s) => s !== id));
+      } else if (canSelectMore) {
+        onChange([...safeSelected, id]);
+      }
+    },
+    [disabled, safeSelected, canSelectMore, onChange],
+  );
+
+  const removeExchange = useCallback(
+    (id: string) => {
+      if (disabled) return;
+      onChange(safeSelected.filter((s) => s !== id));
+    },
+    [disabled, safeSelected, onChange],
+  );
 
   const toggleContinent = useCallback((continent: Continent) => {
     setExpandedContinents((prev) => {
@@ -464,107 +659,76 @@ export function ExchangePicker({
     });
   }, []);
 
-  const toggleExchange = useCallback(
-    (exchangeId: string) => {
-      if (disabled) return;
-      const isSelected = safeSelected.includes(exchangeId);
-      if (isSelected) {
-        onChange(safeSelected.filter((id) => id !== exchangeId));
-      } else if (canSelectMore) {
-        onChange([...safeSelected, exchangeId]);
-      }
-    },
-    [disabled, safeSelected, canSelectMore, onChange],
-  );
-
-  const removeExchange = useCallback(
-    (exchangeId: string) => {
-      if (disabled) return;
-      onChange(safeSelected.filter((id) => id !== exchangeId));
-    },
-    [disabled, safeSelected, onChange],
-  );
-
   const selectAllInContinent = useCallback(
     (continent: Continent) => {
       if (disabled) return;
-      const continentExchanges = exchangesByContinent.get(continent) || [];
-      const continentIds = new Set(continentExchanges.map((ex) => ex.id));
-      const selectedInContinent = safeSelected.filter((id) => continentIds.has(id));
 
-      if (selectedInContinent.length === continentExchanges.length) {
-        onChange(safeSelected.filter((id) => !continentIds.has(id)));
+      const continentExchanges = exchangesByContinent.get(continent) || [];
+      const continentIds = continentExchanges.map((ex) => ex.id);
+
+      const allSelected = continentIds.every((id) => safeSelected.includes(id));
+
+      if (allSelected) {
+        // Deselect all in this continent
+        onChange(safeSelected.filter((id) => !continentIds.includes(id)));
       } else {
-        const notSelected = continentExchanges
-          .filter((ex) => !safeSelected.includes(ex.id))
-          .map((ex) => ex.id);
-        const canAdd = max - safeSelected.length;
-        const toAdd = notSelected.slice(0, canAdd);
+        // Select all (respecting max limit)
+        const currentOtherSelections = safeSelected.filter((id) => !continentIds.includes(id));
+        const spaceRemaining = max - currentOtherSelections.length;
+        const toAdd = continentIds
+          .filter((id) => !safeSelected.includes(id))
+          .slice(0, spaceRemaining);
+
         onChange([...safeSelected, ...toAdd]);
       }
     },
-    [disabled, safeSelected, exchangesByContinent, max, onChange],
+    [disabled, exchangesByContinent, safeSelected, max, onChange],
   );
 
   const resetAll = useCallback(() => {
     if (disabled) return;
     onChange([]);
+    setInternalPreferences(new Map());
   }, [disabled, onChange]);
 
-  // Auto-expand continents with search matches
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const continentsWithMatches = new Set<Continent>();
-      for (const [continent, list] of filteredExchanges) {
-        if (list.length > 0) {
-          continentsWithMatches.add(continent);
-        }
-      }
-      setExpandedContinents(continentsWithMatches);
-    }
-  }, [searchQuery, filteredExchanges]);
+  // Get current benchmark for an exchange
+  const getBenchmark = useCallback(
+    (exchangeId: string, exchange: ExchangeOption) => {
+      return indexPreferences.get(exchangeId) ?? exchange.defaultBenchmark;
+    },
+    [indexPreferences],
+  );
 
-  // ========================================================================
-  // RENDER
-  // ========================================================================
-
+  // Don't render until mounted (prevents hydration mismatch)
   if (!mounted) {
     return (
-      <div className="rounded-2xl bg-slate-900/50 p-8 ring-1 ring-white/10">
-        <div className="flex items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-        </div>
+      <div className="flex h-96 items-center justify-center rounded-xl border border-white/10 bg-slate-900/50">
+        <div className="text-sm text-slate-500">Loading exchanges...</div>
       </div>
     );
   }
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl bg-slate-900/50 ring-1 ring-white/10">
+    <div
+      className="flex h-full max-h-[calc(100vh-200px)] flex-col overflow-hidden rounded-xl 
+                 border border-white/10 bg-slate-900/80 backdrop-blur-sm"
+      role="region"
+      aria-label="Exchange selector"
+    >
       {/* ================================================================== */}
       {/* STICKY SELECTION TRAY                                             */}
       {/* ================================================================== */}
-      <div className="shrink-0 border-b border-white/10 bg-slate-900/95 backdrop-blur-sm">
+      <div className="shrink-0 border-b border-white/5 bg-slate-900/95">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="text-lg" aria-hidden="true">
-              🌐
-            </span>
-            <h3 className="text-sm font-semibold text-white">Your Selection</h3>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-mono font-medium ${
-                !validation.valid
-                  ? 'bg-red-500/20 text-red-400'
-                  : safeSelected.length >= max
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : safeSelected.length > 0
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-slate-700/50 text-slate-500'
-              }`}
-            >
-              {safeSelected.length}/{max}
-            </span>
-          </div>
-
+          <h3 className="text-sm font-semibold text-slate-200">
+            Selected Exchanges
+            {safeSelected.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-slate-500">
+                ({selectedExchanges.filter((ex) => ex.hasMultipleIndices).length} with index
+                options)
+              </span>
+            )}
+          </h3>
           {safeSelected.length > 0 && (
             <button
               type="button"
@@ -596,21 +760,15 @@ export function ExchangePicker({
         </div>
 
         {safeSelected.length > 0 ? (
-          <div className="px-4 pb-3">
-            <div
-              className="flex max-h-24 flex-wrap gap-2 overflow-y-auto pr-1
-                         scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20
-                         hover:scrollbar-thumb-white/30"
-            >
-              {selectedExchanges.map((exchange) => (
-                <SelectionChip
-                  key={exchange.id}
-                  exchange={exchange}
-                  onRemove={() => removeExchange(exchange.id)}
-                  disabled={disabled}
-                />
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2 px-4 pb-3">
+            {selectedExchanges.map((exchange) => (
+              <SelectionChip
+                key={exchange.id}
+                exchange={exchange}
+                onRemove={() => removeExchange(exchange.id)}
+                disabled={disabled}
+              />
+            ))}
           </div>
         ) : (
           <div className="px-4 pb-3">
@@ -655,7 +813,7 @@ export function ExchangePicker({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by exchange, city, or country..."
+            placeholder="Search by exchange, city, country, or index..."
             disabled={disabled}
             className="w-full rounded-lg border border-white/10 bg-slate-800/50
                        py-2.5 pl-10 pr-10 text-sm text-slate-200 placeholder:text-slate-500
@@ -687,9 +845,6 @@ export function ExchangePicker({
 
       {/* ================================================================== */}
       {/* CONTINENTAL ACCORDION                                             */}
-      {/* v1.3.0: Responsive height with scroll preserved                   */}
-      {/* - Small screens: max-h-[400px] with scroll                        */}
-      {/* - Large screens: fills available space, scroll when needed        */}
       {/* ================================================================== */}
       <div
         className="min-h-0 flex-1 overflow-y-auto
@@ -749,7 +904,9 @@ export function ExchangePicker({
                           key={exchange.id}
                           exchange={exchange}
                           isSelected={safeSelected.includes(exchange.id)}
+                          currentBenchmark={getBenchmark(exchange.id, exchange)}
                           onToggle={() => toggleExchange(exchange.id)}
+                          onIndexChange={(benchmark) => handleIndexChange(exchange.id, benchmark)}
                           disabled={!canSelectMore}
                         />
                       ))}
@@ -767,8 +924,8 @@ export function ExchangePicker({
       {/* ================================================================== */}
       <div className="shrink-0 border-t border-white/5 bg-slate-800/30 px-4 py-3">
         <p className="text-center text-[10px] text-slate-500">
-          💡 Tip: Click chips to remove • Use search to find exchanges quickly • Select All respects
-          the {max} limit
+          💡 Tip: Click chips to remove • Use dropdown to change index • Select All respects the{' '}
+          {max} limit
         </p>
       </div>
     </div>

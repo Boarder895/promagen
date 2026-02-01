@@ -260,15 +260,11 @@ const IndexRowPlaceholder = React.memo(function IndexRowPlaceholder({
   indexName,
 }: IndexRowPlaceholderProps) {
   return (
-    <div
-      className="w-full px-4 py-2.5"
-      role="group"
-      aria-label={`${indexName}: awaiting price data`}
-    >
-      {/* Index name + placeholder on ONE line */}
+    <div className="w-full px-4 py-2.5" role="group" aria-label={`${indexName}: market closed`}>
+      {/* Index name + status on ONE line */}
       <FitText min={10} max={16} className="font-medium text-slate-300">
         <span>{indexName}: </span>
-        <span className="text-slate-500 animate-pulse">···</span>
+        <span className="text-slate-500 italic text-[0.85em]">Market closed</span>
       </FitText>
     </div>
   );
