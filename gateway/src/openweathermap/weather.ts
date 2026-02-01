@@ -22,11 +22,7 @@ import { GenericCache } from '../lib/cache.js';
 import { CircuitBreaker } from '../lib/circuit.js';
 import { logInfo, logWarn, logDebug, logError } from '../lib/logging.js';
 
-import {
-  fetchWeatherBatch,
-  validateCities,
-  hasOpenWeatherMapApiKey,
-} from './adapter.js';
+import { fetchWeatherBatch, validateCities, hasOpenWeatherMapApiKey } from './adapter.js';
 import { openWeatherMapBudget, MAX_CITIES_PER_BATCH } from './budget.js';
 import {
   weatherScheduler,
@@ -91,10 +87,7 @@ let isRefreshing = false;
  * @param cities - All exchange cities from catalog
  * @param selectedIds - Selected exchange IDs (priority for Batch A)
  */
-export function initWeatherHandler(
-  cities: CityInfo[],
-  selectedIds: string[],
-): void {
+export function initWeatherHandler(cities: CityInfo[], selectedIds: string[]): void {
   // Validate cities
   const { valid, invalid } = validateCities(cities);
 
@@ -123,8 +116,12 @@ export function initWeatherHandler(
 
 /**
  * Split cities into Batch A (priority) and Batch B.
- * Batch A includes all selected exchanges plus extras to reach 24.
- * Batch B contains the remaining cities.
+ * Batch A includes selected exchanges first, then fills to MAX_CITIES_PER_BATCH.
+ * Batch B gets the next MAX_CITIES_PER_BATCH cities.
+ * Cities beyond 2 × MAX_CITIES_PER_BATCH are excluded from weather fetching.
+ *
+ * IMPORTANT: Both batches are hard-capped at MAX_CITIES_PER_BATCH (24) to stay
+ * within the OpenWeatherMap minute rate limit (60 calls/min).
  */
 function splitIntoBatches(): void {
   const selectedSet = new Set(selectedExchangeIds.map((id) => id.toLowerCase()));
@@ -140,23 +137,30 @@ function splitIntoBatches(): void {
     }
   }
 
-  // Build Batch A: all selected + fill to MAX_CITIES_PER_BATCH
-  batchACities = [...priority];
-  batchBCities = [];
+  // Build ordered list: priority cities first, then remaining
+  const ordered = [...priority, ...remaining];
 
-  for (const city of remaining) {
-    if (batchACities.length < MAX_CITIES_PER_BATCH) {
-      batchACities.push(city);
-    } else {
-      batchBCities.push(city);
-    }
-  }
+  // Cap each batch at MAX_CITIES_PER_BATCH (24)
+  batchACities = ordered.slice(0, MAX_CITIES_PER_BATCH);
+  batchBCities = ordered.slice(MAX_CITIES_PER_BATCH, MAX_CITIES_PER_BATCH * 2);
+
+  const excluded = ordered.length - (batchACities.length + batchBCities.length);
 
   logDebug('Weather batches configured', {
     batchACount: batchACities.length,
-    batchASelected: priority.length,
     batchBCount: batchBCities.length,
+    priorityCities: priority.length,
+    totalCities: ordered.length,
+    excluded,
   });
+
+  if (excluded > 0) {
+    logWarn('Weather: cities excluded (exceed 2 × MAX_CITIES_PER_BATCH)', {
+      excluded,
+      maxPerBatch: MAX_CITIES_PER_BATCH,
+      maxTotal: MAX_CITIES_PER_BATCH * 2,
+    });
+  }
 }
 
 /**
@@ -312,9 +316,7 @@ export async function getWeatherForExchanges(
 
   // Filter to requested exchanges
   const idSet = new Set(exchangeIds.map((id) => id.toLowerCase()));
-  const filteredData = response.data.filter((w) =>
-    idSet.has(w.id.toLowerCase()),
-  );
+  const filteredData = response.data.filter((w) => idSet.has(w.id.toLowerCase()));
 
   return {
     ...response,
