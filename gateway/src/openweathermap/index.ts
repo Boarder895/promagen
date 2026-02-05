@@ -5,8 +5,9 @@
  *
  * Provider: OpenWeatherMap (api.openweathermap.org)
  * Budget: 1,000 calls/day, 60 calls/minute (free tier)
- * Schedule: :10 and :40 (offset from other feeds)
- * Batching: 24 cities per batch, alternating hourly
+ * Schedule: :10 only (v3.0.0 — dropped :40)
+ * Batching: 4 batches (~21 cities each), rotating hourly via hour % 4
+ * Dedup: 89 exchanges → 83 unique API calls (saves 6 per cycle)
  *
  * @module openweathermap
  */
@@ -19,6 +20,7 @@ export type {
   CityInfo,
   WeatherBatches,
   BatchId,
+  CoordGroup,
   OWMCurrentWeatherResponse,
   OWMWeatherCondition,
   OWMMainData,
@@ -37,6 +39,7 @@ export {
   CONDITION_TO_EMOJI,
   DEFAULT_EMOJI,
   CONDITION_TO_ATMOSPHERE,
+  ALL_BATCH_IDS,
 } from './types.js';
 
 // =============================================================================
@@ -50,6 +53,7 @@ export {
   getBudgetHeadroom,
   EXPECTED_DAILY_USAGE,
   MAX_CITIES_PER_BATCH,
+  NUM_BATCHES,
 } from './budget.js';
 
 // =============================================================================

@@ -1,0 +1,764 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "created": "2026-02-05",
+    "phase": "3-complete",
+    "totalCommodities": 78,
+    "averageCountriesPerCommodity": 5,
+    "totalPhrases": 390,
+    "crossPopulation": {
+      "environment": ["regional landscapes", "production facilities", "geographic settings"],
+      "atmosphere": ["cultural moods", "regional character", "local conditions"]
+    }
+  },
+  "production": {
+    "crude_oil": {
+      "id": "crude_oil",
+      "topProducers": ["USA", "Saudi Arabia", "Russia", "Canada", "Iraq"],
+      "regionPhrases": [
+        "texas permian basin pump jacks endless horizon",
+        "saudi arabian desert pipeline gleaming sand dunes",
+        "russian siberian tundra frozen drilling operation",
+        "canadian oil sands massive extraction landscape",
+        "iraqi basra oil fields ancient mesopotamia backdrop"
+      ]
+    },
+    "natural_gas": {
+      "id": "natural_gas",
+      "topProducers": ["USA", "Russia", "Iran", "Qatar", "China"],
+      "regionPhrases": [
+        "american appalachian shale fracking operation valley",
+        "russian yamal peninsula arctic gas field snow",
+        "iranian south pars offshore platform gulf waters",
+        "qatari north dome facility desert coast meeting",
+        "chinese sichuan basin mountain surrounded drilling"
+      ]
+    },
+    "heating_oil": {
+      "id": "heating_oil",
+      "topProducers": ["USA", "Germany", "Japan", "UK", "France"],
+      "regionPhrases": [
+        "new england colonial home delivery truck snow",
+        "german efficient heating system modern residence",
+        "japanese compact urban heating apartment block",
+        "british countryside cottage tank delivery lane",
+        "french rural farmhouse stone building warmth"
+      ]
+    },
+    "gasoline": {
+      "id": "gasoline",
+      "topProducers": ["USA", "China", "Russia", "Japan", "India"],
+      "regionPhrases": [
+        "american highway gas station neon desert night",
+        "chinese megacity fuel station urban sprawl",
+        "russian long distance trucking station taiga",
+        "japanese compact efficient station tokyo streets",
+        "indian roadside pump bustling highway traffic"
+      ]
+    },
+    "diesel": {
+      "id": "diesel",
+      "topProducers": ["USA", "China", "India", "Russia", "Japan"],
+      "regionPhrases": [
+        "american interstate truck stop prairie vastness",
+        "chinese port diesel bunker massive container ship",
+        "indian agricultural tractor rural punjab fields",
+        "russian trans siberian railway diesel locomotive",
+        "japanese fishing fleet diesel harbor preparation"
+      ]
+    },
+    "coal": {
+      "id": "coal",
+      "topProducers": ["China", "India", "Indonesia", "USA", "Australia"],
+      "regionPhrases": [
+        "chinese shanxi province underground mine vast reserves",
+        "indian jharkhand open pit coal belt industrial",
+        "indonesian kalimantan jungle surrounded mine export",
+        "american wyoming powder river basin strip mining",
+        "australian queensland bowen basin rail loading export"
+      ]
+    },
+    "uranium": {
+      "id": "uranium",
+      "topProducers": ["Kazakhstan", "Canada", "Australia", "Namibia", "Niger"],
+      "regionPhrases": [
+        "kazakh steppe in-situ leach operation remote",
+        "canadian saskatchewan underground mcarthur river deep",
+        "australian northern territory ranger mine outback",
+        "namibian namib desert rossing mine ancient landscape",
+        "niger sahel region arlit mine desert isolation"
+      ]
+    },
+    "ethanol": {
+      "id": "ethanol",
+      "topProducers": ["USA", "Brazil", "EU", "China", "India"],
+      "regionPhrases": [
+        "american midwest corn belt ethanol plant prairie",
+        "brazilian sao paulo sugarcane distillery tropical",
+        "european wheat based biorefinery countryside setting",
+        "chinese northeast corn processing facility cold region",
+        "indian maharashtra sugarcane molasses distillery"
+      ]
+    },
+    "propane": {
+      "id": "propane",
+      "topProducers": ["USA", "Saudi Arabia", "Canada", "Russia", "Qatar"],
+      "regionPhrases": [
+        "american gulf coast fractionation facility humid coast",
+        "saudi arabian petrochemical complex desert industrial",
+        "canadian alberta gas plant prairie winter",
+        "russian west siberian processing cold remote",
+        "qatari ras laffan industrial city coastal desert"
+      ]
+    },
+    "jet_fuel": {
+      "id": "jet_fuel",
+      "topProducers": ["USA", "China", "Russia", "Japan", "UK"],
+      "regionPhrases": [
+        "american refinery gulf coast aviation fuel production",
+        "chinese beijing airport massive fuel farm operation",
+        "russian aviation fuel depot long haul supply",
+        "japanese narita airport efficient fuel logistics",
+        "british heathrow fuel hydrant system underground"
+      ]
+    },
+    "gold": {
+      "id": "gold",
+      "topProducers": ["China", "Australia", "Russia", "Canada", "USA"],
+      "regionPhrases": [
+        "chinese shandong province deep underground mine",
+        "australian kalgoorlie super pit outback red earth",
+        "russian magadan region permafrost gold extraction",
+        "canadian ontario red lake mine northern wilderness",
+        "american nevada carlin trend desert open pit"
+      ]
+    },
+    "silver": {
+      "id": "silver",
+      "topProducers": ["Mexico", "Peru", "China", "Russia", "Poland"],
+      "regionPhrases": [
+        "mexican zacatecas colonial mining town heritage",
+        "peruvian andes high altitude silver operation",
+        "chinese henan province industrial silver recovery",
+        "russian ural mountains polymetallic deposit",
+        "polish silesian industrial district byproduct recovery"
+      ]
+    },
+    "platinum": {
+      "id": "platinum",
+      "topProducers": ["South Africa", "Russia", "Zimbabwe", "Canada", "USA"],
+      "regionPhrases": [
+        "south african bushveld complex deep underground mining",
+        "russian norilsk arctic nickel platinum extraction",
+        "zimbabwean great dyke geological treasure",
+        "canadian sudbury basin nickel platinum byproduct",
+        "american montana stillwater complex mountain mining"
+      ]
+    },
+    "palladium": {
+      "id": "palladium",
+      "topProducers": ["Russia", "South Africa", "Canada", "USA", "Zimbabwe"],
+      "regionPhrases": [
+        "russian norilsk industrial city arctic palladium",
+        "south african rustenburg platinum belt mining",
+        "canadian thunder bay nickel copper palladium",
+        "american montana palladium specific mining operation",
+        "zimbabwean mimosa mine african bushveld geology"
+      ]
+    },
+    "rhodium": {
+      "id": "rhodium",
+      "topProducers": ["South Africa", "Russia", "Zimbabwe", "Canada", "USA"],
+      "regionPhrases": [
+        "south african anglo platinum refinery precious metals",
+        "russian krasnoyarsk refinery rhodium separation",
+        "zimbabwean unki mine pgm recovery operation",
+        "canadian vale sudbury integrated refining",
+        "american stillwater mining precious metal recovery"
+      ]
+    },
+    "copper": {
+      "id": "copper",
+      "topProducers": ["Chile", "Peru", "China", "DRC", "USA"],
+      "regionPhrases": [
+        "chilean atacama desert escondida mine vast pit",
+        "peruvian andes cerro verde terraced extraction",
+        "chinese jiangxi province dexing mine expansion",
+        "congolese copper belt katanga region geological",
+        "american arizona morenci mine desert mountain"
+      ]
+    },
+    "aluminum": {
+      "id": "aluminum",
+      "topProducers": ["China", "India", "Russia", "Canada", "UAE"],
+      "regionPhrases": [
+        "chinese shandong massive smelter industrial zone",
+        "indian odisha vedanta alumina refinery",
+        "russian siberian hydropower smelter cheap electricity",
+        "canadian quebec hydroelectric aluminum production",
+        "emirati dubai jebel ali smelter desert industrial"
+      ]
+    },
+    "zinc": {
+      "id": "zinc",
+      "topProducers": ["China", "Peru", "Australia", "USA", "India"],
+      "regionPhrases": [
+        "chinese yunnan lead zinc belt mountain mining",
+        "peruvian antamina polymetallic high altitude operation",
+        "australian mount isa outback zinc lead mine",
+        "american alaska red dog arctic zinc deposit",
+        "indian rajasthan rampura agucha underground"
+      ]
+    },
+    "nickel": {
+      "id": "nickel",
+      "topProducers": ["Indonesia", "Philippines", "Russia", "New Caledonia", "Australia"],
+      "regionPhrases": [
+        "indonesian sulawesi laterite mine tropical rainforest",
+        "philippine mindanao nickel operation island setting",
+        "russian norilsk sulfide nickel arctic industrial",
+        "new caledonian goro mine pacific island landscape",
+        "australian western australia nickel sulfide outback"
+      ]
+    },
+    "lead": {
+      "id": "lead",
+      "topProducers": ["China", "Australia", "USA", "Peru", "Mexico"],
+      "regionPhrases": [
+        "chinese henan province lead smelting industrial",
+        "australian broken hill historic mining outback",
+        "american missouri lead belt underground mining",
+        "peruvian cerro de pasco high altitude polymetallic",
+        "mexican durango fresnillo district silver lead"
+      ]
+    },
+    "tin": {
+      "id": "tin",
+      "topProducers": ["China", "Indonesia", "Myanmar", "Peru", "Bolivia"],
+      "regionPhrases": [
+        "chinese yunnan tin capital gejiu mining city",
+        "indonesian bangka island offshore dredging tropical",
+        "myanmar wa state artisanal tin mining remote",
+        "peruvian san rafael mine andean tin deposit",
+        "bolivian potosi historic tin mining altiplano"
+      ]
+    },
+    "steel": {
+      "id": "steel",
+      "topProducers": ["China", "India", "Japan", "USA", "Russia"],
+      "regionPhrases": [
+        "chinese hebei tangshan steel mills industrial smog",
+        "indian jharkhand tata steel integrated complex",
+        "japanese nippon steel efficient coastal works",
+        "american indiana gary steel mills great lakes",
+        "russian magnitogorsk ural mountains soviet heritage"
+      ]
+    },
+    "wheat": {
+      "id": "wheat",
+      "topProducers": ["China", "India", "Russia", "USA", "France"],
+      "regionPhrases": [
+        "chinese henan plains golden wheat harvest",
+        "indian punjab breadbasket combine harvesting",
+        "russian southern steppe black earth wheat belt",
+        "american kansas prairie amber waves grain",
+        "french beauce plain european breadbasket harvest"
+      ]
+    },
+    "corn": {
+      "id": "corn",
+      "topProducers": ["USA", "China", "Brazil", "Argentina", "Ukraine"],
+      "regionPhrases": [
+        "american iowa corn belt endless green rows",
+        "chinese heilongjiang northeast corn production",
+        "brazilian mato grosso cerrado expansion modern",
+        "argentine pampas corn cattle integration flat",
+        "ukrainian chernozem black soil corn golden"
+      ]
+    },
+    "soybeans": {
+      "id": "soybeans",
+      "topProducers": ["Brazil", "USA", "Argentina", "China", "India"],
+      "regionPhrases": [
+        "brazilian mato grosso soybean frontier massive scale",
+        "american illinois delta rich soil soybean",
+        "argentine rosario export terminal river loading",
+        "chinese manchuria traditional soybean cultivation",
+        "indian madhya pradesh rain fed soybean crop"
+      ]
+    },
+    "rice": {
+      "id": "rice",
+      "topProducers": ["China", "India", "Indonesia", "Bangladesh", "Vietnam"],
+      "regionPhrases": [
+        "chinese yangtze delta terraced paddy water management",
+        "indian west bengal monsoon flooded paddy green",
+        "indonesian java bali terraced hillside rice art",
+        "bangladeshi ganges delta rice bowl intensive",
+        "vietnamese mekong delta floating rice season"
+      ]
+    },
+    "oats": {
+      "id": "oats",
+      "topProducers": ["Russia", "Canada", "Australia", "Poland", "Finland"],
+      "regionPhrases": [
+        "russian volga region oat fields vast steppe",
+        "canadian prairie oat production golden harvest",
+        "australian south oat hay production dry climate",
+        "polish lowland oat cultivation traditional farm",
+        "finnish northern oat hardy variety cool summer"
+      ]
+    },
+    "coffee": {
+      "id": "coffee",
+      "topProducers": ["Brazil", "Vietnam", "Colombia", "Indonesia", "Ethiopia"],
+      "regionPhrases": [
+        "brazilian minas gerais coffee plantation red earth",
+        "vietnamese central highlands robusta farm misty",
+        "colombian andes arabica mountain slope shade grown",
+        "indonesian sumatra mandheling volcanic soil coffee",
+        "ethiopian yirgacheffe birthplace coffee wild forest"
+      ]
+    },
+    "cocoa": {
+      "id": "cocoa",
+      "topProducers": ["Ivory Coast", "Ghana", "Indonesia", "Ecuador", "Cameroon"],
+      "regionPhrases": [
+        "ivorian cocoa belt tropical forest plantation",
+        "ghanaian ashanti region cocoa farmer cooperative",
+        "indonesian sulawesi cocoa smallholder tropical",
+        "ecuadorian arriba nacional fine flavor heritage",
+        "cameroonian southwest region cocoa forest shade"
+      ]
+    },
+    "sugar": {
+      "id": "sugar",
+      "topProducers": ["Brazil", "India", "Thailand", "China", "USA"],
+      "regionPhrases": [
+        "brazilian sao paulo sugarcane ethanol mill tropical",
+        "indian uttar pradesh cane crushing season monsoon",
+        "thai northeastern isaan sugarcane plateau dry season",
+        "chinese guangxi karst landscape cane fields scenic",
+        "american louisiana sugar plantation bayou heritage"
+      ]
+    },
+    "cotton": {
+      "id": "cotton",
+      "topProducers": ["China", "India", "USA", "Brazil", "Pakistan"],
+      "regionPhrases": [
+        "chinese xinjiang cotton belt vast irrigated desert",
+        "indian gujarat cotton picking rural women workers",
+        "american texas high plains cotton mechanical harvest",
+        "brazilian bahia cerrado cotton modern agriculture",
+        "pakistani punjab cotton sindh irrigation canal"
+      ]
+    },
+    "rubber": {
+      "id": "rubber",
+      "topProducers": ["Thailand", "Indonesia", "Vietnam", "India", "China"],
+      "regionPhrases": [
+        "thai southern rubber plantation morning mist tapping",
+        "indonesian sumatra rubber smallholder jungle edge",
+        "vietnamese central highlands rubber estate organized",
+        "indian kerala rubber tapping traditional technique",
+        "chinese hainan island rubber plantation tropical"
+      ]
+    },
+    "live_cattle": {
+      "id": "live_cattle",
+      "topProducers": ["USA", "Brazil", "China", "Argentina", "Australia"],
+      "regionPhrases": [
+        "american texas panhandle feedlot dust sunset",
+        "brazilian mato grosso cattle ranch cerrado vast",
+        "chinese inner mongolia grassland cattle traditional",
+        "argentine pampas estancia grass fed gaucho",
+        "australian queensland cattle station outback remote"
+      ]
+    },
+    "lean_hogs": {
+      "id": "lean_hogs",
+      "topProducers": ["China", "USA", "Germany", "Spain", "Brazil"],
+      "regionPhrases": [
+        "chinese sichuan intensive hog production industrial",
+        "american iowa hog barn modern climate controlled",
+        "german lower saxony pig farming efficient european",
+        "spanish catalonia iberian ham heritage production",
+        "brazilian santa catarina integrated pork system"
+      ]
+    },
+    "feeder_cattle": {
+      "id": "feeder_cattle",
+      "topProducers": ["USA", "Brazil", "Australia", "Mexico", "Argentina"],
+      "regionPhrases": [
+        "american montana ranch weaning roundup mountain",
+        "brazilian goias calf production savanna cattle",
+        "australian northern territory mustering helicopter outback",
+        "mexican chihuahua cattle ranch desert grassland",
+        "argentine patagonia sheep cattle mixed grazing"
+      ]
+    },
+    "pork_bellies": {
+      "id": "pork_bellies",
+      "topProducers": ["China", "USA", "Germany", "Spain", "Denmark"],
+      "regionPhrases": [
+        "chinese bacon production facility eastern seaboard",
+        "american midwest pork processing smokehouse",
+        "german black forest smoked bacon tradition",
+        "spanish panceta production mediterranean curing",
+        "danish bacon export facility european quality"
+      ]
+    },
+    "lithium": {
+      "id": "lithium",
+      "topProducers": ["Australia", "Chile", "China", "Argentina", "Zimbabwe"],
+      "regionPhrases": [
+        "australian pilbara spodumene hard rock mine red",
+        "chilean atacama salar brine evaporation white desert",
+        "chinese jiangxi lepidolite processing facility",
+        "argentine salta lithium triangle high altitude",
+        "zimbabwean bikita pegmatite historic deposit"
+      ]
+    },
+    "cobalt": {
+      "id": "cobalt",
+      "topProducers": ["DRC", "Russia", "Australia", "Philippines", "Cuba"],
+      "regionPhrases": [
+        "congolese katanga artisanal cobalt mining controversy",
+        "russian norilsk nickel cobalt byproduct arctic",
+        "australian murrin murrin laterite cobalt nickel",
+        "philippine nickel laterite cobalt recovery tropical",
+        "cuban moa nickel cobalt operation caribbean"
+      ]
+    },
+    "rare_earths": {
+      "id": "rare_earths",
+      "topProducers": ["China", "USA", "Myanmar", "Australia", "India"],
+      "regionPhrases": [
+        "chinese bayan obo inner mongolia massive deposit",
+        "american mountain pass california rare earth revival",
+        "myanmar kachin state ion adsorption heavy rare",
+        "australian mount weld western australia processing",
+        "indian odisha beach sand monazite extraction"
+      ]
+    },
+    "graphite": {
+      "id": "graphite",
+      "topProducers": ["China", "Mozambique", "Brazil", "Madagascar", "India"],
+      "regionPhrases": [
+        "chinese heilongjiang flake graphite dominant producer",
+        "mozambican balama massive graphite project africa",
+        "brazilian minas gerais graphite traditional mining",
+        "madagascan graphite deposit unique island geology",
+        "indian tamil nadu graphite traditional production"
+      ]
+    },
+    "manganese": {
+      "id": "manganese",
+      "topProducers": ["South Africa", "Australia", "Gabon", "China", "Ghana"],
+      "regionPhrases": [
+        "south african kalahari manganese field vast deposit",
+        "australian groote eylandt island mine isolated",
+        "gabonese moanda mine tropical forest manganese",
+        "chinese guangxi manganese processing industrial",
+        "ghanaian nsuta mine west african manganese"
+      ]
+    },
+    "molybdenum": {
+      "id": "molybdenum",
+      "topProducers": ["China", "Chile", "USA", "Peru", "Mexico"],
+      "regionPhrases": [
+        "chinese shaanxi molybdenum primary mine industrial",
+        "chilean chuquicamata copper moly byproduct giant pit",
+        "american colorado climax molybdenum high altitude",
+        "peruvian antamina polymetallic moly copper andes",
+        "mexican sonora la caridad copper moly desert"
+      ]
+    },
+    "vanadium": {
+      "id": "vanadium",
+      "topProducers": ["China", "Russia", "South Africa", "Brazil", "USA"],
+      "regionPhrases": [
+        "chinese panzhihua steel slag vanadium recovery",
+        "russian nizhny tagil steel industry vanadium",
+        "south african bushveld magnetite vanadium primary",
+        "brazilian maracas menchen vanadium mine bahia",
+        "american arkansas vanadium from uranium tailings"
+      ]
+    },
+    "tungsten": {
+      "id": "tungsten",
+      "topProducers": ["China", "Vietnam", "Russia", "Bolivia", "Rwanda"],
+      "regionPhrases": [
+        "chinese jiangxi tungsten dominant global supply",
+        "vietnamese dai loan mine hard rock extraction",
+        "russian primorsky krai scheelite deposit far east",
+        "bolivian potosi tungsten tin traditional mining",
+        "rwandan wolfram mining conflict mineral traceability"
+      ]
+    },
+    "antimony": {
+      "id": "antimony",
+      "topProducers": ["China", "Russia", "Tajikistan", "Bolivia", "Turkey"],
+      "regionPhrases": [
+        "chinese hunan xikuangshan antimony capital world",
+        "russian yakutia antimony gold remote extraction",
+        "tajik anzob processing facility central asian",
+        "bolivian potosi antimony tin historic mining",
+        "turkish tokat antimony mine anatolian geology"
+      ]
+    },
+    "titanium": {
+      "id": "titanium",
+      "topProducers": ["China", "Japan", "Russia", "Kazakhstan", "USA"],
+      "regionPhrases": [
+        "chinese sichuan titanium sponge production industrial",
+        "japanese osaka titanium specialty metal precision",
+        "russian ust kamenogorsk titanium magnesium kazakh border",
+        "kazakh titanium sponge production soviet heritage",
+        "american utah ati titanium aerospace quality"
+      ]
+    },
+    "orange_juice": {
+      "id": "orange_juice",
+      "topProducers": ["Brazil", "USA", "Mexico", "Spain", "Egypt"],
+      "regionPhrases": [
+        "brazilian sao paulo orange belt citrus groves endless",
+        "american florida indian river citrus hurricane risk",
+        "mexican veracruz orange groves gulf coast humid",
+        "spanish valencia mediterranean orange heritage",
+        "egyptian delta citrus modern irrigation production"
+      ]
+    },
+    "milk": {
+      "id": "milk",
+      "topProducers": ["India", "USA", "Pakistan", "China", "Brazil"],
+      "regionPhrases": [
+        "indian cooperative amul dairy buffalo milk village",
+        "american wisconsin dairy farm cheese belt pastoral",
+        "pakistani punjab dairy buffalo water cooling",
+        "chinese inner mongolia modern dairy mega farm",
+        "brazilian minas gerais dairy cattle tropical pasture"
+      ]
+    },
+    "cheese": {
+      "id": "cheese",
+      "topProducers": ["USA", "Germany", "France", "Italy", "Netherlands"],
+      "regionPhrases": [
+        "american wisconsin cheddar cheese factory artisan",
+        "german bavarian cheese alpine dairy tradition",
+        "french normandy camembert terroir protected origin",
+        "italian emilia romagna parmigiano reggiano wheel aging",
+        "dutch gouda cheese traditional market holland"
+      ]
+    },
+    "butter": {
+      "id": "butter",
+      "topProducers": ["India", "USA", "Germany", "France", "New Zealand"],
+      "regionPhrases": [
+        "indian ghee production traditional clarified butter",
+        "american midwest butter churning creamery modern",
+        "german bavarian butter alpine grass fed quality",
+        "french normandy butter aop protected designation",
+        "new zealand fonterra dairy export grassfed"
+      ]
+    },
+    "eggs": {
+      "id": "eggs",
+      "topProducers": ["China", "USA", "India", "Mexico", "Japan"],
+      "regionPhrases": [
+        "chinese shandong egg production industrial scale",
+        "american iowa egg farm layer house automated",
+        "indian andhra pradesh backyard poultry commercial",
+        "mexican jalisco egg industry concentrated production",
+        "japanese cage free egg premium quality standard"
+      ]
+    },
+    "chicken": {
+      "id": "chicken",
+      "topProducers": ["USA", "Brazil", "China", "Indonesia", "India"],
+      "regionPhrases": [
+        "american georgia broiler belt integrated production",
+        "brazilian parana santa catarina export oriented",
+        "chinese shandong white feather chicken industrial",
+        "indonesian java backyard to commercial poultry",
+        "indian tamil nadu broiler integration growing"
+      ]
+    },
+    "turkey": {
+      "id": "turkey",
+      "topProducers": ["USA", "Brazil", "Germany", "France", "Italy"],
+      "regionPhrases": [
+        "american minnesota turkey production thanksgiving belt",
+        "brazilian santa catarina turkey export processing",
+        "german lower saxony turkey farm european market",
+        "french southwest france turkey christmas tradition",
+        "italian veneto turkey bresaola specialty production"
+      ]
+    },
+    "honey": {
+      "id": "honey",
+      "topProducers": ["China", "Turkey", "Argentina", "Iran", "USA"],
+      "regionPhrases": [
+        "chinese heilongjiang acacia honey vast apiaries",
+        "turkish pine honey aegean forest unique variety",
+        "argentine pampas clover honey export quality",
+        "iranian kurdistan wild honey mountain traditional",
+        "american north dakota clover alfalfa honey plains"
+      ]
+    },
+    "maple_syrup": {
+      "id": "maple_syrup",
+      "topProducers": ["Canada", "USA", "South Korea", "Japan"],
+      "regionPhrases": [
+        "canadian quebec maple federation quota system",
+        "american vermont sugar bush traditional sugarhouse",
+        "south korean gorosoe sap alternative maple",
+        "japanese hokkaido maple small scale artisan",
+        "new brunswick canadian maritime maple production"
+      ]
+    },
+    "olive_oil": {
+      "id": "olive_oil",
+      "topProducers": ["Spain", "Italy", "Greece", "Turkey", "Morocco"],
+      "regionPhrases": [
+        "spanish andalusia olive sea endless groves",
+        "italian tuscany extra virgin olive terraced hills",
+        "greek kalamata olive harvest mediterranean climate",
+        "turkish aegean olive oil ancient tradition",
+        "moroccan meknes olive grove atlas foothills"
+      ]
+    },
+    "palm_oil": {
+      "id": "palm_oil",
+      "topProducers": ["Indonesia", "Malaysia", "Thailand", "Colombia", "Nigeria"],
+      "regionPhrases": [
+        "indonesian sumatra kalimantan palm plantation controversy",
+        "malaysian sabah sarawak palm oil sustainable effort",
+        "thai southern palm smallholder cooperative",
+        "colombian llanos palm oil latin american expansion",
+        "nigerian traditional palm oil artisanal processing"
+      ]
+    },
+    "fish_meal": {
+      "id": "fish_meal",
+      "topProducers": ["Peru", "Chile", "Thailand", "China", "Norway"],
+      "regionPhrases": [
+        "peruvian anchovy fishmeal humboldt current abundance",
+        "chilean jack mackerel fishmeal southern pacific",
+        "thai trawl bycatch fishmeal aquaculture feed",
+        "chinese fishmeal import aquaculture demand massive",
+        "norwegian fish processing meal nordic quality"
+      ]
+    },
+    "soybean_oil": {
+      "id": "soybean_oil",
+      "topProducers": ["China", "USA", "Brazil", "Argentina", "India"],
+      "regionPhrases": [
+        "chinese dalian soybean crushing import dependent",
+        "american midwest soybean processing biodiesel",
+        "brazilian paranagua soy crush export terminal",
+        "argentine rosario soy processing industrial corridor",
+        "indian indore soybean oil refining central india"
+      ]
+    },
+    "canola_oil": {
+      "id": "canola_oil",
+      "topProducers": ["Canada", "China", "India", "Australia", "Germany"],
+      "regionPhrases": [
+        "canadian prairie canola golden bloom summer",
+        "chinese yangtze rapeseed traditional cultivation",
+        "indian rajasthan mustard rapeseed winter crop",
+        "australian victoria canola export quality crop",
+        "german schleswig holstein rapeseed biofuel modern"
+      ]
+    },
+    "cashews": {
+      "id": "cashews",
+      "topProducers": ["Vietnam", "India", "Ivory Coast", "Philippines", "Benin"],
+      "regionPhrases": [
+        "vietnamese binh phuoc cashew processing hub",
+        "indian kerala goa cashew plantation coastal",
+        "ivorian bondoukou cashew raw export africa",
+        "philippine palawan cashew smallholder island",
+        "beninese parakou cashew collection west africa"
+      ]
+    },
+    "pistachios": {
+      "id": "pistachios",
+      "topProducers": ["USA", "Iran", "Turkey", "Syria", "China"],
+      "regionPhrases": [
+        "american california central valley pistachio orchard",
+        "iranian kerman green gold desert irrigation",
+        "turkish gaziantep antep pistachio baklava culture",
+        "syrian aleppo pistachio historic cultivation",
+        "chinese xinjiang pistachio emerging production"
+      ]
+    },
+    "walnuts": {
+      "id": "walnuts",
+      "topProducers": ["China", "USA", "Iran", "Turkey", "Chile"],
+      "regionPhrases": [
+        "chinese xinjiang yunnan walnut dominant global",
+        "american california central valley walnut orchard",
+        "iranian hamadan walnut traditional mountain cultivation",
+        "turkish kastamonu black sea walnut forest",
+        "chilean central valley walnut export southern hemisphere"
+      ]
+    },
+    "hazelnuts": {
+      "id": "hazelnuts",
+      "topProducers": ["Turkey", "Italy", "Azerbaijan", "USA", "Georgia"],
+      "regionPhrases": [
+        "turkish black sea coast hazelnut orchard steep",
+        "italian piedmont langhe nocciola tonda gentile",
+        "azerbaijani qabala hazelnut post soviet revival",
+        "american oregon willamette valley hazelnut modern",
+        "georgian imereti hazelnut traditional cultivation"
+      ]
+    },
+    "rapeseed": {
+      "id": "rapeseed",
+      "topProducers": ["Canada", "China", "India", "Germany", "France"],
+      "regionPhrases": [
+        "canadian saskatchewan manitoba rapeseed canola prairie",
+        "chinese yangtze basin rapeseed yellow flower spring",
+        "indian mustard rapeseed winter flowering crop",
+        "german northern plains rapeseed biofuel feedstock",
+        "french picardy champagne rapeseed golden fields"
+      ]
+    },
+    "silk": {
+      "id": "silk",
+      "topProducers": ["China", "India", "Uzbekistan", "Brazil", "Thailand"],
+      "regionPhrases": [
+        "chinese jiangsu zhejiang silk road heritage mulberry",
+        "indian karnataka mysore silk traditional weaving",
+        "uzbek fergana valley silk soviet legacy",
+        "brazilian parana silk japanese immigrant tradition",
+        "thai korat silk isan region traditional craft"
+      ]
+    },
+    "potatoes": {
+      "id": "potatoes",
+      "topProducers": ["China", "India", "Russia", "Ukraine", "USA"],
+      "regionPhrases": [
+        "chinese inner mongolia gansu potato vast scale",
+        "indian uttar pradesh potato winter crop plains",
+        "russian black earth potato traditional staple",
+        "ukrainian chernozem potato rich soil cultivation",
+        "american idaho russet potato volcanic soil quality"
+      ]
+    },
+    "sunflower_oil": {
+      "id": "sunflower_oil",
+      "topProducers": ["Ukraine", "Russia", "Argentina", "Turkey", "France"],
+      "regionPhrases": [
+        "ukrainian black soil sunflower golden fields vast",
+        "russian krasnodar sunflower major producer region",
+        "argentine pampas sunflower rotation cattle land",
+        "turkish thrace sunflower european turkey cultivation",
+        "french southwest sunflower traditional cooking oil"
+      ]
+    }
+  }
+}

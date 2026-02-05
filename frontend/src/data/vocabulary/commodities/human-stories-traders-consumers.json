@@ -1,0 +1,160 @@
+{
+  "metadata": {
+    "phase": "6.5",
+    "name": "Human Stories - Traders, Consumers, Families",
+    "description": "Market participants, end consumers, and family narratives in commodity chains",
+    "phraseCount": 110,
+    "crossPopulation": ["Subject", "Environment", "Atmosphere"]
+  },
+  "traders_brokers": {
+    "floor_traders": [
+      "pit trader hand signals",
+      "market maker spread tight",
+      "scalper quick reflexes",
+      "local trader regular",
+      "runner message carrying",
+      "clerk order recording",
+      "phone broker shouting",
+      "arbitrageur watching screens",
+      "hedger protecting position",
+      "speculator risk embracing"
+    ],
+    "modern_traders": [
+      "algo trader monitoring",
+      "quant analyst coding",
+      "risk manager calculating",
+      "portfolio manager deciding",
+      "research analyst reporting",
+      "sales trader client facing",
+      "execution trader filling",
+      "compliance officer checking",
+      "back office reconciling",
+      "IT support firefighting"
+    ],
+    "physical_traders": [
+      "grain merchant handshake deal",
+      "oil trader cargo tracking",
+      "metal dealer sample testing",
+      "coffee buyer origin visiting",
+      "cotton merchant quality grading",
+      "sugar trader relationship building",
+      "cocoa sourcer farm direct",
+      "rubber trader futures hedging",
+      "timber buyer forest walking",
+      "livestock trader auction bidding"
+    ],
+    "emotional_states": [
+      "euphoria big win",
+      "devastation blown account",
+      "anxiety position overnight",
+      "relief stop hit safe",
+      "greed doubling down",
+      "fear missing out",
+      "exhaustion market close",
+      "frustration choppy market",
+      "confidence winning streak",
+      "humility lesson learned"
+    ]
+  },
+  "consumers_end_users": {
+    "retail_consumers": [
+      "shopper price comparing",
+      "housewife budget stretching",
+      "chef ingredient selecting",
+      "barista beans grinding",
+      "baker flour measuring",
+      "jeweler gold appraising",
+      "mechanic oil changing",
+      "farmer fuel purchasing",
+      "homeowner heating oil",
+      "driver gas pumping"
+    ],
+    "industrial_users": [
+      "factory purchasing agent",
+      "procurement manager negotiating",
+      "inventory controller counting",
+      "production planner scheduling",
+      "quality assurance testing",
+      "logistics coordinator tracking",
+      "warehouse manager receiving",
+      "manufacturing engineer specifying",
+      "cost accountant calculating",
+      "supply chain analyst forecasting"
+    ],
+    "artisans_craftspeople": [
+      "chocolatier tempering",
+      "goldsmith crafting delicate",
+      "furniture maker wood selecting",
+      "weaver thread choosing",
+      "potter clay preparing",
+      "glassblower silica melting",
+      "blacksmith metal heating",
+      "leather worker hide tanning",
+      "perfumer essence blending",
+      "vintner grape crushing"
+    ]
+  },
+  "families_communities": {
+    "producer_families": [
+      "farming family generations deep",
+      "mining town dependent",
+      "fishing village traditional",
+      "plantation community tied",
+      "ranching family heritage",
+      "orchard family seasonal",
+      "dairy farm dawn rising",
+      "vineyard family pride",
+      "timber family land stewards",
+      "oil field family relocated"
+    ],
+    "trading_families": [
+      "merchant dynasty centuries",
+      "trading house legacy",
+      "broker family tradition",
+      "exchange seat inherited",
+      "commodity empire built",
+      "import business family",
+      "warehouse family owned",
+      "shipping line generations",
+      "processing plant founders",
+      "export company patriarch"
+    ],
+    "consumer_families": [
+      "kitchen table price worry",
+      "heating bill anxiety winter",
+      "grocery budget stretching",
+      "gas price commute cost",
+      "holiday meal planning",
+      "children fed priority",
+      "elderly fixed income",
+      "young couple starting out",
+      "single parent managing",
+      "retirement savings protecting"
+    ],
+    "community_impact": [
+      "boom town prosperity",
+      "bust town abandoned",
+      "port city dependent",
+      "agricultural heartland",
+      "industrial corridor",
+      "trading hub cosmopolitan",
+      "refinery town employment",
+      "market town weekly",
+      "border town crossing",
+      "commodity coast shipping"
+    ]
+  },
+  "crossPopulationTags": {
+    "traders_brokers.floor_traders": ["Subject", "Environment"],
+    "traders_brokers.modern_traders": ["Subject", "Environment"],
+    "traders_brokers.physical_traders": ["Subject", "Environment"],
+    "traders_brokers.emotional_states": ["Atmosphere", "Subject"],
+    "consumers_end_users.retail_consumers": ["Subject", "Environment"],
+    "consumers_end_users.industrial_users": ["Subject", "Environment"],
+    "consumers_end_users.artisans_craftspeople": ["Subject", "Action"],
+    "families_communities.producer_families": ["Subject", "Atmosphere"],
+    "families_communities.trading_families": ["Subject", "Atmosphere"],
+    "families_communities.consumer_families": ["Subject", "Atmosphere"],
+    "families_communities.community_impact": ["Environment", "Atmosphere"]
+  }
+}

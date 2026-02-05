@@ -8,6 +8,15 @@
  * - Strict typing for API responses
  * - No 'any' types anywhere
  *
+ * UPDATED v3.0.0 (01 Feb 2026):
+ * - BatchId expanded from 'A' | 'B' to 'A' | 'B' | 'C' | 'D' (4-batch strategy)
+ * - WeatherBatches expanded to 4 batches
+ * - WeatherResponseMeta includes batchC/D refresh timestamps
+ * - ALL_BATCH_IDS constant for iteration
+ * - CoordGroup interface for coordinate deduplication
+ *
+ * Existing features preserved: Yes
+ *
  * @module openweathermap/types
  */
 
@@ -32,19 +41,49 @@ export interface CityInfo {
 
 /**
  * Batch configuration for weather fetching.
- * Cities are split into two batches for budget efficiency.
+ * Cities are split into four batches for budget efficiency.
+ *
+ * v3.0.0: Expanded from 2 to 4 batches to cover all 89 exchanges
+ * (83 unique coordinates after dedup) within 1,000 calls/day free tier.
  */
 export interface WeatherBatches {
-  /** Batch A: Priority cities (includes all selected exchanges) */
+  /** Batch A: Priority cities (includes all 16 selected exchanges) */
   readonly batchA: readonly CityInfo[];
-  /** Batch B: Remaining cities */
+  /** Batch B: Remaining cities (group 1) */
   readonly batchB: readonly CityInfo[];
+  /** Batch C: Remaining cities (group 2) */
+  readonly batchC: readonly CityInfo[];
+  /** Batch D: Remaining cities (group 3) */
+  readonly batchD: readonly CityInfo[];
 }
 
 /**
- * Batch identifier for alternating hourly fetches.
+ * Batch identifier for rotating hourly fetches.
+ *
+ * v3.0.0: Expanded from 2 (A/B) to 4 (A/B/C/D).
+ * Cycle: hour % 4 → 0=A, 1=B, 2=C, 3=D.
+ * Each batch refreshes every 4 hours — acceptable for weather.
  */
-export type BatchId = 'A' | 'B';
+export type BatchId = 'A' | 'B' | 'C' | 'D';
+
+/**
+ * All batch IDs in order. Used for iteration and splitting.
+ */
+export const ALL_BATCH_IDS: readonly BatchId[] = ['A', 'B', 'C', 'D'] as const;
+
+/**
+ * Coordinate group for deduplication.
+ * Multiple exchanges at identical lat/lon share a single API call.
+ *
+ * v3.0.0: New — saves 6 API calls per cycle (Mumbai ×4→1, Moscow ×2→1,
+ * Zurich ×2→1, Frankfurt ×2→1).
+ */
+export interface CoordGroup {
+  /** The city we actually call the API for */
+  representative: CityInfo;
+  /** ALL exchange IDs at this coordinate (including representative) */
+  allIds: string[];
+}
 
 // =============================================================================
 // OPENWEATHERMAP API TYPES (RAW RESPONSE)
@@ -184,6 +223,8 @@ export interface WeatherData {
 
 /**
  * Weather-specific response metadata.
+ *
+ * v3.0.0: Added batchCRefreshedAt, batchDRefreshedAt.
  */
 export interface WeatherResponseMeta {
   /** Data freshness mode */
@@ -200,6 +241,10 @@ export interface WeatherResponseMeta {
   readonly batchARefreshedAt?: string;
   /** When Batch B was last refreshed */
   readonly batchBRefreshedAt?: string;
+  /** When Batch C was last refreshed */
+  readonly batchCRefreshedAt?: string;
+  /** When Batch D was last refreshed */
+  readonly batchDRefreshedAt?: string;
   /** Budget state */
   readonly budget: {
     readonly state: 'ok' | 'warning' | 'blocked';
@@ -248,7 +293,7 @@ export function isValidLongitude(lon: number): boolean {
 export function isOWMResponse(data: unknown): data is OWMCurrentWeatherResponse {
   if (!data || typeof data !== 'object') return false;
   const obj = data as Record<string, unknown>;
-  
+
   return (
     Array.isArray(obj['weather']) &&
     obj['weather'].length > 0 &&

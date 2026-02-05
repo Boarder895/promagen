@@ -71,6 +71,24 @@
       "prevClose": 0.6198
     }
   },
+   {
+    "id": "usd-aud",
+    "base": "USD",
+    "quote": "AUD",
+    "label": "USD/AUD",
+    "baseCountryCode": "US",
+    "quoteCountryCode": "AU",
+    "countryLabel": "United States/Australia",
+    "precision": 4,
+    "category": "major",
+    "rank": 4,
+    "group": "catalog",
+    "homeLongitude": null,
+    "demo": {
+      "value": 0.6215,
+      "prevClose": 0.6198
+    }
+  },
   {
     "id": "nzd-usd",
     "base": "NZD",

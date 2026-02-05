@@ -2,13 +2,12 @@
 //
 // Typed helper layer over src/data/commodities SSOT.
 //
-// Option A (selected.json list):
-// - commodities.catalog.json defines the universe (metadata).
-// - commodities.selected.json defines the free default ordered list.
-// - commodities.paid.selected.json defines the paid default ordered list (optional, used for internal helpers).
+// The commodities movers grid uses ALL active commodities from the catalog.
+// The grid dynamically sorts them to display top 4 winners and top 4 losers.
+//
+// Authority: Compacted conversation 2026-02-03 (commodities movers grid)
 
 import commoditiesJson from '@/data/commodities/commodities.catalog.json';
-import freeSelectedJson from '@/data/commodities/commodities.selected.json';
 import paidSelectedJson from '@/data/commodities/commodities.paid.selected.json';
 import type {
   Commodity,
@@ -66,11 +65,11 @@ export function getActiveCommodities(): Commodity[] {
 /**
  * Default free-tier commodities.
  *
- * SSOT rule: order MUST match commodities.selected.json.
+ * Returns ALL active commodities for the movers grid.
+ * The grid dynamically sorts these to find top winners/losers.
  */
 export function getDefaultFreeCommodities(): Commodity[] {
-  const ids = (freeSelectedJson as SelectedList).ids;
-  return resolveSelected(ids, 'commodities.selected.json');
+  return getActiveCommodities();
 }
 
 /**

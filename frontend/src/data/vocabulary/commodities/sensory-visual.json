@@ -1,0 +1,173 @@
+{
+  "metadata": {
+    "phase": "6.1",
+    "name": "Visual Sensory",
+    "description": "Colors, textures, and visual appearances for commodity imagery",
+    "phraseCount": 108,
+    "crossPopulation": ["Atmosphere", "Environment", "Lighting"]
+  },
+  "colors": {
+    "metallic": [
+      "molten gold streaming",
+      "oxidized copper patina",
+      "brushed silver gleam",
+      "platinum frost shimmer",
+      "tarnished bronze warmth",
+      "iron rust bleeding",
+      "aluminum bright flash",
+      "nickel cool gray",
+      "zinc dull matte",
+      "palladium mirror shine"
+    ],
+    "organic_warm": [
+      "amber honey glow",
+      "caramel sugar crystalline",
+      "cinnamon bark reddish",
+      "coffee bean mahogany",
+      "cocoa powder dusted",
+      "wheat field golden",
+      "maple syrup translucent",
+      "tobacco leaf umber",
+      "leather hide tan",
+      "cork natural speckled"
+    ],
+    "organic_cool": [
+      "olive oil jade green",
+      "cotton boll cream white",
+      "rice grain pearl",
+      "sugar crystal transparent",
+      "salt flake opalescent",
+      "mint leaf verdant",
+      "tea leaf emerald dried",
+      "hemp fiber sage",
+      "bamboo shoot pale green",
+      "seaweed deep marine"
+    ],
+    "earth_tones": [
+      "crude oil obsidian black",
+      "coal anthracite deep",
+      "iron ore russet brown",
+      "clay terracotta orange",
+      "sand dune beige",
+      "granite flecked gray",
+      "limestone chalk white",
+      "slate blue-gray layered",
+      "basite volcanic dark",
+      "laterite red soil"
+    ]
+  },
+  "textures": {
+    "smooth": [
+      "polished ingot surface",
+      "liquid mercury pooling",
+      "refined oil slick",
+      "processed grain flour",
+      "crystallized sugar facets",
+      "rolled metal sheet",
+      "milled surface uniform",
+      "cast bar gleaming",
+      "pressed pellet compact",
+      "tumbled gemstone rounded"
+    ],
+    "rough": [
+      "raw ore jagged",
+      "unprocessed bark ridged",
+      "natural fiber coarse",
+      "dried bean wrinkled",
+      "weathered sack burlap",
+      "corroded pipe pitted",
+      "uncut crystal angular",
+      "husked grain chaffy",
+      "sun-cracked earth mosaic",
+      "volcanic rock porous"
+    ],
+    "granular": [
+      "sugar sand fine",
+      "coffee ground particulate",
+      "grain dust suspended",
+      "metal shavings curled",
+      "salt crystal scattered",
+      "cocoa powder sifted",
+      "flour cloud billowing",
+      "sawdust soft pile",
+      "spice powder fragmented",
+      "mineral grit coarse"
+    ],
+    "fibrous": [
+      "cotton strand pulled",
+      "wool fiber crimped",
+      "silk thread lustrous",
+      "hemp rope braided",
+      "jute twine rough",
+      "sisal cord stiff",
+      "flax linen woven",
+      "bamboo split striped",
+      "sugarcane bagasse crushed",
+      "palm frond layered"
+    ]
+  },
+  "appearances": {
+    "commodity_states": [
+      "raw unprocessed bulk",
+      "refined bar stacked",
+      "bagged and palletized",
+      "containerized shipping ready",
+      "loose pile heaped",
+      "bundled tight wrapped",
+      "drummed liquid sealed",
+      "crated wooden slats",
+      "silo stored towering",
+      "warehouse floor scattered"
+    ],
+    "light_interaction": [
+      "catching warehouse light",
+      "shadow depth pooling",
+      "dust motes dancing",
+      "lens flare gleaming",
+      "backlit silhouette stark",
+      "reflected surface doubled",
+      "filtered through grain dust",
+      "harsh industrial spotlight",
+      "natural window spill",
+      "emergency lighting amber"
+    ],
+    "movement_visual": [
+      "conveyor belt flowing",
+      "crane load swinging",
+      "forklift stack rising",
+      "chute pour cascading",
+      "auger spiral turning",
+      "hopper feed falling",
+      "truck bed dumping",
+      "ship hold filling",
+      "elevator grain rising",
+      "pipeline liquid pulsing"
+    ],
+    "scale_perspective": [
+      "macro crystal detail",
+      "aerial stockpile view",
+      "close-up texture shot",
+      "wide warehouse expanse",
+      "human scale comparison",
+      "industrial magnitude vast",
+      "intimate handful close",
+      "horizon line distant",
+      "stacked to ceiling",
+      "sprawling yard endless"
+    ]
+  },
+  "crossPopulationTags": {
+    "colors.metallic": ["Lighting", "Atmosphere"],
+    "colors.organic_warm": ["Atmosphere", "Environment"],
+    "colors.organic_cool": ["Environment", "Atmosphere"],
+    "colors.earth_tones": ["Environment", "Atmosphere"],
+    "textures.smooth": ["Subject", "Environment"],
+    "textures.rough": ["Environment", "Atmosphere"],
+    "textures.granular": ["Atmosphere", "Environment"],
+    "textures.fibrous": ["Subject", "Environment"],
+    "appearances.commodity_states": ["Environment", "Subject"],
+    "appearances.light_interaction": ["Lighting", "Atmosphere"],
+    "appearances.movement_visual": ["Action", "Environment"],
+    "appearances.scale_perspective": ["Environment", "Atmosphere"]
+  }
+}

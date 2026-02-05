@@ -1,0 +1,269 @@
+{
+  "metadata": {
+    "phase": "10a",
+    "name": "Shared Vocab Expansion",
+    "description": "Universal vocabulary applicable across all commodity types and contexts",
+    "phraseCount": 200,
+    "crossPopulation": ["Subject", "Environment", "Atmosphere", "Lighting", "Action"]
+  },
+  "universal_actions": {
+    "movement": [
+      "lifting straining effort",
+      "carrying burden heavy",
+      "pushing resistance forward",
+      "pulling force applied",
+      "dragging weight reluctant",
+      "rolling momentum building",
+      "sliding friction smooth",
+      "dropping release falling",
+      "throwing arc trajectory",
+      "catching secure grasp"
+    ],
+    "transformation": [
+      "breaking apart shattering",
+      "combining merging unified",
+      "separating dividing distinct",
+      "mixing blending uniform",
+      "crushing compression force",
+      "grinding reduction powder",
+      "melting phase change",
+      "solidifying forming solid",
+      "evaporating rising vapor",
+      "condensing collecting liquid"
+    ],
+    "inspection": [
+      "examining closely studying",
+      "measuring precise reading",
+      "testing quality checking",
+      "sampling representative portion",
+      "weighing balance determining",
+      "counting inventory tracking",
+      "sorting categorizing separating",
+      "grading quality assigning",
+      "labeling identification marking",
+      "documenting record creating"
+    ],
+    "communication": [
+      "signaling gesture indicating",
+      "shouting voice carrying",
+      "pointing direction showing",
+      "nodding agreement silent",
+      "waving attention getting",
+      "writing notation recording",
+      "calling radio transmitting",
+      "reporting status updating",
+      "instructing teaching guiding",
+      "confirming verification completing"
+    ]
+  },
+  "universal_states": {
+    "quantity": [
+      "abundant overflow excess",
+      "scarce shortage deficit",
+      "sufficient adequate enough",
+      "depleted exhausted empty",
+      "accumulating growing stockpile",
+      "diminishing reducing shrinking",
+      "balanced equilibrium stable",
+      "surplus extra remaining",
+      "deficit shortfall gap",
+      "rationed controlled limited"
+    ],
+    "quality": [
+      "pristine untouched perfect",
+      "degraded deteriorated worn",
+      "contaminated impure tainted",
+      "refined purified clean",
+      "raw unprocessed natural",
+      "processed transformed finished",
+      "damaged compromised defective",
+      "certified verified approved",
+      "rejected failed standards",
+      "premium highest grade"
+    ],
+    "time": [
+      "fresh recently produced",
+      "aged matured developed",
+      "expired past prime",
+      "seasonal limited window",
+      "perpetual continuous ongoing",
+      "intermittent sporadic irregular",
+      "delayed behind schedule",
+      "expedited rushed urgent",
+      "scheduled planned timed",
+      "spontaneous unplanned sudden"
+    ],
+    "condition": [
+      "stable unchanged steady",
+      "volatile fluctuating unstable",
+      "improving getting better",
+      "deteriorating getting worse",
+      "critical urgent serious",
+      "normal expected standard",
+      "exceptional unusual rare",
+      "transitional changing shifting",
+      "terminal final ending",
+      "nascent beginning emerging"
+    ]
+  },
+  "universal_environments": {
+    "scale": [
+      "massive overwhelming large",
+      "intimate small focused",
+      "sprawling expansive spread",
+      "compact dense concentrated",
+      "towering vertical impressive",
+      "vast horizontal endless",
+      "cramped tight restricted",
+      "open spacious airy",
+      "cluttered filled busy",
+      "sparse minimal empty"
+    ],
+    "condition": [
+      "pristine clean maintained",
+      "weathered worn aged",
+      "industrial functional utilitarian",
+      "abandoned neglected forgotten",
+      "active operating busy",
+      "dormant inactive waiting",
+      "under construction building",
+      "renovated restored updated",
+      "temporary makeshift improvised",
+      "permanent established fixed"
+    ],
+    "access": [
+      "restricted limited entry",
+      "public open accessible",
+      "secured protected guarded",
+      "hazardous dangerous warning",
+      "controlled permitted only",
+      "congested crowded busy",
+      "isolated remote distant",
+      "connected linked networked",
+      "bottleneck constrained narrow",
+      "hub central convergence"
+    ]
+  },
+  "universal_atmospheres": {
+    "tension": [
+      "anticipation building waiting",
+      "uncertainty doubt questioning",
+      "anxiety worry concern",
+      "relief release relaxing",
+      "urgency pressure immediate",
+      "calm peace tranquil",
+      "chaos disorder confusion",
+      "order structure organized",
+      "suspense unknown pending",
+      "resolution conclusion ending"
+    ],
+    "energy": [
+      "frenetic fast chaotic",
+      "sluggish slow lethargic",
+      "steady consistent rhythmic",
+      "explosive sudden intense",
+      "building momentum growing",
+      "waning declining fading",
+      "pulsing rhythmic beating",
+      "static still unchanged",
+      "dynamic moving changing",
+      "dormant quiet sleeping"
+    ],
+    "mood": [
+      "optimistic hopeful positive",
+      "pessimistic gloomy negative",
+      "neutral balanced objective",
+      "tense stressed tight",
+      "relaxed easy comfortable",
+      "focused concentrated intent",
+      "distracted scattered unfocused",
+      "determined resolute committed",
+      "defeated discouraged beaten",
+      "triumphant victorious celebrating"
+    ]
+  },
+  "universal_lighting": {
+    "quality": [
+      "harsh bright intense",
+      "soft diffused gentle",
+      "dramatic contrast stark",
+      "flat even uniform",
+      "dappled filtered spotted",
+      "glaring overwhelming bright",
+      "dim low subdued",
+      "flickering unstable varying",
+      "steady constant stable",
+      "pulsing rhythmic changing"
+    ],
+    "direction": [
+      "overhead downward casting",
+      "side angled modeling",
+      "backlit silhouette creating",
+      "front flat illuminating",
+      "rim edge highlighting",
+      "under upward dramatic",
+      "ambient surrounding general",
+      "spot focused concentrated",
+      "bounce reflected indirect",
+      "fill shadow softening"
+    ],
+    "color_temperature": [
+      "warm golden orange",
+      "cool blue white",
+      "neutral balanced daylight",
+      "mixed multiple sources",
+      "tinted colored cast",
+      "natural sun sky",
+      "artificial electric lamp",
+      "fire flame dancing",
+      "neon vibrant saturated",
+      "twilight purple blue"
+    ]
+  },
+  "universal_subjects": {
+    "body_language": [
+      "stance wide stable",
+      "posture bent working",
+      "gesture expressive communicating",
+      "expression focused concentrated",
+      "movement purposeful directed",
+      "stillness pause waiting",
+      "tension muscles straining",
+      "relaxation ease comfortable",
+      "fatigue tired worn",
+      "alertness aware ready"
+    ],
+    "interaction": [
+      "collaboration teamwork together",
+      "isolation alone separate",
+      "supervision watching overseeing",
+      "assistance helping supporting",
+      "conflict disagreement tension",
+      "negotiation discussing terms",
+      "instruction teaching showing",
+      "observation watching learning",
+      "competition rivalry comparing",
+      "cooperation mutual benefit"
+    ],
+    "attire": [
+      "protective gear safety",
+      "uniform standard issue",
+      "casual everyday normal",
+      "formal professional dressed",
+      "weathered worn used",
+      "clean fresh maintained",
+      "specialized task specific",
+      "layered climate adapted",
+      "branded company identified",
+      "anonymous unmarked plain"
+    ]
+  },
+  "crossPopulationTags": {
+    "universal_actions": ["Action", "Subject"],
+    "universal_states": ["Atmosphere", "Environment"],
+    "universal_environments": ["Environment", "Atmosphere"],
+    "universal_atmospheres": ["Atmosphere", "Lighting"],
+    "universal_lighting": ["Lighting", "Atmosphere"],
+    "universal_subjects": ["Subject", "Action"]
+  }
+}

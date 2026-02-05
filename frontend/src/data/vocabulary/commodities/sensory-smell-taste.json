@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "phase": "6.2",
+    "name": "Smell & Taste Sensory",
+    "description": "Aromas and flavor profiles for commodity imagery and atmosphere",
+    "phraseCount": 108,
+    "crossPopulation": ["Atmosphere", "Environment"]
+  },
+  "aromas": {
+    "metallic_industrial": [
+      "hot metal tang",
+      "welding smoke acrid",
+      "machine oil thick",
+      "diesel exhaust heavy",
+      "rust iron blood",
+      "smelter sulfur sharp",
+      "foundry char bitter",
+      "coolant chemical",
+      "hydraulic fluid pungent",
+      "burnt rubber industrial"
+    ],
+    "agricultural_fresh": [
+      "fresh cut hay sweet",
+      "rain on dry grain petrichor",
+      "green wheat fields",
+      "cotton bloom subtle",
+      "rice paddy earthy",
+      "corn silk delicate",
+      "soybean field vegetal",
+      "barley malt promise",
+      "oat straw golden",
+      "sugarcane crushed sweet"
+    ],
+    "roasted_processed": [
+      "coffee roasting deep",
+      "cocoa processing rich",
+      "roasted peanuts warm",
+      "toasted sesame nutty",
+      "caramelizing sugar burnt",
+      "malted barley brewery",
+      "tobacco curing barn",
+      "roasted cashew buttery",
+      "toasted coconut tropical",
+      "charred wood smoky"
+    ],
+    "spice_exotic": [
+      "cinnamon bark warm",
+      "vanilla bean intoxicating",
+      "pepper sharp bite",
+      "clove sweet heat",
+      "cardamom complex",
+      "ginger root zingy",
+      "turmeric earthy bright",
+      "nutmeg mysterious",
+      "saffron honeyed hay",
+      "cumin dusty warm"
+    ],
+    "marine_petroleum": [
+      "crude oil heavy sweet",
+      "refined gasoline sharp",
+      "tanker hold briny oil",
+      "offshore rig salt spray",
+      "bunker fuel thick",
+      "natural gas mercaptan",
+      "asphalt hot tar",
+      "lubricant slick",
+      "kerosene lamp",
+      "diesel dock persistent"
+    ]
+  },
+  "flavors": {
+    "sweet_profiles": [
+      "raw sugar crystalline",
+      "molasses deep dark",
+      "honey floral complex",
+      "maple syrup amber",
+      "agave nectar clean",
+      "palm sugar caramel",
+      "stevia leaf bitter-sweet",
+      "corn syrup neutral",
+      "date sugar rich",
+      "coconut sugar toasted"
+    ],
+    "bitter_profiles": [
+      "dark chocolate intense",
+      "raw cocoa astringent",
+      "black coffee bold",
+      "green tea tannin",
+      "hops flower bitter",
+      "olive oil peppery",
+      "grapefruit pith sharp",
+      "burnt grain char",
+      "almond skin edge",
+      "chicory root deep"
+    ],
+    "umami_savory": [
+      "soy sauce depth",
+      "fermented bean paste",
+      "aged cheese complex",
+      "miso earthy salt",
+      "fish sauce pungent",
+      "mushroom dried intense",
+      "tomato concentrated",
+      "seaweed mineral",
+      "cured meat aged",
+      "yeast extract rich"
+    ],
+    "acid_fermented": [
+      "citrus zest bright",
+      "vinegar sharp clean",
+      "fermented grain sour",
+      "wine barrel aged",
+      "pickled brine tang",
+      "sourdough starter active",
+      "kombucha effervescent",
+      "tamarind sour-sweet",
+      "yogurt culture tang",
+      "kimchi fermented heat"
+    ],
+    "texture_mouthfeel": [
+      "oil coating smooth",
+      "grain grit subtle",
+      "sugar dissolving",
+      "salt crystal burst",
+      "spice heat building",
+      "tannin dry mouth",
+      "fat rich coating",
+      "alcohol warmth spreading",
+      "carbonation tingle",
+      "starch thick body"
+    ]
+  },
+  "crossPopulationTags": {
+    "aromas.metallic_industrial": ["Atmosphere", "Environment"],
+    "aromas.agricultural_fresh": ["Atmosphere", "Environment"],
+    "aromas.roasted_processed": ["Atmosphere", "Environment"],
+    "aromas.spice_exotic": ["Atmosphere", "Subject"],
+    "aromas.marine_petroleum": ["Atmosphere", "Environment"],
+    "flavors.sweet_profiles": ["Atmosphere", "Subject"],
+    "flavors.bitter_profiles": ["Atmosphere", "Subject"],
+    "flavors.umami_savory": ["Atmosphere", "Subject"],
+    "flavors.acid_fermented": ["Atmosphere", "Environment"],
+    "flavors.texture_mouthfeel": ["Atmosphere", "Subject"]
+  }
+}

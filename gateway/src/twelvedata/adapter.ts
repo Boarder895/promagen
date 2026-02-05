@@ -10,7 +10,8 @@
  * - Structured error handling
  * - No sensitive data in logs
  *
- * Used by: FX feed, Crypto feed
+ * v3.0: Crypto Removed
+ * - FX-only adapter (crypto parsing functions removed)
  *
  * @module twelvedata/adapter
  */
@@ -60,7 +61,7 @@ export function hasTwelveDataApiKey(): boolean {
 /**
  * Fetch price data from TwelveData /price endpoint.
  *
- * @param symbols - Array of symbols (e.g., ['EUR/USD', 'BTC/USD'])
+ * @param symbols - Array of symbols (e.g., ['EUR/USD', 'GBP/USD'])
  * @returns Raw API response
  * @throws Error if request fails or times out
  *
@@ -265,86 +266,6 @@ export function parseFxPriceResponse(
   return results;
 }
 
-/**
- * Parse TwelveData price response for crypto assets.
- *
- * @param data - Raw API response
- * @param symbolToIdMap - Map from API symbol to internal info
- * @returns Parsed price entries
- */
-export function parseCryptoPriceResponse(
-  data: unknown,
-  symbolToIdMap: Map<string, { id: string; symbol: string; name: string }>,
-): Array<{
-  id: string;
-  symbol: string;
-  name: string;
-  price: number;
-  quoteCurrency: string;
-}> {
-  const results: Array<{
-    id: string;
-    symbol: string;
-    name: string;
-    price: number;
-    quoteCurrency: string;
-  }> = [];
-
-  if (!data || typeof data !== 'object') {
-    return results;
-  }
-
-  const obj = data as Record<string, unknown>;
-
-  // Single symbol response
-  if ('price' in obj && typeof obj['price'] === 'string') {
-    const firstEntry = symbolToIdMap.entries().next().value;
-    if (firstEntry) {
-      const [, info] = firstEntry as [string, { id: string; symbol: string; name: string }];
-      const price = parseFloat(obj['price'] as string);
-      if (!Number.isNaN(price)) {
-        results.push({
-          id: info.id,
-          symbol: info.symbol,
-          name: info.name,
-          price,
-          quoteCurrency: 'USD',
-        });
-      }
-    }
-    return results;
-  }
-
-  // Multi-symbol response
-  for (const [apiSymbol, value] of Object.entries(obj)) {
-    if (!value || typeof value !== 'object') continue;
-
-    const priceData = value as Record<string, unknown>;
-
-    // Skip error responses
-    if ('code' in priceData || 'status' in priceData) continue;
-
-    const priceStr = priceData['price'];
-    if (typeof priceStr !== 'string') continue;
-
-    const price = parseFloat(priceStr);
-    if (Number.isNaN(price)) continue;
-
-    const info = symbolToIdMap.get(apiSymbol);
-    if (info) {
-      results.push({
-        id: info.id,
-        symbol: info.symbol,
-        name: info.name,
-        price,
-        quoteCurrency: 'USD',
-      });
-    }
-  }
-
-  return results;
-}
-
 // =============================================================================
 // SYMBOL BUILDERS
 // =============================================================================
@@ -359,16 +280,4 @@ export function parseCryptoPriceResponse(
  */
 export function buildFxSymbol(base: string, quote: string): string {
   return `${base.toUpperCase()}/${quote.toUpperCase()}`;
-}
-
-/**
- * Build TwelveData crypto symbol (always quoted in USD).
- *
- * @example
- * ```typescript
- * buildCryptoSymbol('BTC'); // 'BTC/USD'
- * ```
- */
-export function buildCryptoSymbol(symbol: string): string {
-  return `${symbol.toUpperCase()}/USD`;
 }

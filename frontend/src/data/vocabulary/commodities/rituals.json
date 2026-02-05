@@ -1,0 +1,218 @@
+{
+  "metadata": {
+    "phase": "9b",
+    "name": "Rituals",
+    "description": "Daily routines, ceremonies, and traditions in commodity production and trading",
+    "phraseCount": 224,
+    "crossPopulation": ["Subject", "Atmosphere", "Action"]
+  },
+  "daily_rituals": {
+    "market_opening": [
+      "bell ringing session start",
+      "traders gathering pit edge",
+      "screens flickering alive",
+      "coffee cups lined ready",
+      "newspapers scanned headlines",
+      "overnight news digesting",
+      "position checking first thing",
+      "morning meeting strategy",
+      "risk limits reviewing",
+      "orders queued waiting"
+    ],
+    "market_closing": [
+      "final bell echoing",
+      "positions squaring frantic",
+      "settlement price marking",
+      "P&L calculating reviewing",
+      "trade blotter printing",
+      "compliance check running",
+      "systems backing up",
+      "lights dimming floor",
+      "cleaning crew arriving",
+      "security rounds beginning"
+    ],
+    "shift_changes": [
+      "handover briefing overlap",
+      "logbook entries reviewing",
+      "equipment status checking",
+      "safety briefing starting",
+      "PPE donning ritual",
+      "time clock punching",
+      "coffee thermos filling",
+      "lunch pail grabbing",
+      "colleague greeting familiar",
+      "night relief arriving"
+    ],
+    "quality_checks": [
+      "sample drawing routine",
+      "moisture meter testing",
+      "grade inspection visual",
+      "weight verification scale",
+      "purity analysis lab",
+      "temperature logging regular",
+      "pressure gauge reading",
+      "inventory count cycle",
+      "documentation completing",
+      "approval stamp marking"
+    ]
+  },
+  "seasonal_rituals": {
+    "planting_season": [
+      "soil blessing ceremony",
+      "first seed sowing ritual",
+      "weather prayers offered",
+      "equipment blessing traditional",
+      "community planting day",
+      "fertility rites ancient",
+      "rain dance performed",
+      "almanac consulting timing",
+      "moon phase observing",
+      "ancestors honoring fields"
+    ],
+    "harvest_season": [
+      "first harvest celebration",
+      "thanksgiving feast gathered",
+      "harvest festival community",
+      "grain offering temple",
+      "blessing of fleet fishing",
+      "vintage celebration wine",
+      "pressing ceremony olive",
+      "shearing festival wool",
+      "rice harvest dance",
+      "corn dolly making"
+    ],
+    "trading_calendar": [
+      "contract rollover ritual",
+      "expiration day tension",
+      "triple witching chaos",
+      "year-end book closing",
+      "bonus season anticipation",
+      "budget planning annual",
+      "inventory year-end count",
+      "audit preparation ritual",
+      "tax filing deadline",
+      "new year trading start"
+    ]
+  },
+  "professional_rituals": {
+    "trading_floor": [
+      "jacket donning badge clipping",
+      "hand signal practice",
+      "voice warm-up shouting",
+      "lucky charm touching",
+      "pre-market routine sacred",
+      "screen arrangement precise",
+      "keyboard cleaning ritual",
+      "phone headset adjusting",
+      "water bottle positioning",
+      "stance taking ready"
+    ],
+    "warehouse": [
+      "morning walkthrough inspection",
+      "forklift pre-check safety",
+      "dock door opening sequence",
+      "receiving area preparing",
+      "pallet jack charging",
+      "picking list reviewing",
+      "safety meeting huddle",
+      "stretch break scheduled",
+      "end-of-day securing",
+      "lights-out final check"
+    ],
+    "production": [
+      "machine startup sequence",
+      "calibration check daily",
+      "raw material inspection",
+      "line clearance procedure",
+      "first article inspection",
+      "quality hold review",
+      "maintenance round scheduled",
+      "shift production meeting",
+      "efficiency tracking posting",
+      "shutdown procedure following"
+    ],
+    "shipping": [
+      "manifest preparation detailed",
+      "container sealing witnessed",
+      "bill of lading signing",
+      "customs documentation filing",
+      "insurance certificate attaching",
+      "loading sequence coordinating",
+      "draft survey conducting",
+      "cargo securing checking",
+      "vessel clearance obtaining",
+      "departure confirmation sending"
+    ]
+  },
+  "cultural_rituals": {
+    "commodity_specific": [
+      "coffee cupping ceremony",
+      "tea ceremony preparation",
+      "wine tasting ritual",
+      "gold weighing ceremony",
+      "silk inspection traditional",
+      "spice blending secret",
+      "tobacco auction chant",
+      "fish auction bell",
+      "cattle auction ring",
+      "diamond sorting ritual"
+    ],
+    "regional_traditions": [
+      "sake barrel breaking celebration",
+      "olive oil blessing church",
+      "rice wine offering temple",
+      "cattle branding ceremony",
+      "whale hunt blessing",
+      "fishing boat christening",
+      "mine opening ceremony",
+      "well spudding celebration",
+      "pipeline welding final joint",
+      "ship launching champagne"
+    ],
+    "superstitions": [
+      "lucky trading jacket wearing",
+      "never count profits early",
+      "first sale discount luck",
+      "spilling salt throwing over",
+      "whistling forbidden ship",
+      "green color avoided trading",
+      "Friday trading cautious",
+      "full moon planting",
+      "bird omen observing",
+      "dream interpretation trading"
+    ]
+  },
+  "ceremonial_moments": {
+    "milestones": [
+      "first cargo loading celebrated",
+      "millionth ton shipped marked",
+      "anniversary celebration company",
+      "retirement ceremony honored",
+      "promotion announcement gathering",
+      "safety record recognition",
+      "quality award presentation",
+      "customer milestone thanking",
+      "partnership signing ceremony",
+      "merger completion bell"
+    ],
+    "memorials": [
+      "fallen worker remembered",
+      "disaster anniversary observed",
+      "industry pioneer honored",
+      "historical site preserved",
+      "traditional method documented",
+      "oral history recorded",
+      "museum artifact donated",
+      "scholarship established memory",
+      "memorial plaque dedicated",
+      "moment of silence observed"
+    ]
+  },
+  "crossPopulationTags": {
+    "daily_rituals": ["Action", "Subject", "Atmosphere"],
+    "seasonal_rituals": ["Atmosphere", "Environment"],
+    "professional_rituals": ["Action", "Subject"],
+    "cultural_rituals": ["Subject", "Atmosphere"],
+    "ceremonial_moments": ["Atmosphere", "Subject"]
+  }
+}

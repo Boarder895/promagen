@@ -1,0 +1,147 @@
+{
+  "metadata": {
+    "phase": "6.4",
+    "name": "Human Stories - Workers & Laborers",
+    "description": "Worker archetypes, labor conditions, and human elements in commodity production",
+    "phraseCount": 110,
+    "crossPopulation": ["Subject", "Environment", "Atmosphere"]
+  },
+  "worker_archetypes": {
+    "agricultural": [
+      "weathered farmer hands cracked",
+      "migrant picker bent working",
+      "plantation overseer watching",
+      "harvest crew dusty tired",
+      "irrigation worker sun-dark",
+      "grain elevator operator",
+      "combine driver cab enclosed",
+      "field hand dawn start",
+      "crop inspector clipboard",
+      "seed sorter patient eyes"
+    ],
+    "industrial": [
+      "foundry worker heat-resistant",
+      "crane operator elevated",
+      "forklift driver focused",
+      "warehouse loader muscled",
+      "quality inspector gloved",
+      "maintenance mechanic greased",
+      "shift supervisor clipboard",
+      "safety officer hard hat",
+      "conveyor attendant watching",
+      "packer assembly line"
+    ],
+    "maritime": [
+      "longshoreman weathered face",
+      "ship captain bridge standing",
+      "deck hand rope calloused",
+      "harbor pilot navigating",
+      "cargo inspector manifest",
+      "tanker crew oil-stained",
+      "dock worker orange vest",
+      "customs officer scrutinizing",
+      "crane gantry operator",
+      "tugboat captain coffee cup"
+    ],
+    "extraction": [
+      "miner headlamp darkness",
+      "driller oil field roughneck",
+      "geologist sample bag",
+      "refinery operator control room",
+      "pipeline welder sparks",
+      "quarry worker dust mask",
+      "logger chainsaw ready",
+      "fisherman net hauling",
+      "diver underwater inspection",
+      "surveyor theodolite precise"
+    ]
+  },
+  "labor_conditions": {
+    "physical_states": [
+      "sweat-soaked shirt clinging",
+      "dust-covered face lined",
+      "calloused hands grip strong",
+      "tired eyes end shift",
+      "sunburned neck exposed",
+      "bent back years work",
+      "scarred arms industrial",
+      "muscled forearms lifting",
+      "squinting bright light",
+      "breathing heavy exertion"
+    ],
+    "work_rhythms": [
+      "pre-dawn shift starting",
+      "lunch break brief respite",
+      "overtime hours extending",
+      "night shift solitude",
+      "seasonal rush intensity",
+      "off-season idle waiting",
+      "double shift exhaustion",
+      "weekend crew skeleton",
+      "holiday work essential",
+      "retirement day final"
+    ],
+    "safety_gear": [
+      "hard hat mandatory",
+      "steel-toe boots scuffed",
+      "high-vis vest orange",
+      "safety glasses fogged",
+      "ear protection muffled",
+      "respirator mask fitted",
+      "work gloves worn thin",
+      "fall harness secured",
+      "fire-resistant coveralls",
+      "chemical suit sealed"
+    ]
+  },
+  "human_moments": {
+    "solidarity": [
+      "workers sharing lunch",
+      "union meeting determined",
+      "strike line standing",
+      "old hand teaching young",
+      "crew joke laughing",
+      "covering sick colleague",
+      "celebrating milestone together",
+      "memorial fallen worker",
+      "petition signing collective",
+      "shift change handshake"
+    ],
+    "personal": [
+      "family photo locker",
+      "phone call home brief",
+      "letter from child",
+      "wedding ring work-worn",
+      "lunch packed wife made",
+      "payday envelope thick",
+      "promotion news sharing",
+      "injury worry family",
+      "retirement watch given",
+      "grandchild visit proud"
+    ],
+    "struggle": [
+      "wages barely enough",
+      "dangerous conditions daily",
+      "far from family months",
+      "body wearing down",
+      "no sick days taken",
+      "accident fear constant",
+      "layoff rumors spreading",
+      "automation threat looming",
+      "health insurance gap",
+      "pension uncertainty future"
+    ]
+  },
+  "crossPopulationTags": {
+    "worker_archetypes.agricultural": ["Subject", "Environment"],
+    "worker_archetypes.industrial": ["Subject", "Environment"],
+    "worker_archetypes.maritime": ["Subject", "Environment"],
+    "worker_archetypes.extraction": ["Subject", "Environment"],
+    "labor_conditions.physical_states": ["Subject", "Atmosphere"],
+    "labor_conditions.work_rhythms": ["Atmosphere", "Environment"],
+    "labor_conditions.safety_gear": ["Subject", "Environment"],
+    "human_moments.solidarity": ["Subject", "Atmosphere"],
+    "human_moments.personal": ["Subject", "Atmosphere"],
+    "human_moments.struggle": ["Atmosphere", "Subject"]
+  }
+}

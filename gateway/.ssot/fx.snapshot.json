@@ -5,9 +5,9 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 1,
-    "ssotHash": "d9248731dc9ec4593b6aa0c23a452c7c3f9e839ef25892806a55e4f6676981fd",
-    "ssotFingerprint": "d9248731dc9e",
-    "snapshotAt": "2026-02-01T13:24:40.125Z"
+    "ssotHash": "3075580d1c3491afcc65c81751f6832693ca9835b2515dbba6d372a65fbc00ea",
+    "ssotFingerprint": "3075580d1c34",
+    "snapshotAt": "2026-02-05T09:06:28.592Z"
   },
   "catalog": [
     {
@@ -29,6 +29,11 @@
       "id": "aud-usd",
       "base": "AUD",
       "quote": "USD"
+    },
+    {
+      "id": "usd-aud",
+      "base": "USD",
+      "quote": "AUD"
     },
     {
       "id": "nzd-usd",
@@ -523,12 +528,14 @@
   ],
   "defaults": [
     "eur-usd",
-    "usd-jpy",
     "gbp-usd",
-    "usd-cny",
-    "usd-brl",
     "gbp-zar",
-    "aud-gbp",
-    "gbp-eur"
+    "usd-cad",
+    "usd-cny",
+    "usd-inr",
+    "usd-brl",
+    "usd-aud",
+    "usd-nok",
+    "usd-myr"
   ]
 }

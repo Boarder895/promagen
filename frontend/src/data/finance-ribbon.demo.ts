@@ -1,4 +1,9 @@
 // src/data/finance-ribbon.demo.ts
+// 
+// Demo data for FX and Commodities ribbons.
+// Used for preview/demo modes when live data is unavailable.
+//
+// v2.0: Crypto removed - no longer part of the ribbon
 
 export type FxRibbonItem = {
   id: string; // e.g. "EURUSD"
@@ -12,14 +17,6 @@ export type CommodityRibbonItem = {
   id: string; // e.g. "BRENT"
   label: string; // e.g. "Brent Crude"
   unit: string; // e.g. "bbl"
-  price: number;
-  changePct: number;
-};
-
-export type CryptoRibbonItem = {
-  id: string; // slug-ish id, e.g. "BTC"
-  symbol: string; // "BTC"
-  name: string; // "Bitcoin"
   price: number;
   changePct: number;
 };
@@ -120,48 +117,6 @@ export const DEMO_COMMODITIES_ROW: CommodityRibbonItem[] = [
     unit: 'oz',
     price: 22.84,
     changePct: -0.37,
-  },
-];
-
-// ───────────────────────────────────────────────────────────────────────────────
-// Demo Crypto row – free tier: 5 fixed coins
-// ───────────────────────────────────────────────────────────────────────────────
-
-export const DEMO_CRYPTO_ROW: CryptoRibbonItem[] = [
-  {
-    id: 'BTC',
-    symbol: 'BTC',
-    name: 'Bitcoin',
-    price: 36450,
-    changePct: 1.83,
-  },
-  {
-    id: 'ETH',
-    symbol: 'ETH',
-    name: 'Ethereum',
-    price: 2040,
-    changePct: 1.12,
-  },
-  {
-    id: 'SOL',
-    symbol: 'SOL',
-    name: 'Solana',
-    price: 58.4,
-    changePct: -2.47,
-  },
-  {
-    id: 'XRP',
-    symbol: 'XRP',
-    name: 'XRP',
-    price: 0.61,
-    changePct: 0.74,
-  },
-  {
-    id: 'ADA',
-    symbol: 'ADA',
-    name: 'Cardano',
-    price: 0.38,
-    changePct: -0.95,
   },
 ];
 

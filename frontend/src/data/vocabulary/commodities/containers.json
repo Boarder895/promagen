@@ -1,0 +1,230 @@
+{
+  "metadata": {
+    "phase": "9a",
+    "name": "Containers",
+    "description": "Vessels, packaging, and storage units across commodity supply chains",
+    "phraseCount": 250,
+    "crossPopulation": ["Environment", "Subject", "Action"]
+  },
+  "bulk_containers": {
+    "maritime": [
+      "cargo hold cavernous dark",
+      "tanker hull curved massive",
+      "bulk carrier hatch open",
+      "container stack colorful grid",
+      "barge flat deck loaded",
+      "hopper barge grain filled",
+      "oil tanker double hull",
+      "LNG carrier spherical tanks",
+      "chemical tanker segregated holds",
+      "ore carrier rust-streaked heavy"
+    ],
+    "rail": [
+      "hopper car grain pouring",
+      "tank car cylindrical rolling",
+      "boxcar sealed doors",
+      "gondola car open top",
+      "covered hopper weatherproof",
+      "unit train mile long",
+      "intermodal well car stacked",
+      "refrigerated car cooling humming",
+      "pressurized car gas contained",
+      "coal car bottom dump"
+    ],
+    "road": [
+      "tanker truck liquid sloshing",
+      "grain trailer pneumatic unload",
+      "flatbed truck strapped load",
+      "dump truck bed rising",
+      "refrigerated truck cold chain",
+      "container chassis hauling",
+      "bulk powder tanker sealed",
+      "livestock trailer ventilated",
+      "fuel tanker hazmat marked",
+      "oversized load escort required"
+    ],
+    "fixed_storage": [
+      "silo towering concrete grain",
+      "tank farm clustered cylinders",
+      "warehouse vast floor space",
+      "stockpile outdoor mountain",
+      "bunker underground secure",
+      "cold storage insulated thick",
+      "grain elevator vertical storage",
+      "oil terminal tank battery",
+      "ore stockyard conveyor fed",
+      "salt dome cavern storage"
+    ]
+  },
+  "industrial_containers": {
+    "processing": [
+      "reactor vessel pressurized",
+      "distillation column towering",
+      "fermentation tank bubbling",
+      "mixing vat paddle turning",
+      "holding tank intermediate",
+      "surge drum buffer capacity",
+      "crystallizer vessel controlled",
+      "centrifuge drum spinning",
+      "filter press plates stacked",
+      "evaporator chamber steam"
+    ],
+    "handling": [
+      "hopper bin funnel shaped",
+      "conveyor bucket continuous",
+      "screw conveyor auger turning",
+      "pneumatic tube flowing",
+      "elevator bucket chain rising",
+      "chute angled sliding",
+      "vibrating feeder controlled flow",
+      "rotary valve metering",
+      "weigh hopper batch measuring",
+      "surge bin overflow capacity"
+    ],
+    "specialized": [
+      "crucible molten metal glowing",
+      "ladle pouring stream bright",
+      "ingot mold cooling solidifying",
+      "torpedo car hot metal",
+      "slag pot waste collected",
+      "tundish continuous casting",
+      "coke oven battery charging",
+      "blast furnace towering heat",
+      "converter vessel tilting pour",
+      "electric arc furnace sparking"
+    ]
+  },
+  "packaging": {
+    "bags_sacks": [
+      "burlap sack coarse woven",
+      "paper bag multi-wall strong",
+      "plastic bag sealed tight",
+      "bulk bag FIBC ton capacity",
+      "valve bag powder filled",
+      "woven polypropylene durable",
+      "jute sack traditional coffee",
+      "cotton bale compressed wrapped",
+      "mesh bag produce breathable",
+      "vacuum bag sealed fresh"
+    ],
+    "boxes_crates": [
+      "wooden crate nailed shut",
+      "cardboard box corrugated stacked",
+      "plastic crate reusable nested",
+      "shipping container steel standardized",
+      "pallet box bulk packaged",
+      "produce crate ventilated",
+      "ammunition crate stenciled marked",
+      "tea chest lined traditional",
+      "wine case wooden branded",
+      "egg crate compartmented protective"
+    ],
+    "drums_barrels": [
+      "oil drum 55 gallon standard",
+      "steel barrel ribbed strong",
+      "plastic drum chemical resistant",
+      "fiber drum lightweight disposable",
+      "wine barrel oak aged",
+      "whiskey cask charred interior",
+      "beer keg stainless pressurized",
+      "chemical drum hazmat labeled",
+      "food grade drum sanitary",
+      "intermediate bulk container IBC"
+    ],
+    "specialty": [
+      "gas cylinder pressurized upright",
+      "cryogenic dewar vacuum insulated",
+      "isotank intermodal liquid",
+      "flexitank bladder container",
+      "bottle crate organized rows",
+      "jerrycan portable fuel",
+      "carboy large bottle protected",
+      "ampoule sealed sterile",
+      "vial small precise quantity",
+      "canister sealed preserved"
+    ]
+  },
+  "traditional_containers": {
+    "historical": [
+      "amphora clay two-handled",
+      "barrel cooper-made wooden",
+      "chest iron-bound locked",
+      "basket woven carried",
+      "urn ceramic decorated",
+      "gourd natural container dried",
+      "leather flask waterskin",
+      "wooden bucket rope handle",
+      "ceramic jar glazed sealed",
+      "wicker hamper lidded"
+    ],
+    "regional": [
+      "sake barrel cedar bound",
+      "olive oil terracotta jar",
+      "tea caddy tin decorated",
+      "spice box compartmented wooden",
+      "rice basket bamboo woven",
+      "fish basket reed sturdy",
+      "grain pot ceramic granary",
+      "honey jar pottery sealed",
+      "salt cellar silver precious",
+      "sugar cone wrapped paper"
+    ]
+  },
+  "container_states": {
+    "full": [
+      "brimming over capacity",
+      "packed tight no space",
+      "loaded heavy straining",
+      "filled level measured",
+      "stuffed maximum density",
+      "bulging seams stressed",
+      "topped off complete",
+      "stacked high towering",
+      "crammed full bursting",
+      "capacity reached limit"
+    ],
+    "empty": [
+      "hollow echoing sound",
+      "vacant awaiting cargo",
+      "drained residue only",
+      "cleared swept clean",
+      "void dark interior",
+      "depleted scraped bare",
+      "idle waiting purpose",
+      "unused stored stacked",
+      "returned empty backhaul",
+      "cleaned sanitized ready"
+    ],
+    "damaged": [
+      "dented impact visible",
+      "rusted corrosion spreading",
+      "leaking drip staining",
+      "cracked stress fracture",
+      "torn bag spilling",
+      "crushed weight collapsed",
+      "contaminated compromised",
+      "warped heat damaged",
+      "punctured hole visible",
+      "degraded weathered worn"
+    ],
+    "in_transit": [
+      "secured strapped tight",
+      "sealed tamper evident",
+      "labeled destination marked",
+      "tracked GPS monitored",
+      "insured value protected",
+      "manifested documented",
+      "customs cleared stamped",
+      "quarantined inspection pending",
+      "bonded duty unpaid",
+      "expedited priority handling"
+    ]
+  },
+  "crossPopulationTags": {
+    "bulk_containers": ["Environment", "Subject"],
+    "industrial_containers": ["Environment", "Action"],
+    "packaging": ["Subject", "Environment"],
+    "traditional_containers": ["Subject", "Atmosphere"],
+    "container_states": ["Atmosphere", "Subject"]
+  }
+}

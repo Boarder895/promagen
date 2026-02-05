@@ -9,7 +9,6 @@
 // - Same chip structure and CSS styling
 // - Same snap-fit font sizing algorithm
 // - Uses FxPairLabel with flags
-// - No winner arrows (winnerSide='neutral')
 // - Shows "Demo" badge instead of pause button
 //
 // Authority: docs/authority/paid_tier.md §5.10
@@ -82,7 +81,7 @@ export function DemoFinanceRibbon({ pairs }: DemoFinanceRibbonProps) {
     setMounted(true);
   }, []);
 
-  // Build chips with FxPairLabel (includes flags, no arrows)
+  // Build chips with FxPairLabel (includes flags)
   const chips: DemoChip[] = useMemo(() => {
     return pairs.map((pair) => {
       // Get country codes - use explicit if available, otherwise derive
@@ -100,9 +99,6 @@ export function DemoFinanceRibbon({ pairs }: DemoFinanceRibbonProps) {
             baseCountryCode={baseCountryCode}
             quote={pair.quote}
             quoteCountryCode={quoteCountryCode}
-            winnerSide="neutral"  // No arrows in demo mode
-            winnerOpacity={0}
-            deltaPct={null}
           />
         ),
         priceText: formatPrice(price, pair.precision),

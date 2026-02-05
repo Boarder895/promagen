@@ -1,0 +1,296 @@
+{
+  "metadata": {
+    "phase": "7b",
+    "name": "Absence States",
+    "description": "Visual and atmospheric states of commodity scarcity, depletion, and absence",
+    "phraseCount": 280,
+    "crossPopulation": ["Environment", "Atmosphere", "Subject"]
+  },
+  "empty_storage": {
+    "warehouses": [
+      "warehouse floor empty vast",
+      "shelves bare dusty",
+      "pallet spaces marked empty",
+      "echo footsteps hollow space",
+      "single light illuminating nothing",
+      "forklift idle waiting",
+      "inventory tags dangling empty",
+      "loading dock silent unused",
+      "office overlooking emptiness",
+      "security guard alone walking"
+    ],
+    "silos_tanks": [
+      "silo interior hollow dark",
+      "tank gauge showing empty",
+      "grain residue dust only",
+      "rust streaks empty walls",
+      "ladders descending into void",
+      "inspection hatch open empty",
+      "conveyor belt still silent",
+      "auger frozen unused",
+      "level indicator bottomed out",
+      "last remnants swept clean"
+    ],
+    "stockpiles": [
+      "stockpile footprint bare ground",
+      "where mountains stood flat",
+      "loader bucket scraping empty",
+      "scale house idle quiet",
+      "truck queue nonexistent",
+      "dust settling absence",
+      "fence surrounding nothing",
+      "security pointless empty",
+      "reclaimer parked unused",
+      "conveyor gallery silent"
+    ],
+    "cold_storage": [
+      "freezer shelves empty frosted",
+      "cooling units running pointless",
+      "inventory slots vacant",
+      "temperature maintained nothing",
+      "dock doors closed no delivery",
+      "forklift battery charging idle",
+      "picking list empty page",
+      "quality lab unused quiet",
+      "packaging station dormant",
+      "shipping manifest blank"
+    ]
+  },
+  "depleted_sources": {
+    "mines_quarries": [
+      "mine shaft abandoned dark",
+      "open pit exhausted deep",
+      "tailings pile monument past",
+      "processing plant silent rusting",
+      "headframe standing sentinel empty",
+      "ore cars lined up unused",
+      "crusher jaw still frozen",
+      "conveyor belt decaying",
+      "office building windows broken",
+      "ghost town miners gone"
+    ],
+    "wells_reservoirs": [
+      "oil well pump nodding dry",
+      "pressure gauge zero reading",
+      "reservoir level critical low",
+      "water table dropped deep",
+      "drilling rig moved on",
+      "pipeline pressure falling",
+      "tank farm draining last",
+      "refinery feedstock starved",
+      "injection well desperate",
+      "enhanced recovery failing"
+    ],
+    "fields_orchards": [
+      "fallow field stubble only",
+      "orchard stumps pulled trees",
+      "vineyard posts wire remaining",
+      "greenhouse glass broken empty",
+      "irrigation system dry abandoned",
+      "farm equipment auction sign",
+      "barn empty animals gone",
+      "silo standing grain-less",
+      "farmhouse abandoned windows dark",
+      "for sale sign weathered"
+    ],
+    "fishing_grounds": [
+      "harbor boats tied idle",
+      "nets hanging mending pointless",
+      "fish market stalls empty",
+      "processing plant closed gates",
+      "quota exhausted early",
+      "fishing ban sign posted",
+      "radar screen no targets",
+      "hold returning empty",
+      "crew dispersed seeking work",
+      "tradition dying generation"
+    ]
+  },
+  "supply_chain_gaps": {
+    "transportation": [
+      "trucks parked lot full",
+      "rail cars sitting idle",
+      "ships anchored waiting nothing",
+      "port cranes still quiet",
+      "pipeline gauge zero flow",
+      "tanker hold ballast only",
+      "cargo plane grounded empty",
+      "conveyor belt stopped still",
+      "logistics office scrambling",
+      "tracking screen no movement"
+    ],
+    "processing": [
+      "refinery units idle cold",
+      "mill stones stopped silent",
+      "smelter furnace cooled down",
+      "processing line halted",
+      "packaging machine dormant",
+      "quality lab waiting samples",
+      "maintenance crew busy nothing",
+      "shift workers sent home",
+      "production board zeros",
+      "capacity utilization crashed"
+    ],
+    "retail": [
+      "supermarket shelves empty gaps",
+      "rationing signs posted limits",
+      "substitute products pushing",
+      "price tags climbing daily",
+      "customer frustration visible",
+      "staff apologizing helpless",
+      "delivery truck late again",
+      "inventory system red alerts",
+      "backorder list growing",
+      "competitor poaching supply"
+    ]
+  },
+  "market_absence": {
+    "trading_floor": [
+      "pit empty traders gone",
+      "screens showing no bids",
+      "market halted circuit breaker",
+      "liquidity evaporated dry",
+      "spread markets disconnected",
+      "phones not ringing silent",
+      "order book thin empty",
+      "last trade hours ago",
+      "settlement price uncertain",
+      "clearing house nervous"
+    ],
+    "price_discovery": [
+      "no offers available any",
+      "bid wanted search desperate",
+      "reference price stale old",
+      "index calculation impossible",
+      "benchmark disconnected reality",
+      "physical premium infinite",
+      "forward curve inverted extreme",
+      "basis relationship broken",
+      "arbitrage impossible no supply",
+      "market making suspended"
+    ],
+    "counterparty": [
+      "supplier defaulted gone",
+      "buyer disappeared bankrupt",
+      "broker license revoked",
+      "exchange member suspended",
+      "clearing firm margin call",
+      "bank credit line pulled",
+      "insurance claim denied",
+      "contract force majeure",
+      "arbitration pending years",
+      "relationship severed permanent"
+    ]
+  },
+  "human_absence": {
+    "workforce": [
+      "factory floor empty machines",
+      "shift change no one coming",
+      "break room silent cold",
+      "time clock unpunched",
+      "locker room deserted",
+      "parking lot empty spaces",
+      "bus stop no workers waiting",
+      "training room chairs empty",
+      "safety meeting cancelled",
+      "union hall quiet concern"
+    ],
+    "expertise": [
+      "retired expert knowledge gone",
+      "apprentice program cancelled",
+      "tribal knowledge lost",
+      "documentation inadequate",
+      "mistakes repeating history",
+      "institutional memory fading",
+      "consultant expensive substitute",
+      "automation replacing poorly",
+      "quality suffering decline",
+      "tradition breaking chain"
+    ],
+    "community": [
+      "company town emptying out",
+      "school enrollment dropping",
+      "main street shops closing",
+      "church pews half empty",
+      "little league team short",
+      "hospital services reduced",
+      "police force stretched thin",
+      "tax base eroding away",
+      "services cut repeatedly",
+      "future uncertain young leaving"
+    ]
+  },
+  "environmental_absence": {
+    "resource_depletion": [
+      "aquifer level critical low",
+      "topsoil eroded bare rock",
+      "forest clearcut stumps only",
+      "fishery collapsed empty nets",
+      "mineral deposit exhausted",
+      "groundwater contaminated unusable",
+      "soil salinity ruined land",
+      "biodiversity lost monoculture",
+      "pollinator decline visible",
+      "ecosystem services failing"
+    ],
+    "climate_impact": [
+      "glacier retreated rock exposed",
+      "snowpack absent water crisis",
+      "permafrost thawing unstable",
+      "coral bleached white dead",
+      "species range shifted gone",
+      "growing season changed disrupted",
+      "precipitation pattern broken",
+      "extreme weather new normal",
+      "adaptation struggling failing",
+      "resilience tested broken"
+    ]
+  },
+  "visual_emptiness": {
+    "light_shadow": [
+      "empty space shadow pooling",
+      "single bulb vast darkness",
+      "sunbeam highlighting nothing",
+      "fluorescent flicker empty room",
+      "emergency light red glow",
+      "moonlight through broken window",
+      "flashlight beam searching finding nothing",
+      "headlights illuminating empty road",
+      "dawn revealing absence scale",
+      "dusk settling on emptiness"
+    ],
+    "atmospheric": [
+      "dust motes floating still air",
+      "echo suggesting void",
+      "silence deafening absence",
+      "cold seeping unused space",
+      "mustiness closed long time",
+      "draft through gaps neglect",
+      "humidity unchecked damage",
+      "temperature extreme uncontrolled",
+      "stale air recycling nothing",
+      "pressure dropping abandonment"
+    ],
+    "decay_neglect": [
+      "rust spreading unchecked",
+      "paint peeling weathered",
+      "weeds growing through concrete",
+      "windows clouded dirt",
+      "graffiti marking abandonment",
+      "roof leaking staining walls",
+      "floor buckling moisture",
+      "ceiling tiles falling",
+      "equipment corroding seized",
+      "nature reclaiming space"
+    ]
+  },
+  "crossPopulationTags": {
+    "empty_storage": ["Environment", "Atmosphere"],
+    "depleted_sources": ["Environment", "Atmosphere"],
+    "supply_chain_gaps": ["Environment", "Subject"],
+    "market_absence": ["Atmosphere", "Environment"],
+    "human_absence": ["Subject", "Atmosphere"],
+    "environmental_absence": ["Environment", "Atmosphere"],
+    "visual_emptiness": ["Lighting", "Atmosphere"]
+  }
+}

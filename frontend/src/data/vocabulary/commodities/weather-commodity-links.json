@@ -1,0 +1,335 @@
+{
+  "metadata": {
+    "phase": "7a",
+    "name": "Weather-Commodity Links",
+    "description": "Weather phenomena and their visual/economic impact on commodities",
+    "phraseCount": 320,
+    "crossPopulation": ["Environment", "Atmosphere", "Lighting"]
+  },
+  "drought": {
+    "visual_states": [
+      "cracked earth parched fields",
+      "withered crops brown dead",
+      "dust bowl swirling dry",
+      "empty reservoir bed exposed",
+      "cattle ribs showing thin",
+      "irrigation canal dry cracked",
+      "well pump running empty",
+      "yellowed wheat stunted growth",
+      "wildfire smoke haze distant",
+      "water truck rationing queue"
+    ],
+    "commodity_impacts": [
+      "grain harvest failure looming",
+      "cotton bolls shriveled small",
+      "coffee cherries dropping early",
+      "corn ears undeveloped stunted",
+      "soybean pods empty flat",
+      "sugar cane stalks thin weak",
+      "rice paddies mud cracked",
+      "citrus fruit small stressed",
+      "almond orchards water-starved",
+      "cattle weight loss severe"
+    ],
+    "market_reactions": [
+      "futures spiking drought premium",
+      "crop insurance claims flooding",
+      "export restrictions imposed",
+      "strategic reserves tapped",
+      "substitution demand surging",
+      "forward contracts defaulting",
+      "speculation fever drought play",
+      "hedging activity frantic",
+      "basis widening dramatically",
+      "carry costs inverted"
+    ]
+  },
+  "flood": {
+    "visual_states": [
+      "fields submerged brown water",
+      "warehouse sandbags stacked",
+      "mudslide road blocked",
+      "river levee breaching",
+      "crops rotting waterlogged",
+      "equipment stranded flooded",
+      "storage silos surrounded",
+      "harvest impossible delayed",
+      "mold spreading stored grain",
+      "debris floating downstream"
+    ],
+    "commodity_impacts": [
+      "grain quality degraded wet",
+      "cotton bales water damaged",
+      "sugar processing halted",
+      "mining operations suspended",
+      "rail transport disrupted",
+      "port access blocked",
+      "warehouse inventory ruined",
+      "livestock evacuation chaos",
+      "fertilizer runoff pollution",
+      "replanting costs mounting"
+    ],
+    "market_reactions": [
+      "quality spreads widening",
+      "delivery delays cascading",
+      "force majeure declared",
+      "insurance assessors overwhelmed",
+      "alternative sourcing scramble",
+      "logistics premium soaring",
+      "replacement demand urgent",
+      "contract rollovers forced",
+      "storage costs spiking",
+      "regional basis blowing out"
+    ]
+  },
+  "frost_freeze": {
+    "visual_states": [
+      "orange groves frost blankets",
+      "ice crystals crop damage",
+      "smudge pots burning orchards",
+      "frozen irrigation lines burst",
+      "helicopter wind machines running",
+      "blackened leaves frost kill",
+      "morning ice melt dripping",
+      "steam rising warming efforts",
+      "thermometer plunging reading",
+      "workers overnight vigil"
+    ],
+    "commodity_impacts": [
+      "citrus crop devastation freeze",
+      "coffee trees frost damage",
+      "winter wheat ice kill",
+      "vegetable harvest destroyed",
+      "fruit tree bud death",
+      "grape vine damage severe",
+      "stone fruit blossoms killed",
+      "tropical plants blackened",
+      "perennial crop setback years",
+      "replanting required extensive"
+    ],
+    "market_reactions": [
+      "orange juice futures limit up",
+      "coffee arabica premium surge",
+      "fresh produce prices spiking",
+      "processing demand shifting",
+      "import demand emergency",
+      "cold storage premium rising",
+      "futures curve backwardation",
+      "option volatility exploding",
+      "spread trades unwinding",
+      "physical shortage acute"
+    ]
+  },
+  "heat_wave": {
+    "visual_states": [
+      "heat shimmer fields distant",
+      "livestock shade seeking panting",
+      "workers midday break shelter",
+      "power lines sagging heat",
+      "asphalt softening storage yards",
+      "air conditioning straining",
+      "water spraying cooling attempts",
+      "early morning harvest only",
+      "night work lights operating",
+      "thermometer extreme reading"
+    ],
+    "commodity_impacts": [
+      "grain protein content dropping",
+      "milk production declining heat",
+      "poultry mortality rising",
+      "energy demand peaking cooling",
+      "water competition intensifying",
+      "labor productivity falling",
+      "storage costs cooling rising",
+      "transportation delays heat",
+      "spoilage rates increasing",
+      "yield forecasts slashed"
+    ],
+    "market_reactions": [
+      "electricity prices spiking",
+      "natural gas demand cooling",
+      "protein premiums adjusting",
+      "feed demand reducing",
+      "processing capacity constrained",
+      "delivery specifications tightening",
+      "quality discounts widening",
+      "regional premiums diverging",
+      "spot market thinning",
+      "forward selling paused"
+    ]
+  },
+  "storm_hurricane": {
+    "visual_states": [
+      "hurricane eye satellite view",
+      "waves crashing oil platforms",
+      "wind-flattened sugar cane",
+      "debris scattered warehouse roof",
+      "power lines down tangled",
+      "flooding storm surge coastal",
+      "evacuation routes jammed",
+      "boarding up preparations",
+      "aftermath destruction survey",
+      "cleanup crews mobilizing"
+    ],
+    "commodity_impacts": [
+      "offshore production shut-in",
+      "refinery operations halted",
+      "port closures shipping delayed",
+      "crop lodging wind damage",
+      "storage facility damage",
+      "pipeline flow interrupted",
+      "power outage processing stopped",
+      "transportation infrastructure damaged",
+      "communication systems down",
+      "supply chain severed"
+    ],
+    "market_reactions": [
+      "crude oil refinery premium",
+      "gasoline crack spread widening",
+      "sugar futures weather premium",
+      "shipping rates emergency surge",
+      "insurance claims catastrophic",
+      "force majeure widespread",
+      "futures volume spiking",
+      "option premium exploding",
+      "cash market disconnected",
+      "arbitrage impossible"
+    ]
+  },
+  "monsoon": {
+    "visual_states": [
+      "monsoon clouds gathering dark",
+      "first rains celebration relief",
+      "flooded rice paddies planting",
+      "muddy roads transport stuck",
+      "umbrella crowds market day",
+      "river swelling banks full",
+      "delayed onset worry dry",
+      "excessive rain concern damage",
+      "break in monsoon clearing",
+      "harvest timing uncertainty"
+    ],
+    "commodity_impacts": [
+      "rice planting window critical",
+      "cotton sowing dependent",
+      "soybean germination water",
+      "sugar cane growth surge",
+      "groundwater recharge vital",
+      "pest pressure increasing wet",
+      "disease spread humidity",
+      "quality concerns moisture",
+      "logistics nightmare mud",
+      "storage challenges damp"
+    ],
+    "market_reactions": [
+      "weather premium building",
+      "planting progress monitored",
+      "acreage estimates revised",
+      "yield models adjusted",
+      "import demand calculated",
+      "government policy response",
+      "strategic reserve decisions",
+      "export quota speculation",
+      "regional price divergence",
+      "basis volatility extreme"
+    ]
+  },
+  "seasonal_transitions": {
+    "spring_planting": [
+      "fields awakening thaw",
+      "tractors preparing seedbed",
+      "planting progress maps",
+      "soil temperature monitoring",
+      "equipment maintenance rush",
+      "seed delivery trucks arriving",
+      "financing arrangements secured",
+      "acreage intentions surveyed",
+      "weather windows narrow",
+      "optimism cautious beginning"
+    ],
+    "summer_growing": [
+      "crops knee high progress",
+      "irrigation pivots rotating",
+      "crop scouts walking fields",
+      "pollination critical window",
+      "pest monitoring intensified",
+      "yield potential assessed",
+      "weather forecasts scrutinized",
+      "hedge decisions pending",
+      "basis negotiations beginning",
+      "storage capacity planning"
+    ],
+    "fall_harvest": [
+      "combines rolling fields",
+      "grain trucks queuing elevator",
+      "yield results coming in",
+      "quality testing stations",
+      "price discovery active",
+      "basis narrowing harvest",
+      "storage decisions made",
+      "export loading beginning",
+      "residue management burning",
+      "soil preparation next year"
+    ],
+    "winter_dormancy": [
+      "fields snow covered quiet",
+      "storage bins full waiting",
+      "maintenance season equipment",
+      "planning meetings next year",
+      "market watching waiting",
+      "basis carry accumulating",
+      "export pace monitored",
+      "demand rationing potential",
+      "crop insurance decisions",
+      "input purchasing planning"
+    ]
+  },
+  "climate_phenomena": {
+    "el_nino": [
+      "Pacific warming pattern",
+      "Australian drought expected",
+      "South American floods likely",
+      "Asian monsoon disrupted",
+      "African crops threatened",
+      "global yield impact modeling",
+      "trade flow shifts anticipated",
+      "price volatility heightened",
+      "strategic positioning early",
+      "multi-year impact planning"
+    ],
+    "la_nina": [
+      "Pacific cooling pattern",
+      "opposite effect preparing",
+      "regional impacts reversed",
+      "forecasting uncertainty high",
+      "historical patterns studied",
+      "probability models running",
+      "contingency plans activated",
+      "cross-hedging strategies",
+      "geographic diversification",
+      "weather derivative interest"
+    ],
+    "polar_vortex": [
+      "arctic blast descending",
+      "extreme cold warning",
+      "heating demand surge",
+      "natural gas storage draw",
+      "propane shortage rural",
+      "transportation frozen stuck",
+      "livestock protection urgent",
+      "pipe freeze risk",
+      "energy infrastructure stressed",
+      "economic activity halted"
+    ]
+  },
+  "crossPopulationTags": {
+    "drought": ["Environment", "Atmosphere"],
+    "flood": ["Environment", "Atmosphere"],
+    "frost_freeze": ["Environment", "Atmosphere", "Lighting"],
+    "heat_wave": ["Environment", "Atmosphere", "Lighting"],
+    "storm_hurricane": ["Environment", "Atmosphere"],
+    "monsoon": ["Environment", "Atmosphere"],
+    "seasonal_transitions": ["Environment", "Atmosphere"],
+    "climate_phenomena": ["Atmosphere", "Environment"]
+  }
+}

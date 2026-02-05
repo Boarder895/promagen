@@ -1319,3 +1319,81 @@ When modifying for Prompt Intelligence:
 ## Changelog
 
 - **7 Jan 2026 (v1.0.0):** Initial document. Defines Prompt Intelligence architecture, data structures, scoring algorithm, integration plan, new pages, and build phases.
+
+# Weather Description → City Prompt Fix
+
+## What This Does
+
+Injects the **real OpenWeatherMap `description`** (e.g., "haze", "broken clouds", "light rain")
+verbatim into the city prompt. Demo data has no description → it's simply absent from the prompt.
+
+**Result:**
+
+- **Live API prompt:** `...Mumbai, bustling streets energy, haze, deep night stillness...`
+- **Demo prompt:** `...Mumbai, bustling streets energy, deep night stillness...`
+
+Nobody sees the difference on the card. But the AI-generated images from live data will be subtly
+richer — and the description text is word-for-word identical to the API response.
+
+## Files (all in `src/lib/weather/`)
+
+### 1. `fetch-weather.ts`
+
+**Change:** `demoToWeatherData()` — `description: item.condition` → `description: undefined`
+**Why:** Demo data should NOT have a description. Only live API provides real OWM descriptions.
+
+### 2. `weather-types.ts`
+
+**Change:** `toFullWeather()` — fallback `display.description ?? display.condition ?? 'unknown conditions'` → `display.description || ''`
+**Why:** Empty string when no real description exists, so prompt builder skips it.
+
+### 3. `weather-prompt-generator.ts`
+
+**Changes:**
+
+- **CITY_VIBES expanded:** 51 cities × 5 vibes → **97 cities × 10 vibes** (970 total phrases)
+  - All 83 unique catalog cities now have vibes (was missing 46)
+  - 14 bonus cities kept for broader matching (Seoul, Barcelona, Rome, etc.)
+  - Every city upgraded from 5 to 10 culturally authentic phrases
+  - Added `são paulo` key alongside `sao paulo` for accent matching
+- `buildContext()` — Added `cond.includes('storm')` and `cond.includes('drizzle')` to context flags so demo storms/drizzle still get dramatic atmosphere even without description
+- **All 4 tier generators** — Inject `ctx.description` into prompt when non-empty:
+  - Tier 1 (CLIP): After city vibe, as comma-separated term
+  - Tier 2 (Midjourney): After city vibe in description flow
+  - Tier 3 (Natural Language): `...in Mumbai with haze, with cinematic warm glow...`
+  - Tier 4 (Plain): After city vibe as comma-separated term
+
+## Deploy Steps (PowerShell, repo root: `frontend`)
+
+```powershell
+# Copy the 3 files
+Copy-Item description-fix\fetch-weather.ts src\lib\weather\fetch-weather.ts
+Copy-Item description-fix\weather-types.ts src\lib\weather\weather-types.ts
+Copy-Item description-fix\weather-prompt-generator.ts src\lib\weather\weather-prompt-generator.ts
+
+# Verify types
+npx tsc --noEmit
+
+# Verify lint
+npx next lint
+
+# Test locally
+npm run dev
+# → Open http://localhost:3000
+# → Click any exchange with LIVE weather data (Batch A — the 16 homepage defaults)
+# → Check the prompt tooltip — should include the API description text
+# → Click an exchange with DEMO data (non-Batch-A) — prompt should NOT have description
+
+# Deploy
+git add src/lib/weather/fetch-weather.ts src/lib/weather/weather-types.ts src/lib/weather/weather-prompt-generator.ts
+git commit -m "feat: inject live API weather description into city prompt"
+git push
+```
+
+## Existing Features Preserved: Yes
+
+- Demo weather cards still show temp, emoji, humidity, wind — unchanged
+- Context flags (isStormy, isRainy) still work for both live and demo
+- All 4 prompt tiers still generate full prompts — description is additive only
+- Legacy deprecated exports unchanged
+- No visual UI changes — the difference is ONLY in the prompt text

@@ -88,15 +88,22 @@ function toWeatherData(item: GatewayWeatherItem): ExchangeWeatherData {
 
 /**
  * Convert demo weather item to ExchangeWeatherData for cards.
+ *
+ * FIXED v3.0.1: ExchangeWeather now has humidity and windSpeedKmh.
+ * Previously set undefined which caused 0%/0km/h on cards.
  */
 function demoToWeatherData(item: ExchangeWeather): ExchangeWeatherData {
   return {
     tempC: item.tempC,
+    tempF: item.tempF,
     emoji: item.iconOverride ?? item.emoji,
     condition: item.condition,
-    // Demo data doesn't have these, so leave undefined
-    humidity: undefined,
-    windKmh: undefined,
+    humidity: item.humidity,
+    windKmh: item.windSpeedKmh,
+    // No description for demo data — only live API provides real OWM
+    // descriptions (e.g., "broken clouds", "light rain", "haze").
+    // This absence is intentional: the prompt builder injects description
+    // verbatim when present, making live prompts richer than demo.
     description: undefined,
   };
 }
@@ -163,7 +170,20 @@ export async function getWeatherIndex(): Promise<Map<string, ExchangeWeatherData
       index.set(item.id, toWeatherData(item));
     }
 
-    console.debug(`[Weather] Loaded ${index.size} cities from gateway (mode: ${json.meta.mode})`);
+    // ── Fill gaps with demo data ────────────────────────────────────────
+    // Gateway accumulates data across batches (A→B→C→D over 4 hours).
+    // On fresh start it may only have 1 batch (~21 cities). Fill missing
+    // exchanges with demo weather so every card always shows something.
+    const demoIndex = buildDemoIndex();
+    for (const [id, demoData] of demoIndex) {
+      if (!index.has(id)) {
+        index.set(id, demoData);
+      }
+    }
+
+    console.debug(
+      `[Weather] Loaded ${json.data.length} live + ${index.size - json.data.length} demo fill = ${index.size} total (mode: ${json.meta.mode})`,
+    );
     return index;
   } catch (error) {
     console.warn(

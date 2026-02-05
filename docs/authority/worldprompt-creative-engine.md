@@ -1,8 +1,8 @@
 # WorldPrompt — The Global Creative Engine
 
-**Last updated:** 9 January 2026  
+**Last updated:** 2 February 2026  
 **Owner:** Promagen  
-**Status:** Vision Document — Ready for Implementation  
+**Status:** Vision Document — Weather Prompt Engine Implemented (Part 8A)
 **Authority:** This document defines the philosophy, architecture, and data requirements for Promagen's ambient global creativity system.
 
 ---
@@ -25,14 +25,14 @@ The world never sleeps. Markets open and close. The sun rises and sets. Moons wa
 
 Promagen's tagline is "a bridge between finance and AI creativity." This is not metaphor — it's mechanics.
 
-| Finance Element | Creative Translation |
-|-----------------|---------------------|
-| Stock exchanges | **Place anchors** — Sydney isn't abstract, it's 28°C, ASX open, morning light |
-| Market open/close | **Energy states** — cities waking, cities sleeping |
-| FX movement | **Mood indicators** — currencies rising = optimism, falling = tension |
-| Commodities | **Materials and textures** — gold = warmth/luxury, oil = industrial/heavy |
-| Time zones | **Light quality** — dawn colours, harsh noon, golden hour, blue hour, night |
-| Weather | **Atmosphere** — rain = reflections, sun = shadows, fog = mystery |
+| Finance Element   | Creative Translation                                                          |
+| ----------------- | ----------------------------------------------------------------------------- |
+| Stock exchanges   | **Place anchors** — Sydney isn't abstract, it's 28°C, ASX open, morning light |
+| Market open/close | **Energy states** — cities waking, cities sleeping                            |
+| FX movement       | **Mood indicators** — currencies rising = optimism, falling = tension         |
+| Commodities       | **Materials and textures** — gold = warmth/luxury, oil = industrial/heavy     |
+| Time zones        | **Light quality** — dawn colours, harsh noon, golden hour, blue hour, night   |
+| Weather           | **Atmosphere** — rain = reflections, sun = shadows, fog = mystery             |
 
 ### 1.2 The Sun-Following Metaphor
 
@@ -59,10 +59,10 @@ They can literally watch Earth's day scroll past them. The exchanges aren't data
 
 When a user sees:
 
-- **Hong Kong 🌙 23°C • HKEX Closed** — That's not data. That's *a warm night in a sleeping city*.
-- **London ☀️ 8°C • LSE Open** — That's *cold morning light, city buzzing with energy*.
-- **Gold +1.2%** — That's *warmth, luxury, amber tones, prosperity*.
-- **Oil -0.8%** — That's *industrial weight, dark tones, machines slowing*.
+- **Hong Kong 🌙 23°C • HKEX Closed** — That's not data. That's _a warm night in a sleeping city_.
+- **London ☀️ 8°C • LSE Open** — That's _cold morning light, city buzzing with energy_.
+- **Gold +1.2%** — That's _warmth, luxury, amber tones, prosperity_.
+- **Oil -0.8%** — That's _industrial weight, dark tones, machines slowing_.
 
 The user might not consciously think "I'll use gold tones because gold is up" — but the ambient presence shapes mood. This is **felt, not explained**.
 
@@ -102,17 +102,17 @@ The AI Providers Leaderboard should **look and feel like a stock exchange tradin
 
 ### 2.2 Stock Exchange Parallels
 
-| Stock Exchange Element | AI Leaderboard Equivalent |
-|------------------------|---------------------------|
-| Ticker symbol | Provider ID/logo |
-| Stock price | Quality score |
-| Price change (24h) | Score change (24h) |
-| Volume | Vote count |
-| Market cap | Total historical engagement |
-| Sector | Platform tier (T1-T4) |
-| Trading hours | "Always open" (24/7 voting) |
-| IPO | New provider added |
-| Delisting | Provider deprecated |
+| Stock Exchange Element | AI Leaderboard Equivalent   |
+| ---------------------- | --------------------------- |
+| Ticker symbol          | Provider ID/logo            |
+| Stock price            | Quality score               |
+| Price change (24h)     | Score change (24h)          |
+| Volume                 | Vote count                  |
+| Market cap             | Total historical engagement |
+| Sector                 | Platform tier (T1-T4)       |
+| Trading hours          | "Always open" (24/7 voting) |
+| IPO                    | New provider added          |
+| Delisting              | Provider deprecated         |
 
 ### 2.3 Dynamic Elements
 
@@ -179,46 +179,50 @@ WorldPrompt is Promagen's signature feature: **automated, contextual prompts gen
 
 WorldPrompt combines multiple real-time data sources:
 
-| Data Source | What It Provides | Example Output |
-|-------------|------------------|----------------|
-| **User presence** | Country with most online users | "India leads" |
-| **Exchange status** | Market open/closed, which exchange | "NSE Open" |
-| **Weather API** | Temperature, conditions | "32°C Humid" |
-| **Time calculation** | Local time of day | "Late Afternoon" |
-| **Commodity prices** | Top movers for that region | "Gold +0.8%" |
-| **Country profile** | Cultural keywords, landscapes | "cotton market, kurta, monsoon" |
-| **Cosmic events** | Moon phase, eclipses | "Full moon rising" |
-| **Seasonal context** | Current season, festivals | "Monsoon season" |
+| Data Source          | What It Provides                                            | Example Output                           |
+| -------------------- | ----------------------------------------------------------- | ---------------------------------------- |
+| **User presence**    | Country with most online users                              | "India leads"                            |
+| **Exchange status**  | Market open/closed, which exchange                          | "NSE Open"                               |
+| **Weather API**      | Temperature, humidity, wind, conditions, description, emoji | "32°C, haze, 78% humidity, 12 km/h wind" |
+| **Time calculation** | Local time of day                                           | "Late Afternoon"                         |
+| **Commodity prices** | Top movers for that region                                  | "Gold +0.8%"                             |
+| **Country profile**  | Cultural keywords, landscapes                               | "cotton market, kurta, monsoon"          |
+| **Cosmic events**    | Moon phase, eclipses                                        | "Full moon rising"                       |
+| **Seasonal context** | Current season, festivals                                   | "Monsoon season"                         |
 
 ### 3.3 The 4-Tier Prompt Display
 
 This is **educational gold**. Users see the same creative concept expressed four different ways:
 
 #### Tier 2 — Midjourney
+
 ```
-bustling cotton market, golden hour, Mumbai skyline, humid haze, 
-merchants in white kurta, warm amber light, monsoon clouds, 
-gold prosperity vibes --ar 16:9 --style raw --no modern cars, 
+bustling cotton market, golden hour, Mumbai skyline, humid haze,
+merchants in white kurta, warm amber light, monsoon clouds,
+gold prosperity vibes --ar 16:9 --style raw --no modern cars,
 western clothing, cloudy sky
 ```
 
 #### Tier 1 — Stability/CLIP
+
 ```
-cotton market, golden hour, Mumbai, humid atmosphere, merchants, 
-white traditional clothing, amber lighting, monsoon clouds, 
+cotton market, golden hour, Mumbai, humid atmosphere, merchants,
+white traditional clothing, amber lighting, monsoon clouds,
 photorealistic, 8k, highly detailed, cinematic composition
 ```
 
 #### Tier 3 — DALL-E/Natural Language
+
 ```
-A photorealistic image of a traditional cotton market in Mumbai 
-during late afternoon golden hour. Merchants wearing white kurta 
-stand among bales of cotton, with the humid city skyline visible 
-through amber haze. Monsoon clouds gather on the horizon, 
+A photorealistic image of a traditional cotton market in Mumbai
+during late afternoon golden hour. Merchants wearing white kurta
+stand among bales of cotton, with the humid city skyline visible
+through amber haze. Monsoon clouds gather on the horizon,
 creating a sense of anticipation.
 ```
 
 #### Tier 4 — Canva/Plain
+
 ```
 Mumbai cotton market at sunset with merchants in white clothes
 ```
@@ -232,7 +236,7 @@ The "featured zone" moves westward with the sun:
 ```
 Hour 0 (UTC Midnight): International Date Line → Pacific
 Hour 6 (UTC 06:00): Asia/Australia morning
-Hour 12 (UTC Noon): Europe/Africa midday  
+Hour 12 (UTC Noon): Europe/Africa midday
 Hour 18 (UTC 18:00): Americas afternoon
 Hour 24: Back to Date Line
 
@@ -245,13 +249,13 @@ function getCurrentFeaturedZone(): number {
   const now = new Date();
   const utcHour = now.getUTCHours();
   const utcMinute = now.getUTCMinutes();
-  
+
   // Each 30-min slot = 7.5° of longitude
-  const slot = (utcHour * 2) + (utcMinute >= 30 ? 1 : 0);
-  
+  const slot = utcHour * 2 + (utcMinute >= 30 ? 1 : 0);
+
   // Map slot to longitude (0 = midnight line, moving west)
-  const longitude = 180 - (slot * 7.5);
-  
+  const longitude = 180 - slot * 7.5;
+
   return longitude;
 }
 ```
@@ -263,17 +267,16 @@ When a country has significantly more users online, it **overrides** the rotatio
 ```typescript
 function getFeaturedCountry(
   rotationLongitude: number,
-  userPresence: CountryPresence[]
+  userPresence: CountryPresence[],
 ): CountryCreativeProfile {
-  
   const topCountry = userPresence[0];
   const secondCountry = userPresence[1];
-  
+
   // If top country has 2x the users of second place, feature them
   if (topCountry.count >= secondCountry.count * 2) {
     return getCountryProfile(topCountry.code);
   }
-  
+
   // Otherwise, follow the sun
   return getCountryByLongitude(rotationLongitude);
 }
@@ -294,7 +297,7 @@ A subtle, rotating line above the prompt builder that reflects current world sta
 ```
 
 ```
-🌕 Full moon tonight — try: "silver glow", "nocturnal", "mysterious"  
+🌕 Full moon tonight — try: "silver glow", "nocturnal", "mysterious"
 ```
 
 ```
@@ -323,7 +326,6 @@ When clicked:
    - Weather in visible exchange cities
    - Market sentiment (overall)
    - Any cosmic events
-   
 2. Pre-fills intelligent suggestions:
 
 ```
@@ -348,14 +350,14 @@ When clicked:
 
 The prompt builder's background **subtly shifts** based on world state:
 
-| Condition | UI Tint |
-|-----------|---------|
-| Markets broadly up | Warm golden undertone |
-| Markets broadly down | Cool blue undertone |
-| Full moon | Silver/white highlights |
-| Eclipse happening | Deep purple/shadow |
-| Most exchanges closed (night) | Darker, more contrast |
-| Most exchanges open (day) | Lighter, softer |
+| Condition                     | UI Tint                 |
+| ----------------------------- | ----------------------- |
+| Markets broadly up            | Warm golden undertone   |
+| Markets broadly down          | Cool blue undertone     |
+| Full moon                     | Silver/white highlights |
+| Eclipse happening             | Deep purple/shadow      |
+| Most exchanges closed (night) | Darker, more contrast   |
+| Most exchanges open (day)     | Lighter, softer         |
 
 **The user doesn't know WHY the interface feels different today. But it does.**
 
@@ -365,20 +367,20 @@ The prompt builder's background **subtly shifts** based on world state:
 
 ### 5.1 Event Calendar
 
-| Event | When | Mechanic |
-|-------|------|----------|
-| **🎅 Santa Tracker** | Dec 24-25 | Follows Santa east → west, Christmas prompts per timezone |
-| **🎆 New Year's Eve** | Dec 31 | Fireworks prompts travel timezone by timezone |
-| **🧧 Lunar New Year** | Jan/Feb | Dragon energy travels through Asia |
-| **🪔 Diwali** | Oct/Nov | Light spreads across India, then diaspora cities |
-| **🌙 Ramadan** | Variable | Iftar prompts follow sunset around the world |
-| **🌸 Cherry Blossom** | Mar-May | Follows bloom from Japan → Korea → Washington DC |
-| **⚽ FIFA World Cup** | Tournament dates | Match-specific prompts, nation cards |
-| **🏏 T20 World Cup** | Tournament dates | Cricket nations featured |
-| **🌑 Solar Eclipse** | When they occur | Prompts follow path of totality |
-| **🌕 Lunar Eclipse** | When they occur | Blood moon themes globally |
-| **☀️ Solstice** | Jun 21 / Dec 21 | Longest light or deepest dark |
-| **🌗 Equinox** | Mar 20 / Sep 22 | Balance, transition, duality |
+| Event                 | When             | Mechanic                                                  |
+| --------------------- | ---------------- | --------------------------------------------------------- |
+| **🎅 Santa Tracker**  | Dec 24-25        | Follows Santa east → west, Christmas prompts per timezone |
+| **🎆 New Year's Eve** | Dec 31           | Fireworks prompts travel timezone by timezone             |
+| **🧧 Lunar New Year** | Jan/Feb          | Dragon energy travels through Asia                        |
+| **🪔 Diwali**         | Oct/Nov          | Light spreads across India, then diaspora cities          |
+| **🌙 Ramadan**        | Variable         | Iftar prompts follow sunset around the world              |
+| **🌸 Cherry Blossom** | Mar-May          | Follows bloom from Japan → Korea → Washington DC          |
+| **⚽ FIFA World Cup** | Tournament dates | Match-specific prompts, nation cards                      |
+| **🏏 T20 World Cup**  | Tournament dates | Cricket nations featured                                  |
+| **🌑 Solar Eclipse**  | When they occur  | Prompts follow path of totality                           |
+| **🌕 Lunar Eclipse**  | When they occur  | Blood moon themes globally                                |
+| **☀️ Solstice**       | Jun 21 / Dec 21  | Longest light or deepest dark                             |
+| **🌗 Equinox**        | Mar 20 / Sep 22  | Balance, transition, duality                              |
 
 ### 5.2 The Santa Protocol (Christmas Eve)
 
@@ -510,90 +512,90 @@ During World Cup, country cards can **temporarily replace** exchange cards in th
 ```typescript
 interface CountryCreativeProfile {
   // === IDENTITY ===
-  countryCode: string;              // ISO 3166-1 alpha-2 (e.g., "IN")
-  countryName: string;              // "India"
-  flag: string;                     // "🇮🇳"
-  region: string;                   // "South Asia"
-  
+  countryCode: string; // ISO 3166-1 alpha-2 (e.g., "IN")
+  countryName: string; // "India"
+  flag: string; // "🇮🇳"
+  region: string; // "South Asia"
+
   // === GEOGRAPHY ===
-  capital: string;                  // "New Delhi"
-  majorCities: string[];            // ["Mumbai", "Delhi", "Bangalore", "Chennai"]
-  longitude: number;                // Primary longitude for rotation calc
-  timezone: string;                 // "Asia/Kolkata"
-  
+  capital: string; // "New Delhi"
+  majorCities: string[]; // ["Mumbai", "Delhi", "Bangalore", "Chennai"]
+  longitude: number; // Primary longitude for rotation calc
+  timezone: string; // "Asia/Kolkata"
+
   // === EXCHANGE (optional) ===
   exchange?: {
-    code: string;                   // "NSE"
-    name: string;                   // "National Stock Exchange"
-    city: string;                   // "Mumbai"
-    mic: string;                    // Market Identifier Code
+    code: string; // "NSE"
+    name: string; // "National Stock Exchange"
+    city: string; // "Mumbai"
+    mic: string; // Market Identifier Code
   };
-  
+
   // === CREATIVE FUEL ===
   commodities: {
-    primary: string[];              // ["Cotton", "Tea", "Spices"]
-    secondary: string[];            // ["Rice", "Wheat", "Sugar"]
-    minerals: string[];             // ["Iron ore", "Coal"]
+    primary: string[]; // ["Cotton", "Tea", "Spices"]
+    secondary: string[]; // ["Rice", "Wheat", "Sugar"]
+    minerals: string[]; // ["Iron ore", "Coal"]
   };
-  
+
   landscapes: {
-    natural: string[];              // ["Himalayas", "Ganges", "Thar Desert"]
-    rural: string[];                // ["Rice paddies", "Tea plantations", "Villages"]
-    coastal: string[];              // ["Kerala backwaters", "Goa beaches"]
+    natural: string[]; // ["Himalayas", "Ganges", "Thar Desert"]
+    rural: string[]; // ["Rice paddies", "Tea plantations", "Villages"]
+    coastal: string[]; // ["Kerala backwaters", "Goa beaches"]
   };
-  
+
   urbanScenes: {
-    landmarks: string[];            // ["Taj Mahal", "Gateway of India"]
-    streetLife: string[];           // ["Bazaars", "Auto-rickshaws", "Chai stalls"]
-    modern: string[];               // ["Mumbai skyline", "Tech parks", "Metro"]
+    landmarks: string[]; // ["Taj Mahal", "Gateway of India"]
+    streetLife: string[]; // ["Bazaars", "Auto-rickshaws", "Chai stalls"]
+    modern: string[]; // ["Mumbai skyline", "Tech parks", "Metro"]
   };
-  
+
   cultural: {
-    clothing: string[];             // ["Saris", "Kurta", "Turbans"]
-    food: string[];                 // ["Curry", "Chai", "Street food"]
-    music: string[];                // ["Bollywood", "Classical ragas", "Bhangra"]
-    art: string[];                  // ["Rangoli", "Mehndi", "Temple carvings"]
-    traditions: string[];           // ["Namaste", "Diwali", "Holi"]
+    clothing: string[]; // ["Saris", "Kurta", "Turbans"]
+    food: string[]; // ["Curry", "Chai", "Street food"]
+    music: string[]; // ["Bollywood", "Classical ragas", "Bhangra"]
+    art: string[]; // ["Rangoli", "Mehndi", "Temple carvings"]
+    traditions: string[]; // ["Namaste", "Diwali", "Holi"]
   };
-  
+
   colours: {
-    national: string[];             // ["Saffron", "White", "Green"]
-    cultural: string[];             // ["Gold", "Red", "Magenta", "Turquoise"]
+    national: string[]; // ["Saffron", "White", "Green"]
+    cultural: string[]; // ["Gold", "Red", "Magenta", "Turquoise"]
   };
-  
+
   symbols: {
-    animals: string[];              // ["Tiger", "Elephant", "Peacock"]
-    plants: string[];               // ["Lotus", "Banyan", "Mango"]
-    icons: string[];                // ["Om", "Chakra", "Namaste hands"]
+    animals: string[]; // ["Tiger", "Elephant", "Peacock"]
+    plants: string[]; // ["Lotus", "Banyan", "Mango"]
+    icons: string[]; // ["Om", "Chakra", "Namaste hands"]
   };
-  
+
   // === SEASONAL ===
   seasons: {
     summer: SeasonProfile;
-    monsoon?: SeasonProfile;        // India, SE Asia
+    monsoon?: SeasonProfile; // India, SE Asia
     winter: SeasonProfile;
     autumn?: SeasonProfile;
     spring?: SeasonProfile;
-    dry?: SeasonProfile;            // Africa, Australia
-    wet?: SeasonProfile;            // Tropics
+    dry?: SeasonProfile; // Africa, Australia
+    wet?: SeasonProfile; // Tropics
   };
-  
+
   // === FESTIVALS ===
   festivals: {
     name: string;
-    months: number[];               // [10, 11] for Oct-Nov
+    months: number[]; // [10, 11] for Oct-Nov
     keywords: string[];
     colours: string[];
   }[];
-  
+
   // === SPORTS ===
   sports: {
     football: boolean;
     cricket: boolean;
     rugby: boolean;
-    other: string[];                // ["Hockey", "Kabaddi"]
+    other: string[]; // ["Hockey", "Kabaddi"]
   };
-  
+
   // === PROMPT TEMPLATES ===
   promptTemplates: {
     dawn: string;
@@ -606,10 +608,10 @@ interface CountryCreativeProfile {
 }
 
 interface SeasonProfile {
-  months: number[];                 // [6, 7, 8] for Jun-Aug
-  weather: string[];                // ["Hot", "Humid", "Rainy"]
-  keywords: string[];               // ["Monsoon clouds", "Wet streets", "Umbrellas"]
-  colours: string[];                // ["Grey", "Green", "Earth tones"]
+  months: number[]; // [6, 7, 8] for Jun-Aug
+  weather: string[]; // ["Hot", "Humid", "Rainy"]
+  keywords: string[]; // ["Monsoon clouds", "Wet streets", "Umbrellas"]
+  colours: string[]; // ["Grey", "Green", "Earth tones"]
 }
 ```
 
@@ -625,32 +627,32 @@ interface SeasonProfile {
   "majorCities": ["Mumbai", "Delhi", "Bangalore", "Chennai", "Kolkata", "Hyderabad"],
   "longitude": 78.9629,
   "timezone": "Asia/Kolkata",
-  
+
   "exchange": {
     "code": "NSE",
     "name": "National Stock Exchange",
     "city": "Mumbai",
     "mic": "XNSE"
   },
-  
+
   "commodities": {
     "primary": ["Cotton", "Tea", "Spices", "Gold"],
     "secondary": ["Rice", "Wheat", "Sugar", "Jute"],
     "minerals": ["Iron ore", "Coal", "Diamonds"]
   },
-  
+
   "landscapes": {
     "natural": ["Himalayas", "Ganges river", "Thar Desert", "Western Ghats", "Sundarbans"],
     "rural": ["Rice paddies", "Tea plantations", "Mango orchards", "Village wells"],
     "coastal": ["Kerala backwaters", "Goa beaches", "Marina Beach", "Fishing villages"]
   },
-  
+
   "urbanScenes": {
     "landmarks": ["Taj Mahal", "Gateway of India", "Red Fort", "Lotus Temple"],
     "streetLife": ["Bazaars", "Auto-rickshaws", "Chai wallahs", "Flower markets", "Spice stalls"],
     "modern": ["Mumbai skyline", "Bangalore tech parks", "Delhi Metro", "Glass towers"]
   },
-  
+
   "cultural": {
     "clothing": ["Saris", "Kurta pajama", "Turbans", "Bindis", "Gold jewellery"],
     "food": ["Curry", "Chai", "Samosas", "Biryani", "Street food carts", "Thali"],
@@ -658,18 +660,18 @@ interface SeasonProfile {
     "art": ["Rangoli", "Mehndi", "Temple carvings", "Miniature paintings"],
     "traditions": ["Namaste greeting", "Removing shoes", "Head wobble", "Joint families"]
   },
-  
+
   "colours": {
     "national": ["Saffron", "White", "Green"],
     "cultural": ["Gold", "Red", "Magenta", "Turquoise", "Orange", "Hot pink"]
   },
-  
+
   "symbols": {
     "animals": ["Bengal tiger", "Elephant", "Peacock", "Cobra", "Cow"],
     "plants": ["Lotus", "Banyan tree", "Mango", "Jasmine", "Marigold"],
     "icons": ["Om symbol", "Chakra wheel", "Namaste hands", "Diya lamp"]
   },
-  
+
   "seasons": {
     "summer": {
       "months": [3, 4, 5],
@@ -690,12 +692,19 @@ interface SeasonProfile {
       "colours": ["Soft gold", "Warm amber", "Misty white"]
     }
   },
-  
+
   "festivals": [
     {
       "name": "Diwali",
       "months": [10, 11],
-      "keywords": ["Diya lamps", "Fireworks", "Rangoli", "Sweets", "New clothes", "Light over darkness"],
+      "keywords": [
+        "Diya lamps",
+        "Fireworks",
+        "Rangoli",
+        "Sweets",
+        "New clothes",
+        "Light over darkness"
+      ],
       "colours": ["Gold", "Orange", "Red", "Sparkle"]
     },
     {
@@ -711,14 +720,14 @@ interface SeasonProfile {
       "colours": ["Red", "Gold", "Orange"]
     }
   ],
-  
+
   "sports": {
     "football": true,
     "cricket": true,
     "rugby": false,
     "other": ["Hockey", "Kabaddi", "Badminton"]
   },
-  
+
   "promptTemplates": {
     "dawn": "First light over {city}, chai steam rising, {season_keyword}, temple bells in distance",
     "morning": "Bustling {urban_scene} in morning rush, {commodity} merchants, golden light through haze",
@@ -744,54 +753,54 @@ interface WorldPromptContext {
   season: string;
   commodities: CommodityMovement[];
   cosmicEvent?: CosmicEvent;
-  activeEvent?: SpecialEvent;  // World Cup, Christmas, etc.
-  userPresence: number;        // Users from this country online
+  activeEvent?: SpecialEvent; // World Cup, Christmas, etc.
+  userPresence: number; // Users from this country online
 }
 
 function generateWorldPrompt(ctx: WorldPromptContext): string {
   const parts: string[] = [];
-  
+
   // 1. Scene anchor (urban or landscape based on time)
   if (ctx.timeOfDay === 'night' || ctx.timeOfDay === 'evening') {
     parts.push(pickRandom(ctx.country.urbanScenes.streetLife));
   } else {
     parts.push(pickRandom(ctx.country.landscapes.natural));
   }
-  
+
   // 2. Time-specific lighting
   parts.push(getTimeOfDayLighting(ctx.timeOfDay));
-  
+
   // 3. Weather influence
   if (ctx.weather.condition !== 'clear') {
     parts.push(getWeatherKeyword(ctx.weather));
   }
-  
+
   // 4. Cultural elements
   parts.push(pickRandom(ctx.country.cultural.clothing));
   parts.push(pickRandom(ctx.country.cultural.traditions));
-  
+
   // 5. Commodity influence (if significant movement)
-  const topMover = ctx.commodities.find(c => Math.abs(c.change) > 0.5);
+  const topMover = ctx.commodities.find((c) => Math.abs(c.change) > 0.5);
   if (topMover) {
     parts.push(getCommodityMood(topMover));
   }
-  
+
   // 6. Season-specific
   const seasonProfile = ctx.country.seasons[ctx.season];
   if (seasonProfile) {
     parts.push(pickRandom(seasonProfile.keywords));
   }
-  
+
   // 7. Cosmic overlay
   if (ctx.cosmicEvent) {
     parts.push(getCosmicKeywords(ctx.cosmicEvent));
   }
-  
+
   // 8. Special event overlay
   if (ctx.activeEvent) {
     parts.push(getEventKeywords(ctx.activeEvent, ctx.country));
   }
-  
+
   return assembleNaturalPrompt(parts);
 }
 ```
@@ -799,30 +808,172 @@ function generateWorldPrompt(ctx: WorldPromptContext): string {
 ### 8.2 Tier Optimization
 
 ```typescript
-function optimizeForTier(
-  basePrompt: string, 
-  tier: 1 | 2 | 3 | 4,
-  negatives: string[]
-): string {
+function optimizeForTier(basePrompt: string, tier: 1 | 2 | 3 | 4, negatives: string[]): string {
   switch (tier) {
     case 2: // Midjourney
       return `${basePrompt} --ar 16:9 --style raw --no ${negatives.join(', ')}`;
-      
+
     case 1: // CLIP/Stability
       const clipKeywords = extractKeywords(basePrompt);
       return `${clipKeywords.join(', ')}, photorealistic, 8k, highly detailed`;
-      
+
     case 3: // Natural Language (DALL-E)
       return `A photorealistic image of ${convertToNaturalLanguage(basePrompt)}`;
-      
+
     case 4: // Plain (Canva)
       return simplifyToCore(basePrompt, 10); // Max 10 words
-      
+
     default:
       return basePrompt;
   }
 }
 ```
+
+### 8.3 Implemented: Weather Prompt Generator
+
+> **Status: IMPLEMENTED** — `frontend/src/lib/weather/weather-prompt-generator.ts`  
+> Authority: `ai_providers.md` §4-Tier Prompt System
+
+The weather prompt generator is the first fully implemented component of the WorldPrompt engine. It converts live weather data into AI image prompts, formatted per the 4-tier system.
+
+#### 8.3.1 Architecture
+
+Gateway (Fly.io) Frontend (Vercel)
+┌──────────────────────┐ ┌─────────────────────────────────┐
+│ openweathermap/ │ │ lib/weather/ │
+│ adapter.ts │ /api/weather │ fetch-weather.ts │
+│ budget.ts (v3.0.0) │───────────────▶│ weather-types.ts │
+│ scheduler.ts │ │ weather-prompt-generator.ts │
+│ weather.ts │ │ │
+│ types.ts │ │ hooks/ │
+│ │ │ use-weather.ts │
+│ 4-batch rotation │ │ use-weather-prompt-tier.ts │
+│ A→B→C→D hourly │ │ │
+│ 89 exchanges │ │ components/exchanges/weather/ │
+│ → 83 unique coords │ │ weather-prompt-tooltip.tsx │
+│ 498 calls/day (50%) │ │ exchange-temp.tsx │
+└──────────────────────┘ │ exchange-condition.tsx │
+└─────────────────────────────────┘
+
+#### 8.3.2 Gateway: 4-Batch Weather System (v3.0.0)
+
+The gateway fetches live weather from **OpenWeatherMap** (OWM) free tier (1,000 calls/day, 60/min).
+
+**Batching strategy:**
+
+- 89 exchange cities → 83 unique coordinates (6 co-located pairs deduplicated)
+- 4 batches: A(21), B(21), C(21), D(20) — rotating via `hour % 4`
+- Single fetch slot at minute :10 each hour
+- Budget: 498 calls/day = 49.8% of free tier
+- Safety cap: 24 cities/batch (well under 60/min limit)
+
+**Co-located exchange groups (share identical weather):**
+
+- Mumbai: BSE, NSE, MCX, NCDEX (4 exchanges, 1 API call)
+- Moscow: MOEX, SPB (2 exchanges, 1 API call)
+- Zurich: SIX, BX Swiss (2 exchanges, 1 API call)
+- Frankfurt: XETRA, Börse Frankfurt (2 exchanges, 1 API call)
+
+**Data fields returned per city:**
+`temperatureC`, `temperatureF`, `humidity`, `windSpeedKmh`, `conditions`, `description`, `emoji`
+
+The `description` field carries the raw OWM text (e.g., "haze", "light rain", "broken clouds") — distinct from `conditions` which is the main category (e.g., "Clouds", "Rain").
+
+**Source files:**
+
+- `gateway/openweathermap/adapter.ts` — API communication, retry logic, batch fetch
+- `gateway/openweathermap/budget.ts` — Credit tracking, daily/minute limits
+- `gateway/openweathermap/scheduler.ts` — Hourly A→B→C→D rotation
+- `gateway/openweathermap/types.ts` — CityInfo, WeatherData, BatchId types
+- `gateway/openweathermap/weather.ts` — Handler with background refresh
+- `gateway/server.ts` — Phase 4 integration, `initWeatherFromConfig()`
+
+#### 8.3.3 Frontend: Prompt Generation Engine
+
+`weather-prompt-generator.ts` (2,519 lines) converts weather data into tier-specific image prompts.
+
+**Vocabulary scale:**
+
+| Dimension                | Range                      | Phrases                    | Source                   |
+| ------------------------ | -------------------------- | -------------------------- | ------------------------ |
+| Temperature              | -20°C to +40°C (61 values) | 30 per value = **1,830**   | Inline computed          |
+| Humidity                 | 0–100% (101 values)        | 5 per value = **505**      | Inline computed          |
+| Wind                     | 0–100 km/h (101 values)    | 4 per value = **404**      | Inline computed          |
+| City vibes               | 97 cities                  | 10 per city = **970**      | Inline `CITY_VIBES` dict |
+| Conditions               | ~20 weather types          | Variable                   | Inline vocabulary        |
+| Time of day              | 24 hours → 5 periods       | mood + lighting per period | Inline vocabulary        |
+| **Total unique phrases** |                            | **~3,700+**                |                          |
+
+**CITY_VIBES coverage (97 cities):**
+
+- Asia-Pacific: 28 cities (Tokyo, Shanghai, Mumbai, Sydney, Seoul, Singapore, etc.)
+- Europe: 38 cities (London, Paris, Frankfurt, Zurich, Milan, Madrid, etc.)
+- Middle East: 11 cities (Dubai, Doha, Istanbul, Riyadh, etc.)
+- Africa: 10 cities (Cairo, Johannesburg, Nairobi, Lagos, etc.)
+- Americas: 10 cities (New York, Chicago, Toronto, São Paulo, etc.)
+
+All 83 unique exchange cities are covered plus 14 bonus global cities.
+
+**Description field injection:**
+When live OWM data includes a `description` (e.g., "scattered clouds", "moderate rain"), it is injected into all 4 tier generators as additional atmospheric detail. Demo mode produces no description (empty string), ensuring prompts only carry real API data.
+
+**Context flags derived from weather:**
+`isStormy`, `isRainy`, `isDrizzle`, `isSnowy`, `isFoggy`, `isWindy`, `isHot`, `isCold`, `isHumid`, `isDry`
+
+These flags add conditional vocabulary (e.g., stormy weather adds "dramatic storm clouds" to Tier 1).
+
+#### 8.3.4 Tier Output Examples
+
+For Tokyo at 28°C, 72% humidity, 15 km/h wind, "light rain", 16:00 local time:
+
+**Tier 1 (CLIP/Stability):**
+warm humid Tokyo air::1.3, soft summer rain, late afternoon amber glow,
+neon-lit streets of Shibuya, light rain, lush tropical humidity,
+gentle breeze rustling, golden hour warmth --no people text watermark
+
+**Tier 2 (Midjourney):**
+warm humid Tokyo air, soft summer rain, late afternoon amber glow,
+neon-lit streets of Shibuya, light rain --ar 16:9 --stylize 100 --no people text
+
+**Tier 3 (DALL·E / Natural Language):**
+A warm, humid late afternoon in Tokyo with light rain.
+The scene captures neon-lit streets of Shibuya under soft summer rain
+with amber golden-hour light and a gentle breeze.
+
+**Tier 4 (Plain Language):**
+warm rainy afternoon in Tokyo, neon streets, golden light, gentle breeze
+
+#### 8.3.5 Tier Gating
+
+- **Free users:** Locked to Tier 4 (Plain Language)
+- **Pro users:** Can select Tier 1–4 via `use-weather-prompt-tier.ts` hook
+- Storage key: `promagen:weather-prompt-tier` (localStorage)
+- Authority: `paid_tier.md` §5.12, `ai_providers.md` §4-Tier Prompt System
+
+#### 8.3.6 Vocabulary JSON Files
+
+Alongside the inline vocabulary in the generator, structured JSON files exist for future vocabulary loader integration:
+frontend/src/data/vocabulary/weather/
+├── city-vibes.json # 59 cities × 10 vibes (structured JSON format)
+├── conditions.json # Weather condition vocabulary
+├── humidity.json # Humidity-based phrases
+├── temperature.json # Temperature-based phrases
+├── time-of-day.json # Time period vocabulary
+└── wind.json # Wind-based phrases
+
+The inline `CITY_VIBES` dictionary in the generator (97 cities × 10 vibes) supersedes the JSON file (59 cities) and is the active source used at runtime.
+
+#### 8.3.7 Dynamic Demo Weather
+
+When the gateway has no live OWM data (API key missing, or between refresh cycles), the frontend generates **algorithmic demo weather** per city using:
+
+- Latitude-based climate zones (tropical, arid, temperate, continental, polar)
+- Seasonal temperature curves per hemisphere
+- Diurnal (day/night) temperature variation
+- Per-city hash fingerprints for unique but deterministic values
+- Condition cycling based on climate + time of day
+
+Demo weather produces `description: undefined` so prompts never contain fake API text.
 
 ---
 
@@ -830,16 +981,16 @@ function optimizeForTier(
 
 ### 9.1 Data Sources Needed
 
-| Data | Source | Refresh Rate | Priority |
-|------|--------|--------------|----------|
-| User presence by country | Vercel Analytics / PostHog / Custom WebSocket | Real-time | P0 |
-| Exchange status | Existing exchange data | 1 min | P0 |
-| Weather | OpenWeather or Twelve Data | 15 min cache | P0 |
-| Commodity prices | Twelve Data | 1 min | P1 |
-| Cosmic events | Astronomy API or pre-calculated | Daily | P1 |
-| Country profiles | Static JSON (your dataset) | Deploy-time | P0 |
-| Festival calendar | Static JSON | Deploy-time | P1 |
-| Santa tracker | NORAD API (Dec 24) | 1 min | P2 |
+| Data                     | Source                                           | Refresh Rate                        | Priority |
+| ------------------------ | ------------------------------------------------ | ----------------------------------- | -------- |
+| User presence by country | Vercel Analytics / PostHog / Custom WebSocket    | Real-time                           | P0       |
+| Exchange status          | Existing exchange data                           | 1 min                               | P0       |
+| Weather                  | OpenWeatherMap (OWM) free tier — **IMPLEMENTED** | Hourly per batch (4-batch rotation) | P0 ✅    |
+| Commodity prices         | Twelve Data                                      | 1 min                               | P1       |
+| Cosmic events            | Astronomy API or pre-calculated                  | Daily                               | P1       |
+| Country profiles         | Static JSON (your dataset)                       | Deploy-time                         | P0       |
+| Festival calendar        | Static JSON                                      | Deploy-time                         | P1       |
+| Santa tracker            | NORAD API (Dec 24)                               | 1 min                               | P2       |
 
 ### 9.2 New Files Needed
 
@@ -876,6 +1027,38 @@ frontend/src/
         └── route.ts                 # WebSocket or polling endpoint
 ```
 
+#### 9.2.1 Implemented Files (Weather Prompt System)
+
+gateway/openweathermap/ # Weather provider module (v3.0.0)
+├── adapter.ts # OWM API fetch, retry, batch
+├── budget.ts # Daily/minute budget tracking
+├── index.ts # Module exports
+├── scheduler.ts # 4-batch hourly rotation
+├── types.ts # CityInfo, WeatherData, BatchId
+├── weather.ts # Handler, background refresh
+└── README.md # Module documentation
+frontend/src/
+├── lib/weather/
+│ ├── weather-prompt-generator.ts # 2,519 lines — 4-tier prompt engine
+│ ├── fetch-weather.ts # Gateway fetch + demo fallback
+│ ├── weather-types.ts # Type conversions, description handling
+│ ├── exchange-weather.ts # Weather-to-exchange mapping
+│ └── weather.ts # Weather utilities
+├── hooks/
+│ ├── use-weather.ts # React hook for weather data
+│ └── use-weather-prompt-tier.ts # Tier selection (Free=4, Pro=1-4)
+├── data/vocabulary/weather/
+│ ├── city-vibes.json # 59 cities (JSON vocabulary)
+│ ├── conditions.json # Condition phrases
+│ ├── humidity.json # Humidity phrases
+│ ├── temperature.json # Temperature phrases
+│ ├── time-of-day.json # Time-of-day vocabulary
+│ └── wind.json # Wind phrases
+└── components/exchanges/weather/
+├── weather-prompt-tooltip.tsx # Copy-enabled prompt tooltip
+├── exchange-temp.tsx # Temperature display
+└── exchange-condition.tsx # Condition icon + text
+
 ### 9.3 API Endpoints
 
 ```
@@ -907,6 +1090,7 @@ Returns: Any active special events (World Cup, etc.)
 **Pass criteria:** A new user understands what Promagen does within 10 seconds of landing.
 
 **How WorldPrompt achieves this:**
+
 - They see a live prompt being generated
 - They see it references real-world data (weather, markets, time)
 - They see it adapts to different AI platforms
@@ -914,20 +1098,20 @@ Returns: Any active special events (World Cup, etc.)
 
 ### 10.2 Engagement Metrics
 
-| Metric | Target | Why It Matters |
-|--------|--------|----------------|
-| Time on homepage | >45 seconds | They're watching WorldPrompt change |
-| Return visits within 7 days | >30% | "I wonder what's generating now" |
-| WorldPrompt → Prompt Builder | >15% | They want to build on what they saw |
-| Social shares | Track | "Look what Promagen made for India" |
-| Geographic diversity | Track | Building global community |
+| Metric                       | Target      | Why It Matters                      |
+| ---------------------------- | ----------- | ----------------------------------- |
+| Time on homepage             | >45 seconds | They're watching WorldPrompt change |
+| Return visits within 7 days  | >30%        | "I wonder what's generating now"    |
+| WorldPrompt → Prompt Builder | >15%        | They want to build on what they saw |
+| Social shares                | Track       | "Look what Promagen made for India" |
+| Geographic diversity         | Track       | Building global community           |
 
 ### 10.3 Community Metrics
 
-| Metric | Target |
-|--------|--------|
-| Countries with 10+ users | 50+ |
-| Peak concurrent users | Track growth |
+| Metric                        | Target          |
+| ----------------------------- | --------------- |
+| Countries with 10+ users      | 50+             |
+| Peak concurrent users         | Track growth    |
 | "My country featured" moments | Track happiness |
 
 ---
@@ -935,6 +1119,7 @@ Returns: Any active special events (World Cup, etc.)
 ## Part 11: Implementation Phases
 
 ### Phase 1: Foundation (Week 1-2)
+
 - [ ] Create `country-profiles.json` with 50 countries (all exchanges + top World Cup nations)
 - [ ] Build `WorldPromptDisplay` component
 - [ ] Implement 30-minute rotation logic
@@ -942,18 +1127,21 @@ Returns: Any active special events (World Cup, etc.)
 - [ ] Add contextual whispers above prompt builder
 
 ### Phase 2: Presence (Week 3)
+
 - [ ] Implement user presence tracking
 - [ ] Build `CountryPresenceBar` component
 - [ ] Add presence-override logic (dominant country wins)
 - [ ] Real-time updates via polling (WebSocket later)
 
 ### Phase 3: Polish (Week 4)
+
 - [ ] Complete country profiles to 100+ countries
 - [ ] Add cosmic events integration
 - [ ] Build `InspireMe` button with suggestions
 - [ ] Ambient UI tint based on world state
 
 ### Phase 4: Events (Ongoing)
+
 - [ ] Santa Tracker for Christmas 2026
 - [ ] World Cup mode (when tournaments scheduled)
 - [ ] Festival overlays (Diwali, Lunar New Year, etc.)
@@ -1000,10 +1188,10 @@ The homepage background becomes a living canvas — an AI-generated scene derive
 
 ### 13.2 Tier Gating
 
-| Tier | Background | Context Bar | Fullscreen |
-|------|------------|-------------|------------|
-| Standard Promagen | Static dark gradient | Hidden | N/A |
-| Pro Promagen | AI-generated scene | Visible | Available |
+| Tier              | Background           | Context Bar | Fullscreen |
+| ----------------- | -------------------- | ----------- | ---------- |
+| Standard Promagen | Static dark gradient | Hidden      | N/A        |
+| Pro Promagen      | AI-generated scene   | Visible     | Available  |
 
 Standard users see the existing dark UI. Pro users see the world.
 
@@ -1056,15 +1244,16 @@ Standard users see the existing dark UI. Pro users see the world.
 
 The system doesn't regenerate images constantly. It responds to **meaningful changes**:
 
-| Trigger | When | Why |
-|---------|------|-----|
-| **City rotation** | Every 30 minutes | Core WorldPrompt cycle |
-| **Time-of-day shift** | Dawn, morning, afternoon, evening, night | Light quality changes dramatically |
-| **Market open/close** | ±1 minute window | Energy state changes (aligns with Market Pulse) |
-| **Weather condition change** | Sunny → Rain, etc. | Atmosphere shift |
-| **Significant FX move** | >1% change in lead pair | Mood indicator |
+| Trigger                      | When                                     | Why                                             |
+| ---------------------------- | ---------------------------------------- | ----------------------------------------------- |
+| **City rotation**            | Every 30 minutes                         | Core WorldPrompt cycle                          |
+| **Time-of-day shift**        | Dawn, morning, afternoon, evening, night | Light quality changes dramatically              |
+| **Market open/close**        | ±1 minute window                         | Energy state changes (aligns with Market Pulse) |
+| **Weather condition change** | Sunny → Rain, etc.                       | Atmosphere shift                                |
+| **Significant FX move**      | >1% change in lead pair                  | Mood indicator                                  |
 
 **Example day for Sydney:**
+
 - 05:30 AEDT → Dawn image (warm amber, first light)
 - 09:00 AEDT → Morning image (bright, ASX about to open)
 - 10:00 AEDT → Market open flash (energy spike)
@@ -1080,6 +1269,7 @@ That's 7 potential images per day for one city. With caching, the same prompt = 
 The existing `generateWorldPrompt()` function produces text. That text becomes the image prompt.
 
 **Example context:**
+
 - City: Sydney
 - Time: 06:15 local (dawn)
 - Weather: 24°C, partly cloudy
@@ -1088,6 +1278,7 @@ The existing `generateWorldPrompt()` function produces text. That text becomes t
 - Season: Summer
 
 **Generated text prompt:**
+
 ```
 Sydney Harbour at dawn, warm amber light breaking through scattered clouds,
 Opera House silhouette against pink-gold sky, sailboats on calm water,
@@ -1096,13 +1287,14 @@ optimistic atmosphere as currencies rise, photorealistic
 ```
 
 **Image API call:**
+
 ```typescript
 const response = await openai.images.generate({
-  model: "dall-e-3",
+  model: 'dall-e-3',
   prompt: generatedPrompt,
-  size: "1792x1024",
-  quality: "standard",
-  n: 1
+  size: '1792x1024',
+  quality: 'standard',
+  n: 1,
 });
 ```
 
@@ -1160,6 +1352,7 @@ When a new image arrives:
 ```
 
 CSS:
+
 ```css
 .worldprompt-bg {
   transition: opacity 2s ease-in-out;
@@ -1201,6 +1394,7 @@ CSS:
 ```
 
 Styling:
+
 - Background: `rgba(0,0,0,0.6)` with `backdrop-filter: blur(8px)`
 - Text: White, `text-sm`
 - Height: 40px
@@ -1234,6 +1428,7 @@ When user clicks **[Expand ⛶]**:
 ```
 
 Features:
+
 - Full-bleed image, no dark overlay
 - Semi-transparent info panel in bottom-left
 - Generated prompt visible (educational + copyable)
@@ -1244,15 +1439,16 @@ Features:
 
 ### 13.10 Cost Control
 
-| Measure | Implementation |
-|---------|----------------|
-| **Caching** | Hash(prompt) → Vercel KV key → 24h TTL |
-| **Deduplication** | Same prompt = cached image, no regeneration |
-| **Rate limiting** | Max 1 generation per city per trigger event |
-| **Resolution** | 1792×1024 (large enough for most screens, not excessive) |
-| **Model** | DALL-E 3 standard quality (~$0.04/image) |
+| Measure           | Implementation                                           |
+| ----------------- | -------------------------------------------------------- |
+| **Caching**       | Hash(prompt) → Vercel KV key → 24h TTL                   |
+| **Deduplication** | Same prompt = cached image, no regeneration              |
+| **Rate limiting** | Max 1 generation per city per trigger event              |
+| **Resolution**    | 1792×1024 (large enough for most screens, not excessive) |
+| **Model**         | DALL-E 3 standard quality (~$0.04/image)                 |
 
 **Daily cost estimate:**
+
 - 12 active cities × 4 time-of-day shifts = 48 potential images
 - With caching (same weather, same FX mood) = ~30 unique images
 - 30 × $0.04 = **~$1.20/day**
@@ -1261,13 +1457,13 @@ Features:
 
 ### 13.11 Fallback Hierarchy
 
-| Condition | Behaviour |
-|-----------|-----------|
-| Image loading | Subtle shimmer animation on dark background |
-| Image generation failed | Keep previous image, log error, retry in 5 mins |
-| Cache miss + API error | Fall back to static gradient |
-| API quota exceeded | Disable feature for remainder of day |
-| User is Standard Promagen | No image, no context bar |
+| Condition                 | Behaviour                                       |
+| ------------------------- | ----------------------------------------------- |
+| Image loading             | Subtle shimmer animation on dark background     |
+| Image generation failed   | Keep previous image, log error, retry in 5 mins |
+| Cache miss + API error    | Fall back to static gradient                    |
+| API quota exceeded        | Disable feature for remainder of day            |
+| User is Standard Promagen | No image, no context bar                        |
 
 ### 13.12 Implementation Files
 
@@ -1302,66 +1498,66 @@ const openai = new OpenAI();
 export async function GET(request: Request) {
   // 1. Get current WorldPrompt context
   const context = await getCurrentWorldPromptContext();
-  
+
   // 2. Generate prompt text
   const promptText = generateWorldPrompt(context);
-  
+
   // 3. Create cache key from prompt hash
   const hash = createHash('sha256').update(promptText).digest('hex').slice(0, 16);
   const cacheKey = `worldprompt:image:${hash}`;
-  
+
   // 4. Check cache
   const cached = await kv.get<string>(cacheKey);
   if (cached) {
-    return Response.json({ 
-      imageUrl: cached, 
+    return Response.json({
+      imageUrl: cached,
       cached: true,
       context: {
         city: context.country.name,
         timeOfDay: context.timeOfDay,
         weather: context.weather.condition,
-        prompt: promptText
-      }
+        prompt: promptText,
+      },
     });
   }
-  
+
   // 5. Generate image
   const response = await openai.images.generate({
-    model: "dall-e-3",
+    model: 'dall-e-3',
     prompt: promptText,
-    size: "1792x1024",
-    quality: "standard",
-    n: 1
+    size: '1792x1024',
+    quality: 'standard',
+    n: 1,
   });
-  
+
   const imageUrl = response.data[0].url;
-  
+
   // 6. Cache for 24 hours
   await kv.set(cacheKey, imageUrl, { ex: 86400 });
-  
+
   // 7. Return
-  return Response.json({ 
-    imageUrl, 
+  return Response.json({
+    imageUrl,
     cached: false,
     context: {
       city: context.country.name,
       timeOfDay: context.timeOfDay,
       weather: context.weather.condition,
-      prompt: promptText
-    }
+      prompt: promptText,
+    },
   });
 }
 ```
 
 ### 13.14 Success Criteria
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Pro user engagement | +20% time on homepage | Analytics comparison |
-| "Wow" factor | Qualitative | User feedback, social shares |
-| Performance | <100ms context bar render | Core Web Vitals |
-| Reliability | 99% image availability | Error rate monitoring |
-| Cost efficiency | <$50/month | API billing |
+| Metric              | Target                    | Measurement                  |
+| ------------------- | ------------------------- | ---------------------------- |
+| Pro user engagement | +20% time on homepage     | Analytics comparison         |
+| "Wow" factor        | Qualitative               | User feedback, social shares |
+| Performance         | <100ms context bar render | Core Web Vitals              |
+| Reliability         | 99% image availability    | Error rate monitoring        |
+| Cost efficiency     | <$50/month                | API billing                  |
 
 ---
 
@@ -1370,12 +1566,15 @@ export async function GET(request: Request) {
 To build the complete `country-profiles.json`, the following countries need profiles:
 
 ### Priority 1: All Exchange Nations (60+)
+
 USA, UK, Japan, China, Hong Kong, India, Australia, Germany, France, Brazil, Canada, Singapore, South Korea, South Africa, Mexico, Russia, Saudi Arabia, UAE, Indonesia, Thailand, Malaysia, Philippines, Vietnam, Poland, Turkey, Nigeria, Egypt, Israel, Switzerland, Netherlands, Norway, Sweden, Spain, Italy, Belgium, Austria, Ireland, Denmark, Finland, New Zealand, Taiwan, Pakistan, Bangladesh, Sri Lanka, Kenya, Morocco, Chile, Argentina, Colombia, Peru...
 
 ### Priority 2: World Cup Nations Without Exchanges (30+)
+
 Senegal, Ghana, Cameroon, Tunisia, Costa Rica, Jamaica, Panama, Uruguay, Ecuador, Serbia, Croatia, Wales, Iran, Qatar, Iceland, Panama, Honduras, Algeria, Ivory Coast, DR Congo...
 
 ### Priority 3: Remaining Nations (100+)
+
 All other countries for comprehensive global coverage.
 
 **Deliverable:** Complete JSON file with all countries following the schema in Part 7.
@@ -1384,33 +1583,34 @@ All other countries for comprehensive global coverage.
 
 ## Appendix B: Cosmic Events Calendar 2026
 
-| Event | Date | Type | Visibility |
-|-------|------|------|------------|
-| Full Moon | Jan 13 | Lunar | Global |
-| New Moon | Jan 29 | Lunar | Global |
-| Full Moon | Feb 12 | Lunar | Global |
-| Total Lunar Eclipse | Mar 14 | Eclipse | Americas, Europe, Africa |
-| Full Moon | Mar 14 | Lunar | Global |
-| Spring Equinox | Mar 20 | Equinox | Global |
-| Partial Solar Eclipse | Mar 29 | Eclipse | Europe, N Africa, W Asia |
-| Full Moon | Apr 12 | Lunar | Global |
-| Full Moon | May 12 | Lunar | Global |
-| Full Moon | Jun 11 | Lunar | Global |
-| Summer Solstice | Jun 21 | Solstice | Global |
-| Full Moon | Jul 10 | Lunar | Global |
-| Full Moon | Aug 8 | Lunar | Global |
-| Partial Lunar Eclipse | Sep 7 | Eclipse | Europe, Africa, Asia, Australia |
-| Full Moon | Sep 7 | Lunar | Global |
-| Autumn Equinox | Sep 22 | Equinox | Global |
-| Full Moon | Oct 6 | Lunar | Global |
-| Full Moon | Nov 5 | Lunar | Global |
-| Full Moon | Dec 4 | Lunar | Global |
-| Winter Solstice | Dec 21 | Solstice | Global |
+| Event                 | Date   | Type     | Visibility                      |
+| --------------------- | ------ | -------- | ------------------------------- |
+| Full Moon             | Jan 13 | Lunar    | Global                          |
+| New Moon              | Jan 29 | Lunar    | Global                          |
+| Full Moon             | Feb 12 | Lunar    | Global                          |
+| Total Lunar Eclipse   | Mar 14 | Eclipse  | Americas, Europe, Africa        |
+| Full Moon             | Mar 14 | Lunar    | Global                          |
+| Spring Equinox        | Mar 20 | Equinox  | Global                          |
+| Partial Solar Eclipse | Mar 29 | Eclipse  | Europe, N Africa, W Asia        |
+| Full Moon             | Apr 12 | Lunar    | Global                          |
+| Full Moon             | May 12 | Lunar    | Global                          |
+| Full Moon             | Jun 11 | Lunar    | Global                          |
+| Summer Solstice       | Jun 21 | Solstice | Global                          |
+| Full Moon             | Jul 10 | Lunar    | Global                          |
+| Full Moon             | Aug 8  | Lunar    | Global                          |
+| Partial Lunar Eclipse | Sep 7  | Eclipse  | Europe, Africa, Asia, Australia |
+| Full Moon             | Sep 7  | Lunar    | Global                          |
+| Autumn Equinox        | Sep 22 | Equinox  | Global                          |
+| Full Moon             | Oct 6  | Lunar    | Global                          |
+| Full Moon             | Nov 5  | Lunar    | Global                          |
+| Full Moon             | Dec 4  | Lunar    | Global                          |
+| Winter Solstice       | Dec 21 | Solstice | Global                          |
 
 ---
 
 ## Changelog
 
+- **2 Feb 2026:** **WEATHER PROMPT ENGINE — IMPLEMENTED** — Added Part 8.3: full documentation of the implemented weather prompt generation system. Gateway v3.0.0 with 4-batch OWM rotation (89 exchanges → 83 unique coords, 498 calls/day, 49.8% budget). Frontend weather-prompt-generator.ts (2,519 lines): 4-tier prompt generation, ~3,700+ unique vocabulary phrases, 97 cities × 10 vibes in CITY_VIBES dictionary. Description field from OWM API now injected into all 4 prompt tiers. Dynamic demo weather with climate-zone modeling. Added §9.2.1: implemented file inventory. Updated §3.2 and §9.1 with actual implementation details. Cross-referenced: `gateway-refactor.md`, `ai_providers.md` §4-Tier Prompt System, `paid_tier.md` §5.12.
 - **9 Jan 2026:** **WORLDPROMPT LIVE BACKGROUND** — Added Part 13: WorldPrompt Live Background — Visual Implementation. Pro Promagen exclusive feature. Homepage background becomes AI-generated scene from WorldPrompt data. Includes: visual layer architecture, image generation triggers, context bar design, fullscreen mode, cost control (~$1.20/day), API endpoint specification, component structure. Authority for tier gating: `paid_tier.md` §5.11.
 - **5 Jan 2026:** Initial document created. Captures complete WorldPrompt vision including philosophy, AI leaderboard as stock board, WorldPrompt feature, contextual whispers, Inspire Me, seasonal events, Santa Protocol, World Cup mode, country profiles schema, prompt generation engine, and implementation roadmap.
 
@@ -1422,6 +1622,6 @@ All other countries for comprehensive global coverage.
 
 Promagen doesn't just help you write prompts. It connects your creativity to the living, breathing planet — every market open, every sunset, every full moon, every goal scored, every commodity traded.
 
-This is the feature that makes Promagen *Promagen*.
+This is the feature that makes Promagen _Promagen_.
 
 Build it. Ship it. Watch the world create.

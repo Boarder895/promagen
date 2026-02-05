@@ -1,0 +1,560 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "created": "2026-02-05",
+    "phase": "4a-complete",
+    "totalCommodities": 78,
+    "methodsPerCommodity": 3,
+    "totalPhrases": 234,
+    "crossPopulation": {
+      "action": ["extraction processes", "harvesting techniques", "mining operations"],
+      "environment": ["extraction sites", "equipment settings"]
+    }
+  },
+  "extraction": {
+    "crude_oil": {
+      "id": "crude_oil",
+      "methods": [
+        "rotary drilling derrick piercing reservoir rock",
+        "hydraulic fracturing pressurized fluid cracking shale",
+        "offshore platform riser pipe deepwater extraction"
+      ]
+    },
+    "natural_gas": {
+      "id": "natural_gas",
+      "methods": [
+        "horizontal drilling accessing shale gas formations",
+        "conventional wellhead vertical extraction reservoir",
+        "coalbed methane dewatering releasing trapped gas"
+      ]
+    },
+    "heating_oil": {
+      "id": "heating_oil",
+      "methods": [
+        "fractional distillation column separating crude",
+        "hydrotreating reactor removing sulfur impurities",
+        "blending terminal mixing seasonal specifications"
+      ]
+    },
+    "gasoline": {
+      "id": "gasoline",
+      "methods": [
+        "catalytic cracking breaking heavy hydrocarbons",
+        "reforming unit boosting octane rating",
+        "alkylation process creating high octane blend"
+      ]
+    },
+    "diesel": {
+      "id": "diesel",
+      "methods": [
+        "atmospheric distillation middle cut separation",
+        "hydrodesulfurization ultra low sulfur production",
+        "winterization dewaxing cold flow improvement"
+      ]
+    },
+    "coal": {
+      "id": "coal",
+      "methods": [
+        "longwall mining shearer cutting underground seam",
+        "surface strip mining dragline exposing coal",
+        "room and pillar mining selective extraction support"
+      ]
+    },
+    "uranium": {
+      "id": "uranium",
+      "methods": [
+        "in-situ leaching solution mining underground",
+        "open pit mining ore body excavation",
+        "underground mining high grade vein extraction"
+      ]
+    },
+    "ethanol": {
+      "id": "ethanol",
+      "methods": [
+        "dry milling grinding fermentation distillation",
+        "wet milling separating starch protein oil",
+        "cellulosic enzymatic breakdown plant material"
+      ]
+    },
+    "propane": {
+      "id": "propane",
+      "methods": [
+        "natural gas processing NGL separation",
+        "refinery gas recovery propane isolation",
+        "fractionation tower cryogenic separation"
+      ]
+    },
+    "jet_fuel": {
+      "id": "jet_fuel",
+      "methods": [
+        "straight run kerosene distillation cut",
+        "hydroprocessing improving thermal stability",
+        "merox treating sweetening mercaptan removal"
+      ]
+    },
+    "gold": {
+      "id": "gold",
+      "methods": [
+        "cyanide heap leaching dissolving fine particles",
+        "gravity separation concentrating dense gold",
+        "underground stoping following high grade veins"
+      ]
+    },
+    "silver": {
+      "id": "silver",
+      "methods": [
+        "flotation concentrate froth separation sulfides",
+        "cyanidation dissolving silver from ore",
+        "smelting lead bullion silver carrier"
+      ]
+    },
+    "platinum": {
+      "id": "platinum",
+      "methods": [
+        "underground narrow reef mining deep extraction",
+        "flotation matte smelting concentration",
+        "solvent extraction selective precious metal isolation"
+      ]
+    },
+    "palladium": {
+      "id": "palladium",
+      "methods": [
+        "nickel sulfide mining byproduct recovery",
+        "electrolytic refining anode slime processing",
+        "autocatalyst recycling secondary recovery"
+      ]
+    },
+    "rhodium": {
+      "id": "rhodium",
+      "methods": [
+        "platinum group metal refining residue",
+        "selective precipitation chemical separation",
+        "spent catalyst recycling precious metal recovery"
+      ]
+    },
+    "copper": {
+      "id": "copper",
+      "methods": [
+        "open pit mining massive scale excavation",
+        "block caving underground controlled collapse",
+        "solvent extraction electrowinning oxide leaching"
+      ]
+    },
+    "aluminum": {
+      "id": "aluminum",
+      "methods": [
+        "bauxite strip mining surface excavation",
+        "bayer process caustic digestion alumina",
+        "hall heroult electrolysis molten salt reduction"
+      ]
+    },
+    "zinc": {
+      "id": "zinc",
+      "methods": [
+        "underground cut and fill mining method",
+        "roast leach electrowin hydrometallurgical",
+        "imperial smelting furnace pyrometallurgical"
+      ]
+    },
+    "nickel": {
+      "id": "nickel",
+      "methods": [
+        "laterite strip mining tropical ore bodies",
+        "sulfide underground mining deep ore",
+        "high pressure acid leach hydrometallurgical"
+      ]
+    },
+    "lead": {
+      "id": "lead",
+      "methods": [
+        "selective flotation galena concentration",
+        "sintering blast furnace smelting reduction",
+        "battery recycling secondary lead recovery"
+      ]
+    },
+    "tin": {
+      "id": "tin",
+      "methods": [
+        "alluvial dredging placer deposit recovery",
+        "hard rock mining lode deposit extraction",
+        "gravity separation cassiterite concentration"
+      ]
+    },
+    "steel": {
+      "id": "steel",
+      "methods": [
+        "blast furnace iron reduction coke carbon",
+        "basic oxygen furnace carbon blowing conversion",
+        "electric arc furnace scrap melting recycling"
+      ]
+    },
+    "wheat": {
+      "id": "wheat",
+      "methods": [
+        "combine harvesting cutting threshing separating",
+        "swathing windrow drying pre-harvest",
+        "direct heading standing crop harvest"
+      ]
+    },
+    "corn": {
+      "id": "corn",
+      "methods": [
+        "combine corn head snapping ears shelling",
+        "picker sheller traditional mechanical harvest",
+        "silage chopper whole plant cutting"
+      ]
+    },
+    "soybeans": {
+      "id": "soybeans",
+      "methods": [
+        "combine flex header low cutting harvest",
+        "direct cutting standing mature beans",
+        "double crop relay planting sequential harvest"
+      ]
+    },
+    "rice": {
+      "id": "rice",
+      "methods": [
+        "combine harvester adapted paddy conditions",
+        "manual sickle cutting traditional harvest",
+        "stripper header grain only separation"
+      ]
+    },
+    "oats": {
+      "id": "oats",
+      "methods": [
+        "combine direct cutting mature standing",
+        "swathing pre-harvest drying windrow",
+        "crimping high moisture preservation harvest"
+      ]
+    },
+    "coffee": {
+      "id": "coffee",
+      "methods": [
+        "selective hand picking ripe cherry only",
+        "strip harvesting all cherries at once",
+        "mechanical harvesting vibrating tree shaking"
+      ]
+    },
+    "cocoa": {
+      "id": "cocoa",
+      "methods": [
+        "machete pod cutting careful harvest",
+        "pod breaking bean extraction manual",
+        "heap fermentation enzymatic development"
+      ]
+    },
+    "sugar": {
+      "id": "sugar",
+      "methods": [
+        "mechanical harvester whole stalk cutting",
+        "manual cutting burning field preparation",
+        "green cane harvesting unburned sustainable"
+      ]
+    },
+    "cotton": {
+      "id": "cotton",
+      "methods": [
+        "spindle picker selective boll harvest",
+        "stripper harvester entire plant stripping",
+        "module builder field storage compaction"
+      ]
+    },
+    "rubber": {
+      "id": "rubber",
+      "methods": [
+        "spiral tapping bark incision latex flow",
+        "puncture tapping multiple small cuts",
+        "cup collection latex gathering morning"
+      ]
+    },
+    "live_cattle": {
+      "id": "live_cattle",
+      "methods": [
+        "rotational grazing pasture management system",
+        "feedlot finishing grain intensive growth",
+        "grass fed ranching extensive grazing"
+      ]
+    },
+    "lean_hogs": {
+      "id": "lean_hogs",
+      "methods": [
+        "confinement farrowing controlled breeding",
+        "grow finish barn intensive feeding",
+        "pasture raised outdoor access system"
+      ]
+    },
+    "feeder_cattle": {
+      "id": "feeder_cattle",
+      "methods": [
+        "cow calf operation calf production",
+        "backgrounding stocker growing phase",
+        "auction marketing price discovery sale"
+      ]
+    },
+    "pork_bellies": {
+      "id": "pork_bellies",
+      "methods": [
+        "primal separation carcass fabrication",
+        "injection curing brine pumping",
+        "dry curing salt rub traditional"
+      ]
+    },
+    "lithium": {
+      "id": "lithium",
+      "methods": [
+        "brine evaporation solar concentration ponds",
+        "hard rock mining spodumene pegmatite",
+        "direct lithium extraction new technology"
+      ]
+    },
+    "cobalt": {
+      "id": "cobalt",
+      "methods": [
+        "artisanal mining hand digging sorting",
+        "industrial copper cobalt byproduct mining",
+        "laterite hydrometallurgical acid leaching"
+      ]
+    },
+    "rare_earths": {
+      "id": "rare_earths",
+      "methods": [
+        "open pit mining ore body excavation",
+        "ion adsorption clay in-situ leaching",
+        "solvent extraction cascade element separation"
+      ]
+    },
+    "graphite": {
+      "id": "graphite",
+      "methods": [
+        "open pit flake graphite ore mining",
+        "underground vein graphite extraction",
+        "flotation concentration purification"
+      ]
+    },
+    "manganese": {
+      "id": "manganese",
+      "methods": [
+        "open pit mining oxide ore extraction",
+        "underground room pillar mining method",
+        "sea floor nodule collection future method"
+      ]
+    },
+    "molybdenum": {
+      "id": "molybdenum",
+      "methods": [
+        "copper mine byproduct flotation separation",
+        "primary molybdenum mine dedicated extraction",
+        "roasting concentrate oxide conversion"
+      ]
+    },
+    "vanadium": {
+      "id": "vanadium",
+      "methods": [
+        "magnetite ore mining vanadium bearing",
+        "steel slag processing secondary recovery",
+        "spent catalyst recycling petroleum residue"
+      ]
+    },
+    "tungsten": {
+      "id": "tungsten",
+      "methods": [
+        "underground vein mining hard rock",
+        "gravity separation wolframite scheelite",
+        "chemical processing ammonium paratungstate"
+      ]
+    },
+    "antimony": {
+      "id": "antimony",
+      "methods": [
+        "underground mining stibnite vein extraction",
+        "hand sorting high grade ore selection",
+        "volatilization roasting oxide recovery"
+      ]
+    },
+    "titanium": {
+      "id": "titanium",
+      "methods": [
+        "beach sand mining heavy mineral separation",
+        "hard rock mining ilmenite extraction",
+        "kroll process magnesium reduction sponge"
+      ]
+    },
+    "orange_juice": {
+      "id": "orange_juice",
+      "methods": [
+        "mechanical tree shaking fruit collection",
+        "hand picking selective harvest quality",
+        "reamer extraction whole fruit juicing"
+      ]
+    },
+    "milk": {
+      "id": "milk",
+      "methods": [
+        "parlor milking rotary carousel automated",
+        "robotic milking voluntary cow access",
+        "pipeline milking direct tank transfer"
+      ]
+    },
+    "cheese": {
+      "id": "cheese",
+      "methods": [
+        "rennet coagulation enzymatic curd formation",
+        "acid coagulation direct acidification",
+        "heat acid precipitation ricotta style"
+      ]
+    },
+    "butter": {
+      "id": "butter",
+      "methods": [
+        "continuous churning industrial production",
+        "batch churning traditional barrel method",
+        "cream separation centrifugal skimming"
+      ]
+    },
+    "eggs": {
+      "id": "eggs",
+      "methods": [
+        "conveyor collection automated gathering",
+        "manual nest box collection daily",
+        "enriched colony cage system gathering"
+      ]
+    },
+    "chicken": {
+      "id": "chicken",
+      "methods": [
+        "catching crew manual live collection",
+        "mechanical harvester automated catching",
+        "gas stunning humane processing method"
+      ]
+    },
+    "turkey": {
+      "id": "turkey",
+      "methods": [
+        "manual catching holiday season surge",
+        "controlled atmosphere stunning humane",
+        "processing line automated evisceration"
+      ]
+    },
+    "honey": {
+      "id": "honey",
+      "methods": [
+        "frame extraction centrifugal spinning",
+        "crush strain comb honey method",
+        "flow hive gravity extraction modern"
+      ]
+    },
+    "maple_syrup": {
+      "id": "maple_syrup",
+      "methods": [
+        "tap spout bucket traditional collection",
+        "tubing vacuum system modern pipeline",
+        "reverse osmosis pre-concentration efficient"
+      ]
+    },
+    "olive_oil": {
+      "id": "olive_oil",
+      "methods": [
+        "trunk shaker mechanical harvest",
+        "hand raking traditional olive collection",
+        "continuous centrifugal extraction modern"
+      ]
+    },
+    "palm_oil": {
+      "id": "palm_oil",
+      "methods": [
+        "chisel pole cutting fruit bunch harvest",
+        "mechanical grabber plantation harvest",
+        "screw press expeller oil extraction"
+      ]
+    },
+    "fish_meal": {
+      "id": "fish_meal",
+      "methods": [
+        "purse seine net pelagic fish capture",
+        "trawl net bycatch reduction fishing",
+        "cooker press drier reduction process"
+      ]
+    },
+    "soybean_oil": {
+      "id": "soybean_oil",
+      "methods": [
+        "solvent extraction hexane dissolution",
+        "mechanical expeller pressing continuous",
+        "supercritical CO2 extraction premium"
+      ]
+    },
+    "canola_oil": {
+      "id": "canola_oil",
+      "methods": [
+        "combine harvesting mature seed pods",
+        "expeller pressing first extraction",
+        "solvent extraction residual oil recovery"
+      ]
+    },
+    "cashews": {
+      "id": "cashews",
+      "methods": [
+        "hand picking fallen apple fruit",
+        "steam roasting shell softening",
+        "manual shelling kernel extraction"
+      ]
+    },
+    "pistachios": {
+      "id": "pistachios",
+      "methods": [
+        "mechanical shaker tree harvest",
+        "catch frame collection system",
+        "hulling machine outer shell removal"
+      ]
+    },
+    "walnuts": {
+      "id": "walnuts",
+      "methods": [
+        "trunk shaker mechanical harvest",
+        "sweeper windrow ground collection",
+        "hulling drying processing immediate"
+      ]
+    },
+    "hazelnuts": {
+      "id": "hazelnuts",
+      "methods": [
+        "ground sweeper fallen nut collection",
+        "mechanical harvester orchard floor",
+        "manual raking traditional gathering"
+      ]
+    },
+    "rapeseed": {
+      "id": "rapeseed",
+      "methods": [
+        "swathing windrow pre-harvest drying",
+        "direct combining standing crop harvest",
+        "desiccation spray uniform ripening"
+      ]
+    },
+    "silk": {
+      "id": "silk",
+      "methods": [
+        "cocoon stifling heat pupa killing",
+        "reeling hot water filament unwinding",
+        "degumming sericin protein removal"
+      ]
+    },
+    "potatoes": {
+      "id": "potatoes",
+      "methods": [
+        "digger harvester mechanical lifting",
+        "windrower soil separation preparation",
+        "bulk handling direct truck loading"
+      ]
+    },
+    "sunflower_oil": {
+      "id": "sunflower_oil",
+      "methods": [
+        "combine header adaptor seed harvest",
+        "expeller pressing cold extraction",
+        "solvent extraction complete oil recovery"
+      ]
+    }
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "created": "2026-02-05",
+    "phase": "5a-complete",
+    "totalPhrases": 180,
+    "crossPopulation": {
+      "environment": ["trading floors", "market venues", "exchange settings"],
+      "subject": ["traders", "brokers", "analysts"],
+      "atmosphere": ["market energy", "trading tension"]
+    }
+  },
+  "tradingFloors": {
+    "scenes": [
+      "trading pit chaos hand signals flying frantic",
+      "electronic screens wall green numbers cascading",
+      "broker phone bank shouting order execution",
+      "trading desk multiple monitors data streaming",
+      "exchange floor bell opening ceremony anticipation",
+      "futures pit circular crowd jostling positions",
+      "commodities exchange historic trading hall grand",
+      "screen trader focused keyboard rapid entry",
+      "floor trader colored jacket crowd recognition",
+      "clearing house back office settlement processing",
+      "market maker booth bid ask spread posting",
+      "arbitrage desk simultaneous screen monitoring",
+      "risk management room real-time position tracking",
+      "compliance officer surveillance screen watching",
+      "trading floor coffee cart early morning ritual"
+    ],
+    "equipment": [
+      "ticker tape machine printing continuous stream",
+      "trading terminal bloomberg reuters flashing",
+      "order book depth of market visualization",
+      "price chart candlestick pattern forming",
+      "news wire headline alert breaking story",
+      "direct market access terminal latency critical",
+      "algorithmic trading server rack humming",
+      "squawk box intercom market commentary live",
+      "position monitor profit loss real-time",
+      "risk dashboard var limits color coded"
+    ]
+  },
+  "traderTypes": {
+    "commoditySpecific": [
+      "oil trader houston energy corridor veteran",
+      "grain merchant chicago board expertise",
+      "metals broker london fix participant",
+      "coffee trader cupping skill taste memory",
+      "cotton buyer memphis exchange floor presence",
+      "sugar trader soft commodities specialist",
+      "natural gas trader weather model watching",
+      "precious metals dealer vault access trusted",
+      "livestock trader cattle auction ring savvy",
+      "cocoa buyer origin country relationships deep"
+    ],
+    "roles": [
+      "floor broker executing client orders pit",
+      "local trader personal account risk taker",
+      "scalper quick profit small moves rapid",
+      "position trader longer term view patient",
+      "spread trader correlation arbitrage specialist",
+      "hedger commercial producer protecting price",
+      "speculator directional bet conviction trade",
+      "market maker liquidity provider bid ask",
+      "prop trader firm capital aggressive style",
+      "quant trader algorithmic systematic approach"
+    ],
+    "archetypes": [
+      "veteran trader decades experience battle scarred",
+      "young gun aggressive ambitious rising star",
+      "quiet analyst deep research conviction trades",
+      "loud pit trader commanding presence voice",
+      "technical chartist pattern recognition obsessed",
+      "fundamental analyst supply demand expertise",
+      "contrarian trader against consensus bold",
+      "trend follower momentum riding patient",
+      "mean reversion trader oversold overbought hunter",
+      "event driven trader catalyst anticipation"
+    ]
+  },
+  "marketLanguage": {
+    "calls": [
+      "buy the dip accumulating weakness confident",
+      "sell the rip distributing strength cautious",
+      "going long bullish conviction position building",
+      "shorting the market bearish bet profit decline",
+      "covering shorts buying back borrowed shares",
+      "rolling contracts expiry management continuity",
+      "spreading the trade relative value positioning",
+      "lifting offers buying aggressively taking ask",
+      "hitting bids selling urgently taking bid",
+      "working the order patient execution algorithm"
+    ],
+    "slang": [
+      "dry powder cash ready deployment waiting",
+      "catching falling knife dangerous bottom picking",
+      "dead cat bounce temporary rally doomed",
+      "bag holder stuck position loss unrealized",
+      "diamond hands holding conviction through volatility",
+      "paper hands weak selling at first decline",
+      "FOMO buying fear missing out chasing",
+      "capitulation final surrender selling climax",
+      "short squeeze forced covering rapid rise",
+      "stop hunt triggering orders liquidity grab"
+    ],
+    "analysis": [
+      "breaking resistance technical level cleared",
+      "testing support price floor holding",
+      "gap up opening higher overnight news",
+      "gap down opening lower shock event",
+      "consolidating sideways range bound waiting",
+      "trending strongly directional momentum clear",
+      "divergence forming indicator price disagreement",
+      "volume spike unusual activity interest surge",
+      "open interest rising new money entering",
+      "backwardation curve inverted supply tight"
+    ]
+  },
+  "exchangeVenues": {
+    "historic": [
+      "chicago mercantile exchange cme group trading floor",
+      "new york mercantile exchange nymex energy trading",
+      "london metal exchange lme ring trading tradition",
+      "intercontinental exchange ice electronic platform",
+      "chicago board of trade cbot grain pit historic",
+      "comex metals division gold silver trading",
+      "tokyo commodity exchange tocom asian markets",
+      "shanghai futures exchange shfe china growth",
+      "multi commodity exchange mcx india expansion",
+      "dalian commodity exchange dce soybean corn"
+    ],
+    "modern": [
+      "electronic matching engine nanosecond execution",
+      "dark pool anonymous institutional trading",
+      "over the counter otc bilateral negotiation",
+      "swap execution facility sef derivatives trading",
+      "central counterparty clearing ccp risk management",
+      "data center colocation proximity advantage",
+      "fiber optic network low latency connection",
+      "cloud trading platform remote access anywhere",
+      "mobile trading app real-time market access",
+      "api connection algorithmic order routing"
+    ]
+  },
+  "tradingRituals": {
+    "daily": [
+      "pre-market preparation news review overnight",
+      "opening bell anticipation strategy ready",
+      "morning meeting desk huddle game plan",
+      "lunch break market lull position review",
+      "afternoon session volume pickup momentum",
+      "closing auction final price discovery",
+      "end of day position reconciliation check",
+      "after hours review trade journal update",
+      "overnight monitoring asia europe session",
+      "weekend analysis preparation next week"
+    ],
+    "seasonal": [
+      "roll period contract expiry transition busy",
+      "triple witching options futures expiry chaos",
+      "earnings season corporate results volatility",
+      "harvest pressure grain market supply flood",
+      "driving season gasoline demand summer peak",
+      "heating season energy demand winter surge",
+      "year end book squaring position clearing",
+      "january effect new year allocation flows",
+      "summer doldrums low volume vacation period",
+      "fall seasonality commodity demand patterns"
+    ]
+  }
+}

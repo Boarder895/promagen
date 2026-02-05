@@ -5,6 +5,11 @@
 // - No demo, no synthetic fallbacks, no freshness logic, no polling.
 // - UI cannot trigger upstream, cannot decide time, cannot mutate FX state.
 //
+// v2.0: Single Row Component
+// - Used by both FinanceRibbonTop and FinanceRibbonBottom
+// - Receives 5 chips per instance
+// - Same styling as before, just cleaner separation
+//
 // Enhancement:
 // - Subtle "alive" micro-motion on price:
 //   * neutral breath pulse
@@ -25,16 +30,20 @@ export interface FinanceRibbonProps {
   buildId: string;
   mode: FxApiMode;
   chips: FinanceRibbonChip[];
+  /** Accessibility label for the row */
+  rowLabel?: string;
+  /** Test ID for the ribbon section */
+  testId?: string;
 }
 
 // Snap-fit rules (UI-only; observational).
 // - Prefer 1 row if it can fit at >= 11.5px.
 // - If it cannot fit even at 11.5px, allow exactly 2 rows.
 // - Font snaps in 0.5px steps (largest that fits).
-const MIN_FONT_PX = 11.5;
+const MIN_FONT_PX = 10;
 const STEP_PX = 0.5;
 // Conservative cap so ultra-wide screens don't produce comically huge chips.
-const MAX_FONT_PX = 16.5;
+const MAX_FONT_PX = 18;
 
 type SnapRows = 1 | 2;
 type SnapState = { rows: SnapRows; fontPx: number };
@@ -53,6 +62,8 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
   buildId,
   mode,
   chips,
+  rowLabel = 'Foreign exchange pairs',
+  testId = 'finance-ribbon',
 }) => {
   const hostRef = React.useRef<HTMLDivElement | null>(null);
   const measurerRef = React.useRef<HTMLUListElement | null>(null);
@@ -88,7 +99,7 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
       // ---- Try 1 row (flex, nowrap) ----
       measurer.style.display = 'flex';
       measurer.style.flexWrap = 'nowrap';
-      measurer.style.justifyContent = 'center';
+      measurer.style.justifyContent = 'space-evenly';
 
       for (const px of candidates) {
         measurer.style.setProperty('--fx-chip-font', `${px}px`);
@@ -104,7 +115,7 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
 
       // ---- Fallback: 2 rows (grid, exactly 2 rows) ----
       measurer.style.display = 'grid';
-      measurer.style.justifyContent = 'center';
+      measurer.style.justifyContent = 'space-evenly';
       measurer.style.gridTemplateRows = 'repeat(2, max-content)';
       measurer.style.gridTemplateColumns = `repeat(${columnsForTwoRows}, max-content)`;
 
@@ -156,8 +167,8 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
 
   const rowClassName =
     snap.rows === 1
-      ? 'flex w-full flex-nowrap items-center justify-center gap-2'
-      : 'grid w-full items-center justify-center gap-2';
+      ? 'flex w-full flex-nowrap items-center justify-evenly gap-2'
+      : 'grid w-full items-center justify-evenly gap-2';
 
   const rowStyle: React.CSSProperties =
     snap.rows === 1
@@ -207,8 +218,8 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
 
   return (
     <section
-      aria-label="Foreign exchange snapshot"
-      data-testid="finance-ribbon"
+      aria-label={rowLabel}
+      data-testid={testId}
       data-mode={mode}
       data-build-id={buildId}
       className="w-full overflow-hidden rounded-2xl bg-slate-950/55 px-3 py-2 text-xs text-slate-50 shadow-md ring-1 ring-slate-800"
@@ -216,8 +227,8 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
       {/* Chips host */}
       <div ref={hostRef} className="relative w-full overflow-hidden">
         <ul
-          aria-label="Foreign exchange pairs"
-          data-testid="fx-row"
+          aria-label={rowLabel}
+          data-testid={`${testId}-row`}
           className={rowClassName}
           style={rowStyle}
         >

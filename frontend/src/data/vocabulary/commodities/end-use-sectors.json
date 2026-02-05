@@ -1,0 +1,560 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "created": "2026-02-05",
+    "phase": "4b-complete",
+    "totalCommodities": 78,
+    "sectorsPerCommodity": 3,
+    "totalPhrases": 234,
+    "crossPopulation": {
+      "environment": ["industrial facilities", "consumer settings", "manufacturing plants"],
+      "subject": ["end users", "professionals", "consumers"]
+    }
+  },
+  "endUse": {
+    "crude_oil": {
+      "id": "crude_oil",
+      "sectors": [
+        "petrochemical plant producing plastics polymers",
+        "transportation fuel powering global mobility",
+        "asphalt production paving highway infrastructure"
+      ]
+    },
+    "natural_gas": {
+      "id": "natural_gas",
+      "sectors": [
+        "power generation turbine electricity production",
+        "residential heating home furnace warmth",
+        "fertilizer manufacturing ammonia synthesis feedstock"
+      ]
+    },
+    "heating_oil": {
+      "id": "heating_oil",
+      "sectors": [
+        "residential home heating basement furnace",
+        "commercial building climate control system",
+        "agricultural greenhouse winter heating"
+      ]
+    },
+    "gasoline": {
+      "id": "gasoline",
+      "sectors": [
+        "passenger vehicle combustion engine propulsion",
+        "small engine equipment lawnmower chainsaw",
+        "motorsport racing high performance fuel"
+      ]
+    },
+    "diesel": {
+      "id": "diesel",
+      "sectors": [
+        "freight trucking long haul transportation",
+        "agricultural machinery tractor combine operation",
+        "marine shipping vessel propulsion fuel"
+      ]
+    },
+    "coal": {
+      "id": "coal",
+      "sectors": [
+        "electricity generation power plant combustion",
+        "steel production blast furnace coking coal",
+        "cement manufacturing kiln heat source"
+      ]
+    },
+    "uranium": {
+      "id": "uranium",
+      "sectors": [
+        "nuclear power plant electricity generation",
+        "medical isotope production cancer treatment",
+        "naval propulsion submarine aircraft carrier"
+      ]
+    },
+    "ethanol": {
+      "id": "ethanol",
+      "sectors": [
+        "fuel blending gasoline oxygenate additive",
+        "beverage alcohol spirits production",
+        "industrial solvent pharmaceutical manufacturing"
+      ]
+    },
+    "propane": {
+      "id": "propane",
+      "sectors": [
+        "residential heating rural home fuel",
+        "industrial forklift fleet warehouse operation",
+        "outdoor cooking backyard grill barbecue"
+      ]
+    },
+    "jet_fuel": {
+      "id": "jet_fuel",
+      "sectors": [
+        "commercial aviation passenger flight propulsion",
+        "military aircraft fighter jet operation",
+        "cargo freight air transport logistics"
+      ]
+    },
+    "gold": {
+      "id": "gold",
+      "sectors": [
+        "jewelry manufacturing wedding ring crafting",
+        "central bank reserves monetary gold storage",
+        "electronics production circuit board contacts"
+      ]
+    },
+    "silver": {
+      "id": "silver",
+      "sectors": [
+        "solar panel production photovoltaic cells",
+        "electronics manufacturing circuit conductors",
+        "jewelry silverware decorative crafting"
+      ]
+    },
+    "platinum": {
+      "id": "platinum",
+      "sectors": [
+        "automotive catalytic converter emissions control",
+        "jewelry luxury engagement ring setting",
+        "chemical catalyst industrial process"
+      ]
+    },
+    "palladium": {
+      "id": "palladium",
+      "sectors": [
+        "automotive emissions control catalytic converter",
+        "electronics multilayer ceramic capacitors",
+        "dental alloy crown bridge restoration"
+      ]
+    },
+    "rhodium": {
+      "id": "rhodium",
+      "sectors": [
+        "automotive three-way catalytic converter",
+        "glass production fiber optic manufacturing",
+        "jewelry plating brilliant white finish"
+      ]
+    },
+    "copper": {
+      "id": "copper",
+      "sectors": [
+        "electrical wiring building infrastructure",
+        "electric vehicle motor windings propulsion",
+        "plumbing pipe residential water supply"
+      ]
+    },
+    "aluminum": {
+      "id": "aluminum",
+      "sectors": [
+        "aerospace aircraft fuselage wing structure",
+        "beverage packaging can container production",
+        "automotive lightweight body panel manufacturing"
+      ]
+    },
+    "zinc": {
+      "id": "zinc",
+      "sectors": [
+        "steel galvanizing corrosion protection coating",
+        "battery production zinc carbon alkaline cells",
+        "die casting automotive hardware manufacturing"
+      ]
+    },
+    "nickel": {
+      "id": "nickel",
+      "sectors": [
+        "stainless steel production kitchen appliances",
+        "electric vehicle battery cathode material",
+        "aerospace superalloy jet engine turbine"
+      ]
+    },
+    "lead": {
+      "id": "lead",
+      "sectors": [
+        "automotive battery starting lighting ignition",
+        "radiation shielding medical x-ray protection",
+        "ammunition production bullet projectile"
+      ]
+    },
+    "tin": {
+      "id": "tin",
+      "sectors": [
+        "electronics solder circuit board assembly",
+        "food packaging tinplate can coating",
+        "bronze alloy bearing bushing production"
+      ]
+    },
+    "steel": {
+      "id": "steel",
+      "sectors": [
+        "construction building beam girder structure",
+        "automotive body frame chassis manufacturing",
+        "appliance production refrigerator washer housing"
+      ]
+    },
+    "wheat": {
+      "id": "wheat",
+      "sectors": [
+        "bread production bakery loaf manufacturing",
+        "pasta manufacturing durum semolina processing",
+        "animal feed livestock poultry ration"
+      ]
+    },
+    "corn": {
+      "id": "corn",
+      "sectors": [
+        "animal feed livestock poultry swine ration",
+        "ethanol production biofuel manufacturing",
+        "food processing sweetener starch production"
+      ]
+    },
+    "soybeans": {
+      "id": "soybeans",
+      "sectors": [
+        "animal feed protein meal livestock poultry",
+        "cooking oil food service frying",
+        "biodiesel production renewable fuel"
+      ]
+    },
+    "rice": {
+      "id": "rice",
+      "sectors": [
+        "food staple human consumption meal",
+        "sake brewing japanese alcohol production",
+        "pet food ingredient companion animal nutrition"
+      ]
+    },
+    "oats": {
+      "id": "oats",
+      "sectors": [
+        "breakfast cereal oatmeal production",
+        "horse feed equine nutrition stable",
+        "cosmetics skincare oat extract ingredient"
+      ]
+    },
+    "coffee": {
+      "id": "coffee",
+      "sectors": [
+        "cafe retail espresso drink preparation",
+        "packaged goods grocery roasted bean",
+        "food service restaurant hotel hospitality"
+      ]
+    },
+    "cocoa": {
+      "id": "cocoa",
+      "sectors": [
+        "chocolate confectionery candy production",
+        "beverage hot cocoa drink powder",
+        "cosmetics cocoa butter skincare lotion"
+      ]
+    },
+    "sugar": {
+      "id": "sugar",
+      "sectors": [
+        "food processing sweetener ingredient",
+        "beverage soft drink sweetening",
+        "ethanol production biofuel fermentation"
+      ]
+    },
+    "cotton": {
+      "id": "cotton",
+      "sectors": [
+        "textile apparel clothing manufacturing",
+        "home furnishing bedding towel production",
+        "medical supply bandage gauze production"
+      ]
+    },
+    "rubber": {
+      "id": "rubber",
+      "sectors": [
+        "tire manufacturing automotive wheel",
+        "medical glove healthcare protection",
+        "industrial hose belt seal component"
+      ]
+    },
+    "live_cattle": {
+      "id": "live_cattle",
+      "sectors": [
+        "beef production steak ground meat",
+        "leather manufacturing hide tanning",
+        "dairy breeding replacement heifer stock"
+      ]
+    },
+    "lean_hogs": {
+      "id": "lean_hogs",
+      "sectors": [
+        "pork production fresh meat retail",
+        "processed meat bacon sausage ham",
+        "export market international protein trade"
+      ]
+    },
+    "feeder_cattle": {
+      "id": "feeder_cattle",
+      "sectors": [
+        "feedlot finishing beef production",
+        "stocker operation backgrounding growth",
+        "breeding stock replacement genetics"
+      ]
+    },
+    "pork_bellies": {
+      "id": "pork_bellies",
+      "sectors": [
+        "bacon production breakfast meat retail",
+        "foodservice restaurant brunch menu",
+        "processed meat pancetta guanciale specialty"
+      ]
+    },
+    "lithium": {
+      "id": "lithium",
+      "sectors": [
+        "electric vehicle battery pack production",
+        "consumer electronics smartphone laptop battery",
+        "grid energy storage renewable integration"
+      ]
+    },
+    "cobalt": {
+      "id": "cobalt",
+      "sectors": [
+        "electric vehicle battery cathode production",
+        "aerospace superalloy turbine blade manufacturing",
+        "rechargeable battery portable device power"
+      ]
+    },
+    "rare_earths": {
+      "id": "rare_earths",
+      "sectors": [
+        "permanent magnet wind turbine generator",
+        "electronics smartphone screen display",
+        "electric vehicle motor magnet propulsion"
+      ]
+    },
+    "graphite": {
+      "id": "graphite",
+      "sectors": [
+        "lithium battery anode electrode production",
+        "steel production arc furnace electrode",
+        "lubricant high temperature application"
+      ]
+    },
+    "manganese": {
+      "id": "manganese",
+      "sectors": [
+        "steel production ferroalloy strengthening",
+        "battery cathode material energy storage",
+        "aluminum alloy beverage can production"
+      ]
+    },
+    "molybdenum": {
+      "id": "molybdenum",
+      "sectors": [
+        "steel alloy pipeline construction strength",
+        "oil refinery catalyst hydroprocessing",
+        "aerospace superalloy high temperature component"
+      ]
+    },
+    "vanadium": {
+      "id": "vanadium",
+      "sectors": [
+        "steel production tool steel strengthening",
+        "grid storage vanadium redox flow battery",
+        "aerospace titanium alloy aircraft component"
+      ]
+    },
+    "tungsten": {
+      "id": "tungsten",
+      "sectors": [
+        "cutting tool carbide drill bit insert",
+        "lighting filament incandescent bulb wire",
+        "aerospace balance weight counterweight"
+      ]
+    },
+    "antimony": {
+      "id": "antimony",
+      "sectors": [
+        "flame retardant plastic textile treatment",
+        "lead battery alloy hardening additive",
+        "semiconductor production electronics doping"
+      ]
+    },
+    "titanium": {
+      "id": "titanium",
+      "sectors": [
+        "aerospace aircraft engine fan blade",
+        "medical implant hip knee replacement",
+        "pigment production paint coating white"
+      ]
+    },
+    "orange_juice": {
+      "id": "orange_juice",
+      "sectors": [
+        "retail beverage breakfast drink carton",
+        "food service restaurant hotel breakfast",
+        "frozen concentrate home preparation"
+      ]
+    },
+    "milk": {
+      "id": "milk",
+      "sectors": [
+        "retail fluid milk grocery dairy case",
+        "cheese production dairy manufacturing",
+        "infant formula baby nutrition product"
+      ]
+    },
+    "cheese": {
+      "id": "cheese",
+      "sectors": [
+        "retail grocery deli specialty counter",
+        "food service pizza restaurant topping",
+        "food manufacturing ingredient processed food"
+      ]
+    },
+    "butter": {
+      "id": "butter",
+      "sectors": [
+        "retail grocery baking cooking spread",
+        "bakery production pastry croissant lamination",
+        "food manufacturing ingredient processed food"
+      ]
+    },
+    "eggs": {
+      "id": "eggs",
+      "sectors": [
+        "retail grocery breakfast protein source",
+        "bakery production cake cookie ingredient",
+        "food manufacturing mayonnaise pasta production"
+      ]
+    },
+    "chicken": {
+      "id": "chicken",
+      "sectors": [
+        "retail grocery fresh frozen meat",
+        "food service restaurant fast food menu",
+        "processed food nugget strip production"
+      ]
+    },
+    "turkey": {
+      "id": "turkey",
+      "sectors": [
+        "holiday retail thanksgiving christmas dinner",
+        "deli meat sliced sandwich production",
+        "ground meat healthy alternative product"
+      ]
+    },
+    "honey": {
+      "id": "honey",
+      "sectors": [
+        "retail grocery natural sweetener spread",
+        "food manufacturing bakery beverage ingredient",
+        "health wellness natural remedy product"
+      ]
+    },
+    "maple_syrup": {
+      "id": "maple_syrup",
+      "sectors": [
+        "retail breakfast pancake waffle topping",
+        "food manufacturing flavoring ingredient",
+        "specialty gift gourmet food product"
+      ]
+    },
+    "olive_oil": {
+      "id": "olive_oil",
+      "sectors": [
+        "retail grocery cooking oil bottle",
+        "food service restaurant kitchen essential",
+        "cosmetics skincare hair product ingredient"
+      ]
+    },
+    "palm_oil": {
+      "id": "palm_oil",
+      "sectors": [
+        "food manufacturing processed food ingredient",
+        "cosmetics soap shampoo production",
+        "biodiesel renewable fuel production"
+      ]
+    },
+    "fish_meal": {
+      "id": "fish_meal",
+      "sectors": [
+        "aquaculture salmon shrimp feed ingredient",
+        "livestock poultry swine protein supplement",
+        "pet food dog cat nutrition"
+      ]
+    },
+    "soybean_oil": {
+      "id": "soybean_oil",
+      "sectors": [
+        "food service frying cooking oil",
+        "food manufacturing margarine shortening",
+        "biodiesel renewable fuel production"
+      ]
+    },
+    "canola_oil": {
+      "id": "canola_oil",
+      "sectors": [
+        "retail grocery cooking oil spray",
+        "food service restaurant frying oil",
+        "food manufacturing margarine production"
+      ]
+    },
+    "cashews": {
+      "id": "cashews",
+      "sectors": [
+        "snack food roasted salted nut",
+        "nut butter alternative spread production",
+        "dairy alternative cashew milk cheese"
+      ]
+    },
+    "pistachios": {
+      "id": "pistachios",
+      "sectors": [
+        "snack food roasted in-shell nut",
+        "confectionery ice cream baklava ingredient",
+        "health food protein omega nutrition"
+      ]
+    },
+    "walnuts": {
+      "id": "walnuts",
+      "sectors": [
+        "snack food health nut consumption",
+        "bakery production brownie cookie ingredient",
+        "health food omega-3 brain nutrition"
+      ]
+    },
+    "hazelnuts": {
+      "id": "hazelnuts",
+      "sectors": [
+        "confectionery chocolate hazelnut spread",
+        "bakery pastry praline production",
+        "snack food roasted nut consumption"
+      ]
+    },
+    "rapeseed": {
+      "id": "rapeseed",
+      "sectors": [
+        "cooking oil canola retail grocery",
+        "biodiesel renewable fuel production",
+        "animal feed meal protein supplement"
+      ]
+    },
+    "silk": {
+      "id": "silk",
+      "sectors": [
+        "luxury fashion apparel dress scarf",
+        "home textile bedding pillowcase production",
+        "medical suture biocompatible thread"
+      ]
+    },
+    "potatoes": {
+      "id": "potatoes",
+      "sectors": [
+        "retail grocery fresh produce consumption",
+        "food processing chip french fry production",
+        "starch industry paper textile adhesive"
+      ]
+    },
+    "sunflower_oil": {
+      "id": "sunflower_oil",
+      "sectors": [
+        "retail grocery cooking oil bottle",
+        "food manufacturing snack chip frying",
+        "cosmetics skincare product ingredient"
+      ]
+    }
+  }
+}

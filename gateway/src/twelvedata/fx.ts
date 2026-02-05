@@ -3,6 +3,16 @@
  * =======================================================
  * FX-specific configuration using shared TwelveData infrastructure.
  *
+ * v3.1: BOTH ROWS ALWAYS POPULATED
+ * - Top row (pairs 0-4): EUR/USD, GBP/USD, GBP/ZAR, USD/CAD, USD/CNY
+ * - Bottom row (pairs 5-9): USD/INR, USD/BRL, USD/AUD, USD/NOK, USD/MYR
+ * - Startup: Top row fetches immediately, bottom row after 1 minute
+ * - After startup: Each row refreshes hourly (alternating)
+ * - Total: ~120 API calls/day
+ *
+ * CRITICAL FIX: rowQuoteCache now properly stores and merges both rows.
+ * getData() returns ALL 10 pairs, not just the last-fetched row.
+ *
  * Security: 10/10
  * - Input validation for all catalog data
  * - Secure API key handling (via adapter)
@@ -13,26 +23,118 @@
  */
 
 import { createFeedHandler } from '../lib/feed-handler.js';
-import { logDebug } from '../lib/logging.js';
+import { logInfo, logDebug, logWarn } from '../lib/logging.js';
 import type { FeedConfig, FxPair, FxQuote, FeedHandler } from '../lib/types.js';
 
 import { fetchTwelveDataPrices, parseFxPriceResponse, buildFxSymbol } from './adapter.js';
-import { fxScheduler } from './scheduler.js';
+import {
+  fxScheduler,
+  getCurrentFxRow,
+  getFxRowIndices,
+  recordFxRowRefresh,
+  getFxRowState,
+  getMsUntilSecondRowFetch,
+  type FxRow,
+} from './scheduler.js';
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 
 const FX_CONFIG_URL = process.env['FX_CONFIG_URL'] ?? 'https://promagen.com/api/fx/config';
-const FX_TTL_SECONDS = parseInt(process.env['FX_RIBBON_TTL_SECONDS'] ?? '1800', 10);
+const FX_TTL_SECONDS = parseInt(process.env['FX_RIBBON_TTL_SECONDS'] ?? '3600', 10); // 1 hour TTL
 const FX_BUDGET_DAILY = parseInt(process.env['FX_RIBBON_BUDGET_DAILY_ALLOWANCE'] ?? '800', 10);
 const FX_BUDGET_MINUTE = parseInt(process.env['FX_RIBBON_BUDGET_MINUTE_ALLOWANCE'] ?? '8', 10);
 
 // =============================================================================
-// PURE SSOT NOTE
+// ROW-AWARE QUOTE CACHE (CRITICAL: This persists both rows)
 // =============================================================================
-// This gateway must not embed fallback catalogs or demo prices.
-// The ONLY allowed fallback is a previously saved SSOT snapshot.
+
+/**
+ * Separate cache for each row's quotes.
+ * This allows us to return ALL 10 pairs even when only one row was just refreshed.
+ */
+interface RowQuoteCache {
+  top: { quotes: FxQuote[]; fetchedAt: Date | null };
+  bottom: { quotes: FxQuote[]; fetchedAt: Date | null };
+}
+
+const rowQuoteCache: RowQuoteCache = {
+  top: { quotes: [], fetchedAt: null },
+  bottom: { quotes: [], fetchedAt: null },
+};
+
+/**
+ * Update the cache for a specific row.
+ * Called after each successful fetch.
+ */
+export function updateRowCache(row: FxRow, quotes: FxQuote[]): void {
+  rowQuoteCache[row].quotes = quotes;
+  rowQuoteCache[row].fetchedAt = new Date();
+
+  logDebug('Row cache updated', {
+    row,
+    quoteCount: quotes.length,
+    pairIds: quotes.map((q) => q.id),
+    fetchedAt: rowQuoteCache[row].fetchedAt?.toISOString(),
+  });
+}
+
+/**
+ * Get cached quotes for a specific row.
+ */
+export function getCachedRowQuotes(row: FxRow): FxQuote[] {
+  return rowQuoteCache[row].quotes;
+}
+
+/**
+ * Get all cached quotes (both rows combined).
+ * This is the key function that ensures both rows are always returned.
+ */
+export function getAllCachedQuotes(): FxQuote[] {
+  return [...rowQuoteCache.top.quotes, ...rowQuoteCache.bottom.quotes];
+}
+
+/**
+ * Check if both rows have been populated at least once.
+ */
+export function areBothRowsPopulated(): boolean {
+  return rowQuoteCache.top.quotes.length > 0 && rowQuoteCache.bottom.quotes.length > 0;
+}
+
+/**
+ * Get cache status for trace/debug.
+ */
+export function getRowCacheStatus(): Record<string, unknown> {
+  return {
+    top: {
+      quoteCount: rowQuoteCache.top.quotes.length,
+      fetchedAt: rowQuoteCache.top.fetchedAt?.toISOString() ?? null,
+      pairIds: rowQuoteCache.top.quotes.map((q) => q.id),
+    },
+    bottom: {
+      quoteCount: rowQuoteCache.bottom.quotes.length,
+      fetchedAt: rowQuoteCache.bottom.fetchedAt?.toISOString() ?? null,
+      pairIds: rowQuoteCache.bottom.quotes.map((q) => q.id),
+    },
+    totalQuotes: rowQuoteCache.top.quotes.length + rowQuoteCache.bottom.quotes.length,
+    bothRowsPopulated: areBothRowsPopulated(),
+  };
+}
+
+// =============================================================================
+// CATALOG CACHE (for building symbols from pair IDs)
+// =============================================================================
+
+let catalogCache: FxPair[] = [];
+
+function setCatalogCache(catalog: FxPair[]): void {
+  catalogCache = catalog;
+}
+
+function _getCatalogCache(): FxPair[] {
+  return catalogCache;
+}
 
 // =============================================================================
 // FEED CONFIGURATION
@@ -40,7 +142,7 @@ const FX_BUDGET_MINUTE = parseInt(process.env['FX_RIBBON_BUDGET_MINUTE_ALLOWANCE
 
 /**
  * FX feed configuration for the generic feed handler.
- * Uses clock-aligned scheduler for :00 and :30 refresh times.
+ * Uses clock-aligned scheduler with startup sequence + row alternation.
  */
 const fxConfig: FeedConfig<FxPair, FxQuote> = {
   id: 'fx',
@@ -51,7 +153,7 @@ const fxConfig: FeedConfig<FxPair, FxQuote> = {
   ssotUrl: FX_CONFIG_URL,
   cacheKey: 'fx:ribbon',
 
-  // Clock-aligned scheduler (Guardrail: prevents TwelveData rate limit)
+  // Clock-aligned scheduler with startup sequence
   scheduler: fxScheduler,
 
   /**
@@ -102,11 +204,14 @@ const fxConfig: FeedConfig<FxPair, FxQuote> = {
             : undefined,
         isDefaultFree: typeof raw['isDefaultFree'] === 'boolean' ? raw['isDefaultFree'] : undefined,
         isDefaultPaid: typeof raw['isDefaultPaid'] === 'boolean' ? raw['isDefaultPaid'] : undefined,
-        // Demo/synthetic prices are intentionally NOT consumed by the gateway.
       });
     }
 
     if (pairs.length === 0) throw new Error('FX SSOT payload contained no valid pairs');
+
+    // Cache the catalog for later symbol building
+    setCatalogCache(pairs);
+
     return pairs;
   },
 
@@ -115,7 +220,10 @@ const fxConfig: FeedConfig<FxPair, FxQuote> = {
    */
   getDefaults(catalog: FxPair[], ssotPayload: unknown): string[] {
     // Prefer explicit ordered default IDs if the frontend provides them
-    const payload = ssotPayload && typeof ssotPayload === 'object' ? (ssotPayload as Record<string, unknown>) : null;
+    const payload =
+      ssotPayload && typeof ssotPayload === 'object'
+        ? (ssotPayload as Record<string, unknown>)
+        : null;
     const candidates = ['defaultPairIds', 'defaultPairs', 'defaultIds', 'pairIds'];
     for (const key of candidates) {
       const v = payload ? payload[key] : undefined;
@@ -138,7 +246,7 @@ const fxConfig: FeedConfig<FxPair, FxQuote> = {
   },
 
   /**
-   * Parse API response to quotes.
+   * Parse API response to quotes AND update row cache.
    */
   parseQuotes(data: unknown, catalog: FxPair[]): FxQuote[] {
     // Build symbol -> pair map
@@ -155,24 +263,112 @@ const fxConfig: FeedConfig<FxPair, FxQuote> = {
     const parsed = parseFxPriceResponse(data, symbolToIdMap);
 
     // Convert to FxQuote format
-    return parsed.map((entry) => ({
+    const quotes = parsed.map((entry) => ({
       id: entry.id,
       base: entry.base,
       quote: entry.quote,
       symbol: entry.symbol,
       price: entry.price,
     }));
+
+    // CRITICAL FIX: Determine row from ACTUAL pair IDs received, not scheduler state
+    // The scheduler state may have already advanced by the time parseQuotes is called
+    const receivedPairIds = new Set(quotes.map((q) => q.id));
+
+    // Get expected pair IDs for each row
+    const topRowIndices = getFxRowIndices('top');
+    const bottomRowIndices = getFxRowIndices('bottom');
+    const topRowPairIds = catalog.slice(topRowIndices.start, topRowIndices.end).map((p) => p.id);
+    const bottomRowPairIds = catalog
+      .slice(bottomRowIndices.start, bottomRowIndices.end)
+      .map((p) => p.id);
+
+    // Count matches for each row
+    const topMatchCount = topRowPairIds.filter((id) => receivedPairIds.has(id)).length;
+    const bottomMatchCount = bottomRowPairIds.filter((id) => receivedPairIds.has(id)).length;
+
+    // Determine which row this data belongs to based on best match
+    let detectedRow: FxRow;
+    if (topMatchCount > bottomMatchCount) {
+      detectedRow = 'top';
+    } else if (bottomMatchCount > topMatchCount) {
+      detectedRow = 'bottom';
+    } else {
+      // Equal matches - use scheduler state as tiebreaker (but this shouldn't happen)
+      detectedRow = getCurrentFxRow();
+      logWarn('parseQuotes: Equal row matches, using scheduler state as tiebreaker', {
+        topMatchCount,
+        bottomMatchCount,
+        schedulerRow: detectedRow,
+      });
+    }
+
+    // Update the cache for the detected row
+    if (topMatchCount >= 3 || bottomMatchCount >= 3) {
+      updateRowCache(detectedRow, quotes);
+      logInfo('Row cache updated after fetch (detected from pair IDs)', {
+        detectedRow,
+        topMatchCount,
+        bottomMatchCount,
+        receivedPairs: Array.from(receivedPairIds),
+      });
+    } else {
+      logWarn('Received quotes do not match either row well', {
+        topMatchCount,
+        bottomMatchCount,
+        topRowPairIds,
+        bottomRowPairIds,
+        receivedPairIds: Array.from(receivedPairIds),
+      });
+    }
+
+    // CRITICAL: Return ALL cached quotes from both rows
+    // This ensures getData() returns all 10 pairs, not just the last 5 fetched
+    const allCachedQuotes = getAllCachedQuotes();
+
+    if (allCachedQuotes.length > 0) {
+      logInfo('Returning merged quotes from both rows', {
+        topRowCount: rowQuoteCache.top.quotes.length,
+        bottomRowCount: rowQuoteCache.bottom.quotes.length,
+        totalCount: allCachedQuotes.length,
+      });
+      return allCachedQuotes;
+    }
+
+    // Fallback: return just the parsed quotes if cache is empty
+    return quotes;
   },
 
   /**
-   * Fetch quotes from TwelveData.
+   * Fetch quotes from TwelveData with ROW ALTERNATION.
+   * Only fetches the current row's pairs (top 5 or bottom 5).
    */
   async fetchQuotes(symbols: string[]): Promise<unknown> {
-    logDebug('FX fetchQuotes called', {
-      symbolCount: symbols.length,
+    // Determine which row to fetch based on scheduler state
+    const currentRow = getCurrentFxRow();
+    const { start, end } = getFxRowIndices(currentRow);
+
+    // Slice symbols for current row only
+    const rowSymbols = symbols.slice(start, end);
+
+    const rowState = getFxRowState();
+    logInfo('FX fetchQuotes with row alternation', {
+      currentRow,
+      totalSymbols: symbols.length,
+      rowSymbols: rowSymbols.length,
+      rowIndices: { start, end },
+      symbols: rowSymbols,
+      startupComplete: rowState.startupComplete,
       nextSlot: fxScheduler.getNextSlotTime().toISOString(),
     });
-    return fetchTwelveDataPrices(symbols);
+
+    // Record this row refresh
+    recordFxRowRefresh(currentRow);
+
+    // Fetch only the current row's symbols
+    const data = await fetchTwelveDataPrices(rowSymbols);
+
+    return data;
   },
 
   /**
@@ -211,11 +407,78 @@ const fxConfig: FeedConfig<FxPair, FxQuote> = {
 
 /**
  * FX feed handler instance.
- * Uses shared TwelveData budget and clock-aligned scheduler.
+ * Uses shared TwelveData budget and clock-aligned scheduler with row alternation.
+ *
+ * Row schedule (v3.1):
+ * - T+0 (startup): Top row (EUR/USD, GBP/USD, GBP/ZAR, USD/CAD, USD/CNY)
+ * - T+1 min: Bottom row (USD/INR, USD/BRL, USD/AUD, USD/NOK, USD/MYR)
+ * - T+1 hour: Top row refreshes
+ * - T+2 hours: Bottom row refreshes
+ * - Continues alternating hourly...
  *
  * Ready to use after calling init().
  */
 export const fxHandler: FeedHandler<FxPair, FxQuote> = createFeedHandler(fxConfig);
+
+// =============================================================================
+// EXTENDED TRACE INFO (for debugging row alternation)
+// =============================================================================
+
+/**
+ * Get extended trace info including row state and cache status.
+ */
+export function getFxTraceInfoWithRows(): Record<string, unknown> {
+  const baseTrace = fxHandler.getTraceInfo();
+  const rowState = getFxRowState();
+  const currentRow = getCurrentFxRow();
+  const cacheStatus = getRowCacheStatus();
+
+  return {
+    ...baseTrace,
+    rowAlternation: {
+      enabled: true,
+      currentRow,
+      lastRefreshedRow: rowState.lastRefreshedRow,
+      lastRefreshTime: rowState.lastRefreshTime?.toISOString() ?? null,
+      startupComplete: rowState.startupComplete,
+      startupTime: rowState.startupTime?.toISOString() ?? null,
+      topRowFetchedAtStartup: rowState.topRowFetchedAtStartup,
+      bottomRowFetchedAtStartup: rowState.bottomRowFetchedAtStartup,
+      topRowPairs: '0-4 (EUR/USD, GBP/USD, GBP/ZAR, USD/CAD, USD/CNY)',
+      bottomRowPairs: '5-9 (USD/INR, USD/BRL, USD/AUD, USD/NOK, USD/MYR)',
+      schedule: 'Startup: both rows within 1 min. Then: hourly alternation',
+      apiCallsPerDay: '~120 (5 pairs × 12 calls × 2 rows)',
+    },
+    rowCache: cacheStatus,
+    bothRowsPopulated: areBothRowsPopulated(),
+  };
+}
+
+// =============================================================================
+// STARTUP HELPER (for triggering second row fetch)
+// =============================================================================
+
+/**
+ * Check if the second row fetch should be triggered.
+ * Call this periodically during startup to trigger the bottom row fetch.
+ */
+export function shouldFetchSecondRow(): boolean {
+  const rowState = getFxRowState();
+  if (rowState.startupComplete) return false;
+  if (!rowState.topRowFetchedAtStartup) return false;
+  if (rowState.bottomRowFetchedAtStartup) return false;
+
+  const msUntil = getMsUntilSecondRowFetch();
+  return msUntil <= 0;
+}
+
+/**
+ * Get milliseconds until second row should be fetched.
+ * Returns 0 if already fetched or not applicable.
+ */
+export function getMsUntilSecondRow(): number {
+  return getMsUntilSecondRowFetch();
+}
 
 // =============================================================================
 // SELECTION VALIDATION (Pro users)
@@ -251,10 +514,6 @@ function isValidPairIdFormat(id: string): boolean {
  * - Normalizes and dedupes input
  * - Validates format of all pair IDs
  * - Enforces min/max limits
- *
- * @param pairIds - Requested pair IDs
- * @param tier - User tier ('free' or 'paid')
- * @returns Validation result
  */
 export function validateFxSelection(
   pairIds: string[],

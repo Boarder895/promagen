@@ -5,9 +5,9 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 1,
-    "ssotHash": "26ef80143e730350dc904f192e310f82f8d820ad9d650e4809e0b90ad05b6ef7",
-    "ssotFingerprint": "26ef80143e73",
-    "snapshotAt": "2026-02-01T13:24:37.219Z"
+    "ssotHash": "4136b288823062cc5977beae3cf59faa4d0f4d45f7c578d2681030f335c080d1",
+    "ssotFingerprint": "4136b2888230",
+    "snapshotAt": "2026-02-04T18:10:00.662Z"
   },
   "catalog": [
     {
@@ -815,10 +815,6 @@
     "btc",
     "eth",
     "usdt",
-    "bnb",
-    "sol",
-    "usdc",
-    "xrp",
-    "doge"
+    "bnb"
   ]
 }

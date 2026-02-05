@@ -38,7 +38,7 @@ export interface WeatherMeta {
   cachedAt?: string;
   expiresAt?: string;
   provider: string;
-  currentBatch: 'A' | 'B';
+  currentBatch: 'A' | 'B' | 'C' | 'D';
 }
 
 export interface UseWeatherResult {
@@ -61,7 +61,8 @@ export interface UseWeatherResult {
 // =============================================================================
 
 /** Weather refresh slots (minutes past hour) - guaranteed non-empty */
-const WEATHER_SLOTS: readonly [number, ...number[]] = [10, 40] as const;
+// v3.0.0: Gateway only fires at :10 (dropped :40 for budget)
+const WEATHER_SLOTS: readonly [number, ...number[]] = [10] as const;
 
 /** Minimum poll interval (1 minute) */
 const MIN_POLL_MS = 60_000;

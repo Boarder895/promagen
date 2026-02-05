@@ -42,7 +42,7 @@ interface WeatherMeta {
   cachedAt?: string;
   expiresAt?: string;
   provider: string;
-  currentBatch: 'A' | 'B';
+  currentBatch: 'A' | 'B' | 'C' | 'D';
   batchARefreshedAt?: string;
   batchBRefreshedAt?: string;
   budget: {

@@ -1,24 +1,29 @@
 /**
  * Promagen Gateway - OpenWeatherMap Clock-Aligned Scheduler
  * ===========================================================
- * Implements clock-aligned scheduling with batch alternation for weather data.
+ * Implements clock-aligned scheduling with 4-batch rotation for weather data.
  *
  * Security: 10/10
  * - No external inputs (pure time-based logic)
  * - Immutable slot configurations
  * - Deterministic behavior
  *
- * Schedule:
- * - Weather refreshes at :10 and :40 (offset from FX, Crypto, Indices)
- * - Batch A (priority cities) refreshes on odd hours
- * - Batch B (remaining cities) refreshes on even hours
+ * Schedule (v3.0.0 — 4-batch):
+ * - Weather refreshes at :10 only (dropped :40 to stay within budget)
+ * - 4 batches rotate by hour: hour % 4 → 0=A, 1=B, 2=C, 3=D
+ * - Each batch refreshes every 4 hours (6× per day)
+ * - ~21 calls per batch << 60/min limit
  *
  * Timeline:
  * ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
- * │:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
+ * │:00 │:05 │:10 │:20 │:30 │:35 │    │:50 │:00 │
  * ├────┼────┼────┼────┼────┼────┼────┼────┼────┤
- * │ FX │IDX │WTH │CRY │ FX │IDX │WTH │CRY │ FX │
+ * │ FX │IDX │WTH │CRY │ FX │IDX │    │CRY │ FX │
  * └────┴────┴────┴────┴────┴────┴────┴────┴────┘
+ *
+ * :40 slot freed — available for future feeds.
+ *
+ * Existing features preserved: Yes
  *
  * @module openweathermap/scheduler
  */
@@ -26,6 +31,7 @@
 import type { FeedScheduler } from '../lib/types.js';
 
 import type { BatchId } from './types.js';
+import { ALL_BATCH_IDS } from './types.js';
 
 // =============================================================================
 // CONSTANTS
@@ -44,9 +50,10 @@ const MIN_WAIT_MS = 1000; // 1 second
 
 /**
  * Weather slot schedule.
- * Offset from other feeds: FX(:00,:30), Indices(:05,:35), Crypto(:20,:50)
+ * v3.0.0: Reduced from [10, 40] to [10] only.
+ * Single slot per hour — batches rotate instead of alternating.
  */
-const WEATHER_SLOTS = [10, 40] as const;
+const WEATHER_SLOTS = [10] as const;
 
 // =============================================================================
 // BATCH DETERMINATION
@@ -54,67 +61,69 @@ const WEATHER_SLOTS = [10, 40] as const;
 
 /**
  * Determine which batch should be fetched at the current time.
- * 
- * Strategy:
- * - Odd hours (1, 3, 5, ..., 23): Batch A (priority cities)
- * - Even hours (0, 2, 4, ..., 22): Batch B (remaining cities)
  *
- * This ensures each batch is refreshed every 2 hours, with priority cities
- * (Batch A) having the same refresh frequency as non-priority cities.
+ * v3.0.0 Strategy (4-batch rotation):
+ * - hour % 4 === 0 → Batch A
+ * - hour % 4 === 1 → Batch B
+ * - hour % 4 === 2 → Batch C
+ * - hour % 4 === 3 → Batch D
  *
- * @returns Current batch ID ('A' or 'B')
+ * Each batch refreshes every 4 hours (6× per day).
+ *
+ * @returns Current batch ID ('A', 'B', 'C', or 'D')
  */
 export function getCurrentBatch(): BatchId {
   const hour = new Date().getUTCHours();
-  return hour % 2 === 1 ? 'A' : 'B';
+  return ALL_BATCH_IDS[hour % 4]!;
 }
 
 /**
  * Determine which batch should be fetched at a specific time.
- * 
+ *
  * @param date - Date to check
- * @returns Batch ID ('A' or 'B')
+ * @returns Batch ID ('A', 'B', 'C', or 'D')
  */
 export function getBatchForTime(date: Date): BatchId {
   const hour = date.getUTCHours();
-  return hour % 2 === 1 ? 'A' : 'B';
+  return ALL_BATCH_IDS[hour % 4]!;
 }
 
 /**
  * Get the next time a specific batch will be refreshed.
- * 
- * @param batch - Batch to check ('A' or 'B')
+ *
+ * @param batch - Batch to check ('A', 'B', 'C', or 'D')
  * @returns Date of next refresh for this batch
  */
 export function getNextBatchRefreshTime(batch: BatchId): Date {
   const now = new Date();
   const currentHour = now.getUTCHours();
   const currentMinute = now.getMinutes();
-  
-  // Determine if we need this hour's slot or next hour's
-  const targetMinute = currentMinute < 10 ? 10 : currentMinute < 40 ? 40 : 10;
-  const addHour = currentMinute >= 40 ? 1 : 0;
-  
-  let targetHour = currentHour + addHour;
-  
-  // Find the next hour that matches the batch
-  const isOddHour = (hour: number): boolean => hour % 2 === 1;
-  const needsOddHour = batch === 'A';
-  
-  // If current target hour doesn't match batch parity, add 1 hour
-  if (isOddHour(targetHour % 24) !== needsOddHour) {
-    targetHour += 1;
+
+  // Target minute is always :10 (single slot)
+  const targetMinute = WEATHER_SLOTS[0];
+
+  // If we've already passed :10 this hour, start looking from the next hour
+  const startHour = currentMinute >= targetMinute ? currentHour + 1 : currentHour;
+
+  // Find the next hour whose batch matches the requested one
+  const batchIndex = ALL_BATCH_IDS.indexOf(batch);
+  for (let offset = 0; offset < 4; offset++) {
+    const candidateHour = (startHour + offset) % 24;
+    if (candidateHour % 4 === batchIndex) {
+      const result = new Date(now);
+      result.setUTCHours(candidateHour, targetMinute, 0, 0);
+
+      // Handle day rollover
+      if (result <= now) {
+        result.setUTCDate(result.getUTCDate() + 1);
+      }
+
+      return result;
+    }
   }
-  
-  const result = new Date(now);
-  result.setUTCHours(targetHour % 24, targetMinute, 0, 0);
-  
-  // Handle day rollover
-  if (result <= now) {
-    result.setUTCDate(result.getUTCDate() + 1);
-  }
-  
-  return result;
+
+  // Fallback: should never reach here but return 4 hours from now
+  return new Date(now.getTime() + 4 * 60 * 60 * 1000);
 }
 
 // =============================================================================
@@ -124,6 +133,8 @@ export function getNextBatchRefreshTime(batch: BatchId): Date {
 /**
  * Weather feed scheduler implementation.
  * Implements FeedScheduler interface (Guardrail G4).
+ *
+ * v3.0.0: Single slot at :10 (was :10 and :40).
  */
 const weatherSchedulerImpl: FeedScheduler = {
   /**
@@ -131,8 +142,8 @@ const weatherSchedulerImpl: FeedScheduler = {
    *
    * Algorithm:
    * 1. Get current minute
-   * 2. Find next slot (:10 or :40) that's after current minute
-   * 3. If no slot found in current hour, wrap to :10 + 60 minutes
+   * 2. Find next slot (:10) that's after current minute
+   * 3. If no slot found in current hour, wrap to :10 of next hour
    * 4. Calculate exact milliseconds, accounting for seconds
    */
   getMsUntilNextSlot(): number {
@@ -172,7 +183,7 @@ const weatherSchedulerImpl: FeedScheduler = {
   /**
    * Check if the current time is within a refresh slot window.
    *
-   * Returns true if we're within SLOT_WINDOW_MS of a slot.
+   * Returns true if we're within SLOT_WINDOW_MS of the :10 slot.
    */
   isSlotActive(): boolean {
     const now = new Date();
@@ -216,7 +227,7 @@ const weatherSchedulerImpl: FeedScheduler = {
 
 /**
  * Weather feed scheduler singleton.
- * Clock-aligned to :10 and :40 with batch alternation.
+ * v3.0.0: Clock-aligned to :10 only with 4-batch rotation.
  */
 export const weatherScheduler: FeedScheduler = weatherSchedulerImpl;
 
@@ -241,7 +252,7 @@ export function getNextRefreshDescription(): string {
 
 /**
  * Check if the current slot is for a specific batch.
- * 
+ *
  * @param batch - Batch to check
  * @returns true if current slot is for this batch
  */
@@ -254,7 +265,7 @@ export function isCurrentSlotForBatch(batch: BatchId): boolean {
 
 /**
  * Get time until a specific batch's next refresh.
- * 
+ *
  * @param batch - Batch to check
  * @returns Milliseconds until next refresh for this batch
  */
@@ -271,12 +282,12 @@ export function getMsUntilBatchRefresh(batch: BatchId): number {
  */
 export function validateNoSlotOverlap(): void {
   const weatherSlots = new Set<number>(WEATHER_SLOTS);
-  
+
   // Known slots from other feeds (from api-calming-efficiency.md)
   const fxSlots = new Set<number>([0, 30]);
   const indicesSlots = new Set<number>([5, 35]);
   const cryptoSlots = new Set<number>([20, 50]);
-  
+
   const otherSlots = new Set<number>([...fxSlots, ...indicesSlots, ...cryptoSlots]);
 
   for (const slot of weatherSlots) {
@@ -293,45 +304,67 @@ export function validateNoSlotOverlap(): void {
 validateNoSlotOverlap();
 
 // =============================================================================
-// BATCH TRACKING STATE
+// BATCH TRACKING STATE (v3.0.0 — 4 batches)
 // =============================================================================
 
 /**
  * Track when each batch was last refreshed.
- * Used for stale-while-revalidate decisions.
+ * Used for stale-while-revalidate decisions and /trace endpoint.
  */
 interface BatchRefreshState {
   batchARefreshedAt: number | null;
   batchBRefreshedAt: number | null;
+  batchCRefreshedAt: number | null;
+  batchDRefreshedAt: number | null;
 }
 
 const batchState: BatchRefreshState = {
   batchARefreshedAt: null,
   batchBRefreshedAt: null,
+  batchCRefreshedAt: null,
+  batchDRefreshedAt: null,
 };
 
 /**
  * Record that a batch was refreshed.
- * 
+ *
  * @param batch - Batch that was refreshed
  */
 export function recordBatchRefresh(batch: BatchId): void {
   const now = Date.now();
-  if (batch === 'A') {
-    batchState.batchARefreshedAt = now;
-  } else {
-    batchState.batchBRefreshedAt = now;
+  switch (batch) {
+    case 'A':
+      batchState.batchARefreshedAt = now;
+      break;
+    case 'B':
+      batchState.batchBRefreshedAt = now;
+      break;
+    case 'C':
+      batchState.batchCRefreshedAt = now;
+      break;
+    case 'D':
+      batchState.batchDRefreshedAt = now;
+      break;
   }
 }
 
 /**
  * Get when a batch was last refreshed.
- * 
+ *
  * @param batch - Batch to check
  * @returns Timestamp or null if never refreshed
  */
 export function getBatchLastRefresh(batch: BatchId): number | null {
-  return batch === 'A' ? batchState.batchARefreshedAt : batchState.batchBRefreshedAt;
+  switch (batch) {
+    case 'A':
+      return batchState.batchARefreshedAt;
+    case 'B':
+      return batchState.batchBRefreshedAt;
+    case 'C':
+      return batchState.batchCRefreshedAt;
+    case 'D':
+      return batchState.batchDRefreshedAt;
+  }
 }
 
 /**
@@ -340,6 +373,8 @@ export function getBatchLastRefresh(batch: BatchId): number | null {
 export function getBatchRefreshState(): {
   batchARefreshedAt: string | undefined;
   batchBRefreshedAt: string | undefined;
+  batchCRefreshedAt: string | undefined;
+  batchDRefreshedAt: string | undefined;
 } {
   return {
     batchARefreshedAt: batchState.batchARefreshedAt
@@ -347,6 +382,12 @@ export function getBatchRefreshState(): {
       : undefined,
     batchBRefreshedAt: batchState.batchBRefreshedAt
       ? new Date(batchState.batchBRefreshedAt).toISOString()
+      : undefined,
+    batchCRefreshedAt: batchState.batchCRefreshedAt
+      ? new Date(batchState.batchCRefreshedAt).toISOString()
+      : undefined,
+    batchDRefreshedAt: batchState.batchDRefreshedAt
+      ? new Date(batchState.batchDRefreshedAt).toISOString()
       : undefined,
   };
 }
@@ -357,4 +398,6 @@ export function getBatchRefreshState(): {
 export function resetBatchState(): void {
   batchState.batchARefreshedAt = null;
   batchState.batchBRefreshedAt = null;
+  batchState.batchCRefreshedAt = null;
+  batchState.batchDRefreshedAt = null;
 }

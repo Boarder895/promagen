@@ -1,14 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "ssot": "frontend/src/data/fx/fx.selected.json",
+  "description": "10 FX pairs for commodity currency conversions. Top row (1-5): majors + ZAR. Bottom row (6-10): exotic commodity pairs.",
   "selectedIds": [
     "eur-usd",
-    "usd-jpy",
     "gbp-usd",
-    "usd-cny",
-    "usd-brl",
     "gbp-zar",
-    "aud-gbp",
-    "gbp-eur"
+    "usd-cad",
+    "usd-cny",
+    "usd-inr",
+    "usd-brl",
+    "usd-aud",
+    "usd-nok",
+    "usd-myr"
   ]
 }

@@ -1,0 +1,257 @@
+{
+  "metadata": {
+    "phase": "8b",
+    "name": "Geopolitical",
+    "description": "Political forces, conflicts, and power dynamics shaping commodity markets",
+    "phraseCount": 250,
+    "crossPopulation": ["Atmosphere", "Environment", "Subject"]
+  },
+  "resource_conflicts": {
+    "oil_wars": [
+      "Persian Gulf tanker escort",
+      "pipeline route disputed territory",
+      "oil field burning retreat",
+      "embargo economic weapon wielded",
+      "regime change resource motivation",
+      "military base strategic positioning",
+      "naval blockade chokepoint control",
+      "proxy war regional instability",
+      "sanctions impact civilian suffering",
+      "diplomatic tension barrel price"
+    ],
+    "water_wars": [
+      "dam construction downstream fury",
+      "river diversion treaty violation",
+      "aquifer depletion border tension",
+      "desalination necessity growing",
+      "irrigation rights legal battle",
+      "drought migration pressure building",
+      "water table falling conflict rising",
+      "cross-border pipeline negotiation",
+      "glacier melt source disappearing",
+      "water privatization protest erupting"
+    ],
+    "mineral_conflicts": [
+      "conflict diamond blood trade",
+      "coltan mine militia control",
+      "rare earth strategic monopoly",
+      "cobalt child labor exposure",
+      "gold mine illegal operation",
+      "copper theft infrastructure damage",
+      "sand mining environmental destruction",
+      "illegal logging forest decimation",
+      "poaching ivory horn extinction",
+      "fishing rights territorial dispute"
+    ],
+    "food_security": [
+      "grain export ban domestic protection",
+      "food riot price spike anger",
+      "land grab foreign investment",
+      "seed patent farmer dependence",
+      "fertilizer shortage harvest threat",
+      "stockpile strategic national reserve",
+      "import dependency vulnerability exposed",
+      "subsidy distortion market price",
+      "food weapon diplomatic leverage",
+      "hunger crisis political instability"
+    ]
+  },
+  "trade_politics": {
+    "tariffs_sanctions": [
+      "tariff announcement market reaction",
+      "trade war escalation tit-for-tat",
+      "sanction circumvention shadow trade",
+      "secondary sanction fear spreading",
+      "exemption negotiation diplomatic dance",
+      "retaliation list strategic targeting",
+      "WTO dispute lengthy process",
+      "dumping accusation investigation",
+      "countervailing duty imposition",
+      "trade deficit political ammunition"
+    ],
+    "trade_agreements": [
+      "free trade agreement signing ceremony",
+      "quota allocation negotiation intense",
+      "rules of origin complexity",
+      "dispute resolution mechanism testing",
+      "market access promise delivery",
+      "environmental standard weakening",
+      "labor protection concern raising",
+      "intellectual property enforcement",
+      "services liberalization expanding",
+      "investment protection controversy"
+    ],
+    "supply_chain_politics": [
+      "reshoring initiative government push",
+      "friend-shoring alliance building",
+      "decoupling rhetoric reality gap",
+      "critical mineral strategy developing",
+      "supply chain mapping vulnerability",
+      "stockpile building strategic",
+      "domestic production incentive",
+      "export control tightening",
+      "technology transfer restriction",
+      "industrial policy revival"
+    ]
+  },
+  "power_dynamics": {
+    "opec_influence": [
+      "OPEC meeting speculation intense",
+      "production cut announcement impact",
+      "quota compliance monitoring",
+      "spare capacity strategic reserve",
+      "market share battle price war",
+      "non-OPEC producer challenge",
+      "OPEC+ expansion influence broadening",
+      "cartel cohesion testing",
+      "price target band defending",
+      "geopolitical alignment shifting"
+    ],
+    "state_owned_enterprises": [
+      "national oil company dominance",
+      "state trading enterprise monopoly",
+      "sovereign wealth fund investment",
+      "strategic reserve management",
+      "government subsidy market distortion",
+      "political appointment management",
+      "transparency lacking concern",
+      "efficiency versus employment",
+      "international expansion acquisition",
+      "domestic obligation priority"
+    ],
+    "multinational_corporations": [
+      "supermajor consolidation continuing",
+      "trading house influence enormous",
+      "mining giant market power",
+      "agribusiness concentration concern",
+      "lobby influence policy shaping",
+      "tax optimization jurisdiction shopping",
+      "environmental liability dispute",
+      "community relations friction",
+      "shareholder pressure ESG",
+      "executive compensation scrutiny"
+    ]
+  },
+  "regional_hotspots": {
+    "middle_east": [
+      "Strait of Hormuz chokepoint",
+      "Saudi Arabia swing producer",
+      "Iran sanction impact regional",
+      "Iraq reconstruction oil production",
+      "UAE diversification strategy",
+      "Qatar gas giant diplomatic",
+      "Yemen conflict proxy dimension",
+      "Israel normalization energy cooperation",
+      "Syria pipeline politics",
+      "Lebanon crisis fuel shortage"
+    ],
+    "asia_pacific": [
+      "China demand growth driving",
+      "South China Sea shipping risk",
+      "Australia export dependency China",
+      "India import reliance vulnerability",
+      "Japan energy security obsession",
+      "Korea strategic reserve building",
+      "Indonesia export ban nickel",
+      "Malaysia palm oil politics",
+      "Vietnam manufacturing shift destination",
+      "Taiwan semiconductor strategic"
+    ],
+    "americas": [
+      "US shale revolution impact",
+      "Venezuela crisis production collapse",
+      "Brazil pre-salt development",
+      "Canada oil sands controversy",
+      "Mexico energy reform reversal",
+      "Argentina Vaca Muerta potential",
+      "Colombia coal export dependency",
+      "Chile copper lithium wealth",
+      "Peru mining social conflict",
+      "Panama Canal bottleneck"
+    ],
+    "africa": [
+      "Nigeria oil theft epidemic",
+      "Angola production decline",
+      "Libya instability output volatile",
+      "Mozambique gas project delayed",
+      "South Africa mining challenges",
+      "DRC cobalt copper strategic",
+      "Ghana gold cocoa economy",
+      "Kenya geothermal pioneer",
+      "Ethiopia dam Nile tension",
+      "Morocco phosphate dominant"
+    ],
+    "europe_russia": [
+      "Nord Stream controversy politics",
+      "Russia gas weapon Europe dependent",
+      "Ukraine transit route vulnerable",
+      "UK North Sea decline",
+      "Norway reliable supplier",
+      "Germany energy transition Energiewende",
+      "Poland coal phase-out struggle",
+      "Netherlands Groningen earthquake closure",
+      "Turkey hub ambition transit",
+      "sanctions evasion routes emerging"
+    ]
+  },
+  "institutional_framework": {
+    "international_bodies": [
+      "IMF commodity price forecast",
+      "World Bank development lending",
+      "IEA emergency coordination",
+      "UNCTAD trade development",
+      "FAO food security monitoring",
+      "WTO dispute settlement",
+      "OECD guidelines multinational",
+      "UN sanctions enforcement",
+      "G7 coordination price cap",
+      "G20 agenda commodity volatility"
+    ],
+    "regulatory_environment": [
+      "Dodd-Frank position limits",
+      "MiFID speculation curbs",
+      "environmental regulation tightening",
+      "carbon border adjustment mechanism",
+      "ESG reporting requirement",
+      "supply chain due diligence",
+      "conflict mineral disclosure",
+      "anti-corruption enforcement",
+      "antitrust investigation merger",
+      "market manipulation prosecution"
+    ]
+  },
+  "future_tensions": {
+    "emerging_conflicts": [
+      "Arctic resource race melting",
+      "deep sea mining jurisdiction",
+      "space resource claim legal",
+      "cyber attack infrastructure vulnerability",
+      "climate migration resource pressure",
+      "water scarcity conflict potential",
+      "food system disruption risk",
+      "energy transition winners losers",
+      "critical mineral competition intense",
+      "technology decoupling acceleration"
+    ],
+    "shifting_alliances": [
+      "BRICS expansion influence growing",
+      "petrodollar alternative emerging",
+      "bilateral swap agreement proliferating",
+      "regional bloc formation accelerating",
+      "middle power hedging strategy",
+      "non-aligned movement revival",
+      "commodity currency correlation",
+      "reserve diversification trend",
+      "payment system fragmentation",
+      "sanctions resilience building"
+    ]
+  },
+  "crossPopulationTags": {
+    "resource_conflicts": ["Atmosphere", "Environment"],
+    "trade_politics": ["Atmosphere", "Subject"],
+    "power_dynamics": ["Subject", "Atmosphere"],
+    "regional_hotspots": ["Environment", "Atmosphere"],
+    "institutional_framework": ["Environment", "Subject"],
+    "future_tensions": ["Atmosphere", "Environment"]
+  }
+}

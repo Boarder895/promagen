@@ -3,13 +3,22 @@
 > **Promagen Gateway** — Weather data feed for exchange cities  
 > **Provider:** OpenWeatherMap (api.openweathermap.org)  
 > **Status:** Production-ready  
-> **Security:** 10/10
+> **Security:** 10/10  
+> **Version:** 3.0.0 (01 Feb 2026)
 
 ---
 
 ## Overview
 
-This module provides real-time weather data for all 48 exchange cities in the Promagen catalog. Weather data influences Gallery Mode prompt generation (rain→moody, snow→serene, clear→vibrant).
+This module provides real-time weather data for all 89 exchange cities in the Promagen catalog. Weather data influences Gallery Mode prompt generation (rain→moody, snow→serene, clear→vibrant).
+
+## v3.0.0 Changes
+
+- **4-batch rotation** (was 2-batch alternation): A→B→C→D via `hour % 4`
+- **Coordinate deduplication**: 89 exchanges → 83 unique API calls (Mumbai ×4→1, Moscow ×2→1, Zurich ×2→1, Frankfurt ×2→1)
+- **Single slot** at `:10` (dropped `:40`) — one batch per hour
+- **Selected-16 in Batch A**: All 16 homepage default exchanges guaranteed in first batch
+- **Results expanded**: After fetching 83 representative cities, data is cloned to all 89 exchange IDs
 
 ## Budget Strategy
 
@@ -17,177 +26,98 @@ This module provides real-time weather data for all 48 exchange cities in the Pr
 |--------|-------|-------|
 | Daily Limit | 1,000 calls | Free tier |
 | Minute Limit | 60 calls | Burst protection |
-| Total Cities | 48 | From exchange catalog |
-| Batch Size | 24 cities | Fits within minute limit |
-| Refresh Frequency | Hourly per batch | Alternating A/B |
-| **Expected Daily Usage** | **576 calls** | 57.6% of budget |
-| **Headroom** | **424 calls** | 42.4% buffer |
+| Total Exchanges | 89 | From exchange catalog |
+| Unique Locations | 83 | After coordinate dedup |
+| Dedup Savings | 6 per cycle | Mumbai, Moscow, Zurich, Frankfurt |
+| Batch Size | ~21 cities | Fits well within minute limit |
+| Refresh Frequency | Every 4 hours per batch | 6× per day per batch |
+| **Expected Daily Usage** | **498 calls** | **49.8% of budget** |
+| **Headroom** | **502 calls** | **50.2% buffer** |
 
-## Batch Alternation
+## Batch Distribution
 
-Cities are split into two batches:
+| Batch | Cities | Composition | Refresh Hours (UTC) |
+|-------|--------|-------------|---------------------|
+| A | 21 | 16 selected + 5 fill | 0, 4, 8, 12, 16, 20 |
+| B | 21 | Remaining group 1 | 1, 5, 9, 13, 17, 21 |
+| C | 21 | Remaining group 2 | 2, 6, 10, 14, 18, 22 |
+| D | 20 | Remaining group 3 | 3, 7, 11, 15, 19, 23 |
 
-- **Batch A (Priority):** 24 cities including all 16 selected exchanges
-- **Batch B (Remaining):** 24 cities (remaining from catalog)
+## Coordinate Deduplication
 
-Batches alternate hourly:
-- Odd hours (1, 3, 5, ..., 23 UTC): Batch A
-- Even hours (0, 2, 4, ..., 22 UTC): Batch B
+Exchanges at identical coordinates share a single API call:
 
-Each city gets fresh data every 2 hours — acceptable for weather.
+| City | Exchanges | API Calls | Savings |
+|------|-----------|-----------|---------|
+| Mumbai | bse-mumbai, nse-mumbai, xbom-mumbai, xnse-mumbai | 1 | 3 |
+| Moscow | misx-moscow, moex-moscow | 1 | 1 |
+| Zurich | six-zurich, xswx-zurich | 1 | 1 |
+| Frankfurt | xetra-frankfurt, xfra-frankfurt | 1 | 1 |
+| **Total** | **10 exchanges** | **4 calls** | **6 saved** |
+
+After fetching weather for the representative city, results are expanded (cloned) to all exchange IDs at that coordinate. The cache stores all 89 entries so any query by exchange ID finds data.
 
 ## Clock-Aligned Scheduling
 
-Weather slots are offset from other feeds to prevent API congestion:
-
 ```
-Hour timeline:
+Hour timeline (every hour, single slot at :10):
 ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
-│:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
+│:00 │:05 │:10 │:20 │:30 │:35 │    │:50 │:00 │
 ├────┼────┼────┼────┼────┼────┼────┼────┼────┤
-│ FX │IDX │WTH │CRY │ FX │IDX │WTH │CRY │ FX │
+│ FX │IDX │WTH │CRY │ FX │IDX │    │CRY │ FX │
 └────┴────┴────┴────┴────┴────┴────┴────┴────┘
-  ↑    ↑    ↑    ↑    ↑    ↑    ↑    ↑
-  TD   MS   OWM  TD   TD   MS   OWM  TD
+  ↑    ↑    ↑    ↑    ↑    ↑         ↑
+  TD   MS   OWM  TD   TD   MS        TD
 
 TD  = TwelveData (FX, Crypto)
 MS  = Marketstack (Indices)
-OWM = OpenWeatherMap (Weather)
+OWM = OpenWeatherMap (Weather) — :10 only
 ```
 
-Weather refreshes at **:10** and **:40** — offset from all other feeds.
+The `:40` slot is now freed and available for future feeds.
 
-## Files
+## Batch Rotation
 
-| File | Purpose |
-|------|---------|
-| `types.ts` | Type definitions for weather data |
-| `budget.ts` | 1000/day, 60/min budget tracking |
-| `scheduler.ts` | Clock-aligned scheduling with batch alternation |
-| `adapter.ts` | OWM response → Promagen format |
-| `weather.ts` | API fetch logic with retry |
-| `index.ts` | Module exports |
-
-## Environment Variables
-
-```bash
-# Required
-OPENWEATHERMAP_API_KEY=your_api_key_here
-
-# Optional (with defaults)
-OPENWEATHERMAP_BUDGET_DAILY=1000
-OPENWEATHERMAP_BUDGET_MINUTE=60
-WEATHER_TTL_SECONDS=3600
+```
+Hour  0 → Batch A (21 cities including 16 selected)
+Hour  1 → Batch B (21 cities)
+Hour  2 → Batch C (21 cities)
+Hour  3 → Batch D (20 cities)
+Hour  4 → Batch A (refreshed, 4h since last)
+Hour  5 → Batch B
+...
+Hour 23 → Batch D
 ```
 
-## API Endpoint
-
-**Gateway:** `GET /weather`
-
-**Response:**
-```json
-{
-  "meta": {
-    "mode": "cached",
-    "cachedAt": "2026-01-19T10:10:00Z",
-    "expiresAt": "2026-01-19T11:10:00Z",
-    "provider": "openweathermap",
-    "currentBatch": "A",
-    "batchARefreshedAt": "2026-01-19T10:10:00Z",
-    "batchBRefreshedAt": "2026-01-19T09:10:00Z",
-    "budget": {
-      "state": "ok",
-      "dailyUsed": 48,
-      "dailyLimit": 1000,
-      "minuteUsed": 0,
-      "minuteLimit": 60
-    }
-  },
-  "data": [
-    {
-      "id": "nyse-new-york",
-      "city": "New York",
-      "temperatureC": 12.5,
-      "temperatureF": 54.5,
-      "conditions": "Clear",
-      "description": "clear sky",
-      "humidity": 65,
-      "windSpeedKmh": 18,
-      "emoji": "☀️",
-      "asOf": "2026-01-19T10:10:00Z"
-    }
-  ]
-}
-```
-
-## Fallback Behaviour
-
-Following the stale-while-revalidate pattern (same as indices):
-
-1. **Fresh cache** → Return immediately
-2. **Circuit breaker open / budget blocked** → Return stale (last-known-good)
-3. **API failure** → Return stale (last-known-good)
-4. **No data ever cached** → Return empty array (renders as "—")
-
-**CRITICAL:** No demo/synthetic data. Either real API data or nothing.
-
-## Security Measures
-
-| Measure | Implementation |
-|---------|----------------|
-| API key protection | Environment variable only |
-| Input validation | Lat/lon range checks (-90 to 90, -180 to 180) |
-| Response sanitisation | Strict type parsing in adapter |
-| Rate limiting | Budget manager with daily/minute tracking |
-| Circuit breaker | 3 failures → 30s pause |
-| HTTPS only | All OWM API calls over TLS |
-| Error masking | Clients see "unavailable", not API errors |
-
-## Usage Example
-
-```typescript
-import { openWeatherMapBudget } from './budget.js';
-import { weatherScheduler, getCurrentBatch } from './scheduler.js';
-import { fetchWeatherForBatch } from './weather.js';
-
-// Check if we should refresh
-if (weatherScheduler.isSlotActive()) {
-  const batch = getCurrentBatch();
-  const citiesCount = batch === 'A' ? 24 : 24;
-  
-  // Check budget
-  if (openWeatherMapBudget.canSpend(citiesCount)) {
-    openWeatherMapBudget.spend(citiesCount);
-    
-    const data = await fetchWeatherForBatch(batch);
-    // Cache and serve data
-  }
-}
-```
-
-## Testing
+## Verification
 
 ```powershell
-# Check budget state
-$weather = Invoke-RestMethod "https://promagen-api.fly.dev/weather"
-$weather.meta.budget
+# Check weather SSOT (should return 89 cities)
+(Invoke-RestMethod "https://promagen.com/api/weather/config").cities.Count
 
-# Verify data count
-$weather.data.Count  # Should be 48
+# Check gateway trace (should show uniqueLocations: 83, deduplicatedSavings: 6)
+(Invoke-RestMethod "https://promagen-api.fly.dev/trace").weather
 
-# Spot check temperatures
-$weather.data | Where-Object { $_.city -eq "London" }
+# Check weather data count (should reach 89 after all 4 batches have run)
+(Invoke-RestMethod "https://promagen-api.fly.dev/weather").data.Count
+
+# Check budget usage
+(Invoke-RestMethod "https://promagen-api.fly.dev/trace").weather.budget
 ```
 
-## Cross-References
+## Architecture
 
-- **Authority:** `docs/authority/gallery-mode-implementation-plan.md` §21
-- **Calming patterns:** `docs/authority/api-calming-efficiency.md`
-- **Exchange catalog:** `frontend/src/data/exchanges/exchanges.catalog.json`
-- **Selected exchanges:** `frontend/public/ssot/exchanges.selected.json`
+```
+Frontend SSOT                    Gateway
+─────────────────                ─────────────────────────
+/api/weather/config  ──────────► initWeatherHandler()
+ ├─ 89 cities                    ├─ buildCoordGroups()     → 83 unique
+ ├─ selectedExchangeIds (all)    ├─ splitIntoBatches()     → A(21) B(21) C(21) D(20)
+ └─ freeDefaultIds (16)          └─ startBackgroundRefresh()
 
----
-
-**SSOT Compliance:** Cities come from the exchange catalog, not hardcoded. Adding exchanges to the catalog automatically includes them in weather fetching.
-
-**Existing features preserved:** Yes — this module integrates with existing gateway patterns.
+Every hour at :10:
+ getCurrentBatch()               → hour % 4 → A/B/C/D
+ fetchWeatherBatch(~21 reps)     → 21 API calls
+ expandToAllExchangeIds()        → 21 → ~25 (dedup expansion)
+ mergeWeatherData()              → cache stores all 89 entries
+```

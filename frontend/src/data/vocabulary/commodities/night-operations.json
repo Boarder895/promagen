@@ -1,0 +1,230 @@
+{
+  "metadata": {
+    "phase": "9c",
+    "name": "Night Operations",
+    "description": "After-hours activities, night shifts, and 24/7 commodity operations",
+    "phraseCount": 200,
+    "crossPopulation": ["Lighting", "Atmosphere", "Environment"]
+  },
+  "night_shift_work": {
+    "industrial": [
+      "night shift skeleton crew",
+      "fluorescent hum empty halls",
+      "machine running unattended",
+      "control room screens glowing",
+      "security guard rounds walking",
+      "emergency lights red glow",
+      "overtime hours stretching",
+      "coffee machine constant use",
+      "radio chatter breaking silence",
+      "maintenance window utilized"
+    ],
+    "logistics": [
+      "truck loading dock lit",
+      "forklift headlights cutting dark",
+      "container yard floodlit",
+      "ship berthing night arrival",
+      "rail yard switching clanking",
+      "airport cargo handling",
+      "customs clearance overnight",
+      "cold chain maintained continuous",
+      "inventory count night team",
+      "delivery route starting pre-dawn"
+    ],
+    "extraction": [
+      "drilling rig lit Christmas tree",
+      "mine headframe beacon shining",
+      "refinery flare stack burning",
+      "pump jack nodding darkness",
+      "pipeline monitoring remote",
+      "offshore platform lights distant",
+      "quarry equipment idling",
+      "logging camp quiet sleeping",
+      "fishing vessel running lights",
+      "processing plant humming continuous"
+    ],
+    "agriculture": [
+      "irrigation running overnight",
+      "greenhouse lights growing",
+      "livestock barn checking",
+      "grain dryer running continuous",
+      "frost protection smudge pots",
+      "harvest continuing headlights",
+      "predator patrol protecting",
+      "automated feeder dispensing",
+      "climate control adjusting",
+      "security camera monitoring"
+    ]
+  },
+  "24_7_trading": {
+    "global_markets": [
+      "Asian session opening",
+      "European handoff occurring",
+      "American close approaching",
+      "overnight gap risk",
+      "thin liquidity danger",
+      "electronic markets continuous",
+      "algo trading tireless",
+      "news breaking overnight",
+      "currency pairs moving",
+      "futures rolling forward"
+    ],
+    "night_desk": [
+      "skeleton staff monitoring",
+      "overseas counterpart calling",
+      "position limit watching",
+      "risk alert triggering",
+      "backup systems checking",
+      "morning brief preparing",
+      "market recap writing",
+      "client update sending",
+      "regulatory filing completing",
+      "disaster recovery testing"
+    ],
+    "physical_trading": [
+      "cargo tracking continuous",
+      "vessel position monitoring",
+      "weather routing updating",
+      "port congestion checking",
+      "demurrage clock ticking",
+      "insurance claim filing",
+      "inspection coordinating timezone",
+      "payment wire timing",
+      "document courier tracking",
+      "storage report generating"
+    ]
+  },
+  "night_atmospheres": {
+    "industrial_nocturne": [
+      "steam rising night air",
+      "sparks showering darkness",
+      "furnace glow orange sky",
+      "cooling tower mist rising",
+      "stack emissions visible lit",
+      "tank farm lights reflected",
+      "conveyor belt silhouette moving",
+      "crane cab isolated lit",
+      "loading arm articulating dark",
+      "flare tip dancing flame"
+    ],
+    "port_nocturne": [
+      "ship lights harbor reflected",
+      "gantry crane towering lit",
+      "container stack shadows geometric",
+      "tugboat searchlight sweeping",
+      "pilot boat approaching",
+      "anchor lights swinging",
+      "deck lights working cargo",
+      "shore crane spotlight beam",
+      "truck headlights queuing",
+      "warehouse security lighting"
+    ],
+    "rural_nocturne": [
+      "grain elevator lit solitary",
+      "barn light warm glow",
+      "tractor headlights field crossing",
+      "irrigation pivot moving dark",
+      "windmill silhouette stars",
+      "farmhouse kitchen light distant",
+      "highway truck passing",
+      "railroad crossing signals flashing",
+      "grain dust catching light",
+      "harvest moon rising golden"
+    ],
+    "urban_nocturne": [
+      "trading floor cleaning crew",
+      "office tower lights scattered",
+      "delivery truck city empty",
+      "restaurant supply arriving",
+      "bakery starting pre-dawn",
+      "market stall setup beginning",
+      "newspaper delivery rounds",
+      "street sweeper passing",
+      "coffee shop opening early",
+      "commuter train first run"
+    ]
+  },
+  "night_sounds": {
+    "industrial": [
+      "machinery humming constant",
+      "alarm distant occasional",
+      "compressor cycling rhythm",
+      "ventilation fan droning",
+      "metal cooling ticking",
+      "pump station throbbing",
+      "generator backup testing",
+      "forklift beeping warning",
+      "intercom announcement echoing",
+      "door slam metal resonant"
+    ],
+    "natural": [
+      "crickets chorus constant",
+      "owl hunting calling",
+      "wind through structures",
+      "water flowing continuous",
+      "thunder distant rumbling",
+      "rain on metal roof",
+      "waves against hull",
+      "ice cracking cold",
+      "leaves rustling stored grain",
+      "animal movement startling"
+    ],
+    "transport": [
+      "truck engine idling",
+      "train horn distant crossing",
+      "ship horn fog warning",
+      "aircraft overhead passing",
+      "helicopter patrol circling",
+      "tire on wet pavement",
+      "air brakes releasing hiss",
+      "container doors closing",
+      "chain rattling securing",
+      "engine starting cold"
+    ]
+  },
+  "night_lighting": {
+    "artificial": [
+      "sodium vapor orange glow",
+      "LED bright white harsh",
+      "mercury vapor blue tint",
+      "halogen spotlight intense",
+      "fluorescent tube flickering",
+      "emergency red battery",
+      "runway lights guiding",
+      "beacon rotating warning",
+      "headlight cutting darkness",
+      "screen glow face illuminated"
+    ],
+    "natural": [
+      "moonlight silver casting",
+      "starlight faint ambient",
+      "dawn light first grey",
+      "dusk light fading purple",
+      "lightning flash momentary",
+      "fire glow dancing warm",
+      "bioluminescence water glowing",
+      "aurora northern dancing",
+      "city glow horizon reflected",
+      "snow reflection brightening"
+    ],
+    "shadows": [
+      "equipment shadow long stretching",
+      "worker silhouette backlit",
+      "container canyon darkness",
+      "tank shadow circular pooling",
+      "crane shadow sweeping moving",
+      "stack shadow shifting moon",
+      "fence shadow pattern striped",
+      "vehicle shadow passing temporary",
+      "cloud shadow moving landscape",
+      "building shadow angular sharp"
+    ]
+  },
+  "crossPopulationTags": {
+    "night_shift_work": ["Subject", "Environment"],
+    "24_7_trading": ["Atmosphere", "Subject"],
+    "night_atmospheres": ["Atmosphere", "Lighting", "Environment"],
+    "night_sounds": ["Atmosphere", "Environment"],
+    "night_lighting": ["Lighting", "Atmosphere"]
+  }
+}

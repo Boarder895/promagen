@@ -7,37 +7,27 @@
 // Market Pulse: Flowing energy streams connect exchanges to providers
 // Auth: Sign in button in header (right), Home + Studio buttons below
 //
+// UPDATED v2.6: Two FX Ribbons (Crypto Removed)
+// - Top FX ribbon: 5 pairs (EUR/USD, GBP/USD, GBP/ZAR, USD/CAD, USD/CNY)
+// - Bottom FX ribbon: 5 pairs (USD/INR, USD/BRL, AUD/USD, USD/NOK, USD/MYR)
+// - Crypto completely removed from codebase
+//
 // UPDATED v2.5: Studio sub-page support
 // - Added isStudioSubPage prop to pass to Mission Control
 // - Mission Control shows 4 buttons (Home | Studio | Pro | Sign in) on Studio sub-pages
 // - All other functionality unchanged
-//
-// UPDATED v2.4: Pro Promagen page support
-// - Added isProPromagenPage prop to pass to Mission Control
-// - Mission Control shows Home button instead of Pro on /pro-promagen page
-// - Updated fallback nav to conditionally show Pro Promagen button
-// - All other functionality unchanged
-//
-// UPDATED v2.3: Studio page support
-// - Added isStudioPage prop to pass to Mission Control
-// - Mission Control shows Home button instead of Studio on /studio page
-// - All other functionality unchanged
-//
-// UPDATED v2.2: Control Dock integration
-// - Control Dock centered BETWEEN "PROMAGEN" label and "Intelligent Prompt Builder"
-// - Houses Reference Frame Toggle (and future controls)
-// - Visible on all viewport sizes (desktop + mobile)
-// - Engine Bay + Mission Control panel synchronization maintained
-// - Fallback nav still shows when MissionControl is completely hidden
 // ============================================================================
 
 'use client';
 
 import React, { useRef, useCallback, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import FinanceRibbon from '@/components/ribbon/finance-ribbon.container';
-import CommoditiesRibbon from '@/components/ribbon/commodities-ribbon.container';
-import CryptoRibbon from '@/components/ribbon/crypto-ribbon.container';
+import {
+  FinanceRibbonTop,
+  FinanceRibbonBottom,
+} from '@/components/ribbon/finance-ribbon.container';
+import CommoditiesMoversGrid from '@/components/ribbon/commodities-movers-grid.container';
+// REMOVED: Crypto ribbon - no longer part of Promagen
 import DemoFinanceRibbon from '@/components/ribbon/demo-finance-ribbon';
 import ProvenanceFooter from '@/components/core/provenance-footer';
 import AuthButton from '@/components/auth/auth-button';
@@ -261,6 +251,7 @@ export default function HomepageGrid({
   // ============================================================================
   // FINANCE RIBBON RENDERING
   // ============================================================================
+  // v2.6: Two separate FX ribbons with commodities in between
 
   const renderFinanceRibbon = useCallback(() => {
     if (!showFinanceRibbon) return null;
@@ -269,11 +260,15 @@ export default function HomepageGrid({
       return <DemoFinanceRibbon pairs={demoPairs} />;
     }
 
+    // Layout order:
+    // 1. Top FX ribbon (5 pairs: EUR/USD, GBP/USD, GBP/ZAR, USD/CAD, USD/CNY)
+    // 2. Commodities grid
+    // 3. Bottom FX ribbon (5 pairs: USD/INR, USD/BRL, AUD/USD, USD/NOK, USD/MYR)
     return (
       <>
-        <FinanceRibbon />
-        <CommoditiesRibbon />
-        <CryptoRibbon />
+        <FinanceRibbonTop />
+        <CommoditiesMoversGrid />
+        <FinanceRibbonBottom />
       </>
     );
   }, [showFinanceRibbon, demoMode, demoPairs]);
@@ -410,7 +405,7 @@ export default function HomepageGrid({
 
             <p className="mt-1 max-w-3xl text-sm text-slate-300 sm:text-base">
               <span className="whitespace-nowrap">
-                Context-driven prompts built from live exchanges, FX, commodities, crypto & weather.
+                Context-driven prompts built from live exchanges, FX, commodities & weather.
               </span>
             </p>
             <div className="pointer-events-none mt-1 flex w-full justify-center">

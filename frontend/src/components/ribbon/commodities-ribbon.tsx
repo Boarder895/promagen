@@ -178,11 +178,31 @@ export default function CommoditiesRibbon({ chips }: CommoditiesRibbonProps) {
       .filter(Boolean)
       .join(' ');
 
+    // Format daily percentage change: "+0.86%" / "−1.22%" / null → hidden
+    const pctText =
+      chip.deltaPct != null && Number.isFinite(chip.deltaPct)
+        ? `${chip.deltaPct >= 0 ? '+' : ''}${chip.deltaPct.toFixed(2)}%`
+        : null;
+
+    const pctClasses = [
+      'tabular-nums',
+      chip.tick === 'up'
+        ? 'text-emerald-400'
+        : chip.tick === 'down'
+          ? 'text-red-400'
+          : 'text-slate-500',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     const chipContent = (
       <span className="flex items-baseline gap-1">
         <span className="font-semibold">{chip.label}</span>
         <span aria-hidden="true" className="text-slate-500">·</span>
         <span className={priceClasses}>{chip.priceText}</span>
+        {pctText && (
+          <span className={pctClasses}>{pctText}</span>
+        )}
       </span>
     );
 

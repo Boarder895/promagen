@@ -31,48 +31,48 @@ import { getDefaultFreeCommodities } from '@/lib/commodities/catalog';
 
 const COMMODITY_BRAND_COLOURS: Record<string, string> = {
   // Energy - vibrant colours
-  brent_crude: '#EF4444',       // Brent - red (was charcoal - invisible)
-  wti_crude: '#F97316',         // WTI - orange (was dark - invisible)
-  ttf_natural_gas: '#00CED1',   // TTF Gas - cyan
-  henry_hub_gas: '#00B4D8',     // Henry Hub - sky cyan
+  brent_crude: '#EF4444', // Brent - red (was charcoal - invisible)
+  wti_crude: '#F97316', // WTI - orange (was dark - invisible)
+  ttf_natural_gas: '#00CED1', // TTF Gas - cyan
+  henry_hub_gas: '#00B4D8', // Henry Hub - sky cyan
 
   // Precious metals
-  gold: '#FFD700',              // Gold
-  silver: '#C0C0C0',            // Silver
-  platinum: '#E5E4E2',          // Platinum
-  palladium: '#CED0CE',         // Palladium
+  gold: '#FFD700', // Gold
+  silver: '#C0C0C0', // Silver
+  platinum: '#E5E4E2', // Platinum
+  palladium: '#CED0CE', // Palladium
 
   // Base metals - more vibrant
-  copper: '#F97316',            // Copper - orange (more visible)
-  aluminum: '#94A3B8',          // Aluminum - slate
-  zinc: '#A1A1AA',              // Zinc - warm grey
-  nickel: '#84CC16',            // Nickel - lime green
-  lead: '#78716C',              // Lead - stone
-  tin: '#E2E8F0',               // Tin - bright silver
+  copper: '#F97316', // Copper - orange (more visible)
+  aluminum: '#94A3B8', // Aluminum - slate
+  zinc: '#A1A1AA', // Zinc - warm grey
+  nickel: '#84CC16', // Nickel - lime green
+  lead: '#78716C', // Lead - stone
+  tin: '#E2E8F0', // Tin - bright silver
 
   // Agriculture - Grains
-  wheat: '#F59E0B',             // Wheat - amber
-  corn: '#FACC15',              // Corn - yellow
-  soybeans: '#A3E635',          // Soybean - lime
-  rice: '#FEF3C7',              // Rice - cream
-  oats: '#D97706',              // Oats - orange
+  wheat: '#F59E0B', // Wheat - amber
+  corn: '#FACC15', // Corn - yellow
+  soybeans: '#A3E635', // Soybean - lime
+  rice: '#FEF3C7', // Rice - cream
+  oats: '#D97706', // Oats - orange
 
   // Agriculture - Softs - VIBRANT
-  coffee: '#DC2626',            // Coffee - red (was brown - too muted)
-  sugar: '#A855F7',             // Sugar - purple (was cream - invisible)
-  cocoa: '#92400E',             // Cocoa - amber brown
-  cotton: '#F8FAFC',            // Cotton - white
-  orange_juice: '#FB923C',      // Orange juice - orange
+  coffee: '#DC2626', // Coffee - red (was brown - too muted)
+  sugar: '#A855F7', // Sugar - purple (was cream - invisible)
+  cocoa: '#92400E', // Cocoa - amber brown
+  cotton: '#F8FAFC', // Cotton - white
+  orange_juice: '#FB923C', // Orange juice - orange
 
   // Livestock
-  live_cattle: '#B45309',       // Cattle - amber brown
-  lean_hogs: '#EC4899',         // Pork - pink
-  feeder_cattle: '#C2410C',     // Sienna
+  live_cattle: '#B45309', // Cattle - amber brown
+  lean_hogs: '#EC4899', // Pork - pink
+  feeder_cattle: '#C2410C', // Sienna
 
   // Industrial
-  iron_ore: '#B7410E',          // Rust
-  lumber: '#CA8A04',            // Wood - yellow
-  rubber: '#475569',            // Dark slate
+  iron_ore: '#B7410E', // Rust
+  lumber: '#CA8A04', // Wood - yellow
+  rubber: '#475569', // Dark slate
 };
 
 // Default fallback
@@ -203,10 +203,9 @@ function buildCommodityTooltipLines(commodity: {
 // ============================================================================
 
 export default function CommoditiesRibbonContainer() {
-  // DISABLED: Commodities feed is currently off to reduce API costs
-  // Set enabled: true when ready to re-enable
+  // ENABLED: Commodities feed active — uses rolling refresh via gateway
   const { quotes, movementById } = useCommoditiesQuotes({
-    enabled: false,
+    enabled: true,
   });
 
   const ssot = useMemo(() => getDefaultFreeCommodities(), []);
@@ -228,9 +227,7 @@ export default function CommoditiesRibbonContainer() {
       const quoteCurrency = (c as { quoteCurrency?: string }).quoteCurrency ?? 'USD';
 
       // Format price with currency and unit
-      const priceText = q
-        ? formatCommodityPrice(q.value, unit, quoteCurrency)
-        : '—';
+      const priceText = q ? formatCommodityPrice(q.value, unit, quoteCurrency) : '—';
 
       // Use shortName which has descriptive labels
       const label = (
@@ -241,10 +238,12 @@ export default function CommoditiesRibbonContainer() {
       );
 
       // Build tooltip data from catalog
-      const tooltipLines = buildCommodityTooltipLines(c as {
-        yearFirstTraded?: number;
-        fact?: string;
-      });
+      const tooltipLines = buildCommodityTooltipLines(
+        c as {
+          yearFirstTraded?: number;
+          fact?: string;
+        },
+      );
 
       // Get brand colour for this commodity
       const glowColour = COMMODITY_BRAND_COLOURS[c.id] ?? DEFAULT_COMMODITY_COLOUR;

@@ -8,7 +8,7 @@
  *
  * Strict SSOT rules:
  * - This endpoint exposes the catalogue (universe) only.
- * - Free-tier defaults are defined separately in commodities.selected.json.
+ * - The movers grid uses ALL active commodities dynamically.
  */
 
 import { NextResponse } from 'next/server';

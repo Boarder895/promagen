@@ -12,11 +12,15 @@
  * - Enterprise-grade input sanitization
  *
  * Architecture: Provider-Based Modular (COMPLETE)
- * - twelvedata/ contains FX + Crypto (Phase 1 ✅)
- * - marketstack/ contains Indices (Phase 2 ✅)
- * - fallback/ contains Commodities (Phase 3 ✅)
+ * - twelvedata/ contains FX (Phase 1 ✅)
+ * - marketstack/ contains Indices + Commodities (Phase 2 ✅, Phase 3 ✅)
  * - openweathermap/ contains Weather (Phase 4 ✅)
  * - server.ts is routes + startup only
+ *
+ * v3.1: FX Both Rows Always Populated
+ * - Startup: Top row fetches immediately, bottom row after 1 minute
+ * - After startup: Rows alternate hourly
+ * - Both rows ALWAYS have data
  *
  * GUARDRAIL G2: server.ts imports from provider index files.
  * This is THE place to see all feeds at a glance.
@@ -25,10 +29,14 @@
  */
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 
-import { commoditiesHandler, validateCommoditiesSelection } from './fallback/index.js';
 import { logError, logInfo, logWarn, logStartup } from './lib/logging.js';
 import type { FxPair } from './lib/types.js';
-import { indicesHandler, validateIndicesSelection } from './marketstack/index.js';
+import {
+  commoditiesHandler,
+  validateCommoditiesSelection,
+  indicesHandler,
+  validateIndicesSelection,
+} from './marketstack/index.js';
 import {
   initWeatherHandler,
   getWeatherData,
@@ -38,10 +46,10 @@ import {
   stopBackgroundRefresh as stopWeatherRefresh,
 } from './openweathermap/index.js';
 import {
-  cryptoHandler,
   fxHandler,
   validateFxSelection,
-  validateCryptoSelection,
+  shouldFetchSecondRow,
+  areBothRowsPopulated,
 } from './twelvedata/index.js';
 
 // =============================================================================
@@ -62,7 +70,7 @@ logInfo('[ENV] Provider API key status at startup', {
 });
 
 if (!twelveDataKey) {
-  logWarn('TWELVEDATA_API_KEY is missing; FX and Crypto will return fallback (null prices).');
+  logWarn('TWELVEDATA_API_KEY is missing; FX will return fallback (null prices).');
 }
 if (!marketstackKey) {
   logWarn('MARKETSTACK_API_KEY is missing; Indices will return fallback (null prices).');
@@ -199,7 +207,6 @@ function bootstrapFrontendConfigUrls(): void {
 
   const derived = {
     FX_CONFIG_URL: `${base}/api/fx/config`,
-    CRYPTO_CONFIG_URL: `${base}/api/crypto/config`,
     INDICES_CONFIG_URL: `${base}/api/indices/config`,
     COMMODITIES_CONFIG_URL: `${base}/api/commodities/config`,
     WEATHER_CONFIG_URL: `${base}/api/weather/config`,
@@ -246,7 +253,6 @@ function getEnvStatus(): Record<string, unknown> {
     FRONTEND_BASE_URL: base,
 
     FX_CONFIG_URL: process.env['FX_CONFIG_URL'] ?? `(derived: ${base}/api/fx/config)`,
-    CRYPTO_CONFIG_URL: process.env['CRYPTO_CONFIG_URL'] ?? `(derived: ${base}/api/crypto/config)`,
     INDICES_CONFIG_URL:
       process.env['INDICES_CONFIG_URL'] ?? `(derived: ${base}/api/indices/config)`,
     COMMODITIES_CONFIG_URL:
@@ -279,20 +285,24 @@ async function initWeatherFromConfig(): Promise<void> {
     const config = (await response.json()) as {
       cities: Array<{ id: string; city: string; lat: number; lon: number }>;
       selectedExchangeIds: string[];
+      freeDefaultIds?: string[];
     };
 
-    initWeatherHandler(config.cities, config.selectedExchangeIds);
+    // v3.0.1 FIX: Use freeDefaultIds (SSOT 16) for batch priority.
+    const batchPriorityIds = config.freeDefaultIds ?? config.selectedExchangeIds;
+
+    initWeatherHandler(config.cities, batchPriorityIds);
 
     logInfo('Weather handler initialized from config', {
       cityCount: config.cities.length,
-      selectedCount: config.selectedExchangeIds.length,
+      priorityCount: batchPriorityIds.length,
+      prioritySource: config.freeDefaultIds ? 'freeDefaultIds' : 'selectedExchangeIds (fallback)',
     });
   } catch (error) {
     logError('Weather config fetch failed', {
       error: error instanceof Error ? error.message : String(error),
       configUrl,
     });
-    // Leave handler uninitialised ("no demo" behaviour). Frontend should render an empty/unavailable state.
     resetWeatherHandler();
   }
 }
@@ -323,10 +333,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       timestamp: new Date().toISOString(),
       feeds: {
         fx: fxHandler.isReady(),
-        crypto: cryptoHandler.isReady(),
+        fxBothRowsPopulated: areBothRowsPopulated(),
         indices: indicesHandler.isReady(),
         commodities: commoditiesHandler.isReady(),
-        weather: true, // Weather is always "ready" - returns empty if no data
+        weather: true,
       },
     });
     return;
@@ -334,15 +344,14 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
   // ==========================================================================
   // REFRESH ENDPOINT (Manual API call trigger for testing)
-  // Usage: GET /refresh?feed=fx|crypto|indices|weather
   // ==========================================================================
   if (path === '/refresh') {
     const feed = url.searchParams.get('feed');
 
-    if (!feed || !['fx', 'crypto', 'indices', 'weather'].includes(feed)) {
+    if (!feed || !['fx', 'indices', 'weather'].includes(feed)) {
       sendJson(res, 400, {
         error: 'Missing or invalid feed parameter',
-        usage: 'GET /refresh?feed=fx|crypto|indices|weather',
+        usage: 'GET /refresh?feed=fx|indices|weather',
         example: 'http://localhost:8080/refresh?feed=fx',
       });
       return;
@@ -355,9 +364,6 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       switch (feed) {
         case 'fx':
           data = await fxHandler.getData();
-          break;
-        case 'crypto':
-          data = await cryptoHandler.getData();
           break;
         case 'indices':
           data = await indicesHandler.getData();
@@ -393,6 +399,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
         mode: data.meta.mode,
         count: data.data.length,
         hasNullPrices: data.data.some((d: { price: number | null }) => d.price === null),
+        bothRowsPopulated: areBothRowsPopulated(),
       });
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       sendJson(res, 200, data);
@@ -438,64 +445,6 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   }
 
   // ==========================================================================
-  // CRYPTO ENDPOINT (TwelveData - Phase 1)
-  // ==========================================================================
-  if (path === '/crypto' || path === '/api/crypto') {
-    if (method === 'GET') {
-      logInfo('Crypto GET request received');
-      const data = await cryptoHandler.getData();
-      logInfo('Crypto GET response', {
-        mode: data.meta.mode,
-        count: data.data.length,
-        hasNullPrices: data.data.some((d: { price: number | null }) => d.price === null),
-      });
-      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-      sendJson(res, 200, data);
-      return;
-    }
-
-    if (method === 'POST') {
-      if (!hasValidGatewaySecret(req)) {
-        sendJson(res, 401, { error: 'Unauthorized' });
-        return;
-      }
-
-      const body = await readBody(req);
-      const json = parseJson(body) as Record<string, unknown> | null;
-
-      if (!json) {
-        sendJson(res, 400, { error: 'Invalid JSON' });
-        return;
-      }
-
-      const assetIds = Array.isArray(json['assetIds'])
-        ? json['assetIds']
-        : Array.isArray(json['cryptoIds'])
-          ? json['cryptoIds']
-          : [];
-      const tier: 'free' | 'paid' = json['tier'] === 'paid' ? 'paid' : 'free';
-
-      const catalogMap = new Map(cryptoHandler.getCatalog().map((item) => [item.id, item]));
-      const validation = validateCryptoSelection(assetIds as string[], tier, catalogMap);
-      if (!validation.valid) {
-        sendJson(res, 400, { error: 'Validation failed', errors: validation.errors });
-        return;
-      }
-
-      const data = await cryptoHandler.getDataForIds(validation.allowedAssetIds);
-      res.setHeader('Cache-Control', 'private, no-cache');
-      sendJson(res, 200, {
-        ...data,
-        meta: { ...data.meta, requestedAssets: validation.allowedAssetIds },
-      });
-      return;
-    }
-
-    sendJson(res, 405, { error: 'Method not allowed' });
-    return;
-  }
-
-  // ==========================================================================
   // INDICES ENDPOINT (Marketstack - Phase 2)
   // ==========================================================================
   if (path === '/indices' || path === '/api/indices') {
@@ -529,9 +478,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       const exchangeIds = Array.isArray(json['exchangeIds']) ? json['exchangeIds'] : [];
       const tier: 'free' | 'paid' = json['tier'] === 'paid' ? 'paid' : 'free';
 
-      // Build catalog map for validation (authoritative from handler catalog)
       const catalogMap = new Map(indicesHandler.getCatalog().map((item) => [item.id, item]));
-
       const validation = validateIndicesSelection(exchangeIds as string[], tier, catalogMap);
       if (!validation.valid) {
         sendJson(res, 400, { error: 'Validation failed', errors: validation.errors });
@@ -552,14 +499,19 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   }
 
   // ==========================================================================
-  // COMMODITIES ENDPOINT (Fallback - Phase 3)
+  // COMMODITIES ENDPOINT (Marketstack - Phase 3)
   // ==========================================================================
   if (path === '/commodities' || path === '/api/commodities') {
     if (method === 'GET') {
+      logInfo('Commodities GET request received');
       const data = await commoditiesHandler.getData();
-      // Always returns fallback since no provider
-      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
-      sendJson(res, 200, { ...data, meta: { ...data.meta, source: 'fallback' } });
+      logInfo('Commodities GET response', {
+        mode: data.meta.mode,
+        count: data.data.length,
+        hasNullPrices: data.data.some((d: { price: number | null }) => d.price === null),
+      });
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
+      sendJson(res, 200, data);
       return;
     }
 
@@ -580,9 +532,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       const commodityIds = Array.isArray(json['commodityIds']) ? json['commodityIds'] : [];
       const tier: 'free' | 'paid' = json['tier'] === 'paid' ? 'paid' : 'free';
 
-      // Build catalog map for validation (authoritative from handler catalog)
       const catalogMap = new Map(commoditiesHandler.getCatalog().map((item) => [item.id, item]));
-
       const validation = validateCommoditiesSelection(commodityIds as string[], tier, catalogMap);
       if (!validation.valid) {
         sendJson(res, 400, { error: 'Validation failed', errors: validation.errors });
@@ -593,11 +543,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
       res.setHeader('Cache-Control', 'private, no-cache');
       sendJson(res, 200, {
         ...data,
-        meta: {
-          ...data.meta,
-          source: 'fallback',
-          requestedCommodities: validation.allowedCommodityIds,
-        },
+        meta: { ...data.meta, requestedCommodities: validation.allowedCommodityIds },
       });
       return;
     }
@@ -611,27 +557,10 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   // ==========================================================================
   if (path === '/weather' || path === '/api/weather') {
     if (method === 'GET') {
-      try {
-        const data = await getWeatherData();
-
-        // Cache based on mode
-        if (data.meta.mode === 'live' || data.meta.mode === 'cached') {
-          res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
-        } else {
-          res.setHeader('Cache-Control', 'public, max-age=60');
-        }
-
-        sendJson(res, 200, data);
-      } catch (error) {
-        logError('Weather endpoint error', {
-          error: error instanceof Error ? error.message : String(error),
-        });
-        sendJson(res, 500, {
-          error: 'Weather data unavailable',
-          meta: { mode: 'error' },
-          data: [],
-        });
-      }
+      logInfo('Weather GET request received');
+      const data = await getWeatherData();
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+      sendJson(res, 200, data);
       return;
     }
 
@@ -640,24 +569,13 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   }
 
   // ==========================================================================
-  // TRACE ENDPOINT (Enhanced Diagnostics)
+  // TRACE ENDPOINT (Debug info)
   // ==========================================================================
-  if (path === '/trace' || path === '/api/fx/trace') {
-    // Ensure trace is never cached by intermediaries
-    res.setHeader('Cache-Control', 'no-store');
-
+  if (path === '/trace') {
     sendJson(res, 200, {
       timestamp: new Date().toISOString(),
-      architecture: {
-        phase1: 'twelvedata (FX + Crypto) ✅',
-        phase2: 'marketstack (Indices) ✅',
-        phase3: 'fallback (Commodities) ✅',
-        phase4: 'openweathermap (Weather) ✅',
-        status: 'COMPLETE - All feeds operational',
-      },
-      environment: getEnvStatus(),
+      env: getEnvStatus(),
       fx: fxHandler.getTraceInfo(),
-      crypto: cryptoHandler.getTraceInfo(),
       indices: indicesHandler.getTraceInfo(),
       commodities: commoditiesHandler.getTraceInfo(),
       weather: getWeatherTraceInfo(),
@@ -667,6 +585,47 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 
   // 404
   sendJson(res, 404, { error: 'Not found' });
+}
+
+// =============================================================================
+// FX SECOND ROW FETCH HELPER
+// =============================================================================
+
+/**
+ * Schedule the second FX row fetch during startup.
+ * This ensures both rows are populated within the first minute.
+ */
+function scheduleSecondFxRowFetch(): void {
+  const checkInterval = setInterval(() => {
+    if (areBothRowsPopulated()) {
+      logInfo('FX startup complete: Both rows populated');
+      clearInterval(checkInterval);
+      return;
+    }
+
+    if (shouldFetchSecondRow()) {
+      logInfo('Triggering second FX row fetch (bottom row)');
+      void fxHandler
+        .getData()
+        .then(() => {
+          logInfo('Second FX row fetch complete', {
+            bothRowsPopulated: areBothRowsPopulated(),
+          });
+          clearInterval(checkInterval);
+        })
+        .catch((e) => {
+          logError('Second FX row fetch failed', { error: String(e) });
+        });
+    }
+  }, 5000); // Check every 5 seconds
+
+  // Safety: Stop checking after 2 minutes
+  setTimeout(() => {
+    clearInterval(checkInterval);
+    if (!areBothRowsPopulated()) {
+      logWarn('FX startup timeout: Not all rows populated after 2 minutes');
+    }
+  }, 120_000);
 }
 
 // =============================================================================
@@ -680,7 +639,6 @@ async function start(): Promise<void> {
     hasGatewaySecret: !!PROMAGEN_GATEWAY_SECRET,
   });
 
-  // Create HTTP server FIRST (health check must pass quickly)
   const server = createServer((req, res) => {
     handleRequest(req, res).catch((err) => {
       logError('Unhandled request error', {
@@ -692,15 +650,12 @@ async function start(): Promise<void> {
     });
   });
 
-  // Start listening IMMEDIATELY (before feed init)
   server.listen(PORT, '0.0.0.0', () => {
     logInfo(`Promagen Gateway listening on http://0.0.0.0:${PORT}`);
 
-    // Initialize feeds AFTER server is listening (non-blocking)
     logInfo('Initializing feeds in background...');
     void Promise.all([
       fxHandler.init().catch((e) => logError('FX init failed', { error: String(e) })),
-      cryptoHandler.init().catch((e) => logError('Crypto init failed', { error: String(e) })),
       indicesHandler.init().catch((e) => logError('Indices init failed', { error: String(e) })),
       commoditiesHandler
         .init()
@@ -709,33 +664,19 @@ async function start(): Promise<void> {
     ]).then(() => {
       logInfo('All feeds initialized');
 
-      // Log feed status after init
       logInfo('Feed catalog sizes', {
         fx: fxHandler.getCatalog().length,
-        crypto: cryptoHandler.getCatalog().length,
         indices: indicesHandler.getCatalog().length,
         commodities: commoditiesHandler.getCatalog().length,
       });
 
-      // Start background refresh after feeds are ready
-      // =====================================================================
-      // CLOCK-ALIGNED SCHEDULING (ALL PROVIDERS)
-      // =====================================================================
-      //
-      // Timeline (minutes past hour):
-      // :00  :05  :10  :20  :30  :35  :40  :50
-      //  FX  IDX  WTH  CRY  FX  IDX  WTH  CRY
-      //  TD   MS  OWM   TD   TD   MS  OWM   TD
-      //
-      // TD  = TwelveData (shared 800/day budget)
-      // MS  = Marketstack (separate 250/day budget)
-      // OWM = OpenWeatherMap (separate 1000/day budget)
-      //
-      // Staggered startup offsets to avoid simultaneous first calls:
-      //
+      // v3.1: FX startup sequence - fetch top row immediately, bottom row after 1 minute
       setTimeout(() => {
         fxHandler.startBackgroundRefresh();
-        logInfo('Background refresh started: FX (clock-aligned :00/:30)');
+        logInfo('Background refresh started: FX (top row immediate, bottom row +1min)');
+
+        // Schedule the second row fetch
+        scheduleSecondFxRowFetch();
       }, 5_000);
 
       setTimeout(() => {
@@ -749,14 +690,9 @@ async function start(): Promise<void> {
       }, 15_000);
 
       setTimeout(() => {
-        cryptoHandler.startBackgroundRefresh();
-        logInfo('Background refresh started: Crypto (clock-aligned :20/:50)');
-      }, 20_000);
-
-      setTimeout(() => {
         startWeatherRefresh();
         logInfo('Background refresh started: Weather (clock-aligned :10/:40)');
-      }, 25_000);
+      }, 20_000);
     });
   });
 
@@ -764,7 +700,6 @@ async function start(): Promise<void> {
   const shutdown = (): void => {
     logInfo('Shutdown signal received');
     fxHandler.stopBackgroundRefresh();
-    cryptoHandler.stopBackgroundRefresh();
     indicesHandler.stopBackgroundRefresh();
     commoditiesHandler.stopBackgroundRefresh();
     stopWeatherRefresh();
@@ -778,7 +713,6 @@ async function start(): Promise<void> {
   process.on('SIGINT', shutdown);
 }
 
-// Run
 start().catch((err) => {
   logError('Failed to start server', {
     error: err instanceof Error ? err.message : String(err),

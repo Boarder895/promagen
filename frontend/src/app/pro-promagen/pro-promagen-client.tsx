@@ -216,9 +216,10 @@ function convertToWeatherDataMap(
       tempF: weather.tempC !== undefined ? Math.round((weather.tempC * 9) / 5 + 32) : undefined,
       emoji: weather.emoji ?? '☀️',
       condition: weather.condition ?? 'Clear',
-      // ExchangeWeather doesn't have humidity/windKmh/description, so use defaults
-      humidity: 50,
-      windKmh: 10,
+      // FIXED v3.0.0: Use actual demo values instead of hardcoded 50/10.
+      // ExchangeWeather DOES have humidity and windSpeedKmh since v3.0.0.
+      humidity: weather.humidity ?? 50,
+      windKmh: weather.windSpeedKmh ?? 10,
       description: weather.condition ?? 'Clear skies',
     });
   });
@@ -324,13 +325,7 @@ export default function ProPromagenClient({
       JSON.stringify([...selectedExchanges].sort()) !==
       JSON.stringify([...initialExchanges].sort());
     return fxChanged || exchChanged;
-  }, [
-    selectedFxPairs,
-    selectedExchanges,
-    initialFx,
-    initialExchanges,
-    hydrated,
-  ]);
+  }, [selectedFxPairs, selectedExchanges, initialFx, initialExchanges, hydrated]);
 
   // ============================================================================
   // DERIVED DATA - Dropdown options with country labels

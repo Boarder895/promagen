@@ -94,7 +94,9 @@ export function toFullWeather(
     temperatureC: display.tempC,
     temperatureF: display.tempF ?? display.tempC * 9 / 5 + 32,
     conditions: display.condition ?? 'Unknown',
-    description: display.description ?? display.condition ?? 'unknown conditions',
+    // Only pass through real API descriptions (e.g., "haze", "broken clouds").
+    // Demo data has description=null → empty string here → prompt builder skips it.
+    description: display.description || '',
     humidity: display.humidity ?? 50,
     windSpeedKmh: display.windKmh ?? 5,
     emoji: display.emoji ?? '🌤️',

@@ -1,0 +1,168 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "created": "2026-02-05",
+    "phase": "5b-complete",
+    "totalPhrases": 170,
+    "crossPopulation": {
+      "atmosphere": ["market moods", "emotional states", "price tension"],
+      "subject": ["affected traders", "market participants"]
+    }
+  },
+  "bullMarket": {
+    "euphoria": [
+      "bull run unstoppable momentum green everywhere",
+      "new highs breaking records celebration trading floor",
+      "rally extending gains accumulating wealth building",
+      "breakout confirmed resistance shattered bulls charging",
+      "buying frenzy demand overwhelming supply exhausted",
+      "euphoric traders high fives champagne popping",
+      "melt up parabolic rise vertical chart",
+      "FOMO peak everyone buying late stage",
+      "greed maximum risk ignored caution abandoned",
+      "bubble territory valuations stretched skeptics silenced"
+    ],
+    "confidence": [
+      "steady uptrend buyers in control patient accumulation",
+      "bullish sentiment optimism spreading portfolio allocation",
+      "dip buying opportunity weakness absorbed quickly",
+      "support holding buyers defending price floor",
+      "momentum building volume confirming price advance",
+      "trend intact higher highs higher lows",
+      "risk on appetite strong allocation increasing",
+      "conviction high positions sized aggressively",
+      "bulls dominant bears retreating defensive",
+      "accumulation phase smart money buying quietly"
+    ]
+  },
+  "bearMarket": {
+    "despair": [
+      "bear market crushing losses portfolio devastation",
+      "capitulation selling everything panic exit",
+      "crash accelerating losses compounding fear maximum",
+      "free fall no support prices collapsing",
+      "blood in streets extreme pessimism despair",
+      "margin calls forced selling cascade effect",
+      "liquidation event positions unwound rapidly",
+      "dead money trapped positions no hope",
+      "depression phase giving up abandoning positions",
+      "extinction event traders blown out finished"
+    ],
+    "fear": [
+      "sell off accelerating losses mounting pressure",
+      "breakdown support failed sellers overwhelming",
+      "distribution phase smart money exiting quietly",
+      "risk off flight to safety defensive positioning",
+      "fear spreading contagion across markets",
+      "volatility spiking uncertainty maximum",
+      "hedging activity protective positions building",
+      "cash is king liquidity hoarding defensive",
+      "bearish sentiment pessimism dominant narrative",
+      "lower lows lower highs trend confirmed down"
+    ]
+  },
+  "sideways": {
+    "consolidation": [
+      "range bound trading directionless chop",
+      "consolidation phase digesting gains resting",
+      "indecision neither bulls nor bears control",
+      "equilibrium supply demand balanced waiting",
+      "coiling spring compression before expansion",
+      "triangle forming breakout pending patience",
+      "channel trading support resistance ping pong",
+      "mean reversion pulls extremes back center",
+      "low volatility quiet before storm calm",
+      "accumulation or distribution unclear watching"
+    ],
+    "uncertainty": [
+      "mixed signals conflicting indicators confusion",
+      "whipsaw action false breakouts frustrating",
+      "choppy market difficult trading conditions",
+      "noise dominant signal unclear direction",
+      "hesitation buyers and sellers cautious",
+      "wait and see mode sitting on hands",
+      "catalyst needed direction trigger awaited",
+      "gridlock stalemate neither side winning",
+      "ambiguity uncertainty paralyzing decisions",
+      "patience tested sideways grind continues"
+    ]
+  },
+  "volatility": {
+    "extreme": [
+      "volatility explosion wild price swings chaos",
+      "flash crash sudden collapse rapid recovery",
+      "circuit breaker halt trading suspended limit",
+      "gap risk overnight moves unexpected shocked",
+      "whipsaw violence both directions punishing",
+      "tail risk event black swan materialized",
+      "liquidity vacuum bids disappeared thin market",
+      "correlation breakdown diversification failed",
+      "regime change new volatility paradigm",
+      "unprecedented moves historical records shattered"
+    ],
+    "elevated": [
+      "heightened volatility wider swings nervous",
+      "vix elevated fear gauge warning signal",
+      "option premiums expensive protection costly",
+      "stop losses widened risk management adjusted",
+      "position sizing reduced prudent caution",
+      "hedges in place protection active",
+      "nimble trading quick decisions required",
+      "adaptive strategy volatility adjusted approach",
+      "opportunity in chaos profitable dislocations",
+      "skilled navigation volatile waters successfully"
+    ]
+  },
+  "transitions": {
+    "turningPoints": [
+      "bottom forming accumulation signs appearing",
+      "reversal pattern head shoulders completing",
+      "trend change momentum shifting direction",
+      "inflection point critical decision zone",
+      "breakout imminent compression extreme ready",
+      "top forming distribution signs appearing",
+      "exhaustion gap final push before reversal",
+      "divergence warning momentum fading price rising",
+      "sentiment extreme contrarian signal triggered",
+      "cycle turn seasonal pattern inflecting"
+    ],
+    "confirmation": [
+      "follow through day trend confirmed valid",
+      "volume surge conviction behind move",
+      "breadth improving participation broadening",
+      "leadership emerging sector rotation clear",
+      "technical confirmation multiple signals aligned",
+      "fundamental catalyst supporting price move",
+      "institutional buying large orders detected",
+      "smart money positioning commitment clear",
+      "trend established higher probability trades",
+      "momentum confirmed strength increasing"
+    ]
+  },
+  "commoditySpecific": {
+    "supplyShock": [
+      "supply disruption prices spiking shortage panic",
+      "production outage unexpected offline event",
+      "weather damage crop loss yield reduction",
+      "geopolitical risk supply route threatened",
+      "sanctions impact trade flow disrupted",
+      "strike action production halted labor dispute",
+      "natural disaster infrastructure damaged",
+      "inventory drawdown stockpiles depleting",
+      "backwardation deepening immediate demand urgent",
+      "squeeze developing shorts trapped supply tight"
+    ],
+    "demandShock": [
+      "demand surge consumption exceeding supply",
+      "economic boom commodity intensive growth",
+      "new application demand source emerging",
+      "stockpiling strategic reserve building",
+      "seasonal peak demand maximum consumption",
+      "demand destruction prices too high rationing",
+      "recession fear consumption collapsing",
+      "substitution effect cheaper alternatives winning",
+      "inventory build surplus accumulating",
+      "contango widening storage economics profitable"
+    ]
+  }
+}

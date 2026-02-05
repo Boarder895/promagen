@@ -12,14 +12,11 @@
 import fxPairsJson from '@/data/fx/fx-pairs.json';
 // (Removed) FX index split-file import: unified SSOT uses fx-pairs.json
 import commoditiesCatalogJson from '@/data/commodities/commodities.catalog.json';
-import cryptoWhitelistJson from '@/data/crypto/whitelist.json';
 
 import type {
   Commodity,
   CommodityId,
   CommoditySelectionValidation,
-  CryptoAsset,
-  CryptoId,
   FxPair,
   FxPairId,
 } from '@/types/finance-ribbon';
@@ -256,58 +253,4 @@ export function validateCommoditySelection(
   const normalisedIds = commodityIds.filter((id) => allowedIds.has(id));
 
   return buildCommodityValidation(normalisedIds);
-}
-
-// ---------------------------------------------------------------------------
-// Crypto helpers – powered by src/data/crypto
-// ---------------------------------------------------------------------------
-
-const CRYPTO_UNIVERSE: CryptoAsset[] = cryptoWhitelistJson as CryptoAsset[];
-
-export type CryptoSelectionWithMode = SelectionResult<CryptoAsset, CryptoId> & {
-  mode: 'free' | 'paid' | 'freeFallback' | 'invalid';
-};
-
-export function getFreeCryptoSelection(): SelectionResult<CryptoAsset, CryptoId> {
-  const requestedIds: CryptoId[] = CRYPTO_UNIVERSE.slice(0, 5).map((asset) => asset.id as CryptoId);
-
-  return selectForRibbon<CryptoAsset, CryptoId>({
-    allItems: CRYPTO_UNIVERSE,
-    requestedIds,
-    maxItems: 5,
-    getId: (asset) => asset.id,
-  });
-}
-
-/**
- * Paid-tier crypto selection with optional fallback to free.
- */
-export function getPaidCryptoSelection(
-  requestedIds: CryptoId[] | null | undefined,
-  options: { fallbackToFree: boolean; minItems: number },
-): CryptoSelectionWithMode {
-  const { fallbackToFree, minItems } = options;
-
-  if (!requestedIds || requestedIds.length === 0) {
-    const free = getFreeCryptoSelection();
-    return { ...free, mode: 'free' };
-  }
-
-  const selection = selectForRibbon<CryptoAsset, CryptoId>({
-    allItems: CRYPTO_UNIVERSE,
-    requestedIds,
-    maxItems: minItems,
-    getId: (asset) => asset.id,
-  });
-
-  if (selection.selected.length >= minItems) {
-    return { ...selection, mode: 'paid' };
-  }
-
-  if (!fallbackToFree) {
-    return { ...selection, mode: 'invalid' };
-  }
-
-  const free = getFreeCryptoSelection();
-  return { ...free, mode: 'freeFallback' };
 }

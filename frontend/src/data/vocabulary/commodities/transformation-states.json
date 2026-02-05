@@ -1,0 +1,901 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "created": "2026-02-05",
+    "phase": "2-complete",
+    "totalCommodities": 78,
+    "stagesPerCommodity": 8,
+    "totalPhrases": 624,
+    "crossPopulation": {
+      "action": ["extraction", "processing", "transformation", "finishing"],
+      "environment": ["facilities", "equipment"],
+      "materials": ["raw", "processed", "refined"]
+    }
+  },
+  "transformations": {
+    "crude_oil": {
+      "id": "crude_oil",
+      "stages": [
+        "underground reservoir pressure trapped millions years",
+        "wellhead gushing black viscous liquid",
+        "pipeline flowing heated maintaining viscosity",
+        "storage tank settling separating water",
+        "refinery distillation tower separating fractions",
+        "cracking unit breaking heavy molecules",
+        "blending terminal mixing specifications",
+        "fuel pump dispensing consumer ready"
+      ]
+    },
+    "natural_gas": {
+      "id": "natural_gas",
+      "stages": [
+        "deep formation methane trapped porous rock",
+        "wellhead flaring separating liquids",
+        "processing plant removing impurities",
+        "compression station pressurizing pipeline",
+        "liquefaction facility cooling minus 162",
+        "LNG tanker transporting cryogenic cargo",
+        "regasification terminal warming expansion",
+        "burner tip blue flame consumer use"
+      ]
+    },
+    "heating_oil": {
+      "id": "heating_oil",
+      "stages": [
+        "crude oil refinery input feedstock",
+        "distillation column middle fraction separation",
+        "hydrotreating unit sulfur removal",
+        "blending tank additive mixing",
+        "terminal storage seasonal inventory",
+        "delivery truck rural distribution",
+        "basement tank homeowner storage",
+        "furnace burner combustion warmth"
+      ]
+    },
+    "gasoline": {
+      "id": "gasoline",
+      "stages": [
+        "crude oil light fraction potential",
+        "reformer unit octane enhancement",
+        "alkylation unit high octane blending",
+        "additive injection detergent mixing",
+        "pipeline distribution regional terminal",
+        "tanker truck station delivery",
+        "underground tank retail storage",
+        "vehicle tank combustion propulsion"
+      ]
+    },
+    "diesel": {
+      "id": "diesel",
+      "stages": [
+        "crude oil middle distillate fraction",
+        "hydrotreating removing sulfur nitrogen",
+        "dewaxing improving cold flow properties",
+        "additive mixing cetane enhancement",
+        "terminal storage bulk inventory",
+        "tanker delivery commercial distribution",
+        "truck stop dispensing commercial fuel",
+        "engine injection compression ignition"
+      ]
+    },
+    "coal": {
+      "id": "coal",
+      "stages": [
+        "ancient swamp vegetation buried compressed",
+        "mine face extraction cutting machinery",
+        "conveyor transport surface delivery",
+        "washing plant cleaning removing ash",
+        "rail car loading unit train transport",
+        "power plant stockpile inventory management",
+        "pulverizer grinding fine powder",
+        "boiler combustion steam generation"
+      ]
+    },
+    "uranium": {
+      "id": "uranium",
+      "stages": [
+        "ore body underground deposit extraction",
+        "mill processing yellowcake production",
+        "conversion facility uranium hexafluoride",
+        "enrichment cascade isotope separation",
+        "fuel fabrication pellet pressing",
+        "reactor core fission chain reaction",
+        "spent fuel pool cooling decay",
+        "repository storage permanent isolation"
+      ]
+    },
+    "ethanol": {
+      "id": "ethanol",
+      "stages": [
+        "corn kernel starch rich feedstock",
+        "milling grinding exposing starch",
+        "cooking liquefaction enzyme addition",
+        "fermentation yeast converting sugars",
+        "distillation alcohol concentration",
+        "dehydration removing remaining water",
+        "denaturing gasoline additive mixing",
+        "blending terminal E10 E85 formulation"
+      ]
+    },
+    "propane": {
+      "id": "propane",
+      "stages": [
+        "natural gas liquid fraction separation",
+        "fractionation tower propane isolation",
+        "refrigeration storage liquid state",
+        "railcar transport pressurized vessel",
+        "terminal storage bulk inventory",
+        "cylinder filling retail distribution",
+        "regulator reducing pressure delivery",
+        "appliance burner clean combustion"
+      ]
+    },
+    "jet_fuel": {
+      "id": "jet_fuel",
+      "stages": [
+        "crude oil kerosene fraction potential",
+        "hydrotreating sulfur aromatics removal",
+        "merox treating mercaptan conversion",
+        "additive injection icing inhibitor",
+        "pipeline transport airport terminal",
+        "hydrant system underground distribution",
+        "wing tank fueling aircraft preparation",
+        "turbine combustion thrust generation"
+      ]
+    },
+    "gold": {
+      "id": "gold",
+      "stages": [
+        "ore body veins disseminated particles",
+        "crushing grinding liberation ore processing",
+        "leaching cyanide dissolving extraction",
+        "electrowinning plating cathode collection",
+        "smelting dore bar crude bullion",
+        "refining electrolytic 9999 purity",
+        "casting bars coins fabrication",
+        "vault storage investment holding"
+      ]
+    },
+    "silver": {
+      "id": "silver",
+      "stages": [
+        "ore body argentite galena host minerals",
+        "flotation concentration sulfide separation",
+        "smelting lead bullion silver carrier",
+        "cupellation oxidizing lead silver separation",
+        "electrolytic refining 999 purity",
+        "casting granules bars various forms",
+        "industrial fabrication electronic contacts",
+        "jewelry crafting finished adornment"
+      ]
+    },
+    "platinum": {
+      "id": "platinum",
+      "stages": [
+        "reef ore sperrylite cooperite minerals",
+        "milling flotation concentrate production",
+        "smelting matte furnace collection",
+        "base metal refinery separation",
+        "precious metal refinery dissolution",
+        "precipitation selective isolation",
+        "ignition sponge metal production",
+        "fabrication catalyst jewelry form"
+      ]
+    },
+    "palladium": {
+      "id": "palladium",
+      "stages": [
+        "nickel copper ore byproduct carrier",
+        "smelting matte collection precious metals",
+        "electrolytic refining anode slime",
+        "dissolution aqua regia selective",
+        "precipitation ammonium chloride",
+        "calcination sponge metal production",
+        "melting ingot bar casting",
+        "fabrication automotive catalyst coating"
+      ]
+    },
+    "rhodium": {
+      "id": "rhodium",
+      "stages": [
+        "platinum ore minor constituent trace",
+        "matte smelting collector metal",
+        "refinery residue precious metal concentrate",
+        "fusion oxidation selective dissolution",
+        "precipitation sodium rhodium sulfate",
+        "reduction sponge metal production",
+        "arc melting consolidated metal",
+        "catalyst manufacture automotive coating"
+      ]
+    },
+    "copper": {
+      "id": "copper",
+      "stages": [
+        "porphyry ore chalcopyrite minerals disseminated",
+        "crushing grinding liberation ball mill",
+        "flotation concentrate froth separation",
+        "smelting matte copper enrichment",
+        "converting blister copper oxygen blow",
+        "fire refining anode casting",
+        "electrorefining cathode 9999 pure",
+        "fabrication wire rod tube production"
+      ]
+    },
+    "aluminum": {
+      "id": "aluminum",
+      "stages": [
+        "bauxite ore gibbsite bohemite diaspore",
+        "digestion bayer process caustic dissolution",
+        "precipitation alumina hydrate crystallization",
+        "calcination aluminum oxide production",
+        "electrolysis hall heroult molten reduction",
+        "tapping molten metal collection",
+        "casting ingot slab billet forms",
+        "rolling extrusion fabrication shapes"
+      ]
+    },
+    "zinc": {
+      "id": "zinc",
+      "stages": [
+        "sphalerite ore zinc sulfide mineral",
+        "flotation concentrate separation",
+        "roasting oxide calcine production",
+        "leaching sulfuric acid dissolution",
+        "purification impurity cementation",
+        "electrolysis cathode zinc plating",
+        "melting casting slab ingot forms",
+        "galvanizing coating steel protection"
+      ]
+    },
+    "nickel": {
+      "id": "nickel",
+      "stages": [
+        "sulfide laterite ore pentlandite garnierite",
+        "concentration flotation pyrometallurgical",
+        "smelting matte nickel iron sulfide",
+        "converting removing iron sulfur",
+        "refining electrolytic carbonyl process",
+        "cathode briquette pellet forms",
+        "melting alloying stainless preparation",
+        "fabrication battery electrode production"
+      ]
+    },
+    "lead": {
+      "id": "lead",
+      "stages": [
+        "galena ore lead sulfide mineral",
+        "flotation concentration separation",
+        "sintering oxidizing agglomeration",
+        "blast furnace reduction bullion",
+        "drossing removing copper arsenic",
+        "refining softening desilverizing",
+        "casting ingot pig forms",
+        "battery grid plate manufacturing"
+      ]
+    },
+    "tin": {
+      "id": "tin",
+      "stages": [
+        "cassiterite ore tin oxide mineral",
+        "gravity separation placer concentration",
+        "smelting reduction furnace metal",
+        "refining liquation boiling poling",
+        "casting ingot bar slab forms",
+        "rolling foil sheet production",
+        "coating tinplating steel protection",
+        "solder alloy electronics joining"
+      ]
+    },
+    "steel": {
+      "id": "steel",
+      "stages": [
+        "iron ore hematite magnetite pellets",
+        "blast furnace reduction pig iron",
+        "basic oxygen furnace carbon removal",
+        "ladle refining alloying treatment",
+        "continuous casting slab bloom billet",
+        "hot rolling reducing thickness",
+        "cold rolling finishing surface quality",
+        "coating galvanizing painting protection"
+      ]
+    },
+    "wheat": {
+      "id": "wheat",
+      "stages": [
+        "seed kernel dormant potential",
+        "germination sprouting soil emergence",
+        "tillering stem development growth",
+        "heading grain formation flowering",
+        "ripening golden maturity harvest ready",
+        "threshing separation grain chaff",
+        "milling grinding flour production",
+        "baking bread final transformation"
+      ]
+    },
+    "corn": {
+      "id": "corn",
+      "stages": [
+        "seed kernel planting soil contact",
+        "emergence coleoptile breaking surface",
+        "vegetative growth leaf development",
+        "tasseling pollination silk emergence",
+        "grain fill kernel development dough",
+        "maturity black layer formation",
+        "harvest combine shelling drying",
+        "processing feed ethanol food products"
+      ]
+    },
+    "soybeans": {
+      "id": "soybeans",
+      "stages": [
+        "seed inoculated rhizobium nitrogen fixing",
+        "emergence cotyledon unifoliate leaves",
+        "vegetative node leaf development",
+        "flowering pod initiation setting",
+        "pod fill seed development swelling",
+        "maturity yellow leaves dry pods",
+        "harvest combine threshing cleaning",
+        "crushing oil meal separation"
+      ]
+    },
+    "rice": {
+      "id": "rice",
+      "stages": [
+        "seed paddy soaked pregermination",
+        "transplanting seedling flooded field",
+        "tillering shoot multiplication water",
+        "panicle initiation reproductive stage",
+        "heading flowering grain set",
+        "grain fill starch accumulation",
+        "harvest golden stalks cutting drying",
+        "milling hulling polishing white rice"
+      ]
+    },
+    "oats": {
+      "id": "oats",
+      "stages": [
+        "seed sowing cool season crop",
+        "emergence coleoptile soil breaking",
+        "tillering stem development growth",
+        "boot stage panicle enclosed",
+        "heading panicle emergence flowering",
+        "grain fill groat development",
+        "harvest swathing combining drying",
+        "processing hulling rolling flaking"
+      ]
+    },
+    "coffee": {
+      "id": "coffee",
+      "stages": [
+        "cherry ripening red purple maturity",
+        "harvesting selective hand picking",
+        "pulping removing fruit flesh",
+        "fermenting mucilage breakdown",
+        "washing cleaning grading wet process",
+        "drying parchment patio sun beds",
+        "milling hulling polishing sorting",
+        "roasting browning aroma development"
+      ]
+    },
+    "cocoa": {
+      "id": "cocoa",
+      "stages": [
+        "pod ripening yellow orange maturity",
+        "harvesting machete cutting careful",
+        "pod breaking extracting wet beans",
+        "fermenting heap box enzymatic",
+        "drying sun platforms turning",
+        "shipping burlap bags export",
+        "roasting aroma flavor development",
+        "grinding pressing liquor butter powder"
+      ]
+    },
+    "sugar": {
+      "id": "sugar",
+      "stages": [
+        "cane stalk maturity sucrose peak",
+        "harvesting cutting burning mechanical",
+        "crushing milling juice extraction",
+        "clarifying lime heating settling",
+        "evaporating concentrating syrup",
+        "crystallizing vacuum pan seeding",
+        "centrifuging separating crystals molasses",
+        "refining filtering decolorizing white"
+      ]
+    },
+    "cotton": {
+      "id": "cotton",
+      "stages": [
+        "boll opening white fiber exposure",
+        "harvesting picker stripper mechanical",
+        "ginning fiber seed separation",
+        "baling pressing packaging transport",
+        "opening cleaning fiber preparation",
+        "carding aligning fiber web",
+        "spinning drafting twisting yarn",
+        "weaving interlacing fabric construction"
+      ]
+    },
+    "rubber": {
+      "id": "rubber",
+      "stages": [
+        "bark tapping latex flow morning",
+        "collection cup accumulation",
+        "coagulation acid addition solidification",
+        "milling sheeting creping forms",
+        "drying smoking preservation",
+        "baling pressing transport packaging",
+        "compounding mixing additives accelerators",
+        "vulcanizing molding curing final product"
+      ]
+    },
+    "live_cattle": {
+      "id": "live_cattle",
+      "stages": [
+        "calf birth nursing mother cow",
+        "weaning separation transition feed",
+        "backgrounding growing stocker phase",
+        "feedlot finishing grain ration",
+        "market weight selection shipping",
+        "processing stunning harvesting",
+        "fabrication cutting primal subprimal",
+        "retail case ready consumer portions"
+      ]
+    },
+    "lean_hogs": {
+      "id": "lean_hogs",
+      "stages": [
+        "piglet birth farrowing crate",
+        "weaning nursery transition feed",
+        "growing finishing barn development",
+        "market weight lean muscle target",
+        "transport loading facility delivery",
+        "processing stunning harvesting chilling",
+        "fabrication cutting breaking carcass",
+        "packaging fresh cured products"
+      ]
+    },
+    "feeder_cattle": {
+      "id": "feeder_cattle",
+      "stages": [
+        "calf birth cow herd origin",
+        "weaning separation ranch handling",
+        "preconditioning vaccination health",
+        "auction sale price discovery",
+        "transport loading trailer shipping",
+        "arrival processing feedlot receiving",
+        "transition diet adjustment adaptation",
+        "finishing phase growth ration"
+      ]
+    },
+    "pork_bellies": {
+      "id": "pork_bellies",
+      "stages": [
+        "hog belly primal cut separation",
+        "trimming squaring specification",
+        "curing salt sugar injection",
+        "smoking hardwood flavor development",
+        "chilling temperature stabilization",
+        "slicing thickness specification",
+        "packaging retail foodservice forms",
+        "cooking consumer preparation serving"
+      ]
+    },
+    "lithium": {
+      "id": "lithium",
+      "stages": [
+        "brine deposit underground aquifer",
+        "pumping surface evaporation ponds",
+        "concentration solar evaporation months",
+        "precipitation lithium carbonate production",
+        "conversion lithium hydroxide battery grade",
+        "cathode material coating electrode",
+        "cell assembly battery pack",
+        "electric vehicle energy storage application"
+      ]
+    },
+    "cobalt": {
+      "id": "cobalt",
+      "stages": [
+        "ore body copper nickel byproduct",
+        "concentration flotation separation",
+        "smelting matte collection",
+        "leaching dissolution purification",
+        "precipitation cobalt hydroxide",
+        "refining electrolytic metal powder",
+        "cathode precursor material production",
+        "battery cell electrode coating"
+      ]
+    },
+    "rare_earths": {
+      "id": "rare_earths",
+      "stages": [
+        "ore body bastnäsite monazite minerals",
+        "crushing grinding liberation",
+        "flotation gravity magnetic separation",
+        "cracking caustic acid decomposition",
+        "separation solvent extraction cascade",
+        "precipitation individual element oxide",
+        "reduction metal production electrolysis",
+        "magnet alloy electronic application"
+      ]
+    },
+    "graphite": {
+      "id": "graphite",
+      "stages": [
+        "ore body flake vein amorphous deposit",
+        "mining extraction crushing screening",
+        "flotation concentration purification",
+        "thermal purification high temperature",
+        "micronizing particle size reduction",
+        "spheronizing rounding battery anode",
+        "coating carbon surface treatment",
+        "anode assembly battery cell production"
+      ]
+    },
+    "manganese": {
+      "id": "manganese",
+      "stages": [
+        "ore body pyrolusite rhodochrosite",
+        "mining extraction open pit underground",
+        "beneficiation washing screening",
+        "sintering agglomeration smelter feed",
+        "smelting ferromanganese production",
+        "refining electrolytic manganese metal",
+        "alloying steel production addition",
+        "battery cathode material formulation"
+      ]
+    },
+    "molybdenum": {
+      "id": "molybdenum",
+      "stages": [
+        "ore body molybdenite copper byproduct",
+        "flotation concentrate production",
+        "roasting molybdic oxide conversion",
+        "sublimation purification technical oxide",
+        "reduction hydrogen metal powder",
+        "sintering consolidation electrode",
+        "arc melting ingot production",
+        "alloy addition steel manufacturing"
+      ]
+    },
+    "vanadium": {
+      "id": "vanadium",
+      "stages": [
+        "ore body magnetite titaniferous slag",
+        "roasting sodium vanadate leaching",
+        "precipitation ammonium metavanadate",
+        "calcination vanadium pentoxide",
+        "reduction ferrovanadium aluminothermic",
+        "melting alloy production steel",
+        "electrolyte preparation vanadium sulfate",
+        "flow battery energy storage system"
+      ]
+    },
+    "tungsten": {
+      "id": "tungsten",
+      "stages": [
+        "ore body wolframite scheelite minerals",
+        "gravity magnetic separation concentration",
+        "chemical processing ammonium paratungstate",
+        "calcination tungsten oxide production",
+        "hydrogen reduction metal powder",
+        "mixing binding carbide preparation",
+        "pressing sintering consolidation",
+        "grinding finishing cutting tool"
+      ]
+    },
+    "antimony": {
+      "id": "antimony",
+      "stages": [
+        "ore body stibnite sulfide mineral",
+        "hand sorting gravity concentration",
+        "roasting oxide volatilization",
+        "reduction smelting crude metal",
+        "refining liquation electrolytic",
+        "casting ingot needle forms",
+        "compounding flame retardant formulation",
+        "plastic textile coating application"
+      ]
+    },
+    "titanium": {
+      "id": "titanium",
+      "stages": [
+        "ore body rutile ilmenite beach sand",
+        "separation gravity magnetic electrostatic",
+        "chlorination titanium tetrachloride",
+        "magnesium reduction kroll process sponge",
+        "melting vacuum arc consolidation",
+        "forging rolling working ingot",
+        "machining precision aerospace component",
+        "coating anodizing surface treatment"
+      ]
+    },
+    "orange_juice": {
+      "id": "orange_juice",
+      "stages": [
+        "fruit maturity brix acid ratio",
+        "harvesting picking mechanical shaking",
+        "grading washing sorting processing",
+        "extraction reaming whole fruit",
+        "finishing screening pulp adjustment",
+        "pasteurizing heat treatment preservation",
+        "concentrating evaporation water removal",
+        "reconstituting blending packaging consumer"
+      ]
+    },
+    "milk": {
+      "id": "milk",
+      "stages": [
+        "udder secretion let down milking",
+        "bulk tank cooling storage farm",
+        "tanker transport processing plant",
+        "clarifying separating standardizing",
+        "pasteurizing heat treatment safety",
+        "homogenizing fat globule reduction",
+        "packaging filling sealing dating",
+        "refrigerated distribution retail consumer"
+      ]
+    },
+    "cheese": {
+      "id": "cheese",
+      "stages": [
+        "milk standardizing culture addition",
+        "coagulating rennet curd formation",
+        "cutting stirring cooking whey release",
+        "draining molding pressing shaping",
+        "salting brining dry rub",
+        "aging ripening flavor development",
+        "grading inspection quality assessment",
+        "cutting packaging retail distribution"
+      ]
+    },
+    "butter": {
+      "id": "butter",
+      "stages": [
+        "cream separation centrifugal skimming",
+        "standardizing fat content adjustment",
+        "ripening culture acidification flavor",
+        "churning fat globule aggregation",
+        "draining buttermilk separation",
+        "working moisture distribution",
+        "salting flavor preservation optional",
+        "molding packaging cold storage"
+      ]
+    },
+    "eggs": {
+      "id": "eggs",
+      "stages": [
+        "ovulation yolk release oviduct",
+        "albumen deposition white formation",
+        "shell gland calcification membrane",
+        "laying oviposition nest box",
+        "collection conveyor automated gathering",
+        "washing sanitizing drying processing",
+        "candling grading weight sorting",
+        "packaging carton distribution retail"
+      ]
+    },
+    "chicken": {
+      "id": "chicken",
+      "stages": [
+        "egg incubation embryo development",
+        "hatching pipping emergence chick",
+        "brooding warmth feeding growth",
+        "growing feed conversion muscle",
+        "market weight harvesting transport",
+        "processing slaughter evisceration chilling",
+        "fabrication cutting portioning",
+        "packaging fresh frozen distribution"
+      ]
+    },
+    "turkey": {
+      "id": "turkey",
+      "stages": [
+        "egg incubation poult development",
+        "hatching emergence brooding start",
+        "growing feed conversion development",
+        "finishing weight target reaching",
+        "harvesting processing stunning",
+        "evisceration chilling inspection",
+        "fabrication whole bird parts",
+        "packaging distribution seasonal retail"
+      ]
+    },
+    "honey": {
+      "id": "honey",
+      "stages": [
+        "nectar collection forager bee gathering",
+        "ripening enzyme inversion evaporation",
+        "capping wax sealing cell storage",
+        "harvesting frame removal uncapping",
+        "extracting centrifugal spinning",
+        "straining filtering debris removal",
+        "settling air bubble rising",
+        "bottling packaging labeling distribution"
+      ]
+    },
+    "maple_syrup": {
+      "id": "maple_syrup",
+      "stages": [
+        "sap rising freeze thaw cycle",
+        "tapping spout insertion collection",
+        "gathering bucket tubing concentration",
+        "filtering removing sediment particles",
+        "evaporating concentrating sugar content",
+        "finishing density temperature target",
+        "grading color classification quality",
+        "bottling packaging labeling distribution"
+      ]
+    },
+    "olive_oil": {
+      "id": "olive_oil",
+      "stages": [
+        "fruit maturity color change ripening",
+        "harvesting shaking beating collecting",
+        "washing removing leaves debris",
+        "crushing milling paste production",
+        "malaxing mixing oil droplet coalescence",
+        "pressing centrifuging oil separation",
+        "decanting settling clarification",
+        "filtering bottling quality grading"
+      ]
+    },
+    "palm_oil": {
+      "id": "palm_oil",
+      "stages": [
+        "fruit bunch ripening color change",
+        "harvesting cutting chisel pole",
+        "sterilizing steam treatment enzyme",
+        "stripping fruit separation bunch",
+        "digesting mashing fruit preparation",
+        "pressing screw expeller oil extraction",
+        "clarifying settling centrifuging",
+        "refining bleaching deodorizing fractionating"
+      ]
+    },
+    "fish_meal": {
+      "id": "fish_meal",
+      "stages": [
+        "catch landing vessel unloading",
+        "storage chilled freshness preservation",
+        "cooking steam heat protein coagulation",
+        "pressing liquid separation meal",
+        "drying moisture reduction preservation",
+        "grinding particle size specification",
+        "bagging packaging storage shipping",
+        "feed mixing aquaculture livestock"
+      ]
+    },
+    "soybean_oil": {
+      "id": "soybean_oil",
+      "stages": [
+        "bean cleaning dehulling preparation",
+        "flaking rolling surface area",
+        "extracting solvent hexane dissolution",
+        "desolventizing removing hexane toasting",
+        "degumming removing phospholipids",
+        "refining neutralizing free fatty acids",
+        "bleaching deodorizing final purification",
+        "bottling packaging consumer industrial"
+      ]
+    },
+    "canola_oil": {
+      "id": "canola_oil",
+      "stages": [
+        "seed cleaning drying preparation",
+        "conditioning heating moisture adjustment",
+        "pressing expeller mechanical extraction",
+        "extracting solvent residual oil",
+        "refining degumming neutralizing",
+        "bleaching color removal clarification",
+        "deodorizing steam stripping volatile",
+        "packaging bottling consumer retail"
+      ]
+    },
+    "cashews": {
+      "id": "cashews",
+      "stages": [
+        "apple fruit cashew nut attached",
+        "harvesting collecting fallen mature",
+        "drying sun curing moisture reduction",
+        "roasting shell oil softening",
+        "shelling manual mechanical extraction",
+        "peeling testa removal blanching",
+        "grading sizing quality sorting",
+        "packaging roasting flavoring retail"
+      ]
+    },
+    "pistachios": {
+      "id": "pistachios",
+      "stages": [
+        "nut maturity hull split opening",
+        "harvesting shaking tree mechanical",
+        "hulling removing outer layer",
+        "drying moisture reduction preservation",
+        "sorting size grade classification",
+        "roasting salting flavoring processing",
+        "packaging retail bulk consumer",
+        "storage cool dry preservation"
+      ]
+    },
+    "walnuts": {
+      "id": "walnuts",
+      "stages": [
+        "nut maturity hull drying splitting",
+        "harvesting shaking mechanical collection",
+        "hulling removing green outer shell",
+        "washing cleaning surface debris",
+        "drying forced air moisture target",
+        "cracking shell separation kernel",
+        "sorting grading halves pieces",
+        "packaging retail industrial distribution"
+      ]
+    },
+    "hazelnuts": {
+      "id": "hazelnuts",
+      "stages": [
+        "nut maturity husk loosening",
+        "harvesting ground collection mechanical",
+        "dehusking removing outer covering",
+        "drying moisture content reduction",
+        "cracking shell kernel separation",
+        "sorting size quality grading",
+        "blanching skin removal roasting",
+        "packaging consumer industrial confectionery"
+      ]
+    },
+    "rapeseed": {
+      "id": "rapeseed",
+      "stages": [
+        "pod maturity seed color change",
+        "swathing cutting drying windrow",
+        "combining threshing seed separation",
+        "cleaning drying storage preparation",
+        "crushing pressing oil extraction",
+        "extracting solvent residual recovery",
+        "refining processing food grade",
+        "bottling packaging consumer retail"
+      ]
+    },
+    "silk": {
+      "id": "silk",
+      "stages": [
+        "cocoon spinning silkworm encasement",
+        "stifling killing pupa heat treatment",
+        "reeling unwinding continuous filament",
+        "throwing twisting yarn preparation",
+        "degumming removing sericin protein",
+        "dyeing color application penetration",
+        "weaving fabric construction interlacing",
+        "finishing washing treating luster"
+      ]
+    },
+    "potatoes": {
+      "id": "potatoes",
+      "stages": [
+        "tuber dormancy storage waiting",
+        "sprouting eye activation planting",
+        "vegetative growth vine development",
+        "tuber initiation underground swelling",
+        "bulking starch accumulation growth",
+        "maturity vine senescence skin set",
+        "harvesting digging mechanical lifting",
+        "storage curing processing distribution"
+      ]
+    },
+    "sunflower_oil": {
+      "id": "sunflower_oil",
+      "stages": [
+        "seed maturity head drying browning",
+        "harvesting combining head cutting",
+        "cleaning drying storage preparation",
+        "dehulling shell removal optional",
+        "pressing expeller mechanical extraction",
+        "extracting solvent residual oil recovery",
+        "refining bleaching deodorizing processing",
+        "packaging bottling consumer distribution"
+      ]
+    }
+  }
+}

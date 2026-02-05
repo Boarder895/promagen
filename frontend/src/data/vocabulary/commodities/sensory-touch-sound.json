@@ -1,0 +1,145 @@
+{
+  "metadata": {
+    "phase": "6.3",
+    "name": "Touch & Sound Sensory",
+    "description": "Tactile sensations and auditory elements for commodity imagery",
+    "phraseCount": 108,
+    "crossPopulation": ["Atmosphere", "Environment", "Action"]
+  },
+  "tactile": {
+    "temperature": [
+      "molten metal searing",
+      "cold storage frozen",
+      "sun-warmed grain",
+      "ice-cold steel",
+      "body-warm coffee beans",
+      "ambient warehouse cool",
+      "furnace blast heat",
+      "refrigerated chill",
+      "tropical humid warm",
+      "desert dry heat"
+    ],
+    "weight_density": [
+      "lead ingot dense",
+      "cotton bale light bulk",
+      "gold bar surprising heft",
+      "grain sack heavy",
+      "oil drum sloshing weight",
+      "lumber stack solid",
+      "coal pile crushing",
+      "aluminum light strong",
+      "copper coil dense",
+      "sugar bag crystalline mass"
+    ],
+    "surface_feel": [
+      "raw ore rough grip",
+      "polished bar smooth",
+      "burlap sack coarse",
+      "silk bale slippery",
+      "oily residue slick",
+      "dust coating gritty",
+      "frost condensation wet",
+      "dried grain papery",
+      "rubber tacky",
+      "concrete abrasive"
+    ],
+    "pressure_resistance": [
+      "grain yield soft",
+      "metal unyielding",
+      "fruit bruise tender",
+      "compressed bale firm",
+      "liquid displacement",
+      "powder compact",
+      "fiber flex spring",
+      "brittle shatter",
+      "elastic bounce",
+      "viscous resistance"
+    ],
+    "moisture": [
+      "fresh harvest damp",
+      "kiln dried bone",
+      "humid warehouse sticky",
+      "condensation dripping",
+      "oil sheen wet",
+      "desert stored parched",
+      "sea spray salt damp",
+      "morning dew moist",
+      "sweat-soaked labor",
+      "rain-wet tarp"
+    ]
+  },
+  "auditory": {
+    "machinery": [
+      "conveyor belt humming",
+      "crane motor whining",
+      "forklift beeping reverse",
+      "compressor rhythmic pulse",
+      "generator constant drone",
+      "pump station throbbing",
+      "mill grinding continuous",
+      "fan ventilation whoosh",
+      "hydraulic hiss release",
+      "alarm klaxon warning"
+    ],
+    "material_sounds": [
+      "grain pouring cascade",
+      "metal clanging sharp",
+      "liquid sloshing tank",
+      "sack thud dropping",
+      "paper rustling documents",
+      "chain rattling crane",
+      "pallet wood creak",
+      "glass bottle clink",
+      "powder whisper settling",
+      "ice cracking cold"
+    ],
+    "human_activity": [
+      "workers shouting distance",
+      "radio chatter static",
+      "footsteps echo concrete",
+      "truck engine idling",
+      "phone ringing office",
+      "keyboard clicking trading",
+      "door slam metal",
+      "laughter break room",
+      "coughing dust",
+      "whistling casual"
+    ],
+    "ambient_environment": [
+      "rain on warehouse roof",
+      "wind through open doors",
+      "ship horn harbor",
+      "train whistle approaching",
+      "aircraft overhead",
+      "traffic distant hum",
+      "birds nesting rafters",
+      "thunder rumble far",
+      "silence night shift",
+      "echo empty space"
+    ],
+    "trading_floor": [
+      "pit roar chaos",
+      "bell opening close",
+      "ticker tape chatter",
+      "phones ringing multiple",
+      "shouting bid offer",
+      "paper shuffle frantic",
+      "chair scrape sudden",
+      "keyboard rapid fire",
+      "screen click refresh",
+      "murmur tense quiet"
+    ]
+  },
+  "crossPopulationTags": {
+    "tactile.temperature": ["Atmosphere", "Environment"],
+    "tactile.weight_density": ["Subject", "Action"],
+    "tactile.surface_feel": ["Subject", "Atmosphere"],
+    "tactile.pressure_resistance": ["Action", "Subject"],
+    "tactile.moisture": ["Atmosphere", "Environment"],
+    "auditory.machinery": ["Environment", "Atmosphere"],
+    "auditory.material_sounds": ["Action", "Atmosphere"],
+    "auditory.human_activity": ["Subject", "Environment"],
+    "auditory.ambient_environment": ["Atmosphere", "Environment"],
+    "auditory.trading_floor": ["Environment", "Atmosphere"]
+  }
+}

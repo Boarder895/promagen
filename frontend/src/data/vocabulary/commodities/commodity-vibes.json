@@ -1,0 +1,2723 @@
+{
+  "$schema": "./schemas/commodity-vibes.schema.json",
+  "version": "2.0.0",
+  "meta": {
+    "domain": "commodities",
+    "category": "commodity-vibes",
+    "description": "Evocative visual phrases for 95 commodities - merged and expanded vocabulary",
+    "totalPhrases": 1235,
+    "completedCommodities": 95,
+    "phasesComplete": ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9-merge"],
+    "updated": "2026-02-05"
+  },
+  "commodities": {
+    "brent": {
+      "id": "brent",
+      "name": "Brent Crude",
+      "emoji": "🛢️",
+      "category": "energy",
+      "extractionMethod": "drilled-offshore",
+      "primaryCountries": ["GB", "NO", "DK", "NL"],
+      "endUseSectors": ["transport-fuel", "energy-generation", "petrochemicals"],
+      "physicalProperties": {
+        "color": "dark brown to black",
+        "state": "liquid",
+        "texture": "viscous, oily",
+        "form": "barrels, tanker cargo"
+      },
+      "vibes": [
+        "North Sea platform silhouette against grey dawn",
+        "offshore derrick flame stack piercing fog",
+        "helicopter approaching oil rig helipad",
+        "roughneck crew change on windswept deck",
+        "pipeline valve station on Scottish coast",
+        "tanker convoy through choppy Atlantic waters",
+        "control room monitors glowing with flow data",
+        "subsea wellhead in murky depths",
+        "storage tank farm at Sullom Voe terminal",
+        "crude oil stream cascading into separator",
+        "platform supply vessel battling North Sea swell",
+        "flare boom burning excess gas against storm clouds",
+        "maintenance diver descending to subsea infrastructure"
+      ],
+      "visualIcons": ["offshore platform", "tanker", "pipeline", "flare stack", "North Sea"],
+      "atmosphereLinks": ["industrial maritime", "harsh weather", "isolated", "essential"],
+      "lightingLinks": ["grey overcast", "flame glow", "dawn offshore", "storm light"]
+    },
+    "wti": {
+      "id": "wti",
+      "name": "WTI Crude Oil",
+      "emoji": "🛢️",
+      "category": "energy",
+      "extractionMethod": "drilled-onshore",
+      "primaryCountries": ["US"],
+      "endUseSectors": ["transport-fuel", "energy-generation", "petrochemicals"],
+      "physicalProperties": {
+        "color": "light brown to black",
+        "state": "liquid",
+        "texture": "less viscous than Brent",
+        "form": "barrels, pipeline flow"
+      },
+      "vibes": [
+        "Permian Basin pumpjack nodding at sunset",
+        "West Texas oil field stretching to horizon",
+        "Cushing Oklahoma tank farm aerial view",
+        "drilling rig towering over prairie grass",
+        "roughneck adjusting pipe on derrick floor",
+        "pipeline crossing arid Texas landscape",
+        "oil train snaking through desert canyon",
+        "refinery towers glowing at Baytown dusk",
+        "wellhead Christmas tree valve assembly",
+        "mudlogger analyzing drill cuttings",
+        "fracking operation floodlit at night",
+        "pump station humming in Midland heat",
+        "lease operator checking production meters dawn"
+      ],
+      "visualIcons": ["pumpjack", "derrick", "tank farm", "pipeline", "Texas landscape"],
+      "atmosphereLinks": ["American industrial", "desert heat", "boom town", "black gold"],
+      "lightingLinks": [
+        "harsh Texas sun",
+        "golden hour prairie",
+        "refinery glow",
+        "night floodlights"
+      ]
+    },
+    "natural_gas": {
+      "id": "natural_gas",
+      "name": "Natural Gas",
+      "emoji": "🔥",
+      "category": "energy",
+      "extractionMethod": "drilled-onshore",
+      "primaryCountries": ["US", "RU", "QA", "IR", "CA"],
+      "endUseSectors": ["heating", "energy-generation", "petrochemicals"],
+      "physicalProperties": {
+        "color": "invisible (flame is blue)",
+        "state": "gas",
+        "texture": "odorless (mercaptan added)",
+        "form": "pipeline flow, LNG tanker"
+      },
+      "vibes": [
+        "blue flame dancing on industrial burner",
+        "LNG tanker with spherical tanks at port",
+        "compressor station humming in forest clearing",
+        "pipeline marker crossing frozen tundra",
+        "gas processing plant steam rising at dawn",
+        "wellhead valve releasing controlled flare",
+        "cryogenic storage tank frost-covered exterior",
+        "underground cavern storage facility entrance",
+        "distribution hub with pressure gauges",
+        "residential meter spinning with consumption",
+        "power plant turbine fed by gas line",
+        "Siberian pipeline cutting through snow",
+        "gas flare illuminating arctic night",
+        "LNG tanker crystalline cargo holds",
+        "pipeline welder sparks flying darkness",
+        "gas field technician checking meters dawn",
+        "emergency shutdown valve operator alert",
+        "seismic survey crew desert landscape",
+        "regasification terminal jetty at sunrise"
+      ],
+      "visualIcons": [
+        "blue flame",
+        "LNG tanker",
+        "pipeline",
+        "compressor station",
+        "storage cavern"
+      ],
+      "atmosphereLinks": ["clean burning", "essential utility", "invisible power", "winter warmth"],
+      "lightingLinks": [
+        "blue flame glow",
+        "industrial fluorescent",
+        "winter grey",
+        "steam diffused"
+      ]
+    },
+    "heating_oil": {
+      "id": "heating_oil",
+      "name": "Heating Oil",
+      "emoji": "🏠",
+      "category": "energy",
+      "extractionMethod": "refined",
+      "primaryCountries": ["US", "DE", "GB", "FR"],
+      "endUseSectors": ["heating", "residential"],
+      "physicalProperties": {
+        "color": "red-dyed (tax marking)",
+        "state": "liquid",
+        "texture": "less viscous than crude",
+        "form": "delivery truck, basement tank"
+      },
+      "vibes": [
+        "delivery truck backing into snowy driveway",
+        "basement oil tank gauge showing half full",
+        "furnace burner igniting with whoosh",
+        "oil truck hose unreeling in winter morning",
+        "New England home with oil fill pipe",
+        "heating oil price sign at roadside dealer",
+        "furnace technician adjusting nozzle",
+        "red-dyed oil flowing through clear tube",
+        "tank farm in Northeast winter landscape",
+        "barge delivering heating oil up Hudson River",
+        "thermostat clicking on as temperature drops",
+        "chimney smoke rising from oil-heated home",
+        "delivery truck winding rural winter road",
+        "oil burner flame dancing blue",
+        "emergency delivery elderly homeowner grateful",
+        "price board changing numbers winter peak",
+        "community fuel assistance program line",
+        "fuel oil futures spiking during polar vortex"
+      ],
+      "visualIcons": ["oil truck", "basement tank", "furnace", "winter home", "delivery hose"],
+      "atmosphereLinks": ["winter essential", "domestic warmth", "Northeast seasonal", "comfort"],
+      "lightingLinks": ["winter grey", "warm interior glow", "furnace flame", "snowy daylight"]
+    },
+    "gasoline": {
+      "id": "gasoline",
+      "name": "Gasoline",
+      "emoji": "⛽",
+      "category": "energy",
+      "extractionMethod": "refined",
+      "primaryCountries": ["US", "CN", "RU", "IN", "JP"],
+      "endUseSectors": ["transport-fuel", "automotive"],
+      "physicalProperties": {
+        "color": "pale yellow to colorless",
+        "state": "liquid (volatile)",
+        "texture": "thin, evaporates quickly",
+        "form": "pump dispenser, jerry can"
+      },
+      "vibes": [
+        "gas station pump nozzle in tank opening",
+        "price sign digits changing at dawn",
+        "tanker truck filling underground storage",
+        "refinery cat cracker tower at sunset",
+        "road trip fuel stop on desert highway",
+        "classic car at vintage gas pump",
+        "fuel gauge needle dropping toward empty",
+        "octane rating buttons glowing at night",
+        "gas station canopy lights in rain",
+        "jerry can being filled for generator",
+        "NASCAR pit crew speed-fueling race car",
+        "motorcycle tank being topped off at sunrise",
+        "gas station neon glow highway night",
+        "pump attendant classic service station",
+        "summer driving season traffic flow",
+        "commuter watching pump meter spin",
+        "emergency jerry can roadside",
+        "seasonal blend changeover refinery adjustment"
+      ],
+      "visualIcons": ["gas pump", "tanker truck", "price sign", "refinery", "fuel gauge"],
+      "atmosphereLinks": [
+        "road freedom",
+        "everyday essential",
+        "price sensitive",
+        "American mobility"
+      ],
+      "lightingLinks": [
+        "gas station fluorescent",
+        "highway sunset",
+        "pump display glow",
+        "rain reflections"
+      ]
+    },
+    "diesel": {
+      "id": "diesel",
+      "name": "Diesel",
+      "emoji": "🚛",
+      "category": "energy",
+      "extractionMethod": "refined",
+      "primaryCountries": ["US", "CN", "IN", "RU", "DE"],
+      "endUseSectors": ["transport-fuel", "industrial", "agriculture"],
+      "physicalProperties": {
+        "color": "amber to brown",
+        "state": "liquid",
+        "texture": "oily, higher flash point than gasoline",
+        "form": "bulk tanks, pump dispenser"
+      },
+      "vibes": [
+        "eighteen wheeler truck stop dawn",
+        "farm tractor plowing field dust rising",
+        "locomotive pulling freight mountain pass",
+        "construction equipment exhaust urban site",
+        "fishing boat diesel engine chug",
+        "generator powering remote camp night",
+        "fuel depot industrial scale storage",
+        "mechanic checking injectors workshop",
+        "winter additive mixing cold climate",
+        "highway convoy headlights stretching",
+        "agricultural harvest equipment sunset",
+        "marine vessel bunkering port facility",
+        "red diesel farm tank refill autumn"
+      ],
+      "visualIcons": ["truck stop", "tractor", "locomotive", "generator", "fuel depot"],
+      "atmosphereLinks": [
+        "heavy transport",
+        "agricultural power",
+        "industrial backbone",
+        "working class"
+      ],
+      "lightingLinks": ["truck stop neon", "field dust haze", "exhaust plume", "depot floodlights"]
+    },
+    "ethanol": {
+      "id": "ethanol",
+      "name": "Ethanol",
+      "emoji": "🌽",
+      "category": "energy",
+      "extractionMethod": "processed",
+      "primaryCountries": ["US", "BR", "CN", "IN", "FR"],
+      "endUseSectors": ["transport-fuel", "biofuel"],
+      "physicalProperties": {
+        "color": "colorless",
+        "state": "liquid",
+        "texture": "thin, alcohol odor",
+        "form": "blended with gasoline, E85 pumps"
+      },
+      "vibes": [
+        "corn ethanol plant towers above Iowa fields",
+        "fermentation tanks bubbling with conversion",
+        "E85 pump at flex-fuel station",
+        "grain trucks queuing at biorefinery",
+        "distillation column separating alcohol",
+        "corn harvest feeding ethanol demand",
+        "Brazilian sugarcane ethanol facility",
+        "biofuel blend being mixed in tank",
+        "green fuel pump handle designation",
+        "ethanol rail cars lined at terminal",
+        "farmer contract signing for corn delivery",
+        "renewable fuel standard compliance monitor",
+        "corn field stretching to horizon",
+        "distillery towers steam rising",
+        "midwest plant aerial farmland",
+        "quality testing lab technician",
+        "sustainable energy corn rows",
+        "cellulosic ethanol pilot plant innovation"
+      ],
+      "visualIcons": ["corn field", "biorefinery", "E85 pump", "fermentation tank", "grain truck"],
+      "atmosphereLinks": [
+        "renewable",
+        "agricultural-industrial",
+        "Midwest heartland",
+        "green transition"
+      ],
+      "lightingLinks": [
+        "golden corn field light",
+        "industrial plant glow",
+        "heartland sunset",
+        "silo shadows"
+      ]
+    },
+    "coal": {
+      "id": "coal",
+      "name": "Coal",
+      "emoji": "⬛",
+      "category": "energy",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["CN", "IN", "US", "AU", "ID"],
+      "endUseSectors": ["energy-generation", "steel-making"],
+      "physicalProperties": {
+        "color": "black, lustrous",
+        "state": "solid",
+        "texture": "hard, brittle, dusty",
+        "form": "chunks, powder, rail cars"
+      },
+      "vibes": [
+        "miner emerging from shaft cage at shift end",
+        "continuous miner cutting into coal seam",
+        "headframe silhouette against grey sky",
+        "coal train stretching across Wyoming prairie",
+        "power plant conveyor feeding furnace",
+        "stockpile mountain at port terminal",
+        "dragline excavator in open pit mine",
+        "coal barge flotilla on Ohio River",
+        "washery separating rock from coal",
+        "mine rescue team drilling emergency shaft",
+        "abandoned colliery headframe in rain",
+        "coal dust coating mining town at dusk",
+        "miner helmet lamp dark tunnel",
+        "conveyor belt carrying black rock",
+        "strip mine terraced earth aerial view",
+        "loader operator dust covered cab",
+        "safety briefing underground crew",
+        "export terminal ships loading",
+        "clean coal technology facility modern",
+        "last shift memorial at closing mine"
+      ],
+      "visualIcons": ["mine shaft", "coal train", "headframe", "dragline", "power plant"],
+      "atmosphereLinks": ["industrial heritage", "hard labor", "transition fuel", "grey gritty"],
+      "lightingLinks": [
+        "overcast industrial",
+        "headlamp underground",
+        "furnace glow",
+        "dust-filtered sun"
+      ]
+    },
+    "uranium": {
+      "id": "uranium",
+      "name": "Uranium",
+      "emoji": "☢️",
+      "category": "energy",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["KZ", "CA", "AU", "NA", "NE"],
+      "endUseSectors": ["energy-generation", "nuclear"],
+      "physicalProperties": {
+        "color": "silvery-grey (yellowcake is yellow)",
+        "state": "solid",
+        "texture": "heavy, radioactive",
+        "form": "yellowcake drums, fuel rods"
+      },
+      "vibes": [
+        "yellowcake drums in secure processing facility",
+        "Olympic Dam open pit uranium mine",
+        "fuel rod assembly in reactor pool blue glow",
+        "Kazakh in-situ leaching wellfield",
+        "nuclear plant cooling towers releasing steam",
+        "uranium hexafluoride cylinder being loaded",
+        "centrifuge cascade in enrichment facility",
+        "Geiger counter clicking near ore sample",
+        "mine workers in radiation monitoring gear",
+        "spent fuel pool Cherenkov radiation glow",
+        "nuclear transport cask on secure convoy",
+        "uranium oxide powder being processed",
+        "yellow cake processing facility contained",
+        "fuel rod assembly precision handling",
+        "hazmat suited worker inspection",
+        "control room operators monitoring",
+        "research reactor laboratory setting",
+        "IAEA inspector verifying safeguards"
+      ],
+      "visualIcons": ["yellowcake", "cooling tower", "fuel rod", "centrifuge", "radiation symbol"],
+      "atmosphereLinks": ["high security", "nuclear power", "controversial", "clean energy"],
+      "lightingLinks": [
+        "Cherenkov blue glow",
+        "clinical facility light",
+        "desert mine sun",
+        "reactor pool illumination"
+      ]
+    },
+    "propane": {
+      "id": "propane",
+      "name": "Propane",
+      "emoji": "🔵",
+      "category": "energy",
+      "extractionMethod": "refined",
+      "primaryCountries": ["US", "CA", "SA", "QA", "RU"],
+      "endUseSectors": ["heating", "cooking", "petrochemicals"],
+      "physicalProperties": {
+        "color": "colorless (pressurized liquid)",
+        "state": "liquid under pressure, gas at ambient",
+        "texture": "odorless (mercaptan added)",
+        "form": "cylinders, bulk tanks"
+      },
+      "vibes": [
+        "backyard BBQ grill tank being connected",
+        "forklift propane cylinder exchange at warehouse",
+        "rural home bulk propane tank in snow",
+        "propane delivery truck on country road",
+        "camping stove blue flame cooking breakfast",
+        "agricultural grain dryer consuming propane",
+        "propane bus fleet at transit depot",
+        "hot air balloon burner flame roaring",
+        "food truck generator running on propane",
+        "propane refrigeration unit on off-grid cabin",
+        "cylinder filling station safety protocols",
+        "blue rhino tank exchange at convenience store",
+        "autogas vehicle filling station",
+        "winter storm demand spike depot",
+        "NGL fractionation plant industrial",
+        "propane retailer storefront winter rush"
+      ],
+      "visualIcons": ["propane tank", "BBQ grill", "delivery truck", "blue flame", "cylinder"],
+      "atmosphereLinks": [
+        "suburban utility",
+        "outdoor living",
+        "rural essential",
+        "portable energy"
+      ],
+      "lightingLinks": [
+        "blue flame glow",
+        "backyard golden hour",
+        "winter grey delivery",
+        "camping dawn"
+      ]
+    },
+    "naphtha": {
+      "id": "naphtha",
+      "name": "Naphtha",
+      "emoji": "🧪",
+      "category": "energy",
+      "extractionMethod": "refined",
+      "primaryCountries": ["SA", "KR", "JP", "SG", "IN"],
+      "endUseSectors": ["petrochemicals", "plastics"],
+      "physicalProperties": {
+        "color": "colorless to pale yellow",
+        "state": "liquid",
+        "texture": "volatile, strong odor",
+        "form": "tanker cargo, pipeline"
+      },
+      "vibes": [
+        "petrochemical cracker consuming naphtha feedstock",
+        "naphtha tanker at Singapore refinery berth",
+        "steam cracker furnace tubes glowing red",
+        "plastics pellet production from naphtha derivatives",
+        "naphtha storage spheres at chemical complex",
+        "laboratory technician testing naphtha sample",
+        "cracker control room monitoring ethylene yield",
+        "naphtha pipeline feeding industrial park",
+        "Asian petrochemical hub at night",
+        "ship-to-ship naphtha transfer at anchorage",
+        "reformer unit upgrading naphtha to gasoline",
+        "aromatics extraction from naphtha stream",
+        "ethylene plant flare stack during startup"
+      ],
+      "visualIcons": [
+        "steam cracker",
+        "petrochemical plant",
+        "tanker",
+        "storage sphere",
+        "plastic pellets"
+      ],
+      "atmosphereLinks": [
+        "chemical industry",
+        "feedstock essential",
+        "Asian manufacturing",
+        "complex processing"
+      ],
+      "lightingLinks": [
+        "industrial night glow",
+        "cracker furnace orange",
+        "laboratory fluorescent",
+        "port floodlights"
+      ]
+    },
+    "gold": {
+      "id": "gold",
+      "name": "Gold",
+      "emoji": "🥇",
+      "category": "precious-metals",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["CN", "AU", "RU", "US", "ZA"],
+      "endUseSectors": ["jewelry-luxury", "electronics-tech", "finance"],
+      "physicalProperties": {
+        "color": "golden yellow",
+        "state": "solid",
+        "texture": "heavy, malleable, lustrous",
+        "form": "bars, coins, dust, jewelry"
+      },
+      "vibes": [
+        "gleaming gold bars stacked in vault",
+        "prospector panning in Sierra Nevada stream",
+        "Witwatersrand deep shaft cage descending",
+        "Fort Knox secure chamber golden glow",
+        "molten gold cascading into ingot mold",
+        "assayer testing purity with acid drop",
+        "jeweler crafting intricate gold filigree",
+        "central bank reserve counting room",
+        "open pit mine terraces cutting into earth",
+        "gold leaf artisan applying delicate sheets",
+        "Comex trading floor gold futures frenzy",
+        "ancient coin collection museum display",
+        "prospector panning riverside golden light",
+        "vault door opening bars gleaming",
+        "rush era miners camp campfire",
+        "refinery pouring molten stream",
+        "investor holding bar sunrise",
+        "dental technician casting crown",
+        "artisan gold miner mercury amalgamation"
+      ],
+      "visualIcons": ["gold bars", "vault", "mining shaft", "jewelry", "coins", "ingot mold"],
+      "atmosphereLinks": ["opulent", "secure", "ancient wealth", "precious", "eternal"],
+      "lightingLinks": ["golden glow", "vault spotlight", "warm metallic", "treasure gleam"]
+    },
+    "silver": {
+      "id": "silver",
+      "name": "Silver",
+      "emoji": "🥈",
+      "category": "precious-metals",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["MX", "PE", "CN", "PL", "AU"],
+      "endUseSectors": ["jewelry-luxury", "electronics-tech", "photography", "solar"],
+      "physicalProperties": {
+        "color": "bright white metallic",
+        "state": "solid",
+        "texture": "lustrous, tarnishes to grey",
+        "form": "bars, coins, industrial powder"
+      },
+      "vibes": [
+        "silver mine tunnel ore vein exposed",
+        "Mexican silver rush Zacatecas colonial town",
+        "sterling silver being poured into mold",
+        "solar panel manufacturing silver paste application",
+        "antique silversmith workshop tools arranged",
+        "silver coin collection numismatic display",
+        "industrial silver contact being fabricated",
+        "silver futures pit trader hand signals",
+        "tarnished silver being polished to shine",
+        "photographic film silver halide crystals",
+        "bullion dealer weighing silver rounds",
+        "jewelry display case silver chains gleaming",
+        "silversmith hammering intricate pattern",
+        "mining operation open pit extraction",
+        "electronics factory circuit boards",
+        "photographer developing darkroom",
+        "cutlery polishing fine dining",
+        "sterling hallmark stamp verification"
+      ],
+      "visualIcons": ["silver bars", "mine tunnel", "jewelry", "solar panel", "coins"],
+      "atmosphereLinks": ["industrial precious", "versatile", "lunar quality", "second place"],
+      "lightingLinks": ["cool metallic shine", "workshop lamp", "display case LED", "mine headlamp"]
+    },
+    "platinum": {
+      "id": "platinum",
+      "name": "Platinum",
+      "emoji": "⚪",
+      "category": "precious-metals",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["ZA", "RU", "ZW", "CA", "US"],
+      "endUseSectors": ["automotive", "jewelry-luxury", "electronics-tech"],
+      "physicalProperties": {
+        "color": "silvery-white",
+        "state": "solid",
+        "texture": "very heavy, corrosion resistant",
+        "form": "bars, catalytic converter, jewelry"
+      },
+      "vibes": [
+        "Bushveld Complex mine face platinum seam",
+        "catalytic converter being manufactured",
+        "platinum wedding band on jeweler's bench",
+        "smelter separating platinum group metals",
+        "automotive exhaust system assembly line",
+        "platinum electrode in chemical process",
+        "Johannesburg platinum refinery furnace",
+        "laboratory platinum crucible being heated",
+        "cancer treatment platinum compound synthesis",
+        "hydrogen fuel cell platinum catalyst layer",
+        "platinum record award gleaming on wall",
+        "investment grade platinum bar assay mark",
+        "catalytic converter assembly line",
+        "south african mine deep underground",
+        "fuel cell membrane production",
+        "aerospace component manufacturing",
+        "fuel cell stack platinum loading"
+      ],
+      "visualIcons": ["catalytic converter", "mine face", "jewelry", "platinum bar", "fuel cell"],
+      "atmosphereLinks": ["rare industrial", "automotive essential", "prestige", "South African"],
+      "lightingLinks": [
+        "smelter orange glow",
+        "laboratory fluorescent",
+        "mine shaft headlamp",
+        "showroom spotlight"
+      ]
+    },
+    "palladium": {
+      "id": "palladium",
+      "name": "Palladium",
+      "emoji": "⚪",
+      "category": "precious-metals",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["RU", "ZA", "CA", "US"],
+      "endUseSectors": ["automotive", "electronics-tech", "dentistry"],
+      "physicalProperties": {
+        "color": "silvery-white",
+        "state": "solid",
+        "texture": "lightweight for precious metal",
+        "form": "sponge, bars, catalytic converter"
+      },
+      "vibes": [
+        "Norilsk Siberian mine palladium extraction",
+        "gasoline catalytic converter palladium coating",
+        "electronics manufacturer soldering with palladium",
+        "dental crown palladium alloy being cast",
+        "palladium sponge in refining crucible",
+        "automotive emission test passing catalytic check",
+        "palladium futures screen price spiking",
+        "recycler dismantling converter for palladium",
+        "hydrogen purification palladium membrane",
+        "palladium coin limited edition minting",
+        "Russian export palladium bars stamped",
+        "white gold alloy palladium being mixed",
+        "automotive emission test facility",
+        "russian mine arctic conditions",
+        "jewelry workshop white gold alloy",
+        "used car catalytic converter theft scene"
+      ],
+      "visualIcons": [
+        "catalytic converter",
+        "Siberian mine",
+        "electronics",
+        "dental lab",
+        "refinery"
+      ],
+      "atmosphereLinks": ["rare earth", "automotive critical", "Russian supply", "recycling value"],
+      "lightingLinks": [
+        "Siberian winter light",
+        "factory fluorescent",
+        "refinery glow",
+        "laboratory LED"
+      ]
+    },
+    "rhodium": {
+      "id": "rhodium",
+      "name": "Rhodium",
+      "emoji": "💎",
+      "category": "precious-metals",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["ZA", "RU"],
+      "endUseSectors": ["automotive", "jewelry-luxury", "electronics-tech"],
+      "physicalProperties": {
+        "color": "silvery-white with blue tinge",
+        "state": "solid",
+        "texture": "extremely hard, corrosion proof",
+        "form": "powder, plating solution, catalyst"
+      },
+      "vibes": [
+        "rhodium plating tank jewelry workshop",
+        "catalytic converter three-way catalyst assembly",
+        "South African platinum mine rhodium byproduct",
+        "rhodium spot price chart extreme volatility",
+        "electroplating bath rhodium solution bubbling",
+        "white gold ring receiving rhodium flash",
+        "laboratory mirror rhodium coating process",
+        "automotive emission rhodium catalyst loading",
+        "precious metal refinery rhodium separation",
+        "rhodium powder in sealed container",
+        "luxury watch rhodium plated movement",
+        "industrial rhodium crucible extreme heat resistance",
+        "plating bath electrochemical",
+        "glass production crucible lining",
+        "price volatility chart extreme swings"
+      ],
+      "visualIcons": ["plating tank", "catalyst", "jewelry", "price chart", "refinery"],
+      "atmosphereLinks": ["ultra rare", "extreme value", "volatile pricing", "essential catalyst"],
+      "lightingLinks": [
+        "plating bath reflection",
+        "jewelry spotlight",
+        "laboratory clean",
+        "refinery furnace"
+      ]
+    },
+    "copper": {
+      "id": "copper",
+      "name": "Copper",
+      "emoji": "🔶",
+      "category": "base-metals",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["CL", "PE", "CN", "CD", "US"],
+      "endUseSectors": ["construction", "electronics-tech", "automotive"],
+      "physicalProperties": {
+        "color": "orange-red, green patina when oxidized",
+        "state": "solid",
+        "texture": "malleable, excellent conductor",
+        "form": "cathodes, wire, pipes, sheets"
+      },
+      "vibes": [
+        "Escondida open pit mine terraced expanse",
+        "copper cathode stacks at smelter yard",
+        "wire drawing mill copper rod feeding",
+        "LME warehouse copper inventory stacked",
+        "green patina Statue of Liberty detail",
+        "electrical cable factory copper wire spooling",
+        "Chilean desert mine truck hauling ore",
+        "plumber fitting copper pipe joint",
+        "copper futures ring dealing LME floor",
+        "electrowinning cell copper plating cathode",
+        "recycler separating copper from scrap",
+        "data center copper busbar installation",
+        "chilean open pit mine terraces",
+        "electrician pulling wire construction site",
+        "smelter furnace molten copper pour",
+        "electric vehicle motor windings",
+        "green roof patina centuries weathering"
+      ],
+      "visualIcons": ["open pit mine", "copper wire", "cathode", "pipes", "green patina"],
+      "atmosphereLinks": [
+        "industrial essential",
+        "electrification",
+        "Chilean desert",
+        "Dr Copper economy"
+      ],
+      "lightingLinks": ["desert mine sun", "smelter glow", "warehouse fluorescent", "factory LED"]
+    },
+    "aluminum": {
+      "id": "aluminum",
+      "name": "Aluminum",
+      "emoji": "🔘",
+      "category": "base-metals",
+      "extractionMethod": "refined",
+      "primaryCountries": ["CN", "IN", "RU", "CA", "AE"],
+      "endUseSectors": ["packaging", "automotive", "aerospace", "construction"],
+      "physicalProperties": {
+        "color": "silvery-grey",
+        "state": "solid",
+        "texture": "lightweight, corrosion resistant",
+        "form": "ingots, sheets, cans, extrusions"
+      },
+      "vibes": [
+        "bauxite mine red earth tropical landscape",
+        "alumina refinery caustic red mud ponds",
+        "aluminum smelter pot room intense heat",
+        "beverage can rolling mill high speed",
+        "aircraft fuselage aluminum skin riveting",
+        "aluminum extrusion press profile emerging",
+        "recycling plant crushed cans conveyor",
+        "window frame aluminum profile factory",
+        "molten aluminum being tapped from cell",
+        "automotive body panel stamping press",
+        "aluminum foil rolling ultra thin sheets",
+        "power lines aluminum conductor stringing",
+        "smelter pot line electric current",
+        "aircraft fuselage assembly plant",
+        "foil production thin gleaming",
+        "bauxite residue red mud pond aerial"
+      ],
+      "visualIcons": ["smelter", "cans", "aircraft", "bauxite", "extrusion"],
+      "atmosphereLinks": [
+        "energy intensive",
+        "lightweight strength",
+        "recyclable",
+        "modern material"
+      ],
+      "lightingLinks": [
+        "smelter intense white",
+        "factory high bay",
+        "tropical mine sun",
+        "airport hangar"
+      ]
+    },
+    "zinc": {
+      "id": "zinc",
+      "name": "Zinc",
+      "emoji": "⬜",
+      "category": "base-metals",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["CN", "AU", "PE", "IN", "US"],
+      "endUseSectors": ["construction", "automotive", "infrastructure"],
+      "physicalProperties": {
+        "color": "bluish-white",
+        "state": "solid",
+        "texture": "brittle at room temperature",
+        "form": "ingots, galvanizing bath, die castings"
+      },
+      "vibes": [
+        "galvanizing line steel sheet dipping",
+        "zinc mine underground stope drilling",
+        "hot-dip galvanizing bath molten zinc",
+        "zinc ingot stack LME branded warehouse",
+        "die casting machine zinc alloy injection",
+        "roofing zinc sheet installation craftsman",
+        "zinc oxide white pigment production",
+        "battery zinc anode manufacturing",
+        "galvanized steel coil being shipped",
+        "zinc smelter roasting furnace fumes",
+        "corrugated galvanized roofing installation",
+        "zinc supplements pharmaceutical packaging",
+        "galvanizing plant steel dipping",
+        "sunscreen zinc oxide mixing",
+        "hot dip galvanizing line worker safety"
+      ],
+      "visualIcons": ["galvanizing bath", "ingots", "roofing", "mine stope", "die casting"],
+      "atmosphereLinks": [
+        "corrosion protection",
+        "industrial essential",
+        "utilitarian",
+        "protective coating"
+      ],
+      "lightingLinks": [
+        "molten zinc glow",
+        "mine shaft headlamp",
+        "factory fluorescent",
+        "warehouse daylight"
+      ]
+    },
+    "nickel": {
+      "id": "nickel",
+      "name": "Nickel",
+      "emoji": "🔵",
+      "category": "base-metals",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["ID", "PH", "RU", "NC", "AU"],
+      "endUseSectors": ["electronics-tech", "automotive", "aerospace"],
+      "physicalProperties": {
+        "color": "silvery-white with golden tinge",
+        "state": "solid",
+        "texture": "hard, magnetic, corrosion resistant",
+        "form": "briquettes, cathodes, stainless steel"
+      },
+      "vibes": [
+        "Indonesian laterite nickel mine tropical",
+        "EV battery nickel sulfate production",
+        "stainless steel mill nickel alloy mixing",
+        "Norilsk Siberian nickel smelter complex",
+        "nickel briquettes being loaded for export",
+        "Tesla Gigafactory battery cell assembly",
+        "LME nickel squeeze trading chaos",
+        "New Caledonia nickel mine aerial view",
+        "electroplating nickel chrome bumper",
+        "superalloy jet engine blade casting",
+        "nickel pig iron Chinese production",
+        "HPAL acid leach nickel extraction",
+        "stainless steel production furnace",
+        "electric vehicle battery factory",
+        "plating bath shiny chrome finish",
+        "EV battery factory gigascale production"
+      ],
+      "visualIcons": [
+        "EV battery",
+        "laterite mine",
+        "stainless steel",
+        "briquettes",
+        "Siberian smelter"
+      ],
+      "atmosphereLinks": [
+        "EV revolution",
+        "battery metal",
+        "stainless essential",
+        "tropical mining"
+      ],
+      "lightingLinks": ["tropical mine sun", "Siberian grey", "factory interior", "smelter glow"]
+    },
+    "lead": {
+      "id": "lead",
+      "name": "Lead",
+      "emoji": "⚫",
+      "category": "base-metals",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["CN", "AU", "US", "PE", "MX"],
+      "endUseSectors": ["automotive", "construction", "energy-storage"],
+      "physicalProperties": {
+        "color": "bluish-grey",
+        "state": "solid",
+        "texture": "very heavy, soft, malleable",
+        "form": "ingots, battery plates, sheet"
+      },
+      "vibes": [
+        "lead-acid battery assembly line automotive",
+        "secondary lead smelter recycling batteries",
+        "radiation shielding lead sheet installation",
+        "lead mine concentrate being processed",
+        "car battery recycling plant crushing",
+        "lead ingot stack foundry floor",
+        "cable sheathing lead extrusion press",
+        "X-ray room lead apron storage",
+        "lead smelter baghouse pollution control",
+        "fishing weight lead casting mold",
+        "lead crystal glass workshop cutting",
+        "ammunition lead bullet manufacturing",
+        "battery recycling smelter operation",
+        "radiation shielding medical facility",
+        "environmental remediation site",
+        "Superfund site contamination remediation"
+      ],
+      "visualIcons": [
+        "car battery",
+        "lead ingots",
+        "recycling plant",
+        "X-ray shielding",
+        "smelter"
+      ],
+      "atmosphereLinks": [
+        "heavy industry",
+        "recycling focused",
+        "radiation protection",
+        "legacy metal"
+      ],
+      "lightingLinks": [
+        "smelter glow",
+        "factory overhead",
+        "recycling yard daylight",
+        "foundry orange"
+      ]
+    },
+    "tin": {
+      "id": "tin",
+      "name": "Tin",
+      "emoji": "🔘",
+      "category": "base-metals",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["CN", "ID", "MM", "PE", "BO"],
+      "endUseSectors": ["electronics-tech", "packaging", "construction"],
+      "physicalProperties": {
+        "color": "silvery-white",
+        "state": "solid",
+        "texture": "soft, low melting point",
+        "form": "ingots, solder wire, tin plate"
+      },
+      "vibes": [
+        "Indonesian tin dredge floating mine",
+        "electronics solder wave machine PCB",
+        "tin can food packaging line speed",
+        "alluvial tin mining Bangka Island",
+        "solder wire being applied to circuit",
+        "tin ingot LME registered brand stack",
+        "tin plating line steel strip coating",
+        "artisanal tin miner panning stream",
+        "bronze bell tin alloy being cast",
+        "tin whisker growth electronics failure",
+        "pewter craftsman tin alloy shaping",
+        "Malaysian tin smelter historic facility",
+        "food can production line sealing",
+        "indonesian placer mining dredge",
+        "float glass production molten tin",
+        "artisanal miner wading through tailings"
+      ],
+      "visualIcons": ["tin dredge", "solder", "tin cans", "ingots", "electronics"],
+      "atmosphereLinks": [
+        "electronics essential",
+        "low tech to high tech",
+        "island mining",
+        "historic metal"
+      ],
+      "lightingLinks": [
+        "tropical island sun",
+        "electronics clean room",
+        "smelter traditional",
+        "packaging factory"
+      ]
+    },
+    "iron_ore": {
+      "id": "iron_ore",
+      "name": "Iron Ore",
+      "emoji": "🔴",
+      "category": "base-metals",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["AU", "BR", "CN", "IN", "RU"],
+      "endUseSectors": ["construction", "automotive", "infrastructure"],
+      "physicalProperties": {
+        "color": "red-brown to black",
+        "state": "solid",
+        "texture": "heavy ore chunks",
+        "form": "lump ore, fines, pellets"
+      },
+      "vibes": [
+        "Pilbara red dust giant haul truck",
+        "Rio Tinto autonomous train ore cars",
+        "Port Hedland iron ore ship loading",
+        "blast furnace iron ore pellets charging",
+        "Carajás mine Brazil rainforest edge",
+        "iron ore stockpile reclaimers working",
+        "Chinese steel mill receiving ore shipment",
+        "ore carrier Capesize through rough seas",
+        "iron ore fines dust cloud loading",
+        "beneficiation plant upgrading ore grade",
+        "Dalian iron ore futures trading frenzy",
+        "mine site accommodation camp Pilbara",
+        "autonomous haul truck fleet coordination"
+      ],
+      "visualIcons": ["haul truck", "ore train", "red dust", "ship loading", "blast furnace"],
+      "atmosphereLinks": ["Australian outback", "steel feedstock", "China demand", "mega mining"],
+      "lightingLinks": [
+        "Pilbara harsh sun",
+        "red dust haze",
+        "port floodlights",
+        "blast furnace orange"
+      ]
+    },
+    "cobalt": {
+      "id": "cobalt",
+      "name": "Cobalt",
+      "emoji": "🔵",
+      "category": "base-metals",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["CD", "RU", "AU", "PH", "CU"],
+      "endUseSectors": ["electronics-tech", "automotive", "aerospace"],
+      "physicalProperties": {
+        "color": "bluish-grey",
+        "state": "solid",
+        "texture": "hard, lustrous, magnetic",
+        "form": "cathodes, hydroxide, battery material"
+      },
+      "vibes": [
+        "DRC artisanal cobalt miner hand digging",
+        "EV battery cathode cobalt compound mixing",
+        "Glencore Mutanda mine industrial scale",
+        "cobalt blue pigment pottery glazing",
+        "smartphone lithium cobalt oxide battery",
+        "ethical sourcing cobalt audit inspection",
+        "cobalt hydroxide processing plant Congo",
+        "superalloy turbine blade cobalt content",
+        "cobalt price spike supply chain fear",
+        "battery recycler recovering cobalt metals",
+        "cobalt-free battery research laboratory",
+        "Katanga mining region aerial overview",
+        "congo mine artisanal extraction",
+        "refinery blue compound production",
+        "supply chain traceability system",
+        "child labor audit DRC supply chain"
+      ],
+      "visualIcons": ["artisanal mine", "EV battery", "DRC landscape", "blue pigment", "cathode"],
+      "atmosphereLinks": ["ethical concerns", "EV critical", "Congo supply", "supply chain risk"],
+      "lightingLinks": [
+        "African sun harsh",
+        "mine pit daylight",
+        "factory clean room",
+        "laboratory LED"
+      ]
+    },
+    "steel": {
+      "id": "steel",
+      "name": "Steel",
+      "emoji": "🔩",
+      "category": "industrial",
+      "extractionMethod": "processed",
+      "primaryCountries": ["CN", "IN", "JP", "US", "RU"],
+      "endUseSectors": ["construction", "automotive", "infrastructure"],
+      "physicalProperties": {
+        "color": "grey metallic",
+        "state": "solid alloy",
+        "texture": "hard, strong, various finishes",
+        "form": "coils, plates, beams, rebar"
+      },
+      "vibes": [
+        "blast furnace molten iron tapping",
+        "steel mill rolling red hot slab",
+        "continuous caster liquid steel solidifying",
+        "steel coil warehouse organized rows",
+        "skyscraper construction steel beam lifting",
+        "electric arc furnace scrap melting",
+        "steel rebar construction site stacked",
+        "automotive stamping press steel body",
+        "stainless steel sheet polishing line",
+        "Shanghai steel futures trading volatility",
+        "steel bridge construction suspension cables",
+        "abandoned steel mill rust belt decay",
+        "blast furnace orange molten pour",
+        "rolling mill red hot billet",
+        "shipyard hull welding sparks",
+        "steel tariff protest worker rally"
+      ],
+      "visualIcons": ["blast furnace", "steel mill", "steel beam", "coils", "construction"],
+      "atmosphereLinks": ["industrial backbone", "China dominance", "infrastructure", "rust belt"],
+      "lightingLinks": [
+        "molten steel orange glow",
+        "mill intense heat",
+        "warehouse fluorescent",
+        "construction daylight"
+      ]
+    },
+    "manganese": {
+      "id": "manganese",
+      "name": "Manganese",
+      "emoji": "⚫",
+      "category": "industrial",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["ZA", "AU", "GA", "CN", "GH"],
+      "endUseSectors": ["construction", "electronics-tech"],
+      "physicalProperties": {
+        "color": "grey-white",
+        "state": "solid",
+        "texture": "hard, brittle",
+        "form": "ore, ferroalloy, dioxide"
+      },
+      "vibes": [
+        "South African manganese mine Kalahari",
+        "ferromanganese smelter electric furnace",
+        "steel mill manganese alloy addition",
+        "battery cathode manganese compound",
+        "manganese ore ship loading port",
+        "Gabon jungle manganese mining operation",
+        "manganese dioxide battery production",
+        "aluminium can manganese alloy content",
+        "deep sea manganese nodule potential",
+        "manganese ore stockpile coastal terminal",
+        "railway track manganese steel crossing",
+        "manganese-rich soil vineyard terroir",
+        "african mine ore extraction",
+        "dry cell battery production",
+        "deep sea nodule prototype harvester"
+      ],
+      "visualIcons": ["manganese mine", "smelter", "ore stockpile", "battery", "steel"],
+      "atmosphereLinks": [
+        "steel essential",
+        "African mining",
+        "battery component",
+        "infrastructure"
+      ],
+      "lightingLinks": [
+        "African sun harsh",
+        "smelter furnace glow",
+        "port floodlights",
+        "mine pit daylight"
+      ]
+    },
+    "lithium": {
+      "id": "lithium",
+      "name": "Lithium",
+      "emoji": "🔋",
+      "category": "industrial",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["AU", "CL", "CN", "AR", "US"],
+      "endUseSectors": ["electronics-tech", "automotive"],
+      "physicalProperties": {
+        "color": "silvery-white metal",
+        "state": "solid (reactive)",
+        "texture": "soft, lightest metal",
+        "form": "carbonate, hydroxide, spodumene"
+      },
+      "vibes": [
+        "Atacama salar lithium brine evaporation ponds",
+        "Australian spodumene hard rock mine",
+        "EV battery lithium-ion cell assembly",
+        "lithium hydroxide processing facility",
+        "Tesla Gigafactory battery production",
+        "brine pumping Bolivian salt flat",
+        "lithium carbonate white powder processing",
+        "battery recycling lithium recovery",
+        "electric vehicle charging station network",
+        "lithium price chart exponential rise",
+        "DLE direct lithium extraction technology",
+        "lithium triangle South America aerial",
+        "atacama salt flat evaporation ponds",
+        "solar storage installation site",
+        "research scientist energy density",
+        "direct lithium extraction pilot success"
+      ],
+      "visualIcons": ["brine ponds", "EV battery", "spodumene mine", "salt flat", "battery cell"],
+      "atmosphereLinks": ["EV revolution", "white gold", "energy transition", "supply scramble"],
+      "lightingLinks": [
+        "Atacama desert harsh sun",
+        "salt flat white glare",
+        "factory clean room",
+        "charging station night"
+      ]
+    },
+    "potash": {
+      "id": "potash",
+      "name": "Potash",
+      "emoji": "🧂",
+      "category": "industrial",
+      "extractionMethod": "mined-underground",
+      "primaryCountries": ["CA", "RU", "BY", "CN", "DE"],
+      "endUseSectors": ["agriculture-inputs"],
+      "physicalProperties": {
+        "color": "pink to red crystals",
+        "state": "solid salt",
+        "texture": "crystalline",
+        "form": "muriate (KCl), sulfate (K2SO4)"
+      },
+      "vibes": [
+        "Saskatchewan potash mine underground cavern",
+        "potash evaporation pond pink color aerial",
+        "fertilizer spreader applying potash field",
+        "potash granules close-up pink crystals",
+        "Belarus potash rail export train",
+        "potash mine continuous miner machine",
+        "fertilizer blending plant potash mixing",
+        "solution mining potash injection well",
+        "crop yield potash deficiency comparison",
+        "potash loading ship port terminal",
+        "Dead Sea potash evaporation facility",
+        "potash price sanctions impact chart",
+        "potash mine flooded cavern pumping"
+      ],
+      "visualIcons": [
+        "pink crystals",
+        "underground mine",
+        "evaporation pond",
+        "fertilizer spreader",
+        "Saskatchewan"
+      ],
+      "atmosphereLinks": [
+        "fertilizer essential",
+        "Canadian mining",
+        "Belarus sanctions",
+        "food security"
+      ],
+      "lightingLinks": [
+        "underground mine headlamp",
+        "pink pond aerial",
+        "field application daylight",
+        "port evening"
+      ]
+    },
+    "urea": {
+      "id": "urea",
+      "name": "Urea",
+      "emoji": "🧪",
+      "category": "industrial",
+      "extractionMethod": "processed",
+      "primaryCountries": ["CN", "IN", "RU", "US", "SA"],
+      "endUseSectors": ["agriculture-inputs", "petrochemicals"],
+      "physicalProperties": {
+        "color": "white granules",
+        "state": "solid",
+        "texture": "prilled or granular",
+        "form": "prills, granules, solution"
+      },
+      "vibes": [
+        "urea plant granulation tower spraying",
+        "natural gas feedstock urea synthesis",
+        "fertilizer application urea spreading",
+        "urea prilling tower top view",
+        "farmer handling urea fertilizer bags",
+        "urea ship bulk cargo discharge",
+        "ammonia reactor urea production step",
+        "selective catalytic reduction urea diesel",
+        "urea price spike gas cost linkage",
+        "nitrogen cycle urea breakdown soil",
+        "AdBlue urea solution truck filling",
+        "urea storage warehouse bulk bags",
+        "urea prills quality control conveyor"
+      ],
+      "visualIcons": [
+        "urea plant",
+        "white granules",
+        "fertilizer bag",
+        "ammonia reactor",
+        "farming"
+      ],
+      "atmosphereLinks": [
+        "nitrogen fertilizer",
+        "natural gas link",
+        "food production",
+        "emission control"
+      ],
+      "lightingLinks": [
+        "plant industrial lighting",
+        "field application daylight",
+        "warehouse interior",
+        "truck stop night"
+      ]
+    },
+    "sulfur": {
+      "id": "sulfur",
+      "name": "Sulfur",
+      "emoji": "💛",
+      "category": "industrial",
+      "extractionMethod": "refined",
+      "primaryCountries": ["CN", "US", "RU", "SA", "CA"],
+      "endUseSectors": ["agriculture-inputs", "petrochemicals"],
+      "physicalProperties": {
+        "color": "bright yellow",
+        "state": "solid",
+        "texture": "brittle, pungent odor",
+        "form": "molten, solid blocks, granules"
+      },
+      "vibes": [
+        "sulfur mountain yellow block storage",
+        "refinery sulfur recovery unit output",
+        "sulfuric acid plant contact process",
+        "sulfur loading ship yellow cargo",
+        "volcanic sulfur deposits yellow vents",
+        "sulfur block cutting saw operation",
+        "fertilizer sulfur coating granules",
+        "molten sulfur forming pool cooling",
+        "Alberta sour gas sulfur byproduct",
+        "tire vulcanization sulfur addition",
+        "sulfur dioxide emission scrubber stack",
+        "match head sulfur striking ignition",
+        "sulfur solidification pit cooling blocks"
+      ],
+      "visualIcons": [
+        "yellow sulfur blocks",
+        "refinery",
+        "volcanic vent",
+        "ship cargo",
+        "acid plant"
+      ],
+      "atmosphereLinks": [
+        "refinery byproduct",
+        "fertilizer input",
+        "volcanic association",
+        "industrial essential"
+      ],
+      "lightingLinks": [
+        "sulfur yellow glow",
+        "refinery night flames",
+        "volcanic otherworldly",
+        "port daylight"
+      ]
+    },
+    "titanium": {
+      "id": "titanium",
+      "name": "Titanium",
+      "emoji": "⬜",
+      "category": "industrial",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["AU", "ZA", "CN", "MZ", "UA"],
+      "endUseSectors": ["aerospace", "construction", "automotive"],
+      "physicalProperties": {
+        "color": "silver-grey",
+        "state": "solid",
+        "texture": "strong, lightweight, corrosion proof",
+        "form": "sponge, ingots, mill products"
+      },
+      "vibes": [
+        "titanium mineral sand beach mining",
+        "aerospace titanium jet engine components",
+        "titanium sponge Kroll process reactor",
+        "medical implant titanium hip joint",
+        "golf club titanium driver head",
+        "titanium dioxide white paint pigment",
+        "submarine hull titanium pressure vessel",
+        "titanium bike frame precision welding",
+        "Ilmenite ore magnetic separation",
+        "Russia titanium export aerospace supply",
+        "titanium wedding band jewelry crafting",
+        "architectural titanium Bilbao Guggenheim",
+        "titanium sponge reactor Kroll process"
+      ],
+      "visualIcons": [
+        "jet engine",
+        "medical implant",
+        "beach mining",
+        "titanium bike",
+        "architecture"
+      ],
+      "atmosphereLinks": [
+        "aerospace grade",
+        "medical precision",
+        "lightweight strength",
+        "premium material"
+      ],
+      "lightingLinks": [
+        "aerospace clean room",
+        "beach mining sun",
+        "medical sterile",
+        "architectural spotlight"
+      ]
+    },
+    "neodymium": {
+      "id": "neodymium",
+      "name": "Neodymium",
+      "emoji": "🧲",
+      "category": "industrial",
+      "extractionMethod": "mined-open-pit",
+      "primaryCountries": ["CN", "AU", "US", "MM", "IN"],
+      "endUseSectors": ["electronics-tech", "automotive", "energy-generation"],
+      "physicalProperties": {
+        "color": "silvery-white, tarnishes",
+        "state": "solid",
+        "texture": "soft, magnetic",
+        "form": "oxide, metal, magnets"
+      },
+      "vibes": [
+        "rare earth mine Inner Mongolia dust",
+        "neodymium magnet manufacturing precision",
+        "wind turbine generator permanent magnet",
+        "electric vehicle motor neodymium magnet",
+        "hard drive neodymium magnet read head",
+        "rare earth separation solvent extraction",
+        "Chinese rare earth export quota control",
+        "neodymium-doped laser crystal growing",
+        "speaker driver neodymium magnet power",
+        "MRI machine neodymium magnet cooling",
+        "rare earth recycling urban mining",
+        "Bayan Obo mine world's largest deposit",
+        "wind turbine permanent magnet assembly"
+      ],
+      "visualIcons": ["rare earth mine", "magnet", "wind turbine", "EV motor", "hard drive"],
+      "atmosphereLinks": ["China dominance", "energy transition", "tech essential", "supply risk"],
+      "lightingLinks": [
+        "Inner Mongolia dust haze",
+        "clean room manufacturing",
+        "wind farm daylight",
+        "laboratory laser"
+      ]
+    },
+    "wheat": {
+      "id": "wheat",
+      "name": "Wheat",
+      "emoji": "🌾",
+      "category": "grains",
+      "extractionMethod": "farmed-broadacre",
+      "primaryCountries": ["CN", "IN", "RU", "US", "FR"],
+      "endUseSectors": ["food-beverage", "animal-feed"],
+      "physicalProperties": {
+        "color": "golden when ripe",
+        "state": "solid grain",
+        "texture": "hard kernels",
+        "form": "bushels, flour, bread"
+      },
+      "vibes": [
+        "golden wheat field swaying Kansas wind",
+        "combine harvester cutting through crop",
+        "grain elevator towering over prairie town",
+        "wheat flowing into truck bed harvest",
+        "flour mill stone grinding wheat kernels",
+        "bread bakery fresh loaves cooling rack",
+        "wheat futures pit CBOT trading chaos",
+        "Ukrainian Black Sea wheat ship loading",
+        "drought-stressed wheat field wilting",
+        "winter wheat emerging through spring snow",
+        "grain inspector testing wheat moisture",
+        "pasta factory semolina wheat processing",
+        "golden waves field summer breeze",
+        "farmer checking crop maturity",
+        "storage silo towering rural",
+        "rust disease inspection worried farmer"
+      ],
+      "visualIcons": ["wheat field", "combine", "grain elevator", "flour mill", "bread"],
+      "atmosphereLinks": ["amber waves", "heartland America", "global staple", "harvest season"],
+      "lightingLinks": [
+        "golden hour field",
+        "harvest dust haze",
+        "mill interior",
+        "bakery warm glow"
+      ]
+    },
+    "corn": {
+      "id": "corn",
+      "name": "Corn",
+      "emoji": "🌽",
+      "category": "grains",
+      "extractionMethod": "farmed-broadacre",
+      "primaryCountries": ["US", "CN", "BR", "AR", "UA"],
+      "endUseSectors": ["food-beverage", "animal-feed", "biofuel"],
+      "physicalProperties": {
+        "color": "yellow kernels",
+        "state": "solid grain",
+        "texture": "starchy kernels on cob",
+        "form": "bushels, ethanol, corn syrup"
+      },
+      "vibes": [
+        "Iowa cornfield rows stretching to horizon",
+        "corn combine header eating through stalks",
+        "ethanol plant towers above corn country",
+        "corn cob close-up golden kernels glistening",
+        "grain bin filling corn harvest stream",
+        "cattle feedlot corn feeding operation",
+        "high fructose corn syrup processing plant",
+        "corn futures electronic trading screen",
+        "pollination corn tassel pollen drift",
+        "corn maze autumn farm attraction",
+        "tortilla factory corn masa preparation",
+        "popcorn kernels exploding in kettle",
+        "midwest field rows stretching horizon",
+        "combine harvesting golden ears",
+        "precision agriculture drone mapping field"
+      ],
+      "visualIcons": ["cornfield", "corn cob", "ethanol plant", "grain bin", "feedlot"],
+      "atmosphereLinks": ["Midwest heartland", "ethanol boom", "feed the world", "American farm"],
+      "lightingLinks": [
+        "summer corn field sun",
+        "harvest golden hour",
+        "ethanol plant night glow",
+        "bin interior dark"
+      ]
+    },
+    "soybeans": {
+      "id": "soybeans",
+      "name": "Soybeans",
+      "emoji": "🫘",
+      "category": "grains",
+      "extractionMethod": "farmed-broadacre",
+      "primaryCountries": ["BR", "US", "AR", "CN", "IN"],
+      "endUseSectors": ["food-beverage", "animal-feed", "biofuel"],
+      "physicalProperties": {
+        "color": "tan to brown beans",
+        "state": "solid legume",
+        "texture": "round hard beans",
+        "form": "bushels, oil, meal, tofu"
+      },
+      "vibes": [
+        "Brazilian Cerrado soybean field aerial view",
+        "soybean harvest combine dust cloud",
+        "crushing plant extracting soybean oil",
+        "tofu factory soy milk curdling vats",
+        "soybean meal animal feed loading",
+        "Amazon deforestation soy expansion edge",
+        "soy sauce fermentation traditional barrels",
+        "biodiesel plant soybean oil processing",
+        "China soybean import cargo discharge",
+        "soybean pod close-up three beans visible",
+        "grain truck queue soybean delivery",
+        "vegetable oil bottling line soy based",
+        "green field pods maturing",
+        "trade war uncertainty farm bankruptcy"
+      ],
+      "visualIcons": ["soybean field", "crushing plant", "tofu", "cargo ship", "Brazil landscape"],
+      "atmosphereLinks": [
+        "Brazil agriculture",
+        "China demand",
+        "protein source",
+        "deforestation debate"
+      ],
+      "lightingLinks": [
+        "tropical Brazil sun",
+        "crushing plant industrial",
+        "food factory clean",
+        "cargo port floodlight"
+      ]
+    },
+    "rice": {
+      "id": "rice",
+      "name": "Rice",
+      "emoji": "🍚",
+      "category": "grains",
+      "extractionMethod": "farmed-broadacre",
+      "primaryCountries": ["CN", "IN", "ID", "BD", "VN"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "white polished, brown unpolished",
+        "state": "solid grain",
+        "texture": "small elongated grains",
+        "form": "paddy, milled rice, rice flour"
+      },
+      "vibes": [
+        "terraced rice paddy emerald green hillside",
+        "rice planting farmers bent in flooded field",
+        "rice harvesting golden stalks being cut",
+        "rice mill polishing white grains tumbling",
+        "basmati rice aging warehouse aromatic",
+        "sushi chef preparing perfect rice",
+        "rice barge floating through Mekong Delta",
+        "Thai jasmine rice export sack loading",
+        "rice paddy water buffalo plowing",
+        "Japanese rice field autumn harvest",
+        "rice paper wrapper being made thin",
+        "rice wine sake brewery fermentation",
+        "paddy field terraced hillside",
+        "heritage variety seed bank preservation"
+      ],
+      "visualIcons": ["rice paddy", "terraces", "rice bowl", "water buffalo", "rice mill"],
+      "atmosphereLinks": [
+        "Asian staple",
+        "flooded fields",
+        "terraced beauty",
+        "ancient cultivation"
+      ],
+      "lightingLinks": [
+        "misty paddy dawn",
+        "tropical wet season",
+        "terraced afternoon",
+        "mill interior"
+      ]
+    },
+    "oats": {
+      "id": "oats",
+      "name": "Oats",
+      "emoji": "🌾",
+      "category": "grains",
+      "extractionMethod": "farmed-broadacre",
+      "primaryCountries": ["RU", "CA", "AU", "PL", "FI"],
+      "endUseSectors": ["food-beverage", "animal-feed"],
+      "physicalProperties": {
+        "color": "pale golden husks",
+        "state": "solid grain",
+        "texture": "light fluffy grain",
+        "form": "rolled oats, oatmeal, flour"
+      },
+      "vibes": [
+        "Scottish oat field rolling highland mist",
+        "oat harvest swathing windrows drying",
+        "rolled oats production steel-cut process",
+        "porridge pot steaming morning breakfast",
+        "oat milk factory modern processing",
+        "horse stable oat feed bucket filling",
+        "granola bar manufacturing oat mixing",
+        "oatmeal cookie baking kitchen aroma",
+        "Canadian prairie oat combine working",
+        "oat bran milling health food product",
+        "overnight oats jar preparation trendy",
+        "oat straw bale livestock bedding",
+        "scottish highland field morning mist",
+        "oat milk barista competition pour"
+      ],
+      "visualIcons": ["oat field", "porridge", "oat milk", "horse stable", "granola"],
+      "atmosphereLinks": ["healthy breakfast", "Scottish heritage", "horse feed", "comfort food"],
+      "lightingLinks": [
+        "highland misty light",
+        "kitchen morning sun",
+        "stable warm glow",
+        "factory bright"
+      ]
+    },
+    "canola": {
+      "id": "canola",
+      "name": "Canola",
+      "emoji": "🌼",
+      "category": "grains",
+      "extractionMethod": "farmed-broadacre",
+      "primaryCountries": ["CA", "CN", "IN", "AU", "FR"],
+      "endUseSectors": ["food-beverage", "biofuel"],
+      "physicalProperties": {
+        "color": "bright yellow flowers, black seeds",
+        "state": "solid seed",
+        "texture": "tiny round oilseeds",
+        "form": "seed, oil, meal"
+      },
+      "vibes": [
+        "canola field brilliant yellow bloom sea",
+        "Canadian prairie canola harvest combine",
+        "canola oil extraction crushing facility",
+        "cooking oil bottle canola label",
+        "canola swathing windrow drying",
+        "biodiesel production canola feedstock",
+        "canola meal animal feed production",
+        "yellow canola flowers bee pollination",
+        "grain elevator canola seed flowing",
+        "canola field aerial photography pattern",
+        "salad dressing canola oil based",
+        "Australian canola export ship loading",
+        "canola oil quality testing smoke point"
+      ],
+      "visualIcons": ["yellow flower field", "canola oil", "combine", "crushing plant", "bees"],
+      "atmosphereLinks": [
+        "Canadian prairies",
+        "heart healthy oil",
+        "yellow spring bloom",
+        "oilseed"
+      ],
+      "lightingLinks": [
+        "brilliant yellow field sun",
+        "spring bloom light",
+        "oil factory clean",
+        "prairie sunset"
+      ]
+    },
+    "coffee": {
+      "id": "coffee",
+      "name": "Coffee",
+      "emoji": "☕",
+      "category": "softs",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["BR", "VN", "CO", "ET", "ID"],
+      "endUseSectors": ["food-beverage", "hospitality"],
+      "physicalProperties": {
+        "color": "green beans, brown roasted",
+        "state": "solid bean, liquid brew",
+        "texture": "aromatic, oily when roasted",
+        "form": "beans, grounds, liquid"
+      },
+      "vibes": [
+        "Colombian hillside coffee plantation mist",
+        "Ethiopian highland coffee ceremony ritual",
+        "Brazilian fazenda sunrise cherry picking",
+        "artisan roaster copper drum rotating",
+        "espresso extraction crema forming perfect",
+        "Vietnamese drip coffee slow patience",
+        "coffee cupping slurp quality testing",
+        "burlap sack warehouse bean storage",
+        "barista latte art heart pouring",
+        "coffee cherry drying beds sun exposure",
+        "ICE coffee futures trading screen",
+        "third wave cafe pour-over ritual",
+        "colombian hillside picker harvest",
+        "fair trade certification visit",
+        "specialty coffee auction lot bidding"
+      ],
+      "visualIcons": ["coffee plantation", "roaster", "espresso", "coffee beans", "cafe"],
+      "atmosphereLinks": ["aromatic", "morning ritual", "artisan craft", "global commodity"],
+      "lightingLinks": [
+        "misty plantation dawn",
+        "warm cafe glow",
+        "roaster copper reflect",
+        "steam diffused"
+      ]
+    },
+    "sugar": {
+      "id": "sugar",
+      "name": "Sugar",
+      "emoji": "🍬",
+      "category": "softs",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["BR", "IN", "CN", "TH", "AU"],
+      "endUseSectors": ["food-beverage", "biofuel"],
+      "physicalProperties": {
+        "color": "white refined, brown raw",
+        "state": "solid crystals",
+        "texture": "granular, dissolves easily",
+        "form": "raw sugar, refined, molasses"
+      },
+      "vibes": [
+        "Brazilian sugarcane field endless green",
+        "cane harvest machete cutters working",
+        "sugar mill crushing cane juice flowing",
+        "centrifuge spinning sugar crystals",
+        "raw sugar mountain warehouse storage",
+        "sugar beet harvest European field",
+        "refinery white sugar packaging line",
+        "molasses tank dark viscous byproduct",
+        "ethanol from sugarcane Brazilian flex fuel",
+        "candy factory sugar cooking kettles",
+        "sugar futures NY11 contract trading",
+        "sugarcane burning pre-harvest tradition",
+        "plantation workers cutting stalks",
+        "sugar quota negotiation trade meeting"
+      ],
+      "visualIcons": ["sugarcane field", "sugar mill", "crystals", "molasses", "candy"],
+      "atmosphereLinks": [
+        "tropical sweetness",
+        "Brazilian agriculture",
+        "energy crop",
+        "guilty pleasure"
+      ],
+      "lightingLinks": [
+        "tropical cane field sun",
+        "mill steam diffused",
+        "refinery bright",
+        "burning field glow"
+      ]
+    },
+    "cocoa": {
+      "id": "cocoa",
+      "name": "Cocoa",
+      "emoji": "🍫",
+      "category": "softs",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["CI", "GH", "ID", "NG", "EC"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "brown beans, pods are varied",
+        "state": "solid bean",
+        "texture": "fermented, dried beans",
+        "form": "beans, butter, powder, chocolate"
+      },
+      "vibes": [
+        "Ivory Coast cocoa pod harvest machete",
+        "cocoa bean fermentation box sweating",
+        "drying cocoa beans on raised platform",
+        "chocolate factory conching smooth texture",
+        "cocoa butter pressing extraction",
+        "Ghanaian farmer checking pod ripeness",
+        "cocoa pod cross-section white pulp beans",
+        "artisan chocolate tempering marble slab",
+        "cocoa powder sifting baking preparation",
+        "hot chocolate steaming mug comfort",
+        "ICE cocoa futures price volatility",
+        "bean-to-bar craft chocolate maker",
+        "ivory coast pod harvest machete",
+        "cocoa butter tempering chocolate making"
+      ],
+      "visualIcons": ["cocoa pod", "chocolate", "drying beans", "West Africa", "chocolate factory"],
+      "atmosphereLinks": [
+        "West African farms",
+        "indulgent pleasure",
+        "craft chocolate",
+        "child labor concerns"
+      ],
+      "lightingLinks": [
+        "tropical plantation shade",
+        "fermentation shed dim",
+        "chocolate factory warm",
+        "African sun filtered"
+      ]
+    },
+    "cotton": {
+      "id": "cotton",
+      "name": "Cotton",
+      "emoji": "☁️",
+      "category": "softs",
+      "extractionMethod": "farmed-broadacre",
+      "primaryCountries": ["CN", "IN", "US", "BR", "PK"],
+      "endUseSectors": ["textiles-apparel"],
+      "physicalProperties": {
+        "color": "white fluffy bolls",
+        "state": "solid fiber",
+        "texture": "soft, absorbent fibers",
+        "form": "bolls, bales, yarn, fabric"
+      },
+      "vibes": [
+        "cotton field white bolls ready harvest",
+        "cotton picker machine harvesting Texas",
+        "cotton gin separating fiber from seed",
+        "cotton bale compressed module field",
+        "textile mill spinning cotton yarn",
+        "denim jeans factory cotton weaving",
+        "cottonseed oil extraction byproduct",
+        "Indian cotton hand picking traditional",
+        "cotton futures ICE trading volatility",
+        "t-shirt printing cotton garment",
+        "cotton swab manufacturing precision",
+        "organic cotton certification inspection",
+        "white field bolls ready harvest",
+        "organic cotton certification field audit"
+      ],
+      "visualIcons": ["cotton field", "cotton boll", "bales", "textile mill", "denim"],
+      "atmosphereLinks": [
+        "Southern agriculture",
+        "textile industry",
+        "soft comfort",
+        "fast fashion"
+      ],
+      "lightingLinks": [
+        "cotton field harsh sun",
+        "gin facility dust",
+        "textile mill industrial",
+        "fashion showroom"
+      ]
+    },
+    "orange_juice": {
+      "id": "orange_juice",
+      "name": "Orange Juice",
+      "emoji": "🍊",
+      "category": "softs",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["BR", "US", "MX", "ES", "EG"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "bright orange",
+        "state": "liquid",
+        "texture": "pulpy or smooth",
+        "form": "fresh, frozen concentrate, NFC"
+      },
+      "vibes": [
+        "Florida orange grove fruit laden trees",
+        "orange picking ladder harvest workers",
+        "juice extraction plant citrus processing",
+        "frozen concentrate storage tank facility",
+        "breakfast glass orange juice pouring",
+        "citrus greening disease damaged grove",
+        "Brazilian orange export terminal loading",
+        "hurricane damaged Florida citrus aftermath",
+        "fresh squeezed orange juice stand",
+        "ICE FCOJ futures trading monitor",
+        "orange blossom fragrance grove spring",
+        "juice carton packaging line filling",
+        "florida grove sunrise harvest",
+        "citrus canker quarantine zone sign"
+      ],
+      "visualIcons": [
+        "orange grove",
+        "orange juice glass",
+        "processing plant",
+        "Florida",
+        "citrus"
+      ],
+      "atmosphereLinks": [
+        "Florida sunshine",
+        "breakfast essential",
+        "weather vulnerable",
+        "vitamin C"
+      ],
+      "lightingLinks": [
+        "Florida bright sun",
+        "grove dappled light",
+        "processing plant fluorescent",
+        "breakfast kitchen"
+      ]
+    },
+    "rubber": {
+      "id": "rubber",
+      "name": "Rubber",
+      "emoji": "🌳",
+      "category": "softs",
+      "extractionMethod": "harvested-wild",
+      "primaryCountries": ["TH", "ID", "VN", "MY", "IN"],
+      "endUseSectors": ["automotive", "manufacturing"],
+      "physicalProperties": {
+        "color": "white latex, brown processed",
+        "state": "liquid latex, solid rubber",
+        "texture": "elastic, flexible",
+        "form": "latex, sheets, tires"
+      },
+      "vibes": [
+        "rubber tree tapping latex dripping bowl",
+        "Thai rubber plantation dawn tapping",
+        "latex collection worker carrying buckets",
+        "rubber sheet smoking processing shed",
+        "tire factory rubber compound mixing",
+        "rubber bale warehouse stacked storage",
+        "vulcanization process tire curing press",
+        "synthetic rubber petrochemical production",
+        "rubber glove manufacturing dipping line",
+        "Tokyo TOCOM rubber futures trading",
+        "rubber plantation rows geometric pattern",
+        "condom manufacturing latex product",
+        "tapper scoring tree dawn ritual",
+        "latex allergy testing medical grade"
+      ],
+      "visualIcons": ["rubber tree", "latex tapping", "tires", "plantation", "rubber sheets"],
+      "atmosphereLinks": [
+        "Southeast Asian plantation",
+        "tire industry",
+        "elastic essential",
+        "colonial history"
+      ],
+      "lightingLinks": [
+        "plantation dawn light",
+        "smoking shed dim",
+        "tire factory harsh",
+        "tropical filtered"
+      ]
+    },
+    "live_cattle": {
+      "id": "live_cattle",
+      "name": "Live Cattle",
+      "emoji": "🐄",
+      "category": "livestock",
+      "extractionMethod": "ranched-livestock",
+      "primaryCountries": ["US", "BR", "AU", "AR", "CN"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "varies by breed",
+        "state": "live animal",
+        "texture": "hide, muscle",
+        "form": "cattle on hoof, beef"
+      },
+      "vibes": [
+        "cattle ranch herd grazing open range",
+        "feedlot cattle pens aerial view rows",
+        "cowboy herding cattle horseback dusty",
+        "cattle auction ring bidding action",
+        "loading cattle truck shipping to market",
+        "Angus cattle black herd quality breed",
+        "ranch sunrise cattle silhouette horizon",
+        "cattle crush veterinary inspection",
+        "grassfed cattle pastoral green pasture",
+        "CME live cattle futures pit trading",
+        "branding cattle Western ranch tradition",
+        "cattle water trough drought stress",
+        "feedlot aerial vast organized pens",
+        "drone herding cattle remote pasture"
+      ],
+      "visualIcons": ["cattle herd", "ranch", "cowboy", "feedlot", "auction"],
+      "atmosphereLinks": ["American West", "beef industry", "ranching heritage", "grasslands"],
+      "lightingLinks": [
+        "ranch golden hour",
+        "feedlot harsh sun",
+        "auction ring spotlight",
+        "dawn silhouette"
+      ]
+    },
+    "lean_hogs": {
+      "id": "lean_hogs",
+      "name": "Lean Hogs",
+      "emoji": "🐷",
+      "category": "livestock",
+      "extractionMethod": "ranched-livestock",
+      "primaryCountries": ["CN", "US", "DE", "ES", "BR"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "pink flesh, various hide",
+        "state": "live animal",
+        "texture": "lean muscle, fat marbling",
+        "form": "hogs, pork cuts, bacon"
+      },
+      "vibes": [
+        "hog farm confinement building rows",
+        "pig pen piglets nursing sow",
+        "hog loading chute truck transport",
+        "pork processing plant hanging carcasses",
+        "Iowa hog farm heartland agriculture",
+        "bacon sizzling breakfast preparation",
+        "Chinese pork demand market influence",
+        "farrowing crate sow with litter",
+        "CME lean hogs futures screen",
+        "pork belly pricing volatility chart",
+        "ham curing smokehouse traditional",
+        "African swine fever biosecurity measures",
+        "modern barn climate controlled",
+        "pork export container reefer loading"
+      ],
+      "visualIcons": ["pig farm", "bacon", "pork processing", "piglets", "hog barn"],
+      "atmosphereLinks": ["Midwest farming", "pork production", "China demand", "breakfast staple"],
+      "lightingLinks": [
+        "barn interior fluorescent",
+        "processing plant bright",
+        "kitchen morning",
+        "farm overcast"
+      ]
+    },
+    "feeder_cattle": {
+      "id": "feeder_cattle",
+      "name": "Feeder Cattle",
+      "emoji": "🐂",
+      "category": "livestock",
+      "extractionMethod": "ranched-livestock",
+      "primaryCountries": ["US", "AU", "BR", "MX", "CA"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "varies by breed",
+        "state": "live animal",
+        "texture": "young cattle, growing",
+        "form": "calves, yearlings"
+      },
+      "vibes": [
+        "feeder cattle young calves pasture",
+        "stockyard feeder cattle pens sorting",
+        "cattle backgrounding operation grazing",
+        "feeder calf auction sale ring",
+        "ranch weaning calves from cows",
+        "feedlot receiving feeder cattle unloading",
+        "veterinarian vaccinating young cattle",
+        "feeder cattle weight gain monitoring",
+        "corn silage feeding young stock",
+        "CME feeder cattle index pricing",
+        "drought selling feeder cattle early",
+        "heifer development program breeding",
+        "heifer development program graduation"
+      ],
+      "visualIcons": ["young cattle", "stockyard", "calf", "ranch", "feedlot"],
+      "atmosphereLinks": ["cattle cycle", "ranch to feedlot", "growing phase", "young stock"],
+      "lightingLinks": [
+        "pasture morning light",
+        "stockyard dust haze",
+        "auction bright",
+        "ranch golden"
+      ]
+    },
+    "poultry": {
+      "id": "poultry",
+      "name": "Poultry",
+      "emoji": "🐔",
+      "category": "livestock",
+      "extractionMethod": "ranched-livestock",
+      "primaryCountries": ["US", "CN", "BR", "RU", "MX"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "white/brown feathers, pink meat",
+        "state": "live bird",
+        "texture": "lean protein",
+        "form": "broilers, layers, eggs"
+      },
+      "vibes": [
+        "broiler house chickens floor covered",
+        "egg laying facility cage free hens",
+        "poultry processing plant assembly line",
+        "chicken farm ventilation system fans",
+        "egg collection conveyor belt automated",
+        "rotisserie chicken golden roasting",
+        "free range chickens outdoor pasture",
+        "poultry feed mill formulation mixing",
+        "chicken nugget breading production",
+        "avian influenza biosecurity protocol",
+        "heritage breed chicken farmer small scale",
+        "egg carton packaging facility",
+        "bird flu outbreak culling operation"
+      ],
+      "visualIcons": ["chicken house", "eggs", "processing plant", "rooster", "free range"],
+      "atmosphereLinks": ["protein factory", "efficient production", "breakfast eggs", "fast food"],
+      "lightingLinks": [
+        "broiler house controlled",
+        "processing bright sterile",
+        "farm daylight",
+        "kitchen cooking"
+      ]
+    },
+    "lumber": {
+      "id": "lumber",
+      "name": "Lumber",
+      "emoji": "🪵",
+      "category": "industrial",
+      "extractionMethod": "harvested-wild",
+      "primaryCountries": ["CA", "US", "RU", "SE", "FI"],
+      "endUseSectors": ["construction"],
+      "physicalProperties": {
+        "color": "varies by species, tan to brown",
+        "state": "solid wood",
+        "texture": "grain patterns, aromatic",
+        "form": "logs, boards, plywood"
+      },
+      "vibes": [
+        "logging truck loaded with fresh cut logs",
+        "sawmill blade cutting through timber",
+        "lumber yard stacked boards organized",
+        "forest harvester felling pine trees",
+        "home construction lumber framing rising",
+        "lumber futures CME extreme volatility",
+        "British Columbia forest clear cut aerial",
+        "sawdust pile mill waste byproduct",
+        "carpenter measuring two-by-four cutting",
+        "lumber barge Pacific Northwest waterway",
+        "tree planter reforestation operation",
+        "pressure treated lumber deck building",
+        "mass timber construction highrise frame"
+      ],
+      "visualIcons": ["logs", "sawmill", "lumber yard", "forest", "framing"],
+      "atmosphereLinks": [
+        "Pacific Northwest",
+        "construction boom",
+        "forest industry",
+        "volatile pricing"
+      ],
+      "lightingLinks": [
+        "forest filtered light",
+        "sawmill dust haze",
+        "lumber yard daylight",
+        "construction site"
+      ]
+    },
+    "beef": {
+      "id": "beef",
+      "name": "Beef",
+      "emoji": "🥩",
+      "category": "food-dairy",
+      "extractionMethod": "ranched-livestock",
+      "primaryCountries": ["US", "BR", "AU", "AR", "CN"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "red meat, marbled fat",
+        "state": "solid protein",
+        "texture": "varies by cut",
+        "form": "carcass, primal cuts, ground"
+      },
+      "vibes": [
+        "ribeye steak sizzling cast iron pan",
+        "beef carcass hanging processing cooler",
+        "butcher knife cutting primal beef sections",
+        "wagyu beef marbling A5 grade",
+        "beef burger patty grill flame char",
+        "dry aged beef locker controlled environment",
+        "Brazilian beef export container loading",
+        "steakhouse presentation seared perfection",
+        "ground beef packaging production line",
+        "beef jerky smoking dehydration process",
+        "Kobe beef certification inspection",
+        "barbecue brisket slow smoke twelve hours",
+        "wagyu certification marbling evaluation"
+      ],
+      "visualIcons": ["steak", "beef cuts", "butcher", "grill", "carcass"],
+      "atmosphereLinks": ["protein staple", "premium dining", "American barbecue", "global export"],
+      "lightingLinks": [
+        "restaurant warm glow",
+        "processing plant bright",
+        "grill fire flicker",
+        "cooler cold fluorescent"
+      ]
+    },
+    "milk": {
+      "id": "milk",
+      "name": "Milk",
+      "emoji": "🥛",
+      "category": "food-dairy",
+      "extractionMethod": "ranched-livestock",
+      "primaryCountries": ["IN", "US", "CN", "BR", "DE"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "white opaque",
+        "state": "liquid",
+        "texture": "creamy, various fat levels",
+        "form": "fresh, powdered, condensed"
+      },
+      "vibes": [
+        "dairy barn milking parlor rotary carousel",
+        "milk tanker truck farm pickup dawn",
+        "pasteurization plant stainless steel vats",
+        "dairy cow herd grazing green pasture",
+        "milk carton packaging line filling",
+        "cheese maker stirring curd vat",
+        "butter churning industrial production",
+        "organic dairy certification inspection",
+        "milk price protest farmer demonstration",
+        "powder milk spray drying tower",
+        "school milk carton lunch program",
+        "dairy cooperative processing facility",
+        "dairy farm milking parlor dawn",
+        "raw milk vending machine farm direct"
+      ],
+      "visualIcons": ["dairy farm", "milk tanker", "processing plant", "milk carton", "cows"],
+      "atmosphereLinks": [
+        "farm fresh",
+        "daily essential",
+        "cooperative farming",
+        "price volatility"
+      ],
+      "lightingLinks": [
+        "barn morning light",
+        "processing plant sterile",
+        "pasture daylight",
+        "cooler fluorescent"
+      ]
+    },
+    "salmon": {
+      "id": "salmon",
+      "name": "Salmon",
+      "emoji": "🐟",
+      "category": "food-dairy",
+      "extractionMethod": "farmed-aquaculture",
+      "primaryCountries": ["NO", "CL", "UK", "CA", "AU"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "pink to orange flesh",
+        "state": "solid protein",
+        "texture": "flaky, oily",
+        "form": "whole fish, fillets, smoked"
+      },
+      "vibes": [
+        "Norwegian salmon farm fjord pens floating",
+        "salmon fillet on ice at fish market",
+        "smoked salmon slicing deli counter",
+        "wild salmon swimming upstream spawning",
+        "Alaska wild salmon fishing boat deck",
+        "sushi chef salmon sashimi slicing",
+        "salmon farm feeding time pellet shower",
+        "fish counter salmon display ice bed",
+        "salmon roe ikura glistening orange",
+        "sea lice salmon farm controversy",
+        "grilled salmon cedar plank cooking",
+        "salmon run counting fish ladder"
+      ],
+      "visualIcons": ["salmon farm", "fillet", "fishing boat", "spawning", "sushi"],
+      "atmosphereLinks": [
+        "Scandinavian aquaculture",
+        "omega-3 health",
+        "wild vs farmed",
+        "sustainable seafood"
+      ],
+      "lightingLinks": [
+        "fjord grey light",
+        "underwater farm blue",
+        "fish market fluorescent",
+        "kitchen warm"
+      ]
+    },
+    "wool": {
+      "id": "wool",
+      "name": "Wool",
+      "emoji": "🐑",
+      "category": "food-dairy",
+      "extractionMethod": "ranched-livestock",
+      "primaryCountries": ["AU", "CN", "NZ", "AR", "ZA"],
+      "endUseSectors": ["textiles-apparel"],
+      "physicalProperties": {
+        "color": "cream, white, varies",
+        "state": "fiber",
+        "texture": "soft, crimped, insulating",
+        "form": "fleece, yarn, fabric"
+      },
+      "vibes": [
+        "sheep shearing blade humming fleece falling",
+        "Australian merino flock dusty paddock",
+        "wool auction warehouse bale inspection",
+        "spinning wheel wool yarn twisting",
+        "wool scouring cleaning greasy fleece",
+        "New Zealand sheep station mountain backdrop",
+        "wool bale pressing hydraulic compaction",
+        "knitting needles wool sweater crafting",
+        "cashmere goats Mongolian herder",
+        "wool carpet weaving traditional loom",
+        "wool suit tailoring Savile Row",
+        "sheep dog herding mustering flock",
+        "merino fleece micron testing laboratory"
+      ],
+      "visualIcons": ["sheep flock", "shearing", "wool bale", "yarn", "sweater"],
+      "atmosphereLinks": [
+        "Australian outback",
+        "natural fiber",
+        "traditional craft",
+        "luxury merino"
+      ],
+      "lightingLinks": [
+        "dusty paddock sun",
+        "shearing shed interior",
+        "auction warehouse",
+        "knitting fireside"
+      ]
+    },
+    "honey": {
+      "id": "honey",
+      "name": "Honey",
+      "emoji": "🍯",
+      "category": "food-dairy",
+      "extractionMethod": "harvested-wild",
+      "primaryCountries": ["CN", "TR", "AR", "US", "UA"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "golden amber varies",
+        "state": "viscous liquid",
+        "texture": "thick, sweet, aromatic",
+        "form": "liquid, comb, creamed"
+      },
+      "vibes": [
+        "beekeeper lifting honeycomb frame inspection",
+        "honey extraction centrifuge spinning frames",
+        "apiary bee boxes orchard pollination",
+        "honeycomb dripping golden thick stream",
+        "manuka honey New Zealand harvesting",
+        "bee swarm cluster branch hanging",
+        "honey bottling line filling jars",
+        "wildflower meadow bee foraging",
+        "varroa mite treatment beekeeper concern",
+        "honey dipper wooden spiral lifting",
+        "honeybee returning hive pollen load",
+        "breakfast toast honey spreading golden",
+        "colony collapse disorder research apiary"
+      ],
+      "visualIcons": ["beekeeper", "honeycomb", "bee", "honey jar", "apiary"],
+      "atmosphereLinks": [
+        "natural sweetness",
+        "bee pollination",
+        "artisan production",
+        "colony collapse concern"
+      ],
+      "lightingLinks": [
+        "golden honey glow",
+        "meadow sunshine",
+        "hive inspection daylight",
+        "kitchen morning"
+      ]
+    },
+    "cheese": {
+      "id": "cheese",
+      "name": "Cheese",
+      "emoji": "🧀",
+      "category": "food-dairy",
+      "extractionMethod": "processed",
+      "primaryCountries": ["US", "DE", "FR", "IT", "NL"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "white to orange varies",
+        "state": "solid",
+        "texture": "soft to hard, varies",
+        "form": "wheels, blocks, slices"
+      },
+      "vibes": [
+        "cheese cave aging wheels stacked rows",
+        "parmesan wheel cutting wedge ceremony",
+        "cheesemaker stirring curd vat copper",
+        "cheese market Gouda stacked rounds",
+        "mozzarella stretching fresh curd pulling",
+        "blue cheese caves Roquefort France",
+        "cheddar block cutting industrial scale",
+        "cheese fondue pot melting Swiss",
+        "cheese grater parmesan shreds falling",
+        "artisan cheese dairy small batch",
+        "cheese board presentation wine pairing",
+        "cheese factory pasteurized milk processing",
+        "AOC certification cave inspection"
+      ],
+      "visualIcons": ["cheese wheel", "cheese cave", "cheesemaker", "cheese board", "curd vat"],
+      "atmosphereLinks": ["artisan craft", "aging patience", "European tradition", "wine pairing"],
+      "lightingLinks": [
+        "cave dim aging",
+        "dairy bright sterile",
+        "cheese shop warm",
+        "kitchen domestic"
+      ]
+    },
+    "butter": {
+      "id": "butter",
+      "name": "Butter",
+      "emoji": "🧈",
+      "category": "food-dairy",
+      "extractionMethod": "processed",
+      "primaryCountries": ["IN", "US", "DE", "FR", "NZ"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "pale yellow",
+        "state": "solid (soft at room temp)",
+        "texture": "creamy, spreadable",
+        "form": "blocks, sticks, whipped"
+      },
+      "vibes": [
+        "butter churn traditional cream separation",
+        "butter packaging production line wrapping",
+        "croissant pastry butter laminating fold",
+        "butter melting pan sizzling golden",
+        "Normandy dairy butter premium grass-fed",
+        "butter sculpture state fair artistic",
+        "ghee clarified butter Indian cooking",
+        "butter dish breakfast table spreading",
+        "compound butter herb mixing restaurant",
+        "butter cookie baking preparation creaming",
+        "butter mountain EU surplus storage",
+        "cultured butter fermentation tangy",
+        "Irish grass-fed butter golden hue"
+      ],
+      "visualIcons": ["butter block", "churn", "croissant", "melting pan", "dairy"],
+      "atmosphereLinks": ["baking essential", "French cuisine", "dairy richness", "comfort food"],
+      "lightingLinks": [
+        "kitchen morning light",
+        "dairy factory bright",
+        "bakery warm glow",
+        "butter golden hue"
+      ]
+    },
+    "eggs": {
+      "id": "eggs",
+      "name": "Eggs",
+      "emoji": "🥚",
+      "category": "food-dairy",
+      "extractionMethod": "ranched-livestock",
+      "primaryCountries": ["CN", "US", "IN", "MX", "BR"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "white or brown shell",
+        "state": "liquid inside shell",
+        "texture": "fragile shell, viscous interior",
+        "form": "shell eggs, liquid, powder"
+      },
+      "vibes": [
+        "egg laying facility conveyor collection",
+        "free range hens outdoor scratching",
+        "egg carton packing line quality check",
+        "breakfast frying pan egg sizzling",
+        "egg grading candling inspection light",
+        "cage free barn hens nesting boxes",
+        "egg price spike avian flu shortage",
+        "bakery egg breaking machine industrial",
+        "quail eggs gourmet presentation tiny",
+        "Easter egg decoration coloring tradition",
+        "egg powder spray drying facility",
+        "duck eggs Asian market specialty",
+        "avian flu biosecurity checkpoint"
+      ],
+      "visualIcons": ["eggs", "hen house", "egg carton", "frying pan", "candling"],
+      "atmosphereLinks": [
+        "breakfast staple",
+        "protein source",
+        "price volatile",
+        "avian flu sensitive"
+      ],
+      "lightingLinks": [
+        "laying house controlled",
+        "kitchen morning",
+        "candling backlight",
+        "farm daylight"
+      ]
+    },
+    "vanilla": {
+      "id": "vanilla",
+      "name": "Vanilla",
+      "emoji": "🌿",
+      "category": "food-dairy",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["MG", "ID", "MX", "UG", "TZ"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "dark brown cured pods",
+        "state": "dried bean",
+        "texture": "aromatic, oily",
+        "form": "beans, extract, powder"
+      },
+      "vibes": [
+        "Madagascar vanilla plantation hand pollinating",
+        "vanilla bean curing sunlight blanket drying",
+        "vanilla orchid delicate white flower",
+        "vanilla extract production bean steeping",
+        "ice cream vanilla bean specks visible",
+        "vanilla farmer checking pod maturity",
+        "bourbon vanilla cured pod aromatic",
+        "vanilla price spike cyclone damage",
+        "perfume vanilla absolute fragrance extraction",
+        "baking vanilla extract measuring spoon",
+        "vanilla bean scraping seeds dessert",
+        "synthetic vanillin factory alternative",
+        "vanilla heist security patrol Madagascar"
+      ],
+      "visualIcons": ["vanilla bean", "vanilla orchid", "Madagascar", "curing", "ice cream"],
+      "atmosphereLinks": ["exotic spice", "hand pollinated", "price volatile", "fragrant luxury"],
+      "lightingLinks": [
+        "tropical plantation filtered",
+        "curing sun exposure",
+        "kitchen warm",
+        "perfume lab sterile"
+      ]
+    },
+    "cinnamon": {
+      "id": "cinnamon",
+      "name": "Cinnamon",
+      "emoji": "🌰",
+      "category": "food-dairy",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["LK", "ID", "CN", "VN", "MM"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "reddish-brown bark",
+        "state": "dried bark",
+        "texture": "rolled quills, aromatic",
+        "form": "sticks, ground, oil"
+      },
+      "vibes": [
+        "Sri Lankan cinnamon peeler bark stripping",
+        "cinnamon quills drying shed stacked",
+        "cinnamon roll baking sweet aroma",
+        "Ceylon cinnamon true variety delicate",
+        "cassia cinnamon Indonesian thicker bark",
+        "cinnamon spice market colorful display",
+        "mulled wine cinnamon stick steeping",
+        "cinnamon grinder powder fresh ground",
+        "cinnamon oil distillation extraction",
+        "cinnamon toast breakfast simple pleasure",
+        "cinnamon challenge viral internet dare",
+        "apple pie cinnamon sugar topping",
+        "true Ceylon cinnamon authenticity test"
+      ],
+      "visualIcons": [
+        "cinnamon sticks",
+        "bark peeling",
+        "Sri Lanka",
+        "spice market",
+        "cinnamon roll"
+      ],
+      "atmosphereLinks": [
+        "warming spice",
+        "Sri Lankan heritage",
+        "baking essential",
+        "festive flavor"
+      ],
+      "lightingLinks": [
+        "tropical processing shade",
+        "spice market colorful",
+        "kitchen baking warm",
+        "cafe cozy"
+      ]
+    },
+    "pepper": {
+      "id": "pepper",
+      "name": "Black Pepper",
+      "emoji": "🫚",
+      "category": "food-dairy",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["VN", "IN", "BR", "ID", "MY"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "black, white, green peppercorns",
+        "state": "dried berry",
+        "texture": "hard peppercorns",
+        "form": "whole, cracked, ground"
+      },
+      "vibes": [
+        "pepper vine climbing pole plantation",
+        "pepper berries sun drying black color",
+        "pepper mill cracking fresh grind",
+        "Malabar pepper Indian origin quality",
+        "Vietnamese pepper farm harvest picking",
+        "white pepper water soaking processing",
+        "pepper trader spice market negotiating",
+        "steak au poivre pepper crust cooking",
+        "pepper spray manufacture capsicum base",
+        "pepper grinder restaurant tableside",
+        "green peppercorn brine preservation",
+        "pepper export container port loading",
+        "Tellicherry pepper premium grade sorting"
+      ],
+      "visualIcons": ["pepper vine", "peppercorns", "pepper mill", "spice market", "plantation"],
+      "atmosphereLinks": [
+        "king of spices",
+        "colonial trade history",
+        "culinary essential",
+        "Vietnamese export"
+      ],
+      "lightingLinks": [
+        "plantation tropical",
+        "drying yard sun",
+        "kitchen cooking warm",
+        "market colorful"
+      ]
+    },
+    "olive_oil": {
+      "id": "olive_oil",
+      "name": "Olive Oil",
+      "emoji": "🫒",
+      "category": "food-dairy",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["ES", "IT", "GR", "TR", "TN"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "golden to green",
+        "state": "liquid",
+        "texture": "smooth, fruity aroma",
+        "form": "extra virgin, virgin, refined"
+      },
+      "vibes": [
+        "olive grove terraced Mediterranean hillside",
+        "olive harvest net catching hand picked",
+        "olive press cold extraction first press",
+        "extra virgin olive oil golden pour",
+        "Spanish olive farm mechanized harvest",
+        "olive oil tasting sommelier evaluation",
+        "Italian restaurant olive oil bread dipping",
+        "olive tree ancient gnarled trunk",
+        "olive oil bottling line filling",
+        "Greek olive grove traditional cultivation",
+        "olive oil fraud adulteration testing",
+        "Mediterranean diet olive oil heart healthy",
+        "fraud detection lab analyzing adulteration"
+      ],
+      "visualIcons": ["olive grove", "olive press", "oil bottle", "Mediterranean", "olive tree"],
+      "atmosphereLinks": [
+        "Mediterranean cuisine",
+        "healthy fat",
+        "ancient tradition",
+        "quality grades"
+      ],
+      "lightingLinks": [
+        "Mediterranean golden sun",
+        "grove dappled light",
+        "tasting room warm",
+        "kitchen cooking"
+      ]
+    },
+    "peanuts": {
+      "id": "peanuts",
+      "name": "Peanuts",
+      "emoji": "🥜",
+      "category": "food-dairy",
+      "extractionMethod": "farmed-broadacre",
+      "primaryCountries": ["CN", "IN", "US", "NG", "SD"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "tan shell, pale nut",
+        "state": "solid legume",
+        "texture": "crunchy, oily",
+        "form": "in-shell, shelled, butter, oil"
+      },
+      "vibes": [
+        "peanut field harvesting digging machine",
+        "peanut butter factory grinding smooth",
+        "baseball game peanut shells scattered",
+        "Georgia peanut farm Jimmy Carter country",
+        "peanut oil extraction pressing facility",
+        "roasted peanuts vendor street cart",
+        "peanut allergy warning food label",
+        "peanut brittle candy making cooking",
+        "African groundnut soup traditional",
+        "peanut drying windrows field curing",
+        "PB&J sandwich childhood nostalgia",
+        "peanut sorting conveyor quality control",
+        "aflatoxin testing peanut butter safety"
+      ],
+      "visualIcons": ["peanuts", "peanut butter", "peanut field", "roasting", "baseball"],
+      "atmosphereLinks": [
+        "American snack",
+        "protein legume",
+        "allergy concern",
+        "Southern agriculture"
+      ],
+      "lightingLinks": [
+        "field harvest sun",
+        "factory bright",
+        "baseball stadium",
+        "kitchen domestic"
+      ]
+    },
+    "almonds": {
+      "id": "almonds",
+      "name": "Almonds",
+      "emoji": "🌰",
+      "category": "food-dairy",
+      "extractionMethod": "farmed-plantation",
+      "primaryCountries": ["US", "ES", "AU", "IR", "MA"],
+      "endUseSectors": ["food-beverage"],
+      "physicalProperties": {
+        "color": "brown skin, white interior",
+        "state": "solid nut",
+        "texture": "crunchy, mild flavor",
+        "form": "whole, sliced, flour, milk"
+      },
+      "vibes": [
+        "California almond orchard bloom pink white",
+        "almond harvest shaker tree trunk",
+        "almond milk processing plant modern",
+        "blanched almonds skin removal processing",
+        "bee pollination almond orchard critical",
+        "almond flour gluten free baking",
+        "marzipan almond paste confection",
+        "almond butter smooth grinding fresh",
+        "Central Valley drought almond water use",
+        "almond sorting conveyor size grading",
+        "almond blossom honey specialty product",
+        "toasted almonds snack salted flavored",
+        "water rights dispute California orchard"
+      ],
+      "visualIcons": [
+        "almond orchard",
+        "almond blossom",
+        "almonds",
+        "almond milk",
+        "bee pollination"
+      ],
+      "atmosphereLinks": [
+        "California agriculture",
+        "water intensive",
+        "health food",
+        "bee dependent"
+      ],
+      "lightingLinks": [
+        "orchard spring bloom light",
+        "factory processing bright",
+        "kitchen natural",
+        "Central Valley sun"
+      ]
+    }
+  }
+}

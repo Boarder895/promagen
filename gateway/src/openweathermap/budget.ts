@@ -10,11 +10,15 @@
  * - Budget state never exposed to external clients
  * - Implements BudgetManagerInterface (Guardrail G4)
  *
- * Budget Strategy:
- * - 48 cities split into 2 batches (24 each)
- * - Batches alternate hourly
- * - 576 calls/day (57.6% of budget)
- * - 24 calls per batch < 60/min limit
+ * Budget Strategy (v3.0.0 — 4-batch, dedup):
+ * - 89 exchanges → 83 unique coordinates (dedup saves 6)
+ * - 83 cities split into 4 batches (~21 each)
+ * - One batch per hour, cycling A→B→C→D via hour % 4
+ * - Single slot at :10 (dropped :40)
+ * - 498 calls/day (49.8% of budget)
+ * - ~21 calls per batch << 60/min limit
+ *
+ * Existing features preserved: Yes
  *
  * @module openweathermap/budget
  */
@@ -231,7 +235,7 @@ class OpenWeatherMapBudgetManager implements BudgetManagerInterface {
       const previousUsed = this.dailyUsed;
       this.dailyUsed = 0;
       this.dailyResetAt = this.getNextDailyReset(now);
-      
+
       logInfo('OpenWeatherMap daily budget reset', {
         previousUsed,
         dailyLimit: this.dailyLimit,
@@ -294,9 +298,9 @@ let instance: OpenWeatherMapBudgetManager | null = null;
  * ```typescript
  * import { openWeatherMapBudget } from './budget.js';
  *
- * // Check before making API calls (24 cities per batch)
- * if (openWeatherMapBudget.canSpend(24)) {
- *   openWeatherMapBudget.spend(24);
+ * // Check before making API calls (~21 cities per batch)
+ * if (openWeatherMapBudget.canSpend(21)) {
+ *   openWeatherMapBudget.spend(21);
  *   // Make API calls
  * }
  * ```
@@ -334,20 +338,35 @@ export function resetOpenWeatherMapBudget(): void {
 }
 
 // =============================================================================
-// BUDGET CALCULATIONS
+// BUDGET CALCULATIONS (v3.0.0 — 4-batch, dedup strategy)
 // =============================================================================
 
 /**
- * Expected daily usage based on batch strategy.
- * 24 cities × 2 batches × 12 refreshes each = 576 calls/day
+ * Number of batches in the rotation.
+ * v3.0.0: Changed from 2 to 4 to cover all 89 exchanges (83 unique coords).
  */
-export const EXPECTED_DAILY_USAGE = 576;
+export const NUM_BATCHES = 4;
 
 /**
- * Maximum cities per batch (for 60/min limit compliance).
- * 24 cities < 60 calls/min limit
+ * Maximum cities per batch (safety cap for 60/min limit compliance).
+ * Actual batch sizes determined by ceil(uniqueLocations / 4) ≈ 21.
+ * Cap kept at 24 for headroom. 24 < 60 ✅
  */
 export const MAX_CITIES_PER_BATCH = 24;
+
+/**
+ * Expected daily usage based on 4-batch dedup strategy.
+ *
+ * 83 unique locations × 6 refreshes/day (every 4 hours) = 498 calls/day.
+ *
+ * Breakdown:
+ * - Batch A: 21 unique × 6 = 126
+ * - Batch B: 21 unique × 6 = 126
+ * - Batch C: 21 unique × 6 = 126
+ * - Batch D: 20 unique × 6 = 120
+ * - Total: 498 (49.8% of 1,000 budget)
+ */
+export const EXPECTED_DAILY_USAGE = 498;
 
 /**
  * Calculate remaining budget headroom.

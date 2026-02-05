@@ -2,23 +2,24 @@
 /**
  * /api/commodities/config — SSOT endpoint for gateway Commodities feed initialisation.
  *
- * Option A (selected.json list):
- * - Free-tier defaults come ONLY from src/data/commodities/commodities.selected.json (ordered).
- * - Paid users may select any IDs from src/data/commodities/commodities.catalog.json (validated in gateway).
+ * Returns ALL active commodities from the catalog for the movers grid.
+ * The gateway fetches prices for all 78 commodities, and the frontend
+ * sorts them to display top 4 winners and top 4 losers dynamically.
  *
  * Strict SSOT rules:
  * - No demo/synthetic prices are emitted.
- * - Defaults must be a subset of the catalogue; if not, this route throws.
+ * - Only active commodities (isActive !== false) are included.
  *
- * Data sources:
+ * Data source:
  * - frontend/src/data/commodities/commodities.catalog.json
- * - frontend/src/data/commodities/commodities.selected.json
+ *
+ * Authority: Compacted conversation 2026-02-03 (commodities movers grid)
+ * Existing features preserved: Yes
  */
 
 import { NextResponse } from 'next/server';
 
 import commoditiesCatalogJson from '@/data/commodities/commodities.catalog.json';
-import commoditiesSelectedJson from '@/data/commodities/commodities.selected.json';
 
 type CommodityCatalogItem = {
   id: string;
@@ -36,31 +37,18 @@ type CommodityCatalogItem = {
   ribbonSubtext?: string;
 };
 
-type CommoditiesSelected = {
-  ids: string[];
-};
-
 export const runtime = 'edge';
 export const revalidate = 3600; // 1 hour cache
 
 export async function GET(): Promise<Response> {
   const all = commoditiesCatalogJson as CommodityCatalogItem[];
-  const selected = commoditiesSelectedJson as CommoditiesSelected;
 
+  // Filter to only active commodities
   const active = all.filter((c) => c.isActive !== false);
 
-  const defaultCommodityIds = Array.isArray(selected.ids) ? selected.ids : [];
-
-  const idSet = new Set(active.map((c) => c.id));
-  const missing = defaultCommodityIds.filter((id) => !idSet.has(id));
-
-  if (missing.length > 0) {
-    throw new Error(
-      `commodities SSOT integrity error: commodities.selected.json contains ids not present in commodities.catalog.json: ${missing.join(
-        ', ',
-      )}`,
-    );
-  }
+  // Return ALL active commodity IDs for the gateway to fetch
+  // The movers grid dynamically sorts these to find winners/losers
+  const defaultCommodityIds = active.map((c) => c.id);
 
   const commodities = active.map((c) => ({
     id: c.id,
@@ -80,10 +68,9 @@ export async function GET(): Promise<Response> {
 
   return NextResponse.json(
     {
-      version: 1,
+      version: 2,
       ssot: {
         catalog: 'frontend/src/data/commodities/commodities.catalog.json',
-        selected: 'frontend/src/data/commodities/commodities.selected.json',
       },
       generatedAt: new Date().toISOString(),
       defaultCommodityIds,
