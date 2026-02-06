@@ -55,6 +55,10 @@ export type ProvidersTableProps = {
   isAuthenticated?: boolean;
   /** Optional callback to register provider IDs for market pulse */
   onProvidersChange?: (providerIds: string[]) => void;
+  /** Whether the table is in expanded (full-centre) mode */
+  isExpanded?: boolean;
+  /** Callback to toggle expanded mode */
+  onExpandToggle?: () => void;
 };
 
 type PromagenUsersCountryUsage = {
@@ -80,12 +84,12 @@ type SortDirection = 'asc' | 'desc';
 function isProviderUnderdog(providerId: string): boolean {
   const marketPower = typedMarketPowerData.providers || {};
   const providerData = marketPower[providerId] as ProviderMarketPower | undefined;
-  
+
   if (!providerData) {
     // Unknown provider — default MPI is 3.0, so NOT underdog
     return false;
   }
-  
+
   const mpi = calculateMPI(providerData);
   return mpi < 3.0;
 }
@@ -96,14 +100,14 @@ function isProviderUnderdog(providerId: string): boolean {
 function isProviderNewcomer(providerId: string): boolean {
   const marketPower = typedMarketPowerData.providers || {};
   const providerData = marketPower[providerId] as ProviderMarketPower | undefined;
-  
+
   if (!providerData || !providerData.foundingYear) {
     return false;
   }
-  
+
   const currentYear = new Date().getFullYear();
   const providerAge = currentYear - providerData.foundingYear;
-  
+
   // Newcomer = less than 1 year old (founded this year or last year within 12 months)
   // For simplicity, we check if founded in current year
   return providerAge < 1;
@@ -150,7 +154,7 @@ async function fetchIndexRatings(providerIds: string[]): Promise<Map<string, Pro
  */
 function toDisplayRating(provider: Provider, dbRating: ProviderRating | undefined): DisplayRating {
   const providerId = provider.id.toLowerCase();
-  
+
   if (dbRating) {
     // Determine state from changePercent
     let state: 'gain' | 'loss' | 'flat' | 'fallback' = 'flat';
@@ -320,24 +324,14 @@ function ImageQualityCell({
   else if (rank === 3) medal = '🥉';
 
   // Ordinal suffix
-  const ordinal =
-    rank === 1
-      ? '1st'
-      : rank === 2
-        ? '2nd'
-        : rank === 3
-          ? '3rd'
-          : `${rank}th`;
+  const ordinal = rank === 1 ? '1st' : rank === 2 ? '2nd' : rank === 3 ? '3rd' : `${rank}th`;
 
   return (
     <div className="flex items-center justify-center gap-2">
       <span className="text-sm">
         {ordinal} {medal}
       </span>
-      <ImageQualityVoteButton
-        providerId={providerId}
-        isAuthenticated={isAuthenticated}
-      />
+      <ImageQualityVoteButton providerId={providerId} isAuthenticated={isAuthenticated} />
     </div>
   );
 }
@@ -353,6 +347,8 @@ export function ProvidersTable({
   limit,
   isAuthenticated = false,
   onProvidersChange,
+  isExpanded = false,
+  onExpandToggle,
 }: ProvidersTableProps) {
   // Sort state: default to Index Rating descending (highest first)
   const [sortBy, setSortBy] = useState<SortColumn>('indexRating');
@@ -445,8 +441,25 @@ export function ProvidersTable({
           {/* 5 columns: Provider (30%) | Promagen Users (18%) | Image Quality (18%) | Support (18%) | Index Rating (16%) */}
           <thead className="providers-table-header">
             <tr>
-              <th className="providers-table-th px-4 py-3 text-center w-[30%] border-r border-white/5">
-                Provider
+              <th className="providers-table-th providers-table-th-sortable px-4 py-3 text-center w-[30%] border-r border-white/5">
+                <button
+                  type="button"
+                  onClick={onExpandToggle}
+                  className={`expand-header ${isExpanded ? 'expand-header-active' : ''}`}
+                  aria-label={
+                    isExpanded
+                      ? 'Collapse table, show finance ribbon'
+                      : 'Expand table, hide finance ribbon'
+                  }
+                  title={isExpanded ? 'Show FX & commodities' : 'Expand leaderboard'}
+                >
+                  <span className="expand-header-label">Provider</span>
+                  <span
+                    className={`expand-header-arrow ${isExpanded ? 'expand-header-arrow-active' : ''}`}
+                  >
+                    ▼
+                  </span>
+                </button>
               </th>
               <th className="providers-table-th px-4 py-3 text-center w-[18%] border-r border-white/5">
                 Promagen Users
@@ -483,9 +496,9 @@ export function ProvidersTable({
                 className="providers-table-row border-t border-slate-800 hover:bg-slate-900/30 transition-colors market-pulse-target"
               >
                 <td className="providers-table-td px-4 py-3 w-[30%] border-r border-white/5">
-                  <ProviderCell 
-                    provider={p} 
-                    rank={index + 1} 
+                  <ProviderCell
+                    provider={p}
+                    rank={index + 1}
                     hasRankUp={p.indexRating?.hasRankUp ?? false}
                   />
                 </td>
@@ -503,11 +516,7 @@ export function ProvidersTable({
                 </td>
 
                 <td className="providers-table-td px-4 py-3 w-[18%] border-r border-white/5">
-                  <SupportIconsCell 
-                    providerName={p.name} 
-                    socials={p.socials}
-                    providerId={p.id}
-                  />
+                  <SupportIconsCell providerName={p.name} socials={p.socials} providerId={p.id} />
                 </td>
 
                 <td className="providers-table-td px-4 py-3 text-center w-[16%]">

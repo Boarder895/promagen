@@ -18,7 +18,11 @@ import { NextResponse } from 'next/server';
 // CONFIGURATION
 // =============================================================================
 
-const GATEWAY_URL = process.env['GATEWAY_URL'] ?? 'https://promagen-api.fly.dev';
+const GATEWAY_URL =
+  process.env['GATEWAY_URL'] ??
+  process.env['NEXT_PUBLIC_GATEWAY_URL'] ??
+  process.env['FX_GATEWAY_URL'] ??
+  'https://promagen-api.fly.dev';
 
 // =============================================================================
 // TYPES

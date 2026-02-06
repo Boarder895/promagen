@@ -31,8 +31,12 @@ import type { ExchangeWeatherData } from '@/components/exchanges/types';
 // CONFIGURATION
 // =============================================================================
 
-/** Gateway URL for weather data */
-const GATEWAY_URL = process.env['GATEWAY_URL'] ?? 'https://promagen-api.fly.dev';
+/** Gateway URL for weather data – matches FX/commodities resolution chain */
+const GATEWAY_URL =
+  process.env['GATEWAY_URL'] ??
+  process.env['NEXT_PUBLIC_GATEWAY_URL'] ??
+  process.env['FX_GATEWAY_URL'] ??
+  'https://promagen-api.fly.dev';
 
 /** Timeout for gateway requests (ms) */
 const FETCH_TIMEOUT_MS = 5_000;

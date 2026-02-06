@@ -219,6 +219,9 @@ export default function HomepageClient({
   // Track displayed provider IDs for market pulse connections
   const [displayedProviderIds, setDisplayedProviderIds] = useState<string[]>([]);
 
+  // Track whether the providers table is expanded (finance ribbon hidden)
+  const [isTableExpanded, setIsTableExpanded] = useState(false);
+
   // ============================================================================
   // EXCHANGE FILTERING (New in this update)
   // ============================================================================
@@ -301,6 +304,11 @@ export default function HomepageClient({
     });
   }, []);
 
+  // Callback when user clicks "Provider" header to expand/collapse
+  const handleExpandToggle = useCallback(() => {
+    setIsTableExpanded((prev) => !prev);
+  }, []);
+
   // ============================================================================
   // UI CONTENT
   // ============================================================================
@@ -323,6 +331,8 @@ export default function HomepageClient({
         // =====================================================
         isAuthenticated={isAuthenticated}
         onProvidersChange={handleProvidersChange}
+        isExpanded={isTableExpanded}
+        onExpandToggle={handleExpandToggle}
       />
     </section>
   );
@@ -379,7 +389,7 @@ export default function HomepageClient({
       leftContent={leftExchanges}
       centre={centreRail}
       rightContent={rightExchanges}
-      showFinanceRibbon
+      showFinanceRibbon={!isTableExpanded}
       exchanges={allOrderedExchanges}
       displayedProviderIds={displayedProviderIds.length > 0 ? displayedProviderIds : providerIds}
       isPaidUser={userTier === 'paid'}

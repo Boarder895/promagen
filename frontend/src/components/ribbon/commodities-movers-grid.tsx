@@ -2,18 +2,24 @@
 // ============================================================================
 // COMMODITIES MOVERS GRID - PRESENTATIONAL
 // ============================================================================
-// Two side-by-side panels with 4 WINDOWS each that:
-// - FILL available space (via aspect-ratio)
-// - GROW with content if needed
-// - SNAP to screen size (responsive)
-// - Content STAYS INSIDE windows (proper overflow handling)
+// Two side-by-side panels with up to 4 WINDOWS each that:
+// - FILL available space (flex-1, no fixed aspect-ratio)
+// - Auto-detect if bottom row fits — if not, hide it cleanly
+// - SNAP font to screen size (responsive)
+// - Content STAYS INSIDE windows (overflow-hidden on panel)
+//
+// OVERFLOW DETECTION:
+// - Panel section has overflow-hidden (nothing escapes)
+// - ResizeObserver measures panel height on every resize
+// - If available grid height can't fit 2 rows of MIN_CARD_HEIGHT, bottom row hides
+// - Result: big screen = 4 cards, small screen = 2 cards, never partial
 //
 // SNAP-FIT FIX:
 // - Measurer does NOT have overflow-hidden (so we can detect overflow)
 // - Windows DO have overflow-hidden (to clip any edge cases)
 // - Card is content-sized, not w-full h-full
 //
-// Authority: Compacted conversation 2026-02-04
+// Authority: Compacted conversation 2026-02-06
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -29,7 +35,19 @@ import type { CommoditiesMoversGridProps } from '@/types/commodities-movers';
 // ============================================================================
 // LAYOUT CONSTANTS
 // ============================================================================
-const PANEL_ASPECT_RATIO = 1.3;
+// Minimum card height (px) — if a grid row would be shorter than this,
+// the bottom row is hidden. Keeps cards readable, never squished.
+const MIN_CARD_HEIGHT_PX = 55;
+
+// Header (title + subtitle) approximate height in px (flex-shrink-0 section).
+// Used for available-grid-height calculation.
+const HEADER_APPROX_PX = 48;
+
+// Panel vertical padding (p-3 = 12px top + 12px bottom)
+const PANEL_PADDING_PX = 24;
+
+// Grid gap (gap-3 = 12px)
+const GRID_GAP_PX = 12;
 
 // ============================================================================
 // SNAP-FIT FONT CONSTANTS
@@ -103,10 +121,17 @@ export default function CommoditiesMoversGrid({
   // Refs for snap-fit measurement
   const gridRef = React.useRef<HTMLDivElement | null>(null);
   const measurerRef = React.useRef<HTMLDivElement | null>(null);
+  const panelRef = React.useRef<HTMLElement | null>(null);
   const rafRef = React.useRef<number | null>(null);
 
   // Snap-fit font state - start at max, will scale down if needed
   const [fontPx, setFontPx] = React.useState<number>(MAX_FONT_PX);
+
+  // Whether bottom row of cards has enough space to render completely
+  const [showBottomRow, setShowBottomRow] = React.useState(true);
+
+  // How many cards per panel
+  const cardsPerPanel = showBottomRow ? 4 : 2;
 
   // Key for triggering reflow on data change
   const dataKey = React.useMemo(
@@ -115,7 +140,7 @@ export default function CommoditiesMoversGrid({
   );
 
   // --------------------------------------------------------------------------
-  // SNAP-FIT MEASUREMENT LOGIC
+  // SNAP-FIT MEASUREMENT LOGIC (font sizing + bottom row detection)
   // --------------------------------------------------------------------------
   const scheduleReflow = React.useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
@@ -125,11 +150,36 @@ export default function CommoditiesMoversGrid({
 
       const grid = gridRef.current;
       const measurer = measurerRef.current;
+      const panel = panelRef.current;
+
+      // ----------------------------------------------------------------
+      // STEP 1: Detect if bottom row fits
+      // ----------------------------------------------------------------
+      if (panel) {
+        const panelHeight = panel.clientHeight;
+        const availableGridHeight = panelHeight - HEADER_APPROX_PX - PANEL_PADDING_PX;
+        // Two rows need: (rowHeight * 2) + gap
+        // So each row gets: (availableGridHeight - gap) / 2
+        const rowHeight = (availableGridHeight - GRID_GAP_PX) / 2;
+        const canFitTwoRows = rowHeight >= MIN_CARD_HEIGHT_PX;
+        setShowBottomRow(canFitTwoRows);
+      }
+
+      // ----------------------------------------------------------------
+      // STEP 2: Snap-fit font sizing (existing logic)
+      // ----------------------------------------------------------------
       if (!grid || !measurer) return;
 
-      // Get single cell dimensions (grid is 2×2 with gap-3 = 12px)
-      const cellWidth = (grid.clientWidth - 12) / 2;
-      const cellHeight = (grid.clientHeight - 12) / 2;
+      // Calculate cell dimensions based on current row count
+      const currentRows = panel
+        ? (panel.clientHeight - HEADER_APPROX_PX - PANEL_PADDING_PX - GRID_GAP_PX) / 2 >=
+          MIN_CARD_HEIGHT_PX
+          ? 2
+          : 1
+        : 2;
+      const cellWidth = (grid.clientWidth - GRID_GAP_PX) / 2;
+      const cellHeight =
+        currentRows === 2 ? (grid.clientHeight - GRID_GAP_PX) / 2 : grid.clientHeight;
 
       if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
       if (!Number.isFinite(cellHeight) || cellHeight <= 0) return;
@@ -166,12 +216,14 @@ export default function CommoditiesMoversGrid({
   React.useEffect(() => {
     scheduleReflow();
 
+    const panel = panelRef.current;
     const grid = gridRef.current;
-    if (!grid) return () => undefined;
 
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(() => scheduleReflow());
-      ro.observe(grid);
+      // Observe BOTH panel (for height detection) and grid (for font sizing)
+      if (panel) ro.observe(panel);
+      if (grid) ro.observe(grid);
 
       return () => {
         ro.disconnect();
@@ -191,14 +243,6 @@ export default function CommoditiesMoversGrid({
   }, [dataKey, scheduleReflow]);
 
   // --------------------------------------------------------------------------
-  // PANEL STYLE
-  // --------------------------------------------------------------------------
-  const panelStyle: React.CSSProperties = {
-    aspectRatio: `${PANEL_ASPECT_RATIO}`,
-    minHeight: 'fit-content',
-  };
-
-  // --------------------------------------------------------------------------
   // RENDER HELPER: Single Panel
   // --------------------------------------------------------------------------
   const renderPanel = (items: typeof winners, type: 'winner' | 'loser', isFirst: boolean) => {
@@ -207,10 +251,13 @@ export default function CommoditiesMoversGrid({
     const title = type === 'winner' ? 'Biggest Winners' : 'Biggest Losers';
     const subtitle = type === 'winner' ? 'Largest gains today' : 'Largest declines today';
 
+    // Only show as many cards as we have room for
+    const visibleCount = cardsPerPanel;
+
     return (
       <section
-        className="flex-1 flex flex-col rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800"
-        style={panelStyle}
+        ref={isFirst ? panelRef : undefined}
+        className="flex-1 flex flex-col min-h-0 rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800 overflow-hidden"
         aria-label={`Commodities with largest ${type === 'winner' ? 'gains' : 'declines'} today`}
       >
         {/* Header */}
@@ -227,19 +274,19 @@ export default function CommoditiesMoversGrid({
           <p className="text-xs text-white/40">{subtitle}</p>
         </div>
 
-        {/* 2×2 Grid of WINDOWS */}
+        {/* Grid of WINDOWS — 2×2 or 2×1 depending on available height */}
         <div
           ref={isFirst ? gridRef : undefined}
-          className="flex-1 grid gap-3"
+          className="flex-1 min-h-0 grid gap-3"
           style={{
             gridTemplateColumns: '1fr 1fr',
-            gridTemplateRows: '1fr 1fr',
+            gridTemplateRows: showBottomRow ? '1fr 1fr' : '1fr',
             ['--commodity-font' as string]: `${fontPx}px`,
           }}
           role="list"
           aria-label={`Top commodity ${type}s`}
         >
-          {Array.from({ length: 4 }).map((_, i) => {
+          {Array.from({ length: visibleCount }).map((_, i) => {
             const mover = items[i];
             return (
               <div
@@ -282,16 +329,13 @@ export default function CommoditiesMoversGrid({
   if (isLoading) {
     return (
       <div
-        className="flex w-full gap-4"
+        className="flex flex-1 min-h-0 w-full gap-4"
         aria-label="Commodities movers loading"
         aria-busy="true"
         data-testid="commodities-movers-grid"
       >
         {/* Winners skeleton */}
-        <section
-          className="flex-1 flex flex-col rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800"
-          style={panelStyle}
-        >
+        <section className="flex-1 flex flex-col min-h-0 rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800 overflow-hidden">
           <div className="flex-shrink-0 flex flex-col items-center gap-1 pb-2">
             <div className="flex items-center gap-2">
               <div className="h-5 w-5 rounded bg-emerald-400/20 animate-pulse" />
@@ -300,13 +344,13 @@ export default function CommoditiesMoversGrid({
             <div className="h-3 w-24 rounded bg-white/5 animate-pulse" />
           </div>
           <div
-            className="flex-1 grid gap-3"
+            className="flex-1 min-h-0 grid gap-3"
             style={{ gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}
           >
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={`winner-skel-${i}`}
-                className="rounded-xl bg-slate-900/80 ring-1 ring-white/10 flex items-center justify-center"
+                className="rounded-xl bg-slate-900/80 ring-1 ring-white/10 flex items-center justify-center overflow-hidden"
               >
                 <CommodityMoverCardSkeleton />
               </div>
@@ -315,10 +359,7 @@ export default function CommoditiesMoversGrid({
         </section>
 
         {/* Losers skeleton */}
-        <section
-          className="flex-1 flex flex-col rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800"
-          style={panelStyle}
-        >
+        <section className="flex-1 flex flex-col min-h-0 rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800 overflow-hidden">
           <div className="flex-shrink-0 flex flex-col items-center gap-1 pb-2">
             <div className="flex items-center gap-2">
               <div className="h-5 w-5 rounded bg-red-400/20 animate-pulse" />
@@ -327,13 +368,13 @@ export default function CommoditiesMoversGrid({
             <div className="h-3 w-24 rounded bg-white/5 animate-pulse" />
           </div>
           <div
-            className="flex-1 grid gap-3"
+            className="flex-1 min-h-0 grid gap-3"
             style={{ gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}
           >
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={`loser-skel-${i}`}
-                className="rounded-xl bg-slate-900/80 ring-1 ring-white/10 flex items-center justify-center"
+                className="rounded-xl bg-slate-900/80 ring-1 ring-white/10 flex items-center justify-center overflow-hidden"
               >
                 <CommodityMoverCardSkeleton />
               </div>
@@ -349,17 +390,15 @@ export default function CommoditiesMoversGrid({
   // --------------------------------------------------------------------------
   if (winners.length === 0 && losers.length === 0) {
     return (
-      <div className="flex w-full gap-4" data-testid="commodities-movers-grid">
+      <div className="flex flex-1 min-h-0 w-full gap-4" data-testid="commodities-movers-grid">
         <section
-          className="flex-1 rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800 flex items-center justify-center"
-          style={panelStyle}
+          className="flex-1 min-h-0 rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800 flex items-center justify-center overflow-hidden"
           aria-label="Commodities winners"
         >
           <span className="text-base text-white/40">Winners data loading...</span>
         </section>
         <section
-          className="flex-1 rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800 flex items-center justify-center"
-          style={panelStyle}
+          className="flex-1 min-h-0 rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800 flex items-center justify-center overflow-hidden"
           aria-label="Commodities losers"
         >
           <span className="text-base text-white/40">Losers data loading...</span>
@@ -372,7 +411,7 @@ export default function CommoditiesMoversGrid({
   // MAIN RENDER
   // --------------------------------------------------------------------------
   return (
-    <div className="flex w-full gap-4" data-testid="commodities-movers-grid">
+    <div className="flex flex-1 min-h-0 w-full gap-4" data-testid="commodities-movers-grid">
       {renderPanel(winners, 'winner', true)}
       {renderPanel(losers, 'loser', false)}
     </div>

@@ -36,10 +36,7 @@ function getGatewayBaseUrl(): string {
   const raw =
     process.env['GATEWAY_URL'] ??
     process.env['NEXT_PUBLIC_GATEWAY_URL'] ??
-    process.env['PROMAGEN_GATEWAY_URL'] ??
-    process.env['PROMAGEN_API_URL'] ??
-    process.env['NEXT_PUBLIC_PROMAGEN_GATEWAY_URL'] ??
-    process.env['NEXT_PUBLIC_PROMAGEN_API_URL'] ??
+    process.env['FX_GATEWAY_URL'] ??
     DEFAULT_GATEWAY_BASE_URL;
 
   return raw.replace(/\/+$/, '');

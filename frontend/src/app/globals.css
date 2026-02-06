@@ -536,8 +536,108 @@ a:hover {
 }
 
 /* ========================================================================== */
-/* Provider Cell — Breathable, beautiful layout for creatives                 */
+/* Expand Header — "Provider" column toggle for table expand/collapse         */
+/* Mirrors sortable-header aesthetic: cyan glow, underline sweep              */
 /* ========================================================================== */
+
+.expand-header {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Underline sweep — identical to sortable-header */
+.expand-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.6), transparent);
+  border-radius: 1px;
+  transition: width 0.25s ease;
+}
+
+/* Hover: show underline */
+.expand-header:hover::after {
+  width: 70%;
+}
+
+/* Hover: brighten text */
+.expand-header:hover {
+  color: rgba(226, 232, 240, 1); /* slate-200 */
+}
+
+/* Hover: brighten arrow */
+.expand-header:hover .expand-header-arrow {
+  color: rgba(148, 163, 184, 0.9); /* slate-400 brighter */
+}
+
+/* Focus state for accessibility */
+.expand-header:focus {
+  outline: none;
+}
+
+.expand-header:focus-visible {
+  outline: 2px solid rgba(34, 211, 238, 0.5);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+/* Label text */
+.expand-header-label {
+  transition: color 0.2s ease;
+}
+
+/* Arrow — rotates 180° when expanded */
+.expand-header-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65em;
+  color: rgba(100, 116, 139, 0.5); /* slate-500 very dim */
+  transition: all 0.3s ease;
+  min-width: 1em;
+}
+
+/* Active (expanded) — arrow rotates to point up, cyan glow */
+.expand-header-arrow-active {
+  transform: rotate(180deg);
+  color: rgba(34, 211, 238, 1) !important; /* cyan-400 */
+  filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.5)) drop-shadow(0 0 8px rgba(34, 211, 238, 0.3));
+}
+
+/* Active header — full underline */
+.expand-header-active::after {
+  width: 80%;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.8), transparent);
+}
+
+/* Active header — label glow */
+.expand-header-active .expand-header-label {
+  color: rgba(226, 232, 240, 1); /* slate-200 */
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.3);
+}
+
+/* ========================================================================== */
+/* Provider Cell — Breathable, beautiful layout for creatives                 */
+/* ==========================================================================  */
 
 .provider-cell-container {
   display: flex;
