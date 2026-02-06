@@ -9,20 +9,18 @@
  *
  * Why rolling instead of clock-aligned?
  * - Marketstack commodities endpoint: 1 commodity per call (no batching)
- * - 1 call/minute hard rate limit on the endpoint
+ * - Rate limit constraints on the endpoint
  * - 78 commodities to cycle through
  * - Rolling lets us fetch continuously without complex slot math
  *
- * COLD-START BURST MODE:
- * - First cycle uses 1-minute intervals (at the API rate limit)
- * - Subsequent cycles use 2-minute intervals (comfortable margin)
- * - This halves the initial cache fill time from 156 min to 78 min
+ * TIMING:
+ * - 1 API call every 3 minutes (uniform, including startup)
+ * - 78 commodities × 3 min = 234 min (~3.9 hours) per full cycle
+ * - Cycles/day: ~6.2
+ * - Calls/day: ~480
  *
- * Rolling Math:
- * - Cold-start (1-min):  78 × 1 = 78 min (~1.3 hours) for first fill
- * - Normal (2-min):      78 × 2 = 156 min (~2.6 hours) per cycle
- * - Cycles/day (normal): ~9.2
- * - Calls/day: ~720
+ * This conservative pacing ensures we stay well within Marketstack rate limits
+ * and avoid 429 errors that were caused by the previous aggressive scheduling.
  *
  * Priority Queue:
  * - All catalog commodities are fetched (no selection filtering)
@@ -34,7 +32,7 @@
  * - Queue is rebuilt from SSOT on each cycle (no stale state)
  * - Timer references are cleaned up on stop
  *
- * Authority: Compacted conversation 2026-02-03 (commodities movers grid)
+ * Authority: Updated 2026-02-05 (rate limit fix - 3 min interval)
  *
  * @module marketstack/commodities-scheduler
  */
@@ -47,48 +45,33 @@ import { logInfo, logDebug, logWarn } from '../lib/logging.js';
 
 /**
  * Interval between individual commodity fetches, in milliseconds.
- * Default: 2 minutes (120,000 ms).
+ * Default: 3 minutes (180,000 ms).
  *
- * This sits comfortably within the 1-call/minute endpoint rate limit.
+ * Balanced pacing to avoid Marketstack 429 rate limit errors
+ * while keeping data reasonably fresh.
+ * Previous values (1-2 min) were too aggressive for the plan's rate limits.
  */
-const DEFAULT_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
-
-/**
- * Cold-start burst interval: 1 minute.
- * Used during the FIRST cycle only to fill the cache faster.
- * After first cycle completes, switches back to DEFAULT_INTERVAL_MS.
- *
- * Why 1 minute (not faster)?
- * - Marketstack commodities endpoint has a 1 call/minute hard rate limit
- * - Going faster would result in 429 errors
- *
- * Cold-start math:
- * - First cycle (burst):  78 × 1 min = 78 min (~1.3 hours)
- * - Subsequent cycles:    78 × 2 min = 156 min (~2.6 hours)
- *
- * Authority: Compacted conversation 2026-02-03 (commodities movers grid)
- */
-const COLD_START_INTERVAL_MS = 60 * 1000; // 1 minute (at the API limit)
+const DEFAULT_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 
 /**
  * Minimum interval guard (prevents accidental thrashing).
  * Even if env var is misconfigured, never go faster than 1 minute.
  */
-const MIN_INTERVAL_MS = 60 * 1000; // 1 minute (matches API rate limit)
+const MIN_INTERVAL_MS = 60 * 1000; // 1 minute (safety floor)
 
 /**
  * Double-word commodities that require URL encoding fix.
  * These are fetched FIRST to ensure they work and to verify the encoding fix.
  *
  * VERIFIED AGAINST: marketstack-commodities.xlsx (78 commodities)
- * 
+ *
  * CRITICAL: These map to Marketstack names with spaces:
  *   crude_oil    → "crude oil"
  *   natural_gas  → "natural gas"
  *   ttf_gas      → "ttf gas" (separate from natural_gas!)
  *   iron_ore     → "iron ore"
  *   etc.
- *   
+ *
  * These are placed at the FRONT of the queue to:
  * 1. Verify the URL encoding fix works immediately
  * 2. Ensure the most problematic commodities are fetched first
@@ -101,7 +84,7 @@ const DOUBLE_WORD_COMMODITY_IDS: readonly string[] = [
   'ttf_natural_gas',
   'uk_gas',
   'heating_oil',
-  
+
   // Agriculture (double-word)
   'orange_juice',
   'palm_oil',
@@ -112,14 +95,14 @@ const DOUBLE_WORD_COMMODITY_IDS: readonly string[] = [
   'eggs_ch',
   'eggs_us',
   'di_ammonium',
-  
+
   // Metals/Industrial (double-word)
   'iron_ore',
   'iron_ore_cny',
   'hrc_steel',
   'soda_ash',
   'kraft_pulp',
-  
+
   // Legacy aliases (map to same Marketstack names)
   'brent_crude',
   'wti_crude',
@@ -180,7 +163,6 @@ export interface CommoditiesRollingScheduler {
 export interface CommoditiesSchedulerTrace {
   readonly running: boolean;
   readonly intervalMs: number;
-  readonly coldStartMode: boolean;
   readonly queueLength: number;
   readonly queuePosition: number;
   readonly currentCommodity: string | null;
@@ -199,7 +181,7 @@ export interface CommoditiesSchedulerTrace {
 /**
  * Create a rolling scheduler for commodities.
  *
- * @param intervalMs - Milliseconds between each fetch (default: 120_000 = 2 min)
+ * @param intervalMs - Milliseconds between each fetch (default: 180_000 = 3 min)
  * @returns Scheduler controls
  *
  * @example
@@ -220,12 +202,12 @@ export function createCommoditiesRollingScheduler(
 ): CommoditiesRollingScheduler {
   // ── Validate interval ─────────────────────────────────────────────────────
   const envInterval = process.env['COMMODITIES_REFRESH_INTERVAL_MS'];
-  let normalInterval = intervalMs ?? DEFAULT_INTERVAL_MS;
+  let effectiveInterval = intervalMs ?? DEFAULT_INTERVAL_MS;
 
   if (envInterval) {
     const parsed = parseInt(envInterval, 10);
     if (Number.isFinite(parsed) && parsed >= MIN_INTERVAL_MS) {
-      normalInterval = parsed;
+      effectiveInterval = parsed;
     } else {
       logWarn('Invalid COMMODITIES_REFRESH_INTERVAL_MS, using default', {
         envValue: envInterval,
@@ -235,7 +217,7 @@ export function createCommoditiesRollingScheduler(
   }
 
   // Enforce minimum
-  normalInterval = Math.max(normalInterval, MIN_INTERVAL_MS);
+  effectiveInterval = Math.max(effectiveInterval, MIN_INTERVAL_MS);
 
   // ── State ─────────────────────────────────────────────────────────────────
   let queue: string[] = [];
@@ -249,30 +231,16 @@ export function createCommoditiesRollingScheduler(
   let lastFetchAt: number | null = null;
   let nextFetchAt: number | null = null;
 
-  /**
-   * Cold-start mode: true during the first cycle (cycleCount === 0).
-   * Uses COLD_START_INTERVAL_MS (1 min) instead of normalInterval (2 min).
-   * Switches to normal interval after first cycle completes.
-   */
-  let coldStartMode = true;
-
-  /**
-   * Get the current effective interval based on cold-start mode.
-   */
-  function getCurrentInterval(): number {
-    return coldStartMode ? COLD_START_INTERVAL_MS : normalInterval;
-  }
-
   // ── Queue builder ─────────────────────────────────────────────────────────
 
   /**
    * Build the fetch queue with priority ordering.
-   * 
+   *
    * ORDER:
    * 1. Double-word commodities FIRST (verify URL encoding fix works)
    * 2. Priority IDs (defaults/selected) that aren't already in double-word
    * 3. Remaining IDs in catalog order
-   * 
+   *
    * Duplicates are removed at each stage.
    */
   function buildQueue(): string[] {
@@ -321,21 +289,9 @@ export function createCommoditiesRollingScheduler(
       queuePosition = 0;
       cycleCount++;
 
-      // Exit cold-start mode after first cycle completes
-      if (coldStartMode && cycleCount > 1) {
-        coldStartMode = false;
-        logInfo('Commodities scheduler: cold-start complete, switching to normal interval', {
-          cycleCount,
-          coldStartIntervalMs: COLD_START_INTERVAL_MS,
-          normalIntervalMs: normalInterval,
-          queueLength: queue.length,
-        });
-      }
-
       logDebug('Commodities scheduler: new cycle', {
         cycleCount,
-        coldStartMode,
-        intervalMs: getCurrentInterval(),
+        intervalMs: effectiveInterval,
         queueLength: queue.length,
         firstThree: queue.slice(0, 3),
       });
@@ -358,7 +314,6 @@ export function createCommoditiesRollingScheduler(
       position: queuePosition,
       total: queue.length,
       cycle: cycleCount,
-      coldStartMode,
     });
 
     // Execute fetch (errors are handled by the callback)
@@ -375,13 +330,12 @@ export function createCommoditiesRollingScheduler(
 
   /**
    * Schedule the next tick.
-   * Uses getCurrentInterval() to respect cold-start vs normal mode.
+   * Always uses the same interval (no cold-start burst mode).
    */
   function scheduleNext(): void {
     if (!running) return;
 
-    const interval = getCurrentInterval();
-    nextFetchAt = Date.now() + interval;
+    nextFetchAt = Date.now() + effectiveInterval;
 
     timer = setTimeout(() => {
       tick().catch(() => {
@@ -391,7 +345,7 @@ export function createCommoditiesRollingScheduler(
           scheduleNext();
         }
       });
-    }, interval);
+    }, effectiveInterval);
   }
 
   // ── Public interface ──────────────────────────────────────────────────────
@@ -410,25 +364,22 @@ export function createCommoditiesRollingScheduler(
       queuePosition = 0;
       cycleCount = 0;
       running = true;
-      coldStartMode = true; // Reset to cold-start mode on each start
 
       // Count double-word commodities in queue
-      const doubleWordInQueue = queue.filter((id) => 
-        DOUBLE_WORD_COMMODITY_IDS.includes(id)
-      ).length;
+      const doubleWordInQueue = queue.filter((id) => DOUBLE_WORD_COMMODITY_IDS.includes(id)).length;
 
-      logInfo('Commodities rolling scheduler started (COLD-START MODE)', {
-        coldStartIntervalMs: COLD_START_INTERVAL_MS,
-        normalIntervalMs: normalInterval,
+      logInfo('Commodities rolling scheduler started', {
+        intervalMs: effectiveInterval,
+        intervalMinutes: Math.round(effectiveInterval / 60_000),
         totalCommodities: allIds.length,
         doubleWordFirst: doubleWordInQueue,
         priorityCount: priorityIds.length,
-        firstEight: queue.slice(0, 8), // Show first 8 (should be double-word)
-        coldStartCycleMinutes: Math.round((allIds.length * COLD_START_INTERVAL_MS) / 60_000),
-        normalCycleMinutes: Math.round((allIds.length * normalInterval) / 60_000),
+        firstEight: queue.slice(0, 8),
+        fullCycleMinutes: Math.round((allIds.length * effectiveInterval) / 60_000),
+        callsPerDay: Math.round((24 * 60) / (effectiveInterval / 60_000)),
       });
 
-      // Start first tick immediately (don't wait)
+      // Start first tick immediately (that's the first "1 call"), then 10 min gap
       tick().catch(() => {
         if (running) scheduleNext();
       });
@@ -446,7 +397,6 @@ export function createCommoditiesRollingScheduler(
       logInfo('Commodities rolling scheduler stopped', {
         cycleCount,
         queuePosition,
-        coldStartMode,
       });
     },
 
@@ -470,8 +420,7 @@ export function createCommoditiesRollingScheduler(
     getTraceInfo(): CommoditiesSchedulerTrace {
       return {
         running,
-        intervalMs: getCurrentInterval(),
-        coldStartMode,
+        intervalMs: effectiveInterval,
         queueLength: queue.length,
         queuePosition,
         currentCommodity:

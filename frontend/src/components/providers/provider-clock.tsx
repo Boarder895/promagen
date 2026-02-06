@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { formatTimeInTimezone, isWithinSupportHours } from '@/lib/utils/timezone';
 
 export type ProviderClockProps = {
@@ -13,8 +13,9 @@ export type ProviderClockProps = {
 export function ProviderClock({ timezone, supportHours }: ProviderClockProps) {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
-  const [colonVisible, setColonVisible] = useState<boolean>(true);
+  const colonRef = useRef<HTMLSpanElement>(null);
 
+  // Clock update - only re-renders once per minute
   useEffect(() => {
     function updateClock() {
       const time = formatTimeInTimezone(timezone);
@@ -24,22 +25,24 @@ export function ProviderClock({ timezone, supportHours }: ProviderClockProps) {
       setIsAvailable(available);
     }
 
-    // Update immediately
     updateClock();
-
-    // Update time every minute
     const timeInterval = setInterval(updateClock, 60_000);
 
-    // Blink colon every 500ms for "live" heartbeat effect
+    return () => clearInterval(timeInterval);
+  }, [timezone, supportHours]);
+
+  // Blink colon via DOM ref — no setState, no re-renders
+  useEffect(() => {
+    let visible = true;
     const blinkInterval = setInterval(() => {
-      setColonVisible((prev) => !prev);
+      visible = !visible;
+      if (colonRef.current) {
+        colonRef.current.style.opacity = visible ? '1' : '0';
+      }
     }, 500);
 
-    return () => {
-      clearInterval(timeInterval);
-      clearInterval(blinkInterval);
-    };
-  }, [timezone, supportHours]);
+    return () => clearInterval(blinkInterval);
+  }, []);
 
   // Loading state
   if (!currentTime) {
@@ -60,9 +63,10 @@ export function ProviderClock({ timezone, supportHours }: ProviderClockProps) {
     >
       <span className="tabular-nums">{hours}</span>
       <span
+        ref={colonRef}
         className="provider-clock-colon"
         style={{
-          opacity: colonVisible ? 1 : 0,
+          opacity: 1,
           marginLeft: '0.05em',
           marginRight: '0.25em',
         }}

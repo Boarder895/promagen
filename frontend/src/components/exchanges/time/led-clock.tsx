@@ -40,16 +40,16 @@ export type LedClockProps = {
  */
 const DIGIT_SEGMENTS: Record<string, boolean[]> = {
   //       a      b      c      d      e      f      g
-  '0': [true,  true,  true,  true,  true,  true,  false],
-  '1': [false, true,  true,  false, false, false, false],
-  '2': [true,  true,  false, true,  true,  false, true ],
-  '3': [true,  true,  true,  true,  false, false, true ],
-  '4': [false, true,  true,  false, false, true,  true ],
-  '5': [true,  false, true,  true,  false, true,  true ],
-  '6': [true,  false, true,  true,  true,  true,  true ],
-  '7': [true,  true,  true,  false, false, false, false],
-  '8': [true,  true,  true,  true,  true,  true,  true ],
-  '9': [true,  true,  true,  true,  false, true,  true ],
+  '0': [true, true, true, true, true, true, false],
+  '1': [false, true, true, false, false, false, false],
+  '2': [true, true, false, true, true, false, true],
+  '3': [true, true, true, true, false, false, true],
+  '4': [false, true, true, false, false, true, true],
+  '5': [true, false, true, true, false, true, true],
+  '6': [true, false, true, true, true, true, true],
+  '7': [true, true, true, false, false, false, false],
+  '8': [true, true, true, true, true, true, true],
+  '9': [true, true, true, true, false, true, true],
 };
 
 type SegmentProps = {
@@ -185,14 +185,21 @@ export const LedClock = React.memo(function LedClock({
           return part ? parseInt(part.value, 10) : 0;
         };
 
-        setTime({
-          h: getValue('hour'),
-          m: getValue('minute'),
-          s: getValue('second'),
+        const h = getValue('hour');
+        const m = getValue('minute');
+        const s = getValue('second');
+
+        // Only update state when values actually change
+        setTime((prev) => {
+          if (prev.h === h && prev.m === m && prev.s === s) return prev;
+          return { h, m, s };
         });
       } catch {
         // Invalid timezone - show 12:00:00
-        setTime({ h: 12, m: 0, s: 0 });
+        setTime((prev) => {
+          if (prev.h === 12 && prev.m === 0 && prev.s === 0) return prev;
+          return { h: 12, m: 0, s: 0 };
+        });
       }
     };
 
@@ -231,13 +238,25 @@ export const LedClock = React.memo(function LedClock({
     m1: (digitWidth + spacing) * 2 + colonWidth + spacing,
     m2: (digitWidth + spacing) * 2 + colonWidth + spacing + digitWidth + spacing,
     colon2: (digitWidth + spacing) * 2 + colonWidth + spacing + (digitWidth + spacing) * 2,
-    s1: (digitWidth + spacing) * 2 + colonWidth + spacing + (digitWidth + spacing) * 2 + colonWidth + spacing,
-    s2: (digitWidth + spacing) * 2 + colonWidth + spacing + (digitWidth + spacing) * 2 + colonWidth + spacing + digitWidth + spacing,
+    s1:
+      (digitWidth + spacing) * 2 +
+      colonWidth +
+      spacing +
+      (digitWidth + spacing) * 2 +
+      colonWidth +
+      spacing,
+    s2:
+      (digitWidth + spacing) * 2 +
+      colonWidth +
+      spacing +
+      (digitWidth + spacing) * 2 +
+      colonWidth +
+      spacing +
+      digitWidth +
+      spacing,
   };
 
-  const timeStr = showSeconds
-    ? `${h1}${h2}:${m1}${m2}:${s1}${s2}`
-    : `${h1}${h2}:${m1}${m2}`;
+  const timeStr = showSeconds ? `${h1}${h2}:${m1}${m2}:${s1}${s2}` : `${h1}${h2}:${m1}${m2}`;
 
   return (
     <div

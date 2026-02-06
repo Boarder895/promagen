@@ -5,6 +5,12 @@
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
+# Some environments (or upstreams) can be flaky on IPv6. Prefer IPv4 first.
+ENV NODE_OPTIONS="--dns-result-order=ipv4first"
+
+# Defensive: ensure system CA bundle exists for outbound HTTPS.
+RUN apk add --no-cache ca-certificates && update-ca-certificates
+
 WORKDIR /app
 
 # Copy package files
@@ -22,6 +28,12 @@ RUN npm run build
 
 # Stage 2: Production
 FROM node:20-alpine AS runner
+
+# Prefer IPv4 first in production too.
+ENV NODE_OPTIONS="--dns-result-order=ipv4first"
+
+# Ensure CA bundle + a real wget for the HEALTHCHECK.
+RUN apk add --no-cache ca-certificates wget && update-ca-certificates
 
 WORKDIR /app
 

@@ -1,22 +1,27 @@
 // frontend/src/components/exchanges/exchange-card.tsx
 // ============================================================================
-// EXCHANGE CARD - WITH AUTO-FIT TEXT
+// EXCHANGE CARD - CSS VARIABLE SNAP-FIT
 // ============================================================================
 // Unified exchange card component with:
-// - FitText component: measures container and scales text to fit
+// - CSS variable --exchange-font: one base size, all text uses relative em
+// - ResizeObserver on card root sets --exchange-font from card width
 // - Left section: Exchange info + Clock (top) | Index quote row (bottom)
 // - Right section: Weather box
 //
+// SNAP-FIT APPROACH (matches commodity-mover-card pattern):
+// - One CSS variable (--exchange-font) on the card root
+// - All child text uses em-relative sizes off that base
+// - Everything scales proportionally together
+// - ResizeObserver recalculates on any container resize
+//
+// UPDATES (5 Feb 2026 - SNAP-FIT v2):
+// - REPLACED: Per-element FitText → card-level CSS variable snap-fit
+// - All text now scales proportionally via --exchange-font
+// - City name (previously fixed text-base) now scales with everything else
+//
 // UPDATES (26 Jan 2026 - FIX #2):
 // - FIXED: Flag wrapped with title="" to suppress native browser tooltip
-//   (removes "United States flag" / "Canada flag" text overlay)
 // - FIXED: cursor-pointer on flag (not cursor-help)
-//
-// UPDATES (23 Jan 2026 - AUTO-FIT):
-// - NEW: FitText component for true auto-sizing text
-// - Text scales based on actual container width (measured in pixels)
-// - Uses ResizeObserver to respond to container/screen size changes
-// - Min/max font sizes prevent text being too tiny or huge
 //
 // Existing features preserved: Yes
 // ============================================================================
@@ -33,98 +38,19 @@ import type { ExchangeWeatherDisplay } from '@/lib/weather/weather-types';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 
 // ============================================================================
-// FIT TEXT COMPONENT - Auto-scales text to fit container width
+// SNAP-FIT FONT CONSTANTS
 // ============================================================================
 // How it works:
-// 1. Renders text at max font size in a hidden measurement span
-// 2. Compares text width to container width
-// 3. Scales font-size down until text fits (or hits minimum)
-// 4. Re-measures on container resize via ResizeObserver
+// 1. ResizeObserver watches card container width
+// 2. Computes base font: cardWidth × FONT_SCALE, clamped to [MIN, MAX]
+// 3. Sets fontSize on the card root element
+// 4. All child text uses em-relative sizes (e.g. 1.15em, 0.85em)
+// 5. Everything scales proportionally in lockstep
 // ============================================================================
-
-interface FitTextProps {
-  children: React.ReactNode;
-  /** Minimum font size in pixels */
-  min?: number;
-  /** Maximum font size in pixels */
-  max?: number;
-  /** Additional CSS classes */
-  className?: string;
-}
-
-const FitText = React.memo(function FitText({
-  children,
-  min = 10,
-  max = 24,
-  className = '',
-}: FitTextProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLSpanElement>(null);
-  const [fontSize, setFontSize] = useState(max);
-
-  const calculateFit = useCallback(() => {
-    if (!containerRef.current || !textRef.current) return;
-
-    const container = containerRef.current;
-    const text = textRef.current;
-
-    // Get available width (container width minus any padding)
-    const containerWidth = container.clientWidth;
-    if (containerWidth === 0) return;
-
-    // Binary search for optimal font size
-    let low = min;
-    let high = max;
-    let bestFit = min;
-
-    while (low <= high) {
-      const mid = Math.floor((low + high) / 2);
-      text.style.fontSize = `${mid}px`;
-
-      // Check if text fits
-      if (text.scrollWidth <= containerWidth) {
-        bestFit = mid;
-        low = mid + 1;
-      } else {
-        high = mid - 1;
-      }
-    }
-
-    setFontSize(bestFit);
-  }, [min, max]);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Initial calculation
-    calculateFit();
-
-    // Re-calculate on resize
-    const resizeObserver = new ResizeObserver(() => {
-      calculateFit();
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, [calculateFit, children]);
-
-  return (
-    <div ref={containerRef} className="w-full overflow-hidden">
-      <span
-        ref={textRef}
-        className={className}
-        style={{
-          fontSize: `${fontSize}px`,
-          display: 'block',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {children}
-      </span>
-    </div>
-  );
-});
+const MIN_EXCHANGE_FONT = 12; // Floor - readable on small screens
+const MAX_EXCHANGE_FONT = 20; // Ceiling - comfortable on large screens
+const FONT_SCALE = 0.042; // Linear scale factor: width × 0.042
+// ~285px → 12px, ~380px → 16px, ~476px → 20px
 
 // ============================================================================
 // TYPES
@@ -233,17 +159,23 @@ const IndexRowWithData = React.memo(function IndexRowWithData({ quote }: IndexRo
 
   return (
     <div className="w-full px-4 py-2.5" role="group" aria-label={srText}>
-      {/* All index data on ONE line - auto-fit */}
-      <FitText min={12} max={20} className="font-medium text-slate-300">
+      {/* All index data on ONE line - snaps with card */}
+      <span
+        className="block font-medium text-slate-300 whitespace-nowrap"
+        style={{ fontSize: '1em' }}
+      >
         <span>{indexName}: </span>
         <span className="ml-1 font-semibold text-slate-100">{formatPrice(price)}</span>
         <span className={tickColorClass}>
-          <span className={`text-[0.8em] ml-1.5 ${tick !== 'flat' ? 'tick-arrow' : ''}`}>
+          <span
+            className={`ml-1.5 ${tick !== 'flat' ? 'tick-arrow' : ''}`}
+            style={{ fontSize: '0.8em' }}
+          >
             {tickArrow}
           </span>{' '}
           {formatChange(change)} ({formatPercent(percentChange)})
         </span>
-      </FitText>
+      </span>
     </div>
   );
 });
@@ -261,11 +193,16 @@ const IndexRowPlaceholder = React.memo(function IndexRowPlaceholder({
 }: IndexRowPlaceholderProps) {
   return (
     <div className="w-full px-4 py-2.5" role="group" aria-label={`${indexName}: market closed`}>
-      {/* Index name + status on ONE line */}
-      <FitText min={10} max={16} className="font-medium text-slate-300">
+      {/* Index name + status on ONE line - snaps with card */}
+      <span
+        className="block font-medium text-slate-300 whitespace-nowrap"
+        style={{ fontSize: '0.9em' }}
+      >
         <span>{indexName}: </span>
-        <span className="text-slate-500 italic text-[0.85em]">Market closed</span>
-      </FitText>
+        <span className="text-slate-500 italic" style={{ fontSize: '0.85em' }}>
+          Market closed
+        </span>
+      </span>
     </div>
   );
 });
@@ -296,7 +233,7 @@ const WeatherSection = React.memo(function WeatherSection({
   if (tempC === null) {
     return (
       <div className="flex flex-col items-center justify-center gap-0.5 text-slate-500 w-full">
-        <span className="text-sm">—</span>
+        <span style={{ fontSize: '0.85em' }}>—</span>
       </div>
     );
   }
@@ -307,25 +244,25 @@ const WeatherSection = React.memo(function WeatherSection({
   return (
     <div className="flex flex-col gap-2 w-full px-1">
       {/* Row 1: Temperature + Weather emoji - centered */}
-      <div className="text-center">
-        <FitText min={10} max={15} className="tabular-nums text-slate-200">
+      <div className="text-center whitespace-nowrap">
+        <span className="tabular-nums text-slate-200" style={{ fontSize: '0.85em' }}>
           {Math.round(tempC)}°C / {Math.round(tempF ?? (tempC * 9) / 5 + 32)}°F{' '}
-          <span className="text-xl">{emoji || ''}</span>
-        </FitText>
+          <span style={{ fontSize: '1.3em' }}>{emoji || ''}</span>
+        </span>
       </div>
 
-      {/* Row 2: Wind - full width, left-aligned */}
-      <div className="flex items-center justify-between text-slate-400">
-        <FitText min={9} max={15} className="tabular-nums">
+      {/* Row 2: Wind - full width */}
+      <div className="flex items-center justify-between text-slate-400 whitespace-nowrap">
+        <span className="tabular-nums" style={{ fontSize: '0.8em' }}>
           {windEmoji} {windKmh ?? 0} km/h
-        </FitText>
+        </span>
       </div>
 
-      {/* Row 3: Humidity - full width, right-aligned */}
-      <div className="flex items-center justify-between text-slate-400">
-        <FitText min={9} max={15} className="tabular-nums">
+      {/* Row 3: Humidity - full width */}
+      <div className="flex items-center justify-between text-slate-400 whitespace-nowrap">
+        <span className="tabular-nums" style={{ fontSize: '0.8em' }}>
           💧 {humidity ?? 0}%
-        </FitText>
+        </span>
       </div>
     </div>
   );
@@ -355,6 +292,34 @@ export const ExchangeCard = React.memo(function ExchangeCard({
   railPosition = 'left',
 }: ExtendedExchangeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [exchangeFont, setExchangeFont] = useState(16);
+
+  // --------------------------------------------------------------------------
+  // SNAP-FIT: Compute base font from card width via ResizeObserver
+  // --------------------------------------------------------------------------
+  const computeFont = useCallback(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const w = el.clientWidth;
+    if (w <= 0) return;
+    const px = Math.round(Math.min(MAX_EXCHANGE_FONT, Math.max(MIN_EXCHANGE_FONT, w * FONT_SCALE)));
+    setExchangeFont((prev) => (prev === px ? prev : px));
+  }, []);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    // Initial calculation
+    computeFont();
+
+    // Re-calculate on resize
+    const ro = new ResizeObserver(() => computeFont());
+    ro.observe(el);
+
+    return () => ro.disconnect();
+  }, [computeFont]);
 
   const ex = exchange as typeof exchange & LegacyExchangeShape;
 
@@ -382,6 +347,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
   const glowSoft = hexToRgba(safeHoverColor, 0.15);
 
   const cardStyle: React.CSSProperties = {
+    fontSize: `${exchangeFont}px`,
     background: 'rgba(255, 255, 255, 0.05)',
     border: `1px solid ${isHovered ? glowBorder : 'rgba(255, 255, 255, 0.1)'}`,
     boxShadow: isHovered
@@ -413,6 +379,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
 
   return (
     <div
+      ref={cardRef}
       className={`relative rounded-lg ${className}`}
       style={cardStyle}
       role="group"
@@ -455,14 +422,19 @@ export const ExchangeCard = React.memo(function ExchangeCard({
           <div className="grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-3">
             {/* Exchange Name + City + Flag */}
             <div className="min-w-0">
-              {/* Exchange name - auto-fit */}
-              <FitText min={12} max={20} className="font-medium leading-tight text-slate-100">
+              {/* Exchange name - snaps with card */}
+              <span
+                className="block font-medium leading-tight text-slate-100 whitespace-nowrap"
+                style={{ fontSize: '0.95em' }}
+              >
                 {displayName}
-              </FitText>
+              </span>
 
               <div className="mt-1 flex items-center gap-2">
-                {/* City name + Flag on same line */}
-                <span className="text-base text-slate-400 truncate">{city}</span>
+                {/* City name - snaps with card (was fixed text-base) */}
+                <span className="text-slate-400 whitespace-nowrap" style={{ fontSize: '0.85em' }}>
+                  {city}
+                </span>
                 <WeatherPromptTooltip
                   city={city}
                   tz={tz}
@@ -493,7 +465,9 @@ export const ExchangeCard = React.memo(function ExchangeCard({
                 <LedClock tz={tz} showSeconds={false} ariaLabel={`Local time in ${city || name}`} />
               ) : (
                 <div className="inline-flex items-center justify-center rounded bg-slate-900/80 px-2 py-1.5 ring-1 ring-slate-700/50">
-                  <span className="font-mono text-base text-slate-500">--:--</span>
+                  <span className="font-mono text-slate-500" style={{ fontSize: '0.9em' }}>
+                    --:--
+                  </span>
                 </div>
               )}
               <MarketStatusIndicator tz={tz} hoursTemplate={hoursTemplate} />

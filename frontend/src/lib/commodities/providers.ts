@@ -38,7 +38,12 @@ type CommoditiesApiPayload = CommoditiesApiResponse;
 const DEFAULT_GATEWAY_URL = 'https://promagen-api.fly.dev';
 
 function getGatewayBaseUrl(): string {
-  return (process.env['FX_GATEWAY_URL'] ?? DEFAULT_GATEWAY_URL).replace(/\/+$/, '');
+  return (
+    process.env['GATEWAY_URL'] ??
+    process.env['NEXT_PUBLIC_GATEWAY_URL'] ??
+    process.env['FX_GATEWAY_URL'] ??
+    DEFAULT_GATEWAY_URL
+  ).replace(/\/+$/, '');
 }
 
 function toFiniteNumber(v: unknown): number | null {

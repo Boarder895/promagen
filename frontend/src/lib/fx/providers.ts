@@ -150,7 +150,18 @@ type FxMode = 'live' | 'cached' | 'fallback';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Gateway URL (Fly.io)
-const GATEWAY_URL = process.env['FX_GATEWAY_URL'] ?? 'https://promagen-api.fly.dev';
+//
+// Resolve order (supports both server-only and public Next.js env vars):
+//   1) GATEWAY_URL (server)
+//   2) NEXT_PUBLIC_GATEWAY_URL (server + client)
+//   3) FX_GATEWAY_URL (legacy)
+//   4) hardcoded default
+const GATEWAY_URL = (
+  process.env['GATEWAY_URL'] ??
+  process.env['NEXT_PUBLIC_GATEWAY_URL'] ??
+  process.env['FX_GATEWAY_URL'] ??
+  'https://promagen-api.fly.dev'
+).replace(/\/+$/, '');
 
 // Fallback: Direct TwelveData (only if gateway fails)
 const TWELVEDATA_API_KEY = (env.providers.twelveDataApiKey ?? '').trim();
@@ -253,19 +264,19 @@ export function getFxProviderSummary(
     id === 'twelvedata'
       ? 'Twelve Data'
       : id === 'cache'
-      ? 'Cache'
-      : id === 'fallback'
-      ? 'Fallback'
-      : id;
+        ? 'Cache'
+        : id === 'fallback'
+          ? 'Fallback'
+          : id;
 
   const modeLabel =
     mode === 'live'
       ? 'Live'
       : mode === 'cached'
-      ? 'Cached'
-      : mode === 'fallback'
-      ? 'Fallback'
-      : '—';
+        ? 'Cached'
+        : mode === 'fallback'
+          ? 'Fallback'
+          : '—';
 
   return {
     meta: {

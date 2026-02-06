@@ -295,7 +295,10 @@ export default function HomepageClient({
 
   // Callback when ProvidersTable changes displayed providers (sorting)
   const handleProvidersChange = useCallback((ids: string[]) => {
-    setDisplayedProviderIds(ids);
+    setDisplayedProviderIds((prev) => {
+      if (prev.length === ids.length && prev.every((id, i) => id === ids[i])) return prev;
+      return ids;
+    });
   }, []);
 
   // ============================================================================
