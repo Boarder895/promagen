@@ -149,19 +149,12 @@ type FxMode = 'live' | 'cached' | 'fallback';
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Gateway URL (Fly.io)
-//
-// Resolve order (supports both server-only and public Next.js env vars):
-//   1) GATEWAY_URL (server)
-//   2) NEXT_PUBLIC_GATEWAY_URL (server + client)
-//   3) FX_GATEWAY_URL (legacy)
-//   4) hardcoded default
-const GATEWAY_URL = (
+// Gateway URL (Fly.io) – resolves whichever env var is set (dev or prod)
+const GATEWAY_URL =
   process.env['GATEWAY_URL'] ??
   process.env['NEXT_PUBLIC_GATEWAY_URL'] ??
   process.env['FX_GATEWAY_URL'] ??
-  'https://promagen-api.fly.dev'
-).replace(/\/+$/, '');
+  'https://promagen-api.fly.dev';
 
 // Fallback: Direct TwelveData (only if gateway fails)
 const TWELVEDATA_API_KEY = (env.providers.twelveDataApiKey ?? '').trim();
