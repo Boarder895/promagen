@@ -13,26 +13,27 @@
  * - 78 commodities to cycle through
  * - Rolling lets us fetch continuously without complex slot math
  *
- * TIMING:
- * - 1 API call every 3 minutes (uniform, including startup)
- * - 78 commodities × 3 min = 234 min (~3.9 hours) per full cycle
- * - Cycles/day: ~6.2
- * - Calls/day: ~480
+ * TIMING (UPDATED 2026-02-08):
+ * - 1 API call every 5 minutes
+ * - 78 commodities × 5 min = 390 min (~6.5 hours) per full cycle
+ * - Cycles/day: ~3.7
+ * - Calls/day: ~288
+ * - Combined with Indices (~96/day): ~384/day total Marketstack
+ * - Budget: 3,333/day (Professional tier) → 11.5% usage
+ * - Headroom: ~88%
  *
- * This conservative pacing ensures we stay well within Marketstack rate limits
- * and avoid 429 errors that were caused by the previous aggressive scheduling.
- *
- * Priority Queue:
- * - All catalog commodities are fetched (no selection filtering)
- * - Priority IDs are placed at the FRONT of each cycle
- * - This ensures frequently-viewed commodities refresh first
+ * RANDOMISATION (UPDATED 2026-02-08):
+ * - Queue is FULLY SHUFFLED each cycle using Fisher-Yates algorithm
+ * - ALL 78 commodities are randomised — no tiers, no priority ordering
+ * - Every commodity has equal chance of being fetched first
+ * - With 78! permutations (~1.1 × 10^115) the sequence never repeats
  *
  * Security: 10/10
- * - No external inputs (schedule is deterministic)
+ * - No external inputs (schedule is fully random each cycle)
  * - Queue is rebuilt from SSOT on each cycle (no stale state)
  * - Timer references are cleaned up on stop
  *
- * Authority: Updated 2026-02-05 (rate limit fix - 3 min interval)
+ * Authority: Updated 2026-02-08 (full shuffle, no tiers)
  *
  * @module marketstack/commodities-scheduler
  */
@@ -45,68 +46,43 @@ import { logInfo, logDebug, logWarn } from '../lib/logging.js';
 
 /**
  * Interval between individual commodity fetches, in milliseconds.
- * Default: 3 minutes (180,000 ms).
+ * Default: 5 minutes (300,000 ms).
  *
- * Balanced pacing to avoid Marketstack 429 rate limit errors
- * while keeping data reasonably fresh.
- * Previous values (1-2 min) were too aggressive for the plan's rate limits.
+ * Budget math:
+ * - 78 commodities × 5 min = 390 min (~6.5 hours) per full cycle
+ * - Cycles/day: ~3.7
+ * - Calls/day: ~288
+ * - Combined with Indices (~96/day): ~384/day total Marketstack
+ * - Budget: 3,333/day → 11.5% usage, 88% headroom
  */
-const DEFAULT_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
+const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Minimum interval guard (prevents accidental thrashing).
- * Even if env var is misconfigured, never go faster than 1 minute.
+ * Even if env var is misconfigured, never go faster than 2 minutes.
  */
-const MIN_INTERVAL_MS = 60 * 1000; // 1 minute (safety floor)
+const MIN_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes (safety floor)
+
+// =============================================================================
+// RANDOMISATION UTILITY
+// =============================================================================
 
 /**
- * Double-word commodities that require URL encoding fix.
- * These are fetched FIRST to ensure they work and to verify the encoding fix.
+ * Fisher-Yates (Knuth) shuffle — O(n) in-place.
+ * Mutates the array and returns it.
  *
- * VERIFIED AGAINST: marketstack-commodities.xlsx (78 commodities)
- *
- * CRITICAL: These map to Marketstack names with spaces:
- *   crude_oil    → "crude oil"
- *   natural_gas  → "natural gas"
- *   ttf_gas      → "ttf gas" (separate from natural_gas!)
- *   iron_ore     → "iron ore"
- *   etc.
- *
- * These are placed at the FRONT of the queue to:
- * 1. Verify the URL encoding fix works immediately
- * 2. Ensure the most problematic commodities are fetched first
+ * Uses Math.random() which is fine for non-cryptographic queue ordering.
  */
-const DOUBLE_WORD_COMMODITY_IDS: readonly string[] = [
-  // Energy (double-word)
-  'crude_oil',
-  'natural_gas',
-  'ttf_gas',
-  'ttf_natural_gas',
-  'uk_gas',
-  'heating_oil',
-
-  // Agriculture (double-word)
-  'orange_juice',
-  'palm_oil',
-  'sunflower_oil',
-  'lean_hogs',
-  'live_cattle',
-  'feeder_cattle',
-  'eggs_ch',
-  'eggs_us',
-  'di_ammonium',
-
-  // Metals/Industrial (double-word)
-  'iron_ore',
-  'iron_ore_cny',
-  'hrc_steel',
-  'soda_ash',
-  'kraft_pulp',
-
-  // Legacy aliases (map to same Marketstack names)
-  'brent_crude',
-  'wti_crude',
-] as const;
+function fisherYatesShuffle<T>(array: T[]): T[] {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    // Swap
+    const temp = array[i]!;
+    array[i] = array[j]!;
+    array[j] = temp;
+  }
+  return array;
+}
 
 // =============================================================================
 // ROLLING SCHEDULER
@@ -129,7 +105,7 @@ export interface CommoditiesRollingScheduler {
    * Start the rolling refresh loop.
    *
    * @param allCatalogIds - Full list of all commodity IDs from catalog
-   * @param priorityIds - IDs to fetch first each cycle (selected/defaults)
+   * @param priorityIds - Accepted for interface compatibility (not used for ordering)
    * @param fetchCallback - Called with the next commodity ID to fetch
    */
   start(allCatalogIds: string[], priorityIds: string[], fetchCallback: RollingFetchCallback): void;
@@ -141,8 +117,11 @@ export interface CommoditiesRollingScheduler {
   stop(): void;
 
   /**
-   * Update the priority queue (e.g., when defaults change via SSOT refresh).
+   * Update the catalog IDs (e.g., when SSOT refreshes).
    * Takes effect on the next cycle.
+   *
+   * @param allCatalogIds - Updated full catalog IDs
+   * @param priorityIds - Accepted for interface compatibility (not used for ordering)
    */
   updatePriority(allCatalogIds: string[], priorityIds: string[]): void;
 
@@ -169,9 +148,8 @@ export interface CommoditiesSchedulerTrace {
   readonly cycleCount: number;
   readonly lastFetchAt: string | null;
   readonly nextFetchAt: string | null;
-  readonly priorityIds: readonly string[];
-  readonly doubleWordIds: readonly string[];
   readonly queueFirstTen: readonly string[];
+  readonly randomised: boolean;
 }
 
 // =============================================================================
@@ -181,7 +159,7 @@ export interface CommoditiesSchedulerTrace {
 /**
  * Create a rolling scheduler for commodities.
  *
- * @param intervalMs - Milliseconds between each fetch (default: 180_000 = 3 min)
+ * @param intervalMs - Milliseconds between each fetch (default: 300_000 = 5 min)
  * @returns Scheduler controls
  *
  * @example
@@ -190,7 +168,7 @@ export interface CommoditiesSchedulerTrace {
  *
  * scheduler.start(
  *   allCatalogIds,     // ['aluminum', 'barley', ... ]  (78 items)
- *   defaultIds,        // ['coffee', 'sugar', ... ]     (8 items - fetched first)
+ *   defaultIds,        // accepted but NOT used for ordering
  *   async (catalogId) => {
  *     await fetchAndCacheCommodity(catalogId);
  *   },
@@ -223,7 +201,6 @@ export function createCommoditiesRollingScheduler(
   let queue: string[] = [];
   let queuePosition = 0;
   let allIds: string[] = [];
-  let priorityIds: string[] = [];
   let running = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let fetchCallback: RollingFetchCallback | null = null;
@@ -234,45 +211,17 @@ export function createCommoditiesRollingScheduler(
   // ── Queue builder ─────────────────────────────────────────────────────────
 
   /**
-   * Build the fetch queue with priority ordering.
+   * Build the fetch queue — FULL Fisher-Yates shuffle of ALL commodities.
    *
-   * ORDER:
-   * 1. Double-word commodities FIRST (verify URL encoding fix works)
-   * 2. Priority IDs (defaults/selected) that aren't already in double-word
-   * 3. Remaining IDs in catalog order
+   * No tiers, no priority ordering, no double-word preference.
+   * Every commodity has an equal chance of being fetched at any position.
    *
-   * Duplicates are removed at each stage.
+   * With 78! permutations (~1.1 × 10^115), the order is unique each cycle.
    */
   function buildQueue(): string[] {
-    const seen = new Set<string>();
-    const result: string[] = [];
-
-    // 1. Double-word commodities first (only if they exist in allIds)
-    const allIdSet = new Set(allIds);
-    for (const id of DOUBLE_WORD_COMMODITY_IDS) {
-      if (allIdSet.has(id) && !seen.has(id)) {
-        result.push(id);
-        seen.add(id);
-      }
-    }
-
-    // 2. Priority IDs (defaults) that aren't already added
-    for (const id of priorityIds) {
-      if (allIdSet.has(id) && !seen.has(id)) {
-        result.push(id);
-        seen.add(id);
-      }
-    }
-
-    // 3. Remaining IDs in catalog order
-    for (const id of allIds) {
-      if (!seen.has(id)) {
-        result.push(id);
-        seen.add(id);
-      }
-    }
-
-    return result;
+    const shuffled = [...allIds];
+    fisherYatesShuffle(shuffled);
+    return shuffled;
   }
 
   // ── Tick ───────────────────────────────────────────────────────────────────
@@ -283,17 +232,18 @@ export function createCommoditiesRollingScheduler(
   async function tick(): Promise<void> {
     if (!running || !fetchCallback) return;
 
-    // Rebuild queue at start of each cycle
+    // Rebuild queue at start of each cycle (with fresh random order)
     if (queuePosition >= queue.length) {
       queue = buildQueue();
       queuePosition = 0;
       cycleCount++;
 
-      logDebug('Commodities scheduler: new cycle', {
+      logDebug('Commodities scheduler: new cycle (fully randomised)', {
         cycleCount,
         intervalMs: effectiveInterval,
         queueLength: queue.length,
-        firstThree: queue.slice(0, 3),
+        firstFive: queue.slice(0, 5),
+        lastFive: queue.slice(-5),
       });
     }
 
@@ -351,35 +301,30 @@ export function createCommoditiesRollingScheduler(
   // ── Public interface ──────────────────────────────────────────────────────
 
   return {
-    start(catalogIds: string[], defaultIds: string[], callback: RollingFetchCallback): void {
+    start(catalogIds: string[], _defaultIds: string[], callback: RollingFetchCallback): void {
       if (running) {
         logWarn('Commodities scheduler: already running, ignoring start()');
         return;
       }
 
       allIds = [...catalogIds];
-      priorityIds = [...defaultIds];
       fetchCallback = callback;
       queue = buildQueue();
       queuePosition = 0;
       cycleCount = 0;
       running = true;
 
-      // Count double-word commodities in queue
-      const doubleWordInQueue = queue.filter((id) => DOUBLE_WORD_COMMODITY_IDS.includes(id)).length;
-
-      logInfo('Commodities rolling scheduler started', {
+      logInfo('Commodities rolling scheduler started (5-min, fully randomised)', {
         intervalMs: effectiveInterval,
         intervalMinutes: Math.round(effectiveInterval / 60_000),
         totalCommodities: allIds.length,
-        doubleWordFirst: doubleWordInQueue,
-        priorityCount: priorityIds.length,
         firstEight: queue.slice(0, 8),
         fullCycleMinutes: Math.round((allIds.length * effectiveInterval) / 60_000),
         callsPerDay: Math.round((24 * 60) / (effectiveInterval / 60_000)),
+        randomised: true,
       });
 
-      // Start first tick immediately (that's the first "1 call"), then 10 min gap
+      // Start first tick immediately (that's the first "1 call"), then 5 min gap
       tick().catch(() => {
         if (running) scheduleNext();
       });
@@ -400,16 +345,13 @@ export function createCommoditiesRollingScheduler(
       });
     },
 
-    updatePriority(catalogIds: string[], newPriorityIds: string[]): void {
+    updatePriority(catalogIds: string[], _newPriorityIds: string[]): void {
       allIds = [...catalogIds];
-      priorityIds = [...newPriorityIds];
 
       // Queue is rebuilt at the start of each cycle, so no
       // need to modify the current queue mid-cycle.
-      logDebug('Commodities scheduler: priority updated', {
+      logDebug('Commodities scheduler: catalog updated', {
         totalCommodities: allIds.length,
-        priorityCount: priorityIds.length,
-        priorityIds: priorityIds.slice(0, 8),
       });
     },
 
@@ -430,9 +372,8 @@ export function createCommoditiesRollingScheduler(
         cycleCount,
         lastFetchAt: lastFetchAt ? new Date(lastFetchAt).toISOString() : null,
         nextFetchAt: nextFetchAt ? new Date(nextFetchAt).toISOString() : null,
-        priorityIds: [...priorityIds],
-        doubleWordIds: [...DOUBLE_WORD_COMMODITY_IDS],
         queueFirstTen: queue.slice(0, 10),
+        randomised: true,
       };
     },
   };

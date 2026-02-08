@@ -2,13 +2,20 @@
 // ============================================================================
 // COMMODITY MOVER CARD
 // ============================================================================
-// Layout (v2.4):
+// Layout (v2.5):
 //   Row 1: 🥈 Silver           (emoji + name side by side)
 //   Row 2: 🇺🇸 $89.77/oz       (flag + base price with unit)
 //   Row 3: ▲ +5.50%            (delta + arrow)
-//   Row 4: 🇪🇺 €82.43           (first conversion with Flag component)
-//   Row 5: 🇬🇧 £69.33           (second conversion with Flag component)
-//   Row 6: 🇺🇸 $89.77           (third conversion - only for non-USD/EUR/GBP)
+//   ── subtle divider ──
+//   Row 4: 🇪🇺 €82.43           (amber — EUR branded)
+//   Row 5: 🇬🇧 £69.33           (purple — GBP branded)
+//   Row 6: 🇺🇸 $89.77           (cyan — USD branded, non-USD/EUR/GBP only)
+//
+// Currency-Branded Colours (v2.5):
+// - USD ($): text-cyan-400    — cool financial blue
+// - EUR (€): text-amber-400   — warm gold tone
+// - GBP (£): text-purple-400  — regal purple
+// - Other:   text-slate-400   — neutral fallback
 //
 // Smart Currency Logic:
 // - Base USD: Show EUR + GBP (2 lines)
@@ -19,12 +26,13 @@
 // Uses CSS variable --commodity-font for snap-fit sizing.
 // Uses Flag component (SVG with emoji fallback) for Windows compatibility.
 //
+// v2.5: Currency-branded conversion colours + divider (8 Feb 2026)
 // v2.4: Flag component for ALL flag displays (5 Feb 2026)
 // v2.3: Flag emoji on base price + 3-line support (5 Feb 2026)
 // v2.2: Stacked conversion lines with flag emojis (5 Feb 2026)
 // v2.1: EUR/GBP Conversion Support (4 Feb 2026)
 //
-// Authority: Compacted conversation 2026-02-04
+// Authority: Compacted conversation 2026-02-08
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -39,6 +47,20 @@ function formatDeltaPct(deltaPct: number): string {
   if (!Number.isFinite(deltaPct)) return '—';
   const sign = deltaPct >= 0 ? '+' : '';
   return `${sign}${deltaPct.toFixed(2)}%`.replace('-', '−');
+}
+
+/** Currency-branded colour class by country code */
+function currencyColorClass(countryCode: string): string {
+  switch (countryCode) {
+    case 'US':
+      return 'text-cyan-400';
+    case 'EU':
+      return 'text-amber-400';
+    case 'GB':
+      return 'text-purple-400';
+    default:
+      return 'text-slate-400';
+  }
 }
 
 export default function CommodityMoverCard({
@@ -92,11 +114,7 @@ export default function CommodityMoverCard({
     >
       {/* ROW 1: Emoji + Name (side by side) */}
       <div className="flex items-center justify-center gap-2">
-        <span
-          className="leading-none"
-          style={{ fontSize: '1.5em' }}
-          aria-hidden="true"
-        >
+        <span className="leading-none" style={{ fontSize: '1.5em' }} aria-hidden="true">
           {emoji}
         </span>
         <span
@@ -108,16 +126,11 @@ export default function CommodityMoverCard({
       </div>
 
       {/* ROW 2: Flag + Base Price with Unit */}
-      <div
-        className="flex items-center justify-center gap-1.5 mt-2"
-        data-testid="commodity-price"
-      >
-        {baseFlagCode && (
-          <Flag countryCode={baseFlagCode} size={14} />
-        )}
+      <div className="flex items-center justify-center gap-2.5 mt-2" data-testid="commodity-price">
+        {baseFlagCode && <Flag countryCode={baseFlagCode} size={32} />}
         <span
           className="text-white tabular-nums leading-tight whitespace-nowrap"
-          style={{ fontSize: '0.9em' }}
+          style={{ fontSize: '1em' }}
         >
           {priceText || '—'}
         </span>
@@ -126,44 +139,47 @@ export default function CommodityMoverCard({
       {/* ROW 3: Delta with arrow */}
       <span
         className={`flex items-center gap-1.5 font-bold tabular-nums whitespace-nowrap mt-2 ${deltaColorClass}`}
-        style={{ fontSize: '0.9em' }}
+        style={{ fontSize: '1em' }}
         data-testid="commodity-delta"
       >
         {arrowIcon}
         {formatDeltaPct(deltaPct)}
       </span>
 
-      {/* ROW 4-6: Currency conversions with Flag components (v2.4) */}
+      {/* Divider between delta and conversions */}
+      <div className="w-3/4 border-t border-white/5 mt-2" aria-hidden="true" />
+
+      {/* ROW 4-6: Currency conversions with branded colours (v2.5) */}
       <div
-        className="flex flex-col items-center mt-2 space-y-0.5"
+        className="flex flex-col items-center mt-2 space-y-1.5"
         data-testid="commodity-conversions"
         aria-label="Equivalent prices in other currencies"
       >
         {/* Line 1 */}
         <span
-          className="flex items-center gap-1 text-slate-400 tabular-nums leading-tight whitespace-nowrap"
-          style={{ fontSize: '0.7em' }}
+          className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine1.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
+          style={{ fontSize: '1em' }}
         >
-          <Flag countryCode={conversionLine1.countryCode} size={12} />
+          <Flag countryCode={conversionLine1.countryCode} size={32} />
           <span>{conversionLine1.priceText}</span>
         </span>
 
         {/* Line 2 */}
         <span
-          className="flex items-center gap-1 text-slate-400 tabular-nums leading-tight whitespace-nowrap"
-          style={{ fontSize: '0.7em' }}
+          className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine2.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
+          style={{ fontSize: '1em' }}
         >
-          <Flag countryCode={conversionLine2.countryCode} size={12} />
+          <Flag countryCode={conversionLine2.countryCode} size={32} />
           <span>{conversionLine2.priceText}</span>
         </span>
 
         {/* Line 3 - only for non-USD/EUR/GBP commodities */}
         {conversionLine3 && (
           <span
-            className="flex items-center gap-1 text-slate-400 tabular-nums leading-tight whitespace-nowrap"
-            style={{ fontSize: '0.7em' }}
+            className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine3.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
+            style={{ fontSize: '1em' }}
           >
-            <Flag countryCode={conversionLine3.countryCode} size={12} />
+            <Flag countryCode={conversionLine3.countryCode} size={32} />
             <span>{conversionLine3.priceText}</span>
           </span>
         )}

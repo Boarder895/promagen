@@ -172,6 +172,7 @@ The market belt is part of the centre column, not a full-width band at the absol
 ```
 
 All ribbon rows are live and share the same snap-fit architecture.
+**Centre column layout:** The finance ribbon is wrapped in a shrinkable `overflow-hidden` container (`flex min-h-0 shrink flex-col gap-3 overflow-hidden`). This allows the ribbon to compress vertically when space is tight, giving the providers table room. The commodities grid auto-detects whether its bottom row fits and hides it if not.
 
 ---
 
@@ -275,7 +276,7 @@ For paid users, the layout stays identical; the difference is the chosen FX set.
 
 ## 2.2 Commodities Row
 
-The Commodities row displays a **Movers Grid** showing the top 4 winners and top 4 losers from ALL 78 tracked commodities.
+The Commodities row displays a **Movers Grid** showing the top 2–4 winners and top 2–4 losers from ALL 78 tracked commodities. The grid auto-detects available height: on large screens it shows 4 cards per panel (2×2), on smaller screens the bottom row auto-hides to show 2 cards per panel (2×1).
 
 > **⚠️ Full Documentation:** See **`docs/authority/commodities.md`** for complete technical details including:
 >
@@ -302,13 +303,13 @@ The Commodities row displays a **Movers Grid** showing the top 4 winners and top
 
 ### Key Facts
 
-| Aspect           | Value                                  |
-| ---------------- | -------------------------------------- |
-| Data source      | All 78 active commodities from gateway |
-| Display          | 2×2 winners + 2×2 losers               |
-| Re-sort interval | Every 10 minutes from cached data      |
-| API timing       | :10, :40 (10-min offset from FX)       |
-| Authority doc    | `docs/authority/commodities.md`        |
+| Aspect           | Value                                                      |
+| ---------------- | ---------------------------------------------------------- |
+| Data source      | All 78 active commodities from gateway                     |
+| Display          | 2×2 or 2×1 per panel (auto-detected from available height) |
+| Re-sort interval | Every 10 minutes from cached data                          |
+| API timing       | :10, :40 (10-min offset from FX)                           |
+| Authority doc    | `docs/authority/commodities.md`                            |
 
 ### Files Reference
 
@@ -650,7 +651,7 @@ Motion respects `prefers-reduced-motion` automatically.
 
 - FX row renders N chips where N = `fx.selected.json` length (no hard-coded counts)
 - Crypto row renders chips driven by `crypto.selected.json`
-- Commodities movers grid shows 4 winners + 4 losers from full 78-commodity catalog
+- Commodities movers grid shows 2–4 winners + 2–4 losers (auto-hides bottom row on small screens)
 - SSOT order is preserved end-to-end
 - Snap-fit algorithm respects 10px minimum font size
 - Motion animations respect `prefers-reduced-motion`

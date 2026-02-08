@@ -8,18 +8,23 @@
 // - SNAP font to screen size (responsive)
 // - Content STAYS INSIDE windows (overflow-hidden on panel)
 //
-// OVERFLOW DETECTION:
-// - Panel section has overflow-hidden (nothing escapes)
-// - ResizeObserver measures panel height on every resize
-// - If available grid height can't fit 2 rows of MIN_CARD_HEIGHT, bottom row hides
-// - Result: big screen = 4 cards, small screen = 2 cards, never partial
+// CONTENT-DRIVEN ROW DETECTION (v3.0):
+// Instead of a magic MIN_CARD_HEIGHT_PX number, the offscreen measurer
+// determines the actual content height at each font candidate. The unified
+// reflow pass tries the largest font first:
+//   1. Measure real content at this font
+//   2. Does it fit in a 2-row cell (with breathing room)? → 2 rows, done
+//   3. Does it fit in a 1-row cell? → drop bottom row, done
+//   4. Neither → try smaller font
+// Result: content is NEVER clipped. If it can't fit in 2 rows the bottom
+// row gracefully disappears and the top row gets the full height.
 //
-// SNAP-FIT FIX:
+// SNAP-FIT:
 // - Measurer does NOT have overflow-hidden (so we can detect overflow)
-// - Windows DO have overflow-hidden (to clip any edge cases)
+// - Windows DO have overflow-hidden (safety net for sub-pixel rounding)
 // - Card is content-sized, not w-full h-full
 //
-// Authority: Compacted conversation 2026-02-06
+// Authority: commodities.md, compacted conversation 2026-02-07
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -35,9 +40,6 @@ import type { CommoditiesMoversGridProps } from '@/types/commodities-movers';
 // ============================================================================
 // LAYOUT CONSTANTS
 // ============================================================================
-// Minimum card height (px) — if a grid row would be shorter than this,
-// the bottom row is hidden. Keeps cards readable, never squished.
-const MIN_CARD_HEIGHT_PX = 55;
 
 // Header (title + subtitle) approximate height in px (flex-shrink-0 section).
 // Used for available-grid-height calculation.
@@ -48,6 +50,10 @@ const PANEL_PADDING_PX = 24;
 
 // Grid gap (gap-3 = 12px)
 const GRID_GAP_PX = 12;
+
+// Breathing room (px) added around measured content height so nothing
+// sits flush against the window edge. 4px top + 4px bottom.
+const BREATHING_ROOM_PX = 8;
 
 // ============================================================================
 // SNAP-FIT FONT CONSTANTS
@@ -140,7 +146,21 @@ export default function CommoditiesMoversGrid({
   );
 
   // --------------------------------------------------------------------------
-  // SNAP-FIT MEASUREMENT LOGIC (font sizing + bottom row detection)
+  // UNIFIED CONTENT-DRIVEN REFLOW
+  // --------------------------------------------------------------------------
+  // Single pass that decides BOTH font size AND row count together.
+  // For each font candidate (largest → smallest):
+  //   1. Render a real card in the offscreen measurer at that font
+  //   2. Read its natural content height and width
+  //   3. Calculate cell dimensions for 2-row layout
+  //   4. Content fits with breathing room? → 2 rows at this font ✓
+  //   5. Doesn't fit 2 rows? Calculate 1-row cell dimensions
+  //   6. Content fits 1 row? → drop bottom row, use this font ✓
+  //   7. Neither? → try next smaller font
+  // Fallback: MIN_FONT_PX, single row.
+  //
+  // No magic numbers — decisions are driven by what the content
+  // actually measures at each font size.
   // --------------------------------------------------------------------------
   const scheduleReflow = React.useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
@@ -152,41 +172,23 @@ export default function CommoditiesMoversGrid({
       const measurer = measurerRef.current;
       const panel = panelRef.current;
 
-      // ----------------------------------------------------------------
-      // STEP 1: Detect if bottom row fits
-      // ----------------------------------------------------------------
-      if (panel) {
-        const panelHeight = panel.clientHeight;
-        const availableGridHeight = panelHeight - HEADER_APPROX_PX - PANEL_PADDING_PX;
-        // Two rows need: (rowHeight * 2) + gap
-        // So each row gets: (availableGridHeight - gap) / 2
-        const rowHeight = (availableGridHeight - GRID_GAP_PX) / 2;
-        const canFitTwoRows = rowHeight >= MIN_CARD_HEIGHT_PX;
-        setShowBottomRow(canFitTwoRows);
-      }
+      if (!grid || !measurer || !panel) return;
 
-      // ----------------------------------------------------------------
-      // STEP 2: Snap-fit font sizing (existing logic)
-      // ----------------------------------------------------------------
-      if (!grid || !measurer) return;
-
-      // Calculate cell dimensions based on current row count
-      const currentRows = panel
-        ? (panel.clientHeight - HEADER_APPROX_PX - PANEL_PADDING_PX - GRID_GAP_PX) / 2 >=
-          MIN_CARD_HEIGHT_PX
-          ? 2
-          : 1
-        : 2;
+      // Panel height is our hard constraint (set by the parent layout).
+      // It does NOT change when we toggle row count, so no oscillation.
+      const panelHeight = panel.clientHeight;
+      const availableGridHeight = panelHeight - HEADER_APPROX_PX - PANEL_PADDING_PX;
       const cellWidth = (grid.clientWidth - GRID_GAP_PX) / 2;
-      const cellHeight =
-        currentRows === 2 ? (grid.clientHeight - GRID_GAP_PX) / 2 : grid.clientHeight;
 
       if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
-      if (!Number.isFinite(cellHeight) || cellHeight <= 0) return;
+      if (availableGridHeight <= 0) return;
+
+      // Pre-calculate cell heights for both layouts
+      const twoRowCellHeight = (availableGridHeight - GRID_GAP_PX) / 2;
+      const oneRowCellHeight = availableGridHeight;
 
       const candidates = buildFontCandidates(MAX_FONT_PX, MIN_FONT_PX, STEP_PX);
 
-      // Try each font size, largest first
       for (const px of candidates) {
         measurer.style.setProperty('--commodity-font', `${px}px`);
 
@@ -194,20 +196,33 @@ export default function CommoditiesMoversGrid({
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         measurer.offsetHeight;
 
-        // Measure content size (NOT container size)
+        // Measure actual content size (NOT container size)
         const contentWidth = measurer.scrollWidth;
         const contentHeight = measurer.scrollHeight;
 
-        // Check if content fits within cell (with small tolerance)
-        const fits = contentWidth <= cellWidth - 4 && contentHeight <= cellHeight - 4;
+        // Width must fit regardless of row count
+        const widthFits = contentWidth <= cellWidth - 4;
+        if (!widthFits) continue; // Too wide at this font, try smaller
 
-        if (fits) {
+        // Prefer 2-row layout (shows more data)
+        if (contentHeight + BREATHING_ROOM_PX <= twoRowCellHeight) {
+          setShowBottomRow((prev) => (prev === true ? prev : true));
           setFontPx((prev) => (Math.abs(prev - px) < 0.001 ? prev : px));
           return;
         }
+
+        // Fall back to 1-row layout (more vertical space per card)
+        if (contentHeight + BREATHING_ROOM_PX <= oneRowCellHeight) {
+          setShowBottomRow((prev) => (prev === false ? prev : false));
+          setFontPx((prev) => (Math.abs(prev - px) < 0.001 ? prev : px));
+          return;
+        }
+
+        // Content too tall even for 1 row at this font → try smaller
       }
 
-      // Fallback to minimum
+      // Absolute fallback: minimum font, single row
+      setShowBottomRow((prev) => (prev === false ? prev : false));
       setFontPx((prev) => (Math.abs(prev - MIN_FONT_PX) < 0.001 ? prev : MIN_FONT_PX));
     });
   }, []);
@@ -221,7 +236,7 @@ export default function CommoditiesMoversGrid({
 
     if (typeof ResizeObserver !== 'undefined') {
       const ro = new ResizeObserver(() => scheduleReflow());
-      // Observe BOTH panel (for height detection) and grid (for font sizing)
+      // Observe BOTH panel (for height constraint) and grid (for width)
       if (panel) ro.observe(panel);
       if (grid) ro.observe(grid);
 
@@ -274,7 +289,7 @@ export default function CommoditiesMoversGrid({
           <p className="text-xs text-white/40">{subtitle}</p>
         </div>
 
-        {/* Grid of WINDOWS — 2×2 or 2×1 depending on available height */}
+        {/* Grid of WINDOWS — 2×2 or 2×1 depending on measured content fit */}
         <div
           ref={isFirst ? gridRef : undefined}
           className="flex-1 min-h-0 grid gap-3"
@@ -304,7 +319,7 @@ export default function CommoditiesMoversGrid({
           })}
         </div>
 
-        {/* Offscreen measurer - NO overflow-hidden so we can detect overflow! */}
+        {/* Offscreen measurer - NO overflow-hidden so we can detect true content size */}
         {isFirst && (
           <div
             ref={measurerRef}

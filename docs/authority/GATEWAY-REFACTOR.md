@@ -1,7 +1,7 @@
 # Gateway Modular Refactor — Implementation Blueprint
 
 > **Status:** ✅ **COMPLETE** (All Phases Deployed)  
-> **Last Updated:** 2026-01-23  
+> **Last Updated:** 2026-02-07  
 > **Location:** `docs/authority/GATEWAY-REFACTOR.md`  
 > **Companion docs:**
 >
@@ -52,7 +52,7 @@ This gateway is a **strict executor**. It does not define what content exists or
 
 ### 1) Free tier defaults (no user selection)
 
-- Defaults come **only** from the frontend SSOT config endpoints (e.g. `/api/fx/config`, `/api/indices/config`, `/api/crypto/config`, `/api/commodities/config`, `/api/weather/config`).
+- Defaults come **only** from the frontend SSOT config endpoints (e.g. `/api/fx/config`, `/api/indices/config`, `/api/commodities/config`, `/api/weather/config`).
 - The gateway must preserve **exact order** from SSOT.
 - The gateway must not generate defaults from "first N active" or any internal list.
 
@@ -108,7 +108,7 @@ The gateway `server.ts` was **4,002 lines** containing:
 
 ```
 gateway/src/
-├── server.ts              # ~250 lines: routes + startup ONLY
+├── server.ts              # ~720 lines: routes + startup + schedulers
 │
 ├── lib/                   # Shared infrastructure (provider-agnostic)
 │   ├── types.ts           # All shared type definitions
@@ -120,50 +120,42 @@ gateway/src/
 │   ├── shared-budgets.ts  # Per-provider budget managers
 │   └── logging.ts         # Structured logging utilities
 │
-├── twelvedata/            # FX + Crypto
+├── twelvedata/            # FX only
 │   ├── README.md          # Provider documentation
-│   ├── index.ts           # Exports fxHandler, cryptoHandler
+│   ├── index.ts           # Exports fxHandler
 │   ├── adapter.ts         # TwelveData API fetch logic
-│   ├── budget.ts          # Shared 800/day budget (ONE instance)
-│   ├── scheduler.ts       # Clock-aligned slots (:00/:30 FX, :20/:50 Crypto)
-│   ├── fx.ts              # FX feed config
-│   └── crypto.ts          # Crypto feed config
+│   ├── budget.ts          # 800/day budget (FX only)
+│   ├── scheduler.ts       # Clock-aligned slots (:00/:30 FX)
+│   └── fx.ts              # FX feed config
 │
-├── marketstack/           # Indices
+├── marketstack/           # Indices + Commodities
 │   ├── README.md          # Provider documentation
-│   ├── index.ts           # Exports indicesHandler
+│   ├── index.ts           # Exports indicesHandler, commoditiesHandler
 │   ├── adapter.ts         # Marketstack API fetch logic + benchmark mapping
-│   ├── budget.ts          # Separate 250/day budget (ONE instance)
-│   ├── scheduler.ts       # Clock-aligned slots (:05/:35)
-│   └── indices.ts         # Indices feed config
+│   ├── budget.ts          # Shared 3,333/day budget (Professional tier)
+│   ├── scheduler.ts       # Clock-aligned slots (:05/:20/:35/:50 indices)
+│   ├── indices.ts         # Indices feed config
+│   ├── commodities.ts     # Commodities feed config ✅ LIVE
+│   ├── commodities-scheduler.ts  # Rolling 5-min scheduler (Fisher-Yates)
+│   └── commodities-budget.ts     # Separate 1,000/day cap for commodities
 │
-├── openweathermap/        # Weather
-│   ├── README.md          # Provider documentation
-│   ├── index.ts           # Exports all weather functions
-│   ├── adapter.ts         # OpenWeatherMap API fetch logic
-│   ├── budget.ts          # Separate 1000/day budget (ONE instance)
-│   ├── scheduler.ts       # Clock-aligned slots (:10/:40)
-│   ├── types.ts           # Weather-specific types
-│   └── weather.ts         # Weather handler (init, fetch, cache)
-│
-└── fallback/              # Feeds with no provider
-    ├── README.md          # Explains why fallback exists
-    └── commodities.ts     # Returns NULL prices only (no demo!)
+└── openweathermap/        # Weather
+    ├── index.ts           # Exports weather handler + helpers
+    └── handler.ts         # Weather feed with city batching ✅ LIVE
 ```
 
 ### Why Provider-Based (Not Feed-Based)
 
-The old structure (`feeds/fx.ts`, `feeds/crypto.ts`, etc.) **scattered provider logic**:
+The old structure (`feeds/fx.ts`, `feeds/indices.ts`, etc.) **scattered provider logic**:
 
 ```
 ❌ OLD (Feed-Based):
 feeds/fx.ts          → imports TwelveData adapter, shared budget
-feeds/crypto.ts      → imports TwelveData adapter, shared budget
 feeds/indices.ts     → imports Marketstack adapter, separate budget
-feeds/commodities.ts → imports nothing, returns fallback
+feeds/commodities.ts → imports Marketstack adapter, separate budget
 
-Problem: TwelveData budget logic is duplicated/scattered
-Problem: Hard to debug "why is TwelveData over budget?"
+Problem: Marketstack budget logic is duplicated/scattered
+Problem: Hard to debug "why is Marketstack over budget?"
 Problem: Scheduler logic for same provider is in multiple files
 ```
 
@@ -172,33 +164,38 @@ The new structure **co-locates everything by provider**:
 ```
 ✅ NEW (Provider-Based):
 twelvedata/
-  ├── budget.ts      # ONE budget instance for ALL TwelveData feeds
-  ├── scheduler.ts   # ONE scheduler for ALL TwelveData feeds
-  ├── adapter.ts     # ONE adapter for ALL TwelveData API calls
-  ├── fx.ts          # Just FX-specific config
-  └── crypto.ts      # Just Crypto-specific config
+  ├── budget.ts      # ONE budget instance for TwelveData (FX only)
+  ├── scheduler.ts   # ONE scheduler for TwelveData
+  ├── adapter.ts     # ONE adapter for TwelveData API calls
+  └── fx.ts          # FX-specific config
 
-Benefit: Debug TwelveData? Look in ONE folder
-Benefit: Add TwelveData feed? Add to ONE folder
-Benefit: TwelveData rate limit? Fix in ONE scheduler
+marketstack/
+  ├── budget.ts      # ONE shared budget (Indices + Commodities)
+  ├── scheduler.ts   # Clock-aligned indices scheduler
+  ├── commodities-scheduler.ts  # Rolling 5-min commodities scheduler
+  ├── indices.ts     # Indices config
+  └── commodities.ts # Commodities config
+
+Benefit: Debug Marketstack? Look in ONE folder
+Benefit: Add Marketstack feed? Add to ONE folder
+Benefit: Marketstack rate limit? Fix in ONE scheduler
 ```
 
 ### Line Count Comparison
 
-| Component               | Before      | After      | Reduction |
-| ----------------------- | ----------- | ---------- | --------- |
-| server.ts               | 4,002       | ~250       | 94%       |
-| lib/types.ts            | (inline)    | ~150       | —         |
-| lib/cache.ts            | (×4)        | ~60        | —         |
-| lib/circuit.ts          | (×2)        | ~50        | —         |
-| lib/dedup.ts            | (×4)        | ~40        | —         |
-| lib/feed-handler.ts     | (new)       | ~200       | —         |
-| lib/logging.ts          | (new)       | ~30        | —         |
-| twelvedata/             | (scattered) | ~430       | —         |
-| marketstack/            | (scattered) | ~340       | —         |
-| openweathermap/         | (new)       | ~400       | —         |
-| fallback/commodities.ts | (inline)    | ~60        | —         |
-| **TOTAL**               | **4,002**   | **~2,010** | **50%**   |
+| Component           | Before      | After      | Reduction |
+| ------------------- | ----------- | ---------- | --------- |
+| server.ts           | 4,002       | ~720       | 82%       |
+| lib/types.ts        | (inline)    | ~150       | —         |
+| lib/cache.ts        | (×4)        | ~60        | —         |
+| lib/circuit.ts      | (×2)        | ~50        | —         |
+| lib/dedup.ts        | (×4)        | ~40        | —         |
+| lib/feed-handler.ts | (new)       | ~200       | —         |
+| lib/logging.ts      | (new)       | ~30        | —         |
+| twelvedata/         | (scattered) | ~280       | —         |
+| marketstack/        | (scattered) | ~550       | —         |
+| openweathermap/     | (new)       | ~200       | —         |
+| **TOTAL**           | **4,002**   | **~2,280** | **43%**   |
 
 ---
 
@@ -206,50 +203,54 @@ Benefit: TwelveData rate limit? Fix in ONE scheduler
 
 ### Provider Status Summary
 
-| Provider       | Feeds       | Status        | Daily Budget | Schedule         | Folder            |
-| -------------- | ----------- | ------------- | ------------ | ---------------- | ----------------- |
-| TwelveData     | FX, Crypto  | ✅ **LIVE**   | 800 credits  | :00/:30, :20/:50 | `twelvedata/`     |
-| Marketstack    | Indices     | ✅ **LIVE**   | 250 credits  | :05/:35          | `marketstack/`    |
-| OpenWeatherMap | Weather     | ✅ **LIVE**   | 1,000/day    | :10/:40          | `openweathermap/` |
-| None           | Commodities | ⏸️ **PARKED** | —            | —                | `fallback/`       |
+| Provider       | Feeds                | Status      | Daily Budget  | Schedule                     | Folder            |
+| -------------- | -------------------- | ----------- | ------------- | ---------------------------- | ----------------- |
+| TwelveData     | FX                   | ✅ **LIVE** | 800 credits   | :00/:30                      | `twelvedata/`     |
+| Marketstack    | Indices, Commodities | ✅ **LIVE** | 3,333 credits | :05/:20/:35/:50 + rolling 5m | `marketstack/`    |
+| OpenWeatherMap | Weather              | ✅ **LIVE** | 1,000/day     | :10/:40                      | `openweathermap/` |
 
 ---
 
-### TwelveData Module (FX + Crypto)
+### TwelveData Module (FX Only)
 
-| Property        | Value                              |
-| --------------- | ---------------------------------- |
-| Provider        | TwelveData                         |
-| Endpoint        | `api.twelvedata.com`               |
-| Budget          | 800 calls/day (shared FX + Crypto) |
-| Rate Limit      | 8 calls/minute                     |
-| FX Schedule     | :00 and :30 past each hour         |
-| Crypto Schedule | :20 and :50 past each hour         |
+| Property    | Value                      |
+| ----------- | -------------------------- |
+| Provider    | TwelveData                 |
+| Endpoint    | `api.twelvedata.com`       |
+| Budget      | 800 calls/day (FX only)    |
+| Rate Limit  | 8 calls/minute             |
+| FX Schedule | :00 and :30 past each hour |
+
+> **Note (Feb 7, 2026):** Crypto feed removed entirely from codebase. TwelveData now serves FX only.
 
 **Key files:**
 
 - `adapter.ts` — TwelveData API fetch logic
-- `budget.ts` — Shared 800/day budget (ONE instance for both feeds)
+- `budget.ts` — 800/day budget (FX only)
 - `fx.ts` — FX feed config, symbol building (`EUR/USD` format)
-- `crypto.ts` — Crypto feed config, symbol building (`BTC/USD` format)
 
 ---
 
-### Marketstack Module (Indices)
+### Marketstack Module (Indices + Commodities)
 
-| Property   | Value                                    |
-| ---------- | ---------------------------------------- |
-| Provider   | Marketstack                              |
-| Endpoint   | `api.marketstack.com/v2/intraday`        |
-| Budget     | 250 calls/day (separate from TwelveData) |
-| Rate Limit | 5 calls/minute                           |
-| Schedule   | :05 and :35 past each hour               |
+| Property             | Value                                            |
+| -------------------- | ------------------------------------------------ |
+| Provider             | Marketstack                                      |
+| Endpoint             | `api.marketstack.com/v2/intraday`                |
+| Budget               | 3,333 calls/day (Professional tier, shared pool) |
+| Rate Limit           | 60 calls/minute                                  |
+| Indices Schedule     | :05, :20, :35, :50 past each hour (4×/hr)        |
+| Commodities Schedule | Rolling every 5 min (1 commodity per call)       |
 
 **Key files:**
 
 - `adapter.ts` — Marketstack API fetch logic + benchmark mapping
-- `budget.ts` — Separate 250/day budget
+- `budget.ts` — Shared 3,333/day budget (Professional tier)
+- `scheduler.ts` — Clock-aligned indices scheduler (:05/:20/:35/:50)
 - `indices.ts` — Indices feed config
+- `commodities.ts` — Commodities feed config ✅ LIVE
+- `commodities-scheduler.ts` — Rolling 5-min scheduler (Fisher-Yates randomised queue)
+- `commodities-budget.ts` — Separate 1,000/day cap for commodities (subset of shared pool)
 
 **Benchmark Mapping (adapter.ts):**
 
@@ -287,12 +288,12 @@ export const BENCHMARK_TO_MARKETSTACK: Record<string, string> = {
 
 **Key differences from other providers:**
 
-| Aspect           | TwelveData/Marketstack              | OpenWeatherMap                             |
-| ---------------- | ----------------------------------- | ------------------------------------------ |
-| Init source      | SSOT from frontend `/api/*/config`  | SSOT from frontend `/api/weather/config`   |
-| Data granularity | Per-symbol (FX pair, crypto, index) | Per-city (exchange location)               |
-| Batching         | All symbols in one request          | 24 cities per batch (A/B alternation)      |
-| Handler pattern  | `FeedHandler` class                 | Standalone functions (different lifecycle) |
+| Aspect           | TwelveData/Marketstack                 | OpenWeatherMap                             |
+| ---------------- | -------------------------------------- | ------------------------------------------ |
+| Init source      | SSOT from frontend `/api/*/config`     | SSOT from frontend `/api/weather/config`   |
+| Data granularity | Per-symbol (FX pair, index, commodity) | Per-city (exchange location)               |
+| Batching         | All symbols in one request             | 24 cities per batch (A/B alternation)      |
+| Handler pattern  | `FeedHandler` class                    | Standalone functions (different lifecycle) |
 
 **Batch System:**
 
@@ -372,23 +373,47 @@ Hour N+1:
 
 ---
 
-### Fallback Module (Commodities)
+### Commodities on Marketstack v2
 
-| Property | Value                       |
-| -------- | --------------------------- |
-| Provider | None (parked)               |
-| Status   | ⏸️ PARKED                   |
-| Reason   | No provider selected yet    |
-| Returns  | `price: null` for all items |
+| Property | Value                                                         |
+| -------- | ------------------------------------------------------------- |
+| Provider | Marketstack v2 (1-per-call API)                               |
+| Status   | ✅ **LIVE**                                                   |
+| Schedule | Rolling every 5 min (not clock-aligned)                       |
+| Items    | 78 commodities                                                |
+| Queue    | Full Fisher-Yates shuffle (all 78, no tiers)                  |
+| Budget   | ~288 calls/day (capped at 1,000/day, shared Marketstack pool) |
+
+> **Note (Feb 7, 2026):** Commodities moved from `fallback/` (demo-only) to `marketstack/` (LIVE data). The Marketstack v2 API supports only 1 commodity per call, hence the rolling scheduler instead of clock-aligned batch.
+
+**Rolling Scheduler:**
 
 ```typescript
-// gateway/src/fallback/commodities.ts
-getFallback(catalog: Commodity[]): CommodityQuote[] {
-  return catalog.map((item) => ({
-    id: item.id,
-    name: item.name,
-    price: null, // NEVER return demo prices
-  }));
+// marketstack/commodities-scheduler.ts
+// Every 5 minutes, fetch 1 commodity from fully randomised queue
+// 78 items × 5 min = ~6.5 hours per full cycle (~3.7 cycles/day)
+// Queue: ALL 78 shuffled via Fisher-Yates each cycle (no tiers, no priority)
+// ~288 calls/day, capped at 1,000/day
+```
+
+**Response Schema:** `GET /commodities`
+
+```typescript
+{
+  meta: {
+    mode: 'live' | 'cached' | 'stale',
+    provider: 'marketstack',
+    budget: { state: 'ok', dailyUsed: 100, dailyLimit: 1000 }
+  },
+  data: [
+    {
+      id: "gold",
+      name: "Gold",
+      price: 2045.30,
+      asOf: "2026-02-07T12:00:00.000Z"
+    },
+    // ... 77 more commodities
+  ]
 }
 ```
 
@@ -438,7 +463,7 @@ export const BENCHMARK_TO_MARKETSTACK: Record<string, string> = {
 
 ---
 
-### Fix 3: Crypto Route Key
+### Fix 3: Crypto Route Key _(Historical — crypto removed Feb 2026)_
 
 **Problem:** Crypto config route returned `cryptos`, gateway expected `crypto`.
 
@@ -449,7 +474,9 @@ export const BENCHMARK_TO_MARKETSTACK: Record<string, string> = {
 // After:  { crypto: [...] }
 ```
 
-**Rule:** Add route key tests to prevent regression.
+> **Note (Feb 7, 2026):** Crypto feed removed entirely. This fix is historical context only.
+
+**Rule:** Audit all config routes for key consistency before deploy.
 
 ---
 
@@ -583,36 +610,33 @@ export type SsotSource = 'frontend' | 'fallback' | 'snapshot-fallback';
 
 # All feeds returning data?
 (Invoke-RestMethod "https://promagen-api.fly.dev/fx").data.Count          # 8
-(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").data.Count      # 8
 (Invoke-RestMethod "https://promagen-api.fly.dev/indices").data.Count     # 8-16
-(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").meta.mode  # "fallback"
+(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").data.Count # 78
 (Invoke-RestMethod "https://promagen-api.fly.dev/weather").data.Count     # 24+
 
 # SSOT source verification
 $trace = Invoke-RestMethod "https://promagen-api.fly.dev/trace"
 $trace.fx.ssotSource       # "frontend"
 $trace.indices.ssotSource  # "frontend"
-$trace.crypto.ssotSource   # "frontend"
 ```
 
 ### Success Criteria
 
-| Criterion                     | Target             | Status |
-| ----------------------------- | ------------------ | ------ |
-| TypeScript compiles           | 0 errors           | ✅     |
-| No circular dependencies      | 0 errors           | ✅     |
-| All endpoints respond         | 200 OK             | ✅     |
-| FX data matches baseline      | Same structure     | ✅     |
-| Crypto data matches baseline  | Same structure     | ✅     |
-| Indices data matches baseline | Same structure     | ✅     |
-| Weather data available        | 24+ cities         | ✅     |
-| Commodities returns fallback  | `mode: 'fallback'` | ✅     |
-| TwelveData budget tracked     | State = 'ok'       | ✅     |
-| Marketstack budget tracked    | State = 'ok'       | ✅     |
-| OpenWeatherMap budget tracked | State = 'ok'       | ✅     |
-| SSOT source = frontend        | All feeds          | ✅     |
-| server.ts < 300 lines         | ~250 lines         | ✅     |
-| All guardrails pass           | 7/7                | ✅     |
+| Criterion                     | Target         | Status |
+| ----------------------------- | -------------- | ------ |
+| TypeScript compiles           | 0 errors       | ✅     |
+| No circular dependencies      | 0 errors       | ✅     |
+| All endpoints respond         | 200 OK         | ✅     |
+| FX data matches baseline      | Same structure | ✅     |
+| Indices data matches baseline | Same structure | ✅     |
+| Commodities data LIVE         | 78 items       | ✅     |
+| Weather data available        | 24+ cities     | ✅     |
+| TwelveData budget tracked     | State = 'ok'   | ✅     |
+| Marketstack budget tracked    | State = 'ok'   | ✅     |
+| OpenWeatherMap budget tracked | State = 'ok'   | ✅     |
+| SSOT source = frontend        | All feeds      | ✅     |
+| server.ts < 800 lines         | ~720 lines     | ✅     |
+| All guardrails pass           | 7/7            | ✅     |
 
 ---
 
@@ -636,11 +660,11 @@ $trace.crypto.ssotSource   # "frontend"
 **Solution:** Always use `flyctl deploy` for code changes.
 **Rule:** Secrets changes need restart; code changes need deploy.
 
-### 4. Route Key Consistency
+### 4. Route Key Consistency _(Historical — crypto removed)_
 
 **Problem:** Crypto config route returned `cryptos`, gateway expected `crypto`.
 **Solution:** Audit all config routes for key consistency.
-**Rule:** Add route key tests to prevent regression.
+**Rule:** Applies to all remaining feeds — always verify route key matches gateway expectation.
 
 ### 5. Snapshot-First Violates TRUE SSOT
 
@@ -664,38 +688,46 @@ $trace.crypto.ssotSource   # "frontend"
 
 ## Changelog
 
-| Date       | Change                                                                 |
-| ---------- | ---------------------------------------------------------------------- |
-| 2026-01-23 | **TRUE SSOT Init Fix**                                                 |
-|            | Fixed `init()` to be frontend-first, snapshot-fallback                 |
-|            | Added cache invalidation on SSOT change                                |
-|            | Added `'snapshot-fallback'` to `SsotSource` type                       |
-|            | Added Taiwan (taiex) to benchmark mappings                             |
-|            | Root cause: Stale snapshot from Jan 17 serving old exchange selections |
-| 2026-01-20 | **OpenWeatherMap Module**                                              |
-|            | Added weather provider (1000/day budget, :10/:40 schedule)             |
-|            | Added A/B batch alternation for 48 cities                              |
-|            | Added `/api/weather/config` SSOT endpoint                              |
-|            | Added cross-reference to dev-prod-environment-setup.md                 |
-| 2026-01-14 | **PM: ALL PHASES COMPLETE** ✅                                         |
-|            | FX: Live via TwelveData                                                |
-|            | Crypto: Live via TwelveData                                            |
-|            | Indices: Live via Marketstack                                          |
-|            | Commodities: Parked (returns null, no demo)                            |
-|            | Fixed: Demo prices removed from all feeds                              |
-|            | Fixed: Benchmark aliases (djia, tsx, russell_2000)                     |
-|            | Fixed: Crypto route key mismatch                                       |
-|            | Fixed: FX symbol encoding                                              |
-| 2026-01-14 | Added Architectural Guardrails section (7 guardrails)                  |
-|            | Added README.md requirement for each provider folder                   |
-|            | Added ESLint no-cycle rule for circular dependency check               |
-|            | Added shared interfaces (FeedScheduler, BudgetManagerInterface)        |
-| 2026-01-14 | **Major rewrite:** Changed from feed-based to provider-based           |
-|            | Added `twelvedata/`, `marketstack/`, `fallback/` folders               |
-|            | Added scheduler.ts for clock-aligned slots                             |
-|            | Added budget.ts per provider (shared vs separate)                      |
-| 2026-01-13 | Document created with feed-based blueprint                             |
-|            | Noted Commodities removed from TwelveData (provider TBD)               |
+| Date       | Change                                                                   |
+| ---------- | ------------------------------------------------------------------------ |
+| 2026-02-07 | **Full audit — corrected to match reality**                              |
+|            | REMOVED: All crypto references (feed, module, routes, health check)      |
+|            | UPDATED: TwelveData → FX only (was FX + Crypto)                          |
+|            | UPDATED: Marketstack 250→3,333/day Professional, :05/:35→:05/:20/:35/:50 |
+|            | ADDED: Commodities LIVE on Marketstack v2 (rolling 5-min scheduler)      |
+|            | REMOVED: `fallback/` folder — commodities now in `marketstack/`          |
+|            | UPDATED: File structure, line counts, provider summary, success criteria |
+|            | UPDATED: server.ts ~250→~720 lines                                       |
+| 2026-01-23 | **TRUE SSOT Init Fix**                                                   |
+|            | Fixed `init()` to be frontend-first, snapshot-fallback                   |
+|            | Added cache invalidation on SSOT change                                  |
+|            | Added `'snapshot-fallback'` to `SsotSource` type                         |
+|            | Added Taiwan (taiex) to benchmark mappings                               |
+|            | Root cause: Stale snapshot from Jan 17 serving old exchange selections   |
+| 2026-01-20 | **OpenWeatherMap Module**                                                |
+|            | Added weather provider (1000/day budget, :10/:40 schedule)               |
+|            | Added A/B batch alternation for 48 cities                                |
+|            | Added `/api/weather/config` SSOT endpoint                                |
+|            | Added cross-reference to dev-prod-environment-setup.md                   |
+| 2026-01-14 | **PM: ALL PHASES COMPLETE** ✅                                           |
+|            | FX: Live via TwelveData                                                  |
+|            | Crypto: Live via TwelveData                                              |
+|            | Indices: Live via Marketstack                                            |
+|            | Commodities: Parked (returns null, no demo)                              |
+|            | Fixed: Demo prices removed from all feeds                                |
+|            | Fixed: Benchmark aliases (djia, tsx, russell_2000)                       |
+|            | Fixed: Crypto route key mismatch                                         |
+|            | Fixed: FX symbol encoding                                                |
+| 2026-01-14 | Added Architectural Guardrails section (7 guardrails)                    |
+|            | Added README.md requirement for each provider folder                     |
+|            | Added ESLint no-cycle rule for circular dependency check                 |
+|            | Added shared interfaces (FeedScheduler, BudgetManagerInterface)          |
+| 2026-01-14 | **Major rewrite:** Changed from feed-based to provider-based             |
+|            | Added `twelvedata/`, `marketstack/`, `fallback/` folders                 |
+|            | Added scheduler.ts for clock-aligned slots                               |
+|            | Added budget.ts per provider (shared vs separate)                        |
+| 2026-01-13 | Document created with feed-based blueprint                               |
+|            | Noted Commodities removed from TwelveData (provider TBD)                 |
 
 ---
 

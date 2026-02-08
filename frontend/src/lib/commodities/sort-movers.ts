@@ -6,6 +6,11 @@
 // - Top 4 winners (highest positive % change)
 // - Top 4 losers (lowest/most negative % change)
 //
+// v2.6: Retail unit conversion system (8 Feb 2026)
+// - Conversion lines now show consumer-friendly units (€2.63 / kg not €2,632.80)
+// - Per-region retail factors: US (imperial), UK (mixed), EU (metric)
+// - All prices strict 2 decimal places
+//
 // v2.5: Gold in ZAR via cross-rate (5 Feb 2026)
 // - Gold displays ZAR as primary currency (converted from USD via GBP)
 // - Cross-rate path: USD → GBP → ZAR using gbp-usd and gbp-zar pairs
@@ -16,13 +21,7 @@
 // - Converts all prices to EUR and GBP using live rates
 // - Handles USD, INR, BRL, CNY, CAD, NOK, MYR, AUD, ZAR currencies
 //
-// Design decisions:
-// - Only commodities with valid price data are considered
-// - Ties broken by absolute magnitude (bigger move wins)
-// - Stale data (null deltaPct) excluded from ranking
-// - Units extracted from catalog's ribbonSubtext field (e.g., "USD/BBL" → "/bbl")
-//
-// Authority: Compacted conversation 2026-02-04
+// Authority: Compacted conversation 2026-02-08
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -35,11 +34,12 @@ import {
   type ConversionRates,
   convertCommodityPrice,
   formatEurGbpLine,
-  formatSmartConversionLines,
   formatZarPrice,
   getCurrencyCountryCode,
   usdToZarCrossRate,
 } from '@/lib/commodities/convert';
+
+import { getRetailConfigForRegion } from '@/lib/commodities/retail-units';
 
 // ============================================================================
 // BRAND COLOURS - Migrated from commodities-ribbon.container.tsx
@@ -124,8 +124,8 @@ function extractUnit(ribbonSubtext?: string): string {
   const unitPart = ribbonSubtext.slice(slashIndex + 1).trim();
   if (!unitPart) return '';
 
-  // Return with leading slash for price display (e.g., "$63.34/bbl")
-  return `/${unitPart.toLowerCase()}`;
+  // Return with spaced slash for price display (e.g., "$63.34 / bbl")
+  return ` / ${unitPart.toLowerCase()}`;
 }
 
 // ============================================================================
@@ -160,32 +160,94 @@ function formatCommodityPrice(value: number, unit: string, quoteCurrency: string
 
   const currencySymbol = getCurrencySymbol(quoteCurrency);
 
-  let formatted: string;
-
-  if (value >= 1000) {
-    formatted = value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  } else if (value >= 10) {
-    formatted = value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  } else if (value >= 1) {
-    formatted = value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 3,
-    });
-  } else {
-    formatted = value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    });
-  }
+  const formatted = value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   // Format: "$63.34/bbl" (no space between price and unit)
   return `${currencySymbol}${formatted}${unit}`;
+}
+
+// ============================================================================
+// RETAIL UNIT PRICE FORMATTING (v2.6)
+// ============================================================================
+// Applies per-region retail conversion factors to the converted currency
+// prices, producing consumer-friendly units like "€2.63 / kg" instead of
+// industrial units like "€2,632.80".
+// ============================================================================
+
+const COUNTRY_SYMBOL: Record<string, string> = { US: '$', GB: '£', EU: '€' };
+
+/**
+ * Format a price with retail unit for a specific region.
+ * Applies the retail factor and appends the unit label.
+ *
+ * @param rawPrice - Price in target currency at industrial unit scale
+ * @param countryCode - Region code: "US", "GB", or "EU"
+ * @param commodityId - Catalog ID for retail unit lookup
+ * @returns Formatted string like "€2.63 / kg" or "—"
+ */
+function formatRetailPrice(
+  rawPrice: number | null,
+  countryCode: string,
+  commodityId: string,
+): string {
+  if (rawPrice === null || !Number.isFinite(rawPrice)) return '—';
+
+  const symbol = COUNTRY_SYMBOL[countryCode] ?? '$';
+  const retailConfig = getRetailConfigForRegion(commodityId, countryCode);
+
+  if (retailConfig) {
+    const retailPrice = rawPrice * retailConfig.factor;
+    const formatted = retailPrice.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return `${symbol}${formatted} / ${retailConfig.unit}`;
+  }
+
+  // Fallback: no retail config, format raw price at 2dp
+  const formatted = rawPrice.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${symbol}${formatted}`;
+}
+
+/**
+ * Build conversion lines with retail unit factors applied.
+ * Handles line ordering based on base currency (same logic as
+ * formatSmartConversionLines) but with retail-aware prices.
+ */
+function buildRetailConversionLines(
+  commodityId: string,
+  quoteCurrency: string,
+  priceEur: number | null,
+  priceGbp: number | null,
+  priceUsd: number | null,
+): {
+  line1: { countryCode: string; priceText: string };
+  line2: { countryCode: string; priceText: string };
+  line3: { countryCode: string; priceText: string } | null;
+} {
+  const currency = quoteCurrency.toUpperCase();
+
+  const eurLine = { countryCode: 'EU', priceText: formatRetailPrice(priceEur, 'EU', commodityId) };
+  const gbpLine = { countryCode: 'GB', priceText: formatRetailPrice(priceGbp, 'GB', commodityId) };
+  const usdLine = { countryCode: 'US', priceText: formatRetailPrice(priceUsd, 'US', commodityId) };
+
+  switch (currency) {
+    case 'EUR':
+      return { line1: usdLine, line2: gbpLine, line3: null };
+    case 'GBP':
+      return { line1: usdLine, line2: eurLine, line3: null };
+    case 'USD':
+      return { line1: eurLine, line2: gbpLine, line3: null };
+    default:
+      // Non-major (INR, BRL, CNY, etc.) → show all three
+      return { line1: eurLine, line2: gbpLine, line3: usdLine };
+  }
 }
 
 // ============================================================================
@@ -332,11 +394,7 @@ export function sortCommoditiesIntoMovers(
     let primaryPriceText = formatCommodityPrice(item.quote.value, unit, quoteCurrency);
 
     if (conversionRates && Number.isFinite(item.quote.value) && item.quote.value > 0) {
-      const converted = convertCommodityPrice(
-        item.quote.value,
-        quoteCurrency,
-        conversionRates,
-      );
+      const converted = convertCommodityPrice(item.quote.value, quoteCurrency, conversionRates);
       priceEur = converted.eur;
       priceGbp = converted.gbp;
       priceUsd = converted.usd;
@@ -344,42 +402,41 @@ export function sortCommoditiesIntoMovers(
 
       if (isGold) {
         // ====================================================================
-        // GOLD: ZAR as primary, EUR/GBP/USD as conversion lines
+        // GOLD: ZAR as primary, EUR/GBP/USD as conversion lines (retail units)
         // ====================================================================
-        // Gold API price is in USD, convert to ZAR via cross-rate
         priceZar = usdToZarCrossRate(item.quote.value, conversionRates);
-        
-        // Primary display is ZAR
+
         if (priceZar !== null) {
           primaryPriceText = `${formatZarPrice(priceZar)}${unit}`;
         }
-        
-        // Conversion lines: EUR, GBP, USD (original price)
+
+        // Conversion lines with retail unit factors applied
         conversionLine1 = {
           countryCode: 'EU',
-          priceText: priceEur !== null ? `€${priceEur.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—',
+          priceText: formatRetailPrice(priceEur, 'EU', item.id),
         };
         conversionLine2 = {
           countryCode: 'GB',
-          priceText: priceGbp !== null ? `£${priceGbp.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—',
+          priceText: formatRetailPrice(priceGbp, 'GB', item.id),
         };
         conversionLine3 = {
           countryCode: 'US',
-          priceText: `$${item.quote.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          priceText: formatRetailPrice(item.quote.value, 'US', item.id),
         };
       } else {
         // ====================================================================
-        // ALL OTHER COMMODITIES: Standard smart conversion lines
+        // ALL OTHER COMMODITIES: Retail unit conversion lines (v2.6)
         // ====================================================================
-        const smartLines = formatSmartConversionLines(
+        const retailLines = buildRetailConversionLines(
+          item.id,
           quoteCurrency,
           priceEur,
           priceGbp,
           priceUsd,
         );
-        conversionLine1 = smartLines.line1;
-        conversionLine2 = smartLines.line2;
-        conversionLine3 = smartLines.line3;
+        conversionLine1 = retailLines.line1;
+        conversionLine2 = retailLines.line2;
+        conversionLine3 = retailLines.line3;
       }
     }
 

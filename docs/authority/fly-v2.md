@@ -130,9 +130,9 @@ This document defines:
    o Multiple regions = multiple sets of machines and cost per region.
 1. Storage
    o Persistent volumes for:
-    Caching rates.
-    User-related data (if stored server-side).
-    Logs and historical metrics.
+   Caching rates.
+   User-related data (if stored server-side).
+   Logs and historical metrics.
    o Volume size × price/GB/month.
 1. Bandwidth / egress
    o Data sent from Fly.io to your users (dashboards, live updates).
@@ -339,13 +339,13 @@ async function start(): Promise<void> {
 
 ### 8.4 Gateway Environment Variables (TwelveData)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `FX_CONFIG_URL` | `https://promagen.com/api/fx/config` | Frontend FX SSOT endpoint |
-| `TWELVEDATA_API_KEY` | (required) | TwelveData API key |
-| `FX_RIBBON_BUDGET_DAILY_ALLOWANCE` | `800` | TwelveData daily credit budget |
-| `FX_RIBBON_BUDGET_MINUTE_ALLOWANCE` | `8` | TwelveData per-minute credit cap |
-| `FX_RIBBON_TTL_SECONDS` | `1800` | FX cache TTL (30 minutes) |
+| Variable                            | Default                              | Description                      |
+| ----------------------------------- | ------------------------------------ | -------------------------------- |
+| `FX_CONFIG_URL`                     | `https://promagen.com/api/fx/config` | Frontend FX SSOT endpoint        |
+| `TWELVEDATA_API_KEY`                | (required)                           | TwelveData API key               |
+| `FX_RIBBON_BUDGET_DAILY_ALLOWANCE`  | `800`                                | TwelveData daily credit budget   |
+| `FX_RIBBON_BUDGET_MINUTE_ALLOWANCE` | `8`                                  | TwelveData per-minute credit cap |
+| `FX_RIBBON_TTL_SECONDS`             | `1800`                               | FX cache TTL (30 minutes)        |
 
 ### 8.5 Verifying SSOT Is Working
 
@@ -356,6 +356,7 @@ Invoke-RestMethod -Uri "https://promagen-api.fly.dev/health"
 ```
 
 **Expected response:**
+
 ```json
 {
   "status": "ok",
@@ -440,6 +441,7 @@ import { logInfo } from './logging.js';
 ```
 
 **Files that require .js extensions:**
+
 - `lib/adapters.ts`
 - `lib/http.ts`
 - `lib/quota.ts`
@@ -471,6 +473,7 @@ promagen/
 ```
 
 **pnpm-workspace.yaml:**
+
 ```yaml
 packages:
   - frontend
@@ -497,12 +500,13 @@ The gateway `/indices` endpoint provides stock exchange index data (e.g., Nikkei
 
 ### 11.1 Provider: Marketstack (Separate from TwelveData)
 
-| Provider | Feeds | Daily Limit | TTL |
-|----------|-------|-------------|-----|
-| TwelveData | FX, Crypto | 800 credits | 30 min |
-| **Marketstack** | **Indices** | **250 credits** | **2 hours** |
+| Provider        | Feeds                     | Daily Limit                      | TTL         |
+| --------------- | ------------------------- | -------------------------------- | ----------- |
+| TwelveData      | FX                        | 800 credits                      | 30 min      |
+| **Marketstack** | **Indices + Commodities** | **3,333 credits (Professional)** | **2 hours** |
+| OpenWeatherMap  | Weather                   | 1,000 credits                    | 5 min       |
 
-Indices uses a **separate provider and budget** — it doesn't compete with TwelveData feeds.
+Indices uses a **separate provider and budget** — it doesn't compete with TwelveData. Commodities shares the Marketstack budget but has a separate 1,000/day cap.
 
 ### 11.2 SSOT: Exchange Catalog
 
@@ -534,24 +538,32 @@ gateway serves /indices                             ← Uses fetched benchmarks
 
 ### 11.3 Gateway Environment Variables (Marketstack)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `INDICES_CONFIG_URL` | `https://promagen.com/api/indices/config` | Frontend Indices SSOT endpoint |
-| `MARKETSTACK_API_KEY` | (required) | Marketstack API key (Fly.io secret) |
-| `INDICES_RIBBON_BUDGET_DAILY_ALLOWANCE` | `250` | Marketstack daily credit budget |
-| `INDICES_RIBBON_BUDGET_MINUTE_ALLOWANCE` | `3` | Marketstack per-minute credit cap |
-| `INDICES_RIBBON_TTL_SECONDS` | `7200` | Indices cache TTL (2 hours) |
+| Variable                                 | Default                                   | Description                                         |
+| ---------------------------------------- | ----------------------------------------- | --------------------------------------------------- |
+| `INDICES_CONFIG_URL`                     | `https://promagen.com/api/indices/config` | Frontend Indices SSOT endpoint                      |
+| `MARKETSTACK_API_KEY`                    | (required)                                | Marketstack API key (Fly.io secret)                 |
+| `INDICES_RIBBON_BUDGET_DAILY_ALLOWANCE`  | `3333`                                    | Marketstack daily credit budget (Professional tier) |
+| `INDICES_RIBBON_BUDGET_MINUTE_ALLOWANCE` | `3`                                       | Marketstack per-minute credit cap                   |
+| `INDICES_RIBBON_TTL_SECONDS`             | `7200`                                    | Indices cache TTL (2 hours)                         |
 
 ### 11.4 API Timing Stagger
 
-Indices refresh at :05 and :35 each hour (5-minute offset from FX):
+Indices refresh at :05, :20, :35, and :50 each hour (15-minute intervals, staggered from FX):
 
 ```
 ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
 │:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
 ├────┼────┼────┼────┼────┼────┼────┼────┼────┤
-│ FX │IDX │    │CRY │ FX │IDX │    │CRY │ FX │
+│ FX │IDX │WTH │IDX │ FX │IDX │WTH │IDX │ FX │
 └────┴────┴────┴────┴────┴────┴────┴────┴────┘
+  ↑    ↑   ↑    ↑    ↑    ↑    ↑    ↑
+  TD   MS  OWM  MS   TD   MS  OWM  MS
+
++ Commodities: rolling every 5 min (Marketstack v2, not clock-aligned)
+
+TD  = TwelveData (800/day, FX only)
+MS  = Marketstack (3,333/day shared, Indices + Commodities)
+OWM = OpenWeatherMap (1,000/day, Weather)
 ```
 
 ### 11.5 Verifying Indices Is Working
@@ -561,20 +573,20 @@ Indices refresh at :05 and :35 each hour (5-minute offset from FX):
 Invoke-RestMethod -Uri "https://promagen-api.fly.dev/indices"
 
 # Check /trace for Marketstack budget
-(Invoke-RestMethod "https://promagen-api.fly.dev/trace").indicesBudget
-# Expected: { dailyUsed: <number>, dailyLimit: 250, state: "ok" }
+(Invoke-RestMethod "https://promagen-api.fly.dev/trace").indices
+# Expected: mode, ssotSource, scheduler info
 ```
 
 ### 11.6 Files (Frontend)
 
-| File | Purpose |
-|------|---------|
-| `src/data/exchanges/exchanges.catalog.json` | Benchmark mappings (48 exchanges) |
-| `src/data/exchanges/exchanges.selected.json` | Default 16 exchange IDs |
-| `src/app/api/indices/config/route.ts` | SSOT endpoint for gateway |
-| `src/app/api/indices/route.ts` | Proxy to gateway `/indices` |
-| `src/hooks/use-indices-quotes.ts` | Polling hook (:05, :35 schedule) |
-| `src/components/exchanges/exchange-card.tsx` | IndexRow component |
+| File                                         | Purpose                                 |
+| -------------------------------------------- | --------------------------------------- |
+| `src/data/exchanges/exchanges.catalog.json`  | Benchmark mappings (48 exchanges)       |
+| `src/data/exchanges/exchanges.selected.json` | Default 16 exchange IDs                 |
+| `src/app/api/indices/config/route.ts`        | SSOT endpoint for gateway               |
+| `src/app/api/indices/route.ts`               | Proxy to gateway `/indices`             |
+| `src/hooks/use-indices-quotes.ts`            | Polling hook (:05/:20/:35/:50 schedule) |
+| `src/components/exchanges/exchange-card.tsx` | IndexRow component                      |
 
 ### 11.7 Changing Default Exchanges (The SSOT Way)
 
@@ -593,12 +605,14 @@ Invoke-RestMethod -Uri "https://promagen-api.fly.dev/indices"
 The gateway was refactored from a **4,002-line monolithic server.ts** to a **provider-based modular architecture**.
 
 **Problem with old structure:**
+
 - TwelveData budget logic scattered across multiple files
 - Scheduler logic for same provider in multiple files
 - Hard to debug "why is TwelveData over budget?"
 - Adding a new feed = copy 800 lines
 
 **Solution: Organize by provider, not by feed:**
+
 - Each provider gets its own folder
 - Budget, scheduler, adapter co-located
 - Adding new feed to existing provider = one config file
@@ -607,7 +621,7 @@ The gateway was refactored from a **4,002-line monolithic server.ts** to a **pro
 
 ```
 gateway/src/
-├── server.ts                    # ~250 lines: routes + startup ONLY
+├── server.ts                    # ~720 lines: routes + startup
 │
 ├── lib/                         # Shared infrastructure (provider-agnostic)
 │   ├── types.ts                 # All shared type definitions
@@ -618,34 +632,37 @@ gateway/src/
 │   └── logging.ts               # Structured logging utilities
 │
 ├── twelvedata/                  # ← Everything TwelveData in ONE place
-│   ├── index.ts                 # Exports fxHandler, cryptoHandler
+│   ├── index.ts                 # Exports fxHandler
 │   ├── adapter.ts               # TwelveData API fetch logic
-│   ├── budget.ts                # Shared 800/day budget (ONE instance)
-│   ├── scheduler.ts             # Clock-aligned slots (:00/:30 FX, :20/:50 Crypto)
-│   ├── fx.ts                    # FX feed config
-│   └── crypto.ts                # Crypto feed config
+│   ├── budget.ts                # 800/day budget (FX only)
+│   ├── scheduler.ts             # Clock-aligned slots (:00/:30 FX)
+│   └── fx.ts                    # FX feed config ✅ LIVE
 │
 ├── marketstack/                 # ← Everything Marketstack in ONE place
-│   ├── index.ts                 # Exports indicesHandler
-│   ├── adapter.ts               # Marketstack API fetch logic
-│   ├── budget.ts                # Separate 250/day budget (ONE instance)
-│   ├── scheduler.ts             # Clock-aligned slots (:05/:35)
-│   └── indices.ts               # Indices feed config
+│   ├── index.ts                 # Exports indicesHandler, commoditiesHandler
+│   ├── adapter.ts               # Marketstack API fetch logic + benchmark mapping
+│   ├── budget.ts                # Shared 3,333/day budget (indices)
+│   ├── scheduler.ts             # Clock-aligned slots (:05/:20/:35/:50 indices)
+│   ├── indices.ts               # Indices feed config ✅ LIVE
+│   ├── commodities.ts           # Commodities feed config ✅ LIVE
+│   ├── commodities-scheduler.ts # Rolling 5-min scheduler (Fisher-Yates randomised)
+│   └── commodities-budget.ts    # Separate 1,000/day cap for commodities
 │
-└── fallback/                    # ← Feeds with no provider
-    └── commodities.ts           # Returns demo prices only
+└── openweathermap/              # ← Everything OpenWeatherMap in ONE place
+    ├── index.ts                 # Exports weather handler + helpers
+    └── handler.ts               # Weather feed with city batching ✅ LIVE
 ```
 
 ### 12.3 Key Benefits
 
-| Aspect | Before (Monolithic) | After (Provider-Based) |
-|--------|---------------------|------------------------|
-| **server.ts** | 4,002 lines | ~250 lines |
-| **Debug TwelveData** | Search entire file | Look in `twelvedata/` |
-| **Budget location** | Scattered | One file per provider |
-| **Scheduler location** | Scattered | One file per provider |
-| **Add TwelveData feed** | Copy 800 lines | Add one config file |
-| **Test in isolation** | Impossible | Import provider module |
+| Aspect                  | Before (Monolithic) | After (Provider-Based) |
+| ----------------------- | ------------------- | ---------------------- |
+| **server.ts**           | 4,002 lines         | ~250 lines             |
+| **Debug TwelveData**    | Search entire file  | Look in `twelvedata/`  |
+| **Budget location**     | Scattered           | One file per provider  |
+| **Scheduler location**  | Scattered           | One file per provider  |
+| **Add TwelveData feed** | Copy 800 lines      | Add one config file    |
+| **Test in isolation**   | Impossible          | Import provider module |
 
 ### 12.4 Provider Module Structure
 
@@ -660,7 +677,7 @@ Each provider folder follows the same pattern:
 └── {feed}.ts     # Feed-specific config (one per feed)
 ```
 
-### 12.5 Clock-Aligned Scheduler
+### 12.5 Clock-Aligned + Rolling Schedulers
 
 **Why clock-aligned (not 90% TTL)?**
 
@@ -668,52 +685,63 @@ Each provider folder follows the same pattern:
 // ❌ BAD: 90% of TTL creates drift
 setInterval(() => refresh(), config.ttlSeconds * 1000 * 0.9);
 // FX at :00 → :27 → :54 → :21...
-// Crypto at :15 → :42 → :09...
+// Indices at :05 → :32 → :59...
 // Eventually they COLLIDE!
 
 // ✅ GOOD: Clock-aligned slots, never drift
 setTimeout(() => {
   refresh();
-  setInterval(() => refresh(), 30 * 60 * 1000);
-}, getMsUntilNextSlot('fx'));
+  setInterval(() => refresh(), 15 * 60 * 1000); // 15 min for indices
+}, getMsUntilNextSlot('indices'));
 // FX ALWAYS at :00, :30
-// Crypto ALWAYS at :20, :50
+// Indices ALWAYS at :05, :20, :35, :50
+// Weather ALWAYS at :10, :40
 // NEVER collide!
 ```
+
+**Why rolling for Commodities?** Marketstack v2 supports only 1 commodity per call. 78 commodities × 5 min = 6.5 hours per cycle. Clock-aligned would cram 78 calls into one slot — rolling spreads the load evenly.
 
 **Schedule:**
 
 ```
-Hour timeline (repeats every hour):
+Hour timeline (every hour):
 ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
 │:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
 ├────┼────┼────┼────┼────┼────┼────┼────┼────┤
-│ FX │IDX │    │CRY │ FX │IDX │    │CRY │ FX │
+│ FX │IDX │WTH │IDX │ FX │IDX │WTH │IDX │ FX │
 └────┴────┴────┴────┴────┴────┴────┴────┴────┘
-  ↑    ↑         ↑    ↑    ↑         ↑
-  TD   MS        TD   TD   MS        TD
+  ↑    ↑   ↑    ↑    ↑    ↑    ↑    ↑
+  TD   MS  OWM  MS   TD   MS  OWM  MS
 
-TD = TwelveData (800/day shared)
-MS = Marketstack (250/day separate)
++ Commodities: rolling every 5 min (Marketstack v2, not clock-aligned)
+
+TD  = TwelveData (800/day, FX only)
+MS  = Marketstack (3,333/day shared, Indices + Commodities)
+OWM = OpenWeatherMap (1,000/day, Weather)
 ```
 
 ### 12.6 Environment Variables (All Providers)
 
-| Variable | Provider | Default | Description |
-|----------|----------|---------|-------------|
-| `TWELVEDATA_API_KEY` | TwelveData | (required) | API key |
-| `TWELVEDATA_BUDGET_DAILY` | TwelveData | `800` | Daily credit limit |
-| `TWELVEDATA_BUDGET_MINUTE` | TwelveData | `8` | Per-minute limit |
-| `FX_RIBBON_TTL_SECONDS` | TwelveData | `1800` | FX cache TTL |
-| `CRYPTO_RIBBON_TTL_SECONDS` | TwelveData | `1800` | Crypto cache TTL |
-| `MARKETSTACK_API_KEY` | Marketstack | (required) | API key |
-| `MARKETSTACK_BUDGET_DAILY` | Marketstack | `250` | Daily credit limit |
-| `MARKETSTACK_BUDGET_MINUTE` | Marketstack | `3` | Per-minute limit |
-| `INDICES_RIBBON_TTL_SECONDS` | Marketstack | `7200` | Indices cache TTL |
+| Variable                          | Provider       | Default    | Description                                   |
+| --------------------------------- | -------------- | ---------- | --------------------------------------------- |
+| `TWELVEDATA_API_KEY`              | TwelveData     | (required) | API key                                       |
+| `TWELVEDATA_BUDGET_DAILY`         | TwelveData     | `800`      | Daily credit limit                            |
+| `TWELVEDATA_BUDGET_MINUTE`        | TwelveData     | `8`        | Per-minute limit                              |
+| `FX_RIBBON_TTL_SECONDS`           | TwelveData     | `1800`     | FX cache TTL                                  |
+| `MARKETSTACK_API_KEY`             | Marketstack    | (required) | API key                                       |
+| `MARKETSTACK_BUDGET_DAILY`        | Marketstack    | `3333`     | Daily credit limit (Professional tier)        |
+| `MARKETSTACK_BUDGET_MINUTE`       | Marketstack    | `60`       | Per-minute limit                              |
+| `INDICES_RIBBON_TTL_SECONDS`      | Marketstack    | `7200`     | Indices cache TTL                             |
+| `COMMODITIES_REFRESH_INTERVAL_MS` | Marketstack    | `300000`   | Commodities rolling interval (5 min)          |
+| `COMMODITIES_BUDGET_DAILY`        | Marketstack    | `1000`     | Commodities daily cap (subset of shared pool) |
+| `OPENWEATHERMAP_API_KEY`          | OpenWeatherMap | (required) | API key                                       |
+| `OPENWEATHERMAP_BUDGET_DAILY`     | OpenWeatherMap | `1000`     | Daily credit limit                            |
+| `OPENWEATHERMAP_BUDGET_MINUTE`    | OpenWeatherMap | `60`       | Per-minute limit                              |
 
 ### 12.7 Migration from Old Structure
 
 **Old files to delete:**
+
 ```powershell
 # Run from: C:\Users\Proma\Projects\promagen\gateway
 Remove-Item -Recurse -Force ".\src\feeds" -ErrorAction SilentlyContinue
@@ -721,6 +749,7 @@ Remove-Item -Recurse -Force ".\src\lib\shared-budgets.ts" -ErrorAction SilentlyC
 ```
 
 **Verification after migration:**
+
 ```powershell
 # TypeScript compiles
 npx tsc --noEmit  # 0 errors
@@ -728,22 +757,36 @@ npx tsc --noEmit  # 0 errors
 # All endpoints work
 (Invoke-RestMethod "https://promagen-api.fly.dev/health").status  # "ok"
 (Invoke-RestMethod "https://promagen-api.fly.dev/fx").data.Count  # 8
-(Invoke-RestMethod "https://promagen-api.fly.dev/crypto").data.Count  # 8
-(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data.Count  # 16
+(Invoke-RestMethod "https://promagen-api.fly.dev/indices").data.Count  # 8-16
+(Invoke-RestMethod "https://promagen-api.fly.dev/commodities").data.Count  # 7
+(Invoke-RestMethod "https://promagen-api.fly.dev/weather") | Select-Object -First 1  # has data
 
-# Budgets tracked correctly
+# Trace shows all feeds
 $trace = Invoke-RestMethod "https://promagen-api.fly.dev/trace"
-$trace.budget.state  # "ok" (TwelveData)
-$trace.indicesBudget.state  # "ok" (Marketstack)
+$trace.fx | Select-Object mode, ssotSource
+$trace.indices | Select-Object mode, ssotSource
+$trace.commodities | Select-Object mode, ssotSource
+$trace.weather
 ```
 
 **Cross-reference:** See `GATEWAY-REFACTOR.md` for full migration blueprint.
 
 ---
 
-**Last updated:** 14 January 2026
+**Last updated:** 7 February 2026
 
 **Changelog:**
+
+- **7 Feb 2026:** Full audit — §11 + §12 corrected to match reality
+  - §11.1: Marketstack budget 250→3,333 (Professional), removed Crypto from TwelveData, added Commodities + Weather
+  - §11.3: Budget env var default 250→3333
+  - §11.4: Timing stagger rebuilt (4 feeds, 3 providers, no crypto)
+  - §11.5: Trace verification updated
+  - §11.6: Hook schedule :05/:35→:05/:20/:35/:50
+  - §12.2: File structure — removed crypto.ts, fallback/; added marketstack/commodities\*, openweathermap/
+  - §12.5: Scheduler section rebuilt (clock-aligned + rolling), timing diagram updated
+  - §12.6: Env vars — removed CRYPTO\_\*, fixed MARKETSTACK budget, added OWM + Commodities vars
+  - §12.7: Verification — removed /crypto, added /commodities + /weather
 - **14 Jan 2026:** Added §12 Provider-Based Gateway Architecture (provider folders, clock-aligned scheduler, migration from monolithic)
 - **13 Jan 2026:** Added §11 Indices SSOT Architecture (Marketstack provider, 2-hour TTL, :05/:35 stagger)
 - **10 Jan 2026:** FX SSOT Consolidated — Updated §8 to reflect unified `fx-pairs.json` file

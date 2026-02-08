@@ -1,7 +1,7 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 9 January 2026  
-**Version:** 2.3 (Console logging standards)  
+**Last updated:** 7 February 2026  
+**Version:** 2.6 (Content-driven sizing pattern)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
 ---
@@ -438,6 +438,61 @@ Only deviate from this style if the user explicitly requests a different style. 
 ```
 
 **Compliance check:** When adding an animation, ask: "Is this used anywhere else?" If no, keep it in the file.
+
+### § 6.3 Content-Driven Sizing (Breathing Room Pattern)
+
+**Purpose:** When UI content doesn't have room to breathe (clipped text, emojis cut off, flags overflowing), use content-driven measurement instead of magic-number thresholds.
+
+**The problem with magic numbers:**
+A fixed pixel threshold like `MIN_HEIGHT_PX = 55` breaks when content changes (larger fonts, flags, emoji). The number has no relationship to what the content actually measures.
+
+**The pattern — measure, then decide:**
+
+1. Render actual content in an **offscreen measurer** (no `overflow-hidden`, `display: inline-block`)
+2. Read `scrollWidth` / `scrollHeight` — this is the true content size
+3. Compare measured size + breathing room against available cell space
+4. If it fits → use that layout. If not → gracefully degrade (hide a row, shrink font, etc.)
+
+```typescript
+// Pattern: unified content-driven reflow
+const BREATHING_ROOM_PX = 8; // 4px top + 4px bottom
+
+for (const fontSize of candidates) {
+  measurer.style.setProperty('--font', `${fontSize}px`);
+  measurer.offsetHeight; // force reflow
+
+  const contentH = measurer.scrollHeight;
+  const contentW = measurer.scrollWidth;
+
+  if (contentW <= cellWidth && contentH + BREATHING_ROOM_PX <= cellHeight) {
+    // Content fits with breathing room — use this layout
+    return { fontSize, layout: 'current' };
+  }
+}
+// Fallback: minimum font, reduced layout
+```
+
+**When to use this pattern:**
+
+- Content clipping on smaller screens (emoji, flags, text cut off)
+- Responsive grids where row count should adapt to actual content height
+- Any component where a fixed height threshold was previously used
+
+**When NOT to use:**
+
+- Fixed-height components where the height is intentional (headers, footers)
+- Components that scroll internally (the scroll handles overflow)
+
+**Key principles:**
+
+- Measure real content, not assumed content
+- Add `BREATHING_ROOM_PX` — nothing should sit flush against window edges
+- Prefer unified passes (decide font + layout together, not in separate steps)
+- Use `ResizeObserver` to trigger re-measurement on resize
+
+**Reference implementation:** `src/components/ribbon/commodities-movers-grid.tsx` (v3.0)
+
+**Authority:** `docs/authority/commodities.md` § Panel Sizing
 
 ---
 
@@ -1172,6 +1227,7 @@ When addressing ESLint, TypeScript typecheck, or test failures, apply the smalle
 
 ## Changelog
 
+- **7 Feb 2026 (v2.6):** Added § 6.3 Content-Driven Sizing (Breathing Room Pattern). Documents the approach for when content doesn't have room to breathe: measure real content in offscreen measurer, compare against available space with breathing room, gracefully degrade layout. Reference implementation: commodities-movers-grid.tsx v3.0.
 - **13 Jan 2026 (v2.5):** Added §10.1 Data Polling Hooks (centralised pattern). Documents all four polling hooks (FX, Indices, Commodities, Crypto) with slot schedules, TTLs, and providers. Standard pattern for visibility-aware, slot-aligned polling.
 - **10 Jan 2026 (v2.4):** Updated FX SSOT file references from `fx.pairs.json` to unified `fx-pairs.json` in §3 and §13 SSOT sections.
 - **9 Jan 2026 (v2.3):** Added Console Logging Standards section in §15 Code Quality Rules. Specifies `console.debug` over `console.log`, prefix convention `[module-name]`, and method hierarchy (error/warn/debug).
@@ -1511,59 +1567,3 @@ className =
 
 This ensures visual consistency across exchange rails, providers table, and prompt builder.
 
-# code-standard.md Update
-
-**Target file:** `C:\Users\Proma\Projects\promagen\docs\authority\code-standard.md`
-
----
-
-## Change 1: Update version and date
-
-**REPLACE lines 3-4:**
-
-```
-**Last updated:** 9 January 2026
-**Version:** 2.3 (Console logging standards)
-```
-
-**WITH:**
-
-```
-**Last updated:** 28 January 2026
-**Version:** 2.4 (Animation placement standard)
-```
-
----
-
-## Change 2: Add § 6.2 Animation Placement Standard
-
-**ADD after line 377** (after the closing `---` of § 6.1 Canonical Button Styling, before `## 7. Accessibility Rules`):
-
-```markdown
-### § 6.2 Animation Placement Standard
-
-**Purpose:** Keep animations self-contained and maintainable. Avoid bloating `globals.css` with single-use animations.
-
-**Gold standard: Animations belong in the component file unless explicitly told otherwise.**
-
-| Approach                                              | When to Use                                                                                                                                        |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Inline in file (Tailwind classes / inline styles)** | Component-specific animations used only in that one component. Keeps everything self-contained, easier to maintain, no hunting through globals.css |
-| **globals.css**                                       | Shared animations used across multiple components, or complex keyframes that Tailwind cannot express easily                                        |
-
-**Default rule:** Always put animations in the component file itself unless:
-
-1. The animation is reused in 3+ components
-2. The user explicitly requests globals.css placement
-3. Tailwind genuinely cannot express the animation (rare)
-
-**Why this matters:** `globals.css` is already large. Adding single-use animations there creates:
-
-- Maintenance burden (hunting through 2000+ lines to find/fix an animation)
-- Namespace pollution (risk of class name collisions)
-- Harder debugging (animation definition far from usage)
-- Version bumped to 2.4
-- New § 6.2 establishes "animations in component file" as default
-- Clear decision table for when to use globals.css vs inline
-- Implementation patterns provided
-```

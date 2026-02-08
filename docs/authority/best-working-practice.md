@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 9 January 2026
+**Last updated:** 7 February 2026
 
 ---
 
@@ -270,7 +270,30 @@ font-size: clamp(MIN, PREFERRED, MAX);
 
 **Authority:** `docs/authority/code-standard.md` § 6.2 (Animation Placement Standard)
 
-````
+### Content-driven sizing (when content doesn't breathe)
+
+**Purpose:** Establish a standard approach for when UI content clips, overflows, or doesn't have room to breathe on smaller screens.
+
+**Hard rule:** Never use magic-number pixel thresholds to decide layout changes (e.g., `MIN_HEIGHT = 55px` to hide a row). These break when content changes. Instead, **measure real content** and let the measurements drive the decision.
+
+**The approach:**
+
+1. Render actual content in an offscreen measurer (`display: inline-block`, no overflow hidden)
+2. Read `scrollWidth` / `scrollHeight` — the true content size at the current font
+3. Compare against available space + breathing room (`BREATHING_ROOM_PX`)
+4. If it fits → keep the layout. If not → gracefully degrade (hide a row, shrink font)
+
+**Key principles:**
+
+- Always add breathing room — content should never sit flush against edges
+- Decide font size and layout together in a single pass (avoids oscillation)
+- Use `ResizeObserver` to trigger re-measurement, not window resize events
+- Prefer graceful degradation over clipping (hide content rather than crop it)
+
+**Reference implementation:** `commodities-movers-grid.tsx` v3.0
+**Authority:** `code-standard.md` § 6.3, `commodities.md` § Panel Sizing
+
+---
 
 ## Docs-first gate (no code until docs are read + doc-delta captured)
 
@@ -378,7 +401,7 @@ When Git says **"your local changes would be overwritten"**, do **not** try rand
 pnpm -C frontend lint
 pnpm -C frontend typecheck
 pnpm -C frontend test:ci
-````
+```
 
 **6. Never run these when you're stressed**
 
@@ -516,6 +539,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **7 Feb 2026:** Added "Content-driven sizing" subsection under UI Consistency. Standard approach when content doesn't have room to breathe: measure real content, not magic numbers. Cross-ref code-standard.md § 6.3.
 - **10 Jan 2026:** Updated FX SSOT file reference from `fx.pairs.json` to unified `fx-pairs.json` (schema table).
 - **9 Jan 2026:** Added "Deployment Resilience" section (Vercel Skew Protection + ChunkErrorBoundary). Zero-downtime deployment strategy for active users.
 - **3 Jan 2026:** Added "Pro Promagen" terminology section (paid tier naming convention). Added "Security-First Development" section (secure code for files in current request only).
@@ -526,69 +550,3 @@ OUTPUT FORMAT:
 - **28 Dec 2025:** Added Schema and Type Consolidation Rules section. Added `prompt-builder-page.md` to authority docs list. Added "Schema or type definitions" to doc update triggers. Updated memory policy for Claude. Improved formatting consistency.
 - **27 Dec 2025:** Added "Git safety gate (anti-panic)" rules (stash-first / rescue-branch / no-guessing / generated artefact handling / no-conflict-marker commits).
 
-# best-working-practice.md Update
-
-**Target file:** `docs/authority/best-working-practice.md`
-
----
-
-## Change 1: Update "Last updated" date
-
-**REPLACE line 3:**
-
-```
-**Last updated:** 9 January 2026
-```
-
-**WITH:**
-
-```
-**Last updated:** 24 January 2026
-```
-
----
-
-## Change 2: Add ignition.md to authority docs list
-
-**ADD after line 231** (after prompt-builder-page.md entry):
-
-```markdown
-- `docs/authority/ignition.md` ← Engine Bay (Ignition) homepage CTA
-```
-
----
-
-## Change 3: Add changelog entry
-
-**ADD at the end of the Changelog section** (before the last entry):
-
-```markdown
-- **24 Jan 2026:** Added `ignition.md` to authority docs list (Engine Bay homepage CTA feature).
-```
-
----
-
-## Full context (lines 229-237 after changes):
-
-```markdown
-- `docs/authority/ai providers.md` ← AI providers catalogue and leaderboard
-- `docs/authority/ai providers affiliate & links.md` ← Affiliate and referral rules
-- `docs/authority/prompt-builder-page.md` ← Prompt builder page architecture
-- `docs/authority/ignition.md` ← Engine Bay (Ignition) homepage CTA
-- `docs/authority/ga4-gtm-nextjs-vercel.md` ← Analytics integration
-- `docs/authority/vercel-pro-promagen-playbook.md` ← Vercel Pro guardrails
-- `docs/authority/fly-v2.md` ← Fly.io deployment
-- `docs/authority/api-documentation-twelvedata.md` ← Vendor reference snapshot (read-only)
-- `docs/authority/TODO-api-integration.md` ← Deferred work and activation tasks
-
-# best-working-practice.md Update
-
-**Target file:** `C:\Users\Proma\Projects\promagen\docs\authority\best-working-practice.md`
-
-## Summary
-
-- Date updated to 28 January 2026
-- New "Animation placement" subsection under UI Consistency
-- Cross-references code-standard.md § 6.2
-- Changelog updated
-```

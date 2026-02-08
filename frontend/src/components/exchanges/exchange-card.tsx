@@ -162,7 +162,7 @@ const IndexRowWithData = React.memo(function IndexRowWithData({ quote }: IndexRo
       {/* All index data on ONE line - snaps with card */}
       <span
         className="block font-medium text-slate-300 whitespace-nowrap"
-        style={{ fontSize: '0.70em' }}
+        style={{ fontSize: '0.60em' }}
       >
         <span>{indexName}: </span>
         <span className="ml-1 font-semibold text-slate-100">{formatPrice(price)}</span>
@@ -425,14 +425,14 @@ export const ExchangeCard = React.memo(function ExchangeCard({
               {/* Exchange name - snaps with card */}
               <span
                 className="block font-medium leading-tight text-slate-100 whitespace-nowrap"
-                style={{ fontSize: '0.80em' }}
+                style={{ fontSize: '0.70em' }}
               >
                 {displayName}
               </span>
 
               <div className="mt-1 flex items-center gap-2">
                 {/* City name - snaps with card (was fixed text-base) */}
-                <span className="text-slate-400 whitespace-nowrap" style={{ fontSize: '0.75em' }}>
+                <span className="text-slate-400 whitespace-nowrap" style={{ fontSize: '0.65em' }}>
                   {city}
                 </span>
                 <WeatherPromptTooltip

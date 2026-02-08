@@ -171,6 +171,46 @@ const CATALOG_TO_MARKETSTACK: Record<string, string> = {
   polyvinyl: 'polyvinyl',
 };
 
+// =============================================================================
+// CENTS-TO-DOLLARS DIVISOR MAP
+// =============================================================================
+// Commodities quoted in sub-currency units (cents, pence) that require ÷100
+// to produce the correct base-currency price.
+//
+// US exchange agricultural futures (11):
+//   ICE US softs:  coffee, sugar, cotton, orange_juice → cents/lb
+//   CBOT grains:   corn, wheat, soybeans, oat → cents/bushel
+//   CME livestock: live_cattle, lean_hogs, feeder_cattle → cents/lb
+//
+// UK exchange (1):
+//   ICE Europe:    uk_gas → pence/therm (85.98p = £0.8598)
+//
+// Verified against Marketstack API responses (8 Feb 2026).
+// All other 66 commodities quote in base-currency units (no conversion).
+// =============================================================================
+
+const CENTS_TO_DOLLARS: Record<string, number> = {
+  // ICE US softs (cents/lb)
+  coffee: 100,
+  sugar: 100,
+  cotton: 100,
+  orange_juice: 100,
+
+  // CBOT grains (cents/bushel)
+  corn: 100,
+  wheat: 100,
+  soybeans: 100,
+  oat: 100,
+
+  // CME livestock (cents/lb)
+  live_cattle: 100,
+  lean_hogs: 100,
+  feeder_cattle: 100,
+
+  // ICE Europe NBP (pence/therm)
+  uk_gas: 100,
+};
+
 /**
  * Convert a catalog commodity ID to the Marketstack commodity_name parameter.
  *
@@ -453,15 +493,23 @@ function parseSingleCommodityResponse(
       ? record['commodity_name']
       : catalogId.replace(/_/g, ' ');
 
+  // ── Apply cents-to-dollars divisor ────────────────────────────────────────
+  // Some commodities are quoted in sub-currency units (cents, pence).
+  // Divide price AND absolute change by 100 to get base currency.
+  // Percentage change is unaffected (already a ratio).
+  const divisor = CENTS_TO_DOLLARS[catalogId] ?? 1;
+  const adjustedPrice = price / divisor;
+
   // v2 doesn't provide high/low — these fields don't exist in the response
   const highRaw = parseFloat(String(record['price_high'] ?? record['high'] ?? ''));
   const lowRaw = parseFloat(String(record['price_low'] ?? record['low'] ?? ''));
 
   // Daily change: "price_change_day" (v2 confirmed — absolute price change)
   const changeRaw = parseFloat(String(record['price_change_day'] ?? ''));
-  const change = Number.isFinite(changeRaw) ? changeRaw : null;
+  const change = Number.isFinite(changeRaw) ? changeRaw / divisor : null;
 
   // Daily percentage: "percentage_day" (v2 confirmed — e.g., "0.86" means +0.86%)
+  // NOTE: percentage is already a ratio — NOT divided by divisor
   const pctRaw = parseFloat(String(record['percentage_day'] ?? ''));
   const percentChange = Number.isFinite(pctRaw) ? pctRaw : null;
 
@@ -489,7 +537,9 @@ function parseSingleCommodityResponse(
 
   logDebug('Marketstack commodities: parsed', {
     catalogId,
-    price,
+    rawPrice: price,
+    adjustedPrice,
+    divisor,
     change,
     percentChange,
     currency,
@@ -498,11 +548,11 @@ function parseSingleCommodityResponse(
   return {
     catalogId,
     name,
-    price,
+    price: adjustedPrice,
     change,
     percentChange,
-    high: Number.isFinite(highRaw) && highRaw > 0 ? highRaw : null,
-    low: Number.isFinite(lowRaw) && lowRaw > 0 ? lowRaw : null,
+    high: Number.isFinite(highRaw) && highRaw > 0 ? highRaw / divisor : null,
+    low: Number.isFinite(lowRaw) && lowRaw > 0 ? lowRaw / divisor : null,
     currency,
     date,
   };

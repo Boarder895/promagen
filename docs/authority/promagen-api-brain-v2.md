@@ -36,7 +36,7 @@ embedding the FX Authority Map (decision authority) so regressions are obvious
 
 embedding the FX NO-BYPASS CHECKLIST (audit tool) and PR review template so authority cannot silently regress
 
-**v2.4.0 update (Jan 12, 2026):** Extended architecture to three feeds (FX, Commodities, Crypto) with identical calming, API timing stagger to prevent rate limits, and removed UI budget emoji indicator.
+**v2.4.0 update (Jan 12, 2026):** Extended architecture to multiple feeds with identical calming, API timing stagger to prevent rate limits, and removed UI budget emoji indicator. **v2.7.0 update (Feb 7, 2026):** Full audit — crypto removed, commodities LIVE on Marketstack v2, weather added, indices 4×/hour, Marketstack 3,333/day, 17 calming techniques.
 
 1. Core principle: rules must be enforceable
 
@@ -58,7 +58,8 @@ Each ribbon's data list is SSOT and lives at:
 
 - **FX:** `frontend/src/data/fx/fx-pairs.json`
 - **Commodities:** `frontend/src/data/commodities/commodities-catalog.json`
-- **Crypto:** `frontend/src/data/crypto/crypto-catalog.json`
+
+> **Note (Feb 7, 2026):** Crypto catalog removed — crypto feed was removed entirely from the codebase.
 
 These files are SSOT for:
 
@@ -78,7 +79,7 @@ config/api/providers.registry.json
 declares providers, endpoints, capabilities, env var dependencies, and metadata
 
 config/api/roles.policies.json
-declares routing policy per role (FX, commodities, crypto, etc.), including fallback chains and caching rules
+declares routing policy per role (FX, commodities, indices, weather, etc.), including fallback chains and caching rules
 
 The registry describes what exists.
 The policy describes how it's used.
@@ -107,7 +108,7 @@ Auth / configuration
 
 Capabilities
 
-- roles supported (e.g. fx.ribbon, commodities.ribbon, crypto.ribbon)
+- roles supported (e.g. fx.ribbon, commodities.ribbon, indices.ribbon, weather)
 - bulk support (true/false)
 - max symbols per bulk request (or "unknown")
 - known provider rate-limit hints (optional; enforcement still belongs to the Gate)
@@ -129,7 +130,7 @@ Each role policy should be able to answer:
 
 Identity
 
-- role id (e.g. fx.ribbon, commodities.ribbon, crypto.ribbon)
+- role id (e.g. fx.ribbon, commodities.ribbon, indices.ribbon, weather)
 - description (optional)
 
 Caching & calm rules (normative)
@@ -164,10 +165,11 @@ A role is a logical data capability: e.g.
 
 fx.ribbon
 fx.trace
+indices.ribbon
+indices.trace
 commodities.ribbon
 commodities.trace
-crypto.ribbon
-crypto.trace
+weather
 
 Roles have policies describing:
 
@@ -207,11 +209,9 @@ API Surface Index (derived from frontend/src/app/api/\*\*/route.ts):
 | /api/audit/[id]                    | audit               | No (audit)            | varies                   | No                            | Audit log / verification           |
 | /api/audit/[id]/verify             | audit               | No (audit)            | varies                   | No                            | Audit log / verification           |
 | /api/auth/\*                       | auth                | No (Clerk)            | no-store                 | No                            | DEPRECATED: Handled by Clerk       |
-| /api/commodities                   | commodities.ribbon  | Yes (Refresh Gate)    | 30m (server TTL)         | Yes (via /trace)              | Commodities ribbon bulk quotes     |
+| /api/commodities                   | commodities.ribbon  | Yes (Refresh Gate)    | 2h (server TTL)          | Yes (via /trace)              | Commodities data (Marketstack v2)  |
 | /api/commodities/trace             | commodities.trace   | Yes (observer-only)   | no-store                 | Yes                           | Commodities trace (read-only)      |
 | /api/consent                       | consent             | No                    | no-store                 | No                            | Consent preferences                |
-| /api/crypto                        | crypto.ribbon       | Yes (Refresh Gate)    | 30m (server TTL)         | Yes (via /trace)              | Crypto ribbon bulk quotes          |
-| /api/crypto/trace                  | crypto.trace        | Yes (observer-only)   | no-store                 | Yes                           | Crypto trace (read-only)           |
 | /api/exchanges                     | exchanges.index     | No (exchanges)        | varies                   | No                            | Exchange list                      |
 | /api/fx                            | fx.ribbon           | Yes (Refresh Gate)    | 30m (server TTL)         | Yes (trace via sibling route) | FX ribbon bulk quotes (A/B cached) |
 | /api/fx/trace                      | fx.trace            | Yes (observer-only)   | no-store                 | Yes                           | FX trace diagnostics (read-only)   |
@@ -230,7 +230,7 @@ API Surface Index (derived from frontend/src/app/api/\*\*/route.ts):
 | /api/snapshot/weather              | snapshot            | No (snapshot store)   | varies                   | No                            | Snapshot read/write                |
 | /api/snapshot/[key]                | snapshot            | No (snapshot store)   | varies                   | No                            | Snapshot read/write                |
 | /api/track-click                   | analytics.track     | No                    | no-store                 | No                            | Click tracking                     |
-| /api/weather                       | weather             | No (weather)          | varies                   | No                            | Weather data                       |
+| /api/weather                       | weather             | Yes (Refresh Gate)    | 5m (server TTL)          | Yes (via /trace)              | Weather data (OpenWeatherMap)      |
 | /api/world-clocks                  | world-clocks        | No                    | varies                   | No                            | World clocks                       |
 
 4.2 Roles table (what ships, and what is governed)
@@ -247,31 +247,45 @@ If a role exists, it must have:
 
 Minimum roles currently relied upon by the Brain model:
 
-| Role id            | Primary route(s)       | Provider chain source                                                  | TTL / cache authority | Bulk rules      | Refresh slot | Forbidden means                                | Trace                             |
-| ------------------ | ---------------------- | ---------------------------------------------------------------------- | --------------------- | --------------- | ------------ | ---------------------------------------------- | --------------------------------- |
-| fx.ribbon          | /api/fx                | roles.policies.json → providers.registry.json (execution via adapters) | Server TTL 30 min     | Bulk-only (N→1) | :00, :30     | budget block; missing key; ride-cache cooldown | /api/fx/trace (observer-only)     |
-| fx.trace           | /api/fx/trace          | none (observer-only)                                                   | no-store preferred    | n/a             | n/a          | never calls upstream; never mutates cache      | itself                            |
-| commodities.ribbon | /api/commodities       | roles.policies.json → providers.registry.json (execution via adapters) | Server TTL 30 min     | Bulk-only (N→1) | :10, :40     | budget block; missing key; ride-cache cooldown | /api/commodities/trace (observer) |
-| commodities.trace  | /api/commodities/trace | none (observer-only)                                                   | no-store preferred    | n/a             | n/a          | never calls upstream; never mutates cache      | itself                            |
-| crypto.ribbon      | /api/crypto            | roles.policies.json → providers.registry.json (execution via adapters) | Server TTL 30 min     | Bulk-only (N→1) | :20, :50     | budget block; missing key; ride-cache cooldown | /api/crypto/trace (observer-only) |
-| crypto.trace       | /api/crypto/trace      | none (observer-only)                                                   | no-store preferred    | n/a             | n/a          | never calls upstream; never mutates cache      | itself                            |
+| Role id            | Primary route(s)       | Provider chain source                                                  | TTL / cache authority | Bulk rules      | Refresh slot        | Forbidden means                                | Trace                             |
+| ------------------ | ---------------------- | ---------------------------------------------------------------------- | --------------------- | --------------- | ------------------- | ---------------------------------------------- | --------------------------------- |
+| fx.ribbon          | /api/fx                | roles.policies.json → providers.registry.json (execution via adapters) | Server TTL 30 min     | Bulk-only (N→1) | :00, :30            | budget block; missing key; ride-cache cooldown | /api/fx/trace (observer-only)     |
+| fx.trace           | /api/fx/trace          | none (observer-only)                                                   | no-store preferred    | n/a             | n/a                 | never calls upstream; never mutates cache      | itself                            |
+| indices.ribbon     | /api/indices           | roles.policies.json → providers.registry.json (execution via adapters) | Server TTL 2 hours    | Bulk-only (N→1) | :05, :20, :35, :50  | budget block; missing key; ride-cache cooldown | /api/indices (via /trace)         |
+| indices.trace      | /api/indices (trace)   | none (observer-only)                                                   | no-store preferred    | n/a             | n/a                 | never calls upstream; never mutates cache      | itself                            |
+| commodities.ribbon | /api/commodities       | marketstack/ module (rolling scheduler)                                | Server TTL 2 hours    | 1-per-call      | rolling every 5 min | budget block; missing key; ride-cache cooldown | /api/commodities/trace (observer) |
+| commodities.trace  | /api/commodities/trace | none (observer-only)                                                   | no-store preferred    | n/a             | n/a                 | never calls upstream; never mutates cache      | itself                            |
+| weather            | /api/weather           | openweathermap/ module                                                 | Server TTL 5 min      | Batch (24/call) | :10, :40            | budget block; missing key                      | /api/weather (via /trace)         |
 
-**Refresh slot** (NEW - Jan 12, 2026): Each ribbon role has assigned refresh slots to prevent simultaneous upstream calls. See §21.2 API Timing Stagger.
+**Refresh slot** (updated Feb 7, 2026): FX and Weather use clock-aligned slots. Indices uses 4×/hour clock-aligned. Commodities uses a rolling 5-min scheduler (not clock-aligned — 78 items, 1-per-call API). See §21.2.
 
 Runtime knobs (environment variables, server-only)
 
-All three ribbon roles share:
+TwelveData (FX only):
 
 - TWELVEDATA_API_KEY
-- FX_RIBBON_BUDGET_DAILY_ALLOWANCE (shared across all feeds)
-- FX_RIBBON_BUDGET_MINUTE_ALLOWANCE
-- FX_RIBBON_BUDGET_MINUTE_WINDOW_SECONDS
+- TWELVEDATA_BUDGET_DAILY (800/day)
+- TWELVEDATA_BUDGET_MINUTE (8/min)
+- FX_RIBBON_TTL_SECONDS (default 1800)
+
+Marketstack (Indices + Commodities, shared 3,333/day Professional):
+
+- MARKETSTACK_API_KEY
+- MARKETSTACK_BUDGET_DAILY (3333/day shared pool)
+- MARKETSTACK_BUDGET_MINUTE (60/min)
+- INDICES_RIBBON_TTL_SECONDS (default 7200)
+- COMMODITIES_REFRESH_INTERVAL_MS (default 300000 = 5 min)
+- COMMODITIES_BUDGET_DAILY (1000/day cap, subset of shared pool)
+
+OpenWeatherMap (Weather):
+
+- OPENWEATHERMAP_API_KEY
+- OPENWEATHERMAP_BUDGET_DAILY (1000/day)
 
 Per-feed TTL overrides:
 
 - FX_RIBBON_TTL_SECONDS (default 1800)
-- COMMODITIES_CACHE_TTL_SECONDS (default 1800)
-- CRYPTO_CACHE_TTL_SECONDS (default 1800)
+- INDICES_RIBBON_TTL_SECONDS (default 7200)
 
 These are deployment-critical: they must be set in the hosting environment (e.g. Vercel/Fly), not only in local .env files.
 
@@ -345,16 +359,34 @@ Provider: twelvedata
 
 - providerId: twelvedata
 - env vars: TWELVEDATA_API_KEY (server-only)
-- roles: fx.ribbon, commodities.ribbon, crypto.ribbon (all ribbon roles)
+- roles: fx.ribbon (FX only — crypto removed, commodities moved to Marketstack)
 - bulk: yes (Promagen uses one bulk request per ribbon feed)
 - symbol format expected by Promagen SSOT + UI:
   - FX: "USD/JPY" style
-  - Commodities: "XAU/USD", "BRENT" etc.
-  - Crypto: "BTC/USD", "ETH/USD" etc.
 - known failure modes to treat as normal:
   - HTTP 429 / "rate limit" → Gate applies ride-cache cooldown; trace explains budget state and last decision
   - 200 OK but missing some symbols → treat as partial data; return "—" for those chips; list missing symbols in trace
   - provider latency/timeouts → treat as upstream failure; attempt fallback chain only if policy allows
+
+Provider: marketstack
+
+- providerId: marketstack
+- env vars: MARKETSTACK_API_KEY (server-only)
+- roles: indices.ribbon, commodities.ribbon
+- budget: 3,333/day (Professional tier, 100K/month), 60/min
+- bulk: yes for indices (batch benchmark symbols), no for commodities (1-per-call API)
+- commodities: rolling 5-min scheduler, all 78 fully shuffled (Fisher-Yates) each cycle, ~288 calls/day
+- indices: clock-aligned :05/:20/:35/:50, ~96 calls/day
+- known failure modes: 429, partial data, weekend/holiday gaps
+
+Provider: openweathermap
+
+- providerId: openweathermap
+- env vars: OPENWEATHERMAP_API_KEY (server-only)
+- roles: weather
+- budget: 1,000/day
+- bulk: batch of 24 cities per call (2 batches = 48 cities)
+- schedule: clock-aligned :10/:40
 
 Virtual providers (not upstream, but used for provenance)
 
@@ -545,7 +577,7 @@ If a role has no budget policy, that is still a policy: it must say "no budget e
 
 Trace endpoints are for observation, not action.
 
-/api/fx/trace, /api/commodities/trace, /api/crypto/trace must never trigger upstream refresh.
+/api/fx/trace, /api/commodities/trace must never trigger upstream refresh.
 
 They must expose:
 
@@ -624,7 +656,7 @@ A group cache entry must carry:
 
 Identity
 
-- role (fx.ribbon, commodities.ribbon, or crypto.ribbon)
+- role (fx.ribbon, commodities.ribbon, indices.ribbon, or weather)
 - groupId (A or B)
 - ssotFingerprint (hash/fingerprint of ordered SSOT ids)
 
@@ -685,7 +717,7 @@ Policy-level expectations:
 
 Cache key must include:
 
-- role id (fx.ribbon, commodities.ribbon, crypto.ribbon)
+- role id (fx.ribbon, commodities.ribbon, indices.ribbon, weather)
 - SSOT fingerprint (ordered list identity)
 - groupId (A or B) for group caches
 
@@ -1155,11 +1187,11 @@ The gateway respects whatever the SSOT says — could be 5, 8, 12, or any number
 
 ---
 
-## 21. Four-Feed Architecture (Updated Jan 13, 2026)
+## 21. Four-Feed Architecture (Updated Feb 7, 2026)
 
 ### 21.1 Architecture Overview
 
-All four data feeds (FX, Indices, Commodities, Crypto) now share **identical calming architecture**:
+All four data feeds (FX, Indices, Commodities, Weather) now share **identical calming architecture** across **3 providers**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -1169,22 +1201,24 @@ All four data feeds (FX, Indices, Commodities, Crypto) now share **identical cal
 │  Feed: FX           Feed: Indices       Feed: Commodities           │
 │  ├── /api/fx        ├── /api/indices    ├── /api/commodities        │
 │  ├── use-fx-quotes  ├── use-indices-quotes                          │
-│  ├── fx-ribbon      ├── exchange-card   ├── commodities-ribbon      │
-│  ├── TTL: 1800s     ├── TTL: 7200s (2h) ├── TTL: 1800s              │
-│  ├── Slots: :00,:30 ├── Slots: :05,:35  ├── Slots: :10,:40          │
-│  └── TwelveData     └── Marketstack     └── TwelveData              │
+│  ├── fx-ribbon      ├── exchange-card   ├── commodity-windows       │
+│  ├── TTL: 1800s     ├── TTL: 7200s (2h) ├── TTL: 7200s per-item   │
+│  ├── Slots: :00,:30 ├── :05,:20,:35,:50 ├── Rolling 5-min          │
+│  └── TwelveData     └── Marketstack     └── Marketstack v2         │
 │                                                                     │
-│  Feed: Crypto                                                       │
-│  ├── /api/crypto                                                    │
-│  ├── use-crypto-quotes.ts                                           │
-│  ├── crypto-ribbon.container                                        │
-│  ├── TTL: 1800s (30 min)                                            │
-│  ├── Slots: :20, :50                                                │
-│  └── TwelveData                                                     │
+│  Feed: Weather                                                      │
+│  ├── /api/weather                                                   │
+│  ├── City batching (48 cities, 2 batches)                           │
+│  ├── TTL: 5 min                                                     │
+│  ├── Slots: :10, :40                                                │
+│  └── OpenWeatherMap                                                 │
 │                                                                     │
 │  ALL FOUR USE:                                                      │
-│  ├── Same 7 calming techniques (TTL, dedup, batch, etc.)            │
-│  ├── Budget management (TwelveData 800/day, Marketstack 250/day)    │
+│  ├── Same 17 calming techniques (TTL, dedup, batch, etc.)           │
+│  ├── Budget management per provider:                                │
+│  │   TwelveData 800/day (FX only)                                   │
+│  │   Marketstack 3,333/day (Indices + Commodities)                  │
+│  │   OpenWeatherMap 1,000/day (Weather)                             │
 │  ├── Same circuit breaker pattern                                   │
 │  ├── Same graceful degradation                                      │
 │  └── API timing stagger (prevents simultaneous upstream calls)      │
@@ -1192,57 +1226,51 @@ All four data feeds (FX, Indices, Commodities, Crypto) now share **identical cal
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Note:** Crypto feed was removed entirely from the codebase. TwelveData now serves FX only.
+
 ### 21.2 API Timing Stagger (Critical)
 
 To prevent simultaneous upstream calls, each feed refreshes at **staggered intervals**:
 
 ```
-Hour timeline (repeats every hour):
+Hour timeline (every hour):
 ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐
 │:00 │:05 │:10 │:20 │:30 │:35 │:40 │:50 │:00 │
 ├────┼────┼────┼────┼────┼────┼────┼────┼────┤
-│ FX │IDX │COM │CRY │ FX │IDX │COM │CRY │ FX │
+│ FX │IDX │WTH │IDX │ FX │IDX │WTH │IDX │ FX │
 └────┴────┴────┴────┴────┴────┴────┴────┴────┘
+  ↑    ↑   ↑    ↑    ↑    ↑    ↑    ↑
+  TD   MS  OWM  MS   TD   MS  OWM  MS
 
-FX:          Minutes 0 and 30 (base schedule)      → TwelveData
-Indices:     Minutes 5 and 35 (5-minute offset)    → Marketstack
-Commodities: Minutes 10 and 40 (10-minute offset)  → TwelveData
-Crypto:      Minutes 20 and 50 (20-minute offset)  → TwelveData
++ Commodities: rolling every 5 min (Marketstack v2, not clock-aligned)
+
+FX:          Minutes 0 and 30 (base schedule)             → TwelveData
+Indices:     Minutes 5, 20, 35, 50 (15-minute intervals)  → Marketstack
+Weather:     Minutes 10 and 40                             → OpenWeatherMap
+Commodities: Rolling every 5 min (1 commodity per call)    → Marketstack v2
 ```
 
 **Why stagger?**
 
-- TwelveData has a **per-minute rate limit** (8 credits/minute)
-- Marketstack has **separate budget** (250/day, doesn't affect TwelveData)
-- Without stagger: 3 TwelveData feeds × 8 symbols = 24 credits at :00 and :30 → **rate limited**
-- With stagger: 8 credits at each TwelveData slot → **safe**
-- Indices at :05/:35 uses Marketstack (different provider, no conflict)
+- TwelveData has a **per-minute rate limit** (8 credits/minute) — now serves FX only
+- Marketstack has **separate budget** (3,333/day Professional, shared between Indices + Commodities)
+- OpenWeatherMap has **separate budget** (1,000/day)
+- Without stagger: multiple providers hit at same minute → needless contention
+- Commodities uses **rolling scheduler** because the API supports only 1 commodity per call (78 items would overwhelm a single clock slot)
 
-**Implementation (frontend hooks):**
+**Implementation (gateway schedulers):**
 
 ```typescript
-// use-commodities-quotes.ts
-function getMsUntilNextCommoditiesSlot(): number {
-  const now = new Date();
-  const minute = now.getMinutes();
-  const targets = [10, 40]; // Commodities refresh slots
+// marketstack/scheduler.ts — Indices (clock-aligned)
+// Refreshes at :05, :20, :35, :50 each hour
+const INDICES_SLOTS = [5, 20, 35, 50];
 
-  let best = targets[0] + 60 - minute;
-  for (const t of targets) {
-    const delta = t - minute;
-    if (delta > 0 && delta < best) best = delta;
-  }
+// marketstack/commodities-scheduler.ts — Commodities (rolling)
+// Processes 1 commodity every 5 minutes, all 78 fully shuffled (Fisher-Yates) each cycle
+// 78 commodities × 5 min = 6.5 hours per full cycle (~3.7 cycles/day)
 
-  return Math.max(1000, best * 60_000 - now.getSeconds() * 1000);
-}
-
-// use-crypto-quotes.ts
-function getMsUntilNextCryptoSlot(): number {
-  const now = new Date();
-  const minute = now.getMinutes();
-  const targets = [20, 50]; // Crypto refresh slots
-  // ... same calculation
-}
+// openweathermap/handler.ts — Weather (clock-aligned)
+// Refreshes at :10, :40 each hour (48 cities in 2 batches of 24)
 ```
 
 ### 21.3 Gateway Endpoints
@@ -1250,10 +1278,11 @@ function getMsUntilNextCryptoSlot(): number {
 | Feed        | Gateway Endpoint | Frontend Route     | Cache Key                |
 | ----------- | ---------------- | ------------------ | ------------------------ |
 | FX          | `/fx`            | `/api/fx`          | `fx:ribbon:all`          |
+| Indices     | `/indices`       | `/api/indices`     | `indices:ribbon:all`     |
 | Commodities | `/commodities`   | `/api/commodities` | `commodities:ribbon:all` |
-| Crypto      | `/crypto`        | `/api/crypto`      | `crypto:ribbon:all`      |
+| Weather     | `/weather`       | `/api/weather`     | `weather:all`            |
 
-All three endpoints use identical implementation patterns:
+All four endpoints use identical implementation patterns:
 
 - `dedupedFetch{Feed}()` for request deduplication
 - `{feed}Cache` Map for TTL caching
@@ -1266,22 +1295,34 @@ All three endpoints use identical implementation patterns:
 | Feed        | SSOT Location                                            |
 | ----------- | -------------------------------------------------------- |
 | FX          | `frontend/src/data/fx/fx-pairs.json`                     |
+| Indices     | `frontend/src/data/exchanges/exchanges.catalog.json`     |
 | Commodities | `frontend/src/data/commodities/commodities-catalog.json` |
-| Crypto      | `frontend/src/data/crypto/crypto-catalog.json`           |
+| Weather     | Derived from exchanges catalog (city coordinates)        |
 
-### 21.5 Budget Management (Shared)
+### 21.5 Budget Management (Per Provider)
 
-All three feeds share a single TwelveData budget:
+Feeds use **3 separate providers** with independent budgets:
 
-- **Daily limit:** 800 credits (shared across all feeds)
-- **Per-minute limit:** 8 credits
+**TwelveData (FX only):**
 
-With API timing stagger:
+- Daily limit: 800 credits
+- Per-minute limit: 8 credits
+- FX: ~48-96 credits/day (2 refreshes/hr × 8 credits = ~16/hr × 6-12 active hours)
+- **Usage: 6-12% of daily limit**
 
-- FX: ~128 credits/day (16 refreshes × 8 credits)
-- Commodities: ~128 credits/day
-- Crypto: ~128 credits/day
-- **Total: ~384 credits/day (48% of limit)**
+**Marketstack (Indices + Commodities, shared pool):**
+
+- Daily limit: 3,333 credits (Professional tier, $49/month)
+- Per-minute limit: 60
+- Indices: ~96 calls/day (4×/hour, batch of benchmark symbols)
+- Commodities: ~288 calls/day (rolling 5-min, 1 commodity per call, capped at 1,000/day)
+- **Combined: ~384 calls/day (11.5% of shared pool)**
+
+**OpenWeatherMap (Weather):**
+
+- Daily limit: 1,000 credits
+- Weather: ~576 calls/day (2×/hour, 48 cities in 2 batches of 24, ~12 calls/refresh × 48 refreshes)
+- **Usage: ~57.6% of daily limit**
 
 ### 21.6 Removed UI Features (Jan 12, 2026)
 
@@ -1321,6 +1362,22 @@ What remains:
 
 ## 22. Changelog
 
+- **7 Feb 2026 (v2.7.0):** Full audit — doc corrected to match reality
+  - REMOVED: All crypto references (feed, roles, routes, SSOT, provider catalogue, timing stagger)
+  - UPDATED: Commodities → ✅ LIVE on Marketstack v2 (rolling 5-min scheduler, not TwelveData)
+  - ADDED: Weather role (OpenWeatherMap, :10/:40, 1,000/day)
+  - ADDED: Indices role to roles table (indices.ribbon, indices.trace)
+  - FIXED: Indices schedule → :05/:20/:35/:50 (4×/hr, was :05/:35)
+  - FIXED: Marketstack budget → 3,333/day (Professional tier, was 250)
+  - FIXED: TwelveData → FX only (was FX + Commodities + Crypto)
+  - UPDATED: Calming techniques 7 → 17
+  - UPDATED: §21 Four-Feed diagram rebuilt (3 providers, no crypto)
+  - UPDATED: §21.2 timing stagger (4 feeds, 3 providers)
+  - UPDATED: §21.3 gateway endpoints (added indices + weather, removed crypto)
+  - UPDATED: §21.5 budget management (per-provider breakdown)
+  - UPDATED: Runtime knobs (per-provider env vars)
+  - UPDATED: Provider catalogue (TwelveData FX only, added Marketstack + OWM)
+  - UPDATED: API Surface Index (removed crypto rows, weather now Brain-governed)
 - **14 Jan 2026 (v2.6.0):** Provider-Based Gateway Architecture
   - Created Book 2 (`promagen-api-brain-v2-book2.md`) for §23–§26
   - §23: Provider-Based Gateway Architecture (folder structure)

@@ -681,12 +681,12 @@ async function start(): Promise<void> {
 
       setTimeout(() => {
         indicesHandler.startBackgroundRefresh();
-        logInfo('Background refresh started: Indices (clock-aligned :05/:35)');
+        logInfo('Background refresh started: Indices (clock-aligned :05/:20/:35/:50)');
       }, 10_000);
 
       setTimeout(() => {
         commoditiesHandler.startBackgroundRefresh();
-        logInfo('Background refresh started: Commodities (clock-aligned :10/:40)');
+        logInfo('Background refresh started: Commodities (rolling 5-min, randomised)');
       }, 15_000);
 
       setTimeout(() => {

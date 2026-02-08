@@ -142,34 +142,11 @@ function formatCommodityPrice(value: number, unit: string, quoteCurrency: string
   // Determine currency symbol
   const currencySymbol = quoteCurrency === 'EUR' ? '€' : '$';
 
-  // Format with appropriate decimals
-  let formatted: string;
-
-  if (value >= 1000) {
-    // Large values: $2,630.50
-    formatted = value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  } else if (value >= 10) {
-    // Medium values: $74.30
-    formatted = value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  } else if (value >= 1) {
-    // Small values: $3.25
-    formatted = value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 3,
-    });
-  } else {
-    // Very small values: $0.1234
-    formatted = value.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
-    });
-  }
+  // All prices: strict 2 decimal places
+  const formatted = value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   return `${currencySymbol}${formatted} ${unit}`;
 }

@@ -201,6 +201,103 @@ function toDisplayRating(provider: Provider, dbRating: ProviderRating | undefine
 }
 
 // =============================================================================
+// EXPAND HEADER COMPONENT (Provider column toggle)
+// =============================================================================
+// All styles inline — no globals.css dependency.
+// To change arrow colour: edit ARROW_COLOUR / ARROW_ACTIVE_COLOUR below.
+// To change transition speed: edit TRANSITION_SPEED.
+// =============================================================================
+
+const ARROW_COLOUR = 'rgba(168, 85, 247, 0.5)'; // idle: dim slate
+const ARROW_HOVER_COLOUR = 'rgba(148, 163, 184, 0.9)'; // hover: brighter slate
+const ARROW_ACTIVE_COLOUR = 'rgba(34, 211, 238, 1)'; // expanded: cyan-400
+const UNDERLINE_COLOUR = 'rgba(34, 211, 238, 0.6)'; // underline sweep
+const UNDERLINE_ACTIVE = 'rgba(34, 211, 238, 0.8)'; // underline when expanded
+const LABEL_GLOW = 'rgba(34, 211, 238, 0.3)'; // label text-shadow
+const TRANSITION_SPEED = '2s'; // arrow rotation/colour speed
+
+function ExpandHeader({ isExpanded, onToggle }: { isExpanded: boolean; onToggle?: () => void }) {
+  const [hovered, setHovered] = React.useState(false);
+
+  const buttonStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    width: '100%',
+    padding: '0.75rem 1rem',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    fontSize: 'inherit',
+    fontWeight: 'inherit',
+    textTransform: 'inherit' as React.CSSProperties['textTransform'],
+    letterSpacing: 'inherit',
+    color: hovered ? 'rgba(226, 232, 240, 1)' : 'inherit',
+    transition: `all 0.2s ease`,
+    position: 'relative',
+  };
+
+  const underlineStyle: React.CSSProperties = {
+    content: '""',
+    position: 'absolute',
+    bottom: '0.5rem',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: isExpanded ? '80%' : hovered ? '70%' : '0',
+    height: '2px',
+    background: `linear-gradient(90deg, transparent, ${isExpanded ? UNDERLINE_ACTIVE : UNDERLINE_COLOUR}, transparent)`,
+    borderRadius: '1px',
+    transition: 'width 0.25s ease',
+  };
+
+  const labelStyle: React.CSSProperties = {
+    transition: `color 0.2s ease`,
+    color: isExpanded ? 'rgba(226, 232, 240, 1)' : undefined,
+    textShadow: isExpanded ? `0 0 8px ${LABEL_GLOW}` : undefined,
+  };
+
+  const arrowStyle: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '1.8em',
+    color: isExpanded ? ARROW_ACTIVE_COLOUR : hovered ? ARROW_HOVER_COLOUR : ARROW_COLOUR,
+    transition: `all ${TRANSITION_SPEED} ease`,
+    minWidth: '1em',
+    transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+    filter: isExpanded
+      ? `drop-shadow(0 0 4px rgba(34, 211, 238, 0.5)) drop-shadow(0 0 8px rgba(34, 211, 238, 0.3))`
+      : 'none',
+    animation: 'expandArrowPulse 1.5s ease-in-out infinite',
+  };
+
+  return (
+    <>
+      {/* Keyframes — 1.5s gentle opacity pulse */}
+      <style>{`@keyframes expandArrowPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
+      <button
+        type="button"
+        onClick={onToggle}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={buttonStyle}
+        aria-label={
+          isExpanded ? 'Collapse table, show finance ribbon' : 'Expand table, hide finance ribbon'
+        }
+        title={isExpanded ? 'Show FX & commodities' : 'Expand leaderboard'}
+      >
+        {/* Underline sweep pseudo-element replacement */}
+        <span style={underlineStyle} aria-hidden="true" />
+        <span style={labelStyle}>Provider</span>
+        <span style={arrowStyle}>▼</span>
+      </button>
+    </>
+  );
+}
+
+// =============================================================================
 // SORTABLE HEADER COMPONENT
 // =============================================================================
 
@@ -442,24 +539,7 @@ export function ProvidersTable({
           <thead className="providers-table-header">
             <tr>
               <th className="providers-table-th providers-table-th-sortable px-4 py-3 text-center w-[30%] border-r border-white/5">
-                <button
-                  type="button"
-                  onClick={onExpandToggle}
-                  className={`expand-header ${isExpanded ? 'expand-header-active' : ''}`}
-                  aria-label={
-                    isExpanded
-                      ? 'Collapse table, show finance ribbon'
-                      : 'Expand table, hide finance ribbon'
-                  }
-                  title={isExpanded ? 'Show FX & commodities' : 'Expand leaderboard'}
-                >
-                  <span className="expand-header-label">Provider</span>
-                  <span
-                    className={`expand-header-arrow ${isExpanded ? 'expand-header-arrow-active' : ''}`}
-                  >
-                    ▼
-                  </span>
-                </button>
+                <ExpandHeader isExpanded={isExpanded} onToggle={onExpandToggle} />
               </th>
               <th className="providers-table-th px-4 py-3 text-center w-[18%] border-r border-white/5">
                 Promagen Users

@@ -15,6 +15,7 @@
 // - USD/INR means: 1 USD = X INR → to get USD from INR: INR / rate
 // - USD/AUD means: 1 USD = X AUD → to get USD from AUD: AUD / rate
 //
+// v2.6: All formatters strict 2dp (8 Feb 2026)
 // v2.5: Cross-rate USD→ZAR via GBP + formatZarPrice (5 Feb 2026)
 // v2.4: Flag emoji support + 3-line conversion for non-major currencies (5 Feb 2026)
 // v2.3: Smart conversion lines (5 Feb 2026)
@@ -432,16 +433,7 @@ export function convertCommodityPrice(
 export function formatUsdPrice(price: number | null): string {
   if (price === null || !Number.isFinite(price)) return '—';
   
-  if (price >= 1000) {
-    return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  if (price >= 10) {
-    return `$${price.toFixed(2)}`;
-  }
-  if (price >= 1) {
-    return `$${price.toFixed(3)}`;
-  }
-  return `$${price.toFixed(4)}`;
+  return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
@@ -452,16 +444,7 @@ export function formatUsdPrice(price: number | null): string {
 export function formatEurPrice(price: number | null): string {
   if (price === null || !Number.isFinite(price)) return '—';
   
-  if (price >= 1000) {
-    return `€${price.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  if (price >= 10) {
-    return `€${price.toFixed(2)}`;
-  }
-  if (price >= 1) {
-    return `€${price.toFixed(3)}`;
-  }
-  return `€${price.toFixed(4)}`;
+  return `€${price.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
@@ -472,16 +455,7 @@ export function formatEurPrice(price: number | null): string {
 export function formatGbpPrice(price: number | null): string {
   if (price === null || !Number.isFinite(price)) return '—';
   
-  if (price >= 1000) {
-    return `£${price.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  if (price >= 10) {
-    return `£${price.toFixed(2)}`;
-  }
-  if (price >= 1) {
-    return `£${price.toFixed(3)}`;
-  }
-  return `£${price.toFixed(4)}`;
+  return `£${price.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
@@ -493,16 +467,7 @@ export function formatGbpPrice(price: number | null): string {
 export function formatZarPrice(price: number | null): string {
   if (price === null || !Number.isFinite(price)) return '—';
   
-  if (price >= 1000) {
-    return `R${price.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
-  if (price >= 10) {
-    return `R${price.toFixed(2)}`;
-  }
-  if (price >= 1) {
-    return `R${price.toFixed(3)}`;
-  }
-  return `R${price.toFixed(4)}`;
+  return `R${price.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 /**
