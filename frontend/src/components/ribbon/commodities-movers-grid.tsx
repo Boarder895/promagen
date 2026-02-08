@@ -264,7 +264,10 @@ export default function CommoditiesMoversGrid({
     const Icon = type === 'winner' ? WinnerIcon : LoserIcon;
     const colorClass = type === 'winner' ? 'text-emerald-400' : 'text-red-400';
     const title = type === 'winner' ? 'Biggest Winners' : 'Biggest Losers';
-    const subtitle = type === 'winner' ? 'Largest gains today' : 'Largest declines today';
+    const subtitle =
+      type === 'winner'
+        ? 'Largest gains in the last 2 hours'
+        : 'Largest declines in the last 2 hours ';
 
     // Only show as many cards as we have room for
     const visibleCount = cardsPerPanel;
@@ -279,14 +282,14 @@ export default function CommoditiesMoversGrid({
         <div className="flex-shrink-0 flex flex-col items-center gap-0.5 pb-2">
           <div className="flex items-center gap-2">
             <Icon />
-            <h3 className={`text-sm font-semibold uppercase tracking-wider ${colorClass}`}>
+            <h3 className={`text-base font-semibold uppercase tracking-wider ${colorClass}`}>
               {title}
             </h3>
             {isStale && (
-              <span className="text-xs text-amber-400/70 animate-pulse">updating...</span>
+              <span className="text-xs text-amber-400/80 animate-pulse">updating...</span>
             )}
           </div>
-          <p className="text-xs text-white/40">{subtitle}</p>
+          <p className="text-sm text-amber-400/80">{subtitle}</p>
         </div>
 
         {/* Grid of WINDOWS — 2×2 or 2×1 depending on measured content fit */}

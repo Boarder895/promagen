@@ -109,12 +109,12 @@ export default function CommodityMoverCard({
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center text-center p-4"
+      className="relative flex flex-col items-center justify-center text-center p-1"
       style={{ fontSize: 'var(--commodity-font, 18px)' }}
     >
       {/* ROW 1: Emoji + Name (side by side) */}
       <div className="flex items-center justify-center gap-2">
-        <span className="leading-none" style={{ fontSize: '1.5em' }} aria-hidden="true">
+        <span className="leading-none" style={{ fontSize: '0,7em' }} aria-hidden="true">
           {emoji}
         </span>
         <span
@@ -126,11 +126,11 @@ export default function CommodityMoverCard({
       </div>
 
       {/* ROW 2: Flag + Base Price with Unit */}
-      <div className="flex items-center justify-center gap-2.5 mt-2" data-testid="commodity-price">
-        {baseFlagCode && <Flag countryCode={baseFlagCode} size={32} />}
+      <div className="flex items-center justify-center gap-2.5 mt-1" data-testid="commodity-price">
+        {baseFlagCode && <Flag countryCode={baseFlagCode} size={26} />}
         <span
           className="text-white tabular-nums leading-tight whitespace-nowrap"
-          style={{ fontSize: '1em' }}
+          style={{ fontSize: '0.7em' }}
         >
           {priceText || '—'}
         </span>
@@ -139,7 +139,7 @@ export default function CommodityMoverCard({
       {/* ROW 3: Delta with arrow */}
       <span
         className={`flex items-center gap-1.5 font-bold tabular-nums whitespace-nowrap mt-2 ${deltaColorClass}`}
-        style={{ fontSize: '1em' }}
+        style={{ fontSize: '0.7em' }}
         data-testid="commodity-delta"
       >
         {arrowIcon}
@@ -158,18 +158,18 @@ export default function CommodityMoverCard({
         {/* Line 1 */}
         <span
           className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine1.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-          style={{ fontSize: '1em' }}
+          style={{ fontSize: '0.7em' }}
         >
-          <Flag countryCode={conversionLine1.countryCode} size={32} />
+          <Flag countryCode={conversionLine1.countryCode} size={26} />
           <span>{conversionLine1.priceText}</span>
         </span>
 
         {/* Line 2 */}
         <span
           className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine2.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-          style={{ fontSize: '1em' }}
+          style={{ fontSize: '0.7em' }}
         >
-          <Flag countryCode={conversionLine2.countryCode} size={32} />
+          <Flag countryCode={conversionLine2.countryCode} size={26} />
           <span>{conversionLine2.priceText}</span>
         </span>
 
@@ -177,9 +177,9 @@ export default function CommodityMoverCard({
         {conversionLine3 && (
           <span
             className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine3.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-            style={{ fontSize: '1em' }}
+            style={{ fontSize: '0.7em' }}
           >
-            <Flag countryCode={conversionLine3.countryCode} size={32} />
+            <Flag countryCode={conversionLine3.countryCode} size={26} />
             <span>{conversionLine3.priceText}</span>
           </span>
         )}
