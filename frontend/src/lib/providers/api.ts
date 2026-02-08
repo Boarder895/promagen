@@ -152,7 +152,7 @@ async function loadUsageSnapshot(providerIds: string[]): Promise<UsageSnapshot> 
       select
         provider_id as "providerId",
         country_code as "countryCode",
-        user_count as "count"
+        users_count as "count"
       from provider_country_usage_30d
       where provider_id = any(${uniqueProviderIds})
     `;

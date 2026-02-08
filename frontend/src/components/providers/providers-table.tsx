@@ -375,7 +375,7 @@ function chunkPairs<T>(items: ReadonlyArray<T>): Array<ReadonlyArray<T>> {
  */
 function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCountryUsage> }) {
   if (!usage || usage.length === 0) {
-    return <span className="text-slate-600 text-xs">—</span>;
+    return <span className="text-slate-600 text-base">—</span>;
   }
 
   // Take top 6
@@ -383,13 +383,13 @@ function PromagenUsersCell({ usage }: { usage?: ReadonlyArray<PromagenUsersCount
   const rows = chunkPairs(top6);
 
   return (
-    <div className="promagen-users-cell flex flex-col gap-1">
+    <div className="promagen-users-cell flex flex-col items-center gap-1">
       {rows.map((row, rowIdx) => (
-        <div key={rowIdx} className="flex items-center justify-center gap-2">
+        <div key={rowIdx} className="flex items-center justify-center gap-3">
           {row.map((item) => (
-            <span key={item.countryCode} className="inline-flex items-center gap-0.5">
-              <Flag countryCode={item.countryCode} size={14} decorative />
-              <span className="text-xs text-slate-400">{toRomanNumeral(item.count)}</span>
+            <span key={item.countryCode} className="inline-flex items-center gap-1">
+              <Flag countryCode={item.countryCode} size={26} decorative />
+              <span className="text-xl text-slate-400">{toRomanNumeral(item.count)}</span>
             </span>
           ))}
         </div>
@@ -583,7 +583,7 @@ export function ProvidersTable({
                   />
                 </td>
 
-                <td className="providers-table-td px-4 py-3 w-[18%] border-r border-white/5">
+                <td className="providers-table-td px-4 py-3 w-[18%] text-center border-r border-white/5">
                   <PromagenUsersCell usage={p.promagenUsers} />
                 </td>
 
