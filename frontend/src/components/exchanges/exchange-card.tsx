@@ -353,7 +353,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
     boxShadow: isHovered
       ? `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`
       : '0 1px 3px rgba(0, 0, 0, 0.1)',
-    transition: 'all 200ms ease-out',
+    transition: 'border-color 200ms ease-out, box-shadow 200ms ease-out',
   };
 
   const extWeather = weather as ExtendedWeatherData | null;

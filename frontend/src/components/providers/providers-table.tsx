@@ -235,7 +235,7 @@ function ExpandHeader({ isExpanded, onToggle }: { isExpanded: boolean; onToggle?
     textTransform: 'inherit' as React.CSSProperties['textTransform'],
     letterSpacing: 'inherit',
     color: hovered ? 'rgba(226, 232, 240, 1)' : 'inherit',
-    transition: `all 0.2s ease`,
+    transition: 'color 0.2s ease',
     position: 'relative',
   };
 
@@ -264,7 +264,7 @@ function ExpandHeader({ isExpanded, onToggle }: { isExpanded: boolean; onToggle?
     justifyContent: 'center',
     fontSize: '1.8em',
     color: isExpanded ? ARROW_ACTIVE_COLOUR : hovered ? ARROW_HOVER_COLOUR : ARROW_COLOUR,
-    transition: `all ${TRANSITION_SPEED} ease`,
+    transition: `color ${TRANSITION_SPEED} ease, transform ${TRANSITION_SPEED} ease, filter ${TRANSITION_SPEED} ease`,
     minWidth: '1em',
     transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
     filter: isExpanded
@@ -275,8 +275,6 @@ function ExpandHeader({ isExpanded, onToggle }: { isExpanded: boolean; onToggle?
 
   return (
     <>
-      {/* Keyframes — 1.5s gentle opacity pulse */}
-      <style>{`@keyframes expandArrowPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
       <button
         type="button"
         onClick={onToggle}

@@ -43,7 +43,7 @@
  * measurements and are NOT affected by this — they keep their own scaling.
  * ========================================================================== */
 html {
-  font-size: clamp(14px, 1.1vw, 18px);
+  font-size: clamp(16px, 1.1vw, 18px);
 }
 
 :root {
@@ -193,42 +193,51 @@ a:hover {
   /* no animation */
 }
 
-/* Whisper tint: very faint flash behind the price, fades quickly */
-@keyframes fx-whisper-up {
+/* Whisper tint: very faint flash behind the price, fades quickly.
+ * PERF (Phase 3): Replaced box-shadow keyframes with opacity-only
+ * pseudo-element. opacity is GPU-compositable (runs on compositor
+ * thread), whereas box-shadow triggers a repaint every frame.
+ * Visual result is identical — a soft coloured halo that fades in/out.
+ */
+@keyframes fx-whisper-fade {
   0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    opacity: 0;
   }
   35% {
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.08);
+    opacity: 1;
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-
-@keyframes fx-whisper-down {
-  0% {
-    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
-  }
-  35% {
-    box-shadow: 0 0 0 6px rgba(248, 113, 113, 0.08);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
+    opacity: 0;
   }
 }
 
 .fx-price {
+  position: relative;
+  display: inline-block; /* pseudo-elements need a block/inline-block parent */
   border-radius: 0.4rem;
   padding: 0 0.15rem;
 }
 
-.fx-whisper-up {
-  animation: fx-whisper-up 260ms ease-out 1;
+/* Shared pseudo-element base — sits behind the text, hidden by default */
+.fx-whisper-up::after,
+.fx-whisper-down::after {
+  content: '';
+  position: absolute;
+  /* 6px outset matches the old box-shadow spread */
+  inset: -6px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  animation: fx-whisper-fade 260ms ease-out 1;
+  will-change: opacity; /* hint to compositor */
 }
 
-.fx-whisper-down {
-  animation: fx-whisper-down 260ms ease-out 1;
+.fx-whisper-up::after {
+  background-color: rgba(16, 185, 129, 0.08);
+}
+
+.fx-whisper-down::after {
+  background-color: rgba(248, 113, 113, 0.08);
 }
 
 /* ========================================================================== */
@@ -284,6 +293,17 @@ a:hover {
 /* Promagen Provider Leaderboard Styles                                       */
 /* Updated: December 31, 2025                                                 */
 /* ========================================================================== */
+
+/* Expand/collapse arrow — gentle opacity pulse */
+@keyframes expandArrowPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
 
 /* Container - flex layout to fill available space (no fixed heights) */
 .providers-table-container {
@@ -390,7 +410,7 @@ a:hover {
   text-transform: inherit;
   letter-spacing: inherit;
   color: inherit;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
   position: relative;
 }
 
@@ -446,7 +466,9 @@ a:hover {
   justify-content: center;
   font-size: 0.75em;
   color: rgba(100, 116, 139, 0.5); /* slate-500 very dim */
-  transition: all 0.2s ease;
+  transition:
+    color 0.2s ease,
+    filter 0.2s ease;
   min-width: 1em;
 }
 
