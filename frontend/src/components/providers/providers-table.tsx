@@ -451,17 +451,29 @@ export function ProvidersTable({
 
   // Index Rating data from database
   const [indexRatings, setIndexRatings] = useState<Map<string, ProviderRating>>(new Map());
-  const [_ratingsLoaded, setRatingsLoaded] = useState(false);
+  const [ratingsLoaded, setRatingsLoaded] = useState(false);
 
   // Fetch Index Ratings on mount
   useEffect(() => {
     const providerIds = providers.map((p) => p.id);
-    if (providerIds.length === 0) return;
+    if (providerIds.length === 0) {
+      setRatingsLoaded(true); // No providers = nothing to wait for
+      return;
+    }
 
-    fetchIndexRatings(providerIds).then((ratings) => {
-      setIndexRatings(ratings);
-      setRatingsLoaded(true);
-    });
+    // Safety timeout: show table after 2s even if API is slow
+    const timeout = setTimeout(() => setRatingsLoaded(true), 2000);
+
+    fetchIndexRatings(providerIds)
+      .then((ratings) => {
+        setIndexRatings(ratings);
+        setRatingsLoaded(true);
+      })
+      .catch(() => {
+        // Ensure table becomes visible even on unexpected errors
+        setRatingsLoaded(true);
+      })
+      .finally(() => clearTimeout(timeout));
   }, [providers]);
 
   // Handle sort toggle: if same column, flip direction; else switch column with default direction
@@ -525,7 +537,16 @@ export function ProvidersTable({
   }, [sorted, onProvidersChange]);
 
   return (
-    <div className="providers-table-container leaderboard-glow-frame">
+    <div
+      className="providers-table-container leaderboard-glow-frame"
+      style={{
+        // CLS FIX: Invisible until Index Ratings load and rows sort.
+        // Per CLS spec, opacity: 0 elements don't contribute to shift scoring.
+        // Prevents the ratings-fetch → re-sort → row reorder from counting as CLS.
+        opacity: ratingsLoaded ? 1 : 0,
+        transition: 'opacity 150ms ease-in',
+      }}
+    >
       {/* Desktop table view — hidden on mobile via CSS */}
       <div
         className="providers-table-scroll-wrapper providers-table-desktop"

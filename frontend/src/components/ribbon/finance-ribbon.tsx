@@ -81,69 +81,92 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
   const INITIAL_FONT_PX = 14;
   const [snap, setSnap] = React.useState<SnapState>({ rows: 1, fontPx: INITIAL_FONT_PX });
 
+  // CLS FIX: Content starts invisible. After first reflow settles,
+  // we fade in. Per CLS spec, opacity: 0 elements don't count as shifts.
+  const [settled, setSettled] = React.useState(false);
+
   const columnsForTwoRows = React.useMemo(() => Math.max(1, Math.ceil(chips.length / 2)), [chips]);
 
-  const scheduleReflow = React.useCallback(() => {
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+  // ---- CLS FIX: Synchronous measurement body (no rAF wrapper) ----
+  // Extracted so it can be called from useLayoutEffect (before paint)
+  // AND from scheduleReflow (after resize, via rAF).
+  const doReflow = React.useCallback(() => {
+    const host = hostRef.current;
+    const measurer = measurerRef.current;
+    if (!host || !measurer) return;
 
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null;
+    const hostWidth = host.clientWidth;
+    if (!Number.isFinite(hostWidth) || hostWidth <= 0) return;
 
-      const host = hostRef.current;
-      const measurer = measurerRef.current;
-      if (!host || !measurer) return;
+    // Set the measurer width to exactly the chips host width.
+    measurer.style.width = `${hostWidth}px`;
 
-      const hostWidth = host.clientWidth;
-      if (!Number.isFinite(hostWidth) || hostWidth <= 0) return;
+    const candidates = buildFontCandidates(MAX_FONT_PX, MIN_FONT_PX, STEP_PX);
 
-      // Set the measurer width to exactly the chips host width.
-      measurer.style.width = `${hostWidth}px`;
+    // ---- Try 1 row (flex, nowrap) ----
+    measurer.style.display = 'flex';
+    measurer.style.flexWrap = 'nowrap';
+    measurer.style.justifyContent = 'space-evenly';
 
-      const candidates = buildFontCandidates(MAX_FONT_PX, MIN_FONT_PX, STEP_PX);
-
-      // ---- Try 1 row (flex, nowrap) ----
-      measurer.style.display = 'flex';
-      measurer.style.flexWrap = 'nowrap';
-      measurer.style.justifyContent = 'space-evenly';
-
-      for (const px of candidates) {
-        measurer.style.setProperty('--fx-chip-font', `${px}px`);
-        // Read after write (in this RAF) – contained to the offscreen measurer.
-        if (measurer.scrollWidth <= hostWidth + 0.5) {
-          setSnap((prev) => {
-            const same = prev.rows === 1 && Math.abs(prev.fontPx - px) < 0.001;
-            return same ? prev : { rows: 1, fontPx: px };
-          });
-          return;
-        }
+    for (const px of candidates) {
+      measurer.style.setProperty('--fx-chip-font', `${px}px`);
+      // Read after write – contained to the offscreen measurer.
+      if (measurer.scrollWidth <= hostWidth + 0.5) {
+        setSnap((prev) => {
+          const same = prev.rows === 1 && Math.abs(prev.fontPx - px) < 0.001;
+          return same ? prev : { rows: 1, fontPx: px };
+        });
+        setSettled(true);
+        return;
       }
+    }
 
-      // ---- Fallback: 2 rows (grid, exactly 2 rows) ----
-      measurer.style.display = 'grid';
-      measurer.style.justifyContent = 'space-evenly';
-      measurer.style.gridTemplateRows = 'repeat(2, max-content)';
-      measurer.style.gridTemplateColumns = `repeat(${columnsForTwoRows}, max-content)`;
+    // ---- Fallback: 2 rows (grid, exactly 2 rows) ----
+    measurer.style.display = 'grid';
+    measurer.style.justifyContent = 'space-evenly';
+    measurer.style.gridTemplateRows = 'repeat(2, max-content)';
+    measurer.style.gridTemplateColumns = `repeat(${columnsForTwoRows}, max-content)`;
 
-      for (const px of candidates) {
-        measurer.style.setProperty('--fx-chip-font', `${px}px`);
-        if (measurer.scrollWidth <= hostWidth + 0.5) {
-          setSnap((prev) => {
-            const same = prev.rows === 2 && Math.abs(prev.fontPx - px) < 0.001;
-            return same ? prev : { rows: 2, fontPx: px };
-          });
-          return;
-        }
+    for (const px of candidates) {
+      measurer.style.setProperty('--fx-chip-font', `${px}px`);
+      if (measurer.scrollWidth <= hostWidth + 0.5) {
+        setSnap((prev) => {
+          const same = prev.rows === 2 && Math.abs(prev.fontPx - px) < 0.001;
+          return same ? prev : { rows: 2, fontPx: px };
+        });
+        setSettled(true);
+        return;
       }
+    }
 
-      // If nothing fits (extremely narrow), lock to 2 rows at minimum font.
-      setSnap((prev) => {
-        const same = prev.rows === 2 && Math.abs(prev.fontPx - MIN_FONT_PX) < 0.001;
-        return same ? prev : { rows: 2, fontPx: MIN_FONT_PX };
-      });
+    // If nothing fits (extremely narrow), lock to 2 rows at minimum font.
+    setSnap((prev) => {
+      const same = prev.rows === 2 && Math.abs(prev.fontPx - MIN_FONT_PX) < 0.001;
+      return same ? prev : { rows: 2, fontPx: MIN_FONT_PX };
     });
+    setSettled(true);
   }, [columnsForTwoRows]);
 
+  // rAF-wrapped version for resize/data-change events (non-blocking)
+  const scheduleReflow = React.useCallback(() => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      doReflow();
+    });
+  }, [doReflow]);
+
+  // ---- CLS FIX: Initial measurement BEFORE browser paints ----
+  // useLayoutEffect runs synchronously after DOM update but before paint.
+  // The setState inside triggers a synchronous re-render, so the browser
+  // only ever paints the correctly-measured layout. CLS = 0 for this component.
+  React.useLayoutEffect(() => {
+    doReflow();
+  }, [doReflow]);
+
+  // Resize observer for subsequent layout changes (user-initiated, no CLS impact)
   React.useEffect(() => {
+    // Re-measure when chip data changes (prices update → chip widths change)
     scheduleReflow();
 
     const host = hostRef.current;
@@ -227,7 +250,13 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
       data-testid={testId}
       data-mode={mode}
       data-build-id={buildId}
-      className="w-full overflow-hidden rounded-2xl bg-slate-950/55 px-3 py-2 text-xs text-slate-50 shadow-md ring-1 ring-slate-800 min-h-[38px]"
+      className="w-full overflow-hidden rounded-2xl bg-slate-950/55 px-3 py-2 text-xs text-slate-50 shadow-md ring-1 ring-slate-800 h-[42px]"
+      style={{
+        // CLS FIX: Invisible until snap-fit reflow settles. Per CLS spec,
+        // elements at opacity: 0 don't contribute to shift scoring.
+        opacity: settled ? 1 : 0,
+        transition: 'opacity 150ms ease-in',
+      }}
     >
       {/* Chips host */}
       <div ref={hostRef} className="relative w-full overflow-hidden">

@@ -141,6 +141,11 @@ export default function CommoditiesMoversGrid({
   // Whether bottom row of cards has enough space to render completely
   const [showBottomRow, setShowBottomRow] = React.useState(true);
 
+  // CLS FIX: Content starts invisible (opacity: 0). After first reflow
+  // settles font + row count, we fade in. Per CLS spec, elements at
+  // opacity: 0 do not contribute to layout shift scoring.
+  const [settled, setSettled] = React.useState(false);
+
   // How many cards per panel
   const cardsPerPanel = showBottomRow ? 4 : 2;
 
@@ -167,73 +172,91 @@ export default function CommoditiesMoversGrid({
   // No magic numbers — decisions are driven by what the content
   // actually measures at each font size.
   // --------------------------------------------------------------------------
-  const scheduleReflow = React.useCallback(() => {
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+  // ---- CLS FIX: Synchronous measurement body (no rAF wrapper) ----
+  // Extracted so it can be called from useLayoutEffect (before paint)
+  // AND from scheduleReflow (after resize, via rAF).
+  const doReflow = React.useCallback(() => {
+    const grid = gridRef.current;
+    const measurer = measurerRef.current;
+    const panel = panelRef.current;
 
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null;
+    if (!grid || !measurer || !panel) return;
 
-      const grid = gridRef.current;
-      const measurer = measurerRef.current;
-      const panel = panelRef.current;
+    // Panel height is our hard constraint (set by the parent layout).
+    // It does NOT change when we toggle row count, so no oscillation.
+    const panelHeight = panel.clientHeight;
+    const availableGridHeight = panelHeight - HEADER_APPROX_PX - PANEL_PADDING_PX;
+    const cellWidth = (grid.clientWidth - GRID_GAP_PX) / 2;
 
-      if (!grid || !measurer || !panel) return;
+    if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
+    if (availableGridHeight <= 0) return;
 
-      // Panel height is our hard constraint (set by the parent layout).
-      // It does NOT change when we toggle row count, so no oscillation.
-      const panelHeight = panel.clientHeight;
-      const availableGridHeight = panelHeight - HEADER_APPROX_PX - PANEL_PADDING_PX;
-      const cellWidth = (grid.clientWidth - GRID_GAP_PX) / 2;
+    // Pre-calculate cell heights for both layouts
+    const twoRowCellHeight = (availableGridHeight - GRID_GAP_PX) / 2;
+    const oneRowCellHeight = availableGridHeight;
 
-      if (!Number.isFinite(cellWidth) || cellWidth <= 0) return;
-      if (availableGridHeight <= 0) return;
+    const candidates = buildFontCandidates(MAX_FONT_PX, MIN_FONT_PX, STEP_PX);
 
-      // Pre-calculate cell heights for both layouts
-      const twoRowCellHeight = (availableGridHeight - GRID_GAP_PX) / 2;
-      const oneRowCellHeight = availableGridHeight;
+    for (const px of candidates) {
+      measurer.style.setProperty('--commodity-font', `${px}px`);
 
-      const candidates = buildFontCandidates(MAX_FONT_PX, MIN_FONT_PX, STEP_PX);
+      // Force reflow to get accurate measurements
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      measurer.offsetHeight;
 
-      for (const px of candidates) {
-        measurer.style.setProperty('--commodity-font', `${px}px`);
+      // Measure actual content size (NOT container size)
+      const contentWidth = measurer.scrollWidth;
+      const contentHeight = measurer.scrollHeight;
 
-        // Force reflow to get accurate measurements
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        measurer.offsetHeight;
+      // Width must fit regardless of row count
+      const widthFits = contentWidth <= cellWidth - 4;
+      if (!widthFits) continue; // Too wide at this font, try smaller
 
-        // Measure actual content size (NOT container size)
-        const contentWidth = measurer.scrollWidth;
-        const contentHeight = measurer.scrollHeight;
-
-        // Width must fit regardless of row count
-        const widthFits = contentWidth <= cellWidth - 4;
-        if (!widthFits) continue; // Too wide at this font, try smaller
-
-        // Prefer 2-row layout (shows more data)
-        if (contentHeight + BREATHING_ROOM_PX <= twoRowCellHeight) {
-          setShowBottomRow((prev) => (prev === true ? prev : true));
-          setFontPx((prev) => (Math.abs(prev - px) < 0.001 ? prev : px));
-          return;
-        }
-
-        // Fall back to 1-row layout (more vertical space per card)
-        if (contentHeight + BREATHING_ROOM_PX <= oneRowCellHeight) {
-          setShowBottomRow((prev) => (prev === false ? prev : false));
-          setFontPx((prev) => (Math.abs(prev - px) < 0.001 ? prev : px));
-          return;
-        }
-
-        // Content too tall even for 1 row at this font → try smaller
+      // Prefer 2-row layout (shows more data)
+      if (contentHeight + BREATHING_ROOM_PX <= twoRowCellHeight) {
+        setShowBottomRow((prev) => (prev === true ? prev : true));
+        setFontPx((prev) => (Math.abs(prev - px) < 0.001 ? prev : px));
+        setSettled(true);
+        return;
       }
 
-      // Absolute fallback: minimum font, single row
-      setShowBottomRow((prev) => (prev === false ? prev : false));
-      setFontPx((prev) => (Math.abs(prev - MIN_FONT_PX) < 0.001 ? prev : MIN_FONT_PX));
-    });
+      // Fall back to 1-row layout (more vertical space per card)
+      if (contentHeight + BREATHING_ROOM_PX <= oneRowCellHeight) {
+        setShowBottomRow((prev) => (prev === false ? prev : false));
+        setFontPx((prev) => (Math.abs(prev - px) < 0.001 ? prev : px));
+        setSettled(true);
+        return;
+      }
+
+      // Content too tall even for 1 row at this font → try smaller
+    }
+
+    // Absolute fallback: minimum font, single row
+    setShowBottomRow((prev) => (prev === false ? prev : false));
+    setFontPx((prev) => (Math.abs(prev - MIN_FONT_PX) < 0.001 ? prev : MIN_FONT_PX));
+    setSettled(true);
   }, []);
 
-  // Trigger reflow on mount, data change, and resize
+  // rAF-wrapped version for resize/data-change events (non-blocking)
+  const scheduleReflow = React.useCallback(() => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      doReflow();
+    });
+  }, [doReflow]);
+
+  // ---- CLS FIX: Initial measurement BEFORE browser paints ----
+  // useLayoutEffect runs synchronously after DOM update but before paint.
+  // The setState inside triggers a synchronous re-render, so the browser
+  // only ever paints the correctly-measured layout. CLS = 0 for this component.
+  React.useLayoutEffect(() => {
+    doReflow();
+  }, [doReflow]);
+
+  // Resize observer + data-change reflow (user-initiated, no CLS impact)
   React.useEffect(() => {
+    // Re-measure when data changes (e.g. commodity prices update)
     scheduleReflow();
 
     const panel = panelRef.current;
@@ -315,7 +338,7 @@ export default function CommoditiesMoversGrid({
               <div
                 key={mover ? mover.id : `${type}-empty-${i}`}
                 role="listitem"
-                className="rounded-xl bg-slate-900/80 ring-1 ring-white/10 flex items-center justify-center overflow-hidden transition-all hover:ring-white/20 hover:bg-slate-800/80"
+                className="rounded-xl bg-slate-900/80 ring-1 ring-white/10 flex items-center justify-center overflow-hidden transition-colors hover:ring-white/20 hover:bg-slate-800/80"
               >
                 {mover ? (
                   <CommodityMoverCard data={mover} isStale={isStale} />
@@ -413,7 +436,11 @@ export default function CommoditiesMoversGrid({
   // --------------------------------------------------------------------------
   if (winners.length === 0 && losers.length === 0) {
     return (
-      <div className="flex flex-1 min-h-0 w-full gap-4" data-testid="commodities-movers-grid">
+      <div
+        className="flex flex-1 min-h-0 w-full gap-4"
+        data-testid="commodities-movers-grid"
+        style={{ opacity: 0 }}
+      >
         <section
           className="flex-1 min-h-0 rounded-2xl bg-slate-950/55 p-3 shadow-md ring-1 ring-slate-800 flex items-center justify-center overflow-hidden"
           aria-label="Commodities winners"
@@ -434,7 +461,16 @@ export default function CommoditiesMoversGrid({
   // MAIN RENDER
   // --------------------------------------------------------------------------
   return (
-    <div className="flex flex-1 min-h-0 w-full gap-4" data-testid="commodities-movers-grid">
+    <div
+      className="flex flex-1 min-h-0 w-full gap-4"
+      data-testid="commodities-movers-grid"
+      style={{
+        // CLS FIX: Invisible until font reflow settles. Per CLS spec,
+        // elements at opacity: 0 don't contribute to shift scoring.
+        opacity: settled ? 1 : 0,
+        transition: 'opacity 150ms ease-in',
+      }}
+    >
       {renderPanel(winners, 'winner', true)}
       {renderPanel(losers, 'loser', false)}
     </div>

@@ -384,14 +384,9 @@ export default function HomepageGrid({
     // 2. Commodities grid (min-h reserves space to prevent CLS)
     // 3. Bottom FX ribbon (5 pairs)
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
         <FinanceRibbonTop />
-        {/* CLS: min-h reserves space before commodities data loads.
-            Actual rendered grid is ~280-320px depending on font snap.
-            300px prevents the 0.199 CLS shift from undersized reservation. */}
-        <div className="min-h-[300px]">
-          <CommoditiesMoversGrid />
-        </div>
+        <CommoditiesMoversGrid />
         <FinanceRibbonBottom />
       </div>
     );

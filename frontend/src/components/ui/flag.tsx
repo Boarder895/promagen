@@ -55,6 +55,10 @@ export function Flag({ countryCode, size = 12, className, decorative = true, tit
           alt={decorative ? '' : label ?? 'Flag'}
           title={tooltipText}
           className="block"
+          // CLS FIX: Explicit CSS dimensions ensure the browser reserves
+          // exact space for SVG flags before they load. HTML width/height
+          // attributes alone aren't always sufficient for SVGs.
+          style={{ width: size, height: size }}
         />
       ) : (
         <span title={tooltipText}>{emoji}</span>

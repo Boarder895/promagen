@@ -63,15 +63,7 @@ type SegmentProps = {
  * Single segment of a 7-segment display.
  */
 function Segment({ on, d }: SegmentProps) {
-  return (
-    <path
-      d={d}
-      fill={on ? 'rgb(52, 211, 153)' : 'rgba(52, 211, 153, 0.1)'} // emerald-400 on, dim when off
-      // PERF: Removed transition-[fill] duration-75. SVG fill is non-compositable
-      // (triggers repaint on every frame). At 75ms on binary digit changes the
-      // transition was imperceptible anyway. Eliminates 83 flagged animations.
-    />
-  );
+  return <path d={d} fill={on ? 'rgb(52, 211, 153)' : 'rgba(52, 211, 153, 0.1)'} />;
 }
 
 type SevenSegmentDigitProps = {
