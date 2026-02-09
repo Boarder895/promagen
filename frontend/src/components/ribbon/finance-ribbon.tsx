@@ -74,7 +74,12 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
     [chips],
   );
 
-  const [snap, setSnap] = React.useState<SnapState>({ rows: 1, fontPx: MIN_FONT_PX });
+  // CLS FIX: Start at midpoint (14px) instead of MIN (10px).
+  // The snap-fit reflow will adjust up or down, but the initial render is
+  // close to the typical settled value (~14-16px on most screens), so the
+  // layout shift from the font-size change is ≤ 2px instead of ≥ 6px.
+  const INITIAL_FONT_PX = 14;
+  const [snap, setSnap] = React.useState<SnapState>({ rows: 1, fontPx: INITIAL_FONT_PX });
 
   const columnsForTwoRows = React.useMemo(() => Math.max(1, Math.ceil(chips.length / 2)), [chips]);
 
@@ -222,7 +227,7 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
       data-testid={testId}
       data-mode={mode}
       data-build-id={buildId}
-      className="w-full overflow-hidden rounded-2xl bg-slate-950/55 px-3 py-2 text-xs text-slate-50 shadow-md ring-1 ring-slate-800"
+      className="w-full overflow-hidden rounded-2xl bg-slate-950/55 px-3 py-2 text-xs text-slate-50 shadow-md ring-1 ring-slate-800 min-h-[38px]"
     >
       {/* Chips host */}
       <div ref={hostRef} className="relative w-full overflow-hidden">

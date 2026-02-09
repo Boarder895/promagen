@@ -12,7 +12,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { SignInButton, UserButton, useClerk } from '@clerk/nextjs';
 
 // Timeout in ms before showing Sign In button even if Clerk hasn't loaded
@@ -73,6 +73,11 @@ const loadingButtonStyles =
  *
  * Uses direct Clerk client state checking to avoid hook synchronization issues
  * that can occur after OAuth redirects.
+ *
+ * CLS FIX: All render paths wrapped in a fixed-dimension container (min-w/min-h)
+ * so that loading→signed-in→signed-out transitions don't shift neighbouring elements.
+ * The avatar (32×32) and the sign-in button (~100×32) both sit inside the same
+ * reserved space, preventing layout jumps.
  */
 export function AuthButton() {
   const clerk = useClerk();
@@ -212,40 +217,39 @@ export function AuthButton() {
   // ─────────────────────────────────────────────────────────────────
   // RENDER
   // ─────────────────────────────────────────────────────────────────
+  // CLS FIX: All states render inside a single fixed-dimension wrapper.
+  // This prevents neighbours from shifting when transitioning between
+  // loading (button ~100×32), signed-in (avatar 32×32), and signed-out (button ~100×32).
 
-  // Not mounted yet (SSR)
+  let content: React.ReactNode;
+
   if (!mounted) {
-    return (
+    // Not mounted yet (SSR)
+    content = (
       <button type="button" disabled className={loadingButtonStyles}>
         <LoadingIcon />
         Loading...
       </button>
     );
-  }
-
-  // Timed out - show fallback link
-  if (timedOut && sessionState === 'loading') {
-    return (
+  } else if (timedOut && sessionState === 'loading') {
+    // Timed out - show fallback link
+    content = (
       <a href="/sign-in" className={signInButtonStyles}>
         <UserIcon />
         Sign in
       </a>
     );
-  }
-
-  // Still loading
-  if (sessionState === 'loading') {
-    return (
+  } else if (sessionState === 'loading') {
+    // Still loading
+    content = (
       <button type="button" disabled className={loadingButtonStyles}>
         <LoadingIcon />
         Loading...
       </button>
     );
-  }
-
-  // Signed in - show avatar
-  if (sessionState === 'signed-in') {
-    return (
+  } else if (sessionState === 'signed-in') {
+    // Signed in - show avatar
+    content = (
       <UserButton
         appearance={{
           elements: {
@@ -260,16 +264,24 @@ export function AuthButton() {
         afterSignOutUrl="/"
       />
     );
+  } else {
+    // Signed out - show sign in button
+    content = (
+      <SignInButton mode="modal">
+        <button type="button" className={signInButtonStyles}>
+          <UserIcon />
+          Sign in
+        </button>
+      </SignInButton>
+    );
   }
 
-  // Signed out - show sign in button
+  // Fixed-dimension wrapper: min-h matches button height, min-w prevents collapse.
+  // flex + items-center + justify-end keeps content right-aligned and vertically centred.
   return (
-    <SignInButton mode="modal">
-      <button type="button" className={signInButtonStyles}>
-        <UserIcon />
-        Sign in
-      </button>
-    </SignInButton>
+    <div className="flex min-h-[32px] min-w-[32px] items-center justify-end">
+      {content}
+    </div>
   );
 }
 

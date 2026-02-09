@@ -1,20 +1,51 @@
 /* Promagen Global Styles — single source of truth
    - Tailwind import (v4-friendly)
+   - Fluid root font: clamp(14px, 1.1vw, 18px)
    - Light, calm gradient background
    - Reduced motion hook
    - Accessible focus outline (no @apply)
    - Card utility + tabular numerals
-   - Ribbon shimmer utility
 
-   Enhancements (FX "alive" language):
-   - Winner arrow micro-transition
+   FX "alive" micro-motion:
    - Neutral breath pulse (slow, subtle)
    - Tick nudge (1–2px)
    - Whisper tint (very faint, 200–300ms)
+
+   Leaderboard:
+   - Provider cell typography (fluid clamp)
+   - Sortable headers (Bloomberg-style)
+   - Glow frame + market pulse
+   - Vote thumbs + index rating
+
+   Cleaned: 9 Feb 2026 — removed 525 lines of dead CSS
 */
 @import 'tailwindcss';
 
 /* ------------------------------ Base tokens ------------------------------ */
+
+/* ==========================================================================
+ * FLUID ROOT FONT-SIZE — The "one knob" for global text scaling
+ * ==========================================================================
+ * How it works:
+ *   font-size: clamp(FLOOR, SCALE × viewport-width, CEILING)
+ *
+ * At key breakpoints:
+ *   1280px laptop:  1.1vw = 14.1px  → clamped to 14px (floor)
+ *   1366px laptop:  1.1vw = 15.0px  → 15px
+ *   1440px laptop:  1.1vw = 15.8px  → 15.8px
+ *   1636px+:        1.1vw = 18.0px  → clamped to 18px (ceiling)
+ *   1920px desktop: 18px (ceiling)
+ *   2560px ultra:   18px (ceiling)
+ *
+ * Everything using rem (Tailwind's text-xs, text-sm, text-base, etc.)
+ * scales proportionally from this root. Components with their own snap-fit
+ * systems (FX ribbon, commodities grid, exchange cards) use px-based
+ * measurements and are NOT affected by this — they keep their own scaling.
+ * ========================================================================== */
+html {
+  font-size: clamp(14px, 1.1vw, 18px);
+}
+
 :root {
   --bg-a: #f9fafb; /* slate-50 */
   --bg-b: #e5e7eb; /* slate-200 */
@@ -80,64 +111,6 @@ body {
     sans-serif;
   text-rendering: optimizeLegibility;
 }
-/* =============================================================================
-   Prompt Builder Scroll Wrapper
-   Matches providers-table-scroll-wrapper styling for uniform scrollbars
-   ============================================================================= */
-
-.prompt-builder-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  min-height: 0; /* Critical for flex children to shrink */
-}
-
-.prompt-builder-scroll-wrapper {
-  flex: 1;
-  min-height: 0; /* Critical for flex children to shrink */
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Custom scrollbar - matches providers table */
-.prompt-builder-scroll-wrapper::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.prompt-builder-scroll-wrapper::-webkit-scrollbar-track {
-  background: rgba(30, 41, 59, 0.3);
-  border-radius: 6px;
-}
-
-.prompt-builder-scroll-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.6);
-  border-radius: 6px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-.prompt-builder-scroll-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.9);
-  background-clip: padding-box;
-}
-
-.prompt-builder-scroll-wrapper::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-/* Firefox scrollbar support */
-.prompt-builder-scroll-wrapper {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(100, 116, 139, 0.6) rgba(30, 41, 59, 0.3);
-}
-
-.prompt-builder-scroll-wrapper:hover {
-  scrollbar-color: rgba(100, 116, 139, 0.9) rgba(30, 41, 59, 0.3);
-}
-
 /* ------------------------------ Links & focus ---------------------------- */
 a {
   color: inherit;
@@ -168,49 +141,9 @@ a:hover {
   font-feature-settings: 'tnum';
 }
 
-/* ------------------------ Ribbon shimmer (calm) -------------------------- */
-@keyframes ribbon-shimmer {
-  0% {
-    transform: translateX(-30%);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateX(0%);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(30%);
-    opacity: 0.7;
-  }
-}
-
-.animate-ribbon-shimmer {
-  animation: ribbon-shimmer 180s linear infinite;
-}
-
 /* ======================================================================== */
 /* FX "alive" micro-motion                                                   */
 /* ======================================================================== */
-
-/* Winner arrow — single green arrow with micro fade */
-.fx-winner-arrow {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 0.9em; /* keeps spacing stable */
-  color: rgba(52, 211, 153, 0.95); /* emerald-ish */
-  transform: translateY(-0.04em);
-  transition: opacity 220ms ease;
-  will-change: opacity;
-}
-
-.fx-winner-arrow--off {
-  opacity: 0;
-}
-
-.fx-winner-arrow--on {
-  opacity: 1;
-}
 
 /* Neutral breath pulse (slow, tiny) */
 @keyframes fx-neutral-breathe {
@@ -591,38 +524,6 @@ a:hover {
   border-radius: 2px;
 }
 
-.provider-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem; /* 6px between icons */
-}
-
-/* Provider icon links (🏠 🎨) */
-.provider-icon-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem; /* 16px */
-  text-decoration: none;
-  opacity: 0.5;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-  cursor: pointer;
-}
-
-.provider-icon-link:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
-.provider-icon-link:focus {
-  opacity: 1;
-  outline: 2px solid rgba(59, 130, 246, 0.5);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
 /* Provider logo icon link (replaces 🏠) — clickable favicon */
 .provider-logo-link {
   display: inline-flex;
@@ -785,19 +686,6 @@ a:hover {
 /* Score & Misc Styles                                                        */
 /* ========================================================================== */
 
-/* Adjusted score asterisk (Big Tech penalty indicator) */
-.score-adjusted {
-  position: relative;
-}
-
-.score-adjusted::after {
-  content: '*';
-  font-size: 0.65em;
-  opacity: 0.6;
-  vertical-align: super;
-  margin-left: 2px;
-}
-
 /* Hover effect for cursor-help (tooltips) */
 .cursor-help {
   cursor: help;
@@ -881,44 +769,6 @@ a:hover {
 }
 
 /* ========================================================================== */
-/* Ribbon Chip Label - Line-clamp safety net                                  */
-/* Used for exchange names, asset names, and other ribbon text that may       */
-/* overflow. Curated ribbonLabel values should fit in 1-2 lines, but this     */
-/* provides a CSS safety net for any edge cases.                              */
-/*                                                                            */
-/* Added: January 2026                                                        */
-/* ========================================================================== */
-
-.ribbon-chip-label {
-  /* Line-clamp to exactly 2 lines */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  /* Consistent line height for predictable height */
-  line-height: 1.3;
-  max-height: 2.6em; /* line-height × 2 lines */
-
-  /* Width constraints for ribbon chips */
-  min-width: 60px;
-  max-width: 180px;
-}
-
-/* Fallback for browsers without -webkit-box support */
-@supports not (display: -webkit-box) {
-  .ribbon-chip-label {
-    display: block;
-    max-height: 2.6em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: normal;
-    word-break: break-word;
-  }
-}
-
-/* ========================================================================== */
 /* Responsive adjustments                                                     */
 /* Updated: January 22, 2026 — Fluid typography + mobile card layout          */
 /* ========================================================================== */
@@ -930,27 +780,6 @@ a:hover {
 
 .providers-mobile-cards {
   display: none;
-}
-
-/* Fluid typography for table cell content — scales naturally */
-.providers-users-cell {
-  font-size: clamp(0.75rem, 0.95vw, 0.9375rem); /* 12px → 15px */
-}
-
-.providers-quality-cell {
-  font-size: clamp(0.8125rem, 1vw, 1rem); /* 13px → 16px */
-}
-
-.providers-medal {
-  font-size: clamp(1rem, 1.3vw, 1.375rem); /* 16px → 22px */
-}
-
-.providers-score-cell {
-  font-size: clamp(0.875rem, 1.1vw, 1.125rem); /* 14px → 18px */
-}
-
-.providers-trend {
-  font-size: clamp(0.875rem, 1.1vw, 1.125rem); /* 14px → 18px */
 }
 
 /* Support icons fluid sizing */
@@ -1105,12 +934,6 @@ a:hover {
   }
 }
 
-/* Loading state (for future async loading) */
-.providers-table-loading {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
 /* ========================================================================== */
 /* Exchange Rail Scrollbar Utilities                                          */
 /* Thin, subtle scrollbars for synchronized exchange rails                    */
@@ -1143,153 +966,6 @@ a:hover {
 .scrollbar-thin:hover {
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
-/* ==========================================================================
- * MARKET PULSE v2.0 - Flowing Energy Stream
- * ==========================================================================
- * 
- * "The bridge comes alive when markets move."
- * 
- * Features:
- * - Row breathing effect during pre-open/pre-close
- * - Row flash effect during opening/closing events
- * - Continent-specific colors via CSS variable
- * - Reduced motion support
- * 
- * Updated: Jan 2026
- * ========================================================================== */
-
-/* ==========================================================================
- * Market Pulse Row Effects
- * ========================================================================== */
-
-/* Base state for pulse-connected rows */
-.market-pulse-row-glow {
-  position: relative;
-  transition:
-    box-shadow 0.3s ease-out,
-    background-color 0.3s ease-out,
-    transform 0.3s ease-out;
-}
-
-/* Subtle breathing animation for pre-open/pre-close states */
-@keyframes market-pulse-row-breathe {
-  0%,
-  100% {
-    box-shadow:
-      inset 0 0 0 0 transparent,
-      0 0 0 0 transparent;
-    background-color: transparent;
-  }
-  50% {
-    box-shadow:
-      inset 0 0 20px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent),
-      0 0 10px 2px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 10%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 5%, transparent);
-  }
-}
-
-.market-pulse-row-breathing {
-  animation: market-pulse-row-breathe 3s ease-in-out infinite;
-}
-
-/* Opening event - warm flash */
-@keyframes market-pulse-row-flash-open {
-  0% {
-    box-shadow:
-      inset 0 0 0 0 transparent,
-      0 0 0 0 transparent;
-    background-color: transparent;
-    transform: scale(1);
-  }
-  15% {
-    box-shadow:
-      inset 0 0 40px 8px color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 40%, transparent),
-      0 0 25px 5px color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 30%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 15%, transparent);
-    transform: scale(1.005);
-  }
-  40% {
-    box-shadow:
-      inset 0 0 25px 4px color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 25%, transparent),
-      0 0 15px 3px color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 15%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #fbbf24) 8%, transparent);
-    transform: scale(1.002);
-  }
-  100% {
-    box-shadow:
-      inset 0 0 0 0 transparent,
-      0 0 0 0 transparent;
-    background-color: transparent;
-    transform: scale(1);
-  }
-}
-
-.market-pulse-row-opening {
-  animation: market-pulse-row-flash-open 1.5s ease-out forwards;
-}
-
-/* Closing event - cool flash */
-@keyframes market-pulse-row-flash-close {
-  0% {
-    box-shadow:
-      inset 0 0 0 0 transparent,
-      0 0 0 0 transparent;
-    background-color: transparent;
-    transform: scale(1);
-  }
-  15% {
-    box-shadow:
-      inset 0 0 40px 8px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 40%, transparent),
-      0 0 25px 5px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 30%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent);
-    transform: scale(1.005);
-  }
-  40% {
-    box-shadow:
-      inset 0 0 25px 4px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 25%, transparent),
-      0 0 15px 3px color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 8%, transparent);
-    transform: scale(1.002);
-  }
-  100% {
-    box-shadow:
-      inset 0 0 0 0 transparent,
-      0 0 0 0 transparent;
-    background-color: transparent;
-    transform: scale(1);
-  }
-}
-
-.market-pulse-row-closing {
-  animation: market-pulse-row-flash-close 1.5s ease-out forwards;
-}
-
-/* ==========================================================================
- * Market Pulse Reduced Motion - Respect user preference
- * ========================================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-  .market-pulse-row-breathing,
-  .market-pulse-row-opening,
-  .market-pulse-row-closing {
-    animation: none;
-  }
-
-  /* Show static highlight instead */
-  .market-pulse-row-breathing {
-    box-shadow: inset 0 0 15px 2px
-      color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 15%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 5%, transparent);
-  }
-
-  .market-pulse-row-opening,
-  .market-pulse-row-closing {
-    box-shadow: inset 0 0 25px 4px
-      color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 25%, transparent);
-    background-color: color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 10%, transparent);
-  }
-}
-
 /* ==========================================================================
  * Market Pulse Active - Option 3 Synchronized Glow
  * Applied dynamically via JS when market events are active
@@ -1398,33 +1074,6 @@ a:hover {
   }
 }
 
-/* ==========================================================================
- * Exchange Card Pulse Ring (optional enhancement)
- * ========================================================================== */
-
-.exchange-card-pulse-active {
-  position: relative;
-}
-
-.exchange-card-pulse-active::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  pointer-events: none;
-  animation: exchange-pulse-ring 1.5s ease-out forwards;
-}
-
-@keyframes exchange-pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--pulse-continent-color, #3b82f6) 50%, transparent);
-    opacity: 1;
-  }
-  100% {
-    box-shadow: 0 0 0 15px transparent;
-    opacity: 0;
-  }
-}
 /* ==========================================================================
  * IMAGE QUALITY VOTE BUTTON STYLES
  * ==========================================================================
@@ -1592,14 +1241,8 @@ a:hover {
    Authority: docs/authority/paid_tier.md §3.2, docs/authority/prompt-builder-page.md
    =============================================================================
    
-   Lock States:
-   - not_authenticated: User not signed in
-   - quota_reached: Free user has used 30 prompts today
-   
    Visual Treatment:
-   - Purple-pink gradient for individual locked comboboxes
-   - Usage counter with progress bar
-   - Paid badge and CTA button styling
+   - Purple-pink gradient for locked comboboxes
    ============================================================================= */
 
 /* ==========================================================================
@@ -1611,137 +1254,6 @@ a:hover {
   position: relative;
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%);
   border-radius: 0.5rem;
-}
-
-/* Lock overlay for individual comboboxes */
-.prompt-lock-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
-  font-weight: 500;
-  border-radius: inherit;
-  z-index: 50;
-  backdrop-filter: blur(2px);
-}
-
-/* ==========================================================================
- * USAGE COUNTER STYLES
- * Shows remaining prompts for free users
- * ========================================================================== */
-
-.usage-counter {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.usage-counter--warning {
-  color: rgb(251, 146, 60); /* orange-400 */
-}
-
-.usage-counter--caution {
-  color: rgb(250, 204, 21); /* yellow-400 */
-}
-
-.usage-counter--normal {
-  color: rgb(52, 211, 153); /* emerald-400 */
-}
-
-/* Progress bar for usage */
-.usage-progress {
-  height: 0.375rem;
-  width: 4rem;
-  overflow: hidden;
-  border-radius: 9999px;
-  background: rgba(51, 65, 85, 1); /* slate-700 */
-}
-
-.usage-progress-bar {
-  height: 100%;
-  transition:
-    width 0.3s ease-out,
-    background-color 0.3s ease-out;
-}
-
-.usage-progress-bar--warning {
-  background: rgb(249, 115, 22); /* orange-500 */
-}
-
-.usage-progress-bar--caution {
-  background: rgb(234, 179, 8); /* yellow-500 */
-}
-
-.usage-progress-bar--normal {
-  background: rgb(16, 185, 129); /* emerald-500 */
-}
-
-/* ==========================================================================
- * PAID USER BADGE
- * Shows enhanced limits are active
- * ========================================================================== */
-
-.paid-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgb(216, 180, 254); /* purple-300 */
-  background: rgba(147, 51, 234, 0.2); /* purple-600/20 */
-  border-radius: 9999px;
-  border: 1px solid rgba(168, 85, 247, 0.3); /* purple-500/30 */
-}
-
-.paid-badge svg {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-/* ==========================================================================
- * LOCK BUTTON STYLES
- * CTA buttons within lock overlays
- * ========================================================================== */
-
-.lock-cta-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, rgb(147, 51, 234) 0%, rgb(236, 72, 153) 100%);
-  border: 1px solid rgba(192, 132, 252, 1); /* purple-400 */
-  border-radius: 9999px;
-  box-shadow: 0 10px 15px -3px rgba(147, 51, 234, 0.3);
-  cursor: pointer;
-  transition: all 0.2s ease-out;
-}
-
-.lock-cta-button:hover {
-  background: linear-gradient(135deg, rgb(168, 85, 247) 0%, rgb(244, 114, 182) 100%);
-  box-shadow: 0 10px 25px -3px rgba(147, 51, 234, 0.4);
-  transform: translateY(-1px);
-}
-
-.lock-cta-button:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px rgba(192, 132, 252, 1),
-    0 0 0 4px rgba(15, 23, 42, 1);
-}
-
-.lock-cta-button svg {
-  width: 1rem;
-  height: 1rem;
 }
 
 /* ==========================================================================
@@ -1905,22 +1417,4 @@ a:hover {
 .providers-mobile-card .rank-up-arrow {
   font-size: 0.75rem; /* 12px */
   margin-left: 2px;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Underdog Badge - For providers with MPI < 3.0 (rising platforms)           */
-/* -------------------------------------------------------------------------- */
-
-.underdog-badge {
-  margin-left: 4px;
-  font-size: 0.875rem;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Newcomer Badge - For providers less than 12 months old                     */
-/* -------------------------------------------------------------------------- */
-
-.newcomer-badge {
-  margin-left: 4px;
-  font-size: 0.875rem;
 }

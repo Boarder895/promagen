@@ -130,8 +130,13 @@ export default function CommoditiesMoversGrid({
   const panelRef = React.useRef<HTMLElement | null>(null);
   const rafRef = React.useRef<number | null>(null);
 
-  // Snap-fit font state - start at max, will scale down if needed
-  const [fontPx, setFontPx] = React.useState<number>(MAX_FONT_PX);
+  // CLS FIX: Start at midpoint (18px) instead of MAX (24px).
+  // Starting at MAX causes a guaranteed downward snap on every load. A midpoint
+  // reduces the visual jump in either direction to ≤ 6px instead of ≥ 12px.
+  const INITIAL_COMMODITY_FONT = 18;
+
+  // Snap-fit font state - start at midpoint, will adjust up or down
+  const [fontPx, setFontPx] = React.useState<number>(INITIAL_COMMODITY_FONT);
 
   // Whether bottom row of cards has enough space to render completely
   const [showBottomRow, setShowBottomRow] = React.useState(true);

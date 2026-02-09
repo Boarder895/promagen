@@ -332,12 +332,18 @@ export default function HomepageGrid({
     // 1. Top FX ribbon (5 pairs: EUR/USD, GBP/USD, GBP/ZAR, USD/CAD, USD/CNY)
     // 2. Commodities grid
     // 3. Bottom FX ribbon (5 pairs: USD/INR, USD/BRL, AUD/USD, USD/NOK, USD/MYR)
+    //
+    // CLS FIX: Wrapped in a container with CSS contain:layout so that any
+    // layout shifts from snap-fit font resizing inside ribbons/commodities
+    // are isolated and don't push the providers table below.
     return (
-      <>
-        <FinanceRibbonTop />
-        <CommoditiesMoversGrid />
-        <FinanceRibbonBottom />
-      </>
+      <div style={{ contain: 'layout' }}>
+        <div className="flex flex-col gap-3">
+          <FinanceRibbonTop />
+          <CommoditiesMoversGrid />
+          <FinanceRibbonBottom />
+        </div>
+      </div>
     );
   }, [showFinanceRibbon, demoMode, demoPairs]);
 
