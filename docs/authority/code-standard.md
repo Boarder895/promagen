@@ -1,7 +1,7 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 7 February 2026  
-**Version:** 2.6 (Content-driven sizing pattern)  
+**Last updated:** 9 February 2026  
+**Version:** 2.7 (CLS Prevention Rules)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
 ---
@@ -1225,8 +1225,135 @@ When addressing ESLint, TypeScript typecheck, or test failures, apply the smalle
 
 ---
 
+## 22. CLS Prevention Rules (Added 9 Feb 2026)
+
+**Purpose:** Cumulative Layout Shift (CLS) is a Core Web Vital that measures visible element movement after initial paint. Google considers CLS ≤ 0.10 "good". Promagen targets ≤ 0.05. These rules prevent the patterns that caused CLS to reach 0.40 and the multi-day fix cycle that followed.
+
+### The SSR hydration gap (why useLayoutEffect doesn't help)
+
+Next.js SSR renders HTML on the server. The browser paints this HTML **before** React hydrates. By the time any React effect runs (including `useLayoutEffect`), the first paint has already happened. Any measurement → setState → re-render cycle after hydration creates a visible shift.
+
+**Timeline:**
+1. Server HTML arrives → browser paints (user sees initial layout)
+2. React hydrates → `useLayoutEffect` fires → measures → `setState`
+3. Re-render → browser paints corrected layout
+4. **CLS recorded between step 1 and step 3**
+
+`useLayoutEffect` only prevents paint between steps 2–3. It cannot prevent the SSR → hydration gap shift (steps 1–2).
+
+### Rule 1: CSS-deterministic heights for measured components
+
+Any component that measures itself to determine layout (snap-fit font, auto-rows, dynamic sizing) **must** have a fixed CSS height on its outer container:
+
+```tsx
+// ✅ Correct — outer height is locked regardless of inner measurement
+<section className="h-[42px] overflow-hidden">
+  <SnapFitContent /> {/* measures and adjusts font size */}
+</section>
+
+// ❌ Wrong — height depends on content, which changes after measurement
+<section className="min-h-[38px]">
+  <SnapFitContent />
+</section>
+```
+
+**Why:** `min-h` allows the container to grow when content changes. `h-[Xpx]` locks it. The value should be the **maximum possible height** (largest font + padding + internal spacing). `overflow-hidden` clips any excess.
+
+### Rule 2: Opacity gating for measurement-driven components
+
+Components that use `requestAnimationFrame`, `ResizeObserver`, or any measure → setState pattern **must** start at `opacity: 0` and fade in after settling. Per CLS specification, elements at `opacity: 0` are excluded from shift scoring even if they change position.
+
+```tsx
+const [settled, setSettled] = useState(false);
+
+// In measurement callback (after final setState):
+setSettled(true);
+
+// In render:
+<div style={{
+  opacity: settled ? 1 : 0,
+  transition: 'opacity 150ms ease-in',
+}}>
+  {/* content that measures/reflowsitself */}
+</div>
+```
+
+**Requirements:**
+- `setSettled(true)` must be called at **every exit path** of the measurement function (success, fallback, error)
+- Add a safety timeout (2s) to ensure content always becomes visible even if measurement fails
+- Loading skeletons/empty states should also use `opacity: 0` if they will be replaced by differently-sized content
+
+### Rule 3: No `transition-all` on layout containers
+
+`transition-all` animates **every** CSS property change, including position, width, height, and transform. When a measurement-driven reflow moves or resizes elements, `transition-all` causes the browser to animate the shift — and CLS counts animated shifts.
+
+```tsx
+// ✅ Correct — only animate visual properties
+className="transition-colors"
+
+// ❌ Wrong — animates layout shifts
+className="transition-all"
+```
+
+**Allowed transition targets:** `transition-colors`, `transition-opacity`, `transition-shadow`. Never use `transition-all` on any element that might change position or size.
+
+### Rule 4: Client-side data fetches that re-sort visible content
+
+Any `useEffect` that fetches data and then re-sorts or re-orders already-visible rows (e.g., fetching ratings then sorting a table) creates CLS. The rows visibly jump to new positions.
+
+**Fix:** Opacity-gate the container until the fetch completes:
+
+```tsx
+const [dataLoaded, setDataLoaded] = useState(false);
+
+useEffect(() => {
+  const timeout = setTimeout(() => setDataLoaded(true), 2000); // safety fallback
+  fetchData()
+    .then((data) => { setData(data); setDataLoaded(true); })
+    .catch(() => setDataLoaded(true)) // always become visible
+    .finally(() => clearTimeout(timeout));
+}, []);
+
+<div style={{ opacity: dataLoaded ? 1 : 0, transition: 'opacity 150ms ease-in' }}>
+  <SortableTable data={data} />
+</div>
+```
+
+### Rule 5: Flex layout isolation
+
+When multiple components share a flex container, one component's height change pushes all siblings down (cascade shift). Use `flex-1 min-h-0` on wrappers to give each section a **CSS-deterministic share** of available space:
+
+```tsx
+// ✅ Correct — each wrapper gets 50%, internal changes can't push siblings
+<div className="flex min-h-0 flex-1 flex-col gap-3">
+  <div className="flex min-h-0 flex-1 flex-col">{/* Finance ribbons */}</div>
+  <div className="min-h-0 flex-1">{/* Providers table */}</div>
+</div>
+
+// ❌ Wrong — finance wrapper is natural height, pushes providers down when content loads
+<div className="flex flex-col gap-3">
+  <div>{/* Finance ribbons */}</div>
+  <div className="flex-1">{/* Providers table */}</div>
+</div>
+```
+
+### CLS checklist (required for any component that measures or fetches)
+
+Before shipping any component that uses `ResizeObserver`, `requestAnimationFrame`, `getBoundingClientRect`, or `useEffect` with data fetching + state updates:
+
+- [ ] Outer container has a fixed CSS height (`h-[Xpx]`) or flex-isolated (`flex-1 min-h-0`)
+- [ ] Content starts at `opacity: 0` with a `settled` / `dataLoaded` gate
+- [ ] `setSettled(true)` called at every exit path (success + fallback + error)
+- [ ] Safety timeout (2s) ensures visibility even on failure
+- [ ] No `transition-all` — only `transition-colors` or `transition-opacity`
+- [ ] Empty/loading states also use `opacity: 0` if replaced by differently-sized content
+- [ ] Verified with Chrome DevTools → Performance panel → Layout Shifts section
+
+---
+
 ## Changelog
 
+- **9 Feb 2026 (v2.7):** Added § 22 CLS Prevention Rules. Documents five rules and a checklist for preventing Cumulative Layout Shift: CSS-deterministic heights, opacity gating, no transition-all on layout containers, client-side fetch re-sort gating, and flex layout isolation. Based on CLS 0.40 → 0.02 fix cycle.
 - **7 Feb 2026 (v2.6):** Added § 6.3 Content-Driven Sizing (Breathing Room Pattern). Documents the approach for when content doesn't have room to breathe: measure real content in offscreen measurer, compare against available space with breathing room, gracefully degrade layout. Reference implementation: commodities-movers-grid.tsx v3.0.
 - **13 Jan 2026 (v2.5):** Added §10.1 Data Polling Hooks (centralised pattern). Documents all four polling hooks (FX, Indices, Commodities, Crypto) with slot schedules, TTLs, and providers. Standard pattern for visibility-aware, slot-aligned polling.
 - **10 Jan 2026 (v2.4):** Updated FX SSOT file references from `fx.pairs.json` to unified `fx-pairs.json` in §3 and §13 SSOT sections.

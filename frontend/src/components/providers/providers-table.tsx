@@ -451,7 +451,7 @@ export function ProvidersTable({
 
   // Index Rating data from database
   const [indexRatings, setIndexRatings] = useState<Map<string, ProviderRating>>(new Map());
-  const [ratingsLoaded, setRatingsLoaded] = useState(false);
+  const [_ratingsLoaded, setRatingsLoaded] = useState(false);
 
   // Fetch Index Ratings on mount
   useEffect(() => {
@@ -537,16 +537,7 @@ export function ProvidersTable({
   }, [sorted, onProvidersChange]);
 
   return (
-    <div
-      className="providers-table-container leaderboard-glow-frame"
-      style={{
-        // CLS FIX: Invisible until Index Ratings load and rows sort.
-        // Per CLS spec, opacity: 0 elements don't contribute to shift scoring.
-        // Prevents the ratings-fetch → re-sort → row reorder from counting as CLS.
-        opacity: ratingsLoaded ? 1 : 0,
-        transition: 'opacity 150ms ease-in',
-      }}
-    >
+    <div className="providers-table-container leaderboard-glow-frame">
       {/* Desktop table view — hidden on mobile via CSS */}
       <div
         className="providers-table-scroll-wrapper providers-table-desktop"

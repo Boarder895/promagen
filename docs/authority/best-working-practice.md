@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 7 February 2026
+**Last updated:** 9 February 2026
 
 ---
 
@@ -493,6 +493,50 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 ---
 
+## Performance Guardrails (CLS Prevention)
+
+**Purpose:**
+Cumulative Layout Shift (CLS) is invisible during development but tanks Google rankings and makes users feel the site is "janky". Promagen hit CLS 0.40 (catastrophic) from patterns that looked harmless in dev. These process rules prevent repeating that.
+
+**Authority:** Technical implementation rules are in `code-standard.md` § 22. This section covers the _process_ — when to check, what to watch for, and how to think about it.
+
+### Pre-ship CLS check (required for homepage-visible components)
+
+Any PR that touches components visible on initial page load (FX ribbons, commodities grid, providers table, exchange cards, header) must include a CLS measurement:
+
+1. Open Chrome DevTools → Performance panel
+2. Check "Screenshots" and "Web Vitals"
+3. Click Record → Reload page → Stop after full load
+4. Check "Layout Shifts" section in the timeline
+5. **Pass criteria:** total CLS ≤ 0.10 (target ≤ 0.05)
+
+If CLS exceeds 0.10, the PR must fix it before merging.
+
+### Three patterns that always cause CLS
+
+These are the root causes we've hit. Treat them as red flags during code review:
+
+| Pattern | Why it shifts | Fix |
+|---|---|---|
+| `useEffect` → fetch → `setState` → re-sort visible rows | Rows jump to new positions after paint | Opacity-gate container until data loads |
+| `requestAnimationFrame` / `ResizeObserver` → `setState` on measured component | Content reflowed after first paint | `opacity: 0` until measurement settles |
+| `transition-all` on containers that resize | Browser animates the layout shift, CLS counts it | Use `transition-colors` or `transition-opacity` only |
+
+### SSR hydration gap (mental model)
+
+The browser paints server-rendered HTML **before** React hydrates. No React effect (`useEffect`, `useLayoutEffect`) can prevent this first paint. If your component looks different after hydration (different font size, different sort order, different row count), the user sees the shift.
+
+**Rule of thumb:** if a component will look different after its first `useEffect` fires, it must start invisible (`opacity: 0`) and fade in after settling.
+
+### What "good" looks like
+
+- CLS ≤ 0.05 (green in Lighthouse/DevTools)
+- Components that measure themselves start invisible and fade in within 150ms
+- No visible "jump" or "flash" on page load
+- Safety timeouts ensure content always becomes visible, even if APIs are slow
+
+---
+
 ## Prompt Optimiser
 
 **Prompt analysis (what makes answers go wrong):**
@@ -539,6 +583,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **9 Feb 2026:** Added "Performance Guardrails (CLS Prevention)" section. Pre-ship CLS check requirement, three red-flag patterns, SSR hydration gap mental model. Cross-ref code-standard.md § 22 for implementation rules.
 - **7 Feb 2026:** Added "Content-driven sizing" subsection under UI Consistency. Standard approach when content doesn't have room to breathe: measure real content, not magic numbers. Cross-ref code-standard.md § 6.3.
 - **10 Jan 2026:** Updated FX SSOT file reference from `fx.pairs.json` to unified `fx-pairs.json` (schema table).
 - **9 Jan 2026:** Added "Deployment Resilience" section (Vercel Skew Protection + ChunkErrorBoundary). Zero-downtime deployment strategy for active users.
