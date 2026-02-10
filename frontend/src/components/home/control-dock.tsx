@@ -2,8 +2,14 @@
 // ============================================================================
 // CONTROL DOCK - Centralised control strip beneath PROMAGEN
 // ============================================================================
-// Houses the Reference Frame Toggle (and future controls like language selector)
-// centered beneath the PROMAGEN heading.
+// Houses the Reference Frame Toggle and AuthButton (sign-in / avatar).
+//
+// v2.0.0 CHANGES:
+// - ADDED: AuthButton placed to the right of Greenwich Meridian toggle
+// - Sign-in button moved here from Mission Control (all pages)
+// - AuthButton already uses identical styling to ReferenceFrameToggle
+//   (rounded-full pill, purple-pink gradient border)
+// - When signed in, shows Clerk UserButton avatar
 //
 // Design:
 // - Glass effect background: bg-slate-900/40 backdrop-blur-sm
@@ -13,12 +19,14 @@
 // - Designed to auto-expand for additional controls
 //
 // Authority: docs/authority/ribbon-homepage.md (Control Dock section)
+// Existing features preserved: Yes
 // ============================================================================
 
 'use client';
 
 import React from 'react';
 import ReferenceFrameToggle from '@/components/reference-frame-toggle';
+import { AuthButton } from '@/components/auth';
 import type { ReferenceFrame } from '@/lib/location';
 
 // ============================================================================
@@ -49,13 +57,12 @@ export interface ControlDockProps {
 /**
  * ControlDock - Centralised control strip beneath PROMAGEN heading.
  *
- * Contains the Reference Frame Toggle and is designed to accommodate
- * future controls (language selector, settings, etc.) on either side.
+ * Contains the Reference Frame Toggle and AuthButton (sign-in / avatar).
  *
  * Layout:
- * ┌─────────────────────────────────────────────────────────┐
- * │   [Future Tab]  │ 🌐 Greenwich Meridian ▾ │  [Future]  │
- * └─────────────────────────────────────────────────────────┘
+ * ┌──────────────────────────────────────────────────────────────────┐
+ * │  [Future]  │ 🌐 Greenwich Meridian ▾ │ 👤 Sign in │  [Future]  │
+ * └──────────────────────────────────────────────────────────────────┘
  */
 export function ControlDock({
   referenceFrame,
@@ -67,10 +74,7 @@ export function ControlDock({
   className = '',
 }: ControlDockProps): React.ReactElement {
   return (
-    <div
-      className={`flex items-center justify-center ${className}`}
-      data-testid="control-dock"
-    >
+    <div className={`flex items-center justify-center ${className}`} data-testid="control-dock">
       {/* 
         Control Dock Container
         - Glass effect with subtle purple-pink gradient border
@@ -102,6 +106,14 @@ export function ControlDock({
           isLocationLoading={isLocationLoading}
           cityName={cityName}
         />
+
+        {/* Auth Button - Sign in / User avatar (moved from Mission Control)
+            COLOUR FIX (buttons.md §1.1): body { color: #020617 } causes all
+            children to inherit slate-950. Must force white on every child type:
+            button/a (container), svg (icon via stroke=currentColor), span (text) */}
+        <div className="[&_button]:!text-white [&_a]:!text-white [&_svg]:!text-white [&_span]:!text-white">
+          <AuthButton />
+        </div>
 
         {/* 
           Future: Settings/preferences would go here (right side)

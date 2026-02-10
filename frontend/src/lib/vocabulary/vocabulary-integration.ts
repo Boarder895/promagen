@@ -1,7 +1,7 @@
 /**
  * Vocabulary Integration Layer
  * =============================
- * Connects the 5,000+ term vocabulary layer to the prompt builder UI.
+ * Connects the 10,000+ term vocabulary layer to the prompt builder UI.
  * 
  * This is the bridge between:
  * - vocabulary/prompt-builder/ (3,600 terms)

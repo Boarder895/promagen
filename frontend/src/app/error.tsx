@@ -1,48 +1,58 @@
 'use client';
 
-export default function GlobalError({
+/**
+ * Route-level error boundary for the App Router.
+ *
+ * KEY DIFFERENCE from global-error.tsx:
+ * - This renders INSIDE layout.tsx (so NO <html>/<body> tags here).
+ * - global-error.tsx renders OUTSIDE layout.tsx and must provide its own <html>/<body>.
+ *
+ * Styled to match Promagen's dark theme.
+ * A11y-first markup, clear recovery actions, no PII in copy.
+ */
+
+import { useEffect } from 'react';
+
+export default function Error({
   error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const message = error?.message || 'Unknown error';
-  const digest = error?.digest;
+  useEffect(() => {
+    // Hook for analytics once wired (kept silent for now)
+    // console.error(error);
+  }, [error]);
 
   return (
-    <html lang="en">
-      <body style={{ fontFamily: 'system-ui', padding: 24 }}>
-        <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>
-          Something went sideways.
-        </h1>
+    <main role="main" className="mx-auto max-w-3xl px-6 py-16">
+      <h1 className="text-2xl font-semibold tracking-tight text-white">
+        Something went wrong
+      </h1>
+      <p className="mt-3 text-sm text-white/75">
+        An unexpected error occurred. You can try again or head back to the homepage.
+      </p>
 
-        <p style={{ color: '#666', marginBottom: 16 }}>
-          {message} {digest ? `(digest: ${digest})` : ''}
-        </p>
-
-        <p style={{ color: '#666', marginBottom: 24 }}>
-          This might clear if you refresh the page. If it keeps happening, you can mention the
-          message above when you contact support.
-        </p>
-
+      <div className="mt-6 flex gap-3">
         <button
           type="button"
-          onClick={reset}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'centre',
-            gap: 8,
-            borderRadius: 999,
-            border: '1px solid rgba(148,163,184,0.6)',
-            padding: '6px 14px',
-            background: 'white',
-            cursor: 'pointer',
-          }}
+          onClick={() => reset()}
+          className="rounded-2xl border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
         >
           Try again
         </button>
-      </body>
-    </html>
+        <a
+          href="/"
+          className="inline-flex items-center rounded-2xl border border-white/10 px-4 py-2 text-sm font-medium text-white hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+        >
+          Go to homepage
+        </a>
+      </div>
+
+      {error?.digest ? (
+        <p className="mt-6 text-xs text-white/50">Error reference: {error.digest}</p>
+      ) : null}
+    </main>
   );
 }

@@ -1,8 +1,19 @@
 // src/components/home/mission-control.tsx
 // ============================================================================
-// MISSION CONTROL - Smart Automated Prompts Panel (v3.5.1)
+// MISSION CONTROL - Smart Automated Prompts Panel (v4.0.0)
 // ============================================================================
 // Right-side panel with weather-driven prompt preview.
+//
+// v4.0.0 CHANGES:
+// - REMOVED: Sign-in button from Mission Control (moved to Control Dock)
+// - REMOVED: All Clerk auth imports, hooks, and state logic
+// - REMOVED: isAuthenticated prop (no longer needed)
+// - REMOVED: userIconPath, actionButtonLoading (sign-in only)
+// - Grid reduced from 3→2 columns (default) and 4→3 (studio sub-pages)
+// - Homepage: Studio | Pro (2 buttons)
+// - Studio page: Home | Pro (2 buttons)
+// - Pro Promagen: Studio | Home (2 buttons)
+// - Studio sub-pages: Home | Studio | Pro (3 buttons)
 //
 // v3.5.1 CHANGES:
 // - ADDED: isStudioSubPage prop for 4-button layout on Studio sub-pages
@@ -42,14 +53,13 @@
 //
 // Authority: buttons.md, mission-control.md
 // Security: 10/10 — No user input handling, type-safe data flow
-// Existing features preserved: Yes
+// Existing features preserved: Yes (sign-in moved to Control Dock, not removed)
 // ============================================================================
 
 'use client';
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { SignInButton, UserButton, useClerk } from '@clerk/nextjs';
 import {
   generateWeatherPrompt,
   getDefaultTier,
@@ -59,12 +69,6 @@ import { toFullWeather, type ExchangeWeatherDisplay } from '@/lib/weather/weathe
 import { WeatherPromptTooltip } from '@/components/exchanges/weather/weather-prompt-tooltip';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
-
-// ============================================================================
-// CONSTANTS — Match AuthButton timeouts
-// ============================================================================
-
-const CLERK_LOAD_TIMEOUT_MS = 3000;
 
 // ============================================================================
 // FIT TEXT COMPONENT - Auto-scales text to fit container width
@@ -169,12 +173,11 @@ export interface MissionControlProps {
   exchanges?: readonly Exchange[];
   weatherIndex?: Map<string, ExchangeWeatherData>;
   nearestExchangeId?: string;
-  isAuthenticated?: boolean;
   /** When true, shows Home button instead of Studio button (for /studio page) */
   isStudioPage?: boolean;
   /** When true, shows Home button instead of Pro button (for /pro-promagen page) */
   isProPromagenPage?: boolean;
-  /** When true, shows 4 buttons: Home | Studio | Pro | Sign in (for /studio/* sub-pages) */
+  /** When true, shows 3 buttons: Home | Studio | Pro (for /studio/* sub-pages) */
   isStudioSubPage?: boolean;
 }
 
@@ -206,13 +209,6 @@ const actionButtonBase =
 const actionButtonActive =
   'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer';
 
-const actionButtonLoading =
-  'border-slate-600/50 bg-slate-800/30 text-slate-400 cursor-wait opacity-70';
-
-// User icon path
-const userIconPath =
-  'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z';
-
 // Home icon path
 const homeIconPath =
   'M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25';
@@ -239,44 +235,6 @@ export default function MissionControl({
 }: MissionControlProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const contentZoneRef = useRef<HTMLDivElement>(null);
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // CLERK AUTH STATE — Same pattern as AuthButton
-  // ══════════════════════════════════════════════════════════════════════════
-  const clerk = useClerk();
-  const [mounted, setMounted] = useState(false);
-  const [timedOut, setTimedOut] = useState(false);
-
-  // Initial mount (prevents SSR hydration issues)
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Timeout fallback (if Clerk doesn't load in 3s, show fallback link)
-  useEffect(() => {
-    if (mounted && !clerk.loaded) {
-      const timeout = setTimeout(() => {
-        if (!clerk.loaded) {
-          console.warn('[MissionControl] Clerk did not load within timeout');
-          setTimedOut(true);
-        }
-      }, CLERK_LOAD_TIMEOUT_MS);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [mounted, clerk.loaded]);
-
-  // Determine auth button state - FIX: Check if user is signed in
-  const authState = useMemo(() => {
-    if (!mounted) return 'ssr';
-    if (clerk.loaded) {
-      // Check if user is signed in
-      if (clerk.user || clerk.session) return 'signed-in';
-      return 'ready'; // Loaded but not signed in
-    }
-    if (timedOut) return 'timeout';
-    return 'loading';
-  }, [mounted, clerk.loaded, clerk.user, clerk.session, timedOut]);
 
   // ══════════════════════════════════════════════════════════════════════════
   // WEATHER & PROMPT LOGIC — Uses same data source as LSE London exchange card
@@ -361,115 +319,6 @@ export default function MissionControl({
   const hasWeatherData = weatherData !== null && weatherData.tempC !== null;
 
   // ══════════════════════════════════════════════════════════════════════════
-  // RENDER SIGN IN BUTTON — Based on authState
-  // ══════════════════════════════════════════════════════════════════════════
-  const renderSignInButton = () => {
-    switch (authState) {
-      case 'ssr':
-      case 'loading':
-        // Show loading state
-        return (
-          <span
-            className={`${actionButtonBase} ${actionButtonLoading}`}
-            aria-label="Loading authentication"
-            aria-disabled="true"
-          >
-            <svg
-              className="h-5 w-5 animate-pulse"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d={userIconPath}
-              />
-            </svg>
-            <span>Loading...</span>
-          </span>
-        );
-
-      case 'timeout':
-        // Fallback link (same as AuthButton)
-        return (
-          <a
-            href="/sign-in"
-            className={`${actionButtonBase} ${actionButtonActive}`}
-            aria-label="Sign in to your account"
-          >
-            <svg
-              className="h-5 w-5 text-purple-100"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d={userIconPath}
-              />
-            </svg>
-            <span className="text-purple-100">Sign in</span>
-          </a>
-        );
-
-      case 'signed-in':
-        // User is signed in - show UserButton for sign out
-        return (
-          <UserButton
-            appearance={{
-              elements: {
-                avatarBox: 'h-8 w-8 ring-2 ring-purple-500/50 hover:ring-purple-400',
-                userButtonPopoverCard: 'bg-slate-900 border border-slate-800',
-                userButtonPopoverActionButton: 'text-slate-300 hover:bg-slate-800',
-                userButtonPopoverActionButtonText: 'text-slate-300',
-                userButtonPopoverActionButtonIcon: 'text-slate-400',
-                userButtonPopoverFooter: 'hidden',
-              },
-            }}
-            afterSignOutUrl="/"
-          />
-        );
-
-      case 'ready':
-        // Clerk is loaded - render SignInButton
-        return (
-          <SignInButton mode="modal">
-            <button
-              type="button"
-              className={`${actionButtonBase} ${actionButtonActive}`}
-              aria-label="Sign in to your account"
-            >
-              <svg
-                className="h-5 w-5 text-purple-100"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d={userIconPath}
-                />
-              </svg>
-              <span className="text-purple-100">Sign in</span>
-            </button>
-          </SignInButton>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  // ══════════════════════════════════════════════════════════════════════════
   // RENDER HOME BUTTON — Always links to /
   // ══════════════════════════════════════════════════════════════════════════
   const renderHomeButton = () => (
@@ -546,7 +395,6 @@ export default function MissionControl({
 
   // ══════════════════════════════════════════════════════════════════════════
   // RENDER SECOND BUTTON — Home or Pro depending on isProPromagenPage
-  // NEW in v3.4.0: Pro/Home toggle for /pro-promagen page
   // ══════════════════════════════════════════════════════════════════════════
   const renderSecondButton = () => {
     if (isProPromagenPage) {
@@ -560,10 +408,10 @@ export default function MissionControl({
 
   // ══════════════════════════════════════════════════════════════════════════
   // DETERMINE GRID LAYOUT
-  // - isStudioSubPage: 4 columns (Home | Studio | Pro | Sign in)
-  // - Default: 3 columns
+  // - isStudioSubPage: 3 columns (Home | Studio | Pro)
+  // - Default: 2 columns
   // ══════════════════════════════════════════════════════════════════════════
-  const gridCols = isStudioSubPage ? 'grid-cols-4' : 'grid-cols-3';
+  const gridCols = isStudioSubPage ? 'grid-cols-3' : 'grid-cols-2';
 
   // ══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -689,27 +537,23 @@ export default function MissionControl({
         </div>
       </div>
 
-      {/* ACTION ZONE — Grid layout (3 or 4 columns) */}
+      {/* ACTION ZONE — Grid layout (2 or 3 columns, sign-in moved to Control Dock) */}
       <div className={`grid ${gridCols} gap-3`}>
         {isStudioSubPage ? (
-          // 4-button layout for Studio sub-pages: Home | Studio | Pro | Sign in
+          // 3-button layout for Studio sub-pages: Home | Studio | Pro
           <>
             {renderHomeButton()}
             {renderStudioButton()}
             {renderProButton()}
-            {renderSignInButton()}
           </>
         ) : (
-          // 3-button layout (default): First | Second | Sign in
+          // 2-button layout (default): First | Second
           <>
             {/* First Button: Home (on Studio page) or Studio (on Homepage/Pro Promagen) */}
             {renderFirstButton()}
 
             {/* Second Button: Home (on Pro Promagen page) or Pro (on Homepage/Studio) */}
             {renderSecondButton()}
-
-            {/* Third Button: Sign In */}
-            {renderSignInButton()}
           </>
         )}
       </div>

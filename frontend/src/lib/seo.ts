@@ -3,7 +3,7 @@ import { env } from '@/lib/env';
 
 export const baseTitle = env.siteName;
 export const baseDescription =
-  'A calm, data-rich dashboard that pairs creative AI providers with global markets.';
+  'AI prompt builder with 10,000+ phrases for 42+ image generators. Elo-ranked leaderboard and live financial market data.';
 
 export function canonical(pathname = '/'): string {
   try {

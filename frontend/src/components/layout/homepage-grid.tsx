@@ -448,7 +448,6 @@ export default function HomepageGrid({
                   exchanges={exchanges}
                   weatherIndex={weatherIndex}
                   nearestExchangeId={nearestExchangeId}
-                  isAuthenticated={isAuthenticated}
                   isStudioPage={isStudioPage}
                   isProPromagenPage={isProPromagenPage}
                   isStudioSubPage={isStudioSubPage}

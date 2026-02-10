@@ -45,8 +45,9 @@ import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 // ============================================================================
 
 export const metadata: Metadata = {
-  title: 'Promagen — Calm, data-rich AI providers overview',
-  description: 'Live exchange rails and an AI providers leaderboard.',
+  title: 'AI Prompt Builder for 42+ Image Generators | Promagen',
+  description:
+    'Build prompts for Midjourney, DALL·E & 40+ AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
 };
 
 // ============================================================================
