@@ -1,7 +1,7 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 9 February 2026  
-**Version:** 2.7 (CLS Prevention Rules)  
+**Last updated:** 14 February 2026  
+**Version:** 2.8 (Anti-Breakpoint Rule + Text Containment)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
 ---
@@ -304,6 +304,24 @@ Spacing, typography, and colour use must match existing components.
 
 No hard-coded pixel values unless already used in the system.
 
+**Responsive font sizing — `clamp()` only, never breakpoints:**
+
+The root `html` font-size is `clamp(16px, 1.1vw, 18px)`, meaning Tailwind's rem-based text classes (`text-sm`, `text-base`, `text-lg`) already scale proportionally with viewport width. Adding Tailwind breakpoint text overrides (`sm:text-sm`, `xl:text-base`, `min-[Xpx]:text-Y`) has no visible effect because the underlying rem is already fluid — breakpoints fight the system.
+
+For any component-specific font sizing, use inline `clamp()`:
+
+```tsx
+// ✅ Correct — scales smoothly from 12px to 16px across viewports
+<p style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}>Text</p>
+
+// ❌ Wrong — breakpoints do nothing when root rem already scales
+<p className="text-xs sm:text-sm xl:text-base">Text</p>
+```
+
+**Exception:** Tooltips may use fixed Tailwind text classes (`text-sm`, `text-xs`) because they are portalled overlays with their own sizing context.
+
+**Authority:** `best-working-practice.md` § Fluid Typography with `clamp()`
+
 ### Fixed Proportional Column Layout (multi-column cards)
 
 When a card displays multiple data groups (e.g., exchange info | time | weather), use **fixed proportional columns** to ensure vertical alignment across all cards at any screen size.
@@ -493,6 +511,48 @@ for (const fontSize of candidates) {
 **Reference implementation:** `src/components/ribbon/commodities-movers-grid.tsx` (v3.0)
 
 **Authority:** `docs/authority/commodities.md` § Panel Sizing
+
+### § 6.4 Text Containment (No Text Escapes Its Window)
+
+**Purpose:** Prevent text from overflowing, wrapping beyond, or visually escaping its containing panel, card, or window. Text that escapes its container looks broken and unprofessional, particularly in fixed-height containers and on smaller viewports.
+
+**Hard rule:** All text within fixed-height containers must be visually contained at every viewport size. No text may overflow or push beyond its parent container boundary.
+
+**The pattern — three properties working together:**
+
+```tsx
+// ✅ Correct — text is fully contained
+<div className="flex-1 overflow-hidden min-h-0">
+  <p className="truncate">Your text here</p>
+</div>
+
+// ❌ Wrong — flex-1 without min-h-0, text escapes on smaller viewports
+<div className="flex-1">
+  <p>Your text here</p>
+</div>
+```
+
+| Property          | What it does                                             | Why it's needed                                                   |
+| ----------------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
+| `overflow-hidden` | Clips anything that exceeds the div's boundary           | Final safety net — nothing visually escapes                       |
+| `min-h-0`         | Overrides flex default `min-height: auto`                | Without this, flex children refuse to shrink below content height |
+| `truncate`        | Forces `white-space: nowrap` + `text-overflow: ellipsis` | Prevents text wrapping to second line and pushing downward        |
+
+**When to use `truncate` vs line clamping:**
+
+- **Single-line labels, status text, instruction text:** Use `truncate` (ellipsis is better than overflow)
+- **Multi-line content (prompts, descriptions):** Use `overflow-hidden min-h-0` on wrapper + `line-clamp-N` on text to limit line count
+- **Always:** The parent container must have `overflow-hidden` as the final safety net
+
+**Forbidden patterns:**
+
+- Text inside a fixed-height flex child without `min-h-0` (text will push beyond container)
+- Relying solely on outer container `overflow-hidden` without `min-h-0` on intermediate flex children (flex ignores parent overflow constraints by default)
+- Animated or pulsing text without containment (animation can cause reflow that escapes)
+
+**Compliance check:** Resize browser to smallest supported viewport. If any text is visually outside its card/panel boundary, the component violates this rule.
+
+**Authority:** `docs/authority/best-working-practice.md` § Text containment
 
 ---
 
@@ -1234,6 +1294,7 @@ When addressing ESLint, TypeScript typecheck, or test failures, apply the smalle
 Next.js SSR renders HTML on the server. The browser paints this HTML **before** React hydrates. By the time any React effect runs (including `useLayoutEffect`), the first paint has already happened. Any measurement → setState → re-render cycle after hydration creates a visible shift.
 
 **Timeline:**
+
 1. Server HTML arrives → browser paints (user sees initial layout)
 2. React hydrates → `useLayoutEffect` fires → measures → `setState`
 3. Re-render → browser paints corrected layout
@@ -1270,15 +1331,18 @@ const [settled, setSettled] = useState(false);
 setSettled(true);
 
 // In render:
-<div style={{
-  opacity: settled ? 1 : 0,
-  transition: 'opacity 150ms ease-in',
-}}>
+<div
+  style={{
+    opacity: settled ? 1 : 0,
+    transition: 'opacity 150ms ease-in',
+  }}
+>
   {/* content that measures/reflowsitself */}
-</div>
+</div>;
 ```
 
 **Requirements:**
+
 - `setSettled(true)` must be called at **every exit path** of the measurement function (success, fallback, error)
 - Add a safety timeout (2s) to ensure content always becomes visible even if measurement fails
 - Loading skeletons/empty states should also use `opacity: 0` if they will be replaced by differently-sized content
@@ -1289,10 +1353,10 @@ setSettled(true);
 
 ```tsx
 // ✅ Correct — only animate visual properties
-className="transition-colors"
+className = 'transition-colors';
 
 // ❌ Wrong — animates layout shifts
-className="transition-all"
+className = 'transition-all';
 ```
 
 **Allowed transition targets:** `transition-colors`, `transition-opacity`, `transition-shadow`. Never use `transition-all` on any element that might change position or size.
@@ -1309,14 +1373,17 @@ const [dataLoaded, setDataLoaded] = useState(false);
 useEffect(() => {
   const timeout = setTimeout(() => setDataLoaded(true), 2000); // safety fallback
   fetchData()
-    .then((data) => { setData(data); setDataLoaded(true); })
+    .then((data) => {
+      setData(data);
+      setDataLoaded(true);
+    })
     .catch(() => setDataLoaded(true)) // always become visible
     .finally(() => clearTimeout(timeout));
 }, []);
 
 <div style={{ opacity: dataLoaded ? 1 : 0, transition: 'opacity 150ms ease-in' }}>
   <SortableTable data={data} />
-</div>
+</div>;
 ```
 
 ### Rule 5: Flex layout isolation
@@ -1353,6 +1420,7 @@ Before shipping any component that uses `ResizeObserver`, `requestAnimationFrame
 
 ## Changelog
 
+- **14 Feb 2026 (v2.8):** Added anti-breakpoint responsive font rule to § 6 intro — never use Tailwind breakpoint text classes (`sm:text-sm`, `xl:text-base`, `min-[Xpx]:text-Y`) because root `html` already uses `clamp()` and rem-based classes already scale. Tooltips exempt. Added § 6.4 Text Containment — three-property pattern (`overflow-hidden`, `min-h-0`, `truncate`) required for all text in fixed-height containers. Cross-ref best-working-practice.md.
 - **9 Feb 2026 (v2.7):** Added § 22 CLS Prevention Rules. Documents five rules and a checklist for preventing Cumulative Layout Shift: CSS-deterministic heights, opacity gating, no transition-all on layout containers, client-side fetch re-sort gating, and flex layout isolation. Based on CLS 0.40 → 0.02 fix cycle.
 - **7 Feb 2026 (v2.6):** Added § 6.3 Content-Driven Sizing (Breathing Room Pattern). Documents the approach for when content doesn't have room to breathe: measure real content in offscreen measurer, compare against available space with breathing room, gracefully degrade layout. Reference implementation: commodities-movers-grid.tsx v3.0.
 - **13 Jan 2026 (v2.5):** Added §10.1 Data Polling Hooks (centralised pattern). Documents all four polling hooks (FX, Indices, Commodities, Crypto) with slot schedules, TTLs, and providers. Standard pattern for visibility-aware, slot-aligned polling.
@@ -1693,4 +1761,3 @@ className =
 - Different track/thumb colours
 
 This ensures visual consistency across exchange rails, providers table, and prompt builder.
-

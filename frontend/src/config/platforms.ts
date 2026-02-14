@@ -20,7 +20,7 @@ export const PLATFORMS_20: Platform[] = [
   },
   {
     id: 'openai',
-    name: 'OpenAI (DALL·E / GPT-Image)',
+    name: 'DALLÂ·E 3 / GPT-Image',
     rank: 2,
     kind: 'api',
     markers: ['??'],

@@ -128,6 +128,7 @@ export function ProviderCell({ provider, rank, hasRankUp = false }: ProviderCell
           target="_blank"
           rel="noopener noreferrer"
           className="provider-name-link"
+          style={{ fontSize: 'clamp(0.6rem, 1vw, 1rem)' }}
           aria-label={`Visit ${provider.name} website (opens in new tab)`}
         >
           {provider.name}

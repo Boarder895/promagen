@@ -76,13 +76,33 @@ function parseBudgetState(raw: unknown): CommoditiesBudgetState | undefined {
 }
 
 function buildFallback(): ProviderResult {
-  // Calm fallback: return NO synthetic prices.
-  // The UI will render "—" for items without quotes (container already handles this).
+  // Static fallback quotes so the movers grid renders cards when the gateway is
+  // unavailable (e.g. Marketstack key removed). Prices are representative, not live.
+  // 12 items: 4+ "winners" (prevClose < value) + 4+ "losers" (prevClose > value).
+  // When the gateway returns real data, this function is never called.
+  const fallbackQuotes: { id: string; value: number; prevClose: number }[] = [
+    // Winners (positive movement)
+    { id: 'gold', value: 2685.4, prevClose: 2651.2 },
+    { id: 'coffee', value: 182.35, prevClose: 178.9 },
+    { id: 'brent_crude', value: 76.82, prevClose: 75.45 },
+    { id: 'cocoa', value: 8425.0, prevClose: 8310.0 },
+    // Losers (negative movement)
+    { id: 'copper', value: 8742.5, prevClose: 8865.0 },
+    { id: 'wheat', value: 542.25, prevClose: 558.75 },
+    { id: 'live_cattle', value: 192.15, prevClose: 195.3 },
+    { id: 'silver', value: 30.18, prevClose: 30.92 },
+    // Extra (ensures sort has enough headroom)
+    { id: 'sugar', value: 19.85, prevClose: 19.42 },
+    { id: 'wti_crude', value: 72.1, prevClose: 73.55 },
+    { id: 'corn', value: 448.5, prevClose: 451.0 },
+    { id: 'lean_hogs', value: 87.3, prevClose: 88.1 },
+  ];
+
   return {
     mode: 'fallback',
     sourceProvider: 'fallback',
     budgetState: 'ok',
-    quotes: [],
+    quotes: fallbackQuotes,
   };
 }
 

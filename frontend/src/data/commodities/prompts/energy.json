@@ -1,0 +1,673 @@
+{
+  "category": "energy",
+  "categoryLabel": "Energy",
+  "commodityCount": 13,
+  "stageLabels": {
+    "origin": "Origin / Raw",
+    "extraction": "Harvest / Extraction",
+    "processing": "Processing / Refinement",
+    "finished": "Finished / Trade-ready"
+  },
+  "commodities": {
+    "brent": {
+      "displayName": "Brent Crude",
+      "intro": "Brent Crude is the benchmark oil for Atlantic basin trading, originally from the Brent field in the North Sea between Shetland and Norway. Modern Brent pricing references a basket of five North Sea fields (BFOET). A light, sweet crude with API gravity around 38 and low sulphur content.",
+      "materials": "Black viscous crude with rainbow iridescent surface sheen, rusted and painted steel platform structure, heavy chain and cable rigging, salt-crusted metal surfaces, rubber pipeline joints, flame from gas flare stack, white sea spray, dark crude-stained concrete.",
+      "stages": {
+        "origin": {
+          "subject": "Steel offshore oil production platform rising from a grey churning sea, multiple deck levels with derrick tower above, gas flare burning orange at the boom tip",
+          "lens": "24mm f/8, wide dramatic perspective capturing full platform structure from waterline to flare tip, deep depth showing sea context",
+          "enhancer": "Rusted salt-weathered steel structure, orange flame against grey overcast sky, white sea spray crashing against platform legs, small supply vessel alongside, industrial scale dwarfing the ocean",
+          "environments": {
+            "_default": "Open sea with grey-green waves, steel jacket platform with multiple processing decks, helicopter pad on top deck, supply vessel approaching, overcast North Sea sky",
+            "NO": "Norwegian Continental Shelf, massive concrete gravity-base platform in deep water, snow-dusted upper decks in winter, fjord supply base visible on distant coastline",
+            "GB": "UK North Sea sector east of Shetland, steel jacket platform in moderate sea state, accommodation module connected by bridge, flare boom extending leeward",
+            "SA": "Saudi Arabian offshore platform in the Persian Gulf, flat calm turquoise water, multiple satellite platforms connected by causeways, extreme heat haze, desert coastline beyond",
+            "BR": "Brazilian pre-salt FPSO off the Santos Basin coast, massive converted tanker hull moored in deep water, offloading shuttle tanker alongside, Atlantic swell"
+          }
+        },
+        "extraction": {
+          "subject": "Drilling floor on an oil rig, roughneck crew manoeuvring pipe into the rotary table, iron roughneck tong gripping the drill string, mud flowing in the return line",
+          "lens": "35mm f/4, documentary industrial depth, capturing both physical labour and heavy machinery together, environmental portrait of the drill floor",
+          "enhancer": "Oil-smeared overalls and hard hats, heavy steel pipe sections, chain tongs and slips, drilling mud splatter on deck plates, fluorescent deck lights against exterior darkness or daylight",
+          "environments": {
+            "_default": "Drill floor of an offshore jack-up rig, open to the elements on two sides with the sea visible, steel grating underfoot, pipe rack stacked with joints, drawworks behind",
+            "NO": "Norwegian semi-submersible drill floor, enclosed against Arctic weather, advanced top-drive system, winter darkness or midnight sun outside the weatherproofed walls",
+            "SA": "Saudi Aramco onshore rig in the Ghawar field, open desert surroundings, sand drifts against the substructure, extreme brightness outside the rig floor shade",
+            "US": "Permian Basin land rig in West Texas, triple derrick rising from flat scrubland, pump jacks nodding on adjacent pads, pickup trucks parked nearby"
+          }
+        },
+        "processing": {
+          "subject": "Towering fractional distillation columns at an oil refinery, complex pipe networks connecting multiple towers, steam venting from pressure relief valves",
+          "lens": "24mm f/11 looking upward, converging vertical lines emphasising industrial height, full depth from ground-level pipes to column tops against the sky",
+          "enhancer": "Chrome and steel pipe surfaces reflecting surrounding structures, steam and vapour wisps from joints, red warning lights on column tops, complex valve assemblies and flanged connections",
+          "environments": {
+            "_default": "Major oil refinery with multiple distillation units, catalytic cracker in the background, tank farm beyond, flare stack burning excess gas",
+            "US": "Houston Ship Channel refinery complex, enormous sprawling facility, cooling towers releasing steam clouds, Texas highway overpass framing the view",
+            "GB": "Grangemouth refinery on the Firth of Forth, grey Scottish sky, compact site between river and hills, Kincardine Bridge visible beyond",
+            "NL": "Rotterdam Europoort refinery, waterway frontage with barges moored alongside, flat Dutch landscape, wind turbines visible beyond the tank farm",
+            "SA": "Ras Tanura refinery on the Gulf coast, massive facility gleaming in harsh sunlight, crude tankers at the marine terminal, desert beyond the fence line"
+          }
+        },
+        "finished": {
+          "subject": "Massive oil tanker loaded low in the water, dark hull stretching the length of the frame, deck pipelines and manifolds running fore to aft, bow wave cutting through the sea",
+          "lens": "35mm f/8, three-quarter bow view from slightly above waterline, showing both ship scale and loaded draught line, sea filling the foreground",
+          "enhancer": "Plimsoll line submerged confirming full cargo, rust streaks on dark hull paint, white superstructure at stern contrasting dark forward deck, wake pattern trailing behind, seabirds following",
+          "environments": {
+            "_default": "Open shipping lane, deep blue-grey sea, tanker in transit, distant coastline or another vessel on the horizon",
+            "GB": "English Channel off Dover, white cliffs visible in background, busy shipping lane with multiple vessels, pilot cutter approaching",
+            "NO": "Norwegian fjord approach to Mongstad terminal, steep green mountainsides rising from the waterline, small pilot boat alongside the tanker hull",
+            "SG": "Singapore Strait, ultra-large tanker threading between anchored vessels, city skyline and container cranes visible on both sides of the passage",
+            "SA": "VLCC departing Ras Tanura terminal, Persian Gulf flat calm, desert shoreline and loading gantries receding behind, extreme heat haze above the water"
+          }
+        }
+      }
+    },
+    "crude_oil": {
+      "displayName": "Crude Oil (WTI)",
+      "intro": "West Texas Intermediate is the primary US oil benchmark, a light sweet crude with API gravity around 39.6 and very low sulphur. Priced at Cushing, Oklahoma \u2014 the pipeline crossroads of America where dozens of pipelines converge at a massive tank farm. WTI is delivered by pipeline from the Permian Basin, Eagle Ford, and Bakken formations.",
+      "materials": "Dark amber-to-black crude with slight translucency in thin film, chrome pipeline valves and flanges, white-painted steel storage tank walls, rusted ladder rungs, dried red Oklahoma clay, sun-bleached pump jack steel, rubber wellhead seals.",
+      "stages": {
+        "origin": {
+          "subject": "Pump jack nodding slowly in an oil field, polished steel horse-head rising and falling against the sky, sucker rod pulling crude from below ground",
+          "lens": "35mm f/8, classic American industrial landscape, pump jack silhouetted or side-lit with surrounding terrain visible, one-third sky",
+          "enhancer": "Rhythmic mechanical motion frozen mid-stroke, polished counterweight gleaming, black oil staining the ground around the wellhead, mesquite scrub and fence posts nearby",
+          "environments": {
+            "_default": "Flat semi-arid oil field with scattered pump jacks nodding across the terrain, gravel access roads between well pads, pipeline markers, distant tank battery",
+            "US": "Permian Basin in West Texas, red-brown desert soil, dozens of pump jacks visible across flat mesquite country, flare stacks burning associated gas on the horizon",
+            "CA": "Alberta oil sands region, boreal forest cleared for well pads, winter snow on the ground, steam rising from SAGD well pairs, frost on equipment",
+            "RU": "Western Siberian marshland, insulated pipeline running through birch forest, wellhead Christmas tree valve stack, frozen puddles on gravel pad, grey overcast sky"
+          }
+        },
+        "extraction": {
+          "subject": "Wellhead Christmas tree valve assembly at the surface, maze of hand-wheels and pressure gauges, crude oil flowing through the production manifold into a gathering line",
+          "lens": "50mm f/4, clean industrial close-up, sharp detail on valve assemblies and pipe connections, enough depth to show the surrounding well pad",
+          "enhancer": "Polished steel valve handles, brass pressure gauge faces with needle readings, crude oil staining around pipe joints, frost or heat shimmer on metal surfaces depending on climate",
+          "environments": {
+            "_default": "Concrete well pad with Christmas tree assembly, flow lines running to a separator unit, tank battery visible nearby, gravel access road",
+            "US": "Eagle Ford shale pad in South Texas, multiple wellheads on a single pad from horizontal drilling, green mesquite brush surrounding the fenced perimeter",
+            "SA": "Ghawar field wellhead in the Arabian desert, immaculately maintained equipment, sand drifts against the pad wall, pipeline right-of-way disappearing into heat haze",
+            "RU": "Siberian well pad in winter, insulated pipelines on raised supports, snow drifts banked against equipment housings, steam from heated separators"
+          }
+        },
+        "processing": {
+          "subject": "Cushing Oklahoma tank farm seen from above, dozens of white cylindrical floating-roof storage tanks arranged in neat rows, pipeline manifolds connecting them, surrounded by earthen containment berms",
+          "lens": "24mm f/11 from elevated position or drone perspective, showing the enormous scale of the tank farm, geometric pattern of circles and lines, flat Oklahoma prairie beyond",
+          "enhancer": "White tank roofs with floating pontoons visible, dark crude oil staining around fill points, earthen containment dikes between tank rows, pipeline junction manifold with multiple valve stations",
+          "environments": {
+            "_default": "Major crude oil storage terminal with rows of large white tanks, pipeline interconnections, loading gantry for rail or truck, flat agricultural land surrounding",
+            "US": "Cushing Oklahoma hub, world's largest crude storage complex, grid of tanks stretching for kilometres, railroad siding with tank cars, wheat fields abutting the terminal fence"
+          }
+        },
+        "finished": {
+          "subject": "Black crude oil pouring in a thick viscous stream from a pipe into a sample container, showing the liquid's true colour and consistency, rainbow iridescence on the surface film",
+          "lens": "85mm macro f/3.5, extreme close-up on the pouring stream, shallow depth isolating the liquid against a blurred industrial background",
+          "enhancer": "Thick viscous stream with visible flow lines, rainbow iridescent surface film, dark amber translucency where the stream is thinnest, oil droplets on the container rim, laboratory glassware nearby",
+          "environments": {
+            "_default": "Pipeline terminal or refinery quality control lab, stainless steel sampling point, laboratory glassware and testing equipment, clipboard with specification sheets",
+            "US": "Cushing terminal quality lab, API gravity test equipment, multiple sample jars of different crude grades lined up for comparison, pipeline schematic on the wall"
+          }
+        }
+      }
+    },
+    "gasoline": {
+      "displayName": "Gasoline",
+      "intro": "Gasoline (petrol in the UK/EU) is the primary refined product from crude oil, produced by catalytic cracking and reforming in refineries. The RBOB (Reformulated Blendstock for Oxygenate Blending) contract is the US benchmark. Gasoline is a clear to pale yellow liquid with a distinctive volatile smell, distributed by pipeline, barge, and tanker truck to retail stations.",
+      "materials": "Clear pale-yellow liquid with high volatility shimmer, chrome and steel fuel nozzle, rubber fuel hose, painted steel tanker body with hazmat placards, concrete forecourt surface, illuminated price sign, glass fuel dispenser sight tube.",
+      "stages": {
+        "origin": {
+          "subject": "Catalytic cracking unit at a refinery, riser reactor tower with regenerator vessel beside it, network of transfer lines between them, catalyst dust visible in vents",
+          "lens": "24mm f/8, industrial scale shot looking up at the cracking unit, pipes and vessels filling the frame, steam and catalyst haze creating atmosphere",
+          "enhancer": "Massive cylindrical reactor vessels connected by diagonal transfer lines, insulated pipes with aluminium cladding, catalyst fines dusting horizontal surfaces, red aviation warning lights on top",
+          "environments": {
+            "_default": "Major oil refinery FCC unit, surrounded by pipe racks and supporting infrastructure, cooling towers behind, flare stack on the perimeter",
+            "US": "Gulf Coast refinery in Texas or Louisiana, enormous FCC unit towering above the bayou landscape, humidity haze softening distant structures, security fencing",
+            "NL": "Rotterdam Europoort, European-scale FCC unit with barge loading terminal adjacent, flat polder landscape, North Sea wind turbines beyond",
+            "IN": "Jamnagar refinery complex in Gujarat, world's largest refinery, multiple FCC units in a massive integrated facility, Arabian Sea coastline visible"
+          }
+        },
+        "extraction": {
+          "subject": "Clear pale-yellow gasoline flowing through a sight glass on a refinery blending header, product pipeline rack behind with labelled lines for different fuel grades",
+          "lens": "50mm f/4, clean industrial product shot, sharp focus on the sight glass showing fuel flow and colour, pipeline rack providing context",
+          "enhancer": "Crystal-clear yellow-tinted liquid visible through glass, flow indicators and temperature gauges on adjacent pipes, grade labels stencilled on pipeline supports, stainless steel fittings",
+          "environments": {
+            "_default": "Refinery product blending area, multiple pipeline headers running in parallel, quality control sampling station nearby, tank farm in the background",
+            "US": "Houston refinery blending terminal, massive pipeline rack carrying multiple fuel grades to the Colonial Pipeline for East Coast distribution",
+            "GB": "Fawley refinery near Southampton, product pipelines running to distribution terminal, grey English sky, hedgerows beyond the perimeter"
+          }
+        },
+        "processing": {
+          "subject": "Fuel tanker truck being loaded at a refinery distribution rack, bottom-loading arms connected to the tanker's belly valves, vapour recovery hood above, driver checking the metering panel",
+          "lens": "35mm f/5.6, documentary perspective showing the full loading process \u2014 truck, loading arms, and rack structure \u2014 with enough context to show the terminal behind",
+          "enhancer": "Polished aluminium tanker body reflecting surroundings, black rubber loading hoses, hazmat diamond placards on tank compartments, digital flow meter display, yellow safety bollards",
+          "environments": {
+            "_default": "Fuel distribution terminal loading rack, covered gantry with multiple loading bays, tank farm behind, queuing trucks waiting their turn",
+            "US": "Major US fuel terminal on the Gulf Coast, multiple tanker trucks being loaded simultaneously, Colonial Pipeline receipt point, American highway overpass nearby",
+            "GB": "Buncefield-style fuel terminal in southern England, loading gantry with vapour recovery, green English countryside beyond the bund walls"
+          }
+        },
+        "finished": {
+          "subject": "Fuel nozzle inserted into a car's filler neck at a petrol station, trigger pulled with fuel flowing, price and litre display ticking over on the pump screen behind",
+          "lens": "50mm f/2.8, tight framing on the nozzle and filler cap, shallow depth blurring the pump display into colourful bokeh, hand gripping the nozzle visible",
+          "enhancer": "Chrome nozzle tip against painted car body, rubber nozzle boot sealing the filler neck, digital pump display with rolling numbers, fuel grade selector buttons, price per litre or gallon visible",
+          "environments": {
+            "_default": "Modern petrol station forecourt, illuminated canopy overhead, multiple pumps in a row, convenience store glowing in the background, parked cars",
+            "US": "American gas station, tall price sign visible from the highway showing regular/mid/premium, pickup trucks at pumps, convenience store with neon signs, flat terrain beyond",
+            "GB": "UK motorway services forecourt, Shell or BP branding, unleaded/super unleaded labels, rain-wet tarmac reflecting canopy lights, cars queuing",
+            "SA": "Saudi Aramco station in the desert, immaculate modern canopy, extremely low price per litre displayed, SUVs and pickups, sand-blown landscape beyond"
+          }
+        }
+      }
+    },
+    "heating_oil": {
+      "displayName": "Heating Oil",
+      "intro": "Heating oil (No. 2 fuel oil) is a middle distillate refined from crude oil, nearly identical to diesel fuel but dyed red for tax identification. It is the primary home heating fuel in the northeastern United States and parts of Europe. Delivered by tanker truck to residential and commercial storage tanks, consumed in oil-fired boilers and furnaces during winter months.",
+      "materials": "Clear red-dyed liquid with slight oily sheen, green or red painted steel storage tank with fill pipe, copper fuel lines, cast iron boiler sections, brass fittings and valves, concrete basement floor, rubber delivery hose with brass coupling.",
+      "stages": {
+        "origin": {
+          "subject": "Red-dyed heating oil visible through a clear sample jar held up against daylight, deep ruby-red colour clearly distinct from clear diesel, laboratory bench behind",
+          "lens": "85mm f/3.5, product beauty shot, shallow depth isolating the sample jar, light passing through the liquid showing true colour",
+          "enhancer": "Deep ruby-red translucent liquid in a cylindrical glass jar, daylight transmission showing colour density, oily meniscus at the glass edge, test spec sheet and hydrometer nearby",
+          "environments": {
+            "_default": "Refinery quality control laboratory, stainless steel bench, multiple fuel sample jars in a rack showing different distillate grades, testing equipment",
+            "US": "Northeast US fuel distributor testing lab, winter weather visible through the window, delivery schedule board on the wall, red-dyed samples in labeled jars",
+            "DE": "German heating oil depot in Bavaria or Rhineland, double-walled Heiz\u00f6l tank trucks delivering to residential customers, half-timbered houses with oil tanks in the cellar, German energy transition slowly replacing oil heating but millions of homes still dependent",
+            "JP": "Japanese kerosene (touyu) delivery truck in a residential neighbourhood, portable kerosene heaters ubiquitous in Japanese homes, kerosene pump at the local gas station, cold Tohoku or Hokkaido winter, the distinctive blue kerosene containers"
+          }
+        },
+        "extraction": {
+          "subject": "Heating oil delivery truck parked outside a New England house, driver unreeling the delivery hose from the truck reel, connecting brass coupling to the house fill pipe",
+          "lens": "35mm f/5.6, documentary street scene, showing the full delivery context \u2014 truck, house, driver, hose connection \u2014 New England residential neighbourhood",
+          "enhancer": "Red delivery truck with company branding, black rubber hose uncoiled across the snowy driveway, brass fill pipe cap removed and hanging on chain, metering ticket in driver's hand, snow on the roof",
+          "environments": {
+            "_default": "Residential street in a cold climate, tanker truck at the kerb, delivery hose running across a path to a house-mounted fill pipe, leafless trees, grey winter sky",
+            "US": "New England clapboard house in Connecticut or Massachusetts, snow on the ground, white picket fence, red oil delivery truck in the driveway, bare maple trees lining the street",
+            "GB": "Rural British cottage with an external green oil tank in the garden, delivery lorry parked on a narrow country lane, stone walls, bare hedgerows in winter",
+            "IE": "Irish farmhouse with a horizontal green kerosene tank on a concrete plinth, tanker navigating a single-track boreen, stone walls and green fields despite the winter",
+            "DE": "German oil refinery at Schwedt or Karlsruhe, heating oil (Heiz\u00f6l EL) being produced alongside diesel, Rhine barge delivery of crude oil, German industrial refinery, Energiewende transition visible in nearby wind turbines",
+            "JP": "Japanese refinery in Yokohama or Chiba, ENEOS or Idemitsu operation, kerosene production peaking before winter, Tokyo Bay industrial coastline, Japanese refinery efficiency"
+          }
+        },
+        "processing": {
+          "subject": "Residential basement oil-fired boiler running, blue flame visible through the observation port, copper fuel lines feeding the burner, expansion tank mounted above",
+          "lens": "35mm f/4, interior documentary shot, warm tungsten lighting, showing the boiler installation with surrounding basement context",
+          "enhancer": "Blue-yellow flame through the glass port, copper fuel lines with brass compression fittings, asbestos-free insulation on hot pipes, temperature and pressure gauges on the boiler face, concrete block basement walls",
+          "environments": {
+            "_default": "Residential basement or utility room, oil-fired boiler with flue pipe rising through the ceiling, fuel oil tank in the corner, concrete floor with a drain",
+            "US": "New England basement, fieldstone foundation walls, cast iron Burnham or Weil-McLain boiler, 275-gallon steel tank with sight gauge, copper lines neatly run along joists",
+            "GB": "British utility room, Grant or Worcester oil boiler wall-mounted, white plastic flue exiting through the wall, tiled floor, washing machine adjacent",
+            "DE": "German homeowner checking the Heiz\u00f6l level gauge on the cellar tank, ordering a delivery before winter, the annual ritual for millions of German oil-heated homes, typical German Keller with ordered storage",
+            "JP": "Japanese hardware store kerosene section, stacked blue polyethylene kerosene containers (polyTanks), portable kerosene fan heaters on display, Japanese winter preparation shopping, the seasonal kerosene economy"
+          }
+        },
+        "finished": {
+          "subject": "Green painted cylindrical heating oil storage tank on a concrete base beside a house, sight gauge showing the fill level, fill cap and vent pipe on top",
+          "lens": "50mm f/5.6, clean architectural context shot, tank sharp with the house and garden providing soft background, enough detail to read the fill level",
+          "enhancer": "Dark green or red painted steel tank with slight rust bloom, sight gauge tube showing amber oil level at three-quarters, brass fill cap and padlock, vent whistle pipe on top, concrete slab base",
+          "environments": {
+            "_default": "Side of a house, storage tank sitting on a concrete slab, fuel line running through the wall to the boiler, garden or yard visible beyond",
+            "US": "New England house exterior, 275-gallon tank in the basement visible through a window or external tank beside the house, autumn leaves on the ground, stacked firewood nearby",
+            "GB": "British rural property, bunded oil tank in the garden screened by a trellis, green English countryside beyond, gravel driveway, stone outbuilding",
+            "IE": "Irish rural home, horizontal tank on block supports, Atlantic weather-beaten exterior, green fields stretching to low hills, rain-washed concrete yard",
+            "DE": "German oil-fired condensing boiler in a cellar, modern Viessmann or Buderus unit, efficient but facing phase-out under German climate policy, the transition away from Heiz\u00f6l in German homes",
+            "JP": "Japanese portable kerosene heater (Toyotomi or Corona brand) warming a tatami room, kettle on top humidifying the dry winter air, sliding paper doors (shoji), Japanese winter domestic comfort, the kerosene heater as a Japanese cultural fixture"
+          }
+        }
+      }
+    },
+    "ethanol": {
+      "displayName": "Ethanol",
+      "intro": "Fuel ethanol is a biofuel produced by fermenting and distilling plant sugars \u2014 primarily corn in the United States and sugarcane in Brazil. The US produces roughly 60% of global ethanol, blended into gasoline at E10 (10%) or E85 (85%) concentrations. Brazilian ethanol from sugarcane is more energy-efficient to produce and can run vehicles as neat fuel (E100). Ethanol is a clear, colourless liquid with a faint sweet smell.",
+      "materials": "Clear colourless liquid indistinguishable from water by sight, golden dried corn kernels, green sugarcane stalks with purple-streaked skin, copper distillation column plates, stainless steel fermentation vessel walls, pale spent grain (distillers grains), white steam from distillation columns.",
+      "stages": {
+        "origin": {
+          "subject": "Tall green corn crop at full height in midsummer, tassels and silk emerging from the ears, dense rows stretching to the vanishing point across flat agricultural land",
+          "lens": "24mm f/8, epic American agricultural landscape, low camera position looking along the row canyon, corn towering overhead, vast sky above",
+          "enhancer": "Dark green leaves arching overhead forming a canopy, pale tassels catching sunlight, fine silk threads emerging from ear husks, rich dark soil between rows, humidity haze in the air",
+          "environments": {
+            "_default": "Flat agricultural plain, dense green corn at 2-metre height, section-line roads forming grid on the horizon, grain elevator visible in the distance",
+            "US": "Iowa corn belt, dead-flat black prairie soil, corn stretching unbroken to the horizon in every direction, farmstead with white barn and silos visible two miles away",
+            "BR": "S\u00e3o Paulo state sugarcane field, tall dense cane stalks with purple-green skin reaching 3 metres, red laterite soil between rows, distant sugar mill chimney smoking",
+            "IN": "Uttar Pradesh sugarcane field, dense cane thicket on alluvial Gangetic plain, narrow irrigation channels between plots, bullocks resting under a mango tree at field edge",
+            "CN": "Chinese corn field in Jilin or Heilongjiang province, Manchurian black soil producing corn for the fuel ethanol programme, flat fertile plains stretching to the horizon, cold continental climate, state-mandated E10 blending in northern provinces",
+            "TH": "Thai sugarcane and cassava fields in Nakhon Ratchasima or Khon Kaen, feedstock for Thailand's E20/E85 ethanol programme, tropical Isan plateau, small-holder farmers supplying ethanol refineries"
+          }
+        },
+        "extraction": {
+          "subject": "Combine harvester moving through a corn field at harvest, header snapping ears from the stalks, grain flowing from the auger into a grain cart running alongside",
+          "lens": "35mm f/5.6, documentary harvest scene, combine and grain cart together, dust and chaff cloud behind, showing the mechanical scale against the crop",
+          "enhancer": "Golden dried corn stalks being consumed by the header, grain streaming from the unloading auger in an arc, chaff dust cloud glowing in backlight, tractor and grain cart keeping pace alongside",
+          "environments": {
+            "_default": "Flat corn field in autumn, dried brown stalks and golden ears, combine cutting a wide swath, stubble behind, grain trucks waiting at the field edge",
+            "US": "Illinois harvest, massive John Deere combine with 12-row corn head, two grain carts shuttling to the elevator, flat horizon, October sky",
+            "BR": "S\u00e3o Paulo state cane harvest, green mechanical harvester cutting sugarcane at the base, chopped cane billets flying into a trailer alongside, sometimes pre-harvest burning visible at plot edges",
+            "CN": "COFCO or Jilin Fuel Ethanol plant, corn-based ethanol production, large state-owned facility, Manchurian industrial zone, Chinese government biofuel mandate driving production",
+            "TH": "Thai ethanol distillery processing cassava and molasses, tropical industrial setting, government B100/E20 blending mandates, one of Southeast Asia's largest ethanol producers"
+          }
+        },
+        "processing": {
+          "subject": "Ethanol distillation plant interior, tall copper and stainless steel distillation columns rising through multiple floors, steam escaping from vent pipes, fermentation tanks visible below",
+          "lens": "24mm f/8 looking upward, converging vertical columns, industrial height emphasised, warm copper tones against stainless steel",
+          "enhancer": "Copper column sections with green patina at joints, sight glasses showing bubbling liquid on column plates, steam wisps, fermentation vessel portholes showing cloudy fermenting mash, yeasty sweet aroma implied by condensation",
+          "environments": {
+            "_default": "Modern biofuel distillery, multiple distillation columns in a steel-frame building, fermentation tanks in an adjacent bay, corn storage silos outside",
+            "US": "Midwest corn ethanol plant, massive cylindrical fermentation tanks, rail siding with tank cars being loaded, grain elevator receiving corn, distillers grains dryer steaming next door",
+            "BR": "Brazilian usina, combined sugar and ethanol mill, juice extraction rollers feeding fermentation vats, bagasse boiler burning cane waste, tropical vegetation surrounding the facility",
+            "CN": "Chinese E10 blending terminal, ethanol being mixed with gasoline for the northern provinces mandate, Sinopec or PetroChina distribution, Chinese fuel infrastructure",
+            "TH": "Thai PTT petrol station with E20 and E85 pumps clearly marked, green ethanol branding, Bangkok motorist filling up, Thai government promotion of flex-fuel vehicles"
+          }
+        },
+        "finished": {
+          "subject": "E85 fuel pump at a gas station, green nozzle and hose, flex-fuel labelling on the dispenser, price displayed, vehicle filler door open",
+          "lens": "50mm f/2.8, consumer-facing product shot, sharp on the pump label and nozzle, shallow depth blurring the station behind into colourful bokeh",
+          "enhancer": "Bright green nozzle handle distinct from regular fuel, E85 flex-fuel label with corn or leaf graphic, digital price display, reflections on the dispenser chrome, concrete forecourt",
+          "environments": {
+            "_default": "Modern fuel station with multiple fuel options, ethanol blend pump clearly labelled, vehicles at adjacent pumps, canopy overhead",
+            "US": "Midwest gas station in Iowa or Nebraska, E85 pump alongside regular grades, corn field literally visible across the highway, pickup truck refuelling",
+            "BR": "Brazilian posto de gasolina, all pumps offering both gasolina and \u00e1lcool (ethanol), motorcycles and flex-fuel cars, tropical street scene, Petrobras or Shell branding",
+            "CN": "Chinese petrol station with E10 labelling in Heilongjiang, driver refuelling, Chinese government biofuel policy in action, Mandarin signage, northern Chinese city",
+            "TH": "Thai tuk-tuk or motorcycle being fuelled with E85 at a PTT station, Bangkok street scene, tropical heat, ethanol as an affordable local fuel alternative, Thai energy independence strategy"
+          }
+        }
+      }
+    },
+    "propane": {
+      "displayName": "Propane",
+      "intro": "Propane (C\u2083H\u2088) is a liquefied petroleum gas (LPG) extracted from natural gas processing and oil refining. Stored as a liquid under modest pressure (about 12 bar at 20\u00b0C), it vaporises when released and burns with a clean blue flame. Used for home heating, cooking, barbecues, agricultural crop drying, forklift fuel, and as petrochemical feedstock. Mont Belvieu, Texas is the US pricing hub.",
+      "materials": "Invisible gas when released but visible as white vapour cloud in cold air, pale blue combustion flame, painted steel cylinder with stamped test dates, brass regulator with pressure gauge, rubber hose with crimp fittings, corrugated steel bullet tank, frost forming on tank surface during rapid draw-off.",
+      "stages": {
+        "origin": {
+          "subject": "Natural gas processing plant with multiple fractionation towers separating propane from the gas stream, pipe racks connecting towers, refrigeration units with frost on the exterior",
+          "lens": "24mm f/8, wide industrial landscape showing the full fractionation train from inlet to product storage, multiple towers in sequence",
+          "enhancer": "Frost and ice buildup on cryogenic pipe sections, insulated vessels with aluminium cladding, pressure relief valves venting small plumes, complex pipe manifolds at tower bases, security lighting",
+          "environments": {
+            "_default": "Gas processing facility in semi-arid terrain, multiple fractionation columns in a row, product storage spheres and bullets behind, gas flare on the perimeter",
+            "US": "Mont Belvieu NGL hub in Texas, massive fractionation complex, underground salt cavern storage, pipeline junction with multiple inbound lines from the Permian and Eagle Ford",
+            "SA": "Saudi Aramco Yanbu NGL plant, enormous scale on the Red Sea coast, LPG export jetty visible, desert surroundings, extreme clarity in dry air",
+            "AU": "North West Shelf LNG/LPG plant in Karratha, gas processing trains facing the Indian Ocean, red Pilbara earth, gas flare against deep blue tropical sky"
+          }
+        },
+        "extraction": {
+          "subject": "Pressurised propane being loaded into a rail tank car at a terminal, loading arm connected to the dome valve, frost forming on the tank shell as liquid flows in",
+          "lens": "35mm f/5.6, industrial documentary showing the loading operation, rail car and loading gantry together, enough context to show the terminal scale",
+          "enhancer": "White frost pattern spreading across the steel tank shell, loading arm with emergency release coupling, hazmat placards on the rail car, liquid level gauge visible, safety shower station nearby",
+          "environments": {
+            "_default": "LPG rail terminal with rows of pressurised tank cars, loading gantry overhead, storage spheres in the background, safety signage everywhere",
+            "US": "Mont Belvieu rail terminal, long unit train of white tank cars, Texas coastal plain, massive white storage spheres and horizontal bullets in the background"
+          }
+        },
+        "processing": {
+          "subject": "Rows of propane cylinders being filled on an automated carousel at a bottling plant, filling heads connected to cylinder valves, scales weighing each bottle",
+          "lens": "50mm f/4, clean factory-floor perspective, showing the carousel mechanism with cylinders at various stages of filling, industrial but orderly",
+          "enhancer": "Freshly painted steel cylinders in assorted sizes, brass valve threads, digital weight display on each station, safety cage around the carousel, filled cylinders on a conveyor moving to the dispatch bay",
+          "environments": {
+            "_default": "LPG cylinder bottling plant, indoor facility with overhead extraction, pallets of empty cylinders on one side and filled stock on the other, delivery trucks at the loading dock",
+            "US": "AmeriGas or Ferrellgas bottling depot, blue or white branded cylinders, forklift loading cylinder cages onto trucks, suburban commercial zone location",
+            "GB": "Calor Gas filling plant, distinctive red cylinders on the filling line, blue Campingaz cylinders on an adjacent line, green British countryside beyond the depot fence"
+          }
+        },
+        "finished": {
+          "subject": "Propane barbecue grill with blue flame visible on the burners, fresh propane cylinder connected below with a brass regulator and rubber hose, food about to be placed on the grate",
+          "lens": "50mm f/2.8, lifestyle product shot, sharp on the blue flame and grill grates, shallow depth on the garden or patio behind, warm evening tones",
+          "enhancer": "Clean blue propane flame across the burner tubes, chrome grill grates heating up, brass regulator wheel on the cylinder, garden furniture and greenery soft in the background, warm evening atmosphere",
+          "environments": {
+            "_default": "Suburban backyard or patio, barbecue grill set up for an evening cook, garden furniture nearby, fence and trees in soft background, warm evening light",
+            "US": "American suburban backyard, large Weber or Traeger grill on a timber deck, green lawn, white picket fence, Stars and Stripes bunting, Fourth of July atmosphere",
+            "AU": "Australian backyard, Hills Hoist clothesline in the background, large built-in BBQ on the patio, gum trees over the fence, outdoor table set for dinner"
+          }
+        }
+      }
+    },
+    "natural_gas": {
+      "displayName": "Natural Gas",
+      "intro": "Natural gas is primarily methane (CH\u2084) extracted from underground reservoirs, often co-located with oil deposits or in dedicated gas fields. The Henry Hub in Louisiana is the US benchmark pricing point where 13 interstate pipelines interconnect. Gas is transported by pipeline as a gas, or liquefied at -162\u00b0C for export by LNG tanker. Used for electricity generation, industrial heating, residential cooking and heating, and as chemical feedstock.",
+      "materials": "Invisible odourless gas (mercaptan odorant added for safety detection), blue combustion flame on a gas burner, chrome and steel pipeline valves, yellow polyethylene distribution pipes, grey steel transmission pipeline, white insulated LNG storage tank, frost and fog around cryogenic equipment.",
+      "stages": {
+        "origin": {
+          "subject": "Natural gas wellhead in a shale field, steel Christmas tree valve stack with multiple gauges and choke valves, condensate separator nearby, flare stack burning associated gas",
+          "lens": "35mm f/5.6, industrial landscape showing the well pad and surrounding terrain, wellhead equipment in the foreground third with the field stretching behind",
+          "enhancer": "Polished steel handwheels and pressure gauges on the wellhead, frost on choke valve body from Joule-Thomson cooling, orange flare flame against the sky, gravel pad surface",
+          "environments": {
+            "_default": "Semi-arid gas field, multiple well pads visible across rolling terrain, gathering pipeline network on the surface, compressor station humming in the middle distance",
+            "US": "Marcellus Shale in Pennsylvania, well pad carved from Appalachian forest, green deciduous trees surrounding the cleared pad, multiple wellheads from horizontal drilling",
+            "QA": "North Field offshore platform in the Persian Gulf, massive gas-processing topsides, flat calm turquoise sea, Qatar coastline and LNG terminal visible in the distance",
+            "NO": "Troll gas field platform in the Norwegian North Sea, massive concrete gravity-base structure, gas-processing topsides in grey weather, supply vessel at the platform base",
+            "AU": "Coal seam gas wellhead in Queensland's Surat Basin, flat pastoral landscape, cattle grazing in adjacent paddock, single wellhead among scattered eucalyptus trees"
+          }
+        },
+        "extraction": {
+          "subject": "Massive pipeline compressor station, multiple gas turbine-driven compressors in an open-sided building, large diameter steel pipeline entering and exiting, pressure gauges reading high",
+          "lens": "24mm f/8, wide industrial shot capturing the full compressor station with pipeline approaches, turbine exhaust stacks visible, scale established by human or vehicle for reference",
+          "enhancer": "Large-bore steel pipeline with welded joints, gas turbine exhaust stacks releasing heat shimmer, vibration blur from running compressors, chain-link security fencing, control room building adjacent",
+          "environments": {
+            "_default": "Pipeline compressor station in open terrain, large diameter pipeline entering from one direction and exiting in another, turbine exhaust plumes, access road and security gate",
+            "US": "Interstate pipeline compressor station in West Virginia, Appalachian mountains behind, 42-inch pipeline visible above ground at the station entry, autumn foliage on surrounding hills",
+            "RU": "Gazprom compressor station on the Yamal-Europe pipeline, snow-covered Siberian landscape, massive turbine hall, heated buildings steaming in the extreme cold"
+          }
+        },
+        "processing": {
+          "subject": "LNG liquefaction train at a coastal export terminal, massive heat exchangers and cold boxes, insulated cryogenic piping with frost buildup, LNG storage tank dome rising behind",
+          "lens": "24mm f/11, industrial panorama capturing the full LNG train from gas inlet to storage tank, complex pipe networks filling the mid-ground, ocean visible beyond",
+          "enhancer": "Thick frost and ice coating on cryogenic pipe sections, aluminium-clad insulation on cold boxes, white LNG storage tank dome, flare stack burning boil-off gas, fog rolling from cold equipment",
+          "environments": {
+            "_default": "Coastal LNG export terminal, liquefaction trains facing the waterfront, white spherical or dome-roof storage tanks, LNG carrier at the loading jetty, blue ocean beyond",
+            "QA": "Ras Laffan LNG terminal in Qatar, world's largest LNG complex, multiple parallel trains, desert coastline, massive Q-Max LNG carriers loading at the jetty",
+            "AU": "Gladstone LNG terminal on Curtis Island, Queensland, tropical vegetation cleared for the facility, Great Barrier Reef waters beyond, LNG carrier departing through the narrows",
+            "US": "Sabine Pass LNG terminal in Louisiana, Cameron Parish wetlands surrounding the facility, multiple liquefaction trains, Calcasieu Ship Channel with LNG carriers transiting"
+          }
+        },
+        "finished": {
+          "subject": "Blue gas flame on a domestic kitchen hob, ring of small even flames burning cleanly, stainless steel pot placed over the burner, cooking in progress",
+          "lens": "50mm f/2.8, intimate kitchen scene, sharp focus on the blue flame ring and pot base, shallow depth blurring the kitchen into warm bokeh",
+          "enhancer": "Perfect blue flame ring with distinct individual flames, chrome burner cap gleaming, heat shimmer above the flame, condensation on the cool pot surface, warm kitchen tones behind",
+          "environments": {
+            "_default": "Modern domestic kitchen, gas hob in a countertop, cooking utensils nearby, window with daylight, warm domestic atmosphere",
+            "US": "American suburban kitchen, Viking or Wolf professional-style gas range, granite countertops, stainless appliances, recipe book open, window overlooking the backyard",
+            "GB": "British kitchen, Rangemaster or AGA gas cooker, tile splashback, copper pans hanging, garden view through the window, kettle nearby"
+          }
+        }
+      }
+    },
+    "ttf_gas": {
+      "displayName": "TTF Gas",
+      "intro": "Title Transfer Facility (TTF) is the European natural gas benchmark, operated by Gasunie Transport Services in the Netherlands. Originally tied to the Groningen gas field (the largest in Europe, now being shut down), TTF has become the dominant price reference for European pipeline gas and LNG imports. Priced in EUR/MWh, it reflects the balance of Norwegian pipeline supply, LNG imports, and storage levels across Europe.",
+      "materials": "Same physical material as natural gas \u2014 invisible methane. Infrastructure differs: yellow high-pressure steel pipelines, green-painted valve stations, white cylindrical gas storage holders, underground salt cavern wellheads, grey control room panels with SCADA screens.",
+      "stages": {
+        "origin": {
+          "subject": "Groningen gas field wellhead cluster in the flat Dutch countryside, multiple Christmas tree valve assemblies behind a security fence, subsidence marker posts in the surrounding field",
+          "lens": "35mm f/8, Dutch landscape perspective, flat horizon with enormous sky, wellhead cluster occupying the lower third, polder landscape stretching behind",
+          "enhancer": "Steel valve assemblies against dramatic Dutch sky, subsidence monitoring posts in neat rows, drainage canal alongside the access road, wet green pasture, distant church steeple on the horizon line",
+          "environments": {
+            "_default": "Flat northern European landscape, gas wellhead cluster behind security fencing, agricultural land surrounding, high-voltage power lines crossing the background",
+            "NL": "Groningen province, perfectly flat polder with drainage canals, wellhead cluster beside a narrow road, grazing cattle in the adjacent field, distant red-brick farmhouse, windmill visible",
+            "NO": "Norwegian pipeline landfall at Easington or Emden, massive yellow pipeline emerging from the seabed, valve station compound, grey North Sea in the background",
+            "BE": "Zeebrugge LNG terminal on the Belgian coast, LNG carriers arriving from Qatar and the US, regasification sending gas into the European grid, North Sea coast, one of Europe's key gas entry points after the Russian supply shift",
+            "GB": "Bacton gas terminal on the Norfolk coast, receiving North Sea gas and interconnector flows from the Netherlands and Belgium, windswept East Anglian coastline, the UK's gas entry point connecting to the European TTF market via BBL pipeline"
+          }
+        },
+        "extraction": {
+          "subject": "Major European gas pipeline valve station, large-bore yellow pipeline entering and exiting, actuated valve assemblies with electric motors, pig launcher and receiver equipment",
+          "lens": "35mm f/5.6, industrial infrastructure in landscape, showing the valve station compound with the pipeline route visible entering and leaving, fencing and signage",
+          "enhancer": "Bright yellow pipeline coating on large-bore steel pipe, electric valve actuators with position indicators, pig trap barrel for pipeline inspection tools, gravel compound with drainage, national gas operator branding",
+          "environments": {
+            "_default": "European pipeline valve station in open countryside, yellow high-pressure pipelines, electrical actuators, metering equipment, agricultural fields surrounding",
+            "NL": "Gasunie valve station in the Netherlands, flat polder landscape, drainage canals either side, wind turbines on the horizon, Dutch infrastructure style",
+            "DE": "GASCADE or Open Grid Europe valve station in northern Germany, flat North German Plain, rapeseed field adjacent, Baltic pipeline junction",
+            "BE": "Fluxys gas hub operations centre in Belgium, pipeline interconnections flowing gas between the UK, Netherlands, Germany, and France, Belgium as the physical crossroads of European gas, modern control room with flow maps",
+            "GB": "National Gas Transmission control room, managing UK gas flows, NBP interconnecting with TTF via Bacton-Zeebrugge interconnector, winter peak demand management, British energy security operations"
+          }
+        },
+        "processing": {
+          "subject": "Underground gas storage facility surface plant, wellhead risers connected to compressor station, gas treatment unit removing moisture, salt cavern entry points marked on the surface",
+          "lens": "24mm f/8, wide industrial landscape showing the full surface facility with terrain providing context for underground storage below",
+          "enhancer": "Multiple wellhead risers in a row, compressor station vibration and exhaust plumes, dehydration towers removing moisture, underground storage capacity implied by modest surface footprint, flat terrain",
+          "environments": {
+            "_default": "Gas storage facility surface plant, multiple wellheads above underground caverns, compressor station, gas treatment equipment, flat or gently rolling terrain",
+            "NL": "Bergermeer or Norg underground storage in the Netherlands, modest surface facility above massive underground capacity, green polder landscape, Gasunie branding",
+            "DE": "Rehden gas storage in Lower Saxony, Europe's largest storage facility, flat North German Plain, wind turbines on the horizon, well-maintained facility in agricultural land",
+            "BE": "Belgian industrial gas consumer, glass factory or chemical plant in Antwerp industrial zone, TTF-priced gas feeding European manufacturing, the energy cost impact on European industry competitiveness",
+            "GB": "British gas-fired power station (CCGT) at Pembroke or Grain, TTF-linked gas pricing affecting UK electricity costs, modern efficient turbines, the gas-to-power link in European energy markets"
+          }
+        },
+        "finished": {
+          "subject": "LNG carrier arriving at a European regasification terminal, massive insulated spherical tanks visible on deck, tugboats guiding the vessel to the berth, unloading arms reaching out",
+          "lens": "35mm f/8, maritime-industrial scene, ship approaching the terminal with port infrastructure visible, enough depth to show both the vessel and the onshore facility",
+          "enhancer": "Four or five white insulated Moss-type spherical tanks above the ship's deck, tugboat pushing against the hull, vapour plume from boil-off gas, unloading arm gantry at the jetty, port city skyline behind",
+          "environments": {
+            "_default": "European LNG import terminal, regasification plant on the waterfront, LNG carrier at the jetty, storage tanks behind, coastal city or town visible",
+            "NL": "GATE terminal in Rotterdam, Maasvlakte industrial area, LNG carrier entering the Nieuwe Waterweg, Europoort refinery infrastructure behind, flat Dutch coastline",
+            "DE": "Wilhelmshaven FSRU terminal, floating regasification unit moored at the jetty, North Sea coastline, purpose-built for post-Russian-gas energy security",
+            "BE": "Brussels residential apartment building with gas central heating, Belgian household experiencing TTF price volatility, European energy bills, winter heating demand in a temperate continental climate",
+            "GB": "British terraced house with a gas combi boiler, the UK's heavy dependence on gas heating, energy price cap discussions, TTF spillover into British domestic energy bills, familiar British domestic setting"
+          }
+        }
+      }
+    },
+    "uk_gas": {
+      "displayName": "UK Gas",
+      "intro": "UK gas is priced at the National Balancing Point (NBP), the virtual trading hub for the British gas grid operated by National Gas Transmission. The UK receives gas from the North Sea via subsea pipelines, Norwegian imports through the Langeled pipeline, LNG imports at terminals like Isle of Grain and South Hook, and interconnector pipelines from Belgium and the Netherlands. Priced in pence per therm (GBp/thm).",
+      "materials": "Same physical material as natural gas. UK-specific infrastructure: grey steel beach terminals where subsea pipelines make landfall, yellow district pipeline markers, British Gas meter boxes on house walls, red-brick boiler houses, copper gas pipes in domestic settings.",
+      "stages": {
+        "origin": {
+          "subject": "North Sea gas platform with processing topsides, subsea pipeline risers visible descending into the grey water, accommodation module with helipad, flare boom at the end of the lattice tower",
+          "lens": "24mm f/8, wide maritime-industrial scene, full platform visible from waterline to helipad, North Sea providing dramatic context, grey sky above",
+          "enhancer": "Weathered grey steel structure against grey sea and sky, orange flare on the boom tip providing the only warm colour, white-capped waves, helicopter approaching the helipad, supply vessel at the platform base",
+          "environments": {
+            "_default": "North Sea gas platform in moderate sea state, grey sky, steel jacket structure, gas processing topsides, subsea pipeline connection, supply vessel nearby",
+            "GB": "UK Continental Shelf platform in the Southern North Sea, relatively shallow water jacket, gas condensate processing topsides, Bacton terminal visible on the Norfolk coast in clear weather",
+            "NO": "Norwegian sector Langeled pipeline entry point, Nyhamna processing plant onshore, fjord coastline, pipeline route across the Norwegian Trench to the UK"
+          }
+        },
+        "extraction": {
+          "subject": "Gas beach terminal where a subsea pipeline makes landfall, massive receiving facility with slug catchers and pressure reduction equipment, pipeline emerging from the sand into the terminal compound",
+          "lens": "35mm f/8, industrial coastal landscape, showing the terminal compound against the coastline, beach and sea visible, pipeline route from offshore implied",
+          "enhancer": "Large-bore pipeline visible in the foreshore, slug catcher vessels for separating liquids, pressure reduction valves with noise attenuators, tall security fencing, coastal erosion defences protecting the facility",
+          "environments": {
+            "_default": "Coastal gas terminal where subsea pipeline arrives onshore, processing and metering equipment, pipeline right-of-way disappearing inland, sea behind",
+            "GB": "Bacton Gas Terminal on the Norfolk coast, multiple pipeline landfalls from the Southern North Sea, low eroding cliffs, wind turbines offshore visible through the haze, flat agricultural land behind"
+          }
+        },
+        "processing": {
+          "subject": "National Gas Transmission compressor station in the English countryside, turbine-driven compressors housed in acoustic enclosures, high-pressure pipeline entering and exiting the site",
+          "lens": "35mm f/5.6, infrastructure-in-landscape shot, compressor station compound with British countryside providing context, hedgerows and fields surrounding",
+          "enhancer": "Acoustic enclosures around gas turbine compressors, exhaust stacks with heat shimmer, metering equipment and control building, green English fields and hedgerows surrounding the facility, low stone wall or fence",
+          "environments": {
+            "_default": "British gas compressor station in rural setting, acoustic enclosures, high-pressure pipeline, metering equipment, green countryside surrounding",
+            "GB": "National Transmission System compressor station in the Midlands, green rolling English countryside, hedgerows and oak trees, village church spire visible beyond, well-screened facility blending into the landscape"
+          }
+        },
+        "finished": {
+          "subject": "British Gas engineer checking a domestic gas meter in a cupboard under the stairs, torch illuminating the brass fittings and dial meter, boiler visible through an adjacent door",
+          "lens": "35mm f/2.8, interior domestic scene, warm tungsten lighting, intimate documentary feel, sharp on the meter and engineer's hands",
+          "enhancer": "Brass gas meter fittings and pipe connections, spinning dial on the meter face, yellow caution label, engineer's torch beam, domestic hallway carpet and coats hanging above",
+          "environments": {
+            "_default": "British residential interior, gas meter in a hallway cupboard or kitchen cabinet, domestic boiler nearby, typical UK home setting",
+            "GB": "Typical UK terraced house, meter cupboard under the stairs, Baxi or Worcester boiler in the kitchen, magnolia walls, CORGI/Gas Safe registration certificate on the boiler"
+          }
+        }
+      }
+    },
+    "coal": {
+      "displayName": "Coal",
+      "intro": "Coal is a combustible sedimentary rock formed from compressed ancient vegetation over millions of years. Ranked by carbon content: lignite (brown coal), sub-bituminous, bituminous (the most traded thermal coal), and anthracite. Mined in open-pit (surface) and underground (longwall or room-and-pillar) operations. The Newcastle benchmark (Australia) prices thermal coal for the Asia-Pacific market. Used primarily for electricity generation and steel production (metallurgical coal).",
+      "materials": "Black lustrous coal with conchoidal fracture surfaces, fine coal dust coating everything, grey overburden rock, massive steel dragline bucket, reinforced rubber conveyor belt, concrete coal bunker walls, steel rail hopper car, ash-grey combustion residue.",
+      "stages": {
+        "origin": {
+          "subject": "Exposed coal seam in an open-cut mine, thick black band clearly visible between layers of grey overburden rock, dragline bucket excavating the seam",
+          "lens": "24mm f/11, wide-angle mine panorama, showing the full depth of the pit with coal seam exposed in the pit wall, massive scale conveyed by tiny equipment",
+          "enhancer": "Jet-black coal seam sharply contrasting grey overburden layers, geological strata visible in the pit wall, coal dust blackening everything nearby, water pooling in the pit floor, massive dragline cable visible",
+          "environments": {
+            "_default": "Large open-cut coal mine with stepped terraces, coal seam exposed in the highwall, draglines and excavators working, haul trucks on ramp roads, overburden dumps behind",
+            "AU": "Hunter Valley open-cut in New South Wales, green eucalyptus bush right to the pit edge, black coal against pale sandstone overburden, coal train loading at the in-pit crusher",
+            "US": "Powder River Basin surface mine in Wyoming, massive low-strip-ratio operation, 30-metre thick coal seam, enormous dragline walking, sagebrush prairie to the horizon",
+            "CN": "Inner Mongolian surface mine, massive terraced pit in the steppe, coal trucks queuing on haul roads, dust cloud over the operation, flat grassland surrounding",
+            "ZA": "Mpumalanga coalfield, open-cast mine near Witbank, subtropical vegetation reclaiming old workings alongside active mining, power station visible in the distance",
+            "IN": "Jharkhand open-cast mine, laterite overburden in monsoon season, black coal exposed in stepped benches, manually loaded trucks alongside mechanised fleet"
+          }
+        },
+        "extraction": {
+          "subject": "Massive electric rope shovel loading coal into a haul truck at the pit face, truck bed filling with black coal, dust cloud from the loading operation",
+          "lens": "35mm f/5.6, industrial documentary capturing both machines together, showing the loading interaction and the pit wall behind, human or pickup truck for scale",
+          "enhancer": "Electric shovel bucket spilling black coal into the truck bed, coal dust cloud at the loading point, truck suspension compressing under load, tyre tracks in coal-dust-blackened ground, power cable trailing behind the shovel",
+          "environments": {
+            "_default": "Open-cut mine pit face, coal being loaded at the active working bench, haul road running up the pit wall behind, water cart spraying dust suppression",
+            "AU": "Hunter Valley pit face, CAT 793 or Komatsu 930E haul truck, P&H or Liebherr electric shovel, coal dust suppression sprays, green bush on the rehabilitated spoil dumps behind",
+            "US": "Wyoming open-pit, massive scale, ultra-class trucks on wide bench roads, coal seam 30 metres thick, minimal overburden, stark treeless landscape"
+          }
+        },
+        "processing": {
+          "subject": "Coal being dumped from a hopper into a crushing plant, black lumps tumbling down the chute, conveyor belt carrying crushed coal upward to a stockpile, dust extraction hoods above",
+          "lens": "35mm f/4, industrial process shot, following the coal from dump hopper through crusher to stockpile conveyor, enough depth to show the full material flow",
+          "enhancer": "Lumps of shiny black coal tumbling in the crusher feed, fine coal dust suspended in air catching light, rubber conveyor belt carrying sized product uphill, steel chute work and transfer points, sprinkler dust suppression arcs",
+          "environments": {
+            "_default": "Coal handling and preparation plant, dump hopper receiving raw coal, crusher building, conveyor system, product stockpile, rail loading facility",
+            "AU": "Newcastle coal terminal CHPP, coal from multiple mines arriving by rail, crushing and screening, product stockpile shaped by stacker-reclaimer, ship loader on the horizon at the port",
+            "ZA": "Richards Bay Coal Terminal preparation plant, conveyor network connecting multiple stockpiles, ship loading berths visible on the Indian Ocean coast"
+          }
+        },
+        "finished": {
+          "subject": "Coal-fired power station with cooling towers releasing white steam plumes, coal stockpile in the foreground, conveyor belt feeding coal from the stockpile to the boiler house",
+          "lens": "24mm f/8, iconic industrial landscape, power station dominating the frame with cooling tower plumes rising into the sky, coal stockpile and conveyor in the foreground providing material context",
+          "enhancer": "White hyperbolic cooling towers with billowing steam, dark boiler house and chimney stack, black coal stockpile with reclaimer bucket-wheel visible, conveyor belt climbing to the bunker house, high-voltage transmission lines exiting the substation",
+          "environments": {
+            "_default": "Coal-fired power station, cooling towers, chimney stack, coal stockpile with conveyor, rail loop bringing coal deliveries, high-voltage lines exiting",
+            "GB": "Drax power station in Yorkshire, massive cooling towers, coal and biomass stockpiles side by side, flat Vale of York farmland, River Ouse, rail loop receiving coal trains",
+            "DE": "Rhineland lignite power station, brown coal open-cast mine literally adjacent, enormous bucket-wheel excavator feeding directly to the plant, flat North Rhine-Westphalia landscape",
+            "CN": "Chinese thermal plant in Shandong province, multiple boiler units with tall stacks, massive coal rail yard alongside, urban-industrial setting, pollution haze",
+            "IN": "NTPC power station in Madhya Pradesh, slender stacks and cooling towers in tropical heat, coal train arriving on the dedicated rail loop, green agricultural land surrounding"
+          }
+        }
+      }
+    },
+    "naphtha": {
+      "displayName": "Naphtha",
+      "intro": "Naphtha is a light petroleum distillate \u2014 the fraction between gasoline and kerosene in the crude oil distillation column. It is the primary feedstock for petrochemical steam crackers that produce ethylene, propylene, and other building blocks for plastics, synthetic fibres, and chemicals. Also used as a gasoline blending component and industrial solvent. A clear to pale yellow liquid with a characteristic petroleum odour.",
+      "materials": "Clear to pale straw-yellow volatile liquid, stainless steel sample jar, chrome pipe fittings, insulated steam cracker furnace tubes, ceramic-lined cracker coils, white product storage tanks, orange flare from cracker furnace, thick pipe insulation with aluminium cladding.",
+      "stages": {
+        "origin": {
+          "subject": "Naphtha being drawn from the distillation column at a refinery, clear pale-yellow liquid flowing through a sight glass on the side-draw line, multiple product offtake points visible on the column",
+          "lens": "50mm f/4, industrial process shot, sharp on the sight glass showing the liquid, distillation column and pipe network providing context behind",
+          "enhancer": "Pale straw-coloured liquid visible in the sight glass, temperature and pressure gauges flanking the offtake point, insulated column with multiple draw-off nozzles, pipe labels showing product names",
+          "environments": {
+            "_default": "Refinery atmospheric distillation unit, side-draw piping from the column, product rundown lines to storage, operator checking the sight glass",
+            "US": "Gulf Coast refinery CDU, massive atmospheric column, side-draw at the naphtha cut point, pipe rack leading to the naphtha splitter and reformer",
+            "JP": "Japanese coastal refinery, compact efficient layout, naphtha drawn for the adjacent petrochemical complex, Inland Sea visible beyond"
+          }
+        },
+        "extraction": {
+          "subject": "Naphtha storage tank farm at a refinery, white floating-roof tanks with product lines, loading gantry for rail cars or barges, vapour recovery system on the tank vents",
+          "lens": "35mm f/8, industrial tank farm landscape, geometric pattern of circular white tanks with pipe interconnections, waterway or rail siding visible",
+          "enhancer": "White tank walls with product labels, floating roof pontoons visible at the rim, vapour recovery piping on tank tops, bund walls containing any spill, loading arm at the gantry",
+          "environments": {
+            "_default": "Refinery tank farm area, white storage tanks of various sizes, pipe rack interconnections, bund walls, loading facility for rail or marine",
+            "NL": "Rotterdam tank terminal, waterway with barges loading alongside, tank farm surrounded by other petrochemical facilities, flat polder landscape, wind turbines beyond",
+            "KR": "South Korean coastal petrochemical terminal, naphtha tanks adjacent to the steam cracker complex, Yellow Sea in the background, integrated industrial zone"
+          }
+        },
+        "processing": {
+          "subject": "Steam cracker furnace bank at a petrochemical plant, multiple tall furnaces in a row with radiant and convection sections visible, cracking coils glowing orange through observation ports",
+          "lens": "24mm f/8, wide industrial shot capturing the full furnace bank, showing the scale of multiple crackers operating in parallel, ethylene product piping visible",
+          "enhancer": "Orange glow visible through furnace observation ports, heat shimmer above the convection section, complex quench system piping at the furnace exit, induced draft fans on top, fire-resistant cladding on structures",
+          "environments": {
+            "_default": "Major petrochemical complex, steam cracker furnace bank, ethylene fractionation towers behind, product pipelines running to downstream plants",
+            "US": "Texas Gulf Coast ethylene complex, multiple cracker furnaces, massive ethylene plant, pipeline connections to polyethylene plants along the coast",
+            "KR": "Yeosu petrochemical complex, densely packed crackers and downstream plants on the South Korean coast, mountains behind, industrial port in the foreground",
+            "SA": "SABIC complex in Jubail, massive world-scale crackers, desert surroundings, Persian Gulf coast, integrated downstream polymer plants"
+          }
+        },
+        "finished": {
+          "subject": "Plastic resin pellets pouring from a production line into a bulk container, thousands of small translucent white beads cascading, petrochemical plant interior",
+          "lens": "85mm macro f/3.5, close-up on the cascading pellets, individual beads visible with translucent quality, shallow depth blurring the production line behind",
+          "enhancer": "Translucent white polymer pellets with slight gloss, individual bead shape visible in the stream, bulk container filling up, fine resin dust in the air, production line conveyor and packaging equipment behind",
+          "environments": {
+            "_default": "Polymer pelletising plant interior, extruder and pelletiser at the end of the production line, bulk containers and bagging stations, quality control sampling point",
+            "US": "Gulf Coast polyethylene plant, massive production scale, pellet silos and rail loading station visible through the open bay door, pipeline from the cracker entering the facility",
+            "CN": "Chinese petrochemical complex, modern high-capacity pelletising line, bags being palletised by robots, export containers being loaded at the warehouse"
+          }
+        }
+      }
+    },
+    "methanol": {
+      "displayName": "Methanol",
+      "intro": "Methanol (CH\u2083OH) is the simplest alcohol \u2014 a clear, colourless, water-soluble liquid produced industrially by catalytic synthesis from syngas (carbon monoxide and hydrogen), which is itself derived from natural gas or coal. China is the world's largest producer and consumer, primarily from coal-based feedstock. Used as a chemical feedstock for formaldehyde, acetic acid, and MTBE, as an industrial solvent, and increasingly as a marine and vehicle fuel.",
+      "materials": "Clear colourless liquid indistinguishable from water by sight, steel reactor vessels with catalyst beds, chrome pipe fittings and flanges, stainless steel storage tanks, white or silver insulated reactor walls, steam from heat exchangers, copper catalyst pellets.",
+      "stages": {
+        "origin": {
+          "subject": "Coal gasification plant in China, tall gasifier vessels producing syngas, coal handling conveyor feeding the top of the gasifier, ash lock hoppers at the base",
+          "lens": "24mm f/8, wide industrial shot showing the full gasification train from coal intake to syngas output, Chinese industrial scale, multiple gasifiers in parallel",
+          "enhancer": "Dark coal on the feed conveyor against steel gasifier vessels, steam and gas plumes, ash handling below, complex pipe networks connecting the gasifiers, Chinese safety signage and operator in hard hat",
+          "environments": {
+            "_default": "Large-scale syngas production facility, gasifier vessels or natural gas reformer tubes, raw gas cooling and cleanup equipment, methanol synthesis building adjacent",
+            "CN": "Inner Mongolian coal-to-methanol complex, massive gasification plant beside an open-cut coal mine, flat steppe landscape, modern Chinese industrial architecture, power lines crossing the site",
+            "SA": "Saudi gas-to-methanol plant in Jubail, steam methane reformer tubes in a radiant furnace, compact modern facility, desert surroundings, Persian Gulf coast",
+            "NZ": "Methanex plant in Taranaki, gas-based methanol production using offshore Maui gas, green New Zealand dairy farmland surrounding the compact facility, Mount Taranaki in the background",
+            "TT": "Trinidad and Tobago natural gas platform in the Columbus Basin, Caribbean Sea, gas feeding the massive Point Lisas petrochemical complex, tropical offshore production, T&T as the Western Hemisphere's largest methanol exporter",
+            "US": "Louisiana or Texas natural gas pipeline delivering shale gas to the Gulf Coast methanol plants, OCI Beaumont or Natgasoline facility, American shale gas renaissance reviving US methanol production"
+          }
+        },
+        "extraction": {
+          "subject": "Methanol synthesis reactor with catalyst beds, high-pressure vessel with temperature monitoring points along its length, product methanol condensing in a downstream cooler",
+          "lens": "50mm f/4, clean industrial interior, reactor vessel as the central subject with process piping and instrumentation providing context",
+          "enhancer": "Cylindrical reactor vessel with multiple temperature thermowell ports, high-pressure flanged connections, insulated hot surfaces, catalyst access ports for loading and unloading, control valves with positioners",
+          "environments": {
+            "_default": "Methanol synthesis plant interior, reactor vessels, distillation column for product purification, control room with DCS screens visible through a window",
+            "CN": "Chinese mega-methanol plant, multiple parallel reactor trains, modern DCS-controlled facility, scale dwarfing a Western single-train plant",
+            "TT": "Methanex or Caribbean Nitrogen Company methanol plant at Point Lisas industrial estate, massive synthesis reactors, tropical Caribbean setting, ship loading for export to the Americas and Europe",
+            "US": "Gulf Coast methanol mega-plant, OCI Beaumont or Natgasoline in Texas, world-scale single-train facility, shale-gas-fed competitive advantage, Houston Ship Channel industrial corridor"
+          }
+        },
+        "processing": {
+          "subject": "Methanol distillation column purifying raw methanol, clear product flowing through a sight glass on the product line, grade AA quality for chemical feedstock use",
+          "lens": "50mm f/4, process industry shot, sight glass with clear product as focal point, distillation column and condenser providing context",
+          "enhancer": "Crystal-clear methanol visible in the sight glass, distillation column packing visible through inspection port, condenser with cooling water connections, quality sampling point with laboratory jars",
+          "environments": {
+            "_default": "Methanol purification section of the plant, distillation columns, product coolers, sampling and quality control station, storage tank farm visible beyond",
+            "CN": "Chinese methanol refining section, multiple parallel distillation trains, product lines running to massive tank farm, rail loading terminal beyond",
+            "TT": "Methanol being loaded onto a chemical tanker at Point Lisas port, Caribbean blue water, palm trees beside the industrial terminal, Trinidad's petrochemical export economy, ship heading to US or European markets",
+            "US": "American methanol being shipped by barge on the Mississippi or by rail from the Gulf Coast, domestic distribution for formaldehyde and fuel blending, American infrastructure and logistics"
+          }
+        },
+        "finished": {
+          "subject": "Methanol tanker ship at a port loading terminal, midships manifold connected to loading arms, product name and hazard placards visible on the hull, coastline behind",
+          "lens": "35mm f/8, maritime-industrial scene, tanker at the loading berth with port infrastructure visible, enough context to show the export operation",
+          "enhancer": "Chemical tanker with coated cargo tanks, midships manifold and loading arms connected, IMO hazard placards on the hull, shore-side pipeline to the tank farm, small harbour tugs nearby",
+          "environments": {
+            "_default": "Chemical tanker port, methanol loading berth, pipeline from tank farm, port city or industrial zone in the background",
+            "CN": "Chinese methanol export terminal, chemical tankers at multiple berths, massive shore tank farm, Chinese port infrastructure, container ships visible in the outer harbour",
+            "NZ": "Port Taranaki, Methanex loading berth, green New Zealand coastline, Mount Taranaki rising above cloud, small provincial port, dairy tanker at the adjacent wharf",
+            "TT": "Point Lisas industrial estate overview, multiple methanol and ammonia plants, Trinidad's industrial heartland, Caribbean island transformed by petrochemicals, Gulf of Paria visible, gas flares at dusk",
+            "US": "American plywood or MDF manufacturing plant using methanol-derived formaldehyde adhesive, the everyday building product that methanol enables, American construction materials supply chain"
+          }
+        }
+      }
+    },
+    "bitumen": {
+      "displayName": "Bitumen",
+      "intro": "Bitumen is the heaviest fraction from crude oil distillation \u2014 a black, sticky, semi-solid hydrocarbon that softens when heated and hardens when cooled. Produced by vacuum distillation of crude oil residue or extracted from natural deposits (oil sands in Canada, pitch lakes in Trinidad). The primary use is road surfacing (asphalt) \u2014 mixed with aggregate to produce hot-mix asphalt (HMA). Also used for waterproofing roofs and as an industrial sealant. China is the world's largest consumer.",
+      "materials": "Black glossy semi-solid with slight tacky sheen, aggregate stones coated in black, hot asphalt steam and heat shimmer, yellow road marking paint, orange construction cones and barriers, steel paving machine rollers, grey uncoated aggregate before mixing, white road edge lines.",
+      "stages": {
+        "origin": {
+          "subject": "Vacuum distillation unit at a refinery producing bitumen from crude oil residue, vacuum column with thick black product flowing from the bottom into a heated storage tank",
+          "lens": "35mm f/5.6, industrial process shot, vacuum column as the central element with hot bitumen product piping visible, enough context to show this is the heaviest product in the refinery",
+          "enhancer": "Thick black bitumen visible through heated sight glass, insulated steam-traced piping preventing solidification, vacuum ejector system at the column top, heat shimmer from the hot product line, dark staining on all surrounding surfaces",
+          "environments": {
+            "_default": "Refinery vacuum distillation area, vacuum column beside the atmospheric unit, heated bitumen storage tanks, tank truck loading area for road construction deliveries",
+            "CN": "Chinese refinery vacuum unit, large-scale bitumen production for the domestic road construction programme, heated tank farm, loading gantry for bitumen tanker trucks",
+            "CA": "Alberta oil sands upgrader, bitumen extraction from mined oil sand, massive tailing ponds visible, boreal forest surrounding, steam rising from upgrader in winter cold"
+          }
+        },
+        "extraction": {
+          "subject": "Hot bitumen being loaded into an insulated tanker truck at a refinery terminal, thick black liquid pouring from a heated loading arm, steam and heat haze rising from the open dome",
+          "lens": "50mm f/4, industrial loading operation, capturing the pour of black bitumen into the tanker, heat distortion creating atmosphere, driver in PPE monitoring the fill",
+          "enhancer": "Jet-black glossy bitumen pouring in a thick stream, intense heat shimmer above the tanker dome, steam-traced insulated loading arm, insulated tanker truck body, temperature gauge showing 160\u00b0C+",
+          "environments": {
+            "_default": "Refinery bitumen loading terminal, heated storage tanks behind, insulated tanker trucks queuing, steam and heat haze in the air",
+            "CN": "Chinese bitumen terminal, multiple tanker trucks being loaded simultaneously, road construction boom scale, heated holding tanks, industrial outskirts of a Chinese city",
+            "CA": "Alberta bitumen terminal, extreme cold requiring extra insulation and heating, steam clouds from hot product in sub-zero air, snow on the ground, boreal forest edge"
+          }
+        },
+        "processing": {
+          "subject": "Hot-mix asphalt plant with drum mixer, aggregate being fed by conveyor into the rotating drum, black hot-mix product discharging into a waiting dump truck, steam and vapour rising",
+          "lens": "35mm f/5.6, industrial construction shot, showing the full HMA plant from aggregate feed to product discharge, dump truck at the outlet for scale",
+          "enhancer": "Grey aggregate climbing the feed conveyor, rotating drum mixer with flame visible inside, black hot-mix asphalt steaming as it falls into the truck bed, bitumen storage tank with steam-traced piping alongside",
+          "environments": {
+            "_default": "Asphalt mixing plant on the outskirts of a town, aggregate stockpiles in various grades, bitumen tank, drum mixer, dust extraction system, dump trucks coming and going",
+            "US": "American hot-mix plant beside a highway construction project, aggregate quarry adjacent, dump trucks shuttling between the plant and the paving operation a mile away",
+            "GB": "UK asphalt plant in a quarry setting, green English countryside surrounding, aggregate stockpiles in neat bays, road tanker delivering bitumen, A-road visible from the site"
+          }
+        },
+        "finished": {
+          "subject": "Road paving machine laying fresh hot asphalt on a road surface, black steaming mat of fresh asphalt being spread by the screed, steel-drum roller compacting behind",
+          "lens": "35mm f/5.6, construction documentary, paver and roller working in sequence, fresh black asphalt surface contrasting with the grey unfinished road, workers and machinery together",
+          "enhancer": "Jet-black fresh asphalt steaming in the ambient air, paver screed smoothing the surface, steel-drum roller pressing the hot mat flat, sharp edge between new black surface and old grey road, orange traffic cones and warning signs",
+          "environments": {
+            "_default": "Road construction site, paving machine laying fresh asphalt, roller compacting behind, traffic management with cones and signs, existing road surface for contrast",
+            "US": "American highway resurfacing project, wide multi-lane road, massive CAT or Volvo paver, multiple rollers, flaggers in hi-vis, American road infrastructure scale",
+            "GB": "British A-road resurfacing, single carriageway with traffic management, Wirtgen or Vogele paver, English hedgerows lining the road, rain-washed conditions making the fresh asphalt glisten",
+            "CN": "Chinese expressway construction, brand-new multi-lane highway being surfaced, enormous scale, multiple pavers working abreast, mountain or plain landscape beyond the construction zone"
+          }
+        }
+      }
+    }
+  }
+}

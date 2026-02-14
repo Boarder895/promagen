@@ -31,6 +31,14 @@ export interface WeatherData {
   windSpeedKmh: number;
   emoji: string;
   asOf: string;
+  /** Sunrise UTC timestamp (seconds) from OWM — may be absent from older gateway */
+  sunriseUtc?: number | null;
+  /** Sunset UTC timestamp (seconds) from OWM — may be absent from older gateway */
+  sunsetUtc?: number | null;
+  /** Timezone offset from UTC in seconds — may be absent from older gateway */
+  timezoneOffset?: number | null;
+  /** Day/night flag from OWM icon suffix — may be absent from older gateway */
+  isDayTime?: boolean;
 }
 
 export interface WeatherMeta {

@@ -18,7 +18,7 @@ type Builder = (inputs: PromptInputs) => BuiltPrompt;
 const enc = (s: string) => encodeURIComponent(s);
 
 export const PROVIDER_BUILDERS: Record<ProviderId, Builder> = {
-  openai: ({ idea }) => ({ text: idea.trim(), note: "Prompt copied. Paste into DALL·E 3." }),
+  openai: ({ idea }) => ({ text: idea.trim(), note: "Prompt copied. Paste into DALLÂ·E 3." }),
   bing: ({ idea }) => ({ text: idea.trim(), note: "Prompt copied. Paste into Bing Image Creator." }),
   midjourney: ({ idea, negative, aspect, seed, styleTag }) => {
     const parts = [styleTag, idea].filter(Boolean) as string[];

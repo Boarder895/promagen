@@ -123,6 +123,7 @@ export default function CommoditiesMoversGrid({
   losers,
   isLoading = false,
   isStale = false,
+  weatherRecord,
 }: CommoditiesMoversGridProps): React.ReactElement {
   // Refs for snap-fit measurement
   const gridRef = React.useRef<HTMLDivElement | null>(null);
@@ -341,7 +342,7 @@ export default function CommoditiesMoversGrid({
                 className="rounded-xl bg-slate-900/80 ring-1 ring-white/10 flex items-center justify-center overflow-hidden transition-colors hover:ring-white/20 hover:bg-slate-800/80"
               >
                 {mover ? (
-                  <CommodityMoverCard data={mover} isStale={isStale} />
+                  <CommodityMoverCard data={mover} isStale={isStale} weatherRecord={weatherRecord} />
                 ) : (
                   <span className="text-white/30 text-lg">—</span>
                 )}
@@ -362,7 +363,7 @@ export default function CommoditiesMoversGrid({
               display: 'inline-block',
             }}
           >
-            {items[0] && <CommodityMoverCard data={items[0]} isStale={false} />}
+            {items[0] && <CommodityMoverCard data={items[0]} isStale={false} weatherRecord={weatherRecord} />}
           </div>
         )}
       </section>

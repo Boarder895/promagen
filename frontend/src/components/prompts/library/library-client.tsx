@@ -125,18 +125,9 @@ function toIndexQuoteData(
 // COMPONENT
 // ============================================================================
 
-export default function LibraryClient({
-  exchanges,
-  weatherIndex,
-  providers,
-}: LibraryClientProps) {
+export default function LibraryClient({ exchanges, weatherIndex, providers }: LibraryClientProps) {
   const router = useRouter();
-  const {
-    isAuthenticated,
-    userTier,
-    locationInfo,
-    setReferenceFrame,
-  } = usePromagenAuth();
+  const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
   // Live weather (client) — updates after hydration
   const { weather: liveWeatherById } = useWeather();
@@ -152,12 +143,26 @@ export default function LibraryClient({
         humidity: w.humidity,
         windKmh: w.windSpeedKmh,
         description: w.description,
+        sunriseUtc: w.sunriseUtc ?? undefined,
+        sunsetUtc: w.sunsetUtc ?? undefined,
+        timezoneOffset: w.timezoneOffset ?? undefined,
+        isDayTime: w.isDayTime ?? undefined,
       });
     }
     return map;
   }, [liveWeatherById]);
 
-  const effectiveWeatherIndex = liveWeatherIndex.size ? liveWeatherIndex : weatherIndex;
+  // Merge live weather ON TOP of SSR weather (which includes demo fallback).
+  // Old logic: replace all if ANY live data exists → loses demo fills for
+  // exchanges not in current batch. New: overlay live onto SSR base.
+  const effectiveWeatherIndex = useMemo(() => {
+    if (liveWeatherIndex.size === 0) return weatherIndex;
+    const merged = new Map(weatherIndex); // start with SSR (includes demo fills)
+    for (const [id, data] of liveWeatherIndex) {
+      merged.set(id, data); // live overrides where available
+    }
+    return merged;
+  }, [liveWeatherIndex, weatherIndex]);
 
   // Get user's exchange selection (tier-aware)
   const {
@@ -242,7 +247,7 @@ export default function LibraryClient({
       sessionStorage.setItem('promagen_load_prompt', JSON.stringify(prompt));
       router.push(`/providers/${prompt.platformId}/prompt-builder`);
     },
-    [router]
+    [router],
   );
 
   // Delete prompt
@@ -254,7 +259,7 @@ export default function LibraryClient({
         setTimeout(() => setToast(null), 2000);
       }
     },
-    [deletePrompt]
+    [deletePrompt],
   );
 
   // Export prompts
@@ -285,7 +290,7 @@ export default function LibraryClient({
       }
       setTimeout(() => setToast(null), 3000);
     },
-    [importPrompts]
+    [importPrompts],
   );
 
   // ============================================================================
@@ -303,16 +308,11 @@ export default function LibraryClient({
       <header className="shrink-0 mb-4">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-semibold text-white">Your Saved Prompts</h2>
-          <a
-            href="/studio"
-            className="text-xs text-white/40 hover:text-white/60 transition-colors"
-          >
+          <a href="/studio" className="text-xs text-white/40 hover:text-white/60 transition-colors">
             ← Back to Studio
           </a>
         </div>
-        <p className="text-sm text-white/50">
-          Save, organise, and reload your favourite prompts
-        </p>
+        <p className="text-sm text-white/50">Save, organise, and reload your favourite prompts</p>
       </header>
 
       {/* Filters */}
@@ -386,7 +386,7 @@ export default function LibraryClient({
       leftContent={leftExchanges}
       centre={centreContent}
       rightContent={rightExchanges}
-      showFinanceRibbon
+      showFinanceRibbon={false}
       exchanges={allOrderedExchanges}
       displayedProviderIds={displayedProviderIds.length > 0 ? displayedProviderIds : providerIds}
       isPaidUser={userTier === 'paid'}
@@ -399,6 +399,7 @@ export default function LibraryClient({
       providers={providers}
       showEngineBay
       showMissionControl
+      hideCommodities
       weatherIndex={effectiveWeatherIndex}
       isStudioSubPage
     />

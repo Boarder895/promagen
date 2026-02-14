@@ -3,23 +3,34 @@
  * =====================================
  * The complete intelligent prompt builder with 4-tier generation,
  * conflict detection, style suggestions, and market mood integration.
- * 
+ *
  * This is the main component that orchestrates all prompt intelligence features.
- * 
- * @version 1.0.0
- * @updated 2026-01-21
+ *
+ * v1.2.0 — Prompt output integration: phrases now appear in all 4 tier previews
+ *           and copied prompts. Merged via useMemo before generator, zero changes
+ *           to generators.ts or hooks. Trimmer naturally skips phrases.
+ * v1.1.0 — Added IntelligentPhrasesCombobox alongside each category dropdown.
+ *           Phrases are commodity-enriched, cascading-filtered, type-to-discover.
+ *           Randomise does NOT affect phrases. Clear All clears both.
+ *
+ * @version 1.2.0
+ * @updated 2026-02-10
  */
 
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { usePromptIntelligence } from '../../hooks/use-prompt-intelligence';
+import { useIntelligentPhrases } from '../../hooks/use-intelligent-phrases';
+import { generateAllTierPrompts } from '../../lib/prompt-builder/generators';
 import { FourTierPromptPreview } from './four-tier-prompt-preview';
 import { IntelligencePanel } from './intelligence-panel';
+import { IntelligentPhrasesCombobox } from '../ui/intelligent-phrases-combobox';
 import type {
   PromptCategory,
+  PromptSelections,
   PlatformTier,
-  StyleSuggestion
+  StyleSuggestion,
 } from '../../types/prompt-intelligence';
 import { CATEGORY_ORDER, CATEGORY_META, TIER_CONFIGS } from '../../types/prompt-intelligence';
 
@@ -49,75 +60,228 @@ interface PromptIntelligenceBuilderProps {
 
 const VOCABULARY_OPTIONS: Record<PromptCategory, string[]> = {
   subject: [
-    'portrait of a woman', 'portrait of a man', 'fantasy warrior', 'cyberpunk hacker',
-    'mythical dragon', 'ancient samurai', 'ethereal fairy', 'steampunk inventor',
-    'space explorer', 'underwater mermaid', 'phoenix rising', 'mechanical owl',
-    'forest spirit', 'demon lord', 'angel guardian', 'robot companion',
-    'witch brewing potion', 'knight in armor', 'princess in castle', 'pirate captain'
+    'portrait of a woman',
+    'portrait of a man',
+    'fantasy warrior',
+    'cyberpunk hacker',
+    'mythical dragon',
+    'ancient samurai',
+    'ethereal fairy',
+    'steampunk inventor',
+    'space explorer',
+    'underwater mermaid',
+    'phoenix rising',
+    'mechanical owl',
+    'forest spirit',
+    'demon lord',
+    'angel guardian',
+    'robot companion',
+    'witch brewing potion',
+    'knight in armor',
+    'princess in castle',
+    'pirate captain',
   ],
   action: [
-    'standing confidently', 'sitting peacefully', 'running dynamically', 'flying through air',
-    'casting magic spell', 'wielding sword', 'reading ancient book', 'meditating deeply',
-    'dancing gracefully', 'fighting fiercely', 'exploring ruins', 'climbing mountain',
-    'swimming underwater', 'riding horse', 'playing instrument', 'creating art'
+    'standing confidently',
+    'sitting peacefully',
+    'running dynamically',
+    'flying through air',
+    'casting magic spell',
+    'wielding sword',
+    'reading ancient book',
+    'meditating deeply',
+    'dancing gracefully',
+    'fighting fiercely',
+    'exploring ruins',
+    'climbing mountain',
+    'swimming underwater',
+    'riding horse',
+    'playing instrument',
+    'creating art',
   ],
   style: [
-    'oil painting', 'digital art', 'watercolor', 'concept art', 'anime style',
-    'impressionist', 'art nouveau', 'cyberpunk aesthetic', 'fantasy art', 'photorealistic',
-    'studio ghibli', 'ukiyo-e', 'baroque', 'minimalist', 'surrealist',
-    'pop art', 'gothic', 'vaporwave', 'steampunk', 'art deco'
+    'oil painting',
+    'digital art',
+    'watercolor',
+    'concept art',
+    'anime style',
+    'impressionist',
+    'art nouveau',
+    'cyberpunk aesthetic',
+    'fantasy art',
+    'photorealistic',
+    'studio ghibli',
+    'ukiyo-e',
+    'baroque',
+    'minimalist',
+    'surrealist',
+    'pop art',
+    'gothic',
+    'vaporwave',
+    'steampunk',
+    'art deco',
   ],
   environment: [
-    'enchanted forest', 'cyberpunk city', 'ancient ruins', 'underwater palace',
-    'mountain peak', 'space station', 'japanese garden', 'gothic cathedral',
-    'desert oasis', 'crystal cave', 'floating islands', 'volcanic landscape',
-    'arctic tundra', 'tropical paradise', 'haunted mansion', 'futuristic lab'
+    'enchanted forest',
+    'cyberpunk city',
+    'ancient ruins',
+    'underwater palace',
+    'mountain peak',
+    'space station',
+    'japanese garden',
+    'gothic cathedral',
+    'desert oasis',
+    'crystal cave',
+    'floating islands',
+    'volcanic landscape',
+    'arctic tundra',
+    'tropical paradise',
+    'haunted mansion',
+    'futuristic lab',
   ],
   composition: [
-    'rule of thirds', 'centered composition', 'dynamic diagonal', 'golden ratio',
-    'symmetrical balance', 'frame within frame', 'leading lines', 'negative space',
-    'bird\'s eye view', 'worm\'s eye view', 'dutch angle', 'panoramic wide'
+    'rule of thirds',
+    'centered composition',
+    'dynamic diagonal',
+    'golden ratio',
+    'symmetrical balance',
+    'frame within frame',
+    'leading lines',
+    'negative space',
+    "bird's eye view",
+    "worm's eye view",
+    'dutch angle',
+    'panoramic wide',
   ],
   camera: [
-    '50mm lens', '85mm portrait lens', 'wide angle 24mm', 'telephoto 200mm',
-    'macro close-up', 'fisheye lens', 'tilt-shift', 'cinematic anamorphic',
-    'low angle shot', 'high angle shot', 'eye level', 'over the shoulder'
+    '50mm lens',
+    '85mm portrait lens',
+    'wide angle 24mm',
+    'telephoto 200mm',
+    'macro close-up',
+    'fisheye lens',
+    'tilt-shift',
+    'cinematic anamorphic',
+    'low angle shot',
+    'high angle shot',
+    'eye level',
+    'over the shoulder',
   ],
   lighting: [
-    'golden hour', 'dramatic lighting', 'soft diffused', 'neon glow',
-    'moonlight', 'volumetric rays', 'rim lighting', 'chiaroscuro',
-    'studio lighting', 'candlelight', 'bioluminescent', 'aurora borealis',
-    'sunset backlight', 'harsh midday sun', 'overcast soft', 'spotlight dramatic'
+    'golden hour',
+    'dramatic lighting',
+    'soft diffused',
+    'neon glow',
+    'moonlight',
+    'volumetric rays',
+    'rim lighting',
+    'chiaroscuro',
+    'studio lighting',
+    'candlelight',
+    'bioluminescent',
+    'aurora borealis',
+    'sunset backlight',
+    'harsh midday sun',
+    'overcast soft',
+    'spotlight dramatic',
   ],
   atmosphere: [
-    'mysterious', 'serene', 'dramatic', 'ethereal', 'melancholic',
-    'energetic', 'mystical', 'peaceful', 'intense', 'dreamy',
-    'ominous', 'whimsical', 'romantic', 'epic', 'nostalgic',
-    'futuristic', 'ancient', 'magical', 'apocalyptic', 'utopian'
+    'mysterious',
+    'serene',
+    'dramatic',
+    'ethereal',
+    'melancholic',
+    'energetic',
+    'mystical',
+    'peaceful',
+    'intense',
+    'dreamy',
+    'ominous',
+    'whimsical',
+    'romantic',
+    'epic',
+    'nostalgic',
+    'futuristic',
+    'ancient',
+    'magical',
+    'apocalyptic',
+    'utopian',
   ],
   colour: [
-    'vibrant colors', 'muted tones', 'warm palette', 'cool tones', 'teal and orange',
-    'monochromatic', 'pastel colors', 'neon colors', 'earth tones', 'jewel tones',
-    'black and white', 'sepia', 'high contrast', 'desaturated', 'color splash'
+    'vibrant colors',
+    'muted tones',
+    'warm palette',
+    'cool tones',
+    'teal and orange',
+    'monochromatic',
+    'pastel colors',
+    'neon colors',
+    'earth tones',
+    'jewel tones',
+    'black and white',
+    'sepia',
+    'high contrast',
+    'desaturated',
+    'color splash',
   ],
   materials: [
-    'marble texture', 'chrome reflection', 'velvet fabric', 'weathered wood',
-    'crystal surfaces', 'metallic sheen', 'organic textures', 'glass transparency',
-    'leather worn', 'silk flowing', 'stone ancient', 'gold ornate',
-    'copper patina', 'ice crystal', 'fire ember', 'water ripple'
+    'marble texture',
+    'chrome reflection',
+    'velvet fabric',
+    'weathered wood',
+    'crystal surfaces',
+    'metallic sheen',
+    'organic textures',
+    'glass transparency',
+    'leather worn',
+    'silk flowing',
+    'stone ancient',
+    'gold ornate',
+    'copper patina',
+    'ice crystal',
+    'fire ember',
+    'water ripple',
   ],
   fidelity: [
-    'highly detailed', 'masterpiece', '8k resolution', 'intricate details',
-    'sharp focus', 'professional quality', 'award winning', 'trending on artstation',
-    'photorealistic', 'ultra detailed', 'best quality', 'high resolution',
-    'studio quality', 'cinematic quality', 'publication ready', 'museum quality'
+    'highly detailed',
+    'masterpiece',
+    '8k resolution',
+    'intricate details',
+    'sharp focus',
+    'professional quality',
+    'award winning',
+    'trending on artstation',
+    'photorealistic',
+    'ultra detailed',
+    'best quality',
+    'high resolution',
+    'studio quality',
+    'cinematic quality',
+    'publication ready',
+    'museum quality',
   ],
   negative: [
-    'blurry', 'low quality', 'bad anatomy', 'watermark', 'signature',
-    'ugly', 'deformed', 'mutation', 'extra limbs', 'poorly drawn',
-    'disfigured', 'out of frame', 'duplicate', 'cropped', 'worst quality',
-    'jpeg artifacts', 'lowres', 'bad hands', 'extra fingers', 'missing fingers'
-  ]
+    'blurry',
+    'low quality',
+    'bad anatomy',
+    'watermark',
+    'signature',
+    'ugly',
+    'deformed',
+    'mutation',
+    'extra limbs',
+    'poorly drawn',
+    'disfigured',
+    'out of frame',
+    'duplicate',
+    'cropped',
+    'worst quality',
+    'jpeg artifacts',
+    'lowres',
+    'bad hands',
+    'extra fingers',
+    'missing fingers',
+  ],
 };
 
 // ============================================================================
@@ -141,24 +305,23 @@ function CategoryDropdown({
   disabled,
   conflicts,
   onAdd,
-  onRemove
+  onRemove,
 }: CategoryDropdownProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const meta = CATEGORY_META[category];
   const options = VOCABULARY_OPTIONS[category];
-  
-  const filteredOptions = options.filter(opt =>
-    opt.toLowerCase().includes(search.toLowerCase()) &&
-    !selections.includes(opt)
+
+  const filteredOptions = options.filter(
+    (opt) => opt.toLowerCase().includes(search.toLowerCase()) && !selections.includes(opt),
   );
-  
-  const hasConflict = conflicts.some(c =>
-    selections.some(s => s.toLowerCase().includes(c.toLowerCase()))
+
+  const hasConflict = conflicts.some((c) =>
+    selections.some((s) => s.toLowerCase().includes(c.toLowerCase())),
   );
-  
+
   return (
-    <div className={`relative ${category === 'negative' ? 'col-span-full' : ''}`}>
+    <div className="relative">
       {/* Label */}
       <label className="flex items-center gap-2 mb-1.5">
         <span className="text-lg">{meta.icon}</span>
@@ -172,7 +335,7 @@ function CategoryDropdown({
           </span>
         )}
       </label>
-      
+
       {/* Selected tags */}
       {selections.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
@@ -181,9 +344,10 @@ function CategoryDropdown({
               key={i}
               className={`
                 inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm
-                ${conflicts.some(c => sel.toLowerCase().includes(c.toLowerCase()))
-                  ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
-                  : 'bg-white/10 text-white/80'
+                ${
+                  conflicts.some((c) => sel.toLowerCase().includes(c.toLowerCase()))
+                    ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+                    : 'bg-white/10 text-white/80'
                 }
               `}
             >
@@ -199,7 +363,7 @@ function CategoryDropdown({
           ))}
         </div>
       )}
-      
+
       {/* Dropdown trigger */}
       <div className="relative">
         <input
@@ -218,7 +382,7 @@ function CategoryDropdown({
             ${disabled ? 'bg-purple-500/10 border-purple-500/30' : ''}
           `}
         />
-        
+
         {/* Dropdown */}
         {isOpen && !disabled && selections.length < limit && (
           <div className="absolute z-50 w-full mt-1 py-2 rounded-xl bg-gray-900 border border-white/20 shadow-xl max-h-60 overflow-y-auto">
@@ -238,10 +402,7 @@ function CategoryDropdown({
                   className={`
                     w-full px-4 py-2 text-left text-sm
                     hover:bg-white/10 transition-colors
-                    ${conflicts.includes(opt.toLowerCase())
-                      ? 'text-orange-400'
-                      : 'text-white/80'
-                    }
+                    ${conflicts.includes(opt.toLowerCase()) ? 'text-orange-400' : 'text-white/80'}
                   `}
                 >
                   {opt}
@@ -254,7 +415,7 @@ function CategoryDropdown({
           </div>
         )}
       </div>
-      
+
       {/* Click outside to close */}
       {isOpen && (
         <div
@@ -286,14 +447,14 @@ export function PromptIntelligenceBuilder({
   marketState,
   weather,
   onPromptCopy,
-  className = ''
+  className = '',
 }: PromptIntelligenceBuilderProps) {
   // Use the intelligence hook
   const {
     selections,
     tier,
     limits,
-    prompts,
+    prompts: _prompts,
     conflicts,
     suggestions,
     platformHints,
@@ -301,42 +462,93 @@ export function PromptIntelligenceBuilder({
     weatherSuggestions,
     addToSelection,
     removeFromSelection,
-    clearAll,
+    clearAll: clearAllStandard,
     randomize,
     getCategoryConflicts,
-    copyPrompt: _copyPrompt
+    copyPrompt: _copyPrompt,
   } = usePromptIntelligence({
     platformId,
     isPro,
     marketState,
-    weather
+    weather,
   });
-  
+
+  // Intelligent phrases hook (runs alongside, no modification to standard hook)
+  const {
+    phraseSelections,
+    selectPhrase,
+    removePhrase,
+    clearAllPhrases,
+    getAllPhraseTexts,
+    searchPhrases,
+    isEligible,
+    selectedCount: phraseCount,
+  } = useIntelligentPhrases();
+
   const tierConfig = TIER_CONFIGS[tier];
-  
-  // Handle suggestion click
-  const handleSuggestionClick = useCallback((suggestion: StyleSuggestion) => {
-    // Add to appropriate category based on term
-    const term = suggestion.term.toLowerCase();
-    if (term.includes('light') || term.includes('glow')) {
-      addToSelection('lighting', suggestion.term);
-    } else if (term.includes('mood') || term.includes('atmosphere')) {
-      addToSelection('atmosphere', suggestion.term);
-    } else {
-      addToSelection('style', suggestion.term);
+
+  // ---------------------------------------------------------------------------
+  // Merge standard selections + intelligent phrase texts for prompt output.
+  // Each category's array gets the phrase text appended (if one is selected).
+  // Zero changes to generators — they just see a richer PromptSelections.
+  // Trimmer can't touch phrases because they aren't in the hook's `selections`.
+  // ---------------------------------------------------------------------------
+  const mergedSelections = useMemo((): PromptSelections => {
+    const phraseTexts = getAllPhraseTexts();
+    // Fast path — nothing to merge
+    if (Object.keys(phraseTexts).length === 0) return selections;
+
+    const merged = { ...selections };
+    for (const cat of CATEGORY_ORDER) {
+      const text = phraseTexts[cat];
+      if (text) {
+        merged[cat] = [...selections[cat], text];
+      }
     }
-  }, [addToSelection]);
-  
+    return merged;
+  }, [selections, getAllPhraseTexts]);
+
+  // Regenerate prompts from merged selections (standard words + phrases)
+  const mergedPrompts = useMemo(() => generateAllTierPrompts(mergedSelections), [mergedSelections]);
+
+  // Combined Clear All — clears standard selections AND intelligent phrases
+  const handleClearAll = useCallback(() => {
+    clearAllStandard();
+    clearAllPhrases();
+  }, [clearAllStandard, clearAllPhrases]);
+
+  // Handle suggestion click
+  const handleSuggestionClick = useCallback(
+    (suggestion: StyleSuggestion) => {
+      // Add to appropriate category based on term
+      const term = suggestion.term.toLowerCase();
+      if (term.includes('light') || term.includes('glow')) {
+        addToSelection('lighting', suggestion.term);
+      } else if (term.includes('mood') || term.includes('atmosphere')) {
+        addToSelection('atmosphere', suggestion.term);
+      } else {
+        addToSelection('style', suggestion.term);
+      }
+    },
+    [addToSelection],
+  );
+
   // Handle mood term click
-  const handleMoodTermClick = useCallback((term: string, category: 'atmosphere' | 'colour' | 'lighting') => {
-    addToSelection(category, term);
-  }, [addToSelection]);
-  
+  const handleMoodTermClick = useCallback(
+    (term: string, category: 'atmosphere' | 'colour' | 'lighting') => {
+      addToSelection(category, term);
+    },
+    [addToSelection],
+  );
+
   // Handle copy
-  const handleCopy = useCallback((copyTier: PlatformTier, text: string) => {
-    onPromptCopy?.(copyTier, text);
-  }, [onPromptCopy]);
-  
+  const handleCopy = useCallback(
+    (copyTier: PlatformTier, text: string) => {
+      onPromptCopy?.(copyTier, text);
+    },
+    [onPromptCopy],
+  );
+
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
@@ -347,16 +559,23 @@ export function PromptIntelligenceBuilder({
             Intelligent Prompt Builder
           </h2>
           <p className="text-white/60 mt-1">
-            Building for <span className="text-white font-medium">{platformName || platformId}</span>
+            Building for{' '}
+            <span className="text-white font-medium">{platformName || platformId}</span>
             <span className="mx-2">•</span>
-            <span className={`
+            <span
+              className={`
               px-2 py-0.5 rounded text-xs font-medium
-              ${tier === 1 ? 'bg-blue-500/20 text-blue-400' :
-                tier === 2 ? 'bg-purple-500/20 text-purple-400' :
-                tier === 3 ? 'bg-emerald-500/20 text-emerald-400' :
-                'bg-orange-500/20 text-orange-400'
+              ${
+                tier === 1
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : tier === 2
+                    ? 'bg-purple-500/20 text-purple-400'
+                    : tier === 3
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-orange-500/20 text-orange-400'
               }
-            `}>
+            `}
+            >
               Tier {tier}: {tierConfig.name}
             </span>
             {isPro && (
@@ -364,9 +583,15 @@ export function PromptIntelligenceBuilder({
                 ✨ Pro
               </span>
             )}
+            {/* Phrase count badge — shows when at least 1 phrase selected */}
+            {phraseCount > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-amber-500/15 border border-amber-500/25 rounded text-xs font-medium text-amber-400">
+                ✦ {phraseCount} phrase{phraseCount !== 1 ? 's' : ''}
+              </span>
+            )}
           </p>
         </div>
-        
+
         {/* Action buttons */}
         <div className="flex items-center gap-2">
           <button
@@ -384,7 +609,7 @@ export function PromptIntelligenceBuilder({
             🎲 Randomise
           </button>
           <button
-            onClick={clearAll}
+            onClick={handleClearAll}
             disabled={isLocked}
             className="
               px-4 py-2 rounded-xl font-medium text-sm
@@ -399,36 +624,54 @@ export function PromptIntelligenceBuilder({
           </button>
         </div>
       </div>
-      
+
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Category dropdowns */}
         <div className="lg:col-span-2 space-y-6">
           {/* Categories grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {CATEGORY_ORDER.map(category => (
-              <CategoryDropdown
-                key={category}
-                category={category}
-                selections={selections[category]}
-                limit={limits[category]}
-                disabled={isLocked}
-                conflicts={getCategoryConflicts(category)}
-                onAdd={(value) => addToSelection(category, value)}
-                onRemove={(value) => removeFromSelection(category, value)}
-              />
+            {CATEGORY_ORDER.map((category) => (
+              <div key={category} className={category === 'negative' ? 'col-span-full' : ''}>
+                {/* Standard dropdown */}
+                <CategoryDropdown
+                  category={category}
+                  selections={selections[category]}
+                  limit={limits[category]}
+                  disabled={isLocked}
+                  conflicts={getCategoryConflicts(category)}
+                  onAdd={(value) => addToSelection(category, value)}
+                  onRemove={(value) => removeFromSelection(category, value)}
+                />
+
+                {/* Intelligent phrases combobox (adjacent, below standard dropdown) */}
+                {isEligible(category) && (
+                  <div className="mt-1.5">
+                    <IntelligentPhrasesCombobox
+                      category={category}
+                      selectedPhrase={phraseSelections[category]}
+                      onSelect={(phrase) => selectPhrase(category, phrase)}
+                      onRemove={() => removePhrase(category)}
+                      onSearch={(query) => searchPhrases(category, query)}
+                      isLocked={isLocked}
+                      isEligible={isEligible(category)}
+                      compact
+                    />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-          
+
           {/* 4-Tier Preview */}
           <FourTierPromptPreview
-            prompts={prompts}
+            prompts={mergedPrompts}
             currentTier={tier}
             onCopy={handleCopy}
             showNegative={true}
           />
         </div>
-        
+
         {/* Intelligence Panel */}
         <div className="lg:col-span-1">
           <div className="sticky top-4">

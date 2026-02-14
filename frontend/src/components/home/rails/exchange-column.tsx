@@ -55,7 +55,7 @@ type ExchangeColumnProps = {
 export default function ExchangeColumn({
   exchanges,
   side,
-  promptTier = 4,
+  promptTier = 3,
   isPro = false,
 }: ExchangeColumnProps): JSX.Element {
   const ariaLabel = side === 'left' ? 'Eastern exchanges' : 'Western exchanges';

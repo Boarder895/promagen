@@ -342,12 +342,26 @@ export default function StudioPageClient({
         humidity: w.humidity,
         windKmh: w.windSpeedKmh,
         description: w.description,
+        sunriseUtc: w.sunriseUtc ?? undefined,
+        sunsetUtc: w.sunsetUtc ?? undefined,
+        timezoneOffset: w.timezoneOffset ?? undefined,
+        isDayTime: w.isDayTime ?? undefined,
       });
     }
     return map;
   }, [liveWeatherById]);
 
-  const effectiveWeatherIndex = liveWeatherIndex.size ? liveWeatherIndex : weatherIndex;
+  // Merge live weather ON TOP of SSR weather (which includes demo fallback).
+  // Old logic: replace all if ANY live data exists → loses demo fills for
+  // exchanges not in current batch. New: overlay live onto SSR base.
+  const effectiveWeatherIndex = useMemo(() => {
+    if (liveWeatherIndex.size === 0) return weatherIndex;
+    const merged = new Map(weatherIndex); // start with SSR (includes demo fills)
+    for (const [id, data] of liveWeatherIndex) {
+      merged.set(id, data); // live overrides where available
+    }
+    return merged;
+  }, [liveWeatherIndex, weatherIndex]);
 
   // Get user's exchange selection (tier-aware)
   const {

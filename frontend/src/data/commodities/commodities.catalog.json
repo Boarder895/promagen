@@ -1193,7 +1193,7 @@
     "priority": 110,
     "tags": ["agriculture", "softs"],
     "ribbonLabel": "Rubber",
-    "ribbonSubtext": "USD CENTS / KG",
+    "ribbonSubtext": "USD / KG",
     "geoLevel": "country",
     "displayCountryCodes": ["US"],
     "yearFirstTraded": null,

@@ -650,6 +650,17 @@
         "norwegian fish processing meal nordic quality"
       ]
     },
+    "salmon": {
+      "id": "salmon",
+      "topProducers": ["Norway", "Chile", "Canada", "United Kingdom", "USA"],
+      "regionPhrases": [
+        "norwegian fjord salmon farm pen floating arctic light",
+        "chilean patagonia salmon aquaculture cold channel southern",
+        "canadian british columbia wild salmon river spawning",
+        "british scottish highland salmon farm loch misty",
+        "american alaskan wild salmon run copper river glacial"
+      ]
+    },
     "soybean_oil": {
       "id": "soybean_oil",
       "topProducers": ["China", "USA", "Brazil", "Argentina", "India"],

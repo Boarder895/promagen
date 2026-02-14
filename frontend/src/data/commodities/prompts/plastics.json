@@ -1,0 +1,405 @@
+{
+  "category": "energy",
+  "subCategory": "distillates",
+  "categoryLabel": "Plastics / Petrochemical Polymers",
+  "commodityCount": 3,
+  "stagesPerCommodity": 12,
+  "_note": "Expanded 12-stage lifecycle (3x standard depth) covering feedstock-to-recycling. These commodities sit in the energy group under distillates in the catalog.",
+  "stageLabels": {
+    "feedstock": "Feedstock Origin",
+    "extraction": "Crude / Gas Extraction",
+    "refining": "Naphtha / Ethane Separation",
+    "monomer": "Monomer Production",
+    "polymerisation": "Polymerisation Reactor",
+    "pelletising": "Pellet Extrusion",
+    "compounding": "Compounding & Additives",
+    "forming": "Moulding / Forming",
+    "product": "Finished Product",
+    "distribution": "Distribution & Retail",
+    "waste": "Post-Consumer Waste",
+    "recycling": "Recycling & Circular Economy"
+  },
+  "commodities": {
+
+    "polyethylene": {
+      "displayName": "Polyethylene",
+      "intro": "Polyethylene (PE) is the world's most produced plastic — over 100 million tonnes annually — used for packaging film, bottles, pipes, toys, and countless everyday items. Produced by polymerising ethylene monomer derived from cracking naphtha (oil-based) or ethane (natural-gas-based). Two main grades: HDPE (high-density, rigid — milk jugs, pipes) and LDPE/LLDPE (low-density, flexible — stretch wrap, plastic bags). The US Gulf Coast and Middle East dominate production due to cheap ethane feedstock from shale gas and associated gas.",
+      "materials": "Translucent waxy pellets (natural PE resin), thin flexible film with slight sheen, rigid white HDPE bottle, clear stretch wrap film, PE pipe with smooth bore, milky-white molten polymer strand, cracker furnace tubes, ethylene gas piping.",
+      "stages": {
+        "feedstock": {
+          "subject": "Shale gas wellhead in the Permian Basin or Marcellus Shale, Christmas-tree valve assembly on the wellhead, ethane-rich natural gas flowing from the formation — the ultimate feedstock for US polyethylene production",
+          "lens": "35mm f/5.6, oil-and-gas landscape, wellhead equipment as central element, pump-jack or gas processing nearby, American shale-country terrain stretching flat or rolling behind",
+          "enhancer": "Steel Christmas-tree valve assembly on the wellhead, gas flow meter, pipeline connection running to the gathering system, shale-country terrain — flat Permian scrub or rolling Appalachian hills for Marcellus, the gas that becomes plastic",
+          "environments": {
+            "_default": "Gas wellhead, valve assembly, gathering pipeline, shale or conventional gas production area, the origin of ethane feedstock for polyethylene",
+            "US": "Permian Basin wellhead in West Texas, pump-jacks surrounding, gas gathering pipeline, associated gas rich in ethane heading to the fractionation plant, flat Permian scrub and mesquite, American shale revolution landscape",
+            "SA": "Saudi Aramco gas plant in the Eastern Province, flares visible, vast desert, associated gas from Ghawar or Shaybah being processed, cheap ethane feedstock that gives Middle Eastern crackers a global cost advantage",
+            "QA": "Qatari North Field offshore platform, massive gas reserves, ethane-rich gas flowing to Ras Laffan industrial city, Persian Gulf waters, the feedstock advantage that built Qatar's petrochemical industry"
+          }
+        },
+        "extraction": {
+          "subject": "Natural gas processing plant fractionating raw gas into methane, ethane, propane, and heavier liquids — ethane being the key PE feedstock, NGL (natural gas liquids) fractionation towers separating the components",
+          "lens": "24mm f/8, gas processing plant panorama, fractionation towers and heat exchangers, pipeline infrastructure, industrial process plant in an energy-producing landscape",
+          "enhancer": "Tall fractionation towers separating NGL components by boiling point, ethane being chilled and piped to the cracker, propane and butane going to other markets, cryogenic processing at extremely low temperatures, pipeline manifolds distributing products",
+          "environments": {
+            "_default": "NGL fractionation plant, cryogenic distillation towers, ethane pipeline to the cracker, gas processing infrastructure, energy-industry landscape",
+            "US": "Mont Belvieu NGL hub in Texas, world's largest NGL fractionation complex, enterprise product storage caverns in salt domes, pipeline hub connecting shale basins to Gulf Coast crackers, flat coastal Texas industrial zone"
+          }
+        },
+        "refining": {
+          "subject": "Steam cracker furnace at a petrochemical complex, ethane or naphtha being thermally cracked at 850°C in radiant-section furnace tubes, the primary reaction that produces ethylene monomer from hydrocarbon feedstock",
+          "lens": "35mm f/5.6, petrochemical plant, cracker furnace as central element, radiant tubes visible through the firebox peepholes, massive industrial chemical complex surrounding",
+          "enhancer": "Steam cracker radiant furnace with vertical reactor tubes glowing inside, ethane or naphtha feed entering the convection section, cracked gas exiting at 850°C, quench tower cooling the product rapidly, the molecular transformation from simple hydrocarbon to reactive ethylene",
+          "environments": {
+            "_default": "Steam cracker at a petrochemical complex, massive furnace banks, quench towers, compression and separation, the heart of olefins production",
+            "US": "ExxonMobil or Dow cracker on the Texas or Louisiana Gulf Coast, world-scale ethane cracker, ship channel industrial landscape, cooling towers and flares, massive petrochemical corridor",
+            "KR": "Lotte or LG Chem cracker in Yeosu or Daesan, naphtha-based cracker, Korean petrochemical complex, coastal industrial zone, one of Asia's largest petrochemical clusters",
+            "DE": "BASF Ludwigshafen Verbund, the world's largest integrated chemical site, naphtha cracker feeding downstream polymer plants, Rhine River industrial landscape, German chemical engineering heritage"
+          }
+        },
+        "monomer": {
+          "subject": "Ethylene purification and compression, the cracked gas being separated in a cold box and distillation column to produce polymer-grade ethylene (99.95%+ purity), the monomer ready for polymerisation",
+          "lens": "50mm f/4, chemical plant interior, cryogenic cold box and ethylene distillation column, the purification step producing the monomer that becomes polyethylene, stainless steel and insulated piping",
+          "enhancer": "Cryogenic cold box separating ethylene from other cracked-gas components at -100°C, heavily insulated piping with frost forming on connections, ethylene distillation column, polymer-grade purity achieved, the invisible gas that becomes the world's most common plastic",
+          "environments": {
+            "_default": "Ethylene separation and purification section of the cracker, cold box, distillation, compression, polymer-grade monomer storage, cryogenic processing equipment",
+            "US": "Gulf Coast cracker ethylene separation, massive cold box, pipeline-grade and polymer-grade ethylene, ethylene pipeline running to polymerisation plants across the Gulf Coast corridor"
+          }
+        },
+        "polymerisation": {
+          "subject": "Polyethylene reactor — fluidised-bed gas-phase reactor or slurry loop reactor — ethylene monomer being converted into solid polyethylene fluff or powder inside the reactor under controlled temperature and pressure with catalyst",
+          "lens": "35mm f/5.6, petrochemical process, reactor vessel as central element, control valves and instrumentation, the transformation of gas into solid polymer happening inside the sealed vessel",
+          "enhancer": "Tall fluidised-bed reactor or horizontal loop reactor, ethylene gas entering with catalyst, polyethylene powder forming inside, reactor temperature and pressure tightly controlled for the desired grade, the molecular chain-building that creates plastic from gas",
+          "environments": {
+            "_default": "Polyethylene reactor plant, fluidised-bed or slurry-loop technology, catalyst handling, reactor product discharge, integrated within the petrochemical complex",
+            "US": "Dow or Chevron Phillips PE reactor on the Gulf Coast, Unipol or MarTech technology, world-scale reactor producing 500,000+ tonnes per year, Gulf Coast petrochemical corridor",
+            "SA": "SABIC PE reactor at Yanbu or Jubail, Saudi petrochemical city, cheap ethane feedstock giving lowest global production cost, desert industrial complex, massive scale"
+          }
+        },
+        "pelletising": {
+          "subject": "Underwater pelletiser cutting molten polyethylene into uniform pellets, the extruder pushing molten PE through a die plate where spinning blades cut it into small cylinders that solidify in circulating water",
+          "lens": "50mm f/4, extrusion plant interior, pelletiser die face and water box as central element, translucent pellets emerging in the water stream, the creation of the trade-grade product",
+          "enhancer": "Molten polyethylene strand emerging through the die plate, spinning blade cutting uniform pellets, circulating water quenching the pellets solid, translucent natural-colour PE pellets flowing through the dewatering screen, the form in which polyethylene is bought and sold globally",
+          "environments": {
+            "_default": "PE pelletising section, extruder, die plate, underwater pelletiser, dewatering, classification screens, pellet silos, packaging into bags or railcars",
+            "US": "Gulf Coast PE plant pelletising hall, high-speed underwater pelletiser, pellet classification, 25kg bags or railcar loading, Houston Ship Channel industrial corridor"
+          }
+        },
+        "compounding": {
+          "subject": "Plastics compounding line, natural PE pellets being blended with colour masterbatch, UV stabilisers, antioxidants, and processing aids in a twin-screw extruder, producing custom-coloured and formulated compounds",
+          "lens": "50mm f/4, compounding factory interior, twin-screw extruder with multiple feed hoppers, coloured pellet streams being blended, the customisation step between resin producer and end-user",
+          "enhancer": "Twin-screw compounding extruder with gravimetric feeders metering natural PE resin, colour masterbatch concentrate, and additives, coloured compound pellets emerging from the strand pelletiser, quality control lab testing colour and properties, custom formulation for each customer requirement",
+          "environments": {
+            "_default": "Plastics compounding facility, twin-screw extrusion, masterbatch blending, custom compound production, quality testing, packaging for converters",
+            "US": "American plastics compounder, custom PE compounds for packaging, pipe, and film markets, industrial park setting, truck loading docks, serving regional converters",
+            "CN": "Chinese compounding facility in Guangdong, massive plastics processing industry, colour matching for export products, industrial zone in the Pearl River Delta, world's largest plastics processing region"
+          }
+        },
+        "forming": {
+          "subject": "Film blowing line, molten LDPE being extruded upward through an annular die forming a bubble of thin film, the bubble rising several storeys through the cooling tower, being collapsed and wound into rolls",
+          "lens": "24mm f/5.6, factory interior looking upward, the PE film bubble rising from the die through the cooling tower, impressive vertical scale of the blown-film process, rolls being wound at the base",
+          "enhancer": "Translucent polyethylene bubble inflating from the annular die, rising 10+ metres through the cooling tower, air ring controlling the bubble diameter and cooling rate, collapsing frame at the top flattening the bubble into double-layer film, winding rolls at the base, the mesmerising process that creates most plastic packaging film",
+          "environments": {
+            "_default": "Blown-film extrusion plant, annular die, cooling tower, collapsing frame, winder, film rolls, the process that creates most flexible plastic packaging",
+            "US": "American packaging film plant, multi-layer co-extrusion blown film for food packaging, print-ready film, roll stock for form-fill-seal machines, suburban industrial park",
+            "CN": "Chinese film plant in Zhejiang or Guangdong, massive flexible packaging industry, film for domestic and export markets, industrial zone, 24-hour production"
+          }
+        },
+        "product": {
+          "subject": "HDPE milk jug on a dairy filling line, blow-moulded translucent white bottle being filled with milk at high speed, capped and labelled, the iconic polyethylene consumer product",
+          "lens": "50mm f/4, dairy filling line, HDPE bottles moving at speed being filled, capped, and labelled, clean food-grade manufacturing, the ubiquitous PE product that everyone recognises",
+          "enhancer": "Translucent white HDPE milk jugs on the filling line conveyor, nozzles filling at high speed, screw caps being applied, labels being wrapped, food-grade hygiene, the recycling triangle with '2' HDPE marking on the base, the plastic bottle everyone has in their refrigerator",
+          "environments": {
+            "_default": "Dairy or beverage filling line, HDPE bottles, high-speed production, food-grade cleanliness, the consumer product that drives PE demand, packaging industry",
+            "US": "American dairy, gallon HDPE milk jugs being filled, Dean Foods or regional dairy, cold chain packaging, American supermarket supply chain, the ubiquitous PE product",
+            "GB": "British supermarket milk in HDPE bottles, 2-pint and 4-pint sizes, colour-coded caps for whole, semi-skimmed, skimmed, British dairy packaging convention"
+          }
+        },
+        "distribution": {
+          "subject": "Supermarket shelf stocked with products in polyethylene packaging — milk jugs, shampoo bottles, detergent containers, frozen food bags — PE surrounding the consumer in every aisle without being noticed",
+          "lens": "35mm f/4, retail environment, supermarket aisle with PE packaging visible on every shelf, the ubiquity of polyethylene in daily life, consumer context",
+          "enhancer": "Supermarket aisle with PE packaging in every direction — HDPE bottles for detergent and milk, LDPE bags for bread and produce, LLDPE stretch wrap on pallets in the back, the most common plastic surrounding consumers who rarely notice it, colourful branded packaging made possible by PE",
+          "environments": {
+            "_default": "Supermarket or retail store, PE packaging visible everywhere, consumer products in polyethylene containers, bags, and films, the ubiquitous presence of PE in daily commerce",
+            "US": "American supermarket, gallon milk jugs, Tide detergent bottles, Ziploc bags, stretch-wrapped pallets in the back, PE in every aisle of American retail life",
+            "IN": "Indian kirana shop or modern supermarket, PE sachets for shampoo and condiments, HDPE water tanks stacked outside, PE packaging enabling affordable single-serve products for emerging-market consumers"
+          }
+        },
+        "waste": {
+          "subject": "Post-consumer PE waste at a materials recovery facility, HDPE bottles and LDPE film being sorted on a conveyor, baled plastic waste ready for recycling, the challenge of plastic waste management",
+          "lens": "35mm f/4, MRF interior, conveyor with mixed plastics being sorted by hand and optical sorters, baled PE ready for recycling, the scale of plastic waste processing",
+          "enhancer": "Mixed post-consumer plastics on the sorting conveyor, optical sorters using NIR to identify HDPE and LDPE, workers manually pulling contaminants, baler compressing sorted PE into cubes, the recycling challenge — PE is technically recyclable but collection rates remain low globally",
+          "environments": {
+            "_default": "Materials recovery facility, plastic sorting, baling, the infrastructure attempting to capture post-consumer PE for recycling rather than landfill or incineration",
+            "US": "American MRF, single-stream recycling sorting, HDPE bottles separated by optical sorters, film contamination challenges, baled HDPE shipped to reclaimers, American recycling infrastructure",
+            "DE": "German Grüner Punkt dual system, advanced sorting with NIR optical separators, high PE recovery rates, German engineering applied to waste, Europe's most advanced recycling infrastructure"
+          }
+        },
+        "recycling": {
+          "subject": "Mechanical PE recycling line, post-consumer HDPE bottles being washed, shredded, and re-pelletised into recycled HDPE (rHDPE) pellets, closing the loop — waste plastic becoming new raw material",
+          "lens": "50mm f/4, recycling plant interior, shredder and wash line, extruder producing rPE pellets, the circular economy in action — waste becoming feedstock",
+          "enhancer": "HDPE bottle flakes being hot-washed to remove labels and contaminants, clean flakes entering the extruder, melt-filtered recycled PE being pelletised, slightly grey-tinged rHDPE pellets compared to virgin — but fully functional, closing the material loop, the circular economy for plastics",
+          "environments": {
+            "_default": "PE recycling plant, washing, shredding, extrusion, re-pelletising, quality testing, the mechanical recycling route for post-consumer polyethylene",
+            "US": "American HDPE recycler, post-consumer milk jugs being washed and re-pelletised, rHDPE pellets going back into non-food bottles, industrial recycling facility, the bottle-to-bottle circular economy",
+            "NL": "Advanced European PE recycler in the Netherlands, high-quality rPE production, sorting by colour, food-contact-grade recycled PE technology, European circular economy leadership"
+          }
+        }
+      }
+    },
+
+    "polypropylene": {
+      "displayName": "Polypropylene",
+      "intro": "Polypropylene (PP) is the world's second-most produced plastic, valued for its excellent chemical resistance, heat tolerance (microwaveable containers), light weight, and versatility. Produced by polymerising propylene monomer — a co-product of ethylene cracking or fluid catalytic cracking (FCC) in oil refineries. PP is used for automotive components, packaging, textiles (non-woven fabrics for masks and nappies), furniture, and medical devices. China is both the largest producer and consumer of PP.",
+      "materials": "Translucent semi-rigid pellets, white injection-moulded container, clear hinged food container (living hinge), non-woven fabric texture (masks and nappies), automotive bumper fascia, PP fibre carpet, biaxially oriented PP (BOPP) film with crisp clarity.",
+      "stages": {
+        "feedstock": {
+          "subject": "Oil refinery fluid catalytic cracker (FCC), the massive reactor-regenerator unit that cracks heavy oil fractions into lighter products — propylene is a key co-product alongside gasoline, the refinery source of PP feedstock",
+          "lens": "24mm f/8, refinery panorama, FCC reactor-regenerator tower dominating the refinery skyline, catalyst standpipe and riser visible, the refinery unit that produces propylene as a valuable byproduct",
+          "enhancer": "Massive FCC reactor-regenerator tower with catalyst standpipe and riser, flue gas stack, fractionation column alongside, the refinery unit producing propylene alongside gasoline, petrochemical-grade propylene separated for polymer production",
+          "environments": {
+            "_default": "Oil refinery FCC unit, reactor-regenerator, propylene recovery, the refinery source of PP monomer alongside cracker co-production",
+            "US": "Gulf Coast refinery FCC, massive refinery complex, propylene recovery for nearby PP plants, Houston Ship Channel industrial corridor, refinery-to-petrochemical integration",
+            "CN": "Sinopec or PetroChina refinery FCC in Shandong or Liaoning, propylene recovery, Chinese refinery scale, integrated refinery-petrochemical complex, the world's largest PP market sourcing monomer from refineries and crackers",
+            "KR": "SK Energy or GS Caltex refinery in Ulsan, FCC propylene recovery, Korean petrochemical integration, coastal refinery complex"
+          }
+        },
+        "extraction": {
+          "subject": "Propylene splitter column at a cracker or refinery, separating propylene from propane by fractional distillation, tall column operating at high reflux to achieve polymer-grade purity (99.5%+ propylene)",
+          "lens": "35mm f/5.6, chemical plant, tall propylene splitter column as central element, many trays required due to the close boiling points of propylene and propane, the purification challenge for PP monomer",
+          "enhancer": "Very tall propylene-propane splitter column (one of the tallest columns in any chemical plant), 150-200+ distillation trays operating at high reflux ratio, the close boiling points making separation difficult, polymer-grade propylene product, chemical-grade rejected to lower-value uses",
+          "environments": {
+            "_default": "Propylene purification section, splitter column, the challenging separation required to produce polymer-grade monomer, chemical engineering at scale",
+            "US": "Gulf Coast propylene splitter, integrated with cracker or refinery, pipeline-quality C3 specification, propylene pipeline running to PP plants along the Houston corridor"
+          }
+        },
+        "refining": {
+          "subject": "Propylene sphere farm and pipeline terminal, large pressurised spheres storing polymer-grade propylene before it is piped to the polymerisation reactor, the monomer storage and distribution infrastructure",
+          "lens": "35mm f/5.6, petrochemical storage, spherical propylene tanks as central elements, pipeline connections, safety equipment, the logistics of handling a flammable pressurised gas on an industrial scale",
+          "enhancer": "Large white pressurised sphere tanks holding liquefied propylene, safety instrumentation and fire water monitors, pipeline manifolds for distribution to the reactor, hazardous gas handling, security fencing, the infrastructure supporting continuous polymer production",
+          "environments": {
+            "_default": "Propylene storage and distribution, pressurised sphere farm, pipeline terminal, safety systems, the logistics connecting monomer supply to the polymerisation plant",
+            "US": "Gulf Coast propylene terminal, sphere farm at a petrochemical complex, pipeline connections to multiple PP plants, Enterprise or Targa midstream infrastructure"
+          }
+        },
+        "monomer": {
+          "subject": "Catalyst preparation laboratory for Ziegler-Natta or metallocene PP catalysts, the proprietary catalyst system that controls the polymer's molecular architecture — stereochemistry, molecular weight, and co-monomer distribution",
+          "lens": "50mm f/4, chemical laboratory, catalyst preparation under inert atmosphere, glovebox with nitrogen, precision chemical synthesis, the intellectual heart of PP technology — catalyst design determines product properties",
+          "enhancer": "Glovebox under nitrogen atmosphere, catalyst components being precisely measured and mixed, moisture-sensitive chemistry, proprietary formulations, catalyst pre-polymerisation vessel, the molecular control system that makes PP versatile — different catalysts produce different grades from the same monomer",
+          "environments": {
+            "_default": "PP catalyst laboratory, inert atmosphere handling, proprietary catalyst technology, the science behind polymer property control, clean laboratory environment",
+            "NL": "LyondellBasell catalyst research in the Netherlands, Spheripol technology development, world-leading PP catalyst innovation, European petrochemical R&D",
+            "JP": "Japanese catalyst developer (Mitsui or Japan Polypropylene), metallocene catalyst innovation, Japanese precision chemistry, advanced materials research laboratory"
+          }
+        },
+        "polymerisation": {
+          "subject": "Spheripol loop reactor for polypropylene production, liquid propylene circulating rapidly through the loop with suspended catalyst, polymer particles growing to millimetre-size granules inside the reactor",
+          "lens": "35mm f/5.6, petrochemical process interior, loop reactor pipes as central element, circulation pump, polymer discharge, the reactor technology that produces most of the world's polypropylene",
+          "enhancer": "Loop reactor with large-diameter pipes in a looping configuration, axial-flow pump circulating liquid propylene with suspended catalyst and growing polymer particles, flash drum where polymer separates from unreacted monomer, the continuous process producing polymer granules",
+          "environments": {
+            "_default": "PP Spheripol or Novolen reactor plant, loop or gas-phase reactor, catalyst injection, polymer discharge, monomer recovery, world-scale PP production",
+            "US": "LyondellBasell or Braskem PP plant on the Gulf Coast, Spheripol loop reactor, world-scale operation, Houston Ship Channel industrial corridor",
+            "CN": "Sinopec or private Chinese PP plant, Spheripol or domestic reactor technology, massive Chinese PP production capacity serving the world's largest market, Chinese petrochemical industrial zone"
+          }
+        },
+        "pelletising": {
+          "subject": "PP extrusion and pelletising, polymer powder or granules being melt-homogenised with stabilisers in a twin-screw extruder and cut into uniform pellets, the trade-grade product — translucent semi-rigid PP pellets",
+          "lens": "50mm f/4, extrusion hall, twin-screw extruder and pelletiser as central elements, translucent PP pellets emerging, the consistent product that polymer producers sell worldwide",
+          "enhancer": "Twin-screw extruder melting and homogenising PP granules with antioxidant stabiliser package, strand die or underwater pelletiser producing uniform translucent pellets, pellet classification screens, dedusting, silo storage, the global commodity product — PP pellets by the railcar",
+          "environments": {
+            "_default": "PP pelletising section, extrusion, pelletising, classification, silo storage, bagging or bulk loading, the finishing step of polymer production",
+            "US": "Gulf Coast PP plant pelletising, railcar loading, 25kg bags and bulk hopper cars, serving North American injection moulding and film markets"
+          }
+        },
+        "compounding": {
+          "subject": "Automotive PP compounding line, natural PP being reinforced with talc or glass fibre and coloured with masterbatch to produce specific automotive-grade compounds, the customisation for demanding applications",
+          "lens": "50mm f/4, compounding factory, twin-screw extruder with side feeders for mineral fillers, coloured compound pellets, automotive specification production, clean technical manufacturing",
+          "enhancer": "Twin-screw compounder with gravimetric feeders for PP resin, talc mineral filler, glass fibre reinforcement, UV stabiliser, and colour masterbatch, coloured filled PP compound pellets emerging, automotive OEM specification testing — impact, heat deflection, surface finish, dimensional stability",
+          "environments": {
+            "_default": "Automotive PP compounding facility, filled and reinforced compounds, colour matching, OEM specification testing, technical plastics manufacturing",
+            "DE": "German automotive compounder (Borealis or SABIC), PP compounds for VW, BMW, or Mercedes bumpers and interior parts, German automotive quality standards, Bavarian or Rhineland industrial setting",
+            "US": "American automotive compounder in Michigan or Ohio, PP compounds for Detroit automakers, injection moulding colour matching, automotive supply chain hub"
+          }
+        },
+        "forming": {
+          "subject": "Large injection moulding machine producing an automotive bumper fascia in talc-filled PP, mould closing with enormous clamping force, molten PP injecting, the part cooling and ejecting — one of PP's highest-volume applications",
+          "lens": "35mm f/4, factory interior, large injection moulding machine (3,000+ tonne clamp) as central element, automotive bumper part being ejected, industrial-scale precision moulding",
+          "enhancer": "Massive injection moulding machine with automotive-scale mould, molten PP injecting at high pressure, bumper fascia part cooling in the mould, robot arm extracting the finished part, quality inspection station, one bumper every 60 seconds, industrial precision meeting automotive aesthetics",
+          "environments": {
+            "_default": "Automotive injection moulding facility, large tonnage machines, bumper and interior parts, quality control, automotive tier-1 manufacturing",
+            "DE": "German automotive tier-1 supplier (Plastic Omnium or Magna), PP bumper moulding for premium brands, precision quality, automated inspection, German manufacturing excellence",
+            "CN": "Chinese automotive moulder, PP bumpers and interiors for domestic and export vehicles, massive moulding hall, rapid Chinese automotive industry growth, industrial zone near assembly plants"
+          }
+        },
+        "product": {
+          "subject": "Clear PP hinged food container in a restaurant kitchen, the classic takeaway clamshell with a living hinge — PP's unique ability to flex millions of times without breaking, holding a fresh meal ready for delivery",
+          "lens": "85mm f/2.8, food-service product shot, clear PP clamshell container with food visible inside, the living hinge at the back, warm kitchen context, the everyday PP product everyone uses",
+          "enhancer": "Crystal-clear PP clamshell container with living hinge (the moulded-in flexible hinge that works indefinitely), fresh food visible inside, stackable design, microwave-safe (PP's heat advantage over PET), takeaway and food-prep essential, the PP product that everyone encounters weekly",
+          "environments": {
+            "_default": "Restaurant kitchen or food-prep area, PP containers being filled, takeaway and food storage, the living-hinge clamshell that demonstrates PP's unique properties",
+            "US": "American restaurant, clear PP clamshells for takeaway and meal prep, DoorDash or Uber Eats delivery context, the disposable container ubiquitous in American food culture",
+            "JP": "Japanese bento preparation, PP containers for konbini (convenience store) meals, immaculate food presentation in clear PP, Japanese convenience culture, millions consumed daily"
+          }
+        },
+        "distribution": {
+          "subject": "Non-woven PP fabric being manufactured for surgical masks and medical gowns — meltblown and spunbond PP layers creating the filtration barrier, PP's critical role in healthcare highlighted during the pandemic",
+          "lens": "50mm f/4, cleanroom manufacturing, non-woven PP fabric on the production line, mask or gown assembly, medical-grade PP application, the pandemic product that revealed PP's importance",
+          "enhancer": "Spunbond-meltblown-spunbond (SMS) non-woven PP fabric being produced on a high-speed line, fine meltblown fibres creating the filtration layer, mask die-cutting and ear-loop attachment, medical-grade clean manufacturing, the product that made 'polypropylene' a household word during COVID-19",
+          "environments": {
+            "_default": "Non-woven PP manufacturing and mask production, meltblown and spunbond technology, medical supply chain, the PP application that became globally visible during the pandemic",
+            "CN": "Chinese mask factory in Hubei or Zhejiang, massive meltblown PP capacity built during the pandemic, N95 and surgical mask production, the supply chain that equipped the world, Chinese manufacturing speed and scale",
+            "US": "American non-woven PP manufacturer, Berry Global or Hollingsworth & Vose, domestic mask and gown production, healthcare supply chain security, post-pandemic reshoring"
+          }
+        },
+        "waste": {
+          "subject": "Mixed PP post-consumer waste — yoghurt pots, bottle caps, food trays, automotive parts — at a recycling sorting facility, the challenge of recycling PP which is technically recyclable but has lower collection rates than PET or HDPE",
+          "lens": "35mm f/4, waste sorting facility, mixed PP items on the conveyor, optical sorting attempting to separate PP from other plastics, the recycling infrastructure challenge for PP (resin code 5)",
+          "enhancer": "Mixed PP items — yoghurt pots, margarine tubs, bottle caps, food trays — on the sorting conveyor, NIR optical sorter identifying PP by its spectral signature, black PP items (undetectable by standard NIR) causing sorting failures, the technical and economic challenges of PP recycling",
+          "environments": {
+            "_default": "Recycling MRF, PP sorting from mixed plastics, the challenge of PP recycling — lower value than PET, colour and contamination issues, the gap between recyclability and actual recycling rates",
+            "DE": "German advanced sorting facility, PP separated to high purity, Der Grüne Punkt system, European recycling regulation driving PP recovery, advanced NIR and AI sorting technology",
+            "US": "American MRF struggling with PP yoghurt-pot and black-tray contamination, lower PP recycling rates than PET and HDPE, the recycling challenge for the #5 resin code"
+          }
+        },
+        "recycling": {
+          "subject": "Chemical recycling plant converting waste PP into pyrolysis oil that can be re-cracked to produce new propylene monomer, the advanced recycling technology that can handle contaminated and mixed PP waste that mechanical recycling cannot process",
+          "lens": "35mm f/4, chemical recycling plant, pyrolysis reactor as central element, waste plastic feed and pyrolysis oil output, the emerging technology for hard-to-recycle PP waste, industrial pilot or commercial scale",
+          "enhancer": "Pyrolysis reactor thermally decomposing waste PP into hydrocarbon vapours, condensing into pyrolysis oil, the oil being shipped to a cracker for re-polymerisation into virgin-quality PP, chemical recycling closing the loop for contaminated waste that mechanical recycling rejects, mass-balance certification",
+          "environments": {
+            "_default": "Chemical/advanced recycling plant, pyrolysis of waste PP, pyrolysis oil production, the emerging technology for plastic circularity beyond mechanical limits",
+            "NL": "Plastic Energy or Shell chemical recycling pilot in the Netherlands, pyrolysis oil from waste PP entering the cracker, circular PP production, European circular economy investment, advanced recycling technology demonstration",
+            "US": "PureCycle Technologies PP recycling in Ohio, solvent-based purification producing ultra-pure recycled PP, American advanced recycling investment, the technology attempting to solve PP's recycling challenge"
+          }
+        }
+      }
+    },
+
+    "polyvinyl": {
+      "displayName": "PVC (Polyvinyl Chloride)",
+      "intro": "PVC (polyvinyl chloride) is the world's third-most produced plastic, unique among major polymers because roughly 57% of its mass comes from chlorine (derived from common salt, NaCl) rather than petroleum. This makes PVC less oil-dependent than other plastics. Produced by polymerising vinyl chloride monomer (VCM). PVC comes in two forms: rigid (uPVC — pipes, window frames, profiles) and flexible (plasticised — cables, flooring, medical bags). China produces and consumes over 40% of global PVC. The construction industry consumes over 70% of PVC output.",
+      "materials": "White PVC powder (suspension resin), white rigid pipe and fittings, clear flexible tubing, window profile cross-section showing multi-chamber design, vinyl flooring sample, cable insulation cross-section, salt crystals and chlorine gas (yellow-green).",
+      "stages": {
+        "feedstock": {
+          "subject": "Rock salt mine or solar salt evaporation pond, the origin of chlorine for PVC — common salt (NaCl) being mined or harvested, providing 57% of PVC's molecular weight, the non-petroleum feedstock that makes PVC unique",
+          "lens": "35mm f/5.6, salt landscape, underground mine chamber with white salt walls or vast solar evaporation ponds, the surprising starting point for the world's third-largest plastic",
+          "enhancer": "Massive salt deposit — white crystal walls in an underground mine chamber or geometric solar evaporation ponds with graduated colours from blue to white, common table salt as an industrial feedstock, NaCl providing the chlorine atom that defines PVC, the connection between salt and plastic that most people never consider",
+          "environments": {
+            "_default": "Rock salt mine or solar salt works, the chlorine source for PVC production, salt as an industrial raw material, the non-obvious feedstock for a major plastic",
+            "US": "Louisiana salt dome mine, massive underground chambers, Cargill or Morton salt, Gulf Coast salt providing chlorine feedstock for the adjacent chlor-alkali and PVC industry, underground salt cathedral",
+            "DE": "German rock salt mine in Saxony or Lower Saxony (K+S), European salt supply for chlor-alkali chemistry, underground mine workings in thick Permian salt deposits, German chemical industry heritage",
+            "AU": "Solar salt works at Port Hedland or Dampier in Western Australia, vast shallow evaporation ponds along the Pilbara coast, red earth beside white salt, Indian Ocean, salt for Asian chlor-alkali plants"
+          }
+        },
+        "extraction": {
+          "subject": "Chlor-alkali electrolysis plant, brine (dissolved salt) being electrolysed in membrane cells to produce chlorine gas, caustic soda, and hydrogen — the industrial chemistry connecting salt to PVC",
+          "lens": "35mm f/4, chemical plant interior, membrane electrolysis cells in rows, chlorine and caustic piping, the electrochemical process that splits NaCl into its elements for PVC production",
+          "enhancer": "Membrane electrolysis cells in long rows, brine feed entering, chlorine gas (yellow-green, highly toxic) being collected and compressed, caustic soda (NaOH) as the valuable co-product, hydrogen vented or used, massive electrical power consumption, the industrial electrochemistry that provides chlorine for PVC",
+          "environments": {
+            "_default": "Chlor-alkali plant, membrane electrolysis, chlorine compression, caustic soda production, the electrochemical bridge between salt mining and PVC production",
+            "US": "Dow or Olin chlor-alkali plant on the Gulf Coast, membrane cells, chlorine pipeline to the VCM plant, integrated Louisiana chemical corridor, cheap salt and power",
+            "DE": "German chlor-alkali plant (Covestro or VESTOLIT), membrane cell technology, Ruhr Valley or Rhine industrial corridor, European chemical industry, green hydrogen from the cells increasingly valued"
+          }
+        },
+        "refining": {
+          "subject": "Ethylene dichloride (EDC) reactor, ethylene and chlorine being combined in a direct chlorination reactor to produce EDC — the intermediate compound in VCM production, the first chemical step from raw materials toward PVC",
+          "lens": "50mm f/4, chemical reactor and distillation plant, EDC reactor as central element, chlorine and ethylene feed piping, the chemical intermediary step, VCM plant visible nearby",
+          "enhancer": "Oxychlorination and direct chlorination reactors producing ethylene dichloride, EDC distillation purification column, balanced process using both routes to consume all HCl co-product, the integrated chemical engineering that makes PVC production efficient",
+          "environments": {
+            "_default": "EDC/VCM plant, chlorination reactors, EDC cracking furnace, VCM purification, integrated within a chlor-alkali and PVC complex",
+            "US": "Gulf Coast EDC/VCM plant, Westlake or Formosa, integrated with chlor-alkali, PVC resin plant downstream, Louisiana or Texas chemical corridor"
+          }
+        },
+        "monomer": {
+          "subject": "EDC cracking furnace producing vinyl chloride monomer (VCM), EDC being thermally cracked at 500°C in furnace tubes, VCM and HCl separating in the downstream distillation, the monomer ready for polymerisation",
+          "lens": "35mm f/5.6, chemical plant, cracking furnace and VCM distillation column, the thermal decomposition producing the PVC monomer, safety equipment prominent (VCM is a classified carcinogen)",
+          "enhancer": "EDC cracking furnace tubes at 500°C, EDC decomposing into VCM and HCl, rapid quench to prevent further reaction, VCM distillation to polymer-grade purity, HCl being recycled to the oxychlorination reactor, safety monitoring for VCM exposure (classified carcinogen requiring strict containment)",
+          "environments": {
+            "_default": "VCM production plant, EDC cracking, VCM purification, HCl recycling, safety-critical chemical operation due to VCM carcinogenicity, integrated PVC complex",
+            "US": "Gulf Coast VCM plant, strict EPA and OSHA monitoring for VCM emissions, fenceline community monitoring, American chemical safety regulation, Louisiana industrial corridor"
+          }
+        },
+        "polymerisation": {
+          "subject": "Suspension PVC reactor — large autoclave vessel where VCM is dispersed in water with suspending agents and polymerised by free-radical initiation, producing PVC powder grains suspended in water",
+          "lens": "35mm f/5.6, PVC plant reactor bay, tall autoclave reactor vessels in a row, VCM handling safety systems, batch polymerisation technology, the reactors that produce PVC resin",
+          "enhancer": "Tall stainless-steel-lined autoclave reactor, VCM and water charged with suspending agent and initiator, exothermic reaction controlled by cooling water, batch reaction over 4-8 hours, reactor opened and PVC slurry discharged, strict VCM containment and recovery between batches",
+          "environments": {
+            "_default": "PVC suspension polymerisation plant, batch autoclave reactors, VCM recovery, slurry processing, PVC drying, the resin production step",
+            "US": "Westlake or Shintech PVC plant in Louisiana, multiple reactors in parallel for continuous production, world-scale operation, Gulf Coast PVC corridor",
+            "CN": "Chinese PVC plant in Xinjiang or Inner Mongolia, often using calcium-carbide-acetylene route rather than ethylene-based VCM, coal-based PVC production unique to China, remote industrial zone"
+          }
+        },
+        "pelletising": {
+          "subject": "PVC resin drying and classification, white PVC powder being centrifuged, dried in a fluidised-bed dryer, and classified by particle size, producing the white powder that is the trade form of PVC resin — not pellets like PE and PP",
+          "lens": "50mm f/4, PVC plant finishing section, white powder on conveyors and in silos, drying and classification, the trade product — PVC is sold as powder rather than pellets (unique among major plastics)",
+          "enhancer": "White PVC suspension resin powder being dried in the fluidised-bed, classified by particle size through vibrating screens, stored in silos, bagged in 25kg bags or loaded into bulk containers, PVC is unique in being traded as free-flowing powder rather than pellets, K-value and porosity specifications determining grade",
+          "environments": {
+            "_default": "PVC resin finishing section, drying, classification, silo storage, bagging, the powder form that distinguishes PVC from pelletised PE and PP",
+            "US": "Shintech (Shin-Etsu subsidiary) PVC resin plant in Plaquemine, Louisiana, world's largest single-site PVC producer, white resin silos, railcar and truck loading, Gulf Coast chemical industry"
+          }
+        },
+        "compounding": {
+          "subject": "PVC dry-blend compounding in a high-speed mixer, white PVC resin being blended with heat stabilisers, lubricants, impact modifiers, pigments, and fillers to create a ready-to-process compound — the recipe that determines PVC's final properties",
+          "lens": "50mm f/4, compounding facility, high-speed hot-cold mixer combination, ingredient addition, the formulation step that transforms brittle PVC resin into a processable material",
+          "enhancer": "High-speed mixer (Henschel type) heating PVC powder through frictional shear, calcium-zinc or tin stabiliser added, lubricant, calcium carbonate filler, impact modifier ACM or CPE, pigment for colour, hot compound dumped to cold mixer for cooling, dry blend ready for extrusion or further compounding into pellets",
+          "environments": {
+            "_default": "PVC compounding facility, hot-cold mixer combination, ingredient metering, dry blend and pellet production, custom formulations for different applications",
+            "US": "American PVC compounder, rigid and flexible formulations, pipe compound for construction, flexible compound for wire and cable, Midwest or Southern US industrial setting",
+            "CN": "Chinese PVC compounder in Zhejiang or Guangdong, massive domestic PVC processing industry, formulations for pipe, profiles, and flooring, Chinese construction boom driving demand"
+          }
+        },
+        "forming": {
+          "subject": "PVC pipe extrusion line, white PVC compound being extruded through an annular die into a continuous pipe, passing through the sizing vacuum tank, haul-off, and saw, producing rigid uPVC pressure and drainage pipe",
+          "lens": "35mm f/4, extrusion factory, pipe line stretching the length of the building, white PVC pipe emerging from the die and traveling through sizing, cooling, printing, cutting — the complete pipe production process visible in one shot",
+          "enhancer": "Molten PVC emerging from the annular die as a continuous pipe, vacuum sizing tank pulling the pipe to exact diameter, cooling tanks, haul-off caterpillar pulling the pipe at constant speed, inkjet printer marking size and standard, automatic saw cutting to length, pipe stacking at the end — the production line that supplies the construction industry",
+          "environments": {
+            "_default": "PVC pipe extrusion factory, single-screw extruder, die, sizing, cooling, printing, cutting, stacking, the dominant PVC product for construction",
+            "US": "American PVC pipe extruder (JM Eagle or North American Pipe), pipe for water, sewer, and drainage, building code compliance markings, ASTM standards, American construction supply chain",
+            "IN": "Indian PVC pipe factory (Astral or Supreme), pipes for water supply and agriculture, rapid growth in Indian plumbing infrastructure, PVC replacing galvanised iron in Indian construction"
+          }
+        },
+        "product": {
+          "subject": "uPVC window profile system installed in a building, multi-chamber profile cross-section visible showing the engineering that provides insulation and structural strength, the construction product that dominates European fenestration",
+          "lens": "50mm f/4, construction product shot, PVC window installed in a building facade, profile cross-section detail visible showing the multi-chamber design, clean architectural context",
+          "enhancer": "White uPVC window frame with visible multi-chamber profile cross-section, double or triple glazing sealed units, hardware and weathersealing, the profile system providing thermal insulation, structural strength, and zero maintenance, PVC's dominant construction application in European and Asian markets",
+          "environments": {
+            "_default": "Residential building with PVC windows installed, clean white profiles, maintenance-free fenestration, the construction application consuming millions of tonnes of PVC annually",
+            "DE": "German residential building with VEKA or Rehau uPVC triple-glazed windows, Passivhaus energy standard, white profiles in a traditional or modern facade, German building energy efficiency, PVC's energy-saving contribution through superior thermal insulation",
+            "GB": "British semi-detached house with replacement uPVC double glazing, the window replacement that transformed British housing from draughty to insulated, white PVC frames now ubiquitous in UK residential architecture",
+            "CN": "Chinese high-rise apartment with PVC-U windows, massive Chinese construction programme consuming PVC profiles, urban Chinese residential tower, the scale of Chinese PVC-window demand"
+          }
+        },
+        "distribution": {
+          "subject": "Hospital ward with PVC medical products visible everywhere — IV bags made from plasticised PVC, blood bags, oxygen tubing, flooring, wall cladding — PVC's critical role in healthcare infrastructure",
+          "lens": "35mm f/4, hospital interior, PVC medical products surrounding a patient bed, IV bags, tubing, flooring, all PVC, the healthcare application that relies on PVC's unique properties",
+          "enhancer": "Flexible PVC IV bags hanging on a stand, clear PVC oxygen tubing, PVC-insulated monitoring cables, vinyl flooring for hygiene, PVC wall protection, blood bags made from specially formulated PVC — the hospital environment is one of PVC's most critical applications, medical-grade PVC enabling modern healthcare",
+          "environments": {
+            "_default": "Hospital ward, PVC medical devices and building products visible throughout, the healthcare application demonstrating PVC's critical role in modern medicine",
+            "US": "American hospital ward, Baxter PVC IV bags, vinyl flooring, PVC cable insulation, the ubiquitous medical plastic that healthcare depends on, American hospital environment",
+            "IN": "Indian hospital, PVC blood bags and IV sets enabling rural healthcare expansion, affordable PVC medical devices extending modern medicine's reach, Indian healthcare improvement through plastics access"
+          }
+        },
+        "waste": {
+          "subject": "End-of-life PVC window frames being collected for recycling, old profiles removed during renovation being separated from glass and hardware, PVC's long product life (50+ years) meaning the waste stream is only now growing as early installations reach end of life",
+          "lens": "35mm f/4, demolition or renovation site, old PVC windows being removed and stacked for recycling, the long-life product now entering its first major recycling phase",
+          "enhancer": "Old PVC window frames being removed from a renovation project, glass separated, hardware stripped, white PVC profiles stacked for collection, 30-50 years of service from these windows, PVC's durability both a virtue (long life) and challenge (eventually enters waste stream), first-generation PVC windows now reaching end of life across Europe",
+          "environments": {
+            "_default": "Renovation or demolition site, PVC windows being removed for recycling, end-of-life PVC product collection, the beginning of the circular economy for long-life PVC products",
+            "DE": "German building renovation, REWINDO or Recovinyl collection of end-of-life PVC windows, German recycling leadership, systematic collection infrastructure, the circular economy for PVC profiles",
+            "GB": "British window replacement, old first-generation uPVC windows being removed (installed in the 1980s-90s), recycling collection skip, the first major wave of PVC window recycling in the UK"
+          }
+        },
+        "recycling": {
+          "subject": "PVC window profile recycling plant, old profiles being shredded, metal and rubber separated, PVC regrind being extruded into new profile or pipe — up to 10 recycling cycles possible for PVC without significant property loss",
+          "lens": "50mm f/4, recycling plant, PVC shredder and separation equipment, regrind extruder producing new product from old, the closed-loop recycling that PVC's thermoplastic nature enables",
+          "enhancer": "Old PVC profiles being fed into the shredder, metal hardware and rubber gaskets separated by eddy current and density separators, clean white PVC regrind, extruder producing recycled PVC pellets or directly extruding new profiles or pipe with recycled PVC core and virgin PVC skin (co-extrusion), up to 10 recycling cycles without significant property loss, PVC's inherent recyclability",
+          "environments": {
+            "_default": "PVC recycling plant, shredding, separation, regrind, extrusion of recycled PVC into new products, the mechanical recycling loop for PVC",
+            "DE": "VEKA Umwelttechnik recycling plant in Germany, old PVC windows ground and extruded into new profiles with recycled core, closed-loop German PVC recycling, Recovinyl system, European circular economy for PVC at commercial scale",
+            "BE": "Belgian PVC recycler, VinyLoop or mechanical recycling, processing collected PVC from across Europe, Antwerp chemical cluster, European PVC recycling hub"
+          }
+        }
+      }
+    }
+
+  }
+}

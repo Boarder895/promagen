@@ -3,7 +3,7 @@
 // WEATHER PROMPT TIER HOOK
 // ============================================================================
 // Manages weather prompt tier preference for users.
-// Free users: Locked to Tier 4 (Artistly/Plain Language)
+// Free users: Locked to Tier 3 (Natural Language / DALL·E, Imagen, Firefly)
 // Pro users: Can select Tier 1-4
 //
 // Authority: docs/authority/ai_providers.md §4-Tier Prompt System
@@ -21,7 +21,7 @@ import { getDefaultTier } from '@/lib/weather/weather-prompt-generator';
 // ============================================================================
 
 const STORAGE_KEY = 'promagen:weather-prompt-tier';
-const FREE_USER_TIER: PromptTier = 4; // Plain Language (Artistly)
+const FREE_USER_TIER: PromptTier = 3; // Natural Language (DALL·E, Imagen, Firefly)
 
 // ============================================================================
 // TYPES
@@ -91,7 +91,7 @@ export function useWeatherPromptTier(isPro: boolean = false): UseWeatherPromptTi
         setTierState(stored);
       }
     } else {
-      // Free users always get tier 4
+      // Free users always get tier 3 (Natural Language)
       setTierState(FREE_USER_TIER);
     }
 
@@ -103,7 +103,7 @@ export function useWeatherPromptTier(isPro: boolean = false): UseWeatherPromptTi
     if (!isHydrated) return;
 
     if (!isPro) {
-      // Free user - reset to tier 4
+      // Free user - reset to tier 3
       setTierState(FREE_USER_TIER);
     }
   }, [isPro, isHydrated]);

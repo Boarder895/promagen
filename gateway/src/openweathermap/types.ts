@@ -15,6 +15,11 @@
  * - ALL_BATCH_IDS constant for iteration
  * - CoordGroup interface for coordinate deduplication
  *
+ * UPDATED v3.1.0 (12 Feb 2026):
+ * - WeatherData gains sunriseUtc, sunsetUtc, timezoneOffset, isDayTime
+ * - Enables accurate day/night detection + moon phase on frontend
+ * - Piped from OWM sys.sunrise, sys.sunset, timezone, weather[0].icon
+ *
  * Existing features preserved: Yes
  *
  * @module openweathermap/types
@@ -99,7 +104,7 @@ export interface OWMWeatherCondition {
   readonly main: string;
   /** Weather condition within the group */
   readonly description: string;
-  /** Weather icon ID */
+  /** Weather icon ID (e.g., "01d" = clear day, "01n" = clear night) */
   readonly icon: string;
 }
 
@@ -193,6 +198,9 @@ export interface OWMCurrentWeatherResponse {
 /**
  * Normalised weather data for a single city.
  * This is what Promagen components consume.
+ *
+ * v3.1.0: Added sunriseUtc, sunsetUtc, timezoneOffset, isDayTime
+ * for accurate day/night detection and moon phase emoji on frontend.
  */
 export interface WeatherData {
   /** Exchange ID (e.g., "nyse-new-york") */
@@ -215,6 +223,32 @@ export interface WeatherData {
   readonly emoji: string;
   /** Data timestamp (ISO format) */
   readonly asOf: string;
+  /**
+   * Sunrise time as Unix timestamp (seconds, UTC).
+   * From OWM sys.sunrise. null if OWM response missing sys data.
+   * Frontend uses this with sunsetUtc for exact day/night boundary.
+   */
+  readonly sunriseUtc: number | null;
+  /**
+   * Sunset time as Unix timestamp (seconds, UTC).
+   * From OWM sys.sunset. null if OWM response missing sys data.
+   * Frontend uses this with sunriseUtc for exact day/night boundary.
+   */
+  readonly sunsetUtc: number | null;
+  /**
+   * City timezone offset from UTC in seconds.
+   * From OWM timezone field (e.g., +28800 for UTC+8 Taipei).
+   * Frontend uses this to convert sunrise/sunset to local time.
+   * null if OWM response missing timezone data.
+   */
+  readonly timezoneOffset: number | null;
+  /**
+   * Whether it is currently daytime at this city.
+   * Derived from OWM weather icon suffix: 'd' = day, 'n' = night.
+   * OWM calculates this using the city's actual sunrise/sunset.
+   * This is the cheapest, most accurate day/night signal.
+   */
+  readonly isDayTime: boolean;
 }
 
 // =============================================================================

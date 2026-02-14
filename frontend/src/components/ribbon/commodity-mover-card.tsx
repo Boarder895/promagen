@@ -26,6 +26,13 @@
 // Uses CSS variable --commodity-font for snap-fit sizing.
 // Uses Flag component (SVG with emoji fallback) for Windows compatibility.
 //
+// v3.1: Per-flag tooltip — each flag gets its own scene country, season,
+//       and weather so hovering different flags produces different prompts.
+//       Base flag = random producer country; conversion flags = their own
+//       country code (EU/GB/US). (10 Feb 2026)
+// v3.0: CommodityPromptTooltip wraps all Flag positions (10 Feb 2026)
+// v3.1: Stage rotation — each flag passes flagIndex (0-3) so all 4 tooltips
+//       show different production stages. No more duplicate prompts. (12 Feb 2026)
 // v2.5: Currency-branded conversion colours + divider (8 Feb 2026)
 // v2.4: Flag component for ALL flag displays (5 Feb 2026)
 // v2.3: Flag emoji on base price + 3-line support (5 Feb 2026)
@@ -42,6 +49,10 @@ import React from 'react';
 
 import type { CommodityMoverCardProps } from '@/types/commodities-movers';
 import { Flag } from '@/components/ui/flag';
+import { CommodityPromptTooltip } from '@/components/ribbon/commodity-prompt-tooltip';
+import { useCommodityTooltipData } from '@/hooks/use-commodity-tooltip-data';
+import { resolveWeather, deriveSeason } from '@/lib/commodities/country-weather-resolver';
+import type { CommodityWeatherSlice } from '@/lib/commodities/commodity-prompt-types';
 
 function formatDeltaPct(deltaPct: number): string {
   if (!Number.isFinite(deltaPct)) return '—';
@@ -66,8 +77,10 @@ function currencyColorClass(countryCode: string): string {
 export default function CommodityMoverCard({
   data,
   isStale = false,
+  weatherRecord,
 }: CommodityMoverCardProps): React.ReactElement {
   const {
+    id,
     name,
     shortName,
     emoji,
@@ -79,6 +92,40 @@ export default function CommodityMoverCard({
     deltaPct,
     direction,
   } = data;
+
+  // Resolve group + availability from catalog (shared across all flags)
+  const tooltipData = useCommodityTooltipData(id, deltaPct);
+
+  // ---- Per-flag weather resolution helper ----
+  // Each flag gets its OWN weather based on its country code.
+  // Pure map lookups — cheap, no need for useMemo.
+  function buildWeatherSlice(countryCode: string): CommodityWeatherSlice | null {
+    if (!weatherRecord) return null;
+    const resolution = resolveWeather(countryCode);
+    if (!resolution) return null;
+    const wx = weatherRecord[resolution.exchangeId];
+    if (!wx) return null;
+    return { temperatureC: wx.temperatureC, description: wx.description };
+  }
+
+  // ---- Per-flag tooltip props builder ----
+  // Each flag position gets a DIFFERENT sceneCountryCode, season, and weather.
+  // This means hovering the 🇪🇺 flag produces a European scene,
+  // the 🇬🇧 flag a British scene, etc.
+  function buildTooltipProps(flagCountryCode: string, flagIndex: number) {
+    return {
+      commodityId: id,
+      commodityName: name,
+      group: tooltipData.group,
+      deltaPct,
+      sceneCountryCode: flagCountryCode,
+      season: deriveSeason(flagCountryCode) ?? ('summer' as const),
+      weather: buildWeatherSlice(flagCountryCode),
+      disabled: !tooltipData.available,
+      verticalPosition: 'below' as const,
+      flagIndex,
+    };
+  }
 
   const deltaColorClass = direction === 'winner' ? 'text-emerald-400' : 'text-red-400';
 
@@ -114,23 +161,28 @@ export default function CommodityMoverCard({
     >
       {/* ROW 1: Emoji + Name (side by side) */}
       <div className="flex items-center justify-center gap-2">
-        <span className="leading-none" style={{ fontSize: '0,7em' }} aria-hidden="true">
+        <span className="leading-none" style={{ fontSize: '0,5em' }} aria-hidden="true">
           {emoji}
         </span>
         <span
           className="font-semibold text-white leading-tight whitespace-nowrap"
-          style={{ fontSize: '1em' }}
+          style={{ fontSize: '0.7em' }}
         >
           {shortName || name}
         </span>
       </div>
 
       {/* ROW 2: Flag + Base Price with Unit */}
+      {/* Base flag uses the PRODUCER COUNTRY (random from pool) */}
       <div className="flex items-center justify-center gap-2.5 mt-1" data-testid="commodity-price">
-        {baseFlagCode && <Flag countryCode={baseFlagCode} size={26} />}
+        {baseFlagCode && (
+          <CommodityPromptTooltip {...buildTooltipProps(tooltipData.sceneCountryCode, 0)}>
+            <Flag countryCode={baseFlagCode} size={20} />
+          </CommodityPromptTooltip>
+        )}
         <span
           className="text-white tabular-nums leading-tight whitespace-nowrap"
-          style={{ fontSize: '0.7em' }}
+          style={{ fontSize: '0.5em' }}
         >
           {priceText || '—'}
         </span>
@@ -139,7 +191,7 @@ export default function CommodityMoverCard({
       {/* ROW 3: Delta with arrow */}
       <span
         className={`flex items-center gap-1.5 font-bold tabular-nums whitespace-nowrap mt-2 ${deltaColorClass}`}
-        style={{ fontSize: '0.7em' }}
+        style={{ fontSize: '0.5em' }}
         data-testid="commodity-delta"
       >
         {arrowIcon}
@@ -147,29 +199,34 @@ export default function CommodityMoverCard({
       </span>
 
       {/* Divider between delta and conversions */}
-      <div className="w-3/4 border-t border-white/5 mt-2" aria-hidden="true" />
+      <div className="w-3/4 border-t border-white/5 mt-1" aria-hidden="true" />
 
       {/* ROW 4-6: Currency conversions with branded colours (v2.5) */}
+      {/* Each conversion flag uses ITS OWN country code for tooltip scene */}
       <div
-        className="flex flex-col items-center mt-2 space-y-1.5"
+        className="flex flex-col items-center mt-1 space-y-1.5"
         data-testid="commodity-conversions"
         aria-label="Equivalent prices in other currencies"
       >
         {/* Line 1 */}
         <span
           className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine1.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-          style={{ fontSize: '0.7em' }}
+          style={{ fontSize: '0.5em' }}
         >
-          <Flag countryCode={conversionLine1.countryCode} size={26} />
+          <CommodityPromptTooltip {...buildTooltipProps(conversionLine1.countryCode, 1)}>
+            <Flag countryCode={conversionLine1.countryCode} size={20} />
+          </CommodityPromptTooltip>
           <span>{conversionLine1.priceText}</span>
         </span>
 
         {/* Line 2 */}
         <span
           className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine2.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-          style={{ fontSize: '0.7em' }}
+          style={{ fontSize: '0.5em' }}
         >
-          <Flag countryCode={conversionLine2.countryCode} size={26} />
+          <CommodityPromptTooltip {...buildTooltipProps(conversionLine2.countryCode, 2)}>
+            <Flag countryCode={conversionLine2.countryCode} size={20} />
+          </CommodityPromptTooltip>
           <span>{conversionLine2.priceText}</span>
         </span>
 
@@ -177,9 +234,11 @@ export default function CommodityMoverCard({
         {conversionLine3 && (
           <span
             className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine3.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-            style={{ fontSize: '0.7em' }}
+            style={{ fontSize: '0.5em' }}
           >
-            <Flag countryCode={conversionLine3.countryCode} size={26} />
+            <CommodityPromptTooltip {...buildTooltipProps(conversionLine3.countryCode, 3)}>
+              <Flag countryCode={conversionLine3.countryCode} size={20} />
+            </CommodityPromptTooltip>
             <span>{conversionLine3.priceText}</span>
           </span>
         )}

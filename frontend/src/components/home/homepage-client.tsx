@@ -178,6 +178,10 @@ export default function HomepageClient({
         humidity: w.humidity,
         windKmh: w.windSpeedKmh,
         description: w.description,
+        sunriseUtc: w.sunriseUtc ?? undefined,
+        sunsetUtc: w.sunsetUtc ?? undefined,
+        timezoneOffset: w.timezoneOffset ?? undefined,
+        isDayTime: w.isDayTime ?? undefined,
       });
     }
     return map;

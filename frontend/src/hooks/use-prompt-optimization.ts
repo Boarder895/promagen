@@ -316,7 +316,7 @@ export function usePromptOptimization({
  */
 function formatPlatformName(platformId: string): string {
   const specialCases: Record<string, string> = {
-    openai: 'OpenAI DALL·E',
+    openai: 'DALL·E 3',
     'google-imagen': 'Google Imagen',
     'adobe-firefly': 'Adobe Firefly',
     'microsoft-designer': 'Microsoft Designer',

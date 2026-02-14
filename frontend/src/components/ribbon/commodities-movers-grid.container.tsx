@@ -31,6 +31,7 @@ import React, { useMemo, useRef, useCallback } from 'react';
 import CommoditiesMoversGrid from '@/components/ribbon/commodities-movers-grid';
 import { useCommoditiesQuotes } from '@/hooks/use-commodities-quotes';
 import { useFxQuotes } from '@/hooks/use-fx-quotes';
+import { useWeather } from '@/hooks/use-weather';
 import {
   sortCommoditiesIntoMovers,
   getEmptyMovers,
@@ -87,6 +88,19 @@ export default function CommoditiesMoversGridContainer(): React.ReactElement {
   const { quotesById: fxQuotesById, status: fxStatus } = useFxQuotes({
     enabled: true,
   });
+
+  // Fetch weather data (shared with exchange ribbons) for commodity prompt tooltips.
+  // Only temperatureC and description are extracted — the commodity prompt generator
+  // does not use humidity or windSpeed.
+  const { weather: weatherMap } = useWeather();
+
+  const weatherRecord = useMemo(() => {
+    const record: Record<string, { temperatureC: number; description: string }> = {};
+    for (const [id, data] of Object.entries(weatherMap)) {
+      record[id] = { temperatureC: data.temperatureC, description: data.description };
+    }
+    return record;
+  }, [weatherMap]);
 
   // ============================================================================
   // BUILD CONVERSION RATES FROM FX DATA
@@ -207,6 +221,7 @@ export default function CommoditiesMoversGridContainer(): React.ReactElement {
       losers={movers.losers}
       isLoading={isLoading}
       isStale={isStale}
+      weatherRecord={weatherRecord}
     />
   );
 }

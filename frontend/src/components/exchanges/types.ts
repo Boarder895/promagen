@@ -6,6 +6,8 @@
 // UPDATED: Extended weather data for prompt generation.
 // UPDATED: Added promptTier and isPro for weather tooltip.
 // UPDATED (19 Jan 2026): Added railPosition for tooltip direction control.
+// UPDATED (12 Feb 2026): Added sunriseUtc, sunsetUtc, timezoneOffset,
+//   isDayTime for accurate day/night detection + moon phase on frontend.
 //
 // Security: 10/10
 // - All types are strict
@@ -18,6 +20,10 @@
 /**
  * Unified weather data shape for exchange cards.
  * Extended to include all fields needed for prompt generation.
+ *
+ * v3.1.0: Added sunriseUtc, sunsetUtc, timezoneOffset, isDayTime
+ * from gateway (piped from OWM API). All optional so demo data
+ * (which has none of these) continues working without changes.
  */
 export type ExchangeWeatherData = {
   /** Temperature in Celsius; null if unavailable */
@@ -36,6 +42,28 @@ export type ExchangeWeatherData = {
   windSpeedKmh?: number | null;
   /** Full weather description (for prompt generation) */
   description?: string | null;
+  /**
+   * Sunrise time as Unix timestamp (seconds, UTC).
+   * From OWM sys.sunrise via gateway. undefined for demo data.
+   */
+  sunriseUtc?: number | null;
+  /**
+   * Sunset time as Unix timestamp (seconds, UTC).
+   * From OWM sys.sunset via gateway. undefined for demo data.
+   */
+  sunsetUtc?: number | null;
+  /**
+   * City timezone offset from UTC in seconds.
+   * From OWM timezone field (e.g., 28800 for UTC+8 Taipei).
+   * undefined for demo data.
+   */
+  timezoneOffset?: number | null;
+  /**
+   * Whether it is currently daytime at this city.
+   * Derived from OWM icon suffix: 'd' = day, 'n' = night.
+   * undefined for demo data → prompt generator falls back to hour threshold.
+   */
+  isDayTime?: boolean | null;
 };
 
 /**
@@ -95,6 +123,18 @@ export type ExchangeCardData = {
    * Hex format, e.g. "#FF4500" (Tokyo), "#2563EB" (NYSE)
    */
   hoverColor?: string;
+  /**
+   * Latitude in decimal degrees (north positive).
+   * Used for astronomical sunrise/sunset fallback in emoji tooltip.
+   * @example 35.6762 (Tokyo), -41.2866 (Wellington)
+   */
+  latitude?: number;
+  /**
+   * Longitude in decimal degrees (east positive).
+   * Used for astronomical sunrise/sunset fallback in emoji tooltip.
+   * @example 139.6503 (Tokyo), 174.7756 (Wellington)
+   */
+  longitude?: number;
 };
 
 /**

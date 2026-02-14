@@ -265,21 +265,24 @@ function TooltipContent({
 
       {/* Content */}
       <div className="relative z-10 flex flex-col gap-3">
-        {/* Header with Pro badge — NO city/country name (flag is sufficient) */}
+        {/* Header with Pro badge and copy button in top-right corner */}
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span
-            className="text-base font-semibold text-white"
-            style={{
-              textShadow: `0 0 12px ${glowRgba}`,
-            }}
-          >
-            Image Prompt
-          </span>
-          {isPro && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
-              PRO
+          <div className="flex items-center gap-2">
+            <span
+              className="text-base font-semibold text-white"
+              style={{
+                textShadow: `0 0 12px ${glowRgba}`,
+              }}
+            >
+              Image Prompt
             </span>
-          )}
+            {isPro && (
+              <span className="px-2 py-1 text-xs font-medium rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
+                PRO
+              </span>
+            )}
+          </div>
+          <CopyIcon onClick={onCopy} copied={copied} />
         </div>
 
         {/* Tier indicator */}
@@ -295,11 +298,6 @@ function TooltipContent({
         >
           {prompt}
         </p>
-
-        {/* Copy button row */}
-        <div className="flex justify-end mt-2 pt-3 border-t border-white/10">
-          <CopyIcon onClick={onCopy} copied={copied} />
-        </div>
       </div>
     </div>
   );

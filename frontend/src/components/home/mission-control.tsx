@@ -281,6 +281,10 @@ export default function MissionControl({
       humidity: data.humidity ?? null,
       windKmh: data.windKmh ?? null,
       description: data.description ?? null,
+      sunriseUtc: data.sunriseUtc ?? null,
+      sunsetUtc: data.sunsetUtc ?? null,
+      timezoneOffset: data.timezoneOffset ?? null,
+      isDayTime: data.isDayTime ?? null,
     };
   }, [previewExchange, weatherIndex]);
 
@@ -443,9 +447,9 @@ export default function MissionControl({
       {/* CONTENT ZONE — Height locked to 84px (matches Engine Bay icon grid height) */}
       <div
         ref={contentZoneRef}
-        className="mb-4 flex h-[84px] flex-col rounded-xl border border-slate-700/50 bg-slate-900/50 p-3"
+        className="mb-4 flex h-[84px] flex-col overflow-hidden rounded-xl border border-slate-700/50 bg-slate-900/50 p-1"
       >
-        <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="mb-1 flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {/* Flag with WeatherPromptTooltip — Opens LEFT, same data as LSE card */}
             {hasWeatherData && weatherData ? (
@@ -530,8 +534,11 @@ export default function MissionControl({
           - Responsive sizing: text-[10px] / sm:text-xs / xl:text-sm
           - Copy button still copies the actual prompt behind the scenes
         */}
-        <div className="flex-1 overflow-y-auto">
-          <p className="text-xs italic text-amber-400/80 sm:text-sm xl:text-sm animate-pulse">
+        <div className="flex-1 overflow-hidden min-h-0">
+          <p
+            className="italic text-amber-400/80 animate-pulse truncate"
+            style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1.10rem)' }}
+          >
             Hover over a countries flag for a real time image prompt.
           </p>
         </div>

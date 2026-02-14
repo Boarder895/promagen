@@ -1,7 +1,7 @@
 # Buttons Authority Document
 
-**Last updated:** 28 January 2026  
-**Version:** 2.0.0  
+**Last updated:** 10 February 2026  
+**Version:** 3.0.0  
 **Owner:** Promagen  
 **Authority:** This document defines ALL button behaviour, styling, wiring, and code locations across Promagen.
 
@@ -24,27 +24,27 @@ This document is the single source of truth for every interactive button in Prom
 
 ## Quick Reference: All Buttons
 
-| Location             | Button                  | Destination            | Mechanism          |
-| -------------------- | ----------------------- | ---------------------- | ------------------ |
-| Mission Control      | Home                    | `/`                    | `<a href>`         |
-| Mission Control      | Studio                  | `/studio`              | `<a href>`         |
-| Mission Control      | Pro                     | `/pro-promagen`        | `<a href>`         |
-| Mission Control      | Sign in                 | Clerk modal            | `<SignInButton>`   |
-| Engine Bay           | Launch Platform Builder | `/providers/{id}`      | `<a href>`         |
-| Engine Bay           | Provider icons          | State update           | `onClick`          |
-| Control Dock         | Greenwich Meridian      | Toggle reference frame | `<button onClick>` |
-| Prompt Builder       | Randomise               | Fill all categories    | `<button onClick>` |
-| Prompt Builder       | Save                    | Save to library        | `<button onClick>` |
-| Prompt Builder       | Done                    | Close/navigate         | `<button onClick>` |
-| Prompt Builder       | Open in {Platform}      | `/go/{id}?src=...`     | `<a href>`         |
-| Fallback Nav         | AuthButton              | Clerk modal            | `<SignInButton>`   |
-| Fallback Nav         | Home                    | `/`                    | `<a href>`         |
-| Fallback Nav         | Studio                  | `/studio`              | `<a href>`         |
-| Fallback Nav         | Pro Promagen            | `/pro-promagen`        | `<a href>`         |
-| Studio Feature Cards | Library                 | `/studio/library`      | `<a href>`         |
-| Studio Feature Cards | Explore                 | `/studio/explore`      | `<a href>`         |
-| Studio Feature Cards | Learn                   | `/studio/learn`        | `<a href>`         |
-| Studio Feature Cards | Playground              | `/studio/playground`   | `<a href>`         |
+| Location             | Button                  | Destination            | Mechanism          | Text/Icon Colour   |
+| -------------------- | ----------------------- | ---------------------- | ------------------ | ------------------ |
+| Control Dock         | Sign in (AuthButton)    | Clerk modal            | `<SignInButton>`   | **WHITE**          |
+| Control Dock         | Greenwich Meridian      | Toggle reference frame | `<button onClick>` | `text-purple-100`  |
+| Mission Control      | Home                    | `/`                    | `<a href>`         | `text-purple-100`  |
+| Mission Control      | Studio                  | `/studio`              | `<a href>`         | `text-purple-100`  |
+| Mission Control      | Pro                     | `/pro-promagen`        | `<a href>`         | `text-purple-100`  |
+| Engine Bay           | Launch Platform Builder | `/providers/{id}`      | `<a href>`         | `text-white`       |
+| Engine Bay           | Provider icons          | State update           | `onClick`          | N/A                |
+| Prompt Builder       | Randomise               | Fill all categories    | `<button onClick>` | `text-purple-100`  |
+| Prompt Builder       | Save                    | Save to library        | `<button onClick>` | `text-emerald-100` |
+| Prompt Builder       | Done                    | Close/navigate         | `<button onClick>` | `text-slate-100`   |
+| Prompt Builder       | Open in {Platform}      | `/go/{id}?src=...`     | `<a href>`         | `text-sky-100`     |
+| Fallback Nav         | AuthButton              | Clerk modal            | `<SignInButton>`   | Inherits           |
+| Fallback Nav         | Home                    | `/`                    | `<a href>`         | Inherits           |
+| Fallback Nav         | Studio                  | `/studio`              | `<a href>`         | Inherits           |
+| Fallback Nav         | Pro Promagen            | `/pro-promagen`        | `<a href>`         | Inherits           |
+| Studio Feature Cards | Library                 | `/studio/library`      | `<a href>`         | Inherits           |
+| Studio Feature Cards | Explore                 | `/studio/explore`      | `<a href>`         | Inherits           |
+| Studio Feature Cards | Learn                   | `/studio/learn`        | `<a href>`         | Inherits           |
+| Studio Feature Cards | Playground              | `/studio/playground`   | `<a href>`         | Inherits           |
 
 ---
 
@@ -86,21 +86,64 @@ This means `<a>` tags inherit BLACK text by default. Tailwind's `text-purple-100
 
 ### 1.3 Affected Components
 
-| Component                                    | File                         | Status                                                    |
-| -------------------------------------------- | ---------------------------- | --------------------------------------------------------- |
-| Mission Control (Home, Studio, Pro, Sign in) | `mission-control.tsx`        | ✅ Fixed — lines 349, 353, 359, 454-467, 474-491, 496-513 |
-| Engine Bay (Launch Platform Builder)         | `engine-bay.tsx`             | ✅ Fixed — lines 349, 353, 359                            |
-| Prompt Builder (Open in {Platform})          | `prompt-builder.tsx`         | ✅ Fixed — lines 1554, 1567                               |
-| Reference Frame Toggle                       | `reference-frame-toggle.tsx` | ✅ OK — uses `<button>` not `<a>`                         |
+| Component                               | File                         | Status                                            |
+| --------------------------------------- | ---------------------------- | ------------------------------------------------- |
+| **Control Dock (Sign in — AuthButton)** | `control-dock.tsx`           | ✅ Fixed — `!important` wrapper (see §1.5)        |
+| Mission Control (Home, Studio, Pro)     | `mission-control.tsx`        | ✅ Fixed — explicit colour on svg + span children |
+| Engine Bay (Launch Platform Builder)    | `engine-bay.tsx`             | ✅ Fixed — lines 349, 353, 359                    |
+| Prompt Builder (Open in {Platform})     | `prompt-builder.tsx`         | ✅ Fixed — lines 1554, 1567                       |
+| Reference Frame Toggle                  | `reference-frame-toggle.tsx` | ✅ OK — uses `<button>` not `<a>`                 |
 
 ### 1.4 Colour Reference by Button Type
 
-| Button Type                       | Parent Colour     | Child Colour (svg + span) |
-| --------------------------------- | ----------------- | ------------------------- |
-| Purple gradient (Mission Control) | `text-purple-100` | `text-purple-100`         |
-| Sky gradient (Open in Platform)   | `text-sky-100`    | `text-sky-100`            |
-| White (Engine Bay active)         | `text-white`      | `text-white`              |
-| Slate (disabled states)           | `text-slate-500`  | Inherits OK (not `<a>`)   |
+| Button Type                           | Parent Colour     | Child Colour (svg + span)  |
+| ------------------------------------- | ----------------- | -------------------------- |
+| **Control Dock Sign in (AuthButton)** | `text-purple-100` | **`!text-white`** (forced) |
+| Purple gradient (Mission Control)     | `text-purple-100` | `text-purple-100`          |
+| Sky gradient (Open in Platform)       | `text-sky-100`    | `text-sky-100`             |
+| White (Engine Bay active)             | `text-white`      | `text-white`               |
+| Slate (disabled states)               | `text-slate-500`  | Inherits OK (not `<a>`)    |
+
+### 1.5 RECURRING ISSUE: AuthButton in Control Dock — WHITE text/icon
+
+> **⚠️ THIS HAS BROKEN 4+ TIMES. READ THIS BEFORE TOUCHING THE SIGN-IN BUTTON.**
+
+**What:** When AuthButton sits inside the Control Dock (next to Greenwich Meridian), its text and icon MUST be **white** — not purple-100, not slate, not inherited. **WHITE.**
+
+**Why it keeps breaking:**
+
+1. `auth-button.tsx` defines its own `signInButtonStyles` with `text-purple-100`
+2. `body { color: #020617 }` in `globals.css` makes children inherit slate-950
+3. Normal Tailwind parent selectors like `[&_button]:text-white` LOSE to the button's own `text-purple-100` class due to CSS specificity — same specificity, later class wins
+4. Even targeting `button`, `a`, `svg` is not enough — you also need `span` (the "Sign in" text)
+
+**The ONLY fix that works — `!important` on ALL four child types:**
+
+```tsx
+{
+  /* In control-dock.tsx — wrapping <AuthButton /> */
+}
+<div className="[&_button]:!text-white [&_a]:!text-white [&_svg]:!text-white [&_span]:!text-white">
+  <AuthButton />
+</div>;
+```
+
+**Why `!important` is required here (and nowhere else):**
+
+- AuthButton is a **shared component** — we cannot modify its internal styles without affecting it everywhere else it's used (Fallback Nav)
+- The wrapper's `[&_button]:text-white` generates a CSS rule with the SAME specificity as the button's own `text-purple-100` — last-defined wins, which is unpredictable
+- `!important` is the only way to guarantee the wrapper override wins without editing AuthButton itself
+- This is NOT a hack — it's the correct pattern for "parent forces colour on shared child component"
+
+**Checklist every time Sign in button is moved or touched:**
+
+- [ ] Text "Sign in" is white (not purple, not slate/black)
+- [ ] User icon (SVG) is white (not purple, not slate/black)
+- [ ] "Loading..." text is acceptable (uses its own disabled styles)
+- [ ] Timeout fallback `<a>` text is white
+- [ ] When signed in, Clerk UserButton avatar renders normally (no white override artefacts)
+
+**File:** `src/components/home/control-dock.tsx`
 
 ---
 
@@ -257,7 +300,7 @@ Used for: All buttons when disabled/locked
 
 ### 4.1 Button Style Constants
 
-**Lines:** 203-210
+**Lines:** 195-205
 
 ```tsx
 const actionButtonBase =
@@ -272,9 +315,12 @@ const actionButtonLoading =
 
 ### 4.2 Grid Layout
 
+**v3.0.0:** Sign-in button removed from Mission Control grid (moved to Control Dock).
+
 ```tsx
-// 4-button layout (isStudioSubPage=true): Home | Studio | Pro | Sign in
-const gridCols = isStudioSubPage ? 'grid-cols-4' : 'grid-cols-3';
+// 3-button layout (isStudioSubPage=true): Home | Studio | Pro
+// 2-button layout (default): varies by page context
+const gridCols = isStudioSubPage ? 'grid-cols-3' : 'grid-cols-2';
 
 <div className={`grid ${gridCols} gap-3`}>{/* buttons */}</div>;
 ```
@@ -346,29 +392,6 @@ const renderProButton = () => (
     <span className="text-purple-100">Pro</span>
   </a>
 );
-```
-
-**Sign In Button** (Lines 420-446):
-
-```tsx
-<SignInButton mode="modal">
-  <button
-    type="button"
-    className={`${actionButtonBase} ${actionButtonActive}`}
-    aria-label="Sign in to your account"
-  >
-    <svg
-      className="h-5 w-5 text-purple-100"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={userIconPath} />
-    </svg>
-    <span className="text-purple-100">Sign in</span>
-  </button>
-</SignInButton>
 ```
 
 ### 4.4 Icon Paths
@@ -618,7 +641,32 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 <span className="text-purple-100">
 ```
 
-### 9.2 Button Not Clicking
+### 9.2 AuthButton Text/Icon Appearing Slate or Purple (Not White)
+
+**Cause:** AuthButton is a shared component with its own `text-purple-100`. Parent wrapper selectors lose the CSS specificity battle.
+
+**Solution:** Use `!important` on ALL four child types in the wrapper div:
+
+```tsx
+<div className="[&_button]:!text-white [&_a]:!text-white [&_svg]:!text-white [&_span]:!text-white">
+  <AuthButton />
+</div>
+```
+
+**Common mistakes that DO NOT work:**
+
+```tsx
+// ❌ Missing span — icon goes white but text stays slate
+[&_button]:text-white [&_a]:text-white [&_svg]:text-white
+
+// ❌ Missing !important — button's own text-purple-100 wins
+[&_button]:text-white [&_a]:text-white [&_svg]:text-white [&_span]:text-white
+
+// ❌ Only targeting button — a (timeout fallback) stays slate
+[&_button]:!text-white [&_svg]:!text-white [&_span]:!text-white
+```
+
+### 9.3 Button Not Clicking
 
 **Check:**
 
@@ -627,7 +675,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 3. Button isn't disabled (`aria-disabled`, `disabled` attribute)
 4. Z-index stacking context (content should be `z-10` above decorative elements)
 
-### 9.3 Navigation Not Working
+### 9.4 Navigation Not Working
 
 **Check:**
 
@@ -639,7 +687,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 **If `<Link>` fails, use `<a href>` instead** — native anchors are more reliable.
 
-### 9.4 Animation Not Playing
+### 9.5 Animation Not Playing
 
 **Check:**
 
@@ -654,23 +702,32 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 ### 10.1 Colour Inheritance (CRITICAL)
 
+- [ ] **Control Dock: Sign in button text is WHITE (not purple, not slate/black)**
+- [ ] **Control Dock: Sign in button icon is WHITE (not purple, not slate/black)**
 - [ ] Mission Control: Home button text/icon is purple-100 (not black)
 - [ ] Mission Control: Studio button text/icon is purple-100 (not black)
 - [ ] Mission Control: Pro button text/icon is purple-100 (not black)
-- [ ] Mission Control: Sign in button text/icon is purple-100 (not black)
 - [ ] Engine Bay: Launch text/icon is white (not black) when active
 - [ ] Prompt Builder: Open in {Platform} text/icon is sky-100 (not black)
 
-### 10.2 Mission Control Buttons
+### 10.2 Control Dock Buttons
+
+- [ ] Sign in opens Clerk modal (unauthenticated)
+- [ ] Sign in text and icon are WHITE
+- [ ] When signed in, shows Clerk UserButton avatar
+- [ ] Greenwich Meridian toggle works for Pro users
+
+### 10.3 Mission Control Buttons
 
 - [ ] Home navigates to `/`
 - [ ] Studio navigates to `/studio`
 - [ ] Pro navigates to `/pro-promagen`
-- [ ] Sign in opens Clerk modal (unauthenticated)
-- [ ] 4-button layout on provider pages (isStudioSubPage=true)
-- [ ] 3-button layout on homepage (isStudioSubPage=false)
+- [ ] 2-button layout on homepage (Studio | Pro)
+- [ ] 2-button layout on studio page (Home | Pro)
+- [ ] 2-button layout on pro-promagen page (Studio | Home)
+- [ ] 3-button layout on provider pages (Home | Studio | Pro)
 
-### 10.3 Engine Bay Button
+### 10.4 Engine Bay Button
 
 - [ ] Launch disabled when no platform selected
 - [ ] Launch enabled when platform selected
@@ -679,7 +736,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 - [ ] Shimmer appears on hover when active
 - [ ] Text and icon are white when active
 
-### 10.4 Prompt Builder Buttons
+### 10.5 Prompt Builder Buttons
 
 - [ ] Randomise fills all categories
 - [ ] Save shows confirmation then resets
@@ -687,7 +744,7 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 - [ ] Open in {Platform} opens new tab
 - [ ] All disabled states work correctly
 
-### 10.5 Accessibility
+### 10.6 Accessibility
 
 - [ ] All buttons keyboard focusable
 - [ ] Focus ring visible on focus
@@ -699,16 +756,16 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 ## 11. File Location Summary
 
-| Component               | File                                          | Key Lines |
-| ----------------------- | --------------------------------------------- | --------- |
-| Mission Control buttons | `src/components/home/mission-control.tsx`     | 453-513   |
-| Mission Control styles  | `src/components/home/mission-control.tsx`     | 203-210   |
-| Mission Control icons   | `src/components/home/mission-control.tsx`     | 213-226   |
-| Engine Bay launch       | `src/components/home/engine-bay.tsx`          | 319-372   |
-| Engine Bay animations   | `src/components/home/engine-bay.tsx`          | 375-426   |
-| Prompt Builder buttons  | `src/components/providers/prompt-builder.tsx` | 1467-1569 |
-| Reference Frame Toggle  | `src/components/reference-frame-toggle.tsx`   | 165-241   |
-| AuthButton              | `src/components/auth/auth-button.tsx`         | Full file |
+| Component                              | File                                          | Key Lines |
+| -------------------------------------- | --------------------------------------------- | --------- |
+| **Control Dock (Sign in + Greenwich)** | `src/components/home/control-dock.tsx`        | Full file |
+| AuthButton (shared)                    | `src/components/auth/auth-button.tsx`         | Full file |
+| Mission Control buttons                | `src/components/home/mission-control.tsx`     | 300-380   |
+| Mission Control styles                 | `src/components/home/mission-control.tsx`     | 195-205   |
+| Engine Bay launch                      | `src/components/home/engine-bay.tsx`          | 319-372   |
+| Engine Bay animations                  | `src/components/home/engine-bay.tsx`          | 375-426   |
+| Prompt Builder buttons                 | `src/components/providers/prompt-builder.tsx` | 1467-1569 |
+| Reference Frame Toggle                 | `src/components/reference-frame-toggle.tsx`   | 165-241   |
 
 ---
 
@@ -727,6 +784,8 @@ Uses canonical purple gradient styling. No colour inheritance issues (uses `<but
 
 ## Changelog
 
+- **10 Feb 2026 (v3.0.0):** **AUTHBUTTON WHITE COLOUR FIX** — Sign-in button moved from Mission Control grid to Control Dock (next to Greenwich Meridian). Added §1.5 documenting the recurring white text/icon issue: AuthButton's own `text-purple-100` fights parent overrides, requires `!important` wrapper on all four child types (`button`, `a`, `svg`, `span`). Added §9.2 debugging guide for AuthButton colour issues with common mistakes. Updated Quick Reference table with Text/Icon Colour column. Updated §1.3 Affected Components and §1.4 Colour Reference. Mission Control grid reduced from 3→2 / 4→3 columns (sign-in no longer in grid). Updated testing checklist §10.1-10.3.
+
 - **28 Jan 2026 (v2.0.0):** **CRITICAL COLOUR FIX** — Added Section 1 documenting text/icon colour inheritance issue. When using `<a>` tags, children must have explicit `text-{colour}` classes because body has `color: #020617` (black) and `a { color: inherit }`. Updated all button implementations to show correct colour classes on svg and span elements. Added Engine Bay animations section with `<style jsx>` code. Added Prompt Builder buttons section (Randomise, Save, Done, Open in Platform). Updated line numbers to match current codebase.
 
 - **26 Jan 2026 (v1.1.0):** **STUDIO FEATURE CARDS** — Added Section 5 documenting the 4 Studio hub navigation cards. Added `isStudioPage` prop to Mission Control.
@@ -739,4 +798,6 @@ _This document is the authority for ALL buttons in Promagen. Update this documen
 
 _**Key principle:** Always update docs FIRST before writing any code. Docs are the single source of truth._
 
-_**Critical rule:** All `<a>` tag buttons MUST have explicit text colour on child `<svg>` and `<span>` elements._
+_**Critical rule #1:** All `<a>` tag buttons MUST have explicit text colour on child `<svg>` and `<span>` elements._
+
+_**Critical rule #2:** AuthButton in Control Dock MUST have `!important` white override on `button`, `a`, `svg`, AND `span` children. It has broken 4+ times — do not remove the `!important` wrapper._

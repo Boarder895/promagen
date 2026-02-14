@@ -82,6 +82,8 @@ export interface CommodityMoverCardProps {
   data: CommodityMoverData;
   /** Optional: show "updating..." indicator for stale data */
   isStale?: boolean;
+  /** Weather data indexed by exchange ID (for commodity prompt tooltips) */
+  weatherRecord?: Record<string, { temperatureC: number; description: string }>;
 }
 
 /**
@@ -96,6 +98,8 @@ export interface CommoditiesMoversGridProps {
   isLoading?: boolean;
   /** Show "updating..." indicators for stale data */
   isStale?: boolean;
+  /** Weather data indexed by exchange ID (for commodity prompt tooltips) */
+  weatherRecord?: Record<string, { temperatureC: number; description: string }>;
 }
 
 /**

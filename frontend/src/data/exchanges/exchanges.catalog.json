@@ -11,7 +11,6 @@
     "hoursTemplate": "americas-brazil",
     "holidaysRef": "b3-sao-paulo",
     "hemisphere": "SW",
-    "ribbonLabel": "B3 São Paulo",
     "marketstack": {
       "defaultBenchmark": "ibovespa",
       "defaultIndexName": "IBOVESPA",
@@ -26,7 +25,8 @@
         }
       ]
     },
-    "hoverColor": "#10B981"
+    "hoverColor": "#10B981",
+    "name": "B3"
   },
   {
     "id": "bcba-buenos-aires",
@@ -50,7 +50,8 @@
         }
       ]
     },
-    "hoverColor": "#F97316"
+    "hoverColor": "#F97316",
+    "name": "BCBA"
   },
   {
     "id": "bist-istanbul",
@@ -74,7 +75,8 @@
         }
       ]
     },
-    "hoverColor": "#F43F5E"
+    "hoverColor": "#F43F5E",
+    "name": "BIST"
   },
   {
     "id": "bme-madrid",
@@ -106,7 +108,8 @@
         }
       ]
     },
-    "hoverColor": "#FCD34D"
+    "hoverColor": "#FCD34D",
+    "name": "BME"
   },
   {
     "id": "borsa-italiana-milan",
@@ -138,7 +141,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "Borsa Italiana"
   },
   {
     "id": "bse-mumbai",
@@ -162,7 +166,8 @@
         }
       ]
     },
-    "hoverColor": "#FB7185"
+    "hoverColor": "#FB7185",
+    "name": "BSE"
   },
   {
     "id": "egx-cairo",
@@ -186,7 +191,8 @@
         }
       ]
     },
-    "hoverColor": "#F59E0B"
+    "hoverColor": "#F59E0B",
+    "name": "EGX"
   },
   {
     "id": "euronext-amsterdam",
@@ -230,7 +236,8 @@
         }
       ]
     },
-    "hoverColor": "#34D399"
+    "hoverColor": "#34D399",
+    "name": "Euronext Amsterdam"
   },
   {
     "id": "euronext-brussels",
@@ -274,7 +281,8 @@
         }
       ]
     },
-    "hoverColor": "#22C55E"
+    "hoverColor": "#22C55E",
+    "name": "Euronext Brussels"
   },
   {
     "id": "euronext-lisbon",
@@ -306,7 +314,8 @@
         }
       ]
     },
-    "hoverColor": "#84CC16"
+    "hoverColor": "#84CC16",
+    "name": "Euronext Lisbon"
   },
   {
     "id": "euronext-paris",
@@ -350,7 +359,8 @@
         }
       ]
     },
-    "hoverColor": "#16A34A"
+    "hoverColor": "#16A34A",
+    "name": "Euronext Paris"
   },
   {
     "id": "hkex-hong-kong",
@@ -375,7 +385,7 @@
       ]
     },
     "hoverColor": "#DC2626",
-    "ribbonLabel": "HKEX"
+    "name": "HKEX"
   },
   {
     "id": "idx-jakarta",
@@ -399,7 +409,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "IDX"
   },
   {
     "id": "jse-johannesburg",
@@ -431,7 +442,8 @@
         }
       ]
     },
-    "hoverColor": "#EAB308"
+    "hoverColor": "#EAB308",
+    "name": "JSE"
   },
   {
     "id": "lse-london",
@@ -459,31 +471,8 @@
         }
       ]
     },
-    "hoverColor": "#DC2626"
-  },
-  {
-    "id": "misx-moscow",
-    "city": "Moscow",
-    "exchange": "Moscow Exchange (MISX)",
-    "country": "Russia",
-    "iso2": "RU",
-    "tz": "Europe/Moscow",
-    "longitude": 37.6173,
-    "latitude": 55.7558,
-    "hoursTemplate": "europe-russia",
-    "holidaysRef": "misx-moscow",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "moex",
-      "defaultIndexName": "MOEX Russia",
-      "availableIndices": [
-        {
-          "benchmark": "moex",
-          "indexName": "MOEX Russia"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#DC2626",
+    "name": "LSE"
   },
   {
     "id": "moex-moscow",
@@ -507,7 +496,8 @@
         }
       ]
     },
-    "hoverColor": "#F43F5E"
+    "hoverColor": "#F43F5E",
+    "name": "MOEX"
   },
   {
     "id": "nasdaq-copenhagen",
@@ -531,7 +521,8 @@
         }
       ]
     },
-    "hoverColor": "#F472B6"
+    "hoverColor": "#F472B6",
+    "name": "Nasdaq Copenhagen"
   },
   {
     "id": "nasdaq-helsinki",
@@ -559,7 +550,8 @@
         }
       ]
     },
-    "hoverColor": "#6366F1"
+    "hoverColor": "#6366F1",
+    "name": "Nasdaq Helsinki"
   },
   {
     "id": "qse-doha",
@@ -583,7 +575,8 @@
         }
       ]
     },
-    "hoverColor": "#7C3AED"
+    "hoverColor": "#7C3AED",
+    "name": "QSE"
   },
   {
     "id": "six-zurich",
@@ -611,7 +604,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "SIX"
   },
   {
     "id": "sse-santiago",
@@ -635,7 +629,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "SSE Santiago"
   },
   {
     "id": "sse-shanghai",
@@ -659,7 +654,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "SSE"
   },
   {
     "id": "szse-shenzhen",
@@ -683,7 +679,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "SZSE"
   },
   {
     "id": "xbah-manama",
@@ -711,7 +708,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "Bahrain Bourse"
   },
   {
     "id": "xbel-belgrade",
@@ -735,7 +733,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "BELEX"
   },
   {
     "id": "xbog-bogota",
@@ -759,31 +758,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
-  },
-  {
-    "id": "xbom-mumbai",
-    "city": "Mumbai",
-    "exchange": "BSE Ltd (Bombay)",
-    "country": "India",
-    "iso2": "IN",
-    "tz": "Asia/Kolkata",
-    "longitude": 72.8777,
-    "latitude": 19.076,
-    "hoursTemplate": "asia-india",
-    "holidaysRef": "xbom-mumbai",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "sensex",
-      "defaultIndexName": "Sensex",
-      "availableIndices": [
-        {
-          "benchmark": "sensex",
-          "indexName": "Sensex"
-        }
-      ]
-    },
-    "hoverColor": "#F97316"
+    "hoverColor": "#FBBF24",
+    "name": "BVC"
   },
   {
     "id": "xetra-frankfurt",
@@ -839,7 +815,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
+    "hoverColor": "#FBBF24",
+    "name": "Xetra"
   },
   {
     "id": "xfka-fukuoka",
@@ -867,7 +844,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "Fukuoka SE"
   },
   {
     "id": "xfra-frankfurt",
@@ -923,7 +901,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
+    "hoverColor": "#FBBF24",
+    "name": "FRA"
   },
   {
     "id": "xice-reykjavik",
@@ -947,7 +926,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "ICEX"
   },
   {
     "id": "xlim-lima",
@@ -971,7 +951,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "BVL"
   },
   {
     "id": "xmex-mexico-city",
@@ -995,7 +976,8 @@
         }
       ]
     },
-    "hoverColor": "#10B981"
+    "hoverColor": "#10B981",
+    "name": "BMV"
   },
   {
     "id": "xngo-nagoya",
@@ -1023,7 +1005,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "Nagoya SE"
   },
   {
     "id": "xnsa-lagos",
@@ -1051,55 +1034,8 @@
         }
       ]
     },
-    "hoverColor": "#10B981"
-  },
-  {
-    "id": "xnse-mumbai",
-    "city": "Mumbai",
-    "exchange": "National Stock Exchange of India (NSE)",
-    "country": "India",
-    "iso2": "IN",
-    "tz": "Asia/Kolkata",
-    "longitude": 72.8777,
-    "latitude": 19.076,
-    "hoursTemplate": "asia-india",
-    "holidaysRef": "xnse-mumbai",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "nifty_50",
-      "defaultIndexName": "NIFTY 50",
-      "availableIndices": [
-        {
-          "benchmark": "nifty_50",
-          "indexName": "NIFTY 50"
-        }
-      ]
-    },
-    "hoverColor": "#F97316"
-  },
-  {
-    "id": "xnze-auckland",
-    "city": "Auckland",
-    "exchange": "New Zealand Exchange (NZX)",
-    "country": "New Zealand",
-    "iso2": "NZ",
-    "tz": "Pacific/Auckland",
-    "longitude": 174.7633,
-    "latitude": -36.8485,
-    "hoursTemplate": "australasia-standard",
-    "holidaysRef": "xnze-auckland",
-    "hemisphere": "SE",
-    "marketstack": {
-      "defaultBenchmark": "nzx_50",
-      "defaultIndexName": "NZX 50",
-      "availableIndices": [
-        {
-          "benchmark": "nzx_50",
-          "indexName": "NZX 50"
-        }
-      ]
-    },
-    "hoverColor": "#10B981"
+    "hoverColor": "#10B981",
+    "name": "NGX"
   },
   {
     "id": "xosl-oslo",
@@ -1123,7 +1059,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "Oslo Børs"
   },
   {
     "id": "xris-riga",
@@ -1147,7 +1084,8 @@
         }
       ]
     },
-    "hoverColor": "#7C3AED"
+    "hoverColor": "#7C3AED",
+    "name": "Nasdaq Riga"
   },
   {
     "id": "xsap-sapporo",
@@ -1175,7 +1113,8 @@
         }
       ]
     },
-    "hoverColor": "#60A5FA"
+    "hoverColor": "#60A5FA",
+    "name": "Sapporo SE"
   },
   {
     "id": "xstc-ho-chi-minh-city",
@@ -1199,7 +1138,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "HOSE"
   },
   {
     "id": "xstu-stuttgart",
@@ -1239,35 +1179,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
-  },
-  {
-    "id": "xswx-zurich",
-    "city": "Zurich",
-    "exchange": "SIX Swiss Exchange",
-    "country": "Switzerland",
-    "iso2": "CH",
-    "tz": "Europe/Zurich",
-    "longitude": 8.5417,
-    "latitude": 47.3769,
-    "hoursTemplate": "europe-switzerland",
-    "holidaysRef": "six-zurich",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "ch20",
-      "defaultIndexName": "SMI",
-      "availableIndices": [
-        {
-          "benchmark": "ch20",
-          "indexName": "SMI"
-        },
-        {
-          "benchmark": "ch50",
-          "indexName": "SMI Mid"
-        }
-      ]
-    },
-    "hoverColor": "#1E40AF"
+    "hoverColor": "#FBBF24",
+    "name": "Börse Stuttgart"
   },
   {
     "id": "adx-abu-dhabi",
@@ -1291,7 +1204,8 @@
         }
       ]
     },
-    "hoverColor": "#FFB347"
+    "hoverColor": "#FFB347",
+    "name": "ADX"
   },
   {
     "id": "ase-amman",
@@ -1315,7 +1229,8 @@
         }
       ]
     },
-    "hoverColor": "#D4A574"
+    "hoverColor": "#D4A574",
+    "name": "ASE"
   },
   {
     "id": "asx-sydney",
@@ -1329,7 +1244,6 @@
     "hoursTemplate": "australia-standard",
     "holidaysRef": "asx-sydney",
     "hemisphere": "SE",
-    "ribbonLabel": "ASX Sydney",
     "marketstack": {
       "defaultBenchmark": "asx200",
       "defaultIndexName": "ASX 200",
@@ -1352,7 +1266,8 @@
         }
       ]
     },
-    "hoverColor": "#10B981"
+    "hoverColor": "#10B981",
+    "name": "ASX"
   },
   {
     "id": "athex-athens",
@@ -1376,7 +1291,8 @@
         }
       ]
     },
-    "hoverColor": "#60A5FA"
+    "hoverColor": "#60A5FA",
+    "name": "ATHEX"
   },
   {
     "id": "budapest-bet",
@@ -1404,7 +1320,8 @@
         }
       ]
     },
-    "hoverColor": "#A78BFA"
+    "hoverColor": "#A78BFA",
+    "name": "BÉT"
   },
   {
     "id": "bursa-kuala-lumpur",
@@ -1428,7 +1345,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
+    "hoverColor": "#FBBF24",
+    "name": "Bursa Malaysia"
   },
   {
     "id": "cse-colombo",
@@ -1456,7 +1374,8 @@
         }
       ]
     },
-    "hoverColor": "#FB923C"
+    "hoverColor": "#FB923C",
+    "name": "CSE"
   },
   {
     "id": "dfm-dubai",
@@ -1470,7 +1389,6 @@
     "hoursTemplate": "gulf-uae",
     "holidaysRef": "dfm-dubai",
     "hemisphere": "NE",
-    "ribbonLabel": "DFM Dubai",
     "marketstack": {
       "defaultBenchmark": "dfm_general",
       "defaultIndexName": "DFM General",
@@ -1481,7 +1399,8 @@
         }
       ]
     },
-    "hoverColor": "#FFD700"
+    "hoverColor": "#FFD700",
+    "name": "DFM"
   },
   {
     "id": "nse-mumbai",
@@ -1495,7 +1414,6 @@
     "hoursTemplate": "asia-india",
     "holidaysRef": "nse-mumbai",
     "hemisphere": "NE",
-    "ribbonLabel": "NSE India",
     "marketstack": {
       "defaultBenchmark": "nifty_50",
       "defaultIndexName": "NIFTY 50",
@@ -1506,7 +1424,8 @@
         }
       ]
     },
-    "hoverColor": "#FF8C00"
+    "hoverColor": "#FF8C00",
+    "name": "NSE"
   },
   {
     "id": "nzx-wellington",
@@ -1520,7 +1439,6 @@
     "hoursTemplate": "australasia-standard",
     "holidaysRef": "nzx-wellington",
     "hemisphere": "SE",
-    "ribbonLabel": "NZX Wellington",
     "marketstack": {
       "defaultBenchmark": "nzx_50",
       "defaultIndexName": "NZX 50",
@@ -1531,7 +1449,8 @@
         }
       ]
     },
-    "hoverColor": "#00FF7F"
+    "hoverColor": "#00FF7F",
+    "name": "NZX"
   },
   {
     "id": "pse-manila",
@@ -1555,7 +1474,8 @@
         }
       ]
     },
-    "hoverColor": "#FF7F50"
+    "hoverColor": "#FF7F50",
+    "name": "PSE"
   },
   {
     "id": "tse-tokyo",
@@ -1569,7 +1489,6 @@
     "hoursTemplate": "asia-tokyo",
     "holidaysRef": "tse-tokyo",
     "hemisphere": "NE",
-    "ribbonLabel": "Tokyo (TSE)",
     "marketstack": {
       "defaultBenchmark": "jp225",
       "defaultIndexName": "Nikkei 225 (Alt)",
@@ -1584,7 +1503,8 @@
         }
       ]
     },
-    "hoverColor": "#FF4500"
+    "hoverColor": "#FF4500",
+    "name": "TSE"
   },
   {
     "id": "wbag-vienna",
@@ -1608,7 +1528,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "Wiener Börse"
   },
   {
     "id": "ise-dublin",
@@ -1632,7 +1553,8 @@
         }
       ]
     },
-    "hoverColor": "#22C55E"
+    "hoverColor": "#22C55E",
+    "name": "Euronext Dublin"
   },
   {
     "id": "pse-prague",
@@ -1656,7 +1578,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "PSE Prague"
   },
   {
     "id": "ljse-ljubljana",
@@ -1680,7 +1603,8 @@
         }
       ]
     },
-    "hoverColor": "#10B981"
+    "hoverColor": "#10B981",
+    "name": "LJSE"
   },
   {
     "id": "zse-zagreb",
@@ -1704,7 +1628,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "ZSE"
   },
   {
     "id": "bcpb-bratislava",
@@ -1728,7 +1653,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "BCPB"
   },
   {
     "id": "luxse-luxembourg",
@@ -1752,7 +1678,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "LuxSE"
   },
   {
     "id": "mse-skopje",
@@ -1776,7 +1703,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
+    "hoverColor": "#FBBF24",
+    "name": "MSE"
   },
   {
     "id": "mnse-podgorica",
@@ -1800,7 +1728,8 @@
         }
       ]
     },
-    "hoverColor": "#F97316"
+    "hoverColor": "#F97316",
+    "name": "MNSE"
   },
   {
     "id": "sase-sarajevo",
@@ -1828,7 +1757,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "SASE"
   },
   {
     "id": "pfts-kyiv",
@@ -1852,7 +1782,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
+    "hoverColor": "#FBBF24",
+    "name": "PFTS"
   },
   {
     "id": "bse-beirut",
@@ -1876,7 +1807,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "BSE Beirut"
   },
   {
     "id": "kse-kuwait",
@@ -1900,7 +1832,8 @@
         }
       ]
     },
-    "hoverColor": "#22C55E"
+    "hoverColor": "#22C55E",
+    "name": "Boursa Kuwait"
   },
   {
     "id": "msm-muscat",
@@ -1924,7 +1857,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "MSM"
   },
   {
     "id": "kase-almaty",
@@ -1948,7 +1882,8 @@
         }
       ]
     },
-    "hoverColor": "#22D3EE"
+    "hoverColor": "#22D3EE",
+    "name": "KASE"
   },
   {
     "id": "psx-karachi",
@@ -1972,7 +1907,8 @@
         }
       ]
     },
-    "hoverColor": "#22C55E"
+    "hoverColor": "#22C55E",
+    "name": "PSX"
   },
   {
     "id": "dse-dhaka",
@@ -1996,7 +1932,8 @@
         }
       ]
     },
-    "hoverColor": "#10B981"
+    "hoverColor": "#10B981",
+    "name": "DSE"
   },
   {
     "id": "mse-ulaanbaatar",
@@ -2024,7 +1961,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "MSE Mongolia"
   },
   {
     "id": "lsx-vientiane",
@@ -2048,7 +1986,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "LSX"
   },
   {
     "id": "nse-nairobi",
@@ -2076,7 +2015,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "NSE Nairobi"
   },
   {
     "id": "gse-accra",
@@ -2100,7 +2040,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
+    "hoverColor": "#FBBF24",
+    "name": "GSE"
   },
   {
     "id": "cse-casablanca",
@@ -2124,7 +2065,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "CSE Casablanca"
   },
   {
     "id": "bse-gaborone",
@@ -2148,7 +2090,8 @@
         }
       ]
     },
-    "hoverColor": "#60A5FA"
+    "hoverColor": "#60A5FA",
+    "name": "BSE Gaborone"
   },
   {
     "id": "nsx-windhoek",
@@ -2172,7 +2115,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "NSX"
   },
   {
     "id": "dse-dar-es-salaam",
@@ -2196,7 +2140,8 @@
         }
       ]
     },
-    "hoverColor": "#22C55E"
+    "hoverColor": "#22C55E",
+    "name": "DSE Dar"
   },
   {
     "id": "sem-port-louis",
@@ -2220,7 +2165,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "SEM"
   },
   {
     "id": "bvc-caracas",
@@ -2244,7 +2190,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
+    "hoverColor": "#FBBF24",
+    "name": "BVC Caracas"
   },
   {
     "id": "bvq-quito",
@@ -2268,7 +2215,8 @@
         }
       ]
     },
-    "hoverColor": "#FBBF24"
+    "hoverColor": "#FBBF24",
+    "name": "BVQ"
   },
   {
     "id": "tsx-toronto",
@@ -2292,7 +2240,8 @@
         }
       ]
     },
-    "hoverColor": "#EF4444"
+    "hoverColor": "#EF4444",
+    "name": "TSX"
   },
   {
     "id": "twse-taipei",
@@ -2316,7 +2265,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "TWSE"
   },
   {
     "id": "set-bangkok",
@@ -2340,7 +2290,8 @@
         }
       ]
     },
-    "hoverColor": "#2DD4BF"
+    "hoverColor": "#2DD4BF",
+    "name": "SET"
   },
   {
     "id": "nyse-new-york",
@@ -2354,7 +2305,6 @@
     "hoursTemplate": "americas-us",
     "holidaysRef": "nyse-new-york",
     "hemisphere": "NW",
-    "ribbonLabel": "NYSE",
     "marketstack": {
       "defaultBenchmark": "us500",
       "defaultIndexName": "S&P 500",
@@ -2377,7 +2327,8 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "NYSE"
   },
   {
     "id": "cboe-chicago",
@@ -2391,7 +2342,6 @@
     "hoursTemplate": "americas-us",
     "holidaysRef": "cboe-chicago",
     "hemisphere": "NW",
-    "ribbonLabel": "Cboe Chicago",
     "marketstack": {
       "defaultBenchmark": "us30",
       "defaultIndexName": "Dow Jones 30",
@@ -2414,6 +2364,7 @@
         }
       ]
     },
-    "hoverColor": "#3B82F6"
+    "hoverColor": "#3B82F6",
+    "name": "Cboe"
   }
 ]

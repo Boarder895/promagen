@@ -118,7 +118,7 @@ export default async function PlaygroundPage() {
       leftContent={leftExchanges}
       centre={centreContent}
       rightContent={rightExchanges}
-      showFinanceRibbon
+      showFinanceRibbon={false}
       exchanges={allOrderedExchanges}
       displayedProviderIds={providerIds}
       providers={providers}

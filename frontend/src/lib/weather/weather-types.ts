@@ -5,6 +5,13 @@
 // Extended weather types that include all API fields needed for:
 // - Display in exchange cards (temp, emoji, conditions)
 // - Dynamic prompt generation (humidity, wind, description)
+// - Accurate day/night detection (sunrise, sunset, isDayTime)
+//
+// UPDATED v3.1.0 (12 Feb 2026):
+// - ExchangeWeatherFull gains sunriseUtc, sunsetUtc, timezoneOffset, isDayTime
+// - ExchangeWeatherDisplay gains matching optional fields
+// - toDisplayWeather() and toFullWeather() pipe through new fields
+// - Enables moon phase emoji at night, accurate sunrise/sunset threshold
 //
 // Authority: docs/authority/ribbon-homepage.md
 // Existing features preserved: Yes
@@ -13,6 +20,8 @@
 /**
  * Full weather data from API.
  * Includes all fields needed for prompt generation.
+ *
+ * v3.1.0: Added day/night detection fields from gateway.
  */
 export interface ExchangeWeatherFull {
   /** Temperature in Celsius */
@@ -29,11 +38,38 @@ export interface ExchangeWeatherFull {
   windSpeedKmh: number;
   /** Weather emoji from API */
   emoji: string;
+  /**
+   * Sunrise time as Unix timestamp (seconds, UTC).
+   * From OWM sys.sunrise. null when demo data or API missing sys.
+   * Used by prompt generator for exact day/night boundary.
+   */
+  sunriseUtc: number | null;
+  /**
+   * Sunset time as Unix timestamp (seconds, UTC).
+   * From OWM sys.sunset. null when demo data or API missing sys.
+   * Used by prompt generator for exact day/night boundary.
+   */
+  sunsetUtc: number | null;
+  /**
+   * City timezone offset from UTC in seconds.
+   * From OWM timezone field (e.g., 28800 for UTC+8 Taipei).
+   * null when demo data or API missing timezone.
+   */
+  timezoneOffset: number | null;
+  /**
+   * Whether it is currently daytime at this city.
+   * Derived from OWM icon suffix: 'd' = day, 'n' = night.
+   * OWM calculates this using the city's actual sunrise/sunset.
+   * When null (demo data), prompt generator falls back to hour threshold.
+   */
+  isDayTime: boolean | null;
 }
 
 /**
  * Weather data for exchange card display.
  * Subset of full data used in UI.
+ *
+ * v3.1.0: Added day/night fields (all nullable for backward compat).
  */
 export interface ExchangeWeatherDisplay {
   /** Temperature in Celsius; null if unavailable */
@@ -50,6 +86,14 @@ export interface ExchangeWeatherDisplay {
   windKmh: number | null;
   /** Full weather description (for tooltip) */
   description: string | null;
+  /** Sunrise UTC timestamp; null if unavailable */
+  sunriseUtc: number | null;
+  /** Sunset UTC timestamp; null if unavailable */
+  sunsetUtc: number | null;
+  /** Timezone offset in seconds from UTC; null if unavailable */
+  timezoneOffset: number | null;
+  /** Whether it is daytime; null if unavailable */
+  isDayTime: boolean | null;
 }
 
 /**
@@ -67,6 +111,10 @@ export function toDisplayWeather(
       humidity: null,
       windKmh: null,
       description: null,
+      sunriseUtc: null,
+      sunsetUtc: null,
+      timezoneOffset: null,
+      isDayTime: null,
     };
   }
 
@@ -78,6 +126,10 @@ export function toDisplayWeather(
     humidity: full.humidity,
     windKmh: full.windSpeedKmh,
     description: full.description,
+    sunriseUtc: full.sunriseUtc,
+    sunsetUtc: full.sunsetUtc,
+    timezoneOffset: full.timezoneOffset,
+    isDayTime: full.isDayTime,
   };
 }
 
@@ -100,6 +152,11 @@ export function toFullWeather(
     humidity: display.humidity ?? 50,
     windSpeedKmh: display.windKmh ?? 5,
     emoji: display.emoji ?? '🌤️',
+    sunriseUtc: display.sunriseUtc ?? null,
+    sunsetUtc: display.sunsetUtc ?? null,
+    timezoneOffset: display.timezoneOffset ?? null,
+    // null means "unknown" — prompt generator will fall back to hour threshold
+    isDayTime: display.isDayTime ?? null,
   };
 }
 

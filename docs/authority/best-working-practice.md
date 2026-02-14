@@ -212,6 +212,8 @@ font-size: clamp(MIN, PREFERRED, MAX);
 2. Existing fixed sizes should be migrated to `clamp()` when touched.
 3. Minimum font size for body text: `12px` (accessibility floor).
 4. Minimum font size for secondary text: `10px` (absolute floor).
+5. **Never use Tailwind breakpoint text classes** (`text-xs`, `sm:text-sm`, `xl:text-base`, `2xl:text-lg`, `min-[Xpx]:text-Y`) for responsive font sizing. The root `html` font-size already scales with `clamp(16px, 1.1vw, 18px)`, so all rem-based Tailwind classes (`text-sm`, `text-base`, etc.) already scale proportionally with viewport width. Adding breakpoint overrides fights the system and produces no visible change. Use inline `style={{ fontSize: 'clamp(...)' }}` instead.
+6. **Tooltips are exempt** — tooltip text may use fixed Tailwind classes (`text-sm`, `text-xs`) because tooltips are portalled overlays with their own sizing context, not affected by container scaling.
 
 **Existing example (exchange cards):**
 
@@ -292,6 +294,44 @@ font-size: clamp(MIN, PREFERRED, MAX);
 
 **Reference implementation:** `commodities-movers-grid.tsx` v3.0
 **Authority:** `code-standard.md` § 6.3, `commodities.md` § Panel Sizing
+
+### Text containment (no text escapes its window)
+
+**Purpose:** Prevent text from overflowing, wrapping beyond, or visually escaping its containing panel/card/window. This is especially critical for fixed-height containers where text that escapes looks broken and unprofessional.
+
+**Hard rule:** All text within fixed-height containers must be visually contained. No text may overflow, push beyond, or escape its parent container boundary under any viewport size.
+
+**The pattern (three properties working together):**
+
+```tsx
+{
+  /* Wrapper div — clips content AND allows flex shrinking */
+}
+<div className="flex-1 overflow-hidden min-h-0">
+  {/* Text element — single line, ellipsis if too wide */}
+  <p className="truncate">Your text here</p>
+</div>;
+```
+
+| Property          | What it does                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `overflow-hidden` | Clips anything that exceeds the div's boundary                                                                |
+| `min-h-0`         | Overrides flex default `min-height: auto`. Without this, flex children refuse to shrink below content height. |
+| `truncate`        | Forces `white-space: nowrap` + `text-overflow: ellipsis` — prevents text wrapping to a second line            |
+
+**When to use `truncate` vs wrapping:**
+
+- **Single-line labels/status text:** Use `truncate` (ellipsis is better than overflow)
+- **Multi-line content (prompts, descriptions):** Use `overflow-hidden min-h-0` on wrapper + `line-clamp-N` on text if line count must be limited
+- **Always:** The parent container must have `overflow-hidden` to act as the final safety net
+
+**Forbidden patterns:**
+
+- Text inside a fixed-height flex child without `min-h-0` (text will push beyond container)
+- Relying solely on outer `overflow-hidden` without `min-h-0` on intermediate flex children (flex ignores parent overflow constraints by default)
+- Animated/pulsing text without containment (animation can cause reflow that escapes)
+
+**Authority:** `code-standard.md` § 6.4
 
 ---
 
@@ -516,11 +556,11 @@ If CLS exceeds 0.10, the PR must fix it before merging.
 
 These are the root causes we've hit. Treat them as red flags during code review:
 
-| Pattern | Why it shifts | Fix |
-|---|---|---|
-| `useEffect` → fetch → `setState` → re-sort visible rows | Rows jump to new positions after paint | Opacity-gate container until data loads |
-| `requestAnimationFrame` / `ResizeObserver` → `setState` on measured component | Content reflowed after first paint | `opacity: 0` until measurement settles |
-| `transition-all` on containers that resize | Browser animates the layout shift, CLS counts it | Use `transition-colors` or `transition-opacity` only |
+| Pattern                                                                       | Why it shifts                                    | Fix                                                  |
+| ----------------------------------------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------- |
+| `useEffect` → fetch → `setState` → re-sort visible rows                       | Rows jump to new positions after paint           | Opacity-gate container until data loads              |
+| `requestAnimationFrame` / `ResizeObserver` → `setState` on measured component | Content reflowed after first paint               | `opacity: 0` until measurement settles               |
+| `transition-all` on containers that resize                                    | Browser animates the layout shift, CLS counts it | Use `transition-colors` or `transition-opacity` only |
 
 ### SSR hydration gap (mental model)
 
@@ -583,6 +623,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **14 Feb 2026:** Added anti-breakpoint rule (#5, #6) to Fluid Typography hard rules — never use Tailwind breakpoint text classes for responsive sizing, always use inline `clamp()`. Tooltips exempt. Added "Text containment (no text escapes its window)" subsection under UI Consistency — three-property pattern (`overflow-hidden`, `min-h-0`, `truncate`) for all text in fixed-height containers. Cross-ref code-standard.md § 6.4.
 - **9 Feb 2026:** Added "Performance Guardrails (CLS Prevention)" section. Pre-ship CLS check requirement, three red-flag patterns, SSR hydration gap mental model. Cross-ref code-standard.md § 22 for implementation rules.
 - **7 Feb 2026:** Added "Content-driven sizing" subsection under UI Consistency. Standard approach when content doesn't have room to breathe: measure real content, not magic numbers. Cross-ref code-standard.md § 6.3.
 - **10 Jan 2026:** Updated FX SSOT file reference from `fx.pairs.json` to unified `fx-pairs.json` (schema table).
@@ -594,4 +635,3 @@ OUTPUT FORMAT:
 - **30 Dec 2025:** No content changes (tooltip standards added to code-standard.md § 7.1 instead of here to avoid duplication).
 - **28 Dec 2025:** Added Schema and Type Consolidation Rules section. Added `prompt-builder-page.md` to authority docs list. Added "Schema or type definitions" to doc update triggers. Updated memory policy for Claude. Improved formatting consistency.
 - **27 Dec 2025:** Added "Git safety gate (anti-panic)" rules (stash-first / rescue-branch / no-guessing / generated artefact handling / no-conflict-marker commits).
-

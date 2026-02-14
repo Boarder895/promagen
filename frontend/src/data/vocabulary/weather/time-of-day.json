@@ -1,164 +1,186 @@
 {
   "$schema": "./schemas/time-of-day.schema.json",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "meta": {
     "domain": "weather",
     "category": "time-of-day",
-    "totalPhrases": 80,
-    "description": "Time-based mood and lighting phrases. 8 time periods × 10 mood/lighting combinations each.",
-    "range": { "min": 0, "max": 23, "unit": "hour" },
-    "updated": "2026-01-21"
+    "totalPhrases": 120,
+    "description": "CLEANED: Pure temporal descriptors only. No mood, no lighting, no behaviour, no environmental bias. Fully generic 24-hour time layer for dynamic prompt assembly.",
+    "range": {
+      "min": 0,
+      "max": 23,
+      "unit": "hour"
+    },
+    "updated": "2026-02-13"
   },
-  "periods": {
-    "deep_night": {
-      "hours": [0, 1, 2, 3, 4],
-      "label": "Deep Night",
-      "phrases": [
-        { "mood": "deep night stillness", "lighting": "soft ambient glow" },
-        { "mood": "midnight tranquility", "lighting": "neon-reflected darkness" },
-        { "mood": "nocturnal silence", "lighting": "streetlight pools" },
-        { "mood": "witching hour calm", "lighting": "moon-silver illumination" },
-        { "mood": "pre-dawn darkness", "lighting": "sparse urban lighting" },
-        { "mood": "sleeping city quiet", "lighting": "distant window warmth" },
-        { "mood": "small hours solitude", "lighting": "star-scattered sky glow" },
-        { "mood": "nightwatch serenity", "lighting": "security light halos" },
-        { "mood": "dreamtime atmosphere", "lighting": "subtle blue darkness" },
-        { "mood": "graveyard shift stillness", "lighting": "artificial twilight" }
-      ]
-    },
-    "dawn": {
-      "hours": [5, 6],
-      "label": "Dawn",
-      "phrases": [
-        { "mood": "dawn breaking softly", "lighting": "soft golden hour light" },
-        { "mood": "sunrise awakening", "lighting": "pink-orange horizon glow" },
-        { "mood": "early morning birth", "lighting": "gentle warm illumination" },
-        { "mood": "day beginning fresh", "lighting": "pastel sky colors" },
-        { "mood": "sunrise promise", "lighting": "golden rim lighting" },
-        { "mood": "first light emergence", "lighting": "rosy-fingered dawn" },
-        { "mood": "morning star fading", "lighting": "gradient sky awakening" },
-        { "mood": "new day hope", "lighting": "soft peach illumination" },
-        { "mood": "cockcrow freshness", "lighting": "eastern sky blush" },
-        { "mood": "aurora birth", "lighting": "salmon-pink horizon" }
-      ]
-    },
-    "morning": {
-      "hours": [7, 8, 9, 10],
-      "label": "Morning",
-      "phrases": [
-        { "mood": "bright morning energy", "lighting": "clear morning light" },
-        { "mood": "fresh day beginning", "lighting": "crisp daylight clarity" },
-        { "mood": "productive morning buzz", "lighting": "sharp clean illumination" },
-        { "mood": "energetic day start", "lighting": "bright natural light" },
-        { "mood": "vibrant morning activity", "lighting": "shadow-casting sunlight" },
-        { "mood": "coffee-hour alertness", "lighting": "warm morning rays" },
-        { "mood": "commute-time bustle", "lighting": "angled east light" },
-        { "mood": "school-run energy", "lighting": "cheerful daylight" },
-        { "mood": "office-opening freshness", "lighting": "professional brightness" },
-        { "mood": "market-opening vitality", "lighting": "commercial daylight" }
-      ]
-    },
-    "midday": {
-      "hours": [11, 12, 13],
-      "label": "Midday",
-      "phrases": [
-        { "mood": "midday sun peak", "lighting": "harsh overhead light" },
-        { "mood": "noon intensity", "lighting": "minimal shadow brightness" },
-        { "mood": "high sun moment", "lighting": "flat bright illumination" },
-        { "mood": "solar maximum energy", "lighting": "bleaching overhead rays" },
-        { "mood": "zenith sun power", "lighting": "contrast-flattening light" },
-        { "mood": "lunch break pause", "lighting": "neutral daylight" },
-        { "mood": "siesta-inducing peak", "lighting": "heat-shimmer brightness" },
-        { "mood": "meridian crossing", "lighting": "shadowless clarity" },
-        { "mood": "day-center stillness", "lighting": "pure white sunlight" },
-        { "mood": "solar apex dominance", "lighting": "color-washing brightness" }
-      ]
-    },
-    "afternoon": {
-      "hours": [14, 15, 16],
-      "label": "Afternoon",
-      "phrases": [
-        { "mood": "afternoon warmth", "lighting": "warm afternoon light" },
-        { "mood": "post-lunch leisure", "lighting": "angled golden rays" },
-        { "mood": "lazy afternoon feeling", "lighting": "lengthening shadows" },
-        { "mood": "productive afternoon", "lighting": "rich warm illumination" },
-        { "mood": "day winding down", "lighting": "honeyed sunlight" },
-        { "mood": "tea-time tranquility", "lighting": "mellow amber glow" },
-        { "mood": "school-out energy", "lighting": "playful sunshine" },
-        { "mood": "market-busy activity", "lighting": "commercial golden hour" },
-        { "mood": "deadline-approaching focus", "lighting": "office window light" },
-        { "mood": "day-review contemplation", "lighting": "westward warming" }
-      ]
-    },
-    "golden_hour": {
-      "hours": [17, 18, 19],
-      "label": "Golden Hour / Sunset",
-      "phrases": [
-        { "mood": "golden hour magic", "lighting": "dramatic golden light" },
-        { "mood": "sunset splendor", "lighting": "warm orange illumination" },
-        { "mood": "evening gold cascade", "lighting": "cinematic warm glow" },
-        { "mood": "dusk approaching beauty", "lighting": "rich amber rays" },
-        { "mood": "day-end magnificence", "lighting": "spectacular sunset colors" },
-        { "mood": "magic hour perfection", "lighting": "photographer's dream light" },
-        { "mood": "romantic evening", "lighting": "rose-gold atmosphere" },
-        { "mood": "sunset symphony", "lighting": "fire-painted sky" },
-        { "mood": "day's farewell glory", "lighting": "molten copper rays" },
-        { "mood": "twilight prelude", "lighting": "vermillion-streaked west" }
-      ]
-    },
-    "twilight": {
-      "hours": [20, 21],
-      "label": "Twilight",
-      "phrases": [
-        { "mood": "evening twilight", "lighting": "soft blue hour light" },
-        { "mood": "dusk descending", "lighting": "purple-blue gradient sky" },
-        { "mood": "night approaching", "lighting": "first lights emerging" },
-        { "mood": "day-to-night transition", "lighting": "mixed artificial-natural" },
-        { "mood": "twilight serenity", "lighting": "deep blue illumination" },
-        { "mood": "blue hour enchantment", "lighting": "cobalt sky glow" },
-        { "mood": "gloaming mystery", "lighting": "indigo atmosphere" },
-        { "mood": "crepuscular beauty", "lighting": "layered sky colors" },
-        { "mood": "starlight awakening", "lighting": "first-star twinkle" },
-        { "mood": "venus rising", "lighting": "evening star brilliance" }
-      ]
-    },
-    "night": {
-      "hours": [22, 23],
-      "label": "Night",
-      "phrases": [
-        { "mood": "night descending", "lighting": "ambient city lights" },
-        { "mood": "evening settling", "lighting": "urban glow patterns" },
-        { "mood": "nocturnal awakening", "lighting": "neon and streetlight mix" },
-        { "mood": "nightlife beginning", "lighting": "colorful night illumination" },
-        { "mood": "darkness embracing", "lighting": "artificial light warmth" },
-        { "mood": "starlight canopy", "lighting": "celestial sparkle" },
-        { "mood": "moonrise atmosphere", "lighting": "lunar silver glow" },
-        { "mood": "night-owl activity", "lighting": "late-night establishment glow" },
-        { "mood": "theater-district energy", "lighting": "marquee brilliance" },
-        { "mood": "last-call approach", "lighting": "closing-time dimming" }
-      ]
-    }
-  },
-  "contextual": {
-    "stormy": [
-      { "mood": "storm-darkened dramatic", "lighting": "lightning-flash illumination" },
-      { "mood": "tempest-threatened atmosphere", "lighting": "ominous cloud-filtered" },
-      { "mood": "thunder-rumble tension", "lighting": "electric atmosphere glow" }
+  "hours": {
+    "0": [
+      "midnight",
+      "the stroke of midnight",
+      "twelve at night",
+      "the midnight hour",
+      "zero hours"
     ],
-    "rainy": [
-      { "mood": "rain-washed serenity", "lighting": "diffused overcast light" },
-      { "mood": "drizzle-softened atmosphere", "lighting": "grey-filtered gentle" },
-      { "mood": "puddle-reflection mood", "lighting": "mirrored light patterns" }
+    "1": [
+      "one in the morning",
+      "01:00",
+      "one o'clock",
+      "hour one",
+      "early hour 1"
     ],
-    "clear": [
-      { "mood": "crystal-clear visibility", "lighting": "pure unfiltered sunlight" },
-      { "mood": "cloudless perfection", "lighting": "sharp shadow definition" },
-      { "mood": "blue-sky optimism", "lighting": "brilliant clarity" }
+    "2": [
+      "two in the morning",
+      "02:00",
+      "two o'clock",
+      "hour two",
+      "early hour 2"
     ],
-    "overcast": [
-      { "mood": "softbox-sky diffusion", "lighting": "even shadowless light" },
-      { "mood": "photographer's overcast", "lighting": "natural soft illumination" },
-      { "mood": "muted-tone atmosphere", "lighting": "gentle grey-filtered" }
+    "3": [
+      "three in the morning",
+      "03:00",
+      "three o'clock",
+      "hour three",
+      "early hour 3"
+    ],
+    "4": [
+      "four in the morning",
+      "04:00",
+      "four o'clock",
+      "hour four",
+      "early hour 4"
+    ],
+    "5": [
+      "five in the morning",
+      "05:00",
+      "five o'clock",
+      "hour five",
+      "start of the morning"
+    ],
+    "6": [
+      "six in the morning",
+      "06:00",
+      "six o'clock",
+      "early morning",
+      "morning hour"
+    ],
+    "7": [
+      "seven in the morning",
+      "07:00",
+      "seven o'clock",
+      "morning",
+      "morning hour 7"
+    ],
+    "8": [
+      "eight in the morning",
+      "08:00",
+      "eight o'clock",
+      "morning",
+      "early in the day"
+    ],
+    "9": [
+      "nine in the morning",
+      "09:00",
+      "nine o'clock",
+      "mid-morning",
+      "the morning"
+    ],
+    "10": [
+      "ten in the morning",
+      "10:00",
+      "ten o'clock",
+      "late morning",
+      "morning period"
+    ],
+    "11": [
+      "eleven in the morning",
+      "11:00",
+      "eleven o'clock",
+      "pre-noon",
+      "late morning"
+    ],
+    "12": [
+      "noon",
+      "midday",
+      "twelve o'clock",
+      "12:00",
+      "the middle of the day"
+    ],
+    "13": [
+      "one in the afternoon",
+      "13:00",
+      "one o'clock pm",
+      "early afternoon",
+      "afternoon"
+    ],
+    "14": [
+      "two in the afternoon",
+      "14:00",
+      "two o'clock pm",
+      "afternoon",
+      "mid-afternoon"
+    ],
+    "15": [
+      "three in the afternoon",
+      "15:00",
+      "three o'clock pm",
+      "afternoon",
+      "mid-afternoon"
+    ],
+    "16": [
+      "four in the afternoon",
+      "16:00",
+      "four o'clock pm",
+      "late afternoon",
+      "afternoon period"
+    ],
+    "17": [
+      "five in the afternoon",
+      "17:00",
+      "five o'clock pm",
+      "late afternoon",
+      "end of afternoon period"
+    ],
+    "18": [
+      "six in the evening",
+      "18:00",
+      "six o'clock pm",
+      "evening",
+      "early evening"
+    ],
+    "19": [
+      "seven in the evening",
+      "19:00",
+      "seven o'clock pm",
+      "evening",
+      "evening period"
+    ],
+    "20": [
+      "eight in the evening",
+      "20:00",
+      "eight o'clock pm",
+      "evening",
+      "night period beginning"
+    ],
+    "21": [
+      "nine in the evening",
+      "21:00",
+      "nine o'clock pm",
+      "late evening",
+      "night"
+    ],
+    "22": [
+      "ten at night",
+      "22:00",
+      "ten o'clock pm",
+      "night-time",
+      "late night hour"
+    ],
+    "23": [
+      "eleven at night",
+      "23:00",
+      "eleven o'clock pm",
+      "approaching midnight",
+      "final hour before midnight"
     ]
   }
 }

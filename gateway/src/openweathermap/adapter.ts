@@ -11,6 +11,13 @@
  * - No sensitive data in logs
  * - Response sanitisation (strips unexpected fields)
  *
+ * UPDATED v3.1.0 (12 Feb 2026):
+ * - parseWeatherResponse() now extracts sunrise, sunset, timezone, isDayTime
+ * - isDayTime derived from OWM icon suffix ('d' = day, 'n' = night)
+ * - These fields enable accurate day/night + moon phase on frontend
+ *
+ * Existing features preserved: Yes
+ *
  * @module openweathermap/adapter
  */
 
@@ -197,6 +204,13 @@ export async function fetchWeatherWithRetry(
 /**
  * Parse OpenWeatherMap response to Promagen WeatherData format.
  *
+ * v3.1.0: Now extracts sunrise, sunset, timezone offset, and day/night flag.
+ * - sunriseUtc / sunsetUtc: Unix timestamps from sys.sunrise / sys.sunset
+ * - timezoneOffset: Seconds from UTC (e.g., +28800 for Taipei UTC+8)
+ * - isDayTime: Derived from icon suffix — 'd' = day, 'n' = night.
+ *   OWM calculates this using the city's actual sunrise/sunset internally,
+ *   so it's the most accurate day/night signal available without extra maths.
+ *
  * @param raw - Raw OWM API response
  * @param city - City info for ID mapping
  * @returns Normalised weather data
@@ -220,6 +234,20 @@ export function parseWeatherResponse(
   // Get emoji for condition
   const emoji = CONDITION_TO_EMOJI[conditions] ?? DEFAULT_EMOJI;
 
+  // ── v3.1.0: Extract day/night + sun times ─────────────────────────────
+  // OWM icon field ends with 'd' (day) or 'n' (night).
+  // OWM determines this from the city's actual sunrise/sunset — free accuracy.
+  const iconStr = condition?.icon ?? '01d';
+  const isDayTime = iconStr.endsWith('d');
+
+  // Sunrise/sunset as Unix timestamps (seconds, UTC).
+  // Defensive: sys may theoretically be partial, though OWM always sends it.
+  const sunriseUtc = typeof raw.sys?.sunrise === 'number' ? raw.sys.sunrise : null;
+  const sunsetUtc = typeof raw.sys?.sunset === 'number' ? raw.sys.sunset : null;
+
+  // Timezone offset in seconds from UTC (e.g., 28800 for UTC+8).
+  const timezoneOffset = typeof raw.timezone === 'number' ? raw.timezone : null;
+
   return {
     id: city.id,
     city: city.city,
@@ -231,6 +259,10 @@ export function parseWeatherResponse(
     windSpeedKmh: Math.round(windSpeedKmh),
     emoji,
     asOf: new Date().toISOString(),
+    sunriseUtc,
+    sunsetUtc,
+    timezoneOffset,
+    isDayTime,
   };
 }
 

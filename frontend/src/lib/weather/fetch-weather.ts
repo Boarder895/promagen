@@ -9,6 +9,11 @@
 // - Added tempF, humidity, windKmh, description
 // - Previously only mapped tempC, emoji, condition (causing 0% humidity, 0 km/h wind)
 //
+// UPDATED v3.1.0 (12 Feb 2026):
+// - GatewayWeatherItem gains sunriseUtc, sunsetUtc, timezoneOffset, isDayTime
+// - toWeatherData() pipes these through to ExchangeWeatherData
+// - demoToWeatherData() sets all four to undefined (triggers fallback in prompt gen)
+//
 // Usage in server components (page.tsx):
 // ```typescript
 // import { getWeatherIndex } from '@/lib/weather/fetch-weather';
@@ -45,7 +50,13 @@ const FETCH_TIMEOUT_MS = 5_000;
 // TYPES
 // =============================================================================
 
-/** Weather data shape from gateway API */
+/**
+ * Weather data shape from gateway API.
+ *
+ * v3.1.0: Added sunriseUtc, sunsetUtc, timezoneOffset, isDayTime.
+ * These are optional (?) because older gateway versions won't send them
+ * and we need graceful degradation during rolling deploys.
+ */
 interface GatewayWeatherItem {
   id: string;
   city: string;
@@ -57,6 +68,14 @@ interface GatewayWeatherItem {
   windSpeedKmh: number;
   emoji: string;
   asOf: string;
+  /** Sunrise Unix timestamp (seconds, UTC). From OWM sys.sunrise. */
+  sunriseUtc?: number | null;
+  /** Sunset Unix timestamp (seconds, UTC). From OWM sys.sunset. */
+  sunsetUtc?: number | null;
+  /** Timezone offset from UTC in seconds. From OWM timezone field. */
+  timezoneOffset?: number | null;
+  /** Day/night flag from OWM icon suffix. 'd' → true, 'n' → false. */
+  isDayTime?: boolean;
 }
 
 /** Gateway response shape */
@@ -77,6 +96,10 @@ interface GatewayWeatherResponse {
  *
  * FIXED: Now maps ALL fields from gateway response.
  * Previously only mapped tempC, emoji, condition - causing 0% humidity, 0 km/h wind.
+ *
+ * v3.1.0: Now pipes sunriseUtc, sunsetUtc, timezoneOffset, isDayTime through.
+ * Uses ?? null for sunrise/sunset/timezone (gateway may send null or omit).
+ * Uses ?? undefined for isDayTime so prompt generator can detect "unknown".
  */
 function toWeatherData(item: GatewayWeatherItem): ExchangeWeatherData {
   return {
@@ -87,6 +110,10 @@ function toWeatherData(item: GatewayWeatherItem): ExchangeWeatherData {
     humidity: item.humidity,
     windKmh: item.windSpeedKmh,
     description: item.description,
+    sunriseUtc: item.sunriseUtc ?? null,
+    sunsetUtc: item.sunsetUtc ?? null,
+    timezoneOffset: item.timezoneOffset ?? null,
+    isDayTime: item.isDayTime ?? undefined,
   };
 }
 
@@ -95,6 +122,9 @@ function toWeatherData(item: GatewayWeatherItem): ExchangeWeatherData {
  *
  * FIXED v3.0.1: ExchangeWeather now has humidity and windSpeedKmh.
  * Previously set undefined which caused 0%/0km/h on cards.
+ *
+ * v3.1.0: Day/night fields set to undefined — demo data has no sun times.
+ * Prompt generator will fall back to hour-based threshold when these are missing.
  */
 function demoToWeatherData(item: ExchangeWeather): ExchangeWeatherData {
   return {
@@ -109,6 +139,11 @@ function demoToWeatherData(item: ExchangeWeather): ExchangeWeatherData {
     // This absence is intentional: the prompt builder injects description
     // verbatim when present, making live prompts richer than demo.
     description: undefined,
+    // No sun times for demo data — prompt generator uses hour threshold fallback.
+    sunriseUtc: undefined,
+    sunsetUtc: undefined,
+    timezoneOffset: undefined,
+    isDayTime: undefined,
   };
 }
 

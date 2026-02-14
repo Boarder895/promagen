@@ -1,201 +1,471 @@
 {
   "$schema": "./schemas/wind.schema.json",
-  "version": "1.0.0",
+  "version": "3.0.1",
   "meta": {
     "domain": "weather",
     "category": "wind",
-    "totalPhrases": 80,
-    "description": "Wind-based energy and movement phrases. 10 ranges × 8 phrases each.",
-    "range": { "min": 0, "max": 100, "unit": "km/h" },
-    "updated": "2026-01-21"
+    "totalPhrases": 240,
+    "description": "CLEANED v2: Neutral wind descriptors only. 0–150 km/h in 5 km/h bins. Zero object references (no flags), no behaviour, no mood, no time or lighting. All phrases unique across bins for prompt diversity.",
+    "range": {
+      "min": 0,
+      "max": 150,
+      "unit": "km/h"
+    },
+    "updated": "2026-02-13",
+    "interval": "5 km/h bins",
+    "phrasesPerRange": 8,
+    "totalRanges": 30
   },
   "ranges": {
-    "calm": {
+    "range_0_to_5": {
       "min": 0,
-      "max": 4,
-      "label": "Calm",
+      "max": 5,
+      "label": "0–5 km/h",
       "phrases": [
-        "perfectly still calm",
-        "motionless tranquil air",
-        "windless serenity",
-        "absolute stillness",
-        "mirror-lake calm",
-        "smoke-rising-straight stillness",
-        "flag-hanging quiet",
-        "leaf-motionless peace"
+        "still-air air movement",
+        "still-air ambient airflow",
+        "still-air sustained wind intensity",
+        "still-air directional wind flow",
+        "still-air continuous air motion",
+        "still-air wind force in open air",
+        "still-air persistent airflow pressure",
+        "still-air overall wind energy"
       ]
     },
-    "light_air": {
+    "range_5_to_10": {
       "min": 5,
-      "max": 11,
-      "label": "Light Air",
+      "max": 10,
+      "label": "5–10 km/h",
       "phrases": [
-        "gentle light breeze",
-        "soft whisper wind",
-        "delicate air movement",
-        "subtle rustling",
-        "barely-felt breeze",
-        "face-touching gentle",
-        "hair-stirring softness",
-        "candle-flickering movement"
+        "barely-moving-air air movement",
+        "barely-moving-air ambient airflow",
+        "barely-moving-air sustained wind intensity",
+        "barely-moving-air directional wind flow",
+        "barely-moving-air continuous air motion",
+        "barely-moving-air wind force in open air",
+        "barely-moving-air persistent airflow pressure",
+        "barely-moving-air overall wind energy"
       ]
     },
-    "light_breeze": {
-      "min": 12,
-      "max": 19,
-      "label": "Light Breeze",
+    "range_10_to_15": {
+      "min": 10,
+      "max": 15,
+      "label": "10–15 km/h",
       "phrases": [
-        "moderate steady breeze",
-        "pleasant wind flow",
-        "comfortable air movement",
-        "refreshing gusts",
-        "leaf-rustling breeze",
-        "flag-stirring wind",
-        "wind-chime tinkling",
-        "grass-bending airflow"
+        "faint-airflow air movement",
+        "faint-airflow ambient airflow",
+        "faint-airflow sustained wind intensity",
+        "faint-airflow directional wind flow",
+        "faint-airflow continuous air motion",
+        "faint-airflow wind force in open air",
+        "faint-airflow persistent airflow pressure",
+        "faint-airflow overall wind energy"
       ]
     },
-    "gentle_breeze": {
+    "range_15_to_20": {
+      "min": 15,
+      "max": 20,
+      "label": "15–20 km/h",
+      "phrases": [
+        "light-airflow air movement",
+        "light-airflow ambient airflow",
+        "light-airflow sustained wind intensity",
+        "light-airflow directional wind flow",
+        "light-airflow continuous air motion",
+        "light-airflow wind force in open air",
+        "light-airflow persistent airflow pressure",
+        "light-airflow overall wind energy"
+      ]
+    },
+    "range_20_to_25": {
       "min": 20,
-      "max": 29,
-      "label": "Gentle Breeze",
+      "max": 25,
+      "label": "20–25 km/h",
       "phrases": [
-        "brisk gusty wind",
-        "energetic breeze",
-        "invigorating wind",
-        "hair-tousling gusts",
-        "small-branch moving",
-        "paper-lifting breeze",
-        "dust-raising wind",
-        "light-flag extending"
+        "gentle-airflow air movement",
+        "gentle-airflow ambient airflow",
+        "gentle-airflow sustained wind intensity",
+        "gentle-airflow directional wind flow",
+        "gentle-airflow continuous air motion",
+        "gentle-airflow wind force in open air",
+        "gentle-airflow persistent airflow pressure",
+        "gentle-airflow overall wind energy"
       ]
     },
-    "moderate_breeze": {
+    "range_25_to_30": {
+      "min": 25,
+      "max": 30,
+      "label": "25–30 km/h",
+      "phrases": [
+        "soft-breeze air movement",
+        "soft-breeze ambient airflow",
+        "soft-breeze sustained wind intensity",
+        "soft-breeze directional wind flow",
+        "soft-breeze continuous air motion",
+        "soft-breeze wind force in open air",
+        "soft-breeze persistent airflow pressure",
+        "soft-breeze overall wind energy"
+      ]
+    },
+    "range_30_to_35": {
       "min": 30,
-      "max": 39,
-      "label": "Moderate Breeze",
+      "max": 35,
+      "label": "30–35 km/h",
       "phrases": [
-        "strong powerful wind",
-        "forceful gusting breeze",
-        "robust wind energy",
-        "flag-snapping gusts",
-        "small-tree swaying",
-        "wave-forming wind",
-        "umbrella-challenging breeze",
-        "hat-holding weather"
+        "steady-breeze air movement",
+        "steady-breeze ambient airflow",
+        "steady-breeze sustained wind intensity",
+        "steady-breeze directional wind flow",
+        "steady-breeze continuous air motion",
+        "steady-breeze wind force in open air",
+        "steady-breeze persistent airflow pressure",
+        "steady-breeze overall wind energy"
       ]
     },
-    "fresh_breeze": {
+    "range_35_to_40": {
+      "min": 35,
+      "max": 40,
+      "label": "35–40 km/h",
+      "phrases": [
+        "firm-breeze air movement",
+        "firm-breeze ambient airflow",
+        "firm-breeze sustained wind intensity",
+        "firm-breeze directional wind flow",
+        "firm-breeze continuous air motion",
+        "firm-breeze wind force in open air",
+        "firm-breeze persistent airflow pressure",
+        "firm-breeze overall wind energy"
+      ]
+    },
+    "range_40_to_45": {
       "min": 40,
-      "max": 49,
-      "label": "Fresh Breeze",
+      "max": 45,
+      "label": "40–45 km/h",
       "phrases": [
-        "very strong fierce wind",
-        "intense gusting force",
-        "tree-bending breeze",
-        "walking-challenging wind",
-        "white-cap forming",
-        "wire-whistling gusts",
-        "resistance-meeting walking",
-        "clothing-pressing force"
+        "brisk-breeze air movement",
+        "brisk-breeze ambient airflow",
+        "brisk-breeze sustained wind intensity",
+        "brisk-breeze directional wind flow",
+        "brisk-breeze continuous air motion",
+        "brisk-breeze wind force in open air",
+        "brisk-breeze persistent airflow pressure",
+        "brisk-breeze overall wind energy"
       ]
     },
-    "strong_breeze": {
+    "range_45_to_50": {
+      "min": 45,
+      "max": 50,
+      "label": "45–50 km/h",
+      "phrases": [
+        "strong-breeze air movement",
+        "strong-breeze ambient airflow",
+        "strong-breeze sustained wind intensity",
+        "strong-breeze directional wind flow",
+        "strong-breeze continuous air motion",
+        "strong-breeze wind force in open air",
+        "strong-breeze persistent airflow pressure",
+        "strong-breeze overall wind energy"
+      ]
+    },
+    "range_50_to_55": {
       "min": 50,
-      "max": 61,
-      "label": "Strong Breeze",
+      "max": 55,
+      "label": "50–55 km/h",
       "phrases": [
-        "gale-force strong wind",
-        "severe wind intensity",
-        "umbrella-destroying gusts",
-        "debris-moving force",
-        "large-branch breaking",
-        "sign-shaking wind",
-        "difficult-walking conditions",
-        "structural-creaking gusts"
+        "stiff-wind air movement",
+        "stiff-wind ambient airflow",
+        "stiff-wind sustained wind intensity",
+        "stiff-wind directional wind flow",
+        "stiff-wind continuous air motion",
+        "stiff-wind wind force in open air",
+        "stiff-wind persistent airflow pressure",
+        "stiff-wind overall wind energy"
       ]
     },
-    "near_gale": {
-      "min": 62,
-      "max": 74,
-      "label": "Near Gale",
+    "range_55_to_60": {
+      "min": 55,
+      "max": 60,
+      "label": "55–60 km/h",
       "phrases": [
-        "storm-force violent wind",
-        "dangerous wind power",
-        "damage-causing gusts",
-        "structural-testing force",
-        "whole-tree motion",
-        "inconvenient-walking wind",
-        "roof-tile threatening",
-        "fence-panel testing"
+        "hard-wind air movement",
+        "hard-wind ambient airflow",
+        "hard-wind sustained wind intensity",
+        "hard-wind directional wind flow",
+        "hard-wind continuous air motion",
+        "hard-wind wind force in open air",
+        "hard-wind persistent airflow pressure",
+        "hard-wind overall wind energy"
       ]
     },
-    "gale": {
+    "range_60_to_65": {
+      "min": 60,
+      "max": 65,
+      "label": "60–65 km/h",
+      "phrases": [
+        "forceful-wind air movement",
+        "forceful-wind ambient airflow",
+        "forceful-wind sustained wind intensity",
+        "forceful-wind directional wind flow",
+        "forceful-wind continuous air motion",
+        "forceful-wind wind force in open air",
+        "forceful-wind persistent airflow pressure",
+        "forceful-wind overall wind energy"
+      ]
+    },
+    "range_65_to_70": {
+      "min": 65,
+      "max": 70,
+      "label": "65–70 km/h",
+      "phrases": [
+        "powerful-wind air movement",
+        "powerful-wind ambient airflow",
+        "powerful-wind sustained wind intensity",
+        "powerful-wind directional wind flow",
+        "powerful-wind continuous air motion",
+        "powerful-wind wind force in open air",
+        "powerful-wind persistent airflow pressure",
+        "powerful-wind overall wind energy"
+      ]
+    },
+    "range_70_to_75": {
+      "min": 70,
+      "max": 75,
+      "label": "70–75 km/h",
+      "phrases": [
+        "very-strong-wind air movement",
+        "very-strong-wind ambient airflow",
+        "very-strong-wind sustained wind intensity",
+        "very-strong-wind directional wind flow",
+        "very-strong-wind continuous air motion",
+        "very-strong-wind wind force in open air",
+        "very-strong-wind persistent airflow pressure",
+        "very-strong-wind overall wind energy"
+      ]
+    },
+    "range_75_to_80": {
       "min": 75,
-      "max": 88,
-      "label": "Gale",
+      "max": 80,
+      "label": "75–80 km/h",
       "phrases": [
-        "severe storm wind",
-        "destructive wind force",
-        "hurricane-adjacent gusts",
-        "emergency-level power",
-        "tree-uprooting potential",
-        "building-damage risk",
-        "travel-impossible conditions",
-        "shelter-seeking urgency"
+        "near-gale air movement",
+        "near-gale ambient airflow",
+        "near-gale sustained wind intensity",
+        "near-gale directional wind flow",
+        "near-gale continuous air motion",
+        "near-gale wind force in open air",
+        "near-gale persistent airflow pressure",
+        "near-gale overall wind energy"
       ]
     },
-    "hurricane": {
-      "min": 89,
-      "max": 100,
-      "label": "Hurricane Force",
+    "range_80_to_85": {
+      "min": 80,
+      "max": 85,
+      "label": "80–85 km/h",
       "phrases": [
-        "hurricane-force extreme wind",
-        "catastrophic wind power",
-        "life-threatening gusts",
-        "apocalyptic wind force",
-        "total-devastation potential",
-        "civilization-pausing wind",
-        "nature-fury unleashed",
-        "unstoppable atmospheric violence"
+        "gale-force air movement",
+        "gale-force ambient airflow",
+        "gale-force sustained wind intensity",
+        "gale-force directional wind flow",
+        "gale-force continuous air motion",
+        "gale-force wind force in open air",
+        "gale-force persistent airflow pressure",
+        "gale-force overall wind energy"
+      ]
+    },
+    "range_85_to_90": {
+      "min": 85,
+      "max": 90,
+      "label": "85–90 km/h",
+      "phrases": [
+        "strong-gale air movement",
+        "strong-gale ambient airflow",
+        "strong-gale sustained wind intensity",
+        "strong-gale directional wind flow",
+        "strong-gale continuous air motion",
+        "strong-gale wind force in open air",
+        "strong-gale persistent airflow pressure",
+        "strong-gale overall wind energy"
+      ]
+    },
+    "range_90_to_95": {
+      "min": 90,
+      "max": 95,
+      "label": "90–95 km/h",
+      "phrases": [
+        "severe-gale air movement",
+        "severe-gale ambient airflow",
+        "severe-gale sustained wind intensity",
+        "severe-gale directional wind flow",
+        "severe-gale continuous air motion",
+        "severe-gale wind force in open air",
+        "severe-gale persistent airflow pressure",
+        "severe-gale overall wind energy"
+      ]
+    },
+    "range_95_to_100": {
+      "min": 95,
+      "max": 100,
+      "label": "95–100 km/h",
+      "phrases": [
+        "violent-gale air movement",
+        "violent-gale ambient airflow",
+        "violent-gale sustained wind intensity",
+        "violent-gale directional wind flow",
+        "violent-gale continuous air motion",
+        "violent-gale wind force in open air",
+        "violent-gale persistent airflow pressure",
+        "violent-gale overall wind energy"
+      ]
+    },
+    "range_100_to_105": {
+      "min": 100,
+      "max": 105,
+      "label": "100–105 km/h",
+      "phrases": [
+        "storm-force air movement",
+        "storm-force ambient airflow",
+        "storm-force sustained wind intensity",
+        "storm-force directional wind flow",
+        "storm-force continuous air motion",
+        "storm-force wind force in open air",
+        "storm-force persistent airflow pressure",
+        "storm-force overall wind energy"
+      ]
+    },
+    "range_105_to_110": {
+      "min": 105,
+      "max": 110,
+      "label": "105–110 km/h",
+      "phrases": [
+        "severe-storm air movement",
+        "severe-storm ambient airflow",
+        "severe-storm sustained wind intensity",
+        "severe-storm directional wind flow",
+        "severe-storm continuous air motion",
+        "severe-storm wind force in open air",
+        "severe-storm persistent airflow pressure",
+        "severe-storm overall wind energy"
+      ]
+    },
+    "range_110_to_115": {
+      "min": 110,
+      "max": 115,
+      "label": "110–115 km/h",
+      "phrases": [
+        "violent-storm air movement",
+        "violent-storm ambient airflow",
+        "violent-storm sustained wind intensity",
+        "violent-storm directional wind flow",
+        "violent-storm continuous air motion",
+        "violent-storm wind force in open air",
+        "violent-storm persistent airflow pressure",
+        "violent-storm overall wind energy"
+      ]
+    },
+    "range_115_to_120": {
+      "min": 115,
+      "max": 120,
+      "label": "115–120 km/h",
+      "phrases": [
+        "extreme-storm air movement",
+        "extreme-storm ambient airflow",
+        "extreme-storm sustained wind intensity",
+        "extreme-storm directional wind flow",
+        "extreme-storm continuous air motion",
+        "extreme-storm wind force in open air",
+        "extreme-storm persistent airflow pressure",
+        "extreme-storm overall wind energy"
+      ]
+    },
+    "range_120_to_125": {
+      "min": 120,
+      "max": 125,
+      "label": "120–125 km/h",
+      "phrases": [
+        "hurricane-grade air movement",
+        "hurricane-grade ambient airflow",
+        "hurricane-grade sustained wind intensity",
+        "hurricane-grade directional wind flow",
+        "hurricane-grade continuous air motion",
+        "hurricane-grade wind force in open air",
+        "hurricane-grade persistent airflow pressure",
+        "hurricane-grade overall wind energy"
+      ]
+    },
+    "range_125_to_130": {
+      "min": 125,
+      "max": 130,
+      "label": "125–130 km/h",
+      "phrases": [
+        "ferocious-wind air movement",
+        "ferocious-wind ambient airflow",
+        "ferocious-wind sustained wind intensity",
+        "ferocious-wind directional wind flow",
+        "ferocious-wind continuous air motion",
+        "ferocious-wind wind force in open air",
+        "ferocious-wind persistent airflow pressure",
+        "ferocious-wind overall wind energy"
+      ]
+    },
+    "range_130_to_135": {
+      "min": 130,
+      "max": 135,
+      "label": "130–135 km/h",
+      "phrases": [
+        "brutal-wind air movement",
+        "brutal-wind ambient airflow",
+        "brutal-wind sustained wind intensity",
+        "brutal-wind directional wind flow",
+        "brutal-wind continuous air motion",
+        "brutal-wind wind force in open air",
+        "brutal-wind persistent airflow pressure",
+        "brutal-wind overall wind energy"
+      ]
+    },
+    "range_135_to_140": {
+      "min": 135,
+      "max": 140,
+      "label": "135–140 km/h",
+      "phrases": [
+        "relentless-wind air movement",
+        "relentless-wind ambient airflow",
+        "relentless-wind sustained wind intensity",
+        "relentless-wind directional wind flow",
+        "relentless-wind continuous air motion",
+        "relentless-wind wind force in open air",
+        "relentless-wind persistent airflow pressure",
+        "relentless-wind overall wind energy"
+      ]
+    },
+    "range_140_to_145": {
+      "min": 140,
+      "max": 145,
+      "label": "140–145 km/h",
+      "phrases": [
+        "overwhelming-wind air movement",
+        "overwhelming-wind ambient airflow",
+        "overwhelming-wind sustained wind intensity",
+        "overwhelming-wind directional wind flow",
+        "overwhelming-wind continuous air motion",
+        "overwhelming-wind wind force in open air",
+        "overwhelming-wind persistent airflow pressure",
+        "overwhelming-wind overall wind energy"
+      ]
+    },
+    "range_145_to_150": {
+      "min": 145,
+      "max": 150,
+      "label": "145–150 km/h",
+      "phrases": [
+        "maximum-wind air movement",
+        "maximum-wind ambient airflow",
+        "maximum-wind sustained wind intensity",
+        "maximum-wind directional wind flow",
+        "maximum-wind continuous air motion",
+        "maximum-wind wind force in open air",
+        "maximum-wind persistent airflow pressure",
+        "maximum-wind overall wind energy"
       ]
     }
-  },
-  "contextual": {
-    "stormy": [
-      "driving storm wind",
-      "relentless tempest gusts",
-      "punishing storm-front wind",
-      "thunder-accompanying force",
-      "lightning-paired gusts"
-    ],
-    "rainy": [
-      "rain-laden breeze",
-      "wet-wind slapping",
-      "precipitation-carrying gusts",
-      "sideways-rain driving",
-      "umbrella-inverting force"
-    ],
-    "cold": [
-      "biting cold wind",
-      "cutting icy breeze",
-      "bone-chilling gusts",
-      "wind-chill factor",
-      "freezing wind exposure"
-    ],
-    "hot": [
-      "warm desert wind",
-      "dry scorching breeze",
-      "furnace-blast gusts",
-      "heat-wave carrying",
-      "sirocco-like warmth"
-    ],
-    "coastal": [
-      "sea-breeze freshness",
-      "offshore wind pattern",
-      "salt-spray carrying",
-      "maritime gusting",
-      "coastal gale energy"
-    ]
   }
 }

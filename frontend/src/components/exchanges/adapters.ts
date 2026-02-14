@@ -36,12 +36,12 @@ import type { Exchange } from '@/data/exchanges/types';
 export function toCardData(
   exchange: Exchange,
   weather?: ExchangeWeatherData | null,
-  indexQuote?: IndexQuoteData | null
+  indexQuote?: IndexQuoteData | null,
 ): ExchangeCardData {
   return {
     id: exchange.id,
-    // Prefer 'exchange' field (full name), fall back to 'name' alias, then 'id'
-    name: exchange.exchange || exchange.name || exchange.id,
+    // Prefer 'name' field (short abbreviation), fall back to 'exchange' (full), then 'id'
+    name: exchange.name || exchange.exchange || exchange.id,
     // Short label for space-constrained UI (falls back to name in component)
     ribbonLabel: exchange.ribbonLabel,
     city: exchange.city ?? '',
@@ -55,6 +55,9 @@ export function toCardData(
     indexQuote: indexQuote ?? null,
     // Pass through hoverColor from catalog
     hoverColor: exchange.hoverColor,
+    // Coordinates for astronomical sunrise/sunset fallback in emoji tooltip
+    latitude: exchange.latitude,
+    longitude: exchange.longitude,
   };
 }
 
@@ -68,7 +71,7 @@ export function toCardData(
  */
 export function fromUiExchange(
   exchange: Exchange,
-  weather?: ExchangeWeatherData | null
+  weather?: ExchangeWeatherData | null,
 ): ExchangeCardData {
   return toCardData(exchange, weather);
 }
@@ -79,7 +82,7 @@ export function fromUiExchange(
  */
 export function fromOrderExchange(
   exchange: Exchange,
-  weather?: ExchangeWeatherData | null
+  weather?: ExchangeWeatherData | null,
 ): ExchangeCardData {
   return toCardData(exchange, weather);
 }
@@ -90,29 +93,31 @@ export function fromOrderExchange(
  */
 export function fromCatalogEntry(
   entry: Record<string, unknown>,
-  weather?: ExchangeWeatherData | null
+  weather?: ExchangeWeatherData | null,
 ): ExchangeCardData {
   // Extract marketstack indexName - handle both legacy and new formats
   const marketstack = entry.marketstack as Record<string, unknown> | undefined;
   // New format uses defaultIndexName, legacy uses indexName
-  const indexName = typeof marketstack?.defaultIndexName === 'string' 
-    ? marketstack.defaultIndexName 
-    : typeof marketstack?.indexName === 'string' 
-      ? marketstack.indexName 
-      : undefined;
+  const indexName =
+    typeof marketstack?.defaultIndexName === 'string'
+      ? marketstack.defaultIndexName
+      : typeof marketstack?.indexName === 'string'
+        ? marketstack.indexName
+        : undefined;
 
   return {
     id: String(entry.id ?? ''),
-    name: String(entry.exchange ?? entry.name ?? entry.id ?? ''),
+    name: String(entry.name ?? entry.exchange ?? entry.id ?? ''),
     ribbonLabel: typeof entry.ribbonLabel === 'string' ? entry.ribbonLabel : undefined,
     city: String(entry.city ?? ''),
     countryCode: String(entry.iso2 ?? entry.countryCode ?? '').toUpperCase(),
     tz: String(entry.tz ?? ''),
-    hoursTemplate:
-      typeof entry.hoursTemplate === 'string' ? entry.hoursTemplate : undefined,
+    hoursTemplate: typeof entry.hoursTemplate === 'string' ? entry.hoursTemplate : undefined,
     weather: weather ?? null,
     indexName,
     indexQuote: null,
     hoverColor: typeof entry.hoverColor === 'string' ? entry.hoverColor : undefined,
+    latitude: typeof entry.latitude === 'number' ? entry.latitude : undefined,
+    longitude: typeof entry.longitude === 'number' ? entry.longitude : undefined,
   };
 }

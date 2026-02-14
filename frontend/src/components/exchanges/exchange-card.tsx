@@ -14,6 +14,11 @@
 // - Everything scales proportionally together
 // - ResizeObserver recalculates on any container resize
 //
+// UPDATES (14 Feb 2026 - SHORT NAMES):
+// - Catalog: 89→84 entries (5 duplicates removed), all ribbonLabel fields removed
+// - New `name` field on every entry = official short abbreviation (NYSE, LSE, etc.)
+// - displayName now resolves to short `name` field (no more ribbonLabel override)
+//
 // UPDATES (5 Feb 2026 - SNAP-FIT v2):
 // - REPLACED: Per-element FitText → card-level CSS variable snap-fit
 // - All text now scales proportionally via --exchange-font
@@ -34,8 +39,10 @@ import Flag from '@/components/ui/flag';
 import { LedClock } from './time/led-clock';
 import { MarketStatusIndicator } from './time/market-status';
 import { WeatherPromptTooltip } from './weather/weather-prompt-tooltip';
+import { WeatherEmojiTooltip } from './weather/weather-emoji-tooltip';
 import type { ExchangeWeatherDisplay } from '@/lib/weather/weather-types';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
+import { getMoonPhase } from '@/lib/weather/weather-prompt-generator';
 
 // ============================================================================
 // SNAP-FIT FONT CONSTANTS
@@ -65,6 +72,10 @@ interface ExtendedWeatherData {
   windKmh?: number | null;
   windSpeedKmh?: number | null;
   description?: string | null;
+  sunriseUtc?: number | null;
+  sunsetUtc?: number | null;
+  timezoneOffset?: number | null;
+  isDayTime?: boolean | null;
 }
 
 // ============================================================================
@@ -158,7 +169,7 @@ const IndexRowWithData = React.memo(function IndexRowWithData({ quote }: IndexRo
   )})`;
 
   return (
-    <div className="w-full px-4 py-2.5" role="group" aria-label={srText}>
+    <div className="w-full px-4 py-1" role="group" aria-label={srText}>
       {/* All index data on ONE line - snaps with card */}
       <span
         className="block font-medium text-slate-300 whitespace-nowrap"
@@ -192,7 +203,7 @@ const IndexRowPlaceholder = React.memo(function IndexRowPlaceholder({
   indexName,
 }: IndexRowPlaceholderProps) {
   return (
-    <div className="w-full px-4 py-2.5" role="group" aria-label={`${indexName}: market closed`}>
+    <div className="w-full px-4 py-1" role="group" aria-label={`${indexName}: market closed`}>
       {/* Index name + status on ONE line - snaps with card */}
       <span
         className="block font-medium text-slate-300 whitespace-nowrap"
@@ -218,17 +229,112 @@ interface WeatherSectionProps {
   promptTier?: PromptTier;
   isPro?: boolean;
   railPosition?: 'left' | 'right';
+  /** Latitude for astronomical sunrise/sunset fallback */
+  latitude?: number | null;
+  /** Longitude for astronomical sunrise/sunset fallback */
+  longitude?: number | null;
+}
+
+/**
+ * Determine whether it is currently nighttime at an exchange.
+ *
+ * Priority cascade (most accurate real-time → least):
+ * 1. Sunrise/sunset times + timezone offset → local time-of-day comparison
+ *    Uses Date.now() so always current. Modular arithmetic so it works
+ *    even when weather data is hours old (sunrise/sunset barely change day-to-day).
+ * 2. IANA timezone string → local hour check (before 6am / after 7pm)
+ * 3. isDayTime boolean from gateway (LAST — it's a stale snapshot from fetch time,
+ *    can be hours old if the batch hasn't refreshed since daytime)
+ *
+ * Returns `true` when it is night (moon emoji should show).
+ */
+function resolveIsNight(
+  isDayTime: boolean | null,
+  tz: string,
+  sunriseUtc: number | null,
+  sunsetUtc: number | null,
+  timezoneOffset: number | null,
+): boolean {
+  // ── Tier 1: Sunrise/sunset → local time-of-day ────────────────────
+  // Most accurate: OWM provides precise sunrise/sunset for this city.
+  // We extract the time-of-day portion (seconds since local midnight)
+  // so it doesn't matter what *date* the data was fetched on — sunrise
+  // and sunset times shift by only seconds day-to-day.
+  if (
+    typeof sunriseUtc === 'number' &&
+    typeof sunsetUtc === 'number' &&
+    typeof timezoneOffset === 'number'
+  ) {
+    const SECONDS_PER_DAY = 86400;
+    const nowUtc = Math.floor(Date.now() / 1000);
+
+    // Convert to seconds-since-local-midnight (double-mod for negative offsets)
+    const nowLocal =
+      (((nowUtc + timezoneOffset) % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY;
+    const sunriseLocal =
+      (((sunriseUtc + timezoneOffset) % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY;
+    const sunsetLocal =
+      (((sunsetUtc + timezoneOffset) % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY;
+
+    // Day = between sunrise and sunset (local time-of-day)
+    return nowLocal < sunriseLocal || nowLocal > sunsetLocal;
+  }
+
+  // ── Tier 2: IANA timezone → local hour (always available) ──────────
+  if (tz) {
+    try {
+      const localHourStr = new Date().toLocaleString('en-GB', {
+        timeZone: tz,
+        hour: 'numeric',
+        hour12: false,
+      });
+      const localHour = parseInt(localHourStr, 10);
+      if (!isNaN(localHour)) {
+        // Before 6am or after 7pm → night
+        return localHour < 6 || localHour >= 19;
+      }
+    } catch (_e) {
+      // Invalid tz string — fall through
+    }
+  }
+
+  // ── Tier 3: Gateway isDayTime flag (stale snapshot — last resort) ──
+  // This is a snapshot from when OWM was queried (up to 4 hours ago).
+  // Only used when sunrise/sunset data AND timezone are both missing.
+  if (isDayTime === true) return false;
+  if (isDayTime === false) return true;
+
+  // ── Fallback: assume daytime (safest default) ──────────────────────
+  return false;
 }
 
 const WeatherSection = React.memo(function WeatherSection({
-  city: _city,
-  tz: _tz,
+  city,
+  tz,
   weather,
   promptTier: _promptTier = 4,
   isPro: _isPro = false,
-  railPosition: _railPosition = 'left',
+  railPosition = 'left',
+  latitude,
+  longitude,
 }: WeatherSectionProps) {
-  const { tempC, tempF, emoji, humidity, windKmh } = weather;
+  const {
+    tempC,
+    tempF,
+    emoji,
+    humidity,
+    windKmh,
+    isDayTime,
+    sunriseUtc,
+    sunsetUtc,
+    timezoneOffset,
+    description,
+  } = weather;
+
+  // At night: swap weather emoji for moon phase emoji
+  // Uses 3-tier fallback: gateway flag → sunrise/sunset → timezone hour
+  const isNight = resolveIsNight(isDayTime, tz, sunriseUtc, sunsetUtc, timezoneOffset);
+  const displayEmoji = isNight ? getMoonPhase().emoji : emoji;
 
   if (tempC === null) {
     return (
@@ -243,11 +349,24 @@ const WeatherSection = React.memo(function WeatherSection({
 
   return (
     <div className="flex flex-col gap-2 w-full px-1">
-      {/* Row 1: Temperature + Weather emoji - centered */}
+      {/* Row 1: Temperature + Weather/Moon emoji with tooltip - centered */}
       <div className="text-center whitespace-nowrap">
         <span className="tabular-nums text-slate-200" style={{ fontSize: '0.85em' }}>
           {Math.round(tempC)}°C / {Math.round(tempF ?? (tempC * 9) / 5 + 32)}°F{' '}
-          <span style={{ fontSize: '1.3em' }}>{emoji || ''}</span>
+          <WeatherEmojiTooltip
+            city={city}
+            tz={tz}
+            description={description ?? null}
+            isNight={isNight}
+            tempC={tempC}
+            sunriseUtc={sunriseUtc}
+            sunsetUtc={sunsetUtc}
+            latitude={latitude}
+            longitude={longitude}
+            tooltipPosition={railPosition}
+          >
+            <span style={{ fontSize: '1.3em' }}>{displayEmoji || ''}</span>
+          </WeatherEmojiTooltip>
         </span>
       </div>
 
@@ -331,6 +450,8 @@ export const ExchangeCard = React.memo(function ExchangeCard({
   const weather = ex.weather ?? null;
   const indexQuote = ex.indexQuote;
   const hoverColor = ex.hoverColor;
+  const latitude = ex.latitude;
+  const longitude = ex.longitude;
 
   const name = ex.name ?? ex.exchange ?? ex.city ?? ex.id;
   const countryCode = ex.countryCode ?? ex.iso2 ?? '';
@@ -366,6 +487,10 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         humidity: extWeather.humidity ?? null,
         windKmh: extWeather.windKmh ?? extWeather.windSpeedKmh ?? null,
         description: extWeather.description ?? extWeather.condition ?? null,
+        sunriseUtc: extWeather.sunriseUtc ?? null,
+        sunsetUtc: extWeather.sunsetUtc ?? null,
+        timezoneOffset: extWeather.timezoneOffset ?? null,
+        isDayTime: extWeather.isDayTime ?? null,
       }
     : {
         tempC: null,
@@ -375,6 +500,10 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         humidity: null,
         windKmh: null,
         description: null,
+        sunriseUtc: null,
+        sunsetUtc: null,
+        timezoneOffset: null,
+        isDayTime: null,
       };
 
   return (
@@ -419,7 +548,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         {/* LEFT SECTION */}
         <div className="flex-[3] flex flex-col min-w-0">
           {/* TOP ROW: Exchange Name + Clock */}
-          <div className="grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-3">
+          <div className="grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-1">
             {/* Exchange Name + City + Flag */}
             <div className="min-w-0">
               {/* Exchange name - snaps with card */}
@@ -431,7 +560,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
               </span>
 
               <div className="mt-1 flex items-center gap-2">
-                {/* City name - snaps with card (was fixed text-base) */}
+                {/* City name - snaps with card */}
                 <span className="text-slate-400 whitespace-nowrap" style={{ fontSize: '0.65em' }}>
                   {city}
                 </span>
@@ -484,7 +613,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
             ) : hasIndexName ? (
               <IndexRowPlaceholder indexName={indexName} />
             ) : (
-              <div className="px-4 py-2.5" />
+              <div className="px-4 py-1" />
             )}
           </div>
         </div>
@@ -494,7 +623,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
 
         {/* RIGHT BOX: Weather */}
         <div className="flex-1 flex flex-col min-w-[100px] max-w-[140px]">
-          <div className="flex-1 flex items-start justify-center px-1 py-3">
+          <div className="flex-1 flex items-start justify-center px-1 py-1">
             <WeatherSection
               city={city}
               tz={tz}
@@ -502,6 +631,8 @@ export const ExchangeCard = React.memo(function ExchangeCard({
               promptTier={promptTier}
               isPro={isPro}
               railPosition={railPosition}
+              latitude={latitude}
+              longitude={longitude}
             />
           </div>
         </div>

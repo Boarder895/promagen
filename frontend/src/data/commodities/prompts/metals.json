@@ -1,0 +1,1394 @@
+{
+  "category": "metals",
+  "categoryLabel": "Metals",
+  "commodityCount": 28,
+  "stageLabels": {
+    "origin": "Origin / Ore Body",
+    "extraction": "Mining / Extraction",
+    "processing": "Smelting / Refining",
+    "finished": "Finished / Trade-ready"
+  },
+  "commodities": {
+    "aluminum": {
+      "displayName": "Aluminium",
+      "intro": "Aluminium is the world's most produced non-ferrous metal, refined from bauxite ore through the Bayer process (producing alumina) and then the Hall-H\u00e9roult electrolytic smelting process. Bauxite is a red-brown laterite ore found in tropical and subtropical regions. Aluminium production is extremely energy-intensive \u2014 smelters locate near cheap hydroelectric or coal power. China produces over 55% of global aluminium. The LME aluminium contract is the global benchmark.",
+      "materials": "Red-brown bauxite ore with pisolitic texture, white alumina powder, molten silvery metal in electrolytic pot, solid silvery ingot with slight blue-white sheen, thin rolled aluminium sheet, extruded profile cross-section, recycled crushed cans.",
+      "stages": {
+        "origin": {
+          "subject": "Open-pit bauxite mine in tropical laterite terrain, bright red-brown earth being excavated by large mining trucks, exposed ore horizon showing the characteristic pisolitic (pea-sized nodule) texture of bauxite",
+          "lens": "24mm f/8, wide mining landscape showing the vivid red-brown colour of the ore body contrasting with green tropical vegetation at the pit margins, equipment providing scale",
+          "enhancer": "Vivid red-brown bauxite ore with pisolitic nodule texture, terraced pit benches in tropical laterite, mining haul trucks on ramp roads, green rainforest edge at the pit boundary, tropical storm clouds building",
+          "environments": {
+            "_default": "Open-pit bauxite mine in tropical terrain, red-brown ore, lush green vegetation surrounding, processing plant visible on the pit rim, tropical wet climate",
+            "AU": "Weipa bauxite mine in Cape York, flat coastal deposit, red ore against turquoise Gulf of Carpentaria waters, ship loader at the port, eucalyptus scrub surrounding, crocodile warning signs",
+            "GN": "Guinean bauxite mine in Bok\u00e9 or Sangaredi, vivid red laterite, tropical vegetation, Compagnie des Bauxites de Guin\u00e9e operation, rail line to Kamsar port, West African tropical landscape",
+            "BR": "Par\u00e1 state bauxite mine at Trombetas, Amazon rainforest clearing, bright red ore, rehabilitated forest on previously mined areas, river barge loading for transport to the alumina refinery",
+            "JM": "Jamaican bauxite mine in the interior highlands, red terra rossa soil, lush tropical vegetation, mining lease beside small farming communities, Caribbean setting"
+          }
+        },
+        "extraction": {
+          "subject": "Bayer process alumina refinery, massive pressure digesters dissolving bauxite in caustic soda, red mud waste being separated from the alumina-bearing liquor, calciner kiln producing white alumina powder",
+          "lens": "35mm f/5.6, industrial refinery panorama, digesters, settling tanks, calciners in sequence, showing the scale of the Bayer process, red mud pond visible beyond the refinery",
+          "enhancer": "Massive pressure digester vessels, red mud slurry being pumped to tailings, white alumina powder discharging from the calciner, caustic soda piping, heat exchangers, red staining on surfaces from bauxite residue",
+          "environments": {
+            "_default": "Alumina refinery, Bayer process plant with digesters and calciners, red mud disposal area, white alumina storage, port loading for shipment to smelters",
+            "AU": "Gladstone QAL refinery in Queensland, bauxite shipped from Weipa, massive refinery on the harbour, alumina exported to smelters worldwide, industrial harbour setting"
+          }
+        },
+        "processing": {
+          "subject": "Aluminium smelter potroom, long row of Hall-H\u00e9roult electrolytic reduction cells glowing orange through the crust, overhead crane servicing the pots, intense heat and fluorescent lighting",
+          "lens": "24mm f/5.6, wide potroom interior showing the dramatic row of glowing cells receding into the distance, strong perspective lines, industrial cathedral atmosphere, orange glow and fluorescent light mixing",
+          "enhancer": "Electrolytic cells with orange-glowing molten aluminium visible through crust breaks, carbon anodes being consumed, overhead crane moving an anode, intense heat radiating, pot fume extraction hoods, massive electrical bus bars running between cells",
+          "environments": {
+            "_default": "Aluminium smelter potroom, rows of reduction cells, anode production facility, cast house, massive power supply, energy-intensive industrial setting",
+            "IS": "Icelandic smelter powered by geothermal and hydro energy, Alcoa or Rio Tinto Alcan facility, dramatic Icelandic volcanic landscape surrounding, sustainable energy source for energy-intensive smelting",
+            "CN": "Chinese smelter in Xinjiang or Shandong, coal-powered, massive scale, hundreds of pots in the potroom, Chinese industrial zone, largest national producer"
+          }
+        },
+        "finished": {
+          "subject": "Stack of bright silvery aluminium ingots freshly cast, T-bar or sow ingots with the smelter brand and LME registration stamps, warehouse stacking for delivery or exchange storage",
+          "lens": "50mm f/4, product warehouse shot, ingot stack in foreground showing brand stamps and surface detail, LME warehouse stretching behind with thousands of tonnes stacked",
+          "enhancer": "Bright silvery aluminium ingots with blue-white sheen, cast surface texture, smelter brand stamp and weight, LME warrant tag attached, forklift stacking, warehouse depth perspective, tonnes of metal stored",
+          "environments": {
+            "_default": "LME-registered warehouse, aluminium ingots stacked by brand, warrant tags, forklift operations, industrial warehouse in a port city",
+            "NL": "Rotterdam LME warehouse, aluminium ingots from global smelters, Europe's largest metal storage hub, port infrastructure surrounding, barge loading for European consumers",
+            "US": "Detroit or New Orleans LME warehouse, aluminium stacks, American automotive and beverage-can industry demand, industrial port setting"
+          }
+        }
+      }
+    },
+    "cobalt": {
+      "displayName": "Cobalt",
+      "intro": "Cobalt is a hard silvery-blue metal critical for lithium-ion battery cathodes (used in electric vehicles and electronics), superalloys for jet engines, and industrial catalysts. Over 70% of global cobalt is mined in the Democratic Republic of Congo, often as a byproduct of copper mining. Cobalt's supply concentration and role in the energy transition make it one of the most geopolitically sensitive metals. Refined cobalt is traded as metal cathodes, broken cathode pieces, or cobalt hydroxide intermediate.",
+      "materials": "Silvery-blue metallic surface with slight lustre, dark grey-black cobalt-bearing ore with copper green staining, blue cobalt oxide powder, shiny cathode plate, bright blue pigment, lithium-ion battery cell cross-section showing cathode layer.",
+      "stages": {
+        "origin": {
+          "subject": "Cobalt-copper open-pit mine in the Central African Copperbelt, terraced benches exposing dark ore with characteristic green malachite copper staining, heavy mining equipment working the benches",
+          "lens": "24mm f/8, wide mining landscape, deep terraced pit with dark ore and green copper staining, tropical vegetation at the pit margins, African mining operation scale",
+          "enhancer": "Dark grey-black ore with vivid green malachite and blue-green cobalt mineral staining, terraced pit benches, haul trucks on the ramp, tropical red laterite on the overburden, artisanal miners visible at smaller adjacent workings in some areas",
+          "environments": {
+            "_default": "Open-pit copper-cobalt mine in tropical Africa, deep terraced pit, dark ore with green staining, processing plant on the rim, tropical vegetation surrounding",
+            "CD": "Katanga province mine in the DRC, Glencore Mutanda or Tenke Fungurume, deep pit in the Copperbelt, artisanal mining communities nearby, tropical savanna, critical global cobalt supply",
+            "AU": "Murrin Murrin nickel-cobalt laterite mine in Western Australia, flat desert laterite deposit, acid leach processing, remote Goldfields location, red earth and scrubby vegetation"
+          }
+        },
+        "extraction": {
+          "subject": "Cobalt hydroxide precipitation circuit at a hydrometallurgical processing plant, green-blue cobalt hydroxide slurry being filtered and washed, filter cake accumulating on the press",
+          "lens": "50mm f/4, hydrometallurgical process interior, filter press as central element with green-blue hydroxide visible, chemical processing environment, piping and tanks surrounding",
+          "enhancer": "Green-blue cobalt hydroxide slurry being pressed through filter plates, wet filter cake building up, clear filtrate draining, acid-resistant lined tanks, chemical dosing pumps, safety shower stations, PPE-clad operators",
+          "environments": {
+            "_default": "Hydrometallurgical processing plant, solvent extraction, precipitation, filtration, cobalt hydroxide intermediate product, chemical processing environment",
+            "CD": "DRC processing facility producing cobalt hydroxide for export to Chinese refineries, containerised product for shipping via Durban or Dar es Salaam, tropical industrial setting"
+          }
+        },
+        "processing": {
+          "subject": "Cobalt electro-refining cell, dark electrolyte solution with cobalt cathode plates slowly growing on the steel blanks, refined cobalt plating out as a shiny silvery-blue deposit",
+          "lens": "50mm f/4, refinery interior, electrolytic cell showing cathode plates in the solution, silvery-blue cobalt visible on the plates, clean chemical processing environment",
+          "enhancer": "Rows of cathode blanks in dark electrolyte solution, silvery-blue cobalt deposit growing on the plates, electrical connections at the top, refined cathode being lifted out showing the metallic surface, chemical fumes extracted overhead",
+          "environments": {
+            "_default": "Cobalt refinery, electro-refining tankhouse, cathode stripping, washing and drying, packaging for sale, chemical refinery setting",
+            "CN": "Chinese cobalt refinery in Jiangsu or Zhejiang, processing DRC hydroxide into refined metal and chemicals, battery-grade cobalt sulphate production line adjacent, Chinese refining dominance",
+            "FI": "Freeport Cobalt (now Umicore) refinery in Kokkola, Finland, one of the largest outside China, Baltic coastal setting, European supply chain"
+          }
+        },
+        "finished": {
+          "subject": "Broken cobalt cathode pieces in a steel drum, silvery-blue metallic fragments with characteristic lustre, LME-grade branding visible, battery factory receiving the material",
+          "lens": "85mm f/3.5, product detail shot, cobalt cathode pieces showing the distinctive blue-silver colour and metallic fracture surfaces, drum and branding providing context",
+          "enhancer": "Silvery-blue cobalt cathode fragments with metallic lustre, characteristic blue tint distinguishing it from other metals, broken pieces showing crystalline fracture surface, steel drum with LME brand tag, battery-grade certification label",
+          "environments": {
+            "_default": "Metal trader's warehouse or battery factory receiving area, cobalt in drums, quality certificates, EV battery production context, strategic metal supply chain",
+            "CN": "Chinese battery gigafactory receiving cobalt, CATL or BYD facility, cobalt being weighed and tested before entering the cathode production line, electric vehicle supply chain endpoint"
+          }
+        }
+      }
+    },
+    "copper": {
+      "displayName": "Copper",
+      "intro": "Copper is the world's most important industrial conductor metal \u2014 essential for electrical wiring, motors, electronics, plumbing, and increasingly for EV motors and renewable energy systems. Mined primarily from porphyry copper deposits in massive open pits. Chile produces roughly 25% of global supply. The LME copper contract (Grade A cathode, 99.99% purity) is the global benchmark. Copper's conductivity, malleability, and corrosion resistance make it irreplaceable in modern infrastructure.",
+      "materials": "Dark grey-green ore with copper mineral specks, bright orange-red freshly exposed metal surface, green patina (verdigris) on aged copper, bright copper wire cross-section, electrolytic cathode plate with dendritic surface, turquoise chrysocolla mineral.",
+      "stages": {
+        "origin": {
+          "subject": "Massive open-pit copper mine, terraced benches spiralling down hundreds of metres into the earth, haul trucks appearing tiny on the ramp roads, vast scale of a world-class porphyry copper deposit",
+          "lens": "24mm f/11, epic wide shot from the pit rim looking down, concentric terraced benches creating dramatic geometry, trucks as tiny specks providing scale, enormous pit depth visible",
+          "enhancer": "Concentric terraced benches in grey-brown and green-stained rock, massive haul trucks reduced to specks by the pit scale, blast dust settling, water at the pit floor, ramp road spiralling down like a giant staircase",
+          "environments": {
+            "_default": "Massive open-pit copper mine, terraced benches, haul trucks, concentrator plant on the rim, tailings dam visible, semi-arid or mountainous terrain",
+            "CL": "Escondida or Chuquicamata in the Atacama Desert, world's largest copper mines, massive pit in the arid altiplano, Andes visible on the horizon, absolute desert surrounding, 3,000m altitude, thin air and intense UV",
+            "US": "Bingham Canyon (Kennecott) in Utah, the world's deepest open pit, Wasatch Mountains behind, Salt Lake City visible in the distance, snow on the pit rim in winter",
+            "PE": "Cerro Verde or Antamina in the Peruvian Andes, pit at high altitude, cloud forest below the mine site, mountain terrain, llama and alpaca on the nearby slopes",
+            "CD": "Kamoa-Kakula underground mine in the DRC Copperbelt, high-grade ore body, Ivanhoe Mines operation, tropical savanna above the underground workings, new development changing global supply"
+          }
+        },
+        "extraction": {
+          "subject": "Copper concentrator flotation cells, frothy green-grey copper mineral concentrate floating on the surface of agitated slurry, paddles sweeping the concentrate froth into launders",
+          "lens": "35mm f/4, concentrator interior, flotation cell row with frothy green surface, paddles operating, enough context to show the row of cells and the concentrator building",
+          "enhancer": "Green-grey copper sulphide froth rising in the flotation cells, mechanical paddles sweeping concentrate into launders, agitated slurry churning below, fine mist from the cells, concentrate thickener visible downstream, tailing stream departing",
+          "environments": {
+            "_default": "Copper concentrator building, ball mills, flotation cells, thickeners, concentrate filter, tailings pipeline, located near the open-pit mine",
+            "CL": "Escondida concentrator in the Atacama, one of the world's largest, processing 300,000+ tonnes per day, desert surroundings, pipeline carrying concentrate slurry to the port"
+          }
+        },
+        "processing": {
+          "subject": "Copper electro-refining tankhouse, rows of alternating anodes and cathodes submerged in blue-green copper sulphate electrolyte, pure copper plating onto cathode blanks over 10-14 days",
+          "lens": "24mm f/5.6, wide tankhouse interior, rows of cells with blue-green electrolyte creating strong perspective lines receding into the distance, warm copper tones on lifted cathodes",
+          "enhancer": "Blue-green copper sulphate electrolyte glowing between anode-cathode pairs, bright orange-copper colour of freshly stripped cathode being lifted by overhead crane, dendritic crystal surface on the cathode face, acidic mist in the air, thousands of cells in rows",
+          "environments": {
+            "_default": "Copper refinery tankhouse, electro-refining cells, cathode stripping, washing, stacking, LME-grade 99.99% copper production, industrial refinery",
+            "CL": "Codelco or BHP refinery in Chile, massive tankhouse, cathodes branded for LME registration, world's largest copper refining nation, desert industrial setting",
+            "JP": "Sumitomo or Mitsubishi refinery in Japan, precision electro-refining, high-purity cathode for electronics industry, Japanese industrial coastal city"
+          }
+        },
+        "finished": {
+          "subject": "Stack of bright copper cathodes in an LME warehouse, distinctive orange-red colour with crystalline surface texture, each cathode stamped with the refinery brand and weight, warehouse stretching deep",
+          "lens": "50mm f/4, warehouse product shot, cathode stack in foreground showing the bright copper colour and brand stamps, thousands of tonnes visible behind, LME warrant tags",
+          "enhancer": "Bright orange-red copper cathodes with dendritic crystal surface texture, refinery brand stamp (Codelco, BHP, Aurubis), LME warrant tag, banded stacks on timber dunnage, warehouse depth, warm copper colour dominating the frame",
+          "environments": {
+            "_default": "LME-registered warehouse, copper cathode stacks, warrant tags, industrial port warehouse, global metal trading hub",
+            "GB": "London or Liverpool LME warehouse, copper cathodes from Chilean and Japanese refineries, centuries of copper trading history, Dickensian warehouse district modernised",
+            "CN": "Shanghai bonded warehouse, copper cathodes for Chinese manufacturing, world's largest copper consumer, Yangshan port logistics, Chinese industrial demand"
+          }
+        }
+      }
+    },
+    "gallium": {
+      "displayName": "Gallium",
+      "intro": "Gallium is a soft silvery metal with the unusual property of melting just above room temperature (29.76\u00b0C) \u2014 it will melt in your hand. Critical for semiconductors (gallium arsenide and gallium nitride for LEDs, 5G communications, and military radar), gallium is almost entirely produced as a byproduct of aluminium refining from bauxite. China produces over 95% of global primary gallium, making it a strategically sensitive material subject to export controls.",
+      "materials": "Silvery liquid metal at room temperature, solid silvery-blue crystal at lower temperatures, tiny ingot or shot pellets in a glass vial, gallium arsenide wafer with mirror-like dark surface, LED chip die on a sapphire substrate, semiconductor cleanroom equipment.",
+      "stages": {
+        "origin": {
+          "subject": "Alumina refinery Bayer process liquor from which gallium is extracted as a trace byproduct, Bayer liquor circulating through the extraction circuit, gallium accumulating in the caustic stream over many cycles",
+          "lens": "50mm f/4, industrial process interior, Bayer process liquor piping and extraction equipment, chemical processing environment, gallium recovery as a secondary operation within the larger alumina refinery",
+          "enhancer": "Bayer process caustic liquor flowing through pipes, gallium extraction circuit branching off the main flow, ion exchange columns or solvent extraction contactors, trace element recovery from a bulk industrial stream, chemical processing environment",
+          "environments": {
+            "_default": "Alumina refinery with gallium recovery circuit, Bayer process plant, ion exchange or electrolytic gallium extraction as a byproduct operation, integrated within the larger refinery",
+            "CN": "Chinese alumina refinery in Shanxi or Henan province, gallium recovery circuit integrated into the Bayer process, world's dominant gallium source, Chinese industrial complex",
+            "JP": "Japanese alumina refinery in Yokohama or Tokuyama with gallium recovery circuit, integrated Bayer process extraction, Japanese metallurgical precision, coastal industrial city, secondary gallium supply outside China",
+            "DE": "German gallium recovery at an Aluminium Oxid Stade or similar refinery in Northern Germany, Bayer process byproduct extraction, European gallium source critical for semiconductor supply security, North Sea coast industrial zone"
+          }
+        },
+        "extraction": {
+          "subject": "Gallium electrolytic recovery cell, crude gallium being electrowon from alkaline Bayer liquor, silvery liquid gallium collecting at the cathode \u2014 liquid even at process temperature, being ladled into moulds",
+          "lens": "50mm f/2.8, close process shot, electrolytic cell with liquid gallium visible at the cathode, operator ladling the liquid metal, unusual sight of a metal that is liquid at low temperature",
+          "enhancer": "Silvery liquid gallium pooling at the cathode surface, operator carefully ladling the liquid metal into a mould, electrolyte solution, low-temperature liquid metal behaviour visible, small-scale speciality metal recovery, clean handling required",
+          "environments": {
+            "_default": "Gallium recovery section of an alumina refinery, small electrolytic cells, liquid metal handling, moulding into crude ingots, speciality metal operation within a bulk industrial plant",
+            "CN": "Chinese gallium electrolysis facility, crude gallium recovery, ingots being cast for further refining, world's largest producer, nondescript industrial building housing a strategically critical operation",
+            "JP": "Japanese gallium purification facility, crude gallium being electrolytically refined, precision Japanese hydrometallurgy, small-scale but high-value speciality metal production, immaculate laboratory-grade facilities",
+            "DE": "German speciality metals company (5N Plus or PPM Pure Metals) refining crude gallium, European semiconductor supply chain, clean processing facility in a German industrial park, supply diversification from Chinese dominance"
+          }
+        },
+        "processing": {
+          "subject": "High-purity gallium refining, zone refining furnace slowly drawing a molten zone through a gallium ingot to push impurities to one end, achieving 7N (99.99999%) purity for semiconductor use",
+          "lens": "50mm f/4, cleanroom or laboratory setting, zone refining apparatus with the gallium ingot visible, precise temperature control equipment, semiconductor-grade purity production",
+          "enhancer": "Zone refining furnace with a narrow molten zone moving slowly through the solid gallium bar, heating coil visible, impurities concentrating at the end, ultra-high purity required for semiconductor substrates, laboratory-grade equipment and cleanliness",
+          "environments": {
+            "_default": "Gallium refining laboratory or facility, zone refining, chemical purification, 6N-7N purity production, cleanroom or near-cleanroom conditions, speciality metals processing",
+            "CN": "Chinese high-purity gallium refinery, zone refining for semiconductor-grade material, export-controlled product, small specialised facility producing strategically critical material",
+            "JP": "Japanese GaAs (gallium arsenide) wafer production at Sumitomo Electric or Mitsubishi Chemical, Czochralski crystal growth, cleanroom wafer slicing, the semiconductor substrate for 5G and radar, Japanese precision manufacturing",
+            "DE": "Freiberger Compound Materials in Saxony, GaAs and GaN wafer production, German semiconductor materials industry, Freiberg mining academy heritage, European chip sovereignty investment"
+          }
+        },
+        "finished": {
+          "subject": "Small silvery gallium ingot melting in a researcher's palm, demonstrating the uniquely low melting point, liquid metal pooling in the cupped hand, laboratory or demonstration context",
+          "lens": "85mm macro f/2.8, intimate detail shot, gallium transitioning from solid to liquid in the palm, silvery mirror-like liquid surface, fascinating material property demonstration",
+          "enhancer": "Solid gallium crystal transitioning to liquid silver pool in a warm human palm, mirror-like liquid metal surface reflecting the surroundings, unique low-melting-point demonstration, clean hands, laboratory setting, scientific wonder",
+          "environments": {
+            "_default": "Laboratory or semiconductor facility, gallium demonstration or quality inspection, small ingots or wafers, high-tech materials context, cleanroom or research environment",
+            "US": "American semiconductor research lab, gallium arsenide wafer production, defence and 5G communications applications, university or national lab setting, high-security materials",
+            "JP": "Japanese 5G base station with GaN power amplifier modules, Fujitsu or NEC telecommunications equipment, the gallium device enabling next-generation communications, Tokyo urban 5G deployment, Japanese tech infrastructure",
+            "DE": "German automotive radar sensor using GaAs chips, Bosch or Continental ADAS module, enabling autonomous driving features, gallium at the heart of vehicle safety technology, German automotive innovation"
+          }
+        }
+      }
+    },
+    "germanium": {
+      "displayName": "Germanium",
+      "intro": "Germanium is a metalloid (between metal and non-metal) critical for fibre-optic telecommunications, infrared optics (night-vision and thermal imaging), and solar cell substrates. Like gallium, it is produced primarily as a byproduct \u2014 from zinc refining residues and coal fly ash. China produces over 60% of global germanium and has imposed export controls. Germanium is transparent to infrared radiation, making it essential for military and civilian thermal imaging lenses.",
+      "materials": "Shiny dark grey metalloid ingot with conchoidal fracture, transparent infrared lens disc, fibre-optic preform rod, zone-refined single crystal bar, germanium dioxide white powder, zinc refinery residue.",
+      "stages": {
+        "origin": {
+          "subject": "Zinc refinery where germanium is recovered from residues, zinc concentrate roasting and leaching circuit, germanium accumulating in the zinc processing dust and residues for later recovery",
+          "lens": "35mm f/5.6, industrial zinc refinery, roasting kilns and leaching tanks, germanium as an invisible trace element in the bulk zinc process, large-scale base metal refinery setting",
+          "enhancer": "Zinc concentrate being fed into the roasting kiln, leaching tanks processing the calcine, residue collection where germanium concentrates, dust recovery system, industrial zinc refinery with germanium as a valuable trace byproduct",
+          "environments": {
+            "_default": "Zinc refinery with germanium byproduct recovery, roasting, leaching, residue processing, industrial metallurgical complex",
+            "CN": "Chinese zinc smelter in Yunnan or Inner Mongolia, germanium recovery from zinc residues, world's largest germanium source, Chinese metallurgical industrial zone",
+            "CA": "Teck Trail zinc smelter in British Columbia, germanium recovered from zinc processing residues, Columbia River valley setting, Rocky Mountain backdrop, Canadian metallurgical complex with speciality metal byproduct recovery",
+            "JP": "Japanese zinc refinery (Dowa or Sumitomo) with germanium recovery, precise Japanese hydrometallurgical byproduct extraction, coastal industrial city, Japanese speciality metals processing excellence"
+          }
+        },
+        "extraction": {
+          "subject": "Germanium tetrachloride distillation column, crude germanium being purified through fractional distillation of the volatile chloride compound, clear liquid GeCl\u2084 dripping from the condenser",
+          "lens": "50mm f/4, chemical processing interior, distillation column with condenser, clear liquid germanium tetrachloride visible, chemical laboratory-scale operation rather than bulk industrial",
+          "enhancer": "Glass or stainless steel distillation column, clear germanium tetrachloride liquid collecting in the receiver, temperature and pressure gauges showing precise control, chemical processing for ultra-high purity, fume extraction hoods",
+          "environments": {
+            "_default": "Germanium chemical processing facility, chlorination, distillation, hydrolysis to GeO\u2082, reduction to metal, speciality metallurgical operation",
+            "CN": "Chinese germanium processing facility, GeCl\u2084 distillation for semiconductor and fibre-optic grades, export-controlled strategic material",
+            "CA": "Canadian germanium processing, GeCl\u2084 distillation at a speciality metals facility, British Columbia or Ontario, North American germanium supply chain diversification, precision chemical processing",
+            "JP": "Japanese germanium purification at a speciality metals company, zone refining for ultra-high purity, Japanese materials science precision, cleanroom-grade processing for fibre optics and IR optics"
+          }
+        },
+        "processing": {
+          "subject": "Germanium single crystal being grown by the Czochralski method, seed crystal being slowly pulled from a crucible of molten germanium, cylindrical single crystal ingot forming, inert atmosphere furnace",
+          "lens": "50mm f/4, crystal growth laboratory, Czochralski puller with the forming crystal visible through the viewport, high-tech materials science, cleanroom or controlled atmosphere environment",
+          "enhancer": "Cylindrical germanium crystal being slowly drawn from the melt, seed crystal at the top, crucible glowing below, inert gas atmosphere, precise temperature and pull-rate control, single-crystal perfection for optics applications",
+          "environments": {
+            "_default": "Crystal growth facility, Czochralski or zone-refining furnaces, germanium single crystal production, cleanroom conditions, semiconductor or optics manufacturing",
+            "BE": "Umicore germanium facility in Belgium, single crystal growth for infrared optics, European speciality metals hub, high-tech industrial park setting",
+            "CA": "Canadian fibre optic preform manufacturing using germanium-doped silica, Corning or OFS facility, germanium enabling the optical fibre that carries internet traffic, North American telecommunications infrastructure",
+            "JP": "Japanese germanium substrate production for multi-junction solar cells (space and CPV applications), Sumitomo or JX Nippon, ultra-high-efficiency photovoltaic applications, Japanese advanced materials"
+          }
+        },
+        "finished": {
+          "subject": "Polished germanium infrared lens, perfectly smooth dark disc transparent to infrared light, mounted in a thermal imaging camera housing, military or civilian night-vision application context",
+          "lens": "85mm macro f/3.5, product beauty shot, germanium lens showing its dark smooth surface, camera housing providing application context, high-tech optics",
+          "enhancer": "Dark smooth germanium lens disc with mirror polish, transparent to infrared but opaque to visible light, mounted in a precision optical housing, thermal camera assembly, military or security application, advanced materials technology",
+          "environments": {
+            "_default": "Optics manufacturing facility or defence electronics assembly, germanium lenses being assembled into thermal cameras, cleanroom or precision workshop, high-value niche application",
+            "US": "American defence optics manufacturer, germanium lenses for military thermal imaging systems, FLIR or L3Harris assembly line, controlled access facility, strategic materials in action",
+            "CA": "Canadian Arctic defence installation with germanium thermal imaging cameras, northern sovereignty surveillance, the strategic importance of infrared optics in vast cold territories, Aurora Borealis over the radar station",
+            "JP": "Japanese infrared camera system for industrial thermography, FLIR-type germanium lens in a compact housing, Japanese manufacturing quality inspection application, non-destructive testing in a Toyota or Sony factory"
+          }
+        }
+      }
+    },
+    "hrc_steel": {
+      "displayName": "HRC Steel",
+      "intro": "Hot-rolled coil (HRC) is the most widely traded form of flat steel, produced by passing heated steel slabs through a series of rolling stands to reduce thickness to 1.5-12mm. The coil is the starting material for automotive panels, structural sections, pipe, appliances, and general manufacturing. HRC is benchmarked regionally \u2014 CRU Midwest (US), NW Europe, and China \u2014 with prices varying by market. China produces over 50% of global crude steel.",
+      "materials": "Dark blue-black mill-scale surface on hot-rolled steel, red-orange glowing slab before rolling, tightly wound coil with visible layer edges, rust-brown oxidised surface, steel slab cross-section showing grey crystalline structure.",
+      "stages": {
+        "origin": {
+          "subject": "Blast furnace tapping, brilliant orange-white molten iron cascading from the taphole into a torpedo ladle car, sparks showering, slag separating, intense heat and light dominating the scene",
+          "lens": "35mm f/5.6, dramatic industrial shot, molten metal stream as the focal point, brilliant orange-white against the dark furnace structure, sparks and slag visible, extreme heat atmosphere",
+          "enhancer": "Brilliant orange-white molten iron cascading from the taphole, shower of sparks where the stream hits the ladle, slag floating on the surface, dark furnace structure silhouetted against the glow, extreme radiant heat, protective gear on distant workers",
+          "environments": {
+            "_default": "Integrated steel works, blast furnace at tapping, torpedo ladle car below, coke ovens and sinter plant in the background, heavy industrial steelmaking landscape",
+            "CN": "Baowu or Ansteel blast furnace in China, massive modern integrated works, multiple furnaces, the scale of Chinese steel production, industrial city setting",
+            "IN": "Tata Steel Jamshedpur or JSW Vijayanagar, blast furnace tapping, Indian industrial landscape, large workforce, hot tropical conditions adding to the furnace heat",
+            "DE": "ThyssenKrupp Duisburg or Salzgitter works, historic Ruhr Valley steel, massive furnace complex, Rhine River barges delivering raw materials, German heavy industry heritage"
+          }
+        },
+        "extraction": {
+          "subject": "Continuous casting machine, molten steel being poured from a ladle into a tundish and flowing down through a water-cooled copper mould, solidifying into a continuous slab emerging red-hot from the bottom",
+          "lens": "35mm f/4, steelworks interior, casting machine as central element, molten steel entering the mould at the top and red-hot slab emerging below, dramatic temperature contrast",
+          "enhancer": "Molten steel pouring from ladle to tundish, stream entering the mould, water-cooled copper mould housing, red-hot steel slab emerging and curving on the roller table, spray cooling, steam clouds, scale crust forming on the surface",
+          "environments": {
+            "_default": "Steel works continuous caster, ladle turret, tundish, mould, strand, cut-off torches, slab stacking, part of the integrated steelmaking flow",
+            "CN": "Chinese steelworks continuous caster, high-speed multi-strand operation, massive throughput, slab yard with thousands of tonnes of inventory, scale of Chinese production"
+          }
+        },
+        "processing": {
+          "subject": "Hot strip mill, red-hot steel slab passing through the finishing stands, glowing orange steel being compressed thinner with each stand, emerging as a flat strip that coils at the end of the mill",
+          "lens": "24mm f/5.6, dramatic industrial shot along the mill line, red-hot slab glowing between the stands, water spray cooling, strip being coiled at the far end, enormous scale of a hot strip mill",
+          "enhancer": "Glowing orange-red steel slab progressively thinning through each rolling stand, water spray descaling, mill scale flaking off, strip emerging thinner and longer with each pass, coiler at the end forming a tight hot coil, steam and heat haze",
+          "environments": {
+            "_default": "Hot strip mill, reheat furnace, roughing and finishing stands, run-out table with water cooling, coiler, massive industrial rolling mill building",
+            "US": "Nucor or US Steel hot strip mill, modern electric-arc-furnace-based minimill or traditional integrated works, American Midwest industrial setting",
+            "CN": "Baowu hot strip mill, ultra-modern Chinese mill, high-speed rolling, massive coil output, Chinese steel dominance in global markets"
+          }
+        },
+        "finished": {
+          "subject": "Stacks of tightly wound hot-rolled coils in a steel service centre, dark blue-black mill scale surface, coil eye visible showing the tight windings, overhead crane moving a coil, industrial warehouse",
+          "lens": "50mm f/4, steel warehouse, coils stacked showing their distinctive profile, crane operating, industrial steel distribution setting, scale of the operation",
+          "enhancer": "Tightly wound HRC coils with dark blue-black mill-scale surface, coil eye showing layer edges, identification tags with grade and dimensions, overhead crane with C-hook handling, coil skid stacking, industrial service centre atmosphere",
+          "environments": {
+            "_default": "Steel service centre or stockholder warehouse, HRC coils stacked by grade and size, slitting and cut-to-length lines adjacent, crane operations, industrial distribution hub",
+            "US": "Midwest steel service centre, HRC from Nucor or Cleveland-Cliffs, automotive and construction industry supply, industrial suburban setting, truck loading docks",
+            "CN": "Chinese steel trading market in Shanghai or Tianjin, enormous HRC inventory, world's largest steel market, industrial trading district"
+          }
+        }
+      }
+    },
+    "indium": {
+      "displayName": "Indium",
+      "intro": "Indium is a soft silvery-white metal so soft you can scratch it with a fingernail. Its primary use is in indium tin oxide (ITO), a transparent electrical conductor sputtered onto glass for LCD and OLED display screens, touchscreens, and solar cells. Indium is produced almost entirely as a byproduct of zinc refining. China produces roughly 50% of global indium, followed by South Korea and Japan. Annual global production is only about 900 tonnes, making it a minor but irreplaceable high-tech metal.",
+      "materials": "Soft silvery-white metal that bends easily, small ingot with visible tooth marks from softness testing, transparent ITO-coated glass panel, zinc refinery residue, crystalline indium bar, flat-panel display glass substrate.",
+      "stages": {
+        "origin": {
+          "subject": "Zinc refinery electrolytic tankhouse where indium concentrates in the zinc processing residues, rows of zinc cathode cells, indium as an invisible trace element in the zinc circuit",
+          "lens": "35mm f/5.6, zinc refinery interior, electrolytic cells in rows, industrial zinc refining where indium is a trace byproduct, base metal operation scale",
+          "enhancer": "Zinc electrolytic tankhouse with cathode plates in rows, indium accumulating in the processing residues and dusts, bulk zinc operation with trace valuable byproducts, industrial hydrometallurgical environment",
+          "environments": {
+            "_default": "Zinc refinery with indium byproduct recovery, electrolytic zinc tankhouse, residue treatment section, industrial metallurgical complex",
+            "CN": "Chinese zinc refinery in Yunnan or Guangxi, indium recovery from zinc residues, world's largest indium source, Chinese metallurgical processing zone",
+            "BE": "Umicore zinc refinery in Balen, Belgium, indium recovery from zinc processing residues, European speciality metals supply, Campine region industrial heartland, Belgian metallurgical heritage",
+            "US": "Freeport-McMoRan El Paso copper refinery, trace indium recovery from copper processing, American domestic indium supply, Rio Grande border industrial area, strategic mineral recovery"
+          }
+        },
+        "extraction": {
+          "subject": "Indium sponge being electrowon from acidic solution in a small electrolytic cell, soft silvery deposit growing on the cathode, speciality metal recovery on a small scale compared to the parent zinc operation",
+          "lens": "50mm f/4, laboratory-scale electrolytic cell, silvery indium deposit visible on the cathode, small-scale speciality metal recovery, controlled chemical processing",
+          "enhancer": "Small electrolytic cell with silvery indium depositing on the cathode, acidic electrolyte solution, crude indium sponge being stripped, small scale contrasting with the massive zinc refinery it sits within, speciality metals recovery",
+          "environments": {
+            "_default": "Indium recovery section within a zinc refinery, small-scale electrolysis, crude indium production, chemical processing for a minor but valuable byproduct",
+            "CN": "Chinese indium recovery facility, small operation within a large zinc refinery, crude indium ingots being cast, global supply significance despite tiny production volumes",
+            "BE": "Belgian indium refining at Umicore, high-purity indium production for the European display and solar industries, clean speciality metals processing, Antwerp-region industrial zone, European supply chain independence",
+            "US": "Indium Corporation of America in Utica, New York, indium refining and ITO target manufacturing, the only major Western Hemisphere indium processor, upstate New York industrial facility, American speciality metals"
+          }
+        },
+        "processing": {
+          "subject": "ITO sputtering target being manufactured, high-purity indium and tin oxide being pressed and sintered into a large flat target plate, cleanroom conditions, precision materials manufacturing",
+          "lens": "50mm f/4, cleanroom manufacturing, ITO target plate as central product, pressing and sintering equipment, semiconductor-supply-chain level cleanliness",
+          "enhancer": "Large flat ITO sputtering target plate, high-purity indium-tin oxide ceramic, vacuum-packed for shipment to display manufacturers, cleanroom garments and equipment, precision weighing and quality control",
+          "environments": {
+            "_default": "ITO target manufacturing facility, powder preparation, pressing, sintering, quality control, cleanroom packaging, speciality materials for the display industry",
+            "JP": "Japanese ITO target manufacturer (JX Nippon Mining or Mitsui), ultra-high purity for display glass coating, Japanese precision manufacturing, clean factory environment",
+            "KR": "South Korean facility producing targets for Samsung and LG display production, Pyeongtaek or Asan industrial zone, display supply chain hub",
+            "BE": "Belgian ITO target production at Umicore, high-purity targets for European display manufacturers, cleanroom manufacturing, one of the few non-Asian ITO target sources, European technology sovereignty",
+            "US": "Indium Corporation sputtering target fabrication, ITO targets being pressed and finished for American and global display manufacturers, Mohawk Valley facility, American materials technology for global electronics"
+          }
+        },
+        "finished": {
+          "subject": "Transparent touchscreen being tested, finger touching the ITO-coated glass surface, display responding, the invisible indium tin oxide layer enabling touch sensitivity \u2014 indium's most ubiquitous application",
+          "lens": "50mm f/2.8, consumer technology product shot, finger on touchscreen as the focal point, display content visible, the invisible technology that indium enables, modern digital life",
+          "enhancer": "Finger touching a responsive touchscreen, display pixels visible at close range, transparent ITO coating invisible but essential, modern smartphone or tablet, the metal nobody sees but everyone uses dozens of times daily",
+          "environments": {
+            "_default": "Consumer electronics context, smartphone or tablet with touchscreen, modern digital lifestyle, indium's invisible presence in every display screen",
+            "KR": "Samsung display factory, OLED panels being tested, ITO layer enabling touch and display function, cutting-edge consumer electronics manufacturing, South Korean tech industry",
+            "BE": "European OLED display panel line using Belgian ITO targets, transparent conducting layer enabling the display, Brussels or Eindhoven tech research context, European display technology, indium enabling the screens we look at all day",
+            "US": "American solar cell with ITO transparent conductor layer, thin-film photovoltaic using indium, the energy transition application alongside displays, American clean energy manufacturing"
+          }
+        }
+      }
+    },
+    "iron_ore": {
+      "displayName": "Iron Ore",
+      "intro": "Iron ore is the raw material for steelmaking \u2014 the world's most produced and consumed metal. Hematite (Fe\u2082O\u2083, red-brown) and magnetite (Fe\u2083O\u2084, black magnetic) are the primary ore minerals. Australia and Brazil together supply roughly 60% of global seaborne iron ore, with the Pilbara (Australia) and Caraj\u00e1s (Brazil) as the world's premier mining regions. The 62% Fe CFR China benchmark (Platts IODEX) is the global price reference. Iron ore is shipped as fines, lump, or pellets.",
+      "materials": "Red-brown hematite ore with metallic lustre, black magnetic magnetite, rusty-red fine ore on conveyor, green-grey pellets, massive haul truck, red Pilbara earth, ore carrier ship hold full of red-brown material.",
+      "stages": {
+        "origin": {
+          "subject": "Massive open-pit iron ore mine, vivid red-brown earth and ore exposed in terraced benches, enormous haul trucks on the ramp roads, the sheer scale of a world-class iron ore operation",
+          "lens": "24mm f/11, epic wide shot from elevated position, vast red-brown pit with terraced benches, trucks as tiny dots providing scale, red earth dominating the colour palette",
+          "enhancer": "Vivid red-brown hematite ore body exposed in deep terraced benches, 400-tonne haul trucks appearing as toys against the pit scale, blast dust settling, red earth staining everything, crushing plant on the rim",
+          "environments": {
+            "_default": "Massive open-pit iron ore mine, red-brown ore, terraced benches, enormous haul trucks, crushing and screening plant, semi-arid or tropical setting",
+            "AU": "Pilbara iron ore mine (BHP Newman or Rio Tinto Tom Price), vivid red earth under intense blue sky, spinifex grassland at the pit margins, autonomous haul trucks, rail line to Port Hedland, 45\u00b0C summer heat",
+            "BR": "Vale Caraj\u00e1s mine in Par\u00e1 state, world's highest-grade iron ore, Amazon rainforest surrounding the mine, enormous pit in red laterite, Caraj\u00e1s railway running 900km to S\u00e3o Lu\u00eds port, tropical jungle setting",
+            "ZA": "Kumba Iron Ore (Anglo American) Sishen mine in the Northern Cape, massive open pit in the Kalahari, red-brown ore contrasting with semi-desert scrub, Sishen-Saldanha railway, South Africa's iron ore heartland",
+            "IN": "NMDC Bailadila mine in Chhattisgarh, open-pit iron ore in the dense Dandakaranya forest, tribal region, red ore in green forest, Indian government-owned mining, rail line through jungle to Visakhapatnam port"
+          }
+        },
+        "extraction": {
+          "subject": "Iron ore being loaded onto a rail car by a massive excavator, red-brown ore cascading into the wagon, ore train stretching into the distance, mine-to-port rail logistics",
+          "lens": "35mm f/5.6, mining logistics documentary, excavator loading the train as central action, ore train visible stretching behind, mine infrastructure in background",
+          "enhancer": "Red-brown iron ore cascading from the excavator bucket into the rail wagon, ore dust cloud, massive train of 200+ wagons stretching to the horizon, two-kilometre-long ore train, remote mine-to-port railway, industrial logistics at continental scale",
+          "environments": {
+            "_default": "Iron ore rail loading, mine site, massive ore train, rail line through remote terrain to export port, industrial logistics connecting mine to market",
+            "AU": "Pilbara ore train loading at the mine, BHP or Rio Tinto autonomous train, 2.4km long with 268 wagons, red desert landscape, rail line running 400km to Port Hedland, one of the world's longest and heaviest trains",
+            "BR": "Vale Caraj\u00e1s loading, ore train descending from the Serra dos Caraj\u00e1s through the Amazon to S\u00e3o Lu\u00eds, longest rail line in Brazil, tropical forest alongside the tracks",
+            "ZA": "Sishen-Saldanha ore train loading, 342-wagon train being loaded with Northern Cape iron ore, one of the world's longest freight railways dedicated to a single commodity, Kalahari landscape",
+            "IN": "Indian iron ore being trucked and railed from Chhattisgarh or Odisha mines, overloaded ore trucks on rural Indian roads, chaotic but essential logistics, ore heading to domestic steel mills and Visakhapatnam export port"
+          }
+        },
+        "processing": {
+          "subject": "Iron ore screening and stacking at an export port, reclaimer machine working the stockpile, red-brown ore being reclaimed and conveyed to the ship loader, massive stockpile geometry",
+          "lens": "24mm f/8, port stockpile landscape, reclaimer machine cutting into the geometric stockpile face, conveyor running to the ship loader, red-brown ore dominating the colour palette, port infrastructure",
+          "enhancer": "Massive geometric stockpile of red-brown ore, bucket-wheel reclaimer cutting a precise face, conveyor belt carrying ore to the ship loader, dust suppression sprays, stockpile blending for export specification, port operations",
+          "environments": {
+            "_default": "Iron ore export port, massive stockpiles, reclaimers, conveyors, ship loaders, cape-size bulk carriers at berth, red-brown ore staining the entire port area",
+            "AU": "Port Hedland, world's largest bulk export port, multiple berths loading cape-size ore carriers, red Pilbara ore stockpiles stretching for kilometres, Indian Ocean, salt flats and mangroves alongside, 24-hour operation",
+            "BR": "Ponta da Madeira terminal at S\u00e3o Lu\u00eds, Vale's Atlantic export port, Valemax 400,000-tonne ore carriers at berth, tropical coast, ore from Caraj\u00e1s arriving by rail",
+            "ZA": "Saldanha Bay iron ore export terminal on the Atlantic coast, stockpiles and ship loading, cape-size bulk carriers at berth, west coast fynbos and cold Benguela current, South Africa's iron ore export gateway",
+            "IN": "Visakhapatnam port iron ore handling, stockpiles awaiting ship loading, Bay of Bengal coast, Indian export and domestic distribution, Rashtriya Ispat Nigam Steel plant visible in the background consuming domestic ore"
+          }
+        },
+        "finished": {
+          "subject": "Cape-size bulk carrier being loaded with iron ore, red-brown ore cascading from the ship loader into the hold, ship sitting low in the water under the weight, port infrastructure framing the maritime operation",
+          "lens": "35mm f/5.6, maritime-industrial shot, ship loader pouring ore into the bulk carrier hold, red ore stream against the blue sea, ship and port together, export trade in action",
+          "enhancer": "Red-brown iron ore cascading from the ship loader chute into the hold of a cape-size bulk carrier, dust cloud at the pour point, ship settling lower as holds fill, 180,000-tonne vessel, port cranes and stockpiles behind, global trade in raw materials",
+          "environments": {
+            "_default": "Iron ore export terminal, ship loading at berth, cape-size bulk carrier, red ore stream, port infrastructure, coastal setting, global seaborne trade",
+            "AU": "Port Hedland ship loading, BHP or FMG cape-size ore carrier, turquoise Indian Ocean water stained red at the berth, red ore against blue sky and sea, Australia's largest export industry loading",
+            "BR": "Ponta da Madeira, Valemax vessel loading 400,000 tonnes for China, Atlantic coast, tropical maritime setting, Brazil's iron ore export gateway",
+            "ZA": "Cape-size bulk carrier departing Saldanha Bay loaded with South African ore, Table Mountain visible in the far distance on a clear day, Atlantic Ocean, African iron ore heading to Chinese and European steel mills",
+            "IN": "Indian steel mill (Tata Jamshedpur or JSW Vijayanagar) receiving domestic iron ore, blast furnace consuming Indian ore for domestic steel production, India as both a producer and consumer, industrial heartland"
+          }
+        }
+      }
+    },
+    "iron_ore_cny": {
+      "displayName": "Iron Ore (CNY)",
+      "intro": "Iron ore traded in Chinese yuan (CNY) on the Dalian Commodity Exchange (DCE) is the world's most liquid iron ore futures contract by volume. China imports over 70% of global seaborne iron ore \u2014 approximately 1.2 billion tonnes annually \u2014 primarily from Australia and Brazil. The DCE contract represents 100 tonnes of 62% Fe fines delivered to Chinese ports. Chinese port stockpiles of iron ore at any given time represent a significant inventory buffer and price signal.",
+      "materials": "Red-brown hematite fines at Chinese port stockpiles, green-grey pellets, ship unloading grabs, port crane jibs, Chinese port infrastructure, stockpile with moisture testing, DCE trading screen.",
+      "stages": {
+        "origin": {
+          "subject": "Chinese port iron ore stockpile, massive red-brown ore piles at a receiving port, newly arrived cargoes being stacked alongside existing inventory, port cranes and ship unloaders visible",
+          "lens": "24mm f/8, wide port stockpile landscape, red-brown ore piles stretching across the port area, gantry cranes, conveyor systems, Chinese port infrastructure, industrial scale",
+          "enhancer": "Massive red-brown ore stockpiles at various moisture levels, freshly landed wet ore darker than dried inventory, stockpile identification markers, port gantry cranes, Chinese-language signage, ship unloaders at the berth",
+          "environments": {
+            "_default": "Chinese iron ore receiving port, massive stockpiles, ship unloading, conveyor systems, truck and rail loading for inland steel mills, port city setting",
+            "CN": "Qingdao or Rizhao port, massive iron ore stockpiles visible from satellite, cape-size bulk carriers at the unloading berths, conveyor systems, truck queues to the steel mills, Yellow Sea coast"
+          }
+        },
+        "extraction": {
+          "subject": "Cape-size bulk carrier being unloaded at a Chinese port, grab cranes lifting red-brown ore from the hold, ore dropping onto the wharf conveyor, Chinese port efficiency in action",
+          "lens": "35mm f/5.6, Chinese port unloading operation, grab crane lifting ore from the ship hold, conveyor running to the stockpile, maritime-industrial scene, Chinese port operations",
+          "enhancer": "Massive grab crane clamshell lifting 25-tonne bites of red-brown ore from the ship hold, ore dropping onto the belt conveyor, ship ballasting as ore is removed, Chinese port workers directing operations, efficient 24-hour unloading",
+          "environments": {
+            "_default": "Chinese iron ore import terminal, ship unloading, grab cranes, conveyors to stockpile, port city, Chinese maritime infrastructure",
+            "CN": "Tangshan or Caofeidian port in Hebei province, closest major port to China's steel heartland, multiple ships unloading simultaneously, steel mill smoke visible inland, Bohai Sea coast"
+          }
+        },
+        "processing": {
+          "subject": "Iron ore being loaded from the port stockpile onto trucks and rail wagons for delivery to nearby steel mills, sampling and testing for moisture and grade before dispatch, Chinese port-to-mill logistics",
+          "lens": "35mm f/5.6, port logistics, ore being loaded onto trucks by front-end loader, weighbridge and sampling station, steel mill direction signs, Chinese industrial logistics",
+          "enhancer": "Red-brown ore being loaded onto tipper trucks by wheel loaders, weighbridge with sampling station, moisture and grade testing, truck convoy heading to the steel mill, Chinese-language logistics signage, port-to-mill supply chain",
+          "environments": {
+            "_default": "Chinese port dispatch area, ore loading onto trucks and rail, sampling station, steel mill delivery logistics, port city industrial zone",
+            "CN": "Hebei province port, trucks heading to Tangshan's massive steel mills, world's most intensive steelmaking region, ore from Australia and Brazil feeding Chinese production, smog and industrial activity"
+          }
+        },
+        "finished": {
+          "subject": "Dalian Commodity Exchange trading floor or screen showing iron ore futures prices in CNY, market data, contract specifications, the financial representation of the physical ore being traded",
+          "lens": "50mm f/4, trading screen or floor shot, DCE iron ore prices as the central subject, Chinese commodity trading, financial markets meeting physical resources",
+          "enhancer": "DCE iron ore futures price screen in CNY per tonne, bid-ask spread, volume indicators, Chinese commodity trading interface, world's most liquid iron ore contract, physical delivery warehouse receipts, Chinese financial markets",
+          "environments": {
+            "_default": "Dalian Commodity Exchange or commodity trading office, iron ore futures on screen, Chinese financial markets, commodity trading connecting physical ore to financial instruments",
+            "CN": "DCE trading floor in Dalian, iron ore I-contract prices, Chinese commodity traders, the financial hub of global iron ore pricing, Liaoning coast, modern Chinese financial infrastructure"
+          }
+        }
+      }
+    },
+    "lead": {
+      "displayName": "Lead",
+      "intro": "Lead is a dense, soft, bluish-grey metal historically used for plumbing, paint, and ammunition, now primarily used in lead-acid batteries (over 85% of demand) for vehicles, backup power, and industrial applications. Lead is mined from galena (lead sulphide, PbS) \u2014 a heavy, shiny dark grey cubic mineral. Major producers include China, Australia, and the US. The LME lead contract is the global benchmark. Lead is one of the most recycled metals \u2014 over 60% of supply comes from secondary (recycled) lead.",
+      "materials": "Dense bluish-grey soft metal with dull surface, shiny dark grey galena crystals with cubic cleavage, lead-acid battery with visible plates and acid, recycled lead ingot, lead sheet, grey tarnish on exposed surfaces.",
+      "stages": {
+        "origin": {
+          "subject": "Underground lead-zinc mine, dark ore face illuminated by cap lamps, galena crystals with distinctive shiny cubic cleavage visible in the rock face, miners drilling the next blast round",
+          "lens": "35mm f/2.8, underground documentary, ore face with galena visible, miner and equipment providing context, dramatic cap-lamp lighting creating strong shadows and mineral reflections",
+          "enhancer": "Dark grey galena crystals with metallic lustre and cubic cleavage faces reflecting cap-lamp light, drill holes in the ore face for the next blast, shotcrete and rock-bolted walls, ventilation ducting, mining safety equipment",
+          "environments": {
+            "_default": "Underground lead-zinc mine, ore face with galena, decline access, drilling and blasting, ore trucking to surface, processing plant above",
+            "AU": "Broken Hill or Mount Isa underground, historic Australian lead-zinc district, deep mining in ancient ore bodies, hot working conditions, outback mining town above",
+            "US": "Missouri lead belt (Viburnum Trend), underground room-and-pillar mining, galena in Mississippi Valley-type deposit, Ozarks above the mine, American lead mining heartland",
+            "CN": "Chinese lead-zinc mine in Yunnan or Hunan province, underground workings in karst limestone terrain, China as the world's largest lead producer, mountainous southern Chinese mining landscape",
+            "CA": "Red Dog mine in Alaska (Teck), the world's largest zinc-lead mine, remote Arctic tundra operation, polar bears and caribou near the mine, fly-in-fly-out Arctic mining, Red Dog Creek loading to barge for export"
+          }
+        },
+        "extraction": {
+          "subject": "Lead-acid battery recycling plant, used batteries being broken and separated into lead paste, metallic lead, polypropylene cases, and sulphuric acid \u2014 the dominant source of secondary lead",
+          "lens": "35mm f/4, recycling plant interior, battery breaking and sorting as central action, lead components being separated for smelting, environmental processing",
+          "enhancer": "Used lead-acid batteries being fed into a hammer mill, breaking into components, lead paste and metallic lead separated on vibrating screens, polypropylene case fragments sorted, acid neutralisation, secondary lead the dominant supply source, environmental controls visible",
+          "environments": {
+            "_default": "Secondary lead recycling plant, battery collection, breaking, component separation, lead paste and metallic lead to the smelter, acid treatment, environmental compliance",
+            "US": "American battery recycler, Ecobat or Gopher Resource, spent automotive and industrial batteries arriving, environmental permits and emission controls, secondary lead for re-manufacture into new batteries",
+            "CN": "Chinese secondary lead smelter recycling batteries, massive Chinese lead-acid battery recycling industry, environmental compliance improving from previously polluting small-scale operations, Chinese industrial modernisation",
+            "CA": "Canadian lead recycling at Glencore Belledune in New Brunswick, battery recycling and primary lead refining, Bay of Chaleur coast, Atlantic Canadian industrial facility, environmental rehabilitation from historic operations"
+          }
+        },
+        "processing": {
+          "subject": "Lead blast furnace or rotary smelter, crude lead bullion being tapped from the furnace into moulds, dull bluish-grey molten metal flowing, refining the primary or secondary lead into soft lead",
+          "lens": "50mm f/4, smelter interior, molten lead stream as focal point, furnace and moulds providing context, heavy industrial atmosphere, dense metal requiring careful handling",
+          "enhancer": "Dull bluish-grey molten lead flowing from the furnace taphole into a ladle, dense heavy metal visible in the flow, refining kettles for removing impurities, lead bullion moulds, ventilation and emission control, fume extraction over every operation",
+          "environments": {
+            "_default": "Lead smelter, blast furnace or secondary rotary furnace, refining kettles, casting, emission controls, environmental compliance a major concern, industrial metallurgical facility",
+            "AU": "Port Pirie lead smelter in South Australia, Nyrstar operation, one of the world's largest primary lead smelters, Spencer Gulf coast, historic smelting town",
+            "CN": "Chinese lead refinery in Henan or Hunan, massive domestic refining capacity, lead bullion casting, Chinese lead production scale, industrial zone with improving environmental controls",
+            "CA": "Trail smelter in British Columbia (Teck), historic lead-zinc smelter in the Columbia River valley, over a century of operation, Rocky Mountain setting, one of the world's largest integrated zinc-lead smelters"
+          }
+        },
+        "finished": {
+          "subject": "New lead-acid battery on an automotive assembly line, being installed in a vehicle, the end product that consumes 85% of all refined lead, battery terminals and case visible",
+          "lens": "50mm f/4, automotive manufacturing, battery being installed as central action, assembly line providing context, the destination for most of the world's lead production",
+          "enhancer": "Lead-acid battery with visible terminal posts and case branding, robotic arm positioning the battery in the engine bay, automotive assembly line, the mundane but essential endpoint for the lead supply chain, every vehicle on the road carrying lead",
+          "environments": {
+            "_default": "Automotive assembly plant or battery manufacturing facility, lead-acid batteries being produced or installed, industrial manufacturing, lead's primary end-use application",
+            "US": "American auto plant, battery installation on the assembly line, Johnson Controls or East Penn battery, Detroit or Southern US manufacturing, everyday automotive technology",
+            "CN": "Chinese electric scooter or e-bike with lead-acid battery, the dominant personal transport in Chinese cities, millions of lead-acid-powered two-wheelers, Chinese urban mobility dependent on lead batteries, city street scene",
+            "CA": "Canadian telecom tower backup battery bank, lead-acid batteries providing critical power backup, telecommunications infrastructure relying on lead, remote Canadian boreal tower site, northern lights in the sky"
+          }
+        }
+      }
+    },
+    "lithium": {
+      "displayName": "Lithium",
+      "intro": "Lithium is the lightest metal, critical for rechargeable lithium-ion batteries powering electric vehicles, electronics, and grid-scale energy storage. Produced from two sources: hard-rock spodumene mining (Australia dominates) and brine evaporation (South America's Lithium Triangle \u2014 Chile, Argentina, Bolivia). The energy transition has driven explosive demand growth. Lithium is traded as lithium carbonate (Li\u2082CO\u2083) or lithium hydroxide (LiOH), with China converting most raw material into battery-grade chemicals.",
+      "materials": "Pale grey spodumene crystal in pegmatite rock, turquoise-blue brine evaporation ponds, white lithium carbonate powder, white crystalline lithium hydroxide, lithium-ion battery cell cylindrical or pouch format, pale grey metalite ore.",
+      "stages": {
+        "origin": {
+          "subject": "Lithium brine evaporation ponds in the high-altitude salt flat, vast geometric turquoise and green ponds on the white salar surface, Andean mountains behind, surreal high-altitude industrial landscape",
+          "lens": "24mm f/11, wide aerial-perspective landscape, geometric coloured ponds contrasting with the white salt flat, Andean peaks on the horizon, surreal colours and scale, 3,000m+ altitude",
+          "enhancer": "Vivid turquoise, green, and yellow evaporation ponds in geometric patterns on the white salt flat, lithium concentration increasing with colour change, Andean cordillera with snow-capped volcanoes behind, thin high-altitude air, vast empty landscape",
+          "environments": {
+            "_default": "High-altitude salt flat (salar) with evaporation ponds, white salt surface, Andean mountains, remote and surreal industrial landscape, thin air and intense UV",
+            "CL": "Salar de Atacama, SQM or Albemarle brine ponds, world's driest desert, vivid coloured ponds on the white salar, Andean volcanoes, 2,300m altitude, flamingos on the brine lake, surreal beauty",
+            "AR": "Salar de Olaroz or Hombre Muerto in the Argentine Puna, high-altitude brine operation, remote Andean plateau, vicu\u00f1as grazing near the ponds, frontier lithium development",
+            "AU": "Greenbushes spodumene mine in Western Australia, open-pit hard-rock pegmatite mining, white spodumene crystals in grey pegmatite rock, jarrah forest surrounding, different extraction method from brine"
+          }
+        },
+        "extraction": {
+          "subject": "Lithium brine being pumped from underground aquifers beneath the salt flat into the first evaporation pond, pump station on the white salar surface, pipeline running to the pond system",
+          "lens": "35mm f/5.6, salar surface operation, pump station and pipeline on the white flat, first evaporation pond filling with brine, Andean mountains surrounding, remote high-altitude industrial extraction",
+          "enhancer": "Brine pump station on the white salt crust, pipeline running across the flat salar to the first evaporation pond, yellow-brown raw brine being pumped, white salt crystals forming at pond edges, vast empty salar stretching to the mountains, 18-24 month evaporation timeline ahead",
+          "environments": {
+            "_default": "Salar pump field, brine extraction wells, pipeline to evaporation ponds, white salt flat, Andean setting, remote industrial operation at altitude",
+            "CL": "Atacama brine extraction, pump wells dotted across the salar, pipeline to the SQM or Albemarle evaporation ponds, driest place on Earth, extreme UV, mining at the edge of habitability"
+          }
+        },
+        "processing": {
+          "subject": "Lithium carbonate precipitation plant, concentrated brine being treated with sodium carbonate to precipitate white lithium carbonate powder, filtration and drying producing the trade-grade product",
+          "lens": "50mm f/4, chemical processing plant, precipitation reactor with white lithium carbonate forming, filtration and drying, clean chemical plant environment",
+          "enhancer": "White lithium carbonate precipitating from concentrated brine in the reactor, filter press producing wet cake, rotary dryer producing fine white powder, chemical dosing systems, quality control laboratory, battery-grade specification testing",
+          "environments": {
+            "_default": "Lithium chemical plant, precipitation, filtration, drying, packaging, quality control, located near the brine source or as a separate conversion facility",
+            "CL": "SQM or Albemarle processing plant at the edge of the Atacama, lithium carbonate production from concentrated brine, packaging for export, remote desert industrial facility",
+            "CN": "Chinese lithium conversion plant in Sichuan or Jiangxi, converting imported spodumene concentrate or domestic brine into battery-grade lithium chemicals, massive Chinese processing dominance"
+          }
+        },
+        "finished": {
+          "subject": "Lithium-ion battery cells being assembled into an EV battery pack on a gigafactory production line, cylindrical or pouch cells being placed into modules, the endpoint of the lithium supply chain and driver of demand",
+          "lens": "35mm f/4, gigafactory interior, battery cells being assembled into modules, robotic assembly, cleanroom conditions, modern EV manufacturing, the energy transition in production",
+          "enhancer": "Cylindrical or prismatic lithium-ion cells being robotically placed into battery modules, electrical connections being made, thermal management system visible, battery pack taking shape, gigafactory automation, the lithium demand driver",
+          "environments": {
+            "_default": "EV battery gigafactory, cell-to-pack assembly, robotic production line, quality testing, clean manufacturing environment, the energy transition's factory floor",
+            "CN": "CATL gigafactory in Ningde, world's largest battery manufacturer, massive production lines, battery packs for global EV makers, Chinese battery manufacturing dominance",
+            "US": "Tesla Gigafactory in Nevada or Panasonic facility, battery cell and pack production for American EVs, desert factory, the US energy transition, massive industrial scale"
+          }
+        }
+      }
+    },
+    "magnesium": {
+      "displayName": "Magnesium",
+      "intro": "Magnesium is the lightest structural metal, 33% lighter than aluminium and 75% lighter than steel, making it essential for lightweight automotive components, aerospace parts, and electronic device housings. Produced by two routes: the Pidgeon process (thermally reducing magnesium oxide with ferrosilicon in retorts \u2014 dominant in China) and electrolytic reduction of magnesium chloride from seawater or brine. China produces over 85% of global magnesium using the coal-intensive Pidgeon process.",
+      "materials": "Bright silvery-white metal with slight roughness, dolomite or magnesite ore (white-grey mineral), brilliant white burning flame, die-cast component with fine surface detail, shiny machined magnesium part, white magnesium oxide powder.",
+      "stages": {
+        "origin": {
+          "subject": "Dolomite quarry, white-grey sedimentary rock being quarried in benches, the raw material for the Pidgeon process magnesium production, quarry operations in semi-arid Chinese terrain",
+          "lens": "35mm f/5.6, quarry landscape, white-grey dolomite rock being excavated, quarry benches and access roads, processing plant or kiln visible nearby",
+          "enhancer": "White-grey dolomite rock with crystalline texture, quarry benches in sedimentary layers, drilling and blasting operations, truck loading, calcination kiln visible on the quarry rim, dusty dry conditions",
+          "environments": {
+            "_default": "Dolomite quarry, white-grey rock, quarry benches, crushing and calcination plant nearby, raw material source for Pidgeon process magnesium",
+            "CN": "Shanxi or Shaanxi dolomite quarry, Chinese Pidgeon process raw material source, semi-arid loess plateau landscape, coal mines nearby providing energy for the retorts, Chinese magnesium heartland",
+            "US": "US Magnesium LLC facility on the Great Salt Lake shore in Utah, extracting magnesium from the lake brine, white salt flats and turquoise brine ponds, Wasatch Mountains behind, the only primary magnesium producer in the Americas",
+            "IL": "Dead Sea Works magnesium plant at the southern Dead Sea basin, extracting from the world's most mineral-rich body of water, evaporation ponds in the Negev desert, Dead Sea turquoise water, Israeli mineral extraction from extreme environment"
+          }
+        },
+        "extraction": {
+          "subject": "Pidgeon process retort furnace, rows of horizontal steel retorts glowing red-hot in a furnace, magnesium vapour condensing at the cooled end of each retort as a solid crystal crown",
+          "lens": "35mm f/4, industrial furnace interior, rows of glowing retorts, magnesium crowns being removed from cooled ends, intense heat, Chinese industrial magnesium production",
+          "enhancer": "Red-glowing horizontal retorts in the furnace, magnesium crystal crown being extracted from the cooled condenser end, bright silvery metal crystals, intense heat from the coal-fired furnace, manual handling of the hot retorts, labour-intensive Chinese process",
+          "environments": {
+            "_default": "Pidgeon process magnesium plant, retort furnaces, crown extraction, remelting and casting, coal-fired energy source, Chinese production method",
+            "CN": "Shanxi province Pidgeon plant, rows of retort furnaces, coal-fired heating, magnesium crowns being harvested, labour-intensive operation, Chinese rural industrial setting, world's dominant production method",
+            "US": "Great Salt Lake brine being concentrated in solar evaporation ponds, magnesium chloride brine heading to the electrolytic cells, Utah desert landscape, Bonneville Salt Flats nearby, American magnesium from salt lake brine rather than the Chinese Pidgeon process",
+            "IL": "Dead Sea magnesium chloride brine being pumped to the electrolysis plant, ICL Group operation, Negev desert evaporation, the most extreme mineral extraction environment on Earth, 430m below sea level"
+          }
+        },
+        "processing": {
+          "subject": "Magnesium ingot casting, molten silvery magnesium being poured under protective gas atmosphere to prevent ignition, ingots forming in steel moulds, the lightest structural metal being cast",
+          "lens": "50mm f/4, foundry interior, molten magnesium pour with protective gas visible, ingot moulds, careful handling of the reactive metal, fire suppression equipment prominently visible",
+          "enhancer": "Bright silvery molten magnesium being poured under SF\u2086 or CO\u2082 protective gas cover, ingot moulds filling, fire extinguishers and sand buckets prominently positioned, the reactive metal requiring special handling, silvery solidified ingots being stacked",
+          "environments": {
+            "_default": "Magnesium casting and remelting facility, protective atmosphere, ingot production, fire safety equipment prominent, careful handling of reactive metal",
+            "CN": "Chinese magnesium foundry, ingots being cast from Pidgeon-process crowns, protective gas covering, export packaging, world's largest supply source",
+            "US": "US Magnesium electrolytic cell house in Rowley, Utah, magnesium being electrowon from Great Salt Lake brine, American electrolytic production contrasting with Chinese thermal process, clean energy-based production, Great Salt Lake visible from the plant",
+            "IL": "Dead Sea Magnesium (DSM) electrolytic plant, magnesium from the Dead Sea, desert industrial facility, Israeli innovation in mineral extraction from hypersaline brine, one of the lowest points on Earth hosting advanced metallurgy"
+          }
+        },
+        "finished": {
+          "subject": "Magnesium die-cast component for an automotive application \u2014 steering column bracket or instrument panel beam \u2014 showing the lightweight metal's fine surface detail and thin-wall capability",
+          "lens": "85mm f/3.5, product beauty shot, magnesium component showing surface detail and lightness, automotive context, engineering excellence in lightweight design",
+          "enhancer": "Silvery magnesium die-cast component with fine surface detail, thin walls showing the metal's castability, lightweight evident from the size-to-weight ratio, automotive mounting points visible, engineering drawing partially visible, lightweighting technology",
+          "environments": {
+            "_default": "Automotive foundry or engineering facility, magnesium die-cast component, lightweight vehicle engineering, die-casting machine, quality inspection",
+            "DE": "German automotive tier-1 supplier, magnesium steering column for BMW or VW, precision die-casting, lightweighting for emission reduction, German automotive engineering excellence",
+            "US": "American aerospace magnesium casting, helicopter transmission housing or aircraft seat frame, Boeing or Lockheed Martin supply chain, lightweight strength for aviation, American aerospace manufacturing",
+            "IL": "Israeli defence application, magnesium alloy component for Iron Dome interceptor or drone airframe, lightweight military technology, desert testing environment, Israeli defence industry innovation using domestic magnesium"
+          }
+        }
+      }
+    },
+    "manganese": {
+      "displayName": "Manganese",
+      "intro": "Manganese is essential for steelmaking \u2014 over 90% of production goes into steel as a deoxidiser and alloying element. Without manganese, steel would be too brittle to use. The metal is also increasingly important in lithium-ion battery cathodes (manganese-rich NMC chemistries). Mined as manganese dioxide (MnO\u2082) or other oxide minerals, typically black-to-grey ores. South Africa holds 75% of global reserves in the Kalahari manganese field. Major producers include South Africa, Gabon, Australia, and China.",
+      "materials": "Black-to-dark-grey manganese oxide ore with earite or dendritic surface texture, silvery-grey metallic manganese flake, ferromanganese alloy lump with conchoidal fracture, black manganese dust, steel ladle additive, battery-grade manganese sulphate solution.",
+      "stages": {
+        "origin": {
+          "subject": "Open-pit manganese mine in semi-arid terrain, dark black-grey ore being excavated from terraced benches, distinctive dark ore colour contrasting with red-brown overburden, mining trucks on ramp roads",
+          "lens": "24mm f/8, mining landscape, dark manganese ore body contrasting with lighter surrounding rock, terraced pit, equipment providing scale, semi-arid setting",
+          "enhancer": "Dark black-grey manganese ore in terraced benches, distinctive colour difference from the red-brown overburden, mining truck loaded with dark ore, ore crusher and screening plant, manganese dust staining equipment black",
+          "environments": {
+            "_default": "Open-pit manganese mine, dark ore body, semi-arid terrain, crushing and screening plant, rail or truck loading for smelter delivery",
+            "ZA": "Kalahari manganese field in the Northern Cape, South Manganese or Assmang mine, dark ore in the red Kalahari sand, semi-desert environment, 75% of global reserves in this region, Sishen-Saldanha rail line for export",
+            "GA": "Comilog mine in Moanda, Gabon, manganese plateau in the tropical forest, open-pit mining, Trans-Gabon railway to the coast, Central African tropical setting",
+            "AU": "Groote Eylandt mine in the Gulf of Carpentaria, South32 operation, shallow deposit on an island, tropical Northern Territory, barge loading for export, Aboriginal land lease"
+          }
+        },
+        "extraction": {
+          "subject": "Manganese ore being crushed and screened at the mine processing plant, dark ore passing through jaw crushers and vibrating screens, sized product stockpiled by grade for smelter delivery or export",
+          "lens": "35mm f/5.6, processing plant, dark ore flowing through crushers and screens, product stockpiles by size fraction, industrial mineral processing",
+          "enhancer": "Black-grey manganese ore fragments passing through crushing and screening equipment, dark dust in the air, sized product on stockpiles, conveyor to the rail loading facility, manganese staining everything dark",
+          "environments": {
+            "_default": "Mine-site processing plant, crushing, screening, ore grading, stockpile management, loading for smelter or export port",
+            "ZA": "Kalahari mine processing plant, sized ore stockpiles, loading onto rail wagons for the Sishen-Saldanha export line, Northern Cape semi-desert landscape"
+          }
+        },
+        "processing": {
+          "subject": "Ferromanganese submerged-arc furnace, electrodes plunged into the charge of manganese ore, coke and flux, intense electric arc heating, molten ferromanganese alloy being tapped for steelmaking use",
+          "lens": "35mm f/4, smelter interior, submerged-arc furnace with electrode columns, molten metal tapping visible, intense heat and light, heavy industrial ferroalloy production",
+          "enhancer": "Massive electrode columns plunged into the furnace charge, electric arc glow visible, molten ferromanganese tapping from the furnace into a ladle, shower of sparks, intense heat, dark smelter interior lit by the molten metal stream",
+          "environments": {
+            "_default": "Ferromanganese smelter, submerged-arc furnaces, electrode handling, tapping operations, casting into moulds or granulation, ferroalloy production for the steel industry",
+            "ZA": "South African ferromanganese smelter in Mpumalanga or Northern Cape, processing domestic Kalahari ore, Eskom power supply, ferroalloy for global steel mills, South African industrial heartland",
+            "CN": "Chinese ferromanganese plant in Guangxi or Guizhou, processing imported ore, electric furnaces, ferroalloy for the world's largest steel industry, Chinese smelting capacity"
+          }
+        },
+        "finished": {
+          "subject": "Ferromanganese lump being added to a steelmaking ladle, the essential alloy addition that makes steel usable, dark grey metallic lumps being weighed and charged, steel mill ladle metallurgy station",
+          "lens": "50mm f/4, steel mill ladle treatment, ferromanganese being charged, molten steel ladle in the background, showing manganese's critical role in steelmaking, heavy industrial metallurgy",
+          "enhancer": "Dark grey ferromanganese lumps with conchoidal fracture surfaces, being weighed on scales before addition to the steel ladle, ladle of molten steel glowing in the background, the essential deoxidiser and alloy addition, every tonne of steel requires manganese",
+          "environments": {
+            "_default": "Steel mill ladle metallurgy station, ferromanganese addition, molten steel treatment, alloy hopper and weighing system, heavy industrial steelmaking",
+            "CN": "Chinese steel mill, ferromanganese addition to the ladle, world's largest steel industry, massive production scale, manganese ensuring steel quality in every tonne produced"
+          }
+        }
+      }
+    },
+    "molybdenum": {
+      "displayName": "Molybdenum",
+      "intro": "Molybdenum is a refractory metal (extremely high melting point \u2014 2,623\u00b0C, second only to tungsten) used primarily as an alloying element in high-strength steel and stainless steel for pipelines, automotive components, and chemical processing equipment. It is also used in catalysts for petroleum refining. Most molybdenum is mined as a byproduct of copper mining from porphyry deposits. The US, Chile, China, and Peru are the largest producers. Ferromolybdenum is the standard trade form for steelmaking.",
+      "materials": "Silvery-grey metallic molybdenite (MoS\u2082) flakes with greasy feel, dark grey technical-grade molybdenum oxide powder, silvery ferromolybdenum lump, high-strength steel pipe section, catalyst pellets, refractory crucible.",
+      "stages": {
+        "origin": {
+          "subject": "Copper-molybdenum porphyry deposit being mined in a massive open pit, molybdenite (MoS\u2082) as a silvery-grey flaky mineral present in the copper ore, co-mined with the copper",
+          "lens": "35mm f/5.6, open-pit copper mine, ore face showing both copper and molybdenum mineralisation, mining trucks and equipment, massive porphyry mining operation",
+          "enhancer": "Porphyry copper ore with silvery-grey molybdenite flakes visible in the rock face alongside copper minerals, massive open-pit benches, molybdenum as a valuable byproduct of copper mining, co-recovery from the same ore body",
+          "environments": {
+            "_default": "Massive porphyry copper-molybdenum open pit, terraced benches, ore with visible molybdenite, copper concentrator also recovering moly as byproduct",
+            "US": "Climax or Henderson molybdenum mine in Colorado, one of the few primary moly mines, Rocky Mountains at 3,000m+ altitude, historic American molybdenum mining, alpine tundra above the mine",
+            "CL": "Chilean porphyry copper mine (El Teniente or Los Pelambres) with significant moly byproduct, Andean mountain setting, moly recovery circuit in the concentrator",
+            "CN": "Chinese primary molybdenum mine in Shaanxi or Henan, Jinduicheng or Luanchuan deposit, open-pit porphyry mining, Chinese mountain terrain, one of the world's largest primary moly mines, loess plateau landscape",
+            "PE": "Peruvian porphyry copper-moly mine (Antamina or Cerro Verde), high Andean open pit, molybdenite as a valuable byproduct of copper mining, 4,000m+ altitude, thin air and extreme UV, Andean cordillera"
+          }
+        },
+        "extraction": {
+          "subject": "Molybdenite flotation circuit, copper-moly concentrate being separated, grey molybdenite froth floating while copper minerals sink, selective flotation producing a clean moly concentrate",
+          "lens": "50mm f/4, concentrator interior, moly-copper separation flotation cells, grey moly froth on the cell surface, industrial mineral processing for the byproduct recovery",
+          "enhancer": "Grey-silvery molybdenite froth floating in the selective flotation cell, separating from the copper minerals, moly concentrate thickener, filter press producing moly concentrate filter cake, byproduct recovery circuit within the larger copper concentrator",
+          "environments": {
+            "_default": "Copper concentrator moly circuit, selective flotation, moly concentrate thickening and filtration, byproduct recovery within the copper processing plant",
+            "CL": "Chilean copper concentrator moly circuit, selective flotation at high altitude, moly concentrate being drummed for roasting at a separate facility",
+            "CN": "Chinese moly flotation circuit at Jinduicheng, selective separation of molybdenite from copper and other sulphides, Chinese mineral processing, mountainous Shaanxi industrial setting",
+            "PE": "Peruvian moly circuit at Cerro Verde near Arequipa, byproduct recovery from copper concentrate, high-altitude processing plant, Andes visible, El Misti volcano in the background"
+          }
+        },
+        "processing": {
+          "subject": "Molybdenite roasting kiln, MoS\u2082 concentrate being roasted to convert to molybdenum oxide (MoO\u2083), grey-green technical-grade oxide powder being produced, SO\u2082 gas being scrubbed from the off-gas",
+          "lens": "50mm f/4, industrial roasting plant, rotary kiln or multiple-hearth roaster, dark concentrate entering and grey-green oxide discharging, off-gas treatment visible",
+          "enhancer": "Dark grey molybdenite concentrate entering the roaster, grey-green molybdenum oxide powder discharging, rotary kiln with refractory lining, off-gas ductwork to the acid plant or scrubber, SO\u2082 treatment, technical-grade oxide for ferromoly production",
+          "environments": {
+            "_default": "Moly roasting plant, concentrate roasting, oxide production, off-gas treatment, ferromolybdenum or chemical production downstream",
+            "US": "Freeport-McMoRan or Climax moly roasting facility in Colorado, technical-grade oxide production, Rocky Mountain industrial setting, downstream ferromoly conversion",
+            "CN": "Chinese ferromolybdenum production in Liaoning or Henan, processing domestic moly concentrate, rotary kiln roasting and alloying, Chinese ferroalloy industry scale, steelmaking additive production",
+            "PE": "Peruvian moly concentrate being drummed for export to Chinese and European roasters, Callao or Matarani port, Pacific coast shipping, Peruvian mining exports, Andean mineral wealth heading to global steel mills"
+          }
+        },
+        "finished": {
+          "subject": "Ferromolybdenum lumps being inspected before delivery to a steel mill, dark silvery-grey metallic pieces with conchoidal fracture, the standard trade form for alloying high-strength and stainless steels",
+          "lens": "50mm f/4, product inspection shot, ferromolybdenum pieces showing metallic surface and fracture texture, quality certification and packaging, steel industry supply chain",
+          "enhancer": "Dark silvery-grey ferromolybdenum lumps with conchoidal fracture, dense heavy pieces, grade certification label, drums or supersacks for steel mill delivery, the essential micro-alloying element for oil-and-gas pipe steel and stainless grades",
+          "environments": {
+            "_default": "Ferroalloy warehouse or steel mill receiving, ferromolybdenum being checked and stored, alloy addition for high-performance steels, metallurgical supply chain",
+            "US": "American steel mill alloy bay, ferromolybdenum from Climax or Chilean byproduct, being weighed for addition to the EAF or ladle, API-grade pipe steel production, oil-and-gas industry demand",
+            "CN": "Chinese pipeline steel production using ferromolybdenum, moly-alloyed X70/X80 grade for oil and gas pipelines, Chinese steel mill producing pipe for domestic and Belt-and-Road infrastructure, massive construction scale",
+            "PE": "Oil pipeline in the Peruvian Amazon or Andes made from moly-alloyed steel, the pipeline infrastructure that moly enables in the very country that mines it, jungle or mountain pipeline engineering, Camisea or NorPeruano pipeline"
+          }
+        }
+      }
+    },
+    "neodymium": {
+      "displayName": "Neodymium",
+      "intro": "Neodymium is a rare earth element essential for the world's strongest permanent magnets (NdFeB \u2014 neodymium-iron-boron). These magnets are critical for EV drive motors, wind turbine generators, hard drives, headphones, and guided munitions. Despite being called 'rare earth', neodymium is as abundant as copper \u2014 the 'rare' refers to the difficulty of separating it from other rare earths. China dominates mining, separation, and magnet manufacturing, controlling over 85% of global supply. Inner Mongolia's Bayan Obo is the world's largest rare earth mine.",
+      "materials": "Dark grey-black bastn\u00e4site or monazite ore, silvery oxidation-prone neodymium metal, powerful NdFeB magnet block with nickel plating, rare earth separation solvent extraction mixer-settlers, yellowish neodymium oxide powder, wind turbine nacelle interior.",
+      "stages": {
+        "origin": {
+          "subject": "Bayan Obo rare earth mine in Inner Mongolia, massive open pit in the steppe, dark mixed iron-rare earth ore being mined, one of the world's most strategically important mineral deposits",
+          "lens": "24mm f/8, wide mining landscape, open pit in the Mongolian steppe, dark ore body, mining trucks, flat grassland stretching to the horizon around the pit, remote strategic mining operation",
+          "enhancer": "Dark iron-rare-earth ore in open-pit benches, Mongolian steppe grassland surrounding the mine, processing plant on the rim, strategic importance of this single deposit for global technology supply chains, wind sweeping across the flat terrain",
+          "environments": {
+            "_default": "Rare earth mine, open-pit or alluvial, dark ore or clay, remote terrain, processing plant, strategically critical mineral extraction",
+            "CN": "Bayan Obo mine in Inner Mongolia, flat Mongolian steppe, massive open pit, combined iron ore and rare earth mining, world's largest rare earth deposit, Baotou processing city 150km south, strategic Chinese resource",
+            "AU": "Lynas Mount Weld mine in Western Australia, open-pit rare earth deposit in the Goldfields, red laterite, concentrate shipped to Malaysia for processing, rare non-Chinese rare earth source"
+          }
+        },
+        "extraction": {
+          "subject": "Rare earth solvent extraction plant, long rows of mixer-settler tanks separating individual rare earth elements from each other, yellowish organic solvent phase visible, the technically difficult separation process",
+          "lens": "35mm f/4, chemical processing interior, rows of mixer-settler tanks stretching into the distance, showing the many stages required to separate chemically similar rare earth elements, complex hydrometallurgy",
+          "enhancer": "Long parallel rows of mixer-settler tanks with organic and aqueous phases visible, each stage incrementally purifying individual rare earths, yellowish organic solvent, aqueous strip solutions, dozens to hundreds of separation stages required, technically demanding chemistry",
+          "environments": {
+            "_default": "Rare earth separation plant, solvent extraction mixer-settlers, individual element purification, chemical processing for strategically critical materials",
+            "CN": "Chinese rare earth separation plant in Baotou or Jiangxi, massive solvent extraction facility, world's dominant separation capacity, mixer-settlers stretching the length of the building, Chinese processing dominance"
+          }
+        },
+        "processing": {
+          "subject": "Neodymium metal being produced by molten salt electrolysis, silvery rare earth metal collecting at the cathode in a high-temperature cell, or NdFeB magnet powder being pressed and sintered into magnet blocks",
+          "lens": "50mm f/4, metallurgical or magnet factory interior, electrolytic cell or sintering furnace, high-value speciality metal production, clean industrial environment",
+          "enhancer": "Silvery neodymium metal in an electrolytic cell, or NdFeB magnet powder being pressed into shapes and loaded into the sintering furnace, powerful magnetic properties developing during heat treatment, clean speciality manufacturing, high-value product",
+          "environments": {
+            "_default": "Neodymium metal reduction or NdFeB magnet manufacturing facility, electrolysis or sintering, speciality metallurgical production, clean industrial setting",
+            "CN": "Chinese NdFeB magnet factory in Ningbo or Baotou, world's largest magnet manufacturing capacity, sintering furnaces, magnetising stations, magnets for EV motors and wind turbines, Chinese manufacturing dominance",
+            "JP": "Japanese magnet manufacturer (Shin-Etsu or TDK), precision NdFeB production, grain-boundary diffusion technology for high-performance grades, Japanese advanced materials expertise"
+          }
+        },
+        "finished": {
+          "subject": "NdFeB permanent magnet being installed in an electric vehicle drive motor, powerful magnet segments arranged in a rotor, the critical component enabling EV performance and the energy transition",
+          "lens": "50mm f/4, EV manufacturing, magnet segments being placed into the motor rotor, precision assembly, the rare earth supply chain's end product enabling the energy transition",
+          "enhancer": "Curved NdFeB magnet segments with nickel plating, being precisely placed into rotor slots, powerful magnetic field requiring careful handling, EV motor assembly jig, the energy transition depends on these magnets, supply chain vulnerability visible in the strategic importance",
+          "environments": {
+            "_default": "EV motor assembly or wind turbine generator manufacturing, NdFeB magnets being installed, clean manufacturing, energy transition technology production",
+            "DE": "German automotive EV motor assembly, BMW or VW electric drive unit, NdFeB magnets in the permanent-magnet synchronous motor, German engineering meets Chinese material supply, modern automated assembly",
+            "CN": "Chinese EV manufacturer, BYD or NIO motor assembly, domestic magnets in domestic vehicles, the world's largest EV market using domestic rare earth supply, vertically integrated Chinese supply chain"
+          }
+        }
+      }
+    },
+    "nickel": {
+      "displayName": "Nickel",
+      "intro": "Nickel is a silvery-white metal essential for stainless steel (accounting for ~70% of demand) and increasingly for lithium-ion battery cathodes in EVs. Mined from two ore types: sulphide deposits (higher grade, underground, in Canada and Russia) and laterite deposits (lower grade, open-pit, in Indonesia and the Philippines). Indonesia has become the world's largest producer through massive laterite processing investment. The LME nickel contract is the global benchmark, though Indonesian NPI (nickel pig iron) has disrupted traditional pricing.",
+      "materials": "Silvery-white metallic briquette or cathode, dark green laterite ore, brassy-yellow pentlandite mineral in dark sulphide ore, stainless steel surface, battery-grade nickel sulphate blue-green crystals, ferronickel granules.",
+      "stages": {
+        "origin": {
+          "subject": "Laterite nickel mine in tropical terrain, red-brown and green-coloured ore being stripped in open-pit benches, vivid colour banding in the laterite profile showing different ore zones",
+          "lens": "24mm f/8, wide tropical mining landscape, colourful laterite ore profile visible in the pit walls \u2014 red limonite zone over green saprolite zone \u2014 tropical vegetation at the pit margins",
+          "enhancer": "Vivid colour banding in the laterite ore profile \u2014 red-brown limonite zone transitioning to green saprolite zone over grey bedrock, tropical rain puddles in the pit floor, mining trucks on red-mud roads, lush tropical vegetation at the edge",
+          "environments": {
+            "_default": "Open-pit laterite nickel mine in tropical terrain, colourful ore zones, tropical vegetation surrounding, processing plant visible, wet tropical climate",
+            "ID": "Indonesian laterite mine in Sulawesi or Halmahera, massive Chinese-invested HPAL or smelting complex adjacent, deforested mine area in tropical island landscape, rain and mud, new industrial zone in remote tropical location",
+            "NC": "New Caledonian laterite mine, stunning Pacific island landscape, vivid red laterite against turquoise ocean, Vale or SLN operation, French overseas territory, coral reef visible from the mine rim",
+            "PH": "Philippine laterite mine in Surigao or Palawan, shallow ore strip, tropical setting, ore being loaded onto barges for export to Chinese NPI smelters"
+          }
+        },
+        "extraction": {
+          "subject": "Nickel HPAL (High Pressure Acid Leach) autoclave, massive high-pressure vessel dissolving laterite ore in sulphuric acid at extreme temperature and pressure, producing a nickel-cobalt solution",
+          "lens": "50mm f/4, industrial process interior, massive autoclave vessel as central element, high-pressure piping and instrumentation, chemical processing at extreme conditions",
+          "enhancer": "Massive high-pressure autoclave vessel with thick walls, operating at 250\u00b0C and 40 atmospheres, sulphuric acid and laterite slurry feed, nickel-cobalt solution draining, exotic alloy piping and valves for the corrosive acidic conditions, technically challenging metallurgy",
+          "environments": {
+            "_default": "HPAL nickel plant, autoclaves, neutralisation, solvent extraction, precipitation, technically complex and capital-intensive laterite processing",
+            "ID": "Indonesian HPAL plant in Morowali industrial park, Sulawesi, Chinese-invested facility, massive construction, tropical island setting, new industrial city emerging from forest"
+          }
+        },
+        "processing": {
+          "subject": "Nickel refinery electrolysis tankhouse, rows of electrolytic cells with nickel cathode blanks being plated to 99.99% purity, green nickel electrolyte solution between the electrodes",
+          "lens": "24mm f/5.6, wide tankhouse interior, rows of electrolytic cells with green electrolyte, nickel cathodes being plated, refined metal production, industrial refinery scale",
+          "enhancer": "Green nickel sulphate electrolyte between anode and cathode plates, nickel deposit growing on the cathode blanks, overhead crane lifting finished cathodes, silvery-white nickel surface visible, acid mist extraction, clean refined metal production",
+          "environments": {
+            "_default": "Nickel refinery tankhouse, electrolytic refining, cathode production, LME-grade nickel, industrial refinery setting",
+            "RU": "Nornickel refinery in Norilsk, massive Arctic refinery complex, nickel and PGM production, extreme cold, polar industrial city, Russian nickel production",
+            "CA": "Vale nickel refinery in Sudbury or Long Harbour, Canadian nickel processing, boreal or Atlantic coastal setting, LME-registered nickel cathodes"
+          }
+        },
+        "finished": {
+          "subject": "LME nickel briquettes or cut cathodes in a warehouse, silvery-white metal with distinctive shape and brand stamps, ready for stainless steel or battery chemical production",
+          "lens": "50mm f/4, warehouse product shot, nickel briquettes or cathode pieces showing silvery-white colour, brand stamps and LME warrant tags, metal trading warehouse",
+          "enhancer": "Silvery-white nickel briquettes with pressed brand mark, or cut cathode squares, LME warrant tags attached, banded on pallets, warehouse stretching behind with tonnes of metal, stainless steel and battery industries awaiting delivery",
+          "environments": {
+            "_default": "LME-registered warehouse, nickel briquettes or cathodes stacked by brand, metal trading hub, industrial port warehouse",
+            "NL": "Rotterdam LME nickel warehouse, briquettes from multiple producers, European stainless steel industry demand, port logistics hub",
+            "CN": "Shanghai bonded warehouse, nickel for Chinese stainless and battery industries, world's largest nickel consumer, Yangshan or Waigaoqiao port"
+          }
+        }
+      }
+    },
+    "soda_ash": {
+      "displayName": "Soda Ash",
+      "intro": "Soda ash (sodium carbonate, Na\u2082CO\u2083) is a fundamental industrial chemical used in glass manufacturing (50% of demand), detergents, chemicals, and increasingly in lithium carbonate production for EV batteries. Produced by two routes: mining of natural trona ore (dominant in the US \u2014 Wyoming has the world's largest trona deposits) and the synthetic Solvay process (dominant in China, EU, and India). The US Green River Basin in Wyoming supplies roughly 90% of US production and is the world's largest natural source.",
+      "materials": "White crystalline trona ore with fibrous texture, white soda ash powder, glass furnace with molten glass, detergent manufacturing, trona mine underground chamber, white chemical bags.",
+      "stages": {
+        "origin": {
+          "subject": "Underground trona mine in Wyoming, massive room-and-pillar workings in the white crystalline ore bed, continuous mining machine cutting into the trona seam, white fibrous ore visible in the face",
+          "lens": "35mm f/2.8, underground documentary, mining machine cutting into white trona ore, vast underground chambers lit by machine lights, scale of the underground workings visible",
+          "enhancer": "White crystalline trona ore with fibrous texture in the mine face, continuous miner cutting into the 3-metre-thick seam, roof bolts in the ceiling, conveyor belt running to the shaft, vast underground rooms, white dust on every surface",
+          "environments": {
+            "_default": "Underground trona mine, room-and-pillar workings, white ore, continuous mining, conveyor to the surface, processing plant above",
+            "US": "Ciner or Genesis Alkali trona mine in the Green River Basin, Wyoming, 450 metres below the sagebrush steppe, world's purest and largest natural soda ash deposit, cowboy country above the industrial underground",
+            "TR": "Turkish natural soda ash mine at Beypazar\u0131 near Ankara, solution mining of trona beds, the discovery that made Turkey the world's newest major natural soda ash source, Anatolian steppe landscape, Ciner Group operation",
+            "CN": "Chinese synthetic soda ash plant in Shandong or Hebei using the Solvay (ammonia soda) process, massive industrial complex, limestone quarry and salt brine supply, China as the world's largest soda ash producer by the synthetic route",
+            "KE": "Lake Magadi in the Kenya Rift Valley, natural trona crystallising on the soda lake surface, pink-hued alkaline water, flamingos wading, Tata Chemicals harvesting trona from the lake bed, dramatic East African Rift Valley setting"
+          }
+        },
+        "extraction": {
+          "subject": "Trona ore being calcined in a rotary kiln on the surface, white crusite-stage product forming as the ore is heated to drive off CO\u2082 and water, converting natural trona to crude soda ash",
+          "lens": "35mm f/5.6, surface processing plant, rotary kiln with trona feed, calcined product discharge, processing plant in the Wyoming landscape",
+          "enhancer": "White trona ore feeding into the rotary calciner, hot calcined crude soda ash discharging, CO\u2082 and steam venting, processing building against the Wyoming sky, mine shaft headframe visible, trona-to-soda-ash conversion",
+          "environments": {
+            "_default": "Trona processing plant, calcination kiln, dissolution, crystallisation, drying, surface facility above the underground mine",
+            "US": "Wyoming trona plant on the sagebrush steppe, Green River visible in the distance, Teton Range on the far horizon, American West landscape with industrial processing, pronghorn antelope near the plant fence",
+            "TR": "Ciner Beypazar\u0131 solution mining, hot water dissolving underground trona deposits and pumping brine to the surface processing plant, Turkish soda ash challenging Wyoming's cost leadership, Anatolian hills",
+            "CN": "Solvay-process plant in Tangshan or Weifang, ammonia absorber towers and carbonation columns, the synthetic route from salt and limestone to soda ash, Chinese heavy chemical industry, industrial city smog",
+            "KE": "Trona being dredged from Lake Magadi's surface crust, the natural soda lake replenishing itself continuously, processing plant on the lakeshore, railway to Mombasa port, flamingos undisturbed by the mining, volcanic Rift Valley landscape"
+          }
+        },
+        "processing": {
+          "subject": "Soda ash crystallisation and drying, white sodium carbonate crystals growing in the evaporator-crystalliser, dried white powder being conveyed to storage and packaging",
+          "lens": "50mm f/4, processing plant interior, crystalliser vessels and dryer, white soda ash powder flowing on conveyors, clean chemical processing environment",
+          "enhancer": "White soda ash crystals forming in the crystalliser, centrifuge separating crystals from liquor, rotary dryer producing final white powder, conveyor to storage silos, clean white product coating surfaces, chemical plant atmosphere",
+          "environments": {
+            "_default": "Soda ash processing plant, crystallisation, drying, product storage, packaging or bulk loading, chemical process industry",
+            "US": "Wyoming soda ash plant, world's lowest-cost natural production, product storage domes, rail loading for domestic and export markets, Union Pacific rail line",
+            "TR": "Turkish soda ash crystallisation and drying, export product for the European and Asian glass industries, rail loading for transport to Mersin or Istanbul port, competitive Turkish production undercutting synthetic producers",
+            "CN": "Chinese soda ash being loaded onto trucks for delivery to the massive Chinese glass industry, domestic consumption matching domestic production, Shandong flat glass corridor, Chinese industrial logistics",
+            "KE": "Kenyan soda ash being railed from Lake Magadi to Mombasa for export, the Magadi Soda railway, African industrial export, Rift Valley to Indian Ocean coast, niche but distinctive natural product"
+          }
+        },
+        "finished": {
+          "subject": "Flat glass furnace being fed with a batch mixture containing soda ash, white powder flowing from the batch hopper into the furnace where it melts to form glass, glowing orange furnace interior visible",
+          "lens": "35mm f/4, glass factory, batch charging as central action, white soda ash batch entering the furnace, orange glow of molten glass inside, the primary end-use for soda ash",
+          "enhancer": "White batch mixture (soda ash, sand, limestone) flowing from the hopper into the glowing orange glass furnace, molten glass visible inside, batch melting at the surface, float glass line stretching away from the furnace, architectural glass production",
+          "environments": {
+            "_default": "Float glass plant, batch house, furnace charging, molten glass flowing, glass ribbon forming on the tin bath, soda ash's primary industrial destination",
+            "US": "American float glass plant, Guardian or Pilkington, batch charging with Wyoming soda ash, architectural and automotive glass production, Midwest or Southern US manufacturing",
+            "TR": "Turkish flat glass factory using domestic soda ash, Trakya Cam (\u015ei\u015fecam) plant near Istanbul, float glass production, Turkish construction boom consuming glass, Bosphorus region industrial development",
+            "CN": "Chinese solar glass factory in Anhui, soda ash as a key input for photovoltaic cover glass, the energy transition driving soda ash demand growth, Chinese solar manufacturing scale, modern glass plant",
+            "KE": "East African glass bottle factory using Kenyan soda ash, domestic value addition, Nairobi or Mombasa industrial area, local soda ash supplying regional glass production, African industrial development"
+          }
+        }
+      }
+    },
+    "steel": {
+      "displayName": "Steel (Rebar)",
+      "intro": "Steel rebar (reinforcing bar) is the most consumed form of long steel product, embedded in concrete to provide tensile strength in construction. Produced primarily in electric arc furnaces (EAFs) melting scrap steel, or from integrated blast-furnace-BOF routes. Rebar is the backbone of global construction \u2014 every building, bridge, and road contains tonnes of it. China produces over 50% of global steel and consumes most of its own rebar domestically. The Shanghai Futures Exchange rebar contract is the world's most liquid steel derivative.",
+      "materials": "Ribbed steel rebar with characteristic herringbone pattern, red-hot glowing billet, electric arc furnace sparks, scrap steel in various forms, concrete reinforcement cage, rust-brown oxidised surface, cross-section showing round profile with ribs.",
+      "stages": {
+        "origin": {
+          "subject": "Scrap steel yard with mountains of shredded and baled scrap metal, electromagnet crane picking up a load of shredded steel for the arc furnace, recycled steel as the primary feedstock for rebar",
+          "lens": "35mm f/5.6, scrap yard industrial landscape, towering scrap piles and electromagnetic crane, showing the scale of steel recycling, the starting point for EAF steelmaking",
+          "enhancer": "Mountains of shredded steel scrap with mixed colours and textures, electromagnetic crane swinging a load of scrap, crushed car bodies and demolition steel visible, scrap grading areas, conveyor to the furnace charge bay, circular economy of steel",
+          "environments": {
+            "_default": "Steel scrap yard adjacent to an EAF minimill, scrap piles, electromagnetic crane, charge buckets, the recycling feedstock for steelmaking",
+            "US": "American scrap yard beside a Nucor or CMC minimill, shredded scrap mountains, automotive hulks, structural demolition steel, industrial American landscape, recycling at massive scale",
+            "CN": "Chinese scrap processor in Hebei or Jiangsu, growing Chinese scrap recycling, obsolete scrap from China's first generation of modern buildings being recycled, expanding domestic scrap supply",
+            "IN": "Indian scrap yard in Gujarat or Maharashtra, ship-breaking yards at Alang providing massive scrap volumes alongside domestic obsolete scrap, Indian recycling industry, the world's largest ship-breaking centre feeding the steel mills",
+            "EG": "Egyptian scrap yard in Alexandria or 6th October City, imported scrap from Europe and domestic collection, Egyptian rebar demand driven by massive construction, Suez Canal logistics for scrap imports, Mediterranean industrial port"
+          }
+        },
+        "extraction": {
+          "subject": "Electric arc furnace in operation, massive electrodes plunged into a charge of scrap steel, brilliant white electric arc visible, sparks and fume billowing, the most dramatic moment in steelmaking",
+          "lens": "35mm f/4, dramatic industrial shot, EAF with brilliant white arc and shower of sparks, intense light and heat, the most visually dramatic industrial process, protective glass filter on the lens",
+          "enhancer": "Brilliant white electric arc between graphite electrodes and scrap charge, shower of orange sparks, lime and carbon injection, fume extraction canopy struggling to contain the off-gas, intense radiant heat, protective shields for workers, the most dramatic sight in industry",
+          "environments": {
+            "_default": "EAF melt shop, electric arc furnace, scrap charging, melting, tapping into ladle, the heart of the minimill steelmaking process",
+            "US": "Nucor EAF melt shop, massive 200-tonne furnace, brilliant arc, scrap charging by crane, American minimill revolution in steelmaking",
+            "TR": "Turkish EAF rebar mill, scrap-based production, Mediterranean coast, rebar for the massive Turkish construction industry, scrap imported by sea",
+            "IN": "Indian EAF or induction furnace steelmaking, small-scale producers alongside modern mills, Jindal or JSW electric furnace, rebar production for India's infrastructure boom, Indian industrial energy challenges",
+            "EG": "Egyptian Steel (Ezz Steel) EAF in Suez or Sadat City, Egypt's largest steelmaker, rebar for the massive Egyptian construction sector, desert industrial zone, New Administrative Capital construction driving demand"
+          }
+        },
+        "processing": {
+          "subject": "Red-hot steel billet being rolled through a series of stands into rebar, glowing orange bar snaking through the rolling mill at high speed, cobble guard visible, finished rebar coiling or being cut to length",
+          "lens": "35mm f/4, rolling mill interior, red-hot billet emerging from the reheating furnace and passing through progressive stands, bar getting thinner and longer at each pass, dramatic orange glow and speed",
+          "enhancer": "Glowing orange steel billet entering the roughing stands, progressively reducing in cross-section through each stand, bar moving faster as it gets thinner, rebar ribs being formed in the finishing stands, flying shear cutting to length, cooling bed receiving the hot bars",
+          "environments": {
+            "_default": "Long-product rolling mill, reheat furnace, roughing and finishing stands, cooling bed, rebar cutting and bundling, industrial steelmaking",
+            "CN": "Chinese rebar rolling mill, high-speed production, massive annual output, SFE rebar grade production, Chinese construction industry supply, industrial zone",
+            "US": "Nucor or CMC rebar mill, compact minimill, efficient EAF-to-rolling process, American construction rebar supply",
+            "IN": "Indian rebar rolling mill, hot-rolled ribbed bar production, TMT (thermo-mechanically treated) rebar, Indian standard specification, massive domestic construction demand from housing and infrastructure programmes",
+            "EG": "Egyptian rebar rolling at Ezz Steel, TMT rebar for the Egyptian market, New Administrative Capital and social housing driving demand, desert industrial corridor, Nile Delta construction visible from the mill"
+          }
+        },
+        "finished": {
+          "subject": "Bundled rebar stacked at a construction site, ribbed reinforcing bars tied into a cage for a concrete pour, construction workers positioning the rebar cage in the formwork, the endpoint of the steel supply chain",
+          "lens": "50mm f/4, construction site documentary, rebar cage in formwork as central subject, construction activity around, the physical infrastructure that steel rebar enables",
+          "enhancer": "Ribbed rebar tied with wire into a reinforcement cage, positioned inside timber or steel formwork, ready for the concrete pour, construction workers in hard hats, crane lifting bundles, the structural skeleton of every concrete building and bridge",
+          "environments": {
+            "_default": "Construction site, rebar cage in formwork, concrete pour preparation, tower crane, building under construction, the destination for rebar \u2014 every building, bridge, and road",
+            "CN": "Chinese construction mega-project, high-rise tower, massive rebar quantities, rapid construction pace, Chinese urbanisation and infrastructure building consuming the world's most rebar",
+            "US": "American highway bridge construction, rebar cage for bridge deck, DOT project, American infrastructure rebuilding, orange construction zone on the interstate",
+            "IN": "Indian construction site, rebar cage being tied for a highway flyover or metro station, massive Indian infrastructure spending, workers in hard hats, urban Indian construction chaos and progress, monsoon clouds building",
+            "EG": "Egyptian construction site in the New Administrative Capital east of Cairo, massive rebar quantities in high-rise foundations, desert construction on an unprecedented scale, pyramids visible from the new city's edge, ancient and modern Egypt"
+          }
+        }
+      }
+    },
+    "tellurium": {
+      "displayName": "Tellurium",
+      "intro": "Tellurium is one of the rarest stable elements in Earth's crust \u2014 rarer than gold \u2014 yet essential for cadmium telluride (CdTe) thin-film solar panels, the fastest-growing and lowest-cost solar technology. Almost all tellurium is recovered as a byproduct of copper refining, from the anode slimes that collect during electrolytic copper refining. Global production is only about 500 tonnes per year. Major sources include China, Japan, and Russia. First Solar is the dominant CdTe solar panel manufacturer.",
+      "materials": "Silvery-white crystalline metalloid with slight metallic lustre, brittle fracture surface, copper refinery anode slime (dark grey-black mud), CdTe solar panel dark glass surface, tellurium dioxide white powder, selenium-tellurium mixed residue.",
+      "stages": {
+        "origin": {
+          "subject": "Copper electro-refinery anode slime collection, dark grey-black mud accumulating at the bottom of the copper refining cells, containing tellurium along with selenium, gold, silver, and platinum group metals",
+          "lens": "50mm f/4, copper refinery interior, anode slime being collected from the bottom of electrolytic cells, dark residue that contains multiple precious and rare byproducts, industrial setting",
+          "enhancer": "Dark grey-black anode slime accumulating below the copper cathodes, being flushed out of the cells for recovery, this unassuming mud contains tellurium, selenium, gold, silver, and PGMs \u2014 enormous value in a residue, copper refinery electrolytic cells in the background",
+          "environments": {
+            "_default": "Copper electrolytic refinery, anode slime collection, multi-element recovery from the residue, copper refining byproduct, industrial metallurgical complex",
+            "JP": "Japanese copper refinery (Mitsubishi or Sumitomo), precision anode slime processing, recovery of multiple valuable byproducts, Japanese metallurgical excellence, coastal industrial city",
+            "SE": "Boliden copper smelter at R\u00f6nnsk\u00e4r in northern Sweden, anode slime from electro-refining containing tellurium, Arctic Swedish coast, Boliden's integrated metals complex, speciality metal recovery from copper refining, Northern Lights visible in winter",
+            "BE": "Umicore precious metals refinery in Hoboken, Antwerp, recovering tellurium from copper refinery anode slimes and electronic waste, Belgian circular economy metals processing, Scheldt River industrial zone"
+          }
+        },
+        "extraction": {
+          "subject": "Tellurium being separated from anode slime through chemical processing, leaching, cementation, or electrolysis, producing crude tellurium powder or sponge from the complex multi-element residue",
+          "lens": "50mm f/4, chemical processing laboratory-scale, tellurium recovery from complex residue, speciality metallurgical processing for a rare byproduct element",
+          "enhancer": "Chemical leaching vessels processing anode slime, tellurium being selectively dissolved and recovered, crude tellurium sponge collecting, small-scale speciality recovery from a complex feedstock, multiple valuable elements being separated simultaneously",
+          "environments": {
+            "_default": "Anode slime treatment facility within a copper refinery, multi-element recovery, chemical leaching and separation, speciality metals processing",
+            "CN": "Chinese tellurium recovery facility, processing copper refinery slimes, world's largest tellurium producer, chemical hydrometallurgical processing",
+            "SE": "Swedish tellurium separation at Boliden, hydrometallurgical recovery from anode slime, Nordic precision metallurgy, one of the few European tellurium sources, Swedish sustainability credentials in speciality metals",
+            "BE": "Umicore tellurium recovery in Belgium, processing anode slimes and recycled electronic materials, European urban mining leadership, recovering critical raw materials from waste, Antwerp circular economy showcase"
+          }
+        },
+        "processing": {
+          "subject": "High-purity tellurium being zone-refined or vacuum-distilled, achieving 5N-6N purity for CdTe solar cell production, crystalline tellurium ingot with silvery metallic surface",
+          "lens": "50mm f/4, clean speciality metals processing, zone refining or vacuum distillation equipment, high-purity tellurium production, near-cleanroom conditions for solar-grade material",
+          "enhancer": "Zone refining furnace purifying tellurium to solar-cell grade, crystalline silvery-white ingot forming, vacuum distillation alternative for purification, high-purity production for photovoltaic industry, precise temperature control, laboratory-grade cleanliness",
+          "environments": {
+            "_default": "Tellurium refining facility, zone refining or vacuum distillation, high-purity production, solar industry supply chain, speciality materials processing",
+            "US": "American tellurium refining for First Solar's domestic supply chain, high-purity Te for CdTe PV manufacturing, solar industry supply security",
+            "SE": "Swedish refined tellurium being prepared for the solar industry, high-purity product from Boliden's integrated recovery, Nordic clean-tech supply chain, tellurium enabling solar energy from Swedish metallurgical excellence",
+            "BE": "Belgian high-purity tellurium from Umicore, zone-refined for CdTe solar applications, European critical raw materials supply, the recycling-to-solar-panel pipeline, Belgian speciality metals leadership"
+          }
+        },
+        "finished": {
+          "subject": "CdTe thin-film solar panel being manufactured, dark glass panel with the telluride semiconductor layer being deposited, First Solar production line, the primary demand driver for tellurium",
+          "lens": "35mm f/4, solar panel manufacturing, CdTe deposition as central process, clean factory environment, the energy transition application that drives tellurium demand",
+          "enhancer": "Dark glass CdTe solar panel moving through the deposition chamber, thin telluride semiconductor layer being applied, vacuum deposition equipment, First Solar branding, cleanroom manufacturing, each panel containing a tiny but critical amount of tellurium",
+          "environments": {
+            "_default": "CdTe solar panel manufacturing facility, thin-film deposition, panel testing, packaging, solar energy technology production",
+            "US": "First Solar factory in Ohio or Arizona, CdTe panel production, American solar manufacturing, domestic tellurium supply chain, energy transition manufacturing, large modern factory",
+            "SE": "First Solar CdTe panels installed on a Scandinavian rooftop, Swedish tellurium potentially in the panel, the circular link from Nordic copper refining to solar energy generation, midnight sun illuminating the panels in summer",
+            "BE": "Utility-scale CdTe solar farm in Belgium or the Netherlands, flat Low Countries landscape with solar panels, European energy transition, tellurium recovered in Belgium enabling local clean electricity generation"
+          }
+        }
+      }
+    },
+    "tin": {
+      "displayName": "Tin",
+      "intro": "Tin is a soft silvery-white metal primarily used for solder in electronics (48% of demand), tinplate food cans, chemicals, and lead-free solder alloys. Mined from cassiterite (tin oxide, SnO\u2082) \u2014 a heavy dark brown mineral found in alluvial (placer) deposits and hard-rock veins. China and Indonesia are the largest producers, with significant output from Myanmar, Peru, and Bolivia. The LME tin contract is the global benchmark. Tin is the smallest of the LME base metals by production volume.",
+      "materials": "Soft silvery-white metal with bright lustre, dark brown-black cassiterite mineral with adamantine lustre, solder wire on a reel, tinplate sheet with mirror finish, alluvial gravel with heavy mineral, circuit board with solder joints.",
+      "stages": {
+        "origin": {
+          "subject": "Alluvial tin mine, gravel-pump or dredge operation washing cassiterite from river gravel or old alluvium, brown slurry being processed through jigs and spirals to concentrate the heavy dark tin mineral",
+          "lens": "35mm f/5.6, alluvial mining documentary, gravel pump or dredge working the deposit, sluice and gravity separation, tropical or subtropical alluvial setting",
+          "enhancer": "Brown gravel slurry being washed through jigs and spiral concentrators, heavy dark cassiterite separating from lighter waste, alluvial workings in river valley or terrace, water recycling circuit, simple gravity-based mineral processing",
+          "environments": {
+            "_default": "Alluvial tin mine, gravel washing and gravity separation, tropical or subtropical river valley, small-scale or medium-scale operation, cassiterite recovery",
+            "ID": "Bangka or Belitung island offshore or onshore tin mining, floating dredge or suction cutter on the seabed, tropical island, tin mining heritage, PT Timah operation, palm-fringed coast",
+            "MM": "Myanmar Wa State tin mine, artisanal hard-rock mining, mountainous terrain, contested territory, significant global supply from a conflict region",
+            "BO": "Bolivian tin mine in Oruro or Potos\u00ed, high-altitude hard-rock vein mining, historic colonial-era mining heritage, Altiplano landscape, cooperative miners"
+          }
+        },
+        "extraction": {
+          "subject": "Tin smelter reverberatory or electric furnace, cassiterite concentrate being reduced to crude tin metal, molten silvery tin collecting at the furnace base, slag floating above",
+          "lens": "50mm f/4, smelter interior, furnace with molten tin visible at the taphole, crude tin flowing into moulds, traditional pyrometallurgical tin smelting",
+          "enhancer": "Molten silvery tin flowing from the furnace taphole, bright metallic lustre, slag floating on the metal surface, cassiterite concentrate being charged, furnace heat, crude tin moulds filling, reverberatory furnace arched roof",
+          "environments": {
+            "_default": "Tin smelter, reverberatory or electric furnace, crude tin production, fire refining, the traditional pyrometallurgical route",
+            "ID": "PT Timah smelter on Bangka island, Indonesia, processing domestic cassiterite, one of the world's largest integrated tin operations, tropical industrial setting, export port nearby",
+            "MY": "MSC (Malaysia Smelting Corporation) in Penang, one of the world's largest custom tin smelters, processing concentrates from multiple origins, George Town heritage area nearby"
+          }
+        },
+        "processing": {
+          "subject": "Refined tin being cast into 25kg ingots, bright silvery molten metal being poured into ingot moulds, solidifying with a mirror-bright surface, LME-grade 99.9%+ purity",
+          "lens": "50mm f/2.8, casting beauty shot, molten tin pour into ingot moulds, bright silvery metal surface, ingots solidifying with mirror finish, warm casting-hall atmosphere",
+          "enhancer": "Bright silvery molten tin pouring into steel ingot moulds, mirror-bright surface on the solidifying metal, 25kg standard ingots, smelter brand stamp on each ingot, tin's low melting point (232\u00b0C) allowing easy casting, LME registration marks",
+          "environments": {
+            "_default": "Tin smelter casting hall, refined tin being poured into ingot moulds, LME-grade production, ingots being stacked, branding and weighing",
+            "ID": "PT Timah casting hall, branded tin ingots for LME delivery, Indonesian origin marking, export packaging, tropical heat in the casting area"
+          }
+        },
+        "finished": {
+          "subject": "Soldering operation on a circuit board, fine tin-based solder wire melting at the tip of a soldering iron, forming a bright joint connecting electronic components, tin's primary modern application",
+          "lens": "85mm macro f/3.5, extreme close-up on the soldering point, solder wire melting and flowing around the component lead, circuit board detail, electronics manufacturing",
+          "enhancer": "Solder wire melting at the iron tip, bright liquid solder flowing around the component lead on the circuit board, flux smoke rising, bright shiny solder joint solidifying, fine electronic work, tin-based lead-free solder (SAC305), PCB green soldermask contrast",
+          "environments": {
+            "_default": "Electronics manufacturing or repair, hand soldering or wave soldering line, circuit boards, solder wire, tin's dominant modern end-use, technology production",
+            "CN": "Chinese electronics factory in Shenzhen, wave soldering line for PCB assembly, lead-free tin-based solder, smartphones and electronics being assembled, the world's electronics manufacturing hub consuming tin",
+            "US": "American electronics repair or prototype workshop, hand soldering with tin-based solder, circuit board assembly, maker culture or professional electronics"
+          }
+        }
+      }
+    },
+    "titanium": {
+      "displayName": "Titanium",
+      "intro": "Titanium is a strong, lightweight, corrosion-resistant metal used primarily as titanium dioxide pigment (TiO\u2082 \u2014 the world's most important white pigment for paint, plastics, and paper, consuming 95% of titanium ore) and as titanium metal for aerospace, medical implants, and chemical processing. Mined from mineral sands containing ilmenite (FeTiO\u2083) and rutile (TiO\u2082). Major producers include Australia, South Africa, Canada, and China. Despite being the ninth most abundant element, titanium metal is expensive due to the complex Kroll reduction process.",
+      "materials": "Dark black ilmenite mineral sand, reddish-brown rutile crystal, brilliant white TiO\u2082 pigment powder, silvery-grey titanium metal with a slightly warm tone, aerospace fasteners, white paint sample, mineral sand concentrate.",
+      "stages": {
+        "origin": {
+          "subject": "Mineral sands mine on a coastal dune or beach deposit, dark heavy-mineral sand being stripped from the dune surface, wet concentrator separating the heavy minerals from the lighter quartz sand",
+          "lens": "35mm f/5.6, coastal mining landscape, dark heavy-mineral sand band visible in the dune cross-section, wet concentrator on the mine face, beach or dune environment, unusual coastal mining operation",
+          "enhancer": "Dark band of heavy mineral sand (ilmenite, rutile, zircon) visible in the dune cross-section above the lighter quartz sand, mining face advancing through the dune, wet concentrator spiral wheels on the mine bench, rehabilitated dune behind with replanted vegetation",
+          "environments": {
+            "_default": "Mineral sands mine on coastal dunes or ancient beach deposit, dark heavy mineral layer, wet concentration, rehabilitation following the mine face",
+            "AU": "Murray Basin or eastern Australian mineral sands, ancient inland beach deposit, flat Murray-Darling plain, mining and progressive rehabilitation, eucalyptus replanting behind the mine face",
+            "ZA": "Richards Bay mineral sands on the KwaZulu-Natal coast, coastal dune mining, Indian Ocean visible, tropical vegetation, Rio Tinto or Tronox operation, one of the world's largest titanium mineral sources",
+            "CA": "Rio Tinto ilmenite mine at Lac Tio (Havre-Saint-Pierre) in Quebec, massive open-pit anorthosite-hosted ilmenite, Canadian Shield geology, boreal forest and Gulf of St Lawrence, one of the world's richest ilmenite deposits",
+            "IN": "Indian mineral sands on the Kerala or Tamil Nadu coast, beach placer ilmenite and rutile, traditional fishing villages adjacent to the mine, Indian Ocean coastline, IREL (Indian Rare Earths Limited) government operation, tropical coastal landscape"
+          }
+        },
+        "extraction": {
+          "subject": "Mineral separation plant, ilmenite and rutile being separated from other heavy minerals using electrostatic and magnetic separators, dark mineral streams flowing through the separation circuit",
+          "lens": "35mm f/4, mineral processing plant interior, electrostatic separation drums and magnetic rolls, different mineral fractions separating into distinct product streams, technical mineral processing",
+          "enhancer": "Mineral streams separating on electrostatic drums \u2014 conducting minerals falling one way, non-conductors another, magnetic separation rolls pulling ilmenite from the mix, clean rutile and ilmenite product streams, zircon as a valuable co-product",
+          "environments": {
+            "_default": "Mineral separation plant, electrostatic and magnetic separation, ilmenite, rutile, and zircon product streams, typically located near the mine or at a port",
+            "AU": "Australian mineral separation plant, producing ilmenite and rutile for pigment and metal industries, zircon for ceramics, efficient multi-product operation",
+            "CA": "Rio Tinto Fer et Titane metallurgical complex at Sorel-Tracy, Quebec, ilmenite smelting in electric furnaces producing titanium slag and pig iron, St Lawrence River industrial town, Canadian titanium feedstock processing",
+            "IN": "Indian mineral separation plant in Kerala, separating ilmenite, rutile, and monazite from beach sand, IREL government facility, tropical coastal processing, Indian mineral sands industry, monsoon coast"
+          }
+        },
+        "processing": {
+          "subject": "Chloride-process TiO\u2082 pigment plant, ilmenite or rutile being chlorinated in a massive fluidised-bed reactor, titanium tetrachloride vapour being oxidised to produce brilliant white TiO\u2082 pigment",
+          "lens": "35mm f/5.6, chemical processing plant, tall reactor vessels, piping, and product storage, large-scale industrial pigment production, white pigment visible at the packaging stage",
+          "enhancer": "Tall fluidised-bed chlorinator vessel, titanium tetrachloride vapour piping, oxidation reactor producing white TiO\u2082, product conveyor to the packaging hall, brilliant white pigment powder, major industrial chemical production",
+          "environments": {
+            "_default": "TiO\u2082 pigment manufacturing plant, chloride or sulphate process, large-scale chemical production, white pigment packaging and distribution",
+            "AU": "Chemours or Tronox pigment plant in Australia, chloride-process TiO\u2082, integrated with mineral sands supply, export packaging for paint industry worldwide",
+            "US": "Chemours plant in Mississippi or Delaware, TiO\u2082 pigment for the American paint and plastics industry, major chemical manufacturing operation",
+            "CA": "Canadian TiO\u2082 slag being shipped from Sorel-Tracy to global pigment manufacturers, St Lawrence Seaway shipping, Canadian feedstock for the global titanium pigment industry, bulk carrier loading at the Quebec port",
+            "IN": "Indian TiO\u2082 pigment plant (Travancore Titanium Products or Kilburn) processing domestic ilmenite, sulphate-route TiO\u2082 production, Kerala or Tamil Nadu industrial zone, domestic pigment for India's growing paint market"
+          }
+        },
+        "finished": {
+          "subject": "Brilliant white paint being mixed in a paint factory, TiO\u2082 pigment being dispersed into the paint base, providing the opacity and whiteness that defines white paint \u2014 titanium's primary end-use by volume",
+          "lens": "50mm f/4, paint factory, white pigment being dispersed into the paint medium, brilliant white product, the ubiquitous end-use for titanium minerals",
+          "enhancer": "Brilliant white TiO\u2082 pigment being added to the paint mix, high-speed disperser blade creating a vortex in the mixing vessel, intense whiteness and opacity, paint tins being filled on the packaging line, every white surface in the built environment uses this pigment",
+          "environments": {
+            "_default": "Paint manufacturing plant, TiO\u2082 dispersion, paint mixing, can filling, the primary destination for titanium minerals \u2014 the white in every white paint, plastic, and paper",
+            "US": "Sherwin-Williams or PPG paint factory, TiO\u2082 pigment dispersion, American home-improvement supply chain, paint cans for millions of homes",
+            "CA": "Aerospace-grade titanium forging at a Canadian facility, Ti-6Al-4V alloy component for Bombardier or Pratt & Whitney, the Kroll-process metal route from Canadian ilmenite to jet engine compressor disc, Montreal aerospace cluster",
+            "IN": "Indian paint factory producing interior wall paint with TiO\u2082 pigment from domestic ilmenite, Asian Paints or Berger facility, the booming Indian paint market driven by urbanisation and rising incomes, Mumbai or Delhi suburban construction"
+          }
+        }
+      }
+    },
+    "uranium": {
+      "displayName": "Uranium",
+      "intro": "Uranium is the fuel for nuclear power, providing roughly 10% of global electricity. Natural uranium is mined, converted to uranium hexafluoride (UF\u2086), enriched to increase the proportion of fissile U-235 from 0.7% to 3-5%, then fabricated into fuel pellets and assemblies. Kazakhstan is the world's largest producer using in-situ leach (ISL) mining. Canada's Athabasca Basin contains the world's highest-grade deposits. The spot uranium price is quoted per pound of U\u2083O\u2088 (yellowcake).",
+      "materials": "Bright yellow uranium oxide concentrate (yellowcake), dark grey pitchblende ore, cylindrical fuel pellets, zirconium-alloy fuel rod cladding, UF\u2086 transport cylinder, nuclear fuel assembly with grid spacers, ISL wellhead.",
+      "stages": {
+        "origin": {
+          "subject": "In-situ leach uranium mine in the Kazakh steppe, wellhead field with injection and extraction wells, acidic lixiviant being pumped underground to dissolve uranium from the sandstone aquifer",
+          "lens": "35mm f/5.6, Kazakh steppe landscape, wellheads and piping on the flat grassland, processing plant visible in the distance, modern uranium mining with minimal surface disturbance",
+          "enhancer": "ISL wellheads dotted across the flat steppe, injection and extraction piping, acidic solution being circulated underground through the ore-bearing sandstone, minimal surface disturbance compared to conventional mining, processing facility on the horizon, Kazakh steppe stretching endlessly",
+          "environments": {
+            "_default": "In-situ leach uranium mine, wellhead field on flat terrain, processing plant, minimal surface disturbance, modern uranium extraction method",
+            "KZ": "Kazatomprom ISL mine on the Kazakh steppe, Turkestan or Kyzylorda region, flat endless steppe, wellheads barely visible against the landscape, world's largest uranium producer, Central Asian continental climate",
+            "CA": "McArthur River or Cigar Lake underground mine in the Athabasca Basin, Saskatchewan, world's highest-grade uranium ore (20%+ U\u2083O\u2088), boreal forest above, remote fly-in mine, jet boring or raise-bore mining methods for the extremely rich ore"
+          }
+        },
+        "extraction": {
+          "subject": "Yellowcake (uranium oxide concentrate) being dried and drummed at the processing plant, bright yellow U\u2083O\u2088 powder being poured into steel drums, the trade form of uranium \u2014 unmistakable colour",
+          "lens": "50mm f/4, processing plant interior, yellow concentrate being dried and drummed, the distinctive bright yellow colour of yellowcake, radiation safety measures visible",
+          "enhancer": "Bright yellow uranium oxide concentrate (yellowcake) being dried in a calciner, yellow powder pouring into steel drums, radiation detection equipment, safety signage, the unmistakable colour that gives yellowcake its name, drums being sealed and labelled for transport",
+          "environments": {
+            "_default": "Uranium processing plant, precipitation, drying, drumming of yellowcake, radiation safety, drums ready for transport to the conversion facility",
+            "KZ": "Kazakh processing plant, ISL-derived yellowcake being drummed, Kazatomprom branding, drums loaded onto rail for transport, steppe industrial facility"
+          }
+        },
+        "processing": {
+          "subject": "Nuclear fuel pellet production, cylindrical UO\u2082 pellets being pressed and sintered, precision-ground fuel pellets being loaded into zirconium-alloy cladding tubes, fuel rod assembly",
+          "lens": "50mm f/4, clean manufacturing, fuel pellets being inspected and loaded into fuel rods, precision nuclear engineering, cleanroom-like conditions, quality control at every step",
+          "enhancer": "Small dark grey cylindrical UO\u2082 fuel pellets being pressed, sintered to ceramic hardness, precision-ground to exact dimensions, loaded into thin zirconium-alloy tubes, fuel rod being assembled into a fuel assembly, extreme quality control, nuclear engineering precision",
+          "environments": {
+            "_default": "Nuclear fuel fabrication plant, pellet pressing, sintering, rod loading, assembly fabrication, extreme quality assurance, nuclear industry manufacturing",
+            "FR": "Framatome fuel fabrication plant in Romans-sur-Is\u00e8re, French nuclear industry, fuel assemblies for PWR reactors, European nuclear supply chain, quality-controlled manufacturing",
+            "US": "Westinghouse fuel fabrication in Columbia, SC, fuel assemblies for American nuclear fleet, precision manufacturing, nuclear-grade quality assurance"
+          }
+        },
+        "finished": {
+          "subject": "Nuclear fuel assembly being loaded into a reactor vessel during refuelling outage, the fuel assembly being lowered by crane into the blue glow of the reactor pool, Cherenkov radiation visible in the water",
+          "lens": "35mm f/2.8, reactor refuelling documentation, fuel assembly being lowered into the blue Cherenkov glow of the reactor pool, underwater blue light, dramatic and awe-inspiring nuclear technology",
+          "enhancer": "Fuel assembly on the crane hook descending into the reactor pool, brilliant blue Cherenkov radiation glowing in the water, fuel assembly grid structure visible through the clear water, refuelling bridge overhead, the endpoint of the nuclear fuel cycle, clean low-carbon electricity generation",
+          "environments": {
+            "_default": "Nuclear power plant reactor hall during refuelling, fuel assembly being loaded, Cherenkov blue glow, reactor pool, refuelling bridge, the nuclear fuel cycle's endpoint generating clean electricity",
+            "FR": "French nuclear power plant (EDF), reactor refuelling, France generates 70% of electricity from nuclear, fuel assembly from domestic enrichment and fabrication, Loire Valley or Rh\u00f4ne cooling towers",
+            "US": "American nuclear plant refuelling outage, NRC oversight, fuel assembly from the domestic supply chain, containment building interior, clean energy production"
+          }
+        }
+      }
+    },
+    "zinc": {
+      "displayName": "Zinc",
+      "intro": "Zinc is the fourth most consumed metal globally, primarily used for galvanising steel (providing corrosion protection, ~60% of demand), die-casting alloys, brass, and zinc oxide. Mined from sphalerite (zinc sulphide, ZnS) typically alongside lead. Major producers include China, Peru, and Australia. The LME zinc contract is the global benchmark. Zinc's role in galvanising makes it essential for construction and automotive industries \u2014 every galvanised steel product relies on zinc.",
+      "materials": "Bluish-grey metallic surface, yellowish sphalerite mineral crystals, bright zinc-galvanised steel surface, white zinc oxide powder, zinc die-cast component, SHG (special high grade) zinc ingot, hot-dip galvanising bath surface.",
+      "stages": {
+        "origin": {
+          "subject": "Underground zinc-lead mine, ore face with yellowish sphalerite and dark galena visible in the rock, miners operating a jumbo drill preparing the next blast round, underground development headings",
+          "lens": "35mm f/2.8, underground documentary, ore face illuminated by cap lamps showing the zinc-lead mineralisation, jumbo drill and miner providing scale, dramatic underground lighting",
+          "enhancer": "Yellowish sphalerite and dark grey galena visible in the ore face, jumbo drill booms positioned for the next blast round, shotcrete-lined walls, ventilation ducting, mesh and rock bolts, underground zinc mining, cap lamp reflections on the wet ore minerals",
+          "environments": {
+            "_default": "Underground zinc-lead mine, ore face with sphalerite, development headings, production stoping, ore passes and trucking to surface, processing plant above",
+            "AU": "Mount Isa or Century mine in Queensland, deep underground in the hot Australian outback, zinc-lead orebody, dewatering challenges, outback mining town above",
+            "PE": "Antamina or Cerro de Pasco mine in the Peruvian Andes, high-altitude zinc mining, thin air, mountain terrain, historic mining heritage alongside modern operations"
+          }
+        },
+        "extraction": {
+          "subject": "Zinc electrolytic refinery, electrolysis tankhouse with rows of zinc cathode plates being plated from zinc sulphate electrolyte, silvery-grey zinc depositing on aluminium cathode blanks",
+          "lens": "24mm f/5.6, wide tankhouse interior, rows of electrolytic cells receding into the distance, zinc cathodes growing in the solution, industrial refinery scale",
+          "enhancer": "Rows of electrolytic cells with pale zinc sulphate solution, silvery-grey zinc growing on aluminium cathode blanks, overhead crane lifting stripped cathodes, acid mist extraction, massive electricity consumption, industrial electro-winning",
+          "environments": {
+            "_default": "Zinc electrolytic refinery, roasting, leaching, purification, electrolysis, cathode stripping, SHG zinc production, large-scale hydrometallurgical facility",
+            "AU": "Sun Metals or Nyrstar zinc refinery in Queensland, roast-leach-electrowin process, cathode stripping, tropical Australian coastal location",
+            "CN": "Chinese zinc refinery in Hunan or Yunnan, processing domestic and imported concentrates, massive Chinese zinc refining capacity"
+          }
+        },
+        "processing": {
+          "subject": "Zinc cathodes being melted and cast into SHG (special high grade) ingots or jumbo blocks, molten bluish-grey zinc being poured into moulds, LME-grade 99.995% zinc production",
+          "lens": "50mm f/4, casting hall, molten zinc pour as central action, ingot moulds filling, warm atmosphere from the melting furnace, zinc's relatively low melting point (420\u00b0C)",
+          "enhancer": "Bluish-grey molten zinc pouring from the furnace into ingot moulds, solidifying with characteristic zinc crystalline fracture pattern (spangle visible on hot-dip surfaces), LME brand stamps on each ingot, ingots being stacked on pallets",
+          "environments": {
+            "_default": "Zinc refinery casting section, cathode melting, ingot or jumbo casting, LME-grade production, packaging and dispatch",
+            "AU": "Australian zinc casting, SHG ingots for LME delivery, export to Asian galvanising and die-casting markets, port-adjacent refinery"
+          }
+        },
+        "finished": {
+          "subject": "Hot-dip galvanising line, steel strip or fabricated steel being dipped into a bath of molten zinc, emerging with a bright silvery coating that will protect the steel from corrosion for decades",
+          "lens": "35mm f/4, galvanising line, steel passing through the molten zinc bath as the central process, bright zinc-coated surface emerging, the primary application for zinc \u2014 corrosion protection",
+          "enhancer": "Steel strip passing through the bath of molten zinc at 450\u00b0C, emerging with a bright silvery zinc coating, zinc flower (spangle) pattern forming as the coating solidifies, air knives controlling coating thickness, galvanised steel for construction and automotive, zinc's essential role in protecting steel",
+          "environments": {
+            "_default": "Hot-dip galvanising line, continuous or batch, molten zinc bath, coated steel emerging, the primary market for zinc \u2014 protecting the world's steel infrastructure from corrosion",
+            "US": "American automotive galvanising line, zinc-coated steel for car body panels, integrated into the steel mill or as a separate coating facility, American manufacturing",
+            "CN": "Chinese galvanising mill, massive capacity supplying construction and manufacturing, zinc-coated steel for the world's largest construction market"
+          }
+        }
+      }
+    },
+    "gold": {
+      "displayName": "Gold",
+      "intro": "Gold is the world's premier monetary metal, store of value, and safe-haven asset. Traded 24 hours a day globally, with LBMA London AM and PM fixes as the benchmark. Gold is extraordinarily dense (19.3 g/cm\u00b3), malleable (one ounce can be beaten into 30 square metres of leaf), and chemically inert. Mined from epithermal veins, porphyry deposits, and placer (alluvial) deposits. China, Australia, Russia, and Canada are the largest producers. Central banks hold over 36,000 tonnes in reserves.",
+      "materials": "Brilliant yellow metal with warm lustre, crystalline gold nugget, dark quartz vein with visible gold, gleaming gold bar (400oz London Good Delivery), fine gold leaf, jewellery with warm yellow glow, refinery pour of molten gold.",
+      "stages": {
+        "origin": {
+          "subject": "Underground gold mine, narrow quartz vein with visible free gold glinting in the rock face, miner illuminating the ore with a cap lamp, the classic sight of gold in its natural setting",
+          "lens": "50mm f/2.8, underground documentary, quartz vein with gold visible as focal point, cap lamp providing dramatic lighting, narrow heading creating an intimate underground scene",
+          "enhancer": "Specks and threads of bright yellow gold visible in white quartz vein material, cap lamp light making the gold glint, dark surrounding rock contrasting with the pale quartz, narrow underground heading, the timeless allure of visible gold in the rock face",
+          "environments": {
+            "_default": "Underground gold mine, quartz vein or orebody, narrow development heading or stope, visible gold in the ore face, the search for gold that has driven humanity for millennia",
+            "ZA": "South African deep-level gold mine (Mponeng or South Deep), world's deepest mines at 3,000m+, Witwatersrand reef, extreme heat and pressure, Johannesburg gold rush heritage, the mines that made modern South Africa",
+            "AU": "Kalgoorlie Super Pit or underground mine in the Western Australian Goldfields, golden mile heritage, red outback earth, corrugated iron mining town, Australian gold rush history",
+            "CA": "Red Lake or Kirkland Lake underground mine in the Canadian Shield, high-grade gold in greenstone belt, boreal forest above, deep Canadian winter, historic gold camp"
+          }
+        },
+        "extraction": {
+          "subject": "Gold being poured at a mine-site gold room, molten gold flowing from the smelting furnace into a dor\u00e9 bar mould, brilliant yellow-orange liquid metal catching the light, the most iconic pour in mining",
+          "lens": "50mm f/2.8, gold-room interior, molten gold pour as the hero shot, brilliant yellow-orange liquid metal, dramatic lighting from the furnace, the most photogenic moment in the gold supply chain",
+          "enhancer": "Brilliant yellow-orange molten gold flowing from the furnace crucible into the dor\u00e9 bar mould, intensely hot, liquid gold surface reflecting the room, bar solidifying with warm yellow colour, furnace glow, protective equipment on the operator, the pour that everyone wants to witness",
+          "environments": {
+            "_default": "Mine-site gold room, smelting furnace, dor\u00e9 bar pouring, security and quality sampling, the controlled environment where raw gold becomes a bar",
+            "AU": "Australian gold mine pour room, dor\u00e9 bar being cast, Kalgoorlie or Telfer operation, armed security, the gold room that symbolises the mine's output"
+          }
+        },
+        "processing": {
+          "subject": "Gold refinery, 999.9 fine gold bars being cast at an LBMA-accredited refinery, gleaming rows of freshly cast 400oz Good Delivery bars, each worth over $1 million, the refined product of the gold supply chain",
+          "lens": "50mm f/2.8, refinery interior, rows of gleaming gold bars as central subject, warm yellow colour filling the frame, extraordinary value concentrated in a small space, security implicit",
+          "enhancer": "Rows of gleaming 999.9 fine gold bars with LBMA stamps, each bar approximately 12.4kg and worth over $1 million, warm yellow metal colour, refinery assay stamps showing purity, serial numbers, extraordinary value density, vault-like atmosphere",
+          "environments": {
+            "_default": "LBMA-accredited gold refinery, bar casting, assaying, stamping, security storage, the final step before market delivery",
+            "CH": "Valcambi or PAMP refinery in Ticino, Switzerland, world's largest gold refining hub, Swiss Alpine town setting, extraordinary security, bars destined for central banks and investors worldwide, Swiss precision and discretion",
+            "GB": "Royal Mint or Johnson Matthey refinery in London, LBMA Good Delivery bars, Bank of England vault destination, City of London gold trading heritage"
+          }
+        },
+        "finished": {
+          "subject": "Bank of England or Federal Reserve gold vault, thousands of 400oz gold bars stacked on pallets in a massive underground vault, gleaming rows under security lighting, sovereign wealth stored in physical form",
+          "lens": "35mm f/4, vault interior, rows of gold bars stacked floor to ceiling, warm yellow metal colour filling the enormous space, ultimate store of value, security and solidity",
+          "enhancer": "Thousands of 400oz gold bars in gleaming rows, stamped with refinery marks and serial numbers, stacked on steel pallets, vault ceiling and walls, security cameras, the weight of national reserves in physical form, gold's enduring role as the ultimate monetary asset",
+          "environments": {
+            "_default": "Central bank gold vault, thousands of bars, massive underground secure storage, sovereign gold reserves, the physical reality of monetary gold",
+            "GB": "Bank of England vault, one of the world's largest gold stores, Victorian-era subterranean vault, bars from LBMA refineries, London's role as the centre of global gold trading",
+            "US": "Fort Knox or Federal Reserve Bank of New York vault, American gold reserves, the world's most famous gold storage, ultimate financial security symbol"
+          }
+        }
+      }
+    },
+    "palladium": {
+      "displayName": "Palladium",
+      "intro": "Palladium is a platinum group metal (PGM) primarily used in gasoline engine catalytic converters (80% of demand), where it converts harmful carbon monoxide, hydrocarbons, and nitrogen oxides into CO\u2082, water, and nitrogen. Russia (Nornickel) and South Africa produce over 75% of global palladium. The metal is silvery-white, lighter than platinum, and has become more expensive than gold in recent years due to tightening emission standards. LPPM and NYMEX are the price benchmarks.",
+      "materials": "Bright silvery-white metal lighter than platinum, dark PGM-bearing ore with visible sulphide minerals, honeycomb catalyst substrate coated with palladium, automotive exhaust system, small palladium ingot or sponge, Russian and South African hallmarks.",
+      "stages": {
+        "origin": {
+          "subject": "South African platinum-group-metal mine, dark Merensky or UG2 reef visible in the narrow underground stope, PGM-bearing sulphides in the dark chromitite or pyroxenite rock, miners working in tight conditions",
+          "lens": "35mm f/2.8, narrow underground stope, dark PGM-bearing reef visible in the rock face, tight working conditions, cap lamp lighting showing the mineralisation, underground PGM mining",
+          "enhancer": "Dark chromitite reef with disseminated sulphide minerals containing PGMs, narrow underground stope with limited headroom, miners drilling or breaking the reef, the geological layer that hosts most of the world's PGM resources, dark rock with invisible precious metals",
+          "environments": {
+            "_default": "Underground PGM mine, narrow reef mining, dark ore with disseminated sulphides, tight stoping conditions, conveyor or rail to surface, concentrator plant above",
+            "ZA": "Bushveld Complex mine in Limpopo or North West province, narrow Merensky Reef stoping at 1,000m+ depth, South African PGM mining, Rustenburg or Mokopane mining town above, the world's richest PGM resource",
+            "RU": "Nornickel mine in Norilsk, Arctic Siberia, nickel-copper-PGM sulphide ore body, extreme polar conditions, one of the world's most remote major mining operations, palladium as a valuable byproduct of nickel mining",
+            "US": "Stillwater mine in Montana, the J-M Reef, America's only PGM mine, underground narrow-vein mining in the Beartooth Mountains, Sibanye-Stillwater operation, American strategic mineral production, Rocky Mountain alpine terrain above the mine portal",
+            "JP": "Japanese spent autocatalyst collection yard, end-of-life vehicles being dismantled for PGM recovery, catalytic converters removed and sorted for recycling, Tokyo or Nagoya auto recycler, urban mining as a palladium source"
+          }
+        },
+        "extraction": {
+          "subject": "PGM concentrate smelting in an electric furnace, PGM-bearing matte being produced from the concentrate, the beginning of the complex multi-stage PGM refining process",
+          "lens": "35mm f/4, smelter interior, electric furnace with matte tapping, the first step in a long and complex PGM refining chain, heavy industrial pyrometallurgy",
+          "enhancer": "Electric furnace smelting PGM concentrate, molten matte collecting at the furnace base, slag floating above, matte tapping into ladles, the first of many processing steps before individual PGMs are separated, high-temperature pyrometallurgy",
+          "environments": {
+            "_default": "PGM smelter, electric furnace, matte production, the first step in the complex PGM refining chain that takes months from ore to refined metal",
+            "ZA": "Anglo American Platinum or Impala smelter in the Bushveld, electric furnace processing concentrate, multiple smelters in the PGM heartland, months of processing ahead before refined palladium emerges",
+            "US": "Stillwater smelter and base metals refinery in Columbus, Montana, PGM concentrate being processed, American domestic PGM production, rural Montana industrial facility in the Yellowstone River valley, mountains surrounding",
+            "JP": "Japanese PGM recycler (Tanaka Kikinzoku or Dowa) sampling and assaying spent catalysts, precise PGM content determination, decanning the ceramic substrate, the technical process of recovering palladium from automotive waste, Japanese precision recycling"
+          }
+        },
+        "processing": {
+          "subject": "PGM precious metals refinery, individual PGMs being separated by complex chemical processes \u2014 solvent extraction, precipitation, and selective reduction \u2014 palladium sponge being produced",
+          "lens": "50mm f/4, chemical refinery interior, complex separation chemistry, palladium being precipitated from solution as the distinctive yellow-brown palladium salt before reduction to metal sponge",
+          "enhancer": "Complex PGM refinery with multiple separation stages, palladium ammonium chloride (yellow salt) being precipitated, filtered, washed, and thermally reduced to grey palladium sponge, months of processing from ore to refined metal, precious metals refining expertise",
+          "environments": {
+            "_default": "PGM refinery, complex chemical separation of six PGM elements plus gold, palladium as one of the products, months-long processing timeline, highly specialised chemical refining",
+            "ZA": "Anglo or Impala PGM refinery in Rustenburg or Springs, world's most complex metallurgical separation, palladium sponge and ingot production, South African PGM refining expertise",
+            "RU": "Nornickel PGM refinery in Krasnoyarsk, processing Norilsk matte, major global palladium source, Russian metallurgical processing capability",
+            "US": "American PGM refining, palladium sponge and ingot production from domestic mine and recycled material, US strategic PGM reserve considerations, American metallurgical processing facility",
+            "JP": "Tanaka precious metals refinery near Tokyo, refining recycled palladium to industrial purity, Japanese closed-loop PGM recycling achieving over 95% recovery rates, world-leading recycling technology"
+          }
+        },
+        "finished": {
+          "subject": "Automotive catalytic converter being manufactured, palladium-coated ceramic honeycomb substrate being inserted into the stainless steel housing, the destination for 80% of all palladium \u2014 cleaning vehicle exhaust",
+          "lens": "50mm f/4, automotive parts manufacturing, honeycomb catalyst substrate visible showing the wash-coat, being assembled into the converter housing, the primary destination for palladium",
+          "enhancer": "Ceramic honeycomb catalyst substrate with its microscopic palladium wash-coat, thousands of tiny channels for exhaust gas flow, stainless steel housing, automotive assembly context, the invisible precious metal cleaning every breath of exhaust gas",
+          "environments": {
+            "_default": "Catalytic converter manufacturing facility, substrate coating, assembly, automotive supply chain, palladium's primary application \u2014 emission control on every gasoline vehicle",
+            "DE": "German automotive tier-1 supplier (BASF Catalysts or Umicore), catalytic converter production for VW, BMW, or Mercedes, precision automotive manufacturing, European emission standards driving demand",
+            "US": "American automotive assembly plant, catalytic converter being installed on a pickup truck or SUV, EPA emission compliance, palladium from Montana mines and recycled converters in the catalyst, Detroit or Southern US auto manufacturing",
+            "JP": "Japanese hybrid vehicle (Toyota Prius or Honda) catalytic converter, palladium-loaded catalyst in the compact converter housing, Japanese automotive emission technology, the technical achievement of cleaning exhaust from the world's cleanest combustion engines"
+          }
+        }
+      }
+    },
+    "platinum": {
+      "displayName": "Platinum",
+      "intro": "Platinum is a dense, silvery-white precious metal prized for its catalytic properties, corrosion resistance, and beauty. Primary uses include diesel engine catalytic converters, jewellery, chemical catalysts, and investment. South Africa's Bushveld Complex contains over 70% of global reserves. Platinum is denser than gold (21.45 vs 19.3 g/cm\u00b3) and historically traded at a premium to gold, though this relationship has inverted in recent years. The LPPM platinum fix is the global benchmark.",
+      "materials": "Dense silvery-white metal with cool blue-grey tone, polished platinum jewellery surface, dark PGM ore from the Bushveld, catalyst gauze mesh, investment coin or bar, laboratory crucible, platinum thermocouple wire.",
+      "stages": {
+        "origin": {
+          "subject": "Bushveld Complex platinum mine surface infrastructure, headgear over the mine shaft, concentrator plant, tailings dam, the industrial landscape of South African PGM mining on the bushveld grassland",
+          "lens": "24mm f/8, wide mining landscape, headgear and plant as central elements, South African bushveld grassland stretching around the mine infrastructure, PGM mining district landscape",
+          "enhancer": "Mine headgear structure over the shaft, concentrator plant with flotation cells, tailings dam, mine village or compound, South African bushveld grassland \u2014 flat terrain with scattered thorn trees, the mining landscape that produces most of the world's platinum",
+          "environments": {
+            "_default": "PGM mine surface infrastructure, headgear, concentrator, tailings, mining landscape, the above-ground view of the underground reef mining operation",
+            "ZA": "Rustenburg or Mokopane PGM mining district, multiple mine headgears visible across the Bushveld landscape, concentrators, smelter smoke, mining village, Magaliesberg mountains in the distance, the epicentre of global platinum production"
+          }
+        },
+        "extraction": {
+          "subject": "PGM concentrate being loaded for transport to the smelter, dark grey concentrate being drummed or containerised, the intermediate product containing all six PGMs plus gold, precious cargo from the mine to the metallurgical complex",
+          "lens": "50mm f/4, mine site logistics, concentrate being loaded into containers or drums, security-tagged cargo, the valuable intermediate product heading to the smelter for the long refining journey",
+          "enhancer": "Dark grey PGM concentrate being loaded under security supervision, each tonne containing valuable platinum, palladium, rhodium, gold, and other precious metals, sealed containers, armed security escort, the high-value cargo moving from mine to smelter",
+          "environments": {
+            "_default": "Mine concentrate dispatch, high-security loading, transport to smelter, valuable PGM-bearing material, armed escort, the precious metals supply chain's security requirements",
+            "ZA": "South African PGM concentrate dispatch, security escort to the smelter, Bushveld mining road, valuable cargo requiring constant protection, the reality of transporting precious metals"
+          }
+        },
+        "processing": {
+          "subject": "Refined platinum ingot being assayed and hallmarked, bright silvery-white metal with cool blue-grey tone, LPPM Good Delivery standard, the endpoint of months of mining and refining",
+          "lens": "85mm f/2.8, product beauty shot, platinum ingot showing the distinctive cool silvery-white colour, hallmarks and assay stamp, the refined precious metal at its most marketable form",
+          "enhancer": "Dense silvery-white platinum ingot with cool blue-grey tone, LPPM hallmark, refinery stamp, assay certificate, weight and purity mark, the cool colour distinguishing it from the warmer tone of palladium and gold, extraordinary density \u2014 a small bar surprisingly heavy",
+          "environments": {
+            "_default": "PGM refinery assay office, platinum ingots or bars being assayed, hallmarked, and certified, LPPM Good Delivery standard, precious metals quality assurance",
+            "ZA": "South African PGM refinery, refined platinum bars, Rand Refinery or Anglo Platinum refinery, the final product from the Bushveld, LPPM certification",
+            "CH": "Swiss refinery (PAMP or Valcambi) re-refining and minting platinum bars and coins, Swiss Alps setting, global precious metals hub"
+          }
+        },
+        "finished": {
+          "subject": "Platinum engagement ring on a jeweller's workbench, the dense cool-white metal being set with a diamond, hand tools and loupe nearby, platinum jewellery as the premium precious metal setting",
+          "lens": "85mm macro f/2.8, jewellery beauty shot, platinum ring with its distinctive cool white metal colour holding a diamond, jeweller's tools creating a craftsman atmosphere",
+          "enhancer": "Cool silvery-white platinum band holding a brilliant diamond, the metal's density felt in its weight, prong setting being tightened by the jeweller, loupe, files, and setting tools on the bench, warm workshop light, the premium precious metal for fine jewellery",
+          "environments": {
+            "_default": "Jeweller's workshop, platinum ring being set, hand tools, workbench, craft atmosphere, platinum's role as the premier jewellery metal",
+            "US": "Tiffany or independent American jeweller, platinum engagement ring, workshop craftsmanship, New York or LA luxury retail destination",
+            "JP": "Japanese jeweller, platinum hallmarked with the Japanese 'Pt950' stamp, Japanese consumers are among the world's largest platinum jewellery buyers, minimalist design, Tokyo Ginza setting"
+          }
+        }
+      }
+    },
+    "rhodium": {
+      "displayName": "Rhodium",
+      "intro": "Rhodium is the rarest and most expensive of the commonly traded precious metals, a platinum group element with extraordinary catalytic properties and corrosion resistance. Over 80% of rhodium goes into three-way catalytic converters for gasoline engines, where it uniquely catalyses the reduction of nitrogen oxides (NOx). South Africa produces roughly 80% of global supply. Rhodium prices are extremely volatile \u2014 ranging from $1,000/oz to over $29,000/oz in recent cycles. Annual global production is only about 30 tonnes.",
+      "materials": "Bright silvery-white metal with mirror polish, rhodium-plated surface with blueish-white tint, PGM ore, catalyst honeycomb, tiny rhodium sponge or powder, autocatalyst cross-section.",
+      "stages": {
+        "origin": {
+          "subject": "The same Bushveld Complex PGM mines that produce platinum and palladium also yield rhodium as the rarest and most valuable byproduct \u2014 the geology and mining are identical, but rhodium concentrations are far lower",
+          "lens": "35mm f/2.8, underground PGM stope, same setting as platinum origin but with emphasis on the rarity \u2014 rhodium as a trace component in the already-precious PGM reef, tiny amounts of extraordinary value",
+          "enhancer": "Dark PGM-bearing reef in the underground stope, the same ore that yields platinum and palladium also contains trace rhodium \u2014 invisible in the rock but extraordinarily valuable, every tonne of ore yields just grams of this rarest PGM, cap lamp illuminating the reef",
+          "environments": {
+            "_default": "Underground PGM mine, same operation as platinum, rhodium as a trace byproduct too rare to mine individually, the geological lottery of PGM distribution in the reef",
+            "ZA": "Bushveld Complex underground, Merensky or UG2 reef, rhodium present in even smaller amounts than platinum, South Africa's dominance of PGM supply concentrating geopolitical risk for this critical emission-control metal",
+            "RU": "Nornickel mining complex at Norilsk, Arctic Siberia, nickel-copper-PGM massive sulphide ore, rhodium as a trace byproduct, the world's most remote major mining city, polar night in winter, extreme industrial Arctic environment",
+            "US": "Stillwater mine in Montana, the only US PGM producer, J-M Reef palladium-platinum ore with trace rhodium, Rocky Mountain underground mining, Beartooth Mountains, American PGM supply independence",
+            "JP": "Japanese PGM recycler (Tanaka or Dowa) recovering rhodium from spent autocatalysts, urban mining concept, precious metals from end-of-life vehicles, Tokyo or Osaka industrial facility, recycling as a significant rhodium supply source"
+          }
+        },
+        "extraction": {
+          "subject": "Rhodium being separated in the PGM refinery as one of the last elements to be isolated, the rarest of the six PGMs requiring the most complex chemistry, small amounts of extraordinary value being recovered",
+          "lens": "50mm f/4, PGM refinery laboratory-scale, rhodium separation as the most chemically challenging step, tiny quantities of the rarest PGM being isolated after months of processing",
+          "enhancer": "Small quantities of rhodium being separated in the final stages of PGM refining, the most chemically resistant of all PGMs requiring harsh conditions to dissolve and precipitate, tiny amounts representing enormous value, laboratory-scale processing for an industrial-scale market",
+          "environments": {
+            "_default": "PGM refinery, rhodium separation as the most difficult stage, complex chemistry for the rarest element, months of processing, tiny but immensely valuable output",
+            "ZA": "South African PGM refinery, rhodium as the most challenging element to separate, Johnson Matthey or Anglo American Platinum refining expertise, the rarest mainstream precious metal",
+            "RU": "Nornickel smelter at Norilsk processing sulphide ore, PGM-bearing matte production, Arctic industrial complex, environmental challenges of the world's most polluted Arctic city, extreme cold and darkness",
+            "US": "Sibanye-Stillwater processing plant in Columbus, Montana, PGM concentrate production from American ore, Rocky Mountain setting, US strategic mineral processing",
+            "JP": "Japanese autocatalyst recycler shredding spent catalytic converters, PGM recovery from the ceramic honeycomb, sampling and assaying the PGM content, Japan's advanced recycling technology recovering rhodium from vehicles"
+          }
+        },
+        "processing": {
+          "subject": "Refined rhodium sponge being compacted and melted into small ingots or bars, bright silvery-white metal with exceptional hardness and brilliance, tiny production quantities of the world's rarest commonly-traded precious metal",
+          "lens": "85mm macro f/2.8, close-up on rhodium sponge or small ingot, bright mirror-like surface, tiny but immensely valuable product, precision weighing and assay",
+          "enhancer": "Small amount of bright silvery-white rhodium sponge or tiny ingot, mirror-brilliant surface when polished, extraordinary hardness for a precious metal, precision analytical balance showing weight to 0.01g, assay certificate, the rarest and at times most expensive precious metal",
+          "environments": {
+            "_default": "PGM refinery precious metals room, rhodium being weighed, assayed, and certified, tiny quantities of extraordinary value, maximum security",
+            "ZA": "South African PGM refinery, refined rhodium being prepared for market, security protocols for the world's most valuable metal by weight, 30 tonnes per year of global production",
+            "RU": "Russian PGM refinery at Krasnoyarsk, Nornickel's chemical-metallurgical plant separating PGMs from Norilsk matte, Siberian city, Russian metallurgical expertise in PGM separation, thousands of kilometres from the mine",
+            "US": "American PGM refining, Heraeus or BASF precious metals division processing Stillwater concentrate and recycled material, US-based PGM refining, national security implications of domestic supply",
+            "JP": "Tanaka Kikinzoku PGM refinery in Japan, rhodium separation from recycled autocatalyst material, Japanese precision refining, the world's most advanced PGM recycling, minimal waste, maximum recovery"
+          }
+        },
+        "finished": {
+          "subject": "Three-way catalytic converter cross-section showing the rhodium-containing wash-coat on the ceramic substrate, the unique rhodium application that reduces toxic nitrogen oxides from engine exhaust \u2014 no substitute exists at scale",
+          "lens": "50mm f/4, automotive technology shot, catalytic converter cutaway showing the honeycomb channels coated with PGM wash-coat containing rhodium, the irreplaceable emission-control technology",
+          "enhancer": "Catalytic converter cutaway showing ceramic honeycomb channels, microscopic rhodium-containing wash-coat on each channel wall, exhaust gas flowing through and being cleaned, NOx being converted to harmless nitrogen, no viable substitute for rhodium in this application, clean-air technology dependent on a metal rarer than gold",
+          "environments": {
+            "_default": "Automotive emission control manufacturing or technical display, catalytic converter with rhodium wash-coat, the unique application driving demand for the rarest mainstream precious metal",
+            "DE": "German automotive emission technology centre, catalyst development for Euro 7 standards, rhodium loading optimisation, the ongoing challenge of cleaning exhaust with the rarest of metals",
+            "RU": "Russian-refined rhodium being exported, small quantities of enormous value in secure packaging, the geopolitical dimension of Russian PGM supply to Western automotive manufacturers, sanctions considerations",
+            "US": "American automotive emission testing laboratory, vehicles on the dynamometer with tailpipe emissions being measured, rhodium-containing catalyst ensuring compliance with EPA Tier 3 standards, the regulatory framework that drives rhodium demand",
+            "JP": "Toyota or Honda emission laboratory, optimising rhodium loading on catalysts for the Japanese market, Japanese engineering balancing emission performance with precious metal cost, the technical challenge of using the rarest metal efficiently"
+          }
+        }
+      }
+    },
+    "silver": {
+      "displayName": "Silver",
+      "intro": "Silver is both a precious metal (investment, jewellery) and an industrial metal (electronics, solar panels, photography). This dual nature makes silver prices responsive to both financial sentiment and industrial demand. Over 50% of silver demand is now industrial \u2014 particularly for silver paste in photovoltaic solar cells, where it provides the electrical contacts. Silver is the best electrical and thermal conductor of any element. Major producers include Mexico, Peru, China, and Poland. The LBMA silver fix is the global benchmark.",
+      "materials": "Bright white metallic surface with high reflectivity, dark grey argentite ore, dendritic crystal silver specimen, silver coin and bar, tarnished black surface (silver sulphide), solar cell with silver grid lines, silver solder paste.",
+      "stages": {
+        "origin": {
+          "subject": "Silver mine in mountainous terrain, underground workings following a narrow silver vein through volcanic host rock, or a massive polymetallic mine where silver is a valuable co-product with lead, zinc, or copper",
+          "lens": "35mm f/4, underground or mountainous mining documentary, silver vein or polymetallic ore face, mining heritage architecture or equipment, the storied history of silver mining",
+          "enhancer": "Silver-bearing vein in dark volcanic rock, or polymetallic ore with galena, sphalerite, and silver minerals together, underground heading or massive open pit in mountain terrain, centuries of silver mining heritage",
+          "environments": {
+            "_default": "Silver mine, underground vein or polymetallic open pit, mountainous terrain, processing plant, silver mining heritage, the metal that built empires and funded conquests",
+            "MX": "Mexican silver mine in Zacatecas, Durango, or Chihuahua, Fresnillo or MAG Silver operation, volcanic mountain terrain, colonial-era mining heritage alongside modern operations, the world's largest silver-producing country, the Sierra Madre",
+            "PE": "Peruvian silver mine in the Andes, Cerro de Pasco or Antamina, high-altitude polymetallic mining, silver as co-product with zinc and lead, thin Andean air, historic silver mining stretching back to Spanish colonial era",
+            "PL": "KGHM copper-silver mine in Lower Silesia, Lubin or Polkowice underground, copper shale with significant silver credits, flat Polish landscape above deep mines, European silver source"
+          }
+        },
+        "extraction": {
+          "subject": "Silver dor\u00e9 bar being poured at a mine-site refinery, bright white-silver molten metal flowing into the mould, containing silver and gold to be separated at a refinery, the raw precious metal from the mine",
+          "lens": "50mm f/2.8, mine refinery pour shot, bright molten silver-gold dor\u00e9 flowing into the mould, brilliant white metal, dramatic moment of the precious metal pour",
+          "enhancer": "Bright white-silver molten dor\u00e9 metal flowing from crucible to mould, brilliant surface of the liquid metal, dor\u00e9 bar solidifying with bright silver surface, mine security present, bullion room atmosphere, the raw precious output of the mine",
+          "environments": {
+            "_default": "Mine-site precious metals refinery, silver-gold dor\u00e9 being poured, secured bullion room, the first solid form of the precious metal from the ore",
+            "MX": "Mexican silver mine dor\u00e9 room, silver-rich dor\u00e9 bar being cast, Fresnillo operation, armed security, the world's largest primary silver producer"
+          }
+        },
+        "processing": {
+          "subject": "Silver refinery, 999 fine silver being cast into Good Delivery bars or granulated into shot, bright white metal with the highest reflectivity of any element, LBMA-standard production",
+          "lens": "50mm f/2.8, refinery beauty shot, 999 fine silver bars with their brilliant white surface, LBMA stamps, the refined precious metal at its peak purity and lustre",
+          "enhancer": "Rows of 999 fine silver Good Delivery bars with brilliant white surface, LBMA stamps and serial numbers, the highest reflectivity of any metal surface, refinery branding, each 1,000oz bar worth approximately $30,000, silver's unique brilliant white colour",
+          "environments": {
+            "_default": "LBMA-accredited silver refinery, bar casting, assaying, stamping, the refined product ready for market \u2014 investment, industry, or jewellery",
+            "GB": "Johnson Matthey or Royal Mint refinery, LBMA Good Delivery silver bars, London silver market heritage, British precious metals refining tradition",
+            "CH": "Swiss refinery (PAMP, Valcambi, or Argor-Heraeus), silver bar and coin production, Swiss Alps, global precious metals refining hub"
+          }
+        },
+        "finished": {
+          "subject": "Solar cell manufacturing, silver paste being screen-printed onto silicon wafer to form the electrical grid pattern, the fastest-growing industrial application for silver, each solar panel containing several grams of silver",
+          "lens": "50mm f/4, solar cell manufacturing cleanroom, silver paste screen-printing as central process, precise grid pattern being laid onto the blue silicon wafer, clean technology manufacturing",
+          "enhancer": "Silver paste being precisely screen-printed onto a blue silicon solar wafer, fine grid lines providing electrical conductivity to harvest solar energy, the silver grid pattern that every solar panel depends on, cleanroom manufacturing, the energy transition consuming silver",
+          "environments": {
+            "_default": "Solar cell manufacturing facility, silver paste application, screen printing, cell testing, the energy transition's growing demand for silver, clean manufacturing environment",
+            "CN": "Chinese solar cell factory in Jiangsu or Zhejiang, LONGi or JA Solar production line, massive scale, silver paste consumption in the world's largest solar manufacturing industry, the energy transition's silver appetite",
+            "US": "First Solar or American solar cell manufacturing, silver paste application, domestic clean energy production, factory floor meeting energy transition goals"
+          }
+        }
+      }
+    }
+  }
+}

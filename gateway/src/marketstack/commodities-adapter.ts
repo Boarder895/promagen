@@ -209,6 +209,9 @@ const CENTS_TO_DOLLARS: Record<string, number> = {
 
   // ICE Europe NBP (pence/therm)
   uk_gas: 100,
+
+  // SGX (cents/kg)
+  rubber: 100,
 };
 
 /**

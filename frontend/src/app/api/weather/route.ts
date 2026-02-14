@@ -2,10 +2,10 @@
  * Promagen Frontend - Weather Route
  * ===================================
  * Proxy to the Fly.io gateway /weather endpoint.
- * 
+ *
  * Path: /api/weather
  * Method: GET
- * 
+ *
  * Weather data is public (same for all users), so no auth/tier checking needed.
  * Simply proxies to the gateway and returns the response.
  *
@@ -39,6 +39,10 @@ interface WeatherData {
   windSpeedKmh: number;
   emoji: string;
   asOf: string;
+  sunriseUtc?: number | null;
+  sunsetUtc?: number | null;
+  timezoneOffset?: number | null;
+  isDayTime?: boolean;
 }
 
 interface WeatherMeta {
@@ -89,7 +93,7 @@ export async function GET(): Promise<NextResponse<WeatherGatewayResponse | Error
 
     if (!response.ok) {
       console.error(`[Weather] Gateway returned ${response.status}`);
-      
+
       return NextResponse.json(
         {
           error: 'Weather data unavailable',
@@ -101,15 +105,26 @@ export async function GET(): Promise<NextResponse<WeatherGatewayResponse | Error
           headers: {
             'Cache-Control': 'no-store',
           },
-        }
+        },
       );
     }
 
     const data = (await response.json()) as WeatherGatewayResponse;
 
+    // ── Diagnostic: Log isDayTime presence on first item ──────────────
+    // Remove this once confirmed working.
+    if (data.data?.length > 0) {
+      const sample = data.data[0];
+      console.debug(
+        `[Weather] Sample: ${sample?.id} isDayTime=${sample?.isDayTime} ` +
+        `sunriseUtc=${sample?.sunriseUtc} timezoneOffset=${sample?.timezoneOffset} ` +
+        `(fields present: isDayTime=${'isDayTime' in (sample ?? {})})`,
+      );
+    }
+
     // Set cache headers based on data mode
     let cacheControl = 'public, max-age=60';
-    
+
     if (data.meta.mode === 'live' || data.meta.mode === 'cached') {
       cacheControl = 'public, max-age=300, stale-while-revalidate=600';
     }
@@ -135,7 +150,7 @@ export async function GET(): Promise<NextResponse<WeatherGatewayResponse | Error
           headers: {
             'Cache-Control': 'no-store',
           },
-        }
+        },
       );
     }
 
@@ -150,7 +165,7 @@ export async function GET(): Promise<NextResponse<WeatherGatewayResponse | Error
         headers: {
           'Cache-Control': 'no-store',
         },
-      }
+      },
     );
   }
 }

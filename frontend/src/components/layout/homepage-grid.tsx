@@ -189,6 +189,8 @@ export type HomepageGridProps = {
   nearestExchangeId?: string;
   /** Hide the Control Dock (e.g., for pages that don't need it) */
   hideControlDock?: boolean;
+  /** Hide the Commodities movers grid (e.g., library page uses full space for prompts) */
+  hideCommodities?: boolean;
   /** When true, Mission Control shows Home button instead of Studio button */
   isStudioPage?: boolean;
   /** When true, Mission Control shows Home button instead of Pro button */
@@ -224,6 +226,7 @@ export default function HomepageGrid({
   weatherIndex,
   nearestExchangeId,
   hideControlDock = false,
+  hideCommodities = false,
   isStudioPage = false,
   isProPromagenPage = false,
   isStudioSubPage = false,
@@ -381,16 +384,16 @@ export default function HomepageGrid({
 
     // Layout order:
     // 1. Top FX ribbon (5 pairs)
-    // 2. Commodities grid (min-h reserves space to prevent CLS)
+    // 2. Commodities grid (unless hideCommodities is true)
     // 3. Bottom FX ribbon (5 pairs)
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         <FinanceRibbonTop />
-        <CommoditiesMoversGrid />
+        {!hideCommodities && <CommoditiesMoversGrid />}
         <FinanceRibbonBottom />
       </div>
     );
-  }, [showFinanceRibbon, demoMode, demoPairs]);
+  }, [showFinanceRibbon, demoMode, demoPairs, hideCommodities]);
 
   // ============================================================================
   // RENDER

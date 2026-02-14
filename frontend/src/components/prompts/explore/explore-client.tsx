@@ -122,10 +122,7 @@ function toIndexQuoteData(
   };
 }
 
-function filterFamilies(
-  families: StyleFamily[],
-  filters: Filters
-): StyleFamily[] {
+function filterFamilies(families: StyleFamily[], filters: Filters): StyleFamily[] {
   return families.filter((family) => {
     // Mood filter
     if (filters.mood !== 'all' && family.mood !== filters.mood) {
@@ -159,12 +156,12 @@ function filterFamilies(
 function sortFamilies(
   families: StyleFamily[],
   sortBy: Filters['sortBy'],
-  sortDirection: Filters['sortDirection']
+  sortDirection: Filters['sortDirection'],
 ): StyleFamily[] {
-  const moodOrder: Record<'calm' | 'intense' | 'neutral', number> = { 
-    calm: 0, 
-    neutral: 1, 
-    intense: 2 
+  const moodOrder: Record<'calm' | 'intense' | 'neutral', number> = {
+    calm: 0,
+    neutral: 1,
+    intense: 2,
   };
 
   return [...families].sort((a, b) => {
@@ -197,12 +194,7 @@ export default function ExploreClient({
   families,
 }: ExploreClientProps) {
   const router = useRouter();
-  const {
-    isAuthenticated,
-    userTier,
-    locationInfo,
-    setReferenceFrame,
-  } = usePromagenAuth();
+  const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
   // Live weather (client) — updates after hydration
   const { weather: liveWeatherById } = useWeather();
@@ -218,12 +210,26 @@ export default function ExploreClient({
         humidity: w.humidity,
         windKmh: w.windSpeedKmh,
         description: w.description,
+        sunriseUtc: w.sunriseUtc ?? undefined,
+        sunsetUtc: w.sunsetUtc ?? undefined,
+        timezoneOffset: w.timezoneOffset ?? undefined,
+        isDayTime: w.isDayTime ?? undefined,
       });
     }
     return map;
   }, [liveWeatherById]);
 
-  const effectiveWeatherIndex = liveWeatherIndex.size ? liveWeatherIndex : weatherIndex;
+  // Merge live weather ON TOP of SSR weather (which includes demo fallback).
+  // Old logic: replace all if ANY live data exists → loses demo fills for
+  // exchanges not in current batch. New: overlay live onto SSR base.
+  const effectiveWeatherIndex = useMemo(() => {
+    if (liveWeatherIndex.size === 0) return weatherIndex;
+    const merged = new Map(weatherIndex); // start with SSR (includes demo fills)
+    for (const [id, data] of liveWeatherIndex) {
+      merged.set(id, data); // live overrides where available
+    }
+    return merged;
+  }, [liveWeatherIndex, weatherIndex]);
 
   // Get user's exchange selection (tier-aware)
   const {
@@ -322,7 +328,7 @@ export default function ExploreClient({
       sessionStorage.setItem('promagen_explore_terms', JSON.stringify(terms));
       router.push('/providers');
     },
-    [router]
+    [router],
   );
 
   // ============================================================================
@@ -420,7 +426,7 @@ export default function ExploreClient({
       leftContent={leftExchanges}
       centre={centreContent}
       rightContent={rightExchanges}
-      showFinanceRibbon
+      showFinanceRibbon={false}
       exchanges={allOrderedExchanges}
       displayedProviderIds={displayedProviderIds.length > 0 ? displayedProviderIds : providerIds}
       isPaidUser={userTier === 'paid'}

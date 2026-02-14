@@ -164,12 +164,7 @@ export default function LearnClient({
   tips,
   platforms,
 }: LearnClientProps) {
-  const {
-    isAuthenticated,
-    userTier,
-    locationInfo,
-    setReferenceFrame,
-  } = usePromagenAuth();
+  const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
   // Live weather (client) — updates after hydration
   const { weather: liveWeatherById } = useWeather();
@@ -185,12 +180,26 @@ export default function LearnClient({
         humidity: w.humidity,
         windKmh: w.windSpeedKmh,
         description: w.description,
+        sunriseUtc: w.sunriseUtc ?? undefined,
+        sunsetUtc: w.sunsetUtc ?? undefined,
+        timezoneOffset: w.timezoneOffset ?? undefined,
+        isDayTime: w.isDayTime ?? undefined,
       });
     }
     return map;
   }, [liveWeatherById]);
 
-  const effectiveWeatherIndex = liveWeatherIndex.size ? liveWeatherIndex : weatherIndex;
+  // Merge live weather ON TOP of SSR weather (which includes demo fallback).
+  // Old logic: replace all if ANY live data exists → loses demo fills for
+  // exchanges not in current batch. New: overlay live onto SSR base.
+  const effectiveWeatherIndex = useMemo(() => {
+    if (liveWeatherIndex.size === 0) return weatherIndex;
+    const merged = new Map(weatherIndex); // start with SSR (includes demo fills)
+    for (const [id, data] of liveWeatherIndex) {
+      merged.set(id, data); // live overrides where available
+    }
+    return merged;
+  }, [liveWeatherIndex, weatherIndex]);
 
   // Get user's exchange selection (tier-aware)
   const {
@@ -414,12 +423,8 @@ export default function LearnClient({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-white/70 mb-2">
-                    No guides found
-                  </h3>
-                  <p className="text-sm text-white/40 max-w-xs">
-                    Try adjusting your search query.
-                  </p>
+                  <h3 className="text-lg font-semibold text-white/70 mb-2">No guides found</h3>
+                  <p className="text-sm text-white/40 max-w-xs">Try adjusting your search query.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -436,10 +441,7 @@ export default function LearnClient({
             </div>
 
             {/* Platform Tier Info Boxes */}
-            <TierInfoBoxes
-              selectedPlatformId={selectedPlatformId}
-              platformNames={platformNames}
-            />
+            <TierInfoBoxes selectedPlatformId={selectedPlatformId} platformNames={platformNames} />
           </div>
         </>
       )}
@@ -480,7 +482,7 @@ export default function LearnClient({
       leftContent={leftExchanges}
       centre={centreContent}
       rightContent={rightExchanges}
-      showFinanceRibbon
+      showFinanceRibbon={false}
       exchanges={allOrderedExchanges}
       displayedProviderIds={displayedProviderIds.length > 0 ? displayedProviderIds : providerIds}
       isPaidUser={userTier === 'paid'}

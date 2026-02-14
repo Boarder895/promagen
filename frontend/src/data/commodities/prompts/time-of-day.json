@@ -1,0 +1,47 @@
+{
+  "_doc": "Time-of-day lighting layer for commodity prompt generation. The OpenWeatherMap API response includes 'timezone' (UTC offset in seconds) — use this to calculate local time at the commodity's production location. Map the local hour to one of four lighting periods. Append the matching 'lighting' string to the prompt enhancer. Combined with the 10 weather conditions, this produces 40 distinct atmosphere combinations per environment.",
+
+  "periods": {
+    "dawn": {
+      "label": "Dawn / Blue Hour",
+      "hourRange": [5, 7],
+      "lighting": "soft pre-sunrise blue-hour light, eastern horizon glowing pale orange-pink through thin cloud, long blue shadows stretching westward, cool colour temperature with warm edge on the horizon, mist lingering in low ground, the quiet transition from night to day",
+      "modifier": "low-angle light raking across surfaces revealing texture, dew or frost visible on metal and vegetation, workers arriving for the early shift, sky gradient from deep blue overhead to warm peach at the horizon"
+    },
+    "morning": {
+      "label": "Morning / Midday",
+      "hourRange": [8, 16],
+      "lighting": "full working-day light, sun well above the horizon casting defined shadows, strong contrast between sunlit and shaded areas, neutral-to-warm colour temperature, clear visibility across the full scene, industrial activity at full pace",
+      "modifier": "harsh overhead sun compressing shadows at midday, or angled morning light with longer shadows early, heat haze visible in hot climates, full operational activity, dust or steam catching the direct sunlight, maximum scene clarity and detail"
+    },
+    "golden": {
+      "label": "Golden Hour / Sunset",
+      "hourRange": [17, 19],
+      "lighting": "warm golden-hour light with long dramatic shadows, sun low on the western horizon casting everything in deep amber and orange tones, industrial structures silhouetted or rimlit, the most cinematic and atmospheric time of day",
+      "modifier": "deep amber side-lighting sculpting three-dimensional form, long shadows creating dramatic depth, warm orange light on metal surfaces, sky graduating from gold to deep blue overhead, workers finishing the day shift, end-of-day atmosphere"
+    },
+    "night": {
+      "label": "Night / Artificial Light",
+      "hourRange": [20, 4],
+      "lighting": "industrial night scene lit by sodium-vapour lamps casting orange pools of light, LED floodlights creating harsh white patches, furnace glow or flare light providing dramatic orange accents, dark sky above, the 24-hour operation continuing under artificial illumination",
+      "modifier": "pools of warm sodium-orange and cool LED-white light creating dramatic contrast, deep shadows between lit areas, safety lighting on walkways, furnace or flare glow reflecting off metal structures, headlights of trucks and vehicles, stars visible in remote locations, the industrial sublime of night operations"
+    }
+  },
+
+  "implementation": {
+    "step1": "Extract timezone offset from OpenWeatherMap response: response.timezone (seconds from UTC)",
+    "step2": "Calculate local hour: new Date((response.dt + response.timezone) * 1000).getUTCHours()",
+    "step3": "Map local hour to period: 5-7 → dawn, 8-16 → morning, 17-19 → golden, 20-4 → night",
+    "step4": "Append the period's 'lighting' string to the prompt enhancer, after the weather lighting layer",
+    "promptStructure": "[subject] + [lens] + [enhancer] + [environment] + [weather lighting] + [time-of-day lighting]"
+  },
+
+  "multiplierEffect": {
+    "weatherConditions": 10,
+    "timeOfDayPeriods": 4,
+    "combinedAtmospheres": 40,
+    "note": "Not all 40 combinations are equally likely (e.g., golden hour + heavy snow is rare but possible at high latitudes), but all produce valid and visually distinct imagery. The weather and time-of-day layers are independent — weather describes the sky condition, time-of-day describes the light angle and colour temperature."
+  },
+
+  "seasonalDaylightNote": "Hour ranges are approximate. At high latitudes (Scandinavia, northern Canada, southern Chile) the dawn/golden periods shift dramatically by season. At equatorial locations they're remarkably consistent year-round. For Promagen's purposes the fixed hour ranges produce good-enough visual results — a Norwegian fjord prompt at hour 15 in December would get 'morning' light when it's actually twilight, but the weather layer (likely overcast/snow) will dominate the atmosphere anyway."
+}
