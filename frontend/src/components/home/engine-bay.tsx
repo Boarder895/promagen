@@ -233,7 +233,10 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
             READY TO BUILD
           </span>
         </div>
-        <h2 className="text-center text-base font-semibold leading-tight sm:text-lg md:text-xl">
+        <h2
+          className="text-center font-semibold leading-tight"
+          style={{ fontSize: 'clamp(0.7rem, 1vw, 1.30rem)' }}
+        >
           <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
             The Dynamic Intelligent Prompt Builder
           </span>
@@ -299,7 +302,13 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
       {/* Dropdown + Launch Button */}
       <div className="flex items-stretch gap-3">
         {/* Combobox Dropdown — 50% width */}
-        <div className="w-1/2">
+        <div
+          className="w-1/2"
+          style={{
+            fontSize: 'clamp(0.70rem, 0.9vw, 1rem)',
+            minHeight: 'clamp(44px, 6vh, 60px)',
+          }}
+        >
           <Combobox
             id="engine-bay-provider-select"
             label="Select AI Platform"
@@ -326,11 +335,16 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
           aria-label={
             selected ? `Launch ${selected.name} prompt builder` : 'Select a platform first'
           }
-          className={`group relative inline-flex w-1/2 items-center justify-center gap-2 overflow-hidden rounded-xl border px-4 py-3 text-center text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 no-underline ${
+          className={`group relative inline-flex w-1/2 items-center justify-center overflow-hidden rounded-xl border text-center font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 no-underline ${
             selected
               ? 'engine-bay-active border-sky-400/60 bg-gradient-to-r from-sky-400/40 via-emerald-300/40 to-indigo-400/40 text-white cursor-pointer'
               : 'border-slate-600/50 bg-slate-800/50 text-slate-500 cursor-not-allowed'
           }`}
+          style={{
+            padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem)',
+            gap: 'clamp(0.25rem, 0.5vw, 0.5rem)',
+            minHeight: 'clamp(40px, 6vh, 60px)',
+          }}
         >
           {/* Shimmer overlay */}
           {selected && (
@@ -345,21 +359,39 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
             Line 1: ✦ Launch
             Line 2: Platform Builder
           */}
-          <div className="relative z-10 flex flex-col items-center gap-0.5">
-            <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
+          <div
+            className="relative z-10 flex flex-col items-center"
+            style={{ gap: 'clamp(0.125rem, 0.25vw, 0.25rem)' }}
+          >
+            <span
+              className="flex items-center font-semibold text-white"
+              style={{
+                gap: 'clamp(0.2rem, 0.4vw, 0.6rem)',
+                fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)',
+              }}
+            >
               <span>✦</span>
               <span>Launch</span>
             </span>
-            <span className="text-sm font-semibold text-white">Platform Builder</span>
+            <span
+              className="font-semibold text-white"
+              style={{ fontSize: 'clamp(0.6rem, 0.9vw, 0.6rem)' }}
+            >
+              Platform Builder
+            </span>
           </div>
 
           {/* Arrow when selected */}
           {selected && (
             <svg
-              className="relative z-10 h-4 w-4 shrink-0 text-white"
+              className="relative z-10 shrink-0 text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
+              style={{
+                width: 'clamp(14px, 1.2vw, 18px)',
+                height: 'clamp(14px, 1.2vw, 18px)',
+              }}
             >
               <path
                 strokeLinecap="round"

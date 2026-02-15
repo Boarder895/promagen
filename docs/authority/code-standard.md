@@ -1,7 +1,7 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 14 February 2026  
-**Version:** 2.8 (Anti-Breakpoint Rule + Text Containment)  
+**Last updated:** 15 February 2026  
+**Version:** 2.9 (Window Boundary Containment)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
 ---
@@ -553,6 +553,67 @@ for (const fontSize of candidates) {
 **Compliance check:** Resize browser to smallest supported viewport. If any text is visually outside its card/panel boundary, the component violates this rule.
 
 **Authority:** `docs/authority/best-working-practice.md` § Text containment
+
+---
+
+### § 6.5 Window Boundary Containment (Nothing In, Nothing Out)
+
+**Purpose:** The Ignition window (Engine Bay) and Mission Control window are self-contained visual panels. Nothing inside either window may overflow or escape its boundary, and nothing from outside may bleed into either window. This is an architectural rule enforced at component creation time — not retrofitted after breakage.
+
+**Hard rules:**
+
+1. **Nothing escapes outward** — All content within a window (text, icons, glows, gradients, absolutely positioned children, animations) must stay inside the window boundary. Content that doesn't fit clips or scrolls — it never paints outside.
+2. **Nothing enters from outside** — Adjacent components (exchange cards, ribbons, overlays, glow effects) must not visually intrude into either window.
+3. **Built from the start** — Every new child element added to either window must respect the boundary without requiring a separate containment fix.
+4. **Never modify the outer container** — Do not add `overflow: hidden`, `contain: paint`, `contain: layout`, or any `style` prop to the outer window container div. These create new stacking contexts and containing blocks that break grid positioning and cause the windows to overlap exchange cards.
+
+**Implementation — containment is internal, not external:**
+
+```tsx
+// ✅ Correct — containment on INNER elements, outer container untouched
+<div className="relative w-full rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+     data-testid="engine-bay">
+  {/* Header — fixed height, won't grow */}
+  <div className="shrink-0">...</div>
+  {/* Body — scrolls internally, clips at own boundary */}
+  <div className="flex-1 overflow-hidden min-h-0">
+    <div className="overflow-y-auto scrollbar-thin ...">
+      <p className="truncate">Text that clips properly</p>
+    </div>
+  </div>
+</div>
+
+// ❌ Wrong — containment on OUTER container breaks grid layout
+<div className="relative w-full rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+     style={{ overflow: 'hidden', contain: 'paint' }}
+     data-testid="engine-bay">
+  ...
+</div>
+```
+
+**Per-element containment techniques:**
+
+| Content type                   | Technique                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------ |
+| Single-line text               | `truncate` on the text element                                                             |
+| Multi-line text                | `line-clamp-N` on text + `overflow-hidden min-h-0` on wrapper                              |
+| Scrollable lists               | `overflow-y-auto` with `min-h-0` and `flex-1` on the scroll container                      |
+| Glow/gradient decorations      | `pointer-events-none` + percentage-based sizing relative to window, not absolute escapes   |
+| Absolutely positioned children | Explicit bounds (`top`/`bottom`/`left`/`right` or `inset`) within the window's padding box |
+
+**Forbidden patterns:**
+
+| Pattern                                                  | Why it breaks                                                 |
+| -------------------------------------------------------- | ------------------------------------------------------------- |
+| `overflow: hidden` on outer window container             | Breaks grid positioning, clips glows and tooltips incorrectly |
+| `contain: paint` or `contain: layout` on outer container | Creates new stacking context, shifts window position in grid  |
+| `position: fixed` on child elements                      | Escapes all containment, paints relative to viewport          |
+| Negative margins pulling content outside window edge     | Content visually exits the window boundary                    |
+| Unbounded absolutely positioned elements                 | Float outside window if no explicit top/bottom/left/right set |
+
+**Compliance check:** Inspect both windows at multiple viewport widths. Draw an imaginary rectangle at each window's border-box edge. Verify: (a) nothing from inside is visually outside that rectangle, (b) nothing from adjacent components is visually inside that rectangle.
+
+**Authority:** `docs/authority/best-working-practice.md` § Window boundary containment
 
 ---
 
@@ -1420,6 +1481,7 @@ Before shipping any component that uses `ResizeObserver`, `requestAnimationFrame
 
 ## Changelog
 
+- **15 Feb 2026 (v2.9):** Added § 6.5 Window Boundary Containment — architectural rule for Ignition (Engine Bay) and Mission Control windows. Nothing inside escapes outward, nothing from outside bleeds inward. Containment achieved via internal element constraints (truncate, overflow-hidden on inner wrappers, bounded absolute positioning). Outer window container div must never have overflow/contain style props added — these break grid positioning. Cross-ref best-working-practice.md.
 - **14 Feb 2026 (v2.8):** Added anti-breakpoint responsive font rule to § 6 intro — never use Tailwind breakpoint text classes (`sm:text-sm`, `xl:text-base`, `min-[Xpx]:text-Y`) because root `html` already uses `clamp()` and rem-based classes already scale. Tooltips exempt. Added § 6.4 Text Containment — three-property pattern (`overflow-hidden`, `min-h-0`, `truncate`) required for all text in fixed-height containers. Cross-ref best-working-practice.md.
 - **9 Feb 2026 (v2.7):** Added § 22 CLS Prevention Rules. Documents five rules and a checklist for preventing Cumulative Layout Shift: CSS-deterministic heights, opacity gating, no transition-all on layout containers, client-side fetch re-sort gating, and flex layout isolation. Based on CLS 0.40 → 0.02 fix cycle.
 - **7 Feb 2026 (v2.6):** Added § 6.3 Content-Driven Sizing (Breathing Room Pattern). Documents the approach for when content doesn't have room to breathe: measure real content in offscreen measurer, compare against available space with breathing room, gracefully degrade layout. Reference implementation: commodities-movers-grid.tsx v3.0.

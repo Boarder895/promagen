@@ -204,7 +204,7 @@ function getLocalHour(tz: string): number {
 // ============================================================================
 
 const actionButtonBase =
-  'inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-xl border px-4 py-3 text-center text-sm font-semibold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80';
+  'inline-flex w-full flex-col items-center justify-center rounded-xl border text-center font-semibold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80';
 
 const actionButtonActive =
   'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer';
@@ -326,17 +326,32 @@ export default function MissionControl({
   // RENDER HOME BUTTON — Always links to /
   // ══════════════════════════════════════════════════════════════════════════
   const renderHomeButton = () => (
-    <a href="/" className={`${actionButtonBase} ${actionButtonActive}`} aria-label="Go to Homepage">
+    <a
+      href="/"
+      className={`${actionButtonBase} ${actionButtonActive}`}
+      aria-label="Go to Homepage"
+      style={{
+        padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem)',
+        gap: 'clamp(0.125rem, 0.25vw, 0.25rem)',
+        minHeight: 'clamp(44px, 6vh, 60px)',
+      }}
+    >
       <svg
-        className="h-5 w-5 text-purple-100"
+        className="text-purple-100"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
         aria-hidden="true"
+        style={{
+          width: 'clamp(18px, 1.5vw, 22px)',
+          height: 'clamp(18px, 1.5vw, 22px)',
+        }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={homeIconPath} />
       </svg>
-      <span className="text-purple-100">Home</span>
+      <span className="text-purple-100" style={{ fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)' }}>
+        Home
+      </span>
     </a>
   );
 
@@ -348,17 +363,28 @@ export default function MissionControl({
       href="/studio"
       className={`${actionButtonBase} ${actionButtonActive}`}
       aria-label="Open Prompt Studio"
+      style={{
+        padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem)',
+        gap: 'clamp(0.125rem, 0.25vw, 0.25rem)',
+        minHeight: 'clamp(44px, 6vh, 60px)',
+      }}
     >
       <svg
-        className="h-5 w-5 text-purple-100"
+        className="text-purple-100"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
         aria-hidden="true"
+        style={{
+          width: 'clamp(18px, 1.5vw, 22px)',
+          height: 'clamp(18px, 1.5vw, 22px)',
+        }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={studioIconPath} />
       </svg>
-      <span className="text-purple-100">Studio</span>
+      <span className="text-purple-100" style={{ fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)' }}>
+        Studio
+      </span>
     </a>
   );
 
@@ -370,17 +396,28 @@ export default function MissionControl({
       href="/pro-promagen"
       className={`${actionButtonBase} ${actionButtonActive}`}
       aria-label="View Pro Promagen features"
+      style={{
+        padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem)',
+        gap: 'clamp(0.125rem, 0.25vw, 0.25rem)',
+        minHeight: 'clamp(44px, 6vh, 60px)',
+      }}
     >
       <svg
-        className="h-5 w-5 text-purple-100"
+        className="text-purple-100"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
         aria-hidden="true"
+        style={{
+          width: 'clamp(18px, 1.5vw, 22px)',
+          height: 'clamp(18px, 1.5vw, 22px)',
+        }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={proIconPath} />
       </svg>
-      <span className="text-purple-100">Pro</span>
+      <span className="text-purple-100" style={{ fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)' }}>
+        Pro
+      </span>
     </a>
   );
 
@@ -437,7 +474,10 @@ export default function MissionControl({
             MISSION CONTROL
           </span>
         </div>
-        <h2 className="text-center text-base font-semibold leading-tight sm:text-lg md:text-xl">
+        <h2
+          className="text-center font-semibold leading-tight"
+          style={{ fontSize: 'clamp(0.7rem, 1vw, 1.30rem)' }}
+        >
           <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
             Smart Dynamic Automated Prompts
           </span>

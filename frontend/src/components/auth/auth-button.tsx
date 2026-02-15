@@ -63,10 +63,12 @@ function LoadingIcon() {
 
 // Shared styles
 const signInButtonStyles =
-  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
+  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
+/* font-size set via inline clamp() on each element */
 
 const loadingButtonStyles =
-  'inline-flex items-center justify-center gap-2 rounded-full border border-slate-500/50 bg-slate-800/50 px-4 py-1.5 text-sm font-medium text-slate-400 opacity-50';
+  'inline-flex items-center justify-center gap-2 rounded-full border border-slate-500/50 bg-slate-800/50 px-4 py-1.5 font-medium text-slate-400 opacity-50';
+/* font-size set via inline clamp() on each element */
 
 /**
  * AuthButton - Adaptive authentication UI
@@ -226,7 +228,12 @@ export function AuthButton() {
   if (!mounted) {
     // Not mounted yet (SSR)
     content = (
-      <button type="button" disabled className={loadingButtonStyles}>
+      <button
+        type="button"
+        disabled
+        className={loadingButtonStyles}
+        style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+      >
         <LoadingIcon />
         Loading...
       </button>
@@ -234,7 +241,11 @@ export function AuthButton() {
   } else if (timedOut && sessionState === 'loading') {
     // Timed out - show fallback link
     content = (
-      <a href="/sign-in" className={signInButtonStyles}>
+      <a
+        href="/sign-in"
+        className={signInButtonStyles}
+        style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+      >
         <UserIcon />
         Sign in
       </a>
@@ -242,7 +253,12 @@ export function AuthButton() {
   } else if (sessionState === 'loading') {
     // Still loading
     content = (
-      <button type="button" disabled className={loadingButtonStyles}>
+      <button
+        type="button"
+        disabled
+        className={loadingButtonStyles}
+        style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+      >
         <LoadingIcon />
         Loading...
       </button>
@@ -268,7 +284,11 @@ export function AuthButton() {
     // Signed out - show sign in button
     content = (
       <SignInButton mode="modal">
-        <button type="button" className={signInButtonStyles}>
+        <button
+          type="button"
+          className={signInButtonStyles}
+          style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+        >
           <UserIcon />
           Sign in
         </button>
@@ -278,11 +298,7 @@ export function AuthButton() {
 
   // Fixed-dimension wrapper: min-h matches button height, min-w prevents collapse.
   // flex + items-center + justify-end keeps content right-aligned and vertically centred.
-  return (
-    <div className="flex min-h-[32px] min-w-[32px] items-center justify-end">
-      {content}
-    </div>
-  );
+  return <div className="flex min-h-[32px] min-w-[32px] items-center justify-end">{content}</div>;
 }
 
 export default AuthButton;

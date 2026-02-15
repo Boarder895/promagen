@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 9 February 2026
+**Last updated:** 15 February 2026
 
 ---
 
@@ -333,6 +333,38 @@ font-size: clamp(MIN, PREFERRED, MAX);
 
 **Authority:** `code-standard.md` § 6.4
 
+### Window boundary containment (nothing in, nothing out)
+
+**Purpose:** The Ignition window (Engine Bay) and Mission Control window are self-contained panels. Nothing inside them may overflow or escape their boundary, and nothing from outside may bleed into them. This is an architectural rule built into every component from the start, not patched on after the fact.
+
+**Hard rules (non-negotiable):**
+
+1. **Nothing escapes outward** — All content within a window (text, icons, glows, gradients, absolutely positioned children, animations) must stay inside the window boundary. If it doesn't fit, it clips or scrolls — it never paints outside.
+2. **Nothing enters from outside** — Adjacent components (exchange cards, ribbons, overlays, glow effects) must not visually bleed into either window. Each window is a hard visual boundary.
+3. **Built from the start** — These containment rules apply at component creation time, not as a retrofit. Every new child element added to either window must respect the boundary without requiring a separate containment fix.
+4. **No `contain: paint` or `contain: layout`** — These CSS containment properties create new stacking contexts and containing blocks that break grid positioning. Do not use them on window containers. Use targeted `overflow-hidden` on inner elements instead.
+5. **Containment is internal, not external** — The outer container div of each window must NOT have `overflow: hidden` or `style` props added to enforce containment. Containment is achieved by ensuring every child element inside the window is properly sized, clipped, and constrained within its own bounds.
+
+**How to achieve containment without breaking layout:**
+
+- Inner scrollable areas: `overflow-y-auto` with `min-h-0` and `flex-1`
+- Single-line text: `truncate` (ellipsis) on the text element
+- Multi-line text: `line-clamp-N` on the text element, `overflow-hidden min-h-0` on its wrapper
+- Glow/gradient decorations: use `pointer-events-none` and constrain with percentage-based sizing relative to the window, not absolute positioning that escapes
+- Absolutely positioned children: must have explicit bounds (`top`/`bottom`/`left`/`right` or `inset`) that keep them within the window's padding box
+
+**Forbidden patterns:**
+
+- Adding `overflow: hidden`, `contain: paint`, or `contain: layout` to the outer window container div (breaks grid positioning and stacking)
+- Absolutely positioned elements without bounded constraints (they escape)
+- Box shadows or glows that extend beyond the window boundary without clipping
+- Child components that use `position: fixed` (escapes all containment)
+- Negative margins that pull content outside the window edge
+
+**Compliance check:** Inspect both windows at multiple viewport sizes. Draw an imaginary box around each window's border. Nothing should be visually outside that box, and nothing from adjacent components should be visually inside it.
+
+**Authority:** `code-standard.md` § 6.5
+
 ---
 
 ## Docs-first gate (no code until docs are read + doc-delta captured)
@@ -623,6 +655,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **15 Feb 2026:** Added "Window boundary containment (nothing in, nothing out)" subsection under UI Consistency. Architectural rule: Ignition and Mission Control windows are hard visual boundaries — no content escapes outward, no external content bleeds inward. Containment achieved via internal element constraints, never by adding overflow/contain to the outer window container (which breaks grid positioning). Cross-ref code-standard.md § 6.5.
 - **14 Feb 2026:** Added anti-breakpoint rule (#5, #6) to Fluid Typography hard rules — never use Tailwind breakpoint text classes for responsive sizing, always use inline `clamp()`. Tooltips exempt. Added "Text containment (no text escapes its window)" subsection under UI Consistency — three-property pattern (`overflow-hidden`, `min-h-0`, `truncate`) for all text in fixed-height containers. Cross-ref code-standard.md § 6.4.
 - **9 Feb 2026:** Added "Performance Guardrails (CLS Prevention)" section. Pre-ship CLS check requirement, three red-flag patterns, SSR hydration gap mental model. Cross-ref code-standard.md § 22 for implementation rules.
 - **7 Feb 2026:** Added "Content-driven sizing" subsection under UI Consistency. Standard approach when content doesn't have room to breathe: measure real content, not magic numbers. Cross-ref code-standard.md § 6.3.

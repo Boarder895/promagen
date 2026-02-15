@@ -163,7 +163,7 @@ export function ReferenceFrameToggle({
   };
 
   const buttonClasses = `
-    inline-flex items-center justify-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium shadow-sm transition-all
+    inline-flex items-center justify-center gap-2 rounded-full border px-4 py-1.5 font-medium shadow-sm transition-all
     focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80
     border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100
     hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400
@@ -180,6 +180,7 @@ export function ReferenceFrameToggle({
       onClick={handleToggle}
       disabled={disabled || isLocationLoading}
       className={buttonClasses}
+      style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
       aria-label={`Exchange reference frame: ${currentLabel}. ${
         isLocked ? 'Pro Promagen feature.' : 'Click to toggle.'
       }`}
@@ -284,8 +285,8 @@ export function ReferenceFrameToggle({
               {isPaidUser
                 ? 'Click to switch reference frame'
                 : isAuthenticated
-                ? 'Click to learn about Pro Promagen'
-                : 'Sign in to unlock this feature'}
+                  ? 'Click to learn about Pro Promagen'
+                  : 'Sign in to unlock this feature'}
             </p>
           </div>
         )}

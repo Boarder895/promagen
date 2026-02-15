@@ -5,9 +5,9 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 2,
-    "ssotHash": "aaa46dfba01f2eda3ddbf988d56bfb8cb47d68404921063368f814052ffc060c",
-    "ssotFingerprint": "aaa46dfba01f",
-    "snapshotAt": "2026-02-14T09:39:44.512Z"
+    "ssotHash": "bdae8e96aa424affcf772c26e9eb70666cd976826e94c768980a38f965357b3b",
+    "ssotFingerprint": "bdae8e96aa42",
+    "snapshotAt": "2026-02-15T14:50:00.962Z"
   },
   "catalog": [
     {
@@ -131,14 +131,6 @@
       "tz": "Europe/London"
     },
     {
-      "id": "misx-moscow",
-      "benchmark": "moex",
-      "indexName": "MOEX Russia",
-      "city": "Moscow",
-      "country": "Russia",
-      "tz": "Europe/Moscow"
-    },
-    {
       "id": "moex-moscow",
       "benchmark": "moex",
       "indexName": "MOEX Russia",
@@ -227,14 +219,6 @@
       "tz": "America/Bogota"
     },
     {
-      "id": "xbom-mumbai",
-      "benchmark": "sensex",
-      "indexName": "Sensex",
-      "city": "Mumbai",
-      "country": "India",
-      "tz": "Asia/Kolkata"
-    },
-    {
       "id": "xetra-frankfurt",
       "benchmark": "de40",
       "indexName": "DAX 40",
@@ -299,22 +283,6 @@
       "tz": "Africa/Lagos"
     },
     {
-      "id": "xnse-mumbai",
-      "benchmark": "nifty_50",
-      "indexName": "NIFTY 50",
-      "city": "Mumbai",
-      "country": "India",
-      "tz": "Asia/Kolkata"
-    },
-    {
-      "id": "xnze-auckland",
-      "benchmark": "nzx_50",
-      "indexName": "NZX 50",
-      "city": "Auckland",
-      "country": "New Zealand",
-      "tz": "Pacific/Auckland"
-    },
-    {
       "id": "xosl-oslo",
       "benchmark": "oslo",
       "indexName": "Oslo Børs",
@@ -353,14 +321,6 @@
       "city": "Stuttgart",
       "country": "Germany",
       "tz": "Europe/Berlin"
-    },
-    {
-      "id": "xswx-zurich",
-      "benchmark": "ch20",
-      "indexName": "SMI",
-      "city": "Zurich",
-      "country": "Switzerland",
-      "tz": "Europe/Zurich"
     },
     {
       "id": "adx-abu-dhabi",
@@ -739,7 +699,6 @@
     "idx-jakarta",
     "jse-johannesburg",
     "lse-london",
-    "misx-moscow",
     "moex-moscow",
     "nasdaq-copenhagen",
     "nasdaq-helsinki",
@@ -751,7 +710,6 @@
     "xbah-manama",
     "xbel-belgrade",
     "xbog-bogota",
-    "xbom-mumbai",
     "xetra-frankfurt",
     "xfka-fukuoka",
     "xfra-frankfurt",
@@ -760,14 +718,11 @@
     "xmex-mexico-city",
     "xngo-nagoya",
     "xnsa-lagos",
-    "xnse-mumbai",
-    "xnze-auckland",
     "xosl-oslo",
     "xris-riga",
     "xsap-sapporo",
     "xstc-ho-chi-minh-city",
     "xstu-stuttgart",
-    "xswx-zurich",
     "adx-abu-dhabi",
     "ase-amman",
     "asx-sydney",
