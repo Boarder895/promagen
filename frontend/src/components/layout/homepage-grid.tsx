@@ -500,7 +500,6 @@ export default function HomepageGrid({
               style={{
                 paddingLeft: 'calc(16px + (100vw - 80px) * 0.225)',
                 paddingRight: 'calc(16px + (100vw - 80px) * 0.225)',
-                overflow: 'hidden',
               }}
             >
               {/* Left section — Listen button centered in this half */}

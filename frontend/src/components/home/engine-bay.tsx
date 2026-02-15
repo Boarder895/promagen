@@ -219,7 +219,6 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
   return (
     <div
       className="relative w-full rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
-      style={{ overflow: 'hidden' }}
       data-testid="engine-bay"
     >
       {/* Header */}
