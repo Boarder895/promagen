@@ -173,7 +173,7 @@ const IndexRowWithData = React.memo(function IndexRowWithData({ quote }: IndexRo
       {/* All index data on ONE line - snaps with card */}
       <span
         className="block font-medium text-slate-300 whitespace-nowrap"
-        style={{ fontSize: '0.60em' }}
+        style={{ fontSize: '0.75em' }}
       >
         <span>{indexName}: </span>
         <span className="ml-1 font-semibold text-slate-100">{formatPrice(price)}</span>
@@ -207,7 +207,7 @@ const IndexRowPlaceholder = React.memo(function IndexRowPlaceholder({
       {/* Index name + status on ONE line - snaps with card */}
       <span
         className="block font-medium text-slate-300 whitespace-nowrap"
-        style={{ fontSize: '0.9em' }}
+        style={{ fontSize: '0.75em' }}
       >
         <span>{indexName}: </span>
         <span className="text-slate-500 italic" style={{ fontSize: '0.85em' }}>
@@ -351,7 +351,7 @@ const WeatherSection = React.memo(function WeatherSection({
     <div className="flex flex-col gap-2 w-full px-1">
       {/* Row 1: Temperature + Weather/Moon emoji with tooltip - centered */}
       <div className="text-center whitespace-nowrap">
-        <span className="tabular-nums text-slate-200" style={{ fontSize: '0.85em' }}>
+        <span className="tabular-nums text-slate-200" style={{ fontSize: '0.70em' }}>
           {Math.round(tempC)}°C / {Math.round(tempF ?? (tempC * 9) / 5 + 32)}°F{' '}
           <WeatherEmojiTooltip
             city={city}
@@ -372,14 +372,14 @@ const WeatherSection = React.memo(function WeatherSection({
 
       {/* Row 2: Wind - full width */}
       <div className="flex items-center justify-between text-slate-400 whitespace-nowrap">
-        <span className="tabular-nums" style={{ fontSize: '0.8em' }}>
+        <span className="tabular-nums" style={{ fontSize: '0.65em' }}>
           {windEmoji} {windKmh ?? 0} km/h
         </span>
       </div>
 
       {/* Row 3: Humidity - full width */}
       <div className="flex items-center justify-between text-slate-400 whitespace-nowrap">
-        <span className="tabular-nums" style={{ fontSize: '0.8em' }}>
+        <span className="tabular-nums" style={{ fontSize: '0.65em' }}>
           💧 {humidity ?? 0}%
         </span>
       </div>
@@ -554,14 +554,14 @@ export const ExchangeCard = React.memo(function ExchangeCard({
               {/* Exchange name - snaps with card */}
               <span
                 className="block font-medium leading-tight text-slate-100 whitespace-nowrap"
-                style={{ fontSize: '0.70em' }}
+                style={{ fontSize: '0.90em' }}
               >
                 {displayName}
               </span>
 
               <div className="mt-1 flex items-center gap-2">
                 {/* City name - snaps with card */}
-                <span className="text-slate-400 whitespace-nowrap" style={{ fontSize: '0.65em' }}>
+                <span className="text-slate-400 whitespace-nowrap" style={{ fontSize: '0.75em' }}>
                   {city}
                 </span>
                 <WeatherPromptTooltip
@@ -579,7 +579,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
                   <span title="">
                     <Flag
                       countryCode={countryCode}
-                      size={28}
+                      size={20}
                       decorative={false}
                       className="shrink-0 cursor-pointer"
                     />

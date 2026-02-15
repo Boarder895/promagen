@@ -423,6 +423,7 @@ export default function MissionControl({
   return (
     <div
       className="relative w-full rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+      style={{ overflow: 'hidden', contain: 'paint' }}
       data-testid="mission-control"
     >
       {/* Header */}
@@ -437,7 +438,10 @@ export default function MissionControl({
             MISSION CONTROL
           </span>
         </div>
-        <h2 className="text-center text-base font-semibold leading-tight sm:text-lg md:text-xl">
+        <h2
+          className="text-center font-semibold leading-tight"
+          style={{ fontSize: 'clamp(0.7rem, 1vw, 1.30rem)' }}
+        >
           <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
             Smart Dynamic Automated Prompts
           </span>

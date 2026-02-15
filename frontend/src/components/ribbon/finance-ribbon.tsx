@@ -40,10 +40,10 @@ export interface FinanceRibbonProps {
 // - Prefer 1 row if it can fit at >= 11.5px.
 // - If it cannot fit even at 11.5px, allow exactly 2 rows.
 // - Font snaps in 0.5px steps (largest that fits).
-const MIN_FONT_PX = 10;
+const MIN_FONT_PX = 8;
 const STEP_PX = 0.5;
 // Conservative cap so ultra-wide screens don't produce comically huge chips.
-const MAX_FONT_PX = 18;
+const MAX_FONT_PX = 16;
 
 type SnapRows = 1 | 2;
 type SnapState = { rows: SnapRows; fontPx: number };

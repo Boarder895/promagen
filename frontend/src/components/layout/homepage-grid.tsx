@@ -500,6 +500,8 @@ export default function HomepageGrid({
               style={{
                 paddingLeft: 'calc(16px + (100vw - 80px) * 0.225)',
                 paddingRight: 'calc(16px + (100vw - 80px) * 0.225)',
+                overflow: 'hidden',
+                contain: 'paint',
               }}
             >
               {/* Left section — Listen button centered in this half */}
@@ -548,7 +550,7 @@ export default function HomepageGrid({
               {/* Centre section — Heading */}
               <h2
                 className="flex-shrink-0 font-semibold leading-tight"
-                style={{ fontSize: 'clamp(1rem, 2.2vw, 1.875rem)' }}
+                style={{ fontSize: 'clamp(0.9rem, 1.3vw, 2rem)' }}
               >
                 <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
                   Promagen — Intelligent Prompt Builder
@@ -573,7 +575,10 @@ export default function HomepageGrid({
             </div>
 
             {/* Amber description — centred below heading row */}
-            <p className="mt-2 max-w-2xl text-sm italic leading-relaxed sm:text-base text-amber-400/80">
+            <p
+              className="mt-2 max-w-2xl italic leading-relaxed text-amber-400/80"
+              style={{ fontSize: 'clamp(0.8rem, 1vw, 1rem)' }}
+            >
               Real context for real-world prompts. Explore cities around the world before you get
               there. Hover over any flag to reveal an intelligent prompt that evolves with live
               financial and environmental conditions. See which AI platform brings it to life best —
