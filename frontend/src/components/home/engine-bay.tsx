@@ -233,10 +233,7 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
             READY TO BUILD
           </span>
         </div>
-        <h2
-          className="text-center font-semibold leading-tight"
-          style={{ fontSize: 'clamp(0.7rem, 1vw, 1.30rem)' }}
-        >
+        <h2 className="text-center text-base font-semibold leading-tight sm:text-lg md:text-xl">
           <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
             The Dynamic Intelligent Prompt Builder
           </span>
