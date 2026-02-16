@@ -1,46 +1,30 @@
 // src/components/ribbon/commodity-mover-card.tsx
 // ============================================================================
-// COMMODITY MOVER CARD
+// COMMODITY MOVER CARD — v4.0 (5-LINE UNIFORM LAYOUT)
 // ============================================================================
-// Layout (v2.5):
-//   Row 1: 🥈 Silver           (emoji + name side by side)
-//   Row 2: 🇺🇸 $89.77/oz       (flag + base price with unit)
-//   Row 3: ▲ +5.50%            (delta + arrow)
-//   ── subtle divider ──
-//   Row 4: 🇪🇺 €82.43           (amber — EUR branded)
-//   Row 5: 🇬🇧 £69.33           (purple — GBP branded)
-//   Row 6: 🇺🇸 $89.77           (cyan — USD branded, non-USD/EUR/GBP only)
+// Layout:
+//   Line 1 (20%): 🥈 Silver           (emoji + name)
+//   Line 2 (20%): 🇺🇸 $89.77/oz       (flag + base price with unit)
+//   Line 3 (20%): ▲ +5.50%            (delta + arrow)
+//   Line 4 (20%): 🇪🇺 €82.43           (EUR conversion — amber branded)
+//   Line 5 (20%): 🇬🇧 £69.33           (GBP conversion — purple branded)
 //
-// Currency-Branded Colours (v2.5):
+// Every card is exactly 5 lines — no conditional 3rd conversion line,
+// no divider. All content right-aligned within each row. All sizing
+// via clamp() relative to --commodity-font CSS variable.
+//
+// Currency-Branded Colours (unchanged):
 // - USD ($): text-cyan-400    — cool financial blue
 // - EUR (€): text-amber-400   — warm gold tone
 // - GBP (£): text-purple-400  — regal purple
 // - Other:   text-slate-400   — neutral fallback
 //
-// Smart Currency Logic:
-// - Base USD: Show EUR + GBP (2 lines)
-// - Base EUR: Show USD + GBP (2 lines, avoids EUR→EUR)
-// - Base GBP: Show USD + EUR (2 lines, avoids GBP→GBP)
-// - Base other (INR, BRL, etc.): Show EUR + GBP + USD (3 lines)
+// v4.0: 5-line uniform grid, right-aligned, drop line3, drop divider (16 Feb 2026)
+// v3.1: Per-flag tooltip (10–12 Feb 2026)
+// v2.5: Currency-branded colours + divider (8 Feb 2026)
 //
-// Uses CSS variable --commodity-font for snap-fit sizing.
-// Uses Flag component (SVG with emoji fallback) for Windows compatibility.
-//
-// v3.1: Per-flag tooltip — each flag gets its own scene country, season,
-//       and weather so hovering different flags produces different prompts.
-//       Base flag = random producer country; conversion flags = their own
-//       country code (EU/GB/US). (10 Feb 2026)
-// v3.0: CommodityPromptTooltip wraps all Flag positions (10 Feb 2026)
-// v3.1: Stage rotation — each flag passes flagIndex (0-3) so all 4 tooltips
-//       show different production stages. No more duplicate prompts. (12 Feb 2026)
-// v2.5: Currency-branded conversion colours + divider (8 Feb 2026)
-// v2.4: Flag component for ALL flag displays (5 Feb 2026)
-// v2.3: Flag emoji on base price + 3-line support (5 Feb 2026)
-// v2.2: Stacked conversion lines with flag emojis (5 Feb 2026)
-// v2.1: EUR/GBP Conversion Support (4 Feb 2026)
-//
-// Authority: Compacted conversation 2026-02-08
-// Existing features preserved: Yes
+// Authority: commodities.md, code-standard.md
+// Existing features preserved: Yes (tooltips, flags, branded colours, stale indicator)
 // ============================================================================
 
 'use client';
@@ -87,7 +71,7 @@ export default function CommodityMoverCard({
     priceText,
     conversionLine1,
     conversionLine2,
-    conversionLine3,
+    // conversionLine3 intentionally ignored — uniform 5-line layout
     baseFlagCode,
     deltaPct,
     direction,
@@ -97,8 +81,6 @@ export default function CommodityMoverCard({
   const tooltipData = useCommodityTooltipData(id, deltaPct);
 
   // ---- Per-flag weather resolution helper ----
-  // Each flag gets its OWN weather based on its country code.
-  // Pure map lookups — cheap, no need for useMemo.
   function buildWeatherSlice(countryCode: string): CommodityWeatherSlice | null {
     if (!weatherRecord) return null;
     const resolution = resolveWeather(countryCode);
@@ -109,9 +91,6 @@ export default function CommodityMoverCard({
   }
 
   // ---- Per-flag tooltip props builder ----
-  // Each flag position gets a DIFFERENT sceneCountryCode, season, and weather.
-  // This means hovering the 🇪🇺 flag produces a European scene,
-  // the 🇬🇧 flag a British scene, etc.
   function buildTooltipProps(flagCountryCode: string, flagIndex: number) {
     return {
       commodityId: id,
@@ -133,7 +112,7 @@ export default function CommodityMoverCard({
     direction === 'winner' ? (
       <svg
         className="text-emerald-400 flex-shrink-0"
-        style={{ width: '1.2em', height: '1.2em' }}
+        style={{ width: '1em', height: '1em' }}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -144,7 +123,7 @@ export default function CommodityMoverCard({
     ) : (
       <svg
         className="text-red-400 flex-shrink-0"
-        style={{ width: '1.2em', height: '1.2em' }}
+        style={{ width: '1em', height: '1em' }}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -154,101 +133,110 @@ export default function CommodityMoverCard({
       </svg>
     );
 
+  // Flag size scales with the font — em-based so it tracks --commodity-font
+  const flagSizeStyle = { width: '1.1em', height: '0.8em' };
+
   return (
     <div
-      className="relative flex flex-col items-center justify-center text-center p-1"
-      style={{ fontSize: 'var(--commodity-font, 18px)' }}
+      className="relative grid h-full w-full"
+      style={{
+        fontSize: 'var(--commodity-font, 18px)',
+        gridTemplateRows: 'repeat(5, 1fr)',
+        padding: 'clamp(2px, 0.3vw, 6px) clamp(6px, 0.8vw, 14px)',
+      }}
     >
-      {/* ROW 1: Emoji + Name (side by side) */}
-      <div className="flex items-center justify-center gap-2">
-        <span className="leading-none" style={{ fontSize: '0,5em' }} aria-hidden="true">
+      {/* LINE 1 — Emoji + Name */}
+      <div className="flex items-center justify-start gap-1 min-w-0">
+        <span
+          className="leading-none flex-shrink-0"
+          style={{ fontSize: '0.85em' }}
+          aria-hidden="true"
+        >
           {emoji}
         </span>
         <span
-          className="font-semibold text-white leading-tight whitespace-nowrap"
-          style={{ fontSize: '0.7em' }}
+          className="font-semibold text-white leading-tight whitespace-nowrap truncate"
+          style={{ fontSize: 'clamp(9px, 0.65em, 18px)' }}
         >
           {shortName || name}
         </span>
       </div>
 
-      {/* ROW 2: Flag + Base Price with Unit */}
-      {/* Base flag uses the PRODUCER COUNTRY (random from pool) */}
-      <div className="flex items-center justify-center gap-2.5 mt-1" data-testid="commodity-price">
+      {/* LINE 2 — Flag + Base Price with Unit */}
+      <div
+        className="flex items-center justify-start gap-1.5 min-w-0"
+        data-testid="commodity-price"
+      >
         {baseFlagCode && (
           <CommodityPromptTooltip {...buildTooltipProps(tooltipData.sceneCountryCode, 0)}>
-            <Flag countryCode={baseFlagCode} size={20} />
+            <span className="flex-shrink-0 inline-flex" style={flagSizeStyle}>
+              <Flag countryCode={baseFlagCode} size={20} />
+            </span>
           </CommodityPromptTooltip>
         )}
         <span
-          className="text-white tabular-nums leading-tight whitespace-nowrap"
-          style={{ fontSize: '0.5em' }}
+          className="text-white tabular-nums leading-tight whitespace-nowrap truncate"
+          style={{ fontSize: 'clamp(8px, 0.55em, 15px)' }}
         >
           {priceText || '—'}
         </span>
       </div>
 
-      {/* ROW 3: Delta with arrow */}
-      <span
-        className={`flex items-center gap-1.5 font-bold tabular-nums whitespace-nowrap mt-2 ${deltaColorClass}`}
-        style={{ fontSize: '0.5em' }}
+      {/* LINE 3 — Delta with arrow */}
+      <div
+        className={`flex items-center justify-start gap-1 min-w-0 ${deltaColorClass}`}
         data-testid="commodity-delta"
       >
         {arrowIcon}
-        {formatDeltaPct(deltaPct)}
-      </span>
+        <span
+          className="font-bold tabular-nums whitespace-nowrap"
+          style={{ fontSize: 'clamp(8px, 0.55em, 15px)' }}
+        >
+          {formatDeltaPct(deltaPct)}
+        </span>
+      </div>
 
-      {/* Divider between delta and conversions */}
-      <div className="w-3/4 border-t border-white/5 mt-1" aria-hidden="true" />
-
-      {/* ROW 4-6: Currency conversions with branded colours (v2.5) */}
-      {/* Each conversion flag uses ITS OWN country code for tooltip scene */}
+      {/* LINE 4 — Conversion 1 (typically EUR) */}
       <div
-        className="flex flex-col items-center mt-1 space-y-1.5"
-        data-testid="commodity-conversions"
-        aria-label="Equivalent prices in other currencies"
+        className={`flex items-center justify-start gap-1.5 min-w-0 ${currencyColorClass(conversionLine1.countryCode)}`}
+        aria-label={`Price in ${conversionLine1.countryCode}`}
       >
-        {/* Line 1 */}
-        <span
-          className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine1.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-          style={{ fontSize: '0.5em' }}
-        >
-          <CommodityPromptTooltip {...buildTooltipProps(conversionLine1.countryCode, 1)}>
+        <CommodityPromptTooltip {...buildTooltipProps(conversionLine1.countryCode, 1)}>
+          <span className="flex-shrink-0 inline-flex" style={flagSizeStyle}>
             <Flag countryCode={conversionLine1.countryCode} size={20} />
-          </CommodityPromptTooltip>
-          <span>{conversionLine1.priceText}</span>
-        </span>
-
-        {/* Line 2 */}
-        <span
-          className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine2.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-          style={{ fontSize: '0.5em' }}
-        >
-          <CommodityPromptTooltip {...buildTooltipProps(conversionLine2.countryCode, 2)}>
-            <Flag countryCode={conversionLine2.countryCode} size={20} />
-          </CommodityPromptTooltip>
-          <span>{conversionLine2.priceText}</span>
-        </span>
-
-        {/* Line 3 - only for non-USD/EUR/GBP commodities */}
-        {conversionLine3 && (
-          <span
-            className={`flex items-center gap-2.5 ${currencyColorClass(conversionLine3.countryCode)} tabular-nums leading-tight whitespace-nowrap`}
-            style={{ fontSize: '0.5em' }}
-          >
-            <CommodityPromptTooltip {...buildTooltipProps(conversionLine3.countryCode, 3)}>
-              <Flag countryCode={conversionLine3.countryCode} size={20} />
-            </CommodityPromptTooltip>
-            <span>{conversionLine3.priceText}</span>
           </span>
-        )}
+        </CommodityPromptTooltip>
+        <span
+          className="tabular-nums leading-tight whitespace-nowrap truncate"
+          style={{ fontSize: 'clamp(8px, 0.55em, 15px)' }}
+        >
+          {conversionLine1.priceText}
+        </span>
+      </div>
+
+      {/* LINE 5 — Conversion 2 (typically GBP) */}
+      <div
+        className={`flex items-center justify-start gap-1.5 min-w-0 ${currencyColorClass(conversionLine2.countryCode)}`}
+        aria-label={`Price in ${conversionLine2.countryCode}`}
+      >
+        <CommodityPromptTooltip {...buildTooltipProps(conversionLine2.countryCode, 2)}>
+          <span className="flex-shrink-0 inline-flex" style={flagSizeStyle}>
+            <Flag countryCode={conversionLine2.countryCode} size={20} />
+          </span>
+        </CommodityPromptTooltip>
+        <span
+          className="tabular-nums leading-tight whitespace-nowrap truncate"
+          style={{ fontSize: 'clamp(8px, 0.55em, 15px)' }}
+        >
+          {conversionLine2.priceText}
+        </span>
       </div>
 
       {/* Stale indicator */}
       {isStale && (
         <span
-          className="absolute top-1 right-1 text-amber-400/70 animate-pulse"
-          style={{ fontSize: '0.5em' }}
+          className="absolute top-0.5 right-1 text-amber-400/70 animate-pulse"
+          style={{ fontSize: 'clamp(7px, 0.45em, 12px)' }}
           aria-label="Updating prices"
         >
           ⟳
@@ -265,37 +253,37 @@ export default function CommodityMoverCard({
 export function CommodityMoverCardSkeleton(): React.ReactElement {
   return (
     <div
-      className="flex flex-col items-center justify-center p-4 animate-pulse"
-      style={{ fontSize: 'var(--commodity-font, 18px)' }}
+      className="grid h-full w-full animate-pulse"
+      style={{
+        fontSize: 'var(--commodity-font, 18px)',
+        gridTemplateRows: 'repeat(5, 1fr)',
+        padding: 'clamp(2px, 0.3vw, 6px) clamp(6px, 0.8vw, 14px)',
+      }}
     >
-      {/* Row 1: Emoji + Name skeleton */}
-      <div className="flex items-center gap-2">
-        <div className="rounded-full bg-white/10" style={{ width: '1.5em', height: '1.5em' }} />
-        <div className="rounded bg-white/10" style={{ width: '3em', height: '1em' }} />
+      {/* Line 1: Emoji + Name */}
+      <div className="flex items-center justify-start gap-1">
+        <div className="rounded-full bg-white/10" style={{ width: '1em', height: '1em' }} />
+        <div className="rounded bg-white/10" style={{ width: '3em', height: '0.7em' }} />
       </div>
-
-      {/* Row 2: Flag + Base Price skeleton */}
-      <div className="flex items-center gap-1.5 mt-2">
-        <div className="rounded bg-white/10" style={{ width: '14px', height: '14px' }} />
-        <div className="rounded bg-white/10" style={{ width: '4.5em', height: '0.9em' }} />
+      {/* Line 2: Flag + Price */}
+      <div className="flex items-center justify-start gap-1">
+        <div className="rounded bg-white/10" style={{ width: '0.9em', height: '0.7em' }} />
+        <div className="rounded bg-white/10" style={{ width: '4em', height: '0.6em' }} />
       </div>
-
-      {/* Row 3: Delta skeleton */}
-      <div className="flex items-center gap-1.5 mt-2">
-        <div className="rounded bg-white/10" style={{ width: '1.2em', height: '1.2em' }} />
-        <div className="rounded bg-white/10" style={{ width: '3em', height: '0.9em' }} />
+      {/* Line 3: Delta */}
+      <div className="flex items-center justify-start gap-1">
+        <div className="rounded bg-white/10" style={{ width: '0.8em', height: '0.8em' }} />
+        <div className="rounded bg-white/10" style={{ width: '2.5em', height: '0.6em' }} />
       </div>
-
-      {/* Row 4-5: Conversion lines skeleton (v2.4) */}
-      <div className="flex flex-col items-center mt-2 space-y-0.5">
-        <div className="flex items-center gap-1">
-          <div className="rounded bg-white/10" style={{ width: '12px', height: '12px' }} />
-          <div className="rounded bg-white/10" style={{ width: '3.5em', height: '0.7em' }} />
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="rounded bg-white/10" style={{ width: '12px', height: '12px' }} />
-          <div className="rounded bg-white/10" style={{ width: '3.5em', height: '0.7em' }} />
-        </div>
+      {/* Line 4: Conversion 1 */}
+      <div className="flex items-center justify-start gap-1">
+        <div className="rounded bg-white/10" style={{ width: '0.9em', height: '0.7em' }} />
+        <div className="rounded bg-white/10" style={{ width: '3em', height: '0.5em' }} />
+      </div>
+      {/* Line 5: Conversion 2 */}
+      <div className="flex items-center justify-start gap-1">
+        <div className="rounded bg-white/10" style={{ width: '0.9em', height: '0.7em' }} />
+        <div className="rounded bg-white/10" style={{ width: '3em', height: '0.5em' }} />
       </div>
     </div>
   );

@@ -1,21 +1,37 @@
 // src/components/layout/homepage-grid.tsx
 // ============================================================================
-// HOMEPAGE GRID - Three-column layout with Market Pulse v2.5
+// HOMEPAGE GRID - Fully unified three-column layout v3.1
 // ============================================================================
-// Layout: Left rail | Centre (Finance ribbon + Providers) | Right rail
-// Synchronized scrolling between exchange rails
-// Market Pulse: Flowing energy streams connect exchanges to providers
-// Auth: Sign in button in header (right), Home + Studio buttons below
+// EVERYTHING lives inside one three-column CSS grid:
+//   Left column:   Engine Bay → Exchange Rail (east)
+//   Centre column: Hero Window → FX Ribbon → Providers/Table
+//   Right column:  Mission Control → Exchange Rail (west)
+//
+// One GRID_GAP clamp() value controls ALL spacing — column gaps between
+// left/centre/right AND vertical gaps between stacked panels within each
+// column. Change any panel height and everything below flows naturally.
+//
+// UPDATED v3.2: ControlDock eliminated — components placed directly
+// - ReferenceFrameToggle (Greenwich Meridian) imported directly
+// - AuthButton (Sign In) imported directly from @/components/auth
+// - Both sit in the Hero Window row right edge in a pill wrapper
+// - Colour fix wrapper on AuthButton preserved from ControlDock
+// - hideControlDock prop removed (was dead — no caller passed it)
+// - ControlDock component is now unused by this file
+//
+// UPDATED v3.1: Hero Window
+// - The hero section (heading, Listen, Greenwich Meridian, Sign In, description)
+//   is no longer a full-width band outside the grid
+// - It's now a styled panel (Hero Window) at the top of the centre column
+// - Same visual treatment as Engine Bay and Mission Control
+// - Fallback nav buttons sit inside Hero Window when MC is hidden
+//
+// UPDATED v3.0: Unified Grid Architecture
+// - Engine Bay and Mission Control inside the grid (not absolute-positioned)
+// - One clamp() gap controls all spacing
 //
 // UPDATED v2.6: Two FX Ribbons (Crypto Removed)
-// - Top FX ribbon: 5 pairs (EUR/USD, GBP/USD, GBP/ZAR, USD/CAD, USD/CNY)
-// - Bottom FX ribbon: 5 pairs (USD/INR, USD/BRL, AUD/USD, USD/NOK, USD/MYR)
-// - Crypto completely removed from codebase
-//
 // UPDATED v2.5: Studio sub-page support
-// - Added isStudioSubPage prop to pass to Mission Control
-// - Mission Control shows 4 buttons (Home | Studio | Pro | Sign in) on Studio sub-pages
-// - All other functionality unchanged
 // ============================================================================
 
 'use client';
@@ -31,7 +47,8 @@ import CommoditiesMoversGrid from '@/components/ribbon/commodities-movers-grid.c
 // REMOVED: Crypto ribbon - no longer part of Promagen
 import DemoFinanceRibbon from '@/components/ribbon/demo-finance-ribbon';
 import ProvenanceFooter from '@/components/core/provenance-footer';
-import ControlDock from '@/components/home/control-dock';
+import ReferenceFrameToggle from '@/components/reference-frame-toggle';
+import { AuthButton } from '@/components/auth';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ReferenceFrame } from '@/lib/location';
 import type { FxPairCatalogEntry } from '@/lib/pro-promagen/types';
@@ -43,7 +60,7 @@ import type { ExchangeWeatherData } from '@/components/exchanges/types';
 // ============================================================================
 // PERF: Dynamic imports — defer heavy panels until JS idle
 // ============================================================================
-// EngineBay (30KB) and MissionControl (29KB) are absolutely positioned panels
+// EngineBay (30KB) and MissionControl (29KB) are grid-flow panels
 // visible only on xl+ screens. Lazy-loading them removes ~60KB from the
 // critical path and cuts ~80ms off TBT.
 // ============================================================================
@@ -80,18 +97,7 @@ const MissionControl = dynamic(() => import('@/components/home/mission-control')
   loading: () => <MissionControlSkeleton />,
 });
 
-// PERF (Phase 3): Lazy-load AuthButton to defer Clerk's SDK (~45KB)
-// from the critical JS bundle. Most visitors are signed-out so this
-// code only needs to run after initial paint.
-const AuthButton = dynamic(() => import('@/components/auth/auth-button'), {
-  ssr: false,
-  loading: () => (
-    <div
-      className="h-[32px] w-[32px] rounded-full bg-slate-800/50 animate-pulse"
-      aria-hidden="true"
-    />
-  ),
-});
+// AuthButton: Imported directly from @/components/auth (no longer lazy-loaded separately)
 
 // ============================================================================
 // ICONS (for fallback nav only)
@@ -162,6 +168,17 @@ const navButtonStyles =
   'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
 
 // ============================================================================
+// SHARED GRID GAP — Single source of truth for all grid spacing
+// ============================================================================
+// One clamp() value controls:
+//   • column-gap between left/centre/right columns
+//   • vertical gap between Engine Bay/Mission Control and exchanges below
+// This ensures perfect symmetry on both sides at every screen width.
+// Min 12px (small xl screens) → scales with viewport → max 24px (large screens)
+// ============================================================================
+const GRID_GAP = 'clamp(12px, 1.25vw, 24px)';
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -187,15 +204,13 @@ export type HomepageGridProps = {
   showMissionControl?: boolean;
   weatherIndex?: Map<string, ExchangeWeatherData>;
   nearestExchangeId?: string;
-  /** Hide the Control Dock (e.g., for pages that don't need it) */
-  hideControlDock?: boolean;
   /** Hide the Commodities movers grid (e.g., library page uses full space for prompts) */
   hideCommodities?: boolean;
   /** When true, Mission Control shows Home button instead of Studio button */
   isStudioPage?: boolean;
   /** When true, Mission Control shows Home button instead of Pro button */
   isProPromagenPage?: boolean;
-  /** When true, Mission Control shows 4 buttons: Home | Studio | Pro | Sign in */
+  /** When true, Mission Control shows 3 buttons: Home | Studio | Pro */
   isStudioSubPage?: boolean;
 };
 
@@ -225,7 +240,6 @@ export default function HomepageGrid({
   showMissionControl = false,
   weatherIndex,
   nearestExchangeId,
-  hideControlDock = false,
   hideCommodities = false,
   isStudioPage = false,
   isProPromagenPage = false,
@@ -270,7 +284,7 @@ export default function HomepageGrid({
       'Microsoft Susan',
       'Serena',
       'Daniel',
-      'Google UK English Male',
+      'Google UK English Female',
     ];
 
     const pickVoice = () => {
@@ -407,113 +421,95 @@ export default function HomepageGrid({
           {mainLabel}
         </h1>
 
-        {/* Hero section */}
+        {/* ================================================================
+            UNIFIED THREE-COLUMN GRID — Single source of truth
+            ================================================================
+            Everything lives inside this grid:
+              Left column:   Engine Bay → Exchange Rail (east)
+              Centre column: Hero Window → FX Ribbon → Providers/Table
+              Right column:  Mission Control → Exchange Rail (west)
+
+            One GRID_GAP clamp() value controls ALL spacing — column gaps
+            and vertical gaps between stacked panels. Change any panel
+            height and everything below flows naturally.
+            ================================================================ */}
         <section
-          aria-label="Promagen overview"
-          className="relative z-20 w-full shrink-0 border-b border-slate-900/70 bg-gradient-to-b from-slate-950 via-slate-950/95 to-slate-950"
+          ref={containerRef}
+          aria-label="Market overview layout"
+          className="relative mx-auto flex min-h-0 w-full flex-1 flex-col px-4 pb-2 pt-2 md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)] md:items-stretch md:pt-2"
+          style={{ gap: GRID_GAP }}
         >
-          {/* Header row */}
-          <div className="relative mx-auto flex min-h-[30px] w-full items-start px-4 pt-1">
-            {/* 
-              ENGINE BAY v4.2.0 - Width LOCKED to exchange rail OUTER width
-              Uses shared CSS variables for panel synchronization
-            */}
+          <MarketPulseOverlay
+            containerRef={containerRef}
+            leftRailRef={leftRef}
+            rightRailRef={rightRef}
+            providersRef={providersRef}
+            selectedExchangeIds={selectedExchangeIds}
+            displayedProviderIds={displayedProviderIds}
+            pulseContexts={pulseContexts}
+            activeExchangeIds={activeExchangeIds}
+          />
+
+          {/* ============================================================
+              LEFT COLUMN — Engine Bay + Eastern Exchanges
+              ============================================================ */}
+          <div className="flex min-h-0 flex-col" style={{ gap: GRID_GAP }}>
+            {/* Engine Bay — xl+ only, inherits exact column width from grid */}
             {showEngineBay && providers.length > 0 && (
-              <div
-                className="absolute left-4 top-4 z-20 hidden xl:block"
-                style={{
-                  width: 'calc((100vw - 80px) * 0.225)',
-                }}
-              >
+              <div className="hidden shrink-0 xl:block">
                 <EngineBay providers={providers} />
               </div>
             )}
 
-            {/* PROMAGEN label removed — brand now in heading */}
-
-            {/* 
-              MISSION CONTROL v3.5.0 - Width LOCKED to exchange rail OUTER width
-              Uses shared CSS variables for panel synchronization
-              Now contains nav buttons (Studio/Home, Pro/Home, Sign in)
-              NEW v2.3: isStudioPage prop swaps Studio button for Home button
-              NEW v2.4: isProPromagenPage prop swaps Pro button for Home button
-              NEW v2.5: isStudioSubPage prop enables 4-button layout
-            */}
-            {showMissionControl && (
+            {/* Exchange rail */}
+            <section
+              role="complementary"
+              aria-label="Eastern exchanges"
+              className="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+              data-testid="rail-east-wrapper"
+            >
               <div
-                className="absolute right-4 top-4 z-20 hidden xl:block"
-                style={{
-                  width: 'calc((100vw - 80px) * 0.225)',
-                }}
+                ref={leftRef}
+                onScroll={handleLeftScroll}
+                className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+                data-testid="rail-east"
               >
-                <MissionControl
-                  providers={providers}
-                  exchanges={exchanges}
-                  weatherIndex={weatherIndex}
-                  nearestExchangeId={nearestExchangeId}
-                  isStudioPage={isStudioPage}
-                  isProPromagenPage={isProPromagenPage}
-                  isStudioSubPage={isStudioSubPage}
-                />
+                {leftContent}
               </div>
-            )}
-
-            {/* 
-              Fallback nav buttons - ONLY shown when Mission Control is hidden
-              This covers: mobile view, and when showMissionControl=false
-              v2.4: Conditionally show Pro Promagen button (hidden on /pro-promagen page)
-            */}
-            {!showMissionControl && (
-              <div className="absolute right-4 top-4 z-30 flex flex-col items-end gap-2">
-                <AuthButton />
-                {!isHomepage && (
-                  <a href="/" className={navButtonStyles}>
-                    <HomeIcon />
-                    Home
-                  </a>
-                )}
-                {!isStudioPage && !isStudioSubPage && (
-                  <a href="/studio" className={navButtonStyles}>
-                    <WandIcon />
-                    Studio
-                  </a>
-                )}
-                {!isProPromagenPage && (
-                  <a href="/pro-promagen" className={navButtonStyles}>
-                    <ProIcon />
-                    Pro Promagen
-                  </a>
-                )}
-              </div>
-            )}
+            </section>
           </div>
 
-          {/* 
-            Hero content - Layout order:
-            1. [Listen] Promagen — Intelligent Prompt Builder [Greenwich Meridian] (one row)
-            2. Description text (amber, 4 sentences, centred below)
-          */}
-          <div className="mx-auto flex w-full flex-col items-center px-4 pt-1 pb-1.5 text-center">
-            {/* Heading row — padded to align with Engine Bay + Mission Control inner edges */}
+          {/* ============================================================
+              CENTRE COLUMN — Hero Window → FX Ribbon → Providers/Table
+              ============================================================ */}
+          <div
+            className="flex min-h-0 flex-1 flex-col"
+            style={{ gap: GRID_GAP }}
+            data-testid="rail-centre"
+          >
+            {/* ----------------------------------------------------------
+                HERO WINDOW — Promagen branding, Listen, Greenwich
+                Meridian, Sign In. Same panel styling as Engine Bay
+                and Mission Control.
+                ---------------------------------------------------------- */}
             <div
-              className="flex w-full items-center"
-              style={{
-                paddingLeft: 'calc(16px + (100vw - 80px) * 0.225)',
-                paddingRight: 'calc(16px + (100vw - 80px) * 0.225)',
-              }}
+              className="shrink-0 rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
+              style={{ padding: 'clamp(10px, 1vw, 16px)' }}
+              data-testid="hero-window"
             >
-              {/* Left section — Listen button centered in this half */}
-              <div className="flex flex-1 items-center justify-center">
+              {/* Row 1: Listen (left edge) | Heading (dead centre) | Greenwich Meridian + Sign In (right edge) */}
+              <div className="relative flex w-full items-center">
+                {/* Left edge — Listen button */}
                 <button
                   onClick={handleListenClick}
-                  className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-[clamp(0.65rem,0.8vw,0.875rem)] font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
+                  className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-[clamp(0.4rem,0.5vw,0.8rem)] font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
                   aria-label={isSpeaking ? 'Stop listening' : 'Listen to description'}
                   title={isSpeaking ? 'Stop' : 'Listen'}
                 >
                   {isSpeaking ? (
                     <>
                       <svg
-                        className="h-3.5 w-3.5 text-purple-300 animate-pulse"
+                        className="h-3 w-3 text-purple-300 animate-pulse"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                         aria-hidden="true"
@@ -526,7 +522,7 @@ export default function HomepageGrid({
                   ) : (
                     <>
                       <svg
-                        className="h-3.5 w-3.5"
+                        className="h-3 w-3"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -543,22 +539,21 @@ export default function HomepageGrid({
                     </>
                   )}
                 </button>
-              </div>
 
-              {/* Centre section — Heading */}
-              <h2
-                className="flex-shrink-0 font-semibold leading-tight"
-                style={{ fontSize: 'clamp(0.9rem, 1.3vw, 2rem)' }}
-              >
-                <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
-                  Promagen — Intelligent Prompt Builder
-                </span>
-              </h2>
+                {/* Dead centre — Heading (absolute so left/right content can't push it off-centre) */}
+                <h2
+                  className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold leading-tight"
+                  style={{ fontSize: 'clamp(0.75rem, 1.1vw, 2rem)' }}
+                >
+                  <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
+                    Promagen — Intelligent Prompt Builder
+                  </span>
+                </h2>
 
-              {/* Right section — Greenwich Meridian centered in this half */}
-              <div className="flex flex-1 items-center justify-center">
-                {!hideControlDock ? (
-                  <ControlDock
+                {/* Right edge — Greenwich Meridian + Sign In (same pill styling as former ControlDock) */}
+                <div className="ml-auto inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-full border border-purple-500/30 bg-slate-900/40 px-1.5 py-1 shadow-lg shadow-purple-900/10 backdrop-blur-sm">
+                  {/* Greenwich Meridian toggle */}
+                  <ReferenceFrameToggle
                     referenceFrame={referenceFrame}
                     onReferenceFrameChange={handleReferenceFrameChange}
                     isPaidUser={isPaidUser}
@@ -566,87 +561,105 @@ export default function HomepageGrid({
                     isLocationLoading={isLocationLoading}
                     cityName={cityName}
                   />
-                ) : (
-                  <div />
-                )}
+
+                  {/* Sign In / User avatar
+                      COLOUR FIX (buttons.md §1.1): body { color: #020617 } causes all
+                      children to inherit slate-950. Must force white on every child type:
+                      button/a (container), svg (icon via stroke=currentColor), span (text) */}
+                  <div className="[&_button]:!text-white [&_a]:!text-white [&_svg]:!text-white [&_span]:!text-white">
+                    <AuthButton />
+                  </div>
+                </div>
               </div>
+
+              {/* Row 2: Amber description */}
+              <p
+                className="mt-1.5 text-center italic leading-relaxed text-amber-400/80"
+                style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1.2rem)' }}
+              >
+                Real context for real-world prompts. Explore cities around the world before you get
+                there. Hover over any flag to reveal an intelligent prompt that evolves with live
+                financial and environmental conditions. See which AI platform brings it to life best
+                — ranked by the community in our live leaderboard. Or build your own prompts from a
+                vast library of curated words and phrases, tailored instantly to your chosen AI
+                platform.
+              </p>
+
+              {/* Glow accent — matches original */}
+              <div className="pointer-events-none mt-1 flex w-full justify-center">
+                <div className="h-2 w-full max-w-sm rounded-full bg-gradient-to-r from-sky-500/18 via-emerald-400/14 to-indigo-500/18 blur-xl" />
+              </div>
+
+              {/* Fallback nav row — shown when Mission Control is hidden (smaller screens / MC disabled) */}
+              {!showMissionControl && (
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                  {!isHomepage && (
+                    <a href="/" className={navButtonStyles}>
+                      <HomeIcon />
+                      Home
+                    </a>
+                  )}
+                  {!isStudioPage && !isStudioSubPage && (
+                    <a href="/studio" className={navButtonStyles}>
+                      <WandIcon />
+                      Studio
+                    </a>
+                  )}
+                  {!isProPromagenPage && (
+                    <a href="/pro-promagen" className={navButtonStyles}>
+                      <ProIcon />
+                      Pro Promagen
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Amber description — centred below heading row */}
-            <p
-              className="mt-2 max-w-2xl italic leading-relaxed text-amber-400/80"
-              style={{ fontSize: 'clamp(0.8rem, 1vw, 1rem)' }}
-            >
-              Real context for real-world prompts. Explore cities around the world before you get
-              there. Hover over any flag to reveal an intelligent prompt that evolves with live
-              financial and environmental conditions. See which AI platform brings it to life best —
-              ranked by the community in our live leaderboard. Or build your own prompts from a vast
-              library of curated words and phrases, tailored instantly to your chosen AI platform.
-            </p>
-            <div className="pointer-events-none mt-0.5 flex w-full justify-center">
-              <div className="h-3 w-full max-w-md rounded-full bg-gradient-to-r from-sky-500/18 via-emerald-400/14 to-indigo-500/18 blur-2xl md:h-4" />
-            </div>
-          </div>
-        </section>
-
-        {/* Three-column grid */}
-        <section
-          ref={containerRef}
-          aria-label="Market overview layout"
-          className="relative mx-auto flex min-h-0 w-full flex-1 flex-col gap-4 px-4 pb-2 pt-1 md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)] md:items-stretch md:gap-6 md:pt-1"
-        >
-          <MarketPulseOverlay
-            containerRef={containerRef}
-            leftRailRef={leftRef}
-            rightRailRef={rightRef}
-            providersRef={providersRef}
-            selectedExchangeIds={selectedExchangeIds}
-            displayedProviderIds={displayedProviderIds}
-            pulseContexts={pulseContexts}
-            activeExchangeIds={activeExchangeIds}
-          />
-
-          {/* Left rail */}
-          <section
-            role="complementary"
-            aria-label="Eastern exchanges"
-            className="flex min-h-0 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10 mt-16"
-            data-testid="rail-east-wrapper"
-          >
-            <div
-              ref={leftRef}
-              onScroll={handleLeftScroll}
-              className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
-              data-testid="rail-east"
-            >
-              {leftContent}
-            </div>
-          </section>
-
-          {/* Centre column */}
-          <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="rail-centre">
+            {/* FX Ribbon(s) + Commodities */}
             {renderFinanceRibbon()}
+
+            {/* Providers table / Comparison table / Centre content */}
             <div ref={providersRef} className="min-h-0 flex-1">
               {centre}
             </div>
           </div>
 
-          {/* Right rail */}
-          <section
-            role="complementary"
-            aria-label="Western exchanges"
-            className="flex min-h-0 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10 mt-16"
-            data-testid="rail-west-wrapper"
-          >
-            <div
-              ref={rightRef}
-              onScroll={handleRightScroll}
-              className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
-              data-testid="rail-west"
+          {/* ============================================================
+              RIGHT COLUMN — Mission Control + Western Exchanges
+              ============================================================ */}
+          <div className="flex min-h-0 flex-col" style={{ gap: GRID_GAP }}>
+            {/* Mission Control — xl+ only, inherits exact column width from grid */}
+            {showMissionControl && (
+              <div className="hidden shrink-0 xl:block">
+                <MissionControl
+                  providers={providers}
+                  exchanges={exchanges}
+                  weatherIndex={weatherIndex}
+                  nearestExchangeId={nearestExchangeId}
+                  isStudioPage={isStudioPage}
+                  isProPromagenPage={isProPromagenPage}
+                  isStudioSubPage={isStudioSubPage}
+                />
+              </div>
+            )}
+
+            {/* Exchange rail */}
+            <section
+              role="complementary"
+              aria-label="Western exchanges"
+              className="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+              data-testid="rail-west-wrapper"
             >
-              {rightContent}
-            </div>
-          </section>
+              <div
+                ref={rightRef}
+                onScroll={handleRightScroll}
+                className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+                data-testid="rail-west"
+              >
+                {rightContent}
+              </div>
+            </section>
+          </div>
         </section>
       </main>
 

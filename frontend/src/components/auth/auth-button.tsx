@@ -232,7 +232,7 @@ export function AuthButton() {
         type="button"
         disabled
         className={loadingButtonStyles}
-        style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+        style={{ fontSize: 'clamp(0.4rem, 0.5vw, 0.8rem)' }}
       >
         <LoadingIcon />
         Loading...
@@ -244,7 +244,7 @@ export function AuthButton() {
       <a
         href="/sign-in"
         className={signInButtonStyles}
-        style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+        style={{ fontSize: 'clamp(0.4rem, 0.5vw, 0.8rem)' }}
       >
         <UserIcon />
         Sign in
@@ -257,7 +257,7 @@ export function AuthButton() {
         type="button"
         disabled
         className={loadingButtonStyles}
-        style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+        style={{ fontSize: 'clamp(0.4rem, 0.5vw, 0.8rem)' }}
       >
         <LoadingIcon />
         Loading...
@@ -287,7 +287,7 @@ export function AuthButton() {
         <button
           type="button"
           className={signInButtonStyles}
-          style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+          style={{ fontSize: 'clamp(0.4rem, 0.5vw, 0.8rem)' }}
         >
           <UserIcon />
           Sign in

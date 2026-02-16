@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 15 February 2026
+**Last updated:** 16 February 2026
 
 ---
 
@@ -178,42 +178,145 @@ Promagen must feel calm and premium. Random container styles make pages feel "ch
 - Implementation: `grid-cols-[2fr_1fr_1fr]` for 50%/25%/25% split.
 - Authority for implementation details: `docs/authority/code-standard.md` §6 (Fixed Proportional Column Layout).
 
-**4. Fluid Typography with `clamp()` (responsive text)**
+**4. Universal `clamp()` Sizing (every visible dimension scales)**
 
-- All UI text must scale smoothly across screen sizes using CSS `clamp()`.
-- Never use fixed `px` font sizes alone — they don't adapt to viewport.
-- Never use `vw` alone — text becomes unreadable on small screens or massive on ultrawides.
+Promagen is a desktop application with dynamic fluid scaling — no breakpoints, no mobile layouts. Every visible dimension must scale smoothly with viewport width using CSS `clamp()`. This applies to **all** of the following, not just text:
+
+- **Text** — font sizes on every element
+- **Icons** — width and height of SVG icons, status dots, image icons
+- **Buttons** — padding, gap, min-height, font size
+- **Gaps** — `gap` on flex and grid containers
+- **Padding** — `padding` on panels, cards, sections, headers
+- **Margins** — `margin-bottom`, `margin-top` for section spacing
+- **Container dimensions** — fixed `height`, `width`, `min-height` on content zones
+- **Image/flag wrappers** — wrapper div dimensions for `<Image fill />` elements
+
+**Hard rule:** If a human can see it and it has a size, it uses `clamp()`. No fixed `px`. No fixed `rem`. No Tailwind size-class shortcuts (`h-4`, `w-6`, `gap-3`, `p-4`, `mb-4`, `text-sm`, `text-[10px]`) for anything that should scale with the viewport.
 
 **The pattern:**
 
 ```css
-font-size: clamp(MIN, PREFERRED, MAX);
+property: clamp(MINIMUM, PREFERRED, MAXIMUM);
 ```
 
 | Parameter   | Purpose                                    | Example |
 | ----------- | ------------------------------------------ | ------- |
-| `MIN`       | Floor — never smaller than this (readable) | `12px`  |
-| `PREFERRED` | Scales with viewport width                 | `1vw`   |
-| `MAX`       | Ceiling — never larger than this           | `16px`  |
+| `MINIMUM`   | Floor — never smaller than this (readable) | `12px`  |
+| `PREFERRED` | Scales with viewport width                 | `0.9vw` |
+| `MAXIMUM`   | Ceiling — never larger than this           | `16px`  |
 
-**Standard scales (use these):**
+**Standard scales — text (use these):**
 
-| Element         | clamp value                         | Notes       |
-| --------------- | ----------------------------------- | ----------- |
-| Body text       | `clamp(0.875rem, 1vw, 1rem)`        | 14px → 16px |
-| Table text      | `clamp(0.8125rem, 1vw, 1rem)`       | 13px → 16px |
-| Small/secondary | `clamp(0.6875rem, 0.9vw, 0.875rem)` | 11px → 14px |
-| Headings        | `clamp(1.25rem, 2vw, 1.75rem)`      | 20px → 28px |
-| Data/monospace  | `clamp(0.75rem, 1vw, 0.875rem)`     | 12px → 14px |
+| Element            | clamp value                         | Notes       |
+| ------------------ | ----------------------------------- | ----------- |
+| Body text          | `clamp(0.875rem, 1vw, 1rem)`        | 14px → 16px |
+| Table text         | `clamp(0.8125rem, 1vw, 1rem)`       | 13px → 16px |
+| Small/secondary    | `clamp(0.6875rem, 0.9vw, 0.875rem)` | 11px → 14px |
+| Headings           | `clamp(1.25rem, 2vw, 1.75rem)`      | 20px → 28px |
+| Data/monospace     | `clamp(0.75rem, 1vw, 0.875rem)`     | 12px → 14px |
+| Tiny (icon labels) | `clamp(8px, 0.6vw, 11px)`           | 8px → 11px  |
 
-**Hard rules:**
+**Standard scales — icons:**
 
-1. New text styles must use `clamp()` — no exceptions.
-2. Existing fixed sizes should be migrated to `clamp()` when touched.
-3. Minimum font size for body text: `12px` (accessibility floor).
-4. Minimum font size for secondary text: `10px` (absolute floor).
-5. **Never use Tailwind breakpoint text classes** (`text-xs`, `sm:text-sm`, `xl:text-base`, `2xl:text-lg`, `min-[Xpx]:text-Y`) for responsive font sizing. The root `html` font-size already scales with `clamp(16px, 1.1vw, 18px)`, so all rem-based Tailwind classes (`text-sm`, `text-base`, etc.) already scale proportionally with viewport width. Adding breakpoint overrides fights the system and produces no visible change. Use inline `style={{ fontSize: 'clamp(...)' }}` instead.
-6. **Tooltips are exempt** — tooltip text may use fixed Tailwind classes (`text-sm`, `text-xs`) because tooltips are portalled overlays with their own sizing context, not affected by container scaling.
+| Element     | clamp value                | Notes            |
+| ----------- | -------------------------- | ---------------- |
+| Status dot  | `clamp(10px, 0.8vw, 14px)` | Green pulse dots |
+| Inline icon | `clamp(12px, 0.9vw, 14px)` | Copy, clipboard  |
+| Button icon | `clamp(18px, 1.5vw, 22px)` | Nav button icons |
+| Large icon  | `clamp(36px, 3vw, 48px)`   | Provider logos   |
+
+**Standard scales — spacing:**
+
+| Element        | clamp value               | Notes                    |
+| -------------- | ------------------------- | ------------------------ |
+| Tight gap      | `clamp(4px, 0.5vw, 8px)`  | Between label+icon       |
+| Standard gap   | `clamp(8px, 0.8vw, 12px)` | Between sections         |
+| Panel padding  | `clamp(10px, 1vw, 16px)`  | Window inner pad         |
+| Section margin | `clamp(8px, 1vw, 16px)`   | Between stacked elements |
+
+**Standard scales — containers:**
+
+| Element           | clamp value                                                 | Notes              |
+| ----------------- | ----------------------------------------------------------- | ------------------ |
+| Content zone      | `clamp(64px, 5.5vw, 84px)`                                  | MC instruction box |
+| Icon button       | `clamp(48px, 4.2vw, 64px)` / `clamp(64px, 5.5vw, 84px)`     | EB icon grid       |
+| Button min-height | `clamp(40px, 6vh, 60px)`                                    | Launch button etc  |
+| Flag wrapper      | `clamp(18px, 1.5vw, 24px)` w / `clamp(14px, 1.1vw, 18px)` h | Country flags      |
+
+**Implementation — Tailwind for appearance, inline `clamp()` for dimensions:**
+
+```tsx
+// ✅ Correct — Tailwind handles colour/shape/state, clamp() handles dimensions
+<button
+  className="inline-flex items-center justify-center rounded-full border
+             border-purple-500/70 bg-gradient-to-r from-purple-600/20
+             to-pink-600/20 font-medium text-purple-100"
+  style={{
+    fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)',
+    padding: 'clamp(0.375rem, 0.5vh, 0.5rem) clamp(0.75rem, 1vw, 1rem)',
+    gap: 'clamp(4px, 0.5vw, 8px)',
+  }}
+>
+  Launch
+</button>
+
+// ❌ Wrong — Tailwind size classes for dimensions
+<button className="text-sm px-4 py-1.5 gap-2">Launch</button>
+```
+
+```tsx
+// ✅ Correct — icon with clamp() dimensions
+<svg
+  viewBox="0 0 24 24"
+  style={{ width: 'clamp(18px, 1.5vw, 22px)', height: 'clamp(18px, 1.5vw, 22px)' }}
+>...</svg>
+
+// ❌ Wrong — fixed Tailwind icon classes
+<svg className="h-5 w-5" viewBox="0 0 24 24">...</svg>
+```
+
+```tsx
+// ✅ Correct — panel with clamp() padding and gap
+<div
+  className="relative rounded-3xl bg-slate-950/70 ring-1 ring-white/10"
+  style={{ padding: 'clamp(10px, 1vw, 16px)' }}
+>
+  <div style={{ marginBottom: 'clamp(8px, 1vw, 16px)', gap: 'clamp(4px, 0.5vw, 8px)' }}>
+    ...
+  </div>
+</div>
+
+// ❌ Wrong — fixed Tailwind spacing
+<div className="p-4">
+  <div className="mb-4 gap-2">...</div>
+</div>
+```
+
+```tsx
+// ✅ Correct — flag image with clamp() wrapper
+<div className="relative" style={{ width: 'clamp(18px, 1.5vw, 24px)', height: 'clamp(14px, 1.1vw, 18px)' }}>
+  <Image src={flagSrc} alt={country} fill className="object-cover" />
+</div>
+
+// ❌ Wrong — fixed dimensions on Image
+<Image src={flagSrc} alt={country} width={24} height={18} />
+```
+
+**Exceptions (where fixed values are acceptable):**
+
+- Tailwind layout utilities that don't represent visible size: `flex-1`, `min-h-0`, `w-full`, `overflow-hidden`
+- Structural classes: `rounded-full`, `rounded-3xl` (cosmetic border radius)
+- Ring/focus/outline: `ring-1`, `focus-visible:ring` (accessibility indicators)
+- Colour/opacity: `bg-slate-950/70`, `text-purple-100`
+- `ml-auto` (layout push, not a dimensional value)
+- Tooltips: may use fixed Tailwind text classes because they are portalled overlays
+- Transition/animation properties: `transition-all`, `duration-200`
+
+**Breakpoint text classes are banned:**
+
+Never use Tailwind breakpoint text classes (`text-xs`, `sm:text-sm`, `xl:text-base`, `2xl:text-lg`, `min-[Xpx]:text-Y`) for responsive sizing. The root `html` font-size already scales with `clamp(16px, 1.1vw, 18px)`, so all rem-based Tailwind classes already scale proportionally with viewport width. Adding breakpoint overrides fights the system and produces no visible change. Use inline `style={{ fontSize: 'clamp(...)' }}` instead.
+
+**Compliance check:** Search a component file for Tailwind size classes (`text-sm`, `h-4`, `w-6`, `gap-3`, `p-4`, `mb-4`, `text-[Npx]`). Every match that represents a visible, scalable dimension must be replaced with an inline `clamp()` style. If a PR introduces new fixed-size Tailwind classes for visible dimensions, it fails review.
 
 **Existing example (exchange cards):**
 
@@ -224,7 +327,7 @@ font-size: clamp(MIN, PREFERRED, MAX);
 }
 ```
 
-**Authority:** `docs/authority/code-standard.md` §6 (Styling Rules)
+**Authority:** `docs/authority/code-standard.md` § 6.0 (Universal clamp() Sizing), Golden Rule #11
 
 ### Card shell discipline (what every card should look like)
 
@@ -335,15 +438,17 @@ font-size: clamp(MIN, PREFERRED, MAX);
 
 ### Window boundary containment (nothing in, nothing out)
 
-**Purpose:** The Ignition window (Engine Bay) and Mission Control window are self-contained panels. Nothing inside them may overflow or escape their boundary, and nothing from outside may bleed into them. This is an architectural rule built into every component from the start, not patched on after the fact.
+**Purpose:** Every panel in the Promagen grid — Engine Bay, Mission Control, Hero Window, exchange cards, FX ribbons, commodity grids — is a self-contained visual unit. Nothing inside any window may overflow or escape its boundary, and nothing from outside may bleed into any window. This is an architectural rule built into every component from the start, not patched on after the fact.
 
 **Hard rules (non-negotiable):**
 
 1. **Nothing escapes outward** — All content within a window (text, icons, glows, gradients, absolutely positioned children, animations) must stay inside the window boundary. If it doesn't fit, it clips or scrolls — it never paints outside.
-2. **Nothing enters from outside** — Adjacent components (exchange cards, ribbons, overlays, glow effects) must not visually bleed into either window. Each window is a hard visual boundary.
-3. **Built from the start** — These containment rules apply at component creation time, not as a retrofit. Every new child element added to either window must respect the boundary without requiring a separate containment fix.
-4. **No `contain: paint` or `contain: layout`** — These CSS containment properties create new stacking contexts and containing blocks that break grid positioning. Do not use them on window containers. Use targeted `overflow-hidden` on inner elements instead.
-5. **Containment is internal, not external** — The outer container div of each window must NOT have `overflow: hidden` or `style` props added to enforce containment. Containment is achieved by ensuring every child element inside the window is properly sized, clipped, and constrained within its own bounds.
+2. **Nothing enters from outside** — Adjacent components (exchange cards, ribbons, overlays, glow effects) must not visually bleed into any window. Each window is a hard visual boundary.
+3. **Only tooltips may overlay** — The sole exception to the boundary rule is tooltips. Tooltips are portalled overlays that render above everything via high `z-index`. No other element — no glow, no gradient, no absolutely positioned child, no animation — may render on top of another window's content.
+4. **Built from the start** — These containment rules apply at component creation time, not as a retrofit. Every new child element added to any window must respect the boundary without requiring a separate containment fix.
+5. **No `contain: paint` or `contain: layout`** — These CSS containment properties create new stacking contexts and containing blocks that break grid positioning. Do not use them on window containers. Use targeted `overflow-hidden` on inner elements instead.
+6. **Containment is internal, not external** — The outer container div of each window must NOT have `overflow: hidden` or `style` props added to enforce containment. Containment is achieved by ensuring every child element inside the window is properly sized, clipped, and constrained within its own bounds.
+7. **`clamp()` gaps enforce separation** — The gap between windows is controlled exclusively by the unified grid's `GRID_GAP` constant (a single `clamp()` value defined once in `homepage-grid.tsx`). Individual windows must not add external margins (`mb-4`, `mt-2`, etc.) that compete with the grid gap. If a window needs internal spacing, use `padding` with `clamp()` — never external margin.
 
 **How to achieve containment without breaking layout:**
 
@@ -364,6 +469,92 @@ font-size: clamp(MIN, PREFERRED, MAX);
 **Compliance check:** Inspect both windows at multiple viewport sizes. Draw an imaginary box around each window's border. Nothing should be visually outside that box, and nothing from adjacent components should be visually inside it.
 
 **Authority:** `code-standard.md` § 6.5
+
+### Unified Grid Architecture (grid is the single source of truth)
+
+**Purpose:** The Promagen homepage uses a single CSS grid that owns all column definitions, row flow, and inter-panel spacing. No panel is "master" or "slave" — the grid is the only source of truth for positioning. Height changes to any panel just work because CSS vertical flow handles that natively.
+
+**Hard rules (non-negotiable):**
+
+1. **One shared grid** — Define one grid. Engine Bay and Mission Control sit in the top row (left and right columns). Exchanges sit in the row below. The centre column holds the Hero Window, FX ribbons, and providers table. Same column definitions, same `clamp()` gaps. Neither panel is master or slave.
+
+2. **One `GRID_GAP` constant** — A single `clamp()` value controls ALL spacing between cells (column gaps between left/centre/right AND vertical gaps between stacked panels within each column). Defined once in `homepage-grid.tsx`, never overridden by child components.
+
+```tsx
+const GRID_GAP = 'clamp(6px, 0.5vw, 10px)';
+
+<div
+  className="grid"
+  style={{
+    gridTemplateColumns: 'clamp(180px, 15vw, 260px) 1fr clamp(180px, 15vw, 260px)',
+    gap: GRID_GAP,
+  }}
+>
+  {/* Left column: Engine Bay → Exchange Rail (east) */}
+  {/* Centre column: Hero Window → FX Ribbons → Providers Table */}
+  {/* Right column: Mission Control → Exchange Rail (west) */}
+</div>;
+```
+
+3. **Panels don't know about each other** — Engine Bay does not set its height to match Mission Control. Mission Control does not set its width to match Engine Bay. Each panel sizes itself internally using `clamp()`, and the grid places them. If Engine Bay grows taller, everything below it flows down naturally — no JS sync, no manual height matching.
+
+4. **Column stacking uses flex with `clamp()` gaps** — Within each column, panels stack vertically in a flex container. The flex gap is the same `GRID_GAP` constant:
+
+```tsx
+<div className="flex min-h-0 flex-1 flex-col" style={{ gap: GRID_GAP }}>
+  <EngineBay /> {/* shrink-0 — takes its natural height */}
+  <ExchangeRailEast /> {/* flex-1 — fills remaining space, scrolls internally */}
+</div>
+```
+
+5. **No external margins on panels** — Panels must not apply external margins (`mb-4`, `mt-2`, etc.). All inter-panel spacing comes from the grid gap or the flex gap of the column container. Internal spacing uses `padding` with `clamp()`.
+
+6. **Column widths use `clamp()`** — Side columns use `clamp(180px, 15vw, 260px)` or similar. The centre column uses `1fr` to fill remaining space. This ensures the layout scales fluidly without breakpoints.
+
+**Visual reference:**
+
+```
+┌─────────────────┬──────────────────────────────────────────┬─────────────────┐
+│   LEFT COLUMN   │              CENTRE COLUMN               │  RIGHT COLUMN   │
+│                 │                                          │                 │
+│   Engine Bay    │   Hero Window (Heading, Listen, Auth)    │ Mission Control │
+│   (shrink-0)    │   (shrink-0)                             │  (shrink-0)     │
+│                 │                                          │                 │
+│─────────────────│──────────────────────────────────────────│─────────────────│
+│                 │                                          │                 │
+│  Exchange Rail  │   FX Ribbons (shrink-0)                  │  Exchange Rail  │
+│  (east)         │                                          │  (west)         │
+│  (flex-1,       │   Commodities Movers (shrink-0)          │  (flex-1,       │
+│   scrolls)      │                                          │   scrolls)      │
+│                 │   Providers Table (flex-1, scrolls)      │                 │
+│                 │                                          │                 │
+└─────────────────┴──────────────────────────────────────────┴─────────────────┘
+
+All gaps between cells = GRID_GAP = clamp(6px, 0.5vw, 10px)
+```
+
+**Why this matters — what went wrong before:**
+
+- Panels set their own margins → double spacing in some gaps, collapsed spacing in others
+- Panel A read Panel B's height to sync → changes to one broke the other
+- Fixed pixel column widths → looked wrong on ultrawides and small monitors
+- Grid gap and panel margins both contributed spacing → impossible to predict total gap
+
+**Forbidden patterns:**
+
+| Pattern                                     | Why it breaks                                                    |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| Panel sets external margin (`mb-4`, `mt-2`) | Competes with grid gap, double-spaces or collapses unpredictably |
+| Panel reads sibling height via JS           | Coupling — changes to one panel break the other                  |
+| Fixed pixel column widths (`250px`)         | Doesn't scale, breaks on non-standard viewports                  |
+| Absolute positioning of panels              | Removes from flow, breaks vertical stacking                      |
+| `position: sticky` on panels                | Fights grid flow, causes scroll containment issues               |
+
+**Compliance check:** Change any panel's internal content height (add text, remove icons, resize content). Verify: (a) the panel grows/shrinks naturally, (b) everything below it flows down, (c) the gap between all panels remains identical, (d) no content from any panel enters another panel's boundary.
+
+**Reference implementation:** `src/components/layout/homepage-grid.tsx` (v3.2+)
+
+**Authority:** `code-standard.md` § 6.6, Golden Rule #12
 
 ---
 
@@ -387,7 +578,7 @@ When you ask "does anything need updating in the docs?" or "tell me which lines 
 
 **Core authority docs:**
 
-- `docs/authority/code-standard.md` ← Frontend code rules (9.5/10 version)
+- `docs/authority/code-standard.md` ← Frontend code rules (v3.0 — Universal clamp(), Unified Grid, Window Containment)
 - `docs/authority/best-working-practice.md` ← This file
 - `docs/authority/promagen-api-brain-v2.md` ← API system document
 - `docs/authority/paid_tier.md` ← Monetisation boundary SSOT
@@ -655,6 +846,10 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **16 Feb 2026:** Major v3.0 alignment with code-standard.md. Three updates:
+  - **Universal `clamp()` Sizing** — Expanded "Fluid Typography" (text-only) into full universal mandate covering ALL visible dimensions: text, icons, buttons, gaps, padding, margins, container heights, image wrappers. Added standard scale tables for icons, spacing, and containers alongside existing text scales. Added code examples for buttons, icons, panels, and flag images. Added exceptions list and compliance check. Cross-ref code-standard.md § 6.0, Golden Rule #11.
+  - **Unified Grid Architecture (NEW)** — One CSS grid is the single source of truth for all panel positioning. One `GRID_GAP` constant (a `clamp()` value) controls all inter-panel spacing. Panels don't know about each other. Visual reference diagram, forbidden patterns, and compliance check. Cross-ref code-standard.md § 6.6, Golden Rule #12.
+  - **Window Boundary Containment (strengthened)** — Added Rule 3 "Only tooltips may overlay" — no glow, gradient, or absolutely positioned child may render on top of another window. Added Rule 7 "`clamp()` gaps enforce separation" — inter-window spacing from grid gap only, never panel margins. Scope expanded from Engine Bay + Mission Control to ALL grid panels.
 - **15 Feb 2026:** Added "Window boundary containment (nothing in, nothing out)" subsection under UI Consistency. Architectural rule: Ignition and Mission Control windows are hard visual boundaries — no content escapes outward, no external content bleeds inward. Containment achieved via internal element constraints, never by adding overflow/contain to the outer window container (which breaks grid positioning). Cross-ref code-standard.md § 6.5.
 - **14 Feb 2026:** Added anti-breakpoint rule (#5, #6) to Fluid Typography hard rules — never use Tailwind breakpoint text classes for responsive sizing, always use inline `clamp()`. Tooltips exempt. Added "Text containment (no text escapes its window)" subsection under UI Consistency — three-property pattern (`overflow-hidden`, `min-h-0`, `truncate`) for all text in fixed-height containers. Cross-ref code-standard.md § 6.4.
 - **9 Feb 2026:** Added "Performance Guardrails (CLS Prevention)" section. Pre-ship CLS check requirement, three red-flag patterns, SSR hydration gap mental model. Cross-ref code-standard.md § 22 for implementation rules.

@@ -218,18 +218,29 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
 
   return (
     <div
-      className="relative w-full rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+      className="relative w-full rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
+      style={{ padding: 'clamp(10px, 1vw, 16px)' }}
       data-testid="engine-bay"
     >
       {/* Header */}
-      <div className="mb-4 flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2">
+      <div
+        className="flex flex-col items-center"
+        style={{ marginBottom: 'clamp(8px, 1vw, 16px)', gap: 'clamp(4px, 0.5vw, 8px)' }}
+      >
+        <div className="flex items-center" style={{ gap: 'clamp(4px, 0.5vw, 8px)' }}>
           <div
-            className="h-3 w-3 animate-pulse rounded-full"
-            style={{ backgroundColor: '#10B981' }}
+            className="animate-pulse rounded-full"
+            style={{
+              backgroundColor: '#10B981',
+              width: 'clamp(8px, 0.4vw, 14px)',
+              height: 'clamp(8px, 0.4vw, 14px)',
+            }}
             aria-hidden="true"
           />
-          <span className="font-mono text-base uppercase tracking-wider text-slate-400">
+          <span
+            className="font-mono uppercase tracking-wider text-slate-400"
+            style={{ fontSize: 'clamp(0.5rem, 0.7vw, 1rem)' }}
+          >
             READY TO BUILD
           </span>
         </div>
@@ -246,10 +257,11 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
       {/* Platform Icon Grid — Desktop only */}
       <div
         ref={iconGridRef}
-        className="mb-4 hidden sm:flex"
+        className="hidden sm:flex"
         style={{
           gap: `${ICON_GAP}px`,
           justifyContent: visibleIconCount < TOP_ICONS_COUNT ? 'center' : 'flex-start',
+          marginBottom: 'clamp(8px, 1vw, 16px)',
         }}
         role="group"
         aria-label="Top AI platforms"
@@ -264,11 +276,12 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
               key={provider.id}
               type="button"
               onClick={() => handleIconClick(provider)}
-              className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 transition-all duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              className="flex flex-col items-center justify-center rounded-xl border-2 transition-all duration-200 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               style={{
-                width: `${ICON_CELL_SIZE}px`,
-                minWidth: `${ICON_CELL_SIZE}px`,
-                height: `${ICON_CELL_SIZE + 20}px`,
+                gap: 'clamp(3px, 0.4vw, 6px)',
+                width: 'clamp(12px, 2.2vw, 64px)',
+                minWidth: 'clamp(24px, 4.2vw, 64px)',
+                height: 'clamp(12px, 3.5vw, 64px)',
                 flexShrink: 0,
                 borderColor: isSelected ? color : 'rgba(51, 65, 85, 0.5)',
                 background: isSelected ? `${color}15` : 'rgba(15, 23, 42, 0.5)',
@@ -278,7 +291,13 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
               aria-label={`Select ${provider.name}`}
               title={provider.name}
             >
-              <div className="relative h-12 w-12 overflow-hidden rounded-md">
+              <div
+                className="relative overflow-hidden rounded-md"
+                style={{
+                  width: 'clamp(36px, 3vw, 48px)',
+                  height: 'clamp(36px, 3vw, 48px)',
+                }}
+              >
                 <Image
                   src={iconPath}
                   alt=""
@@ -289,8 +308,12 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
                 />
               </div>
               <span
-                className="max-w-full truncate px-0.5 text-[10px] font-medium transition-colors"
-                style={{ color: isSelected ? color : '#64748B' }}
+                className="max-w-full truncate font-medium transition-colors"
+                style={{
+                  color: isSelected ? color : '#64748B',
+                  fontSize: 'clamp(8px, 0.6vw, 11px)',
+                  paddingInline: 'clamp(1px, 0.15vw, 2px)',
+                }}
               >
                 {getShortName(provider)}
               </span>
@@ -300,13 +323,13 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
       </div>
 
       {/* Dropdown + Launch Button */}
-      <div className="flex items-stretch gap-3">
+      <div className="flex items-stretch" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
         {/* Combobox Dropdown — 50% width */}
         <div
           className="w-1/2"
           style={{
             fontSize: 'clamp(0.70rem, 0.9vw, 1rem)',
-            minHeight: 'clamp(44px, 6vh, 60px)',
+            minHeight: 'clamp(40px, 5vh, 60px)',
           }}
         >
           <Combobox
@@ -341,9 +364,9 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
               : 'border-slate-600/50 bg-slate-800/50 text-slate-500 cursor-not-allowed'
           }`}
           style={{
-            padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem)',
+            padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
             gap: 'clamp(0.25rem, 0.5vw, 0.5rem)',
-            minHeight: 'clamp(40px, 6vh, 60px)',
+            minHeight: 'clamp(40px, 1vh, 60px)',
           }}
         >
           {/* Shimmer overlay */}
@@ -361,13 +384,13 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
           */}
           <div
             className="relative z-10 flex flex-col items-center"
-            style={{ gap: 'clamp(0.125rem, 0.25vw, 0.25rem)' }}
+            style={{ gap: 'clamp(0.2rem, 0.3vw, 0.4rem)' }}
           >
             <span
               className="flex items-center font-semibold text-white"
               style={{
-                gap: 'clamp(0.2rem, 0.4vw, 0.6rem)',
-                fontSize: 'clamp(0.6rem, 0.7vw, 0.8rem)',
+                gap: 'clamp(0.2rem, 0.4vw, 1rem)',
+                fontSize: 'clamp(0.5rem, 0.6vw, 0.8rem)',
               }}
             >
               <span>✦</span>
@@ -375,7 +398,7 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
             </span>
             <span
               className="font-semibold text-white"
-              style={{ fontSize: 'clamp(0.6rem, 0.9vw, 0.6rem)' }}
+              style={{ fontSize: 'clamp(0.5rem, 0.6vw, 0.75rem)' }}
             >
               Platform Builder
             </span>

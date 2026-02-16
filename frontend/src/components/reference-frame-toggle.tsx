@@ -134,7 +134,7 @@ export function ReferenceFrameToggle({
 
   const isUserFrame = referenceFrame === 'user';
   const locationLabel = cityName || 'My Location';
-  const currentLabel = isUserFrame ? locationLabel : 'Greenwich Meridian';
+  const currentLabel = isUserFrame ? locationLabel : 'Greenwich';
 
   // Build tooltip content based on user state
   let tooltipContent = isUserFrame ? TOOLTIP_USER_LOCATION : TOOLTIP_GREENWICH;
@@ -180,7 +180,7 @@ export function ReferenceFrameToggle({
       onClick={handleToggle}
       disabled={disabled || isLocationLoading}
       className={buttonClasses}
-      style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.875rem)' }}
+      style={{ fontSize: 'clamp(0.4rem, 0.5vw, 0.8rem)' }}
       aria-label={`Exchange reference frame: ${currentLabel}. ${
         isLocked ? 'Pro Promagen feature.' : 'Click to toggle.'
       }`}

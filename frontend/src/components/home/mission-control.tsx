@@ -5,7 +5,7 @@
 // Right-side panel with weather-driven prompt preview.
 //
 // v4.0.0 CHANGES:
-// - REMOVED: Sign-in button from Mission Control (moved to Control Dock)
+// - REMOVED: Sign-in button from Mission Control (now in homepage-grid Hero Window)
 // - REMOVED: All Clerk auth imports, hooks, and state logic
 // - REMOVED: isAuthenticated prop (no longer needed)
 // - REMOVED: userIconPath, actionButtonLoading (sign-in only)
@@ -17,7 +17,7 @@
 //
 // v3.5.1 CHANGES:
 // - ADDED: isStudioSubPage prop for 4-button layout on Studio sub-pages
-// - When isStudioSubPage=true, shows Home | Studio | Pro | Sign in (4 buttons)
+// - When isStudioSubPage=true, shows Home | Studio | Pro (3 buttons)
 // - Grid changes from grid-cols-3 to grid-cols-4
 // - Studio button links to /studio (the hub page)
 // - Added separate renderHomeButton, renderStudioButton, renderProButton functions
@@ -48,12 +48,12 @@
 //
 // v3.2.11 CHANGES:
 // - Added mounted state to prevent SSR hydration issues
-// - Added timeout fallback (3s) like AuthButton
+// - Added timeout fallback (3s) for hydration safety
 // - Proper loading state with visible "Loading..." text
 //
 // Authority: buttons.md, mission-control.md
 // Security: 10/10 — No user input handling, type-safe data flow
-// Existing features preserved: Yes (sign-in moved to Control Dock, not removed)
+// Existing features preserved: Yes (sign-in lives in homepage-grid Hero Window)
 // ============================================================================
 
 'use client';
@@ -331,9 +331,9 @@ export default function MissionControl({
       className={`${actionButtonBase} ${actionButtonActive}`}
       aria-label="Go to Homepage"
       style={{
-        padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem)',
-        gap: 'clamp(0.125rem, 0.25vw, 0.25rem)',
-        minHeight: 'clamp(44px, 6vh, 60px)',
+        padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
+        gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
+        minHeight: 'clamp(40px, 5vh, 60px)',
       }}
     >
       <svg
@@ -364,9 +364,9 @@ export default function MissionControl({
       className={`${actionButtonBase} ${actionButtonActive}`}
       aria-label="Open Prompt Studio"
       style={{
-        padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem)',
-        gap: 'clamp(0.125rem, 0.25vw, 0.25rem)',
-        minHeight: 'clamp(44px, 6vh, 60px)',
+        padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
+        gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
+        minHeight: 'clamp(40px, 5vh, 60px)',
       }}
     >
       <svg
@@ -397,9 +397,9 @@ export default function MissionControl({
       className={`${actionButtonBase} ${actionButtonActive}`}
       aria-label="View Pro Promagen features"
       style={{
-        padding: 'clamp(0.5rem, 1vh, 0.75rem) clamp(0.75rem, 1.5vw, 1rem)',
-        gap: 'clamp(0.125rem, 0.25vw, 0.25rem)',
-        minHeight: 'clamp(44px, 6vh, 60px)',
+        padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
+        gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
+        minHeight: 'clamp(40px, 5vh, 60px)',
       }}
     >
       <svg
@@ -415,7 +415,7 @@ export default function MissionControl({
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={proIconPath} />
       </svg>
-      <span className="text-purple-100" style={{ fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)' }}>
+      <span className="text-purple-100" style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.875rem)' }}>
         Pro
       </span>
     </a>
@@ -459,18 +459,29 @@ export default function MissionControl({
   // ══════════════════════════════════════════════════════════════════════════
   return (
     <div
-      className="relative w-full rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+      className="relative w-full rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
+      style={{ padding: 'clamp(10px, 1vw, 16px)' }}
       data-testid="mission-control"
     >
       {/* Header */}
-      <div className="mb-4 flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2">
+      <div
+        className="flex flex-col items-center"
+        style={{ marginBottom: 'clamp(8px, 1vw, 16px)', gap: 'clamp(4px, 0.5vw, 8px)' }}
+      >
+        <div className="flex items-center" style={{ gap: 'clamp(4px, 0.5vw, 8px)' }}>
           <div
-            className="h-3 w-3 animate-pulse rounded-full"
-            style={{ backgroundColor: '#10B981' }}
+            className="animate-pulse rounded-full"
+            style={{
+              backgroundColor: '#10B981',
+              width: 'clamp(10px, 0.8vw, 14px)',
+              height: 'clamp(10px, 0.8vw, 14px)',
+            }}
             aria-hidden="true"
           />
-          <span className="font-mono text-base uppercase tracking-wider text-slate-400">
+          <span
+            className="font-mono uppercase tracking-wider text-slate-400"
+            style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1rem)' }}
+          >
             MISSION CONTROL
           </span>
         </div>
@@ -487,10 +498,21 @@ export default function MissionControl({
       {/* CONTENT ZONE — Height locked to 84px (matches Engine Bay icon grid height) */}
       <div
         ref={contentZoneRef}
-        className="mb-4 flex h-[84px] flex-col overflow-hidden rounded-xl border border-slate-700/50 bg-slate-900/50 p-1"
+        className="flex flex-col overflow-hidden rounded-xl border border-slate-700/50 bg-slate-900/50"
+        style={{
+          height: 'clamp(12px, 3.5vw, 64px)',
+          marginBottom: 'clamp(8px, 1vw, 16px)',
+          padding: 'clamp(2px, 0.3vw, 5px)',
+        }}
       >
-        <div className="mb-1 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div
+          className="flex items-center justify-between"
+          style={{ marginBottom: 'clamp(2px, 0.3vw, 4px)', gap: 'clamp(4px, 0.5vw, 8px)' }}
+        >
+          <div
+            className="flex min-w-0 flex-1 items-center"
+            style={{ gap: 'clamp(4px, 0.5vw, 8px)' }}
+          >
             {/* Flag with WeatherPromptTooltip — Opens LEFT, same data as LSE card */}
             {hasWeatherData && weatherData ? (
               <WeatherPromptTooltip
@@ -501,22 +523,36 @@ export default function MissionControl({
                 verticalPosition="below"
               >
                 {/* Flag image — cursor-pointer (no question mark), no title attribute */}
+                <div
+                  className="relative shrink-0 cursor-pointer overflow-hidden rounded-sm"
+                  style={{
+                    width: 'clamp(18px, 1.5vw, 24px)',
+                    height: 'clamp(14px, 1.1vw, 18px)',
+                  }}
+                >
+                  <Image
+                    src={`/flags/${countryCode.toLowerCase()}.svg`}
+                    alt=""
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </WeatherPromptTooltip>
+            ) : (
+              <div
+                className="relative shrink-0 overflow-hidden rounded-sm"
+                style={{
+                  width: 'clamp(18px, 1.5vw, 24px)',
+                  height: 'clamp(14px, 1.1vw, 18px)',
+                }}
+              >
                 <Image
                   src={`/flags/${countryCode.toLowerCase()}.svg`}
                   alt=""
-                  width={24}
-                  height={18}
-                  className="shrink-0 cursor-pointer rounded-sm"
+                  fill
+                  className="object-cover"
                 />
-              </WeatherPromptTooltip>
-            ) : (
-              <Image
-                src={`/flags/${countryCode.toLowerCase()}.svg`}
-                alt=""
-                width={24}
-                height={18}
-                className="shrink-0 rounded-sm"
-              />
+              </div>
             )}
             {/* 
               Label: "London Real Time Text Prompt" 
@@ -532,31 +568,41 @@ export default function MissionControl({
             <button
               type="button"
               onClick={handleCopy}
-              className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-all ${
+              className={`inline-flex shrink-0 items-center justify-center rounded-md transition-all ${
                 copied
                   ? 'bg-emerald-500/20 text-emerald-400'
                   : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
               }`}
+              style={{
+                width: 'clamp(20px, 1.5vw, 24px)',
+                height: 'clamp(20px, 1.5vw, 24px)',
+              }}
               title={copied ? 'Copied!' : 'Copy prompt'}
               aria-label={copied ? 'Copied to clipboard' : 'Copy prompt'}
             >
               {copied ? (
                 <svg
-                  className="h-3.5 w-3.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={2.5}
+                  style={{
+                    width: 'clamp(12px, 0.9vw, 14px)',
+                    height: 'clamp(12px, 0.9vw, 14px)',
+                  }}
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
                 <svg
-                  className="h-3.5 w-3.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={2}
+                  style={{
+                    width: 'clamp(12px, 0.9vw, 14px)',
+                    height: 'clamp(12px, 0.9vw, 14px)',
+                  }}
                 >
                   <path
                     strokeLinecap="round"
@@ -577,15 +623,15 @@ export default function MissionControl({
         <div className="flex-1 overflow-hidden min-h-0">
           <p
             className="italic text-amber-400/80 animate-pulse truncate"
-            style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1.10rem)' }}
+            style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1rem)' }}
           >
             Hover over a countries flag for a real time image prompt.
           </p>
         </div>
       </div>
 
-      {/* ACTION ZONE — Grid layout (2 or 3 columns, sign-in moved to Control Dock) */}
-      <div className={`grid ${gridCols} gap-3`}>
+      {/* ACTION ZONE — Grid layout (2 or 3 columns, no sign-in — that's in Hero Window) */}
+      <div className={`grid ${gridCols}`} style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
         {isStudioSubPage ? (
           // 3-button layout for Studio sub-pages: Home | Studio | Pro
           <>

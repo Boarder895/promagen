@@ -22,11 +22,16 @@ export function FxPairLabel({
   className,
 }: FxPairLabelProps) {
   return (
-    <span className={className ?? 'inline-flex items-center gap-2'}>
+    <span className={className ?? 'inline-flex items-center'} style={{ gap: 'clamp(3px, 0.4vw, 8px)' }}>
       {/* Base currency */}
-      <span className="inline-flex items-center gap-2">
+      <span className="inline-flex items-center" style={{ gap: 'clamp(2px, 0.3vw, 8px)' }}>
         <span>{base.trim().toUpperCase()}</span>
-        <Flag countryCode={baseCountryCode} size={20} />
+        <span
+          className="inline-flex shrink-0 items-center overflow-hidden"
+          style={{ width: 'clamp(12px, 1.2vw, 20px)', height: 'clamp(12px, 1.2vw, 20px)' }}
+        >
+          <Flag countryCode={baseCountryCode} size={20} />
+        </span>
       </span>
 
       {/* Separator */}
@@ -35,9 +40,14 @@ export function FxPairLabel({
       </span>
 
       {/* Quote currency */}
-      <span className="inline-flex items-center gap-2">
+      <span className="inline-flex items-center" style={{ gap: 'clamp(2px, 0.3vw, 8px)' }}>
         <span>{quote.trim().toUpperCase()}</span>
-        <Flag countryCode={quoteCountryCode} size={20} />
+        <span
+          className="inline-flex shrink-0 items-center overflow-hidden"
+          style={{ width: 'clamp(12px, 1.2vw, 20px)', height: 'clamp(12px, 1.2vw, 20px)' }}
+        >
+          <Flag countryCode={quoteCountryCode} size={20} />
+        </span>
       </span>
     </span>
   );

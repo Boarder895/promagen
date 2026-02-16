@@ -1,6 +1,14 @@
 // src/components/home/control-dock.tsx
 // ============================================================================
-// CONTROL DOCK - Centralised control strip beneath PROMAGEN
+// ⚠️  DEPRECATED — SAFE TO DELETE
+// ============================================================================
+// This component is no longer imported by any file.
+// ReferenceFrameToggle and AuthButton are now placed directly in
+// homepage-grid.tsx (Hero Window row, right edge) as of v3.2.
+// This file can be safely removed from the codebase.
+// ============================================================================
+//
+// FORMER PURPOSE: Centralised control strip beneath PROMAGEN
 // ============================================================================
 // Houses the Reference Frame Toggle and AuthButton (sign-in / avatar).
 //

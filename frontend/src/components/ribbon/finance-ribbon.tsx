@@ -195,17 +195,19 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
 
   const rowClassName =
     snap.rows === 1
-      ? 'flex w-full flex-nowrap items-center justify-evenly gap-2'
-      : 'grid w-full items-center justify-evenly gap-2';
+      ? 'flex w-full flex-nowrap items-center justify-evenly'
+      : 'grid w-full items-center justify-evenly';
 
   const rowStyle: React.CSSProperties =
     snap.rows === 1
       ? ({
           // CSS var drives exact 0.5px snapping without needing Tailwind arbitrary values everywhere.
           ['--fx-chip-font' as unknown as string]: `${snap.fontPx}px`,
+          gap: 'clamp(4px, 0.5vw, 8px)',
         } as React.CSSProperties)
       : ({
           ['--fx-chip-font' as unknown as string]: `${snap.fontPx}px`,
+          gap: 'clamp(4px, 0.5vw, 8px)',
           gridTemplateRows: 'repeat(2, max-content)',
           gridTemplateColumns: `repeat(${columnsForTwoRows}, max-content)`,
         } as React.CSSProperties);
@@ -224,10 +226,15 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
     return (
       <li
         key={keyPrefix ? `${keyPrefix}-${chip.id}` : chip.id}
-        className="flex shrink-0 items-baseline gap-1 whitespace-nowrap rounded-full bg-slate-900 px-3 py-1 text-[length:var(--fx-chip-font)] leading-none"
+        className="flex shrink-0 items-baseline whitespace-nowrap rounded-full bg-slate-900 text-[length:var(--fx-chip-font)] leading-none"
+        style={{
+          paddingInline: 'clamp(6px, 0.6vw, 12px)',
+          paddingBlock: 'clamp(2px, 0.25vw, 4px)',
+          gap: 'clamp(2px, 0.3vw, 4px)',
+        }}
         data-chip-id={chip.id}
       >
-        <span data-testid={`fx-${chip.id}`} className="flex items-baseline gap-1">
+        <span data-testid={`fx-${chip.id}`} className="flex items-baseline" style={{ gap: 'clamp(2px, 0.3vw, 4px)' }}>
           <span className="font-semibold" data-testid="fx-label">
             {chip.label}
           </span>
@@ -250,12 +257,16 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
       data-testid={testId}
       data-mode={mode}
       data-build-id={buildId}
-      className="w-full overflow-hidden rounded-2xl bg-slate-950/55 px-3 py-2 text-xs text-slate-50 shadow-md ring-1 ring-slate-800 h-[42px]"
+      className="w-full overflow-hidden rounded-2xl bg-slate-950/55 text-slate-50 shadow-md ring-1 ring-slate-800"
       style={{
         // CLS FIX: Invisible until snap-fit reflow settles. Per CLS spec,
         // elements at opacity: 0 don't contribute to shift scoring.
         opacity: settled ? 1 : 0,
         transition: 'opacity 150ms ease-in',
+        height: 'clamp(30px, 2.8vw, 42px)',
+        paddingInline: 'clamp(8px, 0.8vw, 12px)',
+        paddingBlock: 'clamp(4px, 0.5vw, 8px)',
+        fontSize: 'clamp(0.65rem, 0.8vw, 0.75rem)',
       }}
     >
       {/* Chips host */}
@@ -273,10 +284,11 @@ export const FinanceRibbon: React.FC<FinanceRibbonProps> = ({
         <ul
           ref={measurerRef}
           aria-hidden="true"
-          className="pointer-events-none absolute left-[-99999px] top-0 gap-2 opacity-0"
+          className="pointer-events-none absolute left-[-99999px] top-0 opacity-0"
           style={{
             // Width + display/layout mode + font var are applied imperatively during measurement.
             ['--fx-chip-font' as unknown as string]: `${snap.fontPx}px`,
+            gap: 'clamp(4px, 0.5vw, 8px)',
           }}
         >
           {chips.map((chip) => renderChip(chip, 'measure'))}
