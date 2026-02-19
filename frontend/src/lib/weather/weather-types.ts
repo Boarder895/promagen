@@ -69,12 +69,37 @@ export interface ExchangeWeatherFull {
   visibility: number | null;
   /** Atmospheric pressure in hPa. null when demo data. */
   pressure: number | null;
+  /**
+   * v8.0.0: Rain volume for last 1 hour in mm.
+   * null when no rain or demo data. Enables numeric precipitation
+   * intensity classification (light/moderate/heavy).
+   */
+  rainMm1h: number | null;
+  /**
+   * v8.0.0: Snow volume for last 1 hour in mm (water equivalent).
+   * null when no snow or demo data. Enables numeric precipitation
+   * intensity classification (light/moderate/heavy).
+   */
+  snowMm1h: number | null;
+  /**
+   * v8.0.0: Wind direction in meteorological degrees (0–360).
+   * null when demo data or API omits direction.
+   * Used for directional wind phrases in Beaufort system.
+   */
+  windDegrees: number | null;
+  /**
+   * v8.0.0: Wind gust speed in km/h.
+   * null when no gusts or demo data.
+   * Used for "gusting to X" wind modifiers.
+   */
+  windGustKmh: number | null;
 }
 
 /**
  * Weather data for exchange card display.
  * Subset of full data used in UI.
  *
+ * v8.0.0: Added rainMm1h, snowMm1h, windDegrees, windGustKmh.
  * v3.1.0: Added day/night fields (all nullable for backward compat).
  */
 export interface ExchangeWeatherDisplay {
@@ -106,6 +131,14 @@ export interface ExchangeWeatherDisplay {
   visibility: number | null;
   /** Atmospheric pressure in hPa; null if unavailable */
   pressure: number | null;
+  /** v8.0.0: Rain volume for last 1 hour in mm; null if unavailable */
+  rainMm1h: number | null;
+  /** v8.0.0: Snow volume for last 1 hour in mm; null if unavailable */
+  snowMm1h: number | null;
+  /** v8.0.0: Wind direction in degrees (0–360); null if unavailable */
+  windDegrees: number | null;
+  /** v8.0.0: Wind gust speed in km/h; null if unavailable */
+  windGustKmh: number | null;
 }
 
 /**
@@ -130,6 +163,10 @@ export function toDisplayWeather(
       cloudCover: null,
       visibility: null,
       pressure: null,
+      rainMm1h: null,
+      snowMm1h: null,
+      windDegrees: null,
+      windGustKmh: null,
     };
   }
 
@@ -148,12 +185,19 @@ export function toDisplayWeather(
     cloudCover: full.cloudCover,
     visibility: full.visibility,
     pressure: full.pressure,
+    rainMm1h: full.rainMm1h,
+    snowMm1h: full.snowMm1h,
+    windDegrees: full.windDegrees,
+    windGustKmh: full.windGustKmh,
   };
 }
 
 /**
  * Convert display weather back to full format for prompt generation.
  * Fills in missing values with reasonable defaults.
+ *
+ * v8.0.0: Maps rainMm1h, snowMm1h, windDegrees, windGustKmh.
+ * All default to null when absent (not 0) to distinguish "no data" from "0mm".
  */
 export function toFullWeather(
   display: ExchangeWeatherDisplay
@@ -178,6 +222,12 @@ export function toFullWeather(
     cloudCover: display.cloudCover ?? null,
     visibility: display.visibility ?? null,
     pressure: display.pressure ?? null,
+    // v8.0.0: Precipitation and extended wind.
+    // null = no data (demo or OWM didn't send it). NOT the same as 0mm.
+    rainMm1h: display.rainMm1h ?? null,
+    snowMm1h: display.snowMm1h ?? null,
+    windDegrees: display.windDegrees ?? null,
+    windGustKmh: display.windGustKmh ?? null,
   };
 }
 

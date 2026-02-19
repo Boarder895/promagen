@@ -1,8 +1,35 @@
 // src/lib/weather/weather-prompt-generator.ts
 // ============================================================================
-// WEATHER PROMPT GENERATOR v7.8 — PRECIPITATION-AWARE SKY SOURCE
+// WEATHER PROMPT GENERATOR v8.0 — PRECIPITATION TRUTH
 // ============================================================================
 // Generates dynamic image prompts from live weather data.
+//
+// v8.0 ARCHITECTURE — PRECIPITATION TRUTH:
+//   The biggest correctness bug in v7.x: snow, sleet, hail, fog, mist, smoke,
+//   and dust were NOT treated as precipitation-active by the Visual Truth engine.
+//   Only rain/drizzle/thunderstorm triggered the precipitationActive flag.
+//   This meant Toronto at -5°C with heavy snow → air clarity "clear",
+//   surfaces "invisible moisture" — obviously wrong.
+//
+//   New classifyPrecip() function replaces the old isRainy/isStormy booleans
+//   with a proper multi-type PrecipState:
+//     { type, intensity, active, reducesVisibility }
+//
+//   Prefers numeric rain.1h/snow.1h from OWM (measured volumes, most trustworthy)
+//   then falls back to keyword inference from conditions/description.
+//
+//   Gateway pipeline: OWM rain/snow objects + wind.deg/wind.gust now extracted
+//   (4 new WeatherData fields: rainMm1h, snowMm1h, windDegrees, windGustKmh).
+//
+//   deriveVisualTruth() now receives PrecipState and handles:
+//   - Snow-specific air clarity (diffuse scattering, heavy → foggy)
+//   - Snow surface moisture (accumulation at ≤0°C, melting at >0°C)
+//   - Hail surface effects (visible regardless of temperature)
+//   - Fog/mist/haze/smoke/dust atmospheric classification
+//
+//   WeatherContext gains isSnowy, isFoggy, isMisty flags.
+//   All 4 tier generators unchanged — they consume VisualTruth which now
+//   carries correct physics for ALL precipitation types.
 //
 // v7.8 ARCHITECTURE — PRECIPITATION-AWARE SKY SOURCE:
 //   Night scenes previously suppressed ALL weather descriptions because
@@ -93,6 +120,73 @@
 //   Layer 8  — MOISTURE: v7.0 replaces humidity — optical surface effects
 //   Layer 9  — THERMAL: v7.0 replaces temperature — optical light effects
 //   Layer 10 — DIRECTIVE: "no people or text visible" (quiet hours only)
+//
+// v8.0 KEY CHANGES FROM v7.8:
+// - PRECIPITATION TRUTH: classifyPrecip() replaces isRainy/isStormy booleans.
+//   Returns PrecipState { type, intensity, active, reducesVisibility }.
+//   Snow, sleet, hail, fog, mist, haze, smoke, dust now classified correctly.
+// - NUMERIC PRECIPITATION: Prefers OWM rain.1h/snow.1h (measured mm/h) over
+//   keyword inference. Light (<0.5mm), moderate (0.5–2mm), heavy (>2mm) for snow;
+//   light (<2mm), moderate (2–6mm), heavy (>6mm) for rain.
+// - GATEWAY PIPELINE: 4 new WeatherData fields extracted from OWM:
+//   rainMm1h, snowMm1h, windDegrees, windGustKmh. Full pipeline:
+//   gateway types → adapter → frontend fetch → component types → exchange card → weather types.
+// - VISUAL TRUTH FIX: deriveVisualTruth() receives PrecipState instead of 2 booleans.
+//   Snow-specific air clarity (diffuse scattering). Snow surface moisture
+//   (accumulation at ≤0°C, melting at >0°C). Hail surface effects. Fog/mist/smoke/dust
+//   atmospheric classification with OWM type trust.
+// - WEATHER CONTEXT: gains isSnowy, isFoggy, isMisty, windDegrees, windGustKmh
+//   in buildContext().
+// - BEAUFORT WIND: WindTier (4 tiers) → WindForce (7 Beaufort-aligned tiers).
+//   Key correction: 50 km/h = nearGale (strong effects, NOT destructive).
+//   Destructive phrases start at gale (62+). All human-body phrases purged.
+//   classifyWind() replaces getWindTier(). VENUE_WIND expanded to 7 tiers × 9 venues.
+// - WIND DIRECTION: getCardinalDirection() converts OWM wind.deg to cardinal word.
+//   Prefix added when available: "south-westerly 35 km/h wind".
+// - GUST FACTOR: When windGustKmh > sustained × 1.5 → "gusting to {gust}" suffix.
+// - SNOW+WIND: When PrecipState is active snow + wind ≥20 km/h → blowing/drifting
+//   snow phrases override venue interaction (horizontal at 50+, reducing vis at 30+).
+// - VENUE TAXONOMY: 7 misclassified venues fixed in city-vibes.json
+//   (e.g. Chinatown Canal Street waterfront→street, Canal City waterfront→market).
+//   14 legitimate exceptions documented with overrideJustification field.
+//   SETTING_OVERRIDES runtime safety net in getCityVenue() for future corrections.
+//   Standalone linter: `npx tsx scripts/lint-venues.ts` (CI-ready, exit code 1 on errors).
+// - TIER 3 SETTING ENDING (Chat 4): Hardcoded "urban landscape" replaced with
+//   getSettingEnding() — returns venue-appropriate directives:
+//   street/narrow/market/plaza→"city scene", waterfront/beach→"coastal scene",
+//   monument→"landmark scene", park→"landscape scene", elevated→"skyline view".
+// - TIER 4 FRAGMENT LIMIT (Chat 4): Hard cap of 10 comma items. Priority-based
+//   dropping: grounding→sky→moon→thermal→moisture (least visual impact first).
+// - TIER 4 PERIOD NOUNS (Chat 4): getTimePeriod() returns "dawn"/"dusk"/"night"
+//   instead of "seven in the evening" — weak parsers handle simple nouns better.
+// - TIER 1 STRUCTURED RETURN (Chat 5): generateWeatherPrompt() returns
+//   WeatherPromptResult { text, positive?, negative?, tier } instead of string.
+//   Consumers use `.text` (backward compat). Tier 1 populates positive/negative
+//   separately for future "copy positive only" UI.
+// - TIER 1 PHOTOREAL TAGS (Chat 5): "masterpiece, best quality, 8k" replaced
+//   with "professional photography, sharp focus, high resolution" (photoreal bias).
+//   Swappable via PHOTOREAL_QUALITY_TAGS constant (future PromptProfile).
+// - TIER 1 TOKEN GUARD (Chat 5): Caps at 15 parts (~60 CLIP tokens). Drops
+//   time/grounding/moisture before quality tags when over budget.
+// - TIER 2 MULTI-PROMPT (Chat 6): Midjourney :: weight syntax replaces dash-break
+//   folklore. Segments: lighting+time::2, venue+sky+weather::1, surface::0.5.
+//   Word budget ~40 words before params. Surface segment dropped when over budget.
+// - PROMPT PROFILE (Chat 7): PromptProfile interface configures generator without
+//   unpredictability. Fields: verbosity (short/standard/rich), style (photoreal/
+//   cinematic/documentary), excludePeople (always/quiet-hours/never), mjAspect,
+//   mjStylize, strictPhysics. DEFAULT_PROMPT_PROFILE matches pre-Chat-7 output
+//   exactly (zero regression). Profile threaded through all 4 tier generators.
+//   Style-keyed quality tags (STYLE_QUALITY_TAGS) and ending prefixes
+//   (STYLE_ENDING_PREFIX) replace hardcoded constants. Verbosity-keyed fragment
+//   limits (VERBOSITY_T1_LIMIT, VERBOSITY_T4_LIMIT) replace hardcoded caps.
+// - PROMPT TRACE (Chat 8): PromptTrace interface exposes every generator decision.
+//   Activated by `debug: true` in WeatherPromptInput or NODE_ENV=development.
+//   Attached to WeatherPromptResult.trace. Fields: profile, precip, windForce,
+//   venue, visualTruth summary, lighting summary, solarElevation, moon,
+//   isNight, seed, excludedPeople, localHour, temperatureC, humidity.
+//   Zero cost in production — trace block never entered when debug is false.
+// - LINT FIX: Removed unused PHOTOREAL_QUALITY_TAGS alias (replaced by
+//   STYLE_QUALITY_TAGS[profile.style] in Chat 7).
 //
 // v7.8 KEY CHANGES FROM v7.7:
 // - PRECIPITATION-AWARE SKY: getSkySourceAware() replaces the old
@@ -217,6 +311,190 @@ export interface WeatherPromptInput {
   latitude?: number | null;
   /** Longitude for solar elevation calculation (lighting engine). Optional. */
   longitude?: number | null;
+  /** v8.0.0 Chat 7: Optional prompt profile. Omit for default behaviour. */
+  profile?: Partial<PromptProfile> | null;
+  /**
+   * v8.0.0 Chat 8: When true, attaches PromptTrace to the result.
+   * Also activates when `process.env.NODE_ENV === 'development'`.
+   * Zero cost when false — trace object is never constructed.
+   */
+  debug?: boolean;
+}
+
+/**
+ * v8.0.0 Chat 5: Structured prompt result.
+ *
+ * `text` is the full display string (backward compatible with old string return).
+ * `positive`/`negative` are only populated for Tier 1 (CLIP-based platforms).
+ * All existing consumers use `.text` identically to the old string.
+ */
+export interface WeatherPromptResult {
+  /** Full display string — equivalent to the old string return. */
+  text: string;
+  /** Positive prompt only (Tier 1 only). For "copy positive only" UI. */
+  positive?: string;
+  /** Negative prompt only (Tier 1 only). For "copy negative only" UI. */
+  negative?: string;
+  /** Which tier generated this result. */
+  tier: PromptTier;
+  /**
+   * v8.0.0 Chat 8: Diagnostic trace — every decision the generator made.
+   * Only populated when `debug: true` in input or NODE_ENV === 'development'.
+   * Inspect with `console.log(result.trace)` or React DevTools.
+   */
+  trace?: PromptTrace;
+}
+
+/**
+ * v8.0.0 Chat 8: Prompt Trace — makes "why did this output happen?" trivial.
+ *
+ * All fields use primitive or serialisable types so they survive
+ * `JSON.stringify()` / React DevTools inspection without circular refs.
+ * Only constructed when debug mode is active — zero cost in production.
+ */
+export interface PromptTrace {
+  /** Resolved profile (after defaults merged). */
+  profile: PromptProfile;
+  /** Precipitation classification from classifyPrecip(). */
+  precip: {
+    type: string;
+    intensity: string;
+    active: boolean;
+    reducesVisibility: boolean;
+  };
+  /** Wind classification from classifyWind(). */
+  windForce: string;
+  /** Wind speed in km/h (raw input). */
+  windSpeedKmh: number;
+  /** Venue picked for this city+seed, or null if city has no venues. */
+  venue: { name: string; setting: string } | null;
+  /** Visual truth summary — what the atmosphere actually looks like. */
+  visualTruth: {
+    airClarity: string;
+    contrast: string;
+    moistureVisibility: string;
+    thermalOptics: string;
+    precipActive: boolean;
+  } | null;
+  /** Lighting engine output summary. */
+  lighting: {
+    base: string;
+    fullPhrase: string;
+    shadowModifier: string;
+    atmosphereModifier: string;
+    moonVisible: boolean;
+    moonPositionPhrase: string | null;
+    nightDominant: string | null;
+    encodesCloudState: boolean;
+  };
+  /** Solar elevation in degrees, null if lat/lon not provided. */
+  solarElevation: number | null;
+  /** Moon phase info. */
+  moon: { name: string; dayInCycle: number; emoji: string };
+  /** Night/day classification. */
+  isNight: boolean;
+  /** Deterministic seed used for phrase rotation. */
+  seed: number;
+  /** Whether people were excluded from this prompt. */
+  excludedPeople: boolean;
+  /** Input hour (local time at the exchange). */
+  localHour: number;
+  /** Temperature in °C. */
+  temperatureC: number;
+  /** Humidity percentage. */
+  humidity: number;
+}
+
+// ============================================================================
+// v8.0.0 Chat 7: PROMPT PROFILE — configurable without unpredictable
+// ============================================================================
+
+/**
+ * Controls generator behaviour without changing the generator's logic.
+ * All fields are optional — omitted fields use DEFAULT_PROMPT_PROFILE values.
+ * The default profile produces identical output to pre-Chat-7 behaviour.
+ *
+ * Future Pro tier: users pick a profile, we store it, pass it in.
+ */
+export interface PromptProfile {
+  /** Controls fragment count. 'standard' matches pre-Chat-7 output. */
+  verbosity: 'short' | 'standard' | 'rich';
+  /** Controls quality tags (Tier 1) and ending sentence (Tier 3). */
+  style: 'photoreal' | 'cinematic' | 'documentary';
+  /** People exclusion: 'quiet-hours' matches pre-Chat-7 behaviour. */
+  excludePeople: 'always' | 'quiet-hours' | 'never';
+  /** Midjourney aspect ratio (Tier 2 only). */
+  mjAspect: '1:1' | '16:9' | '2:3';
+  /** Midjourney stylize value (Tier 2 only). */
+  mjStylize: number;
+  /** When true, more aggressively prune contradictory fragments. (Reserved.) */
+  strictPhysics: boolean;
+}
+
+/** Zero-regression default — produces identical output to Chats 1–6. */
+export const DEFAULT_PROMPT_PROFILE: PromptProfile = {
+  verbosity: 'standard',
+  style: 'photoreal',
+  excludePeople: 'quiet-hours',
+  mjAspect: '16:9',
+  mjStylize: 100,
+  strictPhysics: false,
+};
+
+/**
+ * Merge a partial profile with defaults. Every field guaranteed filled.
+ * Consumers can pass `{ style: 'cinematic' }` and get everything else default.
+ */
+function resolveProfile(partial?: Partial<PromptProfile> | null): PromptProfile {
+  if (!partial) return { ...DEFAULT_PROMPT_PROFILE };
+  return { ...DEFAULT_PROMPT_PROFILE, ...partial };
+}
+
+// ── Style-keyed quality tags (Tier 1) ──────────────────────────────────
+const STYLE_QUALITY_TAGS: Record<PromptProfile['style'], readonly string[]> = {
+  photoreal: ['professional photography', 'sharp focus', 'high resolution'],
+  cinematic: ['cinematic color grading', 'anamorphic lens', 'high resolution'],
+  documentary: ['documentary photography', 'natural light', 'high resolution'],
+};
+
+// ── Style-keyed ending prefixes (Tier 3) ───────────────────────────────
+const STYLE_ENDING_PREFIX: Record<PromptProfile['style'], string> = {
+  photoreal: 'Photorealistic',
+  cinematic: 'Cinematic',
+  documentary: 'Documentary',
+};
+
+// ── Verbosity-keyed fragment limits ────────────────────────────────────
+const VERBOSITY_T1_LIMIT: Record<PromptProfile['verbosity'], number> = {
+  short: 12,
+  standard: 15,
+  rich: 18,
+};
+const VERBOSITY_T4_LIMIT: Record<PromptProfile['verbosity'], number> = {
+  short: 8,
+  standard: 10,
+  rich: 12,
+};
+
+/**
+ * Resolve people-exclusion based on profile + current quiet-hours state.
+ * Replaces raw `isQuietHours()` in each tier.
+ */
+function shouldExcludePeople(
+  profile: PromptProfile,
+  weather: ExchangeWeatherFull,
+  localHour: number,
+  observedAtUtc: Date,
+): boolean {
+  switch (profile.excludePeople) {
+    case 'always':
+      return true;
+    case 'never':
+      return false;
+    case 'quiet-hours':
+    default:
+      return isQuietHours(weather, localHour, observedAtUtc);
+  }
 }
 
 interface WeatherContext {
@@ -229,6 +507,12 @@ interface WeatherContext {
   emoji: string;
   isStormy: boolean;
   isRainy: boolean;
+  /** v8.0.0: Snow/sleet/hail detection (was missing before — biggest correctness bug) */
+  isSnowy: boolean;
+  /** v8.0.0: Fog detection for atmospheric rendering */
+  isFoggy: boolean;
+  /** v8.0.0: Mist/haze detection for atmospheric rendering */
+  isMisty: boolean;
   isCold: boolean;
   isHot: boolean;
   isDry: boolean;
@@ -246,6 +530,10 @@ interface WeatherContext {
   visibility: number | null;
   /** Atmospheric pressure in hPa. null = demo/unavailable. */
   pressure: number | null;
+  /** v8.0.0: Wind direction in degrees (0–360). null = demo/unavailable. */
+  windDegrees: number | null;
+  /** v8.0.0: Wind gust speed in km/h. null = demo/unavailable. */
+  windGustKmh: number | null;
 }
 
 // ============================================================================
@@ -338,6 +626,41 @@ type ThermalOptics =
   | 'frost'
   | 'deep-cold';
 
+// ── Precipitation Classification (v8.0.0) ──────────────────────────────────
+// Replaces the old isRainy/isStormy booleans with a proper classifier.
+// Prefers numeric rain.1h/snow.1h when available (most trustworthy),
+// falls back to keyword inference from OWM description/conditions.
+//
+// Key fix: snow, sleet, hail are now treated as precipitation-active,
+// which feeds correct air clarity, surface moisture, and light scattering.
+
+type PrecipType =
+  | 'none'
+  | 'rain'
+  | 'drizzle'
+  | 'snow'
+  | 'sleet'
+  | 'hail'
+  | 'thunderstorm'
+  | 'mist'
+  | 'fog'
+  | 'haze'
+  | 'smoke'
+  | 'dust';
+
+type PrecipIntensity = 'none' | 'light' | 'moderate' | 'heavy';
+
+interface PrecipState {
+  /** Specific precipitation type */
+  type: PrecipType;
+  /** Intensity level — derived from numeric mm/h when available, else keyword */
+  intensity: PrecipIntensity;
+  /** True when something is physically falling (rain, snow, sleet, hail, drizzle, thunderstorm) */
+  active: boolean;
+  /** True for anything that impairs visibility (all active precip + fog/mist/haze/smoke/dust) */
+  reducesVisibility: boolean;
+}
+
 interface VisualTruth {
   /** Dew point temperature in °C (Magnus formula) */
   dewPoint: number;
@@ -351,8 +674,15 @@ interface VisualTruth {
   moistureVisibility: MoistureVisibility;
   /** What temperature does to light and physics */
   thermalOptics: ThermalOptics;
-  /** Whether precipitation is active (rain/snow/drizzle) */
-  precipitationActive: boolean;
+  /**
+   * v8.0.0: Full precipitation classification.
+   * Replaces the old boolean `precipitationActive` with rich type/intensity data.
+   * - type: exact precip type (snow, rain, sleet, hail, fog, mist, etc.)
+   * - intensity: none | light | moderate | heavy (from rain.1h/snow.1h when available)
+   * - active: true when something is physically falling (rain, snow, sleet, hail)
+   * - reducesVisibility: true for all precip + fog/mist/haze/smoke/dust
+   */
+  precip: PrecipState;
 }
 
 // ── Dew Point Calculation (Magnus formula) ──────────────────────────────────
@@ -365,6 +695,68 @@ function computeDewPoint(tempC: number, humidity: number): number {
   const b = 237.7;
   const alpha = (a * tempC) / (b + tempC) + Math.log(clampedHumidity / 100);
   return (b * alpha) / (a - alpha);
+}
+
+// ── Precipitation Classifier (v8.0.0) ──────────────────────────────────────
+// Replaces the old isRainy/isStormy booleans with a proper multi-type classifier.
+//
+// Priority:
+//   1. Numeric rain.1h / snow.1h (most trustworthy — OWM measures these)
+//   2. Keyword inference from conditions/description (always available)
+//
+// KEY FIX: Snow, sleet, hail are now correctly classified as active precipitation.
+// Before v8.0.0, "light snow" in Toronto → precipitationActive = false → air clarity
+// stayed "clear" → prompt showed pristine conditions during snowfall. Now fixed.
+
+function classifyPrecip(weather: ExchangeWeatherFull): PrecipState {
+  const desc = (weather.description || '').toLowerCase();
+  const cond = (weather.conditions || '').toLowerCase();
+  const rain = weather.rainMm1h ?? null;
+  const snow = weather.snowMm1h ?? null;
+
+  // ── Priority 1: Numeric measurement (when OWM provides rain.1h / snow.1h) ──
+  // These are actual measured volumes — most trustworthy signal.
+  if (snow !== null && snow > 0) {
+    const intensity: PrecipIntensity = snow >= 2 ? 'heavy' : snow >= 0.5 ? 'moderate' : 'light';
+    return { type: 'snow', intensity, active: true, reducesVisibility: true };
+  }
+  if (rain !== null && rain > 0) {
+    const intensity: PrecipIntensity = rain >= 6 ? 'heavy' : rain >= 2 ? 'moderate' : 'light';
+    return { type: 'rain', intensity, active: true, reducesVisibility: true };
+  }
+
+  // ── Priority 2: Keyword inference from OWM description/conditions ───────────
+  // Less precise than numeric, but always available.
+  const has = (k: string) => desc.includes(k) || cond.includes(k);
+
+  // Active falling precipitation (order: most specific → least)
+  if (has('thunder'))
+    return { type: 'thunderstorm', intensity: 'moderate', active: true, reducesVisibility: true };
+  if (has('hail'))
+    return { type: 'hail', intensity: 'moderate', active: true, reducesVisibility: true };
+  if (has('sleet'))
+    return { type: 'sleet', intensity: 'light', active: true, reducesVisibility: true };
+  if (has('snow'))
+    return { type: 'snow', intensity: 'light', active: true, reducesVisibility: true };
+  if (has('drizzle'))
+    return { type: 'drizzle', intensity: 'light', active: true, reducesVisibility: true };
+  if (has('rain'))
+    return { type: 'rain', intensity: 'light', active: true, reducesVisibility: true };
+
+  // Visibility phenomena (not falling, but critical to rendering)
+  if (has('fog'))
+    return { type: 'fog', intensity: 'moderate', active: false, reducesVisibility: true };
+  if (has('mist'))
+    return { type: 'mist', intensity: 'light', active: false, reducesVisibility: true };
+  if (has('haze'))
+    return { type: 'haze', intensity: 'light', active: false, reducesVisibility: true };
+  if (has('smoke'))
+    return { type: 'smoke', intensity: 'moderate', active: false, reducesVisibility: true };
+  if (has('dust') || has('sand'))
+    return { type: 'dust', intensity: 'moderate', active: false, reducesVisibility: true };
+
+  // No precipitation or visibility phenomena detected
+  return { type: 'none', intensity: 'none', active: false, reducesVisibility: false };
 }
 
 // ── Derive Visual Truth ─────────────────────────────────────────────────────
@@ -380,8 +772,7 @@ function deriveVisualTruth(
   pressure: number | null,
   solarElevation: number | null,
   isNight: boolean,
-  isRainy: boolean,
-  isStormy: boolean,
+  precip: PrecipState,
 ): VisualTruth {
   const cloud = cloudCover ?? 0;
   const vis = visibility ?? 10000;
@@ -391,8 +782,11 @@ function deriveVisualTruth(
   const dewPoint = computeDewPoint(tempC, humidity);
   const dewSpread = tempC - dewPoint;
 
-  // ── Precipitation flag ────────────────────────────────────────
-  const precipitationActive = isRainy || isStormy;
+  // ── Precipitation state (v8.0.0) ──────────────────────────────────
+  // Now derived from classifyPrecip() — includes snow, sleet, hail.
+  // Before v8.0.0, snow was NOT treated as precipitation, causing
+  // "clear pristine air" prompts during snowfall.
+  const precipitationActive = precip.active;
 
   // ── Air Clarity ───────────────────────────────────────────────
   // Cross-references: visibility, humidity, dew point spread, wind, temperature.
@@ -400,8 +794,34 @@ function deriveVisualTruth(
   let airClarity: AirClarity;
 
   if (precipitationActive) {
-    // Rain/snow always reduces atmospheric clarity
-    airClarity = vis < 3000 ? 'foggy' : 'hazy';
+    // Active falling precipitation always reduces atmospheric clarity.
+    // v8.0.0: Snow-specific logic — heavy snow can approach whiteout.
+    if (precip.type === 'snow' || precip.type === 'sleet') {
+      // Snow scatters light diffusely — intensity drives how much
+      airClarity =
+        precip.intensity === 'heavy'
+          ? 'foggy'
+          : precip.intensity === 'moderate' || vis < 3000
+            ? 'misty'
+            : 'hazy';
+    } else {
+      // Rain, drizzle, thunderstorm, hail
+      airClarity = vis < 3000 ? 'foggy' : 'hazy';
+    }
+  } else if (precip.reducesVisibility) {
+    // Non-falling visibility phenomena (fog, mist, haze, smoke, dust).
+    // These are ALSO handled by the vis-based checks below, but we
+    // trust the explicit OWM classification when available.
+    if (precip.type === 'fog') {
+      airClarity = 'foggy';
+    } else if (precip.type === 'mist') {
+      airClarity = vis < 1000 ? 'foggy' : 'misty';
+    } else if (precip.type === 'smoke' || precip.type === 'dust') {
+      airClarity = vis < 3000 ? 'misty' : 'hazy';
+    } else {
+      // haze — defer to visibility-based checks below
+      airClarity = vis < 5000 ? 'hazy' : 'softened';
+    }
   } else if (vis < 1000) {
     airClarity = 'foggy'; // OWM reporting actual fog
   } else if (vis < 3000) {
@@ -474,15 +894,39 @@ function deriveVisualTruth(
   // ── Moisture Visibility ───────────────────────────────────────
   // Describes SURFACE effects (damp, frost, dry). Not atmospheric effects
   // (those are covered by airClarity).
-  // At ≤0°C, moisture becomes frost/ice → handled by thermalOptics instead.
+  //
+  // v8.0.0: Snow is now correctly treated as surface-affecting precipitation.
+  // Before v8.0.0, sub-zero snow had precipitationActive=false, so surfaces
+  // showed "invisible" moisture during snowfall — obviously wrong.
+  //
+  // Snow logic: at ≤0°C, snow accumulates (noticeable→dominant by intensity).
+  //             at >0°C, snow melts on contact → wet surfaces (same as rain).
   let moistureVisibility: MoistureVisibility;
 
-  if (tempC <= 0) {
-    // Sub-zero: any surface moisture is ice. Thermal optics handles frost.
-    // Suppress liquid moisture descriptions.
+  if (precipitationActive && (precip.type === 'snow' || precip.type === 'sleet')) {
+    // Snow/sleet on surfaces — affected regardless of temperature.
+    // At ≤0°C: accumulation. At >0°C: melting to wet.
+    if (tempC <= 0) {
+      // Sub-zero snow: surfaces show snow cover (thermal optics handles frost character)
+      moistureVisibility =
+        precip.intensity === 'heavy'
+          ? 'dominant'
+          : precip.intensity === 'moderate'
+            ? 'visible'
+            : 'noticeable';
+    } else {
+      // Above-zero snow/sleet: melts on contact → wet surfaces
+      moistureVisibility = 'dominant';
+    }
+  } else if (precipitationActive && precip.type === 'hail') {
+    // Hail: ice impacts on surfaces — visible regardless of temperature
+    moistureVisibility = 'visible';
+  } else if (tempC <= 0) {
+    // Sub-zero, no active precip: any surface moisture is frost/ice.
+    // Thermal optics handles frost visual character. Suppress liquid descriptions.
     moistureVisibility = humidity < 20 ? 'bone-dry' : 'invisible';
   } else if (precipitationActive) {
-    // Active rain = surfaces are wet regardless of dew point
+    // Active rain/drizzle/thunderstorm at >0°C = surfaces are wet
     moistureVisibility = 'dominant';
   } else if (humidity < 20) {
     moistureVisibility = 'bone-dry';
@@ -559,7 +1003,7 @@ function deriveVisualTruth(
     contrast,
     moistureVisibility,
     thermalOptics,
-    precipitationActive,
+    precip,
   };
 }
 
@@ -1680,6 +2124,20 @@ function buildContext(
       desc.includes('drizzle') ||
       cond.includes('rain') ||
       cond.includes('drizzle'),
+    // v8.0.0: Snow, fog, mist detection (was missing before)
+    isSnowy:
+      desc.includes('snow') ||
+      desc.includes('sleet') ||
+      desc.includes('hail') ||
+      cond.includes('snow') ||
+      cond.includes('sleet') ||
+      cond.includes('hail'),
+    isFoggy: desc.includes('fog') || cond.includes('fog'),
+    isMisty:
+      desc.includes('mist') ||
+      desc.includes('haze') ||
+      cond.includes('mist') ||
+      cond.includes('haze'),
     isCold: weather.temperatureC < 10,
     isHot: weather.temperatureC > 28,
     isDry: weather.humidity < 40,
@@ -1694,6 +2152,8 @@ function buildContext(
     cloudCover: weather.cloudCover,
     visibility: weather.visibility,
     pressure: weather.pressure,
+    windDegrees: weather.windDegrees ?? null,
+    windGustKmh: weather.windGustKmh ?? null,
   };
 }
 
@@ -2420,6 +2880,20 @@ for (const [key, raw] of Object.entries(CITY_DATA_RAW)) {
   };
 }
 
+// ── v8.0.0: Setting Override Map ──────────────────────────────────────────
+// Runtime safety net for known taxonomy errors that haven't been fixed in
+// city-vibes.json yet. Key = "city::venue name" (lowercase), value = correct
+// VenueSetting. Applied in getCityVenue() after venue selection.
+//
+// This map should be EMPTY in a fully-corrected dataset. If you add entries
+// here, also file a fix for city-vibes.json so the override can be removed.
+// Run `npx tsx scripts/lint-venues.ts` to detect mismatches.
+const SETTING_OVERRIDES: Record<string, VenueSetting> = {
+  // No overrides currently needed — all known errors fixed in city-vibes.json v8.0.0.
+  // Example format:
+  // 'new york::chinatown canal street': 'street',
+};
+
 // ============================================================================
 // PHRASE SELECTORS
 // ============================================================================
@@ -2436,116 +2910,201 @@ function getHumidityPhrase(ctx: WeatherContext, seed: number): string {
   return pickRandom(pool, seed * 1.1);
 }
 
-/**
- * v7.3: Venue-aware wind — source-object composition.
- *
- * RULES:
- * 1. Phrases describe what OBJECTS do. No "wind/breeze/gale" words.
- * 2. Verbs calibrated per tier:
- *    light (15–25):   gentle motion (swaying, drifting, rippling)
- *    moderate (25–35): forceful motion (flapping, rattling, bending)
- *    strong (35–50):   violent motion (snapping, straining, horizontal)
- *    extreme (50+):    destructive motion (stripped, shredded, airborne)
- * 3. No "tearing" below extreme. No "battering" for immovable objects.
- * 4. Composed as one clause: "{speed} km/h {noun}, {interaction}"
- */
-type WindTier = 'light' | 'moderate' | 'strong' | 'extreme';
-const VENUE_WIND: Record<VenueSetting, Record<WindTier, string[]>> = {
+// ── Beaufort-Calibrated Wind System (v8.0.0) ─────────────────────────────────
+// Replaces the old 4-tier system (light/moderate/strong/extreme) with
+// 7 Beaufort-aligned tiers. Key correction: 50 km/h is "near gale"
+// (strong visible effects on vegetation/objects, NOT destructive).
+// Destructive phrases ("airborne", "ripping", "buckling") now correctly
+// start at gale force (62+ km/h, Beaufort 8+).
+//
+// All human-body references purged ("hair pulled", "difficult to stand",
+// "impossible to stand") — prompts describe what the CAMERA sees, not
+// what a person feels.
+//
+// Beaufort mapping:
+//   calm       <6       (B0–1)  — invisible in photograph, early return
+//   breeze     6–19     (B2–3)  — gentle movement: flags shift, leaves rustle
+//   fresh      20–29    (B4)    — moderate: dust raised, small branches move
+//   strong     30–49    (B5–6)  — clear effects: large branches, flags snap
+//   nearGale   50–61    (B7)    — whole trees sway, resistance felt walking
+//   gale       62–74    (B8)    — twigs break, structural damage begins
+//   strongGale 75–88    (B9)    — significant damage, chimneys removed
+//   storm      89+      (B10+)  — trees uprooted, considerable structural damage
+//
+// New features in v8.0.0:
+// - Wind direction from OWM (windDegrees) → cardinal suffix when available
+// - Gust factor: when windGustKmh > sustained * 1.5 → "gusting to {gust}" suffix
+// - Snow+wind interaction: blowing/drifting snow phrases when precip.type === 'snow'
+
+type WindForce =
+  | 'calm'
+  | 'breeze'
+  | 'fresh'
+  | 'strong'
+  | 'nearGale'
+  | 'gale'
+  | 'strongGale'
+  | 'storm';
+
+/** Tiers that have venue interaction phrase pools (calm excluded — early return). */
+type ActiveWindForce = Exclude<WindForce, 'calm'>;
+
+const VENUE_WIND: Record<VenueSetting, Record<ActiveWindForce, string[]>> = {
   waterfront: {
-    light: [
+    breeze: [
       'ripples crossing harbour water',
-      'moored boats rocking gently',
-      'harbour flags shifting lazily',
+      'moored boats shifting gently at berths',
+      'harbour flags lifting from poles',
     ],
-    moderate: [
+    fresh: [
+      'small waves forming across the harbour',
+      'spray misting lightly over bows',
+      'flags extending taut from poles',
+    ],
+    strong: [
       'whitecaps forming across the harbour',
       'spray lifting off wave crests',
       'moored boats straining at lines',
     ],
-    strong: [
+    nearGale: [
       'harbour whitecaps and blown spray',
       'waves slapping hard against quayside',
       'rigging cables humming taut',
     ],
-    extreme: [
-      'waves crashing over quayside walls',
+    gale: [
+      'waves crashing against quayside walls',
       'spray filling the air horizontally',
       'boats slamming against moorings',
     ],
+    strongGale: [
+      'heavy seas breaking over harbour walls',
+      'harbour awash with horizontal spray',
+      'smaller vessels heeling dangerously',
+    ],
+    storm: [
+      'waves overtopping harbour walls entirely',
+      'massive spray sheets across the quay',
+      'harbour infrastructure visibly straining',
+    ],
   },
   beach: {
-    light: [
+    breeze: [
       'fine sand drifting at ankle height',
       'shallow surf ruffled onshore',
       'beach grass swaying gently',
     ],
-    moderate: [
+    fresh: [
       'sand streaming in low ribbons',
       'surf choppy and breaking unevenly',
-      'dune grass flattened sideways',
+      'dune grass bending sideways',
     ],
     strong: [
-      'sand flying at waist height',
+      'sand flying at knee height',
       'rough surf pounding the shore',
-      'everything sandblasted horizontal',
+      'vegetation flattened sideways',
     ],
-    extreme: [
+    nearGale: [
+      'sand streaming at waist height',
+      'heavy surf breaking far up the beach',
+      'everything bent hard shoreward',
+    ],
+    gale: [
       'sand airborne in thick clouds',
       'violent surf crashing far inland',
-      'beach completely scoured bare',
+      'beach scoured down to wet sand',
+    ],
+    strongGale: [
+      'sand blasting horizontal across the shore',
+      'enormous surf breaking over dunes',
+      'coastal debris tumbling inland',
+    ],
+    storm: [
+      'total sand whiteout conditions',
+      'surf reaching well beyond the dunes',
+      'beach landscape completely reshaped',
     ],
   },
   street: {
-    light: [
+    breeze: [
       'awnings swaying gently overhead',
       'litter drifting along gutters',
       'shop banners shifting slowly',
     ],
-    moderate: [
+    fresh: [
       'awnings flapping hard overhead',
       'signage rattling on brackets',
-      'loose paper channelling fast',
+      'loose paper channelling fast between buildings',
     ],
     strong: [
       'awnings straining at fixings',
       'signs swinging wildly on posts',
-      'debris skittering down pavement',
+      'debris skittering down the pavement',
     ],
-    extreme: [
+    nearGale: [
+      'awnings pulled taut and vibrating',
+      'larger signs bending on mountings',
+      'bins rolling down the street',
+    ],
+    gale: [
       'awnings ripping from brackets',
       'signs bent sideways on posts',
-      'loose objects airborne',
+      'loose objects tumbling down the road',
+    ],
+    strongGale: [
+      'canopy structures tearing free',
+      'signage damaged and hanging loose',
+      'lightweight street furniture shifting',
+    ],
+    storm: [
+      'structural debris airborne in the street',
+      'signage destroyed and scattered',
+      'nothing unsecured remaining upright',
     ],
   },
   narrow: {
-    light: [
+    breeze: [
       'noren curtains swaying in doorways',
       'hanging lanterns rotating slowly',
       'alley air funnelling gently',
     ],
-    moderate: [
+    fresh: [
       'noren curtains flapping horizontal',
       'hanging signs clattering on walls',
-      'funnelled air pushing through',
+      'funnelled air pushing through the passage',
     ],
     strong: [
       'noren curtains pinned horizontal',
       'lanterns swinging wildly overhead',
-      'funnelled blast through alley',
+      'funnelled blast howling through the alley',
     ],
-    extreme: [
-      'everything pinned flat horizontal',
-      'hanging objects torn from hooks',
-      'alley acting as a blast tunnel',
+    nearGale: [
+      'fabric pinned flat against walls',
+      'hanging objects swinging hard',
+      'wind howling through the narrow passage',
+    ],
+    gale: [
+      'lightweight objects torn from hooks',
+      'alley acting as a violent wind tunnel',
+      'debris channelling fast through the gap',
+    ],
+    strongGale: [
+      'everything loose stripped from walls',
+      'alley funnelling violent sustained gusts',
+      'shutters rattling and straining on hinges',
+    ],
+    storm: [
+      'alley completely scoured by wind',
+      'debris blasting through the passage',
+      'nothing hanging or mounted remaining',
     ],
   },
   market: {
-    light: [
+    breeze: [
       'stall canopies rippling gently',
       'hanging fabric swaying overhead',
       'produce displays shifting slightly',
     ],
-    moderate: [
+    fresh: [
       'stall canopies flapping hard',
       'hanging banners snapping taut',
       'lightweight goods sliding off tables',
@@ -2553,21 +3112,36 @@ const VENUE_WIND: Record<VenueSetting, Record<WindTier, string[]>> = {
     strong: [
       'canopy frames straining and bending',
       'fabric covers lifting at edges',
-      'stall goods scattering',
+      'stall goods scattering across aisles',
     ],
-    extreme: [
-      'stall canopies ripping free',
-      'market goods airborne',
+    nearGale: [
+      'canopies pulled taut and vibrating',
+      'heavier goods sliding on tables',
+      'vendors securing remaining stock',
+    ],
+    gale: [
+      'canopy frames bending dangerously',
+      'fabric covers tearing loose',
+      'goods tumbling from overturned tables',
+    ],
+    strongGale: [
+      'stall canopies ripping free entirely',
+      'market goods airborne across the aisles',
       'entire stall frames buckling',
+    ],
+    storm: [
+      'entire market stalls collapsing',
+      'everything airborne and scattered',
+      'market infrastructure destroyed',
     ],
   },
   plaza: {
-    light: [
+    breeze: [
       'dust skittering across flagstones',
       'flags on poles shifting gently',
       'fountain spray drifting sideways',
     ],
-    moderate: [
+    fresh: [
       'flags snapping taut on poles',
       'loose leaves spiralling across stone',
       'fountain spray blown sideways',
@@ -2575,21 +3149,36 @@ const VENUE_WIND: Record<VenueSetting, Record<WindTier, string[]>> = {
     strong: [
       'flags rigid horizontal on poles',
       'grit blasting across open stone',
-      'fountain completely blown apart',
+      'fountain spray completely dispersed',
     ],
-    extreme: [
+    nearGale: [
+      'flag fabric straining at fastenings',
+      'loose objects rolling across the plaza',
+      'fountain blown apart into mist',
+    ],
+    gale: [
       'flag fabric shredding on poles',
-      'open plaza scoured by blast',
-      'nothing upright in open space',
+      'open plaza scoured by flying grit',
+      'temporary structures leaning dangerously',
+    ],
+    strongGale: [
+      'flagpoles bending under sustained force',
+      'nothing unsecured remaining in the open',
+      'plaza completely scoured clean',
+    ],
+    storm: [
+      'structural elements straining visibly',
+      'plaza cleared of all loose material',
+      'flagpoles damaged and bent horizontal',
     ],
   },
   park: {
-    light: [
+    breeze: [
       'leaves drifting from branches',
       'long grass bending uniformly',
       'branches swaying gently overhead',
     ],
-    moderate: [
+    fresh: [
       'trees swaying noticeably',
       'leaves scattering across paths',
       'shrubs flattened sideways',
@@ -2597,95 +3186,219 @@ const VENUE_WIND: Record<VenueSetting, Record<WindTier, string[]>> = {
     strong: [
       'trees bending hard windward',
       'branches cracking overhead',
-      'leaves stripped from canopy',
+      'leaves stripped from lower canopy',
     ],
-    extreme: [
-      'trees bent nearly horizontal',
-      'large branches snapping off',
-      'canopy completely stripped bare',
+    nearGale: [
+      'whole trees swaying heavily',
+      'large branches thrashing',
+      'leaf litter spiralling in vortices',
+    ],
+    gale: ['large branches snapping off', 'trees bent hard windward', 'canopy being stripped bare'],
+    strongGale: [
+      'major limbs breaking with cracks',
+      'trees leaning dangerously windward',
+      'everything stripped bare overhead',
+    ],
+    storm: [
+      'trees uprooted and toppling',
+      'canopy completely destroyed',
+      'park landscape totally transformed',
     ],
   },
   elevated: {
-    light: [
-      'treetops swaying below viewpoint',
+    breeze: [
       'exposed shrubs leaning gently',
-      'hair and clothing pulled sideways',
+      'treetops swaying below viewpoint',
+      'summit flags shifting on poles',
     ],
-    moderate: [
+    fresh: [
       'treetops thrashing below viewpoint',
-      'exposed vegetation flattened sideways',
-      'difficult to stand still',
+      'exposed vegetation bending sideways',
+      'summit flags snapping taut',
     ],
     strong: [
       'treetops violently thrashing below',
       'all vegetation pinned flat',
-      'standing requires bracing',
+      'exposed surfaces completely windswept',
     ],
-    extreme: [
-      'treetops stripped bare below',
-      'nothing standing upright at summit',
-      'impossible to stand unsupported',
+    nearGale: [
+      'everything flattened on exposed summit',
+      'vegetation pinned flat to the ground',
+      'sustained roar across the ridgeline',
+    ],
+    gale: [
+      'summit completely scoured by wind',
+      'vegetation stripped from exposed rock',
+      'exposed structures visibly straining',
+    ],
+    strongGale: [
+      'nothing upright on the exposed ridge',
+      'structural elements vibrating audibly',
+      'sustained howl across bare summit',
+    ],
+    storm: [
+      'extreme exposure conditions at summit',
+      'everything flattened or stripped away',
+      'ridgeline completely impassable',
     ],
   },
   monument: {
-    light: [
+    breeze: [
       'entrance flags shifting gently',
-      'courtyard dust drifting',
+      'courtyard dust drifting in eddies',
       'prayer flags swaying on lines',
     ],
-    moderate: [
+    fresh: [
       'entrance flags flapping hard',
-      'courtyard grit spiralling',
-      'loose offering items sliding',
+      'courtyard grit spiralling upward',
+      'loose offering items sliding across stone',
     ],
     strong: [
-      'flags rigid and snapping',
-      'courtyard scoured by grit',
-      'temporary structures straining',
+      'flags rigid and snapping loudly',
+      'courtyard scoured by blowing grit',
+      'temporary structures straining at anchors',
     ],
-    extreme: [
-      'flags shredding at poles',
-      'everything loose airborne',
-      'temporary structures collapsing',
+    nearGale: [
+      'flags straining hard at poles',
+      'courtyard blasted clean of debris',
+      'lightweight barriers shifting position',
+    ],
+    gale: [
+      'flags shredding at their poles',
+      'everything loose airborne across grounds',
+      'temporary structures leaning dangerously',
+    ],
+    strongGale: [
+      'flagpoles bending under the force',
+      'monument grounds completely scoured',
+      'barriers toppling across courtyards',
+    ],
+    storm: [
+      'structural elements of grounds straining',
+      'grounds completely cleared by wind',
+      'monument stonework sandblasted by debris',
     ],
   },
 };
 
-function getWindTier(speed: number): WindTier | null {
-  if (speed < 15) return null;
-  if (speed < 25) return 'light';
-  if (speed < 35) return 'moderate';
+function classifyWind(speed: number): WindForce {
+  if (speed < 6) return 'calm';
+  if (speed < 20) return 'breeze';
+  if (speed < 30) return 'fresh';
   if (speed < 50) return 'strong';
-  return 'extreme';
+  if (speed < 62) return 'nearGale';
+  if (speed < 75) return 'gale';
+  if (speed < 89) return 'strongGale';
+  return 'storm';
+}
+
+/** Convert wind degrees (0–360) to cardinal direction word. */
+function getCardinalDirection(degrees: number): string {
+  const dirs = [
+    'northerly',
+    'north-easterly',
+    'easterly',
+    'south-easterly',
+    'southerly',
+    'south-westerly',
+    'westerly',
+    'north-westerly',
+  ];
+  return dirs[Math.round(degrees / 45) % 8]!;
+}
+
+/** Wind noun by Beaufort force — what the whole clause labels itself. */
+function getWindNoun(force: WindForce): string {
+  switch (force) {
+    case 'calm':
+      return 'air';
+    case 'breeze':
+      return 'breeze';
+    case 'fresh':
+      return 'breeze';
+    case 'strong':
+      return 'wind';
+    case 'nearGale':
+      return 'high wind';
+    case 'gale':
+      return 'gale';
+    case 'strongGale':
+      return 'severe gale';
+    case 'storm':
+      return 'storm';
+  }
 }
 
 /**
- * v7.3: Composed wind clause.
+ * v8.0.0: Beaufort-calibrated wind phrase.
  *
  * Output format (single clause, no stacking):
- *   Below 15:  "still air" / "light 8 km/h breeze"
- *   15–25:     "{speed} km/h breeze, {interaction}"
- *   25–50:     "{speed} km/h wind, {interaction}"
- *   50+:       "{speed} km/h gale, {interaction}"
+ *   Below 6:   "still air"
+ *   6–19:      "{direction} {speed} km/h breeze, {interaction}"
+ *   20–29:     "{direction} {speed} km/h breeze, {interaction}"
+ *   30–49:     "{direction} {speed} km/h wind, {interaction}"
+ *   50–61:     "{direction} {speed} km/h high wind, {interaction}"
+ *   62–74:     "{direction} {speed} km/h gale, {interaction}"
+ *   75–88:     "{direction} {speed} km/h severe gale, {interaction}"
+ *   89+:       "{direction} {speed} km/h storm, {interaction}"
  *
- * The speed number does the intensity work. The noun (breeze/wind/gale)
+ * New in v8.0.0:
+ * - Direction prefix when windDegrees available (e.g. "south-westerly 35 km/h wind")
+ * - Gust suffix when gust > sustained * 1.5 (e.g. "gusting to 52 km/h")
+ * - Snow+wind interaction: blowing/drifting snow replaces venue interaction
+ *   when PrecipState indicates active snow and wind is fresh+
+ *
+ * The speed number does the intensity work. The noun (breeze/wind/gale/storm)
  * sets the register. The interaction shows what the camera sees.
  */
-function getWindPhrase(ctx: WeatherContext, seed: number, venueSetting?: VenueSetting): string {
+function getWindPhrase(
+  ctx: WeatherContext,
+  seed: number,
+  venueSetting?: VenueSetting,
+  precip?: PrecipState,
+): string {
   const speed = Math.round(ctx.windKmh);
 
-  // Below 15 km/h — invisible in a still photo
-  if (speed < 5) return 'still air';
-  if (speed < 15) return `light ${speed} km/h breeze`;
+  // Below 6 km/h — Beaufort 0–1, invisible in a still photo
+  if (speed < 6) return 'still air';
 
-  // 15+: Compose single clause — speed + noun + interaction
-  const noun = speed < 25 ? 'breeze' : speed < 50 ? 'wind' : 'gale';
-  const tier = getWindTier(speed)!;
+  const force = classifyWind(speed);
+  const noun = getWindNoun(force);
   const setting = venueSetting ?? 'street';
-  const pool = VENUE_WIND[setting]?.[tier];
+
+  // Direction prefix — only when OWM provides wind.deg
+  const dirPrefix =
+    typeof ctx.windDegrees === 'number' ? `${getCardinalDirection(ctx.windDegrees)} ` : '';
+
+  // Gust suffix — only when gust exceeds sustained speed by 50%+
+  let gustSuffix = '';
+  if (typeof ctx.windGustKmh === 'number' && ctx.windGustKmh > speed * 1.5) {
+    gustSuffix = ` gusting to ${Math.round(ctx.windGustKmh)} km/h`;
+  }
+
+  // Snow+wind interaction: blowing/drifting snow overrides venue interaction
+  // when active snow/sleet and wind is fresh (20+) or above
+  if (
+    precip &&
+    precip.active &&
+    (precip.type === 'snow' || precip.type === 'sleet') &&
+    speed >= 20
+  ) {
+    const snowInteraction =
+      speed >= 50
+        ? 'snow streaming horizontal across the scene'
+        : speed >= 30
+          ? 'blowing snow reducing visibility'
+          : 'snow drifting across surfaces';
+    return `${dirPrefix}${speed} km/h ${noun}${gustSuffix}, ${snowInteraction}`;
+  }
+
+  // Standard venue interaction
+  const pool = force !== 'calm' ? VENUE_WIND[setting]?.[force as ActiveWindForce] : undefined;
   const interaction = pool?.length ? pickRandom(pool, seed * 2.3) : '';
 
-  return interaction ? `${speed} km/h ${noun}, ${interaction}` : `${speed} km/h ${noun}`;
+  const core = `${dirPrefix}${speed} km/h ${noun}${gustSuffix}`;
+  return interaction ? `${core}, ${interaction}` : core;
 }
 
 /**
@@ -2821,10 +3534,14 @@ function getCityVenue(city: string, seed: number): VenueResult | null {
 
   // Pick a random venue — return name + setting (default to 'street')
   // v7.7: pass through venue-specific lightCharacter when present in JSON.
+  // v8.0.0: Apply setting override if registered (runtime safety net).
   const venue = pickRandom(data.venues, seed * 2.1);
+  const overrideKey = `${cityLower}::${venue.name.toLowerCase()}`;
+  const effectiveSetting: VenueSetting =
+    SETTING_OVERRIDES[overrideKey] ?? (venue.setting as VenueSetting) ?? 'street';
   const result: VenueResult = {
     name: venue.name,
-    setting: (venue.setting as VenueSetting) ?? 'street',
+    setting: effectiveSetting,
   };
   if (venue.lightCharacter && venue.lightCharacter.length > 0) {
     result.lightCharacter = venue.lightCharacter;
@@ -2852,8 +3569,71 @@ function getCityVenue(city: string, seed: number): VenueResult | null {
 //                  Wind → Humidity → Temp → Directive
 // ============================================================================
 
+// ── v8.0.0 Chat 4: Setting-Aware Ending + Period Noun Time ────────────────
+
+/**
+ * Returns a setting-appropriate quality directive for Tier 3 endings.
+ * Replaces the hardcoded "Photorealistic, highly detailed urban landscape."
+ * which was wrong for beaches, parks, elevated viewpoints, etc.
+ * v8.0.0 Chat 7: prefix driven by profile.style (Photorealistic/Cinematic/Documentary).
+ */
+function getSettingEnding(
+  venue: VenueResult | null,
+  style: PromptProfile['style'] = 'photoreal',
+): string {
+  const prefix = STYLE_ENDING_PREFIX[style];
+  if (!venue) return `${prefix}, high-detail city scene.`;
+  switch (venue.setting) {
+    case 'street':
+    case 'narrow':
+    case 'market':
+    case 'plaza':
+      return `${prefix}, high-detail city scene.`;
+    case 'waterfront':
+    case 'beach':
+      return `${prefix}, high-detail coastal scene.`;
+    case 'monument':
+      return `${prefix}, high-detail landmark scene.`;
+    case 'park':
+      return `${prefix}, high-detail landscape scene.`;
+    case 'elevated':
+      return `${prefix}, high-detail skyline view.`;
+    default:
+      return `${prefix}, high-detail city scene.`;
+  }
+}
+
+/**
+ * Period noun for Tier 4 — weak parsers handle "dawn", "dusk", "night"
+ * better than "seven in the evening" or "the stroke of midnight".
+ * Returns a simple period-of-day noun instead of clock-time phrasing.
+ */
+function getTimePeriod(hour: number): string {
+  if (hour >= 0 && hour < 5) return 'deep night';
+  if (hour === 5) return 'pre-dawn';
+  if (hour === 6) return 'dawn';
+  if (hour >= 7 && hour < 10) return 'morning';
+  if (hour >= 10 && hour < 12) return 'late morning';
+  if (hour === 12) return 'midday';
+  if (hour >= 13 && hour < 15) return 'early afternoon';
+  if (hour >= 15 && hour < 17) return 'late afternoon';
+  if (hour >= 17 && hour < 19) return 'early evening';
+  if (hour === 19) return 'dusk';
+  if (hour === 20) return 'twilight';
+  if (hour >= 21 && hour < 23) return 'night';
+  return 'late night'; // hour 23
+}
+
+// ── v8.0.0 Chat 5→7: Quality tags now in STYLE_QUALITY_TAGS (profile-keyed).
+// Old PHOTOREAL_QUALITY_TAGS constant removed — use STYLE_QUALITY_TAGS[profile.style].
+
 /**
  * Tier 1: CLIP-Based — Weighted keywords with emphasis markers
+ *
+ * v8.0.0 Chat 5:
+ * - Returns WeatherPromptResult (structured positive/negative).
+ * - Quality tags: "masterpiece, best quality, 8k" → photoreal-biased.
+ * - Token budget guard: caps at 15 parts (~60 CLIP tokens).
  *
  * Lighting rendered as independent weighted tokens:
  * - Primary light source gets :1.3 weight
@@ -2868,13 +3648,15 @@ function generateTier1(
   observedAtUtc: Date,
   visualTruth: VisualTruth | null,
   venue: VenueResult | null,
-): string {
+  profile: PromptProfile,
+): WeatherPromptResult {
   const ctx = buildContext(weather, hour, observedAtUtc);
   const twoHourWindow = Math.floor(observedAtUtc.getTime() / 7_200_000);
   const seed = ctx.tempC * 100 + ctx.humidity * 10 + ctx.windKmh + hour + twoHourWindow;
 
-  const quiet = isQuietHours(weather, hour, observedAtUtc);
-  const wind = getWindPhrase(ctx, seed, venue?.setting);
+  // v8.0.0 Chat 7: People exclusion driven by profile instead of raw isQuietHours.
+  const quiet = shouldExcludePeople(profile, weather, hour, observedAtUtc);
+  const wind = getWindPhrase(ctx, seed, venue?.setting, visualTruth?.precip);
   const time = getTimeDescriptor(ctx, seed);
   // Sky omitted when lighting already encodes cloud state
   const skySource = getSkySourceAware(ctx, seed, lighting.encodesCloudState);
@@ -2896,8 +3678,9 @@ function generateTier1(
   if (lighting.atmosphereModifier) lightingParts.push(lighting.atmosphereModifier);
   // Stability modifier omitted from T1 — too abstract for CLIP
 
-  // Order: City → Venue → Lighting → Moon → Sky → Thermal → Wind → Moisture → Grounding → Time → quality
-  const parts = [
+  // v8.0.0 Chat 7: Quality tags driven by profile.style.
+  const qualityTags = STYLE_QUALITY_TAGS[profile.style];
+  const parts: (string | null)[] = [
     `(${city}:1.3)`,
     venue ? `(${venue.name}:1.2)` : null,
     ...lightingParts,
@@ -2910,28 +3693,47 @@ function generateTier1(
     moisture,
     grounding,
     time,
-    'masterpiece',
-    'best quality',
-    '8k',
-  ].filter(Boolean);
+    ...qualityTags,
+  ];
 
-  const positivePrompt = parts.join(', ');
+  // v8.0.0 Chat 7: Fragment limit driven by profile.verbosity.
+  const maxParts = VERBOSITY_T1_LIMIT[profile.verbosity];
+  const filtered = parts.filter(Boolean) as string[];
+  while (filtered.length > maxParts) {
+    const dropIdx = filtered.length - qualityTags.length - 1;
+    if (dropIdx < 3) break; // Never drop city/venue/primary lighting
+    filtered.splice(dropIdx, 1);
+  }
+
+  const positivePrompt = filtered.join(', ');
   const negativePrompt = quiet
     ? 'people, person, crowd, text, watermark, logo, signature, blurry'
     : 'text, watermark, logo, signature, blurry';
 
-  return `Positive prompt: ${positivePrompt}
-Negative prompt: ${negativePrompt}`;
+  return {
+    text: `Positive prompt: ${positivePrompt}\nNegative prompt: ${negativePrompt}`,
+    positive: positivePrompt,
+    negative: negativePrompt,
+    tier: 1,
+  };
 }
 
 /**
- * Tier 2: Midjourney — Natural flow with parameter flags
+ * Tier 2: Midjourney — Multi-prompt weight syntax (v8.0.0 Chat 6)
  *
- * v7.4: Connected scene via composeLightingSentence and composeSurfaceSentence.
- * Thermal absorbed into lighting connector. Surface reflects specific light.
+ * Replaced dash-break folklore with Midjourney `::` weight syntax.
+ * Segments control relative importance directly:
+ *   lighting+time::2  venue+sky+weather::1  surface::0.5
  *
- * Lighting+Time MUST lead (first clause ~60% weight).
- * Dash break after first clause prevents over-stylization.
+ * Word budget: ~40 words before parameters (MJ docs warn long prompts confuse).
+ * Quiet hours: formalised `--no people text` parameter.
+ *
+ * Segment strategy:
+ * - Seg 1 (::2): Lighting + time — defines colour palette and mood.
+ *   MJ gives ~60% attention to first segment; ::2 reinforces.
+ * - Seg 2 (::1): Venue + sky + weather — the scene content.
+ * - Seg 3 (::0.5): Surface detail — lowest priority, adds realism.
+ *   Omitted entirely when empty or over word budget (keeps prompt tight).
  */
 function generateTier2(
   city: string,
@@ -2942,13 +3744,15 @@ function generateTier2(
   visualTruth: VisualTruth | null,
   solarElevation: number | null,
   venue: VenueResult | null,
+  profile: PromptProfile,
 ): string {
   const ctx = buildContext(weather, hour, observedAtUtc);
   const twoHourWindow = Math.floor(observedAtUtc.getTime() / 7_200_000);
   const seed = ctx.tempC * 100 + ctx.humidity * 10 + ctx.windKmh + hour + twoHourWindow;
 
-  const quiet = isQuietHours(weather, hour, observedAtUtc);
-  const wind = getWindPhrase(ctx, seed, venue?.setting);
+  // v8.0.0 Chat 7: People exclusion driven by profile.
+  const quiet = shouldExcludePeople(profile, weather, hour, observedAtUtc);
+  const wind = getWindPhrase(ctx, seed, venue?.setting, visualTruth?.precip);
   const time = getTimeDescriptor(ctx, seed);
   const skySource = getSkySourceAware(ctx, seed, lighting.encodesCloudState);
 
@@ -2962,11 +3766,8 @@ function generateTier2(
     ? getSurfaceGrounding(visualTruth, ctx.tempC, moisture, thermal, seed, venue?.setting)
     : null;
 
-  const venuePart = venue ? ` at ${venue.name}` : '';
-
-  // v7.4: Connected lighting (thermal absorbed as connector, not standalone)
+  // v7.4: Connected lighting (thermal absorbed as connector)
   const lightScene = composeLightingSentence(lighting, visualTruth, seed);
-  const firstClause = `${capitalize(time)}, ${lightScene}`;
 
   // Moon
   const moonPart = lighting.moonVisible
@@ -2988,19 +3789,40 @@ function generateTier2(
   const moistureLevel = visualTruth?.moistureVisibility ?? 'invisible';
   const surfacePhrase = composeSurfaceSentence(moisture, grounding, moistureLevel, lightRef);
 
-  // Scene parts: no standalone thermal or moisture (absorbed into lighting/surface)
-  const sceneParts = [
-    `${city}${venuePart}`,
-    skySource,
-    moonPart,
-    wind,
-    surfacePhrase ? surfacePhrase.charAt(0).toLowerCase() + surfacePhrase.slice(1) : null,
-  ].filter(Boolean);
+  // ── Segment 1 (::2): Lighting + time ─────────────────────────────────
+  const seg1 = `${capitalize(time)}, ${lightScene}`;
 
-  const description = `${firstClause} — ${sceneParts.join(', ')}`;
-  const negatives = quiet ? '--ar 16:9 --stylize 100 --no people text' : '--ar 16:9 --stylize 100';
+  // ── Segment 2 (::1): Venue + sky + weather ───────────────────────────
+  const venuePart = venue ? ` at ${venue.name}` : '';
+  const sceneParts = [`${city}${venuePart}`, skySource, moonPart, wind].filter(Boolean);
+  const seg2 = sceneParts.join(', ');
 
-  return `${description} ${negatives}`;
+  // ── Segment 3 (::0.5): Surface detail ────────────────────────────────
+  // Omitted entirely if no surface phrase (keeps prompt short).
+  const surfaceLower = surfacePhrase
+    ? surfacePhrase.charAt(0).toLowerCase() + surfacePhrase.slice(1)
+    : null;
+
+  // Word budget: target ~40 words before params. Count across all segments.
+  const countWords = (s: string) => s.split(/\s+/).length;
+  const baseWords = countWords(seg1) + countWords(seg2);
+  const surfaceWords = surfaceLower ? countWords(surfaceLower) : 0;
+
+  // Assemble with :: weight syntax
+  let prompt: string;
+  if (surfaceLower && baseWords + surfaceWords <= 45) {
+    prompt = `${seg1}::2 ${seg2}::1 ${surfaceLower}::0.5`;
+  } else {
+    // Over budget or no surface — 2-segment prompt
+    prompt = `${seg1}::2 ${seg2}::1`;
+  }
+
+  // Parameters always trail after the last segment
+  const params = quiet
+    ? `--ar ${profile.mjAspect} --stylize ${profile.mjStylize} --no people text`
+    : `--ar ${profile.mjAspect} --stylize ${profile.mjStylize}`;
+
+  return `${prompt} ${params}`;
 }
 
 /**
@@ -3031,13 +3853,15 @@ function generateTier3(
   visualTruth: VisualTruth | null,
   solarElevation: number | null,
   venue: VenueResult | null,
+  profile: PromptProfile,
 ): string {
   const ctx = buildContext(weather, hour, observedAtUtc);
   const twoHourWindow = Math.floor(observedAtUtc.getTime() / 7_200_000);
   const seed = ctx.tempC * 100 + ctx.humidity * 10 + ctx.windKmh + hour + twoHourWindow;
 
-  const quiet = isQuietHours(weather, hour, observedAtUtc);
-  const wind = getWindPhrase(ctx, seed, venue?.setting);
+  // v8.0.0 Chat 7: People exclusion driven by profile.
+  const quiet = shouldExcludePeople(profile, weather, hour, observedAtUtc);
+  const wind = getWindPhrase(ctx, seed, venue?.setting, visualTruth?.precip);
   const time = getTimeDescriptor(ctx, seed);
   const skySource = getSkySourceAware(ctx, seed, lighting.encodesCloudState);
 
@@ -3079,11 +3903,11 @@ function generateTier3(
   const lightSentence = `${capitalize(lightScene)}.${skyClause}${moonClause}`;
 
   // ── S3: Wind as action ──────────────────────────────────────────────
-  // v7.4: Wind is its own sentence — not comma-listed with conditions.
-  // Below 5 km/h: omitted entirely (invisible in a still photograph).
+  // v8.0.0: Threshold updated to match Beaufort calm boundary (B0–1 = <6 km/h).
+  // Below 6 km/h: omitted entirely (invisible in a still photograph).
   let windSentence = '';
   const speed = Math.round(ctx.windKmh);
-  if (speed >= 5) {
+  if (speed >= 6) {
     windSentence = `${capitalize(wind)}.`;
   }
 
@@ -3104,12 +3928,14 @@ function generateTier3(
   const surfaceSentence = surfacePhrase ? `${surfacePhrase}.` : '';
 
   // ── Assemble ────────────────────────────────────────────────────────
+  // v8.0.0 Chat 4: Setting-aware ending replaces hardcoded "urban landscape"
+  // which was wrong for beaches, parks, elevated viewpoints, etc.
   const sentences = [
     opening,
     lightSentence,
     windSentence,
     surfaceSentence,
-    'Photorealistic, highly detailed urban landscape.',
+    getSettingEnding(venue, profile.style),
   ].filter(Boolean);
   if (quiet) sentences.push('No people or readable text.');
 
@@ -3119,12 +3945,14 @@ function generateTier3(
 /**
  * Tier 4: Plain Language — Simple comma-separated prompt
  *
- * Order: City → Venue → Lighting → Time → Sky(cond) → Moon → Wind →
- *        Humidity → Temp → Directive
+ * v8.0.0 Chat 4:
+ * - Period noun time (getTimePeriod) replaces clock-time phrasing.
+ *   Weak parsers handle "dawn"/"night" better than "seven in the evening".
+ * - Hard fragment limit: 10 comma items maximum.
+ *   Drop priority (lowest visual impact first):
+ *   grounding → skySource → moon → thermal → moisture
  *
  * Lighting before Time (concrete visual > abstract clock for weak parsers).
- * Moon moved from last to slot 6 (not buried).
- * Temperature deliberately last (least visual impact).
  */
 function generateTier4(
   city: string,
@@ -3134,14 +3962,17 @@ function generateTier4(
   observedAtUtc: Date,
   visualTruth: VisualTruth | null,
   venue: VenueResult | null,
+  profile: PromptProfile,
 ): string {
   const ctx = buildContext(weather, hour, observedAtUtc);
   const twoHourWindow = Math.floor(observedAtUtc.getTime() / 7_200_000);
   const seed = ctx.tempC * 100 + ctx.humidity * 10 + ctx.windKmh + hour + twoHourWindow;
 
-  const quiet = isQuietHours(weather, hour, observedAtUtc);
-  const wind = getWindPhrase(ctx, seed, venue?.setting);
-  const time = getTimeDescriptor(ctx, seed);
+  // v8.0.0 Chat 7: People exclusion driven by profile.
+  const quiet = shouldExcludePeople(profile, weather, hour, observedAtUtc);
+  const wind = getWindPhrase(ctx, seed, venue?.setting, visualTruth?.precip);
+  // v8.0.0 Chat 4: Period noun instead of clock-time phrasing
+  const time = getTimePeriod(ctx.hour);
   const skySource = getSkySourceAware(ctx, seed, lighting.encodesCloudState);
 
   // v7.0: Visual truth phrases
@@ -3154,26 +3985,47 @@ function generateTier4(
     ? getSurfaceGrounding(visualTruth, ctx.tempC, moisture, thermal, seed, venue?.setting)
     : null;
 
-  // Order: City → Venue → Lighting → Time → Sky → Moon → Wind → Moisture → Thermal → Grounding
   const moonPart = lighting.moonVisible
     ? lighting.moonPositionPhrase
       ? `${ctx.moonPhrase} ${lighting.moonPositionPhrase}`
       : ctx.moonPhrase
     : null;
-  const parts = [
-    city,
-    venue?.name,
-    lighting.fullPhrase,
-    time,
-    skySource,
-    moonPart,
-    wind,
-    moisture,
-    thermal,
-    grounding,
-  ].filter(Boolean);
 
-  const prompt = parts.join(', ');
+  // v8.0.0 Chat 4: Priority-tagged parts for the 10-fragment limit.
+  // Higher priority = kept. Lower priority = dropped first when over budget.
+  // Priority 10 (city) → never dropped.  Priority 1 (grounding) → first to drop.
+  const tagged: { value: string | null | undefined; priority: number }[] = [
+    { value: city, priority: 10 },
+    { value: venue?.name, priority: 9 },
+    { value: lighting.fullPhrase, priority: 8 },
+    { value: time, priority: 7 },
+    { value: wind, priority: 6 },
+    { value: moisture, priority: 5 },
+    { value: thermal, priority: 4 },
+    { value: moonPart, priority: 3 },
+    { value: skySource, priority: 2 },
+    { value: grounding, priority: 1 },
+  ];
+
+  // Filter to only non-empty values
+  const live = tagged.filter((t): t is { value: string; priority: number } => !!t.value);
+
+  // v8.0.0 Chat 7: Fragment limit driven by profile.verbosity.
+  const MAX_T4_PARTS = VERBOSITY_T4_LIMIT[profile.verbosity];
+  while (live.length > MAX_T4_PARTS) {
+    let minIdx = 0;
+    let minPri = live[0]?.priority ?? Infinity;
+    for (let i = 1; i < live.length; i++) {
+      const pri = live[i]?.priority ?? Infinity;
+      if (pri < minPri) {
+        minPri = pri;
+        minIdx = i;
+      }
+    }
+    live.splice(minIdx, 1);
+  }
+
+  const prompt = live.map((t) => t.value).join(', ');
   return quiet ? `${prompt}, no people or text visible` : prompt;
 }
 
@@ -3190,8 +4042,11 @@ function capitalize(str: string): string {
 // MAIN GENERATOR
 // ============================================================================
 
-export function generateWeatherPrompt(input: WeatherPromptInput): string {
+export function generateWeatherPrompt(input: WeatherPromptInput): WeatherPromptResult {
   const { city, weather, localHour, tier, latitude, longitude, observedAtUtcSeconds } = input;
+
+  // v8.0.0 Chat 7: Resolve prompt profile (fills defaults for omitted fields).
+  const profile = resolveProfile(input.profile);
 
   // v6.2: single reference time for ALL physics (sun elevation, lunar position, moon phase,
   // and quiet-hours gating). Derived from API dt (UTC seconds) + timezoneOffset.
@@ -3211,20 +4066,11 @@ export function generateWeatherPrompt(input: WeatherPromptInput): string {
   }
 
   // v7.0: Derive visual truth BEFORE lighting — unified atmospheric assessment.
-  // Needs basic context for precipitation flags.
+  // v8.0.0: classifyPrecip() replaces isRainy/isStormy booleans.
+  // This is the fix for the biggest correctness bug: snow was not treated
+  // as precipitation-active, causing "clear pristine air" during snowfall.
   const isNight = isNightTime(weather, localHour, observedAtUtc);
-  const desc = (weather.description || '').toLowerCase();
-  const cond = (weather.conditions || '').toLowerCase();
-  const isRainy =
-    desc.includes('rain') ||
-    desc.includes('drizzle') ||
-    cond.includes('rain') ||
-    cond.includes('drizzle');
-  const isStormy =
-    desc.includes('storm') ||
-    desc.includes('thunder') ||
-    cond.includes('thunder') ||
-    cond.includes('storm');
+  const precip = classifyPrecip(weather);
 
   // Visual truth: cross-references ALL weather data to derive what the atmosphere LOOKS like.
   // v7.1: ALWAYS computed. Dew point needs only temp + humidity (always available).
@@ -3232,6 +4078,7 @@ export function generateWeatherPrompt(input: WeatherPromptInput): string {
   // v7.0 BUG: guard (cloudCover != null || visibility != null) blocked visual truth for demo
   // exchanges and any live data gap, causing fallback to "in pristine clear air" + old
   // humidity/temp phrases — exactly the contradictions visual truth was built to eliminate.
+  // v8.0.0: Now receives PrecipState instead of isRainy/isStormy booleans.
   const visualTruth = deriveVisualTruth(
     weather.temperatureC,
     weather.humidity,
@@ -3241,8 +4088,7 @@ export function generateWeatherPrompt(input: WeatherPromptInput): string {
     weather.pressure,
     solarElevation,
     isNight,
-    isRainy,
-    isStormy,
+    precip,
   );
 
   // Compute lighting state ONCE — one engine, multiple skins
@@ -3285,45 +4131,125 @@ export function generateWeatherPrompt(input: WeatherPromptInput): string {
     venue?.lightCharacter ?? null,
   );
 
+  // v8.0.0 Chat 5→7: All tiers return WeatherPromptResult.
+  // Tier 1 returns it directly (with positive/negative fields).
+  // Tiers 2/3/4 return string internally; wrapped here for backward compat.
+  // v8.0.0 Chat 7: Resolved profile passed to every tier.
+  // v8.0.0 Chat 8: Result captured so trace can be attached.
+  let result: WeatherPromptResult;
+
   switch (tier) {
     case 1:
-      return generateTier1(city, weather, localHour, lighting, observedAtUtc, visualTruth, venue);
+      result = generateTier1(
+        city,
+        weather,
+        localHour,
+        lighting,
+        observedAtUtc,
+        visualTruth,
+        venue,
+        profile,
+      );
+      break;
     case 2:
-      return generateTier2(
-        city,
-        weather,
-        localHour,
-        lighting,
-        observedAtUtc,
-        visualTruth,
-        solarElevation,
-        venue,
-      );
-    case 3:
-      return generateTier3(
-        city,
-        weather,
-        localHour,
-        lighting,
-        observedAtUtc,
-        visualTruth,
-        solarElevation,
-        venue,
-      );
+      result = {
+        text: generateTier2(
+          city,
+          weather,
+          localHour,
+          lighting,
+          observedAtUtc,
+          visualTruth,
+          solarElevation,
+          venue,
+          profile,
+        ),
+        tier: 2,
+      };
+      break;
     case 4:
-      return generateTier4(city, weather, localHour, lighting, observedAtUtc, visualTruth, venue);
+      result = {
+        text: generateTier4(
+          city,
+          weather,
+          localHour,
+          lighting,
+          observedAtUtc,
+          visualTruth,
+          venue,
+          profile,
+        ),
+        tier: 4,
+      };
+      break;
+    case 3:
     default:
-      return generateTier3(
-        city,
-        weather,
-        localHour,
-        lighting,
-        observedAtUtc,
-        visualTruth,
-        solarElevation,
-        venue,
-      );
+      result = {
+        text: generateTier3(
+          city,
+          weather,
+          localHour,
+          lighting,
+          observedAtUtc,
+          visualTruth,
+          solarElevation,
+          venue,
+          profile,
+        ),
+        tier: 3,
+      };
+      break;
   }
+
+  // v8.0.0 Chat 8: Prompt Trace — attach diagnostic object in debug mode.
+  // Zero cost in production: the trace block is never entered.
+  const debugMode = input.debug === true || process.env.NODE_ENV === 'development';
+  if (debugMode) {
+    const windForce = classifyWind(weather.windSpeedKmh);
+    const excludedPeople = shouldExcludePeople(profile, weather, localHour, observedAtUtc);
+
+    result.trace = {
+      profile,
+      precip: {
+        type: precip.type,
+        intensity: precip.intensity,
+        active: precip.active,
+        reducesVisibility: precip.reducesVisibility,
+      },
+      windForce,
+      windSpeedKmh: weather.windSpeedKmh,
+      venue: venue ? { name: venue.name, setting: venue.setting } : null,
+      visualTruth: visualTruth
+        ? {
+            airClarity: visualTruth.airClarity,
+            contrast: visualTruth.contrast,
+            moistureVisibility: visualTruth.moistureVisibility,
+            thermalOptics: visualTruth.thermalOptics,
+            precipActive: visualTruth.precip.active,
+          }
+        : null,
+      lighting: {
+        base: lighting.base,
+        fullPhrase: lighting.fullPhrase,
+        shadowModifier: lighting.shadowModifier,
+        atmosphereModifier: lighting.atmosphereModifier,
+        moonVisible: lighting.moonVisible,
+        moonPositionPhrase: lighting.moonPositionPhrase,
+        nightDominant: lighting.nightDominant,
+        encodesCloudState: lighting.encodesCloudState,
+      },
+      solarElevation,
+      moon: { name: moonInfo.name, dayInCycle: moonInfo.dayInCycle, emoji: moonInfo.emoji },
+      isNight,
+      seed: venueSeed,
+      excludedPeople,
+      localHour,
+      temperatureC: weather.temperatureC,
+      humidity: weather.humidity,
+    };
+  }
+
+  return result;
 }
 
 export function getDefaultTier(): PromptTier {

@@ -9,6 +9,11 @@
 // - Added tempF, humidity, windKmh, description
 // - Previously only mapped tempC, emoji, condition (causing 0% humidity, 0 km/h wind)
 //
+// UPDATED v8.0.0 (19 Feb 2026):
+// - GatewayWeatherItem gains rainMm1h, snowMm1h, windDegrees, windGustKmh
+// - toWeatherData() pipes these through to ExchangeWeatherData
+// - Enables precipitation classification and Beaufort wind on frontend
+//
 // UPDATED v3.1.0 (12 Feb 2026):
 // - GatewayWeatherItem gains sunriseUtc, sunsetUtc, timezoneOffset, isDayTime
 // - toWeatherData() pipes these through to ExchangeWeatherData
@@ -53,6 +58,7 @@ const FETCH_TIMEOUT_MS = 5_000;
 /**
  * Weather data shape from gateway API.
  *
+ * v8.0.0: Added rainMm1h, snowMm1h, windDegrees, windGustKmh.
  * v3.1.0: Added sunriseUtc, sunsetUtc, timezoneOffset, isDayTime.
  * These are optional (?) because older gateway versions won't send them
  * and we need graceful degradation during rolling deploys.
@@ -82,6 +88,14 @@ interface GatewayWeatherItem {
   visibility?: number | null;
   /** Atmospheric pressure in hPa. From OWM main.pressure. */
   pressure?: number | null;
+  /** v8.0.0: Rain volume for last 1 hour in mm. null when no rain. */
+  rainMm1h?: number | null;
+  /** v8.0.0: Snow volume for last 1 hour in mm. null when no snow. */
+  snowMm1h?: number | null;
+  /** v8.0.0: Wind direction in degrees (0–360). null when absent. */
+  windDegrees?: number | null;
+  /** v8.0.0: Wind gust speed in km/h. null when no gusts. */
+  windGustKmh?: number | null;
 }
 
 /** Gateway response shape */
@@ -103,6 +117,7 @@ interface GatewayWeatherResponse {
  * FIXED: Now maps ALL fields from gateway response.
  * Previously only mapped tempC, emoji, condition - causing 0% humidity, 0 km/h wind.
  *
+ * v8.0.0: Now pipes rainMm1h, snowMm1h, windDegrees, windGustKmh through.
  * v3.1.0: Now pipes sunriseUtc, sunsetUtc, timezoneOffset, isDayTime through.
  * Uses ?? null for sunrise/sunset/timezone (gateway may send null or omit).
  * Uses ?? undefined for isDayTime so prompt generator can detect "unknown".
@@ -123,6 +138,10 @@ function toWeatherData(item: GatewayWeatherItem): ExchangeWeatherData {
     cloudCover: item.cloudCover ?? undefined,
     visibility: item.visibility ?? undefined,
     pressure: item.pressure ?? undefined,
+    rainMm1h: item.rainMm1h ?? undefined,
+    snowMm1h: item.snowMm1h ?? undefined,
+    windDegrees: item.windDegrees ?? undefined,
+    windGustKmh: item.windGustKmh ?? undefined,
   };
 }
 

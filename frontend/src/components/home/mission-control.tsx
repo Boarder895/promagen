@@ -288,6 +288,10 @@ export default function MissionControl({
       cloudCover: data.cloudCover ?? null,
       visibility: data.visibility ?? null,
       pressure: data.pressure ?? null,
+      rainMm1h: data.rainMm1h ?? null,
+      snowMm1h: data.snowMm1h ?? null,
+      windDegrees: data.windDegrees ?? null,
+      windGustKmh: data.windGustKmh ?? null,
     };
   }, [previewExchange, weatherIndex]);
 
@@ -300,6 +304,7 @@ export default function MissionControl({
     const fullWeather = toFullWeather(weatherData);
     if (!fullWeather) return null;
 
+    // v8.0.0 Chat 5: generateWeatherPrompt returns WeatherPromptResult; extract .text.
     return generateWeatherPrompt({
       city: previewExchange.city ?? 'London',
       weather: fullWeather,
@@ -307,7 +312,7 @@ export default function MissionControl({
       tier,
       latitude: previewExchange.latitude,
       longitude: previewExchange.longitude,
-    });
+    }).text;
   }, [weatherData, previewExchange]);
 
   const handleCopy = useCallback(async () => {

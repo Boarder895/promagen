@@ -11,6 +11,12 @@
  * - No sensitive data in logs
  * - Response sanitisation (strips unexpected fields)
  *
+ * UPDATED v8.0.0 (19 Feb 2026):
+ * - parseWeatherResponse() now extracts rainMm1h, snowMm1h, windDegrees, windGustKmh
+ * - OWM sends rain/snow objects only when precipitation is active
+ * - wind.deg and wind.gust are standard OWM fields (deg always present, gust optional)
+ * - These fields enable precipitation classification and Beaufort wind on frontend
+ *
  * UPDATED v6.0.0 (17 Feb 2026):
  * - parseWeatherResponse() now extracts cloudCover, visibility, pressure
  * - These fields enable the deterministic lighting engine on frontend
@@ -208,6 +214,7 @@ export async function fetchWeatherWithRetry(
 /**
  * Parse OpenWeatherMap response to Promagen WeatherData format.
  *
+ * v8.0.0: Now extracts rainMm1h, snowMm1h, windDegrees, windGustKmh.
  * v6.0.0: Now extracts cloudCover, visibility, pressure for lighting engine.
  * v3.1.0: Now extracts sunrise, sunset, timezone offset, and day/night flag.
  * - sunriseUtc / sunsetUtc: Unix timestamps from sys.sunrise / sys.sunset
@@ -261,6 +268,23 @@ export function parseWeatherResponse(
   // Atmospheric pressure in hPa — always present in main block.
   const pressure = raw.main.pressure;
 
+  // ── v8.0.0: Extract precipitation and extended wind fields ────────────
+  // OWM only sends the rain/snow objects when precipitation is occurring.
+  // When absent, we set null (not 0) to distinguish "no data" from "0mm".
+  const rainMm1h =
+    raw.rain && typeof raw.rain['1h'] === 'number' ? raw.rain['1h'] : null;
+  const snowMm1h =
+    raw.snow && typeof raw.snow['1h'] === 'number' ? raw.snow['1h'] : null;
+
+  // Wind direction is always present in OWM response (standard field).
+  // Defensive null check in case of rare API anomaly.
+  const windDegrees = typeof raw.wind.deg === 'number' ? raw.wind.deg : null;
+
+  // Wind gust is optional — only sent when gusts detected.
+  // Convert from m/s to km/h (same as sustained wind).
+  const windGustKmh =
+    typeof raw.wind.gust === 'number' ? Math.round(raw.wind.gust * 3.6) : null;
+
   return {
     id: city.id,
     city: city.city,
@@ -279,6 +303,10 @@ export function parseWeatherResponse(
     cloudCover,
     visibility,
     pressure,
+    rainMm1h,
+    snowMm1h,
+    windDegrees,
+    windGustKmh,
   };
 }
 

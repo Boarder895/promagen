@@ -199,7 +199,8 @@
         },
         {
           "name": "Canal Ring Bridges",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "UNESCO canal network — actual navigable waterways with boats"
         },
         {
           "name": "Rijksmuseum",
@@ -231,7 +232,8 @@
         },
         {
           "name": "Bloemenmarkt Canal Edge",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Flower market on canal houseboats — actual water surface visible"
         }
       ]
     },
@@ -897,7 +899,8 @@
             "distant Michigan Avenue glow on dark lake sand",
             "lakeshore path lamps and faint lighthouse beam",
             "Gold Coast tower light reflecting off calm water"
-          ]
+          ],
+          "overrideJustification": "Genuine beach on Lake Michigan despite Street in name"
         },
         {
           "name": "Wicker Park",
@@ -1081,7 +1084,8 @@
         },
         {
           "name": "Gulshan Lake Park",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Park centred on Gulshan Lake — water is the defining feature"
         },
         {
           "name": "Star Mosque",
@@ -1205,7 +1209,7 @@
         },
         {
           "name": "Temple Bar Streets",
-          "setting": "monument"
+          "setting": "narrow"
         },
         {
           "name": "St Stephen’s Green",
@@ -1303,7 +1307,8 @@
         },
         {
           "name": "Momochi Seaside Park",
-          "setting": "beach"
+          "setting": "beach",
+          "overrideJustification": "Seaside park with beach — beach/seaside is the defining feature"
         },
         {
           "name": "Tenjin Central Park",
@@ -1323,7 +1328,7 @@
         },
         {
           "name": "Canal City",
-          "setting": "waterfront"
+          "setting": "market"
         }
       ]
     },
@@ -1340,7 +1345,7 @@
         },
         {
           "name": "Riverwalk Mall",
-          "setting": "waterfront"
+          "setting": "market"
         },
         {
           "name": "Mokolodi Nature Reserve Gate",
@@ -1385,7 +1390,8 @@
         },
         {
           "name": "Market Square Harbour",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Kauppatori market stalls at harbour edge — water is primary"
         },
         {
           "name": "Esplanadi Park",
@@ -1554,7 +1560,8 @@
         },
         {
           "name": "Maiden’s Tower View from Üsküdar Shore",
-          "setting": "street"
+          "setting": "waterfront",
+          "overrideJustification": "Shore viewpoint across the Bosphorus — genuine waterfront"
         },
         {
           "name": "İstiklal Avenue",
@@ -1685,7 +1692,8 @@
         },
         {
           "name": "Port Grand Food Street",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Food street built on Karachi harbour — actual dockside"
         },
         {
           "name": "Hill Park",
@@ -1726,7 +1734,7 @@
         },
         {
           "name": "Lake Gardens",
-          "setting": "waterfront"
+          "setting": "park"
         },
         {
           "name": "Jalan Alor Food Street",
@@ -2271,7 +2279,8 @@
         },
         {
           "name": "Xochimilco Canals",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Ancient floating gardens on active waterways with trajineras"
         },
         {
           "name": "Roma Norte District",
@@ -2316,7 +2325,8 @@
         },
         {
           "name": "Navigli Canals",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Historic canal district with active navigable waterways"
         },
         {
           "name": "Piazza della Scala",
@@ -2627,7 +2637,7 @@
         },
         {
           "name": "Chinatown Canal Street",
-          "setting": "waterfront"
+          "setting": "street"
         },
         {
           "name": "Smorgasburg Williamsburg",
@@ -3165,7 +3175,8 @@
         },
         {
           "name": "Yuyuan Garden Bazaar",
-          "setting": "market"
+          "setting": "market",
+          "overrideJustification": "Historic bazaar/market complex — bazaar is the venue type"
         },
         {
           "name": "Nanjing Road Pedestrian Street",
@@ -3252,7 +3263,8 @@
         },
         {
           "name": "Shenzhen Bay Park",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Linear park along Shenzhen Bay — bay waterfront is primary"
         }
       ]
     },
@@ -3681,7 +3693,8 @@
         },
         {
           "name": "Danube Canal",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Actual branch of the Danube through central Vienna"
         },
         {
           "name": "MuseumsQuartier",
@@ -3755,7 +3768,8 @@
         },
         {
           "name": "Harbourside Market",
-          "setting": "waterfront"
+          "setting": "waterfront",
+          "overrideJustification": "Weekend market directly on Wellington harbour — water is primary"
         },
         {
           "name": "Oriental Bay Beach",
@@ -3767,7 +3781,8 @@
         },
         {
           "name": "Lambton Quay",
-          "setting": "waterfront"
+          "setting": "street",
+          "overrideJustification": "Major commercial street — no water despite Quay in name (historic reclamation)"
         },
         {
           "name": "Zealandia Sanctuary",

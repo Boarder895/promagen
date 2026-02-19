@@ -70,6 +70,14 @@ export type ExchangeWeatherData = {
   visibility?: number | null;
   /** Atmospheric pressure in hPa. From OWM main.pressure via gateway. */
   pressure?: number | null;
+  /** v8.0.0: Rain volume for last 1 hour in mm. undefined for demo data. */
+  rainMm1h?: number | null;
+  /** v8.0.0: Snow volume for last 1 hour in mm. undefined for demo data. */
+  snowMm1h?: number | null;
+  /** v8.0.0: Wind direction in degrees (0–360). undefined for demo data. */
+  windDegrees?: number | null;
+  /** v8.0.0: Wind gust speed in km/h. undefined for demo data. */
+  windGustKmh?: number | null;
 };
 
 /**

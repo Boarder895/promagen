@@ -353,7 +353,8 @@ export function WeatherPromptTooltip({
   const fullWeather = toFullWeather(weather);
 
   // Generate prompt if weather data available
-  const prompt = fullWeather
+  // v8.0.0 Chat 5: generateWeatherPrompt returns WeatherPromptResult; extract .text for display.
+  const promptResult = fullWeather
     ? generateWeatherPrompt({
         city,
         weather: fullWeather,
@@ -363,6 +364,7 @@ export function WeatherPromptTooltip({
         longitude,
       })
     : null;
+  const prompt = promptResult?.text ?? null;
 
   // Get temperature-based color for glow
   const tempColor = weather.tempC !== null ? getTemperatureColor(weather.tempC) : '#38BDF8'; // Default cyan

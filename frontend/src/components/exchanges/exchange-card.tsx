@@ -79,6 +79,11 @@ interface ExtendedWeatherData {
   cloudCover?: number | null;
   visibility?: number | null;
   pressure?: number | null;
+  // v8.0.0: Precipitation and extended wind fields
+  rainMm1h?: number | null;
+  snowMm1h?: number | null;
+  windDegrees?: number | null;
+  windGustKmh?: number | null;
 }
 
 // ============================================================================
@@ -497,6 +502,10 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         cloudCover: extWeather.cloudCover ?? null,
         visibility: extWeather.visibility ?? null,
         pressure: extWeather.pressure ?? null,
+        rainMm1h: extWeather.rainMm1h ?? null,
+        snowMm1h: extWeather.snowMm1h ?? null,
+        windDegrees: extWeather.windDegrees ?? null,
+        windGustKmh: extWeather.windGustKmh ?? null,
       }
     : {
         tempC: null,
@@ -513,6 +522,10 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         cloudCover: null,
         visibility: null,
         pressure: null,
+        rainMm1h: null,
+        snowMm1h: null,
+        windDegrees: null,
+        windGustKmh: null,
       };
 
   return (

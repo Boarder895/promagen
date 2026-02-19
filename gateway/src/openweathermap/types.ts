@@ -8,6 +8,11 @@
  * - Strict typing for API responses
  * - No 'any' types anywhere
  *
+ * UPDATED v8.0.0 (19 Feb 2026):
+ * - OWMCurrentWeatherResponse gains rain?, snow? optional objects
+ * - WeatherData gains rainMm1h, snowMm1h, windDegrees, windGustKmh
+ * - Enables precipitation classification and Beaufort wind in prompt generator
+ *
  * UPDATED v3.0.0 (01 Feb 2026):
  * - BatchId expanded from 'A' | 'B' to 'A' | 'B' | 'C' | 'D' (4-batch strategy)
  * - WeatherBatches expanded to 4 batches
@@ -165,6 +170,11 @@ export interface OWMSysData {
 /**
  * Complete raw response from OpenWeatherMap Current Weather API.
  * GET /data/2.5/weather
+ *
+ * v8.0.0: Added rain, snow optional objects.
+ * OWM sends these when precipitation is occurring.
+ * - rain.1h: Rain volume for last 1 hour in mm (absent when no rain)
+ * - snow.1h: Snow volume for last 1 hour in mm (absent when no snow)
  */
 export interface OWMCurrentWeatherResponse {
   /** Weather conditions (can have multiple) */
@@ -177,6 +187,24 @@ export interface OWMCurrentWeatherResponse {
   readonly clouds: OWMCloudsData;
   /** System data */
   readonly sys: OWMSysData;
+  /**
+   * Rain volume data.
+   * Only present when rain is occurring.
+   * OWM provides 1h (and optionally 3h) volume in mm.
+   */
+  readonly rain?: {
+    readonly '1h'?: number;
+    readonly '3h'?: number;
+  };
+  /**
+   * Snow volume data.
+   * Only present when snow is occurring.
+   * OWM provides 1h (and optionally 3h) volume in mm water equivalent.
+   */
+  readonly snow?: {
+    readonly '1h'?: number;
+    readonly '3h'?: number;
+  };
   /** City name */
   readonly name: string;
   /** City ID */
@@ -199,6 +227,8 @@ export interface OWMCurrentWeatherResponse {
  * Normalised weather data for a single city.
  * This is what Promagen components consume.
  *
+ * v8.0.0: Added rainMm1h, snowMm1h, windDegrees, windGustKmh
+ * for precipitation classification and Beaufort-calibrated wind.
  * v3.1.0: Added sunriseUtc, sunsetUtc, timezoneOffset, isDayTime
  * for accurate day/night detection and moon phase emoji on frontend.
  */
@@ -267,6 +297,33 @@ export interface WeatherData {
    * for stability modifier. Only extreme values (>1030 or <1000) produce output.
    */
   readonly pressure: number;
+  /**
+   * v8.0.0: Rain volume for last 1 hour in mm.
+   * From OWM rain['1h']. null when OWM omits the rain object
+   * (i.e., no rain occurring). Enables numeric precipitation intensity
+   * classification in the prompt generator.
+   */
+  readonly rainMm1h: number | null;
+  /**
+   * v8.0.0: Snow volume for last 1 hour in mm (water equivalent).
+   * From OWM snow['1h']. null when OWM omits the snow object
+   * (i.e., no snow occurring). Enables numeric precipitation intensity
+   * classification in the prompt generator.
+   */
+  readonly snowMm1h: number | null;
+  /**
+   * v8.0.0: Wind direction in meteorological degrees (0–360).
+   * 0/360 = north, 90 = east, 180 = south, 270 = west.
+   * From OWM wind.deg. null when OWM omits wind direction.
+   * Used by Beaufort wind system for directional wind phrases.
+   */
+  readonly windDegrees: number | null;
+  /**
+   * v8.0.0: Wind gust speed in km/h.
+   * From OWM wind.gust (converted from m/s). null when OWM omits gust data.
+   * Gust significantly exceeding sustained speed produces "gusting to X" modifier.
+   */
+  readonly windGustKmh: number | null;
 }
 
 // =============================================================================
