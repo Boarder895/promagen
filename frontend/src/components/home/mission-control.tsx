@@ -285,6 +285,9 @@ export default function MissionControl({
       sunsetUtc: data.sunsetUtc ?? null,
       timezoneOffset: data.timezoneOffset ?? null,
       isDayTime: data.isDayTime ?? null,
+      cloudCover: data.cloudCover ?? null,
+      visibility: data.visibility ?? null,
+      pressure: data.pressure ?? null,
     };
   }, [previewExchange, weatherIndex]);
 
@@ -302,6 +305,8 @@ export default function MissionControl({
       weather: fullWeather,
       localHour,
       tier,
+      latitude: previewExchange.latitude,
+      longitude: previewExchange.longitude,
     });
   }, [weatherData, previewExchange]);
 
@@ -473,14 +478,14 @@ export default function MissionControl({
             className="animate-pulse rounded-full"
             style={{
               backgroundColor: '#10B981',
-              width: 'clamp(10px, 0.8vw, 14px)',
-              height: 'clamp(10px, 0.8vw, 14px)',
+              width: 'clamp(8px, 0.4vw, 14px)',
+              height: 'clamp(8px, 0.4vw, 14px)',
             }}
             aria-hidden="true"
           />
           <span
             className="font-mono uppercase tracking-wider text-slate-400"
-            style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1rem)' }}
+            style={{ fontSize: 'clamp(0.5rem, 0.7vw, 1rem)' }}
           >
             MISSION CONTROL
           </span>
@@ -521,6 +526,8 @@ export default function MissionControl({
                 weather={weatherData}
                 tooltipPosition="right"
                 verticalPosition="below"
+                latitude={previewExchange?.latitude}
+                longitude={previewExchange?.longitude}
               >
                 {/* Flag image — cursor-pointer (no question mark), no title attribute */}
                 <div

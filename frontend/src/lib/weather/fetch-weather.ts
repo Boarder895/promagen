@@ -76,6 +76,12 @@ interface GatewayWeatherItem {
   timezoneOffset?: number | null;
   /** Day/night flag from OWM icon suffix. 'd' → true, 'n' → false. */
   isDayTime?: boolean;
+  /** Cloud cover percentage (0–100). From OWM clouds.all. */
+  cloudCover?: number | null;
+  /** Visibility in metres (0–10000). From OWM visibility field. */
+  visibility?: number | null;
+  /** Atmospheric pressure in hPa. From OWM main.pressure. */
+  pressure?: number | null;
 }
 
 /** Gateway response shape */
@@ -114,6 +120,9 @@ function toWeatherData(item: GatewayWeatherItem): ExchangeWeatherData {
     sunsetUtc: item.sunsetUtc ?? null,
     timezoneOffset: item.timezoneOffset ?? null,
     isDayTime: item.isDayTime ?? undefined,
+    cloudCover: item.cloudCover ?? undefined,
+    visibility: item.visibility ?? undefined,
+    pressure: item.pressure ?? undefined,
   };
 }
 

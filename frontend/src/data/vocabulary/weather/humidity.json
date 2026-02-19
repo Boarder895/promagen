@@ -1,19 +1,19 @@
 {
   "$schema": "./schemas/humidity.schema.json",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "meta": {
     "domain": "weather",
     "category": "humidity",
-    "totalPhrases": 160,
-    "description": "CLEANED v2: Pure humidity translation layer. Neutral water-vapour descriptors only. 0–100% in 5% bins. Zero repetition across bins. No weather events, no visibility terms, no time/season language, no behaviour, no indoor implications.",
+    "totalPhrases": 60,
+    "description": "Pure humidity translation layer. Neutral relative-humidity descriptors only. 0–100% in 5% bins. No repetition across bins. No weather events, no visibility terms, no time/season language, no behaviour, no indoor implications.",
     "range": {
       "min": 0,
       "max": 100,
       "unit": "%"
     },
-    "updated": "2026-02-13",
+    "updated": "2026-02-18",
     "interval": "5% bins",
-    "phrasesPerRange": 8,
+    "phrasesPerRange": 3,
     "totalRanges": 20
   },
   "ranges": {
@@ -21,255 +21,110 @@
       "min": 0,
       "max": 5,
       "label": "0–5%",
-      "phrases": [
-        "ultra-dry atmospheric moisture",
-        "ultra-dry air moisture content",
-        "ultra-dry ambient humidity level",
-        "ultra-dry moisture load in the air",
-        "ultra-dry water-vapour presence",
-        "ultra-dry humidity intensity",
-        "ultra-dry moisture saturation tendency",
-        "ultra-dry overall atmospheric moisture field"
-      ]
+      "phrases": ["extremely low humidity", "near-zero humidity", "almost no moisture in the air"]
     },
     "range_5_to_10": {
       "min": 5,
       "max": 10,
       "label": "5–10%",
-      "phrases": [
-        "very-dry atmospheric moisture",
-        "very-dry air moisture content",
-        "very-dry ambient humidity level",
-        "very-dry moisture load in the air",
-        "very-dry water-vapour presence",
-        "very-dry humidity intensity",
-        "very-dry moisture saturation tendency",
-        "very-dry overall atmospheric moisture field"
-      ]
+      "phrases": ["very low humidity", "very dry air", "minimal moisture in the air"]
     },
     "range_10_to_15": {
       "min": 10,
       "max": 15,
       "label": "10–15%",
-      "phrases": [
-        "dry-leaning atmospheric moisture",
-        "dry-leaning air moisture content",
-        "dry-leaning ambient humidity level",
-        "dry-leaning moisture load in the air",
-        "dry-leaning water-vapour presence",
-        "dry-leaning humidity intensity",
-        "dry-leaning moisture saturation tendency",
-        "dry-leaning overall atmospheric moisture field"
-      ]
+      "phrases": ["low humidity", "dry air", "little moisture in the air"]
     },
     "range_15_to_20": {
       "min": 15,
       "max": 20,
       "label": "15–20%",
-      "phrases": [
-        "low-moisture atmospheric moisture",
-        "low-moisture air moisture content",
-        "low-moisture ambient humidity level",
-        "low-moisture moisture load in the air",
-        "low-moisture water-vapour presence",
-        "low-moisture humidity intensity",
-        "low-moisture moisture saturation tendency",
-        "low-moisture overall atmospheric moisture field"
-      ]
+      "phrases": ["low-to-moderate humidity", "slightly dry air", "light moisture in the air"]
     },
     "range_20_to_25": {
       "min": 20,
       "max": 25,
       "label": "20–25%",
-      "phrases": [
-        "light-moisture atmospheric moisture",
-        "light-moisture air moisture content",
-        "light-moisture ambient humidity level",
-        "light-moisture moisture load in the air",
-        "light-moisture water-vapour presence",
-        "light-moisture humidity intensity",
-        "light-moisture moisture saturation tendency",
-        "light-moisture overall atmospheric moisture field"
-      ]
+      "phrases": ["below-average humidity", "mildly dry air", "limited moisture in the air"]
     },
     "range_25_to_30": {
       "min": 25,
       "max": 30,
       "label": "25–30%",
-      "phrases": [
-        "mild-moisture atmospheric moisture",
-        "mild-moisture air moisture content",
-        "mild-moisture ambient humidity level",
-        "mild-moisture moisture load in the air",
-        "mild-moisture water-vapour presence",
-        "mild-moisture humidity intensity",
-        "mild-moisture moisture saturation tendency",
-        "mild-moisture overall atmospheric moisture field"
-      ]
+      "phrases": ["moderately low humidity", "on the dry side", "reduced moisture in the air"]
     },
     "range_30_to_35": {
       "min": 30,
       "max": 35,
       "label": "30–35%",
-      "phrases": [
-        "balanced-humidity atmospheric moisture",
-        "balanced-humidity air moisture content",
-        "balanced-humidity ambient humidity level",
-        "balanced-humidity moisture load in the air",
-        "balanced-humidity water-vapour presence",
-        "balanced-humidity humidity intensity",
-        "balanced-humidity moisture saturation tendency",
-        "balanced-humidity overall atmospheric moisture field"
-      ]
+      "phrases": ["moderate-low humidity", "modest humidity", "some moisture in the air"]
     },
     "range_35_to_40": {
       "min": 35,
       "max": 40,
       "label": "35–40%",
-      "phrases": [
-        "moderate-humidity atmospheric moisture",
-        "moderate-humidity air moisture content",
-        "moderate-humidity ambient humidity level",
-        "moderate-humidity moisture load in the air",
-        "moderate-humidity water-vapour presence",
-        "moderate-humidity humidity intensity",
-        "moderate-humidity moisture saturation tendency",
-        "moderate-humidity overall atmospheric moisture field"
-      ]
+      "phrases": ["mid-range humidity", "moderate humidity", "balanced moisture in the air"]
     },
     "range_40_to_45": {
       "min": 40,
       "max": 45,
       "label": "40–45%",
-      "phrases": [
-        "moist-leaning atmospheric moisture",
-        "moist-leaning air moisture content",
-        "moist-leaning ambient humidity level",
-        "moist-leaning moisture load in the air",
-        "moist-leaning water-vapour presence",
-        "moist-leaning humidity intensity",
-        "moist-leaning moisture saturation tendency",
-        "moist-leaning overall atmospheric moisture field"
-      ]
+      "phrases": ["average humidity", "typical humidity level", "steady moisture content"]
     },
     "range_45_to_50": {
       "min": 45,
       "max": 50,
       "label": "45–50%",
       "phrases": [
-        "high-moisture atmospheric moisture",
-        "high-moisture air moisture content",
-        "high-moisture ambient humidity level",
-        "high-moisture moisture load in the air",
-        "high-moisture water-vapour presence",
-        "high-moisture humidity intensity",
-        "high-moisture moisture saturation tendency",
-        "high-moisture overall atmospheric moisture field"
+        "slightly humid air",
+        "humidity slightly above average",
+        "noticeable moisture content"
       ]
     },
     "range_50_to_55": {
       "min": 50,
       "max": 55,
       "label": "50–55%",
-      "phrases": [
-        "very-moist atmospheric moisture",
-        "very-moist air moisture content",
-        "very-moist ambient humidity level",
-        "very-moist moisture load in the air",
-        "very-moist water-vapour presence",
-        "very-moist humidity intensity",
-        "very-moist moisture saturation tendency",
-        "very-moist overall atmospheric moisture field"
-      ]
+      "phrases": ["moderately humid air", "above-average humidity", "increased moisture content"]
     },
     "range_55_to_60": {
       "min": 55,
       "max": 60,
       "label": "55–60%",
-      "phrases": [
-        "heavy-moisture atmospheric moisture",
-        "heavy-moisture air moisture content",
-        "heavy-moisture ambient humidity level",
-        "heavy-moisture moisture load in the air",
-        "heavy-moisture water-vapour presence",
-        "heavy-moisture humidity intensity",
-        "heavy-moisture moisture saturation tendency",
-        "heavy-moisture overall atmospheric moisture field"
-      ]
+      "phrases": ["humid air", "high humidity", "substantial moisture in the air"]
     },
     "range_60_to_65": {
       "min": 60,
       "max": 65,
       "label": "60–65%",
-      "phrases": [
-        "humidity-dense atmospheric moisture",
-        "humidity-dense air moisture content",
-        "humidity-dense ambient humidity level",
-        "humidity-dense moisture load in the air",
-        "humidity-dense water-vapour presence",
-        "humidity-dense humidity intensity",
-        "humidity-dense moisture saturation tendency",
-        "humidity-dense overall atmospheric moisture field"
-      ]
+      "phrases": ["quite humid air", "high humidity levels", "air with a high moisture content"]
     },
     "range_65_to_70": {
       "min": 65,
       "max": 70,
       "label": "65–70%",
-      "phrases": [
-        "humidity-rich atmospheric moisture",
-        "humidity-rich air moisture content",
-        "humidity-rich ambient humidity level",
-        "humidity-rich moisture load in the air",
-        "humidity-rich water-vapour presence",
-        "humidity-rich humidity intensity",
-        "humidity-rich moisture saturation tendency",
-        "humidity-rich overall atmospheric moisture field"
-      ]
+      "phrases": ["very humid air", "humidity is high", "air heavy with moisture"]
     },
     "range_70_to_75": {
       "min": 70,
       "max": 75,
       "label": "70–75%",
-      "phrases": [
-        "near-saturated atmospheric moisture",
-        "near-saturated air moisture content",
-        "near-saturated ambient humidity level",
-        "near-saturated moisture load in the air",
-        "near-saturated water-vapour presence",
-        "near-saturated humidity intensity",
-        "near-saturated moisture saturation tendency",
-        "near-saturated overall atmospheric moisture field"
-      ]
+      "phrases": ["high relative humidity", "humidity is very high", "air laden with moisture"]
     },
     "range_75_to_80": {
       "min": 75,
       "max": 80,
       "label": "75–80%",
-      "phrases": [
-        "saturation-close atmospheric moisture",
-        "saturation-close air moisture content",
-        "saturation-close ambient humidity level",
-        "saturation-close moisture load in the air",
-        "saturation-close water-vapour presence",
-        "saturation-close humidity intensity",
-        "saturation-close moisture saturation tendency",
-        "saturation-close overall atmospheric moisture field"
-      ]
+      "phrases": ["very high relative humidity", "very damp air", "strongly humid air"]
     },
     "range_80_to_85": {
       "min": 80,
       "max": 85,
       "label": "80–85%",
       "phrases": [
-        "vapour-heavy atmospheric moisture",
-        "vapour-heavy air moisture content",
-        "vapour-heavy ambient humidity level",
-        "vapour-heavy moisture load in the air",
-        "vapour-heavy water-vapour presence",
-        "vapour-heavy humidity intensity",
-        "vapour-heavy moisture saturation tendency",
-        "vapour-heavy overall atmospheric moisture field"
+        "extremely high relative humidity",
+        "markedly damp air",
+        "air thick with moisture"
       ]
     },
     "range_85_to_90": {
@@ -277,14 +132,9 @@
       "max": 90,
       "label": "85–90%",
       "phrases": [
-        "vapour-dense atmospheric moisture",
-        "vapour-dense air moisture content",
-        "vapour-dense ambient humidity level",
-        "vapour-dense moisture load in the air",
-        "vapour-dense water-vapour presence",
-        "vapour-dense humidity intensity",
-        "vapour-dense moisture saturation tendency",
-        "vapour-dense overall atmospheric moisture field"
+        "humidity nearing saturation",
+        "near-saturation humidity",
+        "air nearing saturation"
       ]
     },
     "range_90_to_95": {
@@ -292,30 +142,16 @@
       "max": 95,
       "label": "90–95%",
       "phrases": [
-        "almost-saturated atmospheric moisture",
-        "almost-saturated air moisture content",
-        "almost-saturated ambient humidity level",
-        "almost-saturated moisture load in the air",
-        "almost-saturated water-vapour presence",
-        "almost-saturated humidity intensity",
-        "almost-saturated moisture saturation tendency",
-        "almost-saturated overall atmospheric moisture field"
+        "humidity very close to saturation",
+        "air very close to saturation",
+        "saturation-close humidity"
       ]
     },
     "range_95_to_100": {
       "min": 95,
       "max": 100,
       "label": "95–100%",
-      "phrases": [
-        "fully-saturated atmospheric moisture",
-        "fully-saturated air moisture content",
-        "fully-saturated ambient humidity level",
-        "fully-saturated moisture load in the air",
-        "fully-saturated water-vapour presence",
-        "fully-saturated humidity intensity",
-        "fully-saturated moisture saturation tendency",
-        "fully-saturated overall atmospheric moisture field"
-      ]
+      "phrases": ["fully saturated air", "air at saturation", "relative humidity at saturation"]
     }
   }
 }

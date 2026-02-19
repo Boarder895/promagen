@@ -1,0 +1,678 @@
+{
+  "$schema": "./schemas/urban-light.schema.json",
+  "version": "3.0.0",
+  "meta": {
+    "version": "5.0.0",
+    "description": "Source-object lighting v5.0. Every phrase names physical light emitters. No abstract descriptions.",
+    "cities": 83,
+    "phrasesPerCity": 3,
+    "totalPhrases": 249,
+    "updated": "2026-02-18"
+  },
+  "cities": {
+    "hong kong": {
+      "urbanLight": 0.98,
+      "lightCharacter": [
+        "dense vertical neon and LED tower facades",
+        "stacked shopfront signage reflecting off glass walls",
+        "tight neon grids mixing warm and cool vertically"
+      ]
+    },
+    "shanghai": {
+      "urbanLight": 0.96,
+      "lightCharacter": [
+        "LED tower facades and neon riverside reflections",
+        "dense commercial signage along bright boulevards",
+        "cool white skyscraper light over warm street-level neon"
+      ]
+    },
+    "shenzhen": {
+      "urbanLight": 0.94,
+      "lightCharacter": [
+        "bright LED building facades and dense signage",
+        "cool white tower light stacked above warm shopfronts",
+        "concentrated tech-district LED glow and neon strips"
+      ]
+    },
+    "tokyo": {
+      "urbanLight": 0.93,
+      "lightCharacter": [
+        "neon shopfronts and vertical LED signage stacked tight",
+        "vending machine glow mixing with dense storefront light",
+        "close-packed warm and cool storefront neon"
+      ]
+    },
+    "new york": {
+      "urbanLight": 0.92,
+      "lightCharacter": [
+        "LED billboard glow and yellow sodium streetlight",
+        "bright bodega neon mixing with overhead white streetlamps",
+        "dense storefront light and illuminated signage on facades"
+      ]
+    },
+    "dubai": {
+      "urbanLight": 0.9,
+      "lightCharacter": [
+        "cool white LED tower facades and glass reflections",
+        "bright boulevard lighting off polished stone and glass",
+        "sharp white architectural lighting on tower bases"
+      ]
+    },
+    "moscow": {
+      "urbanLight": 0.88,
+      "lightCharacter": [
+        "warm sodium streetlamps along wide lit boulevards",
+        "ornate building floodlighting and bright metro entrances",
+        "amber heritage lighting mixing with modern white LED"
+      ]
+    },
+    "taipei": {
+      "urbanLight": 0.87,
+      "lightCharacter": [
+        "dense neon shopfront signs above bright sidewalks",
+        "warm LED storefronts and illuminated Chinese signage",
+        "stacked commercial neon mixing warm and cool light"
+      ]
+    },
+    "chicago": {
+      "urbanLight": 0.86,
+      "lightCharacter": [
+        "cool white streetlamps along bright commercial strips",
+        "illuminated tower lobbies and warm retail window glow",
+        "sodium streetlight mixing with bright retail facades"
+      ]
+    },
+    "mumbai": {
+      "urbanLight": 0.85,
+      "lightCharacter": [
+        "dense warm shopfront light spilling across crowded lanes",
+        "bright fluorescent storefronts and overhead string lights",
+        "mixed warm bulbs and cool fluorescent tubes at close range"
+      ]
+    },
+    "são paulo": {
+      "urbanLight": 0.84,
+      "lightCharacter": [
+        "bright commercial signage and warm streetlamp rows",
+        "dense LED storefronts along wide illuminated avenues",
+        "warm sodium lamp glow mixing with cool retail lighting"
+      ]
+    },
+    "paris": {
+      "urbanLight": 0.82,
+      "lightCharacter": [
+        "warm amber floodlighting on stone facades",
+        "golden tungsten lamppost rows along tree-lined avenues",
+        "heritage streetlamp glow and warm café terrace light"
+      ]
+    },
+    "london": {
+      "urbanLight": 0.8,
+      "lightCharacter": [
+        "mixed warm and cool streetlamps on wet pavement",
+        "warm pub window glow under cool white street lighting",
+        "heritage lamppost light mixing with bright shop windows"
+      ]
+    },
+    "kuala lumpur": {
+      "urbanLight": 0.79,
+      "lightCharacter": [
+        "warm shopfront light and cool LED tower facades",
+        "bright hawker stall bulbs under modern skyline glow",
+        "dense mixed neon signage along commercial streets"
+      ]
+    },
+    "bangkok": {
+      "urbanLight": 0.78,
+      "lightCharacter": [
+        "warm street vendor bulbs and bright neon signs",
+        "temple floodlighting mixing with dense shopfront glow",
+        "fluorescent food stall light and overhead neon tubes"
+      ]
+    },
+    "sydney": {
+      "urbanLight": 0.77,
+      "lightCharacter": [
+        "cool white LED streetlamps and warm pub window light",
+        "bright harbour-facing building light and sodium lamps",
+        "mixed warm retail glow and cool overhead street lighting"
+      ]
+    },
+    "abu dhabi": {
+      "urbanLight": 0.76,
+      "lightCharacter": [
+        "cool white mosque floodlighting and boulevard LED",
+        "bright modern streetlamps along polished stone paths",
+        "clean architectural LED uplighting on tower bases"
+      ]
+    },
+    "istanbul": {
+      "urbanLight": 0.75,
+      "lightCharacter": [
+        "warm amber mosque floodlighting and bazaar lanterns",
+        "warm tungsten café light spilling onto cobblestones",
+        "heritage lamppost glow mixing with bright signage"
+      ]
+    },
+    "milan": {
+      "urbanLight": 0.74,
+      "lightCharacter": [
+        "warm boutique window light and heritage lamppost glow",
+        "amber street lighting on stone facades and arcades",
+        "elegant warm retail lighting along covered galleries"
+      ]
+    },
+    "madrid": {
+      "urbanLight": 0.73,
+      "lightCharacter": [
+        "warm sodium streetlamps along wide bright boulevards",
+        "amber building floodlights and tapas bar terrace glow",
+        "golden lamppost rows and illuminated stone facades"
+      ]
+    },
+    "buenos aires": {
+      "urbanLight": 0.72,
+      "lightCharacter": [
+        "warm café window light spilling onto wide sidewalks",
+        "amber sodium streetlamps and bright commercial signage",
+        "mixed warm storefronts and cool overhead lighting"
+      ]
+    },
+    "frankfurt": {
+      "urbanLight": 0.72,
+      "lightCharacter": [
+        "cool white tower lobby light and warm street-level glow",
+        "modern LED streetlamps mixing with banking district facades",
+        "clean white commercial lighting on glass tower bases"
+      ]
+    },
+    "mexico city": {
+      "urbanLight": 0.71,
+      "lightCharacter": [
+        "warm taco stand bulbs and bright commercial signage",
+        "amber sodium streetlamps along busy commercial avenues",
+        "warm mixed storefronts under scattered overhead lighting"
+      ]
+    },
+    "ho chi minh city": {
+      "urbanLight": 0.7,
+      "lightCharacter": [
+        "dense warm shopfront light and bright neon signage",
+        "fluorescent café glow spilling onto narrow sidewalks",
+        "warm bulb strings and bright commercial LED signs"
+      ]
+    },
+    "toronto": {
+      "urbanLight": 0.7,
+      "lightCharacter": [
+        "cool white streetlamps and warm retail window rows",
+        "bright commercial signage mixing with sodium streetlight",
+        "clean LED street lighting and illuminated tower lobbies"
+      ]
+    },
+    "jakarta": {
+      "urbanLight": 0.69,
+      "lightCharacter": [
+        "warm warung stall light and bright mall entrance glow",
+        "mixed fluorescent shopfronts along busy commercial roads",
+        "bright overhead LED signs and warm street-level bulbs"
+      ]
+    },
+    "cairo": {
+      "urbanLight": 0.68,
+      "lightCharacter": [
+        "warm tungsten shopfront bulbs and fluorescent signage",
+        "bright market stall light spilling into dusty streets",
+        "amber café lanterns mixing with harsh fluorescent overhead"
+      ]
+    },
+    "manila": {
+      "urbanLight": 0.68,
+      "lightCharacter": [
+        "bright jeepney strip lights and warm sari-sari store glow",
+        "fluorescent shopfront light and LED commercial signage",
+        "dense warm street-level light and cool overhead lamps"
+      ]
+    },
+    "doha": {
+      "urbanLight": 0.67,
+      "lightCharacter": [
+        "cool white tower LED facades and boulevard lighting",
+        "bright modern streetlamps on polished waterfront stone",
+        "clean architectural uplighting on museum facades"
+      ]
+    },
+    "lagos": {
+      "urbanLight": 0.66,
+      "lightCharacter": [
+        "warm generator-powered shopfront bulbs and headlights",
+        "fluorescent store light punctuating darker street gaps",
+        "bright warm vendor light in pools along busy roads"
+      ]
+    },
+    "karachi": {
+      "urbanLight": 0.65,
+      "lightCharacter": [
+        "warm fluorescent shopfront strips along dense bazaar lanes",
+        "bright overhead commercial signs and warm bulb strings",
+        "mixed tungsten and fluorescent light at close range"
+      ]
+    },
+    "dhaka": {
+      "urbanLight": 0.63,
+      "lightCharacter": [
+        "warm dense shopfront light along narrow commercial lanes",
+        "fluorescent signage and bare bulb strings overhead",
+        "bright warm storefronts in tight clusters with dark gaps"
+      ]
+    },
+    "johannesburg": {
+      "urbanLight": 0.62,
+      "lightCharacter": [
+        "cool white security lighting and warm retail storefronts",
+        "bright LED commercial signs along major intersections",
+        "sodium streetlamps in scattered pools with dark gaps"
+      ]
+    },
+    "amsterdam": {
+      "urbanLight": 0.61,
+      "lightCharacter": [
+        "warm canal-house window light reflecting on dark water",
+        "amber heritage lamppost glow on wet cobblestones",
+        "warm pub and café light spilling across bridge rails"
+      ]
+    },
+    "bogota": {
+      "urbanLight": 0.6,
+      "lightCharacter": [
+        "warm storefront light and sodium lamp rows on avenues",
+        "bright commercial signage above warm street-level glow",
+        "scattered warm lighting with darker gaps between blocks"
+      ]
+    },
+    "lisbon": {
+      "urbanLight": 0.58,
+      "lightCharacter": [
+        "warm amber tram-line streetlamps on tiled facades",
+        "warm café terrace light and heritage lamppost glow",
+        "golden streetlamp light on pastel-painted stone walls"
+      ]
+    },
+    "athens": {
+      "urbanLight": 0.57,
+      "lightCharacter": [
+        "warm taverna light spilling onto marble steps",
+        "amber monument floodlighting above dim side streets",
+        "warm overhead string lights and scattered streetlamps"
+      ]
+    },
+    "brussels": {
+      "urbanLight": 0.56,
+      "lightCharacter": [
+        "warm amber streetlamps on ornate stone facades",
+        "heritage lamppost glow and bright café window light",
+        "golden building floodlighting above cobblestone squares"
+      ]
+    },
+    "prague": {
+      "urbanLight": 0.55,
+      "lightCharacter": [
+        "amber heritage lamppost glow on Gothic stone facades",
+        "warm streetlamp light reflecting off wet cobblestones",
+        "golden monument floodlighting and dim lantern glow"
+      ]
+    },
+    "budapest": {
+      "urbanLight": 0.54,
+      "lightCharacter": [
+        "warm amber bridge floodlighting reflecting on the river",
+        "heritage lamppost glow along ornate boulevard facades",
+        "golden building uplighting and warm thermal bath glow"
+      ]
+    },
+    "santiago": {
+      "urbanLight": 0.54,
+      "lightCharacter": [
+        "sodium streetlamps and warm shopfront light on avenues",
+        "scattered commercial signage with dark residential gaps",
+        "warm restaurant light pools along commercial streets"
+      ]
+    },
+    "copenhagen": {
+      "urbanLight": 0.52,
+      "lightCharacter": [
+        "warm amber streetlamps along coloured harbour facades",
+        "soft warm café glow and clean Danish street lighting",
+        "heritage lamppost light on cobblestones and canal edges"
+      ]
+    },
+    "vienna": {
+      "urbanLight": 0.52,
+      "lightCharacter": [
+        "warm amber palace floodlighting and heritage lamppost glow",
+        "golden streetlamp rows along grand boulevard facades",
+        "warm opera house glow and ornate lamppost light"
+      ]
+    },
+    "nagoya": {
+      "urbanLight": 0.52,
+      "lightCharacter": [
+        "moderate neon shopfront light and cool LED signage",
+        "warm izakaya glow and scattered vending machine light",
+        "mixed storefront lighting at moderate density"
+      ]
+    },
+    "lima": {
+      "urbanLight": 0.51,
+      "lightCharacter": [
+        "warm sodium streetlamps and bright commercial storefronts",
+        "amber building light and scattered overhead signage",
+        "mixed warm retail glow with wider dark gaps"
+      ]
+    },
+    "zurich": {
+      "urbanLight": 0.5,
+      "lightCharacter": [
+        "clean warm streetlamps along lake-edge promenades",
+        "precise Swiss street lighting on stone building facades",
+        "warm tram-stop light and heritage lamppost glow"
+      ]
+    },
+    "dublin": {
+      "urbanLight": 0.5,
+      "lightCharacter": [
+        "warm pub window glow on Georgian brick facades",
+        "amber streetlamp light and bright bar terrace spill",
+        "heritage lampposts and warm doorway light pools"
+      ]
+    },
+    "auckland": {
+      "urbanLight": 0.49,
+      "lightCharacter": [
+        "scattered harbour-edge streetlamps and warm bar light",
+        "moderate warm storefronts with dark waterfront gaps",
+        "warm restaurant glow and cool overhead street lighting"
+      ]
+    },
+    "nairobi": {
+      "urbanLight": 0.49,
+      "lightCharacter": [
+        "warm security compound lighting and scattered streetlamps",
+        "bright LED commercial signs at major intersections",
+        "warm shop bulbs in scattered pools along dark roads"
+      ]
+    },
+    "kuwait city": {
+      "urbanLight": 0.48,
+      "lightCharacter": [
+        "cool white boulevard LED and mall entrance glow",
+        "bright modern tower lighting on sparse dark streets",
+        "clean architectural lighting with wide unlit gaps"
+      ]
+    },
+    "casablanca": {
+      "urbanLight": 0.48,
+      "lightCharacter": [
+        "warm café lanterns and amber streetlamp glow",
+        "scattered overhead lighting along busy medina edges",
+        "warm shopfront bulbs and bright mosque floodlighting"
+      ]
+    },
+    "manama": {
+      "urbanLight": 0.47,
+      "lightCharacter": [
+        "warm souk lantern light and scattered modern streetlamps",
+        "bright commercial mall glow beside dimmer old quarters",
+        "warm overhead string lights and amber building lighting"
+      ]
+    },
+    "colombo": {
+      "urbanLight": 0.47,
+      "lightCharacter": [
+        "warm shopfront light and scattered fluorescent signage",
+        "temple lamplight mixing with overhead street bulbs",
+        "bright vendor stall glow in pools along darker roads"
+      ]
+    },
+    "sapporo": {
+      "urbanLight": 0.45,
+      "lightCharacter": [
+        "warm izakaya lantern glow and moderate street lighting",
+        "warm ramen shop light and scattered neon signs",
+        "moderate warm storefronts with wider dark gaps"
+      ]
+    },
+    "muscat": {
+      "urbanLight": 0.44,
+      "lightCharacter": [
+        "warm amber fortress floodlighting and sparse road lamps",
+        "clean white mosque lighting with dark residential gaps",
+        "scattered warm building light along quiet coast roads"
+      ]
+    },
+    "oslo": {
+      "urbanLight": 0.44,
+      "lightCharacter": [
+        "warm amber streetlamps reflecting on wet harbour stone",
+        "clean Nordic street lighting along dark waterfront edges",
+        "sparse warm café glow and modern LED lampposts"
+      ]
+    },
+    "fukuoka": {
+      "urbanLight": 0.44,
+      "lightCharacter": [
+        "warm yatai food stall lanterns and soft street lighting",
+        "moderate neon shopfront glow and warm izakaya light",
+        "scattered warm vendor light along riverside paths"
+      ]
+    },
+    "helsinki": {
+      "urbanLight": 0.43,
+      "lightCharacter": [
+        "warm amber streetlamps on granite building facades",
+        "clean Nordic street lighting with dark harbour gaps",
+        "warm café window glow and sparse heritage lampposts"
+      ]
+    },
+    "stuttgart": {
+      "urbanLight": 0.43,
+      "lightCharacter": [
+        "clean warm streetlamps along orderly German facades",
+        "moderate retail window glow and overhead lamp rows",
+        "warm beer hall light spilling onto cobblestone streets"
+      ]
+    },
+    "amman": {
+      "urbanLight": 0.42,
+      "lightCharacter": [
+        "warm amber building light climbing terraced hillsides",
+        "scattered lamppost glow and bright mosque floodlighting",
+        "warm café terrace light in pools on limestone streets"
+      ]
+    },
+    "almaty": {
+      "urbanLight": 0.42,
+      "lightCharacter": [
+        "warm sodium streetlamps along Soviet-era wide avenues",
+        "scattered commercial signage with dark residential gaps",
+        "amber overhead lamp rows with long dark intervals"
+      ]
+    },
+    "caracas": {
+      "urbanLight": 0.41,
+      "lightCharacter": [
+        "warm storefront light along commercial strip roads",
+        "scattered sodium streetlamps with dark hillside gaps",
+        "bright arepera glow and overhead commercial signage"
+      ]
+    },
+    "wellington": {
+      "urbanLight": 0.4,
+      "lightCharacter": [
+        "scattered harbour-edge streetlamps and warm bar glow",
+        "sparse warm café light mixing with cool wharf LED",
+        "moderate lamppost pools on wind-polished wet streets"
+      ]
+    },
+    "accra": {
+      "urbanLight": 0.39,
+      "lightCharacter": [
+        "warm kerosene and bulb light from open-front shops",
+        "scattered fluorescent vendor stalls along dark roads",
+        "bright compound security light punctuating darkness"
+      ]
+    },
+    "riga": {
+      "urbanLight": 0.38,
+      "lightCharacter": [
+        "warm amber heritage lamppost glow on Art Nouveau facades",
+        "sparse streetlamp pools on cobblestones with dark gaps",
+        "scattered warm window light along quiet old town lanes"
+      ]
+    },
+    "zagreb": {
+      "urbanLight": 0.37,
+      "lightCharacter": [
+        "warm amber streetlamps on Austro-Hungarian facades",
+        "scattered heritage lamppost pools along tram-line streets",
+        "warm café glow on cobblestones between darker gaps"
+      ]
+    },
+    "belgrade": {
+      "urbanLight": 0.37,
+      "lightCharacter": [
+        "warm kafana window light and sodium streetlamp pools",
+        "scattered amber lamp glow along fortress-edge paths",
+        "bright bar terrace light in pools between dark blocks"
+      ]
+    },
+    "kyiv": {
+      "urbanLight": 0.35,
+      "lightCharacter": [
+        "warm amber streetlamps along wide tree-lined boulevards",
+        "bright church floodlighting above dim residential blocks",
+        "scattered sodium lamp pools with dark parkland gaps"
+      ]
+    },
+    "bratislava": {
+      "urbanLight": 0.35,
+      "lightCharacter": [
+        "sparse warm streetlamps on castle-district cobblestones",
+        "amber heritage lantern glow along quiet old town lanes",
+        "scattered lamppost pools with wide dark residential gaps"
+      ]
+    },
+    "beirut": {
+      "urbanLight": 0.34,
+      "lightCharacter": [
+        "warm café and bar light on Corniche-edge streets",
+        "scattered generator-powered shopfront glow at intervals",
+        "bright restaurant terrace light in pools along dark roads"
+      ]
+    },
+    "luxembourg": {
+      "urbanLight": 0.33,
+      "lightCharacter": [
+        "sparse warm heritage lampposts on stone casemate walls",
+        "clean quiet streetlamp pools along fortress-edge paths",
+        "amber lamppost glow on cobblestones with wide dark gaps"
+      ]
+    },
+    "ljubljana": {
+      "urbanLight": 0.32,
+      "lightCharacter": [
+        "warm amber bridge lamppost glow reflecting on the river",
+        "sparse heritage streetlamps along quiet old town lanes",
+        "soft warm café light on cobblestones beside dark water"
+      ]
+    },
+    "quito": {
+      "urbanLight": 0.32,
+      "lightCharacter": [
+        "warm amber church floodlighting above dark colonial lanes",
+        "scattered streetlamp pools along volcanic-stone streets",
+        "bright plaza lamppost glow with wide dark residential gaps"
+      ]
+    },
+    "port louis": {
+      "urbanLight": 0.3,
+      "lightCharacter": [
+        "warm harbour-edge lamppost glow on wet stone paths",
+        "sparse warm market bulbs and scattered street lighting",
+        "bright waterfront restaurant light in isolated pools"
+      ]
+    },
+    "sarajevo": {
+      "urbanLight": 0.3,
+      "lightCharacter": [
+        "warm amber mosque lamplight and scattered heritage lamps",
+        "sparse warm café glow on Baščaršija cobblestones",
+        "bright minaret floodlighting above dim residential lanes"
+      ]
+    },
+    "dar es salaam": {
+      "urbanLight": 0.3,
+      "lightCharacter": [
+        "sparse warm vendor light along unpaved darker roads",
+        "bright security lighting punctuating long dark stretches",
+        "scattered warm bulb glow from open-front shops"
+      ]
+    },
+    "skopje": {
+      "urbanLight": 0.28,
+      "lightCharacter": [
+        "sparse warm lamppost pools on bridge-district stone",
+        "bright monument floodlighting above dark residential blocks",
+        "scattered warm café light along quiet riverside paths"
+      ]
+    },
+    "ulaanbaatar": {
+      "urbanLight": 0.26,
+      "lightCharacter": [
+        "sparse sodium streetlamp pools on wide dark avenues",
+        "warm ger-district light and scattered overhead lamps",
+        "bright intersection lighting with long unlit road gaps"
+      ]
+    },
+    "reykjavik": {
+      "urbanLight": 0.25,
+      "lightCharacter": [
+        "sparse warm streetlamps on wind-scoured lava-stone paths",
+        "warm café window glow punctuating dark harbour-edge streets",
+        "dim harbour lamppost pools on wet volcanic pavement"
+      ]
+    },
+    "podgorica": {
+      "urbanLight": 0.24,
+      "lightCharacter": [
+        "sparse warm lamppost pools along quiet riverside streets",
+        "scattered warm café glow between dark residential blocks",
+        "bright bridge lighting above mostly unlit neighbourhoods"
+      ]
+    },
+    "gaborone": {
+      "urbanLight": 0.22,
+      "lightCharacter": [
+        "sparse warm compound security lights along dark roads",
+        "bright mall entrance glow punctuating wide dark gaps",
+        "scattered warm overhead lamps at distant intervals"
+      ]
+    },
+    "vientiane": {
+      "urbanLight": 0.22,
+      "lightCharacter": [
+        "warm temple lamplight and sparse road-edge bulbs",
+        "scattered warm noodle stall glow along dark riverside",
+        "dim warm overhead lamps with long stretches of darkness"
+      ]
+    },
+    "windhoek": {
+      "urbanLight": 0.2,
+      "lightCharacter": [
+        "sparse warm security lamps along quiet German-era streets",
+        "bright restaurant light in isolated pools on dark roads",
+        "scattered warm overhead lamps with wide open darkness"
+      ]
+    }
+  }
+}

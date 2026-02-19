@@ -1,0 +1,205 @@
+{
+  "$schema": "./schemas/wind.schema.json",
+  "version": "4.0.1",
+  "meta": {
+    "domain": "weather",
+    "category": "wind",
+    "description": "TEMPLATE-READY: Wind descriptor layer only. 0–150 km/h in 5 km/h bins. Deterministic descriptor per bin. Designed for runtime insertion of exact API wind speed into templates. No object references, no behaviour, no mood, no time/lighting.",
+    "range": {
+      "min": 0,
+      "max": 150,
+      "unit": "km/h"
+    },
+    "updated": "2026-02-18",
+    "interval": "5 km/h bins",
+    "totalRanges": 30,
+    "templates": {
+      "numeric_exact": "wind at {speed} km/h",
+      "combined_exact": "{descriptor} at {speed} km/h",
+      "combined_approx": "{descriptor} around {speed} km/h"
+    },
+    "notes": "Pick range by speed, read descriptor, then format using templates. Use *_exact when you keep the API value; use *_approx if you round/smooth."
+  },
+  "ranges": {
+    "range_0_to_5": {
+      "min": 0,
+      "max": 5,
+      "label": "0–5 km/h",
+      "descriptor": "calm air"
+    },
+    "range_5_to_10": {
+      "min": 5,
+      "max": 10,
+      "label": "5–10 km/h",
+      "descriptor": "faint breeze"
+    },
+    "range_10_to_15": {
+      "min": 10,
+      "max": 15,
+      "label": "10–15 km/h",
+      "descriptor": "light breeze"
+    },
+    "range_15_to_20": {
+      "min": 15,
+      "max": 20,
+      "label": "15–20 km/h",
+      "descriptor": "gentle breeze"
+    },
+    "range_20_to_25": {
+      "min": 20,
+      "max": 25,
+      "label": "20–25 km/h",
+      "descriptor": "moderate breeze"
+    },
+    "range_25_to_30": {
+      "min": 25,
+      "max": 30,
+      "label": "25–30 km/h",
+      "descriptor": "moderate breeze"
+    },
+    "range_30_to_35": {
+      "min": 30,
+      "max": 35,
+      "label": "30–35 km/h",
+      "descriptor": "fresh breeze"
+    },
+    "range_35_to_40": {
+      "min": 35,
+      "max": 40,
+      "label": "35–40 km/h",
+      "descriptor": "fresh breeze"
+    },
+    "range_40_to_45": {
+      "min": 40,
+      "max": 45,
+      "label": "40–45 km/h",
+      "descriptor": "strong breeze"
+    },
+    "range_45_to_50": {
+      "min": 45,
+      "max": 50,
+      "label": "45–50 km/h",
+      "descriptor": "strong breeze"
+    },
+    "range_50_to_55": {
+      "min": 50,
+      "max": 55,
+      "label": "50–55 km/h",
+      "descriptor": "near-gale winds"
+    },
+    "range_55_to_60": {
+      "min": 55,
+      "max": 60,
+      "label": "55–60 km/h",
+      "descriptor": "near-gale winds"
+    },
+    "range_60_to_65": {
+      "min": 60,
+      "max": 65,
+      "label": "60–65 km/h",
+      "descriptor": "gale-force winds"
+    },
+    "range_65_to_70": {
+      "min": 65,
+      "max": 70,
+      "label": "65–70 km/h",
+      "descriptor": "gale-force winds"
+    },
+    "range_70_to_75": {
+      "min": 70,
+      "max": 75,
+      "label": "70–75 km/h",
+      "descriptor": "gale-force winds"
+    },
+    "range_75_to_80": {
+      "min": 75,
+      "max": 80,
+      "label": "75–80 km/h",
+      "descriptor": "strong gale"
+    },
+    "range_80_to_85": {
+      "min": 80,
+      "max": 85,
+      "label": "80–85 km/h",
+      "descriptor": "strong gale"
+    },
+    "range_85_to_90": {
+      "min": 85,
+      "max": 90,
+      "label": "85–90 km/h",
+      "descriptor": "strong gale"
+    },
+    "range_90_to_95": {
+      "min": 90,
+      "max": 95,
+      "label": "90–95 km/h",
+      "descriptor": "storm-force winds"
+    },
+    "range_95_to_100": {
+      "min": 95,
+      "max": 100,
+      "label": "95–100 km/h",
+      "descriptor": "storm-force winds"
+    },
+    "range_100_to_105": {
+      "min": 100,
+      "max": 105,
+      "label": "100–105 km/h",
+      "descriptor": "storm-force winds"
+    },
+    "range_105_to_110": {
+      "min": 105,
+      "max": 110,
+      "label": "105–110 km/h",
+      "descriptor": "violent storm winds"
+    },
+    "range_110_to_115": {
+      "min": 110,
+      "max": 115,
+      "label": "110–115 km/h",
+      "descriptor": "violent storm winds"
+    },
+    "range_115_to_120": {
+      "min": 115,
+      "max": 120,
+      "label": "115–120 km/h",
+      "descriptor": "violent storm winds"
+    },
+    "range_120_to_125": {
+      "min": 120,
+      "max": 125,
+      "label": "120–125 km/h",
+      "descriptor": "hurricane-force winds"
+    },
+    "range_125_to_130": {
+      "min": 125,
+      "max": 130,
+      "label": "125–130 km/h",
+      "descriptor": "hurricane-force winds"
+    },
+    "range_130_to_135": {
+      "min": 130,
+      "max": 135,
+      "label": "130–135 km/h",
+      "descriptor": "hurricane-force winds"
+    },
+    "range_135_to_140": {
+      "min": 135,
+      "max": 140,
+      "label": "135–140 km/h",
+      "descriptor": "hurricane-force winds"
+    },
+    "range_140_to_145": {
+      "min": 140,
+      "max": 145,
+      "label": "140–145 km/h",
+      "descriptor": "hurricane-force winds"
+    },
+    "range_145_to_150": {
+      "min": 145,
+      "max": 150,
+      "label": "145–150 km/h",
+      "descriptor": "hurricane-force winds"
+    }
+  }
+}

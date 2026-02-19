@@ -70,6 +70,10 @@ export interface WeatherPromptTooltipProps {
    * 'below' = positioned below the trigger
    */
   verticalPosition?: 'center' | 'below';
+  /** Latitude for solar/lunar elevation calculation (lighting engine). Optional. */
+  latitude?: number | null;
+  /** Longitude for solar/lunar elevation calculation (lighting engine). Optional. */
+  longitude?: number | null;
 }
 
 // ============================================================================
@@ -328,6 +332,8 @@ export function WeatherPromptTooltip({
   isPro = false,
   tooltipPosition = 'left',
   verticalPosition = 'center',
+  latitude,
+  longitude,
 }: WeatherPromptTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -353,6 +359,8 @@ export function WeatherPromptTooltip({
         weather: fullWeather,
         localHour: getLocalHour(tz),
         tier,
+        latitude,
+        longitude,
       })
     : null;
 

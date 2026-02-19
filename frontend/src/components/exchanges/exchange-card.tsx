@@ -76,6 +76,9 @@ interface ExtendedWeatherData {
   sunsetUtc?: number | null;
   timezoneOffset?: number | null;
   isDayTime?: boolean | null;
+  cloudCover?: number | null;
+  visibility?: number | null;
+  pressure?: number | null;
 }
 
 // ============================================================================
@@ -491,6 +494,9 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         sunsetUtc: extWeather.sunsetUtc ?? null,
         timezoneOffset: extWeather.timezoneOffset ?? null,
         isDayTime: extWeather.isDayTime ?? null,
+        cloudCover: extWeather.cloudCover ?? null,
+        visibility: extWeather.visibility ?? null,
+        pressure: extWeather.pressure ?? null,
       }
     : {
         tempC: null,
@@ -504,6 +510,9 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         sunsetUtc: null,
         timezoneOffset: null,
         isDayTime: null,
+        cloudCover: null,
+        visibility: null,
+        pressure: null,
       };
 
   return (
@@ -571,6 +580,8 @@ export const ExchangeCard = React.memo(function ExchangeCard({
                   tier={promptTier}
                   isPro={isPro}
                   tooltipPosition={railPosition}
+                  latitude={latitude}
+                  longitude={longitude}
                 >
                   {/* 
                     Flag wrapper: title="" suppresses native browser tooltip

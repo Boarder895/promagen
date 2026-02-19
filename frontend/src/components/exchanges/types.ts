@@ -64,6 +64,12 @@ export type ExchangeWeatherData = {
    * undefined for demo data → prompt generator falls back to hour threshold.
    */
   isDayTime?: boolean | null;
+  /** Cloud cover % (0–100). From OWM clouds.all via gateway. */
+  cloudCover?: number | null;
+  /** Visibility in metres (0–10000). From OWM visibility via gateway. */
+  visibility?: number | null;
+  /** Atmospheric pressure in hPa. From OWM main.pressure via gateway. */
+  pressure?: number | null;
 };
 
 /**

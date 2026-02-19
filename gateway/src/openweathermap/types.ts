@@ -249,6 +249,24 @@ export interface WeatherData {
    * This is the cheapest, most accurate day/night signal.
    */
   readonly isDayTime: boolean;
+  /**
+   * Cloud cover percentage (0–100).
+   * From OWM clouds.all. Used by the lighting engine (v6.0)
+   * for shadow/diffusion modifier and night base phrase selection.
+   */
+  readonly cloudCover: number;
+  /**
+   * Visibility in metres (0–10000).
+   * From OWM visibility field. Used by the lighting engine (v6.0)
+   * as primary atmosphere clarity indicator. Overrides humidity for haze detection.
+   */
+  readonly visibility: number;
+  /**
+   * Atmospheric pressure in hectopascals (hPa).
+   * From OWM main.pressure. Used by the lighting engine (v6.0)
+   * for stability modifier. Only extreme values (>1030 or <1000) produce output.
+   */
+  readonly pressure: number;
 }
 
 // =============================================================================

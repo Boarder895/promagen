@@ -1,6 +1,6 @@
 {
   "$schema": "./schemas/temperature.schema.json",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "meta": {
     "domain": "weather",
     "category": "temperature",
@@ -10,11 +10,11 @@
       "unit": "°C"
     },
     "interval": "5°C bins",
-    "phrasesPerRange": 10,
+    "phrasesPerRange": 3,
     "totalRanges": 18,
-    "totalPhrases": 180,
+    "totalPhrases": 54,
     "description": "CLEANED v2: Pure temperature translation layer with non-repeating neutral thermal descriptors per 5°C bin. No time-of-day, no seasonal language, no behavioural bias, no indoor implications.",
-    "updated": "2026-02-13"
+    "updated": "2026-02-17"
   },
   "ranges": {
     "range_neg_40_to_neg_35": {
@@ -22,306 +22,112 @@
       "max": -35,
       "label": "-40°C to -35°C",
       "phrases": [
-        "ultra‑subzero ambient temperature",
-        "ultra‑subzero air feel",
-        "ultra‑subzero thermal intensity",
-        "ultra‑subzero temperature presence in open air",
-        "ultra‑subzero sensation on exposed skin",
-        "ultra‑subzero atmospheric temperature level",
-        "ultra‑subzero thermal character of the air",
-        "ultra‑subzero temperature pressure in the environment",
-        "ultra‑subzero background temperature field",
-        "ultra‑subzero overall thermal load in the air"
+        "extreme subzero cold",
+        "air far below freezing",
+        "intense deep-freeze temperatures"
       ]
     },
     "range_neg_35_to_neg_30": {
       "min": -35,
       "max": -30,
       "label": "-35°C to -30°C",
-      "phrases": [
-        "deep‑subzero ambient temperature",
-        "deep‑subzero air feel",
-        "deep‑subzero thermal intensity",
-        "deep‑subzero temperature presence in open air",
-        "deep‑subzero sensation on exposed skin",
-        "deep‑subzero atmospheric temperature level",
-        "deep‑subzero thermal character of the air",
-        "deep‑subzero temperature pressure in the environment",
-        "deep‑subzero background temperature field",
-        "deep‑subzero overall thermal load in the air"
-      ]
+      "phrases": ["severe subzero cold", "air well below freezing", "brutal deep cold"]
     },
     "range_neg_30_to_neg_25": {
       "min": -30,
       "max": -25,
       "label": "-30°C to -25°C",
-      "phrases": [
-        "hard‑subzero ambient temperature",
-        "hard‑subzero air feel",
-        "hard‑subzero thermal intensity",
-        "hard‑subzero temperature presence in open air",
-        "hard‑subzero sensation on exposed skin",
-        "hard‑subzero atmospheric temperature level",
-        "hard‑subzero thermal character of the air",
-        "hard‑subzero temperature pressure in the environment",
-        "hard‑subzero background temperature field",
-        "hard‑subzero overall thermal load in the air"
-      ]
+      "phrases": ["very severe cold", "hard subzero temperatures", "piercing cold air"]
     },
     "range_neg_25_to_neg_20": {
       "min": -25,
       "max": -20,
       "label": "-25°C to -20°C",
-      "phrases": [
-        "biting‑subzero ambient temperature",
-        "biting‑subzero air feel",
-        "biting‑subzero thermal intensity",
-        "biting‑subzero temperature presence in open air",
-        "biting‑subzero sensation on exposed skin",
-        "biting‑subzero atmospheric temperature level",
-        "biting‑subzero thermal character of the air",
-        "biting‑subzero temperature pressure in the environment",
-        "biting‑subzero background temperature field",
-        "biting‑subzero overall thermal load in the air"
-      ]
+      "phrases": ["bitter cold", "strong subzero temperatures", "biting cold air"]
     },
     "range_neg_20_to_neg_15": {
       "min": -20,
       "max": -15,
       "label": "-20°C to -15°C",
-      "phrases": [
-        "severe freeze ambient temperature",
-        "severe freeze air feel",
-        "severe freeze thermal intensity",
-        "severe freeze temperature presence in open air",
-        "severe freeze sensation on exposed skin",
-        "severe freeze atmospheric temperature level",
-        "severe freeze thermal character of the air",
-        "severe freeze temperature pressure in the environment",
-        "severe freeze background temperature field",
-        "severe freeze overall thermal load in the air"
-      ]
+      "phrases": ["severe cold", "deep cold conditions", "air temperature well below zero"]
     },
     "range_neg_15_to_neg_10": {
       "min": -15,
       "max": -10,
       "label": "-15°C to -10°C",
-      "phrases": [
-        "strong freeze ambient temperature",
-        "strong freeze air feel",
-        "strong freeze thermal intensity",
-        "strong freeze temperature presence in open air",
-        "strong freeze sensation on exposed skin",
-        "strong freeze atmospheric temperature level",
-        "strong freeze thermal character of the air",
-        "strong freeze temperature pressure in the environment",
-        "strong freeze background temperature field",
-        "strong freeze overall thermal load in the air"
-      ]
+      "phrases": ["hard frost cold", "sharp cold air", "air below -10°C"]
     },
     "range_neg_10_to_neg_5": {
       "min": -10,
       "max": -5,
       "label": "-10°C to -5°C",
-      "phrases": [
-        "freezing‑edge ambient temperature",
-        "freezing‑edge air feel",
-        "freezing‑edge thermal intensity",
-        "freezing‑edge temperature presence in open air",
-        "freezing‑edge sensation on exposed skin",
-        "freezing‑edge atmospheric temperature level",
-        "freezing‑edge thermal character of the air",
-        "freezing‑edge temperature pressure in the environment",
-        "freezing‑edge background temperature field",
-        "freezing‑edge overall thermal load in the air"
-      ]
+      "phrases": ["freezing cold", "air below -5°C", "cold air near subzero"]
     },
     "range_neg_5_to_0": {
       "min": -5,
       "max": 0,
       "label": "-5°C to 0°C",
-      "phrases": [
-        "near‑freezing ambient temperature",
-        "near‑freezing air feel",
-        "near‑freezing thermal intensity",
-        "near‑freezing temperature presence in open air",
-        "near‑freezing sensation on exposed skin",
-        "near‑freezing atmospheric temperature level",
-        "near‑freezing thermal character of the air",
-        "near‑freezing temperature pressure in the environment",
-        "near‑freezing background temperature field",
-        "near‑freezing overall thermal load in the air"
-      ]
+      "phrases": ["near-freezing cold", "air close to 0°C", "cold air around freezing point"]
     },
     "range_0_to_5": {
       "min": 0,
       "max": 5,
       "label": "0°C to 5°C",
-      "phrases": [
-        "cold‑leaning ambient temperature",
-        "cold‑leaning air feel",
-        "cold‑leaning thermal intensity",
-        "cold‑leaning temperature presence in open air",
-        "cold‑leaning sensation on exposed skin",
-        "cold‑leaning atmospheric temperature level",
-        "cold‑leaning thermal character of the air",
-        "cold‑leaning temperature pressure in the environment",
-        "cold‑leaning background temperature field",
-        "cold‑leaning overall thermal load in the air"
-      ]
+      "phrases": ["cold air just above freezing", "low single-digit temperatures", "chilly air"]
     },
     "range_5_to_10": {
       "min": 5,
       "max": 10,
       "label": "5°C to 10°C",
-      "phrases": [
-        "cool‑leaning ambient temperature",
-        "cool‑leaning air feel",
-        "cool‑leaning thermal intensity",
-        "cool‑leaning temperature presence in open air",
-        "cool‑leaning sensation on exposed skin",
-        "cool‑leaning atmospheric temperature level",
-        "cool‑leaning thermal character of the air",
-        "cool‑leaning temperature pressure in the environment",
-        "cool‑leaning background temperature field",
-        "cool‑leaning overall thermal load in the air"
-      ]
+      "phrases": ["cool air", "single-digit temperatures", "cool conditions"]
     },
     "range_10_to_15": {
       "min": 10,
       "max": 15,
       "label": "10°C to 15°C",
-      "phrases": [
-        "fresh‑cool ambient temperature",
-        "fresh‑cool air feel",
-        "fresh‑cool thermal intensity",
-        "fresh‑cool temperature presence in open air",
-        "fresh‑cool sensation on exposed skin",
-        "fresh‑cool atmospheric temperature level",
-        "fresh‑cool thermal character of the air",
-        "fresh‑cool temperature pressure in the environment",
-        "fresh‑cool background temperature field",
-        "fresh‑cool overall thermal load in the air"
-      ]
+      "phrases": ["mildly cool air", "cool-to-mild temperatures", "fresh mild air"]
     },
     "range_15_to_20": {
       "min": 15,
       "max": 20,
       "label": "15°C to 20°C",
-      "phrases": [
-        "soft‑cool ambient temperature",
-        "soft‑cool air feel",
-        "soft‑cool thermal intensity",
-        "soft‑cool temperature presence in open air",
-        "soft‑cool sensation on exposed skin",
-        "soft‑cool atmospheric temperature level",
-        "soft‑cool thermal character of the air",
-        "soft‑cool temperature pressure in the environment",
-        "soft‑cool background temperature field",
-        "soft‑cool overall thermal load in the air"
-      ]
+      "phrases": ["mild air", "comfortable mild temperatures", "gentle mild warmth"]
     },
     "range_20_to_25": {
       "min": 20,
       "max": 25,
       "label": "20°C to 25°C",
-      "phrases": [
-        "gentle‑mild ambient temperature",
-        "gentle‑mild air feel",
-        "gentle‑mild thermal intensity",
-        "gentle‑mild temperature presence in open air",
-        "gentle‑mild sensation on exposed skin",
-        "gentle‑mild atmospheric temperature level",
-        "gentle‑mild thermal character of the air",
-        "gentle‑mild temperature pressure in the environment",
-        "gentle‑mild background temperature field",
-        "gentle‑mild overall thermal load in the air"
-      ]
+      "phrases": ["warm air", "pleasant warm temperatures", "warm conditions"]
     },
     "range_25_to_30": {
       "min": 25,
       "max": 30,
       "label": "25°C to 30°C",
-      "phrases": [
-        "balanced‑mild ambient temperature",
-        "balanced‑mild air feel",
-        "balanced‑mild thermal intensity",
-        "balanced‑mild temperature presence in open air",
-        "balanced‑mild sensation on exposed skin",
-        "balanced‑mild atmospheric temperature level",
-        "balanced‑mild thermal character of the air",
-        "balanced‑mild temperature pressure in the environment",
-        "balanced‑mild background temperature field",
-        "balanced‑mild overall thermal load in the air"
-      ]
+      "phrases": ["very warm air", "high twenties warmth", "hot-leaning temperatures"]
     },
     "range_30_to_35": {
       "min": 30,
       "max": 35,
       "label": "30°C to 35°C",
-      "phrases": [
-        "light‑warm ambient temperature",
-        "light‑warm air feel",
-        "light‑warm thermal intensity",
-        "light‑warm temperature presence in open air",
-        "light‑warm sensation on exposed skin",
-        "light‑warm atmospheric temperature level",
-        "light‑warm thermal character of the air",
-        "light‑warm temperature pressure in the environment",
-        "light‑warm background temperature field",
-        "light‑warm overall thermal load in the air"
-      ]
+      "phrases": ["hot air", "low thirties heat", "strong heat"]
     },
     "range_35_to_40": {
       "min": 35,
       "max": 40,
       "label": "35°C to 40°C",
-      "phrases": [
-        "steady‑warm ambient temperature",
-        "steady‑warm air feel",
-        "steady‑warm thermal intensity",
-        "steady‑warm temperature presence in open air",
-        "steady‑warm sensation on exposed skin",
-        "steady‑warm atmospheric temperature level",
-        "steady‑warm thermal character of the air",
-        "steady‑warm temperature pressure in the environment",
-        "steady‑warm background temperature field",
-        "steady‑warm overall thermal load in the air"
-      ]
+      "phrases": ["very hot air", "intense heat", "high heat"]
     },
     "range_40_to_45": {
       "min": 40,
       "max": 45,
       "label": "40°C to 45°C",
-      "phrases": [
-        "high‑heat ambient temperature",
-        "high‑heat air feel",
-        "high‑heat thermal intensity",
-        "high‑heat temperature presence in open air",
-        "high‑heat sensation on exposed skin",
-        "high‑heat atmospheric temperature level",
-        "high‑heat thermal character of the air",
-        "high‑heat temperature pressure in the environment",
-        "high‑heat background temperature field",
-        "high‑heat overall thermal load in the air"
-      ]
+      "phrases": ["extreme heat", "scorching air temperature", "searing heat"]
     },
     "range_45_to_50": {
       "min": 45,
       "max": 50,
       "label": "45°C to 50°C",
-      "phrases": [
-        "extreme‑heat ambient temperature",
-        "extreme‑heat air feel",
-        "extreme‑heat thermal intensity",
-        "extreme‑heat temperature presence in open air",
-        "extreme‑heat sensation on exposed skin",
-        "extreme‑heat atmospheric temperature level",
-        "extreme‑heat thermal character of the air",
-        "extreme‑heat temperature pressure in the environment",
-        "extreme‑heat background temperature field",
-        "extreme‑heat overall thermal load in the air"
-      ]
+      "phrases": ["dangerous extreme heat", "air temperature near 50°C", "exceptional heat"]
     }
   }
 }

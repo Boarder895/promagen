@@ -156,7 +156,7 @@ export default function CommodityMoverCard({
         </span>
         <span
           className="font-semibold text-white leading-tight whitespace-nowrap truncate"
-          style={{ fontSize: 'clamp(9px, 0.65em, 18px)' }}
+          style={{ fontSize: 'clamp(9px, 0.7em, 22px)' }}
         >
           {shortName || name}
         </span>
@@ -176,7 +176,7 @@ export default function CommodityMoverCard({
         )}
         <span
           className="text-white tabular-nums leading-tight whitespace-nowrap truncate"
-          style={{ fontSize: 'clamp(8px, 0.55em, 15px)' }}
+          style={{ fontSize: 'clamp(8px, 0.6em, 15px)' }}
         >
           {priceText || '—'}
         </span>
@@ -190,7 +190,7 @@ export default function CommodityMoverCard({
         {arrowIcon}
         <span
           className="font-bold tabular-nums whitespace-nowrap"
-          style={{ fontSize: 'clamp(8px, 0.55em, 15px)' }}
+          style={{ fontSize: 'clamp(8px, 0.6em, 15px)' }}
         >
           {formatDeltaPct(deltaPct)}
         </span>
@@ -208,7 +208,7 @@ export default function CommodityMoverCard({
         </CommodityPromptTooltip>
         <span
           className="tabular-nums leading-tight whitespace-nowrap truncate"
-          style={{ fontSize: 'clamp(8px, 0.55em, 15px)' }}
+          style={{ fontSize: 'clamp(8px, 0.6em, 15px)' }}
         >
           {conversionLine1.priceText}
         </span>
@@ -226,7 +226,7 @@ export default function CommodityMoverCard({
         </CommodityPromptTooltip>
         <span
           className="tabular-nums leading-tight whitespace-nowrap truncate"
-          style={{ fontSize: 'clamp(8px, 0.55em, 15px)' }}
+          style={{ fontSize: 'clamp(8px, 0.6em, 15px)' }}
         >
           {conversionLine2.priceText}
         </span>

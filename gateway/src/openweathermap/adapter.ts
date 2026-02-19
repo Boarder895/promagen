@@ -11,6 +11,10 @@
  * - No sensitive data in logs
  * - Response sanitisation (strips unexpected fields)
  *
+ * UPDATED v6.0.0 (17 Feb 2026):
+ * - parseWeatherResponse() now extracts cloudCover, visibility, pressure
+ * - These fields enable the deterministic lighting engine on frontend
+ *
  * UPDATED v3.1.0 (12 Feb 2026):
  * - parseWeatherResponse() now extracts sunrise, sunset, timezone, isDayTime
  * - isDayTime derived from OWM icon suffix ('d' = day, 'n' = night)
@@ -204,6 +208,7 @@ export async function fetchWeatherWithRetry(
 /**
  * Parse OpenWeatherMap response to Promagen WeatherData format.
  *
+ * v6.0.0: Now extracts cloudCover, visibility, pressure for lighting engine.
  * v3.1.0: Now extracts sunrise, sunset, timezone offset, and day/night flag.
  * - sunriseUtc / sunsetUtc: Unix timestamps from sys.sunrise / sys.sunset
  * - timezoneOffset: Seconds from UTC (e.g., +28800 for Taipei UTC+8)
@@ -248,6 +253,14 @@ export function parseWeatherResponse(
   // Timezone offset in seconds from UTC (e.g., 28800 for UTC+8).
   const timezoneOffset = typeof raw.timezone === 'number' ? raw.timezone : null;
 
+  // ── v6.0.0: Extract lighting engine fields ────────────────────────────
+  // Cloud cover percentage — always present in OWM response.
+  const cloudCover = raw.clouds?.all ?? 0;
+  // Visibility in metres — OWM caps at 10000.
+  const visibility = typeof raw.visibility === 'number' ? raw.visibility : 10000;
+  // Atmospheric pressure in hPa — always present in main block.
+  const pressure = raw.main.pressure;
+
   return {
     id: city.id,
     city: city.city,
@@ -263,6 +276,9 @@ export function parseWeatherResponse(
     sunsetUtc,
     timezoneOffset,
     isDayTime,
+    cloudCover,
+    visibility,
+    pressure,
   };
 }
 

@@ -4,8 +4,7 @@
   "meta": {
     "domain": "weather",
     "category": "time-of-day",
-    "totalPhrases": 120,
-    "description": "CLEANED: Pure temporal descriptors only. No mood, no lighting, no behaviour, no environmental bias. Fully generic 24-hour time layer for dynamic prompt assembly.",
+    "totalPhrases": 67,
     "range": {
       "min": 0,
       "max": 23,
@@ -14,173 +13,29 @@
     "updated": "2026-02-13"
   },
   "hours": {
-    "0": [
-      "midnight",
-      "the stroke of midnight",
-      "twelve at night",
-      "the midnight hour",
-      "zero hours"
-    ],
-    "1": [
-      "one in the morning",
-      "01:00",
-      "one o'clock",
-      "hour one",
-      "early hour 1"
-    ],
-    "2": [
-      "two in the morning",
-      "02:00",
-      "two o'clock",
-      "hour two",
-      "early hour 2"
-    ],
-    "3": [
-      "three in the morning",
-      "03:00",
-      "three o'clock",
-      "hour three",
-      "early hour 3"
-    ],
-    "4": [
-      "four in the morning",
-      "04:00",
-      "four o'clock",
-      "hour four",
-      "early hour 4"
-    ],
-    "5": [
-      "five in the morning",
-      "05:00",
-      "five o'clock",
-      "hour five",
-      "start of the morning"
-    ],
-    "6": [
-      "six in the morning",
-      "06:00",
-      "six o'clock",
-      "early morning",
-      "morning hour"
-    ],
-    "7": [
-      "seven in the morning",
-      "07:00",
-      "seven o'clock",
-      "morning",
-      "morning hour 7"
-    ],
-    "8": [
-      "eight in the morning",
-      "08:00",
-      "eight o'clock",
-      "morning",
-      "early in the day"
-    ],
-    "9": [
-      "nine in the morning",
-      "09:00",
-      "nine o'clock",
-      "mid-morning",
-      "the morning"
-    ],
-    "10": [
-      "ten in the morning",
-      "10:00",
-      "ten o'clock",
-      "late morning",
-      "morning period"
-    ],
-    "11": [
-      "eleven in the morning",
-      "11:00",
-      "eleven o'clock",
-      "pre-noon",
-      "late morning"
-    ],
-    "12": [
-      "noon",
-      "midday",
-      "twelve o'clock",
-      "12:00",
-      "the middle of the day"
-    ],
-    "13": [
-      "one in the afternoon",
-      "13:00",
-      "one o'clock pm",
-      "early afternoon",
-      "afternoon"
-    ],
-    "14": [
-      "two in the afternoon",
-      "14:00",
-      "two o'clock pm",
-      "afternoon",
-      "mid-afternoon"
-    ],
-    "15": [
-      "three in the afternoon",
-      "15:00",
-      "three o'clock pm",
-      "afternoon",
-      "mid-afternoon"
-    ],
-    "16": [
-      "four in the afternoon",
-      "16:00",
-      "four o'clock pm",
-      "late afternoon",
-      "afternoon period"
-    ],
-    "17": [
-      "five in the afternoon",
-      "17:00",
-      "five o'clock pm",
-      "late afternoon",
-      "end of afternoon period"
-    ],
-    "18": [
-      "six in the evening",
-      "18:00",
-      "six o'clock pm",
-      "evening",
-      "early evening"
-    ],
-    "19": [
-      "seven in the evening",
-      "19:00",
-      "seven o'clock pm",
-      "evening",
-      "evening period"
-    ],
-    "20": [
-      "eight in the evening",
-      "20:00",
-      "eight o'clock pm",
-      "evening",
-      "night period beginning"
-    ],
-    "21": [
-      "nine in the evening",
-      "21:00",
-      "nine o'clock pm",
-      "late evening",
-      "night"
-    ],
-    "22": [
-      "ten at night",
-      "22:00",
-      "ten o'clock pm",
-      "night-time",
-      "late night hour"
-    ],
-    "23": [
-      "eleven at night",
-      "23:00",
-      "eleven o'clock pm",
-      "approaching midnight",
-      "final hour before midnight"
-    ]
+    "0": ["midnight", "the stroke of midnight", "the midnight hour"],
+    "1": ["one in the morning"],
+    "2": ["two in the morning"],
+    "3": ["three in the morning"],
+    "4": ["four in the morning"],
+    "5": ["five in the morning", "start of the morning"],
+    "6": ["six in the morning", "early morning"],
+    "7": ["seven in the morning"],
+    "8": ["eight in the morning"],
+    "9": ["nine in the morning", "mid-morning"],
+    "10": ["ten in the morning", "late morning"],
+    "11": ["eleven in the morning", "late morning"],
+    "12": ["noon", "midday", "the middle of the day"],
+    "13": ["one in the afternoon", "early afternoon"],
+    "14": ["two in the afternoon", "mid-afternoon"],
+    "15": ["three in the afternoon", "mid-afternoon"],
+    "16": ["four in the afternoon", "late afternoon"],
+    "17": ["five in the afternoon", "late afternoon"],
+    "18": ["six in the evening", "early evening"],
+    "19": ["seven in the evening"],
+    "20": ["eight in the evening"],
+    "21": ["nine in the evening", "late evening"],
+    "22": ["ten at night", "night-time"],
+    "23": ["eleven at night", "approaching midnight"]
   }
 }

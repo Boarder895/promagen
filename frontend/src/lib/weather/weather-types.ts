@@ -63,6 +63,12 @@ export interface ExchangeWeatherFull {
    * When null (demo data), prompt generator falls back to hour threshold.
    */
   isDayTime: boolean | null;
+  /** Cloud cover % (0–100). null when demo data. */
+  cloudCover: number | null;
+  /** Visibility in metres (0–10000). null when demo data. */
+  visibility: number | null;
+  /** Atmospheric pressure in hPa. null when demo data. */
+  pressure: number | null;
 }
 
 /**
@@ -94,6 +100,12 @@ export interface ExchangeWeatherDisplay {
   timezoneOffset: number | null;
   /** Whether it is daytime; null if unavailable */
   isDayTime: boolean | null;
+  /** Cloud cover % (0–100); null if unavailable */
+  cloudCover: number | null;
+  /** Visibility in metres (0–10000); null if unavailable */
+  visibility: number | null;
+  /** Atmospheric pressure in hPa; null if unavailable */
+  pressure: number | null;
 }
 
 /**
@@ -115,6 +127,9 @@ export function toDisplayWeather(
       sunsetUtc: null,
       timezoneOffset: null,
       isDayTime: null,
+      cloudCover: null,
+      visibility: null,
+      pressure: null,
     };
   }
 
@@ -130,6 +145,9 @@ export function toDisplayWeather(
     sunsetUtc: full.sunsetUtc,
     timezoneOffset: full.timezoneOffset,
     isDayTime: full.isDayTime,
+    cloudCover: full.cloudCover,
+    visibility: full.visibility,
+    pressure: full.pressure,
   };
 }
 
@@ -157,6 +175,9 @@ export function toFullWeather(
     timezoneOffset: display.timezoneOffset ?? null,
     // null means "unknown" — prompt generator will fall back to hour threshold
     isDayTime: display.isDayTime ?? null,
+    cloudCover: display.cloudCover ?? null,
+    visibility: display.visibility ?? null,
+    pressure: display.pressure ?? null,
   };
 }
 

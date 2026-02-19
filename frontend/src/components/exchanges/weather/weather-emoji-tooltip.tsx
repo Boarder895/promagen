@@ -1,12 +1,15 @@
 // src/components/exchanges/weather/weather-emoji-tooltip.tsx
 // ============================================================================
-// WEATHER EMOJI TOOLTIP — Conditions + Moon Phase + Sun Event
+// WEATHER EMOJI TOOLTIP — Conditions + Moon Phase/Position + Sun Event
 // ============================================================================
 // Tooltip on hover over the weather/moon emoji on exchange cards.
-// Shows one coherent sentence:
+// Shows one coherent sentence with moon position always present (day + night):
 //
-//   Daytime:   "Broken clouds over Taipei. Sunset at 17:47."
-//   Nighttime: "Light rain over Wellington. Waxing crescent moon. Sunrise at 06:23."
+//   Day above:   "Broken clouds over Bangkok. Waxing crescent moon, currently located mid-sky in the west at +45°. Sunset at 18:23."
+//   Day high:    "Few clouds over Wellington. Waxing crescent moon, currently located high in the northern sky at +58°. Sunset at 20:22."
+//   Night above: "Overcast clouds over Chicago. Waxing crescent moon, currently located in the western, mid sky at +15°. Sunrise at 06:43."
+//   Night below: "Overcast clouds over London. The Waxing crescent moon is currently below the horizon in the northern sky at -48°. Sunrise at 07:09."
+//   Day below:   "Clear sky over Sydney. The Waxing crescent moon is currently below the horizon in the eastern sky at -12°. Sunset at 17:47."
 //
 // Same visual language as WeatherPromptTooltip (portal, temperature glow,
 // dark glass). Copy button in top-right corner (same style as city vibe prompts).
@@ -28,7 +31,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { getTemperatureColor } from '@/lib/weather/weather-types';
-import { getNextSunEvent } from '@/lib/weather/sun-calculator';
+import { getNextSunEvent, getLunarPosition } from '@/lib/weather/sun-calculator';
 import { getMoonPhase } from '@/lib/weather/weather-prompt-generator';
 
 // ============================================================================
@@ -96,16 +99,100 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 /**
+ * Convert azimuth adjective to cardinal direction noun.
+ * "northern" → "north", "south-western" → "south-west", etc.
+ */
+function azimuthToDirection(azBin: string): string {
+  const map: Record<string, string> = {
+    northern: 'north',
+    'north-eastern': 'north-east',
+    eastern: 'east',
+    'south-eastern': 'south-east',
+    southern: 'south',
+    'south-western': 'south-west',
+    western: 'west',
+    'north-western': 'north-west',
+  };
+  return map[azBin] ?? azBin;
+}
+
+/**
+ * Build the moon position phrase with day/night–specific word order.
+ *
+ * DAYTIME (sun up):
+ *   near overhead  → "near overhead at +72°"
+ *   high           → "high in the northern sky at +58°"
+ *   mid-sky        → "mid-sky in the west at +25°"
+ *   low            → "low on the horizon in the west at +5°"
+ *
+ * NIGHTTIME (sun down):
+ *   near overhead  → "near overhead at +72°"
+ *   high           → "in the western, high sky at +45°"
+ *   mid            → "in the western, mid sky at +15°"
+ *   low            → "in the western, low on the horizon at +5°"
+ */
+function buildMoonPositionPhrase(
+  altitudeBin: string | null,
+  azimuthBin: string,
+  altitude: number,
+  isNight: boolean,
+): string {
+  const altRounded = Math.round(altitude);
+  const altStr = altRounded >= 0 ? `+${altRounded}` : `${altRounded}`;
+  const dir = azimuthToDirection(azimuthBin);
+
+  // Near overhead — no direction needed (day or night)
+  if (altitudeBin === 'near overhead') {
+    return `near overhead at ${altStr}°`;
+  }
+
+  if (!isNight) {
+    // ── Daytime word order: {altitude descriptor} in the {direction} ──
+    if (altitudeBin === 'high in the sky') {
+      return `high in the ${azimuthBin} sky at ${altStr}°`;
+    }
+    if (altitudeBin === 'mid-sky') {
+      return `mid-sky in the ${dir} at ${altStr}°`;
+    }
+    if (altitudeBin === 'low on the horizon') {
+      return `low on the horizon in the ${dir} at ${altStr}°`;
+    }
+  } else {
+    // ── Nighttime word order: in the {azimuth}, {altitude descriptor} ──
+    if (altitudeBin === 'high in the sky') {
+      return `in the ${azimuthBin}, high sky at ${altStr}°`;
+    }
+    if (altitudeBin === 'mid-sky') {
+      return `in the ${azimuthBin}, mid sky at ${altStr}°`;
+    }
+    if (altitudeBin === 'low on the horizon') {
+      return `in the ${azimuthBin}, low on the horizon at ${altStr}°`;
+    }
+  }
+
+  // Fallback (should not reach)
+  return `in the ${azimuthBin} sky at ${altStr}°`;
+}
+
+/**
  * Build the tooltip sentence.
  *
- * Daytime:   "Broken clouds over Taipei. Sunset at 17:47."
- * Nighttime: "Light rain over Wellington. Waxing crescent moon. Sunrise at 06:23."
+ * Always includes moon phase + position (day and night).
+ *
+ * Day above:    "Few clouds over Wellington. Waxing crescent moon, currently located high in the northern sky at +58°. Sunset at 20:22."
+ * Day mid:      "Broken clouds over Bangkok. Waxing crescent moon, currently located mid-sky in the west at +45°. Sunset at 18:23."
+ * Night above:  "Overcast clouds over Chicago. Waxing crescent moon, currently located in the western, mid sky at +15°. Sunrise at 06:43."
+ * Night below:  "Overcast clouds over London. The Waxing crescent moon is currently below the horizon in the northern sky at -48°. Sunrise at 07:09."
+ * Day below:    "Clear sky over Sydney. The Waxing crescent moon is currently below the horizon in the eastern sky at -12°. Sunset at 17:47."
+ * No lat/lon:   "Clear sky over Sydney. Waxing crescent moon. Sunset at 17:47."
  */
 function buildTooltipText(
   city: string,
   description: string | null,
   isNight: boolean,
   sunEvent: { label: 'Sunrise' | 'Sunset'; time: string } | null,
+  latitude?: number | null,
+  longitude?: number | null,
 ): string {
   const parts: string[] = [];
 
@@ -116,14 +203,35 @@ function buildTooltipText(
     parts.push(`Weather over ${city}.`);
   }
 
-  // Moon phase (night only)
-  if (isNight) {
-    const moon = getMoonPhase();
-    // Sentence-case: "Waxing Crescent" → "Waxing crescent"
-    const moonName = moon.name.charAt(0).toUpperCase() + moon.name.slice(1).toLowerCase();
-    // Some phases already include "moon" (e.g. "New Moon", "Full Moon") — don't double it
-    const hasMoon = moonName.toLowerCase().includes('moon');
-    parts.push(hasMoon ? `${moonName}.` : `${moonName} moon.`);
+  // Moon phase + position (always, day and night)
+  const moon = getMoonPhase();
+  const moonName = moon.name.charAt(0).toUpperCase() + moon.name.slice(1).toLowerCase();
+  const hasMoon = moonName.toLowerCase().includes('moon');
+  const moonLabel = hasMoon ? moonName : `${moonName} moon`;
+
+  if (typeof latitude === 'number' && typeof longitude === 'number') {
+    const pos = getLunarPosition(latitude, longitude);
+    const altRounded = Math.round(pos.altitude);
+    const altStr = altRounded >= 0 ? `+${altRounded}` : `${altRounded}`;
+
+    if (pos.altitude > 0) {
+      // Above horizon — phase + position (word order differs day vs night)
+      const phrase = buildMoonPositionPhrase(
+        pos.altitudeBin,
+        pos.azimuthBin,
+        pos.altitude,
+        isNight,
+      );
+      parts.push(`${moonLabel}, currently located ${phrase}.`);
+    } else {
+      // Below horizon — same wording day or night, includes phase name
+      parts.push(
+        `The ${moonLabel} is currently below the horizon in the ${pos.azimuthBin} sky at ${altStr}°.`,
+      );
+    }
+  } else {
+    // No coordinates — phase only (backward compat)
+    parts.push(`${moonLabel}.`);
   }
 
   // Next sun event
@@ -310,7 +418,7 @@ export function WeatherEmojiTooltip({
 
   // ── Compute tooltip data ───────────────────────────────────────────
   const sunEvent = getNextSunEvent(isNight, tz, sunriseUtc, sunsetUtc, latitude, longitude);
-  const tooltipText = buildTooltipText(city, description, isNight, sunEvent);
+  const tooltipText = buildTooltipText(city, description, isNight, sunEvent, latitude, longitude);
   const tempColor = tempC !== null ? getTemperatureColor(tempC) : '#38BDF8';
 
   // ── Position calculation ───────────────────────────────────────────
