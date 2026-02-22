@@ -8,7 +8,7 @@
 // - Copy icon to copy prompt to clipboard
 // - Uses React Portal to render at document.body (escapes all containers)
 // - 400ms hover persistence for easy copy access
-// - Tier-based prompt format (Free: Tier 4, Pro: Selectable 1-4)
+// - Tier-based prompt format (Free: Tier 3, Pro: Selectable 1-4)
 //
 // UPDATES (26 Jan 2026):
 // - REMOVED: Country/city name from tooltip header (flag is sufficient)
@@ -54,7 +54,7 @@ export interface WeatherPromptTooltipProps {
   tz: string;
   /** Weather data for prompt generation */
   weather: ExchangeWeatherDisplay;
-  /** Prompt tier (1-4). Defaults to 4 (Artistly) for free users */
+  /** Prompt tier (1-4). Defaults to 3 (Natural Language) for free users */
   tier?: PromptTier;
   /** Whether user is Pro (for styling) */
   isPro?: boolean;
@@ -292,7 +292,7 @@ function TooltipContent({
         {/* Tier indicator */}
         <span className="text-xs text-slate-500 -mt-1">
           Tier {tier}:{' '}
-          {tier === 1 ? 'CLIP' : tier === 2 ? 'Midjourney' : tier === 3 ? 'DALL·E' : 'Plain'}
+          {tier === 1 ? 'CLIP-Based' : tier === 2 ? 'Midjourney Family' : tier === 3 ? 'Natural Language' : 'Plain Language'}
         </span>
 
         {/* Prompt text */}

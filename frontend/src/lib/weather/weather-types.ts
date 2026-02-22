@@ -93,6 +93,14 @@ export interface ExchangeWeatherFull {
    * Used for "gusting to X" wind modifiers.
    */
   windGustKmh: number | null;
+  /**
+   * v9.5.0: OWM weather condition ID (200–804).
+   * From OWM weather[0].id. Enables precise cloud type classification
+   * (e.g., 801 = few clouds/cumulus, 804 = overcast/stratus, 2xx = cumulonimbus).
+   * null when demo data or gateway hasn't been updated to send it.
+   * When null, cloud type is inferred from description string.
+   */
+  weatherId: number | null;
 }
 
 /**
@@ -139,6 +147,8 @@ export interface ExchangeWeatherDisplay {
   windDegrees: number | null;
   /** v8.0.0: Wind gust speed in km/h; null if unavailable */
   windGustKmh: number | null;
+  /** v9.5.0: OWM weather condition ID (weather[0].id); null if unavailable */
+  weatherId: number | null;
 }
 
 /**
@@ -167,6 +177,7 @@ export function toDisplayWeather(
       snowMm1h: null,
       windDegrees: null,
       windGustKmh: null,
+      weatherId: null,
     };
   }
 
@@ -189,6 +200,7 @@ export function toDisplayWeather(
     snowMm1h: full.snowMm1h,
     windDegrees: full.windDegrees,
     windGustKmh: full.windGustKmh,
+    weatherId: full.weatherId,
   };
 }
 
@@ -228,6 +240,7 @@ export function toFullWeather(
     snowMm1h: display.snowMm1h ?? null,
     windDegrees: display.windDegrees ?? null,
     windGustKmh: display.windGustKmh ?? null,
+    weatherId: display.weatherId ?? null,
   };
 }
 

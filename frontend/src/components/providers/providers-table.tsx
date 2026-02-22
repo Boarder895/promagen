@@ -36,6 +36,7 @@ import { IndexRatingCell } from './index-rating-cell';
 import { toRomanNumeral } from '@/lib/format/number';
 import { Flag } from '@/components/ui/flag';
 import Tooltip from '@/components/ui/tooltip';
+import type { WeatherData } from '@/hooks/use-weather';
 
 // Market power data for MPI calculation
 import marketPowerData from '@/data/providers/market-power.json';
@@ -59,6 +60,10 @@ export type ProvidersTableProps = {
   isExpanded?: boolean;
   /** Callback to toggle expanded mode */
   onExpandToggle?: () => void;
+  /** Weather data map from useWeather() — enables provider flag weather tooltips */
+  weatherMap?: Record<string, WeatherData>;
+  /** Whether user is Pro (for tooltip badge) */
+  isPro?: boolean;
 };
 
 type PromagenUsersCountryUsage = {
@@ -444,6 +449,8 @@ export function ProvidersTable({
   onProvidersChange,
   isExpanded = false,
   onExpandToggle,
+  weatherMap,
+  isPro = false,
 }: ProvidersTableProps) {
   // Sort state: default to Index Rating descending (highest first)
   const [sortBy, setSortBy] = useState<SortColumn>('indexRating');
@@ -590,6 +597,8 @@ export function ProvidersTable({
                     provider={p}
                     rank={index + 1}
                     hasRankUp={p.indexRating?.hasRankUp ?? false}
+                    weatherMap={weatherMap}
+                    isPro={isPro}
                   />
                 </td>
 

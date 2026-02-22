@@ -83,6 +83,7 @@ export default function ExchangeRail({
             <ExchangeCard
               key={exchange.id}
               exchange={toCardData(exchange, weather)}
+              promptTier={3}
             />
           );
         })}

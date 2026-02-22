@@ -42,6 +42,7 @@ import {
   getWeatherData,
   getWeatherTraceInfo,
   resetWeatherHandler,
+  warmAllBatches,
   startBackgroundRefresh as startWeatherRefresh,
   stopBackgroundRefresh as stopWeatherRefresh,
 } from './openweathermap/index.js';
@@ -272,38 +273,70 @@ function getEnvStatus(): Record<string, unknown> {
 async function initWeatherFromConfig(): Promise<void> {
   const configUrl = process.env['WEATHER_CONFIG_URL'] ?? getDefaultWeatherConfigUrl();
 
-  try {
-    const response = await fetch(configUrl, {
-      headers: { 'User-Agent': 'Promagen-Gateway/1.0' },
-      signal: AbortSignal.timeout(10_000),
-    });
+  // v3.3.0: Retry with backoff. In local dev the frontend may not be compiled
+  // yet when the gateway starts. Without retry, weather is permanently dead
+  // because resetWeatherHandler() sets isInitialized=false with no recovery path.
+  // 5 attempts: 0s, 3s, 6s, 12s, 24s = ~45s total. Covers Next.js cold compile.
+  const MAX_ATTEMPTS = 5;
+  const BASE_DELAY_MS = 3_000;
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch weather config: HTTP ${response.status}`);
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch(configUrl, {
+        headers: { 'User-Agent': 'Promagen-Gateway/1.0' },
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch weather config: HTTP ${response.status}`);
+      }
+
+      const config = (await response.json()) as {
+        cities: Array<{ id: string; city: string; lat: number; lon: number }>;
+        selectedExchangeIds: string[];
+        freeDefaultIds?: string[];
+      };
+
+      // v3.0.1 FIX: Use freeDefaultIds (SSOT 16) for batch priority.
+      const batchPriorityIds = config.freeDefaultIds ?? config.selectedExchangeIds;
+
+      initWeatherHandler(config.cities, batchPriorityIds);
+
+      logInfo('Weather handler initialized from config', {
+        cityCount: config.cities.length,
+        priorityCount: batchPriorityIds.length,
+        prioritySource: config.freeDefaultIds ? 'freeDefaultIds' : 'selectedExchangeIds (fallback)',
+        attempt,
+      });
+
+      // v3.2.0: Warm ALL 4 batches immediately so every city (including
+      // provider-specific ones in B/C/D) has weather data from first request.
+      // 15 provider cities + 84 exchange = 99 total, 97 unique after dedup.
+      // Without this, provider tooltips don't work for up to 4 hours after restart.
+      await warmAllBatches();
+      return; // ← Success — exit the retry loop
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+
+      if (attempt < MAX_ATTEMPTS) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1); // 3s, 6s, 12s, 24s
+        logWarn(
+          `Weather config fetch failed (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${Math.round(delay / 1000)}s`,
+          {
+            error: errorMsg,
+            configUrl,
+          },
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        // Final attempt failed — give up
+        logError(`Weather config fetch failed after ${MAX_ATTEMPTS} attempts`, {
+          error: errorMsg,
+          configUrl,
+        });
+        resetWeatherHandler();
+      }
     }
-
-    const config = (await response.json()) as {
-      cities: Array<{ id: string; city: string; lat: number; lon: number }>;
-      selectedExchangeIds: string[];
-      freeDefaultIds?: string[];
-    };
-
-    // v3.0.1 FIX: Use freeDefaultIds (SSOT 16) for batch priority.
-    const batchPriorityIds = config.freeDefaultIds ?? config.selectedExchangeIds;
-
-    initWeatherHandler(config.cities, batchPriorityIds);
-
-    logInfo('Weather handler initialized from config', {
-      cityCount: config.cities.length,
-      priorityCount: batchPriorityIds.length,
-      prioritySource: config.freeDefaultIds ? 'freeDefaultIds' : 'selectedExchangeIds (fallback)',
-    });
-  } catch (error) {
-    logError('Weather config fetch failed', {
-      error: error instanceof Error ? error.message : String(error),
-      configUrl,
-    });
-    resetWeatherHandler();
   }
 }
 

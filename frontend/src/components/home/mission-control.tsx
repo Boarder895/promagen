@@ -292,6 +292,7 @@ export default function MissionControl({
       snowMm1h: data.snowMm1h ?? null,
       windDegrees: data.windDegrees ?? null,
       windGustKmh: data.windGustKmh ?? null,
+      weatherId: data.weatherId ?? null,
     };
   }, [previewExchange, weatherIndex]);
 

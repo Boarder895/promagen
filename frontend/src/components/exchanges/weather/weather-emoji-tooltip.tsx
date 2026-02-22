@@ -186,6 +186,31 @@ function buildMoonPositionPhrase(
  * Day below:    "Clear sky over Sydney. The Waxing crescent moon is currently below the horizon in the eastern sky at -12°. Sunset at 17:47."
  * No lat/lon:   "Clear sky over Sydney. Waxing crescent moon. Sunset at 17:47."
  */
+/**
+ * Normalise sun-referencing weather descriptions at night.
+ *
+ * OWM reports "sunny" / "clear sky" etc. which are physically correct during
+ * the day but contradictory after sunset — you can't have "sunny" skies when
+ * the sun is below the horizon. All other conditions (cloudy, rain, fog …)
+ * are valid day or night.
+ */
+function normaliseNightDescription(desc: string): string {
+  const lower = desc.toLowerCase().trim();
+
+  // Exact matches — full description is a sun-reference
+  if (lower === 'sunny' || lower === 'clear sky') return 'Clear';
+  if (lower === 'mostly sunny') return 'Mostly clear';
+  if (lower === 'partly sunny') return 'Partly cloudy';
+
+  // Partial matches — "sunny" embedded in a longer phrase
+  // e.g. "sunny intervals" → "clear intervals"
+  if (lower.includes('sunny')) {
+    return desc.replace(/[Ss]unny/g, (match) => (match.charAt(0) === 'S' ? 'Clear' : 'clear'));
+  }
+
+  return desc;
+}
+
 function buildTooltipText(
   city: string,
   description: string | null,
@@ -197,8 +222,10 @@ function buildTooltipText(
   const parts: string[] = [];
 
   // Weather description + city
+  // Normalise sun-referencing descriptions at night (v9.6.1)
   if (description) {
-    parts.push(`${capitalise(description)} over ${city}.`);
+    const display = isNight ? normaliseNightDescription(description) : description;
+    parts.push(`${capitalise(display)} over ${city}.`);
   } else {
     parts.push(`Weather over ${city}.`);
   }
@@ -306,10 +333,18 @@ function TooltipContent({
         }}
       />
 
-      {/* Content — copy button top-right, text below */}
+      {/* Content — heading + copy button top-right, text below */}
       <div className="relative z-10 flex flex-col gap-2">
-        {/* Header row with copy button top-right */}
-        <div className="flex items-start justify-end">
+        {/* Header row: heading + copy button */}
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="text-base font-semibold text-white"
+            style={{
+              textShadow: `0 0 12px ${glowRgba}`,
+            }}
+          >
+            Meteorological Data
+          </span>
           <button
             type="button"
             onClick={(e) => {

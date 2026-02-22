@@ -10,13 +10,13 @@
  * - Budget state never exposed to external clients
  * - Implements BudgetManagerInterface (Guardrail G4)
  *
- * Budget Strategy (v3.0.0 — 4-batch, dedup):
- * - 89 exchanges → 83 unique coordinates (dedup saves 6)
- * - 83 cities split into 4 batches (~21 each)
+ * Budget Strategy (v3.1.0 — 4-batch, dedup, provider cities):
+ * - 94 entries (84 exchange + 10 provider) → 92 unique coordinates (dedup saves 2)
+ * - 92 cities split into 4 batches (~23 each)
  * - One batch per hour, cycling A→B→C→D via hour % 4
  * - Single slot at :10 (dropped :40)
- * - 498 calls/day (49.8% of budget)
- * - ~21 calls per batch << 60/min limit
+ * - 552 calls/day (55.2% of budget)
+ * - ~23 calls per batch << 60/min limit
  *
  * Existing features preserved: Yes
  *
@@ -298,7 +298,7 @@ let instance: OpenWeatherMapBudgetManager | null = null;
  * ```typescript
  * import { openWeatherMapBudget } from './budget.js';
  *
- * // Check before making API calls (~21 cities per batch)
+ * // Check before making API calls (~23 cities per batch)
  * if (openWeatherMapBudget.canSpend(21)) {
  *   openWeatherMapBudget.spend(21);
  *   // Make API calls
@@ -338,35 +338,41 @@ export function resetOpenWeatherMapBudget(): void {
 }
 
 // =============================================================================
-// BUDGET CALCULATIONS (v3.0.0 — 4-batch, dedup strategy)
+// BUDGET CALCULATIONS (v3.1.0 — 4-batch, dedup, provider cities)
 // =============================================================================
 
 /**
  * Number of batches in the rotation.
- * v3.0.0: Changed from 2 to 4 to cover all 89 exchanges (83 unique coords).
+ * v3.0.0: Changed from 2 to 4 to cover all exchanges + provider HQ cities.
  */
 export const NUM_BATCHES = 4;
 
 /**
  * Maximum cities per batch (safety cap for 60/min limit compliance).
- * Actual batch sizes determined by ceil(uniqueLocations / 4) ≈ 21.
- * Cap kept at 24 for headroom. 24 < 60 ✅
+ * Actual batch sizes determined by ceil(uniqueLocations / 4) ≈ 23.
+ * Cap kept at 28 for headroom. 28 < 60 ✅
+ *
+ * v3.1.0: Raised from 24 → 28. With 92 unique locations, batches are ~23.
+ * Previous cap of 24 left only 1 city of headroom — too tight.
  */
-export const MAX_CITIES_PER_BATCH = 24;
+export const MAX_CITIES_PER_BATCH = 28;
 
 /**
  * Expected daily usage based on 4-batch dedup strategy.
  *
- * 83 unique locations × 6 refreshes/day (every 4 hours) = 498 calls/day.
+ * 92 unique locations × 6 refreshes/day (every 4 hours) = 552 calls/day.
+ *
+ * Sources: 84 exchange cities + 10 provider HQ cities = 94 total entries.
+ * After coordinate dedup (Mumbai ×2→1, Frankfurt ×2→1): 92 unique locations.
  *
  * Breakdown:
- * - Batch A: 21 unique × 6 = 126
- * - Batch B: 21 unique × 6 = 126
- * - Batch C: 21 unique × 6 = 126
- * - Batch D: 20 unique × 6 = 120
- * - Total: 498 (49.8% of 1,000 budget)
+ * - Batch A: 23 unique × 6 = 138
+ * - Batch B: 23 unique × 6 = 138
+ * - Batch C: 23 unique × 6 = 138
+ * - Batch D: 23 unique × 6 = 138
+ * - Total: 552 (55.2% of 1,000 budget)
  */
-export const EXPECTED_DAILY_USAGE = 498;
+export const EXPECTED_DAILY_USAGE = 552;
 
 /**
  * Calculate remaining budget headroom.

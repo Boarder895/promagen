@@ -44,7 +44,7 @@ import ProvidersTable from '@/components/providers/providers-table';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
 import { useExchangeSelection } from '@/hooks/use-exchange-selection';
-import { useWeather } from '@/hooks/use-weather';
+import { useWeather, type WeatherData } from '@/hooks/use-weather';
 import { getRailsRelative } from '@/lib/location';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
@@ -182,6 +182,9 @@ export default function HomepageClient({
         sunsetUtc: w.sunsetUtc ?? undefined,
         timezoneOffset: w.timezoneOffset ?? undefined,
         isDayTime: w.isDayTime ?? undefined,
+        windDegrees: w.windDegrees ?? undefined,
+        windGustKmh: w.windGustKmh ?? undefined,
+        visibility: w.visibility ?? undefined,
       });
     }
     return map;
@@ -198,6 +201,113 @@ export default function HomepageClient({
     }
     return merged;
   }, [liveWeatherIndex, weatherIndex]);
+
+  // ── Provider weather map ──────────────────────────────────────────────
+  // Providers use the SAME merged SSR+live weather source as exchange cards,
+  // converted to the Record<string, WeatherData> format that ProviderCell expects.
+  // This ensures providers get weather from first render (SSR) — NOT only after
+  // the client-side useWeather() fetch completes.
+  const providerWeatherMap = useMemo(() => {
+    const map: Record<string, WeatherData> = {};
+    for (const [id, w] of effectiveWeatherIndex) {
+      map[id] = {
+        id,
+        city: id,
+        temperatureC: w.tempC ?? 0,
+        temperatureF: w.tempF ?? (w.tempC !== null ? (w.tempC * 9) / 5 + 32 : 32),
+        conditions: w.condition ?? 'Unknown',
+        description: w.description ?? w.condition ?? '',
+        humidity: w.humidity ?? 50,
+        windSpeedKmh: w.windKmh ?? w.windSpeedKmh ?? 5,
+        emoji: w.emoji ?? '🌤️',
+        asOf: new Date().toISOString(),
+        sunriseUtc: w.sunriseUtc ?? null,
+        sunsetUtc: w.sunsetUtc ?? null,
+        timezoneOffset: w.timezoneOffset ?? null,
+        isDayTime: w.isDayTime ?? undefined,
+        windDegrees: w.windDegrees ?? null,
+        windGustKmh: w.windGustKmh ?? null,
+        visibility: w.visibility ?? null,
+      };
+    }
+
+    // ── DIAGNOSTIC: Weather pipeline trace ──────────────────────────────
+    const providerKeys = Object.keys(map).filter((k) => k.startsWith('provider-'));
+    const exchangeKeys = Object.keys(map).filter((k) => !k.startsWith('provider-'));
+    const ssrKeys = [...weatherIndex.keys()];
+    const ssrProviderKeys = ssrKeys.filter((k) => k.startsWith('provider-'));
+    const liveKeys = [...liveWeatherIndex.keys()];
+    const liveProviderKeys = liveKeys.filter((k) => k.startsWith('provider-'));
+    console.debug('[WEATHER-DIAG] ═══════════════════════════════════════');
+    console.debug('[WEATHER-DIAG] SSR weatherIndex:', {
+      total: weatherIndex.size,
+      providerIds: ssrProviderKeys.length,
+      providerSample: ssrProviderKeys.slice(0, 5),
+      hasSF: weatherIndex.has('provider-san-francisco'),
+      hasLondon: weatherIndex.has('lse-london'),
+    });
+    console.debug('[WEATHER-DIAG] Client liveWeatherIndex:', {
+      total: liveWeatherIndex.size,
+      providerIds: liveProviderKeys.length,
+      providerSample: liveProviderKeys.slice(0, 5),
+      hasSF: liveWeatherIndex.has('provider-san-francisco'),
+    });
+    console.debug('[WEATHER-DIAG] Merged effectiveWeatherIndex:', {
+      total: effectiveWeatherIndex.size,
+      isSSR: effectiveWeatherIndex === weatherIndex,
+    });
+    console.debug('[WEATHER-DIAG] providerWeatherMap:', {
+      totalKeys: Object.keys(map).length,
+      providerKeys: providerKeys.length,
+      exchangeKeys: exchangeKeys.length,
+      providerList: providerKeys,
+      hasSF: !!map['provider-san-francisco'],
+      hasSeattle: !!map['provider-seattle'],
+      hasCairns: !!map['provider-cairns'],
+    });
+    // ── DIAGNOSTIC: Show actual field values for windDegrees/gusts/visibility ──
+    const sfEntry = map['provider-san-francisco'];
+    const nyseEntry = map['nyse-new-york'];
+    const sfSource = effectiveWeatherIndex.get('provider-san-francisco');
+    console.debug(
+      '[WEATHER-FIELD-DIAG] provider-san-francisco MAP entry:',
+      sfEntry
+        ? {
+            windDegrees: sfEntry.windDegrees,
+            windGustKmh: sfEntry.windGustKmh,
+            visibility: sfEntry.visibility,
+            windSpeedKmh: sfEntry.windSpeedKmh,
+          }
+        : 'NOT FOUND',
+    );
+    console.debug(
+      '[WEATHER-FIELD-DIAG] provider-san-francisco SOURCE (effectiveWeatherIndex):',
+      sfSource
+        ? {
+            windDegrees: sfSource.windDegrees,
+            windGustKmh: sfSource.windGustKmh,
+            visibility: sfSource.visibility,
+            windKmh: sfSource.windKmh,
+          }
+        : 'NOT FOUND',
+    );
+    console.debug(
+      '[WEATHER-FIELD-DIAG] nyse-new-york MAP entry:',
+      nyseEntry
+        ? {
+            windDegrees: nyseEntry.windDegrees,
+            windGustKmh: nyseEntry.windGustKmh,
+            visibility: nyseEntry.visibility,
+            windSpeedKmh: nyseEntry.windSpeedKmh,
+          }
+        : 'NOT FOUND',
+    );
+    // ── END FIELD DIAGNOSTIC ──────────────────────────────────────────────
+    console.debug('[WEATHER-DIAG] ═══════════════════════════════════════');
+    // ── END DIAGNOSTIC ─────────────────────────────────────────────────
+
+    return map;
+  }, [effectiveWeatherIndex, weatherIndex, liveWeatherIndex]);
 
   // Get user's exchange selection (tier-aware)
   const {
@@ -337,6 +447,7 @@ export default function HomepageClient({
         onProvidersChange={handleProvidersChange}
         isExpanded={isTableExpanded}
         onExpandToggle={handleExpandToggle}
+        weatherMap={providerWeatherMap}
       />
     </section>
   );
@@ -394,6 +505,8 @@ export default function HomepageClient({
       centre={centreRail}
       rightContent={rightExchanges}
       showFinanceRibbon={!isTableExpanded}
+      isTableExpanded={isTableExpanded}
+      onExpandToggle={handleExpandToggle}
       exchanges={allOrderedExchanges}
       displayedProviderIds={displayedProviderIds.length > 0 ? displayedProviderIds : providerIds}
       isPaidUser={userTier === 'paid'}

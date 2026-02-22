@@ -43,6 +43,7 @@ import { WeatherEmojiTooltip } from './weather/weather-emoji-tooltip';
 import type { ExchangeWeatherDisplay } from '@/lib/weather/weather-types';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 import { getMoonPhase } from '@/lib/weather/weather-prompt-generator';
+import { resolveIsNight } from '@/lib/weather/day-night';
 
 // ============================================================================
 // SNAP-FIT FONT CONSTANTS
@@ -84,6 +85,7 @@ interface ExtendedWeatherData {
   snowMm1h?: number | null;
   windDegrees?: number | null;
   windGustKmh?: number | null;
+  weatherId?: number | null;
 }
 
 // ============================================================================
@@ -243,84 +245,13 @@ interface WeatherSectionProps {
   longitude?: number | null;
 }
 
-/**
- * Determine whether it is currently nighttime at an exchange.
- *
- * Priority cascade (most accurate real-time → least):
- * 1. Sunrise/sunset times + timezone offset → local time-of-day comparison
- *    Uses Date.now() so always current. Modular arithmetic so it works
- *    even when weather data is hours old (sunrise/sunset barely change day-to-day).
- * 2. IANA timezone string → local hour check (before 6am / after 7pm)
- * 3. isDayTime boolean from gateway (LAST — it's a stale snapshot from fetch time,
- *    can be hours old if the batch hasn't refreshed since daytime)
- *
- * Returns `true` when it is night (moon emoji should show).
- */
-function resolveIsNight(
-  isDayTime: boolean | null,
-  tz: string,
-  sunriseUtc: number | null,
-  sunsetUtc: number | null,
-  timezoneOffset: number | null,
-): boolean {
-  // ── Tier 1: Sunrise/sunset → local time-of-day ────────────────────
-  // Most accurate: OWM provides precise sunrise/sunset for this city.
-  // We extract the time-of-day portion (seconds since local midnight)
-  // so it doesn't matter what *date* the data was fetched on — sunrise
-  // and sunset times shift by only seconds day-to-day.
-  if (
-    typeof sunriseUtc === 'number' &&
-    typeof sunsetUtc === 'number' &&
-    typeof timezoneOffset === 'number'
-  ) {
-    const SECONDS_PER_DAY = 86400;
-    const nowUtc = Math.floor(Date.now() / 1000);
-
-    // Convert to seconds-since-local-midnight (double-mod for negative offsets)
-    const nowLocal =
-      (((nowUtc + timezoneOffset) % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY;
-    const sunriseLocal =
-      (((sunriseUtc + timezoneOffset) % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY;
-    const sunsetLocal =
-      (((sunsetUtc + timezoneOffset) % SECONDS_PER_DAY) + SECONDS_PER_DAY) % SECONDS_PER_DAY;
-
-    // Day = between sunrise and sunset (local time-of-day)
-    return nowLocal < sunriseLocal || nowLocal > sunsetLocal;
-  }
-
-  // ── Tier 2: IANA timezone → local hour (always available) ──────────
-  if (tz) {
-    try {
-      const localHourStr = new Date().toLocaleString('en-GB', {
-        timeZone: tz,
-        hour: 'numeric',
-        hour12: false,
-      });
-      const localHour = parseInt(localHourStr, 10);
-      if (!isNaN(localHour)) {
-        // Before 6am or after 7pm → night
-        return localHour < 6 || localHour >= 19;
-      }
-    } catch (_e) {
-      // Invalid tz string — fall through
-    }
-  }
-
-  // ── Tier 3: Gateway isDayTime flag (stale snapshot — last resort) ──
-  // This is a snapshot from when OWM was queried (up to 4 hours ago).
-  // Only used when sunrise/sunset data AND timezone are both missing.
-  if (isDayTime === true) return false;
-  if (isDayTime === false) return true;
-
-  // ── Fallback: assume daytime (safest default) ──────────────────────
-  return false;
-}
+// resolveIsNight() — imported from '@/lib/weather/day-night' (shared with provider cells)
 
 const WeatherSection = React.memo(function WeatherSection({
   city,
   tz,
   weather,
-  promptTier: _promptTier = 4,
+  promptTier: _promptTier = 3,
   isPro: _isPro = false,
   railPosition = 'left',
   latitude,
@@ -414,7 +345,7 @@ interface ExtendedExchangeCardProps extends ExchangeCardProps {
 export const ExchangeCard = React.memo(function ExchangeCard({
   exchange,
   className = '',
-  promptTier = 4,
+  promptTier = 3,
   isPro = false,
   railPosition = 'left',
 }: ExtendedExchangeCardProps) {
@@ -506,6 +437,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         snowMm1h: extWeather.snowMm1h ?? null,
         windDegrees: extWeather.windDegrees ?? null,
         windGustKmh: extWeather.windGustKmh ?? null,
+        weatherId: extWeather.weatherId ?? null,
       }
     : {
         tempC: null,
@@ -526,6 +458,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
         snowMm1h: null,
         windDegrees: null,
         windGustKmh: null,
+        weatherId: null,
       };
 
   return (

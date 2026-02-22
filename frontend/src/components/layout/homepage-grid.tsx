@@ -56,6 +56,7 @@ import { useMarketPulse } from '@/hooks/use-market-pulse';
 import { MarketPulseOverlay } from '@/components/market-pulse';
 import type { Provider } from '@/types/providers';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
+import { speakText, stopSpeaking } from '@/lib/speech';
 
 // ============================================================================
 // PERF: Dynamic imports — defer heavy panels until JS idle
@@ -204,6 +205,10 @@ export type HomepageGridProps = {
   showMissionControl?: boolean;
   weatherIndex?: Map<string, ExchangeWeatherData>;
   nearestExchangeId?: string;
+  /** Whether the providers table is in expanded (full-height) mode */
+  isTableExpanded?: boolean;
+  /** Callback to toggle table expand/collapse — same handler as Provider column header */
+  onExpandToggle?: () => void;
   /** Hide the Commodities movers grid (e.g., library page uses full space for prompts) */
   hideCommodities?: boolean;
   /** When true, Mission Control shows Home button instead of Studio button */
@@ -213,6 +218,83 @@ export type HomepageGridProps = {
   /** When true, Mission Control shows 3 buttons: Home | Studio | Pro */
   isStudioSubPage?: boolean;
 };
+
+// ============================================================================
+// LEADERBOARD INTRO — Gradient heading + clickable expand trigger
+// ============================================================================
+// Replicates ExpandHeader animation from providers-table.tsx:
+//   - Arrow colours: idle purple → hover slate → expanded cyan
+//   - 2s transition on colour/transform/filter
+//   - expandArrowPulse 1.5s infinite (keyframes in globals.css)
+//   - rotate(180deg) + cyan drop-shadow when expanded
+// Text gradient matches "Promagen — Intelligent Prompt Builder" heading.
+// ============================================================================
+
+const INTRO_ARROW_COLOUR = 'rgba(168, 85, 247, 0.5)';
+const INTRO_ARROW_HOVER = 'rgba(148, 163, 184, 0.9)';
+const INTRO_ARROW_ACTIVE = 'rgba(34, 211, 238, 1)';
+const INTRO_TRANSITION = '2s';
+
+function LeaderboardIntro({
+  isExpanded,
+  onToggle,
+}: {
+  isExpanded: boolean;
+  onToggle?: () => void;
+}) {
+  const [hovered, setHovered] = React.useState(false);
+
+  const arrowStyle: React.CSSProperties = {
+    display: 'inline',
+    color: isExpanded ? INTRO_ARROW_ACTIVE : hovered ? INTRO_ARROW_HOVER : INTRO_ARROW_COLOUR,
+    transition: `color ${INTRO_TRANSITION} ease, transform ${INTRO_TRANSITION} ease, filter ${INTRO_TRANSITION} ease`,
+    transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+    filter: isExpanded
+      ? 'drop-shadow(0 0 4px rgba(34, 211, 238, 0.5)) drop-shadow(0 0 8px rgba(34, 211, 238, 0.3))'
+      : 'none',
+    animation: 'expandArrowPulse 1.5s ease-in-out infinite',
+  };
+
+  return (
+    <div
+      className="flex shrink-0 flex-col items-center text-center"
+      style={{ padding: 'clamp(2px, 0.3vw, 6px) 0' }}
+    >
+      {/* Line 1 — Static gradient heading */}
+      <span
+        className="pointer-events-none font-semibold leading-tight"
+        style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.5rem)' }}
+      >
+        <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
+          42 AI Image Generators — Elo-Ranked by the Community
+        </span>
+      </span>
+
+      {/* Line 2 — Clickable expand trigger (matches Provider column header style exactly) */}
+      <button
+        type="button"
+        onClick={onToggle}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className="mt-0.5 cursor-pointer border-none bg-transparent font-semibold uppercase leading-tight"
+        style={{
+          fontSize: 'clamp(0.6875rem, 0.9vw, 0.875rem)',
+          letterSpacing: '0.05em',
+          color: hovered ? 'rgba(226, 232, 240, 1)' : 'rgba(148, 163, 184, 1)',
+          transition: 'color 0.2s ease',
+        }}
+        aria-label={
+          isExpanded ? 'Collapse table, show finance ribbon' : 'Expand table, hide finance ribbon'
+        }
+        title={isExpanded ? 'Show FX & commodities' : 'Expand leaderboard'}
+      >
+        <span className="whitespace-nowrap">
+          Click <span style={arrowStyle}>▼</span> Provider to expand.
+        </span>
+      </button>
+    </div>
+  );
+}
 
 // ============================================================================
 // COMPONENT
@@ -241,6 +323,8 @@ export default function HomepageGrid({
   weatherIndex,
   nearestExchangeId,
   hideCommodities = false,
+  isTableExpanded = false,
+  onExpandToggle,
   isStudioPage = false,
   isProPromagenPage = false,
   isStudioSubPage = false,
@@ -254,7 +338,7 @@ export default function HomepageGrid({
   const isHomepage = pathname === '/';
 
   // --------------------------------------------------------------------------
-  // SPEECH SYNTHESIS — British female voice with priority fallback
+  // SPEECH SYNTHESIS — British female voice (shared utility)
   // --------------------------------------------------------------------------
   const [isSpeaking, setIsSpeaking] = React.useState(false);
 
@@ -262,63 +346,15 @@ export default function HomepageGrid({
     'Real context for real-world prompts. Explore cities around the world before you get there. Hover over any flag to reveal an intelligent prompt that evolves with live financial and environmental conditions. See which AI platform brings it to life best — ranked by the community in our live leaderboard. Or build your own prompts from a vast library of curated words and phrases, tailored instantly to your chosen AI platform.';
 
   const handleListenClick = useCallback(() => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-
-    // If already speaking, stop
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      stopSpeaking();
       setIsSpeaking(false);
       return;
     }
-
-    const utterance = new SpeechSynthesisUtterance(heroText);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.0;
-
-    // British female voice priority list
-    const preferredVoices = [
-      'Google UK English Female',
-      'Martha',
-      'Kate',
-      'Microsoft Hazel',
-      'Microsoft Susan',
-      'Serena',
-      'Daniel',
-      'Google UK English Female',
-    ];
-
-    const pickVoice = () => {
-      const voices = window.speechSynthesis.getVoices();
-      for (const name of preferredVoices) {
-        const match = voices.find((v) => v.name.includes(name));
-        if (match) return match;
-      }
-      // Fallback: any en-GB voice
-      const gbVoice = voices.find((v) => v.lang.startsWith('en-GB'));
-      if (gbVoice) return gbVoice;
-      // Last resort: any English voice
-      return voices.find((v) => v.lang.startsWith('en')) || null;
-    };
-
-    const setVoiceAndSpeak = () => {
-      const voice = pickVoice();
-      if (voice) utterance.voice = voice;
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      setIsSpeaking(true);
-      window.speechSynthesis.speak(utterance);
-    };
-
-    // Voices may load async — handle both cases
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      setVoiceAndSpeak();
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => {
-        setVoiceAndSpeak();
-        window.speechSynthesis.onvoiceschanged = null;
-      };
-    }
+    speakText(heroText, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+    });
   }, [isSpeaking]);
 
   // Memoize onBurst to prevent infinite re-renders in useMarketPulse
@@ -397,17 +433,17 @@ export default function HomepageGrid({
     }
 
     // Layout order:
-    // 1. Top FX ribbon (5 pairs)
+    // 1. Top FX ribbon (5 pairs) — with city-vibes tooltips on flags
     // 2. Commodities grid (unless hideCommodities is true)
-    // 3. Bottom FX ribbon (5 pairs)
+    // 3. Bottom FX ribbon (5 pairs) — with city-vibes tooltips on flags
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <FinanceRibbonTop />
+        <FinanceRibbonTop weatherIndex={weatherIndex} isPaidUser={isPaidUser} />
         {!hideCommodities && <CommoditiesMoversGrid />}
-        <FinanceRibbonBottom />
+        <FinanceRibbonBottom weatherIndex={weatherIndex} isPaidUser={isPaidUser} />
       </div>
     );
-  }, [showFinanceRibbon, demoMode, demoPairs, hideCommodities]);
+  }, [showFinanceRibbon, demoMode, demoPairs, hideCommodities, weatherIndex, isPaidUser]);
 
   // ============================================================================
   // RENDER
@@ -617,6 +653,18 @@ export default function HomepageGrid({
 
             {/* FX Ribbon(s) + Commodities */}
             {renderFinanceRibbon()}
+
+            {/* ============================================================
+                LEADERBOARD INTRO — Centred between bottom FX and table
+                ============================================================
+                Line 1: Static gradient text (matches "Promagen — Intelligent Prompt Builder")
+                Line 2: Clickable — fires same onExpandToggle as Provider column header
+                Arrow replicates ExpandHeader animation from providers-table.tsx
+                Hidden when table is expanded (ribbon is gone, no gap to fill)
+                ============================================================ */}
+            {!isTableExpanded && (
+              <LeaderboardIntro isExpanded={isTableExpanded} onToggle={onExpandToggle} />
+            )}
 
             {/* Providers table / Comparison table / Centre content */}
             <div ref={providersRef} className="min-h-0 flex-1">

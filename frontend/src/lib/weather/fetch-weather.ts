@@ -96,6 +96,8 @@ interface GatewayWeatherItem {
   windDegrees?: number | null;
   /** v8.0.0: Wind gust speed in km/h. null when no gusts. */
   windGustKmh?: number | null;
+  /** v9.5.0: OWM weather condition ID (weather[0].id). null when not piped. */
+  weatherId?: number | null;
 }
 
 /** Gateway response shape */
@@ -142,6 +144,7 @@ function toWeatherData(item: GatewayWeatherItem): ExchangeWeatherData {
     snowMm1h: item.snowMm1h ?? undefined,
     windDegrees: item.windDegrees ?? undefined,
     windGustKmh: item.windGustKmh ?? undefined,
+    weatherId: item.weatherId ?? undefined,
   };
 }
 
@@ -236,6 +239,53 @@ export async function getWeatherIndex(): Promise<Map<string, ExchangeWeatherData
     for (const item of json.data) {
       index.set(item.id, toWeatherData(item));
     }
+
+    // ── DIAGNOSTIC: Log gateway response composition (shows in terminal) ──
+    const providerIds = json.data
+      .filter((d: { id: string }) => d.id.startsWith('provider-'))
+      .map((d: { id: string }) => d.id);
+    console.debug('[WEATHER-SSR-DIAG] Gateway response:', {
+      totalItems: json.data.length,
+      mode: json.meta.mode,
+      providerIdsCount: providerIds.length,
+      providerIds: providerIds,
+      hasSF: providerIds.includes('provider-san-francisco'),
+      hasSeattle: providerIds.includes('provider-seattle'),
+      hasCairns: providerIds.includes('provider-cairns'),
+    });
+    // ── DIAGNOSTIC: Show raw gateway JSON field values ────────────────────
+    const sfRaw = json.data.find((d: { id: string }) => d.id === 'provider-san-francisco');
+    const nyseRaw = json.data.find((d: { id: string }) => d.id === 'nyse-new-york');
+    console.debug(
+      '[WEATHER-SSR-FIELD-DIAG] RAW gateway JSON for provider-san-francisco:',
+      sfRaw
+        ? {
+            windDegrees: sfRaw.windDegrees,
+            windGustKmh: sfRaw.windGustKmh,
+            visibility: sfRaw.visibility,
+            windSpeedKmh: sfRaw.windSpeedKmh,
+            // Show if the properties even exist on the object
+            hasWindDegrees: 'windDegrees' in sfRaw,
+            hasWindGustKmh: 'windGustKmh' in sfRaw,
+            hasVisibility: 'visibility' in sfRaw,
+          }
+        : 'NOT FOUND',
+    );
+    console.debug(
+      '[WEATHER-SSR-FIELD-DIAG] RAW gateway JSON for nyse-new-york:',
+      nyseRaw
+        ? {
+            windDegrees: nyseRaw.windDegrees,
+            windGustKmh: nyseRaw.windGustKmh,
+            visibility: nyseRaw.visibility,
+            hasWindDegrees: 'windDegrees' in nyseRaw,
+            hasWindGustKmh: 'windGustKmh' in nyseRaw,
+            hasVisibility: 'visibility' in nyseRaw,
+          }
+        : 'NOT FOUND',
+    );
+    // ── END FIELD DIAGNOSTIC ─────────────────────────────────────────────
+    // ── END DIAGNOSTIC ────────────────────────────────────────────────────
 
     // ── Fill gaps with demo data ────────────────────────────────────────
     // Gateway accumulates data across batches (A→B→C→D over 4 hours).

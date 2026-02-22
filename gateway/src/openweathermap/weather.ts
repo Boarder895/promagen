@@ -12,11 +12,14 @@
  * Features (v3.0.0):
  * - Clock-aligned scheduling (:10 only, dropped :40)
  * - 4-batch rotation (A/B/C/D via hour % 4)
- * - Coordinate deduplication (89 exchanges → 83 API calls)
+ * - Coordinate deduplication (99 entries → 97 API calls)
  * - Selected 16 exchanges guaranteed in Batch A
  * - TTL caching (1 hour)
  * - Last-known-good fallback
- * - Results expanded back to all 89 exchange IDs after fetch
+ * - Results expanded back to all 99 entry IDs after fetch
+ *
+ * v3.1.0: Now receives 84 exchange + 15 provider HQ cities from
+ * /api/weather/config. No code changes — fully data-driven.
  *
  * Existing features preserved: Yes
  *
@@ -68,7 +71,7 @@ const circuit = new CircuitBreaker({
   resetTimeoutMs: 30_000,
 });
 
-/** All cities from SSOT (89 entries, including coordinate duplicates) */
+/** All cities from SSOT (99 entries: 84 exchange + 15 provider, including coordinate duplicates) */
 let allCities: CityInfo[] = [];
 
 /**
@@ -86,7 +89,7 @@ const idToCoordKey: Map<string, string> = new Map();
 
 /**
  * Batch arrays of REPRESENTATIVE cities (the ones we actually call the API for).
- * batchCities['A'] contains ~21 representative CityInfo objects.
+ * batchCities['A'] contains ~23 representative CityInfo objects.
  */
 let batchCities: Record<BatchId, CityInfo[]> = { A: [], B: [], C: [], D: [] };
 
@@ -217,7 +220,7 @@ function getBatchAllIds(batch: BatchId): Set<string> {
 /**
  * Initialize weather handler with cities from SSOT.
  *
- * @param cities - All exchange cities from catalog (89 entries)
+ * @param cities - All cities from config (99 entries: 84 exchange + 15 provider)
  * @param selectedIds - Selected exchange IDs (16 homepage defaults for Batch A)
  */
 export function initWeatherHandler(cities: CityInfo[], selectedIds: string[]): void {
@@ -262,7 +265,7 @@ export function initWeatherHandler(cities: CityInfo[], selectedIds: string[]): v
  * Split unique representative cities into 4 batches.
  *
  * Strategy:
- * 1. Collect all unique representative cities from coordGroups (83).
+ * 1. Collect all unique representative cities from coordGroups (97).
  * 2. Separate into "selected" (their coord group's representative is in
  *    the selected-16 list) and "remaining".
  * 3. Batch A = all selected representatives + fill from remaining to target size.
@@ -523,7 +526,7 @@ export async function getWeatherForExchanges(
  *   (including coordinate-deduplicated siblings)
  * - Keep entries from other batches unchanged
  *
- * @param existing - Existing weather data (all 89 entries from previous merges)
+ * @param existing - Existing weather data (all 99 entries from previous merges)
  * @param newExpandedData - New batch data (already expanded to all sibling IDs)
  * @param batch - Which batch was fetched
  * @returns Merged weather data
@@ -606,6 +609,96 @@ export function startBackgroundRefresh(): void {
 
   // Schedule next refresh
   scheduleNextRefresh();
+}
+
+/**
+ * Warm ALL 4 batches on startup so every city has data immediately.
+ *
+ * Without this, provider-specific cities (in batches B/C/D) have no
+ * weather data until their batch naturally rotates — up to 4 hours.
+ *
+ * Budget impact: ~97 API calls (all unique cities).
+ * At 1000/day limit this is 9.7% — acceptable as a one-time startup cost.
+ *
+ * Minute budget (60/min): With 97 cities across 4 batches (~25 each),
+ * A+B = ~49 calls which fits under the 60/min limit. If budget is
+ * blocked, waits for the minute window to reset before continuing.
+ *
+ * Call AFTER initWeatherHandler() and BEFORE startBackgroundRefresh().
+ */
+export async function warmAllBatches(): Promise<void> {
+  if (!isInitialized || allCities.length === 0) {
+    logWarn('Weather warmup skipped (not initialized)');
+    return;
+  }
+
+  if (!hasOpenWeatherMapApiKey()) {
+    logWarn('Weather warmup skipped (no API key)');
+    return;
+  }
+
+  const batches: BatchId[] = ['A', 'B', 'C', 'D'];
+  let totalApiCalls = 0;
+  let totalExpanded = 0;
+
+  for (const batch of batches) {
+    const cities = batchCities[batch];
+    if (cities.length === 0) continue;
+
+    // If minute budget is exhausted, wait for it to reset (max ~61s)
+    if (!openWeatherMapBudget.canSpend(cities.length)) {
+      const budgetState = openWeatherMapBudget.getState();
+      const waitMs = Math.max(0, budgetState.minuteResetAt - Date.now()) + 1000; // +1s safety
+
+      if (waitMs > 90_000) {
+        // Something weird — don't wait more than 90s
+        logWarn(`Weather warmup: skipping batch ${batch} (wait too long: ${waitMs}ms)`);
+        continue;
+      }
+
+      logInfo(`Weather warmup: waiting ${Math.round(waitMs / 1000)}s for minute budget reset before batch ${batch}`);
+      await new Promise(resolve => setTimeout(resolve, waitMs));
+
+      // Re-check after wait
+      if (!openWeatherMapBudget.canSpend(cities.length)) {
+        logWarn(`Weather warmup: budget still blocked at batch ${batch}, skipping`);
+        continue;
+      }
+    }
+
+    try {
+      openWeatherMapBudget.spend(cities.length);
+      const batchData = await fetchWeatherBatch(cities, batch);
+      circuit.recordSuccess();
+      recordBatchRefresh(batch);
+
+      const expandedData = expandToAllExchangeIds(batchData);
+      const existing = cache.getStale(CACHE_KEY_ALL) ?? [];
+      const merged = mergeWeatherData(existing, expandedData, batch);
+      cache.set(CACHE_KEY_ALL, merged);
+
+      totalApiCalls += batchData.length;
+      totalExpanded += expandedData.length;
+
+      logInfo(`Weather warmup: batch ${batch} complete`, {
+        apiCalls: batchData.length,
+        expandedCount: expandedData.length,
+        totalCached: merged.length,
+      });
+    } catch (error) {
+      circuit.recordFailure();
+      logError(`Weather warmup: batch ${batch} failed`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Continue to next batch — partial warmup is better than none
+    }
+  }
+
+  logInfo('Weather warmup complete', {
+    totalApiCalls,
+    totalExpanded,
+    cachedEntries: cache.get(CACHE_KEY_ALL)?.length ?? 0,
+  });
 }
 
 /**

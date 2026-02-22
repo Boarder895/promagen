@@ -53,8 +53,8 @@ export interface CityInfo {
  * Batch configuration for weather fetching.
  * Cities are split into four batches for budget efficiency.
  *
- * v3.0.0: Expanded from 2 to 4 batches to cover all 89 exchanges
- * (83 unique coordinates after dedup) within 1,000 calls/day free tier.
+ * v3.0.0: Expanded from 2 to 4 batches to cover all 94 entries
+ * (92 unique coordinates after dedup) within 1,000 calls/day free tier.
  */
 export interface WeatherBatches {
   /** Batch A: Priority cities (includes all 16 selected exchanges) */

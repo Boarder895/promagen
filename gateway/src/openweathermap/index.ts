@@ -6,8 +6,8 @@
  * Provider: OpenWeatherMap (api.openweathermap.org)
  * Budget: 1,000 calls/day, 60 calls/minute (free tier)
  * Schedule: :10 only (v3.0.0 — dropped :40)
- * Batching: 4 batches (~21 cities each), rotating hourly via hour % 4
- * Dedup: 89 exchanges → 83 unique API calls (saves 6 per cycle)
+ * Batching: 4 batches (~23 cities each), rotating hourly via hour % 4
+ * Dedup: 94 entries → 92 unique API calls (saves 2 per cycle)
  *
  * @module openweathermap
  */
@@ -104,4 +104,5 @@ export {
   stopBackgroundRefresh,
   getWeatherTraceInfo,
   resetWeatherHandler,
+  warmAllBatches,
 } from './weather.js';

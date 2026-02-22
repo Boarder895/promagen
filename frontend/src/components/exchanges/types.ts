@@ -78,6 +78,8 @@ export type ExchangeWeatherData = {
   windDegrees?: number | null;
   /** v8.0.0: Wind gust speed in km/h. undefined for demo data. */
   windGustKmh?: number | null;
+  /** v9.5.0: OWM weather condition ID (weather[0].id). undefined for demo data. */
+  weatherId?: number | null;
 };
 
 /**

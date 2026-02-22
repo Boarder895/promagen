@@ -1,0 +1,179 @@
+// src/data/providers/provider-weather-map.ts
+// ============================================================================
+// PROVIDER → WEATHER MAPPING
+// ============================================================================
+// Maps each AI provider to its weather data source and city-vibes city.
+//
+// Weather sources fall into two categories:
+//   1. Existing exchange weather — provider HQ is within 100km of an exchange
+//      city that already has weather data (e.g. London → lse-london).
+//   2. New provider weather — 15 dedicated cities added to the weather batch
+//      (e.g. San Francisco → provider-san-francisco).
+//
+// The `vibesCity` field is the key into city-vibes.json for venue
+// selection. The `lat`/`lon` fields are the provider HQ coordinates, used
+// by the lighting engine for solar/lunar elevation.
+//
+// Coverage: 42/42 providers (17 existing exchange, 25 via 15 provider cities)
+//
+// NOTE: Redmond and Rockville use Seattle / Washington DC weather respectively
+// (within 17–22km) but display their own vibesCity and venue vocabulary.
+//
+// Authority: provider-city-vibes-build-plan.md §Phase 1B
+// Existing features preserved: Yes
+// ============================================================================
+
+import { getPlatformTierId } from '@/data/platform-tiers';
+import type { PlatformTierId } from '@/data/platform-tiers';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface ProviderWeatherMapping {
+  /** Key into useWeather() result (exchange ID or provider-* ID) */
+  readonly weatherId: string;
+  /** Lowercase key into city-vibes.json */
+  readonly vibesCity: string;
+  /** Provider HQ latitude — for lighting engine solar elevation */
+  readonly lat: number;
+  /** Provider HQ longitude — for lighting engine solar elevation */
+  readonly lon: number;
+}
+
+// ============================================================================
+// MAPPING TABLE
+// ============================================================================
+
+/**
+ * Complete provider → weather mapping for all 42 AI providers.
+ *
+ * Grouped by weather source for readability:
+ * - San Francisco cluster (9 providers)
+ * - Bay Area dedicated cities (4 providers: Mountain View, San Jose, Menlo Park)
+ * - Other new provider cities (12 providers)
+ * - Existing exchange cities (17 providers)
+ */
+export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMapping>> = {
+  // ─── San Francisco cluster (provider-san-francisco) ─────────────────────
+  // 9 providers in San Francisco proper, all within 10km
+  'midjourney':         { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'openai':             { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'playground':         { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'lexica':             { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'openart':            { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'picsart':            { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'deepai':             { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'bluewillow':         { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+  'simplified':         { weatherId: 'provider-san-francisco', vibesCity: 'San Francisco', lat: 37.7749, lon: -122.4194 },
+
+  // ─── Mountain View (provider-mountain-view) ────────────────────────────
+  'google-imagen':      { weatherId: 'provider-mountain-view', vibesCity: 'Mountain View', lat: 37.3861, lon: -122.0839 },
+  'hotpot':             { weatherId: 'provider-mountain-view', vibesCity: 'Mountain View', lat: 37.4419, lon: -122.143  }, // Palo Alto (7km from MV)
+
+  // ─── San Jose (provider-san-jose) ──────────────────────────────────────
+  'adobe-firefly':      { weatherId: 'provider-san-jose',      vibesCity: 'San Jose',      lat: 37.3382, lon: -121.8863 },
+
+  // ─── Menlo Park (provider-menlo-park) ──────────────────────────────────
+  'imagine-meta':       { weatherId: 'provider-menlo-park',    vibesCity: 'Menlo Park',    lat: 37.4529, lon: -122.1817 },
+
+  // ─── Redmond (Seattle weather, Redmond venues) ──────────────────────────
+  'microsoft-designer': { weatherId: 'provider-seattle',       vibesCity: 'Redmond',       lat: 47.674,  lon: -122.1215 }, // Seattle weather, Redmond venues
+  'bing':               { weatherId: 'provider-seattle',       vibesCity: 'Redmond',       lat: 47.674,  lon: -122.1215 }, // Seattle weather, Redmond venues
+
+  // ─── Houston (provider-houston) ─────────────────────────────────────────
+  'craiyon':            { weatherId: 'provider-houston',       vibesCity: 'Houston',       lat: 29.7604, lon: -95.3698  },
+
+  // ─── Austin (provider-austin) ───────────────────────────────────────────
+  'jasper-art':         { weatherId: 'provider-austin',        vibesCity: 'Austin',        lat: 30.2672, lon: -97.7431  },
+
+  // ─── Warsaw (provider-warsaw) ───────────────────────────────────────────
+  'getimg':             { weatherId: 'provider-warsaw',        vibesCity: 'Warsaw',        lat: 52.2297, lon: 21.0122   },
+
+  // ─── Málaga (provider-malaga) ───────────────────────────────────────────
+  'freepik':            { weatherId: 'provider-malaga',        vibesCity: 'Málaga',        lat: 36.7213, lon: -4.4214   },
+
+  // ─── Limassol (provider-limassol) ───────────────────────────────────────
+  'vistacreate':        { weatherId: 'provider-limassol',      vibesCity: 'Limassol',      lat: 34.6786, lon: 33.0413   },
+
+  // ─── Rockville (DC weather, Rockville venues) ───────────────────────────
+  'visme':              { weatherId: 'provider-washington-dc', vibesCity: 'Rockville',     lat: 39.084,  lon: -77.1528  }, // DC weather, Rockville venues
+
+  // ─── Sheridan (provider-sheridan) ───────────────────────────────────────
+  'novelai':            { weatherId: 'provider-sheridan',      vibesCity: 'Sheridan',      lat: 44.7972, lon: -106.956  },
+
+  // ─── Cairns (provider-cairns) ───────────────────────────────────────────
+  'nightcafe':          { weatherId: 'provider-cairns',        vibesCity: 'Cairns',        lat: -16.9186, lon: 145.7781 },
+
+  // ─── London (lse-london) ───────────────────────────────────────────────
+  'stability':          { weatherId: 'lse-london',             vibesCity: 'London',        lat: 51.5074, lon: -0.1276   },
+  'dreamstudio':        { weatherId: 'lse-london',             vibesCity: 'London',        lat: 51.5074, lon: -0.1276   },
+  'dreamlike':          { weatherId: 'lse-london',             vibesCity: 'London',        lat: 51.5074, lon: -0.1276   },
+
+  // ─── Sydney (asx-sydney) ───────────────────────────────────────────────
+  'leonardo':           { weatherId: 'asx-sydney',             vibesCity: 'Sydney',        lat: -33.8688, lon: 151.2093 },
+  'canva':              { weatherId: 'asx-sydney',             vibesCity: 'Sydney',        lat: -33.886,  lon: 151.211  }, // Surry Hills (2km)
+
+  // ─── Toronto (tsx-toronto) ──────────────────────────────────────────────
+  'ideogram':           { weatherId: 'tsx-toronto',            vibesCity: 'Toronto',       lat: 43.6532, lon: -79.3832  },
+
+  // ─── Burlington (provider-burlington) ──────────────────────────────────
+  'artistly':           { weatherId: 'provider-burlington',    vibesCity: 'Burlington',    lat: 43.3255, lon: -79.7990  },
+
+  // ─── Kuala Lumpur (bursa-kuala-lumpur) ──────────────────────────────────
+  '123rf':              { weatherId: 'bursa-kuala-lumpur',     vibesCity: 'Kuala Lumpur',  lat: 3.139,   lon: 101.6869  },
+  'pixlr':              { weatherId: 'bursa-kuala-lumpur',     vibesCity: 'Kuala Lumpur',  lat: 3.0738,  lon: 101.6068  }, // Bandar Sunway (11km)
+
+  // ─── Hong Kong (hkex-hong-kong) ────────────────────────────────────────
+  'fotor':              { weatherId: 'hkex-hong-kong',         vibesCity: 'Hong Kong',     lat: 22.3193, lon: 114.1694  },
+  'artguru':            { weatherId: 'hkex-hong-kong',         vibesCity: 'Hong Kong',     lat: 22.3193, lon: 114.1694  },
+  'picwish':            { weatherId: 'hkex-hong-kong',         vibesCity: 'Hong Kong',     lat: 22.3193, lon: 114.1694  },
+
+  // ─── New York (nyse-new-york) ──────────────────────────────────────────
+  'artbreeder':         { weatherId: 'nyse-new-york',          vibesCity: 'New York',      lat: 40.7128, lon: -74.006   },
+  'runway':             { weatherId: 'nyse-new-york',          vibesCity: 'New York',      lat: 40.7128, lon: -74.006   },
+
+  // ─── Paris (euronext-paris) ────────────────────────────────────────────
+  'clipdrop':           { weatherId: 'euronext-paris',         vibesCity: 'Paris',         lat: 48.8566, lon: 2.3522    },
+
+  // ─── Vienna (wbag-vienna) ──────────────────────────────────────────────
+  'remove-bg':          { weatherId: 'wbag-vienna',            vibesCity: 'Vienna',        lat: 48.2082, lon: 16.3738   },
+
+  // ─── Taipei (twse-taipei) ──────────────────────────────────────────────
+  'myedit':             { weatherId: 'twse-taipei',            vibesCity: 'Taipei',        lat: 25.033,  lon: 121.5654  },
+
+  // ─── Amman (ase-amman) ─────────────────────────────────────────────────
+  'photoleap':          { weatherId: 'ase-amman',              vibesCity: 'Amman',         lat: 31.7683, lon: 35.2137   }, // Jerusalem (69km)
+
+  // ─── Freiburg (provider-freiburg) ───────────────────────────────────────
+  'flux':               { weatherId: 'provider-freiburg',      vibesCity: 'Freiburg',      lat: 47.999,  lon: 7.842     },
+} as const;
+
+// ============================================================================
+// LOOKUP HELPERS
+// ============================================================================
+
+/**
+ * Get weather mapping for a provider.
+ * Returns null if provider has no mapping (should not happen for known providers).
+ */
+export function getProviderWeatherMapping(providerId: string): ProviderWeatherMapping | null {
+  return PROVIDER_WEATHER_MAP[providerId] ?? null;
+}
+
+/**
+ * Get the prompt tier for a provider.
+ * Convenience wrapper over getPlatformTierId from platform-tiers.ts.
+ * Defaults to tier 3 (Natural Language) if provider not found.
+ */
+export function getProviderTier(providerId: string): PlatformTierId {
+  return getPlatformTierId(providerId) ?? 3;
+}
+
+/**
+ * Check whether a weather data ID is a provider-specific city
+ * (vs an exchange city). Provider IDs start with "provider-".
+ */
+export function isProviderWeatherId(weatherId: string): boolean {
+  return weatherId.startsWith('provider-');
+}

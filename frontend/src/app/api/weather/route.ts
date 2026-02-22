@@ -43,6 +43,9 @@ interface WeatherData {
   sunsetUtc?: number | null;
   timezoneOffset?: number | null;
   isDayTime?: boolean;
+  windDegrees?: number | null;
+  windGustKmh?: number | null;
+  visibility?: number | null;
 }
 
 interface WeatherMeta {
@@ -110,6 +113,16 @@ export async function GET(): Promise<NextResponse<WeatherGatewayResponse | Error
     }
 
     const data = (await response.json()) as WeatherGatewayResponse;
+
+    // ── DIAGNOSTIC: Log gateway response via API route ────────────────
+    const providerApiIds = data.data?.filter((d: { id: string }) => d.id.startsWith('provider-')).map((d: { id: string }) => d.id) ?? [];
+    console.debug('[WEATHER-API-DIAG] /api/weather proxy:', {
+      totalItems: data.data?.length ?? 0,
+      mode: data.meta?.mode ?? 'unknown',
+      providerIdsCount: providerApiIds.length,
+      providerIds: providerApiIds,
+    });
+    // ── END DIAGNOSTIC ────────────────────────────────────────────────
 
     // ── Diagnostic: Log isDayTime presence on first item ──────────────
     // Remove this once confirmed working.

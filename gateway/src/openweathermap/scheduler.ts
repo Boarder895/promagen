@@ -12,7 +12,7 @@
  * - Weather refreshes at :10 only (dropped :40 to stay within budget)
  * - 4 batches rotate by hour: hour % 4 → 0=A, 1=B, 2=C, 3=D
  * - Each batch refreshes every 4 hours (6× per day)
- * - ~21 calls per batch << 60/min limit
+ * - ~23 calls per batch << 60/min limit
  *
  * Timeline:
  * ┌────┬────┬────┬────┬────┬────┬────┬────┬────┐

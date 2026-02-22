@@ -123,7 +123,7 @@ const TIER_META: Record<number, TierMeta> = {
     dotClass: 'bg-blue-400',
   },
   2: {
-    label: 'Midjourney',
+    label: 'Midjourney Family',
     shortLabel: 'MJ',
     platforms: 'Midjourney · BlueWillow',
     accentClass: 'text-purple-400',

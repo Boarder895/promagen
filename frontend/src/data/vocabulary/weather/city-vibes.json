@@ -3932,9 +3932,774 @@
           "setting": "waterfront"
         }
       ]
+    },
+    "austin": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Congress Avenue Bridge",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Lady Bird Lake",
+          "setting": "waterfront"
+        },
+        {
+          "name": "South Congress",
+          "setting": "street"
+        },
+        {
+          "name": "Zilker Park",
+          "setting": "park"
+        },
+        {
+          "name": "Texas State Capitol",
+          "setting": "monument"
+        },
+        {
+          "name": "Barton Springs Pool",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Mount Bonnell",
+          "setting": "elevated"
+        },
+        {
+          "name": "Rainey Street",
+          "setting": "street"
+        },
+        {
+          "name": "Graffiti Park at Castle Hill",
+          "setting": "elevated"
+        },
+        {
+          "name": "East Sixth Street",
+          "setting": "street"
+        }
+      ]
+    },
+    "cairns": {
+      "country": "Australia",
+      "venues": [
+        {
+          "name": "Cairns Esplanade Lagoon",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Palm Cove Beach",
+          "setting": "beach"
+        },
+        {
+          "name": "Rusty's Markets",
+          "setting": "market"
+        },
+        {
+          "name": "Barron Gorge",
+          "setting": "park"
+        },
+        {
+          "name": "Cairns Botanic Gardens",
+          "setting": "park"
+        },
+        {
+          "name": "Kuranda Scenic Railway Lookout",
+          "setting": "elevated"
+        },
+        {
+          "name": "Daintree River Crossing",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Fitzroy Island Jetty",
+          "setting": "beach"
+        },
+        {
+          "name": "Trinity Inlet Boardwalk",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Port Douglas Lookout",
+          "setting": "elevated"
+        }
+      ]
+    },
+    "houston": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Space Center Houston",
+          "setting": "monument"
+        },
+        {
+          "name": "Buffalo Bayou Park",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Museum District",
+          "setting": "street"
+        },
+        {
+          "name": "Market Square Park",
+          "setting": "plaza"
+        },
+        {
+          "name": "Discovery Green",
+          "setting": "park"
+        },
+        {
+          "name": "Hermann Park",
+          "setting": "park"
+        },
+        {
+          "name": "San Jacinto Monument",
+          "setting": "monument"
+        },
+        {
+          "name": "Galveston Seawall",
+          "setting": "beach"
+        },
+        {
+          "name": "Heights Boulevard",
+          "setting": "street"
+        },
+        {
+          "name": "Menil Collection Grounds",
+          "setting": "park"
+        }
+      ]
+    },
+    "limassol": {
+      "country": "Cyprus",
+      "venues": [
+        {
+          "name": "Molos Promenade",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Limassol Marina",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Kolossi Castle",
+          "setting": "monument"
+        },
+        {
+          "name": "Limassol Old Town",
+          "setting": "narrow"
+        },
+        {
+          "name": "Governor's Beach",
+          "setting": "beach"
+        },
+        {
+          "name": "Kourion Amphitheatre",
+          "setting": "elevated"
+        },
+        {
+          "name": "Saripolou Square",
+          "setting": "plaza"
+        },
+        {
+          "name": "Limassol Municipal Gardens",
+          "setting": "park"
+        },
+        {
+          "name": "Amathus Archaeological Site",
+          "setting": "monument"
+        },
+        {
+          "name": "Fasouri Watermania Promenade",
+          "setting": "park"
+        }
+      ]
+    },
+    "málaga": {
+      "country": "Spain",
+      "venues": [
+        {
+          "name": "Alcazaba",
+          "setting": "monument"
+        },
+        {
+          "name": "Castillo de Gibralfaro",
+          "setting": "elevated"
+        },
+        {
+          "name": "Muelle Uno",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Atarazanas Central Market",
+          "setting": "market"
+        },
+        {
+          "name": "Calle Marqués de Larios",
+          "setting": "street"
+        },
+        {
+          "name": "Málaga Cathedral",
+          "setting": "monument"
+        },
+        {
+          "name": "Malagueta Beach",
+          "setting": "beach"
+        },
+        {
+          "name": "Plaza de la Merced",
+          "setting": "plaza"
+        },
+        {
+          "name": "Paseo del Parque",
+          "setting": "park"
+        },
+        {
+          "name": "Soho Street Art District",
+          "setting": "street"
+        }
+      ]
+    },
+    "san francisco": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Golden Gate Bridge",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Fisherman's Wharf",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Lombard Street",
+          "setting": "street"
+        },
+        {
+          "name": "Chinatown Gate",
+          "setting": "narrow"
+        },
+        {
+          "name": "Painted Ladies",
+          "setting": "street"
+        },
+        {
+          "name": "Coit Tower",
+          "setting": "elevated"
+        },
+        {
+          "name": "Palace of Fine Arts",
+          "setting": "monument"
+        },
+        {
+          "name": "Ferry Building",
+          "setting": "market"
+        },
+        {
+          "name": "Twin Peaks",
+          "setting": "elevated"
+        },
+        {
+          "name": "Alcatraz Island",
+          "setting": "waterfront"
+        }
+      ]
+    },
+    "seattle": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Pike Place Market",
+          "setting": "market"
+        },
+        {
+          "name": "Space Needle",
+          "setting": "elevated"
+        },
+        {
+          "name": "Pioneer Square",
+          "setting": "plaza"
+        },
+        {
+          "name": "Kerry Park",
+          "setting": "elevated"
+        },
+        {
+          "name": "Gas Works Park",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Chihuly Garden and Glass",
+          "setting": "park"
+        },
+        {
+          "name": "Alki Beach",
+          "setting": "beach"
+        },
+        {
+          "name": "Olympic Sculpture Park",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Ballard Locks",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Capitol Hill",
+          "setting": "street"
+        }
+      ]
+    },
+    "sheridan": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Main Street Historic District",
+          "setting": "street"
+        },
+        {
+          "name": "Bighorn Mountain Overlook",
+          "setting": "elevated"
+        },
+        {
+          "name": "Trail End State Historic Site",
+          "setting": "monument"
+        },
+        {
+          "name": "Kendrick Park",
+          "setting": "park"
+        },
+        {
+          "name": "Sheridan Inn",
+          "setting": "monument"
+        },
+        {
+          "name": "Brinton Museum Grounds",
+          "setting": "park"
+        },
+        {
+          "name": "Tongue River Canyon",
+          "setting": "waterfront"
+        },
+        {
+          "name": "King's Saddlery",
+          "setting": "street"
+        },
+        {
+          "name": "Dayton Bell Tower",
+          "setting": "plaza"
+        },
+        {
+          "name": "Red Grade Road Lookout",
+          "setting": "elevated"
+        }
+      ]
+    },
+    "warsaw": {
+      "country": "Poland",
+      "venues": [
+        {
+          "name": "Old Town Market Square",
+          "setting": "plaza"
+        },
+        {
+          "name": "Palace of Culture and Science",
+          "setting": "elevated"
+        },
+        {
+          "name": "Łazienki Royal Baths",
+          "setting": "park"
+        },
+        {
+          "name": "Nowy Świat",
+          "setting": "street"
+        },
+        {
+          "name": "Vistula Boulevards",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Krakowskie Przedmieście",
+          "setting": "street"
+        },
+        {
+          "name": "Wilanów Palace Gardens",
+          "setting": "park"
+        },
+        {
+          "name": "Warsaw Uprising Monument",
+          "setting": "monument"
+        },
+        {
+          "name": "Praga District",
+          "setting": "narrow"
+        },
+        {
+          "name": "Copernicus Science Centre",
+          "setting": "waterfront"
+        }
+      ]
+    },
+    "washington dc": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "National Mall",
+          "setting": "park"
+        },
+        {
+          "name": "Lincoln Memorial",
+          "setting": "monument"
+        },
+        {
+          "name": "Capitol Building",
+          "setting": "monument"
+        },
+        {
+          "name": "Georgetown Waterfront",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Tidal Basin",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Smithsonian Castle",
+          "setting": "monument"
+        },
+        {
+          "name": "Dupont Circle",
+          "setting": "plaza"
+        },
+        {
+          "name": "Eastern Market",
+          "setting": "market"
+        },
+        {
+          "name": "Adams Morgan",
+          "setting": "street"
+        },
+        {
+          "name": "The Wharf",
+          "setting": "waterfront"
+        }
+      ]
+    },
+    "freiburg": {
+      "country": "Germany",
+      "venues": [
+        {
+          "name": "Freiburg Münster",
+          "setting": "monument"
+        },
+        {
+          "name": "Münsterplatz",
+          "setting": "plaza"
+        },
+        {
+          "name": "Bächle Waterways",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Schlossberg Tower",
+          "setting": "elevated"
+        },
+        {
+          "name": "Augustinerplatz",
+          "setting": "plaza"
+        },
+        {
+          "name": "Freiburg Altstadt",
+          "setting": "narrow"
+        },
+        {
+          "name": "Schwabentor Gate",
+          "setting": "monument"
+        },
+        {
+          "name": "Seepark",
+          "setting": "park"
+        },
+        {
+          "name": "Konviktstraße",
+          "setting": "street"
+        },
+        {
+          "name": "Colombi Park",
+          "setting": "park"
+        }
+      ]
+    },
+    "san jose": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "San Jose City Hall",
+          "setting": "monument"
+        },
+        {
+          "name": "Santana Row",
+          "setting": "street"
+        },
+        {
+          "name": "Plaza de César Chávez",
+          "setting": "plaza"
+        },
+        {
+          "name": "Guadalupe River Trail",
+          "setting": "waterfront"
+        },
+        {
+          "name": "San Pedro Square Market",
+          "setting": "market"
+        },
+        {
+          "name": "Winchester Mystery House",
+          "setting": "monument"
+        },
+        {
+          "name": "Japantown",
+          "setting": "narrow"
+        },
+        {
+          "name": "Municipal Rose Garden",
+          "setting": "park"
+        },
+        {
+          "name": "Communications Hill",
+          "setting": "elevated"
+        },
+        {
+          "name": "Almaden Quicksilver Trail",
+          "setting": "park"
+        }
+      ]
+    },
+    "burlington": {
+      "country": "Canada",
+      "venues": [
+        {
+          "name": "Spencer Smith Park",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Burlington Waterfront Trail",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Royal Botanical Gardens",
+          "setting": "park"
+        },
+        {
+          "name": "Brant Street Pier",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Village Square",
+          "setting": "plaza"
+        },
+        {
+          "name": "Mount Nemo Conservation Area",
+          "setting": "elevated"
+        },
+        {
+          "name": "Beachway Park",
+          "setting": "beach"
+        },
+        {
+          "name": "Downtown Brant Street",
+          "setting": "street"
+        },
+        {
+          "name": "Joseph Brant Museum",
+          "setting": "monument"
+        },
+        {
+          "name": "Paletta Lakefront Mansion",
+          "setting": "park"
+        }
+      ]
+    },
+    "mountain view": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Shoreline Amphitheatre",
+          "setting": "park"
+        },
+        {
+          "name": "Shoreline Lake",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Castro Street",
+          "setting": "street"
+        },
+        {
+          "name": "Rengstorff Park",
+          "setting": "park"
+        },
+        {
+          "name": "Stevens Creek Trail",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Computer History Museum",
+          "setting": "monument"
+        },
+        {
+          "name": "Dana Street Roasting",
+          "setting": "street"
+        },
+        {
+          "name": "Eagle Park",
+          "setting": "park"
+        },
+        {
+          "name": "Cuesta Park",
+          "setting": "plaza"
+        },
+        {
+          "name": "Permanente Creek Trail",
+          "setting": "waterfront"
+        }
+      ]
+    },
+    "menlo park": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Santa Cruz Avenue",
+          "setting": "street"
+        },
+        {
+          "name": "Bayfront Park",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Bedwell Bayfront Park",
+          "setting": "park"
+        },
+        {
+          "name": "Burgess Park",
+          "setting": "park"
+        },
+        {
+          "name": "Allied Arts Guild",
+          "setting": "monument"
+        },
+        {
+          "name": "Fremont Park",
+          "setting": "plaza"
+        },
+        {
+          "name": "San Francisquito Creek Trail",
+          "setting": "waterfront"
+        },
+        {
+          "name": "El Camino Real",
+          "setting": "street"
+        },
+        {
+          "name": "Flood Park",
+          "setting": "park"
+        },
+        {
+          "name": "Marsh Road Trailhead",
+          "setting": "waterfront"
+        }
+      ]
+    },
+    "redmond": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Marymoor Park",
+          "setting": "park"
+        },
+        {
+          "name": "Redmond Town Center",
+          "setting": "plaza"
+        },
+        {
+          "name": "Sammamish River Trail",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Idylwood Park",
+          "setting": "beach"
+        },
+        {
+          "name": "Downtown Redmond",
+          "setting": "street"
+        },
+        {
+          "name": "Pike Place Market",
+          "setting": "market"
+        },
+        {
+          "name": "Space Needle",
+          "setting": "elevated"
+        },
+        {
+          "name": "Kerry Park",
+          "setting": "elevated"
+        },
+        {
+          "name": "Olympic Sculpture Park",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Gas Works Park",
+          "setting": "waterfront"
+        }
+      ]
+    },
+    "rockville": {
+      "country": "United States",
+      "venues": [
+        {
+          "name": "Rockville Town Square",
+          "setting": "plaza"
+        },
+        {
+          "name": "Red Gate Park",
+          "setting": "park"
+        },
+        {
+          "name": "Lake Needwood",
+          "setting": "waterfront"
+        },
+        {
+          "name": "King Farm Village Center",
+          "setting": "street"
+        },
+        {
+          "name": "Glenview Mansion",
+          "setting": "monument"
+        },
+        {
+          "name": "National Mall",
+          "setting": "park"
+        },
+        {
+          "name": "Lincoln Memorial",
+          "setting": "monument"
+        },
+        {
+          "name": "Tidal Basin",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Georgetown Waterfront",
+          "setting": "waterfront"
+        },
+        {
+          "name": "Smithsonian Castle",
+          "setting": "monument"
+        }
+      ]
     }
   },
-  "totalCities": 83,
+  "totalCities": 100,
   "venuesPerCity": 10,
-  "totalVenues": 844
+  "totalVenues": 1012
 }

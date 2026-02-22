@@ -39,6 +39,12 @@ export interface WeatherData {
   timezoneOffset?: number | null;
   /** Day/night flag from OWM icon suffix — may be absent from older gateway */
   isDayTime?: boolean;
+  /** Wind direction in meteorological degrees (0–360). From OWM wind.deg via gateway. */
+  windDegrees?: number | null;
+  /** Wind gust speed in km/h. From OWM wind.gust (converted m/s→km/h) via gateway. */
+  windGustKmh?: number | null;
+  /** Visibility in metres (0–10000). From OWM visibility field via gateway. */
+  visibility?: number | null;
 }
 
 export interface WeatherMeta {
@@ -150,6 +156,18 @@ export function useWeather(): UseWeatherResult {
       for (const w of data.data) {
         map[w.id] = w;
       }
+
+      // ── DIAGNOSTIC: Log client fetch results ──────────────────────────
+      const providerHookKeys = Object.keys(map).filter(k => k.startsWith('provider-'));
+      console.debug('[WEATHER-HOOK-DIAG] useWeather fetch:', {
+        totalItems: data.data.length,
+        mode: data.meta?.mode ?? 'unknown',
+        mapKeys: Object.keys(map).length,
+        providerKeys: providerHookKeys.length,
+        providerList: providerHookKeys,
+        hasSF: !!map['provider-san-francisco'],
+      });
+      // ── END DIAGNOSTIC ────────────────────────────────────────────────
 
       setWeatherMap(map);
       setWeatherArray(data.data);

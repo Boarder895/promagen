@@ -133,6 +133,7 @@ function LazyExchangeCard({
       key={exchange.id}
       exchange={toCardData(exchange, weather, indexQuote)}
       railPosition={side}
+      promptTier={3}
     />
   );
 }
