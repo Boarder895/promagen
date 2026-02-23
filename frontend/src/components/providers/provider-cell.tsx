@@ -501,7 +501,7 @@ export function ProviderCell({
           <div className="provider-city-line">
             {weatherDisplay && mapping ? (
               <WeatherPromptTooltip
-                city={mapping.vibesCity}
+                city={mapping.tooltipCity ?? mapping.vibesCity}
                 tz={provider.timezone}
                 weather={weatherDisplay}
                 tier={providerTier}
@@ -523,7 +523,12 @@ export function ProviderCell({
             ) : (
               <Flag countryCode={provider.countryCode} size={20} decorative />
             )}
-            <span className="provider-city">{provider.hqCity}</span>
+            <span className="provider-city">
+              {provider.hqCity}
+              {mapping?.tooltipCity && mapping.tooltipCity !== provider.hqCity && (
+                <span style={{ opacity: 0.6 }}>{` (${mapping.tooltipCity})`}</span>
+              )}
+            </span>
           </div>
 
           {/* Weather/Moon emoji + Time — same row, emoji beneath flag */}
@@ -533,7 +538,7 @@ export function ProviderCell({
           >
             {displayEmoji && weatherDisplay && mapping && provider.timezone && (
               <ProviderWeatherEmojiTooltip
-                city={mapping.vibesCity}
+                city={mapping.tooltipCity ?? mapping.vibesCity}
                 tz={provider.timezone}
                 description={weatherDisplay.description}
                 isNight={isNight}

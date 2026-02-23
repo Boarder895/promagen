@@ -17,12 +17,13 @@
 import type { LunarPosition } from './sun-calculator';
 import { pickRandom } from './prng';
 import type {
+  AirClarity,
   CloudState,
   LightingState,
   VisualTruth,
   VenueSetting,
 } from './prompt-types';
-import { AIR_CLARITY_PHRASES, CONTRAST_SHADOW_PHRASES } from './visual-truth';
+import { AIR_CLARITY_PHRASES, getContrastShadowPhrase } from './visual-truth';
 import urbanLightData from '@/data/vocabulary/weather/urban-light.json';
 
 interface UrbanLightEntry {
@@ -548,14 +549,14 @@ const DAYLIGHT_MID: DaylightPool = {
 
 const DAYLIGHT_HIGH: DaylightPool = {
   clear: [
-    'high-angle sunlight with strong downward intensity',
+    'high-angle sunlight with well-defined downward light direction',
     'bright overhead sun with slightly cool white quality',
-    'intense direct daylight from high in the sky',
+    'clear direct daylight from high in the sky',
   ],
   scattered: [
     'strong high-angle sun with occasional cloud dimming',
-    'bright overhead daylight with sparse cumulus shadow',
-    'intense sun with scattered cloud shadows on the ground',
+    'bright overhead daylight with sparse cumulus drifting past',
+    'direct sun at high angle with scattered cloud filtering',
   ],
   broken: [
     'high sun diffused through broken cloud layer',
@@ -572,13 +573,13 @@ const DAYLIGHT_HIGH: DaylightPool = {
 
 const DAYLIGHT_ZENITH: DaylightPool = {
   clear: [
-    'near-vertical overhead sunlight with minimal shadow',
-    'intense direct downlight from near-zenith sun',
-    'harsh overhead tropical-intensity sunlight',
+    'near-vertical overhead sunlight at steep downward angle',
+    'direct downlight from near-zenith sun',
+    'strong overhead tropical-angle sunlight',
   ],
   scattered: [
-    'intense overhead sun with thin cloud barely filtering',
-    'near-vertical sun with scattered cloud creating brief shade',
+    'strong overhead sun with thin cloud barely filtering',
+    'near-vertical sun with scattered cloud drifting across',
   ],
   broken: [
     'strong diffused zenith light through broken cloud',
@@ -620,6 +621,7 @@ function getDaylightBase(
   cloud: number,
   seed: number,
   visibility?: number,
+  airClarity?: AirClarity | null,
 ): string {
   let effectiveCloud = cloud;
   if (visibility !== undefined) {
@@ -630,6 +632,30 @@ function getDaylightBase(
     } else if (visibility < 5000) {
       effectiveCloud = Math.max(effectiveCloud, 26); // haze → scattered
     }
+  }
+
+  // v10.2.0: Air clarity floor (Bug 2 fix). Humidity-derived haze/softening
+  // can scatter direct sunlight even when OWM visibility is above 5000m.
+  // Without this, getDaylightBase picks "intense direct" phrases from the
+  // clear pool, which then contradicts the shadow modifier's "soft" phrase
+  // and the atmosphere modifier's "softly diffused air".
+  // The floor pushes pool selection to scattered/broken, which has phrases
+  // like "warm sunlight with occasional haze dimming" — coherent with the
+  // shadow and atmosphere modifiers downstream.
+  //
+  // Also covers OWM visibility-cap distrust: visual-truth can classify
+  // airClarity as 'foggy'/'misty' when OWM reports 10000m visibility but
+  // near-dew-point conditions indicate actual fog/mist formation. The
+  // visibility floor above wouldn't fire (10000 > 5000), but the lighting
+  // base must still reflect the reduced clarity.
+  if (airClarity === 'foggy') {
+    effectiveCloud = Math.max(effectiveCloud, 76); // foggy → overcast pool
+  } else if (airClarity === 'misty') {
+    effectiveCloud = Math.max(effectiveCloud, 51); // misty → broken pool
+  } else if (airClarity === 'hazy') {
+    effectiveCloud = Math.max(effectiveCloud, 51); // hazy → broken pool
+  } else if (airClarity === 'softened') {
+    effectiveCloud = Math.max(effectiveCloud, 26); // softened → scattered pool
   }
 
   if (solarElevation < -12) return pickFromDaylightPool(TWILIGHT_ASTRO, effectiveCloud, seed);
@@ -862,7 +888,8 @@ export function computeLighting(
     // seed picks deterministically from the phrase pool.
     // Replaces the v9.0.0 static 9-phrase chain with 80+ combinations.
     const daylightSeed = cityLightSeed(city, moonDayInCycle);
-    base = getDaylightBase(solarElevation, cloud, daylightSeed, vis);
+    const airClarity = visualTruth?.airClarity ?? null;
+    base = getDaylightBase(solarElevation, cloud, daylightSeed, vis, airClarity);
   }
 
   // ── Segment 2: SHADOW MODIFIER ──────────────────────────────────
@@ -878,7 +905,10 @@ export function computeLighting(
     solarElevation > 6 // Skip golden hour — shadows inherently soft
   ) {
     if (visualTruth) {
-      shadowModifier = CONTRAST_SHADOW_PHRASES[visualTruth.contrast];
+      // v10.2.0: Context-aware shadow phrase — differentiates haze-caused
+      // from cloud-caused moderate contrast. Prevents "strong intensity" base
+      // paired with "soft intermittent shadows" when haze is the real cause.
+      shadowModifier = getContrastShadowPhrase(visualTruth.contrast, visualTruth.airClarity);
     } else {
       shadowModifier = '';
     }

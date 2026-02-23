@@ -102,7 +102,7 @@ export const VENUE_WIND: Record<VenueSetting, Record<ActiveWindForce, string[]>>
     breeze: [
       'awnings swaying gently overhead',
       'litter drifting along gutters',
-      'shop banners shifting slowly',
+      'loose fabric and small flags shifting slowly',
     ],
     fresh: [
       'awnings flapping hard overhead',
@@ -255,7 +255,7 @@ export const VENUE_WIND: Record<VenueSetting, Record<ActiveWindForce, string[]>>
     fresh: [
       'trees swaying noticeably',
       'leaves scattering across paths',
-      'shrubs flattened sideways',
+      'shrubs bending and rustling in the wind',
     ],
     strong: [
       'trees leaning noticeably windward',
@@ -320,12 +320,12 @@ export const VENUE_WIND: Record<VenueSetting, Record<ActiveWindForce, string[]>>
     breeze: [
       'entrance flags shifting gently',
       'courtyard dust drifting in eddies',
-      'prayer flags swaying on lines',
+      'pennant lines swaying between posts',
     ],
     fresh: [
       'entrance flags flapping hard',
       'courtyard grit spiralling upward',
-      'loose offering items sliding across stone',
+      'loose items sliding across stone',
     ],
     strong: [
       'flags rigid and snapping loudly',
@@ -503,8 +503,30 @@ export function getWindPhrase(
     return `${dirPrefix}${speed} km/h ${noun}${gustSuffix}, ${wetInteraction}`;
   }
 
-  // Standard venue interaction
-  const pool = force !== 'calm' ? VENUE_WIND[setting]?.[force as ActiveWindForce] : undefined;
+  // v10.2.0: Gust-aware interaction selection.
+  // Camera captures peak moments — when gusts significantly exceed sustained
+  // wind, step up interaction by one Beaufort level. This prevents mild
+  // interaction phrases pairing with extreme gust suffixes (e.g. "entrance
+  // flags flapping hard, gusting to 77 km/h" → now selects from 'strong'
+  // pool: "flags rigid and snapping loudly").
+  // Capped at one step above sustained to avoid implausible jumps.
+  let interactionForce: ActiveWindForce = force as ActiveWindForce;
+  if (typeof ctx.windGustKmh === 'number' && ctx.windGustKmh > speed * 1.5) {
+    const gustForce = classifyWind(Math.round(ctx.windGustKmh));
+    if (gustForce !== 'calm') {
+      const forceOrder: ActiveWindForce[] = [
+        'breeze', 'fresh', 'strong', 'nearGale', 'gale', 'strongGale', 'storm',
+      ];
+      const sustainedIdx = forceOrder.indexOf(force as ActiveWindForce);
+      const gustIdx = forceOrder.indexOf(gustForce as ActiveWindForce);
+      if (gustIdx > sustainedIdx && sustainedIdx >= 0) {
+        interactionForce = forceOrder[Math.min(sustainedIdx + 1, gustIdx)]!;
+      }
+    }
+  }
+
+  // Standard venue interaction (using gust-adjusted force level)
+  const pool = VENUE_WIND[setting]?.[interactionForce] ?? undefined;
   const interaction = pool?.length ? pickRandom(pool, seed * 2.3) : '';
 
   const core = `${dirPrefix}${speed} km/h ${noun}${gustSuffix}`;

@@ -14,7 +14,7 @@
 // selection. The `lat`/`lon` fields are the provider HQ coordinates, used
 // by the lighting engine for solar/lunar elevation.
 //
-// Coverage: 42/42 providers (17 existing exchange, 25 via 15 provider cities)
+// Coverage: 42/42 providers (17 existing exchange, 27 via 17 provider cities)
 //
 // NOTE: Redmond and Rockville use Seattle / Washington DC weather respectively
 // (within 17–22km) but display their own vibesCity and venue vocabulary.
@@ -33,8 +33,14 @@ import type { PlatformTierId } from '@/data/platform-tiers';
 export interface ProviderWeatherMapping {
   /** Key into useWeather() result (exchange ID or provider-* ID) */
   readonly weatherId: string;
-  /** Lowercase key into city-vibes.json */
+  /** Lowercase key into city-vibes.json — used for venue vocabulary lookups */
   readonly vibesCity: string;
+  /**
+   * Display city for tooltips when HQ city ≠ weather source city.
+   * E.g. Redmond HQ uses Seattle weather → tooltipCity: 'Seattle'.
+   * When absent, vibesCity is used in tooltips.
+   */
+  readonly tooltipCity?: string;
   /** Provider HQ latitude — for lighting engine solar elevation */
   readonly lat: number;
   /** Provider HQ longitude — for lighting engine solar elevation */
@@ -51,8 +57,8 @@ export interface ProviderWeatherMapping {
  * Grouped by weather source for readability:
  * - San Francisco cluster (9 providers)
  * - Bay Area dedicated cities (4 providers: Mountain View, San Jose, Menlo Park)
- * - Other new provider cities (12 providers)
- * - Existing exchange cities (17 providers)
+ * - Other new provider cities (14 providers)
+ * - Existing exchange cities (15 providers)
  */
 export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMapping>> = {
   // ─── San Francisco cluster (provider-san-francisco) ─────────────────────
@@ -78,8 +84,8 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
   'imagine-meta':       { weatherId: 'provider-menlo-park',    vibesCity: 'Menlo Park',    lat: 37.4529, lon: -122.1817 },
 
   // ─── Redmond (Seattle weather, Redmond venues) ──────────────────────────
-  'microsoft-designer': { weatherId: 'provider-seattle',       vibesCity: 'Redmond',       lat: 47.674,  lon: -122.1215 }, // Seattle weather, Redmond venues
-  'bing':               { weatherId: 'provider-seattle',       vibesCity: 'Redmond',       lat: 47.674,  lon: -122.1215 }, // Seattle weather, Redmond venues
+  'microsoft-designer': { weatherId: 'provider-seattle',       vibesCity: 'Redmond',       tooltipCity: 'Seattle',        lat: 47.674,  lon: -122.1215 },
+  'bing':               { weatherId: 'provider-seattle',       vibesCity: 'Redmond',       tooltipCity: 'Seattle',        lat: 47.674,  lon: -122.1215 },
 
   // ─── Houston (provider-houston) ─────────────────────────────────────────
   'craiyon':            { weatherId: 'provider-houston',       vibesCity: 'Houston',       lat: 29.7604, lon: -95.3698  },
@@ -97,7 +103,7 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
   'vistacreate':        { weatherId: 'provider-limassol',      vibesCity: 'Limassol',      lat: 34.6786, lon: 33.0413   },
 
   // ─── Rockville (DC weather, Rockville venues) ───────────────────────────
-  'visme':              { weatherId: 'provider-washington-dc', vibesCity: 'Rockville',     lat: 39.084,  lon: -77.1528  }, // DC weather, Rockville venues
+  'visme':              { weatherId: 'provider-washington-dc', vibesCity: 'Rockville',     tooltipCity: 'Washington DC', lat: 39.084,  lon: -77.1528  },
 
   // ─── Sheridan (provider-sheridan) ───────────────────────────────────────
   'novelai':            { weatherId: 'provider-sheridan',      vibesCity: 'Sheridan',      lat: 44.7972, lon: -106.956  },
@@ -122,7 +128,9 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
 
   // ─── Kuala Lumpur (bursa-kuala-lumpur) ──────────────────────────────────
   '123rf':              { weatherId: 'bursa-kuala-lumpur',     vibesCity: 'Kuala Lumpur',  lat: 3.139,   lon: 101.6869  },
-  'pixlr':              { weatherId: 'bursa-kuala-lumpur',     vibesCity: 'Kuala Lumpur',  lat: 3.0738,  lon: 101.6068  }, // Bandar Sunway (11km)
+
+  // ─── Bandar Sunway (provider-bandar-sunway) ───────────────────────────
+  'pixlr':              { weatherId: 'provider-bandar-sunway', vibesCity: 'Bandar Sunway', lat: 3.0738,  lon: 101.6068  },
 
   // ─── Hong Kong (hkex-hong-kong) ────────────────────────────────────────
   'fotor':              { weatherId: 'hkex-hong-kong',         vibesCity: 'Hong Kong',     lat: 22.3193, lon: 114.1694  },
@@ -142,8 +150,8 @@ export const PROVIDER_WEATHER_MAP: Readonly<Record<string, ProviderWeatherMappin
   // ─── Taipei (twse-taipei) ──────────────────────────────────────────────
   'myedit':             { weatherId: 'twse-taipei',            vibesCity: 'Taipei',        lat: 25.033,  lon: 121.5654  },
 
-  // ─── Amman (ase-amman) ─────────────────────────────────────────────────
-  'photoleap':          { weatherId: 'ase-amman',              vibesCity: 'Amman',         lat: 31.7683, lon: 35.2137   }, // Jerusalem (69km)
+  // ─── Jerusalem (provider-jerusalem) ─────────────────────────────────────
+  'photoleap':          { weatherId: 'provider-jerusalem',     vibesCity: 'Jerusalem',     lat: 31.7683, lon: 35.2137   },
 
   // ─── Freiburg (provider-freiburg) ───────────────────────────────────────
   'flux':               { weatherId: 'provider-freiburg',      vibesCity: 'Freiburg',      lat: 47.999,  lon: 7.842     },

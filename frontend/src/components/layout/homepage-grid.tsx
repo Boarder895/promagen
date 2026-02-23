@@ -662,7 +662,7 @@ export default function HomepageGrid({
                 Arrow replicates ExpandHeader animation from providers-table.tsx
                 Hidden when table is expanded (ribbon is gone, no gap to fill)
                 ============================================================ */}
-            {!isTableExpanded && (
+            {!isTableExpanded && pathname === '/' && (
               <LeaderboardIntro isExpanded={isTableExpanded} onToggle={onExpandToggle} />
             )}
 

@@ -58,7 +58,7 @@ import {
 // SHARED SEED COMPUTATION
 // ============================================================================
 
-function computeSeed(
+export function computeSeed(
   ctx: ReturnType<typeof buildContext>,
   hour: number,
   observedAtUtc: Date,

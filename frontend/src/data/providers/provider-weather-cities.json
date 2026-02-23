@@ -13,5 +13,7 @@
   { "id": "provider-san-jose",       "city": "San Jose",       "lat": 37.3382,  "lon": -121.8863 },
   { "id": "provider-menlo-park",     "city": "Menlo Park",     "lat": 37.4529,  "lon": -122.1817 },
   { "id": "provider-burlington",     "city": "Burlington",     "lat": 43.3255,  "lon": -79.7990  },
-  { "id": "provider-freiburg",       "city": "Freiburg",       "lat": 47.9990,  "lon": 7.8420    }
+  { "id": "provider-freiburg",       "city": "Freiburg",       "lat": 47.9990,  "lon": 7.8420    },
+  { "id": "provider-jerusalem",      "city": "Jerusalem",      "lat": 31.7683,  "lon": 35.2137   },
+  { "id": "provider-bandar-sunway",  "city": "Bandar Sunway",  "lat": 3.0738,   "lon": 101.6068  }
 ]

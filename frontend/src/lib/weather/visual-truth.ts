@@ -519,6 +519,42 @@ export const CONTRAST_SHADOW_PHRASES: Record<ContrastLevel, string> = {
   flat: 'with flat even illumination',
 };
 
+/**
+ * v10.2.0: Context-aware shadow phrase — differentiates between causes of
+ * moderate contrast so the shadow modifier doesn't contradict the lighting base.
+ *
+ * "Soft intermittent shadows" = cloud gaps (intermittent direct sunlight).
+ * "Well-defined light direction with soft-edged shadows" = haze/humidity softening
+ *   (still directional sun, but edges are diffused by particulate scatter).
+ *
+ * This eliminates contradictions like:
+ *   "high-angle sunlight with strong downward intensity with soft intermittent shadows"
+ * because when airClarity is hazy/softened, getDaylightBase now selects from the
+ * scattered/broken pool (softer base phrases) AND this function selects a shadow
+ * phrase that acknowledges directional light with haze-softened edges.
+ */
+export function getContrastShadowPhrase(
+  contrast: ContrastLevel,
+  airClarity: AirClarity,
+): string {
+  switch (contrast) {
+    case 'high':
+      return 'with sharp defined shadows';
+    case 'flat':
+      return 'with flat even illumination';
+    case 'low':
+      return 'with faint diffused shadows';
+    case 'moderate':
+      // Haze/softened air: light is still directional but edges are diffused.
+      // "Intermittent" is wrong — that implies cloud gaps, not atmospheric scatter.
+      if (airClarity === 'hazy' || airClarity === 'softened') {
+        return 'with well-defined light direction with soft-edged shadows';
+      }
+      // Cloud-caused moderate: intermittent sun through cloud gaps.
+      return 'with soft intermittent shadows';
+  }
+}
+
 // Moisture phrases — SURFACE effects
 // v7.3: Setting-aware material-specific phrases.
 // Each venue setting has a known ground material. Moisture phrases name it.

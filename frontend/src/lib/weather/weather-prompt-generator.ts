@@ -58,13 +58,14 @@ import { classifyPrecip, deriveVisualTruth, computeDewPoint } from './visual-tru
 import { computeClimateContext } from './climate';
 import { computeLighting, validateLightingCoherence } from './lighting-engine';
 import { classifyWind } from './wind-system';
-import { getCityVenue } from './vocabulary-loaders';
+import { getCityVenue, buildContext } from './vocabulary-loaders';
 import {
   generateTier1,
   generateTier1Flux,
   generateTier2,
   generateTier3,
   generateTier4,
+  computeSeed as computeTierSeed,
 } from './tier-generators';
 import { isNightTime, shouldExcludePeople, computeSolarPhase } from './time-utils';
 import { getMoonPhase } from './moon-phase';
@@ -526,9 +527,15 @@ export function generateWeatherPrompt(input: WeatherPromptInput): WeatherPromptR
 
   // ── Post-process: coherence and polish ─────────────────────────────────
 
-  // v9.8.0: Compute camera lens for composition coherence. Uses venueSeed
-  // so the lens class matches what tier generators select for the same venue.
-  const compositionCamera = getCameraLens(profile.style, venue?.setting ?? null, venueSeed);
+  // v10.1.0: Compute camera lens for composition coherence. Uses the SAME
+  // seed as tier generators (buildContext + computeTierSeed) so the lens class
+  // matches what tier generators select. Previously used venueSeed which was
+  // computed differently, causing contradictions like "compressed parkland
+  // detail shot" (telephoto composition) injected into a prompt with "wide angle"
+  // (wide camera from the tier's own seed).
+  const tierCtx = buildContext(weather, localHour, observedAtUtc);
+  const tierSeed = computeTierSeed(tierCtx, localHour, observedAtUtc, city);
+  const compositionCamera = getCameraLens(profile.style, venue?.setting ?? null, tierSeed);
   const composition = getComposition(venue?.setting ?? null, isNight, compositionCamera.lensDescriptor);
 
   if (result.tier === 1 && result.positive && result.negative) {
@@ -623,8 +630,9 @@ export function generateWeatherPrompt(input: WeatherPromptInput): WeatherPromptR
       },
       solarElevation,
       camera: (() => {
-        // Use the same venueSeed used for venue picking to keep trace deterministic.
-        const cam = getCameraLens(profile.style, venue?.setting ?? null, venueSeed);
+        // v10.2.0: Use tierSeed (same as the seed used for composition and prompt camera)
+        // to keep trace deterministic AND matching the actual camera in the output.
+        const cam = getCameraLens(profile.style, venue?.setting ?? null, tierSeed);
         return { body: cam.body, lensSpec: cam.lensSpec, lensDescriptor: cam.lensDescriptor };
       })(),
       climate: (() => {
