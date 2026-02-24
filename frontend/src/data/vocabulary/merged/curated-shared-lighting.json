@@ -1,0 +1,38 @@
+{
+  "$schema": "vocabulary-merged",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "merged",
+    "source": "shared-adjectives",
+    "category": "lighting",
+    "label": "Lighting (Shared Adjectives Merged)",
+    "totalOptions": 24,
+    "updated": "2026-02-24"
+  },
+  "options": [
+    "blinding",
+    "brilliant",
+    "crepuscular",
+    "dazzling",
+    "dim",
+    "dusky",
+    "gleaming",
+    "glittering",
+    "gloomy",
+    "glowing",
+    "incandescent",
+    "inky",
+    "luminous",
+    "lustrous",
+    "murky",
+    "opalescent",
+    "phosphorescent",
+    "pitch-black",
+    "radiant",
+    "shadowy",
+    "shimmering",
+    "sparkling",
+    "tenebrous",
+    "twinkling"
+  ]
+}

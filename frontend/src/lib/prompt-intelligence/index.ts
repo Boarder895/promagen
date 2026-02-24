@@ -15,6 +15,14 @@ export type {
   SemanticTag,
   SemanticTagsData,
   
+  // Semantic Clusters (Phase 1)
+  SemanticCluster,
+  SemanticClustersData,
+  
+  // Direct Affinities (Phase 1)
+  DirectAffinity,
+  DirectAffinitiesData,
+  
   // Style Families
   StyleFamily,
   FamiliesData,
@@ -66,6 +74,8 @@ import conflictsData from '@/data/prompt-intelligence/conflicts.json';
 import marketMoodsData from '@/data/prompt-intelligence/market-moods.json';
 import platformHintsData from '@/data/prompt-intelligence/platform-hints.json';
 import semanticTagsData from '@/data/prompt-intelligence/semantic-tags.json';
+import semanticClustersData from '@/data/prompt-intelligence/semantic-clusters.json';
+import directAffinitiesData from '@/data/prompt-intelligence/direct-affinities.json';
 
 import type { 
   FamiliesData, 
@@ -74,6 +84,8 @@ import type {
   PlatformHintsData,
   SemanticTagsData,
   SemanticTag,
+  SemanticClustersData,
+  DirectAffinitiesData,
   MarketStateType,
   PlatformHint,
 } from './types';
@@ -234,6 +246,129 @@ export function hasSemanticTag(option: string): boolean {
 export function getTagCoverage(): { total: number; tagged: number; categories: string[] } {
   const data = semanticTagsData as SemanticTagsData;
   return data.coverage;
+}
+
+// ============================================================================
+// Semantic Clusters Functions (Phase 1)
+// ============================================================================
+
+// Pre-build term → cluster ID index at import time for O(1) lookups
+const _termToClusterIds: Map<string, string[]> = new Map();
+(() => {
+  const data = semanticClustersData as unknown as SemanticClustersData;
+  if (!data?.clusters) return;
+  for (const [clusterId, cluster] of Object.entries(data.clusters)) {
+    for (const terms of Object.values(cluster.terms)) {
+      if (!Array.isArray(terms)) continue;
+      for (const term of terms) {
+        const lower = term.toLowerCase();
+        const existing = _termToClusterIds.get(lower);
+        if (existing) {
+          if (!existing.includes(clusterId)) existing.push(clusterId);
+        } else {
+          _termToClusterIds.set(lower, [clusterId]);
+        }
+      }
+    }
+  }
+})();
+
+/**
+ * Get all semantic clusters.
+ */
+export function getSemanticClusters(): SemanticClustersData {
+  return semanticClustersData as unknown as SemanticClustersData;
+}
+
+/**
+ * Get cluster IDs that contain a given term.
+ * Uses pre-indexed lookup for performance (O(1)).
+ * @param term - The prompt option to look up
+ * @returns Array of cluster IDs (empty if not in any cluster)
+ */
+export function getClustersForTerm(term: string): string[] {
+  return _termToClusterIds.get(term.toLowerCase()) ?? [];
+}
+
+/**
+ * Get all terms in a cluster for a specific category.
+ * @param clusterId - The cluster ID (e.g., 'cyberpunk')
+ * @param category - The category to get terms for
+ * @returns Array of terms (empty if cluster/category not found)
+ */
+export function getClusterTerms(clusterId: string, category: string): string[] {
+  const data = semanticClustersData as unknown as SemanticClustersData;
+  return (data.clusters[clusterId]?.terms as Record<string, string[]>)?.[category] ?? [];
+}
+
+/**
+ * Compute active clusters from a set of selected terms.
+ * A cluster is "active" if ≥1 selected term belongs to it.
+ * @param selectedTerms - Currently selected terms
+ * @returns Set of active cluster IDs
+ */
+export function computeActiveClusters(selectedTerms: string[]): Set<string> {
+  const active = new Set<string>();
+  for (const term of selectedTerms) {
+    const clusters = getClustersForTerm(term);
+    for (const cid of clusters) {
+      active.add(cid);
+    }
+  }
+  return active;
+}
+
+// ============================================================================
+// Direct Affinities Functions (Phase 1)
+// ============================================================================
+
+// Pre-build term → affinity index at import time for O(1) lookups
+const _termAffinityIndex: Map<string, { boosts: Set<string>; penalises: Set<string> }> = new Map();
+(() => {
+  const data = directAffinitiesData as unknown as DirectAffinitiesData;
+  if (!data?.affinities) return;
+  for (const aff of data.affinities) {
+    const lower = aff.term.toLowerCase();
+    _termAffinityIndex.set(lower, {
+      boosts: new Set(aff.boosts.map((b: string) => b.toLowerCase())),
+      penalises: new Set((aff.penalises ?? []).map((p: string) => p.toLowerCase())),
+    });
+  }
+})();
+
+/**
+ * Get all direct affinities.
+ */
+export function getDirectAffinities(): DirectAffinitiesData {
+  return directAffinitiesData as unknown as DirectAffinitiesData;
+}
+
+/**
+ * Get direct affinity data for a specific anchor term.
+ * Uses pre-indexed lookup for performance (O(1)).
+ * @param term - The anchor term
+ * @returns Boost and penalise sets, or undefined if no affinity exists
+ */
+export function getAffinityForTerm(term: string): { boosts: Set<string>; penalises: Set<string> } | undefined {
+  return _termAffinityIndex.get(term.toLowerCase());
+}
+
+/**
+ * Check if an option is boosted by any of the selected terms.
+ * @param option - The option to check
+ * @param selectedTerms - Currently selected terms
+ * @returns Net affinity score (positive = boosted, negative = penalised)
+ */
+export function computeAffinityScore(option: string, selectedTerms: string[]): number {
+  const optionLower = option.toLowerCase();
+  let score = 0;
+  for (const term of selectedTerms) {
+    const aff = _termAffinityIndex.get(term.toLowerCase());
+    if (!aff) continue;
+    if (aff.boosts.has(optionLower)) score += 1;
+    if (aff.penalises.has(optionLower)) score -= 1;
+  }
+  return score;
 }
 
 // ============================================================================

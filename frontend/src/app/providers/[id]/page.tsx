@@ -51,8 +51,8 @@ function ProviderNotFound({ id }: { id: string }) {
     >
       <h2 className="text-xl font-semibold text-slate-50">Provider not found</h2>
       <p className="max-w-md text-sm text-slate-400">
-        The provider &ldquo;{id}&rdquo; is not in the current Promagen catalogue.
-        It may have been removed or the URL may be incorrect.
+        The provider &ldquo;{id}&rdquo; is not in the current Promagen catalogue. It may have been
+        removed or the URL may be incorrect.
       </p>
       <a
         href="/"
@@ -84,8 +84,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const url = `https://promagen.app/providers/${provider.id}`;
   const title = `${provider.name} prompt builder • Promagen`;
   const description =
-    provider.tagline ??
-    `Craft prompts for ${provider.name} with live market context on Promagen.`;
+    provider.tagline ?? `Craft prompts for ${provider.name} with live market context on Promagen.`;
 
   return {
     title,
@@ -109,7 +108,11 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default async function ProviderPage({ params }: { params: Promise<Params> }): Promise<JSX.Element> {
+export default async function ProviderPage({
+  params,
+}: {
+  params: Promise<Params>;
+}): Promise<JSX.Element> {
   const { id } = await params;
 
   // Parallel data fetching for optimal performance
@@ -162,7 +165,7 @@ export default async function ProviderPage({ params }: { params: Promise<Params>
       leftContent={leftExchanges}
       centre={centreContent}
       rightContent={rightExchanges}
-      showFinanceRibbon
+      showFinanceRibbon={false}
       // ========================================================================
       // ENGINE BAY + MISSION CONTROL — Same as homepage
       // ========================================================================

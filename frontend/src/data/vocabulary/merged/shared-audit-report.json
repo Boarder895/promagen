@@ -1,0 +1,21 @@
+{
+  "phase": "0.3",
+  "title": "Shared Vocabulary Audit \u2014 Final Results",
+  "date": "2026-02-24",
+  "status": "COMPLETE \u2014 ready for Part 0.4 merge",
+  "source": "adjectives.json (893 unique adjectives across 17 subcategories)",
+  "skipped_files": {
+    "connectors.json": "531 phrases \u2014 assembler glue, not user choices",
+    "intensifiers.json": "502 phrases \u2014 assembler glue, not user choices"
+  },
+  "output_summary": {
+    "lighting": 24,
+    "colour": 23,
+    "atmosphere": 71,
+    "materials": 49,
+    "composition": 40,
+    "style": 30
+  },
+  "total_kept": 236,
+  "curation_method": "Hand-curated: only adjectives that pass the visual evocation test for AI image prompts"
+}

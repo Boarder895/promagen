@@ -1,0 +1,214 @@
+{
+  "$schema": "merge-manifest",
+  "version": "1.0.0",
+  "generated": "2026-02-24",
+  "summary": {
+    "totalCorePhrases": 3501,
+    "totalMergedPhrases": 5557,
+    "totalCombined": 9058,
+    "mergedCategories": 9,
+    "unchangedCategories": 3
+  },
+  "files": {
+    "action": {
+      "file": "action-merged.json",
+      "mergedCount": 988,
+      "coreCount": 277,
+      "combinedTotal": 1265,
+      "sources": [
+        {
+          "source": "commodities",
+          "rawCount": 988
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    },
+    "atmosphere": {
+      "file": "atmosphere-merged.json",
+      "mergedCount": 930,
+      "coreCount": 305,
+      "combinedTotal": 1235,
+      "sources": [
+        {
+          "source": "commodities",
+          "rawCount": 437
+        },
+        {
+          "source": "shared-adjectives",
+          "rawCount": 71
+        },
+        {
+          "source": "weather",
+          "rawCount": 422
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    },
+    "colour": {
+      "file": "colour-merged.json",
+      "mergedCount": 62,
+      "coreCount": 294,
+      "combinedTotal": 356,
+      "sources": [
+        {
+          "source": "commodities",
+          "rawCount": 40
+        },
+        {
+          "source": "shared-adjectives",
+          "rawCount": 22
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    },
+    "composition": {
+      "file": "composition-merged.json",
+      "mergedCount": 40,
+      "coreCount": 279,
+      "combinedTotal": 319,
+      "sources": [
+        {
+          "source": "shared-adjectives",
+          "rawCount": 40
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    },
+    "environment": {
+      "file": "environment-merged.json",
+      "mergedCount": 2340,
+      "coreCount": 279,
+      "combinedTotal": 2619,
+      "sources": [
+        {
+          "source": "commodities",
+          "rawCount": 1308
+        },
+        {
+          "source": "weather",
+          "rawCount": 1032
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    },
+    "lighting": {
+      "file": "lighting-merged.json",
+      "mergedCount": 552,
+      "coreCount": 302,
+      "combinedTotal": 854,
+      "sources": [
+        {
+          "source": "commodities",
+          "rawCount": 280
+        },
+        {
+          "source": "shared-adjectives",
+          "rawCount": 24
+        },
+        {
+          "source": "weather",
+          "rawCount": 248
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    },
+    "materials": {
+      "file": "materials-merged.json",
+      "mergedCount": 403,
+      "coreCount": 285,
+      "combinedTotal": 688,
+      "sources": [
+        {
+          "source": "commodities",
+          "rawCount": 354
+        },
+        {
+          "source": "shared-adjectives",
+          "rawCount": 49
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    },
+    "style": {
+      "file": "style-merged.json",
+      "mergedCount": 30,
+      "coreCount": 295,
+      "combinedTotal": 325,
+      "sources": [
+        {
+          "source": "shared-adjectives",
+          "rawCount": 30
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    },
+    "subject": {
+      "file": "subject-merged.json",
+      "mergedCount": 212,
+      "coreCount": 292,
+      "combinedTotal": 504,
+      "sources": [
+        {
+          "source": "commodities",
+          "rawCount": 212
+        }
+      ],
+      "dedup": {
+        "removedCoreDupes": 0,
+        "removedInternalDupes": 0,
+        "removedCrossCategoryDupes": 0
+      }
+    }
+  },
+  "unchangedCategories": {
+    "camera": {
+      "coreCount": 298,
+      "reason": "No merged data from audits"
+    },
+    "fidelity": {
+      "coreCount": 282,
+      "reason": "No merged data from audits"
+    },
+    "negative": {
+      "coreCount": 313,
+      "reason": "No merged data from audits"
+    }
+  },
+  "auditSources": {
+    "weather": "Part 0.1: urban-light, conditions, wind, temperature, humidity, time-of-day, city-vibes",
+    "commodities": "Part 0.2: 15 files audited, 6 skipped (geopolitical, historical, trading-culture, weather-links, absence-states, smell-taste)",
+    "shared": "Part 0.3: 236 adjectives from 893 in adjectives.json. Connectors + intensifiers skipped."
+  }
+}

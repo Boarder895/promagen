@@ -128,6 +128,8 @@ export interface PlatformARSupport {
 export interface CompositionPack {
   /** The composition text to inject into prompt */
   text: string;
+  /** Individual composition terms (for trimmer visibility) */
+  terms: string[];
   /** Whether to append native AR parameter */
   useNativeAR: boolean;
   /** The AR parameter string (e.g., '--ar 16:9') */

@@ -1,0 +1,60 @@
+{
+  "$schema": "vocabulary-merged",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "merged",
+    "category": "composition",
+    "label": "Composition (Merged)",
+    "description": "Curated phrases merged from weather, commodity, and shared vocabulary audits",
+    "totalOptions": 40,
+    "sources": [
+      {
+        "source": "shared-adjectives",
+        "rawCount": 40
+      }
+    ],
+    "updated": "2026-02-24"
+  },
+  "options": [
+    "airborne",
+    "angular",
+    "boundless",
+    "coiled",
+    "colossal",
+    "conical",
+    "crescent",
+    "cylindrical",
+    "dispersed",
+    "elevated",
+    "enormous",
+    "expansive",
+    "foreground",
+    "gigantic",
+    "helical",
+    "hovering",
+    "immense",
+    "levitating",
+    "lofty",
+    "looming",
+    "meandering",
+    "microscopic",
+    "miniature",
+    "minuscule",
+    "monumental",
+    "peripheral",
+    "petite",
+    "pyramidal",
+    "receding",
+    "scattered",
+    "serpentine",
+    "sinuous",
+    "soaring",
+    "spherical",
+    "spiral",
+    "sprawling",
+    "subterranean",
+    "sunken",
+    "towering",
+    "twisted"
+  ]
+}

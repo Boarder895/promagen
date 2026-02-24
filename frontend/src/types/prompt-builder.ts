@@ -8,18 +8,18 @@
  *        Lighting → Colour → Atmosphere → Materials → Fidelity → Negative
  */
 export type PromptCategory =
-  | 'subject'      // Subject (identity + key attributes) - limit 1
-  | 'action'       // Action / Pose - limit 1
-  | 'style'        // Style / Rendering / References - limit 1
-  | 'environment'  // Environment (location + time + background) - limit 1
-  | 'composition'  // Composition / Framing - limit 1
-  | 'camera'       // Camera (angle + lens + DoF) - limit 1
-  | 'lighting'     // Lighting (type + direction + intensity) - limit 1
-  | 'colour'       // Colour / Grade - limit 1
-  | 'atmosphere'   // Atmosphere (fog, haze, rain, particles) - limit 1
-  | 'materials'    // Materials / Texture - limit 1
-  | 'fidelity'     // Quality boosters (8K, masterpiece, sharp focus) - limit 1
-  | 'negative';    // Constraints / Negative prompt - limit 5
+  | 'subject' // Subject (identity + key attributes) - limit 1
+  | 'action' // Action / Pose - limit 1
+  | 'style' // Style / Rendering / References - limit 1
+  | 'environment' // Environment (location + time + background) - limit 1
+  | 'composition' // Composition / Framing - limit 1
+  | 'camera' // Camera (angle + lens + DoF) - limit 1
+  | 'lighting' // Lighting (type + direction + intensity) - limit 1
+  | 'colour' // Colour / Grade - limit 1
+  | 'atmosphere' // Atmosphere (fog, haze, rain, particles) - limit 1
+  | 'materials' // Materials / Texture - limit 1
+  | 'fidelity' // Quality boosters (8K, masterpiece, sharp focus) - limit 1
+  | 'negative'; // Constraints / Negative prompt - limit 5
 
 /** Canonical category order for optimal prompt construction */
 export const CATEGORY_ORDER: PromptCategory[] = [
@@ -135,6 +135,22 @@ export interface PlatformFormat {
   suffixParams?: string[];
   tokenLimit?: number;
   sweetSpot?: number;
+
+  // ── Tier-aware assembly config ──
+  // Quality terms auto-prepended before user selections (e.g., SD "masterpiece")
+  qualityPrefix?: string[];
+  // Quality terms auto-appended after user selections (e.g., Flux "8K")
+  qualitySuffix?: string[];
+  // Standard quality negatives auto-included with user negatives
+  qualityNegative?: string[];
+  // Per-category weighting — maps category key to emphasis weight.
+  // Applied using weightingSyntax. e.g., { "subject": 1.2, "lighting": 1.1 }
+  weightedCategories?: Record<string, number>;
+  // Categories to front-load in output for maximum platform impact.
+  // These appear first, before remaining categoryOrder entries.
+  // For CLIP: weighted categories. For MJ: subject + style + mood.
+  // For NatLang: controls sentence clause order after the core subject+action nucleus.
+  impactPriority?: PromptCategory[];
 }
 
 /** Full platform formats JSON structure */

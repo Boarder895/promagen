@@ -1,0 +1,3657 @@
+{
+  "$schema": "./schemas/intelligence.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "intelligence",
+    "category": "direct-affinities",
+    "label": "Direct Affinities",
+    "description": "250 fine-grained term-to-term boost/penalise pairs. Phase 1 Part 1.3.",
+    "totalAffinities": 250,
+    "uniqueTerms": 327
+  },
+  "affinities": [
+    {
+      "term": "golden hour",
+      "boosts": [
+        "warm tones",
+        "earth tones",
+        "serene",
+        "romantic",
+        "soft lighting",
+        "shallow depth of field",
+        "oil painting"
+      ],
+      "penalises": [
+        "neon glow",
+        "blacklight UV",
+        "neon colours",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "blue hour",
+      "boosts": [
+        "cool tones",
+        "contemplative",
+        "melancholic",
+        "moonlight",
+        "silver and blue"
+      ],
+      "penalises": [
+        "warm tones",
+        "golden hour",
+        "midday sun"
+      ]
+    },
+    {
+      "term": "neon glow",
+      "boosts": [
+        "neon colours",
+        "teal and orange",
+        "cyberpunk city",
+        "neon-lit streets",
+        "futuristic",
+        "chrome reflection"
+      ],
+      "penalises": [
+        "golden hour",
+        "dappled light",
+        "serene",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "candlelight",
+      "boosts": [
+        "warm tones",
+        "romantic",
+        "mysterious",
+        "gothic cathedral",
+        "velvet soft",
+        "oil painting"
+      ],
+      "penalises": [
+        "neon glow",
+        "LED lighting",
+        "midday sun",
+        "overcast sky"
+      ]
+    },
+    {
+      "term": "dramatic lighting",
+      "boosts": [
+        "high contrast",
+        "ominous",
+        "dramatic",
+        "concept art",
+        "chiaroscuro"
+      ],
+      "penalises": [
+        "flat lighting",
+        "soft lighting",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "soft lighting",
+      "boosts": [
+        "serene",
+        "romantic",
+        "pastel palette",
+        "watercolor painting",
+        "dreamy soft"
+      ],
+      "penalises": [
+        "hard lighting",
+        "high contrast",
+        "dramatic lighting"
+      ]
+    },
+    {
+      "term": "studio lighting",
+      "boosts": [
+        "photorealistic",
+        "fashion photography",
+        "sharp focus",
+        "portrait of a woman"
+      ],
+      "penalises": [
+        "natural lighting",
+        "golden hour",
+        "overcast sky"
+      ]
+    },
+    {
+      "term": "Rembrandt lighting",
+      "boosts": [
+        "portrait of a man",
+        "oil painting",
+        "chiaroscuro",
+        "dramatic",
+        "warm tones"
+      ],
+      "penalises": [
+        "flat lighting",
+        "neon glow",
+        "LED lighting"
+      ]
+    },
+    {
+      "term": "volumetric lighting",
+      "boosts": [
+        "god rays",
+        "dramatic",
+        "concept art",
+        "8K resolution",
+        "enchanted forest"
+      ],
+      "penalises": [
+        "flat lighting",
+        "overcast sky"
+      ]
+    },
+    {
+      "term": "chiaroscuro",
+      "boosts": [
+        "oil painting",
+        "baroque style",
+        "dramatic",
+        "high contrast",
+        "Rembrandt lighting"
+      ],
+      "penalises": [
+        "flat lighting",
+        "pastel palette",
+        "light and airy"
+      ]
+    },
+    {
+      "term": "moonlight",
+      "boosts": [
+        "mysterious",
+        "cool tones",
+        "serene",
+        "silver and blue",
+        "dark forest"
+      ],
+      "penalises": [
+        "midday sun",
+        "golden hour",
+        "warm tones"
+      ]
+    },
+    {
+      "term": "backlit",
+      "boosts": [
+        "rim lighting",
+        "golden hour",
+        "silhouette drama",
+        "dramatic",
+        "warm tones"
+      ],
+      "penalises": [
+        "flat lighting",
+        "front lit"
+      ]
+    },
+    {
+      "term": "LED lighting",
+      "boosts": [
+        "neon colours",
+        "futuristic",
+        "cyberpunk city",
+        "chrome reflection",
+        "teal and orange"
+      ],
+      "penalises": [
+        "candlelight",
+        "golden hour",
+        "oil painting"
+      ]
+    },
+    {
+      "term": "LED strip ambient",
+      "boosts": [
+        "neon colours",
+        "cyberpunk city",
+        "futuristic",
+        "chrome reflection"
+      ],
+      "penalises": [
+        "candlelight",
+        "golden hour",
+        "dappled light"
+      ]
+    },
+    {
+      "term": "dappled light",
+      "boosts": [
+        "enchanted forest",
+        "serene",
+        "natural lighting",
+        "warm tones",
+        "watercolor painting"
+      ],
+      "penalises": [
+        "neon glow",
+        "studio lighting",
+        "hard lighting"
+      ]
+    },
+    {
+      "term": "low key lighting",
+      "boosts": [
+        "dark and brooding",
+        "mysterious",
+        "ominous",
+        "film noir",
+        "high contrast"
+      ],
+      "penalises": [
+        "high key lighting",
+        "light and airy",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "high key lighting",
+      "boosts": [
+        "light and airy",
+        "pastel palette",
+        "clean lines",
+        "minimalist"
+      ],
+      "penalises": [
+        "low key lighting",
+        "dark and brooding",
+        "ominous"
+      ]
+    },
+    {
+      "term": "firelight",
+      "boosts": [
+        "warm tones",
+        "dramatic",
+        "medieval castle",
+        "stone surface"
+      ],
+      "penalises": [
+        "cool tones",
+        "neon glow",
+        "LED lighting"
+      ]
+    },
+    {
+      "term": "light fog atmosphere",
+      "boosts": [
+        "mysterious",
+        "foggy atmosphere",
+        "desaturated",
+        "misty woods",
+        "eerie"
+      ],
+      "penalises": [
+        "sharp focus",
+        "high contrast",
+        "vibrant colours"
+      ]
+    },
+    {
+      "term": "bioluminescence",
+      "boosts": [
+        "magical",
+        "otherworldly",
+        "bioluminescent cave",
+        "crystal clarity",
+        "iridescent"
+      ],
+      "penalises": [
+        "midday sun",
+        "overcast sky",
+        "studio lighting"
+      ]
+    },
+    {
+      "term": "blacklight UV",
+      "boosts": [
+        "neon colours",
+        "cyberpunk city",
+        "energetic",
+        "holographic"
+      ],
+      "penalises": [
+        "golden hour",
+        "natural lighting",
+        "serene"
+      ]
+    },
+    {
+      "term": "sunrise lighting",
+      "boosts": [
+        "warm tones",
+        "serene",
+        "peaceful",
+        "golden hour",
+        "misty morning"
+      ],
+      "penalises": [
+        "moonlight",
+        "neon glow",
+        "midnight darkness"
+      ]
+    },
+    {
+      "term": "sunset lighting",
+      "boosts": [
+        "warm tones",
+        "romantic",
+        "dramatic",
+        "golden hour",
+        "nostalgic"
+      ],
+      "penalises": [
+        "moonlight",
+        "overcast sky",
+        "midnight darkness"
+      ]
+    },
+    {
+      "term": "overcast sky",
+      "boosts": [
+        "desaturated",
+        "melancholic",
+        "muted tones",
+        "contemplative",
+        "soft lighting"
+      ],
+      "penalises": [
+        "golden hour",
+        "dramatic lighting",
+        "vibrant colours"
+      ]
+    },
+    {
+      "term": "midday sun",
+      "boosts": [
+        "hard lighting",
+        "high contrast",
+        "desert canyon",
+        "warm tones"
+      ],
+      "penalises": [
+        "moonlight",
+        "candlelight",
+        "foggy atmosphere"
+      ]
+    },
+    {
+      "term": "god rays",
+      "boosts": [
+        "volumetric lighting",
+        "dramatic",
+        "enchanted forest",
+        "mystical",
+        "gothic cathedral"
+      ],
+      "penalises": [
+        "flat lighting",
+        "neon glow",
+        "studio lighting"
+      ]
+    },
+    {
+      "term": "rim lighting",
+      "boosts": [
+        "dramatic",
+        "backlit",
+        "portrait of a woman",
+        "cinematic style"
+      ],
+      "penalises": [
+        "flat lighting",
+        "soft lighting"
+      ]
+    },
+    {
+      "term": "stained glass",
+      "boosts": [
+        "gothic cathedral",
+        "jewel tones",
+        "warm tones",
+        "magical",
+        "art nouveau"
+      ],
+      "penalises": [
+        "minimalist",
+        "brutalist",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "warm tones",
+      "boosts": [
+        "golden hour",
+        "earth tones",
+        "oil painting",
+        "romantic",
+        "candlelight",
+        "wood grain"
+      ],
+      "penalises": [
+        "cool tones",
+        "neon colours",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "cool tones",
+      "boosts": [
+        "blue hour",
+        "moonlight",
+        "melancholic",
+        "silver and blue",
+        "ice cave"
+      ],
+      "penalises": [
+        "warm tones",
+        "golden hour",
+        "firelight"
+      ]
+    },
+    {
+      "term": "earth tones",
+      "boosts": [
+        "natural lighting",
+        "warm tones",
+        "wood grain",
+        "stone surface",
+        "oil painting"
+      ],
+      "penalises": [
+        "neon colours",
+        "vibrant colours",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "neon colours",
+      "boosts": [
+        "neon glow",
+        "cyberpunk city",
+        "LED lighting",
+        "futuristic",
+        "energetic"
+      ],
+      "penalises": [
+        "earth tones",
+        "pastel palette",
+        "oil painting"
+      ]
+    },
+    {
+      "term": "pastel palette",
+      "boosts": [
+        "soft lighting",
+        "watercolor painting",
+        "ethereal",
+        "whimsical",
+        "dreamy soft"
+      ],
+      "penalises": [
+        "high contrast",
+        "neon colours",
+        "dark and brooding"
+      ]
+    },
+    {
+      "term": "jewel tones",
+      "boosts": [
+        "stained glass",
+        "high fantasy",
+        "gemstone facets",
+        "gold leaf",
+        "enchanted forest"
+      ],
+      "penalises": [
+        "desaturated",
+        "monochrome",
+        "minimalist"
+      ]
+    },
+    {
+      "term": "monochrome",
+      "boosts": [
+        "black and white",
+        "desaturated",
+        "film noir",
+        "dramatic",
+        "high contrast"
+      ],
+      "penalises": [
+        "vibrant colours",
+        "neon colours",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "vibrant colours",
+      "boosts": [
+        "energetic",
+        "anime style",
+        "pop art",
+        "joyful",
+        "digital painting"
+      ],
+      "penalises": [
+        "desaturated",
+        "monochrome",
+        "muted tones"
+      ]
+    },
+    {
+      "term": "desaturated",
+      "boosts": [
+        "melancholic",
+        "monochrome",
+        "film noir",
+        "foggy atmosphere",
+        "contemplative"
+      ],
+      "penalises": [
+        "vibrant colours",
+        "neon colours",
+        "joyful"
+      ]
+    },
+    {
+      "term": "muted tones",
+      "boosts": [
+        "nostalgic",
+        "contemplative",
+        "watercolor painting",
+        "soft lighting",
+        "film noir"
+      ],
+      "penalises": [
+        "vibrant colours",
+        "neon colours",
+        "high contrast"
+      ]
+    },
+    {
+      "term": "teal and orange",
+      "boosts": [
+        "cinematic style",
+        "cyberpunk city",
+        "dramatic",
+        "neon glow",
+        "digital painting"
+      ],
+      "penalises": [
+        "pastel palette",
+        "monochrome",
+        "earth tones"
+      ]
+    },
+    {
+      "term": "sepia toned",
+      "boosts": [
+        "nostalgic",
+        "daguerreotype",
+        "warm tones",
+        "victorian greenhouse"
+      ],
+      "penalises": [
+        "neon colours",
+        "vibrant colours",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "high contrast",
+      "boosts": [
+        "dramatic",
+        "film noir",
+        "low key lighting",
+        "ominous",
+        "chiaroscuro"
+      ],
+      "penalises": [
+        "low contrast",
+        "soft lighting",
+        "dreamy soft"
+      ]
+    },
+    {
+      "term": "metallic accents",
+      "boosts": [
+        "chrome reflection",
+        "gold leaf",
+        "art deco",
+        "futuristic",
+        "steel brushed"
+      ],
+      "penalises": [
+        "earth tones",
+        "wood grain",
+        "watercolor painting"
+      ]
+    },
+    {
+      "term": "holographic",
+      "boosts": [
+        "iridescent",
+        "futuristic",
+        "cyberpunk city",
+        "neon colours",
+        "glass transparency"
+      ],
+      "penalises": [
+        "earth tones",
+        "oil painting",
+        "sepia toned"
+      ]
+    },
+    {
+      "term": "iridescent",
+      "boosts": [
+        "holographic",
+        "crystal clarity",
+        "gemstone facets",
+        "magical",
+        "ethereal"
+      ],
+      "penalises": [
+        "monochrome",
+        "desaturated",
+        "muted tones"
+      ]
+    },
+    {
+      "term": "black and white",
+      "boosts": [
+        "monochrome",
+        "film noir",
+        "high contrast",
+        "dramatic",
+        "low key lighting"
+      ],
+      "penalises": [
+        "vibrant colours",
+        "neon colours",
+        "warm tones"
+      ]
+    },
+    {
+      "term": "colour grading",
+      "boosts": [
+        "cinematic style",
+        "teal and orange",
+        "dramatic",
+        "photorealistic"
+      ],
+      "penalises": [
+        "watercolor painting",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "red and black",
+      "boosts": [
+        "ominous",
+        "gothic style",
+        "dramatic",
+        "high contrast",
+        "vampire"
+      ],
+      "penalises": [
+        "pastel palette",
+        "serene",
+        "whimsical"
+      ]
+    },
+    {
+      "term": "pink and teal",
+      "boosts": [
+        "vaporwave",
+        "synthwave",
+        "nostalgic",
+        "neon glow",
+        "retro futurism"
+      ],
+      "penalises": [
+        "earth tones",
+        "sepia toned",
+        "monochrome"
+      ]
+    },
+    {
+      "term": "emerald and gold",
+      "boosts": [
+        "art deco",
+        "art nouveau",
+        "elegant",
+        "gold leaf",
+        "jewel tones"
+      ],
+      "penalises": [
+        "desaturated",
+        "monochrome",
+        "cool tones"
+      ]
+    },
+    {
+      "term": "silver and blue",
+      "boosts": [
+        "cool tones",
+        "moonlight",
+        "ice cave",
+        "cold and stark",
+        "steel brushed"
+      ],
+      "penalises": [
+        "warm tones",
+        "golden hour",
+        "earth tones"
+      ]
+    },
+    {
+      "term": "rust and sage",
+      "boosts": [
+        "post-apocalyptic",
+        "earth tones",
+        "iron rust",
+        "muted tones"
+      ],
+      "penalises": [
+        "neon colours",
+        "vibrant colours",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "copper and green",
+      "boosts": [
+        "steampunk",
+        "copper patina",
+        "brass polish",
+        "warm tones"
+      ],
+      "penalises": [
+        "neon colours",
+        "futuristic",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "bronze and cream",
+      "boosts": [
+        "steampunk",
+        "warm tones",
+        "brass polish",
+        "nostalgic"
+      ],
+      "penalises": [
+        "neon colours",
+        "cool tones",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "oil painting",
+      "boosts": [
+        "canvas texture",
+        "warm tones",
+        "Rembrandt lighting",
+        "baroque style",
+        "museum quality"
+      ],
+      "penalises": [
+        "pixel art",
+        "3D render",
+        "neon colours"
+      ]
+    },
+    {
+      "term": "watercolor painting",
+      "boosts": [
+        "pastel palette",
+        "soft lighting",
+        "ethereal",
+        "dreamy soft",
+        "paper texture"
+      ],
+      "penalises": [
+        "photorealistic",
+        "8K resolution",
+        "hard lighting"
+      ]
+    },
+    {
+      "term": "digital painting",
+      "boosts": [
+        "concept art",
+        "vibrant colours",
+        "dramatic lighting",
+        "8K resolution"
+      ],
+      "penalises": [
+        "daguerreotype",
+        "sepia toned",
+        "film noir"
+      ]
+    },
+    {
+      "term": "photorealistic",
+      "boosts": [
+        "sharp focus",
+        "8K resolution",
+        "natural lighting",
+        "tack sharp"
+      ],
+      "penalises": [
+        "pixel art",
+        "watercolor painting",
+        "sketch style"
+      ]
+    },
+    {
+      "term": "hyperrealistic",
+      "boosts": [
+        "ultra detailed",
+        "sharp focus",
+        "micro details",
+        "8K resolution"
+      ],
+      "penalises": [
+        "abstract",
+        "pixel art",
+        "watercolor painting"
+      ]
+    },
+    {
+      "term": "concept art",
+      "boosts": [
+        "digital painting",
+        "dramatic lighting",
+        "highly detailed",
+        "volumetric lighting"
+      ],
+      "penalises": [
+        "daguerreotype",
+        "polaroid instant",
+        "sepia toned"
+      ]
+    },
+    {
+      "term": "anime style",
+      "boosts": [
+        "vibrant colours",
+        "manga style",
+        "anime cel shaded",
+        "dynamic stance"
+      ],
+      "penalises": [
+        "photorealistic",
+        "hyperrealistic",
+        "daguerreotype"
+      ]
+    },
+    {
+      "term": "manga style",
+      "boosts": [
+        "anime style",
+        "anime cel shaded",
+        "vibrant colours",
+        "high contrast"
+      ],
+      "penalises": [
+        "photorealistic",
+        "oil painting",
+        "daguerreotype"
+      ]
+    },
+    {
+      "term": "cinematic style",
+      "boosts": [
+        "dramatic lighting",
+        "teal and orange",
+        "colour grading",
+        "wide shot",
+        "shallow depth of field"
+      ],
+      "penalises": [
+        "pixel art",
+        "watercolor painting",
+        "sketch style"
+      ]
+    },
+    {
+      "term": "film noir",
+      "boosts": [
+        "black and white",
+        "low key lighting",
+        "mysterious",
+        "split lighting",
+        "high contrast"
+      ],
+      "penalises": [
+        "vibrant colours",
+        "pastel palette",
+        "golden hour"
+      ]
+    },
+    {
+      "term": "cyberpunk",
+      "boosts": [
+        "neon glow",
+        "cyberpunk city",
+        "chrome reflection",
+        "futuristic",
+        "rain-soaked alley"
+      ],
+      "penalises": [
+        "golden hour",
+        "pastel palette",
+        "serene",
+        "flower meadow"
+      ]
+    },
+    {
+      "term": "steampunk",
+      "boosts": [
+        "brass polish",
+        "copper patina",
+        "victorian greenhouse",
+        "warm tones",
+        "clockwork factory"
+      ],
+      "penalises": [
+        "neon colours",
+        "cyberpunk city",
+        "LED lighting"
+      ]
+    },
+    {
+      "term": "gothic style",
+      "boosts": [
+        "dark and brooding",
+        "candlelight",
+        "ominous",
+        "gothic cathedral",
+        "velvet soft"
+      ],
+      "penalises": [
+        "pastel palette",
+        "joyful",
+        "light and airy"
+      ]
+    },
+    {
+      "term": "dark fantasy",
+      "boosts": [
+        "ominous",
+        "haunting",
+        "dark forest",
+        "demon creature",
+        "low key lighting"
+      ],
+      "penalises": [
+        "light and airy",
+        "pastel palette",
+        "joyful"
+      ]
+    },
+    {
+      "term": "high fantasy",
+      "boosts": [
+        "enchanted forest",
+        "magical",
+        "dragon",
+        "knight in armour",
+        "volumetric lighting"
+      ],
+      "penalises": [
+        "film noir",
+        "brutalist",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "sci-fi",
+      "boosts": [
+        "futuristic",
+        "chrome reflection",
+        "space station",
+        "holographic",
+        "robot android"
+      ],
+      "penalises": [
+        "medieval castle",
+        "oil painting",
+        "sepia toned"
+      ]
+    },
+    {
+      "term": "illustration",
+      "boosts": [
+        "vibrant colours",
+        "digital painting",
+        "concept art",
+        "line art"
+      ],
+      "penalises": [
+        "photorealistic",
+        "daguerreotype"
+      ]
+    },
+    {
+      "term": "matte painting",
+      "boosts": [
+        "dramatic",
+        "volumetric lighting",
+        "mountain peak",
+        "8K resolution",
+        "concept art"
+      ],
+      "penalises": [
+        "macro lens",
+        "close-up shot",
+        "pixel art"
+      ]
+    },
+    {
+      "term": "impressionist",
+      "boosts": [
+        "natural lighting",
+        "golden hour",
+        "soft lighting",
+        "flower meadow",
+        "warm tones"
+      ],
+      "penalises": [
+        "photorealistic",
+        "sharp focus",
+        "hard lighting"
+      ]
+    },
+    {
+      "term": "baroque style",
+      "boosts": [
+        "chiaroscuro",
+        "Rembrandt lighting",
+        "dramatic",
+        "gold leaf",
+        "velvet soft"
+      ],
+      "penalises": [
+        "minimalist",
+        "flat lighting",
+        "pixel art"
+      ]
+    },
+    {
+      "term": "renaissance style",
+      "boosts": [
+        "oil painting",
+        "marble texture",
+        "gold leaf",
+        "chiaroscuro",
+        "museum quality"
+      ],
+      "penalises": [
+        "cyberpunk",
+        "neon colours",
+        "pixel art"
+      ]
+    },
+    {
+      "term": "surrealist",
+      "boosts": [
+        "dreamlike",
+        "otherworldly",
+        "surreal",
+        "floating islands",
+        "abstract"
+      ],
+      "penalises": [
+        "documentary style",
+        "photorealistic",
+        "sharp focus"
+      ]
+    },
+    {
+      "term": "abstract",
+      "boosts": [
+        "vibrant colours",
+        "geometric patterns",
+        "energetic",
+        "surreal"
+      ],
+      "penalises": [
+        "photorealistic",
+        "sharp focus",
+        "hyperrealistic"
+      ]
+    },
+    {
+      "term": "pop art",
+      "boosts": [
+        "vibrant colours",
+        "high contrast",
+        "complementary colours",
+        "energetic"
+      ],
+      "penalises": [
+        "muted tones",
+        "monochrome",
+        "oil painting"
+      ]
+    },
+    {
+      "term": "art deco",
+      "boosts": [
+        "geometric patterns",
+        "gold leaf",
+        "metallic accents",
+        "elegant",
+        "symmetrical composition"
+      ],
+      "penalises": [
+        "organic shapes",
+        "watercolor painting",
+        "muted tones"
+      ]
+    },
+    {
+      "term": "art nouveau",
+      "boosts": [
+        "organic shapes",
+        "curved lines",
+        "gold leaf",
+        "silk shimmer",
+        "whimsical"
+      ],
+      "penalises": [
+        "geometric patterns",
+        "brutalist",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "minimalist",
+      "boosts": [
+        "clean lines",
+        "monochrome",
+        "negative space emphasis",
+        "soft lighting"
+      ],
+      "penalises": [
+        "baroque style",
+        "ornate",
+        "intricate details",
+        "vibrant colours"
+      ]
+    },
+    {
+      "term": "brutalist",
+      "boosts": [
+        "concrete texture",
+        "cold and stark",
+        "steel brushed",
+        "geometric patterns"
+      ],
+      "penalises": [
+        "art nouveau",
+        "whimsical",
+        "pastel palette",
+        "flower meadow"
+      ]
+    },
+    {
+      "term": "vaporwave",
+      "boosts": [
+        "pink and teal",
+        "neon colours",
+        "synthwave",
+        "nostalgic",
+        "holographic"
+      ],
+      "penalises": [
+        "earth tones",
+        "oil painting",
+        "sepia toned"
+      ]
+    },
+    {
+      "term": "synthwave",
+      "boosts": [
+        "neon glow",
+        "neon colours",
+        "retro futurism",
+        "futuristic",
+        "pink and teal"
+      ],
+      "penalises": [
+        "earth tones",
+        "sepia toned",
+        "watercolor painting"
+      ]
+    },
+    {
+      "term": "solarpunk",
+      "boosts": [
+        "vibrant colours",
+        "rooftop garden",
+        "bamboo grove",
+        "joyful",
+        "natural lighting"
+      ],
+      "penalises": [
+        "dark and brooding",
+        "ominous",
+        "desaturated"
+      ]
+    },
+    {
+      "term": "pixel art",
+      "boosts": [
+        "vibrant colours",
+        "pixel perfect",
+        "nostalgic",
+        "energetic"
+      ],
+      "penalises": [
+        "photorealistic",
+        "hyperrealistic",
+        "oil painting"
+      ]
+    },
+    {
+      "term": "glitch art",
+      "boosts": [
+        "neon colours",
+        "surreal",
+        "digital painting",
+        "energetic"
+      ],
+      "penalises": [
+        "photorealistic",
+        "oil painting",
+        "serene"
+      ]
+    },
+    {
+      "term": "fractal art",
+      "boosts": [
+        "geometric patterns",
+        "kaleidoscope pattern",
+        "vibrant colours",
+        "surreal"
+      ],
+      "penalises": [
+        "photorealistic",
+        "minimalist",
+        "monochrome"
+      ]
+    },
+    {
+      "term": "sketch style",
+      "boosts": [
+        "paper texture",
+        "monochrome",
+        "fine details",
+        "contemplative"
+      ],
+      "penalises": [
+        "photorealistic",
+        "vibrant colours",
+        "neon colours"
+      ]
+    },
+    {
+      "term": "line art",
+      "boosts": [
+        "clean lines",
+        "monochrome",
+        "fine details",
+        "illustration"
+      ],
+      "penalises": [
+        "photorealistic",
+        "oil painting",
+        "neon colours"
+      ]
+    },
+    {
+      "term": "charcoal drawing",
+      "boosts": [
+        "monochrome",
+        "paper texture",
+        "dramatic",
+        "contemplative"
+      ],
+      "penalises": [
+        "vibrant colours",
+        "neon colours",
+        "photorealistic"
+      ]
+    },
+    {
+      "term": "daguerreotype",
+      "boosts": [
+        "sepia toned",
+        "nostalgic",
+        "victorian parlor",
+        "muted tones"
+      ],
+      "penalises": [
+        "neon colours",
+        "cyberpunk city",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "portrait photography",
+      "boosts": [
+        "shallow depth of field",
+        "bokeh effect",
+        "natural lighting",
+        "85mm lens"
+      ],
+      "penalises": [
+        "pixel art",
+        "abstract",
+        "wide shot"
+      ]
+    },
+    {
+      "term": "street photography",
+      "boosts": [
+        "35mm lens",
+        "available light",
+        "handheld camera feel",
+        "documentary style"
+      ],
+      "penalises": [
+        "studio lighting",
+        "bokeh effect",
+        "soft lighting"
+      ]
+    },
+    {
+      "term": "serene",
+      "boosts": [
+        "soft lighting",
+        "pastel palette",
+        "natural lighting",
+        "watercolor painting",
+        "zen garden"
+      ],
+      "penalises": [
+        "ominous",
+        "chaotic",
+        "neon glow",
+        "hard lighting"
+      ]
+    },
+    {
+      "term": "dramatic",
+      "boosts": [
+        "high contrast",
+        "dramatic lighting",
+        "volumetric lighting",
+        "concept art"
+      ],
+      "penalises": [
+        "calm",
+        "flat lighting",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "mysterious",
+      "boosts": [
+        "low key lighting",
+        "light fog atmosphere",
+        "desaturated",
+        "film noir",
+        "dark forest"
+      ],
+      "penalises": [
+        "joyful",
+        "vibrant colours",
+        "midday sun"
+      ]
+    },
+    {
+      "term": "ethereal",
+      "boosts": [
+        "soft lighting",
+        "pastel palette",
+        "watercolor painting",
+        "dreamy soft",
+        "magical"
+      ],
+      "penalises": [
+        "hard lighting",
+        "concrete texture",
+        "brutalist"
+      ]
+    },
+    {
+      "term": "ominous",
+      "boosts": [
+        "dark and brooding",
+        "low key lighting",
+        "desaturated",
+        "red and black",
+        "gothic style"
+      ],
+      "penalises": [
+        "serene",
+        "joyful",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "whimsical",
+      "boosts": [
+        "pastel palette",
+        "magical",
+        "fairy",
+        "watercolor painting",
+        "illustration"
+      ],
+      "penalises": [
+        "ominous",
+        "dark and brooding",
+        "film noir"
+      ]
+    },
+    {
+      "term": "energetic",
+      "boosts": [
+        "vibrant colours",
+        "neon glow",
+        "hard lighting",
+        "pop art",
+        "dutch angle"
+      ],
+      "penalises": [
+        "serene",
+        "calm",
+        "soft lighting"
+      ]
+    },
+    {
+      "term": "melancholic",
+      "boosts": [
+        "desaturated",
+        "cool tones",
+        "overcast sky",
+        "muted tones",
+        "rain-soaked alley"
+      ],
+      "penalises": [
+        "joyful",
+        "vibrant colours",
+        "energetic"
+      ]
+    },
+    {
+      "term": "nostalgic",
+      "boosts": [
+        "warm tones",
+        "sepia toned",
+        "daguerreotype",
+        "muted tones",
+        "golden hour"
+      ],
+      "penalises": [
+        "futuristic",
+        "neon colours",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "dark and brooding",
+      "boosts": [
+        "low key lighting",
+        "desaturated",
+        "ominous",
+        "chiaroscuro",
+        "dark forest"
+      ],
+      "penalises": [
+        "light and airy",
+        "joyful",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "foggy atmosphere",
+      "boosts": [
+        "light fog atmosphere",
+        "desaturated",
+        "mysterious",
+        "misty woods",
+        "cool tones"
+      ],
+      "penalises": [
+        "sharp focus",
+        "vibrant colours",
+        "midday sun"
+      ]
+    },
+    {
+      "term": "futuristic",
+      "boosts": [
+        "neon colours",
+        "chrome reflection",
+        "LED lighting",
+        "holographic",
+        "cyberpunk city"
+      ],
+      "penalises": [
+        "sepia toned",
+        "medieval castle",
+        "oil painting"
+      ]
+    },
+    {
+      "term": "magical",
+      "boosts": [
+        "bioluminescence",
+        "enchanted forest",
+        "ethereal",
+        "vibrant colours",
+        "volumetric lighting"
+      ],
+      "penalises": [
+        "brutalist",
+        "concrete texture",
+        "documentary style"
+      ]
+    },
+    {
+      "term": "eerie",
+      "boosts": [
+        "low key lighting",
+        "light fog atmosphere",
+        "desaturated",
+        "haunted mansion",
+        "moonlight"
+      ],
+      "penalises": [
+        "joyful",
+        "vibrant colours",
+        "golden hour"
+      ]
+    },
+    {
+      "term": "dreamlike",
+      "boosts": [
+        "dreamy soft",
+        "ethereal",
+        "soft focus artistic",
+        "surreal",
+        "pastel palette"
+      ],
+      "penalises": [
+        "sharp focus",
+        "hard lighting",
+        "photorealistic"
+      ]
+    },
+    {
+      "term": "haunting",
+      "boosts": [
+        "low key lighting",
+        "moonlight",
+        "eerie",
+        "dark forest",
+        "desaturated"
+      ],
+      "penalises": [
+        "joyful",
+        "golden hour",
+        "vibrant colours"
+      ]
+    },
+    {
+      "term": "joyful",
+      "boosts": [
+        "vibrant colours",
+        "warm tones",
+        "natural lighting",
+        "golden hour"
+      ],
+      "penalises": [
+        "ominous",
+        "dark and brooding",
+        "desaturated"
+      ]
+    },
+    {
+      "term": "calm",
+      "boosts": [
+        "soft lighting",
+        "pastel palette",
+        "natural lighting",
+        "zen garden"
+      ],
+      "penalises": [
+        "chaotic",
+        "energetic",
+        "neon glow"
+      ]
+    },
+    {
+      "term": "warm and cozy",
+      "boosts": [
+        "warm tones",
+        "candlelight",
+        "golden hour",
+        "wood grain",
+        "linen texture"
+      ],
+      "penalises": [
+        "cold and stark",
+        "neon colours",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "cold and stark",
+      "boosts": [
+        "cool tones",
+        "steel brushed",
+        "concrete texture",
+        "monochrome",
+        "overcast sky"
+      ],
+      "penalises": [
+        "warm and cozy",
+        "warm tones",
+        "golden hour"
+      ]
+    },
+    {
+      "term": "misty morning",
+      "boosts": [
+        "light fog atmosphere",
+        "soft lighting",
+        "desaturated",
+        "dappled light",
+        "natural lighting"
+      ],
+      "penalises": [
+        "neon glow",
+        "midday sun",
+        "hard lighting"
+      ]
+    },
+    {
+      "term": "mystical",
+      "boosts": [
+        "volumetric lighting",
+        "bioluminescence",
+        "ethereal",
+        "enchanted forest",
+        "gemstone facets"
+      ],
+      "penalises": [
+        "brutalist",
+        "documentary style",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "surreal",
+      "boosts": [
+        "dreamlike",
+        "otherworldly",
+        "floating islands",
+        "abstract",
+        "iridescent"
+      ],
+      "penalises": [
+        "photorealistic",
+        "documentary style",
+        "sharp focus"
+      ]
+    },
+    {
+      "term": "nightmarish",
+      "boosts": [
+        "dark and brooding",
+        "eerie",
+        "haunted mansion",
+        "low key lighting",
+        "distorted"
+      ],
+      "penalises": [
+        "serene",
+        "joyful",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "otherworldly",
+      "boosts": [
+        "bioluminescence",
+        "iridescent",
+        "floating islands",
+        "crystal clarity",
+        "alien planet"
+      ],
+      "penalises": [
+        "documentary style",
+        "suburban street",
+        "photorealistic"
+      ]
+    },
+    {
+      "term": "85mm lens",
+      "boosts": [
+        "shallow depth of field",
+        "bokeh effect",
+        "portrait of a woman",
+        "portrait of a man"
+      ],
+      "penalises": [
+        "wide shot",
+        "extreme wide shot",
+        "aerial shot"
+      ]
+    },
+    {
+      "term": "35mm lens",
+      "boosts": [
+        "street photography",
+        "documentary style",
+        "handheld camera feel",
+        "wide shot"
+      ],
+      "penalises": [
+        "extreme close-up",
+        "macro lens",
+        "bokeh effect"
+      ]
+    },
+    {
+      "term": "macro lens",
+      "boosts": [
+        "extreme close-up",
+        "micro details",
+        "tack sharp",
+        "butterfly",
+        "spider web"
+      ],
+      "penalises": [
+        "wide shot",
+        "aerial shot",
+        "establishing shot"
+      ]
+    },
+    {
+      "term": "shallow depth of field",
+      "boosts": [
+        "bokeh effect",
+        "85mm lens",
+        "portrait photography",
+        "close-up shot"
+      ],
+      "penalises": [
+        "deep focus",
+        "extreme wide shot",
+        "aerial shot"
+      ]
+    },
+    {
+      "term": "dutch angle",
+      "boosts": [
+        "dynamic tension",
+        "diagonal lines",
+        "dramatic",
+        "energetic",
+        "ominous"
+      ],
+      "penalises": [
+        "symmetrical composition",
+        "calm",
+        "serene"
+      ]
+    },
+    {
+      "term": "low angle shot",
+      "boosts": [
+        "dramatic",
+        "ominous",
+        "standing confidently",
+        "knight in armour"
+      ],
+      "penalises": [
+        "overhead shot",
+        "birds eye view",
+        "aerial shot"
+      ]
+    },
+    {
+      "term": "wide shot",
+      "boosts": [
+        "establishing shot",
+        "mountain peak",
+        "desert canyon",
+        "atmospheric perspective"
+      ],
+      "penalises": [
+        "extreme close-up",
+        "macro lens",
+        "micro details"
+      ]
+    },
+    {
+      "term": "extreme close-up",
+      "boosts": [
+        "micro details",
+        "macro lens",
+        "tack sharp",
+        "shallow depth of field"
+      ],
+      "penalises": [
+        "wide shot",
+        "aerial shot",
+        "establishing shot"
+      ]
+    },
+    {
+      "term": "drone photography",
+      "boosts": [
+        "aerial shot",
+        "birds eye view",
+        "extreme wide shot",
+        "panoramic view"
+      ],
+      "penalises": [
+        "macro lens",
+        "close-up shot",
+        "shallow depth of field"
+      ]
+    },
+    {
+      "term": "aerial shot",
+      "boosts": [
+        "birds eye view",
+        "drone photography",
+        "panoramic view",
+        "mountain peak"
+      ],
+      "penalises": [
+        "close-up shot",
+        "macro lens",
+        "extreme close-up"
+      ]
+    },
+    {
+      "term": "long exposure",
+      "boosts": [
+        "light painting",
+        "waterfall",
+        "starlight",
+        "cityscape"
+      ],
+      "penalises": [
+        "sharp focus",
+        "frozen moment",
+        "tack sharp"
+      ]
+    },
+    {
+      "term": "handheld camera feel",
+      "boosts": [
+        "street photography",
+        "documentary style",
+        "35mm lens",
+        "energetic"
+      ],
+      "penalises": [
+        "studio lighting",
+        "symmetrical composition",
+        "static camera"
+      ]
+    },
+    {
+      "term": "bokeh effect",
+      "boosts": [
+        "shallow depth of field",
+        "85mm lens",
+        "portrait photography",
+        "soft lighting"
+      ],
+      "penalises": [
+        "deep focus",
+        "wide shot",
+        "aerial shot"
+      ]
+    },
+    {
+      "term": "symmetrical composition",
+      "boosts": [
+        "geometric patterns",
+        "centered subject",
+        "art deco",
+        "elegant"
+      ],
+      "penalises": [
+        "dutch angle",
+        "dynamic tension",
+        "diagonal lines"
+      ]
+    },
+    {
+      "term": "rule of thirds",
+      "boosts": [
+        "leading lines",
+        "off-center subject",
+        "portrait photography"
+      ],
+      "penalises": [
+        "centered subject",
+        "symmetrical composition"
+      ]
+    },
+    {
+      "term": "diagonal lines",
+      "boosts": [
+        "dynamic tension",
+        "energetic",
+        "dutch angle",
+        "leading lines"
+      ],
+      "penalises": [
+        "symmetrical composition",
+        "centered subject",
+        "calm"
+      ]
+    },
+    {
+      "term": "leading lines",
+      "boosts": [
+        "atmospheric perspective",
+        "one-point perspective",
+        "wide shot"
+      ],
+      "penalises": [
+        "centered subject",
+        "extreme close-up"
+      ]
+    },
+    {
+      "term": "geometric patterns",
+      "boosts": [
+        "symmetrical composition",
+        "art deco",
+        "radial symmetry",
+        "kaleidoscope pattern"
+      ],
+      "penalises": [
+        "organic shapes",
+        "watercolor painting"
+      ]
+    },
+    {
+      "term": "negative space emphasis",
+      "boosts": [
+        "minimalist",
+        "clean lines",
+        "centered subject",
+        "calm"
+      ],
+      "penalises": [
+        "cluttered",
+        "intricate details",
+        "maximalist"
+      ]
+    },
+    {
+      "term": "dynamic tension",
+      "boosts": [
+        "diagonal lines",
+        "energetic",
+        "dutch angle",
+        "anime style"
+      ],
+      "penalises": [
+        "symmetrical composition",
+        "centered subject",
+        "calm"
+      ]
+    },
+    {
+      "term": "cyberpunk hacker",
+      "boosts": [
+        "neon glow",
+        "cyberpunk city",
+        "teal and orange",
+        "chrome reflection",
+        "futuristic"
+      ],
+      "penalises": [
+        "golden hour",
+        "flower meadow",
+        "watercolor painting"
+      ]
+    },
+    {
+      "term": "knight in armour",
+      "boosts": [
+        "medieval castle",
+        "metal surface",
+        "dramatic lighting",
+        "holding weapon",
+        "concept art"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "neon colours",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "dragon",
+      "boosts": [
+        "firelight",
+        "volcanic landscape",
+        "dramatic",
+        "concept art",
+        "flying through air"
+      ],
+      "penalises": [
+        "minimalist",
+        "suburban street",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "wizard",
+      "boosts": [
+        "casting spell",
+        "enchanted forest",
+        "volumetric lighting",
+        "magical",
+        "mystical"
+      ],
+      "penalises": [
+        "photorealistic",
+        "suburban street",
+        "documentary style"
+      ]
+    },
+    {
+      "term": "fairy",
+      "boosts": [
+        "bioluminescence",
+        "enchanted forest",
+        "whimsical",
+        "pastel palette",
+        "ethereal"
+      ],
+      "penalises": [
+        "ominous",
+        "dark and brooding",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "vampire",
+      "boosts": [
+        "gothic style",
+        "candlelight",
+        "ominous",
+        "red and black",
+        "dark and brooding"
+      ],
+      "penalises": [
+        "golden hour",
+        "joyful",
+        "pastel palette"
+      ]
+    },
+    {
+      "term": "robot android",
+      "boosts": [
+        "chrome reflection",
+        "LED lighting",
+        "futuristic",
+        "cyberpunk city",
+        "steel brushed"
+      ],
+      "penalises": [
+        "oil painting",
+        "medieval castle",
+        "sepia toned"
+      ]
+    },
+    {
+      "term": "astronaut in space suit",
+      "boosts": [
+        "space station",
+        "alien planet",
+        "starlight",
+        "futuristic",
+        "sci-fi"
+      ],
+      "penalises": [
+        "medieval castle",
+        "candlelight",
+        "oil painting"
+      ]
+    },
+    {
+      "term": "mermaid",
+      "boosts": [
+        "underwater reef",
+        "bioluminescence",
+        "iridescent",
+        "shell nacre",
+        "coral texture"
+      ],
+      "penalises": [
+        "desert canyon",
+        "cyberpunk city",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "portrait of a woman",
+      "boosts": [
+        "shallow depth of field",
+        "85mm lens",
+        "soft lighting",
+        "bokeh effect",
+        "natural lighting"
+      ],
+      "penalises": [
+        "wide shot",
+        "aerial shot",
+        "pixel art"
+      ]
+    },
+    {
+      "term": "portrait of a man",
+      "boosts": [
+        "Rembrandt lighting",
+        "dramatic",
+        "85mm lens",
+        "shallow depth of field"
+      ],
+      "penalises": [
+        "wide shot",
+        "aerial shot",
+        "pixel art"
+      ]
+    },
+    {
+      "term": "samurai warrior",
+      "boosts": [
+        "samurai dojo",
+        "dramatic lighting",
+        "anime style",
+        "swinging sword"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "neon colours",
+        "suburban street"
+      ]
+    },
+    {
+      "term": "elf archer",
+      "boosts": [
+        "enchanted forest",
+        "dappled light",
+        "high fantasy",
+        "concept art"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "concrete texture",
+        "neon colours"
+      ]
+    },
+    {
+      "term": "phoenix rising",
+      "boosts": [
+        "firelight",
+        "dramatic",
+        "vibrant colours",
+        "volcanic landscape",
+        "magical"
+      ],
+      "penalises": [
+        "cool tones",
+        "ice cave",
+        "monochrome"
+      ]
+    },
+    {
+      "term": "wolf",
+      "boosts": [
+        "dark forest",
+        "moonlight",
+        "dramatic",
+        "earth tones",
+        "misty woods"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "neon colours",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "demon creature",
+      "boosts": [
+        "dark fantasy",
+        "ominous",
+        "firelight",
+        "red and black",
+        "haunting"
+      ],
+      "penalises": [
+        "serene",
+        "pastel palette",
+        "joyful"
+      ]
+    },
+    {
+      "term": "witch",
+      "boosts": [
+        "magical",
+        "enchanted forest",
+        "candlelight",
+        "mystical",
+        "dark fantasy"
+      ],
+      "penalises": [
+        "futuristic",
+        "cyberpunk city",
+        "chrome reflection"
+      ]
+    },
+    {
+      "term": "pirate captain",
+      "boosts": [
+        "cruise ship deck",
+        "dramatic",
+        "leather texture",
+        "sunset lighting"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "futuristic",
+        "space station"
+      ]
+    },
+    {
+      "term": "bounty hunter",
+      "boosts": [
+        "cyberpunk city",
+        "neon glow",
+        "chrome reflection",
+        "futuristic",
+        "dramatic"
+      ],
+      "penalises": [
+        "flower meadow",
+        "pastel palette",
+        "watercolor painting"
+      ]
+    },
+    {
+      "term": "unicorn",
+      "boosts": [
+        "enchanted forest",
+        "magical",
+        "iridescent",
+        "pastel palette",
+        "ethereal"
+      ],
+      "penalises": [
+        "dark and brooding",
+        "ominous",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "young woman",
+      "boosts": [
+        "portrait photography",
+        "soft lighting",
+        "natural lighting",
+        "shallow depth of field"
+      ],
+      "penalises": [
+        "wide shot",
+        "aerial shot"
+      ]
+    },
+    {
+      "term": "couple in love",
+      "boosts": [
+        "romantic",
+        "golden hour",
+        "warm tones",
+        "soft lighting",
+        "bokeh effect"
+      ],
+      "penalises": [
+        "ominous",
+        "dark and brooding",
+        "dark fantasy"
+      ]
+    },
+    {
+      "term": "child playing",
+      "boosts": [
+        "joyful",
+        "natural lighting",
+        "warm tones",
+        "golden hour"
+      ],
+      "penalises": [
+        "ominous",
+        "dark and brooding",
+        "gothic style"
+      ]
+    },
+    {
+      "term": "flower bouquet",
+      "boosts": [
+        "soft lighting",
+        "natural lighting",
+        "vibrant colours",
+        "macro lens",
+        "warm tones"
+      ],
+      "penalises": [
+        "neon glow",
+        "cyberpunk city",
+        "dark and brooding"
+      ]
+    },
+    {
+      "term": "butterfly",
+      "boosts": [
+        "macro lens",
+        "vibrant colours",
+        "dappled light",
+        "flower meadow"
+      ],
+      "penalises": [
+        "dark and brooding",
+        "cyberpunk city",
+        "neon glow"
+      ]
+    },
+    {
+      "term": "dancer",
+      "boosts": [
+        "dynamic stance",
+        "energetic",
+        "dancing gracefully",
+        "vibrant colours"
+      ],
+      "penalises": [
+        "static camera",
+        "calm",
+        "contemplative"
+      ]
+    },
+    {
+      "term": "architect",
+      "boosts": [
+        "leading lines",
+        "geometric patterns",
+        "symmetrical composition",
+        "minimalist"
+      ],
+      "penalises": [
+        "abstract",
+        "watercolor painting",
+        "pixel art"
+      ]
+    },
+    {
+      "term": "gladiator",
+      "boosts": [
+        "roman colosseum",
+        "dramatic lighting",
+        "metal surface",
+        "earth tones"
+      ],
+      "penalises": [
+        "futuristic",
+        "neon colours",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "mech pilot",
+      "boosts": [
+        "cyberpunk city",
+        "chrome reflection",
+        "dramatic lighting",
+        "anime style",
+        "LED lighting"
+      ],
+      "penalises": [
+        "oil painting",
+        "watercolor painting",
+        "medieval castle"
+      ]
+    },
+    {
+      "term": "wild west outlaw",
+      "boosts": [
+        "desert canyon",
+        "warm tones",
+        "dramatic lighting",
+        "leather texture",
+        "sepia toned"
+      ],
+      "penalises": [
+        "neon colours",
+        "cyberpunk city",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "cyberpunk city",
+      "boosts": [
+        "neon glow",
+        "neon colours",
+        "chrome reflection",
+        "futuristic",
+        "teal and orange"
+      ],
+      "penalises": [
+        "flower meadow",
+        "golden hour",
+        "oil painting",
+        "medieval castle"
+      ]
+    },
+    {
+      "term": "enchanted forest",
+      "boosts": [
+        "dappled light",
+        "magical",
+        "volumetric lighting",
+        "mystical",
+        "bioluminescence"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "neon colours",
+        "concrete texture"
+      ]
+    },
+    {
+      "term": "dark forest",
+      "boosts": [
+        "moonlight",
+        "mysterious",
+        "low key lighting",
+        "eerie",
+        "misty woods"
+      ],
+      "penalises": [
+        "midday sun",
+        "golden hour",
+        "joyful"
+      ]
+    },
+    {
+      "term": "medieval castle",
+      "boosts": [
+        "candlelight",
+        "dramatic lighting",
+        "stone surface",
+        "knight in armour",
+        "firelight"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "neon colours",
+        "LED lighting"
+      ]
+    },
+    {
+      "term": "gothic cathedral",
+      "boosts": [
+        "stained glass",
+        "candlelight",
+        "god rays",
+        "ominous",
+        "stone surface"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "neon colours",
+        "minimalist"
+      ]
+    },
+    {
+      "term": "flower meadow",
+      "boosts": [
+        "dappled light",
+        "golden hour",
+        "serene",
+        "warm tones",
+        "natural lighting"
+      ],
+      "penalises": [
+        "cyberpunk city",
+        "neon glow",
+        "ominous"
+      ]
+    },
+    {
+      "term": "zen garden",
+      "boosts": [
+        "serene",
+        "calm",
+        "natural lighting",
+        "minimalist",
+        "stone surface"
+      ],
+      "penalises": [
+        "neon glow",
+        "cyberpunk city",
+        "chaotic"
+      ]
+    },
+    {
+      "term": "desert canyon",
+      "boosts": [
+        "dramatic lighting",
+        "warm tones",
+        "earth tones",
+        "midday sun",
+        "wide shot"
+      ],
+      "penalises": [
+        "underwater reef",
+        "cool tones",
+        "moonlight"
+      ]
+    },
+    {
+      "term": "volcanic landscape",
+      "boosts": [
+        "dramatic",
+        "firelight",
+        "warm tones",
+        "earth tones",
+        "dragon"
+      ],
+      "penalises": [
+        "cool tones",
+        "ice cave",
+        "serene"
+      ]
+    },
+    {
+      "term": "mountain peak",
+      "boosts": [
+        "dramatic lighting",
+        "aerial shot",
+        "wide shot",
+        "atmospheric perspective"
+      ],
+      "penalises": [
+        "macro lens",
+        "close-up shot",
+        "suburban street"
+      ]
+    },
+    {
+      "term": "underwater reef",
+      "boosts": [
+        "bioluminescence",
+        "iridescent",
+        "cool tones",
+        "coral texture",
+        "shell nacre"
+      ],
+      "penalises": [
+        "desert canyon",
+        "midday sun",
+        "warm tones"
+      ]
+    },
+    {
+      "term": "ice cave",
+      "boosts": [
+        "cool tones",
+        "crystal clarity",
+        "blue hour",
+        "cold and stark",
+        "silver and blue"
+      ],
+      "penalises": [
+        "warm tones",
+        "golden hour",
+        "firelight"
+      ]
+    },
+    {
+      "term": "floating islands",
+      "boosts": [
+        "magical",
+        "otherworldly",
+        "surreal",
+        "volumetric lighting",
+        "concept art"
+      ],
+      "penalises": [
+        "photorealistic",
+        "documentary style",
+        "suburban street"
+      ]
+    },
+    {
+      "term": "rain-soaked alley",
+      "boosts": [
+        "mysterious",
+        "neon glow",
+        "film noir",
+        "water reflection",
+        "ominous"
+      ],
+      "penalises": [
+        "golden hour",
+        "flower meadow",
+        "serene"
+      ]
+    },
+    {
+      "term": "neon-lit streets",
+      "boosts": [
+        "neon glow",
+        "neon colours",
+        "futuristic",
+        "cyberpunk city",
+        "energetic"
+      ],
+      "penalises": [
+        "golden hour",
+        "flower meadow",
+        "serene"
+      ]
+    },
+    {
+      "term": "victorian greenhouse",
+      "boosts": [
+        "warm tones",
+        "dappled light",
+        "nostalgic",
+        "glass transparency",
+        "soft lighting"
+      ],
+      "penalises": [
+        "neon colours",
+        "cyberpunk city",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "baroque palace",
+      "boosts": [
+        "baroque style",
+        "gold leaf",
+        "marble texture",
+        "elegant",
+        "chiaroscuro"
+      ],
+      "penalises": [
+        "brutalist",
+        "concrete texture",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "abandoned factory",
+      "boosts": [
+        "iron rust",
+        "concrete texture",
+        "ominous",
+        "dramatic lighting",
+        "post-apocalyptic"
+      ],
+      "penalises": [
+        "serene",
+        "flower meadow",
+        "golden hour"
+      ]
+    },
+    {
+      "term": "haunted mansion",
+      "boosts": [
+        "eerie",
+        "candlelight",
+        "dark and brooding",
+        "gothic style",
+        "moonlight"
+      ],
+      "penalises": [
+        "joyful",
+        "golden hour",
+        "vibrant colours"
+      ]
+    },
+    {
+      "term": "space station",
+      "boosts": [
+        "futuristic",
+        "chrome reflection",
+        "LED lighting",
+        "sci-fi",
+        "glass transparency"
+      ],
+      "penalises": [
+        "medieval castle",
+        "oil painting",
+        "candlelight"
+      ]
+    },
+    {
+      "term": "bioluminescent cave",
+      "boosts": [
+        "bioluminescence",
+        "magical",
+        "iridescent",
+        "crystal clarity",
+        "otherworldly"
+      ],
+      "penalises": [
+        "midday sun",
+        "documentary style",
+        "suburban street"
+      ]
+    },
+    {
+      "term": "crystal cave",
+      "boosts": [
+        "crystal clarity",
+        "gemstone facets",
+        "magical",
+        "iridescent"
+      ],
+      "penalises": [
+        "concrete texture",
+        "suburban street",
+        "overcast sky"
+      ]
+    },
+    {
+      "term": "grand canyon",
+      "boosts": [
+        "dramatic lighting",
+        "earth tones",
+        "wide shot",
+        "aerial shot",
+        "panoramic view"
+      ],
+      "penalises": [
+        "macro lens",
+        "close-up shot",
+        "neon glow"
+      ]
+    },
+    {
+      "term": "misty woods",
+      "boosts": [
+        "light fog atmosphere",
+        "mysterious",
+        "eerie",
+        "dappled light",
+        "cool tones"
+      ],
+      "penalises": [
+        "midday sun",
+        "neon glow",
+        "vibrant colours"
+      ]
+    },
+    {
+      "term": "overgrown ruins",
+      "boosts": [
+        "post-apocalyptic",
+        "nostalgic",
+        "dappled light",
+        "moss green",
+        "stone surface"
+      ],
+      "penalises": [
+        "futuristic",
+        "chrome reflection",
+        "neon glow"
+      ]
+    },
+    {
+      "term": "chrome reflection",
+      "boosts": [
+        "futuristic",
+        "cyberpunk city",
+        "neon glow",
+        "teal and orange",
+        "steel brushed"
+      ],
+      "penalises": [
+        "oil painting",
+        "watercolor painting",
+        "sepia toned"
+      ]
+    },
+    {
+      "term": "marble texture",
+      "boosts": [
+        "baroque style",
+        "renaissance style",
+        "elegant",
+        "gold leaf",
+        "mansion estate"
+      ],
+      "penalises": [
+        "iron rust",
+        "concrete texture",
+        "cyberpunk city"
+      ]
+    },
+    {
+      "term": "gold leaf",
+      "boosts": [
+        "baroque style",
+        "art deco",
+        "elegant",
+        "jewel tones",
+        "warm tones"
+      ],
+      "penalises": [
+        "concrete texture",
+        "brutalist",
+        "desaturated"
+      ]
+    },
+    {
+      "term": "leather texture",
+      "boosts": [
+        "warm tones",
+        "nostalgic",
+        "steampunk",
+        "daguerreotype",
+        "wood grain"
+      ],
+      "penalises": [
+        "chrome reflection",
+        "neon colours",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "concrete texture",
+      "boosts": [
+        "brutalist",
+        "cold and stark",
+        "steel brushed",
+        "minimalist"
+      ],
+      "penalises": [
+        "gold leaf",
+        "silk shimmer",
+        "flower meadow"
+      ]
+    },
+    {
+      "term": "stone surface",
+      "boosts": [
+        "medieval castle",
+        "ancient temple",
+        "earth tones",
+        "dramatic lighting"
+      ],
+      "penalises": [
+        "chrome reflection",
+        "neon colours",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "glass transparency",
+      "boosts": [
+        "futuristic",
+        "chrome reflection",
+        "clean lines",
+        "minimalist"
+      ],
+      "penalises": [
+        "oil paint impasto",
+        "canvas texture",
+        "earth tones"
+      ]
+    },
+    {
+      "term": "iron rust",
+      "boosts": [
+        "post-apocalyptic",
+        "abandoned factory",
+        "earth tones",
+        "desaturated"
+      ],
+      "penalises": [
+        "chrome reflection",
+        "gold leaf",
+        "elegant"
+      ]
+    },
+    {
+      "term": "silk shimmer",
+      "boosts": [
+        "elegant",
+        "romantic",
+        "soft lighting",
+        "art nouveau",
+        "warm tones"
+      ],
+      "penalises": [
+        "concrete texture",
+        "iron rust",
+        "brutalist"
+      ]
+    },
+    {
+      "term": "velvet soft",
+      "boosts": [
+        "romantic",
+        "baroque style",
+        "gothic style",
+        "warm tones",
+        "elegant"
+      ],
+      "penalises": [
+        "concrete texture",
+        "chrome reflection",
+        "brutalist"
+      ]
+    },
+    {
+      "term": "crystal clarity",
+      "boosts": [
+        "iridescent",
+        "magical",
+        "bioluminescent cave",
+        "gemstone facets"
+      ],
+      "penalises": [
+        "concrete texture",
+        "iron rust",
+        "desaturated"
+      ]
+    },
+    {
+      "term": "gemstone facets",
+      "boosts": [
+        "jewel tones",
+        "iridescent",
+        "crystal clarity",
+        "magical",
+        "gold leaf"
+      ],
+      "penalises": [
+        "concrete texture",
+        "desaturated",
+        "monochrome"
+      ]
+    },
+    {
+      "term": "brass polish",
+      "boosts": [
+        "steampunk",
+        "warm tones",
+        "copper patina",
+        "victorian greenhouse"
+      ],
+      "penalises": [
+        "chrome reflection",
+        "neon colours",
+        "cool tones"
+      ]
+    },
+    {
+      "term": "wood grain",
+      "boosts": [
+        "warm tones",
+        "earth tones",
+        "natural lighting",
+        "nostalgic",
+        "country kitchen"
+      ],
+      "penalises": [
+        "chrome reflection",
+        "neon colours",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "canvas texture",
+      "boosts": [
+        "oil painting",
+        "oil paint impasto",
+        "warm tones",
+        "museum quality"
+      ],
+      "penalises": [
+        "photorealistic",
+        "chrome reflection",
+        "neon colours"
+      ]
+    },
+    {
+      "term": "casting spell",
+      "boosts": [
+        "volumetric lighting",
+        "magical",
+        "enchanted forest",
+        "wizard",
+        "bioluminescence"
+      ],
+      "penalises": [
+        "documentary style",
+        "suburban street",
+        "photorealistic"
+      ]
+    },
+    {
+      "term": "fighting fiercely",
+      "boosts": [
+        "dramatic lighting",
+        "dynamic tension",
+        "concept art",
+        "dutch angle"
+      ],
+      "penalises": [
+        "serene",
+        "calm",
+        "soft lighting"
+      ]
+    },
+    {
+      "term": "flying through air",
+      "boosts": [
+        "dramatic",
+        "volumetric lighting",
+        "wide shot",
+        "aerial shot"
+      ],
+      "penalises": [
+        "close-up shot",
+        "macro lens",
+        "underground cavern"
+      ]
+    },
+    {
+      "term": "dancing gracefully",
+      "boosts": [
+        "elegant",
+        "soft lighting",
+        "dynamic motion",
+        "dynamic stance"
+      ],
+      "penalises": [
+        "ominous",
+        "dark and brooding",
+        "static camera"
+      ]
+    },
+    {
+      "term": "swimming underwater",
+      "boosts": [
+        "underwater reef",
+        "bioluminescence",
+        "cool tones",
+        "iridescent"
+      ],
+      "penalises": [
+        "desert canyon",
+        "midday sun",
+        "firelight"
+      ]
+    },
+    {
+      "term": "floating weightlessly",
+      "boosts": [
+        "ethereal",
+        "dreamy soft",
+        "space station",
+        "soft lighting"
+      ],
+      "penalises": [
+        "hard lighting",
+        "midday sun",
+        "ground level shot"
+      ]
+    },
+    {
+      "term": "standing confidently",
+      "boosts": [
+        "dramatic lighting",
+        "low angle shot",
+        "portrait of a man"
+      ],
+      "penalises": [
+        "crouching low",
+        "looking away"
+      ]
+    },
+    {
+      "term": "looking away",
+      "boosts": [
+        "contemplative",
+        "melancholic",
+        "profile view",
+        "soft lighting"
+      ],
+      "penalises": [
+        "looking at camera",
+        "energetic"
+      ]
+    },
+    {
+      "term": "running fast",
+      "boosts": [
+        "energetic",
+        "dynamic tension",
+        "dynamic motion",
+        "dutch angle"
+      ],
+      "penalises": [
+        "calm",
+        "serene",
+        "static camera"
+      ]
+    },
+    {
+      "term": "swinging sword",
+      "boosts": [
+        "knight in armour",
+        "dramatic lighting",
+        "dynamic tension",
+        "metal surface"
+      ],
+      "penalises": [
+        "calm",
+        "serene",
+        "soft lighting"
+      ]
+    },
+    {
+      "term": "holding weapon",
+      "boosts": [
+        "dramatic",
+        "concept art",
+        "knight in armour",
+        "standing confidently"
+      ],
+      "penalises": [
+        "dancing gracefully",
+        "sitting relaxed"
+      ]
+    },
+    {
+      "term": "reading intently",
+      "boosts": [
+        "contemplative",
+        "warm tones",
+        "soft lighting",
+        "candlelight"
+      ],
+      "penalises": [
+        "energetic",
+        "neon glow",
+        "chaotic"
+      ]
+    },
+    {
+      "term": "mid-leap",
+      "boosts": [
+        "dynamic tension",
+        "low angle shot",
+        "energetic",
+        "anime style"
+      ],
+      "penalises": [
+        "calm",
+        "static camera",
+        "contemplative"
+      ]
+    },
+    {
+      "term": "embracing someone",
+      "boosts": [
+        "romantic",
+        "warm tones",
+        "soft lighting",
+        "golden hour"
+      ],
+      "penalises": [
+        "ominous",
+        "dark and brooding",
+        "cold and stark"
+      ]
+    },
+    {
+      "term": "shadow lurking",
+      "boosts": [
+        "eerie",
+        "low key lighting",
+        "dark and brooding",
+        "mysterious"
+      ],
+      "penalises": [
+        "golden hour",
+        "joyful",
+        "vibrant colours"
+      ]
+    },
+    {
+      "term": "8K resolution",
+      "boosts": [
+        "ultra detailed",
+        "sharp focus",
+        "photorealistic",
+        "ray tracing"
+      ],
+      "penalises": [
+        "dreamy soft",
+        "soft focus artistic",
+        "pixel art"
+      ]
+    },
+    {
+      "term": "ray tracing",
+      "boosts": [
+        "8K resolution",
+        "photorealistic",
+        "glass transparency",
+        "chrome reflection"
+      ],
+      "penalises": [
+        "watercolor painting",
+        "oil painting",
+        "sketch style"
+      ]
+    },
+    {
+      "term": "highly detailed",
+      "boosts": [
+        "intricate details",
+        "8K resolution",
+        "concept art",
+        "sharp focus"
+      ],
+      "penalises": [
+        "dreamy soft",
+        "soft focus artistic",
+        "minimalist"
+      ]
+    },
+    {
+      "term": "sharp focus",
+      "boosts": [
+        "tack sharp",
+        "8K resolution",
+        "photorealistic",
+        "macro lens"
+      ],
+      "penalises": [
+        "dreamy soft",
+        "soft focus artistic",
+        "foggy atmosphere"
+      ]
+    },
+    {
+      "term": "soft focus artistic",
+      "boosts": [
+        "dreamy soft",
+        "ethereal",
+        "watercolor painting",
+        "pastel palette"
+      ],
+      "penalises": [
+        "sharp focus",
+        "tack sharp",
+        "8K resolution"
+      ]
+    },
+    {
+      "term": "dreamy soft",
+      "boosts": [
+        "ethereal",
+        "soft focus artistic",
+        "watercolor painting",
+        "pastel palette"
+      ],
+      "penalises": [
+        "sharp focus",
+        "tack sharp",
+        "8K resolution"
+      ]
+    },
+    {
+      "term": "museum quality",
+      "boosts": [
+        "oil painting",
+        "masterpiece",
+        "highly detailed",
+        "Rembrandt lighting"
+      ],
+      "penalises": [
+        "pixel art",
+        "glitch art",
+        "vaporwave"
+      ]
+    },
+    {
+      "term": "masterpiece",
+      "boosts": [
+        "museum quality",
+        "oil painting",
+        "highly detailed",
+        "intricate details"
+      ],
+      "penalises": [
+        "pixel art",
+        "glitch art",
+        "sketch style"
+      ]
+    },
+    {
+      "term": "ultra detailed",
+      "boosts": [
+        "8K resolution",
+        "micro details",
+        "sharp focus",
+        "concept art"
+      ],
+      "penalises": [
+        "dreamy soft",
+        "soft focus artistic",
+        "watercolor painting"
+      ]
+    },
+    {
+      "term": "tack sharp",
+      "boosts": [
+        "sharp focus",
+        "8K resolution",
+        "macro lens",
+        "photorealistic"
+      ],
+      "penalises": [
+        "dreamy soft",
+        "soft focus artistic",
+        "watercolor painting"
+      ]
+    },
+    {
+      "term": "natural lighting",
+      "boosts": [
+        "golden hour",
+        "soft lighting",
+        "warm tones",
+        "portrait photography",
+        "flower meadow"
+      ],
+      "penalises": [
+        "studio lighting",
+        "neon glow",
+        "LED lighting"
+      ]
+    },
+    {
+      "term": "contemplative",
+      "boosts": [
+        "soft lighting",
+        "muted tones",
+        "looking away",
+        "oil painting",
+        "overcast sky"
+      ],
+      "penalises": [
+        "energetic",
+        "chaotic",
+        "neon glow"
+      ]
+    },
+    {
+      "term": "intricate details",
+      "boosts": [
+        "highly detailed",
+        "concept art",
+        "8K resolution",
+        "macro lens"
+      ],
+      "penalises": [
+        "dreamy soft",
+        "soft focus artistic",
+        "minimalist"
+      ]
+    },
+    {
+      "term": "romantic",
+      "boosts": [
+        "warm tones",
+        "golden hour",
+        "soft lighting",
+        "bokeh effect",
+        "couple in love"
+      ],
+      "penalises": [
+        "ominous",
+        "dark and brooding",
+        "cold and stark"
+      ]
+    },
+    {
+      "term": "close-up shot",
+      "boosts": [
+        "shallow depth of field",
+        "bokeh effect",
+        "portrait of a woman",
+        "tack sharp"
+      ],
+      "penalises": [
+        "aerial shot",
+        "wide shot",
+        "establishing shot"
+      ]
+    },
+    {
+      "term": "steel brushed",
+      "boosts": [
+        "futuristic",
+        "chrome reflection",
+        "cold and stark",
+        "titanium matte"
+      ],
+      "penalises": [
+        "wood grain",
+        "oil painting",
+        "warm tones"
+      ]
+    },
+    {
+      "term": "linen texture",
+      "boosts": [
+        "warm tones",
+        "natural lighting",
+        "cottagecore",
+        "soft lighting"
+      ],
+      "penalises": [
+        "chrome reflection",
+        "neon colours",
+        "futuristic"
+      ]
+    },
+    {
+      "term": "elegant",
+      "boosts": [
+        "gold leaf",
+        "silk shimmer",
+        "baroque palace",
+        "art deco",
+        "soft lighting"
+      ],
+      "penalises": [
+        "brutalist",
+        "concrete texture",
+        "iron rust"
+      ]
+    },
+    {
+      "term": "walking slowly",
+      "boosts": [
+        "contemplative",
+        "melancholic",
+        "rain-soaked alley",
+        "suburban street"
+      ],
+      "penalises": [
+        "energetic",
+        "mid-leap",
+        "running fast"
+      ]
+    },
+    {
+      "term": "warm light 3200K",
+      "boosts": [
+        "warm tones",
+        "candlelight",
+        "nostalgic",
+        "portrait of a woman"
+      ],
+      "penalises": [
+        "cool tones",
+        "neon glow",
+        "blue hour"
+      ]
+    },
+    {
+      "term": "medium shot",
+      "boosts": [
+        "portrait of a man",
+        "portrait of a woman",
+        "natural lighting"
+      ],
+      "penalises": [
+        "extreme close-up",
+        "aerial shot",
+        "birds eye view"
+      ]
+    },
+    {
+      "term": "rooftop garden",
+      "boosts": [
+        "natural lighting",
+        "dappled light",
+        "solarpunk",
+        "vibrant colours"
+      ],
+      "penalises": [
+        "underground cavern",
+        "dark forest",
+        "ominous"
+      ]
+    },
+    {
+      "term": "post-apocalyptic",
+      "boosts": [
+        "iron rust",
+        "abandoned factory",
+        "desaturated",
+        "overgrown ruins",
+        "concrete texture"
+      ],
+      "penalises": [
+        "elegant",
+        "gold leaf",
+        "vibrant colours"
+      ]
+    },
+    {
+      "term": "ancient",
+      "boosts": [
+        "stone surface",
+        "earth tones",
+        "dramatic lighting",
+        "egyptian pyramid",
+        "gold leaf"
+      ],
+      "penalises": [
+        "futuristic",
+        "neon colours",
+        "chrome reflection"
+      ]
+    },
+    {
+      "term": "dusty environment",
+      "boosts": [
+        "earth tones",
+        "warm tones",
+        "desaturated",
+        "desert canyon",
+        "midday sun"
+      ],
+      "penalises": [
+        "underwater reef",
+        "cool tones",
+        "crystal clarity"
+      ]
+    },
+    {
+      "term": "peaceful",
+      "boosts": [
+        "soft lighting",
+        "natural lighting",
+        "zen garden",
+        "warm tones",
+        "flower meadow"
+      ],
+      "penalises": [
+        "ominous",
+        "chaotic",
+        "neon glow"
+      ]
+    },
+    {
+      "term": "snowy silence",
+      "boosts": [
+        "cool tones",
+        "overcast sky",
+        "snowy summit",
+        "monochrome",
+        "cold and stark"
+      ],
+      "penalises": [
+        "warm tones",
+        "golden hour",
+        "vibrant colours"
+      ]
+    }
+  ]
+}

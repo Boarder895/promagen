@@ -6,8 +6,13 @@
  * - All options for free-text chip display
  * - Context-aware suggestion pool
  *
- * @version 1.0.0
+ * v1.1.0 — Now combines core prompt-builder options with merged
+ *          vocabulary from weather, commodity, and shared audits.
+ *          Core options always appear first; merged options append.
+ *
+ * @version 1.1.0
  * @created 2026-01-21
+ * @updated 2026-02-24
  */
 
 import {
@@ -16,6 +21,8 @@ import {
   type VocabularyCategory,
   getOptions,
 } from '@/data/vocabulary/prompt-builder';
+
+import { getMergedOptions, getMergedCount } from '@/data/vocabulary/merged';
 
 import familiesData from '@/data/vocabulary/intelligence/families.json';
 
@@ -47,6 +54,10 @@ export interface CategoryVocabulary {
     description: string;
     tooltipGuidance: string;
     totalAvailable: number;
+    /** Count of core options (original prompt-builder) */
+    coreCount: number;
+    /** Count of merged options (weather + commodity + shared) */
+    mergedCount: number;
   };
 }
 
@@ -65,6 +76,25 @@ interface StyleFamily {
 const DROPDOWN_LIMIT = 100;
 const SUGGESTION_POOL_SIZE = 20;
 const CHIP_DISPLAY_LIMIT = 50; // For performance in chip render
+
+// ============================================================================
+// COMBINED OPTIONS HELPER
+// ============================================================================
+
+/**
+ * Get all options for a category: core first, then merged.
+ * This is the single source of truth for "all available options".
+ */
+function getCombinedOptions(category: CategoryKey): string[] {
+  const coreOpts = getOptions(category);
+  const mergedOpts = getMergedOptions(category);
+
+  if (mergedOpts.length === 0) return coreOpts;
+
+  // Core first, merged appended — no duplicates possible
+  // (dedup was enforced at build time in Part 0.4)
+  return [...coreOpts, ...mergedOpts];
+}
 
 // ============================================================================
 // FAMILY DETECTION
@@ -135,15 +165,11 @@ function scoreTermByContext(term: string, context: VocabularyContext): number {
   let score = 0;
   const lowerTerm = term.toLowerCase();
 
-  // Base score: common/popular terms get slight boost
-  // (first 50 in JSON are typically most common)
-
   // Family match bonus
   if (context.dominantFamily) {
     const bestWith = getFamilyBestWith(context.dominantFamily);
     const avoidWith = getFamilyAvoidWith(context.dominantFamily);
 
-    // Boost terms that work well with detected family
     if (
       bestWith.some(
         (b) => lowerTerm.includes(b.toLowerCase()) || b.toLowerCase().includes(lowerTerm),
@@ -152,7 +178,6 @@ function scoreTermByContext(term: string, context: VocabularyContext): number {
       score += 10;
     }
 
-    // Penalise terms that conflict with detected family
     if (
       avoidWith.some(
         (a) => lowerTerm.includes(a.toLowerCase()) || a.toLowerCase().includes(lowerTerm),
@@ -187,7 +212,7 @@ function scoreTermByContext(term: string, context: VocabularyContext): number {
 
   // Avoid already-selected terms
   if (context.selectedTerms?.some((s) => s.toLowerCase() === lowerTerm)) {
-    score -= 100; // Strongly deprioritise duplicates
+    score -= 100;
   }
 
   return score;
@@ -201,17 +226,14 @@ function sortByRelevance(options: string[], context?: VocabularyContext): string
     !context ||
     (!context.dominantFamily && !context.marketMood && !context.selectedTerms?.length)
   ) {
-    // No context - return as-is (already in sensible order from JSON)
     return options;
   }
 
-  // Score and sort
   const scored = options.map((opt) => ({
     term: opt,
     score: scoreTermByContext(opt, context),
   }));
 
-  // Sort by score descending, then alphabetically for ties
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     return a.term.localeCompare(b.term);
@@ -234,8 +256,7 @@ function sortByRelevance(options: string[], context?: VocabularyContext): string
  * @example
  * // Basic usage (no context)
  * const styleVocab = loadCategoryVocabulary('style');
- * console.log(styleVocab.dropdownOptions.length); // 100
- * console.log(styleVocab.allOptions.length); // ~300
+ * console.log(styleVocab.allOptions.length); // ~325 (core 295 + merged 30)
  *
  * @example
  * // With context (intelligent sorting)
@@ -244,25 +265,22 @@ function sortByRelevance(options: string[], context?: VocabularyContext): string
  *   dominantFamily: 'cyberpunk',
  *   marketMood: 'bullish'
  * });
- * // vocab.suggestionPool will prioritise neon/bright lighting
  */
 export function loadCategoryVocabulary(
   category: CategoryKey,
   context?: VocabularyContext,
 ): CategoryVocabulary {
-  // Get all options from vocabulary (excludes empty string)
-  const allOptions = getOptions(category);
+  const allOptions = getCombinedOptions(category);
   const vocabData = vocabulary[category] as VocabularyCategory;
+  const coreCount = getOptions(category).length;
+  const mergedCount = getMergedCount(category);
 
-  // Sort by relevance if context provided
   const sorted = sortByRelevance(allOptions, context);
 
-  // Build suggestion pool from top-scored items
   const suggestionPool = sorted
-    .filter((term) => !context?.selectedTerms?.includes(term)) // Exclude already selected
+    .filter((term) => !context?.selectedTerms?.includes(term))
     .slice(0, SUGGESTION_POOL_SIZE);
 
-  // Dropdown gets top 100 (or all if fewer)
   const dropdownOptions = sorted.slice(0, DROPDOWN_LIMIT);
 
   return {
@@ -274,13 +292,14 @@ export function loadCategoryVocabulary(
       description: vocabData.meta.description,
       tooltipGuidance: vocabData.meta.tooltipGuidance,
       totalAvailable: allOptions.length,
+      coreCount,
+      mergedCount,
     },
   };
 }
 
 /**
  * Load vocabulary for all categories at once
- * Useful for initial render optimisation
  */
 export function loadAllVocabulary(
   context?: VocabularyContext,
@@ -311,33 +330,28 @@ export function loadAllVocabulary(
 
 /**
  * Get chips to display in free-text area (performance-limited)
- * Returns subset of all options, excluding already selected
  */
 export function getChipDisplayOptions(
   category: CategoryKey,
   selectedTerms: string[],
   searchQuery?: string,
 ): string[] {
-  const allOptions = getOptions(category);
+  const allOptions = getCombinedOptions(category);
 
-  // Filter out already selected
   let filtered = allOptions.filter(
     (opt) => !selectedTerms.some((s) => s.toLowerCase() === opt.toLowerCase()),
   );
 
-  // Apply search filter if provided
   if (searchQuery && searchQuery.trim()) {
     const query = searchQuery.toLowerCase();
     filtered = filtered.filter((opt) => opt.toLowerCase().startsWith(query));
   }
 
-  // Limit for performance
   return filtered.slice(0, CHIP_DISPLAY_LIMIT);
 }
 
 /**
- * Search across a category's vocabulary
- * Returns matching terms with match type indicator
+ * Search across a category's vocabulary (core + merged)
  */
 export function searchCategoryVocabulary(
   category: CategoryKey,
@@ -345,7 +359,7 @@ export function searchCategoryVocabulary(
 ): Array<{ term: string; matchType: 'exact' | 'startsWith' | 'contains' }> {
   if (!query || !query.trim()) return [];
 
-  const allOptions = getOptions(category);
+  const allOptions = getCombinedOptions(category);
   const lowerQuery = query.toLowerCase();
 
   const results: Array<{ term: string; matchType: 'exact' | 'startsWith' | 'contains' }> = [];
@@ -362,13 +376,58 @@ export function searchCategoryVocabulary(
     }
   }
 
-  // Sort: exact first, then startsWith, then contains
   results.sort((a, b) => {
     const order = { exact: 0, startsWith: 1, contains: 2 };
     return order[a.matchType] - order[b.matchType];
   });
 
   return results;
+}
+
+/**
+ * Get combined vocabulary statistics (core + merged)
+ */
+export function getCombinedVocabularyStats(): {
+  totalCategories: number;
+  totalOptions: number;
+  totalCore: number;
+  totalMerged: number;
+  categoryCounts: Record<CategoryKey, { core: number; merged: number; total: number }>;
+} {
+  const categories: CategoryKey[] = [
+    'subject',
+    'action',
+    'style',
+    'environment',
+    'composition',
+    'camera',
+    'lighting',
+    'atmosphere',
+    'colour',
+    'materials',
+    'fidelity',
+    'negative',
+  ];
+
+  const categoryCounts = {} as Record<CategoryKey, { core: number; merged: number; total: number }>;
+  let totalCore = 0;
+  let totalMerged = 0;
+
+  for (const cat of categories) {
+    const core = getOptions(cat).length;
+    const merged = getMergedCount(cat);
+    categoryCounts[cat] = { core, merged, total: core + merged };
+    totalCore += core;
+    totalMerged += merged;
+  }
+
+  return {
+    totalCategories: categories.length,
+    totalOptions: totalCore + totalMerged,
+    totalCore,
+    totalMerged,
+    categoryCounts,
+  };
 }
 
 // ============================================================================
@@ -378,3 +437,6 @@ export function searchCategoryVocabulary(
 export { DROPDOWN_LIMIT, SUGGESTION_POOL_SIZE, CHIP_DISPLAY_LIMIT };
 
 export type { StyleFamily, CategoryKey };
+
+// Re-export merged utilities for direct access
+export { getMergedOptions, getMergedCount, hasMergedData } from '@/data/vocabulary/merged';

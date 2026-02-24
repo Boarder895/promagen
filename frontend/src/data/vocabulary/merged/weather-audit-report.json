@@ -1,0 +1,88 @@
+{
+  "phase": "0.1",
+  "title": "Weather Vocabulary Audit \u2014 Final Results",
+  "date": "2026-02-24",
+  "status": "COMPLETE \u2014 ready for Part 0.4 merge",
+  "source_files_audited": 7,
+  "source_files": {
+    "urban-light.json": {
+      "raw_phrases": 249,
+      "target": "lighting",
+      "kept": 248,
+      "quality": "EXCELLENT \u2014 vivid city-specific lighting (neon, sodium-vapour, LED, caf\u00e9 glow)",
+      "notes": "urbanLight field is numeric (float), lightCharacter is the phrase list. 83 cities \u00d7 3 phrases each."
+    },
+    "conditions.json": {
+      "raw_phrases": 292,
+      "target": "atmosphere",
+      "kept": 280,
+      "quality": "VERY GOOD \u2014 weather condition descriptors across 14 types + 12 contextual",
+      "notes": "Removed 12 phrases: technical terms (\u00b0C references, saturation levels)"
+    },
+    "wind.json": {
+      "raw_phrases": 240,
+      "target": "atmosphere",
+      "kept": 16,
+      "quality": "POOR RAW \u2014 entirely formulaic (\"[prefix] air movement\" \u00d7 30 ranges \u00d7 8 templates)",
+      "notes": "Reduced from 240 to 16 hand-crafted replacements. Original phrases are for weather generator, not humans."
+    },
+    "temperature.json": {
+      "raw_phrases": 54,
+      "target": "atmosphere",
+      "kept": 50,
+      "quality": "GOOD \u2014 temperature feel descriptors",
+      "notes": "Removed 4 phrases containing \u00b0C numbers"
+    },
+    "humidity.json": {
+      "raw_phrases": 60,
+      "target": "atmosphere",
+      "kept": 37,
+      "quality": "MIXED \u2014 some visual, some too meteorological",
+      "notes": "Removed generic labels like \"low humidity\", \"moderate humidity\", kept \"air thick with moisture\""
+    },
+    "time-of-day.json": {
+      "raw_phrases": 42,
+      "target": "atmosphere + lighting",
+      "kept": 39,
+      "quality": "GOOD \u2014 time period labels and descriptors",
+      "notes": "Light-related ones routed to lighting, time labels to atmosphere"
+    },
+    "city-vibes.json": {
+      "raw_venues": 1032,
+      "target": "environment",
+      "kept": 1032,
+      "quality": "EXCELLENT \u2014 real venues from 102 cities worldwide",
+      "notes": "Kept \"Venue, City\" format only (1,032). Dropped 986 standalone names without city context."
+    }
+  },
+  "output_summary": {
+    "lighting": {
+      "count": 248,
+      "source": "urban-light.json lightCharacter (83 cities \u00d7 3 phrases)"
+    },
+    "atmosphere": {
+      "count": 422,
+      "source": "conditions + wind (curated) + temperature + humidity + time-of-day"
+    },
+    "environment": {
+      "count": 1032,
+      "source": "city-vibes.json venues (102 cities \u00d7 10 venues, \"Venue, City\" format)"
+    }
+  },
+  "total_kept": 1702,
+  "total_removed": {
+    "formulaic_wind": 224,
+    "meteorological_jargon": 99,
+    "standalone_venues": 986,
+    "core_duplicates": 1,
+    "total_removed": 1310
+  },
+  "quality_decisions": [
+    "KEPT: >8 word lighting phrases \u2014 they are vivid and descriptive, not bloated",
+    "KEPT: 5 single-word time descriptors (midnight, midday, etc.) \u2014 valid atmosphere terms",
+    "REMOVED: All 240 wind.json phrases \u2014 entirely formulaic templates, replaced with 16 hand-crafted",
+    "REMOVED: All standalone venue names \u2014 \"Heritage Village\" without city context is ambiguous",
+    "REMOVED: All \u00b0C/\u00b0F numbers \u2014 not visual",
+    "REMOVED: All \"X humidity\" labels \u2014 meteorological, not atmospheric description"
+  ]
+}

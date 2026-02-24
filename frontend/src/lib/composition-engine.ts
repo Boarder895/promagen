@@ -2,11 +2,13 @@
 // ============================================================================
 // COMPOSITION ENGINE - Static and Dynamic Composition Pack Assembly
 // ============================================================================
-// Version 1.1.0
+// Version 2.0.0
 //
-// FIXES in v1.1.0:
-// - Fixed TypeScript error: getPlatformARSupport returns proper fallback
-// - Fixed TypeScript error: hintArray[0] properly guarded against undefined
+// FIXES in v2.0.0:
+// - Tier-aware composition budgets: CLIP gets 3-4 hints (not 10)
+// - Semantic deduplication removes near-duplicate hints
+// - CompositionPack now exposes individual `terms[]` for trimmer visibility
+// - Static packs also budget-limited per tier
 //
 // The Composition Engine provides two modes for aspect ratio handling:
 // - STATIC MODE: Fixed composition packs per AR (predictable, learnable)
@@ -29,6 +31,8 @@
 // ============================================================================
 
 import type { PromptSelections } from '@/types/prompt-builder';
+import { getPlatformTierId } from '@/data/platform-tiers';
+import type { PlatformTierId } from '@/data/platform-tiers';
 
 // ============================================================================
 // TYPES
@@ -83,6 +87,8 @@ export interface PlatformARSupport {
 export interface CompositionPack {
   /** The assembled composition text */
   text: string;
+  /** Individual composition terms (for trimmer visibility) */
+  terms: string[];
   /** Whether native AR parameter should be used */
   useNativeAR: boolean;
   /** The AR parameter string (e.g., "--ar 16:9") if applicable */
@@ -763,16 +769,130 @@ function deduplicateContributions(contributions: CompositionContribution): strin
   return [...new Set(allHints)];
 }
 
+// ============================================================================
+// TIER-AWARE COMPOSITION BUDGETS
+// ============================================================================
+// CLIP-based platforms have a 77-token hard limit where every token counts.
+// Midjourney's first 10-15 words drive the image vibe.
+// Natural language platforms can absorb more composition guidance.
+// Plain language platforms need minimal, concrete hints.
+//
+// Budget = max number of composition hints per tier.
+// ============================================================================
+
 /**
- * Assemble dynamic composition pack from AR + selections
+ * Get the composition hint budget for a platform tier.
+ *
+ * Tier 1 (CLIP): 3-4 hints max — every token is precious
+ * Tier 2 (MJ):   4-5 hints — vibe matters, be specific not verbose
+ * Tier 3 (NatLang): 5-6 hints — can absorb more framing guidance
+ * Tier 4 (Plain): 2-3 hints — minimal, only essential framing
  */
-function assembleDynamicPack(ratioId: AspectRatioId, selections: PromptSelections): string {
+function getTierCompositionBudget(tierId: PlatformTierId | undefined): number {
+  switch (tierId) {
+    case 1:
+      return 4; // CLIP: ~12-16 tokens budget (out of 77)
+    case 2:
+      return 5; // MJ: room for vibe + framing
+    case 3:
+      return 6; // NatLang: can handle more
+    case 4:
+      return 3; // Plain: keep it tight
+    default:
+      return 5; // Unknown: moderate
+  }
+}
+
+// ============================================================================
+// SEMANTIC DEDUPLICATION
+// ============================================================================
+// Removes near-duplicate hints where two phrases say the same thing.
+// Uses word overlap: if >50% of words in hint A appear in hint B,
+// keep whichever is shorter (more CLIP-friendly).
+// ============================================================================
+
+/**
+ * Extract significant words from a hint (lowercase, split hyphens, skip filler).
+ */
+function getSignificantWords(hint: string): Set<string> {
+  const stopWords = new Set(['a', 'an', 'the', 'in', 'of', 'for', 'and', 'or', 'with', 'as']);
+  return new Set(
+    hint
+      .toLowerCase()
+      .split(/[\s-]+/) // Split on whitespace AND hyphens
+      .filter((w) => w.length > 2 && !stopWords.has(w)),
+  );
+}
+
+/**
+ * Calculate word overlap ratio between two hints.
+ * Returns 0-1 where 1 = complete overlap.
+ */
+function wordOverlap(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  for (const word of a) {
+    if (b.has(word)) shared++;
+  }
+  // Overlap relative to the smaller set (so "subject fills height" vs
+  // "full-height portrait" catches shared "height" + context overlap)
+  const minSize = Math.min(a.size, b.size);
+  return minSize > 0 ? shared / minSize : 0;
+}
+
+/**
+ * Remove semantically duplicate hints.
+ * When two hints overlap >50%, keep the shorter one (more token-efficient).
+ */
+function deduplicateHintsSemantic(hints: string[]): string[] {
+  if (hints.length <= 1) return hints;
+
+  // Pre-compute word sets
+  const wordSets = hints.map((h) => getSignificantWords(h));
+  const removed = new Set<number>();
+
+  for (let i = 0; i < hints.length; i++) {
+    if (removed.has(i)) continue;
+    for (let j = i + 1; j < hints.length; j++) {
+      if (removed.has(j)) continue;
+
+      const overlap = wordOverlap(wordSets[i]!, wordSets[j]!);
+      if (overlap >= 0.5) {
+        // Keep the shorter hint (fewer tokens for same meaning)
+        const iLen = hints[i]!.length;
+        const jLen = hints[j]!.length;
+        if (iLen <= jLen) {
+          removed.add(j);
+        } else {
+          removed.add(i);
+          break; // i was removed, move on
+        }
+      }
+    }
+  }
+
+  return hints.filter((_, idx) => !removed.has(idx));
+}
+
+/**
+ * Assemble dynamic composition pack from AR + selections.
+ * Uses tier-aware budget and semantic deduplication.
+ *
+ * @param ratioId - Aspect ratio for AR-specific hints
+ * @param selections - User selections for context-aware contributions
+ * @param budget - Max number of hints (from getTierCompositionBudget)
+ * @returns Array of individual hint terms (not joined — caller joins)
+ */
+function assembleDynamicPack(
+  ratioId: AspectRatioId,
+  selections: PromptSelections,
+  budget: number,
+): string[] {
   const ar = ASPECT_RATIOS[ratioId];
   const hints: string[] = [];
 
-  // Start with AR-specific hints
+  // Start with AR-specific hints (1 from each of 4 categories)
   for (const hintArray of Object.values(ar.dynamicHints)) {
-    // Pick first hint from each category for conciseness
     if (hintArray.length > 0) {
       const firstHint = hintArray[0];
       if (firstHint !== undefined) {
@@ -785,14 +905,15 @@ function assembleDynamicPack(ratioId: AspectRatioId, selections: PromptSelection
   const contributions = getContributions(selections);
   const selectionHints = deduplicateContributions(contributions);
 
-  // Merge AR hints with selection hints, removing duplicates
+  // Merge AR hints with selection hints, removing exact duplicates
   const allHints = [...new Set([...hints, ...selectionHints])];
 
-  // Limit to reasonable length (8-12 hints max)
-  const trimmedHints = allHints.slice(0, 10);
+  // Semantic deduplication — removes near-duplicates like
+  // "subject fills height" + "full-height portrait"
+  const deduped = deduplicateHintsSemantic(allHints);
 
-  // Join into natural language
-  return trimmedHints.join(', ');
+  // Apply tier-aware budget — trim from the back (AR hints are first = preserved)
+  return deduped.slice(0, budget);
 }
 
 // ============================================================================
@@ -800,13 +921,18 @@ function assembleDynamicPack(ratioId: AspectRatioId, selections: PromptSelection
 // ============================================================================
 
 /**
- * Assemble composition pack for the given AR and platform
+ * Assemble composition pack for the given AR and platform.
+ * Uses tier-aware budgets to limit composition hints for token-constrained
+ * platforms (CLIP: 3-4 hints, MJ: 4-5, NatLang: 5-6, Plain: 2-3).
+ *
+ * Returns individual terms in the `terms` array so the optimizer/trimmer
+ * can see and remove composition content when needed.
  *
  * @param platformId - Platform identifier (e.g., 'midjourney', 'openai')
  * @param ratioId - Aspect ratio identifier (e.g., '16:9')
  * @param mode - Composition mode ('static' or 'dynamic')
  * @param selections - User's prompt selections (for dynamic mode)
- * @returns CompositionPack with text and AR parameter info
+ * @returns CompositionPack with text, terms array, and AR parameter info
  */
 export function assembleCompositionPack(
   platformId: string,
@@ -818,6 +944,7 @@ export function assembleCompositionPack(
   if (!isValidAspectRatio(ratioId)) {
     return {
       text: '',
+      terms: [],
       useNativeAR: false,
       arParameter: null,
       mode,
@@ -829,13 +956,25 @@ export function assembleCompositionPack(
   const platformSupport = getPlatformARSupport(platformId);
   const isNativelySupported = platformSupportsAR(platformId, ratioId);
 
-  // Determine composition text based on mode
-  let compositionText: string;
+  // Get tier-aware budget
+  const tierId = getPlatformTierId(platformId);
+  const budget = getTierCompositionBudget(tierId);
+
+  // Determine composition terms based on mode
+  let compositionTerms: string[];
   if (mode === 'static') {
-    compositionText = ar.staticPack;
+    // Static packs are pre-written strings — split into terms
+    compositionTerms = ar.staticPack
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, budget);
   } else {
-    compositionText = assembleDynamicPack(ratioId, selections);
+    // Dynamic packs return individual terms, already budget-limited
+    compositionTerms = assembleDynamicPack(ratioId, selections, budget);
   }
+
+  const compositionText = compositionTerms.join(', ');
 
   // Determine if we should use native AR parameter
   const useNativeAR = isNativelySupported;
@@ -848,10 +987,9 @@ export function assembleCompositionPack(
       .replace('{height}', String(ar.height));
   }
 
-  // If native AR is used, composition text is optional enhancement
-  // If not native, composition text is required for framing guidance
   return {
     text: compositionText,
+    terms: compositionTerms,
     useNativeAR,
     arParameter,
     mode,

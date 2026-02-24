@@ -20,6 +20,9 @@ import {
   getSemanticTags,
   getFamilies,
   getMarketMood,
+  getClustersForTerm,
+  computeActiveClusters,
+  getAffinityForTerm,
 } from '../index';
 import { detectConflicts } from './conflict-detection';
 
@@ -42,6 +45,9 @@ export interface BuildContextInput {
   
   /** Current market state */
   marketState?: MarketState | null;
+  
+  /** Platform tier (1-4) for tier-aware scoring */
+  tier?: number | null;
 }
 
 /**
@@ -138,6 +144,62 @@ const SCORE_WEIGHTS = {
   
   /** Bonus for subject keyword relevance */
   subjectKeywordMatch: 15,
+  
+  /** Per shared cluster member bonus (Phase 1) */
+  clusterPerMember: 8,
+  
+  /** Maximum cluster boost cap (Phase 1) */
+  clusterMax: 25,
+  
+  /** Direct affinity boost from another selected term (Phase 1) */
+  affinityBoost: 20,
+  
+  /** Direct affinity penalty from another selected term (Phase 1) */
+  affinityPenalty: -15,
+};
+
+// ============================================================================
+// Tier-Aware Multipliers (Phase 1)
+// ============================================================================
+// Each tier optimises scoring for its prompt assembly strategy.
+// Multiplier is applied to the *variable* portion of the score (score - base).
+// 1.0 = no change, >1.0 = amplified differentiation, <1.0 = dampened.
+
+const TIER_MULTIPLIERS: Record<number, {
+  cluster: number;
+  affinity: number;
+  family: number;
+  mood: number;
+  label: string;
+}> = {
+  1: {  // CLIP — keyword coherence matters most
+    cluster: 1.2,
+    affinity: 1.0,
+    family: 1.0,
+    mood: 0.8,
+    label: 'CLIP',
+  },
+  2: {  // MJ — MJ-specific affinities matter most
+    cluster: 1.0,
+    affinity: 1.2,
+    family: 1.0,
+    mood: 1.0,
+    label: 'Midjourney',
+  },
+  3: {  // Natural Language — family coherence + mood matter more
+    cluster: 0.8,
+    affinity: 1.0,
+    family: 1.2,
+    mood: 1.3,
+    label: 'Natural Language',
+  },
+  4: {  // Plain — dampened, "keep it simple" bias
+    cluster: 0.5,
+    affinity: 0.5,
+    family: 0.5,
+    mood: 0.5,
+    label: 'Plain',
+  },
 };
 
 // ============================================================================
@@ -297,7 +359,7 @@ function collectComplements(
  * Build context from current selections.
  */
 export function buildContext(input: BuildContextInput): PromptContext {
-  const { selections, customSubject, marketMoodEnabled = false, marketState = null } = input;
+  const { selections, customSubject, marketMoodEnabled = false, marketState = null, tier = null } = input;
   
   // Extract subject keywords
   const subjectKeywords = extractKeywords(customSubject || '');
@@ -354,6 +416,9 @@ export function buildContext(input: BuildContextInput): PromptContext {
     }
   }
   
+  // Compute active clusters from selected terms (Phase 1)
+  const activeClusters = computeActiveClusters(selectedTerms);
+  
   return {
     subjectKeywords,
     activeFamily,
@@ -363,6 +428,8 @@ export function buildContext(input: BuildContextInput): PromptContext {
     selectedTerms,
     marketMoodEnabled,
     marketState,
+    activeClusters,
+    tier,
   };
 }
 
@@ -393,6 +460,8 @@ function scoreOption(
     marketBoost: 0,
     multiFamilyBonus: 0,
     subjectKeywordMatch: 0,
+    clusterBoost: 0,
+    affinityBoost: 0,
   };
   
   if (tag) {
@@ -498,13 +567,76 @@ function scoreOption(
     }
   }
   
+  // === CLUSTER SCORING (Phase 1) ===
+  // How many of the user's active clusters does this option belong to?
+  // More shared clusters = higher relevance.
+  if (context.activeClusters.size > 0) {
+    const optionClusters = getClustersForTerm(option);
+    let clusterScore = 0;
+    for (const clusterId of optionClusters) {
+      if (context.activeClusters.has(clusterId)) {
+        // Count how many selected terms share this cluster
+        let sharedCount = 0;
+        for (const sel of context.selectedTerms) {
+          const selClusters = getClustersForTerm(sel);
+          if (selClusters.includes(clusterId)) {
+            sharedCount++;
+          }
+        }
+        clusterScore += Math.min(
+          sharedCount * SCORE_WEIGHTS.clusterPerMember,
+          SCORE_WEIGHTS.clusterMax
+        );
+      }
+    }
+    // Cap total cluster boost across all clusters
+    breakdown.clusterBoost = Math.min(clusterScore, SCORE_WEIGHTS.clusterMax);
+    score += breakdown.clusterBoost;
+  }
+  
+  // === DIRECT AFFINITY SCORING (Phase 1) ===
+  // Do any of the user's selections explicitly boost or penalise this option?
+  if (context.selectedTerms.length > 0) {
+    const optionLower = option.toLowerCase();
+    let affinityScore = 0;
+    for (const selectedTerm of context.selectedTerms) {
+      const aff = getAffinityForTerm(selectedTerm);
+      if (!aff) continue;
+      if (aff.boosts.has(optionLower)) {
+        affinityScore += SCORE_WEIGHTS.affinityBoost;
+      }
+      if (aff.penalises.has(optionLower)) {
+        affinityScore += SCORE_WEIGHTS.affinityPenalty;
+      }
+    }
+    breakdown.affinityBoost = affinityScore;
+    score += affinityScore;
+  }
+  
+  // === TIER-AWARE MULTIPLIER (Phase 1) ===
+  // Apply per-tier weight to the variable portion of the score.
+  // This amplifies differentiation for keyword-focused tiers (1,2) and
+  // dampens it for plain tiers (4).
+  let tierMultiplierValue = 1.0;
+  const tm = context.tier != null ? TIER_MULTIPLIERS[context.tier] : undefined;
+  if (tm) {
+    // Weight the variable components by tier preferences
+    const tierAdjusted =
+      breakdown.clusterBoost * (tm.cluster - 1.0) +
+      breakdown.affinityBoost * (tm.affinity - 1.0) +
+      breakdown.familyMatch * (tm.family - 1.0) +
+      breakdown.moodMatch * (tm.mood - 1.0);
+    score += tierAdjusted;
+    tierMultiplierValue = (tm.cluster + tm.affinity + tm.family + tm.mood) / 4;
+  }
+  
   // Clamp score to 0-100
   score = Math.max(0, Math.min(100, Math.round(score)));
   
   return {
     option,
     score,
-    breakdown: includeBreakdown ? breakdown : undefined,
+    breakdown: includeBreakdown ? { ...breakdown, tierMultiplier: tierMultiplierValue } : undefined,
   };
 }
 
@@ -550,12 +682,14 @@ export function reorderByRelevance(
   category: PromptCategory,
   selections: Partial<Record<PromptCategory, string[]>>,
   marketMoodEnabled = false,
-  marketState: MarketState | null = null
+  marketState: MarketState | null = null,
+  tier: number | null = null
 ): ScoredOption[] {
   const context = buildContext({ 
     selections, 
     marketMoodEnabled, 
-    marketState 
+    marketState,
+    tier,
   });
   
   return scoreOptions({

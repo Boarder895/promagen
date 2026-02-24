@@ -74,6 +74,70 @@ export interface SemanticTagsData {
 }
 
 // ============================================================================
+// § 1b. Semantic Clusters (Phase 1)
+// ============================================================================
+
+/**
+ * A semantic cluster groups terms across multiple categories that
+ * naturally belong together (e.g., "cyberpunk" links neon glow, chrome,
+ * cyberpunk city, teal and orange, etc.).
+ */
+export interface SemanticCluster {
+  /** Display label */
+  label: string;
+  
+  /** Brief description */
+  description: string;
+  
+  /** Terms grouped by category */
+  terms: Partial<Record<PromptCategory, string[]>>;
+}
+
+/**
+ * Full semantic clusters JSON structure.
+ */
+export interface SemanticClustersData {
+  version: string;
+  meta: {
+    totalClusters: number;
+    totalPlacements: number;
+    uniqueTerms: number;
+  };
+  clusters: Record<string, SemanticCluster>;
+}
+
+// ============================================================================
+// § 1c. Direct Affinities (Phase 1)
+// ============================================================================
+
+/**
+ * A direct affinity is a fine-grained term-to-term boost/penalise pair
+ * that is more specific than cluster membership.
+ */
+export interface DirectAffinity {
+  /** Anchor term */
+  term: string;
+  
+  /** Terms that score higher when this anchor is selected */
+  boosts: string[];
+  
+  /** Terms that score lower when this anchor is selected */
+  penalises?: string[];
+}
+
+/**
+ * Full direct affinities JSON structure.
+ */
+export interface DirectAffinitiesData {
+  version: string;
+  meta: {
+    totalAffinities: number;
+    uniqueTerms: number;
+  };
+  affinities: DirectAffinity[];
+}
+
+// ============================================================================
 // § 2. Style Families
 // ============================================================================
 
@@ -200,6 +264,12 @@ export interface ScoredOption {
     multiFamilyBonus?: number;
     /** Bonus for matching subject keywords */
     subjectKeywordMatch?: number;
+    /** Bonus from shared cluster membership (Phase 1) */
+    clusterBoost?: number;
+    /** Bonus/penalty from direct affinities (Phase 1) */
+    affinityBoost?: number;
+    /** Tier multiplier applied (Phase 1) — 1.0 = neutral */
+    tierMultiplier?: number;
   };
 }
 
@@ -231,6 +301,12 @@ export interface PromptContext {
   
   /** Current market state (if Market Mood enabled) */
   marketState: MarketState | null;
+  
+  /** Active cluster IDs — clusters where ≥1 selected term is a member (Phase 1) */
+  activeClusters: Set<string>;
+  
+  /** Platform tier (1-4) for tier-aware scoring multipliers (Phase 1) */
+  tier: number | null;
 }
 
 // ============================================================================

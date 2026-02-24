@@ -1,14 +1,16 @@
 // src/hooks/use-prompt-optimization.ts
 // ============================================================================
-// USE PROMPT OPTIMIZATION HOOK v2.0.0
+// USE PROMPT OPTIMIZATION HOOK v3.0.0
 // ============================================================================
 // React hook managing Text Length Optimizer state and logic.
-// Provides real-time length analysis and optimization on copy.
 //
-// NEW in v2.0.0:
-// - Integrates with Intelligence Preferences for smart trim control
-// - When smartTrimEnabled=true: trims by semantic relevance (lowest scores first)
-// - When smartTrimEnabled=false: trims by position (dumb trim, last items first)
+// NEW in v3.0.0:
+// - Uses gold-standard 4-phase optimizer (prompt-optimizer.ts)
+// - Phase 0: Redundancy removal (free quality)
+// - Phase 1: CLIP token overflow trim (free — invisible terms)
+// - Phase 2: Position-aware scoring (category × position)
+// - Phase 3: Weakest-term removal (surgical, one at a time)
+// - Removed legacy category-removal trimmer and effectiveIdealMax flex
 //
 // Features:
 // - Always starts OFF (no persistence)
@@ -28,24 +30,18 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import type { PromptSelections } from '@/types/prompt-builder';
-import type {
-  PromptLengthAnalysis,
-  OptimizedPrompt,
-  PromptLimit,
-} from '@/types/prompt-limits';
+import type { PromptLengthAnalysis, OptimizedPrompt, PromptLimit } from '@/types/prompt-limits';
 
 import {
   getPromptLimit,
   analyzePromptLength,
-  optimizePrompt,
   formatCharCount,
   getStatusIcon,
   getStatusColorClass,
 } from '@/lib/prompt-trimmer';
 
-// Import prompt intelligence for smart trim
-import { smartTrimAssembledPrompt } from '@/lib/prompt-intelligence';
-import { useIntelligencePreferences } from '@/hooks/use-intelligence-preferences';
+// Gold-standard 4-phase optimizer
+import { optimizePromptGoldStandard } from '@/lib/prompt-optimizer';
 
 // ============================================================================
 // TYPES
@@ -67,31 +63,31 @@ export interface UsePromptOptimizationOptions {
 export interface UsePromptOptimizationReturn {
   /** Whether optimizer is enabled */
   isOptimizerEnabled: boolean;
-  
+
   /** Toggle optimizer on/off */
   setOptimizerEnabled: (enabled: boolean) => void;
-  
+
   /** Current length analysis (always calculated for indicator) */
   analysis: PromptLengthAnalysis;
-  
+
   /** Platform-specific limits */
   limits: PromptLimit;
-  
+
   /** Get optimized prompt for copying */
   getOptimizedPrompt: () => OptimizedPrompt;
-  
+
   /** Whether toggle is disabled (static mode) */
   isToggleDisabled: boolean;
-  
+
   /** Formatted indicator text (e.g., "285/350 ✓") */
   indicatorText: string;
-  
+
   /** Indicator color class */
   indicatorColorClass: string;
-  
+
   /** Status icon */
   statusIcon: string;
-  
+
   /** Tooltip content for the toggle */
   tooltipContent: TooltipContent;
 }
@@ -110,13 +106,6 @@ export interface TooltipContent {
   /** Quality impact percentage */
   qualityImpact: string;
 }
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-/** Platforms using Midjourney-style --no syntax */
-const MIDJOURNEY_FAMILY = ['midjourney', 'bluewillow', 'nijijourney'];
 
 // ============================================================================
 // HOOK
@@ -144,18 +133,14 @@ export function usePromptOptimization({
   platformId,
   promptText,
   selections,
-  isMidjourneyFamily,
   compositionMode = 'dynamic',
 }: UsePromptOptimizationOptions): UsePromptOptimizationReturn {
   // ============================================================================
-  // STATE & PREFERENCES
+  // STATE
   // ============================================================================
 
   // Optimizer always starts OFF, no persistence between sessions
   const [isOptimizerEnabled, setOptimizerEnabled] = useState(false);
-  
-  // Get intelligence preferences for smart trim control
-  const { preferences: intelligencePrefs } = useIntelligencePreferences();
 
   // ============================================================================
   // COMPUTED VALUES
@@ -163,12 +148,6 @@ export function usePromptOptimization({
 
   // Get platform limits
   const limits = useMemo(() => getPromptLimit(platformId), [platformId]);
-
-  // Detect Midjourney family for negative handling
-  const isMjFamily = useMemo(
-    () => isMidjourneyFamily ?? MIDJOURNEY_FAMILY.includes(platformId.toLowerCase()),
-    [platformId, isMidjourneyFamily],
-  );
 
   // Analyze current prompt length (always calculated for indicator)
   const analysis = useMemo(
@@ -209,9 +188,8 @@ export function usePromptOptimization({
     const platformName = formatPlatformName(platformId);
 
     // Format max chars
-    const maxChars = limits.maxChars !== null
-      ? `${formatCharCount(limits.maxChars)} characters`
-      : 'Unlimited';
+    const maxChars =
+      limits.maxChars !== null ? `${formatCharCount(limits.maxChars)} characters` : 'Unlimited';
 
     // Format sweet spot
     const sweetSpot = `${limits.idealMin}-${limits.idealMax} chars (~${limits.idealWords} words)`;
@@ -232,7 +210,12 @@ export function usePromptOptimization({
 
   /**
    * Get optimized prompt for copying.
-   * Uses smart trim (by relevance) or dumb trim (by position) based on preferences.
+   *
+   * Uses the gold-standard 4-phase pipeline:
+   *   Phase 0: Redundancy removal (free — removes duplicate semantics)
+   *   Phase 1: CLIP token overflow trim (free — invisible terms past token 77)
+   *   Phase 2: Position-aware scoring (category_importance × position_decay)
+   *   Phase 3: Weakest-term removal (surgical, one at a time)
    */
   const getOptimizedPrompt = useCallback((): OptimizedPrompt => {
     // If optimizer not enabled, return original
@@ -248,45 +231,38 @@ export function usePromptOptimization({
       };
     }
 
-    // Use smart trim if enabled in preferences
-    if (intelligencePrefs.smartTrimEnabled) {
-      // Smart trim: uses semantic relevance to decide what to remove
-      const smartResult = smartTrimAssembledPrompt({
-        promptText,
-        selections,
-        platformId,
-        targetLength: limits.idealMax,
-        preserveSubject: true, // Always protect subject
-      });
-      
-      return {
-        original: promptText,
-        optimized: smartResult.optimized,
-        originalLength: promptText.length,
-        optimizedLength: smartResult.optimized.length,
-        wasTrimmed: smartResult.wasTrimmed,
-        removedCategories: [...new Set(smartResult.removedTerms.map(t => t.category))],
-        status: analysis.status,
-      };
-    }
-
-    // Dumb trim: uses position-based category trimming (default/legacy)
-    return optimizePrompt(
+    // Run gold-standard 4-phase optimizer
+    const result = optimizePromptGoldStandard({
       promptText,
-      platformId,
       selections,
-      isMjFamily ? 'midjourney' : 'other',
+      platformId,
+      targetLength: limits.idealMax,
+    });
+
+    // Build human-readable removed term summaries
+    const reasonLabels: Record<string, string> = {
+      redundant: 'redundant',
+      'past-token-limit': 'past CLIP limit',
+      'lowest-score': 'low priority',
+      compressed: 'compressed',
+    };
+    const termNames = result.removedTerms.map(
+      (t) => `${t.term} (${reasonLabels[t.reason] ?? t.reason})`,
     );
-  }, [
-    isOptimizerEnabled,
-    promptText,
-    platformId,
-    selections,
-    isMjFamily,
-    analysis.status,
-    intelligencePrefs.smartTrimEnabled,
-    limits.idealMax,
-  ]);
+
+    return {
+      original: promptText,
+      optimized: result.optimized,
+      originalLength: result.originalLength,
+      optimizedLength: result.optimizedLength,
+      wasTrimmed: result.wasTrimmed,
+      removedCategories: result.removedCategories,
+      removedTermNames: termNames,
+      removedTerms: result.removedTerms,
+      achievedAtPhase: result.achievedAtPhase,
+      status: analysis.status,
+    };
+  }, [isOptimizerEnabled, promptText, platformId, selections, analysis.status, limits.idealMax]);
 
   // ============================================================================
   // RETURN
@@ -312,11 +288,11 @@ export function usePromptOptimization({
 
 /**
  * Format platform ID into display name.
- * Handles special cases like 'openai' → 'OpenAI', 'adobe-firefly' → 'Adobe Firefly'.
+ * Handles special cases like 'openai' -> 'OpenAI', 'adobe-firefly' -> 'Adobe Firefly'.
  */
 function formatPlatformName(platformId: string): string {
   const specialCases: Record<string, string> = {
-    openai: 'DALL·E 3',
+    openai: 'DALL\u00B7E 3',
     'google-imagen': 'Google Imagen',
     'adobe-firefly': 'Adobe Firefly',
     'microsoft-designer': 'Microsoft Designer',

@@ -43,34 +43,34 @@ export type LengthStatus = 'under' | 'optimal' | 'over' | 'critical';
 export interface PromptLimit {
   /** Maximum character limit (null if unlimited) */
   readonly maxChars: number | null;
-  
+
   /** Lower bound of optimal range (characters) */
   readonly idealMin: number;
-  
+
   /** Upper bound of optimal range (characters) */
   readonly idealMax: number;
-  
+
   /** Approximate optimal word count for tooltip display */
   readonly idealWords: number;
-  
+
   /** CLIP/encoder token limit if applicable (null if not token-limited) */
   readonly tokenLimit: number | null;
-  
+
   /** Platform-specific behavior insight for tooltip */
   readonly platformNote: string;
-  
+
   /** What optimization achieves - shown in tooltip */
   readonly optimizationBenefit: string;
-  
+
   /** Expected improvement range (e.g., "5-10%") */
   readonly qualityImpact: string;
-  
+
   /** Impact severity for internal prioritization */
   readonly impactCategory: ImpactCategory;
-  
+
   /** Model architecture type */
   readonly architecture: ModelArchitecture;
-  
+
   /** Research provenance for auditability */
   readonly sources: readonly string[];
 }
@@ -98,31 +98,31 @@ export interface PromptLimitsConfig {
 export interface PromptLengthAnalysis {
   /** Current prompt character count */
   readonly currentLength: number;
-  
+
   /** Current word count (approximate) */
   readonly currentWords: number;
-  
+
   /** Platform's ideal maximum */
   readonly idealMax: number;
-  
+
   /** Platform's ideal minimum */
   readonly idealMin: number;
-  
+
   /** Platform's hard maximum (null if unlimited) */
   readonly hardMax: number | null;
-  
+
   /** Current status for color coding */
   readonly status: LengthStatus;
-  
+
   /** Whether optimization would trim the prompt */
   readonly needsTrimming: boolean;
-  
+
   /** How many characters need trimming (0 if within range) */
   readonly excessChars: number;
-  
+
   /** How many more characters recommended (0 if sufficient) */
   readonly shortfall: number;
-  
+
   /** Categories suggested to add if under minimum */
   readonly suggestedCategories: readonly string[];
 }
@@ -134,24 +134,38 @@ export interface PromptLengthAnalysis {
 export interface OptimizedPrompt {
   /** Original prompt text */
   readonly original: string;
-  
+
   /** Optimized prompt text (may be same as original) */
   readonly optimized: string;
-  
+
   /** Original character count */
   readonly originalLength: number;
-  
+
   /** Optimized character count */
   readonly optimizedLength: number;
-  
+
   /** Whether any trimming occurred */
   readonly wasTrimmed: boolean;
-  
-  /** Categories that were removed during trimming */
+
+  /** Categories that were fully removed during trimming */
   readonly removedCategories: readonly string[];
-  
+
+  /** Human-readable list of removed terms with reasons (e.g., "even lighting (redundant)") */
+  readonly removedTermNames?: readonly string[];
+
   /** Final status after optimization */
   readonly status: LengthStatus;
+
+  /** Raw removed terms with full scoring data (for transparency panel) */
+  readonly removedTerms?: ReadonlyArray<{
+    readonly term: string;
+    readonly category: string;
+    readonly score: number;
+    readonly reason: 'redundant' | 'past-token-limit' | 'lowest-score' | 'compressed';
+  }>;
+
+  /** Which optimization phase achieved the target (0-4), or -1 if already within */
+  readonly achievedAtPhase?: number;
 }
 
 /**
@@ -160,19 +174,19 @@ export interface OptimizedPrompt {
 export interface TextLengthOptimizerProps {
   /** Current optimizer enabled state */
   readonly isEnabled: boolean;
-  
+
   /** Callback when toggle is clicked */
   readonly onToggle: (enabled: boolean) => void;
-  
+
   /** Platform ID for tooltip content */
   readonly platformId: string;
-  
+
   /** Platform display name for tooltip header */
   readonly platformName: string;
-  
+
   /** Whether toggle is disabled (Static mode active) */
   readonly disabled?: boolean;
-  
+
   /** Current prompt length analysis for tooltip display */
   readonly analysis: PromptLengthAnalysis | null;
 }
@@ -183,10 +197,10 @@ export interface TextLengthOptimizerProps {
 export interface LengthIndicatorProps {
   /** Current analysis data */
   readonly analysis: PromptLengthAnalysis;
-  
+
   /** Original prompt length (before optimization) */
   readonly originalLength: number;
-  
+
   /** Whether optimizer will trim on copy */
   readonly willTrim: boolean;
 }
@@ -201,31 +215,32 @@ export interface LengthIndicatorProps {
  */
 export function isValidPromptLimit(obj: unknown): obj is PromptLimit {
   if (typeof obj !== 'object' || obj === null) return false;
-  
+
   const candidate = obj as Record<string, unknown>;
-  
+
   // Required fields
   if (typeof candidate.idealMin !== 'number' || candidate.idealMin < 1) return false;
   if (typeof candidate.idealMax !== 'number' || candidate.idealMax < 1) return false;
   if (typeof candidate.idealWords !== 'number' || candidate.idealWords < 1) return false;
-  if (typeof candidate.platformNote !== 'string' || candidate.platformNote.length === 0) return false;
+  if (typeof candidate.platformNote !== 'string' || candidate.platformNote.length === 0)
+    return false;
   if (typeof candidate.optimizationBenefit !== 'string') return false;
   if (typeof candidate.qualityImpact !== 'string') return false;
-  
+
   // Nullable fields
   if (candidate.maxChars !== null && typeof candidate.maxChars !== 'number') return false;
   if (candidate.tokenLimit !== null && typeof candidate.tokenLimit !== 'number') return false;
-  
+
   // Enum fields
   const validImpactCategories = ['high', 'moderate', 'low'];
   if (!validImpactCategories.includes(candidate.impactCategory as string)) return false;
-  
+
   const validArchitectures = ['clip-based', 'transformer', 'proprietary', 'unknown'];
   if (!validArchitectures.includes(candidate.architecture as string)) return false;
-  
+
   // Array field
   if (!Array.isArray(candidate.sources) || candidate.sources.length === 0) return false;
-  
+
   return true;
 }
 
@@ -263,15 +278,15 @@ export const DEFAULT_PROMPT_LIMIT: Readonly<PromptLimit> = {
  * Protected categories (subject, style) are never auto-trimmed.
  */
 export const TRIM_PRIORITY = [
-  'fidelity',      // Quality boosters - nice to have
-  'materials',     // Textures - enhancement
-  'atmosphere',    // Mood - enhancement
-  'colour',        // Grade - enhancement
-  'composition',   // Framing - can be implied
-  'camera',        // Lens - can be implied
-  'lighting',      // Important but trimmable
-  'environment',   // Setting - semi-core
-  'action',        // Pose - core but trimmable
+  'fidelity', // Quality boosters - nice to have
+  'materials', // Textures - enhancement
+  'atmosphere', // Mood - enhancement
+  'colour', // Grade - enhancement
+  'composition', // Framing - can be implied
+  'camera', // Lens - can be implied
+  'lighting', // Important but trimmable
+  'environment', // Setting - semi-core
+  'action', // Pose - core but trimmable
   // 'style',      // NEVER TRIM - defines look
   // 'subject',    // NEVER TRIM - core identity
 ] as const;

@@ -1,13 +1,19 @@
 // src/lib/prompt-builder.ts
 // Platform-optimized prompt assembler for AI image platforms
-// Version 3.1.0 - Vocabulary loader integration for intelligent suggestions
+// Version 4.1.0 - Tier-aware unified assembly with intent reordering
 // Features:
 // - 12 categories support (added Fidelity)
+// - Unified tier-aware assembler replaces 7 family-specific functions
+//   Tier 1 (CLIP): quality prefix → impact-priority keywords → weighted → separate negative
+//   Tier 2 (Midjourney): impact-priority keywords → inline --no negatives
+//   Tier 3 (Natural Language): config-ordered sentence clauses → convert negatives
+//   Tier 4 (Plain Language): short comma lists, minimal output
+// - Intent reordering: impactPriority config front-loads the categories each
+//   platform weights most heavily (first 10-15 words for MJ, weighted tokens
+//   at front for CLIP, subject-first clauses for NatLang)
+// - All platform quirks driven by config (platform-formats.json), not hardcoded
 // - Silent token/word limit optimization per platform
-// - Keyword vs sentence mode formatting
-// - Core category prioritization when trimming
 // - Negative-to-positive conversion for natural language platforms
-//   (e.g., "blurry" → "sharp focus", "noisy" → "pristine clarity")
 // - supportsNativeNegative() for conditional free text in negative combobox
 // - Vocabulary-driven options with intelligent context-aware suggestions
 
@@ -19,6 +25,9 @@ import type {
   PlatformFormats,
   PromptOptions,
 } from '@/types/prompt-builder';
+
+import { getPlatformTierId } from '@/data/platform-tiers';
+import type { PlatformTierId } from '@/data/platform-tiers';
 
 import promptOptionsData from '@/data/providers/prompt-options.json';
 import platformFormatsData from '@/data/providers/platform-formats.json';
@@ -72,71 +81,71 @@ export type { VocabularyContext, CategoryVocabulary };
 // Platform Family Definitions
 // ============================================================================
 
-type PlatformFamily = 
-  | 'midjourney'       // Midjourney, BlueWillow
+type PlatformFamily =
+  | 'midjourney' // Midjourney, BlueWillow
   | 'stable-diffusion' // Stability, DreamStudio, Lexica, etc.
-  | 'natural'          // DALL-E, Firefly, Bing, Canva, etc.
-  | 'leonardo'         // Leonardo AI
-  | 'flux'             // Flux/BFL
-  | 'novelai'          // NovelAI (curly brace weighting)
-  | 'ideogram';        // Ideogram
+  | 'natural' // DALL-E, Firefly, Bing, Canva, etc.
+  | 'leonardo' // Leonardo AI
+  | 'flux' // Flux/BFL
+  | 'novelai' // NovelAI (curly brace weighting)
+  | 'ideogram'; // Ideogram
 
 const PLATFORM_FAMILIES: Record<string, PlatformFamily> = {
   // Midjourney family
-  'midjourney': 'midjourney',
-  'bluewillow': 'midjourney',
-  
+  midjourney: 'midjourney',
+  bluewillow: 'midjourney',
+
   // Stable Diffusion family
-  'stability': 'stable-diffusion',
-  'dreamstudio': 'stable-diffusion',
-  'lexica': 'stable-diffusion',
-  'playground': 'stable-diffusion',
-  'nightcafe': 'stable-diffusion',
-  'getimg': 'stable-diffusion',
-  'dreamlike': 'stable-diffusion',
-  'openart': 'stable-diffusion',
-  'artistly': 'natural',
-  'clipdrop': 'stable-diffusion',
-  
+  stability: 'stable-diffusion',
+  dreamstudio: 'stable-diffusion',
+  lexica: 'stable-diffusion',
+  playground: 'stable-diffusion',
+  nightcafe: 'stable-diffusion',
+  getimg: 'stable-diffusion',
+  dreamlike: 'stable-diffusion',
+  openart: 'stable-diffusion',
+  artistly: 'natural',
+  clipdrop: 'stable-diffusion',
+
   // Leonardo family
-  'leonardo': 'leonardo',
-  
+  leonardo: 'leonardo',
+
   // Flux family
-  'flux': 'flux',
-  
+  flux: 'flux',
+
   // NovelAI family
-  'novelai': 'novelai',
-  
+  novelai: 'novelai',
+
   // Ideogram family
-  'ideogram': 'ideogram',
-  
+  ideogram: 'ideogram',
+
   // Natural language family (DALL-E style)
-  'openai': 'natural',
+  openai: 'natural',
   'adobe-firefly': 'natural',
-  'bing': 'natural',
+  bing: 'natural',
   'microsoft-designer': 'natural',
-  'meta-imagine': 'natural',
-  'canva': 'natural',
-  'jasper-art': 'natural',
-  'simplified': 'natural',
-  'vistacreate': 'natural',
-  'visme': 'natural',
-  'fotor': 'natural',
-  'hotpot': 'natural',
-  'pixlr': 'natural',
-  'picwish': 'natural',
-  'craiyon': 'natural',
-  'deepai': 'natural',
-  'photoleap': 'natural',
-  'picsart': 'natural',
-  'i23rf': 'natural',
-  'freepik': 'natural',
-  'artguru': 'natural',
-  'artbreeder': 'natural',
-  'myedit': 'natural',
+  'imagine-meta': 'natural',
+  canva: 'natural',
+  'jasper-art': 'stable-diffusion',
+  simplified: 'natural',
+  vistacreate: 'natural',
+  visme: 'natural',
+  fotor: 'natural',
+  hotpot: 'natural',
+  pixlr: 'natural',
+  picwish: 'natural',
+  craiyon: 'natural',
+  deepai: 'natural',
+  photoleap: 'natural',
+  picsart: 'natural',
+  '123rf': 'natural',
+  freepik: 'natural',
+  artguru: 'stable-diffusion',
+  artbreeder: 'natural',
+  myedit: 'natural',
   'remove-bg': 'natural',
   'google-imagen': 'natural',
-  'runway': 'natural',
+  runway: 'natural',
 };
 
 function getPlatformFamily(platformId: string): PlatformFamily {
@@ -144,14 +153,10 @@ function getPlatformFamily(platformId: string): PlatformFamily {
 }
 
 // ============================================================================
-// Quality Prefixes & Suffixes
+// Quality constants removed — now config-driven via platform-formats.json
+// Each platform's qualityPrefix, qualitySuffix, qualityNegative, and
+// weightedCategories are read from getPlatformFormat() at assembly time.
 // ============================================================================
-
-const SD_QUALITY_PREFIX = ['masterpiece', 'best quality', 'highly detailed'];
-const SD_QUALITY_NEGATIVE = ['worst quality', 'low quality', 'normal quality', 'lowres', 'bad anatomy', 'bad hands', 'error', 'missing fingers', 'extra digit', 'fewer digits', 'cropped', 'jpeg artifacts', 'signature', 'watermark', 'username', 'blurry'];
-
-const LEONARDO_QUALITY_PREFIX = ['masterpiece', 'highly detailed', 'professional'];
-const FLUX_QUALITY_SUFFIX = ['8K', 'ultra detailed', 'sharp focus'];
 
 // ============================================================================
 // Negative to Positive Conversion Map
@@ -160,46 +165,46 @@ const FLUX_QUALITY_SUFFIX = ['8K', 'ultra detailed', 'sharp focus'];
 
 const NEGATIVE_TO_POSITIVE: Record<string, string> = {
   // Quality issues → Quality enhancers
-  'blurry': 'sharp focus',
+  blurry: 'sharp focus',
   'low quality': 'high quality',
   'low resolution': 'high resolution',
-  'pixelated': 'smooth details',
-  'grainy': 'clean and smooth',
-  'noisy': 'pristine clarity',
+  pixelated: 'smooth details',
+  grainy: 'clean and smooth',
+  noisy: 'pristine clarity',
   'poorly drawn': 'well-rendered',
-  
+
   // Exposure issues → Proper exposure
-  'overexposed': 'balanced exposure',
-  'underexposed': 'well-illuminated',
-  'oversaturated': 'balanced colors',
+  overexposed: 'balanced exposure',
+  underexposed: 'well-illuminated',
+  oversaturated: 'balanced colors',
   'washed out': 'vibrant rich tones',
-  
+
   // Unwanted elements → Clean image
-  'text': 'clean image',
-  'watermark': 'unmarked',
-  'signature': 'unsigned',
-  'logo': 'logo-free',
-  'border': 'borderless',
-  'frame': 'full frame',
-  
+  text: 'clean image',
+  watermark: 'unmarked',
+  signature: 'unsigned',
+  logo: 'logo-free',
+  border: 'borderless',
+  frame: 'full frame',
+
   // Composition issues → Good composition
-  'cropped': 'complete composition',
+  cropped: 'complete composition',
   'out of frame': 'centered subject',
-  'duplicate': 'unique composition',
-  
+  duplicate: 'unique composition',
+
   // Anatomy issues → Correct anatomy
-  'deformed': 'well-formed',
-  'distorted': 'correct proportions',
-  'disfigured': 'natural appearance',
+  deformed: 'well-formed',
+  distorted: 'correct proportions',
+  disfigured: 'natural appearance',
   'bad anatomy': 'anatomically correct',
   'extra limbs': 'normal anatomy',
   'extra fingers': 'correct hands',
   'mutated hands': 'well-defined hands',
-  
+
   // Aesthetic issues → Positive aesthetics
-  'ugly': 'beautiful',
-  'morbid': 'pleasant mood',
-  'mutilated': 'intact and whole',
+  ugly: 'beautiful',
+  morbid: 'pleasant mood',
+  mutilated: 'intact and whole',
 };
 
 /**
@@ -207,10 +212,13 @@ const NEGATIVE_TO_POSITIVE: Record<string, string> = {
  * - Known terms: converted to positive (e.g., "blurry" → "sharp focus")
  * - Custom/unknown terms: kept with "without" prefix (e.g., "chromatic aberration" → "without chromatic aberration")
  */
-function convertNegativesToPositives(negatives: string[]): { positives: string[]; withouts: string[] } {
+function convertNegativesToPositives(negatives: string[]): {
+  positives: string[];
+  withouts: string[];
+} {
   const positives: string[] = [];
   const withouts: string[] = [];
-  
+
   for (const neg of negatives) {
     const mapped = NEGATIVE_TO_POSITIVE[neg.toLowerCase()];
     if (mapped) {
@@ -220,7 +228,7 @@ function convertNegativesToPositives(negatives: string[]): { positives: string[]
       withouts.push(neg);
     }
   }
-  
+
   return { positives, withouts };
 }
 
@@ -249,629 +257,462 @@ function trimPromptToLimit(
   parts: string[],
   selections: PromptSelections,
   limit: number,
-  separator: string = ', '
+  separator: string = ', ',
 ): { trimmed: string[]; wasTrimmed: boolean } {
   const current = parts.join(separator);
   let wasTrimmed = false;
-  
+
   // If within limit, return as-is
   if (countWords(current) <= limit) {
     return { trimmed: parts, wasTrimmed: false };
   }
-  
+
   // Remove optional category content first
   const trimmedParts = [...parts];
-  
+
   // Start trimming from the end (optional categories are usually last)
   while (countWords(trimmedParts.join(separator)) > limit && trimmedParts.length > 1) {
     trimmedParts.pop();
     wasTrimmed = true;
   }
-  
+
   return { trimmed: trimmedParts, wasTrimmed };
 }
 
 // ============================================================================
-// Assembly Strategies per Platform Family
+// Unified Tier-Aware Assembly with Intent Reordering
+// ============================================================================
+// Replaces 7 separate family functions with a single assembler that reads
+// tier + platform format config + impactPriority.
+//
+// Intent reordering: each platform has an impactPriority config — the categories
+// that carry the most weight for that platform's model. These are front-loaded
+// in the output so they land in the positions the platform pays most attention to:
+//
+//   Tier 1 (CLIP-Based):   Weighted categories promoted to early token positions
+//                           where CLIP encoder attention is strongest
+//   Tier 2 (Midjourney):   Subject + style + atmosphere front-loaded within the
+//                           first 10-15 words where MJ's influence is highest
+//   Tier 3 (Natural Lang): Config-driven clause order — impactPriority categories
+//                           form the core sentence, remaining categories trail
+//   Tier 4 (Plain Lang):   Subject + style front-loaded, everything else trimmed
+//
+// Platform-specific quirks (NovelAI braces, Leonardo ::, SD weighting) are
+// driven by config fields: weightingSyntax, weightedCategories, qualityPrefix,
+// qualitySuffix, qualityNegative, negativeSyntax, impactPriority.
 // ============================================================================
 
 /**
- * Midjourney-style assembly
- * Format: subject, action, style, environment --ar 16:9 --no blur
+ * Apply weighting syntax to a term using the platform's config.
+ * e.g., SD: "(term:1.1)", Leonardo: "term::1.2", NovelAI quality prefix already pre-formatted
  */
-function assembleMidjourney(selections: PromptSelections, platformFormat: PlatformFormat): AssembledPrompt {
+function applyWeight(term: string, weight: number, syntax: string | undefined): string {
+  if (!syntax) return term;
+  return syntax.replace('{term}', term).replace('{weight}', String(weight));
+}
+
+/**
+ * Compute the effective category output order with intent reordering.
+ *
+ * Impact priority categories come first (in their impactPriority order),
+ * followed by remaining categories from categoryOrder that weren't already
+ * included. Negative is always excluded from positive output.
+ *
+ * Example for Midjourney:
+ *   impactPriority = [subject, style, atmosphere, action]
+ *   categoryOrder  = [subject, action, style, environment, lighting, atmosphere, ...]
+ *   effective      = [subject, style, atmosphere, action, environment, lighting, ...]
+ *                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ *                     impact zone (first 10-15 words)
+ */
+function getEffectiveOrder(platformFormat: PlatformFormat): PromptCategory[] {
+  const impact = platformFormat.impactPriority ?? [];
+  const impactSet = new Set(impact);
+  const order: PromptCategory[] = [...impact];
+
+  // Append remaining categories from categoryOrder that aren't in impactPriority
+  for (const cat of platformFormat.categoryOrder) {
+    if (cat !== 'negative' && !impactSet.has(cat)) {
+      order.push(cat);
+    }
+  }
+
+  return order;
+}
+
+/**
+ * Collect user selections in impact-priority order with per-category weighting.
+ *
+ * Two-pass collection:
+ *   1. Impact priority categories first (in impactPriority order)
+ *   2. Remaining categories from categoryOrder
+ *
+ * This ensures the most impactful terms land in early token positions where
+ * CLIP-based models and Midjourney pay the most attention.
+ */
+function collectKeywordParts(
+  selections: PromptSelections,
+  platformFormat: PlatformFormat,
+): string[] {
   const parts: string[] = [];
-  
-  // Subject first (most important)
-  if (selections.subject?.length) {
-    parts.push(...selections.subject);
+  const weights = platformFormat.weightedCategories ?? {};
+  const syntax = platformFormat.weightingSyntax;
+  const effectiveOrder = getEffectiveOrder(platformFormat);
+
+  for (const category of effectiveOrder) {
+    const values = selections[category];
+    if (!values?.length) continue;
+
+    const weight = weights[category];
+    if (weight && syntax) {
+      parts.push(...values.map((v) => applyWeight(v, weight, syntax)));
+    } else {
+      parts.push(...values);
+    }
   }
-  
-  // Action early
-  if (selections.action?.length) {
-    parts.push(...selections.action);
+
+  return parts;
+}
+
+/**
+ * Keyword-mode assembly (Tier 1 CLIP, Tier 2 Midjourney, and keyword-style platforms)
+ *
+ * Flow: qualityPrefix → impact-priority selections (weighted) → qualitySuffix → trim → negatives
+ *
+ * Intent reordering ensures the platform's impactPriority categories appear
+ * immediately after qualityPrefix, placing them in the early token positions
+ * where model attention is strongest.
+ */
+function assembleKeywords(
+  selections: PromptSelections,
+  platformFormat: PlatformFormat,
+): AssembledPrompt {
+  const parts: string[] = [];
+
+  // 1. Quality prefix from config (e.g., SD "masterpiece", NovelAI "{{{masterpiece}}}")
+  if (platformFormat.qualityPrefix?.length) {
+    parts.push(...platformFormat.qualityPrefix);
   }
-  
-  // Style and mood early (MJ likes these prominent)
-  if (selections.style?.length) {
-    parts.push(...selections.style);
+
+  // 2. User selections in impact-priority order, with weighting
+  parts.push(...collectKeywordParts(selections, platformFormat));
+
+  // 3. Quality suffix from config (e.g., Flux "8K, ultra detailed")
+  if (platformFormat.qualitySuffix?.length) {
+    parts.push(...platformFormat.qualitySuffix);
   }
-  
-  // Environment
-  if (selections.environment?.length) {
-    parts.push(...selections.environment);
+
+  // 4. Trim to sweet spot — trims from the back, preserving front-loaded impact terms
+  const limit = platformFormat.sweetSpot || 80;
+  const separator = platformFormat.separator || ', ';
+  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit, separator);
+
+  let positive = trimmed.join(separator);
+
+  // 5. Handle negatives based on platform config
+  const userNegatives = selections.negative?.filter(Boolean) ?? [];
+
+  if (platformFormat.negativeSupport === 'inline' && platformFormat.negativeSyntax) {
+    // Inline negatives (e.g., MJ "--no blur, text" or Ideogram "without blur")
+    if (userNegatives.length > 0) {
+      const negStr = userNegatives.join(', ');
+      const inlineNeg = platformFormat.negativeSyntax.replace('{negative}', negStr);
+      positive += ` ${inlineNeg}`;
+    }
+    return {
+      positive,
+      negative: undefined,
+      tips: platformFormat.tips,
+      supportsNegative: true,
+      negativeMode: 'inline',
+      wasTrimmed,
+    };
   }
-  
-  // Lighting
-  if (selections.lighting?.length) {
-    parts.push(...selections.lighting);
+
+  if (platformFormat.negativeSupport === 'separate') {
+    // Separate negative field — prepend quality negatives from config
+    const qualityNeg = platformFormat.qualityNegative ?? [];
+    const allNegatives = [...qualityNeg, ...userNegatives];
+    return {
+      positive,
+      negative: allNegatives.length > 0 ? allNegatives.join(', ') : undefined,
+      tips: platformFormat.tips,
+      supportsNegative: true,
+      negativeMode: 'separate',
+      wasTrimmed,
+    };
   }
-  
-  // Atmosphere
-  if (selections.atmosphere?.length) {
-    parts.push(...selections.atmosphere);
-  }
-  
-  // Colour
-  if (selections.colour?.length) {
-    parts.push(...selections.colour);
-  }
-  
-  // Composition
-  if (selections.composition?.length) {
-    parts.push(...selections.composition);
-  }
-  
-  // Camera details
-  if (selections.camera?.length) {
-    parts.push(...selections.camera);
-  }
-  
-  // Materials
-  if (selections.materials?.length) {
-    parts.push(...selections.materials);
-  }
-  
-  // Trim to platform limit
-  const limit = platformFormat.sweetSpot || 40;
-  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit);
-  
-  let positive = trimmed.join(', ');
-  
-  // Add --no for negatives (MJ inline style)
-  const negatives = selections.negative?.filter(Boolean) ?? [];
-  if (negatives.length > 0) {
-    positive += ` --no ${negatives.join(', ')}`;
-  }
-  
+
+  // No negative support
   return {
     positive,
     negative: undefined,
     tips: platformFormat.tips,
-    supportsNegative: true,
-    negativeMode: 'inline',
+    supportsNegative: false,
+    negativeMode: 'none',
     wasTrimmed,
   };
 }
 
+// ============================================================================
+// Natural Language Sentence Connectors
+// ============================================================================
+// Maps each category to its natural language connector when building sentences.
+// The connector wraps the selected term(s) to form grammatically correct clauses.
+//
+// Subject and action are special — they form the core sentence nucleus and are
+// always fused together ("A samurai warrior fighting" not "A samurai warrior, fighting").
+// All other categories produce trailing clauses joined by commas.
+// ============================================================================
+
+interface SentenceConnector {
+  prefix?: string; // Prepended before value(s) — e.g., "in " for environment
+  suffix?: string; // Appended after value(s) — e.g., " style" for style
+  joiner?: string; // Joins multiple values — defaults to " and "
+}
+
+const SENTENCE_CONNECTORS: Record<string, SentenceConnector> = {
+  // Core nucleus — subject and action have no connectors (handled specially)
+  subject: {},
+  action: {},
+
+  // Scene categories
+  environment: { prefix: 'in ' },
+  style: { prefix: 'in ', suffix: ' style' },
+  lighting: { prefix: 'with ' },
+  atmosphere: { suffix: ' atmosphere' },
+  colour: {},
+  materials: { prefix: 'featuring ' },
+  composition: {},
+  camera: {},
+  fidelity: {},
+};
+
 /**
- * Stable Diffusion-style assembly
- * Format: masterpiece, best quality, subject, action, style, (lighting:1.2)
- * Separate negative with quality terms
+ * Build a sentence clause from a category's selections and its connector.
  */
-function assembleStableDiffusion(selections: PromptSelections, platformFormat: PlatformFormat): AssembledPrompt {
-  const parts: string[] = [];
-  
-  // Quality prefix (crucial for SD)
-  parts.push(...SD_QUALITY_PREFIX);
-  
-  // Subject
-  if (selections.subject?.length) {
-    parts.push(...selections.subject);
-  }
-  
-  // Action
-  if (selections.action?.length) {
-    parts.push(...selections.action);
-  }
-  
-  // Style
-  if (selections.style?.length) {
-    parts.push(...selections.style);
-  }
-  
-  // Environment
-  if (selections.environment?.length) {
-    parts.push(...selections.environment);
-  }
-  
-  // Lighting with emphasis
-  if (selections.lighting?.length) {
-    parts.push(...selections.lighting.map(l => `(${l}:1.1)`));
-  }
-  
-  // Atmosphere
-  if (selections.atmosphere?.length) {
-    parts.push(...selections.atmosphere);
-  }
-  
-  // Colour
-  if (selections.colour?.length) {
-    parts.push(...selections.colour);
-  }
-  
-  // Camera
-  if (selections.camera?.length) {
-    parts.push(...selections.camera);
-  }
-  
-  // Materials
-  if (selections.materials?.length) {
-    parts.push(...selections.materials);
-  }
-  
-  // Composition
-  if (selections.composition?.length) {
-    parts.push(...selections.composition);
-  }
-  
-  // Trim to platform limit
-  const limit = platformFormat.sweetSpot || 50;
-  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit);
-  
-  const positive = trimmed.join(', ');
-  
-  // Build comprehensive negative
-  const userNegatives = selections.negative?.filter(Boolean) ?? [];
-  const allNegatives = [...SD_QUALITY_NEGATIVE, ...userNegatives];
-  const negative = allNegatives.join(', ');
-  
-  return {
-    positive,
-    negative,
-    tips: platformFormat.tips,
-    supportsNegative: true,
-    negativeMode: 'separate',
-    wasTrimmed,
-  };
+function buildClause(category: PromptCategory, values: string[]): string {
+  const connector = SENTENCE_CONNECTORS[category] ?? {};
+  const joiner = connector.joiner ?? ' and ';
+  const joined = values.join(joiner);
+  const prefix = connector.prefix ?? '';
+  const suffix = connector.suffix ?? '';
+  return `${prefix}${joined}${suffix}`;
 }
 
 /**
- * Natural language assembly (DALL-E, Firefly, etc.)
- * Format: "A [subject] [action] in [environment] with [lighting], in a [style] style"
+ * Natural language assembly (Tier 3 — DALL-E, Firefly, Ideogram, etc.)
+ *
+ * Config-driven clause ordering: the sentence structure follows impactPriority +
+ * categoryOrder from the platform config, not a hardcoded category sequence.
+ *
+ * Subject + action always form the core sentence nucleus (fused together),
+ * then remaining categories are appended as clauses in the effective order
+ * determined by impactPriority front-loading.
+ *
+ * Example (OpenAI, impactPriority=[subject, action, environment, style]):
+ *   "A samurai warrior fighting in an ancient temple, in concept art style,
+ *    with dramatic golden hour lighting, misty atmosphere"
+ *
+ * Example (Ideogram, impactPriority=[subject, action, style, environment]):
+ *   "A samurai warrior fighting, in concept art style, in an ancient temple,
+ *    with dramatic golden hour lighting"
  */
-function assembleNatural(selections: PromptSelections, platformId: string, platformFormat: PlatformFormat): AssembledPrompt {
-  const sentences: string[] = [];
-  
-  // Build the main description
-  let mainDesc = '';
-  
-  // Start with subject
+function assembleNaturalSentences(
+  selections: PromptSelections,
+  platformFormat: PlatformFormat,
+): AssembledPrompt {
+  const effectiveOrder = getEffectiveOrder(platformFormat);
+
+  // ── Core sentence nucleus: subject + action + first environment ──
+  // These are always fused regardless of config order, because every
+  // natural language prompt needs a grammatical subject
+  let nucleus = '';
   const subject = selections.subject?.[0];
   const action = selections.action?.[0];
-  
+
   if (subject && action) {
-    mainDesc = `${subject} ${action}`;
+    nucleus = `${subject} ${action}`;
   } else if (subject) {
-    mainDesc = subject;
+    nucleus = subject;
   }
-  
-  // Add environment
-  if (selections.environment?.length) {
-    const envStr = selections.environment.join(' during ');
-    if (mainDesc) {
-      mainDesc += ` in ${envStr}`;
+
+  // Check if environment comes before style in effective order
+  // If so, fuse it into the nucleus for a tighter core sentence
+  const envIdx = effectiveOrder.indexOf('environment');
+  const styleIdx = effectiveOrder.indexOf('style');
+  const envIsEarly = envIdx !== -1 && (styleIdx === -1 || envIdx < styleIdx);
+
+  if (envIsEarly && selections.environment?.length) {
+    const envStr = selections.environment.join(' and ');
+    if (nucleus) {
+      nucleus += ` in ${envStr}`;
     } else {
-      mainDesc = `Scene in ${envStr}`;
+      nucleus = `Scene in ${envStr}`;
     }
   }
-  
-  if (mainDesc) {
-    // Capitalize first letter for natural sentence
-    mainDesc = mainDesc.charAt(0).toUpperCase() + mainDesc.slice(1);
-    sentences.push(mainDesc);
+
+  // Capitalize nucleus
+  if (nucleus) {
+    nucleus = nucleus.charAt(0).toUpperCase() + nucleus.slice(1);
   }
-  
-  // Add style as "in X style"
-  if (selections.style?.length) {
-    const styleStr = selections.style.join(' and ');
-    sentences.push(`in ${styleStr} style`);
+
+  // ── Build trailing clauses in effective order ──
+  // Skip subject, action, and environment-if-fused (already in nucleus)
+  const skipSet = new Set<PromptCategory>(['subject', 'action']);
+  if (envIsEarly) skipSet.add('environment');
+
+  const clauses: string[] = [];
+  if (nucleus) clauses.push(nucleus);
+
+  for (const category of effectiveOrder) {
+    if (skipSet.has(category)) continue;
+    const values = selections[category];
+    if (!values?.length) continue;
+
+    clauses.push(buildClause(category, values));
   }
-  
-  // Add lighting
-  if (selections.lighting?.length) {
-    const lightStr = selections.lighting.join(' and ');
-    sentences.push(`with ${lightStr}`);
-  }
-  
-  // Add atmosphere
-  if (selections.atmosphere?.length) {
-    const atmoStr = selections.atmosphere.join(' and ');
-    sentences.push(`${atmoStr} atmosphere`);
-  }
-  
-  // Add colour
-  if (selections.colour?.length) {
-    const colourStr = selections.colour.join(' and ');
-    sentences.push(`${colourStr}`);
-  }
-  
-  // Add materials
-  if (selections.materials?.length) {
-    const matStr = selections.materials.join(' and ');
-    sentences.push(`featuring ${matStr}`);
-  }
-  
-  // Add composition
-  if (selections.composition?.length) {
-    sentences.push(selections.composition.join(', '));
-  }
-  
-  // Add camera details
-  if (selections.camera?.length) {
-    sentences.push(selections.camera.join(', '));
-  }
-  
-  // Join into flowing sentence
-  let positive = sentences.join(', ');
-  
-  // Handle negatives for natural language platforms
-  // - Known terms: converted to positives (e.g., "blurry" → "sharp focus")
-  // - Custom free text: uses "without X" (e.g., "chromatic aberration" → "without chromatic aberration")
+
+  let positive = clauses.join(', ');
+
+  // ── Handle negatives ──
   const negatives = selections.negative?.filter(Boolean) ?? [];
+
+  if (platformFormat.negativeSupport === 'inline' && platformFormat.negativeSyntax) {
+    if (negatives.length > 0) {
+      const negStr = negatives.join(', ');
+      const inlineNeg = platformFormat.negativeSyntax.replace('{negative}', negStr);
+      positive += `, ${inlineNeg}`;
+    }
+    return trimAndReturn(positive, platformFormat, true, 'inline');
+  }
+
+  // Convert negatives to positive equivalents for natural language platforms
   if (negatives.length > 0) {
     const { positives, withouts } = convertNegativesToPositives(negatives);
-    
-    // Add converted positives
     if (positives.length > 0) {
       positive += `, ${positives.join(', ')}`;
     }
-    
-    // Add custom terms with "without"
     if (withouts.length > 0) {
       positive += `, without ${withouts.join(' or ')}`;
     }
   }
-  
-  // Trim to platform limit (word count for natural language)
+
+  return trimAndReturn(positive, platformFormat, true, 'converted');
+}
+
+/**
+ * Plain language assembly (Tier 4 — Canva, Craiyon, PicsArt, etc.)
+ *
+ * Produces short, comma-separated keyword lists (5-15 words ideal).
+ * Uses impact-priority ordering so subject + style land first,
+ * with everything else appended if there's budget remaining.
+ */
+function assemblePlainLanguage(
+  selections: PromptSelections,
+  platformFormat: PlatformFormat,
+): AssembledPrompt {
+  const parts: string[] = [];
+  const effectiveOrder = getEffectiveOrder(platformFormat);
+
+  // Collect selections in impact-priority order — flat keywords, no frills
+  for (const category of effectiveOrder) {
+    const values = selections[category];
+    if (values?.length) {
+      parts.push(...values);
+    }
+  }
+
+  // Trim to sweet spot (typically 40-60 words for Tier 4)
+  const limit = platformFormat.sweetSpot || 40;
+  const separator = platformFormat.separator || ', ';
+  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit, separator);
+
+  const positive = trimmed.join(separator);
+
+  // Tier 4 platforms have no negative support — convert to positives
+  const negatives = selections.negative?.filter(Boolean) ?? [];
+  let finalPositive = positive;
+
+  if (negatives.length > 0) {
+    const { positives } = convertNegativesToPositives(negatives);
+    if (positives.length > 0) {
+      finalPositive += `${separator}${positives.join(separator)}`;
+    }
+  }
+
+  return {
+    positive: finalPositive,
+    negative: undefined,
+    tips: platformFormat.tips,
+    supportsNegative: false,
+    negativeMode: 'none',
+    wasTrimmed,
+  };
+}
+
+/**
+ * Helper: trim natural language prompt to word limit and build AssembledPrompt
+ */
+function trimAndReturn(
+  positive: string,
+  platformFormat: PlatformFormat,
+  supportsNegative: boolean,
+  negativeMode: 'inline' | 'converted' | 'none',
+): AssembledPrompt {
   const limit = platformFormat.sweetSpot || 100;
   const words = positive.split(/\s+/);
   let wasTrimmed = false;
+  let trimmedPositive = positive;
+
   if (words.length > limit) {
-    positive = words.slice(0, limit).join(' ');
+    trimmedPositive = words.slice(0, limit).join(' ');
     wasTrimmed = true;
   }
-  
+
   return {
-    positive,
+    positive: trimmedPositive,
     negative: undefined,
     tips: platformFormat.tips,
-    supportsNegative: true,  // Natural language platforms convert negatives to positive equivalents
-    negativeMode: 'converted',  // Negatives are converted to positives (e.g., "blurry" → "sharp focus")
+    supportsNegative,
+    negativeMode,
     wasTrimmed,
   };
 }
 
 /**
- * Leonardo assembly
- * Format: Keywords with optional weighting (concept::1.5)
+ * Unified tier-aware assembly router.
+ * Reads the platform's tier + format config and delegates to the appropriate
+ * assembly strategy. All platform quirks come from config, not hardcoded logic.
+ *
+ * Routing priority:
+ *   1. Tier 4 → plain language (short comma lists, no frills)
+ *   2. promptStyle "keywords" → keyword assembly (Tier 1 CLIP, Tier 2 MJ,
+ *      and keyword-style Tier 3 platforms like Flux)
+ *   3. Everything else → natural language sentences (Tier 3 default)
  */
-function assembleLeonardo(selections: PromptSelections, platformFormat: PlatformFormat): AssembledPrompt {
-  const parts: string[] = [];
-  
-  // Quality prefix
-  parts.push(...LEONARDO_QUALITY_PREFIX);
-  
-  // Subject with optional weight
-  if (selections.subject?.length) {
-    parts.push(...selections.subject.map(s => `${s}::1.2`));
-  }
-  
-  // Action
-  if (selections.action?.length) {
-    parts.push(...selections.action);
-  }
-  
-  // Style
-  if (selections.style?.length) {
-    parts.push(...selections.style);
-  }
-  
-  // Environment
-  if (selections.environment?.length) {
-    parts.push(...selections.environment);
-  }
-  
-  // Lighting
-  if (selections.lighting?.length) {
-    parts.push(...selections.lighting);
-  }
-  
-  // Atmosphere
-  if (selections.atmosphere?.length) {
-    parts.push(...selections.atmosphere);
-  }
-  
-  // Colour
-  if (selections.colour?.length) {
-    parts.push(...selections.colour);
-  }
-  
-  // Camera
-  if (selections.camera?.length) {
-    parts.push(...selections.camera);
-  }
-  
-  // Materials
-  if (selections.materials?.length) {
-    parts.push(...selections.materials);
-  }
-  
-  // Composition
-  if (selections.composition?.length) {
-    parts.push(...selections.composition);
-  }
-  
-  // Trim to platform limit
-  const limit = platformFormat.sweetSpot || 100;
-  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit);
-  
-  const positive = trimmed.join(', ');
-  
-  // Separate negative
-  const userNegatives = selections.negative?.filter(Boolean) ?? [];
-  const allNegatives = [...SD_QUALITY_NEGATIVE, ...userNegatives];
-  const negative = allNegatives.join(', ');
-  
-  return {
-    positive,
-    negative,
-    tips: platformFormat.tips,
-    supportsNegative: true,
-    negativeMode: 'separate',
-    wasTrimmed,
-  };
-}
+function assembleTierAware(
+  platformId: string,
+  selections: PromptSelections,
+  platformFormat: PlatformFormat,
+): AssembledPrompt {
+  const tierId: PlatformTierId | undefined = getPlatformTierId(platformId);
 
-/**
- * Flux assembly
- * Format: Keywords with quality suffix
- */
-function assembleFlux(selections: PromptSelections, platformFormat: PlatformFormat): AssembledPrompt {
-  const parts: string[] = [];
-  
-  // Subject
-  if (selections.subject?.length) {
-    parts.push(...selections.subject);
+  // Tier 4: Plain language — short comma lists, no frills
+  // Takes priority over promptStyle so Tier 4 keyword platforms (e.g., artistly)
+  // still get simple output appropriate for their limited capabilities
+  if (tierId === 4) {
+    return assemblePlainLanguage(selections, platformFormat);
   }
-  
-  // Action
-  if (selections.action?.length) {
-    parts.push(...selections.action);
-  }
-  
-  // Style
-  if (selections.style?.length) {
-    parts.push(...selections.style);
-  }
-  
-  // Environment
-  if (selections.environment?.length) {
-    parts.push(...selections.environment);
-  }
-  
-  // Lighting
-  if (selections.lighting?.length) {
-    parts.push(...selections.lighting);
-  }
-  
-  // Atmosphere
-  if (selections.atmosphere?.length) {
-    parts.push(...selections.atmosphere);
-  }
-  
-  // Colour
-  if (selections.colour?.length) {
-    parts.push(...selections.colour);
-  }
-  
-  // Camera
-  if (selections.camera?.length) {
-    parts.push(...selections.camera);
-  }
-  
-  // Materials
-  if (selections.materials?.length) {
-    parts.push(...selections.materials);
-  }
-  
-  // Composition
-  if (selections.composition?.length) {
-    parts.push(...selections.composition);
-  }
-  
-  // Add quality suffix
-  parts.push(...FLUX_QUALITY_SUFFIX);
-  
-  // Trim to platform limit
-  const limit = platformFormat.sweetSpot || 120;
-  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit);
-  
-  const positive = trimmed.join(', ');
-  
-  // Separate negative
-  const userNegatives = selections.negative?.filter(Boolean) ?? [];
-  const allNegatives = [...SD_QUALITY_NEGATIVE, ...userNegatives];
-  const negative = allNegatives.join(', ');
-  
-  return {
-    positive,
-    negative,
-    tips: platformFormat.tips,
-    supportsNegative: true,
-    negativeMode: 'separate',
-    wasTrimmed,
-  };
-}
 
-/**
- * NovelAI assembly
- * Format: {{{emphasis}}}, subject, style
- */
-function assembleNovelAI(selections: PromptSelections, platformFormat: PlatformFormat): AssembledPrompt {
-  const parts: string[] = [];
-  
-  // Quality with braces
-  parts.push('{{{masterpiece}}}', '{{best quality}}');
-  
-  // Subject
-  if (selections.subject?.length) {
-    parts.push(...selections.subject);
+  // Keyword-mode platforms: Tier 1 (CLIP), Tier 2 (MJ), and keyword-style
+  // Tier 3 platforms (Flux) — promptStyle in config is the authority
+  if (platformFormat.promptStyle === 'keywords') {
+    return assembleKeywords(selections, platformFormat);
   }
-  
-  // Action
-  if (selections.action?.length) {
-    parts.push(...selections.action);
-  }
-  
-  // Style
-  if (selections.style?.length) {
-    parts.push(...selections.style);
-  }
-  
-  // Environment
-  if (selections.environment?.length) {
-    parts.push(...selections.environment);
-  }
-  
-  // Lighting
-  if (selections.lighting?.length) {
-    parts.push(...selections.lighting);
-  }
-  
-  // Atmosphere
-  if (selections.atmosphere?.length) {
-    parts.push(...selections.atmosphere);
-  }
-  
-  // Colour
-  if (selections.colour?.length) {
-    parts.push(...selections.colour);
-  }
-  
-  // Camera
-  if (selections.camera?.length) {
-    parts.push(...selections.camera);
-  }
-  
-  // Materials
-  if (selections.materials?.length) {
-    parts.push(...selections.materials);
-  }
-  
-  // Composition
-  if (selections.composition?.length) {
-    parts.push(...selections.composition);
-  }
-  
-  // Trim to platform limit
-  const limit = platformFormat.sweetSpot || 80;
-  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit);
-  
-  const positive = trimmed.join(', ');
-  
-  // Separate negative
-  const userNegatives = selections.negative?.filter(Boolean) ?? [];
-  const allNegatives = [...SD_QUALITY_NEGATIVE, ...userNegatives];
-  const negative = allNegatives.join(', ');
-  
-  return {
-    positive,
-    negative,
-    tips: platformFormat.tips,
-    supportsNegative: true,
-    negativeMode: 'separate',
-    wasTrimmed,
-  };
-}
 
-/**
- * Ideogram assembly
- * Natural language, good with text, inline negatives
- */
-function assembleIdeogram(selections: PromptSelections, platformFormat: PlatformFormat): AssembledPrompt {
-  const parts: string[] = [];
-  
-  // Subject
-  if (selections.subject?.length) {
-    parts.push(...selections.subject);
-  }
-  
-  // Action
-  if (selections.action?.length) {
-    parts.push(...selections.action);
-  }
-  
-  // Style
-  if (selections.style?.length) {
-    parts.push(...selections.style);
-  }
-  
-  // Environment
-  if (selections.environment?.length) {
-    parts.push(...selections.environment);
-  }
-  
-  // Lighting
-  if (selections.lighting?.length) {
-    parts.push(...selections.lighting);
-  }
-  
-  // Atmosphere
-  if (selections.atmosphere?.length) {
-    parts.push(...selections.atmosphere);
-  }
-  
-  // Colour
-  if (selections.colour?.length) {
-    parts.push(...selections.colour);
-  }
-  
-  // Materials
-  if (selections.materials?.length) {
-    parts.push(...selections.materials);
-  }
-  
-  // Composition
-  if (selections.composition?.length) {
-    parts.push(...selections.composition);
-  }
-  
-  // Camera
-  if (selections.camera?.length) {
-    parts.push(...selections.camera);
-  }
-  
-  // Trim to platform limit
-  const limit = platformFormat.sweetSpot || 100;
-  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit);
-  
-  let positive = trimmed.join(', ');
-  
-  // Ideogram uses "without" for negatives
-  const negatives = selections.negative?.filter(Boolean) ?? [];
-  if (negatives.length > 0) {
-    positive += `, without ${negatives.join(', ')}`;
-  }
-  
-  return {
-    positive,
-    negative: undefined,
-    tips: platformFormat.tips,
-    supportsNegative: true,
-    negativeMode: 'inline',
-    wasTrimmed,
-  };
+  // Tier 3 and all other natural-language platforms: flowing sentences
+  return assembleNaturalSentences(selections, platformFormat);
 }
 
 // ============================================================================
@@ -892,7 +733,7 @@ export function getPlatformFormat(platformId: string): PlatformFormat {
  */
 export function getCategoryOptions(
   category: PromptCategory,
-  context?: VocabularyContext
+  context?: VocabularyContext,
 ): string[] {
   try {
     const vocab = loadCategoryVocabulary(category as CategoryKey, context);
@@ -928,14 +769,14 @@ export function getCategoryConfig(category: PromptCategory) {
 /**
  * Get enhanced category configuration with vocabulary-driven options
  * Includes: dropdown options (100), all options (~300), suggestions (20)
- * 
+ *
  * @param category - The prompt category
  * @param context - Optional context for intelligent sorting
- * 
+ *
  * @example
  * // Basic usage
  * const config = getEnhancedCategoryConfig('style');
- * 
+ *
  * @example
  * // With intelligence context
  * const config = getEnhancedCategoryConfig('lighting', {
@@ -946,13 +787,13 @@ export function getCategoryConfig(category: PromptCategory) {
  */
 export function getEnhancedCategoryConfig(
   category: PromptCategory,
-  context?: VocabularyContext
+  context?: VocabularyContext,
 ): EnhancedCategoryConfig {
   const legacy = promptOptions.categories[category];
-  
+
   try {
     const vocab = loadCategoryVocabulary(category as CategoryKey, context);
-    
+
     return {
       label: vocab.meta.label || legacy?.label || category,
       description: vocab.meta.description || legacy?.description || '',
@@ -978,13 +819,13 @@ export function getEnhancedCategoryConfig(
 
 /**
  * Get context-aware suggestions for a category
- * 
+ *
  * @param category - The prompt category
  * @param context - Context including selected terms and detected family
  */
 export function getCategorySuggestions(
   category: PromptCategory,
-  context: VocabularyContext
+  context: VocabularyContext,
 ): string[] {
   try {
     const vocab = loadCategoryVocabulary(category as CategoryKey, context);
@@ -996,15 +837,15 @@ export function getCategorySuggestions(
 
 /**
  * Get chips for free-text area (excludes selected, search-filtered)
- * 
- * @param category - The prompt category  
+ *
+ * @param category - The prompt category
  * @param selectedTerms - Currently selected terms to exclude
  * @param searchQuery - Optional search filter
  */
 export function getCategoryChips(
   category: PromptCategory,
   selectedTerms: string[],
-  searchQuery?: string
+  searchQuery?: string,
 ): string[] {
   try {
     return getChipDisplayOptions(category as CategoryKey, selectedTerms, searchQuery);
@@ -1019,7 +860,7 @@ export function getCategoryChips(
  */
 export function searchCategoryOptions(
   category: PromptCategory,
-  query: string
+  query: string,
 ): Array<{ term: string; matchType: 'exact' | 'startsWith' | 'contains' }> {
   try {
     return searchCategoryVocabulary(category as CategoryKey, query);
@@ -1056,15 +897,13 @@ export function getOrderedCategories(platformId: string): PromptCategory[] {
 }
 
 /**
- * Assemble a prompt from user selections for a specific platform
- * Routes to platform-specific assembly strategy
+ * Assemble a prompt from user selections for a specific platform.
+ * Uses unified tier-aware assembly — reads tier + platform format config
+ * to determine the correct assembly strategy.
  */
-export function assemblePrompt(
-  platformId: string,
-  selections: PromptSelections
-): AssembledPrompt {
+export function assemblePrompt(platformId: string, selections: PromptSelections): AssembledPrompt {
   // Check if we have any selections at all
-  const hasSelections = Object.values(selections).some(arr => arr && arr.length > 0);
+  const hasSelections = Object.values(selections).some((arr) => arr && arr.length > 0);
   if (!hasSelections) {
     return {
       positive: '',
@@ -1074,27 +913,9 @@ export function assemblePrompt(
       negativeMode: 'none',
     };
   }
-  
-  const family = getPlatformFamily(platformId);
+
   const platformFormat = getPlatformFormat(platformId);
-  
-  switch (family) {
-    case 'midjourney':
-      return assembleMidjourney(selections, platformFormat);
-    case 'stable-diffusion':
-      return assembleStableDiffusion(selections, platformFormat);
-    case 'leonardo':
-      return assembleLeonardo(selections, platformFormat);
-    case 'flux':
-      return assembleFlux(selections, platformFormat);
-    case 'novelai':
-      return assembleNovelAI(selections, platformFormat);
-    case 'ideogram':
-      return assembleIdeogram(selections, platformFormat);
-    case 'natural':
-    default:
-      return assembleNatural(selections, platformId, platformFormat);
-  }
+  return assembleTierAware(platformId, selections, platformFormat);
 }
 
 /**
@@ -1111,10 +932,7 @@ export function formatPromptForCopy(assembled: AssembledPrompt): string {
 /**
  * Get a preview of what the prompt will look like
  */
-export function getPromptPreview(
-  platformId: string,
-  selections: PromptSelections
-): string {
+export function getPromptPreview(platformId: string, selections: PromptSelections): string {
   const assembled = assemblePrompt(platformId, selections);
   return formatPromptForCopy(assembled);
 }
@@ -1130,12 +948,12 @@ export function supportsNegativePrompts(platformId: string): boolean {
 /**
  * Check if platform supports native negative prompts (inline or separate field)
  * Used to determine if free text should be allowed in the negative combobox
- * 
+ *
  * Platforms with native support (free text allowed):
  * - Inline: midjourney, bluewillow, ideogram (use --no or "without")
- * - Separate: stability, leonardo, flux, novelai, playground, nightcafe, 
+ * - Separate: stability, leonardo, flux, novelai, playground, nightcafe,
  *             lexica, openart, dreamstudio, getimg, dreamlike
- * 
+ *
  * Platforms without native support (dropdown only, no free text):
  * - Converted: All natural language platforms (DALL-E, Firefly, Canva, etc.)
  */
@@ -1165,13 +983,13 @@ export function getPlatformExample(platformId: string): string | undefined {
 export function getPlatformFamilyName(platformId: string): string {
   const family = getPlatformFamily(platformId);
   const names: Record<PlatformFamily, string> = {
-    'midjourney': 'Midjourney-style',
+    midjourney: 'Midjourney-style',
     'stable-diffusion': 'Stable Diffusion-style',
-    'natural': 'Natural language',
-    'leonardo': 'Leonardo AI',
-    'flux': 'Flux',
-    'novelai': 'NovelAI',
-    'ideogram': 'Ideogram',
+    natural: 'Natural language',
+    leonardo: 'Leonardo AI',
+    flux: 'Flux',
+    novelai: 'NovelAI',
+    ideogram: 'Ideogram',
   };
   return names[family];
 }
@@ -1194,11 +1012,7 @@ export type Built = { text: string; deepLink?: string };
  * Legacy buildPrompt function for backward compatibility
  * @deprecated Use assemblePrompt instead
  */
-export function buildPrompt(
-  providerId: string,
-  input: BuildInput,
-  website?: string
-): Built {
+export function buildPrompt(providerId: string, input: BuildInput, website?: string): Built {
   const { idea, negative } = input;
 
   const selections: PromptSelections = {

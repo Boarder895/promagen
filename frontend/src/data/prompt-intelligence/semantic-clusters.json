@@ -1,0 +1,2719 @@
+{
+  "$schema": "./schemas/intelligence.schema.json",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "intelligence",
+    "category": "semantic-clusters",
+    "label": "Semantic Clusters",
+    "description": "50 cross-category term groupings for cascade scoring. Phase 1 Part 1.2.",
+    "totalClusters": 50,
+    "totalPlacements": 1516,
+    "uniqueTerms": 440
+  },
+  "clusters": {
+    "cyberpunk": {
+      "label": "Cyberpunk",
+      "description": "Neon-lit dystopian technology aesthetic",
+      "terms": {
+        "subject": [
+          "cyberpunk hacker",
+          "robot android",
+          "bounty hunter",
+          "mech pilot"
+        ],
+        "action": [
+          "running fast",
+          "fighting fiercely",
+          "casting spell",
+          "crouching low"
+        ],
+        "style": [
+          "digital painting",
+          "concept art",
+          "cyberpunk",
+          "sci-fi"
+        ],
+        "environment": [
+          "cyberpunk city",
+          "neon-lit streets",
+          "rain-soaked alley"
+        ],
+        "lighting": [
+          "neon glow",
+          "LED strip ambient",
+          "LED lighting",
+          "blacklight UV"
+        ],
+        "atmosphere": [
+          "ominous",
+          "energetic",
+          "dramatic",
+          "futuristic"
+        ],
+        "colour": [
+          "neon colours",
+          "teal and orange",
+          "high contrast",
+          "cyan"
+        ],
+        "materials": [
+          "chrome reflection",
+          "steel brushed",
+          "titanium matte",
+          "glass transparency"
+        ],
+        "camera": [
+          "dutch angle",
+          "low angle shot",
+          "wide shot"
+        ],
+        "composition": [
+          "diagonal lines",
+          "leading lines",
+          "dynamic tension"
+        ],
+        "fidelity": [
+          "8K resolution",
+          "ray tracing",
+          "ultra detailed"
+        ]
+      }
+    },
+    "steampunk": {
+      "label": "Steampunk",
+      "description": "Victorian-era technology fantasy with brass and gears",
+      "terms": {
+        "subject": [
+          "halfling adventurer",
+          "pirate captain",
+          "mech pilot",
+          "dwarf blacksmith"
+        ],
+        "action": [
+          "standing confidently",
+          "holding weapon",
+          "reading intently"
+        ],
+        "style": [
+          "steampunk",
+          "concept art",
+          "illustration",
+          "digital painting"
+        ],
+        "environment": [
+          "steampunk workshop",
+          "victorian greenhouse",
+          "cruise ship deck",
+          "clockwork factory"
+        ],
+        "lighting": [
+          "gas lamp light",
+          "warm light 3200K",
+          "candlelight",
+          "firelight"
+        ],
+        "atmosphere": [
+          "mysterious",
+          "nostalgic",
+          "dramatic"
+        ],
+        "colour": [
+          "warm tones",
+          "sepia toned",
+          "bronze and cream",
+          "copper and green"
+        ],
+        "materials": [
+          "brass polish",
+          "copper patina",
+          "leather texture",
+          "wood grain"
+        ],
+        "camera": [
+          "medium shot",
+          "low angle shot"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "intricate details"
+        ]
+      }
+    },
+    "vaporwave": {
+      "label": "Vaporwave",
+      "description": "Retro-futuristic 80s/90s nostalgia aesthetic",
+      "terms": {
+        "subject": [
+          "astronaut in space suit",
+          "portrait of a woman"
+        ],
+        "style": [
+          "vaporwave",
+          "retro futurism",
+          "synthwave",
+          "glitch art"
+        ],
+        "environment": [
+          "neon arcade",
+          "rooftop garden",
+          "metro station"
+        ],
+        "lighting": [
+          "neon glow",
+          "LED lighting",
+          "fluorescent light",
+          "sunset lighting"
+        ],
+        "atmosphere": [
+          "nostalgic",
+          "dreamlike",
+          "surreal",
+          "melancholic"
+        ],
+        "colour": [
+          "neon colours",
+          "pastel palette",
+          "pink and teal",
+          "purple and yellow"
+        ],
+        "materials": [
+          "chrome reflection",
+          "glass transparency",
+          "marble texture"
+        ],
+        "composition": [
+          "symmetrical composition",
+          "centered subject",
+          "geometric patterns"
+        ]
+      }
+    },
+    "cottagecore": {
+      "label": "Cottagecore",
+      "description": "Rustic pastoral cottage life aesthetic",
+      "terms": {
+        "subject": [
+          "young woman",
+          "mother and child",
+          "fairy",
+          "flower bouquet"
+        ],
+        "action": [
+          "reading intently",
+          "sitting relaxed",
+          "dancing gracefully"
+        ],
+        "style": [
+          "watercolor painting",
+          "oil painting",
+          "illustration",
+          "portrait photography"
+        ],
+        "environment": [
+          "flower meadow",
+          "lavender fields",
+          "victorian greenhouse",
+          "zen garden",
+          "cherry blossom garden"
+        ],
+        "lighting": [
+          "golden hour",
+          "dappled light",
+          "natural lighting",
+          "soft lighting"
+        ],
+        "atmosphere": [
+          "serene",
+          "peaceful",
+          "romantic",
+          "whimsical",
+          "warm and cozy"
+        ],
+        "colour": [
+          "pastel palette",
+          "warm tones",
+          "earth tones",
+          "muted tones"
+        ],
+        "materials": [
+          "linen texture",
+          "cotton weave",
+          "wool felt",
+          "wood grain",
+          "ceramic glaze"
+        ],
+        "fidelity": [
+          "soft focus artistic",
+          "dreamy soft"
+        ]
+      }
+    },
+    "dark-academia": {
+      "label": "Dark Academia",
+      "description": "Gothic scholarly aesthetic with old libraries",
+      "terms": {
+        "subject": [
+          "college student",
+          "young man",
+          "young woman"
+        ],
+        "action": [
+          "reading intently",
+          "looking away"
+        ],
+        "style": [
+          "cinematic style",
+          "oil painting",
+          "daguerreotype",
+          "portrait photography"
+        ],
+        "environment": [
+          "gothic cathedral",
+          "baroque palace",
+          "victorian parlor"
+        ],
+        "lighting": [
+          "candlelight",
+          "window light",
+          "overcast sky",
+          "low key lighting"
+        ],
+        "atmosphere": [
+          "melancholic",
+          "contemplative",
+          "mysterious",
+          "nostalgic"
+        ],
+        "colour": [
+          "muted tones",
+          "earth tones",
+          "desaturated",
+          "warm tones"
+        ],
+        "materials": [
+          "leather texture",
+          "wood grain",
+          "velvet soft",
+          "stone surface"
+        ],
+        "camera": [
+          "medium shot",
+          "close-up shot",
+          "shallow depth of field"
+        ]
+      }
+    },
+    "gothic": {
+      "label": "Gothic",
+      "description": "Dark gothic architecture and atmosphere",
+      "terms": {
+        "subject": [
+          "vampire",
+          "dark elf",
+          "angel with wings",
+          "demon creature"
+        ],
+        "action": [
+          "standing confidently",
+          "looking away",
+          "casting spell"
+        ],
+        "style": [
+          "gothic style",
+          "dark fantasy",
+          "digital painting",
+          "concept art"
+        ],
+        "environment": [
+          "gothic cathedral",
+          "dark forest",
+          "medieval castle",
+          "haunted mansion"
+        ],
+        "lighting": [
+          "candlelight",
+          "moonlight",
+          "low key lighting",
+          "chiaroscuro"
+        ],
+        "atmosphere": [
+          "ominous",
+          "dark and brooding",
+          "eerie",
+          "haunting",
+          "mysterious"
+        ],
+        "colour": [
+          "desaturated",
+          "monochrome",
+          "red and black",
+          "high contrast"
+        ],
+        "materials": [
+          "stone surface",
+          "iron rust",
+          "velvet soft",
+          "stained glass"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "intricate details"
+        ]
+      }
+    },
+    "art-deco": {
+      "label": "Art Deco",
+      "description": "1920s geometric luxury and glamour",
+      "terms": {
+        "subject": [
+          "young woman",
+          "dancer",
+          "couple in love"
+        ],
+        "action": [
+          "dancing gracefully",
+          "leaning against wall",
+          "looking at camera"
+        ],
+        "style": [
+          "art deco",
+          "illustration",
+          "vector art"
+        ],
+        "environment": [
+          "mansion estate",
+          "baroque palace",
+          "rooftop garden"
+        ],
+        "lighting": [
+          "spotlight",
+          "chandelier sparkle",
+          "warm light 3200K"
+        ],
+        "atmosphere": [
+          "elegant",
+          "romantic",
+          "nostalgic"
+        ],
+        "colour": [
+          "metallic accents",
+          "white and gold",
+          "emerald and gold",
+          "high contrast"
+        ],
+        "materials": [
+          "gold leaf",
+          "marble texture",
+          "chrome reflection",
+          "glass transparency"
+        ],
+        "composition": [
+          "symmetrical composition",
+          "geometric patterns",
+          "radial symmetry"
+        ]
+      }
+    },
+    "solarpunk": {
+      "label": "Solarpunk",
+      "description": "Optimistic green-tech utopian future",
+      "terms": {
+        "subject": [
+          "young woman",
+          "group of friends",
+          "botanist"
+        ],
+        "style": [
+          "solarpunk",
+          "concept art",
+          "digital painting",
+          "illustration"
+        ],
+        "environment": [
+          "rooftop garden",
+          "victorian greenhouse",
+          "bamboo grove"
+        ],
+        "lighting": [
+          "golden hour",
+          "dappled light",
+          "natural lighting",
+          "volumetric lighting"
+        ],
+        "atmosphere": [
+          "serene",
+          "uplifting",
+          "joyful",
+          "futuristic"
+        ],
+        "colour": [
+          "vibrant colours",
+          "green and magenta",
+          "warm tones",
+          "jade and coral"
+        ],
+        "materials": [
+          "glass transparency",
+          "wood grain",
+          "bamboo grain"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "8K resolution"
+        ]
+      }
+    },
+    "brutalist": {
+      "label": "Brutalist",
+      "description": "Raw concrete modernist architecture",
+      "terms": {
+        "subject": [
+          "portrait of a man"
+        ],
+        "style": [
+          "brutalist",
+          "minimalist",
+          "photorealistic",
+          "architectural photography"
+        ],
+        "environment": [
+          "minimalist apartment",
+          "metro station"
+        ],
+        "lighting": [
+          "overcast sky",
+          "hard lighting",
+          "flat lighting",
+          "midday sun"
+        ],
+        "atmosphere": [
+          "cold and stark",
+          "contemplative"
+        ],
+        "colour": [
+          "monochrome",
+          "desaturated",
+          "muted tones",
+          "low contrast"
+        ],
+        "materials": [
+          "concrete texture",
+          "steel brushed",
+          "glass transparency"
+        ],
+        "composition": [
+          "leading lines",
+          "geometric patterns",
+          "symmetrical composition"
+        ]
+      }
+    },
+    "art-nouveau": {
+      "label": "Art Nouveau",
+      "description": "Flowing organic lines and decorative natural forms",
+      "terms": {
+        "subject": [
+          "young woman",
+          "fairy",
+          "flower bouquet"
+        ],
+        "action": [
+          "dancing gracefully",
+          "looking at camera",
+          "reaching out"
+        ],
+        "style": [
+          "art nouveau",
+          "illustration",
+          "stained glass",
+          "folk art"
+        ],
+        "environment": [
+          "victorian greenhouse",
+          "flower meadow",
+          "baroque palace"
+        ],
+        "lighting": [
+          "soft lighting",
+          "dappled light",
+          "stained glass"
+        ],
+        "atmosphere": [
+          "ethereal",
+          "romantic",
+          "whimsical",
+          "magical"
+        ],
+        "colour": [
+          "pastel palette",
+          "jewel tones",
+          "metallic accents",
+          "emerald and gold"
+        ],
+        "materials": [
+          "gold leaf",
+          "stained glass",
+          "ceramic glaze",
+          "silk shimmer"
+        ],
+        "composition": [
+          "S-curve composition",
+          "organic shapes",
+          "curved lines"
+        ]
+      }
+    },
+    "psychedelic": {
+      "label": "Psychedelic",
+      "description": "Trippy kaleidoscopic visuals and fractal patterns",
+      "terms": {
+        "subject": [
+          "fairy",
+          "demon creature"
+        ],
+        "style": [
+          "abstract",
+          "surrealist",
+          "glitch art",
+          "fractal art"
+        ],
+        "environment": [
+          "bioluminescent cave",
+          "crystal cave",
+          "floating islands"
+        ],
+        "lighting": [
+          "bioluminescence",
+          "holographic",
+          "blacklight UV",
+          "neon glow"
+        ],
+        "atmosphere": [
+          "surreal",
+          "dreamlike",
+          "otherworldly",
+          "energetic",
+          "magical"
+        ],
+        "colour": [
+          "neon colours",
+          "vibrant colours",
+          "holographic",
+          "iridescent",
+          "rainbow spectrum"
+        ],
+        "materials": [
+          "crystal clarity",
+          "gemstone facets",
+          "glass transparency"
+        ],
+        "composition": [
+          "radial symmetry",
+          "geometric patterns",
+          "kaleidoscope pattern"
+        ]
+      }
+    },
+    "noir": {
+      "label": "Film Noir",
+      "description": "Classic detective genre with shadows and rain",
+      "terms": {
+        "subject": [
+          "Victorian detective",
+          "portrait of a man"
+        ],
+        "action": [
+          "looking away",
+          "walking slowly",
+          "standing confidently"
+        ],
+        "style": [
+          "cinematic style",
+          "film noir"
+        ],
+        "environment": [
+          "rain-soaked alley",
+          "victorian parlor",
+          "neon-lit streets"
+        ],
+        "lighting": [
+          "split lighting",
+          "low key lighting",
+          "rim lighting",
+          "chiaroscuro",
+          "light fog atmosphere"
+        ],
+        "atmosphere": [
+          "mysterious",
+          "ominous",
+          "tense",
+          "dark and brooding",
+          "foggy atmosphere"
+        ],
+        "colour": [
+          "black and white",
+          "monochrome",
+          "desaturated",
+          "high contrast"
+        ],
+        "materials": [
+          "leather texture",
+          "glass transparency",
+          "concrete texture"
+        ],
+        "camera": [
+          "low angle shot",
+          "dutch angle",
+          "close-up shot"
+        ]
+      }
+    },
+    "fantasy-epic": {
+      "label": "Fantasy Epic",
+      "description": "High fantasy world with magic and mythical creatures",
+      "terms": {
+        "subject": [
+          "dragon",
+          "wizard",
+          "knight in armour",
+          "elf archer",
+          "phoenix rising",
+          "griffin"
+        ],
+        "action": [
+          "casting spell",
+          "holding weapon",
+          "flying through air",
+          "fighting fiercely",
+          "swinging sword"
+        ],
+        "style": [
+          "concept art",
+          "digital painting",
+          "high fantasy",
+          "matte painting"
+        ],
+        "environment": [
+          "enchanted forest",
+          "medieval castle",
+          "mountain peak",
+          "volcanic landscape",
+          "floating islands"
+        ],
+        "lighting": [
+          "volumetric lighting",
+          "dramatic lighting",
+          "god rays",
+          "firelight",
+          "bioluminescence"
+        ],
+        "atmosphere": [
+          "dramatic",
+          "mystical",
+          "ethereal",
+          "ominous",
+          "magical"
+        ],
+        "colour": [
+          "jewel tones",
+          "vibrant colours",
+          "warm tones"
+        ],
+        "materials": [
+          "metal surface",
+          "leather texture",
+          "stone surface",
+          "gemstone facets"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "intricate details",
+          "8K resolution"
+        ]
+      }
+    },
+    "horror": {
+      "label": "Horror",
+      "description": "Dark horror with fear and supernatural dread",
+      "terms": {
+        "subject": [
+          "demon creature",
+          "vampire",
+          "werewolf",
+          "ghostly"
+        ],
+        "action": [
+          "reaching out",
+          "crouching low",
+          "shadow lurking"
+        ],
+        "style": [
+          "gothic style",
+          "dark fantasy",
+          "digital painting"
+        ],
+        "environment": [
+          "haunted mansion",
+          "dark forest",
+          "crystal cave",
+          "underground cavern"
+        ],
+        "lighting": [
+          "low key lighting",
+          "moonlight",
+          "candlelight",
+          "blacklight UV",
+          "light fog atmosphere"
+        ],
+        "atmosphere": [
+          "eerie",
+          "ominous",
+          "haunting",
+          "nightmarish",
+          "dark and brooding"
+        ],
+        "colour": [
+          "desaturated",
+          "monochrome",
+          "red and black",
+          "high contrast"
+        ],
+        "materials": [
+          "stone surface",
+          "iron rust",
+          "bone ivory"
+        ],
+        "camera": [
+          "dutch angle",
+          "low angle shot",
+          "extreme close-up"
+        ]
+      }
+    },
+    "sci-fi-space": {
+      "label": "Sci-Fi Space",
+      "description": "Space exploration and cosmic science fiction",
+      "terms": {
+        "subject": [
+          "astronaut in space suit",
+          "spaceship",
+          "robot android",
+          "alien being"
+        ],
+        "action": [
+          "floating weightlessly",
+          "flying through air",
+          "looking away"
+        ],
+        "style": [
+          "sci-fi",
+          "concept art",
+          "matte painting",
+          "digital painting"
+        ],
+        "environment": [
+          "space station",
+          "alien planet",
+          "asteroid field",
+          "space nebula vista"
+        ],
+        "lighting": [
+          "starlight",
+          "bioluminescence",
+          "holographic",
+          "LED lighting"
+        ],
+        "atmosphere": [
+          "futuristic",
+          "serene",
+          "dramatic",
+          "otherworldly",
+          "alien landscape"
+        ],
+        "colour": [
+          "cool tones",
+          "teal and orange",
+          "neon colours",
+          "monochrome"
+        ],
+        "materials": [
+          "chrome reflection",
+          "titanium matte",
+          "glass transparency"
+        ],
+        "fidelity": [
+          "8K resolution",
+          "ray tracing",
+          "ultra detailed"
+        ]
+      }
+    },
+    "underwater": {
+      "label": "Underwater World",
+      "description": "Deep ocean and aquatic fantasy environments",
+      "terms": {
+        "subject": [
+          "mermaid",
+          "diver",
+          "jellyfish"
+        ],
+        "action": [
+          "swimming underwater",
+          "floating weightlessly",
+          "dancing gracefully"
+        ],
+        "style": [
+          "digital painting",
+          "concept art",
+          "watercolor painting"
+        ],
+        "environment": [
+          "underwater reef",
+          "ocean depths",
+          "abyssal plain",
+          "bioluminescent cave"
+        ],
+        "lighting": [
+          "bioluminescence",
+          "volumetric lighting",
+          "god rays",
+          "dappled light"
+        ],
+        "atmosphere": [
+          "mystical",
+          "serene",
+          "ethereal",
+          "magical",
+          "otherworldly"
+        ],
+        "colour": [
+          "cool tones",
+          "teal and orange",
+          "iridescent",
+          "vibrant colours"
+        ],
+        "materials": [
+          "coral texture",
+          "shell nacre",
+          "glass transparency",
+          "crystal clarity"
+        ]
+      }
+    },
+    "western": {
+      "label": "Wild West",
+      "description": "American frontier cowboy aesthetic",
+      "terms": {
+        "subject": [
+          "wild west outlaw",
+          "ranger"
+        ],
+        "action": [
+          "standing confidently",
+          "holding weapon"
+        ],
+        "style": [
+          "cinematic style",
+          "photorealistic",
+          "concept art"
+        ],
+        "environment": [
+          "desert canyon",
+          "wild west saloon",
+          "grand canyon",
+          "savanna grassland"
+        ],
+        "lighting": [
+          "golden hour",
+          "midday sun",
+          "dramatic lighting",
+          "sunset lighting"
+        ],
+        "atmosphere": [
+          "dramatic",
+          "tense",
+          "nostalgic",
+          "dusty environment"
+        ],
+        "colour": [
+          "warm tones",
+          "earth tones",
+          "sepia toned",
+          "desaturated"
+        ],
+        "materials": [
+          "leather texture",
+          "wood grain",
+          "iron rust"
+        ]
+      }
+    },
+    "fairy-tale": {
+      "label": "Fairy Tale",
+      "description": "Enchanted storybook world of wonder",
+      "terms": {
+        "subject": [
+          "fairy",
+          "unicorn",
+          "young woman",
+          "witch",
+          "elf archer"
+        ],
+        "action": [
+          "dancing gracefully",
+          "flying through air",
+          "casting spell"
+        ],
+        "style": [
+          "illustration",
+          "watercolor painting",
+          "digital painting",
+          "rackham illustration"
+        ],
+        "environment": [
+          "enchanted forest",
+          "cherry blossom garden",
+          "floating islands",
+          "flower meadow",
+          "crystal cave"
+        ],
+        "lighting": [
+          "dappled light",
+          "bioluminescence",
+          "soft lighting",
+          "magic hour",
+          "volumetric lighting"
+        ],
+        "atmosphere": [
+          "whimsical",
+          "magical",
+          "ethereal",
+          "dreamlike",
+          "fantastical"
+        ],
+        "colour": [
+          "pastel palette",
+          "vibrant colours",
+          "jewel tones",
+          "iridescent"
+        ],
+        "materials": [
+          "silk shimmer",
+          "crystal clarity",
+          "gold leaf",
+          "gemstone facets"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "intricate details"
+        ]
+      }
+    },
+    "post-apocalyptic": {
+      "label": "Post-Apocalyptic",
+      "description": "Survival in a ruined civilization",
+      "terms": {
+        "subject": [
+          "portrait of a man",
+          "robot android"
+        ],
+        "action": [
+          "walking slowly",
+          "crouching low",
+          "looking away"
+        ],
+        "style": [
+          "concept art",
+          "matte painting",
+          "cinematic style",
+          "photorealistic"
+        ],
+        "environment": [
+          "abandoned factory",
+          "overgrown ruins",
+          "desert canyon",
+          "ghost town street"
+        ],
+        "lighting": [
+          "overcast sky",
+          "dramatic lighting",
+          "light fog atmosphere",
+          "sunset lighting"
+        ],
+        "atmosphere": [
+          "post-apocalyptic",
+          "ominous",
+          "melancholic",
+          "dusty environment",
+          "cold and stark"
+        ],
+        "colour": [
+          "desaturated",
+          "muted tones",
+          "earth tones",
+          "rust and sage"
+        ],
+        "materials": [
+          "iron rust",
+          "concrete texture",
+          "metal surface"
+        ]
+      }
+    },
+    "noir-detective": {
+      "label": "Noir Detective",
+      "description": "Gritty crime mystery in urban shadows",
+      "terms": {
+        "subject": [
+          "Victorian detective",
+          "portrait of a man"
+        ],
+        "action": [
+          "walking slowly",
+          "looking away",
+          "standing confidently"
+        ],
+        "style": [
+          "cinematic style",
+          "film noir"
+        ],
+        "environment": [
+          "rain-soaked alley",
+          "victorian parlor"
+        ],
+        "lighting": [
+          "split lighting",
+          "rim lighting",
+          "low key lighting",
+          "neon sign art"
+        ],
+        "atmosphere": [
+          "mysterious",
+          "tense",
+          "ominous",
+          "foggy atmosphere"
+        ],
+        "colour": [
+          "black and white",
+          "desaturated",
+          "high contrast",
+          "teal and orange"
+        ],
+        "camera": [
+          "dutch angle",
+          "close-up shot",
+          "low angle shot"
+        ]
+      }
+    },
+    "golden-hour-portrait": {
+      "label": "Golden Hour Portrait",
+      "description": "Warm natural light portrait photography",
+      "terms": {
+        "subject": [
+          "portrait of a woman",
+          "portrait of a man",
+          "young woman",
+          "couple in love"
+        ],
+        "action": [
+          "looking away",
+          "profile view",
+          "leaning against wall"
+        ],
+        "style": [
+          "portrait photography",
+          "cinematic style",
+          "photorealistic"
+        ],
+        "environment": [
+          "flower meadow",
+          "rooftop garden",
+          "sunset beach",
+          "rolling hills"
+        ],
+        "lighting": [
+          "golden hour",
+          "warm light 3200K",
+          "backlit",
+          "rim lighting",
+          "natural lighting"
+        ],
+        "atmosphere": [
+          "serene",
+          "romantic",
+          "nostalgic",
+          "warm and cozy"
+        ],
+        "colour": [
+          "warm tones",
+          "earth tones"
+        ],
+        "camera": [
+          "85mm lens",
+          "shallow depth of field",
+          "bokeh effect",
+          "medium shot"
+        ],
+        "materials": [
+          "linen texture",
+          "cotton weave"
+        ],
+        "fidelity": [
+          "sharp focus"
+        ]
+      }
+    },
+    "studio-portrait": {
+      "label": "Studio Portrait",
+      "description": "Professional controlled studio photography",
+      "terms": {
+        "subject": [
+          "portrait of a woman",
+          "portrait of a man",
+          "young woman"
+        ],
+        "action": [
+          "looking at camera",
+          "profile view"
+        ],
+        "style": [
+          "photorealistic",
+          "cinematic style",
+          "fashion photography",
+          "editorial style"
+        ],
+        "environment": [
+          "recording studio",
+          "dance studio"
+        ],
+        "lighting": [
+          "studio lighting",
+          "Rembrandt lighting",
+          "butterfly lighting",
+          "clamshell lighting",
+          "high key lighting"
+        ],
+        "atmosphere": [
+          "elegant",
+          "dramatic",
+          "calm"
+        ],
+        "colour": [
+          "monochrome",
+          "high contrast",
+          "desaturated",
+          "colour grading"
+        ],
+        "camera": [
+          "85mm lens",
+          "close-up shot",
+          "medium shot",
+          "shallow depth of field"
+        ],
+        "materials": [
+          "silk shimmer",
+          "velvet soft",
+          "satin sheen"
+        ],
+        "fidelity": [
+          "sharp focus",
+          "tack sharp",
+          "studio quality"
+        ]
+      }
+    },
+    "street-photography": {
+      "label": "Street Photography",
+      "description": "Candid urban documentary-style photography",
+      "terms": {
+        "subject": [
+          "photographer",
+          "portrait of a man",
+          "group of friends"
+        ],
+        "action": [
+          "walking slowly",
+          "running fast",
+          "looking away"
+        ],
+        "style": [
+          "street photography",
+          "photorealistic",
+          "documentary style"
+        ],
+        "environment": [
+          "suburban street",
+          "rain-soaked alley",
+          "neon-lit streets",
+          "bazaar marketplace"
+        ],
+        "lighting": [
+          "natural lighting",
+          "available light",
+          "neon sign art",
+          "overcast sky"
+        ],
+        "atmosphere": [
+          "energetic",
+          "contemplative",
+          "nostalgic",
+          "rainy mood"
+        ],
+        "colour": [
+          "muted tones",
+          "desaturated",
+          "teal and orange",
+          "monochrome"
+        ],
+        "camera": [
+          "35mm lens",
+          "wide shot",
+          "eye level shot",
+          "handheld camera feel"
+        ],
+        "fidelity": [
+          "sharp focus"
+        ]
+      }
+    },
+    "macro-nature": {
+      "label": "Macro Nature",
+      "description": "Extreme close-up nature photography",
+      "terms": {
+        "subject": [
+          "butterfly",
+          "flower bouquet",
+          "spider web"
+        ],
+        "style": [
+          "photorealistic",
+          "hyperrealistic"
+        ],
+        "environment": [
+          "flower meadow",
+          "zen garden",
+          "tropical jungle"
+        ],
+        "lighting": [
+          "natural lighting",
+          "dappled light",
+          "backlit",
+          "soft lighting"
+        ],
+        "atmosphere": [
+          "serene",
+          "magical",
+          "contemplative"
+        ],
+        "colour": [
+          "vibrant colours",
+          "jewel tones",
+          "warm tones"
+        ],
+        "camera": [
+          "macro lens",
+          "extreme close-up",
+          "shallow depth of field",
+          "bokeh effect"
+        ],
+        "materials": [
+          "petal softness",
+          "morning dew moist"
+        ],
+        "fidelity": [
+          "micro details",
+          "tack sharp",
+          "ultra detailed"
+        ]
+      }
+    },
+    "aerial-landscape": {
+      "label": "Aerial Landscape",
+      "description": "Sweeping aerial and drone photography",
+      "terms": {
+        "subject": [
+          "volcanic coastline"
+        ],
+        "style": [
+          "photorealistic",
+          "matte painting",
+          "cinematic style"
+        ],
+        "environment": [
+          "mountain peak",
+          "rolling hills",
+          "desert canyon",
+          "volcanic landscape",
+          "ocean depths"
+        ],
+        "lighting": [
+          "golden hour",
+          "sunrise lighting",
+          "dramatic lighting",
+          "overcast sky"
+        ],
+        "atmosphere": [
+          "dramatic",
+          "serene",
+          "peaceful",
+          "misty morning"
+        ],
+        "colour": [
+          "vibrant colours",
+          "earth tones",
+          "warm tones",
+          "cool tones"
+        ],
+        "camera": [
+          "drone photography",
+          "aerial shot",
+          "birds eye view",
+          "extreme wide shot",
+          "panoramic view"
+        ],
+        "composition": [
+          "leading lines",
+          "S-curve composition",
+          "atmospheric perspective"
+        ],
+        "fidelity": [
+          "8K resolution",
+          "sharp focus",
+          "crystal clear"
+        ]
+      }
+    },
+    "long-exposure": {
+      "label": "Long Exposure",
+      "description": "Light trails and motion blur night photography",
+      "terms": {
+        "subject": [
+          "cityscape",
+          "waterfall"
+        ],
+        "style": [
+          "light painting",
+          "photorealistic"
+        ],
+        "environment": [
+          "suburban street",
+          "sunset beach",
+          "mountain peak"
+        ],
+        "lighting": [
+          "neon glow",
+          "starlight",
+          "moonlight",
+          "ambient lighting"
+        ],
+        "atmosphere": [
+          "serene",
+          "mysterious",
+          "dreamlike",
+          "midnight darkness"
+        ],
+        "colour": [
+          "neon colours",
+          "cool tones",
+          "high contrast",
+          "teal and orange"
+        ],
+        "camera": [
+          "wide shot",
+          "long exposure"
+        ],
+        "materials": [
+          "glass transparency",
+          "water reflection"
+        ],
+        "fidelity": [
+          "sharp focus",
+          "crystal clear"
+        ]
+      }
+    },
+    "serene-nature": {
+      "label": "Serene Nature",
+      "description": "Peaceful natural landscapes and calm beauty",
+      "terms": {
+        "subject": [
+          "tree of life",
+          "flower bouquet",
+          "portrait of a man"
+        ],
+        "style": [
+          "watercolor painting",
+          "oil painting",
+          "impressionist"
+        ],
+        "environment": [
+          "flower meadow",
+          "zen garden",
+          "bamboo grove",
+          "alpine meadow",
+          "cherry blossom garden"
+        ],
+        "lighting": [
+          "golden hour",
+          "dappled light",
+          "soft lighting",
+          "natural lighting",
+          "sunrise lighting"
+        ],
+        "atmosphere": [
+          "serene",
+          "peaceful",
+          "calm",
+          "contemplative",
+          "misty morning"
+        ],
+        "colour": [
+          "pastel palette",
+          "earth tones",
+          "warm tones",
+          "muted tones"
+        ],
+        "materials": [
+          "wood grain",
+          "stone surface",
+          "linen texture"
+        ],
+        "camera": [
+          "wide shot",
+          "shallow depth of field"
+        ],
+        "fidelity": [
+          "soft focus artistic",
+          "dreamy soft"
+        ]
+      }
+    },
+    "dark-moody": {
+      "label": "Dark & Moody",
+      "description": "Brooding shadowy atmosphere with drama",
+      "terms": {
+        "subject": [
+          "portrait of a man",
+          "raven"
+        ],
+        "action": [
+          "looking away",
+          "standing confidently",
+          "back turned"
+        ],
+        "style": [
+          "cinematic style",
+          "digital painting"
+        ],
+        "environment": [
+          "dark forest",
+          "abandoned factory",
+          "rain-soaked alley"
+        ],
+        "lighting": [
+          "low key lighting",
+          "rim lighting",
+          "split lighting",
+          "chiaroscuro",
+          "light fog atmosphere"
+        ],
+        "atmosphere": [
+          "dark and brooding",
+          "melancholic",
+          "moody",
+          "ominous",
+          "foggy atmosphere"
+        ],
+        "colour": [
+          "desaturated",
+          "monochrome",
+          "high contrast",
+          "low contrast"
+        ],
+        "materials": [
+          "leather texture",
+          "iron rust",
+          "concrete texture"
+        ],
+        "camera": [
+          "close-up shot",
+          "dutch angle",
+          "shallow depth of field"
+        ]
+      }
+    },
+    "vibrant-energetic": {
+      "label": "Vibrant & Energetic",
+      "description": "Bold colours and dynamic action-packed scenes",
+      "terms": {
+        "subject": [
+          "dancer",
+          "street performer"
+        ],
+        "action": [
+          "dancing gracefully",
+          "jumping high",
+          "running fast",
+          "spinning around",
+          "mid-leap"
+        ],
+        "style": [
+          "pop art",
+          "digital painting",
+          "comic book style",
+          "anime style"
+        ],
+        "environment": [
+          "neon-lit streets",
+          "neon arcade",
+          "baseball stadium"
+        ],
+        "lighting": [
+          "neon glow",
+          "strobe effect",
+          "hard lighting",
+          "LED lighting"
+        ],
+        "atmosphere": [
+          "energetic",
+          "chaotic",
+          "joyful",
+          "uplifting"
+        ],
+        "colour": [
+          "vibrant colours",
+          "neon colours",
+          "high contrast",
+          "complementary colours"
+        ],
+        "materials": [
+          "chrome reflection",
+          "sequin sparkle"
+        ],
+        "camera": [
+          "low angle shot",
+          "wide shot",
+          "dutch angle"
+        ],
+        "composition": [
+          "diagonal lines",
+          "dynamic tension",
+          "leading lines"
+        ]
+      }
+    },
+    "misty-mysterious": {
+      "label": "Misty & Mysterious",
+      "description": "Fog-shrouded scenes with hidden depth",
+      "terms": {
+        "subject": [
+          "portrait of a man",
+          "lighthouse beacon",
+          "ancient ruins"
+        ],
+        "style": [
+          "cinematic style",
+          "matte painting",
+          "oil painting"
+        ],
+        "environment": [
+          "misty woods",
+          "dark forest",
+          "mountain peak",
+          "ocean depths"
+        ],
+        "lighting": [
+          "light fog atmosphere",
+          "overcast sky",
+          "moonlight",
+          "diffused light",
+          "blue hour"
+        ],
+        "atmosphere": [
+          "mysterious",
+          "eerie",
+          "foggy atmosphere",
+          "misty morning",
+          "haunting"
+        ],
+        "colour": [
+          "desaturated",
+          "cool tones",
+          "muted tones",
+          "monochrome"
+        ],
+        "materials": [
+          "stone surface",
+          "moss green"
+        ],
+        "camera": [
+          "wide shot",
+          "establishing shot"
+        ],
+        "fidelity": [
+          "soft focus artistic"
+        ]
+      }
+    },
+    "warm-nostalgic": {
+      "label": "Warm & Nostalgic",
+      "description": "Vintage warmth evoking memory and sentiment",
+      "terms": {
+        "subject": [
+          "elderly couple",
+          "grandmother",
+          "family portrait",
+          "child playing"
+        ],
+        "action": [
+          "embracing someone",
+          "sitting relaxed",
+          "laughing heartily"
+        ],
+        "style": [
+          "portrait photography",
+          "daguerreotype",
+          "oil painting",
+          "polaroid instant"
+        ],
+        "environment": [
+          "victorian greenhouse",
+          "country kitchen",
+          "flower meadow"
+        ],
+        "lighting": [
+          "golden hour",
+          "warm light 3200K",
+          "candlelight",
+          "window light"
+        ],
+        "atmosphere": [
+          "nostalgic",
+          "romantic",
+          "warm and cozy",
+          "peaceful",
+          "joyful"
+        ],
+        "colour": [
+          "warm tones",
+          "sepia toned",
+          "earth tones",
+          "muted tones"
+        ],
+        "materials": [
+          "wood grain",
+          "linen texture",
+          "wool felt",
+          "leather texture"
+        ],
+        "camera": [
+          "medium shot",
+          "shallow depth of field",
+          "85mm lens"
+        ],
+        "fidelity": [
+          "soft focus artistic"
+        ]
+      }
+    },
+    "cold-desolate": {
+      "label": "Cold & Desolate",
+      "description": "Frozen barren landscapes of isolation",
+      "terms": {
+        "subject": [
+          "portrait of a man",
+          "polar bear",
+          "wolf"
+        ],
+        "style": [
+          "photorealistic",
+          "matte painting",
+          "cinematic style"
+        ],
+        "environment": [
+          "snowy summit",
+          "ice cave",
+          "arctic tundra"
+        ],
+        "lighting": [
+          "overcast sky",
+          "blue hour",
+          "diffused light",
+          "moonlight"
+        ],
+        "atmosphere": [
+          "cold and stark",
+          "melancholic",
+          "serene",
+          "snowy silence"
+        ],
+        "colour": [
+          "cool tones",
+          "monochrome",
+          "desaturated",
+          "silver and blue"
+        ],
+        "materials": [
+          "crystal clarity",
+          "steel brushed"
+        ],
+        "fidelity": [
+          "8K resolution",
+          "sharp focus"
+        ]
+      }
+    },
+    "ancient-civilization": {
+      "label": "Ancient Civilization",
+      "description": "Egypt, Greece, Rome and ancient cultures",
+      "terms": {
+        "subject": [
+          "gladiator",
+          "centaur"
+        ],
+        "action": [
+          "standing confidently",
+          "holding weapon",
+          "praying hands"
+        ],
+        "style": [
+          "concept art",
+          "matte painting",
+          "hyperrealistic",
+          "oil painting"
+        ],
+        "environment": [
+          "egyptian pyramid",
+          "greek ruins",
+          "roman colosseum",
+          "ancient temple"
+        ],
+        "lighting": [
+          "midday sun",
+          "dramatic lighting",
+          "firelight",
+          "golden hour"
+        ],
+        "atmosphere": [
+          "ancient",
+          "dramatic",
+          "mystical",
+          "dusty environment"
+        ],
+        "colour": [
+          "earth tones",
+          "warm tones",
+          "jewel tones",
+          "sepia toned"
+        ],
+        "materials": [
+          "stone surface",
+          "marble texture",
+          "gold leaf",
+          "bronze age"
+        ]
+      }
+    },
+    "medieval-fantasy": {
+      "label": "Medieval Fantasy",
+      "description": "Castles, knights and feudal kingdoms",
+      "terms": {
+        "subject": [
+          "knight in armour",
+          "dragon",
+          "wizard",
+          "queen on throne"
+        ],
+        "action": [
+          "holding weapon",
+          "swinging sword",
+          "casting spell"
+        ],
+        "style": [
+          "concept art",
+          "oil painting",
+          "digital painting",
+          "high fantasy"
+        ],
+        "environment": [
+          "medieval castle",
+          "dark forest",
+          "enchanted forest",
+          "mountain peak"
+        ],
+        "lighting": [
+          "candlelight",
+          "firelight",
+          "volumetric lighting",
+          "dramatic lighting"
+        ],
+        "atmosphere": [
+          "dramatic",
+          "mysterious",
+          "ominous",
+          "magical"
+        ],
+        "colour": [
+          "earth tones",
+          "jewel tones",
+          "warm tones",
+          "red and black"
+        ],
+        "materials": [
+          "metal surface",
+          "leather texture",
+          "stone surface",
+          "wood grain"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "intricate details"
+        ]
+      }
+    },
+    "renaissance-classical": {
+      "label": "Renaissance Classical",
+      "description": "Classical painting and sculpture aesthetic",
+      "terms": {
+        "subject": [
+          "angel with wings",
+          "young woman",
+          "portrait of a man"
+        ],
+        "action": [
+          "looking at camera",
+          "reaching out",
+          "looking away"
+        ],
+        "style": [
+          "renaissance style",
+          "oil painting",
+          "baroque style",
+          "magical realism"
+        ],
+        "environment": [
+          "baroque palace",
+          "greek ruins",
+          "mansion estate"
+        ],
+        "lighting": [
+          "chiaroscuro",
+          "soft lighting",
+          "candlelight",
+          "Rembrandt lighting"
+        ],
+        "atmosphere": [
+          "elegant",
+          "contemplative",
+          "dramatic",
+          "serene"
+        ],
+        "colour": [
+          "warm tones",
+          "earth tones",
+          "muted tones",
+          "jewel tones"
+        ],
+        "materials": [
+          "marble texture",
+          "gold leaf",
+          "velvet soft",
+          "silk shimmer"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "museum quality",
+          "masterpiece"
+        ]
+      }
+    },
+    "victorian-era": {
+      "label": "Victorian Era",
+      "description": "19th century British society",
+      "terms": {
+        "subject": [
+          "Victorian detective",
+          "young woman"
+        ],
+        "action": [
+          "reading intently",
+          "standing confidently",
+          "walking slowly"
+        ],
+        "style": [
+          "daguerreotype",
+          "oil painting",
+          "cinematic style"
+        ],
+        "environment": [
+          "victorian greenhouse",
+          "gothic cathedral",
+          "baroque palace",
+          "victorian parlor"
+        ],
+        "lighting": [
+          "candlelight",
+          "gas lamp light",
+          "light fog atmosphere",
+          "overcast sky"
+        ],
+        "atmosphere": [
+          "mysterious",
+          "nostalgic",
+          "foggy atmosphere",
+          "melancholic"
+        ],
+        "colour": [
+          "sepia toned",
+          "muted tones",
+          "desaturated",
+          "earth tones"
+        ],
+        "materials": [
+          "leather texture",
+          "velvet soft",
+          "brass polish",
+          "wood grain"
+        ]
+      }
+    },
+    "1920s-art-deco": {
+      "label": "1920s Jazz Age",
+      "description": "Roaring Twenties glamour",
+      "terms": {
+        "subject": [
+          "young woman",
+          "dancer",
+          "couple in love"
+        ],
+        "action": [
+          "dancing gracefully",
+          "looking at camera"
+        ],
+        "style": [
+          "art deco",
+          "cinematic style",
+          "daguerreotype"
+        ],
+        "environment": [
+          "mansion estate",
+          "rooftop garden",
+          "jazz club interior"
+        ],
+        "lighting": [
+          "chandelier sparkle",
+          "warm light 3200K",
+          "spotlight"
+        ],
+        "atmosphere": [
+          "elegant",
+          "romantic",
+          "nostalgic",
+          "energetic"
+        ],
+        "colour": [
+          "metallic accents",
+          "white and gold",
+          "sepia toned",
+          "high contrast"
+        ],
+        "materials": [
+          "gold leaf",
+          "silk shimmer",
+          "velvet soft",
+          "chrome reflection"
+        ],
+        "composition": [
+          "geometric patterns",
+          "symmetrical composition"
+        ]
+      }
+    },
+    "1980s-retro": {
+      "label": "1980s Retro",
+      "description": "Neon-soaked arcade and pop culture nostalgia",
+      "terms": {
+        "subject": [
+          "teenager",
+          "robot android",
+          "street performer"
+        ],
+        "action": [
+          "dancing gracefully",
+          "running fast",
+          "playing instrument"
+        ],
+        "style": [
+          "synthwave",
+          "retro futurism",
+          "pop art",
+          "neon sign art"
+        ],
+        "environment": [
+          "neon-lit streets",
+          "neon arcade",
+          "suburban street"
+        ],
+        "lighting": [
+          "neon glow",
+          "LED lighting",
+          "sunset lighting",
+          "fluorescent light"
+        ],
+        "atmosphere": [
+          "energetic",
+          "nostalgic",
+          "dreamlike",
+          "futuristic"
+        ],
+        "colour": [
+          "neon colours",
+          "pink and teal",
+          "vibrant colours",
+          "high contrast"
+        ],
+        "materials": [
+          "chrome reflection",
+          "glass transparency"
+        ],
+        "composition": [
+          "geometric patterns",
+          "diagonal lines"
+        ]
+      }
+    },
+    "oil-painting": {
+      "label": "Oil Painting",
+      "description": "Traditional oil painting technique and aesthetic",
+      "terms": {
+        "subject": [
+          "portrait of a woman",
+          "flower bouquet"
+        ],
+        "style": [
+          "oil painting",
+          "impressionist",
+          "baroque style",
+          "renaissance style"
+        ],
+        "environment": [
+          "flower meadow",
+          "rolling hills",
+          "baroque palace"
+        ],
+        "lighting": [
+          "golden hour",
+          "soft lighting",
+          "chiaroscuro",
+          "Rembrandt lighting",
+          "natural lighting"
+        ],
+        "atmosphere": [
+          "serene",
+          "contemplative",
+          "romantic",
+          "dramatic"
+        ],
+        "colour": [
+          "warm tones",
+          "earth tones",
+          "muted tones"
+        ],
+        "materials": [
+          "canvas texture",
+          "oil paint impasto",
+          "linen texture"
+        ],
+        "fidelity": [
+          "museum quality",
+          "masterpiece"
+        ]
+      }
+    },
+    "watercolor": {
+      "label": "Watercolor",
+      "description": "Delicate transparent watercolor painting style",
+      "terms": {
+        "subject": [
+          "flower bouquet",
+          "butterfly"
+        ],
+        "style": [
+          "watercolor painting",
+          "illustration"
+        ],
+        "environment": [
+          "flower meadow",
+          "cherry blossom garden",
+          "zen garden"
+        ],
+        "lighting": [
+          "soft lighting",
+          "natural lighting",
+          "dappled light"
+        ],
+        "atmosphere": [
+          "ethereal",
+          "serene",
+          "whimsical",
+          "light and airy"
+        ],
+        "colour": [
+          "pastel palette",
+          "muted tones",
+          "warm tones",
+          "cool tones"
+        ],
+        "materials": [
+          "paper texture"
+        ],
+        "fidelity": [
+          "soft focus artistic",
+          "dreamy soft"
+        ]
+      }
+    },
+    "digital-3d": {
+      "label": "Digital 3D",
+      "description": "3D rendering and CGI visual effects",
+      "terms": {
+        "subject": [
+          "robot android",
+          "spaceship"
+        ],
+        "style": [
+          "3D render",
+          "CGI",
+          "Unreal Engine",
+          "Octane render",
+          "low poly",
+          "isometric"
+        ],
+        "environment": [
+          "cyberpunk city",
+          "space station"
+        ],
+        "lighting": [
+          "volumetric lighting",
+          "LED lighting",
+          "studio lighting"
+        ],
+        "atmosphere": [
+          "futuristic",
+          "dramatic",
+          "cold and stark"
+        ],
+        "colour": [
+          "teal and orange",
+          "neon colours",
+          "high contrast",
+          "metallic accents"
+        ],
+        "materials": [
+          "chrome reflection",
+          "glass transparency",
+          "titanium matte",
+          "steel brushed"
+        ],
+        "fidelity": [
+          "ray tracing",
+          "8K resolution",
+          "ultra detailed",
+          "photorealistic"
+        ]
+      }
+    },
+    "pixel-art": {
+      "label": "Pixel Art",
+      "description": "Retro pixel art and 8-bit game aesthetic",
+      "terms": {
+        "subject": [
+          "robot android",
+          "knight in armour",
+          "wizard"
+        ],
+        "action": [
+          "running fast",
+          "jumping high",
+          "casting spell"
+        ],
+        "style": [
+          "pixel art",
+          "voxel art",
+          "low poly"
+        ],
+        "environment": [
+          "medieval castle",
+          "cyberpunk city",
+          "enchanted forest"
+        ],
+        "lighting": [
+          "flat lighting",
+          "neon glow"
+        ],
+        "atmosphere": [
+          "energetic",
+          "whimsical",
+          "nostalgic"
+        ],
+        "colour": [
+          "vibrant colours",
+          "neon colours",
+          "pastel palette",
+          "high contrast"
+        ],
+        "fidelity": [
+          "pixel perfect",
+          "crisp details"
+        ]
+      }
+    },
+    "anime-style": {
+      "label": "Anime Style",
+      "description": "Japanese anime and manga illustration aesthetic",
+      "terms": {
+        "subject": [
+          "samurai warrior",
+          "young woman",
+          "elf archer",
+          "mech pilot"
+        ],
+        "action": [
+          "fighting fiercely",
+          "casting spell",
+          "mid-leap",
+          "swinging sword",
+          "lunging forward"
+        ],
+        "style": [
+          "anime style",
+          "manga style",
+          "anime cel shaded",
+          "digital painting"
+        ],
+        "environment": [
+          "samurai dojo",
+          "cherry blossom garden",
+          "cyberpunk city"
+        ],
+        "lighting": [
+          "dramatic lighting",
+          "volumetric lighting",
+          "neon glow",
+          "sunset lighting"
+        ],
+        "atmosphere": [
+          "dramatic",
+          "energetic",
+          "ethereal",
+          "whimsical"
+        ],
+        "colour": [
+          "vibrant colours",
+          "pastel palette",
+          "neon colours",
+          "high contrast"
+        ],
+        "camera": [
+          "low angle shot",
+          "dutch angle",
+          "extreme close-up",
+          "wide shot"
+        ],
+        "composition": [
+          "dynamic tension",
+          "diagonal lines"
+        ],
+        "fidelity": [
+          "clean lines"
+        ]
+      }
+    },
+    "sketch-ink": {
+      "label": "Sketch & Ink",
+      "description": "Hand-drawn pen and ink illustration style",
+      "terms": {
+        "subject": [
+          "portrait of a woman",
+          "portrait of a man",
+          "architect"
+        ],
+        "style": [
+          "sketch style",
+          "line art",
+          "ink wash",
+          "charcoal drawing",
+          "pencil drawing"
+        ],
+        "environment": [
+          "suburban street",
+          "victorian parlor"
+        ],
+        "lighting": [
+          "natural lighting",
+          "overcast sky",
+          "soft lighting"
+        ],
+        "atmosphere": [
+          "contemplative",
+          "melancholic",
+          "nostalgic"
+        ],
+        "colour": [
+          "monochrome",
+          "black and white",
+          "sepia toned",
+          "desaturated"
+        ],
+        "materials": [
+          "paper texture",
+          "canvas texture"
+        ],
+        "fidelity": [
+          "fine details",
+          "intricate details",
+          "clean lines"
+        ]
+      }
+    },
+    "food-still-life": {
+      "label": "Food & Still Life",
+      "description": "Food photography and traditional still life",
+      "terms": {
+        "subject": [
+          "flower bouquet"
+        ],
+        "style": [
+          "photorealistic",
+          "oil painting",
+          "hyperrealistic"
+        ],
+        "environment": [
+          "country kitchen"
+        ],
+        "lighting": [
+          "natural lighting",
+          "soft lighting",
+          "window light",
+          "Rembrandt lighting"
+        ],
+        "atmosphere": [
+          "warm and cozy",
+          "serene",
+          "elegant"
+        ],
+        "colour": [
+          "warm tones",
+          "earth tones",
+          "vibrant colours"
+        ],
+        "materials": [
+          "ceramic glaze",
+          "wood grain",
+          "linen texture",
+          "glass transparency"
+        ],
+        "camera": [
+          "close-up shot",
+          "macro lens",
+          "shallow depth of field",
+          "overhead shot"
+        ],
+        "composition": [
+          "rule of thirds",
+          "centered subject",
+          "negative space emphasis"
+        ],
+        "fidelity": [
+          "tack sharp",
+          "micro details"
+        ]
+      }
+    },
+    "architecture-interior": {
+      "label": "Architecture & Interior",
+      "description": "Architectural photography and interior design",
+      "terms": {
+        "subject": [
+          "architect"
+        ],
+        "style": [
+          "photorealistic",
+          "architectural photography",
+          "minimalist",
+          "brutalist"
+        ],
+        "environment": [
+          "gothic cathedral",
+          "baroque palace",
+          "minimalist apartment",
+          "mansion estate"
+        ],
+        "lighting": [
+          "natural lighting",
+          "studio lighting",
+          "volumetric lighting",
+          "god rays"
+        ],
+        "atmosphere": [
+          "elegant",
+          "contemplative",
+          "serene",
+          "cold and stark"
+        ],
+        "colour": [
+          "monochrome",
+          "warm tones",
+          "cool tones",
+          "metallic accents"
+        ],
+        "materials": [
+          "marble texture",
+          "concrete texture",
+          "glass transparency",
+          "wood grain",
+          "steel brushed"
+        ],
+        "camera": [
+          "wide shot",
+          "extreme wide shot",
+          "low angle shot"
+        ],
+        "composition": [
+          "leading lines",
+          "symmetrical composition",
+          "one-point perspective",
+          "geometric patterns"
+        ],
+        "fidelity": [
+          "8K resolution",
+          "sharp focus",
+          "architecturally accurate"
+        ]
+      }
+    },
+    "wildlife-animal": {
+      "label": "Wildlife & Animal",
+      "description": "Wild animal photography and illustration",
+      "terms": {
+        "subject": [
+          "wolf",
+          "eagle soaring",
+          "lion",
+          "polar bear"
+        ],
+        "action": [
+          "running fast",
+          "standing confidently"
+        ],
+        "style": [
+          "photorealistic",
+          "hyperrealistic",
+          "oil painting",
+          "concept art"
+        ],
+        "environment": [
+          "savanna grassland",
+          "dark forest",
+          "mountain peak",
+          "arctic tundra"
+        ],
+        "lighting": [
+          "golden hour",
+          "natural lighting",
+          "dramatic lighting",
+          "sunrise lighting"
+        ],
+        "atmosphere": [
+          "dramatic",
+          "serene",
+          "tense",
+          "peaceful"
+        ],
+        "colour": [
+          "earth tones",
+          "warm tones",
+          "muted tones",
+          "vibrant colours"
+        ],
+        "camera": [
+          "telephoto compression",
+          "close-up shot",
+          "eye level shot"
+        ],
+        "fidelity": [
+          "ultra detailed",
+          "sharp focus",
+          "zoologically accurate"
+        ]
+      }
+    },
+    "mech-robot": {
+      "label": "Mech & Robot",
+      "description": "Giant mechs and robotic characters",
+      "terms": {
+        "subject": [
+          "robot android",
+          "mech pilot"
+        ],
+        "action": [
+          "fighting fiercely",
+          "standing confidently",
+          "flying through air"
+        ],
+        "style": [
+          "concept art",
+          "digital painting",
+          "sci-fi",
+          "anime style"
+        ],
+        "environment": [
+          "cyberpunk city",
+          "abandoned factory"
+        ],
+        "lighting": [
+          "LED lighting",
+          "neon glow",
+          "dramatic lighting",
+          "volumetric lighting"
+        ],
+        "atmosphere": [
+          "dramatic",
+          "energetic",
+          "futuristic",
+          "ominous"
+        ],
+        "colour": [
+          "metallic accents",
+          "teal and orange",
+          "neon colours"
+        ],
+        "materials": [
+          "chrome reflection",
+          "steel brushed",
+          "titanium matte",
+          "iron rust"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "intricate details",
+          "8K resolution"
+        ]
+      }
+    },
+    "mythical-creature": {
+      "label": "Mythical Creature",
+      "description": "Dragons, phoenixes and legendary beasts",
+      "terms": {
+        "subject": [
+          "dragon",
+          "phoenix rising",
+          "griffin",
+          "unicorn",
+          "centaur"
+        ],
+        "action": [
+          "flying through air",
+          "fighting fiercely",
+          "casting spell"
+        ],
+        "style": [
+          "concept art",
+          "digital painting",
+          "oil painting",
+          "high fantasy"
+        ],
+        "environment": [
+          "mountain peak",
+          "volcanic landscape",
+          "enchanted forest",
+          "floating islands"
+        ],
+        "lighting": [
+          "dramatic lighting",
+          "firelight",
+          "volumetric lighting",
+          "bioluminescence"
+        ],
+        "atmosphere": [
+          "dramatic",
+          "mystical",
+          "magical",
+          "ominous"
+        ],
+        "colour": [
+          "jewel tones",
+          "vibrant colours",
+          "warm tones"
+        ],
+        "materials": [
+          "gemstone facets",
+          "gold leaf",
+          "metal surface"
+        ],
+        "fidelity": [
+          "highly detailed",
+          "intricate details",
+          "8K resolution"
+        ]
+      }
+    },
+    "urban-street": {
+      "label": "Urban Street",
+      "description": "Gritty city life and urban culture",
+      "terms": {
+        "subject": [
+          "photographer",
+          "street performer",
+          "teenager"
+        ],
+        "action": [
+          "walking slowly",
+          "running fast",
+          "leaning against wall"
+        ],
+        "style": [
+          "street art",
+          "graffiti art",
+          "street photography",
+          "photorealistic"
+        ],
+        "environment": [
+          "suburban street",
+          "neon-lit streets",
+          "rain-soaked alley",
+          "bazaar marketplace"
+        ],
+        "lighting": [
+          "neon sign art",
+          "available light",
+          "overcast sky",
+          "neon glow"
+        ],
+        "atmosphere": [
+          "energetic",
+          "moody",
+          "rainy mood",
+          "foggy atmosphere"
+        ],
+        "colour": [
+          "muted tones",
+          "teal and orange",
+          "desaturated",
+          "vibrant colours"
+        ],
+        "materials": [
+          "concrete texture",
+          "brick pattern",
+          "metal surface"
+        ],
+        "camera": [
+          "35mm lens",
+          "wide shot",
+          "handheld camera feel"
+        ]
+      }
+    }
+  }
+}

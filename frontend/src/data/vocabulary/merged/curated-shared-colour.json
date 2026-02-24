@@ -1,0 +1,36 @@
+{
+  "$schema": "vocabulary-merged",
+  "version": "1.0.0",
+  "meta": {
+    "domain": "merged",
+    "source": "shared-adjectives",
+    "category": "colour",
+    "label": "Colour (Shared Adjectives Merged)",
+    "totalOptions": 22,
+    "updated": "2026-02-24"
+  },
+  "options": [
+    "bold",
+    "deep",
+    "delicate",
+    "earthy",
+    "electric",
+    "fluorescent",
+    "grayscale",
+    "intense",
+    "kaleidoscopic",
+    "metallic",
+    "multicolored",
+    "muted",
+    "neon",
+    "pale",
+    "pastel",
+    "psychedelic",
+    "punchy",
+    "rich",
+    "striking",
+    "vibrant",
+    "vivid",
+    "washed-out"
+  ]
+}

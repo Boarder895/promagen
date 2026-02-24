@@ -76,6 +76,7 @@ import { AspectRatioSelector } from '@/components/providers/aspect-ratio-selecto
 import { CompositionModeToggle } from '@/components/composition-mode-toggle';
 import { TextLengthOptimizer } from '@/components/providers/text-length-optimizer';
 import { LengthIndicator } from '@/components/providers/length-indicator';
+import { OptimizationTransparencyPanel } from '@/components/providers/optimization-transparency-panel';
 import { usePromagenAuth, type PromptLockState } from '@/hooks/use-promagen-auth';
 import { useCompositionMode } from '@/hooks/use-composition-mode';
 import { usePromptOptimization } from '@/hooks/use-prompt-optimization';
@@ -678,7 +679,35 @@ export function PromptBuilder({
   const allowNegativeFreeText = supportsNativeNegative(platformId);
   const _hasNativeAR = platformSupportsAR(platformId, aspectRatio ?? '1:1');
   const isMjFamily = MIDJOURNEY_FAMILY.includes(platformId.toLowerCase());
-  const _platformTier = platformTier; // For potential UI display
+
+  // Tier badge config — tells users what prompt style this platform expects
+  const tierBadge =
+    {
+      1: {
+        label: 'CLIP-Based',
+        bg: 'bg-blue-500/15',
+        text: 'text-blue-400',
+        ring: 'ring-blue-500/30',
+      },
+      2: {
+        label: 'Midjourney',
+        bg: 'bg-purple-500/15',
+        text: 'text-purple-400',
+        ring: 'ring-purple-500/30',
+      },
+      3: {
+        label: 'Natural Language',
+        bg: 'bg-emerald-500/15',
+        text: 'text-emerald-400',
+        ring: 'ring-emerald-500/30',
+      },
+      4: {
+        label: 'Plain Language',
+        bg: 'bg-orange-500/15',
+        text: 'text-orange-400',
+        ring: 'ring-orange-500/30',
+      },
+    }[platformTier] ?? null;
 
   // Build selections object from category state
   const selections = useMemo<PromptSelections>(() => {
@@ -722,6 +751,18 @@ export function PromptBuilder({
 
   const hasContent = promptText.trim().length > 0;
 
+  // Build selections that include composition pack terms so the optimizer
+  // can see (and trim) composition content when needed. Without this,
+  // composition text is invisible to applyCategoryTrimming and survives
+  // while creative content gets destroyed.
+  const selectionsForOptimizer = useMemo((): PromptSelections => {
+    if (!compositionPack?.terms?.length) return selections;
+    return {
+      ...selections,
+      composition: [...(selections.composition ?? []), ...compositionPack.terms],
+    };
+  }, [selections, compositionPack]);
+
   // ============================================================================
   // Text Length Optimizer Hook
   // ============================================================================
@@ -736,7 +777,7 @@ export function PromptBuilder({
   } = usePromptOptimization({
     platformId,
     promptText,
-    selections,
+    selections: selectionsForOptimizer,
     isMidjourneyFamily: isMjFamily,
     compositionMode,
   });
@@ -826,6 +867,9 @@ export function PromptBuilder({
     // Only reorder if there's content (context to base ordering on)
     if (!hasContent) return map;
 
+    // Performance measurement (Phase 1.7) — target: <16ms (one frame)
+    const start = typeof performance !== 'undefined' ? performance.now() : 0;
+
     const categories = getAllCategories();
     for (const category of categories) {
       if (category === 'negative') continue; // Skip negative, doesn't benefit from reorder
@@ -833,16 +877,25 @@ export function PromptBuilder({
       const config = getEnhancedCategoryConfig(category);
       if (!config || config.options.length === 0) continue;
 
-      // Reorder options based on current selections + live market mood
+      // Reorder options based on current selections + live market mood + tier
       const scoredOptions = reorderByRelevance(
         config.options,
         category,
         selections,
         isMarketMoodEnabled,
         marketState,
+        platformTier,
       );
 
       map.set(category, scoredOptions);
+    }
+
+    // Log warning if reorder exceeds one frame budget
+    if (typeof performance !== 'undefined' && process.env.NODE_ENV === 'development') {
+      const elapsed = performance.now() - start;
+      if (elapsed > 16) {
+        console.warn(`[Cascade] Reorder took ${elapsed.toFixed(1)}ms (target: <16ms) — ${map.size} categories`);
+      }
     }
 
     return map;
@@ -852,6 +905,7 @@ export function PromptBuilder({
     intelligencePrefs.liveReorderEnabled,
     isMarketMoodEnabled,
     marketState,
+    platformTier,
   ]);
 
   // Helper to get options for a category (reordered if available)
@@ -1088,6 +1142,16 @@ export function PromptBuilder({
                 <h2 className="text-lg font-semibold text-slate-50">
                   {provider.name} · Prompt builder
                 </h2>
+              )}
+
+              {/* Tier badge — shows prompt style this platform expects */}
+              {tierBadge && (
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${tierBadge.bg} ${tierBadge.text} ${tierBadge.ring}`}
+                  title={`Tier ${platformTier}: ${tierBadge.label} — this platform works best with ${platformTier <= 2 ? 'keyword-based' : 'natural language'} prompts`}
+                >
+                  {tierBadge.label}
+                </span>
               )}
 
               {/* Composition mode toggle */}
@@ -1339,28 +1403,48 @@ export function PromptBuilder({
             </div>
 
             {/* ============================================================ */}
-            {/* Optimization Section - Shows when enabled AND prompt was changed */}
-            {/* FIX v7.1.1: Changed from wasTrimmed to wasOptimized (length comparison) */}
+            {/* Optimization Section - Shows when optimizer is enabled */}
+            {/* Shows amber bar when prompt will be trimmed on copy */}
+            {/* Shows green bar when prompt is already within optimal range */}
             {/* ============================================================ */}
             {hasContent && isOptimizerEnabled && wasOptimized && (
               <div className="flex flex-col gap-2 mt-2">
-                {/* Info bar: "Optimizing on copy: X → Y chars" */}
+                {/* Info bar: "Optimized: X → Y chars" + removed terms */}
                 <div className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-amber-400">↓</span>
-                      <span className="text-xs text-amber-200">
-                        <span className="font-medium">Optimizing on copy:</span>{' '}
-                        {optimizedResult.originalLength} → {optimizedResult.optimizedLength} chars
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400">↓</span>
+                    <span className="text-xs text-amber-200">
+                      <span className="font-medium">Optimized:</span>{' '}
+                      {optimizedResult.originalLength} → {optimizedResult.optimizedLength} chars{' '}
+                      <span className="text-amber-400/60">
+                        (saved {optimizedResult.originalLength - optimizedResult.optimizedLength})
                       </span>
-                    </div>
-                    {optimizedResult.removedCategories.length > 0 && (
-                      <span className="text-[10px] text-amber-400/70">
-                        Trimmed: {optimizedResult.removedCategories.join(', ')}
-                      </span>
-                    )}
+                    </span>
                   </div>
+                  {/* Show what was removed and why */}
+                  {optimizedResult.removedTermNames &&
+                    optimizedResult.removedTermNames.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {optimizedResult.removedTermNames.map((name, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center rounded-md bg-amber-900/30 px-1.5 py-0.5 text-[10px] text-amber-300/80"
+                          >
+                            ✕ {name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                 </div>
+
+                {/* Phase D: Optimization Transparency Panel (Pro-only) */}
+                <OptimizationTransparencyPanel
+                  removedTerms={optimizedResult.removedTerms ?? []}
+                  achievedAtPhase={optimizedResult.achievedAtPhase ?? -1}
+                  originalLength={optimizedResult.originalLength}
+                  optimizedLength={optimizedResult.optimizedLength}
+                  isPro={userTier === 'paid'}
+                />
 
                 {/* Optimized prompt preview box - SAME STYLING as Assembled prompt */}
                 <div className="flex items-center justify-between">
@@ -1375,22 +1459,47 @@ export function PromptBuilder({
                   </pre>
                 </div>
 
-                {/* Length indicator with status */}
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">
-                    Original: {optimizedResult.originalLength} → Optimized:{' '}
-                    {optimizedResult.optimizedLength}
-                  </span>
-                  <span className="text-amber-400">Will optimize</span>
-                </div>
-                <p className="text-[10px] text-amber-400/70">↓ Prompt will be optimized on copy</p>
+                {/* Length indicator */}
+                <LengthIndicator
+                  analysis={analysis}
+                  isOptimizerEnabled={isOptimizerEnabled}
+                  optimizedLength={optimizedResult.optimizedLength}
+                  willTrim={true}
+                />
               </div>
             )}
 
-            {/* Length indicator when optimizer enabled but NO changes made */}
-            {/* FIX v7.1.1: Changed from !wasTrimmed to !wasOptimized */}
+            {/* Optimized preview when optimizer enabled but prompt is already optimal */}
             {hasContent && isOptimizerEnabled && !wasOptimized && (
-              <div className="mt-1">
+              <div className="flex flex-col gap-2 mt-2">
+                {/* Info bar: "Already within optimal range" */}
+                <div className="rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400">✓</span>
+                      <span className="text-xs text-emerald-200">
+                        <span className="font-medium">Within optimal range</span> —{' '}
+                        {optimizedResult.optimizedLength} chars
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-emerald-400/70">No trimming needed</span>
+                  </div>
+                </div>
+
+                {/* Optimized prompt preview box */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-emerald-300">Optimized prompt</span>
+                  <span className="text-xs text-emerald-400/70 tabular-nums">
+                    {optimizedResult.optimizedLength} chars
+                  </span>
+                </div>
+                <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+                  <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
+                    {optimizedResult.optimized}
+                  </pre>
+                </div>
+
+                {/* Length indicator */}
                 <LengthIndicator
                   analysis={analysis}
                   isOptimizerEnabled={isOptimizerEnabled}

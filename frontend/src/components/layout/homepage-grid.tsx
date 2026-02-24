@@ -258,12 +258,12 @@ function LeaderboardIntro({
   return (
     <div
       className="flex shrink-0 flex-col items-center text-center"
-      style={{ padding: 'clamp(2px, 0.3vw, 6px) 0' }}
+      style={{ margin: 'clamp(-6px, -0.625vw, -12px) 0' }}
     >
       {/* Line 1 — Static gradient heading */}
       <span
         className="pointer-events-none font-semibold leading-tight"
-        style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.5rem)' }}
+        style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.2rem)' }}
       >
         <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
           42 AI Image Generators — Elo-Ranked by the Community
