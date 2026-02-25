@@ -1,0 +1,1178 @@
+{
+  "_meta": {
+    "version": "1.0.0",
+    "description": "Promagen Scene Starters — 200 curated scene templates (25 free + 175 pro). Authority: prompt-builder-evolution-plan-v2.md §6",
+    "updated": "2026-02-25",
+    "counts": {
+      "free": 25,
+      "pro": 0,
+      "total": 25,
+      "worlds": 23
+    }
+  },
+  "scenes": [
+    {
+      "id": "dramatic-portrait",
+      "name": "Dramatic Portrait",
+      "world": "portraits-and-people",
+      "emoji": "🎭",
+      "description": "Moody studio portrait with dramatic lighting and cinematic feel",
+      "tier": "free",
+      "prefills": {
+        "subject": ["portrait of a woman"],
+        "action": ["looking away"],
+        "style": ["cinematic style"],
+        "environment": ["recording studio"],
+        "lighting": ["dramatic lighting"],
+        "atmosphere": ["mysterious"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 9,
+          "boostFidelity": true,
+          "note": "CLIP excels at moody portrait keywords"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 2:3 --s 500 --v 6",
+          "note": "MJ portraits benefit from vertical AR"
+        },
+        "3": {
+          "affinity": 8,
+          "narrative": "A dramatic portrait of a woman looking away in a dimly lit studio, bathed in moody cinematic lighting",
+          "note": "Strong NL scene"
+        },
+        "4": {
+          "affinity": 7,
+          "core": "dramatic portrait woman studio moody",
+          "reducedPrefills": ["subject", "style", "lighting"],
+          "note": "Works well simplified"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": ["chiaroscuro shadow play", "single key light cutting through darkness"],
+        "atmosphere": ["quiet intensity", "unspoken story behind the eyes"]
+      },
+      "tags": ["portrait", "studio", "dramatic", "moody", "cinematic", "woman", "dark"]
+    },
+    {
+      "id": "fantasy-hero",
+      "name": "Fantasy Hero",
+      "world": "portraits-and-people",
+      "emoji": "⚔️",
+      "description": "Warrior in an enchanted forest at golden hour",
+      "tier": "free",
+      "prefills": {
+        "subject": ["samurai warrior"],
+        "action": ["standing confidently"],
+        "style": ["concept art"],
+        "environment": ["enchanted forest"],
+        "lighting": ["golden hour"],
+        "atmosphere": ["ethereal"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 9,
+          "boostFidelity": true,
+          "note": "CLIP handles fantasy+nature well with fidelity boost"
+        },
+        "2": {
+          "affinity": 10,
+          "params": "--ar 2:3 --s 750 --v 6",
+          "note": "MJ excels at fantasy character art"
+        },
+        "3": {
+          "affinity": 8,
+          "narrative": "A samurai warrior standing confidently in an enchanted forest, golden hour light filtering through ancient trees",
+          "note": "Rich visual narrative"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "samurai warrior enchanted forest golden hour",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Complex scene loses atmosphere simplified"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": ["shafts of amber light through canopy", "warm glow on battle-worn armour"],
+        "environment": ["moss-covered roots and ancient stones", "fireflies drifting between trees"]
+      },
+      "tags": ["fantasy", "warrior", "samurai", "forest", "golden hour", "heroic", "character"]
+    },
+    {
+      "id": "street-photographer",
+      "name": "Street Photographer",
+      "world": "portraits-and-people",
+      "emoji": "📸",
+      "description": "Night-time neon street scene with gritty atmosphere",
+      "tier": "free",
+      "prefills": {
+        "subject": ["photographer"],
+        "action": ["walking slowly"],
+        "style": ["portrait photography"],
+        "environment": ["neon-lit streets"],
+        "lighting": ["neon glow"],
+        "atmosphere": ["energetic"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": false,
+          "note": "CLIP renders neon well without fidelity terms"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 16:9 --s 600 --v 6",
+          "note": "MJ neon street photography is excellent"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A photographer walking through neon-lit city streets at night, vibrant signs reflected on wet pavement",
+          "note": "NL excels at atmospheric description"
+        },
+        "4": {
+          "affinity": 7,
+          "core": "photographer neon street night",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Neon is universally understood"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": ["neon reflected on wet asphalt", "flickering kanji signs overhead"],
+        "atmosphere": ["electric pulse of the city", "steam rising from street vents"]
+      },
+      "tags": ["street", "photographer", "neon", "night", "urban", "city", "energetic"]
+    },
+    {
+      "id": "vintage-glamour",
+      "name": "Vintage Glamour",
+      "world": "portraits-and-people",
+      "emoji": "🕰️",
+      "description": "Classic Hollywood elegance in a candlelit palace",
+      "tier": "free",
+      "prefills": {
+        "subject": ["young woman"],
+        "action": ["leaning against wall"],
+        "style": ["daguerreotype"],
+        "environment": ["baroque palace"],
+        "lighting": ["candlelight"],
+        "atmosphere": ["romantic"]
+      },
+      "tierGuidance": {
+        "1": { "affinity": 7, "boostFidelity": false, "note": "Daguerreotype is niche on CLIP" },
+        "2": {
+          "affinity": 8,
+          "params": "--ar 3:4 --s 800 --v 6",
+          "note": "MJ handles vintage aesthetics beautifully"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A young woman leaning against a marble column in a grand baroque palace, soft candlelight casting warm golden shadows",
+          "note": "NL excels at period descriptions"
+        },
+        "4": {
+          "affinity": 5,
+          "core": "vintage woman palace candlelight",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Daguerreotype may confuse plain parsers"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "warm pools of candlelight on marble",
+          "flickering shadow patterns on gilded walls"
+        ],
+        "materials": ["silk gown catching the light", "antique gold picture frames"]
+      },
+      "tags": ["vintage", "glamour", "palace", "baroque", "romantic", "candlelight", "elegant"]
+    },
+    {
+      "id": "cyberpunk-character",
+      "name": "Cyberpunk Character",
+      "world": "portraits-and-people",
+      "emoji": "🤖",
+      "description": "Neon-lit hacker in a dystopian city",
+      "tier": "free",
+      "prefills": {
+        "subject": ["cyberpunk hacker"],
+        "action": ["casting spell"],
+        "style": ["digital painting"],
+        "environment": ["cyberpunk city"],
+        "lighting": ["neon glow"],
+        "atmosphere": ["ominous"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 10,
+          "boostFidelity": true,
+          "note": "CLIP is strongest on cyberpunk+neon — flagship scene"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 16:9 --s 750 --v 6",
+          "note": "MJ cyberpunk is exceptional"
+        },
+        "3": {
+          "affinity": 8,
+          "narrative": "A cyberpunk hacker channelling digital energy in a neon-drenched dystopian cityscape, ominous atmosphere and holographic interfaces",
+          "note": "Rich NL description"
+        },
+        "4": {
+          "affinity": 5,
+          "core": "cyberpunk hacker neon city",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Too complex for plain parsers"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": ["sodium-vapour haze", "holographic billboard flicker"],
+        "atmosphere": ["electric tension in the air", "distant sirens"],
+        "environment": ["rain-slicked concrete canyon", "towering megastructure shadows"]
+      },
+      "tags": ["cyberpunk", "hacker", "neon", "dystopian", "city", "digital", "ominous", "sci-fi"]
+    },
+    {
+      "id": "enchanted-forest",
+      "name": "Enchanted Forest",
+      "world": "landscapes-and-worlds",
+      "emoji": "🌳",
+      "description": "Mystical tree of life in a magical woodland glade",
+      "tier": "free",
+      "prefills": {
+        "subject": ["tree of life"],
+        "style": ["oil painting"],
+        "environment": ["enchanted forest"],
+        "lighting": ["dappled light"],
+        "atmosphere": ["ethereal"],
+        "colour": ["warm tones"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": false,
+          "note": "Oil painting style reduces need for fidelity terms"
+        },
+        "2": {
+          "affinity": 10,
+          "params": "--ar 16:9 --s 800 --v 6",
+          "note": "MJ landscape + oil painting is exceptional"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A magnificent tree of life standing in a sunlit enchanted forest, dappled light filtering through golden leaves, painted in rich oils",
+          "note": "NL handles painterly descriptions well"
+        },
+        "4": {
+          "affinity": 7,
+          "core": "tree of life enchanted forest golden light",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Simple and evocative"
+        }
+      },
+      "flavourPhrases": {
+        "environment": [
+          "ancient roots intertwined with glowing crystals",
+          "carpet of wildflowers beneath the canopy"
+        ],
+        "lighting": ["shafts of golden light through dense foliage"]
+      },
+      "tags": ["forest", "enchanted", "tree", "nature", "magical", "painting", "landscape"]
+    },
+    {
+      "id": "desert-ruins",
+      "name": "Desert Ruins",
+      "world": "landscapes-and-worlds",
+      "emoji": "🏜️",
+      "description": "Ancient civilisation ruins baking under desert sun",
+      "tier": "free",
+      "prefills": {
+        "subject": ["ancient ruins"],
+        "style": ["matte painting"],
+        "environment": ["desert canyon"],
+        "lighting": ["midday sun"],
+        "atmosphere": ["mysterious"],
+        "colour": ["earth tones"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": true,
+          "note": "Matte painting + fidelity creates epic landscapes"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 21:9 --s 700 --v 6",
+          "note": "Ultrawide cinematic framing suits ruins"
+        },
+        "3": {
+          "affinity": 8,
+          "narrative": "Crumbling ancient ruins rising from a sun-scorched desert canyon, bathed in harsh midday light with mysterious shadows",
+          "note": "Strong visual narrative"
+        },
+        "4": {
+          "affinity": 8,
+          "core": "ancient ruins desert sun",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Simple — works across all platforms"
+        }
+      },
+      "flavourPhrases": {
+        "environment": [
+          "half-buried columns emerging from sand dunes",
+          "wind-carved archways framing the horizon"
+        ],
+        "atmosphere": ["heat shimmer distorting the distant cliffs"]
+      },
+      "tags": ["desert", "ruins", "ancient", "landscape", "archaeology", "mysterious", "epic"]
+    },
+    {
+      "id": "underwater-kingdom",
+      "name": "Underwater Kingdom",
+      "world": "landscapes-and-worlds",
+      "emoji": "🧜",
+      "description": "Bioluminescent undersea realm with mythical creatures",
+      "tier": "free",
+      "prefills": {
+        "subject": ["mermaid"],
+        "style": ["digital painting"],
+        "environment": ["underwater reef"],
+        "lighting": ["bioluminescence"],
+        "atmosphere": ["mystical"],
+        "colour": ["cool tones"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": true,
+          "note": "Bioluminescence benefits from ray tracing terms"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 16:9 --s 750 --v 6",
+          "note": "MJ bioluminescent scenes are stunning"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A mermaid gliding through a bioluminescent underwater reef kingdom, cool-toned light emanating from living corals and jellyfish",
+          "note": "Excellent NL imagery"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "mermaid underwater glowing reef",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Bioluminescence may confuse basic parsers"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "phosphorescent coral pulsing with inner light",
+          "deep blue shafts piercing from the surface"
+        ],
+        "environment": ["translucent jellyfish drifting like lanterns"]
+      },
+      "tags": ["underwater", "mermaid", "bioluminescent", "ocean", "fantasy", "mystical", "blue"]
+    },
+    {
+      "id": "space-vista",
+      "name": "Space Vista",
+      "world": "landscapes-and-worlds",
+      "emoji": "🚀",
+      "description": "Starlit spacecraft overlooking a cosmic floating cityscape",
+      "tier": "free",
+      "prefills": {
+        "subject": ["spaceship"],
+        "style": ["concept art"],
+        "environment": ["floating city"],
+        "lighting": ["starlight"],
+        "atmosphere": ["serene"],
+        "colour": ["monochrome"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 9,
+          "boostFidelity": true,
+          "note": "Sci-fi concept art thrives with 8K and ray tracing"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 21:9 --s 600 --v 6",
+          "note": "Ultrawide for cinematic space vistas"
+        },
+        "3": {
+          "affinity": 8,
+          "narrative": "A sleek spaceship hovering above a floating city under starlight, serene and vast, rendered in monochromatic tones",
+          "note": "Evocative NL description"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "spaceship floating city starlight",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Concept is clear but complex"
+        }
+      },
+      "flavourPhrases": {
+        "environment": [
+          "anti-gravity platforms connected by light bridges",
+          "nebula clouds swirling beyond the city edge"
+        ],
+        "lighting": ["cold starlight reflecting off polished hull"]
+      },
+      "tags": ["space", "spaceship", "sci-fi", "cosmic", "serene", "concept art", "floating"]
+    },
+    {
+      "id": "volcanic-fury",
+      "name": "Volcanic Fury",
+      "world": "landscapes-and-worlds",
+      "emoji": "🌋",
+      "description": "Raw volcanic power — erupting lava and dramatic skies",
+      "tier": "free",
+      "prefills": {
+        "subject": ["volcano erupting"],
+        "style": ["hyperrealistic"],
+        "environment": ["volcanic landscape"],
+        "lighting": ["firelight"],
+        "atmosphere": ["dramatic"],
+        "colour": ["vibrant colours"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 9,
+          "boostFidelity": true,
+          "note": "Hyperrealistic + fidelity creates photorealistic lava"
+        },
+        "2": {
+          "affinity": 8,
+          "params": "--ar 16:9 --s 500 --v 6",
+          "note": "MJ handles dramatic landscapes well"
+        },
+        "3": {
+          "affinity": 8,
+          "narrative": "A hyperrealistic volcano erupting with rivers of molten lava flowing across a dramatic landscape lit by fire and lightning",
+          "note": "Vivid NL description"
+        },
+        "4": {
+          "affinity": 8,
+          "core": "erupting volcano lava fire dramatic",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Universally understood"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "incandescent lava flows casting orange across ash clouds",
+          "lightning cracking through volcanic plume"
+        ],
+        "atmosphere": ["raw elemental power unleashed"]
+      },
+      "tags": ["volcano", "eruption", "lava", "dramatic", "fire", "landscape", "nature", "power"]
+    },
+    {
+      "id": "film-noir",
+      "name": "Film Noir",
+      "world": "mood-and-atmosphere",
+      "emoji": "🕵️",
+      "description": "Shadowy Victorian detective in a suspenseful noir setting",
+      "tier": "free",
+      "prefills": {
+        "subject": ["victorian detective"],
+        "style": ["cinematic style"],
+        "environment": ["victorian parlor"],
+        "lighting": ["split lighting"],
+        "atmosphere": ["ominous"],
+        "colour": ["black and white"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": false,
+          "note": "B&W reduces need for fidelity terms"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 21:9 --s 750 --v 6",
+          "note": "Cinematic MJ noir is exceptional"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A Victorian detective standing in a dimly lit parlor, sharp split lighting casting deep shadows, ominous black and white composition",
+          "note": "NL thrives on atmospheric noir"
+        },
+        "4": {
+          "affinity": 7,
+          "core": "detective noir black white shadows",
+          "reducedPrefills": ["subject", "style", "colour"],
+          "note": "Noir is widely understood"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "venetian blind shadows striping the wall",
+          "single desk lamp pooling light on case files"
+        ],
+        "atmosphere": ["cigarette smoke curling upward", "the tick of a grandfather clock"]
+      },
+      "tags": ["noir", "detective", "victorian", "shadows", "black and white", "suspense", "moody"]
+    },
+    {
+      "id": "dreamscape",
+      "name": "Dreamscape",
+      "world": "mood-and-atmosphere",
+      "emoji": "💭",
+      "description": "Surreal fairy floating through a moonlit dreamworld",
+      "tier": "free",
+      "prefills": {
+        "subject": ["fairy"],
+        "style": ["surrealist"],
+        "environment": ["floating city"],
+        "lighting": ["moonlight"],
+        "atmosphere": ["whimsical"],
+        "colour": ["pastel palette"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 7,
+          "boostFidelity": false,
+          "note": "Surrealist style doesn't need hyper-fidelity"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 1:1 --s 800 --v 6 --weird 100",
+          "note": "MJ --weird flag enhances surrealism"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A tiny fairy drifting through a surreal floating dreamscape bathed in pale moonlight, soft pastel colours and impossible architecture",
+          "note": "NL excels at dreamlike descriptions"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "fairy dreamscape moonlight surreal",
+          "reducedPrefills": ["subject", "style", "lighting"],
+          "note": "Surrealist concept may be lost on plain parsers"
+        }
+      },
+      "flavourPhrases": {
+        "environment": ["staircases leading to nowhere", "upside-down waterfalls of light"],
+        "atmosphere": [
+          "gravity doesn't quite work here",
+          "soft echoes of half-remembered lullabies"
+        ]
+      },
+      "tags": [
+        "dream",
+        "surreal",
+        "fairy",
+        "moonlight",
+        "whimsical",
+        "pastel",
+        "floating",
+        "fantasy"
+      ]
+    },
+    {
+      "id": "horror-scene",
+      "name": "Horror Scene",
+      "world": "mood-and-atmosphere",
+      "emoji": "👻",
+      "description": "Unsettling creature in a blacklit crystalline cavern",
+      "tier": "free",
+      "prefills": {
+        "subject": ["demon creature"],
+        "style": ["digital painting"],
+        "environment": ["crystal cave"],
+        "lighting": ["blacklight uv"],
+        "atmosphere": ["ominous"],
+        "colour": ["desaturated"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": true,
+          "note": "Detailed horror benefits from fidelity boost"
+        },
+        "2": {
+          "affinity": 8,
+          "params": "--ar 2:3 --s 500 --v 6",
+          "note": "Vertical framing for looming creatures"
+        },
+        "3": {
+          "affinity": 7,
+          "narrative": "A terrifying demon creature emerging from the depths of a blacklit crystal cave, desaturated colours adding to the ominous dread",
+          "note": "NL conveys dread well"
+        },
+        "4": {
+          "affinity": 5,
+          "core": "demon creature dark cave",
+          "reducedPrefills": ["subject", "environment", "atmosphere"],
+          "note": "Blacklight UV may not parse on basic platforms"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "ultraviolet glow revealing hidden veins in crystal walls",
+          "sickly phosphorescence from cave pools"
+        ],
+        "atmosphere": ["something ancient stirring in the deep"]
+      },
+      "tags": ["horror", "demon", "dark", "cave", "crystal", "blacklight", "ominous", "creature"]
+    },
+    {
+      "id": "golden-romance",
+      "name": "Golden Romance",
+      "world": "mood-and-atmosphere",
+      "emoji": "💛",
+      "description": "Couple bathed in golden hour warmth on a rooftop garden",
+      "tier": "free",
+      "prefills": {
+        "subject": ["couple in love"],
+        "style": ["portrait photography"],
+        "environment": ["rooftop garden"],
+        "lighting": ["golden hour"],
+        "atmosphere": ["romantic"],
+        "colour": ["golden hour warm"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 7,
+          "boostFidelity": false,
+          "note": "Photography style doesn't stack well with fidelity terms"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 3:4 --s 700 --v 6",
+          "note": "MJ golden hour portraits are stunning"
+        },
+        "3": {
+          "affinity": 10,
+          "narrative": "A couple in love embracing on a lush rooftop garden at golden hour, warm amber light wrapping around them, romantic and intimate",
+          "note": "NL excels at emotional romantic scenes"
+        },
+        "4": {
+          "affinity": 8,
+          "core": "couple rooftop garden golden hour",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Simple and universally romantic"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "warm amber wrapping around silhouettes",
+          "sun flare through entwined fingers"
+        ],
+        "atmosphere": ["the world pausing for just this moment"]
+      },
+      "tags": ["romance", "couple", "golden hour", "rooftop", "warm", "love", "photography"]
+    },
+    {
+      "id": "psychedelic-trip",
+      "name": "Psychedelic Trip",
+      "world": "mood-and-atmosphere",
+      "emoji": "🌀",
+      "description": "Explosive kaleidoscopic energy in a bioluminescent forest",
+      "tier": "free",
+      "prefills": {
+        "subject": ["being of light"],
+        "style": ["psychedelic art"],
+        "environment": ["mushroom forest"],
+        "lighting": ["neon lighting"],
+        "atmosphere": ["blacklight psychedelia"],
+        "colour": ["neon colours"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": false,
+          "note": "Psychedelic art thrives on chaos — fidelity dampens it"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 1:1 --s 900 --v 6 --weird 250",
+          "note": "Max --weird for psychedelic chaos"
+        },
+        "3": {
+          "affinity": 7,
+          "narrative": "A luminous being of pure light radiating through a psychedelic mushroom forest, neon colours pulsing and swirling in kaleidoscopic patterns",
+          "note": "NL can struggle with abstract chaos"
+        },
+        "4": {
+          "affinity": 4,
+          "core": "psychedelic light neon forest",
+          "reducedPrefills": ["subject", "style", "environment"],
+          "note": "Too abstract for plain parsers"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "fractal light patterns spiralling outward",
+          "colour bleeding between dimensions"
+        ],
+        "environment": ["mushroom caps glowing with inner fire", "reality bending at the edges"]
+      },
+      "tags": ["psychedelic", "neon", "abstract", "trippy", "mushroom", "glowing", "kaleidoscopic"]
+    },
+    {
+      "id": "anime-action",
+      "name": "Anime Action",
+      "world": "style-forward",
+      "emoji": "⚡",
+      "description": "Dynamic samurai warrior at an ancient Japanese temple",
+      "tier": "free",
+      "prefills": {
+        "subject": ["samurai warrior"],
+        "style": ["anime style"],
+        "environment": ["ancient temple"],
+        "lighting": ["volumetric lighting"],
+        "atmosphere": ["dramatic"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 7,
+          "boostFidelity": false,
+          "note": "Anime style conflicts with photorealistic fidelity"
+        },
+        "2": {
+          "affinity": 10,
+          "params": "--ar 16:9 --s 600 --niji 6",
+          "note": "MJ --niji flag is essential for anime"
+        },
+        "3": {
+          "affinity": 7,
+          "narrative": "A samurai warrior in dynamic anime style standing before an ancient temple, volumetric light rays streaming through the scene",
+          "note": "NL anime descriptions can be hit-or-miss"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "anime samurai temple dramatic",
+          "reducedPrefills": ["subject", "style", "environment"],
+          "note": "Anime keyword is widely understood"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "speed lines radiating from impact",
+          "cherry blossom petals frozen mid-flight"
+        ],
+        "atmosphere": ["the moment before the blade falls"]
+      },
+      "tags": ["anime", "samurai", "action", "temple", "japanese", "dramatic", "niji"]
+    },
+    {
+      "id": "oil-painting-still-life",
+      "name": "Oil Painting Still Life",
+      "world": "style-forward",
+      "emoji": "🎨",
+      "description": "Classical Dutch-master style flower arrangement",
+      "tier": "free",
+      "prefills": {
+        "subject": ["flower bouquet"],
+        "style": ["oil painting"],
+        "lighting": ["overcast sky"],
+        "atmosphere": ["serene"],
+        "materials": ["velvet soft"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 7,
+          "boostFidelity": false,
+          "note": "Oil painting style doesn't need fidelity boost"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 3:4 --s 800 --v 6",
+          "note": "MJ still life painting is beautiful"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A lush flower bouquet arranged on velvet fabric, painted in rich oil colours with soft overcast light and serene tranquillity",
+          "note": "NL excels at classical descriptions"
+        },
+        "4": {
+          "affinity": 7,
+          "core": "flower bouquet oil painting still life",
+          "reducedPrefills": ["subject", "style", "lighting"],
+          "note": "Classical concept translates well"
+        }
+      },
+      "flavourPhrases": {
+        "materials": ["dewdrops on wilting petals", "cracked varnish texture of old masters"],
+        "lighting": ["soft window light falling across the arrangement"]
+      },
+      "tags": ["oil painting", "still life", "flowers", "classical", "dutch master", "serene"]
+    },
+    {
+      "id": "concept-art-creature",
+      "name": "Concept Art Creature",
+      "world": "style-forward",
+      "emoji": "🐲",
+      "description": "Mythical dragon perched on a mountain peak",
+      "tier": "free",
+      "prefills": {
+        "subject": ["dragon"],
+        "style": ["concept art"],
+        "environment": ["snowy summit"],
+        "lighting": ["dramatic lighting"],
+        "atmosphere": ["ominous"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 9,
+          "boostFidelity": true,
+          "note": "Concept art creatures benefit from 8K and detail terms"
+        },
+        "2": {
+          "affinity": 10,
+          "params": "--ar 16:9 --s 700 --v 6",
+          "note": "MJ creature design is industry-leading"
+        },
+        "3": {
+          "affinity": 8,
+          "narrative": "A mythical dragon with vast wings perched on a snowy mountain summit, dramatic lighting silhouetting its form against stormy skies",
+          "note": "Strong NL visual"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "dragon mountain dramatic concept art",
+          "reducedPrefills": ["subject", "style", "environment"],
+          "note": "Dragon is universally understood"
+        }
+      },
+      "flavourPhrases": {
+        "environment": [
+          "wind-blasted peak above the cloudline",
+          "ancient claw marks scored into granite"
+        ],
+        "atmosphere": ["the weight of centuries in its gaze"]
+      },
+      "tags": ["dragon", "creature", "concept art", "mountain", "fantasy", "epic", "ominous"]
+    },
+    {
+      "id": "pixel-art-retro",
+      "name": "Pixel Art Retro",
+      "world": "style-forward",
+      "emoji": "👾",
+      "description": "Retro-futuristic robot in a neon arcade",
+      "tier": "free",
+      "prefills": {
+        "subject": ["robot android"],
+        "style": ["pixel art"],
+        "environment": ["neon arcade"],
+        "lighting": ["led strip ambient"],
+        "atmosphere": ["energetic"],
+        "materials": ["chrome reflection"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 6,
+          "boostFidelity": false,
+          "note": "Pixel art is low-res by design — fidelity contradicts"
+        },
+        "2": {
+          "affinity": 7,
+          "params": "--ar 1:1 --s 400 --v 6",
+          "note": "Square format for retro pixel grids"
+        },
+        "3": {
+          "affinity": 5,
+          "narrative": "A chrome robot standing in a retro pixel-art neon arcade, LED strips casting colourful reflections on its metallic body",
+          "note": "NL struggles to describe pixel aesthetic"
+        },
+        "4": {
+          "affinity": 8,
+          "core": "pixel art robot neon retro",
+          "reducedPrefills": ["subject", "style", "environment"],
+          "note": "Pixel art is well-known on basic platforms"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": ["CRT screen glow on chrome surfaces", "pixel-perfect scanline overlay"],
+        "atmosphere": ["8-bit soundtrack energy", "insert coin to continue"]
+      },
+      "tags": ["pixel art", "retro", "robot", "neon", "arcade", "chrome", "gaming"]
+    },
+    {
+      "id": "art-deco-poster",
+      "name": "Art Deco Poster",
+      "world": "style-forward",
+      "emoji": "✨",
+      "description": "Elegant dancer in a grand palace with Art Deco styling",
+      "tier": "free",
+      "prefills": {
+        "subject": ["ballerina dancing"],
+        "style": ["art deco"],
+        "environment": ["palace courtyard"],
+        "lighting": ["spotlight"],
+        "atmosphere": ["elegant refinement"],
+        "materials": ["gold leaf"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 7,
+          "boostFidelity": false,
+          "note": "Art Deco is a graphic style — fidelity unnecessary"
+        },
+        "2": {
+          "affinity": 8,
+          "params": "--ar 2:3 --s 750 --v 6",
+          "note": "Poster format works with vertical AR"
+        },
+        "3": {
+          "affinity": 8,
+          "narrative": "An elegant ballerina dancing in a grand palace courtyard, Art Deco geometric patterns and gold leaf details, a single spotlight illuminating the performance",
+          "note": "NL captures the elegance well"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "art deco ballerina gold elegant",
+          "reducedPrefills": ["subject", "style", "atmosphere"],
+          "note": "Art Deco is recognisable but niche"
+        }
+      },
+      "flavourPhrases": {
+        "materials": ["geometric gold inlay patterns", "sunburst motifs on polished marble"],
+        "lighting": ["single cone of white light in dark grandeur"]
+      },
+      "tags": ["art deco", "ballerina", "elegant", "gold", "poster", "dance", "glamour"]
+    },
+    {
+      "id": "solarpunk-utopia",
+      "name": "Solarpunk Utopia",
+      "world": "trending-seasonal",
+      "emoji": "🌱",
+      "description": "Lush green futuristic city powered by nature and technology",
+      "tier": "free",
+      "prefills": {
+        "subject": ["botanist"],
+        "style": ["solarpunk"],
+        "environment": ["rooftop garden"],
+        "lighting": ["golden hour"],
+        "atmosphere": ["peaceful"],
+        "colour": ["emerald and gold"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": true,
+          "note": "Solarpunk architecture benefits from detail fidelity"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 16:9 --s 700 --v 6",
+          "note": "MJ handles solarpunk aesthetics brilliantly"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A botanist tending a lush rooftop garden in a solarpunk city at golden hour, emerald foliage intertwined with gleaming solar technology",
+          "note": "NL excels at utopian world-building"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "solarpunk green city nature future",
+          "reducedPrefills": ["subject", "style", "environment"],
+          "note": "Solarpunk may not be known on basic platforms"
+        }
+      },
+      "flavourPhrases": {
+        "environment": [
+          "vertical gardens climbing solar-panel facades",
+          "wind turbines shaped like flowers"
+        ],
+        "atmosphere": ["technology and nature in perfect harmony"]
+      },
+      "tags": ["solarpunk", "utopia", "green", "future", "nature", "technology", "trending"]
+    },
+    {
+      "id": "dark-academia",
+      "name": "Dark Academia",
+      "world": "trending-seasonal",
+      "emoji": "📚",
+      "description": "Moody scholarly atmosphere in a candlelit library",
+      "tier": "free",
+      "prefills": {
+        "subject": ["student"],
+        "style": ["dark academia"],
+        "environment": ["library reading room"],
+        "lighting": ["candlelight"],
+        "atmosphere": ["nostalgic"],
+        "colour": ["earth tones"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 7,
+          "boostFidelity": false,
+          "note": "Dark academia is moody — hyper-fidelity dulls the vibe"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 3:4 --s 800 --v 6",
+          "note": "MJ captures dark academia mood perfectly"
+        },
+        "3": {
+          "affinity": 9,
+          "narrative": "A student absorbed in ancient texts in a candlelit university library, dark academia aesthetic with leather-bound books and mahogany shelves",
+          "note": "NL thrives on atmospheric description"
+        },
+        "4": {
+          "affinity": 7,
+          "core": "student library candlelight moody books",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Library + candles is universally evocative"
+        }
+      },
+      "flavourPhrases": {
+        "environment": [
+          "leather-bound tomes stacked to the ceiling",
+          "dust motes floating in candlelight"
+        ],
+        "atmosphere": ["the weight of accumulated knowledge"]
+      },
+      "tags": ["dark academia", "library", "student", "moody", "candlelight", "books", "trending"]
+    },
+    {
+      "id": "cottagecore-morning",
+      "name": "Cottagecore Morning",
+      "world": "trending-seasonal",
+      "emoji": "🌸",
+      "description": "Idyllic countryside cottage surrounded by wildflower meadows",
+      "tier": "free",
+      "prefills": {
+        "subject": ["cottage"],
+        "style": ["cottagecore"],
+        "environment": ["flower meadow"],
+        "lighting": ["sunrise lighting"],
+        "atmosphere": ["peaceful"],
+        "colour": ["pastel palette"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 7,
+          "boostFidelity": false,
+          "note": "Cottagecore is soft and painterly — not hyper-detailed"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 16:9 --s 800 --v 6",
+          "note": "MJ cottagecore is beautifully warm"
+        },
+        "3": {
+          "affinity": 10,
+          "narrative": "A charming countryside cottage surrounded by wildflower meadows at sunrise, soft pastel morning light and cottagecore warmth throughout",
+          "note": "NL perfect for idyllic pastoral scenes"
+        },
+        "4": {
+          "affinity": 8,
+          "core": "cottage flowers meadow sunrise pastoral",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Simple and universally appealing"
+        }
+      },
+      "flavourPhrases": {
+        "environment": [
+          "wisteria climbing the stone walls",
+          "smoke curling from a crooked chimney"
+        ],
+        "atmosphere": ["the smell of fresh bread through an open window"]
+      },
+      "tags": [
+        "cottagecore",
+        "cottage",
+        "meadow",
+        "pastoral",
+        "flowers",
+        "sunrise",
+        "seasonal",
+        "spring"
+      ]
+    },
+    {
+      "id": "cozy-winter-night",
+      "name": "Cozy Winter Night",
+      "world": "trending-seasonal",
+      "emoji": "❄️",
+      "description": "Warm cabin interior with snow falling outside the window",
+      "tier": "free",
+      "prefills": {
+        "subject": ["winter wonderland"],
+        "style": ["hyperrealistic"],
+        "environment": ["cozy cabin interior"],
+        "lighting": ["firelight"],
+        "atmosphere": ["warm and cozy"],
+        "colour": ["warm tones"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 8,
+          "boostFidelity": true,
+          "note": "Hyperrealistic winter scenes benefit from fidelity boost"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 16:9 --s 700 --v 6",
+          "note": "MJ cozy interiors are exceptional"
+        },
+        "3": {
+          "affinity": 10,
+          "narrative": "A cozy cabin interior on a winter night, warm firelight dancing on wooden walls while snow falls gently outside frost-edged windows",
+          "note": "NL perfect for sensory winter descriptions"
+        },
+        "4": {
+          "affinity": 9,
+          "core": "cozy cabin winter fire snow night",
+          "reducedPrefills": ["subject", "environment", "lighting"],
+          "note": "Universally understood — high affinity across all platforms"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": ["firelight dancing on pine walls", "frost crystals catching the warm glow"],
+        "atmosphere": ["the crackle of burning logs", "cocoa steam rising in lamplight"]
+      },
+      "tags": ["winter", "cozy", "cabin", "snow", "firelight", "warm", "seasonal", "night"]
+    },
+    {
+      "id": "synthwave-sunset",
+      "name": "Synthwave Sunset",
+      "world": "trending-seasonal",
+      "emoji": "🌅",
+      "description": "Retro-futuristic neon grid horizon at electric sunset",
+      "tier": "free",
+      "prefills": {
+        "subject": ["spaceship"],
+        "style": ["synthwave"],
+        "environment": ["sunset beach"],
+        "lighting": ["sunset lighting"],
+        "atmosphere": ["energetic"],
+        "colour": ["pink and teal"]
+      },
+      "tierGuidance": {
+        "1": {
+          "affinity": 9,
+          "boostFidelity": false,
+          "note": "Synthwave is stylised — fidelity terms undermine the aesthetic"
+        },
+        "2": {
+          "affinity": 9,
+          "params": "--ar 21:9 --s 750 --v 6",
+          "note": "Ultrawide for cinematic synthwave horizon"
+        },
+        "3": {
+          "affinity": 7,
+          "narrative": "A sleek spaceship hovering above a synthwave sunset beach, neon pink and teal light reflecting off chrome surfaces and grid-patterned water",
+          "note": "NL handles synthwave but less precisely"
+        },
+        "4": {
+          "affinity": 6,
+          "core": "synthwave sunset neon retro spaceship",
+          "reducedPrefills": ["subject", "style", "colour"],
+          "note": "Synthwave is niche on basic parsers"
+        }
+      },
+      "flavourPhrases": {
+        "lighting": [
+          "infinite neon grid vanishing to the horizon",
+          "chrome reflections of electric pink sky"
+        ],
+        "atmosphere": ["80s retrowave nostalgia meets the future"]
+      },
+      "tags": ["synthwave", "retro", "sunset", "neon", "pink", "teal", "vaporwave", "trending"]
+    }
+  ]
+}

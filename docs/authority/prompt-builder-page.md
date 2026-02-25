@@ -1,6 +1,6 @@
 # Prompt Builder Page
 
-**Last updated:** 8 January 2026  
+**Last updated:** 25 February 2026  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).
 
@@ -836,6 +836,16 @@ frontend/src/
 - [x] **Combobox v6.3.0** (bulletproof auto-close, Done button, double-click protection)
 - [x] **AspectRatioSelector v1.2.0** (no lock overlay)
 - [x] **Prompt builder v8.2.0** (platform-aware limits, dynamic tooltips, auto-trim)
+- [x] **Prompt builder v9.0.0** (Phase 0–4 prompt builder evolution)
+- [x] **Vocabulary Merge** — 9,058 terms (3,501 core + 5,557 merged from weather/commodity/shared)
+- [x] **Cascading Intelligence** — downstream dropdowns reorder based on upstream selections
+- [x] **Scene Starters** — 200 curated one-click scenes (25 free, 175 pro) with tier-aware prefills
+- [x] **Explore Drawer** — expandable vocabulary panel per category with source grouping + search
+- [x] **Scene flavour phrases** — 26 scenes have bonus phrases shown in Explore Drawer "🎬 Scene" tab
+- [x] **All-tier chip badges** — Tier 1 ★, Tier 2 ◆, Tier 3 💬, Tier 4 ⚡/⚠
+- [x] **Cascade chip ordering** — Explore chips sorted by relevance score when cascade data available
+- [x] **Analytics integration** — 5 new GTM events (scene_selected, scene_reset, explore_drawer_opened, explore_chip_clicked, cascade_reorder_triggered)
+- [x] **Fluid typography audit** — All Phase 2–4 components use CSS clamp(). Zero fixed font sizes.
 
 ---
 
@@ -904,6 +914,50 @@ frontend/src/
 - Combobox announces selected items
 - Lock state messages accessible via screen readers
 
+### Scene Starters Tests (Phase 2–4)
+
+- Scene Starters strip appears between instructions and category grid
+- Collapsed by default, expands on click
+- 25 free scenes accessible to all users
+- 175 pro scenes visible with lock icon at 50% opacity
+- Clicking free scene prefills 5–8 categories simultaneously
+- Clicking pro scene (anonymous) shows "Sign in first" modal
+- Clicking pro scene (free user) shows "Upgrade to Pro" dialog with link to /pro-promagen
+- Active scene shows cyan tint on card + ✕ clear button in header
+- Modifying scene values then resetting shows confirmation dialog
+- Combobox chips from scene have cyan tint + 🎬 indicator
+- Tier 4 platform shows reduced prefills (3–5 categories) with amber "⚡ reduced" label
+- Affinity dots on scene cards: green (≥8), amber (6–7), red (<6)
+- World pills scroll horizontally; free worlds left, pro worlds after divider
+
+### Explore Drawer Tests (Phase 3–4)
+
+- "Explore N more phrases ▾" trigger bar below each category dropdown
+- Click to expand → search input + source tabs + chip cloud
+- Categories with merged data show tabs: All, Core, Weather, Commodity, Shared
+- Categories without merged data (camera, fidelity, negative) show no tabs
+- Environment shows ~2,600 terms — paginated at 60 per page
+- Click chip → adds to selection, chip disappears from drawer
+- Fill to max → remaining chips show disabled state
+- Search filters chips in real-time with highlighted matches
+- Opening another drawer closes the previous (accordion behaviour)
+- Active scene with flavourPhrases → "🎬 Scene" tab appears first with scene-specific phrases
+- Tier 1 → ★ badges on 1–2 word chips
+- Tier 2 → ◆ badges on 2–4 word chips
+- Tier 3 → 💬 badges on 3+ word chips
+- Tier 4 → ⚡ simple / ⚠ complex badges
+- Cascade ordering: chips sorted by relevance score (not alphabetical) when cascade active
+- Escape key closes expanded drawer
+- Scene-flavour chips have cyan tint styling (distinct from core vocab)
+
+### Analytics Tests (Phase 4.2)
+
+- `scene_selected` fires on scene activation (check GTM dataLayer)
+- `scene_reset` fires on scene clear (includes `was_modified` flag)
+- `explore_drawer_opened` fires once per drawer expand (not on collapse)
+- `explore_chip_clicked` fires on chip click with category, term, platform_tier, source_tab
+- `cascade_reorder_triggered` fires when cascade scoring runs with categories_reordered count
+
 **Test file:** `frontend/src/app/providers/[id]/__tests__/page.test.tsx`
 
 ---
@@ -921,6 +975,12 @@ When modifying the prompt builder page:
 - **Preserve all existing prompt building functionality for authenticated users**
 - **Do not break lock states or authentication flows**
 - **Do not reintroduce lock message overlay text on dropdowns**
+- **Do not modify scene-starters.json without updating scene-starters.md**
+- **Do not remove scenes — only add or update existing scenes**
+- **Do not modify core vocabulary files when changing merged vocabulary data**
+- **Preserve Scene Starters ↔ Explore Drawer flavour phrase wiring**
+- **Preserve cascade ordering in Explore Drawer chip clouds**
+- **All new UI elements must use CSS clamp() for sizing — no fixed px/rem**
 
 **Existing features preserved:** Yes (required for every change)
 
@@ -942,6 +1002,8 @@ These features were removed as they added no value:
 ---
 
 ## Changelog
+
+- **25 Feb 2026 (v9.0.0):** **PROMPT BUILDER EVOLUTION PHASES 0–4** — Major feature release. Vocabulary Merge: 9,058 total terms (3,501 core + 5,557 merged from weather, commodity, shared audits). Cascading Intelligence: downstream dropdowns reorder based on upstream selections using cluster affinity + co-occurrence scoring. Scene Starters: 200 curated one-click scenes (25 free, 175 pro) grouped into 10 thematic worlds — pre-populate 5–8 categories simultaneously with tier-aware prefills. Pro gate: locked scenes show upgrade dialog (anonymous → sign-in modal, free → /pro-promagen link). Explore Drawer: expandable vocabulary panel per category with source-grouped tabs (Core, Weather, Commodity, Shared), real-time search with highlighted matches, 60-chip pagination, click-to-add. Phase 4 polish: scene flavour phrases as "🎬 Scene" tab in Explore, all-tier chip badges (★/◆/💬/⚡/⚠), cascade relevance ordering, 5 new GTM analytics events. Fluid typography audit passed: 127 clamp() calls across Phase 2–4 components, zero fixed font sizes. See scene-starters.md for full Scene Starters documentation. See prompt-builder-evolution-plan-v2.md for architecture. Files: scene-selector.tsx v1.3.0 (1,110 lines), explore-drawer.tsx v2.0.0 (805 lines), prompt-builder.tsx v9.0.0 (1,806 lines), vocabulary-loader.ts (457 lines), merged/index.ts v1.1.0 (232 lines), events.ts (276 lines), scene-starters.json (200 entries), 16 curated vocabulary files, cluster data in 48 JSON files.
 
 - **8 Jan 2026 (v8.3.0):** **FREE TIER LIMIT REDUCED** — Changed Standard Promagen daily prompt limit from 30/day to **10/day**. Updated lock state progression: Free signed-in (0-9) → (10) locked. Benefits list updated. See paid_tier.md for rationale.
 

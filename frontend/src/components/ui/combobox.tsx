@@ -1,6 +1,12 @@
 // src/components/ui/combobox.tsx
 // Enhanced multi-select combobox with lock states, auto-close, and vocabulary chips
-// Version 7.0.0 - Added vocabulary chip display for expanded selection options
+// Version 7.1.0 - Added scene-origin chip tinting for Scene Starters
+//
+// NEW in v7.1.0:
+// - sceneOriginValues prop: Array of values set by a Scene Starter
+// - Scene-origin chips get subtle cyan tint + tiny 🎬 indicator
+// - Distinguishes scene-set values from manual selections visually
+// - Per-value ✕ clear still works identically on all chips
 //
 // NEW in v7.0.0:
 // - chipOptions prop: Array of clickable chips shown below dropdown when open
@@ -87,6 +93,12 @@ export interface ComboboxProps {
    * Label for the chip section (default: "Quick picks")
    */
   chipSectionLabel?: string;
+  /**
+   * Values set by a Scene Starter (Phase 2).
+   * Chips matching these values get a subtle cyan tint + scene indicator.
+   * Helps users see which values came from the scene vs manual picks.
+   */
+  sceneOriginValues?: string[];
 }
 
 export function Combobox({
@@ -110,6 +122,7 @@ export function Combobox({
   chipOptions = [],
   showChipsWhenClosed = false,
   chipSectionLabel = 'Quick picks',
+  sceneOriginValues,
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -120,6 +133,12 @@ export function Combobox({
 
   // Ref to track if we're currently processing a selection (prevents double-click)
   const isSelectingRef = useRef(false);
+
+  // Scene-origin lookup for chip tinting (Phase 2)
+  const sceneOriginSet = useMemo(
+    () => new Set(sceneOriginValues ?? []),
+    [sceneOriginValues],
+  );
 
   // Filter options based on input (exclude already selected and empty first option)
   const filteredOptions = options
@@ -428,36 +447,57 @@ export function Combobox({
         onKeyDown={handleContainerKeyDown}
       >
         {/* Selected chips */}
-        {selected.map((item) => (
-          <span
-            key={item}
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
-              isLocked ? 'bg-purple-600/30 text-purple-200' : 'bg-sky-600/30 text-sky-100'
-            }`}
-          >
-            <span className="max-w-[120px] truncate">{item}</span>
-            {!isLocked && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove(item);
-                }}
-                className="ml-0.5 rounded-full p-0.5 hover:bg-sky-500/30 focus:outline-none focus:ring-1 focus:ring-sky-400"
-                aria-label={`Remove ${item}`}
-              >
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            )}
-          </span>
-        ))}
+        {selected.map((item) => {
+          const isSceneOrigin = sceneOriginSet.has(item);
+          return (
+            <span
+              key={item}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
+                isLocked
+                  ? 'bg-purple-600/30 text-purple-200'
+                  : isSceneOrigin
+                    ? 'bg-cyan-600/25 text-cyan-100 ring-1 ring-cyan-500/20'
+                    : 'bg-sky-600/30 text-sky-100'
+              }`}
+            >
+              {/* Scene-origin indicator — tiny film clapper */}
+              {isSceneOrigin && !isLocked && (
+                <span
+                  className="opacity-50"
+                  style={{ fontSize: 'clamp(0.5rem, 0.55vw, 0.6rem)' }}
+                  aria-label="Set by scene"
+                >
+                  🎬
+                </span>
+              )}
+              <span className="max-w-[120px] truncate">{item}</span>
+              {!isLocked && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemove(item);
+                  }}
+                  className={`ml-0.5 rounded-full p-0.5 focus:outline-none focus:ring-1 ${
+                    isSceneOrigin
+                      ? 'hover:bg-cyan-500/30 focus:ring-cyan-400'
+                      : 'hover:bg-sky-500/30 focus:ring-sky-400'
+                  }`}
+                  aria-label={`Remove ${item}`}
+                >
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </span>
+          );
+        })}
 
         {/* Text input with spellcheck */}
         <input

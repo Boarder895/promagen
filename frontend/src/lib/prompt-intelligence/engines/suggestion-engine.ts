@@ -25,6 +25,8 @@ import {
   getAffinityForTerm,
 } from '../index';
 import { detectConflicts } from './conflict-detection';
+import { lookupCoOccurrence } from '@/lib/learning/co-occurrence-lookup';
+import type { CoOccurrenceLookup } from '@/lib/learning/co-occurrence-lookup';
 
 // ============================================================================
 // Types
@@ -48,6 +50,12 @@ export interface BuildContextInput {
   
   /** Platform tier (1-4) for tier-aware scoring */
   tier?: number | null;
+
+  /** Pre-built co-occurrence lookup from Phase 5 (null = no data) */
+  coOccurrenceWeights?: CoOccurrenceLookup | null;
+
+  /** Blend ratio [curated, learned] from Phase 5 (default: [1.0, 0.0]) */
+  blendRatio?: [curated: number, learned: number];
 }
 
 /**
@@ -156,6 +164,9 @@ const SCORE_WEIGHTS = {
   
   /** Direct affinity penalty from another selected term (Phase 1) */
   affinityPenalty: -15,
+
+  /** Maximum co-occurrence boost from learned data (Phase 5) */
+  coOccurrenceMax: 20,
 };
 
 // ============================================================================
@@ -359,7 +370,15 @@ function collectComplements(
  * Build context from current selections.
  */
 export function buildContext(input: BuildContextInput): PromptContext {
-  const { selections, customSubject, marketMoodEnabled = false, marketState = null, tier = null } = input;
+  const {
+    selections,
+    customSubject,
+    marketMoodEnabled = false,
+    marketState = null,
+    tier = null,
+    coOccurrenceWeights = null,
+    blendRatio = [1.0, 0.0],
+  } = input;
   
   // Extract subject keywords
   const subjectKeywords = extractKeywords(customSubject || '');
@@ -430,6 +449,8 @@ export function buildContext(input: BuildContextInput): PromptContext {
     marketState,
     activeClusters,
     tier,
+    coOccurrenceWeights,
+    blendRatio,
   };
 }
 
@@ -462,6 +483,7 @@ function scoreOption(
     subjectKeywordMatch: 0,
     clusterBoost: 0,
     affinityBoost: 0,
+    coOccurrenceBoost: 0,
   };
   
   if (tag) {
@@ -613,6 +635,27 @@ function scoreOption(
     score += affinityScore;
   }
   
+  // === CO-OCCURRENCE SCORING (Phase 5) ===
+  // Blend learned co-occurrence signal with curated scores.
+  // Uses blendRatio to gradually shift weight from curated to learned
+  // as more telemetry accumulates.
+  let coOccurrenceBoostValue = 0;
+  if (context.coOccurrenceWeights && context.blendRatio[1] > 0) {
+    const rawCoOccurrence = lookupCoOccurrence(
+      option,
+      context.selectedTerms,
+      context.tier,
+      context.coOccurrenceWeights,
+    );
+    if (rawCoOccurrence > 0) {
+      // Scale by learned weight portion of blend ratio and max boost
+      coOccurrenceBoostValue = Math.round(
+        (rawCoOccurrence / 100) * SCORE_WEIGHTS.coOccurrenceMax * context.blendRatio[1],
+      );
+      score += coOccurrenceBoostValue;
+    }
+  }
+  
   // === TIER-AWARE MULTIPLIER (Phase 1) ===
   // Apply per-tier weight to the variable portion of the score.
   // This amplifies differentiation for keyword-focused tiers (1,2) and
@@ -636,7 +679,7 @@ function scoreOption(
   return {
     option,
     score,
-    breakdown: includeBreakdown ? { ...breakdown, tierMultiplier: tierMultiplierValue } : undefined,
+    breakdown: includeBreakdown ? { ...breakdown, tierMultiplier: tierMultiplierValue, coOccurrenceBoost: coOccurrenceBoostValue } : undefined,
   };
 }
 
@@ -683,13 +726,17 @@ export function reorderByRelevance(
   selections: Partial<Record<PromptCategory, string[]>>,
   marketMoodEnabled = false,
   marketState: MarketState | null = null,
-  tier: number | null = null
+  tier: number | null = null,
+  coOccurrenceWeights: CoOccurrenceLookup | null = null,
+  blendRatio: [number, number] = [1.0, 0.0],
 ): ScoredOption[] {
   const context = buildContext({ 
     selections, 
     marketMoodEnabled, 
     marketState,
     tier,
+    coOccurrenceWeights,
+    blendRatio,
   });
   
   return scoreOptions({

@@ -387,6 +387,19 @@ export function searchCategoryVocabulary(
 /**
  * Get combined vocabulary statistics (core + merged)
  */
+/**
+ * Get the count of explorable terms for a category (total minus selected).
+ * Used for the Explore Drawer trigger label: "Explore N more phrases ▾"
+ */
+export function getExploreCount(
+  category: CategoryKey,
+  selectedTerms: string[],
+): number {
+  const all = getCombinedOptions(category);
+  const selectedSet = new Set(selectedTerms.map((s) => s.toLowerCase()));
+  return all.filter((t) => !selectedSet.has(t.toLowerCase())).length;
+}
+
 export function getCombinedVocabularyStats(): {
   totalCategories: number;
   totalOptions: number;
@@ -440,3 +453,5 @@ export type { StyleFamily, CategoryKey };
 
 // Re-export merged utilities for direct access
 export { getMergedOptions, getMergedCount, hasMergedData } from '@/data/vocabulary/merged';
+export { getSourceGroupedOptions } from '@/data/vocabulary/merged';
+export type { SourceGroup } from '@/data/vocabulary/merged';

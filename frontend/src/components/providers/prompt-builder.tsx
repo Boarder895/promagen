@@ -62,6 +62,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { SignInButton } from '@clerk/nextjs';
 import { trackPromptBuilderOpen, trackPromptCopy } from '@/lib/analytics/providers';
+import { sendPromptTelemetry } from '@/lib/telemetry/prompt-telemetry-client';
 import {
   assemblePrompt,
   formatPromptForCopy,
@@ -88,6 +89,7 @@ import { VALID_ASPECT_RATIOS } from '@/types/composition';
 import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
 import { useIntelligencePreferences } from '@/hooks/use-intelligence-preferences';
 import { useMarketMoodLive } from '@/hooks/use-market-mood-live';
+import { useLearnedWeights } from '@/hooks/use-learned-weights';
 import {
   DNABar,
   ConflictWarning,
@@ -101,6 +103,12 @@ import { reorderByRelevance, generateCoherentPrompt } from '@/lib/prompt-intelli
 // Save to Library imports
 import { useSavedPrompts } from '@/hooks/use-saved-prompts';
 import { SavePromptModal, type SavePromptData } from '@/components/prompts/save-prompt-modal';
+
+// Scene Starters import (Phase 2)
+import { SceneSelector } from '@/components/providers/scene-selector';
+import { ExploreDrawer, type CascadeScoreMap } from '@/components/providers/explore-drawer';
+import { getSceneById } from '@/data/scenes';
+import { trackEvent } from '@/lib/analytics/events';
 
 // ============================================================================
 // Types
@@ -463,6 +471,31 @@ export function PromptBuilder({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
 
+  // Step 2.6: Scene origin tracking — which values came from a Scene Starter
+  const [scenePrefills, setScenePrefills] = useState<Record<string, string[]> | undefined>();
+  // Phase 4: Track active scene ID for flavour phrases lookup
+  const [activeSceneId, setActiveSceneId] = useState<string | undefined>();
+
+  // Phase 3: Explore Drawer accordion — only one drawer open at a time
+  const [expandedExploreCategory, setExpandedExploreCategory] = useState<PromptCategory | null>(
+    null,
+  );
+
+  const handleActiveSceneChange = useCallback(
+    (sceneId: string | undefined, prefills: Record<string, string[]> | undefined) => {
+      setScenePrefills(prefills);
+      setActiveSceneId(sceneId);
+    },
+    [],
+  );
+
+  // Phase 4.1: Look up active scene's flavourPhrases
+  const activeSceneFlavour = useMemo(() => {
+    if (!activeSceneId) return undefined;
+    const scene = getSceneById(activeSceneId);
+    return scene?.flavourPhrases;
+  }, [activeSceneId]);
+
   // Market mood uses preference as source of truth
   const isMarketMoodEnabled = intelligencePrefs.marketMoodEnabled;
   const setIsMarketMoodEnabled = useCallback(
@@ -482,6 +515,12 @@ export function PromptBuilder({
 
   // Save to Library hook
   const { savePrompt } = useSavedPrompts();
+
+  // Phase 5: Learned co-occurrence weights for dropdown reordering
+  const {
+    coOccurrenceLookup,
+    blendRatio: learnedBlendRatio,
+  } = useLearnedWeights();
 
   // ============================================================================
   // Market Mood State (Live FX data with demo fallback)
@@ -877,7 +916,7 @@ export function PromptBuilder({
       const config = getEnhancedCategoryConfig(category);
       if (!config || config.options.length === 0) continue;
 
-      // Reorder options based on current selections + live market mood + tier
+      // Reorder options based on current selections + live market mood + tier + learned weights
       const scoredOptions = reorderByRelevance(
         config.options,
         category,
@@ -885,16 +924,20 @@ export function PromptBuilder({
         isMarketMoodEnabled,
         marketState,
         platformTier,
+        coOccurrenceLookup,
+        learnedBlendRatio,
       );
 
       map.set(category, scoredOptions);
     }
 
     // Log warning if reorder exceeds one frame budget
+    const elapsed = typeof performance !== 'undefined' ? performance.now() - start : 0;
     if (typeof performance !== 'undefined' && process.env.NODE_ENV === 'development') {
-      const elapsed = performance.now() - start;
       if (elapsed > 16) {
-        console.warn(`[Cascade] Reorder took ${elapsed.toFixed(1)}ms (target: <16ms) — ${map.size} categories`);
+        console.warn(
+          `[Cascade] Reorder took ${elapsed.toFixed(1)}ms (target: <16ms) — ${map.size} categories`,
+        );
       }
     }
 
@@ -906,7 +949,19 @@ export function PromptBuilder({
     isMarketMoodEnabled,
     marketState,
     platformTier,
+    coOccurrenceLookup,
+    learnedBlendRatio,
   ]);
+
+  // Step 4.2: Track cascade reorder events (useEffect for purity)
+  useEffect(() => {
+    if (reorderedOptionsMap.size > 0) {
+      trackEvent('cascade_reorder_triggered', {
+        categories_reordered: reorderedOptionsMap.size,
+        elapsed_ms: 0, // elapsed only available inside memo scope
+      });
+    }
+  }, [reorderedOptionsMap]);
 
   // Helper to get options for a category (reordered if available)
   const getOptionsForCategory = useCallback(
@@ -925,6 +980,39 @@ export function PromptBuilder({
   const wasOptimized = optimizedResult.originalLength !== optimizedResult.optimizedLength;
 
   const displayCategories = useMemo(() => CATEGORY_ORDER as PromptCategory[], []);
+
+  // Step 2.6: Get scene-origin values for a category (for combobox chip tinting)
+  const getSceneOriginValues = useCallback(
+    (category: PromptCategory): string[] | undefined => {
+      if (!scenePrefills) return undefined;
+      return scenePrefills[category];
+    },
+    [scenePrefills],
+  );
+
+  // Phase 4.4: Derive cascade score map for a category (for Explore Drawer ordering)
+  const getCascadeScores = useCallback(
+    (category: PromptCategory): CascadeScoreMap | undefined => {
+      const scored = reorderedOptionsMap.get(category);
+      if (!scored || scored.length === 0) return undefined;
+      const map: CascadeScoreMap = new Map();
+      for (const s of scored) {
+        map.set(s.option.toLowerCase(), s.score);
+      }
+      return map;
+    },
+    [reorderedOptionsMap],
+  );
+
+  // Phase 4.1: Get scene flavour phrases for a category
+  const getSceneFlavourPhrases = useCallback(
+    (category: PromptCategory): string[] | undefined => {
+      if (!activeSceneFlavour) return undefined;
+      const phrases = activeSceneFlavour[category as keyof typeof activeSceneFlavour];
+      return phrases && phrases.length > 0 ? phrases : undefined;
+    },
+    [activeSceneFlavour],
+  );
 
   const outboundHref = provider.id ? `/go/${provider.id}?src=prompt_builder` : null;
 
@@ -999,6 +1087,7 @@ export function PromptBuilder({
     if (isLocked) return;
     setCategoryState(createInitialState());
     setAspectRatio(null);
+    setScenePrefills(undefined); // Step 2.6: Clear scene tracking on full clear
   }, [isLocked, setAspectRatio]);
 
   const handleCopyPrompt = useCallback(async () => {
@@ -1016,10 +1105,28 @@ export function PromptBuilder({
       if (provider.id) {
         trackPromptCopy({ providerId: provider.id, promptLength: textToCopy.length });
       }
+
+      // Phase 5: Fire telemetry for the learning pipeline (fire-and-forget)
+      sendPromptTelemetry({
+        selections,
+        healthScore,
+        scoreFactors: {
+          coherence: promptAnalysis?.dna?.coherenceScore ?? 0,
+          fill: promptAnalysis?.summary?.fillPercent ?? 0,
+          conflicts: promptAnalysis?.summary?.conflictCount ?? 0,
+        },
+        promptText: textToCopy,
+        platformId,
+        tier: platformTier as 1 | 2 | 3 | 4,
+        sceneUsed: activeSceneId ?? null,
+        copied: true,
+        saved: false,
+        reusedFromLibrary: false,
+      });
     } catch (err) {
       console.error('Failed to copy prompt:', err);
     }
-  }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult]);
+  }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId]);
 
   const handleDone = useCallback(() => {
     onDone?.();
@@ -1067,6 +1174,24 @@ export function PromptBuilder({
         setShowSaveModal(false);
         setSavedConfirmation(true);
         setTimeout(() => setSavedConfirmation(false), 2000);
+
+        // Phase 5: Fire telemetry for the learning pipeline (fire-and-forget)
+        sendPromptTelemetry({
+          selections,
+          healthScore,
+          scoreFactors: {
+            coherence: promptAnalysis?.dna?.coherenceScore ?? 0,
+            fill: promptAnalysis?.summary?.fillPercent ?? 0,
+            conflicts: promptAnalysis?.summary?.conflictCount ?? 0,
+          },
+          promptText: optimizedResult.optimized,
+          platformId,
+          tier: platformTier as 1 | 2 | 3 | 4,
+          sceneUsed: activeSceneId ?? null,
+          copied: false,
+          saved: true,
+          reusedFromLibrary: false,
+        });
       }
     },
     [
@@ -1079,6 +1204,9 @@ export function PromptBuilder({
       optimizedResult,
       negativesArray,
       selections,
+      healthScore,
+      platformTier,
+      activeSceneId,
     ],
   );
 
@@ -1265,6 +1393,20 @@ export function PromptBuilder({
             </span>
           </p>
 
+          {/* ════════════════════════════════════════════════════════ */}
+          {/* Scene Starters — quick-start strip (Phase 2)           */}
+          {/* Sits between instructions and category grid.           */}
+          {/* Collapsed by default. Expands to show world accordion. */}
+          {/* ════════════════════════════════════════════════════════ */}
+          <SceneSelector
+            categoryState={categoryState}
+            setCategoryState={setCategoryState}
+            userTier={userTier}
+            isLocked={isLocked}
+            onActiveSceneChange={handleActiveSceneChange}
+            platformTier={platformTier}
+          />
+
           {/* Category dropdowns grid */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {displayCategories.map((category) => {
@@ -1302,6 +1444,26 @@ export function PromptBuilder({
                     isLocked={isLocked}
                     chipOptions={getCategoryChips(category, state.selected, state.customValue)}
                     chipSectionLabel="More options"
+                    sceneOriginValues={getSceneOriginValues(category)}
+                  />
+                  {/* Phase 3: Explore Drawer — expandable vocabulary panel */}
+                  <ExploreDrawer
+                    category={category}
+                    selectedTerms={state.selected}
+                    onAddTerm={(term) =>
+                      handleSelectChange(category, [...state.selected, term])
+                    }
+                    maxSelections={maxSelections}
+                    isLocked={isLocked}
+                    platformTier={platformTier}
+                    isExpanded={expandedExploreCategory === category}
+                    onToggle={() =>
+                      setExpandedExploreCategory(
+                        expandedExploreCategory === category ? null : category,
+                      )
+                    }
+                    sceneFlavourPhrases={getSceneFlavourPhrases(category)}
+                    cascadeScores={getCascadeScores(category)}
                   />
                 </div>
               );

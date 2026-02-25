@@ -53,7 +53,13 @@ export type AnalyticsEventName =
   | 'nav_click'
   | 'page_view_custom'
   | 'ribbon_pause'
-  | 'fx_pair_select';
+  | 'fx_pair_select'
+  // Phase 4 — Prompt Builder Evolution events
+  | 'scene_selected'
+  | 'scene_reset'
+  | 'explore_drawer_opened'
+  | 'explore_chip_clicked'
+  | 'cascade_reorder_triggered';
 
 export interface AnalyticsEventPayloads {
   provider_click: {
@@ -180,6 +186,39 @@ export interface AnalyticsEventPayloads {
     count: number;
     ids: string;
     source?: string;
+  };
+
+  // Phase 4 — Prompt Builder Evolution events
+
+  scene_selected: {
+    scene_id: string;
+    scene_name: string;
+    world: string;
+    tier: 'free' | 'pro';
+    platform_tier: number;
+    categories_prefilled: number;
+  };
+
+  scene_reset: {
+    scene_id: string;
+    was_modified: boolean;
+  };
+
+  explore_drawer_opened: {
+    category: string;
+    platform_tier: number;
+  };
+
+  explore_chip_clicked: {
+    category: string;
+    term: string;
+    platform_tier: number;
+    source_tab: string;
+  };
+
+  cascade_reorder_triggered: {
+    categories_reordered: number;
+    elapsed_ms: number;
   };
 }
 

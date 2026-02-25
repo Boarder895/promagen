@@ -7,6 +7,7 @@
 // ============================================================================
 
 import type { PromptCategory, PromptBuilderState } from '@/types/prompt-builder';
+import type { CoOccurrenceLookup } from '@/lib/learning/co-occurrence-lookup';
 
 // ============================================================================
 // § 1. Semantic Tags
@@ -270,6 +271,8 @@ export interface ScoredOption {
     affinityBoost?: number;
     /** Tier multiplier applied (Phase 1) — 1.0 = neutral */
     tierMultiplier?: number;
+    /** Boost from learned co-occurrence data (Phase 5) */
+    coOccurrenceBoost?: number;
   };
 }
 
@@ -307,6 +310,12 @@ export interface PromptContext {
   
   /** Platform tier (1-4) for tier-aware scoring multipliers (Phase 1) */
   tier: number | null;
+
+  /** Pre-built co-occurrence lookup from learned weights (Phase 5, null = no data) */
+  coOccurrenceWeights: CoOccurrenceLookup | null;
+
+  /** Blend ratio [curated, learned] based on total event count (Phase 5) */
+  blendRatio: [curated: number, learned: number];
 }
 
 // ============================================================================

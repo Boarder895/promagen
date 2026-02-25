@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 16 February 2026
+**Last updated:** 25 February 2026
 
 ---
 
@@ -374,6 +374,41 @@ Never use Tailwind breakpoint text classes (`text-xs`, `sm:text-sm`, `xl:text-ba
 - "Is this animation unique to this component?" → keep it in the file
 
 **Authority:** `docs/authority/code-standard.md` § 6.2 (Animation Placement Standard)
+
+**Phase 4 pattern — co-located `<style>` tags:**
+
+When a component needs CSS `@keyframes` that Tailwind cannot express (e.g., multi-step transforms), use a `<style dangerouslySetInnerHTML>` block inside the component with a constant string. This keeps animations in the file without globals.css. See `explore-drawer.tsx` and `scene-selector.tsx` for reference implementations.
+
+```tsx
+const COMPONENT_STYLES = `
+  @keyframes my-fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .my-class { animation: my-fade-in 0.2s ease-out; }
+`;
+// Then in JSX:
+<style dangerouslySetInnerHTML={{ __html: COMPONENT_STYLES }} />
+```
+
+### Accessibility patterns (interactive element rules)
+
+**Purpose:** Prevent ESLint a11y violations and ensure screen reader compatibility.
+
+**Hard rules:**
+
+1. **Only `<button>`, `<a>`, `<input>`, `<select>` get `onClick`/`onKeyDown` handlers.** Never put interactive handlers on `<div>`, `<span>`, `<li>`, or other non-interactive elements. If you need a clickable area, use `<button type="button">`.
+
+2. **Confirmation/upgrade dialogs** use `role="dialog"` and `aria-modal="true"`. Backdrop dismissal uses a `<button>` element (not a `<div onClick>`).
+
+3. **Document-level keyboard listeners** go in `useEffect` with cleanup. Never use `onKeyDown` on `<div role="region">` or other non-interactive containers.
+
+4. **Accordion patterns:** Parent manages state (which is expanded). Trigger is a `<button>` with `aria-expanded`. Content uses `role="region"` with `aria-label`.
+
+**Reference implementations:**
+- Confirmation dialog pattern: `scene-selector.tsx` (lines 766–812)
+- Escape key handling: `explore-drawer.tsx` (lines 272–280)
+- Accordion: `prompt-builder.tsx` + `explore-drawer.tsx`
 
 ### Content-driven sizing (when content doesn't breathe)
 

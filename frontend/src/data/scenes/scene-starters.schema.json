@@ -1,0 +1,327 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "scene-starters.schema.json",
+  "title": "Scene Starters",
+  "description": "Schema for Promagen Scene Starters — 200 curated scene templates (25 free + 175 pro). Authority: prompt-builder-evolution-plan-v2.md §6, §14.1",
+  "type": "object",
+  "required": ["_meta", "scenes"],
+  "additionalProperties": false,
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["version", "description", "updated", "counts"],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version of this data file"
+        },
+        "description": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date",
+          "description": "ISO 8601 date of last update"
+        },
+        "counts": {
+          "type": "object",
+          "required": ["free", "pro", "total", "worlds"],
+          "additionalProperties": false,
+          "properties": {
+            "free": { "type": "integer", "minimum": 0 },
+            "pro": { "type": "integer", "minimum": 0 },
+            "total": { "type": "integer", "minimum": 0 },
+            "worlds": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/SceneEntry" },
+      "minItems": 0,
+      "description": "All scene starter entries (free + pro)"
+    }
+  },
+
+  "$defs": {
+    "PromptCategory": {
+      "type": "string",
+      "enum": [
+        "subject",
+        "action",
+        "style",
+        "environment",
+        "composition",
+        "camera",
+        "lighting",
+        "colour",
+        "atmosphere",
+        "materials",
+        "fidelity",
+        "negative"
+      ],
+      "description": "Must match PromptCategory type in src/types/prompt-builder.ts"
+    },
+
+    "PrefillableCategory": {
+      "type": "string",
+      "enum": [
+        "subject",
+        "action",
+        "style",
+        "environment",
+        "composition",
+        "camera",
+        "lighting",
+        "colour",
+        "atmosphere",
+        "materials",
+        "fidelity"
+      ],
+      "description": "Categories that can be pre-filled by a scene. Excludes 'negative' — scenes never pre-fill negative prompts."
+    },
+
+    "WorldSlug": {
+      "type": "string",
+      "enum": [
+        "portraits-and-people",
+        "landscapes-and-worlds",
+        "mood-and-atmosphere",
+        "style-forward",
+        "trending-seasonal",
+        "cinematic",
+        "fantasy-and-mythology",
+        "sci-fi-and-future",
+        "historical-eras",
+        "urban-and-street",
+        "nature-and-elements",
+        "architecture-and-interiors",
+        "portraiture-and-character",
+        "dark-and-horror",
+        "whimsical-and-surreal",
+        "cultural-and-ceremonial",
+        "abstract-and-experimental",
+        "food-and-still-life",
+        "animals-and-creatures",
+        "commodity-inspired",
+        "weather-driven",
+        "seasonal",
+        "micro-and-macro"
+      ],
+      "description": "Kebab-case world identifier. First 5 are free, remaining 18 are pro."
+    },
+
+    "TierGuidanceCLIP": {
+      "type": "object",
+      "required": ["affinity"],
+      "additionalProperties": false,
+      "properties": {
+        "affinity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "How well this scene works on CLIP-based platforms (1=poor, 10=excellent)"
+        },
+        "boostFidelity": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to auto-add fidelity terms (8K, masterpiece) for this scene"
+        },
+        "note": {
+          "type": "string",
+          "description": "Human-readable note for documentation / admin panel"
+        }
+      }
+    },
+
+    "TierGuidanceMJ": {
+      "type": "object",
+      "required": ["affinity"],
+      "additionalProperties": false,
+      "properties": {
+        "affinity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "How well this scene works on Midjourney (1=poor, 10=excellent)"
+        },
+        "params": {
+          "type": "string",
+          "pattern": "^--",
+          "description": "Recommended MJ parameters (e.g. '--ar 21:9 --s 750 --v 6')"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+
+    "TierGuidanceNL": {
+      "type": "object",
+      "required": ["affinity"],
+      "additionalProperties": false,
+      "properties": {
+        "affinity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "How well this scene works on NL platforms like DALL-E (1=poor, 10=excellent)"
+        },
+        "narrative": {
+          "type": "string",
+          "minLength": 20,
+          "description": "One-sentence natural language description seed for this scene"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+
+    "TierGuidancePlain": {
+      "type": "object",
+      "required": ["affinity"],
+      "additionalProperties": false,
+      "properties": {
+        "affinity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "How well this scene works on plain-language platforms (1=poor, 10=excellent)"
+        },
+        "core": {
+          "type": "string",
+          "description": "Simplified 3–5 essential terms for plain parsers"
+        },
+        "reducedPrefills": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PrefillableCategory" },
+          "minItems": 3,
+          "maxItems": 5,
+          "description": "Which categories to pre-fill on Tier 4 (reduced set of 3–5)"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+
+    "TierGuidance": {
+      "type": "object",
+      "required": ["1", "2", "3", "4"],
+      "additionalProperties": false,
+      "properties": {
+        "1": { "$ref": "#/$defs/TierGuidanceCLIP" },
+        "2": { "$ref": "#/$defs/TierGuidanceMJ" },
+        "3": { "$ref": "#/$defs/TierGuidanceNL" },
+        "4": { "$ref": "#/$defs/TierGuidancePlain" }
+      },
+      "description": "Per-tier metadata. Tier 1=CLIP, 2=MJ, 3=NatLang, 4=Plain."
+    },
+
+    "FlavourPhrases": {
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(subject|action|style|environment|composition|camera|lighting|colour|atmosphere|materials|fidelity)$": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 2 },
+          "minItems": 1,
+          "maxItems": 10,
+          "description": "Extra evocative phrases for Explore Drawer (Phase 3). NOT from core vocabulary — unique to this scene."
+        }
+      },
+      "description": "Scene-specific bonus phrases shown in Explore Drawer. Keyed by category."
+    },
+
+    "SceneEntry": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "world",
+        "emoji",
+        "description",
+        "tier",
+        "prefills",
+        "tierGuidance",
+        "tags"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "minLength": 3,
+          "maxLength": 60,
+          "description": "Unique kebab-case identifier (e.g. 'blade-runner-rain')"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 60,
+          "description": "Display name shown in accordion dropdown (e.g. 'Blade Runner Rain')"
+        },
+        "world": {
+          "$ref": "#/$defs/WorldSlug",
+          "description": "Which world/heading this scene belongs to"
+        },
+        "emoji": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4,
+          "description": "Emoji icon shown in dropdown (e.g. '🎬', '⚔️')"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 120,
+          "description": "Short tagline shown below name in dropdown (e.g. 'Neon-drenched cyberpunk street in heavy rain')"
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["free", "pro"],
+          "description": "'free' = accessible to all users (25 scenes). 'pro' = locked behind Pro gate (175 scenes)."
+        },
+        "prefills": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^(subject|action|style|environment|composition|camera|lighting|colour|atmosphere|materials|fidelity)$": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 2 },
+              "minItems": 1,
+              "maxItems": 3,
+              "description": "Values to pre-fill into this category dropdown. Max 3 per category (respects platform limits)."
+            }
+          },
+          "minProperties": 4,
+          "maxProperties": 11,
+          "description": "Categories to pre-populate. Minimum 4 categories filled, maximum 11 (all except negative). Every value MUST exist in core or merged vocabulary."
+        },
+        "tierGuidance": {
+          "$ref": "#/$defs/TierGuidance"
+        },
+        "flavourPhrases": {
+          "$ref": "#/$defs/FlavourPhrases",
+          "description": "Optional. Extra scene-specific phrases for Explore Drawer (Phase 3)."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 30
+          },
+          "minItems": 3,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "description": "Searchable tags for filtering and future learning. 3–12 tags per scene."
+        }
+      }
+    }
+  }
+}

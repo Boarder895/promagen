@@ -76,6 +76,9 @@ The following features are available to all users without sign-in:
 - **Weather badges** â€” Current weather for each exchange city
 - **AI Providers Leaderboard** â€” Browse and compare all 42 AI image generation providers
 - **Market Pulse (4 cities)** â€” Visual connection animations for Sydney, Hong Kong, London, and Chicago
+- **Scene Starters (25 free scenes)** — One-click prompt templates across 10 thematic worlds (Phase 2)
+- **Explore Drawer** — Expandable vocabulary panel showing 9,058 browseable phrases per category with search and source-grouped tabs (Phase 3)
+- **Cascading Intelligence** — Downstream dropdowns reorder options based on upstream selections for coherent prompt building (Phase 1)
 
 These features define the baseline experience.
 They are complete and honest.
@@ -1272,6 +1275,37 @@ Authority for implementation: `docs/authority/gallery-mode-master.md`
 
 ---
 
+### 5.12 Scene Starters (prompt builder quick-start)
+
+Scene Starters are curated one-click prompt templates in the prompt builder. They pre-populate 5–8 categories simultaneously from a library of 200 themed scenes.
+
+#### Tier Comparison
+
+| Aspect | Standard Promagen | Pro Promagen |
+|--------|-------------------|--------------|
+| Scene count | 25 scenes | 200 scenes (25 free + 175 pro) |
+| Worlds accessible | All 10 worlds (limited scenes per world) | All 10 worlds (full library) |
+| Tier-aware prefills | Yes | Yes |
+| Modification tracking | Yes | Yes |
+| Flavour phrases in Explore | Yes (when scene has them) | Yes (when scene has them) |
+
+#### Scene Distribution
+
+200 scenes across 10 worlds: Portraits & People, Fantasy & Mythology, Sci-Fi & Futurism, Nature & Landscapes, Urban & Architecture, Abstract & Artistic, Horror & Dark, Historical & Period, Food & Still Life, Underwater & Aerial. Each world has exactly 20 scenes. Free scenes are spread across all worlds so every user can experience every theme.
+
+#### Pro Gate Behaviour
+
+- Free scenes (25): fully accessible, no restrictions
+- Pro scenes (175): visible with 🔒 icon at 50% opacity
+- Anonymous user clicking pro scene → "Sign in first" (Clerk sign-in modal)
+- Free signed-in user clicking pro scene → "Upgrade to Pro" dialog with link to `/pro-promagen`
+- Pro scenes never dead-end — always show an upgrade path
+
+#### Authority
+
+See `scene-starters.md` for full architecture, data schema, and file locations.
+
+
 ## 6. Invariants (apply to everyone, always)
 
 These rules are **never overridden**, including for paid users:
@@ -1349,6 +1383,7 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **25 Feb 2026:** **SCENE STARTERS + EXPLORE DRAWER (v9.0.0)** — Added §5.12 Scene Starters. 200 curated scenes (25 free, 175 pro) across 10 worlds. Pro gate: locked scenes show upgrade dialog. Updated §2.1 free features: added Scene Starters (25 free), Explore Drawer (9,058 phrases), Cascading Intelligence. See scene-starters.md for full documentation. See prompt-builder-evolution-plan-v2.md for architecture.
 - **1 Feb 2026:** **INDICES DROPDOWN REMOVED (v2.8.0)** — Removed ChipsDropdown component from comparison-table.tsx (333 lines of code removed). Root cause: duplicate React key errors from multi-index exchanges (e.g., XETRA having DAX + MDAX). ChipsDropdown rendered index chips with exchange MIC as key, causing collisions when multiple indices shared the same exchange. Solution: index selection now handled per-exchange via dropdown in Exchange Picker (exchange-card.tsx). StatusBadge component also removed (28 lines, unreferenced). File reduced from 932→570 lines (39% smaller). Updated §5.10 comparison table row: "Stock Indices" now shows "Per-exchange in Exchange Picker" instead of ChipsDropdown. All file versions bumped to v2.8.0.
 - **29 Jan 2026:** **FX PICKER REGIONAL FULLSCREEN REDESIGN (v2.0.0)** â€” Complete rewrite of Â§5.5 FX Picker UI. Implemented fullscreen regional accordion (matches Exchange Picker UX). 4 regions based on BASE currency: Americas (ðŸŒŽ), Europe (ðŸ°), Asia Pacific (ðŸŒ), Middle East & Africa (ðŸŒ). Features: dual SVG flags per pair (base+quote), sticky selection tray, progress bar (0-16), search across all regions, category badges (MAJOR/CROSS/EMERGING). Files: `fx-picker.tsx` v2.0.0, `fx-regions.ts` v1.0.0 (100+ currency mappings), `fx-picker-helpers.ts` v1.0.0. Updated Â§5.10 to reflect fullscreen picker modes. Trigger button: emerald-sky gradient with currency exchange icon. Note: MEA region shows fewer pairs because fx-pairs.json has limited BASE currency entries for that region.
 - **29 Jan 2026:** **EXCHANGE PICKER SCROLL FIX (v2.5.0)** â€” Fixed large screen scroll behavior in Exchange Picker. Now uses `overflow-y-auto` on all screen sizes with `max-h-[400px] lg:max-h-none`. Removed `lg:overflow-visible` which broke scrolling entirely. All continents closed by default. Updated Â§5.3 with current implementation details.
