@@ -940,6 +940,15 @@ Pie chart: beginner / intermediate / expert. Average journey length (sessions to
 
 👍/👌/👎 distribution. Per-platform satisfaction rates. Terms with highest 👎 rate (candidates for demotion). Correlation between assigned score and user rating.
 
+Design Constraint for Phase 7.10 (Feedback Widget)
+Hard requirement: The three-point feedback scale (great / okay / poor) must include explanatory text or tooltips so users understand the middle option means "mediocre, not impressive" — not a second positive. If users misread 👌 as approval rather than "meh," the outcome data feeding Phase 6's weight recalibration is corrupted and the scorer learns from noise.
+Options to evaluate when building Phase 7.10:
+
+Tooltip on each button explaining what it means
+Short label text beneath each icon (e.g. "Nailed it" / "Just okay" / "Missed")
+Use words as the primary UI with 👍👌👎 icons secondary
+
+The data schema ('great' | 'okay' | 'poor') is unaffected — this is purely a presentation concern, but it directly impacts data quality for the entire self-improving scorer pipeline.
 ### 12.2 Access Control
 
 Admin-only route protected by Clerk role check. Not visible to regular users. No link in main navigation — accessed directly via URL.

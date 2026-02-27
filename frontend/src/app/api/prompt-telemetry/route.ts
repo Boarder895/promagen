@@ -198,7 +198,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       INSERT INTO prompt_events (
         id, session_id, attempt_number, selections, category_count,
         char_length, score, score_factors, platform, tier,
-        scene_used, outcome
+        scene_used, outcome, user_tier, account_age_days
       ) VALUES (
         ${eventId},
         ${data.sessionId},
@@ -211,7 +211,9 @@ export async function POST(req: NextRequest): Promise<Response> {
         ${data.platform},
         ${data.tier},
         ${data.sceneUsed},
-        ${JSON.stringify(data.outcome)}
+        ${JSON.stringify(data.outcome)},
+        ${data.userTier ?? null},
+        ${data.accountAgeDays ?? null}
       )
     `;
 

@@ -3,19 +3,20 @@
 // COLLECTIVE INTELLIGENCE ENGINE — Learned Weights Hook
 // ============================================================================
 //
-// Client hook that fetches co-occurrence data from the learning API,
-// builds a fast lookup structure, and caches it module-level.
+// Client hook that fetches co-occurrence data AND scoring weights
+// from the learning API, caches them module-level.
 //
 // Data only changes at 3 AM UTC (nightly cron), so we:
-// 1. Fetch once on mount
-// 2. Cache in module-level variable (survives re-renders)
+// 1. Fetch once on mount (parallel requests)
+// 2. Cache in module-level variables (survives re-renders)
 // 3. Refetch every 10 minutes as background refresh
 // 4. Return null gracefully if cron has not run yet
 //
 // Authority: docs/authority/prompt-builder-evolution-plan-v2.md section 9.1
 //
-// Version: 1.0.0
+// Version: 6.0.0 — Phase 7.4: added combo lookup from magic combo mining
 // Created: 2026-02-25
+// Updated: 2026-02-26
 //
 // Existing features preserved: Yes.
 // ============================================================================
@@ -30,13 +31,57 @@ import {
   type CoOccurrenceLookup,
 } from '@/lib/learning/co-occurrence-lookup';
 import { getBlendRatio } from '@/lib/learning/constants';
+import type { ScoringWeights } from '@/lib/learning/weight-recalibration';
+import type { AntiPatternData } from '@/lib/learning/anti-pattern-detection';
+import {
+  buildAntiPatternLookup,
+  type AntiPatternLookup,
+} from '@/lib/learning/anti-pattern-lookup';
+import type { CollisionMatrixData } from '@/lib/learning/collision-matrix';
+import {
+  buildCollisionLookup,
+  type CollisionLookup,
+} from '@/lib/learning/collision-lookup';
+import type { IterationInsightsData } from '@/lib/learning/iteration-tracking';
+import {
+  buildWeakTermLookup,
+  type WeakTermLookup,
+} from '@/lib/learning/weak-term-lookup';
+import type { RedundancyGroupsData } from '@/lib/learning/redundancy-detection';
+import {
+  buildRedundancyLookup,
+  type RedundancyLookup,
+} from '@/lib/learning/redundancy-lookup';
+import type { MagicCombosData } from '@/lib/learning/magic-combo-mining';
+import {
+  buildComboLookup,
+  type ComboLookup,
+} from '@/lib/learning/combo-lookup';
 
 // ============================================================================
 // MODULE-LEVEL CACHE
 // ============================================================================
 
-/** Cached lookup — survives re-renders, cleared on page refresh */
+/** Cached co-occurrence lookup — survives re-renders, cleared on page refresh */
 let cachedLookup: CoOccurrenceLookup | null = null;
+
+/** Cached scoring weights — survives re-renders, cleared on page refresh */
+let cachedScoringWeights: ScoringWeights | null = null;
+
+/** Cached anti-pattern lookup (Phase 7.1) — survives re-renders */
+let cachedAntiPatternLookup: AntiPatternLookup | null = null;
+
+/** Cached collision lookup (Phase 7.1) — survives re-renders */
+let cachedCollisionLookup: CollisionLookup | null = null;
+
+/** Cached weak term lookup (Phase 7.2) — survives re-renders */
+let cachedWeakTermLookup: WeakTermLookup | null = null;
+
+/** Cached redundancy lookup (Phase 7.3) — survives re-renders */
+let cachedRedundancyLookup: RedundancyLookup | null = null;
+
+/** Cached combo lookup (Phase 7.4) — survives re-renders */
+let cachedComboLookup: ComboLookup | null = null;
 
 /** Timestamp of last successful fetch */
 let lastFetchedAt = 0;
@@ -52,8 +97,26 @@ export interface UseLearnedWeightsReturn {
   /** Pre-built co-occurrence lookup (null = no data yet or loading) */
   coOccurrenceLookup: CoOccurrenceLookup | null;
 
+  /** Per-tier scoring weights from Phase 6 (null = cron hasn't run yet) */
+  scoringWeights: ScoringWeights | null;
+
   /** Current blend ratio: [curatedWeight, learnedWeight] based on event count */
   blendRatio: [curated: number, learned: number];
+
+  /** Pre-built anti-pattern lookup from Phase 7.1 (null = no data or cron hasn't run) */
+  antiPatternLookup: AntiPatternLookup | null;
+
+  /** Pre-built collision lookup from Phase 7.1 (null = no data or cron hasn't run) */
+  collisionLookup: CollisionLookup | null;
+
+  /** Pre-built weak term lookup from Phase 7.2 (null = no data or cron hasn't run) */
+  weakTermLookup: WeakTermLookup | null;
+
+  /** Pre-built redundancy lookup from Phase 7.3 (null = no data or cron hasn't run) */
+  redundancyLookup: RedundancyLookup | null;
+
+  /** Pre-built combo lookup from Phase 7.4 (null = no data or cron hasn't run) */
+  comboLookup: ComboLookup | null;
 
   /** Whether the initial fetch is in progress */
   isLoading: boolean;
@@ -75,18 +138,74 @@ interface CoOccurrenceApiResponse {
   updatedAt: string | null;
 }
 
+interface ScoringWeightsApiResponse {
+  ok: boolean;
+  data: ScoringWeights | null;
+  updatedAt: string | null;
+}
+
+interface AntiPatternApiResponse {
+  ok: boolean;
+  data: AntiPatternData | null;
+  updatedAt: string | null;
+}
+
+interface CollisionApiResponse {
+  ok: boolean;
+  data: CollisionMatrixData | null;
+  updatedAt: string | null;
+}
+
+interface IterationInsightsApiResponse {
+  ok: boolean;
+  data: IterationInsightsData | null;
+  updatedAt: string | null;
+}
+
+interface RedundancyGroupsApiResponse {
+  ok: boolean;
+  data: RedundancyGroupsData | null;
+  updatedAt: string | null;
+}
+
+interface MagicCombosApiResponse {
+  ok: boolean;
+  data: MagicCombosData | null;
+  updatedAt: string | null;
+}
+
 // ============================================================================
 // HOOK
 // ============================================================================
 
 /**
- * Hook for accessing learned co-occurrence weights.
+ * Hook for accessing learned weights (co-occurrence + scoring weights).
  *
- * Returns a pre-built lookup structure that the suggestion engine
- * can use for fast per-option scoring.
+ * Returns pre-built data structures that the suggestion engine and
+ * health scorer can use for fast per-option scoring.
+ *
+ * Phase 6 addition: `scoringWeights` field for per-tier health scoring.
  */
 export function useLearnedWeights(): UseLearnedWeightsReturn {
   const [lookup, setLookup] = useState<CoOccurrenceLookup | null>(cachedLookup);
+  const [scoringWeights, setScoringWeights] = useState<ScoringWeights | null>(
+    cachedScoringWeights,
+  );
+  const [antiPatternLookup, setAntiPatternLookup] = useState<AntiPatternLookup | null>(
+    cachedAntiPatternLookup,
+  );
+  const [collisionLookup, setCollisionLookup] = useState<CollisionLookup | null>(
+    cachedCollisionLookup,
+  );
+  const [weakTermLookup, setWeakTermLookup] = useState<WeakTermLookup | null>(
+    cachedWeakTermLookup,
+  );
+  const [redundancyLookup, setRedundancyLookup] = useState<RedundancyLookup | null>(
+    cachedRedundancyLookup,
+  );
+  const [comboLookup, setComboLookup] = useState<ComboLookup | null>(
+    cachedComboLookup,
+  );
   const [blendRatio, setBlendRatio] = useState<[number, number]>(() =>
     cachedLookup ? getBlendRatio(cachedLookup.eventCount) : [1.0, 0.0],
   );
@@ -99,6 +218,12 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
     const now = Date.now();
     if (cachedLookup && now - lastFetchedAt < REFETCH_INTERVAL_MS) {
       setLookup(cachedLookup);
+      setScoringWeights(cachedScoringWeights);
+      setAntiPatternLookup(cachedAntiPatternLookup);
+      setCollisionLookup(cachedCollisionLookup);
+      setWeakTermLookup(cachedWeakTermLookup);
+      setRedundancyLookup(cachedRedundancyLookup);
+      setComboLookup(cachedComboLookup);
       setBlendRatio(getBlendRatio(cachedLookup.eventCount));
       setIsLoading(false);
       return;
@@ -107,29 +232,104 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
     try {
       setError(null);
 
-      const response = await fetch('/api/learning/co-occurrence');
+      // Fetch all endpoints in parallel — none blocks the others
+      const [coOccResponse, scoringResponse, antiPatternResponse, collisionResponse, iterationResponse, redundancyResponse, comboResponse] =
+        await Promise.allSettled([
+          fetch('/api/learning/co-occurrence'),
+          fetch('/api/learning/scoring-weights'),
+          fetch('/api/learning/anti-patterns'),
+          fetch('/api/learning/collisions'),
+          fetch('/api/learning/iteration-insights'),
+          fetch('/api/learning/redundancy-groups'),
+          fetch('/api/learning/magic-combos'),
+        ]);
 
-      if (!response.ok) {
-        throw new Error('HTTP ' + response.status);
+      // ── Process co-occurrence ──────────────────────────────────────
+      if (coOccResponse.status === 'fulfilled' && coOccResponse.value.ok) {
+        const json =
+          (await coOccResponse.value.json()) as CoOccurrenceApiResponse;
+
+        if (json.ok) {
+          const newLookup = buildCoOccurrenceLookup(json.data);
+          cachedLookup = newLookup;
+          setLookup(newLookup);
+          const eventCount = json.data?.eventCount ?? 0;
+          setBlendRatio(getBlendRatio(eventCount));
+        }
       }
 
-      const json = (await response.json()) as CoOccurrenceApiResponse;
+      // ── Process scoring weights ────────────────────────────────────
+      if (scoringResponse.status === 'fulfilled' && scoringResponse.value.ok) {
+        const json =
+          (await scoringResponse.value.json()) as ScoringWeightsApiResponse;
 
-      if (!json.ok) {
-        throw new Error('API returned ok:false');
+        if (json.ok && json.data) {
+          cachedScoringWeights = json.data;
+          setScoringWeights(json.data);
+        }
       }
 
-      // Build lookup from matrix (null if no data yet)
-      const newLookup = buildCoOccurrenceLookup(json.data);
-      const eventCount = json.data?.eventCount ?? 0;
+      // ── Process anti-patterns (Phase 7.1) ──────────────────────────
+      if (antiPatternResponse.status === 'fulfilled' && antiPatternResponse.value.ok) {
+        const json =
+          (await antiPatternResponse.value.json()) as AntiPatternApiResponse;
 
-      // Update module cache
-      cachedLookup = newLookup;
+        if (json.ok && json.data) {
+          const newAntiPatternLookup = buildAntiPatternLookup(json.data);
+          cachedAntiPatternLookup = newAntiPatternLookup;
+          setAntiPatternLookup(newAntiPatternLookup);
+        }
+      }
+
+      // ── Process collisions (Phase 7.1) ─────────────────────────────
+      if (collisionResponse.status === 'fulfilled' && collisionResponse.value.ok) {
+        const json =
+          (await collisionResponse.value.json()) as CollisionApiResponse;
+
+        if (json.ok && json.data) {
+          const newCollisionLookup = buildCollisionLookup(json.data);
+          cachedCollisionLookup = newCollisionLookup;
+          setCollisionLookup(newCollisionLookup);
+        }
+      }
+
+      // ── Process iteration insights (Phase 7.2) ────────────────────
+      if (iterationResponse.status === 'fulfilled' && iterationResponse.value.ok) {
+        const json =
+          (await iterationResponse.value.json()) as IterationInsightsApiResponse;
+
+        if (json.ok && json.data) {
+          const newWeakTermLookup = buildWeakTermLookup(json.data);
+          cachedWeakTermLookup = newWeakTermLookup;
+          setWeakTermLookup(newWeakTermLookup);
+        }
+      }
+
+      // ── Process redundancy groups (Phase 7.3) ─────────────────────
+      if (redundancyResponse.status === 'fulfilled' && redundancyResponse.value.ok) {
+        const json =
+          (await redundancyResponse.value.json()) as RedundancyGroupsApiResponse;
+
+        if (json.ok && json.data) {
+          const newRedundancyLookup = buildRedundancyLookup(json.data);
+          cachedRedundancyLookup = newRedundancyLookup;
+          setRedundancyLookup(newRedundancyLookup);
+        }
+      }
+
+      // ── Process magic combos (Phase 7.4) ──────────────────────────
+      if (comboResponse.status === 'fulfilled' && comboResponse.value.ok) {
+        const json =
+          (await comboResponse.value.json()) as MagicCombosApiResponse;
+
+        if (json.ok && json.data) {
+          const newComboLookup = buildComboLookup(json.data);
+          cachedComboLookup = newComboLookup;
+          setComboLookup(newComboLookup);
+        }
+      }
+
       lastFetchedAt = Date.now();
-
-      // Update React state
-      setLookup(newLookup);
-      setBlendRatio(getBlendRatio(eventCount));
     } catch (err) {
       console.error('[useLearnedWeights] Fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch');
@@ -156,7 +356,13 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
 
   return {
     coOccurrenceLookup: lookup,
+    scoringWeights,
     blendRatio,
+    antiPatternLookup,
+    collisionLookup,
+    weakTermLookup,
+    redundancyLookup,
+    comboLookup,
     isLoading,
     error,
     refetch: fetchWeights,

@@ -18,7 +18,7 @@
 // - sessionId is a per-tab crypto.randomUUID() that dies on tab close
 // - No cookies, no credentials
 //
-// Version: 1.0.0
+// Version: 2.0.0 — Phase 7.1a confidence fields added (optional, backward-compat)
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -89,6 +89,10 @@ export interface PromptTelemetryEvent {
   sceneUsed: string | null;
   /** Outcome signals */
   outcome: PromptOutcome;
+  /** User's subscription tier (optional — GDPR safe, not PII) */
+  userTier?: 'free' | 'paid';
+  /** Days since account creation (optional — GDPR safe, not PII) */
+  accountAgeDays?: number;
 }
 
 /**
@@ -219,6 +223,17 @@ export const PromptTelemetryEventSchema = z.object({
     .nullable(),
 
   outcome: OutcomeSchema,
+
+  userTier: z
+    .enum(['free', 'paid'])
+    .optional(),
+
+  accountAgeDays: z
+    .number()
+    .int()
+    .min(0, 'accountAgeDays must be >= 0')
+    .max(10_000, 'accountAgeDays must be <= 10000')
+    .optional(),
 });
 
 /**

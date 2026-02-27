@@ -1,9 +1,11 @@
 /**
  * Learning Aggregation Cron Job
  *
- * Nightly computation for the Collective Intelligence Engine.
- * Reads qualifying prompt_events, computes co-occurrence matrices,
- * and stores results in the learned_weights table.
+ * Nightly computation for the Collective Intelligence Engine (Phase 5),
+ * the Self-Improving Scorer (Phase 6), Negative Pattern Learning (Phase 7.1),
+ * Iteration Tracking (Phase 7.2), Semantic Redundancy Detection (Phase 7.3),
+ * Higher-Order Combinations / Magic Combos (Phase 7.4),
+ * and Per-Platform Learning (Phase 7.5).
  *
  * Schedule: 03:00 UTC daily (configured in Vercel dashboard)
  *
@@ -13,11 +15,52 @@
  * - Returns 404 for invalid auth (hides endpoint existence)
  *
  * LAYERS:
- * - Layer 1: Co-occurrence matrix       (5.3b ✓)
- * - Layer 2: Sequence patterns           (5.3c ✓)
- * - Layer 3: Scene candidates            (5.3d ✓)
+ * - Layer 1: Co-occurrence matrix       (Phase 5 — 5.3b)
+ * - Layer 2: Sequence patterns           (Phase 5 — 5.3c)
+ * - Layer 3: Scene candidates            (Phase 5 — 5.3d)
+ * - Layer 4: Weight Recalibration        (Phase 6 — scoring-weights)
+ * - Layer 5: Category Value Discovery    (Phase 6 — category-values)
+ * - Layer 6: Term Quality Scores         (Phase 6 — term-quality-scores)
+ * - Layer 7: Threshold Discovery         (Phase 6 — threshold-discovery)
+ * - Layer 8: Scorer Health Report        (Phase 6 — scorer-health-report)
+ * - Layer 9: Anti-pattern Detection      (Phase 7.1 — anti-patterns)
+ * - Layer 10: Collision Matrix           (Phase 7.1 — collision-matrix)
+ * - Layer 11: Iteration Tracking         (Phase 7.2 — iteration-insights)
+ * - Layer 12: Redundancy Detection       (Phase 7.3 — redundancy-groups)
+ * - Layer 13: Magic Combos               (Phase 7.4 — magic-combos)
+ * - Layer 14a: Platform Term Quality     (Phase 7.5 — platform-term-quality)
+ * - Layer 14b: Platform Co-occurrence    (Phase 7.5 — platform-co-occurrence)
  *
- * @see docs/authority/prompt-builder-evolution-plan-v2.md § 9
+ * Execution order:
+ *   Layers 4, 5, 6 run in parallel (no inter-dependencies).
+ *   Layer 7 depends on Layer 4 output (previous threshold for smoothing).
+ *   Layer 8 depends on Layer 4 output (current weights for drift calc).
+ *   Layers 9, 10 run in parallel (no inter-dependencies).
+ *   Layers 9, 10 use a SEPARATE event set (all events, not just qualifying).
+ *   Layer 11 runs after Layers 9, 10 (reuses same event set).
+ *   Layer 12 runs after Layer 11 (reuses same event set).
+ *   Layer 13 runs after Layer 12 (reuses same event set).
+ *   Layers 14a, 14b run after Layer 13 (reuses same event set).
+ *
+ * Phase 6 is gated by PHASE_6_SCORING_ENABLED env var (default: false).
+ * Phase 7.1 is gated by PHASE_7_LEARNING_ENABLED env var (default: false).
+ * Phase 7.2 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
+ * Phase 7.3 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
+ * Phase 7.4 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
+ * Phase 7.5 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
+ * Phase 6 failures are non-fatal — Phase 5 results persist regardless.
+ * Phase 7 failures are non-fatal — Phase 5 + 6 results persist regardless.
+ *
+ * @see docs/authority/prompt-builder-evolution-plan-v2.md § 9, § 10, § 11
+ * @see docs/authority/phase-6-self-improving-scorer-buildplan.md § 4.8
+ * @see docs/authority/phase-7.1-negative-pattern-learning-buildplan.md § 5
+ * @see docs/authority/phase-7.2-iteration-tracking-buildplan.md § 5
+ * @see docs/authority/phase-7.3-semantic-redundancy-detection-buildplan.md § 5
+ * @see docs/authority/phase-7.4-magic-combos-buildplan.md § 5
+ * @see docs/authority/phase-7.5-per-platform-learning-buildplan.md § 5
+ *
+ * Version: 7.1.0 — Parallel Layer 14a/14b + phase75 summary object
+ * Existing features preserved: Yes.
  */
 
 import type { NextRequest } from 'next/server';
@@ -29,17 +72,56 @@ import {
   releaseAggregationLock,
   countQualifyingEvents,
   fetchQualifyingEvents,
+  fetchAllEventsForAntiPatterns,
   upsertLearnedWeights,
+  getLearnedWeights,
   logCronRun,
 } from '@/lib/learning/database';
 
 import { LEARNING_CONSTANTS } from '@/lib/learning/constants';
+
+// ── Phase 5 imports ──────────────────────────────────────────────────────────
 import { computeCoOccurrenceMatrix } from '@/lib/learning/co-occurrence';
 import type { CoOccurrenceMatrix } from '@/lib/learning/co-occurrence';
 import { computeSequencePatterns } from '@/lib/learning/sequence-patterns';
 import type { SequencePatterns } from '@/lib/learning/sequence-patterns';
 import { computeSceneCandidates } from '@/lib/learning/scene-candidates';
 import type { SceneCandidates, ExistingScenePrefills } from '@/lib/learning/scene-candidates';
+
+// ── Phase 6 imports ──────────────────────────────────────────────────────────
+import { computeScoringWeights } from '@/lib/learning/weight-recalibration';
+import type { ScoringWeights } from '@/lib/learning/weight-recalibration';
+import { computeCategoryValues } from '@/lib/learning/category-value-discovery';
+import { computeTermQualityScores } from '@/lib/learning/term-quality-scoring';
+import type { TermQualityScores } from '@/lib/learning/term-quality-scoring';
+import { discoverThresholds } from '@/lib/learning/threshold-discovery';
+import type { ThresholdDiscoveryResult } from '@/lib/learning/threshold-discovery';
+import { generateHealthReport } from '@/lib/learning/scorer-health';
+import type { ScorerHealthReport } from '@/lib/learning/scorer-health';
+
+// ── Phase 7.1 imports ────────────────────────────────────────────────────────
+import { computeAntiPatterns } from '@/lib/learning/anti-pattern-detection';
+import type { AntiPatternData } from '@/lib/learning/anti-pattern-detection';
+import { computeCollisionMatrix } from '@/lib/learning/collision-matrix';
+import type { CollisionMatrixData } from '@/lib/learning/collision-matrix';
+
+// ── Phase 7.2 imports ────────────────────────────────────────────────────────
+import { computeIterationInsights } from '@/lib/learning/iteration-tracking';
+import type { IterationInsightsData } from '@/lib/learning/iteration-tracking';
+
+// ── Phase 7.3 imports ────────────────────────────────────────────────────────
+import { computeRedundancyGroups } from '@/lib/learning/redundancy-detection';
+import type { RedundancyGroupsData } from '@/lib/learning/redundancy-detection';
+
+// ── Phase 7.4 imports ────────────────────────────────────────────────────────
+import { computeMagicCombos } from '@/lib/learning/magic-combo-mining';
+import type { MagicCombosData } from '@/lib/learning/magic-combo-mining';
+
+// ── Phase 7.5 imports ────────────────────────────────────────────────────────
+import { computePlatformTermQuality } from '@/lib/learning/platform-term-quality';
+import type { PlatformTermQualityData } from '@/lib/learning/platform-term-quality';
+import { computePlatformCoOccurrence } from '@/lib/learning/platform-co-occurrence';
+import type { PlatformCoOccurrenceData } from '@/lib/learning/platform-co-occurrence';
 
 import sceneStartersData from '@/data/scenes/scene-starters.json';
 import type { SceneStartersFile } from '@/types/scene-starters';
@@ -48,9 +130,21 @@ import type { SceneStartersFile } from '@/types/scene-starters';
 // CONFIGURATION
 // =============================================================================
 
-const CRON_SECRET = process.env.PROMAGEN_CRON_SECRET;
+// CRON_SECRET read at request time inside validateCronAuth() — not module level
 
-/** Learned weights storage keys */
+/** Feature flag for Phase 6 scoring layers (default: false).
+ *  Read at request time so env var changes take effect without redeployment. */
+function isPhase6Enabled(): boolean {
+  return (process.env.PHASE_6_SCORING_ENABLED ?? '').trim().toLowerCase() === 'true';
+}
+
+/** Feature flag for Phase 7.1 negative pattern learning layers (default: false).
+ *  Read at request time so env var changes take effect without redeployment. */
+function isPhase7Enabled(): boolean {
+  return (process.env.PHASE_7_LEARNING_ENABLED ?? '').trim().toLowerCase() === 'true';
+}
+
+/** Phase 5 learned weights storage keys */
 const WEIGHTS_KEY_CO_OCCURRENCE = 'co-occurrence';
 const WEIGHTS_KEY_SEQUENCES = 'sequences';
 const WEIGHTS_KEY_SCENE_CANDIDATES = 'scene-candidates';
@@ -69,6 +163,51 @@ interface AggregationCronResponse {
   requestId: string;
   ranAt: string;
   dryRun: boolean;
+
+  // Phase 6 additions
+  phase6Enabled: boolean;
+  scoringWeightsGenerated: boolean;
+  termQualityGenerated: boolean;
+  scorerHealthCorrelation: number | null;
+  phase6DurationMs: number;
+
+  // Phase 7.1 additions
+  phase7Enabled: boolean;
+  antiPatternsGenerated: boolean;
+  antiPatternCount: number;
+  collisionMatrixGenerated: boolean;
+  collisionCount: number;
+  phase7DurationMs: number;
+
+  // Phase 7.2 additions
+  iterationInsightsGenerated: boolean;
+  weakTermCount: number;
+  multiAttemptSessions: number;
+
+  // Phase 7.3 additions
+  redundancyGroupsGenerated: boolean;
+  redundancyGroupCount: number;
+
+  // Phase 7.4 additions
+  magicCombosGenerated: boolean;
+  magicComboCount: number;
+
+  // Phase 7.5 additions (flat — backward compat)
+  platformTermQualityGenerated: boolean;
+  platformTermCount: number;
+  platformCoOccurrenceGenerated: boolean;
+  platformPairCount: number;
+
+  // Phase 7.5 grouped summary (easier for Admin Command Centre dashboard)
+  phase75: Phase75Summary;
+}
+
+/** Grouped Phase 7.5 metrics — nested for cleaner dashboard consumption */
+interface Phase75Summary {
+  termQualityGenerated: boolean;
+  termCount: number;
+  coOccurrenceGenerated: boolean;
+  pairCount: number;
 }
 
 // =============================================================================
@@ -106,21 +245,22 @@ function generateRequestId(): string {
  * Returns 404 (not 401/403) to hide endpoint existence.
  */
 function validateCronAuth(request: NextRequest): boolean {
-  if (!CRON_SECRET || CRON_SECRET.length < 16) {
+  const cronSecret = process.env.PROMAGEN_CRON_SECRET;
+
+  if (!cronSecret || cronSecret.length < 16) {
     console.error('[Learning Cron] PROMAGEN_CRON_SECRET not configured or too short');
     return false;
   }
 
   const headerSecret =
-    request.headers.get('x-promagen-cron') ??
-    request.headers.get('x-cron-secret');
+    request.headers.get('x-promagen-cron') ?? request.headers.get('x-cron-secret');
 
-  if (headerSecret === CRON_SECRET) return true;
+  if (headerSecret === cronSecret) return true;
 
   const url = new URL(request.url);
   const querySecret = url.searchParams.get('secret');
 
-  if (querySecret === CRON_SECRET) return true;
+  if (querySecret === cronSecret) return true;
 
   return false;
 }
@@ -132,8 +272,42 @@ function validateCronAuth(request: NextRequest): boolean {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const startTime = Date.now();
   const requestId = generateRequestId();
+  const phase6Enabled = isPhase6Enabled();
+  const phase7Enabled = isPhase7Enabled();
 
   console.debug('[Learning Cron] Request received', { requestId });
+
+  // Phase 6 tracking
+  let phase6DurationMs = 0;
+  let scoringWeightsGenerated = false;
+  let termQualityGenerated = false;
+  let scorerHealthCorrelation: number | null = null;
+
+  // Phase 7.1 tracking
+  let phase7DurationMs = 0;
+  let antiPatternsGenerated = false;
+  let antiPatternCount = 0;
+  let collisionMatrixGenerated = false;
+  let collisionCount = 0;
+
+  // Phase 7.2 tracking
+  let iterationInsightsGenerated = false;
+  let weakTermCount = 0;
+  let multiAttemptSessions = 0;
+
+  // Phase 7.3 tracking
+  let redundancyGroupsGenerated = false;
+  let redundancyGroupCount = 0;
+
+  // Phase 7.4 tracking
+  let magicCombosGenerated = false;
+  let magicComboCount = 0;
+
+  // Phase 7.5 tracking
+  let platformTermQualityGenerated = false;
+  let platformTermCount = 0;
+  let platformCoOccurrenceGenerated = false;
+  let platformPairCount = 0;
 
   // ─────────────────────────────────────────────────────────────────────────
   // SECURITY: Validate auth
@@ -179,6 +353,34 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         requestId,
         ranAt: new Date().toISOString(),
         dryRun,
+        phase6Enabled: phase6Enabled,
+        scoringWeightsGenerated: false,
+        termQualityGenerated: false,
+        scorerHealthCorrelation: null,
+        phase6DurationMs: 0,
+        phase7Enabled: phase7Enabled,
+        antiPatternsGenerated: false,
+        antiPatternCount: 0,
+        collisionMatrixGenerated: false,
+        collisionCount: 0,
+        phase7DurationMs: 0,
+        iterationInsightsGenerated: false,
+        weakTermCount: 0,
+        multiAttemptSessions: 0,
+        redundancyGroupsGenerated: false,
+        redundancyGroupCount: 0,
+        magicCombosGenerated: false,
+        magicComboCount: 0,
+        platformTermQualityGenerated: false,
+        platformTermCount: 0,
+        platformCoOccurrenceGenerated: false,
+        platformPairCount: 0,
+        phase75: {
+          termQualityGenerated: false,
+          termCount: 0,
+          coOccurrenceGenerated: false,
+          pairCount: 0,
+        },
       };
       return NextResponse.json(response, { status: 409 });
     }
@@ -211,6 +413,34 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         requestId,
         ranAt: new Date().toISOString(),
         dryRun,
+        phase6Enabled: phase6Enabled,
+        scoringWeightsGenerated: false,
+        termQualityGenerated: false,
+        scorerHealthCorrelation: null,
+        phase6DurationMs: 0,
+        phase7Enabled: phase7Enabled,
+        antiPatternsGenerated: false,
+        antiPatternCount: 0,
+        collisionMatrixGenerated: false,
+        collisionCount: 0,
+        phase7DurationMs: 0,
+        iterationInsightsGenerated: false,
+        weakTermCount: 0,
+        multiAttemptSessions: 0,
+        redundancyGroupsGenerated: false,
+        redundancyGroupCount: 0,
+        magicCombosGenerated: false,
+        magicComboCount: 0,
+        platformTermQualityGenerated: false,
+        platformTermCount: 0,
+        platformCoOccurrenceGenerated: false,
+        platformPairCount: 0,
+        phase75: {
+          termQualityGenerated: false,
+          termCount: 0,
+          coOccurrenceGenerated: false,
+          pairCount: 0,
+        },
       };
       return NextResponse.json(response);
     }
@@ -232,15 +462,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       throw new Error('Timeout after fetching events');
     }
 
+    // ═════════════════════════════════════════════════════════════════════
+    // PHASE 5: Collective Intelligence Engine (Layers 1–3)
+    // ═════════════════════════════════════════════════════════════════════
+
     // ─────────────────────────────────────────────────────────────────────
     // LAYER 1: Co-occurrence Matrix
     // ─────────────────────────────────────────────────────────────────────
-    const coOccurrenceMatrix: CoOccurrenceMatrix = computeCoOccurrenceMatrix(
-      allEvents,
-      new Date(),
-    );
+    const coOccurrenceMatrix: CoOccurrenceMatrix = computeCoOccurrenceMatrix(allEvents, new Date());
 
-    console.debug('[Learning Cron] Co-occurrence computed', {
+    console.debug('[Learning Cron] Layer 1 — Co-occurrence computed', {
       requestId,
       eventCount: coOccurrenceMatrix.eventCount,
       totalPairs: coOccurrenceMatrix.totalPairs,
@@ -254,12 +485,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // ─────────────────────────────────────────────────────────────────────
     // LAYER 2: Sequence Patterns
     // ─────────────────────────────────────────────────────────────────────
-    const sequencePatterns: SequencePatterns = computeSequencePatterns(
-      allEvents,
-      new Date(),
-    );
+    const sequencePatterns: SequencePatterns = computeSequencePatterns(allEvents, new Date());
 
-    console.debug('[Learning Cron] Sequence patterns computed', {
+    console.debug('[Learning Cron] Layer 2 — Sequence patterns computed', {
       requestId,
       sessionCount: sequencePatterns.sessionCount,
       tierCount: Object.keys(sequencePatterns.tiers).length,
@@ -272,11 +500,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // ─────────────────────────────────────────────────────────────────────
     // LAYER 3: Scene Candidates
     // ─────────────────────────────────────────────────────────────────────
-    // Load existing scenes for overlap checking
     const typedSceneData = sceneStartersData as unknown as SceneStartersFile;
-    const existingScenes: ExistingScenePrefills[] = typedSceneData.scenes.map(
-      (s) => ({ prefills: s.prefills as Record<string, string[]> }),
-    );
+    const existingScenes: ExistingScenePrefills[] = typedSceneData.scenes.map((s) => ({
+      prefills: s.prefills as Record<string, string[]>,
+    }));
 
     const sceneCandidates: SceneCandidates = computeSceneCandidates(
       allEvents,
@@ -284,7 +511,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       new Date(),
     );
 
-    console.debug('[Learning Cron] Scene candidates computed', {
+    console.debug('[Learning Cron] Layer 3 — Scene candidates computed', {
       requestId,
       eventsConsidered: sceneCandidates.eventsConsidered,
       clustersFormed: sceneCandidates.clustersFormed,
@@ -296,14 +523,451 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // Persist results
+    // Persist Phase 5 results
     // ─────────────────────────────────────────────────────────────────────
     if (!dryRun) {
       await upsertLearnedWeights(WEIGHTS_KEY_CO_OCCURRENCE, coOccurrenceMatrix);
       await upsertLearnedWeights(WEIGHTS_KEY_SEQUENCES, sequencePatterns);
       await upsertLearnedWeights(WEIGHTS_KEY_SCENE_CANDIDATES, sceneCandidates);
 
-      console.debug('[Learning Cron] Persisted all learned weights', {
+      console.debug('[Learning Cron] Persisted Phase 5 learned weights', {
+        requestId,
+      });
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // PHASE 6: Self-Improving Scorer (Layers 4–8)
+    // Gated by PHASE_6_SCORING_ENABLED env var.
+    // Non-fatal: if Phase 6 fails, Phase 5 results are already persisted.
+    // ═════════════════════════════════════════════════════════════════════
+
+    if (phase6Enabled && !isTimedOut()) {
+      const phase6Start = Date.now();
+
+      console.debug('[Learning Cron] Phase 6 starting', { requestId });
+
+      try {
+        // ── Fetch previous run data for smoothing ────────────────────────
+        const [
+          previousWeightsResult,
+          previousTermQualityResult,
+          previousThresholdResult,
+          previousHealthResult,
+        ] = await Promise.all([
+          getLearnedWeights<ScoringWeights>(LEARNING_CONSTANTS.SCORING_WEIGHTS_KEY),
+          getLearnedWeights<TermQualityScores>(LEARNING_CONSTANTS.TERM_QUALITY_KEY),
+          getLearnedWeights<ThresholdDiscoveryResult>(LEARNING_CONSTANTS.THRESHOLD_DISCOVERY_KEY),
+          getLearnedWeights<ScorerHealthReport>(LEARNING_CONSTANTS.SCORER_HEALTH_KEY),
+        ]);
+
+        const previousWeights = previousWeightsResult?.data ?? null;
+        const previousTermQuality = previousTermQualityResult?.data ?? null;
+        const previousThreshold = previousThresholdResult?.data ?? null;
+        const previousHealth = previousHealthResult?.data ?? null;
+
+        if (isTimedOut()) {
+          throw new Error('Timeout after fetching previous Phase 6 data');
+        }
+
+        // ── Layers 4, 5, 6: Run in parallel ─────────────────────────────
+        // All three read from allEvents and don't depend on each other.
+        const [scoringWeights, categoryValues, termQualityScores] = await Promise.all([
+          // Layer 4: Weight Recalibration
+          Promise.resolve(computeScoringWeights(allEvents, previousWeights)),
+          // Layer 5: Category Value Discovery
+          Promise.resolve(computeCategoryValues(allEvents)),
+          // Layer 6: Term Quality Scores
+          Promise.resolve(computeTermQualityScores(allEvents, previousTermQuality)),
+        ]);
+
+        console.debug('[Learning Cron] Layers 4-6 computed', {
+          requestId,
+          scoringWeightsEventCount: scoringWeights.eventCount,
+          categoryValueTiers: Object.keys(categoryValues.tiers).length,
+          termQualityTermCount: termQualityScores.global.termCount,
+        });
+
+        if (isTimedOut()) {
+          throw new Error('Timeout after Phase 6 Layers 4-6');
+        }
+
+        // ── Layer 7: Threshold Discovery ─────────────────────────────────
+        // Depends on previous threshold for smoothing.
+        const thresholdResult: ThresholdDiscoveryResult = discoverThresholds(
+          allEvents,
+          previousThreshold,
+        );
+
+        console.debug('[Learning Cron] Layer 7 — Threshold discovery computed', {
+          requestId,
+          globalThreshold: thresholdResult.global.threshold,
+        });
+
+        if (isTimedOut()) {
+          throw new Error('Timeout after Phase 6 Layer 7');
+        }
+
+        // ── Layer 8: Scorer Health Report ────────────────────────────────
+        // Depends on current + previous weights for drift calculation.
+        const healthReport: ScorerHealthReport = generateHealthReport(
+          allEvents,
+          scoringWeights,
+          previousWeights,
+          previousHealth,
+        );
+
+        scorerHealthCorrelation = healthReport.overallCorrelation;
+
+        console.debug('[Learning Cron] Layer 8 — Scorer health computed', {
+          requestId,
+          overallCorrelation: healthReport.overallCorrelation,
+          correlationTrend: healthReport.correlationTrend,
+          weightDrift: healthReport.weightDrift,
+          alertCount: healthReport.alerts.length,
+        });
+
+        // ── Persist Phase 6 results ──────────────────────────────────────
+        if (!dryRun) {
+          await Promise.all([
+            upsertLearnedWeights(LEARNING_CONSTANTS.SCORING_WEIGHTS_KEY, scoringWeights),
+            upsertLearnedWeights(LEARNING_CONSTANTS.CATEGORY_VALUES_KEY, categoryValues),
+            upsertLearnedWeights(LEARNING_CONSTANTS.TERM_QUALITY_KEY, termQualityScores),
+            upsertLearnedWeights(LEARNING_CONSTANTS.THRESHOLD_DISCOVERY_KEY, thresholdResult),
+            upsertLearnedWeights(LEARNING_CONSTANTS.SCORER_HEALTH_KEY, healthReport),
+          ]);
+
+          scoringWeightsGenerated = true;
+          termQualityGenerated = true;
+
+          console.debug('[Learning Cron] Persisted Phase 6 learned weights', {
+            requestId,
+          });
+        } else {
+          // Mark as generated even in dry-run for response accuracy
+          scoringWeightsGenerated = true;
+          termQualityGenerated = true;
+        }
+
+        phase6DurationMs = Date.now() - phase6Start;
+
+        console.debug('[Learning Cron] Phase 6 complete', {
+          requestId,
+          phase6DurationMs,
+          scoringWeightsGenerated,
+          termQualityGenerated,
+          scorerHealthCorrelation,
+        });
+      } catch (phase6Error) {
+        // ── Phase 6 failures are non-fatal ─────────────────────────────
+        // Phase 5 results are already persisted above. Log and continue.
+        phase6DurationMs = Date.now() - phase6Start;
+        const errorMsg =
+          phase6Error instanceof Error ? phase6Error.message : 'Unknown Phase 6 error';
+
+        console.error('[Learning Cron] Phase 6 error (non-fatal)', {
+          requestId,
+          error: errorMsg,
+          phase6DurationMs,
+        });
+      }
+    } else if (!phase6Enabled) {
+      console.debug('[Learning Cron] Phase 6 skipped (PHASE_6_SCORING_ENABLED != true)', {
+        requestId,
+      });
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // PHASE 7: Negative Pattern Learning (Layers 9–10) + Iteration Tracking (Layer 11)
+    //        + Semantic Redundancy Detection (Layer 12)
+    // Gated by PHASE_7_LEARNING_ENABLED env var.
+    // Non-fatal: if Phase 7 fails, Phase 5 + 6 results persist regardless.
+    //
+    // Uses a SEPARATE event set from fetchAllEventsForAntiPatterns()
+    // because Phase 7 needs ALL events (including low-scoring ones),
+    // whereas Phase 5 only processes qualifying (high-scoring) events.
+    // Layers 11–12 reuse the same event set as Layers 9–10 (no extra query).
+    // ═════════════════════════════════════════════════════════════════════
+
+    if (phase7Enabled && !isTimedOut()) {
+      const phase7Start = Date.now();
+
+      console.debug('[Learning Cron] Phase 7.1 starting', { requestId });
+
+      try {
+        // ── Fetch ALL events (including low-scoring) ─────────────────────
+        // Anti-patterns need events that scored poorly — the inverse of Phase 5.
+        // fetchAllEventsForAntiPatterns() has NO score floor, only
+        // requires ANTI_PATTERN_MIN_CATEGORIES (2) and 180-day window.
+        const antiPatternEvents = await fetchAllEventsForAntiPatterns(windowDays, batchSize, 0);
+
+        console.debug('[Learning Cron] Fetched anti-pattern events', {
+          requestId,
+          count: antiPatternEvents.length,
+          qualifyingEvents: allEvents.length,
+        });
+
+        if (isTimedOut()) {
+          throw new Error('Timeout after fetching anti-pattern events');
+        }
+
+        // ── Layers 9, 10: Run in parallel ────────────────────────────────
+        // Both read from antiPatternEvents and don't depend on each other.
+        const [antiPatternData, collisionData]: [AntiPatternData, CollisionMatrixData] =
+          await Promise.all([
+            // Layer 9: Anti-pattern Detection
+            Promise.resolve(computeAntiPatterns(antiPatternEvents, new Date())),
+            // Layer 10: Collision Matrix
+            Promise.resolve(computeCollisionMatrix(antiPatternEvents, new Date())),
+          ]);
+
+        antiPatternCount = antiPatternData.totalPatterns;
+        collisionCount = collisionData.totalCollisions;
+
+        console.debug('[Learning Cron] Layers 9-10 computed', {
+          requestId,
+          antiPatternEventCount: antiPatternData.eventCount,
+          antiPatternTotal: antiPatternData.totalPatterns,
+          antiPatternTiers: Object.keys(antiPatternData.tiers).length,
+          collisionEventCount: collisionData.eventCount,
+          collisionTotal: collisionData.totalCollisions,
+          collisionTiers: Object.keys(collisionData.tiers).length,
+        });
+
+        if (isTimedOut()) {
+          throw new Error('Timeout after Phase 7.1 Layers 9-10');
+        }
+
+        // ── Persist Phase 7.1 results ────────────────────────────────────
+        if (!dryRun) {
+          await Promise.all([
+            upsertLearnedWeights(LEARNING_CONSTANTS.ANTI_PATTERNS_KEY, antiPatternData),
+            upsertLearnedWeights(LEARNING_CONSTANTS.COLLISION_MATRIX_KEY, collisionData),
+          ]);
+
+          antiPatternsGenerated = true;
+          collisionMatrixGenerated = true;
+
+          console.debug('[Learning Cron] Persisted Phase 7.1 learned weights', {
+            requestId,
+          });
+        } else {
+          // Mark as generated even in dry-run for response accuracy
+          antiPatternsGenerated = true;
+          collisionMatrixGenerated = true;
+        }
+
+        // ── Layer 11: Iteration Tracking (Phase 7.2) ──────────────────────
+        // Reuses antiPatternEvents (same event set — ALL events, no score floor).
+        // Runs after Layers 9–10 since it doesn't depend on their output.
+        if (!isTimedOut()) {
+          console.debug('[Learning Cron] Layer 11 (Iteration Tracking) starting', { requestId });
+
+          const iterationInsights: IterationInsightsData | null =
+            computeIterationInsights(antiPatternEvents);
+
+          if (iterationInsights) {
+            weakTermCount = iterationInsights.totalWeakTerms;
+            multiAttemptSessions = iterationInsights.global.multiAttemptCount;
+
+            if (!dryRun) {
+              await upsertLearnedWeights(
+                LEARNING_CONSTANTS.ITERATION_INSIGHTS_KEY,
+                iterationInsights,
+              );
+            }
+
+            iterationInsightsGenerated = true;
+
+            console.debug('[Learning Cron] Layer 11 complete', {
+              requestId,
+              sessionCount: iterationInsights.sessionCount,
+              multiAttemptSessions,
+              weakTermCount,
+              tiers: Object.keys(iterationInsights.tiers).length,
+            });
+          } else {
+            console.debug('[Learning Cron] Layer 11 skipped — insufficient data', { requestId });
+          }
+        }
+
+        // ── Layer 12: Semantic Redundancy Detection (Phase 7.3) ──────────
+        // Reuses antiPatternEvents (same ALL-events set — no new DB query).
+        // Detects same-category terms that are functionally interchangeable.
+        if (!isTimedOut()) {
+          console.debug('[Learning Cron] Layer 12 (Redundancy Detection) starting', { requestId });
+
+          const redundancyData: RedundancyGroupsData | null =
+            computeRedundancyGroups(antiPatternEvents);
+
+          if (redundancyData) {
+            redundancyGroupCount = redundancyData.totalGroups;
+
+            if (!dryRun) {
+              await upsertLearnedWeights(LEARNING_CONSTANTS.REDUNDANCY_GROUPS_KEY, redundancyData);
+            }
+
+            redundancyGroupsGenerated = true;
+
+            console.debug('[Learning Cron] Layer 12 complete', {
+              requestId,
+              totalGroups: redundancyGroupCount,
+              tiers: Object.keys(redundancyData.tiers).length,
+            });
+          } else {
+            console.debug('[Learning Cron] Layer 12 skipped — insufficient data', { requestId });
+          }
+        }
+
+        // ── Layer 13: Magic Combos — Higher-Order Combinations (Phase 7.4) ──
+        // Reuses antiPatternEvents (same ALL-events set — no new DB query).
+        // Discovers trios/quads with emergent synergy via Apriori mining.
+        if (!isTimedOut()) {
+          console.debug('[Learning Cron] Layer 13 (Magic Combos) starting', { requestId });
+
+          const magicCombosData: MagicCombosData | null = computeMagicCombos(antiPatternEvents);
+
+          if (magicCombosData) {
+            magicComboCount = magicCombosData.totalCombos;
+
+            if (!dryRun) {
+              await upsertLearnedWeights(LEARNING_CONSTANTS.MAGIC_COMBOS_KEY, magicCombosData);
+            }
+
+            magicCombosGenerated = true;
+
+            console.debug('[Learning Cron] Layer 13 complete', {
+              requestId,
+              totalCombos: magicComboCount,
+              tiers: Object.keys(magicCombosData.tiers).length,
+              globalCombos: magicCombosData.global.comboCount,
+            });
+          } else {
+            console.debug('[Learning Cron] Layer 13 skipped — insufficient data', { requestId });
+          }
+        }
+
+        // ── Layers 14a + 14b: Per-Platform Learning (Phase 7.5) ────────
+        // Independent engines with separate storage keys — run in parallel.
+        // Reuses antiPatternEvents (same ALL-events set — no new DB query).
+        // Individual try/catch so one failure doesn't block the other.
+        if (!isTimedOut()) {
+          console.debug('[Learning Cron] Layers 14a+14b (Per-Platform Learning) starting in parallel', { requestId });
+
+          const [layer14aResult, layer14bResult] = await Promise.allSettled([
+            // ── Layer 14a: Platform Term Quality ──────────────────────
+            (async () => {
+              const previousPlatformTermQuality =
+                await getLearnedWeights<PlatformTermQualityData>(
+                  LEARNING_CONSTANTS.PLATFORM_TERM_QUALITY_KEY,
+                );
+
+              const data: PlatformTermQualityData | null =
+                computePlatformTermQuality(
+                  antiPatternEvents,
+                  previousPlatformTermQuality?.data ?? null,
+                );
+
+              if (data) {
+                platformTermCount = data.totalTermsScored;
+                if (!dryRun) {
+                  await upsertLearnedWeights(
+                    LEARNING_CONSTANTS.PLATFORM_TERM_QUALITY_KEY,
+                    data,
+                  );
+                }
+                platformTermQualityGenerated = true;
+                console.debug('[Learning Cron] Layer 14a complete', {
+                  requestId,
+                  totalTerms: platformTermCount,
+                  totalPlatforms: data.totalPlatforms,
+                  graduatedPlatforms: data.graduatedPlatforms,
+                });
+              } else {
+                console.debug('[Learning Cron] Layer 14a skipped — insufficient data', { requestId });
+              }
+            })(),
+
+            // ── Layer 14b: Platform Co-occurrence ─────────────────────
+            (async () => {
+              const data: PlatformCoOccurrenceData | null =
+                computePlatformCoOccurrence(antiPatternEvents);
+
+              if (data) {
+                platformPairCount = data.totalPairs;
+                if (!dryRun) {
+                  await upsertLearnedWeights(
+                    LEARNING_CONSTANTS.PLATFORM_CO_OCCURRENCE_KEY,
+                    data,
+                  );
+                }
+                platformCoOccurrenceGenerated = true;
+                console.debug('[Learning Cron] Layer 14b complete', {
+                  requestId,
+                  totalPairs: platformPairCount,
+                  totalPlatforms: data.totalPlatforms,
+                  graduatedPlatforms: data.graduatedPlatforms,
+                });
+              } else {
+                console.debug('[Learning Cron] Layer 14b skipped — insufficient data', { requestId });
+              }
+            })(),
+          ]);
+
+          // Log individual failures (non-fatal — other layer may have succeeded)
+          if (layer14aResult.status === 'rejected') {
+            console.error('[Learning Cron] Layer 14a failed (non-fatal)', {
+              requestId,
+              error: layer14aResult.reason instanceof Error
+                ? layer14aResult.reason.message
+                : 'Unknown error',
+            });
+          }
+          if (layer14bResult.status === 'rejected') {
+            console.error('[Learning Cron] Layer 14b failed (non-fatal)', {
+              requestId,
+              error: layer14bResult.reason instanceof Error
+                ? layer14bResult.reason.message
+                : 'Unknown error',
+            });
+          }
+        }
+
+        phase7DurationMs = Date.now() - phase7Start;
+
+        console.debug('[Learning Cron] Phase 7 complete (7.1 + 7.2 + 7.3 + 7.4 + 7.5)', {
+          requestId,
+          phase7DurationMs,
+          antiPatternsGenerated,
+          antiPatternCount,
+          collisionMatrixGenerated,
+          collisionCount,
+          iterationInsightsGenerated,
+          weakTermCount,
+          multiAttemptSessions,
+          redundancyGroupsGenerated,
+          redundancyGroupCount,
+          magicCombosGenerated,
+          magicComboCount,
+          platformTermQualityGenerated,
+          platformTermCount,
+          platformCoOccurrenceGenerated,
+          platformPairCount,
+        });
+      } catch (phase7Error) {
+        // ── Phase 7 failures are non-fatal ──────────────────────────────
+        // Phase 5 + 6 results are already persisted. Log and continue.
+        phase7DurationMs = Date.now() - phase7Start;
+        const errorMsg =
+          phase7Error instanceof Error ? phase7Error.message : 'Unknown Phase 7 error';
+
+        console.error('[Learning Cron] Phase 7 error (non-fatal)', {
+          requestId,
+          error: errorMsg,
+          phase7DurationMs,
+        });
+      }
+    } else if (!phase7Enabled) {
+      console.debug('[Learning Cron] Phase 7 skipped (PHASE_7_LEARNING_ENABLED != true)', {
         requestId,
       });
     }
@@ -314,9 +978,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const durationMs = Date.now() - startTime;
     const pairsGenerated = coOccurrenceMatrix.totalPairs;
     const candidatesFound = sceneCandidates.candidates.length;
+
+    const phase6Suffix = phase6Enabled
+      ? `, Phase 6: ${phase6DurationMs}ms (weights=${scoringWeightsGenerated}, quality=${termQualityGenerated}, r=${scorerHealthCorrelation?.toFixed(3) ?? 'n/a'})`
+      : '';
+
+    const phase7Suffix = phase7Enabled
+      ? `, Phase 7: ${phase7DurationMs}ms (anti=${antiPatternCount}, collisions=${collisionCount}, weakTerms=${weakTermCount}, multiSessions=${multiAttemptSessions}, redundancyGroups=${redundancyGroupCount}, magicCombos=${magicComboCount}, platformTerms=${platformTermCount}, platformPairs=${platformPairCount})`
+      : '';
+
     const message = dryRun
-      ? `Dry run: ${allEvents.length} events → ${pairsGenerated} pairs, ${sequencePatterns.sessionCount} sessions, ${candidatesFound} candidates`
-      : `Aggregated ${allEvents.length} events → ${pairsGenerated} pairs, ${sequencePatterns.sessionCount} sessions, ${candidatesFound} candidates`;
+      ? `Dry run: ${allEvents.length} events → ${pairsGenerated} pairs, ${sequencePatterns.sessionCount} sessions, ${candidatesFound} candidates${phase6Suffix}${phase7Suffix}`
+      : `Aggregated ${allEvents.length} events → ${pairsGenerated} pairs, ${sequencePatterns.sessionCount} sessions, ${candidatesFound} candidates${phase6Suffix}${phase7Suffix}`;
 
     if (!dryRun) {
       await logCronRun(
@@ -335,6 +1008,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       eventsProcessed: allEvents.length,
       pairsGenerated,
       durationMs,
+      phase6DurationMs,
+      phase7DurationMs,
       dryRun,
     });
 
@@ -348,6 +1023,34 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       requestId,
       ranAt: new Date().toISOString(),
       dryRun,
+      phase6Enabled: phase6Enabled,
+      scoringWeightsGenerated,
+      termQualityGenerated,
+      scorerHealthCorrelation,
+      phase6DurationMs,
+      phase7Enabled: phase7Enabled,
+      antiPatternsGenerated,
+      antiPatternCount,
+      collisionMatrixGenerated,
+      collisionCount,
+      phase7DurationMs,
+      iterationInsightsGenerated,
+      weakTermCount,
+      multiAttemptSessions,
+      redundancyGroupsGenerated,
+      redundancyGroupCount,
+      magicCombosGenerated,
+      magicComboCount,
+      platformTermQualityGenerated,
+      platformTermCount,
+      platformCoOccurrenceGenerated,
+      platformPairCount,
+      phase75: {
+        termQualityGenerated: platformTermQualityGenerated,
+        termCount: platformTermCount,
+        coOccurrenceGenerated: platformCoOccurrenceGenerated,
+        pairCount: platformPairCount,
+      },
     };
 
     return NextResponse.json(response);
@@ -381,6 +1084,34 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       requestId,
       ranAt: new Date().toISOString(),
       dryRun: false,
+      phase6Enabled: phase6Enabled,
+      scoringWeightsGenerated: false,
+      termQualityGenerated: false,
+      scorerHealthCorrelation: null,
+      phase6DurationMs,
+      phase7Enabled: phase7Enabled,
+      antiPatternsGenerated: false,
+      antiPatternCount: 0,
+      collisionMatrixGenerated: false,
+      collisionCount: 0,
+      phase7DurationMs,
+      iterationInsightsGenerated: false,
+      weakTermCount: 0,
+      multiAttemptSessions: 0,
+      redundancyGroupsGenerated: false,
+      redundancyGroupCount: 0,
+      magicCombosGenerated: false,
+      magicComboCount: 0,
+      platformTermQualityGenerated: false,
+      platformTermCount: 0,
+      platformCoOccurrenceGenerated: false,
+      platformPairCount: 0,
+      phase75: {
+        termQualityGenerated: false,
+        termCount: 0,
+        coOccurrenceGenerated: false,
+        pairCount: 0,
+      },
     };
 
     return NextResponse.json(response, { status: 500 });

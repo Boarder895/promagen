@@ -48,6 +48,9 @@ import {
 
 import { getFamilies, getSemanticTag } from '../index';
 
+import type { ScoringWeights } from '@/lib/learning/weight-recalibration';
+import { STATIC_DEFAULTS } from '@/lib/learning/weight-recalibration';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -284,25 +287,104 @@ function buildPromptDNA(
 
 /**
  * Calculate overall health score.
+ *
+ * When learned weights are available (Phase 6), uses per-tier factor
+ * weights to determine how much each scoring dimension contributes.
+ * Falls back to the original static formula when no learned data exists.
+ *
+ * The output scale is always 0–100, backward compatible.
+ *
+ * @param dna — Prompt DNA with fill counts and coherence score
+ * @param hasSubject — Whether the user entered a subject
+ * @param learnedWeights — Per-tier scoring weights (null = use static formula)
+ * @param tierId — Platform tier for per-tier weights (defaults to global)
  */
 function calculateHealthScore(
-  dna: PromptDNA, 
-  hasSubject: boolean
+  dna: PromptDNA,
+  hasSubject: boolean,
+  learnedWeights?: ScoringWeights | null,
+  tierId?: number,
 ): number {
-  let score = 50; // Base score
-  
-  // Subject bonus
-  if (hasSubject) {
-    score += 20;
+  // ── Static fallback (exact same formula as before Phase 6) ─────────
+  if (!learnedWeights) {
+    let score = 50; // Base score
+
+    // Subject bonus
+    if (hasSubject) {
+      score += 20;
+    }
+
+    // Fill bonus (more categories = better)
+    score += Math.floor((dna.filledCount / dna.totalCategories) * 15);
+
+    // Coherence contribution
+    score += Math.floor(dna.coherenceScore * 0.15);
+
+    // Clamp to 0-100
+    return Math.max(0, Math.min(100, score));
   }
-  
-  // Fill bonus (more categories = better)
-  score += Math.floor((dna.filledCount / dna.totalCategories) * 15);
-  
-  // Coherence contribution
-  score += Math.floor(dna.coherenceScore * 0.15);
-  
-  // Clamp to 0-100
+
+  // ── Learned-aware scoring ──────────────────────────────────────────
+  //
+  // Factor weights from the recalibration engine tell us the relative
+  // importance of each factor. We map available DNA data to factors:
+  //
+  //   categoryCount → filledCount / totalCategories  (0–1)
+  //   coherence     → coherenceScore / 100           (0–1)
+  //   negative      → 1 if negatives present (from DNA fill), else 0
+  //
+  // Factors we can't compute client-side (promptLength, tierFormat,
+  // fidelity, density) are excluded — their weight is redistributed
+  // to the factors we CAN measure.
+
+  // Pick per-tier weights or fall back to global
+  const tierKey = tierId ? String(tierId) : undefined;
+  const profile =
+    (tierKey && learnedWeights.tiers[tierKey]) || learnedWeights.global;
+  const weights = profile?.weights ?? STATIC_DEFAULTS;
+
+  // Extract the factors we can measure from DNA
+  const fillRatio = dna.totalCategories > 0
+    ? dna.filledCount / dna.totalCategories
+    : 0;
+  const coherenceRatio = dna.coherenceScore / 100;
+  const hasNegatives = dna.categoryFill['negative'] === 'filled' ? 1 : 0;
+
+  // Map factors to measurable values
+  const measured: Record<string, number> = {
+    categoryCount: fillRatio,
+    coherence: coherenceRatio,
+    negative: hasNegatives,
+  };
+
+  // Compute weighted sum using only the factors we can measure.
+  // Redistribute unmeasured weight proportionally to measured factors.
+  let measuredWeightSum = 0;
+  for (const key of Object.keys(measured)) {
+    measuredWeightSum += weights[key] ?? 0;
+  }
+
+  // Avoid division by zero — if no measured factors have weight, use static
+  if (measuredWeightSum === 0) {
+    return calculateHealthScore(dna, hasSubject);
+  }
+
+  // Normalise measured weights to sum to 1.0 (redistributes unmeasured)
+  let weightedScore = 0;
+  for (const [key, value] of Object.entries(measured)) {
+    const rawWeight = weights[key] ?? 0;
+    const normalisedWeight = rawWeight / measuredWeightSum;
+    weightedScore += value * normalisedWeight;
+  }
+
+  // weightedScore is now 0–1. Map to the 30-point variable range:
+  //   Base: 50 (always)
+  //   Subject: +20 (binary)
+  //   Variable: up to 30 points from weighted factors
+  let score = 50;
+  if (hasSubject) score += 20;
+  score += Math.floor(weightedScore * 30);
+
   return Math.max(0, Math.min(100, score));
 }
 
@@ -321,6 +403,9 @@ function calculateHealthScore(
  *   selections: { style: ['cyberpunk', 'neon noir'] },
  *   negatives: ['blurry'],
  *   platformId: 'midjourney',
+ * }, undefined, {
+ *   learnedWeights: scoringWeights,  // from useLearnedWeights()
+ *   tierId: 2,                       // platform tier
  * });
  * 
  * if (analysis.conflicts.hasHardConflicts) {
@@ -330,7 +415,13 @@ function calculateHealthScore(
  */
 export function analyzePrompt(
   state: PromptState,
-  market?: MarketContext
+  market?: MarketContext,
+  options?: {
+    /** Per-tier scoring weights from Phase 6 (null = use static formula) */
+    learnedWeights?: ScoringWeights | null;
+    /** Platform tier ID for per-tier weights */
+    tierId?: number;
+  },
 ): PromptAnalysis {
   const { selections, customValues, negatives, platformId } = state;
   
@@ -372,9 +463,14 @@ export function analyzePrompt(
     platformId,
   });
   
-  // Calculate health score
+  // Calculate health score (Phase 6: optionally uses learned weights)
   const hasSubject = state.subject.trim().length > 0;
-  const healthScore = calculateHealthScore(dna, hasSubject);
+  const healthScore = calculateHealthScore(
+    dna,
+    hasSubject,
+    options?.learnedWeights,
+    options?.tierId,
+  );
   
   // Build summary
   const platformRecs = getPlatformRecommendations(platformId);

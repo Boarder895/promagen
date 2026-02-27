@@ -90,6 +90,7 @@ import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
 import { useIntelligencePreferences } from '@/hooks/use-intelligence-preferences';
 import { useMarketMoodLive } from '@/hooks/use-market-mood-live';
 import { useLearnedWeights } from '@/hooks/use-learned-weights';
+import { usePlatformLearning } from '@/hooks/use-platform-learning';
 import {
   DNABar,
   ConflictWarning,
@@ -446,6 +447,7 @@ export function PromptBuilder({
   const {
     isAuthenticated,
     userTier,
+    accountAgeDays,
     promptLockState,
     anonymousUsage,
     dailyUsage,
@@ -516,11 +518,22 @@ export function PromptBuilder({
   // Save to Library hook
   const { savePrompt } = useSavedPrompts();
 
-  // Phase 5: Learned co-occurrence weights for dropdown reordering
+  // Phase 5 + 7.1 + 7.2 + 7.3 + 7.4: Learned weights for dropdown reordering + negative pattern + iteration tracking + redundancy + magic combos
   const {
     coOccurrenceLookup,
     blendRatio: learnedBlendRatio,
+    antiPatternLookup,
+    collisionLookup,
+    weakTermLookup,
+    redundancyLookup,
+    comboLookup,
   } = useLearnedWeights();
+
+  // Phase 7.5: Per-platform learning data for platform-aware scoring
+  const {
+    platformTermQualityLookup,
+    platformCoOccurrenceLookup,
+  } = usePlatformLearning();
 
   // ============================================================================
   // Market Mood State (Live FX data with demo fallback)
@@ -926,6 +939,14 @@ export function PromptBuilder({
         platformTier,
         coOccurrenceLookup,
         learnedBlendRatio,
+        antiPatternLookup,
+        collisionLookup,
+        weakTermLookup,
+        redundancyLookup,
+        comboLookup,
+        platformTermQualityLookup,
+        platformCoOccurrenceLookup,
+        platformId,
       );
 
       map.set(category, scoredOptions);
@@ -951,6 +972,14 @@ export function PromptBuilder({
     platformTier,
     coOccurrenceLookup,
     learnedBlendRatio,
+    antiPatternLookup,
+    collisionLookup,
+    weakTermLookup,
+    redundancyLookup,
+    comboLookup,
+    platformTermQualityLookup,
+    platformCoOccurrenceLookup,
+    platformId,
   ]);
 
   // Step 4.2: Track cascade reorder events (useEffect for purity)
@@ -1122,11 +1151,13 @@ export function PromptBuilder({
         copied: true,
         saved: false,
         reusedFromLibrary: false,
+        userTier: userTier as 'free' | 'paid',
+        accountAgeDays,
       });
     } catch (err) {
       console.error('Failed to copy prompt:', err);
     }
-  }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId]);
+  }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId, userTier, accountAgeDays]);
 
   const handleDone = useCallback(() => {
     onDone?.();
@@ -1191,6 +1222,8 @@ export function PromptBuilder({
           copied: false,
           saved: true,
           reusedFromLibrary: false,
+          userTier: userTier as 'free' | 'paid',
+          accountAgeDays,
         });
       }
     },
@@ -1207,6 +1240,8 @@ export function PromptBuilder({
       healthScore,
       platformTier,
       activeSceneId,
+      userTier,
+      accountAgeDays,
     ],
   );
 

@@ -27,6 +27,21 @@ import {
 import { detectConflicts } from './conflict-detection';
 import { lookupCoOccurrence } from '@/lib/learning/co-occurrence-lookup';
 import type { CoOccurrenceLookup } from '@/lib/learning/co-occurrence-lookup';
+import { lookupAntiPatternSeverity } from '@/lib/learning/anti-pattern-lookup';
+import type { AntiPatternLookup } from '@/lib/learning/anti-pattern-lookup';
+import { lookupCollision } from '@/lib/learning/collision-lookup';
+import type { CollisionLookup } from '@/lib/learning/collision-lookup';
+import { lookupWeakTermScore } from '@/lib/learning/weak-term-lookup';
+import type { WeakTermLookup } from '@/lib/learning/weak-term-lookup';
+import { lookupRedundancy } from '@/lib/learning/redundancy-lookup';
+import type { RedundancyLookup } from '@/lib/learning/redundancy-lookup';
+import { lookupComboBoost } from '@/lib/learning/combo-lookup';
+import type { ComboLookup } from '@/lib/learning/combo-lookup';
+import { lookupPlatformTermQuality } from '@/lib/learning/platform-term-quality-lookup';
+import type { PlatformTermQualityLookup } from '@/lib/learning/platform-term-quality-lookup';
+import { lookupPlatformCoOccurrence } from '@/lib/learning/platform-co-occurrence-lookup';
+import type { PlatformCoOccurrenceLookup } from '@/lib/learning/platform-co-occurrence-lookup';
+import { LEARNING_CONSTANTS } from '@/lib/learning/constants';
 
 // ============================================================================
 // Types
@@ -56,6 +71,30 @@ export interface BuildContextInput {
 
   /** Blend ratio [curated, learned] from Phase 5 (default: [1.0, 0.0]) */
   blendRatio?: [curated: number, learned: number];
+
+  /** Pre-built anti-pattern lookup from Phase 7.1 (null = no data) */
+  antiPatternLookup?: AntiPatternLookup | null;
+
+  /** Pre-built collision lookup from Phase 7.1 (null = no data) */
+  collisionLookup?: CollisionLookup | null;
+
+  /** Pre-built weak term lookup from Phase 7.2 (null = no data) */
+  weakTermLookup?: WeakTermLookup | null;
+
+  /** Pre-built redundancy lookup from Phase 7.3 (null = no data) */
+  redundancyLookup?: RedundancyLookup | null;
+
+  /** Pre-built combo lookup from Phase 7.4 (null = no data) */
+  comboLookup?: ComboLookup | null;
+
+  /** Pre-built platform term quality lookup from Phase 7.5 (null = no data) */
+  platformTermQualityLookup?: PlatformTermQualityLookup | null;
+
+  /** Pre-built platform co-occurrence lookup from Phase 7.5 (null = no data) */
+  platformCoOccurrenceLookup?: PlatformCoOccurrenceLookup | null;
+
+  /** Active platform identifier e.g. "leonardo", "midjourney" (Phase 7.5) */
+  platformId?: string | null;
 }
 
 /**
@@ -167,6 +206,41 @@ const SCORE_WEIGHTS = {
 
   /** Maximum co-occurrence boost from learned data (Phase 5) */
   coOccurrenceMax: 20,
+
+  /** Anti-pattern penalty (from learned data, Phase 7.1).
+   *  Severe — these actively hurt prompts. Scaled by severity 0–1. */
+  antiPatternPenalty: -30,
+
+  /** Collision penalty (from learned data, Phase 7.1).
+   *  Moderate — redundancy, not toxicity. Scaled by competitionScore 0–1. */
+  collisionPenalty: -20,
+
+  /** Weak term penalty (from iteration tracking, Phase 7.2).
+   *  Demotes terms users frequently replace. Scaled by weaknessScore 0–1. */
+  weakTermPenalty: -15,
+
+  /** Redundancy penalty (from semantic redundancy detection, Phase 7.3).
+   *  Gentle nudge — terms are functionally identical, just wasteful.
+   *  Scaled by meanRedundancy 0–1. Lightest of all Phase 7 penalties. */
+  redundancyPenalty: -12,
+
+  /** Magic combo boost (from higher-order combination mining, Phase 7.4).
+   *  First positive learned signal beyond co-occurrence. Rewards terms that
+   *  complete or nearly complete a proven synergistic combination.
+   *  Scaled by combo boostScore 0–1 (synergy × completeness). */
+  comboBoostMax: 25,
+
+  /** Platform-specific co-occurrence boost delta (Phase 7.5).
+   *  When platform data overrides tier-level co-occurrence, the difference
+   *  (positive or negative) is applied as an additional signal.
+   *  This captures platform-specific pair affinities. */
+  platformCoOccurrenceMax: 15,
+
+  /** Platform-specific term quality boost (Phase 7.5).
+   *  Adjusts scores when a term performs better or worse on a specific
+   *  platform vs the neutral baseline (50). Scaled by (score - 50) / 50.
+   *  Positive for high performers, negative for underperformers. */
+  platformTermQualityMax: 12,
 };
 
 // ============================================================================
@@ -378,6 +452,14 @@ export function buildContext(input: BuildContextInput): PromptContext {
     tier = null,
     coOccurrenceWeights = null,
     blendRatio = [1.0, 0.0],
+    antiPatternLookup = null,
+    collisionLookup = null,
+    weakTermLookup = null,
+    redundancyLookup = null,
+    comboLookup = null,
+    platformTermQualityLookup = null,
+    platformCoOccurrenceLookup = null,
+    platformId = null,
   } = input;
   
   // Extract subject keywords
@@ -451,7 +533,53 @@ export function buildContext(input: BuildContextInput): PromptContext {
     tier,
     coOccurrenceWeights,
     blendRatio,
+    antiPatternLookup,
+    collisionLookup,
+    weakTermLookup,
+    redundancyLookup,
+    comboLookup,
+    platformTermQualityLookup,
+    platformCoOccurrenceLookup,
+    platformId,
   };
+}
+
+// ============================================================================
+// Platform Blend Ratio
+// ============================================================================
+
+/**
+ * Compute a platform-specific blend ratio that ramps faster than the
+ * tier-level blendRatio. Uses the max event count across both platform
+ * lookups for the given tier+platform.
+ *
+ * Formula: min(1.0, maxEventCount / PLATFORM_BLEND_RAMP_THRESHOLD)
+ *
+ * At threshold=50: 10 events → 0.2, 25 → 0.5, 50+ → 1.0
+ * vs tier-level confidence at threshold=500: 10 → 0.02, 50 → 0.1
+ *
+ * This lets popular platforms (Leonardo, Midjourney) contribute platform
+ * signals much sooner, while low-traffic platforms stay conservative.
+ */
+function getPlatformBlendRatio(
+  platformId: string,
+  tier: number | null,
+  termQualityLookup: PlatformTermQualityLookup | null,
+  coOccurrenceLookup: PlatformCoOccurrenceLookup | null,
+): number {
+  if (tier == null) return 0;
+  const tierKey = String(tier);
+
+  const tqEvents = termQualityLookup?.eventCounts[tierKey]?.[platformId] ?? 0;
+  const coEvents = coOccurrenceLookup?.eventCounts[tierKey]?.[platformId] ?? 0;
+  const maxEvents = Math.max(tqEvents, coEvents);
+
+  if (maxEvents <= 0) return 0;
+
+  return Math.min(
+    1.0,
+    maxEvents / LEARNING_CONSTANTS.PLATFORM_BLEND_RAMP_THRESHOLD,
+  );
 }
 
 // ============================================================================
@@ -484,6 +612,13 @@ function scoreOption(
     clusterBoost: 0,
     affinityBoost: 0,
     coOccurrenceBoost: 0,
+    antiPatternPenalty: 0,
+    collisionPenalty: 0,
+    weakTermPenalty: 0,
+    redundancyPenalty: 0,
+    comboBoost: 0,
+    platformCoOccurrenceBoost: 0,
+    platformTermQualityBoost: 0,
   };
   
   if (tag) {
@@ -656,6 +791,186 @@ function scoreOption(
     }
   }
   
+  // === ANTI-PATTERN SCORING (Phase 7.1) ===
+  // Demote options that form known-bad pairs with current selections.
+  // Severity 0–1 scales the penalty: severity 1.0 → full -30 penalty.
+  // When lookup is null (no data), penalty is 0 → backward compatible.
+  let antiPatternPenaltyValue = 0;
+  if (context.antiPatternLookup) {
+    const severity = lookupAntiPatternSeverity(
+      option,
+      context.selectedTerms,
+      context.tier,
+      context.antiPatternLookup,
+    );
+    if (severity > 0) {
+      antiPatternPenaltyValue = Math.round(SCORE_WEIGHTS.antiPatternPenalty * severity);
+      breakdown.antiPatternPenalty = antiPatternPenaltyValue;
+      score += antiPatternPenaltyValue;
+    }
+  }
+  
+  // === COLLISION SCORING (Phase 7.1) ===
+  // Demote options that compete for the same semantic role as current selections.
+  // competitionScore 0–1 scales the penalty: 1.0 → full -20 penalty.
+  // When lookup is null (no data), penalty is 0 → backward compatible.
+  let collisionPenaltyValue = 0;
+  if (context.collisionLookup) {
+    const collisionResult = lookupCollision(
+      option,
+      context.selectedTerms,
+      context.tier,
+      context.collisionLookup,
+    );
+    if (collisionResult) {
+      collisionPenaltyValue = Math.round(
+        SCORE_WEIGHTS.collisionPenalty * collisionResult.competitionScore,
+      );
+      breakdown.collisionPenalty = collisionPenaltyValue;
+      score += collisionPenaltyValue;
+    }
+  }
+  
+  // === WEAK TERM SCORING (Phase 7.2) ===
+  // Demote terms that users frequently replace during iteration.
+  // weaknessScore 0–1 scales the penalty: 1.0 → full -15 penalty.
+  // When lookup is null (no data), penalty is 0 → backward compatible.
+  let weakTermPenaltyValue = 0;
+  if (context.weakTermLookup) {
+    const weakness = lookupWeakTermScore(
+      option,
+      context.tier,
+      context.weakTermLookup,
+    );
+    if (weakness > 0) {
+      weakTermPenaltyValue = Math.round(SCORE_WEIGHTS.weakTermPenalty * weakness);
+      breakdown.weakTermPenalty = weakTermPenaltyValue;
+      score += weakTermPenaltyValue;
+    }
+  }
+  
+  // === REDUNDANCY SCORING (Phase 7.3) ===
+  // Gentle nudge away from terms functionally identical to already-selected terms.
+  // meanRedundancy 0–1 scales the penalty: 1.0 → full -12 penalty.
+  // When lookup is null (no data), penalty is 0 → backward compatible.
+  let redundancyPenaltyValue = 0;
+  if (context.redundancyLookup) {
+    const redundancy = lookupRedundancy(
+      option,
+      context.selectedTerms,
+      context.tier,
+      context.redundancyLookup,
+    );
+    if (redundancy > 0) {
+      redundancyPenaltyValue = Math.round(SCORE_WEIGHTS.redundancyPenalty * redundancy);
+      breakdown.redundancyPenalty = redundancyPenaltyValue;
+      score += redundancyPenaltyValue;
+    }
+  }
+  
+  // === MAGIC COMBO BOOST (Phase 7.4) ===
+  // Rewards terms that complete or nearly complete a proven winning combination.
+  // boostScore 0–1 scales the boost: 1.0 → full +25, 0.5 → +12 (partial completion).
+  // When lookup is null (no data), boost is 0 → backward compatible.
+  let comboBoostValue = 0;
+  if (context.comboLookup) {
+    const boost = lookupComboBoost(
+      option,
+      context.selectedTerms,
+      context.tier,
+      context.comboLookup,
+    );
+    if (boost > 0) {
+      comboBoostValue = Math.round(SCORE_WEIGHTS.comboBoostMax * boost);
+      breakdown.comboBoost = comboBoostValue;
+      score += comboBoostValue;
+    }
+  }
+  
+  // === PLATFORM CO-OCCURRENCE BOOST (Phase 7.5) ===
+  // When platform-specific co-occurrence data exists, compare it against the
+  // tier-level co-occurrence to get a delta. Positive delta = this pair works
+  // BETTER on this platform than average. Negative = worse.
+  // lookupPlatformCoOccurrence handles confidence blending internally.
+  // When no platform data exists, returns tierFallbackWeight → delta = 0.
+  //
+  // Uses platformBlendRatio (ramps at 50 events) instead of tier-level
+  // blendRatio[1] so popular platforms contribute signals sooner.
+  let platformCoOccurrenceBoostValue = 0;
+  if (
+    context.platformCoOccurrenceLookup &&
+    context.platformId &&
+    context.selectedTerms.length > 0
+  ) {
+    const platformBlendRatio = getPlatformBlendRatio(
+      context.platformId,
+      context.tier,
+      context.platformTermQualityLookup,
+      context.platformCoOccurrenceLookup,
+    );
+
+    if (platformBlendRatio > 0) {
+      // Get tier-level co-occurrence as baseline
+      const tierCoOccurrence = context.coOccurrenceWeights
+        ? lookupCoOccurrence(
+            option,
+            context.selectedTerms,
+            context.tier,
+            context.coOccurrenceWeights,
+          )
+        : 0;
+
+      // Get platform-aware co-occurrence (blended with tier fallback)
+      const platformCoOccurrence = lookupPlatformCoOccurrence(
+        option,
+        context.selectedTerms,
+        context.platformId,
+        context.tier,
+        context.platformCoOccurrenceLookup,
+        tierCoOccurrence,
+      );
+
+      // Delta = how much this platform differs from tier average
+      const delta = platformCoOccurrence - tierCoOccurrence;
+      if (delta !== 0) {
+        platformCoOccurrenceBoostValue = Math.round(
+          (delta / 100) * SCORE_WEIGHTS.platformCoOccurrenceMax * platformBlendRatio,
+        );
+        breakdown.platformCoOccurrenceBoost = platformCoOccurrenceBoostValue;
+        score += platformCoOccurrenceBoostValue;
+      }
+    }
+  }
+
+  // === PLATFORM TERM QUALITY BOOST (Phase 7.5) ===
+  // When platform-specific term quality data exists, deviation from neutral (50)
+  // becomes a boost or penalty. Score 85 → +0.7 × max. Score 30 → -0.4 × max.
+  // lookupPlatformTermQuality handles confidence blending internally.
+  // When no platform data exists, returns fallback (50) → deviation = 0.
+  let platformTermQualityBoostValue = 0;
+  if (
+    context.platformTermQualityLookup &&
+    context.platformId
+  ) {
+    const platformScore = lookupPlatformTermQuality(
+      option,
+      context.platformId,
+      context.tier,
+      context.platformTermQualityLookup,
+      50, // neutral fallback
+    );
+
+    // Deviation from neutral: (score - 50) / 50 gives -1.0 to +1.0
+    const deviation = (platformScore - 50) / 50;
+    if (Math.abs(deviation) > 0.05) { // ignore tiny deviations
+      platformTermQualityBoostValue = Math.round(
+        SCORE_WEIGHTS.platformTermQualityMax * deviation,
+      );
+      breakdown.platformTermQualityBoost = platformTermQualityBoostValue;
+      score += platformTermQualityBoostValue;
+    }
+  }
+  
   // === TIER-AWARE MULTIPLIER (Phase 1) ===
   // Apply per-tier weight to the variable portion of the score.
   // This amplifies differentiation for keyword-focused tiers (1,2) and
@@ -679,7 +994,7 @@ function scoreOption(
   return {
     option,
     score,
-    breakdown: includeBreakdown ? { ...breakdown, tierMultiplier: tierMultiplierValue, coOccurrenceBoost: coOccurrenceBoostValue } : undefined,
+    breakdown: includeBreakdown ? { ...breakdown, tierMultiplier: tierMultiplierValue, coOccurrenceBoost: coOccurrenceBoostValue, antiPatternPenalty: antiPatternPenaltyValue, collisionPenalty: collisionPenaltyValue, weakTermPenalty: weakTermPenaltyValue, redundancyPenalty: redundancyPenaltyValue, comboBoost: comboBoostValue, platformCoOccurrenceBoost: platformCoOccurrenceBoostValue, platformTermQualityBoost: platformTermQualityBoostValue } : undefined,
   };
 }
 
@@ -729,6 +1044,14 @@ export function reorderByRelevance(
   tier: number | null = null,
   coOccurrenceWeights: CoOccurrenceLookup | null = null,
   blendRatio: [number, number] = [1.0, 0.0],
+  antiPatternLookup: AntiPatternLookup | null = null,
+  collisionLookup: CollisionLookup | null = null,
+  weakTermLookup: WeakTermLookup | null = null,
+  redundancyLookup: RedundancyLookup | null = null,
+  comboLookup: ComboLookup | null = null,
+  platformTermQualityLookup: PlatformTermQualityLookup | null = null,
+  platformCoOccurrenceLookup: PlatformCoOccurrenceLookup | null = null,
+  platformId: string | null = null,
 ): ScoredOption[] {
   const context = buildContext({ 
     selections, 
@@ -737,6 +1060,14 @@ export function reorderByRelevance(
     tier,
     coOccurrenceWeights,
     blendRatio,
+    antiPatternLookup,
+    collisionLookup,
+    weakTermLookup,
+    redundancyLookup,
+    comboLookup,
+    platformTermQualityLookup,
+    platformCoOccurrenceLookup,
+    platformId,
   });
   
   return scoreOptions({

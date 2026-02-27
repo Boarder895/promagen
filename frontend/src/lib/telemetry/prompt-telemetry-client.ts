@@ -15,7 +15,7 @@
 //
 // Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9.4
 //
-// Version: 1.0.0
+// Version: 2.0.0 — Phase 7.1a confidence fields added
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -75,6 +75,10 @@ export interface TelemetryInput {
   saved: boolean;
   /** Whether the user reused a prompt from their library */
   reusedFromLibrary: boolean;
+  /** User subscription tier ('free' | 'paid') — optional, GDPR safe */
+  userTier?: 'free' | 'paid';
+  /** Days since account creation — optional, GDPR safe */
+  accountAgeDays?: number;
 }
 
 // ============================================================================
@@ -257,6 +261,9 @@ export async function sendPromptTelemetry(input: TelemetryInput): Promise<boolea
         returnedWithin60s,
         reusedFromLibrary: input.reusedFromLibrary,
       },
+      // Phase 7.1: Confidence multiplier data (optional, GDPR safe)
+      ...(input.userTier ? { userTier: input.userTier } : {}),
+      ...(input.accountAgeDays != null ? { accountAgeDays: input.accountAgeDays } : {}),
     };
 
     // --- Record copy timestamp for return-within-60s detection ---

@@ -13,6 +13,10 @@
     {
       "path": "/api/index-rating/cron?secret=$PROMAGEN_CRON_SECRET",
       "schedule": "5 0 * * *"
+    },
+    {
+      "path": "/api/learning/aggregate?secret=$PROMAGEN_CRON_SECRET",
+      "schedule": "0 3 * * *"
     }
   ]
 }

@@ -127,6 +127,8 @@ export interface PromagenAuthState {
   avatarUrl: string | null;
   /** User's subscription tier (defaults to 'free') */
   userTier: UserTier;
+  /** Days since account creation (0 for anonymous/unknown) */
+  accountAgeDays: number;
   /** Vote weight multiplier based on tier (1.0 for free, 1.5 for paid) */
   voteWeight: number;
   /** Current lock state for prompt builder */
@@ -212,6 +214,17 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
 
   const userTier: UserTier = publicMetadata?.tier ?? 'free';
   const storedReferenceFrame: ReferenceFrame = publicMetadata?.referenceFrame ?? 'user';
+
+  // Compute account age in days from Clerk's user.createdAt (0 for anonymous/unknown)
+  const accountAgeDays = useMemo(() => {
+    if (!user?.createdAt) return 0;
+    const created = user.createdAt instanceof Date
+      ? user.createdAt
+      : new Date(user.createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - created.getTime();
+    return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+  }, [user?.createdAt]);
 
   // Vote weight: 1.5x for paid users (silent multiplier)
   const voteWeight = userTier === 'paid' ? 1.5 : 1.0;
@@ -392,6 +405,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     displayName: user?.fullName ?? user?.firstName ?? null,
     avatarUrl: user?.imageUrl ?? null,
     userTier,
+    accountAgeDays,
     voteWeight,
     promptLockState,
     dailyUsage,

@@ -12,9 +12,9 @@
 // - learned_weights      — JSON weight files produced by nightly cron
 // - learning_cron_runs   — Observability log for cron executions
 //
-// Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9.4
+// Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9.4, § 11
 //
-// Version: 1.0.0
+// Version: 2.1.0 — Phase 7.1a confidence columns + anti-pattern query
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -50,6 +50,8 @@ export async function ensurePromptEventsTable(): Promise<void> {
       tier            SMALLINT    NOT NULL,
       scene_used      TEXT,
       outcome         JSONB       NOT NULL DEFAULT '{}',
+      user_tier       TEXT,
+      account_age_days SMALLINT,
       created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
@@ -170,6 +172,10 @@ export interface PromptEventRow {
   tier: number;
   scene_used: string | null;
   outcome: Record<string, boolean>;
+  /** User subscription tier ('free' | 'paid'), null/undefined for old events */
+  user_tier?: string | null;
+  /** Days since account creation at event time, null/undefined for old events */
+  account_age_days?: number | null;
   created_at: Date | string;
 }
 
@@ -210,7 +216,7 @@ export async function fetchQualifyingEvents(
       SELECT
         id, session_id, attempt_number, selections, category_count,
         char_length, score, score_factors, platform, tier,
-        scene_used, outcome, created_at
+        scene_used, outcome, user_tier, account_age_days, created_at
       FROM prompt_events
       WHERE score >= ${LEARNING_CONSTANTS.SCORE_THRESHOLD}
         AND category_count >= ${LEARNING_CONSTANTS.MIN_CATEGORIES}
@@ -222,6 +228,42 @@ export async function fetchQualifyingEvents(
     return result;
   } catch (error) {
     console.error('[Learning] Error fetching qualifying events:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch ALL events (including low-scoring ones) for anti-pattern analysis.
+ *
+ * Unlike fetchQualifyingEvents, this has NO score floor — anti-pattern
+ * detection needs the bad prompts to learn what kills quality.
+ * Still respects time window and a minimum category count to filter junk.
+ *
+ * @param windowDays — How far back to look (default: 180 = 6 months)
+ * @param limit — Max rows to fetch (default: AGGREGATION_BATCH_SIZE)
+ * @param offset — Pagination offset (default: 0)
+ */
+export async function fetchAllEventsForAntiPatterns(
+  windowDays: number = 180,
+  limit: number = LEARNING_CONSTANTS.AGGREGATION_BATCH_SIZE,
+  offset: number = 0,
+): Promise<PromptEventRow[]> {
+  try {
+    const result = await db()<PromptEventRow[]>`
+      SELECT
+        id, session_id, attempt_number, selections, category_count,
+        char_length, score, score_factors, platform, tier,
+        scene_used, outcome, user_tier, account_age_days, created_at
+      FROM prompt_events
+      WHERE category_count >= ${LEARNING_CONSTANTS.ANTI_PATTERN_MIN_CATEGORIES}
+        AND created_at >= NOW() - (${windowDays} || ' days')::interval
+      ORDER BY created_at DESC
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `;
+    return result;
+  } catch (error) {
+    console.error('[Learning] Error fetching events for anti-pattern analysis:', error);
     return [];
   }
 }

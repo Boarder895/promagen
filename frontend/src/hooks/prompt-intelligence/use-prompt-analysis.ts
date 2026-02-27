@@ -13,6 +13,8 @@ import {
   type PromptAnalysis,
 } from '@/lib/prompt-intelligence';
 
+import type { ScoringWeights } from '@/lib/learning/weight-recalibration';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -29,6 +31,12 @@ export interface UsePromptAnalysisOptions {
   
   /** Whether analysis is enabled (default: true) */
   enabled?: boolean;
+
+  /** Per-tier scoring weights from Phase 6 (null = use static formula) */
+  learnedWeights?: ScoringWeights | null;
+
+  /** Platform tier ID for per-tier weights */
+  tierId?: number;
 }
 
 export interface UsePromptAnalysisResult {
@@ -70,6 +78,8 @@ export function usePromptAnalysis(
     marketMoodEnabled = false,
     marketData,
     enabled = true,
+    learnedWeights,
+    tierId,
   } = options;
   
   const [analysis, setAnalysis] = useState<PromptAnalysis | null>(null);
@@ -95,11 +105,14 @@ export function usePromptAnalysis(
     setIsAnalyzing(true);
     
     // Run analysis synchronously (it's all client-side)
-    const result = analyzePrompt(stateRef.current, marketContext);
+    const result = analyzePrompt(stateRef.current, marketContext, {
+      learnedWeights,
+      tierId,
+    });
     
     setAnalysis(result);
     setIsAnalyzing(false);
-  }, [enabled, marketContext]);
+  }, [enabled, marketContext, learnedWeights, tierId]);
   
   // Create stable key for dependency tracking
   const selectionsKey = JSON.stringify(state.selections);

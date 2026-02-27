@@ -8,6 +8,13 @@
 
 import type { PromptCategory, PromptBuilderState } from '@/types/prompt-builder';
 import type { CoOccurrenceLookup } from '@/lib/learning/co-occurrence-lookup';
+import type { AntiPatternLookup } from '@/lib/learning/anti-pattern-lookup';
+import type { CollisionLookup } from '@/lib/learning/collision-lookup';
+import type { WeakTermLookup } from '@/lib/learning/weak-term-lookup';
+import type { RedundancyLookup } from '@/lib/learning/redundancy-lookup';
+import type { ComboLookup } from '@/lib/learning/combo-lookup';
+import type { PlatformTermQualityLookup } from '@/lib/learning/platform-term-quality-lookup';
+import type { PlatformCoOccurrenceLookup } from '@/lib/learning/platform-co-occurrence-lookup';
 
 // ============================================================================
 // § 1. Semantic Tags
@@ -273,6 +280,20 @@ export interface ScoredOption {
     tierMultiplier?: number;
     /** Boost from learned co-occurrence data (Phase 5) */
     coOccurrenceBoost?: number;
+    /** Penalty from anti-pattern data (Phase 7.1) */
+    antiPatternPenalty?: number;
+    /** Penalty from collision data (Phase 7.1) */
+    collisionPenalty?: number;
+    /** Penalty from weak term data (Phase 7.2) */
+    weakTermPenalty?: number;
+    /** Penalty from redundancy data (Phase 7.3) */
+    redundancyPenalty?: number;
+    /** Boost from magic combo completion (Phase 7.4) */
+    comboBoost?: number;
+    /** Platform-specific co-occurrence boost override (Phase 7.5) */
+    platformCoOccurrenceBoost?: number;
+    /** Platform-specific term quality adjustment (Phase 7.5) */
+    platformTermQualityBoost?: number;
   };
 }
 
@@ -316,6 +337,30 @@ export interface PromptContext {
 
   /** Blend ratio [curated, learned] based on total event count (Phase 5) */
   blendRatio: [curated: number, learned: number];
+
+  /** Pre-built anti-pattern lookup from learned weights (Phase 7.1, null = no data) */
+  antiPatternLookup: AntiPatternLookup | null;
+
+  /** Pre-built collision lookup from learned weights (Phase 7.1, null = no data) */
+  collisionLookup: CollisionLookup | null;
+
+  /** Pre-built weak term lookup from learned weights (Phase 7.2, null = no data) */
+  weakTermLookup: WeakTermLookup | null;
+
+  /** Pre-built redundancy lookup from learned weights (Phase 7.3, null = no data) */
+  redundancyLookup: RedundancyLookup | null;
+
+  /** Pre-built combo lookup from learned weights (Phase 7.4, null = no data) */
+  comboLookup: ComboLookup | null;
+
+  /** Pre-built platform term quality lookup (Phase 7.5, null = no data) */
+  platformTermQualityLookup: PlatformTermQualityLookup | null;
+
+  /** Pre-built platform co-occurrence lookup (Phase 7.5, null = no data) */
+  platformCoOccurrenceLookup: PlatformCoOccurrenceLookup | null;
+
+  /** Active platform identifier e.g. "leonardo", "midjourney" (Phase 7.5) */
+  platformId: string | null;
 }
 
 // ============================================================================

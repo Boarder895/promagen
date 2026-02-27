@@ -14,6 +14,10 @@ import type {
   SemanticEra 
 } from '../types';
 import { getConflicts, getSemanticTag } from '../index';
+import { lookupAntiPatternSeverity } from '@/lib/learning/anti-pattern-lookup';
+import type { AntiPatternLookup } from '@/lib/learning/anti-pattern-lookup';
+import { lookupCollision } from '@/lib/learning/collision-lookup';
+import type { CollisionLookup } from '@/lib/learning/collision-lookup';
 
 // ============================================================================
 // Types
@@ -31,6 +35,15 @@ export interface ConflictDetectionInput {
   
   /** Whether to include soft conflicts (default: true) */
   includeSoftConflicts?: boolean;
+
+  /** Pre-built anti-pattern lookup from Phase 7.1 (null = no data) */
+  antiPatternLookup?: AntiPatternLookup | null;
+
+  /** Pre-built collision lookup from Phase 7.1 (null = no data) */
+  collisionLookup?: CollisionLookup | null;
+
+  /** Platform tier for tier-specific conflict lookup (Phase 7.1) */
+  tier?: number | null;
 }
 
 /**
@@ -308,6 +321,110 @@ function checkEraConflicts(
   return conflicts;
 }
 
+/**
+ * Check for conflicts learned from telemetry data.
+ * Sources: anti-patterns (severity-based) and collision matrix.
+ *
+ * Anti-patterns with severity > 0.7 produce **hard** conflicts.
+ * Everything else produces **soft** conflicts.
+ *
+ * Null lookups → no learned conflicts (backward compatible).
+ *
+ * @since Phase 7.1
+ */
+function checkLearnedConflicts(
+  termToCategory: Map<string, PromptCategory>,
+  antiPatternLookup: AntiPatternLookup | null | undefined,
+  collisionLookup: CollisionLookup | null | undefined,
+  tier: number | null | undefined,
+): DetectedConflict[] {
+  const conflicts: DetectedConflict[] = [];
+  const allTerms = [...termToCategory.keys()];
+  const seenPairs = new Set<string>();
+
+  // ── Anti-pattern conflicts ──────────────────────────────────────────
+  if (antiPatternLookup) {
+    for (let i = 0; i < allTerms.length; i++) {
+      const termA = allTerms[i]!;
+      for (let j = i + 1; j < allTerms.length; j++) {
+        const termB = allTerms[j]!;
+
+        const severity = lookupAntiPatternSeverity(
+          termA,
+          [termB],
+          tier ?? null,
+          antiPatternLookup,
+        );
+
+        if (severity > 0) {
+          const pairKey = [termA, termB].sort().join('|');
+          if (seenPairs.has(pairKey)) continue;
+          seenPairs.add(pairKey);
+
+          const catA = termToCategory.get(termA);
+          const catB = termToCategory.get(termB);
+          const categories: PromptCategory[] = [];
+          if (catA) categories.push(catA);
+          if (catB && catB !== catA) categories.push(catB);
+
+          // High severity (>0.7) → hard conflict; otherwise soft
+          const conflictSeverity: ConflictSeverity = severity > 0.7 ? 'hard' : 'soft';
+
+          conflicts.push({
+            terms: [termA, termB],
+            reason: `Learned conflict: "${termA}" and "${termB}" tend to reduce prompt quality when combined (severity ${(severity * 100).toFixed(0)}%).`,
+            suggestion: `Consider removing one for better results.`,
+            severity: conflictSeverity,
+            categories,
+          });
+        }
+      }
+    }
+  }
+
+  // ── Collision conflicts ─────────────────────────────────────────────
+  if (collisionLookup) {
+    for (let i = 0; i < allTerms.length; i++) {
+      const termA = allTerms[i]!;
+      for (let j = i + 1; j < allTerms.length; j++) {
+        const termB = allTerms[j]!;
+
+        const pairKey = [termA, termB].sort().join('|');
+        if (seenPairs.has(pairKey)) continue;
+
+        const collisionResult = lookupCollision(
+          termA,
+          [termB],
+          tier ?? null,
+          collisionLookup,
+        );
+
+        if (collisionResult) {
+          seenPairs.add(pairKey);
+
+          const catA = termToCategory.get(termA);
+          const catB = termToCategory.get(termB);
+          const categories: PromptCategory[] = [];
+          if (catA) categories.push(catA);
+          if (catB && catB !== catA) categories.push(catB);
+
+          const weakerLabel = collisionResult.weakerTerm === termA ? termA : termB;
+
+          conflicts.push({
+            terms: [termA, termB],
+            reason: `These compete for the same role — using both reduces quality by ~${(collisionResult.qualityDelta * 100).toFixed(0)}%.`,
+            suggestion: `Choose one. "${weakerLabel}" is the weaker option here.`,
+            severity: 'soft',
+            categories,
+          });
+        }
+      }
+    }
+  }
+
+  return conflicts;
+}
+
 // ============================================================================
 // Main Export
 // ============================================================================
@@ -330,7 +447,14 @@ function checkEraConflicts(
  * ```
  */
 export function detectConflicts(input: ConflictDetectionInput): ConflictDetectionResult {
-  const { selections, customValues, includeSoftConflicts = true } = input;
+  const {
+    selections,
+    customValues,
+    includeSoftConflicts = true,
+    antiPatternLookup,
+    collisionLookup,
+    tier,
+  } = input;
   
   // Extract all terms with their categories
   const termToCategory = extractAllTerms(selections, customValues);
@@ -353,6 +477,8 @@ export function detectConflicts(input: ConflictDetectionInput): ConflictDetectio
     ...checkSemanticTagConflicts(termToCategory, includeSoftConflicts),
     ...(includeSoftConflicts ? checkMoodConflicts(termToCategory) : []),
     ...(includeSoftConflicts ? checkEraConflicts(termToCategory) : []),
+    // Phase 7.1: Learned conflicts from telemetry data (additive only)
+    ...checkLearnedConflicts(termToCategory, antiPatternLookup, collisionLookup, tier),
   ];
   
   // Deduplicate conflicts (same terms)
