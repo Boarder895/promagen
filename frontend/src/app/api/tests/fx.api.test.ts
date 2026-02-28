@@ -2,61 +2,54 @@ import { describe, it, expect } from '@jest/globals';
 
 import { NextRequest } from 'next/server';
 
-import { GET } from '@/app/api/fx/route';
 import { getDefaultFxPairsWithIndexForTier } from '@/data/fx';
-import type { FxApiResponse } from '@/types/finance-ribbon';
+import { isFxApiResponse } from './api-test-helpers';
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
+// Console silencing handled by api-test-setup.ts (setupFilesAfterFramework).
 
-function isFxApiResponse(x: unknown): x is FxApiResponse {
-  if (!isPlainObject(x)) return false;
+// ---------------------------------------------------------------------------
+// Mock getFxRibbon so tests don't require a live gateway.
+// Uses SSOT pair data so the "N quotes in SSOT order" test works.
+// ---------------------------------------------------------------------------
+jest.mock('@/lib/fx/providers', () => {
+   
+  const { getDefaultFxPairsWithIndexForTier: getPairs } = require('@/data/fx');
+  const pairs = getPairs('free');
 
-  const meta = x.meta;
-  const data = x.data;
+  return {
+    getFxRibbon: jest.fn(async () => ({
+      meta: {
+        mode: 'cached',
+        buildId: 'test',
+        sourceProvider: 'mock',
+        asOf: new Date().toISOString(),
+        cached: true,
+        ttlSeconds: 300,
+        ssotKey: 'test-ssot',
+        budget: { state: 'ok' },
+      },
+      data: pairs.map((p: { id: string; base: string; quote: string; label: string; group: string }) => ({
+        id: p.id,
+        base: p.base,
+        quote: p.quote,
+        label: p.label,
+        category: p.group || 'major',
+        price: 1.0,
+        change: 0.01,
+        changePct: 0.5,
+        providerSymbol: `${p.base}/${p.quote}`,
+      })),
+    })),
+  };
+});
 
-  if (!isPlainObject(meta)) return false;
-  if (!Array.isArray(data)) return false;
-
-  const buildId = meta.buildId;
-  const mode = meta.mode;
-  const sourceProvider = meta.sourceProvider;
-  const asOf = meta.asOf;
-
-  if (typeof buildId !== 'string') return false;
-  if (typeof mode !== 'string') return false;
-  if (typeof sourceProvider !== 'string') return false;
-  if (typeof asOf !== 'string') return false;
-
-  for (const item of data) {
-    if (!isPlainObject(item)) return false;
-
-    if (typeof item.id !== 'string') return false;
-    if (typeof item.base !== 'string') return false;
-    if (typeof item.quote !== 'string') return false;
-    if (typeof item.label !== 'string') return false;
-    if (typeof item.category !== 'string') return false;
-
-    const price = item.price;
-    const change = item.change;
-    const changePct = item.changePct;
-
-    const priceOk = price === null || (typeof price === 'number' && Number.isFinite(price));
-    const changeOk = change === null || (typeof change === 'number' && Number.isFinite(change));
-    const changePctOk =
-      changePct === null || (typeof changePct === 'number' && Number.isFinite(changePct));
-
-    if (!priceOk || !changeOk || !changePctOk) return false;
-  }
-
-  return true;
-}
+// Import route AFTER mocks are set up.
+import { GET } from '@/app/api/fx/route';
 
 function makeRequest(): NextRequest {
   return new NextRequest('http://localhost/api/fx', {
     headers: {
-      // Helps your route’s request-id + rate-limit logic behave deterministically in tests.
+      // Helps your route's request-id + rate-limit logic behave deterministically in tests.
       'x-forwarded-for': '127.0.0.1',
       'user-agent': 'jest',
     },

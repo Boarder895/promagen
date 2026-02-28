@@ -41,20 +41,18 @@ function buildLongitudeIndex(): Map<string, number> {
 }
 
 describe('exchange-order – homepage rails', () => {
-  const EXPECTED_EAST_TO_WEST: string[] = [
-    'nzx-wellington',
-    'asx-sydney',
-    'tse-tokyo',
-    'hkex-hong-kong',
-    'set-bangkok',
-    'nse-mumbai',
-    'dfm-dubai',
-    'moex-moscow',
-    'jse-johannesburg',
-    'lse-london',
-    'b3-sao-paulo',
-    'cboe-chicago',
-  ];
+  // Derived from the actual data files — zero manual updates when exchanges change.
+  // Reads exchanges.selected.json for the IDs, then sorts by longitude (descending = east→west)
+  // using exchanges.catalog.json as the source of truth for coordinates.
+  const longitudeIndex = buildLongitudeIndex();
+  const EXPECTED_EAST_TO_WEST: string[] = getSelectedIds()
+    .slice()
+    .sort((a, b) => (longitudeIndex.get(b) ?? 0) - (longitudeIndex.get(a) ?? 0));
+
+  it('selected exchanges count is 16 (update this when adding/removing exchanges)', () => {
+    const selectedIds = getSelectedIds();
+    expect(selectedIds.length).toBe(16);
+  });
 
   it('getRailsForHomepage splits the selected exchanges into left/right rails', () => {
     const { left, right } = getRailsForHomepage();
@@ -62,8 +60,9 @@ describe('exchange-order – homepage rails', () => {
     const leftIds = left.map((e: Exchange) => e.id);
     const rightIds = right.map((e: Exchange) => e.id);
 
-    expect(leftIds).toEqual(EXPECTED_EAST_TO_WEST.slice(0, 6));
-    expect(rightIds).toEqual(EXPECTED_EAST_TO_WEST.slice(6).reverse());
+    const half = Math.ceil(EXPECTED_EAST_TO_WEST.length / 2);
+    expect(leftIds).toEqual(EXPECTED_EAST_TO_WEST.slice(0, half));
+    expect(rightIds).toEqual(EXPECTED_EAST_TO_WEST.slice(half).reverse());
   });
 
   it('getHomepageExchanges returns all selected ids ordered east→west', () => {
@@ -87,7 +86,8 @@ describe('exchange-order – homepage rails', () => {
     const selectedIds = getSelectedIds();
     const { left, right } = splitIds(selectedIds);
 
-    expect(left.map((e) => e.id)).toEqual(selectedIds.slice(0, 6));
-    expect(right.map((e) => e.id)).toEqual(selectedIds.slice(6));
+    const half = Math.ceil(selectedIds.length / 2);
+    expect(left.map((e) => e.id)).toEqual(selectedIds.slice(0, half));
+    expect(right.map((e) => e.id)).toEqual(selectedIds.slice(half));
   });
 });

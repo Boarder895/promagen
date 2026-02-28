@@ -26,6 +26,8 @@ import {
   getAllPlatformIds,
   getPlatformsByTier,
   getCompressionStats,
+  SHORTHAND_LEVELS,
+  hasShorthandLevel,
 } from '@/data/compression';
 
 import type { CompressionTier } from '@/types/compression';
@@ -155,9 +157,33 @@ describe('Platform Support Matrix Integrity', () => {
   });
 
   it('should have valid shorthandLevel for each platform', () => {
-    const validLevels = ['FULL', 'HIGH', 'UNIVERSAL', 'MINIMAL'];
     for (const [, config] of Object.entries(platformSupport.platforms)) {
-      expect(validLevels).toContain(config.shorthandLevel);
+      expect(SHORTHAND_LEVELS).toContain(config.shorthandLevel);
+    }
+  });
+
+  it('should have SHORTHAND_LEVELS ordered MINIMAL < LOW < MEDIUM < HIGH < FULL', () => {
+    // Stability is tier 1 with FULL shorthand — it must pass every level check
+    const ordered: Array<typeof SHORTHAND_LEVELS[number]> = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH', 'FULL'];
+
+    // Verify the canonical array matches the expected ordering
+    expect([...SHORTHAND_LEVELS]).toEqual(ordered);
+
+    // Verify hasShorthandLevel respects the hierarchy:
+    // a FULL platform satisfies every level from MINIMAL up to FULL
+    for (const level of ordered) {
+      expect(hasShorthandLevel('stability', level)).toBe(true);
+    }
+
+    // A MINIMAL-only platform must NOT satisfy higher levels
+    // Find a platform with MINIMAL shorthandLevel
+    const minimalPlatform = Object.entries(platformSupport.platforms)
+      .find(([, config]) => config.shorthandLevel === 'MINIMAL');
+
+    if (minimalPlatform) {
+      const [platformId] = minimalPlatform;
+      expect(hasShorthandLevel(platformId, 'MINIMAL')).toBe(true);
+      expect(hasShorthandLevel(platformId, 'FULL')).toBe(false);
     }
   });
 });

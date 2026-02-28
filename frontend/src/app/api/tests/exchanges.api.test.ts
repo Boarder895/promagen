@@ -1,21 +1,43 @@
 import { describe, it, expect } from "@jest/globals";
 import { GET } from "@/app/api/exchanges/route";
 
-type ApiErr = { ok: false; error: string };
-type ExchangesPayload = { ok: true; data: { items: unknown[] } };
-type ApiResp = ApiErr | ExchangesPayload;
+// Console silencing handled by api-test-setup.ts (setupFilesAfterFramework).
 
-function isOk<T extends { ok: true }>(v: unknown): v is T {
-  return !!v && typeof v === "object" && (v as any).ok === true;
-}
+type ExchangeItem = {
+  id: string;
+  city: string;
+  exchange: string;
+  country: string;
+  iso2: string;
+  tz: string;
+  longitude: number;
+  latitude: number;
+};
+
+type ExchangesPayload = {
+  ok: true;
+  asOf: string;
+  count: number;
+  exchanges: ExchangeItem[];
+};
 
 describe("GET /api/exchanges", () => {
-  it("returns items array", async () => {
+  it("returns exchanges array with expected shape", async () => {
     const res = await GET();
-    const json = (await res.json()) as ApiResp;
-    expect(isOk<ExchangesPayload>(json)).toBe(true);
-    if (isOk<ExchangesPayload>(json)) {
-      expect(Array.isArray(json.data.items)).toBe(true);
-    }
+    const json = (await res.json()) as ExchangesPayload;
+
+    expect(json.ok).toBe(true);
+    expect(typeof json.asOf).toBe("string");
+    expect(typeof json.count).toBe("number");
+    expect(Array.isArray(json.exchanges)).toBe(true);
+    expect(json.exchanges.length).toBe(json.count);
+    expect(json.exchanges.length).toBeGreaterThan(0);
+
+    // Spot-check first item shape.
+    const first = json.exchanges[0];
+    if (!first) throw new Error('Expected at least one exchange');
+    expect(typeof first.id).toBe("string");
+    expect(typeof first.city).toBe("string");
+    expect(typeof first.tz).toBe("string");
   });
 });

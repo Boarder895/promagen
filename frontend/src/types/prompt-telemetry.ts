@@ -18,7 +18,7 @@
 // - sessionId is a per-tab crypto.randomUUID() that dies on tab close
 // - No cookies, no credentials
 //
-// Version: 2.0.0 — Phase 7.1a confidence fields added (optional, backward-compat)
+// Version: 3.0.0 — Phase 7.6a A/B testing optional fields added (backward-compat)
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -93,6 +93,14 @@ export interface PromptTelemetryEvent {
   userTier?: 'free' | 'paid';
   /** Days since account creation (optional — GDPR safe, not PII) */
   accountAgeDays?: number;
+
+  // ── A/B Testing (Phase 7.6) ─────────────────────────────────────────
+  /** Stable anonymous browser hash for A/B test assignment (localStorage UUID) */
+  abHash?: string;
+  /** Active A/B test ID (null if no test running) */
+  activeTestId?: string;
+  /** Which variant this event belongs to: A=control, B=variant */
+  activeVariant?: 'A' | 'B';
 }
 
 /**
@@ -233,6 +241,22 @@ export const PromptTelemetryEventSchema = z.object({
     .int()
     .min(0, 'accountAgeDays must be >= 0')
     .max(10_000, 'accountAgeDays must be <= 10000')
+    .optional(),
+
+  // ── A/B Testing (Phase 7.6) — optional backward-compatible fields ──
+  abHash: z
+    .string()
+    .uuid({ message: 'abHash must be a valid UUID' })
+    .optional(),
+
+  activeTestId: z
+    .string()
+    .min(1, 'activeTestId must not be empty')
+    .max(128, 'activeTestId must be <= 128 chars')
+    .optional(),
+
+  activeVariant: z
+    .enum(['A', 'B'])
     .optional(),
 });
 

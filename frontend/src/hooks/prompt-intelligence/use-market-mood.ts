@@ -3,9 +3,11 @@
 // USE MARKET MOOD HOOK
 // ============================================================================
 // React hook for market mood detection and suggestions.
+//
+// Version: 1.2.0 — Uses shared useSyncComputation utility
 // ============================================================================
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { MarketState, SuggestedOption } from '@/lib/prompt-intelligence/types';
 import {
   detectMarketState,
@@ -15,6 +17,7 @@ import {
   getMarketMoodIcon,
   type MarketDataInput,
 } from '@/lib/prompt-intelligence';
+import { useSyncComputation } from '@/hooks/use-sync-computation';
 
 // ============================================================================
 // Types
@@ -64,6 +67,9 @@ export interface UseMarketMoodResult {
 
 /**
  * Hook for market mood detection and suggestions.
+ *
+ * useSyncComputation handles the core detection + manual refresh.
+ * useEffect only manages the auto-refresh interval timer.
  */
 export function useMarketMood(
   marketData: MarketDataInput | undefined,
@@ -75,55 +81,43 @@ export function useMarketMood(
     refreshInterval = 0,
   } = options;
   
-  const [state, setState] = useState<MarketState | null>(null);
-  const [description, setDescription] = useState<string | null>(null);
-  
-  // Use ref to avoid stale closures
-  const marketDataRef = useRef(marketData);
-  marketDataRef.current = marketData;
-  
   // Stable key for market data changes
   const marketDataKey = JSON.stringify(marketData);
   
-  // Detect market state
-  const detectState = useCallback(() => {
-    if (!enabled || !marketDataRef.current) {
-      setState(null);
-      setDescription(null);
-      return;
-    }
-    
-    const result = detectMarketState(marketDataRef.current);
-    setState(result.state);
-    setDescription(result.description);
-  }, [enabled]);
+  // Core detection via shared utility
+  const { value: detection, refresh } = useSyncComputation(
+    () => {
+      if (!enabled || !marketData) {
+        return { state: null as MarketState | null, description: null as string | null };
+      }
+      const result = detectMarketState(marketData);
+      return { state: result.state, description: result.description };
+    },
+    [enabled, marketDataKey]
+  );
   
-  // Initial detection and on data change
-  useEffect(() => {
-    detectState();
-     
-  }, [detectState, marketDataKey]);
+  const { state, description } = detection;
   
-  // Auto-refresh interval
+  // Auto-refresh interval — useEffect only for timer lifecycle
   useEffect(() => {
     if (refreshInterval <= 0 || !enabled) return;
     
-    const timer = setInterval(detectState, refreshInterval);
+    const timer = setInterval(refresh, refreshInterval);
     return () => clearInterval(timer);
-  }, [refreshInterval, enabled, detectState]);
+  }, [refreshInterval, enabled, refresh]);
   
   // Derived values
-  const isActive = useMemo(() => {
-    return state ? shouldShowMarketMood(state) : false;
-  }, [state]);
+  const isActive = useMemo(() => (state ? shouldShowMarketMood(state) : false), [state]);
   
-  const theme = useMemo(() => {
-    return state && isActive ? getMarketMoodTheme(state.type) : null;
-  }, [state, isActive]);
+  const theme = useMemo(
+    () => (state && isActive ? getMarketMoodTheme(state.type) : null),
+    [state, isActive]
+  );
   
-  const icon = useMemo(() => {
-    return state && isActive ? getMarketMoodIcon(state.type) : null;
-  }, [state, isActive]);
+  const icon = useMemo(
+    () => (state && isActive ? getMarketMoodIcon(state.type) : null),
+    [state, isActive]
+  );
   
   const suggestions = useMemo(() => {
     if (!state || !isActive) return [];
@@ -137,7 +131,7 @@ export function useMarketMood(
     theme,
     icon,
     suggestions,
-    refresh: detectState,
+    refresh,
   };
 }
 

@@ -1,5 +1,5 @@
 // frontend/src/data/providers/tests/providers.catalog.shape.test.ts
-// Shape tests for providers.json – guards the canonical 20-provider catalogue.
+// Shape tests for providers.json – guards the canonical 42-provider catalogue.
 
 import providers from '../providers.json';
 
@@ -9,9 +9,9 @@ const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
 describe('providers.catalog.json shape', () => {
-  it('has the canonical 20 providers (update intentionally if this changes)', () => {
+  it('has the canonical 42 providers (update intentionally if this changes)', () => {
     expect(Array.isArray(providers)).toBe(true);
-    expect(providers.length).toBe(20);
+    expect(providers.length).toBe(42);
   });
 
   it('every provider has required fields with correct basic types', () => {

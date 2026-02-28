@@ -99,6 +99,11 @@ export interface ComboboxProps {
    * Helps users see which values came from the scene vs manual picks.
    */
   sceneOriginValues?: string[];
+  /**
+   * Called when a user adds a custom term via Enter key (Phase 7.7).
+   * Fire-and-forget — used for vocabulary crowdsourcing collection.
+   */
+  onCustomTermSubmitted?: (term: string) => void;
 }
 
 export function Combobox({
@@ -123,6 +128,7 @@ export function Combobox({
   showChipsWhenClosed = false,
   chipSectionLabel = 'Quick picks',
   sceneOriginValues,
+  onCustomTermSubmitted,
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -293,6 +299,7 @@ export function Combobox({
         onSelectChange(newSelected);
         setFilter('');
         onCustomChange('');
+        onCustomTermSubmitted?.(filter.trim());
       }
     } else if (e.key === 'Backspace' && !filter && selected.length > 0) {
       // Remove last chip on backspace when input is empty

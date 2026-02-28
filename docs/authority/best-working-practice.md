@@ -78,6 +78,34 @@ Memory is used only for stable working preferences and process rules (e.g., "one
 - When returning a "full file replacement", it must be the COMPLETE file content (no omissions or shortening).
 - No lines may be deleted or "simplified away" unless the user explicitly approves the change as REMOVE/REPLACE with line ranges.
 
+## Test & Verification Command Format
+
+**Purpose:** All verification instructions must use the project's npm scripts (via `pnpm`), never raw `npx` or global tool calls. This ensures consistent behaviour across machines and CI.
+
+**Hard rules:**
+
+1. **Always use `pnpm run` / `pnpm test`** — never `npx tsc`, `npx jest`, or bare tool names.
+2. **Typecheck:** `pnpm run typecheck` (not `npx tsc --noEmit`)
+3. **Run tests:** `pnpm test -- --testPathPattern="<pattern>" --verbose` (not `npx jest`)
+4. **Lint:** `pnpm run lint` (not `npx eslint`)
+5. **Full check:** `pnpm run check` (lint + typecheck)
+6. **All output files must be presented as a zip with folder structure matching the repo** — so the user can "Open in Windows Explorer" and drag files into place.
+
+**Correct format (copy-paste into every build part):**
+
+```powershell
+# Run at repo root: C:\Users\Proma\Projects\promagen
+pnpm run typecheck
+pnpm test -- --testPathPattern="<test-name>" --verbose
+```
+
+**Wrong format (never use):**
+
+````powershell
+# ❌ These bypass project config and may behave differently
+npx tsc --noEmit
+npx jest --testPathPattern="<test-name>" --verbose
+
 ---
 
 ## Schema and Type Consolidation Rules
@@ -120,7 +148,7 @@ const SubsetSchema = z.object({ id: z.string(), name: z.string() }).passthrough(
 
 // ❌ Wrong — rejects extra fields, causes 500s
 const SubsetSchema = z.object({ id: z.string(), name: z.string() }).strict();
-```
+````
 
 ---
 
@@ -388,7 +416,7 @@ const COMPONENT_STYLES = `
   .my-class { animation: my-fade-in 0.2s ease-out; }
 `;
 // Then in JSX:
-<style dangerouslySetInnerHTML={{ __html: COMPONENT_STYLES }} />
+<style dangerouslySetInnerHTML={{ __html: COMPONENT_STYLES }} />;
 ```
 
 ### Accessibility patterns (interactive element rules)
@@ -406,6 +434,7 @@ const COMPONENT_STYLES = `
 4. **Accordion patterns:** Parent manages state (which is expanded). Trigger is a `<button>` with `aria-expanded`. Content uses `role="region"` with `aria-label`.
 
 **Reference implementations:**
+
 - Confirmation dialog pattern: `scene-selector.tsx` (lines 766–812)
 - Escape key handling: `explore-drawer.tsx` (lines 272–280)
 - Accordion: `prompt-builder.tsx` + `explore-drawer.tsx`

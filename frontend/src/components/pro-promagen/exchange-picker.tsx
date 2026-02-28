@@ -469,6 +469,19 @@ const ExchangeListItem = React.memo(function ExchangeListItem({
     return null;
   }
 
+  // Row-level click: toggles selection (same as checkbox).
+  // stopPropagation on inner interactive elements prevents double-fire.
+  const handleRowClick = () => {
+    if (!disabled || isSelected) onToggle();
+  };
+
+  const handleRowKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleRowClick();
+    }
+  };
+
   return (
     <div
       className={`flex w-full items-center gap-3 px-4 py-2.5 transition-all duration-150
@@ -478,12 +491,21 @@ const ExchangeListItem = React.memo(function ExchangeListItem({
                       : disabled
                         ? 'border-l-2 border-transparent opacity-50'
                         : 'border-l-2 border-transparent hover:bg-slate-800/50'
-                  }`}
+                  }
+                  ${!disabled || isSelected ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+      onClick={handleRowClick}
+      onKeyDown={handleRowKeyDown}
+      role="option"
+      tabIndex={0}
+      aria-selected={isSelected}
     >
       {/* Checkbox button */}
       <button
         type="button"
-        onClick={onToggle}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
         disabled={disabled && !isSelected}
         className="flex items-center gap-3 text-left
                    focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
@@ -561,7 +583,20 @@ export function ExchangePicker({
   disabled = false,
 }: ExchangePickerProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedContinents, setExpandedContinents] = useState<Set<Continent>>(new Set());
+
+  // Auto-expand continents that contain pre-selected exchanges.
+  // Uses a lazy initializer so it only runs once on mount.
+  const [expandedContinents, setExpandedContinents] = useState<Set<Continent>>(() => {
+    if (!Array.isArray(exchanges) || !Array.isArray(selected)) return new Set<Continent>();
+    const selectedSet = new Set(selected);
+    const continents = new Set<Continent>();
+    for (const ex of exchanges) {
+      if (ex && selectedSet.has(ex.id) && ex.continent) {
+        continents.add(ex.continent as Continent);
+      }
+    }
+    return continents;
+  });
   const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 

@@ -3,9 +3,11 @@
 // USE SMART SUGGESTIONS HOOK
 // ============================================================================
 // React hook for context-aware suggestions.
+//
+// Version: 1.2.0 — Uses shared useSyncComputation utility
 // ============================================================================
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useMemo, useCallback } from 'react';
 import type { PromptCategory } from '@/types/prompt-builder';
 import type { SuggestedOption, MarketState } from '@/lib/prompt-intelligence/types';
 import {
@@ -14,6 +16,7 @@ import {
   detectMarketState,
   type MarketDataInput,
 } from '@/lib/prompt-intelligence';
+import { useSyncComputation } from '@/hooks/use-sync-computation';
 
 // ============================================================================
 // Types
@@ -80,14 +83,6 @@ export function useSmartSuggestions(
     customSubject,
   } = options;
   
-  const [byCategory, setByCategory] = useState<Partial<Record<PromptCategory, SuggestedOption[]>>>({});
-  const [topSuggestions, setTopSuggestions] = useState<SuggestedOption[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Use ref for selections to avoid stale closures
-  const selectionsRef = useRef(selections);
-  selectionsRef.current = selections;
-  
   // Detect market state if enabled
   const marketState = useMemo<MarketState | null>(() => {
     if (!marketMoodEnabled || !marketData) return null;
@@ -97,64 +92,50 @@ export function useSmartSuggestions(
   // Stable key for selections
   const selectionsKey = JSON.stringify(selections);
   
-  // Calculate suggestions
-  const calculateSuggestions = useCallback(() => {
-    if (!enabled) {
-      setByCategory({});
-      setTopSuggestions([]);
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    // Get suggestions by category
-    const result = getSuggestions({
-      selections: selectionsRef.current,
-      customSubject,
-      maxPerCategory,
-      marketMoodEnabled,
-      marketState,
-      minScore,
-    });
-    
-    setByCategory(result.suggestions);
-    
-    // Get top suggestions
-    const top = getTopSuggestions(selectionsRef.current, {
-      maxTotal,
-      market: marketMoodEnabled ? { enabled: true, data: marketData } : undefined,
-    });
-    
-    setTopSuggestions(top);
-    setIsLoading(false);
-  }, [
-    enabled,
-    customSubject,
-    maxPerCategory,
-    maxTotal,
-    minScore,
-    marketMoodEnabled,
-    marketState,
-    marketData,
-  ]);
-  
-  // Recalculate on changes
-  useEffect(() => {
-    calculateSuggestions();
-     
-  }, [calculateSuggestions, selectionsKey]);
+  // Core computation via shared utility
+  const { value: computed, refresh } = useSyncComputation(
+    () => {
+      if (!enabled) {
+        return {
+          byCategory: {} as Partial<Record<PromptCategory, SuggestedOption[]>>,
+          topSuggestions: [] as SuggestedOption[],
+        };
+      }
+      
+      const result = getSuggestions({
+        selections,
+        customSubject,
+        maxPerCategory,
+        marketMoodEnabled,
+        marketState,
+        minScore,
+      });
+      
+      const top = getTopSuggestions(selections, {
+        maxTotal,
+        market: marketMoodEnabled ? { enabled: true, data: marketData } : undefined,
+      });
+      
+      return {
+        byCategory: result.suggestions,
+        topSuggestions: top,
+      };
+    },
+    [enabled, customSubject, maxPerCategory, maxTotal, minScore, marketMoodEnabled, marketState, marketData, selectionsKey]
+  );
   
   // Helper to get suggestions for a specific category
-  const forCategory = useCallback((category: PromptCategory): SuggestedOption[] => {
-    return byCategory[category] ?? [];
-  }, [byCategory]);
+  const forCategory = useCallback(
+    (category: PromptCategory): SuggestedOption[] => computed.byCategory[category] ?? [],
+    [computed.byCategory]
+  );
   
   return {
-    byCategory,
-    topSuggestions,
-    isLoading,
+    byCategory: computed.byCategory,
+    topSuggestions: computed.topSuggestions,
+    isLoading: false, // Synchronous — never loading
     forCategory,
-    refresh: calculateSuggestions,
+    refresh,
   };
 }
 

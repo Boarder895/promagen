@@ -3,7 +3,7 @@
 // USE SMART SUGGESTIONS HOOK - Tests
 // ============================================================================
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useSmartSuggestions } from '../use-smart-suggestions';
 import type { PromptCategory } from '@/types/prompt-builder';
 
@@ -169,7 +169,9 @@ describe('useSmartSuggestions', () => {
       const initialSuggestions = result.current.topSuggestions;
       
       // Call refresh
-      result.current.refresh();
+      act(() => {
+        result.current.refresh();
+      });
       
       // Should still have suggestions (same input = same output)
       expect(Array.isArray(result.current.topSuggestions)).toBe(true);

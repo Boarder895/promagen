@@ -361,6 +361,11 @@ export interface PromptContext {
 
   /** Active platform identifier e.g. "leonardo", "midjourney" (Phase 7.5) */
   platformId: string | null;
+
+  /** A/B variant weight overrides (Phase 7.6f). When non-null, applied as
+   *  `{ ...SCORE_WEIGHTS, ...abVariantWeights }` in the scoring engine.
+   *  null = use default weights (control group or no test running). */
+  abVariantWeights: Record<string, number> | null;
 }
 
 // ============================================================================

@@ -95,6 +95,9 @@ export interface BuildContextInput {
 
   /** Active platform identifier e.g. "leonardo", "midjourney" (Phase 7.5) */
   platformId?: string | null;
+
+  /** A/B variant weight overrides (Phase 7.6f, null = default weights) */
+  abVariantWeights?: Record<string, number> | null;
 }
 
 /**
@@ -460,6 +463,7 @@ export function buildContext(input: BuildContextInput): PromptContext {
     platformTermQualityLookup = null,
     platformCoOccurrenceLookup = null,
     platformId = null,
+    abVariantWeights = null,
   } = input;
   
   // Extract subject keywords
@@ -541,6 +545,7 @@ export function buildContext(input: BuildContextInput): PromptContext {
     platformTermQualityLookup,
     platformCoOccurrenceLookup,
     platformId,
+    abVariantWeights,
   };
 }
 
@@ -598,8 +603,13 @@ function scoreOption(
   includeBreakdown: boolean
 ): ScoredOption {
   const tag = getSemanticTag(option);
+
+  // Phase 7.6f: Merge A/B variant weight overrides (null = use defaults)
+  const W = context.abVariantWeights
+    ? { ...SCORE_WEIGHTS, ...context.abVariantWeights }
+    : SCORE_WEIGHTS;
   
-  let score = SCORE_WEIGHTS.base;
+  let score = W.base;
   const breakdown = {
     familyMatch: 0,
     moodMatch: 0,
@@ -624,10 +634,10 @@ function scoreOption(
   if (tag) {
     // Family matching
     if (context.activeFamily && tag.families.includes(context.activeFamily)) {
-      breakdown.familyMatch = SCORE_WEIGHTS.familyMatch;
+      breakdown.familyMatch = W.familyMatch;
       score += breakdown.familyMatch;
     } else if (tag.families.some(f => context.relatedFamilies.includes(f))) {
-      breakdown.familyMatch = SCORE_WEIGHTS.relatedFamilyMatch;
+      breakdown.familyMatch = W.relatedFamilyMatch;
       score += breakdown.familyMatch;
     }
     
@@ -637,20 +647,20 @@ function scoreOption(
         context.relatedFamilies.includes(f)
       ).length;
       if (matchCount > 1) {
-        breakdown.multiFamilyBonus = SCORE_WEIGHTS.multiFamilyBonus * (matchCount - 1);
+        breakdown.multiFamilyBonus = W.multiFamilyBonus * (matchCount - 1);
         score += breakdown.multiFamilyBonus;
       }
     }
     
     // Mood matching
     if (context.dominantMood && tag.mood === context.dominantMood) {
-      breakdown.moodMatch = SCORE_WEIGHTS.moodMatch;
+      breakdown.moodMatch = W.moodMatch;
       score += breakdown.moodMatch;
     }
     
     // Era matching
     if (context.era && tag.era === context.era) {
-      breakdown.eraMatch = SCORE_WEIGHTS.eraMatch;
+      breakdown.eraMatch = W.eraMatch;
       score += breakdown.eraMatch;
     }
   }
@@ -662,22 +672,22 @@ function scoreOption(
       optionLower.includes(kw) || kw.includes(optionLower.split(' ')[0] ?? '')
     );
     if (hasKeywordMatch) {
-      breakdown.subjectKeywordMatch = SCORE_WEIGHTS.subjectKeywordMatch;
+      breakdown.subjectKeywordMatch = W.subjectKeywordMatch;
       score += breakdown.subjectKeywordMatch;
     }
   }
   
   // Complement bonus
   if (complements.has(option.toLowerCase())) {
-    breakdown.complementBonus = SCORE_WEIGHTS.complementBonus;
+    breakdown.complementBonus = W.complementBonus;
     score += breakdown.complementBonus;
   }
   
   // Suggestion bonus (from other selections)
   const lowerOption = option.toLowerCase();
   if (suggestions.has(option) || suggestions.has(lowerOption)) {
-    breakdown.complementBonus += SCORE_WEIGHTS.suggestBonus;
-    score += SCORE_WEIGHTS.suggestBonus;
+    breakdown.complementBonus += W.suggestBonus;
+    score += W.suggestBonus;
   }
   
   // Conflict penalty - check if this option would conflict
@@ -703,7 +713,7 @@ function scoreOption(
     });
     
     if (conflictResult.hasHardConflicts) {
-      breakdown.conflictPenalty = SCORE_WEIGHTS.conflictPenalty;
+      breakdown.conflictPenalty = W.conflictPenalty;
       score += breakdown.conflictPenalty;
     }
   }
@@ -717,7 +727,7 @@ function scoreOption(
         option.toLowerCase().includes(b.toLowerCase()) ||
         b.toLowerCase().includes(option.toLowerCase())
       )) {
-        const boost = SCORE_WEIGHTS.marketBoostMax * context.marketState.intensity;
+        const boost = W.marketBoostMax * context.marketState.intensity;
         breakdown.marketBoost = Math.round(boost);
         score += breakdown.marketBoost;
       }
@@ -741,13 +751,13 @@ function scoreOption(
           }
         }
         clusterScore += Math.min(
-          sharedCount * SCORE_WEIGHTS.clusterPerMember,
-          SCORE_WEIGHTS.clusterMax
+          sharedCount * W.clusterPerMember,
+          W.clusterMax
         );
       }
     }
     // Cap total cluster boost across all clusters
-    breakdown.clusterBoost = Math.min(clusterScore, SCORE_WEIGHTS.clusterMax);
+    breakdown.clusterBoost = Math.min(clusterScore, W.clusterMax);
     score += breakdown.clusterBoost;
   }
   
@@ -760,10 +770,10 @@ function scoreOption(
       const aff = getAffinityForTerm(selectedTerm);
       if (!aff) continue;
       if (aff.boosts.has(optionLower)) {
-        affinityScore += SCORE_WEIGHTS.affinityBoost;
+        affinityScore += W.affinityBoost;
       }
       if (aff.penalises.has(optionLower)) {
-        affinityScore += SCORE_WEIGHTS.affinityPenalty;
+        affinityScore += W.affinityPenalty;
       }
     }
     breakdown.affinityBoost = affinityScore;
@@ -785,7 +795,7 @@ function scoreOption(
     if (rawCoOccurrence > 0) {
       // Scale by learned weight portion of blend ratio and max boost
       coOccurrenceBoostValue = Math.round(
-        (rawCoOccurrence / 100) * SCORE_WEIGHTS.coOccurrenceMax * context.blendRatio[1],
+        (rawCoOccurrence / 100) * W.coOccurrenceMax * context.blendRatio[1],
       );
       score += coOccurrenceBoostValue;
     }
@@ -804,7 +814,7 @@ function scoreOption(
       context.antiPatternLookup,
     );
     if (severity > 0) {
-      antiPatternPenaltyValue = Math.round(SCORE_WEIGHTS.antiPatternPenalty * severity);
+      antiPatternPenaltyValue = Math.round(W.antiPatternPenalty * severity);
       breakdown.antiPatternPenalty = antiPatternPenaltyValue;
       score += antiPatternPenaltyValue;
     }
@@ -824,7 +834,7 @@ function scoreOption(
     );
     if (collisionResult) {
       collisionPenaltyValue = Math.round(
-        SCORE_WEIGHTS.collisionPenalty * collisionResult.competitionScore,
+        W.collisionPenalty * collisionResult.competitionScore,
       );
       breakdown.collisionPenalty = collisionPenaltyValue;
       score += collisionPenaltyValue;
@@ -843,7 +853,7 @@ function scoreOption(
       context.weakTermLookup,
     );
     if (weakness > 0) {
-      weakTermPenaltyValue = Math.round(SCORE_WEIGHTS.weakTermPenalty * weakness);
+      weakTermPenaltyValue = Math.round(W.weakTermPenalty * weakness);
       breakdown.weakTermPenalty = weakTermPenaltyValue;
       score += weakTermPenaltyValue;
     }
@@ -862,7 +872,7 @@ function scoreOption(
       context.redundancyLookup,
     );
     if (redundancy > 0) {
-      redundancyPenaltyValue = Math.round(SCORE_WEIGHTS.redundancyPenalty * redundancy);
+      redundancyPenaltyValue = Math.round(W.redundancyPenalty * redundancy);
       breakdown.redundancyPenalty = redundancyPenaltyValue;
       score += redundancyPenaltyValue;
     }
@@ -881,7 +891,7 @@ function scoreOption(
       context.comboLookup,
     );
     if (boost > 0) {
-      comboBoostValue = Math.round(SCORE_WEIGHTS.comboBoostMax * boost);
+      comboBoostValue = Math.round(W.comboBoostMax * boost);
       breakdown.comboBoost = comboBoostValue;
       score += comboBoostValue;
     }
@@ -934,7 +944,7 @@ function scoreOption(
       const delta = platformCoOccurrence - tierCoOccurrence;
       if (delta !== 0) {
         platformCoOccurrenceBoostValue = Math.round(
-          (delta / 100) * SCORE_WEIGHTS.platformCoOccurrenceMax * platformBlendRatio,
+          (delta / 100) * W.platformCoOccurrenceMax * platformBlendRatio,
         );
         breakdown.platformCoOccurrenceBoost = platformCoOccurrenceBoostValue;
         score += platformCoOccurrenceBoostValue;
@@ -964,7 +974,7 @@ function scoreOption(
     const deviation = (platformScore - 50) / 50;
     if (Math.abs(deviation) > 0.05) { // ignore tiny deviations
       platformTermQualityBoostValue = Math.round(
-        SCORE_WEIGHTS.platformTermQualityMax * deviation,
+        W.platformTermQualityMax * deviation,
       );
       breakdown.platformTermQualityBoost = platformTermQualityBoostValue;
       score += platformTermQualityBoostValue;
@@ -1052,6 +1062,7 @@ export function reorderByRelevance(
   platformTermQualityLookup: PlatformTermQualityLookup | null = null,
   platformCoOccurrenceLookup: PlatformCoOccurrenceLookup | null = null,
   platformId: string | null = null,
+  abVariantWeights: Record<string, number> | null = null,
 ): ScoredOption[] {
   const context = buildContext({ 
     selections, 
@@ -1068,6 +1079,7 @@ export function reorderByRelevance(
     platformTermQualityLookup,
     platformCoOccurrenceLookup,
     platformId,
+    abVariantWeights,
   });
   
   return scoreOptions({

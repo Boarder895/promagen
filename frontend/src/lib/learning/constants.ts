@@ -6,9 +6,9 @@
 // All magic numbers for the learning pipeline live here.
 // Code reads these; code never changes. Adjust values to tune behaviour.
 //
-// Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9, § 11, § 7.3
+// Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9, § 11, § 7.3, § 7.6
 //
-// Version: 6.0.0 — Phase 7.5 constants added (Per-Platform Learning)
+// Version: 7.0.0 — Phase 7.6a A/B Testing constants added
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -252,6 +252,34 @@ export const LEARNING_CONSTANTS = {
    *  decays toward 0 — gracefully reverting scoring to tier fallback
    *  for abandoned platforms. Prevents ghost models from lingering. */
   PLATFORM_STALE_DAYS: 90,
+
+  // ── Phase 7.6: A/B Testing Pipeline ────────────────────────────────────
+  //
+  // Split-tests scoring model changes before committing them.
+  // Serves 50% of users the current model (control) and 50% a new model
+  // (variant). Measures which group produces higher copy/save rates.
+
+  /** Storage key for active A/B test state in learned_weights table */
+  AB_ACTIVE_TEST_KEY: 'ab-active-test',
+
+  /** Minimum weight delta (sum of absolute differences) to trigger a new A/B test.
+   *  Below this threshold, weight changes are applied directly (too small to test). */
+  AB_CHANGE_THRESHOLD: 0.05,
+
+  /** Default split: 50% control, 50% variant */
+  AB_DEFAULT_SPLIT_PCT: 50,
+
+  /** Minimum events per variant before evaluation begins */
+  AB_MIN_EVENTS_PER_VARIANT: 200,
+
+  /** Default test duration in days */
+  AB_DEFAULT_DURATION_DAYS: 7,
+
+  /** Maximum test duration — auto-rollback if inconclusive after this */
+  AB_MAX_DURATION_DAYS: 14,
+
+  /** p-value threshold for statistical significance (two-tailed Z-test) */
+  AB_SIGNIFICANCE_THRESHOLD: 0.05,
 
   // ── Rate Limiting ──────────────────────────────────────────────────────
 

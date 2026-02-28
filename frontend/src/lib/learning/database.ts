@@ -14,7 +14,7 @@
 //
 // Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9.4, § 11
 //
-// Version: 2.1.0 — Phase 7.1a confidence columns + anti-pattern query
+// Version: 2.2.0 — Phase 7.6c A/B testing CRUD + prompt_events migration
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -24,6 +24,8 @@ import 'server-only';
 
 import { db } from '@/lib/db';
 import { LEARNING_CONSTANTS } from '@/lib/learning/constants';
+
+import type { ABTest, ABTestEventCounts, ABTestResult } from '@/lib/learning/ab-testing';
 
 // ============================================================================
 // TABLE CREATION (AUTO-MIGRATION)
@@ -73,6 +75,18 @@ export async function ensurePromptEventsTable(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_prompt_events_platform
     ON prompt_events (platform, created_at)
   `;
+
+  // ── A/B testing columns (Phase 7.6c) ─────────────────────────────
+  // Three nullable columns — old events without these fields still work fine.
+  await sql`ALTER TABLE prompt_events ADD COLUMN IF NOT EXISTS ab_hash TEXT`;
+  await sql`ALTER TABLE prompt_events ADD COLUMN IF NOT EXISTS test_id TEXT`;
+  await sql`ALTER TABLE prompt_events ADD COLUMN IF NOT EXISTS variant TEXT`;
+
+  // Partial index: only events that belong to an A/B test (test_id IS NOT NULL)
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_prompt_events_ab_test
+    ON prompt_events (test_id, variant) WHERE test_id IS NOT NULL
+  `;
 }
 
 /**
@@ -110,6 +124,42 @@ export async function ensureLearningCronRunsTable(): Promise<void> {
 }
 
 /**
+ * Create ab_tests table if not exists.
+ * Stores A/B test definitions and results (Phase 7.6c).
+ *
+ * Design constraint: At most ONE test can have status = 'running' at a time.
+ * Enforced in application logic (check before insert), not as a DB constraint,
+ * to allow concurrent reads.
+ */
+export async function ensureABTestsTable(): Promise<void> {
+  const sql = db();
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS ab_tests (
+      id                TEXT        NOT NULL PRIMARY KEY,
+      name              TEXT        NOT NULL,
+      status            TEXT        NOT NULL DEFAULT 'running',
+      control_weights   JSONB       NOT NULL,
+      variant_weights   JSONB       NOT NULL,
+      split_pct         SMALLINT    NOT NULL DEFAULT 50,
+      min_events        SMALLINT    NOT NULL DEFAULT 200,
+      max_duration_days SMALLINT    NOT NULL DEFAULT 14,
+      started_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      ended_at          TIMESTAMPTZ,
+      peek_count        SMALLINT    NOT NULL DEFAULT 0,
+      result_summary    JSONB,
+      created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  // Quick lookup for the currently running test
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_ab_tests_running
+    ON ab_tests (status) WHERE status = 'running'
+  `;
+}
+
+/**
  * Ensure all required tables exist.
  * Idempotent — safe to call on every cold start.
  */
@@ -117,6 +167,7 @@ export async function ensureAllTables(): Promise<void> {
   await ensurePromptEventsTable();
   await ensureLearnedWeightsTable();
   await ensureLearningCronRunsTable();
+  await ensureABTestsTable();
 }
 
 // ============================================================================
@@ -176,6 +227,12 @@ export interface PromptEventRow {
   user_tier?: string | null;
   /** Days since account creation at event time, null/undefined for old events */
   account_age_days?: number | null;
+  /** Stable anonymous browser UUID for A/B assignment (Phase 7.6) */
+  ab_hash?: string | null;
+  /** Active A/B test ID at time of event (Phase 7.6) */
+  test_id?: string | null;
+  /** Assigned variant: 'A' (control) or 'B' (variant) (Phase 7.6) */
+  variant?: string | null;
   created_at: Date | string;
 }
 
@@ -406,6 +463,7 @@ export async function checkLearningHealth(): Promise<{
     prompt_events: boolean;
     learned_weights: boolean;
     learning_cron_runs: boolean;
+    ab_tests: boolean;
   };
   eventCount: number;
   qualifyingCount: number;
@@ -418,17 +476,20 @@ export async function checkLearningHealth(): Promise<{
       prompt_events: boolean;
       learned_weights: boolean;
       learning_cron_runs: boolean;
+      ab_tests: boolean;
     }[]>`
       SELECT
         EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'prompt_events') AS prompt_events,
         EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'learned_weights') AS learned_weights,
-        EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'learning_cron_runs') AS learning_cron_runs
+        EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'learning_cron_runs') AS learning_cron_runs,
+        EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'ab_tests') AS ab_tests
     `;
 
     const tables = tableCheck[0] ?? {
       prompt_events: false,
       learned_weights: false,
       learning_cron_runs: false,
+      ab_tests: false,
     };
 
     let eventCount = 0;
@@ -454,10 +515,207 @@ export async function checkLearningHealth(): Promise<{
     console.error('[Learning] Health check failed:', error);
     return {
       connected: false,
-      tables: { prompt_events: false, learned_weights: false, learning_cron_runs: false },
+      tables: { prompt_events: false, learned_weights: false, learning_cron_runs: false, ab_tests: false },
       eventCount: 0,
       qualifyingCount: 0,
       lastCronRun: null,
+    };
+  }
+}
+
+// ============================================================================
+// A/B TEST CRUD (Phase 7.6c)
+// ============================================================================
+
+/** Row shape returned by ab_tests queries (snake_case from Postgres). */
+interface ABTestRow {
+  id: string;
+  name: string;
+  status: string;
+  control_weights: Record<string, number>;
+  variant_weights: Record<string, number>;
+  split_pct: number;
+  min_events: number;
+  max_duration_days: number;
+  started_at: string;
+  ended_at: string | null;
+  peek_count: number;
+  result_summary: ABTestResult | null;
+}
+
+/** Convert a Postgres snake_case row to our camelCase ABTest interface. */
+function rowToABTest(row: ABTestRow): ABTest {
+  return {
+    id: row.id,
+    name: row.name,
+    status: row.status as ABTest['status'],
+    controlWeights: row.control_weights,
+    variantWeights: row.variant_weights,
+    splitPct: Number(row.split_pct),
+    minEvents: Number(row.min_events),
+    maxDurationDays: Number(row.max_duration_days),
+    startedAt: String(row.started_at),
+    endedAt: row.ended_at ? String(row.ended_at) : null,
+    peekCount: Number(row.peek_count),
+    resultSummary: row.result_summary,
+  };
+}
+
+/**
+ * Insert a new A/B test.
+ * Checks that no other test is currently running (at-most-one invariant).
+ * Throws if a running test already exists.
+ */
+export async function insertABTest(test: ABTest): Promise<void> {
+  const sql = db();
+
+  // Enforce at-most-one running test
+  const running = await sql<ABTestRow[]>`
+    SELECT id FROM ab_tests WHERE status = 'running' LIMIT 1
+  `;
+  if (running.length > 0) {
+    throw new Error(
+      `Cannot create A/B test: test "${running[0]!.id}" is already running`,
+    );
+  }
+
+  await sql`
+    INSERT INTO ab_tests (
+      id, name, status, control_weights, variant_weights,
+      split_pct, min_events, max_duration_days, started_at,
+      ended_at, peek_count, result_summary
+    ) VALUES (
+      ${test.id},
+      ${test.name},
+      ${test.status},
+      ${JSON.stringify(test.controlWeights)},
+      ${JSON.stringify(test.variantWeights)},
+      ${test.splitPct},
+      ${test.minEvents},
+      ${test.maxDurationDays},
+      ${test.startedAt},
+      ${test.endedAt},
+      ${test.peekCount},
+      ${test.resultSummary ? JSON.stringify(test.resultSummary) : null}
+    )
+  `;
+}
+
+/**
+ * Get the currently running A/B test (at most one).
+ * Returns null if no test is running.
+ */
+export async function getRunningABTest(): Promise<ABTest | null> {
+  try {
+    const rows = await db()<ABTestRow[]>`
+      SELECT * FROM ab_tests WHERE status = 'running' LIMIT 1
+    `;
+    if (rows.length === 0) return null;
+    return rowToABTest(rows[0]!);
+  } catch (error) {
+    console.error('[Learning] Error fetching running A/B test:', error);
+    return null;
+  }
+}
+
+/**
+ * Get all A/B tests (for admin), ordered by created_at desc.
+ *
+ * @param limit — Max rows to return (default: 50)
+ */
+export async function getAllABTests(limit: number = 50): Promise<ABTest[]> {
+  try {
+    const rows = await db()<ABTestRow[]>`
+      SELECT * FROM ab_tests ORDER BY created_at DESC LIMIT ${limit}
+    `;
+    return rows.map(rowToABTest);
+  } catch (error) {
+    console.error('[Learning] Error fetching all A/B tests:', error);
+    return [];
+  }
+}
+
+/**
+ * Update test status, endedAt, and resultSummary when a test concludes.
+ * Also increments peek_count for observability.
+ */
+export async function updateABTestResult(
+  testId: string,
+  status: 'promoted' | 'rolled_back',
+  resultSummary: ABTestResult,
+): Promise<void> {
+  await db()`
+    UPDATE ab_tests
+    SET status = ${status},
+        ended_at = NOW(),
+        result_summary = ${JSON.stringify(resultSummary)}
+    WHERE id = ${testId}
+  `;
+}
+
+/**
+ * Increment the peek_count for a running test (called after each evaluation).
+ */
+export async function incrementPeekCount(testId: string): Promise<void> {
+  await db()`
+    UPDATE ab_tests
+    SET peek_count = peek_count + 1
+    WHERE id = ${testId}
+  `;
+}
+
+/**
+ * Count events per variant for a running test.
+ * Aggregates from prompt_events where test_id matches.
+ *
+ * Uses FILTER clause for efficient single-pass aggregation.
+ */
+export async function countABTestEvents(
+  testId: string,
+): Promise<ABTestEventCounts> {
+  try {
+    const rows = await db()<{
+      control_events: string;
+      variant_events: string;
+      control_copies: string;
+      variant_copies: string;
+      control_saves: string;
+      variant_saves: string;
+    }[]>`
+      SELECT
+        COUNT(*) FILTER (WHERE variant = 'A')::text AS control_events,
+        COUNT(*) FILTER (WHERE variant = 'B')::text AS variant_events,
+        COUNT(*) FILTER (WHERE variant = 'A' AND (outcome->>'copied')::boolean = true)::text AS control_copies,
+        COUNT(*) FILTER (WHERE variant = 'B' AND (outcome->>'copied')::boolean = true)::text AS variant_copies,
+        COUNT(*) FILTER (WHERE variant = 'A' AND (outcome->>'saved')::boolean = true)::text AS control_saves,
+        COUNT(*) FILTER (WHERE variant = 'B' AND (outcome->>'saved')::boolean = true)::text AS variant_saves
+      FROM prompt_events
+      WHERE test_id = ${testId}
+    `;
+
+    const row = rows[0];
+    if (!row) {
+      return {
+        controlEvents: 0, variantEvents: 0,
+        controlCopies: 0, variantCopies: 0,
+        controlSaves: 0, variantSaves: 0,
+      };
+    }
+
+    return {
+      controlEvents: parseInt(row.control_events, 10),
+      variantEvents: parseInt(row.variant_events, 10),
+      controlCopies: parseInt(row.control_copies, 10),
+      variantCopies: parseInt(row.variant_copies, 10),
+      controlSaves: parseInt(row.control_saves, 10),
+      variantSaves: parseInt(row.variant_saves, 10),
+    };
+  } catch (error) {
+    console.error('[Learning] Error counting A/B test events:', error);
+    return {
+      controlEvents: 0, variantEvents: 0,
+      controlCopies: 0, variantCopies: 0,
+      controlSaves: 0, variantSaves: 0,
     };
   }
 }

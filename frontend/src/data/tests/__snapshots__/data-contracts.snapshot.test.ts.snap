@@ -1,0 +1,102 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Internal contract: exchanges.catalog.json first entry structure matches snapshot 1`] = `
+{
+  "city": "string",
+  "country": "string",
+  "exchange": "string",
+  "hemisphere": "string",
+  "holidaysRef": "string",
+  "hoursTemplate": "string",
+  "hoverColor": "string",
+  "id": "string",
+  "iso2": "string",
+  "latitude": "number",
+  "longitude": "number",
+  "marketstack": {
+    "availableIndices": [
+      {
+        "benchmark": "string",
+        "indexName": "string",
+      },
+    ],
+    "defaultBenchmark": "string",
+    "defaultIndexName": "string",
+  },
+  "name": "string",
+  "tz": "string",
+}
+`;
+
+exports[`Internal contract: fx-pairs.json first entry structure matches snapshot 1`] = `
+{
+  "base": "string",
+  "baseCountryCode": "string",
+  "category": "string",
+  "countryLabel": "string",
+  "demo": {
+    "prevClose": "number",
+    "value": "number",
+  },
+  "group": "string",
+  "homeLongitude": "number",
+  "id": "string",
+  "label": "string",
+  "precision": "number",
+  "quote": "string",
+  "quoteCountryCode": "string",
+  "rank": "number",
+}
+`;
+
+exports[`Internal contract: getDefaultFxPairsWithIndexForTier() free tier returns ordered SSOT pairs with expected shape 1`] = `
+{
+  "base": "string",
+  "group": "string",
+  "homeLongitude": "number",
+  "id": "string",
+  "index": "number",
+  "label": "string",
+  "quote": "string",
+  "tiers": [
+    "string",
+  ],
+}
+`;
+
+exports[`Internal contract: providers.json first entry structure matches snapshot 1`] = `
+{
+  "affiliateProgramme": "boolean",
+  "affiliateUrl": "null",
+  "apiAvailable": "boolean",
+  "apiDocsUrl": "null",
+  "country": "string",
+  "countryCode": "string",
+  "hqCity": "string",
+  "id": "string",
+  "imageQualityRank": "number",
+  "incumbentAdjustment": "boolean",
+  "localIcon": "string",
+  "name": "string",
+  "requiresDisclosure": "boolean",
+  "score": "number",
+  "socials": {
+    "discord": "string",
+    "facebook": "string",
+    "instagram": "string",
+    "reddit": "string",
+    "x": "string",
+  },
+  "supportHours": "string",
+  "supportsPrefill": "boolean",
+  "tagline": "string",
+  "tags": [
+    "string",
+  ],
+  "timezone": "string",
+  "tip": "string",
+  "trend": "string",
+  "visualStyles": "string",
+  "website": "string",
+}
+`;

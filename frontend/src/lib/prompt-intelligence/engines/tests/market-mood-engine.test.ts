@@ -26,11 +26,17 @@ describe('Market Mood Engine', () => {
     });
     
     it('detects high volatility from FX data', () => {
+      // Use a currency cycle (EUR→USD, GBP→EUR, USD→GBP) so individual
+      // currency strengths cancel out while average volatility stays ≥ 1.5.
+      // EUR = +1.80 − 1.60 = +0.20  (below 0.5 threshold)
+      // GBP = +1.60 − 1.70 = −0.10  (below 0.5 threshold)
+      // USD = −1.80 + 1.70 = −0.10  (below 0.5 threshold)
+      // Avg volatility = (1.80 + 1.60 + 1.70) / 3 = 1.70  (above 1.5 threshold)
       const result = detectMarketState({
         fxPairs: [
-          { pair: 'EUR/USD', rate: 1.0900, previousClose: 1.0700, changePercent: 1.87 },
-          { pair: 'GBP/USD', rate: 1.2800, previousClose: 1.2600, changePercent: 1.59 },
-          { pair: 'USD/JPY', rate: 152.00, previousClose: 149.50, changePercent: 1.67 },
+          { pair: 'EUR/USD', rate: 1.0900, previousClose: 1.0707, changePercent: 1.80 },
+          { pair: 'GBP/EUR', rate: 0.8600, previousClose: 0.8465, changePercent: 1.60 },
+          { pair: 'USD/GBP', rate: 0.7850, previousClose: 0.7719, changePercent: 1.70 },
         ],
         exchanges: [
           { exchangeId: 'NYSE', isOpen: true },

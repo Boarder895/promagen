@@ -18,7 +18,7 @@
 // - Safe mode: accept but don't persist (keeps frontend happy during incidents)
 // - IP used only for rate limiting key, never written to prompt_events
 //
-// Version: 1.0.0
+// Version: 1.1.0 — Phase 7.6c A/B testing fields (ab_hash, test_id, variant)
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -198,7 +198,8 @@ export async function POST(req: NextRequest): Promise<Response> {
       INSERT INTO prompt_events (
         id, session_id, attempt_number, selections, category_count,
         char_length, score, score_factors, platform, tier,
-        scene_used, outcome, user_tier, account_age_days
+        scene_used, outcome, user_tier, account_age_days,
+        ab_hash, test_id, variant
       ) VALUES (
         ${eventId},
         ${data.sessionId},
@@ -213,7 +214,10 @@ export async function POST(req: NextRequest): Promise<Response> {
         ${data.sceneUsed},
         ${JSON.stringify(data.outcome)},
         ${data.userTier ?? null},
-        ${data.accountAgeDays ?? null}
+        ${data.accountAgeDays ?? null},
+        ${data.abHash ?? null},
+        ${data.activeTestId ?? null},
+        ${data.activeVariant ?? null}
       )
     `;
 

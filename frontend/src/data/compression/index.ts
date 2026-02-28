@@ -303,6 +303,12 @@ export function isHighValueAdjective(word: string): boolean {
 // ============================================================================
 
 /**
+ * Canonical ordering of shorthand levels, lowest → highest.
+ * Single source of truth — used by hasShorthandLevel and tests.
+ */
+export const SHORTHAND_LEVELS = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH', 'FULL'] as const;
+
+/**
  * Check if a platform supports a specific shorthand level.
  */
 export function hasShorthandLevel(
@@ -312,9 +318,8 @@ export function hasShorthandLevel(
   const config = getPlatformConfiguration(platformId);
   if (!config) return false;
 
-  const levels = ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH', 'FULL'];
-  const platformLevelIndex = levels.indexOf(config.shorthandLevel);
-  const minLevelIndex = levels.indexOf(minLevel);
+  const platformLevelIndex = SHORTHAND_LEVELS.indexOf(config.shorthandLevel);
+  const minLevelIndex = SHORTHAND_LEVELS.indexOf(minLevel);
 
   return platformLevelIndex >= minLevelIndex;
 }

@@ -2317,7 +2317,7 @@
           "reducedPrefills": [
             "subject",
             "style",
-            "environment"
+            "atmosphere"
           ]
         }
       },
@@ -4104,7 +4104,7 @@
           "reducedPrefills": [
             "subject",
             "style",
-            "environment"
+            "atmosphere"
           ]
         }
       },

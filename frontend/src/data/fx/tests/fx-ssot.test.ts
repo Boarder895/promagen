@@ -4,8 +4,8 @@
 //
 // Guards two invariants:
 //
-//  1. Every id in fx.pairs.json exists in pairs.json.
-//  2. No FX JSON file except pairs.json defines base/quote/label/precision/demo,
+//  1. fx-pairs.json has unique ids and fx.selected.json only references valid ids.
+//  2. No FX JSON file except fx-pairs.json defines base/quote/label/precision/demo,
 //     with a small, explicit carve-out for non-FX metadata:
 //
 //       - finance.config.json → provider.base is an HTTP base URL, not FX "base".
@@ -24,12 +24,6 @@ type FxPairRow = {
   label: string;
   precision: number;
   demo?: boolean;
-};
-
-type FxIndexRow = {
-  id: string;
-  // other fields are ignored for this test
-  [key: string]: unknown;
 };
 
 type Offender = {
@@ -82,34 +76,42 @@ function collectBannedKeyPaths(value: unknown, parentPath: string): string[] {
 }
 
 describe('FX single-source-of-truth (SSoT)', () => {
-  it('ensures every id in fx.pairs.json exists in pairs.json', () => {
-    const pairs = loadJson<FxPairRow[]>('pairs.json');
-    const fxIndex = loadJson<FxIndexRow[]>('fx.pairs.json');
+  it('ensures fx-pairs.json has unique ids and fx.selected.json only references valid ones', () => {
+    const pairs = loadJson<FxPairRow[]>('fx-pairs.json');
 
-    const pairIds = new Set(pairs.map((row) => normaliseId(row.id)));
+    // Every id must be unique
+    const ids = pairs.map((row) => normaliseId(row.id));
+    const uniqueIds = new Set(ids);
+    const duplicates = ids.filter((id, i) => ids.indexOf(id) !== i);
 
-    const missing: string[] = [];
-    for (const row of fxIndex) {
-      const id = normaliseId(row.id);
-      if (!pairIds.has(id)) {
-        missing.push(row.id);
+    if (duplicates.length > 0) {
+      throw new Error(
+        `fx-pairs.json contains duplicate ids:\n${[...new Set(duplicates)].map((id) => `- "${id}"`).join('\n')}`,
+      );
+    }
+
+    expect(uniqueIds.size).toBe(pairs.length);
+
+    // Every id in fx.selected.json must exist in fx-pairs.json
+    const selected = loadJson<{ selectedIds: string[] }>('fx.selected.json');
+    const missingSelected: string[] = [];
+    for (const id of selected.selectedIds) {
+      if (!uniqueIds.has(normaliseId(id))) {
+        missingSelected.push(id);
       }
     }
 
-    if (missing.length > 0) {
-      const messageLines = missing.map(
-        (id) => `- "${id}" is present in fx.pairs.json but missing from pairs.json`,
-      );
+    if (missingSelected.length > 0) {
       throw new Error(
-        `FX index contains ids that do not exist in pairs.json:\n${messageLines.join('\n')}`,
+        `fx.selected.json references ids not in fx-pairs.json:\n${missingSelected.map((id) => `- "${id}"`).join('\n')}`,
       );
     }
   });
 
-  it('rejects duplicate FX metadata outside pairs.json', () => {
+  it('rejects duplicate FX metadata outside fx-pairs.json', () => {
     const files = fs
       .readdirSync(FX_DATA_DIR)
-      .filter((file) => file.endsWith('.json') && file !== 'pairs.json');
+      .filter((file) => file.endsWith('.json') && file !== 'fx-pairs.json');
 
     const offenders: Offender[] = [];
 
@@ -149,7 +151,7 @@ describe('FX single-source-of-truth (SSoT)', () => {
         .join('\n');
 
       throw new Error(
-        `FX JSON files other than pairs.json must not define base/quote/label/precision/demo.\n` +
+        `FX JSON files other than fx-pairs.json must not define base/quote/label/precision/demo.\n` +
           `Offending keys found:\n${details}`,
       );
     }

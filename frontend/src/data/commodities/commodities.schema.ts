@@ -30,7 +30,7 @@ export const commoditySubGroups = [
 
 export type CommoditySubGroup = (typeof commoditySubGroups)[number];
 
-export const quoteCurrencies = ['USD', 'EUR', 'GBP'] as const;
+export const quoteCurrencies = ['USD', 'EUR', 'GBP', 'AUD', 'BRL', 'CAD', 'CNY', 'INR', 'MYR', 'NOK'] as const;
 export type QuoteCurrency = (typeof quoteCurrencies)[number];
 
 export const commodityGeoLevels = ['country', 'region', 'multi_country'] as const;
@@ -83,9 +83,10 @@ export const commoditySchema = z.object({
     .int('yearFirstTraded must be an integer')
     .min(1800, 'yearFirstTraded must be 1800 or later')
     .max(2030, 'yearFirstTraded must be 2030 or earlier')
+    .nullable()
     .optional(),
 
-  fact: z.string().max(150, 'fact must be 150 characters or less').optional(),
+  fact: z.string().max(200, 'fact must be 200 characters or less').optional(),
 });
 
 export type Commodity = z.infer<typeof commoditySchema>;

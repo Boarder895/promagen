@@ -11,10 +11,10 @@ function readJson<T>(p: string): T {
   return JSON.parse(fs.readFileSync(p, "utf8")) as T;
 }
 
-const fp = path.resolve(__dirname, "..", "data", "fx", "pairs.json");
+const fp = path.resolve(__dirname, "..", "data", "fx", "fx-pairs.json");
 
-describe("FX pairs catalogue (canonical at src/data/fx/pairs.json)", () => {
-  test("pairs.json exists", () => {
+describe("FX pairs catalogue (canonical at src/data/fx/fx-pairs.json)", () => {
+  test("fx-pairs.json exists", () => {
     expect(fs.existsSync(fp)).toBe(true);
   });
 

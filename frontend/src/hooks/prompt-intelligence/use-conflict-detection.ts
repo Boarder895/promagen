@@ -3,15 +3,18 @@
 // USE CONFLICT DETECTION HOOK
 // ============================================================================
 // React hook for real-time conflict detection.
+//
+// Version: 1.2.0 — Uses shared useSyncComputation utility
 // ============================================================================
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import type { PromptCategory } from '@/types/prompt-builder';
 import type { DetectedConflict } from '@/lib/prompt-intelligence/types';
 import {
   detectConflicts,
   previewTermAddition,
 } from '@/lib/prompt-intelligence';
+import { useSyncComputation } from '@/hooks/use-sync-computation';
 
 // ============================================================================
 // Types
@@ -78,77 +81,73 @@ export function useConflictDetection(
     enabled = true,
   } = options;
   
-  const [conflicts, setConflicts] = useState<DetectedConflict[]>([]);
-  const [hasConflicts, setHasConflicts] = useState(false);
-  const [hasHardConflicts, setHasHardConflicts] = useState(false);
-  const [hardCount, setHardCount] = useState(0);
-  const [softCount, setSoftCount] = useState(0);
-  
-  // Use refs to track latest values for callbacks
+  // Ref for wouldConflict callback (needs latest selections without deps)
   const selectionsRef = useRef(selections);
-  const customValuesRef = useRef(customValues);
   selectionsRef.current = selections;
-  customValuesRef.current = customValues;
   
   // Stringify for dependency comparison
   const selectionsKey = JSON.stringify(selections);
   const customValuesKey = JSON.stringify(customValues);
   
-  // Detect conflicts
-  const detectConflictsNow = useCallback(() => {
-    if (!enabled) {
-      setConflicts([]);
-      setHasConflicts(false);
-      setHasHardConflicts(false);
-      setHardCount(0);
-      setSoftCount(0);
-      return;
-    }
-    
-    const result = detectConflicts({
-      selections: selectionsRef.current,
-      customValues: customValuesRef.current,
-      includeSoftConflicts,
-    });
-    
-    setConflicts(result.conflicts);
-    setHasConflicts(result.hasConflicts);
-    setHasHardConflicts(result.hasHardConflicts);
-    setHardCount(result.hardCount);
-    setSoftCount(result.softCount);
-  }, [enabled, includeSoftConflicts]);
+  // Core computation via shared utility
+  const { value: detected, refresh: redetect } = useSyncComputation(
+    () => {
+      if (!enabled) {
+        return {
+          conflicts: [] as DetectedConflict[],
+          hasConflicts: false,
+          hasHardConflicts: false,
+          hardCount: 0,
+          softCount: 0,
+        };
+      }
+      
+      const result = detectConflicts({
+        selections,
+        customValues,
+        includeSoftConflicts,
+      });
+      
+      return {
+        conflicts: result.conflicts,
+        hasConflicts: result.hasConflicts,
+        hasHardConflicts: result.hasHardConflicts,
+        hardCount: result.hardCount,
+        softCount: result.softCount,
+      };
+    },
+    [enabled, includeSoftConflicts, selectionsKey, customValuesKey]
+  );
   
-  // Re-detect on changes
-  useEffect(() => {
-    detectConflictsNow();
-     
-  }, [detectConflictsNow, selectionsKey, customValuesKey]);
+  // Helpers
+  const forCategory = useCallback(
+    (category: PromptCategory): DetectedConflict[] =>
+      detected.conflicts.filter(c => c.categories.includes(category)),
+    [detected.conflicts]
+  );
   
-  // Get conflicts for a specific category
-  const forCategory = useCallback((category: PromptCategory): DetectedConflict[] => {
-    return conflicts.filter(c => c.categories.includes(category));
-  }, [conflicts]);
+  const forTerm = useCallback(
+    (term: string): DetectedConflict[] =>
+      detected.conflicts.filter(c => c.terms.includes(term)),
+    [detected.conflicts]
+  );
   
-  // Get conflicts involving a specific term
-  const forTerm = useCallback((term: string): DetectedConflict[] => {
-    return conflicts.filter(c => c.terms.includes(term));
-  }, [conflicts]);
-  
-  // Preview if adding a term would cause conflicts
-  const wouldConflict = useCallback((term: string, category: PromptCategory) => {
-    return previewTermAddition(selectionsRef.current, term, category);
-  }, []);
+  const wouldConflict = useCallback(
+    (term: string, category: PromptCategory) =>
+      previewTermAddition(selectionsRef.current, term, category),
+    []
+  );
   
   return {
-    conflicts,
-    hasConflicts,
-    hasHardConflicts,
-    hardCount,
-    softCount,
+    conflicts: detected.conflicts,
+    hasConflicts: detected.hasConflicts,
+    hasHardConflicts: detected.hasHardConflicts,
+    hardCount: detected.hardCount,
+    softCount: detected.softCount,
     forCategory,
     forTerm,
     wouldConflict,
-    redetect: detectConflictsNow,
+    redetect,
   };
 }
 

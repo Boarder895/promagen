@@ -3,16 +3,14 @@
 /**
  * App-scoped test for the /api/weather route.
  *
- * We focus on:
- * - shape of the payload
- * - that DEMO mode uses the demo dataset
+ * The route is a pure proxy to the Fly.io gateway /weather endpoint.
+ * We mock global.fetch to simulate the gateway response and verify
+ * the route returns the expected shape.
  */
-
-import { NextResponse } from 'next/server';
 
 jest.mock('next/server', () => ({
   NextResponse: {
-    json: jest.fn((payload: unknown) => {
+    json: jest.fn((payload: unknown, _init?: unknown) => {
       // Rough shim of NextResponse.json for testing.
       return {
         ok: true,
@@ -23,73 +21,100 @@ jest.mock('next/server', () => ({
   },
 }));
 
-jest.mock('@/lib/weather/exchange-weather', () => ({
-  listExchangeWeather: jest.fn(() => [
-    {
-      exchange: 'lse-london',
-      tempC: 12,
-      feelsLikeC: 10,
-      condition: 'rain',
-      emoji: '🌧️',
-    },
-  ]),
-}));
+// Console silencing handled by api-test-setup.ts (setupFilesAfterFramework).
 
-jest.mock('@/data/exchanges/exchanges.catalog.json', () => [
-  {
-    id: 'lse-london',
-    city: 'London',
-    exchange: 'London Stock Exchange',
-    country: 'United Kingdom',
-    iso2: 'GB',
-    tz: 'Europe/London',
-    longitude: -0.1,
-    latitude: 51.5,
-    hoursTemplate: 'uk-regular',
-    holidaysRef: 'uk-lse',
-    hemisphere: 'north',
-  },
-]);
+import { NextResponse } from 'next/server';
 
-jest.mock('@/data/exchanges/exchanges.selected.json', () => ({
-  ids: ['lse-london'],
-}));
-
-// Import AFTER mocks so that the route sees the mocks.
+// Import AFTER mocks so that the route sees the NextResponse shim.
 import { GET } from '@/app/api/weather/route';
 
-describe('/api/weather (DEMO mode)', () => {
-  const ORIGINAL_ENV = process.env;
+const MOCK_GATEWAY_RESPONSE = {
+  meta: {
+    mode: 'live' as const,
+    provider: 'openweathermap',
+    currentBatch: 'A' as const,
+    batchARefreshedAt: new Date().toISOString(),
+    budget: {
+      state: 'ok',
+      dailyUsed: 5,
+      dailyLimit: 1000,
+      minuteUsed: 1,
+      minuteLimit: 60,
+    },
+  },
+  data: [
+    {
+      id: 'lse-london',
+      city: 'London',
+      temperatureC: 12,
+      temperatureF: 54,
+      conditions: 'rain',
+      description: 'Light rain',
+      humidity: 80,
+      windSpeedKmh: 15,
+      emoji: '🌧️',
+      asOf: new Date().toISOString(),
+      isDayTime: true,
+    },
+  ],
+};
+
+describe('/api/weather (proxy mode)', () => {
+  const ORIGINAL_FETCH = global.fetch;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env = { ...ORIGINAL_ENV, WEATHER_MODE: 'demo' };
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(MOCK_GATEWAY_RESPONSE),
+      } as Response),
+    );
   });
 
   afterEach(() => {
-    process.env = ORIGINAL_ENV;
+    global.fetch = ORIGINAL_FETCH;
   });
 
-  test('returns a list of weather entries with expected shape', async () => {
+  test('returns gateway weather data with expected shape', async () => {
     const response = await GET();
-    const body = await (response as Response).json();
+    const body = (await (response as Response).json()) as typeof MOCK_GATEWAY_RESPONSE;
 
-    expect(Array.isArray(body)).toBe(true);
-    expect((body as unknown[]).length).toBeGreaterThan(0);
+    // Route passes through the gateway { meta, data } envelope.
+    expect(body.meta).toBeDefined();
+    expect(body.meta.mode).toBe('live');
+    expect(body.meta.provider).toBe('openweathermap');
 
-    const first: any = (body as unknown[])[0];
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.data.length).toBeGreaterThan(0);
 
+    const first = body.data[0];
+    if (!first) throw new Error('Expected at least one weather item');
     expect(first.id).toBe('lse-london');
     expect(first.city).toBe('London');
     expect(typeof first.temperatureC).toBe('number');
-    expect(typeof first.feelsLikeC).toBe('number');
     expect(first.conditions).toBe('rain');
     expect(first.emoji).toBe('🌧️');
-    expect(new Date(first.updatedISO).toString()).not.toBe('Invalid Date');
   });
 
   test('uses NextResponse.json under the hood', async () => {
     await GET();
     expect(NextResponse.json).toHaveBeenCalledTimes(1);
+  });
+
+  test('returns error envelope when gateway is unavailable', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 502,
+        json: () => Promise.resolve({}),
+      } as Response),
+    );
+
+    const response = await GET();
+    const body = (await (response as Response).json()) as Record<string, unknown>;
+
+    expect(body.error).toBe('Weather data unavailable');
   });
 });

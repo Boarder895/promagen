@@ -15,7 +15,7 @@
 //
 // Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9.4
 //
-// Version: 2.0.0 — Phase 7.1a confidence fields added
+// Version: 3.0.0 — Phase 7.6e A/B testing fields (abHash, activeTestId, activeVariant)
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -79,6 +79,14 @@ export interface TelemetryInput {
   userTier?: 'free' | 'paid';
   /** Days since account creation — optional, GDPR safe */
   accountAgeDays?: number;
+
+  // ── Phase 7.6: A/B testing fields ─────────────────────────────────────
+  /** Stable anonymous browser hash for A/B assignment */
+  abHash?: string | null;
+  /** Active A/B test ID (null if no test running) */
+  activeTestId?: string | null;
+  /** Assigned variant: 'A' (control) or 'B' (variant) */
+  activeVariant?: 'A' | 'B' | null;
 }
 
 // ============================================================================
@@ -264,6 +272,10 @@ export async function sendPromptTelemetry(input: TelemetryInput): Promise<boolea
       // Phase 7.1: Confidence multiplier data (optional, GDPR safe)
       ...(input.userTier ? { userTier: input.userTier } : {}),
       ...(input.accountAgeDays != null ? { accountAgeDays: input.accountAgeDays } : {}),
+      // Phase 7.6: A/B testing fields (optional, GDPR safe — abHash is an opaque UUID)
+      ...(input.abHash ? { abHash: input.abHash } : {}),
+      ...(input.activeTestId ? { activeTestId: input.activeTestId } : {}),
+      ...(input.activeVariant ? { activeVariant: input.activeVariant } : {}),
     };
 
     // --- Record copy timestamp for return-within-60s detection ---

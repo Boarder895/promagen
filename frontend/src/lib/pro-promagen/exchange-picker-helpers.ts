@@ -241,7 +241,11 @@ export function groupByContinent(
     groups.set(continent, []);
   }
 
+  // Defensive: bail early if options is null/undefined (e.g. data still loading)
+  if (!Array.isArray(options)) return groups;
+
   for (const option of options) {
+    if (!option) continue;
     const list = groups.get(option.continent);
     if (list) {
       list.push(option);
@@ -263,6 +267,8 @@ export function searchExchanges(
   options: ExchangeOption[],
   query: string
 ): ExchangeOption[] {
+  // Defensive: bail early if options is null/undefined
+  if (!Array.isArray(options)) return [];
   if (!query.trim()) return options;
 
   const q = query.toLowerCase().trim();
@@ -287,6 +293,8 @@ export function getExchangesByIds(
   allExchanges: ExchangeOption[],
   selectedIds: string[]
 ): ExchangeOption[] {
+  // Defensive: bail early if either input is null/undefined
+  if (!Array.isArray(allExchanges) || !Array.isArray(selectedIds)) return [];
   // Preserve order of selectedIds
   const result: ExchangeOption[] = [];
   for (const id of selectedIds) {
@@ -306,6 +314,10 @@ export function validateSelection(
   min: number,
   max: number
 ): { valid: boolean; message?: string } {
+  // Defensive: treat null/undefined as empty selection
+  if (!Array.isArray(selected)) {
+    return { valid: min <= 0, message: min > 0 ? `Select at least ${min} exchange${min === 1 ? '' : 's'}` : undefined };
+  }
   if (selected.length < min) {
     return {
       valid: false,

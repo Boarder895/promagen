@@ -3,9 +3,15 @@
 // USE PROMPT ANALYSIS HOOK
 // ============================================================================
 // React hook for real-time prompt analysis with debouncing.
+//
+// Version: 1.2.0 — Inlined setTimeout body (no useCallback), consolidated state
+//
+// NOTE: This hook cannot use useSyncComputation because it genuinely needs
+// debounced (async-ish) computation. The 4 synchronous hooks use the shared
+// utility; this hook keeps useEffect + setTimeout for the debounce.
 // ============================================================================
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   analyzePrompt,
   type PromptState,
@@ -63,11 +69,24 @@ export interface UsePromptAnalysisResult {
 }
 
 // ============================================================================
+// Internal State
+// ============================================================================
+
+interface AnalysisState {
+  analysis: PromptAnalysis | null;
+  isAnalyzing: boolean;
+}
+
+// ============================================================================
 // Hook Implementation
 // ============================================================================
 
 /**
  * Hook for real-time prompt analysis with debouncing.
+ *
+ * All dynamic values are read from refs inside the setTimeout callback,
+ * so the effect only re-fires when genuine input keys change — not when
+ * unstable object references are recreated on re-render.
  */
 export function usePromptAnalysis(
   state: PromptState,
@@ -82,50 +101,61 @@ export function usePromptAnalysis(
     tierId,
   } = options;
   
-  const [analysis, setAnalysis] = useState<PromptAnalysis | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisState, setAnalysisState] = useState<AnalysisState>({
+    analysis: null,
+    isAnalyzing: false,
+  });
   
-  // Track latest state for debounced callback
+  // ── Refs: hold latest values so the setTimeout body is always current ──
   const stateRef = useRef(state);
   stateRef.current = state;
+  
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
+  
+  const learnedWeightsRef = useRef(learnedWeights);
+  learnedWeightsRef.current = learnedWeights;
+  
+  const tierIdRef = useRef(tierId);
+  tierIdRef.current = tierId;
   
   // Memoize market context
   const marketContext = useMemo<MarketContext | undefined>(() => {
     if (!marketMoodEnabled) return undefined;
-    return {
-      enabled: true,
-      data: marketData,
-    };
+    return { enabled: true, data: marketData };
   }, [marketMoodEnabled, marketData]);
   
-  // Perform analysis
-  const performAnalysis = useCallback(() => {
-    if (!enabled) return;
+  const marketContextRef = useRef(marketContext);
+  marketContextRef.current = marketContext;
+  
+  // ── Inline analysis function (reads everything from refs) ──────────────
+  // Not wrapped in useCallback — called directly from setTimeout and from
+  // the returned reanalyze. Reads all dynamic values from refs so it never
+  // goes stale and never appears in useEffect deps.
+  const runAnalysis = () => {
+    if (!enabledRef.current) return;
     
-    setIsAnalyzing(true);
-    
-    // Run analysis synchronously (it's all client-side)
-    const result = analyzePrompt(stateRef.current, marketContext, {
-      learnedWeights,
-      tierId,
+    const result = analyzePrompt(stateRef.current, marketContextRef.current, {
+      learnedWeights: learnedWeightsRef.current,
+      tierId: tierIdRef.current,
     });
     
-    setAnalysis(result);
-    setIsAnalyzing(false);
-  }, [enabled, marketContext, learnedWeights, tierId]);
+    setAnalysisState({ analysis: result, isAnalyzing: false });
+  };
   
-  // Create stable key for dependency tracking
+  // ── Stable dependency keys ─────────────────────────────────────────────
   const selectionsKey = JSON.stringify(state.selections);
   const negativesKey = JSON.stringify(state.negatives);
   
-  // Debounced analysis on state change
+  // ── Debounced analysis on state change ─────────────────────────────────
   useEffect(() => {
     if (!enabled) {
-      setAnalysis(null);
+      setAnalysisState({ analysis: null, isAnalyzing: false });
       return;
     }
     
-    const timer = setTimeout(performAnalysis, debounceMs);
+    setAnalysisState(prev => ({ ...prev, isAnalyzing: true }));
+    const timer = setTimeout(runAnalysis, debounceMs);
     return () => clearTimeout(timer);
      
   }, [
@@ -135,19 +165,18 @@ export function usePromptAnalysis(
     negativesKey,
     enabled,
     debounceMs,
-    performAnalysis,
   ]);
   
-  // Extract quick-access values
-  const healthScore = analysis?.healthScore ?? 0;
-  const conflictCount = analysis?.conflicts.conflicts.length ?? 0;
-  const fillPercent = analysis?.summary.fillPercent ?? 0;
-  const hasHardConflicts = analysis?.conflicts.hasHardConflicts ?? false;
+  // Quick-access values
+  const healthScore = analysisState.analysis?.healthScore ?? 0;
+  const conflictCount = analysisState.analysis?.conflicts.conflicts.length ?? 0;
+  const fillPercent = analysisState.analysis?.summary.fillPercent ?? 0;
+  const hasHardConflicts = analysisState.analysis?.conflicts.hasHardConflicts ?? false;
   
   return {
-    analysis,
-    isAnalyzing,
-    reanalyze: performAnalysis,
+    analysis: analysisState.analysis,
+    isAnalyzing: analysisState.isAnalyzing,
+    reanalyze: runAnalysis,
     healthScore,
     conflictCount,
     fillPercent,

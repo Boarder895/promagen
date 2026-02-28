@@ -3,7 +3,7 @@
 // USE SMART REORDER HOOK - Tests
 // ============================================================================
 
-import { renderHook } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useSmartReorder } from '../use-smart-reorder';
 import type { PromptCategory } from '@/types/prompt-builder';
 
@@ -179,7 +179,9 @@ describe('useSmartReorder', () => {
       const initialOrder = [...result.current.options];
       
       // Call reorder
-      result.current.reorder();
+      act(() => {
+        result.current.reorder();
+      });
       
       // Should still have same options (order may or may not change)
       expect(result.current.options).toHaveLength(initialOrder.length);

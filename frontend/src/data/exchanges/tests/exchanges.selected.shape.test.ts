@@ -36,7 +36,7 @@ function asSelected(input: unknown): SelectedIds {
   };
 }
 
-const FREE_TIER_EXCHANGE_COUNT = 12;
+const FREE_TIER_EXCHANGE_COUNT = 16;
 
 describe('exchanges.selected.json shape', () => {
   const rows = asCatalogRows(catalog);

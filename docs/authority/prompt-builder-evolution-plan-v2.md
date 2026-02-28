@@ -1,10 +1,39 @@
 # Prompt Builder Evolution Plan v2.0
 
-**Version:** 2.0.0  
-**Created:** 2026-02-24  
-**Status:** Planning — No code yet  
-**Authority:** This document is the single source of truth for the prompt builder evolution.  
-**Admin Route:** `/admin/scoring-health` (separate standalone page)
+**Version:** 2.1.0
+**Created:** 2026-02-24
+**Last Updated:** 2026-02-27
+**Status:** Active Build — Phases 0–7.7 complete, Phases 7.8–7.11 remaining
+**Authority:** This document is the single source of truth for the prompt builder evolution.
+**Admin Route:** `/admin` (live), `/admin/scoring-health` (planned — Phase 7.11)
+**Tests:** See `tests.md` for all test code. This document references test files but does not include test source.
+
+---
+
+## Build Status Dashboard
+
+| Phase    | Feature                         | Status         | Key Metric                                                                                                      |
+| -------- | ------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------- |
+| **0**    | Vocabulary Merge                | ✅ COMPLETE    | 9,058 terms (3,501 core + 5,557 merged) across 9 merged + 3 unchanged categories                                |
+| **1**    | Cascading Intelligence          | ✅ COMPLETE    | 50 semantic clusters, 250 affinities, 2,032 tagged terms, 145 conflicts, 42 platform hints                      |
+| **2**    | Scene Starters                  | ✅ COMPLETE    | 200 scenes (25 free / 175 pro) across 23 worlds                                                                 |
+| **3**    | Explore Drawer                  | ✅ COMPLETE    | 805-line component with tier badges, cascade ordering, search, pagination                                       |
+| **4**    | Polish & Integration            | ✅ COMPLETE    | Scene flavour phrases wired, analytics events, fluid typography, Phase 4 tests                                  |
+| **5**    | Collective Intelligence Engine  | ✅ COMPLETE    | Telemetry endpoint, 14-layer aggregation cron (1,354 lines), 14 learning API routes                             |
+| **6**    | Self-Improving Scorer           | ✅ COMPLETE    | 11,189 LOC across 29 learning engine files, 5 recalibration mechanisms                                          |
+| **7.1**  | Negative Pattern Learning       | ✅ COMPLETE    | Anti-pattern detection (370 lines) + collision matrix (346 lines) + lookups                                     |
+| **7.2**  | Iteration Tracking              | ✅ COMPLETE    | Session sequence tracking (642 lines) + weak term lookup (177 lines)                                            |
+| **7.3**  | Semantic Redundancy Detection   | ✅ COMPLETE    | Redundancy detection (574 lines) + lookup (246 lines)                                                           |
+| **7.4**  | Higher-Order Combinations       | ✅ COMPLETE    | Magic combo mining (595 lines) + combo lookup (366 lines)                                                       |
+| **7.5**  | Per-Platform Learning           | ✅ COMPLETE    | Platform term quality (520 lines) + platform co-occurrence (423 lines) + lookups                                |
+| **7.6**  | A/B Testing Pipeline            | ✅ COMPLETE    | 988-line A/B engine + deterministic hash assignment + CRUD API routes                                           |
+| **7.7**  | Vocabulary Crowdsourcing        | ✅ COMPLETE    | 3,535 LOC: 3-layer dedup, smart category suggestion, admin review with batch workflow                           |
+| **7.8**  | Temporal Intelligence           | ❌ NOT STARTED | —                                                                                                               |
+| **7.9**  | Prompt Compression Intelligence | ❌ NOT STARTED | Basic compression engine exists (`compress.ts`) but learned profiles not built                                  |
+| **7.10** | User Feedback Invitation        | ❌ NOT STARTED | `feedback-bar.tsx` exists as quality indicator but not the post-copy 👍👌👎 widget                              |
+| **7.11** | Admin Command Centre            | ⚠️ PARTIAL     | Admin layout + nav + dashboard + scene-candidates + vocab-submissions live. Scoring-health dashboard not built. |
+
+**Total LOC delivered:** ~30,000+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, and crowdsourcing pipeline.
 
 ---
 
@@ -21,7 +50,7 @@
 9. [Collective Intelligence Engine (Phase 5)](#9-collective-intelligence-engine-phase-5)
 10. [Self-Improving Scorer (Phase 6)](#10-self-improving-scorer-phase-6)
 11. [Advanced Learning Systems (Phase 7)](#11-advanced-learning-systems-phase-7)
-12. [Admin Command Centre (Phase 7.10)](#12-admin-command-centre-phase-710)
+12. [Admin Command Centre (Phase 7.11)](#12-admin-command-centre-phase-711)
 13. [The 4 Optimizer Tiers — Cross-Feature Matrix](#13-the-4-optimizer-tiers--cross-feature-matrix)
 14. [Data Structures](#14-data-structures)
 15. [Output Files — What the Cron Produces](#15-output-files--what-the-cron-produces)
@@ -52,7 +81,7 @@ A prompt builder that thinks with the user AND gets smarter every day without co
 - **Explore Drawer** gives power users access to the full vocabulary depth
 - **Collective Intelligence** learns from every high-quality prompt built across all users
 - **Self-Improving Scorer** automatically recalibrates its own weights against real outcomes
-- **Advanced Learning** detects anti-patterns, tracks iterations, finds magic combinations, learns per-platform, A/B tests improvements, adapts to user skill level, responds to temporal trends, compresses prompts intelligently, and incorporates direct user feedback
+- **Advanced Learning** detects anti-patterns, tracks iterations, finds magic combinations, learns per-platform, A/B tests improvements, crowdsources vocabulary, responds to temporal trends, compresses prompts intelligently, and incorporates direct user feedback
 
 All features work across all 4 optimizer tiers (CLIP, Midjourney, Natural Language, Plain Language) and all 42 platforms.
 
@@ -60,16 +89,16 @@ All features work across all 4 optimizer tiers (CLIP, Midjourney, Natural Langua
 
 ## 2. Feature Overview
 
-| #   | Feature                            | What it does                                                                 | Tier                  | Phase | Depends on |
-| --- | ---------------------------------- | ---------------------------------------------------------------------------- | --------------------- | ----- | ---------- |
-| D   | **Vocabulary Merge**               | Curate + map weather/commodity/shared phrases into prompt builder categories | Free (data layer)     | 0     | Nothing    |
-| B   | **Cascading Intelligence**         | Reorder downstream dropdowns based on upstream selections                    | Free                  | 1     | Phase 0    |
-| A   | **Scene Starters**                 | Pre-populate categories from curated scene templates (hierarchical dropdown) | Free (25) / Pro (200) | 2     | Phase 1    |
-| C   | **Explore Drawer**                 | Expandable panel showing full vocabulary per category, contextually filtered | Free                  | 3     | Phase 0, 1 |
-| —   | **Polish & Integration**           | Cross-feature wiring, analytics, fluid typography, docs                      | —                     | 4     | Phases 0–3 |
-| —   | **Collective Intelligence Engine** | Telemetry + co-occurrence learning + auto-scene generation                   | —                     | 5     | Phase 4    |
-| —   | **Self-Improving Scorer**          | Weight recalibration + per-tier models + threshold auto-adjustment           | —                     | 6     | Phase 5    |
-| —   | **Advanced Learning Systems**      | 10 additional learning dimensions + Admin Command Centre                     | —                     | 7     | Phase 6    |
+| #   | Feature                            | What it does                                                                 | Tier                  | Phase | Status           |
+| --- | ---------------------------------- | ---------------------------------------------------------------------------- | --------------------- | ----- | ---------------- |
+| D   | **Vocabulary Merge**               | Curate + map weather/commodity/shared phrases into prompt builder categories | Free (data layer)     | 0     | ✅ COMPLETE      |
+| B   | **Cascading Intelligence**         | Reorder downstream dropdowns based on upstream selections                    | Free                  | 1     | ✅ COMPLETE      |
+| A   | **Scene Starters**                 | Pre-populate categories from curated scene templates (hierarchical dropdown) | Free (25) / Pro (200) | 2     | ✅ COMPLETE      |
+| C   | **Explore Drawer**                 | Expandable panel showing full vocabulary per category, contextually filtered | Free                  | 3     | ✅ COMPLETE      |
+| —   | **Polish & Integration**           | Cross-feature wiring, analytics, fluid typography, docs                      | —                     | 4     | ✅ COMPLETE      |
+| —   | **Collective Intelligence Engine** | Telemetry + co-occurrence learning + auto-scene generation                   | —                     | 5     | ✅ COMPLETE      |
+| —   | **Self-Improving Scorer**          | Weight recalibration + per-tier models + threshold auto-adjustment           | —                     | 6     | ✅ COMPLETE      |
+| —   | **Advanced Learning Systems**      | 10 additional learning dimensions + Admin Command Centre                     | —                     | 7     | ⚠️ 7/10 COMPLETE |
 
 **Build order:** 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7
 
@@ -161,391 +190,254 @@ Everything else — which weights, which terms, which combinations, which thresh
 
 ## 4. Feature D — Vocabulary Merge (Phase 0)
 
-### 4.1 What Gets Merged
+**Status:** ✅ COMPLETE
 
-**MERGE — universally useful for image prompts:**
+### 4.1 What Was Merged — Actual Results
 
-| Source                                          | Category Target        | Count                 | Why                                            |
-| ----------------------------------------------- | ---------------------- | --------------------- | ---------------------------------------------- |
-| weather/urban-light.json                        | Lighting               | 254                   | "Sodium-vapour haze", "neon on wet asphalt"    |
-| weather/city-vibes.json → venues                | Environment            | ~1,032                | "Tsukiji Fish Market", "Corniche waterfront"   |
-| weather/conditions.json                         | Atmosphere             | 280                   | "Rain-slicked", "fog-shrouded"                 |
-| weather/temperature.json                        | Atmosphere             | ~40 (subset)          | "Blistering heat", "bone-chilling cold"        |
-| weather/wind.json                               | Atmosphere             | ~60 (subset)          | "Howling gale", "gentle breeze"                |
-| commodities/sensory-visual.json                 | Materials, Colour      | 150                   | Metallic colours, organic textures             |
-| commodities/night-operations.json → lighting    | Lighting               | ~47                   | "Refinery flare glow", "dock crane spotlights" |
-| commodities/night-operations.json → atmosphere  | Atmosphere             | ~60                   | "Shift-change quiet", "24/7 hum"               |
-| commodities/transformation-states.json          | Action                 | ~200                  | "Smelting", "forging", "distilling"            |
-| commodities/extraction-methods.json             | Action                 | ~100                  | "Deep mining", "offshore drilling"             |
-| commodities/rituals.json → daily + professional | Action                 | ~80                   | "Morning inspection", "quality testing"        |
-| commodities/human-stories-workers.json          | Subject                | ~126                  | "Oil rig roughneck", "tea plantation picker"   |
-| commodities/human-stories-traders.json          | Subject                | ~60 (subset)          | "Floor trader", "commodity broker"             |
-| commodities/price-states.json                   | Atmosphere             | ~60 (subset)          | "Euphoric ascent", "creeping dread"            |
-| commodities/containers.json                     | Environment, Materials | ~100                  | "Cargo containers", "grain silos"              |
-| commodities/production-countries.json           | Environment            | ~200                  | "Brazilian highlands", "Arabian desert"        |
-| shared/adjectives.json                          | Atmosphere, Colour     | ~200 (curated subset) | Universal descriptors                          |
+| Source                             | Category Target | Actual Count | Notes                                                             |
+| ---------------------------------- | --------------- | ------------ | ----------------------------------------------------------------- |
+| curated-weather-lighting.json      | Lighting        | 248          | Urban light phrases — "sodium-vapour haze", "neon on wet asphalt" |
+| curated-weather-environment.json   | Environment     | 1,032        | City venue phrases — "Tsukiji Fish Market", "Corniche waterfront" |
+| curated-weather-atmosphere.json    | Atmosphere      | 422          | Weather conditions — "rain-slicked", "fog-shrouded"               |
+| curated-commodity-action.json      | Action          | 988          | Commodity-related actions                                         |
+| curated-commodity-atmosphere.json  | Atmosphere      | 437          | Commodity atmosphere phrases                                      |
+| curated-commodity-colour.json      | Colour          | 40           | Commodity colour terms                                            |
+| curated-commodity-environment.json | Environment     | 1,308        | Commodity environments                                            |
+| curated-commodity-lighting.json    | Lighting        | 280          | Commodity lighting phrases                                        |
+| curated-commodity-materials.json   | Materials       | 354          | Commodity material textures                                       |
+| curated-commodity-subject.json     | Subject         | 212          | Commodity subject terms                                           |
+| curated-shared-atmosphere.json     | Atmosphere      | 71           | Shared adjectives (atmosphere)                                    |
+| curated-shared-colour.json         | Colour          | 22           | Shared colour adjectives                                          |
+| curated-shared-composition.json    | Composition     | 40           | Shared composition terms                                          |
+| curated-shared-lighting.json       | Lighting        | 24           | Shared lighting adjectives                                        |
+| curated-shared-materials.json      | Materials       | 49           | Shared material adjectives                                        |
+| curated-shared-style.json          | Style           | 30           | Shared style terms                                                |
 
-**DO NOT MERGE — too domain-specific:**
+### 4.2 Merge Summary
 
-| Source                                   | Why                                           |
-| ---------------------------------------- | --------------------------------------------- |
-| commodities/geopolitical.json            | "Sanctions regime" — not visual               |
-| commodities/trading-culture.json (most)  | "Open outcry", "margin call" — finance jargon |
-| commodities/historical-moments.json      | "Tulip mania" — too narrative                 |
-| commodities/weather-commodity-links.json | Too specific                                  |
-| commodities/absence-states.json (most)   | Niche                                         |
-| shared/connectors.json                   | Assembler glue, not user choices              |
-| shared/intensifiers.json                 | Assembler modifiers                           |
+| Metric                               | Value                                                                                         |
+| ------------------------------------ | --------------------------------------------------------------------------------------------- |
+| **Core vocabulary (12 categories)**  | 3,501 terms                                                                                   |
+| **Merged vocabulary (9 categories)** | 5,557 terms                                                                                   |
+| **Combined total**                   | 9,058 terms                                                                                   |
+| **Merged categories**                | 9 (action, atmosphere, colour, composition, environment, lighting, materials, style, subject) |
+| **Unchanged categories**             | 3 (camera: 298, fidelity: 282, negative: 313 — no merged data)                                |
 
-### 4.2 Merge Architecture
+### 4.3 Actual Chip Counts Per Category (After Merge)
 
-```
-vocabulary/
-  prompt-builder/     ← UNTOUCHED (3,955 core phrases)
-  weather/            ← UNTOUCHED (still used by weather-prompt-generator)
-  commodities/        ← UNTOUCHED (still used by commodity-prompt-generator)
-  shared/             ← UNTOUCHED (still used by assembler)
-  merged/             ← NEW: curated subset mapped to prompt builder categories
-    lighting.json     ← urban-light + commodity night-ops lighting
-    atmosphere.json   ← weather conditions + price-states moods + wind + temp
-    environment.json  ← city venues + production regions + containers
-    subject.json      ← worker archetypes + trader archetypes
-    action.json       ← transformations + extractions + rituals
-    materials.json    ← sensory-visual textures + commodity appearances
-    colour.json       ← sensory-visual colours + adjective colours
-    merge-manifest.json ← tracks source, count, version for each merged file
-```
+| Category    | Core      | Merged    | Total     |
+| ----------- | --------- | --------- | --------- |
+| Action      | 277       | 988       | 1,265     |
+| Atmosphere  | 305       | 930       | 1,235     |
+| Colour      | 294       | 62        | 356       |
+| Composition | 279       | 40        | 319       |
+| Environment | 279       | 2,340     | 2,619     |
+| Lighting    | 302       | 552       | 854       |
+| Materials   | 285       | 403       | 688       |
+| Style       | 295       | 30        | 325       |
+| Subject     | 292       | 212       | 504       |
+| Camera      | 298       | 0         | 298       |
+| Fidelity    | 282       | 0         | 282       |
+| Negative    | 313       | 0         | 313       |
+| **TOTAL**   | **3,501** | **5,557** | **9,058** |
 
-### 4.3 Build Steps
+### 4.4 Installed Files
 
-| Step | Task                                  | Details                                                                                       |
-| ---- | ------------------------------------- | --------------------------------------------------------------------------------------------- |
-| 0.1  | Audit and curate weather phrases      | Extract ~1,566 phrases. Hand-review. Remove duplicates. Map to target categories.             |
-| 0.2  | Audit and curate commodity phrases    | Extract ~1,770 phrases. Remove finance jargon. Map to target categories.                      |
-| 0.3  | Audit and curate shared phrases       | Select ~350 universal adjectives. Map to Atmosphere and Colour.                               |
-| 0.4  | Create `vocabulary/merged/` directory | 7 JSON files + merge-manifest.json.                                                           |
-| 0.5  | Verify phrase counts                  | Automated test: manifest counts match actual JSON counts. No duplicates across core + merged. |
+| File                                                       | Lines | Purpose                                                       |
+| ---------------------------------------------------------- | ----- | ------------------------------------------------------------- |
+| `src/data/vocabulary/merged/index.ts`                      | 232   | Loader module — `getMergedOptions()`, `getMergedCount()`      |
+| `src/data/vocabulary/merged/merge-manifest.json`           | —     | Source tracking with version, summary, audit sources          |
+| `src/data/vocabulary/merged/*-merged.json` (9 files)       | —     | Merged vocabulary per category                                |
+| `src/data/vocabulary/merged/curated-*.json` (16 files)     | —     | Curated source files (weather × 3, commodity × 7, shared × 6) |
+| `src/data/vocabulary/merged/*-audit-report.json` (3 files) | —     | Audit reports: commodity, shared, weather                     |
+| `src/lib/vocabulary/vocabulary-loader.ts`                  | —     | Updated to load merged vocab — core first, merged appended    |
 
-**Effort:** 2–3 days  
-**Verification:** `npm run test -- merge-manifest` passes. Total merged ≈ 3,686 new phrases.
+### 4.5 Tests
+
+- `src/__tests__/vocabulary-merge.integrity.test.ts` (230 lines) — validates merge manifest, option counts, no duplicates, category mapping
 
 ---
 
 ## 5. Feature B — Cascading Intelligence (Phase 1)
 
-### 5.1 Concept
+**Status:** ✅ COMPLETE
 
-Every time the user selects or changes a value in ANY category, the system re-evaluates and reorders every other category's dropdown. Most contextually relevant options float to the top. Nothing is removed — only reordered.
+### 5.1 What Was Built
 
-### 5.2 The Relationship Graph — Three Layers
+The intelligence layer provides contextual awareness across all 12 categories. When a user selects "cyberpunk hacker" in Subject, the system knows which lighting, environment, atmosphere, and style terms are most coherent with that selection.
 
-**Layer 1 — Semantic Clusters (broad strokes, 40–60 clusters)**
+### 5.2 Intelligence Data (Actual)
 
-A cluster maps terms across multiple categories that naturally go together:
+| Data File                | Location                        | Key Metric                                                                                                                                                                                                           |
+| ------------------------ | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `semantic-clusters.json` | `src/data/prompt-intelligence/` | 50 clusters (cyberpunk, steampunk, vaporwave, cottagecore, dark-academia, gothic, art-deco, solarpunk, brutalist, noir, fantasy-epic, horror, sci-fi-space, etc.) with 1,516 total member terms across 11 categories |
+| `direct-affinities.json` | `src/data/prompt-intelligence/` | 250 term-to-term relationships                                                                                                                                                                                       |
+| `semantic-tags.json`     | `src/data/prompt-intelligence/` | 2,032 options tagged out of 2,045 total (99.4% coverage) across 12 categories                                                                                                                                        |
+| `conflicts.json`         | `src/data/prompt-intelligence/` | 145 conflict rules                                                                                                                                                                                                   |
+| `platform-hints.json`    | `src/data/prompt-intelligence/` | Hints for all 42 platforms                                                                                                                                                                                           |
+| `market-moods.json`      | `src/data/prompt-intelligence/` | 11 market mood definitions                                                                                                                                                                                           |
+| `families.json`          | `src/data/prompt-intelligence/` | Family groupings for vocabulary                                                                                                                                                                                      |
 
-```
-CLUSTER: "cyberpunk"
-  subject:     [cyberpunk hacker, android humanoid, bounty hunter, mech pilot]
-  action:      [running dynamically, fighting fiercely, casting spell]
-  style:       [digital painting, concept art, cyberpunk aesthetic, synthwave]
-  environment: [cyberpunk city, neon alleyway, futuristic metropolis]
-  lighting:    [neon glow, holographic, LED strips, blacklight UV]
-  atmosphere:  [ominous, dramatic, energetic, mysterious]
-  colour:      [neon colors, teal and orange, high contrast]
-  materials:   [chrome reflection, iridescent metal, brushed steel]
-  camera:      [anamorphic lens, dutch angle]
-  composition: [rule of thirds, leading lines, diagonal composition]
-  fidelity:    [8k resolution, ray tracing, unreal engine]
-```
+All data files have TypeScript declaration files (`.json.d.ts`) for type safety.
 
-**Layer 2 — Direct Affinities (fine-grained, 200–400 pairs)**
+A mirrored copy lives at `src/data/vocabulary/intelligence/` with its own `index.ts` loader and `README.md`.
 
-```
-"golden hour"  → boosts: [warm palette, serene, earth tones, film photography]
-               → penalises: [neon glow, blacklight UV]
-"85mm portrait lens" → boosts: [shallow depth of field, bokeh background]
-"anime style"  → boosts: [vibrant colors, dynamic actions, --niji 6]
-```
+### 5.3 Engine Files (Actual)
 
-**Layer 3 — Existing Infrastructure (already built)**
+| File                                                           | Lines | Purpose                                                                                                                               |
+| -------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/prompt-intelligence/index.ts`                         | 648   | Public API — single import point for all intelligence functionality                                                                   |
+| `src/lib/prompt-intelligence/types.ts`                         | 638   | Type definitions — imports from all learning lookups (co-occurrence, anti-pattern, collision, weak-term, redundancy, combo, platform) |
+| `src/lib/prompt-intelligence/coherent-randomise.ts`            | 382   | Coherent randomisation engine                                                                                                         |
+| `src/lib/prompt-intelligence/combine.ts`                       | 365   | Term combination logic                                                                                                                |
+| `src/lib/prompt-intelligence/phrase-filter.ts`                 | 476   | Phrase filtering with intelligence context                                                                                            |
+| `src/lib/prompt-intelligence/get-families.ts`                  | 67    | Family lookup helper                                                                                                                  |
+| `src/lib/prompt-intelligence/engines/index.ts`                 | 83    | Engine sub-module barrel export                                                                                                       |
+| `src/lib/prompt-intelligence/engines/suggestion-engine.ts`     | 1,331 | Core suggestion engine — cascade scoring, contextual reordering                                                                       |
+| `src/lib/prompt-intelligence/engines/integration.ts`           | 729   | Integration layer connecting all intelligence systems                                                                                 |
+| `src/lib/prompt-intelligence/engines/platform-optimization.ts` | 589   | Platform-specific optimisation per tier                                                                                               |
+| `src/lib/prompt-intelligence/engines/market-mood-engine.ts`    | 576   | Market mood influence on vocabulary                                                                                                   |
+| `src/lib/prompt-intelligence/engines/conflict-detection.ts`    | 567   | Real-time conflict detection between selected terms                                                                                   |
 
-`families.json` defines style families with `bestWith` and `avoidWith`. The vocabulary-loader already scores by family.
+**Total prompt intelligence LOC:** 6,451
 
-### 5.3 Scoring Algorithm
+### 5.4 Tests
 
-On every selection change:
-
-1. **Cluster detection** — which clusters does the selected term belong to?
-2. **Compound scoring** — for each candidate in every other category:
-   - `clusterBoost = (number of active cluster members) × clusterWeight`
-   - `directBoost = sum of direct affinity scores from all selected terms`
-   - `familyBoost = existing vocabulary-loader family scoring`
-   - `penaltyScore = avoidWith penalties + conflict detection`
-   - `finalScore = clusterBoost + directBoost + familyBoost - penaltyScore`
-3. **Reorder** — sort each category's options by finalScore descending
-4. **Preserve** — user's existing selections stay locked, only unselected options reorder
-
-### 5.4 Tier-Aware Cascade
-
-| Tier               | Cascade Behaviour                                                                        |
-| ------------------ | ---------------------------------------------------------------------------------------- |
-| **Tier 1 (CLIP)**  | Extra weight to terms with `tier1Boost`. CLIP benefits from keyword coherence.           |
-| **Tier 2 (MJ)**    | MJ-specific affinities. "Anime style" boosts `--niji 6`. "Cinematic" boosts `--ar 21:9`. |
-| **Tier 3 (NL)**    | Favours terms with `tier3Phrase` variants (richer natural language forms).               |
-| **Tier 4 (Plain)** | Dampened weights (0.5×). "Keep it simple" bias.                                          |
-
-### 5.5 Build Steps
-
-| Step | Task                                | Details                                                                     |
-| ---- | ----------------------------------- | --------------------------------------------------------------------------- |
-| 1.1  | Design semantic clusters JSON       | `data/intelligence/semantic-clusters.json` — 40–60 clusters                 |
-| 1.2  | Design direct affinities JSON       | `data/intelligence/direct-affinities.json` — 200–400 pairs                  |
-| 1.3  | Extend vocabulary-loader.ts scoring | Add cluster + affinity scoring alongside family scoring                     |
-| 1.4  | Connect full cross-category context | `loadCategoryVocabulary()` accepts all selected terms across all categories |
-| 1.5  | Wire into prompt-builder.tsx        | On any selection change, rebuild context and re-score. Debounce 100ms.      |
-| 1.6  | Tier-aware scoring weights          | Per-tier weight multipliers                                                 |
-| 1.7  | Load merged vocab                   | `loadCategoryVocabulary()` loads core + merged, core has base priority      |
-| 1.8  | Performance test                    | Target: < 16ms (one frame). Web Worker fallback if needed.                  |
-
-**Effort:** 3–5 days  
-**Verification:** Select "cyberpunk hacker" → Action shows "fighting fiercely" in top 5. Lighting shows "neon glow" in top 5.
+- `src/__tests__/cascading-intelligence.integrity.test.ts` (299 lines) — validates cluster structure, affinity format, tag coverage, conflict rules
+- `src/lib/prompt-intelligence/engines/__tests__/integration-scoring.test.ts` — scoring integration
+- `src/lib/prompt-intelligence/engines/tests/` — individual engine tests (conflict-detection, integration, market-mood, platform-optimization, suggestion-engine)
 
 ---
 
 ## 6. Feature A — Scene Starters (Phase 2)
 
-### 6.1 Concept
+**Status:** ✅ COMPLETE
 
-A dropdown positioned above Subject labelled "Scene Blueprint". Hierarchical accordion layout — headings first, then scenes within each heading. Pre-populates 4–8 categories with coherent values. Every pre-filled value individually clearable.
+### 6.1 What Was Built
 
-### 6.2 Hierarchical Dropdown UX
+200 curated scenes (25 free, 175 Pro) across 23 worlds. Each scene pre-fills up to 8 categories with contextually coherent terms, includes tier guidance for all 4 optimizer tiers, and provides flavour phrases for the Explore Drawer.
 
-```
-Step 1 — User clicks "Scene Blueprint" dropdown. Sees HEADINGS only:
-┌──────────────────────────────────────────────────────┐
-│  ▸ Portraits & People              (5 scenes)       │
-│  ▸ Landscapes & Worlds             (5 scenes)       │
-│  ▸ Mood & Atmosphere               (5 scenes)       │
-│  ▸ Style-Forward                   (5 scenes)       │
-│  ▸ Trending / Seasonal             (5 scenes)       │
-│                                                      │
-│  ── Pro Worlds ──────────────────── 🔒 ──────────── │
-│  ▸ Cinematic                       (12 scenes)      │
-│  ▸ Fantasy & Mythology             (12 scenes)      │
-│  ▸ Sci-Fi & Future                 (12 scenes)      │
-│  ...14 more worlds                                   │
-└──────────────────────────────────────────────────────┘
+### 6.2 Scene Data (Actual)
 
-Step 2 — User clicks "Portraits & People". Heading EXPANDS (others collapse):
-┌──────────────────────────────────────────────────────┐
-│  ▾ Portraits & People              (5 scenes)       │
-│    ┌──────────────────────────────────────────────┐  │
-│    │ 🎬 Dramatic Portrait                        │  │
-│    │    Moody studio portrait with dramatic       │  │
-│    │    lighting and cinematic feel               │  │
-│    │──────────────────────────────────────────────│  │
-│    │ ⚔️ Fantasy Hero                              │  │
-│    │    Warrior in an enchanted forest            │  │
-│    │    at golden hour                            │  │
-│    │──────────────────────────────────────────────│  │
-│    │ 📸 Street Photographer                      │  │
-│    │    Night-time Tokyo street scene             │  │
-│    │    with neon reflections                     │  │
-│    │──────────────────────────────────────────────│  │
-│    │ 🕰️ Vintage Glamour                          │  │
-│    │    Classic Hollywood elegance in             │  │
-│    │    candlelit ballroom                        │  │
-│    │──────────────────────────────────────────────│  │
-│    │ 🤖 Cyberpunk Character                      │  │
-│    │    Neon-lit hacker in a dystopian city       │  │
-│    └──────────────────────────────────────────────┘  │
-│  ▸ Landscapes & Worlds             (5 scenes)       │
-│  ▸ Mood & Atmosphere               (5 scenes)       │
-│  ...                                                 │
-└──────────────────────────────────────────────────────┘
+| Metric           | Value                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Total scenes** | 200                                                                                                                      |
+| **Free scenes**  | 25 (across 5 worlds: landscapes-and-worlds, mood-and-atmosphere, portraits-and-people, style-forward, trending-seasonal) |
+| **Pro scenes**   | 175 (across 18 worlds)                                                                                                   |
+| **Total worlds** | 23                                                                                                                       |
+| **Scene keys**   | id, name, world, description, emoji, tags, tier, prefills, tierGuidance, flavourPhrases                                  |
 
-Step 3 — User clicks "Cyberpunk Character":
-  → Dropdown closes
-  → Categories pre-fill with scene values
-  → Scene name appears in Scene Blueprint bar with ✕ to clear
-  → Cascade Intelligence triggers on all pre-filled values
-```
+### 6.3 World Breakdown (Actual)
 
-**Rules:**
+| World                      | Count | Tier |
+| -------------------------- | ----- | ---- |
+| abstract-and-experimental  | 8     | Pro  |
+| animals-and-creatures      | 8     | Pro  |
+| architecture-and-interiors | 10    | Pro  |
+| cinematic                  | 12    | Pro  |
+| commodity-inspired         | 10    | Pro  |
+| cultural-and-ceremonial    | 10    | Pro  |
+| dark-and-horror            | 8     | Pro  |
+| fantasy-and-mythology      | 12    | Pro  |
+| food-and-still-life        | 8     | Pro  |
+| historical-eras            | 12    | Pro  |
+| landscapes-and-worlds      | 5     | Free |
+| micro-and-macro            | 5     | Pro  |
+| mood-and-atmosphere        | 5     | Free |
+| nature-and-elements        | 10    | Pro  |
+| portraits-and-people       | 5     | Free |
+| portraiture-and-character  | 12    | Pro  |
+| sci-fi-and-future          | 12    | Pro  |
+| seasonal                   | 8     | Pro  |
+| style-forward              | 5     | Free |
+| trending-seasonal          | 5     | Free |
+| urban-and-street           | 12    | Pro  |
+| weather-driven             | 8     | Pro  |
+| whimsical-and-surreal      | 10    | Pro  |
 
-- Only one heading expanded at a time (accordion behaviour)
-- Pro world headings expand to show scene names + descriptions, but clicking a scene triggers upgrade prompt
-- Each pre-filled value has ✕ to clear individually
-- "Reset Scene" button clears all pre-fills (confirmation dialog if user modified values)
+### 6.4 Installed Files
 
-### 6.3 The 25 Free Scenes
+| File                                          | Lines | Purpose                                                                      |
+| --------------------------------------------- | ----- | ---------------------------------------------------------------------------- |
+| `src/data/scenes/scene-starters.json`         | —     | 200 scene definitions with full prefills, tier guidance, flavour phrases     |
+| `src/data/scenes/scene-starters.schema.json`  | 327   | JSON Schema validation                                                       |
+| `src/data/scenes/worlds.ts`                   | 239   | World definitions and ordering                                               |
+| `src/data/scenes/index.ts`                    | —     | Scene data barrel export                                                     |
+| `src/types/scene-starters.ts`                 | 291   | TypeScript types mirroring schema exactly                                    |
+| `src/components/providers/scene-selector.tsx` | 1,110 | Hierarchical accordion dropdown with world grouping, free/pro gating, search |
 
-**Portraits & People (5)**
+Also: `src/data/vocabulary/prompt-builder/scene-starters.json` (25 free scenes — legacy location)
 
-| #   | Scene Name          | Subject             | Action               | Style            | Environment      | Lighting          | Atmosphere |
-| --- | ------------------- | ------------------- | -------------------- | ---------------- | ---------------- | ----------------- | ---------- |
-| 1   | Dramatic Portrait   | portrait of a woman | looking away         | cinematic        | studio backdrop  | dramatic lighting | mysterious |
-| 2   | Fantasy Hero        | fantasy warrior     | standing confidently | concept art      | enchanted forest | golden hour       | ethereal   |
-| 3   | Street Photographer | street photographer | walking dynamically  | film photography | tokyo at night   | neon glow         | energetic  |
-| 4   | Vintage Glamour     | fashion model       | leaning casually     | daguerreotype    | grand ballroom   | candlelight       | romantic   |
-| 5   | Cyberpunk Character | cyberpunk hacker    | casting spell        | digital painting | cyberpunk city   | neon glow         | ominous    |
+### 6.5 Tests
 
-**Landscapes & Worlds (5)**
-
-| #   | Scene Name         | Subject            | Style            | Environment        | Lighting         | Atmosphere | Colour         |
-| --- | ------------------ | ------------------ | ---------------- | ------------------ | ---------------- | ---------- | -------------- |
-| 6   | Enchanted Forest   | tree of life       | oil painting     | enchanted forest   | dappled sunlight | ethereal   | warm palette   |
-| 7   | Desert Ruins       | ancient ruins      | matte painting   | desert oasis       | midday sun       | mysterious | earth tones    |
-| 8   | Underwater Kingdom | mermaid            | digital painting | underwater palace  | bioluminescent   | mystical   | cool tones     |
-| 9   | Space Vista        | spaceship          | concept art      | floating islands   | starlight        | serene     | monochromatic  |
-| 10  | Volcanic Fury      | volcanic landscape | hyperrealistic   | volcanic landscape | fire light       | dramatic   | vibrant colors |
-
-**Mood & Atmosphere (5)**
-
-| #   | Scene Name       | Subject             | Style            | Environment           | Lighting       | Atmosphere | Colour          |
-| --- | ---------------- | ------------------- | ---------------- | --------------------- | -------------- | ---------- | --------------- |
-| 11  | Film Noir        | Victorian detective | cinematic        | victorian street      | split lighting | ominous    | black and white |
-| 12  | Dreamscape       | ethereal fairy      | surrealist       | floating islands      | moonlight      | whimsical  | pastel colors   |
-| 13  | Horror Scene     | demon creature      | digital painting | crystal cave          | blacklight UV  | ominous    | desaturated     |
-| 14  | Golden Romance   | couple in love      | film photography | rooftop garden        | golden hour    | romantic   | warm palette    |
-| 15  | Psychedelic Trip | abstract            | glitch art       | bioluminescent forest | holographic    | energetic  | neon colors     |
-
-**Style-Forward (5)**
-
-| #   | Scene Name              | Subject           | Style        | Environment           | Lighting          | Atmosphere | Materials         |
-| --- | ----------------------- | ----------------- | ------------ | --------------------- | ----------------- | ---------- | ----------------- |
-| 16  | Anime Action            | samurai warrior   | anime style  | japanese temple       | volumetric rays   | dramatic   | —                 |
-| 17  | Oil Painting Still Life | flower bouquet    | oil painting | —                     | overcast soft     | serene     | velvet fabric     |
-| 18  | Concept Art Creature    | mythical dragon   | concept art  | mountain peak         | dramatic lighting | ominous    | —                 |
-| 19  | Pixel Art Retro         | robot android     | pixel art    | futuristic metropolis | LED strips        | energetic  | chrome reflection |
-| 20  | Art Deco Poster         | ballerina dancing | art deco     | grand ballroom        | spotlight         | elegant    | gold ornate       |
-
-**Trending / Seasonal (5 — rotate quarterly)**
-
-| #   | Scene Name          | Notes                    |
-| --- | ------------------- | ------------------------ |
-| 21  | Solarpunk Utopia    | Trending aesthetic       |
-| 22  | Dark Academia       | Trending aesthetic       |
-| 23  | Cottagecore Morning | Seasonal — spring/summer |
-| 24  | Cozy Winter Night   | Seasonal — autumn/winter |
-| 25  | Synthwave Sunset    | Perennial favourite      |
-
-### 6.4 The 175 Pro Scenes — World Categories
-
-| World                        | Count   | Example Scenes                                                                                                                                                                                                               |
-| ---------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Cinematic**                | 12      | Blade Runner Rain, Wes Anderson Palette, Kubrick Symmetry, Ghibli Dreamscape, Tarantino Standoff, Spielberg Wonder, Lynch Surreal, Kurosawa Duel, Nolan Inception, Tarkovsky Solitude, Villeneuve Vast, Scott Industrial     |
-| **Fantasy & Mythology**      | 12      | Dragon's Lair, Elven Court, Necromancer Tower, Norse Ragnarok, Japanese Yokai, Greek Pantheon, Fairy Ring, Dwarven Forge, Merlin's Study, Kraken Depths, Phoenix Rebirth, Shadow Realm                                       |
-| **Sci-Fi & Future**          | 12      | Space Station Life, Alien Marketplace, Mech Battle, Solarpunk City, Post-Apocalyptic, AI Consciousness, Colony Ship, Quantum Lab, Cybernetic Surgery, Terraform Dawn, Dyson Sphere, Digital Afterlife                        |
-| **Historical Eras**          | 12      | Ancient Egypt, Roman Arena, Viking Raid, Renaissance Workshop, Victorian London, 1920s Jazz, Samurai Duel, Medieval Siege, Byzantine Court, Aztec Temple, Silk Road, Industrial Revolution                                   |
-| **Urban & Street**           | 12      | Tokyo Neon, Havana Vintage, Mumbai Monsoon, NY Rooftop, Marrakech Souk, London Fog, Paris Rain, Shanghai Skyline, Rio Carnival, Istanbul Bazaar, Bangkok Night Market, Berlin Underground                                    |
-| **Nature & Elements**        | 10      | Volcanic Eruption, Aurora Borealis, Bioluminescent Bay, Supercell Storm, Cherry Blossom, Monsoon Deluge, Coral Reef, Frozen Waterfall, Desert Mirage, Ancient Redwoods                                                       |
-| **Architecture & Interiors** | 10      | Gothic Cathedral, Abandoned Factory, Luxury Penthouse, Infinite Library, Art Gallery, Japanese Ryokan, Brutalist Monument, Greenhouse Garden, Observatory Dome, Underground Cistern                                          |
-| **Portraiture & Character**  | 12      | High Fashion Editorial, Battle-Worn Warrior, Elderly Wisdom, Child's Wonder, Couple at Sunset, Masked Ball, Steampunk Inventor, Witch's Apprentice, Street Musician, Royal Coronation, Astronaut Reflection, Monk Meditation |
-| **Dark & Horror**            | 8       | Lovecraftian Deep, Haunted Manor, Gothic Vampire, Psychological Dread, Plague Doctor, Cursed Forest, Eldritch Ritual, Abandoned Asylum                                                                                       |
-| **Whimsical & Surreal**      | 10      | Dalí Dreamscape, Tiny World Macro, Impossible Architecture, Cloud Kingdom, Time-Frozen, Living Painting, Toy Soldier War, Mushroom Forest, Upside Down City, Paper Cut World                                                 |
-| **Cultural & Ceremonial**    | 10      | Tea Ceremony, Day of the Dead, Carnival Masquerade, Temple Prayer, Harvest Festival, Wedding Feast, Fire Dance, Lantern Release, Incense Meditation, Tribal Gathering                                                        |
-| **Abstract & Experimental**  | 8       | Geometric Explosion, Colour Field, Fractal Nature, Data Sculpture, Sound Visualised, Ink in Water, Light Painting, Deconstructed Portrait                                                                                    |
-| **Food & Still Life**        | 8       | Dutch Master Still Life, Street Food Steam, Cocktail Art, Ingredient Explosion, Market Produce, Baker's Dawn, Spice Palette, Wine Cellar                                                                                     |
-| **Animals & Creatures**      | 8       | Wildlife Documentary, Mythical Beast, Mechanical Creature, Spirit Animal, Deep Sea Creature, Pack Hunt, Bird Migration, Insect Macro                                                                                         |
-| **Commodity-Inspired**       | 10      | Gold Rush, Coffee Harvest, Oil Rig Storm, Silk Loom, Copper Mine, Wheat Field Harvest, Diamond Cutting, Spice Trade, Steel Foundry, Tea Plantation                                                                           |
-| **Weather-Driven**           | 8       | Monsoon Mumbai, Saharan Heatwave, Arctic Whiteout, London Pea-Souper, Tropical Cyclone, Cherry Blossom Rain, Desert Lightning, Nordic Midnight Sun                                                                           |
-| **Seasonal**                 | 8       | Spring Awakening, Summer Solstice, Autumn Harvest, Winter Solstice, Lunar New Year, Midsummer Night, Harvest Moon, First Snow                                                                                                |
-| **Micro & Macro**            | 5       | Dewdrop Universe, Satellite View, Cellular Cosmos, Ant's Perspective, Galaxy Collision                                                                                                                                       |
-| **TOTAL**                    | **175** |                                                                                                                                                                                                                              |
-
-### 6.5 Scene Starters × The 4 Optimizer Tiers
-
-Each scene stores ONE set of human-readable values. The assembler handles tier-specific formatting. But scenes include `tierGuidance` metadata:
-
-| Tier               | What happens                                                     | Scene awareness                                                                                                  |
-| ------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| **Tier 1 (CLIP)**  | Adds weights: `(cyberpunk hacker:1.3)`. Stacks quality boosters. | Scenes flag if they need fidelity terms. Show CLIP affinity score. Full 8-category pre-fill.                     |
-| **Tier 2 (MJ)**    | Appends `--ar`, `--v`, `--s`, `--no` parameters.                 | Scenes include recommended MJ params. Some need `--niji` (anime) or `--weird` (surreal). Full pre-fill.          |
-| **Tier 3 (NL)**    | Converts to flowing sentences.                                   | Scenes have a "narrative seed" — one-sentence NL description. Show NL affinity score. Full pre-fill.             |
-| **Tier 4 (Plain)** | Simplifies to 5–15 words.                                        | Scenes have a "simplified core" — 3–5 essential terms. Reduced pre-fill (3–5 categories only). Warns if complex. |
-
-### 6.6 Build Steps
-
-| Step | Task                             | Details                                                                                                            |
-| ---- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 2.1  | Design scene data JSON structure | Schema with id, name, world, description, prefills, tierGuidance, flavourPhrases, free/pro flag                    |
-| 2.2  | Write 25 free scenes             | Complete data entries. Test each on 2+ platforms (1 per tier).                                                     |
-| 2.3  | Write 175 Pro scenes             | Batch by world — complete one world at a time.                                                                     |
-| 2.4  | Scene schema + validation test   | All prefill values exist in vocabulary. All platforms exist. No orphans.                                           |
-| 2.5  | SceneSelector component          | Hierarchical accordion dropdown. Free scenes in 5 world headings. Pro scenes in 17 world headings, greyed with 🔒. |
-| 2.6  | Pre-fill logic                   | Populate categories, trigger cascade, ✕ clear buttons, "Reset Scene" button, confirmation dialog.                  |
-| 2.7  | Tier-aware pre-fill              | Adjust depth per tier. Show affinity indicator.                                                                    |
-| 2.8  | Pro gate integration             | Wire to `usePromagenAuth()`. 25 accessible, 175 visible but locked.                                                |
-
-**Effort:** 5–8 days
+- `src/__tests__/scene-starters.integrity.test.ts` (267 lines) — validates all prefill values exist in vocabulary, tier guidance structure, world assignments
 
 ---
 
 ## 7. Feature C — Explore Drawer (Phase 3)
 
-### 7.1 Concept
+**Status:** ✅ COMPLETE (including deferred items from Phase 4)
 
-Below each category dropdown, a collapsible section reads "Explore 847 more phrases ▾". When expanded, shows full vocabulary as browseable, searchable chip clouds grouped by source (Core, Weather, Commodity, Shared).
+### 7.1 What Was Built
 
-### 7.2 Tier-Aware Badges
+Below each category dropdown, a collapsible section showing full vocabulary as browseable, searchable chip clouds grouped by source (Core, Weather, Commodity, Shared). Includes scene flavour phrase tab, tier-aware badges on all chips, and cascade relevance ordering.
 
-| Tier               | Badge                                                   |
-| ------------------ | ------------------------------------------------------- |
-| **Tier 1 (CLIP)**  | CLIP weight indicator: `[golden hour ★1.3]`             |
-| **Tier 2 (MJ)**    | Parameter hints: `[cinematic → --ar 21:9]`              |
-| **Tier 3 (NL)**    | NL form tooltip on hover: "bathed in golden hour light" |
-| **Tier 4 (Plain)** | "⚡ simple" badge on safe terms. "⚠ complex" on others. |
+### 7.2 Tier-Aware Badges (✅ IMPLEMENTED)
 
-### 7.3 Chip Count Estimates (After Merge)
+All 4 tier badges are implemented via `getTierBadge()` function using word-count heuristics:
 
-| Category    | Core      | Weather    | Commodity  | Shared   | Total      |
-| ----------- | --------- | ---------- | ---------- | -------- | ---------- |
-| Subject     | 324       | —          | ~180       | —        | ~504       |
-| Action      | 314       | —          | ~220       | —        | ~534       |
-| Style       | 332       | —          | —          | —        | 332        |
-| Environment | 313       | ~1,032     | ~350       | —        | ~1,695     |
-| Composition | 311       | —          | —          | —        | 311        |
-| Camera      | 339       | —          | —          | —        | 339        |
-| Lighting    | 341       | 254        | ~130       | —        | ~725       |
-| Atmosphere  | 346       | 280        | ~400       | ~200     | ~1,226     |
-| Colour      | 333       | —          | ~150       | ~150     | ~633       |
-| Materials   | 325       | —          | ~340       | —        | ~665       |
-| Fidelity    | 317       | —          | —          | —        | 317        |
-| Negative    | 960       | —          | —          | —        | 960        |
-| **TOTAL**   | **3,955** | **~1,566** | **~1,770** | **~350** | **~7,641** |
+| Tier               | Badge                 | Logic                                                 |
+| ------------------ | --------------------- | ----------------------------------------------------- |
+| **Tier 1 (CLIP)**  | ★                     | 1–2 word terms (token-efficient for weighted prompts) |
+| **Tier 2 (MJ)**    | ◆                     | 2–4 word terms (Midjourney keyword sweet-spot)        |
+| **Tier 3 (NL)**    | 💬                    | 3+ word terms (natural language descriptive)          |
+| **Tier 4 (Plain)** | ⚡ simple / ⚠ complex | 1–2 words simple, 3+ complex                          |
 
-### 7.4 Build Steps
+### 7.3 Cascade Relevance Ordering (✅ IMPLEMENTED)
 
-| Step | Task                    | Details                                                                  |
-| ---- | ----------------------- | ------------------------------------------------------------------------ |
-| 3.1  | ExploreDrawer component | Collapsible section. Phrase count in header. Accordion by source.        |
-| 3.2  | Chip cloud rendering    | Click-to-add. Pagination/virtual scroll for 500+ chips.                  |
-| 3.3  | Search within Explore   | Text input. Real-time filter. Highlight substring.                       |
-| 3.4  | Contextual ordering     | Chips ordered by cascade score.                                          |
-| 3.5  | Tier-aware badges       | Per-tier badge rendering.                                                |
-| 3.6  | Performance guard       | Lazy-load on drawer open. Virtualise if > 500 chips. Memo source groups. |
-| 3.7  | Accessibility           | Keyboard nav. ARIA labels. Screen reader. Focus management.              |
+Chips sorted by cascade score when `cascadeScores` map is provided and active tab is not 'scene'. Higher-scoring terms appear first, giving users the most contextually relevant options at the top.
 
-**Effort:** 3–4 days
+### 7.4 Installed Files
+
+| File                                          | Lines | Purpose                                                                                                                         |
+| --------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `src/components/providers/explore-drawer.tsx` | 805   | Full explore drawer with tabs (All, Core, Weather, Commodity, Shared, Scene), search, pagination, tier badges, cascade ordering |
+
+### 7.5 Integration
+
+- Imported in `prompt-builder.tsx` at line 110: `import { ExploreDrawer, type CascadeScoreMap }`
+- Rendered at line 1500 within prompt builder layout
+- Receives `sceneFlavourPhrases`, `cascadeScores`, `platformTier` props
 
 ---
 
 ## 8. Polish & Integration (Phase 4)
 
-| Step | Task                            | Details                                                                                                        |
-| ---- | ------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| 4.1  | Scene Starters × Explore Drawer | Scene's `flavourPhrases` appear as "Scene suggestions" group at top of Explore.                                |
-| 4.2  | Analytics integration           | Track: scene_selected, scene_reset, explore_drawer_opened, explore_chip_clicked, cascade_reorder_triggered     |
-| 4.3  | Fluid typography                | All new components use CSS clamp(). No fixed font sizes.                                                       |
-| 4.4  | Documentation update            | Update prompt-builder-page.md, paid_tier.md, best-working-practice.md. Create scene-starters.md.               |
-| 4.5  | End-to-end test                 | Build prompt via Scene Starter → modify → use Explore Drawer → copy. Repeat per tier. Verify optimizer output. |
+**Status:** ✅ COMPLETE
 
-**Effort:** 2–3 days
+### 8.1 What Was Built
+
+| Step | Task                                                             | Status                                                     |
+| ---- | ---------------------------------------------------------------- | ---------------------------------------------------------- |
+| 4.1  | Scene Starters × Explore Drawer — flavour phrases as "Scene" tab | ✅ Wired in explore-drawer.tsx and scene-selector.tsx      |
+| 4.2  | Analytics integration — cascade_reorder_triggered event          | ✅ Wired in prompt-builder.tsx                             |
+| 4.3  | All 4 tier badges on Explore Drawer chips                        | ✅ Implemented (was originally deferred, now complete)     |
+| 4.4  | Cascade relevance chip ordering                                  | ✅ Implemented (was originally deferred, now complete)     |
+| 4.5  | Fluid typography — clamp() throughout                            | ✅ 92 uses in scene-selector.tsx, 35 in explore-drawer.tsx |
+
+### 8.2 Tests
+
+- `src/components/providers/__tests__/phase-4-evolution.test.ts` — Phase 4 integration tests
+
+### 8.3 Note on Deferred Items
+
+The original plan deferred two items for the Explore Drawer: (1) all 4 tier badges and (2) cascade relevance chip ordering. **Both have been implemented** and shipped as part of the Phase 3/4 build. The deferred item list is now empty.
 
 ---
 
 ## 9. Collective Intelligence Engine (Phase 5)
+
+**Status:** ✅ COMPLETE
 
 ### 9.1 The Learning Loop
 
@@ -598,34 +490,71 @@ When 237+ prompts share similar selections and score 90%+, propose new scene. Go
 | **Decay over time**              | 6-month-old data weighs less than last week's                       |
 | **Platform-specific learning**   | Separate models per tier (what works on MJ ≠ Canva)                 |
 
-### 9.4 Data Storage
+### 9.4 Telemetry & Database (Actual)
 
-- **Telemetry endpoint:** `POST /api/prompt-telemetry`
-- **Database table:** prompt_id, selections (JSON), platform, tier, score, created_at
-- **Per event:** ~500 bytes. 80,000 events = ~40MB raw.
-- **Nightly cron crunches to:** ~100KB of weights/matrices.
+| Component           | File                                           | Lines |
+| ------------------- | ---------------------------------------------- | ----- |
+| Telemetry endpoint  | `src/app/api/prompt-telemetry/route.ts`        | 264   |
+| Telemetry client    | `src/lib/telemetry/prompt-telemetry-client.ts` | 322   |
+| A/B hash util       | `src/lib/telemetry/ab-hash.ts`                 | 85    |
+| Database operations | `src/lib/learning/database.ts`                 | 721   |
 
-### 9.5 Cold Start
+Telemetry wired into `prompt-builder.tsx` at two copy paths (lines 1143 and 1217) as fire-and-forget.
 
-Hand-curated clusters from Phase 1 carry system until ~1,000 prompts. After ~10,000, learned data starts dominating. After ~80,000, system knows per-tier optimal combinations.
+### 9.5 14-Layer Aggregation Cron (Actual)
 
-### 9.6 Build Steps
+The nightly aggregation cron (`src/app/api/learning/aggregate/route.ts`, 1,354 lines) runs at 03:00 UTC daily and executes 14 computation layers:
 
-| Step | Task                                                                        | Effort   |
-| ---- | --------------------------------------------------------------------------- | -------- |
-| 5.1  | Telemetry endpoint `POST /api/prompt-telemetry`                             | 0.5 days |
-| 5.2  | Database schema (prompt_events table)                                       | 0.5 days |
-| 5.3  | Nightly aggregation cron (co-occurrence + sequences + scene candidates)     | 2 days   |
-| 5.4  | Co-occurrence weights JSON output                                           | 0.5 days |
-| 5.5  | Vocabulary-loader integration (blend learned + curated, configurable ratio) | 1 day    |
-| 5.6  | Auto-scene candidate pipeline + review queue                                | 1 day    |
-| 5.7  | Decay + diversity tuning                                                    | 0.5 days |
+| Layer | Phase    | What it computes                       |
+| ----- | -------- | -------------------------------------- |
+| 1     | 5 — 5.3b | Co-occurrence matrix                   |
+| 2     | 5 — 5.3c | Sequence patterns                      |
+| 3     | 5 — 5.3d | Scene candidates                       |
+| 4     | 6        | Weight recalibration (scoring-weights) |
+| 5     | 6        | Category value discovery               |
+| 6     | 6        | Term quality scores                    |
+| 7     | 6        | Threshold discovery                    |
+| 8     | 6        | Scorer health report                   |
+| 9     | 7.1      | Anti-pattern detection                 |
+| 10    | 7.1      | Collision matrix                       |
+| 11    | 7.2      | Iteration tracking insights            |
+| 12    | 7.3      | Redundancy detection                   |
+| 13    | 7.4      | Magic combos                           |
+| 14a   | 7.5      | Platform term quality                  |
+| 14b   | 7.5      | Platform co-occurrence                 |
 
-**Total effort:** 4–6 days
+Security: Cron secret validation (PROMAGEN_CRON_SECRET), advisory lock to prevent concurrent runs, returns 404 for invalid auth.
+
+### 9.6 Learning API Routes (Actual)
+
+14 API routes serve learning data to the frontend:
+
+| Route                                  | Lines | Phase |
+| -------------------------------------- | ----- | ----- |
+| `/api/learning/aggregate`              | 1,354 | 5–7.5 |
+| `/api/learning/co-occurrence`          | 75    | 5     |
+| `/api/learning/sequences`              | 75    | 5     |
+| `/api/learning/scene-candidates`       | 75    | 5     |
+| `/api/learning/scoring-weights`        | 78    | 6     |
+| `/api/learning/anti-patterns`          | 80    | 7.1   |
+| `/api/learning/collisions`             | 82    | 7.1   |
+| `/api/learning/iteration-insights`     | 83    | 7.2   |
+| `/api/learning/redundancy-groups`      | 82    | 7.3   |
+| `/api/learning/magic-combos`           | 80    | 7.4   |
+| `/api/learning/platform-term-quality`  | 88    | 7.5   |
+| `/api/learning/platform-co-occurrence` | 88    | 7.5   |
+| `/api/learning/ab-tests`               | 138   | 7.6   |
+| `/api/learning/ab-assignment`          | 106   | 7.6   |
+
+### 9.7 Tests
+
+- `src/lib/learning/__tests__/aggregate-phase6.test.ts` (527 lines) — aggregation pipeline integration tests
 
 ---
 
 ## 10. Self-Improving Scorer (Phase 6)
+
+**Status:** ✅ COMPLETE
 
 ### 10.1 The Problem
 
@@ -643,235 +572,264 @@ Current scorer uses static weights based on educated guesses. But what if prompt
 | 6   | Same combinations across many users                     | Convergent     | Medium  |
 | 7   | Prompt structure patterns correlating with copies/saves | Structural     | Medium  |
 
-### 10.3 Five Self-Improvement Mechanisms
+### 10.3 Five Self-Improvement Mechanisms (All Implemented)
 
-**Mechanism 1 — Weight Recalibration ("What Actually Matters?")**
+**Mechanism 1 — Weight Recalibration** (`weight-recalibration.ts`, 471 lines)
+Measure correlation between each scoring factor and outcomes. Recalibrate via Pearson correlation → normalise to weights summing to 1.0.
 
-Measure correlation between each scoring factor and outcomes. Recalibrate monthly via Pearson correlation → normalise to weights summing to 1.0. No ML required, just arithmetic.
+**Mechanism 2 — Threshold Discovery** (`threshold-discovery.ts`, 366 lines)
+Plot score vs copy rate. Find the "knee" where quality plateaus. Auto-adjust learning threshold.
 
-```
-Example: Day 1 → Day 30 weight shift:
-  categoryCount:  0.25 → 0.08  (less important than assumed)
-  coherence:      0.05 → 0.35  (massively more important)
-  promptLength:   0.20 → 0.18  (stable)
-  negativePresent: 0.15 → 0.05 (barely matters on Tier 3/4)
-```
+**Mechanism 3 — Per-Tier Scoring Models** (via `category-value-discovery.ts`, 380 lines)
+Four separate scoring models per tier with different factor weights.
 
-**Mechanism 2 — Threshold Discovery ("What Does 90% Actually Mean?")**
+**Mechanism 4 — Category Value Discovery** (`category-value-discovery.ts`, 380 lines)
+Learn which categories are high-value vs low-value per tier.
 
-Plot score vs copy rate. Find the "knee" where quality plateaus. Auto-adjust learning threshold to sit at quality plateau point.
-
-**Mechanism 3 — Per-Tier Scoring Models ("Midjourney Isn't Canva")**
-
-Four separate scoring models:
-
-| Tier           | High-Weight Factors                                                          | Low-Weight Factors                              |
-| -------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- |
-| Tier 1 (CLIP)  | keywordDensity, fidelityTerms, negativePresent                               | coherence (medium)                              |
-| Tier 2 (MJ)    | coherence, tierFormatting                                                    | fidelityTerms (MJ ignores "8k masterpiece")     |
-| Tier 3 (NL)    | coherence (highest)                                                          | categoryCount (3–4 well-described > 8 keywords) |
-| Tier 4 (Plain) | promptLength (INVERTED — shorter better), categoryCount (INVERTED — 2–3 max) | fidelityTerms (ZERO)                            |
-
-**Mechanism 4 — Category Value Discovery ("Which Categories Actually Matter?")**
-
-Learn which categories are high-value vs low-value per tier. A prompt with 4 high-value categories scores higher than 6 low-value ones. Feeds back into Cascading Intelligence.
-
-**Mechanism 5 — Term-Level Quality Scores ("Which Words Actually Work?")**
-
-Each term gets per-tier quality score. High-quality terms boosted in dropdown ordering. Low-quality terms demoted (not removed).
+**Mechanism 5 — Term-Level Quality Scores** (`term-quality-scoring.ts`, 398 lines)
+Each term gets per-tier quality score. High-quality terms boosted in dropdown ordering.
 
 ### 10.4 The Meta-Loop — Scoring Scores Itself
 
-Step 8 in nightly cron: measure score-outcome correlation. If correlation improves month-over-month, system genuinely learning. If plateaus, weights stable. If drops, flag for manual review.
+`scorer-health.ts` (388 lines) measures score-outcome correlation. If correlation improves month-over-month, system genuinely learning. If drops, flag for manual review.
 
-### 10.5 Build Steps
+### 10.5 Full Learning Engine File Inventory (Actual)
 
-| Step | Task                                                            | Effort   |
-| ---- | --------------------------------------------------------------- | -------- |
-| 6.1  | Extend telemetry (copy, save, return-time, reuse signals)       | 1 day    |
-| 6.2  | Store per-prompt score factor breakdown alongside total         | 0.5 days |
-| 6.3  | Nightly cron: weight recalibration (factor-outcome correlation) | 1 day    |
-| 6.4  | Nightly cron: per-tier scoring model generation                 | 1 day    |
-| 6.5  | Nightly cron: category value discovery                          | 0.5 days |
-| 6.6  | Nightly cron: term quality scores per tier                      | 1 day    |
-| 6.7  | Threshold auto-adjustment (knee detection)                      | 0.5 days |
-| 6.8  | Meta-check: score-outcome correlation trend monitoring          | 0.5 days |
+| File                               | Lines | Phase | Purpose                                         |
+| ---------------------------------- | ----- | ----- | ----------------------------------------------- |
+| `database.ts`                      | 721   | 5     | Secure parameterized database operations        |
+| `constants.ts`                     | 335   | 5     | Learning pipeline configuration constants       |
+| `decay.ts`                         | 190   | 5     | Time decay functions for telemetry weighting    |
+| `outcome-score.ts`                 | 529   | 5–6   | Compute outcome scores from 7 signals           |
+| `co-occurrence.ts`                 | 260   | 5     | Co-occurrence matrix computation                |
+| `co-occurrence-lookup.ts`          | 131   | 5     | Fast co-occurrence pair lookup                  |
+| `sequence-patterns.ts`             | 347   | 5     | Selection order pattern analysis                |
+| `scene-candidates.ts`              | 414   | 5     | Auto-scene candidate generation                 |
+| `weight-recalibration.ts`          | 471   | 6     | Factor-outcome correlation → weight adjustment  |
+| `threshold-discovery.ts`           | 366   | 6     | Quality threshold knee detection                |
+| `category-value-discovery.ts`      | 380   | 6     | Per-tier category importance ranking            |
+| `term-quality-scoring.ts`          | 398   | 6     | Per-term per-tier quality scores                |
+| `scorer-health.ts`                 | 388   | 6     | Meta-loop: score-outcome correlation monitoring |
+| `anti-pattern-detection.ts`        | 370   | 7.1   | Detect term pairs that kill prompts             |
+| `anti-pattern-lookup.ts`           | 144   | 7.1   | Fast anti-pattern pair lookup                   |
+| `collision-matrix.ts`              | 346   | 7.1   | Terms competing for same space                  |
+| `collision-lookup.ts`              | 183   | 7.1   | Fast collision pair lookup                      |
+| `iteration-tracking.ts`            | 642   | 7.2   | Session sequence analysis                       |
+| `weak-term-lookup.ts`              | 177   | 7.2   | Terms most often replaced                       |
+| `redundancy-detection.ts`          | 574   | 7.3   | Synonym/interchangeable term detection          |
+| `redundancy-lookup.ts`             | 246   | 7.3   | Redundancy group lookup                         |
+| `magic-combo-mining.ts`            | 595   | 7.4   | Frequent itemset mining (trios/quads)           |
+| `combo-lookup.ts`                  | 366   | 7.4   | Fast magic combo lookup                         |
+| `platform-term-quality.ts`         | 520   | 7.5   | Per-platform term quality scoring               |
+| `platform-term-quality-lookup.ts`  | 266   | 7.5   | Platform-specific term lookup                   |
+| `platform-co-occurrence.ts`        | 423   | 7.5   | Per-platform co-occurrence patterns             |
+| `platform-co-occurrence-lookup.ts` | 331   | 7.5   | Platform co-occurrence lookup                   |
+| `ab-testing.ts`                    | 988   | 7.6   | A/B test lifecycle management                   |
+| `ab-assignment.ts`                 | 88    | 7.6   | Deterministic hash-based user assignment        |
 
-**Total effort:** ~6 days (admin dashboard moved to Phase 7.10)
+**Total learning engine LOC:** 11,189
+
+### 10.6 Tests
+
+24 test files in `src/lib/learning/__tests__/`:
+
+- `weight-recalibration.test.ts` (499 lines)
+- `threshold-discovery.test.ts` (314 lines)
+- `category-value-discovery.test.ts` (436 lines)
+- `term-quality-scoring.test.ts` (488 lines)
+- `scorer-health.test.ts` (426 lines)
+- `outcome-score.test.ts` (352 lines)
+- `anti-pattern-detection.test.ts` (550 lines)
+- `collision-matrix.test.ts` (548 lines)
+- `negative-pattern-integration.test.ts` (394 lines)
+- `iteration-tracking.test.ts` (552 lines)
+- `iteration-integration.test.ts` (354 lines)
+- `redundancy-detection.test.ts` (648 lines)
+- `redundancy-integration.test.ts` (370 lines)
+- `magic-combo-mining.test.ts` (746 lines)
+- `combo-lookup.test.ts` (404 lines)
+- `combo-integration.test.ts` (382 lines)
+- `confidence-multiplier.test.ts` (509 lines)
+- `platform-co-occurrence.test.ts` (508 lines)
+- `platform-co-occurrence-lookup.test.ts` (411 lines)
+- `platform-term-quality.test.ts` (666 lines)
+- `platform-term-quality-lookup.test.ts` (379 lines)
+- `ab-testing.test.ts` (890 lines)
+- `ab-assignment.test.ts` (232 lines)
+- `aggregate-phase6.test.ts` (527 lines)
 
 ---
 
 ## 11. Advanced Learning Systems (Phase 7)
 
-Ten additional learning dimensions that take the system from "good" to "nobody can compete with this."
+Ten additional learning dimensions. Seven complete, three remaining.
 
-### 7.1 — Negative Pattern Learning ("What Kills a Prompt?")
+### 7.1 — Negative Pattern Learning ✅ COMPLETE
 
 Learn what DOESN'T work from abandoned/low-scoring prompts.
 
-**Anti-pattern detection:** Count term pairs that appear frequently in low-scoring prompts but rarely in high-scoring ones. Example: "oil painting" + "8k resolution" + "ray tracing" — contradictory aesthetic (traditional medium vs photorealistic tech). When user selects "oil painting", actively DEMOTE "8k resolution" and "ray tracing" with a subtle conflict indicator.
+**Anti-pattern detection** (`anti-pattern-detection.ts`, 370 lines): Count term pairs that appear frequently in low-scoring prompts but rarely in high-scoring ones. When user selects "oil painting", actively DEMOTE "8k resolution" and "ray tracing".
 
-**Term collision maps:** Pairs that occupy the same "space" and compete. "golden hour" + "moonlight" → 23% copy rate (terrible). Each alone → 80%+. Both are lighting sources — using both confuses the model.
+**Collision matrix** (`collision-matrix.ts`, 346 lines): Pairs that occupy the same "space" and compete. "golden hour" + "moonlight" → each alone 80%+, both together 23%.
+
+**Lookups:** `anti-pattern-lookup.ts` (144 lines), `collision-lookup.ts` (183 lines)
+
+**API routes:** `/api/learning/anti-patterns` (80 lines), `/api/learning/collisions` (82 lines)
 
 **Output files:** `anti-patterns.json`, `collision-matrix.json`
 
-**Effort:** 1.5 days
+### 7.2 — Iteration Tracking ✅ COMPLETE
 
-### 7.2 — Iteration Tracking ("How Do People Fix Prompts?")
+Track sequential prompt attempts within a session.
 
-Track sequential prompt attempts within a session (user builds, copies, returns, changes, copies again).
+**Engine** (`iteration-tracking.ts`, 642 lines): Session sequence analysis — which category users add FIRST when fixing, which changes produce biggest score jumps, which terms get REPLACED most.
 
-**What this teaches:**
+**Weak term lookup** (`weak-term-lookup.ts`, 177 lines): Terms most often replaced by users.
 
-- Which category users add FIRST when fixing a prompt → highest-value category
-- Which changes produce biggest score jumps → recalibrates category value weights
-- Which terms get REPLACED most often → weak terms, demote in dropdown
-- Final attempt in sequence (user doesn't return) → highest-confidence quality signal, weight 3× higher
-- Average iterations needed → if decreasing over time, system is improving
+**Sequence patterns** (`sequence-patterns.ts`, 347 lines): Selection order analysis.
 
-**Data structure:** `iteration_sessions` table linking sequential prompt_events by session_id + attempt_number.
+**API route:** `/api/learning/iteration-insights` (83 lines)
 
-**Effort:** 1.5 days
-
-### 7.3 — Semantic Redundancy Detection ("Which Words Say the Same Thing?")
+### 7.3 — Semantic Redundancy Detection ✅ COMPLETE
 
 Detect terms that users pick interchangeably (never both) with similar outcomes.
 
-**Example:** "cinematic lighting" (78%), "dramatic lighting" (15%), "film lighting" (7%) — all produce similar copy rates. Functionally identical for AI generation.
+**Engine** (`redundancy-detection.ts`, 574 lines): Identifies functionally identical terms.
 
-**What this enables:**
+**Lookup** (`redundancy-lookup.ts`, 246 lines): Fast redundancy group queries.
 
-- Redundancy warnings: "These terms overlap. One is usually enough."
-- Smart substitution suggestions
-- Token efficiency on Tier 4
-- Dropdown deduplication in Explore Drawer ("similar to your selection" label)
+**API route:** `/api/learning/redundancy-groups` (82 lines)
 
 **Output file:** `redundancy-groups.json`
 
-**Effort:** 1 day
-
-### 7.4 — Higher-Order Combinations ("The Magic Trios")
+### 7.4 — Higher-Order Combinations ✅ COMPLETE
 
 Co-occurrence matrices capture PAIRS. Some magic only happens with 3+ terms together.
 
-**Example:** "oil painting" + "golden hour" + "impasto texture" → 93% (excellent). No pair alone predicts this.
+**Engine** (`magic-combo-mining.ts`, 595 lines): Frequent itemset mining (Apriori/FP-Growth) on telemetry data. Top 500–1,000 trios/quads.
 
-**Implementation:** Frequent itemset mining (Apriori/FP-Growth algorithm) on telemetry data. Store top 500–1,000 magic combos (trios and quads). When 2 terms from a magic combo are selected, the third gets a massive boost — "you're two-thirds of the way to something that works really well."
+**Lookup** (`combo-lookup.ts`, 366 lines): When 2 terms from a magic combo are selected, the third gets a massive boost.
+
+**API route:** `/api/learning/magic-combos` (80 lines)
 
 **Output file:** `magic-combos.json`
 
-**Effort:** 1.5 days
+### 7.5 — Per-Platform Learning ✅ COMPLETE
 
-### 7.5 — Per-Platform Learning (Not Just Per-Tier)
+Within Tier 1, Leonardo might handle "neon glow" brilliantly while NightCafe struggles.
 
-Within Tier 1, Leonardo might handle "neon glow" brilliantly while NightCafe struggles. With 500+ prompts per platform, learn platform-specific term quality scores and co-occurrence patterns.
+**Platform term quality** (`platform-term-quality.ts`, 520 lines + lookup 266 lines): Per-platform term scoring with confidence-weighted tier fallback.
 
-**Cold start:** Use tier-level weights as fallback, blend in platform-specific data as it accumulates:
+**Platform co-occurrence** (`platform-co-occurrence.ts`, 423 lines + lookup 331 lines): Platform-specific pair patterns.
 
-`finalWeight = (platformData × platformConfidence) + (tierData × (1 - platformConfidence))`
+**API routes:** `/api/learning/platform-term-quality` (88 lines), `/api/learning/platform-co-occurrence` (88 lines)
 
-where `platformConfidence` scales 0→1 as sample count grows.
+Cold start: `finalWeight = (platformData × platformConfidence) + (tierData × (1 - platformConfidence))` where `platformConfidence` scales 0→1 as sample count grows.
 
-**Output:** Per-platform entries in `term-quality-scores.json`
-
-**Effort:** 1 day
-
-### 7.6 — A/B Testing the Scoring Model
+### 7.6 — A/B Testing Pipeline ✅ COMPLETE
 
 Split-test scoring model changes before committing them.
 
-**Mechanism:** Serve 50% of users current model (control), 50% new model (variant). Measure which group produces higher copy/save/reuse rates over 7 days. If variant wins with p < 0.05, auto-promote. If loses, auto-rollback.
+**Engine** (`ab-testing.ts`, 988 lines): Full A/B test lifecycle — create, assign, measure, auto-promote/rollback. Statistical significance via p-value calculation.
 
-**Automated pipeline:** Nightly cron proposes weight changes → creates A/B test → test runs 7 days → auto-promotes or rollbacks → weekly email summary: "3 tests ran, 2 promoted, 1 rolled back. Net improvement: +2.3% copy rate."
+**Assignment** (`ab-assignment.ts`, 88 lines): Deterministic hash-based user assignment (same user always gets same variant).
 
-**Data structure:** `ab_test_assignments` table (user_hash → variant_id per test).
+**Hashing** (`ab-hash.ts`, 85 lines): Stable hash for anonymous user bucketing.
 
-**Effort:** 2 days
+**API routes:** `/api/learning/ab-tests` (138 lines — CRUD), `/api/learning/ab-assignment` (106 lines)
 
-### 7.7 — User Skill Segmentation ("Beginners Need Different Help Than Experts")
+**Database:** `ab_test_assignments` table (user_hash → variant_id per test). Version 2.2.0 of `database.ts` includes A/B testing CRUD + prompt_events migration.
 
-Automatic skill detection from behaviour:
+### 7.7 — Vocabulary Crowdsourcing ✅ COMPLETE
 
-| Signal              | Beginner | Intermediate | Expert       |
-| ------------------- | -------- | ------------ | ------------ |
-| Sessions            | First 5  | 6–20         | 20+          |
-| Categories filled   | ≤ 3      | 4–6          | 6+           |
-| Uses free text      | Never    | Occasionally | Frequently   |
-| Uses Explore Drawer | Never    | Sometimes    | Default open |
-| Session length      | < 2 min  | 2–5 min      | 5+ min       |
-| Saved prompts       | None     | Some         | Library user |
+**Note:** The original plan listed Phase 7.7 as "User Skill Segmentation." During implementation, this was repurposed to "Vocabulary Crowdsourcing Pipeline" — a community-driven vocabulary expansion system with admin review workflow. Skill segmentation may be built as a separate future phase.
 
-**Adaptive behaviour:**
+**What was built (3,535 LOC total):**
 
-- **Beginner:** Scene Starters prominent. Cascade aggressive (fewer, obviously "right" options). Scoring lenient. Tooltips visible.
-- **Expert:** Explore Drawer open by default. Cascade subtle (reorder, don't hide). Scoring precise. Term quality badges visible.
-- **Scoring adapts:** Beginner scoring rewards using Scene Starters (+15 points). Expert scoring rewards sophistication.
+A complete pipeline for users to suggest new vocabulary terms, with intelligent auto-filtering and an admin review interface.
 
-**Output file:** `skill-thresholds.json`
+#### 7.7.1 Submission Pipeline
 
-**Effort:** 1 day
+| Component          | File                                       | Lines | Purpose                                                                                                |
+| ------------------ | ------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------ |
+| Types              | `src/types/vocab-submission.ts`            | 420   | Full type system: VocabSubmission, SubmissionStatus, ConfidenceLevel, AdminAction types                |
+| Auto-filter        | `src/lib/vocabulary/vocab-auto-filter.ts`  | 172   | 3-layer dedup: exact match, normalised match (case/whitespace/punctuation), fuzzy similarity threshold |
+| Category suggester | `src/lib/vocabulary/category-suggester.ts` | 255   | Smart category suggestion using keyword pattern matching against existing vocabulary                   |
+| Client hook        | `src/hooks/use-vocab-submission.ts`        | 152   | React hook for submission UI: validation, submission state, error handling                             |
 
-### 7.8 — Temporal Intelligence ("When Matters")
+#### 7.7.2 Admin Review API
+
+| Handler                            | Purpose                                    |
+| ---------------------------------- | ------------------------------------------ |
+| GET                                | Fetch pending submissions with filtering   |
+| POST (action: reject)              | Reject individual submission with reason   |
+| POST (action: undo-reject)         | Rescue rejected submission back to pending |
+| POST (action: accept-batch)        | Accept all visible pending terms           |
+| POST (action: rescue)              | Rescue specific rejected term              |
+| POST (action: reassign-category)   | Move term to different category            |
+| POST (action: override-confidence) | Manually set confidence level              |
+
+**File:** `src/app/api/admin/vocab-submissions/route.ts` (904 lines)
+
+#### 7.7.3 Admin Review UI
+
+**File:** `src/app/admin/vocab-submissions/page.tsx` (1,632 lines)
+
+Features:
+
+- Smart Batch Preview with accept/reject counts
+- Clickable category badges for instant reassignment (cycles through all 12 categories)
+- Clickable confidence badges (cycles low → medium → high → low)
+- Category distribution anomaly alert (warns when >60% of batch in single category — bot/bulk detection)
+- Live 30-second polling for new submissions
+- Keyboard navigation (J = next, K = previous, X = reject, U = undo)
+- Export-to-PR workflow for generating merge scripts
+
+#### 7.7.4 Data Storage
+
+**File:** `src/data/learned/vocab-submissions.json` — JSON file storage for submissions.
+
+#### 7.7.5 Tests
+
+- `src/__tests__/vocab-submission.integrity.test.ts` (537 lines, 69 tests passing) — validates 3-layer dedup, category suggestion, submission lifecycle, admin actions, confidence override, anomaly detection
+
+### 7.8 — Temporal Intelligence ❌ NOT STARTED
 
 Track seasonal trends, weekly patterns, and platform update impacts.
 
-**Patterns detected:**
+**Planned patterns:**
 
-- Seasonal: "snow" terms → 340% more popular Nov–Feb. "cherry blossom" → 800% spike March–April.
-- Weekly: Weekend prompts 40% more experimental than weekday.
-- Platform updates: MJ v7 released → historical weights invalid → correlation drops → system enters "learning period" with heavy recent-data weighting → recalibrated within 2–3 weeks.
-
-**What this enables:**
-
-- Data-driven seasonal Scene Starter rotation
-- "Trending Now" section in Explore Drawer
-- Automatic platform update detection and recalibration
+- Seasonal: "snow" terms → 340% more popular Nov–Feb
+- Weekly: Weekend prompts 40% more experimental than weekday
+- Platform updates: MJ v7 released → historical weights invalid → system enters "learning period"
 
 **Output files:** `temporal-boosts.json`, `trending-terms.json`
 
+**Note:** `trending-dock.tsx` and `trending-table.tsx` exist in the codebase but are unrelated homepage UI components, not the temporal learning engine.
+
 **Effort:** 1 day
 
-### 7.9 — Prompt Compression Intelligence ("What Can Be Removed?")
+### 7.9 — Prompt Compression Intelligence ❌ NOT STARTED
 
 Learn what can be REMOVED without affecting quality.
 
-**Example:** "highly detailed, intricate, 8k resolution, best quality, masterpiece" → 78% copy rate. Just "highly detailed" → 77% copy rate. The extra 4 terms add 1% at the cost of 5 tokens.
+**Existing infrastructure:** A basic compression engine exists (`src/lib/compress.ts`, `src/lib/prompt-compression.ts`, `src/types/compression.ts`, `src/data/compression/compression-dictionary.json`) with synonym substitution and shorthand. This is the _static_ compression engine (abbreviations, redundant modifier removal).
 
-**Per-tier compression profiles:**
-
-- Tier 1: Gentle compression. Keep 15+ terms.
-- Tier 2: Sweet spot 8–12 terms + params. Remove quality junk MJ ignores.
-- Tier 3: Sweet spot 2–3 natural sentences. Remove keyword-style terms.
-- Tier 4: Maximum 5–8 words. Brutal compression.
+**What's missing:** The _learned_ compression profiles — per-tier optimal prompt length and removable term sets based on telemetry analysis.
 
 **Output file:** `compression-profiles.json`
 
 **Effort:** 1 day
 
-### 7.10 — User Feedback Invitation ("Did This Actually Work?")
+### 7.10 — User Feedback Invitation ❌ NOT STARTED
 
 The biggest gap: we never ask. We infer quality from proxies. A direct signal is 10× more valuable.
 
-**Simple post-generation feedback (60s after copy, or next visit):**
+**Existing infrastructure:** `feedback-bar.tsx` exists as a prompt quality indicator (poor/ok/great) but is NOT the post-copy feedback widget.
 
-```
-┌──────────────────────────────────────────────┐
-│  How did your last prompt turn out?          │
-│                                              │
-│  👍 Great    👌 Okay    👎 Not good          │
-│                                              │
-│  [Skip]                                      │
-└──────────────────────────────────────────────┘
-```
+**What's missing:** The post-generation 👍👌👎 widget that appears 60s after copy or on next visit. Three buttons, one click.
 
-Three buttons. One click. Even 20% response rate = thousands of ground-truth data points per month.
-
-**What this enables:**
-
-- Ground truth calibration (score vs actual image quality)
-- Per-platform quality mapping
-- Term effectiveness with direct evidence
-- The scoring system calibrates against ACTUAL outcomes, not just proxy signals
+**Design constraint:** The three-point scale must include explanatory text so users understand 👌 means "mediocre, not impressive" — not approval. Options: tooltips on each button, short labels beneath icons ("Nailed it" / "Just okay" / "Missed"), or words as primary UI with icons secondary.
 
 **Data structure:** `feedback_events` table (prompt_event_id, rating, timestamp)
 
@@ -879,111 +837,62 @@ Three buttons. One click. Even 20% response rate = thousands of ground-truth dat
 
 ---
 
-## 12. Admin Command Centre (Phase 7.10)
+## 12. Admin Command Centre (Phase 7.11)
 
-**Route:** `/admin/scoring-health` — separate standalone page within the Promagen app.
+**Status:** ⚠️ PARTIAL — Admin infrastructure live, scoring-health dashboard not built.
 
-### 12.1 Dashboard Sections
+### 12.1 What's Built
 
-**Section 1 — Scorer Health Overview**
+| Component                | File                                                   | Lines | Status              |
+| ------------------------ | ------------------------------------------------------ | ----- | ------------------- |
+| Admin layout             | `src/app/admin/layout.tsx`                             | 55    | ✅ Live             |
+| Admin navigation         | `src/app/admin/admin-nav.tsx`                          | 52    | ✅ Live             |
+| Admin dashboard          | `src/app/admin/page.tsx`                               | 100   | ✅ Live             |
+| Vocab submissions review | `src/app/admin/vocab-submissions/page.tsx`             | 1,632 | ✅ Live (Phase 7.7) |
+| Scene candidates review  | `src/app/admin/scene-candidates/page.tsx`              | 526   | ✅ Live             |
+| Exchange editor          | `src/app/admin/exchanges/page.tsx`                     | —     | ✅ Live             |
+| Provider browser         | `src/app/admin/providers/page.tsx`                     | —     | ✅ Live             |
+| Admin actions            | `src/app/admin/actions.ts`                             | —     | ✅ Live             |
+| Scene candidates API     | `src/app/api/admin/learning/scene-candidates/route.ts` | 239   | ✅ Live             |
+| Migration API            | `src/app/api/admin/learning/migrate/route.ts`          | 186   | ✅ Live             |
 
-| Metric                              | Display                                         |
-| ----------------------------------- | ----------------------------------------------- |
-| Score-outcome correlation (current) | Large number + trend arrow + sparkline (30-day) |
-| Correlation change vs last month    | +/- percentage with colour (green = improving)  |
-| Total prompts logged                | Counter                                         |
-| Active A/B tests                    | Count + status badges                           |
-| Last cron run                       | Timestamp + duration + success/fail             |
+### 12.2 What's NOT Built — Scoring Health Dashboard
 
-**Section 2 — Weight Drift Visualisation**
+The `/admin/scoring-health` page with its 10 sections is not yet built:
 
-Line chart showing how each scoring factor's weight has changed over time:
+| Section | Description                                                                 | Status                                |
+| ------- | --------------------------------------------------------------------------- | ------------------------------------- |
+| 1       | Scorer Health Overview (correlation metrics, trend arrows, sparklines)      | ❌                                    |
+| 2       | Weight Drift Visualisation (line chart showing factor weight changes)       | ❌                                    |
+| 3       | Per-Tier Scoring Models (side-by-side weight comparison, heatmap)           | ❌                                    |
+| 4       | Term Quality Leaderboard (top/bottom 20 per category per tier)              | ❌                                    |
+| 5       | Anti-Pattern Alerts (collision pairs, severity scores, manual overrides)    | ❌                                    |
+| 6       | A/B Test Results (control vs variant, significance, promote/rollback)       | ❌                                    |
+| 7       | Auto-Scene Candidate Review (preview, approve/reject, confidence)           | ✅ Built at `/admin/scene-candidates` |
+| 8       | Temporal Trends (trending terms, seasonal patterns, platform update alerts) | ❌                                    |
+| 9       | User Skill Distribution (pie chart, graduation funnel)                      | ❌                                    |
+| 10      | Feedback Summary (👍👌👎 distribution, per-platform satisfaction)           | ❌                                    |
 
-```
-Weight Evolution (90 days)
-  coherence:      ████████████████████████████████▓▓▓▓  0.05 → 0.35
-  categoryCount:  ████████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  0.25 → 0.08
-  tierFormat:     ████████████████████████████████████  0.15 → 0.17
-  promptLength:   ████████████████████████████████████  0.20 → 0.18
-  ...
-```
+### 12.3 Access Control
 
-**Section 3 — Per-Tier Scoring Models**
+Admin layout uses dark theme (bg gradient + white text). Not visible to regular users. Admin pages accessed directly via `/admin` URL.
 
-Table showing current weights for each tier side-by-side. Heatmap colouring (green = high weight, grey = low).
-
-**Section 4 — Term Quality Leaderboard**
-
-Top 20 and bottom 20 terms per category per tier. Sortable by quality score, usage count, trend direction.
-
-**Section 5 — Anti-Pattern Alerts**
-
-Detected collision pairs and anti-patterns with sample counts and severity scores. Ability to manually override (force-keep or force-suppress a pattern).
-
-**Section 6 — A/B Test Results**
-
-Current and historical A/B tests. Control vs variant metrics. Statistical significance indicator. Promote/rollback buttons.
-
-**Section 7 — Auto-Scene Candidates**
-
-Proposed scenes from collective intelligence. Preview with prefills. Approve/reject buttons. Confidence score and sample count.
-
-**Section 8 — Temporal Trends**
-
-Trending terms (last 7 days vs previous 7 days). Seasonal patterns. Platform update detection alerts.
-
-**Section 9 — User Skill Distribution**
-
-Pie chart: beginner / intermediate / expert. Average journey length (sessions to graduate). Conversion funnel: beginner → Scene Starter user → Pro subscriber.
-
-**Section 10 — Feedback Summary**
-
-👍/👌/👎 distribution. Per-platform satisfaction rates. Terms with highest 👎 rate (candidates for demotion). Correlation between assigned score and user rating.
-
-Design Constraint for Phase 7.10 (Feedback Widget)
-Hard requirement: The three-point feedback scale (great / okay / poor) must include explanatory text or tooltips so users understand the middle option means "mediocre, not impressive" — not a second positive. If users misread 👌 as approval rather than "meh," the outcome data feeding Phase 6's weight recalibration is corrupted and the scorer learns from noise.
-Options to evaluate when building Phase 7.10:
-
-Tooltip on each button explaining what it means
-Short label text beneath each icon (e.g. "Nailed it" / "Just okay" / "Missed")
-Use words as the primary UI with 👍👌👎 icons secondary
-
-The data schema ('great' | 'okay' | 'poor') is unaffected — this is purely a presentation concern, but it directly impacts data quality for the entire self-improving scorer pipeline.
-### 12.2 Access Control
-
-Admin-only route protected by Clerk role check. Not visible to regular users. No link in main navigation — accessed directly via URL.
-
-### 12.3 Build Steps
-
-| Step    | Task                                     | Effort   |
-| ------- | ---------------------------------------- | -------- |
-| 7.10.1  | Page scaffolding + route + auth guard    | 0.5 days |
-| 7.10.2  | Scorer health overview (metrics cards)   | 0.5 days |
-| 7.10.3  | Weight drift chart (Recharts line chart) | 0.5 days |
-| 7.10.4  | Per-tier model comparison table          | 0.5 days |
-| 7.10.5  | Term quality leaderboard                 | 0.5 days |
-| 7.10.6  | Anti-pattern alerts panel                | 0.5 days |
-| 7.10.7  | A/B test results + controls              | 0.5 days |
-| 7.10.8  | Auto-scene candidate review queue        | 0.5 days |
-| 7.10.9  | Temporal trends + feedback summary       | 0.5 days |
-| 7.10.10 | User skill distribution                  | 0.5 days |
-
-**Total effort for admin dashboard:** ~5 days
+**Estimated remaining effort:** ~4 days (Section 7 already exists)
 
 ---
 
 ## 13. The 4 Optimizer Tiers — Cross-Feature Matrix
 
-| Feature                    | Tier 1 (CLIP, 13 platforms)                                            | Tier 2 (MJ, 2 platforms)                                | Tier 3 (NL, 10 platforms)                         | Tier 4 (Plain, 17 platforms)                                     |
-| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------- |
-| **Scene Starters**         | Full 8-category pre-fill. Auto-adds fidelity. CLIP affinity score.     | Full pre-fill. Suggests MJ params. MJ affinity score.   | Full pre-fill. Narrative seed. NL affinity score. | Reduced 3–5 categories. Simplified core. Complexity warning.     |
-| **Cascading Intelligence** | Full cascade. Extra tier1Boost weight. Quality terms always suggested. | Full cascade. MJ affinities (--niji, --weird).          | Full cascade. Favours tier3Phrase variants.       | Dampened cascade (0.5×). Fewer options. "Keep simple" bias.      |
-| **Explore Drawer**         | CLIP weight badges (★1.3). Full depth.                                 | Parameter hints (→ --ar 21:9). Full depth.              | NL tooltips on hover. Full depth.                 | "⚡ simple" badges. Complex term warnings. Collapsed by default. |
-| **Vocabulary Merge**       | All merged. CLIP-friendly boosted.                                     | All merged. MJ-compatible highlighted.                  | All merged. NL-friendly prioritised.              | Reduced set. Only tier4Simple terms.                             |
-| **Co-occurrence Learning** | Per Tier 1 model. Keyword coherence patterns.                          | Per Tier 2 model. MJ-specific combos.                   | Per Tier 3 model. Narrative flow patterns.        | Per Tier 4 model. Simplicity patterns.                           |
-| **Scoring Model**          | keywordDensity HIGH, fidelityTerms HIGH, negativePresent HIGH.         | coherence HIGH, tierFormatting HIGH, fidelityTerms LOW. | coherence HIGHEST, categoryCount LOW.             | promptLength HIGH INVERTED, fidelityTerms ZERO.                  |
-| **Term Quality**           | Per Tier 1 scores.                                                     | Per Tier 2 scores.                                      | Per Tier 3 scores.                                | Per Tier 4 scores.                                               |
-| **Compression**            | Gentle. 15+ terms OK.                                                  | Medium. 8–12 + params.                                  | 2–3 sentences.                                    | Brutal. 5–8 words max.                                           |
+| Feature                    | Tier 1 (CLIP, 13 platforms)                                            | Tier 2 (MJ, 2 platforms)                                | Tier 3 (NL, 10 platforms)                         | Tier 4 (Plain, 17 platforms)                                 |
+| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------------------ |
+| **Scene Starters**         | Full 8-category pre-fill. Auto-adds fidelity. CLIP affinity score.     | Full pre-fill. Suggests MJ params. MJ affinity score.   | Full pre-fill. Narrative seed. NL affinity score. | Reduced 3–5 categories. Simplified core. Complexity warning. |
+| **Cascading Intelligence** | Full cascade. Extra tier1Boost weight. Quality terms always suggested. | Full cascade. MJ affinities (--niji, --weird).          | Full cascade. Favours tier3Phrase variants.       | Dampened cascade (0.5×). Fewer options. "Keep simple" bias.  |
+| **Explore Drawer**         | CLIP weight badges (★1.3). Full depth.                                 | Parameter hints (◆ sweet-spot). Full depth.             | NL tooltips (💬 descriptive). Full depth.         | ⚡ simple / ⚠ complex badges. Collapsed by default.          |
+| **Vocabulary Merge**       | All merged. CLIP-friendly boosted.                                     | All merged. MJ-compatible highlighted.                  | All merged. NL-friendly prioritised.              | Reduced set. Only tier4Simple terms.                         |
+| **Co-occurrence Learning** | Per Tier 1 model. Keyword coherence patterns.                          | Per Tier 2 model. MJ-specific combos.                   | Per Tier 3 model. Narrative flow patterns.        | Per Tier 4 model. Simplicity patterns.                       |
+| **Scoring Model**          | keywordDensity HIGH, fidelityTerms HIGH, negativePresent HIGH.         | coherence HIGH, tierFormatting HIGH, fidelityTerms LOW. | coherence HIGHEST, categoryCount LOW.             | promptLength HIGH INVERTED, fidelityTerms ZERO.              |
+| **Term Quality**           | Per Tier 1 scores.                                                     | Per Tier 2 scores.                                      | Per Tier 3 scores.                                | Per Tier 4 scores.                                           |
+| **Compression**            | Gentle. 15+ terms OK.                                                  | Medium. 8–12 + params.                                  | 2–3 sentences.                                    | Brutal. 5–8 words max.                                       |
 
 ### Tier Platform Lists
 
@@ -1006,6 +915,8 @@ Admin-only route protected by Clerk role check. Not visible to regular users. No
   "name": "Blade Runner Rain",
   "world": "cinematic",
   "description": "Neon-drenched cyberpunk street in heavy rain",
+  "emoji": "🌃",
+  "tags": ["cyberpunk", "rain", "neon"],
   "tier": "pro",
   "prefills": {
     "subject": ["cyberpunk hacker"],
@@ -1043,29 +954,30 @@ Admin-only route protected by Clerk role check. Not visible to regular users. No
     ],
     "atmosphere": ["electric tension in the air", "steam rising from vents", "distant sirens"],
     "environment": ["rain-slicked concrete canyon", "towering megastructure shadows"]
-  },
-  "tags": ["rain", "night", "cyberpunk", "cinematic", "urban", "moody"]
+  }
 }
 ```
 
-### 14.2 Semantic Cluster Entry
+### 14.2 Vocabulary Submission Entry (Phase 7.7)
 
 ```json
 {
-  "id": "cyberpunk",
-  "name": "Cyberpunk",
-  "weight": 8,
-  "members": {
-    "subject": ["cyberpunk hacker", "android humanoid", "bounty hunter", "mech pilot"],
-    "action": ["running dynamically", "fighting fiercely", "casting spell"],
-    "style": ["digital painting", "concept art", "cyberpunk aesthetic", "synthwave"],
-    "environment": ["cyberpunk city", "neon alleyway", "futuristic metropolis"],
-    "lighting": ["neon glow", "holographic", "LED strips", "blacklight UV"],
-    "atmosphere": ["ominous", "dramatic", "energetic", "mysterious"],
-    "colour": ["neon colors", "teal and orange", "high contrast"],
-    "materials": ["chrome reflection", "iridescent metal", "brushed steel"],
-    "camera": ["anamorphic lens", "dutch angle"],
-    "fidelity": ["8k resolution", "ray tracing", "unreal engine"]
+  "id": "sub_abc123",
+  "term": "ethereal mist",
+  "suggestedCategory": "atmosphere",
+  "status": "pending",
+  "confidence": "high",
+  "source": "user",
+  "submittedAt": "2026-02-27T10:00:00Z",
+  "dupCheck": {
+    "exact": false,
+    "normalised": false,
+    "fuzzyScore": 0.42
+  },
+  "categorySuggestion": {
+    "category": "atmosphere",
+    "confidence": 0.89,
+    "reasoning": "Pattern match: mist/fog/haze → atmosphere"
   }
 }
 ```
@@ -1139,21 +1051,22 @@ Admin-only route protected by Clerk role check. Not visible to regular users. No
 
 Every file is JSON. Code reads them. Code never changes. Data gets smarter nightly.
 
-| File                        | Phase | Size Est. | Contents                                         |
-| --------------------------- | ----- | --------- | ------------------------------------------------ |
-| `scoring-weights.json`      | 6     | < 1KB     | Per-tier factor weights                          |
-| `co-occurrence-matrix.json` | 5     | ~50–100KB | Term pair co-occurrence counts by tier           |
-| `anti-patterns.json`        | 7.1   | ~10KB     | Term pairs that sabotage each other              |
-| `collision-matrix.json`     | 7.1   | ~5KB      | Terms that compete for same "space"              |
-| `magic-combos.json`         | 7.4   | ~20KB     | Top 500–1,000 trios/quads                        |
-| `term-quality-scores.json`  | 6     | ~30KB     | Per-term per-tier quality scores                 |
-| `redundancy-groups.json`    | 7.3   | ~10KB     | Synonym groups with interchangeability data      |
-| `compression-profiles.json` | 7.9   | ~5KB      | Optimal prompt length + removable terms per tier |
-| `scene-candidates.json`     | 5     | ~15KB     | Auto-proposed scenes for review                  |
-| `trending-terms.json`       | 7.8   | ~5KB      | Terms trending up/down in last 7 days            |
-| `temporal-boosts.json`      | 7.8   | ~5KB      | Seasonal and time-of-week modifiers              |
-| `skill-thresholds.json`     | 7.7   | ~2KB      | Beginner/intermediate/expert boundaries          |
-| `scorer-health-report.json` | 6     | ~3KB      | Correlation trends, drift alerts                 |
+| File                        | Phase | Size Est. | Contents                                         | Engine File                 |
+| --------------------------- | ----- | --------- | ------------------------------------------------ | --------------------------- |
+| `scoring-weights.json`      | 6     | < 1KB     | Per-tier factor weights                          | `weight-recalibration.ts`   |
+| `co-occurrence-matrix.json` | 5     | ~50–100KB | Term pair co-occurrence counts by tier           | `co-occurrence.ts`          |
+| `anti-patterns.json`        | 7.1   | ~10KB     | Term pairs that sabotage each other              | `anti-pattern-detection.ts` |
+| `collision-matrix.json`     | 7.1   | ~5KB      | Terms that compete for same "space"              | `collision-matrix.ts`       |
+| `magic-combos.json`         | 7.4   | ~20KB     | Top 500–1,000 trios/quads                        | `magic-combo-mining.ts`     |
+| `term-quality-scores.json`  | 6     | ~30KB     | Per-term per-tier quality scores                 | `term-quality-scoring.ts`   |
+| `redundancy-groups.json`    | 7.3   | ~10KB     | Synonym groups with interchangeability data      | `redundancy-detection.ts`   |
+| `compression-profiles.json` | 7.9   | ~5KB      | Optimal prompt length + removable terms per tier | ❌ Not yet built            |
+| `scene-candidates.json`     | 5     | ~15KB     | Auto-proposed scenes for review                  | `scene-candidates.ts`       |
+| `trending-terms.json`       | 7.8   | ~5KB      | Terms trending up/down in last 7 days            | ❌ Not yet built            |
+| `temporal-boosts.json`      | 7.8   | ~5KB      | Seasonal and time-of-week modifiers              | ❌ Not yet built            |
+| `skill-thresholds.json`     | —     | ~2KB      | Beginner/intermediate/expert boundaries          | ❌ Not yet built            |
+| `scorer-health-report.json` | 6     | ~3KB      | Correlation trends, drift alerts                 | `scorer-health.ts`          |
+| `vocab-submissions.json`    | 7.7   | Variable  | User-submitted vocabulary pending review         | `vocab-auto-filter.ts`      |
 
 **Total nightly output:** ~160–200KB. Trivial.
 
@@ -1161,79 +1074,131 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 
 ## 16. File Impact Map
 
-### New Files
+### New Files — Actually Installed
 
-| File                                            | Phase | Purpose                            |
-| ----------------------------------------------- | ----- | ---------------------------------- |
-| `data/vocabulary/merged/*.json` (7 files)       | 0     | Curated vocab mapped to categories |
-| `data/vocabulary/merged/merge-manifest.json`    | 0     | Source tracking                    |
-| `data/intelligence/semantic-clusters.json`      | 1     | 40–60 cluster definitions          |
-| `data/intelligence/direct-affinities.json`      | 1     | 200–400 term relationships         |
-| `data/scenes/scene-starters.json`               | 2     | 200 scene definitions              |
-| `data/scenes/scene-starters.schema.json`        | 2     | Validation schema                  |
-| `components/providers/scene-selector.tsx`       | 2     | Hierarchical accordion dropdown    |
-| `components/providers/explore-drawer.tsx`       | 3     | Expandable vocabulary panel        |
-| `data/learned/*.json` (13 files)                | 5–7   | Cron-generated weight files        |
-| `api/prompt-telemetry/route.ts`                 | 5     | Telemetry endpoint                 |
-| `lib/learning/aggregation-cron.ts`              | 5–7   | Nightly cron logic                 |
-| `app/admin/scoring-health/page.tsx`             | 7.10  | Admin Command Centre               |
-| `components/admin/*.tsx` (10 panels)            | 7.10  | Dashboard section components       |
-| `components/prompt-builder/feedback-widget.tsx` | 7.10  | 👍👌👎 post-copy widget            |
+**Phase 0 — Vocabulary Merge:**
+| File | Purpose |
+| ---- | ------- |
+| `src/data/vocabulary/merged/index.ts` (232 lines) | Loader: `getMergedOptions()`, `getMergedCount()` |
+| `src/data/vocabulary/merged/merge-manifest.json` | Source tracking |
+| `src/data/vocabulary/merged/*-merged.json` (9 files) | Merged vocabulary per category |
+| `src/data/vocabulary/merged/curated-*.json` (16 files) | Curated source files |
+| `src/data/vocabulary/merged/*-audit-report.json` (3 files) | Audit reports |
+
+**Phase 1 — Cascading Intelligence:**
+| File | Purpose |
+| ---- | ------- |
+| `src/data/prompt-intelligence/*.json` (7 data files + 7 .d.ts files) | Clusters, affinities, tags, conflicts, platform hints, market moods, families |
+| `src/data/vocabulary/intelligence/` (mirror + index.ts + README.md) | Vocabulary-accessible copy |
+| `src/lib/prompt-intelligence/*.ts` (6 files, 2,576 lines) | Core intelligence: coherent-randomise, combine, phrase-filter, types, index, get-families |
+| `src/lib/prompt-intelligence/engines/*.ts` (6 files, 3,875 lines) | Engines: suggestion, integration, platform-optimization, market-mood, conflict-detection, index |
+
+**Phase 2 — Scene Starters:**
+| File | Purpose |
+| ---- | ------- |
+| `src/data/scenes/scene-starters.json` | 200 scenes |
+| `src/data/scenes/scene-starters.schema.json` (327 lines) | JSON Schema |
+| `src/data/scenes/worlds.ts` (239 lines) | World definitions |
+| `src/data/scenes/index.ts` | Barrel export |
+| `src/types/scene-starters.ts` (291 lines) | TypeScript types |
+| `src/components/providers/scene-selector.tsx` (1,110 lines) | UI component |
+
+**Phase 3 — Explore Drawer:**
+| File | Purpose |
+| ---- | ------- |
+| `src/components/providers/explore-drawer.tsx` (805 lines) | Full explore drawer with tabs, search, pagination, badges, cascade ordering |
+
+**Phase 5–7.6 — Learning Engine:**
+| File | Purpose |
+| ---- | ------- |
+| `src/lib/learning/*.ts` (29 files, 11,189 lines) | Complete learning engine |
+| `src/app/api/learning/*/route.ts` (14 routes) | Learning API endpoints |
+| `src/app/api/prompt-telemetry/route.ts` (264 lines) | Telemetry endpoint |
+| `src/lib/telemetry/*.ts` (3 files, 407 lines) | Client telemetry + A/B hashing |
+| `src/lib/learning/__tests__/*.ts` (24 test files) | Comprehensive test suite |
+
+**Phase 7.7 — Vocabulary Crowdsourcing:**
+| File | Purpose |
+| ---- | ------- |
+| `src/types/vocab-submission.ts` (420 lines) | Type system |
+| `src/lib/vocabulary/vocab-auto-filter.ts` (172 lines) | 3-layer dedup |
+| `src/lib/vocabulary/category-suggester.ts` (255 lines) | Smart category suggestion |
+| `src/hooks/use-vocab-submission.ts` (152 lines) | React submission hook |
+| `src/app/api/admin/vocab-submissions/route.ts` (904 lines) | Admin API (6 handlers) |
+| `src/app/admin/vocab-submissions/page.tsx` (1,632 lines) | Admin review UI |
+| `src/data/learned/vocab-submissions.json` | Submission storage |
+
+**Admin Infrastructure:**
+| File | Purpose |
+| ---- | ------- |
+| `src/app/admin/layout.tsx` (55 lines) | Shared admin layout with dark theme |
+| `src/app/admin/admin-nav.tsx` (52 lines) | Client navigation with active-link highlighting |
+| `src/app/admin/page.tsx` (100 lines) | Admin dashboard overview |
+| `src/app/admin/scene-candidates/page.tsx` (526 lines) | Scene candidate review |
+| `src/app/admin/exchanges/page.tsx` | Exchange editor |
+| `src/app/admin/providers/page.tsx` | Provider browser |
+| `src/app/admin/actions.ts` | Server actions |
+| `src/app/api/admin/learning/scene-candidates/route.ts` (239 lines) | Scene candidates API |
+| `src/app/api/admin/learning/migrate/route.ts` (186 lines) | Migration API |
 
 ### Modified Files
 
-| File                                      | Phase   | Changes                                                               |
-| ----------------------------------------- | ------- | --------------------------------------------------------------------- |
-| `lib/vocabulary/vocabulary-loader.ts`     | 0+1+5   | Load merged vocab. Cluster + affinity scoring. Blend learned weights. |
-| `lib/prompt-builder.ts`                   | 1       | Full cross-category context passing                                   |
-| `components/providers/prompt-builder.tsx` | 1+2+3+5 | SceneSelector. ExploreDrawer. Telemetry logging. Feedback widget.     |
-| `types/prompt-builder.ts`                 | 1       | Extended VocabularyContext type                                       |
-| `lib/prompt-optimizer.ts`                 | 6       | Read learned scoring weights instead of static ones                   |
+| File                                                    | Phase   | Changes                                                                          |
+| ------------------------------------------------------- | ------- | -------------------------------------------------------------------------------- |
+| `lib/vocabulary/vocabulary-loader.ts`                   | 0+1+5   | Load merged vocab. Family imports. Core first, merged appended.                  |
+| `components/providers/prompt-builder.tsx` (1,907 lines) | 1+2+3+5 | SceneSelector (line 109), ExploreDrawer (line 110), Telemetry (lines 1143, 1217) |
 
 ### Untouched Files
 
-| File                                    | Reason                                              |
-| --------------------------------------- | --------------------------------------------------- |
-| `data/vocabulary/prompt-builder/*.json` | Core vocab stays pure                               |
-| `data/vocabulary/weather/*.json`        | Still consumed by weather-prompt-generator          |
-| `data/vocabulary/commodities/*.json`    | Still consumed by commodity-prompt-generator        |
-| `data/vocabulary/shared/*.json`         | Still consumed by assembler                         |
-| `data/platform-tiers.ts`                | Tier definitions unchanged                          |
-| `lib/prompt-builder/generators.ts`      | Assembler formats whatever user selects — unchanged |
+| File                                    | Reason                                       |
+| --------------------------------------- | -------------------------------------------- |
+| `data/vocabulary/prompt-builder/*.json` | Core vocab stays pure                        |
+| `data/vocabulary/weather/*.json`        | Still consumed by weather-prompt-generator   |
+| `data/vocabulary/commodities/*.json`    | Still consumed by commodity-prompt-generator |
+| `data/vocabulary/shared/*.json`         | Still consumed by assembler                  |
+| `data/platform-tiers.ts`                | Tier definitions unchanged                   |
 
 ---
 
 ## 17. Build Phase Summary
 
-| Phase       | Feature                                                                  | Effort         | Dependencies |
-| ----------- | ------------------------------------------------------------------------ | -------------- | ------------ |
-| **Phase 0** | Vocabulary Merge (curate + map phrases)                                  | 2–3 days       | None         |
-| **Phase 1** | Cascading Intelligence (clusters + affinities + scoring)                 | 3–5 days       | Phase 0      |
-| **Phase 2** | Scene Starters (200 scenes + hierarchical dropdown)                      | 5–8 days       | Phase 1      |
-| **Phase 3** | Explore Drawer (expandable vocab panel)                                  | 3–4 days       | Phase 0, 1   |
-| **Phase 4** | Polish & Integration                                                     | 2–3 days       | Phases 0–3   |
-| **Phase 5** | Collective Intelligence Engine (telemetry + co-occurrence + auto-scenes) | 4–6 days       | Phase 4      |
-| **Phase 6** | Self-Improving Scorer (weight recalibration + per-tier models)           | ~6 days        | Phase 5      |
-| **Phase 7** | Advanced Learning Systems:                                               |                | Phase 6      |
-|             | 7.1 Negative Pattern Learning (anti-patterns + collisions)               | 1.5 days       |              |
-|             | 7.2 Iteration Tracking (session sequences)                               | 1.5 days       |              |
-|             | 7.3 Semantic Redundancy Detection                                        | 1 day          |              |
-|             | 7.4 Higher-Order Combinations (magic trios)                              | 1.5 days       |              |
-|             | 7.5 Per-Platform Learning (42 individual models)                         | 1 day          |              |
-|             | 7.6 A/B Testing Pipeline                                                 | 2 days         |              |
-|             | 7.7 User Skill Segmentation                                              | 1 day          |              |
-|             | 7.8 Temporal Intelligence (seasonal + platform updates)                  | 1 day          |              |
-|             | 7.9 Prompt Compression Intelligence                                      | 1 day          |              |
-|             | 7.10 User Feedback Invitation (👍👌👎)                                   | 1 day          |              |
-|             | 7.11 Admin Command Centre (`/admin/scoring-health`)                      | 5 days         |              |
-| **TOTAL**   |                                                                          | **42–57 days** |              |
+| Phase       | Feature                         | Effort (Planned)              | Effort (Actual)           | Status        | Dependencies |
+| ----------- | ------------------------------- | ----------------------------- | ------------------------- | ------------- | ------------ |
+| **Phase 0** | Vocabulary Merge                | 2–3 days                      | ✅ Complete               | ✅ DONE       | None         |
+| **Phase 1** | Cascading Intelligence          | 4–6 days                      | ✅ Complete               | ✅ DONE       | Phase 0      |
+| **Phase 2** | Scene Starters (200 scenes)     | 5–8 days                      | ✅ Complete               | ✅ DONE       | Phase 1      |
+| **Phase 3** | Explore Drawer                  | 3–4 days                      | ✅ Complete               | ✅ DONE       | Phase 0, 1   |
+| **Phase 4** | Polish & Integration            | 2–3 days                      | ✅ Complete               | ✅ DONE       | Phases 0–3   |
+| **Phase 5** | Collective Intelligence Engine  | 4–6 days                      | ✅ Complete               | ✅ DONE       | Phase 4      |
+| **Phase 6** | Self-Improving Scorer           | ~6 days                       | ✅ Complete               | ✅ DONE       | Phase 5      |
+| **7.1**     | Negative Pattern Learning       | 1.5 days                      | ✅ Complete               | ✅ DONE       | Phase 6      |
+| **7.2**     | Iteration Tracking              | 1.5 days                      | ✅ Complete               | ✅ DONE       | Phase 6      |
+| **7.3**     | Semantic Redundancy Detection   | 1 day                         | ✅ Complete               | ✅ DONE       | Phase 6      |
+| **7.4**     | Higher-Order Combinations       | 1.5 days                      | ✅ Complete               | ✅ DONE       | Phase 6      |
+| **7.5**     | Per-Platform Learning           | 1 day                         | ✅ Complete               | ✅ DONE       | Phase 6      |
+| **7.6**     | A/B Testing Pipeline            | 2 days                        | ✅ Complete               | ✅ DONE       | Phase 6      |
+| **7.7**     | Vocabulary Crowdsourcing        | 1 day (planned as Skill Seg.) | ✅ Complete (7 parts)     | ✅ DONE       | Phase 6      |
+| **7.8**     | Temporal Intelligence           | 1 day                         | —                         | ❌ TODO       | Phase 6      |
+| **7.9**     | Prompt Compression Intelligence | 1 day                         | —                         | ❌ TODO       | Phase 6      |
+| **7.10**    | User Feedback Invitation        | 1 day                         | —                         | ❌ TODO       | Phase 6      |
+| **7.11**    | Admin Command Centre            | 5 days                        | ⚠️ Partial (~2 days done) | ⚠️ PARTIAL    | Phase 6      |
+| **TOTAL**   |                                 | **42–57 days**                | **~40 days complete**     | **~85% done** |              |
+
+### Remaining Work
+
+| Phase               | Feature                                               | Estimated Effort |
+| ------------------- | ----------------------------------------------------- | ---------------- |
+| 7.8                 | Temporal Intelligence                                 | 1 day            |
+| 7.9                 | Prompt Compression Intelligence (learned profiles)    | 1 day            |
+| 7.10                | User Feedback Invitation (👍👌👎 widget)              | 1 day            |
+| 7.11                | Admin Scoring Health Dashboard (remaining 8 sections) | ~4 days          |
+| **TOTAL REMAINING** |                                                       | **~7 days**      |
 
 ### Parallel Work Opportunities
 
-- Phase 7.1–7.10 are independent of each other — can be built in any order
-- Phase 7.11 (Admin Command Centre) can start once Phase 6 is deployed (it visualises Phase 5–7 data)
-- Scene data authoring (Phase 2.2, 2.3) can run in parallel with Phase 1 engineering
-- Phase 5 telemetry collection starts immediately after Phase 4 deployment; Phases 6–7 engineering can begin while data accumulates
+- Phase 7.8–7.10 are independent of each other — can be built in any order
+- Phase 7.11 remaining sections depend on data from Phases 7.8–7.10 for full visualisation
+- Scene data authoring can run in parallel with any remaining engineering
 
 ---
 
@@ -1252,6 +1217,7 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 | **Scoring drift** — weights shift in wrong direction      | Low        | High   | A/B testing validates before committing. Meta-check monitors correlation. Rollback ability. |
 | **Cold start** — not enough data for learning             | Medium     | Low    | Hand-curated clusters carry system for months. Graceful fallback.                           |
 | **Platform updates** — MJ v7 invalidates learned weights  | Medium     | Medium | Temporal intelligence detects correlation drops. Auto-enters learning period.               |
+| **Vocab crowdsourcing spam** — bot/bulk submissions       | Medium     | Medium | 3-layer dedup, category anomaly alert (>60% single category), confidence scoring.           |
 
 ---
 
@@ -1269,6 +1235,7 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 | User feedback response rate      | N/A                  | 20%+                         | feedback_events / prompt copies              |
 | Scoring weight stability         | N/A                  | Month-over-month convergence | Weight drift chart in Admin                  |
 | Beginner → Expert graduation     | N/A                  | Avg 8 sessions               | Skill segmentation tracking                  |
+| Vocab submissions per month      | N/A                  | 50+ quality submissions      | Admin review queue volume                    |
 
 ---
 
@@ -1299,4 +1266,4 @@ This data is the product. The vocabulary, the scenes, the cascading intelligence
 
 ---
 
-_End of document. Version 2.0.0. 2026-02-24._
+_End of document. Version 2.1.0. Updated 2026-02-27. Previous version: 2.0.0 (2026-02-24)._

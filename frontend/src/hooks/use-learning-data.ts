@@ -3,22 +3,25 @@
 // UNIFIED LEARNING DATA — Composition Hook
 // ============================================================================
 //
-// Phase 7.5, Part 7.5e (Improvement 1) — Thin facade composing:
+// Phase 7.5, Part 7.5e (Improvement 1) + Phase 7.6e — Thin facade composing:
 //   • useLearnedWeights()   → tier-level data (Phases 5–7.4)
 //   • usePlatformLearning() → platform-specific data (Phase 7.5)
+//   • useABTest()           → A/B test variant assignment (Phase 7.6)
 //
-// Components call one hook instead of two. Zero new logic, pure composition.
+// Components call one hook instead of three. Zero new logic, pure composition.
 // Prevents component authors from forgetting to call one of the hooks.
 //
 // Usage:
-//   const { coOccurrenceLookup, platformTermQualityLookup, isLoading, ... } = useLearningData();
+//   const { coOccurrenceLookup, platformTermQualityLookup, abVariant, isLoading, ... } = useLearningData();
 //
 // isLoading semantics:
-//   • true only while BOTH hooks are still loading (one finishing is enough to start rendering)
-//   • error is the first non-null error from either hook
+//   • true only while BOTH tier + platform hooks are still loading
+//   • AB loading is tracked separately (abIsLoading) since it's non-blocking
+//   • error is the first non-null error from any hook
 //
-// Version: 1.0.0
+// Version: 2.0.0 — Phase 7.6e A/B test variant assignment
 // Created: 2026-02-27
+// Updated: 2026-02-27
 //
 // Existing features preserved: Yes.
 // ============================================================================
@@ -27,6 +30,7 @@
 
 import { useLearnedWeights, type UseLearnedWeightsReturn } from './use-learned-weights';
 import { usePlatformLearning, type UsePlatformLearningReturn } from './use-platform-learning';
+import { useABTest, type UseABTestReturn } from './use-ab-test';
 
 // ============================================================================
 // RETURN TYPE
@@ -71,6 +75,25 @@ export interface UseLearningDataReturn {
   /** Milliseconds since platform data was last computed (>24h = stale) */
   platformDataAge: UsePlatformLearningReturn['dataAge'];
 
+  // ── A/B testing (Phase 7.6) ─────────────────────────────────────────────
+  /** Active A/B test ID (null if none running) */
+  activeTestId: UseABTestReturn['activeTestId'];
+
+  /** Active A/B test name (null if none running) */
+  activeTestName: UseABTestReturn['activeTestName'];
+
+  /** Assigned variant: 'A' (control) or 'B' (variant), null if no test */
+  abVariant: UseABTestReturn['variant'];
+
+  /** Variant-specific weight overrides (null = use default weights) */
+  abVariantWeights: UseABTestReturn['variantWeights'];
+
+  /** Stable anonymous browser hash for A/B assignment */
+  abHash: UseABTestReturn['abHash'];
+
+  /** Whether the A/B assignment is still loading (non-blocking) */
+  abIsLoading: UseABTestReturn['isLoading'];
+
   // ── Merged status ───────────────────────────────────────────────────────
   /** True only while BOTH hooks are still loading */
   isLoading: boolean;
@@ -97,6 +120,7 @@ export interface UseLearningDataReturn {
  * const {
  *   coOccurrenceLookup, blendRatio, antiPatternLookup, // tier
  *   platformTermQualityLookup, platformCoOccurrenceLookup, // platform
+ *   activeTestId, abVariant, abVariantWeights, abHash, // A/B
  *   isLoading, error,
  * } = useLearningData();
  * ```
@@ -104,6 +128,7 @@ export interface UseLearningDataReturn {
 export function useLearningData(): UseLearningDataReturn {
   const tier = useLearnedWeights();
   const platform = usePlatformLearning();
+  const ab = useABTest();
 
   return {
     // Tier-level
@@ -122,15 +147,24 @@ export function useLearningData(): UseLearningDataReturn {
     platformLastUpdatedAt: platform.lastUpdatedAt,
     platformDataAge: platform.dataAge,
 
-    // Merged status — loading only when BOTH are loading
+    // A/B testing
+    activeTestId: ab.activeTestId,
+    activeTestName: ab.activeTestName,
+    abVariant: ab.variant,
+    abVariantWeights: ab.variantWeights,
+    abHash: ab.abHash,
+    abIsLoading: ab.isLoading,
+
+    // Merged status — loading only when BOTH tier + platform are loading
+    // (AB loading is tracked separately via abIsLoading since it's non-blocking)
     isLoading: tier.isLoading && platform.isLoading,
 
-    // First non-null error from either hook
-    error: tier.error || platform.error,
+    // First non-null error from any hook
+    error: tier.error || platform.error || ab.error,
 
-    // Refetch both
+    // Refetch all three
     refetch: async () => {
-      await Promise.allSettled([tier.refetch(), platform.refetch()]);
+      await Promise.allSettled([tier.refetch(), platform.refetch(), ab.refetch()]);
     },
   };
 }

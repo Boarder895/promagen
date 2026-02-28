@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "lastBatchAt": null,
+  "submissions": [],
+  "filtered": [],
+  "stats": {
+    "totalReceived": 0,
+    "pending": 0,
+    "accepted": 0,
+    "rejected": 0,
+    "autoFiltered": 0
+  },
+  "dailyGrowth": []
+}

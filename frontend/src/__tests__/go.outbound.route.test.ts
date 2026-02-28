@@ -17,6 +17,8 @@ function expectPromagenResponseHeaders(res: Response): void {
   expect(safe === '0' || safe === '1').toBe(true);
 }
 
+// Console silencing handled by api-test-setup.ts (setupFilesAfterFramework).
+
 describe('/go/[providerId] outbound redirect', () => {
   beforeEach(() => {
     jest.resetModules();

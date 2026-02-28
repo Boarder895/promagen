@@ -3,14 +3,17 @@
 // USE SMART REORDER HOOK
 // ============================================================================
 // React hook for smart reordering of dropdown options.
+//
+// Version: 1.2.0 — Uses shared useSyncComputation utility
 // ============================================================================
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { PromptCategory } from '@/types/prompt-builder';
 import {
   getOrderedOptions,
   type MarketDataInput,
 } from '@/lib/prompt-intelligence';
+import { useSyncComputation } from '@/hooks/use-sync-computation';
 
 // ============================================================================
 // Types
@@ -81,71 +84,59 @@ export function useSmartReorder(
     recommendedThreshold = 65,
   } = hookOptions;
   
-  const [orderedOptions, setOrderedOptions] = useState<ScoredOption[]>([]);
-  
-  // Use ref for selections
-  const selectionsRef = useRef(selections);
-  selectionsRef.current = selections;
-  
-  // Stable keys for dependencies
+  // Stable keys for dependency tracking
   const selectionsKey = JSON.stringify(selections);
   const optionsKey = JSON.stringify(options);
   
-  // Calculate ordered options
-  const calculateOrder = useCallback(() => {
-    if (!enabled || options.length === 0) {
-      setOrderedOptions(options.map(o => ({ option: o, score: 50, isRecommended: false })));
-      return;
-    }
-    
-    const scored = getOrderedOptions({
-      options,
-      category,
-      selections: selectionsRef.current,
-      market: marketMoodEnabled ? { enabled: true, data: marketData } : undefined,
-    });
-    
-    setOrderedOptions(scored.map(s => ({
-      ...s,
-      isRecommended: s.score >= recommendedThreshold,
-    })));
-  }, [enabled, options, category, marketMoodEnabled, marketData, recommendedThreshold]);
-  
-  // Recalculate on changes
-  useEffect(() => {
-    calculateOrder();
-     
-  }, [calculateOrder, selectionsKey, optionsKey]);
+  // Core computation via shared utility
+  const { value: orderedOptions, refresh: reorder } = useSyncComputation<ScoredOption[]>(
+    () => {
+      if (!enabled || options.length === 0) {
+        return options.map(o => ({ option: o, score: 50, isRecommended: false }));
+      }
+      
+      const scored = getOrderedOptions({
+        options,
+        category,
+        selections,
+        market: marketMoodEnabled ? { enabled: true, data: marketData } : undefined,
+      });
+      
+      return scored.map(s => ({
+        ...s,
+        isRecommended: s.score >= recommendedThreshold,
+      }));
+    },
+    [enabled, optionsKey, category, selectionsKey, marketMoodEnabled, marketData, recommendedThreshold]
+  );
   
   // Derived values
-  const optionStrings = useMemo(() => {
-    return orderedOptions.map(o => o.option);
-  }, [orderedOptions]);
+  const optionStrings = useMemo(() => orderedOptions.map(o => o.option), [orderedOptions]);
   
-  const recommended = useMemo(() => {
-    return orderedOptions.filter(o => o.isRecommended).map(o => o.option);
-  }, [orderedOptions]);
+  const recommended = useMemo(
+    () => orderedOptions.filter(o => o.isRecommended).map(o => o.option),
+    [orderedOptions]
+  );
   
-  // Score lookup map
+  // Lookup structures
   const scoreMap = useMemo(() => {
     const map = new Map<string, number>();
     orderedOptions.forEach(o => map.set(o.option, o.score));
     return map;
   }, [orderedOptions]);
   
-  // Recommended lookup set
-  const recommendedSet = useMemo(() => {
-    return new Set(recommended);
-  }, [recommended]);
+  const recommendedSet = useMemo(() => new Set(recommended), [recommended]);
   
-  // Helper functions
-  const getScore = useCallback((option: string): number => {
-    return scoreMap.get(option) ?? 50;
-  }, [scoreMap]);
+  // Helpers
+  const getScore = useCallback(
+    (option: string): number => scoreMap.get(option) ?? 50,
+    [scoreMap]
+  );
   
-  const isRecommendedFn = useCallback((option: string): boolean => {
-    return recommendedSet.has(option);
-  }, [recommendedSet]);
+  const isRecommendedFn = useCallback(
+    (option: string): boolean => recommendedSet.has(option),
+    [recommendedSet]
+  );
   
   return {
     orderedOptions,
@@ -153,7 +144,7 @@ export function useSmartReorder(
     recommended,
     getScore,
     isRecommended: isRecommendedFn,
-    reorder: calculateOrder,
+    reorder,
   };
 }
 

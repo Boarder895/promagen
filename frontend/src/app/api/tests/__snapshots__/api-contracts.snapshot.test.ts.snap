@@ -1,0 +1,126 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Contract: GET /api/exchanges response structure matches snapshot 1`] = `
+{
+  "asOf": "string",
+  "count": "number",
+  "exchanges": [
+    {
+      "city": "string",
+      "country": "string",
+      "exchange": "string",
+      "hemisphere": "string",
+      "id": "string",
+      "iso2": "string",
+      "latitude": "number",
+      "longitude": "number",
+      "tz": "string",
+    },
+  ],
+  "ok": "boolean",
+}
+`;
+
+exports[`Contract: GET /api/fx response structure matches snapshot 1`] = `
+{
+  "data": [
+    {
+      "base": "string",
+      "category": "string",
+      "change": "number",
+      "changePct": "number",
+      "id": "string",
+      "label": "string",
+      "price": "number",
+      "providerSymbol": "string",
+      "quote": "string",
+    },
+  ],
+  "meta": {
+    "asOf": "string",
+    "budget": {
+      "state": "string",
+    },
+    "buildId": "string",
+    "cached": "boolean",
+    "mode": "string",
+    "requestId": "string",
+    "safeMode": "boolean",
+    "sourceProvider": "string",
+    "ssotKey": "string",
+    "ttlSeconds": "number",
+  },
+}
+`;
+
+exports[`Contract: GET /api/providers response structure matches snapshot 1`] = `
+[
+  {
+    "affiliateProgramme": "boolean",
+    "affiliateUrl": "null",
+    "apiAvailable": "boolean",
+    "apiDocsUrl": "null",
+    "country": "string",
+    "countryCode": "string",
+    "hqCity": "string",
+    "id": "string",
+    "imageQualityRank": "number",
+    "incumbentAdjustment": "boolean",
+    "localIcon": "string",
+    "name": "string",
+    "requiresDisclosure": "boolean",
+    "score": "number",
+    "socials": {
+      "discord": "string",
+      "facebook": "string",
+      "instagram": "string",
+      "reddit": "string",
+      "x": "string",
+    },
+    "supportHours": "string",
+    "supportsPrefill": "boolean",
+    "tagline": "string",
+    "tags": [
+      "string",
+    ],
+    "timezone": "string",
+    "tip": "string",
+    "trend": "string",
+    "visualStyles": "string",
+    "website": "string",
+  },
+]
+`;
+
+exports[`Contract: GET /api/weather response structure matches snapshot 1`] = `
+{
+  "data": [
+    {
+      "asOf": "string",
+      "city": "string",
+      "conditions": "string",
+      "description": "string",
+      "emoji": "string",
+      "humidity": "number",
+      "id": "string",
+      "isDayTime": "boolean",
+      "temperatureC": "number",
+      "temperatureF": "number",
+      "windSpeedKmh": "number",
+    },
+  ],
+  "meta": {
+    "batchARefreshedAt": "string",
+    "budget": {
+      "dailyLimit": "number",
+      "dailyUsed": "number",
+      "minuteLimit": "number",
+      "minuteUsed": "number",
+      "state": "string",
+    },
+    "currentBatch": "string",
+    "mode": "string",
+    "provider": "string",
+  },
+}
+`;

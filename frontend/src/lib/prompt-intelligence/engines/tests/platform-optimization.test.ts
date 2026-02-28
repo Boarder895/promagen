@@ -232,7 +232,9 @@ describe('Platform Optimization Engine', () => {
     });
     
     it('has subject last (most important)', () => {
-      const priority = getTrimPriority('stability');
+      // Use a platform without custom trimPriority so the DEFAULT order applies.
+      // Platforms with custom trimPriority (e.g. stability) return a partial list.
+      const priority = getTrimPriority('unknown-test-platform');
       
       // Subject should be last in trim priority (trim last = most important)
       expect(priority[priority.length - 1]).toBe('subject');

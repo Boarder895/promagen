@@ -30,6 +30,7 @@
  * - Layer 13: Magic Combos               (Phase 7.4 — magic-combos)
  * - Layer 14a: Platform Term Quality     (Phase 7.5 — platform-term-quality)
  * - Layer 14b: Platform Co-occurrence    (Phase 7.5 — platform-co-occurrence)
+ * - Layer 15:  A/B Test Management       (Phase 7.6 — ab-testing-pipeline)
  *
  * Execution order:
  *   Layers 4, 5, 6 run in parallel (no inter-dependencies).
@@ -48,6 +49,7 @@
  * Phase 7.3 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
  * Phase 7.4 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
  * Phase 7.5 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
+ * Phase 7.6 is gated by PHASE_7_AB_TESTING_ENABLED env var (default: false).
  * Phase 6 failures are non-fatal — Phase 5 results persist regardless.
  * Phase 7 failures are non-fatal — Phase 5 + 6 results persist regardless.
  *
@@ -59,7 +61,7 @@
  * @see docs/authority/phase-7.4-magic-combos-buildplan.md § 5
  * @see docs/authority/phase-7.5-per-platform-learning-buildplan.md § 5
  *
- * Version: 7.1.0 — Parallel Layer 14a/14b + phase75 summary object
+ * Version: 8.0.0 — Layer 15 A/B test management (Phase 7.6d)
  * Existing features preserved: Yes.
  */
 
@@ -123,6 +125,17 @@ import type { PlatformTermQualityData } from '@/lib/learning/platform-term-quali
 import { computePlatformCoOccurrence } from '@/lib/learning/platform-co-occurrence';
 import type { PlatformCoOccurrenceData } from '@/lib/learning/platform-co-occurrence';
 
+// ── Phase 7.6 imports ────────────────────────────────────────────────────────
+import { shouldCreateTest, evaluateTest, createABTest } from '@/lib/learning/ab-testing';
+import type { ABTest, ABTestResult } from '@/lib/learning/ab-testing';
+import {
+  getRunningABTest,
+  insertABTest,
+  updateABTestResult,
+  incrementPeekCount,
+  countABTestEvents,
+} from '@/lib/learning/database';
+
 import sceneStartersData from '@/data/scenes/scene-starters.json';
 import type { SceneStartersFile } from '@/types/scene-starters';
 
@@ -142,6 +155,12 @@ function isPhase6Enabled(): boolean {
  *  Read at request time so env var changes take effect without redeployment. */
 function isPhase7Enabled(): boolean {
   return (process.env.PHASE_7_LEARNING_ENABLED ?? '').trim().toLowerCase() === 'true';
+}
+
+/** Feature flag for Phase 7.6 A/B testing pipeline (default: false).
+ *  When disabled, Layer 4 weights are applied directly (pre-7.6 behaviour). */
+function isPhase76Enabled(): boolean {
+  return (process.env.PHASE_7_AB_TESTING_ENABLED ?? '').trim().toLowerCase() === 'true';
 }
 
 /** Phase 5 learned weights storage keys */
@@ -200,6 +219,10 @@ interface AggregationCronResponse {
 
   // Phase 7.5 grouped summary (easier for Admin Command Centre dashboard)
   phase75: Phase75Summary;
+
+  // Phase 7.6 additions
+  phase76Enabled: boolean;
+  phase76: Phase76Summary;
 }
 
 /** Grouped Phase 7.5 metrics — nested for cleaner dashboard consumption */
@@ -208,6 +231,22 @@ interface Phase75Summary {
   termCount: number;
   coOccurrenceGenerated: boolean;
   pairCount: number;
+}
+
+/** Phase 7.6 A/B testing summary */
+interface Phase76Summary {
+  /** Was a test evaluated this run? */
+  testEvaluated: boolean;
+  /** Was a new test created this run? */
+  testCreated: boolean;
+  /** Decision from evaluation (null if no test evaluated) */
+  decision: 'promote' | 'rollback' | 'extend' | null;
+  /** Active test ID (running or just concluded) */
+  testId: string | null;
+  /** Test name */
+  testName: string | null;
+  /** Error message if Layer 15 failed */
+  error: string | null;
 }
 
 // =============================================================================
@@ -309,6 +348,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let platformCoOccurrenceGenerated = false;
   let platformPairCount = 0;
 
+  // Phase 7.6 tracking
+  const phase76Enabled = isPhase76Enabled();
+  const phase76Summary: Phase76Summary = {
+    testEvaluated: false,
+    testCreated: false,
+    decision: null,
+    testId: null,
+    testName: null,
+    error: null,
+  };
+  // Hoisted so Layer 15 can access Layer 4 output
+  let proposedWeightsForAB: Record<string, number> | null = null;
+  let currentLiveWeightsForAB: Record<string, number> | null = null;
+
   // ─────────────────────────────────────────────────────────────────────────
   // SECURITY: Validate auth
   // ─────────────────────────────────────────────────────────────────────────
@@ -381,6 +434,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           coOccurrenceGenerated: false,
           pairCount: 0,
         },
+        phase76Enabled,
+        phase76: phase76Summary,
       };
       return NextResponse.json(response, { status: 409 });
     }
@@ -441,6 +496,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           coOccurrenceGenerated: false,
           pairCount: 0,
         },
+        phase76Enabled,
+        phase76: phase76Summary,
       };
       return NextResponse.json(response);
     }
@@ -586,6 +643,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           categoryValueTiers: Object.keys(categoryValues.tiers).length,
           termQualityTermCount: termQualityScores.global.termCount,
         });
+
+        // Capture for Layer 15 (A/B testing) — hoisted variable
+        proposedWeightsForAB = scoringWeights.global.weights;
+        currentLiveWeightsForAB = previousWeights?.global.weights ?? null;
 
         if (isTimedOut()) {
           throw new Error('Timeout after Phase 6 Layers 4-6');
@@ -972,6 +1033,156 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       });
     }
 
+    // ═════════════════════════════════════════════════════════════════════
+    // PHASE 7.6: A/B Testing Pipeline — Layer 15
+    // Gated by PHASE_7_AB_TESTING_ENABLED env var.
+    // Non-fatal: if Layer 15 fails, all prior results are already persisted.
+    //
+    // Logic:
+    //   15a. Get running test (if any)
+    //   15b. If running test → evaluate, decide promote/rollback/extend
+    //   15c. If no running test → compare proposed vs live weights → create
+    //   15d. Cache active test info for GET /api/learning/ab-assignment
+    // ═════════════════════════════════════════════════════════════════════
+
+    if (phase76Enabled && !isTimedOut() && !dryRun) {
+      console.debug('[Learning Cron] Layer 15 (A/B testing) starting', { requestId });
+
+      try {
+        // 15a. Check for running test
+        const runningTest = await getRunningABTest();
+
+        if (runningTest) {
+          // ── 15b. Evaluate running test ────────────────────────────────
+          const counts = await countABTestEvents(runningTest.id);
+          const result: ABTestResult = evaluateTest(runningTest, counts);
+
+          // Increment peek count (for O'Brien-Fleming tracking)
+          await incrementPeekCount(runningTest.id);
+
+          phase76Summary.testEvaluated = true;
+          phase76Summary.testId = runningTest.id;
+          phase76Summary.testName = runningTest.name;
+          phase76Summary.decision = result.decision;
+
+          if (result.decision === 'promote') {
+            // Promote: apply variant weights as the new live weights
+            await updateABTestResult(runningTest.id, 'promoted', result);
+
+            // Merge variant weights into the scoring-weights data
+            const currentWeightsData = await getLearnedWeights<ScoringWeights>(
+              LEARNING_CONSTANTS.SCORING_WEIGHTS_KEY,
+            );
+            if (currentWeightsData?.data) {
+              const promoted = { ...currentWeightsData.data };
+              promoted.global = {
+                ...promoted.global,
+                weights: { ...promoted.global.weights, ...runningTest.variantWeights },
+              };
+              for (const tierKey of Object.keys(promoted.tiers)) {
+                promoted.tiers[tierKey] = {
+                  ...promoted.tiers[tierKey]!,
+                  weights: { ...promoted.tiers[tierKey]!.weights, ...runningTest.variantWeights },
+                };
+              }
+              await upsertLearnedWeights(LEARNING_CONSTANTS.SCORING_WEIGHTS_KEY, promoted);
+            }
+
+            // Clear the cached active test
+            await upsertLearnedWeights(LEARNING_CONSTANTS.AB_ACTIVE_TEST_KEY, null);
+
+            console.debug('[Learning Cron] Layer 15 — Test PROMOTED', {
+              requestId,
+              testId: runningTest.id,
+              testName: runningTest.name,
+              pValue: result.pValue,
+              bayesProb: result.bayesianProbVariantWins,
+              controlRate: result.controlCopyRate,
+              variantRate: result.variantCopyRate,
+            });
+          } else if (result.decision === 'rollback') {
+            // Rollback: discard variant weights (live weights unchanged)
+            await updateABTestResult(runningTest.id, 'rolled_back', result);
+
+            // Clear the cached active test
+            await upsertLearnedWeights(LEARNING_CONSTANTS.AB_ACTIVE_TEST_KEY, null);
+
+            console.debug('[Learning Cron] Layer 15 — Test ROLLED BACK', {
+              requestId,
+              testId: runningTest.id,
+              testName: runningTest.name,
+              reason: result.reason,
+            });
+          } else {
+            // Extend: no-op, test continues — update cache with latest eval
+            await upsertLearnedWeights(LEARNING_CONSTANTS.AB_ACTIVE_TEST_KEY, {
+              ...runningTest,
+              peekCount: runningTest.peekCount + 1,
+              resultSummary: result,
+            });
+
+            console.debug('[Learning Cron] Layer 15 — Test EXTENDED', {
+              requestId,
+              testId: runningTest.id,
+              peekNumber: result.peekNumber,
+              pValue: result.pValue,
+              adjustedAlpha: result.adjustedAlpha,
+            });
+          }
+        } else {
+          // ── 15c. No running test — consider creating one ──────────────
+          if (proposedWeightsForAB && currentLiveWeightsForAB) {
+            const testCandidate = shouldCreateTest(currentLiveWeightsForAB, proposedWeightsForAB);
+
+            if (testCandidate) {
+              const newTest: ABTest = createABTest(
+                testCandidate.name,
+                currentLiveWeightsForAB,
+                proposedWeightsForAB,
+              );
+
+              await insertABTest(newTest);
+
+              // Cache for fast GET reads
+              await upsertLearnedWeights(LEARNING_CONSTANTS.AB_ACTIVE_TEST_KEY, newTest);
+
+              phase76Summary.testCreated = true;
+              phase76Summary.testId = newTest.id;
+              phase76Summary.testName = newTest.name;
+
+              console.debug('[Learning Cron] Layer 15 — New A/B test CREATED', {
+                requestId,
+                testId: newTest.id,
+                testName: newTest.name,
+                weightDelta: testCandidate.delta,
+              });
+            } else {
+              console.debug('[Learning Cron] Layer 15 — Weight delta below threshold, no test created', {
+                requestId,
+              });
+            }
+          } else {
+            console.debug('[Learning Cron] Layer 15 — No proposed weights (Phase 6 may be disabled)', {
+              requestId,
+            });
+          }
+        }
+      } catch (layer15Error) {
+        // Layer 15 is non-fatal
+        const errorMsg = layer15Error instanceof Error ? layer15Error.message : 'Unknown Layer 15 error';
+        phase76Summary.error = errorMsg;
+
+        console.error('[Learning Cron] Layer 15 error (non-fatal)', {
+          requestId,
+          error: errorMsg,
+        });
+      }
+    } else if (!phase76Enabled) {
+      console.debug('[Learning Cron] Phase 7.6 skipped (PHASE_7_AB_TESTING_ENABLED != true)', {
+        requestId,
+      });
+    }
+
     // ─────────────────────────────────────────────────────────────────────
     // Log completion
     // ─────────────────────────────────────────────────────────────────────
@@ -987,9 +1198,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       ? `, Phase 7: ${phase7DurationMs}ms (anti=${antiPatternCount}, collisions=${collisionCount}, weakTerms=${weakTermCount}, multiSessions=${multiAttemptSessions}, redundancyGroups=${redundancyGroupCount}, magicCombos=${magicComboCount}, platformTerms=${platformTermCount}, platformPairs=${platformPairCount})`
       : '';
 
+    const phase76Suffix = phase76Enabled
+      ? `, Phase 7.6: AB(eval=${phase76Summary.testEvaluated}, created=${phase76Summary.testCreated}, decision=${phase76Summary.decision ?? 'n/a'})`
+      : '';
+
     const message = dryRun
-      ? `Dry run: ${allEvents.length} events → ${pairsGenerated} pairs, ${sequencePatterns.sessionCount} sessions, ${candidatesFound} candidates${phase6Suffix}${phase7Suffix}`
-      : `Aggregated ${allEvents.length} events → ${pairsGenerated} pairs, ${sequencePatterns.sessionCount} sessions, ${candidatesFound} candidates${phase6Suffix}${phase7Suffix}`;
+      ? `Dry run: ${allEvents.length} events → ${pairsGenerated} pairs, ${sequencePatterns.sessionCount} sessions, ${candidatesFound} candidates${phase6Suffix}${phase7Suffix}${phase76Suffix}`
+      : `Aggregated ${allEvents.length} events → ${pairsGenerated} pairs, ${sequencePatterns.sessionCount} sessions, ${candidatesFound} candidates${phase6Suffix}${phase7Suffix}${phase76Suffix}`;
 
     if (!dryRun) {
       await logCronRun(
@@ -1051,6 +1266,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         coOccurrenceGenerated: platformCoOccurrenceGenerated,
         pairCount: platformPairCount,
       },
+      phase76Enabled,
+      phase76: phase76Summary,
     };
 
     return NextResponse.json(response);
@@ -1112,6 +1329,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         coOccurrenceGenerated: false,
         pairCount: 0,
       },
+      phase76Enabled,
+      phase76: phase76Summary,
     };
 
     return NextResponse.json(response, { status: 500 });

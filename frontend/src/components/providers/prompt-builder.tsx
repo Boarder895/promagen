@@ -89,8 +89,8 @@ import { VALID_ASPECT_RATIOS } from '@/types/composition';
 import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
 import { useIntelligencePreferences } from '@/hooks/use-intelligence-preferences';
 import { useMarketMoodLive } from '@/hooks/use-market-mood-live';
-import { useLearnedWeights } from '@/hooks/use-learned-weights';
-import { usePlatformLearning } from '@/hooks/use-platform-learning';
+import { useLearningData } from '@/hooks/use-learning-data';
+import { useVocabSubmission } from '@/hooks/use-vocab-submission';
 import {
   DNABar,
   ConflictWarning,
@@ -458,6 +458,9 @@ export function PromptBuilder({
 
   const { compositionMode, setCompositionMode, aspectRatio, setAspectRatio } = useCompositionMode();
 
+  // Vocabulary crowdsourcing — silently captures custom terms (Phase 7.7)
+  const submitCustomTerm = useVocabSubmission(platformId, platformTier);
+
   // Prompt Intelligence Preferences
   const { preferences: intelligencePrefs, setPreference: setIntelligencePref } =
     useIntelligencePreferences();
@@ -518,7 +521,7 @@ export function PromptBuilder({
   // Save to Library hook
   const { savePrompt } = useSavedPrompts();
 
-  // Phase 5 + 7.1 + 7.2 + 7.3 + 7.4: Learned weights for dropdown reordering + negative pattern + iteration tracking + redundancy + magic combos
+  // Phase 5 + 7.1–7.6: Unified learning data (tier + platform + A/B testing)
   const {
     coOccurrenceLookup,
     blendRatio: learnedBlendRatio,
@@ -527,13 +530,13 @@ export function PromptBuilder({
     weakTermLookup,
     redundancyLookup,
     comboLookup,
-  } = useLearnedWeights();
-
-  // Phase 7.5: Per-platform learning data for platform-aware scoring
-  const {
     platformTermQualityLookup,
     platformCoOccurrenceLookup,
-  } = usePlatformLearning();
+    abVariantWeights,
+    abHash,
+    activeTestId: abTestId,
+    abVariant,
+  } = useLearningData();
 
   // ============================================================================
   // Market Mood State (Live FX data with demo fallback)
@@ -947,6 +950,7 @@ export function PromptBuilder({
         platformTermQualityLookup,
         platformCoOccurrenceLookup,
         platformId,
+        abVariantWeights,
       );
 
       map.set(category, scoredOptions);
@@ -980,6 +984,7 @@ export function PromptBuilder({
     platformTermQualityLookup,
     platformCoOccurrenceLookup,
     platformId,
+    abVariantWeights,
   ]);
 
   // Step 4.2: Track cascade reorder events (useEffect for purity)
@@ -1153,11 +1158,14 @@ export function PromptBuilder({
         reusedFromLibrary: false,
         userTier: userTier as 'free' | 'paid',
         accountAgeDays,
+        abHash,
+        activeTestId: abTestId,
+        activeVariant: abVariant,
       });
     } catch (err) {
       console.error('Failed to copy prompt:', err);
     }
-  }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId, userTier, accountAgeDays]);
+  }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId, userTier, accountAgeDays, abHash, abTestId, abVariant]);
 
   const handleDone = useCallback(() => {
     onDone?.();
@@ -1224,6 +1232,9 @@ export function PromptBuilder({
           reusedFromLibrary: false,
           userTier: userTier as 'free' | 'paid',
           accountAgeDays,
+          abHash,
+          activeTestId: abTestId,
+          activeVariant: abVariant,
         });
       }
     },
@@ -1242,6 +1253,9 @@ export function PromptBuilder({
       activeSceneId,
       userTier,
       accountAgeDays,
+      abHash,
+      abTestId,
+      abVariant,
     ],
   );
 
@@ -1480,6 +1494,7 @@ export function PromptBuilder({
                     chipOptions={getCategoryChips(category, state.selected, state.customValue)}
                     chipSectionLabel="More options"
                     sceneOriginValues={getSceneOriginValues(category)}
+                    onCustomTermSubmitted={(term) => submitCustomTerm(term, category)}
                   />
                   {/* Phase 3: Explore Drawer — expandable vocabulary panel */}
                   <ExploreDrawer
