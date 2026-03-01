@@ -11,7 +11,7 @@
 //
 // All three sub-hooks are mocked so we test pure composition only.
 //
-// Version: 2.0.0 — Phase 7.6e A/B mock added (eliminates fetch noise)
+// Version: 3.0.0 — Phase 7.8e temporal fields added
 // Existing features preserved: Yes.
 // ============================================================================
 
@@ -33,6 +33,8 @@ const mockTierReturn = {
   weakTermLookup: null,
   redundancyLookup: null,
   comboLookup: null,
+  temporalLookup: null,
+  trendingLookup: null,
   isLoading: false,
   error: null as string | null,
   refetch: jest.fn(() => Promise.resolve()),
@@ -104,6 +106,8 @@ describe('useLearningData', () => {
     expect(result.current).toHaveProperty('weakTermLookup');
     expect(result.current).toHaveProperty('redundancyLookup');
     expect(result.current).toHaveProperty('comboLookup');
+    expect(result.current).toHaveProperty('temporalLookup');
+    expect(result.current).toHaveProperty('trendingLookup');
   });
 
   it('exposes all platform-level fields', () => {

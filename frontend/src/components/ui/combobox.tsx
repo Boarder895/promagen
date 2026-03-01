@@ -1,5 +1,14 @@
 // src/components/ui/combobox.tsx
 // Enhanced multi-select combobox with lock states, auto-close, and vocabulary chips
+// Version 7.2.0 - Added feedback hint chip tinting (Feedback-Driven Autopilot)
+//
+// NEW in v7.2.0:
+// - feedbackHintTerms prop: Record<string, 'positive' | 'negative'>
+// - Terms from 👍 prompts get emerald tint + 🔥 indicator
+// - Terms from 👎 prompts get amber tint + ⚠️ indicator
+// - Applied to both selected chips and quick-pick chip options
+// - Priority: locked > scene-origin > feedback-hint > default
+//
 // Version 7.1.0 - Added scene-origin chip tinting for Scene Starters
 //
 // NEW in v7.1.0:
@@ -104,6 +113,13 @@ export interface ComboboxProps {
    * Fire-and-forget — used for vocabulary crowdsourcing collection.
    */
   onCustomTermSubmitted?: (term: string) => void;
+  /**
+   * Term-level feedback hints from the Feedback-Driven Autopilot (Phase 7.10g).
+   * Map of term → 'positive' (green hint, appeared in 👍 prompts) or
+   * 'negative' (amber hint, appeared in 👎 prompts).
+   * Applied to both selected chips and dropdown/chip options.
+   */
+  feedbackHintTerms?: Record<string, 'positive' | 'negative'>;
 }
 
 export function Combobox({
@@ -129,6 +145,7 @@ export function Combobox({
   chipSectionLabel = 'Quick picks',
   sceneOriginValues,
   onCustomTermSubmitted,
+  feedbackHintTerms,
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -456,6 +473,7 @@ export function Combobox({
         {/* Selected chips */}
         {selected.map((item) => {
           const isSceneOrigin = sceneOriginSet.has(item);
+          const feedbackHint = feedbackHintTerms?.[item];
           return (
             <span
               key={item}
@@ -464,7 +482,11 @@ export function Combobox({
                   ? 'bg-purple-600/30 text-purple-200'
                   : isSceneOrigin
                     ? 'bg-cyan-600/25 text-cyan-100 ring-1 ring-cyan-500/20'
-                    : 'bg-sky-600/30 text-sky-100'
+                    : feedbackHint === 'positive'
+                      ? 'bg-emerald-600/20 text-emerald-100 ring-1 ring-emerald-500/25'
+                      : feedbackHint === 'negative'
+                        ? 'bg-amber-600/20 text-amber-100 ring-1 ring-amber-500/25'
+                        : 'bg-sky-600/30 text-sky-100'
               }`}
             >
               {/* Scene-origin indicator — tiny film clapper */}
@@ -475,6 +497,27 @@ export function Combobox({
                   aria-label="Set by scene"
                 >
                   🎬
+                </span>
+              )}
+              {/* Feedback hint indicators */}
+              {!isSceneOrigin && !isLocked && feedbackHint === 'positive' && (
+                <span
+                  className="opacity-60"
+                  style={{ fontSize: 'clamp(0.5rem, 0.55vw, 0.6rem)' }}
+                  aria-label="Worked well before"
+                  title="This term scored well in previous prompts"
+                >
+                  🔥
+                </span>
+              )}
+              {!isSceneOrigin && !isLocked && feedbackHint === 'negative' && (
+                <span
+                  className="opacity-60"
+                  style={{ fontSize: 'clamp(0.5rem, 0.55vw, 0.6rem)' }}
+                  aria-label="Missed before"
+                  title="This term scored poorly in previous prompts"
+                >
+                  ⚠️
                 </span>
               )}
               <span className="max-w-[120px] truncate">{item}</span>
@@ -488,7 +531,11 @@ export function Combobox({
                   className={`ml-0.5 rounded-full p-0.5 focus:outline-none focus:ring-1 ${
                     isSceneOrigin
                       ? 'hover:bg-cyan-500/30 focus:ring-cyan-400'
-                      : 'hover:bg-sky-500/30 focus:ring-sky-400'
+                      : feedbackHint === 'positive'
+                        ? 'hover:bg-emerald-500/30 focus:ring-emerald-400'
+                        : feedbackHint === 'negative'
+                          ? 'hover:bg-amber-500/30 focus:ring-amber-400'
+                          : 'hover:bg-sky-500/30 focus:ring-sky-400'
                   }`}
                   aria-label={`Remove ${item}`}
                 >
@@ -678,7 +725,9 @@ export function Combobox({
 
             {/* Scrollable chips */}
             <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
-              {filteredChips.map((chip) => (
+              {filteredChips.map((chip) => {
+                const chipHint = feedbackHintTerms?.[chip];
+                return (
                 <button
                   key={chip}
                   type="button"
@@ -688,13 +737,29 @@ export function Combobox({
                     inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-medium
                     transition-all duration-150 ease-out
                     ${
-                      canSelectMore
-                        ? 'bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-700/80 hover:text-slate-200 hover:border-slate-600 active:scale-95 cursor-pointer'
-                        : 'bg-slate-900/40 text-slate-600 border border-slate-800/30 cursor-not-allowed'
+                      !canSelectMore
+                        ? 'bg-slate-900/40 text-slate-600 border border-slate-800/30 cursor-not-allowed'
+                        : chipHint === 'positive'
+                          ? 'bg-emerald-900/25 text-emerald-300 border border-emerald-700/40 hover:bg-emerald-800/40 hover:text-emerald-100 active:scale-95 cursor-pointer'
+                          : chipHint === 'negative'
+                            ? 'bg-amber-900/25 text-amber-300 border border-amber-700/40 hover:bg-amber-800/40 hover:text-amber-100 active:scale-95 cursor-pointer'
+                            : 'bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:bg-slate-700/80 hover:text-slate-200 hover:border-slate-600 active:scale-95 cursor-pointer'
                     }
                   `}
-                  title={`Add "${chip}"`}
+                  title={
+                    chipHint === 'positive'
+                      ? `"${chip}" — worked well in previous prompts`
+                      : chipHint === 'negative'
+                        ? `"${chip}" — missed in previous prompts`
+                        : `Add "${chip}"`
+                  }
                 >
+                  {chipHint === 'positive' && canSelectMore && (
+                    <span className="mr-0.5 opacity-60" style={{ fontSize: 'clamp(0.45rem, 0.5vw, 0.55rem)' }}>🔥</span>
+                  )}
+                  {chipHint === 'negative' && canSelectMore && (
+                    <span className="mr-0.5 opacity-60" style={{ fontSize: 'clamp(0.45rem, 0.5vw, 0.55rem)' }}>⚠️</span>
+                  )}
                   <span className="max-w-[100px] truncate">{chip}</span>
                   {canSelectMore && (
                     <svg
@@ -712,7 +777,8 @@ export function Combobox({
                     </svg>
                   )}
                 </button>
-              ))}
+                );
+              })}
             </div>
 
             {/* Right fade gradient */}

@@ -6,9 +6,9 @@
 // All magic numbers for the learning pipeline live here.
 // Code reads these; code never changes. Adjust values to tune behaviour.
 //
-// Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9, § 11, § 7.3, § 7.6
+// Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9, § 11, § 7.3, § 7.6, § 7.8, § 7.9, § 7.10
 //
-// Version: 7.0.0 — Phase 7.6a A/B Testing constants added
+// Version: 9.3.0 — Phase 7.10a Feedback credibility constants
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -281,6 +281,255 @@ export const LEARNING_CONSTANTS = {
   /** p-value threshold for statistical significance (two-tailed Z-test) */
   AB_SIGNIFICANCE_THRESHOLD: 0.05,
 
+  // ── Phase 7.8: Temporal Intelligence ──────────────────────────────────
+  //
+  // Adds time-awareness to the learning pipeline:
+  // - Seasonal patterns: "snow" 340% more popular Nov–Feb
+  // - Weekly patterns: Weekend prompts 40% more experimental
+  // - Trending velocity: Terms rising/falling in last 7 days vs 30-day baseline
+
+  /** Storage key for temporal boosts in learned_weights table */
+  TEMPORAL_BOOSTS_KEY: 'temporal-boosts',
+
+  /** Storage key for trending terms in learned_weights table */
+  TRENDING_TERMS_KEY: 'trending-terms',
+
+  /** Minimum total events for a term to be included in seasonal/weekly analysis.
+   *  Below this, the sample is too small for meaningful monthly distribution. */
+  TEMPORAL_MIN_TOTAL_EVENTS: 20,
+
+  /** Seasonal boost significance threshold.
+   *  Only store month entries where |boost - 1.0| > this value.
+   *  0.3 means a term must be 30%+ above or below average to be stored. */
+  TEMPORAL_SEASONAL_SIGNIFICANCE: 0.3,
+
+  /** Weekly pattern significance threshold (same principle as seasonal).
+   *  0.2 = 20% above/below average for a given day to qualify. */
+  TEMPORAL_WEEKLY_SIGNIFICANCE: 0.2,
+
+  /** Recent window for trending analysis (days) */
+  TEMPORAL_TRENDING_RECENT_DAYS: 7,
+
+  /** Baseline window for trending analysis (days) — starts after recent window.
+   *  Trending = comparing last 7 days against the prior 30 days. */
+  TEMPORAL_TRENDING_BASELINE_DAYS: 30,
+
+  /** Minimum events in recent window for a term to appear in trending */
+  TEMPORAL_TRENDING_MIN_RECENT: 3,
+
+  /** Minimum events in baseline window for velocity calculation.
+   *  Below this, baseline rate is too noisy for meaningful comparison. */
+  TEMPORAL_TRENDING_MIN_BASELINE: 5,
+
+  /** Velocity threshold to classify as 'rising' or 'falling'.
+   *  0.25 = 25% faster/slower than baseline to trigger classification. */
+  TEMPORAL_TRENDING_VELOCITY_THRESHOLD: 0.25,
+
+  /** Max seasonal boost entries stored per tier (storage cap) */
+  TEMPORAL_MAX_SEASONAL_PER_TIER: 300,
+
+  /** Max weekly pattern entries stored per tier (storage cap) */
+  TEMPORAL_MAX_WEEKLY_PER_TIER: 200,
+
+  /** Max trending term entries stored per tier (storage cap) */
+  TEMPORAL_MAX_TRENDING_PER_TIER: 100,
+
+  /** Suggestion engine boost multiplier for seasonal relevance.
+   *  Applied as: baseScore * (1 + (seasonalBoost - 1) * weight).
+   *  At 0.15, a term with 2.0× seasonal boost gets +15% score. */
+  TEMPORAL_SEASONAL_WEIGHT: 0.15,
+
+  /** Suggestion engine boost for trending-up terms.
+   *  Smaller than seasonal — trending is a hint, not a strong signal. */
+  TEMPORAL_TRENDING_WEIGHT: 0.08,
+
+  /** Confidence ramp threshold for seasonal boosts.
+   *  Terms with totalEvents < this value have dampened seasonal signals.
+   *  Formula: effectiveBoost = 1.0 + (rawBoost - 1.0) × min(1.0, totalEvents / ramp).
+   *  At 200, a term with 50 events gets 25% of its seasonal signal;
+   *  a term with 200+ events gets the full signal. */
+  TEMPORAL_SEASONAL_CONFIDENCE_RAMP: 200,
+
+  /** Staleness half-life for trending data (hours).
+   *  Trending signals halve in strength every 24 hours after generation.
+   *  After 48h: 25% strength. After 72h: 12.5%. */
+  TEMPORAL_TRENDING_STALENESS_HALFLIFE_HOURS: 24,
+
+  /** Staleness half-life for seasonal data (hours).
+   *  Seasonal signals are more stable so decay slower — halve every 48h.
+   *  After 96h: 25% strength. After 144h: 12.5%. */
+  TEMPORAL_SEASONAL_STALENESS_HALFLIFE_HOURS: 48,
+
+  /** Age in hours after which temporal data is considered fully stale (0 impact).
+   *  Safety ceiling — after 168h (1 week) the data is completely ignored
+   *  regardless of how much signal the half-life formula still produces. */
+  TEMPORAL_MAX_STALENESS_HOURS: 168,
+
+  // ── Phase 7.9: Compression Intelligence ───────────────────────────────
+  //
+  // Learned compression profiles from telemetry. Three capabilities:
+  // 1. Optimal length profiles — per-tier "sweet spot" for prompt char length
+  // 2. Expendable term detection — terms safe to remove during compression,
+  //    cross-referencing quality, iteration, redundancy, and anti-pattern data.
+  // 3. Platform-aware length profiles — per-platform length sweet spots
+  //    (Midjourney vs DALL-E etc.) with tier-level fallback.
+  //
+  // Stored as cron Layer 17, runs in parallel with Layer 16 (Temporal).
+
+  /** Storage key for compression profiles in learned_weights table */
+  COMPRESSION_PROFILES_KEY: 'compression-profiles',
+
+  /** Minimum events per tier before compression analysis is meaningful.
+   *  Below this, the length histogram is too sparse for reliable peaks. */
+  COMPRESSION_MIN_EVENTS_PER_TIER: 100,
+
+  /** Minimum events a term must appear in (per tier) to be evaluated for
+   *  expendability. Prevents flagging rare terms with noisy signals. */
+  COMPRESSION_MIN_TERM_EVENTS: 10,
+
+  /** Minimum combined expendability score (0–1) for a term to be flagged.
+   *  0.40 = at least two moderate signals or one strong + one weak.
+   *  Keeps false positive rate low — only terms with real evidence qualify. */
+  COMPRESSION_MIN_EXPENDABILITY: 0.40,
+
+  /** Maximum expendable terms stored per tier (storage cap).
+   *  200 per tier × 4 tiers = 800 terms worst case. In practice ~40–80. */
+  COMPRESSION_MAX_EXPENDABLE_PER_TIER: 200,
+
+  /** Character bucket size for length histogram analysis.
+   *  20 chars ≈ 3–4 words. Gives ~15–20 meaningful buckets for typical
+   *  prompt lengths (20–400 chars). Too small = noisy; too large = imprecise. */
+  COMPRESSION_LENGTH_BUCKET_SIZE: 20,
+
+  /** Minimum events per length bucket for the bucket to count in analysis.
+   *  Filters out outlier lengths with too few events for a reliable average. */
+  COMPRESSION_MIN_EVENTS_PER_BUCKET: 10,
+
+  /** Fractional outcome drop from peak that triggers the "diminishing returns"
+   *  marker. 0.15 = outcome must fall >15% below peak to mark the boundary.
+   *  Used for admin dashboard guidance, not active compression. */
+  COMPRESSION_DIMINISHING_RETURNS_DROP: 0.15,
+
+  /** Weight of replacement rate signal in expendability formula (Phase 7.2).
+   *  Highest weight — if users actively replace a term, it's the strongest
+   *  evidence that the term isn't pulling its weight. */
+  COMPRESSION_WEIGHT_REPLACEMENT: 0.35,
+
+  /** Weight of quality penalty signal in expendability formula (Phase 6).
+   *  Second highest — low quality scores indicate poor contribution. */
+  COMPRESSION_WEIGHT_QUALITY: 0.30,
+
+  /** Weight of redundancy signal in expendability formula (Phase 7.3).
+   *  Binary signal: 0.20 if a better alternative exists, 0 otherwise. */
+  COMPRESSION_WEIGHT_REDUNDANCY: 0.20,
+
+  /** Weight of anti-pattern count signal in expendability formula (Phase 7.1).
+   *  Lowest weight — anti-patterns are about pairs, not individual terms.
+   *  Capped at 3 pairs: min(1.0, antiPatternCount / 3) × this weight. */
+  COMPRESSION_WEIGHT_ANTIPATTERN: 0.15,
+
+  /** Maximum suggestion engine penalty for expendable terms (score points).
+   *  Applied as: score -= expendabilityMax × expendability.
+   *  At 8 and expendability 1.0, a maximally expendable term loses 8 points. */
+  COMPRESSION_EXPENDABILITY_MAX_PENALTY: 8,
+
+  /** Minimum events per platform within a tier for platform-specific length
+   *  analysis. Reuses the same threshold as Phase 7.5 per-platform learning.
+   *  Below this, the platform falls back to the tier-level length profile. */
+  COMPRESSION_PLATFORM_MIN_EVENTS: 50,
+
+  /** Maximum platform profiles stored per tier (storage cap).
+   *  42 platforms × 4 tiers worst case, but in practice only 8–12 platforms
+   *  per tier hit the minimum events threshold. 20 provides generous headroom. */
+  COMPRESSION_MAX_PLATFORMS_PER_TIER: 20,
+
+  /** Confidence threshold for platform length blending (events).
+   *  Below this, platform length data is blended with tier-level data:
+   *    confidence = min(1.0, eventCount / threshold)
+   *    blendedChars = tierOptimal + (platformOptimal - tierOptimal) × confidence
+   *  At 50 events: ~10% platform influence. At 500+: 100% platform.
+   *  Same value as Phase 7.5 PLATFORM_CONFIDENCE_THRESHOLD for consistency. */
+  COMPRESSION_PLATFORM_CONFIDENCE_THRESHOLD: 500,
+
+  // ── Feedback Credibility (Phase 7.10) ──────────────────────────────────
+  //
+  // Four-factor credibility scoring for direct user feedback signals.
+  // Determines how much to trust each feedback event in the learning pipeline.
+  // Range: [CREDIBILITY_MIN, CREDIBILITY_MAX]
+  //
+  // Formula: tierMult × ageMult × frequencyMult × speedMult (clamped)
+
+  // ── Tier Multipliers (financially invested = more deliberate) ─────────
+  /** Paid (Pro Promagen): financially invested → most deliberate feedback */
+  FEEDBACK_CREDIBILITY_TIER_PAID: 1.25,
+  /** Free signed-in: accountable, trackable → baseline */
+  FEEDBACK_CREDIBILITY_TIER_FREE: 1.0,
+  /** Anonymous: no accountability, might be random clicking */
+  FEEDBACK_CREDIBILITY_TIER_ANONYMOUS: 0.60,
+
+  // ── Account Age Multipliers (taste develops over time) ────────────────
+  /** 0–6 days: still exploring, may not know what good output looks like */
+  FEEDBACK_CREDIBILITY_AGE_NEW: 0.85,
+  /** 7–29 days: learning the platform → baseline */
+  FEEDBACK_CREDIBILITY_AGE_SETTLING: 1.0,
+  /** 30–89 days: familiar with the tool, reliable judgement */
+  FEEDBACK_CREDIBILITY_AGE_EXPERIENCED: 1.10,
+  /** 90+ days: veteran — knows what works across platforms */
+  FEEDBACK_CREDIBILITY_AGE_VETERAN: 1.15,
+
+  // ── Account Age Thresholds (days) ─────────────────────────────────────
+  FEEDBACK_CREDIBILITY_AGE_THRESHOLD_SETTLING: 7,
+  FEEDBACK_CREDIBILITY_AGE_THRESHOLD_EXPERIENCED: 30,
+  FEEDBACK_CREDIBILITY_AGE_THRESHOLD_VETERAN: 90,
+
+  // ── Usage Frequency Multipliers (power users test more = better calibration) ─
+  /** 5+ copies this week: daily power user */
+  FEEDBACK_CREDIBILITY_FREQ_DAILY: 1.15,
+  /** 2–4 copies this week: regular user */
+  FEEDBACK_CREDIBILITY_FREQ_WEEKLY: 1.05,
+  /** 1 copy this week: casual */
+  FEEDBACK_CREDIBILITY_FREQ_CASUAL: 1.0,
+  /** 0 copies this week (returning user): may have forgotten context */
+  FEEDBACK_CREDIBILITY_FREQ_RARE: 0.90,
+
+  // ── Frequency Thresholds (weekly copy count) ──────────────────────────
+  FEEDBACK_CREDIBILITY_FREQ_THRESHOLD_DAILY: 5,
+  FEEDBACK_CREDIBILITY_FREQ_THRESHOLD_WEEKLY: 2,
+
+  // ── Response Speed Multipliers (fresher signal = more reliable) ───────
+  /** < 2 minutes: just tested it — freshest possible signal */
+  FEEDBACK_CREDIBILITY_SPEED_INSTANT: 1.10,
+  /** < 1 hour: reasonable feedback window → baseline */
+  FEEDBACK_CREDIBILITY_SPEED_QUICK: 1.0,
+  /** < 24 hours: might be rating from memory */
+  FEEDBACK_CREDIBILITY_SPEED_DELAYED: 0.95,
+  /** > 24 hours: memory decay — less reliable */
+  FEEDBACK_CREDIBILITY_SPEED_LATE: 0.85,
+
+  // ── Speed Thresholds (milliseconds) ───────────────────────────────────
+  /** 2 minutes in ms */
+  FEEDBACK_CREDIBILITY_SPEED_THRESHOLD_INSTANT: 2 * 60 * 1_000,
+  /** 1 hour in ms */
+  FEEDBACK_CREDIBILITY_SPEED_THRESHOLD_QUICK: 60 * 60 * 1_000,
+  /** 24 hours in ms */
+  FEEDBACK_CREDIBILITY_SPEED_THRESHOLD_DELAYED: 24 * 60 * 60 * 1_000,
+
+  // ── Clamp Range ───────────────────────────────────────────────────────
+  /** Minimum credibility (prevent crushing any user's feedback signal) */
+  FEEDBACK_CREDIBILITY_MIN: 0.40,
+  /** Maximum credibility (prevent any single user from dominating) */
+  FEEDBACK_CREDIBILITY_MAX: 1.80,
+
+  // ── Feedback Rate Limiting ────────────────────────────────────────────
+  /** Max feedback submissions per IP per minute */
+  FEEDBACK_RATE_LIMIT_PER_MINUTE: 5,
+
+  // ── Feedback Widget Timing ────────────────────────────────────────────
+  /** Delay before showing feedback widget after copy (ms) */
+  FEEDBACK_WIDGET_DELAY_MS: 4_000,
+  /** Duration to suppress re-showing after dismiss (ms) — 24 hours */
+  FEEDBACK_DISMISS_COOLDOWN_MS: 24 * 60 * 60 * 1_000,
+
   // ── Rate Limiting ──────────────────────────────────────────────────────
 
   /** Max telemetry events per IP per minute (production) */
@@ -304,6 +553,22 @@ export const LEARNING_CONSTANTS = {
 
   /** Maximum age of raw events before eligible for purge (days) */
   RAW_EVENT_RETENTION_DAYS: 365,
+
+  // ── Feedback Sentiment Streaks (Phase 7.10f) ──────────────────────────
+  //
+  // Track consecutive feedback patterns per session per platform.
+  // Hot streaks amplify winning formulas; cold streaks flag problems.
+
+  /** Minimum consecutive same-rating to trigger a hot or cold streak */
+  FEEDBACK_STREAK_THRESHOLD: 3,
+  /** Minimum alternating ratings to trigger an oscillating pattern */
+  FEEDBACK_OSCILLATING_THRESHOLD: 4,
+  /** Quality score boost for term combos in hot-streak prompts (next cron) */
+  FEEDBACK_STREAK_HOT_BOOST: 1.15,
+  /** Quality score penalty for term combos in cold-streak prompts (next cron) */
+  FEEDBACK_STREAK_COLD_PENALTY: 0.85,
+  /** Maximum stored streak history entries per platform per session */
+  FEEDBACK_STREAK_MAX_HISTORY: 20,
 } as const;
 
 /**

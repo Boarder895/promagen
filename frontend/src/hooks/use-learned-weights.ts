@@ -14,9 +14,9 @@
 //
 // Authority: docs/authority/prompt-builder-evolution-plan-v2.md section 9.1
 //
-// Version: 6.0.0 — Phase 7.4: added combo lookup from magic combo mining
+// Version: 8.0.0 — Phase 7.9e: added compression lookup from /compression-profiles
 // Created: 2026-02-25
-// Updated: 2026-02-26
+// Updated: 2026-02-28
 //
 // Existing features preserved: Yes.
 // ============================================================================
@@ -57,6 +57,18 @@ import {
   buildComboLookup,
   type ComboLookup,
 } from '@/lib/learning/combo-lookup';
+import type { TemporalBoostsData, TrendingTermsData } from '@/lib/learning/temporal-intelligence';
+import {
+  buildTemporalLookup,
+  buildTrendingLookup,
+  type TemporalLookup,
+  type TrendingLookup,
+} from '@/lib/learning/temporal-lookup';
+import type { CompressionProfilesData } from '@/lib/learning/compression-intelligence';
+import {
+  buildCompressionLookup,
+  type CompressionLookup,
+} from '@/lib/learning/compression-lookup';
 
 // ============================================================================
 // MODULE-LEVEL CACHE
@@ -82,6 +94,15 @@ let cachedRedundancyLookup: RedundancyLookup | null = null;
 
 /** Cached combo lookup (Phase 7.4) — survives re-renders */
 let cachedComboLookup: ComboLookup | null = null;
+
+/** Cached temporal lookup (Phase 7.8) — survives re-renders */
+let cachedTemporalLookup: TemporalLookup | null = null;
+
+/** Cached trending lookup (Phase 7.8) — survives re-renders */
+let cachedTrendingLookup: TrendingLookup | null = null;
+
+/** Cached compression lookup (Phase 7.9) — survives re-renders */
+let cachedCompressionLookup: CompressionLookup | null = null;
 
 /** Timestamp of last successful fetch */
 let lastFetchedAt = 0;
@@ -117,6 +138,15 @@ export interface UseLearnedWeightsReturn {
 
   /** Pre-built combo lookup from Phase 7.4 (null = no data or cron hasn't run) */
   comboLookup: ComboLookup | null;
+
+  /** Pre-built temporal lookup from Phase 7.8 (null = no data or cron hasn't run) */
+  temporalLookup: TemporalLookup | null;
+
+  /** Pre-built trending lookup from Phase 7.8 (null = no data or cron hasn't run) */
+  trendingLookup: TrendingLookup | null;
+
+  /** Pre-built compression lookup from Phase 7.9 (null = no data or cron hasn't run) */
+  compressionLookup: CompressionLookup | null;
 
   /** Whether the initial fetch is in progress */
   isLoading: boolean;
@@ -174,6 +204,20 @@ interface MagicCombosApiResponse {
   updatedAt: string | null;
 }
 
+interface TemporalAllApiResponse {
+  ok: boolean;
+  boosts: TemporalBoostsData | null;
+  trending: TrendingTermsData | null;
+  boostsUpdatedAt: string | null;
+  trendingUpdatedAt: string | null;
+}
+
+interface CompressionProfilesApiResponse {
+  ok: boolean;
+  data: CompressionProfilesData | null;
+  updatedAt: string | null;
+}
+
 // ============================================================================
 // HOOK
 // ============================================================================
@@ -206,6 +250,15 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
   const [comboLookup, setComboLookup] = useState<ComboLookup | null>(
     cachedComboLookup,
   );
+  const [temporalLookup, setTemporalLookup] = useState<TemporalLookup | null>(
+    cachedTemporalLookup,
+  );
+  const [trendingLookup, setTrendingLookup] = useState<TrendingLookup | null>(
+    cachedTrendingLookup,
+  );
+  const [compressionLookup, setCompressionLookup] = useState<CompressionLookup | null>(
+    cachedCompressionLookup,
+  );
   const [blendRatio, setBlendRatio] = useState<[number, number]>(() =>
     cachedLookup ? getBlendRatio(cachedLookup.eventCount) : [1.0, 0.0],
   );
@@ -224,6 +277,9 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
       setWeakTermLookup(cachedWeakTermLookup);
       setRedundancyLookup(cachedRedundancyLookup);
       setComboLookup(cachedComboLookup);
+      setTemporalLookup(cachedTemporalLookup);
+      setTrendingLookup(cachedTrendingLookup);
+      setCompressionLookup(cachedCompressionLookup);
       setBlendRatio(getBlendRatio(cachedLookup.eventCount));
       setIsLoading(false);
       return;
@@ -233,7 +289,7 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
       setError(null);
 
       // Fetch all endpoints in parallel — none blocks the others
-      const [coOccResponse, scoringResponse, antiPatternResponse, collisionResponse, iterationResponse, redundancyResponse, comboResponse] =
+      const [coOccResponse, scoringResponse, antiPatternResponse, collisionResponse, iterationResponse, redundancyResponse, comboResponse, temporalResponse, compressionResponse] =
         await Promise.allSettled([
           fetch('/api/learning/co-occurrence'),
           fetch('/api/learning/scoring-weights'),
@@ -242,6 +298,8 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
           fetch('/api/learning/iteration-insights'),
           fetch('/api/learning/redundancy-groups'),
           fetch('/api/learning/magic-combos'),
+          fetch('/api/learning/temporal-all'),
+          fetch('/api/learning/compression-profiles'),
         ]);
 
       // ── Process co-occurrence ──────────────────────────────────────
@@ -329,6 +387,37 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
         }
       }
 
+      // ── Process temporal intelligence (Phase 7.8) ─────────────────
+      if (temporalResponse.status === 'fulfilled' && temporalResponse.value.ok) {
+        const json =
+          (await temporalResponse.value.json()) as TemporalAllApiResponse;
+
+        if (json.ok) {
+          if (json.boosts) {
+            const newTemporalLookup = buildTemporalLookup(json.boosts);
+            cachedTemporalLookup = newTemporalLookup;
+            setTemporalLookup(newTemporalLookup);
+          }
+          if (json.trending) {
+            const newTrendingLookup = buildTrendingLookup(json.trending);
+            cachedTrendingLookup = newTrendingLookup;
+            setTrendingLookup(newTrendingLookup);
+          }
+        }
+      }
+
+      // ── Process compression profiles (Phase 7.9) ──────────────────
+      if (compressionResponse.status === 'fulfilled' && compressionResponse.value.ok) {
+        const json =
+          (await compressionResponse.value.json()) as CompressionProfilesApiResponse;
+
+        if (json.ok && json.data) {
+          const newCompressionLookup = buildCompressionLookup(json.data);
+          cachedCompressionLookup = newCompressionLookup;
+          setCompressionLookup(newCompressionLookup);
+        }
+      }
+
       lastFetchedAt = Date.now();
     } catch (err) {
       console.error('[useLearnedWeights] Fetch error:', err);
@@ -363,6 +452,9 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
     weakTermLookup,
     redundancyLookup,
     comboLookup,
+    temporalLookup,
+    trendingLookup,
+    compressionLookup,
     isLoading,
     error,
     refetch: fetchWeights,

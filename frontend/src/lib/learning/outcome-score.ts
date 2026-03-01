@@ -5,8 +5,8 @@
 //
 // Phase 6, Part 6.1 — Data Layer.
 //
-// Converts raw outcome signals (copied, saved, returnedWithin60s, reused)
-// into a single numeric "outcome score" (0–1). This is the Y-axis for all
+// Converts raw outcome signals (copied, saved, returnedWithin60s, reused,
+// feedback) into a single numeric "outcome score" (0–1). This is the Y-axis for all
 // Phase 6 correlation analysis: weight recalibration, category value
 // discovery, term quality scoring, and threshold discovery.
 //
@@ -20,6 +20,11 @@
 // signal — the user stopped iterating, meaning they were satisfied.
 // Mid-session attempts are downweighted (user kept changing things).
 //
+// Phase 7.10e extension: Direct User Feedback (5th signal family).
+// Adds credibility-weighted feedback contribution from the 👍👌👎
+// rating widget. feedbackContribution = signalWeight × credibilityScore.
+// Missing feedback defaults to no-op (fully backward compatible).
+//
 // Pure function — no side effects, no database calls, no I/O.
 // Called by every Phase 6 cron computation layer.
 //
@@ -28,7 +33,7 @@
 // Build plan: docs/authority/phase-7.1-negative-pattern-learning-buildplan.md § 5
 // Build plan: docs/authority/phase-7.2-iteration-tracking-buildplan.md § 5
 //
-// Version: 3.0.0 — Final-attempt factor added (Phase 7.2a)
+// Version: 4.0.0 — Feedback as 5th outcome signal (Phase 7.10e)
 // Created: 25 February 2026
 //
 // TODO (deferred): If scorer health report shows confidence multiplier
@@ -91,6 +96,36 @@ export const OUTCOME_SIGNAL_WEIGHTS = {
    * Implies dissatisfaction — penalises the outcome score.
    */
   returnedPenalty: -0.2,
+
+  // ── Phase 7.10e: Direct User Feedback ──────────────────────────────
+  //
+  // The 5th outcome signal family: user explicitly rated the prompt.
+  // Credibility-weighted: feedbackContribution = signalWeight × credibilityScore
+  //
+  // A 👍 from a paid veteran (cred 1.80):  +0.40 × 1.80 = +0.72
+  // A 👍 from an anon new user (cred 0.40): +0.40 × 0.40 = +0.16
+  // A 👎 from a paid veteran (cred 1.80):  -0.30 × 1.80 = -0.54
+
+  /**
+   * Signal 5a: User rated 👍 "Nailed it".
+   * Strongest positive signal after reuse — explicit human approval.
+   * Multiplied by credibility score before adding to outcome.
+   */
+  feedbackPositive: 0.40,
+
+  /**
+   * Signal 5b: User rated 👌 "Just okay".
+   * Neutral — no contribution to outcome score.
+   * Retained as a constant for admin dashboard reference.
+   */
+  feedbackNeutral: 0.0,
+
+  /**
+   * Signal 5c: User rated 👎 "Missed".
+   * Strong negative signal — explicit human disapproval.
+   * Multiplied by credibility score before adding to outcome.
+   */
+  feedbackNegative: -0.30,
 } as const;
 
 /**
@@ -123,6 +158,10 @@ export interface OutcomeSignals {
   saved?: boolean;
   returnedWithin60s?: boolean;
   reusedFromLibrary?: boolean;
+  /** Phase 7.10e: Direct user feedback rating (optional — most prompts won't have one) */
+  feedbackRating?: 'positive' | 'neutral' | 'negative';
+  /** Phase 7.10e: Credibility score of the feedback (0.40–1.80). Defaults to 1.0 if missing. */
+  feedbackCredibility?: number;
 }
 
 /**
@@ -140,6 +179,8 @@ export interface OutcomeScoreBreakdown {
     saved: number;
     reusedFromLibrary: number;
     returnedPenalty: number;
+    /** Phase 7.10e: Credibility-weighted feedback contribution */
+    feedback: number;
   };
 
   /** Raw signal values (what was true/false) */
@@ -148,6 +189,10 @@ export interface OutcomeScoreBreakdown {
     saved: boolean;
     returnedWithin60s: boolean;
     reusedFromLibrary: boolean;
+    /** Phase 7.10e: The rating that was provided, or null if none */
+    feedbackRating: 'positive' | 'neutral' | 'negative' | null;
+    /** Phase 7.10e: Credibility used in computation (1.0 if missing) */
+    feedbackCredibility: number;
   };
 }
 
@@ -182,6 +227,12 @@ export interface OutcomeScoreBreakdown {
  *
  * computeOutcomeScore({ copied: true, saved: true, reusedFromLibrary: true })
  * // → 0.95 → capped at 1.0? No: 0.10 + 0.15 + 0.35 + 0.50 = 1.10 → 1.0
+ *
+ * computeOutcomeScore({ copied: true, feedbackRating: 'positive', feedbackCredibility: 1.25 })
+ * // → 0.25 + (0.40 × 1.25) = 0.25 + 0.50 = 0.75
+ *
+ * computeOutcomeScore({ copied: true, feedbackRating: 'negative', feedbackCredibility: 1.80 })
+ * // → 0.25 + (-0.30 × 1.80) = 0.25 - 0.54 = 0 (floored)
  */
 export function computeOutcomeScore(outcome: OutcomeSignals): number {
   const w = OUTCOME_SIGNAL_WEIGHTS;
@@ -219,6 +270,20 @@ export function computeOutcomeScore(outcome: OutcomeSignals): number {
     score += w.returnedPenalty;
   }
 
+  // Signal 5: Direct user feedback (Phase 7.10e)
+  // Credibility-weighted: contribution = signalWeight × credibilityScore
+  // Missing feedback = no-op (backward compatible).
+  // Missing credibility defaults to 1.0 (neutral).
+  if (outcome.feedbackRating) {
+    const cred = outcome.feedbackCredibility ?? 1.0;
+    if (outcome.feedbackRating === 'positive') {
+      score += w.feedbackPositive * cred;
+    } else if (outcome.feedbackRating === 'negative') {
+      score += w.feedbackNegative * cred;
+    }
+    // 'neutral' adds 0.0 × cred = 0 — no-op by design
+  }
+
   // Clamp to [0, 1]
   return Math.max(OUTCOME_SCORE_MIN, Math.min(OUTCOME_SCORE_MAX, score));
 }
@@ -240,12 +305,23 @@ export function computeOutcomeScoreDetailed(outcome: OutcomeSignals): OutcomeSco
   const returnedWithin60s = outcome.returnedWithin60s === true;
   const reusedFromLibrary = outcome.reusedFromLibrary === true;
 
+  // Phase 7.10e: Feedback contribution (credibility-weighted)
+  const feedbackRating = outcome.feedbackRating ?? null;
+  const feedbackCredibility = outcome.feedbackCredibility ?? 1.0;
+  let feedbackContribution = 0;
+  if (feedbackRating === 'positive') {
+    feedbackContribution = round4(w.feedbackPositive * feedbackCredibility);
+  } else if (feedbackRating === 'negative') {
+    feedbackContribution = round4(w.feedbackNegative * feedbackCredibility);
+  }
+
   const signals = {
     copied: copied ? w.copied : 0,
     copiedNoReturn: copied && !returnedWithin60s ? w.copiedNoReturn : 0,
     saved: saved ? w.saved : 0,
     reusedFromLibrary: reusedFromLibrary ? w.reusedFromLibrary : 0,
     returnedPenalty: returnedWithin60s ? w.returnedPenalty : 0,
+    feedback: feedbackContribution,
   };
 
   const rawSum =
@@ -253,7 +329,8 @@ export function computeOutcomeScoreDetailed(outcome: OutcomeSignals): OutcomeSco
     signals.copiedNoReturn +
     signals.saved +
     signals.reusedFromLibrary +
-    signals.returnedPenalty;
+    signals.returnedPenalty +
+    signals.feedback;
 
   const score = Math.max(OUTCOME_SCORE_MIN, Math.min(OUTCOME_SCORE_MAX, rawSum));
 
@@ -265,6 +342,8 @@ export function computeOutcomeScoreDetailed(outcome: OutcomeSignals): OutcomeSco
       saved,
       returnedWithin60s,
       reusedFromLibrary,
+      feedbackRating,
+      feedbackCredibility,
     },
   };
 }

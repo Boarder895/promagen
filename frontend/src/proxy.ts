@@ -8,6 +8,14 @@ const DEV_HEALTH_TOKEN = (process.env.PROMAGEN_DEV_HEALTH_TOKEN ?? '').trim();
 
 const DEV_HEALTH_PATHS = new Set<string>(['/dev/health', '/api/health', '/health-check']);
 
+// Admin user IDs — same env var used by /api/admin/* route handlers (defence in depth)
+const ADMIN_USER_IDS = new Set(
+  (process.env.ADMIN_USER_IDS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
+);
+
 const CSP_REPORT_URI = '/api/meta/csp-report';
 const REPORT_TO = JSON.stringify({
   group: 'csp-endpoint',
@@ -24,6 +32,10 @@ const isProtectedRoute = createRouteMatcher([
   '/api/admin(.*)',
   '/api/tests(.*)',
 ]);
+
+// Admin-only gates (subset of protected routes — requires ADMIN_USER_IDS membership)
+const isAdminPageRoute = createRouteMatcher(['/admin(.*)']);
+const isAdminApiRoute = createRouteMatcher(['/api/admin(.*)']);
 
 function getPromagenRequestId(req: NextRequest): string {
   return (
@@ -69,9 +81,7 @@ function buildCsp(isDev: boolean, isPreview: boolean): string {
   const clerkHostedFallback =
     'https://*.clerk.accounts.dev https://*.clerk.com https://clerk.promagen.com https://accounts.promagen.com';
   const clerkScriptSrc = clerkFapi ? `${clerkFapi} ${clerkHostedFallback}` : clerkHostedFallback;
-  const clerkConnectSrc = clerkFapi
-    ? `${clerkFapi} ${clerkHostedFallback}`
-    : clerkHostedFallback;
+  const clerkConnectSrc = clerkFapi ? `${clerkFapi} ${clerkHostedFallback}` : clerkHostedFallback;
 
   const directives: string[] = [];
 
@@ -168,12 +178,40 @@ function applySecurityHeaders(
   return response;
 }
 
-export default clerkMiddleware(async (auth, req) => {
+// ============================================================================
+// DEV vs PROD MIDDLEWARE
+// ============================================================================
+// Dev:  Plain handler — no Clerk overhead, all pages open, security headers applied.
+// Prod: clerkMiddleware wrapper — full auth + admin-only gate.
+// ============================================================================
+
+function devMiddleware(req: NextRequest): NextResponse {
+  const url = req.nextUrl;
+  const host = url.host.toLowerCase();
+  const pathname = url.pathname;
+  const requestId = getPromagenRequestId(req);
+  const isDevHealth = isDevHealthPath(pathname);
+
+  // Dev/health gate
+  if (isDevHealth) {
+    const token = req.headers.get('x-promagen-health-token') ?? '';
+    const allowed =
+      (DEV_HEALTH_TOKEN && token === DEV_HEALTH_TOKEN) || isPromagenInternalHost(host);
+    if (!allowed) {
+      const res = NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return applySecurityHeaders(res, true, true, requestId);
+    }
+  }
+
+  const res = NextResponse.next();
+  return applySecurityHeaders(res, true, isDevHealth, requestId);
+}
+
+const prodMiddleware = clerkMiddleware(async (auth, req) => {
   const url = req.nextUrl;
   const host = url.host.toLowerCase();
   const pathname = url.pathname;
 
-  const isDev = process.env.NODE_ENV === 'development';
   const isDevHealth = isDevHealthPath(pathname);
   const requestId = getPromagenRequestId(req);
 
@@ -185,26 +223,58 @@ export default clerkMiddleware(async (auth, req) => {
 
     if (!allowed) {
       const res = NextResponse.json({ error: 'Not found' }, { status: 404 });
-      return applySecurityHeaders(res, isDev, true, requestId);
+      return applySecurityHeaders(res, false, true, requestId);
     }
   }
 
   // 2) Canonical host enforcement
-  if (host !== 'localhost:3000' && ENFORCE_CANONICAL && CANONICAL_HOST && host !== CANONICAL_HOST) {
+  if (ENFORCE_CANONICAL && CANONICAL_HOST && host !== CANONICAL_HOST) {
     const to = `${url.protocol}//${CANONICAL_HOST}${url.pathname}${url.search}`;
     const res = NextResponse.redirect(to, 308);
-    return applySecurityHeaders(res, isDev, isDevHealth, requestId);
+    return applySecurityHeaders(res, false, isDevHealth, requestId);
   }
 
   // 3) Clerk protection for private areas
   if (isProtectedRoute(req)) {
     await auth.protect();
+
+    // 3b) Admin-only gate — non-admins never see admin pages or hit admin APIs.
+    //     Requires ADMIN_USER_IDS env var (comma-separated Clerk user IDs).
+    //     Tier is read from session claims (Clerk Dashboard → Sessions → Customize token
+    //     must include: { "publicMetadata": "{{user.public_metadata}}" }).
+    //     If publicMetadata is missing from the token, tier defaults to undefined → free path.
+    if (isAdminPageRoute(req) || isAdminApiRoute(req)) {
+      const { userId, sessionClaims } = await auth();
+
+      if (!userId || !ADMIN_USER_IDS.has(userId)) {
+        // Read tier from JWT session claims (set via Clerk session token customisation)
+        const meta = sessionClaims?.publicMetadata as { tier?: string } | undefined;
+        const tier = meta?.tier;
+
+        // API routes → 403 JSON (no redirect)
+        if (isAdminApiRoute(req)) {
+          const res = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          return applySecurityHeaders(res, false, false, requestId);
+        }
+
+        // Page routes → redirect based on tier
+        //   paid (not admin) → homepage (they've already paid, nothing to upsell)
+        //   free / unknown   → pro-promagen (upsell opportunity)
+        const target = tier === 'paid' ? '/' : '/pro-promagen';
+        const res = NextResponse.redirect(new URL(target, req.url));
+        return applySecurityHeaders(res, false, false, requestId);
+      }
+    }
   }
 
   // 4) Continue
   const res = NextResponse.next();
-  return applySecurityHeaders(res, isDev, isDevHealth, requestId);
+  return applySecurityHeaders(res, false, isDevHealth, requestId);
 });
+
+const IS_DEV = process.env.NODE_ENV === 'development';
+
+export default IS_DEV ? devMiddleware : prodMiddleware;
 
 export const config = {
   matcher: [

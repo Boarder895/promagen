@@ -1,6 +1,6 @@
 // src/components/providers/scene-selector.tsx
 // ============================================================================
-// SCENE SELECTOR v1.3.0 — Pro gate integration + upgrade prompt
+// SCENE SELECTOR v1.5.0 — Feedback Confidence Halos
 // ============================================================================
 // A collapsible horizontal strip that sits between the prompt builder header
 // and the category dropdown grid. Lets users pick a curated scene template
@@ -64,6 +64,15 @@ import { allScenes, freeScenes, ALL_WORLDS, WORLD_BY_SLUG, getScenesByWorld } fr
 import type { SceneEntry, WorldMeta } from '@/types/scene-starters';
 import type { PromptCategory, CategoryState } from '@/types/prompt-builder';
 import { trackEvent } from '@/lib/analytics/events';
+import {
+  enhanceScenePrefills,
+  hasEnoughFeedbackForEnhancement,
+  computeSceneConfidenceMap,
+} from '@/lib/feedback/feedback-scene-enhancer';
+import type { SceneConfidence } from '@/lib/feedback/feedback-scene-enhancer';
+import { getOptions } from '@/data/vocabulary/prompt-builder';
+import type { CategoryKey } from '@/data/vocabulary/prompt-builder';
+import type { TermHint } from '@/hooks/use-feedback-memory';
 
 // ============================================================================
 // Types
@@ -93,6 +102,12 @@ export interface SceneSelectorProps {
    * Tiers 1–3 get full prefills. Affinity indicator shown on cards.
    */
   platformTier: 1 | 2 | 3 | 4;
+  /**
+   * Term-level feedback hints from useFeedbackMemory (Phase 7.10g).
+   * When present + strong enough signal, scene prefills are personalised
+   * with the user's proven winning terms via feedback-scene-enhancer.
+   */
+  feedbackTermHints?: TermHint[];
 }
 
 // ============================================================================
@@ -150,6 +165,26 @@ const SCENE_STYLES = `
 
   /* ── Panel expand ──────────────────────────────────────────── */
   .ss-panel { will-change: max-height, opacity; }
+
+  /* ── Confidence Halos — feedback-driven glow rings ─────────── */
+  @keyframes ss-halo-breathe {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 0.85; }
+  }
+  .ss-halo--proven {
+    box-shadow:
+      0 0 0 1px rgba(52, 211, 153, 0.25),
+      0 0 12px -3px rgba(52, 211, 153, 0.18);
+    animation: ss-halo-breathe 3s ease-in-out infinite;
+  }
+  .ss-halo--warm {
+    box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.12);
+  }
+  .ss-halo--risky {
+    box-shadow:
+      0 0 0 1px rgba(251, 191, 36, 0.25),
+      0 0 10px -3px rgba(251, 191, 36, 0.14);
+  }
 `;
 
 // ============================================================================
@@ -163,6 +198,7 @@ export function SceneSelector({
   isLocked,
   onActiveSceneChange,
   platformTier,
+  feedbackTermHints,
 }: SceneSelectorProps) {
   // ── State ──────────────────────────────────────────────────────────────
   const [isExpanded, setIsExpanded] = useState(false);
@@ -187,6 +223,15 @@ export function SceneSelector({
   const activeWorld = useMemo(() => WORLD_BY_SLUG.get(activeWorldSlug), [activeWorldSlug]);
 
   const scenesForWorld = useMemo(() => getScenesByWorld(activeWorldSlug), [activeWorldSlug]);
+
+  // Phase 7.10 — Confidence halos: batch-compute overlap scores for visible scenes
+  const confidenceMap = useMemo(
+    () =>
+      feedbackTermHints && feedbackTermHints.length > 0
+        ? computeSceneConfidenceMap(scenesForWorld, feedbackTermHints)
+        : new Map<string, SceneConfidence>(),
+    [scenesForWorld, feedbackTermHints],
+  );
 
   const activeScene = useMemo(
     () => (activeSceneId ? allScenes.find((s) => s.id === activeSceneId) : undefined),
@@ -270,14 +315,34 @@ export function SceneSelector({
         if (reducedCats && !reducedCats.has(cat)) continue;
         prefillMap[cat] = [...(values ?? [])];
       }
-      setScenePrefillSnapshot(prefillMap);
 
-      // Apply prefills (tier-filtered for Tier 4)
+      // Phase 7.10: Feedback-Aware Scene Enhancement
+      // If user has enough feedback history, silently enrich prefills
+      // with their proven winning terms from feedback memory.
+      let effectivePrefills = prefillMap;
+      if (
+        feedbackTermHints &&
+        feedbackTermHints.length > 0 &&
+        hasEnoughFeedbackForEnhancement(feedbackTermHints)
+      ) {
+        const vocabLookup = (cat: string): string[] => {
+          try {
+            return getOptions(cat as CategoryKey);
+          } catch {
+            return [];
+          }
+        };
+        const enhanced = enhanceScenePrefills(prefillMap, feedbackTermHints, vocabLookup);
+        effectivePrefills = enhanced.prefills;
+      }
+
+      setScenePrefillSnapshot(effectivePrefills);
+
+      // Apply prefills (tier-filtered for Tier 4, feedback-enhanced)
       setCategoryState((prev) => {
         const next = { ...prev };
-        for (const [cat, values] of Object.entries(scene.prefills)) {
+        for (const [cat, values] of Object.entries(effectivePrefills)) {
           const category = cat as PromptCategory;
-          if (reducedCats && !reducedCats.has(cat)) continue;
           if (next[category]) {
             next[category] = {
               ...next[category],
@@ -293,7 +358,7 @@ export function SceneSelector({
       setShowConfirmReset(false);
 
       // Step 2.6: Notify parent of scene activation
-      onActiveSceneChange?.(scene.id, prefillMap);
+      onActiveSceneChange?.(scene.id, effectivePrefills);
 
       // Step 4.2: Analytics — scene_selected
       trackEvent('scene_selected', {
@@ -302,7 +367,7 @@ export function SceneSelector({
         world: scene.world,
         tier: scene.tier,
         platform_tier: platformTier,
-        categories_prefilled: Object.keys(prefillMap).length,
+        categories_prefilled: Object.keys(effectivePrefills).length,
       });
 
       // Pulse animation
@@ -639,6 +704,7 @@ export function SceneSelector({
                     onClick={handleSceneApply}
                     animDelay={idx * 30}
                     platformTier={platformTier}
+                    confidence={confidenceMap.get(scene.id) ?? null}
                   />
                 ))}
               </div>
@@ -943,6 +1009,8 @@ interface SceneCardProps {
   animDelay: number;
   /** Current platform tier for affinity indicator (Step 2.7) */
   platformTier: 1 | 2 | 3 | 4;
+  /** Feedback confidence level for halo ring (Phase 7.10) */
+  confidence: SceneConfidence;
 }
 
 function SceneCard({
@@ -953,6 +1021,7 @@ function SceneCard({
   onClick,
   animDelay,
   platformTier,
+  confidence,
 }: SceneCardProps) {
   // Step 2.7: Tier-specific data
   const tierKey = String(platformTier) as '1' | '2' | '3' | '4';
@@ -962,6 +1031,21 @@ function SceneCard({
   const reducedCount = isReduced && tier4.reducedPrefills ? tier4.reducedPrefills.length : null;
   const fullCount = Object.keys(scene.prefills).length;
   const displayCount = reducedCount ?? fullCount;
+
+  // Phase 7.10: Halo CSS class — only show when card is not active and not locked
+  const haloClass =
+    !isActive && !isProLocked && confidence
+      ? `ss-halo--${confidence}`
+      : '';
+
+  // Confidence label for tooltip
+  const confidenceLabel = confidence === 'proven'
+    ? ' ✦ Proven for you'
+    : confidence === 'warm'
+      ? ' ✦ Looks promising'
+      : confidence === 'risky'
+        ? ' ⚠ Mixed results'
+        : '';
 
   return (
     <button
@@ -979,6 +1063,7 @@ function SceneCard({
               : 'border-slate-800/30 bg-slate-900/25 hover:border-slate-700/50 hover:bg-slate-800/35 cursor-pointer'
         }
         ${isPulsing ? 'ss-card--pulse' : ''}
+        ${haloClass}
       `}
       style={{
         animationDelay: `${animDelay}ms`,
@@ -986,7 +1071,9 @@ function SceneCard({
         gap: 'clamp(2px, 0.25vw, 4px)',
       }}
       title={
-        isProLocked ? `${scene.name} — Pro Promagen only` : `${scene.name}: ${scene.description}`
+        isProLocked
+          ? `${scene.name} — Pro Promagen only`
+          : `${scene.name}: ${scene.description}${confidenceLabel}`
       }
     >
       {/* Pro lock icon */}
@@ -1062,6 +1149,26 @@ function SceneCard({
           title={`Tier ${platformTier} affinity: ${affinity}/10`}
           aria-label={`Affinity ${affinity} out of 10`}
         />
+        {/* Confidence micro-badge — only when halo is active */}
+        {!isProLocked && confidence && (
+          <span
+            style={{
+              fontSize: 'clamp(7px, 0.5vw, 9px)',
+              lineHeight: 1,
+              color:
+                confidence === 'risky'
+                  ? 'rgba(251, 191, 36, 0.7)'
+                  : 'rgba(52, 211, 153, 0.7)',
+            }}
+            aria-label={
+              confidence === 'proven' ? 'Proven for you'
+                : confidence === 'warm' ? 'Looks promising'
+                  : 'Mixed results'
+            }
+          >
+            {confidence === 'proven' ? '✦' : confidence === 'warm' ? '·' : '⚠'}
+          </span>
+        )}
       </div>
 
       {/* Active glow overlay */}
@@ -1071,6 +1178,22 @@ function SceneCard({
           style={{
             background:
               'linear-gradient(135deg, rgba(34,211,238,0.06) 0%, transparent 40%, transparent 60%, rgba(139,92,246,0.04) 100%)',
+          }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Confidence halo overlay — proven/warm get emerald tint, risky gets amber */}
+      {!isActive && !isProLocked && confidence && (
+        <div
+          className="absolute inset-[-1px] rounded-[inherit] pointer-events-none"
+          style={{
+            background:
+              confidence === 'proven'
+                ? 'linear-gradient(135deg, rgba(52,211,153,0.06) 0%, transparent 50%, rgba(52,211,153,0.03) 100%)'
+                : confidence === 'warm'
+                  ? 'linear-gradient(135deg, rgba(52,211,153,0.03) 0%, transparent 70%)'
+                  : 'linear-gradient(135deg, rgba(251,191,36,0.05) 0%, transparent 50%, rgba(251,191,36,0.03) 100%)',
           }}
           aria-hidden="true"
         />

@@ -3,8 +3,8 @@
 // UNIFIED LEARNING DATA — Composition Hook
 // ============================================================================
 //
-// Phase 7.5, Part 7.5e (Improvement 1) + Phase 7.6e — Thin facade composing:
-//   • useLearnedWeights()   → tier-level data (Phases 5–7.4)
+// Phase 7.5, Part 7.5e (Improvement 1) + Phase 7.6e + Phase 7.8e — Thin facade composing:
+//   • useLearnedWeights()   → tier-level data (Phases 5–7.4) + temporal (Phase 7.8)
 //   • usePlatformLearning() → platform-specific data (Phase 7.5)
 //   • useABTest()           → A/B test variant assignment (Phase 7.6)
 //
@@ -12,16 +12,16 @@
 // Prevents component authors from forgetting to call one of the hooks.
 //
 // Usage:
-//   const { coOccurrenceLookup, platformTermQualityLookup, abVariant, isLoading, ... } = useLearningData();
+//   const { coOccurrenceLookup, platformTermQualityLookup, abVariant, temporalLookup, isLoading, ... } = useLearningData();
 //
 // isLoading semantics:
 //   • true only while BOTH tier + platform hooks are still loading
 //   • AB loading is tracked separately (abIsLoading) since it's non-blocking
 //   • error is the first non-null error from any hook
 //
-// Version: 2.0.0 — Phase 7.6e A/B test variant assignment
+// Version: 4.0.0 — Phase 7.9e: added compression lookup
 // Created: 2026-02-27
-// Updated: 2026-02-27
+// Updated: 2026-02-28
 //
 // Existing features preserved: Yes.
 // ============================================================================
@@ -61,6 +61,17 @@ export interface UseLearningDataReturn {
 
   /** Combo lookup from Phase 7.4 */
   comboLookup: UseLearnedWeightsReturn['comboLookup'];
+
+  // ── Temporal-level (Phase 7.8) ─────────────────────────────────────────
+  /** Pre-built temporal lookup for seasonal/weekly boosts */
+  temporalLookup: UseLearnedWeightsReturn['temporalLookup'];
+
+  /** Pre-built trending lookup for velocity signals */
+  trendingLookup: UseLearnedWeightsReturn['trendingLookup'];
+
+  // ── Compression-level (Phase 7.9) ────────────────────────────────────
+  /** Pre-built compression lookup for optimal lengths + expendable terms */
+  compressionLookup: UseLearnedWeightsReturn['compressionLookup'];
 
   // ── Platform-level (Phase 7.5) ──────────────────────────────────────────
   /** Platform-specific term quality lookup */
@@ -121,6 +132,8 @@ export interface UseLearningDataReturn {
  *   coOccurrenceLookup, blendRatio, antiPatternLookup, // tier
  *   platformTermQualityLookup, platformCoOccurrenceLookup, // platform
  *   activeTestId, abVariant, abVariantWeights, abHash, // A/B
+ *   temporalLookup, trendingLookup, // temporal (Phase 7.8)
+ *   compressionLookup, // compression (Phase 7.9)
  *   isLoading, error,
  * } = useLearningData();
  * ```
@@ -140,6 +153,13 @@ export function useLearningData(): UseLearningDataReturn {
     weakTermLookup: tier.weakTermLookup,
     redundancyLookup: tier.redundancyLookup,
     comboLookup: tier.comboLookup,
+
+    // Temporal-level
+    temporalLookup: tier.temporalLookup,
+    trendingLookup: tier.trendingLookup,
+
+    // Compression-level
+    compressionLookup: tier.compressionLookup,
 
     // Platform-level
     platformTermQualityLookup: platform.platformTermQualityLookup,

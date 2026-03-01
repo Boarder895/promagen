@@ -59,10 +59,20 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { SignInButton } from '@clerk/nextjs';
 import { trackPromptBuilderOpen, trackPromptCopy } from '@/lib/analytics/providers';
 import { sendPromptTelemetry } from '@/lib/telemetry/prompt-telemetry-client';
+import FeedbackInvitation from '@/components/ux/feedback-invitation';
+import FeedbackMemoryBanner from '@/components/ux/feedback-memory-banner';
+import {
+  storeFeedbackPending,
+  readFeedbackPending,
+  isDismissedRecently,
+} from '@/lib/feedback/feedback-client';
+import type { FeedbackPendingData } from '@/lib/feedback/feedback-client';
+import { useFeedbackMemory } from '@/hooks/use-feedback-memory';
+import type { FeedbackRating } from '@/types/feedback';
 import {
   assemblePrompt,
   formatPromptForCopy,
@@ -476,6 +486,13 @@ export function PromptBuilder({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
 
+  // Phase 7.10d: Feedback invitation state
+  const [feedbackPending, setFeedbackPending] = useState<FeedbackPendingData | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Phase 7.10g: Contextual feedback memory + autopilot
+  const { recordRatedPrompt, getOverlap, getTermHints } = useFeedbackMemory();
+
   // Step 2.6: Scene origin tracking — which values came from a Scene Starter
   const [scenePrefills, setScenePrefills] = useState<Record<string, string[]> | undefined>();
   // Phase 4: Track active scene ID for flavour phrases lookup
@@ -536,6 +553,7 @@ export function PromptBuilder({
     abHash,
     activeTestId: abTestId,
     abVariant,
+    compressionLookup,
   } = useLearningData();
 
   // ============================================================================
@@ -585,6 +603,14 @@ export function PromptBuilder({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Phase 7.10d: Return-visit detection — show feedback if unrated prompt exists
+  useEffect(() => {
+    if (!isMounted) return;
+    if (isDismissedRecently()) return;
+    const pending = readFeedbackPending();
+    if (pending) setFeedbackPending(pending);
+  }, [isMounted]);
 
   // ============================================================================
   // Load Explore Terms from SessionStorage
@@ -778,6 +804,29 @@ export function PromptBuilder({
     }
     return result;
   }, [categoryState]);
+
+  // Phase 7.10g: Contextual feedback overlap detection
+  const feedbackOverlap = useMemo(
+    () => getOverlap(platformId, selections),
+    [getOverlap, platformId, selections],
+  );
+
+  // Phase 7.10g: Autopilot term hints — Record<term, 'positive'|'negative'>
+  const feedbackHintTerms = useMemo(() => {
+    const hints = getTermHints(platformId);
+    if (hints.length === 0) return undefined;
+    const map: Record<string, 'positive' | 'negative'> = {};
+    for (const h of hints) {
+      map[h.term] = h.type;
+    }
+    return map;
+  }, [getTermHints, platformId]);
+
+  // Phase 7.10: Raw TermHint[] for Feedback-Aware Scene Starters
+  const rawTermHints = useMemo(
+    () => getTermHints(platformId),
+    [getTermHints, platformId],
+  );
 
   // Assemble base prompt
   const assembled = useMemo(() => assemblePrompt(platformId, selections), [platformId, selections]);
@@ -1140,8 +1189,9 @@ export function PromptBuilder({
         trackPromptCopy({ providerId: provider.id, promptLength: textToCopy.length });
       }
 
-      // Phase 5: Fire telemetry for the learning pipeline (fire-and-forget)
-      sendPromptTelemetry({
+      // Phase 5: Fire telemetry for the learning pipeline
+      // Phase 7.10d: Await to capture eventId for feedback linkage
+      const eventId = await sendPromptTelemetry({
         selections,
         healthScore,
         scoreFactors: {
@@ -1162,6 +1212,21 @@ export function PromptBuilder({
         activeTestId: abTestId,
         activeVariant: abVariant,
       });
+
+      // Phase 7.10d: Schedule feedback widget 4s after copy
+      if (eventId && !isDismissedRecently()) {
+        const pending: FeedbackPendingData = {
+          eventId,
+          platform: platformId,
+          tier: platformTier as number,
+          copiedAt: Date.now(),
+        };
+        storeFeedbackPending(pending);
+        if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+        feedbackTimerRef.current = setTimeout(() => {
+          setFeedbackPending(pending);
+        }, 4_000);
+      }
     } catch (err) {
       console.error('Failed to copy prompt:', err);
     }
@@ -1454,6 +1519,7 @@ export function PromptBuilder({
             isLocked={isLocked}
             onActiveSceneChange={handleActiveSceneChange}
             platformTier={platformTier}
+            feedbackTermHints={rawTermHints}
           />
 
           {/* Category dropdowns grid */}
@@ -1495,6 +1561,7 @@ export function PromptBuilder({
                     chipSectionLabel="More options"
                     sceneOriginValues={getSceneOriginValues(category)}
                     onCustomTermSubmitted={(term) => submitCustomTerm(term, category)}
+                    feedbackHintTerms={feedbackHintTerms}
                   />
                   {/* Phase 3: Explore Drawer — expandable vocabulary panel */}
                   <ExploreDrawer
@@ -1514,6 +1581,7 @@ export function PromptBuilder({
                     }
                     sceneFlavourPhrases={getSceneFlavourPhrases(category)}
                     cascadeScores={getCascadeScores(category)}
+                    compressionLookup={compressionLookup}
                   />
                 </div>
               );
@@ -1890,6 +1958,46 @@ export function PromptBuilder({
           )}
         </div>
       </footer>
+
+      {/* Phase 7.10g: Feedback Memory Banner — contextual overlap hint */}
+      {feedbackOverlap && !feedbackPending && (
+        <div style={{ marginTop: 'clamp(6px, 0.4vw, 10px)' }}>
+          <FeedbackMemoryBanner
+            overlap={feedbackOverlap}
+            platformName={provider.name}
+            userTier={userTier as string | null}
+          />
+        </div>
+      )}
+
+      {/* Phase 7.10d: Feedback Invitation Widget */}
+      {feedbackPending && (
+        <div style={{ marginTop: 'clamp(8px, 0.6vw, 12px)' }}>
+          <FeedbackInvitation
+            pending={feedbackPending}
+            userContext={{
+              userTier: userTier as string | null,
+              accountAgeDays,
+            }}
+            onComplete={(rating?: FeedbackRating) => {
+              // Phase 7.10g: Record to feedback memory if rated
+              if (rating && feedbackPending) {
+                recordRatedPrompt(
+                  platformId,
+                  rating,
+                  selections,
+                  feedbackPending.eventId,
+                );
+              }
+              setFeedbackPending(null);
+              if (feedbackTimerRef.current) {
+                clearTimeout(feedbackTimerRef.current);
+                feedbackTimerRef.current = null;
+              }
+            }}
+          />
+        </div>
+      )}
 
       {/* Save Prompt Modal */}
       <SavePromptModal

@@ -9,7 +9,7 @@
 // server component (required for metadata export). Uses usePathname()
 // to highlight the current page.
 //
-// Version: 1.0.0
+// Version: 2.0.0 — Phase 7.11a (add Scoring Health link)
 // Created: 2026-02-27
 //
 // Existing features preserved: Yes.
@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const NAV_LINKS = [
+  { href: '/admin/scoring-health',  label: 'Scoring Health' },
   { href: '/admin/vocab-submissions', label: 'Vocab Queue' },
   { href: '/admin/scene-candidates',  label: 'Scene Candidates' },
   { href: '/admin/providers',         label: 'Providers' },

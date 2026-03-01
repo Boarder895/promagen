@@ -5,7 +5,8 @@
  * the Self-Improving Scorer (Phase 6), Negative Pattern Learning (Phase 7.1),
  * Iteration Tracking (Phase 7.2), Semantic Redundancy Detection (Phase 7.3),
  * Higher-Order Combinations / Magic Combos (Phase 7.4),
- * and Per-Platform Learning (Phase 7.5).
+ * Per-Platform Learning (Phase 7.5), Temporal Intelligence (Phase 7.8),
+ * and Compression Intelligence (Phase 7.9).
  *
  * Schedule: 03:00 UTC daily (configured in Vercel dashboard)
  *
@@ -31,6 +32,8 @@
  * - Layer 14a: Platform Term Quality     (Phase 7.5 — platform-term-quality)
  * - Layer 14b: Platform Co-occurrence    (Phase 7.5 — platform-co-occurrence)
  * - Layer 15:  A/B Test Management       (Phase 7.6 — ab-testing-pipeline)
+ * - Layer 16:  Temporal Intelligence     (Phase 7.8 — temporal-boosts + trending-terms)
+ * - Layer 17:  Compression Intelligence  (Phase 7.9 — compression-profiles)
  *
  * Execution order:
  *   Layers 4, 5, 6 run in parallel (no inter-dependencies).
@@ -42,6 +45,9 @@
  *   Layer 12 runs after Layer 11 (reuses same event set).
  *   Layer 13 runs after Layer 12 (reuses same event set).
  *   Layers 14a, 14b run after Layer 13 (reuses same event set).
+ *   Layer 16 runs in parallel with Layers 14a, 14b (reuses same event set).
+ *   Layer 17 runs in parallel with Layers 14a, 14b, 16. Reads dependency
+ *     outputs from Layers 6, 9, 11, 12 (already computed earlier in the run).
  *
  * Phase 6 is gated by PHASE_6_SCORING_ENABLED env var (default: false).
  * Phase 7.1 is gated by PHASE_7_LEARNING_ENABLED env var (default: false).
@@ -50,6 +56,8 @@
  * Phase 7.4 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
  * Phase 7.5 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
  * Phase 7.6 is gated by PHASE_7_AB_TESTING_ENABLED env var (default: false).
+ * Phase 7.8 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
+ * Phase 7.9 is gated by the SAME PHASE_7_LEARNING_ENABLED env var.
  * Phase 6 failures are non-fatal — Phase 5 results persist regardless.
  * Phase 7 failures are non-fatal — Phase 5 + 6 results persist regardless.
  *
@@ -61,7 +69,7 @@
  * @see docs/authority/phase-7.4-magic-combos-buildplan.md § 5
  * @see docs/authority/phase-7.5-per-platform-learning-buildplan.md § 5
  *
- * Version: 8.0.0 — Layer 15 A/B test management (Phase 7.6d)
+ * Version: 9.2.0 — Layer 17 Compression Intelligence (Phase 7.9c)
  * Existing features preserved: Yes.
  */
 
@@ -135,6 +143,13 @@ import {
   incrementPeekCount,
   countABTestEvents,
 } from '@/lib/learning/database';
+
+// ── Phase 7.8 imports ────────────────────────────────────────────────────────
+import { runTemporalAnalysis } from '@/lib/learning/temporal-intelligence';
+
+// ── Phase 7.9 imports ────────────────────────────────────────────────────────
+import { analyseCompressionProfiles } from '@/lib/learning/compression-intelligence';
+import type { CompressionProfilesData } from '@/lib/learning/compression-intelligence';
 
 import sceneStartersData from '@/data/scenes/scene-starters.json';
 import type { SceneStartersFile } from '@/types/scene-starters';
@@ -223,6 +238,12 @@ interface AggregationCronResponse {
   // Phase 7.6 additions
   phase76Enabled: boolean;
   phase76: Phase76Summary;
+
+  // Phase 7.8 additions
+  phase78: Phase78Summary;
+
+  // Phase 7.9 additions
+  phase79: Phase79Summary;
 }
 
 /** Grouped Phase 7.5 metrics — nested for cleaner dashboard consumption */
@@ -246,6 +267,34 @@ interface Phase76Summary {
   /** Test name */
   testName: string | null;
   /** Error message if Layer 15 failed */
+  error: string | null;
+}
+
+/** Phase 7.8 Temporal Intelligence summary */
+interface Phase78Summary {
+  /** Were temporal boosts (seasonal + weekly) computed? */
+  temporalBoostsGenerated: boolean;
+  /** Were trending terms computed? */
+  trendingTermsGenerated: boolean;
+  /** Number of seasonal boost entries across all tiers */
+  seasonalTermCount: number;
+  /** Number of trending term entries across all tiers */
+  trendingTermCount: number;
+  /** Error message if Layer 16 failed */
+  error: string | null;
+}
+
+/** Phase 7.9 Compression Intelligence summary */
+interface Phase79Summary {
+  /** Were compression profiles computed? */
+  compressionProfilesGenerated: boolean;
+  /** Number of tiers with length profiles */
+  tiersWithProfiles: number;
+  /** Total expendable terms across all tiers */
+  expendableTermCount: number;
+  /** Total platforms with per-platform length data */
+  platformProfileCount: number;
+  /** Error message if Layer 17 failed */
   error: string | null;
 }
 
@@ -362,6 +411,30 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let proposedWeightsForAB: Record<string, number> | null = null;
   let currentLiveWeightsForAB: Record<string, number> | null = null;
 
+  // Phase 7.8 tracking
+  const phase78Summary: Phase78Summary = {
+    temporalBoostsGenerated: false,
+    trendingTermsGenerated: false,
+    seasonalTermCount: 0,
+    trendingTermCount: 0,
+    error: null,
+  };
+
+  // Phase 7.9 tracking
+  const phase79Summary: Phase79Summary = {
+    compressionProfilesGenerated: false,
+    tiersWithProfiles: 0,
+    expendableTermCount: 0,
+    platformProfileCount: 0,
+    error: null,
+  };
+
+  // Hoisted so Layer 17 can access Layer 6, 9, 11, 12 outputs
+  let termQualityForCompression: TermQualityScores | null = null;
+  let antiPatternDataForCompression: AntiPatternData | null = null;
+  let iterationInsightsForCompression: IterationInsightsData | null = null;
+  let redundancyDataForCompression: RedundancyGroupsData | null = null;
+
   // ─────────────────────────────────────────────────────────────────────────
   // SECURITY: Validate auth
   // ─────────────────────────────────────────────────────────────────────────
@@ -436,6 +509,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         },
         phase76Enabled,
         phase76: phase76Summary,
+        phase78: phase78Summary,
+        phase79: phase79Summary,
       };
       return NextResponse.json(response, { status: 409 });
     }
@@ -498,6 +573,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         },
         phase76Enabled,
         phase76: phase76Summary,
+        phase78: phase78Summary,
+        phase79: phase79Summary,
       };
       return NextResponse.json(response);
     }
@@ -648,6 +725,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         proposedWeightsForAB = scoringWeights.global.weights;
         currentLiveWeightsForAB = previousWeights?.global.weights ?? null;
 
+        // Capture for Layer 17 (Compression Intelligence) — hoisted variable
+        termQualityForCompression = termQualityScores;
+
         if (isTimedOut()) {
           throw new Error('Timeout after Phase 6 Layers 4-6');
         }
@@ -784,6 +864,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         antiPatternCount = antiPatternData.totalPatterns;
         collisionCount = collisionData.totalCollisions;
 
+        // Capture for Layer 17 (Compression Intelligence)
+        antiPatternDataForCompression = antiPatternData;
+
         console.debug('[Learning Cron] Layers 9-10 computed', {
           requestId,
           antiPatternEventCount: antiPatternData.eventCount,
@@ -839,6 +922,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
             iterationInsightsGenerated = true;
 
+            // Capture for Layer 17 (Compression Intelligence)
+            iterationInsightsForCompression = iterationInsights;
+
             console.debug('[Learning Cron] Layer 11 complete', {
               requestId,
               sessionCount: iterationInsights.sessionCount,
@@ -868,6 +954,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             }
 
             redundancyGroupsGenerated = true;
+
+            // Capture for Layer 17 (Compression Intelligence)
+            redundancyDataForCompression = redundancyData;
 
             console.debug('[Learning Cron] Layer 12 complete', {
               requestId,
@@ -911,10 +1000,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         // Independent engines with separate storage keys — run in parallel.
         // Reuses antiPatternEvents (same ALL-events set — no new DB query).
         // Individual try/catch so one failure doesn't block the other.
+        // Layer 16 (Phase 7.8) runs in parallel — no write dependency on 14a/14b.
+        // Layer 17 (Phase 7.9) runs in parallel — reads hoisted Layer 6/9/11/12 outputs.
         if (!isTimedOut()) {
-          console.debug('[Learning Cron] Layers 14a+14b (Per-Platform Learning) starting in parallel', { requestId });
+          console.debug('[Learning Cron] Layers 14a+14b+16+17 (Per-Platform + Temporal + Compression) starting in parallel', { requestId });
 
-          const [layer14aResult, layer14bResult] = await Promise.allSettled([
+          const [layer14aResult, layer14bResult, layer16Result, layer17Result] = await Promise.allSettled([
             // ── Layer 14a: Platform Term Quality ──────────────────────
             (async () => {
               const previousPlatformTermQuality =
@@ -972,9 +1063,98 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                 console.debug('[Learning Cron] Layer 14b skipped — insufficient data', { requestId });
               }
             })(),
+
+            // ── Layer 16: Temporal Intelligence (Phase 7.8) ───────────
+            // Computes seasonal boosts, weekly patterns, and trending terms.
+            // Reads antiPatternEvents (same ALL-events set — no new DB query).
+            // Writes two keys to learned_weights in parallel.
+            (async () => {
+              console.debug('[Learning Cron] Layer 16 (Temporal Intelligence) starting', { requestId });
+
+              const { temporalBoosts, trendingTerms } = runTemporalAnalysis(
+                antiPatternEvents,
+                new Date(),
+              );
+
+              // Count entries for logging
+              const seasonalCount = Object.values(temporalBoosts.seasonal)
+                .reduce((sum, tier) => sum + tier.boosts.length, 0);
+              const trendingCount = Object.values(trendingTerms.trending)
+                .reduce((sum, tier) => sum + tier.terms.length, 0);
+
+              if (!dryRun) {
+                await Promise.all([
+                  upsertLearnedWeights(
+                    LEARNING_CONSTANTS.TEMPORAL_BOOSTS_KEY,
+                    temporalBoosts,
+                  ),
+                  upsertLearnedWeights(
+                    LEARNING_CONSTANTS.TRENDING_TERMS_KEY,
+                    trendingTerms,
+                  ),
+                ]);
+              }
+
+              phase78Summary.temporalBoostsGenerated = true;
+              phase78Summary.trendingTermsGenerated = true;
+              phase78Summary.seasonalTermCount = seasonalCount;
+              phase78Summary.trendingTermCount = trendingCount;
+
+              console.debug('[Learning Cron] Layer 16 complete', {
+                requestId,
+                seasonalTermCount: seasonalCount,
+                trendingTermCount: trendingCount,
+                tiersAnalysed: Object.keys(temporalBoosts.seasonal).length,
+                eventsAnalysed: temporalBoosts.eventsAnalysed,
+              });
+            })(),
+
+            // ── Layer 17: Compression Intelligence (Phase 7.9) ────────────
+            // Computes optimal length profiles, expendable terms, and
+            // platform-aware length profiles. Reads hoisted dependency
+            // outputs from Layers 6, 9, 11, 12 (no new DB queries).
+            // Writes one key to learned_weights.
+            (async () => {
+              console.debug('[Learning Cron] Layer 17 (Compression Intelligence) starting', { requestId });
+
+              const compressionData: CompressionProfilesData = analyseCompressionProfiles(
+                antiPatternEvents,
+                termQualityForCompression,
+                iterationInsightsForCompression,
+                redundancyDataForCompression,
+                antiPatternDataForCompression,
+              );
+
+              // Count outputs for logging
+              const tiersWithProfiles = Object.keys(compressionData.lengthProfiles).length;
+              const expendableCount = Object.values(compressionData.expendableTerms)
+                .reduce((sum, terms) => sum + terms.length, 0);
+              const platformCount = Object.values(compressionData.platformLengthProfiles)
+                .reduce((sum, tier) => sum + tier.platforms.length, 0);
+
+              if (!dryRun) {
+                await upsertLearnedWeights(
+                  LEARNING_CONSTANTS.COMPRESSION_PROFILES_KEY,
+                  compressionData,
+                );
+              }
+
+              phase79Summary.compressionProfilesGenerated = true;
+              phase79Summary.tiersWithProfiles = tiersWithProfiles;
+              phase79Summary.expendableTermCount = expendableCount;
+              phase79Summary.platformProfileCount = platformCount;
+
+              console.debug('[Learning Cron] Layer 17 complete', {
+                requestId,
+                tiersWithProfiles,
+                expendableTermCount: expendableCount,
+                platformProfileCount: platformCount,
+                eventsAnalysed: compressionData.totalEventsAnalysed,
+              });
+            })(),
           ]);
 
-          // Log individual failures (non-fatal — other layer may have succeeded)
+          // Log individual failures (non-fatal — other layers may have succeeded)
           if (layer14aResult.status === 'rejected') {
             console.error('[Learning Cron] Layer 14a failed (non-fatal)', {
               requestId,
@@ -991,11 +1171,31 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                 : 'Unknown error',
             });
           }
+          if (layer16Result.status === 'rejected') {
+            const errorMsg = layer16Result.reason instanceof Error
+              ? layer16Result.reason.message
+              : 'Unknown Layer 16 error';
+            phase78Summary.error = errorMsg;
+            console.error('[Learning Cron] Layer 16 failed (non-fatal)', {
+              requestId,
+              error: errorMsg,
+            });
+          }
+          if (layer17Result.status === 'rejected') {
+            const errorMsg = layer17Result.reason instanceof Error
+              ? layer17Result.reason.message
+              : 'Unknown Layer 17 error';
+            phase79Summary.error = errorMsg;
+            console.error('[Learning Cron] Layer 17 failed (non-fatal)', {
+              requestId,
+              error: errorMsg,
+            });
+          }
         }
 
         phase7DurationMs = Date.now() - phase7Start;
 
-        console.debug('[Learning Cron] Phase 7 complete (7.1 + 7.2 + 7.3 + 7.4 + 7.5)', {
+        console.debug('[Learning Cron] Phase 7 complete (7.1 + 7.2 + 7.3 + 7.4 + 7.5 + 7.8 + 7.9)', {
           requestId,
           phase7DurationMs,
           antiPatternsGenerated,
@@ -1013,6 +1213,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           platformTermCount,
           platformCoOccurrenceGenerated,
           platformPairCount,
+          temporalBoostsGenerated: phase78Summary.temporalBoostsGenerated,
+          seasonalTermCount: phase78Summary.seasonalTermCount,
+          trendingTermCount: phase78Summary.trendingTermCount,
+          compressionProfilesGenerated: phase79Summary.compressionProfilesGenerated,
+          compressionTiers: phase79Summary.tiersWithProfiles,
+          expendableTerms: phase79Summary.expendableTermCount,
+          platformProfiles: phase79Summary.platformProfileCount,
         });
       } catch (phase7Error) {
         // ── Phase 7 failures are non-fatal ──────────────────────────────
@@ -1195,7 +1402,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       : '';
 
     const phase7Suffix = phase7Enabled
-      ? `, Phase 7: ${phase7DurationMs}ms (anti=${antiPatternCount}, collisions=${collisionCount}, weakTerms=${weakTermCount}, multiSessions=${multiAttemptSessions}, redundancyGroups=${redundancyGroupCount}, magicCombos=${magicComboCount}, platformTerms=${platformTermCount}, platformPairs=${platformPairCount})`
+      ? `, Phase 7: ${phase7DurationMs}ms (anti=${antiPatternCount}, collisions=${collisionCount}, weakTerms=${weakTermCount}, multiSessions=${multiAttemptSessions}, redundancyGroups=${redundancyGroupCount}, magicCombos=${magicComboCount}, platformTerms=${platformTermCount}, platformPairs=${platformPairCount}, seasonal=${phase78Summary.seasonalTermCount}, trending=${phase78Summary.trendingTermCount}, compression=${phase79Summary.compressionProfilesGenerated ? `${phase79Summary.tiersWithProfiles}tiers/${phase79Summary.expendableTermCount}exp/${phase79Summary.platformProfileCount}plat` : 'n/a'})`
       : '';
 
     const phase76Suffix = phase76Enabled
@@ -1268,6 +1475,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
       phase76Enabled,
       phase76: phase76Summary,
+      phase78: phase78Summary,
+      phase79: phase79Summary,
     };
 
     return NextResponse.json(response);
@@ -1331,6 +1540,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
       phase76Enabled,
       phase76: phase76Summary,
+      phase78: phase78Summary,
+      phase79: phase79Summary,
     };
 
     return NextResponse.json(response, { status: 500 });

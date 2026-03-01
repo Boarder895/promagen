@@ -8,15 +8,26 @@
 // Replaces the old placeholder page with a clean dashboard showing
 // quick-access cards for each admin section.
 //
-// Version: 2.0.0 — Phase 7.7 Part 6
+// Version: 6.0.0 — Phase 7.11a (add Scoring Health card)
 // Created: 2026-02-27
 //
-// Existing features preserved: Yes (old placeholder was non-functional).
+// Existing features preserved: Yes.
 // ============================================================================
 
 import Link from 'next/link';
 
+import { TemporalFreshnessBadge } from '@/components/admin/temporal-freshness-badge';
+import { CompressionDashboard } from '@/components/admin/compression-dashboard';
+import { FeedbackPulseDashboard } from '@/components/admin/feedback-pulse-dashboard';
+
 const TOOLS = [
+  {
+    href: '/admin/scoring-health',
+    label: 'Scoring Health',
+    description: 'Comprehensive dashboard: correlation metrics, weight drift, term quality, A/B tests, pipeline uptime.',
+    icon: '🩺',
+    colour: 'bg-emerald-500/15 ring-emerald-500/30 hover:bg-emerald-500/25',
+  },
   {
     href: '/admin/vocab-submissions',
     label: 'Vocab Queue',
@@ -62,6 +73,27 @@ export default function AdminDashboard() {
       >
         Internal control panel for Promagen data sources and intelligence pipelines.
       </p>
+
+      {/* ── Pipeline Health ─────────────────────────────────────────── */}
+      <h2
+        className="mb-3 font-semibold text-white/60"
+        style={{ fontSize: 'clamp(12px, 1.1vw, 14px)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}
+      >
+        Pipeline Health
+      </h2>
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <TemporalFreshnessBadge />
+        <CompressionDashboard />
+        <FeedbackPulseDashboard />
+      </div>
+
+      {/* ── Tools ───────────────────────────────────────────────────── */}
+      <h2
+        className="mb-3 font-semibold text-white/60"
+        style={{ fontSize: 'clamp(12px, 1.1vw, 14px)', letterSpacing: '0.05em', textTransform: 'uppercase' as const }}
+      >
+        Tools
+      </h2>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {TOOLS.map(({ href, label, description, icon, colour }) => (

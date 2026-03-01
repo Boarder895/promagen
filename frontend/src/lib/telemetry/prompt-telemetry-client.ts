@@ -215,10 +215,13 @@ export function checkQualityGates(input: TelemetryInput): string | null {
  * Send a prompt telemetry event to the learning pipeline.
  *
  * Fire-and-forget: this function never throws and never blocks the UI.
+ *
+ * Returns the server-assigned event ID on success (for feedback linkage),
+ * or null on failure. Callers that don't need the ID can ignore the return.
  * If quality gates fail or the network request fails, it logs and returns.
  *
  * @param input — Data collected from the prompt builder at copy/save time
- * @returns true if the event was sent successfully, false otherwise
+ * @returns Server-assigned event ID on success, null on any failure
  *
  * @example
  * ```ts
@@ -237,7 +240,7 @@ export function checkQualityGates(input: TelemetryInput): string | null {
  * });
  * ```
  */
-export async function sendPromptTelemetry(input: TelemetryInput): Promise<boolean> {
+export async function sendPromptTelemetry(input: TelemetryInput): Promise<string | null> {
   try {
     // --- Quality gates ---
     const gateResult = checkQualityGates(input);
@@ -245,7 +248,7 @@ export async function sendPromptTelemetry(input: TelemetryInput): Promise<boolea
       if (process.env.NODE_ENV === 'development') {
         console.debug('[Telemetry] Quality gate failed:', gateResult);
       }
-      return false;
+      return null;
     }
 
     // --- Build event payload ---
@@ -296,7 +299,16 @@ export async function sendPromptTelemetry(input: TelemetryInput): Promise<boolea
         const text = await response.text().catch(() => '');
         console.warn('[Telemetry] POST failed:', response.status, text);
       }
-      return false;
+      return null;
+    }
+
+    // --- Extract event ID for feedback linkage (Phase 7.10d) ---
+    let eventId: string | null = null;
+    try {
+      const json = await response.json() as { ok?: boolean; id?: string };
+      eventId = json.id ?? null;
+    } catch {
+      // Non-critical: feedback linkage degrades gracefully
     }
 
     if (process.env.NODE_ENV === 'development') {
@@ -308,15 +320,16 @@ export async function sendPromptTelemetry(input: TelemetryInput): Promise<boolea
         tier: event.tier,
         copied: event.outcome.copied,
         saved: event.outcome.saved,
+        eventId,
       });
     }
 
-    return true;
+    return eventId;
   } catch (err) {
     // Never throw — telemetry must not break the UI
     if (process.env.NODE_ENV === 'development') {
       console.warn('[Telemetry] Error:', err);
     }
-    return false;
+    return null;
   }
 }

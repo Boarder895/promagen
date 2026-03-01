@@ -42,6 +42,10 @@
 // Nothing in globals.css.
 //
 // Authority: prompt-builder-evolution-plan-v2.md § 7, § 8
+//
+// v4.5 — Step 7.9d: Compression expendability indicators on chips.
+//         compressionLookup prop → thin coloured underline on expendable terms.
+// v4.6 — Step 7.9f: Staleness alert when compressionLookup is absent.
 // ============================================================================
 
 'use client';
@@ -55,6 +59,7 @@ import {
 } from '@/lib/vocabulary/vocabulary-loader';
 import { trackEvent } from '@/lib/analytics/events';
 import type { PromptCategory } from '@/types/prompt-builder';
+import { lookupExpendability, type CompressionLookup } from '@/lib/learning/compression-lookup';
 
 // ============================================================================
 // Co-located styles (no globals.css)
@@ -105,6 +110,8 @@ export interface ExploreDrawerProps {
   sceneFlavourPhrases?: string[];
   /** Step 4.4: Cascade relevance scores for sorting chips (term → score) */
   cascadeScores?: CascadeScoreMap;
+  /** Step 7.9d: Compression lookup for expendability indicators on chips */
+  compressionLookup?: CompressionLookup | null;
 }
 
 // ============================================================================
@@ -135,6 +142,7 @@ export function ExploreDrawer({
   onToggle,
   sceneFlavourPhrases,
   cascadeScores,
+  compressionLookup,
 }: ExploreDrawerProps) {
   // ── State ──────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<SourceTab>('all');
@@ -441,6 +449,21 @@ export function ExploreDrawer({
           role="region"
           aria-label={`Explore ${category} vocabulary`}
         >
+          {/* Phase 7.9f: Staleness alert — shown when compressionLookup is absent */}
+          {!compressionLookup && (
+            <div
+              className="flex items-center gap-1.5 rounded bg-amber-500/[0.06] border border-amber-500/10 text-amber-400/60"
+              style={{
+                padding: 'clamp(3px, 0.3vw, 5px) clamp(6px, 0.5vw, 8px)',
+                marginBottom: 'clamp(4px, 0.4vw, 6px)',
+                fontSize: 'clamp(0.42rem, 0.48vw, 0.55rem)',
+              }}
+            >
+              <span aria-hidden="true">⏳</span>
+              <span>Expendability data unavailable — run nightly cron to enable compression intelligence.</span>
+            </div>
+          )}
+
           {/* Search input */}
           <div className="relative" style={{ marginBottom: 'clamp(6px, 0.6vw, 10px)' }}>
             {/* Search icon */}
@@ -580,6 +603,11 @@ export function ExploreDrawer({
                     (activeTab === 'all' && sceneFlavourSet.has(term.toLowerCase()))
                   }
                   cascadeScore={cascadeScores?.get(term.toLowerCase())}
+                  expendability={
+                    compressionLookup
+                      ? lookupExpendability(compressionLookup, term, platformTier)
+                      : 0
+                  }
                 />
               ))
             )}
@@ -693,6 +721,8 @@ interface ExploreChipProps {
   isSceneFlavour?: boolean;
   /** Step 4.4: Cascade relevance score (0–100) */
   cascadeScore?: number;
+  /** Step 7.9d: Expendability score 0–1 (0 = valuable, 1 = safe to remove) */
+  expendability?: number;
 }
 
 const ExploreChip = React.memo(function ExploreChip({
@@ -703,9 +733,25 @@ const ExploreChip = React.memo(function ExploreChip({
   onClick,
   isSceneFlavour = false,
   cascadeScore,
+  expendability = 0,
 }: ExploreChipProps) {
   // Step 4.3: All-tier badge
   const tierBadge = getTierBadge(term, platformTier);
+
+  // Step 7.9d: Expendability indicator — thin colored bottom border
+  // Green-ish (not expendable) = invisible, amber (borderline), red (expendable)
+  const expStyle: React.CSSProperties | undefined =
+    expendability >= 0.55
+      ? { borderBottomWidth: '2px', borderBottomStyle: 'solid', borderBottomColor: 'rgba(244,63,94,0.50)' }
+      : expendability >= 0.40
+        ? { borderBottomWidth: '2px', borderBottomStyle: 'solid', borderBottomColor: 'rgba(245,158,11,0.40)' }
+        : undefined;
+
+  const expLabel = expendability >= 0.55
+    ? ' · expendable'
+    : expendability >= 0.40
+      ? ' · borderline'
+      : '';
 
   return (
     <button
@@ -726,11 +772,12 @@ const ExploreChip = React.memo(function ExploreChip({
         padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.5vw, 8px)',
         fontSize: 'clamp(0.5rem, 0.56vw, 0.64rem)',
         gap: 'clamp(2px, 0.2vw, 3px)',
+        ...expStyle,
       }}
       title={
         tierBadge
-          ? `${term} — ${tierBadge.title}${cascadeScore ? ` (relevance: ${cascadeScore})` : ''}`
-          : term
+          ? `${term} — ${tierBadge.title}${cascadeScore ? ` (relevance: ${cascadeScore})` : ''}${expLabel}`
+          : `${term}${expLabel}`
       }
       aria-label={`Add ${term} to selection`}
     >

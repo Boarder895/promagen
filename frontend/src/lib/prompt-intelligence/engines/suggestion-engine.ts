@@ -41,6 +41,10 @@ import { lookupPlatformTermQuality } from '@/lib/learning/platform-term-quality-
 import type { PlatformTermQualityLookup } from '@/lib/learning/platform-term-quality-lookup';
 import { lookupPlatformCoOccurrence } from '@/lib/learning/platform-co-occurrence-lookup';
 import type { PlatformCoOccurrenceLookup } from '@/lib/learning/platform-co-occurrence-lookup';
+import { lookupSeasonalBoost, lookupWeeklyBoost, lookupTrendingVelocity } from '@/lib/learning/temporal-lookup';
+import type { TemporalLookup, TrendingLookup } from '@/lib/learning/temporal-lookup';
+import { lookupExpendability } from '@/lib/learning/compression-lookup';
+import type { CompressionLookup } from '@/lib/learning/compression-lookup';
 import { LEARNING_CONSTANTS } from '@/lib/learning/constants';
 
 // ============================================================================
@@ -98,6 +102,15 @@ export interface BuildContextInput {
 
   /** A/B variant weight overrides (Phase 7.6f, null = default weights) */
   abVariantWeights?: Record<string, number> | null;
+
+  /** Pre-built temporal lookup for seasonal/weekly boosts (Phase 7.8, null = no data) */
+  temporalLookup?: TemporalLookup | null;
+
+  /** Pre-built trending lookup for velocity signals (Phase 7.8, null = no data) */
+  trendingLookup?: TrendingLookup | null;
+
+  /** Pre-built compression lookup for expendability penalties (Phase 7.9, null = no data) */
+  compressionLookup?: CompressionLookup | null;
 }
 
 /**
@@ -244,6 +257,30 @@ const SCORE_WEIGHTS = {
    *  platform vs the neutral baseline (50). Scaled by (score - 50) / 50.
    *  Positive for high performers, negative for underperformers. */
   platformTermQualityMax: 12,
+
+  /** Temporal seasonal boost (Phase 7.8).
+   *  Nudges terms that are seasonally relevant right now.
+   *  seasonalMultiplier 2.5 → delta 1.5 → +15. Penalty capped at -10.
+   *  Smallest of all Phase 7 boosts — a gentle "time of year" signal. */
+  temporalSeasonalMax: 10,
+
+  /** Temporal weekly boost (Phase 7.8).
+   *  Nudges terms that are popular on this day of week (weekend vs weekday).
+   *  Very light signal — mostly affects experimental vs professional split. */
+  temporalWeeklyMax: 5,
+
+  /** Temporal trending boost (Phase 7.8).
+   *  Nudges terms that are currently rising in popularity.
+   *  Velocity 0.5 (50% above baseline) → +4 points.
+   *  Negative velocity dampens but doesn't penalise heavily. */
+  temporalTrendingMax: 8,
+
+  /** Expendability penalty (Phase 7.9).
+   *  Demotes terms flagged as expendable by compression intelligence.
+   *  Scaled by expendability 0–1 (higher = safer to remove).
+   *  At -8 and expendability 1.0, a maximally expendable term loses 8 points.
+   *  Lightest penalty in the system — gentle nudge, not a hard block. */
+  expendabilityPenalty: -8,
 };
 
 // ============================================================================
@@ -464,6 +501,9 @@ export function buildContext(input: BuildContextInput): PromptContext {
     platformCoOccurrenceLookup = null,
     platformId = null,
     abVariantWeights = null,
+    temporalLookup = null,
+    trendingLookup = null,
+    compressionLookup = null,
   } = input;
   
   // Extract subject keywords
@@ -546,6 +586,9 @@ export function buildContext(input: BuildContextInput): PromptContext {
     platformCoOccurrenceLookup,
     platformId,
     abVariantWeights,
+    temporalLookup,
+    trendingLookup,
+    compressionLookup,
   };
 }
 
@@ -629,6 +672,8 @@ function scoreOption(
     comboBoost: 0,
     platformCoOccurrenceBoost: 0,
     platformTermQualityBoost: 0,
+    temporalBoost: 0,
+    expendabilityPenalty: 0,
   };
   
   if (tag) {
@@ -980,7 +1025,81 @@ function scoreOption(
       score += platformTermQualityBoostValue;
     }
   }
-  
+
+  // === TEMPORAL BOOST (Phase 7.8) ===
+  // Three temporal signals combined into one additive score adjustment:
+  // 1. Seasonal: "snow" boosted in December, dampened in July
+  // 2. Weekly: experimental terms boosted on weekends
+  // 3. Trending: terms gaining popularity get a small nudge
+  //
+  // lookupSeasonalBoost/lookupWeeklyBoost return multipliers around 1.0.
+  // lookupTrendingVelocity returns velocity (positive = rising).
+  // All three return neutral (1.0/0) when no data exists → zero impact.
+  let temporalBoostValue = 0;
+  if (context.temporalLookup || context.trendingLookup) {
+    const now = new Date();
+    const month = now.getMonth() + 1;  // 1-indexed (1=Jan, 12=Dec)
+    const dow = now.getDay();           // 0=Sun, 6=Sat
+
+    // Seasonal: multiplier delta (e.g. 2.5 → delta 1.5 → score +15)
+    if (context.temporalLookup) {
+      const seasonalMult = lookupSeasonalBoost(
+        context.temporalLookup, option, month, context.tier,
+      );
+      const seasonalDelta = seasonalMult - 1.0;
+      if (Math.abs(seasonalDelta) > 0.05) {
+        // Clamp delta to [-1.0, +2.0] to prevent runaway boosts
+        const clampedDelta = Math.max(-1.0, Math.min(2.0, seasonalDelta));
+        temporalBoostValue += Math.round(W.temporalSeasonalMax * clampedDelta);
+      }
+
+      // Weekly: multiplier delta (typically ±0.3)
+      const weeklyMult = lookupWeeklyBoost(
+        context.temporalLookup, option, dow, context.tier,
+      );
+      const weeklyDelta = weeklyMult - 1.0;
+      if (Math.abs(weeklyDelta) > 0.05) {
+        const clampedWeekly = Math.max(-1.0, Math.min(1.0, weeklyDelta));
+        temporalBoostValue += Math.round(W.temporalWeeklyMax * clampedWeekly);
+      }
+    }
+
+    // Trending: velocity signal (positive = rising, negative = falling)
+    if (context.trendingLookup) {
+      const velocity = lookupTrendingVelocity(
+        context.trendingLookup, option, context.tier,
+      );
+      if (Math.abs(velocity) > 0.05) {
+        // Clamp velocity to [-1.0, +1.0]
+        const clampedVelocity = Math.max(-1.0, Math.min(1.0, velocity));
+        temporalBoostValue += Math.round(W.temporalTrendingMax * clampedVelocity);
+      }
+    }
+
+    if (temporalBoostValue !== 0) {
+      breakdown.temporalBoost = temporalBoostValue;
+      score += temporalBoostValue;
+    }
+  }
+
+  // === EXPENDABILITY PENALTY (Phase 7.9) ===
+  // Terms flagged as expendable by compression intelligence receive a
+  // gentle demotion. This is the lightest of all penalties — it doesn't
+  // hide terms, just nudges them down slightly so better alternatives
+  // surface first. Expendability 0.4 (threshold) → -3.2 points.
+  // Expendability 1.0 (max) → -8 points.
+  let expendabilityPenaltyValue = 0;
+  if (context.compressionLookup && context.tier != null) {
+    const expendability = lookupExpendability(
+      context.compressionLookup, option, context.tier,
+    );
+    if (expendability > 0) {
+      expendabilityPenaltyValue = Math.round(W.expendabilityPenalty * expendability);
+      breakdown.expendabilityPenalty = expendabilityPenaltyValue;
+      score += expendabilityPenaltyValue;
+    }
+  }
+
   // === TIER-AWARE MULTIPLIER (Phase 1) ===
   // Apply per-tier weight to the variable portion of the score.
   // This amplifies differentiation for keyword-focused tiers (1,2) and
@@ -1004,7 +1123,7 @@ function scoreOption(
   return {
     option,
     score,
-    breakdown: includeBreakdown ? { ...breakdown, tierMultiplier: tierMultiplierValue, coOccurrenceBoost: coOccurrenceBoostValue, antiPatternPenalty: antiPatternPenaltyValue, collisionPenalty: collisionPenaltyValue, weakTermPenalty: weakTermPenaltyValue, redundancyPenalty: redundancyPenaltyValue, comboBoost: comboBoostValue, platformCoOccurrenceBoost: platformCoOccurrenceBoostValue, platformTermQualityBoost: platformTermQualityBoostValue } : undefined,
+    breakdown: includeBreakdown ? { ...breakdown, tierMultiplier: tierMultiplierValue, coOccurrenceBoost: coOccurrenceBoostValue, antiPatternPenalty: antiPatternPenaltyValue, collisionPenalty: collisionPenaltyValue, weakTermPenalty: weakTermPenaltyValue, redundancyPenalty: redundancyPenaltyValue, comboBoost: comboBoostValue, platformCoOccurrenceBoost: platformCoOccurrenceBoostValue, platformTermQualityBoost: platformTermQualityBoostValue, temporalBoost: temporalBoostValue, expendabilityPenalty: expendabilityPenaltyValue } : undefined,
   };
 }
 

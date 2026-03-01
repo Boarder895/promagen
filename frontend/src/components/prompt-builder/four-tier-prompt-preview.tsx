@@ -1,22 +1,35 @@
 /**
- * FourTierPromptPreview Component v1.1.0
+ * FourTierPromptPreview Component v1.2.0
  * ======================================
  * Displays prompt versions with individual copy buttons.
+ * 
+ * v1.2.0 (Feb 2026):
+ * - NEW: Smart Prompt Length Gauge (Phase 7.9d)
+ *   Live character count bar powered by compression intelligence.
+ *   Shows green (optimal), amber (diminishing returns), red (too long) zones.
+ *   Only renders when compressionLookup data is available.
  * 
  * v1.1.0 (Jan 2026):
  * - NEW: singleTierMode prop - shows only active tier when provider selected
  * - When singleTierMode=true, only the currentTier is displayed
  * - When singleTierMode=false, all 4 tiers are shown (playground neutral mode)
  * 
- * @version 1.1.0
- * @updated 2026-01-21
+ * Existing features preserved: Yes.
+ * 
+ * @version 1.2.0
+ * @updated 2026-02-28
  */
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import type { GeneratedPrompts, PlatformTier } from '../../types/prompt-intelligence';
 import { TIER_CONFIGS } from '../../types/prompt-intelligence';
+import {
+  lookupBestOptimalChars,
+  lookupOptimalLength,
+  type CompressionLookup,
+} from '@/lib/learning/compression-lookup';
 
 // ============================================================================
 // TYPES
@@ -30,6 +43,10 @@ interface FourTierPromptPreviewProps {
   showNegative?: boolean;
   /** When true, only shows the currentTier card (provider selected mode) */
   singleTierMode?: boolean;
+  /** Step 7.9d: Compression lookup for Smart Prompt Length Gauge (null = no gauge) */
+  compressionLookup?: CompressionLookup | null;
+  /** Step 7.9d: Platform slug for platform-aware length blending (null = tier-only) */
+  platformId?: string | null;
 }
 
 interface TierCardProps {
@@ -41,13 +58,202 @@ interface TierCardProps {
   compact?: boolean;
   /** When true, card takes full width */
   fullWidth?: boolean;
+  /** Step 7.9d: Compression lookup for length gauge */
+  compressionLookup?: CompressionLookup | null;
+  /** Step 7.9d: Platform slug for blending */
+  platformId?: string | null;
+}
+
+// ============================================================================
+// SMART PROMPT LENGTH GAUGE (Phase 7.9d)
+// ============================================================================
+// A live character count bar that shows where the current prompt length
+// sits relative to the learned optimal zone.
+//
+// Zones:
+//   Green  (0 → optimal)           — Sweet spot: best performance
+//   Amber  (optimal → diminishing) — Still good, diminishing returns
+//   Red    (diminishing → max)     — Too long: consider trimming
+//
+// Powered entirely by compression lookup — zero new API calls.
+// Only renders when learned data exists for this tier.
+// ============================================================================
+
+/** Fallback max for the gauge scale when no diminishing returns data */
+const GAUGE_SCALE_MAX = 600;
+
+interface LengthGaugeProps {
+  /** Current prompt character count */
+  charCount: number;
+  /** Optimal chars from confidence-blended lookup */
+  optimalChars: number;
+  /** Diminishing returns threshold (chars) */
+  diminishingAt: number;
+}
+
+function PromptLengthGauge({ charCount, optimalChars, diminishingAt }: LengthGaugeProps) {
+  // Scale: max of gauge = 1.4× diminishing (gives visual breathing room beyond red zone)
+  const scaleMax = Math.max(diminishingAt * 1.4, optimalChars * 2, GAUGE_SCALE_MAX);
+
+  // Zone boundaries as percentages of the gauge width
+  const optimalPct = Math.min((optimalChars / scaleMax) * 100, 100);
+  const diminishPct = Math.min((diminishingAt / scaleMax) * 100, 100);
+
+  // Current position as percentage
+  const cursorPct = Math.min((charCount / scaleMax) * 100, 100);
+
+  // Determine status label + colour
+  let status: string;
+  let statusColor: string;
+  let cursorColor: string;
+
+  if (charCount <= 0) {
+    status = '';
+    statusColor = 'text-white/30';
+    cursorColor = 'rgba(100,116,139,0.4)';
+  } else if (charCount <= optimalChars) {
+    status = 'sweet spot';
+    statusColor = 'text-emerald-400/80';
+    cursorColor = 'rgba(52,211,153,0.9)';
+  } else if (charCount <= diminishingAt) {
+    status = 'diminishing returns';
+    statusColor = 'text-amber-400/80';
+    cursorColor = 'rgba(251,191,36,0.9)';
+  } else {
+    status = 'consider trimming';
+    statusColor = 'text-rose-400/80';
+    cursorColor = 'rgba(251,113,133,0.9)';
+  }
+
+  return (
+    <div
+      style={{
+        marginTop: 'clamp(6px, 0.5vw, 10px)',
+        marginBottom: 'clamp(2px, 0.2vw, 4px)',
+      }}
+    >
+      {/* Label row */}
+      <div className="flex items-center justify-between" style={{ marginBottom: 'clamp(2px, 0.2vw, 4px)' }}>
+        <span
+          className="text-white/40 font-medium"
+          style={{ fontSize: 'clamp(0.48rem, 0.52vw, 0.6rem)' }}
+        >
+          Prompt length
+        </span>
+        <span
+          className={`font-medium ${statusColor}`}
+          style={{ fontSize: 'clamp(0.48rem, 0.52vw, 0.6rem)' }}
+        >
+          {charCount > 0 && (
+            <>
+              {charCount} chars
+              {status && <> · {status}</>}
+            </>
+          )}
+        </span>
+      </div>
+
+      {/* Gauge bar */}
+      <div
+        className="relative w-full rounded-full overflow-hidden"
+        style={{ height: 'clamp(4px, 0.35vw, 6px)' }}
+        role="progressbar"
+        aria-valuenow={charCount}
+        aria-valuemin={0}
+        aria-valuemax={Math.round(scaleMax)}
+        aria-label={`Prompt length: ${charCount} characters${status ? `, ${status}` : ''}`}
+      >
+        {/* Background: three colour zones */}
+        <div className="absolute inset-0 flex">
+          {/* Green zone: 0 → optimal */}
+          <div
+            className="h-full"
+            style={{
+              width: `${optimalPct}%`,
+              background: 'linear-gradient(90deg, rgba(52,211,153,0.15), rgba(52,211,153,0.30))',
+            }}
+          />
+          {/* Amber zone: optimal → diminishing */}
+          <div
+            className="h-full"
+            style={{
+              width: `${diminishPct - optimalPct}%`,
+              background: 'linear-gradient(90deg, rgba(251,191,36,0.15), rgba(251,191,36,0.30))',
+            }}
+          />
+          {/* Red zone: diminishing → max */}
+          <div
+            className="h-full flex-1"
+            style={{
+              background: 'linear-gradient(90deg, rgba(251,113,133,0.15), rgba(251,113,133,0.30))',
+            }}
+          />
+        </div>
+
+        {/* Filled portion up to cursor */}
+        {charCount > 0 && (
+          <div
+            className="absolute inset-y-0 left-0 rounded-full transition-all duration-300 ease-out"
+            style={{
+              width: `${cursorPct}%`,
+              background: cursorColor,
+            }}
+          />
+        )}
+
+        {/* Optimal marker: thin white line at sweet-spot boundary */}
+        <div
+          className="absolute inset-y-0"
+          style={{
+            left: `${optimalPct}%`,
+            width: '1px',
+            background: 'rgba(255,255,255,0.25)',
+          }}
+        />
+      </div>
+
+      {/* Tick labels */}
+      <div className="relative w-full" style={{ marginTop: 'clamp(1px, 0.1vw, 2px)' }}>
+        <span
+          className="absolute text-white/20"
+          style={{
+            left: `${optimalPct}%`,
+            transform: 'translateX(-50%)',
+            fontSize: 'clamp(0.38rem, 0.42vw, 0.48rem)',
+          }}
+        >
+          {optimalChars}
+        </span>
+        <span
+          className="absolute text-white/20"
+          style={{
+            left: `${diminishPct}%`,
+            transform: 'translateX(-50%)',
+            fontSize: 'clamp(0.38rem, 0.42vw, 0.48rem)',
+          }}
+        >
+          {diminishingAt}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 // ============================================================================
 // TIER CARD COMPONENT
 // ============================================================================
 
-function TierCard({ tier, positive, negative, isActive, onCopy, compact, fullWidth }: TierCardProps) {
+function TierCard({
+  tier,
+  positive,
+  negative,
+  isActive,
+  onCopy,
+  compact,
+  fullWidth,
+  compressionLookup,
+  platformId,
+}: TierCardProps) {
   const [copied, setCopied] = useState(false);
   const config = TIER_CONFIGS[tier];
   
@@ -62,6 +268,21 @@ function TierCard({ tier, positive, negative, isActive, onCopy, compact, fullWid
     
     setTimeout(() => setCopied(false), 2000);
   }, [positive, negative, tier, onCopy]);
+
+  // Step 7.9d: Compute gauge data from compression lookup
+  const gaugeData = useMemo(() => {
+    if (!compressionLookup) return null;
+
+    const optimalChars = lookupBestOptimalChars(compressionLookup, tier, platformId ?? null);
+    if (optimalChars === null) return null;
+
+    const tierProfile = lookupOptimalLength(compressionLookup, tier);
+    const diminishingAt = tierProfile?.diminishingReturnsAt ?? Math.round(optimalChars * 1.5);
+
+    return { optimalChars, diminishingAt };
+  }, [compressionLookup, tier, platformId]);
+
+  const charCount = positive.length;
   
   // Tier-specific styling
   const tierColors = {
@@ -152,6 +373,15 @@ function TierCard({ tier, positive, negative, isActive, onCopy, compact, fullWid
           </p>
         )}
       </div>
+
+      {/* Step 7.9d: Smart Prompt Length Gauge — only when data available */}
+      {gaugeData && isActive && (
+        <PromptLengthGauge
+          charCount={charCount}
+          optimalChars={gaugeData.optimalChars}
+          diminishingAt={gaugeData.diminishingAt}
+        />
+      )}
       
       {/* Copy button */}
       <button
@@ -197,6 +427,8 @@ export function FourTierPromptPreview({
   compact = false,
   showNegative = true,
   singleTierMode = false,
+  compressionLookup,
+  platformId,
 }: FourTierPromptPreviewProps) {
   const handleCopy = useCallback((tier: PlatformTier, text: string) => {
     onCopy?.(tier, text);
@@ -238,6 +470,8 @@ export function FourTierPromptPreview({
           onCopy={() => handleCopy(currentTier, tierPromptMap[currentTier])}
           compact={compact}
           fullWidth={true}
+          compressionLookup={compressionLookup}
+          platformId={platformId}
         />
       </div>
     );
@@ -265,6 +499,8 @@ export function FourTierPromptPreview({
           isActive={currentTier === 1}
           onCopy={() => handleCopy(1, prompts.tier1)}
           compact={compact}
+          compressionLookup={compressionLookup}
+          platformId={platformId}
         />
         <TierCard
           tier={2}
@@ -273,6 +509,8 @@ export function FourTierPromptPreview({
           isActive={currentTier === 2}
           onCopy={() => handleCopy(2, prompts.tier2)}
           compact={compact}
+          compressionLookup={compressionLookup}
+          platformId={platformId}
         />
         <TierCard
           tier={3}
@@ -281,6 +519,8 @@ export function FourTierPromptPreview({
           isActive={currentTier === 3}
           onCopy={() => handleCopy(3, prompts.tier3)}
           compact={compact}
+          compressionLookup={compressionLookup}
+          platformId={platformId}
         />
         <TierCard
           tier={4}
@@ -289,6 +529,8 @@ export function FourTierPromptPreview({
           isActive={currentTier === 4}
           onCopy={() => handleCopy(4, prompts.tier4)}
           compact={compact}
+          compressionLookup={compressionLookup}
+          platformId={platformId}
         />
       </div>
       

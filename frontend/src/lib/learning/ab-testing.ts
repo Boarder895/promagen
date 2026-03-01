@@ -986,3 +986,43 @@ export function computeLiftDistribution(
     density: count / N,
   }));
 }
+
+// ============================================================================
+// PREDEFINED TEST SEEDS (Phase 7.8e, Improvement 4)
+// ============================================================================
+
+/**
+ * Predefined A/B test configurations for common experiments.
+ *
+ * Usage (admin dashboard or script):
+ * ```ts
+ * const test = createABTest(
+ *   AB_TEST_SEEDS.TEMPORAL_KILL_SWITCH.name,
+ *   currentSCORE_WEIGHTS,
+ *   { ...currentSCORE_WEIGHTS, ...AB_TEST_SEEDS.TEMPORAL_KILL_SWITCH.variantOverrides },
+ * );
+ * ```
+ */
+export const AB_TEST_SEEDS = {
+  /**
+   * Temporal Intelligence Kill Switch
+   *
+   * Measures whether Phase 7.8 temporal signals (seasonal, weekly, trending)
+   * improve prompt quality. Control group gets default weights (temporal ON).
+   * Variant group gets all three temporal weights zeroed (temporal OFF).
+   *
+   * Expected outcome: If temporal intelligence works, the control group (ON)
+   * should have higher copy rates and quality scores than the variant (OFF).
+   * If no significant difference after 2 weeks of traffic, temporal signals
+   * may be adding complexity without value.
+   */
+  TEMPORAL_KILL_SWITCH: {
+    name: 'temporal-intelligence-v1',
+    description: 'Measure lift from Phase 7.8 temporal signals (seasonal + weekly + trending)',
+    variantOverrides: {
+      temporalSeasonalMax: 0,
+      temporalWeeklyMax: 0,
+      temporalTrendingMax: 0,
+    } as Record<string, number>,
+  },
+} as const;

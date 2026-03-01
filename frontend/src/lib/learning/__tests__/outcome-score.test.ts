@@ -301,7 +301,8 @@ describe('computeOutcomeScoreDetailed', () => {
       result.signals.copiedNoReturn +
       result.signals.saved +
       result.signals.reusedFromLibrary +
-      result.signals.returnedPenalty;
+      result.signals.returnedPenalty +
+      result.signals.feedback;
 
     // Sum is 1.10 but score is capped at 1.0
     expect(r(signalSum)).toBe(1.1);
@@ -348,5 +349,185 @@ describe('OUTCOME_SIGNAL_WEIGHTS', () => {
     expect(w.reusedFromLibrary).toBeGreaterThan(w.saved);
     expect(w.saved).toBeGreaterThan(w.copiedNoReturn);
     expect(w.copiedNoReturn).toBeGreaterThan(w.copied);
+  });
+
+  it('feedback weights: positive > 0, neutral === 0, negative < 0', () => {
+    const w = OUTCOME_SIGNAL_WEIGHTS;
+    expect(w.feedbackPositive).toBeGreaterThan(0);
+    expect(w.feedbackNeutral).toBe(0);
+    expect(w.feedbackNegative).toBeLessThan(0);
+  });
+
+  it('feedbackPositive is weaker than reusedFromLibrary', () => {
+    const w = OUTCOME_SIGNAL_WEIGHTS;
+    expect(w.feedbackPositive).toBeLessThan(w.reusedFromLibrary);
+  });
+});
+
+// ============================================================================
+// Phase 7.10e — Feedback as 5th Outcome Signal
+// ============================================================================
+
+describe('computeOutcomeScore — feedback signals (Phase 7.10e)', () => {
+  it('no feedback fields → same score as before (backward compatible)', () => {
+    const without = computeOutcomeScore({ copied: true });
+    const withUndef = computeOutcomeScore({ copied: true, feedbackRating: undefined });
+    expect(without).toBe(withUndef);
+    expect(without).toBe(0.25);
+  });
+
+  it('positive feedback with default credibility (1.0) adds 0.40', () => {
+    const score = computeOutcomeScore({
+      copied: true,
+      feedbackRating: 'positive',
+    });
+    // copied(0.10) + copiedNoReturn(0.15) + feedback(0.40 × 1.0) = 0.65
+    expect(r(score)).toBe(0.65);
+  });
+
+  it('positive feedback with high credibility (1.80) → capped at 1.0', () => {
+    const score = computeOutcomeScore({
+      copied: true,
+      feedbackRating: 'positive',
+      feedbackCredibility: 1.80,
+    });
+    // copied(0.10) + copiedNoReturn(0.15) + feedback(0.40 × 1.80 = 0.72) = 0.97
+    expect(r(score)).toBe(0.97);
+  });
+
+  it('positive feedback with low credibility (0.40) → small contribution', () => {
+    const score = computeOutcomeScore({
+      copied: true,
+      feedbackRating: 'positive',
+      feedbackCredibility: 0.40,
+    });
+    // copied(0.10) + copiedNoReturn(0.15) + feedback(0.40 × 0.40 = 0.16) = 0.41
+    expect(r(score)).toBe(0.41);
+  });
+
+  it('neutral feedback adds nothing regardless of credibility', () => {
+    const base = computeOutcomeScore({ copied: true });
+    const withNeutral = computeOutcomeScore({
+      copied: true,
+      feedbackRating: 'neutral',
+      feedbackCredibility: 1.80,
+    });
+    expect(base).toBe(withNeutral);
+  });
+
+  it('negative feedback with default credibility (1.0) subtracts 0.30', () => {
+    const score = computeOutcomeScore({
+      copied: true,
+      feedbackRating: 'negative',
+    });
+    // copied(0.10) + copiedNoReturn(0.15) + feedback(-0.30 × 1.0) = -0.05 → floored to 0
+    expect(score).toBe(0);
+  });
+
+  it('negative feedback on strong base → reduced but positive', () => {
+    const score = computeOutcomeScore({
+      copied: true,
+      saved: true,
+      feedbackRating: 'negative',
+      feedbackCredibility: 1.0,
+    });
+    // copied(0.10) + copiedNoReturn(0.15) + saved(0.35) + feedback(-0.30) = 0.30
+    expect(r(score)).toBe(0.30);
+  });
+
+  it('negative feedback with high credibility → larger penalty', () => {
+    const score = computeOutcomeScore({
+      copied: true,
+      saved: true,
+      feedbackRating: 'negative',
+      feedbackCredibility: 1.80,
+    });
+    // copied(0.10) + copiedNoReturn(0.15) + saved(0.35) + feedback(-0.30 × 1.80 = -0.54) = 0.06
+    expect(r(score)).toBe(0.06);
+  });
+
+  it('feedback + returned penalty can stack (both negative)', () => {
+    const score = computeOutcomeScore({
+      copied: true,
+      returnedWithin60s: true,
+      feedbackRating: 'negative',
+    });
+    // copied(0.10) + returnedPenalty(-0.20) + feedback(-0.30) = -0.40 → floored to 0
+    expect(score).toBe(0);
+  });
+
+  it('feedback + all positive signals → still capped at 1.0', () => {
+    const score = computeOutcomeScore({
+      copied: true,
+      saved: true,
+      reusedFromLibrary: true,
+      feedbackRating: 'positive',
+      feedbackCredibility: 1.80,
+    });
+    // 0.10 + 0.15 + 0.35 + 0.50 + 0.72 = 1.82 → capped at 1.0
+    expect(score).toBe(1.0);
+  });
+});
+
+describe('computeOutcomeScoreDetailed — feedback breakdown (Phase 7.10e)', () => {
+  it('includes feedback signal and raw fields for positive rating', () => {
+    const result = computeOutcomeScoreDetailed({
+      copied: true,
+      feedbackRating: 'positive',
+      feedbackCredibility: 1.25,
+    });
+
+    // feedback contribution: 0.40 × 1.25 = 0.50
+    expect(result.signals.feedback).toBe(0.5);
+    expect(result.raw.feedbackRating).toBe('positive');
+    expect(result.raw.feedbackCredibility).toBe(1.25);
+  });
+
+  it('feedback signal is 0 when no feedbackRating', () => {
+    const result = computeOutcomeScoreDetailed({ copied: true });
+    expect(result.signals.feedback).toBe(0);
+    expect(result.raw.feedbackRating).toBeNull();
+    expect(result.raw.feedbackCredibility).toBe(1.0);
+  });
+
+  it('negative feedback contribution is negative in breakdown', () => {
+    const result = computeOutcomeScoreDetailed({
+      feedbackRating: 'negative',
+      feedbackCredibility: 1.0,
+    });
+    expect(result.signals.feedback).toBe(-0.3);
+    expect(result.raw.feedbackRating).toBe('negative');
+  });
+
+  it('neutral feedback contribution is 0 in breakdown', () => {
+    const result = computeOutcomeScoreDetailed({
+      copied: true,
+      feedbackRating: 'neutral',
+      feedbackCredibility: 1.80,
+    });
+    expect(result.signals.feedback).toBe(0);
+    expect(result.raw.feedbackRating).toBe('neutral');
+    expect(result.raw.feedbackCredibility).toBe(1.80);
+  });
+
+  it('all signals sum including feedback matches score (or clamp)', () => {
+    const result = computeOutcomeScoreDetailed({
+      copied: true,
+      saved: true,
+      feedbackRating: 'positive',
+      feedbackCredibility: 1.25,
+    });
+
+    const signalSum =
+      result.signals.copied +
+      result.signals.copiedNoReturn +
+      result.signals.saved +
+      result.signals.reusedFromLibrary +
+      result.signals.returnedPenalty +
+      result.signals.feedback;
+
+    // 0.10 + 0.15 + 0.35 + 0 + 0 + 0.50 = 1.10 → capped at 1.0
+    expect(r(signalSum)).toBe(1.1);
+    expect(result.score).toBe(1.0);
   });
 });

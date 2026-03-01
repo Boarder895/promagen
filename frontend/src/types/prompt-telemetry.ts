@@ -57,6 +57,10 @@ export interface PromptOutcome {
   returnedWithin60s: boolean;
   /** User reused a previously saved prompt */
   reusedFromLibrary: boolean;
+  /** Phase 7.10e: Direct user feedback rating (optional — not all prompts get rated) */
+  feedbackRating?: 'positive' | 'neutral' | 'negative';
+  /** Phase 7.10e: Credibility score of the feedback (0.40–1.80). Only present when feedbackRating is set. */
+  feedbackCredibility?: number;
 }
 
 /**

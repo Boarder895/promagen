@@ -2,7 +2,7 @@
 // ============================================================================
 // PROMPT INTELLIGENCE - Type Definitions
 // ============================================================================
-// Version: 1.0.0
+// Version: 1.2.0 — Phase 7.9c compression lookup type
 // Authority: docs/authority/prompt-intelligence.md
 // ============================================================================
 
@@ -15,6 +15,8 @@ import type { RedundancyLookup } from '@/lib/learning/redundancy-lookup';
 import type { ComboLookup } from '@/lib/learning/combo-lookup';
 import type { PlatformTermQualityLookup } from '@/lib/learning/platform-term-quality-lookup';
 import type { PlatformCoOccurrenceLookup } from '@/lib/learning/platform-co-occurrence-lookup';
+import type { TemporalLookup, TrendingLookup } from '@/lib/learning/temporal-lookup';
+import type { CompressionLookup } from '@/lib/learning/compression-lookup';
 
 // ============================================================================
 // § 1. Semantic Tags
@@ -24,7 +26,14 @@ import type { PlatformCoOccurrenceLookup } from '@/lib/learning/platform-co-occu
  * Mood classification for prompt options.
  * Used for coherence scoring and conflict detection.
  */
-export type SemanticMood = 'calm' | 'intense' | 'neutral' | 'eerie' | 'joyful' | 'melancholic' | 'dramatic';
+export type SemanticMood =
+  | 'calm'
+  | 'intense'
+  | 'neutral'
+  | 'eerie'
+  | 'joyful'
+  | 'melancholic'
+  | 'dramatic';
 
 /**
  * Era/time period classification.
@@ -44,25 +53,25 @@ export type TimeOfDay = 'dawn' | 'morning' | 'midday' | 'afternoon' | 'evening' 
 export interface SemanticTag {
   /** Which category this option belongs to */
   category: PromptCategory;
-  
+
   /** Style families this option belongs to (1-5 families) */
   families: string[];
-  
+
   /** Emotional/tonal mood */
   mood?: SemanticMood;
-  
+
   /** Historical era/time period */
   era?: SemanticEra;
-  
+
   /** Time of day (for lighting/atmosphere) */
   timeOfDay?: TimeOfDay;
-  
+
   /** Options that conflict/clash with this one */
   conflicts?: string[];
-  
+
   /** Options that work well with this one */
   complements?: string[];
-  
+
   /** Cross-category suggestions when this option is selected */
   suggests?: Partial<Record<PromptCategory, string[]>>;
 }
@@ -93,10 +102,10 @@ export interface SemanticTagsData {
 export interface SemanticCluster {
   /** Display label */
   label: string;
-  
+
   /** Brief description */
   description: string;
-  
+
   /** Terms grouped by category */
   terms: Partial<Record<PromptCategory, string[]>>;
 }
@@ -125,10 +134,10 @@ export interface SemanticClustersData {
 export interface DirectAffinity {
   /** Anchor term */
   term: string;
-  
+
   /** Terms that score higher when this anchor is selected */
   boosts: string[];
-  
+
   /** Terms that score lower when this anchor is selected */
   penalises?: string[];
 }
@@ -156,28 +165,28 @@ export interface DirectAffinitiesData {
 export interface StyleFamily {
   /** Display name for UI */
   displayName: string;
-  
+
   /** Brief description */
   description: string;
-  
+
   /** All options that belong to this family */
   members: string[];
-  
+
   /** Other families that work well with this one */
   related: string[];
-  
+
   /** Families that conflict with this one */
   opposes: string[];
-  
+
   /** Default mood for this family */
   mood: SemanticMood;
-  
+
   /** Suggested colours when this family is dominant */
   suggestedColours?: string[];
-  
+
   /** Suggested lighting when this family is dominant */
   suggestedLighting?: string[];
-  
+
   /** Suggested atmosphere when this family is dominant */
   suggestedAtmosphere?: string[];
 }
@@ -206,13 +215,13 @@ export type ConflictSeverity = 'hard' | 'soft';
 export interface ConflictDefinition {
   /** The options that conflict */
   terms: string[];
-  
+
   /** Explanation of why they conflict */
   reason: string;
-  
+
   /** Suggested resolution or alternative */
   suggestion?: string;
-  
+
   /** How severe the conflict is */
   severity: ConflictSeverity;
 }
@@ -232,16 +241,16 @@ export interface ConflictsData {
 export interface DetectedConflict {
   /** The conflicting terms */
   terms: string[];
-  
+
   /** Explanation of the conflict */
   reason: string;
-  
+
   /** Suggested resolution */
   suggestion?: string;
-  
+
   /** Severity level */
   severity: ConflictSeverity;
-  
+
   /** Which categories contain the conflicting terms */
   categories: PromptCategory[];
 }
@@ -256,10 +265,10 @@ export interface DetectedConflict {
 export interface ScoredOption {
   /** The option text */
   option: string;
-  
+
   /** Relevance score (0-100) */
   score: number;
-  
+
   /** Breakdown of score components (for debugging/tooltips) */
   breakdown?: {
     familyMatch: number;
@@ -294,6 +303,10 @@ export interface ScoredOption {
     platformCoOccurrenceBoost?: number;
     /** Platform-specific term quality adjustment (Phase 7.5) */
     platformTermQualityBoost?: number;
+    /** Temporal boost from seasonal/weekly/trending signals (Phase 7.8) */
+    temporalBoost?: number;
+    /** Penalty from expendable term detection (Phase 7.9) */
+    expendabilityPenalty?: number;
   };
 }
 
@@ -304,31 +317,31 @@ export interface ScoredOption {
 export interface PromptContext {
   /** Keywords extracted from user's typed subject */
   subjectKeywords: string[];
-  
+
   /** The most common family across all selections */
   activeFamily: string | null;
-  
+
   /** All related families from current selections */
   relatedFamilies: string[];
-  
+
   /** The dominant mood from current selections */
   dominantMood: SemanticMood | null;
-  
+
   /** The era from current selections */
   era: SemanticEra | null;
-  
+
   /** All currently selected terms (for conflict detection) */
   selectedTerms: string[];
-  
+
   /** Whether Market Mood feature is enabled */
   marketMoodEnabled: boolean;
-  
+
   /** Current market state (if Market Mood enabled) */
   marketState: MarketState | null;
-  
+
   /** Active cluster IDs — clusters where ≥1 selected term is a member (Phase 1) */
   activeClusters: Set<string>;
-  
+
   /** Platform tier (1-4) for tier-aware scoring multipliers (Phase 1) */
   tier: number | null;
 
@@ -366,6 +379,15 @@ export interface PromptContext {
    *  `{ ...SCORE_WEIGHTS, ...abVariantWeights }` in the scoring engine.
    *  null = use default weights (control group or no test running). */
   abVariantWeights: Record<string, number> | null;
+
+  /** Pre-built temporal lookup for seasonal/weekly boosts (Phase 7.8, null = no data) */
+  temporalLookup: TemporalLookup | null;
+
+  /** Pre-built trending lookup for velocity signals (Phase 7.8, null = no data) */
+  trendingLookup: TrendingLookup | null;
+
+  /** Pre-built compression lookup for expendability penalties (Phase 7.9, null = no data) */
+  compressionLookup: CompressionLookup | null;
 }
 
 // ============================================================================
@@ -375,7 +397,7 @@ export interface PromptContext {
 /**
  * Possible market states that influence suggestions.
  */
-export type MarketStateType = 
+export type MarketStateType =
   | 'market_opening'
   | 'market_closing'
   | 'high_volatility'
@@ -394,13 +416,13 @@ export type MarketStateType =
 export interface MarketState {
   /** Primary market state */
   type: MarketStateType;
-  
+
   /** Intensity of the state (0-1) */
   intensity: number;
-  
+
   /** Which exchange triggered this (if applicable) */
   exchangeId?: string;
-  
+
   /** Whether the market is currently open somewhere */
   isMarketOpen: boolean;
 }
@@ -411,10 +433,10 @@ export interface MarketState {
 export interface MarketMoodBoost {
   /** What triggers this mood */
   trigger: string;
-  
+
   /** Options to boost, by category */
   boost: Partial<Record<PromptCategory, string[]>>;
-  
+
   /** Multiplier for boosted options (e.g., 1.3 = +30% score) */
   boostWeight: number;
 }
@@ -438,31 +460,31 @@ export interface MarketMoodsData {
 export interface PlatformHint {
   /** Platform tier (1-4) */
   tier: number;
-  
+
   /** Whether platform weights earlier tokens more heavily */
   prefersEarlierTokens?: boolean;
-  
+
   /** Whether platform prefers natural language over keywords */
   prefersNaturalLanguage?: boolean;
-  
+
   /** Whether platform prefers keyword lists */
   prefersKeywords?: boolean;
-  
+
   /** Weight syntax (e.g., "::1.5" for Midjourney) */
   weightSyntax?: string;
-  
+
   /** Negative prompt syntax (e.g., "--no" for Midjourney) */
   negativeSyntax?: string;
-  
+
   /** Whether negative is in separate field */
   separateNegative?: boolean;
-  
+
   /** User-facing hints for this platform */
   hints: string[];
-  
+
   /** Categories that perform well on this platform */
   strongCategories?: PromptCategory[];
-  
+
   /** Categories to trim first when over limit */
   trimPriority?: PromptCategory[];
 }
@@ -496,25 +518,25 @@ export type CategoryCoherenceStatus = 'coherent' | 'neutral' | 'conflict';
 export interface PromptDNA {
   /** Overall coherence score (0-100) */
   coherenceScore: number;
-  
+
   /** Per-category fill status */
   categoryFill: Record<PromptCategory, CategoryFillStatus>;
-  
+
   /** Per-category coherence status */
   categoryCoherence: Record<PromptCategory, CategoryCoherenceStatus>;
-  
+
   /** Detected conflicts */
   conflicts: DetectedConflict[];
-  
+
   /** Dominant style family */
   dominantFamily: string | null;
-  
+
   /** Dominant mood */
   dominantMood: SemanticMood | null;
-  
+
   /** Number of categories filled */
   filledCount: number;
-  
+
   /** Total number of categories (excluding negative) */
   totalCategories: number;
 }
@@ -529,16 +551,16 @@ export interface PromptDNA {
 export interface SuggestedOption {
   /** The option text */
   option: string;
-  
+
   /** Which category it belongs to */
   category: PromptCategory;
-  
+
   /** Why it's suggested (for tooltip) */
   reason: string;
-  
+
   /** Relevance score */
   score: number;
-  
+
   /** Whether this came from Market Mood boost */
   isMarketBoosted?: boolean;
 }
@@ -553,16 +575,16 @@ export interface SuggestedOption {
 export interface ReorderOptions {
   /** Current prompt builder state */
   state: PromptBuilderState;
-  
+
   /** Category to reorder options for */
   category: PromptCategory;
-  
+
   /** Original options list */
   options: string[];
-  
+
   /** Whether Market Mood is enabled */
   marketMoodEnabled?: boolean;
-  
+
   /** Current market state */
   marketState?: MarketState | null;
 }
@@ -573,7 +595,7 @@ export interface ReorderOptions {
 export interface ReorderResult {
   /** Options sorted by relevance score */
   options: ScoredOption[];
-  
+
   /** The context used for scoring */
   context: PromptContext;
 }
@@ -584,13 +606,13 @@ export interface ReorderResult {
 export interface SmartTrimOptions {
   /** Current selections by category */
   selections: Partial<Record<PromptCategory, string[]>>;
-  
+
   /** Custom values by category (protected from trim) */
   customValues: Partial<Record<PromptCategory, string>>;
-  
+
   /** Maximum character limit */
   maxChars: number;
-  
+
   /** Platform ID for platform-specific trim priority */
   platformId?: string;
 }
@@ -601,10 +623,10 @@ export interface SmartTrimOptions {
 export interface SmartTrimResult {
   /** Trimmed selections by category */
   selections: Partial<Record<PromptCategory, string[]>>;
-  
+
   /** Whether any trimming occurred */
   wasTrimmed: boolean;
-  
+
   /** What was removed (for user feedback) */
   removed: Array<{ term: string; category: PromptCategory; reason: string }>;
 }
@@ -615,10 +637,10 @@ export interface SmartTrimResult {
 export interface RandomiseOptions {
   /** Current state (to preserve user's subject if typed) */
   currentState: PromptBuilderState;
-  
+
   /** Platform ID for limit awareness */
   platformId: string;
-  
+
   /** Target style family (optional - will pick random if not provided) */
   targetFamily?: string;
 }
@@ -629,10 +651,10 @@ export interface RandomiseOptions {
 export interface RandomiseResult {
   /** New state with randomised selections */
   state: PromptBuilderState;
-  
+
   /** The style family that was used */
   family: string;
-  
+
   /** Whether user's subject was preserved */
   subjectPreserved: boolean;
 }

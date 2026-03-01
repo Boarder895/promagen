@@ -11,10 +11,11 @@
 // - prompt_events        — Raw telemetry from high-quality prompts
 // - learned_weights      — JSON weight files produced by nightly cron
 // - learning_cron_runs   — Observability log for cron executions
+// - feedback_events      — Direct user feedback (👍👌👎) linked to prompt events
 //
-// Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9.4, § 11
+// Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 9.4, § 11, § 7.10
 //
-// Version: 2.2.0 — Phase 7.6c A/B testing CRUD + prompt_events migration
+// Version: 2.4.0 — Phase 7.10h Dashboard query helpers
 // Created: 2026-02-25
 //
 // Existing features preserved: Yes.
@@ -26,6 +27,7 @@ import { db } from '@/lib/db';
 import { LEARNING_CONSTANTS } from '@/lib/learning/constants';
 
 import type { ABTest, ABTestEventCounts, ABTestResult } from '@/lib/learning/ab-testing';
+import type { FeedbackRating } from '@/types/feedback';
 
 // ============================================================================
 // TABLE CREATION (AUTO-MIGRATION)
@@ -87,6 +89,13 @@ export async function ensurePromptEventsTable(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_prompt_events_ab_test
     ON prompt_events (test_id, variant) WHERE test_id IS NOT NULL
   `;
+
+  // ── Feedback columns (Phase 7.10a) ─────────────────────────────────
+  // Denormalized feedback data on prompt_events for efficient JOIN-free
+  // queries in the 17 existing cron layers. Full event detail lives in
+  // the dedicated feedback_events table.
+  await sql`ALTER TABLE prompt_events ADD COLUMN IF NOT EXISTS feedback_rating TEXT`;
+  await sql`ALTER TABLE prompt_events ADD COLUMN IF NOT EXISTS feedback_credibility REAL`;
 }
 
 /**
@@ -160,6 +169,61 @@ export async function ensureABTestsTable(): Promise<void> {
 }
 
 /**
+ * Create feedback_events table if not exists.
+ * Stores direct user feedback (👍👌👎) linked to prompt events.
+ *
+ * Phase 7.10a — one row per feedback event. Idempotent per prompt_event_id
+ * (enforced at API level via ON CONFLICT, not DB constraint, to allow
+ * the dual-write to prompt_events without transaction overhead).
+ *
+ * GDPR posture: No user IDs, no IPs. user_tier and account_age_days are
+ * aggregated demographic signals, not PII.
+ */
+export async function ensureFeedbackEventsTable(): Promise<void> {
+  const sql = db();
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS feedback_events (
+      id                  TEXT        NOT NULL PRIMARY KEY,
+      prompt_event_id     TEXT        NOT NULL,
+      rating              TEXT        NOT NULL,
+      credibility_score   REAL        NOT NULL,
+      credibility_factors JSONB       NOT NULL DEFAULT '{}',
+      response_time_ms    BIGINT      NOT NULL DEFAULT 0,
+      user_tier           TEXT,
+      account_age_days    SMALLINT,
+      platform            TEXT        NOT NULL,
+      tier                SMALLINT    NOT NULL,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  // Join back to prompt_events for cron aggregation
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_feedback_events_prompt
+    ON feedback_events (prompt_event_id)
+  `;
+
+  // Time-based queries for cron windowed aggregation
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_feedback_events_created
+    ON feedback_events (created_at)
+  `;
+
+  // Platform + tier for per-platform satisfaction scores
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_feedback_events_platform
+    ON feedback_events (platform, tier, created_at)
+  `;
+
+  // Unique constraint: one feedback per prompt event (idempotency)
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_feedback_events_unique_prompt
+    ON feedback_events (prompt_event_id)
+  `;
+}
+
+/**
  * Ensure all required tables exist.
  * Idempotent — safe to call on every cold start.
  */
@@ -168,6 +232,7 @@ export async function ensureAllTables(): Promise<void> {
   await ensureLearnedWeightsTable();
   await ensureLearningCronRunsTable();
   await ensureABTestsTable();
+  await ensureFeedbackEventsTable();
 }
 
 // ============================================================================
@@ -233,6 +298,10 @@ export interface PromptEventRow {
   test_id?: string | null;
   /** Assigned variant: 'A' (control) or 'B' (variant) (Phase 7.6) */
   variant?: string | null;
+  /** Direct user feedback rating: 'positive' | 'neutral' | 'negative' (Phase 7.10) */
+  feedback_rating?: string | null;
+  /** Credibility-weighted trust score for this feedback (0.40–1.80) (Phase 7.10) */
+  feedback_credibility?: number | null;
   created_at: Date | string;
 }
 
@@ -717,5 +786,250 @@ export async function countABTestEvents(
       controlCopies: 0, variantCopies: 0,
       controlSaves: 0, variantSaves: 0,
     };
+  }
+}
+
+// ============================================================================
+// FEEDBACK EVENT QUERIES (Phase 7.10)
+// ============================================================================
+
+/** Row shape returned by feedback_events queries */
+export interface FeedbackEventRow {
+  id: string;
+  prompt_event_id: string;
+  rating: string;
+  credibility_score: number;
+  credibility_factors: Record<string, number>;
+  response_time_ms: number;
+  user_tier: string | null;
+  account_age_days: number | null;
+  platform: string;
+  tier: number;
+  created_at: Date | string;
+}
+
+/**
+ * Insert a feedback event and update the parent prompt_events row.
+ *
+ * Dual-write pattern:
+ * 1. INSERT into feedback_events (full detail for admin + cron)
+ * 2. UPDATE prompt_events set feedback_rating + feedback_credibility (denormalized for JOIN-free cron queries)
+ *
+ * Idempotent: ON CONFLICT (prompt_event_id) DO NOTHING — one feedback per prompt event.
+ *
+ * @returns true if inserted, false if already exists (idempotent)
+ */
+export async function insertFeedbackEvent(event: {
+  id: string;
+  promptEventId: string;
+  rating: FeedbackRating;
+  credibilityScore: number;
+  credibilityFactors: Record<string, number>;
+  responseTimeMs: number;
+  userTier: string | null;
+  accountAgeDays: number | null;
+  platform: string;
+  tier: number;
+}): Promise<boolean> {
+  try {
+    const sql = db();
+
+    // 1. Insert into feedback_events (idempotent via unique index)
+    const result = await sql`
+      INSERT INTO feedback_events (
+        id, prompt_event_id, rating, credibility_score,
+        credibility_factors, response_time_ms, user_tier,
+        account_age_days, platform, tier
+      ) VALUES (
+        ${event.id},
+        ${event.promptEventId},
+        ${event.rating},
+        ${event.credibilityScore},
+        ${JSON.stringify(event.credibilityFactors)},
+        ${event.responseTimeMs},
+        ${event.userTier},
+        ${event.accountAgeDays},
+        ${event.platform},
+        ${event.tier}
+      )
+      ON CONFLICT (prompt_event_id) DO NOTHING
+    `;
+
+    // If nothing was inserted (duplicate), skip the denormalized update
+    if (result.count === 0) {
+      return false;
+    }
+
+    // 2. Denormalize feedback onto prompt_events for JOIN-free cron queries
+    await sql`
+      UPDATE prompt_events
+      SET feedback_rating = ${event.rating},
+          feedback_credibility = ${event.credibilityScore}
+      WHERE id = ${event.promptEventId}
+    `;
+
+    return true;
+  } catch (error) {
+    console.error('[Learning] Error inserting feedback event:', error);
+    return false;
+  }
+}
+
+/**
+ * Fetch recent feedback events for a time window (used by Layer 18 cron).
+ *
+ * @param afterDate — Only events created after this date
+ * @param limit — Max rows to return
+ */
+export async function fetchRecentFeedbackEvents(
+  afterDate: Date,
+  limit: number = 10_000,
+): Promise<FeedbackEventRow[]> {
+  try {
+    const rows = await db()<FeedbackEventRow[]>`
+      SELECT *
+      FROM feedback_events
+      WHERE created_at > ${afterDate}
+      ORDER BY created_at DESC
+      LIMIT ${limit}
+    `;
+    return rows;
+  } catch (error) {
+    console.error('[Learning] Error fetching recent feedback events:', error);
+    return [];
+  }
+}
+
+/**
+ * Count feedback events by rating for a given platform + time window.
+ * Used by the admin dashboard Feedback Pulse widget.
+ */
+export async function countFeedbackByRating(
+  afterDate: Date,
+  platform?: string,
+): Promise<{ positive: number; neutral: number; negative: number; total: number }> {
+  try {
+    const sql = db();
+
+    const rows = platform
+      ? await sql<{ rating: string; count: string }[]>`
+          SELECT rating, COUNT(*)::text AS count
+          FROM feedback_events
+          WHERE created_at > ${afterDate}
+            AND platform = ${platform}
+          GROUP BY rating
+        `
+      : await sql<{ rating: string; count: string }[]>`
+          SELECT rating, COUNT(*)::text AS count
+          FROM feedback_events
+          WHERE created_at > ${afterDate}
+          GROUP BY rating
+        `;
+
+    let positive = 0, neutral = 0, negative = 0;
+    for (const row of rows) {
+      const c = parseInt(row.count, 10);
+      if (row.rating === 'positive') positive = c;
+      else if (row.rating === 'neutral') neutral = c;
+      else if (row.rating === 'negative') negative = c;
+    }
+
+    return { positive, neutral, negative, total: positive + neutral + negative };
+  } catch (error) {
+    console.error('[Learning] Error counting feedback by rating:', error);
+    return { positive: 0, neutral: 0, negative: 0, total: 0 };
+  }
+}
+
+// ============================================================================
+// Phase 7.10h — Dashboard query helpers
+// ============================================================================
+
+/**
+ * Daily feedback counts for the last N days.
+ * Used by Feedback Pulse Dashboard sparkline.
+ */
+export async function fetchDailyFeedbackCounts(
+  days: number = 14,
+): Promise<{ date: string; positive: number; neutral: number; negative: number }[]> {
+  try {
+    const sql = db();
+    const afterDate = new Date();
+    afterDate.setDate(afterDate.getDate() - days);
+
+    const rows = await sql<{ day: string; rating: string; count: string }[]>`
+      SELECT
+        TO_CHAR(created_at, 'YYYY-MM-DD') AS day,
+        rating,
+        COUNT(*)::text AS count
+      FROM feedback_events
+      WHERE created_at > ${afterDate}
+      GROUP BY day, rating
+      ORDER BY day ASC
+    `;
+
+    const dayMap = new Map<string, { date: string; positive: number; neutral: number; negative: number }>();
+    for (const row of rows) {
+      if (!dayMap.has(row.day)) {
+        dayMap.set(row.day, { date: row.day, positive: 0, neutral: 0, negative: 0 });
+      }
+      const entry = dayMap.get(row.day)!;
+      const c = parseInt(row.count, 10);
+      if (row.rating === 'positive') entry.positive = c;
+      else if (row.rating === 'neutral') entry.neutral = c;
+      else if (row.rating === 'negative') entry.negative = c;
+    }
+    return Array.from(dayMap.values());
+  } catch (error) {
+    console.error('[Learning] Error fetching daily feedback counts:', error);
+    return [];
+  }
+}
+
+/**
+ * Credibility-weighted satisfaction per platform.
+ * Formula: Σ(ratingValue × credibility) / Σ(credibility) × 100
+ * Where positive=1, neutral=0.5, negative=0
+ */
+export async function fetchPlatformSatisfaction(
+  afterDate: Date,
+): Promise<{ platform: string; score: number; eventCount: number }[]> {
+  try {
+    const sql = db();
+    const rows = await sql<{
+      platform: string;
+      rating: string;
+      credibility_score: number;
+    }[]>`
+      SELECT platform, rating, credibility_score
+      FROM feedback_events
+      WHERE created_at > ${afterDate}
+      ORDER BY platform
+    `;
+
+    const platformMap = new Map<string, { weightedSum: number; totalWeight: number; count: number }>();
+    for (const row of rows) {
+      if (!platformMap.has(row.platform)) {
+        platformMap.set(row.platform, { weightedSum: 0, totalWeight: 0, count: 0 });
+      }
+      const entry = platformMap.get(row.platform)!;
+      const ratingValue = row.rating === 'positive' ? 1 : row.rating === 'neutral' ? 0.5 : 0;
+      const cred = row.credibility_score ?? 1;
+      entry.weightedSum += ratingValue * cred;
+      entry.totalWeight += cred;
+      entry.count++;
+    }
+
+    const results: { platform: string; score: number; eventCount: number }[] = [];
+    for (const [platform, data] of platformMap) {
+      const score = data.totalWeight > 0
+        ? Math.round((data.weightedSum / data.totalWeight) * 100)
+        : 0;
+      results.push({ platform, score, eventCount: data.count });
+    }
+    return results.sort((a, b) => b.eventCount - a.eventCount);
+  } catch (error) {
+    console.error('[Learning] Error fetching platform satisfaction:', error);
+    return [];
   }
 }

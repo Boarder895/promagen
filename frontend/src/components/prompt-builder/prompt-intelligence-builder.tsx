@@ -33,6 +33,7 @@ import type {
   StyleSuggestion,
 } from '../../types/prompt-intelligence';
 import { CATEGORY_ORDER, CATEGORY_META, TIER_CONFIGS } from '../../types/prompt-intelligence';
+import type { CompressionLookup } from '@/lib/learning/compression-lookup';
 
 // ============================================================================
 // TYPES
@@ -52,6 +53,8 @@ interface PromptIntelligenceBuilderProps {
   };
   onPromptCopy?: (tier: PlatformTier, prompt: string) => void;
   className?: string;
+  /** Phase 7.9e: Compression lookup for Smart Prompt Length Gauge (null = no gauge) */
+  compressionLookup?: CompressionLookup | null;
 }
 
 // ============================================================================
@@ -448,6 +451,7 @@ export function PromptIntelligenceBuilder({
   weather,
   onPromptCopy,
   className = '',
+  compressionLookup,
 }: PromptIntelligenceBuilderProps) {
   // Use the intelligence hook
   const {
@@ -669,6 +673,8 @@ export function PromptIntelligenceBuilder({
             currentTier={tier}
             onCopy={handleCopy}
             showNegative={true}
+            compressionLookup={compressionLookup}
+            platformId={platformId}
           />
         </div>
 

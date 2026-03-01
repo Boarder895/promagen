@@ -469,4 +469,144 @@ describe('Suggestion Engine', () => {
       expect(result.totalCount).toBeGreaterThan(0);
     });
   });
+
+  // ==========================================================================
+  // Temporal Intelligence Integration (Phase 7.8d)
+  // ==========================================================================
+
+  describe('temporal integration', () => {
+    it('buildContext passes temporal lookups through', () => {
+      const mockTemporalLookup = {
+        seasonal: { '1': new Map([['snow', { 12: 2.5, 7: 0.3 }]]) },
+        seasonalEvents: { '1': new Map([['snow', 500]]) },
+        weekly: { '1': new Map([['snow', { 0: 1.2, 6: 1.3 }]]) },
+        eventsAnalysed: 1000,
+        generatedAt: new Date().toISOString(),
+      };
+      const mockTrendingLookup = {
+        tiers: { '1': new Map([['cyberpunk', 0.5]]) },
+        eventsAnalysed: 1000,
+        generatedAt: new Date().toISOString(),
+      };
+
+      const context = buildContext({
+        selections: { style: ['cyberpunk'] },
+        temporalLookup: mockTemporalLookup,
+        trendingLookup: mockTrendingLookup,
+      });
+
+      expect(context.temporalLookup).toBe(mockTemporalLookup);
+      expect(context.trendingLookup).toBe(mockTrendingLookup);
+    });
+
+    it('defaults temporal lookups to null', () => {
+      const context = buildContext({ selections: {} });
+
+      expect(context.temporalLookup).toBeNull();
+      expect(context.trendingLookup).toBeNull();
+    });
+
+    it('temporal boost appears in score breakdown', () => {
+      // Build a mock seasonal lookup where "golden hour" is 2.0× in current month
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const mockTemporalLookup = {
+        seasonal: { '1': new Map([['golden hour', { [month]: 2.0 }]]) },
+        seasonalEvents: { '1': new Map([['golden hour', 500]]) },
+        weekly: {},
+        eventsAnalysed: 1000,
+        generatedAt: now.toISOString(),
+      };
+
+      const context = buildContext({
+        selections: { style: ['cyberpunk'] },
+        temporalLookup: mockTemporalLookup,
+        tier: 1,
+      });
+
+      const scored = scoreOptions({
+        options: ['golden hour'],
+        category: 'lighting',
+        context,
+        includeBreakdown: true,
+      });
+
+      const result = scored[0];
+      expect(result).toBeDefined();
+      // Seasonal multiplier 2.0 → delta 1.0 → temporalSeasonalMax(10) × 1.0 = 10
+      expect(result?.breakdown?.temporalBoost).toBe(10);
+    });
+
+    it('returns zero temporal boost when no data', () => {
+      const context = buildContext({
+        selections: { style: ['cyberpunk'] },
+        temporalLookup: null,
+        trendingLookup: null,
+      });
+
+      const scored = scoreOptions({
+        options: ['golden hour'],
+        category: 'lighting',
+        context,
+        includeBreakdown: true,
+      });
+
+      const result = scored[0];
+      expect(result).toBeDefined();
+      // When both lookups are null → temporalBoost stays 0
+      expect(result?.breakdown?.temporalBoost).toBe(0);
+    });
+
+    it('trending velocity adds to temporal boost', () => {
+      const mockTrendingLookup = {
+        tiers: { '2': new Map([['cyberpunk', 0.8]]) },
+        eventsAnalysed: 500,
+        generatedAt: new Date().toISOString(),
+      };
+
+      const context = buildContext({
+        selections: {},
+        trendingLookup: mockTrendingLookup,
+        tier: 2,
+      });
+
+      const scored = scoreOptions({
+        options: ['cyberpunk'],
+        category: 'style',
+        context,
+        includeBreakdown: true,
+      });
+
+      const result = scored[0];
+      expect(result).toBeDefined();
+      // Velocity 0.8, clamped to 0.8, × temporalTrendingMax(8) = 6 (rounded)
+      expect(result?.breakdown?.temporalBoost).toBe(6);
+    });
+
+    it('negative trending velocity dampens score', () => {
+      const mockTrendingLookup = {
+        tiers: { '3': new Map([['vintage', -0.5]]) },
+        eventsAnalysed: 500,
+        generatedAt: new Date().toISOString(),
+      };
+
+      const context = buildContext({
+        selections: {},
+        trendingLookup: mockTrendingLookup,
+        tier: 3,
+      });
+
+      const scored = scoreOptions({
+        options: ['vintage'],
+        category: 'style',
+        context,
+        includeBreakdown: true,
+      });
+
+      const result = scored[0];
+      expect(result).toBeDefined();
+      // Velocity -0.5, × temporalTrendingMax(8) = -4
+      expect(result?.breakdown?.temporalBoost).toBe(-4);
+    });
+  });
 });
