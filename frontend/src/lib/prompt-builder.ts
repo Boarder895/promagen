@@ -1,7 +1,12 @@
 // src/lib/prompt-builder.ts
 // Platform-optimized prompt assembler for AI image platforms
-// Version 4.2.0 - Rich phrase handling for unified brain
+// Version 5.0.0 - 3-stage pipeline: Static → Dynamic → Optimize
 // Changelog:
+//   5.0.0 - 3-stage pipeline architecture:
+//           Stage 1 (Static): assembleStatic() — raw comma join, no intelligence
+//           Stage 2 (Dynamic): assemblePrompt(skipTrim) — platform formatting, no trimming
+//           Stage 3 (Optimize): optimizer pipeline — trims dynamic output to sweet spot
+//           AssemblyOptions.skipTrim threads through all sub-assemblers
 //   4.2.0 - Rich phrase detection (>4 words bypass weight wrapping + connectors)
 //           Smart trim: metadata categories drop before core scene categories
 //           Plain language: rich phrases simplified to first N words
@@ -30,6 +35,26 @@ import type {
   PlatformFormats,
   PromptOptions,
 } from '@/types/prompt-builder';
+
+import { CATEGORY_ORDER } from '@/types/prompt-builder';
+
+// ============================================================================
+// ASSEMBLY OPTIONS — 3-Stage Pipeline Control
+// ============================================================================
+// Stage 1 (Static):  assembleStatic()        — raw comma join, no intelligence
+// Stage 2 (Dynamic): assemblePrompt(skipTrim) — platform formatting, no trimming
+// Stage 3 (Optimize): optimizer pipeline      — trims dynamic output to sweet spot
+// ============================================================================
+
+export interface AssemblyOptions {
+  /**
+   * When true, skip trimming to the platform's sweet-spot word/token limit.
+   * Used by Dynamic mode (Stage 2) so the assembler formats the prompt
+   * with full platform intelligence (weights, reordering, quality tags,
+   * connectors) but leaves the length untouched for the optimizer (Stage 3).
+   */
+  skipTrim?: boolean;
+}
 
 import { getPlatformTierId } from '@/data/platform-tiers';
 import type { PlatformTierId } from '@/data/platform-tiers';
@@ -553,6 +578,7 @@ function sanitiseClipTokens(text: string): string {
 function assembleKeywords(
   selections: PromptSelections,
   platformFormat: PlatformFormat,
+  options?: AssemblyOptions,
 ): AssembledPrompt {
   const parts: string[] = [];
 
@@ -569,10 +595,21 @@ function assembleKeywords(
     parts.push(...platformFormat.qualitySuffix);
   }
 
-  // 4. Trim to sweet spot — trims from the back, preserving front-loaded impact terms
-  const limit = platformFormat.sweetSpot || 80;
+  // 4. Trim to sweet spot — SKIPPED when skipTrim is true (Stage 2 Dynamic mode).
+  //    Dynamic mode formats with full platform intelligence but leaves length
+  //    untouched for the optimizer (Stage 3) to handle.
   const separator = platformFormat.separator || ', ';
-  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit, separator);
+  let trimmed: string[];
+  let wasTrimmed = false;
+
+  if (options?.skipTrim) {
+    trimmed = parts;
+  } else {
+    const limit = platformFormat.sweetSpot || 80;
+    const result = trimPromptToLimit(parts, selections, limit, separator);
+    trimmed = result.trimmed;
+    wasTrimmed = result.wasTrimmed;
+  }
 
   let positive = trimmed.join(separator);
 
@@ -584,12 +621,30 @@ function assembleKeywords(
   const userNegatives = selections.negative?.filter(Boolean) ?? [];
 
   if (platformFormat.negativeSupport === 'inline' && platformFormat.negativeSyntax) {
+    // v5.1.0: Merge config-level qualityNegative with user negatives (deduped).
+    // qualityNegative provides baseline artifact prevention (blurry, bad anatomy, etc.)
+    // even when the user hasn't added any negatives. User negatives override/extend.
+    const qualityNeg = platformFormat.qualityNegative ?? [];
+    const seenNeg = new Set<string>();
+    const allNegatives: string[] = [];
+    for (const term of [...userNegatives, ...qualityNeg]) {
+      const key = term.toLowerCase().trim();
+      if (key && !seenNeg.has(key)) {
+        seenNeg.add(key);
+        allNegatives.push(term);
+      }
+    }
+
     // v3.3.0: Convert known negatives to positive reinforcement terms first,
     // then inline remaining unconverted terms with the platform's syntax.
-    if (userNegatives.length > 0) {
-      const { positives, withouts } = convertNegativesToPositives(userNegatives);
-      if (positives.length > 0) {
-        positive += `${separator}${positives.join(separator)}`;
+    if (allNegatives.length > 0) {
+      const { positives, withouts } = convertNegativesToPositives(allNegatives);
+      // Deduplicate positive reinforcement against existing positive content
+      // (qualitySuffix may already include "sharp focus" or "high quality")
+      const existingLower = positive.toLowerCase();
+      const dedupedPositives = positives.filter((term) => !existingLower.includes(term.toLowerCase()));
+      if (dedupedPositives.length > 0) {
+        positive += `${separator}${dedupedPositives.join(separator)}`;
       }
       if (withouts.length > 0) {
         const negStr = withouts.join(', ');
@@ -757,6 +812,7 @@ function buildClause(category: PromptCategory, values: string[]): string {
 function assembleNaturalSentences(
   selections: PromptSelections,
   platformFormat: PlatformFormat,
+  options?: AssemblyOptions,
 ): AssembledPrompt {
   const effectiveOrder = getEffectiveOrder(platformFormat);
 
@@ -853,7 +909,7 @@ function assembleNaturalSentences(
         positive += `, ${inlineNeg}`;
       }
     }
-    return trimAndReturn(positive, platformFormat, true, 'inline');
+    return trimAndReturn(positive, platformFormat, true, 'inline', options);
   }
 
   // Convert negatives to positive equivalents for natural language platforms
@@ -867,7 +923,7 @@ function assembleNaturalSentences(
     }
   }
 
-  return trimAndReturn(positive, platformFormat, true, 'converted');
+  return trimAndReturn(positive, platformFormat, true, 'converted', options);
 }
 
 /**
@@ -886,6 +942,7 @@ function assembleNaturalSentences(
 function assemblePlainLanguage(
   selections: PromptSelections,
   platformFormat: PlatformFormat,
+  options?: AssemblyOptions,
 ): AssembledPrompt {
   const parts: string[] = [];
   const effectiveOrder = getEffectiveOrder(platformFormat);
@@ -900,9 +957,19 @@ function assemblePlainLanguage(
   }
 
   // Trim to sweet spot (typically 40-60 words for Tier 4)
-  const limit = platformFormat.sweetSpot || 40;
+  // SKIPPED when skipTrim is true (Stage 2 Dynamic mode).
   const separator = platformFormat.separator || ', ';
-  const { trimmed, wasTrimmed } = trimPromptToLimit(parts, selections, limit, separator);
+  let trimmed: string[];
+  let wasTrimmed = false;
+
+  if (options?.skipTrim) {
+    trimmed = parts;
+  } else {
+    const limit = platformFormat.sweetSpot || 40;
+    const result = trimPromptToLimit(parts, selections, limit, separator);
+    trimmed = result.trimmed;
+    wasTrimmed = result.wasTrimmed;
+  }
 
   const positive = trimmed.join(separator);
 
@@ -935,15 +1002,20 @@ function trimAndReturn(
   platformFormat: PlatformFormat,
   supportsNegative: boolean,
   negativeMode: 'inline' | 'converted' | 'none',
+  options?: AssemblyOptions,
 ): AssembledPrompt {
-  const limit = platformFormat.sweetSpot || 100;
-  const words = positive.split(/\s+/);
   let wasTrimmed = false;
   let trimmedPositive = positive;
 
-  if (words.length > limit) {
-    trimmedPositive = words.slice(0, limit).join(' ');
-    wasTrimmed = true;
+  // SKIPPED when skipTrim is true (Stage 2 Dynamic mode).
+  if (!options?.skipTrim) {
+    const limit = platformFormat.sweetSpot || 100;
+    const words = positive.split(/\s+/);
+
+    if (words.length > limit) {
+      trimmedPositive = words.slice(0, limit).join(' ');
+      wasTrimmed = true;
+    }
   }
 
   return {
@@ -1076,6 +1148,7 @@ function assembleTierAware(
   selections: PromptSelections,
   platformFormat: PlatformFormat,
   weightOverrides?: Partial<Record<PromptCategory, number>>,
+  options?: AssemblyOptions,
 ): AssembledPrompt {
   // Upgrade 3: Deduplicate within each category before assembly.
   // Both the generator and builder UI call assemblePrompt(), so placing
@@ -1104,13 +1177,13 @@ function assembleTierAware(
   // Tier 4: Plain language — short comma lists, no frills
   let result: AssembledPrompt;
   if (tierId === 4) {
-    result = assemblePlainLanguage(crossDeduped, mergedFormat);
+    result = assemblePlainLanguage(crossDeduped, mergedFormat, options);
   } else if (mergedFormat.promptStyle === 'keywords') {
     // Keyword-mode platforms: Tier 1 (CLIP), Tier 2 (MJ), and keyword-style
-    result = assembleKeywords(crossDeduped, mergedFormat);
+    result = assembleKeywords(crossDeduped, mergedFormat, options);
   } else {
     // Tier 3 and all other natural-language platforms: flowing sentences
-    result = assembleNaturalSentences(crossDeduped, mergedFormat);
+    result = assembleNaturalSentences(crossDeduped, mergedFormat, options);
   }
 
   // Improvement 5: Token estimation — helps users know when they're over CLIP limits.
@@ -1306,11 +1379,17 @@ export function getOrderedCategories(platformId: string): PromptCategory[] {
  * Assemble a prompt from user selections for a specific platform.
  * Uses unified tier-aware assembly — reads tier + platform format config
  * to determine the correct assembly strategy.
+ *
+ * @param platformId - Target platform identifier
+ * @param selections - User's category selections
+ * @param weightOverrides - Optional weather intelligence weight overrides
+ * @param options - Assembly options (e.g., skipTrim for Stage 2 Dynamic mode)
  */
 export function assemblePrompt(
   platformId: string,
   selections: PromptSelections,
   weightOverrides?: Partial<Record<PromptCategory, number>>,
+  options?: AssemblyOptions,
 ): AssembledPrompt {
   // Check if we have any selections at all
   const hasSelections = Object.values(selections).some((arr) => arr && arr.length > 0);
@@ -1325,7 +1404,104 @@ export function assemblePrompt(
   }
 
   const platformFormat = getPlatformFormat(platformId);
-  return assembleTierAware(platformId, selections, platformFormat, weightOverrides);
+  return assembleTierAware(platformId, selections, platformFormat, weightOverrides, options);
+}
+
+// ============================================================================
+// Stage 1: Static Assembly (Raw User Selections)
+// ============================================================================
+// Produces a literal dump of user selections in CATEGORY_ORDER.
+// No reordering, no weights, no quality tags, no sentence connectors,
+// no deduplication, no trimming. What you pick is what you get.
+//
+// Negative handling is minimal but correct:
+//   - Separate-field platforms: negatives populate the separate field
+//   - Inline-negative platforms (--no): syntax applied for correct parsing
+//   - No-support platforms: negatives converted to positive equivalents
+//
+// This gives power users full control and provides a visible baseline
+// for comparison when switching to Dynamic mode.
+// ============================================================================
+
+/**
+ * Assemble a raw static prompt from user selections.
+ * Stage 1 of the 3-stage pipeline: no intelligence, no formatting.
+ *
+ * @param platformId - Target platform (used only for negative handling)
+ * @param selections - User's category selections
+ */
+export function assembleStatic(
+  platformId: string,
+  selections: PromptSelections,
+): AssembledPrompt {
+  const hasSelections = Object.values(selections).some((arr) => arr && arr.length > 0);
+  if (!hasSelections) {
+    return {
+      positive: '',
+      negative: undefined,
+      tips: undefined,
+      supportsNegative: true,
+      negativeMode: 'none',
+    };
+  }
+
+  const platformFormat = getPlatformFormat(platformId);
+
+  // Collect all positive selections in canonical CATEGORY_ORDER — raw, no reordering
+  const parts: string[] = [];
+  for (const category of CATEGORY_ORDER) {
+    if (category === 'negative') continue; // handled separately below
+    const values = selections[category];
+    if (values?.length) {
+      parts.push(...values);
+    }
+  }
+
+  const separator = platformFormat.separator || ', ';
+  let positive = parts.join(separator);
+
+  // Handle negatives with minimal platform-correct syntax
+  const userNegatives = selections.negative?.filter(Boolean) ?? [];
+
+  if (platformFormat.negativeSupport === 'inline' && platformFormat.negativeSyntax) {
+    // Inline platforms (e.g., Midjourney --no): apply syntax so terms actually work
+    if (userNegatives.length > 0) {
+      const negStr = userNegatives.join(', ');
+      const inlineNeg = platformFormat.negativeSyntax.replace('{negative}', negStr);
+      positive += ` ${inlineNeg}`;
+    }
+    return {
+      positive,
+      negative: undefined,
+      tips: platformFormat.tips,
+      supportsNegative: true,
+      negativeMode: 'inline',
+    };
+  }
+
+  if (platformFormat.negativeSupport === 'separate') {
+    // Separate-field platforms: raw negatives go to separate field (no quality negatives)
+    return {
+      positive,
+      negative: userNegatives.length > 0 ? userNegatives.join(', ') : undefined,
+      tips: platformFormat.tips,
+      supportsNegative: true,
+      negativeMode: 'separate',
+    };
+  }
+
+  // No negative support — convert to "without X" for minimal correctness
+  if (userNegatives.length > 0) {
+    positive += `${separator}without ${userNegatives.join(' or ')}`;
+  }
+
+  return {
+    positive,
+    negative: undefined,
+    tips: platformFormat.tips,
+    supportsNegative: false,
+    negativeMode: 'none',
+  };
 }
 
 /**

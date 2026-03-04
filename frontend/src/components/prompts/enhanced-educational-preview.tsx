@@ -29,7 +29,6 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Combobox } from '@/components/ui/combobox';
 import { FourTierPromptPreview } from '@/components/prompt-builder/four-tier-prompt-preview';
 import { IntelligencePanel } from '@/components/prompt-builder/intelligence-panel';
-import { MarketMoodToggle } from '@/components/prompt-intelligence';
 import { SavePromptModal, type SavePromptData } from '@/components/prompts/save-prompt-modal';
 import { useSavedPrompts } from '@/hooks/use-saved-prompts';
 import { generateAllTierPrompts } from '@/lib/prompt-builder/enhanced-generators';
@@ -47,7 +46,6 @@ import {
   type GeneratedPrompts,
   type ConflictWarning,
   type StyleSuggestion,
-  type MarketMoodContext,
 } from '@/types/prompt-intelligence';
 import type { Provider } from '@/types/providers';
 
@@ -406,17 +404,6 @@ function useMockIntelligence(selections: PromptSelections, dominantFamily: strin
     );
   }, [dominantFamily]);
 
-  const marketMood: MarketMoodContext = useMemo(
-    () => ({
-      state: 'bullish',
-      moodTerms: ['optimistic', 'energetic', 'ascending'],
-      colorSuggestions: ['vibrant greens', 'gold accents'],
-      lightingSuggestions: ['golden hour', 'bright and airy'],
-      atmosphereSuggestions: ['triumphant', 'energetic'],
-    }),
-    [],
-  );
-
   const platformHints: string[] = useMemo(
     () => [
       '💡 Tier 1 (CLIP): Use (term:1.2) weights for emphasis',
@@ -428,7 +415,7 @@ function useMockIntelligence(selections: PromptSelections, dominantFamily: strin
 
   const weatherSuggestions: string[] = useMemo(() => ['wet surfaces', 'rain droplets'], []);
 
-  return { conflicts, suggestions, marketMood, platformHints, weatherSuggestions };
+  return { conflicts, suggestions, platformHints, weatherSuggestions };
 }
 
 // ============================================================================
@@ -441,7 +428,6 @@ export default function EnhancedEducationalPreview({
 }: EnhancedEducationalPreviewProps) {
   // State
   const [selections, setSelections] = useState<PromptSelections>(EMPTY_SELECTIONS);
-  const [marketMoodEnabled, setMarketMoodEnabled] = useState(true);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
@@ -481,7 +467,7 @@ export default function EnhancedEducationalPreview({
   }, [selections]);
 
   // Get intelligence data
-  const { conflicts, suggestions, marketMood, platformHints, weatherSuggestions } =
+  const { conflicts, suggestions, platformHints, weatherSuggestions } =
     useMockIntelligence(selections, dominantFamily);
 
   // Suggested save name
@@ -613,13 +599,6 @@ export default function EnhancedEducationalPreview({
 
           {/* DNA Bar - flex-1 makes it stretch to fill available space */}
           <DnaBar selections={selections} dominantFamily={dominantFamily} />
-
-          <div className="shrink-0">
-            <MarketMoodToggle
-              isEnabled={marketMoodEnabled}
-              onToggle={() => setMarketMoodEnabled(!marketMoodEnabled)}
-            />
-          </div>
         </div>
 
         {/* Show selected provider tier info */}
@@ -685,7 +664,7 @@ export default function EnhancedEducationalPreview({
                 conflicts={conflicts}
                 suggestions={suggestions}
                 platformHints={platformHints}
-                marketMood={marketMoodEnabled ? marketMood : null}
+                marketMood={null}
                 weatherSuggestions={weatherSuggestions}
                 tier={activeTier}
                 onSuggestionClick={handleSuggestionClick}

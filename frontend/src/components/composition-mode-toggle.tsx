@@ -1,24 +1,33 @@
 // src/components/composition-mode-toggle.tsx
 // ============================================================================
-// COMPOSITION MODE TOGGLE
+// COMPOSITION MODE TOGGLE — 3-Stage Pipeline Control
 // ============================================================================
-// Toggle for switching between Static and Dynamic composition modes.
+// Toggle for switching between Static and Dynamic prompt assembly modes.
 // Styled to match the ReferenceFrameToggle (purple-pink gradient).
+//
+// 3-Stage Pipeline:
+//   Static  → Raw user selections, comma-joined in category order. No intelligence.
+//   Dynamic → Full platform-specific formatting (weights, reordering, quality tags,
+//             sentence connectors). No length trimming — that's the optimizer's job.
+//   Optimize button (separate) → Trims dynamic prompt to platform sweet spot.
+//
+// Tooltips are PLATFORM-SPECIFIC — each tier gets accurate feature descriptions.
 //
 // Visibility: ALWAYS VISIBLE
 // - All users can toggle between Static and Dynamic
 // - Dynamic mode showcases platform intelligence
-// - Static mode provides predictable, learnable output
+// - Static mode provides predictable, raw output
 //
-// Placement: Below Greenwich Meridian toggle (homepage) or in prompt builder header
+// Placement: Prompt builder header row
 //
 // Authority: docs/authority/prompt-builder-page.md
 // ============================================================================
 
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { CompositionMode } from '@/types/composition';
+import { getPlatformTierId, type PlatformTierId } from '@/data/platform-tiers';
 
 // ============================================================================
 // TYPES
@@ -29,6 +38,8 @@ export interface CompositionModeToggleProps {
   compositionMode: CompositionMode;
   /** Callback when mode changes */
   onModeChange: (mode: CompositionMode) => void;
+  /** Platform ID for tier-specific tooltip content */
+  platformId?: string;
   /** Whether toggle is disabled */
   disabled?: boolean;
   /** Compact mode (smaller, for inline use) */
@@ -36,41 +47,118 @@ export interface CompositionModeToggleProps {
 }
 
 // ============================================================================
-// TOOLTIP CONTENT
+// TOOLTIP CONTENT — PLATFORM-SPECIFIC
 // ============================================================================
 
 const TOOLTIP_STATIC = `📋 Static Mode
 
-Aspect ratios use fixed composition packs.
+Your selections assembled exactly as picked — no intelligence.
 
-• Same output every time for each AR
-• Predictable, learnable behaviour
-• Great for beginners
-• Example: 16:9 always adds "wide establishing shot, cinematic framing, subject on rule of thirds"`;
+• Comma-separated in category order
+• No reordering, no weights, no quality tags
+• What you pick is what you get
+• Optimizer toggle disabled
+• Great for power users who want full control`;
 
-const TOOLTIP_DYNAMIC = `✨ Dynamic Mode
+/**
+ * Generate tier-specific Dynamic Mode tooltip.
+ * Each tier gets accurate feature descriptions — no false claims.
+ */
+function getDynamicTooltip(tierId: PlatformTierId | undefined): string {
+  switch (tierId) {
+    case 1:
+      // CLIP-Based: stability, dreamstudio, lexica, etc.
+      return `✨ Dynamic Mode — CLIP Platform
 
-Aspect ratios assemble context-aware composition packs.
+Your selections formatted with full platform intelligence.
 
-• Reads your Subject, Style, Camera, Lighting selections
-• Generates unique composition hints per prompt
-• Richer, more tailored results
-• Great for power users
+• Reorders terms by platform impact priority
+• Applies CLIP emphasis weights, e.g. (samurai:1.2)
+• Prepends quality boosters (masterpiece, best quality)
+• Appends sharpness terms (sharp focus, 8K)
+• Deduplicates across categories
+• Separate negative prompt field
+• Enable Optimize to trim to ideal length
 
-Example: 16:9 + samurai + cinematic style → "wide cinematic frame, warrior positioned on left third with action space, theatrical staging"`;
+Tip: Toggle Static → Dynamic to see what the intelligence adds.`;
+
+    case 2:
+      // Midjourney Family: midjourney, bluewillow
+      return `✨ Dynamic Mode — Midjourney
+
+Your selections formatted with Midjourney-specific intelligence.
+
+• Reorders terms by impact priority (first words matter most)
+• Builds --no block from your negative selections
+• Protects parameters (--ar, --v, --s, --style)
+• Steep position decay — front-loaded keywords dominate
+• No CLIP weights — Midjourney uses its own attention system
+• Enable Optimize to trim to ideal length
+
+Tip: Toggle Static → Dynamic to see what the intelligence adds.`;
+
+    case 3:
+      // Natural Language: openai, firefly, ideogram, flux, etc.
+      return `✨ Dynamic Mode — Natural Language
+
+Your selections formatted as natural, readable sentences.
+
+• Reorders by platform impact priority
+• Builds grammatical sentences from your selections
+• Converts negatives to positive phrasing (e.g. "blurry" → "sharp focus")
+• No special syntax or weights needed — this platform reads naturally
+• Deduplicates across categories
+• Enable Optimize to trim to ideal length
+
+Tip: Toggle Static → Dynamic to see what the intelligence adds.`;
+
+    case 4:
+      // Plain Language: canva, craiyon, picsart, etc.
+      return `✨ Dynamic Mode — Simple Platform
+
+Your selections formatted for this platform's simpler engine.
+
+• Reorders by platform impact priority
+• Keeps prompts short and focused
+• No weights or complex syntax — this platform prefers simplicity
+• Deduplicates across categories
+• Enable Optimize to trim to ideal length
+
+Tip: Toggle Static → Dynamic to see what the intelligence adds.`;
+
+    default:
+      return `✨ Dynamic Mode
+
+Your selections formatted with platform intelligence.
+
+• Reorders by platform impact priority
+• Platform-native formatting applied
+• Deduplicates across categories
+• Enable Optimize to trim to ideal length
+
+Tip: Toggle Static → Dynamic to see what the intelligence adds.`;
+  }
+}
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
 /**
- * CompositionModeToggle - Switch between Static and Dynamic composition modes.
+ * CompositionModeToggle - Switch between Static and Dynamic assembly modes.
+ *
+ * Static:  Raw comma-joined selections in category order (no intelligence).
+ * Dynamic: Platform-specific formatting (weights, reordering, quality tags).
+ *
+ * Tooltip content is tier-specific — accurately describes what Dynamic mode
+ * does for the currently selected platform.
  *
  * Available to all users. Styled to match ReferenceFrameToggle (purple-pink gradient).
  */
 export function CompositionModeToggle({
   compositionMode,
   onModeChange,
+  platformId,
   disabled = false,
   compact = false,
 }: CompositionModeToggleProps) {
@@ -97,7 +185,14 @@ export function CompositionModeToggle({
 
   const isStatic = compositionMode === 'static';
   const currentLabel = isStatic ? 'Static' : 'Dynamic';
-  const tooltipContent = isStatic ? TOOLTIP_STATIC : TOOLTIP_DYNAMIC;
+
+  // Get tier-specific tooltip content
+  const tierId = useMemo(
+    () => (platformId ? getPlatformTierId(platformId) : undefined),
+    [platformId],
+  );
+
+  const tooltipContent = isStatic ? TOOLTIP_STATIC : getDynamicTooltip(tierId);
 
   // ============================================================================
   // STYLING
@@ -138,7 +233,7 @@ export function CompositionModeToggle({
           onClick={handleToggle}
           disabled={disabled}
           className={buttonClasses}
-          aria-label={`Composition mode: ${currentLabel}. Click to switch to ${isStatic ? 'Dynamic' : 'Static'} mode.`}
+          aria-label={`Assembly mode: ${currentLabel}. Click to switch to ${isStatic ? 'Dynamic' : 'Static'} mode.`}
           aria-describedby="composition-mode-tooltip"
         >
           {/* Mode icon */}
@@ -203,7 +298,7 @@ export function CompositionModeToggle({
           <div
             id="composition-mode-tooltip"
             role="tooltip"
-            className="absolute left-0 top-full z-50 mt-2 w-80 rounded-lg border border-slate-700 bg-slate-800/95 p-3 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
+            className="absolute left-0 top-full z-50 mt-2 w-80 rounded-lg border border-slate-700 bg-slate-800/95 p-3 text-xs shadow-xl backdrop-blur-sm"
           >
             {/* Tooltip arrow */}
             <div className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 border-l border-t border-slate-700 bg-slate-800/95" />

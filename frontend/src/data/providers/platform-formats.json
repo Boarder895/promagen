@@ -19,7 +19,8 @@
       "style",
       "colour",
       "materials",
-      "atmosphere"
+      "atmosphere",
+      "fidelity"
     ],
     "wrapNegativeInPrompt": false,
     "tokenLimit": 200,
@@ -46,7 +47,8 @@
         "colour",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "suffixParams": [
         "--ar",
@@ -63,8 +65,22 @@
       "impactPriority": [
         "subject",
         "style",
+        "lighting",
         "atmosphere",
-        "action"
+        "environment",
+        "action",
+        "colour"
+      ],
+      "qualitySuffix": [
+        "high quality",
+        "detailed"
+      ],
+      "qualityNegative": [
+        "blurry",
+        "watermark",
+        "text",
+        "bad quality",
+        "worst quality"
       ]
     },
     "bluewillow": {
@@ -82,7 +98,8 @@
         "colour",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 60,
@@ -92,8 +109,22 @@
       "impactPriority": [
         "subject",
         "style",
+        "lighting",
         "atmosphere",
-        "action"
+        "environment",
+        "action",
+        "colour"
+      ],
+      "qualitySuffix": [
+        "high quality",
+        "detailed"
+      ],
+      "qualityNegative": [
+        "blurry",
+        "watermark",
+        "text",
+        "bad quality",
+        "worst quality"
       ]
     },
     "stability": {
@@ -113,7 +144,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 77,
@@ -143,14 +175,22 @@
       ],
       "weightedCategories": {
         "lighting": 1.1,
-        "subject": 1.2
+        "subject": 1.2,
+        "style": 1.15,
+        "environment": 1.05
       },
       "tips": "Use quality boosters: masterpiece, best quality, highly detailed. Comprehensive negative prompts improve output.",
       "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, concept art, cinematic lighting, dramatic",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "dreamstudio": {
@@ -170,7 +210,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -200,14 +241,22 @@
       ],
       "weightedCategories": {
         "lighting": 1.1,
-        "subject": 1.2
+        "subject": 1.2,
+        "style": 1.15,
+        "environment": 1.05
       },
       "tips": "Same as Stability AI. Use SDXL-optimised prompts for best results.",
       "exampleOutput": "masterpiece, portrait of a samurai warrior, fighting stance, cinematic lighting, dramatic atmosphere, 8K",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "lexica": {
@@ -225,7 +274,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -254,14 +304,24 @@
         "blurry"
       ],
       "weightedCategories": {
-        "lighting": 1.1
+        "lighting": 1.1,
+        "subject": 1.2,
+        "style": 1.15,
+        "environment": 1.05
       },
       "tips": "SD-based. Use quality tags and comprehensive negative prompts.",
       "exampleOutput": "masterpiece, portrait of a samurai, fighting pose, cinematic lighting, dramatic, highly detailed",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "weightingSyntax": "({term}:{weight})",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "playground": {
@@ -279,7 +339,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -308,14 +369,24 @@
         "blurry"
       ],
       "weightedCategories": {
-        "lighting": 1.1
+        "lighting": 1.1,
+        "subject": 1.2,
+        "style": 1.15,
+        "environment": 1.05
       },
       "tips": "Playground supports multiple models. Match prompt style to selected model.",
       "exampleOutput": "portrait of a samurai, fighting, concept art, cinematic lighting, dramatic mood, highly detailed",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "weightingSyntax": "({term}:{weight})",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "nightcafe": {
@@ -333,7 +404,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -362,14 +434,24 @@
         "blurry"
       ],
       "weightedCategories": {
-        "lighting": 1.1
+        "lighting": 1.1,
+        "subject": 1.2,
+        "style": 1.15,
+        "environment": 1.05
       },
       "tips": "NightCafe supports multiple algorithms. SD mode uses standard weighting.",
       "exampleOutput": "portrait of a samurai warrior, fighting, concept art, cinematic lighting, dramatic mood, 8K detail",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "weightingSyntax": "({term}:{weight})",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "getimg": {
@@ -387,7 +469,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -416,14 +499,24 @@
         "blurry"
       ],
       "weightedCategories": {
-        "lighting": 1.1
+        "lighting": 1.1,
+        "subject": 1.2,
+        "style": 1.15,
+        "environment": 1.05
       },
       "tips": "Multiple models available. Match prompt style to model.",
       "exampleOutput": "portrait of a samurai warrior, fighting, concept art, cinematic lighting, dramatic",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "weightingSyntax": "({term}:{weight})",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "openart": {
@@ -441,7 +534,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -470,14 +564,24 @@
         "blurry"
       ],
       "weightedCategories": {
-        "lighting": 1.1
+        "lighting": 1.1,
+        "subject": 1.2,
+        "style": 1.15,
+        "environment": 1.05
       },
       "tips": "SD-based with multiple models. Quality tags help.",
       "exampleOutput": "portrait of a samurai, fighting, concept art, cinematic lighting, dramatic mood",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "weightingSyntax": "({term}:{weight})",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "clipdrop": {
@@ -495,7 +599,8 @@
         "atmosphere",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -505,7 +610,8 @@
       "impactPriority": [
         "subject",
         "lighting",
-        "style"
+        "style",
+        "environment"
       ],
       "qualityNegative": [
         "worst quality",
@@ -529,6 +635,18 @@
         "masterpiece",
         "best quality",
         "highly detailed"
+      ],
+      "weightingSyntax": "({term}:{weight})",
+      "weightedCategories": {
+        "subject": 1.2,
+        "lighting": 1.1,
+        "style": 1.15,
+        "environment": 1.05
+      },
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "jasper-art": {
@@ -546,61 +664,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
-      ],
-      "wrapNegativeInPrompt": false,
-      "tokenLimit": 150,
-      "sweetSpot": 80,
-      "qualityPrefix": [
-        "masterpiece",
-        "best quality",
-        "highly detailed"
-      ],
-      "qualityNegative": [
-        "worst quality",
-        "low quality",
-        "normal quality",
-        "lowres",
-        "bad anatomy",
-        "bad hands",
-        "error",
-        "missing fingers",
-        "extra digit",
-        "fewer digits",
-        "cropped",
-        "jpeg artifacts",
-        "signature",
-        "watermark",
-        "username",
-        "blurry"
-      ],
-      "weightedCategories": {
-        "lighting": 1.1
-      },
-      "tips": "Jasper Art uses SD-based generation. Quality tags and negative prompts help.",
-      "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, cinematic lighting, dramatic",
-      "impactPriority": [
-        "subject",
-        "style",
-        "lighting"
-      ]
-    },
-    "artguru": {
-      "promptStyle": "keywords",
-      "separator": ", ",
-      "negativeSupport": "separate",
-      "negativeSyntax": null,
-      "categoryOrder": [
-        "subject",
-        "action",
-        "style",
-        "environment",
-        "lighting",
-        "atmosphere",
-        "colour",
-        "camera",
-        "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -630,17 +695,90 @@
       ],
       "weightedCategories": {
         "subject": 1.2,
-        "lighting": 1.1
+        "style": 1.15,
+        "lighting": 1.1,
+        "environment": 1.05
+      },
+      "tips": "Jasper Art uses SD-based generation. Quality tags and negative prompts help.",
+      "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, cinematic lighting, dramatic",
+      "impactPriority": [
+        "subject",
+        "style",
+        "lighting",
+        "environment"
+      ],
+      "weightingSyntax": "({term}:{weight})",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
+      ]
+    },
+    "artguru": {
+      "promptStyle": "keywords",
+      "separator": ", ",
+      "negativeSupport": "separate",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "environment",
+        "lighting",
+        "atmosphere",
+        "colour",
+        "camera",
+        "materials",
+        "composition",
+        "fidelity"
+      ],
+      "wrapNegativeInPrompt": false,
+      "tokenLimit": 150,
+      "sweetSpot": 80,
+      "qualityPrefix": [
+        "masterpiece",
+        "best quality",
+        "highly detailed"
+      ],
+      "qualityNegative": [
+        "worst quality",
+        "low quality",
+        "normal quality",
+        "lowres",
+        "bad anatomy",
+        "bad hands",
+        "error",
+        "missing fingers",
+        "extra digit",
+        "fewer digits",
+        "cropped",
+        "jpeg artifacts",
+        "signature",
+        "watermark",
+        "username",
+        "blurry"
+      ],
+      "weightedCategories": {
+        "subject": 1.2,
+        "lighting": 1.1,
+        "style": 1.15,
+        "environment": 1.05
       },
       "tips": "Artguru is SD-based. Use quality tags and comprehensive negative prompts.",
       "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting pose, cinematic lighting, highly detailed",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
       ],
       "supportsWeighting": true,
-      "weightingSyntax": "({term}:{weight})"
+      "weightingSyntax": "({term}:{weight})",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
+      ]
     },
     "leonardo": {
       "promptStyle": "keywords",
@@ -659,7 +797,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 200,
@@ -688,14 +827,23 @@
         "blurry"
       ],
       "weightedCategories": {
-        "subject": 1.2
+        "subject": 1.2,
+        "style": 1.15,
+        "lighting": 1.1,
+        "environment": 1.05
       },
       "tips": "Use weighting for emphasis (concept::1.5). Choose appropriate model for style.",
       "exampleOutput": "portrait of a samurai::1.2, fighting, cinematic lighting, dramatic mood, concept art, highly detailed",
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "flux": {
@@ -713,12 +861,17 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 256,
       "sweetSpot": 120,
-      "qualitySuffix": [],
+      "qualitySuffix": [
+        "sharp focus",
+        "highly detailed",
+        "professional quality"
+      ],
       "qualityNegative": [
         "worst quality",
         "low quality",
@@ -742,7 +895,8 @@
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
       ]
     },
     "novelai": {
@@ -762,7 +916,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -795,7 +950,13 @@
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
+      ],
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
       ]
     },
     "ideogram": {
@@ -813,7 +974,8 @@
         "colour",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": true,
       "tokenLimit": 200,
@@ -824,7 +986,15 @@
         "subject",
         "action",
         "style",
-        "environment"
+        "environment",
+        "lighting"
+      ],
+      "qualityNegative": [
+        "blurry",
+        "watermark",
+        "text",
+        "low quality",
+        "bad quality"
       ]
     },
     "openai": {
@@ -842,7 +1012,8 @@
         "atmosphere",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": true,
       "negativeWrapPrefix": "without ",
@@ -854,7 +1025,8 @@
         "subject",
         "action",
         "environment",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "adobe-firefly": {
@@ -872,7 +1044,8 @@
         "colour",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 300,
@@ -883,7 +1056,8 @@
         "subject",
         "action",
         "style",
-        "environment"
+        "environment",
+        "lighting"
       ]
     },
     "google-imagen": {
@@ -901,7 +1075,8 @@
         "colour",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": true,
       "negativeWrapPrefix": "excluding ",
@@ -913,7 +1088,8 @@
         "subject",
         "action",
         "environment",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "microsoft-designer": {
@@ -931,7 +1107,8 @@
         "atmosphere",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 400,
@@ -941,7 +1118,9 @@
       "impactPriority": [
         "subject",
         "action",
-        "style"
+        "style",
+        "environment",
+        "lighting"
       ]
     },
     "imagine-meta": {
@@ -959,7 +1138,8 @@
         "atmosphere",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 200,
@@ -969,7 +1149,9 @@
       "impactPriority": [
         "subject",
         "action",
-        "style"
+        "environment",
+        "style",
+        "lighting"
       ]
     },
     "runway": {
@@ -987,7 +1169,8 @@
         "colour",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 200,
@@ -997,7 +1180,9 @@
       "impactPriority": [
         "subject",
         "action",
+        "environment",
         "style",
+        "lighting",
         "atmosphere"
       ]
     },
@@ -1014,7 +1199,8 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -1023,7 +1209,10 @@
       "exampleOutput": "samurai warrior portrait, fighting, dramatic lighting, cinematic",
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ]
     },
     "fotor": {
@@ -1039,7 +1228,8 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -1048,7 +1238,10 @@
       "exampleOutput": "samurai warrior portrait, fighting pose, dramatic lighting, cinematic style",
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ]
     },
     "deepai": {
@@ -1064,7 +1257,8 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -1073,7 +1267,10 @@
       "exampleOutput": "portrait of a samurai warrior fighting with dramatic cinematic lighting",
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ]
     },
     "craiyon": {
@@ -1089,7 +1286,8 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 100,
@@ -1098,7 +1296,10 @@
       "exampleOutput": "samurai warrior portrait, fighting, dramatic lighting",
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ]
     },
     "artistly": {
@@ -1114,7 +1315,8 @@
         "lighting",
         "atmosphere",
         "colour",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -1123,7 +1325,44 @@
       "exampleOutput": "portrait of a samurai warrior, fighting, concept art, cinematic lighting, dramatic mood",
       "impactPriority": [
         "subject",
-        "style"
+        "style",
+        "lighting",
+        "environment"
+      ],
+      "weightingSyntax": "({term}:{weight})",
+      "weightedCategories": {
+        "subject": 1.2,
+        "style": 1.15,
+        "lighting": 1.1,
+        "environment": 1.05
+      },
+      "qualityPrefix": [
+        "masterpiece",
+        "best quality",
+        "highly detailed"
+      ],
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
+      ],
+      "qualityNegative": [
+        "worst quality",
+        "low quality",
+        "normal quality",
+        "lowres",
+        "bad anatomy",
+        "bad hands",
+        "error",
+        "missing fingers",
+        "extra digit",
+        "fewer digits",
+        "cropped",
+        "jpeg artifacts",
+        "signature",
+        "watermark",
+        "username",
+        "blurry"
       ]
     },
     "bing": {
@@ -1141,7 +1380,8 @@
         "atmosphere",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 400,
@@ -1149,7 +1389,9 @@
       "impactPriority": [
         "subject",
         "action",
-        "style"
+        "environment",
+        "style",
+        "lighting"
       ],
       "tips": "Bing uses DALL\u00b7E. Keep prompts simple and descriptive.",
       "exampleOutput": "A dramatic portrait of a samurai warrior in a fighting stance with cinematic golden hour lighting"
@@ -1167,14 +1409,18 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
       "sweetSpot": 40,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "tips": "Canva works best with short, focused prompts. Use UI style presets.",
       "exampleOutput": "samurai warrior, fighting, dramatic lighting"
@@ -1194,14 +1440,18 @@
         "atmosphere",
         "composition",
         "camera",
-        "materials"
+        "materials",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
       "sweetSpot": 100,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "tips": "Simple interface. Short, focused prompts work best.",
       "exampleOutput": "samurai warrior portrait, fighting, dramatic lighting, cinematic style"
@@ -1221,7 +1471,8 @@
         "colour",
         "camera",
         "materials",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -1250,15 +1501,25 @@
         "blurry"
       ],
       "weightedCategories": {
-        "lighting": 1.1
+        "lighting": 1.1,
+        "subject": 1.2,
+        "style": 1.15,
+        "environment": 1.05
       },
       "impactPriority": [
         "subject",
         "style",
-        "lighting"
+        "lighting",
+        "environment"
       ],
       "tips": "SD-based. Use quality tags and comprehensive negative prompts.",
-      "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, cinematic lighting, dramatic"
+      "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, cinematic lighting, dramatic",
+      "weightingSyntax": "({term}:{weight})",
+      "qualitySuffix": [
+        "sharp focus",
+        "8K",
+        "intricate textures"
+      ]
     },
     "artbreeder": {
       "promptStyle": "natural",
@@ -1273,12 +1534,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 30,
@@ -1298,12 +1563,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 60,
@@ -1323,12 +1592,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 40,
@@ -1348,12 +1621,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 30,
@@ -1373,12 +1650,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 40,
@@ -1398,12 +1679,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 50,
@@ -1423,12 +1708,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 30,
@@ -1448,12 +1737,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 50,
@@ -1473,12 +1766,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 40,
@@ -1498,12 +1795,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 50,
@@ -1523,12 +1824,16 @@
         "colour",
         "environment",
         "atmosphere",
-        "composition"
+        "composition",
+        "fidelity"
       ],
       "wrapNegativeInPrompt": false,
       "impactPriority": [
         "subject",
-        "style"
+        "action",
+        "environment",
+        "style",
+        "lighting"
       ],
       "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
       "sweetSpot": 60,

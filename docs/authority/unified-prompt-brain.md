@@ -1,16 +1,17 @@
 # Unified Prompt Brain — Architecture Document
 
-**Status:** Implemented (Phases A–D complete, Upgrades 3–5 shipped, Extras 4–6 shipped)
-**Version:** 2.0.0
-**Date:** 2026-03-03
+**Status:** Implemented (Phases A–D complete, Upgrades 3–5 shipped, Extras 4–6 shipped, Parity v3.5.1 shipped)
+**Version:** 3.0.0
+**Date:** 2026-03-04
 **Scope:** Single prompt assembly engine for all of Promagen — weather-generated, user-built, scene-starter, and preloaded prompts all flow through `assemblePrompt()`.
 
 ### Changelog
 
-| Version | Date       | Change                                                                                                                                                                                     |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1.0.0   | 2026-03-03 | Initial proposal — Status: Proposed                                                                                                                                                        |
-| 2.0.0   | 2026-03-03 | Full rewrite — Status: Implemented. All 4 build phases shipped. 5 upgrades. 3 extras. Composition blueprint fixes. Quality parity. Cross-referenced against src.zip actual implementation. |
+| Version | Date       | Change                                                                                                                                                                                                                                                                                                       |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1.0.0   | 2026-03-03 | Initial proposal — Status: Proposed                                                                                                                                                                                                                                                                          |
+| 2.0.0   | 2026-03-03 | Full rewrite — Status: Implemented. All 4 build phases shipped. 5 upgrades. 3 extras. Composition blueprint fixes. Quality parity. Cross-referenced against src.zip actual implementation.                                                                                                                   |
+| 3.0.0   | 2026-03-04 | Parity v3.3.0–v3.5.1 shipped. 42-platform coverage (was 31). Post-processing engine extracted. NEGATIVE_TO_POSITIVE map (45 entries). SENTENCE_CONNECTORS optimised. 42-platform parity test suite (660 lines). All line counts, function offsets, test paths, and exports cross-referenced against src.zip. |
 
 ---
 
@@ -20,7 +21,7 @@ Promagen had two independent systems that both built prompt text. They shared ze
 
 ### System A — Weather Prompt Generator
 
-19 files in `src/lib/weather/` computing physics-based weather intelligence: solar elevation, lunar position, wind classification, precipitation, lighting engine (973 lines), visual truth (1,301 lines), camera lens selection (289 lines), composition, surface grounding, moisture phrases, wind phrases, venue intelligence, climate zones, cloud type classification.
+24 files in `src/lib/weather/` (9,463 total lines) computing physics-based weather intelligence: solar elevation, lunar position, wind classification, precipitation, lighting engine (973 lines), visual truth (1,301 lines), camera lens selection (289 lines), composition, surface grounding, moisture phrases, wind phrases, venue intelligence, climate zones, cloud type classification.
 
 **Assembly duplication (the problem):** 5 functions in `tier-generators.ts` each assembled prompt text independently:
 
@@ -30,9 +31,11 @@ Promagen had two independent systems that both built prompt text. They shared ze
 - `generateTier3()` — Natural language sentences with connectors
 - `generateTier4()` — Plain comma-separated lists
 
+> **Post v11.0:** These 5 functions were deleted in Phase E (Tier Generator Retirement). `tier-generators.ts` is now a 95-line stub containing only shared enrichment helpers (`buildSkyEnrichment`, `buildTimeOfDayEnrichment`). The stub header documents the deletion.
+
 ### System B — Prompt Builder
 
-`prompt-builder.ts` — the user-facing assembly engine with `assembleKeywords()`, `assembleNaturalSentences()`, `assemblePlainLanguage()`, routed by `assembleTierAware()`. Platform-format-driven with 42+ platforms configured for token limits, sweet spots, weight syntax, impact priority, category ordering, and negative handling.
+`prompt-builder.ts` (1,562 lines) — the user-facing assembly engine with `assembleKeywords()`, `assembleNaturalSentences()`, `assemblePlainLanguage()`, routed by `assembleTierAware()`. Platform-format-driven with 42 platforms configured in `platform-formats.json` (v3.5.0, 1,539 lines) for token limits, sweet spots, weight syntax, impact priority, category ordering, and negative handling.
 
 **Vocabulary limitation (the problem):** Generic dropdown terms ("moonlight", "golden hour", "dramatic lighting") with no physics awareness, no camera intelligence, no surface/moisture/thermal phrases.
 
@@ -89,7 +92,7 @@ interface WeatherCategoryMeta {
 }
 ```
 
-Note: v1.0.0 proposed `WeatherCategoryMap` without `weightOverrides` or `confidence` fields. Both were added during implementation and are now part of the shipped type (`types/prompt-builder.ts` lines 256–288).
+Note: v1.0.0 proposed `WeatherCategoryMap` without `weightOverrides` or `confidence` fields. Both were added during implementation and are now part of the shipped type (`types/prompt-builder.ts` lines 256–293).
 
 ### Every Prompt Path Uses the Same Assembler
 
@@ -103,20 +106,23 @@ Note: v1.0.0 proposed `WeatherCategoryMap` without `weightOverrides` or `confide
 | Optimizer                        | `assemblePrompt()` output → optimisation pipeline          | Implemented (unchanged)    |
 
 ```
-┌───────────────────────────────────────────────────────────────┐
-│                                                               │
-│                    assemblePrompt()                            │
-│                    THE ONE BRAIN                               │
-│                                                               │
-│  Input:  platformId + PromptSelections + weightOverrides?     │
-│  Output: tier-formatted text for that specific platform       │
-│                                                               │
-│  Routes to:                                                   │
-│    assembleKeywords()         → Tier 1 CLIP, Tier 2 MJ       │
-│    assembleNaturalSentences() → Tier 3 NL (DALL·E, Firefly)  │
-│    assemblePlainLanguage()    → Tier 4 (Canva, Craiyon)       │
-│                                                               │
-└───────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                                                           │
+│                    assemblePrompt()                        │
+│                    THE ONE BRAIN                           │
+│                                                           │
+│  Input:  platformId + PromptSelections + weightOverrides? │
+│  Output: tier-formatted text for that specific platform   │
+│                                                           │
+│  Routes to:                                               │
+│    assembleKeywords()         → Tier 1 CLIP, Tier 2 MJ   │
+│    assembleNaturalSentences() → Tier 3 NL (DALL·E, etc)  │
+│    assemblePlainLanguage()    → Tier 4 (Canva, Craiyon)   │
+│                                                           │
+│  Post-processed by:                                       │
+│    postProcessAssembled()     → Leak, synergy, grammar    │
+│                                                           │
+└───────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -127,11 +133,11 @@ Note: v1.0.0 proposed `WeatherCategoryMap` without `weightOverrides` or `confide
 
 The assembler now handles both short dropdown terms (`"moonlight"`) and long physics-computed phrases (`"Cool white moonlight competing with focused accent lighting"`). Each sub-assembler has phrase-length-aware logic:
 
-- **`assembleKeywords()`** — short terms get weighted with platform syntax (e.g., `(moonlight:1.3)`). Long phrases (>4 words) are inserted without parenthetical weight wrapping — too much text in one weight group confuses the model.
-- **`assembleNaturalSentences()`** — short terms use grammatical connectors ("in", "with"). Long phrases become standalone clauses or appended sentences — avoids `"with Cool white moonlight competing with focused accent lighting"`.
-- **`assemblePlainLanguage()`** — long phrases get intelligent truncation for Tier 4's tight token budget (40–60 words).
+- **`assembleKeywords()`** (line 553) — short terms get weighted with platform syntax (e.g., `(moonlight:1.3)`). Long phrases (>4 words) are inserted without parenthetical weight wrapping — too much text in one weight group confuses the model.
+- **`assembleNaturalSentences()`** (line 757) — short terms use grammatical connectors ("in", "with"). Long phrases become standalone clauses or appended sentences — avoids `"with Cool white moonlight competing with focused accent lighting"`.
+- **`assemblePlainLanguage()`** (line 886) — long phrases get intelligent truncation for Tier 4's tight token budget (40–60 words).
 
-Test: `prompt-builder-rich-phrases.test.ts` (318 lines)
+Test: `src/lib/__tests__/prompt-builder-rich-phrases.test.ts` (318 lines)
 
 ### 3.2 Weight Override Pipeline
 
@@ -156,14 +162,60 @@ SD-family platforms had inconsistent quality prefix terms in `platform-formats.j
 
 ### 3.5 Helper Functions
 
-| Function                        | Line | Purpose                                                                 |
-| ------------------------------- | ---- | ----------------------------------------------------------------------- |
-| `deduplicateWithinCategories()` | 937  | Drops short terms subsumed by longer terms in same category             |
-| `deduplicateAcrossCategories()` | 987  | Drops exact dupes across categories, keeps in first per effective order |
-| `getEffectiveOrder()`           | 397  | Computes category output order from `impactPriority` config             |
-| `estimateClipTokens()`          | 494  | Token count estimation for all tiers                                    |
-| `getPlatformFormat()`           | 1084 | Platform config lookup                                                  |
-| `selectionsFromMap()`           | 1472 | Convert WeatherCategoryMap → PromptSelections                           |
+| Function                        | Line | Purpose                                                                       |
+| ------------------------------- | ---- | ----------------------------------------------------------------------------- |
+| `deduplicateWithinCategories()` | 986  | Drops short terms subsumed by longer terms in same category                   |
+| `deduplicateAcrossCategories()` | 1034 | Drops exact dupes across categories, keeps in first per effective order       |
+| `getEffectiveOrder()`           | 415  | Computes category output order from `impactPriority` config                   |
+| `estimateClipTokens()`          | 510  | Token count estimation for all tiers                                          |
+| `getPlatformFormat()`           | 1131 | Platform config lookup (used by weight merge)                                 |
+| `selectionsFromMap()`           | 1519 | Convert WeatherCategoryMap → PromptSelections                                 |
+| `tierToRefPlatform()`           | 1493 | Reference platform per tier (T1→leonardo, T2→midjourney, T3→openai, T4→canva) |
+
+### 3.6 SENTENCE_CONNECTORS (v3.5.1)
+
+Natural language assembly (Tier 3) uses `SENTENCE_CONNECTORS` (line 674) to join category values into grammatical clauses. Each connector defines optional `prefix`, `suffix`, and `joiner`:
+
+```typescript
+const SENTENCE_CONNECTORS: Record<string, SentenceConnector> = {
+  subject: {},
+  action: {},
+  environment: { prefix: 'in ' },
+  style: { prefix: 'in ' }, // v3.5.1: removed " style" suffix
+  lighting: { prefix: 'with ' },
+  atmosphere: { joiner: ', ' }, // v3.5.1: removed " atmosphere" suffix, comma joiner
+  colour: {},
+  materials: {}, // v3.4.0: removed "featuring" prefix
+  composition: {},
+  camera: {},
+  fidelity: {},
+};
+```
+
+**v3.5.1 changes (connector optimisation):**
+
+1. **`style`:** Removed `suffix: ' style'` — "photorealistic" is cleaner and more CLIP-efficient than "in photorealistic style". The suffix word dilutes CLIP attention without changing AI image output.
+2. **`atmosphere`:** Removed `suffix: ' atmosphere'`, switched `joiner` from `" and "` to `", "` — "mysterious" is more prompt-efficient than "mysterious atmosphere". Comma joiner ("haze, urban glow") is standard prompt syntax vs "haze and urban glow".
+3. **`materials`:** (v3.4.0) Removed `prefix: 'featuring '` — materials terms like "rain-slicked asphalt" are self-describing.
+
+These changes closed the flux parity gap from 95.5% → 100% by eliminating semantically empty filler words ("style", "atmosphere", "and") that the natural language path added but the keyword builder path correctly stripped.
+
+### 3.7 NEGATIVE_TO_POSITIVE Conversion Map
+
+For platforms that don't support negative prompts (Tier 3 `negativeSupport: 'none'` and Tier 4), the assembler converts negative terms to positive reinforcement using `NEGATIVE_TO_POSITIVE` (line 171, 45 entries):
+
+| Negative Term          | Positive Conversion    | Category       |
+| ---------------------- | ---------------------- | -------------- |
+| `blurry`               | `sharp focus`          | Quality        |
+| `watermark/watermarks` | `unmarked`             | Unwanted       |
+| `people/person/crowd`  | `empty scene`          | People control |
+| `cartoon/cartoonish`   | `realistic rendering`  | Style          |
+| `anime`                | `photographic realism` | Style          |
+| `text`                 | `clean image`          | Unwanted       |
+| `oversaturated`        | `balanced colors`      | Exposure       |
+| `deformed`             | `well-formed`          | Anatomy        |
+
+This map handles singular/plural variants (e.g., `watermark` and `watermarks` both → `unmarked`). Terms without a mapping are silently dropped on no-neg platforms.
 
 ---
 
@@ -175,7 +227,7 @@ All physics computation, lighting engine, visual truth, camera lens selection, s
 
 ### 4.2 Assembly Delegation (New)
 
-The generator now calls `buildWeatherCategoryMap()` (weather-category-mapper.ts, 521 lines) after computing all weather intelligence. This maps physics outputs to `PromptCategory` slots:
+The generator (486 lines) now calls `buildWeatherCategoryMap()` (weather-category-mapper.ts, 581 lines) after computing all weather intelligence. This maps physics outputs to `PromptCategory` slots:
 
 | PromptCategory | Weather Source                         | Type        |
 | -------------- | -------------------------------------- | ----------- |
@@ -226,7 +278,7 @@ One venue. Zero desync. The `venueSeed` path remains as a fallback for callers t
 
 ### 5.3 Route Integration
 
-In `route.ts` (prompt-of-the-moment), the venue is selected once per rotation cycle, then passed to the generator via `venueOverride` (route.ts line 452). The `categoryMap.meta` returned by the generator now carries the true venue name, which the route uses for the "Inspired by" badge display (route.ts line 462).
+In `route.ts` (prompt-of-the-moment, 639 lines), the venue is selected once per rotation cycle, then passed to the generator via `venueOverride` (route.ts line 452). The `categoryMap.meta` returned by the generator now carries the true venue name, which the route uses for the "Inspired by" badge display (route.ts line 462).
 
 ---
 
@@ -238,7 +290,7 @@ The prompt builder's Phase D preload effect read `sessionStorage('promagen:prelo
 
 ### 6.2 The Fix
 
-Split into two independent effects in `prompt-builder.tsx`:
+Split into two independent effects in `prompt-builder.tsx` (2,476 lines):
 
 **Effect 1 — Category preload (runs once on mount):**
 Reads `promagen:preloaded-payload` from sessionStorage. If the payload contains a `categoryMap` (WeatherCategoryMap), it applies `selections`, `customValues`, and `weightOverrides` to the builder state. Clears all sessionStorage keys immediately (one-time use). This effect has no dependency on `categoryState`.
@@ -267,7 +319,7 @@ The original doc described 4 build phases (A–D) as future work. All are now im
 
 ### Phase A — Weather Category Mapper (Implemented)
 
-**Delivered:** `weather-category-mapper.ts` (521 lines)
+**Delivered:** `weather-category-mapper.ts` (581 lines)
 
 Core function `buildWeatherCategoryMap(input)` converts computed weather intelligence into a `WeatherCategoryMap`. Maps physics-computed data to prompt builder categories:
 
@@ -306,13 +358,13 @@ export function assemblePrompt(
 ): AssembledPrompt;
 ```
 
-Internal enhancements to `assembleTierAware()`:
+Internal enhancements to `assembleTierAware()` (line 1074):
 
-1. **Within-category dedup** — `deduplicateWithinCategories()` (line 937): drops short terms that are substrings of longer terms in the same category. Example: `["natural daylight", "Natural daylight, low rolling stratocumulus"]` → keeps only the longer phrase.
+1. **Within-category dedup** — `deduplicateWithinCategories()` (line 986): drops short terms that are substrings of longer terms in the same category. Example: `["natural daylight", "Natural daylight, low rolling stratocumulus"]` → keeps only the longer phrase.
 
-2. **Cross-category dedup** — `deduplicateAcrossCategories()` (line 987): scans all categories in effective output order. Same term in two categories → kept only in the first (higher-priority) category. Example: "photorealistic" in style AND lighting → kept only in style.
+2. **Cross-category dedup** — `deduplicateAcrossCategories()` (line 1034): scans all categories in effective output order. Same term in two categories → kept only in the first (higher-priority) category. Example: "photorealistic" in style AND lighting → kept only in style.
 
-3. **Weight merge** — `assembleTierAware()` (line 1047): weather weight overrides provide a base layer; platform-defined `weightedCategories` spread on top. **Platform wins on conflicts.** This is intentional: platforms know their own weight syntax limits, and weather's suggestions are starting points.
+3. **Weight merge** — `assembleTierAware()` (line 1074): weather weight overrides provide a base layer; platform-defined `weightedCategories` spread on top. **Platform wins on conflicts.** This is intentional: platforms know their own weight syntax limits, and weather's suggestions are starting points.
 
    ```typescript
    const mergedFormat = weightOverrides
@@ -326,7 +378,7 @@ Internal enhancements to `assembleTierAware()`:
      : platformFormat;
    ```
 
-4. **Token estimation** — `estimateClipTokens()` (line 494): computed for ALL tiers, not just CLIP. Result attached as `assembled.estimatedTokens` with `assembled.tokenLimit` from platform config.
+4. **Token estimation** — `estimateClipTokens()` (line 510): computed for ALL tiers, not just CLIP. Result attached as `assembled.estimatedTokens` with `assembled.tokenLimit` from platform config.
 
 5. **Rich phrase handling** — long phrases (>4 words) from weather customValues are handled by each sub-assembler:
    - `assembleKeywords()`: inserts long phrases without parenthetical weight wrapping
@@ -362,6 +414,8 @@ If payload.categoryMap exists (Phase D path):
   ↓
 assemblePrompt(platformId, selections, weatherWeightOverrides)
   ↓
+postProcessAssembled(assembled, tier, atmosphereModifier)
+  ↓
 Single Brain output — identical assembly logic for all sources
 ```
 
@@ -375,20 +429,123 @@ Single Brain output — identical assembly logic for all sources
 
 The prompt text produced by `assemblePrompt(platformId, selectionsFromMap(categoryMap), categoryMap.weightOverrides)` must be visually indistinguishable from the old `generateTier1/2/3/4()` output for the same weather data. Users clicking "Try in" should see the same prompt quality in the builder as on the homepage.
 
-### 8.2 Parity Fixes Shipped
+### 8.2 Parity Fixes Shipped (v3.0.0–v3.5.1)
 
-**Quality prefix normalisation (platform-formats.json):**
+**Quality prefix normalisation (v3.0.0, platform-formats.json):**
 SD-family platforms had inconsistent quality prefix terms. Normalised across Stability, Leonardo, ComfyUI, and other SD-derived platforms to use the same prefix set. This eliminates subtle differences where the builder output had "masterpiece, best quality" while the generator had "masterpiece, highly detailed".
 
-**impactPriority alignment (platform-formats.json):**
+**impactPriority alignment (v3.0.0, platform-formats.json):**
 Each platform's `impactPriority` array defines which categories appear in early token positions. These were aligned with the generator's implicit priority order to produce matching output order.
 
-**Negative dedup verification:**
+**Negative dedup verification (v3.0.0):**
 The generator's negative terms sometimes duplicated terms the assembler also injects from platform config `qualityNegative`. Cross-category dedup (Improvement 1) now catches these — same negative term from weather AND platform config → kept only once.
 
-### 8.3 Remaining Difference
+**NEGATIVE_TO_POSITIVE map expansion (v3.4.0):**
+Added singular/plural variants (watermark/watermarks → unmarked, people/person/crowd → empty scene), style conversions (cartoon → realistic rendering, anime → photographic realism), and anatomy corrections. 45 entries total covering quality, exposure, unwanted elements, people control, style exclusions, composition issues, and anatomy.
 
-The tier generators produce hand-crafted sentence connectors ("A scene of...", "Shot on...") that the assembler's `assembleNaturalSentences()` approximates but doesn't replicate word-for-word. This is acceptable: the assembly is structurally equivalent and produces the same visual output from AI image generators. The exact prose framing differs but has zero impact on generated image quality.
+**Materials connector removal (v3.4.0):**
+Removed `prefix: 'featuring '` from materials SENTENCE_CONNECTOR — "featuring rain-slicked asphalt" is unnatural; materials terms are self-describing.
+
+**Platform config fixes (v3.5.0, 42-platform expansion):**
+Expanded from 31 to 42 platforms. Fixed 5 misconfigured platforms:
+
+- `clipdrop`: was NL style → fixed to keywords with separate neg, 10 categories (was 54% parity)
+- `getimg`: added materials + composition categories (was 78% parity)
+- `stability`: sweetSpot raised from 50 → 70+ (was truncating composition)
+- `bluewillow`: added camera + materials categories (was 92% parity)
+- `novelai`: added "highly detailed" to qualityPrefix (was 96% parity)
+
+Added 11 new Tier 4 platforms with proper configs: artbreeder, freepik, myedit, photoleap, picwish, pixlr, remove-bg, simplified, visme, vistacreate, 123rf.
+
+**SENTENCE_CONNECTORS optimisation (v3.5.1):**
+Removed " style" suffix and " atmosphere" suffix from connectors. These words were semantically empty — no AI platform uses them as signal words. Closed the final flux parity gap from 95.5% → 100%. See §3.6 for details.
+
+### 8.3 Parity Achievement
+
+**v3.5.1 result:** 42/42 platforms at 100% Jaccard parity across 4 city fixtures (Amsterdam, Istanbul, Tokyo, Sydney). Zero gen-only words, zero bld-only words. Both paths produce identical semantic content for every supported platform.
+
+The tier generators produce hand-crafted sentence connectors ("A scene of...", "Shot on...") that the assembler's `assembleNaturalSentences()` approximates but doesn't replicate word-for-word. This is acceptable: the assembly is structurally equivalent and produces the same visual output from AI image generators. The exact prose framing differs but has zero impact on generated image quality. With v3.5.1, even this minor prose framing difference has been eliminated for keyword and comma-list platforms.
+
+---
+
+## 8A. Prompt Post-Processing Engine
+
+### 8A.1 Overview
+
+`prompt-post-process.ts` (216 lines) provides 6 exported text-polishing functions that apply after assembly. Extracted from `weather-prompt-generator.ts` so both the homepage path and the builder/"Try in" path share identical post-processing.
+
+### 8A.2 Exported Functions
+
+| Function                         | Purpose                                                                         |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| `neutraliseLeakPhrases(text)`    | Replaces culturally-specific nouns ("prayer flags" → "entrance flags")          |
+| `fixCommonGrammar(text)`         | Fixes double commas, trailing conjunctions, spacing                             |
+| `postProcessTier1Positive(...)`  | Tier 1 CLIP-specific: leak phrases + redundant phenomenon removal               |
+| `removeRedundantPhenomenon(...)` | Strips atmosphere terms already covered by atmosphere modifier (haze, fog, etc) |
+| `trimMjPhenomenonDuplicates(…)`  | Tier 2 MJ-specific phenomenon dedup                                             |
+| `postProcessAssembled(...)`      | Convenience wrapper — applies correct pipeline per tier                         |
+
+### 8A.3 Pipeline per Tier
+
+```
+postProcessAssembled(assembled, tier, atmosphereModifier):
+  Tier 1 (CLIP):   neutraliseLeakPhrases → removeRedundantPhenomenon → fixCommonGrammar
+  Tier 2 (MJ):     neutraliseLeakPhrases → trimMjPhenomenonDuplicates → fixCommonGrammar
+  Tier 3 (NL):     neutraliseLeakPhrases → removeRedundantPhenomenon → fixCommonGrammar
+  Tier 4 (Plain):  neutraliseLeakPhrases → removeRedundantPhenomenon → fixCommonGrammar
+```
+
+Both the homepage generator path and the builder/"Try in" path call `postProcessAssembled()` after `assemblePrompt()`, ensuring identical polish regardless of entry point.
+
+---
+
+## 8B. 42-Platform Parity Testing Infrastructure
+
+### 8B.1 Architecture
+
+Two parity test files validate that the homepage generator path and the builder "Try in" path produce identical output:
+
+**`parity-homepage-builder.test.ts` (638 lines):**
+Original 4-tier × 4-city test suite. Tests the reference platform per tier (leonardo, midjourney, openai, canva). Threshold: ≥95% Jaccard (raised from 80% in v3.5.1).
+
+**`parity-all-42-platforms.test.ts` (660 lines):**
+Comprehensive audit covering every platform in every tier. Created in v3.5.1. Contains 8 test sections:
+
+1. **Platform config completeness** — all 42 tier platforms have explicit configs in `platformFormats.platforms` (no fallback to `_defaults`), minimum 5 categories each, all categories exist in tier reference superset.
+2. **Full 42-platform parity** — ≥95% Jaccard across all 42 platforms × 4 cities = 168 test cases.
+3. **Containment metric** — ≥95% of gen content words survive in bld positive OR negative output.
+4. **Token limit enforcement** — builder output never exceeds platform `tokenLimit` (+10% margin).
+5. **Negative handling** — mode-specific correctness: separate (neg field populated), inline (--no syntax), none (positive reinforcement via NEGATIVE_TO_POSITIVE).
+6. **Post-processing integrity** — leak prevention ("prayer flags" neutralised), synergy conflict resolution (golden hour + midnight), weight syntax preservation (CLIP weights, MJ no-leak, NL/Plain clean).
+7. **Regression guards** — 16 specific assertions for every previously-fixed bug: clipdrop style, getimg categories, stability sweetSpot, bluewillow categories, novelai qualityPrefix, hotpot categories, flux qualitySuffix, N2P conversions (watermarks→unmarked, people→empty scene, cartoon→realistic, anime→photographic realism), 11 T4 explicit configs, materials "featuring" removal, style suffix removal, atmosphere suffix removal.
+8. **Summary table** — visual parity matrix with per-city scores and pass/fail counts.
+
+### 8B.2 Metrics
+
+- **Jaccard similarity:** `|A ∩ B| / |A ∪ B|` on tokenised word sets (CLIP weight syntax stripped). ≥95% required.
+- **Containment score:** Fraction of gen-path words found in bld-path positive OR negative output. ≥95% required.
+- **Token estimation:** `text.split(/\s+/).length` vs platform `tokenLimit` × 1.1 margin.
+
+### 8B.3 City Fixtures
+
+Four representative cities with full `WeatherCategoryMap` fixtures:
+
+| City      | Selections | Custom Values | Negatives | Weight Overrides | Special Conditions   |
+| --------- | ---------- | ------------- | --------- | ---------------- | -------------------- |
+| Amsterdam | 6          | 5             | 4         | 4                | Plaza, Partly Cloudy |
+| Istanbul  | 5          | 6             | 6         | 4                | Monument, Night      |
+| Tokyo     | 6          | 5             | 6         | 4                | Street, Haze         |
+| Sydney    | 6          | 4             | 3         | 4                | Waterfront, Clear    |
+
+### 8B.4 Platform Coverage
+
+| Tier      | Style          | Ref Platform | Platform Count | Platforms                                                                                                                                                  |
+| --------- | -------------- | ------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1         | CLIP Keywords  | leonardo     | 13             | artguru, clipdrop, dreamlike, dreamstudio, getimg, jasper-art, leonardo, lexica, nightcafe, novelai, openart, playground, stability                        |
+| 2         | Midjourney     | midjourney   | 2              | bluewillow, midjourney                                                                                                                                     |
+| 3         | Natural Lang   | openai       | 10             | adobe-firefly, bing, flux, google-imagen, hotpot, ideogram, imagine-meta, microsoft-designer, openai, runway                                               |
+| 4         | Plain/Consumer | canva        | 17             | artbreeder, artistly, canva, craiyon, deepai, fotor, freepik, myedit, photoleap, picsart, picwish, pixlr, remove-bg, simplified, visme, vistacreate, 123rf |
+| **Total** |                |              | **42**         |                                                                                                                                                            |
 
 ---
 
@@ -398,7 +555,7 @@ After the core 4-phase build, a series of targeted upgrades improved assembler q
 
 ### Upgrade 3 — Canonical Assembly Dedup
 
-**File:** `prompt-builder.ts` lines 937–1025
+**File:** `prompt-builder.ts` lines 986–1068
 **Test:** `upgrade-3-canonical-assembly.test.ts` (160 lines)
 
 Placed dedup inside `assembleTierAware()` so that BOTH the generator path and the builder UI path produce identical deduplication. Before this, the generator path could produce duplicate terms because it bypassed the builder's UI-level dedup.
@@ -427,7 +584,7 @@ The fingerprint is computed from the WeatherCategoryMap at generation time and a
 ### Extra 4 — Adaptive Weight Calibration
 
 **File:** `adaptive-weights.ts` (254 lines)
-**Test:** `adaptive-weights.test.ts` (311 lines)
+**Test:** `src/lib/__tests__/adaptive-weights.test.ts` (311 lines)
 
 Dynamically adjusts CLIP weight overrides based on prompt density. A prompt with 3 populated categories gets stronger weights (1.3, 1.2, 1.1); a prompt with 10 categories gets gentler weights (1.1, 1.05, 1.0). The algorithm:
 
@@ -453,7 +610,7 @@ Computes a complete scene composition from venue setting + camera data. Returns 
 ### Extra 6 — Category Synergy Matrix
 
 **File:** `category-synergy.ts` (409 lines)
-**Test:** `category-synergy.test.ts` (239 lines)
+**Test:** `src/lib/__tests__/category-synergy.test.ts` (239 lines)
 
 Defines synergy scores between category term pairs. Scores range from -1.0 (physics impossibility) to +1.0 (strong reinforcement). Used by the synergy rewriter to detect and resolve conflicts before assembly.
 
@@ -478,35 +635,44 @@ The rewriter is opt-in: callers invoke `rewriteWithSynergy()` before passing sel
 
 ## 11. File Impact Summary — Actuals
 
-| File                                                 | Action                                                                                                           | Actual Lines      |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `src/lib/prompt-builder.ts`                          | **ENHANCED** — 3-arg assemblePrompt, dedup, weight merge, token estimation                                       | 1,519 lines total |
-| `src/lib/weather/weather-category-mapper.ts`         | **NEW** — category mapping from weather intelligence                                                             | 521 lines         |
-| `src/lib/weather/composition-blueprint.ts`           | **NEW** — scene composition + dofPhrase + framing                                                                | 506 lines         |
-| `src/lib/weather/synergy-rewriter.ts`                | **NEW** — conflict resolution + reinforcement bridging                                                           | 600 lines         |
-| `src/lib/weather/category-synergy.ts`                | **NEW** — synergy score matrix                                                                                   | 409 lines         |
-| `src/lib/weather/adaptive-weights.ts`                | **NEW** — density-aware weight calibration                                                                       | 254 lines         |
-| `src/lib/weather/weather-prompt-generator.ts`        | **REFACTORED** — outputs WeatherCategoryMap, venueOverride                                                       | 561 lines         |
-| `src/lib/weather/prompt-types.ts`                    | **UPDATED** — venueSeed, venueOverride fields                                                                    | ~614 lines        |
-| `src/types/prompt-builder.ts`                        | **UPDATED** — WeatherCategoryMap, WeatherCategoryMeta, PromptDNAFingerprint, PromptDNAScore, 12 PromptCategories | 350 lines         |
-| `src/data/providers/platform-formats.json`           | **UPDATED** — quality prefix normalisation, impactPriority alignment, weight syntax                              | 1,193 lines       |
-| `src/app/api/homepage/prompt-of-the-moment/route.ts` | **UPDATED** — venueOverride, sharedCategoryMap, inspiredBy with hash                                             | 563 lines         |
-| `src/components/home/prompt-showcase.tsx`            | **UPDATED** — stores categoryMap, forwards inspiredBy + hash                                                     | updated           |
-| `src/components/providers/prompt-builder.tsx`        | **UPDATED** — Phase D preload, badge split, weatherWeightOverrides                                               | 2,431 lines total |
+| File                                                 | Action                                                                                                                                    | Actual Lines |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `src/lib/prompt-builder.ts`                          | **ENHANCED** — 3-arg assemblePrompt, dedup, weight merge, token estimation, NEGATIVE_TO_POSITIVE (45 entries), SENTENCE_CONNECTORS v3.5.1 | 1,562 lines  |
+| `src/lib/prompt-post-process.ts`                     | **NEW** — Post-processing engine extracted from weather-prompt-generator. 6 exported functions (leak, grammar, phenomenon, synergy)       | 216 lines    |
+| `src/lib/weather/weather-category-mapper.ts`         | **NEW** — category mapping from weather intelligence                                                                                      | 581 lines    |
+| `src/lib/weather/composition-blueprint.ts`           | **NEW** — scene composition + dofPhrase + framing                                                                                         | 506 lines    |
+| `src/lib/weather/synergy-rewriter.ts`                | **NEW** — conflict resolution + reinforcement bridging                                                                                    | 600 lines    |
+| `src/lib/weather/category-synergy.ts`                | **NEW** — synergy score matrix                                                                                                            | 409 lines    |
+| `src/lib/weather/adaptive-weights.ts`                | **NEW** — density-aware weight calibration                                                                                                | 254 lines    |
+| `src/lib/weather/weather-prompt-generator.ts`        | **REFACTORED** — outputs WeatherCategoryMap, venueOverride, post-processing extracted                                                     | 486 lines    |
+| `src/lib/weather/tier-generators.ts`                 | **RETIRED** — Phase E deleted 5 generator functions; stub with shared enrichment helpers remains                                          | 95 lines     |
+| `src/lib/weather/prompt-types.ts`                    | **UPDATED** — venueSeed, venueOverride fields                                                                                             | 613 lines    |
+| `src/types/prompt-builder.ts`                        | **UPDATED** — WeatherCategoryMap, WeatherCategoryMeta, PromptDNAFingerprint, PromptDNAScore, 12 PromptCategories                          | 349 lines    |
+| `src/data/providers/platform-formats.json`           | **UPDATED** — v3.5.0, 42 platforms, quality prefix normalisation, impactPriority, connector fixes                                         | 1,539 lines  |
+| `src/data/platform-tiers.ts`                         | **UPDATED** — Tier definitions with 42 platforms (13 + 2 + 10 + 17)                                                                       | 199 lines    |
+| `src/app/api/homepage/prompt-of-the-moment/route.ts` | **UPDATED** — venueOverride, sharedCategoryMap, inspiredBy with hash                                                                      | 639 lines    |
+| `src/components/home/prompt-showcase.tsx`            | **UPDATED** — stores categoryMap, forwards inspiredBy + hash                                                                              | 857 lines    |
+| `src/components/providers/prompt-builder.tsx`        | **UPDATED** — Phase D preload, badge split, weatherWeightOverrides                                                                        | 2,476 lines  |
 
 ### Test Coverage
 
-| Test File                               | Lines       | Covers                                   |
-| --------------------------------------- | ----------- | ---------------------------------------- |
-| `upgrade-3-canonical-assembly.test.ts`  | 160         | Within/cross-category dedup              |
-| `upgrade-5-prompt-fingerprint.test.ts`  | 255         | DNA fingerprint hash + verification      |
-| `extra-5-6-composition-synergy.test.ts` | 394         | Composition blueprint + synergy matrix   |
-| `category-synergy.test.ts`              | 239         | Synergy scoring edge cases               |
-| `adaptive-weights.test.ts`              | 311         | Weight calibration across densities      |
-| `prompt-builder-rich-phrases.test.ts`   | 318         | Long phrase handling in all 3 assemblers |
-| `prompt-dna.test.ts`                    | 330         | DNA fingerprint utilities                |
-| `weather-category-mapper.test.ts`       | exists      | Category mapping from weather data       |
-| **Total new test lines**                | **~2,007+** |                                          |
+| Test File                                               | Lines     | Covers                                   |
+| ------------------------------------------------------- | --------- | ---------------------------------------- |
+| `src/__tests__/parity-homepage-builder.test.ts`         | 638       | 4-tier × 4-city Jaccard parity (≥95%)    |
+| `src/__tests__/parity-all-42-platforms.test.ts`         | 660       | 42-platform × 4-city parity + regression |
+| `src/__tests__/upgrade-2-clip-sanitiser.test.ts`        | 134       | CLIP weight sanitisation                 |
+| `src/__tests__/upgrade-3-canonical-assembly.test.ts`    | 160       | Within/cross-category dedup              |
+| `src/__tests__/upgrade-4-venue-singularity.test.ts`     | 199       | Venue override + seed fallback           |
+| `src/__tests__/upgrade-5-prompt-fingerprint.test.ts`    | 255       | DNA fingerprint hash + verification      |
+| `src/__tests__/extra-5-6-composition-synergy.test.ts`   | 394       | Composition blueprint + synergy matrix   |
+| `src/__tests__/quality-95-fixes.test.ts`                | 265       | Quality parity edge cases                |
+| `src/__tests__/improvements-1-5.test.ts`                | 254       | Assembly improvements 1–5                |
+| `src/lib/__tests__/weather-category-mapper.test.ts`     | 736       | Category mapping from weather data       |
+| `src/lib/__tests__/adaptive-weights.test.ts`            | 311       | Weight calibration across densities      |
+| `src/lib/__tests__/prompt-builder-rich-phrases.test.ts` | 318       | Long phrase handling in all 3 assemblers |
+| `src/lib/__tests__/category-synergy.test.ts`            | 239       | Synergy scoring edge cases               |
+| `src/lib/__tests__/prompt-dna.test.ts`                  | 330       | DNA fingerprint utilities                |
+| **Total brain-related test lines**                      | **4,893** |                                          |
 
 ---
 
@@ -551,16 +717,18 @@ The learning engine can accumulate `PromptDNAScore` metrics per hash to discover
 
 ## 13. Risk Assessment — Updated
 
-| Risk                                                   | Original Severity | Status         | Resolution                                                                                                                                                              |
-| ------------------------------------------------------ | ----------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Assembler output quality drops below generators        | HIGH              | **Mitigated**  | Quality parity fixes shipped (§8). Rich phrase handling tested (318 test lines). Minor prose framing differences are acceptable — zero impact on AI image output.       |
-| Long phrases break token budgets (MJ: 40 words)        | MEDIUM            | **Mitigated**  | `assemblePlainLanguage()` has intelligent truncation. `assembleKeywords()` skips weight-wrapping on long phrases. Token estimation (`estimateClipTokens`) warns users.  |
-| CLIP weight wrapping produces garbage for long phrases | MEDIUM            | **Mitigated**  | Rich phrases (>4 words) are inserted without parenthetical weight wrapping. Adaptive weights (Extra 4) calibrate weights by density. Tested against Stability/Leonardo. |
-| Breaking existing manual prompt builder behaviour      | HIGH              | **Mitigated**  | All existing tests pass. Rich phrase handling is additive — short-term code paths unchanged. Within-category dedup preserves original terms when no redundancy exists.  |
-| Venue desync                                           | LOW               | **Resolved**   | Venue Singularity (Upgrade 4) eliminates desync entirely. `venueOverride` bypasses `getCityVenue()`.                                                                    |
-| Performance: assembler called 4× per PotM request      | LOW               | **Acceptable** | assemblePrompt() is <1ms per call. PotM cached 10 minutes. No measurable impact.                                                                                        |
-| Synergy rewriter produces unexpected replacements      | NEW               | **Monitored**  | Rewriter is opt-in (`rewriteWithSynergy()` before assembly). Callers control whether to use it. Resolution rules are explicit and testable (394 test lines).            |
-| Adaptive weights over-dampen emphasis on dense prompts | NEW               | **Tested**     | Weight calibration maintains category hierarchy. 311 test lines verify density curves across 3–10 category fills.                                                       |
+| Risk                                                   | Original Severity | Status         | Resolution                                                                                                                                                                                                                             |
+| ------------------------------------------------------ | ----------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Assembler output quality drops below generators        | HIGH              | **Resolved**   | 42/42 platforms at 100% Jaccard parity (v3.5.1). Comprehensive test suite with 168 parity cases, regression guards, and post-processing integrity checks.                                                                              |
+| Long phrases break token budgets (MJ: 40 words)        | MEDIUM            | **Mitigated**  | `assemblePlainLanguage()` has intelligent truncation. `assembleKeywords()` skips weight-wrapping on long phrases. Token estimation (`estimateClipTokens`) warns users. Token limit enforcement tested for all 42 platforms × 4 cities. |
+| CLIP weight wrapping produces garbage for long phrases | MEDIUM            | **Mitigated**  | Rich phrases (>4 words) are inserted without parenthetical weight wrapping. Adaptive weights (Extra 4) calibrate weights by density. Tested against Stability/Leonardo.                                                                |
+| Breaking existing manual prompt builder behaviour      | HIGH              | **Mitigated**  | All existing tests pass. Rich phrase handling is additive — short-term code paths unchanged. Within-category dedup preserves original terms when no redundancy exists.                                                                 |
+| Venue desync                                           | LOW               | **Resolved**   | Venue Singularity (Upgrade 4) eliminates desync entirely. `venueOverride` bypasses `getCityVenue()`.                                                                                                                                   |
+| Performance: assembler called 4× per PotM request      | LOW               | **Acceptable** | assemblePrompt() is <1ms per call. PotM cached 10 minutes. No measurable impact.                                                                                                                                                       |
+| Synergy rewriter produces unexpected replacements      | NEW               | **Monitored**  | Rewriter is opt-in (`rewriteWithSynergy()` before assembly). Callers control whether to use it. Resolution rules are explicit and testable (394 test lines).                                                                           |
+| Adaptive weights over-dampen emphasis on dense prompts | NEW               | **Tested**     | Weight calibration maintains category hierarchy. 311 test lines verify density curves across 3–10 category fills.                                                                                                                      |
+| Platform config regression on new platforms            | NEW               | **Guarded**    | 42-platform test suite catches regressions across all platforms. 16 regression guards for specific previously-fixed bugs. Test threshold raised to 95%.                                                                                |
+| NEGATIVE_TO_POSITIVE map missing conversions           | NEW               | **Tested**     | 45 entries cover quality, exposure, unwanted, people, style, composition, and anatomy categories. Singular/plural variants handled. Parity tests verify conversion consistency between gen and bld paths.                              |
 
 ---
 
@@ -583,7 +751,7 @@ The `PromptCategory` union type in `types/prompt-builder.ts` defines 12 categori
 | `fidelity`    | Quality boosters (8K, masterpiece) | —                             |
 | `negative`    | Constraints / Negative prompt      | N/A                           |
 
-Canonical order is defined in `CATEGORY_ORDER` constant. Effective output order per platform is determined by `getEffectiveOrder()` which reads `impactPriority` from platform config and appends remaining categories.
+Canonical order is defined in `CATEGORY_ORDER` constant. Effective output order per platform is determined by `getEffectiveOrder()` (line 415) which reads `impactPriority` from platform config and appends remaining categories.
 
 ---
 
@@ -595,41 +763,43 @@ Canonical order is defined in `CATEGORY_ORDER` constant. Effective output order 
 | `prompt-builder-page.md`               | Authority doc for builder component. `assemblePrompt()` signature updated to 3-arg. `weatherWeightOverrides` state variable documented. Phase D data flow sessionStorage → builder pathway works end-to-end with weights.                                                                                          |
 | `code-standard.md`                     | `assemblePrompt()` signature updated. `PromptCategory` type shows 12 categories. `platform-formats.json` quality prefix and impactPriority changes noted.                                                                                                                                                          |
 | `prompt-optimizer.md`                  | §2.3 architecture diagram upstream of optimizer. Optimizer consumes output of assembler. Weight merge means weighted terms may carry weather-derived weights (e.g., `(LED lighting:1.3)` instead of platform-default 1.1). §12.1 references `getPlatformFormat()` — format now includes merged weightedCategories. |
-| `ai_providers.md`                      | Prompt builder data sources section. Exports now include `getPlatformFormat()`. Line count stale — prompt-builder.ts is 1,519 lines (was documented as 763). platform-formats.json changes (quality prefix, impactPriority, weight syntax) noted.                                                                  |
-| `weather-prompt-generator-analysis.md` | Scored system 82/100. Several recommendations now implemented: camera metadata improvements (Upgrade 4, Extra 5), composition fixes (dofPhrase guard, vanishing-point), platform negatives (cross-category dedup). "Path from 82 to 95+" section can get a status note.                                            |
+| `ai_providers.md`                      | Prompt builder data sources section. Exports now include `getPlatformFormat()` and `platformFormats`. Line count: prompt-builder.ts is 1,562 lines. platform-formats.json is 1,539 lines (42 platforms, v3.5.0).                                                                                                   |
+| `weather-prompt-generator-analysis.md` | Scored system 82/100. Several recommendations now implemented: camera metadata improvements (Upgrade 4, Extra 5), composition fixes (dofPhrase guard, vanishing-point), platform negatives (cross-category dedup). Post-analysis note estimates 90–93/100 after unified brain.                                     |
 | `prompt-builder-evolution-plan-v2.md`  | Evolution plan marked "ALL PHASES COMPLETE." The unified brain is a new initiative built on top of the evolution plan. Cross-reference to this document as the next phase.                                                                                                                                         |
 
 ---
 
 ## 16. Exports — prompt-builder.ts
 
-All public exports from the single brain assembly engine (1,519 lines):
+All public exports from the single brain assembly engine (1,562 lines):
 
-| Export                                                     | Purpose                                                          |
-| ---------------------------------------------------------- | ---------------------------------------------------------------- |
-| `assemblePrompt(platformId, selections, weightOverrides?)` | The One Brain — routes to correct sub-assembler by tier + config |
-| `formatPromptForCopy(assembled)`                           | Returns positive prompt text for clipboard                       |
-| `getPromptPreview(platformId, selections)`                 | Quick preview (calls assemblePrompt internally)                  |
-| `getPlatformFormat(platformId)`                            | Platform config lookup (used by weight merge)                    |
-| `getCategoryOptions(category, context?)`                   | Vocabulary-driven dropdown options (top 100)                     |
-| `getAllCategoryOptions(category)`                          | Full vocabulary for a category                                   |
-| `getCategoryConfig(category)`                              | Category metadata (label, maxSelections, etc.)                   |
-| `getEnhancedCategoryConfig(...)`                           | Config with vocabulary context                                   |
-| `getCategorySuggestions(...)`                              | Intelligent term suggestions                                     |
-| `getCategoryChips(...)`                                    | Pre-selected chip terms                                          |
-| `searchCategoryOptions(...)`                               | Fuzzy search within vocabulary                                   |
-| `detectStyleFamily(selectedTerms)`                         | Style family detection from terms                                |
-| `getAllCategories()`                                       | Returns `CATEGORY_ORDER` array                                   |
-| `getOrderedCategories(platformId)`                         | Platform-specific effective order                                |
-| `supportsNegativePrompts(platformId)`                      | Platform family check                                            |
-| `supportsNativeNegative(platformId)`                       | Native negative support check                                    |
-| `getPlatformTips(platformId)`                              | Platform usage tips                                              |
-| `getPlatformExample(platformId)`                           | Example prompt for platform                                      |
-| `getPlatformFamilyName(platformId)`                        | Human-readable family name                                       |
-| `buildPrompt(providerId, input, website?)`                 | Legacy builder (backward compat)                                 |
-| `tierToRefPlatform(tier)`                                  | Reference platform per tier                                      |
-| `selectionsFromMap(categoryMap)`                           | Convert WeatherCategoryMap → PromptSelections                    |
-| `estimateClipTokens`                                       | Token count estimation                                           |
+| Export                                                     | Purpose                                                                       |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `assemblePrompt(platformId, selections, weightOverrides?)` | The One Brain — routes to correct sub-assembler by tier + config              |
+| `formatPromptForCopy(assembled)`                           | Returns positive prompt text for clipboard                                    |
+| `getPromptPreview(platformId, selections)`                 | Quick preview (calls assemblePrompt internally)                               |
+| `getPlatformFormat(platformId)`                            | Platform config lookup (used by weight merge)                                 |
+| `getCategoryOptions(category, context?)`                   | Vocabulary-driven dropdown options (top 100)                                  |
+| `getAllCategoryOptions(category)`                          | Full vocabulary for a category                                                |
+| `getCategoryConfig(category)`                              | Category metadata (label, maxSelections, etc.)                                |
+| `getEnhancedCategoryConfig(...)`                           | Config with vocabulary context                                                |
+| `getCategorySuggestions(...)`                              | Intelligent term suggestions                                                  |
+| `getCategoryChips(...)`                                    | Pre-selected chip terms                                                       |
+| `searchCategoryOptions(...)`                               | Fuzzy search within vocabulary                                                |
+| `detectStyleFamily(selectedTerms)`                         | Style family detection from terms                                             |
+| `getAllCategories()`                                       | Returns `CATEGORY_ORDER` array                                                |
+| `getOrderedCategories(platformId)`                         | Platform-specific effective order                                             |
+| `supportsNegativePrompts(platformId)`                      | Platform family check                                                         |
+| `supportsNativeNegative(platformId)`                       | Native negative support check                                                 |
+| `getPlatformTips(platformId)`                              | Platform usage tips                                                           |
+| `getPlatformExample(platformId)`                           | Example prompt for platform                                                   |
+| `getPlatformFamilyName(platformId)`                        | Human-readable family name                                                    |
+| `buildPrompt(providerId, input, website?)`                 | Legacy builder (backward compat)                                              |
+| `tierToRefPlatform(tier)`                                  | Reference platform per tier (T1→leonardo, T2→midjourney, T3→openai, T4→canva) |
+| `selectionsFromMap(categoryMap)`                           | Convert WeatherCategoryMap → PromptSelections                                 |
+| `estimateClipTokens(text)`                                 | Token count estimation                                                        |
+| `platformFormats`                                          | Raw platform formats data (used by parity tests for key-existence checks)     |
+| `promptOptions`                                            | Prompt vocabulary options data                                                |
 
 ---
 

@@ -99,6 +99,7 @@ import { useFeedbackMemory } from '@/hooks/use-feedback-memory';
 import type { FeedbackRating } from '@/types/feedback';
 import {
   assemblePrompt,
+  assembleStatic,
   formatPromptForCopy,
   getEnhancedCategoryConfig,
   getAllCategories,
@@ -125,7 +126,6 @@ import { VALID_ASPECT_RATIOS } from '@/types/composition';
 // Prompt Intelligence imports
 import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
 import { useIntelligencePreferences } from '@/hooks/use-intelligence-preferences';
-import { useMarketMoodLive } from '@/hooks/use-market-mood-live';
 import { useLearningData } from '@/hooks/use-learning-data';
 import { useVocabSubmission } from '@/hooks/use-vocab-submission';
 import {
@@ -133,9 +133,8 @@ import {
   ConflictWarning,
   SuggestionChips,
   HealthBadge,
-  MarketMoodToggle,
 } from '@/components/prompt-intelligence';
-import type { SuggestedOption, ScoredOption, MarketState } from '@/lib/prompt-intelligence/types';
+import type { SuggestedOption, ScoredOption } from '@/lib/prompt-intelligence/types';
 import { reorderByRelevance, generateCoherentPrompt } from '@/lib/prompt-intelligence';
 
 // Save to Library imports
@@ -293,6 +292,170 @@ function injectCompositionText(
 function appendARParameter(prompt: string, arParameter: string): string {
   if (!arParameter) return prompt;
   return `${prompt.trim()} ${arParameter}`;
+}
+
+// ============================================================================
+// Improvement 1: Visual Diff — "Show Don't Tell" Mode Switching
+// ============================================================================
+// When switching Static ↔ Dynamic, highlights what intelligence added/changed
+// so users SEE the value difference between raw selections and platform formatting.
+//
+// Green highlights  = terms ADDED by intelligence (quality prefix, neg→pos conversions)
+// Purple highlights = terms MODIFIED by intelligence (CLIP weights, reordering)
+// Highlights fade after 3s via CSS transition.
+// ============================================================================
+
+/** Normalise term for comparison — strip CLIP weight syntax, lowercase, trim */
+function normaliseTerm(term: string): string {
+  return term
+    .replace(/\({1,2}([^)]+?)(?::[0-9.]+)?\){1,2}/g, '$1') // (term:1.2) → term
+    .replace(/\{+([^}]+?)\}+/g, '$1')                        // {{{term}}} → term
+    .replace(/::[0-9.]+/g, '')                                 // term::1.2 → term
+    .toLowerCase()
+    .trim();
+}
+
+interface DiffResult {
+  index: number;
+  type: 'added' | 'modified';
+}
+
+/** Compute term-level diff between old and new prompt text */
+function computePromptDiff(
+  oldText: string,
+  newText: string,
+  separator: string = ', ',
+): DiffResult[] {
+  if (!oldText.trim() || !newText.trim()) return [];
+
+  const oldTerms = oldText.split(separator).map((t) => t.trim()).filter(Boolean);
+  const newTerms = newText.split(separator).map((t) => t.trim()).filter(Boolean);
+
+  const oldNormalised = new Set(oldTerms.map(normaliseTerm));
+  const oldExact = new Set(oldTerms);
+
+  const diffs: DiffResult[] = [];
+  for (let i = 0; i < newTerms.length; i++) {
+    const term = newTerms[i]!;
+    const norm = normaliseTerm(term);
+
+    if (!oldNormalised.has(norm)) {
+      diffs.push({ index: i, type: 'added' });
+    } else if (!oldExact.has(term)) {
+      diffs.push({ index: i, type: 'modified' });
+    }
+  }
+  return diffs;
+}
+
+/** Render prompt text with highlighted diff terms that fade out */
+function DiffHighlightedText({
+  text,
+  diffs,
+  separator = ', ',
+  fadingOut,
+}: {
+  text: string;
+  diffs: DiffResult[];
+  separator?: string;
+  fadingOut: boolean;
+}) {
+  const terms = text.split(separator).map((t) => t.trim()).filter(Boolean);
+  const diffMap = new Map(diffs.map((d) => [d.index, d.type]));
+
+  return (
+    <>
+      {terms.map((term, i) => {
+        const diffType = diffMap.get(i);
+        const isLast = i === terms.length - 1;
+        const suffix = !isLast ? `${separator}` : '';
+
+        if (!diffType) {
+          return (
+            <React.Fragment key={i}>
+              {term}{suffix}
+            </React.Fragment>
+          );
+        }
+
+        const baseClass = diffType === 'added'
+          ? 'bg-emerald-500/25 text-emerald-200 rounded px-0.5 -mx-0.5'
+          : 'bg-purple-500/20 text-purple-200 rounded px-0.5 -mx-0.5';
+
+        return (
+          <React.Fragment key={i}>
+            <span
+              className={`${baseClass} transition-all duration-1000 ease-out ${
+                fadingOut ? 'bg-transparent !text-inherit' : ''
+              }`}
+            >
+              {term}
+            </span>
+            {suffix}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+}
+
+// ============================================================================
+// Improvement 2: Stage Indicator Badge
+// ============================================================================
+// Small badge above assembled prompt showing which pipeline stage produced
+// the current preview: 📋 Static | ✨ Dynamic | ⚡ Optimized | ✓ Optimal
+// ============================================================================
+
+function StageBadge({
+  compositionMode,
+  isOptimizerEnabled,
+  wasOptimized,
+}: {
+  compositionMode: 'static' | 'dynamic';
+  isOptimizerEnabled: boolean;
+  wasOptimized: boolean;
+}) {
+  if (compositionMode === 'static') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-slate-600/50 bg-slate-800/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-400"
+        title="Raw selections — no intelligence applied. What you pick is what you get."
+      >
+        📋 Static
+      </span>
+    );
+  }
+
+  if (isOptimizerEnabled && wasOptimized) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400"
+        title="Platform-formatted AND trimmed to optimal length for best results."
+      >
+        ⚡ Optimized
+      </span>
+    );
+  }
+
+  if (isOptimizerEnabled && !wasOptimized) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-950/30 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400/80"
+        title="Platform-formatted and already within optimal length."
+      >
+        ✓ Optimal
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-md border border-purple-500/30 bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-400"
+      title="Platform intelligence applied — reordered, weighted, quality tags added. Enable Optimize to trim to ideal length."
+    >
+      ✨ Dynamic
+    </span>
+  );
 }
 
 // ============================================================================
@@ -499,7 +662,7 @@ export function PromptBuilder({
   const submitCustomTerm = useVocabSubmission(platformId, platformTier);
 
   // Prompt Intelligence Preferences
-  const { preferences: intelligencePrefs, setPreference: setIntelligencePref } =
+  const { preferences: intelligencePrefs } =
     useIntelligencePreferences();
 
   // ============================================================================
@@ -558,23 +721,6 @@ export function PromptBuilder({
     return scene?.flavourPhrases;
   }, [activeSceneId]);
 
-  // Market mood uses preference as source of truth
-  const isMarketMoodEnabled = intelligencePrefs.marketMoodEnabled;
-  const setIsMarketMoodEnabled = useCallback(
-    (enabled: boolean) => {
-      setIntelligencePref('marketMoodEnabled', enabled);
-    },
-    [setIntelligencePref],
-  );
-
-  // Live market mood hook - fetches real FX data when enabled
-  const {
-    marketState: liveMarketState,
-    isLoading: _isMarketMoodLoading,
-    error: _marketMoodError,
-    dataMode: _marketDataMode,
-  } = useMarketMoodLive(isMarketMoodEnabled);
-
   // Save to Library hook
   const { savePrompt } = useSavedPrompts();
 
@@ -595,50 +741,6 @@ export function PromptBuilder({
     abVariant,
     compressionLookup,
   } = useLearningData();
-
-  // ============================================================================
-  // Market Mood State (Live FX data with demo fallback)
-  // ============================================================================
-
-  // Use live market state when available, otherwise fall back to demo
-  const marketState: MarketState | null = useMemo(() => {
-    if (!isMarketMoodEnabled) return null;
-
-    // Use live data if available
-    if (liveMarketState) {
-      return liveMarketState;
-    }
-
-    // Fallback to demo state while loading or on error
-    // This ensures the toggle still works even without live data
-    const hour = new Date().getHours();
-    const states: Array<{ type: MarketState['type']; intensity: number }> = [
-      { type: 'low_volatility', intensity: 0.3 },
-      { type: 'high_volatility', intensity: 0.7 },
-      { type: 'gold_rising', intensity: 0.5 },
-      { type: 'crypto_pumping', intensity: 0.6 },
-      { type: 'currency_strength_usd', intensity: 0.4 },
-      { type: 'market_opening', intensity: 0.5 },
-    ];
-    const stateIndex = hour % states.length;
-    const selected = states[stateIndex];
-
-    if (!selected) {
-      return {
-        type: 'neutral' as const,
-        intensity: 0.3,
-        isMarketOpen: false,
-      };
-    }
-
-    const isMarketOpen = hour >= 8 && hour < 18;
-
-    return {
-      type: selected.type,
-      intensity: selected.intensity,
-      isMarketOpen,
-    };
-  }, [isMarketMoodEnabled, liveMarketState]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -1201,18 +1303,35 @@ export function PromptBuilder({
   // (e.g. "golden hour" + "midnight" → "warm amber artificial light") and
   // inject bridging phrases for strong reinforcements.
   // Matches the same step the homepage generator runs via rewriteWithSynergy().
+  // ONLY applies in Dynamic mode — Static mode is raw user input, no intelligence.
   const rewrittenSelections = useMemo(() => {
+    if (compositionMode === 'static') return selections;
     const { selections: rewritten } = rewriteWithSynergy(selections);
     return rewritten;
-  }, [selections]);
+  }, [selections, compositionMode]);
 
-  // Assemble base prompt (uses synergy-rewritten selections)
-  // ── Gap 2 fix: Post-processing polish pass ─────────────────────────────
+  // ============================================================================
+  // 3-Stage Assembly Pipeline
+  // ============================================================================
+  // Stage 1 (Static):  assembleStatic()  — raw comma join in CATEGORY_ORDER
+  // Stage 2 (Dynamic): assemblePrompt(skipTrim: true) — platform formatting, no trim
+  // Stage 3 (Optimize): optimizer pipeline — trims dynamic output to sweet spot
+  // ============================================================================
+
+  // Assemble base prompt — routes through 3-stage pipeline based on compositionMode.
+  // ── Gap 2 fix: Post-processing polish pass (Dynamic only) ──────────────
   // After assembly, applies the same 4 polish functions the homepage generator
   // runs: leak phrase neutralisation, CLIP dedup (Tier 1), redundant phenomenon
   // removal, MJ phenomenon trim (Tier 2), and grammar cleanup.
+  // Static mode skips post-processing to preserve raw user input.
   const assembled = useMemo(() => {
-    const raw = assemblePrompt(platformId, rewrittenSelections, weatherWeightOverrides);
+    if (compositionMode === 'static') {
+      // Stage 1: Raw user selections, no intelligence
+      return assembleStatic(platformId, selections);
+    }
+
+    // Stage 2: Full platform-specific formatting, skipTrim for optimizer (Stage 3)
+    const raw = assemblePrompt(platformId, rewrittenSelections, weatherWeightOverrides, { skipTrim: true });
 
     // Derive atmosphere hint from category state for phenomenon dedup.
     // In the generator this comes from lighting.atmosphereModifier; in the
@@ -1223,7 +1342,7 @@ export function PromptBuilder({
     ].join(' ');
 
     return postProcessAssembled(raw, platformTier as 1 | 2 | 3 | 4, atmosHint);
-  }, [platformId, rewrittenSelections, weatherWeightOverrides, platformTier, categoryState.atmosphere]);
+  }, [platformId, rewrittenSelections, weatherWeightOverrides, platformTier, categoryState.atmosphere, compositionMode, selections]);
 
   // Assemble composition pack if AR selected
   const compositionPack = useMemo(() => {
@@ -1248,6 +1367,46 @@ export function PromptBuilder({
   }, [assembled, compositionPack, platformId]);
 
   const hasContent = promptText.trim().length > 0;
+
+  // ============================================================================
+  // Improvement 1: Visual Diff State — tracks mode switches for highlighting
+  // ============================================================================
+  const prevModeRef = useRef(compositionMode);
+  const prevPromptRef = useRef(promptText);
+  const [diffActive, setDiffActive] = useState(false);
+  const [diffFading, setDiffFading] = useState(false);
+  const [diffResults, setDiffResults] = useState<DiffResult[]>([]);
+  const diffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (prevModeRef.current !== compositionMode && hasContent) {
+      const diffs = computePromptDiff(prevPromptRef.current, promptText);
+      setDiffResults(diffs);
+      setDiffActive(true);
+      setDiffFading(false);
+
+      // Start fading after 2s
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      fadeTimerRef.current = setTimeout(() => setDiffFading(true), 2000);
+
+      // Remove highlights completely after 3.5s
+      if (diffTimerRef.current) clearTimeout(diffTimerRef.current);
+      diffTimerRef.current = setTimeout(() => {
+        setDiffActive(false);
+        setDiffFading(false);
+        setDiffResults([]);
+      }, 3500);
+    }
+
+    prevModeRef.current = compositionMode;
+    prevPromptRef.current = promptText;
+
+    return () => {
+      if (diffTimerRef.current) clearTimeout(diffTimerRef.current);
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    };
+  }, [compositionMode, promptText, hasContent]);
 
   // §4.5: Clear "Inspired by" badge when user manually modifies via Clear all
   // (badge persists during normal editing since the selections ARE the prompt)
@@ -1378,13 +1537,13 @@ export function PromptBuilder({
       const config = getEnhancedCategoryConfig(category);
       if (!config || config.options.length === 0) continue;
 
-      // Reorder options based on current selections + live market mood + tier + learned weights
+      // Reorder options based on current selections + tier + learned weights
       const scoredOptions = reorderByRelevance(
         config.options,
         category,
         selections,
-        isMarketMoodEnabled,
-        marketState,
+        false,
+        null,
         platformTier,
         coOccurrenceLookup,
         learnedBlendRatio,
@@ -1417,8 +1576,6 @@ export function PromptBuilder({
     hasContent,
     selections,
     intelligencePrefs.liveReorderEnabled,
-    isMarketMoodEnabled,
-    marketState,
     platformTier,
     coOccurrenceLookup,
     learnedBlendRatio,
@@ -1797,6 +1954,7 @@ export function PromptBuilder({
               <CompositionModeToggle
                 compositionMode={compositionMode}
                 onModeChange={setCompositionMode}
+                platformId={platformId}
                 disabled={isLocked}
                 compact
               />
@@ -1815,20 +1973,6 @@ export function PromptBuilder({
                 disabled={isOptimizerDisabled || isLocked}
                 tooltipContent={tooltipContent}
                 analysis={hasContent ? analysis : null}
-                compact
-              />
-
-              {/* Divider */}
-              <span className="text-slate-600 hidden sm:inline" aria-hidden="true">
-                │
-              </span>
-
-              {/* Market Mood Toggle */}
-              <MarketMoodToggle
-                isEnabled={isMarketMoodEnabled}
-                onToggle={setIsMarketMoodEnabled}
-                marketState={marketState}
-                disabled={isLocked}
                 compact
               />
             </div>
@@ -1900,7 +2044,7 @@ export function PromptBuilder({
           {/* Instruction text - green style */}
           <p className="text-xs text-slate-500">
             <span className="text-emerald-400">
-              Press Done or click away to close dropdowns. Type in any field to add custom entries.
+              Click Done or click away to close dropdowns. Type in any field to add custom entries.
             </span>
           </p>
 
@@ -2039,6 +2183,14 @@ export function PromptBuilder({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-slate-300">Assembled prompt</span>
+                {/* Improvement 2: Stage indicator badge */}
+                {hasContent && (
+                  <StageBadge
+                    compositionMode={compositionMode}
+                    isOptimizerEnabled={isOptimizerEnabled}
+                    wasOptimized={wasOptimized}
+                  />
+                )}
                 {/* DNA Bar - shows category fill status (only if enabled in preferences) */}
                 {intelligencePrefs.showDNABar && hasContent && promptAnalysis && (
                   <DNABar
@@ -2134,7 +2286,16 @@ export function PromptBuilder({
             >
               {hasContent ? (
                 <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed">
-                  {promptText}
+                  {/* Improvement 1: Show diff highlights when switching modes */}
+                  {diffActive && diffResults.length > 0 ? (
+                    <DiffHighlightedText
+                      text={promptText}
+                      diffs={diffResults}
+                      fadingOut={diffFading}
+                    />
+                  ) : (
+                    promptText
+                  )}
                 </pre>
               ) : (
                 <span className="italic text-xs">
