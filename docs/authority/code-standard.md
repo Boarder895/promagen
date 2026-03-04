@@ -1849,80 +1849,77 @@ The prompt builder uses a 9-category dropdown system with platform-specific opti
 - Options: `src/data/providers/prompt-options.json`
 - Platform formats: `src/data/providers/platform-formats.json`
 - Types: `src/types/prompt-builder.ts`
-- Logic: `src/lib/prompt-builder.ts` (763 lines)
+- Logic: `src/lib/prompt-builder.ts` (1,519 lines)
 
 **Category Schema:**
 
 ```typescript
 type PromptCategory =
-  | 'subject'
-  | 'medium'
-  | 'style'
-  | 'lighting'
-  | 'colour'
-  | 'composition'
-  | 'mood'
-  | 'camera'
-  | 'negative';
-
-interface CategoryConfig {
-  label: string;
-  description: string;
-  options: string[]; // Exactly 30 options per category
-}
+  | 'subject'     // Subject (identity + key attributes) - limit 1
+  | 'action'      // Action / Pose - limit 1
+  | 'style'       // Style / Rendering / References - limit 1
+  | 'environment' // Environment (location + time + background) - limit 1
+  | 'composition' // Composition / Framing - limit 1
+  | 'camera'      // Camera (angle + lens + DoF) - limit 1
+  | 'lighting'    // Lighting (type + direction + intensity) - limit 1
+  | 'colour'      // Colour / Grade - limit 1
+  | 'atmosphere'  // Atmosphere (fog, haze, rain, particles) - limit 1
+  | 'materials'   // Materials / Texture - limit 1
+  | 'fidelity'    // Quality boosters (8K, masterpiece, sharp focus) - limit 1
+  | 'negative';   // Constraints / Negative prompt - limit 5
 ```
 
-**9 Categories × 30 Options:**
+> CategoryConfig interface removed — category metadata is now accessed via `getCategoryConfig(category)` which reads from prompt-options.json.
 
-| Category        | Description         | Max Selections |
-| --------------- | ------------------- | -------------- |
-| Subject         | Main focus of image | 5              |
-| Medium          | Artistic technique  | 5              |
-| Style / Genre   | Visual style        | 5              |
-| Lighting        | Light conditions    | 5              |
-| Colour Scheme   | Palette/tones       | 5              |
-| Composition     | Framing/angle       | 5              |
-| Mood            | Emotional tone      | 5              |
-| Camera Details  | Lens effects        | 5              |
-| Negative Prompt | What to exclude     | 10             |
+**12 Categories × ~100 Options (platform-aware limits):**
 
-#### Platform-Specific Assembly
+| Category    | Description                        | Options |
+| ----------- | ---------------------------------- | ------- |
+| Subject     | Identity + key attributes          | ~103    |
+| Action      | Action / Pose                      | ~99     |
+| Style       | Style / Rendering / References     | ~99     |
+| Environment | Location + time + background       | ~100    |
+| Composition | Framing                            | ~99     |
+| Camera      | Angle + lens + DoF                 | ~99     |
+| Lighting    | Type + direction + intensity       | ~99     |
+| Colour      | Colour grade                       | ~99     |
+| Atmosphere  | Fog, haze, rain, particles, mood   | ~99     |
+| Materials   | Surface texture                    | ~100    |
+| Fidelity    | Quality boosters (8K, masterpiece) | ~100    |
+| Negative    | Constraints / Negative prompt      | ~961    |
 
-Different AI platforms require different prompt syntax. The assembler routes to platform-specific functions:
+Selection limits are **platform-aware** — different per tier. See `prompt-builder-page.md` for the full limits matrix.
+
+#### Tier-Aware Assembly
+
+The assembler uses a single entry point with tier-aware routing:
 
 ```typescript
-function assemblePrompt(platformId: string, selections: PromptSelections): AssembledPrompt {
-  const family = getPlatformFamily(platformId);
-  switch (family) {
-    case 'midjourney':
-      return assembleMidjourney(selections);
-    case 'stable-diffusion':
-      return assembleStableDiffusion(selections);
-    case 'leonardo':
-      return assembleLeonardo(selections);
-    case 'flux':
-      return assembleFlux(selections);
-    case 'novelai':
-      return assembleNovelAI(selections);
-    case 'ideogram':
-      return assembleIdeogram(selections);
-    default:
-      return assembleNatural(selections, platformId);
-  }
-}
+function assemblePrompt(
+  platformId: string,
+  selections: PromptSelections,
+  weightOverrides?: Partial<Record<PromptCategory, number>>,
+): AssembledPrompt
 ```
 
-**7 Platform Families:**
+Routing logic inside `assembleTierAware()`:
 
-| Family           | Platforms                                 | Syntax Style                             |
-| ---------------- | ----------------------------------------- | ---------------------------------------- |
-| Midjourney       | midjourney, bluewillow                    | `subject, style --no negative`           |
-| Stable Diffusion | stability, dreamstudio, lexica, etc. (10) | `masterpiece, (term:1.1)` + separate neg |
-| Leonardo         | leonardo                                  | `term::1.1` weighting syntax             |
-| Flux             | flux                                      | Keywords + quality suffix                |
-| NovelAI          | novelai                                   | `{{{emphasis}}}` braces                  |
-| Ideogram         | ideogram                                  | `without X` inline negatives             |
-| Natural          | openai, dall-e, canva, etc. (26)          | Flowing sentences                        |
+| Condition                    | Sub-assembler                | Tiers          |
+| ---------------------------- | ---------------------------- | -------------- |
+| `tierId === 4`               | `assemblePlainLanguage()`    | Tier 4 (Plain) |
+| `promptStyle === 'keywords'` | `assembleKeywords()`         | Tier 1 + 2     |
+| Everything else              | `assembleNaturalSentences()` | Tier 3         |
+
+**4 Platform Tiers (42 platforms):**
+
+| Tier | Name             | Platforms | Prompt Style                                   |
+| ---- | ---------------- | --------- | ---------------------------------------------- |
+| 1    | CLIP-Based       | 13        | Weighted keywords `(term:1.2)` + separate neg  |
+| 2    | Midjourney       | 2         | Keywords + `--no` params                       |
+| 3    | Natural Language  | 10        | Conversational sentences                       |
+| 4    | Plain Language   | 17        | Short, focused prompts                         |
+
+Platform config lives in `platform-formats.json` (31 entries + defaults). Tier assignments in `platform-tiers.ts` (199 lines). See `prompt-builder-page.md` for full platform lists.
 
 #### Combobox Component Pattern
 

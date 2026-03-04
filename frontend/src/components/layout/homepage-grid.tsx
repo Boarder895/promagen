@@ -1,15 +1,21 @@
 // src/components/layout/homepage-grid.tsx
 // ============================================================================
-// HOMEPAGE GRID - Fully unified three-column layout v3.1
+// HOMEPAGE GRID - Fully unified three-column layout v3.4
 // ============================================================================
 // EVERYTHING lives inside one three-column CSS grid:
-//   Left column:   Engine Bay → Exchange Rail (east)
+//   Left column:   Engine Bay → Exchange Rail (east) / Scene Starters (homepage)
 //   Centre column: Hero Window → FX Ribbon → Providers/Table
-//   Right column:  Mission Control → Exchange Rail (west)
+//   Right column:  Mission Control → Exchange Rail (west) / Community Pulse (homepage)
 //
 // One GRID_GAP clamp() value controls ALL spacing — column gaps between
 // left/centre/right AND vertical gaps between stacked panels within each
 // column. Change any panel height and everything below flows naturally.
+//
+// UPDATED v3.4: Homepage hero cleanup
+// - Listen button + amber intro text hidden on homepage (kept on World Context)
+// - LeaderboardIntro exported; only rendered here on World Context
+//   (homepage renders it in new-homepage-client.tsx centreRail instead)
+// - Authority: docs/authority/homepage.md §3, §9.2
 //
 // UPDATED v3.2: ControlDock eliminated — components placed directly
 // - ReferenceFrameToggle (Greenwich Meridian) imported directly
@@ -161,6 +167,25 @@ function ProIcon(): React.ReactElement {
   );
 }
 
+function GlobeIcon(): React.ReactElement {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 003 12c0-1.605.42-3.113 1.157-4.418"
+      />
+    </svg>
+  );
+}
+
 // ============================================================================
 // SHARED STYLES
 // ============================================================================
@@ -235,7 +260,7 @@ const INTRO_ARROW_HOVER = 'rgba(148, 163, 184, 0.9)';
 const INTRO_ARROW_ACTIVE = 'rgba(34, 211, 238, 1)';
 const INTRO_TRANSITION = '2s';
 
-function LeaderboardIntro({
+export function LeaderboardIntro({
   isExpanded,
   onToggle,
 }: {
@@ -336,6 +361,7 @@ export default function HomepageGrid({
   const providersRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const isHomepage = pathname === '/';
+  const isWorldContext = pathname === '/world-context';
 
   // --------------------------------------------------------------------------
   // SPEECH SYNTHESIS — British female voice (shared utility)
@@ -535,7 +561,8 @@ export default function HomepageGrid({
             >
               {/* Row 1: Listen (left edge) | Heading (dead centre) | Greenwich Meridian + Sign In (right edge) */}
               <div className="relative flex w-full items-center">
-                {/* Left edge — Listen button */}
+                {/* Left edge — Listen button (hidden on homepage, shown on World Context + other pages) */}
+                {!isHomepage && (
                 <button
                   onClick={handleListenClick}
                   className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-[clamp(0.4rem,0.5vw,0.8rem)] font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
@@ -575,6 +602,7 @@ export default function HomepageGrid({
                     </>
                   )}
                 </button>
+                )}
 
                 {/* Dead centre — Heading (absolute so left/right content can't push it off-centre) */}
                 <h2
@@ -608,7 +636,8 @@ export default function HomepageGrid({
                 </div>
               </div>
 
-              {/* Row 2: Amber description */}
+              {/* Row 2: Amber description (hidden on homepage, shown on World Context + other pages) */}
+              {!isHomepage && (
               <p
                 className="mt-1.5 text-center italic leading-relaxed text-amber-400/80"
                 style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1.2rem)' }}
@@ -620,19 +649,27 @@ export default function HomepageGrid({
                 vast library of curated words and phrases, tailored instantly to your chosen AI
                 platform.
               </p>
+              )}
 
               {/* Glow accent — matches original */}
               <div className="pointer-events-none mt-1 flex w-full justify-center">
                 <div className="h-2 w-full max-w-sm rounded-full bg-gradient-to-r from-sky-500/18 via-emerald-400/14 to-indigo-500/18 blur-xl" />
               </div>
 
-              {/* Fallback nav row — shown when Mission Control is hidden (smaller screens / MC disabled) */}
+              {/* Fallback nav row — shown when Mission Control is hidden (smaller screens / MC disabled)
+                  v5.0.0: Added World Context link (homepage.md §9.2) */}
               {!showMissionControl && (
                 <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
                   {!isHomepage && (
                     <a href="/" className={navButtonStyles}>
                       <HomeIcon />
                       Home
+                    </a>
+                  )}
+                  {!isWorldContext && (
+                    <a href="/world-context" className={navButtonStyles}>
+                      <GlobeIcon />
+                      World Context
                     </a>
                   )}
                   {!isStudioPage && !isStudioSubPage && (
@@ -662,7 +699,7 @@ export default function HomepageGrid({
                 Arrow replicates ExpandHeader animation from providers-table.tsx
                 Hidden when table is expanded (ribbon is gone, no gap to fill)
                 ============================================================ */}
-            {!isTableExpanded && pathname === '/' && (
+            {!isTableExpanded && isWorldContext && (
               <LeaderboardIntro isExpanded={isTableExpanded} onToggle={onExpandToggle} />
             )}
 

@@ -18,7 +18,7 @@
 //
 // Features:
 //   - Copy button (same as exchange card emoji tooltip)
-//   - Speaker button (British female TTS, same voice as hero description)
+//   - Speaker button (British female TTS, continues after tooltip closes)
 //   - Visibility only in daytime tooltip (OWM metres → km/miles or m/yards)
 //   - Visibility < 1km → show in metres and yards
 //   - Wind degrees → compass direction ("northerly", "south-westerly")
@@ -622,7 +622,11 @@ export function ProviderWeatherEmojiTooltip({
   useEffect(() => {
     setIsMounted(true);
     setHasSpeech(isSpeechSupported());
-    return () => setIsMounted(false);
+    return () => {
+      setIsMounted(false);
+      // Stop TTS on full component unmount (page navigation) — not on tooltip hide
+      stopSpeaking();
+    };
   }, []);
 
   // Cleanup timeout on unmount
@@ -632,13 +636,8 @@ export function ProviderWeatherEmojiTooltip({
     };
   }, []);
 
-  // Stop TTS when tooltip closes
-  useEffect(() => {
-    if (!isVisible && speaking) {
-      stopSpeaking();
-      setSpeaking(false);
-    }
-  }, [isVisible, speaking]);
+  // TTS continues independently even after tooltip closes.
+  // The onEnd callback in speakText() resets the speaking state naturally.
 
   // Reset copied state after timeout
   useEffect(() => {

@@ -11,11 +11,11 @@ interface ExchangeCountry {
  * country-commodities.map.json. These are real exchange countries pending
  * commodity data addition.
  *
- * TODO: add commodity data for these 28 countries.
+ * TODO: add commodity data for these 29 countries.
  */
 const KNOWN_MISSING_COUNTRIES = new Set([
   'Bahrain', 'Bosnia and Herzegovina', 'Botswana', 'Croatia',
-  'Czech Republic', 'Ecuador', 'Ghana', 'Jordan', 'Kazakhstan',
+  'Cyprus', 'Czech Republic', 'Ecuador', 'Ghana', 'Jordan', 'Kazakhstan',
   'Kuwait', 'Laos', 'Lebanon', 'Luxembourg', 'Mauritius',
   'Mongolia', 'Montenegro', 'Namibia', 'North Macedonia', 'Oman',
   'Portugal', 'Qatar', 'Serbia', 'Slovakia', 'Slovenia',

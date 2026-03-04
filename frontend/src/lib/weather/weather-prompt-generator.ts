@@ -1,21 +1,20 @@
 // src/lib/weather/weather-prompt-generator.ts
 // ============================================================================
-// WEATHER PROMPT GENERATOR — ORCHESTRATOR (v10.0.0)
+// WEATHER PROMPT GENERATOR — ORCHESTRATOR (v11.0.0)
 // ============================================================================
 //
-// Goals vs v9.x
-// - Reduce prompt jitter when observedAtUtcSeconds is not provided (time quantisation)
-// - Stronger deterministic seed based on *all* relevant weather fields
-// - Post-process outputs to:
-//     * remove redundant sky/atmosphere duplication (fog/haze/mist/smoke/dust)
-//     * fix a few known grammar patterns (Flux "with in ...")
-//     * neutralise culturally-specific leak phrases that misfire in many cities
-//     * (lightly) inject composition phrasing by venue setting (short, safe)
+// v11.0.0 (Mar 2026) — Phase E: Tier Generator Retirement
+// - Unified brain is now the ONLY prompt path (no feature flag)
+// - Deleted legacy tier generator dispatch + A/B comparison logger
+// - Removed getComposition() + injectCompositionIntoText() (assembler handles it)
+// - weather-brain-comparison.ts deleted (transitional A/B tool)
+// - ~200 lines of dual-path plumbing removed
+//
+// v10.3.0 — Phase C: Unified Brain with feature flag
+// v10.1.0 — Composition coherence + camera lens determinism
+// v10.0.0 — Reduce prompt jitter, stronger deterministic seed, post-processing
 //
 // Public API and exports remain compatible with v9.x.
-//
-// IMPORTANT (end-to-end): For truly stable "physics-grade" prompts, pass
-// observedAtUtcSeconds from OpenWeather dt (time of data calculation).
 // ============================================================================
 
 // ── Re-export public types for all consumers ────────────────────────────────
@@ -51,7 +50,7 @@ import type {
   WeatherPromptInput,
   WeatherPromptResult,
   VenueSetting,
-  LightingState,
+  VenueResult,
 } from './prompt-types';
 import { TIER_INFO, resolveProfile } from './prompt-types';
 import { classifyPrecip, deriveVisualTruth, computeDewPoint } from './visual-truth';
@@ -59,18 +58,23 @@ import { computeClimateContext } from './climate';
 import { computeLighting, validateLightingCoherence } from './lighting-engine';
 import { classifyWind } from './wind-system';
 import { getCityVenue, buildContext } from './vocabulary-loaders';
-import {
-  generateTier1,
-  generateTier1Flux,
-  generateTier2,
-  generateTier3,
-  generateTier4,
-  computeSeed as computeTierSeed,
-} from './tier-generators';
+import { computeSeed as computeTierSeed } from './tier-generators';
 import { isNightTime, shouldExcludePeople, computeSolarPhase } from './time-utils';
 import { getMoonPhase } from './moon-phase';
 import { getCameraLens } from './camera-lens';
 import { classifyCloudType } from './cloud-types';
+import { buildWeatherCategoryMap } from './weather-category-mapper';
+import type { WeatherCategoryMap } from './prompt-types';
+import { assemblePrompt, selectionsFromMap, tierToRefPlatform } from '@/lib/prompt-builder';
+import { hashCategoryMap } from '@/lib/prompt-dna';
+import { rewriteWithSynergy } from './synergy-rewriter';
+import {
+  neutraliseLeakPhrases,
+  fixCommonGrammar,
+  postProcessTier1Positive,
+  removeRedundantPhenomenon,
+  trimMjPhenomenonDuplicates,
+} from '@/lib/prompt-post-process';
 
 // ============================================================================
 // TIME + SEED HELPERS
@@ -166,181 +170,10 @@ function computeSceneSeed(input: WeatherPromptInput, observedAtUtc: Date): numbe
 }
 
 // ============================================================================
-// POST-PROCESSING: COHERENCE + LEXICAL SAFETY
+// POST-PROCESSING: Imported from @/lib/prompt-post-process.ts
+// Functions: neutraliseLeakPhrases, fixCommonGrammar, postProcessTier1Positive,
+//            removeRedundantPhenomenon, trimMjPhenomenonDuplicates
 // ============================================================================
-
-/**
- * Returns true when the lens descriptor indicates a portrait or telephoto focal
- * length that contradicts "wide" framing language.
- * Standard primes (35-50mm) are borderline but acceptable with "wide" in MJ.
- */
-function isTeleLens(lensDescriptor?: string): boolean {
-  if (!lensDescriptor) return false;
-  const d = lensDescriptor.toLowerCase();
-  return (
-    d.includes('portrait') ||
-    d.includes('telephoto') ||
-    d.includes('macro') ||
-    d.includes('tele')
-  );
-}
-
-function getComposition(
-  setting: VenueSetting | null,
-  isNight: boolean,
-  lensDescriptor?: string,
-): string | null {
-  // Keep these short and non-contradictory (we already specify lens + camera separately).
-  // v9.8.0: Lens-aware. When a portrait/tele lens is selected, "wide" framing
-  // becomes contradictory. Switch to compressed/detail framing instead.
-  const tele = isTeleLens(lensDescriptor);
-
-  switch (setting) {
-    case 'elevated':
-      return tele ? 'compressed telephoto skyline view' : 'wide panoramic establishing shot';
-    case 'beach':
-      return tele
-        ? (isNight ? 'telephoto seascape night shot' : 'telephoto seascape shot')
-        : (isNight ? 'wide seascape night shot' : 'wide seascape shot');
-    case 'waterfront':
-      return tele ? 'compressed harbourfront detail' : 'wide harbourfront shot';
-    case 'monument':
-      return isNight ? 'low-angle architectural night shot' : 'low-angle architectural shot';
-    case 'narrow':
-      return 'eye-level alleyway shot';
-    case 'market':
-      return 'street-level documentary shot';
-    case 'park':
-      return tele ? 'compressed parkland detail shot' : 'wide parkland scene';
-    case 'plaza':
-      return tele ? 'compressed plaza detail shot' : 'wide open-square scene';
-    case 'street':
-    default:
-      return isNight ? 'street-level night photography' : 'street-level photography';
-  }
-}
-
-function removeRedundantPhenomenon(text: string, lighting: LightingState): string {
-  const atm = (lighting.atmosphereModifier || '').toLowerCase();
-
-  // Only remove the ultra-simple “X overhead.” sentence when it duplicates atmosphere.
-  // This avoids deleting richer sky clauses.
-  const pairs: Array<{ k: string; re: RegExp }> = [
-    { k: 'haze', re: /\s+Haze overhead\.\s*/i },
-    { k: 'mist', re: /\s+Mist overhead\.\s*/i },
-    { k: 'fog', re: /\s+Fog overhead\.\s*/i },
-    { k: 'smoke', re: /\s+Smoke overhead\.\s*/i },
-    { k: 'dust', re: /\s+Dust overhead\.\s*/i },
-  ];
-
-  let out = text;
-  for (const p of pairs) {
-    if (atm.includes(p.k)) {
-      out = out.replace(p.re, ' ');
-    }
-  }
-  return out;
-}
-
-function neutraliseLeakPhrases(text: string): string {
-  // These replacements deliberately target culturally-specific or overly-assumptive nouns
-  // that can misfire across many cities/venues.
-  const replacements: Array<[RegExp, string]> = [
-    [/prayer flags/gi, 'entrance flags'],
-    [/temple steps/gi, 'stone steps'],
-    [/faint moisture on temple steps/gi, 'faint moisture on stone steps'],
-    [/offering items/gi, 'loose items'],
-  ];
-
-  let out = text;
-  for (const [re, rep] of replacements) {
-    out = out.replace(re, rep);
-  }
-  return out;
-}
-
-function fixCommonGrammar(text: string): string {
-  let out = text;
-
-  // Flux variant can produce "with in atmospheric haze" when an atmosphere modifier begins with "in ...".
-  out = out.replace(/\bwith in\b/gi, 'in');
-
-  // Clean double commas / spacing.
-  out = out.replace(/\s+,/g, ',');
-  out = out.replace(/,\s*,/g, ', ');
-  out = out.replace(/\s{2,}/g, ' ');
-  return out.trim();
-}
-
-function injectCompositionIntoText(
-  tier: PromptTier,
-  text: string,
-  composition: string | null,
-): string {
-  if (!composition) return text;
-
-  // Tier 1 text has a fixed "Positive prompt:" / "Negative prompt:" structure.
-  if (tier === 1) {
-    // Do nothing here; Tier 1 injection is handled via positive string reconstruction.
-    return text;
-  }
-
-  // Tier 2 includes params starting at "--ar". Insert composition before params.
-  if (tier === 2) {
-    const idx = text.indexOf(' --ar ');
-    if (idx === -1) return `${text}. ${composition}`;
-    const promptPart = text.slice(0, idx).trim();
-    const paramsPart = text.slice(idx).trim();
-    return `${promptPart}. ${composition} ${paramsPart}`.replace(/\s{2,}/g, ' ').trim();
-  }
-
-  // Tier 3 is sentence-based; add a short sentence after the opening clause.
-  if (tier === 3) {
-    // Insert after first sentence (up to first period).
-    const firstStop = text.indexOf('.');
-    if (firstStop === -1) return `${text}. ${composition}.`;
-    const a = text.slice(0, firstStop + 1);
-    const b = text.slice(firstStop + 1).trim();
-    return `${a} ${composition}. ${b}`.replace(/\s{2,}/g, ' ').trim();
-  }
-
-  // Tier 4 is comma-separated; inject after city/venue if possible.
-  if (tier === 4) {
-    const firstComma = text.indexOf(',');
-    if (firstComma === -1) return `${text}, ${composition}`;
-    const secondComma = text.indexOf(',', firstComma + 1);
-    if (secondComma === -1) return `${text}, ${composition}`;
-    const head = text.slice(0, secondComma);
-    const tail = text.slice(secondComma + 1).trim();
-    return `${head}, ${composition}, ${tail}`.replace(/\s{2,}/g, ' ').trim();
-  }
-
-  return text;
-}
-
-function postProcessTier1Positive(positive: string, lighting: LightingState): string {
-  // Remove simple duplicated sky tokens if lighting already encodes the same phenomenon.
-  const atm = (lighting.atmosphereModifier || '').toLowerCase();
-  const fenómenos = ['haze', 'mist', 'fog', 'smoke', 'dust'];
-
-  let out = positive;
-  for (const k of fenómenos) {
-    if (atm.includes(k)) {
-      // Remove both "(haze:1.1)" and plain "haze" tokens that sit as comma fragments.
-      const weighted = new RegExp(`\\(\\s*${k}\\s*:\\s*1\\.1\\s*\\)\\s*,?\\s*`, 'ig');
-      const plainMid = new RegExp(`,\\s*${k}\\s*,`, 'ig');
-      const plainEnd = new RegExp(`,\\s*${k}\\s*$`, 'ig');
-      out = out.replace(weighted, '');
-      out = out.replace(plainMid, ', ');
-      out = out.replace(plainEnd, '');
-    }
-  }
-
-  out = out.replace(/,\s*,/g, ', ');
-  out = out.replace(/\s{2,}/g, ' ');
-  out = out.replace(/,\s*$/g, '');
-  return out.trim();
-}
 
 // ============================================================================
 // MAIN ORCHESTRATOR
@@ -398,9 +231,28 @@ export function generateWeatherPrompt(input: WeatherPromptInput): WeatherPromptR
 
   // Stronger deterministic seed for venue and post-processing.
   const sceneSeed = computeSceneSeed(input, observedAtUtc);
-  const venueSeed = (sceneSeed ^ 0x9e3779b9) >>> 0;
 
-  const venue = getCityVenue(city, venueSeed);
+  // v10.3.0 Phase C (Extra 2): Venue seed forwarding.
+  // When the route passes venueSeed, use it directly so the route and generator
+  // agree on which venue to display. Eliminates the desync bug where the
+  // homepage label says "Museum District" but the prompt describes "Discovery Green".
+  const venueSeed =
+    typeof input.venueSeed === 'number'
+      ? input.venueSeed >>> 0 // unsigned 32-bit
+      : (sceneSeed ^ 0x9e3779b9) >>> 0;
+
+  // v11.1.0 Upgrade 4 — Venue Singularity: when the route provides a direct
+  // venue override, use it exactly. No getCityVenue() call, no seed mismatch.
+  // The route knows which venue it wants — trust it.
+  let venue: VenueResult | null;
+  if (input.venueOverride) {
+    venue = {
+      name: input.venueOverride.name,
+      setting: input.venueOverride.setting as VenueSetting,
+    };
+  } else {
+    venue = getCityVenue(city, venueSeed);
+  }
 
   // Moon + lighting.
   // v9.8.0: Precipitation-aware cloud floor.
@@ -448,119 +300,75 @@ export function generateWeatherPrompt(input: WeatherPromptInput): WeatherPromptR
     venue?.lightCharacter ?? null,
   );
 
-  // Dispatch to tier generator.
-  let result: WeatherPromptResult;
-  switch (tier) {
-    case 1: {
-      const t1 = generateTier1(
-        city,
-        weather,
-        localHour,
-        lighting,
-        observedAtUtc,
-        visualTruth,
-        venue,
-        profile,
-      );
-      t1.fluxPrompt = generateTier1Flux(
-        city,
-        weather,
-        localHour,
-        lighting,
-        observedAtUtc,
-        visualTruth,
-        venue,
-        profile,
-      );
-      result = t1;
-      break;
-    }
-    case 2:
-      result = {
-        text: generateTier2(
-          city,
-          weather,
-          localHour,
-          lighting,
-          observedAtUtc,
-          visualTruth,
-          solarElevation,
-          venue,
-          profile,
-        ),
-        tier: 2,
-      };
-      break;
-    case 4:
-      result = {
-        text: generateTier4(
-          city,
-          weather,
-          localHour,
-          lighting,
-          observedAtUtc,
-          visualTruth,
-          venue,
-          profile,
-        ),
-        tier: 4,
-      };
-      break;
-    case 3:
-    default:
-      result = {
-        text: generateTier3(
-          city,
-          weather,
-          localHour,
-          lighting,
-          observedAtUtc,
-          visualTruth,
-          solarElevation,
-          venue,
-          profile,
-        ),
-        tier: 3,
-      };
-      break;
+  // ── Phase C (Unified Brain): Build category map ────────────────────────
+  // Always computed — consumers (route, showcase, builder) use it.
+  const categoryMap: WeatherCategoryMap = buildWeatherCategoryMap({
+    city,
+    weather,
+    hour: localHour,
+    lighting,
+    observedAtUtc,
+    visualTruth,
+    solarElevation,
+    venue,
+    profile,
+  });
+
+  // ── Unified brain: assemblePrompt() produces text from category map ──────
+  const refPlatform = tierToRefPlatform(tier as 1 | 2 | 3 | 4);
+  const rawSelections = selectionsFromMap(categoryMap);
+
+  // Extra 6: Synergy-aware rewriting — resolve conflicts, boost reinforcements
+  const rewritten = rewriteWithSynergy(rawSelections, categoryMap.customValues);
+  const selections = rewritten.selections;
+
+  const assembled = assemblePrompt(refPlatform, selections, categoryMap.weightOverrides);
+
+  const result: WeatherPromptResult = {
+    text: assembled.positive,
+    tier,
+  };
+
+  // Tier 1: separate positive/negative + Flux variant
+  if (tier === 1) {
+    result.positive = assembled.positive;
+    result.negative = assembled.negative ?? categoryMap.negative.join(', ');
+
+    // Flux: assemble with Tier 3 reference (T5 = natural language, no weights)
+    const fluxAssembled = assemblePrompt('flux', selections);
+    result.fluxPrompt = fluxAssembled.positive || undefined;
+
+    result.text = `Positive prompt: ${result.positive}\nNegative prompt: ${result.negative}`;
   }
 
-  // ── Post-process: coherence and polish ─────────────────────────────────
+  // Always attach the category map to the result.
+  result.categoryMap = categoryMap;
 
-  // v10.1.0: Compute camera lens for composition coherence. Uses the SAME
-  // seed as tier generators (buildContext + computeTierSeed) so the lens class
-  // matches what tier generators select. Previously used venueSeed which was
-  // computed differently, causing contradictions like "compressed parkland
-  // detail shot" (telephoto composition) injected into a prompt with "wide angle"
-  // (wide camera from the tier's own seed).
+  // Upgrade 5 — Prompt Fingerprint Verification:
+  // Hash the categoryMap content so the builder can verify symmetry.
+  result.categoryMapHash = hashCategoryMap(categoryMap);
+
+  // ── Post-process: coherence and polish ─────────────────────────────────
+  // v11.0.0: Composition injection removed — assembler already includes it.
+  // Camera lens is still computed for the trace diagnostic below.
   const tierCtx = buildContext(weather, localHour, observedAtUtc);
   const tierSeed = computeTierSeed(tierCtx, localHour, observedAtUtc, city);
-  const compositionCamera = getCameraLens(profile.style, venue?.setting ?? null, tierSeed);
-  const composition = getComposition(venue?.setting ?? null, isNight, compositionCamera.lensDescriptor);
 
   if (result.tier === 1 && result.positive && result.negative) {
     // Post-process positive and rebuild the display text.
     let pos = result.positive;
     pos = neutraliseLeakPhrases(pos);
-    pos = postProcessTier1Positive(pos, lighting);
+    pos = postProcessTier1Positive(pos, lighting.atmosphereModifier ?? '');
     pos = fixCommonGrammar(pos);
-
-    // Optional: composition token (keep subtle weight, skip for short verbosity)
-    if (composition && profile.verbosity !== 'short') {
-      pos = `${pos}, (${composition}:1.05)`;
-    }
 
     let neg = result.negative;
     neg = fixCommonGrammar(neutraliseLeakPhrases(neg));
 
-    // Flux prompt: grammar + neutralisation + optional composition (as plain phrase)
+    // Flux prompt: grammar + neutralisation
     let flux = result.fluxPrompt ?? '';
     if (flux) {
       flux = neutraliseLeakPhrases(flux);
       flux = fixCommonGrammar(flux);
-      if (composition) {
-        flux = `${flux}, ${composition}`.replace(/\s{2,}/g, ' ').trim();
-      }
     }
 
     result.positive = pos;
@@ -570,18 +378,12 @@ export function generateWeatherPrompt(input: WeatherPromptInput): WeatherPromptR
   } else {
     let txt = result.text;
     txt = neutraliseLeakPhrases(txt);
-    txt = removeRedundantPhenomenon(txt, lighting);
-    txt = injectCompositionIntoText(result.tier, txt, composition);
+    txt = removeRedundantPhenomenon(txt, lighting.atmosphereModifier ?? '');
     txt = fixCommonGrammar(txt);
 
     // A small extra redundancy trim for MJ prompts: remove ", haze," etc when atmosphere already encodes haze.
     if (result.tier === 2) {
-      const atm = (lighting.atmosphereModifier || '').toLowerCase();
-      if (atm.includes('haze')) txt = txt.replace(/,\s*haze\s*,/i, ', ');
-      if (atm.includes('mist')) txt = txt.replace(/,\s*mist\s*,/i, ', ');
-      if (atm.includes('fog')) txt = txt.replace(/,\s*fog\s*,/i, ', ');
-      if (atm.includes('smoke')) txt = txt.replace(/,\s*smoke\s*,/i, ', ');
-      if (atm.includes('dust')) txt = txt.replace(/,\s*dust\s*,/i, ', ');
+      txt = trimMjPhenomenonDuplicates(txt, lighting.atmosphereModifier ?? '');
       txt = fixCommonGrammar(txt);
     }
 

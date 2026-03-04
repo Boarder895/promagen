@@ -1,15 +1,25 @@
 // src/components/home/mission-control.tsx
 // ============================================================================
-// MISSION CONTROL - Smart Automated Prompts Panel (v4.0.0)
+// MISSION CONTROL - Smart Automated Prompts Panel (v5.0.0)
 // ============================================================================
 // Right-side panel with weather-driven prompt preview.
+//
+// v5.0.0 CHANGES:
+// - ADDED: World Context button on ALL pages (links to /world-context)
+// - Grid expanded from 2→3 columns (default) and 3→4 (studio sub-pages)
+// - Homepage: Studio | World Context | Pro (3 buttons)
+// - Studio page: Home | World Context | Pro (3 buttons)
+// - Pro Promagen: Studio | World Context | Home (3 buttons)
+// - Studio sub-pages: Home | World Context | Studio | Pro (4 buttons)
+// - Provider pages: Home | World Context | Studio | Pro (4 buttons)
+// - Authority: docs/authority/homepage.md §9.1, buttons.md
 //
 // v4.0.0 CHANGES:
 // - REMOVED: Sign-in button from Mission Control (now in homepage-grid Hero Window)
 // - REMOVED: All Clerk auth imports, hooks, and state logic
 // - REMOVED: isAuthenticated prop (no longer needed)
 // - REMOVED: userIconPath, actionButtonLoading (sign-in only)
-// - Grid reduced from 3→2 columns (default) and 4→3 (studio sub-pages)
+// - Former grid: 2 columns (default) and 3 (studio sub-pages)
 // - Homepage: Studio | Pro (2 buttons)
 // - Studio page: Home | Pro (2 buttons)
 // - Pro Promagen: Studio | Home (2 buttons)
@@ -220,6 +230,10 @@ const studioIconPath =
 // Pro/Star icon path
 const proIconPath =
   'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z';
+
+// World Context / Globe icon path (Heroicons globe-americas)
+const worldContextIconPath =
+  'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 003 12c0-1.605.42-3.113 1.157-4.418';
 
 // ============================================================================
 // COMPONENT
@@ -433,6 +447,41 @@ export default function MissionControl({
   );
 
   // ══════════════════════════════════════════════════════════════════════════
+  // RENDER WORLD CONTEXT BUTTON — Always links to /world-context
+  // Authority: docs/authority/homepage.md §9.1, buttons.md §1.2
+  // CRITICAL: Explicit text-purple-100 on child <svg> and <span> per buttons.md §1
+  // ══════════════════════════════════════════════════════════════════════════
+  const renderWorldContextButton = () => (
+    <a
+      href="/world-context"
+      className={`${actionButtonBase} ${actionButtonActive}`}
+      aria-label="Open World Context"
+      style={{
+        padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
+        gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
+        minHeight: 'clamp(40px, 5vh, 60px)',
+      }}
+    >
+      <svg
+        className="text-purple-100"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        style={{
+          width: 'clamp(18px, 1.5vw, 22px)',
+          height: 'clamp(18px, 1.5vw, 22px)',
+        }}
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={worldContextIconPath} />
+      </svg>
+      <span className="text-purple-100" style={{ fontSize: 'clamp(0.6rem, 0.75vw, 0.8rem)' }}>
+        World Context
+      </span>
+    </a>
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
   // RENDER FIRST BUTTON — Home or Studio depending on isStudioPage
   // ══════════════════════════════════════════════════════════════════════════
   const renderFirstButton = () => {
@@ -460,10 +509,11 @@ export default function MissionControl({
 
   // ══════════════════════════════════════════════════════════════════════════
   // DETERMINE GRID LAYOUT
-  // - isStudioSubPage: 3 columns (Home | Studio | Pro)
-  // - Default: 2 columns
+  // - isStudioSubPage: 4 columns (Home | World Context | Studio | Pro)
+  // - Default: 3 columns (First | World Context | Second)
+  // v5.0.0: +1 column for World Context button on all pages
   // ══════════════════════════════════════════════════════════════════════════
-  const gridCols = isStudioSubPage ? 'grid-cols-3' : 'grid-cols-2';
+  const gridCols = isStudioSubPage ? 'grid-cols-4' : 'grid-cols-3';
 
   // ══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -643,22 +693,27 @@ export default function MissionControl({
         </div>
       </div>
 
-      {/* ACTION ZONE — Grid layout (2 or 3 columns, no sign-in — that's in Hero Window) */}
+      {/* ACTION ZONE — Grid layout (3 or 4 columns — World Context always present)
+           v5.0.0: World Context button added on all pages
+           Authority: docs/authority/homepage.md §9.1 */}
       <div className={`grid ${gridCols}`} style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
         {isStudioSubPage ? (
-          // 3-button layout for Studio sub-pages: Home | Studio | Pro
+          // 4-button layout for Studio sub-pages / Provider pages:
+          // Home | World Context | Studio | Pro
           <>
             {renderHomeButton()}
+            {renderWorldContextButton()}
             {renderStudioButton()}
             {renderProButton()}
           </>
         ) : (
-          // 2-button layout (default): First | Second
+          // 3-button layout (default): First | World Context | Second
+          // Homepage:      Studio | World Context | Pro
+          // Studio:        Home   | World Context | Pro
+          // Pro Promagen:  Studio | World Context | Home
           <>
-            {/* First Button: Home (on Studio page) or Studio (on Homepage/Pro Promagen) */}
             {renderFirstButton()}
-
-            {/* Second Button: Home (on Pro Promagen page) or Pro (on Homepage/Studio) */}
+            {renderWorldContextButton()}
             {renderSecondButton()}
           </>
         )}

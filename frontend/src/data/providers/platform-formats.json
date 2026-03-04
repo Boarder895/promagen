@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "version": "3.1.0",
-    "description": "Platform-specific prompt assembly rules with tier-aware config and intent reordering. impactPriority defines which categories to front-load for maximum platform impact.",
-    "updated": "2026-02-23"
+    "version": "3.5.0",
+    "description": "Platform-specific prompt assembly rules with tier-aware config and intent reordering. impactPriority defines which categories to front-load for maximum platform impact. v3.2.0: Normalised quality prefixes across SD family, added weight syntax to Artguru, subject emphasis for SD platforms. v3.3.0: Aligned all Tier 3/4 platform categoryOrders with reference platforms for parity. v3.4.0: hotpot ss=100 +composition/camera/materials; imagine-meta +materials; canva ref +environment/atmosphere/composition; all T4 aligned; flux qualitySuffix cleared; expanded NEGATIVE_TO_POSITIVE map. v3.5.0: All 42 platforms configured. clipdrop reconfigured as T1 CLIP; getimg +materials/composition; stability ss\u219270; bluewillow +camera/materials; 11 missing T4 platforms added. novelai ss=80\u2192100.",
+    "updated": "2026-03-03"
   },
   "_defaults": {
     "promptStyle": "natural",
@@ -80,7 +80,9 @@
         "lighting",
         "atmosphere",
         "colour",
-        "composition"
+        "composition",
+        "camera",
+        "materials"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 60,
@@ -115,7 +117,7 @@
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 77,
-      "sweetSpot": 50,
+      "sweetSpot": 70,
       "qualityPrefix": [
         "masterpiece",
         "best quality",
@@ -140,14 +142,15 @@
         "blurry"
       ],
       "weightedCategories": {
-        "lighting": 1.1
+        "lighting": 1.1,
+        "subject": 1.2
       },
       "tips": "Use quality boosters: masterpiece, best quality, highly detailed. Comprehensive negative prompts improve output.",
       "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, concept art, cinematic lighting, dramatic",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "dreamstudio": {
@@ -196,14 +199,15 @@
         "blurry"
       ],
       "weightedCategories": {
-        "lighting": 1.1
+        "lighting": 1.1,
+        "subject": 1.2
       },
       "tips": "Same as Stability AI. Use SDXL-optimised prompts for best results.",
       "exampleOutput": "masterpiece, portrait of a samurai warrior, fighting stance, cinematic lighting, dramatic atmosphere, 8K",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "lexica": {
@@ -256,8 +260,8 @@
       "exampleOutput": "masterpiece, portrait of a samurai, fighting pose, cinematic lighting, dramatic, highly detailed",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "playground": {
@@ -310,8 +314,8 @@
       "exampleOutput": "portrait of a samurai, fighting, concept art, cinematic lighting, dramatic mood, highly detailed",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "nightcafe": {
@@ -364,8 +368,8 @@
       "exampleOutput": "portrait of a samurai warrior, fighting, concept art, cinematic lighting, dramatic mood, 8K detail",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "getimg": {
@@ -381,7 +385,9 @@
         "lighting",
         "atmosphere",
         "colour",
-        "camera"
+        "camera",
+        "materials",
+        "composition"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -416,8 +422,8 @@
       "exampleOutput": "portrait of a samurai warrior, fighting, concept art, cinematic lighting, dramatic",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "openart": {
@@ -470,21 +476,26 @@
       "exampleOutput": "portrait of a samurai, fighting, concept art, cinematic lighting, dramatic mood",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "clipdrop": {
-      "promptStyle": "natural",
+      "promptStyle": "keywords",
       "separator": ", ",
-      "negativeSupport": "none",
+      "negativeSupport": "separate",
       "negativeSyntax": null,
       "categoryOrder": [
         "subject",
         "action",
         "style",
+        "environment",
         "lighting",
-        "colour"
+        "colour",
+        "atmosphere",
+        "composition",
+        "camera",
+        "materials"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -495,6 +506,29 @@
         "subject",
         "lighting",
         "style"
+      ],
+      "qualityNegative": [
+        "worst quality",
+        "low quality",
+        "normal quality",
+        "lowres",
+        "bad anatomy",
+        "bad hands",
+        "error",
+        "missing fingers",
+        "extra digit",
+        "fewer digits",
+        "cropped",
+        "jpeg artifacts",
+        "signature",
+        "watermark",
+        "username",
+        "blurry"
+      ],
+      "qualityPrefix": [
+        "masterpiece",
+        "best quality",
+        "highly detailed"
       ]
     },
     "jasper-art": {
@@ -547,8 +581,8 @@
       "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, cinematic lighting, dramatic",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ]
     },
     "artguru": {
@@ -595,15 +629,18 @@
         "blurry"
       ],
       "weightedCategories": {
+        "subject": 1.2,
         "lighting": 1.1
       },
       "tips": "Artguru is SD-based. Use quality tags and comprehensive negative prompts.",
       "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting pose, cinematic lighting, highly detailed",
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
-      ]
+        "style",
+        "lighting"
+      ],
+      "supportsWeighting": true,
+      "weightingSyntax": "({term}:{weight})"
     },
     "leonardo": {
       "promptStyle": "keywords",
@@ -629,8 +666,8 @@
       "sweetSpot": 100,
       "qualityPrefix": [
         "masterpiece",
-        "highly detailed",
-        "professional"
+        "best quality",
+        "highly detailed"
       ],
       "qualityNegative": [
         "worst quality",
@@ -681,11 +718,7 @@
       "wrapNegativeInPrompt": false,
       "tokenLimit": 256,
       "sweetSpot": 120,
-      "qualitySuffix": [
-        "8K",
-        "ultra detailed",
-        "sharp focus"
-      ],
+      "qualitySuffix": [],
       "qualityNegative": [
         "worst quality",
         "low quality",
@@ -733,10 +766,11 @@
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
-      "sweetSpot": 80,
+      "sweetSpot": 100,
       "qualityPrefix": [
         "{{{masterpiece}}}",
-        "{{best quality}}"
+        "{{best quality}}",
+        "{{highly detailed}}"
       ],
       "qualityNegative": [
         "worst quality",
@@ -778,6 +812,7 @@
         "atmosphere",
         "colour",
         "composition",
+        "camera",
         "materials"
       ],
       "wrapNegativeInPrompt": true,
@@ -836,6 +871,7 @@
         "atmosphere",
         "colour",
         "composition",
+        "camera",
         "materials"
       ],
       "wrapNegativeInPrompt": false,
@@ -863,7 +899,9 @@
         "lighting",
         "atmosphere",
         "colour",
-        "composition"
+        "composition",
+        "camera",
+        "materials"
       ],
       "wrapNegativeInPrompt": true,
       "negativeWrapPrefix": "excluding ",
@@ -888,7 +926,12 @@
         "action",
         "style",
         "lighting",
-        "colour"
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition",
+        "camera",
+        "materials"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 400,
@@ -911,7 +954,12 @@
         "action",
         "style",
         "lighting",
-        "colour"
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition",
+        "camera",
+        "materials"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 200,
@@ -937,7 +985,9 @@
         "lighting",
         "environment",
         "colour",
-        "composition"
+        "composition",
+        "camera",
+        "materials"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 200,
@@ -961,7 +1011,10 @@
         "action",
         "style",
         "lighting",
-        "colour"
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -983,7 +1036,10 @@
         "action",
         "style",
         "lighting",
-        "colour"
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -1005,7 +1061,10 @@
         "action",
         "style",
         "lighting",
-        "colour"
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -1026,7 +1085,11 @@
         "subject",
         "action",
         "style",
-        "lighting"
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 100,
@@ -1074,7 +1137,11 @@
         "style",
         "environment",
         "lighting",
-        "colour"
+        "colour",
+        "atmosphere",
+        "composition",
+        "camera",
+        "materials"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 400,
@@ -1097,7 +1164,10 @@
         "action",
         "style",
         "lighting",
-        "colour"
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
@@ -1119,11 +1189,16 @@
         "action",
         "style",
         "lighting",
-        "colour"
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition",
+        "camera",
+        "materials"
       ],
       "wrapNegativeInPrompt": false,
       "tokenLimit": 150,
-      "sweetSpot": 60,
+      "sweetSpot": 100,
       "impactPriority": [
         "subject",
         "style"
@@ -1179,11 +1254,286 @@
       },
       "impactPriority": [
         "subject",
-        "lighting",
-        "style"
+        "style",
+        "lighting"
       ],
       "tips": "SD-based. Use quality tags and comprehensive negative prompts.",
       "exampleOutput": "masterpiece, best quality, portrait of a samurai, fighting, cinematic lighting, dramatic"
+    },
+    "artbreeder": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 30,
+      "tokenLimit": 75,
+      "tips": "Artbreeder works best with very short evocative phrases. Use sliders for fine-tuning."
+    },
+    "freepik": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 60,
+      "tokenLimit": 150,
+      "tips": "Freepik AI responds to clear descriptive prompts. Include style and mood."
+    },
+    "myedit": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 40,
+      "tokenLimit": 100,
+      "tips": "CyberLink MyEdit works best with short, focused prompts."
+    },
+    "photoleap": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 30,
+      "tokenLimit": 75,
+      "tips": "Photoleap is mobile-first \u2014 use short, punchy prompts focused on subject and style."
+    },
+    "picwish": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 40,
+      "tokenLimit": 100,
+      "tips": "PicWish works best with simple, clear descriptions."
+    },
+    "pixlr": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 50,
+      "tokenLimit": 150,
+      "tips": "Pixlr AI responds to concise natural language descriptions."
+    },
+    "remove-bg": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 30,
+      "tokenLimit": 75,
+      "tips": "Remove.bg AI generation uses very short prompts. Focus on the main subject."
+    },
+    "simplified": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 50,
+      "tokenLimit": 150,
+      "tips": "Simplified works well with marketing-focused descriptions."
+    },
+    "visme": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 40,
+      "tokenLimit": 100,
+      "tips": "Visme works best with clear, presentation-ready descriptions."
+    },
+    "vistacreate": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 50,
+      "tokenLimit": 150,
+      "tips": "VistaCreate responds to focused visual descriptions with mood and colour."
+    },
+    "123rf": {
+      "promptStyle": "natural",
+      "separator": ", ",
+      "negativeSupport": "none",
+      "negativeSyntax": null,
+      "categoryOrder": [
+        "subject",
+        "action",
+        "style",
+        "lighting",
+        "colour",
+        "environment",
+        "atmosphere",
+        "composition"
+      ],
+      "wrapNegativeInPrompt": false,
+      "impactPriority": [
+        "subject",
+        "style"
+      ],
+      "exampleOutput": "atmospheric cityscape, warm tones, dramatic lighting",
+      "sweetSpot": 60,
+      "tokenLimit": 150,
+      "tips": "123RF AI works best with stock-photo-style descriptions. Be specific about subject and setting."
     }
   }
 }

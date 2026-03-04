@@ -1,6 +1,9 @@
 // src/types/prompt-builder.ts
 // TypeScript types for the enhanced prompt builder system with 12 categories
-// Version 3.1.0 - All selection limits set to 1 except negative (5)
+// Version 3.2.0 - Rich phrase handling + WeatherCategoryMap + Prompt DNA
+// Changelog:
+//   3.2.0 - Added WeatherCategoryMap, PromptSource, PromptDNAFingerprint
+//   3.1.0 - All selection limits set to 1 except negative (5)
 
 /**
  * Available prompt categories - 12 total
@@ -181,6 +184,14 @@ export interface AssembledPrompt {
   negativeMode: NegativeSupport;
   /** Was the prompt trimmed to fit token limits */
   wasTrimmed?: boolean;
+  /**
+   * v11.1.1 Improvement 5: Estimated CLIP token count for the positive prompt.
+   * CLIP uses BPE tokenisation where ~1.3 words ≈ 1 token.
+   * Standard CLIP models process 77 tokens per encoding pass.
+   */
+  estimatedTokens?: number;
+  /** Platform's configured token limit (e.g., 77 for CLIP, 60 for MJ) */
+  tokenLimit?: number;
 }
 
 /** State for a single category in the UI */
@@ -208,4 +219,131 @@ export interface ComboboxProps {
   maxCustomChars?: number;
   /** Whether to show the free text input (default: true) */
   allowFreeText?: boolean;
+}
+
+// ============================================================================
+// Prompt Source Tracking (Phase A — Unified Brain)
+// ============================================================================
+
+/**
+ * Identifies where a prompt's data originated.
+ * Used by the assembler to apply source-specific intelligence:
+ *   - 'user': manual dropdown selections (existing behaviour, no change)
+ *   - 'weather': weather intelligence computed phrases (rich phrase handling)
+ *   - 'scene-starter': scene starter presets (standard dropdown terms)
+ *   - 'randomiser': randomise button output (standard dropdown terms)
+ */
+export type PromptSource = 'user' | 'weather' | 'scene-starter' | 'randomiser';
+
+// ============================================================================
+// Weather Category Map (Phase A — Unified Brain Data Contract)
+// ============================================================================
+
+/**
+ * Structured output from weather intelligence, mapped to prompt builder categories.
+ *
+ * The weather generator computes WHAT the scene looks like (physics, lighting,
+ * camera, venue, wind, etc.) and outputs this structured map. The assembler
+ * then formats it for any platform tier.
+ *
+ * Categories can have BOTH a dropdown selection AND a customValue:
+ *   - selections: closest vocabulary match (e.g., "moonlight")
+ *   - customValues: rich physics-computed phrase (e.g., "Cool white moonlight
+ *     competing with focused accent lighting")
+ *
+ * The assembler uses customValue when present, dropdown term as fallback.
+ */
+export interface WeatherCategoryMap {
+  /** Dropdown selections — terms that exist in vocabulary JSONs */
+  selections: Partial<Record<PromptCategory, string[]>>;
+
+  /** Custom values — rich physics-computed phrases per category */
+  customValues: Partial<Record<PromptCategory, string>>;
+
+  /** Negative terms */
+  negative: string[];
+
+  /** Optional per-category weight overrides for CLIP-tier platforms */
+  weightOverrides?: Partial<Record<PromptCategory, number>>;
+
+  /**
+   * Per-category confidence score (0–1).
+   *
+   * Indicates how confident the mapper is about each category mapping.
+   * Higher confidence = data came directly from physics computation.
+   * Lower confidence  = heuristic fallback or generic default was used.
+   *
+   * UI can use this for:
+   *   - Chip opacity (dim = low confidence → invite editing)
+   *   - Tooltip hints ("AI-suggested — click to refine")
+   *   - Assembler can prefer customValue (high) vs selection (low)
+   *
+   * Example: subject (city) = 1.0 always; lighting = 0.95 with visual truth,
+   * 0.6 without; atmosphere = 0.5 with generic conditions fallback.
+   */
+  confidence?: Partial<Record<PromptCategory, number>>;
+
+  /** Metadata for "Inspired by" badge + diagnostics */
+  meta: WeatherCategoryMeta;
+}
+
+/**
+ * Metadata attached to a WeatherCategoryMap for UI display and diagnostics.
+ */
+export interface WeatherCategoryMeta {
+  city: string;
+  venue: string;
+  venueSetting: string;
+  mood: string;
+  conditions: string;
+  emoji: string;
+  tempC: number | null;
+  localTime: string;
+  source: 'weather-intelligence';
+}
+
+// ============================================================================
+// Prompt DNA Fingerprinting (Extra 2 — Category Combination Tracking)
+// ============================================================================
+
+/**
+ * A fingerprint representing a unique combination of category selections.
+ * Used by the learning engine to track which COMBINATIONS produce
+ * the best user engagement (likes, copies, "Try in" clicks).
+ *
+ * Example: "Subject=cityscape + Lighting=moonlight + Atmosphere=contemplative"
+ * produces a stable hash that feeds back into vocabulary ranking.
+ */
+export interface PromptDNAFingerprint {
+  /** Stable hash of the category combination (FNV-1a, 32-bit hex) */
+  hash: string;
+  /** Human-readable category breakdown */
+  categories: Partial<Record<PromptCategory, string>>;
+  /** Where the prompt originated */
+  source: PromptSource;
+  /** Platform the prompt was assembled for */
+  platformId: string;
+  /** Timestamp of creation (ISO 8601) */
+  createdAt: string;
+}
+
+/**
+ * Engagement metrics tracked per DNA fingerprint.
+ * Accumulates across all users who see/interact with this combination.
+ */
+export interface PromptDNAScore {
+  /** The fingerprint hash (FK to PromptDNAFingerprint) */
+  hash: string;
+  /** Total times this combination was displayed */
+  impressions: number;
+  /** Total likes received */
+  likes: number;
+  /** Total copies (clipboard) */
+  copies: number;
+  /** Total "Try in" clicks to prompt builder */
+  tryInClicks: number;
+  /** Computed quality score (0–1) = weighted(likes + copies + tryIn) / impressions */
+  qualityScore: number;
+  /** Last updated timestamp */
+  updatedAt: string;
 }

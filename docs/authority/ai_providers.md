@@ -220,6 +220,33 @@ const connections = getCityConnections();
 
 ---
 
+### Prompt builder data sources
+
+The prompt builder system uses two additional SSOT JSON files:
+
+**Prompt options:**
+- Location: `frontend/src/data/providers/prompt-options.json`
+- Schema: `frontend/src/types/prompt-builder.ts` (PromptCategory union type, 12 categories)
+- Content: 12 categories × ~100 curated options + ~961 negative options ≈ 2,100 total terms
+
+**Platform formats:**
+- Location: `frontend/src/data/providers/platform-formats.json`
+- Schema: `frontend/src/types/prompt-builder.ts` (PlatformFormat interface)
+- Content: Assembly rules for 31 platform configs (+ defaults) across 4 tiers. Includes `impactPriority`, `weightedCategories`, `qualityPrefix`, `promptStyle`, and `tokenLimit` per platform.
+
+**Assembly logic:**
+- Location: `frontend/src/lib/prompt-builder.ts` (1,519 lines)
+- Key exports: `assemblePrompt(platformId, selections, weightOverrides?)`, `formatPromptForCopy()`, `getCategoryConfig()`, `getPlatformFormat()`, `selectionsFromMap()`, `tierToRefPlatform()`
+- Full export list: 24 public functions — see `unified-prompt-brain.md` §16
+
+**Type definitions:**
+- Location: `frontend/src/types/prompt-builder.ts`
+- Key types: `PromptCategory`, `PlatformFormat`, `AssembledPrompt`, `WeatherCategoryMap`
+
+For full prompt builder architecture, see: **prompt-builder-page.md**
+
+---
+
 ## AI Provider Selector (v2.1.0 — NEW)
 
 ### Overview
@@ -435,12 +462,12 @@ The provider catalogue maps each platform to one of **four prompt tiers** based 
 
 ### Tier Definitions
 
-| Tier  | Name              | Prompt Style                                | Examples                         |
-| ----- | ----------------- | ------------------------------------------- | -------------------------------- |
-| **1** | CLIP-Based        | Tokenized keywords, high stacking tolerance | Stable Diffusion, Flux, Leonardo |
-| **2** | Midjourney Family | Parameter-rich, very high tolerance         | Midjourney, Niji, BlueWillow     |
-| **3** | Natural Language  | Conversational prompts, medium tolerance    | DALL·E, Imagen, Firefly          |
-| **4** | Plain Language    | Simple prompts work best, low tolerance     | Craiyon, Canva, Artbreeder       |
+| Tier  | Name              | Prompt Style                                | Examples                           |
+| ----- | ----------------- | ------------------------------------------- | ---------------------------------- |
+| **1** | CLIP-Based        | Tokenized keywords, high stacking tolerance | Stable Diffusion, Leonardo, NovelAI |
+| **2** | Midjourney Family | Parameter-rich, very high tolerance         | Midjourney, BlueWillow             |
+| **3** | Natural Language  | Conversational prompts, medium tolerance    | DALL·E, Flux, Imagen, Firefly      |
+| **4** | Plain Language    | Simple prompts work best, low tolerance     | Craiyon, Canva, Artbreeder         |
 
 ### Platform Tier Assignments (All 42 Platforms)
 

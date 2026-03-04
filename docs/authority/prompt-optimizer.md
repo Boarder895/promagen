@@ -59,11 +59,12 @@ User selects terms in Prompt Builder
 ┌──────────────────────────┐
 │  Prompt Assembler         │  prompt-builder.ts
 │  assembleTierAware()      │  Builds platform-specific prompt text
-│  4 assembly strategies:   │  from user selections + composition pack
-│    assembleKeywords()     │
-│    assembleMidjourney()   │  Injects qualityPrefix/qualitySuffix
+│  3 sub-assemblers:        │  from user selections + weightOverrides
+│    assembleKeywords()     │  Injects qualityPrefix/qualitySuffix
 │    assembleNaturalSent()  │  from platform-formats.json
 │    assemblePlainLang()    │
+│                           │  Weather weight overrides merge here:
+│                           │  weather base → platform wins on conflicts
 └──────────┬───────────────┘
            │  assembled prompt text
            ▼
@@ -616,7 +617,7 @@ Fallback: if the reconstructed clause doesn't match the prompt string exactly, i
 | ----------------------- | --------------------- | --------------------------------------------- |
 | `prompt-trimmer.ts`     | `getPromptLimit()`    | Look up platform character/token limits       |
 | `platform-tiers.ts`     | `getPlatformTierId()` | Determine tier for routing                    |
-| `prompt-builder.ts`     | `getPlatformFormat()` | Get promptStyle + qualityPrefix/qualitySuffix |
+| `prompt-builder.ts`     | `getPlatformFormat()` | Get promptStyle + qualityPrefix/qualitySuffix. Note: `weightedCategories` may include weather-derived overrides merged upstream by `assembleTierAware()` (weather base layer, platform wins on conflicts). Optimizer receives the merged output. |
 | `clip-bpe-tokenizer.ts` | `clipTokenCount()`    | Exact/heuristic CLIP token counts             |
 
 ### 12.2 Consumers of Optimizer

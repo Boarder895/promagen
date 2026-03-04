@@ -1,41 +1,33 @@
 // src/app/page.tsx
 // ============================================================================
-// HOMEPAGE - Server Component (Dynamic)
+// NEW HOMEPAGE - Server Component (Dynamic)
 // ============================================================================
-// Loads data on the server, passes to client component for dynamic ordering.
+// The prompt-focused homepage replaces the former financial-data-first layout.
+// The original layout (exchange rails, FX ribbons, etc.) now lives at /world-context.
 //
-// UPDATED (2026-01-19): Now fetches LIVE weather from gateway!
-// - Uses getWeatherIndex() which calls gateway /weather endpoint
-// - Returns empty data if gateway unavailable
-// - Emoji now reflects actual weather conditions ☀️🌧❄️
+// This page loads providers + weather for the Prompt of the Moment showcase,
+// then delegates to NewHomepageClient for:
+// - Prompt of the Moment (4-tier weather prompt, copy, like, "Try in")
+// - Scene Starters preview (left rail)
+// - Community Pulse feed (right rail)
+// - Online users by country
 //
-// UPDATED (2026-01-22): Made dynamic to avoid stale weather at build time
-// - Homepage now renders at request time, not build time
-// - Weather data is always fresh (not baked in during build)
-// - Build no longer depends on gateway availability
+// Authority: docs/authority/homepage.md
 //
-// Server responsibilities:
-// - Load providers from data files
-// - Load all exchanges from catalog
-// - Fetch weather from gateway (with demo fallback)
-// - SEO metadata
-//
-// Client responsibilities (HomepageClient):
-// - Detect user location
-// - Order exchanges relative to location/Greenwich
-// - Handle reference frame toggle (paid users)
-// - Wire auth state
-//
-// Authority: docs/authority/paid_tier.md §3.4
+// Existing features preserved: Yes
+// - Leaderboard table stays on new homepage
+// - Engine Bay stays
+// - Mission Control stays (+ World Context button)
+// - All other pages untouched
 // ============================================================================
 
 import React from 'react';
 import type { Metadata } from 'next';
 
-// Force dynamic rendering - homepage needs live weather data
+// Force dynamic rendering — homepage needs live weather for Prompt of the Moment
 export const dynamic = 'force-dynamic';
 
-import HomepageClient from '@/components/home/homepage-client';
+import NewHomepageClient from '@/components/home/new-homepage-client';
 import { getProviders } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
@@ -47,7 +39,7 @@ import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 export const metadata: Metadata = {
   title: 'AI Prompt Builder for 42+ Image Generators | Promagen',
   description:
-    'Build prompts for Midjourney, DALL·E & 40+ AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and live financial market data.',
+    'Build prompts for Midjourney, DALL·E & 40+ AI image generators. 10,000+ phrase vocabulary, Elo-ranked leaderboard, and intelligent weather-driven prompts.',
 };
 
 // ============================================================================
@@ -55,22 +47,24 @@ export const metadata: Metadata = {
 // ============================================================================
 
 /**
- * HomePage - Server component that loads data and renders client wrapper.
+ * HomePage — Server component for the new prompt-focused homepage.
  *
- * The client wrapper (HomepageClient) handles:
- * - User location detection
- * - Dynamic exchange ordering based on location
- * - Reference frame toggle for paid users
+ * Loads the same server data as before (providers, exchanges, weather) but
+ * the client component renders the new layout: Prompt of the Moment showcase
+ * in the centre, Scene Starters preview on the left, Community Pulse on the right.
  */
 export default async function HomePage() {
-  // Load data on server (parallel fetches)
   const [providers, allExchanges, weatherIndex] = await Promise.all([
     Promise.resolve(getProviders()),
     Promise.resolve(getHomepageExchanges()),
-    getWeatherIndex(), // Now fetches LIVE data from gateway!
+    getWeatherIndex(),
   ]);
 
   return (
-    <HomepageClient exchanges={allExchanges} weatherIndex={weatherIndex} providers={providers} />
+    <NewHomepageClient
+      exchanges={allExchanges}
+      weatherIndex={weatherIndex}
+      providers={providers}
+    />
   );
 }

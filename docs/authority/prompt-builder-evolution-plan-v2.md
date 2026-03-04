@@ -1,39 +1,41 @@
 # Prompt Builder Evolution Plan v2.0
 
-**Version:** 2.1.0
+**Version:** 2.2.0
 **Created:** 2026-02-24
-**Last Updated:** 2026-02-27
-**Status:** Active Build — Phases 0–7.7 complete, Phases 7.8–7.11 remaining
+**Last Updated:** 2026-03-01
+**Status:** ✅ ALL PHASES COMPLETE — Phases 0–7.11 delivered
+
+> **Next phase:** The Unified Prompt Brain initiative builds on top of this evolution plan. It consolidates the weather generator's assembly path into the prompt builder's `assemblePrompt()` — one brain for all prompt paths. See `unified-prompt-brain.md` for full architecture, implementation details, and the 10 post-integration fixes shipped.
 **Authority:** This document is the single source of truth for the prompt builder evolution.
-**Admin Route:** `/admin` (live), `/admin/scoring-health` (planned — Phase 7.11)
-**Tests:** See `tests.md` for all test code. This document references test files but does not include test source.
+**Admin Route:** `/admin` (live), `/admin/scoring-health` (live — 12 dashboard sections)
+**Tests:** 131 test files across 8 Jest projects. See `test-in-place.md` for inventory. This document references test files but does not include test source.
 
 ---
 
 ## Build Status Dashboard
 
-| Phase    | Feature                         | Status         | Key Metric                                                                                                      |
-| -------- | ------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------- |
-| **0**    | Vocabulary Merge                | ✅ COMPLETE    | 9,058 terms (3,501 core + 5,557 merged) across 9 merged + 3 unchanged categories                                |
-| **1**    | Cascading Intelligence          | ✅ COMPLETE    | 50 semantic clusters, 250 affinities, 2,032 tagged terms, 145 conflicts, 42 platform hints                      |
-| **2**    | Scene Starters                  | ✅ COMPLETE    | 200 scenes (25 free / 175 pro) across 23 worlds                                                                 |
-| **3**    | Explore Drawer                  | ✅ COMPLETE    | 805-line component with tier badges, cascade ordering, search, pagination                                       |
-| **4**    | Polish & Integration            | ✅ COMPLETE    | Scene flavour phrases wired, analytics events, fluid typography, Phase 4 tests                                  |
-| **5**    | Collective Intelligence Engine  | ✅ COMPLETE    | Telemetry endpoint, 14-layer aggregation cron (1,354 lines), 14 learning API routes                             |
-| **6**    | Self-Improving Scorer           | ✅ COMPLETE    | 11,189 LOC across 29 learning engine files, 5 recalibration mechanisms                                          |
-| **7.1**  | Negative Pattern Learning       | ✅ COMPLETE    | Anti-pattern detection (370 lines) + collision matrix (346 lines) + lookups                                     |
-| **7.2**  | Iteration Tracking              | ✅ COMPLETE    | Session sequence tracking (642 lines) + weak term lookup (177 lines)                                            |
-| **7.3**  | Semantic Redundancy Detection   | ✅ COMPLETE    | Redundancy detection (574 lines) + lookup (246 lines)                                                           |
-| **7.4**  | Higher-Order Combinations       | ✅ COMPLETE    | Magic combo mining (595 lines) + combo lookup (366 lines)                                                       |
-| **7.5**  | Per-Platform Learning           | ✅ COMPLETE    | Platform term quality (520 lines) + platform co-occurrence (423 lines) + lookups                                |
-| **7.6**  | A/B Testing Pipeline            | ✅ COMPLETE    | 988-line A/B engine + deterministic hash assignment + CRUD API routes                                           |
-| **7.7**  | Vocabulary Crowdsourcing        | ✅ COMPLETE    | 3,535 LOC: 3-layer dedup, smart category suggestion, admin review with batch workflow                           |
-| **7.8**  | Temporal Intelligence           | ❌ NOT STARTED | —                                                                                                               |
-| **7.9**  | Prompt Compression Intelligence | ❌ NOT STARTED | Basic compression engine exists (`compress.ts`) but learned profiles not built                                  |
-| **7.10** | User Feedback Invitation        | ❌ NOT STARTED | `feedback-bar.tsx` exists as quality indicator but not the post-copy 👍👌👎 widget                              |
-| **7.11** | Admin Command Centre            | ⚠️ PARTIAL     | Admin layout + nav + dashboard + scene-candidates + vocab-submissions live. Scoring-health dashboard not built. |
+| Phase    | Feature                         | Status      | Key Metric                                                                                                        |
+| -------- | ------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| **0**    | Vocabulary Merge                | ✅ COMPLETE | 9,058 terms (3,501 core + 5,557 merged) across 9 merged + 3 unchanged categories                                  |
+| **1**    | Cascading Intelligence          | ✅ COMPLETE | 50 semantic clusters, 250 affinities, 2,032 tagged terms, 145 conflicts, 42 platform hints                        |
+| **2**    | Scene Starters                  | ✅ COMPLETE | 200 scenes (25 free / 175 pro) across 23 worlds                                                                   |
+| **3**    | Explore Drawer                  | ✅ COMPLETE | 852-line component with tier badges, cascade ordering, search, pagination                                         |
+| **4**    | Polish & Integration            | ✅ COMPLETE | Scene flavour phrases wired, analytics events, fluid typography, Phase 4 tests                                    |
+| **5**    | Collective Intelligence Engine  | ✅ COMPLETE | Telemetry endpoint, 17-layer aggregation cron (1,565 lines), 17 learning API routes                               |
+| **6**    | Self-Improving Scorer           | ✅ COMPLETE | 14,438 LOC across 35 learning engine files, 5 recalibration mechanisms                                            |
+| **7.1**  | Negative Pattern Learning       | ✅ COMPLETE | Anti-pattern detection (370 lines) + collision matrix (346 lines) + lookups                                       |
+| **7.2**  | Iteration Tracking              | ✅ COMPLETE | Session sequence tracking (642 lines) + weak term lookup (177 lines)                                              |
+| **7.3**  | Semantic Redundancy Detection   | ✅ COMPLETE | Redundancy detection (574 lines) + lookup (246 lines)                                                             |
+| **7.4**  | Higher-Order Combinations       | ✅ COMPLETE | Magic combo mining (595 lines) + combo lookup (366 lines)                                                         |
+| **7.5**  | Per-Platform Learning           | ✅ COMPLETE | Platform term quality (520 lines) + platform co-occurrence (423 lines) + lookups                                  |
+| **7.6**  | A/B Testing Pipeline            | ✅ COMPLETE | 1,028-line A/B engine + deterministic hash assignment + lift distribution + adaptive peek scheduling              |
+| **7.7**  | Vocabulary Crowdsourcing        | ✅ COMPLETE | 3,659 LOC: 3-layer dedup, smart category suggestion, admin review with batch workflow                             |
+| **7.8**  | Temporal Intelligence           | ✅ COMPLETE | Temporal engine (652 lines) + lookup (332 lines) + admin freshness badge (313 lines)                              |
+| **7.9**  | Prompt Compression Intelligence | ✅ COMPLETE | Compression engine (732 lines) + lookup (349 lines) + overrides (151 lines) + admin dashboard (445 lines)         |
+| **7.10** | User Feedback Invitation        | ✅ COMPLETE | 4-factor credibility scoring, feedback client, streaks, scene enhancer, confidence halos, feedback memory hook    |
+| **7.11** | Admin Command Centre            | ✅ COMPLETE | 12 live dashboard sections, 19 components (8,154 lines), 18 API routes (5,264 lines), 8 lib modules (3,176 lines) |
 
-**Total LOC delivered:** ~30,000+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, and crowdsourcing pipeline.
+**Total LOC delivered:** ~46,800+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, feedback, and crowdsourcing pipeline.
 
 ---
 
@@ -364,7 +366,7 @@ A mirrored copy lives at `src/data/vocabulary/intelligence/` with its own `index
 | `src/data/scenes/worlds.ts`                   | 239   | World definitions and ordering                                               |
 | `src/data/scenes/index.ts`                    | —     | Scene data barrel export                                                     |
 | `src/types/scene-starters.ts`                 | 291   | TypeScript types mirroring schema exactly                                    |
-| `src/components/providers/scene-selector.tsx` | 1,110 | Hierarchical accordion dropdown with world grouping, free/pro gating, search |
+| `src/components/providers/scene-selector.tsx` | 1,233 | Hierarchical accordion dropdown with world grouping, free/pro gating, search |
 
 Also: `src/data/vocabulary/prompt-builder/scene-starters.json` (25 free scenes — legacy location)
 
@@ -401,7 +403,7 @@ Chips sorted by cascade score when `cascadeScores` map is provided and active ta
 
 | File                                          | Lines | Purpose                                                                                                                         |
 | --------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `src/components/providers/explore-drawer.tsx` | 805   | Full explore drawer with tabs (All, Core, Weather, Commodity, Shared, Scene), search, pagination, tier badges, cascade ordering |
+| `src/components/providers/explore-drawer.tsx` | 852   | Full explore drawer with tabs (All, Core, Weather, Commodity, Shared, Scene), search, pagination, tier badges, cascade ordering |
 
 ### 7.5 Integration
 
@@ -501,50 +503,56 @@ When 237+ prompts share similar selections and score 90%+, propose new scene. Go
 
 Telemetry wired into `prompt-builder.tsx` at two copy paths (lines 1143 and 1217) as fire-and-forget.
 
-### 9.5 14-Layer Aggregation Cron (Actual)
+### 9.5 17-Layer Aggregation Cron (Actual)
 
-The nightly aggregation cron (`src/app/api/learning/aggregate/route.ts`, 1,354 lines) runs at 03:00 UTC daily and executes 14 computation layers:
+The nightly aggregation cron (`src/app/api/learning/aggregate/route.ts`, 1,565 lines) runs at 03:00 UTC daily and executes 17 computation layers:
 
-| Layer | Phase    | What it computes                       |
-| ----- | -------- | -------------------------------------- |
-| 1     | 5 — 5.3b | Co-occurrence matrix                   |
-| 2     | 5 — 5.3c | Sequence patterns                      |
-| 3     | 5 — 5.3d | Scene candidates                       |
-| 4     | 6        | Weight recalibration (scoring-weights) |
-| 5     | 6        | Category value discovery               |
-| 6     | 6        | Term quality scores                    |
-| 7     | 6        | Threshold discovery                    |
-| 8     | 6        | Scorer health report                   |
-| 9     | 7.1      | Anti-pattern detection                 |
-| 10    | 7.1      | Collision matrix                       |
-| 11    | 7.2      | Iteration tracking insights            |
-| 12    | 7.3      | Redundancy detection                   |
-| 13    | 7.4      | Magic combos                           |
-| 14a   | 7.5      | Platform term quality                  |
-| 14b   | 7.5      | Platform co-occurrence                 |
+| Layer | Phase    | What it computes                                |
+| ----- | -------- | ----------------------------------------------- |
+| 1     | 5 — 5.3b | Co-occurrence matrix                            |
+| 2     | 5 — 5.3c | Sequence patterns                               |
+| 3     | 5 — 5.3d | Scene candidates                                |
+| 4     | 6        | Weight recalibration (scoring-weights)          |
+| 5     | 6        | Category value discovery                        |
+| 6     | 6        | Term quality scores                             |
+| 7     | 6        | Threshold discovery                             |
+| 8     | 6        | Scorer health report                            |
+| 9     | 7.1      | Anti-pattern detection                          |
+| 10    | 7.1      | Collision matrix                                |
+| 11    | 7.2      | Iteration tracking insights                     |
+| 12    | 7.3      | Redundancy detection                            |
+| 13    | 7.4      | Magic combos                                    |
+| 14a   | 7.5      | Platform term quality                           |
+| 14b   | 7.5      | Platform co-occurrence                          |
+| 15    | 7.8      | Temporal intelligence (seasonal + trending)     |
+| 16    | 7.9      | Compression profiles (per-tier optimal lengths) |
+| 17    | 7.10     | Feedback summary aggregation                    |
 
 Security: Cron secret validation (PROMAGEN_CRON_SECRET), advisory lock to prevent concurrent runs, returns 404 for invalid auth.
 
 ### 9.6 Learning API Routes (Actual)
 
-14 API routes serve learning data to the frontend:
+17 API routes serve learning data to the frontend:
 
-| Route                                  | Lines | Phase |
-| -------------------------------------- | ----- | ----- |
-| `/api/learning/aggregate`              | 1,354 | 5–7.5 |
-| `/api/learning/co-occurrence`          | 75    | 5     |
-| `/api/learning/sequences`              | 75    | 5     |
-| `/api/learning/scene-candidates`       | 75    | 5     |
-| `/api/learning/scoring-weights`        | 78    | 6     |
-| `/api/learning/anti-patterns`          | 80    | 7.1   |
-| `/api/learning/collisions`             | 82    | 7.1   |
-| `/api/learning/iteration-insights`     | 83    | 7.2   |
-| `/api/learning/redundancy-groups`      | 82    | 7.3   |
-| `/api/learning/magic-combos`           | 80    | 7.4   |
-| `/api/learning/platform-term-quality`  | 88    | 7.5   |
-| `/api/learning/platform-co-occurrence` | 88    | 7.5   |
-| `/api/learning/ab-tests`               | 138   | 7.6   |
-| `/api/learning/ab-assignment`          | 106   | 7.6   |
+| Route                                  | Lines | Phase  |
+| -------------------------------------- | ----- | ------ |
+| `/api/learning/aggregate`              | 1,565 | 5–7.10 |
+| `/api/learning/co-occurrence`          | 75    | 5      |
+| `/api/learning/sequences`              | 75    | 5      |
+| `/api/learning/scene-candidates`       | 75    | 5      |
+| `/api/learning/scoring-weights`        | 78    | 6      |
+| `/api/learning/anti-patterns`          | 80    | 7.1    |
+| `/api/learning/collisions`             | 82    | 7.1    |
+| `/api/learning/iteration-insights`     | 83    | 7.2    |
+| `/api/learning/redundancy-groups`      | 82    | 7.3    |
+| `/api/learning/magic-combos`           | 80    | 7.4    |
+| `/api/learning/platform-term-quality`  | 88    | 7.5    |
+| `/api/learning/platform-co-occurrence` | 88    | 7.5    |
+| `/api/learning/ab-tests`               | 138   | 7.6    |
+| `/api/learning/ab-assignment`          | 106   | 7.6    |
+| `/api/learning/temporal-all`           | 89    | 7.8    |
+| `/api/learning/compression-profiles`   | 82    | 7.9    |
+| `/api/learning/feedback-summary`       | 186   | 7.10   |
 
 ### 9.7 Tests
 
@@ -595,39 +603,45 @@ Each term gets per-tier quality score. High-quality terms boosted in dropdown or
 
 ### 10.5 Full Learning Engine File Inventory (Actual)
 
-| File                               | Lines | Phase | Purpose                                         |
-| ---------------------------------- | ----- | ----- | ----------------------------------------------- |
-| `database.ts`                      | 721   | 5     | Secure parameterized database operations        |
-| `constants.ts`                     | 335   | 5     | Learning pipeline configuration constants       |
-| `decay.ts`                         | 190   | 5     | Time decay functions for telemetry weighting    |
-| `outcome-score.ts`                 | 529   | 5–6   | Compute outcome scores from 7 signals           |
-| `co-occurrence.ts`                 | 260   | 5     | Co-occurrence matrix computation                |
-| `co-occurrence-lookup.ts`          | 131   | 5     | Fast co-occurrence pair lookup                  |
-| `sequence-patterns.ts`             | 347   | 5     | Selection order pattern analysis                |
-| `scene-candidates.ts`              | 414   | 5     | Auto-scene candidate generation                 |
-| `weight-recalibration.ts`          | 471   | 6     | Factor-outcome correlation → weight adjustment  |
-| `threshold-discovery.ts`           | 366   | 6     | Quality threshold knee detection                |
-| `category-value-discovery.ts`      | 380   | 6     | Per-tier category importance ranking            |
-| `term-quality-scoring.ts`          | 398   | 6     | Per-term per-tier quality scores                |
-| `scorer-health.ts`                 | 388   | 6     | Meta-loop: score-outcome correlation monitoring |
-| `anti-pattern-detection.ts`        | 370   | 7.1   | Detect term pairs that kill prompts             |
-| `anti-pattern-lookup.ts`           | 144   | 7.1   | Fast anti-pattern pair lookup                   |
-| `collision-matrix.ts`              | 346   | 7.1   | Terms competing for same space                  |
-| `collision-lookup.ts`              | 183   | 7.1   | Fast collision pair lookup                      |
-| `iteration-tracking.ts`            | 642   | 7.2   | Session sequence analysis                       |
-| `weak-term-lookup.ts`              | 177   | 7.2   | Terms most often replaced                       |
-| `redundancy-detection.ts`          | 574   | 7.3   | Synonym/interchangeable term detection          |
-| `redundancy-lookup.ts`             | 246   | 7.3   | Redundancy group lookup                         |
-| `magic-combo-mining.ts`            | 595   | 7.4   | Frequent itemset mining (trios/quads)           |
-| `combo-lookup.ts`                  | 366   | 7.4   | Fast magic combo lookup                         |
-| `platform-term-quality.ts`         | 520   | 7.5   | Per-platform term quality scoring               |
-| `platform-term-quality-lookup.ts`  | 266   | 7.5   | Platform-specific term lookup                   |
-| `platform-co-occurrence.ts`        | 423   | 7.5   | Per-platform co-occurrence patterns             |
-| `platform-co-occurrence-lookup.ts` | 331   | 7.5   | Platform co-occurrence lookup                   |
-| `ab-testing.ts`                    | 988   | 7.6   | A/B test lifecycle management                   |
-| `ab-assignment.ts`                 | 88    | 7.6   | Deterministic hash-based user assignment        |
+| File                               | Lines | Phase | Purpose                                                       |
+| ---------------------------------- | ----- | ----- | ------------------------------------------------------------- |
+| `database.ts`                      | 721   | 5     | Secure parameterized database operations                      |
+| `constants.ts`                     | 335   | 5     | Learning pipeline configuration constants                     |
+| `decay.ts`                         | 190   | 5     | Time decay functions for telemetry weighting                  |
+| `outcome-score.ts`                 | 529   | 5–6   | Compute outcome scores from 7 signals                         |
+| `co-occurrence.ts`                 | 260   | 5     | Co-occurrence matrix computation                              |
+| `co-occurrence-lookup.ts`          | 131   | 5     | Fast co-occurrence pair lookup                                |
+| `sequence-patterns.ts`             | 347   | 5     | Selection order pattern analysis                              |
+| `scene-candidates.ts`              | 414   | 5     | Auto-scene candidate generation                               |
+| `weight-recalibration.ts`          | 471   | 6     | Factor-outcome correlation → weight adjustment                |
+| `threshold-discovery.ts`           | 366   | 6     | Quality threshold knee detection                              |
+| `category-value-discovery.ts`      | 380   | 6     | Per-tier category importance ranking                          |
+| `term-quality-scoring.ts`          | 398   | 6     | Per-term per-tier quality scores                              |
+| `scorer-health.ts`                 | 388   | 6     | Meta-loop: score-outcome correlation monitoring               |
+| `anti-pattern-detection.ts`        | 370   | 7.1   | Detect term pairs that kill prompts                           |
+| `anti-pattern-lookup.ts`           | 144   | 7.1   | Fast anti-pattern pair lookup                                 |
+| `collision-matrix.ts`              | 346   | 7.1   | Terms competing for same space                                |
+| `collision-lookup.ts`              | 183   | 7.1   | Fast collision pair lookup                                    |
+| `iteration-tracking.ts`            | 642   | 7.2   | Session sequence analysis                                     |
+| `weak-term-lookup.ts`              | 177   | 7.2   | Terms most often replaced                                     |
+| `redundancy-detection.ts`          | 574   | 7.3   | Synonym/interchangeable term detection                        |
+| `redundancy-lookup.ts`             | 246   | 7.3   | Redundancy group lookup                                       |
+| `magic-combo-mining.ts`            | 595   | 7.4   | Frequent itemset mining (trios/quads)                         |
+| `combo-lookup.ts`                  | 366   | 7.4   | Fast magic combo lookup                                       |
+| `platform-term-quality.ts`         | 520   | 7.5   | Per-platform term quality scoring                             |
+| `platform-term-quality-lookup.ts`  | 266   | 7.5   | Platform-specific term lookup                                 |
+| `platform-co-occurrence.ts`        | 423   | 7.5   | Per-platform co-occurrence patterns                           |
+| `platform-co-occurrence-lookup.ts` | 331   | 7.5   | Platform co-occurrence lookup                                 |
+| `ab-testing.ts`                    | 1,028 | 7.6   | A/B test lifecycle + lift distribution + adaptive peek        |
+| `ab-assignment.ts`                 | 88    | 7.6   | Deterministic hash-based user assignment                      |
+| `temporal-intelligence.ts`         | 652   | 7.8   | Seasonal patterns + weekly trends + platform update detection |
+| `temporal-lookup.ts`               | 332   | 7.8   | Fast temporal boost/trending term lookup                      |
+| `compression-intelligence.ts`      | 732   | 7.9   | Per-tier optimal prompt length + removable terms              |
+| `compression-lookup.ts`            | 349   | 7.9   | Compression profile lookup                                    |
+| `compression-overrides.ts`         | 151   | 7.9   | Admin override layer for compression rules                    |
+| `feedback-streaks.ts`              | 335   | 7.10  | Hot/cold/oscillating streak detection per session             |
 
-**Total learning engine LOC:** 11,189
+**Total learning engine LOC:** 14,438 (35 files)
 
 ### 10.6 Tests
 
@@ -730,7 +744,7 @@ Cold start: `finalWeight = (platformData × platformConfidence) + (tierData × (
 
 Split-test scoring model changes before committing them.
 
-**Engine** (`ab-testing.ts`, 988 lines): Full A/B test lifecycle — create, assign, measure, auto-promote/rollback. Statistical significance via p-value calculation.
+**Engine** (`ab-testing.ts`, 1,028 lines): Full A/B test lifecycle — create, assign, measure, auto-promote/rollback. Bayesian early-stop evaluation. Lift distribution sparkline (Monte Carlo sampling from Beta-Binomial posteriors). Adaptive peek scheduling (12h/24h/72h intervals based on event velocity).
 
 **Assignment** (`ab-assignment.ts`, 88 lines): Deterministic hash-based user assignment (same user always gets same variant).
 
@@ -744,7 +758,7 @@ Split-test scoring model changes before committing them.
 
 **Note:** The original plan listed Phase 7.7 as "User Skill Segmentation." During implementation, this was repurposed to "Vocabulary Crowdsourcing Pipeline" — a community-driven vocabulary expansion system with admin review workflow. Skill segmentation may be built as a separate future phase.
 
-**What was built (3,535 LOC total):**
+**What was built (3,659 LOC total):**
 
 A complete pipeline for users to suggest new vocabulary terms, with intelligent auto-filtering and an admin review interface.
 
@@ -793,91 +807,191 @@ Features:
 
 - `src/__tests__/vocab-submission.integrity.test.ts` (537 lines, 69 tests passing) — validates 3-layer dedup, category suggestion, submission lifecycle, admin actions, confidence override, anomaly detection
 
-### 7.8 — Temporal Intelligence ❌ NOT STARTED
+### 7.8 — Temporal Intelligence ✅ COMPLETE
 
 Track seasonal trends, weekly patterns, and platform update impacts.
 
-**Planned patterns:**
+**Temporal engine** (`temporal-intelligence.ts`, 652 lines): Seasonal pattern detection with monthly multipliers, weekly trend analysis (weekend vs weekday), platform update detection via correlation drop monitoring. Half-life decay for staleness with configurable confidence ramps.
 
-- Seasonal: "snow" terms → 340% more popular Nov–Feb
-- Weekly: Weekend prompts 40% more experimental than weekday
-- Platform updates: MJ v7 released → historical weights invalid → system enters "learning period"
+**Temporal lookup** (`temporal-lookup.ts`, 332 lines): Fast lookup for seasonal boosts and trending terms. Returns `TemporalLookup` with `seasonalBoosts` (per-term monthly multipliers) and `trendingTerms` (7-day velocity).
 
-**Output files:** `temporal-boosts.json`, `trending-terms.json`
+**Admin components:**
 
-**Note:** `trending-dock.tsx` and `trending-table.tsx` exist in the codebase but are unrelated homepage UI components, not the temporal learning engine.
+- `temporal-freshness-badge.tsx` (313 lines) — Color-coded staleness indicator (fresh/stale/dead) with strength bars, auto-refresh every 5 minutes
+- `temporal-trends-panel.tsx` (441 lines) — Dashboard Section 8: trending terms visualization, seasonal patterns, platform update alerts
 
-**Effort:** 1 day
+**API routes:** `/api/learning/temporal-all` (89 lines), `/api/admin/scoring-health/temporal` (249 lines)
 
-### 7.9 — Prompt Compression Intelligence ❌ NOT STARTED
+**Output files:** `temporal-boosts.json`, `trending-terms.json` (generated by aggregation cron Layer 15)
+
+**Tests:** `__tests__/admin/scoring-health-7-11e.test.ts` covers temporal panel rendering and data fetch
+
+### 7.9 — Prompt Compression Intelligence ✅ COMPLETE
 
 Learn what can be REMOVED without affecting quality.
 
-**Existing infrastructure:** A basic compression engine exists (`src/lib/compress.ts`, `src/lib/prompt-compression.ts`, `src/types/compression.ts`, `src/data/compression/compression-dictionary.json`) with synonym substitution and shorthand. This is the _static_ compression engine (abbreviations, redundant modifier removal).
+**Compression engine** (`compression-intelligence.ts`, 732 lines): Analyses telemetry to discover per-tier optimal prompt lengths and expendable terms. Computes compression ratios based on copy/save rate correlation with term count.
 
-**What's missing:** The _learned_ compression profiles — per-tier optimal prompt length and removable term sets based on telemetry analysis.
+**Compression lookup** (`compression-lookup.ts`, 349 lines): Fast lookup for per-tier optimal length profiles and expendable term sets.
 
-**Output file:** `compression-profiles.json`
+**Compression overrides** (`compression-overrides.ts`, 151 lines): Admin override layer allowing manual keep/remove rules that survive cron recalculation.
 
-**Effort:** 1 day
+**Admin dashboard** (`compression-dashboard.tsx`, 445 lines): Pipeline health widget showing data freshness, per-tier optimal length profiles with history sparklines, top expendable terms per tier, and platform-specific length deltas.
 
-### 7.10 — User Feedback Invitation ❌ NOT STARTED
+**API routes:** `/api/learning/compression-profiles` (82 lines)
 
-The biggest gap: we never ask. We infer quality from proxies. A direct signal is 10× more valuable.
+**Output file:** `compression-profiles.json` (generated by aggregation cron Layer 16)
 
-**Existing infrastructure:** `feedback-bar.tsx` exists as a prompt quality indicator (poor/ok/great) but is NOT the post-copy feedback widget.
+**Pre-existing static engine:** The static compression engine (`src/lib/prompt-optimizer.ts`, 1,604 lines) handles synonym substitution and shorthand — the learned profiles layer sits on top of this.
 
-**What's missing:** The post-generation 👍👌👎 widget that appears 60s after copy or on next visit. Three buttons, one click.
+**Tests:** Reference `compression-intelligence` test coverage in test inventory
 
-**Design constraint:** The three-point scale must include explanatory text so users understand 👌 means "mediocre, not impressive" — not approval. Options: tooltips on each button, short labels beneath icons ("Nailed it" / "Just okay" / "Missed"), or words as primary UI with icons secondary.
+### 7.10 — User Feedback Invitation ✅ COMPLETE
 
-**Data structure:** `feedback_events` table (prompt_event_id, rating, timestamp)
+The biggest gap is closed: we now ask directly. A direct signal is 10× more valuable than inferred signals.
 
-**Effort:** 1 day
+**Built in 7 sub-parts:**
+
+**7.10a — Data Layer** (`src/types/feedback.ts`, 328 lines): Four-factor credibility scoring algorithm. Weights feedback by: (1) user tier — paid users 1.25× multiplier, (2) account age — veterans weighted higher, (3) usage frequency — power users calibrate better, (4) response speed — under 2 minutes = fresh test signal. Combined formula clamped to `[CREDIBILITY_MIN, CREDIBILITY_MAX]`.
+
+**7.10b — Feedback Confidence Halos** (`scene-selector.tsx` modifications, `feedback-scene-enhancer.ts` 295 lines): Subtle glow rings on scene cards based on historical feedback overlap. Confidence levels: "proven" (emerald glow + breathing animation, 3+ positive matches), "warm" (faint emerald outline, 1-2 positive), "risky" (amber warning ring, 2+ negative), or null (no halo, insufficient data). Users see scenes that "just work better for them" without knowing why.
+
+**7.10c — Feedback Client** (`feedback-client.ts`, 225 lines): sessionStorage tracking + fire-and-forget POST. 24-hour dismissal cooldown. Client-side credibility computation. Never throws — UI never breaks from feedback plumbing.
+
+**7.10d — Feedback Memory Hook** (`use-feedback-memory.ts`, 355 lines): React hook for per-user term-level feedback hints. Drives the confidence halos and scene enhancer.
+
+**7.10e — Scene Enhancer** (`feedback-scene-enhancer.ts`, 295 lines): When a user loads a scene, this checks their feedback memory and silently enriches scene prefills with proven winners. Only adds within same category, only when signal is strong (count ≥ MIN_HINT_COUNT), never removes scene defaults.
+
+**7.10f — Feedback Streaks** (`feedback-streaks.ts`, 335 lines): Real-time pattern detection per session per platform. Three streak types: 🔥 hot streak (3+ consecutive 👍 → boost term combo weights), ❄️ cold streak (3+ consecutive 👎 → flag for admin review), 🔄 oscillating (alternating 👍👎 → high-variance, useful for A/B decisions).
+
+**7.10g — Admin Feedback Panel** (`feedback-summary-panel.tsx`, 451 lines): Dashboard Section 10: 👍/👌/👎 distribution, per-platform satisfaction rates, terms with highest 👎 rate, correlation between score and rating. Drill-through to anti-patterns panel.
+
+**API routes:** `/api/learning/feedback-summary` (186 lines), `/api/admin/scoring-health/feedback` (170 lines)
+
+**Data structure:** `feedback_events` table (prompt_event_id, rating, credibility_score, timestamp, tier, platform_id, response_speed_ms)
+
+**Tests:** `__tests__/feedback-credibility.test.ts`, `__tests__/feedback-scene-enhancer.test.ts` — credibility scoring edge cases, scene enhancer integration
 
 ---
 
 ## 12. Admin Command Centre (Phase 7.11)
 
-**Status:** ⚠️ PARTIAL — Admin infrastructure live, scoring-health dashboard not built.
+**Status:** ✅ COMPLETE — 12 dashboard sections live at `/admin/scoring-health`.
 
-### 12.1 What's Built
+**Built in 10 sub-parts (7.11a–7.11j):**
 
-| Component                | File                                                   | Lines | Status              |
-| ------------------------ | ------------------------------------------------------ | ----- | ------------------- |
-| Admin layout             | `src/app/admin/layout.tsx`                             | 55    | ✅ Live             |
-| Admin navigation         | `src/app/admin/admin-nav.tsx`                          | 52    | ✅ Live             |
-| Admin dashboard          | `src/app/admin/page.tsx`                               | 100   | ✅ Live             |
-| Vocab submissions review | `src/app/admin/vocab-submissions/page.tsx`             | 1,632 | ✅ Live (Phase 7.7) |
-| Scene candidates review  | `src/app/admin/scene-candidates/page.tsx`              | 526   | ✅ Live             |
-| Exchange editor          | `src/app/admin/exchanges/page.tsx`                     | —     | ✅ Live             |
-| Provider browser         | `src/app/admin/providers/page.tsx`                     | —     | ✅ Live             |
-| Admin actions            | `src/app/admin/actions.ts`                             | —     | ✅ Live             |
-| Scene candidates API     | `src/app/api/admin/learning/scene-candidates/route.ts` | 239   | ✅ Live             |
-| Migration API            | `src/app/api/admin/learning/migrate/route.ts`          | 186   | ✅ Live             |
+### 12.1 Dashboard Architecture
 
-### 12.2 What's NOT Built — Scoring Health Dashboard
+**Page shell** (`scoring-health-client.tsx`, 209 lines): DrillThroughProvider wrapping all sections. Sticky sidebar nav with IntersectionObserver for active section highlighting. Anomaly Alert Banner pinned top. Undo Timeline strip above section grid.
 
-The `/admin/scoring-health` page with its 10 sections is not yet built:
+**Sidebar nav** (`scoring-health-nav.tsx`, 145 lines): 12 section jump links with smooth-scroll, active state detection, and disabled-section handling.
 
-| Section | Description                                                                 | Status                                |
-| ------- | --------------------------------------------------------------------------- | ------------------------------------- |
-| 1       | Scorer Health Overview (correlation metrics, trend arrows, sparklines)      | ❌                                    |
-| 2       | Weight Drift Visualisation (line chart showing factor weight changes)       | ❌                                    |
-| 3       | Per-Tier Scoring Models (side-by-side weight comparison, heatmap)           | ❌                                    |
-| 4       | Term Quality Leaderboard (top/bottom 20 per category per tier)              | ❌                                    |
-| 5       | Anti-Pattern Alerts (collision pairs, severity scores, manual overrides)    | ❌                                    |
-| 6       | A/B Test Results (control vs variant, significance, promote/rollback)       | ❌                                    |
-| 7       | Auto-Scene Candidate Review (preview, approve/reject, confidence)           | ✅ Built at `/admin/scene-candidates` |
-| 8       | Temporal Trends (trending terms, seasonal patterns, platform update alerts) | ❌                                    |
-| 9       | User Skill Distribution (pie chart, graduation funnel)                      | ❌                                    |
-| 10      | Feedback Summary (👍👌👎 distribution, per-platform satisfaction)           | ❌                                    |
+**Types** (`scoring-health-types.ts`, 724 lines): All dashboard types, section definitions, API response shapes.
 
-### 12.3 Access Control
+### 12.2 All 12 Dashboard Sections (All Live)
 
-Admin layout uses dark theme (bg gradient + white text). Not visible to regular users. Admin pages accessed directly via `/admin` URL.
+| #   | Section                        | Component                       | Lines | Build Part | API Route                                         |
+| --- | ------------------------------ | ------------------------------- | ----- | ---------- | ------------------------------------------------- |
+| —   | Anomaly Alert Banner           | `anomaly-alert-banner.tsx`      | 401   | 7.11g      | `/api/admin/scoring-health/anomalies` (201)       |
+| —   | Undo Timeline                  | `undo-timeline.tsx`             | 190   | 7.11i      | In-memory (lib/admin/undo-stack.ts, 153)          |
+| 1   | Scorer Health Overview         | `scorer-health-overview.tsx`    | 429   | 7.11a      | `/api/admin/scoring-health/overview` (311)        |
+| 2   | Weight Drift Chart             | `weight-drift-chart.tsx`        | 438   | 7.11b      | `/api/admin/scoring-health/weight-history` (141)  |
+| 3   | Per-Tier Models Heatmap        | `tier-models-heatmap.tsx`       | 437   | 7.11b      | `/api/admin/scoring-health/tier-weights` (176)    |
+| 4   | Term Quality Leaderboard       | `term-quality-leaderboard.tsx`  | 607   | 7.11c      | `/api/admin/scoring-health/term-quality` (228)    |
+| 4+  | Term Inspector (drill-through) | `term-inspector.tsx`            | 354   | 7.11d      | `/api/admin/scoring-health/term-inspect` (236)    |
+| 5   | Anti-Pattern Alerts            | `anti-pattern-alerts.tsx`       | 425   | 7.11d      | `/api/admin/scoring-health/anti-patterns` (215)   |
+| 6   | A/B Test Results               | `ab-test-section.tsx`           | 233   | 7.11d      | `/api/admin/scoring-health/ab-tests` (158)        |
+| 7   | Pipeline Dependency Graph      | `pipeline-dependency-graph.tsx` | 428   | 7.11g      | `/api/admin/scoring-health/pipeline-status` (275) |
+| 8   | Temporal Trends                | `temporal-trends-panel.tsx`     | 441   | 7.11e      | `/api/admin/scoring-health/temporal` (249)        |
+| 9   | Skill Distribution             | `skill-distribution-panel.tsx`  | 362   | 7.11f      | `/api/admin/scoring-health/skill-dist` (255)      |
+| 10  | Feedback Summary               | `feedback-summary-panel.tsx`    | 451   | 7.11e      | `/api/admin/scoring-health/feedback` (170)        |
+| 11  | Configuration Profiles         | `profile-manager.tsx`           | 868   | 7.11i      | `/api/admin/scoring-health/profiles` (196)        |
+| 12  | Code Evolution Radar           | `code-evolution-radar.tsx`      | 954   | 7.11j      | `/api/admin/scoring-health/code-radar` (347)      |
 
-**Estimated remaining effort:** ~4 days (Section 7 already exists)
+**Additional dashboard components:**
+
+- `css-sparkline.tsx` (130 lines) — Pure CSS sparkline renderer (no chart library)
+- `weight-editor-modal.tsx` (303 lines) — Click-to-edit weight values from heatmap (7.11c)
+- `weight-tuning-sandbox.tsx` (558 lines) — Full-screen modal for simulation: adjust weights with sliders, live preview of how changes affect recent prompt scores, two-click promote to production (7.11h)
+
+### 12.3 Cross-Section Drill-Through Flows (7.11g)
+
+Three drill-through navigation paths implemented via `DrillThroughProvider` context:
+
+1. **Banner → any section**: Anomaly alert click smooth-scrolls to relevant section + pulse-highlight animation
+2. **Section 10 (platform click) → Section 5**: Feedback panel platform badge click navigates to anti-patterns filtered by that platform
+3. **Section 5 (term click) → Section 4**: Anti-pattern term click auto-opens the term inspector with that term pre-loaded
+
+### 12.4 Admin Library Modules
+
+| Module                      | Lines | Purpose                                                                                                              |
+| --------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------- |
+| `anomaly-thresholds.ts`     | 355   | Configurable alert thresholds for all pipeline health metrics                                                        |
+| `code-dates.generated.ts`   | 72    | Auto-generated file modification timestamps for Code Radar                                                           |
+| `code-evolution-radar.ts`   | 874   | Drift detection engine: weight ceiling, factor exhaustion, threshold staleness, vocab drift, anti-pattern saturation |
+| `drill-through-context.tsx` | 297   | React context for cross-section navigation                                                                           |
+| `pipeline-dependencies.ts`  | 297   | DAG definition for pipeline dependency graph                                                                         |
+| `scoring-health-types.ts`   | 724   | Shared types + section definitions                                                                                   |
+| `scoring-profiles.ts`       | 296   | Profile save/load/activate/rollback logic                                                                            |
+| `undo-stack.ts`             | 153   | In-memory undo stack for weight edits                                                                                |
+| `weight-simulator.ts`       | 274   | Pure simulation engine for weight tuning sandbox                                                                     |
+
+### 12.5 Admin Scoring Health API Routes
+
+18 API routes at `/api/admin/scoring-health/`:
+
+| Route               | Lines | Purpose                                      |
+| ------------------- | ----- | -------------------------------------------- |
+| `overview`          | 311   | Scorer health metrics + sparkline data       |
+| `weight-history`    | 141   | Weight drift over time                       |
+| `tier-weights`      | 176   | Current per-tier weight matrices             |
+| `weight-edit`       | 171   | Persist weight changes                       |
+| `term-quality`      | 228   | Top/bottom terms per category per tier       |
+| `term-inspect`      | 236   | Deep-dive into individual term performance   |
+| `anti-patterns`     | 215   | Detected collision pairs + severity          |
+| `ab-tests`          | 158   | Active/historical A/B test results           |
+| `temporal`          | 249   | Trending terms + seasonal patterns           |
+| `skill-dist`        | 255   | User skill distribution breakdown            |
+| `feedback`          | 170   | Feedback summary + per-platform satisfaction |
+| `anomalies`         | 201   | Pipeline anomaly detection                   |
+| `pipeline-status`   | 275   | Pipeline dependency health status            |
+| `profiles`          | 196   | Configuration profile CRUD                   |
+| `profiles/activate` | —     | Profile activation endpoint                  |
+| `profiles/delete`   | —     | Profile deletion endpoint                    |
+| `simulate-weights`  | 278   | Weight simulation preview                    |
+| `code-radar`        | 347   | Code evolution drift analysis                |
+
+### 12.6 What's Built Beyond the Original Plan
+
+The original plan specified 10 dashboard sections. The actual build delivered 12 sections plus significant enhancements:
+
+- **Section 7 (Pipeline Dependency Graph)**: Not in original plan. Visualises DAG of all pipeline components and their health status.
+- **Section 12 (Code Evolution Radar)**: Not in original plan. Monitors 5 drift types (weight ceiling, factor exhaustion, threshold staleness, vocabulary drift, anti-pattern saturation) and provides file-level alerts when source code is falling behind the data.
+- **Anomaly Alert Banner**: Persistent top banner monitoring all pipeline health metrics with configurable thresholds.
+- **Undo Timeline**: Edit history with one-click rollback for weight changes.
+- **Weight Tuning Sandbox**: Full simulation environment for previewing weight changes before production deployment.
+- **Cross-Section Drill-Through**: Context-aware navigation between related dashboard sections.
+- **Term Inspector**: Deep-dive panel accessible from both Term Quality Leaderboard and Anti-Pattern Alerts.
+
+### 12.7 Access Control
+
+Admin layout uses dark theme (bg gradient + white text). Not visible to regular users. Admin pages accessed directly via `/admin` URL. Scoring health protected by Clerk admin role check.
+
+### 12.8 Tests
+
+11 test files in `__tests__/admin/`:
+
+- `scoring-health-overview.test.ts` — Section 1 rendering + API fetch
+- `weight-drift-chart.test.ts` — Section 2 chart data processing
+- `term-quality-leaderboard.test.ts` — Section 4 sorting + filtering
+- `scoring-health-7-11d.test.ts` — Sections 5+6 drill-through integration
+- `scoring-health-7-11e.test.ts` — Sections 8+10 temporal + feedback
+- `skill-distribution.test.ts` — Section 9 distribution calculations
+- `scoring-profiles.test.ts` — Section 11 profile CRUD
+- `weight-simulator.test.ts` — Sandbox simulation engine
+- `anomaly-thresholds.test.ts` — Anomaly detection rules
+- `pipeline-dependencies.test.ts` — DAG traversal + health rollup
+- `code-evolution-radar.test.ts` — Drift detection algorithms
 
 ---
 
@@ -1021,13 +1135,23 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 }
 ```
 
-### 14.4 Feedback Event
+### 14.4 Feedback Event (Phase 7.10)
 
 ```json
 {
   "id": "fb_def456",
   "promptEventId": "evt_abc123",
   "rating": "great",
+  "credibilityScore": 1.12,
+  "credibilityBreakdown": {
+    "tierMultiplier": 1.25,
+    "ageMultiplier": 1.1,
+    "frequencyMultiplier": 1.0,
+    "speedMultiplier": 0.82
+  },
+  "responseSpeedMs": 45000,
+  "tier": "pro",
+  "platformId": "midjourney",
   "timestamp": "2026-03-15T14:23:15Z"
 }
 ```
@@ -1051,24 +1175,25 @@ Admin layout uses dark theme (bg gradient + white text). Not visible to regular 
 
 Every file is JSON. Code reads them. Code never changes. Data gets smarter nightly.
 
-| File                        | Phase | Size Est. | Contents                                         | Engine File                 |
-| --------------------------- | ----- | --------- | ------------------------------------------------ | --------------------------- |
-| `scoring-weights.json`      | 6     | < 1KB     | Per-tier factor weights                          | `weight-recalibration.ts`   |
-| `co-occurrence-matrix.json` | 5     | ~50–100KB | Term pair co-occurrence counts by tier           | `co-occurrence.ts`          |
-| `anti-patterns.json`        | 7.1   | ~10KB     | Term pairs that sabotage each other              | `anti-pattern-detection.ts` |
-| `collision-matrix.json`     | 7.1   | ~5KB      | Terms that compete for same "space"              | `collision-matrix.ts`       |
-| `magic-combos.json`         | 7.4   | ~20KB     | Top 500–1,000 trios/quads                        | `magic-combo-mining.ts`     |
-| `term-quality-scores.json`  | 6     | ~30KB     | Per-term per-tier quality scores                 | `term-quality-scoring.ts`   |
-| `redundancy-groups.json`    | 7.3   | ~10KB     | Synonym groups with interchangeability data      | `redundancy-detection.ts`   |
-| `compression-profiles.json` | 7.9   | ~5KB      | Optimal prompt length + removable terms per tier | ❌ Not yet built            |
-| `scene-candidates.json`     | 5     | ~15KB     | Auto-proposed scenes for review                  | `scene-candidates.ts`       |
-| `trending-terms.json`       | 7.8   | ~5KB      | Terms trending up/down in last 7 days            | ❌ Not yet built            |
-| `temporal-boosts.json`      | 7.8   | ~5KB      | Seasonal and time-of-week modifiers              | ❌ Not yet built            |
-| `skill-thresholds.json`     | —     | ~2KB      | Beginner/intermediate/expert boundaries          | ❌ Not yet built            |
-| `scorer-health-report.json` | 6     | ~3KB      | Correlation trends, drift alerts                 | `scorer-health.ts`          |
-| `vocab-submissions.json`    | 7.7   | Variable  | User-submitted vocabulary pending review         | `vocab-auto-filter.ts`      |
+| File                        | Phase | Size Est. | Contents                                                 | Engine File                   |
+| --------------------------- | ----- | --------- | -------------------------------------------------------- | ----------------------------- |
+| `scoring-weights.json`      | 6     | < 1KB     | Per-tier factor weights                                  | `weight-recalibration.ts`     |
+| `co-occurrence-matrix.json` | 5     | ~50–100KB | Term pair co-occurrence counts by tier                   | `co-occurrence.ts`            |
+| `anti-patterns.json`        | 7.1   | ~10KB     | Term pairs that sabotage each other                      | `anti-pattern-detection.ts`   |
+| `collision-matrix.json`     | 7.1   | ~5KB      | Terms that compete for same "space"                      | `collision-matrix.ts`         |
+| `magic-combos.json`         | 7.4   | ~20KB     | Top 500–1,000 trios/quads                                | `magic-combo-mining.ts`       |
+| `term-quality-scores.json`  | 6     | ~30KB     | Per-term per-tier quality scores                         | `term-quality-scoring.ts`     |
+| `redundancy-groups.json`    | 7.3   | ~10KB     | Synonym groups with interchangeability data              | `redundancy-detection.ts`     |
+| `compression-profiles.json` | 7.9   | ~5KB      | Optimal prompt length + removable terms per tier         | `compression-intelligence.ts` |
+| `scene-candidates.json`     | 5     | ~15KB     | Auto-proposed scenes for review                          | `scene-candidates.ts`         |
+| `trending-terms.json`       | 7.8   | ~5KB      | Terms trending up/down in last 7 days                    | `temporal-intelligence.ts`    |
+| `temporal-boosts.json`      | 7.8   | ~5KB      | Seasonal and time-of-week modifiers                      | `temporal-intelligence.ts`    |
+| `skill-thresholds.json`     | —     | ~2KB      | Beginner/intermediate/expert boundaries                  | Manual configuration          |
+| `scorer-health-report.json` | 6     | ~3KB      | Correlation trends, drift alerts                         | `scorer-health.ts`            |
+| `vocab-submissions.json`    | 7.7   | Variable  | User-submitted vocabulary pending review                 | `vocab-auto-filter.ts`        |
+| `feedback-summary.json`     | 7.10  | ~10KB     | Rating distributions, platform satisfaction, streak data | `feedback-streaks.ts`         |
 
-**Total nightly output:** ~160–200KB. Trivial.
+**Total nightly output:** ~170–220KB. Trivial.
 
 ---
 
@@ -1101,20 +1226,20 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 | `src/data/scenes/worlds.ts` (239 lines) | World definitions |
 | `src/data/scenes/index.ts` | Barrel export |
 | `src/types/scene-starters.ts` (291 lines) | TypeScript types |
-| `src/components/providers/scene-selector.tsx` (1,110 lines) | UI component |
+| `src/components/providers/scene-selector.tsx` (1,233 lines) | UI component |
 
 **Phase 3 — Explore Drawer:**
 | File | Purpose |
 | ---- | ------- |
-| `src/components/providers/explore-drawer.tsx` (805 lines) | Full explore drawer with tabs, search, pagination, badges, cascade ordering |
+| `src/components/providers/explore-drawer.tsx` (852 lines) | Full explore drawer with tabs, search, pagination, badges, cascade ordering |
 
 **Phase 5–7.6 — Learning Engine:**
 | File | Purpose |
 | ---- | ------- |
-| `src/lib/learning/*.ts` (29 files, 11,189 lines) | Complete learning engine |
-| `src/app/api/learning/*/route.ts` (14 routes) | Learning API endpoints |
+| `src/lib/learning/*.ts` (35 files, 14,438 lines) | Complete learning engine |
+| `src/app/api/learning/*/route.ts` (17 routes) | Learning API endpoints |
 | `src/app/api/prompt-telemetry/route.ts` (264 lines) | Telemetry endpoint |
-| `src/lib/telemetry/*.ts` (3 files, 407 lines) | Client telemetry + A/B hashing |
+| `src/lib/telemetry/*.ts` (3 files, 420 lines) | Client telemetry + A/B hashing |
 | `src/lib/learning/__tests__/*.ts` (24 test files) | Comprehensive test suite |
 
 **Phase 7.7 — Vocabulary Crowdsourcing:**
@@ -1127,6 +1252,39 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 | `src/app/api/admin/vocab-submissions/route.ts` (904 lines) | Admin API (6 handlers) |
 | `src/app/admin/vocab-submissions/page.tsx` (1,632 lines) | Admin review UI |
 | `src/data/learned/vocab-submissions.json` | Submission storage |
+
+**Phase 7.8 — Temporal Intelligence:**
+| File | Purpose |
+| ---- | ------- |
+| `src/lib/learning/temporal-intelligence.ts` (652 lines) | Seasonal patterns + trending detection |
+| `src/lib/learning/temporal-lookup.ts` (332 lines) | Fast temporal boost lookup |
+| `src/components/admin/temporal-freshness-badge.tsx` (313 lines) | Admin pipeline health indicator |
+
+**Phase 7.9 — Compression Intelligence:**
+| File | Purpose |
+| ---- | ------- |
+| `src/lib/learning/compression-intelligence.ts` (732 lines) | Per-tier optimal length analysis |
+| `src/lib/learning/compression-lookup.ts` (349 lines) | Compression profile lookup |
+| `src/lib/learning/compression-overrides.ts` (151 lines) | Admin override layer |
+| `src/components/admin/compression-dashboard.tsx` (445 lines) | Admin pipeline health widget |
+
+**Phase 7.10 — User Feedback Invitation:**
+| File | Purpose |
+| ---- | ------- |
+| `src/types/feedback.ts` (328 lines) | Credibility scoring + rating types |
+| `src/lib/feedback/feedback-client.ts` (225 lines) | sessionStorage + fire-and-forget POST |
+| `src/lib/feedback/feedback-scene-enhancer.ts` (295 lines) | Personalise scene prefills from feedback |
+| `src/lib/learning/feedback-streaks.ts` (335 lines) | Hot/cold/oscillating streak detection |
+| `src/hooks/use-feedback-memory.ts` (355 lines) | React hook for term-level feedback hints |
+
+**Phase 7.11 — Admin Scoring Health Dashboard:**
+| File | Purpose |
+| ---- | ------- |
+| `src/app/admin/scoring-health/page.tsx` | Page route |
+| `src/app/admin/scoring-health/scoring-health-client.tsx` (209 lines) | Dashboard shell with DrillThrough provider |
+| `src/components/admin/scoring-health/*.tsx` (19 components, 8,154 lines) | All 12 sections + supporting components |
+| `src/lib/admin/*.ts` (9 modules, 3,176 lines) | Types, anomaly thresholds, profiles, simulator, undo stack, pipeline graph, code radar |
+| `src/app/api/admin/scoring-health/*/route.ts` (18 routes, ~3,800 lines) | All dashboard API endpoints |
 
 **Admin Infrastructure:**
 | File | Purpose |
@@ -1143,10 +1301,15 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 
 ### Modified Files
 
-| File                                                    | Phase   | Changes                                                                          |
-| ------------------------------------------------------- | ------- | -------------------------------------------------------------------------------- |
-| `lib/vocabulary/vocabulary-loader.ts`                   | 0+1+5   | Load merged vocab. Family imports. Core first, merged appended.                  |
-| `components/providers/prompt-builder.tsx` (1,907 lines) | 1+2+3+5 | SceneSelector (line 109), ExploreDrawer (line 110), Telemetry (lines 1143, 1217) |
+| File                                                                 | Phase        | Changes                                                              |
+| -------------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
+| `lib/vocabulary/vocabulary-loader.ts`                                | 0+1+5        | Load merged vocab. Family imports. Core first, merged appended.      |
+| `components/providers/prompt-builder.tsx` (2,015 lines)              | 1+2+3+5+7.10 | SceneSelector, ExploreDrawer, Telemetry, feedback memory integration |
+| `components/providers/scene-selector.tsx` (1,233 lines)              | 2+4+7.10b    | Confidence halos from feedback memory, CSS halo animations           |
+| `components/providers/explore-drawer.tsx` (852 lines)                | 3+4          | Tier badges (all 4 tiers), cascade relevance ordering                |
+| `lib/prompt-intelligence/engines/suggestion-engine.ts` (1,450 lines) | 1+7.2        | Weak term penalty integration from iteration tracking                |
+| `hooks/use-learned-weights.ts`                                       | 7.2          | Parallel fetch of iteration insights + weak term lookup building     |
+| `lib/learning/constants.ts`                                          | 5+6+7.x      | Learning pipeline configuration constants (expanded for each phase)  |
 
 ### Untouched Files
 
@@ -1162,43 +1325,49 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 
 ## 17. Build Phase Summary
 
-| Phase       | Feature                         | Effort (Planned)              | Effort (Actual)           | Status        | Dependencies |
-| ----------- | ------------------------------- | ----------------------------- | ------------------------- | ------------- | ------------ |
-| **Phase 0** | Vocabulary Merge                | 2–3 days                      | ✅ Complete               | ✅ DONE       | None         |
-| **Phase 1** | Cascading Intelligence          | 4–6 days                      | ✅ Complete               | ✅ DONE       | Phase 0      |
-| **Phase 2** | Scene Starters (200 scenes)     | 5–8 days                      | ✅ Complete               | ✅ DONE       | Phase 1      |
-| **Phase 3** | Explore Drawer                  | 3–4 days                      | ✅ Complete               | ✅ DONE       | Phase 0, 1   |
-| **Phase 4** | Polish & Integration            | 2–3 days                      | ✅ Complete               | ✅ DONE       | Phases 0–3   |
-| **Phase 5** | Collective Intelligence Engine  | 4–6 days                      | ✅ Complete               | ✅ DONE       | Phase 4      |
-| **Phase 6** | Self-Improving Scorer           | ~6 days                       | ✅ Complete               | ✅ DONE       | Phase 5      |
-| **7.1**     | Negative Pattern Learning       | 1.5 days                      | ✅ Complete               | ✅ DONE       | Phase 6      |
-| **7.2**     | Iteration Tracking              | 1.5 days                      | ✅ Complete               | ✅ DONE       | Phase 6      |
-| **7.3**     | Semantic Redundancy Detection   | 1 day                         | ✅ Complete               | ✅ DONE       | Phase 6      |
-| **7.4**     | Higher-Order Combinations       | 1.5 days                      | ✅ Complete               | ✅ DONE       | Phase 6      |
-| **7.5**     | Per-Platform Learning           | 1 day                         | ✅ Complete               | ✅ DONE       | Phase 6      |
-| **7.6**     | A/B Testing Pipeline            | 2 days                        | ✅ Complete               | ✅ DONE       | Phase 6      |
-| **7.7**     | Vocabulary Crowdsourcing        | 1 day (planned as Skill Seg.) | ✅ Complete (7 parts)     | ✅ DONE       | Phase 6      |
-| **7.8**     | Temporal Intelligence           | 1 day                         | —                         | ❌ TODO       | Phase 6      |
-| **7.9**     | Prompt Compression Intelligence | 1 day                         | —                         | ❌ TODO       | Phase 6      |
-| **7.10**    | User Feedback Invitation        | 1 day                         | —                         | ❌ TODO       | Phase 6      |
-| **7.11**    | Admin Command Centre            | 5 days                        | ⚠️ Partial (~2 days done) | ⚠️ PARTIAL    | Phase 6      |
-| **TOTAL**   |                                 | **42–57 days**                | **~40 days complete**     | **~85% done** |              |
+| Phase       | Feature                         | Effort (Planned)              | Effort (Actual)        | Status        | Dependencies |
+| ----------- | ------------------------------- | ----------------------------- | ---------------------- | ------------- | ------------ |
+| **Phase 0** | Vocabulary Merge                | 2–3 days                      | ✅ Complete            | ✅ DONE       | None         |
+| **Phase 1** | Cascading Intelligence          | 4–6 days                      | ✅ Complete            | ✅ DONE       | Phase 0      |
+| **Phase 2** | Scene Starters (200 scenes)     | 5–8 days                      | ✅ Complete            | ✅ DONE       | Phase 1      |
+| **Phase 3** | Explore Drawer                  | 3–4 days                      | ✅ Complete            | ✅ DONE       | Phase 0, 1   |
+| **Phase 4** | Polish & Integration            | 2–3 days                      | ✅ Complete            | ✅ DONE       | Phases 0–3   |
+| **Phase 5** | Collective Intelligence Engine  | 4–6 days                      | ✅ Complete            | ✅ DONE       | Phase 4      |
+| **Phase 6** | Self-Improving Scorer           | ~6 days                       | ✅ Complete            | ✅ DONE       | Phase 5      |
+| **7.1**     | Negative Pattern Learning       | 1.5 days                      | ✅ Complete            | ✅ DONE       | Phase 6      |
+| **7.2**     | Iteration Tracking              | 1.5 days                      | ✅ Complete            | ✅ DONE       | Phase 6      |
+| **7.3**     | Semantic Redundancy Detection   | 1 day                         | ✅ Complete            | ✅ DONE       | Phase 6      |
+| **7.4**     | Higher-Order Combinations       | 1.5 days                      | ✅ Complete            | ✅ DONE       | Phase 6      |
+| **7.5**     | Per-Platform Learning           | 1 day                         | ✅ Complete            | ✅ DONE       | Phase 6      |
+| **7.6**     | A/B Testing Pipeline            | 2 days                        | ✅ Complete            | ✅ DONE       | Phase 6      |
+| **7.7**     | Vocabulary Crowdsourcing        | 1 day (planned as Skill Seg.) | ✅ Complete (7 parts)  | ✅ DONE       | Phase 6      |
+| **7.8**     | Temporal Intelligence           | 1 day                         | ✅ Complete (5 parts)  | ✅ DONE       | Phase 6      |
+| **7.9**     | Prompt Compression Intelligence | 1 day                         | ✅ Complete (6 parts)  | ✅ DONE       | Phase 6      |
+| **7.10**    | User Feedback Invitation        | 1 day                         | ✅ Complete (7 parts)  | ✅ DONE       | Phase 6      |
+| **7.11**    | Admin Command Centre            | 5 days                        | ✅ Complete (10 parts) | ✅ DONE       | Phase 6      |
+| **TOTAL**   |                                 | **42–57 days**                | **✅ All complete**    | **100% done** |              |
 
-### Remaining Work
+### Remaining Work — Test Coverage
 
-| Phase               | Feature                                               | Estimated Effort |
-| ------------------- | ----------------------------------------------------- | ---------------- |
-| 7.8                 | Temporal Intelligence                                 | 1 day            |
-| 7.9                 | Prompt Compression Intelligence (learned profiles)    | 1 day            |
-| 7.10                | User Feedback Invitation (👍👌👎 widget)              | 1 day            |
-| 7.11                | Admin Scoring Health Dashboard (remaining 8 sections) | ~4 days          |
-| **TOTAL REMAINING** |                                                       | **~7 days**      |
+All phases are feature-complete. The main outstanding work is test coverage expansion:
+
+| Area                                                      | Status                         | Gap                                                                         |
+| --------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------- |
+| Learning engines (`lib/learning/`)                        | 24 test files, strong coverage | Temporal, compression, feedback-streaks need dedicated tests                |
+| Admin dashboard (`__tests__/admin/`)                      | 11 test files                  | Coverage for weight-editor-modal, weight-tuning-sandbox integration         |
+| Weather engine (`lib/weather/`, 7,859 lines)              | No test files                  | ~200 test cases estimated                                                   |
+| Prompt optimizer (`lib/prompt-optimizer.ts`, 1,604 lines) | No test file                   | ~60 test cases estimated                                                    |
+| API routes (17 learning + 18 admin)                       | Aggregate route tested         | Individual route tests needed                                               |
+| Hooks (35+ untested)                                      | Partial coverage               | `use-learned-weights`, `use-platform-learning` tested; others need coverage |
+
+See `test-gap-analysis.md` for the full 6-phase build order with specific file names, estimated test case counts, and effort estimates (~9 days total).
 
 ### Parallel Work Opportunities
 
-- Phase 7.8–7.10 are independent of each other — can be built in any order
-- Phase 7.11 remaining sections depend on data from Phases 7.8–7.10 for full visualisation
-- Scene data authoring can run in parallel with any remaining engineering
+- Test coverage expansion (see `test-gap-analysis.md`) can run in parallel with any new feature work
+- Scene data authoring for new worlds can run at any time
+- Learning data accumulation is ongoing — system gets smarter every day as telemetry flows in
+- Admin dashboard refinements (UX polish, performance) are low-risk independent work
 
 ---
 
@@ -1266,4 +1435,4 @@ This data is the product. The vocabulary, the scenes, the cascading intelligence
 
 ---
 
-_End of document. Version 2.1.0. Updated 2026-02-27. Previous version: 2.0.0 (2026-02-24)._
+_End of document. Version 2.2.0. Updated 2026-03-01. Previous version: 2.1.0 (2026-02-27)._

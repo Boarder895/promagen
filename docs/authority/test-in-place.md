@@ -1,8 +1,9 @@
 # Promagen — Test Inventory (In Place)
 
-**Generated:** 28 February 2026
-**Source of truth:** `src.zip` + `pnpm run test:ci` output
-**Status:** 108 suites, 1,427 passing, 3 skipped, 0 failing
+**Generated:** 1 March 2026
+**Previous version:** 28 February 2026 (108 files / 1,427 cases)
+**Source of truth:** `src.zip` (1 Mar 2026) + conversation history cross-reference
+**Status:** 131 suites, 2,034 passing, 3 skipped, 0 failing
 **Runner:** Jest 29.7.0 via `jest.config.cjs` (8 named projects)
 
 ---
@@ -11,15 +12,34 @@
 
 | Metric               | Value                                                                               |
 | -------------------- | ----------------------------------------------------------------------------------- |
-| Test files           | 108                                                                                 |
-| Test cases (passing) | 1,427                                                                               |
+| Test files           | 131                                                                                 |
+| Test cases (passing) | 2,034                                                                               |
 | Skipped tests        | 3                                                                                   |
 | Failed tests         | 0                                                                                   |
 | Jest projects        | 8 (`data`, `learning`, `intelligence`, `hooks`, `components`, `api`, `util`, `app`) |
-| Lint errors          | 0 (after Round 14 fix)                                                              |
+| Lint errors          | 0                                                                                   |
 | TypeScript errors    | 0                                                                                   |
 | Snapshot files       | 8                                                                                   |
-| CI wall-clock time   | ~19 s                                                                               |
+| CI wall-clock time   | ~25 s                                                                               |
+
+### Delta from v1 → v2
+
+| Metric        | v1 (28 Feb) | v2 (1 Mar) | Change      |
+| ------------- | ----------- | ---------- | ----------- |
+| Test files    | 108         | 131        | **+23**     |
+| Test cases    | 1,427       | 2,034      | **+607**    |
+| Jest projects | 8           | 8          | (unchanged) |
+| Skipped       | 3           | 3          | (unchanged) |
+
+### New coverage by phase
+
+| Phase   | Feature                  | New test files | New cases |
+| ------- | ------------------------ | -------------- | --------- |
+| 7.8     | Temporal Intelligence    | 1              | 58        |
+| 7.9     | Compression Intelligence | 3              | 80        |
+| 7.10    | User Feedback System     | 8              | 146       |
+| 7.11    | Admin Command Centre     | 11             | 278       |
+| **All** |                          | **23**         | **607**   |
 
 ---
 
@@ -27,59 +47,49 @@
 
 | #   | Project        | Env   | Files   | Cases      | Est. Time | Script                       |
 | --- | -------------- | ----- | ------- | ---------- | --------- | ---------------------------- |
-| 1   | `data`         | node  | 31      | ~340       | ~4 s      | `pnpm run test:data`         |
-| 2   | `learning`     | node  | 24      | ~530       | ~5 s      | `pnpm run test:learning`     |
-| 3   | `intelligence` | node  | 6       | ~170       | ~3 s      | `pnpm run test:intelligence` |
-| 4   | `hooks`        | jsdom | 9       | ~107       | ~3 s      | `pnpm run test:hooks`        |
-| 5   | `components`   | jsdom | 12      | ~100       | ~2 s      | `pnpm run test:components`   |
-| 6   | `api`          | node  | 6       | ~18        | ~1 s      | `pnpm run test:api`          |
-| 7   | `util`         | node  | 12      | ~44        | ~1 s      | `pnpm run test:util`         |
-| 8   | `app`          | jsdom | 6       | ~118       | ~2 s      | `pnpm run test:app`          |
-|     | **TOTAL**      |       | **108** | **~1,427** | **~19 s** | `pnpm run test:ci`           |
+| 1   | `data`         | node  | 44      | 572        | ~6 s      | `pnpm run test:data`         |
+| 2   | `learning`     | node  | 30      | 808        | ~7 s      | `pnpm run test:learning`     |
+| 3   | `intelligence` | node  | 6       | 176        | ~3 s      | `pnpm run test:intelligence` |
+| 4   | `hooks`        | jsdom | 10      | 126        | ~3 s      | `pnpm run test:hooks`        |
+| 5   | `components`   | jsdom | 13      | 98         | ~2 s      | `pnpm run test:components`   |
+| 6   | `api`          | node  | 8       | 40         | ~1 s      | `pnpm run test:api`          |
+| 7   | `util`         | node  | 14      | 96         | ~1 s      | `pnpm run test:util`         |
+| 8   | `app`          | jsdom | 6       | 118        | ~2 s      | `pnpm run test:app`          |
+|     | **TOTAL**      |       | **131** | **~2,034** | **~25 s** | `pnpm run test:ci`           |
 
 ---
 
 ## 3. Full File Inventory by Project
 
-### 3.1 — `data` (31 files, ~340 cases)
+### 3.1 — `data` (44 files, 572 cases)
 
-Data integrity, schema validation, JSON shape checks. All node environment, zero DOM.
+Data integrity, schema validation, JSON shape checks, admin lib functions. All node environment, zero DOM.
 
-| File                                                                   | Cases      | What It Validates                                                                                                                                                                  |
-| ---------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/data/commodities/tests/commodities.catalog.schema.test.ts`        | 1          | Commodity catalog matches Zod schema, unique IDs                                                                                                                                   |
-| `src/data/commodities/tests/country-commodities.ids-coverage.test.ts`  | 3          | Energy/agriculture/metals columns reference valid commodity IDs                                                                                                                    |
-| `src/data/commodities/tests/exchange-commodities.map.schema.test.ts`   | 3          | Commodity-exchange map schema, row count, known exchange IDs                                                                                                                       |
-| `src/data/commodities/tests/exchanges-country-coverage.test.ts`        | 1          | Every exchange country has a matching country-commodities row                                                                                                                      |
-| `src/data/emoji/__tests__/budget-indicator.integrity.test.ts`          | 1          | Budget guard emoji mapping returns SSOT emoji for ok/warning/blocked                                                                                                               |
-| `src/data/emoji/__tests__/emoji.helpers.test.ts`                       | 8          | getEmoji, getTrendEmoji, getProviderEmoji — known IDs, nulls, fallbacks                                                                                                            |
-| `src/data/emoji/tests/emoji-bank.shape.test.ts`                        | 1          | emoji-bank.json matches schema, no duplicate IDs                                                                                                                                   |
-| `src/data/exchanges/tests/exchanges.catalog.shape.test.ts`             | 12         | Catalog field types, kebab-case IDs, IANA timezones, geo bounds, unique IDs                                                                                                        |
-| `src/data/exchanges/tests/exchanges.index.test.ts`                     | 5          | Homepage east-west ordering, rail split logic, splitIds helper                                                                                                                     |
-| `src/data/exchanges/tests/exchanges.selected.shape.test.ts`            | 4          | Selected IDs array, no duplicates, all exist in catalog                                                                                                                            |
-| `src/data/fx/tests/fx-ssot.test.ts`                                    | 2          | fx-pairs.json unique IDs, fx.selected references valid ones                                                                                                                        |
-| `src/data/prompt-intelligence/tests/data-integrity.test.ts`            | 16         | Semantic tags coverage, families, conflicts, market moods, platform hints, categories, versions                                                                                    |
-| `src/data/prompt-intelligence/tests/prompt-intelligence.shape.test.ts` | 25         | Shape of families.json, conflicts.json, market-moods.json, platform-hints.json, semantic-tags.json, cross-file references                                                          |
-| `src/data/providers/__tests__/providers.helpers.test.ts`               | 6          | getProviderById, PROVIDERS_BY_ID, getProviderCapabilities, DEFAULT_CAPABILITIES                                                                                                    |
-| `src/data/providers/tests/providers.capabilities.shape.test.ts`        | 7 (1 skip) | \_defaults shape, override flags, catalog match, DEFAULT_CAPABILITIES, PROVIDER_CAPABILITIES                                                                                       |
-| `src/data/providers/tests/providers.catalog.shape.test.ts`             | 5 (1 skip) | 42 providers, required fields, unique IDs, sensible scores                                                                                                                         |
-| `src/data/providers/tests/providers.hints-presets.shape.test.ts`       | 3 (1 skip) | pasteHints shape, PRESETS array, preset provider IDs reference real providers                                                                                                      |
-| `src/data/tests/catalogs.shape.test.ts`                                | 3          | Basic load check for exchanges, countries, providers arrays                                                                                                                        |
-| `src/data/tests/commodities.display-country-codes.contract.test.ts`    | 1          | Display country codes reference valid ISO codes from countries.catalog.json                                                                                                        |
-| `src/data/tests/cosmic.shape.test.ts`                                  | 1          | Cosmic events shape validation                                                                                                                                                     |
-| `src/data/tests/data-contracts.snapshot.test.ts`                       | 8          | Snapshot contracts for fx-pairs.json, exchanges.catalog.json, providers.json, getDefaultFxPairsWithIndexForTier()                                                                  |
-| `src/__tests__/cascading-intelligence.integrity.test.ts`               | 20         | Phase 1 semantic tags, clusters, affinities, score differentiation, tier multipliers, buildContext integration                                                                     |
-| `src/__tests__/country-currency.integrity.test.ts`                     | 2          | ISO2→ISO3 currency map, 3-letter codes                                                                                                                                             |
-| `src/__tests__/currency.integrity.test.ts`                             | 2          | Currency catalog validation                                                                                                                                                        |
-| `src/__tests__/fx-pairs.test.ts`                                       | 2          | fx-pairs.json existence and well-formed pairs                                                                                                                                      |
-| `src/__tests__/providers.schema.test.ts`                               | 3          | providers.json strict Zod schema match, unique IDs                                                                                                                                 |
-| `src/__tests__/roman-numerals.integrity.test.ts`                       | 3          | Roman numeral rendering 1-12, edge cases                                                                                                                                           |
-| `src/__tests__/scene-starters.integrity.test.ts`                       | 15         | Prefill values in vocabulary, kebab-case IDs, tier guidance, tags, description lengths, orphan checks                                                                              |
-| `src/__tests__/schemas.test.ts`                                        | 3          | Providers validation, bad exchange rejection, pair demo block                                                                                                                      |
-| `src/__tests__/schemas.catalogs.test.ts`                               | 3          | Catalog shape smoke: exchanges, countries, providers                                                                                                                               |
-| `src/__tests__/vocab-submission.integrity.test.ts`                     | 52         | Phase 7.7 vocab pipeline: profanity filter, spam patterns, length guards, clean terms, false positive resistance, normaliseTerm, category suggester, confidence scoring, constants |
-| `src/__tests__/vocabulary-merge.integrity.test.ts`                     | 10         | Phase 0.6 merge: no empty strings, no internal duplicates, no cross-category overlap, no finance jargon, core-first ordering                                                       |
-| `src/components/providers/__tests__/phase-4-evolution.test.ts`         | 63         | Phase 4 scenes (200 total), worlds, tier guidance, flavour phrases, vocabulary merge, tier badges, cascade scoring, analytics events                                               |
+#### 3.1a — Data layer (21 files, 180 cases)
+
+| File                                                                   | Cases      | What It Validates                                                                                                         |
+| ---------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `src/data/commodities/tests/commodities.catalog.schema.test.ts`        | 1          | Commodity catalog matches Zod schema, unique IDs                                                                          |
+| `src/data/commodities/tests/country-commodities.ids-coverage.test.ts`  | 3          | Energy/agriculture/metals columns reference valid commodity IDs                                                           |
+| `src/data/commodities/tests/exchange-commodities.map.schema.test.ts`   | 3          | Commodity-exchange map schema, row count, known exchange IDs                                                              |
+| `src/data/commodities/tests/exchanges-country-coverage.test.ts`        | 1          | Every exchange country has a matching country-commodities row                                                             |
+| `src/data/emoji/__tests__/budget-indicator.integrity.test.ts`          | 1          | Budget guard emoji mapping returns SSOT emoji for ok/warning/blocked                                                      |
+| `src/data/emoji/__tests__/emoji.helpers.test.ts`                       | 8          | getEmoji, getTrendEmoji, getProviderEmoji — known IDs, nulls, fallbacks                                                   |
+| `src/data/emoji/tests/emoji-bank.shape.test.ts`                        | 1          | emoji-bank.json matches schema, no duplicate IDs                                                                          |
+| `src/data/exchanges/tests/exchanges.catalog.shape.test.ts`             | 12         | Catalog field types, kebab-case IDs, IANA timezones, geo bounds, unique IDs                                               |
+| `src/data/exchanges/tests/exchanges.index.test.ts`                     | 5          | Homepage east-west ordering, rail split logic, splitIds helper                                                            |
+| `src/data/exchanges/tests/exchanges.selected.shape.test.ts`            | 4          | Selected IDs array, no duplicates, all exist in catalog                                                                   |
+| `src/data/fx/tests/fx-ssot.test.ts`                                    | 2          | fx-pairs.json unique IDs, fx.selected references valid ones                                                               |
+| `src/data/prompt-intelligence/tests/data-integrity.test.ts`            | 16         | Semantic tags coverage, families, conflicts, market moods, platform hints, categories, versions                           |
+| `src/data/prompt-intelligence/tests/prompt-intelligence.shape.test.ts` | 25         | Shape of families.json, conflicts.json, market-moods.json, platform-hints.json, semantic-tags.json, cross-file references |
+| `src/data/providers/__tests__/providers.helpers.test.ts`               | 6          | getProviderById, PROVIDERS_BY_ID, getProviderCapabilities, DEFAULT_CAPABILITIES                                           |
+| `src/data/providers/tests/providers.capabilities.shape.test.ts`        | 7 (1 skip) | \_defaults shape, override flags, catalog match, DEFAULT_CAPABILITIES, PROVIDER_CAPABILITIES                              |
+| `src/data/providers/tests/providers.catalog.shape.test.ts`             | 5 (1 skip) | 42 providers, required fields, unique IDs, sensible scores                                                                |
+| `src/data/providers/tests/providers.hints-presets.shape.test.ts`       | 3 (1 skip) | pasteHints shape, PRESETS array, preset provider IDs reference real providers                                             |
+| `src/data/tests/catalogs.shape.test.ts`                                | 3          | Basic load check for exchanges, countries, providers arrays                                                               |
+| `src/data/tests/commodities.display-country-codes.contract.test.ts`    | 1          | Display country codes reference valid ISO codes from countries.catalog.json                                               |
+| `src/data/tests/cosmic.shape.test.ts`                                  | 1          | Cosmic events shape validation                                                                                            |
+| `src/data/tests/data-contracts.snapshot.test.ts`                       | 8          | Snapshot contracts for fx-pairs.json, exchanges.catalog.json, providers.json, getDefaultFxPairsWithIndexForTier()         |
 
 **Skipped tests (3):**
 
@@ -87,11 +97,48 @@ Data integrity, schema validation, JSON shape checks. All node environment, zero
 2. `providers.catalog.shape.test.ts` — "enforces allowed values for any future group/tier fields"
 3. `providers.hints-presets.shape.test.ts` — "optionally ensures coverage: most providers have at least one preset"
 
+#### 3.1b — Cross-cutting integrity (12 files, 114 cases)
+
+| File                                                           | Cases | What It Validates                                                                                                                                                                  |
+| -------------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/__tests__/cascading-intelligence.integrity.test.ts`       | 20    | Phase 1 semantic tags, clusters, affinities, score differentiation, tier multipliers, buildContext integration                                                                     |
+| `src/__tests__/country-currency.integrity.test.ts`             | 2     | ISO2→ISO3 currency map, 3-letter codes                                                                                                                                             |
+| `src/__tests__/currency.integrity.test.ts`                     | 2     | Currency catalog validation                                                                                                                                                        |
+| `src/__tests__/fx-pairs.test.ts`                               | 2     | fx-pairs.json existence and well-formed pairs                                                                                                                                      |
+| `src/__tests__/providers.schema.test.ts`                       | 3     | providers.json strict Zod schema match, unique IDs                                                                                                                                 |
+| `src/__tests__/roman-numerals.integrity.test.ts`               | 3     | Roman numeral rendering 1-12, edge cases                                                                                                                                           |
+| `src/__tests__/scene-starters.integrity.test.ts`               | 15    | Prefill values in vocabulary, kebab-case IDs, tier guidance, tags, description lengths, orphan checks                                                                              |
+| `src/__tests__/schemas.catalogs.test.ts`                       | 3     | Catalog shape smoke: exchanges, countries, providers                                                                                                                               |
+| `src/__tests__/schemas.test.ts`                                | 3     | Providers validation, bad exchange rejection, pair demo block                                                                                                                      |
+| `src/__tests__/vocab-submission.integrity.test.ts`             | 52    | Phase 7.7 vocab pipeline: profanity filter, spam patterns, length guards, clean terms, false positive resistance, normaliseTerm, category suggester, confidence scoring, constants |
+| `src/__tests__/vocabulary-merge.integrity.test.ts`             | 10    | Phase 0.6 merge: no empty strings, no internal duplicates, no cross-category overlap, no finance jargon, core-first ordering                                                       |
+| `src/components/providers/__tests__/phase-4-evolution.test.ts` | 63    | Phase 4 scenes (200 total), worlds, tier guidance, flavour phrases, vocabulary merge, tier badges, cascade scoring, analytics events                                               |
+
+#### 3.1c — Admin lib functions ★ NEW (11 files, 278 cases)
+
+Phase 7.11 admin command centre pure-logic tests. All test admin lib modules (`@/lib/admin/*`), not UI components.
+
+| File                                                   | Cases | What It Validates                                                                                                                                                                     |
+| ------------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/__tests__/admin/anomaly-thresholds.test.ts`       | 30    | evaluateCorrelation (critical/warning/empty/improving/cron-failure), evaluateTemporalFreshness (critical/warning/fresh/stale channels), evaluateAntiPatterns, evaluateABTests         |
+| `src/__tests__/admin/code-evolution-radar.test.ts`     | 52    | detectCorrelationCeiling (plateau/moving/severity), detectFactorExhaustion (floor/streaks), detectThresholdStaleness (divergence), detectVocabularyDrift, detectAlgorithmSaturation   |
+| `src/__tests__/admin/pipeline-dependencies.test.ts`    | 25    | PIPELINE_NODES (12 nodes, unique IDs, bidirectional consistency), PIPELINE_NODE_MAP, getConnectionLines (no self-loops), getDownstreamImpact (leaf/single/cascade)                    |
+| `src/__tests__/admin/scoring-health-7-11d.test.ts`     | 24    | Undo stack (push/prepend/trim/markUndone/descriptions/countPending/getRecent), anti-pattern severity buckets, AB test history entry shapes                                            |
+| `src/__tests__/admin/scoring-health-7-11e.test.ts`     | 20    | freshnessStatus (fresh/stale/no-data/Infinity/NaN), sentimentPercentages (correct/zero-division/100%), detectRedFlags (platform satisfaction/velocity drop), filterWeekendInsights    |
+| `src/__tests__/admin/scoring-health-overview.test.ts`  | 19    | normaliseSparkline (empty/range/constant/single/negative/decimal), formatTrend (up/down/flat/zero/large), formatRelativeTime (null/future/minutes/hours)                              |
+| `src/__tests__/admin/scoring-profiles.test.ts`         | 29    | validateProfileName (valid/empty/long/special/boundary), validateWeight (valid/negative/>1/Infinity/NaN), normaliseWeights (balanced/unbalanced/zero/empty/single), generateProfileId |
+| `src/__tests__/admin/skill-distribution.test.ts`       | 14    | classifySkill (beginner/intermediate/expert/boundaries), computeDistribution (percentages/empty/single), tierCountsToPercentages (convert/zero/uneven), graduation funnel sorting     |
+| `src/__tests__/admin/term-quality-leaderboard.test.ts` | 27    | sortEntries (score/usage/trend/term/asc/desc/empty/single), filterEntries (category/search/combined/empty), computeSummary (high/low performers)                                      |
+| `src/__tests__/admin/weight-drift-chart.test.ts`       | 16    | computeFactorDrift (empty/baseline/direction/flat/sort/sparkline/single), findDriftExtremes (nulls/biggest/Infinity/all-grew), findHeatmapExtremes (empty/hottest/coldest/zero)       |
+| `src/__tests__/admin/weight-simulator.test.ts`         | 22    | computeWeightedScore (sum/missing/empty/rounding), normaliseWeights (sum/zero/empty/preserved), simulateBatch (empty/identical/rank-changes/sorted/delta), computeWeightDiff          |
+
 ---
 
-### 3.2 — `learning` (24 files, ~530 cases)
+### 3.2 — `learning` (30 files, 808 cases)
 
-ML scoring engine — weight recalibration, A/B testing, term quality, redundancy, combo mining, confidence multipliers. All node, pure computation.
+ML scoring engine — weight recalibration, A/B testing, term quality, redundancy, combo mining, confidence multipliers, temporal intelligence, compression intelligence, feedback credibility. All node, pure computation.
+
+#### 3.2a — Core learning (24 files, 597 cases) — unchanged from v1
 
 | File                                    | Cases | What It Validates                                                                                                                                                                                                                                                                   |
 | --------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -108,7 +155,7 @@ ML scoring engine — weight recalibration, A/B testing, term quality, redundanc
 | `iteration-tracking.test.ts`            | 25    | Null/empty input, single-attempt sessions, category addition, fix order tracking, term replacement, retained terms, score jumps, threshold checks, tiers, global aggregation, session splitting, metadata, multiAttemptPercent, identifyFinalAttempts, identifyMultiAttemptSessions |
 | `magic-combo-mining.test.ts`            | 20    | Basic trio/quad detection, Apriori pruning, synergy calculation, support counting, tier handling, sorting, categories, alphabetical terms, output metadata, edge cases                                                                                                              |
 | `negative-pattern-integration.test.ts`  | 16    | Anti-pattern lookup (severity, clean pairs, null data, tier fallback), collision lookup (score, non-colliding, null), suggestion engine penalty verification, conflict detection with learned data, full round-trip                                                                 |
-| `outcome-score.test.ts`                 | 28    | computeOutcomeScore (all signal combinations, clamping, raw DB shape), computeOutcomeScoreDetailed (breakdown, signal contributions), OUTCOME_SIGNAL_WEIGHTS (hierarchy verification)                                                                                               |
+| `outcome-score.test.ts`                 | 45    | computeOutcomeScore (all signal combinations, clamping, raw DB shape), computeOutcomeScoreDetailed (breakdown, signal contributions), OUTCOME_SIGNAL_WEIGHTS (hierarchy verification)                                                                                               |
 | `platform-co-occurrence.test.ts`        | 22    | Guard rails, single platform pairs, normalisation, alphabetical sorting, multi-platform independence, cross-tier isolation, confidence/graduation, stale decay, pair caps/filtering, metadata                                                                                       |
 | `platform-co-occurrence-lookup.test.ts` | 17    | buildPlatformCoOccurrenceLookup (null/undefined/valid/multi-platform), lookupPlatformCoOccurrence (fallback/confidence blending/pair matching/multi-platform)                                                                                                                       |
 | `platform-term-quality.test.ts`         | 27    | Guard rails, single platform scoring, good vs bad terms, multi-platform independence, cross-tier isolation, confidence calculation, graduation, stale decay, term filtering/caps, trend calculation, metadata                                                                       |
@@ -120,11 +167,32 @@ ML scoring engine — weight recalibration, A/B testing, term quality, redundanc
 | `threshold-discovery.test.ts`           | 22    | Cold start defaults, buildBuckets, findElbow (linear/plateau/empty/sparse), smoothThreshold (first run/smoothing/clamping), per-tier with insufficient data, constants                                                                                                              |
 | `weight-recalibration.test.ts`          | 40    | pearsonCorrelation (empty/zero-variance/perfect/moderate), normaliseToWeights (sum/floor/absolute values), smoothWeights (first run/formula/new factors), computeScoringWeights cold start/warm start/tier fallback/smoothing, STATIC_DEFAULTS, constants                           |
 
+#### 3.2b — Phase 7.8 Temporal Intelligence ★ NEW (1 file, 58 cases)
+
+| File                            | Cases | What It Validates                                                                                                                                                                                                                                                                    |
+| ------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `temporal-intelligence.test.ts` | 58    | extractTermsByMonth (empty/bucketing/category frequency/Date-vs-ISO), computeSeasonalBoosts (empty/minEvents/winter-heavy/significance/maxPerTier/sorting), extractTermsByDayOfWeek, detectWeeklyPatterns, detectPlatformUpdates, computeTemporalBoosts, full round-trip integration |
+
+#### 3.2c — Phase 7.9 Compression Intelligence ★ NEW (3 files, 80 cases)
+
+| File                               | Cases | What It Validates                                                                                                                                                                                     |
+| ---------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `compression-intelligence.test.ts` | 28    | buildQualityIndex (null/indexing), buildWeakTermIndex (null/indexing), buildRedundancyIndex (null/non-canonical), buildAntiPatternIndex (null/pair-counting), computeOptimalLength (peak/diminishing) |
+| `compression-lookup.test.ts`       | 39    | buildCompressionLookup (null/undefined/valid/metadata/empty/multi-tier), lookupOptimalLength (null/existing/missing), lookupPlatformOptimalLength (null/existing/missing), getCompressionAdvice       |
+| `compression-overrides.test.ts`    | 13    | isOverriddenTerm (resolution/cinematic/render-engine/artistic/platform-specific/unknown/case-sensitive), EXPENDABLE_OVERRIDES (non-empty/60+ terms/immutable/no-empties/no-dupes/5 categories)        |
+
+#### 3.2d — Phase 7.10 Feedback Learning ★ NEW (2 files, 73 cases)
+
+| File                           | Cases | What It Validates                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `feedback-credibility.test.ts` | 43    | computeFeedbackCredibility: empty (1.0)/null (0.6)/undefined (1.0), tier multipliers (paid 1.25/free 1.0/anonymous 0.60/unknown), age brackets (new 0.85/settling 1.0/experienced 1.10/veteran 1.15), frequency multipliers (daily/weekly), response speed (fast 1.20/medium/slow), combined 4-factor scoring, clamping 0.3-2.0, constants |
+| `feedback-streaks.test.ts`     | 30    | detectStreak: null for empty/short, hot streak (exactly 3/5 consecutive positive/broken by negative/by neutral), cold streak (3/4 consecutive negative), oscillating (4 alternating/starting negative/broken by neutral), hot takes priority, all neutral → none, mixed → none                                                             |
+
 ---
 
-### 3.3 — `intelligence` (6 files, ~170 cases)
+### 3.3 — `intelligence` (6 files, 176 cases)
 
-Prompt scoring engines — suggestion, conflict detection, market mood, platform optimisation. Node environment.
+Prompt scoring engines — suggestion, conflict detection, market mood, platform optimisation. Node environment. Unchanged from v1.
 
 | File                                            | Cases | What It Validates                                                                                                                                                                                                                                                                                                  |
 | ----------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -133,13 +201,15 @@ Prompt scoring engines — suggestion, conflict detection, market mood, platform
 | `engines/tests/integration.test.ts`             | 34    | analyzePrompt (health score, conflicts, DNA, dominant family, suggestions, platform formatting, summary, market suggestions), quickConflictCheck, getOrderedOptions, getTopSuggestions, formatAndTrim, getMarketMoodUI, previewTermAddition                                                                        |
 | `engines/tests/market-mood-engine.test.ts`      | 31    | detectMarketState (neutral/volatility/opening/closing/USD/gold/crypto), applyMarketMoodBoosts, getMarketMoodSuggestions, shouldShowMarketMood, getMarketMoodTheme, getMarketMoodIcon, performance                                                                                                                  |
 | `engines/tests/platform-optimization.test.ts`   | 37    | formatPromptForPlatform (basic/subject/negatives/limits/hints/empty/unknown), smartTrimPrompt, getCategoryOrder, getTrimPriority, getPlatformCharLimit, platformSupportsWeights, platformUsesSeparateNegative, formatWithWeight, getPlatformRecommendations, estimateTokenCount, formatCompletePrompt, performance |
-| `engines/tests/suggestion-engine.test.ts`       | 28    | buildContext (empty/keywords/family/mood/era/market), scoreOptions (all/sorted/breakdown/compatible/conflicting), reorderByRelevance, getSuggestions (grouped/maxPerCategory/minScore/category filter/excludes/reasons/market-boosted), getSuggestionsForCategory, getAutoCompleteSuggestions, performance         |
+| `engines/tests/suggestion-engine.test.ts`       | 34    | buildContext (empty/keywords/family/mood/era/market), scoreOptions (all/sorted/breakdown/compatible/conflicting), reorderByRelevance, getSuggestions (grouped/maxPerCategory/minScore/category filter/excludes/reasons/market-boosted), getSuggestionsForCategory, getAutoCompleteSuggestions, performance         |
 
 ---
 
-### 3.4 — `hooks` (9 files, ~107 cases)
+### 3.4 — `hooks` (10 files, 126 cases)
 
 React hooks — all require jsdom for `renderHook()`.
+
+#### 3.4a — Core hooks (9 files, 107 cases) — unchanged from v1
 
 | File                                                                 | Cases | What It Validates                                                                                                                                                                                          |
 | -------------------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -153,11 +223,19 @@ React hooks — all require jsdom for `renderHook()`.
 | `hooks/prompt-intelligence/__tests__/use-smart-reorder.test.ts`      | 15    | Ordered options, helper functions, recommended array, scoring, getScore, isRecommended, enabled/recommendedThreshold options, reorder, selection/options change reactivity, empty options                  |
 | `hooks/prompt-intelligence/__tests__/use-smart-suggestions.test.ts`  | 13    | Empty selections, helper functions, suggestion generation, category organisation, required properties, forCategory, maxPerCategory/maxTotal/minScore/enabled options, refresh, selection change reactivity |
 
+#### 3.4b — Phase 7.10 Feedback hook ★ NEW (1 file, 19 cases)
+
+| File                                          | Cases | What It Validates                                                                                                                                                                                                            |
+| --------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hooks/__tests__/use-feedback-memory.test.ts` | 19    | flattenSelections (empty/multi-category/undefined), findOverlap (none/overlapping/empty-current/empty-rated), buildTermHints (empty/positive/negative/neutral-ignored/net-positive-wins), useFeedbackMemory hook integration |
+
 ---
 
-### 3.5 — `components` (12 files, ~100 cases)
+### 3.5 — `components` (13 files, 98 cases)
 
-React component rendering — jsdom environment. Note: `phase-4-evolution.test.ts` lives under `components/` but runs in `data` project.
+React component rendering — jsdom environment.
+
+#### 3.5a — Existing components (10 files, 76 cases) — unchanged from v1
 
 | File                                                    | Cases | What It Validates                                                                                                                                                                                                                                                              |
 | ------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -171,13 +249,27 @@ React component rendering — jsdom environment. Note: `phase-4-evolution.test.t
 | `providers/__tests__/provider-detail.smoke.test.tsx`    | 2     | Renders provider details, outbound CTAs route via /go (no direct external hrefs)                                                                                                                                                                                               |
 | `ui/__tests__/tabs.keyboard.test.tsx`                   | 1     | Arrow key focus movement, Home/End key support                                                                                                                                                                                                                                 |
 | `ui/__tests__/tabs.live.test.tsx`                       | 2     | Labelled tablist with 3 tabs, polite live region without visual noise                                                                                                                                                                                                          |
-| `ux/__tests__/return-to-last.smoke.test.tsx`            | 2     | Renders nothing when no key, renders link when last provider present (migrates legacy)                                                                                                                                                                                         |
+
+#### 3.5b — Phase 7.10 Feedback components ★ NEW (2 files, 22 cases)
+
+| File                                           | Cases | What It Validates                                                                                                                                                                                |
+| ---------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ux/__tests__/feedback-invitation.test.tsx`    | 12    | Rendering (region/subtitle/3 buttons/dismiss/a11y), rating interaction (sendFeedback args/userContext passthrough/thanks text/hides buttons), dismiss (recordDismissal/onComplete), auto-dismiss |
+| `ux/__tests__/feedback-memory-banner.test.tsx` | 10    | Rendering (null → nothing/positive message/negative message/neutral message/+N more overflow), user tier (pro/free message), dismiss (removes banner/DOM removal/accessible button)              |
+
+#### 3.5c — Existing UX (1 file, 2 cases) — unchanged from v1
+
+| File                                         | Cases | What It Validates                                                                      |
+| -------------------------------------------- | ----- | -------------------------------------------------------------------------------------- |
+| `ux/__tests__/return-to-last.smoke.test.tsx` | 2     | Renders nothing when no key, renders link when last provider present (migrates legacy) |
 
 ---
 
-### 3.6 — `api` (6 files, ~18 cases)
+### 3.6 — `api` (8 files, 40 cases)
 
 API route contracts — node environment. Uses `api-test-setup.ts` to silence console.debug/error noise.
+
+#### 3.6a — Existing API tests (7 files, 19 cases) — unchanged from v1
 
 | File                                           | Cases | What It Validates                                                                                                                                                    |
 | ---------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -189,11 +281,19 @@ API route contracts — node environment. Uses `api-test-setup.ts` to silence co
 | `src/__tests__/go.outbound.route.test.ts`      | 7     | /go/[providerId] redirect: buildGoHref, 400 on missing src, 404 for unknown, affiliateUrl with click_id/utm, website fallback, explicit utm_medium, required headers |
 | `src/__tests__/api.weather.route.test.ts`      | 3     | /api/weather proxy: gateway data shape, NextResponse.json, error envelope                                                                                            |
 
+#### 3.6b — Phase 7.10 Feedback API ★ NEW (1 file, 21 cases)
+
+| File                                                | Cases | What It Validates                                                                                                                                                                                                                                                                           |
+| --------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/api/feedback/__tests__/feedback-route.test.ts` | 21    | Happy path (201 with id/correct args/neutral rating/negative rating/null userTier/null accountAgeDays), validation (missing promptEventId/empty promptEventId/invalid rating/missing rating/credibilityScore > 2/negative credibilityScore/tier outside 1-4), error handling, rate limiting |
+
 ---
 
-### 3.7 — `util` (12 files, ~44 cases)
+### 3.7 — `util` (14 files, 96 cases)
 
 Pure utility/library functions — node environment, zero DOM.
+
+#### 3.7a — Existing utilities (12 files, 45 cases) — unchanged from v1
 
 | File                                                 | Cases | What It Validates                                                                                              |
 | ---------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
@@ -210,11 +310,18 @@ Pure utility/library functions — node environment, zero DOM.
 | `src/__tests__/fx.normalise-symbol.test.ts`          | 3     | normaliseSymbol: canonical key mapping, delimiter variants, concatenated pairs                                 |
 | `src/__tests__/exchange-order.test.ts`               | 4     | Selected exchange count (16), rail split, east-west ordering, splitIds mirror                                  |
 
+#### 3.7b — Phase 7.10 Feedback client ★ NEW (2 files, 51 cases)
+
+| File                                                     | Cases | What It Validates                                                                                                                                                                                                                                          |
+| -------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/feedback/__tests__/feedback-client.test.ts`         | 18    | Pending feedback storage (store/read/null/corrupted/missing-eventId/missing-copiedAt/clear), dismissal cooldown (none/immediately/after-24h/corrupted), sendFeedback (POST shape/success/failure)                                                          |
+| `lib/feedback/__tests__/feedback-scene-enhancer.test.ts` | 33    | enhanceScenePrefills (unmodified/positive-hinted/below-MIN_HINT_COUNT/MAX_ADDITIONS_PER_CATEGORY/strongest-first/already-in-prefills/vocabulary-validated/multi-category/warningTerms/empty/custom-category/empty-values), hasEnoughFeedbackForEnhancement |
+
 ---
 
-### 3.8 — `app` (6 files, ~118 cases)
+### 3.8 — `app` (6 files, 118 cases)
 
-App-scoped integration / catch-all — jsdom environment (mixed .ts/.tsx).
+App-scoped integration / catch-all — jsdom environment (mixed .ts/.tsx). Unchanged from v1.
 
 | File                                               | Cases | What It Validates                                                                                                                                                                                                                                              |
 | -------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -275,16 +382,16 @@ These are the systems identified as having zero test coverage. Ranked by risk le
 | ------------------------------------------ | ------------ | ------- | --------------------------------------------------------------------------------------------------------------- |
 | **Vocabulary System** (`lib/vocabulary/*`) | 4 files      | 🟡 HIGH | Category suggester, auto-filter, vocabulary loader. Powers dropdown suggestions in prompt builder.              |
 | **Telemetry Client** (`lib/telemetry/*`)   | 2 files      | 🟡 HIGH | Quality gates, session tracking, return-within-60s detection. Silent failures = no learning data.               |
-| **35 Hooks without tests**                 | 35 files     | 🟡 HIGH | Includes use-prompt-builder, use-weather, use-learned-weights, use-prompt-optimization — all business-critical. |
+| **36 Hooks without tests**                 | 36 files     | 🟡 HIGH | Includes use-prompt-builder, use-weather, use-learned-weights, use-prompt-optimization — all business-critical. |
 
 ### 5.3 🟠 MEDIUM — Undertested
 
-| System                    | Tested/Total             | Risk      | Impact                                                                                                                                                                                                                                                            |
-| ------------------------- | ------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **API Routes**            | 6 test files / 69 routes | 🟠 MEDIUM | Most are CRUD/simple, but learning/_ and admin/_ routes handle scoring weights, aggregation cron, and user data.                                                                                                                                                  |
-| **Component directories** | 6 of 28 dirs tested      | 🟠 MEDIUM | 22 component directories have zero tests (admin, analytics, auth, builders, chrome, common, core, cosmic, footer, fx, health, home, icons, layout, leaderboard, market-pulse, prompt-builder, prompt-intelligence, prompts, ribbon, settings, tooltips, weather). |
+| System                    | Tested/Total              | Risk      | Impact                                                                                                                                                                                                                                                            |
+| ------------------------- | ------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **API Routes**            | 8 test files / 69+ routes | 🟠 MEDIUM | Most are CRUD/simple, but learning/_ and admin/_ routes handle scoring weights, aggregation cron, and user data.                                                                                                                                                  |
+| **Component directories** | 6 of 29 dirs tested       | 🟠 MEDIUM | 23 component directories have zero tests (admin, analytics, auth, builders, chrome, common, core, cosmic, footer, fx, health, home, icons, layout, leaderboard, market-pulse, prompt-builder, prompt-intelligence, prompts, ribbon, settings, tooltips, weather). |
 
-### 5.4 Untested Hooks (35 files)
+### 5.4 Untested Hooks (36 files)
 
 ```
 use-analytics.ts              use-market-mood-live.ts
@@ -306,9 +413,10 @@ use-index-ratings.ts          user-plan.ts
 use-indices-quotes.ts
 use-intelligence-preferences.ts
 use-intelligent-phrases.ts
+use-learned-weights.ts
 ```
 
-### 5.5 Untested Component Directories (22 of 28)
+### 5.5 Untested Component Directories (23 of 29)
 
 ```
 admin/          cosmic/         icons/          prompts/
@@ -369,8 +477,48 @@ pnpm run check:all              # lint + typecheck + test:ci
 
 ## 8. Version History
 
-| Date           | Change                                                        | Tests Before            | Tests After             |
-| -------------- | ------------------------------------------------------------- | ----------------------- | ----------------------- |
-| 27 Feb 2026    | Phase A — Jest config reorganised into 8 projects             | 105 files / 1,413 cases | 105 files / 1,413 cases |
-| 27-28 Feb 2026 | Rounds 1-13 — 13 rounds of fixes and improvements             | 105 files / 1,413 cases | 108 files / 1,427 cases |
-| 28 Feb 2026    | Round 14 — Lint fix (onKeyDown + tabIndex on exchange-picker) | 108 files / 1,427 cases | 108 files / 1,427 cases |
+| Date           | Change                                                               | Tests Before            | Tests After             |
+| -------------- | -------------------------------------------------------------------- | ----------------------- | ----------------------- |
+| 27 Feb 2026    | Phase A — Jest config reorganised into 8 projects                    | 105 files / 1,413 cases | 105 files / 1,413 cases |
+| 27-28 Feb 2026 | Rounds 1-13 — 13 rounds of fixes and improvements                    | 105 files / 1,413 cases | 108 files / 1,427 cases |
+| 28 Feb 2026    | Round 14 — Lint fix (onKeyDown + tabIndex on exchange-picker)        | 108 files / 1,427 cases | 108 files / 1,427 cases |
+| 28 Feb–1 Mar   | Phases 7.8-7.11 — Temporal, Compression, Feedback, Admin test suites | 108 files / 1,427 cases | 131 files / 2,034 cases |
+
+### Phase 7.8-7.11 Test Build Log
+
+| Phase | Files Added | Cases Added | What Was Tested                                                                                                                                                                                                               |
+| ----- | ----------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 7.8   | 1           | 58          | Temporal intelligence: seasonal boosts, weekly patterns, platform update detection                                                                                                                                            |
+| 7.9   | 3           | 80          | Compression intelligence: quality/weak/redundancy indexes, lookup, overrides                                                                                                                                                  |
+| 7.10  | 8           | 146         | Feedback system: credibility scoring, streaks, client, scene enhancer, API route, components, hook                                                                                                                            |
+| 7.11  | 11          | 278         | Admin command centre: all 11 lib modules (anomaly thresholds, code evolution radar, pipeline deps, undo stack, temporal/feedback panels, overview, profiles, skill distribution, leaderboard, weight drift, weight simulator) |
+
+---
+
+## 9. Cross-Reference: Test ↔ Build Phase ↔ Source Module
+
+| Test File                          | Build Phase | Source Module Under Test                                             | Lines in Source |
+| ---------------------------------- | ----------- | -------------------------------------------------------------------- | --------------- |
+| `temporal-intelligence.test.ts`    | 7.8         | `lib/learning/temporal-intelligence.ts`                              | 652             |
+| `compression-intelligence.test.ts` | 7.9         | `lib/learning/compression-intelligence.ts`                           | 732             |
+| `compression-lookup.test.ts`       | 7.9         | `lib/learning/compression-lookup.ts`                                 | 349             |
+| `compression-overrides.test.ts`    | 7.9         | `lib/learning/compression-overrides.ts`                              | 151             |
+| `feedback-credibility.test.ts`     | 7.10        | `lib/learning/feedback-credibility.ts` (part of `types/feedback.ts`) | 328             |
+| `feedback-streaks.test.ts`         | 7.10        | `lib/learning/feedback-streaks.ts`                                   | 335             |
+| `feedback-client.test.ts`          | 7.10        | `lib/feedback/feedback-client.ts`                                    | 225             |
+| `feedback-scene-enhancer.test.ts`  | 7.10        | `lib/feedback/feedback-scene-enhancer.ts`                            | 295             |
+| `feedback-route.test.ts`           | 7.10        | `app/api/feedback/route.ts`                                          | ~120            |
+| `feedback-invitation.test.tsx`     | 7.10        | `components/ux/feedback-invitation.tsx`                              | ~200            |
+| `feedback-memory-banner.test.tsx`  | 7.10        | `components/ux/feedback-memory-banner.tsx`                           | ~150            |
+| `use-feedback-memory.test.ts`      | 7.10        | `hooks/use-feedback-memory.ts`                                       | 355             |
+| `anomaly-thresholds.test.ts`       | 7.11        | `lib/admin/anomaly-thresholds.ts`                                    | ~280            |
+| `code-evolution-radar.test.ts`     | 7.11        | `lib/admin/code-evolution-radar.ts`                                  | ~400            |
+| `pipeline-dependencies.test.ts`    | 7.11        | `lib/admin/pipeline-dependencies.ts`                                 | ~200            |
+| `scoring-health-7-11d.test.ts`     | 7.11        | `lib/admin/undo-stack.ts`, `scoring-health-types.ts`                 | ~490            |
+| `scoring-health-7-11e.test.ts`     | 7.11        | `lib/admin/scoring-health-types.ts` (temporal/feedback helpers)      | ~300            |
+| `scoring-health-overview.test.ts`  | 7.11        | `lib/admin/scoring-health-types.ts` (sparkline/trend/time)           | ~300            |
+| `scoring-profiles.test.ts`         | 7.11        | `lib/admin/scoring-profiles.ts`                                      | ~400            |
+| `skill-distribution.test.ts`       | 7.11        | `lib/admin/scoring-health-types.ts` (skill helpers)                  | ~300            |
+| `term-quality-leaderboard.test.ts` | 7.11        | `lib/admin/scoring-health-types.ts` (sort/filter/summary)            | ~300            |
+| `weight-drift-chart.test.ts`       | 7.11        | `lib/admin/scoring-health-types.ts` (drift/heatmap helpers)          | ~300            |
+| `weight-simulator.test.ts`         | 7.11        | `lib/admin/weight-simulator.ts`                                      | ~200            |

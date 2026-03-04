@@ -1,6 +1,11 @@
 // src/lib/prompt-builder.ts
 // Platform-optimized prompt assembler for AI image platforms
-// Version 4.1.0 - Tier-aware unified assembly with intent reordering
+// Version 4.2.0 - Rich phrase handling for unified brain
+// Changelog:
+//   4.2.0 - Rich phrase detection (>4 words bypass weight wrapping + connectors)
+//           Smart trim: metadata categories drop before core scene categories
+//           Plain language: rich phrases simplified to first N words
+//   4.1.0 - Tier-aware unified assembly with intent reordering
 // Features:
 // - 12 categories support (added Fidelity)
 // - Unified tier-aware assembler replaces 7 family-specific functions
@@ -179,13 +184,31 @@ const NEGATIVE_TO_POSITIVE: Record<string, string> = {
   oversaturated: 'balanced colors',
   'washed out': 'vibrant rich tones',
 
-  // Unwanted elements → Clean image
+  // Unwanted elements → Clean image (singular + plural forms)
   text: 'clean image',
   watermark: 'unmarked',
+  watermarks: 'unmarked',
   signature: 'unsigned',
+  signatures: 'unsigned',
   logo: 'logo-free',
+  logos: 'logo-free',
   border: 'borderless',
   frame: 'full frame',
+
+  // People / crowd control (weather scenes are often empty)
+  people: 'empty scene',
+  person: 'empty scene',
+  crowd: 'empty scene',
+  crowds: 'empty scene',
+
+  // Style / medium exclusions → Positive style affirmation
+  cartoon: 'realistic rendering',
+  cartoonish: 'realistic rendering',
+  anime: 'photographic realism',
+  illustration: 'photographic',
+  sketch: 'detailed rendering',
+  '3d render': 'photographic',
+  'cgi look': 'natural look',
 
   // Composition issues → Good composition
   cropped: 'complete composition',
@@ -248,6 +271,70 @@ function countWords(text: string): number {
 //   // Rough estimation: ~4 chars per token on average
 //   return Math.ceil(text.length / 4);
 // }
+
+// ============================================================================
+// Rich Phrase Detection (Phase A — Unified Brain)
+// ============================================================================
+// Weather intelligence produces multi-word physics-computed phrases like
+// "Cool white moonlight competing with focused accent lighting".
+// These need different treatment than simple dropdown terms like "moonlight".
+//
+// Threshold: >4 words = rich phrase. This covers:
+//   - 1 word:  "moonlight"                     → dropdown term (no change)
+//   - 2 words: "golden hour"                   → dropdown term (no change)
+//   - 3 words: "low angle shot"                → dropdown term (no change)
+//   - 4 words: "warm golden hour light"        → dropdown term (no change)
+//   - 5+ words: "Cool white moonlight competing with..." → rich phrase (new path)
+// ============================================================================
+
+const RICH_PHRASE_THRESHOLD = 4;
+
+/**
+ * Detect if a term is a rich phrase (>4 words) vs a simple dropdown term.
+ * Rich phrases bypass weight wrapping and connector prefixing.
+ */
+function isRichPhrase(term: string): boolean {
+  return countWords(term) > RICH_PHRASE_THRESHOLD;
+}
+
+/**
+ * Simplify a rich phrase for Tier 4 (plain language) by extracting the first
+ * N key words. Drops modifiers and prepositions to fit tight token budgets.
+ *
+ * "Cool white moonlight competing with focused accent lighting" →
+ * "cool white moonlight" (first 3 content words)
+ */
+function simplifyRichPhrase(phrase: string, maxWords: number = 3): string {
+  const words = phrase.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return phrase;
+  return words.slice(0, maxWords).join(' ');
+}
+
+// ============================================================================
+// Smart Trim Category Priority (Phase A — Unified Brain)
+// ============================================================================
+// When trimming to token budget, drop metadata/optional categories FIRST,
+// preserving the core scene identity. This prevents rich weather phrases
+// from crowding out subject + lighting.
+
+/** Categories that define the scene identity — trimmed LAST */
+const TRIM_PRIORITY_CORE: PromptCategory[] = [
+  'subject',
+  'lighting',
+  'environment',
+  'style',
+  'camera',
+];
+
+/** Categories that enhance but don't define — trimmed FIRST */
+const TRIM_PRIORITY_METADATA: PromptCategory[] = [
+  'fidelity',
+  'materials',
+  'composition',
+  'colour',
+  'atmosphere',
+  'action',
+];
 
 // ============================================================================
 // Prompt Trimming for Token Limits
@@ -349,6 +436,12 @@ function getEffectiveOrder(platformFormat: PlatformFormat): PromptCategory[] {
  *
  * This ensures the most impactful terms land in early token positions where
  * CLIP-based models and Midjourney pay the most attention.
+ *
+ * Rich phrase handling (v4.2.0):
+ *   - Short terms (≤4 words): weighted per config as before
+ *   - Rich phrases (>4 words): inserted as-is without weight wrapping.
+ *     Wrapping "(Cool white moonlight competing with focused accent lighting:1.3)"
+ *     puts too much text in one weight group, confusing CLIP attention.
  */
 function collectKeywordParts(
   selections: PromptSelections,
@@ -365,7 +458,8 @@ function collectKeywordParts(
 
     const weight = weights[category];
     if (weight && syntax) {
-      parts.push(...values.map((v) => applyWeight(v, weight, syntax)));
+      // Apply weight only to short terms; rich phrases pass through unweighted
+      parts.push(...values.map((v) => (isRichPhrase(v) ? v : applyWeight(v, weight, syntax))));
     } else {
       parts.push(...values);
     }
@@ -383,6 +477,79 @@ function collectKeywordParts(
  * immediately after qualityPrefix, placing them in the early token positions
  * where model attention is strongest.
  */
+
+// ── Upgrade 2 (v11.1.0): CLIP Syntax Sanitiser ─────────────────────────────
+//
+// CLIP tokenisers (Stable Diffusion, Leonardo, ComfyUI, Flux) and Midjourney
+// split on commas. Periods inside tokens confuse tokenisers and can deweight
+// everything after them. This sanitiser runs on all keyword-mode output.
+//
+// Fixes:
+//   "Natural daylight. Lumpy stratocumulus layer..."
+//     → "Natural daylight, lumpy stratocumulus layer..."
+//   "midground tack-sharp."
+//     → "midground tack-sharp"
+//
+// Safe: preserves decimals (f/1.4, 0.5), ellipsis (...), abbreviations.
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Improvement 5 (v11.1.1): CLIP Token Estimator ──────────────────────────
+//
+// CLIP uses BPE tokenisation. Approximate mapping:
+//   - Common English words → 1 token each
+//   - Compound/rare words → 2+ tokens
+//   - Punctuation (commas, colons) → 1 token each
+//   - Numbers → 1-2 tokens
+//
+// CLIP encoding window: 77 tokens (SD 1.5/SDXL). SDXL uses two encoders
+// but the main CLIP-L still processes 77. Tokens beyond 77 get weaker
+// attention (some implementations use BREAK for multi-pass encoding).
+//
+// Estimation: split on whitespace + punctuation, count. Roughly 1.3 words
+// per token, but commas and weight syntax add tokens too.
+// ────────────────────────────────────────────────────────────────────────────
+function estimateClipTokens(text: string): number {
+  if (!text.trim()) return 0;
+
+  // Strip weight syntax that tokeniser ignores: (term:1.2) → term, {{{term}}} → term
+  const cleaned = text
+    .replace(/\({2,}([^)]+?)(?::[0-9.]+)?\){2,}/g, '$1') // ((term:1.2)) → term
+    .replace(/\(([^)]+?):[0-9.]+\)/g, '$1') // (term:1.2) → term
+    .replace(/\{+([^}]+?)\}+/g, '$1') // {{{term}}} → term
+    .replace(/::[0-9.]+/g, ''); // term::1.2 → term
+
+  // Split into BPE-like tokens: words + punctuation + numbers
+  const tokens = cleaned.match(/[a-zA-Z]+(?:[-'][a-zA-Z]+)*|[0-9]+(?:\.[0-9]+)?|[,.:;!?()]/g);
+  return tokens?.length ?? 0;
+}
+
+function sanitiseClipTokens(text: string): string {
+  let out = text;
+
+  // 0. Strip periods at end of a token before comma separator
+  //    "overhead., Southerly" → "overhead, Southerly"
+  //    Safe: preserves "f/1.4," because a digit precedes the period.
+  out = out.replace(/([a-zA-Z])\.\s*,/g, '$1,');
+
+  // 1. Replace sentence-ending periods followed by space+letter with ", "
+  //    "Natural daylight. Lumpy" → "Natural daylight, lumpy"
+  //    Safe: won't match decimals (1.4) or ellipsis (...) because they lack
+  //    the space+letter pattern.
+  out = out.replace(/\.(\s+)([A-Za-z])/g, (_match, _space, firstChar: string) => {
+    return `, ${firstChar.toLowerCase()}`;
+  });
+
+  // 2. Strip any trailing period (with optional whitespace)
+  out = out.replace(/\.\s*$/, '');
+
+  // 3. Collapse double commas, leading/trailing commas, double spaces
+  out = out.replace(/,\s*,/g, ',');
+  out = out.replace(/\s{2,}/g, ' ');
+  out = out.replace(/^,\s*/, '');
+  out = out.replace(/,\s*$/, '');
+
+  return out.trim();
+}
+
 function assembleKeywords(
   selections: PromptSelections,
   platformFormat: PlatformFormat,
@@ -409,15 +576,26 @@ function assembleKeywords(
 
   let positive = trimmed.join(separator);
 
+  // Upgrade 2: Sanitise CLIP syntax — strip stray periods from natural-language
+  // customValues that survive into keyword-mode output.
+  positive = sanitiseClipTokens(positive);
+
   // 5. Handle negatives based on platform config
   const userNegatives = selections.negative?.filter(Boolean) ?? [];
 
   if (platformFormat.negativeSupport === 'inline' && platformFormat.negativeSyntax) {
-    // Inline negatives (e.g., MJ "--no blur, text" or Ideogram "without blur")
+    // v3.3.0: Convert known negatives to positive reinforcement terms first,
+    // then inline remaining unconverted terms with the platform's syntax.
     if (userNegatives.length > 0) {
-      const negStr = userNegatives.join(', ');
-      const inlineNeg = platformFormat.negativeSyntax.replace('{negative}', negStr);
-      positive += ` ${inlineNeg}`;
+      const { positives, withouts } = convertNegativesToPositives(userNegatives);
+      if (positives.length > 0) {
+        positive += `${separator}${positives.join(separator)}`;
+      }
+      if (withouts.length > 0) {
+        const negStr = withouts.join(', ');
+        const inlineNeg = platformFormat.negativeSyntax.replace('{negative}', negStr);
+        positive += ` ${inlineNeg}`;
+      }
     }
     return {
       positive,
@@ -430,9 +608,31 @@ function assembleKeywords(
   }
 
   if (platformFormat.negativeSupport === 'separate') {
-    // Separate negative field — prepend quality negatives from config
+    // v3.3.0: Convert known negatives to positive reinforcement terms and
+    // append to positive prompt. The negatives still go to the separate field
+    // so the model avoids them AND the positive prompt reinforces what to include.
+    // v3.4.0: Deduplicate against existing positive content — qualitySuffix
+    // may already include terms like "sharp focus" that neg-to-pos also produces.
+    const { positives: negPos } = convertNegativesToPositives(userNegatives);
+    const existingLower = positive.toLowerCase();
+    const dedupedNegPos = negPos.filter((term) => !existingLower.includes(term.toLowerCase()));
+    if (dedupedNegPos.length > 0) {
+      positive += `${separator}${dedupedNegPos.join(separator)}`;
+    }
+
+    // Separate negative field — prepend quality negatives from config.
+    // Fix: Deduplicate — qualityNeg may overlap with weather-generated user negatives
+    // (e.g., "blurry" appears in both qualityNegative config and buildNegativeTerms()).
     const qualityNeg = platformFormat.qualityNegative ?? [];
-    const allNegatives = [...qualityNeg, ...userNegatives];
+    const seenNeg = new Set<string>();
+    const allNegatives: string[] = [];
+    for (const term of [...qualityNeg, ...userNegatives]) {
+      const key = term.toLowerCase().trim();
+      if (key && !seenNeg.has(key)) {
+        seenNeg.add(key);
+        allNegatives.push(term);
+      }
+    }
     return {
       positive,
       negative: allNegatives.length > 0 ? allNegatives.join(', ') : undefined,
@@ -478,11 +678,17 @@ const SENTENCE_CONNECTORS: Record<string, SentenceConnector> = {
 
   // Scene categories
   environment: { prefix: 'in ' },
-  style: { prefix: 'in ', suffix: ' style' },
+  // v3.5.1: Removed " style" suffix — "photorealistic" is cleaner and more
+  // CLIP-efficient than "in photorealistic style". Suffix dilutes attention
+  // without changing what the AI generates. Closes flux parity 95.5% → 100%.
+  style: { prefix: 'in ' },
   lighting: { prefix: 'with ' },
-  atmosphere: { suffix: ' atmosphere' },
+  // v3.5.1: Removed " atmosphere" suffix, switched joiner to comma.
+  // "mysterious" is more prompt-efficient than "mysterious atmosphere".
+  // Comma joiner ("haze, urban glow") is standard prompt syntax vs "and".
+  atmosphere: { joiner: ', ' },
   colour: {},
-  materials: { prefix: 'featuring ' },
+  materials: {}, // v3.4.0: removed "featuring" prefix — materials terms are self-describing
   composition: {},
   camera: {},
   fidelity: {},
@@ -490,14 +696,44 @@ const SENTENCE_CONNECTORS: Record<string, SentenceConnector> = {
 
 /**
  * Build a sentence clause from a category's selections and its connector.
+ *
+ * Rich phrase handling (v4.2.0):
+ *   - Short terms: wrapped with prefix/suffix connectors as before
+ *     "moonlight" → "with moonlight"
+ *   - Rich phrases (>4 words): inserted as standalone clauses, no connector
+ *     "Cool white moonlight competing with focused accent lighting"
+ *     NOT "with Cool white moonlight competing with focused accent lighting"
  */
 function buildClause(category: PromptCategory, values: string[]): string {
   const connector = SENTENCE_CONNECTORS[category] ?? {};
   const joiner = connector.joiner ?? ' and ';
-  const joined = values.join(joiner);
-  const prefix = connector.prefix ?? '';
-  const suffix = connector.suffix ?? '';
-  return `${prefix}${joined}${suffix}`;
+
+  // Separate rich phrases from short terms
+  const shortTerms: string[] = [];
+  const richPhrases: string[] = [];
+
+  for (const v of values) {
+    if (isRichPhrase(v)) {
+      richPhrases.push(v);
+    } else {
+      shortTerms.push(v);
+    }
+  }
+
+  const parts: string[] = [];
+
+  // Short terms get normal connector treatment
+  if (shortTerms.length > 0) {
+    const joined = shortTerms.join(joiner);
+    const prefix = connector.prefix ?? '';
+    const suffix = connector.suffix ?? '';
+    parts.push(`${prefix}${joined}${suffix}`);
+  }
+
+  // Rich phrases become standalone clauses (no connector)
+  parts.push(...richPhrases);
+
+  return parts.join(', ');
 }
 
 /**
@@ -544,11 +780,34 @@ function assembleNaturalSentences(
   const envIsEarly = envIdx !== -1 && (styleIdx === -1 || envIdx < styleIdx);
 
   if (envIsEarly && selections.environment?.length) {
-    const envStr = selections.environment.join(' and ');
-    if (nucleus) {
-      nucleus += ` in ${envStr}`;
-    } else {
-      nucleus = `Scene in ${envStr}`;
+    // Split environment terms: short terms get "in" prefix, rich phrases stand alone
+    const shortEnvs: string[] = [];
+    const richEnvs: string[] = [];
+    for (const env of selections.environment) {
+      if (isRichPhrase(env)) {
+        richEnvs.push(env);
+      } else {
+        shortEnvs.push(env);
+      }
+    }
+
+    // Fuse short terms into nucleus with "in" prefix (existing behaviour)
+    if (shortEnvs.length > 0) {
+      const shortStr = shortEnvs.join(' and ');
+      if (nucleus) {
+        nucleus += ` in ${shortStr}`;
+      } else {
+        nucleus = `Scene in ${shortStr}`;
+      }
+    }
+
+    // Rich phrases appended as standalone clauses (no "in" prefix)
+    if (richEnvs.length > 0) {
+      if (nucleus) {
+        nucleus += `, ${richEnvs.join(', ')}`;
+      } else {
+        nucleus = richEnvs.join(', ');
+      }
     }
   }
 
@@ -580,9 +839,19 @@ function assembleNaturalSentences(
 
   if (platformFormat.negativeSupport === 'inline' && platformFormat.negativeSyntax) {
     if (negatives.length > 0) {
-      const negStr = negatives.join(', ');
-      const inlineNeg = platformFormat.negativeSyntax.replace('{negative}', negStr);
-      positive += `, ${inlineNeg}`;
+      // v3.3.0: Convert known negatives to positive reinforcement terms first
+      // (e.g. "blurry" → "sharp focus"), then inline remaining unconverted
+      // terms. This matches the conversion path and ensures consistent
+      // quality terms across all Tier 3 natural-language platforms.
+      const { positives, withouts } = convertNegativesToPositives(negatives);
+      if (positives.length > 0) {
+        positive += `, ${positives.join(', ')}`;
+      }
+      if (withouts.length > 0) {
+        const negStr = withouts.join(', ');
+        const inlineNeg = platformFormat.negativeSyntax.replace('{negative}', negStr);
+        positive += `, ${inlineNeg}`;
+      }
     }
     return trimAndReturn(positive, platformFormat, true, 'inline');
   }
@@ -607,6 +876,12 @@ function assembleNaturalSentences(
  * Produces short, comma-separated keyword lists (5-15 words ideal).
  * Uses impact-priority ordering so subject + style land first,
  * with everything else appended if there's budget remaining.
+ *
+ * Rich phrase handling (v4.2.0):
+ *   - Rich phrases (>4 words) are simplified to their first 3 content words
+ *     to fit Tier 4's tight token budget (40-60 words).
+ *   - "Cool white moonlight competing with focused accent lighting"
+ *     → "cool white moonlight"
  */
 function assemblePlainLanguage(
   selections: PromptSelections,
@@ -616,10 +891,11 @@ function assemblePlainLanguage(
   const effectiveOrder = getEffectiveOrder(platformFormat);
 
   // Collect selections in impact-priority order — flat keywords, no frills
+  // Rich phrases get simplified to fit the tight budget
   for (const category of effectiveOrder) {
     const values = selections[category];
     if (values?.length) {
-      parts.push(...values);
+      parts.push(...values.map((v) => (isRichPhrase(v) ? simplifyRichPhrase(v, 3) : v)));
     }
   }
 
@@ -691,28 +967,158 @@ function trimAndReturn(
  *      and keyword-style Tier 3 platforms like Flux)
  *   3. Everything else → natural language sentences (Tier 3 default)
  */
+// ── Upgrade 3 (v11.1.0): Assembly-Level Deduplication ───────────────────────
+//
+// When a category has multiple values and one is a case-insensitive substring
+// of another LONGER value, the shorter one is redundant. Drop it.
+//
+// Runs at the assembly entry point so BOTH the generator path
+// (selectionsFromMap → assemblePrompt) and the builder UI path
+// (UI state → assemblePrompt) get identical dedup. Single canonical assembly.
+//
+// Example:
+//   lighting: ["natural daylight", "Natural daylight, low rolling stratocumulus..."]
+//   → ["Natural daylight, low rolling stratocumulus..."]
+//
+//   composition: ["street photography", "street-level photography"]
+//   → both kept ("street photography" ≠ substring of "street-level photography")
+// ─────────────────────────────────────────────────────────────────────────────
+function deduplicateWithinCategories(selections: PromptSelections): PromptSelections {
+  const result: PromptSelections = {};
+
+  for (const [category, values] of Object.entries(selections)) {
+    if (!values || values.length <= 1) {
+      result[category as PromptCategory] = values;
+      continue;
+    }
+
+    const kept: string[] = [];
+    for (let i = 0; i < values.length; i++) {
+      const valLower = values[i]!.toLowerCase();
+      let isRedundant = false;
+
+      for (let j = 0; j < values.length; j++) {
+        if (i === j) continue;
+        const otherLower = values[j]!.toLowerCase();
+        // Drop this value if a LONGER value in the same category contains it
+        if (otherLower.length > valLower.length && otherLower.includes(valLower)) {
+          isRedundant = true;
+          break;
+        }
+      }
+
+      if (!isRedundant) {
+        kept.push(values[i]!);
+      }
+    }
+
+    result[category as PromptCategory] = kept.length > 0 ? kept : values;
+  }
+
+  return result;
+}
+
+// ── Improvement 1 (v11.1.1): Cross-category deduplication ──────────────────
+//
+// After within-category dedup, scan ALL categories for exact duplicate terms.
+// If the same term (case-insensitive, trimmed) appears in multiple categories,
+// keep it only in the FIRST category per the effective output order.
+//
+// Example: "photorealistic" in style AND lighting → keep only in style (earlier)
+// Example: "mysterious" in atmosphere AND mood → keep only in atmosphere (earlier)
+//
+// Rich phrases (>4 words) are compared as-is. Short terms are normalised.
+// This does NOT compare substrings across categories — "street" in composition
+// is NOT deduped against "street-level" in a different category.
+// ────────────────────────────────────────────────────────────────────────────
+function deduplicateAcrossCategories(
+  selections: PromptSelections,
+  effectiveOrder: PromptCategory[],
+): PromptSelections {
+  // Track which normalised terms have been claimed by which category
+  const claimed = new Map<string, PromptCategory>();
+  const result: PromptSelections = {};
+
+  for (const category of effectiveOrder) {
+    const values = selections[category];
+    if (!values?.length) continue;
+
+    const kept: string[] = [];
+    for (const term of values) {
+      const norm = term.toLowerCase().trim();
+      if (!norm) continue;
+
+      const owner = claimed.get(norm);
+      if (owner && owner !== category) {
+        // This exact term already appeared in a higher-priority category — skip
+        continue;
+      }
+
+      claimed.set(norm, category);
+      kept.push(term);
+    }
+
+    if (kept.length > 0) {
+      result[category] = kept;
+    }
+  }
+
+  // Preserve negative (not part of effective order)
+  if (selections.negative?.length) {
+    result.negative = [...selections.negative];
+  }
+
+  return result;
+}
+
 function assembleTierAware(
   platformId: string,
   selections: PromptSelections,
   platformFormat: PlatformFormat,
+  weightOverrides?: Partial<Record<PromptCategory, number>>,
 ): AssembledPrompt {
+  // Upgrade 3: Deduplicate within each category before assembly.
+  // Both the generator and builder UI call assemblePrompt(), so placing
+  // dedup here guarantees identical output — Single Canonical Assembly.
+  const deduped = deduplicateWithinCategories(selections);
+
+  // Improvement 1: Deduplicate across categories — same term in two
+  // categories → keep only in the first one per effective output order.
+  const effectiveOrder = getEffectiveOrder(platformFormat);
+  const crossDeduped = deduplicateAcrossCategories(deduped, effectiveOrder);
+
   const tierId: PlatformTierId | undefined = getPlatformTierId(platformId);
 
+  // Improvement 2: Merge weather intelligence weight overrides with platform defaults.
+  // Platform's own weightedCategories take precedence; weather fills the rest.
+  const mergedFormat = weightOverrides
+    ? {
+        ...platformFormat,
+        weightedCategories: {
+          ...(weightOverrides as Record<string, number>),
+          ...platformFormat.weightedCategories, // platform wins on conflicts
+        },
+      }
+    : platformFormat;
+
   // Tier 4: Plain language — short comma lists, no frills
-  // Takes priority over promptStyle so Tier 4 keyword platforms (e.g., artistly)
-  // still get simple output appropriate for their limited capabilities
+  let result: AssembledPrompt;
   if (tierId === 4) {
-    return assemblePlainLanguage(selections, platformFormat);
+    result = assemblePlainLanguage(crossDeduped, mergedFormat);
+  } else if (mergedFormat.promptStyle === 'keywords') {
+    // Keyword-mode platforms: Tier 1 (CLIP), Tier 2 (MJ), and keyword-style
+    result = assembleKeywords(crossDeduped, mergedFormat);
+  } else {
+    // Tier 3 and all other natural-language platforms: flowing sentences
+    result = assembleNaturalSentences(crossDeduped, mergedFormat);
   }
 
-  // Keyword-mode platforms: Tier 1 (CLIP), Tier 2 (MJ), and keyword-style
-  // Tier 3 platforms (Flux) — promptStyle in config is the authority
-  if (platformFormat.promptStyle === 'keywords') {
-    return assembleKeywords(selections, platformFormat);
-  }
+  // Improvement 5: Token estimation — helps users know when they're over CLIP limits.
+  // Computed for ALL tiers (useful even for NatLang to show prompt complexity).
+  result.estimatedTokens = estimateClipTokens(result.positive);
+  result.tokenLimit = mergedFormat.tokenLimit ?? undefined;
 
-  // Tier 3 and all other natural-language platforms: flowing sentences
-  return assembleNaturalSentences(selections, platformFormat);
+  return result;
 }
 
 // ============================================================================
@@ -901,7 +1307,11 @@ export function getOrderedCategories(platformId: string): PromptCategory[] {
  * Uses unified tier-aware assembly — reads tier + platform format config
  * to determine the correct assembly strategy.
  */
-export function assemblePrompt(platformId: string, selections: PromptSelections): AssembledPrompt {
+export function assemblePrompt(
+  platformId: string,
+  selections: PromptSelections,
+  weightOverrides?: Partial<Record<PromptCategory, number>>,
+): AssembledPrompt {
   // Check if we have any selections at all
   const hasSelections = Object.values(selections).some((arr) => arr && arr.length > 0);
   if (!hasSelections) {
@@ -915,7 +1325,7 @@ export function assemblePrompt(platformId: string, selections: PromptSelections)
   }
 
   const platformFormat = getPlatformFormat(platformId);
-  return assembleTierAware(platformId, selections, platformFormat);
+  return assembleTierAware(platformId, selections, platformFormat, weightOverrides);
 }
 
 /**
@@ -1031,3 +1441,122 @@ export function buildPrompt(providerId: string, input: BuildInput, website?: str
 // ============================================================================
 
 export { promptOptions, platformFormats };
+
+// ============================================================================
+// Exports for unified brain integration (Phase A utilities)
+// ============================================================================
+
+export {
+  isRichPhrase,
+  simplifyRichPhrase,
+  sanitiseClipTokens,
+  deduplicateWithinCategories,
+  deduplicateAcrossCategories,
+  estimateClipTokens,
+  RICH_PHRASE_THRESHOLD,
+  TRIM_PRIORITY_CORE,
+  TRIM_PRIORITY_METADATA,
+};
+
+// ============================================================================
+// Phase C — Unified Brain: Category Map → Prompt Selections
+// ============================================================================
+
+import type { WeatherCategoryMap } from '@/types/prompt-builder';
+
+/**
+ * Reference platform IDs for each tier — used when the assembler needs a
+ * concrete platform to look up format config, but the caller only has a tier.
+ *
+ * These are the "most representative" platform for each tier's assembly style.
+ * The assembler reads token limits, weight syntax, category ordering, and
+ * negative handling from the platform format config.
+ */
+const TIER_REF_PLATFORM: Record<1 | 2 | 3 | 4, string> = {
+  1: 'leonardo', // Tier 1 CLIP: representative for weighted keyword stacking
+  2: 'midjourney', // Tier 2 MJ: only Midjourney uses :: multi-prompt syntax
+  3: 'openai', // Tier 3 NL: representative for natural language sentence flow
+  4: 'canva', // Tier 4 Plain: representative for short comma lists
+};
+
+/**
+ * Convert a tier number (1–4) to a reference platform ID for assembly.
+ *
+ * The weather generator works with tiers, not specific platforms. When
+ * delegating text assembly to `assemblePrompt()`, we need a concrete
+ * platform ID to look up format config. This function returns the
+ * canonical reference platform for each tier.
+ *
+ * @param tier - Prompt tier (1–4)
+ * @returns Platform ID string (e.g. 'leonardo', 'midjourney', 'openai', 'canva')
+ */
+export function tierToRefPlatform(tier: 1 | 2 | 3 | 4): string {
+  return TIER_REF_PLATFORM[tier] ?? TIER_REF_PLATFORM[3];
+}
+
+/**
+ * Merge a `WeatherCategoryMap` into `PromptSelections` for `assemblePrompt()`.
+ *
+ * For each category, the result array contains:
+ *   1. All dropdown `selections` (vocabulary-matched terms)
+ *   2. The `customValues` rich phrase (if present, appended at end)
+ *
+ * The assembler already handles rich phrases (>4 words) differently from
+ * dropdown terms (Phase A enhancement), so the merge is straightforward.
+ *
+ * **Upgrade 1 (v11.1.0):** When a customValue *contains* a selection term
+ * (case-insensitive substring match), the selection is redundant and is dropped.
+ * The customValue is always the richer physics-computed phrase — keeping both
+ * produced duplicates like "bright daylight, Bright daylight with passing
+ * cumulus cloud shadows" and "street-level documentary, street-level documentary
+ * shot". Now only the richer phrase survives.
+ *
+ * Negative terms are mapped to the 'negative' category key.
+ *
+ * @param map - Weather category map from `buildWeatherCategoryMap()`
+ * @returns PromptSelections ready for `assemblePrompt()`
+ */
+export function selectionsFromMap(map: WeatherCategoryMap): PromptSelections {
+  const result: PromptSelections = {};
+
+  // Merge selections + customValues per category
+  const allCategories = new Set([
+    ...Object.keys(map.selections ?? {}),
+    ...Object.keys(map.customValues ?? {}),
+  ]) as Set<PromptCategory>;
+
+  for (const category of allCategories) {
+    const selected = map.selections?.[category] ?? [];
+    const custom = map.customValues?.[category];
+    const customTrimmed = custom?.trim() ?? '';
+
+    // Upgrade 1: When a customValue contains a selection term (case-insensitive),
+    // the selection is redundant — the customValue is the richer phrase.
+    // Example: selection "moonlight" + customValue "Cool white moonlight competing..."
+    //   → drop "moonlight", keep only the rich phrase.
+    // But if a selection is NOT contained in the customValue, keep it — it's
+    // an independent vocabulary term (e.g. atmosphere: ["contemplative"]).
+    let filtered: string[];
+    if (customTrimmed) {
+      const customLower = customTrimmed.toLowerCase();
+      filtered = selected.filter((term) => !customLower.includes(term.toLowerCase()));
+    } else {
+      filtered = [...selected];
+    }
+
+    const merged = [...filtered];
+    if (customTrimmed) {
+      merged.push(customTrimmed);
+    }
+    if (merged.length > 0) {
+      result[category] = merged;
+    }
+  }
+
+  // Negative terms → 'negative' category
+  if (map.negative && map.negative.length > 0) {
+    result.negative = [...map.negative];
+  }
+
+  return result;
+}

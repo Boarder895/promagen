@@ -5,6 +5,8 @@
 **Status:** Part A IMPLEMENTED · Part B IMPLEMENTED · Wiring PENDING  
 **Authority:** This document defines the architecture, data flow, vocabulary integration, and UI for the Commodity Prompt System and the Intelligent Phrases Dropdown. Supersedes v2 entirely.
 
+> **Cross-reference:** The main prompt builder now uses tier-aware assembly with weather weight overrides (`assemblePrompt(platformId, selections, weightOverrides?)`). The commodity prompt builder's blueprint assembler is independent but follows the same 4-tier routing pattern. See `unified-prompt-brain.md` for the main system's architecture.
+
 ---
 
 ## Table of Contents

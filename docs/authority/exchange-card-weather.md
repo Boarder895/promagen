@@ -2,7 +2,7 @@
 
 > **Authority document** for the weather data pipeline, display, tooltips, prompt generation, lighting engine, and astronomical calculations on Promagen exchange cards.
 >
-> **Version:** 9.6.0 — 20 February 2026
+> **Version:** 11.1.0 — 3 March 2026
 >
 > **Scope:** Gateway (Fly.io) → Frontend (Vercel/Next.js) — end-to-end.
 
@@ -16,34 +16,42 @@ The exchange card weather system delivers real-time weather data for **89 stock 
 2. **Weather emoji tooltip** — Hover the weather/moon emoji → conditions sentence, moon phase (night), next sunrise/sunset time.
 3. **Image prompt tooltip** — Hover the country flag → AI-ready image prompt generated from live weather + city venue scenes + deterministic lighting engine + visual truth layer, across 4 format tiers (+ Flux variant) for 42+ AI image generators.
 
-### Architecture — Modular Decomposition (v9.0.0)
+### Architecture — Modular Decomposition (v9.0.0, extended v10–v11)
 
-The prompt generation system was decomposed from a single 4,311-line monolith (`weather-prompt-generator.ts`) into **18 focused modules** totalling **~7,118 lines** in the frontend weather library. Each module has a single responsibility and explicit imports/exports with zero circular dependencies.
+The prompt generation system was decomposed from a single 4,311-line monolith (`weather-prompt-generator.ts`) into **24 focused modules** totalling **~9,538 lines** in the frontend weather library. Each module has a single responsibility and explicit imports/exports with zero circular dependencies. The v11.0.0 "Unified Brain" evolution retired the legacy per-tier generators and replaced them with a category-map → assembler pipeline that delegates text assembly to the shared `prompt-builder.ts` (1,519 lines).
 
 | Module                        | Lines | Responsibility                                                                                             |
 | ----------------------------- | ----- | ---------------------------------------------------------------------------------------------------------- |
-| `weather-prompt-generator.ts` | 320   | Orchestrator — dispatches to subsystems, assembles final output                                            |
-| `tier-generators.ts`          | 644   | 4 tier generators + Flux variant (T1 CLIP, T1F Flux, T2 MJ, T3 NL, T4 Plain)                               |
-| `visual-truth.ts`             | 1,253 | Visual Truth layer — dew point physics, air clarity, contrast, moisture, thermal optics                    |
-| `lighting-engine.ts`          | 917   | Procedural lighting — solar elevation bands, daytime enrichment (87 phrase pools), night competition model |
-| `prompt-types.ts`             | 548   | All interfaces — PromptProfile, PromptTrace, VisualTruth, LightingState, WeatherPromptResult               |
+| `weather-prompt-generator.ts` | 561   | Orchestrator — computes physics, builds category map, delegates to assembler, post-processes               |
+| `visual-truth.ts`             | 1,301 | Visual Truth layer — dew point physics, air clarity, contrast, moisture, thermal optics                    |
+| `lighting-engine.ts`          | 973   | Procedural lighting — solar elevation bands, daytime enrichment (87 phrase pools), night competition model |
+| `synergy-rewriter.ts`         | 600   | Synergy-aware prompt rewriting — conflict resolution + reinforcement bridging (v11.0)                      |
+| `prompt-types.ts`             | 613   | All interfaces — PromptProfile, PromptTrace, VisualTruth, LightingState, WeatherPromptResult               |
+| `weather-category-mapper.ts`  | 581   | Bridge: weather physics → WeatherCategoryMap for unified assembler (v10.3)                                 |
+| `sun-calculator.ts`           | 562   | NOAA sunrise/sunset + solar elevation + lunar position (Meeus ephemeris)                                   |
+| `wind-system.ts`              | 534   | Beaufort-calibrated wind — 8 force tiers, venue-aware phrases, cardinal direction, gusts                   |
 | `vocabulary-loaders.ts`       | 519   | JSON vocabulary loading, range lookups, phrase selection, buildContext()                                   |
-| `wind-system.ts`              | 476   | Beaufort-calibrated wind — 8 force tiers, venue-aware phrases, cardinal direction, gusts                   |
+| `composition-blueprint.ts`    | 506   | Scene composition — foreground/midground/background + depth-of-field from camera data (v11.0)              |
+| `category-synergy.ts`         | 409   | Synergy matrix — detects reinforcing/conflicting category combos, scores signals (v11.0)                   |
 | `weather-types.ts`            | 336   | ExchangeWeatherFull, ExchangeWeatherDisplay, type conversions                                              |
-| `camera-lens.ts`              | 283   | Camera body + lens selection per style × setting, platform-aware quality tags, negative prompts            |
-| `fetch-weather.ts`            | 275   | Server-side gateway fetch + demo gap-fill + GatewayWeatherItem type                                        |
+| `fetch-weather.ts`            | 322   | Server-side gateway fetch + demo gap-fill + GatewayWeatherItem type                                        |
+| `camera-lens.ts`              | 289   | Camera body + lens selection per style × setting, platform-aware quality tags, negative prompts            |
+| `adaptive-weights.ts`         | 254   | Dynamic CLIP weight calibration based on prompt density and platform token budgets (v11.0)                 |
 | `cloud-types.ts`              | 223   | OWM weather.id → 10 visual cloud types (cumulus, stratus, cirrus, etc.), 40 phrases                        |
 | `time-utils.ts`               | 203   | 12 directional solar phases (dawn vs dusk), time descriptors, solar phase labels                           |
 | `climate.ts`                  | 195   | 7 latitude-based climate zones, effective humidity/dew-spread normalization                                |
 | `moon-phase.ts`               | 147   | Synodic cycle → 8 phases, 40 prompt phrases, emoji selection                                               |
 | `weather.ts`                  | 113   | Shared weather utilities                                                                                   |
+| `day-night.ts`                | 98    | 3-tier cascade day/night detection — extracted from exchange-card.tsx for cross-component reuse (v10.x)    |
+| `tier-generators.ts`          | 95    | Shared seed + sky/time enrichment helpers (legacy generators deleted v11.0)                                |
 | `prng.ts`                     | 87    | Knuth-hash PRNG, capitalize(), hashString() — deterministic seeded selection                               |
-| `sun-calculator.ts`           | 562   | NOAA sunrise/sunset + solar elevation + lunar position (Meeus ephemeris)                                   |
 | `exchange-weather.ts`         | 17    | Barrel re-exports                                                                                          |
 
 At night, the weather emoji swaps to a moon phase emoji calculated from pure astronomy (no API). The lighting engine models venue-aware urban vs moonlight competition (v7.5), with coherence validation (v7.6), iconic venue enrichment (v7.7), precipitation-aware sky source logic (v7.8), and daytime enrichment with 87 phrase pools across 8 solar bands × 4 cloud strata (v9.1.0). A unified Visual Truth layer (v7.0) cross-references all weather data to eliminate physics conflicts across prompt layers, extended with compound precipitation detection (v9.3.0), climate-aware humidity normalization (v9.4.0), cloud type classification (v9.5.0), and directional dawn/dusk solar phase (v9.5.0).
 
 **v9.0–v9.6 additions on top of v8.0:** Monolith decomposition into 18 modules with Knuth-hash PRNG (v9.0). Daytime lighting enrichment with Kelvin colour temperature 2500K–12000K (v9.1). Camera/lens metadata system with platform-aware quality tags and negative prompts across all 4 tiers (v9.2). Compound precipitation detection with 3-source classification (v9.3). Climate-aware humidity — latitude-based zone normalization so Singapore 85% ≠ London 85% (v9.4). Cloud type classifier from OWM weather.id with 10 visual types and 40 phrases (v9.5). Directional dawn/dusk solar phase with 12 phases (v9.5). OWM weatherId pipeline through 5 type interfaces (v9.5). MJ V6/V7 natural language prompt format replacing legacy `::` multi-prompt syntax (v9.6). Flux-native T5 text encoder variant for Tier 1 (v9.6). `mjVersion` field on PromptProfile (v9.6). `fluxPrompt` field on WeatherPromptResult (v9.6).
+
+**v10.0–v11.1 additions (Unified Brain evolution):** Stronger deterministic scene seed using FNV-1a hash of all weather fields for reduced prompt jitter (v10.0). Composition coherence + camera lens determinism (v10.1). `weather-category-mapper.ts` bridges weather physics into a `WeatherCategoryMap` consumed by the shared `prompt-builder.ts` assembler (v10.3). Venue seed forwarding eliminates route/generator venue desync (v10.3). Category synergy matrix detects reinforcing/conflicting combinations and produces scored signals (v11.0). Synergy-aware rewriter resolves physics impossibilities ("golden hour" + "midnight") and injects bridging phrases for reinforcing pairs (v11.0). Scene composition blueprint fills the composition category from camera/lens + venue data (v11.0). Adaptive CLIP weight calibration adjusts weights by prompt density and token budget (v11.0). Legacy tier generators (T1/T1F/T2/T3/T4) retired — unified brain is the only prompt path with no feature flag (v11.0 Phase E). Day/night detection extracted to shared `day-night.ts` module (v10.x). Venue singularity: route can pass `venueOverride` for exact venue match (v11.1). Prompt fingerprint verification via `categoryMapHash` for builder symmetry checking (v11.1). City-vibes expanded to 102 cities / 1,032 venues (v10.x).
 
 ### Data Sources
 
@@ -56,7 +64,7 @@ At night, the weather emoji swaps to a moon phase emoji calculated from pure ast
 | Solar elevation | Pure astronomy (NOAA formula)  | Lighting engine base — sun angle from lat, lon, day-of-year, hour                                     | Calculated client-side, no API     |
 | Urban light     | `urban-light.json` (§11A.3)    | Per-city artificial light emission factor for night lighting competition model                        | Static data, 83 cities             |
 | Sunrise/sunset  | OWM timestamps + NOAA fallback | Tooltip sun event times + quiet hours boundary                                                        | API: exact. Fallback: ±5 min       |
-| City scenes     | `city-vibes.json`              | Venue names + settings + optional lightCharacter for 83 cities                                        | Static vocabulary, seeded rotation |
+| City scenes     | `city-vibes.json`              | Venue names + settings + optional lightCharacter for 102 cities                                       | Static vocabulary, seeded rotation |
 
 ---
 
@@ -88,17 +96,17 @@ At night, the weather emoji swaps to a moon phase emoji calculated from pure ast
 │    demo gap-fill                                  │   └─ EmojiTooltip│
 │                                                   └─ PromptTooltip   │
 │                                                                      │
-│  ┌─── weather-prompt-generator.ts v9.6 (ORCHESTRATOR) ────────────┐ │
+│  ┌─── weather-prompt-generator.ts v11.0 (ORCHESTRATOR) ────────────┐ │
 │  │                                                                 │ │
 │  │  ┌─ SUBSYSTEMS (dedicated modules) ──────────────────────────┐ │ │
 │  │  │                                                            │ │ │
-│  │  │  visual-truth.ts (1,253 lines)                            │ │ │
+│  │  │  visual-truth.ts (1,301 lines)                            │ │ │
 │  │  │    ├─ deriveVisualTruth() — unified atmospheric state     │ │ │
 │  │  │    ├─ Dew point physics + air clarity + contrast          │ │ │
 │  │  │    ├─ Compound precipitation (v9.3)                       │ │ │
 │  │  │    └─ Climate-aware humidity via climate.ts (v9.4)        │ │ │
 │  │  │                                                            │ │ │
-│  │  │  lighting-engine.ts (917 lines)                           │ │ │
+│  │  │  lighting-engine.ts (973 lines)                           │ │ │
 │  │  │    ├─ Daytime: 87 phrase pools (8 bands × 4 strata)      │ │ │
 │  │  │    │   └─ Kelvin colour temp (2500K–12000K) (v9.1)       │ │ │
 │  │  │    └─ Nighttime: Urban vs Moon competition model (v7.5+) │ │ │
@@ -108,19 +116,35 @@ At night, the weather emoji swaps to a moon phase emoji calculated from pure ast
 │  │  │        ├─ Coherence validator (banned terms) (v7.6)       │ │ │
 │  │  │        └─ 3-tier light priority (v7.7)                    │ │ │
 │  │  │                                                            │ │ │
-│  │  │  tier-generators.ts (644 lines)                           │ │ │
-│  │  │    ├─ T1 CLIP: (token:1.3) weighted keywords             │ │ │
-│  │  │    ├─ T1F Flux: T5-native variant (no weights) (v9.6)    │ │ │
-│  │  │    ├─ T2 MJ: V6/V7 natural language (v9.6) + V5.2 legacy│ │ │
-│  │  │    ├─ T3 NL: Connected scene description (default)       │ │ │
-│  │  │    └─ T4 Plain: Simple comma-separated fragments         │ │ │
+│  │  │  weather-category-mapper.ts (581 lines) [v10.3 NEW]      │ │ │
+│  │  │    ├─ buildWeatherCategoryMap() — physics → categories   │ │ │
+│  │  │    ├─ Maps lighting/venue/wind/atmos to 12 categories    │ │ │
+│  │  │    └─ Produces selections + customValues per category     │ │ │
 │  │  │                                                            │ │ │
-│  │  │  wind-system.ts (476 lines)                               │ │ │
+│  │  │  synergy-rewriter.ts (600 lines) [v11.0 NEW]             │ │ │
+│  │  │    ├─ rewriteWithSynergy() — pre-process step            │ │ │
+│  │  │    ├─ Conflict resolution (score < -0.3)                  │ │ │
+│  │  │    └─ Reinforcement bridging (score > 0.5)                │ │ │
+│  │  │                                                            │ │ │
+│  │  │  category-synergy.ts (409 lines) [v11.0 NEW]             │ │ │
+│  │  │    └─ analyseSynergy() — reinforcing/conflicting combos  │ │ │
+│  │  │                                                            │ │ │
+│  │  │  composition-blueprint.ts (506 lines) [v11.0 NEW]        │ │ │
+│  │  │    └─ Foreground/midground/background + DoF from camera  │ │ │
+│  │  │                                                            │ │ │
+│  │  │  adaptive-weights.ts (254 lines) [v11.0 NEW]             │ │ │
+│  │  │    └─ Dynamic CLIP weight calibration by prompt density   │ │ │
+│  │  │                                                            │ │ │
+│  │  │  tier-generators.ts (95 lines — helpers only)             │ │ │
+│  │  │    ├─ computeSeed(), enhanceSkySource()                   │ │ │
+│  │  │    └─ Legacy T1–T4 generators deleted (v11.0 Phase E)    │ │ │
+│  │  │                                                            │ │ │
+│  │  │  wind-system.ts (534 lines)                               │ │ │
 │  │  │    ├─ Beaufort-calibrated (8 force tiers)                 │ │ │
 │  │  │    ├─ Venue-aware wind phrases                            │ │ │
 │  │  │    └─ Cardinal direction + gust factor                    │ │ │
 │  │  │                                                            │ │ │
-│  │  │  camera-lens.ts (283 lines)                               │ │ │
+│  │  │  camera-lens.ts (289 lines)                               │ │ │
 │  │  │    ├─ Per-style × per-setting camera bodies + lenses      │ │ │
 │  │  │    ├─ Platform-aware quality tags (T1–T4)                 │ │ │
 │  │  │    └─ Negative prompt system (CLIP/MJ --no/NL avoid)      │ │ │
@@ -137,15 +161,16 @@ At night, the weather emoji swaps to a moon phase emoji calculated from pure ast
 │  │  └──────────────────────────────────────────────────────────┘ │ │
 │  │                                                                 │ │
 │  │  ┌─ SHARED DATA ────────────────────────────────────────────┐ │ │
-│  │  │  prompt-types.ts (548) — all interfaces                  │ │ │
+│  │  │  prompt-types.ts (613) — all interfaces                  │ │ │
 │  │  │  vocabulary-loaders.ts (519) — JSON phrase selection      │ │ │
 │  │  │  prng.ts (87) — Knuth-hash PRNG, deterministic seeds    │ │ │
 │  │  │  moon-phase.ts (147) — 8 phases, 40 phrases             │ │ │
 │  │  │  sun-calculator.ts (562) — NOAA solar + Meeus lunar     │ │ │
+│  │  │  day-night.ts (98) — shared 3-tier cascade detection    │ │ │
 │  │  └──────────────────────────────────────────────────────────┘ │ │
 │  │                                                                 │ │
 │  │  ┌─ VOCABULARY JSON ───────────────────────────────────────┐  │ │
-│  │  │  city-vibes.json — 83 cities, 842 venues, 9 settings    │  │ │
+│  │  │  city-vibes.json — 102 cities, 1,032 venues, 9 settings │  │ │
 │  │  │  wind.json — 30 ranges, 240 phrases                     │  │ │
 │  │  │  temperature.json — 18 ranges, 54 phrases               │  │ │
 │  │  │  humidity.json — 20 ranges, 60 phrases                  │  │ │
@@ -285,7 +310,7 @@ interface WeatherData {
 
 ### 4.1 Server-Side Fetch
 
-**File:** `src/lib/weather/fetch-weather.ts` (272 lines)
+**File:** `src/lib/weather/fetch-weather.ts` (322 lines)
 
 `getWeatherIndex()` is called in server components (page.tsx) at build/request time.
 
@@ -328,7 +353,7 @@ Demo data has **no** `description`, `sunriseUtc`, `sunsetUtc`, `timezoneOffset`,
 
 ### 4.2 API Route (Proxy)
 
-**File:** `src/app/api/weather/route.ts` (171 lines)
+**File:** `src/app/api/weather/route.ts` (184 lines)
 
 A simple proxy from the Vercel frontend to the Fly.io gateway. No authentication required (weather is public data). Sets cache headers based on data freshness mode:
 
@@ -456,7 +481,7 @@ interface ExchangeWeatherDisplay {
 
 ### 5.2B GatewayWeatherItem (Gateway Response)
 
-**File:** `src/lib/weather/fetch-weather.ts` (275 lines)
+**File:** `src/lib/weather/fetch-weather.ts` (322 lines)
 
 Shape received from the Fly.io gateway. Optional fields were added incrementally across versions.
 
@@ -531,7 +556,7 @@ Converts a canonical `Exchange` (from `exchanges.catalog.json`) to the card's da
 
 ## 6. Exchange Card Component
 
-**File:** `src/components/exchanges/exchange-card.tsx` (668 lines)
+**File:** `src/components/exchanges/exchange-card.tsx` (601 lines)
 
 ### 6.1 Snap-Fit Scaling
 
@@ -561,6 +586,7 @@ ExchangeCard (root)
 ### 6.3 Day/Night Detection — 3-Tier Cascade
 
 **Function:** `resolveIsNight(isDayTime, tz, sunriseUtc, sunsetUtc, timezoneOffset) → boolean`
+**File:** `src/lib/weather/day-night.ts` (98 lines) — extracted from exchange-card.tsx (v10.x) for cross-component reuse (exchange cards + provider cells + any future consumer).
 
 Determines whether it's night at a given exchange, used to swap the weather emoji for a moon phase emoji.
 
@@ -613,7 +639,7 @@ Used by both the emoji tooltip and the prompt tooltip for border glow, box shado
 
 ## 7. Weather Emoji Tooltip
 
-**File:** `src/components/exchanges/weather/weather-emoji-tooltip.tsx` (508 lines)
+**File:** `src/components/exchanges/weather/weather-emoji-tooltip.tsx` (543 lines)
 
 ### 7.1 Purpose
 
@@ -889,7 +915,7 @@ Generates AI-ready image prompts from live weather data. Triggered by hovering t
 
 ## 11. 4-Tier Prompt System
 
-**Files:** `src/lib/weather/weather-prompt-generator.ts` (320-line orchestrator) → dispatches to 17 subsystem modules (7,118 lines total) — **v9.6**
+**Files:** `src/lib/weather/weather-prompt-generator.ts` (561-line orchestrator) → dispatches to 23 subsystem modules (9,538 lines total) + delegates text assembly to `src/lib/prompt-builder.ts` (1,519 lines) — **v11.1**. Legacy per-tier generators (T1/T1F/T2/T3/T4) were retired in v11.0 Phase E. The unified brain pipeline is now the only prompt path: `buildWeatherCategoryMap()` → `selectionsFromMap()` → `rewriteWithSynergy()` → `assemblePrompt()`.
 
 ### 11.1 Tier Definitions
 
@@ -1000,7 +1026,7 @@ _(cond) = conditionally included, see §11A.7 Sky/Lighting Duplication Rule_
 
 **File:** `src/data/vocabulary/weather/city-vibes.json`
 
-**v6.0 change:** Activities removed. The scene model now provides **venue-only** location-specific subjects for 83 cities. Activities were the source of quiet-hours contradictions ("beach volleyball at 3am") and have been eliminated.
+**v6.0 change:** Activities removed. The scene model now provides **venue-only** location-specific subjects for 102 cities (expanded from 83 in v10.x). Activities were the source of quiet-hours contradictions ("beach volleyball at 3am") and have been eliminated.
 
 **v7.5 change:** Every venue carries a `setting` field (one of 9 types). The setting drives venue-aware lighting: dedicated night light pools for non-urban settings, per-setting urban attenuation factors, and coherence validation against banned commercial terms. See §11A.3 for details.
 
@@ -1010,8 +1036,8 @@ _(cond) = conditionally included, see §11A.7 Sky/Lighting Duplication Rule_
 
 | Metric                           | Count                     |
 | -------------------------------- | ------------------------- |
-| Cities                           | 83                        |
-| Total venues                     | 842                       |
+| Cities                           | 102 (was 83 pre-v10)      |
+| Total venues                     | 1,032                     |
 | Average venues/city              | ~10                       |
 | Venue settings (types)           | 9                         |
 | Enriched venues (lightCharacter) | 25                        |
@@ -1080,7 +1106,7 @@ Seven vocabulary/data files in `src/data/vocabulary/weather/`:
 
 | File               | Ranges | Items | Coverage                                                                                                  |
 | ------------------ | ------ | ----- | --------------------------------------------------------------------------------------------------------- |
-| `city-vibes.json`  | —      | 842   | 83 cities, 842 venues, 9 settings, 25 enriched (75 lightCharacter phrases)                                |
+| `city-vibes.json`  | —      | 1,032 | 102 cities, 1,032 venues, 9 settings, 25 enriched (75 lightCharacter phrases)                             |
 | `conditions.json`  | 14     | 280   | 14 weather types (20 phrases each)                                                                        |
 | `wind.json`        | 30     | 240   | 0–150 km/h in 5 km/h bands (legacy ranges, supplemented by `wind-system.ts` Beaufort pools)               |
 | `temperature.json` | 18     | 54    | −40°C to +50°C in 5°C bands (3 phrases per bin)                                                           |
@@ -1092,9 +1118,9 @@ Seven vocabulary/data files in `src/data/vocabulary/weather/`:
 
 **Total prompt vocabulary: 1,626 items** — 1,333 JSON items + 87 daytime lighting phrases (v9.1) + 12 night competition phrases + 40 moon phrases + 20 setting light phrases + 75 venue enrichment phrases + 189 Beaufort wind interaction phrases (v8.0) = 1,756 total phrase slots across all systems.
 
-### 11.5 Prompt Composition — 12 Layers (v6.0, updated v7.0/v7.8/v8.0/v9.x)
+### 11.5 Prompt Composition — 12 Layers (v6.0, updated v7.0/v7.8/v8.0/v9.x/v11.0)
 
-The `generateWeatherPrompt()` orchestrator (320 lines) computes shared state once, then dispatches to the correct tier generator. **v7.0:** Visual Truth (§11.12) is computed ONCE before any layer, providing unified atmospheric state. **v7.8:** Layer 5 uses `getSkySourceAware()` to allow precipitation through at night. **v9.0:** Decomposed into 18 modules. **v9.1–v9.6:** Layers 5, 7, 11, and 12 enriched by new subsystems.
+The `generateWeatherPrompt()` orchestrator (561 lines) computes shared state once, builds a `WeatherCategoryMap` via `buildWeatherCategoryMap()`, then delegates text assembly to `assemblePrompt()` in `prompt-builder.ts`. **v7.0:** Visual Truth (§11.12) is computed ONCE before any layer, providing unified atmospheric state. **v7.8:** Layer 5 uses `getSkySourceAware()` to allow precipitation through at night. **v9.0:** Decomposed into 18 modules. **v9.1–v9.6:** Layers 5, 7, 11, and 12 enriched by new subsystems. **v10.3–v11.0:** Unified Brain — the category mapper translates physics into structured category data, the synergy rewriter resolves conflicts and boosts reinforcements, then the shared assembler produces tier-specific text. Legacy per-tier generators retired.
 
 | Layer | Element         | Source                                                                                                                                                                                                                                                 |
 | ----- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -1113,7 +1139,7 @@ The `generateWeatherPrompt()` orchestrator (320 lines) computes shared state onc
 
 ### 11.6 Wind System (v8.0 — Beaufort-Calibrated, v9.0 — Decomposed)
 
-**File:** `src/lib/weather/wind-system.ts` (476 lines)
+**File:** `src/lib/weather/wind-system.ts` (534 lines)
 **Vocabulary:** `src/data/vocabulary/weather/wind.json` (471 lines — 30 ranges, 240 phrases)
 
 Replaces the v6.0 wind-template-descriptors system. The old system stored 1 descriptor per 5 km/h bin and assembled `"fresh breeze at 37 km/h"` at runtime. The new system classifies wind into Beaufort-aligned force tiers, then selects venue-specific interaction phrases that show the camera what wind _looks like_ in the scene.
@@ -1213,18 +1239,45 @@ The fix: `getSkySourceAware()` treats `encodesCloudState` as a signal to suppres
 
 All 5 tier generators call `getSkySourceAware()` instead of the old conditional gate.
 
-### 11.8 Seed & Rotation
+### 11.8 Seed & Rotation (updated v10.0)
+
+**v10.0 change:** The old simple seed (`ctx.tempC * 100 + ctx.humidity * 10 + ...`) was replaced with a comprehensive FNV-1a 32-bit hash of ALL weather fields. This dramatically improves seed sensitivity — small but meaningful weather changes now reliably rotate phrase selections.
 
 ```typescript
-const twoHourWindow = Math.floor(Date.now() / 7_200_000);
-const seed = ctx.tempC * 100 + ctx.humidity * 10 + ctx.windKmh + hour + twoHourWindow;
+// v10.0 computeSceneSeed() — hashes 22 weather properties:
+const key = [
+  'v10',
+  city,
+  `tier=${tier}`,
+  `h=${localHour}`,
+  `t2h=${twoHourBucket}`,
+  `lat=${lat}`,
+  `lon=${lon}`,
+  `tempC=${tempC}`,
+  `hum=${humidity}`,
+  `wind=${windKmh}`,
+  `gust=${gustKmh}`,
+  `wdeg=${windDeg}`,
+  `cloud=${cloudCover}`,
+  `vis=${visibility}`,
+  `pres=${pressure}`,
+  `rain1h=${rainMm1h}`,
+  `snow1h=${snowMm1h}`,
+  `wid=${weatherId}`,
+  `cond=${conditions}`,
+  `desc=${description}`,
+  `sunrise=...`,
+  `sunset=...`,
+].join('|');
+return (fnv1a32(key) ^ hashString(city)) >>> 0;
 ```
 
-The seeded random (`Math.sin(seed * 9999)`) produces:
+The seed produces:
 
 - **Deterministic within a 2-hour window** — same conditions + same time → same prompt.
-- **Rotation every 2 hours** — `twoHourWindow` changes, re-rolling venue/phrase selection even if weather is unchanged.
-- **Weather-sensitive** — any change in temperature, humidity, or wind speed shifts the seed, producing new phrase selections immediately.
+- **Rotation every 2 hours** — `twoHourBucket` changes, re-rolling venue/phrase selection even if weather is unchanged.
+- **Weather-sensitive** — any change in ANY weather field (temperature, humidity, wind speed, cloud cover, visibility, pressure, rain/snow volumes, weatherId, conditions) shifts the seed, producing new phrase selections immediately.
+- **Time quantisation** (v10.0) — when `observedAtUtcSeconds` is not provided, `new Date()` is quantised to 10-minute buckets to prevent rapid prompt drift.
 
 **Note:** The lighting element (§11A) does NOT use the seed. It is fully deterministic from measured data — no rotation, no randomness. Same inputs always produce the same lighting phrase.
 
@@ -2732,20 +2785,78 @@ const DEFAULT_PROMPT_PROFILE: PromptProfile = {
 
 **Default:** `mjVersion: '7'` — new conversations get V7 natural language format. Existing V5.2 users can set `mjVersion: '5.2'` to retain the `::` weight syntax.
 
-### 11K.4 WeatherPromptResult — fluxPrompt Field
+### 11K.4 WeatherPromptResult — fluxPrompt Field (updated v11.1)
 
 ```typescript
 interface WeatherPromptResult {
   text: string;
   positive?: string;
   negative?: string;
-  fluxPrompt?: string; // v9.6.0 — NEW (Tier 1 only)
+  fluxPrompt?: string; // v9.6.0 — Tier 1 only (T5-native, no CLIP weights)
   tier: PromptTier;
+  categoryMap?: WeatherCategoryMap; // v10.3.0 — always populated in v11.0+
+  categoryMapHash?: string; // v11.1.0 — FNV-1a hash for builder symmetry verification
   trace?: PromptTrace;
 }
 ```
 
-`fluxPrompt` is only populated when `tier === 1`. For all other tiers it is `undefined`.
+`fluxPrompt` is only populated when `tier === 1`. For all other tiers it is `undefined`. `categoryMap` is always populated from v11.0 onwards (unified brain is the only path). `categoryMapHash` is a platform-independent fingerprint — same hash regardless of tier.
+
+---
+
+## 11L. Unified Brain Pipeline (v10.0–v11.0)
+
+### 11L.1 Overview
+
+The Unified Brain replaces the legacy per-tier generators with a structured pipeline that separates weather intelligence computation from text assembly. This allows the same physics computations to produce output for any tier without duplicating logic across 5 generator functions.
+
+### 11L.2 Pipeline Stages
+
+```
+generateWeatherPrompt(input)
+  ├─ 1. Physics computation (unchanged from v9.x)
+  │     Solar elevation, lunar position, precip, visual truth,
+  │     cloud type, solar phase, lighting, wind, camera/lens
+  │
+  ├─ 2. buildWeatherCategoryMap() [weather-category-mapper.ts]
+  │     Maps physics outputs → 12 prompt builder categories
+  │     Each category gets: selections (vocabulary match) +
+  │     customValues (rich physics phrases) + weightOverrides
+  │
+  ├─ 3. selectionsFromMap(categoryMap) [prompt-builder.ts]
+  │     Flattens WeatherCategoryMap → PromptSelections
+  │
+  ├─ 4. rewriteWithSynergy(selections, customValues) [synergy-rewriter.ts]
+  │     Conflict resolution: "golden hour" + "midnight" →
+  │       replaces "golden hour" with "amber artificial light"
+  │     Reinforcement bridging: "moonlight" + "contemplative" →
+  │       injects connecting phrase
+  │
+  ├─ 5. assemblePrompt(refPlatform, selections, weightOverrides) [prompt-builder.ts]
+  │     Text assembly via shared assembler — tier-specific formatting
+  │     tierToRefPlatform() maps tier → reference platform
+  │
+  └─ 6. Post-processing (weather-prompt-generator.ts)
+        removeRedundantPhenomenon(), neutraliseLeakPhrases(),
+        fixCommonGrammar(), postProcessTier1Positive()
+```
+
+### 11L.3 WeatherCategoryMap
+
+The `WeatherCategoryMap` type (defined in `src/types/prompt-builder.ts`) is the bridge between weather physics and text assembly. It contains:
+
+- **selections** — Per-category vocabulary matches (dropdown-compatible values)
+- **customValues** — Per-category rich physics phrases (freetext-compatible)
+- **weightOverrides** — Per-category CLIP weight adjustments for Tier 1
+- **negative** — Negative prompt terms (CLIP anti-tokens, MJ --no items)
+
+### 11L.4 Deleted Files
+
+- `weather-brain-comparison.ts` — Transitional A/B testing tool that compared legacy tier generator output against unified brain output. Deleted in v11.0 Phase E.
+
+### 11L.5 Compatibility
+
+The public API (`generateWeatherPrompt()`, `getDefaultTier()`, `getTierInfo()`, `getAllTierOptions()`) and all type exports remain backward compatible with v9.x consumers. The `categoryMap` field on `WeatherPromptResult` is always populated (v11.0+) — consumers can use it directly to populate prompt builder UI dropdowns.
 
 ---
 
@@ -2851,34 +2962,48 @@ Every exchange has `latitude` and `longitude` (100% coverage), enabling astronom
 | `openweathermap/weather.ts`   | 794   | Main handler, batch city management, MERGE accumulator                                   |
 | `openweathermap/index.ts`     | 107   | Module exports                                                                           |
 
-### Frontend — Weather Library (18 modules, 7,118 lines total)
+### Frontend — Weather Library (24 modules, 9,538 lines total)
 
-| File                                          | Lines | Purpose                                                                                                                                                                            |
-| --------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/lib/weather/weather-prompt-generator.ts` | 320   | Orchestrator — dispatches to subsystems, assembles WeatherPromptResult, attaches PromptTrace                                                                                       |
-| `src/lib/weather/visual-truth.ts`             | 1,253 | Visual Truth layer — dew point physics, air clarity, contrast, moisture visibility, thermal optics, compound precipitation, climate integration                                    |
-| `src/lib/weather/lighting-engine.ts`          | 917   | Procedural lighting — 87 daytime phrase pools (8 solar bands × 4 cloud strata), Kelvin colour temp, night competition model, venue attenuation, coherence validation               |
-| `src/lib/weather/tier-generators.ts`          | 644   | 5 tier generators: T1 CLIP, T1F Flux (v9.6), T2 MJ V6/V7 + V5.2 legacy (v9.6), T3 NL, T4 Plain. Cloud type enrichment, solar phase enrichment                                      |
-| `src/lib/weather/sun-calculator.ts`           | 562   | NOAA sunrise/sunset + solar elevation + lunar position (Meeus ephemeris)                                                                                                           |
-| `src/lib/weather/prompt-types.ts`             | 548   | All interfaces — PromptProfile (7 fields), PromptTrace (19 top-level fields), VisualTruth (10 fields), LightingState, WeatherPromptResult, WeatherPromptInput, TierInfo, TIER_INFO |
-| `src/lib/weather/vocabulary-loaders.ts`       | 519   | JSON vocabulary loading, range lookups (temperature, humidity), phrase selection, buildContext(), descriptionToEmoji()                                                             |
-| `src/lib/weather/wind-system.ts`              | 476   | Beaufort-calibrated wind — 8 force tiers, venue-aware phrases (7 forces × 9 settings), cardinal direction, gust factor, snow+wind interaction                                      |
-| `src/lib/weather/weather-types.ts`            | 336   | ExchangeWeatherFull (19 fields), ExchangeWeatherDisplay (19 fields), type conversions, temperature colour                                                                          |
-| `src/lib/weather/camera-lens.ts`              | 283   | Camera body + lens per style × setting, platform-aware quality tags (T1–T4), negative prompts (CLIP anti-tokens, MJ --no, NL avoidance)                                            |
-| `src/lib/weather/fetch-weather.ts`            | 275   | Server-side gateway fetch + 5-min cache + demo gap-fill + GatewayWeatherItem (22 fields)                                                                                           |
-| `src/lib/weather/cloud-types.ts`              | 223   | OWM weather.id → 10 visual cloud types (cumulus, stratus, cirrus, cumulonimbus, etc.), 40 visual phrases, 3-path classification                                                    |
-| `src/lib/weather/time-utils.ts`               | 203   | 12 directional solar phases (dawn-astro → dusk-astro), computeSolarPhase(), getSolarPhaseLabel(), time descriptors                                                                 |
-| `src/lib/weather/climate.ts`                  | 195   | 7 latitude-based climate zones (tropical → subarctic), effective humidity/dew-spread normalization, zone-specific thresholds                                                       |
-| `src/lib/weather/moon-phase.ts`               | 147   | Synodic cycle → 8 phases, 40 prompt phrases (5 per phase), emoji selection                                                                                                         |
-| `src/lib/weather/weather.ts`                  | 113   | Shared weather utilities                                                                                                                                                           |
-| `src/lib/weather/prng.ts`                     | 87    | Knuth-hash PRNG, capitalize(), hashString() — deterministic seeded selection across all modules                                                                                    |
-| `src/lib/weather/exchange-weather.ts`         | 17    | Barrel re-exports                                                                                                                                                                  |
+| File                                          | Lines | Purpose                                                                                                                                                                         |
+| --------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/weather/weather-prompt-generator.ts` | 561   | Orchestrator — computes physics, builds category map, delegates to assembler via unified brain pipeline, post-processes output                                                  |
+| `src/lib/weather/visual-truth.ts`             | 1,301 | Visual Truth layer — dew point physics, air clarity, contrast, moisture visibility, thermal optics, compound precipitation, climate integration                                 |
+| `src/lib/weather/lighting-engine.ts`          | 973   | Procedural lighting — 87 daytime phrase pools (8 solar bands × 4 cloud strata), Kelvin colour temp, night competition model, venue attenuation, coherence validation            |
+| `src/lib/weather/prompt-types.ts`             | 613   | All interfaces — PromptProfile (7 fields), PromptTrace (19 top-level fields), VisualTruth (10 fields), LightingState, WeatherPromptResult (9 fields), WeatherPromptInput        |
+| `src/lib/weather/synergy-rewriter.ts`         | 600   | Synergy-aware prompt rewriting — resolves physics conflicts (score < -0.3), injects bridging phrases for reinforcements (score > 0.5). Pre-process step before assemblePrompt() |
+| `src/lib/weather/weather-category-mapper.ts`  | 581   | Bridge: weather physics (lighting, visual truth, venue, wind, camera) → WeatherCategoryMap (12 categories with selections + customValues). Feeds the unified assembler          |
+| `src/lib/weather/sun-calculator.ts`           | 562   | NOAA sunrise/sunset + solar elevation + lunar position (Meeus ephemeris)                                                                                                        |
+| `src/lib/weather/wind-system.ts`              | 534   | Beaufort-calibrated wind — 8 force tiers, venue-aware phrases (7 forces × 9 settings), cardinal direction, gust factor, snow+wind interaction                                   |
+| `src/lib/weather/vocabulary-loaders.ts`       | 519   | JSON vocabulary loading, range lookups (temperature, humidity), phrase selection, buildContext(), descriptionToEmoji()                                                          |
+| `src/lib/weather/composition-blueprint.ts`    | 506   | Scene composition blueprint — foreground/midground/background layers, depth-of-field from camera/lens data, fills composition category                                          |
+| `src/lib/weather/category-synergy.ts`         | 409   | Synergy matrix — defines reinforcing/conflicting relationships between category terms, produces scored SynergyMatch signals for the rewriter                                    |
+| `src/lib/weather/weather-types.ts`            | 336   | ExchangeWeatherFull (19 fields), ExchangeWeatherDisplay (19 fields), type conversions, temperature colour                                                                       |
+| `src/lib/weather/fetch-weather.ts`            | 322   | Server-side gateway fetch + 5-min cache + demo gap-fill + GatewayWeatherItem (22 fields)                                                                                        |
+| `src/lib/weather/camera-lens.ts`              | 289   | Camera body + lens per style × setting, platform-aware quality tags (T1–T4), negative prompts (CLIP anti-tokens, MJ --no, NL avoidance)                                         |
+| `src/lib/weather/adaptive-weights.ts`         | 254   | Dynamic CLIP weight calibration — adjusts weight overrides based on prompt density, platform token budgets, and category importance hierarchy                                   |
+| `src/lib/weather/cloud-types.ts`              | 223   | OWM weather.id → 10 visual cloud types (cumulus, stratus, cirrus, cumulonimbus, etc.), 40 visual phrases, 3-path classification                                                 |
+| `src/lib/weather/time-utils.ts`               | 203   | 12 directional solar phases (dawn-astro → dusk-astro), computeSolarPhase(), getSolarPhaseLabel(), time descriptors                                                              |
+| `src/lib/weather/climate.ts`                  | 195   | 7 latitude-based climate zones (tropical → subarctic), effective humidity/dew-spread normalization, zone-specific thresholds                                                    |
+| `src/lib/weather/moon-phase.ts`               | 147   | Synodic cycle → 8 phases, 40 prompt phrases (5 per phase), emoji selection                                                                                                      |
+| `src/lib/weather/weather.ts`                  | 113   | Shared weather utilities                                                                                                                                                        |
+| `src/lib/weather/day-night.ts`                | 98    | 3-tier cascade day/night detection — extracted from exchange-card.tsx for reuse across exchange cards + provider cells                                                          |
+| `src/lib/weather/tier-generators.ts`          | 95    | Shared helpers: computeSeed(), enhanceSkySource(), enhanceTimeWithPhase(). Legacy T1/T1F/T2/T3/T4 generators deleted v11.0 Phase E                                              |
+| `src/lib/weather/prng.ts`                     | 87    | Knuth-hash PRNG, capitalize(), hashString() — deterministic seeded selection across all modules                                                                                 |
+| `src/lib/weather/exchange-weather.ts`         | 17    | Barrel re-exports                                                                                                                                                               |
+
+### Frontend — Unified Assembler (external dependency)
+
+| File                          | Lines | Purpose                                                                                                                                                                         |
+| ----------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/prompt-builder.ts`   | 1,519 | Shared prompt assembler — `assemblePrompt()`, `selectionsFromMap()`, `tierToRefPlatform()`. Text assembly for all tiers, consumed by weather system and prompt builder UI alike |
+| `src/lib/prompt-dna.ts`       | 360   | Prompt fingerprinting — `hashCategoryMap()` for symmetry verification between generator and builder                                                                             |
+| `src/types/prompt-builder.ts` | —     | WeatherCategoryMap, PromptSelections, PromptCategory type definitions shared across weather + builder                                                                           |
 
 ### Frontend — Vocabulary JSON (7 files)
 
 | File                                           | Lines | Purpose                                                                            |
 | ---------------------------------------------- | ----- | ---------------------------------------------------------------------------------- |
-| `src/data/vocabulary/weather/city-vibes.json`  | 3,940 | 83 cities, 842 venues, 9 settings, 25 enriched (75 lightCharacter phrases)         |
+| `src/data/vocabulary/weather/city-vibes.json`  | 4,794 | 102 cities, 1,032 venues, 9 settings, 25 enriched (75 lightCharacter phrases)      |
 | `src/data/vocabulary/weather/urban-light.json` | 677   | 83 cities, per-city urban light emission factor (0.0–1.0, NASA/NOAA VIIRS-derived) |
 | `src/data/vocabulary/weather/wind.json`        | 471   | 30 ranges (0–150 km/h in 5 km/h bins), 240 phrases (8 per bin)                     |
 | `src/data/vocabulary/weather/conditions.json`  | 398   | 14 weather types, 280 phrases (20 per type)                                        |
@@ -2890,18 +3015,19 @@ Every exchange has `latitude` and `longitude` (100% coverage), enabling astronom
 
 ### Frontend — Components
 
-| File                                                          | Lines | Purpose                                                                                            |
-| ------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------- |
-| `src/components/exchanges/exchange-card.tsx`                  | 671   | Main card component (snap-fit, day/night detection, WeatherSection, ExtendedWeatherData interface) |
-| `src/components/exchanges/weather/weather-prompt-tooltip.tsx` | 525   | Prompt tooltip (4-tier AI prompts + copy button)                                                   |
-| `src/components/exchanges/weather/weather-emoji-tooltip.tsx`  | 508   | Emoji tooltip (conditions + moon position + sun event)                                             |
-| `src/components/exchanges/types.ts`                           | 187   | Card types (`ExchangeCardData`, `ExchangeWeatherData` — 20 fields including weatherId)             |
-| `src/components/exchanges/adapters.ts`                        | 123   | Data adapters (`toCardData`)                                                                       |
-| `src/components/exchanges/weather/exchange-condition.tsx`     | 84    | Condition display sub-component                                                                    |
-| `src/components/exchanges/weather/exchange-temp.tsx`          | 35    | Temperature display sub-component                                                                  |
-| `src/components/home/mission-control.tsx`                     | 668   | Home page orchestrator (ExchangeWeatherData → ExchangeWeatherDisplay conversion)                   |
-| `src/components/ribbon/commodity-prompt-tooltip.tsx`          | 771   | Commodity prompt tooltip (shares tier system)                                                      |
-| `src/hooks/use-weather-prompt-tier.ts`                        | 134   | Tier selection hook (Free→Tier 3, Pro→localStorage)                                                |
+| File                                                          | Lines | Purpose                                                                                                |
+| ------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------ |
+| `src/components/exchanges/exchange-card.tsx`                  | 601   | Main card component (snap-fit, day/night via day-night.ts import, WeatherSection, ExtendedWeatherData) |
+| `src/components/exchanges/weather/weather-emoji-tooltip.tsx`  | 543   | Emoji tooltip (conditions + moon position + sun event)                                                 |
+| `src/components/exchanges/weather/weather-prompt-tooltip.tsx` | 525   | Prompt tooltip (4-tier AI prompts + copy button)                                                       |
+| `src/components/exchanges/types.ts`                           | 187   | Card types (`ExchangeCardData`, `ExchangeWeatherData` — 20 fields including weatherId)                 |
+| `src/components/exchanges/adapters.ts`                        | 123   | Data adapters (`toCardData`)                                                                           |
+| `src/components/exchanges/weather/exchange-condition.tsx`     | 84    | Condition display sub-component                                                                        |
+| `src/components/exchanges/weather/exchange-temp.tsx`          | 35    | Temperature display sub-component                                                                      |
+| `src/components/home/mission-control.tsx`                     | 668   | Home page orchestrator (ExchangeWeatherData → ExchangeWeatherDisplay conversion)                       |
+| `src/components/ribbon/commodity-prompt-tooltip.tsx`          | 771   | Commodity prompt tooltip (shares tier system)                                                          |
+| `src/hooks/use-weather-prompt-tier.ts`                        | 185   | Tier selection hook (Free→Tier 3, Pro→localStorage)                                                    |
+| `src/hooks/use-weather.ts`                                    | 305   | Weather data hook for client components                                                                |
 
 ### Frontend — Data
 
@@ -2924,10 +3050,10 @@ Every exchange has `latitude` and `longitude` (100% coverage), enabling astronom
 | Refresh cycle per exchange              | Every 4 hours                                                                                                                                                                                               |
 | Daily API calls                         | ~498 (within 1,000 free tier)                                                                                                                                                                               |
 | **Architecture**                        |                                                                                                                                                                                                             |
-| Weather library modules                 | 18 (decomposed from 1 monolith in v9.0)                                                                                                                                                                     |
-| Weather library total lines             | 7,118 (was 4,311 single file in v8.0)                                                                                                                                                                       |
+| Weather library modules                 | 24 (was 18 in v9.0, extended v10–v11 with 6 new modules: weather-category-mapper, synergy-rewriter, composition-blueprint, category-synergy, adaptive-weights, day-night)                                   |
+| Weather library total lines             | 9,538 (was 7,118 in v9.6, was 4,311 single file in v8.0)                                                                                                                                                    |
 | Vocabulary JSON files                   | 7 (was 8 — `wind-template-descriptors.json` deleted v9.0)                                                                                                                                                   |
-| Total frontend weather code             | ~7,118 lines (library) + ~2,678 lines (components)                                                                                                                                                          |
+| Total frontend weather code             | ~9,538 lines (library) + ~1,519 lines (unified assembler) + ~2,978 lines (components/hooks)                                                                                                                 |
 | Total gateway weather code              | ~3,200 lines                                                                                                                                                                                                |
 | **OWM Pipeline**                        |                                                                                                                                                                                                             |
 | OWM pipeline fields                     | 5 (rainMm1h, snowMm1h, windDegrees, windGustKmh — v8.0; weatherId — v9.5)                                                                                                                                   |
@@ -2955,8 +3081,8 @@ Every exchange has `latitude` and `longitude` (100% coverage), enabling astronom
 | API fields used for lighting            | 6 (solar elevation, cloud %, visibility, humidity, pressure, moon phase)                                                                                                                                    |
 | Night lighting inputs                   | 11 (solar elevation, cloud %, visibility, pressure, moon phase, lunar position, urban light factor, city name, venue setting, venue lightCharacter, visual truth)                                           |
 | **City & Venue**                        |                                                                                                                                                                                                             |
-| Cities with venue scenes                | 83                                                                                                                                                                                                          |
-| Total venues                            | 842                                                                                                                                                                                                         |
+| Cities with venue scenes                | 102 (was 83 pre-v10)                                                                                                                                                                                        |
+| Total venues                            | 1,032                                                                                                                                                                                                       |
 | Venue settings                          | 9 types (waterfront, beach, street, narrow, market, plaza, park, elevated, monument)                                                                                                                        |
 | Enriched venues (lightCharacter)        | 25 venues across 19 cities, 75 phrases                                                                                                                                                                      |
 | Justified venue overrides (v8.0)        | 15 venues with `overrideJustification` (8 trigger active lint rules)                                                                                                                                        |
@@ -2996,7 +3122,7 @@ Every exchange has `latitude` and `longitude` (100% coverage), enabling astronom
 | **Profile & Trace**                     |                                                                                                                                                                                                             |
 | PromptProfile fields (v9.6)             | 7 (verbosity, style, excludePeople, mjAspect, mjStylize, mjVersion, strictPhysics)                                                                                                                          |
 | PromptTrace top-level fields            | 19 (profile, precip, windForce, windSpeedKmh, venue, visualTruth, lighting, solarElevation, camera, climate, cloudType, solarPhase, moon, isNight, seed, excludedPeople, localHour, temperatureC, humidity) |
-| WeatherPromptResult fields (v9.6)       | 7 (text, positive, negative, fluxPrompt, tier, trace — positive/negative/fluxPrompt/trace optional)                                                                                                         |
+| WeatherPromptResult fields (v11.1)      | 9 (text, positive, negative, fluxPrompt, tier, categoryMap, categoryMapHash, trace — positive/negative/fluxPrompt/categoryMap/categoryMapHash/trace optional)                                               |
 
 ---
 
@@ -3004,6 +3130,11 @@ Every exchange has `latitude` and `longitude` (100% coverage), enabling astronom
 
 | Version | Date        | Changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 11.1.0  | 3 Mar 2026  | **DOCUMENT UPDATE** — Authority document updated to v11.1.0 to reflect actual codebase state. **VENUE SINGULARITY** (Upgrade 4) — `venueOverride` field on `WeatherPromptInput` allows the route to pass an exact venue, bypassing `getCityVenue()` entirely. Eliminates the desync bug where route-level venue selection and generator-level seeded random produced different venues. **PROMPT FINGERPRINT VERIFICATION** (Upgrade 5) — `categoryMapHash` field on `WeatherPromptResult` uses FNV-1a hash of normalised categoryMap content. The builder computes its own hash for symmetry checking: "Matches original" vs "Modified from original" badge. **LINE COUNTS** — `weather-prompt-generator.ts` 561, `prompt-types.ts` 613 (+`venueOverride`, `venueSeed`, `categoryMap`, `categoryMapHash` fields). **CITY-VIBES EXPANDED** — 83→102 cities, 842→1,032 venues (19 new cities added for broader global coverage).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 11.0.0  | Mar 2026    | **PHASE E: TIER GENERATOR RETIREMENT** — Unified brain is now the ONLY prompt path (no feature flag). Legacy tier generators (`generateTier1()`, `generateTier1Flux()`, `generateTier2()`, `generateTier3()`, `generateTier4()`, `stripClipWeight()`) deleted from `tier-generators.ts` (644→95 lines). `weather-brain-comparison.ts` deleted (transitional A/B tool). `getComposition()` + `injectCompositionIntoText()` removed from orchestrator (assembler handles it). ~200 lines of dual-path plumbing removed. **6 NEW MODULES:** `weather-category-mapper.ts` (581 lines) — bridges physics to WeatherCategoryMap. `synergy-rewriter.ts` (600 lines) — conflict resolution + reinforcement bridging. `composition-blueprint.ts` (506 lines) — scene composition from camera/venue data. `category-synergy.ts` (409 lines) — synergy matrix for category combos. `adaptive-weights.ts` (254 lines) — dynamic CLIP weight calibration. `day-night.ts` (98 lines) — extracted 3-tier cascade for cross-component reuse. **NEW PIPELINE:** `buildWeatherCategoryMap()` → `selectionsFromMap()` → `rewriteWithSynergy()` → `assemblePrompt()`. Public API and exports remain compatible with v9.x. **MODULE COUNT:** 18→24. **TOTAL LINES:** 7,118→9,538.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 10.3.0  | Mar 2026    | **PHASE C: UNIFIED BRAIN WITH FEATURE FLAG** — `buildWeatherCategoryMap()` always computed — consumers (route, showcase, builder) use it. Feature flag controlled whether the unified brain or legacy tier generators produced the text output. Venue seed forwarding (`venueSeed` field on `WeatherPromptInput`) eliminates the route/generator venue desync bug where the homepage label says "Museum District" but the prompt describes "Discovery Green".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 10.1.0  | Mar 2026    | **COMPOSITION COHERENCE + CAMERA LENS DETERMINISM** — Camera lens selection uses tierSeed (same as composition and prompt camera) to keep trace deterministic AND matching the actual camera in the output.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 10.0.0  | Mar 2026    | **PROMPT JITTER REDUCTION** — Stronger deterministic scene seed using FNV-1a 32-bit hash of all weather fields (temp, humidity, wind, gust, cloud, visibility, pressure, rain, snow, weatherId, conditions, description, sunrise, sunset, timezone, isDayTime). Time quantisation (10-minute buckets) prevents rapid prompt drift when using `new Date()`. `computeSceneSeed()` replaces the old simple city-hash approach. Post-processing: `removeRedundantPhenomenon()` strips duplicate sky tokens, `neutraliseLeakPhrases()` replaces culturally-specific nouns (prayer flags → entrance flags, temple steps → stone steps), `fixCommonGrammar()` cleans double commas and spacing.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | 9.6.0   | 20 Feb 2026 | **FLUX-NATIVE TIER 1 VARIANT** — `generateTier1Flux()` produces T5 text-encoder prompts without CLIP attention weights. `stripClipWeight()` utility removes `(token:N.N)` syntax. New `fluxPrompt` field on `WeatherPromptResult` (generated alongside standard T1 output). **MJ V6/V7 NATURAL LANGUAGE** — Tier 2 generator branches on `PromptProfile.mjVersion`: V5.2 retains legacy `::` multi-prompt syntax; V6.1/V7 use natural language sentences (no `::` weights, no `--no` flags → inline avoidance phrasing). `mjVersion` field added to `PromptProfile` (values: `'5.2'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | '6.1'                                                                                                                                                                                         | '7'`, default `'7'`). §11.9 night integration updated with 6 tier format variants. **FILE:** `tier-generators.ts` 576→644 lines (+68). |
 | 9.5.0   | 20 Feb 2026 | **CLOUD TYPE CLASSIFIER** — `classifyCloudType()` in `cloud-types.ts` (223 lines). 3-path classification: OWM `weatherId` (800–804 range) → OWM description keywords → cloud cover percentage fallback. 10 visual cloud types (cirrus, cirrostratus, cirrocumulus, altostratus, altocumulus, stratocumulus, stratus, nimbostratus, cumulus, cumulonimbus). 40 visual phrases (4 per type). `REPLACEABLE_SKY` set of 11 generic OWM strings replaced with type-specific descriptions. **SOLAR PHASE** — `computeSolarPhase()` in `time-utils.ts` (+120 lines). 12 directional phases (4 dawn, 3 day, 4 dusk, 1 night) with sunrise/sunset direction detection via solar noon comparison. **OWM weatherId PIPELINE** — `weatherId: number                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | null`added to 5 type interfaces (gateway → adapter → frontend → component → weather types). **VisualTruth** gains`cloudType`and`solarPhase` fields (set by orchestrator post-classification). |
 | 9.4.0   | 20 Feb 2026 | **CLIMATE-AWARE HUMIDITY** — `computeClimateContext()` in `climate.ts` (195 lines). 7 latitude-based climate zones (tropical, arid, subtropical, warm-temperate, cool-temperate, subarctic, polar). Each zone has baseline humidity + dew-spread offset calibrated from climatological norms. `effectiveHumidity` and `effectiveDewSpread` normalise raw readings so Singapore 85% ≠ London 85%. Precipitation-driven paths and thermal optics bypass normalisation (physics of rain/frost is universal). `deriveVisualTruth()` receives `latitude` parameter. **VisualTruth** gains `climateZone` field.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |

@@ -3,6 +3,7 @@
 // WEATHER PROMPT GENERATOR — SHARED TYPES & CONSTANTS
 // ============================================================================
 //
+// v9.1.0 (21 Feb 2026): Added WeatherCategoryMap re-export for unified brain
 // v9.0.0 (20 Feb 2026):
 // - Extracted from weather-prompt-generator.ts (4,311-line monolith)
 // - All types used across multiple modules live here
@@ -13,6 +14,7 @@
 // ============================================================================
 
 import type { ExchangeWeatherFull } from './weather-types';
+import type { WeatherCategoryMap } from '@/types/prompt-builder';
 
 // ============================================================================
 // PROMPT TIER TYPES
@@ -51,6 +53,31 @@ export interface WeatherPromptInput {
    * Zero cost when false — trace object is never constructed.
    */
   debug?: boolean;
+  /**
+   * v10.3.0 Phase C (Unified Brain, Extra 2): Optional venue seed override.
+   * When provided, the generator uses this seed to select the venue instead of
+   * computing its own from `computeSceneSeed()`. This eliminates the venue
+   * desync bug where the route picks one venue and the generator picks another.
+   *
+   * The route should pass `venueRotation` (its own time-based index) here so
+   * the generator deterministically picks the same venue the route intends.
+   */
+  venueSeed?: number | null;
+
+  /**
+   * v11.1.0 Upgrade 4 — Venue Singularity: Direct venue override.
+   *
+   * When provided, the generator uses this venue EXACTLY — skips getCityVenue()
+   * entirely. This guarantees the route and generator use the identical venue.
+   *
+   * The old `venueSeed` approach tried to sync via seeded random, but the route
+   * uses index-based rotation while getCityVenue uses pickRandom — they produce
+   * different indices, causing two venues in the output.
+   *
+   * Pass `{ name: "Zoo Park", setting: "park" }` and that's the only venue
+   * that will appear in the prompt. Subject gets city only, environment gets venue.
+   */
+  venueOverride?: { name: string; setting: string } | null;
 }
 
 /**
@@ -78,6 +105,30 @@ export interface WeatherPromptResult {
   fluxPrompt?: string;
   /** Which tier generated this result. */
   tier: PromptTier;
+  /**
+   * v10.3.0 Phase C (Unified Brain): Structured category map produced by
+   * `buildWeatherCategoryMap()`. Contains both vocabulary-matched dropdown
+   * selections and rich physics-computed custom phrases per category.
+   *
+   * Always populated (v11.0.0: unified brain is the only path).
+   * Consumers can use this to populate the prompt builder UI directly
+   * (dropdowns + freetext inputs), or pass to `assemblePrompt()` via
+   * `selectionsFromMap()` for text assembly.
+   */
+  categoryMap?: WeatherCategoryMap;
+  /**
+   * v11.1.0 Upgrade 5 — Prompt Fingerprint Verification.
+   *
+   * FNV-1a hash of the normalised categoryMap content (selections + customValues).
+   * Platform-independent: same hash regardless of Tier 1 CLIP vs Tier 3 NatLang.
+   *
+   * The builder computes its own hash from the loaded categoryMap. If the
+   * hashes match → "Matches original" badge. If the user edits selections
+   * → hash diverges → "Modified from original" badge.
+   *
+   * Production metric target: 99% match rate when user hasn't edited.
+   */
+  categoryMapHash?: string;
   /**
    * v8.0.0 Chat 8: Diagnostic trace — every decision the generator made.
    * Only populated when `debug: true` in input or NODE_ENV === 'development'.
@@ -546,3 +597,17 @@ export const TIER_INFO: Record<PromptTier, TierInfo> = {
 
 export const SYNODIC_MONTH = 29.53058770576;
 export const REFERENCE_NEW_MOON_DAYS = 10957.76;
+
+// ============================================================================
+// UNIFIED BRAIN — Re-export WeatherCategoryMap
+// ============================================================================
+// Convenience re-export so weather modules can import from sibling.
+// Canonical definition lives in @/types/prompt-builder.
+
+export type {
+  WeatherCategoryMap,
+  WeatherCategoryMeta,
+  PromptSource,
+  PromptDNAFingerprint,
+  PromptDNAScore,
+} from '@/types/prompt-builder';

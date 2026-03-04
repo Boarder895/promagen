@@ -1,0 +1,243 @@
+// src/components/home/new-homepage-client.tsx
+// ============================================================================
+// NEW HOMEPAGE CLIENT — Prompt-focused layout (Phase 6 + hero cleanup)
+// ============================================================================
+// Replaces the original homepage-client.tsx for the `/` route.
+// The original (exchange rails, finance ribbon) is now used by /world-context.
+//
+// Phase 1 (Foundation): Shell layout with placeholder left/right rails.
+// Phase 2 (Prompt Showcase): PromptShowcase wired into centre rail above table.
+// Phase 3 (Scene Starters): SceneStartersPreview replaces left rail placeholder.
+// Phase 5 (Community Pulse): CommunityPulse replaces right rail placeholder.
+// Hero cleanup: LeaderboardIntro moved here (between Showcase + Table).
+//
+// Key differences from original homepage-client.tsx:
+// - No exchange rails (replaced by Scene Starters + Community Pulse)
+// - No finance ribbon (showFinanceRibbon = false always)
+// - No exchange filtering, ordering, or index quote fetching
+// - Centre column: PromptShowcase + LeaderboardIntro + ProvidersTable
+// - Left column: SceneStartersPreview (200 scenes, pro gate)
+// - Engine Bay and Mission Control: preserved
+//
+// Authority: docs/authority/homepage.md §3, §4, §5, §6
+//
+// Existing features preserved: Yes
+// - ProvidersTable, Engine Bay, Mission Control untouched
+// - All other pages unaffected (they still import homepage-client.tsx)
+// ============================================================================
+
+'use client';
+
+import React, { useMemo, useCallback, useState } from 'react';
+import HomepageGrid, { LeaderboardIntro } from '@/components/layout/homepage-grid';
+import ProvidersTable from '@/components/providers/providers-table';
+import PromptShowcase from '@/components/home/prompt-showcase';
+import SceneStartersPreview from '@/components/home/scene-starters-preview';
+import CommunityPulse from '@/components/home/community-pulse';
+import { usePromagenAuth } from '@/hooks/use-promagen-auth';
+import { useWeather, type WeatherData } from '@/hooks/use-weather';
+import type { Exchange } from '@/data/exchanges/types';
+import type { ExchangeWeatherData } from '@/components/exchanges/types';
+import type { Provider } from '@/types/providers';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface NewHomepageClientProps {
+  /** All exchanges (passed to Mission Control for weather prompt preview) */
+  exchanges: ReadonlyArray<Exchange>;
+  /** Weather data indexed by exchange ID (from gateway API) */
+  weatherIndex: Map<string, ExchangeWeatherData>;
+  /** All AI providers */
+  providers: Provider[];
+}
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
+/**
+ * NewHomepageClient — Client wrapper for the prompt-focused homepage.
+ *
+ * Handles:
+ * 1. Auth state (for voting in providers table)
+ * 2. Weather data merging (SSR + live, for Mission Control prompt preview)
+ * 3. Provider table expand/collapse
+ * 4. Left rail: Scene Starters preview (Phase 3)
+ * 5. Right rail: Community Pulse live feed (Phase 5)
+ * 6. Centre: PromptShowcase (Phase 2) + ProvidersTable
+ */
+export default function NewHomepageClient({
+  exchanges,
+  weatherIndex,
+  providers,
+}: NewHomepageClientProps) {
+  const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
+
+  // ── Live weather (client-side update after hydration) ───────────────────
+  const { weather: liveWeatherById } = useWeather();
+
+  const liveWeatherIndex = useMemo(() => {
+    const map = new Map<string, ExchangeWeatherData>();
+    for (const [id, w] of Object.entries(liveWeatherById)) {
+      map.set(id, {
+        tempC: w.temperatureC,
+        tempF: w.temperatureF,
+        emoji: w.emoji,
+        condition: w.conditions,
+        humidity: w.humidity,
+        windKmh: w.windSpeedKmh,
+        description: w.description,
+        sunriseUtc: w.sunriseUtc ?? undefined,
+        sunsetUtc: w.sunsetUtc ?? undefined,
+        timezoneOffset: w.timezoneOffset ?? undefined,
+        isDayTime: w.isDayTime ?? undefined,
+        windDegrees: w.windDegrees ?? undefined,
+        windGustKmh: w.windGustKmh ?? undefined,
+        visibility: w.visibility ?? undefined,
+      });
+    }
+    return map;
+  }, [liveWeatherById]);
+
+  // Merge live weather ON TOP of SSR weather
+  const effectiveWeatherIndex = useMemo(() => {
+    if (liveWeatherIndex.size === 0) return weatherIndex;
+    const merged = new Map(weatherIndex);
+    for (const [id, data] of liveWeatherIndex) {
+      merged.set(id, data);
+    }
+    return merged;
+  }, [liveWeatherIndex, weatherIndex]);
+
+  // ── Provider weather map (for ProvidersTable weather tooltips) ──────────
+  const providerWeatherMap = useMemo(() => {
+    const map: Record<string, WeatherData> = {};
+    for (const [id, w] of effectiveWeatherIndex) {
+      map[id] = {
+        id,
+        city: id,
+        temperatureC: w.tempC ?? 0,
+        temperatureF: w.tempF ?? (w.tempC !== null ? (w.tempC * 9) / 5 + 32 : 32),
+        conditions: w.condition ?? 'Unknown',
+        description: w.description ?? w.condition ?? '',
+        humidity: w.humidity ?? 50,
+        windSpeedKmh: w.windKmh ?? 5,
+        emoji: w.emoji ?? '🌤️',
+        asOf: new Date().toISOString(),
+        sunriseUtc: w.sunriseUtc ?? null,
+        sunsetUtc: w.sunsetUtc ?? null,
+        timezoneOffset: w.timezoneOffset ?? null,
+        isDayTime: w.isDayTime ?? undefined,
+        windDegrees: w.windDegrees ?? null,
+        windGustKmh: w.windGustKmh ?? null,
+        visibility: w.visibility ?? null,
+      };
+    }
+    return map;
+  }, [effectiveWeatherIndex]);
+
+  // ── Table state ────────────────────────────────────────────────────────
+  const [displayedProviderIds, setDisplayedProviderIds] = useState<string[]>([]);
+  const [isTableExpanded, setIsTableExpanded] = useState(false);
+
+  const providerIds = useMemo(() => providers.map((p) => p.id), [providers]);
+
+  const handleProvidersChange = useCallback((ids: string[]) => {
+    setDisplayedProviderIds((prev) => {
+      if (prev.length === ids.length && prev.every((id, i) => id === ids[i])) return prev;
+      return ids;
+    });
+  }, []);
+
+  const handleExpandToggle = useCallback(() => {
+    setIsTableExpanded((prev) => !prev);
+  }, []);
+
+  // ── Location loading (same pattern as original) ────────────────────────
+  const effectiveLocationLoading = isAuthenticated && locationInfo.isLoading;
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // UI CONTENT
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // Centre rail — PromptShowcase (Phase 2) + ProvidersTable
+  const centreRail = (
+    <div
+      className="flex h-full min-h-0 flex-col"
+      style={{ gap: 'clamp(12px, 1.25vw, 24px)' }}
+      data-testid="rail-centre-inner"
+    >
+      {/* Prompt of the Moment — hidden when table expanded (table takes full space) */}
+      {!isTableExpanded && <PromptShowcase />}
+
+      {/* Leaderboard intro — "42 AI Image Generators" heading + expand trigger
+          Positioned directly above the providers table, flowing naturally.
+          Hidden when table is expanded (no gap to fill). */}
+      {!isTableExpanded && (
+        <LeaderboardIntro isExpanded={isTableExpanded} onToggle={handleExpandToggle} />
+      )}
+
+      {/* AI Providers Leaderboard */}
+      <section
+        aria-label="AI providers leaderboard"
+        className="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+      >
+        <ProvidersTable
+          providers={providers}
+          title="AI Providers Leaderboard"
+          caption="Scores and trends are illustrative while external APIs are being wired."
+          showRank
+          isAuthenticated={isAuthenticated}
+          onProvidersChange={handleProvidersChange}
+          isExpanded={isTableExpanded}
+          onExpandToggle={handleExpandToggle}
+          weatherMap={providerWeatherMap}
+        />
+      </section>
+    </div>
+  );
+
+  // Left rail — Scene Starters preview (Phase 3)
+  const leftContent = (
+    <SceneStartersPreview
+      userTier={userTier}
+      isAuthenticated={isAuthenticated}
+    />
+  );
+
+  // Right rail — Community Pulse (Phase 5)
+  const rightContent = (
+    <CommunityPulse />
+  );
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════════════════════════════════════════
+
+  return (
+    <HomepageGrid
+      mainLabel="Promagen home"
+      leftContent={leftContent}
+      centre={centreRail}
+      rightContent={rightContent}
+      showFinanceRibbon={false}
+      isTableExpanded={isTableExpanded}
+      onExpandToggle={handleExpandToggle}
+      exchanges={exchanges}
+      displayedProviderIds={displayedProviderIds.length > 0 ? displayedProviderIds : providerIds}
+      isPaidUser={userTier === 'paid'}
+      isAuthenticated={isAuthenticated}
+      referenceFrame={locationInfo.referenceFrame}
+      onReferenceFrameChange={setReferenceFrame}
+      isLocationLoading={effectiveLocationLoading}
+      cityName={locationInfo.cityName}
+      countryCode={locationInfo.countryCode}
+      providers={providers}
+      showEngineBay
+      showMissionControl
+      weatherIndex={effectiveWeatherIndex}
+    />
+  );
+}

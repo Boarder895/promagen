@@ -1,8 +1,9 @@
 # Prompt Builder Page
 
-**Last updated:** 25 February 2026  
+**Last updated:** 3 March 2026  
 **Owner:** Promagen  
-**Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).
+**Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).  
+**Cross-reference:** For unified assembly engine architecture, see `unified-prompt-brain.md`. For optimizer engine architecture, see `prompt-optimizer.md`.
 
 ---
 
@@ -23,12 +24,14 @@ The design philosophy: Promagen is a bridge between markets and imagination. The
 The prompt builder has five distinct lock states with different visual treatments:
 
 #### 1. Anonymous - Under Limit (0-4 prompts used today)
+
 - **Visual treatment:** Normal dropdowns, fully functional
 - **Usage counter:** "X/5 free prompts today" in header
 - **Behaviour:** Full access to all 12 categories with standard selection limits
 - **Storage:** localStorage v2 with tamper detection and daily reset tracking
 
 #### 2. Anonymous - Limit Reached (5 prompts used today)
+
 - **Visual treatment:** All dropdowns display **disabled styling only** (purple-tinted, reduced opacity)
 - **Overlay:** Centred overlay at TOP of prompt builder section, button at top of overlay
 - **Call-to-action:** "Sign in to continue" button (at top of overlay)
@@ -38,12 +41,14 @@ The prompt builder has five distinct lock states with different visual treatment
 - **Reset:** Counter resets at midnight in user's local timezone (same as authenticated users)
 
 #### 3. Free User - Under Quota (0-29 prompts/day)
+
 - **Visual treatment:** Normal dropdowns, fully functional
-- **Usage counter:** Discrete counter showing "X/10 prompts today" 
+- **Usage counter:** Discrete counter showing "X/10 prompts today"
 - **Behaviour:** Full access to all 12 categories with standard selection limits
 - **Reset:** Counter resets at midnight in user's timezone
 
 #### 4. Free User - Quota Reached (10/10 used)
+
 - **Visual treatment:** All dropdowns display **disabled styling only** (purple-tinted, reduced opacity)
 - **Overlay:** Centred overlay at TOP of prompt builder section, button at top of overlay
 - **Call-to-action:** "Go Pro for unlimited" button (at top of overlay)
@@ -51,6 +56,7 @@ The prompt builder has five distinct lock states with different visual treatment
 - **Behaviour:** All dropdowns disabled with purple tint, **NO overlay text on individual dropdowns**
 
 #### 5. Paid User
+
 - **Visual treatment:** Normal dropdowns, fully functional
 - **No usage counter:** Unlimited daily usage
 - **Platform-aware enhanced limits:** +1 bonus on stackable categories (style, lighting, colour, atmosphere, materials, fidelity, negative) â€” see Â§12-Category Dropdown System for full tier matrix
@@ -60,26 +66,28 @@ The prompt builder has five distinct lock states with different visual treatment
 
 When locked, the following component behaviours apply:
 
-| Component | Locked Behaviour |
-|-----------|-----------------|
-| **Combobox dropdowns** | Disabled styling (purple tint, `opacity-50`), NO overlay text, lock icon in label only |
-| **Dropdown arrows** | Hidden when locked |
-| **Dropdown input** | Shows empty placeholder, cannot type |
-| **Randomise button** | Disabled (`cursor-not-allowed`, muted colors) |
-| **Free text input** | Disabled, cannot type in any category |
-| **Aspect ratio selector** | Disabled buttons with `opacity-50`, NO overlay text |
-| **Copy prompt button** | Shows appropriate CTA based on lock reason |
+| Component                 | Locked Behaviour                                                                       |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| **Combobox dropdowns**    | Disabled styling (purple tint, `opacity-50`), NO overlay text, lock icon in label only |
+| **Dropdown arrows**       | Hidden when locked                                                                     |
+| **Dropdown input**        | Shows empty placeholder, cannot type                                                   |
+| **Randomise button**      | Disabled (`cursor-not-allowed`, muted colors)                                          |
+| **Free text input**       | Disabled, cannot type in any category                                                  |
+| **Aspect ratio selector** | Disabled buttons with `opacity-50`, NO overlay text                                    |
+| **Copy prompt button**    | Shows appropriate CTA based on lock reason                                             |
 
 **Critical UX rule:** Individual dropdowns do NOT show "Sign in to continue" or other overlay text. Lock messaging appears ONLY in the central overlay at the top of the prompt builder section. This keeps the UI clean and non-repetitive.
 
 ### Usage Tracking System
 
 **Trigger event:** "Copy prompt" button click
+
 - This represents the moment users extract value from Promagen's curation work
 - Most accurate measure of actual prompt usage
 - Cleaner than tracking AI provider submissions
 
 **Anonymous tracking (localStorage v2):**
+
 - 5 prompts per day (resets at midnight local time)
 - Key: `promagen:anonymous:usage`
 - Schema version: 2 (includes daily reset tracking)
@@ -88,21 +96,22 @@ When locked, the following component behaviours apply:
 - Daily reset: if `lastResetDate !== today`, count resets to 0
 
 **Anonymous storage schema v2:**
+
 ```typescript
 interface AnonymousUsageData {
-  count: number;           // Prompt copy count (resets daily)
-  firstUse: string;        // First use timestamp (ISO)
-  lastUse: string;         // Last use timestamp (ISO)
-  lastResetDate: string;   // Date of last reset (YYYY-MM-DD)
-  version: 2;              // Schema version
-  checksum: string;        // Tamper detection hash
+  count: number; // Prompt copy count (resets daily)
+  firstUse: string; // First use timestamp (ISO)
+  lastUse: string; // Last use timestamp (ISO)
+  lastResetDate: string; // Date of last reset (YYYY-MM-DD)
+  version: 2; // Schema version
+  checksum: string; // Tamper detection hash
 }
 
 interface AnonymousUsageState {
-  count: number;           // Current usage count
-  limit: number;           // Maximum allowed (5)
-  remaining: number;       // Remaining prompts
-  isAtLimit: boolean;      // Whether limit is reached
+  count: number; // Current usage count
+  limit: number; // Maximum allowed (5)
+  remaining: number; // Remaining prompts
+  isAtLimit: boolean; // Whether limit is reached
   resetTime: string | null; // Midnight tonight (ISO)
 }
 ```
@@ -110,12 +119,14 @@ interface AnonymousUsageState {
 **Migration from v1:** Previous v1 data (without `lastResetDate`) is invalidated on read, triggering a fresh start with v2 schema.
 
 **Authenticated tracking (Vercel KV):**
+
 - Store daily usage in Vercel KV (consistent with voting system)
 - Key format: `usage:${userId}:${date}` where date is YYYY-MM-DD in user's timezone
 - Reset logic: Check if current date > stored date, reset counter if true
 - Timezone detection: Use browser `Intl.DateTimeFormat().resolvedOptions().timeZone`
 
 **Usage quota structure:**
+
 ```typescript
 interface DailyUsage {
   userId: string;
@@ -174,6 +185,7 @@ interface DailyUsage {
 ```
 
 **Key visual features:**
+
 - Prompt builder fills **full height** of centre column (aligns with exchange rails)
 - Same `rounded-3xl` corners as exchange rails
 - Same `bg-slate-950/70` background as exchange rails
@@ -243,16 +255,18 @@ export function ProviderWorkspace({ provider }: ProviderWorkspaceProps) {
 ### PromptBuilder
 
 **File:** `frontend/src/components/providers/prompt-builder.tsx`
-**Version:** 8.3.0
+**Version:** 10.0.0
 
 **Purpose:** Full-featured prompt crafting interface with platform-specific optimization, platform-aware category limits, and authentication-gated access.
 
 **New in v8.3.0:**
+
 - Optional `providerSelector` prop for custom header (used by Playground page)
 - When provided, renders custom element instead of static "Provider · Prompt builder" title
 - Enables builder-first flow with provider dropdown
 
 **New authentication requirements:**
+
 - Must use `usePromagenAuth({ platformId })` hook to check authentication state and get platform-aware limits
 - Must check daily usage quota and user tier
 - Must apply appropriate lock states based on authentication/quota status
@@ -277,30 +291,30 @@ export interface PromptBuilderProps {
 ```typescript
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 
-export function PromptBuilder({ 
+export function PromptBuilder({
   id = 'prompt-builder',
   provider,
   onDone,
   providerSelector,
 }: PromptBuilderProps) {
   const platformId = provider.id ?? 'default';
-  
-  const { 
-    isAuthenticated, 
-    isLoading, 
+
+  const {
+    isAuthenticated,
+    isLoading,
     userTier,
-    categoryLimits,    // Platform-aware limits
-    platformTier,      // 1 | 2 | 3 | 4
-    dailyUsage 
+    categoryLimits, // Platform-aware limits
+    platformTier, // 1 | 2 | 3 | 4
+    dailyUsage,
   } = usePromagenAuth({ platformId });
 
   // Lock state logic
-  const isLocked = !isAuthenticated || 
-    (userTier === 'free' && dailyUsage.count >= dailyUsage.limit);
+  const isLocked =
+    !isAuthenticated || (userTier === 'free' && dailyUsage.count >= dailyUsage.limit);
 
   // NOTE: lockMessage is NO LONGER passed to Combobox components
   // Lock messaging appears only in central overlay
-  
+
   // categoryLimits now reflects platform capabilities
   // e.g., Midjourney (Tier 2): style=3, Artistly (Tier 4): style=1
 
@@ -311,17 +325,19 @@ export function PromptBuilder({
 #### Header Rendering (v8.3.0)
 
 ```tsx
-{/* Provider selector (Playground) or static title (Provider page) */}
-{providerSelector ? (
-  <div className="flex items-center gap-2">
-    {providerSelector}
-    <span className="text-sm text-slate-400">· Prompt builder</span>
-  </div>
-) : (
-  <h2 className="text-lg font-semibold text-slate-50">
-    {provider.name} · Prompt builder
-  </h2>
-)}
+{
+  /* Provider selector (Playground) or static title (Provider page) */
+}
+{
+  providerSelector ? (
+    <div className="flex items-center gap-2">
+      {providerSelector}
+      <span className="text-sm text-slate-400">· Prompt builder</span>
+    </div>
+  ) : (
+    <h2 className="text-lg font-semibold text-slate-50">{provider.name} · Prompt builder</h2>
+  );
+}
 ```
 
 #### Structure
@@ -391,11 +407,12 @@ export function PromptBuilder({
    - Sky-blue bordered box with ðŸ’¡ icon
 
 5. **Assembled Prompt Preview**
-   - Shows the compiled **positive prompt only**
+   - Shows the compiled **positive prompt only** from `assemblePrompt(platformId, selections, weatherWeightOverrides?)`
    - **NO separator line** (removed)
    - **NO "Negative prompt:" label** (removed)
    - Clear all button with **Core Colours gradient** (`from-sky-400 via-emerald-300 to-indigo-400`)
    - Scrollable if prompt is long
+   - When "Inspired by" badge is active (from "Try in" preload), shows city/venue/conditions badge above preview
 
 6. **Footer** (fixed at bottom)
    - **Copy prompt button** (usage tracking trigger)
@@ -411,20 +428,20 @@ export function PromptBuilder({
 
 Categories are ordered for optimal AI token weighting â€” most important terms appear first:
 
-| # | Category | Label | Description |
-|---|----------|-------|-------------|
-| 1 | `subject` | Subject | Core identity â€” one main subject |
-| 2 | `action` | Action / Pose | Core identity â€” one primary action |
-| 3 | `style` | Style / Rendering | Art styles, rendering approaches |
-| 4 | `environment` | Environment | Core identity â€” one setting |
-| 5 | `composition` | Composition / Framing | One framing approach |
-| 6 | `camera` | Camera | One lens/angle |
-| 7 | `lighting` | Lighting | Light sources, directions, qualities |
-| 8 | `colour` | Colour / Grade | Palettes, grades, tonal treatments |
-| 9 | `atmosphere` | Atmosphere | Environmental effects, mood |
-| 10 | `materials` | Materials / Texture | Textures, surfaces, materials |
-| 11 | `fidelity` | Fidelity | Quality boosters, resolution enhancers |
-| 12 | `negative` | Constraints / Negative | Comprehensive exclusions |
+| #   | Category      | Label                  | Description                            |
+| --- | ------------- | ---------------------- | -------------------------------------- |
+| 1   | `subject`     | Subject                | Core identity â€” one main subject     |
+| 2   | `action`      | Action / Pose          | Core identity â€” one primary action   |
+| 3   | `style`       | Style / Rendering      | Art styles, rendering approaches       |
+| 4   | `environment` | Environment            | Core identity â€” one setting          |
+| 5   | `composition` | Composition / Framing  | One framing approach                   |
+| 6   | `camera`      | Camera                 | One lens/angle                         |
+| 7   | `lighting`    | Lighting               | Light sources, directions, qualities   |
+| 8   | `colour`      | Colour / Grade         | Palettes, grades, tonal treatments     |
+| 9   | `atmosphere`  | Atmosphere             | Environmental effects, mood            |
+| 10  | `materials`   | Materials / Texture    | Textures, surfaces, materials          |
+| 11  | `fidelity`    | Fidelity               | Quality boosters, resolution enhancers |
+| 12  | `negative`    | Constraints / Negative | Comprehensive exclusions               |
 
 ### Platform-Aware Selection Limits (v8.2.0)
 
@@ -432,46 +449,46 @@ Selection limits are **platform-aware** â€” different AI platforms handle p
 
 #### Platform Tier Philosophy
 
-| Tier | Name | Prompt Style | Why These Limits? |
-|------|------|--------------|-------------------|
-| **1** | CLIP-Based | Tokenized keywords | CLIP tokenizes efficiently â€” stacking 2-3 styles/lights produces coherent results |
-| **2** | Midjourney Family | Parameter-rich | Built for complex prompts â€” handles 3+ styles, `--no` with 8+ terms |
-| **3** | Natural Language | Conversational | Prefers focused prompts â€” too many terms cause confusion |
-| **4** | Plain Language | Simple prompts | Consumer-focused â€” one style, one mood works best |
+| Tier  | Name              | Prompt Style       | Why These Limits?                                                                   |
+| ----- | ----------------- | ------------------ | ----------------------------------------------------------------------------------- |
+| **1** | CLIP-Based        | Tokenized keywords | CLIP tokenizes efficiently â€” stacking 2-3 styles/lights produces coherent results |
+| **2** | Midjourney Family | Parameter-rich     | Built for complex prompts â€” handles 3+ styles, `--no` with 8+ terms               |
+| **3** | Natural Language  | Conversational     | Prefers focused prompts â€” too many terms cause confusion                          |
+| **4** | Plain Language    | Simple prompts     | Consumer-focused â€” one style, one mood works best                                 |
 
 #### Selection Limits Matrix (Standard Promagen)
 
-| Category | Tier 1 (CLIP) | Tier 2 (MJ) | Tier 3 (NatLang) | Tier 4 (Plain) |
-|----------|---------------|-------------|------------------|----------------|
-| Subject | 1 | 1 | 1 | 1 |
-| Action | 1 | 1 | 1 | 1 |
-| **Style** | 2 | 3 | 2 | 1 |
-| Environment | 1 | 1 | 1 | 1 |
-| Composition | 1 | 1 | 1 | 1 |
-| Camera | 1 | 1 | 1 | 1 |
-| **Lighting** | 2 | 3 | 2 | 1 |
-| **Colour** | 2 | 2 | 1 | 1 |
-| **Atmosphere** | 2 | 2 | 1 | 1 |
-| **Materials** | 2 | 2 | 1 | 1 |
-| **Fidelity** | 2 | 3 | 2 | 1 |
-| **Negative** | 5 | 8 | 3 | 2 |
+| Category       | Tier 1 (CLIP) | Tier 2 (MJ) | Tier 3 (NatLang) | Tier 4 (Plain) |
+| -------------- | ------------- | ----------- | ---------------- | -------------- |
+| Subject        | 1             | 1           | 1                | 1              |
+| Action         | 1             | 1           | 1                | 1              |
+| **Style**      | 2             | 3           | 2                | 1              |
+| Environment    | 1             | 1           | 1                | 1              |
+| Composition    | 1             | 1           | 1                | 1              |
+| Camera         | 1             | 1           | 1                | 1              |
+| **Lighting**   | 2             | 3           | 2                | 1              |
+| **Colour**     | 2             | 2           | 1                | 1              |
+| **Atmosphere** | 2             | 2           | 1                | 1              |
+| **Materials**  | 2             | 2           | 1                | 1              |
+| **Fidelity**   | 2             | 3           | 2                | 1              |
+| **Negative**   | 5             | 8           | 3                | 2              |
 
 #### Pro Promagen Bonus (+1 on stackable categories)
 
-| Category | Tier 1 | Tier 2 | Tier 3 | Tier 4 |
-|----------|--------|--------|--------|--------|
-| Subject | 1 | 1 | 1 | 1 |
-| Action | 1 | 1 | 1 | 1 |
-| **Style** | **3** | **4** | **3** | **2** |
-| Environment | 1 | 1 | 1 | 1 |
-| Composition | 1 | 1 | 1 | 1 |
-| Camera | 1 | 1 | 1 | 1 |
-| **Lighting** | **3** | **4** | **3** | **2** |
-| **Colour** | **3** | **3** | **2** | **2** |
-| **Atmosphere** | **3** | **3** | **2** | **2** |
-| **Materials** | **3** | **3** | **2** | **2** |
-| **Fidelity** | **3** | **4** | **3** | **2** |
-| **Negative** | **6** | **9** | **4** | **3** |
+| Category       | Tier 1 | Tier 2 | Tier 3 | Tier 4 |
+| -------------- | ------ | ------ | ------ | ------ |
+| Subject        | 1      | 1      | 1      | 1      |
+| Action         | 1      | 1      | 1      | 1      |
+| **Style**      | **3**  | **4**  | **3**  | **2**  |
+| Environment    | 1      | 1      | 1      | 1      |
+| Composition    | 1      | 1      | 1      | 1      |
+| Camera         | 1      | 1      | 1      | 1      |
+| **Lighting**   | **3**  | **4**  | **3**  | **2**  |
+| **Colour**     | **3**  | **3**  | **2**  | **2**  |
+| **Atmosphere** | **3**  | **3**  | **2**  | **2**  |
+| **Materials**  | **3**  | **3**  | **2**  | **2**  |
+| **Fidelity**   | **3**  | **4**  | **3**  | **2**  |
+| **Negative**   | **6**  | **9**  | **4**  | **3**  |
 
 **Stackable categories:** Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative  
 **Non-stackable categories (always 1):** Subject, Action, Environment, Composition, Camera
@@ -529,20 +546,20 @@ const { categoryLimits, platformTier } = usePromagenAuth({ platformId: provider.
 
 ### Options Per Category
 
-| Category | Option Count | Notes |
-|----------|--------------|-------|
-| Subject | ~100 | People, creatures, objects, scenes |
-| Action | ~100 | Poses, movements, activities |
-| Style | ~100 | Art styles, rendering approaches |
-| Environment | ~100 | Locations, settings, backgrounds |
-| Composition | ~100 | Framing, perspective, layout |
-| Camera | ~100 | Lenses, angles, technical settings |
-| Lighting | ~100 | Light sources, directions, qualities |
-| Colour | ~100 | Palettes, grades, tonal treatments |
-| Atmosphere | ~100 | Environmental effects, mood |
-| Materials | ~100 | Textures, surfaces, materials |
-| Fidelity | ~100 | Quality boosters, resolution enhancers |
-| **Negative** | **~1000** | Comprehensive exclusions by category |
+| Category     | Option Count | Notes                                  |
+| ------------ | ------------ | -------------------------------------- |
+| Subject      | ~100         | People, creatures, objects, scenes     |
+| Action       | ~100         | Poses, movements, activities           |
+| Style        | ~100         | Art styles, rendering approaches       |
+| Environment  | ~100         | Locations, settings, backgrounds       |
+| Composition  | ~100         | Framing, perspective, layout           |
+| Camera       | ~100         | Lenses, angles, technical settings     |
+| Lighting     | ~100         | Light sources, directions, qualities   |
+| Colour       | ~100         | Palettes, grades, tonal treatments     |
+| Atmosphere   | ~100         | Environmental effects, mood            |
+| Materials    | ~100         | Textures, surfaces, materials          |
+| Fidelity     | ~100         | Quality boosters, resolution enhancers |
+| **Negative** | **~1000**    | Comprehensive exclusions by category   |
 
 **Total: ~2,100 curated prompt terms**
 
@@ -562,16 +579,18 @@ Options are stored in: `frontend/src/data/providers/prompt-options.json`
 
 The Negative category's free text input is **platform-dependent**:
 
-| Platform Type | Free Text? | Reason |
-|---------------|------------|--------|
-| **Native negative support** (14 platforms) | âœ… Shown | Custom terms work directly |
-| **Converted negatives** (28 platforms) | âŒ Hidden | Only pre-mapped terms convert |
+| Platform Type                              | Free Text? | Reason                        |
+| ------------------------------------------ | ---------- | ----------------------------- |
+| **Native negative support** (14 platforms) | âœ… Shown  | Custom terms work directly    |
+| **Converted negatives** (28 platforms)     | âŒ Hidden  | Only pre-mapped terms convert |
 
 **Platforms with native negative support:**
+
 - Inline: Midjourney, BlueWillow, Ideogram (use `--no` or `without`)
 - Separate field: Stability, Leonardo, Flux, NovelAI, Playground, NightCafe, Lexica, OpenArt, DreamStudio, Getimg, Dreamlike
 
 **Platforms without native support (dropdown only):**
+
 - DALL-E, Adobe Firefly, Bing, Microsoft Designer, Meta Imagine, Canva, Jasper Art, Google Imagen, and 20+ others
 
 For these 28 platforms, custom negative text would be ignored anyway â€” only the pre-mapped dropdown terms work (they convert to positive equivalents).
@@ -615,8 +634,8 @@ interface ComboboxProps {
   maxCustomChars?: number;
   allowFreeText?: boolean;
   isLocked?: boolean;
-  lockMessage?: string;  // NOTE: Accepted but NOT displayed in v5.0.0+
-  compact?: boolean;     // v6.4.0: Hides label, tooltip, and pt-8 padding
+  lockMessage?: string; // NOTE: Accepted but NOT displayed in v5.0.0+
+  compact?: boolean; // v6.4.0: Hides label, tooltip, and pt-8 padding
 }
 ```
 
@@ -632,14 +651,15 @@ The dropdown **closes immediately** when the selection limit is reached:
 ```typescript
 // CRITICAL: Close FIRST for single-select or when limit reached
 if (maxSelections === 1 || newCount >= maxSelections) {
-  setIsOpen(false);  // Happens IMMEDIATELY
+  setIsOpen(false); // Happens IMMEDIATELY
 }
-onSelectChange(newSelected);  // State update happens AFTER close
+onSelectChange(newSelected); // State update happens AFTER close
 ```
 
 ### Lock State Visual Treatment (v5.0.0)
 
 When `isLocked=true`:
+
 - **Disabled styling:** Purple-tinted background, reduced opacity
 - **Lock icon:** Appears in label only (small, unobtrusive)
 - **Dropdown arrow:** Hidden when locked
@@ -659,6 +679,7 @@ When `isLocked=true`:
 ### Lock State Visual Treatment (v1.2.0)
 
 When `disabled=true`:
+
 - **Disabled buttons:** `opacity-50`, `cursor-not-allowed`
 - **NO overlay text:** Clean disabled appearance
 - **NO "Sign in to continue" text**
@@ -672,30 +693,98 @@ When `disabled=true`:
 The "Copy prompt" button must be enhanced to track usage:
 
 ```typescript
+// assemblePrompt now accepts optional 3rd arg: weatherWeightOverrides
+// When user arrives via "Try in" from homepage PotM, weatherWeightOverrides
+// carries per-category weights from the weather intelligence system.
+// For manual builds, weatherWeightOverrides is undefined (no effect).
+const assembled = assemblePrompt(platformId, selections, weatherWeightOverrides);
+
 const handleCopyPrompt = async () => {
   // Existing copy functionality
-  await navigator.clipboard.writeText(assembledPrompt);
-  
+  await navigator.clipboard.writeText(assembled.positive);
+
   // Track usage for authenticated free users
   if (isAuthenticated && userTier === 'free') {
     try {
       await trackPromptUsage(userId);
-      updateDailyUsage(current => ({
+      updateDailyUsage((current) => ({
         ...current,
-        count: current.count + 1
+        count: current.count + 1,
       }));
     } catch (error) {
       console.error('Failed to track usage:', error);
     }
   }
-  
+
   // Track for anonymous users (localStorage)
   if (!isAuthenticated) {
     incrementAnonymousCount();
   }
-  
+
   showNotification('Prompt copied to clipboard');
 };
+```
+
+### Homepage "Try in" Preload (Phase D — Unified Brain)
+
+When a user clicks "Try in [Provider]" from the homepage Prompt of the Moment showcase, the builder pre-populates with weather-generated data via sessionStorage. This is the Phase D pathway from the Unified Brain architecture (see `unified-prompt-brain.md`).
+
+#### State Variable: `weatherWeightOverrides`
+
+```typescript
+const [weatherWeightOverrides, setWeatherWeightOverrides] = useState<
+  Partial<Record<PromptCategory, number>> | undefined
+>(undefined);
+```
+
+This state holds per-category weight overrides from the weather intelligence system (e.g., `{ subject: 1.3, lighting: 1.3, environment: 1.2, composition: 1.05 }`). When defined, these weights merge into `assemblePrompt()` as the third argument. When the user arrives via manual dropdown selection (not "Try in"), this state is `undefined` and has no effect.
+
+#### SessionStorage Payload
+
+The homepage writes two keys when the user clicks "Try in":
+
+```typescript
+// Key 1: Category data + weight overrides
+'promagen:preloaded-payload': {
+  promptText: string;                                    // Pre-formatted display text (fallback)
+  categoryMap?: {                                        // WeatherCategoryMap (Phase D path)
+    selections: Partial<Record<PromptCategory, string[]>>;
+    customValues: Partial<Record<PromptCategory, string>>;
+    negative: string[];
+    weightOverrides?: Partial<Record<string, number>>;   // Per-category weights
+    confidence?: Partial<Record<PromptCategory, number>>;
+    meta: WeatherCategoryMeta;
+  };
+}
+
+// Key 2: "Inspired by" badge metadata
+'promagen:preloaded-inspiredBy': {
+  city: string;
+  venue: string;
+  mood: string;
+  conditions: string;
+  emoji: string;
+  categoryMapHash: string;   // For badge fingerprint verification
+}
+```
+
+#### Two-Effect Split (Bug Fix)
+
+The preload uses two independent `useEffect` hooks to avoid the flash/re-apply bug:
+
+**Effect 1 — Category preload (runs once on mount):** Reads `promagen:preloaded-payload`. If `categoryMap` exists, applies `selections`, `customValues`, and `weightOverrides` to builder state. Clears all sessionStorage keys immediately (one-time use). No dependency on `categoryState`.
+
+**Effect 2 — "Inspired by" badge (runs once on mount):** Reads `promagen:preloaded-inspiredBy`. Sets display-only badge state (city, venue, conditions, mood, emoji). Does not trigger re-application of selections.
+
+#### Weight Merge Order
+
+When `weatherWeightOverrides` is defined, `assembleTierAware()` merges it with platform-defined weights. **Platform wins on conflicts:**
+
+```typescript
+weightedCategories: {
+  ...weatherWeightOverrides,              // weather base layer
+  ...platformFormat.weightedCategories,   // platform wins
+}
 ```
 
 ### Randomise Button Lock State
@@ -724,13 +813,15 @@ The ðŸŽ² Randomise button must be disabled when locked:
 **Purpose:** Increment daily usage count for authenticated users
 
 **Request:**
+
 ```typescript
 {
-  action: 'prompt_copy'
+  action: 'prompt_copy';
 }
 ```
 
 **Response:**
+
 ```typescript
 {
   success: boolean;
@@ -753,7 +844,7 @@ frontend/src/
 â”‚   â””â”€â”€ prompt-builder/
 â”‚       â””â”€â”€ page.tsx                # Redirect to /providers/[id]
 â”œâ”€â”€ components/providers/
-â”‚   â”œâ”€â”€ prompt-builder.tsx          # Main prompt builder component v8.3.0 (~1500 lines)
+â”‚   â”œâ”€â”€ prompt-builder.tsx          # Main prompt builder component v10.0.0 (~2,431 lines)
 â”‚   â”œâ”€â”€ aspect-ratio-selector.tsx   # Aspect ratio selector v1.2.0 (no lock overlay)
 â”‚   â””â”€â”€ provider-workspace.tsx      # Full-height wrapper
 â”œâ”€â”€ components/ui/
@@ -762,27 +853,33 @@ frontend/src/
 â”‚   â””â”€â”€ use-promagen-auth.ts        # Authentication hook
 â”œâ”€â”€ data/providers/
 â”‚   â”œâ”€â”€ prompt-options.json         # 12 categories (~2100 options, ~2200 lines)
-â”‚   â””â”€â”€ platform-formats.json       # 42 platform assembly rules
+â”‚   â””â”€â”€ platform-formats.json       # 42 platform assembly rules (~1,193 lines)
 â”œâ”€â”€ lib/
-â”‚   â”œâ”€â”€ prompt-builder.ts           # Assembly logic (~1050 lines)
+â”‚   â”œâ”€â”€ prompt-builder.ts           # Unified assembly engine (~1,519 lines)
 â”‚   â”‚   â”œâ”€â”€ NEGATIVE_TO_POSITIVE    # 30-entry conversion map
 â”‚   â”‚   â”œâ”€â”€ convertNegativesToPositives()
 â”‚   â”‚   â”œâ”€â”€ supportsNativeNegative()  # Check for native negative support
 â”‚   â”‚   â”œâ”€â”€ formatPromptForCopy()     # Returns positive only
-â”‚   â”‚   â”œâ”€â”€ assembleNatural()         # Natural language assembly
-â”‚   â”‚   â”œâ”€â”€ assembleMidjourney()      # Midjourney assembly
-â”‚   â”‚   â”œâ”€â”€ assembleStableDiffusion()
-â”‚   â”‚   â””â”€â”€ ... (7 platform families)
+â”‚   â”‚   â”œâ”€â”€ getPlatformFormat()       # Looks up platform config
+â”‚   â”‚   â”œâ”€â”€ getEffectiveOrder()       # Impact-priority category ordering
+â”‚   â”‚   â”œâ”€â”€ assemblePrompt(platformId, selections, weightOverrides?)  # THE ONE BRAIN
+â”‚   â”‚   â”œâ”€â”€ assembleTierAware()       # Internal: weight merge, dedup, token estimation
+â”‚   â”‚   â”œâ”€â”€ deduplicateWithinCategories()
+â”‚   â”‚   â”œâ”€â”€ deduplicateAcrossCategories()
+â”‚   â”‚   â””â”€â”€ estimateClipTokens()      # Token estimation for ALL tiers
 â”‚   â””â”€â”€ usage/
 â”‚       â”œâ”€â”€ anonymous-storage.ts    # Anonymous tracking v2.0.0 (daily reset)
 â”‚       â”œâ”€â”€ constants.ts            # Usage limits
 â”‚       â””â”€â”€ index.ts                # Re-exports
 â””â”€â”€ types/
-    â””â”€â”€ prompt-builder.ts           # TypeScript types
+    â””â”€â”€ prompt-builder.ts           # TypeScript types (~350 lines)
         â”œâ”€â”€ PromptCategory          # 12 categories
         â”œâ”€â”€ CATEGORY_ORDER          # Optimal order for prompt construction
         â”œâ”€â”€ CATEGORY_LIMITS         # Selection limits per category
         â”œâ”€â”€ PLATFORMS_WITH_NATIVE_NEGATIVE  # 14 platforms
+        â”œâ”€â”€ WeatherCategoryMap      # Structured data contract (weather → builder)
+        â”œâ”€â”€ WeatherCategoryMeta     # City/venue/conditions metadata
+        â”œâ”€â”€ PromptDNAFingerprint    # Prompt identity hash
         â””â”€â”€ ComboboxProps           # Includes allowFreeText
 ```
 
@@ -981,6 +1078,8 @@ When modifying the prompt builder page:
 - **Preserve Scene Starters ↔ Explore Drawer flavour phrase wiring**
 - **Preserve cascade ordering in Explore Drawer chip clouds**
 - **All new UI elements must use CSS clamp() for sizing — no fixed px/rem**
+- **Preserve Phase D preload two-effect split — do not merge badge + selection effects**
+- **Do not modify weatherWeightOverrides merge order (platform wins on conflicts)**
 
 **Existing features preserved:** Yes (required for every change)
 
@@ -990,18 +1089,20 @@ When modifying the prompt builder page:
 
 These features were removed as they added no value:
 
-| Feature | Removed Date | Reason |
-|---------|--------------|--------|
-| Platform family badge | 1 Jan 2026 | Added visual clutter, no user value |
-| Provider tags display | 1 Jan 2026 | Redundant with provider page |
-| "Negative prompt:" separator | 1 Jan 2026 | Confused users, cluttered preview |
-| LaunchPanel | 31 Dec 2025 | Replaced by full-height prompt builder |
-| 30-item dropdown limit | 1 Jan 2026 | Artificially hid curated options |
-| **Dropdown lock message overlay** | 4 Jan 2026 | Ugly UX, repetitive text on every dropdown |
+| Feature                           | Removed Date | Reason                                     |
+| --------------------------------- | ------------ | ------------------------------------------ |
+| Platform family badge             | 1 Jan 2026   | Added visual clutter, no user value        |
+| Provider tags display             | 1 Jan 2026   | Redundant with provider page               |
+| "Negative prompt:" separator      | 1 Jan 2026   | Confused users, cluttered preview          |
+| LaunchPanel                       | 31 Dec 2025  | Replaced by full-height prompt builder     |
+| 30-item dropdown limit            | 1 Jan 2026   | Artificially hid curated options           |
+| **Dropdown lock message overlay** | 4 Jan 2026   | Ugly UX, repetitive text on every dropdown |
 
 ---
 
 ## Changelog
+
+- **3 Mar 2026 (v10.0.0):** **UNIFIED BRAIN INTEGRATION** — `assemblePrompt()` signature updated from 2-arg `(platformId, selections)` to 3-arg `(platformId, selections, weightOverrides?)`. 7 family-specific assemblers (`assembleNatural`, `assembleMidjourney`, `assembleStableDiffusion`, etc.) replaced by single unified tier-aware assembler routing through `assembleKeywords()` (Tier 1+2), `assembleNaturalSentences()` (Tier 3), `assemblePlainLanguage()` (Tier 4). New internal functions: `assembleTierAware()` (weight merge + dedup + token estimation), `deduplicateWithinCategories()`, `deduplicateAcrossCategories()`, `estimateClipTokens()`, `getPlatformFormat()`, `getEffectiveOrder()`. `prompt-builder.ts` grew from ~1,050 to ~1,519 lines. `prompt-builder.tsx` grew from ~1,806 to ~2,431 lines. New `weatherWeightOverrides` state variable for "Try in" preload from homepage PotM. Phase D sessionStorage preload pathway: `promagen:preloaded-payload` (with `weightOverrides?: Partial<Record<string, number>>`) and `promagen:preloaded-inspiredBy` (badge metadata + `categoryMapHash`). Two-effect split prevents flash/re-apply bug. `platform-formats.json` updated: quality prefix normalisation across SD-family, `impactPriority` alignment, weight syntax. New types: `WeatherCategoryMap`, `WeatherCategoryMeta`, `PromptDNAFingerprint`. See `unified-prompt-brain.md` for full architecture.
 
 - **25 Feb 2026 (v9.0.0):** **PROMPT BUILDER EVOLUTION PHASES 0–4** — Major feature release. Vocabulary Merge: 9,058 total terms (3,501 core + 5,557 merged from weather, commodity, shared audits). Cascading Intelligence: downstream dropdowns reorder based on upstream selections using cluster affinity + co-occurrence scoring. Scene Starters: 200 curated one-click scenes (25 free, 175 pro) grouped into 10 thematic worlds — pre-populate 5–8 categories simultaneously with tier-aware prefills. Pro gate: locked scenes show upgrade dialog (anonymous → sign-in modal, free → /pro-promagen link). Explore Drawer: expandable vocabulary panel per category with source-grouped tabs (Core, Weather, Commodity, Shared), real-time search with highlighted matches, 60-chip pagination, click-to-add. Phase 4 polish: scene flavour phrases as "🎬 Scene" tab in Explore, all-tier chip badges (★/◆/💬/⚡/⚠), cascade relevance ordering, 5 new GTM analytics events. Fluid typography audit passed: 127 clamp() calls across Phase 2–4 components, zero fixed font sizes. See scene-starters.md for full Scene Starters documentation. See prompt-builder-evolution-plan-v2.md for architecture. Files: scene-selector.tsx v1.3.0 (1,110 lines), explore-drawer.tsx v2.0.0 (805 lines), prompt-builder.tsx v9.0.0 (1,806 lines), vocabulary-loader.ts (457 lines), merged/index.ts v1.1.0 (232 lines), events.ts (276 lines), scene-starters.json (200 entries), 16 curated vocabulary files, cluster data in 48 JSON files.
 

@@ -1,7 +1,31 @@
 // src/components/providers/prompt-builder.tsx
 // ============================================================================
-// ENHANCED PROMPT BUILDER v8.2.0 — BULLETPROOF Auto-Close Fix
+// ENHANCED PROMPT BUILDER v8.5.0 — Dropdown Population + Inspired By Badge
 // ============================================================================
+// NEW in v8.5.0:
+// - §4.5: "Try in" from homepage populates REAL DROPDOWNS (not just raw text)
+// - Reads sessionStorage('promagen:preloaded-selections') → applies to categoryState
+// - Same pattern as scene preload — assemblePrompt() generates correct tier output
+// - User can modify any dropdown and prompt updates naturally
+// - §4.5 #2: "Inspired by" badge shows weather context (city, venue, conditions, mood)
+// - Badge links back to homepage; dismissed on "Clear all"
+// - Replaces old raw-text preload (preloadedPrompt state removed)
+//
+// NEW in v8.4.0:
+// - §4.5: Pre-loaded prompt from homepage "Try in" icons
+// - Reads sessionStorage('promagen:preloaded-prompt') on mount
+// - Displays weather-generated prompt in assembled output area
+// - Shows info banner: "Prompt loaded from homepage — edit below or copy directly"
+// - Dropdowns stay empty — user can modify via dropdowns or copy directly
+// - Clears preloaded prompt when user starts building their own
+// - Copy button works with preloaded prompt (no selections needed)
+//
+// NEW in v8.3.0:
+// - Scene pre-load from homepage: reads sessionStorage('promagen:preloaded-scene')
+// - On mount, looks up scene via getSceneById, applies prefills (tier-aware)
+// - Same logic as SceneSelector handleSceneSelection (Tier 4 reduced prefills)
+// - Authority: docs/authority/homepage.md §5.4
+//
 // CRITICAL FIX in v8.2.0:
 // - Single-select dropdowns close IMMEDIATELY on click (before state update)
 // - Prevents double-click race condition with ref guard
@@ -91,7 +115,10 @@ import { OptimizationTransparencyPanel } from '@/components/providers/optimizati
 import { usePromagenAuth, type PromptLockState } from '@/hooks/use-promagen-auth';
 import { useCompositionMode } from '@/hooks/use-composition-mode';
 import { usePromptOptimization } from '@/hooks/use-prompt-optimization';
-import type { PromptCategory, PromptSelections, CategoryState } from '@/types/prompt-builder';
+import type { PromptCategory, PromptSelections, CategoryState, WeatherCategoryMap } from '@/types/prompt-builder';
+import { hashCategoryMap } from '@/lib/prompt-dna';
+import { rewriteWithSynergy } from '@/lib/weather/synergy-rewriter';
+import { postProcessAssembled } from '@/lib/prompt-post-process';
 import { CATEGORY_ORDER } from '@/types/prompt-builder';
 import { VALID_ASPECT_RATIOS } from '@/types/composition';
 
@@ -486,6 +513,19 @@ export function PromptBuilder({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
 
+  // §4.5: "Inspired by" badge — weather context from homepage "Try in" click
+  const [inspiredByData, setInspiredByData] = useState<{
+    city: string; venue: string; conditions: string; emoji: string;
+    tempC: number | null; localTime: string; mood: string;
+    categoryMapHash?: string; // Upgrade 5: original hash for fingerprint verification
+  } | null>(null);
+
+  // Weather intelligence weight overrides — forwarded to assemblePrompt()
+  // so builder output matches homepage emphasis (environment::1.2, composition::1.05 etc.)
+  const [weatherWeightOverrides, setWeatherWeightOverrides] = useState<
+    Partial<Record<PromptCategory, number>> | undefined
+  >(undefined);
+
   // Phase 7.10d: Feedback invitation state
   const [feedbackPending, setFeedbackPending] = useState<FeedbackPendingData | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -727,6 +767,291 @@ export function PromptBuilder({
   }, [isMounted]);
 
   // ============================================================================
+  // Load Scene from Homepage (SessionStorage) — Phase 3, Step 3.3
+  // ============================================================================
+  // When user clicks a scene card on the homepage, the scene ID is stored in
+  // sessionStorage. On mount, apply that scene's prefills to category state.
+  // Authority: docs/authority/homepage.md §5.4
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    try {
+      const sceneId = sessionStorage.getItem('promagen:preloaded-scene');
+      if (!sceneId) return;
+
+      // Clear immediately so it doesn't persist across navigations
+      sessionStorage.removeItem('promagen:preloaded-scene');
+
+      const scene = getSceneById(sceneId);
+      if (!scene) return;
+
+      // Build prefill map (same pattern as scene-selector.tsx handleSceneSelection)
+      // Tier 4 gets reduced prefills; tiers 1–3 get full prefills
+      const tier4Guidance = scene.tierGuidance['4'];
+      const reducedCats =
+        platformTier === 4 && tier4Guidance?.reducedPrefills
+          ? new Set<string>(tier4Guidance.reducedPrefills)
+          : null;
+
+      const prefillMap: Record<string, string[]> = {};
+      for (const [cat, values] of Object.entries(scene.prefills)) {
+        if (reducedCats && !reducedCats.has(cat)) continue;
+        prefillMap[cat] = [...(values ?? [])];
+      }
+
+      // Apply prefills to category state
+      setCategoryState((prev) => {
+        const next = { ...prev };
+        for (const [cat, values] of Object.entries(prefillMap)) {
+          const category = cat as PromptCategory;
+          if (next[category]) {
+            next[category] = {
+              ...next[category],
+              selected: [...(values ?? [])],
+              customValue: next[category].customValue ?? '',
+            };
+          }
+        }
+        return next;
+      });
+
+      // Set active scene tracking
+      setScenePrefills(prefillMap);
+      setActiveSceneId(sceneId);
+    } catch {
+      // Silently ignore errors
+    }
+  }, [isMounted, platformTier]);
+
+  // ============================================================================
+  // Phase D: Pre-loaded Prompt from Homepage "Try in" Icons
+  // ============================================================================
+  // Reads 'promagen:preloaded-payload' from sessionStorage.
+  //
+  // Phase D (preferred): If payload contains categoryMap (WeatherCategoryMap),
+  // populates ALL 12 categories from selections + customValues + negative.
+  // This is the full physics-computed structured data from weather intelligence.
+  //
+  // Legacy fallback: If payload has promptText but no categoryMap, falls back to
+  // old behaviour: stuff prompt text into subject.customValue + mood metadata.
+  //
+  // Also reads 'promagen:preloaded-inspiredBy' for the "Inspired by" badge.
+  // Clears all sessionStorage keys immediately after reading (one-time use).
+
+  useEffect(() => {
+    if (!isMounted) return;
+
+    try {
+      const payloadRaw = sessionStorage.getItem('promagen:preloaded-payload');
+      const inspiredByRaw = sessionStorage.getItem('promagen:preloaded-inspiredBy');
+
+      // Also check legacy keys for backward compatibility
+      const legacySelectionsRaw = sessionStorage.getItem('promagen:preloaded-selections');
+
+      // Clear ALL preload keys immediately so they don't persist
+      sessionStorage.removeItem('promagen:preloaded-payload');
+      sessionStorage.removeItem('promagen:preloaded-inspiredBy');
+      sessionStorage.removeItem('promagen:preloaded-selections');
+      sessionStorage.removeItem('promagen:preloaded-prompt');
+      sessionStorage.removeItem('promagen:preloaded-tier');
+
+      // Apply "Inspired by" badge data
+      if (inspiredByRaw) {
+        try {
+          setInspiredByData(JSON.parse(inspiredByRaw));
+        } catch {
+          // Invalid JSON — ignore
+        }
+      }
+
+      // ── Parse payload ──────────────────────────────────────────────
+      if (payloadRaw) {
+        let payload: {
+          promptText?: string;
+          selections?: Record<string, string[]>;
+          categoryMap?: {
+            selections?: Partial<Record<string, string[]>>;
+            customValues?: Partial<Record<string, string>>;
+            negative?: string[];
+            weightOverrides?: Partial<Record<string, number>>;
+            confidence?: Partial<Record<string, number>>;
+          };
+        };
+        try {
+          payload = JSON.parse(payloadRaw);
+        } catch {
+          return;
+        }
+
+        // ── Phase D path: WeatherCategoryMap present ─────────────────
+        // Populates ALL 12 categories from structured weather intelligence.
+        if (payload.categoryMap) {
+          const catMap = payload.categoryMap;
+          const mapSelections = catMap.selections ?? {};
+          const mapCustomValues = catMap.customValues ?? {};
+          const mapNegative = catMap.negative ?? [];
+
+          setCategoryState((prev) => {
+            const next = { ...prev };
+
+            // Apply dropdown selections per category
+            for (const [cat, values] of Object.entries(mapSelections)) {
+              const category = cat as PromptCategory;
+              if (!next[category] || !Array.isArray(values) || values.length === 0) continue;
+              const limit = categoryLimits[category] ?? 1;
+              const shown = values.slice(0, limit);
+              const overflow = values.slice(limit);
+              next[category] = {
+                ...next[category],
+                selected: shown,
+                // Carry overflow selections into customValue so the assembler
+                // still includes them — same pattern as negative overflow.
+                // If a real customValue exists (weather-intelligence phrase),
+                // the next loop overwrites this with the richer content.
+                customValue: overflow.length > 0
+                  ? overflow.join(', ')
+                  : next[category]!.customValue,
+              };
+            }
+
+            // Apply customValues (rich physics phrases) per category
+            for (const [cat, value] of Object.entries(mapCustomValues)) {
+              const category = cat as PromptCategory;
+              if (!next[category] || typeof value !== 'string' || !value.trim()) continue;
+              next[category] = {
+                ...next[category],
+                customValue: value.trim(),
+              };
+            }
+
+            // Apply negative terms — Improvement 3: carry ALL negatives.
+            // Selected gets up to limit; overflow goes into customValue so
+            // the assembler still includes them in the prompt output.
+            if (mapNegative.length > 0 && next.negative) {
+              const limit = categoryLimits.negative ?? 5;
+              const shown = mapNegative.slice(0, limit);
+              const overflow = mapNegative.slice(limit);
+              next.negative = {
+                ...next.negative,
+                selected: shown,
+                // Overflow terms join into customValue so assembler picks them up
+                customValue: overflow.length > 0 ? overflow.join(', ') : '',
+              };
+            }
+
+            return next;
+          });
+
+          // Capture weather weight overrides so assemblePrompt() can
+          // reproduce the same emphasis the homepage generator used.
+          if (catMap.weightOverrides) {
+            setWeatherWeightOverrides(
+              catMap.weightOverrides as Partial<Record<PromptCategory, number>>,
+            );
+          }
+
+          return; // Phase D handled — skip legacy paths
+        }
+
+        // ── Legacy path: promptText + mood selections (pre-Phase D) ──
+        const rawPromptText = payload.promptText ?? '';
+        const moodSelections = payload.selections ?? {};
+
+        if (rawPromptText) {
+          setCategoryState((prev) => {
+            const next = { ...prev };
+
+            // ── Parse Tier 1 CLIP positive/negative split ──────────
+            let positiveText = rawPromptText;
+            let negativeText = '';
+
+            const posMatch = rawPromptText.match(/Positive prompt:\s*([\s\S]*?)(?:\nNegative prompt:|$)/i);
+            const negMatch = rawPromptText.match(/Negative prompt:\s*([\s\S]*?)$/i);
+
+            if (posMatch?.[1]) {
+              positiveText = posMatch[1].trim();
+              negativeText = negMatch?.[1]?.trim() ?? '';
+            }
+
+            // ── Subject: the ACTUAL prompt text (the good stuff) ───
+            next.subject = {
+              ...next.subject,
+              customValue: positiveText,
+            };
+
+            // ── Negative: CLIP negative terms if present ───────────
+            if (negativeText && next.negative) {
+              next.negative = {
+                ...next.negative,
+                customValue: negativeText,
+              };
+            }
+
+            // ── Metadata dropdowns: style, atmosphere, colour ──────
+            for (const [cat, values] of Object.entries(moodSelections)) {
+              const category = cat as PromptCategory;
+              // Only apply metadata categories — not scene descriptors
+              if (category === 'subject' || category === 'environment' || category === 'lighting') continue;
+              if (next[category] && Array.isArray(values) && values.length > 0) {
+                const limit = categoryLimits[category] ?? 1;
+                const trimmed = values.slice(0, limit);
+                next[category] = {
+                  ...next[category],
+                  selected: trimmed,
+                };
+              }
+            }
+
+            return next;
+          });
+        }
+
+        return; // New payload handled, skip legacy
+      }
+
+      // ── Legacy flat selections format (backward compat) ────────────
+      if (legacySelectionsRaw) {
+        try {
+          const parsed = JSON.parse(legacySelectionsRaw);
+          // Support both { selections, customValues } and flat Record shapes
+          const selectionsMap = parsed.selections ?? (Array.isArray(Object.values(parsed)[0]) ? parsed : {});
+          const customValuesMap = parsed.customValues ?? {};
+
+          setCategoryState((prev) => {
+            const next = { ...prev };
+            for (const [cat, values] of Object.entries(selectionsMap)) {
+              const category = cat as PromptCategory;
+              if (next[category] && Array.isArray(values) && (values as string[]).length > 0) {
+                const limit = categoryLimits[category] ?? 1;
+                next[category] = {
+                  ...next[category],
+                  selected: (values as string[]).slice(0, limit),
+                  customValue: next[category].customValue ?? '',
+                };
+              }
+            }
+            for (const [cat, value] of Object.entries(customValuesMap)) {
+              const category = cat as PromptCategory;
+              if (next[category] && typeof value === 'string' && value.trim()) {
+                next[category] = {
+                  ...next[category],
+                  customValue: value.trim(),
+                };
+              }
+            }
+            return next;
+          });
+        } catch {
+          // Invalid JSON — ignore
+        }
+      }
+    } catch {
+      // sessionStorage unavailable — graceful degradation
+    }
+  }, [isMounted, categoryLimits]);
+
+  // ============================================================================
   // Auto-Trim Effect (Silent Platform Switch)
   // ============================================================================
 
@@ -796,7 +1121,17 @@ export function PromptBuilder({
     for (const [cat, state] of Object.entries(categoryState)) {
       const allValues = [...state.selected];
       if (state.customValue.trim()) {
-        allValues.push(state.customValue.trim());
+        if (cat === 'negative') {
+          // Negative overflow was joined with ', ' when it exceeded the
+          // category limit — split back to individual terms so each one
+          // can be matched by NEGATIVE_TO_POSITIVE conversion and inline
+          // negation ("without X or Y") in the assembler.
+          allValues.push(
+            ...state.customValue.split(',').map((t) => t.trim()).filter(Boolean),
+          );
+        } else {
+          allValues.push(state.customValue.trim());
+        }
       }
       if (allValues.length > 0) {
         result[cat as PromptCategory] = allValues;
@@ -804,6 +1139,39 @@ export function PromptBuilder({
     }
     return result;
   }, [categoryState]);
+
+  // ── Upgrade 5: Prompt Fingerprint Verification ──────────────────────────
+  // Computes hash of current builder state, compares with original hash
+  // from homepage generator. Shows badge: match → green, modified → amber.
+  const fingerprintStatus = useMemo<'match' | 'modified' | null>(() => {
+    if (!inspiredByData?.categoryMapHash) return null;
+
+    // Build a minimal WeatherCategoryMap from current builder state
+    const currentSelections: Partial<Record<PromptCategory, string[]>> = {};
+    const currentCustomValues: Partial<Record<PromptCategory, string>> = {};
+
+    for (const [cat, state] of Object.entries(categoryState)) {
+      const category = cat as PromptCategory;
+      if (category === 'negative') continue; // hash ignores negatives
+
+      if (state.selected.length > 0) {
+        currentSelections[category] = [...state.selected];
+      }
+      if (state.customValue.trim()) {
+        currentCustomValues[category] = state.customValue.trim();
+      }
+    }
+
+    const currentMap: WeatherCategoryMap = {
+      selections: currentSelections,
+      customValues: currentCustomValues,
+      negative: [], // ignored by hash
+      meta: { city: '', venue: '', venueSetting: '', mood: '', conditions: '', emoji: '', tempC: null, localTime: '', source: 'weather-intelligence' },
+    };
+
+    const currentHash = hashCategoryMap(currentMap);
+    return currentHash === inspiredByData.categoryMapHash ? 'match' : 'modified';
+  }, [categoryState, inspiredByData?.categoryMapHash]);
 
   // Phase 7.10g: Contextual feedback overlap detection
   const feedbackOverlap = useMemo(
@@ -828,8 +1196,34 @@ export function PromptBuilder({
     [getTermHints, platformId],
   );
 
-  // Assemble base prompt
-  const assembled = useMemo(() => assemblePrompt(platformId, selections), [platformId, selections]);
+  // ── Gap 1 fix: Synergy-aware rewriting ──────────────────────────────────
+  // Pre-processes selections before assembly to resolve physics contradictions
+  // (e.g. "golden hour" + "midnight" → "warm amber artificial light") and
+  // inject bridging phrases for strong reinforcements.
+  // Matches the same step the homepage generator runs via rewriteWithSynergy().
+  const rewrittenSelections = useMemo(() => {
+    const { selections: rewritten } = rewriteWithSynergy(selections);
+    return rewritten;
+  }, [selections]);
+
+  // Assemble base prompt (uses synergy-rewritten selections)
+  // ── Gap 2 fix: Post-processing polish pass ─────────────────────────────
+  // After assembly, applies the same 4 polish functions the homepage generator
+  // runs: leak phrase neutralisation, CLIP dedup (Tier 1), redundant phenomenon
+  // removal, MJ phenomenon trim (Tier 2), and grammar cleanup.
+  const assembled = useMemo(() => {
+    const raw = assemblePrompt(platformId, rewrittenSelections, weatherWeightOverrides);
+
+    // Derive atmosphere hint from category state for phenomenon dedup.
+    // In the generator this comes from lighting.atmosphereModifier; in the
+    // builder we derive it from the atmosphere category selections + customValue.
+    const atmosHint = [
+      ...(categoryState.atmosphere?.selected ?? []),
+      categoryState.atmosphere?.customValue ?? '',
+    ].join(' ');
+
+    return postProcessAssembled(raw, platformTier as 1 | 2 | 3 | 4, atmosHint);
+  }, [platformId, rewrittenSelections, weatherWeightOverrides, platformTier, categoryState.atmosphere]);
 
   // Assemble composition pack if AR selected
   const compositionPack = useMemo(() => {
@@ -854,6 +1248,9 @@ export function PromptBuilder({
   }, [assembled, compositionPack, platformId]);
 
   const hasContent = promptText.trim().length > 0;
+
+  // §4.5: Clear "Inspired by" badge when user manually modifies via Clear all
+  // (badge persists during normal editing since the selections ARE the prompt)
 
   // Build selections that include composition pack terms so the optimizer
   // can see (and trim) composition content when needed. Without this,
@@ -1563,6 +1960,13 @@ export function PromptBuilder({
                     onCustomTermSubmitted={(term) => submitCustomTerm(term, category)}
                     feedbackHintTerms={feedbackHintTerms}
                   />
+                  {/* Improvement 3: Negative overflow badge — shows when "Try in" carried more negatives than the dropdown limit */}
+                  {isNegative && state.customValue && state.selected.length >= maxSelections && (
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400">
+                      <svg className="h-3 w-3 text-sky-400/60" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm6.5-.25A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /></svg>
+                      <span>{state.selected.length} shown + {state.customValue.split(',').filter(Boolean).length} overflow — all included in prompt</span>
+                    </div>
+                  )}
                   {/* Phase 3: Explore Drawer — expandable vocabulary panel */}
                   <ExploreDrawer
                     category={category}
@@ -1646,16 +2050,35 @@ export function PromptBuilder({
                 )}
               </div>
               <div className="flex items-center gap-3">
-                {/* Char count inline */}
+                {/* Char count + token estimate inline */}
                 {hasContent && (
-                  <span className="text-xs text-slate-500 tabular-nums">
-                    {promptText.length} chars
+                  <span className="flex items-center gap-2 text-xs tabular-nums">
+                    <span className="text-slate-500">{promptText.length} chars</span>
+                    {assembled.estimatedTokens != null && (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${
+                          assembled.tokenLimit && assembled.estimatedTokens > assembled.tokenLimit
+                            ? 'bg-amber-500/10 text-amber-400'
+                            : 'text-slate-500'
+                        }`}
+                        title={
+                          assembled.tokenLimit && assembled.estimatedTokens > assembled.tokenLimit
+                            ? `Estimated ${assembled.estimatedTokens} tokens exceeds this platform's ${assembled.tokenLimit}-token encoding window. Tail terms may receive weaker attention.`
+                            : `Estimated CLIP tokens (approximate)`
+                        }
+                      >
+                        {assembled.tokenLimit && assembled.estimatedTokens > assembled.tokenLimit && (
+                          <svg className="h-3 w-3 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575L6.457 1.047ZM8 5a.75.75 0 0 1 .75.75v2.5a.75.75 0 0 1-1.5 0v-2.5A.75.75 0 0 1 8 5Zm0 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /></svg>
+                        )}
+                        ~{assembled.estimatedTokens}{assembled.tokenLimit ? `/${assembled.tokenLimit}` : ''} tokens
+                      </span>
+                    )}
                   </span>
                 )}
                 {hasContent && !isLocked && (
                   <button
                     type="button"
-                    onClick={handleClear}
+                    onClick={() => { handleClear(); setInspiredByData(null); setWeatherWeightOverrides(undefined); }}
                     className="text-xs font-medium bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent hover:from-sky-300 hover:via-emerald-200 hover:to-indigo-300 transition-all"
                   >
                     Clear all
@@ -1663,6 +2086,44 @@ export function PromptBuilder({
                 )}
               </div>
             </div>
+
+            {/* §4.5 #2: "Inspired by" weather badge — shows when prompt was loaded from homepage */}
+            {inspiredByData && hasContent && (
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href="/"
+                  className="group flex items-center gap-2 rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-1.5 transition-colors hover:border-sky-500/30 hover:bg-sky-500/8"
+                >
+                  <span className="text-xs text-sky-300/90">
+                    {inspiredByData.emoji} Inspired by live weather in {inspiredByData.city}, {inspiredByData.venue}
+                    {' · '}{inspiredByData.localTime}
+                    {inspiredByData.tempC !== null ? ` · ${inspiredByData.tempC}°C` : ''}
+                    {' · '}{inspiredByData.conditions}
+                    {' · '}{inspiredByData.mood}
+                  </span>
+                  <span className="text-xs text-sky-500/50 opacity-0 transition-opacity group-hover:opacity-100">← back</span>
+                </a>
+                {/* Upgrade 5: Prompt Fingerprint Verification badge */}
+                {fingerprintStatus === 'match' && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400"
+                    title="Builder selections match the original weather-generated prompt exactly"
+                  >
+                    <svg className="h-3 w-3" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" /></svg>
+                    Matches original
+                  </span>
+                )}
+                {fingerprintStatus === 'modified' && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400"
+                    title="You've edited selections — prompt differs from the original weather-generated version"
+                  >
+                    <svg className="h-3 w-3" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M11.013 1.427a1.75 1.75 0 0 1 2.474 0l1.086 1.086a1.75 1.75 0 0 1 0 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 0 1-.927-.928l.929-3.25c.081-.286.235-.547.445-.758l8.61-8.61Zm1.414 1.06a.25.25 0 0 0-.354 0L3.463 11.098l-.47 1.643 1.643-.47 8.61-8.61a.25.25 0 0 0 0-.354l-1.086-1.086Z" /></svg>
+                    Modified from original
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Original prompt preview box */}
             <div

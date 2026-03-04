@@ -59,7 +59,10 @@ export type AnalyticsEventName =
   | 'scene_reset'
   | 'explore_drawer_opened'
   | 'explore_chip_clicked'
-  | 'cascade_reorder_triggered';
+  | 'cascade_reorder_triggered'
+  // Phase 4 — Like System events (homepage.md §7.7)
+  | 'prompt_liked'
+  | 'prompt_like_removed';
 
 export interface AnalyticsEventPayloads {
   provider_click: {
@@ -219,6 +222,22 @@ export interface AnalyticsEventPayloads {
   cascade_reorder_triggered: {
     categories_reordered: number;
     elapsed_ms: number;
+  };
+
+  // Phase 4 — Like System events (homepage.md §7.7)
+
+  prompt_liked: {
+    prompt_id: string;
+    tier?: string;
+    source?: 'showcase' | 'pulse';
+    is_authenticated?: boolean;
+  };
+
+  prompt_like_removed: {
+    prompt_id: string;
+    tier?: string;
+    source?: 'showcase' | 'pulse';
+    is_authenticated?: boolean;
   };
 }
 

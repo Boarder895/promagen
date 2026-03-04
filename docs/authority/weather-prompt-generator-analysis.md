@@ -260,6 +260,13 @@ A proper hash like `((seed * 2654435761) >>> 0) / 4294967296` (Knuth multiplicat
 
 **5. Platform-specific negative prompts** — Make the negative prompt profile-driven. Booru-trained models need "worst quality, low quality, bad anatomy". Photoreal models need "illustration, painting, cartoon". Midjourney and DALL-E need no negative at all.
 
+> **Implementation status (Mar 2026):**
+> - Recommendation 1 (decomposition): ✅ DONE — Generator decomposed from 4,311-line monolith into orchestrator (320 lines) + 17 subsystem modules (7,118 lines total). See `exchange-card-weather.md` §11.
+> - Recommendation 2 (PRNG fix): ✅ DONE — FNV-1a hashing replaces Math.sin. City-name hash in seed.
+> - Recommendation 3 (daytime lighting): Partial — cloud-colour interaction not yet added, but lighting engine now has visual truth cross-referencing.
+> - Recommendation 4 (camera/lens metadata): ✅ DONE — Camera body + lens spec per venue setting. composition-blueprint.ts (506 lines) adds DoF + focal plane. See `unified-prompt-brain.md` §4.3.
+> - Recommendation 5 (platform negatives): ✅ DONE — Cross-category negative dedup in `assembleTierAware()`. NEGATIVE_TO_POSITIVE map (30 entries). Platform-aware negative handling across all 42 platforms.
+
 ### MEDIUM IMPACT (would move score to 92-94)
 
 **6. Compound precipitation** — Allow PrecipState to represent combinations: rain+fog, snow+mist. Derive unique airClarity and surface effects for compound states.
@@ -272,6 +279,11 @@ A proper hash like `((seed * 2654435761) >>> 0) / 4294967296` (Knuth multiplicat
 
 **10. Trust OWM visibility during precipitation** — When rain.1h exists AND visibility is reported, use visibility to modulate airClarity intensity within the precipitation class.
 
+> **Implementation status (Mar 2026):**
+> - Recommendation 7 (colour temperature): Partial — visual truth `colourPhrase` now drives the colour category, but explicit Kelvin values not yet in output.
+> - Recommendation 9 (remove dead JSON): Not started.
+> - Recommendations 6, 8, 10: Not started.
+
 ### LOW IMPACT (would move score to 95+)
 
 **11. Dynamic cloud-type phrases** — OWM provides weather.id codes that distinguish cumulus from stratus from cirrus. Currently collapsed into a single cloud cover percentage. Cloud TYPE dramatically affects visual rendering.
@@ -282,6 +294,11 @@ A proper hash like `((seed * 2654435761) >>> 0) / 4294967296` (Knuth multiplicat
 
 **14. Per-platform Tier 1 variants** — SD 1.5, SDXL, SD3, and Flux all parse prompts differently. A sub-tier system would produce optimal output per platform instead of one-size-fits-all CLIP syntax.
 
+> **Implementation status (Mar 2026):**
+> - Recommendation 13 (Tier 2 modernisation): ✅ DONE — Tier 2 now has proper word budget and parameter handling via tier-aware assembly.
+> - Recommendation 14 (per-platform Tier 1 variants): ✅ DONE — `platform-formats.json` defines per-platform `weightedCategories`, `qualityPrefix`, `impactPriority`, and `tokenLimit`. Each Tier 1 platform gets individually tuned assembly.
+> - Recommendations 11, 12: Not started.
+
 ---
 
 ## 10. Final Assessment
@@ -291,3 +308,5 @@ This is, without question, the most sophisticated weather-to-image-prompt system
 The path from 82 to 95+ is clear and achievable. The high-impact items (decomposition, PRNG fix, daytime lighting enrichment, camera metadata, platform negatives) are all bounded changes that don't require architectural rework. The system's foundation is strong enough to support everything on the roadmap.
 
 **Do not rewrite this system. Evolve it.**
+
+> **Post-analysis note (Mar 2026):** The system has been evolved exactly as recommended. The unified brain refactor (`unified-prompt-brain.md`) completed Phases A–E, shipping 10 post-integration fixes. The generator is now intelligence-only; all assembly routes through `assemblePrompt()`. Estimated current score: 90–93/100 (camera metadata, platform negatives, and decomposition pushed it up significantly; compound weather and colour temperature remain the main gaps).
