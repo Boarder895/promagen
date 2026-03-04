@@ -44,7 +44,6 @@
 
 import React, { useRef, useCallback, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import {
   FinanceRibbonTop,
   FinanceRibbonBottom,
@@ -65,44 +64,16 @@ import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import { speakText, stopSpeaking } from '@/lib/speech';
 
 // ============================================================================
-// PERF: Dynamic imports — defer heavy panels until JS idle
+// Engine Bay & Mission Control — Direct imports (no skeleton flash)
 // ============================================================================
-// EngineBay (30KB) and MissionControl (29KB) are grid-flow panels
-// visible only on xl+ screens. Lazy-loading them removes ~60KB from the
-// critical path and cuts ~80ms off TBT.
+// Previously lazy-loaded via dynamic() with ssr:false to save ~60KB on the
+// critical path. This caused a visible 2-3s skeleton placeholder before
+// content appeared — looked broken on xl+ screens. Direct imports trade a
+// small bundle increase for immediate, flicker-free rendering.
 // ============================================================================
 
-/** Skeleton matching EngineBay's approximate dimensions */
-function EngineBaySkeleton(): JSX.Element {
-  return (
-    <div
-      className="rounded-3xl bg-slate-950/70 ring-1 ring-white/10"
-      style={{ height: '260px' }}
-      aria-hidden="true"
-    />
-  );
-}
-
-/** Skeleton matching MissionControl's approximate dimensions */
-function MissionControlSkeleton(): JSX.Element {
-  return (
-    <div
-      className="rounded-3xl bg-slate-950/70 ring-1 ring-white/10"
-      style={{ height: '320px' }}
-      aria-hidden="true"
-    />
-  );
-}
-
-const EngineBay = dynamic(() => import('@/components/home/engine-bay'), {
-  ssr: false,
-  loading: () => <EngineBaySkeleton />,
-});
-
-const MissionControl = dynamic(() => import('@/components/home/mission-control'), {
-  ssr: false,
-  loading: () => <MissionControlSkeleton />,
-});
+import EngineBay from '@/components/home/engine-bay';
+import MissionControl from '@/components/home/mission-control';
 
 // AuthButton: Imported directly from @/components/auth (no longer lazy-loaded separately)
 
@@ -369,7 +340,7 @@ export default function HomepageGrid({
   const [isSpeaking, setIsSpeaking] = React.useState(false);
 
   const heroText =
-    'Real context for real-world prompts. Explore cities around the world before you get there. Hover over any flag to reveal an intelligent prompt that evolves with live financial and environmental conditions. See which AI platform brings it to life best — ranked by the community in our live leaderboard. Or build your own prompts from a vast library of curated words and phrases, tailored instantly to your chosen AI platform.';
+    'Real context for real-world prompts. Explore cities around the world before you get there. Hover over any flag to reveal an intelligent prompt that evolves with meteorological data. See which AI platform brings it to life best — ranked by the community in our live leaderboard. Or build your own prompts from a vast library of curated words and phrases, tailored instantly to your chosen AI platform.';
 
   const handleListenClick = useCallback(() => {
     if (isSpeaking) {
@@ -561,8 +532,7 @@ export default function HomepageGrid({
             >
               {/* Row 1: Listen (left edge) | Heading (dead centre) | Greenwich Meridian + Sign In (right edge) */}
               <div className="relative flex w-full items-center">
-                {/* Left edge — Listen button (hidden on homepage, shown on World Context + other pages) */}
-                {!isHomepage && (
+                {/* Left edge — Listen button (all pages) */}
                 <button
                   onClick={handleListenClick}
                   className="inline-flex flex-shrink-0 items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-[clamp(0.4rem,0.5vw,0.8rem)] font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
@@ -602,7 +572,6 @@ export default function HomepageGrid({
                     </>
                   )}
                 </button>
-                )}
 
                 {/* Dead centre — Heading (absolute so left/right content can't push it off-centre) */}
                 <h2
@@ -635,21 +604,6 @@ export default function HomepageGrid({
                   </div>
                 </div>
               </div>
-
-              {/* Row 2: Amber description (hidden on homepage, shown on World Context + other pages) */}
-              {!isHomepage && (
-              <p
-                className="mt-1.5 text-center italic leading-relaxed text-amber-400/80"
-                style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1.2rem)' }}
-              >
-                Real context for real-world prompts. Explore cities around the world before you get
-                there. Hover over any flag to reveal an intelligent prompt that evolves with live
-                financial and environmental conditions. See which AI platform brings it to life best
-                — ranked by the community in our live leaderboard. Or build your own prompts from a
-                vast library of curated words and phrases, tailored instantly to your chosen AI
-                platform.
-              </p>
-              )}
 
               {/* Glow accent — matches original */}
               <div className="pointer-events-none mt-1 flex w-full justify-center">

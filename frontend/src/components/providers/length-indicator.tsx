@@ -134,21 +134,21 @@ export function LengthIndicator({
 
       {/* Suggestions when under minimum */}
       {analysis.status === 'under' && analysis.suggestedCategories.length > 0 && (
-        <p className="text-[10px] text-sky-400/80">
+        <p className="text-[0.7rem] text-sky-400/80">
           💡 Try adding: {analysis.suggestedCategories.join(', ')}
         </p>
       )}
 
       {/* Trim warning when over */}
       {analysis.status === 'over' && isOptimizerEnabled && (
-        <p className="text-[10px] text-amber-400/80">
+        <p className="text-[0.7rem] text-amber-400/80">
           ↓ Prompt will be optimized on copy
         </p>
       )}
 
       {/* Critical warning */}
       {analysis.status === 'critical' && (
-        <p className="text-[10px] text-rose-400/80">
+        <p className="text-[0.7rem] text-rose-400/80">
           ⚠ Exceeds platform limit — will be trimmed
         </p>
       )}

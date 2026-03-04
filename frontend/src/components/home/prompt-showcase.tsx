@@ -261,7 +261,7 @@ function ProviderIcon({
     <button
       type="button"
       onClick={handleClick}
-      className="inline-flex shrink-0 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10 transition-all hover:bg-white/10 hover:ring-white/20"
+      className="inline-flex shrink-0 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/10 transition-all hover:bg-white/20 hover:ring-white/20"
       style={{
         width: 'clamp(26px, 2vw, 34px)',
         height: 'clamp(26px, 2vw, 34px)',
@@ -278,6 +278,7 @@ function ProviderIcon({
         style={{
           width: 'clamp(14px, 1.2vw, 20px)',
           height: 'clamp(14px, 1.2vw, 20px)',
+          filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4))',
         }}
       />
     </button>

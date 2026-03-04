@@ -672,6 +672,8 @@ export function PromptBuilder({
   const [categoryState, setCategoryState] =
     useState<Record<PromptCategory, CategoryState>>(createInitialState());
   const [copied, setCopied] = useState(false);
+  const [copiedAssembled, setCopiedAssembled] = useState(false);
+  const [copiedOptimized, setCopiedOptimized] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
@@ -1786,6 +1788,41 @@ export function PromptBuilder({
     }
   }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId, userTier, accountAgeDays, abHash, abTestId, abVariant]);
 
+  // Inline copy: Assembled prompt box (bottom-right icon)
+  const handleCopyAssembled = useCallback(async () => {
+    if (!hasContent || isLocked) return;
+    const allowed = await trackUsageCallback(provider.id);
+    if (!allowed) return;
+    try {
+      await navigator.clipboard.writeText(promptText);
+      setCopiedAssembled(true);
+      setTimeout(() => setCopiedAssembled(false), 2000);
+      if (provider.id) {
+        trackPromptCopy({ providerId: provider.id, promptLength: promptText.length });
+      }
+    } catch (err) {
+      console.error('Failed to copy assembled prompt:', err);
+    }
+  }, [hasContent, isLocked, trackUsageCallback, provider.id, promptText]);
+
+  // Inline copy: Optimized prompt box (bottom-right icon)
+  const handleCopyOptimized = useCallback(async () => {
+    if (!hasContent || isLocked) return;
+    const allowed = await trackUsageCallback(provider.id);
+    if (!allowed) return;
+    try {
+      const textToCopy = optimizedResult.optimized;
+      await navigator.clipboard.writeText(textToCopy);
+      setCopiedOptimized(true);
+      setTimeout(() => setCopiedOptimized(false), 2000);
+      if (provider.id) {
+        trackPromptCopy({ providerId: provider.id, promptLength: textToCopy.length });
+      }
+    } catch (err) {
+      console.error('Failed to copy optimized prompt:', err);
+    }
+  }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult]);
+
   const handleDone = useCallback(() => {
     onDone?.();
   }, [onDone]);
@@ -2296,6 +2333,30 @@ export function PromptBuilder({
                   ) : (
                     promptText
                   )}
+                  {/* Inline copy icon — flows after last character, floats right */}
+                  {!isLocked && (
+                    <button
+                      type="button"
+                      onClick={handleCopyAssembled}
+                      className={`ml-2 inline-flex float-right rounded-md p-1 transition-all ${
+                        copiedAssembled
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                      }`}
+                      title={copiedAssembled ? 'Copied!' : 'Copy assembled prompt'}
+                      aria-label={copiedAssembled ? 'Copied to clipboard' : 'Copy assembled prompt to clipboard'}
+                    >
+                      {copiedAssembled ? (
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
+                  )}
                 </pre>
               ) : (
                 <span className="italic text-xs">
@@ -2330,7 +2391,7 @@ export function PromptBuilder({
                         {optimizedResult.removedTermNames.map((name, i) => (
                           <span
                             key={i}
-                            className="inline-flex items-center rounded-md bg-amber-900/30 px-1.5 py-0.5 text-[10px] text-amber-300/80"
+                            className="inline-flex items-center rounded-md bg-amber-900/30 px-1.5 py-0.5 text-[0.7rem] text-amber-300/80"
                           >
                             ✕ {name}
                           </span>
@@ -2358,6 +2419,30 @@ export function PromptBuilder({
                 <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
                   <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
                     {optimizedResult.optimized}
+                    {/* Inline copy icon — flows after last character, floats right */}
+                    {!isLocked && (
+                      <button
+                        type="button"
+                        onClick={handleCopyOptimized}
+                        className={`ml-2 inline-flex float-right rounded-md p-1 transition-all ${
+                          copiedOptimized
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-white/5 text-emerald-300/50 hover:bg-white/10 hover:text-emerald-200'
+                        }`}
+                        title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
+                        aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
+                      >
+                        {copiedOptimized ? (
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                   </pre>
                 </div>
 
@@ -2384,7 +2469,7 @@ export function PromptBuilder({
                         {optimizedResult.optimizedLength} chars
                       </span>
                     </div>
-                    <span className="text-[10px] text-emerald-400/70">No trimming needed</span>
+                    <span className="text-[0.7rem] text-emerald-400/70">No trimming needed</span>
                   </div>
                 </div>
 
@@ -2398,6 +2483,30 @@ export function PromptBuilder({
                 <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
                   <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
                     {optimizedResult.optimized}
+                    {/* Inline copy icon — flows after last character, floats right */}
+                    {!isLocked && (
+                      <button
+                        type="button"
+                        onClick={handleCopyOptimized}
+                        className={`ml-2 inline-flex float-right rounded-md p-1 transition-all ${
+                          copiedOptimized
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-white/5 text-emerald-300/50 hover:bg-white/10 hover:text-emerald-200'
+                        }`}
+                        title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
+                        aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
+                      >
+                        {copiedOptimized ? (
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                   </pre>
                 </div>
 
