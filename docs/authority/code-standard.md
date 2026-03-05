@@ -300,6 +300,46 @@ CSS Modules only when Tailwind cannot express it cleanly.
 
 Keep styling consistent with the existing design system.
 
+**§ 6.0.1 Minimum Text Size Floor (Hard Rule)**
+
+No text in Promagen may render below **9px** at any viewport width. This means:
+
+- Every `clamp()` first value (minimum) for `fontSize` must be ≥ `9px` (≥ `0.5625rem`)
+- The "Tiny (icon labels)" scale is updated to `clamp(9px, 0.65vw, 11px)` (was 8px floor)
+- Em-based font sizes inside snap-fit containers: `0.75em` of the minimum snap-fit base (12px) = 9px — this is the floor
+- Any font size that computes below 9px at any viewport width fails review
+
+**Reference:** "6 categories" text in `scene-starters-preview.tsx` line 247 — this is the smallest readable text in Promagen.
+
+**§ 6.0.2 Banned Text Colours (Hard Rule)**
+
+`text-slate-500` (`#64748b`) and `text-slate-600` (`#475569`) are banned for all user-facing text. They are unreadable on dark backgrounds.
+
+- Use `text-white`, `text-slate-100`, `text-slate-200`, `text-slate-300`, or `text-slate-400` only
+- `text-slate-400` (`#94A3B8`) is the dimmest permitted text colour
+- If text needs to be de-emphasised, reduce opacity on white (`text-white/60`) rather than using dark slate classes
+
+### § 6.0.3 No Opacity Dimming (Hard Rule)
+
+Never dim, fade, or reduce the opacity of UI elements to indicate a disabled or inactive state. On Promagen's dark background, dimmed content becomes invisible.
+
+**Banned patterns:**
+
+- `opacity: 0.4` / `opacity: 0.5` or any sub-1.0 opacity on cards, text, or containers to show "not ready"
+- Tailwind `opacity-50`, `opacity-40`, or similar classes for state indication
+- Conditional opacity like `hasProvider ? 1 : 0.4` to dim content when a prerequisite is missing
+
+**What to do instead:**
+
+- Change the instruction text to explain what the user needs to do (e.g., "Select a platform above to unlock scenes.")
+- Keep all content at full visibility — users need to see what's available before they commit
+- Use colour changes (e.g., border colour, dot colour) if you need to show active vs inactive, never opacity
+
+**Exception:** Crossfade transitions between content swaps (e.g., batch rotation `opacity 0 → 1`) are permitted because they are momentary animation, not a resting state.
+
+**Compliance check:** Search for `opacity:` and `opacity-` in component files. Any opacity below 1.0 applied as a resting visual state (not a transition) is a violation.
+
+````
 ### § 6.0 Universal `clamp()` Sizing (Non-Negotiable)
 
 **Purpose:** Promagen is a desktop application with dynamic fluid scaling. Every visible dimension — text, icons, buttons, gaps, padding, margins, container heights, border radii — must scale smoothly with viewport width using CSS `clamp()`. No fixed pixel values. No fixed rem values. No Tailwind size-class shortcuts for anything that should scale.
@@ -353,7 +393,7 @@ marginBottom: 'clamp(8px, 1vw, 16px)'; // Section spacing
 // Containers
 height: 'clamp(64px, 5.5vw, 84px)'; // Content zone
 minHeight: 'clamp(40px, 6vh, 60px)'; // Button min height
-```
+````
 
 **Exceptions (where fixed values are acceptable):**
 
@@ -1855,18 +1895,18 @@ The prompt builder uses a 9-category dropdown system with platform-specific opti
 
 ```typescript
 type PromptCategory =
-  | 'subject'     // Subject (identity + key attributes) - limit 1
-  | 'action'      // Action / Pose - limit 1
-  | 'style'       // Style / Rendering / References - limit 1
+  | 'subject' // Subject (identity + key attributes) - limit 1
+  | 'action' // Action / Pose - limit 1
+  | 'style' // Style / Rendering / References - limit 1
   | 'environment' // Environment (location + time + background) - limit 1
   | 'composition' // Composition / Framing - limit 1
-  | 'camera'      // Camera (angle + lens + DoF) - limit 1
-  | 'lighting'    // Lighting (type + direction + intensity) - limit 1
-  | 'colour'      // Colour / Grade - limit 1
-  | 'atmosphere'  // Atmosphere (fog, haze, rain, particles) - limit 1
-  | 'materials'   // Materials / Texture - limit 1
-  | 'fidelity'    // Quality boosters (8K, masterpiece, sharp focus) - limit 1
-  | 'negative';   // Constraints / Negative prompt - limit 5
+  | 'camera' // Camera (angle + lens + DoF) - limit 1
+  | 'lighting' // Lighting (type + direction + intensity) - limit 1
+  | 'colour' // Colour / Grade - limit 1
+  | 'atmosphere' // Atmosphere (fog, haze, rain, particles) - limit 1
+  | 'materials' // Materials / Texture - limit 1
+  | 'fidelity' // Quality boosters (8K, masterpiece, sharp focus) - limit 1
+  | 'negative'; // Constraints / Negative prompt - limit 5
 ```
 
 > CategoryConfig interface removed — category metadata is now accessed via `getCategoryConfig(category)` which reads from prompt-options.json.
@@ -1899,7 +1939,7 @@ function assemblePrompt(
   platformId: string,
   selections: PromptSelections,
   weightOverrides?: Partial<Record<PromptCategory, number>>,
-): AssembledPrompt
+): AssembledPrompt;
 ```
 
 Routing logic inside `assembleTierAware()`:
@@ -1912,12 +1952,12 @@ Routing logic inside `assembleTierAware()`:
 
 **4 Platform Tiers (42 platforms):**
 
-| Tier | Name             | Platforms | Prompt Style                                   |
-| ---- | ---------------- | --------- | ---------------------------------------------- |
-| 1    | CLIP-Based       | 13        | Weighted keywords `(term:1.2)` + separate neg  |
-| 2    | Midjourney       | 2         | Keywords + `--no` params                       |
-| 3    | Natural Language  | 10        | Conversational sentences                       |
-| 4    | Plain Language   | 17        | Short, focused prompts                         |
+| Tier | Name             | Platforms | Prompt Style                                  |
+| ---- | ---------------- | --------- | --------------------------------------------- |
+| 1    | CLIP-Based       | 13        | Weighted keywords `(term:1.2)` + separate neg |
+| 2    | Midjourney       | 2         | Keywords + `--no` params                      |
+| 3    | Natural Language | 10        | Conversational sentences                      |
+| 4    | Plain Language   | 17        | Short, focused prompts                        |
 
 Platform config lives in `platform-formats.json` (31 entries + defaults). Tier assignments in `platform-tiers.ts` (199 lines). See `prompt-builder-page.md` for full platform lists.
 

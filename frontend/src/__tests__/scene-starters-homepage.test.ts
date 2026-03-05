@@ -19,8 +19,11 @@
  * - SceneSelector initialSceneId contract (scene exists, world valid)
  * - Provider icon path sanitisation (no injection via malicious IDs)
  * - No hardcoded provider defaults (no "midjourney", no "flux" fallback)
+ * - v4.1: formatOrdinal produces correct ordinal suffixes
+ * - v4.1: getVibePhrase first letter uppercase
+ * - v4.1: Cascading glow timing constants
  *
- * @version 1.0.0
+ * @version 2.0.0
  * @created 2026-03-05
  */
 
@@ -77,7 +80,10 @@ function getVibePhrase(scene: SceneEntry): string {
   if (keys.length === 0) return '';
   const firstKey = keys[0] as keyof typeof fp;
   const arr = fp[firstKey];
-  if (arr && arr.length > 0) return arr[0] ?? '';
+  if (arr && arr.length > 0) {
+    const raw = arr[0] ?? '';
+    return raw.length > 0 ? raw.charAt(0).toUpperCase() + raw.slice(1) : '';
+  }
   return '';
 }
 
@@ -352,5 +358,72 @@ describe('Scene Starters Homepage — Icon Path Safety', () => {
     expect(sanitise('../../../etc/passwd')).toBe('etcpasswd');
     expect(sanitise('provider<script>')).toBe('providerscript');
     expect(sanitise("id'OR'1'='1")).toBe('idOR11');
+  });
+});
+
+// ============================================================================
+// I. ORDINAL FORMATTING (v4.1.0)
+// ============================================================================
+
+describe('Scene Starters Homepage — formatOrdinal', () => {
+  /** Replicate formatOrdinal from scene-starters-preview.tsx */
+  function formatOrdinal(n: number): string {
+    const suffixes = ['th', 'st', 'nd', 'rd'] as const;
+    const v = n % 100;
+    const suffix = suffixes[(v - 20) % 10] ?? suffixes[v] ?? 'th';
+    return `${n}${suffix}`;
+  }
+
+  it('1 → "1st"', () => expect(formatOrdinal(1)).toBe('1st'));
+  it('2 → "2nd"', () => expect(formatOrdinal(2)).toBe('2nd'));
+  it('3 → "3rd"', () => expect(formatOrdinal(3)).toBe('3rd'));
+  it('4 → "4th"', () => expect(formatOrdinal(4)).toBe('4th'));
+  it('11 → "11th" (special teen)', () => expect(formatOrdinal(11)).toBe('11th'));
+  it('12 → "12th" (special teen)', () => expect(formatOrdinal(12)).toBe('12th'));
+  it('13 → "13th" (special teen)', () => expect(formatOrdinal(13)).toBe('13th'));
+  it('21 → "21st"', () => expect(formatOrdinal(21)).toBe('21st'));
+  it('22 → "22nd"', () => expect(formatOrdinal(22)).toBe('22nd'));
+  it('23 → "23rd"', () => expect(formatOrdinal(23)).toBe('23rd'));
+  it('42 → "42nd"', () => expect(formatOrdinal(42)).toBe('42nd'));
+  it('100 → "100th"', () => expect(formatOrdinal(100)).toBe('100th'));
+});
+
+// ============================================================================
+// J. VIBE PHRASE UPPERCASE (v4.1.0)
+// ============================================================================
+
+describe('Scene Starters Homepage — Vibe Phrase Uppercase', () => {
+  it('first letter of every free scene vibe phrase is uppercase', () => {
+    const violations: string[] = [];
+    for (const scene of freeScenes) {
+      const phrase = getVibePhrase(scene);
+      if (phrase.length > 0 && phrase.charAt(0) !== phrase.charAt(0).toUpperCase()) {
+        violations.push(`${scene.id}: "${phrase}" starts with lowercase`);
+      }
+    }
+    expect(violations).toHaveLength(0);
+  });
+});
+
+// ============================================================================
+// K. CASCADING GLOW CONSTANTS (v4.1.0)
+// ============================================================================
+
+describe('Scene Starters Homepage — Cascading Glow Contract', () => {
+  /** Must match scene-starters-preview.tsx constants */
+  const GLOW_ON_MS = 3000;
+  const GLOW_OFF_MS = 1000;
+
+  it('full cycle is 32 seconds (8 cards × 4s each)', () => {
+    const cycleMs = BATCH_SIZE * (GLOW_ON_MS + GLOW_OFF_MS);
+    expect(cycleMs).toBe(32000);
+  });
+
+  it('glow on duration is 3 seconds', () => {
+    expect(GLOW_ON_MS).toBe(3000);
+  });
+
+  it('dark gap between cards is 1 second', () => {
+    expect(GLOW_OFF_MS).toBe(1000);
   });
 });

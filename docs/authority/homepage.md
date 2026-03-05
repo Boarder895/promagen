@@ -1,9 +1,9 @@
 # New Homepage — Authority Document
 
-**Last updated:** 4 March 2026  
-**Version:** 2.0.0  
+**Last updated:** 5 March 2026  
+**Version:** 3.0.0  
 **Owner:** Promagen  
-**Status:** Implemented (all 7 build phases complete)  
+**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 redesign)  
 **Authority:** This document defines the new Promagen homepage layout, components, data flow, and build plan. It supersedes the homepage section of `ribbon-homepage.md` for the `/` route only.
 
 ---
@@ -44,7 +44,7 @@ The current homepage (ribbon, exchange rails, flag tooltips, financial data) mov
 | ----------------------------------------------- | ---------------------- | ------------------------------------------------------------- |
 | Finance ribbon (FX, Commodities, Crypto)        | Visible                | **Removed**                                                   |
 | Orange intro text paragraph                     | Visible                | **Removed**                                                   |
-| Exchange rails (left + right)                   | 16 exchange cards      | **Replaced** — Scene Starters (left), Community Pulse (right) |
+| Exchange rails (left + right)                   | 16 exchange cards      | **Replaced** — Scene Starters (left, exchange-card styled), Community Pulse (right) |
 | "Promagen — Intelligent Prompt Builder" heading | Visible                | **Kept**                                                      |
 | "42 AI Image Generators — Elo-Ranked" heading   | Visible                | **Kept**                                                      |
 | AI Providers Leaderboard table                  | Visible                | **Kept**                                                      |
@@ -112,25 +112,25 @@ All principles from `code-standard.md` and `best-working-practice.md` apply. Spe
 │              │                                          │                   │
 │  SCENE       │  42 AI Image Generators — Elo-Ranked     │  COMMUNITY        │
 │  STARTERS    │  by the Community                        │  PULSE            │
-│  (preview)   │  Click ▼ Provider to expand              │                   │
-│              │                                          │                   │
-│  🎬 Dramatic │  ┌──────────────────────────────────────┐│  "93-score MJ     │
-│  Portrait    │  │                                      ││   prompt built    │
-│  5 categories│  │     AI PROVIDERS LEADERBOARD         ││   2 min ago"      │
-│              │  │                                      ││  ♡ 12             │
-│  ⚔️ Hero's   │  │     (scrollable, same as current)    ││                   │
-│  Journey     │  │                                      ││  "87-score DALL-E │
-│  6 categories│  │                                      ││   prompt built    │
-│              │  │                                      ││   5 min ago"      │
-│  🌙 Night    │  │                                      ││  ♡ 7              │
-│  Noir        │  │                                      ││                   │
-│  7 categories│  │                                      ││  "91-score Flux   │
+│  (exchange-  │  Click ▼ Provider to expand              │                   │
+│  card style) │                                          │                   │
+│              │  ┌──────────────────────────────────────┐│  "93-score MJ     │
+│  ● 🎭 Drama-│  │                                      ││   prompt built    │
+│  tic Portrait│  │     AI PROVIDERS LEADERBOARD         ││   2 min ago"      │
+│  ───────────-│  │                                      ││  ♡ 12             │
+│  👤 Portraits│  │     (scrollable, same as current)    ││                   │
+│  7 cat · vibe│  │                                      ││  "87-score DALL-E │
 │              │  │                                      ││   prompt built    │
-│  🔒 Cyberpunk│  │                                      ││   8 min ago"      │
-│  (Pro)       │  │                                      ││  ♡ 3              │
-│              │  │                                      ││                   │
-│  🔒 Ancient  │  └──────────────────────────────────────┘│                   │
-│  (Pro)       │                                          │                   │
+│  ● ⚔️ Fantasy│  │                                      ││   5 min ago"      │
+│  Hero        │  │                                      ││  ♡ 7              │
+│  ───────────-│  │                                      ││                   │
+│  👤 Portraits│  │                                      ││  "91-score Flux   │
+│  5 cat · vibe│  │                                      ││   prompt built    │
+│              │  │                                      ││   8 min ago"      │
+│  (8 cards per│  │                                      ││  ♡ 3              │
+│   batch,     │  │                                      ││                   │
+│   rotates    │  └──────────────────────────────────────┘│                   │
+│   5 min)     │                                          │                   │
 │              │                                          │                   │
 ├──────────────┼──────────────────────────────────────────┼───────────────────┤
 │              │             FOOTER                        │                   │
@@ -402,98 +402,155 @@ Shows creative possibilities. Answers "what can I build?" and gives instant acti
 
 ### 5.2 Data Source
 
-Existing `scene-starters.json` SSOT: 200 scenes (25 free, 175 Pro) across 23 worlds. No new data files.
+Existing `scene-starters.json` SSOT: 200 scenes (25 free, 175 Pro) across 23 worlds. Only the 25 free scenes are displayed on the homepage. No new data files.
 
-### 5.3 Component: `SceneStartersPreview`
+### 5.3 Component: `SceneStartersPreview` (v4.1.0)
 
-**File:** `src/components/home/scene-starters-preview.tsx`
+**File:** `src/components/home/scene-starters-preview.tsx` (585 lines)
 
-**Visual design:**
+**Visual design — v4.1.0 layout (top to bottom):**
 
 ```
-┌─ SCENE STARTERS ────────────────────┐
-│  🎬 Discover & build  •  25 free    │
-├─────────────────────────────────────┤
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ 🎬  Dramatic Portrait       │    │
-│  │ Portraits & People          │    │
-│  │ 5 categories • ★ Tier 1     │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ ⚔️  Hero's Journey          │    │
-│  │ Fantasy & Mythology         │    │
-│  │ 6 categories • ◆ Tier 2     │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ 🌙  Night Noir              │    │
-│  │ Mood & Atmosphere           │    │
-│  │ 7 categories • 💬 Tier 3    │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ 🔒  Cyberpunk Character     │    │
-│  │ Sci-Fi & Future     Pro     │    │
-│  │ 8 categories • ★ Tier 1     │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ... (scrollable)                   │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ View all 200 scenes →       │    │
-│  └─────────────────────────────┘    │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│               ● Scene Starters                           │  ← centred, gradient (sky→emerald→indigo)
+│                                                          │
+│       Click a scene to start building.                   │  ← amber italic, pulsing (2s cycle)
+│     OR: Select a platform above to unlock scenes.        │  ← shown when no provider selected
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌────────────────────────────────────────────────┐      │
+│  │ ● 🎭  Dramatic Portrait              → Flux   │      │  ← card 1 glows first (3s on)
+│  │   👤 Portraits & People                        │      │
+│  │─────────────────────────────────────────────── │      │
+│  │   Chiaroscuro shadow play                      │      │
+│  └────────────────────────────────────────────────┘      │
+│                                                          │  ← 1s dark gap
+│  ┌────────────────────────────────────────────────┐      │
+│  │ ● ⚔️  Fantasy Hero                        →   │      │  ← card 2 glows next (3s on)
+│  │   👤 Portraits & People                        │      │
+│  │─────────────────────────────────────────────── │      │
+│  │   Shafts of amber light through canopy         │      │
+│  └────────────────────────────────────────────────┘      │
+│                                                          │
+│  ... (cards 3–8, each takes its turn in the cascade)     │
+│                                                          │
+├──────────────────────────────────────────────────────────┤
+│  [icon] Ranked 4th for Image Quality    25 free · 175 Pro│  ← footer row
+└──────────────────────────────────────────────────────────┘
 ```
 
-**Container:** Scrollable vertical list with `overflow-y: auto` and the standard scrollbar styling: `scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30`.
+**Cards are structurally identical to `exchange-card.tsx`:**
 
-**Scene cards (inner):** `rounded-xl bg-slate-900/60 ring-1 ring-white/5` with hover state `hover:ring-white/15 hover:bg-slate-900/80`.
+| Exchange Card Element | Scene Card Equivalent | Shared Code Pattern |
+| --------------------- | --------------------- | ------------------- |
+| Snap-fit font (12–20px via ResizeObserver × 0.042) | Same 3 constants, same ResizeObserver | `MIN_FONT=12, MAX_FONT=20, FONT_SCALE=0.042` |
+| Top row padding `px-4 py-1` | Same padding class | Tailwind `px-4 py-1` |
+| Exchange name `0.90em` | Scene name `0.90em` | `style={{ fontSize: '0.90em' }}` |
+| City + Flag `0.75em` + `mt-1` | World emoji + label `0.75em` + `mt-1` | Same spacing and size |
+| Horizontal divider `border-t border-white/5` | Same divider | Identical class |
+| Index quote row `px-4 py-1` | Vibe phrase row | Same padding |
+| Dual radial glow (top + bottom) | Same glow overlays | Same `radial-gradient` patterns |
+| Border + boxShadow on hover | Same glow treatment (+ cascade glow) | Same shadow string format |
+| Card gap `space-y-3` | Same gap | Shared from parent scroll container |
 
-**Each card shows:**
+**Scene card content (v4.1.0):**
 
-| Element             | Source                                              | Styling                                      |
-| ------------------- | --------------------------------------------------- | -------------------------------------------- |
-| Emoji               | `scene.emoji` from SSOT                             | Inline, left-aligned                         |
-| Scene name          | `scene.name` from SSOT                              | `clamp()` body text, white                   |
-| World name          | `scene.world` mapped via `WORLD_BY_SLUG`            | `clamp()` small text, muted `text-slate-400` |
-| Category count      | Count of `scene.prefills` keys                      | `clamp()` small text, muted                  |
-| Tier affinity badge | From `scene.tier` field                             | ★/◆/💬/⚡ matching tier badge system         |
-| Lock icon           | Shown if `scene.tier === 'pro'` and user is not Pro | 🔒 at 50% opacity, card slightly dimmed      |
+| Row | Element | Source | Styling |
+| --- | ------- | ------ | ------- |
+| Top | Tier dot | `getBestTier()` → tier 1–4 | Coloured dot (cyan/violet/emerald/amber) with `box-shadow` glow |
+| Top | Emoji | `scene.emoji` | `0.90em` |
+| Top | Scene name | `scene.name` | `0.90em`, `text-slate-100`, truncate |
+| Top | Arrow | Static `→` or `→ {providerName}` on hover | `0.75em`, white at rest, cyan (`#22D3EE`) on hover. Shows provider name on hover when provider selected (e.g., "→ Flux"). Truncated at `6em`. |
+| Top | World label | `WORLD_BY_SLUG.get(scene.world)` | `0.75em`, `text-slate-400`, `mt-1` |
+| Divider | — | — | `border-t border-white/5` |
+| Bottom | Vibe phrase | First phrase from `scene.flavourPhrases`, first letter uppercased | `0.75em`, italic, `text-white/60`, truncate. Category count removed in v3.2.0. |
 
-**Ordering:**
+**Tier dot colours:**
 
-- Free scenes first (25 scenes from 5 free worlds)
-- Pro scenes after, grouped by world
-- Within each group: SSOT order from `scene-starters.json`
+| Tier | Colour | Hex |
+| ---- | ------ | --- |
+| 1 (CLIP) | Cyan | `#22D3EE` |
+| 2 (Midjourney) | Violet | `#A78BFA` |
+| 3 (Natural Language) | Emerald | `#34D399` |
+| 4 (Plain) | Amber | `#FBBF24` |
 
-**"View all 200 scenes" link:** Navigates to the prompt builder page where the full Scene Selector component lives. Routes to the user's last-used provider (see §5.4).
+**Heading:** "Scene Starters" (title case, not all-caps). Uses gradient text matching the leaderboard heading in `homepage-grid.tsx`: `bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent`. Font size: `clamp(0.65rem, 0.9vw, 1.2rem)`, `font-semibold`. Centred.
+
+**Subtitle:** Two states controlled by `hasProvider`:
+- Provider selected: "Click a scene to start building." (6 words)
+- No provider: "Select a platform above to unlock scenes."
+- Styled: `italic text-amber-400/80`, pulsing animation matching mission-control (`2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, opacity 1→0.5→1). Animation defined inline via `<style dangerouslySetInnerHTML>`, not in globals.css.
+
+**Cascading glow cycle (v4.1.0):**
+
+Each card takes its turn glowing in a continuous cascade:
+1. Card 1 glows for 3 seconds (uses existing tier-coloured glow system: `glowRgba`, `glowBorder`, `glowSoft`)
+2. Glow fades out over 600ms (CSS transition on `border-color` and `box-shadow`)
+3. 1 second dark pause
+4. Card 2 glows for 3 seconds → off → 1 second → Card 3... through all 8 cards
+5. After card 8 → back to card 1, infinite loop (32-second full cycle)
+
+Implementation: Parent owns `activeGlowIndex` (0–7) and `glowOn` (boolean). One `useEffect` with two `setTimeout` calls drives the cycle. Card receives `isGlowActive={glowOn && index === activeGlowIndex}`. Hover always wins — if the user hovers any card, it glows regardless of the cascade position. Glow resets to card 0 when the 5-minute batch rotates.
+
+**Footer row:** Below the last card. `flex justify-between`:
+- Left: Provider icon (Engine Bay size, `clamp(36px, 3vw, 48px)`) + "Ranked {ordinal} for Image Quality" (plain text, not clickable). Dynamic from `selectedProvider.imageQualityRank`. Only shown when provider selected.
+- Right: "25 free · 175 Pro" in `text-emerald-400` (Tier 3 green). Clickable `<button>`. Navigates to `/providers/{id}` with no scene pre-loaded (removes `promagen:preloaded-scene` from sessionStorage, so prompt builder opens with empty dropdowns). No provider selected → nudges Engine Bay.
+
+**Rotation:** 8 free scenes per batch. 25 free scenes ÷ 8 = 3 full batches (24 scenes shown, 25th excluded). Auto-rotates every 5 minutes with 300ms crossfade. Batches draw from free scenes in SSOT order. Cascading glow resets to card 0 on batch change.
+
+**No Pro scenes displayed:** Only free scenes appear on the homepage. Pro scenes are accessible via the full Scene Selector inside the prompt builder.
+
+**No provider selector UI:** Engine Bay (directly above in the left column) handles all provider selection. See §5.4.
+
+**No opacity dimming:** Cards are always at full brightness regardless of provider selection state. Per `code-standard.md` § 6.0.3, opacity dimming is banned for state indication on dark backgrounds.
+
+**Text colour rules:** No `text-slate-500` or `text-slate-600` anywhere. Dimmest text: `text-slate-400` for world labels, `text-white/60` for vibe phrases. Per `code-standard.md` § 6.0.2.
+
+**Minimum font size:** 9px floor. All `clamp()` minimums ≥ `0.5625rem`. Em-based sizes never below `0.75em` at the 12px snap-fit base. Per `code-standard.md` § 6.0.1.
+
+**Container:** `space-y-3` gap (matches exchange rail), `overflow-y: auto` with standard scrollbar styling.
 
 ### 5.4 Provider Routing on Scene Click
 
-**Priority order:**
+**Architecture:** Engine Bay owns provider selection state. The homepage parent (`new-homepage-client.tsx`) holds `selectedProvider` in React state, persists it to `localStorage('promagen:homepage-provider')`, and passes it down to both Engine Bay (controlled mode) and SceneStartersPreview.
 
-1. **Last-used provider:** Stored in `localStorage` key `lastProvider` (matches `use-remember-provider.ts`). If present, navigate directly to `/providers/[id]/prompt-builder` with the scene pre-loaded via `sessionStorage` key `promagen:preloaded-scene`.
-2. **No stored provider:** Falls back to Midjourney (`DEFAULT_PROVIDER = 'midjourney'`). No Engine Bay popup — the user lands directly in the prompt builder.
+**Click flow — scene card:**
 
-**Pro gate:**
+1. **Provider selected in Engine Bay:** Scene click reads `selectedProvider.id` from prop → stores scene ID in `sessionStorage('promagen:preloaded-scene')` → navigates to `/providers/${id}` (the provider detail page with prompt builder).
+2. **No provider selected:** Scene click calls `onNudgeProvider()` → parent focuses the Engine Bay dropdown input → Combobox opens automatically. User picks a provider, then clicks scene again.
 
-- Anonymous → Clerk `SignInButton` modal
-- Free user clicking a Pro scene → inline upgrade prompt with sign-in option
-- Pro user → direct navigation
+**Click flow — "25 free · 175 Pro" footer button:**
+
+1. **Provider selected:** Removes `promagen:preloaded-scene` from sessionStorage → navigates to `/providers/${id}`. Prompt builder opens with all dropdowns empty (no scene pre-loaded). User builds from scratch.
+2. **No provider selected:** Same nudge behaviour — focuses Engine Bay dropdown.
+
+**No default provider.** State starts as `null`. No "midjourney" fallback, no "flux" default. User must actively choose.
+
+**Provider persistence:** `handleProviderChange` in `new-homepage-client.tsx` saves provider ID to `localStorage('promagen:homepage-provider')`. On mount, `useEffect` restores the saved provider. Navigating away and returning → provider still selected.
+
+**Navigation URL:** Always `/providers/${encodeURIComponent(id)}`. **Never** `/providers/${id}/prompt-builder` — that route is deprecated and redirects incorrectly.
 
 **Scene pre-loading via `sessionStorage`:**
 
 1. On scene card click, store the scene ID: `sessionStorage.setItem('promagen:preloaded-scene', sceneId)`
-2. Navigate to `/providers/[id]/prompt-builder`
+2. Navigate to `/providers/${id}`
 3. On mount, the prompt builder checks for `promagen:preloaded-scene`
-4. If found: trigger the same scene-apply logic that the Scene Selector uses (populate dropdowns via `prefills` from SSOT)
-5. Clear the sessionStorage key immediately
+4. If found: populates dropdowns via `prefills` from SSOT, sets `preloadedSceneId`
+5. `preloadedSceneId` passed to SceneSelector as `initialSceneId` → SceneSelector auto-expands and navigates to the scene's world
+6. sessionStorage key cleared immediately after reading
 
-**Pro scene click (unauthenticated):** Opens the Clerk sign-in modal via `<SignInButton mode="modal">`. Same pattern as existing Scene Selector pro gate.
+**SceneSelector auto-expand (v3.0.0):**
 
-**Pro scene click (free user):** Shows upgrade dialog with link to `/pro-promagen`. Same pattern as existing Scene Selector pro gate.
+`scene-selector.tsx` accepts a new `initialSceneId` prop. When set:
+- `isExpanded` → `true` (accordion opens)
+- `activeWorldSlug` → the scene's world slug
+- `activeSceneId` → the scene ID
+
+This ensures the user sees which world and scene they came from (e.g., "Portraits & People" with "Dramatic Portrait" highlighted).
+
+### 5.5 Test Coverage
+
+**File:** `src/__tests__/scene-starters-homepage.test.ts` — 31 test cases across 8 groups covering batching, data quality, navigation URLs, storage keys, SceneSelector contract, exchange-card parity, no hardcoded defaults, and icon path sanitisation.
 
 ---
 
@@ -955,9 +1012,9 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 
 | File                                                 | Purpose                                  | Lines |
 | ---------------------------------------------------- | ---------------------------------------- | ----- |
-| `src/components/home/new-homepage-client.tsx`        | New homepage client wrapper              | 243   |
+| `src/components/home/new-homepage-client.tsx`        | New homepage client wrapper (+ Engine Bay state owner) | 281   |
 | `src/components/home/prompt-showcase.tsx`            | Prompt of the Moment card + online users | 858   |
-| `src/components/home/scene-starters-preview.tsx`     | Left rail scene cards                    | 377   |
+| `src/components/home/scene-starters-preview.tsx`     | Left rail scene cards (v4.1.0, cascading glow)        | 585   |
 | `src/components/home/community-pulse.tsx`            | Right rail pulse feed                    | 420   |
 | `src/app/api/homepage/prompt-of-the-moment/route.ts` | Showcase prompt API                      | 639   |
 | `src/app/api/homepage/community-pulse/route.ts`      | Pulse feed API                           | 155   |
@@ -983,8 +1040,10 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----- |
 | `src/app/page.tsx`                            | Imports `NewHomepageClient`, passes providers/exchanges/weatherIndex                                     | 70    |
 | `src/components/home/mission-control.tsx`     | Added `renderWorldContextButton()`, World Context button on all page variants                            | 723   |
-| `src/components/layout/homepage-grid.tsx`     | `leftContent`/`rightContent` props, `showFinanceRibbon` toggle, table expand support                     | 711   |
-| `src/components/providers/prompt-builder.tsx` | sessionStorage pre-load reader (Phase D: `promagen:preloaded-payload` + `promagen:preloaded-inspiredBy`) | 2,746 |
+| `src/components/layout/homepage-grid.tsx`     | `leftContent`/`rightContent` props, `showFinanceRibbon` toggle, table expand support, `selectedProvider`/`onProviderChange` piped to Engine Bay (v5.0.0) | 721   |
+| `src/components/providers/prompt-builder.tsx` | sessionStorage pre-load reader (Phase D: `promagen:preloaded-payload` + `promagen:preloaded-inspiredBy`), `preloadedSceneId` state passed to SceneSelector as `initialSceneId` | 2,751 |
+| `src/components/home/engine-bay.tsx`          | `selectedProvider`/`onProviderChange` optional props for controlled mode (v5.0.0)                        | 499   |
+| `src/components/providers/scene-selector.tsx` | `initialSceneId` prop for auto-expand on homepage scene pre-load                                         | 1,250 |
 
 **Not modified (design decision):** `homepage-client.tsx` (527 lines) is unchanged — reused as-is by `/world-context`. No `fallback-nav.tsx` exists; navigation is handled entirely by Mission Control buttons.
 
@@ -993,6 +1052,7 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 | File                                            | Lines | Cases | Coverage                                               |
 | ----------------------------------------------- | ----- | ----- | ------------------------------------------------------ |
 | `src/__tests__/parity-homepage-builder.test.ts` | 638   | 10    | PotM → prompt builder pre-load parity across all tiers |
+| `src/__tests__/scene-starters-homepage.test.ts` | 310   | 31    | Batching, nav URLs, storage keys, exchange-card parity, SceneSelector contract, no hardcoded defaults, icon path safety |
 
 ---
 
@@ -1022,15 +1082,17 @@ Every new component must use inline `clamp()` for all visible dimensions. Refere
 | Token       | Value                                              | Usage                                                        |
 | ----------- | -------------------------------------------------- | ------------------------------------------------------------ |
 | Outer card  | `rounded-3xl bg-slate-950/70 ring-1 ring-white/10` | Prompt Showcase, Scene Starters panel, Community Pulse panel |
-| Inner card  | `rounded-xl bg-slate-900/60 ring-1 ring-white/5`   | Tier prompt cards, scene cards, pulse cards                  |
-| Hover state | `hover:ring-white/15 hover:bg-slate-900/80`        | Clickable inner cards                                        |
-| Pro locked  | `opacity-50 cursor-not-allowed`                    | Pro scene cards for free/anon users                          |
+| Inner card  | `rounded-xl bg-slate-900/60 ring-1 ring-white/5`   | Tier prompt cards, pulse cards                       |
+| Scene card  | Exchange-card style: `rgba(255,255,255,0.05)` bg, `1px solid` border, dual radial glow on hover + cascading glow cycle | Scene Starters left rail (matches `exchange-card.tsx`) |
+| Hover state | `hover:ring-white/15 hover:bg-slate-900/80`        | Clickable inner cards                                |
 
 ### 13.3 Animation Rules
 
 - All animations in component files via `<style dangerouslySetInnerHTML>` — not in `globals.css` (per `best-working-practice.md` animation placement rule)
 - Crossfade transitions: `opacity`, `transform` only — never `transition-all` (CLS prevention per `best-working-practice.md` §Performance Guardrails)
 - Like heart scale animation: co-located in `prompt-showcase.tsx`
+- Scene Starters subtitle pulse: `scene-subtitle-pulse` keyframes co-located in `scene-starters-preview.tsx` (2s cubic-bezier, opacity 1→0.5→1, matches mission-control `animate-pulse`)
+- Scene Starters cascading glow: no CSS animation — driven by React state (`activeGlowIndex` + `glowOn`), 600ms CSS transition on `border-color` and `box-shadow` provides smooth fade in/out
 - All animations respect `prefers-reduced-motion`
 
 ### 13.4 Scrollbar Consistency
@@ -1071,14 +1133,29 @@ All `<a>` tag buttons **must** have explicit text colour on child `<svg>` and `<
 
 ### 14.3 Scene Starters Preview
 
-- [ ] 25 free scenes visible to all users
-- [ ] Pro scenes visible with lock icon at 50% opacity
-- [ ] Clicking free scene: navigates to prompt builder with scene pre-loaded
-- [ ] Provider routing: uses last-used provider from localStorage
-- [ ] No stored provider: Engine Bay platform picker opens automatically
-- [ ] Pro scene click (anon): sign-in modal
-- [ ] Pro scene click (free): upgrade dialog with `/pro-promagen` link
-- [ ] "View all 200 scenes" link works
+- [ ] 8 free scenes visible per rotation batch (no pro scenes shown)
+- [ ] Scene cards match exchange card structure (snap-fit font, same padding, same divider)
+- [ ] Tier dot colour matches tier (cyan/violet/emerald/amber)
+- [ ] Vibe phrase shown in italic on bottom row (first letter uppercase, no category count)
+- [ ] Batches rotate every 5 minutes with crossfade
+- [ ] Cascading glow: cards light up one at a time (3s on → 1s dark → next), looping endlessly through all 8
+- [ ] Cascading glow resets to card 1 on batch rotation
+- [ ] Hover overrides cascading glow (user hover always wins)
+- [ ] Arrow shows "→" at rest, "→ {provider name}" on hover when provider selected
+- [ ] Clicking scene with provider selected: navigates to `/providers/{id}` with scene pre-loaded
+- [ ] Scene pre-load: prompt builder opens with dropdowns populated + SceneSelector expanded to correct world
+- [ ] Clicking scene with no provider: Engine Bay dropdown auto-opens
+- [ ] "Scene Starters" heading: title case, centred, gradient text (sky→emerald→indigo)
+- [ ] Subtitle: amber italic pulsing text, changes copy based on provider state
+- [ ] Footer row: provider icon + rank text (left), "25 free · 175 Pro" emerald green (right)
+- [ ] "25 free · 175 Pro" click: navigates to prompt builder with empty dropdowns (no scene pre-loaded)
+- [ ] Image Quality rank is dynamic from `provider.imageQualityRank` — changes when data changes
+- [ ] Provider icon in footer matches Engine Bay icon size (`clamp(36px, 3vw, 48px)`)
+- [ ] Provider persists across page navigation (localStorage)
+- [ ] Navigation URL is `/providers/{id}` (never `/providers/{id}/prompt-builder`)
+- [ ] No opacity dimming — cards always at full brightness regardless of provider state
+- [ ] No `text-slate-500` or `text-slate-600` anywhere (banned colours)
+- [ ] All text ≥ 9px at every viewport width (minimum font-size floor)
 
 ### 14.4 Community Pulse
 
@@ -1212,7 +1289,7 @@ Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context
 | 7.7  | Update `paid_tier.md` (like system + online users = free features) | Phase 4, 6   |
 | 7.8  | Full E2E manual test pass (see §14)                                | All phases   |
 
-**All 7 phases complete.** Total new code: ~4,427 lines across 18 new files + 4 modified files.
+**All 7 phases complete + Scene Starters v4.1 redesign.** Total new code: ~4,635 lines across 18 new files + 6 modified files.
 
 ---
 
@@ -1239,17 +1316,25 @@ When building on the new homepage:
 - Do not modify the vocabulary system, scoring engine, or learning pipeline
 - Do not modify the leaderboard table or provider cells
 - Do not modify the weather-prompt-generator (consume it, don't change it)
-- Do not modify Engine Bay or Mission Control (except the World Context button which is already added)
+- Do not modify Engine Bay or Mission Control (except the controlled mode props which are already added)
 - Do not modify scene-starters.json (read-only consumption)
 - Do not modify any existing page layout except `/` and adding the World Context button
 - Do not remove or modify any existing API routes
 - All new UI elements must use CSS `clamp()` for sizing — no fixed px/rem
 - Preserve all existing features on the World Context page
-- **Do not modify sessionStorage key names** (`promagen:preloaded-payload`, `promagen:preloaded-inspiredBy`) — the prompt builder reads these on mount
+- **Do not modify sessionStorage key names** (`promagen:preloaded-payload`, `promagen:preloaded-inspiredBy`, `promagen:preloaded-scene`) — the prompt builder reads these on mount
 - **Do not modify the `promagen-session` cookie name or maxAge** — the like system depends on session continuity
 - **Preserve the venue desync fix** — always use `categoryMap.meta.venue` as the authoritative venue, not the route's index rotation
 - **Preserve the categoryMapHash** in `inspiredBy` — the prompt builder uses this for fingerprint matching
 - **Preserve the table-expand hide** — PromptShowcase + LeaderboardIntro must both hide when `isTableExpanded` is true
+- **Navigation URL is `/providers/{id}`** — never `/providers/{id}/prompt-builder` (deprecated redirect route, causes `/providers/undefined` bug)
+- **Engine Bay controlled mode is homepage-only** — only `new-homepage-client.tsx` passes `selectedProvider`/`onProviderChange`. All other pages leave them `undefined`.
+- **Provider persistence key is `promagen:homepage-provider`** — not `lastProvider` (old key had stale values)
+- **Scene cards must match exchange card structure** — same snap-fit constants (12, 20, 0.042), same `px-4 py-1` padding, same `space-y-3` gap, same divider class
+- **No `text-slate-500` or `text-slate-600`** — banned on dark backgrounds. Dimmest permitted: `text-slate-400`. For de-emphasised text: `text-white/60`. Per `code-standard.md` § 6.0.2.
+- **No opacity dimming for state indication** — never dim cards/containers to show inactive state. Use text changes or colour changes instead. Per `code-standard.md` § 6.0.3.
+- **All text ≥ 9px** — every `clamp()` min for `fontSize` must be ≥ `0.5625rem`. Em-based sizes never below `0.75em` at 12px snap-fit base. Per `code-standard.md` § 6.0.1.
+- **Cascading glow constants** — `GLOW_ON_MS = 3000`, `GLOW_OFF_MS = 1000`. Do not change without updating this doc.
 
 **Existing features preserved: Yes** (required for every change).
 
@@ -1276,6 +1361,41 @@ When building on the new homepage:
 ---
 
 ## 19. Changelog
+
+- **5 March 2026 (v3.0.0):** **SCENE STARTERS v4.1.0 REDESIGN.** §5 rewritten completely for v4.1.0:
+  - **Cascading glow cycle:** Cards glow one at a time in sequence — 3s on, 1s dark, next card, infinite loop through all 8 (32s full cycle). Parent-controlled via `activeGlowIndex` + `glowOn` state. Resets to card 0 on batch rotation. Hover always overrides cascade.
+  - **Heading:** "Scene Starters" (title case, not ALL-CAPS). Centred. Gradient text matching leaderboard heading (`sky-400 → emerald-300 → indigo-400`). Font size `clamp(0.65rem, 0.9vw, 1.2rem)`.
+  - **Subtitle:** Two states — "Click a scene to start building." (provider selected) / "Select a platform above to unlock scenes." (no provider). Amber italic, pulsing animation matching mission-control (`2s cubic-bezier`). Inline `<style>`, no globals.
+  - **Arrow with provider name:** "→" at rest, "→ Flux" on hover when provider selected. Cyan on hover. Truncated at 6em.
+  - **Footer row:** Provider icon + "Ranked {ordinal} for Image Quality" (left, plain text, dynamic from `provider.imageQualityRank`). "25 free · 175 Pro" (right, emerald-400 green, clickable → prompt builder with empty dropdowns).
+  - **Category count removed** from bottom row — vibe phrase only, first letter uppercased.
+  - **Banned colours enforced:** `text-slate-500`/`text-slate-600` replaced with `text-white/60` and `text-white/50`. Per `code-standard.md` § 6.0.2.
+  - **No opacity dimming:** Cards always full brightness. Per `code-standard.md` § 6.0.3.
+  - **9px font floor enforced:** All `clamp()` minimums ≥ `0.5625rem`. Vibe phrase bumped from `0.70em` to `0.75em`. Per `code-standard.md` § 6.0.1.
+  - **Provider icon size:** Matches Engine Bay icons (`clamp(36px, 3vw, 48px)`), moved from header to footer.
+  - Component grew from 435 to 585 lines. Version: v3.0.0 → v4.1.0.
+  - §5.4 updated: "25 free · 175 Pro" explore click flow documented.
+  - §12 file locations updated (585 lines).
+  - §13.3 animation rules updated (subtitle pulse + cascading glow).
+  - §14.3 acceptance criteria expanded (11 → 23 checks).
+  - §17 non-regression rules: added banned colours, no dimming, 9px floor, glow constants.
+  - New `code-standard.md` sections referenced: § 6.0.1, § 6.0.2, § 6.0.3.
+
+- **5 March 2026 (v2.1.0):** **SCENE STARTERS v3.0.0 REDESIGN.** §5 rewritten completely:
+  - Scene cards now structurally identical to exchange cards: same snap-fit font system (ResizeObserver, width × 0.042, clamped 12–20px), same `px-4 py-1` padding, same `0.90em`/`0.75em` font sizes, same horizontal divider, same dual radial glow, same `space-y-3` gap
+  - Shows 8 free scenes per batch (no pro/locked scenes on homepage), rotates every 5 minutes
+  - Each card shows: tier dot (coloured like market status) + emoji + name | world emoji + label + category count + italic flavour phrase
+  - Provider UI removed from Scene Starters — Engine Bay handles selection via controlled mode (`selectedProvider`/`onProviderChange` props, see `ignition.md` v5.0.0)
+  - No default provider. State starts null. User must choose in Engine Bay.
+  - Provider persisted to `localStorage('promagen:homepage-provider')` by parent, restored on mount
+  - Navigation URL changed from `/providers/{id}/prompt-builder` (deprecated redirect, caused `/providers/undefined` bug) to `/providers/${id}`
+  - SceneSelector auto-expand: new `initialSceneId` prop opens accordion to correct world on arrival
+  - `prompt-builder.tsx`: added `preloadedSceneId` state, passed to SceneSelector
+  - `scene-selector.tsx`: added `initialSceneId` prop with `useEffect` to expand + navigate
+  - Test file added: `src/__tests__/scene-starters-homepage.test.ts` (31 cases, 8 groups)
+  - Updated §12 file locations (6 modified files, 2 test files)
+  - Updated §14.3 acceptance criteria (11 checks)
+  - Updated §17 non-regression rules (4 new rules)
 
 - **4 March 2026 (v2.0.0):** **STATUS UPDATE — ALL PHASES IMPLEMENTED.** Document upgraded from "Specification (pre-build)" to "Implemented". 25+ discrepancies corrected against actual src.zip:
   - **Tier colours fixed:** Tier 1 `text-cyan-400` → `text-violet-400`, Tier 2 `text-violet-400` → `text-blue-400`. Tier 1 label "CLIP" → "CLIP-Based". Tier 4 label "Plain" → "Plain Language". Ring + dot colours added.

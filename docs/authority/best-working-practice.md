@@ -182,6 +182,27 @@ const SubsetSchema = z.object({ id: z.string(), name: z.string() }).strict();
 **Purpose:**
 Promagen must feel calm and premium. Random container styles make pages feel "cheap" and users leave.
 
+### Minimum text size and banned colours
+
+**Minimum text size — 9px floor:**
+No text in Promagen may render below 9px. Every `clamp()` min value for `fontSize` must be ≥ 9px (≥ 0.5625rem). Em-based sizes in snap-fit containers must not compute below 9px at the minimum snap-fit base. The reference is the "6 categories" text in scene cards — that is the smallest acceptable text.
+
+**Banned text colours:**
+`text-slate-500` (`#64748b`) and `text-slate-600` (`#475569`) are banned. They are invisible on Promagen's dark backgrounds. Dimmest permitted: `text-slate-400` (`#94A3B8`). For subtler text, use `text-white/60` (opacity on white) instead of darker slate classes.
+
+**Authority:** `code-standard.md` § 6.0.1, § 6.0.2
+
+### No opacity dimming for state indication
+
+Never reduce the opacity of UI elements to show a disabled, inactive, or "not ready" state. On Promagen's dark background, anything below full opacity disappears. Content must always be fully visible — users need to see what's available. Use text changes (different instruction copy) or colour changes (border, dot) to communicate state, never opacity.
+
+**Authority:** `code-standard.md` § 6.0.3
+
+````
+## Also ADD a changelog entry:
+
+```markdown
+- **5 March 2026:** Added "No opacity dimming for state indication" rule under UI Consistency. Banned sub-1.0 resting opacity for state indication on dark backgrounds. Cross-ref code-standard.md § 6.0.3.
 ### Hard rules (non-negotiable)
 
 **1. One box language only**
@@ -225,7 +246,7 @@ Promagen is a desktop application with dynamic fluid scaling — no breakpoints,
 
 ```css
 property: clamp(MINIMUM, PREFERRED, MAXIMUM);
-```
+````
 
 | Parameter   | Purpose                                    | Example |
 | ----------- | ------------------------------------------ | ------- |
