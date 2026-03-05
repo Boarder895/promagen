@@ -28,7 +28,7 @@
 
 'use client';
 
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import HomepageGrid, { LeaderboardIntro } from '@/components/layout/homepage-grid';
 import ProvidersTable from '@/components/providers/providers-table';
 import PromptShowcase from '@/components/home/prompt-showcase';
@@ -39,7 +39,6 @@ import { useWeather, type WeatherData } from '@/hooks/use-weather';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
-
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -142,6 +141,41 @@ export default function NewHomepageClient({
   const [displayedProviderIds, setDisplayedProviderIds] = useState<string[]>([]);
   const [isTableExpanded, setIsTableExpanded] = useState(false);
 
+  // ── Engine Bay ↔ Scene Starters shared provider state ──────────────────
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+
+  // Restore provider selection on mount (survives page navigation)
+  useEffect(() => {
+    try {
+      const savedId = localStorage.getItem('promagen:homepage-provider');
+      if (savedId && savedId !== 'undefined' && savedId !== 'null') {
+        const found = providers.find((p) => p.id === savedId);
+        if (found) setSelectedProvider(found);
+      }
+    } catch { /* noop */ }
+  }, [providers]);
+
+  const handleProviderChange = useCallback((provider: Provider | null) => {
+    setSelectedProvider(provider);
+    // Persist so it survives navigation back to homepage
+    try {
+      if (provider?.id) {
+        localStorage.setItem('promagen:homepage-provider', provider.id);
+      } else {
+        localStorage.removeItem('promagen:homepage-provider');
+      }
+    } catch { /* noop */ }
+  }, []);
+
+  /** Called when user clicks a scene with no provider — auto-opens Engine Bay dropdown */
+  const handleNudgeProvider = useCallback(() => {
+    const input = document.getElementById('engine-bay-provider-select') as HTMLInputElement | null;
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setTimeout(() => input.focus(), 150);
+    }
+  }, []);
+
   const providerIds = useMemo(() => providers.map((p) => p.id), [providers]);
 
   const handleProvidersChange = useCallback((ids: string[]) => {
@@ -199,11 +233,13 @@ export default function NewHomepageClient({
     </div>
   );
 
-  // Left rail — Scene Starters preview (Phase 3)
+  // Left rail — Scene Starters preview (v3.0.0: exchange-card structure match)
   const leftContent = (
     <SceneStartersPreview
       userTier={userTier}
       isAuthenticated={isAuthenticated}
+      selectedProvider={selectedProvider}
+      onNudgeProvider={handleNudgeProvider}
     />
   );
 
@@ -238,6 +274,8 @@ export default function NewHomepageClient({
       showEngineBay
       showMissionControl
       weatherIndex={effectiveWeatherIndex}
+      selectedProvider={selectedProvider}
+      onProviderChange={handleProviderChange}
     />
   );
 }

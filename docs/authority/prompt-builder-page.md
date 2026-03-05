@@ -1,9 +1,9 @@
 # Prompt Builder Page
 
-**Last updated:** 3 March 2026  
-**Owner:** Promagen  
-**Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).  
-**Cross-reference:** For unified assembly engine architecture, see `unified-prompt-brain.md`. For optimizer engine architecture, see `prompt-optimizer.md`.
+**Last updated:** 4 March 2026
+**Owner:** Promagen
+**Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).
+**Cross-reference:** For unified assembly engine architecture, see `unified-prompt-brain.md`. For optimizer engine architecture, see `prompt-optimizer.md`. For composition mode definitions, see §3-Stage Assembly Pipeline below.
 
 ---
 
@@ -40,7 +40,7 @@ The prompt builder has five distinct lock states with different visual treatment
 - **Behaviour:** All dropdowns disabled with purple tint, **NO overlay text on individual dropdowns**
 - **Reset:** Counter resets at midnight in user's local timezone (same as authenticated users)
 
-#### 3. Free User - Under Quota (0-29 prompts/day)
+#### 3. Free User - Under Quota (0-9 prompts/day)
 
 - **Visual treatment:** Normal dropdowns, fully functional
 - **Usage counter:** Discrete counter showing "X/10 prompts today"
@@ -59,7 +59,7 @@ The prompt builder has five distinct lock states with different visual treatment
 
 - **Visual treatment:** Normal dropdowns, fully functional
 - **No usage counter:** Unlimited daily usage
-- **Platform-aware enhanced limits:** +1 bonus on stackable categories (style, lighting, colour, atmosphere, materials, fidelity, negative) â€” see Â§12-Category Dropdown System for full tier matrix
+- **Platform-aware enhanced limits:** +1 bonus on stackable categories (style, lighting, colour, atmosphere, materials, fidelity, negative) — see §12-Category Dropdown System for full tier matrix
 - **Behaviour:** Never locks due to usage
 
 ### Lock State Component Behaviour (v5.0.0)
@@ -141,47 +141,65 @@ interface DailyUsage {
 ## Page Architecture
 
 ```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                          Finance Ribbon (FX/Crypto)                          â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚                 â”‚              PROMPT BUILDER                      â”‚       â”‚
-â”‚   Exchange      â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚    Ex-â”‚
-â”‚   Rail          â”‚  â”‚ Header: Provider Â· Prompt builder           â”‚ â”‚   change â”‚
-â”‚   (East)        â”‚  â”‚ (clean header, no badges or tags)           â”‚ â”‚   Rail   â”‚
-â”‚                 â”‚  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤ â”‚   (West) â”‚
-â”‚   â€¢ NZX         â”‚  â”‚ LOCK STATE CHECK                             â”‚ â”‚   â€¢ Cboe â”‚
-â”‚   â€¢ ASX         â”‚  â”‚ â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”â”‚ â”‚   â€¢ B3   â”‚
-â”‚   â€¢ TSE         â”‚  â”‚ â”‚ IF ANONYMOUS & UNDER 5:                    â”‚â”‚ â”‚   â€¢ LSE  â”‚
-â”‚   â€¢ HKEX        â”‚  â”‚ â”‚   Normal dropdowns + "X/5 free today"     â”‚â”‚ â”‚   â€¢ JSE  â”‚
-â”‚   â€¢ SET         â”‚  â”‚ â”‚ IF ANONYMOUS & 5 USED TODAY:               â”‚â”‚ â”‚   â€¢ MOEX â”‚
-â”‚   â€¢ NSE         â”‚  â”‚ â”‚   Central overlay (button at top)         â”‚â”‚ â”‚   â€¢ DFM  â”‚
-â”‚   (synced       â”‚  â”‚ â”‚   Dropdowns: disabled styling, NO text    â”‚â”‚ â”‚  (synced â”‚
-â”‚    scroll)      â”‚  â”‚ â”‚   "Sign in to continue" + benefits        â”‚â”‚ â”‚   scroll)â”‚
-â”‚                 â”‚  â”‚ â”‚ IF SIGNED IN & UNDER QUOTA:               â”‚â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ â”‚   Normal dropdowns + "X/10" counter       â”‚â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ â”‚ IF SIGNED IN & OVER QUOTA:                â”‚â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ â”‚   Central overlay (button at top)         â”‚â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ â”‚   Dropdowns: disabled styling, NO text    â”‚â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ â”‚ IF PAID USER:                             â”‚â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ â”‚   Normal dropdowns + enhanced limits      â”‚â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ 12-Category Dropdown Grid                    â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ Subject (1) | Action (1)    | Style (2)      â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ Environment(1)| Composition(1)| Camera (1)    â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ Lighting (2)| Colour (1)   | Atmosphere (1)   â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ Materials(1)| Fidelity (2) |                  â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ Negative (5) [full width]                    â”‚ â”‚          â”‚
-â”‚                 â”‚  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤ â”‚          â”‚
-â”‚                 â”‚  â”‚ Platform Tips (contextual)                   â”‚ â”‚          â”‚
-â”‚                 â”‚  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤ â”‚          â”‚
-â”‚                 â”‚  â”‚ Assembled Prompt Preview         [Clear all] â”‚ â”‚          â”‚
-â”‚                 â”‚  â”‚ (positive prompt only, no separator)         â”‚ â”‚          â”‚
-â”‚                 â”‚  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤ â”‚          â”‚
-â”‚                 â”‚  â”‚ [Copy] [ðŸŽ² Randomise] [Done] [Open in â†—]     â”‚ â”‚          â”‚
-â”‚                 â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚          â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚                              Provenance Footer                               â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                          Finance Ribbon (FX/Crypto)                                  │
+├─────────────────┬───────────────────────────────────────────────────────┬────────────┤
+│                 │              PROMPT BUILDER                          │            │
+│   Exchange      │  ┌───────────────────────────────────────────────┐   │    Ex-     │
+│   Rail          │  │ Header: Provider · Prompt builder             │   │   change   │
+│   (East)        │  │ (clean header, no badges or tags)             │   │   Rail     │
+│                 │  ├───────────────────────────────────────────────┤   │   (West)   │
+│   • NZX         │  │ LOCK STATE CHECK                              │   │   • Cboe   │
+│   • ASX         │  │ ┌─────────────────────────────────────────┐   │   │   • B3     │
+│   • TSE         │  │ │ IF ANONYMOUS & UNDER 5:                 │   │   │   • LSE    │
+│   • HKEX        │  │ │   Normal dropdowns + "X/5 free today"  │   │   │   • JSE    │
+│   • SET         │  │ │ IF ANONYMOUS & 5 USED TODAY:            │   │   │   • MOEX   │
+│   • NSE         │  │ │   Central overlay (button at top)       │   │   │   • DFM    │
+│   (synced       │  │ │   Dropdowns: disabled styling, NO text  │   │   │  (synced   │
+│    scroll)      │  │ │   "Sign in to continue" + benefits      │   │   │   scroll)  │
+│                 │  │ │ IF SIGNED IN & UNDER QUOTA:             │   │   │            │
+│                 │  │ │   Normal dropdowns + "X/10" counter     │   │   │            │
+│                 │  │ │ IF SIGNED IN & OVER QUOTA:              │   │   │            │
+│                 │  │ │   Central overlay (button at top)       │   │   │            │
+│                 │  │ │   Dropdowns: disabled styling, NO text  │   │   │            │
+│                 │  │ │ IF PAID USER:                           │   │   │            │
+│                 │  │ │   Normal dropdowns + enhanced limits    │   │   │            │
+│                 │  │ └─────────────────────────────────────────┘   │   │            │
+│                 │  │ ┌─────────────────────────────────────────┐   │   │            │
+│                 │  │ │ Composition Mode Toggle                 │   │   │            │
+│                 │  │ │ [Static|Dynamic] | Text Length Optimizer │   │   │            │
+│                 │  │ └─────────────────────────────────────────┘   │   │            │
+│                 │  │ 12-Category Dropdown Grid                     │   │            │
+│                 │  │ Subject (1) | Action (1)    | Style (2)      │   │            │
+│                 │  │ Environment(1)|Composition(1)| Camera (1)     │   │            │
+│                 │  │ Lighting (2)| Colour (1)   | Atmosphere (1)  │   │            │
+│                 │  │ Materials(1)| Fidelity (2) |                  │   │            │
+│                 │  │ Negative (5) [full width]                     │   │            │
+│                 │  ├───────────────────────────────────────────────┤   │            │
+│                 │  │ Scene Starters + Explore Drawer (expandable)  │   │            │
+│                 │  ├───────────────────────────────────────────────┤   │            │
+│                 │  │ Platform Tips (contextual)                    │   │            │
+│                 │  ├───────────────────────────────────────────────┤   │            │
+│                 │  │ Stage Badge: 📋 Static | ✨ Dynamic |        │   │            │
+│                 │  │              ⚡ Optimized | ✓ Optimal         │   │            │
+│                 │  │ Assembled Prompt Preview         [Clear all]  │   │            │
+│                 │  │ (positive only, inline copy icon float-right) │   │            │
+│                 │  ├───────────────────────────────────────────────┤   │            │
+│                 │  │ Optimized Prompt Preview (when optimizer ON)  │   │            │
+│                 │  │ (emerald border, inline copy icon float-right)│   │            │
+│                 │  │ Length Indicator + Transparency Panel          │   │            │
+│                 │  ├───────────────────────────────────────────────┤   │            │
+│                 │  │ Prompt Intelligence: DNA Bar, Conflict Warn,  │   │            │
+│                 │  │ Smart Suggestions, Health Badge               │   │            │
+│                 │  ├───────────────────────────────────────────────┤   │            │
+│                 │  │ [Copy*] [🎲 Randomise**] [Save] [Done]       │   │            │
+│                 │  │ [Open in Provider ↗]                          │   │            │
+│                 │  │ * = Usage tracking trigger                    │   │            │
+│                 │  │ ** = Disabled when locked                     │   │            │
+│                 │  └───────────────────────────────────────────────┘   │            │
+├─────────────────┴───────────────────────────────────────────────────────┴────────────┤
+│                              Provenance Footer                                       │
+└──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Key visual features:**
@@ -193,9 +211,11 @@ interface DailyUsage {
 - **Identical scrollbar styling** across all three columns
 - **Disabled styling on locked dropdowns** (purple tint, no overlay text)
 - **Central overlay only** for lock messaging (not per-dropdown)
-- **No platform family badge** (removed â€” adds no value)
-- **No provider tags** (removed â€” adds no value)
+- **No platform family badge** (removed — adds no value)
+- **No provider tags** (removed — adds no value)
 - **Clean assembled prompt output** (no "Negative prompt:" separator)
+- **Inline copy icons** float-right inside both prompt preview boxes
+- **Stage indicator badge** above assembled prompt preview
 
 ---
 
@@ -204,7 +224,7 @@ interface DailyUsage {
 **Primary route:** `/providers/[id]`
 
 - Dynamic segment `[id]` matches provider slug from `providers.json` (e.g., `midjourney`, `leonardo`, `openai`)
-- Invalid slugs render a "Provider not found" state (do not 404 â€” show helpful UI)
+- Invalid slugs render a "Provider not found" state (do not 404 — show helpful UI)
 
 **File location:** `frontend/src/app/providers/[id]/page.tsx`
 
@@ -234,7 +254,7 @@ The page MUST use `HomepageGrid` to maintain visual consistency with the homepag
 
 ### ProviderWorkspace
 
-**File:** `frontend/src/components/providers/provider-workspace.tsx`
+**File:** `frontend/src/components/providers/provider-workspace.tsx` (61 lines)
 
 **Purpose:** Container that passes provider data to PromptBuilder with full-height layout and authentication checking.
 
@@ -248,24 +268,37 @@ export function ProviderWorkspace({ provider }: ProviderWorkspaceProps) {
 }
 ```
 
-**Note:** LaunchPanel has been removed â€” PromptBuilder now fills the entire centre column.
+**Note:** LaunchPanel has been removed — PromptBuilder now fills the entire centre column.
 
 ---
 
 ### PromptBuilder
 
 **File:** `frontend/src/components/providers/prompt-builder.tsx`
-**Version:** 10.0.0
+**Version:** 10.0.0 (2,746 lines)
 
-**Purpose:** Full-featured prompt crafting interface with platform-specific optimization, platform-aware category limits, and authentication-gated access.
+**Purpose:** Full-featured prompt crafting interface with 3-stage assembly pipeline (Static/Dynamic/Optimize), platform-specific optimization, platform-aware category limits, and authentication-gated access.
+
+**New in v10.0.0:**
+
+- Unified Brain integration — single `assemblePrompt()` with tier-aware routing
+- 3-arg signature: `assemblePrompt(platformId, selections, weatherWeightOverrides?)`
+- `weatherWeightOverrides` state variable for "Try in" preload from homepage PotM
+- Phase D sessionStorage preload: `promagen:preloaded-payload` + `promagen:preloaded-inspiredBy`
+- Two-effect split prevents flash/re-apply bug (Effect 1: category preload, Effect 2: badge display)
+
+**New in v8.5.0:**
+
+- §4.5: "Try in" from homepage populates REAL DROPDOWNS (not just raw text)
+- Reads `sessionStorage('promagen:preloaded-selections')` → applies to categoryState
+- "Inspired by" badge shows weather context (city, venue, conditions, mood)
 
 **New in v8.3.0:**
 
 - Optional `providerSelector` prop for custom header (used by Playground page)
-- When provided, renders custom element instead of static "Provider · Prompt builder" title
-- Enables builder-first flow with provider dropdown
+- Scene pre-load from homepage via `sessionStorage('promagen:preloaded-scene')`
 
-**New authentication requirements:**
+**Authentication requirements:**
 
 - Must use `usePromagenAuth({ platformId })` hook to check authentication state and get platform-aware limits
 - Must check daily usage quota and user tier
@@ -314,111 +347,236 @@ export function PromptBuilder({
 
   // NOTE: lockMessage is NO LONGER passed to Combobox components
   // Lock messaging appears only in central overlay
-
-  // categoryLimits now reflects platform capabilities
-  // e.g., Midjourney (Tier 2): style=3, Artistly (Tier 4): style=1
-
-  // Rest of component...
 }
 ```
 
 #### Header Rendering (v8.3.0)
 
 ```tsx
-{
-  /* Provider selector (Playground) or static title (Provider page) */
-}
-{
-  providerSelector ? (
-    <div className="flex items-center gap-2">
-      {providerSelector}
-      <span className="text-sm text-slate-400">· Prompt builder</span>
-    </div>
-  ) : (
-    <h2 className="text-lg font-semibold text-slate-50">{provider.name} · Prompt builder</h2>
-  );
-}
+{providerSelector ? (
+  <div className="flex items-center gap-2">
+    {providerSelector}
+    <span className="text-sm text-slate-400">· Prompt builder</span>
+  </div>
+) : (
+  <h2 className="text-lg font-semibold text-slate-50">{provider.name} · Prompt builder</h2>
+)}
 ```
 
-#### Structure
+#### Instruction Text
 
 ```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚ HEADER (shrink-0)                                               â”‚
-â”‚ â€¢ Provider name Â· Prompt builder                                â”‚
-â”‚ â€¢ "Build your prompt by selecting from the criteria below..."   â”‚
-â”‚ â€¢ (NO badge, NO tags â€” clean header only)                       â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚ AUTHENTICATION LAYER (conditional)                             â”‚
-â”‚ â€¢ Usage counter (if free user): "X/10 prompts today"           â”‚
-â”‚ â€¢ Central lock overlay (if not authenticated or over quota)    â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚ SCROLLABLE CONTENT (flex-1, overflow-y-auto)                    â”‚
-â”‚ â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
-â”‚ â”‚ 12-Category Dropdown Grid (3 columns on desktop)            â”‚ â”‚
-â”‚ â”‚ Row 1: Subject (1)   | Action (1)      | Style (1-4*)       â”‚ â”‚
-â”‚ â”‚ Row 2: Environment(1)| Composition (1) | Camera (1)         â”‚ â”‚
-â”‚ â”‚ Row 3: Lighting (1-4*)| Colour (1-3*)  | Atmosphere (1-3*)  â”‚ â”‚
-â”‚ â”‚ Row 4: Materials(1-3*)| Fidelity (1-4*)| [empty]            â”‚ â”‚
-â”‚ â”‚ Row 5: Constraints/Negative (2-9*) [full width]             â”‚ â”‚
-â”‚ â”‚ * = Platform-aware: varies by platform tier + user tier     â”‚ â”‚
-â”‚ â”‚ When locked: disabled styling only, NO overlay text         â”‚ â”‚
-â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
-â”‚ â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
-â”‚ â”‚ Platform Tips (contextual, sky-coloured box)                â”‚ â”‚
-â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
-â”‚ â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
-â”‚ â”‚ Assembled Prompt Preview                      [Clear all]   â”‚ â”‚
-â”‚ â”‚ â€¢ Shows positive prompt ONLY (no separator, no neg label)   â”‚ â”‚
-â”‚ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚ FOOTER (shrink-0)                                               â”‚
-â”‚ [ðŸ“‹ Copy prompt*] [ðŸŽ² Randomise**] [âœ“ Done] [â†— Open in Provider] â”‚
-â”‚ * = Usage tracking trigger                                      â”‚
-â”‚ ** = Disabled when locked                                       â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+Click Done or click away to close dropdowns. Type in any field to add custom entries.
 ```
 
 #### Required Elements
 
-1. **Header** (fixed at top)
-   - Provider name + "Prompt builder" (h2)
-   - Subtitle with gradient: "Build your prompt by selecting from the criteria below. Not every field is required, but the more detail you provide, the better your results will be. Custom entries accepted."
-   - ~~Platform family badge~~ **REMOVED** â€” adds no value
-   - ~~Provider tags~~ **REMOVED** â€” adds no value
+1. **Header** (fixed at top): Provider name · Prompt builder, subtitle with gradient. NO badge, NO tags — clean header only.
 
-2. **Authentication Layer** (conditional)
-   - Usage counter for free users (discrete, non-intrusive)
-   - Central lock overlay for unauthenticated or over-quota users
-   - **NO per-dropdown lock overlay text** (v5.0.0+ change)
+2. **Authentication Layer** (conditional): Usage counter for free users, central lock overlay for unauthenticated or over-quota users. NO per-dropdown lock overlay text.
 
-3. **Category Dropdowns** (12 categories with platform-aware limits)
-   - Multi-select comboboxes with custom entry support
-   - Grid layout: 3 columns on desktop, 2 on tablet, 1 on mobile
-   - Negative prompt spans full width
-   - **~100 options per positive category**
-   - **~1000 options for negative category**
-   - **Platform-aware limits:** Different platforms get different selection counts (see Â§12-Category Dropdown System)
-   - **Pro Promagen bonus:** +1 on stackable categories
-   - **When locked:** disabled styling only, no text overlay
+3. **Composition Mode Toggle + Text Length Optimizer**: Static/Dynamic toggle with platform-specific tooltips, optimizer toggle with divider. See §3-Stage Assembly Pipeline.
 
-4. **Platform Tips** (contextual)
-   - Shows platform-specific guidance when relevant
-   - Sky-blue bordered box with ðŸ’¡ icon
+4. **Category Dropdowns** (12 categories with platform-aware limits): Multi-select comboboxes with custom entry support. Grid: 3 columns desktop, 2 tablet, 1 mobile. Negative spans full width. ~100 options per positive category, ~1000 for negative. Platform-aware limits (see §12-Category Dropdown System). Pro Promagen bonus: +1 on stackable categories. When locked: disabled styling only, no text overlay.
 
-5. **Assembled Prompt Preview**
-   - Shows the compiled **positive prompt only** from `assemblePrompt(platformId, selections, weatherWeightOverrides?)`
-   - **NO separator line** (removed)
-   - **NO "Negative prompt:" label** (removed)
-   - Clear all button with **Core Colours gradient** (`from-sky-400 via-emerald-300 to-indigo-400`)
-   - Scrollable if prompt is long
-   - When "Inspired by" badge is active (from "Try in" preload), shows city/venue/conditions badge above preview
+5. **Scene Starters** (v9.0.0): 200 curated one-click scenes (25 free, 175 pro) across 23 worlds. Prefill 5–8 categories with tier-aware selections.
 
-6. **Footer** (fixed at bottom)
-   - **Copy prompt button** (usage tracking trigger)
-   - ðŸŽ² Randomise button (purple gradient) â€” **disabled when locked**
-   - Done button
-   - Open in Provider button (links to `/go/[id]`)
+6. **Explore Drawer** (v9.0.0): Expandable vocabulary panel per category with source-grouped tabs (Core, Weather, Commodity, Shared, 🎬 Scene). Real-time search, 60-chip pagination, click-to-add, tier badges (★/◆/💬/⚡/⚠), cascade relevance ordering.
+
+7. **Platform Tips** (contextual): Shows platform-specific guidance when relevant. Sky-blue bordered box with 💡 icon.
+
+8. **Stage Indicator Badge**: Shows current assembly stage above the prompt preview: `📋 Static` | `✨ Dynamic` | `⚡ Optimized` | `✓ Optimal`.
+
+9. **Assembled Prompt Preview**: Shows compiled positive prompt from `assemblePrompt(platformId, selections, weatherWeightOverrides?)`. NO separator line, NO "Negative prompt:" label. Clear all button with Core Colours gradient. Inline copy icon (float-right, SVG clipboard icon). "Inspired by" badge when pre-loaded from homepage "Try in".
+
+10. **Optimized Prompt Preview** (when optimizer ON): Emerald-bordered box with optimized text. Shows char count, removed terms, optimization transparency panel (Pro-only). Inline copy icon float-right. Length indicator below.
+
+11. **Prompt Intelligence Section**: DNA Bar (coherence visualisation), conflict warnings (when `intelligencePrefs.conflictWarningsEnabled`), smart suggestion chips (4 compact / 6 full), health badge with coherence score.
+
+12. **Footer** (fixed at bottom): Copy prompt button (usage tracking trigger), 🎲 Randomise (purple gradient, disabled when locked), Save to Library, Done, Open in Provider (`/go/[id]?src=prompt_builder`).
+
+13. **Feedback System** (Phase 7.10): FeedbackInvitation widget (post-copy), FeedbackMemoryBanner (overlap hints).
+
+---
+
+## 3-Stage Assembly Pipeline
+
+**Added:** 4 March 2026
+
+The prompt builder uses a 3-stage pipeline that maps directly to the Composition Mode Toggle:
+
+### Stage Definitions
+
+| Stage | Mode | Function | What It Does |
+| --- | --- | --- | --- |
+| **1** | Static | `assembleStatic()` | Raw comma join of user selections in `CATEGORY_ORDER`. No formatting, no intelligence, no weights. |
+| **2** | Dynamic | `assemblePrompt(id, sel, overrides?, { skipTrim: true })` | Platform-specific formatting: reorder by impact priority, apply CLIP weights, quality prefix/suffix, deduplication. NO length trimming. |
+| **3** | Optimize | `assemblePrompt(id, sel, overrides?)` | Full Dynamic formatting WITH 5-phase trim pipeline to platform sweet spot. |
+
+### Composition Mode Toggle
+
+**File:** `frontend/src/components/composition-mode-toggle.tsx` (322 lines)
+
+**Props:**
+
+```typescript
+export interface CompositionModeToggleProps {
+  compositionMode: 'static' | 'dynamic';
+  onModeChange: (mode: 'static' | 'dynamic') => void;
+  platformId?: string;      // NEW: enables tier-specific tooltips
+  disabled?: boolean;
+  compact?: boolean;
+}
+```
+
+**Platform-specific tooltips:** The toggle tooltip changes based on `platformId` → `getPlatformTierId()`:
+
+- **Tier 1 (CLIP):** Explains CLIP emphasis weights `(samurai:1.2)`, quality boosters, sharpness terms
+- **Tier 2 (Midjourney):** Explains `--no` block, parameter protection, steep position decay
+- **Tier 3 (Natural Language):** Explains grammatical sentence building, negative-to-positive conversion
+- **Tier 4 (Plain):** Explains short focused prompts, no weights
+- **Static tooltip:** Always the same — raw selections, no formatting
+
+**Tooltip body text colour:** `text-slate-300` (reverted from `text-emerald-400` for readability)
+
+### Text Length Optimizer
+
+**File:** `frontend/src/components/providers/text-length-optimizer.tsx` (347 lines)
+
+- Toggle right of Static/Dynamic, separated by vertical divider
+- Disabled (Core Colours at full opacity) when Static mode ON
+- When enabled, shows optimized prompt preview with emerald border
+- Tooltip body text colour: `text-slate-300` (reverted from `text-emerald-400`)
+
+### Visual Diff Highlighting
+
+When switching from Static → Dynamic, added/changed terms are highlighted with emerald background that fades after 2 seconds. Implemented via `DiffHighlightedText` inline component (prompt-builder.tsx line 352).
+
+### Length Indicator
+
+**File:** `frontend/src/components/providers/length-indicator.tsx` (224 lines)
+
+Shows current prompt length relative to platform sweet spot with colour-coded status (green/amber/rose).
+
+### Optimization Transparency Panel
+
+**File:** `frontend/src/components/providers/optimization-transparency-panel.tsx` (419 lines)
+
+Pro-only panel showing removed terms, phase where sweet spot was achieved, original vs optimized length.
+
+### Inline Copy Icons
+
+Both prompt preview boxes (assembled + optimized) have inline copy icons that float right after the last character:
+
+- `ml-2 inline-flex float-right rounded-md p-1`
+- Assembled: `bg-white/5 text-slate-400` → hover `bg-white/10 text-slate-200`
+- Optimized: `bg-white/5 text-emerald-300/50` → hover `bg-white/10 text-emerald-200`
+- Copied state: `bg-emerald-500/20 text-emerald-400` with checkmark SVG
+
+---
+
+## Usage Tracking Implementation
+
+### Copy Prompt Button Enhancement
+
+```typescript
+// assemblePrompt now accepts optional 3rd arg: weatherWeightOverrides
+const assembled = assemblePrompt(platformId, selections, weatherWeightOverrides);
+
+const handleCopyPrompt = async () => {
+  await navigator.clipboard.writeText(assembled.positive);
+
+  // Track usage for authenticated free users
+  if (isAuthenticated && userTier === 'free') {
+    try {
+      await trackPromptUsage(userId);
+      updateDailyUsage((current) => ({
+        ...current,
+        count: current.count + 1,
+      }));
+    } catch (error) {
+      console.error('Failed to track usage:', error);
+    }
+  }
+
+  // Track for anonymous users (localStorage)
+  if (!isAuthenticated) {
+    incrementAnonymousCount();
+  }
+
+  showNotification('Prompt copied to clipboard');
+};
+```
+
+### Homepage "Try in" Preload (Phase D — Unified Brain)
+
+When a user clicks "Try in [Provider]" from the homepage PotM, the builder pre-populates via sessionStorage. See `unified-prompt-brain.md` for full architecture.
+
+#### State Variable: `weatherWeightOverrides`
+
+```typescript
+const [weatherWeightOverrides, setWeatherWeightOverrides] = useState<
+  Partial<Record<PromptCategory, number>> | undefined
+>(undefined);
+```
+
+Holds per-category weight overrides from weather intelligence (e.g., `{ subject: 1.3, lighting: 1.3, environment: 1.2, composition: 1.05 }`). When defined, merges into `assemblePrompt()` as third argument. When user arrives via manual dropdown (not "Try in"), this is `undefined`.
+
+#### SessionStorage Payload
+
+```typescript
+// Key 1: Category data + weight overrides
+'promagen:preloaded-payload': {
+  promptText: string;
+  categoryMap?: {
+    selections: Partial<Record<PromptCategory, string[]>>;
+    customValues: Partial<Record<PromptCategory, string>>;
+    negative: string[];
+    weightOverrides?: Partial<Record<string, number>>;
+    confidence?: Partial<Record<PromptCategory, number>>;
+    meta: WeatherCategoryMeta;
+  };
+}
+
+// Key 2: "Inspired by" badge metadata
+'promagen:preloaded-inspiredBy': {
+  city: string;
+  venue: string;
+  mood: string;
+  conditions: string;
+  emoji: string;
+  categoryMapHash: string;
+}
+```
+
+#### Two-Effect Split (Bug Fix)
+
+**Effect 1 — Category preload (runs once on mount):** Reads `promagen:preloaded-payload`. If `categoryMap` exists, applies `selections`, `customValues`, and `weightOverrides` to builder state. Clears sessionStorage immediately.
+
+**Effect 2 — "Inspired by" badge (runs once on mount):** Reads `promagen:preloaded-inspiredBy`. Sets display-only badge state. Does not trigger re-application of selections.
+
+#### Weight Merge Order
+
+**Platform wins on conflicts:**
+
+```typescript
+weightedCategories: {
+  ...weatherWeightOverrides,              // weather base layer
+  ...platformFormat.weightedCategories,   // platform wins
+}
+```
+
+### Usage Tracking API
+
+**Endpoint:** `POST /api/usage/track`
+
+```typescript
+// Request
+{ action: 'prompt_copy' }
+
+// Response
+{ success: boolean; usage: { count: number; limit: number | null; resetTime: string } }
+```
 
 ---
 
@@ -426,14 +584,14 @@ export function PromptBuilder({
 
 ### Category Order (Optimized for Prompt Construction)
 
-Categories are ordered for optimal AI token weighting â€” most important terms appear first:
+Categories are ordered for optimal AI token weighting — most important terms appear first:
 
 | #   | Category      | Label                  | Description                            |
 | --- | ------------- | ---------------------- | -------------------------------------- |
-| 1   | `subject`     | Subject                | Core identity â€” one main subject     |
-| 2   | `action`      | Action / Pose          | Core identity â€” one primary action   |
+| 1   | `subject`     | Subject                | Core identity — one main subject       |
+| 2   | `action`      | Action / Pose          | Core identity — one primary action     |
 | 3   | `style`       | Style / Rendering      | Art styles, rendering approaches       |
-| 4   | `environment` | Environment            | Core identity â€” one setting          |
+| 4   | `environment` | Environment            | Core identity — one setting            |
 | 5   | `composition` | Composition / Framing  | One framing approach                   |
 | 6   | `camera`      | Camera                 | One lens/angle                         |
 | 7   | `lighting`    | Lighting               | Light sources, directions, qualities   |
@@ -445,16 +603,16 @@ Categories are ordered for optimal AI token weighting â€” most important te
 
 ### Platform-Aware Selection Limits (v8.2.0)
 
-Selection limits are **platform-aware** â€” different AI platforms handle prompt complexity differently. Each of the 42 supported platforms is assigned to one of four tiers.
+Selection limits are **platform-aware** — different AI platforms handle prompt complexity differently. Each of the 42 supported platforms is assigned to one of four tiers.
 
 #### Platform Tier Philosophy
 
 | Tier  | Name              | Prompt Style       | Why These Limits?                                                                   |
 | ----- | ----------------- | ------------------ | ----------------------------------------------------------------------------------- |
-| **1** | CLIP-Based        | Tokenized keywords | CLIP tokenizes efficiently â€” stacking 2-3 styles/lights produces coherent results |
-| **2** | Midjourney Family | Parameter-rich     | Built for complex prompts â€” handles 3+ styles, `--no` with 8+ terms               |
-| **3** | Natural Language  | Conversational     | Prefers focused prompts â€” too many terms cause confusion                          |
-| **4** | Plain Language    | Simple prompts     | Consumer-focused â€” one style, one mood works best                                 |
+| **1** | CLIP-Based        | Tokenized keywords | CLIP tokenizes efficiently — stacking 2-3 styles/lights produces coherent results   |
+| **2** | Midjourney Family  | Parameter-rich     | Built for complex prompts — handles 3+ styles, `--no` with 8+ terms                |
+| **3** | Natural Language   | Conversational     | Prefers focused prompts — too many terms cause confusion                            |
+| **4** | Plain Language     | Simple prompts     | Consumer-focused — one style, one mood works best                                   |
 
 #### Selection Limits Matrix (Standard Promagen)
 
@@ -490,21 +648,21 @@ Selection limits are **platform-aware** â€” different AI platforms handle p
 | **Fidelity**   | **3**  | **4**  | **3**  | **2**  |
 | **Negative**   | **6**  | **9**  | **4**  | **3**  |
 
-**Stackable categories:** Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative  
+**Stackable categories:** Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative
 **Non-stackable categories (always 1):** Subject, Action, Environment, Composition, Camera
 
 #### Platform Tier Assignments (All 42 Platforms)
 
-**Tier 1 â€” CLIP-Based (13 platforms):**
+**Tier 1 — CLIP-Based (13 platforms):**
 `stability`, `leonardo`, `clipdrop`, `nightcafe`, `dreamstudio`, `lexica`, `novelai`, `dreamlike`, `getimg`, `openart`, `playground`, `artguru`, `jasper-art`
 
-**Tier 2 â€” Midjourney Family (2 platforms):**
+**Tier 2 — Midjourney Family (2 platforms):**
 `midjourney`, `bluewillow`
 
-**Tier 3 â€” Natural Language (10 platforms):**
+**Tier 3 — Natural Language (10 platforms):**
 `openai`, `adobe-firefly`, `ideogram`, `runway`, `microsoft-designer`, `bing`, `flux`, `google-imagen`, `imagine-meta`, `hotpot`
 
-**Tier 4 â€” Plain Language (17 platforms):**
+**Tier 4 — Plain Language (17 platforms):**
 `canva`, `craiyon`, `deepai`, `pixlr`, `picwish`, `fotor`, `visme`, `vistacreate`, `myedit`, `simplified`, `freepik`, `picsart`, `photoleap`, `artbreeder`, `123rf`, `remove-bg`, `artistly`
 
 #### Auto-Trim Behaviour
@@ -515,34 +673,12 @@ When a user switches platforms, selection limits may change. The system **silent
 - No notification shown (clean UX)
 - User can re-select different options if desired
 
-**Example:** User on Midjourney (Tier 2) with 3 styles â†’ switches to Artistly (Tier 4) â†’ 2 styles automatically removed, 1 remains.
-
 #### Dynamic Tooltip Guidance
 
 Tooltips dynamically reflect the actual limit for the current platform with proper singular/plural grammar:
 
 - Artistly (Tier 4): "Pick 1 style. Keep it focused."
 - Midjourney (Tier 2): "Pick up to 3 complementary styles. Avoid conflicting aesthetics."
-
-### Implementation
-
-```typescript
-import { usePromagenAuth } from '@/hooks/use-promagen-auth';
-
-// Platform tier is determined automatically from provider.id
-const { categoryLimits, platformTier } = usePromagenAuth({ platformId: provider.id });
-
-// categoryLimits is now platform-aware
-// e.g., { style: 3, lighting: 3, negative: 8 } for Midjourney
-// e.g., { style: 1, lighting: 1, negative: 2 } for Artistly
-
-// Use in Combobox
-<Combobox
-  maxSelections={categoryLimits[category] ?? 1}
-  tooltipGuidance={getDynamicTooltipGuidance(category, categoryLimits[category])}
-  ...
-/>
-```
 
 ### Options Per Category
 
@@ -574,6 +710,7 @@ Options are stored in: `frontend/src/data/providers/prompt-options.json`
 - Pink character counter (`text-pink-500`)
 - **Conditional free text for Negative category** (see below)
 - **Disabled when locked** (cannot type in any category)
+- **Vocab submission** (Phase 7.7): custom terms silently captured via `useVocabSubmission(platformId, platformTier)` for crowdsourced vocabulary growth
 
 ### Conditional Free Text for Negative Category
 
@@ -581,8 +718,8 @@ The Negative category's free text input is **platform-dependent**:
 
 | Platform Type                              | Free Text? | Reason                        |
 | ------------------------------------------ | ---------- | ----------------------------- |
-| **Native negative support** (14 platforms) | âœ… Shown  | Custom terms work directly    |
-| **Converted negatives** (28 platforms)     | âŒ Hidden  | Only pre-mapped terms convert |
+| **Native negative support** (14 platforms) | ✅ Shown   | Custom terms work directly    |
+| **Converted negatives** (28 platforms)     | ❌ Hidden  | Only pre-mapped terms convert |
 
 **Platforms with native negative support:**
 
@@ -593,7 +730,7 @@ The Negative category's free text input is **platform-dependent**:
 
 - DALL-E, Adobe Firefly, Bing, Microsoft Designer, Meta Imagine, Canva, Jasper Art, Google Imagen, and 20+ others
 
-For these 28 platforms, custom negative text would be ignored anyway â€” only the pre-mapped dropdown terms work (they convert to positive equivalents).
+For these 28 platforms, custom negative text would be ignored anyway — only the pre-mapped dropdown terms work (they convert to positive equivalents).
 
 ---
 
@@ -616,29 +753,6 @@ For these 28 platforms, custom negative text would be ignored anyway â€” on
 - **Double-click protection** via ref guard (v6.3.0)
 - **Compact mode** for header use (v6.4.0) — hides label, tooltip, pt-8 padding
 
-### Props Interface
-
-```typescript
-interface ComboboxProps {
-  id: string;
-  label: string;
-  description?: string;
-  tooltipGuidance?: string;
-  options: string[];
-  selected: string[];
-  customValue: string;
-  onSelectChange: (selected: string[]) => void;
-  onCustomChange: (value: string) => void;
-  placeholder?: string;
-  maxSelections?: number;
-  maxCustomChars?: number;
-  allowFreeText?: boolean;
-  isLocked?: boolean;
-  lockMessage?: string; // NOTE: Accepted but NOT displayed in v5.0.0+
-  compact?: boolean; // v6.4.0: Hides label, tooltip, and pt-8 padding
-}
-```
-
 ### Auto-Close Behaviour (v6.3.0)
 
 The dropdown **closes immediately** when the selection limit is reached:
@@ -647,14 +761,6 @@ The dropdown **closes immediately** when the selection limit is reached:
 - **Multi-select (limit 2+):** Closes when `newSelected.length >= maxSelections`
 - **Done button:** Available for multi-select to close before reaching max
 - **Double-click protection:** Uses ref guard to prevent race conditions
-
-```typescript
-// CRITICAL: Close FIRST for single-select or when limit reached
-if (maxSelections === 1 || newCount >= maxSelections) {
-  setIsOpen(false); // Happens IMMEDIATELY
-}
-onSelectChange(newSelected); // State update happens AFTER close
-```
 
 ### Lock State Visual Treatment (v5.0.0)
 
@@ -665,265 +771,154 @@ When `isLocked=true`:
 - **Dropdown arrow:** Hidden when locked
 - **Input:** Shows empty placeholder, cannot type
 - **NO overlay text:** The `lockMessage` prop is accepted for compatibility but NOT displayed
-- **NO "Sign in to continue" text** in dropdown area
-
-**Why no overlay text?** Showing "Sign in to continue" on every single dropdown was ugly and repetitive UX. Lock messaging now appears ONLY in the central overlay at the top of the prompt builder section.
 
 ---
 
 ## AspectRatioSelector Component
 
-**File:** `frontend/src/components/providers/aspect-ratio-selector.tsx`
+**File:** `frontend/src/components/providers/aspect-ratio-selector.tsx` (322 lines)
 **Version:** 1.2.0
 
-### Lock State Visual Treatment (v1.2.0)
-
-When `disabled=true`:
-
-- **Disabled buttons:** `opacity-50`, `cursor-not-allowed`
-- **NO overlay text:** Clean disabled appearance
-- **NO "Sign in to continue" text**
+When `disabled=true`: `opacity-50`, `cursor-not-allowed`, NO overlay text.
 
 ---
 
-## Usage Tracking Implementation
+## File Tree
 
-### Copy Prompt Button Enhancement
-
-The "Copy prompt" button must be enhanced to track usage:
-
-```typescript
-// assemblePrompt now accepts optional 3rd arg: weatherWeightOverrides
-// When user arrives via "Try in" from homepage PotM, weatherWeightOverrides
-// carries per-category weights from the weather intelligence system.
-// For manual builds, weatherWeightOverrides is undefined (no effect).
-const assembled = assemblePrompt(platformId, selections, weatherWeightOverrides);
-
-const handleCopyPrompt = async () => {
-  // Existing copy functionality
-  await navigator.clipboard.writeText(assembled.positive);
-
-  // Track usage for authenticated free users
-  if (isAuthenticated && userTier === 'free') {
-    try {
-      await trackPromptUsage(userId);
-      updateDailyUsage((current) => ({
-        ...current,
-        count: current.count + 1,
-      }));
-    } catch (error) {
-      console.error('Failed to track usage:', error);
-    }
-  }
-
-  // Track for anonymous users (localStorage)
-  if (!isAuthenticated) {
-    incrementAnonymousCount();
-  }
-
-  showNotification('Prompt copied to clipboard');
-};
-```
-
-### Homepage "Try in" Preload (Phase D — Unified Brain)
-
-When a user clicks "Try in [Provider]" from the homepage Prompt of the Moment showcase, the builder pre-populates with weather-generated data via sessionStorage. This is the Phase D pathway from the Unified Brain architecture (see `unified-prompt-brain.md`).
-
-#### State Variable: `weatherWeightOverrides`
-
-```typescript
-const [weatherWeightOverrides, setWeatherWeightOverrides] = useState<
-  Partial<Record<PromptCategory, number>> | undefined
->(undefined);
-```
-
-This state holds per-category weight overrides from the weather intelligence system (e.g., `{ subject: 1.3, lighting: 1.3, environment: 1.2, composition: 1.05 }`). When defined, these weights merge into `assemblePrompt()` as the third argument. When the user arrives via manual dropdown selection (not "Try in"), this state is `undefined` and has no effect.
-
-#### SessionStorage Payload
-
-The homepage writes two keys when the user clicks "Try in":
-
-```typescript
-// Key 1: Category data + weight overrides
-'promagen:preloaded-payload': {
-  promptText: string;                                    // Pre-formatted display text (fallback)
-  categoryMap?: {                                        // WeatherCategoryMap (Phase D path)
-    selections: Partial<Record<PromptCategory, string[]>>;
-    customValues: Partial<Record<PromptCategory, string>>;
-    negative: string[];
-    weightOverrides?: Partial<Record<string, number>>;   // Per-category weights
-    confidence?: Partial<Record<PromptCategory, number>>;
-    meta: WeatherCategoryMeta;
-  };
-}
-
-// Key 2: "Inspired by" badge metadata
-'promagen:preloaded-inspiredBy': {
-  city: string;
-  venue: string;
-  mood: string;
-  conditions: string;
-  emoji: string;
-  categoryMapHash: string;   // For badge fingerprint verification
-}
-```
-
-#### Two-Effect Split (Bug Fix)
-
-The preload uses two independent `useEffect` hooks to avoid the flash/re-apply bug:
-
-**Effect 1 — Category preload (runs once on mount):** Reads `promagen:preloaded-payload`. If `categoryMap` exists, applies `selections`, `customValues`, and `weightOverrides` to builder state. Clears all sessionStorage keys immediately (one-time use). No dependency on `categoryState`.
-
-**Effect 2 — "Inspired by" badge (runs once on mount):** Reads `promagen:preloaded-inspiredBy`. Sets display-only badge state (city, venue, conditions, mood, emoji). Does not trigger re-application of selections.
-
-#### Weight Merge Order
-
-When `weatherWeightOverrides` is defined, `assembleTierAware()` merges it with platform-defined weights. **Platform wins on conflicts:**
-
-```typescript
-weightedCategories: {
-  ...weatherWeightOverrides,              // weather base layer
-  ...platformFormat.weightedCategories,   // platform wins
-}
-```
-
-### Randomise Button Lock State
-
-The ðŸŽ² Randomise button must be disabled when locked:
-
-```typescript
-<button
-  type="button"
-  onClick={handleRandomise}
-  disabled={isLocked}  // Disabled when locked
-  className={`... ${
-    isLocked
-      ? 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
-      : 'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 ...'
-  }`}
->
-  <span>ðŸŽ²</span>
-  Randomise
-</button>
-```
-
-### Usage Tracking API
-
-**Endpoint:** `POST /api/usage/track`
-**Purpose:** Increment daily usage count for authenticated users
-
-**Request:**
-
-```typescript
-{
-  action: 'prompt_copy';
-}
-```
-
-**Response:**
-
-```typescript
-{
-  success: boolean;
-  usage: {
-    count: number;
-    limit: number | null;
-    resetTime: string; // ISO timestamp
-  }
-}
-```
-
----
-
-## File Structure
+### Source Structure
 
 ```
 frontend/src/
-â”œâ”€â”€ app/providers/[id]/
-â”‚   â”œâ”€â”€ page.tsx                    # Provider prompt builder page (auth-aware)
-â”‚   â””â”€â”€ prompt-builder/
-â”‚       â””â”€â”€ page.tsx                # Redirect to /providers/[id]
-â”œâ”€â”€ components/providers/
-â”‚   â”œâ”€â”€ prompt-builder.tsx          # Main prompt builder component v10.0.0 (~2,431 lines)
-â”‚   â”œâ”€â”€ aspect-ratio-selector.tsx   # Aspect ratio selector v1.2.0 (no lock overlay)
-â”‚   â””â”€â”€ provider-workspace.tsx      # Full-height wrapper
-â”œâ”€â”€ components/ui/
-â”‚   â””â”€â”€ combobox.tsx                # Multi-select combobox v6.4.0 (~530 lines)
-â”œâ”€â”€ hooks/
-â”‚   â””â”€â”€ use-promagen-auth.ts        # Authentication hook
-â”œâ”€â”€ data/providers/
-â”‚   â”œâ”€â”€ prompt-options.json         # 12 categories (~2100 options, ~2200 lines)
-â”‚   â””â”€â”€ platform-formats.json       # 42 platform assembly rules (~1,193 lines)
-â”œâ”€â”€ lib/
-â”‚   â”œâ”€â”€ prompt-builder.ts           # Unified assembly engine (~1,519 lines)
-â”‚   â”‚   â”œâ”€â”€ NEGATIVE_TO_POSITIVE    # 30-entry conversion map
-â”‚   â”‚   â”œâ”€â”€ convertNegativesToPositives()
-â”‚   â”‚   â”œâ”€â”€ supportsNativeNegative()  # Check for native negative support
-â”‚   â”‚   â”œâ”€â”€ formatPromptForCopy()     # Returns positive only
-â”‚   â”‚   â”œâ”€â”€ getPlatformFormat()       # Looks up platform config
-â”‚   â”‚   â”œâ”€â”€ getEffectiveOrder()       # Impact-priority category ordering
-â”‚   â”‚   â”œâ”€â”€ assemblePrompt(platformId, selections, weightOverrides?)  # THE ONE BRAIN
-â”‚   â”‚   â”œâ”€â”€ assembleTierAware()       # Internal: weight merge, dedup, token estimation
-â”‚   â”‚   â”œâ”€â”€ deduplicateWithinCategories()
-â”‚   â”‚   â”œâ”€â”€ deduplicateAcrossCategories()
-â”‚   â”‚   â””â”€â”€ estimateClipTokens()      # Token estimation for ALL tiers
-â”‚   â””â”€â”€ usage/
-â”‚       â”œâ”€â”€ anonymous-storage.ts    # Anonymous tracking v2.0.0 (daily reset)
-â”‚       â”œâ”€â”€ constants.ts            # Usage limits
-â”‚       â””â”€â”€ index.ts                # Re-exports
-â””â”€â”€ types/
-    â””â”€â”€ prompt-builder.ts           # TypeScript types (~350 lines)
-        â”œâ”€â”€ PromptCategory          # 12 categories
-        â”œâ”€â”€ CATEGORY_ORDER          # Optimal order for prompt construction
-        â”œâ”€â”€ CATEGORY_LIMITS         # Selection limits per category
-        â”œâ”€â”€ PLATFORMS_WITH_NATIVE_NEGATIVE  # 14 platforms
-        â”œâ”€â”€ WeatherCategoryMap      # Structured data contract (weather → builder)
-        â”œâ”€â”€ WeatherCategoryMeta     # City/venue/conditions metadata
-        â”œâ”€â”€ PromptDNAFingerprint    # Prompt identity hash
-        â””â”€â”€ ComboboxProps           # Includes allowFreeText
+├── app/providers/[id]/
+│   ├── page.tsx                    # Provider prompt builder page (auth-aware)
+│   └── prompt-builder/
+│       └── page.tsx                # Redirect to /providers/[id]
+├── components/
+│   ├── composition-mode-toggle.tsx # Static/Dynamic toggle v1.0.0 (322 lines)
+│   ├── providers/
+│   │   ├── prompt-builder.tsx      # Main prompt builder v10.0.0 (2,746 lines)
+│   │   ├── text-length-optimizer.tsx  # Optimizer toggle v1.0.0 (347 lines)
+│   │   ├── length-indicator.tsx    # Length vs sweet spot (224 lines)
+│   │   ├── optimization-transparency-panel.tsx  # Pro-only detail (419 lines)
+│   │   ├── aspect-ratio-selector.tsx  # AR buttons v1.2.0 (322 lines)
+│   │   └── provider-workspace.tsx  # Centre column wrapper (61 lines)
+│   └── ui/
+│       └── combobox.tsx            # Multi-select combobox v6.4.0
+├── hooks/
+│   ├── use-promagen-auth.ts        # Auth, tier, limits, usage (421 lines)
+│   ├── use-composition-mode.ts     # Composition mode persistence (352 lines)
+│   └── use-prompt-optimization.ts  # Optimizer computation (356 lines)
+├── data/
+│   ├── providers/
+│   │   ├── prompt-options.json     # 12 categories (~2,100 options)
+│   │   └── platform-formats.json   # 42 platform configs (1,844 lines)
+│   └── platform-tiers.ts          # Platform → tier mapping (199 lines)
+├── lib/
+│   ├── prompt-builder.ts           # Unified assembly engine (1,738 lines)
+│   │   ├── assemblePrompt(platformId, selections, weightOverrides?)  # THE ONE BRAIN
+│   │   ├── assembleStatic(platformId, selections)  # Raw comma join (no intelligence)
+│   │   ├── getPlatformFormat()     # Looks up platform config
+│   │   ├── getEffectiveOrder()     # Impact-priority category ordering
+│   │   ├── assembleTierAware()     # Internal: weight merge + dedup + token estimation
+│   │   ├── deduplicateWithinCategories()
+│   │   ├── deduplicateAcrossCategories()
+│   │   ├── estimateClipTokens()    # Token estimation for all tiers
+│   │   ├── convertNegativesToPositives()
+│   │   ├── supportsNativeNegative()
+│   │   └── formatPromptForCopy()
+│   ├── prompt-post-process.ts      # Post-processing engine (216 lines, 6 exports)
+│   ├── prompt-dna.ts              # DNA fingerprint hashing
+│   ├── adaptive-weights.ts        # Weight merge: weather × platform
+│   ├── category-synergy.ts        # Inter-category boost scoring
+│   ├── weather/
+│   │   ├── weather-category-mapper.ts  # Weather → category map (581 lines)
+│   │   └── weather-prompt-generator.ts # Weather prompt engine (486 lines)
+│   └── usage/
+│       ├── anonymous-storage.ts    # Anonymous tracking v2.0.0 (daily reset)
+│       ├── constants.ts            # Usage limits
+│       └── index.ts                # Re-exports
+└── types/
+    └── prompt-builder.ts           # TypeScript types
+        ├── PromptCategory          # 12 categories
+        ├── CATEGORY_ORDER          # Optimal order for prompt construction
+        ├── CATEGORY_LIMITS         # Selection limits per category
+        ├── PLATFORMS_WITH_NATIVE_NEGATIVE  # 14 platforms
+        ├── WeatherCategoryMap      # Structured data contract (weather → builder)
+        ├── WeatherCategoryMeta     # City/venue/conditions metadata
+        └── PromptDNAFingerprint    # Prompt identity hash
 ```
 
 ---
 
-## Implementation Checklist
+## Prompt Intelligence Integrations
 
-- [x] PromptBuilder with 12-category dropdown system
-- [x] ~~Selection limits: Free tier (all 1 except negative 5), Paid tier (style/lighting/fidelity get 2)~~ **REPLACED by platform-aware limits**
-- [x] **Platform-aware category limits** (v8.0.0) â€” 4 tiers with different selection counts
-- [x] **Platform tier assignments** â€” All 42 platforms mapped to tiers 1-4
-- [x] **Pro Promagen +1 bonus** on stackable categories
-- [x] **Auto-trim on platform switch** â€” Silently removes excess selections
-- [x] **Dynamic tooltip guidance** (v8.1.0) â€” Shows actual limit per platform
-- [x] **Bulletproof auto-close** (v6.3.0) â€” Closes BEFORE state update for single-select
-- [x] **Done button** for multi-select dropdowns (limit â‰¥ 2)
-- [x] **Double-click protection** via ref guard
-- [x] Platform-specific prompt optimization (7 families)
-- [x] Negative-to-positive conversion (30 mappings)
-- [x] Custom negative handling ("without X")
-- [x] Combobox component with multi-select + custom entry
-- [x] 50-char custom entry limit
-- [x] Auto-close dropdown when max reached
-- [x] ðŸŽ² Randomise button with purple gradient
-- [x] Randomise fills ALL 12 categories (including negative)
-- [x] **Randomise disabled when locked** (v6.4.0)
-- [x] Full-height layout aligned with exchange rails
-- [x] Uniform scrollbar styling
-- [x] Copy prompt functionality
-- [x] Open in Provider functionality
-- [x] Analytics events wired
-- [x] ~~Platform family badge display~~ **REMOVED**
-- [x] ~~Provider tags display~~ **REMOVED**
-- [x] Platform tips display
-- [x] Artistly uses natural family (not SD)
-- [x] LaunchPanel removed (no longer needed)
-- [x] **Fidelity category added** (position #11)
-- [x] **~100 options per positive category**
-- [x] **~1000 negative options**
-- [x] **Clean assembled prompt output (no separator)**
-- [x] **Core Colours gradient on Clear all button**
-- [x] **Conditional free text for negative (platform-dependent)**
-- [x] **supportsNativeNegative() function added**
-- [x] **Dropdown shows ALL options (no artificial limit)**
+The prompt builder integrates with the intelligence preference system via `useIntelligencePreferences()`:
+
+| Preference | Controls |
+| --- | --- |
+| `liveReorderEnabled` | Cascading intelligence — downstream reorder based on upstream selections |
+| `conflictWarningsEnabled` | Show conflict count badge when term conflicts detected |
+| `showCoherenceScore` | Show coherence percentage in health badge |
+| `suggestionsEnabled` | Show smart suggestion chips below prompt preview |
+| `compactSuggestions` | 4 chips (compact) vs 6 chips (full) |
+| `showDNABar` | Show prompt DNA composition bar |
+| `showWhyThisTooltips` | Show explanatory tooltips on DNA bar segments |
+
+**Market Mood toggle:** Removed from prompt builder scope (4 March 2026). The `useIntelligencePreferences` hook no longer includes `setIntelligencePref` in the prompt builder's destructuring. Market Mood may still exist in Gallery Mode — see `gallery-mode-master.md`.
+
+---
+
+## Scene Starters + Explore Drawer (v9.0.0)
+
+Full documentation in `scene-starters.md` and `prompt-builder-evolution-plan-v2.md`. Summary:
+
+### Scene Starters
+
+- 200 curated scenes (25 free, 175 pro) across 23 worlds
+- One-click prefill: 5–8 categories populated with tier-aware selections
+- Pro gate: locked scenes show upgrade dialog
+- Scene reset clears all prefilled categories
+
+### Explore Drawer
+
+- Expandable vocabulary panel per category
+- Source-grouped tabs: Core, Weather, Commodity, Shared
+- Active scene with `flavourPhrases` → "🎬 Scene" tab appears first
+- 9,058 total terms (3,501 core + 5,557 merged)
+- Tier badges: ★ (Tier 1), ◆ (Tier 2), 💬 (Tier 3), ⚡/⚠ (Tier 4)
+- Cascade ordering: chips sorted by relevance score when cascade data available
+- 60-chip pagination, real-time search, click-to-add
+- Categories without merged data (camera, fidelity, negative) show no tabs
+- Environment shows ~2,600 terms — paginated at 60 per page
+- Escape key closes expanded drawer
+
+### Analytics Events (Phase 4.2)
+
+- `scene_selected` fires on scene activation
+- `scene_reset` fires on scene clear (includes `was_modified` flag)
+- `explore_drawer_opened` fires once per drawer expand
+- `explore_chip_clicked` fires on chip click with category, term, platform_tier, source_tab
+- `cascade_reorder_triggered` fires when cascade scoring runs
+
+---
+
+## Prompt Telemetry & Learning Pipeline
+
+On every "Copy prompt" click, the builder fires telemetry via `sendPromptTelemetry()` with:
+
+- Platform ID, tier, composition mode, optimizer state
+- Health score, prompt analysis, AB test variant
+- Scene ID (if from scene starter)
+- User tier, account age days
+
+This feeds the learning pipeline for weight recalibration, co-occurrence analysis, and term quality scoring.
+
+---
+
+## Checklist
+
+- [x] **Full-height prompt builder** (no LaunchPanel)
+- [x] **12 categories, ~100 options each** (dropdown shows ALL options)
 - [x] **Anonymous 5-try feature** (localStorage tracking)
 - [x] **Anonymous daily reset** (v2.0.0 - resets at midnight)
 - [x] **Authentication integration** (Clerk)
@@ -932,17 +927,33 @@ frontend/src/
 - [x] **Daily quota enforcement** (10/day Standard, unlimited Pro Promagen)
 - [x] **Combobox v6.3.0** (bulletproof auto-close, Done button, double-click protection)
 - [x] **AspectRatioSelector v1.2.0** (no lock overlay)
-- [x] **Prompt builder v8.2.0** (platform-aware limits, dynamic tooltips, auto-trim)
-- [x] **Prompt builder v9.0.0** (Phase 0–4 prompt builder evolution)
-- [x] **Vocabulary Merge** — 9,058 terms (3,501 core + 5,557 merged from weather/commodity/shared)
+- [x] **Prompt builder v10.0.0** (unified brain, 3-stage pipeline, 2,746 lines)
+- [x] **3-Stage Assembly Pipeline** — Static (`assembleStatic`) / Dynamic (`assemblePrompt` skipTrim) / Optimize (`assemblePrompt`)
+- [x] **Composition Mode Toggle** — platform-specific tier tooltips (T1 CLIP / T2 MJ / T3 NL / T4 Plain)
+- [x] **Text Length Optimizer** — with transparency panel (Pro-only)
+- [x] **Visual diff highlighting** — Static → Dynamic shows emerald highlights on changed terms
+- [x] **Stage indicator badge** — 📋 Static | ✨ Dynamic | ⚡ Optimized | ✓ Optimal
+- [x] **Inline copy icons** — float-right in both assembled and optimized preview boxes
+- [x] **Tooltip body text** — `text-slate-300` (reverted from emerald-400 for readability)
+- [x] **Instruction text** — "Click Done" (not "Press Done")
+- [x] **Market Mood toggle** — removed from prompt builder scope
+- [x] **Vocabulary Merge** — 9,058 terms (3,501 core + 5,557 merged)
 - [x] **Cascading Intelligence** — downstream dropdowns reorder based on upstream selections
-- [x] **Scene Starters** — 200 curated one-click scenes (25 free, 175 pro) with tier-aware prefills
+- [x] **Scene Starters** — 200 curated scenes (25 free, 175 pro) with tier-aware prefills
 - [x] **Explore Drawer** — expandable vocabulary panel per category with source grouping + search
 - [x] **Scene flavour phrases** — 26 scenes have bonus phrases shown in Explore Drawer "🎬 Scene" tab
 - [x] **All-tier chip badges** — Tier 1 ★, Tier 2 ◆, Tier 3 💬, Tier 4 ⚡/⚠
 - [x] **Cascade chip ordering** — Explore chips sorted by relevance score when cascade data available
-- [x] **Analytics integration** — 5 new GTM events (scene_selected, scene_reset, explore_drawer_opened, explore_chip_clicked, cascade_reorder_triggered)
+- [x] **Analytics integration** — 5 GTM events (scene_selected, scene_reset, explore_drawer_opened, explore_chip_clicked, cascade_reorder_triggered)
 - [x] **Fluid typography audit** — All Phase 2–4 components use CSS clamp(). Zero fixed font sizes.
+- [x] **PotM Provider Icon visibility** — `bg-white/15` background + `drop-shadow(0 0 3px rgba(255,255,255,0.4))` glow
+- [x] **Vocab submission** (Phase 7.7) — custom terms silently captured
+- [x] **Feedback system** (Phase 7.10) — FeedbackInvitation + FeedbackMemoryBanner
+- [x] **Prompt telemetry** — fires on copy for learning pipeline
+- [x] **Unified Brain** (v10.0.0) — single `assemblePrompt()` with tier-aware routing
+- [x] **Phase D preload** — sessionStorage two-effect split for "Try in" from homepage
+- [x] **weatherWeightOverrides** — per-category weight overrides from weather intelligence
+- [x] **42-platform parity** — all platforms at architectural ceiling
 
 ---
 
@@ -972,7 +983,7 @@ frontend/src/
 - **Platform switch triggers auto-trim** (excess selections removed)
 - **Tooltip shows actual limit** ("Pick 1 style" vs "Pick up to 3 styles")
 - **Single-select closes immediately** (no double-click possible)
-- **Done button visible for multi-select** (limit â‰¥ 2)
+- **Done button visible for multi-select** (limit ≥ 2)
 
 ### Usage Tracking Tests
 
@@ -990,9 +1001,21 @@ frontend/src/
 - Clear all resets all selections
 - Randomise populates ALL 12 categories
 - Randomise fills negative with 2-3 options
-- Open in Provider href matches `/go/[id]?src=provider_detail`
+- Open in Provider href matches `/go/[id]?src=prompt_builder`
 - Dropdowns close when max selections reached
 - Negative category free text hidden for non-native platforms
+
+### 3-Stage Pipeline Tests (4 March 2026)
+
+- Static mode: `assembleStatic()` returns raw comma-joined selections (no weights, no reorder)
+- Dynamic mode: `assemblePrompt(skipTrim)` returns platform-formatted output (weights, reorder, quality prefix/suffix, NO trimming)
+- Optimize mode: `assemblePrompt()` returns trimmed output within platform sweet spot
+- Stage badge updates correctly: 📋 Static | ✨ Dynamic | ⚡ Optimized | ✓ Optimal
+- Visual diff highlights appear when switching Static → Dynamic (emerald background, 2s fade)
+- Inline copy icons work in both assembled and optimized preview boxes
+- Dynamic config guard: all 42 platforms produce correct output per their `platform-formats.json` config
+- Tooltip body text uses `text-slate-300` (NOT emerald-400)
+- Composition Mode Toggle shows tier-specific Dynamic tooltip content
 
 ### Platform-Specific Tests
 
@@ -1055,7 +1078,9 @@ frontend/src/
 - `explore_chip_clicked` fires on chip click with category, term, platform_tier, source_tab
 - `cascade_reorder_triggered` fires when cascade scoring runs with categories_reordered count
 
-**Test file:** `frontend/src/app/providers/[id]/__tests__/page.test.tsx`
+**Test file:** `frontend/src/components/providers/__tests__/phase-4-evolution.test.ts` (63 cases)
+**Test file:** `frontend/src/lib/__tests__/prompt-builder-3-stage.test.ts` (41 cases + dynamic config guard)
+**Test file:** `frontend/src/components/providers/__tests__/prompt-builder.analytics.test.tsx` (1 case)
 
 ---
 
@@ -1080,6 +1105,9 @@ When modifying the prompt builder page:
 - **All new UI elements must use CSS clamp() for sizing — no fixed px/rem**
 - **Preserve Phase D preload two-effect split — do not merge badge + selection effects**
 - **Do not modify weatherWeightOverrides merge order (platform wins on conflicts)**
+- **Preserve 3-stage pipeline: Static/Dynamic/Optimize must remain independent paths**
+- **Do not re-add Market Mood toggle to prompt builder (removed from scope)**
+- **Tooltip body text must stay text-slate-300 — do not change to emerald-400**
 
 **Existing features preserved:** Yes (required for every change)
 
@@ -1097,25 +1125,27 @@ These features were removed as they added no value:
 | LaunchPanel                       | 31 Dec 2025  | Replaced by full-height prompt builder     |
 | 30-item dropdown limit            | 1 Jan 2026   | Artificially hid curated options           |
 | **Dropdown lock message overlay** | 4 Jan 2026   | Ugly UX, repetitive text on every dropdown |
+| **Market Mood toggle**            | 4 Mar 2026   | Removed from prompt builder scope          |
 
 ---
 
 ## Changelog
 
-- **3 Mar 2026 (v10.0.0):** **UNIFIED BRAIN INTEGRATION** — `assemblePrompt()` signature updated from 2-arg `(platformId, selections)` to 3-arg `(platformId, selections, weightOverrides?)`. 7 family-specific assemblers (`assembleNatural`, `assembleMidjourney`, `assembleStableDiffusion`, etc.) replaced by single unified tier-aware assembler routing through `assembleKeywords()` (Tier 1+2), `assembleNaturalSentences()` (Tier 3), `assemblePlainLanguage()` (Tier 4). New internal functions: `assembleTierAware()` (weight merge + dedup + token estimation), `deduplicateWithinCategories()`, `deduplicateAcrossCategories()`, `estimateClipTokens()`, `getPlatformFormat()`, `getEffectiveOrder()`. `prompt-builder.ts` grew from ~1,050 to ~1,519 lines. `prompt-builder.tsx` grew from ~1,806 to ~2,431 lines. New `weatherWeightOverrides` state variable for "Try in" preload from homepage PotM. Phase D sessionStorage preload pathway: `promagen:preloaded-payload` (with `weightOverrides?: Partial<Record<string, number>>`) and `promagen:preloaded-inspiredBy` (badge metadata + `categoryMapHash`). Two-effect split prevents flash/re-apply bug. `platform-formats.json` updated: quality prefix normalisation across SD-family, `impactPriority` alignment, weight syntax. New types: `WeatherCategoryMap`, `WeatherCategoryMeta`, `PromptDNAFingerprint`. See `unified-prompt-brain.md` for full architecture.
+- **4 Mar 2026 (v10.1.0):** **3-STAGE PIPELINE + UI POLISH** — Added 3-stage assembly pipeline (Static/Dynamic/Optimize) with `assembleStatic()` for raw output. Composition Mode Toggle now accepts `platformId` prop for tier-specific Dynamic tooltips (T1 CLIP / T2 MJ / T3 NL / T4 Plain). Text Length Optimizer tooltip body text reverted from `text-emerald-400` to `text-slate-300` for readability. Instruction text changed "Press Done" → "Click Done". Stage indicator badge added (📋/✨/⚡/✓). Inline copy icons added to both assembled and optimized prompt preview boxes (float-right positioning). Visual diff highlighting on Static→Dynamic switch. Market Mood toggle removed from prompt builder scope (`setIntelligencePref` removed from destructuring). PotM ProviderIcon visibility fix: `bg-white/15` + `drop-shadow(0 0 3px rgba(255,255,255,0.4))`. All 42 platforms pushed to architectural ceiling. prompt-builder.tsx grew from ~2,431 to 2,746 lines. prompt-builder.ts grew from ~1,519 to 1,738 lines. New test: `prompt-builder-3-stage.test.ts` (653 lines, ~41 cases). Dynamic config guard tests cover all 42 platforms. See `unified-prompt-brain.md` for full architecture.
 
-- **25 Feb 2026 (v9.0.0):** **PROMPT BUILDER EVOLUTION PHASES 0–4** — Major feature release. Vocabulary Merge: 9,058 total terms (3,501 core + 5,557 merged from weather, commodity, shared audits). Cascading Intelligence: downstream dropdowns reorder based on upstream selections using cluster affinity + co-occurrence scoring. Scene Starters: 200 curated one-click scenes (25 free, 175 pro) grouped into 10 thematic worlds — pre-populate 5–8 categories simultaneously with tier-aware prefills. Pro gate: locked scenes show upgrade dialog (anonymous → sign-in modal, free → /pro-promagen link). Explore Drawer: expandable vocabulary panel per category with source-grouped tabs (Core, Weather, Commodity, Shared), real-time search with highlighted matches, 60-chip pagination, click-to-add. Phase 4 polish: scene flavour phrases as "🎬 Scene" tab in Explore, all-tier chip badges (★/◆/💬/⚡/⚠), cascade relevance ordering, 5 new GTM analytics events. Fluid typography audit passed: 127 clamp() calls across Phase 2–4 components, zero fixed font sizes. See scene-starters.md for full Scene Starters documentation. See prompt-builder-evolution-plan-v2.md for architecture. Files: scene-selector.tsx v1.3.0 (1,110 lines), explore-drawer.tsx v2.0.0 (805 lines), prompt-builder.tsx v9.0.0 (1,806 lines), vocabulary-loader.ts (457 lines), merged/index.ts v1.1.0 (232 lines), events.ts (276 lines), scene-starters.json (200 entries), 16 curated vocabulary files, cluster data in 48 JSON files.
+- **3 Mar 2026 (v10.0.0):** **UNIFIED BRAIN INTEGRATION** — `assemblePrompt()` signature updated from 2-arg `(platformId, selections)` to 3-arg `(platformId, selections, weightOverrides?)`. 7 family-specific assemblers replaced by single unified tier-aware assembler routing through `assembleKeywords()` (Tier 1+2), `assembleNaturalSentences()` (Tier 3), `assemblePlainLanguage()` (Tier 4). New internal functions: `assembleTierAware()`, `deduplicateWithinCategories()`, `deduplicateAcrossCategories()`, `estimateClipTokens()`, `getPlatformFormat()`, `getEffectiveOrder()`. New `weatherWeightOverrides` state variable for "Try in" preload. Phase D sessionStorage preload pathway with two-effect split. New types: `WeatherCategoryMap`, `WeatherCategoryMeta`, `PromptDNAFingerprint`. See `unified-prompt-brain.md` for full architecture.
 
-- **8 Jan 2026 (v8.3.0):** **FREE TIER LIMIT REDUCED** — Changed Standard Promagen daily prompt limit from 30/day to **10/day**. Updated lock state progression: Free signed-in (0-9) → (10) locked. Benefits list updated. See paid_tier.md for rationale.
+- **25 Feb 2026 (v9.0.0):** **PROMPT BUILDER EVOLUTION PHASES 0–4** — Vocabulary Merge: 9,058 terms. Cascading Intelligence: downstream reorder. Scene Starters: 200 scenes. Explore Drawer: expandable per-category panels. Phase 4 polish: flavour phrases, tier badges, cascade ordering, 5 GTM events. Fluid typography: 127 clamp() calls. See `prompt-builder-evolution-plan-v2.md`.
 
-- **5 Jan 2026 (v8.2.0):** **PLATFORM-AWARE CATEGORY LIMITS** â€” Complete overhaul of selection limits system. Limits now vary by platform tier (Tier 1: CLIP-based, Tier 2: Midjourney, Tier 3: Natural Language, Tier 4: Plain Language). All 42 platforms assigned to appropriate tier. Pro Promagen users get +1 on stackable categories. Auto-trim on platform switch silently removes excess selections. Dynamic tooltip guidance shows actual limits with proper singular/plural grammar. Combobox v6.3.0: bulletproof auto-close (closes BEFORE state update for single-select), Done button for multi-select, double-click protection. PromptBuilder v8.2.0 with platform-aware usePromagenAuth({ platformId }) hook. See paid_tier.md Â§5.5 for full tier matrix.
-- **4 Jan 2026 (v6.4.0):** **LOCK STATE UX CLEANUP** â€” Removed "Sign in to continue" text overlay from individual Combobox dropdowns. Lock messaging now appears ONLY in the central overlay at top of prompt builder section. Combobox v5.0.0: accepts `lockMessage` prop but does NOT display it. AspectRatioSelector v1.2.0: no lock overlay. PromptBuilder v6.4.0: removed `lockMessage` prop from all Combobox and AspectRatioSelector instances. Randomise button disabled when locked. This is a UX improvement â€” showing the same text on every dropdown was ugly and cluttered.
-- **4 Jan 2026 (v2.0.0 anonymous-storage):** **ANONYMOUS DAILY RESET** â€” Anonymous users now get 5 prompts per day (resets at midnight local time), matching the authenticated user experience. Previously was 5 prompts total lifetime. Anonymous storage upgraded to v2 schema with `lastResetDate` field. Migration: v1 data invalidated on read, triggers fresh v2 start.
-- **3 Jan 2026 (v4.2):** **TERMINOLOGY UPDATE** â€” Renamed "paid" to "Pro Promagen" and "free" to "Standard Promagen" in user-facing references. Updated category table headers. Updated test descriptions. Internal code still uses `'paid'` for brevity.
-- **3 Jan 2026 (v4.1):** **ANONYMOUS 5-TRY UPDATE** â€” Added 5 free prompts for anonymous users before sign-in required. Lock states expanded from 4 to 5 states. Lock overlay UI redesign: CTA button at top (no lock icon), centred layout, benefits list. Anonymous usage stored in localStorage with tamper detection. Updated architecture diagram.
-- **2 Jan 2026 (v4.0):** **MAJOR AUTHENTICATION UPDATE** â€” Added prompt builder authentication requirements. Lock states for unauthenticated users. Daily usage quotas (10/day for Standard, unlimited for Pro Promagen). Usage tracking on "Copy prompt" clicks. Purple-pink gradient lock styling. Enhanced selection limits for Pro Promagen users. Midnight reset in user's timezone. Updated testing requirements for authentication flows.
-- **1 Jan 2026 (v3.1):** Updated selection limits for tiered access. Standard Promagen: all categories limit 1 (except negative at 5). Pro Promagen: style, lighting, and fidelity upgraded to limit 2. See `paid_tier.md` Â§5.5. Removed artificial 30/100-item dropdown cap â€” now shows ALL options (scrollable). Removed "Type to filter X more options" message.
-- **1 Jan 2026 (v3.0):** Major update. Added Fidelity category (now 12 total). Expanded to ~100 options per category and ~1000 negative options. Removed platform family badge. Removed provider tags. Removed "Negative prompt:" separator from output. Added Core Colours gradient to Clear all button. Randomise now fills ALL 12 categories including negative (2-3 options). Added conditional free text for negative category (platform-dependent). Added `supportsNativeNegative()` function. Updated category order for optimal prompt construction.
-- **1 Jan 2026:** Expanded to 11 categories (added Action, Environment, Materials). Added selection limits (1/2/5). Added ðŸŽ² Randomise button. Implemented negative-to-positive conversion for natural language platforms. Fixed Artistly platform family mapping. Added dropdown auto-close. Removed max badge from tooltips. Added 50-char custom entry limit.
-- **31 Dec 2025:** Major rewrite. Removed LaunchPanel, PromptBuilder fills full height. Added 9-category dropdown system with 30 options each. Added platform-specific optimization (7 families, 42 platforms). Uniform scrollbar styling.
-- **28 Dec 2025:** Initial version with two-panel layout (PromptBuilder + LaunchPanel).
+- **8 Jan 2026 (v8.3.0):** **FREE TIER LIMIT REDUCED** — Standard Promagen 30/day → 10/day.
+- **5 Jan 2026 (v8.2.0):** **PLATFORM-AWARE CATEGORY LIMITS** — Tier-based selection limits for all 42 platforms. Pro +1 bonus. Auto-trim on switch. Dynamic tooltips. Combobox v6.3.0.
+- **4 Jan 2026 (v6.4.0):** **LOCK STATE UX CLEANUP** — Removed dropdown overlay text. Central overlay only.
+- **4 Jan 2026 (v2.0.0 anonymous-storage):** **ANONYMOUS DAILY RESET** — 5 prompts/day resets at midnight.
+- **3 Jan 2026 (v4.2):** **TERMINOLOGY UPDATE** — "paid" → "Pro Promagen", "free" → "Standard Promagen".
+- **3 Jan 2026 (v4.1):** **ANONYMOUS 5-TRY UPDATE** — 5 free prompts for anonymous users. Lock states expanded to 5.
+- **2 Jan 2026 (v4.0):** **MAJOR AUTHENTICATION UPDATE** — Lock states, daily quotas, usage tracking.
+- **1 Jan 2026 (v3.1):** Tiered selection limits. Removed dropdown cap.
+- **1 Jan 2026 (v3.0):** Added Fidelity (12 categories). ~100 options each. Removed badge/tags/separator.
+- **1 Jan 2026:** Expanded to 11 categories. Randomise. Negative-to-positive conversion.
+- **31 Dec 2025:** Major rewrite. Removed LaunchPanel. 9-category dropdown system.
+- **28 Dec 2025:** Initial version with two-panel layout.

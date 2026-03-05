@@ -10,6 +10,7 @@
 import React from 'react';
 
 import PromptBuilder from '@/components/providers/prompt-builder';
+import { useRememberProvider } from '@/components/ux/use-remember-provider';
 import type { Provider } from '@/types/providers';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -45,6 +46,10 @@ function toPromptBuilderProvider(provider: Provider) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function ProviderWorkspace({ provider }: ProviderWorkspaceProps) {
+  // Store this provider ID in localStorage so the homepage Scene Starters
+  // can route back to the user's last-visited provider (bug fix: orphaned hook)
+  useRememberProvider(provider.id);
+
   const builderProvider = toPromptBuilderProvider(provider);
 
   return (

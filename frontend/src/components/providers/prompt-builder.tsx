@@ -702,6 +702,8 @@ export function PromptBuilder({
   const [scenePrefills, setScenePrefills] = useState<Record<string, string[]> | undefined>();
   // Phase 4: Track active scene ID for flavour phrases lookup
   const [activeSceneId, setActiveSceneId] = useState<string | undefined>();
+  // Homepage pre-loaded scene: passed to SceneSelector to auto-expand
+  const [preloadedSceneId, setPreloadedSceneId] = useState<string | undefined>();
 
   // Phase 3: Explore Drawer accordion — only one drawer open at a time
   const [expandedExploreCategory, setExpandedExploreCategory] = useState<PromptCategory | null>(
@@ -923,6 +925,8 @@ export function PromptBuilder({
       // Set active scene tracking
       setScenePrefills(prefillMap);
       setActiveSceneId(sceneId);
+      // Tell SceneSelector to auto-expand and show this scene's world
+      setPreloadedSceneId(sceneId);
     } catch {
       // Silently ignore errors
     }
@@ -2098,6 +2102,7 @@ export function PromptBuilder({
             onActiveSceneChange={handleActiveSceneChange}
             platformTier={platformTier}
             feedbackTermHints={rawTermHints}
+            initialSceneId={preloadedSceneId}
           />
 
           {/* Category dropdowns grid */}

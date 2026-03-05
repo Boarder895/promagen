@@ -38,6 +38,10 @@ import type { Provider } from '@/types/providers';
 
 export interface EngineBayProps {
   providers: Provider[];
+  /** Controlled mode: selected provider from parent (optional — falls back to internal state) */
+  selectedProvider?: Provider | null;
+  /** Controlled mode: callback when user selects/deselects a provider */
+  onProviderChange?: (provider: Provider | null) => void;
 }
 
 // ============================================================================
@@ -152,10 +156,21 @@ function calculateVisibleIcons(containerWidth: number, maxIcons: number): number
 // COMPONENT
 // ============================================================================
 
-export default function EngineBay({ providers }: EngineBayProps): React.ReactElement | null {
-  const [selected, setSelected] = useState<Provider | null>(null);
+export default function EngineBay({ providers, selectedProvider: controlledSelected, onProviderChange }: EngineBayProps): React.ReactElement | null {
+  const [internalSelected, setInternalSelected] = useState<Provider | null>(null);
   const [visibleIconCount, setVisibleIconCount] = useState(TOP_ICONS_COUNT);
   const iconGridRef = useRef<HTMLDivElement>(null);
+
+  // Controlled vs uncontrolled: use parent state if provided, else internal
+  const isControlled = controlledSelected !== undefined;
+  const selected = isControlled ? controlledSelected : internalSelected;
+  const setSelected = useCallback((provider: Provider | null) => {
+    if (isControlled && onProviderChange) {
+      onProviderChange(provider);
+    } else {
+      setInternalSelected(provider);
+    }
+  }, [isControlled, onProviderChange]);
 
   // Derived data
   const sortedProviders = useMemo(() => sortByImageQualityRank(providers), [providers]);
@@ -191,8 +206,8 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
 
   // Handlers
   const handleIconClick = useCallback((provider: Provider) => {
-    setSelected((prev) => (prev?.id === provider.id ? null : provider));
-  }, []);
+    setSelected(selected?.id === provider.id ? null : provider);
+  }, [selected, setSelected]);
 
   const handleComboboxChange = useCallback(
     (selectedNames: string[]) => {
@@ -204,7 +219,7 @@ export default function EngineBay({ providers }: EngineBayProps): React.ReactEle
         setSelected(null);
       }
     },
-    [nameToProvider],
+    [nameToProvider, setSelected],
   );
 
   const handleCustomChange = useCallback(() => {

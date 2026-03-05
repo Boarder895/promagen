@@ -213,6 +213,10 @@ export type HomepageGridProps = {
   isProPromagenPage?: boolean;
   /** When true, Mission Control shows 3 buttons: Home | Studio | Pro */
   isStudioSubPage?: boolean;
+  /** Controlled provider selection from Engine Bay (lifted state) */
+  selectedProvider?: import('@/types/providers').Provider | null;
+  /** Callback when user selects/deselects a provider in Engine Bay */
+  onProviderChange?: (provider: import('@/types/providers').Provider | null) => void;
 };
 
 // ============================================================================
@@ -324,6 +328,8 @@ export default function HomepageGrid({
   isStudioPage = false,
   isProPromagenPage = false,
   isStudioSubPage = false,
+  selectedProvider,
+  onProviderChange,
 }: HomepageGridProps): React.ReactElement {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
@@ -490,7 +496,11 @@ export default function HomepageGrid({
             {/* Engine Bay — xl+ only, inherits exact column width from grid */}
             {showEngineBay && providers.length > 0 && (
               <div className="hidden shrink-0 xl:block">
-                <EngineBay providers={providers} />
+                <EngineBay
+                  providers={providers}
+                  selectedProvider={selectedProvider}
+                  onProviderChange={onProviderChange}
+                />
               </div>
             )}
 

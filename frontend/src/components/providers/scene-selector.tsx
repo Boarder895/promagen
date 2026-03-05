@@ -108,6 +108,11 @@ export interface SceneSelectorProps {
    * with the user's proven winning terms via feedback-scene-enhancer.
    */
   feedbackTermHints?: TermHint[];
+  /**
+   * Pre-loaded scene ID from homepage (via sessionStorage).
+   * When set, SceneSelector auto-expands and navigates to that scene's world.
+   */
+  initialSceneId?: string;
 }
 
 // ============================================================================
@@ -199,6 +204,7 @@ export function SceneSelector({
   onActiveSceneChange,
   platformTier,
   feedbackTermHints,
+  initialSceneId,
 }: SceneSelectorProps) {
   // ── State ──────────────────────────────────────────────────────────────
   const [isExpanded, setIsExpanded] = useState(false);
@@ -215,6 +221,17 @@ export function SceneSelector({
   const [upgradeSceneId, setUpgradeSceneId] = useState<string | undefined>();
 
   const pillsRef = useRef<HTMLDivElement>(null);
+
+  // ── Auto-expand when scene pre-loaded from homepage ─────────────────
+  useEffect(() => {
+    if (!initialSceneId) return;
+    const scene = allScenes.find((s) => s.id === initialSceneId);
+    if (!scene) return;
+    // Expand the selector, navigate to the scene's world, highlight the scene
+    setIsExpanded(true);
+    setActiveWorldSlug(scene.world);
+    setActiveSceneId(initialSceneId);
+  }, [initialSceneId]);
 
   // ── Derived ────────────────────────────────────────────────────────────
   const isPro = userTier === 'paid';

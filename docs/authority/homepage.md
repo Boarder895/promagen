@@ -1,9 +1,9 @@
 # New Homepage — Authority Document
 
-**Last updated:** 2 March 2026  
-**Version:** 1.0.0  
+**Last updated:** 4 March 2026  
+**Version:** 2.0.0  
 **Owner:** Promagen  
-**Status:** Specification (pre-build)  
+**Status:** Implemented (all 7 build phases complete)  
 **Authority:** This document defines the new Promagen homepage layout, components, data flow, and build plan. It supersedes the homepage section of `ribbon-homepage.md` for the `/` route only.
 
 ---
@@ -143,9 +143,11 @@ The three-column grid from `homepage-grid.tsx` is preserved exactly:
 
 ```
 Left rail:     0.9fr  → Scene Starters preview
-Centre column: 1fr    → Prompt of the Moment + Leaderboard heading + Providers table
+Centre column: 2.2fr  → Prompt of the Moment + Leaderboard heading + Providers table
 Right rail:    0.9fr  → Community Pulse
 ```
+
+**Tailwind class:** `md:grid-cols-[minmax(0,0.9fr)_minmax(0,2.2fr)_minmax(0,0.9fr)]`
 
 Panel width formula (unchanged): `calc((100vw - 80px) * 0.225)` for Engine Bay and Mission Control.
 
@@ -173,9 +175,9 @@ Answers "what does Promagen do?" in under 2 seconds. Displays a live, weather-dr
 
 ### 4.2 Data Source
 
-Reuses the existing `weather-prompt-generator.ts` engine (2,519 lines). No new API spend. The generator already produces 4-tier prompts from live weather data for 102 cities × 10 venues.
+Reuses the existing weather prompt engine (`src/lib/weather/` — 28 files, ~10,800 lines total, with `weather-prompt-generator.ts` at 486 lines as the entry point). No new API spend. The generator produces 4-tier prompts from live weather data for 102 cities × 10 venues.
 
-**Rotation:** A new city prompt is generated every 10 minutes, cycling through all 102 cities in `city-vibes.json` SSOT order. Full rotation completes in 102 × 10 min = 17 hours, then restarts. The rotation pointer is stored server-side (in-memory or KV) so all users see the same city at the same time.
+**Rotation:** A new city prompt is generated every 10 minutes, cycling through all 102 cities in `city-vibes.json` SSOT order. Full rotation completes in 102 × 10 min = 17 hours, then restarts. The rotation is **deterministic** — `Math.floor(Date.now() / ROTATION_MS) % 102` — so all users see the same city at the same time without any server-side state. Server restarts have no effect.
 
 **Inputs per cycle:**
 
@@ -191,35 +193,54 @@ Reuses the existing `weather-prompt-generator.ts` engine (2,519 lines). No new A
 
 ```typescript
 interface PromptOfTheMoment {
-  city: string; // "Tokyo"
-  countryCode: string; // "JP"
-  localTime: string; // "14:32 JST"
-  conditions: string; // "Light Rain"
-  mood: string; // "Serene"
-  venue: string; // "Shibuya Crossing"
+  city: string;                    // "Tokyo"
+  countryCode: string;             // "JP"
+  localTime: string;               // "14:32 JST"
+  conditions: string;              // "Light Rain"
+  mood: string;                    // "Serene"
+  venue: string;                   // "Shibuya Crossing" (from categoryMap.meta.venue)
   prompts: {
-    tier1: string; // CLIP-based
-    tier2: string; // Midjourney
-    tier3: string; // Natural Language
-    tier4: string; // Plain
+    tier1: string;                 // CLIP-based
+    tier2: string;                 // Midjourney
+    tier3: string;                 // Natural Language
+    tier4: string;                 // Plain Language
   };
   tierProviders: {
-    tier1: ProviderShortcut[]; // Top 3 providers for this tier
+    tier1: ProviderShortcut[];     // Top providers for this tier
     tier2: ProviderShortcut[];
     tier3: ProviderShortcut[];
     tier4: ProviderShortcut[];
   };
-  generatedAt: string; // ISO timestamp
-  nextRotationAt: string; // ISO timestamp (current + 10 min)
-  rotationIndex: number; // 0–101
+  generatedAt: string;             // ISO timestamp
+  nextRotationAt: string;          // ISO timestamp (current slot + 10 min)
+  rotationIndex: number;           // 0–101
+  weather: { ... };                // Full weather data for tooltip (see types/homepage.ts)
+  tierSelections?: {               // Phase D: WeatherCategoryMap per tier for builder pre-fill
+    tier1: { promptText: string; selections: Record<string, string[]>; categoryMap?: WeatherCategoryMap };
+    tier2: { promptText: string; selections: Record<string, string[]>; categoryMap?: WeatherCategoryMap };
+    tier3: { promptText: string; selections: Record<string, string[]>; categoryMap?: WeatherCategoryMap };
+    tier4: { promptText: string; selections: Record<string, string[]>; categoryMap?: WeatherCategoryMap };
+  };
+  inspiredBy?: {                   // Phase D: Badge metadata for builder
+    city: string;
+    venue: string;
+    conditions: string;
+    emoji: string;
+    tempC: number | null;
+    localTime: string;
+    mood: string;
+    categoryMapHash?: string;      // FNV-1a hash via hashCategoryMap()
+  };
 }
 
 interface ProviderShortcut {
-  id: string; // "leonardo"
-  name: string; // "Leonardo AI"
-  iconPath: string; // "/icons/providers/leonardo.png"
+  id: string;                      // "leonardo"
+  name: string;                    // "Leonardo AI"
+  iconPath: string;                // "/icons/providers/leonardo.png"
 }
 ```
+
+**Full type definitions:** `src/types/homepage.ts` (229 lines) — canonical source for all homepage interfaces including `PromptOfTheMoment`, `CommunityPulseEntry`, `LikeRequest`, `OnlineCountryEntry`, and `ScenePreviewCard`.
 
 ### 4.3 API Route
 
@@ -227,15 +248,19 @@ interface ProviderShortcut {
 
 **Behaviour:**
 
-1. Read rotation pointer (in-memory counter, wraps at 102)
-2. Look up city from `city-vibes.json` at pointer index
-3. Fetch weather for that city from gateway cache (no additional API call — uses existing cached data)
-4. Call `generateWeatherPrompt()` for all 4 tiers
-5. Look up top 3 leaderboard providers per tier (from existing providers SSOT + tier mapping)
-6. Return `PromptOfTheMoment` JSON
-7. Cache response with 10-minute TTL (aligned to rotation cadence)
+1. Compute rotation index: `Math.floor(Date.now() / ROTATION_MS) % 102`
+2. Look up city from `city-vibes.json` at that index
+3. Compute venue rotation: `Math.floor(Date.now() / ROTATION_MS / 102)` (cycles venues across full city rotations)
+4. Fetch weather for that city from gateway cache (no additional API call — uses existing cached data)
+5. Call `generateWeatherPrompt()` for all 4 tiers
+6. Extract `categoryMap` from first tier result (shared across all tiers — same weather intelligence)
+7. Use `categoryMap.meta.venue` as authoritative venue name (venue desync fix)
+8. Look up top providers per tier from `PLATFORM_TIERS` + `providers.json` SSOT
+9. Return `PromptOfTheMoment` JSON with `tierSelections` and `inspiredBy`
+10. Cache response with `revalidate: 600` (10-minute ISR aligned to rotation cadence)
+11. Auto-log rotation as `prompt_showcase_entries` row for Community Pulse feed (once per rotation index, tracked in-memory)
 
-**Rotation advancement:** A `setInterval` on the server advances the pointer every 10 minutes. If the server restarts, the pointer resets to 0 (acceptable — there's no "correct" starting city).
+**No server state required.** Rotation is deterministic — `floor(now / 600000) % 102` produces the same city index on any server instance at any time. Server restarts have zero effect.
 
 **Fallback:** If weather data is unavailable for the current city, use demo weather data (`15°C, partly cloudy, 10 km/h wind`). If the generator throws, serve the last successfully generated prompt. The component must never show an error state — always show a prompt.
 
@@ -248,10 +273,11 @@ interface ProviderShortcut {
 ```
 ┌─ PROMPT OF THE MOMENT ──────────────────────────────────────────┐
 │                                                                   │
-│  🇯🇵  Tokyo • Shibuya Crossing • 14:32 JST                       │
-│  Light Rain • Serene                                              │
+│  🇯🇵  Tokyo • Shibuya Crossing • 14:32                            │
+│  Light Rain                                                       │
+│  Live weather prompt · next city in 8:32                          │
 │                                                                   │
-│  ┌─ CLIP (Tier 1) ─────────────────────────── 📋  ♡ 23 ┐        │
+│  ┌─ CLIP-Based (Tier 1) ──────────────────── 📋  ♡ 23 ┐         │
 │  │ neon-lit streets, rain-slicked pavement, (cinematic   │        │
 │  │ lighting:1.2), tokyo signage, reflections on wet...   │        │
 │  │                                                       │        │
@@ -272,7 +298,7 @@ interface ProviderShortcut {
 │  │ Try in: [DALL-E] [Firefly] [Ideogram]                 │          │
 │  └───────────────────────────────────────────────────────┘          │
 │                                                                   │
-│  ┌─ Plain (Tier 4) ─────────────────────────── 📋  ♡ 5 ┐        │
+│  ┌─ Plain Language (Tier 4) ────────────────── 📋  ♡ 5 ┐        │
 │  │ Tokyo rainy street at night, neon lights               │        │
 │  │                                                       │        │
 │  │ Try in: [Canva] [Artistly] [Craiyon]                  │        │
@@ -289,41 +315,76 @@ interface ProviderShortcut {
 
 **Tier label colours:**
 
-| Tier   | Label            | Colour             |
-| ------ | ---------------- | ------------------ |
-| Tier 1 | CLIP             | `text-cyan-400`    |
-| Tier 2 | Midjourney       | `text-violet-400`  |
-| Tier 3 | Natural Language | `text-emerald-400` |
-| Tier 4 | Plain            | `text-amber-400`   |
+| Tier   | Label            | Colour             | Ring Colour           | Dot Colour |
+| ------ | ---------------- | ------------------ | --------------------- | ---------- |
+| Tier 1 | CLIP-Based       | `text-violet-400`  | `ring-violet-500/20`  | `#8B5CF6`  |
+| Tier 2 | Midjourney       | `text-blue-400`    | `ring-blue-500/20`    | `#3B82F6`  |
+| Tier 3 | Natural Language | `text-emerald-400` | `ring-emerald-500/20` | `#10B981`  |
+| Tier 4 | Plain Language   | `text-amber-400`   | `ring-amber-500/20`   | `#F59E0B`  |
 
-These colours are informational — they match the tier badge colours already used in Scene Starters (★ cyan, ◆ violet, 💬 emerald, ⚡ amber).
+These colours are informational — Tier 1 uses violet (not cyan) because it matches the CLIP-weight visual language in the prompt builder.
 
-**Copy button (📋):** Same clipboard icon and behaviour as `weather-prompt-tooltip.tsx`. On click: copies tier prompt to clipboard, shows brief "Copied!" feedback (1.5s), then reverts.
+**Copy button (📋):** Same clipboard icon and behaviour as `weather-prompt-tooltip.tsx`. On click: copies tier prompt to clipboard, shows brief "Copied!" feedback (1.5s) with `bg-emerald-500/20 text-emerald-400`, then reverts.
 
-**Like button (♡):** Small heart icon, right of copy button. See §7 for full specification.
+**Like button (♡):** Small heart icon, right of copy button. `text-slate-400` default, `text-pink-400` when liked, `hover:text-pink-300`. See §7 for full specification.
 
-**"Try in" provider icons:** 2-4 small provider PNG icons (`/icons/providers/{id}.png`) per tier, inline below the prompt text. Each icon is clickable — navigates to that provider's prompt builder with the prompt pre-loaded (see §4.5).
+**"Try in" provider icons:** 2-4 small provider PNG icons (`/icons/providers/{id}.png`) per tier, inline below the prompt text. Each icon is clickable — navigates to that provider's prompt builder with the prompt pre-loaded (see §4.5). Icon container: `rounded-lg bg-white/15 ring-1 ring-white/10 hover:bg-white/20 hover:ring-white/20`. Image inside: `drop-shadow(0 0 3px rgba(255,255,255,0.4))` for glow visibility on dark backgrounds.
 
-**Prompt text styling:** Monospace feel using `clamp()` font sizing. Prompt text is selectable but not editable. Max 3 lines visible with `line-clamp-3`; full prompt visible on hover or click-to-expand.
+**Prompt text styling:** `font-mono leading-relaxed text-slate-300` using `clamp()` font sizing. Prompt text is selectable but not editable.
 
-**Rotation transition:** When the city changes (every 10 min), the card content crossfades (`opacity 0 → 1`, 800ms ease-in-out). No layout shift — container dimensions are fixed. Respects `prefers-reduced-motion`.
+**Countdown timer:** Below the city header, an amber italic line shows `"Live weather prompt · next city in M:SS"` with a live countdown (tabular-nums for stable digit widths). The countdown auto-refreshes every second and triggers a new API fetch when it reaches zero.
+
+**Metadata line:** City header shows: `Flag · CityName · Venue · HH:MM` (blinking colon, no timezone suffix, no mood text). Weather emoji appears with hover tooltip (same `ProviderWeatherEmojiTooltip` as leaderboard). Conditions text (e.g., "Light Rain") on a separate line below.
+
+**Rotation transition:** When the city changes (every 10 min), the card content crossfades (`opacity 0 → 1`, 800ms ease-in-out). No layout shift — container dimensions are fixed. Respects `prefers-reduced-motion`. Previous city data held for 800ms overlay during transition (managed by `usePromptShowcase` hook).
+
+**Table expand behaviour:** When the AI Providers Leaderboard is expanded (isTableExpanded), the PromptShowcase and LeaderboardIntro are both hidden to give the table maximum vertical space.
+
+**Skeleton loader:** Pulse-animated placeholder with fixed min-height (`clamp(180px, 18vw, 300px)`) — prevents CLS during initial load.
 
 ### 4.5 "Try in [Provider]" Mechanic
 
-**Flow:** User clicks a provider icon in the Prompt of the Moment → navigate to `/providers/[id]/prompt-builder`.
+**Flow:** User clicks a provider icon in the Prompt of the Moment → navigate to `/providers/[id]` (the prompt builder page).
 
-**Prompt pre-loading via `sessionStorage`:**
+**Prompt pre-loading via `sessionStorage` (Phase D — WeatherCategoryMap):**
 
-1. On icon click, store the assembled prompt text under `sessionStorage` key: `promagen:preloaded-prompt`
-2. Store the tier label alongside: `promagen:preloaded-tier` (e.g., `"tier2"`)
-3. Navigate to `/providers/[id]/prompt-builder`
-4. On mount, the prompt builder checks for the sessionStorage keys
-5. If found: populate the output preview area (assembled prompt display) with the pre-loaded text; show a subtle info banner: "Prompt loaded from homepage — edit below or copy directly"
+1. On icon click, store the tier's full payload under `sessionStorage` key: `promagen:preloaded-payload`
+2. Store the "Inspired by" badge metadata under: `promagen:preloaded-inspiredBy`
+3. Navigate to `/providers/[id]`
+4. On mount, the prompt builder reads both sessionStorage keys
+5. If found: populate ALL 12 category dropdowns from the `categoryMap` data (not just the text output), show an "Inspired by [City] · [Venue]" badge
 6. Clear both sessionStorage keys immediately after reading
 
-**Why sessionStorage, not URL params:** Prompts can exceed 300 characters. URL encoding creates ugly, unshareable links and risks hitting URL length limits. SessionStorage is invisible, one-time-use, and handles any length.
+**Payload shape (`promagen:preloaded-payload`):**
 
-**Why not pre-fill dropdowns:** The weather-prompt-generator assembles prompts from weather/city/venue data — not from the 12 category dropdowns. There is no clean reverse mapping. Showing the assembled output directly is honest and simple. The dropdowns remain empty for the user to start their own build if they wish.
+```typescript
+{
+  promptText: string;                           // Assembled prompt text for this tier
+  selections: Record<string, string[]>;         // Legacy (empty object — superseded by categoryMap)
+  categoryMap?: WeatherCategoryMap;             // Full 12-category structured data from weather intelligence
+}
+```
+
+**Inspired-by shape (`promagen:preloaded-inspiredBy`):**
+
+```typescript
+{
+  city: string;                 // e.g., "Tokyo"
+  venue: string;                // e.g., "Shibuya Crossing" (from categoryMap.meta, not route rotation)
+  conditions: string;           // e.g., "Light Rain"
+  emoji: string;                // Weather emoji
+  tempC: number | null;         // Temperature in Celsius
+  localTime: string;            // e.g., "14:32"
+  mood: string;                 // e.g., "Serene"
+  categoryMapHash?: string;     // FNV-1a hash via hashCategoryMap() — for fingerprint matching
+}
+```
+
+**Why sessionStorage, not URL params:** Prompts can exceed 300 characters and the WeatherCategoryMap payload is typically 2-5 KB. URL encoding creates ugly, unshareable links and risks hitting URL length limits. SessionStorage is invisible, one-time-use, and handles any length.
+
+**Why categoryMap, not raw text:** Phase D resolved the "dead prompt" problem. Previously, clicking "Try in" would dump assembled text into the prompt builder with empty dropdowns — users couldn't edit individual categories. Now the full `WeatherCategoryMap` (with selections, customValues, and weightOverrides per category) flows through, so the builder pre-fills all 12 dropdowns with real physics-computed data. The user can then tweak individual categories (e.g., swap the camera lens) and re-assemble.
+
+**Venue desync fix (Phase D):** The route selects a venue by index rotation, but the weather generator selects a venue by seed (they can disagree). The response now uses `categoryMap.meta.venue` as the authoritative venue name, ensuring the header label and the generated prompt describe the same location.
 
 ### 4.6 Provider Selection for Scene Starters vs Prompt of the Moment
 
@@ -413,8 +474,14 @@ Existing `scene-starters.json` SSOT: 200 scenes (25 free, 175 Pro) across 23 wor
 
 **Priority order:**
 
-1. **Last-used provider:** Stored in `localStorage` key `promagen:last-provider-id`. If present, navigate directly to `/providers/[id]/prompt-builder` with the scene pre-loaded.
-2. **No stored provider:** The platform picker in Engine Bay opens automatically with a prompt message: "Select an AI platform to get started." The scene selection is held in state. Once a provider is selected and the user clicks Launch, they arrive at the prompt builder with the scene applied.
+1. **Last-used provider:** Stored in `localStorage` key `lastProvider` (matches `use-remember-provider.ts`). If present, navigate directly to `/providers/[id]/prompt-builder` with the scene pre-loaded via `sessionStorage` key `promagen:preloaded-scene`.
+2. **No stored provider:** Falls back to Midjourney (`DEFAULT_PROVIDER = 'midjourney'`). No Engine Bay popup — the user lands directly in the prompt builder.
+
+**Pro gate:**
+
+- Anonymous → Clerk `SignInButton` modal
+- Free user clicking a Pro scene → inline upgrade prompt with sign-in option
+- Pro user → direct navigation
 
 **Scene pre-loading via `sessionStorage`:**
 
@@ -762,7 +829,7 @@ The build should implement the Vercel KV approach with a fallback that simply hi
 
 ### 9.2 Fallback Navigation
 
-The fallback nav (`src/components/nav/fallback-nav.tsx`) also needs the World Context link added, matching the existing Home, Studio, Pro pattern.
+No separate `fallback-nav.tsx` exists. All navigation is handled via Mission Control buttons on every page. The top nav (`src/components/nav/top-nav.tsx`) provides tab-based navigation for providers and does not include World Context — it is intentionally only reachable via Mission Control.
 
 ---
 
@@ -790,16 +857,14 @@ The fallback nav (`src/components/nav/fallback-nav.tsx`) also needs the World Co
 
 ### 10.3 Implementation
 
-Create `/src/app/world-context/page.tsx` (server component) and `/src/app/world-context/world-context-client.tsx` (client component). These files are essentially copies of the current `/src/app/page.tsx` and `/src/components/home/homepage-client.tsx` with:
+**Actual approach (implemented):** `/world-context/page.tsx` (67 lines) is a server component that imports the existing `homepage-client.tsx` directly — no copy, no separate client file. This is the "lower risk" approach from v1.0.0 planning.
 
-1. Route changed to `/world-context`
-2. `showFinanceRibbon` always true
-3. Exchange rails always rendered
-4. No Prompt of the Moment, no Scene Starters preview, no Community Pulse
+```
+src/app/world-context/page.tsx → imports src/components/home/homepage-client.tsx (unchanged)
+src/app/page.tsx               → imports src/components/home/new-homepage-client.tsx (new layout)
+```
 
-The original `homepage-client.tsx` is then refactored to render the new homepage layout (Prompt of the Moment, Scene Starters preview, Community Pulse) instead of exchange rails and ribbon.
-
-**Alternative approach (lower risk):** Keep `homepage-client.tsx` as-is and create a new `new-homepage-client.tsx` for `/`. The original is imported by `/world-context/page.tsx`. This avoids modifying existing tested code. **Recommended approach.**
+The original `homepage-client.tsx` (527 lines) is completely untouched — it renders exchange rails, finance ribbon, and the full three-column financial layout exactly as before. The new homepage layout lives entirely in `new-homepage-client.tsx` (243 lines).
 
 ---
 
@@ -809,7 +874,7 @@ The original `homepage-client.tsx` is then refactored to render the new homepage
 
 | Route                                | Method | Purpose                                    | Cache               |
 | ------------------------------------ | ------ | ------------------------------------------ | ------------------- |
-| `/api/homepage/prompt-of-the-moment` | GET    | Current showcase prompt (all 4 tiers)      | 10 min TTL          |
+| `/api/homepage/prompt-of-the-moment` | GET    | Current showcase prompt (all 4 tiers)      | `revalidate: 600`   |
 | `/api/homepage/community-pulse`      | GET    | Recent 20 pulse entries + most liked today | 30 sec TTL          |
 | `/api/prompts/like`                  | POST   | Like a prompt                              | None                |
 | `/api/prompts/like`                  | DELETE | Unlike a prompt                            | None                |
@@ -888,39 +953,46 @@ The original `homepage-client.tsx` is then refactored to render the new homepage
 
 ### 12.1 New Files
 
-| File                                                 | Purpose                                  | Estimated Lines                     |
-| ---------------------------------------------------- | ---------------------------------------- | ----------------------------------- |
-| `src/components/home/prompt-showcase.tsx`            | Prompt of the Moment card + online users | 400–500                             |
-| `src/components/home/scene-starters-preview.tsx`     | Left rail scene cards                    | 200–250                             |
-| `src/components/home/community-pulse.tsx`            | Right rail pulse feed                    | 200–250                             |
-| `src/app/api/homepage/prompt-of-the-moment/route.ts` | Showcase prompt API                      | 150–200                             |
-| `src/app/api/homepage/community-pulse/route.ts`      | Pulse feed API                           | 100–150                             |
-| `src/app/api/prompts/like/route.ts`                  | Like/unlike API                          | 100–150                             |
-| `src/app/api/prompts/like/status/route.ts`           | Like status check API                    | 50–80                               |
-| `src/app/api/heartbeat/route.ts`                     | Client heartbeat API                     | 50–80                               |
-| `src/app/api/online-users/route.ts`                  | Aggregated online counts API             | 80–100                              |
-| `src/app/world-context/page.tsx`                     | World Context server component           | 50–80                               |
-| `src/app/world-context/world-context-client.tsx`     | World Context client component           | Copy of current homepage-client.tsx |
-| `src/hooks/use-prompt-showcase.ts`                   | Fetch hook for Prompt of the Moment      | 60–80                               |
-| `src/hooks/use-community-pulse.ts`                   | Fetch hook for pulse feed                | 60–80                               |
-| `src/hooks/use-online-users.ts`                      | Heartbeat + online users hook            | 80–100                              |
-| `src/hooks/use-like.ts`                              | Like/unlike hook with optimistic UI      | 80–100                              |
-| `src/types/homepage.ts`                              | TypeScript types for all new interfaces  | 80–100                              |
-| `docs/authority/homepage.md`                         | This document                            | —                                   |
+| File                                                 | Purpose                                  | Lines |
+| ---------------------------------------------------- | ---------------------------------------- | ----- |
+| `src/components/home/new-homepage-client.tsx`        | New homepage client wrapper              | 243   |
+| `src/components/home/prompt-showcase.tsx`            | Prompt of the Moment card + online users | 858   |
+| `src/components/home/scene-starters-preview.tsx`     | Left rail scene cards                    | 377   |
+| `src/components/home/community-pulse.tsx`            | Right rail pulse feed                    | 420   |
+| `src/app/api/homepage/prompt-of-the-moment/route.ts` | Showcase prompt API                      | 639   |
+| `src/app/api/homepage/community-pulse/route.ts`      | Pulse feed API                           | 155   |
+| `src/app/api/prompts/like/route.ts`                  | Like/unlike API (POST + DELETE)          | 187   |
+| `src/app/api/prompts/like/status/route.ts`           | Like status check API                    | 99    |
+| `src/app/api/heartbeat/route.ts`                     | Client heartbeat API                     | 107   |
+| `src/app/api/online-users/route.ts`                  | Aggregated online counts API             | 67    |
+| `src/app/world-context/page.tsx`                     | World Context server component           | 67    |
+| `src/hooks/use-prompt-showcase.ts`                   | Fetch hook for Prompt of the Moment      | 151   |
+| `src/hooks/use-community-pulse.ts`                   | Fetch hook for pulse feed                | 132   |
+| `src/hooks/use-online-users.ts`                      | Heartbeat + online users hook            | 200   |
+| `src/hooks/use-like.ts`                              | Like/unlike hook with optimistic UI      | 203   |
+| `src/types/homepage.ts`                              | TypeScript types for all new interfaces  | 229   |
+| `src/lib/likes/database.ts`                          | DB table creation + like CRUD operations | 223   |
+| `src/lib/likes/session.ts`                           | Cookie-based session management          | 69    |
+| `docs/authority/homepage.md`                         | This document                            | —     |
+
+**Note:** `world-context-client.tsx` was not created. The `/world-context` route reuses the existing `homepage-client.tsx` directly (no modifications needed).
 
 ### 12.2 Modified Files
 
-| File                                          | Changes                                                                               |
-| --------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `src/components/home/mission-control.tsx`     | Add `renderWorldContextButton()`, update button grid layouts on all pages             |
-| `src/components/home/homepage-client.tsx`     | Refactor to render new homepage layout (or create separate `new-homepage-client.tsx`) |
-| `src/app/page.tsx`                            | Point to new homepage client component                                                |
-| `src/components/nav/fallback-nav.tsx`         | Add World Context link                                                                |
-| `src/components/providers/prompt-builder.tsx` | Add `sessionStorage` pre-load check for scene and prompt                              |
-| `docs/authority/buttons.md`                   | Add World Context button row                                                          |
-| `docs/authority/mission-control.md`           | Document new button layout                                                            |
-| `docs/authority/ribbon-homepage.md`           | Cross-reference to this document, note `/` is now new homepage                        |
-| `docs/authority/paid_tier.md`                 | Add like system (free feature), online users (free feature) to §2.1                   |
+| File                                          | Changes                                                                                                  | Lines |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----- |
+| `src/app/page.tsx`                            | Imports `NewHomepageClient`, passes providers/exchanges/weatherIndex                                     | 70    |
+| `src/components/home/mission-control.tsx`     | Added `renderWorldContextButton()`, World Context button on all page variants                            | 723   |
+| `src/components/layout/homepage-grid.tsx`     | `leftContent`/`rightContent` props, `showFinanceRibbon` toggle, table expand support                     | 711   |
+| `src/components/providers/prompt-builder.tsx` | sessionStorage pre-load reader (Phase D: `promagen:preloaded-payload` + `promagen:preloaded-inspiredBy`) | 2,746 |
+
+**Not modified (design decision):** `homepage-client.tsx` (527 lines) is unchanged — reused as-is by `/world-context`. No `fallback-nav.tsx` exists; navigation is handled entirely by Mission Control buttons.
+
+### 12.3 Test Files
+
+| File                                            | Lines | Cases | Coverage                                               |
+| ----------------------------------------------- | ----- | ----- | ------------------------------------------------------ |
+| `src/__tests__/parity-homepage-builder.test.ts` | 638   | 10    | PotM → prompt builder pre-load parity across all tiers |
 
 ---
 
@@ -1055,7 +1127,7 @@ All `<a>` tag buttons **must** have explicit text colour on child `<svg>` and `<
 
 ## 15. Build Order
 
-### Phase 1: Foundation (Est. 2–3 days)
+### Phase 1: Foundation ✅ Complete
 
 | Step | Task                                                                            | Dependencies      |
 | ---- | ------------------------------------------------------------------------------- | ----------------- |
@@ -1075,7 +1147,7 @@ pnpm run lint
 
 Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context` shows exact current homepage. World Context button visible on all pages.
 
-### Phase 2: Prompt of the Moment (Est. 3–4 days)
+### Phase 2: Prompt of the Moment ✅ Complete
 
 | Step | Task                                                                               | Dependencies                      |
 | ---- | ---------------------------------------------------------------------------------- | --------------------------------- |
@@ -1086,7 +1158,7 @@ Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context
 | 2.5  | Add sessionStorage reader in `prompt-builder.tsx` (pre-loaded prompt support)      | 2.4                               |
 | 2.6  | Crossfade transition on city rotation                                              | 2.3                               |
 
-### Phase 3: Scene Starters Preview (Est. 2 days)
+### Phase 3: Scene Starters Preview ✅ Complete
 
 | Step | Task                                                                      | Dependencies                 |
 | ---- | ------------------------------------------------------------------------- | ---------------------------- |
@@ -1095,7 +1167,7 @@ Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context
 | 3.3  | Add sessionStorage scene pre-load in `prompt-builder.tsx`                 | 3.2                          |
 | 3.4  | Pro gate (sign-in modal for anon, upgrade dialog for free)                | 3.1, existing Clerk patterns |
 
-### Phase 4: Like System (Est. 2–3 days)
+### Phase 4: Like System ✅ Complete
 
 | Step | Task                                                               | Dependencies                   |
 | ---- | ------------------------------------------------------------------ | ------------------------------ |
@@ -1107,7 +1179,7 @@ Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context
 | 4.6  | Scoring system integration (co-occurrence boost)                   | 4.1, existing scoring pipeline |
 | 4.7  | GTM analytics events (`prompt_liked`, `prompt_like_removed`)       | 4.3                            |
 
-### Phase 5: Community Pulse (Est. 2 days)
+### Phase 5: Community Pulse ✅ Complete
 
 | Step | Task                                                                      | Dependencies              |
 | ---- | ------------------------------------------------------------------------- | ------------------------- |
@@ -1117,7 +1189,7 @@ Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context
 | 5.4  | Wire weather-seeded entries (auto-log from Prompt of the Moment rotation) | 5.1, Phase 2              |
 | 5.5  | "Most liked today" card                                                   | 5.3, Phase 4              |
 
-### Phase 6: Online Users (Est. 1–2 days)
+### Phase 6: Online Users ✅ Complete
 
 | Step | Task                                                    | Dependencies     |
 | ---- | ------------------------------------------------------- | ---------------- |
@@ -1127,7 +1199,7 @@ Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context
 | 6.4  | Add online users display to `prompt-showcase.tsx`       | 6.3, Phase 2     |
 | 6.5  | Threshold gate (render only at ≥ 50)                    | 6.4              |
 
-### Phase 7: Polish & Documentation (Est. 1–2 days)
+### Phase 7: Polish & Documentation ✅ Complete
 
 | Step | Task                                                               | Dependencies |
 | ---- | ------------------------------------------------------------------ | ------------ |
@@ -1140,39 +1212,44 @@ Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context
 | 7.7  | Update `paid_tier.md` (like system + online users = free features) | Phase 4, 6   |
 | 7.8  | Full E2E manual test pass (see §14)                                | All phases   |
 
-**Total estimated build: 13–18 days**
+**All 7 phases complete.** Total new code: ~4,427 lines across 18 new files + 4 modified files.
 
 ---
 
 ## 16. Risk Mitigation
 
-| Risk                                              | Mitigation                                                                                                                                                         |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Rotation engine server restart resets pointer** | Acceptable — there's no "correct" starting city. Users don't know which city was showing before restart.                                                           |
-| **Weather data unavailable**                      | Generator uses demo fallback (15°C, partly cloudy). Component never shows error state.                                                                             |
-| **Vercel KV unavailable**                         | Online users component hidden (threshold not met). No visible error.                                                                                               |
-| **Low initial like counts**                       | Expected. Honest zero counts per "no fake data" principle. Community Pulse is seeded with weather prompts to avoid empty feed.                                     |
-| **sessionStorage not available**                  | "Try in" and scene pre-load gracefully degrade — user arrives at prompt builder in default state (no error, no pre-load, they build from scratch).                 |
-| **Too many concurrent API requests on homepage**  | Prompt of the Moment cached for 10 min, Community Pulse cached for 30 sec, online users cached for 30 sec. Homepage generates max 3 lightweight API calls on load. |
-| **CLS from prompt showcase loading**              | Container has fixed min-height. Content opacity-gated until data loads.                                                                                            |
-| **Pro gate confusion**                            | Same patterns as existing Scene Selector — tested and proven.                                                                                                      |
+| Risk                                             | Mitigation                                                                                                                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Rotation engine server restart**               | No effect — rotation is deterministic (`floor(now / 600000) % 102`), not stored in memory. All instances produce the same city at the same time.                   |
+| **Weather data unavailable**                     | Generator uses demo fallback (15°C, partly cloudy). Component never shows error state.                                                                             |
+| **Vercel KV unavailable**                        | Online users component hidden (threshold not met). No visible error.                                                                                               |
+| **Low initial like counts**                      | Expected. Honest zero counts per "no fake data" principle. Community Pulse is seeded with weather prompts to avoid empty feed.                                     |
+| **sessionStorage not available**                 | "Try in" and scene pre-load gracefully degrade — user arrives at prompt builder in default state (no error, no pre-load, they build from scratch).                 |
+| **Too many concurrent API requests on homepage** | Prompt of the Moment cached for 10 min, Community Pulse cached for 30 sec, online users cached for 30 sec. Homepage generates max 3 lightweight API calls on load. |
+| **CLS from prompt showcase loading**             | Container has fixed min-height. Content opacity-gated until data loads.                                                                                            |
+| **Pro gate confusion**                           | Same patterns as existing Scene Selector — tested and proven.                                                                                                      |
 
 ---
 
 ## 17. Non-Regression Rule
 
-When building the new homepage:
+When building on the new homepage:
 
-- Do not modify the prompt builder (except adding sessionStorage pre-load reader)
+- Do not modify the prompt builder (except the sessionStorage pre-load reader)
 - Do not modify the vocabulary system, scoring engine, or learning pipeline
 - Do not modify the leaderboard table or provider cells
 - Do not modify the weather-prompt-generator (consume it, don't change it)
-- Do not modify Engine Bay or Mission Control (except adding the World Context button)
+- Do not modify Engine Bay or Mission Control (except the World Context button which is already added)
 - Do not modify scene-starters.json (read-only consumption)
 - Do not modify any existing page layout except `/` and adding the World Context button
 - Do not remove or modify any existing API routes
 - All new UI elements must use CSS `clamp()` for sizing — no fixed px/rem
 - Preserve all existing features on the World Context page
+- **Do not modify sessionStorage key names** (`promagen:preloaded-payload`, `promagen:preloaded-inspiredBy`) — the prompt builder reads these on mount
+- **Do not modify the `promagen-session` cookie name or maxAge** — the like system depends on session continuity
+- **Preserve the venue desync fix** — always use `categoryMap.meta.venue` as the authoritative venue, not the route's index rotation
+- **Preserve the categoryMapHash** in `inspiredBy` — the prompt builder uses this for fingerprint matching
+- **Preserve the table-expand hide** — PromptShowcase + LeaderboardIntro must both hide when `isTableExpanded` is true
 
 **Existing features preserved: Yes** (required for every change).
 
@@ -1199,5 +1276,25 @@ When building the new homepage:
 ---
 
 ## 19. Changelog
+
+- **4 March 2026 (v2.0.0):** **STATUS UPDATE — ALL PHASES IMPLEMENTED.** Document upgraded from "Specification (pre-build)" to "Implemented". 25+ discrepancies corrected against actual src.zip:
+  - **Tier colours fixed:** Tier 1 `text-cyan-400` → `text-violet-400`, Tier 2 `text-violet-400` → `text-blue-400`. Tier 1 label "CLIP" → "CLIP-Based". Tier 4 label "Plain" → "Plain Language". Ring + dot colours added.
+  - **Grid column:** centre `1fr` → `2.2fr` (Tailwind class documented)
+  - **Rotation engine:** "stored server-side (in-memory or KV)" → deterministic math `floor(now / 600000) % 102`. No server state. `setInterval` description removed. Risk mitigation row updated accordingly.
+  - **§4.2 PromptOfTheMoment interface:** Added `weather`, `tierSelections` (Phase D WeatherCategoryMap), and `inspiredBy` (with `categoryMapHash`) fields. Types reference to `src/types/homepage.ts` (229 lines) added.
+  - **§4.2 weather generator:** Line count corrected from 2,519 to 486 (entry point) / ~10,800 (full engine, 28 files)
+  - **§4.3 API route:** Rewritten with 11 accurate steps including categoryMap extraction, venue desync fix, ISR caching, and auto-logging to prompt_showcase_entries
+  - **§4.5 sessionStorage rewritten:** Old spec (`promagen:preloaded-prompt` + `promagen:preloaded-tier`) replaced with Phase D implementation (`promagen:preloaded-payload` with WeatherCategoryMap + `promagen:preloaded-inspiredBy` with badge metadata + categoryMapHash). "Why not pre-fill dropdowns" replaced with Phase D explanation (all 12 categories now pre-filled). Venue desync fix documented.
+  - **§5.4 Provider routing:** localStorage key `promagen:last-provider-id` → `lastProvider`. Engine Bay popup → default to Midjourney. Pro gate behaviour documented.
+  - **§9.2 Fallback nav:** `fallback-nav.tsx` reference removed (file doesn't exist)
+  - **§10.3 Implementation:** Speculative dual-file approach replaced with actual — `world-context/page.tsx` imports existing `homepage-client.tsx` directly
+  - **§12 file locations:** All estimated line counts replaced with actual (18 new files totalling ~4,427 lines). `world-context-client.tsx` removed (not created). `new-homepage-client.tsx`, `likes/database.ts`, `likes/session.ts` added. §12.2 line counts added. §12.3 test files section added.
+  - **§15 build order:** All 7 phases marked ✅ Complete
+  - **§16 risk mitigation:** Rotation restart row updated (no effect — deterministic)
+  - **Added to §4.4:** Countdown timer ("next city in M:SS"), ProviderIcon glow styling (`bg-white/15` + `drop-shadow`), table-expand hide behaviour, skeleton loader, metadata line format (no TZ suffix, no mood text), copy button feedback colours (`bg-emerald-500/20 text-emerald-400`), like button colour states (`text-pink-400`/`text-slate-400`)
+  - **Non-regression rules:** 5 new rules added (sessionStorage keys, cookie, venue desync, categoryMapHash, table-expand)
+  - **ASCII diagram:** Tier labels updated, countdown line added, metadata line corrected
+
+- **2 March 2026 (v1.0.0):** Initial specification document. All 7 build phases planned.
 
 - **2 March 2026 (v1.0.0):** Initial specification. New homepage with Prompt of the Moment showcase, Scene Starters preview, Community Pulse feed, like system, online users by country (threshold 50), World Context button on all pages. Current homepage moves to `/world-context`. 7-phase build plan, 13–18 day estimated build.
