@@ -42,6 +42,9 @@ export interface UsePromptShowcaseResult {
 // CONSTANTS
 // ============================================================================
 
+/** Rotation cadence — must match API route's ROTATION_MS */
+const ROTATION_MS = 10 * 60 * 1000;
+
 /** Duration of the crossfade overlay (ms) */
 const CROSSFADE_MS = 800;
 
@@ -72,12 +75,12 @@ export function usePromptShowcase(): UsePromptShowcaseResult {
     if (fadeTimerRef.current) { clearTimeout(fadeTimerRef.current); fadeTimerRef.current = null; }
   }, []);
 
-  // Schedule next fetch at rotation boundary
-  const scheduleNext = useCallback((nextRotationAt: string) => {
-    const delay = Math.max(
-      new Date(nextRotationAt).getTime() - Date.now() + 500, // +500ms buffer
-      MIN_FETCH_DELAY_MS,
-    );
+  // Schedule next fetch at rotation boundary (computed client-side)
+  const scheduleNext = useCallback(() => {
+    const now = Date.now();
+    const currentSlot = Math.floor(now / ROTATION_MS);
+    const nextBoundary = (currentSlot + 1) * ROTATION_MS;
+    const delay = Math.max(nextBoundary - now + 500, MIN_FETCH_DELAY_MS); // +500ms buffer
     timerRef.current = setTimeout(() => {
       if (mountedRef.current) void doFetch(true);
     }, delay);
@@ -112,8 +115,8 @@ export function usePromptShowcase(): UsePromptShowcaseResult {
         }, CROSSFADE_MS);
       }
 
-      // Schedule next rotation fetch
-      scheduleNext(json.nextRotationAt);
+      // Schedule next rotation fetch (client-side boundary, not API value)
+      scheduleNext();
     } catch (err) {
       if (!mountedRef.current) return;
       setError(err instanceof Error ? err.message : 'Failed to load');

@@ -471,14 +471,20 @@ function LocalClock({ time }: { time: string }) {
 // COUNTDOWN TIMER — Live MM:SS until next city rotation
 // ============================================================================
 
-function CountdownTimer({ nextRotationAt }: { nextRotationAt: string }) {
+function CountdownTimer({ nextRotationAt: _nextRotationAt }: { nextRotationAt: string }) {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
-    const target = new Date(nextRotationAt).getTime();
+    // Compute next rotation client-side using the same deterministic math
+    // as the API: 10-minute slots. This avoids stale cached nextRotationAt
+    // from Vercel CDN causing the counter to stick at 0:00.
+    const ROTATION_MS = 10 * 60 * 1000;
 
     function tick() {
-      const diff = Math.max(0, target - Date.now());
+      const now = Date.now();
+      const currentSlot = Math.floor(now / ROTATION_MS);
+      const nextBoundary = (currentSlot + 1) * ROTATION_MS;
+      const diff = Math.max(0, nextBoundary - now);
       const totalSec = Math.floor(diff / 1000);
       const m = Math.floor(totalSec / 60);
       const s = totalSec % 60;
@@ -488,7 +494,7 @@ function CountdownTimer({ nextRotationAt }: { nextRotationAt: string }) {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [nextRotationAt]);
+  }, []);
 
   return <span className="tabular-nums">{remaining}</span>;
 }

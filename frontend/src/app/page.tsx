@@ -24,8 +24,11 @@
 import React from 'react';
 import type { Metadata } from 'next';
 
-// Force dynamic rendering — homepage needs live weather for Prompt of the Moment
-export const dynamic = 'force-dynamic';
+// ISR: serve from cache, revalidate in background every 60 seconds.
+// Weather data is refreshed client-side by useWeather() after hydration,
+// so SSR weather only needs to be "good enough" — not real-time.
+// This eliminates the 5-second gateway fetch blocking every page load.
+export const revalidate = 60;
 
 import NewHomepageClient from '@/components/home/new-homepage-client';
 import { getProviders } from '@/lib/providers/api';
