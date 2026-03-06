@@ -156,7 +156,11 @@ function calculateVisibleIcons(containerWidth: number, maxIcons: number): number
 // COMPONENT
 // ============================================================================
 
-export default function EngineBay({ providers, selectedProvider: controlledSelected, onProviderChange }: EngineBayProps): React.ReactElement | null {
+export default function EngineBay({
+  providers,
+  selectedProvider: controlledSelected,
+  onProviderChange,
+}: EngineBayProps): React.ReactElement | null {
   const [internalSelected, setInternalSelected] = useState<Provider | null>(null);
   const [visibleIconCount, setVisibleIconCount] = useState(TOP_ICONS_COUNT);
   const iconGridRef = useRef<HTMLDivElement>(null);
@@ -164,13 +168,16 @@ export default function EngineBay({ providers, selectedProvider: controlledSelec
   // Controlled vs uncontrolled: use parent state if provided, else internal
   const isControlled = controlledSelected !== undefined;
   const selected = isControlled ? controlledSelected : internalSelected;
-  const setSelected = useCallback((provider: Provider | null) => {
-    if (isControlled && onProviderChange) {
-      onProviderChange(provider);
-    } else {
-      setInternalSelected(provider);
-    }
-  }, [isControlled, onProviderChange]);
+  const setSelected = useCallback(
+    (provider: Provider | null) => {
+      if (isControlled && onProviderChange) {
+        onProviderChange(provider);
+      } else {
+        setInternalSelected(provider);
+      }
+    },
+    [isControlled, onProviderChange],
+  );
 
   // Derived data
   const sortedProviders = useMemo(() => sortByImageQualityRank(providers), [providers]);
@@ -205,9 +212,12 @@ export default function EngineBay({ providers, selectedProvider: controlledSelec
   }, []);
 
   // Handlers
-  const handleIconClick = useCallback((provider: Provider) => {
-    setSelected(selected?.id === provider.id ? null : provider);
-  }, [selected, setSelected]);
+  const handleIconClick = useCallback(
+    (provider: Provider) => {
+      setSelected(selected?.id === provider.id ? null : provider);
+    },
+    [selected, setSelected],
+  );
 
   const handleComboboxChange = useCallback(
     (selectedNames: string[]) => {
@@ -344,7 +354,7 @@ export default function EngineBay({ providers, selectedProvider: controlledSelec
           className="w-1/2"
           style={{
             fontSize: 'clamp(0.70rem, 0.9vw, 1rem)',
-            minHeight: 'clamp(40px, 5vh, 60px)',
+            height: 'clamp(40px, 5vh, 60px)',
           }}
         >
           <Combobox
@@ -381,7 +391,7 @@ export default function EngineBay({ providers, selectedProvider: controlledSelec
           style={{
             padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
             gap: 'clamp(0.25rem, 0.5vw, 0.5rem)',
-            minHeight: 'clamp(40px, 1vh, 60px)',
+            height: 'clamp(40px, 5vh, 60px)',
           }}
         >
           {/* Shimmer overlay */}

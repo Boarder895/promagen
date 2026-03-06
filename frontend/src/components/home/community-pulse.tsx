@@ -1,420 +1,781 @@
 // src/components/home/community-pulse.tsx
 // ============================================================================
-// COMMUNITY PULSE — Right rail on new homepage
+// COMMUNITY PULSE — Right rail on new homepage (v8.0.0 — demo user prompts)
 // ============================================================================
-// Scrollable feed of recent high-scoring prompts from the community.
-// Provides social proof that Promagen is alive and active.
+// Structurally mirrors scene-starters-preview.tsx for visual symmetry.
 //
-// Features:
-// - 20 most recent entries (weather-seeded initially, user-generated later)
-// - Score colour-coding: ≥90 emerald, ≥80 amber, <80 slate
-// - Like button per entry (integrated with use-like hook)
-// - "Most liked today" pinned card at bottom (hidden if no likes)
-// - Relative timestamps ("2 min ago", "1 hour ago")
-// - 30-second auto-refresh via use-community-pulse hook
-// - All sizing via CSS clamp() (desktop-only per Promagen rules)
-// - Skeleton loader (no CLS)
+// Top 6 cards: Demo user-created prompts from 210 pre-generated entries
+//   - Per-card glow from platform brand colour (same as scene-starters per-tier)
+//   - Line 1: Platform icon + platform name
+//   - Line 2: Prompt description (subject + style, italic)
+//   - Line 3: "Created in" + flag + local time (leaderboard clock style)
+//   - Like heart: identical to PotM LikeButton (same JSX/sizes/colours)
+//   - Flag hover: portal tooltip with full optimised prompt + copy button
 //
-// Authority: docs/authority/homepage.md §6
-// Existing features preserved: Yes (additive component only)
+// Bottom 2 cards: Online users (500 demo, 16 countries)
+//
+// Rotation: top 6 picks rotate every 30 minutes (deterministic)
+// Cascading glow cycle: 3s on → 1s dark → next card
+//
+// Authority: docs/authority/homepage.md §6, §8
+// Existing features preserved: Yes — window dimensions unchanged
 // ============================================================================
 
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import Image from 'next/image';
+import demoPrompts from '@/data/community-pulse/demo-prompts.json';
 import { useCommunityPulse } from '@/hooks/use-community-pulse';
-import { useLike, type LikeState } from '@/hooks/use-like';
 import type { CommunityPulseEntry } from '@/types/homepage';
 
 // ============================================================================
-// CONSTANTS
+// CONSTANTS — MATCHED TO scene-starters-preview.tsx
 // ============================================================================
 
-/** Default like state (not liked, 0 count). */
-const EMPTY_LIKE: LikeState = { liked: false, count: 0, isUpdating: false };
+const MIN_FONT = 12;
+const MAX_FONT = 20;
+const FONT_SCALE = 0.042;
 
-// ============================================================================
-// RELATIVE TIME HELPER
-// ============================================================================
+const GLOW_ON_MS = 3000;
+const GLOW_OFF_MS = 1000;
+
+const CARD_COUNT = 8;
+const USER_CARD_COUNT = 6;
+
+/** Rotation cadence: pick new top 6 every 30 minutes */
+const ROTATION_MS = 30 * 60 * 1000;
+
+function hexToRgba(hex: string, alpha: number): string {
+  const safe = /^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#3B82F6';
+  const r = parseInt(safe.slice(1, 3), 16);
+  const g = parseInt(safe.slice(3, 5), 16);
+  const b = parseInt(safe.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// ── Online users accent (cyan) ──────────────────────────────────────────
+const ONLINE_GLOW_HEX = '#22D3EE';
+const ONLINE_GLOW_RGBA = hexToRgba(ONLINE_GLOW_HEX, 0.3);
+const ONLINE_GLOW_BORDER = hexToRgba(ONLINE_GLOW_HEX, 0.5);
+const ONLINE_GLOW_SOFT = hexToRgba(ONLINE_GLOW_HEX, 0.15);
+
+// ── Prompt tooltip constants (match weather-prompt-tooltip.tsx) ──────────
+const CLOSE_DELAY_MS = 400;
+const TOOLTIP_GAP = 8;
+const TOOLTIP_WIDTH = 450;
+
+// ── Platform brand colours (same map as scene-starters-preview.tsx) ─────
+const PLATFORM_COLORS: Readonly<Record<string, string>> = {
+  midjourney: '#7C3AED', openai: '#10B981', 'google-imagen': '#4285F4',
+  leonardo: '#EC4899', flux: '#F97316', stability: '#8B5CF6',
+  'adobe-firefly': '#FF6B35', ideogram: '#06B6D4', playground: '#3B82F6',
+  'microsoft-designer': '#0078D4', novelai: '#A855F7', lexica: '#14B8A6',
+  openart: '#F43F5E', '123rf': '#EF4444', canva: '#00C4CC',
+  bing: '#0078D4', nightcafe: '#D946EF', picsart: '#FF3366',
+  artistly: '#8B5CF6', fotor: '#22C55E', pixlr: '#3B82F6',
+  deepai: '#6366F1', craiyon: '#FBBF24', bluewillow: '#3B82F6',
+  dreamstudio: '#A855F7', artbreeder: '#10B981', 'jasper-art': '#F59E0B',
+  runway: '#EF4444', freepik: '#0EA5E9', simplified: '#8B5CF6',
+  photoleap: '#EC4899', vistacreate: '#F97316', artguru: '#06B6D4',
+  myedit: '#3B82F6', visme: '#7C3AED', hotpot: '#F59E0B',
+  picwish: '#10B981', clipdrop: '#6366F1', getimg: '#14B8A6',
+  'imagine-meta': '#0668E1', dreamlike: '#D946EF', 'remove-bg': '#22C55E',
+};
+const DEFAULT_BRAND_COLOR = '#3B82F6';
 
 /**
- * Format an ISO timestamp as a relative "time ago" string.
- * Keeps it short: "just now", "2m ago", "1h ago", "3d ago".
+ * Convert a live CommunityPulseEntry (from API) into the DemoEntry format
+ * that UserPromptCard expects. Maps fields and derives missing values.
  */
-function timeAgo(isoString: string): string {
-  const now = Date.now();
-  const then = new Date(isoString).getTime();
-  const diffMs = Math.max(0, now - then);
-  const diffSec = Math.floor(diffMs / 1000);
+function apiEntryToCard(entry: CommunityPulseEntry): DemoEntry {
+  const pid = entry.platformId || '';
+  // Extract HH:MM from ISO timestamp
+  let localTime = '00:00';
+  try {
+    const d = new Date(entry.createdAt);
+    localTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } catch { /* fallback */ }
 
-  if (diffSec < 60) return 'just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
+  return {
+    platformId: pid,
+    platformName: entry.platform || pid,
+    platformIcon: `/icons/providers/${pid}.png`,
+    brandColor: PLATFORM_COLORS[pid] ?? DEFAULT_BRAND_COLOR,
+    description: entry.description || '',
+    optimisedPrompt: entry.promptText || entry.description || '',
+    score: entry.score,
+    countryCode: entry.countryCode || '',
+    localTime,
+    likeCount: entry.likeCount,
+    isLive: true,
+  };
 }
 
 // ============================================================================
-// SCORE COLOUR HELPER
+// DEMO ENTRY TYPE
 // ============================================================================
 
-/**
- * Per spec §6.3: ≥90 emerald, ≥80 amber, <80 slate.
- */
-function scoreColour(score: number): string {
-  if (score >= 90) return 'text-emerald-400';
-  if (score >= 80) return 'text-amber-400';
-  return 'text-slate-400';
+interface DemoEntry {
+  platformId: string;
+  platformName: string;
+  platformIcon: string;
+  brandColor: string;
+  description: string;
+  optimisedPrompt: string;
+  score: number;
+  countryCode: string;
+  localTime: string;
+  likeCount: number;
+  /** True = real user data from API, false = demo placeholder */
+  isLive: boolean;
 }
 
 // ============================================================================
-// PULSE CARD — Single entry in the feed
+// DEMO ONLINE USERS — 500 users across 16 countries
 // ============================================================================
 
-function PulseCard({
+interface DemoCountry {
+  countryCode: string;
+  count: number;
+  label: string;
+}
+
+const DEMO_USERS_TOTAL = 500;
+
+const DEMO_COUNTRIES: DemoCountry[] = [
+  { countryCode: 'US', count: 87, label: 'United States' },
+  { countryCode: 'GB', count: 62, label: 'United Kingdom' },
+  { countryCode: 'IN', count: 55, label: 'India' },
+  { countryCode: 'DE', count: 42, label: 'Germany' },
+  { countryCode: 'FR', count: 35, label: 'France' },
+  { countryCode: 'JP', count: 31, label: 'Japan' },
+  { countryCode: 'AU', count: 28, label: 'Australia' },
+  { countryCode: 'CA', count: 25, label: 'Canada' },
+  { countryCode: 'BR', count: 22, label: 'Brazil' },
+  { countryCode: 'KR', count: 19, label: 'South Korea' },
+  { countryCode: 'NL', count: 17, label: 'Netherlands' },
+  { countryCode: 'SG', count: 15, label: 'Singapore' },
+  { countryCode: 'SE', count: 13, label: 'Sweden' },
+  { countryCode: 'IT', count: 12, label: 'Italy' },
+  { countryCode: 'MX', count: 10, label: 'Mexico' },
+  { countryCode: 'ZA', count: 7, label: 'South Africa' },
+];
+
+const DEMO_TOP_8 = DEMO_COUNTRIES.slice(0, 8);
+const DEMO_BOTTOM_8 = DEMO_COUNTRIES.slice(8, 16);
+
+// ============================================================================
+// PROMPT TOOLTIP — Portal-based (matches weather-prompt-tooltip.tsx exactly)
+// ============================================================================
+
+function PromptTooltipContent({
   entry,
-  likeState,
-  onToggleLike,
+  position,
+  onMouseEnter,
+  onMouseLeave,
+  onCopy,
+  copied,
 }: {
-  entry: CommunityPulseEntry;
-  likeState: LikeState;
-  onToggleLike: () => void;
+  entry: DemoEntry;
+  position: { top: number; left: number };
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onCopy: () => void;
+  copied: boolean;
 }) {
+  const glowRgba = hexToRgba(entry.brandColor, 0.3);
+  const glowBorder = hexToRgba(entry.brandColor, 0.5);
+  const glowSoft = hexToRgba(entry.brandColor, 0.15);
+
   return (
     <div
-      className="flex flex-col rounded-xl bg-white/[0.03] ring-1 ring-white/[0.06] transition-colors hover:bg-white/[0.05]"
-      style={{ padding: 'clamp(6px, 0.6vw, 10px)' }}
+      role="tooltip"
+      className="fixed rounded-xl px-6 py-4 text-sm text-slate-100"
+      style={{
+        top: position.top,
+        left: position.left,
+        transform: 'translateY(-50%)',
+        zIndex: 99999,
+        background: 'rgba(15, 23, 42, 0.97)',
+        border: `1px solid ${glowBorder}`,
+        boxShadow: `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`,
+        width: `${TOOLTIP_WIDTH}px`,
+        maxWidth: `${TOOLTIP_WIDTH}px`,
+        minWidth: '300px',
+        pointerEvents: 'auto',
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
-      {/* Row 1: Score + Platform */}
+      {/* Ethereal glow overlay - top radial */}
       <div
-        className="flex items-center"
-        style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}
-      >
-        {/* Score badge */}
-        <span
-          className={`font-mono font-bold ${scoreColour(entry.score)}`}
-          style={{ fontSize: 'clamp(0.55rem, 0.65vw, 0.75rem)' }}
-        >
-          {entry.score}
-        </span>
-
-        {/* Dot separator */}
-        <span
-          className="text-slate-600"
-          style={{ fontSize: 'clamp(0.4rem, 0.45vw, 0.55rem)' }}
-          aria-hidden="true"
-        >
-          ·
-        </span>
-
-        {/* Platform / City name */}
-        <span
-          className="truncate text-slate-400"
-          style={{ fontSize: 'clamp(0.48rem, 0.58vw, 0.68rem)' }}
-        >
-          {entry.platform}
-        </span>
-
-        {/* Tier indicator dot */}
-        <span
-          className="ml-auto shrink-0 rounded-full"
-          style={{
-            width: 'clamp(4px, 0.3vw, 6px)',
-            height: 'clamp(4px, 0.3vw, 6px)',
-            backgroundColor: tierDotColour(entry.tier),
-          }}
-          title={tierLabel(entry.tier)}
-          aria-hidden="true"
-        />
-      </div>
-
-      {/* Row 2: Description */}
-      <p
-        className="truncate text-slate-200"
-        style={{
-          fontSize: 'clamp(0.55rem, 0.68vw, 0.78rem)',
-          marginTop: 'clamp(2px, 0.15vw, 3px)',
-        }}
-        title={entry.description}
-      >
-        {entry.description || 'Untitled prompt'}
-      </p>
-
-      {/* Row 3: Time ago + Like button */}
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+        style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
+      />
+      {/* Bottom glow accent */}
       <div
-        className="flex items-center"
-        style={{ marginTop: 'clamp(2px, 0.2vw, 4px)' }}
-      >
-        {/* Time ago */}
-        <span
-          className="text-slate-500"
-          style={{ fontSize: 'clamp(0.42rem, 0.5vw, 0.6rem)' }}
-        >
-          {timeAgo(entry.createdAt)}
-        </span>
-
-        {/* Like button — aligned right */}
-        <button
-          type="button"
-          onClick={onToggleLike}
-          disabled={likeState.isUpdating}
-          className={`ml-auto inline-flex shrink-0 items-center transition-all ${
-            likeState.liked
-              ? 'text-pink-400'
-              : 'text-slate-500 hover:text-pink-300'
-          } ${likeState.isUpdating ? 'opacity-60' : ''}`}
-          style={{
-            gap: 'clamp(3px, 0.25vw, 4px)',
-            fontSize: 'clamp(0.6rem, 0.72vw, 0.85rem)',
-            padding: 'clamp(1px, 0.1vw, 2px) clamp(3px, 0.25vw, 5px)',
-          }}
-          title={likeState.liked ? 'Unlike this prompt' : 'Like this prompt'}
-          aria-label={`${likeState.liked ? 'Unlike' : 'Like'} prompt (${likeState.count} likes)`}
-        >
-          <span
-            style={{
-              fontSize: 'clamp(1.1rem, 1.3vw, 1.56rem)',
-              transition: 'transform 200ms ease-out',
-              transform: likeState.liked ? 'scale(1.2)' : 'scale(1)',
-              display: 'inline-block',
-            }}
-            aria-hidden="true"
-          >
-            {likeState.liked ? '♥' : '♡'}
-          </span>
-          <span className="tabular-nums">{likeState.count}</span>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// MOST LIKED TODAY CARD — Pinned at bottom of feed
-// ============================================================================
-
-function MostLikedCard({ entry }: { entry: CommunityPulseEntry }) {
-  return (
-    <div
-      className="flex items-center rounded-xl bg-amber-500/[0.06] ring-1 ring-amber-500/20"
-      style={{ padding: 'clamp(6px, 0.6vw, 10px)', gap: 'clamp(6px, 0.5vw, 8px)' }}
-    >
-      {/* Trophy */}
-      <span
-        style={{ fontSize: 'clamp(0.7rem, 0.85vw, 1rem)' }}
-        aria-hidden="true"
-      >
-        🏆
-      </span>
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
+        style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`, opacity: 0.6 }}
+      />
 
       {/* Content */}
-      <div className="min-w-0 flex-1">
+      <div className="relative z-10 flex flex-col gap-3">
+        {/* Header: "Image Prompt" + copy button */}
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <span
+            className="text-base font-semibold text-white"
+            style={{ textShadow: `0 0 12px ${glowRgba}` }}
+          >
+            Image Prompt
+          </span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onCopy(); }}
+            className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all duration-200 ${
+              copied
+                ? 'bg-emerald-500/20 text-emerald-400'
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+            }`}
+            title={copied ? 'Copied!' : 'Copy prompt'}
+            aria-label={copied ? 'Copied to clipboard' : 'Copy prompt to clipboard'}
+          >
+            {copied ? (
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* Platform label */}
+        <span className="-mt-1 text-xs text-slate-300">
+          {entry.platformName}
+        </span>
+
+        {/* Prompt text */}
         <p
-          className="font-medium text-amber-300"
-          style={{ fontSize: 'clamp(0.42rem, 0.52vw, 0.62rem)' }}
+          className="whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-200"
+          style={{ maxWidth: '420px' }}
         >
-          Most liked today
-        </p>
-        <p
-          className="truncate text-slate-300"
-          style={{ fontSize: 'clamp(0.5rem, 0.62vw, 0.72rem)' }}
-          title={entry.description}
-        >
-          {entry.description || 'Untitled prompt'}
+          {entry.optimisedPrompt}
         </p>
       </div>
-
-      {/* Like count */}
-      <span
-        className="shrink-0 text-pink-400"
-        style={{ fontSize: 'clamp(0.96rem, 1.16vw, 1.36rem)' }}
-      >
-        ♥ {entry.likeCount}
-      </span>
     </div>
   );
 }
 
 // ============================================================================
-// SKELETON LOADER
+// USER PROMPT CARD
 // ============================================================================
 
-function PulseSkeleton() {
+const UserPromptCard = React.memo(function UserPromptCard({
+  entry,
+  cardFont,
+  isGlowActive,
+}: {
+  entry: DemoEntry;
+  cardFont: number;
+  isGlowActive: boolean;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [tooltipCoords, setTooltipCoords] = useState({ top: 0, left: 0 });
+  const [copied, setCopied] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const flagRef = useRef<HTMLSpanElement>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isGlowing = isHovered || isGlowActive;
+
+  useEffect(() => { setIsMounted(true); return () => setIsMounted(false); }, []);
+  useEffect(() => { if (copied) { const t = setTimeout(() => setCopied(false), 1500); return () => clearTimeout(t); } }, [copied]);
+  useEffect(() => { return () => { if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current); }; }, []);
+
+  const clearCloseTimeout = useCallback(() => {
+    if (closeTimeoutRef.current) { clearTimeout(closeTimeoutRef.current); closeTimeoutRef.current = null; }
+  }, []);
+
+  const startCloseDelay = useCallback(() => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => setTooltipVisible(false), CLOSE_DELAY_MS);
+  }, [clearCloseTimeout]);
+
+  const handleFlagEnter = useCallback(() => {
+    clearCloseTimeout();
+    if (flagRef.current) {
+      const rect = flagRef.current.getBoundingClientRect();
+      setTooltipCoords({ top: rect.top + rect.height / 2, left: rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP });
+    }
+    setTooltipVisible(true);
+  }, [clearCloseTimeout]);
+
+  const handleFlagLeave = useCallback(() => { startCloseDelay(); }, [startCloseDelay]);
+  const handleTooltipEnter = useCallback(() => { clearCloseTimeout(); }, [clearCloseTimeout]);
+  const handleTooltipLeave = useCallback(() => { startCloseDelay(); }, [startCloseDelay]);
+
+  const handleCopy = useCallback(async () => {
+    try { await navigator.clipboard.writeText(entry.optimisedPrompt); setCopied(true); } catch { /* noop */ }
+  }, [entry.optimisedPrompt]);
+
+  // ── Per-card glow from brand colour (same pattern as scene-starters) ──
+  const glowRgba = hexToRgba(entry.brandColor, 0.3);
+  const glowBorder = hexToRgba(entry.brandColor, 0.5);
+  const glowSoft = hexToRgba(entry.brandColor, 0.15);
+
+  const cardStyle: React.CSSProperties = {
+    fontSize: `${cardFont}px`,
+    height: 'clamp(74px, 6.2vw, 104px)',
+    overflow: 'hidden',
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: `1px solid ${isGlowing ? glowBorder : 'rgba(255, 255, 255, 0.1)'}`,
+    boxShadow: isGlowing
+      ? `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`
+      : '0 1px 3px rgba(0, 0, 0, 0.1)',
+    transition: 'border-color 600ms ease-out, box-shadow 600ms ease-out',
+  };
+
+  // Split time for blinking colon display
+  const [hours, minutes] = entry.localTime.split(':');
+
   return (
     <div
-      className="flex flex-col"
-      style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}
-      aria-label="Loading community pulse"
+      className="relative w-full rounded-lg"
+      style={cardStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div
-          key={i}
-          className="animate-pulse rounded-xl bg-slate-800/40"
-          style={{ height: 'clamp(48px, 4.5vw, 72px)' }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ============================================================================
-// EMPTY STATE
-// ============================================================================
-
-function EmptyPulse() {
-  return (
-    <div
-      className="flex flex-col items-center justify-center text-center"
-      style={{ padding: 'clamp(16px, 1.5vw, 24px) 0' }}
-    >
+      {/* Ethereal glow - top radial */}
       <span
-        style={{ fontSize: 'clamp(1.2rem, 1.5vw, 2rem)' }}
-        aria-hidden="true"
-      >
-        📡
-      </span>
-      <p
-        className="text-slate-500"
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
         style={{
-          fontSize: 'clamp(0.55rem, 0.68vw, 0.78rem)',
-          marginTop: 'clamp(4px, 0.3vw, 6px)',
+          background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)`,
+          opacity: isGlowing ? 1 : 0,
+          transition: 'opacity 600ms ease-out',
         }}
+        aria-hidden="true"
+      />
+      {/* Ethereal glow - bottom radial */}
+      <span
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
+        style={{
+          background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`,
+          opacity: isGlowing ? 0.6 : 0,
+          transition: 'opacity 600ms ease-out',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* MAIN LAYOUT — 3 equal rows via fixed 33.333% height each */}
+      <div
+        className="relative z-10 flex h-full flex-col justify-between"
+        style={{ padding: 'clamp(5px, 0.4vw, 8px) clamp(8px, 0.7vw, 14px)' }}
       >
-        No prompt activity yet
-      </p>
-      <p
-        className="text-slate-600"
-        style={{ fontSize: 'clamp(0.45rem, 0.55vw, 0.65rem)' }}
-      >
-        Weather-driven prompts will appear shortly
-      </p>
+        {/* LINE 1: Platform icon + platform name + heart */}
+        <div className="flex items-center gap-2" style={{ height: '33.333%' }}>
+          {/* Platform icon */}
+          <span
+            className="relative shrink-0 overflow-hidden rounded-sm"
+            style={{ width: 'clamp(14px, 1.2vw, 20px)', height: 'clamp(14px, 1.2vw, 20px)' }}
+          >
+            <Image
+              src={entry.platformIcon}
+              alt={entry.platformName}
+              fill
+              sizes="20px"
+              className="object-contain"
+              style={{ filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4))' }}
+            />
+          </span>
+          {/* Platform name */}
+          <span
+            className="min-w-0 flex-1 truncate font-medium leading-tight text-slate-100"
+            style={{ fontSize: '0.90em' }}
+          >
+            {entry.platformName}
+          </span>
+          {/* Score — only shown for live user entries (demo entries have no score) */}
+          {entry.isLive && (
+            <span
+              className="shrink-0 tabular-nums text-white"
+              style={{ fontSize: '0.85em' }}
+            >
+              {entry.score}/100
+            </span>
+          )}
+          {/* Like heart — scaled to fit row height */}
+          <span
+            className="inline-flex shrink-0 items-center text-pink-400"
+            style={{
+              gap: 'clamp(4px, 0.4vw, 6px)',
+              fontSize: '0.85em',
+            }}
+          >
+            <span aria-hidden="true">
+              {entry.likeCount > 0 ? '♥' : '♡'}
+            </span>
+            {entry.likeCount > 0 && (
+              <span className="tabular-nums text-emerald-400">{entry.likeCount}</span>
+            )}
+          </span>
+        </div>
+
+        {/* LINE 2: Prompt description — uppercase first letter */}
+        <div className="flex items-center" style={{ height: '33.333%' }}>
+          <span
+            className="min-w-0 flex-1 truncate italic text-slate-300"
+            style={{ fontSize: '0.75em' }}
+          >
+            {entry.description.charAt(0).toUpperCase() + entry.description.slice(1)}
+          </span>
+        </div>
+
+        {/* LINE 3: Created in + flag + time */}
+        <div
+          className="flex items-center"
+          style={{ height: '33.333%', fontSize: '0.68em' }}
+        >
+          <span className="text-slate-400">Created in</span>
+          {/* Flag — 3× gap on each side */}
+          <span
+            ref={flagRef}
+            className="relative inline-flex shrink-0 cursor-pointer overflow-hidden rounded-sm"
+            style={{
+              width: 'clamp(18px, 1.5vw, 24px)',
+              height: 'clamp(14px, 1.1vw, 18px)',
+              marginLeft: 'clamp(9px, 0.9vw, 15px)',
+              marginRight: 'clamp(9px, 0.9vw, 15px)',
+            }}
+            onMouseEnter={handleFlagEnter}
+            onMouseLeave={handleFlagLeave}
+          >
+            <Image
+              src={`/flags/${entry.countryCode.toLowerCase()}.svg`}
+              alt={entry.countryCode}
+              fill
+              sizes="24px"
+              className="object-cover"
+            />
+          </span>
+          <span className="text-slate-400">at</span>
+          {/* Time — mono font, visible colon */}
+          <span
+            className="tabular-nums text-slate-200"
+            style={{
+              marginLeft: 'clamp(6px, 0.6vw, 10px)',
+              fontFamily: "'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace",
+              letterSpacing: '0.05em',
+            }}
+          >
+            {hours}
+            <span
+              style={{
+                display: 'inline-block',
+                width: '0.6ch',
+                textAlign: 'center',
+                fontWeight: 600,
+              }}
+            >
+              :
+            </span>
+            {minutes}
+          </span>
+        </div>
+      </div>
+
+      {/* Tooltip via Portal */}
+      {isMounted && tooltipVisible && createPortal(
+        <PromptTooltipContent
+          entry={entry}
+          position={tooltipCoords}
+          onMouseEnter={handleTooltipEnter}
+          onMouseLeave={handleTooltipLeave}
+          onCopy={handleCopy}
+          copied={copied}
+        />,
+        document.body,
+      )}
     </div>
   );
-}
+});
 
 // ============================================================================
-// TIER HELPERS
+// ONLINE USERS CARD
 // ============================================================================
 
-function tierDotColour(tier: string): string {
-  switch (tier) {
-    case 'tier1': return '#8B5CF6'; // violet
-    case 'tier2': return '#3B82F6'; // blue
-    case 'tier3': return '#10B981'; // emerald
-    case 'tier4': return '#F59E0B'; // amber
-    default: return '#64748B';      // slate
-  }
-}
+const OnlineUsersCard = React.memo(function OnlineUsersCard({
+  cardFont,
+  isGlowActive,
+  countries,
+  headerText,
+  headerEmoji,
+}: {
+  cardFont: number;
+  isGlowActive: boolean;
+  countries: DemoCountry[];
+  headerText: string;
+  headerEmoji: string;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const isGlowing = isHovered || isGlowActive;
 
-function tierLabel(tier: string): string {
-  switch (tier) {
-    case 'tier1': return 'CLIP-Based';
-    case 'tier2': return 'Midjourney';
-    case 'tier3': return 'Natural Language';
-    case 'tier4': return 'Plain Language';
-    default: return 'Unknown';
-  }
-}
+  const cardStyle: React.CSSProperties = {
+    fontSize: `${cardFont}px`,
+    height: 'clamp(74px, 6.2vw, 104px)',
+    overflow: 'hidden',
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: `1px solid ${isGlowing ? ONLINE_GLOW_BORDER : 'rgba(255, 255, 255, 0.1)'}`,
+    boxShadow: isGlowing
+      ? `0 0 40px 8px ${ONLINE_GLOW_RGBA}, 0 0 80px 16px ${ONLINE_GLOW_SOFT}, inset 0 0 25px 3px ${ONLINE_GLOW_RGBA}`
+      : '0 1px 3px rgba(0, 0, 0, 0.1)',
+    transition: 'border-color 600ms ease-out, box-shadow 600ms ease-out',
+  };
+
+  return (
+    <div
+      className="relative w-full rounded-lg"
+      style={cardStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <span
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
+        style={{
+          background: `radial-gradient(ellipse at 50% 0%, ${ONLINE_GLOW_RGBA} 0%, transparent 70%)`,
+          opacity: isGlowing ? 1 : 0,
+          transition: 'opacity 600ms ease-out',
+        }}
+        aria-hidden="true"
+      />
+      <span
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
+        style={{
+          background: `radial-gradient(ellipse at 50% 100%, ${ONLINE_GLOW_SOFT} 0%, transparent 60%)`,
+          opacity: isGlowing ? 0.6 : 0,
+          transition: 'opacity 600ms ease-out',
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative z-10 flex flex-col">
+        <div className="flex items-center" style={{ padding: 'clamp(3px, 0.25vw, 5px) clamp(8px, 0.7vw, 14px)' }}>
+          <span style={{ fontSize: '0.9em', marginRight: 'clamp(4px, 0.3vw, 6px)' }}>{headerEmoji}</span>
+          <span className="min-w-0 flex-1 truncate font-medium leading-tight text-cyan-300" style={{ fontSize: '0.85em' }}>
+            {headerText}
+          </span>
+        </div>
+        <div className="border-t border-white/5" aria-hidden="true" />
+        <div
+          className="flex flex-nowrap items-center overflow-hidden"
+          style={{ padding: 'clamp(3px, 0.25vw, 5px) clamp(8px, 0.7vw, 14px)', gap: 'clamp(8px, 0.8vw, 14px)' }}
+        >
+          {countries.map((c) => (
+            <span
+              key={c.countryCode}
+              className="inline-flex shrink-0 items-center text-slate-300"
+              style={{ gap: 'clamp(4px, 0.4vw, 8px)', fontSize: '0.78em' }}
+              title={`${c.label}: ${c.count} online`}
+            >
+              <span
+                className="relative shrink-0 overflow-hidden rounded-sm"
+                style={{ width: 'clamp(18px, 1.5vw, 24px)', height: 'clamp(14px, 1.1vw, 18px)' }}
+              >
+                <Image src={`/flags/${c.countryCode.toLowerCase()}.svg`} alt="" fill sizes="24px" className="object-cover" />
+              </span>
+              <span className="tabular-nums font-medium">{c.count}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export default function CommunityPulse() {
-  const { entries, mostLikedToday, isLoading } = useCommunityPulse();
+  // ── Snap-fit font ─────────────────────────────────────────────────────
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [cardFont, setCardFont] = useState(16);
 
-  // ── Like system integration ────────────────────────────────────────────
-  // Collect all entry IDs for batched like status
-  const entryIds = useMemo(
-    () => entries.map((e) => e.id),
-    [entries],
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const computeFont = () => {
+      const w = el.clientWidth;
+      if (w <= 0) return;
+      const px = Math.round(Math.min(MAX_FONT, Math.max(MIN_FONT, w * FONT_SCALE)));
+      setCardFont((prev) => (prev === px ? prev : px));
+    };
+    computeFont();
+    const ro = new ResizeObserver(() => computeFont());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // ── Cascading glow cycle ──────────────────────────────────────────────
+  const [activeGlowIndex, setActiveGlowIndex] = useState(0);
+  const [glowOn, setGlowOn] = useState(true);
+
+  useEffect(() => {
+    const offTimer = setTimeout(() => setGlowOn(false), GLOW_ON_MS);
+    const nextTimer = setTimeout(() => {
+      setActiveGlowIndex((prev) => (prev + 1) % CARD_COUNT);
+      setGlowOn(true);
+    }, GLOW_ON_MS + GLOW_OFF_MS);
+    return () => { clearTimeout(offTimer); clearTimeout(nextTimer); };
+  }, [activeGlowIndex]);
+
+  // ── Live data from API ─────────────────────────────────────────────
+  const { entries: liveEntries } = useCommunityPulse();
+
+  // Filter to user-created entries only (source === 'user')
+  const userCards = useMemo(() =>
+    liveEntries
+      .filter((e) => e.source === 'user')
+      .slice(0, USER_CARD_COUNT)
+      .map(apiEntryToCard),
+    [liveEntries],
   );
 
-  const { states: likeStates, toggleLike } = useLike(entryIds);
-
-  const handleToggleLike = useCallback(
-    (entryId: string) => {
-      toggleLike(entryId, { source: 'pulse' });
-    },
-    [toggleLike],
+  // ── 30-minute rotation for demo fallback ──────────────────────────
+  const [rotationSlot, setRotationSlot] = useState(() =>
+    Math.floor(Date.now() / ROTATION_MS),
   );
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const id = setInterval(() => {
+      setRotationSlot(Math.floor(Date.now() / ROTATION_MS));
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Real user entries take top slots, demo fills the rest
+  const topSix = useMemo(() => {
+    const all = (demoPrompts as Array<Omit<DemoEntry, 'isLive'>>).map(
+      (e) => ({ ...e, isLive: false }) as DemoEntry,
+    );
+    const demoSlotsNeeded = USER_CARD_COUNT - userCards.length;
+
+    if (demoSlotsNeeded <= 0) {
+      return userCards.slice(0, USER_CARD_COUNT);
+    }
+
+    const offset = (rotationSlot * demoSlotsNeeded) % all.length;
+    const demoPicks: DemoEntry[] = [];
+    for (let i = 0; i < demoSlotsNeeded; i++) {
+      demoPicks.push(all[(offset + i) % all.length]!);
+    }
+
+    return [...userCards, ...demoPicks];
+  }, [userCards, rotationSlot]);
+
+  // ══════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════════════════════════════════════
+
   return (
-    <div
-      className="flex h-full flex-col"
-      style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}
-      data-testid="community-pulse"
-    >
-      {/* ── Section header ────────────────────────────────────────────── */}
-      <div
-        className="flex shrink-0 items-center"
-        style={{
-          gap: 'clamp(5px, 0.5vw, 8px)',
-          padding: 'clamp(4px, 0.35vw, 6px) 0',
+    <div className="flex h-full flex-col" data-testid="community-pulse">
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes pulse-subtitle-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        .pulse-subtitle-pulse {
+          animation: pulse-subtitle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `,
         }}
+      />
+
+      {/* Header (MIRRORS scene-starters) */}
+      <div
+        className="flex items-center justify-center"
+        style={{ gap: 'clamp(4px, 0.4vw, 8px)', marginBottom: 'clamp(4px, 0.4vw, 7px)' }}
       >
-        {/* Live dot */}
         <div
           className="animate-pulse rounded-full"
-          style={{
-            backgroundColor: '#10B981',
-            width: 'clamp(5px, 0.3vw, 7px)',
-            height: 'clamp(5px, 0.3vw, 7px)',
-          }}
+          style={{ backgroundColor: '#10B981', width: 'clamp(6px, 0.35vw, 10px)', height: 'clamp(6px, 0.35vw, 10px)' }}
           aria-hidden="true"
         />
-        <span
-          className="font-mono uppercase tracking-wider text-slate-400"
-          style={{ fontSize: 'clamp(0.45rem, 0.58vw, 0.68rem)' }}
-        >
-          Community Pulse
+        <span className="font-semibold leading-tight" style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.2rem)' }}>
+          <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
+            Community Pulse
+          </span>
         </span>
+      </div>
+
+      {/* Subtitle */}
+      <p
+        className="pulse-subtitle-pulse truncate italic text-amber-400/80"
+        style={{ fontSize: 'clamp(0.5625rem, 0.75vw, 1rem)', marginBottom: 'clamp(5px, 0.5vw, 9px)', textAlign: 'center' }}
+      >
+        The most popular prompts
+      </p>
+
+      {/* Cards */}
+      <div
+        ref={containerRef}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
+      >
+        {/* Top 6: User prompt cards */}
+        {topSix.map((entry, index) => (
+          <UserPromptCard
+            key={`${entry.platformId}-${entry.description}-${rotationSlot}`}
+            entry={entry}
+            cardFont={cardFont}
+            isGlowActive={glowOn && index === activeGlowIndex}
+          />
+        ))}
+
+        {/* Bottom 2: Online users */}
+        <OnlineUsersCard
+          cardFont={cardFont}
+          isGlowActive={glowOn && activeGlowIndex === 6}
+          countries={DEMO_TOP_8}
+          headerText={`${DEMO_USERS_TOTAL} Online`}
+          headerEmoji="🌍"
+        />
+        <OnlineUsersCard
+          cardFont={cardFont}
+          isGlowActive={glowOn && activeGlowIndex === 7}
+          countries={DEMO_BOTTOM_8}
+          headerText="16 Countries"
+          headerEmoji="🏳️"
+        />
+      </div>
+
+      {/* Footer */}
+      <div
+        className="flex shrink-0 items-center justify-between"
+        style={{ marginTop: 'clamp(6px, 0.5vw, 10px)', minHeight: 'clamp(36px, 3vw, 48px)' }}
+      >
         <span
-          className="ml-auto text-slate-600"
-          style={{ fontSize: 'clamp(0.38rem, 0.45vw, 0.55rem)' }}
+          className="inline-flex items-center text-emerald-400"
+          style={{ fontSize: 'clamp(0.5rem, 0.6vw, 0.75rem)', gap: 'clamp(3px, 0.25vw, 5px)' }}
         >
+          <span
+            className="inline-block animate-pulse rounded-full"
+            style={{ backgroundColor: '#10B981', width: 'clamp(5px, 0.3vw, 7px)', height: 'clamp(5px, 0.3vw, 7px)' }}
+            aria-hidden="true"
+          />
           Live
         </span>
+        <span
+          className="shrink-0 text-emerald-400"
+          style={{ fontSize: 'clamp(0.5625rem, 0.65vw, 0.75rem)' }}
+        >
+          {DEMO_USERS_TOTAL} users · 16 countries
+        </span>
       </div>
-
-      {/* ── Feed area (scrollable) ────────────────────────────────────── */}
-      <div
-        className="min-h-0 flex-1 overflow-y-auto"
-        style={{
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(148, 163, 184, 0.15) transparent',
-        }}
-      >
-        {isLoading ? (
-          <PulseSkeleton />
-        ) : entries.length === 0 ? (
-          <EmptyPulse />
-        ) : (
-          <div
-            className="flex flex-col"
-            style={{ gap: 'clamp(4px, 0.35vw, 6px)' }}
-          >
-            {entries.map((entry) => (
-              <PulseCard
-                key={entry.id}
-                entry={entry}
-                likeState={likeStates.get(entry.id) ?? EMPTY_LIKE}
-                onToggleLike={() => handleToggleLike(entry.id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Most liked today (pinned at bottom, hidden if no likes) ──── */}
-      {mostLikedToday && mostLikedToday.likeCount > 0 && (
-        <div className="shrink-0">
-          <MostLikedCard entry={mostLikedToday} />
-        </div>
-      )}
     </div>
   );
 }

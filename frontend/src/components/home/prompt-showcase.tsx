@@ -186,7 +186,7 @@ function LikeButton({
         likeState.liked ? 'text-pink-400' : 'text-slate-400 hover:text-pink-300'
       } ${likeState.isUpdating ? 'opacity-60' : ''}`}
       style={{
-        gap: 'clamp(3px, 0.3vw, 5px)',
+        gap: 'clamp(6px, 0.6vw, 10px)',
         padding: 'clamp(2px, 0.15vw, 3px) clamp(4px, 0.3vw, 6px)',
         fontSize: 'clamp(0.65rem, 0.8vw, 0.95rem)',
       }}
@@ -206,7 +206,7 @@ function LikeButton({
         {likeState.liked ? '♥' : '♡'}
       </span>
       {/* Count */}
-      {likeState.count > 0 && <span className="tabular-nums">{likeState.count}</span>}
+      {likeState.count > 0 && <span className={`tabular-nums ${likeState.liked ? 'text-emerald-400' : ''}`}>{likeState.count}</span>}
     </button>
   );
 }
@@ -362,20 +362,20 @@ function TierPanel({
         </p>
       </div>
 
-      {/* "Try in" provider icons — overflow-hidden hides partial icons (Engine Bay pattern) */}
+      {/* "Try in" provider icons — horizontal scroll for overflow (§8.1 scrollbar utilities) */}
       {providers.length > 0 && (
         <div
-          className="flex items-center overflow-hidden"
+          className="flex items-center min-w-0"
           style={{ gap: 'clamp(4px, 0.35vw, 7px)' }}
         >
           <span
-            className="shrink-0 text-slate-500"
-            style={{ fontSize: 'clamp(0.45rem, 0.55vw, 0.62rem)' }}
+            className="shrink-0 font-bold uppercase tracking-wide text-red-300"
+            style={{ fontSize: 'clamp(0.65rem, 0.8vw, 0.875rem)', marginRight: 'clamp(12px, 1.05vw, 21px)' }}
           >
             Try in
           </span>
           <div
-            className="flex flex-nowrap items-center overflow-hidden"
+            className="flex flex-nowrap items-center overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
             style={{ gap: 'clamp(3px, 0.25vw, 5px)' }}
           >
             {providers.map((p) => (
@@ -797,8 +797,8 @@ export default function PromptShowcase() {
           aria-hidden="true"
         />
         <span
-          className="font-mono uppercase tracking-wider text-slate-400"
-          style={{ fontSize: 'clamp(0.45rem, 0.6vw, 0.7rem)' }}
+          className="font-mono font-bold uppercase tracking-wider text-white"
+          style={{ fontSize: 'clamp(0.7rem, 0.9vw, 1rem)' }}
         >
           PROMPT OF THE MOMENT
         </span>

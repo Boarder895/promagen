@@ -211,6 +211,8 @@ const SceneCard = React.memo(function SceneCard({
   const isGlowing = isHovered || isGlowActive;
   const cardStyle: React.CSSProperties = {
     fontSize: `${sceneFont}px`,
+    height: 'clamp(74px, 6.2vw, 104px)',
+    overflow: 'hidden',
     background: 'rgba(255, 255, 255, 0.05)',
     border: `1px solid ${isGlowing ? glowBorder : 'rgba(255, 255, 255, 0.1)'}`,
     boxShadow: isGlowing
@@ -536,7 +538,10 @@ export default function SceneStartersPreview({
       {/* ── Footer: icon+rank left | "25 free · 175 Pro" right ─────── */}
       <div
         className="flex shrink-0 items-center justify-between"
-        style={{ marginTop: 'clamp(6px, 0.5vw, 10px)' }}
+        style={{
+          marginTop: 'clamp(6px, 0.5vw, 10px)',
+          minHeight: 'clamp(36px, 3vw, 48px)',
+        }}
       >
         {/* Left: provider icon + rank (only when provider selected) */}
         {selectedProvider ? (

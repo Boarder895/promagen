@@ -1,16 +1,17 @@
 // src/app/page.tsx
 // ============================================================================
-// NEW HOMEPAGE - Server Component (Dynamic)
+// NEW HOMEPAGE - Server Component (ISR)
 // ============================================================================
 // The prompt-focused homepage replaces the former financial-data-first layout.
 // The original layout (exchange rails, FX ribbons, etc.) now lives at /world-context.
 //
-// This page loads providers + weather for the Prompt of the Moment showcase,
-// then delegates to NewHomepageClient for:
-// - Prompt of the Moment (4-tier weather prompt, copy, like, "Try in")
-// - Scene Starters preview (left rail)
-// - Community Pulse feed (right rail)
-// - Online users by country
+// Performance strategy:
+// - ISR with 60s revalidation (not force-dynamic)
+// - Providers + exchanges are sync JSON reads (instant)
+// - Weather fetch is non-blocking with 2s timeout + empty fallback
+//   (client-side useWeather() refreshes after hydration anyway)
+// - Prompt of the Moment is client-fetched with module-level prefetch
+//   (fires at JS parse time, before React hydrates)
 //
 // Authority: docs/authority/homepage.md
 //
@@ -25,15 +26,13 @@ import React from 'react';
 import type { Metadata } from 'next';
 
 // ISR: serve from cache, revalidate in background every 60 seconds.
-// Weather data is refreshed client-side by useWeather() after hydration,
-// so SSR weather only needs to be "good enough" — not real-time.
-// This eliminates the 5-second gateway fetch blocking every page load.
 export const revalidate = 60;
 
 import NewHomepageClient from '@/components/home/new-homepage-client';
 import { getProviders } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
+import type { ExchangeWeatherData } from '@/components/exchanges/types';
 
 // ============================================================================
 // METADATA (SEO)
@@ -52,16 +51,30 @@ export const metadata: Metadata = {
 /**
  * HomePage — Server component for the new prompt-focused homepage.
  *
- * Loads the same server data as before (providers, exchanges, weather) but
- * the client component renders the new layout: Prompt of the Moment showcase
- * in the centre, Scene Starters preview on the left, Community Pulse on the right.
+ * Weather is fetched with a tight 2s timeout — if the gateway is slow,
+ * the page renders immediately with an empty weather map. The client-side
+ * useWeather() hook fills it in after hydration (~1-2s later). This means
+ * weather tooltips may flash from empty to populated, but the page loads
+ * instantly instead of waiting 5+ seconds for the gateway.
  */
 export default async function HomePage() {
-  const [providers, allExchanges, weatherIndex] = await Promise.all([
-    Promise.resolve(getProviders()),
-    Promise.resolve(getHomepageExchanges()),
-    getWeatherIndex(),
-  ]);
+  // Providers + exchanges are synchronous JSON reads — instant
+  const providers = getProviders();
+  const allExchanges = getHomepageExchanges();
+
+  // Weather: non-blocking with 2s timeout. Empty map fallback.
+  // Client-side useWeather() refreshes after hydration anyway.
+  let weatherIndex: Map<string, ExchangeWeatherData>;
+  try {
+    weatherIndex = await Promise.race([
+      getWeatherIndex(),
+      new Promise<Map<string, ExchangeWeatherData>>((resolve) =>
+        setTimeout(() => resolve(new Map()), 2000),
+      ),
+    ]);
+  } catch {
+    weatherIndex = new Map();
+  }
 
   return (
     <NewHomepageClient

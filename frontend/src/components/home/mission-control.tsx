@@ -214,7 +214,7 @@ function getLocalHour(tz: string): number {
 // ============================================================================
 
 const actionButtonBase =
-  'inline-flex w-full flex-col items-center justify-center rounded-xl border text-center font-semibold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80';
+  'inline-flex w-full flex-col items-center justify-center overflow-hidden rounded-xl border text-center font-semibold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/80';
 
 const actionButtonActive =
   'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer';
@@ -358,7 +358,7 @@ export default function MissionControl({
       style={{
         padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
         gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
-        minHeight: 'clamp(40px, 5vh, 60px)',
+        height: 'clamp(40px, 5vh, 60px)',
       }}
     >
       <svg
@@ -368,8 +368,8 @@ export default function MissionControl({
         viewBox="0 0 24 24"
         aria-hidden="true"
         style={{
-          width: 'clamp(18px, 1.5vw, 22px)',
-          height: 'clamp(18px, 1.5vw, 22px)',
+          width: 'clamp(14px, 1vw, 18px)',
+          height: 'clamp(14px, 1vw, 18px)',
         }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={homeIconPath} />
@@ -391,7 +391,7 @@ export default function MissionControl({
       style={{
         padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
         gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
-        minHeight: 'clamp(40px, 5vh, 60px)',
+        height: 'clamp(40px, 5vh, 60px)',
       }}
     >
       <svg
@@ -401,8 +401,8 @@ export default function MissionControl({
         viewBox="0 0 24 24"
         aria-hidden="true"
         style={{
-          width: 'clamp(18px, 1.5vw, 22px)',
-          height: 'clamp(18px, 1.5vw, 22px)',
+          width: 'clamp(14px, 1vw, 18px)',
+          height: 'clamp(14px, 1vw, 18px)',
         }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={studioIconPath} />
@@ -424,7 +424,7 @@ export default function MissionControl({
       style={{
         padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
         gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
-        minHeight: 'clamp(40px, 5vh, 60px)',
+        height: 'clamp(40px, 5vh, 60px)',
       }}
     >
       <svg
@@ -434,8 +434,8 @@ export default function MissionControl({
         viewBox="0 0 24 24"
         aria-hidden="true"
         style={{
-          width: 'clamp(18px, 1.5vw, 22px)',
-          height: 'clamp(18px, 1.5vw, 22px)',
+          width: 'clamp(14px, 1vw, 18px)',
+          height: 'clamp(14px, 1vw, 18px)',
         }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={proIconPath} />
@@ -459,7 +459,7 @@ export default function MissionControl({
       style={{
         padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
         gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
-        minHeight: 'clamp(40px, 5vh, 60px)',
+        height: 'clamp(40px, 5vh, 60px)',
       }}
     >
       <svg
@@ -469,8 +469,8 @@ export default function MissionControl({
         viewBox="0 0 24 24"
         aria-hidden="true"
         style={{
-          width: 'clamp(18px, 1.5vw, 22px)',
-          height: 'clamp(18px, 1.5vw, 22px)',
+          width: 'clamp(14px, 1vw, 18px)',
+          height: 'clamp(14px, 1vw, 18px)',
         }}
       >
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={worldContextIconPath} />

@@ -1,19 +1,22 @@
 // src/hooks/use-prompt-showcase.ts
 // ============================================================================
-// PROMPT OF THE MOMENT — Data Hook
+// PROMPT OF THE MOMENT — Data Hook (v2.0.0 — Module-Level Prefetch)
 // ============================================================================
-// Fetches the current prompt showcase from the API and auto-refreshes
-// when the 10-minute rotation period expires.
+// v2.0.0: Fetch starts at JS PARSE TIME, not component mount time.
+// The API call fires the instant this module is imported (during bundle load),
+// eliminating the "hydrate → mount → useEffect → fetch" waterfall.
+// By the time React mounts the showcase component, data is already in-flight
+// or has already arrived.
 //
 // Features:
-// - Initial fetch on mount
-// - Auto-refresh aligned to nextRotationAt boundary (+500ms buffer)
+// - Module-level prefetch (fires before React hydrates)
+// - Auto-refresh aligned to 10-minute rotation boundary (client-side math)
 // - previousData held for 800ms crossfade transition
 // - Retry on error (30s backoff)
 // - Cleanup on unmount (no leaked timers)
 //
 // Authority: docs/authority/homepage.md §4
-// Existing features preserved: Yes (additive file only)
+// Existing features preserved: Yes
 // ============================================================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -55,6 +58,29 @@ const RETRY_DELAY_MS = 30_000;
 const MIN_FETCH_DELAY_MS = 5_000;
 
 // ============================================================================
+// MODULE-LEVEL PREFETCH
+// ============================================================================
+// This fetch fires the INSTANT the JS module is parsed by the browser —
+// typically during bundle evaluation, well before React hydrates.
+// The promise is consumed by the first hook instance that mounts.
+
+let _prefetchPromise: Promise<PromptOfTheMoment | null> | null = null;
+
+function startPrefetch(): Promise<PromptOfTheMoment | null> {
+  return fetch('/api/homepage/prompt-of-the-moment')
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<PromptOfTheMoment>;
+    })
+    .catch(() => null);
+}
+
+// Fire immediately at module load (client-side only)
+if (typeof window !== 'undefined') {
+  _prefetchPromise = startPrefetch();
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 
@@ -80,7 +106,7 @@ export function usePromptShowcase(): UsePromptShowcaseResult {
     const now = Date.now();
     const currentSlot = Math.floor(now / ROTATION_MS);
     const nextBoundary = (currentSlot + 1) * ROTATION_MS;
-    const delay = Math.max(nextBoundary - now + 500, MIN_FETCH_DELAY_MS); // +500ms buffer
+    const delay = Math.max(nextBoundary - now + 500, MIN_FETCH_DELAY_MS);
     timerRef.current = setTimeout(() => {
       if (mountedRef.current) void doFetch(true);
     }, delay);
@@ -115,7 +141,7 @@ export function usePromptShowcase(): UsePromptShowcaseResult {
         }, CROSSFADE_MS);
       }
 
-      // Schedule next rotation fetch (client-side boundary, not API value)
+      // Schedule next rotation fetch
       scheduleNext();
     } catch (err) {
       if (!mountedRef.current) return;
@@ -132,10 +158,31 @@ export function usePromptShowcase(): UsePromptShowcaseResult {
    
   }, [data, scheduleNext]);
 
-  // Mount: initial fetch
+  // Mount: consume prefetch or fall back to fresh fetch
   useEffect(() => {
     mountedRef.current = true;
-    void doFetch(false);
+
+    // Consume the module-level prefetch (fires before hydration)
+    if (_prefetchPromise) {
+      const promise = _prefetchPromise;
+      _prefetchPromise = null; // consume once
+
+      promise.then((json) => {
+        if (!mountedRef.current) return;
+        if (json) {
+          setData(json);
+          setError(null);
+          setIsLoading(false);
+          scheduleNext();
+        } else {
+          // Prefetch failed — fall back to normal fetch
+          void doFetch(false);
+        }
+      });
+    } else {
+      // No prefetch available (SSR, or already consumed) — fetch normally
+      void doFetch(false);
+    }
 
     return () => {
       mountedRef.current = false;

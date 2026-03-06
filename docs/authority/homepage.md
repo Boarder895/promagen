@@ -1,9 +1,9 @@
 # New Homepage — Authority Document
 
-**Last updated:** 5 March 2026  
-**Version:** 3.0.0  
+**Last updated:** 6 March 2026  
+**Version:** 4.0.0  
 **Owner:** Promagen  
-**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 redesign)  
+**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 + Community Pulse v8.0 redesign)  
 **Authority:** This document defines the new Promagen homepage layout, components, data flow, and build plan. It supersedes the homepage section of `ribbon-homepage.md` for the `/` route only.
 
 ---
@@ -69,7 +69,7 @@ All principles from `code-standard.md` and `best-working-practice.md` apply. Spe
 | **Universal clamp()** | Every new component uses inline `clamp()` for all visible dimensions. Zero fixed `px`/`rem`. Zero Tailwind size classes for scalable elements.                                                                  |
 | **Card-only design**  | All new containers are rounded cards matching existing `rounded-3xl bg-slate-950/70 ring-1 ring-white/10`.                                                                                                      |
 | **SSOT-first**        | Prompt rotation uses existing 102-city SSOT from `city-vibes.json`. Scene data from `scene-starters.json`. Provider data from `providers.json`.                                                                 |
-| **No fake data**      | Community Pulse shows real data with zero likes. Online users shows real counts or hides below threshold. Weather-seeded prompts are real prompts, not fabricated metrics.                                      |
+| **Demo-to-live**      | Community Pulse starts with 210 demo prompts (clearly distinguished via absent score badge). Real user prompts take over automatically as they flow in. Online users show demo counts until threshold. No fabricated engagement metrics.                                      |
 | **No scope creep**    | This build changes the `/` route layout. It does not modify the prompt builder, vocabulary system, scoring engine, or any existing page except adding a "World Context" button to Mission Control on all pages. |
 | **Viewport-locked**   | `h-dvh overflow-hidden` on body. All scrolling inside individual containers. No page-level scrollbar.                                                                                                           |
 | **Accessibility**     | All interactive elements use `<button>` or `<a>`. Full keyboard navigation. ARIA labels. `prefers-reduced-motion` respected.                                                                                    |
@@ -558,91 +558,207 @@ This ensures the user sees which world and scene they came from (e.g., "Portrait
 
 ### 6.1 Purpose
 
-Social proof that Promagen is alive and active. Answers "is anyone using this?" Replaces the right exchange rail.
+Social proof that Promagen is alive and active. Answers "is anyone using this?" and "what are people building?" Replaces the right exchange rail. Structurally mirrors Scene Starters (left rail) for visual symmetry.
 
 ### 6.2 Data Source
 
-**Initial seed (pre-user-traffic):** Weather-generated prompts from the Prompt of the Moment rotation. Every 10 minutes when a new city prompt is generated, it is also logged as a Community Pulse entry. These entries show the city, tier, score, and timestamp — real prompts, real scores, zero fabricated engagement.
+**Demo prompts (pre-user-traffic):** 210 pre-generated prompts stored in `src/data/community-pulse/demo-prompts.json`. 5 prompts per platform across all 42 platforms. Each prompt is assembled and optimised for its specific platform format (T1 CLIP weights, T2 Midjourney params, T3 Natural Language sentences, T4 Plain Language). Prompts built from real vocabulary files — coherent visual scenes, not random term combinations. Every prompt fills 85-99% of its platform's `idealMax` character budget.
 
-**Post-launch:** As users build prompts and they pass through the scoring system (score ≥ 80), they are logged anonymously to the Community Pulse feed. No user IDs, no IPs — just the prompt description, tier, platform, score, and timestamp.
+**Demo prompt structure per tier:**
+- **Tier 1 CLIP:** `masterpiece, best quality, highly detailed, (subject:1.2), style, lighting, colour, composition, sharp focus, 8K, intricate textures`
+- **Tier 2 Midjourney:** `subject, style, lighting, colour, composition, high quality, detailed --ar 16:9 --v 6 --s 500 --no blur, watermark, text`
+- **Tier 3 Natural Language:** `A subject in style style. with lighting. Atmosphere. Set in environment. Rendered in colour. Composed with composition. Fidelity.`
+- **Tier 4 Plain:** `subject, style, lighting, colour, atmosphere`
 
-### 6.3 Component: `CommunityPulse`
+**Live user prompts (post-traffic):** When a user copies an optimised prompt in the prompt builder, the builder POSTs to `/api/homepage/community-pulse` fire-and-forget. The entry is stored with `source = 'user'` in `prompt_showcase_entries`. The `useCommunityPulse` hook polls every 30 seconds. User entries push demo entries out of the top 6 card slots automatically.
 
-**File:** `src/components/home/community-pulse.tsx`
+**Merge logic:** User entries (`source === 'user'`) fill the top card slots (up to 6). Remaining slots are filled by demo prompts from the 30-minute rotation. When all 6 slots are real users, zero demos are shown. When zero real users exist, full demo rotation (current behaviour).
 
-**Visual design:**
+**Generator script:** `scripts/generate-demo-prompts.ts` — run via `npx tsx scripts/generate-demo-prompts.ts` to regenerate prompts through the real One Brain pipeline (`assemblePrompt` + `optimizePromptGoldStandard` per platform).
+
+### 6.3 Component: `CommunityPulse` (v8.0.0)
+
+**File:** `src/components/home/community-pulse.tsx` (781 lines)
+
+**Visual design — v8.0.0 layout (top to bottom):**
 
 ```
-┌─ COMMUNITY PULSE ──────────────────┐
-│  Live • recent prompt activity      │
-├─────────────────────────────────────┤
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ 🎯 93-score Midjourney       │    │
-│  │ "Neon Rain Samurai"          │    │
-│  │ 2 min ago            ♡ 12   │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ 🎯 87-score DALL-E          │    │
-│  │ "Golden Hour Vineyard"       │    │
-│  │ 5 min ago            ♡ 7    │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ 🎯 91-score Flux             │    │
-│  │ "Tokyo Street at Twilight"   │    │
-│  │ 8 min ago            ♡ 3    │    │
-│  └─────────────────────────────┘    │
-│                                     │
-│  ... (scrollable)                   │
-│                                     │
-│  ┌─────────────────────────────┐    │
-│  │ 🏆 Most liked today:        │    │
-│  │ "Cyberpunk Samurai" ♡ 47    │    │
-│  └─────────────────────────────┘    │
-└─────────────────────────────────────┘
++----------------------------------------------------------+
+|               * Community Pulse                           |  <- centred, gradient (sky->emerald->indigo)
+|                                                          |
+|         The most popular prompts                         |  <- amber italic, pulsing (2s cycle)
++----------------------------------------------------------+
+|                                                          |
+|  +----------------------------------------------------+  |
+|  | [MJ icon] Midjourney          87/100       heart 12 |  |  <- LINE 1: icon + name + score (live only) + heart
+|  | Neon samurai in rain-soaked Tokyo alley              |  |  <- LINE 2: description, italic, uppercase first
+|  | Created in [flag]  at  14:32                        |  |  <- LINE 3: flag + mono clock
+|  +----------------------------------------------------+  |
+|                                                          |
+|  +----------------------------------------------------+  |
+|  | [Flux icon] Flux              heart 31              |  |  <- demo card (no score)
+|  | Golden hour vineyard with morning mist              |  |
+|  | Created in [flag]  at  09:17                        |  |
+|  +----------------------------------------------------+  |
+|                                                          |
+|  ... (6 user prompt cards total)                         |
+|                                                          |
+|  +----------------------------------------------------+  |
+|  | earth  500 Online                                   |  |  <- online users card 1 (cyan glow)
+|  | [US] 87  [GB] 62  [IN] 55  [DE] 42  ...           |  |
+|  +----------------------------------------------------+  |
+|                                                          |
+|  +----------------------------------------------------+  |
+|  | flag  16 Countries                                  |  |  <- online users card 2 (cyan glow)
+|  | [BR] 22  [KR] 19  [NL] 17  [SG] 15  ...           |  |
+|  +----------------------------------------------------+  |
+|                                                          |
++----------------------------------------------------------+
+|  * Live                         500 users * 16 countries |  <- footer
++----------------------------------------------------------+
 ```
 
-**Container:** Same scrollable pattern as Scene Starters (left rail) — `overflow-y: auto` with standard scrollbar styling.
+**Card layout — 3 equal rows, no horizontal divider:**
 
-**Each pulse card shows:**
+Each user prompt card has a fixed height of `clamp(74px, 6.2vw, 104px)` (same as scene cards). The interior uses `flex h-full flex-col justify-between` with `height: '33.333%'` on each row — guaranteeing equal vertical distribution regardless of content height.
 
-| Element            | Source                                  | Styling                                                                                                |
-| ------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Score              | Prompt score from scoring engine        | `clamp()` small text, colour-coded: ≥90 `text-emerald-400`, ≥80 `text-amber-400`, <80 `text-slate-400` |
-| Platform           | Provider name from SSOT                 | `clamp()` small text, muted                                                                            |
-| Prompt description | Short summary (max 40 chars, truncated) | `clamp()` body text, `text-slate-200`                                                                  |
-| Time ago           | Relative timestamp                      | `clamp()` tiny text, `text-slate-500`                                                                  |
-| Like count         | From `prompt_likes` table               | ♡ + count, clickable (see §7)                                                                          |
+| Row | Element | Source | Styling |
+| --- | ------- | ------ | ------- |
+| Line 1 | Platform icon | `/icons/providers/{id}.png` | `clamp(14px, 1.2vw, 20px)` square, `object-contain`, drop-shadow glow |
+| Line 1 | Platform name | `entry.platformName` | `0.90em`, `text-slate-100`, font-medium, truncate |
+| Line 1 | Score (live only) | `entry.score` | `0.85em`, `text-white`, tabular-nums. Format: `87/100`. Hidden for demo entries (`isLive === false`) |
+| Line 1 | Like heart | `entry.likeCount` | `0.85em`, `text-pink-400`. `heart` filled when > 0, `heart-outline` when 0. Count in `text-emerald-400` |
+| Line 2 | Description | `entry.description` (subject + style) | `0.75em`, italic, `text-slate-300`, truncate. First letter uppercased via `charAt(0).toUpperCase()` |
+| Line 3 | "Created in" | Static text | `0.68em`, `text-slate-400` |
+| Line 3 | Country flag | `entry.countryCode` | `clamp(18px, 1.5vw, 24px)` x `clamp(14px, 1.1vw, 18px)` — same size as online users / leaderboard. `marginLeft` + `marginRight`: `clamp(9px, 0.9vw, 15px)` (3x standard gap). Hover triggers tooltip |
+| Line 3 | "at" | Static text | `0.68em`, `text-slate-400` |
+| Line 3 | Time | `entry.localTime` (HH:MM) | Mono font (`SF Mono, Consolas`), `text-slate-200`, visible colon (`fontWeight: 600`, `width: 0.6ch`). Gap before time: `clamp(6px, 0.6vw, 10px)` |
 
-**"Most liked today" card:** Pinned at bottom of the feed. Shows the single prompt with the highest like count in the last 24 hours. If no likes exist yet, this card is hidden.
+**Per-card brand colour glow (same pattern as Scene Starters tier dot colour):**
 
-**Feed limit:** Show the 20 most recent entries. Older entries fall off. No pagination — this is a live feed, not an archive.
+Each card derives its glow colour from `PLATFORM_COLORS[platformId]`. The glow system is identical to scene-starters: `hexToRgba(brandColor, 0.3)` for `glowRgba`, `0.5` for `glowBorder`, `0.15` for `glowSoft`. Top + bottom radial gradients, 600ms transition.
 
-### 6.4 API Route
+| Platform | Brand Colour | Glow |
+| --- | --- | --- |
+| Midjourney | `#7C3AED` | Violet |
+| Flux | `#F97316` | Orange |
+| Leonardo | `#EC4899` | Pink |
+| DALL-E (openai) | `#10B981` | Emerald |
+| Stability | `#8B5CF6` | Violet |
+| Ideogram | `#06B6D4` | Cyan |
+| (42 platforms total — see `PLATFORM_COLORS` map in component) | | |
 
-**Endpoint:** `GET /api/homepage/community-pulse`
+**Flag hover tooltip (portal-based):**
 
-**Returns:** Array of the 20 most recent pulse entries, plus the "most liked today" entry.
+Hovering the country flag opens a portal tooltip showing the full optimised prompt for that platform. Matches the weather-prompt-tooltip.tsx pattern exactly:
+- Portal to `document.body` (escapes all containers)
+- 400ms close delay with `clearCloseTimeout`/`startCloseDelay` pattern
+- Both trigger AND tooltip have `onMouseEnter`/`onMouseLeave` handlers
+- Styled: `rounded-xl px-6 py-4`, `rgba(15, 23, 42, 0.97)` background
+- Ethereal glow overlays from platform brand colour
+- "Image Prompt" heading + platform name subheading + copy button
+- Width: 450px, `zIndex: 99999`
+- Position: opens LEFT from right rail (`rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP`)
+
+**`isLive` flag — demo vs real distinction:**
+
+Every card carries an `isLive: boolean` field. Demo entries = `false`, API entries = `true`. The score (`87/100`) only renders when `isLive` is true. This provides instant visual confirmation of whether real user data is flowing.
+
+**Heading:** "Community Pulse" (title case). Centred. Gradient text matching scene-starters (`sky-400 -> emerald-300 -> indigo-400`). Font size `clamp(0.65rem, 0.9vw, 1.2rem)`, `font-semibold`. Pulsing green dot to the left.
+
+**Subtitle:** "The most popular prompts" — amber italic, pulsing animation matching scene-starters (`2s cubic-bezier`). Inline `<style>`, no globals.
+
+**Cascading glow cycle:** Same timing as scene-starters — 3s on, 1s dark, next card, infinite loop through all 8 cards (6 user prompt + 2 online user). Parent-controlled via `activeGlowIndex` + `glowOn` state.
+
+**30-minute demo rotation:** `Math.floor(Date.now() / ROTATION_MS)` where `ROTATION_MS = 30 * 60 * 1000`. Deterministic — same prompts shown to all users at the same time. Checked every 60 seconds via `setInterval`.
+
+**Bottom 2 cards — Online users:**
+
+Two cards with cyan glow (`#22D3EE`):
+- Card 7: "500 Online" header + top 8 country flags with counts
+- Card 8: "16 Countries" header + remaining 8 country flags with counts
+- Each flag: `clamp(18px, 1.5vw, 24px)` x `clamp(14px, 1.1vw, 18px)`, with count in `tabular-nums font-medium text-slate-300`
+- Currently demo data (500 users, 16 countries). Will be replaced with live heartbeat data when concurrent users reach threshold.
+
+**Footer row:** `flex justify-between`:
+- Left: Green pulsing dot + "Live" in `text-emerald-400`
+- Right: "500 users . 16 countries" in `text-emerald-400`
+
+**No props required:** `<CommunityPulse />` in `new-homepage-client.tsx` — no `selectedProvider` needed. Demo prompts are pre-optimised per platform. Live entries carry their own platform context.
+
+**No horizontal divider:** Cards use 3 equal-height rows with no `border-t` between them. Content is separated by the row structure itself.
+
+**No slate-500/slate-600:** Dimmest text is `text-slate-400` for "Created in" and "at" labels. Per `code-standard.md` section 6.0.2.
+
+### 6.4 API Routes
+
+**GET /api/homepage/community-pulse**
+
+Returns the 20 most recent pulse entries from `prompt_showcase_entries`, plus the single "most liked today" entry. Queries include `prompt_text` for tooltip display. 30-second SWR cache.
+
+**POST /api/homepage/community-pulse**
+
+Logs a user-created prompt to the Community Pulse feed. Called fire-and-forget by `prompt-builder.tsx` after copy. Validates input, sanitises (platformId max 100 chars, promptText max 2000, description max 60, countryCode max 2, score 0-100). INSERTs with `source = 'user'`. Returns new entry ID.
+
+```typescript
+// POST body
+interface PostBody {
+  platformId: string;
+  platformName: string;
+  tier: string;
+  promptText: string;
+  description: string;  // Subject + style from selections, max 60 chars
+  score: number;        // healthScore from prompt analysis
+  countryCode: string;  // From locationInfo via usePromagenAuth
+}
+```
+
+**CommunityPulseEntry type (v4.0.0):**
 
 ```typescript
 interface CommunityPulseEntry {
-  id: string; // Unique entry ID
-  score: number; // Prompt score (0–100)
-  platform: string; // Provider name
-  platformId: string; // Provider ID (for icon)
-  description: string; // Short prompt summary
+  id: string;
+  score: number;
+  platform: string;
+  platformId: string;
+  description: string;
   tier: 'tier1' | 'tier2' | 'tier3' | 'tier4';
-  likeCount: number; // Total likes
-  createdAt: string; // ISO timestamp
-}
-
-interface CommunityPulseResponse {
-  entries: CommunityPulseEntry[];
-  mostLikedToday: CommunityPulseEntry | null;
+  likeCount: number;
+  createdAt: string;
+  countryCode: string;
+  source: string;           // 'weather' | 'user'
+  venue: string;
+  conditions: string;
+  categoryMap: WeatherCategoryMap | null;
+  weather: PulseWeatherData | null;
+  promptText: string;       // Full prompt for tooltip display
 }
 ```
+
+### 6.5 Builder Integration (Pipeline)
+
+**File:** `src/components/providers/prompt-builder.tsx` (2,770 lines)
+
+When a user copies an optimised prompt (`handleCopyPrompt`), the builder fires a POST to `/api/homepage/community-pulse` after telemetry. This is fire-and-forget (`void fetch().catch()`) — never blocks the copy action.
+
+The POST body includes:
+- `platformId` — the specific platform (e.g., `'flux'`, not a tier representative)
+- `platformName` — display name (e.g., `'Flux (Black Forest Labs)'`)
+- `tier` — derived from platform tier (`'tier3'`)
+- `promptText` — the full optimised prompt text (same text copied to clipboard)
+- `description` — derived from subject + style selections, max 60 chars (e.g., `"neon samurai, cinematic"`)
+- `score` — `healthScore` from `usePromptAnalysis` (0-100)
+- `countryCode` — from `locationInfo.countryCode` via `usePromagenAuth`
+
+**Dependency:** `locationInfo` added to `usePromagenAuth` destructure and `handleCopyPrompt` dependency array.
+
+### 6.6 New Data Files
+
+| File | Purpose | Size |
+| --- | --- | --- |
+| `src/data/community-pulse/demo-prompts.json` | 210 pre-generated demo prompts (5 x 42 platforms) | ~130 KB |
+| `src/data/community-pulse/demo-prompts.json.d.ts` | TypeScript type declaration for JSON import | 19 lines |
+| `scripts/generate-demo-prompts.ts` | Build-time generator using real One Brain pipeline | ~160 lines |
 
 ---
 
@@ -702,6 +818,8 @@ CREATE TABLE prompt_showcase_entries (
   score         INTEGER NOT NULL DEFAULT 0,-- Prompt score (0–100)
   source        TEXT NOT NULL DEFAULT 'weather', -- 'weather' | 'user'
   like_count    INTEGER NOT NULL DEFAULT 0,-- Denormalised count (updated by trigger or app)
+  prompts_json  TEXT,                      -- WeatherCategoryMap JSON (weather-seeded entries)
+  weather_json  TEXT,                      -- Weather snapshot JSON (for emoji tooltip)
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -933,6 +1051,7 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 | ------------------------------------ | ------ | ------------------------------------------ | ------------------- |
 | `/api/homepage/prompt-of-the-moment` | GET    | Current showcase prompt (all 4 tiers)      | `revalidate: 600`   |
 | `/api/homepage/community-pulse`      | GET    | Recent 20 pulse entries + most liked today | 30 sec TTL          |
+| `/api/homepage/community-pulse`      | POST   | Log user-created prompt (fire-and-forget)  | None                |
 | `/api/prompts/like`                  | POST   | Like a prompt                              | None                |
 | `/api/prompts/like`                  | DELETE | Unlike a prompt                            | None                |
 | `/api/prompts/like/status`           | GET    | Check which prompts the session has liked  | None                |
@@ -1015,9 +1134,9 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 | `src/components/home/new-homepage-client.tsx`        | New homepage client wrapper (+ Engine Bay state owner) | 281   |
 | `src/components/home/prompt-showcase.tsx`            | Prompt of the Moment card + online users | 858   |
 | `src/components/home/scene-starters-preview.tsx`     | Left rail scene cards (v4.1.0, cascading glow)        | 585   |
-| `src/components/home/community-pulse.tsx`            | Right rail pulse feed                    | 420   |
+| `src/components/home/community-pulse.tsx`            | Right rail user prompt cards + online users (v8.0.0) | 781   |
 | `src/app/api/homepage/prompt-of-the-moment/route.ts` | Showcase prompt API                      | 639   |
-| `src/app/api/homepage/community-pulse/route.ts`      | Pulse feed API                           | 155   |
+| `src/app/api/homepage/community-pulse/route.ts`      | Pulse feed API (GET + POST)              | 262   |
 | `src/app/api/prompts/like/route.ts`                  | Like/unlike API (POST + DELETE)          | 187   |
 | `src/app/api/prompts/like/status/route.ts`           | Like status check API                    | 99    |
 | `src/app/api/heartbeat/route.ts`                     | Client heartbeat API                     | 107   |
@@ -1027,9 +1146,12 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 | `src/hooks/use-community-pulse.ts`                   | Fetch hook for pulse feed                | 132   |
 | `src/hooks/use-online-users.ts`                      | Heartbeat + online users hook            | 200   |
 | `src/hooks/use-like.ts`                              | Like/unlike hook with optimistic UI      | 203   |
-| `src/types/homepage.ts`                              | TypeScript types for all new interfaces  | 229   |
-| `src/lib/likes/database.ts`                          | DB table creation + like CRUD operations | 223   |
+| `src/types/homepage.ts`                              | TypeScript types for all new interfaces  | 263   |
+| `src/lib/likes/database.ts`                          | DB table creation + like CRUD + schema migrations | 223   |
 | `src/lib/likes/session.ts`                           | Cookie-based session management          | 69    |
+| `src/data/community-pulse/demo-prompts.json`         | 210 pre-generated demo prompts (5 x 42)  | —     |
+| `src/data/community-pulse/demo-prompts.json.d.ts`   | TypeScript type declaration for JSON      | 19    |
+| `scripts/generate-demo-prompts.ts`                   | Demo prompt generator (One Brain pipeline)| ~160  |
 | `docs/authority/homepage.md`                         | This document                            | —     |
 
 **Note:** `world-context-client.tsx` was not created. The `/world-context` route reuses the existing `homepage-client.tsx` directly (no modifications needed).
@@ -1041,7 +1163,7 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 | `src/app/page.tsx`                            | Imports `NewHomepageClient`, passes providers/exchanges/weatherIndex                                     | 70    |
 | `src/components/home/mission-control.tsx`     | Added `renderWorldContextButton()`, World Context button on all page variants                            | 723   |
 | `src/components/layout/homepage-grid.tsx`     | `leftContent`/`rightContent` props, `showFinanceRibbon` toggle, table expand support, `selectedProvider`/`onProviderChange` piped to Engine Bay (v5.0.0) | 721   |
-| `src/components/providers/prompt-builder.tsx` | sessionStorage pre-load reader (Phase D: `promagen:preloaded-payload` + `promagen:preloaded-inspiredBy`), `preloadedSceneId` state passed to SceneSelector as `initialSceneId` | 2,751 |
+| `src/components/providers/prompt-builder.tsx` | sessionStorage pre-load reader (Phase D), `preloadedSceneId` → SceneSelector, Community Pulse POST on copy (`locationInfo` from auth, `pulseDesc` from selections, fire-and-forget) | 2,770 |
 | `src/components/home/engine-bay.tsx`          | `selectedProvider`/`onProviderChange` optional props for controlled mode (v5.0.0)                        | 499   |
 | `src/components/providers/scene-selector.tsx` | `initialSceneId` prop for auto-expand on homepage scene pre-load                                         | 1,250 |
 
@@ -1093,6 +1215,8 @@ Every new component must use inline `clamp()` for all visible dimensions. Refere
 - Like heart scale animation: co-located in `prompt-showcase.tsx`
 - Scene Starters subtitle pulse: `scene-subtitle-pulse` keyframes co-located in `scene-starters-preview.tsx` (2s cubic-bezier, opacity 1→0.5→1, matches mission-control `animate-pulse`)
 - Scene Starters cascading glow: no CSS animation — driven by React state (`activeGlowIndex` + `glowOn`), 600ms CSS transition on `border-color` and `box-shadow` provides smooth fade in/out
+- Community Pulse subtitle pulse: `pulse-subtitle-pulse` keyframes co-located in `community-pulse.tsx` (2s cubic-bezier, opacity 1->0.5->1, matches scene-starters)
+- Community Pulse cascading glow: same React state pattern as scene-starters (shared constants: `GLOW_ON_MS = 3000`, `GLOW_OFF_MS = 1000`)
 - All animations respect `prefers-reduced-motion`
 
 ### 13.4 Scrollbar Consistency
@@ -1159,11 +1283,28 @@ All `<a>` tag buttons **must** have explicit text colour on child `<svg>` and `<
 
 ### 14.4 Community Pulse
 
-- [ ] Feed shows recent entries (weather-seeded initially, user-generated later)
-- [ ] Like button works on pulse entries
-- [ ] "Most liked today" card shows when likes exist, hidden when none
-- [ ] Feed refreshes periodically (30-second polling)
-- [ ] Entries with zero likes show "♡ 0" (honest, no fake counts)
+- [x] 210 demo prompts displayed in 6-card rotation (5 per platform x 42 platforms)
+- [x] Demo prompts are coherent visual scenes from real vocabulary files (not word salad)
+- [x] Each demo prompt optimised for its specific platform format (T1/T2/T3/T4)
+- [x] Demo prompts fill 85-99% of each platform's idealMax character budget
+- [x] Card layout: 3 equal rows (33.333% each), no horizontal divider
+- [x] Line 1: Platform icon + platform name + score/100 (live only) + heart + like count
+- [x] Line 2: Description (subject + style, italic, uppercase first letter)
+- [x] Line 3: "Created in" + flag (3x gap margins) + "at" + mono clock (visible colon, fontWeight 600)
+- [x] Per-card brand colour glow from PLATFORM_COLORS map (42 unique colours)
+- [x] Flag hover: portal tooltip with full optimised prompt + copy button (400ms close delay)
+- [x] Like heart: filled when count > 0, outline when 0. Count in emerald-400
+- [x] Score (`87/100`) only shown for live user entries (`isLive === true`). Demo cards show no score
+- [x] 30-minute rotation of top 6 demo prompts (deterministic, all users see same)
+- [x] `useCommunityPulse` hook connected — polls API every 30 seconds
+- [x] Real user entries (source === 'user') push demo entries out of top slots automatically
+- [x] Builder POSTs to `/api/homepage/community-pulse` on copy (fire-and-forget)
+- [x] POST includes: platformId, promptText, description, score, countryCode
+- [x] Bottom 2 cards: Online users (cyan glow, 16 countries, demo 500 users)
+- [x] Cascading glow cycle matches scene-starters (3s on, 1s dark, 8-card loop)
+- [x] Footer: green pulsing dot + "Live" (left), user/country count (right)
+- [x] No `text-slate-500`/`text-slate-600` anywhere (banned colours)
+- [x] `<CommunityPulse />` has no props — self-contained with hook + demo fallback
 
 ### 14.5 Online Users
 
@@ -1335,6 +1476,12 @@ When building on the new homepage:
 - **No opacity dimming for state indication** — never dim cards/containers to show inactive state. Use text changes or colour changes instead. Per `code-standard.md` § 6.0.3.
 - **All text ≥ 9px** — every `clamp()` min for `fontSize` must be ≥ `0.5625rem`. Em-based sizes never below `0.75em` at 12px snap-fit base. Per `code-standard.md` § 6.0.1.
 - **Cascading glow constants** — `GLOW_ON_MS = 3000`, `GLOW_OFF_MS = 1000`. Do not change without updating this doc.
+- **Community Pulse demo rotation** — `ROTATION_MS = 30 * 60 * 1000` (30 minutes). Deterministic: `Math.floor(Date.now() / ROTATION_MS)`. Same prompts shown to all users simultaneously.
+- **Community Pulse `isLive` flag** — demo entries must always have `isLive: false`. API entries must always have `isLive: true`. Score only renders when `isLive === true`.
+- **Community Pulse card height locked** — `clamp(74px, 6.2vw, 104px)`. Same as scene cards. Do not change without updating both components.
+- **Community Pulse 3-row layout** — each row `height: '33.333%'` (not `flex-1`). This prevents content height from pushing rows unequal.
+- **Builder → Pulse POST** — fire-and-forget (`void fetch().catch()`). Must never block the copy action or throw errors to the user.
+- **Demo prompts: 210 entries** — 5 per platform x 42 platforms. If platforms are added/removed, regenerate via `npx tsx scripts/generate-demo-prompts.ts`.
 
 **Existing features preserved: Yes** (required for every change).
 
@@ -1361,6 +1508,23 @@ When building on the new homepage:
 ---
 
 ## 19. Changelog
+
+- **6 March 2026 (v4.0.0):** **COMMUNITY PULSE v8.0.0 COMPLETE REDESIGN + BUILDER PIPELINE WIRING.** §6 rewritten completely:
+  - **Weather/city vibe seeding removed** from Community Pulse cards. Weather-seeded entries still log to DB (from PotM auto-logger) but cards no longer display them.
+  - **210 demo prompts:** 5 per platform x 42 platforms. Built from real vocabulary files. Each prompt optimised for its specific platform format (T1 CLIP weights + quality prefix, T2 MJ params, T3 NL sentences, T4 plain). All fill 85-99% of platform idealMax. Coherent visual scenes (samurai in rain, coral reef, jazz musician, etc.) not random word soup.
+  - **Card layout redesign:** 3 equal rows (33.333% height each), no horizontal divider. Line 1: platform icon + name + score/100 (live only) + heart. Line 2: description italic. Line 3: "Created in" + flag + "at" + mono clock.
+  - **Per-card brand colour glow:** Each card glows its platform brand colour (violet for MJ, orange for Flux, pink for Leonardo, etc.). Same glow pattern as scene-starters tier dot colour.
+  - **Flag hover tooltip:** Portal-based, 400ms close delay, ethereal glow from brand colour, "Image Prompt" heading + copy button, full optimised prompt text. Same pattern as weather-prompt-tooltip.tsx.
+  - **`isLive` flag:** Demo entries = false (no score shown), API entries = true (score shown as `87/100`). Instant visual distinction between demo and real data.
+  - **Live data wiring:** `useCommunityPulse` hook imported, polls every 30s. `apiEntryToCard()` converts API entries to card format. User entries (`source === 'user'`) take top slots, demos fill remaining.
+  - **Builder pipeline:** `prompt-builder.tsx` POSTs to `/api/homepage/community-pulse` fire-and-forget on copy. Body: platformId, platformName, tier, promptText, description (subject+style from selections), score (healthScore), countryCode (from locationInfo). `locationInfo` added to `usePromagenAuth` destructure.
+  - **POST handler:** New `POST /api/homepage/community-pulse` route. Validates, sanitises, INSERTs with `source = 'user'`. Returns entry ID.
+  - **DB schema:** Added `prompts_json TEXT` and `weather_json TEXT` columns to `prompt_showcase_entries` via `ALTER TABLE ADD COLUMN IF NOT EXISTS`.
+  - **Types:** Added `PulseWeatherData` interface, `weather` and `promptText` fields to `CommunityPulseEntry`.
+  - **Bottom 2 cards:** Online users with cyan glow (demo 500 users, 16 countries).
+  - **New files:** `demo-prompts.json` (210 entries), `demo-prompts.json.d.ts`, `generate-demo-prompts.ts`.
+  - Component grew from 420 to 781 lines. API route grew from 155 to 262 lines.
+  - §6 rewritten (§6.1-§6.6). §7.3 schema updated. §11.1 routes table updated (POST added). §12.1/§12.2 file locations updated. §14.4 acceptance criteria rewritten (5 -> 23 checks, all passing).
 
 - **5 March 2026 (v3.0.0):** **SCENE STARTERS v4.1.0 REDESIGN.** §5 rewritten completely for v4.1.0:
   - **Cascading glow cycle:** Cards glow one at a time in sequence — 3s on, 1s dark, next card, infinite loop through all 8 (32s full cycle). Parent-controlled via `activeGlowIndex` + `glowOn` state. Resets to card 0 on batch rotation. Hover always overrides cascade.

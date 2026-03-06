@@ -7,7 +7,7 @@
 // - Reads sessionStorage('promagen:preloaded-selections') → applies to categoryState
 // - Same pattern as scene preload — assemblePrompt() generates correct tier output
 // - User can modify any dropdown and prompt updates naturally
-// - §4.5 #2: "Inspired by" badge shows weather context (city, venue, conditions, mood)
+// - §4.5 #2: "Inspired by" badge shows weather context (city, venue, conditions)
 // - Badge links back to homepage; dismissed on "Clear all"
 // - Replaces old raw-text preload (preloadedPrompt state removed)
 //
@@ -654,6 +654,7 @@ export function PromptBuilder({
     categoryLimits,
     platformTier,
     trackPromptCopy: trackUsageCallback,
+    locationInfo,
   } = usePromagenAuth({ platformId });
 
   const { compositionMode, setCompositionMode, aspectRatio, setAspectRatio } = useCompositionMode();
@@ -1787,10 +1788,29 @@ export function PromptBuilder({
           setFeedbackPending(pending);
         }, 4_000);
       }
+
+      // Community Pulse: log user prompt (fire-and-forget)
+      // Derives description from subject + style selections
+      const subjectTerms = selections.subject ?? [];
+      const styleTerms = selections.style ?? [];
+      const pulseDesc = [subjectTerms[0], styleTerms[0]].filter(Boolean).join(', ').slice(0, 60) || 'Custom prompt';
+      void fetch('/api/homepage/community-pulse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platformId,
+          platformName: provider.name,
+          tier: `tier${platformTier}`,
+          promptText: textToCopy,
+          description: pulseDesc,
+          score: healthScore,
+          countryCode: locationInfo.countryCode ?? '',
+        }),
+      }).catch(() => { /* fire-and-forget — never block copy */ });
     } catch (err) {
       console.error('Failed to copy prompt:', err);
     }
-  }, [hasContent, isLocked, trackUsageCallback, provider.id, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId, userTier, accountAgeDays, abHash, abTestId, abVariant]);
+  }, [hasContent, isLocked, trackUsageCallback, provider.id, provider.name, optimizedResult, selections, healthScore, promptAnalysis, platformTier, platformId, activeSceneId, userTier, accountAgeDays, abHash, abTestId, abVariant, locationInfo]);
 
   // Inline copy: Assembled prompt box (bottom-right icon)
   const handleCopyAssembled = useCallback(async () => {
@@ -2293,7 +2313,6 @@ export function PromptBuilder({
                     {' · '}{inspiredByData.localTime}
                     {inspiredByData.tempC !== null ? ` · ${inspiredByData.tempC}°C` : ''}
                     {' · '}{inspiredByData.conditions}
-                    {' · '}{inspiredByData.mood}
                   </span>
                   <span className="text-xs text-sky-500/50 opacity-0 transition-opacity group-hover:opacity-100">← back</span>
                 </a>

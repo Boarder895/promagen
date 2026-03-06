@@ -84,6 +84,16 @@ export async function ensureLikeTables(): Promise<void> {
 
   await ensureShowcaseEntriesTable();
   await ensurePromptLikesTable();
+
+  // Add prompts_json column (categoryMap as JSON) — safe if already exists
+  try {
+    const sql = db();
+    await sql`ALTER TABLE prompt_showcase_entries ADD COLUMN IF NOT EXISTS prompts_json TEXT`;
+    await sql`ALTER TABLE prompt_showcase_entries ADD COLUMN IF NOT EXISTS weather_json TEXT`;
+  } catch {
+    // Column may already exist or ALTER not supported — safe to continue
+  }
+
   tablesEnsured = true;
 }
 

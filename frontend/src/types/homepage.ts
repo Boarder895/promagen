@@ -137,13 +137,33 @@ export interface PromptOfTheMoment {
 
 // ── Community Pulse ─────────────────────────────────────────────────────────
 
+/** Weather snapshot stored with each pulse entry (same shape as PotM weather) */
+export interface PulseWeatherData {
+  description: string;
+  emoji: string;
+  tempC: number | null;
+  tempF: number | null;
+  windKmh: number | null;
+  windDegrees: number | null;
+  windGustKmh: number | null;
+  humidity: number | null;
+  visibility: number | null;
+  sunriseUtc: number | null;
+  sunsetUtc: number | null;
+  isDayTime: boolean | null;
+  timezoneOffset: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  timezone: string;
+}
+
 /** A single entry in the Community Pulse feed */
 export interface CommunityPulseEntry {
   /** Unique entry ID */
   id: string;
   /** Prompt score (0–100) */
   score: number;
-  /** Provider display name */
+  /** Provider display name (city name for weather-seeded, provider name for user) */
   platform: string;
   /** Provider ID (for icon lookup) */
   platformId: string;
@@ -155,6 +175,20 @@ export interface CommunityPulseEntry {
   likeCount: number;
   /** ISO timestamp */
   createdAt: string;
+  /** ISO 3166-1 alpha-2 country code */
+  countryCode: string;
+  /** Entry source: 'weather' (auto-seeded) or 'user' (user-created) */
+  source: string;
+  /** Venue name (weather-seeded entries only) */
+  venue: string;
+  /** Weather conditions (weather-seeded entries only) */
+  conditions: string;
+  /** WeatherCategoryMap from weather intelligence — run One Brain pipeline client-side */
+  categoryMap: WeatherCategoryMap | null;
+  /** Weather snapshot for emoji tooltip (same data as PotM weather object) */
+  weather: PulseWeatherData | null;
+  /** Full prompt text for tooltip display */
+  promptText: string;
 }
 
 /** Response from /api/homepage/community-pulse */

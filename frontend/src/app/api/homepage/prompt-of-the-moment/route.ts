@@ -365,25 +365,6 @@ function getLocalTime(tz: string): { hour: number; formatted: string } {
 }
 
 // ============================================================================
-// MOOD DERIVATION
-// ============================================================================
-
-function deriveMood(hour: number, conditions: string): string {
-  const c = conditions.toLowerCase();
-  const isNight = hour < 6 || hour >= 20;
-  const isGolden = (hour >= 6 && hour < 8) || (hour >= 17 && hour < 20);
-
-  if (c.includes('storm') || c.includes('thunder')) return 'Dramatic';
-  if (c.includes('rain') || c.includes('drizzle')) return isNight ? 'Melancholic' : 'Reflective';
-  if (c.includes('snow') || c.includes('blizzard')) return 'Ethereal';
-  if (c.includes('fog') || c.includes('mist') || c.includes('haze')) return 'Mysterious';
-  if (c.includes('overcast') || c.includes('cloudy')) return isGolden ? 'Moody' : 'Contemplative';
-  if (isNight) return 'Nocturnal';
-  if (isGolden) return 'Golden';
-  return 'Serene';
-}
-
-// ============================================================================
 // TITLE-CASE HELPER
 // ============================================================================
 
@@ -419,9 +400,13 @@ const _loggedRotations = new Set<number>();
 
 /**
  * Auto-log a weather-seeded entry to prompt_showcase_entries.
- * Picks tier3 (Natural Language) as the showcase description — most readable.
+ * Stores the WeatherCategoryMap so the Community Pulse tooltip can run
+ * the One Brain pipeline client-side for any platform on hover.
  */
-async function logShowcaseEntry(response: PromptOfTheMoment): Promise<void> {
+async function logShowcaseEntry(
+  response: PromptOfTheMoment,
+  categoryMap?: WeatherCategoryMap,
+): Promise<void> {
   try {
     if (!hasDatabaseConfigured()) return;
     if (_loggedRotations.has(response.rotationIndex)) return;
@@ -438,30 +423,31 @@ async function logShowcaseEntry(response: PromptOfTheMoment): Promise<void> {
     await ensureLikeTables();
     const sql = db();
 
-    // Create a short description: "City — Mood" (max 60 chars per spec)
-    const description = `${response.city} — ${response.mood}`.slice(0, 60);
+    // Description: just the city name (max 60 chars)
+    const description = response.city.slice(0, 60);
 
-    // Score: weather-seeded prompts get a synthetic score 75–95 based on mood richness
-    const moodScores: Record<string, number> = {
-      Dramatic: 93,
-      Ethereal: 91,
-      Mysterious: 90,
-      Nocturnal: 88,
-      Golden: 87,
-      Melancholic: 85,
-      Moody: 84,
-      Reflective: 82,
-      Contemplative: 80,
-      Serene: 78,
-    };
-    const score = moodScores[response.mood] ?? 80;
+    // Score: weather-seeded prompts get a synthetic score 78–93 based on conditions
+    const conditions = response.conditions.toLowerCase();
+    let score = 82;
+    if (conditions.includes('storm') || conditions.includes('thunder')) score = 93;
+    else if (conditions.includes('snow') || conditions.includes('blizzard')) score = 91;
+    else if (conditions.includes('fog') || conditions.includes('mist') || conditions.includes('haze')) score = 90;
+    else if (conditions.includes('rain') || conditions.includes('drizzle')) score = 87;
+    else if (conditions.includes('overcast') || conditions.includes('cloud')) score = 84;
+    else score = 78;
+
+    // Store full WeatherCategoryMap — tooltip runs One Brain pipeline client-side
+    const promptsJson = categoryMap ? JSON.stringify(categoryMap) : null;
+
+    // Store weather snapshot — tooltip emoji + meteorological sentence
+    const weatherJson = response.weather ? JSON.stringify(response.weather) : null;
 
     await sql`
       INSERT INTO prompt_showcase_entries
-        (city, country_code, venue, mood, tier, platform_id, prompt_text, description, score, source)
+        (city, country_code, venue, mood, tier, platform_id, prompt_text, description, score, source, prompts_json, weather_json)
       VALUES
-        (${response.city}, ${response.countryCode}, ${response.venue}, ${response.mood},
-         'tier3', NULL, ${response.prompts.tier3}, ${description}, ${score}, 'weather')
+        (${response.city}, ${response.countryCode}, ${response.venue}, '',
+         'tier3', NULL, ${response.prompts.tier3}, ${description}, ${score}, 'weather', ${promptsJson}, ${weatherJson})
     `;
   } catch (error) {
     // Fire-and-forget: never block the main response
@@ -507,10 +493,7 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
     const tz = exchange?.tz ?? 'UTC';
     const { hour: localHour, formatted: localTime } = getLocalTime(tz);
 
-    // ── 5. Derive mood ──────────────────────────────────────────────────
-    const mood = deriveMood(localHour, weather.conditions);
-
-    // ── 6. Generate all 4 tier prompts ──────────────────────────────────
+    // ── 5. Generate all 4 tier prompts ──────────────────────────────────
     // Phase D: categoryMap is shared across tiers (same city/weather/venue).
     // Only the text assembly differs by tier. Capture it from the first call.
     const prompts: Record<string, string> = {};
@@ -541,7 +524,6 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
     // The generator's venue intelligence picks the actual venue — may differ
     // from the route's simple index rotation. Trust the generator.
     const realVenue = sharedCategoryMap?.meta?.venue ?? venue.name;
-    const realMood = sharedCategoryMap?.meta?.mood ?? mood;
 
     // ── 7. Build provider shortcuts ─────────────────────────────────────
     const allShortcuts = getProviderShortcutsAllTiers();
@@ -556,7 +538,7 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
       countryCode,
       localTime,
       conditions: weather.conditions,
-      mood: realMood,
+      mood: '',
       venue: realVenue,
       prompts: {
         tier1: prompts['tier1']!,
@@ -579,7 +561,7 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
         tier3: { promptText: prompts['tier3']!, selections: {}, categoryMap: sharedCategoryMap },
         tier4: { promptText: prompts['tier4']!, selections: {}, categoryMap: sharedCategoryMap },
       },
-      // Phase D: "Inspired by" badge from categoryMap.meta (real venue, real mood)
+      // Phase D: "Inspired by" badge from categoryMap.meta (real venue)
       inspiredBy: {
         city: cityName,
         venue: realVenue,
@@ -587,7 +569,7 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
         emoji: sharedCategoryMap?.meta?.emoji ?? weather.emoji ?? '🌤️',
         tempC: sharedCategoryMap?.meta?.tempC ?? weather.temperatureC ?? null,
         localTime: sharedCategoryMap?.meta?.localTime ?? localTime,
-        mood: realMood,
+        mood: '',
         // Upgrade 5: Prompt Fingerprint Verification hash
         categoryMapHash: sharedCategoryMap ? hashCategoryMap(sharedCategoryMap) : undefined,
       },
@@ -617,7 +599,7 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
     _lastSuccessful = response;
 
     // ── 10. Auto-log to Community Pulse feed (Phase 5, fire-and-forget) ──
-    void logShowcaseEntry(response);
+    void logShowcaseEntry(response, sharedCategoryMap);
 
     return NextResponse.json(response, {
       headers: { 'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=60' },

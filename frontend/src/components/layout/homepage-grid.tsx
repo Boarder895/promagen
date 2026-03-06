@@ -336,6 +336,7 @@ export default function HomepageGrid({
   const isSyncing = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const providersRef = useRef<HTMLDivElement>(null);
+
   const pathname = usePathname();
   const isHomepage = pathname === '/';
   const isWorldContext = pathname === '/world-context';
