@@ -204,7 +204,7 @@ export default function NewHomepageClient({
       data-testid="rail-centre-inner"
     >
       {/* Prompt of the Moment — hidden when table expanded (table takes full space) */}
-      {!isTableExpanded && <PromptShowcase />}
+      {!isTableExpanded && <PromptShowcase selectedProviderId={selectedProvider?.id} />}
 
       {/* Leaderboard intro — "42 AI Image Generators" heading + expand trigger
           Positioned directly above the providers table, flowing naturally.

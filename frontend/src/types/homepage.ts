@@ -189,6 +189,8 @@ export interface CommunityPulseEntry {
   weather: PulseWeatherData | null;
   /** Full prompt text for tooltip display */
   promptText: string;
+  /** Nearest city/town name (from IP geolocation for user entries, hardcoded for demo) */
+  locationName: string;
 }
 
 /** Response from /api/homepage/community-pulse */

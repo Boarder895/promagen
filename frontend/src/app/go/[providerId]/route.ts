@@ -274,7 +274,7 @@ async function bestEffortInsertActivity(input: {
 
 export async function GET(
   request: NextRequest,
-  context: { params: { providerId: string } },
+  context: { params: Promise<{ providerId: string }> },
 ): Promise<Response> {
   const startedAt = Date.now();
   const requestId = getRequestId(request);
@@ -304,7 +304,8 @@ export async function GET(
     });
   }
 
-  const providerId = (context?.params?.providerId ?? '').trim();
+  const { providerId: rawProviderId } = await context.params;
+  const providerId = (rawProviderId ?? '').trim();
   const provider = providerId ? findProvider(providerId) : null;
 
   if (!provider) {

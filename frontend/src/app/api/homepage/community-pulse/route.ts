@@ -191,6 +191,7 @@ function rowToEntry(row: Record<string, unknown>): CommunityPulseEntry {
     categoryMap,
     weather,
     promptText: (row.prompt_text as string) || '',
+    locationName: (row.city as string) || '',
   };
 }
 
@@ -203,6 +204,51 @@ function validTier(t: string): 'tier1' | 'tier2' | 'tier3' | 'tier4' {
 /** Standard cache headers: 30-second SWR per spec §14.4. */
 function cacheHeaders(): Record<string, string> {
   return { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=30' };
+}
+
+// ============================================================================
+// SERVER-SIDE IP GEOLOCATION
+// ============================================================================
+// Extracts the user's IP from Vercel's x-forwarded-for header and resolves
+// the nearest city via ipapi.co (free tier: 1000 req/day, no key required).
+// Short timeout (2s) — if it fails, returns '' so the insert still succeeds.
+// ============================================================================
+
+/**
+ * Resolve city name from the request IP address.
+ * Uses ipapi.co server-side (same provider as client-side geo-ip.ts).
+ * Returns empty string on any failure — never throws.
+ */
+async function resolveCity(request: NextRequest): Promise<string> {
+  try {
+    // Vercel provides the real client IP in x-forwarded-for
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0]?.trim();
+
+    if (!ip) return '';
+
+    // Skip private/localhost IPs (dev environment)
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      return '';
+    }
+
+    const res = await fetch(`https://ipapi.co/${ip}/json/`, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(2000), // 2s max — don't slow the POST
+    });
+
+    if (!res.ok) return '';
+
+    const data = (await res.json()) as { city?: string; error?: boolean };
+    if (data.error || !data.city) return '';
+
+    // Sanitise: max 100 chars, no HTML
+    return String(data.city).slice(0, 100);
+  } catch {
+    // Timeout, network error, parse error — all safe to swallow
+    return '';
+  }
 }
 
 // ============================================================================
@@ -243,6 +289,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const score = Math.min(100, Math.max(0, Number(body.score) || 0));
     const countryCode = String(body.countryCode || '').slice(0, 2).toUpperCase();
 
+    // ── Server-side IP geolocation for city name ──────────────────────
+    // Resolve nearest city from user's IP. Non-blocking: if it fails,
+    // we still insert the entry with an empty city (graceful fallback).
+    const cityName = await resolveCity(request);
+
     await ensureLikeTables();
     const sql = db();
 
@@ -250,7 +301,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       INSERT INTO prompt_showcase_entries
         (city, country_code, venue, mood, tier, platform_id, prompt_text, description, score, source)
       VALUES
-        ('', ${countryCode}, '', '', ${tier}, ${platformId}, ${promptText}, ${description}, ${score}, 'user')
+        (${cityName}, ${countryCode}, '', '', ${tier}, ${platformId}, ${promptText}, ${description}, ${score}, 'user')
       RETURNING id
     `;
 

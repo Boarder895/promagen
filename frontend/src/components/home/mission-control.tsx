@@ -473,7 +473,12 @@ export default function MissionControl({
           height: 'clamp(14px, 1vw, 18px)',
         }}
       >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={worldContextIconPath} />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+          d={worldContextIconPath}
+        />
       </svg>
       <span className="text-purple-100" style={{ fontSize: 'clamp(0.6rem, 0.75vw, 0.8rem)' }}>
         World Context
@@ -688,7 +693,7 @@ export default function MissionControl({
             className="italic text-amber-400/80 animate-pulse truncate"
             style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1rem)' }}
           >
-            Hover over a countries flag for a real time image prompt.
+            Hover over a countries flag for an image prompt.
           </p>
         </div>
       </div>

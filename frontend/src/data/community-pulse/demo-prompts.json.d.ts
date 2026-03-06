@@ -11,7 +11,7 @@ interface DemoPromptEntry {
   optimisedPrompt: string;
   score: number;
   countryCode: string;
-  localTime: string;
+  locationName: string;
   likeCount: number;
 }
 

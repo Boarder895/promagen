@@ -47,7 +47,7 @@ describe('/go/[providerId] outbound redirect', () => {
     const { GET } = await import('@/app/go/[providerId]/route');
 
     const req = new Request('https://promagen.local/go/openai') as unknown as NextRequest;
-    const res = await GET(req, { params: { providerId: 'openai' } });
+    const res = await GET(req, { params: Promise.resolve({ providerId: 'openai' }) });
 
     expect(res.status).toBe(400);
     expect(res.headers.get('Cache-Control')).toBe('no-store');
@@ -72,7 +72,7 @@ describe('/go/[providerId] outbound redirect', () => {
     const req = new Request(
       'https://promagen.local/go/unknown?src=leaderboard',
     ) as unknown as NextRequest;
-    const res = await GET(req, { params: { providerId: 'unknown' } });
+    const res = await GET(req, { params: Promise.resolve({ providerId: 'unknown' }) });
 
     expect(res.status).toBe(404);
     expect(res.headers.get('Cache-Control')).toBe('no-store');
@@ -100,7 +100,7 @@ describe('/go/[providerId] outbound redirect', () => {
       'https://promagen.local/go/openai?src=leaderboard',
     ) as unknown as NextRequest;
 
-    const res = await GET(req, { params: { providerId: 'openai' } });
+    const res = await GET(req, { params: Promise.resolve({ providerId: 'openai' }) });
 
     expect(res.status).toBe(302);
 
@@ -142,7 +142,7 @@ describe('/go/[providerId] outbound redirect', () => {
     const req = new Request(
       'https://promagen.local/go/lexica?src=provider_detail',
     ) as unknown as NextRequest;
-    const res = await GET(req, { params: { providerId: 'lexica' } });
+    const res = await GET(req, { params: Promise.resolve({ providerId: 'lexica' }) });
 
     expect(res.status).toBe(302);
 
@@ -177,7 +177,7 @@ describe('/go/[providerId] outbound redirect', () => {
       'https://promagen.local/go/openart?src=leaderboard&utm_medium=email',
     ) as unknown as NextRequest;
 
-    const res = await GET(req, { params: { providerId: 'openart' } });
+    const res = await GET(req, { params: Promise.resolve({ providerId: 'openart' }) });
 
     expect(res.status).toBe(302);
 
@@ -208,7 +208,7 @@ describe('/go/[providerId] outbound redirect', () => {
     const req = new Request(
       'https://promagen.local/go/openart?src=leaderboard',
     ) as unknown as NextRequest;
-    const res = await GET(req, { params: { providerId: 'openart' } });
+    const res = await GET(req, { params: Promise.resolve({ providerId: 'openart' }) });
 
     expect(res.status).toBe(302);
     expect(res.headers.get('Cache-Control')).toBe('no-store');

@@ -1,23 +1,23 @@
 // src/components/home/community-pulse.tsx
 // ============================================================================
-// COMMUNITY PULSE — Right rail on new homepage (v8.0.0 — demo user prompts)
+// COMMUNITY PULSE — Right rail on new homepage (v9.0.0 — 8 platform prompt cards)
 // ============================================================================
 // Structurally mirrors scene-starters-preview.tsx for visual symmetry.
 //
-// Top 6 cards: Demo user-created prompts from 210 pre-generated entries
+// All 8 cards: Platform prompt cards from 210 pre-generated entries
 //   - Per-card glow from platform brand colour (same as scene-starters per-tier)
 //   - Line 1: Platform icon + platform name
 //   - Line 2: Prompt description (subject + style, italic)
-//   - Line 3: "Created in" + flag + local time (leaderboard clock style)
+//   - Line 3: "Created in" + flag + location name (city/town)
 //   - Like heart: identical to PotM LikeButton (same JSX/sizes/colours)
 //   - Flag hover: portal tooltip with full optimised prompt + copy button
 //
-// Bottom 2 cards: Online users (500 demo, 16 countries)
+// v9.0.0: Removed online users cards. Extended from 6 to 8 prompt cards.
 //
-// Rotation: top 6 picks rotate every 30 minutes (deterministic)
+// Rotation: all 8 picks rotate every 30 minutes (deterministic)
 // Cascading glow cycle: 3s on → 1s dark → next card
 //
-// Authority: docs/authority/homepage.md §6, §8
+// Authority: docs/authority/homepage.md §6
 // Existing features preserved: Yes — window dimensions unchanged
 // ============================================================================
 
@@ -42,7 +42,7 @@ const GLOW_ON_MS = 3000;
 const GLOW_OFF_MS = 1000;
 
 const CARD_COUNT = 8;
-const USER_CARD_COUNT = 6;
+const USER_CARD_COUNT = 8;
 
 /** Rotation cadence: pick new top 6 every 30 minutes */
 const ROTATION_MS = 30 * 60 * 1000;
@@ -54,12 +54,6 @@ function hexToRgba(hex: string, alpha: number): string {
   const b = parseInt(safe.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
-
-// ── Online users accent (cyan) ──────────────────────────────────────────
-const ONLINE_GLOW_HEX = '#22D3EE';
-const ONLINE_GLOW_RGBA = hexToRgba(ONLINE_GLOW_HEX, 0.3);
-const ONLINE_GLOW_BORDER = hexToRgba(ONLINE_GLOW_HEX, 0.5);
-const ONLINE_GLOW_SOFT = hexToRgba(ONLINE_GLOW_HEX, 0.15);
 
 // ── Prompt tooltip constants (match weather-prompt-tooltip.tsx) ──────────
 const CLOSE_DELAY_MS = 400;
@@ -91,12 +85,6 @@ const DEFAULT_BRAND_COLOR = '#3B82F6';
  */
 function apiEntryToCard(entry: CommunityPulseEntry): DemoEntry {
   const pid = entry.platformId || '';
-  // Extract HH:MM from ISO timestamp
-  let localTime = '00:00';
-  try {
-    const d = new Date(entry.createdAt);
-    localTime = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  } catch { /* fallback */ }
 
   return {
     platformId: pid,
@@ -107,7 +95,7 @@ function apiEntryToCard(entry: CommunityPulseEntry): DemoEntry {
     optimisedPrompt: entry.promptText || entry.description || '',
     score: entry.score,
     countryCode: entry.countryCode || '',
-    localTime,
+    locationName: entry.locationName || '',
     likeCount: entry.likeCount,
     isLive: true,
   };
@@ -126,45 +114,11 @@ interface DemoEntry {
   optimisedPrompt: string;
   score: number;
   countryCode: string;
-  localTime: string;
+  locationName: string;
   likeCount: number;
   /** True = real user data from API, false = demo placeholder */
   isLive: boolean;
 }
-
-// ============================================================================
-// DEMO ONLINE USERS — 500 users across 16 countries
-// ============================================================================
-
-interface DemoCountry {
-  countryCode: string;
-  count: number;
-  label: string;
-}
-
-const DEMO_USERS_TOTAL = 500;
-
-const DEMO_COUNTRIES: DemoCountry[] = [
-  { countryCode: 'US', count: 87, label: 'United States' },
-  { countryCode: 'GB', count: 62, label: 'United Kingdom' },
-  { countryCode: 'IN', count: 55, label: 'India' },
-  { countryCode: 'DE', count: 42, label: 'Germany' },
-  { countryCode: 'FR', count: 35, label: 'France' },
-  { countryCode: 'JP', count: 31, label: 'Japan' },
-  { countryCode: 'AU', count: 28, label: 'Australia' },
-  { countryCode: 'CA', count: 25, label: 'Canada' },
-  { countryCode: 'BR', count: 22, label: 'Brazil' },
-  { countryCode: 'KR', count: 19, label: 'South Korea' },
-  { countryCode: 'NL', count: 17, label: 'Netherlands' },
-  { countryCode: 'SG', count: 15, label: 'Singapore' },
-  { countryCode: 'SE', count: 13, label: 'Sweden' },
-  { countryCode: 'IT', count: 12, label: 'Italy' },
-  { countryCode: 'MX', count: 10, label: 'Mexico' },
-  { countryCode: 'ZA', count: 7, label: 'South Africa' },
-];
-
-const DEMO_TOP_8 = DEMO_COUNTRIES.slice(0, 8);
-const DEMO_BOTTOM_8 = DEMO_COUNTRIES.slice(8, 16);
 
 // ============================================================================
 // PROMPT TOOLTIP — Portal-based (matches weather-prompt-tooltip.tsx exactly)
@@ -340,9 +294,6 @@ const UserPromptCard = React.memo(function UserPromptCard({
     transition: 'border-color 600ms ease-out, box-shadow 600ms ease-out',
   };
 
-  // Split time for blinking colon display
-  const [hours, minutes] = entry.localTime.split(':');
-
   return (
     <div
       className="relative w-full rounded-lg"
@@ -435,21 +386,21 @@ const UserPromptCard = React.memo(function UserPromptCard({
           </span>
         </div>
 
-        {/* LINE 3: Created in + flag + time */}
+        {/* LINE 3: Created in + flag + location name */}
         <div
           className="flex items-center"
           style={{ height: '33.333%', fontSize: '0.68em' }}
         >
           <span className="text-slate-400">Created in</span>
-          {/* Flag — 3× gap on each side */}
+          {/* Flag — tooltip trigger */}
           <span
             ref={flagRef}
             className="relative inline-flex shrink-0 cursor-pointer overflow-hidden rounded-sm"
             style={{
               width: 'clamp(18px, 1.5vw, 24px)',
               height: 'clamp(14px, 1.1vw, 18px)',
-              marginLeft: 'clamp(9px, 0.9vw, 15px)',
-              marginRight: 'clamp(9px, 0.9vw, 15px)',
+              marginLeft: 'clamp(6px, 0.6vw, 10px)',
+              marginRight: 'clamp(6px, 0.6vw, 10px)',
             }}
             onMouseEnter={handleFlagEnter}
             onMouseLeave={handleFlagLeave}
@@ -462,29 +413,15 @@ const UserPromptCard = React.memo(function UserPromptCard({
               className="object-cover"
             />
           </span>
-          <span className="text-slate-400">at</span>
-          {/* Time — mono font, visible colon */}
-          <span
-            className="tabular-nums text-slate-200"
-            style={{
-              marginLeft: 'clamp(6px, 0.6vw, 10px)',
-              fontFamily: "'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace",
-              letterSpacing: '0.05em',
-            }}
-          >
-            {hours}
+          {/* Location name — brand colour tint per card */}
+          {entry.locationName && (
             <span
-              style={{
-                display: 'inline-block',
-                width: '0.6ch',
-                textAlign: 'center',
-                fontWeight: 600,
-              }}
+              className="min-w-0 truncate font-medium"
+              style={{ color: entry.brandColor }}
             >
-              :
+              {entry.locationName}
             </span>
-            {minutes}
-          </span>
+          )}
         </div>
       </div>
 
@@ -500,97 +437,6 @@ const UserPromptCard = React.memo(function UserPromptCard({
         />,
         document.body,
       )}
-    </div>
-  );
-});
-
-// ============================================================================
-// ONLINE USERS CARD
-// ============================================================================
-
-const OnlineUsersCard = React.memo(function OnlineUsersCard({
-  cardFont,
-  isGlowActive,
-  countries,
-  headerText,
-  headerEmoji,
-}: {
-  cardFont: number;
-  isGlowActive: boolean;
-  countries: DemoCountry[];
-  headerText: string;
-  headerEmoji: string;
-}) {
-  const [isHovered, setIsHovered] = useState(false);
-  const isGlowing = isHovered || isGlowActive;
-
-  const cardStyle: React.CSSProperties = {
-    fontSize: `${cardFont}px`,
-    height: 'clamp(74px, 6.2vw, 104px)',
-    overflow: 'hidden',
-    background: 'rgba(255, 255, 255, 0.05)',
-    border: `1px solid ${isGlowing ? ONLINE_GLOW_BORDER : 'rgba(255, 255, 255, 0.1)'}`,
-    boxShadow: isGlowing
-      ? `0 0 40px 8px ${ONLINE_GLOW_RGBA}, 0 0 80px 16px ${ONLINE_GLOW_SOFT}, inset 0 0 25px 3px ${ONLINE_GLOW_RGBA}`
-      : '0 1px 3px rgba(0, 0, 0, 0.1)',
-    transition: 'border-color 600ms ease-out, box-shadow 600ms ease-out',
-  };
-
-  return (
-    <div
-      className="relative w-full rounded-lg"
-      style={cardStyle}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <span
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
-        style={{
-          background: `radial-gradient(ellipse at 50% 0%, ${ONLINE_GLOW_RGBA} 0%, transparent 70%)`,
-          opacity: isGlowing ? 1 : 0,
-          transition: 'opacity 600ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      <span
-        className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
-        style={{
-          background: `radial-gradient(ellipse at 50% 100%, ${ONLINE_GLOW_SOFT} 0%, transparent 60%)`,
-          opacity: isGlowing ? 0.6 : 0,
-          transition: 'opacity 600ms ease-out',
-        }}
-        aria-hidden="true"
-      />
-      <div className="relative z-10 flex flex-col">
-        <div className="flex items-center" style={{ padding: 'clamp(3px, 0.25vw, 5px) clamp(8px, 0.7vw, 14px)' }}>
-          <span style={{ fontSize: '0.9em', marginRight: 'clamp(4px, 0.3vw, 6px)' }}>{headerEmoji}</span>
-          <span className="min-w-0 flex-1 truncate font-medium leading-tight text-cyan-300" style={{ fontSize: '0.85em' }}>
-            {headerText}
-          </span>
-        </div>
-        <div className="border-t border-white/5" aria-hidden="true" />
-        <div
-          className="flex flex-nowrap items-center overflow-hidden"
-          style={{ padding: 'clamp(3px, 0.25vw, 5px) clamp(8px, 0.7vw, 14px)', gap: 'clamp(8px, 0.8vw, 14px)' }}
-        >
-          {countries.map((c) => (
-            <span
-              key={c.countryCode}
-              className="inline-flex shrink-0 items-center text-slate-300"
-              style={{ gap: 'clamp(4px, 0.4vw, 8px)', fontSize: '0.78em' }}
-              title={`${c.label}: ${c.count} online`}
-            >
-              <span
-                className="relative shrink-0 overflow-hidden rounded-sm"
-                style={{ width: 'clamp(18px, 1.5vw, 24px)', height: 'clamp(14px, 1.1vw, 18px)' }}
-              >
-                <Image src={`/flags/${c.countryCode.toLowerCase()}.svg`} alt="" fill sizes="24px" className="object-cover" />
-              </span>
-              <span className="tabular-nums font-medium">{c.count}</span>
-            </span>
-          ))}
-        </div>
-      </div>
     </div>
   );
 });
@@ -657,7 +503,7 @@ export default function CommunityPulse() {
   }, []);
 
   // Real user entries take top slots, demo fills the rest
-  const topSix = useMemo(() => {
+  const displayCards = useMemo(() => {
     const all = (demoPrompts as Array<Omit<DemoEntry, 'isLive'>>).map(
       (e) => ({ ...e, isLive: false }) as DemoEntry,
     );
@@ -726,8 +572,8 @@ export default function CommunityPulse() {
         ref={containerRef}
         className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
       >
-        {/* Top 6: User prompt cards */}
-        {topSix.map((entry, index) => (
+        {/* All 8: Platform prompt cards */}
+        {displayCards.map((entry, index) => (
           <UserPromptCard
             key={`${entry.platformId}-${entry.description}-${rotationSlot}`}
             entry={entry}
@@ -735,22 +581,6 @@ export default function CommunityPulse() {
             isGlowActive={glowOn && index === activeGlowIndex}
           />
         ))}
-
-        {/* Bottom 2: Online users */}
-        <OnlineUsersCard
-          cardFont={cardFont}
-          isGlowActive={glowOn && activeGlowIndex === 6}
-          countries={DEMO_TOP_8}
-          headerText={`${DEMO_USERS_TOTAL} Online`}
-          headerEmoji="🌍"
-        />
-        <OnlineUsersCard
-          cardFont={cardFont}
-          isGlowActive={glowOn && activeGlowIndex === 7}
-          countries={DEMO_BOTTOM_8}
-          headerText="16 Countries"
-          headerEmoji="🏳️"
-        />
       </div>
 
       {/* Footer */}
@@ -773,7 +603,7 @@ export default function CommunityPulse() {
           className="shrink-0 text-emerald-400"
           style={{ fontSize: 'clamp(0.5625rem, 0.65vw, 0.75rem)' }}
         >
-          {DEMO_USERS_TOTAL} users · 16 countries
+          42 platforms
         </span>
       </div>
     </div>
