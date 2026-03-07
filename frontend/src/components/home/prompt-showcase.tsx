@@ -302,7 +302,7 @@ function ProviderIcon({
     <button
       type="button"
       onClick={handleClick}
-      className="inline-flex shrink-0 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/10 transition-all hover:bg-white/20 hover:ring-white/20"
+      className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/10 transition-all hover:bg-white/20 hover:ring-white/20 hover:scale-110"
       style={{
         width: 'clamp(30px, 2.3vw, 38px)',
         height: 'clamp(30px, 2.3vw, 38px)',
@@ -697,7 +697,7 @@ function deriveBridgePills(
     }
   }
 
-  return pills.slice(0, 4);
+  return pills.slice(0, 3);
 }
 
 /**
@@ -769,6 +769,7 @@ function CityContent({
   onToggleLike,
   isTransitioning = false,
   selectedProviderId,
+  onTierChange,
 }: {
   data: PromptOfTheMoment;
   likeStates: Map<string, LikeState>;
@@ -777,6 +778,8 @@ function CityContent({
   isTransitioning?: boolean;
   /** Provider selected in Engine Bay — auto-switches to that provider's tier */
   selectedProviderId?: string;
+  /** Fires when active tier changes (for leaderboard highlighting) */
+  onTierChange?: (tierId: number) => void;
 }) {
   // ── Active tier tab state ──────────────────────────────────────────────
   const [activeTier, setActiveTier] = useState<TierDisplay['key']>('tier1');
@@ -789,6 +792,12 @@ function CityContent({
       setActiveTier(`tier${tierId}` as TierDisplay['key']);
     }
   }, [selectedProviderId]);
+
+  // ── Notify parent when tier changes (for leaderboard bridge) ──────────
+  useEffect(() => {
+    const tierId = parseInt(activeTier.replace('tier', ''), 10);
+    onTierChange?.(tierId);
+  }, [activeTier, onTierChange]);
 
   const activeDisplay = TIER_DISPLAYS.find((d) => d.key === activeTier)!;
   const promptText = data.prompts[activeTier];
@@ -1001,11 +1010,8 @@ function CityContent({
           </div>
         </div>
 
-        {/* Prompt text — colour-coded anatomy + weight heatmap */}
-        <div
-          className="overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
-          style={{ maxHeight: 'clamp(80px, 9vw, 160px)' }}
-        >
+        {/* Prompt text — colour-coded anatomy, auto-height (no scroll) */}
+        <div>
           <PromptAnatomy
             promptText={promptText}
             categoryMap={categoryMap}
@@ -1013,21 +1019,29 @@ function CityContent({
           />
         </div>
 
-        {/* "Try in" provider icons — larger, spacious */}
+        {/* "Try in" — colour band separator + bar treatment */}
         {providers.length > 0 && (
           <div
-            className="flex items-center min-w-0"
-            style={{ gap: 'clamp(6px, 0.5vw, 10px)' }}
+            className="flex items-center min-w-0 rounded-lg"
+            style={{
+              gap: 'clamp(8px, 0.7vw, 12px)',
+              padding: 'clamp(6px, 0.5vw, 10px) clamp(10px, 0.8vw, 14px)',
+              background: 'rgba(255, 255, 255, 0.06)',
+              borderLeft: `3px solid ${activeDisplay.dotColour}`,
+            }}
           >
             <span
-              className="shrink-0 font-bold uppercase tracking-wide text-red-300"
-              style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.95rem)', marginRight: 'clamp(6px, 0.5vw, 10px)' }}
+              className="shrink-0 font-bold uppercase tracking-wide"
+              style={{
+                fontSize: 'clamp(0.7rem, 0.85vw, 0.95rem)',
+                color: activeDisplay.dotColour,
+              }}
             >
               Try in
             </span>
             <div
               className="flex flex-nowrap items-center overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
-              style={{ gap: 'clamp(4px, 0.35vw, 7px)' }}
+              style={{ gap: 'clamp(5px, 0.4vw, 8px)' }}
             >
               {providers.map((p) => (
                 <ProviderIcon
@@ -1256,7 +1270,7 @@ function OnlineUsersBar({ total, countries }: { total: number; countries: Online
 // MAIN COMPONENT
 // ============================================================================
 
-export default function PromptShowcase({ selectedProviderId }: { selectedProviderId?: string }) {
+export default function PromptShowcase({ selectedProviderId, onTierChange }: { selectedProviderId?: string; onTierChange?: (tierId: number) => void }) {
   const { data, previousData, isLoading, isTransitioning, error } = usePromptShowcase();
 
   // ── Online users (Phase 6) ─────────────────────────────────────────────
@@ -1363,6 +1377,7 @@ export default function PromptShowcase({ selectedProviderId }: { selectedProvide
             onToggleLike={handleToggleLike}
             isTransitioning={isTransitioning}
             selectedProviderId={selectedProviderId}
+            onTierChange={onTierChange}
           />
         </div>
       </div>

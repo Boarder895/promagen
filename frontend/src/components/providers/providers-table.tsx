@@ -36,6 +36,7 @@ import { IndexRatingCell } from './index-rating-cell';
 import { toRomanNumeral } from '@/lib/format/number';
 import { Flag } from '@/components/ui/flag';
 import Tooltip from '@/components/ui/tooltip';
+import { getPlatformTierId, type PlatformTierId } from '@/data/platform-tiers';
 import type { WeatherData } from '@/hooks/use-weather';
 
 // Market power data for MPI calculation
@@ -64,6 +65,10 @@ export type ProvidersTableProps = {
   weatherMap?: Record<string, WeatherData>;
   /** Whether user is Pro (for tooltip badge) */
   isPro?: boolean;
+  /** Active tier from showcase — highlights matching provider rows */
+  highlightTierId?: number;
+  /** Active tier filter from parent — filters table to show only matching platforms */
+  tierFilter?: PlatformTierId | null;
 };
 
 type PromagenUsersCountryUsage = {
@@ -451,10 +456,15 @@ export function ProvidersTable({
   onExpandToggle,
   weatherMap,
   isPro = false,
+  highlightTierId,
+  tierFilter,
 }: ProvidersTableProps) {
   // Sort state: default to Index Rating descending (highest first)
   const [sortBy, setSortBy] = useState<SortColumn>('indexRating');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Tier label + colour maps for row highlighting
+  const tierColours: Record<number, string> = { 1: '#8B5CF6', 2: '#3B82F6', 3: '#10B981', 4: '#F59E0B' };
 
   // Index Rating data from database
   const [indexRatings, setIndexRatings] = useState<Map<string, ProviderRating>>(new Map());
@@ -543,6 +553,12 @@ export function ProvidersTable({
     }
   }, [sorted, onProvidersChange]);
 
+  // Tier filtering: when active, only show platforms in the selected tier
+  const displayed = React.useMemo(() => {
+    if (!tierFilter) return sorted;
+    return sorted.filter((p) => getPlatformTierId(p.id) === tierFilter);
+  }, [sorted, tierFilter]);
+
   return (
     <div className="providers-table-container leaderboard-glow-frame">
       {/* Desktop table view — hidden on mobile via CSS */}
@@ -586,11 +602,22 @@ export function ProvidersTable({
           </thead>
 
           <tbody>
-            {sorted.map((p, index) => (
+            {displayed.map((p, index) => {
+              const providerTierId = getPlatformTierId(p.id);
+              const isHighlighted = highlightTierId && providerTierId === highlightTierId && !tierFilter;
+              const highlightBorder = isHighlighted ? `3px solid ${tierColours[highlightTierId]}` : undefined;
+              const highlightBg = isHighlighted ? `${tierColours[highlightTierId]}08` : undefined;
+
+              return (
               <tr
                 key={p.id}
                 data-provider-id={p.id}
                 className="providers-table-row border-t border-slate-800 hover:bg-slate-900/30 transition-colors market-pulse-target"
+                style={{
+                  borderLeft: highlightBorder,
+                  backgroundColor: highlightBg,
+                  transition: 'border-left 400ms ease, background-color 400ms ease',
+                }}
               >
                 <td className="providers-table-td px-4 py-3 w-[30%] border-r border-white/5">
                   <ProviderCell
@@ -626,7 +653,8 @@ export function ProvidersTable({
                   )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

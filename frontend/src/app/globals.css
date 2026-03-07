@@ -682,18 +682,18 @@ a:hover {
 
 .provider-time {
   font-family: 'SF Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: clamp(0.8125rem, 1.1vw, 1.125rem); /* 13px → 18px */
+  font-size: clamp(0.6rem, 1vw, 1rem); /* Match city name: clamp(0.6rem, 1vw, 1rem) */
   font-weight: 500;
   letter-spacing: 0.025em;
   white-space: nowrap; /* Time NEVER wraps */
 }
 
 .provider-time-bright {
-  color: rgba(226, 232, 240, 0.95); /* slate-200 */
+  color: rgba(255, 255, 255, 0.95); /* Always white — no dimming */
 }
 
 .provider-time-dim {
-  color: rgba(100, 116, 139, 0.7); /* slate-500 dimmed */
+  color: rgba(255, 255, 255, 0.95); /* Always white — no dimming regardless of hours */
 }
 
 /* Blinking colon — fixed width prevents layout shift */

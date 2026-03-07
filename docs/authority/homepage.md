@@ -1,9 +1,9 @@
 # New Homepage — Authority Document
 
 **Last updated:** 6 March 2026  
-**Version:** 4.0.0  
+**Version:** 5.0.0  
 **Owner:** Promagen  
-**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 + Community Pulse v8.0 redesign)  
+**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 + Community Pulse v9.0 + Prompt Showcase v10 Hero Redesign)  
 **Authority:** This document defines the new Promagen homepage layout, components, data flow, and build plan. It supersedes the homepage section of `ribbon-homepage.md` for the `/` route only.
 
 ---
@@ -40,19 +40,19 @@ The current homepage (ribbon, exchange rails, flag tooltips, financial data) mov
 
 ### What changes
 
-| Element                                         | Current Homepage (`/`) | New Homepage (`/`)                                            |
-| ----------------------------------------------- | ---------------------- | ------------------------------------------------------------- |
-| Finance ribbon (FX, Commodities, Crypto)        | Visible                | **Removed**                                                   |
-| Orange intro text paragraph                     | Visible                | **Removed**                                                   |
+| Element                                         | Current Homepage (`/`) | New Homepage (`/`)                                                                  |
+| ----------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------- |
+| Finance ribbon (FX, Commodities, Crypto)        | Visible                | **Removed**                                                                         |
+| Orange intro text paragraph                     | Visible                | **Removed**                                                                         |
 | Exchange rails (left + right)                   | 16 exchange cards      | **Replaced** — Scene Starters (left, exchange-card styled), Community Pulse (right) |
-| "Promagen — Intelligent Prompt Builder" heading | Visible                | **Kept**                                                      |
-| "42 AI Image Generators — Elo-Ranked" heading   | Visible                | **Kept**                                                      |
-| AI Providers Leaderboard table                  | Visible                | **Kept**                                                      |
-| Engine Bay                                      | Visible                | **Kept**                                                      |
-| Mission Control                                 | Visible                | **Kept** (+ World Context button)                             |
-| Prompt of the Moment showcase                   | —                      | **New**                                                       |
-| Like buttons on prompts                         | —                      | **New**                                                       |
-| Online users by country                         | —                      | **New** (conditional, threshold: 50)                          |
+| "Promagen — Intelligent Prompt Builder" heading | Visible                | **Kept**                                                                            |
+| "42 AI Image Generators — Elo-Ranked" heading   | Visible                | **Kept**                                                                            |
+| AI Providers Leaderboard table                  | Visible                | **Kept**                                                                            |
+| Engine Bay                                      | Visible                | **Kept**                                                                            |
+| Mission Control                                 | Visible                | **Kept** (+ World Context button)                                                   |
+| Prompt of the Moment showcase                   | —                      | **New**                                                                             |
+| Like buttons on prompts                         | —                      | **New**                                                                             |
+| Online users by country                         | —                      | **New** (conditional, threshold: 50)                                                |
 
 ### What does NOT change
 
@@ -64,15 +64,15 @@ Engine Bay, Mission Control, leaderboard glow frame, leaderboard table, provider
 
 All principles from `code-standard.md` and `best-working-practice.md` apply. Specific emphasis for this build:
 
-| Principle             | Application                                                                                                                                                                                                     |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Universal clamp()** | Every new component uses inline `clamp()` for all visible dimensions. Zero fixed `px`/`rem`. Zero Tailwind size classes for scalable elements.                                                                  |
-| **Card-only design**  | All new containers are rounded cards matching existing `rounded-3xl bg-slate-950/70 ring-1 ring-white/10`.                                                                                                      |
-| **SSOT-first**        | Prompt rotation uses existing 102-city SSOT from `city-vibes.json`. Scene data from `scene-starters.json`. Provider data from `providers.json`.                                                                 |
-| **Demo-to-live**      | Community Pulse starts with 210 demo prompts (clearly distinguished via absent score badge). Real user prompts take over automatically as they flow in. Online users show demo counts until threshold. No fabricated engagement metrics.                                      |
-| **No scope creep**    | This build changes the `/` route layout. It does not modify the prompt builder, vocabulary system, scoring engine, or any existing page except adding a "World Context" button to Mission Control on all pages. |
-| **Viewport-locked**   | `h-dvh overflow-hidden` on body. All scrolling inside individual containers. No page-level scrollbar.                                                                                                           |
-| **Accessibility**     | All interactive elements use `<button>` or `<a>`. Full keyboard navigation. ARIA labels. `prefers-reduced-motion` respected.                                                                                    |
+| Principle             | Application                                                                                                                                                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Universal clamp()** | Every new component uses inline `clamp()` for all visible dimensions. Zero fixed `px`/`rem`. Zero Tailwind size classes for scalable elements.                                                                                           |
+| **Card-only design**  | All new containers are rounded cards matching existing `rounded-3xl bg-slate-950/70 ring-1 ring-white/10`.                                                                                                                               |
+| **SSOT-first**        | Prompt rotation uses existing 102-city SSOT from `city-vibes.json`. Scene data from `scene-starters.json`. Provider data from `providers.json`.                                                                                          |
+| **Demo-to-live**      | Community Pulse starts with 210 demo prompts (clearly distinguished via absent score badge). Real user prompts take over automatically as they flow in. Online users show demo counts until threshold. No fabricated engagement metrics. |
+| **No scope creep**    | This build changes the `/` route layout. It does not modify the prompt builder, vocabulary system, scoring engine, or any existing page except adding a "World Context" button to Mission Control on all pages.                          |
+| **Viewport-locked**   | `h-dvh overflow-hidden` on body. All scrolling inside individual containers. No page-level scrollbar.                                                                                                                                    |
+| **Accessibility**     | All interactive elements use `<button>` or `<a>`. Full keyboard navigation. ARIA labels. `prefers-reduced-motion` respected.                                                                                                             |
 
 ---
 
@@ -88,22 +88,22 @@ All principles from `code-standard.md` and `best-working-practice.md` apply. Spe
 │              │                                          │                   │
 │  ENGINE BAY  │         PROMPT OF THE MOMENT             │  MISSION CONTROL  │
 │              │  ┌────────────────────────────────────┐  │                   │
-│  [Platform   │  │ Tokyo • 14:32 JST • Light Rain     │  │  [Location badge] │
-│   icons]     │  │ Mood: Serene                        │  │  [Weather prompt] │
+│  [Platform   │  │ Tokyo • Shibuya Crossing • 14:32   │  │  [Location badge] │
+│   icons]     │  │ Light Rain                          │  │  [Weather prompt] │
 │              │  │                                    │  │                   │
-│  [Dropdown]  │  │ ┌─ CLIP ──────────────── 📋 ────┐ │  │  Buttons:         │
-│              │  │ │ neon-lit streets...           │ │  │  [World Context]  │
-│  [Launch     │  │ │ Try: [SD] [Leo] [NightCafe]  │ │  │  [Studio]         │
-│   Button]    │  │ ├─ Midjourney ──────────── 📋 ──┤ │  │  [Pro Promagen]   │
-│              │  │ │ Tokyo rain --ar 16:9...       │ │  │                   │
-│              │  │ │ Try: [MJ] [BlueWillow]       │ │  │  [Sign in]        │
-│              │  │ ├─ Natural Language ──────── 📋 ─┤ │  │                   │
-│              │  │ │ A rain-soaked Tokyo street... │ │  │                   │
-│              │  │ │ Try: [DALL-E] [Firefly]      │ │  │                   │
-│              │  │ ├─ Plain ──────────────── 📋 ───┤ │  │                   │
-│              │  │ │ Tokyo rainy street, neon...   │ │  │                   │
-│              │  │ │ Try: [Canva] [Artistly]      │ │  │                   │
-│              │  │ └──────────────────────────────┘ │  │                   │
+│  [Dropdown]  │  │ Intelligence Engine:                │  │  Buttons:         │
+│              │  │ ☁️Rain→fog  🌡️14°C→cool  💡Dusk→…  │  │  [World Context]  │
+│  [Launch     │  │                                    │  │  [Studio]         │
+│   Button]    │  │ [● CLIP [SD][Leo]+10]              │  │  [Pro Promagen]   │
+│              │  │ [● Midjourney [MJ][BW]]            │  │                   │
+│              │  │ [● Natural [FF][Flux]+7]            │  │  [Sign in]        │
+│              │  │ [● Plain [Canva][Pics]+14]          │  │                   │
+│              │  │                                    │  │                   │
+│              │  │ ┌─ CLIP-Based Tier 1 ─── ♡  📋 ┐  │  │                   │
+│              │  │ │ colour-coded prompt anatomy   │  │  │                   │
+│              │  │ │ with morph animation          │  │  │                   │
+│              │  │ │ Try in: [SD] [Leo] [NC] …    │  │  │                   │
+│              │  │ └──────────────────────────────┘  │  │                   │
 │              │  │                                    │  │                   │
 │              │  │ 🇬🇧 12  🇺🇸 8  🇩🇪 4  ▾ (+6)       │  │                   │
 │              │  └────────────────────────────────────┘  │                   │
@@ -264,83 +264,106 @@ interface ProviderShortcut {
 
 **Fallback:** If weather data is unavailable for the current city, use demo weather data (`15°C, partly cloudy, 10 km/h wind`). If the generator throws, serve the last successfully generated prompt. The component must never show an error state — always show a prompt.
 
-### 4.4 Component: `PromptShowcase`
+### 4.4 Component: `PromptShowcase` (v10 — Hero Prompt + Tier Tabs + Anatomy + Intelligence Bridge + Morph)
 
-**File:** `src/components/home/prompt-showcase.tsx`
+**File:** `src/components/home/prompt-showcase.tsx` (1,414 lines)
 
-**Visual design:**
+**v10 architecture:** The 2×2 grid of 4 cramped TierPanels was replaced with a single hero prompt area controlled by 4 tier tab pills. One prompt gets the full stage. This is a fundamentally different layout from v7 (4-panel grid).
+
+**Visual design — v10 layout (top to bottom):**
 
 ```
-┌─ PROMPT OF THE MOMENT ──────────────────────────────────────────┐
-│                                                                   │
-│  🇯🇵  Tokyo • Shibuya Crossing • 14:32                            │
-│  Light Rain                                                       │
-│  Live weather prompt · next city in 8:32                          │
-│                                                                   │
-│  ┌─ CLIP-Based (Tier 1) ──────────────────── 📋  ♡ 23 ┐         │
-│  │ neon-lit streets, rain-slicked pavement, (cinematic   │        │
-│  │ lighting:1.2), tokyo signage, reflections on wet...   │        │
-│  │                                                       │        │
-│  │ Try in: [SD] [Leonardo] [NightCafe]                   │        │
-│  └───────────────────────────────────────────────────────┘        │
-│                                                                   │
-│  ┌─ Midjourney (Tier 2) ──────────────────── 📋  ♡ 41 ┐         │
-│  │ Tokyo rain district, neon reflections, cinematic      │         │
-│  │ --ar 16:9 --style raw --v 6.1                         │         │
-│  │                                                       │         │
-│  │ Try in: [MJ] [BlueWillow]                             │         │
-│  └───────────────────────────────────────────────────────┘         │
-│                                                                   │
-│  ┌─ Natural Language (Tier 3) ────────────── 📋  ♡ 8 ┐          │
-│  │ A rain-soaked Tokyo street at twilight, neon signs    │          │
-│  │ casting coloured reflections across wet pavement...   │          │
-│  │                                                       │          │
-│  │ Try in: [DALL-E] [Firefly] [Ideogram]                 │          │
-│  └───────────────────────────────────────────────────────┘          │
-│                                                                   │
-│  ┌─ Plain Language (Tier 4) ────────────────── 📋  ♡ 5 ┐        │
-│  │ Tokyo rainy street at night, neon lights               │        │
-│  │                                                       │        │
-│  │ Try in: [Canva] [Artistly] [Craiyon]                  │        │
-│  └───────────────────────────────────────────────────────┘        │
-│                                                                   │
-│  🇬🇧 12  🇺🇸 8  🇩🇪 4  ▾ (+6 countries)                          │
-│                                                                   │
-└───────────────────────────────────────────────────────────────────┘
+┌─ PROMPT OF THE MOMENT ─────── Live weather prompt · next city in 8:32 ──┐
+│                                                                           │
+│  🇯🇵  Tokyo • Shibuya Crossing • Light Rain • 14:32                       │
+│                                                                           │
+│  Intelligence Engine  ☁️ Rain→fog  🌡️ 14°C→cool tones  💡 Dusk→dusk light │
+│                                                                           │
+│  [● CLIP [SD][Leo][NC]+10]  [● MJ [MJ][BW]]                             │
+│  [● Natural [FF][Flux][DE]+7]  [● Plain [Canva][Pics][Cray]+14]          │
+│                                                                           │
+│  ┌─ CLIP-Based Tier 1 ──────────────────────── ♡ 23  📋 ─┐              │
+│  │ masterpiece, best quality, highly detailed,             │              │
+│  │ (neon-lit streets:1.2), rain-slicked pavement,          │  <- colour   │
+│  │ (cinematic lighting:1.1), tokyo signage, reflections    │  <- coded    │
+│  │ on wet surfaces, sharp focus, 8K, intricate textures    │  <- anatomy  │
+│  │                                                         │              │
+│  │ TRY IN  [SD] [Leonardo] [NightCafe] [Playground] …     │              │
+│  └─────────────────────────────────────────────────────────┘              │
+│                                                                           │
+│  🇬🇧 12  🇺🇸 8  🇩🇪 4  ▾ (+6 countries)                                    │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Card styling:** `rounded-3xl bg-slate-950/70 ring-1 ring-white/10` (matches all existing cards).
+**Key components inside PromptShowcase:**
 
-**Tier prompt cards (inner):** `rounded-xl bg-slate-900/60 ring-1 ring-white/5` — lighter inner cards, consistent with card-within-card pattern.
+**1. Intelligence Bridge (`IntelligenceBridge` component):**
+Compact pill strip between city header and tier tabs. Shows 3-4 weather→vocabulary reasoning pills. Format: `Intelligence Engine  ☁️ broken clouds → overcast light  🌡️ 14°C → cool tones  💡 Dusk → dusk light  💨 15 km/h → wind phrase`. Output terms are coloured using `CATEGORY_COLOURS`. Only renders when `categoryMap` + weather data are both available.
 
-**Tier label colours:**
+Data sources: `data.weather` (raw API data) + `categoryMap.selections` (vocabulary terms the engine chose). Derived by `deriveBridgePills()` function — up to 4 pills in priority order: conditions→atmosphere, temperature→colour, time→lighting, wind→action, humidity→materials (fallback).
 
-| Tier   | Label            | Colour             | Ring Colour           | Dot Colour |
-| ------ | ---------------- | ------------------ | --------------------- | ---------- |
-| Tier 1 | CLIP-Based       | `text-violet-400`  | `ring-violet-500/20`  | `#8B5CF6`  |
-| Tier 2 | Midjourney       | `text-blue-400`    | `ring-blue-500/20`    | `#3B82F6`  |
-| Tier 3 | Natural Language | `text-emerald-400` | `ring-emerald-500/20` | `#10B981`  |
-| Tier 4 | Plain Language   | `text-amber-400`   | `ring-amber-500/20`   | `#F59E0B`  |
+**2. Tier Tab Pills with Provider Icons:**
+Four horizontal pills: `● CLIP [SD][Leo][NC]+10` · `● Midjourney [MJ][BW]` · `● Natural [FF][Flux][DE]+7` · `● Plain [Canva][Pics][Cray]+14`. Each pill shows the tier's top 3 provider icons from `data.tierProviders[tierKey]` plus an overflow count. Users scan logos across tabs to find their platform.
 
-These colours are informational — Tier 1 uses violet (not cyan) because it matches the CLIP-weight visual language in the prompt builder.
+Tab sizes: `fontSize: clamp(0.65rem, 0.85vw, 1rem)`, icons `clamp(18px, 1.5vw, 24px)`. Active tab: `bg-{tier}/10 ring-{tier}/30 text-{tier}`. Inactive: `bg-white/5 ring-white/10 text-slate-400`.
 
-**Copy button (📋):** Same clipboard icon and behaviour as `weather-prompt-tooltip.tsx`. On click: copies tier prompt to clipboard, shows brief "Copied!" feedback (1.5s) with `bg-emerald-500/20 text-emerald-400`, then reverts.
+**Tier tab colours (v10 — updated ring values):**
 
-**Like button (♡):** Small heart icon, right of copy button. `text-slate-400` default, `text-pink-400` when liked, `hover:text-pink-300`. See §7 for full specification.
+| Tier   | Label            | Colour             | Active BG           | Ring Colour           | Dot Colour |
+| ------ | ---------------- | ------------------ | ------------------- | --------------------- | ---------- |
+| Tier 1 | CLIP-Based       | `text-violet-400`  | `bg-violet-500/10`  | `ring-violet-500/30`  | `#8B5CF6`  |
+| Tier 2 | Midjourney       | `text-blue-400`    | `bg-blue-500/10`    | `ring-blue-500/30`    | `#3B82F6`  |
+| Tier 3 | Natural Language | `text-emerald-400` | `bg-emerald-500/10` | `ring-emerald-500/30` | `#10B981`  |
+| Tier 4 | Plain Language   | `text-amber-400`   | `bg-amber-500/10`   | `ring-amber-500/30`   | `#F59E0B`  |
 
-**"Try in" provider icons:** 2-4 small provider PNG icons (`/icons/providers/{id}.png`) per tier, inline below the prompt text. Each icon is clickable — navigates to that provider's prompt builder with the prompt pre-loaded (see §4.5). Icon container: `rounded-lg bg-white/15 ring-1 ring-white/10 hover:bg-white/20 hover:ring-white/20`. Image inside: `drop-shadow(0 0 3px rgba(255,255,255,0.4))` for glow visibility on dark backgrounds.
+**3. Engine Bay Auto-Select (Option C):**
+When a user selects a provider in the Engine Bay dropdown, `selectedProviderId` flows through `PromptShowcase` → `CityContent`. A `useEffect` calls `getPlatformTierId(selectedProviderId)` from `platform-tiers.ts` and auto-switches `activeTier` to that provider's tier. E.g., selecting Leonardo → CLIP tab activates. Manual tab clicks still work. Import: `import { getPlatformTierId } from '@/data/platform-tiers'`.
 
-**Prompt text styling:** `font-mono leading-relaxed text-slate-300` using `clamp()` font sizing. Prompt text is selectable but not editable.
+Wiring: `new-homepage-client.tsx` passes `selectedProvider?.id` to `<PromptShowcase selectedProviderId={selectedProvider?.id} />`.
 
-**Countdown timer:** Below the city header, an amber italic line shows `"Live weather prompt · next city in M:SS"` with a live countdown (tabular-nums for stable digit widths). The countdown auto-refreshes every second and triggers a new API fetch when it reaches zero.
+**4. Prompt Anatomy (`PromptAnatomy` component):**
+Colour-codes each term in the prompt by its source category. The prompt text stops being a flat string and becomes a visual map of what each term does.
 
-**Metadata line:** City header shows: `Flag · CityName · Venue · HH:MM` (blinking colon, no timezone suffix, no mood text). Weather emoji appears with hover tooltip (same `ProviderWeatherEmojiTooltip` as leaderboard). Conditions text (e.g., "Light Rain") on a separate line below.
+12 category colours (`CATEGORY_COLOURS` constant):
 
-**Rotation transition:** When the city changes (every 10 min), the card content crossfades (`opacity 0 → 1`, 800ms ease-in-out). No layout shift — container dimensions are fixed. Respects `prefers-reduced-motion`. Previous city data held for 800ms overlay during transition (managed by `usePromptShowcase` hook).
+| Category    | Colour    | Hex       | Purpose                    |
+| ----------- | --------- | --------- | -------------------------- |
+| Subject     | Gold      | `#FCD34D` | The star of the show       |
+| Action      | Lime      | `#A3E635` | Movement / energy          |
+| Style       | Purple    | `#C084FC` | Artistic reference         |
+| Environment | Sky blue  | `#38BDF8` | Place / setting            |
+| Composition | Emerald   | `#34D399` | Framing / structure        |
+| Camera      | Orange    | `#FB923C` | Lens / angle               |
+| Lighting    | Amber     | `#FBBF24` | Light source / direction   |
+| Colour      | Pink      | `#F472B6` | Colour grade               |
+| Atmosphere  | Cyan      | `#22D3EE` | Fog / haze / particles     |
+| Materials   | Teal      | `#2DD4BF` | Surface / texture          |
+| Fidelity    | Soft blue | `#93C5FD` | Quality boosters (8K, etc) |
+| Structural  | Slate     | `#94A3B8` | Commas, glue text          |
 
-**Table expand behaviour:** When the AI Providers Leaderboard is expanded (isTableExpanded), the PromptShowcase and LeaderboardIntro are both hidden to give the table maximum vertical space.
+Parser: `parsePromptUnified()` — single unified parser for all 4 tiers. Keeps original text byte-for-byte intact (no comma splitting). Terms matched via `buildTermIndex()` from `categoryMap.selections` + `categoryMap.customValues`. CLIP weight syntax `(term:1.2)` detected inline for glow intensity. Fidelity keywords auto-detected for unmatched terms.
 
-**Skeleton loader:** Pulse-animated placeholder with fixed min-height (`clamp(180px, 18vw, 300px)`) — prevents CLS during initial load.
+Higher-weight terms get subtle `text-shadow: 0 0 10px {colour}50` glow. All text full brightness — no opacity dimming. Text normalization: `promptText.replace(/([a-z])([A-Z])/g, '$1 $2')` fixes upstream concatenation bugs.
+
+Graceful fallback: if `categoryMap` is missing, renders plain `text-slate-200` text.
+
+**5. Morph Animation on City Rotation:**
+When the city rotates, each coloured term in the new prompt ripples in individually instead of hard-swapping as a block. Each segment `<span>` gets: `animation: morphTermIn 600ms ease-out forwards`, `animationDelay: ${index * 40}ms`, starts at `opacity: 0`. The `morphTermIn` keyframe: fades 0→1, slides up 4px (`translateY`), deblurs (`filter: blur(2px)→0`). With ~20 segments at 40ms stagger, full ripple takes ~1.4s. Old city fades out as block (existing `showcase-fade-out`). `prefers-reduced-motion` respected.
+
+**Other preserved features from v7:**
+
+- **Card styling:** `rounded-3xl bg-slate-950/70 ring-1 ring-white/10`
+- **Hero prompt inner card:** `rounded-xl bg-slate-900/60 ring-1 ${activeDisplay.ringColour}`
+- **Copy button (📋):** clipboard + 1.5s "Copied!" feedback, `bg-emerald-500/20 text-emerald-400`
+- **Like button (♡):** `text-slate-400` default, `text-pink-400` liked, scale(1.2) animation
+- **"Try in" provider icons:** `clamp(30px, 2.3vw, 38px)` buttons, `clamp(18px, 1.5vw, 24px)` images, `drop-shadow` glow
+- **Countdown timer:** amber italic, `tabular-nums`, client-side computation
+- **Metadata line:** Flag · CityName · Venue · Conditions · HH:MM (blinking colon)
+- **Crossfade transition:** 800ms opacity with `prefers-reduced-motion` support
+- **Table expand behaviour:** PromptShowcase + LeaderboardIntro hidden when expanded
+- **Skeleton loader:** pulse-animated, tab pills + hero prompt skeleton
+- **Online users bar:** threshold ≥50, collapsed/expanded country flags
+- **ARIA:** `role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls`, `role="tabpanel"`
 
 ### 4.5 "Try in [Provider]" Mechanic
 
@@ -441,42 +464,43 @@ Existing `scene-starters.json` SSOT: 200 scenes (25 free, 175 Pro) across 23 wor
 
 **Cards are structurally identical to `exchange-card.tsx`:**
 
-| Exchange Card Element | Scene Card Equivalent | Shared Code Pattern |
-| --------------------- | --------------------- | ------------------- |
+| Exchange Card Element                              | Scene Card Equivalent                 | Shared Code Pattern                          |
+| -------------------------------------------------- | ------------------------------------- | -------------------------------------------- |
 | Snap-fit font (12–20px via ResizeObserver × 0.042) | Same 3 constants, same ResizeObserver | `MIN_FONT=12, MAX_FONT=20, FONT_SCALE=0.042` |
-| Top row padding `px-4 py-1` | Same padding class | Tailwind `px-4 py-1` |
-| Exchange name `0.90em` | Scene name `0.90em` | `style={{ fontSize: '0.90em' }}` |
-| City + Flag `0.75em` + `mt-1` | World emoji + label `0.75em` + `mt-1` | Same spacing and size |
-| Horizontal divider `border-t border-white/5` | Same divider | Identical class |
-| Index quote row `px-4 py-1` | Vibe phrase row | Same padding |
-| Dual radial glow (top + bottom) | Same glow overlays | Same `radial-gradient` patterns |
-| Border + boxShadow on hover | Same glow treatment (+ cascade glow) | Same shadow string format |
-| Card gap `space-y-3` | Same gap | Shared from parent scroll container |
+| Top row padding `px-4 py-1`                        | Same padding class                    | Tailwind `px-4 py-1`                         |
+| Exchange name `0.90em`                             | Scene name `0.90em`                   | `style={{ fontSize: '0.90em' }}`             |
+| City + Flag `0.75em` + `mt-1`                      | World emoji + label `0.75em` + `mt-1` | Same spacing and size                        |
+| Horizontal divider `border-t border-white/5`       | Same divider                          | Identical class                              |
+| Index quote row `px-4 py-1`                        | Vibe phrase row                       | Same padding                                 |
+| Dual radial glow (top + bottom)                    | Same glow overlays                    | Same `radial-gradient` patterns              |
+| Border + boxShadow on hover                        | Same glow treatment (+ cascade glow)  | Same shadow string format                    |
+| Card gap `space-y-3`                               | Same gap                              | Shared from parent scroll container          |
 
 **Scene card content (v4.1.0):**
 
-| Row | Element | Source | Styling |
-| --- | ------- | ------ | ------- |
-| Top | Tier dot | `getBestTier()` → tier 1–4 | Coloured dot (cyan/violet/emerald/amber) with `box-shadow` glow |
-| Top | Emoji | `scene.emoji` | `0.90em` |
-| Top | Scene name | `scene.name` | `0.90em`, `text-slate-100`, truncate |
-| Top | Arrow | Static `→` or `→ {providerName}` on hover | `0.75em`, white at rest, cyan (`#22D3EE`) on hover. Shows provider name on hover when provider selected (e.g., "→ Flux"). Truncated at `6em`. |
-| Top | World label | `WORLD_BY_SLUG.get(scene.world)` | `0.75em`, `text-slate-400`, `mt-1` |
-| Divider | — | — | `border-t border-white/5` |
-| Bottom | Vibe phrase | First phrase from `scene.flavourPhrases`, first letter uppercased | `0.75em`, italic, `text-white/60`, truncate. Category count removed in v3.2.0. |
+| Row     | Element     | Source                                                            | Styling                                                                                                                                       |
+| ------- | ----------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Top     | Tier dot    | `getBestTier()` → tier 1–4                                        | Coloured dot (cyan/violet/emerald/amber) with `box-shadow` glow                                                                               |
+| Top     | Emoji       | `scene.emoji`                                                     | `0.90em`                                                                                                                                      |
+| Top     | Scene name  | `scene.name`                                                      | `0.90em`, `text-slate-100`, truncate                                                                                                          |
+| Top     | Arrow       | Static `→` or `→ {providerName}` on hover                         | `0.75em`, white at rest, cyan (`#22D3EE`) on hover. Shows provider name on hover when provider selected (e.g., "→ Flux"). Truncated at `6em`. |
+| Top     | World label | `WORLD_BY_SLUG.get(scene.world)`                                  | `0.75em`, `text-slate-400`, `mt-1`                                                                                                            |
+| Divider | —           | —                                                                 | `border-t border-white/5`                                                                                                                     |
+| Bottom  | Vibe phrase | First phrase from `scene.flavourPhrases`, first letter uppercased | `0.75em`, italic, `text-white/60`, truncate. Category count removed in v3.2.0.                                                                |
 
 **Tier dot colours:**
 
-| Tier | Colour | Hex |
-| ---- | ------ | --- |
-| 1 (CLIP) | Cyan | `#22D3EE` |
-| 2 (Midjourney) | Violet | `#A78BFA` |
+| Tier                 | Colour  | Hex       |
+| -------------------- | ------- | --------- |
+| 1 (CLIP)             | Cyan    | `#22D3EE` |
+| 2 (Midjourney)       | Violet  | `#A78BFA` |
 | 3 (Natural Language) | Emerald | `#34D399` |
-| 4 (Plain) | Amber | `#FBBF24` |
+| 4 (Plain)            | Amber   | `#FBBF24` |
 
 **Heading:** "Scene Starters" (title case, not all-caps). Uses gradient text matching the leaderboard heading in `homepage-grid.tsx`: `bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent`. Font size: `clamp(0.65rem, 0.9vw, 1.2rem)`, `font-semibold`. Centred.
 
 **Subtitle:** Two states controlled by `hasProvider`:
+
 - Provider selected: "Click a scene to start building." (6 words)
 - No provider: "Select a platform above to unlock scenes."
 - Styled: `italic text-amber-400/80`, pulsing animation matching mission-control (`2s cubic-bezier(0.4, 0, 0.6, 1) infinite`, opacity 1→0.5→1). Animation defined inline via `<style dangerouslySetInnerHTML>`, not in globals.css.
@@ -484,6 +508,7 @@ Existing `scene-starters.json` SSOT: 200 scenes (25 free, 175 Pro) across 23 wor
 **Cascading glow cycle (v4.1.0):**
 
 Each card takes its turn glowing in a continuous cascade:
+
 1. Card 1 glows for 3 seconds (uses existing tier-coloured glow system: `glowRgba`, `glowBorder`, `glowSoft`)
 2. Glow fades out over 600ms (CSS transition on `border-color` and `box-shadow`)
 3. 1 second dark pause
@@ -493,6 +518,7 @@ Each card takes its turn glowing in a continuous cascade:
 Implementation: Parent owns `activeGlowIndex` (0–7) and `glowOn` (boolean). One `useEffect` with two `setTimeout` calls drives the cycle. Card receives `isGlowActive={glowOn && index === activeGlowIndex}`. Hover always wins — if the user hovers any card, it glows regardless of the cascade position. Glow resets to card 0 when the 5-minute batch rotates.
 
 **Footer row:** Below the last card. `flex justify-between`:
+
 - Left: Provider icon (Engine Bay size, `clamp(36px, 3vw, 48px)`) + "Ranked {ordinal} for Image Quality" (plain text, not clickable). Dynamic from `selectedProvider.imageQualityRank`. Only shown when provider selected.
 - Right: "25 free · 175 Pro" in `text-emerald-400` (Tier 3 green). Clickable `<button>`. Navigates to `/providers/{id}` with no scene pre-loaded (removes `promagen:preloaded-scene` from sessionStorage, so prompt builder opens with empty dropdowns). No provider selected → nudges Engine Bay.
 
@@ -542,6 +568,7 @@ Implementation: Parent owns `activeGlowIndex` (0–7) and `glowOn` (boolean). On
 **SceneSelector auto-expand (v3.0.0):**
 
 `scene-selector.tsx` accepts a new `initialSceneId` prop. When set:
+
 - `isExpanded` → `true` (accordion opens)
 - `activeWorldSlug` → the scene's world slug
 - `activeSceneId` → the scene ID
@@ -564,7 +591,10 @@ Social proof that Promagen is alive and active. Answers "is anyone using this?" 
 
 **Demo prompts (pre-user-traffic):** 210 pre-generated prompts stored in `src/data/community-pulse/demo-prompts.json`. 5 prompts per platform across all 42 platforms. Each prompt is assembled and optimised for its specific platform format (T1 CLIP weights, T2 Midjourney params, T3 Natural Language sentences, T4 Plain Language). Prompts built from real vocabulary files — coherent visual scenes, not random term combinations. Every prompt fills 85-99% of its platform's `idealMax` character budget.
 
+**Demo prompt data per entry:** `platformId`, `platformName`, `platformIcon`, `brandColor`, `description`, `optimisedPrompt`, `score`, `countryCode`, `locationName` (real town per country — 5 unique towns per country across 42 countries), `likeCount`. No `localTime` field — replaced by `locationName` in v9.0.0.
+
 **Demo prompt structure per tier:**
+
 - **Tier 1 CLIP:** `masterpiece, best quality, highly detailed, (subject:1.2), style, lighting, colour, composition, sharp focus, 8K, intricate textures`
 - **Tier 2 Midjourney:** `subject, style, lighting, colour, composition, high quality, detailed --ar 16:9 --v 6 --s 500 --no blur, watermark, text`
 - **Tier 3 Natural Language:** `A subject in style style. with lighting. Atmosphere. Set in environment. Rendered in colour. Composed with composition. Fidelity.`
@@ -572,13 +602,13 @@ Social proof that Promagen is alive and active. Answers "is anyone using this?" 
 
 **Live user prompts (post-traffic):** When a user copies an optimised prompt in the prompt builder, the builder POSTs to `/api/homepage/community-pulse` fire-and-forget. The entry is stored with `source = 'user'` in `prompt_showcase_entries`. The `useCommunityPulse` hook polls every 30 seconds. User entries push demo entries out of the top 6 card slots automatically.
 
-**Merge logic:** User entries (`source === 'user'`) fill the top card slots (up to 6). Remaining slots are filled by demo prompts from the 30-minute rotation. When all 6 slots are real users, zero demos are shown. When zero real users exist, full demo rotation (current behaviour).
+**Merge logic:** User entries (`source === 'user'`) fill the top card slots (up to 8). Remaining slots are filled by demo prompts from the 30-minute rotation. When all 8 slots are real users, zero demos are shown. When zero real users exist, full demo rotation (current behaviour).
 
 **Generator script:** `scripts/generate-demo-prompts.ts` — run via `npx tsx scripts/generate-demo-prompts.ts` to regenerate prompts through the real One Brain pipeline (`assemblePrompt` + `optimizePromptGoldStandard` per platform).
 
-### 6.3 Component: `CommunityPulse` (v8.0.0)
+### 6.3 Component: `CommunityPulse` (v9.0.0)
 
-**File:** `src/components/home/community-pulse.tsx` (781 lines)
+**File:** `src/components/home/community-pulse.tsx` (611 lines)
 
 **Visual design — v8.0.0 layout (top to bottom):**
 
@@ -592,7 +622,7 @@ Social proof that Promagen is alive and active. Answers "is anyone using this?" 
 |  +----------------------------------------------------+  |
 |  | [MJ icon] Midjourney          87/100       heart 12 |  |  <- LINE 1: icon + name + score (live only) + heart
 |  | Neon samurai in rain-soaked Tokyo alley              |  |  <- LINE 2: description, italic, uppercase first
-|  | Created in [flag]  at  14:32                        |  |  <- LINE 3: flag + mono clock
+|  | Created in [flag]  Prague                           |  |  <- LINE 3: flag + mono clock
 |  +----------------------------------------------------+  |
 |                                                          |
 |  +----------------------------------------------------+  |
@@ -601,7 +631,7 @@ Social proof that Promagen is alive and active. Answers "is anyone using this?" 
 |  | Created in [flag]  at  09:17                        |  |
 |  +----------------------------------------------------+  |
 |                                                          |
-|  ... (6 user prompt cards total)                         |
+|  ... (8 platform prompt cards total)                         |
 |                                                          |
 |  +----------------------------------------------------+  |
 |  | earth  500 Online                                   |  |  <- online users card 1 (cyan glow)
@@ -622,35 +652,35 @@ Social proof that Promagen is alive and active. Answers "is anyone using this?" 
 
 Each user prompt card has a fixed height of `clamp(74px, 6.2vw, 104px)` (same as scene cards). The interior uses `flex h-full flex-col justify-between` with `height: '33.333%'` on each row — guaranteeing equal vertical distribution regardless of content height.
 
-| Row | Element | Source | Styling |
-| --- | ------- | ------ | ------- |
-| Line 1 | Platform icon | `/icons/providers/{id}.png` | `clamp(14px, 1.2vw, 20px)` square, `object-contain`, drop-shadow glow |
-| Line 1 | Platform name | `entry.platformName` | `0.90em`, `text-slate-100`, font-medium, truncate |
-| Line 1 | Score (live only) | `entry.score` | `0.85em`, `text-white`, tabular-nums. Format: `87/100`. Hidden for demo entries (`isLive === false`) |
-| Line 1 | Like heart | `entry.likeCount` | `0.85em`, `text-pink-400`. `heart` filled when > 0, `heart-outline` when 0. Count in `text-emerald-400` |
-| Line 2 | Description | `entry.description` (subject + style) | `0.75em`, italic, `text-slate-300`, truncate. First letter uppercased via `charAt(0).toUpperCase()` |
-| Line 3 | "Created in" | Static text | `0.68em`, `text-slate-400` |
-| Line 3 | Country flag | `entry.countryCode` | `clamp(18px, 1.5vw, 24px)` x `clamp(14px, 1.1vw, 18px)` — same size as online users / leaderboard. `marginLeft` + `marginRight`: `clamp(9px, 0.9vw, 15px)` (3x standard gap). Hover triggers tooltip |
-| Line 3 | "at" | Static text | `0.68em`, `text-slate-400` |
-| Line 3 | Time | `entry.localTime` (HH:MM) | Mono font (`SF Mono, Consolas`), `text-slate-200`, visible colon (`fontWeight: 600`, `width: 0.6ch`). Gap before time: `clamp(6px, 0.6vw, 10px)` |
+| Row    | Element           | Source                                | Styling                                                                                                                                     |
+| ------ | ----------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Line 1 | Platform icon     | `/icons/providers/{id}.png`           | `clamp(14px, 1.2vw, 20px)` square, `object-contain`, drop-shadow glow                                                                       |
+| Line 1 | Platform name     | `entry.platformName`                  | `0.90em`, `text-slate-100`, font-medium, truncate                                                                                           |
+| Line 1 | Score (live only) | `entry.score`                         | `0.85em`, `text-white`, tabular-nums. Format: `87/100`. Hidden for demo entries (`isLive === false`)                                        |
+| Line 1 | Like heart        | `entry.likeCount`                     | `0.85em`, `text-pink-400`. `heart` filled when > 0, `heart-outline` when 0. Count in `text-emerald-400`                                     |
+| Line 2 | Description       | `entry.description` (subject + style) | `0.75em`, italic, `text-slate-300`, truncate. First letter uppercased via `charAt(0).toUpperCase()`                                         |
+| Line 3 | "Created in"      | Static text                           | `0.68em`, `text-slate-400`                                                                                                                  |
+| Line 3 | Country flag      | `entry.countryCode`                   | `clamp(18px, 1.5vw, 24px)` x `clamp(14px, 1.1vw, 18px)`. `marginLeft` + `marginRight`: `clamp(6px, 0.6vw, 10px)`. Hover triggers tooltip    |
+| Line 3 | Location name     | `entry.locationName`                  | `font-medium`, colour: `entry.brandColor` (per-card brand colour tint). Truncate for long names. Real towns: "Sasolburg", "Prague", "Osaka" |
 
 **Per-card brand colour glow (same pattern as Scene Starters tier dot colour):**
 
 Each card derives its glow colour from `PLATFORM_COLORS[platformId]`. The glow system is identical to scene-starters: `hexToRgba(brandColor, 0.3)` for `glowRgba`, `0.5` for `glowBorder`, `0.15` for `glowSoft`. Top + bottom radial gradients, 600ms transition.
 
-| Platform | Brand Colour | Glow |
-| --- | --- | --- |
-| Midjourney | `#7C3AED` | Violet |
-| Flux | `#F97316` | Orange |
-| Leonardo | `#EC4899` | Pink |
-| DALL-E (openai) | `#10B981` | Emerald |
-| Stability | `#8B5CF6` | Violet |
-| Ideogram | `#06B6D4` | Cyan |
-| (42 platforms total — see `PLATFORM_COLORS` map in component) | | |
+| Platform                                                      | Brand Colour | Glow    |
+| ------------------------------------------------------------- | ------------ | ------- |
+| Midjourney                                                    | `#7C3AED`    | Violet  |
+| Flux                                                          | `#F97316`    | Orange  |
+| Leonardo                                                      | `#EC4899`    | Pink    |
+| DALL-E (openai)                                               | `#10B981`    | Emerald |
+| Stability                                                     | `#8B5CF6`    | Violet  |
+| Ideogram                                                      | `#06B6D4`    | Cyan    |
+| (42 platforms total — see `PLATFORM_COLORS` map in component) |              |         |
 
 **Flag hover tooltip (portal-based):**
 
 Hovering the country flag opens a portal tooltip showing the full optimised prompt for that platform. Matches the weather-prompt-tooltip.tsx pattern exactly:
+
 - Portal to `document.body` (escapes all containers)
 - 400ms close delay with `clearCloseTimeout`/`startCloseDelay` pattern
 - Both trigger AND tooltip have `onMouseEnter`/`onMouseLeave` handlers
@@ -668,21 +698,16 @@ Every card carries an `isLive: boolean` field. Demo entries = `false`, API entri
 
 **Subtitle:** "The most popular prompts" — amber italic, pulsing animation matching scene-starters (`2s cubic-bezier`). Inline `<style>`, no globals.
 
-**Cascading glow cycle:** Same timing as scene-starters — 3s on, 1s dark, next card, infinite loop through all 8 cards (6 user prompt + 2 online user). Parent-controlled via `activeGlowIndex` + `glowOn` state.
+**Cascading glow cycle:** Same timing as scene-starters — 3s on, 1s dark, next card, infinite loop through all 8 platform prompt cards. Parent-controlled via `activeGlowIndex` + `glowOn` state.
 
 **30-minute demo rotation:** `Math.floor(Date.now() / ROTATION_MS)` where `ROTATION_MS = 30 * 60 * 1000`. Deterministic — same prompts shown to all users at the same time. Checked every 60 seconds via `setInterval`.
 
-**Bottom 2 cards — Online users:**
-
-Two cards with cyan glow (`#22D3EE`):
-- Card 7: "500 Online" header + top 8 country flags with counts
-- Card 8: "16 Countries" header + remaining 8 country flags with counts
-- Each flag: `clamp(18px, 1.5vw, 24px)` x `clamp(14px, 1.1vw, 18px)`, with count in `tabular-nums font-medium text-slate-300`
-- Currently demo data (500 users, 16 countries). Will be replaced with live heartbeat data when concurrent users reach threshold.
+**Online users cards removed (v9.0.0):** The 2 online users cards (cards 7-8 with cyan glow) were removed. All 8 card slots are now platform prompt cards.
 
 **Footer row:** `flex justify-between`:
+
 - Left: Green pulsing dot + "Live" in `text-emerald-400`
-- Right: "500 users . 16 countries" in `text-emerald-400`
+- Right: "42 platforms" in `text-emerald-400`
 
 **No props required:** `<CommunityPulse />` in `new-homepage-client.tsx` — no `selectedProvider` needed. Demo prompts are pre-optimised per platform. Live entries carry their own platform context.
 
@@ -698,7 +723,7 @@ Returns the 20 most recent pulse entries from `prompt_showcase_entries`, plus th
 
 **POST /api/homepage/community-pulse**
 
-Logs a user-created prompt to the Community Pulse feed. Called fire-and-forget by `prompt-builder.tsx` after copy. Validates input, sanitises (platformId max 100 chars, promptText max 2000, description max 60, countryCode max 2, score 0-100). INSERTs with `source = 'user'`. Returns new entry ID.
+Logs a user-created prompt to the Community Pulse feed. Called fire-and-forget by `prompt-builder.tsx` after copy. Validates input, sanitises (platformId max 100 chars, promptText max 2000, description max 60, countryCode max 2, score 0-100). **Server-side IP geolocation:** resolves nearest city from user's IP via `ipapi.co` (2s timeout, graceful fallback to empty string). Stores city in `city` DB column. INSERTs with `source = 'user'`. Returns new entry ID.
 
 ```typescript
 // POST body
@@ -707,9 +732,9 @@ interface PostBody {
   platformName: string;
   tier: string;
   promptText: string;
-  description: string;  // Subject + style from selections, max 60 chars
-  score: number;        // healthScore from prompt analysis
-  countryCode: string;  // From locationInfo via usePromagenAuth
+  description: string; // Subject + style from selections, max 60 chars
+  score: number; // healthScore from prompt analysis
+  countryCode: string; // From locationInfo via usePromagenAuth
 }
 ```
 
@@ -726,12 +751,13 @@ interface CommunityPulseEntry {
   likeCount: number;
   createdAt: string;
   countryCode: string;
-  source: string;           // 'weather' | 'user'
+  source: string; // 'weather' | 'user'
   venue: string;
   conditions: string;
   categoryMap: WeatherCategoryMap | null;
   weather: PulseWeatherData | null;
-  promptText: string;       // Full prompt for tooltip display
+  promptText: string; // Full prompt for tooltip display
+  locationName: string; // Nearest city/town from IP geolocation
 }
 ```
 
@@ -742,6 +768,7 @@ interface CommunityPulseEntry {
 When a user copies an optimised prompt (`handleCopyPrompt`), the builder fires a POST to `/api/homepage/community-pulse` after telemetry. This is fire-and-forget (`void fetch().catch()`) — never blocks the copy action.
 
 The POST body includes:
+
 - `platformId` — the specific platform (e.g., `'flux'`, not a tier representative)
 - `platformName` — display name (e.g., `'Flux (Black Forest Labs)'`)
 - `tier` — derived from platform tier (`'tier3'`)
@@ -754,11 +781,11 @@ The POST body includes:
 
 ### 6.6 New Data Files
 
-| File | Purpose | Size |
-| --- | --- | --- |
-| `src/data/community-pulse/demo-prompts.json` | 210 pre-generated demo prompts (5 x 42 platforms) | ~130 KB |
-| `src/data/community-pulse/demo-prompts.json.d.ts` | TypeScript type declaration for JSON import | 19 lines |
-| `scripts/generate-demo-prompts.ts` | Build-time generator using real One Brain pipeline | ~160 lines |
+| File                                              | Purpose                                            | Size       |
+| ------------------------------------------------- | -------------------------------------------------- | ---------- |
+| `src/data/community-pulse/demo-prompts.json`      | 210 pre-generated demo prompts (5 x 42 platforms)  | ~130 KB    |
+| `src/data/community-pulse/demo-prompts.json.d.ts` | TypeScript type declaration for JSON import        | 19 lines   |
+| `scripts/generate-demo-prompts.ts`                | Build-time generator using real One Brain pipeline | ~160 lines |
 
 ---
 
@@ -1129,51 +1156,51 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 
 ### 12.1 New Files
 
-| File                                                 | Purpose                                  | Lines |
-| ---------------------------------------------------- | ---------------------------------------- | ----- |
-| `src/components/home/new-homepage-client.tsx`        | New homepage client wrapper (+ Engine Bay state owner) | 281   |
-| `src/components/home/prompt-showcase.tsx`            | Prompt of the Moment card + online users | 858   |
-| `src/components/home/scene-starters-preview.tsx`     | Left rail scene cards (v4.1.0, cascading glow)        | 585   |
-| `src/components/home/community-pulse.tsx`            | Right rail user prompt cards + online users (v8.0.0) | 781   |
-| `src/app/api/homepage/prompt-of-the-moment/route.ts` | Showcase prompt API                      | 639   |
-| `src/app/api/homepage/community-pulse/route.ts`      | Pulse feed API (GET + POST)              | 262   |
-| `src/app/api/prompts/like/route.ts`                  | Like/unlike API (POST + DELETE)          | 187   |
-| `src/app/api/prompts/like/status/route.ts`           | Like status check API                    | 99    |
-| `src/app/api/heartbeat/route.ts`                     | Client heartbeat API                     | 107   |
-| `src/app/api/online-users/route.ts`                  | Aggregated online counts API             | 67    |
-| `src/app/world-context/page.tsx`                     | World Context server component           | 67    |
-| `src/hooks/use-prompt-showcase.ts`                   | Fetch hook for Prompt of the Moment      | 151   |
-| `src/hooks/use-community-pulse.ts`                   | Fetch hook for pulse feed                | 132   |
-| `src/hooks/use-online-users.ts`                      | Heartbeat + online users hook            | 200   |
-| `src/hooks/use-like.ts`                              | Like/unlike hook with optimistic UI      | 203   |
-| `src/types/homepage.ts`                              | TypeScript types for all new interfaces  | 263   |
-| `src/lib/likes/database.ts`                          | DB table creation + like CRUD + schema migrations | 223   |
-| `src/lib/likes/session.ts`                           | Cookie-based session management          | 69    |
-| `src/data/community-pulse/demo-prompts.json`         | 210 pre-generated demo prompts (5 x 42)  | —     |
-| `src/data/community-pulse/demo-prompts.json.d.ts`   | TypeScript type declaration for JSON      | 19    |
-| `scripts/generate-demo-prompts.ts`                   | Demo prompt generator (One Brain pipeline)| ~160  |
-| `docs/authority/homepage.md`                         | This document                            | —     |
+| File                                                 | Purpose                                                                                      | Lines |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----- |
+| `src/components/home/new-homepage-client.tsx`        | New homepage client wrapper (+ Engine Bay state owner)                                       | 281   |
+| `src/components/home/prompt-showcase.tsx`            | Prompt of the Moment — hero prompt + tier tabs + anatomy + intelligence bridge + morph (v10) | 1,414 |
+| `src/components/home/scene-starters-preview.tsx`     | Left rail scene cards (v4.1.0, cascading glow)                                               | 585   |
+| `src/components/home/community-pulse.tsx`            | Right rail 8 platform prompt cards with brand colour location names (v9.0.0)                 | 611   |
+| `src/app/api/homepage/prompt-of-the-moment/route.ts` | Showcase prompt API                                                                          | 639   |
+| `src/app/api/homepage/community-pulse/route.ts`      | Pulse feed API (GET + POST + server-side IP geolocation)                                     | 314   |
+| `src/app/api/prompts/like/route.ts`                  | Like/unlike API (POST + DELETE)                                                              | 187   |
+| `src/app/api/prompts/like/status/route.ts`           | Like status check API                                                                        | 99    |
+| `src/app/api/heartbeat/route.ts`                     | Client heartbeat API                                                                         | 107   |
+| `src/app/api/online-users/route.ts`                  | Aggregated online counts API                                                                 | 67    |
+| `src/app/world-context/page.tsx`                     | World Context server component                                                               | 67    |
+| `src/hooks/use-prompt-showcase.ts`                   | Fetch hook for Prompt of the Moment                                                          | 151   |
+| `src/hooks/use-community-pulse.ts`                   | Fetch hook for pulse feed                                                                    | 132   |
+| `src/hooks/use-online-users.ts`                      | Heartbeat + online users hook                                                                | 200   |
+| `src/hooks/use-like.ts`                              | Like/unlike hook with optimistic UI                                                          | 203   |
+| `src/types/homepage.ts`                              | TypeScript types for all new interfaces                                                      | 265   |
+| `src/lib/likes/database.ts`                          | DB table creation + like CRUD + schema migrations                                            | 223   |
+| `src/lib/likes/session.ts`                           | Cookie-based session management                                                              | 69    |
+| `src/data/community-pulse/demo-prompts.json`         | 210 pre-generated demo prompts (5 x 42)                                                      | —     |
+| `src/data/community-pulse/demo-prompts.json.d.ts`    | TypeScript type declaration for JSON                                                         | 19    |
+| `scripts/generate-demo-prompts.ts`                   | Demo prompt generator (One Brain pipeline)                                                   | ~160  |
+| `docs/authority/homepage.md`                         | This document                                                                                | —     |
 
 **Note:** `world-context-client.tsx` was not created. The `/world-context` route reuses the existing `homepage-client.tsx` directly (no modifications needed).
 
 ### 12.2 Modified Files
 
-| File                                          | Changes                                                                                                  | Lines |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----- |
-| `src/app/page.tsx`                            | Imports `NewHomepageClient`, passes providers/exchanges/weatherIndex                                     | 70    |
-| `src/components/home/mission-control.tsx`     | Added `renderWorldContextButton()`, World Context button on all page variants                            | 723   |
-| `src/components/layout/homepage-grid.tsx`     | `leftContent`/`rightContent` props, `showFinanceRibbon` toggle, table expand support, `selectedProvider`/`onProviderChange` piped to Engine Bay (v5.0.0) | 721   |
+| File                                          | Changes                                                                                                                                                                             | Lines |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| `src/app/page.tsx`                            | Imports `NewHomepageClient`, passes providers/exchanges/weatherIndex                                                                                                                | 70    |
+| `src/components/home/mission-control.tsx`     | Added `renderWorldContextButton()`, World Context button on all page variants                                                                                                       | 723   |
+| `src/components/layout/homepage-grid.tsx`     | `leftContent`/`rightContent` props, `showFinanceRibbon` toggle, table expand support, `selectedProvider`/`onProviderChange` piped to Engine Bay (v5.0.0)                            | 721   |
 | `src/components/providers/prompt-builder.tsx` | sessionStorage pre-load reader (Phase D), `preloadedSceneId` → SceneSelector, Community Pulse POST on copy (`locationInfo` from auth, `pulseDesc` from selections, fire-and-forget) | 2,770 |
-| `src/components/home/engine-bay.tsx`          | `selectedProvider`/`onProviderChange` optional props for controlled mode (v5.0.0)                        | 499   |
-| `src/components/providers/scene-selector.tsx` | `initialSceneId` prop for auto-expand on homepage scene pre-load                                         | 1,250 |
+| `src/components/home/engine-bay.tsx`          | `selectedProvider`/`onProviderChange` optional props for controlled mode (v5.0.0)                                                                                                   | 499   |
+| `src/components/providers/scene-selector.tsx` | `initialSceneId` prop for auto-expand on homepage scene pre-load                                                                                                                    | 1,250 |
 
 **Not modified (design decision):** `homepage-client.tsx` (527 lines) is unchanged — reused as-is by `/world-context`. No `fallback-nav.tsx` exists; navigation is handled entirely by Mission Control buttons.
 
 ### 12.3 Test Files
 
-| File                                            | Lines | Cases | Coverage                                               |
-| ----------------------------------------------- | ----- | ----- | ------------------------------------------------------ |
-| `src/__tests__/parity-homepage-builder.test.ts` | 638   | 10    | PotM → prompt builder pre-load parity across all tiers |
+| File                                            | Lines | Cases | Coverage                                                                                                                |
+| ----------------------------------------------- | ----- | ----- | ----------------------------------------------------------------------------------------------------------------------- |
+| `src/__tests__/parity-homepage-builder.test.ts` | 638   | 10    | PotM → prompt builder pre-load parity across all tiers                                                                  |
 | `src/__tests__/scene-starters-homepage.test.ts` | 310   | 31    | Batching, nav URLs, storage keys, exchange-card parity, SceneSelector contract, no hardcoded defaults, icon path safety |
 
 ---
@@ -1201,12 +1228,12 @@ Every new component must use inline `clamp()` for all visible dimensions. Refere
 
 ### 13.2 Card Design Tokens
 
-| Token       | Value                                              | Usage                                                        |
-| ----------- | -------------------------------------------------- | ------------------------------------------------------------ |
-| Outer card  | `rounded-3xl bg-slate-950/70 ring-1 ring-white/10` | Prompt Showcase, Scene Starters panel, Community Pulse panel |
-| Inner card  | `rounded-xl bg-slate-900/60 ring-1 ring-white/5`   | Tier prompt cards, pulse cards                       |
-| Scene card  | Exchange-card style: `rgba(255,255,255,0.05)` bg, `1px solid` border, dual radial glow on hover + cascading glow cycle | Scene Starters left rail (matches `exchange-card.tsx`) |
-| Hover state | `hover:ring-white/15 hover:bg-slate-900/80`        | Clickable inner cards                                |
+| Token       | Value                                                                                                                  | Usage                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Outer card  | `rounded-3xl bg-slate-950/70 ring-1 ring-white/10`                                                                     | Prompt Showcase, Scene Starters panel, Community Pulse panel |
+| Inner card  | `rounded-xl bg-slate-900/60 ring-1 ring-white/5`                                                                       | Tier prompt cards, pulse cards                               |
+| Scene card  | Exchange-card style: `rgba(255,255,255,0.05)` bg, `1px solid` border, dual radial glow on hover + cascading glow cycle | Scene Starters left rail (matches `exchange-card.tsx`)       |
+| Hover state | `hover:ring-white/15 hover:bg-slate-900/80`                                                                            | Clickable inner cards                                        |
 
 ### 13.3 Animation Rules
 
@@ -1217,6 +1244,7 @@ Every new component must use inline `clamp()` for all visible dimensions. Refere
 - Scene Starters cascading glow: no CSS animation — driven by React state (`activeGlowIndex` + `glowOn`), 600ms CSS transition on `border-color` and `box-shadow` provides smooth fade in/out
 - Community Pulse subtitle pulse: `pulse-subtitle-pulse` keyframes co-located in `community-pulse.tsx` (2s cubic-bezier, opacity 1->0.5->1, matches scene-starters)
 - Community Pulse cascading glow: same React state pattern as scene-starters (shared constants: `GLOW_ON_MS = 3000`, `GLOW_OFF_MS = 1000`)
+- Prompt Showcase morph animation: `morphTermIn` keyframes co-located in `prompt-showcase.tsx`. Per-term stagger (40ms × index), 600ms ease-out, opacity + translateY + blur. Fired on city rotation when `isTransitioning` is true.
 - All animations respect `prefers-reduced-motion`
 
 ### 13.4 Scrollbar Consistency
@@ -1283,7 +1311,7 @@ All `<a>` tag buttons **must** have explicit text colour on child `<svg>` and `<
 
 ### 14.4 Community Pulse
 
-- [x] 210 demo prompts displayed in 6-card rotation (5 per platform x 42 platforms)
+- [x] 210 demo prompts displayed in 8-card rotation (5 per platform x 42 platforms)
 - [x] Demo prompts are coherent visual scenes from real vocabulary files (not word salad)
 - [x] Each demo prompt optimised for its specific platform format (T1/T2/T3/T4)
 - [x] Demo prompts fill 85-99% of each platform's idealMax character budget
@@ -1483,6 +1511,15 @@ When building on the new homepage:
 - **Builder → Pulse POST** — fire-and-forget (`void fetch().catch()`). Must never block the copy action or throw errors to the user.
 - **Demo prompts: 210 entries** — 5 per platform x 42 platforms. If platforms are added/removed, regenerate via `npx tsx scripts/generate-demo-prompts.ts`.
 
+- **Prompt Showcase is now v10 (hero + tabs)** — do not revert to the 2×2 grid. The `TierPanel` component was deleted. All 4 tiers render through one `PromptAnatomy` instance controlled by `activeTier` state.
+- **PromptAnatomy colours** — 12 category colours in `CATEGORY_COLOURS`. Subject is gold (`#FCD34D`), not white. Fidelity is soft blue (`#93C5FD`), not slate. Structural is slate-400 (`#94A3B8`), not slate-200.
+- **Intelligence Engine label** — the intelligence bridge label is "Intelligence Engine", not "AI Brain". The pipeline is algorithmic (17 systems), not AI/ML.
+- **Community Pulse cards: 8 not 6** — `USER_CARD_COUNT = 8`. Online users cards were removed. All 8 slots are platform prompt cards.
+- **Community Pulse Line 3: location not time** — `locationName` (brand colour tint) replaced `localTime`. Demo entries have hardcoded towns. Live entries get city from server-side IP geolocation.
+- **Demo prompts: weight syntax fixed** — all 65 CLIP prompts use `:1.2` (no space). Duplicate atmosphere phrases deduplicated (154 prompts diversified).
+- **Provider links via `/go/[providerId]`** — route uses Next.js 15 async params (`await context.params`). Test file uses `Promise.resolve()` wrappers.
+- **Engine Bay auto-select** — `selectedProviderId` flows from `new-homepage-client.tsx` → `PromptShowcase` → `CityContent`. `useEffect` calls `getPlatformTierId()` to auto-switch tier tab.
+
 **Existing features preserved: Yes** (required for every change).
 
 ---
@@ -1508,6 +1545,22 @@ When building on the new homepage:
 ---
 
 ## 19. Changelog
+
+- **6 March 2026 (v5.0.0):** **PROMPT SHOWCASE v10 HERO REDESIGN + COMMUNITY PULSE v9.0 + DEMO PROMPT BUGFIXES + PROVIDER LINK FIX.** Major overhaul of centre column and right rail:
+  - **Prompt Showcase v8→v10:** Replaced 2×2 TierPanel grid with single hero prompt + 4 tier tab pills. `TierPanel` component deleted entirely.
+  - **Tier tab pills with provider icons (Option B):** Each tab shows top 3 provider icons + overflow count. Users spot their platform logo and click. Icons `clamp(18px, 1.5vw, 24px)`.
+  - **Engine Bay auto-select (Option C):** Selecting a provider in Engine Bay auto-switches the PotM tier tab via `getPlatformTierId()`. `selectedProviderId` prop threaded through component chain.
+  - **Prompt Anatomy (Idea 1+5):** Colour-coded category segments + weight heatmap. 12 category colours (subject=gold, lighting=amber, atmosphere=cyan, etc.). Unified parser `parsePromptUnified()` for all tiers — keeps original text intact, no comma splitting. Higher-weight terms get `text-shadow` glow.
+  - **Intelligence Bridge (Idea 3):** `IntelligenceBridge` component between city header and tier tabs. 3-4 compact pills: `☁️ broken clouds → overcast light` · `🌡️ 14°C → cool tones`. Output terms coloured by category. Label: "Intelligence Engine" (honest — algorithmic, not AI/ML).
+  - **Morph Animation (Idea 4):** Per-term staggered fade-in on city rotation. `morphTermIn` keyframe: 600ms ease-out, 40ms stagger, translateY(4px) + blur(2px). Old city fades as block, new city ripples in term by term.
+  - **Community Pulse v8→v9:** Extended from 6 to 8 platform prompt cards. Online users cards removed. Footer: "42 platforms".
+  - **Location names replace time:** Line 3 changed from "Created in 🇿🇦 at 08:45" to "Created in 🇿🇦 Sasolburg". Brand colour tint on city name (`entry.brandColor`, `font-medium`). 210 demo entries updated with real towns (5 unique per country). `locationName` field added to `DemoEntry`, `DemoPromptEntry`, `CommunityPulseEntry`.
+  - **Server-side IP geolocation:** POST route resolves city from user IP via `ipapi.co` (2s timeout). `resolveCity()` function reads `x-forwarded-for`, skips private IPs.
+  - **Demo prompt bugfixes:** 65 CLIP prompts fixed `:1. 2` → `:1.2`. 154 prompts had duplicate atmosphere phrases replaced with curated alternatives.
+  - **Provider links fixed:** `/go/[providerId]` route updated for Next.js 15 async params (`Promise<{ providerId: string }>`). Test file updated with `Promise.resolve()` wrappers. All 42 provider homepage links now work.
+  - **Cleanup:** Legend removed (bridge pills teach colours), native title tooltips removed, `CATEGORY_LABELS`/`LEGEND_ITEMS` deleted.
+  - §4.4 rewritten completely (v10 architecture). §6.3 updated (v9.0.0). §12 line counts updated. §13.3 animations updated (morph keyframe). §17 non-regression rules expanded (8 new rules). §14.2 and §14.4 acceptance criteria updated.
+  - Files changed: `prompt-showcase.tsx` (858→1,414), `community-pulse.tsx` (781→611), `new-homepage-client.tsx` (1 line), `community-pulse/route.ts` (262→314), `homepage.ts` (+2 lines), `demo-prompts.json` (location + bugfixes), `demo-prompts.json.d.ts`, `go/[providerId]/route.ts` (async params), `go.outbound.route.test.ts` (Promise.resolve).
 
 - **6 March 2026 (v4.0.0):** **COMMUNITY PULSE v8.0.0 COMPLETE REDESIGN + BUILDER PIPELINE WIRING.** §6 rewritten completely:
   - **Weather/city vibe seeding removed** from Community Pulse cards. Weather-seeded entries still log to DB (from PotM auto-logger) but cards no longer display them.

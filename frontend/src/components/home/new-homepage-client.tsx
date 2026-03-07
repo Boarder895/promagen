@@ -39,6 +39,7 @@ import { useWeather, type WeatherData } from '@/hooks/use-weather';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
+import { type PlatformTierId, getPlatformTierId } from '@/data/platform-tiers';
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -141,6 +142,22 @@ export default function NewHomepageClient({
   const [displayedProviderIds, setDisplayedProviderIds] = useState<string[]>([]);
   const [isTableExpanded, setIsTableExpanded] = useState(false);
 
+  // ── Showcase tier state (drives leaderboard bridge) ────────────────────
+  const [showcaseTierId, setShowcaseTierId] = useState<number>(1);
+
+  // ── Tier filter state (shared between LeaderboardIntro subtitle + ProvidersTable) ──
+  const [tierFilter, setTierFilter] = useState<PlatformTierId | null>(null);
+  const highlightCount = useMemo(() => {
+    if (!showcaseTierId) return 0;
+    return providers.filter((p) => getPlatformTierId(p.id) === showcaseTierId).length;
+  }, [providers, showcaseTierId]);
+  const handleActivateFilter = useCallback(() => {
+    setTierFilter(showcaseTierId as PlatformTierId);
+  }, [showcaseTierId]);
+  const handleClearFilter = useCallback(() => {
+    setTierFilter(null);
+  }, []);
+
   // ── Engine Bay ↔ Scene Starters shared provider state ──────────────────
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
 
@@ -204,13 +221,21 @@ export default function NewHomepageClient({
       data-testid="rail-centre-inner"
     >
       {/* Prompt of the Moment — hidden when table expanded (table takes full space) */}
-      {!isTableExpanded && <PromptShowcase selectedProviderId={selectedProvider?.id} />}
+      {!isTableExpanded && <PromptShowcase selectedProviderId={selectedProvider?.id} onTierChange={setShowcaseTierId} />}
 
       {/* Leaderboard intro — "42 AI Image Generators" heading + expand trigger
           Positioned directly above the providers table, flowing naturally.
           Hidden when table is expanded (no gap to fill). */}
       {!isTableExpanded && (
-        <LeaderboardIntro isExpanded={isTableExpanded} onToggle={handleExpandToggle} />
+        <LeaderboardIntro
+          isExpanded={isTableExpanded}
+          onToggle={handleExpandToggle}
+          activeTierId={showcaseTierId}
+          tierFilter={tierFilter}
+          onClearFilter={handleClearFilter}
+          highlightCount={highlightCount}
+          onActivateFilter={handleActivateFilter}
+        />
       )}
 
       {/* AI Providers Leaderboard */}
@@ -228,6 +253,8 @@ export default function NewHomepageClient({
           isExpanded={isTableExpanded}
           onExpandToggle={handleExpandToggle}
           weatherMap={providerWeatherMap}
+          highlightTierId={showcaseTierId}
+          tierFilter={tierFilter}
         />
       </section>
     </div>

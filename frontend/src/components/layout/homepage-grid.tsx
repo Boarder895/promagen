@@ -238,11 +238,32 @@ const INTRO_TRANSITION = '2s';
 export function LeaderboardIntro({
   isExpanded,
   onToggle,
+  activeTierId,
+  tierFilter,
+  onClearFilter,
+  highlightCount,
+  onActivateFilter,
 }: {
   isExpanded: boolean;
   onToggle?: () => void;
+  /** Active tier from showcase — drives accent colour (1-4, default 1) */
+  activeTierId?: number;
+  /** Currently active tier filter (null = showing all 42) */
+  tierFilter?: number | null;
+  /** Clear the active filter */
+  onClearFilter?: () => void;
+  /** Number of platforms in the highlighted tier */
+  highlightCount?: number;
+  /** Activate the filter for the highlighted tier */
+  onActivateFilter?: () => void;
 }) {
   const [hovered, setHovered] = React.useState(false);
+  const [filterHovered, setFilterHovered] = React.useState(false);
+
+  // Tier accent colour for the heading underline
+  const tierColours: Record<number, string> = { 1: '#8B5CF6', 2: '#3B82F6', 3: '#10B981', 4: '#F59E0B' };
+  const tierLabels: Record<number, string> = { 1: 'CLIP-Based', 2: 'Midjourney', 3: 'Natural Language', 4: 'Plain Language' };
+  const accentColour = tierColours[activeTierId ?? 1] ?? tierColours[1];
 
   const arrowStyle: React.CSSProperties = {
     display: 'inline',
@@ -255,12 +276,16 @@ export function LeaderboardIntro({
     animation: 'expandArrowPulse 1.5s ease-in-out infinite',
   };
 
+  const isFiltered = tierFilter != null && tierFilter > 0;
+  const filterColour = isFiltered ? tierColours[tierFilter] ?? tierColours[1] : undefined;
+  const filterLabel = isFiltered ? tierLabels[tierFilter] ?? '' : '';
+
   return (
     <div
       className="flex shrink-0 flex-col items-center text-center"
       style={{ margin: 'clamp(-6px, -0.625vw, -12px) 0' }}
     >
-      {/* Line 1 — Static gradient heading */}
+      {/* Line 1 — Static gradient heading + tier accent */}
       <span
         className="pointer-events-none font-semibold leading-tight"
         style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.2rem)' }}
@@ -269,29 +294,99 @@ export function LeaderboardIntro({
           42 AI Image Generators — Elo-Ranked by the Community
         </span>
       </span>
-
-      {/* Line 2 — Clickable expand trigger (matches Provider column header style exactly) */}
-      <button
-        type="button"
-        onClick={onToggle}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        className="mt-0.5 cursor-pointer border-none bg-transparent font-semibold uppercase leading-tight"
+      {/* Tier accent underline — colour follows active showcase tier */}
+      <div
         style={{
-          fontSize: 'clamp(0.6875rem, 0.9vw, 0.875rem)',
-          letterSpacing: '0.05em',
-          color: hovered ? 'rgba(226, 232, 240, 1)' : 'rgba(148, 163, 184, 1)',
-          transition: 'color 0.2s ease',
+          height: '2px',
+          width: 'clamp(60px, 8vw, 120px)',
+          background: accentColour,
+          borderRadius: '1px',
+          margin: 'clamp(2px, 0.2vw, 4px) auto 0',
+          transition: 'background 400ms ease',
+          opacity: 0.7,
         }}
-        aria-label={
-          isExpanded ? 'Collapse table, show finance ribbon' : 'Expand table, hide finance ribbon'
-        }
-        title={isExpanded ? 'Show FX & commodities' : 'Expand leaderboard'}
-      >
-        <span className="whitespace-nowrap">
-          Click <span style={arrowStyle}>▼</span> Provider to expand.
-        </span>
-      </button>
+        aria-hidden="true"
+      />
+
+      {/* Line 2 — Two states only:
+           A) Filter active → filter label + count + Clear
+           B) No filter → "Click ▼ Provider to expand" + optional filter prompt */}
+      {isFiltered ? (
+        /* State A: Active filter — clicking clears it, "Click ▼" returns */
+        <button
+          type="button"
+          onClick={onClearFilter}
+          className="mt-0.5 cursor-pointer border-none bg-transparent font-semibold uppercase leading-tight"
+          style={{
+            fontSize: 'clamp(0.6875rem, 0.9vw, 0.875rem)',
+            letterSpacing: '0.05em',
+            color: 'rgba(148, 163, 184, 1)',
+            transition: 'color 0.2s ease',
+          }}
+          aria-label={`Clear ${filterLabel} filter, show all 42 platforms`}
+        >
+          <span className="whitespace-nowrap">
+            <span style={{ color: filterColour }}>{filterLabel}</span>
+            <span className="text-slate-500"> · </span>
+            <span>{highlightCount ?? 0} of 42</span>
+            <span className="text-slate-500"> · </span>
+            <span className="hover:text-white transition-colors">Clear</span>
+          </span>
+        </button>
+      ) : (
+        /* State B: No filter — show expand instruction + optional filter prompt */
+        <div className="mt-0.5 flex items-center justify-center" style={{ gap: 'clamp(4px, 0.4vw, 8px)' }}>
+          <button
+            type="button"
+            onClick={onToggle}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            className="cursor-pointer border-none bg-transparent font-semibold uppercase leading-tight"
+            style={{
+              fontSize: 'clamp(0.6875rem, 0.9vw, 0.875rem)',
+              letterSpacing: '0.05em',
+              color: hovered ? 'rgba(226, 232, 240, 1)' : 'rgba(148, 163, 184, 1)',
+              transition: 'color 0.2s ease',
+            }}
+            aria-label={
+              isExpanded ? 'Collapse table, show finance ribbon' : 'Expand table, hide finance ribbon'
+            }
+            title={isExpanded ? 'Show FX & commodities' : 'Expand leaderboard'}
+          >
+            <span className="whitespace-nowrap">
+              Click <span style={arrowStyle}>▼</span> Provider to expand
+            </span>
+          </button>
+          {/* Filter prompt — appears alongside when tier is highlighted */}
+          {activeTierId && highlightCount && highlightCount > 0 && (
+            <button
+              type="button"
+              onClick={onActivateFilter}
+              onMouseEnter={() => setFilterHovered(true)}
+              onMouseLeave={() => setFilterHovered(false)}
+              className="cursor-pointer border-none bg-transparent font-semibold uppercase leading-tight"
+              style={{
+                fontSize: 'clamp(0.6875rem, 0.9vw, 0.875rem)',
+                letterSpacing: '0.05em',
+                color: 'rgba(148, 163, 184, 1)',
+                transition: 'color 0.2s ease, filter 0.2s ease',
+              }}
+              aria-label={`Filter to ${tierLabels[activeTierId]} platforms`}
+            >
+              <span className="whitespace-nowrap">
+                <span className="text-slate-500">·</span>{' '}
+                <span style={{
+                  color: tierColours[activeTierId],
+                  filter: filterHovered ? `drop-shadow(0 0 4px ${tierColours[activeTierId]}) brightness(1.4)` : 'none',
+                  transition: 'filter 0.2s ease',
+                }}>
+                  Filter: {tierLabels[activeTierId]} ({highlightCount})
+                </span>
+              </span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

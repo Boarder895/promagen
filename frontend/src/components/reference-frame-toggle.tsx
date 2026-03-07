@@ -46,34 +46,6 @@ export interface ReferenceFrameToggleProps {
 // TOOLTIP CONTENT
 // ============================================================================
 
-const TOOLTIP_USER_LOCATION = `📍 Your Location Reference
-
-Stock exchanges are ordered east → west relative to YOUR current position.
-
-• Exchanges to your east appear on the left
-• Exchanges to your west appear on the right
-
-This gives you a personalised view of global markets based on where you are in the world.`;
-
-const TOOLTIP_GREENWICH = `🌐 Greenwich Meridian Reference
-
-Stock exchanges are ordered east → west relative to the Greenwich Meridian (0° longitude).
-
-The Greenwich Meridian is an imaginary line running from the North Pole to the South Pole through Greenwich, London. It's the global standard for measuring longitude and time zones.
-
-• Exchanges east of London appear on the left (Asia, Australia)
-• Exchanges west of London appear on the right (Americas)
-
-This provides a consistent, universal view regardless of your location.`;
-
-const TOOLTIP_PRO_FEATURE_ANONYMOUS = `\n\n────────────────────────
-🔒 Pro Promagen Feature
-Sign in to unlock geographic personalisation.`;
-
-const TOOLTIP_PRO_FEATURE_FREE = `\n\n────────────────────────
-🔒 Pro Promagen Feature
-Upgrade to Pro Promagen to toggle between your location and the Greenwich Meridian.`;
-
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -97,7 +69,6 @@ export function ReferenceFrameToggle({
   // HOOKS
   // ============================================================================
 
-  const [showTooltip, setShowTooltip] = useState(false);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Handle toggle click - only works for Pro users
@@ -135,14 +106,6 @@ export function ReferenceFrameToggle({
   const isUserFrame = referenceFrame === 'user';
   const locationLabel = cityName || 'My Location';
   const currentLabel = isUserFrame ? locationLabel : 'Greenwich';
-
-  // Build tooltip content based on user state
-  let tooltipContent = isUserFrame ? TOOLTIP_USER_LOCATION : TOOLTIP_GREENWICH;
-  if (!isAuthenticated) {
-    tooltipContent += TOOLTIP_PRO_FEATURE_ANONYMOUS;
-  } else if (!isPaidUser) {
-    tooltipContent += TOOLTIP_PRO_FEATURE_FREE;
-  }
 
   // Determine if toggle is locked (non-functional)
   const isLocked = !isPaidUser;
@@ -184,7 +147,6 @@ export function ReferenceFrameToggle({
       aria-label={`Exchange reference frame: ${currentLabel}. ${
         isLocked ? 'Pro Promagen feature.' : 'Click to toggle.'
       }`}
-      aria-describedby="reference-frame-tooltip"
     >
       {/* Globe icon - matches Sign In user icon style */}
       <svg
@@ -251,45 +213,9 @@ export function ReferenceFrameToggle({
       {/* Toggle button with tooltip trigger */}
       <div
         className="relative"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => {
-          setShowTooltip(false);
-          setShowUpgradePrompt(false);
-        }}
-        onFocus={() => setShowTooltip(true)}
-        onBlur={() => {
-          setShowTooltip(false);
-          setShowUpgradePrompt(false);
-        }}
       >
         {/* Wrap in SignInButton for anonymous users */}
         {!isAuthenticated ? <SignInButton mode="modal">{toggleButton}</SignInButton> : toggleButton}
-
-        {/* Tooltip */}
-        {showTooltip && !showUpgradePrompt && (
-          <div
-            id="reference-frame-tooltip"
-            role="tooltip"
-            className="absolute left-0 top-full z-50 mt-2 w-80 rounded-lg border border-slate-700 bg-slate-800/95 p-3 text-xs text-slate-200 shadow-xl backdrop-blur-sm"
-          >
-            {/* Tooltip arrow */}
-            <div className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 border-l border-t border-slate-700 bg-slate-800/95" />
-
-            {/* Tooltip content */}
-            <div className="relative whitespace-pre-line leading-relaxed text-slate-300">
-              {tooltipContent}
-            </div>
-
-            {/* Click instruction */}
-            <p className="mt-2 text-[10px] text-slate-500">
-              {isPaidUser
-                ? 'Click to switch reference frame'
-                : isAuthenticated
-                  ? 'Click to learn about Pro Promagen'
-                  : 'Sign in to unlock this feature'}
-            </p>
-          </div>
-        )}
 
         {/* Upgrade prompt (for free signed-in users) */}
         {showUpgradePrompt && isAuthenticated && !isPaidUser && (
