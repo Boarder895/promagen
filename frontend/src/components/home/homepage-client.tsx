@@ -61,6 +61,8 @@ export interface HomepageClientProps {
   weatherIndex: Map<string, ExchangeWeatherData>;
   /** All AI providers */
   providers: Provider[];
+  /** Override the centre heading text */
+  headingText?: string;
 }
 
 // ============================================================================
@@ -155,6 +157,7 @@ export default function HomepageClient({
   exchanges,
   weatherIndex,
   providers,
+  headingText,
 }: HomepageClientProps) {
   const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
@@ -501,6 +504,7 @@ export default function HomepageClient({
   return (
     <HomepageGrid
       mainLabel="Promagen home"
+      headingText={headingText}
       leftContent={leftExchanges}
       centre={centreRail}
       rightContent={rightExchanges}

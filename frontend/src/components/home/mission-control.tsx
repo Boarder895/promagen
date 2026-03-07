@@ -189,6 +189,8 @@ export interface MissionControlProps {
   isProPromagenPage?: boolean;
   /** When true, shows 3 buttons: Home | Studio | Pro (for /studio/* sub-pages) */
   isStudioSubPage?: boolean;
+  /** When true, shows Home button instead of World Context button (for /world-context page) */
+  isWorldContextPage?: boolean;
 }
 
 // ============================================================================
@@ -246,6 +248,7 @@ export default function MissionControl({
   isStudioPage = false,
   isProPromagenPage = false,
   isStudioSubPage = false,
+  isWorldContextPage = false,
 }: MissionControlProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const contentZoneRef = useRef<HTMLDivElement>(null);
@@ -698,8 +701,9 @@ export default function MissionControl({
         </div>
       </div>
 
-      {/* ACTION ZONE — Grid layout (3 or 4 columns — World Context always present)
+      {/* ACTION ZONE — Grid layout (3 or 4 columns — World Context / Home always in middle)
            v5.0.0: World Context button added on all pages
+           v6.0.0: On /world-context, middle slot shows Home instead of World Context
            Authority: docs/authority/homepage.md §9.1 */}
       <div className={`grid ${gridCols}`} style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
         {isStudioSubPage ? (
@@ -707,18 +711,19 @@ export default function MissionControl({
           // Home | World Context | Studio | Pro
           <>
             {renderHomeButton()}
-            {renderWorldContextButton()}
+            {isWorldContextPage ? renderHomeButton() : renderWorldContextButton()}
             {renderStudioButton()}
             {renderProButton()}
           </>
         ) : (
-          // 3-button layout (default): First | World Context | Second
+          // 3-button layout (default): First | World Context/Home | Second
           // Homepage:      Studio | World Context | Pro
+          // World Context: Studio | Home          | Pro
           // Studio:        Home   | World Context | Pro
           // Pro Promagen:  Studio | World Context | Home
           <>
             {renderFirstButton()}
-            {renderWorldContextButton()}
+            {isWorldContextPage ? renderHomeButton() : renderWorldContextButton()}
             {renderSecondButton()}
           </>
         )}

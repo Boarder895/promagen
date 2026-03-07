@@ -230,6 +230,14 @@ export default function CommoditiesMoversGrid({
   React.useEffect(() => {
     scheduleReflow();
 
+    // Font-load safety: re-measure after all web fonts finish loading.
+    // In production, useLayoutEffect runs before fonts are ready, causing
+    // fallback font metrics to collapse to 1 row. This re-measures with
+    // final font metrics and corrects the row count.
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(() => scheduleReflow());
+    }
+
     const grid = gridRef.current;
 
     if (typeof ResizeObserver !== 'undefined') {

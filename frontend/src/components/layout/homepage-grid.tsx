@@ -181,6 +181,8 @@ const GRID_GAP = 'clamp(12px, 1.25vw, 24px)';
 
 export type HomepageGridProps = {
   mainLabel: string;
+  /** Override the centre heading text (default: "Promagen — Intelligent Prompt Builder") */
+  headingText?: string;
   leftContent: ReactNode;
   centre: ReactNode;
   rightContent: ReactNode;
@@ -261,8 +263,18 @@ export function LeaderboardIntro({
   const [filterHovered, setFilterHovered] = React.useState(false);
 
   // Tier accent colour for the heading underline
-  const tierColours: Record<number, string> = { 1: '#8B5CF6', 2: '#3B82F6', 3: '#10B981', 4: '#F59E0B' };
-  const tierLabels: Record<number, string> = { 1: 'CLIP-Based', 2: 'Midjourney', 3: 'Natural Language', 4: 'Plain Language' };
+  const tierColours: Record<number, string> = {
+    1: '#8B5CF6',
+    2: '#3B82F6',
+    3: '#10B981',
+    4: '#F59E0B',
+  };
+  const tierLabels: Record<number, string> = {
+    1: 'CLIP-Based',
+    2: 'Midjourney',
+    3: 'Natural Language',
+    4: 'Plain Language',
+  };
   const accentColour = tierColours[activeTierId ?? 1] ?? tierColours[1];
 
   const arrowStyle: React.CSSProperties = {
@@ -277,8 +289,8 @@ export function LeaderboardIntro({
   };
 
   const isFiltered = tierFilter != null && tierFilter > 0;
-  const filterColour = isFiltered ? tierColours[tierFilter] ?? tierColours[1] : undefined;
-  const filterLabel = isFiltered ? tierLabels[tierFilter] ?? '' : '';
+  const filterColour = isFiltered ? (tierColours[tierFilter] ?? tierColours[1]) : undefined;
+  const filterLabel = isFiltered ? (tierLabels[tierFilter] ?? '') : '';
 
   return (
     <div
@@ -335,7 +347,10 @@ export function LeaderboardIntro({
         </button>
       ) : (
         /* State B: No filter — show expand instruction + optional filter prompt */
-        <div className="mt-0.5 flex items-center justify-center" style={{ gap: 'clamp(4px, 0.4vw, 8px)' }}>
+        <div
+          className="mt-0.5 flex items-center justify-center"
+          style={{ gap: 'clamp(4px, 0.4vw, 8px)' }}
+        >
           <button
             type="button"
             onClick={onToggle}
@@ -349,7 +364,9 @@ export function LeaderboardIntro({
               transition: 'color 0.2s ease',
             }}
             aria-label={
-              isExpanded ? 'Collapse table, show finance ribbon' : 'Expand table, hide finance ribbon'
+              isExpanded
+                ? 'Collapse table, show finance ribbon'
+                : 'Expand table, hide finance ribbon'
             }
             title={isExpanded ? 'Show FX & commodities' : 'Expand leaderboard'}
           >
@@ -375,11 +392,15 @@ export function LeaderboardIntro({
             >
               <span className="whitespace-nowrap">
                 <span className="text-slate-500">·</span>{' '}
-                <span style={{
-                  color: tierColours[activeTierId],
-                  filter: filterHovered ? `drop-shadow(0 0 4px ${tierColours[activeTierId]}) brightness(1.4)` : 'none',
-                  transition: 'filter 0.2s ease',
-                }}>
+                <span
+                  style={{
+                    color: tierColours[activeTierId],
+                    filter: filterHovered
+                      ? `drop-shadow(0 0 4px ${tierColours[activeTierId]}) brightness(1.4)`
+                      : 'none',
+                    transition: 'filter 0.2s ease',
+                  }}
+                >
                   Filter: {tierLabels[activeTierId]} ({highlightCount})
                 </span>
               </span>
@@ -397,6 +418,7 @@ export function LeaderboardIntro({
 
 export default function HomepageGrid({
   mainLabel,
+  headingText,
   leftContent,
   centre,
   rightContent,
@@ -441,8 +463,9 @@ export default function HomepageGrid({
   // --------------------------------------------------------------------------
   const [isSpeaking, setIsSpeaking] = React.useState(false);
 
-  const heroText =
-    'Real context for real-world prompts. Explore cities around the world before you get there. Hover over any flag to reveal an intelligent prompt that evolves with meteorological data. See which AI platform brings it to life best — ranked by the community in our live leaderboard. Or build your own prompts from a vast library of curated words and phrases, tailored instantly to your chosen AI platform.';
+  const heroText = isWorldContext
+    ? "Every country flag on this page hides a surprise — hover over one and you'll see a live AI image prompt, crafted from the real weather happening in that city right now. The commodities tell visual stories too. Everything you see is live, and every prompt works across all 42 AI platforms."
+    : 'Real context for real-world prompts. Explore cities around the world before you get there. Hover over any flag to reveal an intelligent prompt that evolves with meteorological data. See which AI platform brings it to life best — ranked by the community in our live leaderboard. Or build your own prompts from a vast library of curated words and phrases, tailored instantly to your chosen AI platform.';
 
   const handleListenClick = useCallback(() => {
     if (isSpeaking) {
@@ -454,7 +477,7 @@ export default function HomepageGrid({
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
     });
-  }, [isSpeaking]);
+  }, [isSpeaking, heroText]);
 
   // Memoize onBurst to prevent infinite re-renders in useMarketPulse
   const handleMarketBurst = useCallback(
@@ -681,12 +704,24 @@ export default function HomepageGrid({
 
                 {/* Dead centre — Heading (absolute so left/right content can't push it off-centre) */}
                 <h2
-                  className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold leading-tight"
+                  className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold leading-tight text-center"
                   style={{ fontSize: 'clamp(0.75rem, 1.1vw, 2rem)' }}
                 >
-                  <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
-                    Promagen — Intelligent Prompt Builder
-                  </span>
+                  {(headingText ?? 'Promagen — Intelligent Prompt Builder')
+                    .split('\n')
+                    .map((line, idx, arr) => (
+                      <span
+                        key={idx}
+                        className="bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent"
+                        style={
+                          arr.length === 1
+                            ? { whiteSpace: 'nowrap' }
+                            : { display: 'block', whiteSpace: 'nowrap' }
+                        }
+                      >
+                        {line}
+                      </span>
+                    ))}
                 </h2>
 
                 {/* Right edge — Greenwich Meridian + Sign In (same pill styling as former ControlDock) */}
@@ -784,6 +819,7 @@ export default function HomepageGrid({
                   isStudioPage={isStudioPage}
                   isProPromagenPage={isProPromagenPage}
                   isStudioSubPage={isStudioSubPage}
+                  isWorldContextPage={isWorldContext}
                 />
               </div>
             )}

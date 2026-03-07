@@ -32,7 +32,7 @@ import { getWeatherIndex } from '@/lib/weather/fetch-weather';
 // ============================================================================
 
 export const metadata: Metadata = {
-  title: 'World Context — Live Markets, Weather & AI Prompts | Promagen',
+  title: 'World Context — Live Markets, Weather Prompts & Commodity Inspiration | Promagen',
   description:
     'Explore 16 stock exchanges with live indices, weather-driven AI prompts, FX rates, and commodity prices. Real context for real-world image generation.',
 };
@@ -62,6 +62,11 @@ export default async function WorldContextPage() {
   ]);
 
   return (
-    <HomepageClient exchanges={allExchanges} weatherIndex={weatherIndex} providers={providers} />
+    <HomepageClient
+      exchanges={allExchanges}
+      weatherIndex={weatherIndex}
+      providers={providers}
+      headingText={"World Context — Live Markets, Weather Prompts &\nCommodity Inspiration"}
+    />
   );
 }
