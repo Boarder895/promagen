@@ -1,14 +1,14 @@
 # Prompt Builder Evolution Plan v2.0
 
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Created:** 2026-02-24
-**Last Updated:** 2026-03-01
+**Last Updated:** 2026-03-07
 **Status:** ✅ ALL PHASES COMPLETE — Phases 0–7.11 delivered
 
 > **Next phase:** The Unified Prompt Brain initiative builds on top of this evolution plan. It consolidates the weather generator's assembly path into the prompt builder's `assemblePrompt()` — one brain for all prompt paths. See `unified-prompt-brain.md` for full architecture, implementation details, and the 10 post-integration fixes shipped.
-**Authority:** This document is the single source of truth for the prompt builder evolution.
-**Admin Route:** `/admin` (live), `/admin/scoring-health` (live — 12 dashboard sections)
-**Tests:** 131 test files across 8 Jest projects. See `test-in-place.md` for inventory. This document references test files but does not include test source.
+> **Authority:** This document is the single source of truth for the prompt builder evolution.
+> **Admin Route:** `/admin` (live), `/admin/scoring-health` (live — 12 dashboard sections)
+> **Tests:** 131 test files across 8 Jest projects. See `test-in-place.md` for inventory. This document references test files but does not include test source.
 
 ---
 
@@ -35,7 +35,7 @@
 | **7.10** | User Feedback Invitation        | ✅ COMPLETE | 4-factor credibility scoring, feedback client, streaks, scene enhancer, confidence halos, feedback memory hook    |
 | **7.11** | Admin Command Centre            | ✅ COMPLETE | 12 live dashboard sections, 19 components (8,154 lines), 18 API routes (5,264 lines), 8 lib modules (3,176 lines) |
 
-**Total LOC delivered:** ~46,800+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, feedback, and crowdsourcing pipeline.
+**Total LOC delivered:** ~47,100+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, feedback, and crowdsourcing pipeline.
 
 ---
 
@@ -91,16 +91,16 @@ All features work across all 4 optimizer tiers (CLIP, Midjourney, Natural Langua
 
 ## 2. Feature Overview
 
-| #   | Feature                            | What it does                                                                 | Tier                  | Phase | Status           |
-| --- | ---------------------------------- | ---------------------------------------------------------------------------- | --------------------- | ----- | ---------------- |
-| D   | **Vocabulary Merge**               | Curate + map weather/commodity/shared phrases into prompt builder categories | Free (data layer)     | 0     | ✅ COMPLETE      |
-| B   | **Cascading Intelligence**         | Reorder downstream dropdowns based on upstream selections                    | Free                  | 1     | ✅ COMPLETE      |
-| A   | **Scene Starters**                 | Pre-populate categories from curated scene templates (hierarchical dropdown) | Free (25) / Pro (200) | 2     | ✅ COMPLETE      |
-| C   | **Explore Drawer**                 | Expandable panel showing full vocabulary per category, contextually filtered | Free                  | 3     | ✅ COMPLETE      |
-| —   | **Polish & Integration**           | Cross-feature wiring, analytics, fluid typography, docs                      | —                     | 4     | ✅ COMPLETE      |
-| —   | **Collective Intelligence Engine** | Telemetry + co-occurrence learning + auto-scene generation                   | —                     | 5     | ✅ COMPLETE      |
-| —   | **Self-Improving Scorer**          | Weight recalibration + per-tier models + threshold auto-adjustment           | —                     | 6     | ✅ COMPLETE      |
-| —   | **Advanced Learning Systems**      | 10 additional learning dimensions + Admin Command Centre                     | —                     | 7     | ⚠️ 7/10 COMPLETE |
+| #   | Feature                            | What it does                                                                 | Tier                  | Phase | Status            |
+| --- | ---------------------------------- | ---------------------------------------------------------------------------- | --------------------- | ----- | ----------------- |
+| D   | **Vocabulary Merge**               | Curate + map weather/commodity/shared phrases into prompt builder categories | Free (data layer)     | 0     | ✅ COMPLETE       |
+| B   | **Cascading Intelligence**         | Reorder downstream dropdowns based on upstream selections                    | Free                  | 1     | ✅ COMPLETE       |
+| A   | **Scene Starters**                 | Pre-populate categories from curated scene templates (hierarchical dropdown) | Free (25) / Pro (200) | 2     | ✅ COMPLETE       |
+| C   | **Explore Drawer**                 | Expandable panel showing full vocabulary per category, contextually filtered | Free                  | 3     | ✅ COMPLETE       |
+| —   | **Polish & Integration**           | Cross-feature wiring, analytics, fluid typography, docs                      | —                     | 4     | ✅ COMPLETE       |
+| —   | **Collective Intelligence Engine** | Telemetry + co-occurrence learning + auto-scene generation                   | —                     | 5     | ✅ COMPLETE       |
+| —   | **Self-Improving Scorer**          | Weight recalibration + per-tier models + threshold auto-adjustment           | —                     | 6     | ✅ COMPLETE       |
+| —   | **Advanced Learning Systems**      | 10 additional learning dimensions + Admin Command Centre                     | —                     | 7     | ✅ 11/11 COMPLETE |
 
 **Build order:** 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7
 
@@ -856,7 +856,7 @@ The biggest gap is closed: we now ask directly. A direct signal is 10× more val
 
 **7.10b — Feedback Confidence Halos** (`scene-selector.tsx` modifications, `feedback-scene-enhancer.ts` 295 lines): Subtle glow rings on scene cards based on historical feedback overlap. Confidence levels: "proven" (emerald glow + breathing animation, 3+ positive matches), "warm" (faint emerald outline, 1-2 positive), "risky" (amber warning ring, 2+ negative), or null (no halo, insufficient data). Users see scenes that "just work better for them" without knowing why.
 
-**7.10c — Feedback Client** (`feedback-client.ts`, 225 lines): sessionStorage tracking + fire-and-forget POST. 24-hour dismissal cooldown. Client-side credibility computation. Never throws — UI never breaks from feedback plumbing.
+**7.10c — Feedback Client** (`feedback-client.ts`, 292 lines): sessionStorage tracking + fire-and-forget POST. 24-hour dismissal cooldown. Client-side credibility computation. Never throws — UI never breaks from feedback plumbing.
 
 **7.10d — Feedback Memory Hook** (`use-feedback-memory.ts`, 355 lines): React hook for per-user term-level feedback hints. Drives the confidence halos and scene enhancer.
 
@@ -865,6 +865,8 @@ The biggest gap is closed: we now ask directly. A direct signal is 10× more val
 **7.10f — Feedback Streaks** (`feedback-streaks.ts`, 335 lines): Real-time pattern detection per session per platform. Three streak types: 🔥 hot streak (3+ consecutive 👍 → boost term combo weights), ❄️ cold streak (3+ consecutive 👎 → flag for admin review), 🔄 oscillating (alternating 👍👎 → high-variance, useful for A/B decisions).
 
 **7.10g — Admin Feedback Panel** (`feedback-summary-panel.tsx`, 451 lines): Dashboard Section 10: 👍/👌/👎 distribution, per-platform satisfaction rates, terms with highest 👎 rate, correlation between score and rating. Drill-through to anti-patterns panel.
+
+**7.10h — Unified Feedback System** (7 March 2026): Extended the 👍👌👎 feedback pipeline from the prompt builder to ALL user-facing surfaces. The builder's `FeedbackInvitation` (post-copy overlay) remains unchanged. A new compact inline `FeedbackWidget` (`src/components/ux/feedback-widget.tsx`, 210 lines) was created for surfaces that need inline feedback without overlay UI. `sendFeedbackDirect()` added to `feedback-client.ts` (225→292 lines) for fire-and-forget POST without sessionStorage dependency. Hearts (♡/♥) replaced with 👍👌👎 on the homepage PotM showcase and Community Pulse cards. Image Quality votes in the leaderboard now dual-write to `feedback_events` alongside their existing Elo table. All signals flow through the same `/api/feedback` endpoint → `feedback_events` table → credibility scoring → streak detection → nightly cron. Authority: `docs/authority/the-like-system.md`. Old like system (`use-like.ts`, `/api/prompts/like`, `prompt_likes` table) orphaned — no longer imported.
 
 **API routes:** `/api/learning/feedback-summary` (186 lines), `/api/admin/scoring-health/feedback` (170 lines)
 
@@ -1272,7 +1274,9 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 | File | Purpose |
 | ---- | ------- |
 | `src/types/feedback.ts` (328 lines) | Credibility scoring + rating types |
-| `src/lib/feedback/feedback-client.ts` (225 lines) | sessionStorage + fire-and-forget POST |
+| `src/lib/feedback/feedback-client.ts` (292 lines) | sessionStorage + fire-and-forget POST + `sendFeedbackDirect()` for inline widgets |
+| `src/components/ux/feedback-widget.tsx` (210 lines) | Compact inline 👍👌👎 widget for all surfaces (homepage, pulse, leaderboard) |
+| `src/hooks/use-image-quality-vote.ts` (+10 lines) | Dual-write: Image Quality votes also fire to `feedback_events` via `sendFeedbackDirect()` |
 | `src/lib/feedback/feedback-scene-enhancer.ts` (295 lines) | Personalise scene prefills from feedback |
 | `src/lib/learning/feedback-streaks.ts` (335 lines) | Hot/cold/oscillating streak detection |
 | `src/hooks/use-feedback-memory.ts` (355 lines) | React hook for term-level feedback hints |
@@ -1435,4 +1439,4 @@ This data is the product. The vocabulary, the scenes, the cascading intelligence
 
 ---
 
-_End of document. Version 2.2.0. Updated 2026-03-01. Previous version: 2.1.0 (2026-02-27)._
+_End of document. Version 2.3.0. Updated 2026-03-07. Previous version: 2.2.0 (2026-03-01)._

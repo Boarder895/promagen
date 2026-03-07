@@ -223,3 +223,70 @@ export async function sendFeedback(
     return false;
   }
 }
+
+// ============================================================================
+// DIRECT FEEDBACK — Lightweight for inline widgets (FeedbackWidget)
+// ============================================================================
+
+/**
+ * Direct feedback submission for inline compact widgets.
+ *
+ * Unlike `sendFeedback()` which requires sessionStorage pending data
+ * (designed for the post-copy builder flow), this function accepts
+ * explicit parameters and fires immediately. Used by FeedbackWidget
+ * on the homepage showcase, community pulse cards, and image quality votes.
+ *
+ * Same /api/feedback endpoint, same feedback_events table, same learning
+ * pipeline. Just a simpler call signature.
+ *
+ * @param params — Direct feedback parameters
+ * @returns true on success, false on any error
+ */
+export async function sendFeedbackDirect(params: {
+  promptEventId: string;
+  rating: FeedbackRating;
+  platform: string;
+  tier: number;
+  source: string;
+}): Promise<boolean> {
+  try {
+    const body = {
+      promptEventId: params.promptEventId,
+      rating: params.rating,
+      credibilityScore: 1.0,
+      credibilityFactors: { tier: 1.0, age: 1.0, frequency: 1.0, speed: 1.0 },
+      responseTimeMs: 0,
+      platform: params.platform,
+      tier: params.tier,
+    };
+
+    const response = await fetch(FEEDBACK_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      if (process.env.NODE_ENV === 'development') {
+        const text = await response.text().catch(() => '');
+        console.warn('[FeedbackDirect] POST failed:', response.status, text);
+      }
+      return false;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[FeedbackDirect] Submitted:', {
+        rating: params.rating,
+        eventId: params.promptEventId,
+        source: params.source,
+      });
+    }
+
+    return true;
+  } catch (err) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[FeedbackDirect] Error:', err);
+    }
+    return false;
+  }
+}

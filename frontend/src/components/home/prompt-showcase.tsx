@@ -59,7 +59,7 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { usePromptShowcase } from '@/hooks/use-prompt-showcase';
-import { useLike, type LikeState } from '@/hooks/use-like';
+import FeedbackWidget from '@/components/ux/feedback-widget';
 import { useOnlineUsers } from '@/hooks/use-online-users';
 import { Flag } from '@/components/ui/flag';
 import { resolveIsNight } from '@/lib/weather/day-night';
@@ -125,8 +125,6 @@ const TIER_DISPLAYS: TierDisplay[] = [
 ];
 
 /** Default like state for prompts (used as fallback) */
-const EMPTY_LIKE_STATE: LikeState = { liked: false, count: 0, isUpdating: false };
-
 // ============================================================================
 // WEATHER EMOJI (derive from conditions text — same as used in exchange cards)
 // ============================================================================
@@ -208,49 +206,6 @@ function CopyButton({ text, label }: { text: string; label: string }) {
 // ============================================================================
 // LIKE BUTTON — Heart toggle with count (§7.8)
 // ============================================================================
-
-function LikeButton({
-  likeState,
-  onToggle,
-  label,
-}: {
-  likeState: LikeState;
-  onToggle: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={likeState.isUpdating}
-      className={`inline-flex shrink-0 items-center justify-center rounded-md transition-all ${
-        likeState.liked ? 'text-pink-400' : 'text-slate-400 hover:text-pink-300'
-      } ${likeState.isUpdating ? 'opacity-60' : ''}`}
-      style={{
-        gap: 'clamp(6px, 0.6vw, 10px)',
-        padding: 'clamp(2px, 0.15vw, 3px) clamp(4px, 0.3vw, 6px)',
-        fontSize: 'clamp(0.65rem, 0.8vw, 0.95rem)',
-      }}
-      title={likeState.liked ? `Unlike ${label} prompt` : `Like ${label} prompt`}
-      aria-label={`${likeState.liked ? 'Unlike' : 'Like'} ${label} prompt (${likeState.count} likes)`}
-    >
-      {/* Heart icon — 2× size for visibility */}
-      <span
-        style={{
-          fontSize: 'clamp(1.2rem, 1.4vw, 1.7rem)',
-          transition: 'transform 200ms ease-out',
-          transform: likeState.liked ? 'scale(1.2)' : 'scale(1)',
-          display: 'inline-block',
-        }}
-        aria-hidden="true"
-      >
-        {likeState.liked ? '♥' : '♡'}
-      </span>
-      {/* Count */}
-      {likeState.count > 0 && <span className={`tabular-nums ${likeState.liked ? 'text-emerald-400' : ''}`}>{likeState.count}</span>}
-    </button>
-  );
-}
 
 // ============================================================================
 // PROVIDER ICON — "Try in [Provider]"
@@ -765,15 +720,11 @@ const IntelligenceBridge = React.memo(function IntelligenceBridge({
 
 function CityContent({
   data,
-  likeStates,
-  onToggleLike,
   isTransitioning = false,
   selectedProviderId,
   onTierChange,
 }: {
   data: PromptOfTheMoment;
-  likeStates: Map<string, LikeState>;
-  onToggleLike: (promptId: string, tierKey: string) => void;
   /** When true, prompt segments animate in with staggered morph effect */
   isTransitioning?: boolean;
   /** Provider selected in Engine Bay — auto-switches to that provider's tier */
@@ -803,7 +754,6 @@ function CityContent({
   const promptText = data.prompts[activeTier];
   const providers = data.tierProviders[activeTier];
   const promptId = `potm:${data.rotationIndex}:${activeTier}`;
-  const likeState = likeStates.get(promptId) ?? EMPTY_LIKE_STATE;
   const categoryMap = data.tierSelections?.[activeTier]?.categoryMap;
   // Shared categoryMap for intelligence bridge (same across all tiers)
   const sharedCategoryMap = data.tierSelections?.tier1?.categoryMap;
@@ -1005,7 +955,12 @@ function CityContent({
             </span>
           </div>
           <div className="flex items-center" style={{ gap: 'clamp(4px, 0.3vw, 6px)' }}>
-            <LikeButton likeState={likeState} onToggle={() => onToggleLike(promptId, activeTier)} label={activeDisplay.label} />
+            <FeedbackWidget
+              itemId={promptId}
+              source="showcase"
+              platformId={activeDisplay.key === 'tier2' ? 'midjourney' : activeDisplay.key === 'tier1' ? 'leonardo' : activeDisplay.key === 'tier3' ? 'openai' : 'canva'}
+              tier={parseInt(activeTier.replace('tier', ''), 10)}
+            />
             <CopyButton text={promptText} label={activeDisplay.label} />
           </div>
         </div>
@@ -1276,29 +1231,6 @@ export default function PromptShowcase({ selectedProviderId, onTierChange }: { s
   // ── Online users (Phase 6) ─────────────────────────────────────────────
   const { total: onlineTotal, countries: onlineCountries } = useOnlineUsers();
 
-  // ── Like system (Phase 4) ──────────────────────────────────────────────
-  // Compute deterministic prompt IDs: potm:{rotationIndex}:{tierKey}
-  const promptIds = useMemo(() => {
-    if (!data) return [];
-    return TIER_DISPLAYS.map((d) => `potm:${data.rotationIndex}:${d.key}`);
-  }, [data]);
-
-  const { states: likeStates, toggleLike } = useLike(promptIds);
-
-  const handleToggleLike = useCallback(
-    (promptId: string, tierKey: string) => {
-      toggleLike(promptId, {
-        tier: tierKey,
-        source: 'showcase',
-      });
-    },
-    [toggleLike],
-  );
-
-  // Empty like props for the crossfade-out previous city (non-interactive)
-  const emptyLikeStates = useMemo(() => new Map<string, LikeState>(), []);
-  const noopToggle = useCallback(() => {}, []);
-
   // Hard error with no data at all
   if (error && !data) {
     return (
@@ -1362,8 +1294,6 @@ export default function PromptShowcase({ selectedProviderId, onTierChange }: { s
           <div className="showcase-fade-out absolute inset-0" aria-hidden="true">
             <CityContent
               data={previousData}
-              likeStates={emptyLikeStates}
-              onToggleLike={noopToggle}
               selectedProviderId={selectedProviderId}
             />
           </div>
@@ -1373,8 +1303,6 @@ export default function PromptShowcase({ selectedProviderId, onTierChange }: { s
         <div className={isTransitioning ? 'showcase-fade-in' : ''}>
           <CityContent
             data={data}
-            likeStates={likeStates}
-            onToggleLike={handleToggleLike}
             isTransitioning={isTransitioning}
             selectedProviderId={selectedProviderId}
             onTierChange={onTierChange}

@@ -1,9 +1,9 @@
 # New Homepage — Authority Document
 
-**Last updated:** 6 March 2026  
-**Version:** 5.0.0  
+**Last updated:** 7 March 2026  
+**Version:** 6.0.0  
 **Owner:** Promagen  
-**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 + Community Pulse v9.0 + Prompt Showcase v10 Hero Redesign)  
+**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 + Community Pulse v9.0 + Prompt Showcase v11 + Unified Feedback System + Leaderboard Bridge)  
 **Authority:** This document defines the new Promagen homepage layout, components, data flow, and build plan. It supersedes the homepage section of `ribbon-homepage.md` for the `/` route only.
 
 ---
@@ -16,7 +16,7 @@
 4. [Centre Column — Prompt of the Moment](#4-centre-column--prompt-of-the-moment)
 5. [Left Column — Scene Starters Preview](#5-left-column--scene-starters-preview)
 6. [Right Column — Community Pulse](#6-right-column--community-pulse)
-7. [Like System](#7-like-system)
+7. [Feedback System](#7-feedback-system)
 8. [Online Users by Country](#8-online-users-by-country)
 9. [Navigation Changes](#9-navigation-changes)
 10. [World Context Page](#10-world-context-page)
@@ -99,7 +99,7 @@ All principles from `code-standard.md` and `best-working-practice.md` apply. Spe
 │              │  │ [● Natural [FF][Flux]+7]            │  │  [Sign in]        │
 │              │  │ [● Plain [Canva][Pics]+14]          │  │                   │
 │              │  │                                    │  │                   │
-│              │  │ ┌─ CLIP-Based Tier 1 ─── ♡  📋 ┐  │  │                   │
+│              │  │ ┌─ CLIP-Based Tier 1 ── 👍👌👎  📋 ┐  │  │                   │
 │              │  │ │ colour-coded prompt anatomy   │  │  │                   │
 │              │  │ │ with morph animation          │  │  │                   │
 │              │  │ │ Try in: [SD] [Leo] [NC] …    │  │  │                   │
@@ -117,17 +117,17 @@ All principles from `code-standard.md` and `best-working-practice.md` apply. Spe
 │              │  ┌──────────────────────────────────────┐│  "93-score MJ     │
 │  ● 🎭 Drama-│  │                                      ││   prompt built    │
 │  tic Portrait│  │     AI PROVIDERS LEADERBOARD         ││   2 min ago"      │
-│  ───────────-│  │                                      ││  ♡ 12             │
+│  ───────────-│  │                                      ││  👍 12  👌 5  👎 2  │
 │  👤 Portraits│  │     (scrollable, same as current)    ││                   │
 │  7 cat · vibe│  │                                      ││  "87-score DALL-E │
 │              │  │                                      ││   prompt built    │
 │  ● ⚔️ Fantasy│  │                                      ││   5 min ago"      │
-│  Hero        │  │                                      ││  ♡ 7              │
+│  Hero        │  │                                      ││  👍 7   👌 2  👎 1  │
 │  ───────────-│  │                                      ││                   │
 │  👤 Portraits│  │                                      ││  "91-score Flux   │
 │  5 cat · vibe│  │                                      ││   prompt built    │
 │              │  │                                      ││   8 min ago"      │
-│  (8 cards per│  │                                      ││  ♡ 3              │
+│  (8 cards per│  │                                      ││  👍 3   👌 1       │
 │   batch,     │  │                                      ││                   │
 │   rotates    │  └──────────────────────────────────────┘│                   │
 │   5 min)     │                                          │                   │
@@ -264,9 +264,9 @@ interface ProviderShortcut {
 
 **Fallback:** If weather data is unavailable for the current city, use demo weather data (`15°C, partly cloudy, 10 km/h wind`). If the generator throws, serve the last successfully generated prompt. The component must never show an error state — always show a prompt.
 
-### 4.4 Component: `PromptShowcase` (v10 — Hero Prompt + Tier Tabs + Anatomy + Intelligence Bridge + Morph)
+### 4.4 Component: `PromptShowcase` (v11 — Hero Prompt + Tier Tabs + Anatomy + Intelligence Bridge + Morph + Leaderboard Bridge + Unified Feedback)
 
-**File:** `src/components/home/prompt-showcase.tsx` (1,414 lines)
+**File:** `src/components/home/prompt-showcase.tsx` (1,357 lines)
 
 **v10 architecture:** The 2×2 grid of 4 cramped TierPanels was replaced with a single hero prompt area controlled by 4 tier tab pills. One prompt gets the full stage. This is a fundamentally different layout from v7 (4-panel grid).
 
@@ -282,7 +282,7 @@ interface ProviderShortcut {
 │  [● CLIP [SD][Leo][NC]+10]  [● MJ [MJ][BW]]                             │
 │  [● Natural [FF][Flux][DE]+7]  [● Plain [Canva][Pics][Cray]+14]          │
 │                                                                           │
-│  ┌─ CLIP-Based Tier 1 ──────────────────────── ♡ 23  📋 ─┐              │
+│  ┌─ CLIP-Based Tier 1 ──────────────────────── 👍 23  👌 5  👎 2  📋 ─┐              │
 │  │ masterpiece, best quality, highly detailed,             │              │
 │  │ (neon-lit streets:1.2), rain-slicked pavement,          │  <- colour   │
 │  │ (cinematic lighting:1.1), tokyo signage, reflections    │  <- coded    │
@@ -298,9 +298,9 @@ interface ProviderShortcut {
 **Key components inside PromptShowcase:**
 
 **1. Intelligence Bridge (`IntelligenceBridge` component):**
-Compact pill strip between city header and tier tabs. Shows 3-4 weather→vocabulary reasoning pills. Format: `Intelligence Engine  ☁️ broken clouds → overcast light  🌡️ 14°C → cool tones  💡 Dusk → dusk light  💨 15 km/h → wind phrase`. Output terms are coloured using `CATEGORY_COLOURS`. Only renders when `categoryMap` + weather data are both available.
+Compact pill strip between city header and tier tabs. Shows 3 weather→vocabulary reasoning pills (capped from 4 — wind/humidity pill dropped for breathing room). Format: `Intelligence Engine  ☁️ broken clouds → overcast light  🌡️ 14°C → cool tones  💡 Dusk → dusk light  💨 15 km/h → wind phrase`. Output terms are coloured using `CATEGORY_COLOURS`. Only renders when `categoryMap` + weather data are both available.
 
-Data sources: `data.weather` (raw API data) + `categoryMap.selections` (vocabulary terms the engine chose). Derived by `deriveBridgePills()` function — up to 4 pills in priority order: conditions→atmosphere, temperature→colour, time→lighting, wind→action, humidity→materials (fallback).
+Data sources: `data.weather` (raw API data) + `categoryMap.selections` (vocabulary terms the engine chose). Derived by `deriveBridgePills()` function — up to 3 pills in priority order: conditions→atmosphere, temperature→colour, time→lighting. Wind and humidity pills dropped (v11) for visual density reduction.
 
 **2. Tier Tab Pills with Provider Icons:**
 Four horizontal pills: `● CLIP [SD][Leo][NC]+10` · `● Midjourney [MJ][BW]` · `● Natural [FF][Flux][DE]+7` · `● Plain [Canva][Pics][Cray]+14`. Each pill shows the tier's top 3 provider icons from `data.tierProviders[tierKey]` plus an overflow count. Users scan logos across tabs to find their platform.
@@ -355,7 +355,8 @@ When the city rotates, each coloured term in the new prompt ripples in individua
 - **Card styling:** `rounded-3xl bg-slate-950/70 ring-1 ring-white/10`
 - **Hero prompt inner card:** `rounded-xl bg-slate-900/60 ring-1 ${activeDisplay.ringColour}`
 - **Copy button (📋):** clipboard + 1.5s "Copied!" feedback, `bg-emerald-500/20 text-emerald-400`
-- **Like button (♡):** `text-slate-400` default, `text-pink-400` liked, scale(1.2) animation
+- **FeedbackWidget (👍👌👎):** Compact inline feedback replacing hearts. Emoji size `clamp(14px, 1.1vw, 18px)` (matches leaderboard thumb). Counts in emerald/amber/red. One click locks vote. Fires to unified `/api/feedback`. See `the-like-system.md`.
+- **Leaderboard Bridge:** Active tier colour flows from showcase → heading underline → table row highlighting → filter chip. `onTierChange` callback from `CityContent` → `PromptShowcase` → `new-homepage-client.tsx`. Tier accent: 2px underline on "42 AI Image Generators" heading. Row highlighting: 3px left border + 3% tint on matching providers. Filter: subtitle swaps between "Click ▼ Provider to expand" + "Filter: {Tier} (N)" and "{Tier} · N of 42 · Clear".
 - **"Try in" provider icons:** `clamp(30px, 2.3vw, 38px)` buttons, `clamp(18px, 1.5vw, 24px)` images, `drop-shadow` glow
 - **Countdown timer:** amber italic, `tabular-nums`, client-side computation
 - **Metadata line:** Flag · CityName · Venue · Conditions · HH:MM (blinking colon)
@@ -608,7 +609,7 @@ Social proof that Promagen is alive and active. Answers "is anyone using this?" 
 
 ### 6.3 Component: `CommunityPulse` (v9.0.0)
 
-**File:** `src/components/home/community-pulse.tsx` (611 lines)
+**File:** `src/components/home/community-pulse.tsx` (604 lines)
 
 **Visual design — v8.0.0 layout (top to bottom):**
 
@@ -620,13 +621,13 @@ Social proof that Promagen is alive and active. Answers "is anyone using this?" 
 +----------------------------------------------------------+
 |                                                          |
 |  +----------------------------------------------------+  |
-|  | [MJ icon] Midjourney          87/100       heart 12 |  |  <- LINE 1: icon + name + score (live only) + heart
+|  | [MJ icon] Midjourney          87/100       👍 12  👌 5  👎 2 |  |  <- LINE 1: icon + name + score (live only) + heart
 |  | Neon samurai in rain-soaked Tokyo alley              |  |  <- LINE 2: description, italic, uppercase first
 |  | Created in [flag]  Prague                           |  |  <- LINE 3: flag + mono clock
 |  +----------------------------------------------------+  |
 |                                                          |
 |  +----------------------------------------------------+  |
-|  | [Flux icon] Flux              heart 31              |  |  <- demo card (no score)
+|  | [Flux icon] Flux              👍 31  👌 8  👎 3              |  |  <- demo card (no score)
 |  | Golden hour vineyard with morning mist              |  |
 |  | Created in [flag]  at  09:17                        |  |
 |  +----------------------------------------------------+  |
@@ -652,16 +653,16 @@ Social proof that Promagen is alive and active. Answers "is anyone using this?" 
 
 Each user prompt card has a fixed height of `clamp(74px, 6.2vw, 104px)` (same as scene cards). The interior uses `flex h-full flex-col justify-between` with `height: '33.333%'` on each row — guaranteeing equal vertical distribution regardless of content height.
 
-| Row    | Element           | Source                                | Styling                                                                                                                                     |
-| ------ | ----------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Line 1 | Platform icon     | `/icons/providers/{id}.png`           | `clamp(14px, 1.2vw, 20px)` square, `object-contain`, drop-shadow glow                                                                       |
-| Line 1 | Platform name     | `entry.platformName`                  | `0.90em`, `text-slate-100`, font-medium, truncate                                                                                           |
-| Line 1 | Score (live only) | `entry.score`                         | `0.85em`, `text-white`, tabular-nums. Format: `87/100`. Hidden for demo entries (`isLive === false`)                                        |
-| Line 1 | Like heart        | `entry.likeCount`                     | `0.85em`, `text-pink-400`. `heart` filled when > 0, `heart-outline` when 0. Count in `text-emerald-400`                                     |
-| Line 2 | Description       | `entry.description` (subject + style) | `0.75em`, italic, `text-slate-300`, truncate. First letter uppercased via `charAt(0).toUpperCase()`                                         |
-| Line 3 | "Created in"      | Static text                           | `0.68em`, `text-slate-400`                                                                                                                  |
-| Line 3 | Country flag      | `entry.countryCode`                   | `clamp(18px, 1.5vw, 24px)` x `clamp(14px, 1.1vw, 18px)`. `marginLeft` + `marginRight`: `clamp(6px, 0.6vw, 10px)`. Hover triggers tooltip    |
-| Line 3 | Location name     | `entry.locationName`                  | `font-medium`, colour: `entry.brandColor` (per-card brand colour tint). Truncate for long names. Real towns: "Sasolburg", "Prague", "Osaka" |
+| Row    | Element           | Source                                | Styling                                                                                                                                         |
+| ------ | ----------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Line 1 | Platform icon     | `/icons/providers/{id}.png`           | `clamp(14px, 1.2vw, 20px)` square, `object-contain`, drop-shadow glow                                                                           |
+| Line 1 | Platform name     | `entry.platformName`                  | `0.90em`, `text-slate-100`, font-medium, truncate                                                                                               |
+| Line 1 | Score (live only) | `entry.score`                         | `0.85em`, `text-white`, tabular-nums. Format: `87/100`. Hidden for demo entries (`isLive === false`)                                            |
+| Line 1 | Feedback widget   | `FeedbackWidget`                      | 👍👌👎 inline. Emoji `clamp(14px, 1.1vw, 18px)`. Counts: emerald/amber/red. One click locks. Fires to `/api/feedback`. See `the-like-system.md` |
+| Line 2 | Description       | `entry.description` (subject + style) | `0.75em`, italic, `text-slate-300`, truncate. First letter uppercased via `charAt(0).toUpperCase()`                                             |
+| Line 3 | "Created in"      | Static text                           | `0.68em`, `text-slate-400`                                                                                                                      |
+| Line 3 | Country flag      | `entry.countryCode`                   | `clamp(18px, 1.5vw, 24px)` x `clamp(14px, 1.1vw, 18px)`. `marginLeft` + `marginRight`: `clamp(6px, 0.6vw, 10px)`. Hover triggers tooltip        |
+| Line 3 | Location name     | `entry.locationName`                  | `font-medium`, colour: `entry.brandColor` (per-card brand colour tint). Truncate for long names. Real towns: "Sasolburg", "Prague", "Osaka"     |
 
 **Per-card brand colour glow (same pattern as Scene Starters tier dot colour):**
 
@@ -789,144 +790,46 @@ The POST body includes:
 
 ---
 
-## 7. Like System
+## 7. Feedback System
+
+> **Authority:** `docs/authority/the-like-system.md` is the single source of truth for all user feedback collection across Promagen. This section is a summary — the full architecture, database schema, pipeline integration, and file locations live in that document.
 
 ### 7.1 Purpose
 
-Provides a clean, intentional quality signal for prompts. Feeds into both the scoring system (term validation) and the Community Pulse feed. A direct "this prompt is good" signal is 10x more valuable than inferred proxy signals (copy rate, save rate).
+Every user interaction that signals quality — good, okay, or bad — feeds directly into the learning pipeline that makes Promagen's prompts and scoring more intelligent every day. One system, one endpoint, one table, one pipeline. Feedback is gold.
 
-### 7.2 Where Likes Appear
+### 7.2 The Three-Point Rating Scale
 
-| Location                      | What is liked                    | Context                          |
-| ----------------------------- | -------------------------------- | -------------------------------- |
-| Prompt of the Moment (centre) | Each tier's prompt independently | 4 like buttons per showcase card |
-| Community Pulse (right rail)  | Each pulse entry                 | 1 like button per pulse card     |
+| Emoji | Rating     | Colour             | Meaning                                 |
+| ----- | ---------- | ------------------ | --------------------------------------- |
+| 👍    | `positive` | Emerald `#34D399`  | Nailed it — prompt matched expectations |
+| 👌    | `neutral`  | Amber `#FBBF24`    | Just okay — mediocre, not impressive    |
+| 👎    | `negative` | Soft red `#F87171` | Missed — prompt did not work            |
 
-### 7.3 Database Schema
+### 7.3 Where Feedback Appears
 
-**Table:** `prompt_likes`
+| Surface                          | UI                              | Source Tag           | Replaces           |
+| -------------------------------- | ------------------------------- | -------------------- | ------------------ |
+| PotM showcase (homepage centre)  | 👍👌👎 inline + coloured counts | `showcase`           | ♡ heart (deleted)  |
+| Community Pulse (homepage right) | 👍👌👎 inline + coloured counts | `pulse`              | ♡ heart (deleted)  |
+| Prompt builder (after copy)      | 👍👌👎 overlay (4s delay)       | `builder`            | Unchanged          |
+| Image Quality (leaderboard)      | 👍 only (existing SVG thumb)    | `image-quality-vote` | Dual-write (added) |
 
-```sql
-CREATE TABLE prompt_likes (
-  id            TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-  prompt_id     TEXT NOT NULL,            -- References the prompt entry
-  session_id    TEXT NOT NULL,            -- Anonymous session identifier (cookie-based)
-  user_id       TEXT,                     -- Clerk user ID (null if anonymous)
-  country_code  TEXT,                     -- Derived from timezone (not PII)
-  created_at    TIMESTAMPTZ DEFAULT NOW()
-);
+### 7.4 Unified Pipeline
 
--- Prevent duplicate likes per session per prompt
-CREATE UNIQUE INDEX idx_prompt_likes_session_prompt
-  ON prompt_likes (session_id, prompt_id);
+All feedback flows to `POST /api/feedback` → `feedback_events` table → credibility scoring → streak detection → term-level memory → scene enhancer → admin dashboard → nightly cron aggregation.
 
--- Fast count queries
-CREATE INDEX idx_prompt_likes_prompt_id
-  ON prompt_likes (prompt_id);
+**Component:** `FeedbackWidget` (`src/components/ux/feedback-widget.tsx`, 210 lines). Compact inline 👍👌👎. One click locks vote — other two grey out. Coloured counts. Fires `sendFeedbackDirect()` to `/api/feedback`.
 
--- Most liked today query
-CREATE INDEX idx_prompt_likes_created
-  ON prompt_likes (created_at);
-```
+**Vote behaviour:** One vote per item per session. No un-voting. Selected emoji scales up with coloured glow. Vote persisted to `sessionStorage`.
 
-**Table:** `prompt_showcase_entries`
+### 7.5 What Was Retired
 
-```sql
-CREATE TABLE prompt_showcase_entries (
-  id            TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
-  city          TEXT NOT NULL,
-  country_code  TEXT NOT NULL,
-  venue         TEXT NOT NULL,
-  mood          TEXT NOT NULL,
-  tier          TEXT NOT NULL,             -- 'tier1' | 'tier2' | 'tier3' | 'tier4'
-  platform_id   TEXT,                      -- Provider ID (null for weather-seeded)
-  prompt_text   TEXT NOT NULL,             -- The full assembled prompt
-  description   TEXT NOT NULL,             -- Short summary (max 60 chars)
-  score         INTEGER NOT NULL DEFAULT 0,-- Prompt score (0–100)
-  source        TEXT NOT NULL DEFAULT 'weather', -- 'weather' | 'user'
-  like_count    INTEGER NOT NULL DEFAULT 0,-- Denormalised count (updated by trigger or app)
-  prompts_json  TEXT,                      -- WeatherCategoryMap JSON (weather-seeded entries)
-  weather_json  TEXT,                      -- Weather snapshot JSON (for emoji tooltip)
-  created_at    TIMESTAMPTZ DEFAULT NOW()
-);
+The old binary heart system (♡/♥) was replaced on 7 March 2026. `LikeButton` component deleted from `prompt-showcase.tsx`. Hearts deleted from `community-pulse.tsx`. `use-like.ts` hook, `/api/prompts/like` route, `/api/prompts/like/status` route, and `prompt_likes` table are orphaned (no longer imported by any homepage component). See `the-like-system.md` §9 for full retirement details.
 
-CREATE INDEX idx_showcase_entries_created
-  ON prompt_showcase_entries (created_at DESC);
+### 7.6 Database Schema
 
-CREATE INDEX idx_showcase_entries_likes_today
-  ON prompt_showcase_entries (like_count DESC, created_at)
-  WHERE created_at > NOW() - INTERVAL '24 hours';
-```
-
-### 7.4 API Routes
-
-**POST /api/prompts/like**
-
-```typescript
-// Request body
-interface LikeRequest {
-  promptId: string;
-}
-
-// Response
-interface LikeResponse {
-  success: boolean;
-  likeCount: number; // New total
-  alreadyLiked: boolean; // True if this session already liked
-}
-```
-
-**Behaviour:**
-
-1. Read `session_id` from cookie (set automatically if not present — see §7.5)
-2. Read `user_id` from Clerk auth (null if anonymous)
-3. Derive `country_code` from `Intl.DateTimeFormat().resolvedOptions().timeZone`
-4. Insert into `prompt_likes` — unique constraint prevents duplicates
-5. Increment `like_count` on `prompt_showcase_entries`
-6. Return new count + `alreadyLiked` flag
-
-**Rate limiting:** Max 60 likes per session per hour. Prevents spam without blocking legitimate use.
-
-### 7.5 Session Management
-
-**Anonymous likes:** A random session ID is generated and stored in a `promagen-session` cookie (`httpOnly`, `sameSite: strict`, `maxAge: 30 days`). This allows one like per prompt per session without requiring sign-in.
-
-**Authenticated likes:** If the user is signed in via Clerk, the `user_id` is also stored. Authenticated likes carry higher credibility weight in the scoring system (see §7.6).
-
-**No sign-in required to like.** This maximises signal volume. Anonymous likes are still valuable — they just carry lower credibility weight.
-
-### 7.6 Scoring System Integration
-
-Likes feed into the existing credibility-weighted scoring pipeline:
-
-| Signal                         | Credibility Weight | Rationale                                                 |
-| ------------------------------ | ------------------ | --------------------------------------------------------- |
-| Anonymous like                 | 1.0x (base)        | Volume signal — lots of these                             |
-| Authenticated like (free user) | 2.0x               | User has committed to an account                          |
-| Authenticated like (Pro user)  | 3.0x               | Highest-value user, most likely to have tested the prompt |
-
-**Term validation:** When a prompt accumulates ≥10 likes, the terms within that prompt receive a co-occurrence confidence boost in the learning pipeline. The boost magnitude scales with like count: `boost = min(likeCount / 50, 1.0)` — capped at 1.0 to prevent runaway popularity from distorting scores.
-
-**Leaderboard influence:** Aggregate likes per tier are tracked. If Tier 2 (Midjourney) prompts consistently receive more likes than other tiers, this signals community preference — but it is normalised by impression count to prevent popularity bias. This data is available for future leaderboard enhancements but does **not** directly modify existing Elo rankings in v1.
-
-### 7.7 GTM Analytics Events
-
-| Event                 | Trigger                      | Payload                                                                   |
-| --------------------- | ---------------------------- | ------------------------------------------------------------------------- |
-| `prompt_liked`        | User clicks like button      | `prompt_id`, `tier`, `source` (`showcase` or `pulse`), `is_authenticated` |
-| `prompt_like_removed` | User un-likes (clicks again) | Same as above                                                             |
-
-### 7.8 UI Behaviour
-
-**Initial state:** ♡ (outline heart) + count. `text-slate-400`.
-
-**Liked state:** ♥ (filled heart) + count. `text-pink-400`. Subtle scale animation (`transform: scale(1.2)`, 200ms, ease-out, then back to 1.0).
-
-**Already-liked detection:** On page load, the component calls `GET /api/prompts/like/status?promptIds=id1,id2,...` with all visible prompt IDs. Returns which ones the current session has already liked. Pre-fills the filled-heart state.
-
-**Un-like:** Clicking a filled heart removes the like (DELETE to `/api/prompts/like`). Count decrements. Heart reverts to outline.
-
----
+The `prompt_showcase_entries` table is unchanged (still used by Community Pulse for storing prompt entries). The `prompt_likes` table is orphaned — no new writes. All feedback now goes to `feedback_events` (see `the-like-system.md` §7).
 
 ## 8. Online Users by Country
 
@@ -1079,9 +982,7 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 | `/api/homepage/prompt-of-the-moment` | GET    | Current showcase prompt (all 4 tiers)      | `revalidate: 600`   |
 | `/api/homepage/community-pulse`      | GET    | Recent 20 pulse entries + most liked today | 30 sec TTL          |
 | `/api/homepage/community-pulse`      | POST   | Log user-created prompt (fire-and-forget)  | None                |
-| `/api/prompts/like`                  | POST   | Like a prompt                              | None                |
-| `/api/prompts/like`                  | DELETE | Unlike a prompt                            | None                |
-| `/api/prompts/like/status`           | GET    | Check which prompts the session has liked  | None                |
+| `/api/feedback`                      | POST   | Unified feedback (👍👌👎) — all surfaces   | None                |
 | `/api/heartbeat`                     | POST   | Client heartbeat with country code         | None (writes to KV) |
 | `/api/online-users`                  | GET    | Aggregated online user counts by country   | 30 sec TTL          |
 
@@ -1125,7 +1026,7 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 │  │                  │    │                          │                  │
 │  │ - 4 tier prompts │    │ - 25 free cards          │                  │
 │  │ - Copy buttons   │    │ - Pro locked cards       │                  │
-│  │ - Like buttons   │    │ - Click → prompt builder │                  │
+│  │ - Feedback widgets   │    │ - Click → prompt builder │                  │
 │  │ - Try in icons   │    │   (sessionStorage scene) │                  │
 │  │ - Online users   │    │                          │                  │
 │  └──────────────────┘    └──────────────────────────┘                  │
@@ -1136,7 +1037,7 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 │  │   like           │    │ (right rail)             │                  │
 │  │                  │◄───│                          │                  │
 │  │ - POST (like)    │    │ - Recent entries feed    │                  │
-│  │ - DELETE (unlike)│    │ - Like buttons per entry │                  │
+│  │ - DELETE (unlike)│    │ - Feedback widget per entry │                  │
 │  │ - GET (status)   │    │ - Most liked today       │                  │
 │  └──────────────────┘    └──────────────────────────┘                  │
 │                                                                         │
@@ -1158,21 +1059,19 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 
 | File                                                 | Purpose                                                                                      | Lines |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- | ----- |
-| `src/components/home/new-homepage-client.tsx`        | New homepage client wrapper (+ Engine Bay state owner)                                       | 281   |
-| `src/components/home/prompt-showcase.tsx`            | Prompt of the Moment — hero prompt + tier tabs + anatomy + intelligence bridge + morph (v10) | 1,414 |
+| `src/components/home/new-homepage-client.tsx`        | New homepage client wrapper (+ Engine Bay state owner)                                       | 308   |
+| `src/components/home/prompt-showcase.tsx`            | Prompt of the Moment — hero prompt + tier tabs + anatomy + intelligence bridge + morph (v10) | 1,357 |
 | `src/components/home/scene-starters-preview.tsx`     | Left rail scene cards (v4.1.0, cascading glow)                                               | 585   |
-| `src/components/home/community-pulse.tsx`            | Right rail 8 platform prompt cards with brand colour location names (v9.0.0)                 | 611   |
+| `src/components/home/community-pulse.tsx`            | Right rail 8 platform prompt cards with brand colour location names (v9.0.0)                 | 604   |
 | `src/app/api/homepage/prompt-of-the-moment/route.ts` | Showcase prompt API                                                                          | 639   |
 | `src/app/api/homepage/community-pulse/route.ts`      | Pulse feed API (GET + POST + server-side IP geolocation)                                     | 314   |
-| `src/app/api/prompts/like/route.ts`                  | Like/unlike API (POST + DELETE)                                                              | 187   |
-| `src/app/api/prompts/like/status/route.ts`           | Like status check API                                                                        | 99    |
 | `src/app/api/heartbeat/route.ts`                     | Client heartbeat API                                                                         | 107   |
 | `src/app/api/online-users/route.ts`                  | Aggregated online counts API                                                                 | 67    |
 | `src/app/world-context/page.tsx`                     | World Context server component                                                               | 67    |
 | `src/hooks/use-prompt-showcase.ts`                   | Fetch hook for Prompt of the Moment                                                          | 151   |
 | `src/hooks/use-community-pulse.ts`                   | Fetch hook for pulse feed                                                                    | 132   |
 | `src/hooks/use-online-users.ts`                      | Heartbeat + online users hook                                                                | 200   |
-| `src/hooks/use-like.ts`                              | Like/unlike hook with optimistic UI                                                          | 203   |
+| `src/hooks/use-like.ts`                              | ORPHANED — replaced by FeedbackWidget + `/api/feedback`. Safe to delete.                     | 203   |
 | `src/types/homepage.ts`                              | TypeScript types for all new interfaces                                                      | 265   |
 | `src/lib/likes/database.ts`                          | DB table creation + like CRUD + schema migrations                                            | 223   |
 | `src/lib/likes/session.ts`                           | Cookie-based session management                                                              | 69    |
@@ -1189,7 +1088,7 @@ The original `homepage-client.tsx` (527 lines) is completely untouched — it re
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- |
 | `src/app/page.tsx`                            | Imports `NewHomepageClient`, passes providers/exchanges/weatherIndex                                                                                                                | 70    |
 | `src/components/home/mission-control.tsx`     | Added `renderWorldContextButton()`, World Context button on all page variants                                                                                                       | 723   |
-| `src/components/layout/homepage-grid.tsx`     | `leftContent`/`rightContent` props, `showFinanceRibbon` toggle, table expand support, `selectedProvider`/`onProviderChange` piped to Engine Bay (v5.0.0)                            | 721   |
+| `src/components/layout/homepage-grid.tsx`     | `leftContent`/`rightContent` props, `showFinanceRibbon` toggle, table expand support, `selectedProvider`/`onProviderChange` piped to Engine Bay (v5.0.0)                            | 810   |
 | `src/components/providers/prompt-builder.tsx` | sessionStorage pre-load reader (Phase D), `preloadedSceneId` → SceneSelector, Community Pulse POST on copy (`locationInfo` from auth, `pulseDesc` from selections, fire-and-forget) | 2,770 |
 | `src/components/home/engine-bay.tsx`          | `selectedProvider`/`onProviderChange` optional props for controlled mode (v5.0.0)                                                                                                   | 499   |
 | `src/components/providers/scene-selector.tsx` | `initialSceneId` prop for auto-expand on homepage scene pre-load                                                                                                                    | 1,250 |
@@ -1239,7 +1138,6 @@ Every new component must use inline `clamp()` for all visible dimensions. Refere
 
 - All animations in component files via `<style dangerouslySetInnerHTML>` — not in `globals.css` (per `best-working-practice.md` animation placement rule)
 - Crossfade transitions: `opacity`, `transform` only — never `transition-all` (CLS prevention per `best-working-practice.md` §Performance Guardrails)
-- Like heart scale animation: co-located in `prompt-showcase.tsx`
 - Scene Starters subtitle pulse: `scene-subtitle-pulse` keyframes co-located in `scene-starters-preview.tsx` (2s cubic-bezier, opacity 1→0.5→1, matches mission-control `animate-pulse`)
 - Scene Starters cascading glow: no CSS animation — driven by React state (`activeGlowIndex` + `glowOn`), 600ms CSS transition on `border-color` and `box-shadow` provides smooth fade in/out
 - Community Pulse subtitle pulse: `pulse-subtitle-pulse` keyframes co-located in `community-pulse.tsx` (2s cubic-bezier, opacity 1->0.5->1, matches scene-starters)
@@ -1316,12 +1214,12 @@ All `<a>` tag buttons **must** have explicit text colour on child `<svg>` and `<
 - [x] Each demo prompt optimised for its specific platform format (T1/T2/T3/T4)
 - [x] Demo prompts fill 85-99% of each platform's idealMax character budget
 - [x] Card layout: 3 equal rows (33.333% each), no horizontal divider
-- [x] Line 1: Platform icon + platform name + score/100 (live only) + heart + like count
+- [x] Line 1: Platform icon + platform name + score/100 (live only) + 👍👌👎 feedback widget
 - [x] Line 2: Description (subject + style, italic, uppercase first letter)
 - [x] Line 3: "Created in" + flag (3x gap margins) + "at" + mono clock (visible colon, fontWeight 600)
 - [x] Per-card brand colour glow from PLATFORM_COLORS map (42 unique colours)
 - [x] Flag hover: portal tooltip with full optimised prompt + copy button (400ms close delay)
-- [x] Like heart: filled when count > 0, outline when 0. Count in emerald-400
+- [x] Feedback widget: 👍👌👎 inline, coloured counts (emerald/amber/red), one click locks
 - [x] Score (`87/100`) only shown for live user entries (`isLive === true`). Demo cards show no score
 - [x] 30-minute rotation of top 6 demo prompts (deterministic, all users see same)
 - [x] `useCommunityPulse` hook connected — polls API every 30 seconds
@@ -1364,10 +1262,10 @@ All `<a>` tag buttons **must** have explicit text colour on child `<svg>` and `<
 
 - [ ] All interactive elements keyboard accessible
 - [ ] Copy buttons have `aria-label="Copy [tier] prompt"`
-- [ ] Like buttons have `aria-label="Like this prompt"` / `aria-label="Unlike this prompt"`
+- [ ] Feedback emojis have `aria-label` for each rating option
 - [ ] Expand/collapse interactions use `aria-expanded`
 - [ ] Screen reader announces prompt content
-- [ ] `prefers-reduced-motion` disables crossfade and heart animation
+- [ ] `prefers-reduced-motion` disables crossfade and morph animations
 
 ---
 
@@ -1413,12 +1311,11 @@ Good looks like: `/` shows new layout (no ribbon, no exchanges). `/world-context
 | 3.3  | Add sessionStorage scene pre-load in `prompt-builder.tsx`                 | 3.2                          |
 | 3.4  | Pro gate (sign-in modal for anon, upgrade dialog for free)                | 3.1, existing Clerk patterns |
 
-### Phase 4: Like System ✅ Complete
+### Phase 4: Feedback System ✅ Complete (Unified 7 March 2026)
 
 | Step | Task                                                               | Dependencies                   |
 | ---- | ------------------------------------------------------------------ | ------------------------------ |
 | 4.1  | Create database tables (`prompt_showcase_entries`, `prompt_likes`) | Database access                |
-| 4.2  | Create `/api/prompts/like` routes (POST, DELETE, GET status)       | 4.1                            |
 | 4.3  | Create `use-like.ts` hook with optimistic UI                       | 4.2                            |
 | 4.4  | Wire like buttons into `prompt-showcase.tsx`                       | 4.3, Phase 2                   |
 | 4.5  | Add session cookie management                                      | 4.2                            |
@@ -1520,31 +1417,51 @@ When building on the new homepage:
 - **Provider links via `/go/[providerId]`** — route uses Next.js 15 async params (`await context.params`). Test file uses `Promise.resolve()` wrappers.
 - **Engine Bay auto-select** — `selectedProviderId` flows from `new-homepage-client.tsx` → `PromptShowcase` → `CityContent`. `useEffect` calls `getPlatformTierId()` to auto-switch tier tab.
 
+- **Prompt Showcase is now v11** — v10 + leaderboard bridge + unified feedback. `onTierChange` callback fires from CityContent.
+- **FeedbackWidget replaces hearts** — PotM showcase and Community Pulse both use `FeedbackWidget`. No `LikeButton`, no `use-like.ts`, no hearts. See `the-like-system.md`.
+- **Intelligence Engine pills capped at 3** — `pills.slice(0, 3)`. Wind/humidity pill dropped. Do not revert to 4.
+- **Leaderboard Bridge** — tier accent underline on heading, row highlighting on matching providers, filter chip in subtitle. Tier state flows via `showcaseTierId` in `new-homepage-client.tsx`.
+- **Provider clocks always white** — `.provider-time-bright` and `.provider-time-dim` both `rgba(255, 255, 255, 0.95)`. Font size matches city name: `clamp(0.6rem, 1vw, 1rem)`. No dimming for after-hours.
+- **Greenwich tooltip removed** — `reference-frame-toggle.tsx` no longer shows hover tooltip. Upgrade prompt for free users still works.
+- **"Click ▼ Provider to expand" is permanent** — always visible when no filter active. Filter prompt sits alongside, not replacing it. Period removed from end.
+- **Filter hover glow uses tier colour** — `brightness(1.4)` + `drop-shadow` in the tier's own colour. Independent from "Click ▼" hover.
+- **`cursor-pointer` on ProviderIcon buttons** — Tailwind preflight resets buttons to `cursor: default`. Explicit `cursor-pointer` + `hover:scale-110` required.
+
 **Existing features preserved: Yes** (required for every change).
 
 ---
 
 ## 18. Related Documents
 
-| Document                              | Relevance                                                     |
-| ------------------------------------- | ------------------------------------------------------------- |
-| `ribbon-homepage.md`                  | Current homepage spec (now `/world-context`)                  |
-| `code-standard.md`                    | All code standards (clamp(), TypeScript, SSOT, viewport lock) |
-| `best-working-practice.md`            | Process rules (CLS, animations, card design, security)        |
-| `buttons.md`                          | All button styling, colour inheritance rules                  |
-| `mission-control.md`                  | Mission Control button layouts                                |
-| `ignition.md`                         | Engine Bay spec                                               |
-| `scene-starters.md`                   | Scene Starters data architecture and UI spec                  |
-| `prompt-builder-page.md`              | Prompt builder page architecture                              |
-| `prompt-builder-evolution-plan-v2.md` | Evolution plan (Phases 0–9)                                   |
-| `gallery-mode-master.md`              | Gallery Mode spec (shared rotation engine concept)            |
-| `paid_tier.md`                        | Free vs paid boundaries                                       |
-| `clerk-auth.md`                       | Authentication patterns                                       |
-| `ai_providers.md`                     | Provider SSOT and leaderboard spec                            |
+| Document                              | Relevance                                                      |
+| ------------------------------------- | -------------------------------------------------------------- |
+| `ribbon-homepage.md`                  | Current homepage spec (now `/world-context`)                   |
+| `code-standard.md`                    | All code standards (clamp(), TypeScript, SSOT, viewport lock)  |
+| `best-working-practice.md`            | Process rules (CLS, animations, card design, security)         |
+| `buttons.md`                          | All button styling, colour inheritance rules                   |
+| `mission-control.md`                  | Mission Control button layouts                                 |
+| `ignition.md`                         | Engine Bay spec                                                |
+| `scene-starters.md`                   | Scene Starters data architecture and UI spec                   |
+| `prompt-builder-page.md`              | Prompt builder page architecture                               |
+| `prompt-builder-evolution-plan-v2.md` | Evolution plan (Phases 0–9)                                    |
+| `gallery-mode-master.md`              | Gallery Mode spec (shared rotation engine concept)             |
+| `paid_tier.md`                        | Free vs paid boundaries                                        |
+| `clerk-auth.md`                       | Authentication patterns                                        |
+| `ai_providers.md`                     | Provider SSOT and leaderboard spec                             |
+| `the-like-system.md`                  | Unified feedback system (👍👌👎) — one system for all surfaces |
 
 ---
 
 ## 19. Changelog
+
+- **7 March 2026 (v6.0.0):** **UNIFIED FEEDBACK SYSTEM + LEADERBOARD BRIDGE + PROMPT SHOWCASE v11.**
+  - **Unified Feedback System:** Hearts (♡/♥) replaced with 👍👌👎 on PotM showcase and Community Pulse. `FeedbackWidget` component created (210 lines). `sendFeedbackDirect()` added to `feedback-client.ts`. All feedback fires to `/api/feedback` → `feedback_events` table → credibility scoring → streak detection → nightly cron. Image Quality votes dual-write to `feedback_events`. `use-like.ts`, `/api/prompts/like`, `/api/prompts/like/status` orphaned. Authority doc: `the-like-system.md` (new).
+  - **Leaderboard Bridge (Ideas 1+3+5):** Tier accent underline on "42 AI Image Generators" heading (colour follows active tier, 400ms transition). Provider row highlighting (3px left border + 3% tint on tier-matching providers). Filter system: subtitle shows "Click ▼ Provider to expand · Filter: CLIP-Based (13)" — clicking filters table. Active filter: "{Tier} · N of 42 · Clear". State lifted to `new-homepage-client.tsx` via `showcaseTierId` + `tierFilter`.
+  - **Intelligence Engine pills capped at 3:** Wind/humidity pill dropped for breathing room.
+  - **Provider clocks:** Always white (`rgba(255,255,255,0.95)`), font size matches city name (`clamp(0.6rem, 1vw, 1rem)`). No after-hours dimming.
+  - **Greenwich tooltip removed:** `reference-frame-toggle.tsx` — hover tooltip deleted (75 lines of tooltip text, 4 constants, `showTooltip` state). Upgrade prompt preserved.
+  - **"Click ▼ Provider to expand" period removed.** Filter hover glow added: `brightness(1.4)` + tier-coloured `drop-shadow`.
+  - Files changed: `prompt-showcase.tsx` (1,414→1,357), `community-pulse.tsx` (611→604), `new-homepage-client.tsx` (281→308), `homepage-grid.tsx` (721→810), `providers-table.tsx` (+tierFilter prop), `reference-frame-toggle.tsx` (381→306), `globals.css` (clock CSS), `use-image-quality-vote.ts` (+dual-write), `feedback-client.ts` (+sendFeedbackDirect). New: `feedback-widget.tsx` (210 lines), `the-like-system.md`.
 
 - **6 March 2026 (v5.0.0):** **PROMPT SHOWCASE v10 HERO REDESIGN + COMMUNITY PULSE v9.0 + DEMO PROMPT BUGFIXES + PROVIDER LINK FIX.** Major overhaul of centre column and right rail:
   - **Prompt Showcase v8→v10:** Replaced 2×2 TierPanel grid with single hero prompt + 4 tier tab pills. `TierPanel` component deleted entirely.
@@ -1560,7 +1477,7 @@ When building on the new homepage:
   - **Provider links fixed:** `/go/[providerId]` route updated for Next.js 15 async params (`Promise<{ providerId: string }>`). Test file updated with `Promise.resolve()` wrappers. All 42 provider homepage links now work.
   - **Cleanup:** Legend removed (bridge pills teach colours), native title tooltips removed, `CATEGORY_LABELS`/`LEGEND_ITEMS` deleted.
   - §4.4 rewritten completely (v10 architecture). §6.3 updated (v9.0.0). §12 line counts updated. §13.3 animations updated (morph keyframe). §17 non-regression rules expanded (8 new rules). §14.2 and §14.4 acceptance criteria updated.
-  - Files changed: `prompt-showcase.tsx` (858→1,414), `community-pulse.tsx` (781→611), `new-homepage-client.tsx` (1 line), `community-pulse/route.ts` (262→314), `homepage.ts` (+2 lines), `demo-prompts.json` (location + bugfixes), `demo-prompts.json.d.ts`, `go/[providerId]/route.ts` (async params), `go.outbound.route.test.ts` (Promise.resolve).
+  - Files changed: `prompt-showcase.tsx` (858→1,357), `community-pulse.tsx` (781→611), `new-homepage-client.tsx` (1 line), `community-pulse/route.ts` (262→314), `homepage.ts` (+2 lines), `demo-prompts.json` (location + bugfixes), `demo-prompts.json.d.ts`, `go/[providerId]/route.ts` (async params), `go.outbound.route.test.ts` (Promise.resolve).
 
 - **6 March 2026 (v4.0.0):** **COMMUNITY PULSE v8.0.0 COMPLETE REDESIGN + BUILDER PIPELINE WIRING.** §6 rewritten completely:
   - **Weather/city vibe seeding removed** from Community Pulse cards. Weather-seeded entries still log to DB (from PotM auto-logger) but cards no longer display them.

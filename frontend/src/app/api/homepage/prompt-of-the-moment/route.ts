@@ -34,7 +34,7 @@ import { hashCategoryMap } from '@/lib/prompt-dna';
 
 // Phase 5: DB imports for Community Pulse auto-logging
 import { hasDatabaseConfigured, db } from '@/lib/db';
-import { ensureLikeTables } from '@/lib/likes/database';
+import { ensureShowcaseTables } from '@/lib/showcase/database';
 
 import cityVibesData from '@/data/vocabulary/weather/city-vibes.json';
 import exchangesCatalog from '@/data/exchanges/exchanges.catalog.json';
@@ -420,7 +420,7 @@ async function logShowcaseEntry(
       for (const idx of oldest) _loggedRotations.delete(idx);
     }
 
-    await ensureLikeTables();
+    await ensureShowcaseTables();
     const sql = db();
 
     // Description: just the city name (max 60 chars)

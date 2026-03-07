@@ -23,7 +23,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { hasKvConfigured, setHeartbeat } from '@/lib/kv/heartbeat-store';
-import { getSessionId, generateSessionId, setSessionCookie } from '@/lib/likes/session';
+import { getSessionId, generateSessionId, setSessionCookie } from '@/lib/session';
 import { rateLimit } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';

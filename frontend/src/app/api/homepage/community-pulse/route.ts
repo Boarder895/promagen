@@ -22,7 +22,7 @@ import type { NextRequest} from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { hasDatabaseConfigured, db } from '@/lib/db';
-import { ensureLikeTables } from '@/lib/likes/database';
+import { ensureShowcaseTables } from '@/lib/showcase/database';
 import type { CommunityPulseEntry, CommunityPulseResponse } from '@/types/homepage';
 
 export const runtime = 'nodejs';
@@ -44,7 +44,7 @@ export async function GET(): Promise<NextResponse<CommunityPulseResponse>> {
     }
 
     // Ensure tables exist (lazy creation, same pattern as like API)
-    await ensureLikeTables();
+    await ensureShowcaseTables();
 
     const sql = db();
 
@@ -294,7 +294,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // we still insert the entry with an empty city (graceful fallback).
     const cityName = await resolveCity(request);
 
-    await ensureLikeTables();
+    await ensureShowcaseTables();
     const sql = db();
 
     const result = await sql`

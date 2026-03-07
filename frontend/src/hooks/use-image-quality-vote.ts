@@ -26,6 +26,7 @@ import {
   getVotedProviderIds,
   getRemainingVotes,
 } from '@/lib/vote-storage';
+import { sendFeedbackDirect } from '@/lib/feedback/feedback-client';
 
 // ============================================================================
 // TYPES
@@ -210,6 +211,15 @@ export function useImageQualityVote(
         if (data.vote?.rank) {
           setCurrentRank(data.vote.rank);
         }
+
+        // Dual-write: also log to feedback_events for unified learning pipeline
+        void sendFeedbackDirect({
+          promptEventId: `iq:${providerId}`,
+          rating: 'positive',
+          platform: providerId,
+          tier: 1, // Image quality votes are cross-tier — tier 1 as default
+          source: 'image-quality-vote',
+        });
       } else {
         // API failed but local vote is already recorded
         // Log for debugging but don't disrupt UX

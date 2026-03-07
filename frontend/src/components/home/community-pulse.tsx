@@ -9,7 +9,7 @@
 //   - Line 1: Platform icon + platform name
 //   - Line 2: Prompt description (subject + style, italic)
 //   - Line 3: "Created in" + flag + location name (city/town)
-//   - Like heart: identical to PotM LikeButton (same JSX/sizes/colours)
+//   - Feedback widget: 👍👌👎 inline (replaces hearts, feeds into unified learning pipeline)
 //   - Flag hover: portal tooltip with full optimised prompt + copy button
 //
 // v9.0.0: Removed online users cards. Extended from 6 to 8 prompt cards.
@@ -29,6 +29,7 @@ import Image from 'next/image';
 import demoPrompts from '@/data/community-pulse/demo-prompts.json';
 import { useCommunityPulse } from '@/hooks/use-community-pulse';
 import type { CommunityPulseEntry } from '@/types/homepage';
+import FeedbackWidget from '@/components/ux/feedback-widget';
 
 // ============================================================================
 // CONSTANTS — MATCHED TO scene-starters-preview.tsx
@@ -327,7 +328,7 @@ const UserPromptCard = React.memo(function UserPromptCard({
         className="relative z-10 flex h-full flex-col justify-between"
         style={{ padding: 'clamp(5px, 0.4vw, 8px) clamp(8px, 0.7vw, 14px)' }}
       >
-        {/* LINE 1: Platform icon + platform name + heart */}
+        {/* LINE 1: Platform icon + platform name + feedback */}
         <div className="flex items-center gap-2" style={{ height: '33.333%' }}>
           {/* Platform icon */}
           <span
@@ -359,21 +360,13 @@ const UserPromptCard = React.memo(function UserPromptCard({
               {entry.score}/100
             </span>
           )}
-          {/* Like heart — scaled to fit row height */}
-          <span
-            className="inline-flex shrink-0 items-center text-pink-400"
-            style={{
-              gap: 'clamp(4px, 0.4vw, 6px)',
-              fontSize: '0.85em',
-            }}
-          >
-            <span aria-hidden="true">
-              {entry.likeCount > 0 ? '♥' : '♡'}
-            </span>
-            {entry.likeCount > 0 && (
-              <span className="tabular-nums text-emerald-400">{entry.likeCount}</span>
-            )}
-          </span>
+          {/* Feedback — 👍👌👎 replacing heart */}
+          <FeedbackWidget
+            itemId={`pulse:${entry.platformId}`}
+            source="pulse"
+            platformId={entry.platformId}
+            tier={3}
+          />
         </div>
 
         {/* LINE 2: Prompt description — uppercase first letter */}
