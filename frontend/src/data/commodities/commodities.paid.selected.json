@@ -1,11 +1,11 @@
 {
   "ids": [
-    "brent_crude",
-    "ttf_natural_gas",
+    "gold",
     "coffee",
-    "sugar",
-    "orange_juice",
-    "iron_ore",
-    "gold"
+    "gasoline",
+    "beef",
+    "silver",
+    "wheat",
+    "cocoa"
   ]
 }

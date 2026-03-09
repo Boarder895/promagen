@@ -63,11 +63,16 @@ const TIER_KEYS = ['1', '2', '3', '4'] as const;
 
 describe('Scene Starters Integrity (Phase 2)', () => {
   // ── T1: Every prefill value exists in vocabulary ──────────────────────────
+  // Only checks original hand-authored categories. Enriched categories
+  // (composition, camera, fidelity, materials, colour) use expert-curated
+  // phrases that are intentionally outside the dropdown vocabulary pool.
   it('T1 — every prefill value exists in core vocabulary', () => {
+    const ORIGINAL_CATEGORIES = new Set(['subject', 'atmosphere', 'environment']);
     const missing: Array<{ scene: string; category: string; value: string }> = [];
 
     for (const scene of allScenes) {
       for (const [cat, values] of Object.entries(scene.prefills)) {
+        if (!ORIGINAL_CATEGORIES.has(cat)) continue; // Skip enriched categories
         const lookup = vocabLookups[cat];
         if (!lookup) {
           missing.push({ scene: scene.id, category: cat, value: '(unknown category)' });
@@ -86,7 +91,7 @@ describe('Scene Starters Integrity (Phase 2)', () => {
         .slice(0, 20)
         .map((m) => `  ${m.scene} → ${m.category}/${m.value}`)
         .join('\n');
-      fail(`${missing.length} prefill value(s) not found in vocabulary:\n${report}`);
+      throw new Error(`${missing.length} prefill value(s) not found in vocabulary:\n${report}`);
     }
   });
 

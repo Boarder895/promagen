@@ -3,16 +3,16 @@
 // PROMPT OF THE MOMENT — API Route
 // ============================================================================
 // Generates the live prompt showcase for the homepage centre column.
-// Rotates through 102 cities from city-vibes.json on a 10-minute cadence.
+// Rotates through 102 cities from city-vibes.json on a 3-minute cadence.
 //
 // Data flow:
-// 1. Deterministic rotation selects city: floor(now / 10min) % 102
+// 1. Deterministic rotation selects city: floor(now / 3min) % 102
 // 2. Weather fetched from gateway (same /weather endpoint as exchange cards)
 // 3. Demo fallback if gateway unavailable (15°C, partly cloudy)
 // 4. generateWeatherPrompt() produces all 4 tier prompts
 // 5. Top providers per tier resolved from PLATFORM_TIERS + providers.json
 //
-// Cache: 10-minute stale-while-revalidate (aligned to rotation cadence)
+// Cache: 3-minute stale-while-revalidate (aligned to rotation cadence)
 //
 // Phase 5 addition: Auto-logs each new rotation as a prompt_showcase_entries
 // row (weather-seeded). This populates the Community Pulse feed. Only one
@@ -43,8 +43,8 @@ import exchangesCatalog from '@/data/exchanges/exchanges.catalog.json';
 // CONSTANTS
 // ============================================================================
 
-/** Rotation cadence in milliseconds (10 minutes) */
-const ROTATION_MS = 10 * 60 * 1000;
+/** Rotation cadence in milliseconds (3 minutes) */
+const ROTATION_MS = 3 * 60 * 1000;
 
 /** Gateway URL — same resolution chain as fetch-weather.ts */
 const GATEWAY_URL =
@@ -278,7 +278,7 @@ interface GatewayWeatherItem {
   weatherId?: number | null;
 }
 
-/** In-memory weather cache (refreshed every 10 min by gateway call). */
+/** In-memory weather cache (refreshed every 3 min by gateway call). */
 let _weatherCache: Map<string, ExchangeWeatherFull> | null = null;
 let _weatherCacheAge = 0;
 const WEATHER_CACHE_TTL = 600_000; // 10 minutes
@@ -532,6 +532,15 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
     const currentSlot = Math.floor(now / ROTATION_MS);
     const nextRotationAt = new Date((currentSlot + 1) * ROTATION_MS).toISOString();
 
+    // ── 8b. Resolve next city for countdown display ─────────────────────
+    const nextRotationIndex = (rotationIndex + 1) % TOTAL_CITIES;
+    const nextCityKey = CITY_KEYS[nextRotationIndex]!;
+    const nextCityData = CITIES[nextCityKey]!;
+    const nextCityName = toTitleCase(nextCityKey);
+    const nextExchange = CITY_TO_EXCHANGE.get(nextCityKey);
+    const nextCountryCode =
+      COUNTRY_NAME_TO_CODE[nextCityData.country] ?? nextExchange?.iso2 ?? nextExchange?.countryCode ?? 'XX';
+
     // ── 9. Build response ──────────────────────────────────────────────
     const response: PromptOfTheMoment = {
       city: cityName,
@@ -576,6 +585,8 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
       generatedAt: new Date(now).toISOString(),
       nextRotationAt,
       rotationIndex,
+      nextCity: nextCityName,
+      nextCountryCode,
       weather: {
         description: weather.description ?? weather.conditions,
         emoji: weather.emoji ?? '🌤️',
@@ -602,7 +613,7 @@ export async function GET(): Promise<NextResponse<PromptOfTheMoment | { error: s
     void logShowcaseEntry(response, sharedCategoryMap);
 
     return NextResponse.json(response, {
-      headers: { 'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=60' },
+      headers: { 'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=60' },
     });
   } catch (error) {
     console.error('[prompt-of-the-moment] Error:', error);

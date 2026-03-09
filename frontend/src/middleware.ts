@@ -181,11 +181,12 @@ function applySecurityHeaders(
 // ============================================================================
 // DEV vs PROD MIDDLEWARE
 // ============================================================================
-// Dev:  Plain handler — no Clerk overhead, all pages open, security headers applied.
-// Prod: clerkMiddleware wrapper — full auth + admin-only gate.
+// Both use clerkMiddleware() so auth()/clerkClient() work in route handlers.
+// Dev: all pages open (no route protection enforced).
+// Prod: full auth + admin-only gate.
 // ============================================================================
 
-function devMiddleware(req: NextRequest): NextResponse {
+const devMiddleware = clerkMiddleware(async (_auth, req) => {
   const url = req.nextUrl;
   const host = url.host.toLowerCase();
   const pathname = url.pathname;
@@ -205,7 +206,7 @@ function devMiddleware(req: NextRequest): NextResponse {
 
   const res = NextResponse.next();
   return applySecurityHeaders(res, true, isDevHealth, requestId);
-}
+});
 
 const prodMiddleware = clerkMiddleware(async (auth, req) => {
   const url = req.nextUrl;

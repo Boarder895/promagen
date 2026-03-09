@@ -32,8 +32,8 @@ import type { CommoditiesMoversGridProps } from '@/types/commodities-movers';
 // ============================================================================
 // SNAP-FIT FONT CONSTANTS
 // ============================================================================
-const MIN_FONT_PX = 12; // Floor — readable on small screens
-const MAX_FONT_PX = 24; // Ceiling — matches exchange-card FitText range
+const MIN_FONT_PX = 13; // Floor — readable on small screens (+1 from v4.0)
+const MAX_FONT_PX = 25; // Ceiling — matches exchange-card FitText range (+1 from v4.0)
 const STEP_PX = 1; // Step increments
 
 // Breathing room (px) added around measured content height so nothing
@@ -136,6 +136,15 @@ export default function CommoditiesMoversGrid({
   const [fontPx, setFontPx] = React.useState<number>(INITIAL_COMMODITY_FONT);
   const [showBottomRow, setShowBottomRow] = React.useState(true);
   const [settled, setSettled] = React.useState(false);
+
+  // ── Currency alternation (8-second cycle) ───────────────────────────
+  // Single shared tick drives all cards — no per-card timers, no drift.
+  // Cards with 2 conversions: tick % 2. Cards with 3: tick % 3.
+  const [currencyTick, setCurrencyTick] = React.useState(0);
+  React.useEffect(() => {
+    const id = setInterval(() => setCurrencyTick((t) => t + 1), 8_000);
+    return () => clearInterval(id);
+  }, []);
 
   const cardsPerPanel = showBottomRow ? 4 : 2;
 
@@ -327,13 +336,14 @@ export default function CommoditiesMoversGrid({
               <div
                 key={mover ? mover.id : `${type}-empty-${i}`}
                 role="listitem"
-                className="rounded-xl bg-slate-900/80 ring-1 ring-white/10 overflow-hidden transition-colors hover:ring-white/20 hover:bg-slate-800/80"
+                className="overflow-hidden"
               >
                 {mover ? (
                   <CommodityMoverCard
                     data={mover}
                     isStale={isStale}
                     weatherRecord={weatherRecord}
+                    currencyTick={currencyTick}
                   />
                 ) : (
                   <span className="text-white/30" style={{ fontSize: CLAMP.headerTitle }}>
@@ -357,7 +367,7 @@ export default function CommoditiesMoversGrid({
             }}
           >
             {items[0] && (
-              <CommodityMoverCard data={items[0]} isStale={false} weatherRecord={weatherRecord} />
+              <CommodityMoverCard data={items[0]} isStale={false} weatherRecord={weatherRecord} currencyTick={0} />
             )}
           </div>
         )}

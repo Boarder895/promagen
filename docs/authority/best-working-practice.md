@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 25 February 2026
+**Last updated:** 7 March 2026
 
 ---
 
@@ -192,17 +192,6 @@ No text in Promagen may render below 9px. Every `clamp()` min value for `fontSiz
 
 **Authority:** `code-standard.md` § 6.0.1, § 6.0.2
 
-### No opacity dimming for state indication
-
-Never reduce the opacity of UI elements to show a disabled, inactive, or "not ready" state. On Promagen's dark background, anything below full opacity disappears. Content must always be fully visible — users need to see what's available. Use text changes (different instruction copy) or colour changes (border, dot) to communicate state, never opacity.
-
-**Authority:** `code-standard.md` § 6.0.3
-
-````
-## Also ADD a changelog entry:
-
-```markdown
-- **5 March 2026:** Added "No opacity dimming for state indication" rule under UI Consistency. Banned sub-1.0 resting opacity for state indication on dark backgrounds. Cross-ref code-standard.md § 6.0.3.
 ### Hard rules (non-negotiable)
 
 **1. One box language only**
@@ -246,7 +235,7 @@ Promagen is a desktop application with dynamic fluid scaling — no breakpoints,
 
 ```css
 property: clamp(MINIMUM, PREFERRED, MAXIMUM);
-````
+```
 
 | Parameter   | Purpose                                    | Example |
 | ----------- | ------------------------------------------ | ------- |
@@ -885,6 +874,46 @@ The browser paints server-rendered HTML **before** React hydrates. No React effe
 
 ---
 
+## Human Factors Gate (no user-facing build without psychological justification)
+
+**Purpose:** Every user-facing visual feature must be designed for the human brain, not just the browser. Features that are technically correct but psychologically invisible are wasted engineering. This gate ensures that every visible element has a reason to exist beyond "it shows data."
+
+**Authority:** `docs/authority/human-factors.md` is the reference document containing 18 principles with research sources, practical application tables, and anti-patterns. Read it once thoroughly; reference it before every user-facing build.
+
+**Hard rule:** Before building any user-facing visual feature, state:
+
+1. **The feature** — one sentence
+2. **The primary human factor** — name it from `human-factors.md`
+3. **Why it applies** — one sentence connecting the factor to the feature
+4. **The anti-pattern** — what would kill the effect
+
+This takes 30 seconds. It prevents hours of building features that look good to a developer but do nothing to a user's brain.
+
+**Scope:** This gate applies to anything the user sees, waits for, listens to, or decides on. It does NOT apply to backend architecture, database schemas, API contracts, cron pipelines, or test infrastructure.
+
+**Examples of gate passes:**
+
+| Feature                          | Factor                         | Justification                                                                        |
+| -------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
+| Show next city name in countdown | Curiosity Gap (Loewenstein)    | User imagines the city before the prompt arrives — gap pulls them in                 |
+| 3-minute rotation (was 10 min)   | Dwell Time + Variable Reward   | 95% of users never saw a rotation at 10 min; at 3 min, 40% do                        |
+| Countdown text shortens at 30s   | Temporal Compression           | State change creates perceived acceleration — final seconds feel faster              |
+| Cascading glow on scene cards    | Variable Reward + Von Restorff | Unpredictable highlight draws the eye; one card stands out from the rest             |
+| Prompt anatomy colours           | Cognitive Load + Curiosity Gap | Colour reduces extraneous load; unexplained colours invite exploration               |
+| British female voice for speaker | Voice Psychology               | Female RP voice produces higher recall and longer listening duration across cultures |
+
+**Quick reference — the 5 most commonly applicable factors:**
+
+| Factor                | When to use it                                | Core insight                                                   |
+| --------------------- | --------------------------------------------- | -------------------------------------------------------------- |
+| Curiosity Gap         | Content reveals, feature discovery, tooltips  | Tell them something exists. Don't tell them what it is.        |
+| Variable Reward       | Rotation, feeds, randomisation                | Predictable = boring. Uncertain outcomes = engagement.         |
+| Anticipatory Dopamine | Countdowns, loading states, transitions       | The moment before the reveal is more exciting than the reveal. |
+| Loss Aversion         | Freemium gating, trial expiry, feature limits | Losing something hurts 2× more than gaining it feels good.     |
+| Cognitive Load        | Adding ANY element to ANY page                | You get 4 working memory slots. Every element costs one.       |
+
+---
+
 ## Prompt Optimiser
 
 **Prompt analysis (what makes answers go wrong):**
@@ -937,6 +966,7 @@ OUTPUT FORMAT:
   - **Window Boundary Containment (strengthened)** — Added Rule 3 "Only tooltips may overlay" — no glow, gradient, or absolutely positioned child may render on top of another window. Added Rule 7 "`clamp()` gaps enforce separation" — inter-window spacing from grid gap only, never panel margins. Scope expanded from Engine Bay + Mission Control to ALL grid panels.
 - **15 Feb 2026:** Added "Window boundary containment (nothing in, nothing out)" subsection under UI Consistency. Architectural rule: Ignition and Mission Control windows are hard visual boundaries — no content escapes outward, no external content bleeds inward. Containment achieved via internal element constraints, never by adding overflow/contain to the outer window container (which breaks grid positioning). Cross-ref code-standard.md § 6.5.
 - **14 Feb 2026:** Added anti-breakpoint rule (#5, #6) to Fluid Typography hard rules — never use Tailwind breakpoint text classes for responsive sizing, always use inline `clamp()`. Tooltips exempt. Added "Text containment (no text escapes its window)" subsection under UI Consistency — three-property pattern (`overflow-hidden`, `min-h-0`, `truncate`) for all text in fixed-height containers. Cross-ref code-standard.md § 6.4.
+- **7 Mar 2026:** Added "Human Factors Gate" section. Every user-facing visual feature must name its primary human factor before implementation. Authority: `docs/authority/human-factors.md` (18 principles — curiosity, reward, anticipation, memory, stimulation, time perception, spatial framing, loss aversion, social proof, peak-end, cognitive load, isolation effect, motor control, aesthetics, dwell time, voice, colour, animation). Backend and data-layer work exempt.
 - **9 Feb 2026:** Added "Performance Guardrails (CLS Prevention)" section. Pre-ship CLS check requirement, three red-flag patterns, SSR hydration gap mental model. Cross-ref code-standard.md § 22 for implementation rules.
 - **7 Feb 2026:** Added "Content-driven sizing" subsection under UI Consistency. Standard approach when content doesn't have room to breathe: measure real content, not magic numbers. Cross-ref code-standard.md § 6.3.
 - **10 Jan 2026:** Updated FX SSOT file reference from `fx.pairs.json` to unified `fx-pairs.json` (schema table).

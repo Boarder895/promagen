@@ -51,7 +51,6 @@ export async function ensureShowcaseTables(): Promise<void> {
     await db()`
       CREATE INDEX IF NOT EXISTS idx_showcase_entries_likes_today
       ON prompt_showcase_entries (like_count DESC, created_at)
-      WHERE created_at > NOW() - INTERVAL '24 hours'
     `;
 
     tablesEnsured = true;

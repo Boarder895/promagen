@@ -107,12 +107,48 @@ function extractAllTerms(
 }
 
 /**
- * Check if two terms match (case-insensitive, supports partial matching for custom text).
+ * Check if two terms match.
+ *
+ * Rules:
+ *   1. Exact match (case-insensitive) — always.
+ *   2. For compound phrases (containing commas), match if any
+ *      comma-separated segment of one term matches the other.
+ *   3. Within a segment, the shorter term must appear as a
+ *      complete word (word-boundary match), not as a substring
+ *      of a longer word. This prevents "detailed" matching
+ *      inside "highly detailed" or "art" matching "heart".
  */
 function termsMatch(term1: string, term2: string): boolean {
-  const t1 = term1.toLowerCase();
-  const t2 = term2.toLowerCase();
-  return t1 === t2 || t1.includes(t2) || t2.includes(t1);
+  const t1 = term1.toLowerCase().trim();
+  const t2 = term2.toLowerCase().trim();
+
+  // Exact full match
+  if (t1 === t2) return true;
+
+  // Split both into comma-separated segments
+  const segs1 = t1.split(',').map(s => s.trim()).filter(Boolean);
+  const segs2 = t2.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Check every segment pair
+  for (const s1 of segs1) {
+    for (const s2 of segs2) {
+      if (s1 === s2) return true;
+
+      // Word-boundary match: shorter must appear as complete word(s) at
+      // the START of the longer segment. "neon" matches "neon glow" (starts
+      // with "neon"), but "detailed" does NOT match "highly detailed" (starts
+      // with "highly"). This eliminates false positives from quality boosters.
+      const shorter = s1.length <= s2.length ? s1 : s2;
+      const longer = s1.length <= s2.length ? s2 : s1;
+
+      if (longer === shorter) return true;
+      if (longer.startsWith(shorter + ' ') || longer.startsWith(shorter + ',')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 // ============================================================================
@@ -256,6 +292,13 @@ function checkMoodConflicts(
     const group1 = moodGroups[mood1];
     const group2 = moodGroups[mood2];
     
+    // Require at least 2 terms in EACH mood group to flag a conflict.
+    // A single calm term + single intense term is normal scene composition
+    // (e.g., "golden hour" calm + "lion" intense = peaceful wildlife scene).
+    // Only flag when the scene is genuinely mood-confused with multiple
+    // terms pulling in opposing directions.
+    if (group1.length < 2 || group2.length < 2) continue;
+
     const item1 = group1[0];
     const item2 = group2[0];
     
@@ -301,6 +344,13 @@ function checkEraConflicts(
   }
   
   // Check for conflicting eras (past vs future is the main conflict)
+  // Require at least 2 terms in each era group to flag a conflict.
+  // A single past term + single future term is often intentional
+  // (e.g., "retro-futurism" or "steampunk" themes).
+  if (eraGroups.past.length < 2 || eraGroups.future.length < 2) {
+    return conflicts;
+  }
+  
   const pastTerm = eraGroups.past[0];
   const futureTerm = eraGroups.future[0];
   

@@ -69,6 +69,8 @@ import type { PromptOfTheMoment, ProviderShortcut, OnlineCountryEntry } from '@/
 import type { WeatherCategoryMap } from '@/types/prompt-builder';
 import type { PromptCategory } from '@/types/prompt-builder';
 import { getPlatformTierId } from '@/data/platform-tiers';
+import { sendShowcaseTelemetry } from '@/lib/telemetry/prompt-telemetry-client';
+import { selectionsFromMap, tierToRefPlatform } from '@/lib/prompt-builder';
 
 // ============================================================================
 // TIER DISPLAY CONFIG
@@ -750,6 +752,25 @@ function CityContent({
     onTierChange?.(tierId);
   }, [activeTier, onTierChange]);
 
+  // ── Gap 2: Fire telemetry when viewing a PotM prompt ──────────────────
+  // Creates a real prompt_events row so FeedbackWidget feedback can be
+  // traced back to specific terms by the learning pipeline.
+  // Deterministic ID: same as promptId → idempotent (ON CONFLICT DO NOTHING).
+  useEffect(() => {
+    const tierNum = parseInt(activeTier.replace('tier', ''), 10) as 1 | 2 | 3 | 4;
+    const tierData = data.tierSelections?.[activeTier];
+    if (!tierData?.categoryMap) return;
+
+    const selections = selectionsFromMap(tierData.categoryMap);
+    sendShowcaseTelemetry({
+      rotationIndex: data.rotationIndex,
+      tier: tierNum,
+      selections,
+      promptText: data.prompts[activeTier],
+      platformId: tierToRefPlatform(tierNum),
+    });
+  }, [data.rotationIndex, activeTier, data.tierSelections, data.prompts]);
+
   const activeDisplay = TIER_DISPLAYS.find((d) => d.key === activeTier)!;
   const promptText = data.prompts[activeTier];
   const providers = data.tierProviders[activeTier];
@@ -1043,27 +1064,53 @@ function LocalClock({ time }: { time: string }) {
 }
 
 // ============================================================================
-// COUNTDOWN TIMER — Live MM:SS until next city rotation
+// COUNTDOWN TIMER — 3-state anticipation display
+// ============================================================================
+// Normal  (3:00 → 0:30):  "🇯🇵 Sapporo arriving in 2:47"  (city=white, rest=amber)
+// Imminent (0:29 → 0:04): "🇯🇵 Sapporo in 0:12"           (city=white, rest=amber bright)
+// Now      (0:03 → 0:00): "🇯🇵 Now"                        (all amber bright)
+//
+// Human factors:
+//   §1  Curiosity Gap (Loewenstein) — city name lets brain visualise before arrival
+//   §3  Anticipatory Dopamine (Schultz) — state change at 30s creates acceleration
+//   §6  Temporal Compression (Eagleman) — visual state change = perceived speed-up
+//   §11 Cognitive Load (Sweller) — "Live weather prompt" preamble dropped (extraneous)
+//   §12 Von Restorff (isolation) — city name white, time amber = hierarchy within line
+//   §17 Dark Interface Colour — white city pops; amber time is warm subordinate
+//
+// Flag size: matches Community Pulse (clamp 18→24px × 14→18px)
+// Gap: 2× standard (clamp 8→12px) for breathing room between flag and city
 // ============================================================================
 
-function CountdownTimer({ nextRotationAt: _nextRotationAt }: { nextRotationAt: string }) {
-  const [remaining, setRemaining] = useState('');
+/** Shared flag style — matches Community Pulse flag dimensions */
+const COUNTDOWN_FLAG_STYLE: React.CSSProperties = {
+  width: 'clamp(18px, 1.5vw, 24px)',
+  height: 'clamp(14px, 1.1vw, 18px)',
+};
+
+/** Shared gap between flag and text — 2× normal for visual breathing room */
+const COUNTDOWN_GAP: React.CSSProperties = {
+  gap: 'clamp(8px, 0.6vw, 12px)',
+};
+
+function CountdownTimer({
+  nextCity,
+  nextCountryCode,
+}: {
+  nextCity: string;
+  nextCountryCode: string;
+}) {
+  const [totalSec, setTotalSec] = useState(180);
 
   useEffect(() => {
-    // Compute next rotation client-side using the same deterministic math
-    // as the API: 10-minute slots. This avoids stale cached nextRotationAt
-    // from Vercel CDN causing the counter to stick at 0:00.
-    const ROTATION_MS = 10 * 60 * 1000;
+    const ROTATION_MS = 3 * 60 * 1000;
 
     function tick() {
       const now = Date.now();
       const currentSlot = Math.floor(now / ROTATION_MS);
       const nextBoundary = (currentSlot + 1) * ROTATION_MS;
       const diff = Math.max(0, nextBoundary - now);
-      const totalSec = Math.floor(diff / 1000);
-      const m = Math.floor(totalSec / 60);
-      const s = totalSec % 60;
-      setRemaining(`${m}:${s.toString().padStart(2, '0')}`);
+      setTotalSec(Math.floor(diff / 1000));
     }
 
     tick();
@@ -1071,7 +1118,65 @@ function CountdownTimer({ nextRotationAt: _nextRotationAt }: { nextRotationAt: s
     return () => clearInterval(id);
   }, []);
 
-  return <span className="tabular-nums">{remaining}</span>;
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  const timeStr = `${m}:${s.toString().padStart(2, '0')}`;
+  const flagSrc = `/flags/${nextCountryCode.toLowerCase()}.svg`;
+
+  // State: Now (0:03 → 0:00) — maximum brightness, single word
+  if (totalSec <= 3) {
+    return (
+      <span className="inline-flex items-center" style={COUNTDOWN_GAP}>
+        <Image
+          src={flagSrc}
+          alt={nextCountryCode}
+          width={24}
+          height={18}
+          className="inline-block rounded-sm object-cover"
+          style={COUNTDOWN_FLAG_STYLE}
+        />
+        <span className="tabular-nums font-semibold text-amber-300" style={{ filter: 'brightness(1.3)' }}>
+          Now
+        </span>
+      </span>
+    );
+  }
+
+  // State: Imminent (0:29 → 0:04) — city white, time amber bright, shorter text
+  if (totalSec <= 29) {
+    return (
+      <span className="inline-flex items-center" style={COUNTDOWN_GAP}>
+        <Image
+          src={flagSrc}
+          alt={nextCountryCode}
+          width={24}
+          height={18}
+          className="inline-block rounded-sm object-cover"
+          style={COUNTDOWN_FLAG_STYLE}
+        />
+        <span className="text-white font-medium">{nextCity}</span>
+        <span className="tabular-nums text-amber-400/90" style={{ filter: 'brightness(1.15)' }}>
+          in {timeStr}
+        </span>
+      </span>
+    );
+  }
+
+  // State: Normal (3:00 → 0:30) — city white, "arriving in" amber
+  return (
+    <span className="inline-flex items-center" style={COUNTDOWN_GAP}>
+      <Image
+        src={flagSrc}
+        alt={nextCountryCode}
+        width={24}
+        height={18}
+        className="inline-block rounded-sm object-cover"
+        style={COUNTDOWN_FLAG_STYLE}
+      />
+      <span className="text-white font-medium">{nextCity}</span>
+      <span className="tabular-nums">arriving in {timeStr}</span>
+    </span>
+  );
 }
 
 // ============================================================================
@@ -1283,7 +1388,7 @@ export default function PromptShowcase({ selectedProviderId, onTierChange }: { s
           className="ml-auto italic text-amber-400/80 truncate"
           style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1rem)' }}
         >
-          Live weather prompt · next city in <CountdownTimer nextRotationAt={data.nextRotationAt} />
+          <CountdownTimer nextCity={data.nextCity ?? 'Loading'} nextCountryCode={data.nextCountryCode ?? 'XX'} />
         </span>
       </div>
 

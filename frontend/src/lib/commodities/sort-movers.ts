@@ -46,51 +46,60 @@ import { getRetailConfigForRegion } from '@/lib/commodities/retail-units';
 // ============================================================================
 
 const COMMODITY_BRAND_COLOURS: Record<string, string> = {
-  // Energy - vibrant colours
-  brent_crude: '#EF4444',
-  brent: '#EF4444',
-  wti_crude: '#F97316',
-  wti: '#F97316',
-  ttf_natural_gas: '#00CED1',
-  henry_hub_gas: '#00B4D8',
+  // 8 bright colours, cycled. No slate, no near-white, no duplicates for
+  // commodities that commonly appear together in winners/losers.
+  // Red=#EF4444  Orange=#F97316  Gold=#EAB308  Green=#22C55E
+  // Cyan=#06B6D4  Blue=#3B82F6  Purple=#A855F7  Pink=#EC4899
+
+  // Energy
+  gasoline: '#F97316',    // Orange
 
   // Precious metals
-  gold: '#FFD700',
-  silver: '#C0C0C0',
-  platinum: '#E5E4E2',
-  palladium: '#CED0CE',
+  gold: '#EAB308',        // Gold
+  silver: '#06B6D4',      // Cyan
+  platinum: '#3B82F6',    // Blue
 
-  // Base metals - more vibrant
-  copper: '#F97316',
-  aluminum: '#94A3B8',
-  zinc: '#A1A1AA',
-  nickel: '#84CC16',
-  lead: '#78716C',
-  tin: '#E2E8F0',
+  // Other
+  lumber: '#22C55E',      // Green
 
-  // Agriculture - Grains
-  wheat: '#F59E0B',
-  corn: '#FACC15',
-  soybeans: '#A3E635',
-  rice: '#FEF3C7',
-  oats: '#D97706',
+  // Grains
+  wheat: '#F97316',       // Orange
+  corn: '#EAB308',        // Gold
+  soybeans: '#22C55E',    // Green
+  rice: '#A855F7',        // Purple
+  oat: '#06B6D4',         // Cyan
+  barley: '#3B82F6',      // Blue
 
-  // Agriculture - Softs - VIBRANT
-  coffee: '#DC2626',
-  sugar: '#A855F7',
-  cocoa: '#92400E',
-  cotton: '#F8FAFC',
-  orange_juice: '#FB923C',
+  // Softs
+  coffee: '#EF4444',      // Red
+  sugar: '#A855F7',       // Purple
+  cocoa: '#EC4899',       // Pink
+  cotton: '#3B82F6',      // Blue
+  orange_juice: '#F97316', // Orange
+  tea: '#22C55E',         // Green
+
+  // Dairy & Eggs
+  milk: '#06B6D4',        // Cyan
+  cheese: '#EAB308',      // Gold
+  butter: '#EC4899',      // Pink
+  eggs_us: '#A855F7',     // Purple
+  eggs_ch: '#EF4444',     // Red
 
   // Livestock
-  live_cattle: '#B45309',
-  lean_hogs: '#EC4899',
-  feeder_cattle: '#C2410C',
+  beef: '#EF4444',        // Red
+  live_cattle: '#F97316', // Orange
+  feeder_cattle: '#EC4899', // Pink
+  lean_hogs: '#A855F7',   // Purple
+  poultry: '#06B6D4',     // Cyan
 
-  // Industrial
-  iron_ore: '#B7410E',
-  lumber: '#CA8A04',
-  rubber: '#475569',
+  // Oils & other agriculture
+  palm_oil: '#EAB308',    // Gold
+  canola: '#22C55E',      // Green
+  rapeseed: '#3B82F6',    // Blue
+  sunflower_oil: '#F97316', // Orange
+  potatoes: '#EC4899',    // Pink
+  salmon: '#EF4444',      // Red
+  wool: '#3B82F6',        // Blue
 };
 
 const DEFAULT_BRAND_COLOUR = '#38BDF8'; // Cyan fallback
@@ -165,8 +174,8 @@ function formatCommodityPrice(value: number, unit: string, quoteCurrency: string
     maximumFractionDigits: 2,
   });
 
-  // Format: "$63.34/bbl" (no space between price and unit)
-  return `${currencySymbol}${formatted}${unit}`;
+  // Format: "$ 63.34/bbl" (thin space between symbol and price for readability)
+  return `${currencySymbol}\u2009${formatted}${unit}`;
 }
 
 // ============================================================================
@@ -204,7 +213,7 @@ function formatRetailPrice(
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
-    return `${symbol}${formatted} / ${retailConfig.unit}`;
+    return `${symbol}\u2009${formatted} / ${retailConfig.unit}`;
   }
 
   // Fallback: no retail config, format raw price at 2dp
@@ -212,7 +221,7 @@ function formatRetailPrice(
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  return `${symbol}${formatted}`;
+  return `${symbol}\u2009${formatted}`;
 }
 
 /**
@@ -283,6 +292,7 @@ export interface CommodityCatalogEntry {
   ribbonSubtext?: string; // e.g., "USD/BBL" - contains unit info
   yearFirstTraded?: number;
   fact?: string;
+  group?: string; // 'energy' | 'agriculture' | 'metals'
 }
 
 // ============================================================================
@@ -449,6 +459,9 @@ export function sortCommoditiesIntoMovers(
       deltaPct: item.deltaPct,
       direction,
       brandColor: COMMODITY_BRAND_COLOURS[item.id] ?? DEFAULT_BRAND_COLOUR,
+      group: item.catalog.group ?? 'metals',
+      fact: item.catalog.fact ?? null,
+      yearFirstTraded: item.catalog.yearFirstTraded ?? null,
       tooltipTitle: item.catalog.name,
       tooltipLines: buildTooltipLines(item.catalog),
       // v2.3: Currency conversion fields with flag support

@@ -328,25 +328,11 @@ interface FreeTooltipContentProps {
   copied: boolean;
 }
 
-/** Group label for the tooltip header */
-const GROUP_LABELS: Record<CommodityGroup, string> = {
-  energy: 'Energy',
-  agriculture: 'Agriculture',
-  metals: 'Metals',
-};
-
-/** Group badge colours */
-const GROUP_BADGE_CLASSES: Record<CommodityGroup, string> = {
-  energy: 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30',
-  agriculture: 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30',
-  metals: 'bg-slate-400/20 text-slate-300 ring-1 ring-slate-400/30',
-};
-
 function FreeTooltipContent({
   prompt,
   tier,
   glowColor,
-  group,
+  group: _group,
   position,
   verticalPosition,
   onMouseEnter,
@@ -396,7 +382,7 @@ function FreeTooltipContent({
 
       {/* Content */}
       <div className="relative z-10 flex flex-col gap-3">
-        {/* Header */}
+        {/* Header — title + copy (top-right) */}
         <div className="flex items-center justify-between gap-2 mb-1">
           <span
             className="text-base font-semibold text-white"
@@ -404,13 +390,11 @@ function FreeTooltipContent({
           >
             Image Prompt
           </span>
-          <span className={`px-2 py-0.5 text-xs font-medium rounded ${GROUP_BADGE_CLASSES[group]}`}>
-            {GROUP_LABELS[group]}
-          </span>
+          <CopyIcon onClick={onCopy} copied={copied} />
         </div>
 
         {/* Tier indicator */}
-        <span className="text-xs text-slate-500 -mt-1">
+        <span className="text-xs text-slate-400 -mt-1">
           Tier {tier}: {TIER_META[tier]?.label ?? 'Plain'}
         </span>
 
@@ -421,11 +405,6 @@ function FreeTooltipContent({
         >
           {prompt}
         </p>
-
-        {/* Copy button row */}
-        <div className="flex justify-end mt-2 pt-3 border-t border-white/10">
-          <CopyIcon onClick={onCopy} copied={copied} />
-        </div>
       </div>
     </div>
   );
@@ -451,7 +430,7 @@ function ProTooltipContent({
   allPrompts,
   activeTier,
   glowColor,
-  group,
+  group: _group,
   position,
   verticalPosition,
   onMouseEnter,
@@ -522,20 +501,13 @@ function ProTooltipContent({
           >
             Image Prompt
           </span>
-          <div className="flex items-center gap-2">
-            <span
-              className={`px-2 py-0.5 text-xs font-medium rounded ${GROUP_BADGE_CLASSES[group]}`}
-            >
-              {GROUP_LABELS[group]}
-            </span>
-            <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
-              PRO
-            </span>
-          </div>
+          <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
+            PRO
+          </span>
         </div>
 
         {/* Subtitle */}
-        <p className="text-[11px] text-slate-500 -mt-1">
+        <p className="text-[11px] text-slate-400 -mt-1">
           4 platform-optimised prompts
           {blueprintUsed && <span className="text-slate-600 ml-1">· Blueprint</span>}
         </p>

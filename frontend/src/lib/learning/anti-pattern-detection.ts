@@ -34,6 +34,7 @@ import { flattenSelections } from '@/lib/learning/decay';
 import {
   computeOutcomeScore,
   computeConfidenceMultiplier,
+  outcomeWithFeedback,
 } from '@/lib/learning/outcome-score';
 
 // ============================================================================
@@ -351,7 +352,7 @@ function buildPairCounts(
  * @returns Weighted outcome score (0–1.35 in theory, typically 0–1)
  */
 function computeWeightedOutcome(evt: PromptEventRow): number {
-  const rawOutcome = computeOutcomeScore(evt.outcome);
+  const rawOutcome = computeOutcomeScore(outcomeWithFeedback(evt.outcome, evt.feedback_rating, evt.feedback_credibility));
   const confidence = computeConfidenceMultiplier({
     userTier: evt.user_tier ?? null,
     accountAgeDays: evt.account_age_days ?? null,

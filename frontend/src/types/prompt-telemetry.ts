@@ -262,6 +262,14 @@ export const PromptTelemetryEventSchema = z.object({
   activeVariant: z
     .enum(['A', 'B'])
     .optional(),
+
+  // ── Showcase telemetry (Gap 2) — deterministic ID for idempotent inserts ──
+  deterministicId: z
+    .string()
+    .min(1, 'deterministicId must not be empty')
+    .max(128, 'deterministicId must be <= 128 chars')
+    .regex(/^[a-z0-9:_-]+$/, 'deterministicId must be lowercase alphanumeric with colons/hyphens/underscores')
+    .optional(),
 });
 
 /**

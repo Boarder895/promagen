@@ -13,20 +13,20 @@
  * - 78 commodities to cycle through
  * - Rolling lets us fetch continuously without complex slot math
  *
- * TIMING (UPDATED 2026-02-08):
- * - 1 API call every 5 minutes
- * - 78 commodities × 5 min = 390 min (~6.5 hours) per full cycle
- * - Cycles/day: ~3.7
- * - Calls/day: ~288
- * - Combined with Indices (~96/day): ~384/day total Marketstack
- * - Budget: 3,333/day (Professional tier) → 11.5% usage
- * - Headroom: ~88%
+ * TIMING (UPDATED 2026-03-08):
+ * - 1 API call every 2.5 minutes
+ * - 34 commodities × 2.5 min = 85 min (~1.4 hours) per full cycle
+ * - Cycles/day: ~17
+ * - Calls/day: ~576
+ * - Combined with Indices (~96/day): ~672/day total Marketstack
+ * - Budget: 3,333/day (Professional tier) → 20% usage
+ * - Headroom: ~80%
  *
  * RANDOMISATION (UPDATED 2026-02-08):
  * - Queue is FULLY SHUFFLED each cycle using Fisher-Yates algorithm
- * - ALL 78 commodities are randomised — no tiers, no priority ordering
+ * - ALL 34 commodities are randomised — no tiers, no priority ordering
  * - Every commodity has equal chance of being fetched first
- * - With 78! permutations (~1.1 × 10^115) the sequence never repeats
+ * - With 34! permutations the sequence never repeats
  *
  * Security: 10/10
  * - No external inputs (schedule is fully random each cycle)
@@ -46,16 +46,16 @@ import { logInfo, logDebug, logWarn } from '../lib/logging.js';
 
 /**
  * Interval between individual commodity fetches, in milliseconds.
- * Default: 5 minutes (300,000 ms).
+ * Default: 2.5 minutes (150,000 ms).
  *
- * Budget math:
- * - 78 commodities × 5 min = 390 min (~6.5 hours) per full cycle
- * - Cycles/day: ~3.7
- * - Calls/day: ~288
- * - Combined with Indices (~96/day): ~384/day total Marketstack
- * - Budget: 3,333/day → 11.5% usage, 88% headroom
+ * Budget math (updated 8 Mar 2026 — 34 commodities):
+ * - 34 commodities × 2.5 min = 85 min (~1.4 hours) per full cycle
+ * - Cycles/day: ~17
+ * - Calls/day: ~576
+ * - Combined with Indices (~96/day): ~672/day total Marketstack
+ * - Budget: 3,333/day → 20% usage, 80% headroom
  */
-const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const DEFAULT_INTERVAL_MS = 2.5 * 60 * 1000; // 2.5 minutes
 
 /**
  * Minimum interval guard (prevents accidental thrashing).
@@ -314,7 +314,7 @@ export function createCommoditiesRollingScheduler(
       cycleCount = 0;
       running = true;
 
-      logInfo('Commodities rolling scheduler started (5-min, fully randomised)', {
+      logInfo('Commodities rolling scheduler started (2.5-min, fully randomised)', {
         intervalMs: effectiveInterval,
         intervalMinutes: Math.round(effectiveInterval / 60_000),
         totalCommodities: allIds.length,

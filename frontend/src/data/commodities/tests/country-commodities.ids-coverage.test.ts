@@ -28,26 +28,16 @@ interface WrongGroupEntry {
 }
 
 /**
- * Known ID naming divergence: country-commodities.map.json uses specific
- * benchmark names (e.g. "brent_crude", "wti_crude") while
- * commodities.catalog.json uses simpler canonical names (e.g. "brent",
- * "crude_oil"). These are acknowledged and tracked here so the test still
- * catches NEW unexpected references.
+ * Known ID naming divergence: country-commodities.map.json may use
+ * benchmark names that differ from commodities.catalog.json IDs.
  *
- * TODO: reconcile naming conventions in a dedicated data-alignment pass.
+ * Updated 8 Mar 2026: Catalog trimmed to 34 everyday commodities.
+ * All removed IDs also cleaned from the country map — no gaps remain.
  */
 const KNOWN_NAMING_GAPS: Record<CommodityGroupKey, Set<string>> = {
-  energy: new Set([
-    'brent_crude', 'dubai_crude', 'gasoil_ulsd', 'gasoline_rbob',
-    'lng_jkm', 'natural_gas_henry_hub', 'nbp_natural_gas',
-    'ttf_natural_gas', 'urals_crude', 'wcs_crude', 'wti_crude',
-  ]),
-  agriculture: new Set([
-    'dates', 'phosphates', 'potash', 'rapeseed_canola',
-  ]),
-  metals: new Set([
-    'aluminium', 'bauxite', 'chromium', 'steel_rebar', 'titanium_ore',
-  ]),
+  energy: new Set([]),
+  agriculture: new Set([]),
+  metals: new Set([]),
 };
 
 function assertIdsExistAndGroupMatch(
@@ -98,7 +88,7 @@ function assertIdsExistAndGroupMatch(
 }
 
 describe('country-commodities.map commodity id coverage', () => {
-  const rows = countryCommodityMapJson as CountryCommodityMapEntry[];
+  const rows = countryCommodityMapJson as unknown as CountryCommodityMapEntry[];
   const commodityById = buildCommodityIndex();
 
   it('only references valid energy commodity ids in energy columns', () => {

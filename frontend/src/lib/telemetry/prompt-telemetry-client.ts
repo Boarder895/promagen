@@ -333,3 +333,88 @@ export async function sendPromptTelemetry(input: TelemetryInput): Promise<string
     return null;
   }
 }
+
+// ============================================================================
+// SHOWCASE TELEMETRY — PotM prompt viewing creates a real prompt_events row
+// ============================================================================
+//
+// Gap 2 Fix (7 March 2026): When a user views a PotM prompt, this fires a
+// lightweight telemetry event with a DETERMINISTIC ID. The ID matches what
+// FeedbackWidget sends as its itemId, so when the user clicks 👍👌👎, the
+// feedback links to a real prompt_events row with full term selections.
+//
+// The learning pipeline can then trace:
+//   user rated 👎 → prompt had terms X, Y, Z → those terms get penalised
+//
+// Deterministic ID: `potm:{rotationIndex}:tier{tierNumber}`
+// ON CONFLICT (id) DO NOTHING: same prompt viewed 10 times = 1 row
+//
+// No quality gates — PotM prompts are weather-generated through the full
+// 12-category pipeline, always high quality. Score fixed at 95.
+//
+// Fire-and-forget. Returns the deterministic ID immediately (no async wait).
+// ============================================================================
+
+export interface ShowcaseTelemetryInput {
+  /** Current rotation index (0–101) */
+  rotationIndex: number;
+  /** Tier number (1–4) */
+  tier: PlatformTierId;
+  /** Full category selections from tierSelections[tier].categoryMap */
+  selections: PromptSelections;
+  /** Assembled prompt text for this tier */
+  promptText: string;
+  /** Reference platform for this tier (e.g. 'leonardo' for tier 1) */
+  platformId: string;
+}
+
+/**
+ * Fire telemetry for a PotM prompt view.
+ *
+ * Creates a real prompt_events row that FeedbackWidget can link against.
+ * Uses a deterministic ID so multiple views of the same prompt are idempotent.
+ *
+ * @returns The deterministic event ID (available immediately, no async wait)
+ */
+export function sendShowcaseTelemetry(input: ShowcaseTelemetryInput): string {
+  const deterministicId = `potm:${input.rotationIndex}:tier${input.tier}`;
+
+  // Count categories with at least 1 selection
+  const categoryCount = Object.values(input.selections).filter(
+    (terms) => Array.isArray(terms) && terms.length > 0,
+  ).length;
+
+  // Don't fire if selections are empty (data not loaded yet)
+  if (categoryCount < 1) return deterministicId;
+
+  const event = {
+    sessionId: getSessionId(),
+    attemptNumber: 1,
+    selections: input.selections,
+    categoryCount,
+    charLength: input.promptText.length,
+    score: 95,
+    scoreFactors: { coherence: 95, fill: 95, conflicts: 0 },
+    platform: input.platformId.toLowerCase(),
+    tier: input.tier,
+    sceneUsed: null,
+    outcome: {
+      copied: false,
+      saved: false,
+      returnedWithin60s: false,
+      reusedFromLibrary: false,
+    },
+    deterministicId,
+  };
+
+  // Fire-and-forget — never blocks the UI
+  void fetch(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(event),
+  }).catch(() => {
+    // Silent — telemetry must never break the UI
+  });
+
+  return deterministicId;
+}

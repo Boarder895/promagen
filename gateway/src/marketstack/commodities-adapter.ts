@@ -9,7 +9,9 @@
  *
  * API Endpoint: GET /v2/commodities?commodity_name=X
  * Rate Limit: 1 call/minute (hard endpoint limit)
- * Our cadence: 1 call every 2 minutes (safely within limit)
+ * Our cadence: 1 call every 2.5 minutes (safely within limit)
+ *
+ * Updated: 8 Mar 2026 — trimmed to 34 everyday commodities (from 78)
  *
  * Mapping: Catalog ID → Marketstack commodity_name
  *   catalog: "iron_ore"      → API: "iron ore"
@@ -61,70 +63,20 @@ const REQUEST_TIMEOUT_MS = 15_000;
  */
 const CATALOG_TO_MARKETSTACK: Record<string, string> = {
   // ═══════════════════════════════════════════════════════════════════════════
-  // ENERGY (single-word and special mappings)
+  // ENERGY (1 item)
   // ═══════════════════════════════════════════════════════════════════════════
-  brent_crude: 'brent',
-  brent: 'brent',
-  wti_crude: 'crude oil', // Marketstack name is "crude oil"
-  coal: 'coal',
-  ethanol: 'ethanol',
   gasoline: 'gasoline',
-  propane: 'propane',
-  naphtha: 'naphtha',
-  uranium: 'uranium',
-  bitumen: 'bitumen',
-  methanol: 'methanol',
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // ENERGY (double-word)
-  // ═══════════════════════════════════════════════════════════════════════════
-  crude_oil: 'crude oil',
-  natural_gas: 'natural gas',
-  ttf_natural_gas: 'ttf gas', // FIXED: was 'natural gas', should be 'ttf gas'
-  ttf_gas: 'ttf gas',
-  uk_gas: 'uk gas',
-  heating_oil: 'heating oil',
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // METALS (single-word)
+  // METALS (3 items)
   // ═══════════════════════════════════════════════════════════════════════════
   gold: 'gold',
   silver: 'silver',
-  copper: 'copper',
-  aluminum: 'aluminum',
-  aluminium: 'aluminum', // UK → US spelling
   platinum: 'platinum',
-  palladium: 'palladium',
-  rhodium: 'rhodium',
-  zinc: 'zinc',
-  nickel: 'nickel',
-  tin: 'tin',
-  lead: 'lead',
-  cobalt: 'cobalt',
-  lithium: 'lithium',
-  steel: 'steel',
   lumber: 'lumber',
-  titanium: 'titanium',
-  magnesium: 'magnesium',
-  manganese: 'manganese',
-  molybdenum: 'molybdenum',
-  gallium: 'gallium',
-  germanium: 'germanium',
-  indium: 'indium',
-  neodymium: 'neodymium',
-  tellurium: 'tellurium',
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // METALS (double-word)
-  // ═══════════════════════════════════════════════════════════════════════════
-  iron_ore: 'iron ore',
-  iron_ore_cny: 'iron ore cny',
-  hrc_steel: 'hrc steel',
-  soda_ash: 'soda ash',
-  kraft_pulp: 'kraft pulp',
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // AGRICULTURE (single-word)
+  // AGRICULTURE — single-word (20 items)
   // ═══════════════════════════════════════════════════════════════════════════
   coffee: 'coffee',
   sugar: 'sugar',
@@ -138,7 +90,6 @@ const CATALOG_TO_MARKETSTACK: Record<string, string> = {
   barley: 'barley',
   canola: 'canola',
   rapeseed: 'rapeseed',
-  rubber: 'rubber',
   wool: 'wool',
   tea: 'tea',
   milk: 'milk',
@@ -148,10 +99,9 @@ const CATALOG_TO_MARKETSTACK: Record<string, string> = {
   poultry: 'poultry',
   salmon: 'salmon',
   potatoes: 'potatoes',
-  urea: 'urea',
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // AGRICULTURE (double-word)
+  // AGRICULTURE — double-word (9 items)
   // ═══════════════════════════════════════════════════════════════════════════
   orange_juice: 'orange juice',
   palm_oil: 'palm oil',
@@ -161,14 +111,6 @@ const CATALOG_TO_MARKETSTACK: Record<string, string> = {
   feeder_cattle: 'feeder cattle',
   eggs_ch: 'eggs ch',
   eggs_us: 'eggs us',
-  di_ammonium: 'di-ammonium', // Note: hyphen in Marketstack name
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PLASTICS/CHEMICALS
-  // ═══════════════════════════════════════════════════════════════════════════
-  polyethylene: 'polyethylene',
-  polypropylene: 'polypropylene',
-  polyvinyl: 'polyvinyl',
 };
 
 // =============================================================================
@@ -182,11 +124,9 @@ const CATALOG_TO_MARKETSTACK: Record<string, string> = {
 //   CBOT grains:   corn, wheat, soybeans, oat → cents/bushel
 //   CME livestock: live_cattle, lean_hogs, feeder_cattle → cents/lb
 //
-// UK exchange (1):
-//   ICE Europe:    uk_gas → pence/therm (85.98p = £0.8598)
-//
 // Verified against Marketstack API responses (8 Feb 2026).
-// All other 66 commodities quote in base-currency units (no conversion).
+// Updated: 8 Mar 2026 — removed uk_gas and rubber (no longer in catalog).
+// All other commodities quote in base-currency units (no conversion).
 // =============================================================================
 
 const CENTS_TO_DOLLARS: Record<string, number> = {
@@ -206,12 +146,6 @@ const CENTS_TO_DOLLARS: Record<string, number> = {
   live_cattle: 100,
   lean_hogs: 100,
   feeder_cattle: 100,
-
-  // ICE Europe NBP (pence/therm)
-  uk_gas: 100,
-
-  // SGX (cents/kg)
-  rubber: 100,
 };
 
 /**

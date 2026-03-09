@@ -7,14 +7,14 @@
  * Both use the same underlying Marketstack API key, but tracking
  * them separately gives cleaner /trace visibility per feed.
  *
- * Budget Math (2-minute rolling interval):
- * - Commodities per cycle: 78 × 2 min = 156 min (~2.6 hours)
- * - Cycles per day: ~9.2
- * - Commodity calls/day: ~720
- * - Combined with Indices (~96/day): ~816/day total Marketstack
+ * Budget Math (2.5-minute rolling interval, 34 commodities):
+ * - Commodities per cycle: 34 × 2.5 min = 85 min (~1.4 hours)
+ * - Cycles per day: ~17
+ * - Commodity calls/day: ~576
+ * - Combined with Indices (~96/day): ~672/day total Marketstack
  * - Total Marketstack budget: 3,333/day (Professional tier)
- * - Usage: ~24.5% of budget
- * - Headroom: ~2,517 calls for future FX migration
+ * - Usage: ~20% of budget
+ * - Headroom: ~2,661 calls remaining
  *
  * This tracker enforces a commodities-specific daily cap
  * (default 1000/day) to prevent runaway usage from starving indices.
@@ -44,8 +44,8 @@ import type {
  * Get commodities daily limit from env or default.
  * Reads at call time (not module load) to ensure env vars are available.
  *
- * Default: 1000/day — generous cap for ~720 expected daily calls.
- * Leaves ~2,333 for indices and future FX.
+ * Default: 1000/day — generous cap for ~576 expected daily calls.
+ * Leaves ~2,333 for indices and future feeds.
  */
 function getCommoditiesDailyLimit(): number {
   const val = process.env['COMMODITIES_BUDGET_DAILY'] ?? '1000';
@@ -57,7 +57,7 @@ function getCommoditiesDailyLimit(): number {
  * Get commodities minute limit from env or default.
  *
  * Marketstack commodities endpoint: 1 call/minute hard limit.
- * Our cadence: 1 call every 2 minutes.
+ * Our cadence: 1 call every 2.5 minutes.
  * Cap at 1/minute as a safety guardrail.
  */
 function getCommoditiesMinuteLimit(): number {

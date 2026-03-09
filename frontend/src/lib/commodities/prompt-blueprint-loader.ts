@@ -37,7 +37,6 @@ import type {
 import energyJson from '@/data/commodities/prompts/energy.json';
 import agricultureJson from '@/data/commodities/prompts/agriculture.json';
 import metalsJson from '@/data/commodities/prompts/metals.json';
-import plasticsJson from '@/data/commodities/prompts/plastics.json';
 import timeOfDayJson from '@/data/commodities/prompts/time-of-day.json';
 
 // ============================================================================
@@ -46,7 +45,8 @@ import timeOfDayJson from '@/data/commodities/prompts/time-of-day.json';
 
 /**
  * Master index: commodityId → CommodityBlueprint.
- * All 78 commodities from all 4 files merged into one Map.
+ * All 34 commodities from 3 files merged into one Map.
+ * (Plastics removed 8 Mar 2026 — polyethylene, polypropylene, polyvinyl cut.)
  *
  * If a commodity ID appears in multiple files (shouldn't happen),
  * the later file wins — but the JSONs are non-overlapping by design.
@@ -72,7 +72,6 @@ function loadBlueprintFile(file: BlueprintFile): void {
 loadBlueprintFile(energyJson as unknown as BlueprintFile);
 loadBlueprintFile(agricultureJson as unknown as BlueprintFile);
 loadBlueprintFile(metalsJson as unknown as BlueprintFile);
-loadBlueprintFile(plasticsJson as unknown as BlueprintFile);
 
 // ============================================================================
 // TIME-OF-DAY INDEX

@@ -150,7 +150,7 @@ function normaliseCountryName(name: string): string {
 export function getCountryCommodityChips(country: string): CountryCommodityChips | undefined {
   const wanted = normaliseCountryName(country);
 
-  const rows = countryCommodityMapJson as CountryCommodityMapEntry[];
+  const rows = countryCommodityMapJson as unknown as CountryCommodityMapEntry[];
 
   // First try exact label match (emoji + name)
   const exact = rows.find((row) => row.country === country);

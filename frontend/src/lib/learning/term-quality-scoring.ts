@@ -30,7 +30,7 @@
 // Existing features preserved: Yes.
 // ============================================================================
 
-import { computeOutcomeScore } from '@/lib/learning/outcome-score';
+import { computeOutcomeScore, outcomeWithFeedback } from '@/lib/learning/outcome-score';
 import type { PromptEventRow } from '@/lib/learning/database';
 
 // ============================================================================
@@ -137,8 +137,10 @@ export function computeTermQualityScores(
     return buildEmptyResult(events.length, now);
   }
 
-  // Pre-compute outcome scores once
-  const outcomeScores = events.map((e) => computeOutcomeScore(e.outcome));
+  // Pre-compute outcome scores once (feedback-aware — Gap 1 fix)
+  const outcomeScores = events.map((e) =>
+    computeOutcomeScore(outcomeWithFeedback(e.outcome, e.feedback_rating, e.feedback_credibility)),
+  );
 
   // Group events + outcomes by tier
   const tierGroups = groupByTier(events, outcomeScores);

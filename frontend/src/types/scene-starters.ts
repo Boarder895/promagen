@@ -216,6 +216,12 @@ export interface SceneEntry {
   flavourPhrases?: FlavourPhrases;
   /** Searchable tags for filtering (3–12 per scene) */
   tags: string[];
+  /** Scene mood: 'calm', 'intense', or 'neutral' — used for filtering */
+  mood?: 'calm' | 'intense' | 'neutral';
+  /** Suggested colour palette for this scene (3–5 colours) */
+  suggestedColours?: string[];
+  /** Pre-assembled Tier 3 example prompt showing the scene at its best */
+  examplePrompt?: string;
 }
 
 // ============================================================================

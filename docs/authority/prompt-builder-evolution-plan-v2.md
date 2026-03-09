@@ -1,6 +1,6 @@
 # Prompt Builder Evolution Plan v2.0
 
-**Version:** 2.3.0
+**Version:** 2.4.0
 **Created:** 2026-02-24
 **Last Updated:** 2026-03-07
 **Status:** ✅ ALL PHASES COMPLETE — Phases 0–7.11 delivered
@@ -23,10 +23,10 @@
 | **4**    | Polish & Integration            | ✅ COMPLETE | Scene flavour phrases wired, analytics events, fluid typography, Phase 4 tests                                    |
 | **5**    | Collective Intelligence Engine  | ✅ COMPLETE | Telemetry endpoint, 17-layer aggregation cron (1,565 lines), 17 learning API routes                               |
 | **6**    | Self-Improving Scorer           | ✅ COMPLETE | 14,438 LOC across 35 learning engine files, 5 recalibration mechanisms                                            |
-| **7.1**  | Negative Pattern Learning       | ✅ COMPLETE | Anti-pattern detection (370 lines) + collision matrix (346 lines) + lookups                                       |
+| **7.1**  | Negative Pattern Learning       | ✅ COMPLETE | Anti-pattern detection (371 lines) + collision matrix (346 lines) + lookups                                       |
 | **7.2**  | Iteration Tracking              | ✅ COMPLETE | Session sequence tracking (642 lines) + weak term lookup (177 lines)                                              |
 | **7.3**  | Semantic Redundancy Detection   | ✅ COMPLETE | Redundancy detection (574 lines) + lookup (246 lines)                                                             |
-| **7.4**  | Higher-Order Combinations       | ✅ COMPLETE | Magic combo mining (595 lines) + combo lookup (366 lines)                                                         |
+| **7.4**  | Higher-Order Combinations       | ✅ COMPLETE | Magic combo mining (596 lines) + combo lookup (366 lines)                                                         |
 | **7.5**  | Per-Platform Learning           | ✅ COMPLETE | Platform term quality (520 lines) + platform co-occurrence (423 lines) + lookups                                  |
 | **7.6**  | A/B Testing Pipeline            | ✅ COMPLETE | 1,028-line A/B engine + deterministic hash assignment + lift distribution + adaptive peek scheduling              |
 | **7.7**  | Vocabulary Crowdsourcing        | ✅ COMPLETE | 3,659 LOC: 3-layer dedup, smart category suggestion, admin review with batch workflow                             |
@@ -35,7 +35,7 @@
 | **7.10** | User Feedback Invitation        | ✅ COMPLETE | 4-factor credibility scoring, feedback client, streaks, scene enhancer, confidence halos, feedback memory hook    |
 | **7.11** | Admin Command Centre            | ✅ COMPLETE | 12 live dashboard sections, 19 components (8,154 lines), 18 API routes (5,264 lines), 8 lib modules (3,176 lines) |
 
-**Total LOC delivered:** ~47,100+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, feedback, and crowdsourcing pipeline.
+**Total LOC delivered:** ~47,400+ across learning engines, prompt intelligence, telemetry, admin UI, scene system, vocab merge, feedback, and crowdsourcing pipeline.
 
 ---
 
@@ -499,7 +499,7 @@ When 237+ prompts share similar selections and score 90%+, propose new scene. Go
 | Telemetry endpoint  | `src/app/api/prompt-telemetry/route.ts`        | 264   |
 | Telemetry client    | `src/lib/telemetry/prompt-telemetry-client.ts` | 322   |
 | A/B hash util       | `src/lib/telemetry/ab-hash.ts`                 | 85    |
-| Database operations | `src/lib/learning/database.ts`                 | 721   |
+| Database operations | `src/lib/learning/database.ts`                 | 1,037 |
 
 Telemetry wired into `prompt-builder.tsx` at two copy paths (lines 1143 and 1217) as fire-and-forget.
 
@@ -588,13 +588,13 @@ Measure correlation between each scoring factor and outcomes. Recalibrate via Pe
 **Mechanism 2 — Threshold Discovery** (`threshold-discovery.ts`, 366 lines)
 Plot score vs copy rate. Find the "knee" where quality plateaus. Auto-adjust learning threshold.
 
-**Mechanism 3 — Per-Tier Scoring Models** (via `category-value-discovery.ts`, 380 lines)
+**Mechanism 3 — Per-Tier Scoring Models** (via `category-value-discovery.ts`, 463 lines)
 Four separate scoring models per tier with different factor weights.
 
-**Mechanism 4 — Category Value Discovery** (`category-value-discovery.ts`, 380 lines)
-Learn which categories are high-value vs low-value per tier.
+**Mechanism 4 — Category Value Discovery** (`category-value-discovery.ts`, 463 lines)
+Learn which categories are high-value vs low-value per tier. v2.0.0 (Gap 3): also computes per-category feedback sentiment — which categories get 👍 vs 👎.
 
-**Mechanism 5 — Term-Level Quality Scores** (`term-quality-scoring.ts`, 398 lines)
+**Mechanism 5 — Term-Level Quality Scores** (`term-quality-scoring.ts`, 400 lines)
 Each term gets per-tier quality score. High-quality terms boosted in dropdown ordering.
 
 ### 10.4 The Meta-Loop — Scoring Scores Itself
@@ -603,45 +603,45 @@ Each term gets per-tier quality score. High-quality terms boosted in dropdown or
 
 ### 10.5 Full Learning Engine File Inventory (Actual)
 
-| File                               | Lines | Phase | Purpose                                                       |
-| ---------------------------------- | ----- | ----- | ------------------------------------------------------------- |
-| `database.ts`                      | 721   | 5     | Secure parameterized database operations                      |
-| `constants.ts`                     | 335   | 5     | Learning pipeline configuration constants                     |
-| `decay.ts`                         | 190   | 5     | Time decay functions for telemetry weighting                  |
-| `outcome-score.ts`                 | 529   | 5–6   | Compute outcome scores from 7 signals                         |
-| `co-occurrence.ts`                 | 260   | 5     | Co-occurrence matrix computation                              |
-| `co-occurrence-lookup.ts`          | 131   | 5     | Fast co-occurrence pair lookup                                |
-| `sequence-patterns.ts`             | 347   | 5     | Selection order pattern analysis                              |
-| `scene-candidates.ts`              | 414   | 5     | Auto-scene candidate generation                               |
-| `weight-recalibration.ts`          | 471   | 6     | Factor-outcome correlation → weight adjustment                |
-| `threshold-discovery.ts`           | 366   | 6     | Quality threshold knee detection                              |
-| `category-value-discovery.ts`      | 380   | 6     | Per-tier category importance ranking                          |
-| `term-quality-scoring.ts`          | 398   | 6     | Per-term per-tier quality scores                              |
-| `scorer-health.ts`                 | 388   | 6     | Meta-loop: score-outcome correlation monitoring               |
-| `anti-pattern-detection.ts`        | 370   | 7.1   | Detect term pairs that kill prompts                           |
-| `anti-pattern-lookup.ts`           | 144   | 7.1   | Fast anti-pattern pair lookup                                 |
-| `collision-matrix.ts`              | 346   | 7.1   | Terms competing for same space                                |
-| `collision-lookup.ts`              | 183   | 7.1   | Fast collision pair lookup                                    |
-| `iteration-tracking.ts`            | 642   | 7.2   | Session sequence analysis                                     |
-| `weak-term-lookup.ts`              | 177   | 7.2   | Terms most often replaced                                     |
-| `redundancy-detection.ts`          | 574   | 7.3   | Synonym/interchangeable term detection                        |
-| `redundancy-lookup.ts`             | 246   | 7.3   | Redundancy group lookup                                       |
-| `magic-combo-mining.ts`            | 595   | 7.4   | Frequent itemset mining (trios/quads)                         |
-| `combo-lookup.ts`                  | 366   | 7.4   | Fast magic combo lookup                                       |
-| `platform-term-quality.ts`         | 520   | 7.5   | Per-platform term quality scoring                             |
-| `platform-term-quality-lookup.ts`  | 266   | 7.5   | Platform-specific term lookup                                 |
-| `platform-co-occurrence.ts`        | 423   | 7.5   | Per-platform co-occurrence patterns                           |
-| `platform-co-occurrence-lookup.ts` | 331   | 7.5   | Platform co-occurrence lookup                                 |
-| `ab-testing.ts`                    | 1,028 | 7.6   | A/B test lifecycle + lift distribution + adaptive peek        |
-| `ab-assignment.ts`                 | 88    | 7.6   | Deterministic hash-based user assignment                      |
-| `temporal-intelligence.ts`         | 652   | 7.8   | Seasonal patterns + weekly trends + platform update detection |
-| `temporal-lookup.ts`               | 332   | 7.8   | Fast temporal boost/trending term lookup                      |
-| `compression-intelligence.ts`      | 732   | 7.9   | Per-tier optimal prompt length + removable terms              |
-| `compression-lookup.ts`            | 349   | 7.9   | Compression profile lookup                                    |
-| `compression-overrides.ts`         | 151   | 7.9   | Admin override layer for compression rules                    |
-| `feedback-streaks.ts`              | 335   | 7.10  | Hot/cold/oscillating streak detection per session             |
+| File                               | Lines | Phase | Purpose                                                                        |
+| ---------------------------------- | ----- | ----- | ------------------------------------------------------------------------------ |
+| `database.ts`                      | 1,037 | 5     | Secure parameterized database operations (Gap 1: +feedback columns in SELECTs) |
+| `constants.ts`                     | 335   | 5     | Learning pipeline configuration constants                                      |
+| `decay.ts`                         | 190   | 5     | Time decay functions for telemetry weighting                                   |
+| `outcome-score.ts`                 | 653   | 5–6   | Compute outcome scores from 7 signals + `outcomeWithFeedback()` (Gap 1)        |
+| `co-occurrence.ts`                 | 260   | 5     | Co-occurrence matrix computation                                               |
+| `co-occurrence-lookup.ts`          | 131   | 5     | Fast co-occurrence pair lookup                                                 |
+| `sequence-patterns.ts`             | 347   | 5     | Selection order pattern analysis                                               |
+| `scene-candidates.ts`              | 414   | 5     | Auto-scene candidate generation                                                |
+| `weight-recalibration.ts`          | 472   | 6     | Factor-outcome correlation → weight adjustment (Gap 1: outcomeWithFeedback)    |
+| `threshold-discovery.ts`           | 366   | 6     | Quality threshold knee detection                                               |
+| `category-value-discovery.ts`      | 463   | 6     | Per-tier category importance ranking + feedback sentiment (Gap 3, v2.0.0)      |
+| `term-quality-scoring.ts`          | 400   | 6     | Per-term per-tier quality scores (Gap 1: outcomeWithFeedback)                  |
+| `scorer-health.ts`                 | 388   | 6     | Meta-loop: score-outcome correlation monitoring                                |
+| `anti-pattern-detection.ts`        | 371   | 7.1   | Detect term pairs that kill prompts (Gap 1: outcomeWithFeedback)               |
+| `anti-pattern-lookup.ts`           | 144   | 7.1   | Fast anti-pattern pair lookup                                                  |
+| `collision-matrix.ts`              | 346   | 7.1   | Terms competing for same space                                                 |
+| `collision-lookup.ts`              | 183   | 7.1   | Fast collision pair lookup                                                     |
+| `iteration-tracking.ts`            | 642   | 7.2   | Session sequence analysis                                                      |
+| `weak-term-lookup.ts`              | 177   | 7.2   | Terms most often replaced                                                      |
+| `redundancy-detection.ts`          | 574   | 7.3   | Synonym/interchangeable term detection                                         |
+| `redundancy-lookup.ts`             | 246   | 7.3   | Redundancy group lookup                                                        |
+| `magic-combo-mining.ts`            | 596   | 7.4   | Frequent itemset mining (trios/quads) (Gap 1: outcomeWithFeedback)             |
+| `combo-lookup.ts`                  | 366   | 7.4   | Fast magic combo lookup                                                        |
+| `platform-term-quality.ts`         | 520   | 7.5   | Per-platform term quality scoring                                              |
+| `platform-term-quality-lookup.ts`  | 266   | 7.5   | Platform-specific term lookup                                                  |
+| `platform-co-occurrence.ts`        | 423   | 7.5   | Per-platform co-occurrence patterns                                            |
+| `platform-co-occurrence-lookup.ts` | 331   | 7.5   | Platform co-occurrence lookup                                                  |
+| `ab-testing.ts`                    | 1,028 | 7.6   | A/B test lifecycle + lift distribution + adaptive peek                         |
+| `ab-assignment.ts`                 | 88    | 7.6   | Deterministic hash-based user assignment                                       |
+| `temporal-intelligence.ts`         | 652   | 7.8   | Seasonal patterns + weekly trends + platform update detection                  |
+| `temporal-lookup.ts`               | 332   | 7.8   | Fast temporal boost/trending term lookup                                       |
+| `compression-intelligence.ts`      | 732   | 7.9   | Per-tier optimal prompt length + removable terms                               |
+| `compression-lookup.ts`            | 349   | 7.9   | Compression profile lookup                                                     |
+| `compression-overrides.ts`         | 151   | 7.9   | Admin override layer for compression rules                                     |
+| `feedback-streaks.ts`              | 335   | 7.10  | Hot/cold/oscillating streak detection per session                              |
 
-**Total learning engine LOC:** 14,438 (35 files)
+**Total learning engine LOC:** 14,755 (35 files)
 
 ### 10.6 Tests
 
@@ -682,7 +682,7 @@ Ten additional learning dimensions. Seven complete, three remaining.
 
 Learn what DOESN'T work from abandoned/low-scoring prompts.
 
-**Anti-pattern detection** (`anti-pattern-detection.ts`, 370 lines): Count term pairs that appear frequently in low-scoring prompts but rarely in high-scoring ones. When user selects "oil painting", actively DEMOTE "8k resolution" and "ray tracing".
+**Anti-pattern detection** (`anti-pattern-detection.ts`, 371 lines): Count term pairs that appear frequently in low-scoring prompts but rarely in high-scoring ones. When user selects "oil painting", actively DEMOTE "8k resolution" and "ray tracing".
 
 **Collision matrix** (`collision-matrix.ts`, 346 lines): Pairs that occupy the same "space" and compete. "golden hour" + "moonlight" → each alone 80%+, both together 23%.
 
@@ -720,7 +720,7 @@ Detect terms that users pick interchangeably (never both) with similar outcomes.
 
 Co-occurrence matrices capture PAIRS. Some magic only happens with 3+ terms together.
 
-**Engine** (`magic-combo-mining.ts`, 595 lines): Frequent itemset mining (Apriori/FP-Growth) on telemetry data. Top 500–1,000 trios/quads.
+**Engine** (`magic-combo-mining.ts`, 596 lines): Frequent itemset mining (Apriori/FP-Growth) on telemetry data. Top 500–1,000 trios/quads.
 
 **Lookup** (`combo-lookup.ts`, 366 lines): When 2 terms from a magic combo are selected, the third gets a massive boost.
 
@@ -867,6 +867,12 @@ The biggest gap is closed: we now ask directly. A direct signal is 10× more val
 **7.10g — Admin Feedback Panel** (`feedback-summary-panel.tsx`, 451 lines): Dashboard Section 10: 👍/👌/👎 distribution, per-platform satisfaction rates, terms with highest 👎 rate, correlation between score and rating. Drill-through to anti-patterns panel.
 
 **7.10h — Unified Feedback System** (7 March 2026): Extended the 👍👌👎 feedback pipeline from the prompt builder to ALL user-facing surfaces. The builder's `FeedbackInvitation` (post-copy overlay) remains unchanged. A new compact inline `FeedbackWidget` (`src/components/ux/feedback-widget.tsx`, 210 lines) was created for surfaces that need inline feedback without overlay UI. `sendFeedbackDirect()` added to `feedback-client.ts` (225→292 lines) for fire-and-forget POST without sessionStorage dependency. Hearts (♡/♥) replaced with 👍👌👎 on the homepage PotM showcase and Community Pulse cards. Image Quality votes in the leaderboard now dual-write to `feedback_events` alongside their existing Elo table. All signals flow through the same `/api/feedback` endpoint → `feedback_events` table → credibility scoring → streak detection → nightly cron. Authority: `docs/authority/the-like-system.md`. Old like system (`use-like.ts`, `/api/prompts/like`, `prompt_likes` table) orphaned — no longer imported.
+
+**7.10i — Gap 1: Dead Wire Fix** (7 March 2026): `feedback_rating` and `feedback_credibility` were written to `prompt_events` but never read by the learning pipeline. Both `fetchQualifyingEvents()` and `fetchAllEventsForAntiPatterns()` SELECTs now include these columns. New `outcomeWithFeedback()` helper in `outcome-score.ts` (653 lines) merges feedback columns into `OutcomeSignals`. All 5 learning engines updated: `term-quality-scoring.ts`, `weight-recalibration.ts`, `magic-combo-mining.ts`, `anti-pattern-detection.ts`, `category-value-discovery.ts`. Each now calls `computeOutcomeScore(outcomeWithFeedback(e.outcome, e.feedback_rating, e.feedback_credibility))`. Zero-allocation fast path when no feedback (majority of events). Every existing feedback_rating immediately influences all scoring. Authority: `the-like-system.md` §8.7.
+
+**7.10j — Gap 2: PotM Showcase Telemetry** (7 March 2026): Homepage feedback used synthetic IDs that didn't match real `prompt_events` rows. Added `sendShowcaseTelemetry()` to `prompt-telemetry-client.ts` (336→420 lines). Fires when user views a PotM prompt via `useEffect` in `prompt-showcase.tsx` (1,357→1,378 lines). Creates real `prompt_events` row with deterministic ID `potm:{rotationIndex}:tier{N}` and full 12-category selections (via `selectionsFromMap()`). Added `deterministicId` field to Zod schema (`prompt-telemetry.ts`, 272→279 lines). API route uses `ON CONFLICT (id) DO NOTHING` for idempotency (`prompt-telemetry/route.ts`, 265→267 lines). FeedbackWidget's `itemId` matches the deterministic ID exactly — learning pipeline now traces homepage 👎 → specific terms penalised.
+
+**7.10k — Gap 3: Category Feedback Sentiment** (7 March 2026): `category-value-discovery.ts` upgraded to v2.0.0 (380→463 lines). For each category in each tier, counts 👍/👌/👎 from events where that category was filled. New fields on `CategoryValue`: `feedbackPositive`, `feedbackNeutral`, `feedbackNegative`, `feedbackSentiment` (range -1.0 to +1.0, null if < 5 feedback events). New `feedbackEventCount` on `TierCategoryValues` and `CategoryValueMap`. Computed in the existing single-pass fused loop — zero extra iteration. Reveals which vocabulary categories need diversification (negative sentiment) vs which are working (positive). No new cron layer — extends existing Layer 5. Test updated: version assertion 1.0.0→2.0.0.
 
 **API routes:** `/api/learning/feedback-summary` (186 lines), `/api/admin/scoring-health/feedback` (170 lines)
 
@@ -1280,6 +1286,17 @@ Every file is JSON. Code reads them. Code never changes. Data gets smarter night
 | `src/lib/feedback/feedback-scene-enhancer.ts` (295 lines) | Personalise scene prefills from feedback |
 | `src/lib/learning/feedback-streaks.ts` (335 lines) | Hot/cold/oscillating streak detection |
 | `src/hooks/use-feedback-memory.ts` (355 lines) | React hook for term-level feedback hints |
+| `src/lib/learning/outcome-score.ts` (653 lines) | `outcomeWithFeedback()` helper (Gap 1) |
+| `src/lib/learning/database.ts` (1,037 lines) | Both SELECTs now include feedback columns (Gap 1) |
+| `src/lib/learning/category-value-discovery.ts` (463 lines) | v2.0.0 — feedback sentiment per category (Gap 1 + Gap 3) |
+| `src/lib/learning/term-quality-scoring.ts` (400 lines) | Uses `outcomeWithFeedback()` (Gap 1) |
+| `src/lib/learning/weight-recalibration.ts` (472 lines) | Uses `outcomeWithFeedback()` (Gap 1) |
+| `src/lib/learning/magic-combo-mining.ts` (596 lines) | Uses `outcomeWithFeedback()` (Gap 1) |
+| `src/lib/learning/anti-pattern-detection.ts` (371 lines) | Uses `outcomeWithFeedback()` (Gap 1) |
+| `src/lib/telemetry/prompt-telemetry-client.ts` (420 lines) | `sendShowcaseTelemetry()` for PotM (Gap 2) |
+| `src/app/api/prompt-telemetry/route.ts` (267 lines) | `deterministicId` + `ON CONFLICT DO NOTHING` (Gap 2) |
+| `src/types/prompt-telemetry.ts` (279 lines) | `deterministicId` Zod field (Gap 2) |
+| `src/components/home/prompt-showcase.tsx` (1,378 lines) | Fires `sendShowcaseTelemetry()` on tier view (Gap 2) |
 
 **Phase 7.11 — Admin Scoring Health Dashboard:**
 | File | Purpose |
@@ -1439,4 +1456,4 @@ This data is the product. The vocabulary, the scenes, the cascading intelligence
 
 ---
 
-_End of document. Version 2.3.0. Updated 2026-03-07. Previous version: 2.2.0 (2026-03-01)._
+_End of document. Version 2.4.0. Updated 2026-03-07. Previous version: 2.3.0 (2026-03-07)._

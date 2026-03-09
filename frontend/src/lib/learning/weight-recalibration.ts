@@ -32,7 +32,7 @@
 // Existing features preserved: Yes.
 // ============================================================================
 
-import { computeOutcomeScore } from '@/lib/learning/outcome-score';
+import { computeOutcomeScore, outcomeWithFeedback } from '@/lib/learning/outcome-score';
 import type { PromptEventRow } from '@/lib/learning/database';
 
 // ============================================================================
@@ -422,9 +422,10 @@ function computeCorrelations(
   }
 
   // Pre-compute outcome scores for all events (once, not per-factor)
+  // Feedback-aware — Gap 1 fix
   const outcomeScores: number[] = [];
   for (const event of events) {
-    outcomeScores.push(computeOutcomeScore(event.outcome));
+    outcomeScores.push(computeOutcomeScore(outcomeWithFeedback(event.outcome, event.feedback_rating, event.feedback_credibility)));
   }
 
   // Correlate each factor with outcome scores

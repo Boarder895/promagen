@@ -599,6 +599,51 @@ export function computeConfidenceMultiplierDetailed(input: ConfidenceInput): Con
 }
 
 // ============================================================================
+// FEEDBACK MERGE HELPER — Gap 1 Fix (7 March 2026)
+// ============================================================================
+//
+// Merges feedback_rating and feedback_credibility from the PromptEventRow
+// into the outcome JSONB signals. Without this, computeOutcomeScore() never
+// sees the feedback data even though it's designed to consume it.
+//
+// All 4 learning engines (term-quality, weight-recalibration, magic-combos,
+// anti-patterns) call this instead of raw event.outcome.
+//
+// Pure function — no I/O, no side effects, zero allocation when no feedback.
+// ============================================================================
+
+/**
+ * Merge feedback columns into outcome signals for computeOutcomeScore().
+ *
+ * The prompt_events table stores feedback in separate columns (feedback_rating,
+ * feedback_credibility) rather than inside the outcome JSONB. This helper
+ * bridges the two so the scoring function receives the complete signal set.
+ *
+ * @param outcome — The outcome JSONB from prompt_events
+ * @param feedbackRating — feedback_rating column (null if no feedback)
+ * @param feedbackCredibility — feedback_credibility column (null if no feedback)
+ * @returns OutcomeSignals with feedback merged in (same reference if no feedback)
+ */
+export function outcomeWithFeedback(
+  outcome: OutcomeSignals,
+  feedbackRating?: string | null,
+  feedbackCredibility?: number | null,
+): OutcomeSignals {
+  // Fast path: no feedback → return original object (zero allocation)
+  if (!feedbackRating) return outcome;
+
+  // Validate rating is one of the three valid values
+  const validRatings = new Set(['positive', 'neutral', 'negative']);
+  if (!validRatings.has(feedbackRating)) return outcome;
+
+  return {
+    ...outcome,
+    feedbackRating: feedbackRating as OutcomeSignals['feedbackRating'],
+    feedbackCredibility: feedbackCredibility ?? 1.0,
+  };
+}
+
+// ============================================================================
 // MATH UTILITY (shared)
 // ============================================================================
 

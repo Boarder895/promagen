@@ -21,7 +21,7 @@
 
 import { createHash, createHmac, timingSafeEqual, randomUUID } from 'crypto';
 import type { NextRequest } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import {
   ALLOWED_ORIGINS,
   BLOCKED_USER_AGENTS,
@@ -418,10 +418,12 @@ export async function extractUserId(_request: NextRequest): Promise<string | nul
  */
 export async function checkPaidStatus(userId: string): Promise<boolean> {
   try {
-    // Get full user object from Clerk (server-side)
-    const user = await currentUser();
+    // Get full user object from Clerk (server-side) — use clerkClient
+    // instead of currentUser() to avoid Next.js 16 proxy.ts filename conflict.
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
     
-    if (!user || user.id !== userId) {
+    if (!user) {
       return false;
     }
     

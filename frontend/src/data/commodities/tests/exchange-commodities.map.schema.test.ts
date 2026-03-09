@@ -5,22 +5,13 @@ import { commoditiesCatalogSchema } from '../commodities.schema';
 import { commodityExchangeMapSchema } from '../exchange-commodities.map.schema';
 
 /**
- * Known ID naming divergence: exchange-commodities.map.json uses specific
- * benchmark names (e.g. "brent_crude", "soybean_meal") while
- * commodities.catalog.json uses simpler canonical names (e.g. "brent",
- * "soybeans"). These are acknowledged and tracked here so the test still
- * catches NEW unexpected references.
+ * Known ID naming divergence: exchange-commodities.map.json may use
+ * IDs that aren't in commodities.catalog.json.
  *
- * TODO: reconcile naming conventions in a dedicated data-alignment pass.
+ * Updated 8 Mar 2026: Catalog trimmed to 34 everyday commodities.
+ * All removed IDs also cleaned from the exchange map — no gaps remain.
  */
-const KNOWN_MAP_EXTRA_IDS = new Set([
-  'aluminium', 'bauxite', 'brent_crude', 'chromium', 'dates',
-  'dubai_crude', 'gasoil_ulsd', 'gasoline_rbob', 'lng_jkm', 'millet',
-  'natural_gas_henry_hub', 'nbp_natural_gas', 'phosphates', 'potash',
-  'rapeseed_canola', 'sorghum', 'soybean_meal', 'soybean_oil',
-  'steel_rebar', 'titanium_ore', 'ttf_natural_gas', 'urals_crude',
-  'wcs_crude', 'wti_crude',
-]);
+const KNOWN_MAP_EXTRA_IDS = new Set<string>([]);
 
 /**
  * Known exchange IDs referenced in the commodity-exchange map that aren't

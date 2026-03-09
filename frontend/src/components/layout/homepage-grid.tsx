@@ -465,7 +465,7 @@ export default function HomepageGrid({
 
   const heroText = isWorldContext
     ? "Every country flag on this page hides a surprise — hover over one and you'll see a live AI image prompt, crafted from the real weather happening in that city right now. The commodities tell visual stories too. Everything you see is live, and every prompt works across all 42 AI platforms."
-    : 'Real context for real-world prompts. Explore cities around the world before you get there. Hover over any flag to reveal an intelligent prompt that evolves with meteorological data. See which AI platform brings it to life best — ranked by the community in our live leaderboard. Or build your own prompts from a vast library of curated words and phrases, tailored instantly to your chosen AI platform.';
+    : "That prompt in the centre rewrites itself every few minutes — a new city, real weather, a completely new scene. You'll never see the same one twice. And those colours aren't random.";
 
   const handleListenClick = useCallback(() => {
     if (isSpeaking) {

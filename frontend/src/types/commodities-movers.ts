@@ -46,6 +46,12 @@ export interface CommodityMoverData {
   direction: MoverDirection;
   /** Brand color for this commodity (hex) */
   brandColor: string;
+  /** Commodity group from catalog (energy, metals, agriculture) */
+  group: string;
+  /** Fun fact about this commodity (from catalog) */
+  fact: string | null;
+  /** Year futures trading started (null if OTC/spot only) */
+  yearFirstTraded: number | null;
   /** Tooltip title */
   tooltipTitle?: string;
   /** Tooltip lines (year first traded, fun fact) */
@@ -84,6 +90,8 @@ export interface CommodityMoverCardProps {
   isStale?: boolean;
   /** Weather data indexed by exchange ID (for commodity prompt tooltips) */
   weatherRecord?: Record<string, { temperatureC: number; description: string }>;
+  /** Currency rotation tick — increments every 8s. Cards use modulo for phase. */
+  currencyTick?: number;
 }
 
 /**

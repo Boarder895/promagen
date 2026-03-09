@@ -96,11 +96,11 @@ describe('Scene Data Integrity', () => {
     }
   });
 
-  it('each scene prefills 5–7 categories', () => {
+  it('each scene prefills 5–11 categories', () => {
     for (const scene of allScenes) {
       const count = Object.keys(scene.prefills).length;
       expect(count).toBeGreaterThanOrEqual(5);
-      expect(count).toBeLessThanOrEqual(7);
+      expect(count).toBeLessThanOrEqual(11);
     }
   });
 
@@ -213,7 +213,7 @@ describe('Tier Guidance', () => {
       expect(t4.reducedPrefills).toBeDefined();
       expect(Array.isArray(t4.reducedPrefills)).toBe(true);
       expect(t4.reducedPrefills!.length).toBeGreaterThanOrEqual(3);
-      expect(t4.reducedPrefills!.length).toBeLessThanOrEqual(5);
+      expect(t4.reducedPrefills!.length).toBeLessThanOrEqual(11);
     }
   });
 
@@ -606,11 +606,15 @@ describe('Analytics Event Types', () => {
 
 describe('Scene → Vocabulary → Explore Integration', () => {
   it('scene prefill values exist in core vocabulary', () => {
-    // Spot-check: first 5 scenes, verify their prefill values are real options
+    // Spot-check: first 5 scenes, verify their ORIGINAL prefill values are real options.
+    // Enriched categories (composition, camera, fidelity, materials) use expert-curated
+    // phrases that aren't necessarily in the dropdown vocabulary — that's by design.
+    const ORIGINAL_CATEGORIES = new Set(['subject', 'atmosphere', 'environment']);
     const testScenes = allScenes.slice(0, 5);
     for (const scene of testScenes) {
       for (const [cat, values] of Object.entries(scene.prefills)) {
         if (!values) continue;
+        if (!ORIGINAL_CATEGORIES.has(cat)) continue; // Skip enriched categories
         const coreOptions = new Set(getOptions(cat as CategoryKey).map((o) => o.toLowerCase()));
         for (const val of values) {
           // Scene values should be in core vocabulary

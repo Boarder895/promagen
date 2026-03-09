@@ -46,7 +46,7 @@ export interface UsePromptShowcaseResult {
 // ============================================================================
 
 /** Rotation cadence — must match API route's ROTATION_MS */
-const ROTATION_MS = 10 * 60 * 1000;
+const ROTATION_MS = 3 * 60 * 1000;
 
 /** Duration of the crossfade overlay (ms) */
 const CROSSFADE_MS = 800;

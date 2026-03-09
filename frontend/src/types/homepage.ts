@@ -64,6 +64,10 @@ export interface PromptOfTheMoment {
   nextRotationAt: string;
   /** Current rotation index (0–101) */
   rotationIndex: number;
+  /** Name of the next city in the rotation (for countdown display) */
+  nextCity: string;
+  /** Country code of the next city (for countdown flag) */
+  nextCountryCode: string;
   /** Weather data for tooltip (matches ProviderWeatherEmojiTooltip props) */
   weather: {
     /** Weather description text (e.g., "broken clouds") */

@@ -1,35 +1,41 @@
 // src/lib/learning/category-value-discovery.ts
 // ============================================================================
-// SELF-IMPROVING SCORER — Category Value Discovery
+// SELF-IMPROVING SCORER — Category Value Discovery + Feedback Sentiment
 // ============================================================================
 //
 // Phase 6, Part 6.4 — Mechanism 4: "Which Categories Actually Matter?"
+// Gap 3 extension (7 March 2026): "Which Categories Need Better Vocabulary?"
 //
 // Learns which categories (style, lighting, colour, ...) are high-value
 // vs low-value per tier. A prompt with 4 high-value categories should
 // score higher than one with 6 low-value categories.
 //
-// Algorithm (per tier):
-//   For each category:
-//     1. Split events into two groups: "has category filled" vs "empty"
-//     2. Compare mean outcome scores between groups
-//     3. categoryValue = mean(filled) - mean(empty)
-//     4. Positive = valuable, negative = irrelevant
-//     5. Clamp negative values at 0 (we don't punish filling more)
+// Gap 3: For events WITH direct user feedback, computes per-category
+// feedback sentiment. If users consistently 👎 prompts containing
+// atmosphere terms but 👍 prompts with lighting terms, that signals
+// which categories need more diverse vocabulary.
+//
+// Algorithm (per tier, per category):
+//   1. Split events into "filled" vs "empty" → compare mean outcomes
+//   2. categoryValue = max(0, mean(filled) - mean(empty))
+//   3. (Gap 3) From events WITH feedback where category IS filled:
+//      sentiment = (positive - negative) / total_with_feedback
+//      Range: -1.0 (all 👎) to +1.0 (all 👍). null if < 5 feedback events.
 //
 // Pure computation layer — receives rows, returns data.
 // No I/O, no database access, no side effects.
 //
 // Authority: docs/authority/prompt-builder-evolution-plan-v2.md § 10.4
-// Build plan: docs/authority/phase-6-self-improving-scorer-buildplan.md § 4.4
+// Authority: docs/authority/the-like-system.md (Gap 3 — feedback sentiment)
 //
-// Version: 1.0.0
+// Version: 2.0.0 — Gap 1 fix (outcomeWithFeedback) + Gap 3 (feedback sentiment)
 // Created: 26 February 2026
+// Updated: 7 March 2026
 //
 // Existing features preserved: Yes.
 // ============================================================================
 
-import { computeOutcomeScore } from '@/lib/learning/outcome-score';
+import { computeOutcomeScore, outcomeWithFeedback } from '@/lib/learning/outcome-score';
 import type { PromptEventRow } from '@/lib/learning/database';
 
 // ============================================================================
@@ -47,6 +53,15 @@ export const MIN_EVENTS_PER_CATEGORY = 20;
  * Below this, return empty (all neutral).
  */
 export const MIN_EVENTS_FOR_DISCOVERY = 50;
+
+/**
+ * Minimum feedback events containing a category before we trust sentiment.
+ * Below this, feedback fields default to null (insufficient data).
+ */
+const MIN_FEEDBACK_FOR_SENTIMENT = 5;
+
+/** Valid feedback ratings — defensive validation even though DB Zod-validates on write */
+const VALID_RATINGS = new Set(['positive', 'neutral', 'negative']);
 
 /**
  * Standard categories tracked by the prompt builder.
@@ -90,6 +105,23 @@ export interface CategoryValue {
 
   /** Number of events where this category was empty */
   emptyCount: number;
+
+  // ── Gap 3: Feedback sentiment (7 March 2026) ────────────────────────
+  // null = insufficient feedback data (< MIN_FEEDBACK_FOR_SENTIMENT)
+
+  /** 👍 count for events containing this category */
+  feedbackPositive: number | null;
+  /** 👌 count for events containing this category */
+  feedbackNeutral: number | null;
+  /** 👎 count for events containing this category */
+  feedbackNegative: number | null;
+  /**
+   * Sentiment: (positive - negative) / total. Range -1.0 to +1.0.
+   * Negative → category vocabulary needs diversification.
+   * Positive → category terms are working well.
+   * null = insufficient data.
+   */
+  feedbackSentiment: number | null;
 }
 
 /** Per-tier category values */
@@ -99,6 +131,9 @@ export interface TierCategoryValues {
 
   /** How many events contributed to this tier */
   eventCount: number;
+
+  /** How many events had direct feedback in this tier (Gap 3) */
+  feedbackEventCount: number;
 }
 
 /** Complete output — stored alongside scoring weights */
@@ -111,6 +146,9 @@ export interface CategoryValueMap {
 
   /** Total events processed */
   eventCount: number;
+
+  /** Total events with direct feedback (Gap 3) */
+  feedbackEventCount: number;
 
   /** Per-tier results (keys: "1", "2", "3", "4") */
   tiers: Record<string, TierCategoryValues>;
@@ -143,20 +181,23 @@ export function computeCategoryValues(
   events: PromptEventRow[],
 ): CategoryValueMap {
   const now = new Date().toISOString();
+  const feedbackEventCount = countFeedbackEvents(events);
 
   if (events.length < MIN_EVENTS_FOR_DISCOVERY) {
-    return buildEmptyResult(events.length, now);
+    return buildEmptyResult(events.length, feedbackEventCount, now);
   }
 
   // Discover all category keys from the data
   const categoryKeys = discoverCategories(events);
 
   if (categoryKeys.length === 0) {
-    return buildEmptyResult(events.length, now);
+    return buildEmptyResult(events.length, feedbackEventCount, now);
   }
 
-  // Pre-compute outcome scores once
-  const outcomeScores = events.map((e) => computeOutcomeScore(e.outcome));
+  // Pre-compute outcome scores once (feedback-aware — Gap 1 fix)
+  const outcomeScores = events.map((e) =>
+    computeOutcomeScore(outcomeWithFeedback(e.outcome, e.feedback_rating, e.feedback_credibility)),
+  );
 
   // Group events by tier
   const tierGroups = groupByTier(events, outcomeScores);
@@ -180,6 +221,7 @@ export function computeCategoryValues(
       tiers[tierKey] = {
         categories: buildNeutralCategories(categoryKeys),
         eventCount: group?.events.length ?? 0,
+        feedbackEventCount: group ? countFeedbackEvents(group.events) : 0,
       };
       continue;
     }
@@ -192,9 +234,10 @@ export function computeCategoryValues(
   }
 
   return {
-    version: '1.0.0',
+    version: '2.0.0',
     generatedAt: now,
     eventCount: events.length,
+    feedbackEventCount,
     tiers,
     global,
   };
@@ -262,6 +305,10 @@ function groupByTier(
 
 /**
  * Compute category values for a set of events (one tier or global).
+ *
+ * Two signals computed in a single fused loop per category (cache-efficient):
+ *   1. Existing: filled vs empty mean outcome comparison
+ *   2. Gap 3: feedback sentiment per category (from events WITH ratings)
  */
 function computeTierCategoryValues(
   events: PromptEventRow[],
@@ -269,54 +316,67 @@ function computeTierCategoryValues(
   categoryKeys: string[],
 ): TierCategoryValues {
   const categories: Record<string, CategoryValue> = {};
+  const feedbackEventCount = countFeedbackEvents(events);
 
   for (const category of categoryKeys) {
-    // Split into filled vs empty
+    // Outcome accumulators
     const filledOutcomes: number[] = [];
     const emptyOutcomes: number[] = [];
 
-    for (let i = 0; i < events.length; i++) {
-      const filled = isCategoryFilled(
-        events[i]!.selections,
-        category,
-      );
+    // Gap 3: Feedback sentiment accumulators (only events WITH feedback AND category filled)
+    let fbPositive = 0;
+    let fbNeutral = 0;
+    let fbNegative = 0;
 
+    // Single pass per category: classify + accumulate both signals
+    for (let i = 0; i < events.length; i++) {
+      const event = events[i]!;
+      const filled = isCategoryFilled(event.selections, category);
+
+      // Signal 1: outcome split (all events)
       if (filled) {
         filledOutcomes.push(outcomeScores[i]!);
       } else {
         emptyOutcomes.push(outcomeScores[i]!);
       }
+
+      // Signal 2: feedback sentiment (only when category filled AND has feedback)
+      if (filled && event.feedback_rating && VALID_RATINGS.has(event.feedback_rating)) {
+        if (event.feedback_rating === 'positive') fbPositive++;
+        else if (event.feedback_rating === 'neutral') fbNeutral++;
+        else if (event.feedback_rating === 'negative') fbNegative++;
+      }
     }
 
-    // Need enough events in the filled group to trust the value
-    if (filledOutcomes.length < MIN_EVENTS_PER_CATEGORY) {
-      categories[category] = {
-        value: 0,
-        meanFilled: mean(filledOutcomes),
-        meanEmpty: mean(emptyOutcomes),
-        filledCount: filledOutcomes.length,
-        emptyCount: emptyOutcomes.length,
-      };
-      continue;
-    }
-
+    // Existing: value from outcome comparison
+    const hasSufficientData = filledOutcomes.length >= MIN_EVENTS_PER_CATEGORY;
     const meanF = mean(filledOutcomes);
     const meanE = mean(emptyOutcomes);
-    const rawValue = meanF - meanE;
+    const rawValue = hasSufficientData ? meanF - meanE : 0;
 
-    // Clamp at 0: we never penalise users for filling a category
+    // Gap 3: feedback sentiment
+    const totalFb = fbPositive + fbNeutral + fbNegative;
+    const hasSufficientFeedback = totalFb >= MIN_FEEDBACK_FOR_SENTIMENT;
+
     categories[category] = {
       value: Math.max(0, round4(rawValue)),
       meanFilled: round4(meanF),
       meanEmpty: round4(meanE),
       filledCount: filledOutcomes.length,
       emptyCount: emptyOutcomes.length,
+      feedbackPositive: hasSufficientFeedback ? fbPositive : null,
+      feedbackNeutral: hasSufficientFeedback ? fbNeutral : null,
+      feedbackNegative: hasSufficientFeedback ? fbNegative : null,
+      feedbackSentiment: hasSufficientFeedback
+        ? round4((fbPositive - fbNegative) / totalFb)
+        : null,
     };
   }
 
   return {
     categories,
     eventCount: events.length,
+    feedbackEventCount,
   };
 }
 
@@ -334,6 +394,10 @@ function buildNeutralCategories(
       meanEmpty: 0,
       filledCount: 0,
       emptyCount: 0,
+      feedbackPositive: null,
+      feedbackNeutral: null,
+      feedbackNegative: null,
+      feedbackSentiment: null,
     };
   }
   return result;
@@ -342,10 +406,15 @@ function buildNeutralCategories(
 /**
  * Build empty result for cold-start.
  */
-function buildEmptyResult(eventCount: number, now: string): CategoryValueMap {
+function buildEmptyResult(
+  eventCount: number,
+  feedbackEventCount: number,
+  now: string,
+): CategoryValueMap {
   const emptyTier: TierCategoryValues = {
     categories: {},
     eventCount: 0,
+    feedbackEventCount: 0,
   };
 
   const tiers: Record<string, TierCategoryValues> = {};
@@ -354,12 +423,26 @@ function buildEmptyResult(eventCount: number, now: string): CategoryValueMap {
   }
 
   return {
-    version: '1.0.0',
+    version: '2.0.0',
     generatedAt: now,
     eventCount,
+    feedbackEventCount,
     tiers,
     global: { ...emptyTier, categories: {} },
   };
+}
+
+// ============================================================================
+// FEEDBACK COUNTING
+// ============================================================================
+
+/** Count events with a valid feedback_rating. Used for feedbackEventCount. */
+function countFeedbackEvents(events: PromptEventRow[]): number {
+  let count = 0;
+  for (const e of events) {
+    if (e.feedback_rating && VALID_RATINGS.has(e.feedback_rating)) count++;
+  }
+  return count;
 }
 
 // ============================================================================

@@ -464,7 +464,10 @@ export function analyzePrompt(
   });
   
   // Calculate health score (Phase 6: optionally uses learned weights)
-  const hasSubject = state.subject.trim().length > 0;
+  // hasSubject: true if user typed text OR if subject was selected from dropdown
+  // (e.g., scene starters inject subject into selections, not customValue)
+  const hasSubject = state.subject.trim().length > 0
+    || (state.selections?.subject?.length ?? 0) > 0;
   const healthScore = calculateHealthScore(
     dna,
     hasSubject,

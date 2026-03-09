@@ -16,10 +16,13 @@
  * Updated: 22 Jan 2026 - Added comprehensive try-catch error handling
  *                      - Proper status codes for different failure modes
  *                      - Server-side logging for debugging
+ * Updated: 08 Mar 2026 - Replaced currentUser() with auth() + clerkClient()
+ *                        to fix Next.js 16 proxy.ts compatibility (Clerk
+ *                        middleware filename detection issue)
  */
 
 import { NextResponse } from 'next/server';
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { z } from 'zod';
 
 import exchangesCatalogJson from '@/data/exchanges/exchanges.catalog.json';
@@ -218,10 +221,15 @@ export async function GET(): Promise<Response> {
     const gatewayBase = getGatewayBaseUrl();
     const gatewayIndicesUrl = `${gatewayBase}/indices`;
 
-    // Determine user (if any)
-    let user: Awaited<ReturnType<typeof currentUser>> = null;
+    // Determine user (if any) — use auth() + clerkClient (not currentUser)
+    // to avoid Next.js 16 proxy.ts / middleware.ts filename conflict.
+    let user: { publicMetadata: Record<string, unknown> } | null = null;
     try {
-      user = await currentUser();
+      const { userId } = await auth();
+      if (userId) {
+        const client = await clerkClient();
+        user = await client.users.getUser(userId);
+      }
     } catch (authError) {
       // Clerk unavailable — treat as anonymous (free path)
       console.warn('[/api/indices] Clerk auth check failed, treating as anonymous:', authError);

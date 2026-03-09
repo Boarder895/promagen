@@ -169,8 +169,9 @@ describe('computeCategoryValues — cold start', () => {
 
   it('includes version and generatedAt', () => {
     const result = computeCategoryValues([]);
-    expect(result.version).toBe('1.0.0');
+    expect(result.version).toBe('2.0.0');
     expect(result.generatedAt).toBeTruthy();
+    expect(result.feedbackEventCount).toBe(0);
   });
 
   it('has all four tiers in output', () => {

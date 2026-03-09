@@ -1,7 +1,7 @@
 # The Like System — Authority Document
 
 **Last updated:** 7 March 2026
-**Version:** 1.0.0
+**Version:** 2.0.0
 **Owner:** Promagen
 **Status:** Implemented
 **Authority:** This document is the single source of truth for all user feedback collection across Promagen. Every surface that collects a like, dislike, or neutral signal must use this system. No exceptions.
@@ -32,12 +32,12 @@ Every feedback surface in Promagen uses the same three-point scale:
 
 ## 3. Where Feedback Appears
 
-| Surface                          | UI                              | itemId Format                    | Source Tag           | Replaces           |
-| -------------------------------- | ------------------------------- | -------------------------------- | -------------------- | ------------------ |
-| PotM showcase (homepage centre)  | 👍👌👎 inline + coloured counts | `potm:{rotationIndex}:{tierKey}` | `showcase`           | ♡ heart (deleted)  |
-| Community Pulse (homepage right) | 👍👌👎 inline + coloured counts | `pulse:{entryId}`                | `pulse`              | ♡ heart (deleted)  |
-| Prompt builder (after copy)      | 👍👌👎 overlay (4s delay)       | `{promptEventId}` from telemetry | `builder`            | Unchanged          |
-| Image Quality (leaderboard)      | 👍 only (existing thumb SVG)    | `iq:{providerId}`                | `image-quality-vote` | Dual-write (added) |
+| Surface                          | UI                              | itemId Format                                                                               | Source Tag           | Replaces           |
+| -------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------- | -------------------- | ------------------ |
+| PotM showcase (homepage centre)  | 👍👌👎 inline + coloured counts | `potm:{rotationIndex}:tier{N}` (deterministic, links to real `prompt_events` row via Gap 2) | `showcase`           | ♡ heart (deleted)  |
+| Community Pulse (homepage right) | 👍👌👎 inline + coloured counts | `pulse:{entryId}`                                                                           | `pulse`              | ♡ heart (deleted)  |
+| Prompt builder (after copy)      | 👍👌👎 overlay (4s delay)       | `{promptEventId}` from telemetry                                                            | `builder`            | Unchanged          |
+| Image Quality (leaderboard)      | 👍 only (existing thumb SVG)    | `iq:{providerId}`                                                                           | `image-quality-vote` | Dual-write (added) |
 
 **Rule:** Any future surface that collects user quality signals must use this system. No new like tables, no new vote endpoints, no isolated signals.
 
@@ -67,7 +67,21 @@ User interaction anywhere on Promagen
         ├──→ Term-level feedback memory
         ├──→ Scene enhancer personalisation
         ├──→ Admin dashboard (Section 10)
-        └──→ Nightly cron aggregation (Layer 17)
+        ├──→ Nightly cron aggregation (17-layer pipeline)
+        │
+        ├──→ [Gap 1] prompt_events.feedback_rating/feedback_credibility
+        │    → outcomeWithFeedback() merges into outcome score
+        │    → All 5 engines: term-quality, weight-recalibration,
+        │      magic-combos, anti-patterns, category-value-discovery
+        │
+        ├──→ [Gap 2] PotM showcase fires sendShowcaseTelemetry()
+        │    → Creates real prompt_events row with deterministic ID
+        │    → FeedbackWidget links feedback to real term selections
+        │    → Learning pipeline traces 👎 → specific terms penalised
+        │
+        └──→ [Gap 3] category-value-discovery computes feedbackSentiment
+             → Per-category: (positive - negative) / total
+             → Reveals which vocabulary categories need diversification
 ```
 
 ### 4.2 Two Client Functions
@@ -251,9 +265,35 @@ Dashboard at `/admin/scoring-health` shows:
 
 ### 8.6 Nightly Cron Aggregation
 
-**File:** `src/app/api/learning/aggregate/route.ts` (Layer 17 within the 17-layer cron)
+**File:** `src/app/api/learning/aggregate/route.ts` (17-layer cron pipeline)
 
 Feedback data is aggregated alongside all other learning signals. Weighted by credibility score. Feeds into co-occurrence matrix updates, term quality recalibration, and scorer weight adjustments.
+
+### 8.7 Learning Pipeline Integration — Gap Fixes (7 March 2026)
+
+Three architectural gaps between the feedback system and the learning pipeline were identified and fixed:
+
+**Gap 1 — Dead Wire Fix:** `feedback_rating` and `feedback_credibility` were written to the `prompt_events` table but never read back. The two SELECT queries in `database.ts` that feed all learning engines omitted these columns, and `PromptEventRow` fields were never populated. Fix: added both columns to both SELECTs. Created `outcomeWithFeedback()` helper in `outcome-score.ts` (pure function, zero-allocation fast path when no feedback). All 5 engines now call `computeOutcomeScore(outcomeWithFeedback(e.outcome, e.feedback_rating, e.feedback_credibility))`. Effect: every 👍👌👎 immediately influences term-quality scoring, weight recalibration, magic combo mining, anti-pattern detection, and category value discovery.
+
+**Gap 2 — PotM Showcase Telemetry:** Homepage feedback used synthetic IDs (`potm:3:tier1`) that didn't match any real `prompt_events` row. The learning pipeline couldn't trace feedback back to specific terms. Fix: `sendShowcaseTelemetry()` fires when a user views a PotM prompt, creating a real `prompt_events` row with a deterministic ID and full 12-category term selections (via `selectionsFromMap()`). `ON CONFLICT (id) DO NOTHING` makes it idempotent. The FeedbackWidget's `itemId` matches the deterministic ID exactly, so when the user clicks 👍👌👎, the feedback links to real selections. The nightly cron can now trace: "user rated 👎 → prompt had terms X, Y, Z → those terms get penalised."
+
+**Gap 3 — Category Feedback Sentiment:** `category-value-discovery.ts` (v2.0.0) now computes per-category feedback sentiment from events that have direct 👍👌👎 ratings. For each category, counts how many 👍 vs 👎 land on prompts containing that category. `feedbackSentiment = (positive - negative) / total`. Range: -1.0 (all 👎) to +1.0 (all 👍). null if < 5 feedback events. Negative sentiment → category vocabulary needs diversification. Computed in the same fused loop as the existing outcome comparison — zero extra iteration.
+
+**Files changed by gap fixes:**
+
+| File                                                     | Change                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------ |
+| `src/lib/learning/outcome-score.ts` (609→653 lines)      | Added `outcomeWithFeedback()` helper                               |
+| `src/lib/learning/database.ts` (1,036→1,037 lines)       | Both SELECTs now include `feedback_rating`, `feedback_credibility` |
+| `src/lib/learning/term-quality-scoring.ts` (399→400)     | Uses `outcomeWithFeedback()`                                       |
+| `src/lib/learning/weight-recalibration.ts` (471→472)     | Uses `outcomeWithFeedback()`                                       |
+| `src/lib/learning/magic-combo-mining.ts` (595→596)       | Uses `outcomeWithFeedback()`                                       |
+| `src/lib/learning/anti-pattern-detection.ts` (370→371)   | Uses `outcomeWithFeedback()`                                       |
+| `src/lib/learning/category-value-discovery.ts` (380→463) | Gap 1 fix + Gap 3 feedback sentiment                               |
+| `src/lib/telemetry/prompt-telemetry-client.ts` (336→420) | Added `sendShowcaseTelemetry()`                                    |
+| `src/app/api/prompt-telemetry/route.ts` (265→267)        | `deterministicId` + `ON CONFLICT`                                  |
+| `src/types/prompt-telemetry.ts` (272→279)                | Added `deterministicId` to Zod schema                              |
+| `src/components/home/prompt-showcase.tsx` (1,357→1,378)  | Fires `sendShowcaseTelemetry()` on tier view                       |
 
 ---
 
@@ -312,6 +352,9 @@ This dual-write ensures the learning pipeline sees Image Quality votes alongside
 | `src/components/ux/feedback-invitation.tsx`                      | 381   | Full overlay 👍👌👎 (post-copy builder flow)         |
 | `src/components/admin/scoring-health/feedback-summary-panel.tsx` | 451   | Admin dashboard Section 10                           |
 | `src/hooks/use-image-quality-vote.ts`                            | 337   | Image quality vote hook (EXTENDED — dual write)      |
+| `src/lib/learning/outcome-score.ts`                              | 653   | `outcomeWithFeedback()` helper (Gap 1)               |
+| `src/lib/learning/category-value-discovery.ts`                   | 463   | Feedback sentiment per category (Gap 3, v2.0.0)      |
+| `src/lib/telemetry/prompt-telemetry-client.ts`                   | 420   | `sendShowcaseTelemetry()` for PotM (Gap 2)           |
 
 ---
 
@@ -330,12 +373,14 @@ This dual-write ensures the learning pipeline sees Image Quality votes alongside
 
 | Document                                    | What needs updating                                              |
 | ------------------------------------------- | ---------------------------------------------------------------- |
-| `homepage.md` §7                            | §7 "Like System" must be rewritten to reference this document    |
+| `homepage.md` §7                            | ✅ Done (v6.0.0) — §7 rewritten as "Feedback System"             |
 | `paid_tier.md` §2.1                         | "Like system" free feature line must reference new 👍👌👎 system |
-| `prompt-builder-evolution-plan-v2.md` §7.10 | Add note that FeedbackWidget now unifies all surfaces            |
+| `prompt-builder-evolution-plan-v2.md` §7.10 | ✅ Done (v2.4.0) — §7.10h + Gap 1/2/3 documented                 |
 
 ---
 
 ## Changelog
+
+- **7 Mar 2026 — v2.0.0:** **GAP 1/2/3 PIPELINE INTEGRATION.** Added §8.7 documenting three learning pipeline gap fixes: Gap 1 (dead wire — feedback columns now read by all 5 learning engines via `outcomeWithFeedback()`), Gap 2 (PotM showcase fires `sendShowcaseTelemetry()` creating real `prompt_events` rows so homepage feedback traces back to specific terms), Gap 3 (category-value-discovery v2.0.0 computes per-category `feedbackSentiment`). Updated §4.1 data flow diagram with all three integration paths. Updated §3 PotM itemId to note deterministic linking. Added 4 new files to §11. Marked §13 related doc updates as complete.
 
 - **7 Mar 2026 — v1.0.0:** Initial version. Unified all feedback signals under one system. Hearts retired from PotM showcase and Community Pulse. FeedbackWidget created. Image Quality votes dual-write to feedback_events. `the-like-system.md` established as authority for all user quality signals.

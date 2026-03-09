@@ -342,7 +342,8 @@ export async function fetchQualifyingEvents(
       SELECT
         id, session_id, attempt_number, selections, category_count,
         char_length, score, score_factors, platform, tier,
-        scene_used, outcome, user_tier, account_age_days, created_at
+        scene_used, outcome, user_tier, account_age_days,
+        feedback_rating, feedback_credibility, created_at
       FROM prompt_events
       WHERE score >= ${LEARNING_CONSTANTS.SCORE_THRESHOLD}
         AND category_count >= ${LEARNING_CONSTANTS.MIN_CATEGORIES}
@@ -379,7 +380,8 @@ export async function fetchAllEventsForAntiPatterns(
       SELECT
         id, session_id, attempt_number, selections, category_count,
         char_length, score, score_factors, platform, tier,
-        scene_used, outcome, user_tier, account_age_days, created_at
+        scene_used, outcome, user_tier, account_age_days,
+        feedback_rating, feedback_credibility, created_at
       FROM prompt_events
       WHERE category_count >= ${LEARNING_CONSTANTS.ANTI_PATTERN_MIN_CATEGORIES}
         AND created_at >= NOW() - (${windowDays} || ' days')::interval

@@ -191,7 +191,9 @@ export async function POST(req: NextRequest): Promise<Response> {
   try {
     await ensureSchema();
 
-    const eventId = generateEventId();
+    // Use client-provided deterministic ID (for idempotent showcase telemetry)
+    // or generate a random UUID (normal builder telemetry)
+    const eventId = data.deterministicId ?? generateEventId();
     const sql = db();
 
     await sql`
@@ -219,6 +221,7 @@ export async function POST(req: NextRequest): Promise<Response> {
         ${data.activeTestId ?? null},
         ${data.activeVariant ?? null}
       )
+      ON CONFLICT (id) DO NOTHING
     `;
 
     const durationMs = Date.now() - startedAt;

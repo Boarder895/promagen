@@ -63,20 +63,48 @@ const TOOLTIP_WIDTH = 450;
 
 // ── Platform brand colours (same map as scene-starters-preview.tsx) ─────
 const PLATFORM_COLORS: Readonly<Record<string, string>> = {
-  midjourney: '#7C3AED', openai: '#10B981', 'google-imagen': '#4285F4',
-  leonardo: '#EC4899', flux: '#F97316', stability: '#8B5CF6',
-  'adobe-firefly': '#FF6B35', ideogram: '#06B6D4', playground: '#3B82F6',
-  'microsoft-designer': '#0078D4', novelai: '#A855F7', lexica: '#14B8A6',
-  openart: '#F43F5E', '123rf': '#EF4444', canva: '#00C4CC',
-  bing: '#0078D4', nightcafe: '#D946EF', picsart: '#FF3366',
-  artistly: '#8B5CF6', fotor: '#22C55E', pixlr: '#3B82F6',
-  deepai: '#6366F1', craiyon: '#FBBF24', bluewillow: '#3B82F6',
-  dreamstudio: '#A855F7', artbreeder: '#10B981', 'jasper-art': '#F59E0B',
-  runway: '#EF4444', freepik: '#0EA5E9', simplified: '#8B5CF6',
-  photoleap: '#EC4899', vistacreate: '#F97316', artguru: '#06B6D4',
-  myedit: '#3B82F6', visme: '#7C3AED', hotpot: '#F59E0B',
-  picwish: '#10B981', clipdrop: '#6366F1', getimg: '#14B8A6',
-  'imagine-meta': '#0668E1', dreamlike: '#D946EF', 'remove-bg': '#22C55E',
+  midjourney: '#7C3AED',
+  openai: '#10B981',
+  'google-imagen': '#4285F4',
+  leonardo: '#EC4899',
+  flux: '#F97316',
+  stability: '#8B5CF6',
+  'adobe-firefly': '#FF6B35',
+  ideogram: '#06B6D4',
+  playground: '#3B82F6',
+  'microsoft-designer': '#0078D4',
+  novelai: '#A855F7',
+  lexica: '#14B8A6',
+  openart: '#F43F5E',
+  '123rf': '#EF4444',
+  canva: '#00C4CC',
+  bing: '#0078D4',
+  nightcafe: '#D946EF',
+  picsart: '#FF3366',
+  artistly: '#8B5CF6',
+  fotor: '#22C55E',
+  pixlr: '#3B82F6',
+  deepai: '#6366F1',
+  craiyon: '#FBBF24',
+  bluewillow: '#3B82F6',
+  dreamstudio: '#A855F7',
+  artbreeder: '#10B981',
+  'jasper-art': '#F59E0B',
+  runway: '#EF4444',
+  freepik: '#0EA5E9',
+  simplified: '#8B5CF6',
+  photoleap: '#EC4899',
+  vistacreate: '#F97316',
+  artguru: '#06B6D4',
+  myedit: '#3B82F6',
+  visme: '#7C3AED',
+  hotpot: '#F59E0B',
+  picwish: '#10B981',
+  clipdrop: '#6366F1',
+  getimg: '#14B8A6',
+  'imagine-meta': '#0668E1',
+  dreamlike: '#D946EF',
+  'remove-bg': '#22C55E',
 };
 const DEFAULT_BRAND_COLOR = '#3B82F6';
 
@@ -167,12 +195,17 @@ function PromptTooltipContent({
       {/* Ethereal glow overlay - top radial */}
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
-        style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
+        style={{
+          background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)`,
+        }}
       />
       {/* Bottom glow accent */}
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl"
-        style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`, opacity: 0.6 }}
+        style={{
+          background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`,
+          opacity: 0.6,
+        }}
       />
 
       {/* Content */}
@@ -187,7 +220,10 @@ function PromptTooltipContent({
           </span>
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onCopy(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCopy();
+            }}
             className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all duration-200 ${
               copied
                 ? 'bg-emerald-500/20 text-emerald-400'
@@ -197,22 +233,35 @@ function PromptTooltipContent({
             aria-label={copied ? 'Copied to clipboard' : 'Copy prompt to clipboard'}
           >
             {copied ? (
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
               </svg>
             )}
           </button>
         </div>
 
         {/* Platform label */}
-        <span className="-mt-1 text-xs text-slate-300">
-          {entry.platformName}
-        </span>
+        <span className="-mt-1 text-xs text-slate-300">{entry.platformName}</span>
 
         {/* Prompt text */}
         <p
@@ -248,12 +297,27 @@ const UserPromptCard = React.memo(function UserPromptCard({
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isGlowing = isHovered || isGlowActive;
 
-  useEffect(() => { setIsMounted(true); return () => setIsMounted(false); }, []);
-  useEffect(() => { if (copied) { const t = setTimeout(() => setCopied(false), 1500); return () => clearTimeout(t); } }, [copied]);
-  useEffect(() => { return () => { if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current); }; }, []);
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+  useEffect(() => {
+    if (copied) {
+      const t = setTimeout(() => setCopied(false), 1500);
+      return () => clearTimeout(t);
+    }
+  }, [copied]);
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
 
   const clearCloseTimeout = useCallback(() => {
-    if (closeTimeoutRef.current) { clearTimeout(closeTimeoutRef.current); closeTimeoutRef.current = null; }
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
   }, []);
 
   const startCloseDelay = useCallback(() => {
@@ -265,17 +329,31 @@ const UserPromptCard = React.memo(function UserPromptCard({
     clearCloseTimeout();
     if (flagRef.current) {
       const rect = flagRef.current.getBoundingClientRect();
-      setTooltipCoords({ top: rect.top + rect.height / 2, left: rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP });
+      setTooltipCoords({
+        top: rect.top + rect.height / 2,
+        left: rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP,
+      });
     }
     setTooltipVisible(true);
   }, [clearCloseTimeout]);
 
-  const handleFlagLeave = useCallback(() => { startCloseDelay(); }, [startCloseDelay]);
-  const handleTooltipEnter = useCallback(() => { clearCloseTimeout(); }, [clearCloseTimeout]);
-  const handleTooltipLeave = useCallback(() => { startCloseDelay(); }, [startCloseDelay]);
+  const handleFlagLeave = useCallback(() => {
+    startCloseDelay();
+  }, [startCloseDelay]);
+  const handleTooltipEnter = useCallback(() => {
+    clearCloseTimeout();
+  }, [clearCloseTimeout]);
+  const handleTooltipLeave = useCallback(() => {
+    startCloseDelay();
+  }, [startCloseDelay]);
 
   const handleCopy = useCallback(async () => {
-    try { await navigator.clipboard.writeText(entry.optimisedPrompt); setCopied(true); } catch { /* noop */ }
+    try {
+      await navigator.clipboard.writeText(entry.optimisedPrompt);
+      setCopied(true);
+    } catch {
+      /* noop */
+    }
   }, [entry.optimisedPrompt]);
 
   // ── Per-card glow from brand colour (same pattern as scene-starters) ──
@@ -353,10 +431,7 @@ const UserPromptCard = React.memo(function UserPromptCard({
           </span>
           {/* Score — only shown for live user entries (demo entries have no score) */}
           {entry.isLive && (
-            <span
-              className="shrink-0 tabular-nums text-white"
-              style={{ fontSize: '0.85em' }}
-            >
+            <span className="shrink-0 tabular-nums text-white" style={{ fontSize: '0.85em' }}>
               {entry.score}/100
             </span>
           )}
@@ -380,10 +455,7 @@ const UserPromptCard = React.memo(function UserPromptCard({
         </div>
 
         {/* LINE 3: Created in + flag + location name */}
-        <div
-          className="flex items-center"
-          style={{ height: '33.333%', fontSize: '0.68em' }}
-        >
+        <div className="flex items-center" style={{ height: '33.333%', fontSize: '0.68em' }}>
           <span className="text-slate-400">Created in</span>
           {/* Flag — tooltip trigger */}
           <span
@@ -408,10 +480,7 @@ const UserPromptCard = React.memo(function UserPromptCard({
           </span>
           {/* Location name — brand colour tint per card */}
           {entry.locationName && (
-            <span
-              className="min-w-0 truncate font-medium"
-              style={{ color: entry.brandColor }}
-            >
+            <span className="min-w-0 truncate font-medium" style={{ color: entry.brandColor }}>
               {entry.locationName}
             </span>
           )}
@@ -419,17 +488,19 @@ const UserPromptCard = React.memo(function UserPromptCard({
       </div>
 
       {/* Tooltip via Portal */}
-      {isMounted && tooltipVisible && createPortal(
-        <PromptTooltipContent
-          entry={entry}
-          position={tooltipCoords}
-          onMouseEnter={handleTooltipEnter}
-          onMouseLeave={handleTooltipLeave}
-          onCopy={handleCopy}
-          copied={copied}
-        />,
-        document.body,
-      )}
+      {isMounted &&
+        tooltipVisible &&
+        createPortal(
+          <PromptTooltipContent
+            entry={entry}
+            position={tooltipCoords}
+            onMouseEnter={handleTooltipEnter}
+            onMouseLeave={handleTooltipLeave}
+            onCopy={handleCopy}
+            copied={copied}
+          />,
+          document.body,
+        )}
     </div>
   );
 });
@@ -468,25 +539,27 @@ export default function CommunityPulse() {
       setActiveGlowIndex((prev) => (prev + 1) % CARD_COUNT);
       setGlowOn(true);
     }, GLOW_ON_MS + GLOW_OFF_MS);
-    return () => { clearTimeout(offTimer); clearTimeout(nextTimer); };
+    return () => {
+      clearTimeout(offTimer);
+      clearTimeout(nextTimer);
+    };
   }, [activeGlowIndex]);
 
   // ── Live data from API ─────────────────────────────────────────────
   const { entries: liveEntries } = useCommunityPulse();
 
   // Filter to user-created entries only (source === 'user')
-  const userCards = useMemo(() =>
-    liveEntries
-      .filter((e) => e.source === 'user')
-      .slice(0, USER_CARD_COUNT)
-      .map(apiEntryToCard),
+  const userCards = useMemo(
+    () =>
+      liveEntries
+        .filter((e) => e.source === 'user')
+        .slice(0, USER_CARD_COUNT)
+        .map(apiEntryToCard),
     [liveEntries],
   );
 
   // ── 30-minute rotation for demo fallback ──────────────────────────
-  const [rotationSlot, setRotationSlot] = useState(() =>
-    Math.floor(Date.now() / ROTATION_MS),
-  );
+  const [rotationSlot, setRotationSlot] = useState(() => Math.floor(Date.now() / ROTATION_MS));
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -506,10 +579,19 @@ export default function CommunityPulse() {
       return userCards.slice(0, USER_CARD_COUNT);
     }
 
-    const offset = (rotationSlot * demoSlotsNeeded) % all.length;
+    // Pick demos with unique providers — no duplicate platforms in one set.
+    // Walks forward from the rotation offset, skipping any entry whose
+    // platformId is already in the picked set. Guarantees visual diversity.
+    const offset = (rotationSlot * demoSlotsNeeded * 3) % all.length;
     const demoPicks: DemoEntry[] = [];
-    for (let i = 0; i < demoSlotsNeeded; i++) {
-      demoPicks.push(all[(offset + i) % all.length]!);
+    const seenPlatforms = new Set(userCards.map((c) => c.platformId));
+
+    for (let scan = 0; scan < all.length && demoPicks.length < demoSlotsNeeded; scan++) {
+      const candidate = all[(offset + scan) % all.length]!;
+      if (!seenPlatforms.has(candidate.platformId)) {
+        seenPlatforms.add(candidate.platformId);
+        demoPicks.push(candidate);
+      }
     }
 
     return [...userCards, ...demoPicks];
@@ -542,10 +624,17 @@ export default function CommunityPulse() {
       >
         <div
           className="animate-pulse rounded-full"
-          style={{ backgroundColor: '#10B981', width: 'clamp(6px, 0.35vw, 10px)', height: 'clamp(6px, 0.35vw, 10px)' }}
+          style={{
+            backgroundColor: '#10B981',
+            width: 'clamp(6px, 0.35vw, 10px)',
+            height: 'clamp(6px, 0.35vw, 10px)',
+          }}
           aria-hidden="true"
         />
-        <span className="font-semibold leading-tight" style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.2rem)' }}>
+        <span
+          className="font-semibold leading-tight"
+          style={{ fontSize: 'clamp(0.65rem, 0.9vw, 1.2rem)' }}
+        >
           <span className="whitespace-nowrap bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
             Community Pulse
           </span>
@@ -555,7 +644,11 @@ export default function CommunityPulse() {
       {/* Subtitle */}
       <p
         className="pulse-subtitle-pulse truncate italic text-amber-400/80"
-        style={{ fontSize: 'clamp(0.5625rem, 0.75vw, 1rem)', marginBottom: 'clamp(5px, 0.5vw, 9px)', textAlign: 'center' }}
+        style={{
+          fontSize: 'clamp(0.5625rem, 0.75vw, 1rem)',
+          marginBottom: 'clamp(5px, 0.5vw, 9px)',
+          textAlign: 'center',
+        }}
       >
         The most popular prompts
       </p>
@@ -587,7 +680,11 @@ export default function CommunityPulse() {
         >
           <span
             className="inline-block animate-pulse rounded-full"
-            style={{ backgroundColor: '#10B981', width: 'clamp(5px, 0.3vw, 7px)', height: 'clamp(5px, 0.3vw, 7px)' }}
+            style={{
+              backgroundColor: '#10B981',
+              width: 'clamp(5px, 0.3vw, 7px)',
+              height: 'clamp(5px, 0.3vw, 7px)',
+            }}
             aria-hidden="true"
           />
           Live
