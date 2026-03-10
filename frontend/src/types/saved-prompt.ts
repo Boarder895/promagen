@@ -1,9 +1,19 @@
 // src/types/saved-prompt.ts
 // ============================================================================
-// SAVED PROMPT TYPES
+// SAVED PROMPT TYPES (v1.1.0)
 // ============================================================================
 // Types for the prompt library system.
-// Authority: docs/authority/prompt-intelligence.md §9.2
+//
+// UPDATED v1.1.0 (9 March 2026): Saved Prompts page redesign
+// - Added `source` field: 'builder' (full structured data) vs 'tooltip' (text-only)
+// - Added `folder` field: optional folder name (undefined = "Unsorted")
+// - Added `tier` field: platform tier (1-4) at time of save
+// - Added `folder` filter to LibraryFilters
+// - Added `folderBreakdown` to LibraryStats
+// - All existing fields and exports preserved
+//
+// Authority: docs/authority/saved-page.md §12
+// Existing features preserved: Yes
 // ============================================================================
 
 import type { PromptSelections, PromptCategory } from './prompt-builder';
@@ -44,6 +54,19 @@ export interface SavedPrompt {
   notes?: string;
   /** Tags for organization */
   tags?: string[];
+
+  // ── New fields (v1.1.0) ──
+
+  /** Save origin: 'builder' = full structured data, 'tooltip' = text-only */
+  source: 'builder' | 'tooltip';
+  /** Folder name. undefined = "Unsorted" */
+  folder?: string;
+  /** Platform tier (1-4) at time of save */
+  tier?: number;
+  /** Whether this prompt went through the optimisation pipeline */
+  isOptimised?: boolean;
+  /** The optimised prompt text (if different from positivePrompt) */
+  optimisedPrompt?: string;
 }
 
 /**
@@ -64,6 +87,8 @@ export interface LibraryFilters {
   sortBy: 'createdAt' | 'updatedAt' | 'name' | 'coherenceScore';
   /** Sort direction */
   sortDirection: 'asc' | 'desc';
+  /** Filter by folder name. undefined = show all, 'unsorted' = no folder assigned */
+  folder?: string;
 }
 
 /**
@@ -84,4 +109,6 @@ export interface LibraryStats {
   platformBreakdown: Record<string, number>;
   familyBreakdown: Record<string, number>;
   moodBreakdown: Record<'calm' | 'intense' | 'neutral', number>;
+  /** Count of prompts per folder. Key '__unsorted__' = no folder assigned. */
+  folderBreakdown: Record<string, number>;
 }

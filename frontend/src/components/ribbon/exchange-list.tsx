@@ -28,6 +28,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import type { Exchange } from '@/data/exchanges/types';
 import { ExchangeCard } from '@/components/exchanges';
 import { toCardData } from '@/components/exchanges/adapters';
+import { useGlobalPromptTier } from '@/hooks/use-global-prompt-tier';
 import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
 
 // ============================================================================
@@ -76,6 +77,7 @@ interface LazyExchangeCardProps {
   weather: ExchangeWeatherData | null;
   indexQuote: IndexQuoteData | null;
   side: 'left' | 'right';
+  promptTier: 1 | 2 | 3 | 4;
 }
 
 /**
@@ -98,6 +100,7 @@ function LazyExchangeCard({
   weather,
   indexQuote,
   side,
+  promptTier,
 }: LazyExchangeCardProps): JSX.Element {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -133,7 +136,7 @@ function LazyExchangeCard({
       key={exchange.id}
       exchange={toCardData(exchange, weather, indexQuote)}
       railPosition={side}
-      promptTier={3}
+      promptTier={promptTier}
     />
   );
 }
@@ -178,6 +181,8 @@ export default function ExchangeList({
   emptyMessage,
   side = 'left',
 }: ExchangeListProps): JSX.Element {
+  const { tier: promptTier } = useGlobalPromptTier();
+
   if (!exchanges.length) {
     return (
       <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10" aria-live="polite">
@@ -198,6 +203,7 @@ export default function ExchangeList({
             weather={weather}
             indexQuote={indexQuote}
             side={side}
+            promptTier={promptTier}
           />
         );
       })}

@@ -1,8 +1,13 @@
 // src/components/ribbon/commodity-prompt-tooltip.tsx
 // ============================================================================
-// COMMODITY PROMPT TOOLTIP v2.0 — Multi-Tier Pro Display
+// COMMODITY PROMPT TOOLTIP v2.1 — Multi-Tier Pro Display + 💾 Save
 // ============================================================================
 // Tooltip that displays dynamically generated image prompts for commodities.
+//
+// v2.1: Added 💾 save icon next to copy in both Free and Pro tooltip headers.
+//       Fires saveToLibrary() + triggerQuickSaveToast() for one-click save.
+//       Authority: saved-page.md §7.1
+//       Existing features preserved: Yes
 //
 // v2.0: Blueprint-driven prompts. Pro users see all 4 tiers with individual
 //       copy buttons. Free users see tier 4 only (unchanged behaviour).
@@ -42,6 +47,7 @@ import type {
   AllTierPrompts,
 } from '@/lib/commodities/commodity-prompt-types';
 import type { Season } from '@/lib/commodities/country-weather-resolver';
+import { SaveIcon } from '@/components/prompts/library/save-icon';
 
 // ============================================================================
 // TYPES
@@ -143,6 +149,14 @@ const TIER_META: Record<number, TierMeta> = {
     accentClass: 'text-orange-400',
     dotClass: 'bg-orange-400',
   },
+};
+
+/** Map tier number to a reference platform for save icon */
+const TIER_PLATFORM: Record<number, { id: string; name: string }> = {
+  1: { id: 'leonardo', name: 'Leonardo' },
+  2: { id: 'midjourney', name: 'Midjourney' },
+  3: { id: 'openai', name: 'DALL·E 3' },
+  4: { id: 'canva', name: 'Canva' },
 };
 
 // ============================================================================
@@ -382,7 +396,7 @@ function FreeTooltipContent({
 
       {/* Content */}
       <div className="relative z-10 flex flex-col gap-3">
-        {/* Header — title + copy (top-right) */}
+        {/* Header — title + save/copy (top-right) */}
         <div className="flex items-center justify-between gap-2 mb-1">
           <span
             className="text-base font-semibold text-white"
@@ -390,7 +404,17 @@ function FreeTooltipContent({
           >
             Image Prompt
           </span>
-          <CopyIcon onClick={onCopy} copied={copied} />
+          <div className="flex items-center gap-1">
+            <SaveIcon
+              positivePrompt={prompt}
+              platformId={TIER_PLATFORM[tier]?.id ?? 'canva'}
+              platformName={TIER_PLATFORM[tier]?.name ?? 'Canva'}
+              source="tooltip"
+              tier={tier}
+              size="md"
+            />
+            <CopyIcon onClick={onCopy} copied={copied} />
+          </div>
         </div>
 
         {/* Tier indicator */}
@@ -501,9 +525,19 @@ function ProTooltipContent({
           >
             Image Prompt
           </span>
-          <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
-            PRO
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="px-2 py-0.5 text-xs font-semibold rounded bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
+              PRO
+            </span>
+            <SaveIcon
+              positivePrompt={allPrompts[`tier${activeTier}` as keyof typeof allPrompts] ?? ''}
+              platformId={TIER_PLATFORM[activeTier]?.id ?? 'canva'}
+              platformName={TIER_PLATFORM[activeTier]?.name ?? 'Canva'}
+              source="tooltip"
+              tier={activeTier}
+              size="md"
+            />
+          </div>
         </div>
 
         {/* Subtitle */}

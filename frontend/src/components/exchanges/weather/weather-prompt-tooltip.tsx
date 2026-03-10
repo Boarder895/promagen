@@ -30,6 +30,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { SaveIcon } from '@/components/prompts/library/save-icon';
 import {
   generateWeatherPrompt,
   getDefaultTier,
@@ -74,6 +75,10 @@ export interface WeatherPromptTooltipProps {
   latitude?: number | null;
   /** Longitude for solar/lunar elevation calculation (lighting engine). Optional. */
   longitude?: number | null;
+  /** Platform ID for save functionality. Optional — defaults to tier-based representative. */
+  platformId?: string;
+  /** Platform display name for save. Optional — defaults to tier-based name. */
+  platformName?: string;
 }
 
 // ============================================================================
@@ -85,6 +90,14 @@ export interface WeatherPromptTooltipProps {
  * Allows user to move cursor from trigger to tooltip for copy action.
  */
 const CLOSE_DELAY_MS = 400;
+
+/** Default platform per tier — used when caller doesn't provide platformId */
+const TIER_DEFAULT_PLATFORM: Record<number, { id: string; name: string }> = {
+  1: { id: 'leonardo', name: 'Leonardo AI' },
+  2: { id: 'midjourney', name: 'Midjourney' },
+  3: { id: 'openai', name: 'OpenAI DALL·E' },
+  4: { id: 'canva', name: 'Canva' },
+};
 
 /** Gap between trigger and tooltip (px) */
 const TOOLTIP_GAP = 8;
@@ -208,6 +221,8 @@ interface TooltipContentProps {
   onMouseLeave: () => void;
   onCopy: () => void;
   copied: boolean;
+  savePlatformId: string;
+  savePlatformName: string;
 }
 
 function TooltipContent({
@@ -221,6 +236,8 @@ function TooltipContent({
   onMouseLeave,
   onCopy,
   copied,
+  savePlatformId,
+  savePlatformName,
 }: TooltipContentProps) {
   const glowRgba = hexToRgba(tempColor, 0.3);
   const glowBorder = hexToRgba(tempColor, 0.5);
@@ -286,7 +303,17 @@ function TooltipContent({
               </span>
             )}
           </div>
-          <CopyIcon onClick={onCopy} copied={copied} />
+          <div className="flex items-center gap-1">
+            <SaveIcon
+              positivePrompt={prompt}
+              platformId={savePlatformId}
+              platformName={savePlatformName}
+              source="tooltip"
+              tier={tier}
+              size="sm"
+            />
+            <CopyIcon onClick={onCopy} copied={copied} />
+          </div>
         </div>
 
         {/* Tier indicator */}
@@ -334,6 +361,8 @@ export function WeatherPromptTooltip({
   verticalPosition = 'center',
   latitude,
   longitude,
+  platformId: propPlatformId,
+  platformName: propPlatformName,
 }: WeatherPromptTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -515,6 +544,8 @@ export function WeatherPromptTooltip({
             onMouseLeave={handleTooltipLeave}
             onCopy={handleCopy}
             copied={copied}
+            savePlatformId={propPlatformId ?? TIER_DEFAULT_PLATFORM[tier]?.id ?? 'openai'}
+            savePlatformName={propPlatformName ?? TIER_DEFAULT_PLATFORM[tier]?.name ?? 'OpenAI DALL·E'}
           />,
           document.body,
         )}

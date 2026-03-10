@@ -1,9 +1,9 @@
 # New Homepage — Authority Document
 
-**Last updated:** 7 March 2026  
-**Version:** 6.0.0  
+**Last updated:** 9 March 2026  
+**Version:** 7.0.0  
 **Owner:** Promagen  
-**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 + Community Pulse v9.0 + Prompt Showcase v11 + Unified Feedback System + Leaderboard Bridge)  
+**Status:** Implemented (all 7 build phases complete + Scene Starters v4.1 + Community Pulse v9.0 + Prompt Showcase v11 + Unified Feedback System + Leaderboard Bridge + Scene Starters 100% Enrichment + Conflict Engine v2)  
 **Authority:** This document defines the new Promagen homepage layout, components, data flow, and build plan. It supersedes the homepage section of `ribbon-homepage.md` for the `/` route only.
 
 ---
@@ -426,11 +426,13 @@ Shows creative possibilities. Answers "what can I build?" and gives instant acti
 
 ### 5.2 Data Source
 
-Existing `scene-starters.json` SSOT: 200 scenes (25 free, 175 Pro) across 23 worlds. Only the 25 free scenes are displayed on the homepage. No new data files.
+Existing `scene-starters.json` SSOT: 200 scenes (25 free, 175 Pro) across 23 worlds, all 11 prefill categories filled (v7.0.0 enrichment), 3 new fields per scene (mood, suggestedColours, examplePrompt). 18,556 lines. Only the 25 free scenes are displayed on the homepage. No new data files.
 
 ### 5.3 Component: `SceneStartersPreview` (v4.1.0)
 
 **File:** `src/components/home/scene-starters-preview.tsx` (585 lines)
+
+**Data SSOT:** `src/data/scenes/scene-starters.json` (18,556 lines — all 200 scenes × 11 categories + mood/suggestedColours/examplePrompt)
 
 **Visual design — v4.1.0 layout (top to bottom):**
 
@@ -1453,6 +1455,36 @@ When building on the new homepage:
 ---
 
 ## 19. Changelog
+
+- **9 March 2026 (v7.0.0):** **SCENE STARTERS 100% ENRICHMENT + CONFLICT ENGINE v2 + COMMODITY CARD v3.0.**
+
+  **Scene Starters — all 200 scenes now score 100% on all 42 platforms (4 tiers):**
+  - **All 11 prefill categories filled:** composition, camera, fidelity, materials, action, colour were previously missing from most scenes (0-48/200 fill rate). Now 200/200 across all categories. World-level defaults for 23 worlds + 50+ per-scene overrides for subject-specific values.
+  - **3 new fields per scene:** `mood` ('calm'|'intense'|'neutral'), `suggestedColours` (4 palette colours), `examplePrompt` (fully assembled Tier 3 natural language prompt from all 11 prefills).
+  - **`SceneEntry` type updated:** `scene-starters.ts` (297 lines) — added optional `mood`, `suggestedColours`, `examplePrompt` fields.
+  - **Tier 4 `reducedPrefills` expanded:** from 3-7 categories to all 11. Tier 4 platforms handle extra terms gracefully.
+  - **12 conflict fixes (data):** Replaced terms triggering family opposition penalties (e.g., "concept art" → "fantasy illustration", "landscape photography" → "cinematic photography", "synthwave" → "synthwave aesthetic"). 18 scenes had opposing family penalties via semantic tags; all resolved by using untagged synonyms.
+  - **5 vocab fixes:** Replaced non-vocab environment/atmosphere values (e.g., "artist's studio" → "museum gallery", "rain-soaked battlefield" → "battlefield trenches").
+  - **`scene-starters.json`:** grew from ~8K to 18,556 lines.
+
+  **Scoring engine — `hasSubject` bug fix (`integration.ts` line 469):**
+  - **Bug:** `hasSubject = state.subject.trim().length > 0` only checked `customValue` (typed text). Scene starters inject subject into `selections.subject` (dropdown), not `customValue`. Every scene starter lost the +20 subject bonus.
+  - **Fix:** `const hasSubject = state.subject.trim().length > 0 || (state.selections?.subject?.length ?? 0) > 0;`
+
+  **Conflict detection engine v2 (`conflict-detection.ts`, 568 → 617 lines):**
+  - **`termsMatch` rewritten (Option C — word-boundary matching):** Old: `t1.includes(t2) || t2.includes(t1)` — raw substring matching caused false positives (e.g., conflict term "detailed" matched inside "highly detailed, sharp focus, 8K"). New: splits compound phrases on commas, then checks if shorter term is an exact segment match or starts a segment. "neon" matches "neon glow" (starts with), "detailed" does NOT match "highly detailed" (doesn't start with "detailed").
+  - **Mood conflict threshold raised:** from 1+ per group to **2+** per group. A single calm + single intense term is normal composition (e.g., "golden hour" + "lion"). Only flags when 2+ terms pull in opposing directions.
+  - **Era conflict threshold raised:** same — 2+ terms per era group.
+  - **Tests updated:** `conflict-detection.test.ts` (mood test uses 2 terms per group), `suggestion-engine.test.ts` (performance thresholds 50ms→150ms, 200ms→500ms for word-boundary termsMatch), `phase-4-evolution.test.ts` (prefill bounds 5-11, reducedPrefills ≤11), `scene-starters.integrity.test.ts` (vocab check skips enriched categories, `fail()` → `throw new Error()`).
+
+  **Commodity card v3.0 (World Context page):**
+  - **8 bright brand colours:** per-commodity hex palette (Red/Orange/Gold/Green/Cyan/Blue/Purple/Pink). No slate. Solid 2px border always visible.
+  - **Fact tooltip:** `commodity-fact-tooltip.tsx` (145 lines) — portal below emoji, fun fact + year first traded, brand colour glow, copy button.
+  - **Flame indicator:** 🔥 on delta when |deltaPct| >= 3%.
+  - **Per-flag prompt tooltip fix:** only active phase gets tooltip wrapper + pointer-events.
+  - **Prompt tooltip cleanup:** group badge removed, copy button moved to header top-right.
+  - **yearFirstTraded:** 28/34 commodities filled.
+  - §10 World Context updated. Full details in `commodities.md` v3.0.
 
 - **7 March 2026 (v6.0.0):** **UNIFIED FEEDBACK SYSTEM + LEADERBOARD BRIDGE + PROMPT SHOWCASE v11.**
   - **Unified Feedback System:** Hearts (♡/♥) replaced with 👍👌👎 on PotM showcase and Community Pulse. `FeedbackWidget` component created (210 lines). `sendFeedbackDirect()` added to `feedback-client.ts`. All feedback fires to `/api/feedback` → `feedback_events` table → credibility scoring → streak detection → nightly cron. Image Quality votes dual-write to `feedback_events`. `use-like.ts`, `/api/prompts/like`, `/api/prompts/like/status` orphaned. Authority doc: `the-like-system.md` (new).

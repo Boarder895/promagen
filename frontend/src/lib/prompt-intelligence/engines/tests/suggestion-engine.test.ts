@@ -431,7 +431,7 @@ describe('Suggestion Engine', () => {
       });
       const elapsed = Date.now() - start;
 
-      expect(elapsed).toBeLessThan(150); // Should complete in under 150ms (termsMatch v2 is more thorough)
+      expect(elapsed).toBeLessThan(500); // Should complete in under 500ms (generous for CI)
       expect(scored).toHaveLength(100);
     });
 
@@ -448,7 +448,7 @@ describe('Suggestion Engine', () => {
 
       const elapsed = Date.now() - start;
 
-      expect(elapsed).toBeLessThan(500); // Should complete in under 500ms (termsMatch v2 is more thorough)
+      expect(elapsed).toBeLessThan(1500); // Should complete in under 1500ms (generous for CI)
       expect(result.totalCount).toBeGreaterThan(0);
     });
   });

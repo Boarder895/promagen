@@ -391,17 +391,17 @@ export function ExploreDrawer({
     <>
       <style dangerouslySetInnerHTML={{ __html: EXPLORE_STYLES }} />
 
-      {/* ─── Trigger bar ─────────────────────────────────────────────── */}
+      {/* ─── Trigger bar — clickable with visible hover affordance ─── */}
       <button
         type="button"
         onClick={handleToggle}
         disabled={isLocked}
         className={`
-          w-full flex items-center justify-between rounded-lg border transition-colors
+          w-full flex items-center justify-between rounded-lg border transition-all duration-200
           ${
             isExpanded
-              ? 'border-slate-700/40 bg-slate-900/40'
-              : 'border-transparent hover:border-slate-800/30 hover:bg-slate-900/20'
+              ? 'border-sky-500/30 bg-sky-950/20 ring-1 ring-sky-500/10'
+              : 'border-white/10 hover:border-sky-500/30 hover:bg-sky-950/15 ring-1 ring-white/5 hover:ring-sky-500/10'
           }
           ${isLocked ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
         `}
@@ -413,20 +413,20 @@ export function ExploreDrawer({
         aria-label={`Explore ${exploreCount} ${category} phrases`}
       >
         <span
-          className="text-slate-500 hover:text-slate-400 transition-colors"
-          style={{ fontSize: 'clamp(0.54rem, 0.6vw, 0.68rem)' }}
+          className="text-white transition-colors"
+          style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
         >
           Explore{' '}
-          <span className="text-slate-400 font-medium">{exploreCount.toLocaleString()}</span> more
+          <span className="text-white font-medium">{exploreCount.toLocaleString()}</span> more
           phrases
           {activeScenePhrases.length > 0 && (
-            <span className="text-cyan-500/60 ml-1">
+            <span className="text-cyan-400 ml-1">
               + {activeScenePhrases.length} scene
             </span>
           )}
         </span>
         <svg
-          className={`text-slate-600 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+          className={`text-slate-300 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -449,18 +449,18 @@ export function ExploreDrawer({
           role="region"
           aria-label={`Explore ${category} vocabulary`}
         >
-          {/* Phase 7.9f: Staleness alert — shown when compressionLookup is absent */}
+          {/* Daily refresh notice — amber, always shown when panel is open */}
           {!compressionLookup && (
             <div
-              className="flex items-center gap-1.5 rounded bg-amber-500/[0.06] border border-amber-500/10 text-amber-400/60"
+              className="flex items-center gap-1.5 rounded bg-amber-500/[0.06] border border-amber-500/10 text-amber-400"
               style={{
                 padding: 'clamp(3px, 0.3vw, 5px) clamp(6px, 0.5vw, 8px)',
                 marginBottom: 'clamp(4px, 0.4vw, 6px)',
-                fontSize: 'clamp(0.42rem, 0.48vw, 0.55rem)',
+                fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)',
               }}
             >
-              <span aria-hidden="true">⏳</span>
-              <span>Expendability data unavailable — run nightly cron to enable compression intelligence.</span>
+              <span aria-hidden="true">✨</span>
+              <span>Words and phrases change on a daily basis.</span>
             </div>
           )}
 
@@ -468,7 +468,7 @@ export function ExploreDrawer({
           <div className="relative" style={{ marginBottom: 'clamp(6px, 0.6vw, 10px)' }}>
             {/* Search icon */}
             <svg
-              className="absolute text-slate-600 pointer-events-none"
+              className="absolute text-slate-300 pointer-events-none"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -496,9 +496,9 @@ export function ExploreDrawer({
               placeholder={`Search ${category} phrases...`}
               spellCheck="false"
               aria-label={`Search ${category} vocabulary`}
-              className="w-full rounded-md border border-slate-800/40 bg-slate-900/60 text-slate-200 placeholder:text-slate-600 outline-none focus:border-sky-500/40 focus:ring-1 focus:ring-sky-500/20 transition-colors"
+              className="w-full rounded-md border border-slate-800/40 bg-slate-900/60 text-white placeholder:text-slate-400 outline-none focus:border-sky-500/40 focus:ring-1 focus:ring-sky-500/20 transition-colors"
               style={{
-                fontSize: 'clamp(0.58rem, 0.66vw, 0.74rem)',
+                fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)',
                 padding: 'clamp(4px, 0.4vw, 7px) clamp(6px, 0.6vw, 10px)',
                 paddingLeft: 'clamp(24px, 2vw, 32px)',
               }}
@@ -507,7 +507,7 @@ export function ExploreDrawer({
               <button
                 type="button"
                 onClick={handleClearSearch}
-                className="absolute text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute text-slate-300 hover:text-white transition-colors"
                 style={{
                   right: 'clamp(6px, 0.6vw, 10px)',
                   top: '50%',
@@ -556,18 +556,18 @@ export function ExploreDrawer({
                         ? tab.key === 'scene'
                           ? 'border-cyan-600/30 bg-cyan-950/30 text-cyan-300'
                           : 'border-sky-600/30 bg-sky-950/30 text-sky-300'
-                        : 'border-slate-800/20 bg-slate-900/20 text-slate-500 hover:text-slate-400 hover:border-slate-700/30'
+                        : 'border-slate-800/20 bg-slate-900/20 text-slate-200 hover:text-white hover:border-slate-700/30'
                     }
                   `}
                   style={{
                     padding: 'clamp(2px, 0.2vw, 4px) clamp(6px, 0.5vw, 8px)',
-                    fontSize: 'clamp(0.5rem, 0.56vw, 0.62rem)',
+                    fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)',
                     gap: 'clamp(2px, 0.2vw, 4px)',
                   }}
                 >
                   <span>{tab.icon}</span>
                   <span>{tab.label}</span>
-                  <span className="opacity-60">({tab.count})</span>
+                  <span className="text-slate-300">({tab.count})</span>
                 </button>
               ))}
             </div>
@@ -584,8 +584,8 @@ export function ExploreDrawer({
           >
             {visibleChips.length === 0 ? (
               <p
-                className="text-slate-600 italic"
-                style={{ fontSize: 'clamp(0.54rem, 0.6vw, 0.68rem)' }}
+                className="text-slate-300 italic"
+                style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
               >
                 {searchQuery ? 'No matches found' : 'All phrases selected'}
               </p>
@@ -622,9 +622,22 @@ export function ExploreDrawer({
               <button
                 type="button"
                 onClick={handleShowMore}
-                className="text-sky-400/60 hover:text-sky-300 transition-colors"
-                style={{ fontSize: 'clamp(0.52rem, 0.58vw, 0.65rem)' }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 hover:border-sky-400/50 hover:text-sky-200 transition-all duration-200 cursor-pointer"
+                style={{
+                  fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)',
+                  padding: 'clamp(3px, 0.3vw, 5px) clamp(10px, 0.8vw, 14px)',
+                }}
               >
+                <svg
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                  style={{ width: 'clamp(10px, 0.8vw, 12px)', height: 'clamp(10px, 0.8vw, 12px)' }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
                 Show {Math.min(CHIP_PAGE_SIZE, remaining)} more ({remaining.toLocaleString()} left)
               </button>
             ) : (
@@ -632,8 +645,8 @@ export function ExploreDrawer({
             )}
             {searchQuery && totalFiltered > 0 && (
               <span
-                className="text-slate-600"
-                style={{ fontSize: 'clamp(0.46rem, 0.52vw, 0.58rem)' }}
+                className="text-slate-200"
+                style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
               >
                 {totalFiltered.toLocaleString()} match{totalFiltered !== 1 ? 'es' : ''}
               </span>
@@ -666,7 +679,7 @@ function getTierBadge(
       if (wordCount <= 2)
         return {
           badge: '★',
-          className: 'text-amber-400/70',
+          className: 'text-amber-400',
           title: 'Token-efficient for CLIP weighting',
         };
       return null;
@@ -675,7 +688,7 @@ function getTierBadge(
       if (wordCount >= 2 && wordCount <= 4)
         return {
           badge: '◆',
-          className: 'text-violet-400/60',
+          className: 'text-violet-400',
           title: 'Keyword-optimised for Midjourney',
         };
       return null;
@@ -684,7 +697,7 @@ function getTierBadge(
       if (wordCount >= 3)
         return {
           badge: '💬',
-          className: 'opacity-50',
+          className: 'text-emerald-400',
           title: 'Descriptive phrase — great for natural language',
         };
       return null;
@@ -693,12 +706,12 @@ function getTierBadge(
       if (wordCount < 3)
         return {
           badge: '⚡',
-          className: 'opacity-60',
+          className: 'text-sky-400',
           title: 'Simple term — safe for basic platforms',
         };
       return {
         badge: '⚠',
-        className: 'opacity-40',
+        className: 'text-amber-400',
         title: 'Complex phrase — may be truncated',
       };
 
@@ -762,15 +775,15 @@ const ExploreChip = React.memo(function ExploreChip({
         inline-flex items-center rounded-full border transition-all duration-150 ease-out
         ${
           disabled
-            ? 'border-slate-800/15 bg-slate-900/20 text-slate-700 cursor-not-allowed'
+            ? 'border-slate-800/15 bg-slate-900/20 text-slate-500 cursor-not-allowed'
             : isSceneFlavour
               ? 'border-cyan-700/30 bg-cyan-950/20 text-cyan-400 hover:bg-cyan-900/30 hover:text-cyan-200 hover:border-cyan-600/40 active:scale-95 cursor-pointer'
-              : 'border-slate-700/25 bg-slate-800/30 text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 hover:border-slate-600/40 active:scale-95 cursor-pointer'
+              : 'border-slate-700/25 bg-slate-800/30 text-slate-200 hover:bg-slate-700/50 hover:text-white hover:border-slate-600/40 active:scale-95 cursor-pointer'
         }
       `}
       style={{
         padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.5vw, 8px)',
-        fontSize: 'clamp(0.5rem, 0.56vw, 0.64rem)',
+        fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)',
         gap: 'clamp(2px, 0.2vw, 3px)',
         ...expStyle,
       }}
@@ -783,7 +796,7 @@ const ExploreChip = React.memo(function ExploreChip({
     >
       {/* Scene flavour indicator */}
       {isSceneFlavour && (
-        <span style={{ fontSize: 'clamp(0.42rem, 0.45vw, 0.5rem)' }} aria-hidden="true">
+        <span style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }} aria-hidden="true">
           🎬
         </span>
       )}
@@ -791,7 +804,7 @@ const ExploreChip = React.memo(function ExploreChip({
       {tierBadge && (
         <span
           className={tierBadge.className}
-          style={{ fontSize: 'clamp(0.45rem, 0.48vw, 0.52rem)' }}
+          style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
           aria-hidden="true"
         >
           {tierBadge.badge}
@@ -802,7 +815,7 @@ const ExploreChip = React.memo(function ExploreChip({
       {/* Plus icon */}
       {!disabled && (
         <svg
-          className="opacity-30"
+          className="opacity-60"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

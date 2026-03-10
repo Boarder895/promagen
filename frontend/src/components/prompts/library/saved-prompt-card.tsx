@@ -1,15 +1,35 @@
 // src/components/prompts/library/saved-prompt-card.tsx
 // ============================================================================
-// SAVED PROMPT CARD
+// SAVED PROMPT CARD (v2.0.0 — Compact Visual-First Redesign)
 // ============================================================================
-// Card component for displaying saved prompts in the library.
-// Design: DNA Helix + Ethereal Glow hybrid
-// Authority: docs/authority/prompt-intelligence.md §9.2
+// Card component for displaying saved prompts in the library grid.
+//
+// v2.0.0: Full redesign per saved-page.md §5.3.
+//   - Visual-first: DNA bar is the dominant element
+//   - Compact: single-line prompt preview, no line-clamp-2
+//   - Browse-only: NO action buttons on card. All actions in right rail.
+//   - Click selects card (ring highlight, populates preview panel)
+//   - Arrival glow: newly saved prompts pulse once on first render
+//
+// Human Factors Gate:
+// - Feature: Compact card with arrival glow for new saves
+// - Factor: Peak-End Rule + Anticipatory Dopamine (Schultz) — the arrival
+//   glow is the payoff after saving. The user expects to see their prompt
+//   in the library; the glow confirms it with a rewarding visual event.
+// - Anti-pattern: No feedback (prompt silently appears) or persistent
+//   animation (glow must be one-shot, ≤2s, never repeats)
+//
+// Authority: saved-page.md §5.3
+// Sizing: All clamp() with 9px floor (code-standard.md §6.0.1)
+// Animations: Co-located <style jsx> (code-standard.md §6.2)
+// Banned: text-slate-500, text-slate-600 (code-standard.md §6.0.2)
+// Existing features preserved: Yes (all existing exports maintained)
 // ============================================================================
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import type { SavedPrompt } from '@/types/saved-prompt';
 
 // ============================================================================
@@ -33,9 +53,9 @@ const FAMILY_COLOURS: Record<string, { gradient: string; glow: string; accent: s
     accent: 'text-amber-400',
   },
   'dark-moody': {
-    gradient: 'from-slate-400 via-slate-500 to-slate-600',
+    gradient: 'from-gray-400 via-gray-500 to-gray-600',
     glow: 'rgba(148, 163, 184, 0.12)',
-    accent: 'text-slate-300',
+    accent: 'text-gray-300',
   },
   'organic': {
     gradient: 'from-emerald-500 via-green-500 to-lime-500',
@@ -76,14 +96,102 @@ const DEFAULT_COLOURS = {
 };
 
 // ============================================================================
+// PLATFORM COLOURS — each platform gets its own visual identity
+// ============================================================================
+// DNA bars and selection glow are coloured by PLATFORM, not family.
+// This ensures every card gets a distinct colour (every card has a platformId).
+// Family colours were invisible because tooltip saves don't carry family data.
+// ============================================================================
+
+const PLATFORM_COLOURS: Record<string, { gradient: string; glow: string; accent: string }> = {
+  'midjourney': {
+    gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
+    glow: 'rgba(124, 58, 237, 0.18)',
+    accent: 'text-violet-400',
+  },
+  'openai': {
+    gradient: 'from-emerald-500 via-green-400 to-teal-500',
+    glow: 'rgba(16, 185, 129, 0.18)',
+    accent: 'text-emerald-400',
+  },
+  'flux': {
+    gradient: 'from-orange-500 via-amber-400 to-yellow-500',
+    glow: 'rgba(249, 115, 22, 0.18)',
+    accent: 'text-orange-400',
+  },
+  'leonardo': {
+    gradient: 'from-pink-500 via-rose-400 to-fuchsia-500',
+    glow: 'rgba(236, 72, 153, 0.18)',
+    accent: 'text-pink-400',
+  },
+  'stability': {
+    gradient: 'from-violet-500 via-indigo-400 to-purple-500',
+    glow: 'rgba(139, 92, 246, 0.18)',
+    accent: 'text-violet-400',
+  },
+  'adobe-firefly': {
+    gradient: 'from-orange-500 via-red-400 to-rose-500',
+    glow: 'rgba(255, 107, 53, 0.18)',
+    accent: 'text-orange-400',
+  },
+  'canva': {
+    gradient: 'from-cyan-500 via-teal-400 to-emerald-500',
+    glow: 'rgba(0, 196, 204, 0.18)',
+    accent: 'text-cyan-400',
+  },
+  'ideogram': {
+    gradient: 'from-cyan-500 via-sky-400 to-blue-500',
+    glow: 'rgba(6, 182, 212, 0.18)',
+    accent: 'text-cyan-400',
+  },
+  'nightcafe': {
+    gradient: 'from-fuchsia-500 via-purple-400 to-violet-500',
+    glow: 'rgba(217, 70, 239, 0.18)',
+    accent: 'text-fuchsia-400',
+  },
+  'craiyon': {
+    gradient: 'from-yellow-500 via-amber-400 to-orange-400',
+    glow: 'rgba(251, 191, 36, 0.18)',
+    accent: 'text-yellow-400',
+  },
+  'bluewillow': {
+    gradient: 'from-blue-500 via-sky-400 to-cyan-500',
+    glow: 'rgba(59, 130, 246, 0.18)',
+    accent: 'text-blue-400',
+  },
+  'novelai': {
+    gradient: 'from-purple-500 via-violet-400 to-indigo-500',
+    glow: 'rgba(168, 85, 247, 0.18)',
+    accent: 'text-purple-400',
+  },
+  'playground': {
+    gradient: 'from-blue-500 via-indigo-400 to-violet-500',
+    glow: 'rgba(59, 130, 246, 0.18)',
+    accent: 'text-blue-400',
+  },
+  'google-imagen': {
+    gradient: 'from-blue-500 via-sky-400 to-green-500',
+    glow: 'rgba(66, 133, 244, 0.18)',
+    accent: 'text-blue-400',
+  },
+};
+
+// ============================================================================
+// SHORT PLATFORM NAMES
+// ============================================================================
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
 export interface SavedPromptCardProps {
   prompt: SavedPrompt;
-  onLoad: (prompt: SavedPrompt) => void;
-  onDelete: (id: string) => void;
-  onEdit?: (prompt: SavedPrompt) => void;
+  /** Whether this card is currently selected */
+  isSelected: boolean;
+  /** Whether this prompt is newly saved (< 60s ago) — triggers arrival glow */
+  isNew?: boolean;
+  /** Called when the card is clicked */
+  onSelect: (prompt: SavedPrompt) => void;
 }
 
 // ============================================================================
@@ -92,26 +200,44 @@ export interface SavedPromptCardProps {
 
 export function SavedPromptCard({
   prompt,
-  onLoad,
-  onDelete,
-  onEdit,
+  isSelected,
+  isNew = false,
+  onSelect,
 }: SavedPromptCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showArrivalGlow, setShowArrivalGlow] = useState(isNew);
+  const arrivalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Get colours based on primary family - handle undefined safely
-  const colours = useMemo(() => {
-    const primaryFamily = prompt.families[0];
-    if (!primaryFamily) {
-      return DEFAULT_COLOURS;
+  // Arrival glow: one-shot, 2s, never repeats
+  useEffect(() => {
+    if (isNew && showArrivalGlow) {
+      arrivalTimerRef.current = setTimeout(() => {
+        setShowArrivalGlow(false);
+      }, 2000);
     }
-    return FAMILY_COLOURS[primaryFamily] ?? DEFAULT_COLOURS;
-  }, [prompt.families]);
+    return () => {
+      if (arrivalTimerRef.current) clearTimeout(arrivalTimerRef.current);
+    };
+  }, [isNew, showArrivalGlow]);
 
-  // Generate DNA bar pattern based on prompt coherence
+  // Get colours — platform first (always available), family fallback
+  const colours: { gradient: string; glow: string; accent: string } = useMemo(() => {
+    // Platform colour (every card has a platformId)
+    const platColour = PLATFORM_COLOURS[prompt.platformId];
+    if (platColour) return platColour;
+    // Family fallback for unknown platforms
+    const primaryFamily = prompt.families[0];
+    if (primaryFamily) {
+      const famColour = FAMILY_COLOURS[primaryFamily];
+      if (famColour) return famColour;
+    }
+    return DEFAULT_COLOURS;
+  }, [prompt.platformId, prompt.families]);
+
+  // DNA bar pattern based on prompt ID
   const dnaPattern = useMemo(() => {
     const seed = prompt.id.charCodeAt(0) + prompt.id.charCodeAt(1);
-    return [...Array(10)].map((_, i) => {
+    return [...Array(12)].map((_, i) => {
       const base = Math.sin(i * 0.7 + seed * 0.1);
       return 0.25 + (base * 0.35 + 0.35);
     });
@@ -119,232 +245,249 @@ export function SavedPromptCard({
 
   // Format relative time
   const relativeTime = useMemo(() => {
-    const now = new Date();
-    const updated = new Date(prompt.updatedAt);
-    const diffMs = now.getTime() - updated.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+    const now = Date.now();
+    const updated = new Date(prompt.updatedAt).getTime();
+    const diffMs = now - updated;
+    const mins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMs / 3600000);
+    const days = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return updated.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return new Date(prompt.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   }, [prompt.updatedAt]);
 
-  // Truncate prompt preview
-  const promptPreview = useMemo(() => {
-    const text = prompt.positivePrompt;
-    if (text.length <= 100) return text;
-    return text.slice(0, 97) + '...';
-  }, [prompt.positivePrompt]);
+  // Primary family name
+  const primaryFamily = prompt.families[0] ?? '';
 
-  // Handlers
-  const handleLoad = useCallback(() => {
-    onLoad(prompt);
-  }, [onLoad, prompt]);
-
-  const handleDelete = useCallback(() => {
-    if (showDeleteConfirm) {
-      onDelete(prompt.id);
-      setShowDeleteConfirm(false);
-    } else {
-      setShowDeleteConfirm(true);
-    }
-  }, [onDelete, prompt.id, showDeleteConfirm]);
-
-  const handleCancelDelete = useCallback(() => {
-    setShowDeleteConfirm(false);
-  }, []);
-
-  const handleEdit = useCallback(() => {
-    onEdit?.(prompt);
-  }, [onEdit, prompt]);
+  // ── Glow colours for commodity-style treatment ──
+  const glowBright = colours.glow.replace(/0\.\d+\)/, '0.5)');
+  const glowSoft = colours.glow.replace(/0\.\d+\)/, '0.3)');
+  const borderSelected = colours.glow.replace(/0\.\d+\)/, '0.9)');
 
   return (
-    <div
-      className="group relative overflow-hidden rounded-2xl transition-all duration-500 ease-out cursor-pointer"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setShowDeleteConfirm(false);
-      }}
-      style={{
-        background: 'rgba(15, 23, 42, 0.7)',
-        boxShadow: isHovered
-          ? `0 0 60px 10px ${colours.glow}, inset 0 0 30px 5px ${colours.glow}`
-          : '0 0 0 0 transparent',
-        border: `1px solid ${isHovered ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
-      }}
-    >
-      {/* Ethereal glow overlay - top */}
-      <div
-        className="absolute inset-0 transition-opacity duration-500 pointer-events-none"
+    <>
+      <button
+        type="button"
+        onClick={() => onSelect(prompt)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`saved-card relative w-full text-left overflow-hidden rounded-2xl transition-all duration-300 cursor-pointer ${
+          showArrivalGlow ? 'saved-card--arrival' : ''
+        }`}
         style={{
-          background: `radial-gradient(ellipse at 50% 0%, ${colours.glow} 0%, transparent 70%)`,
-          opacity: isHovered ? 1 : 0,
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: `1px solid ${isSelected || isHovered ? borderSelected : 'rgba(255, 255, 255, 0.1)'}`,
+          boxShadow: (isHovered || isSelected)
+            ? `0 0 40px 8px ${glowBright}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowBright}`
+            : '0 1px 3px rgba(0, 0, 0, 0.1)',
+          transition: 'border-color 600ms ease-out, box-shadow 600ms ease-out',
+          padding: 'clamp(8px, 0.7vw, 12px)',
         }}
-      />
-
-      {/* Ethereal glow overlay - bottom */}
-      <div
-        className="absolute inset-0 transition-opacity duration-700 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at 50% 100%, ${colours.glow} 0%, transparent 60%)`,
-          opacity: isHovered ? 0.5 : 0,
-        }}
-      />
-
-      <div className="relative z-10 p-4">
-        {/* DNA Helix Bar */}
-        <div className="flex gap-0.5 mb-3">
+        aria-pressed={isSelected}
+        aria-label={`${prompt.name} — ${prompt.platformName}`}
+      >
+        {/* Ethereal glow — top radial (Community Pulse pattern) */}
+        <span
+          className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+          style={{
+            background: `radial-gradient(ellipse at 50% 0%, ${glowBright} 0%, transparent 70%)`,
+            opacity: (isHovered || isSelected) ? 1 : 0,
+            transition: 'opacity 600ms ease-out',
+          }}
+          aria-hidden="true"
+        />
+        {/* Ethereal glow — bottom radial */}
+        <span
+          className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
+          style={{
+            background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`,
+            opacity: (isHovered || isSelected) ? 0.8 : 0,
+            transition: 'opacity 600ms ease-out',
+          }}
+          aria-hidden="true"
+        />
+        {/* Card content — sits above glow overlays */}
+        <div className="relative z-10">
+        {/* ── DNA Bar (full width, identity stripe) ── */}
+        <div
+          className="flex rounded-md overflow-hidden"
+          style={{
+            gap: 'clamp(1px, 0.08vw, 2px)',
+            height: 'clamp(10px, 0.8vw, 14px)',
+            marginBottom: 'clamp(6px, 0.5vw, 10px)',
+          }}
+        >
           {dnaPattern.map((opacity, i) => (
             <div
               key={i}
-              className={`h-1.5 flex-1 rounded-full bg-gradient-to-r ${colours.gradient} transition-all duration-500`}
+              className={`flex-1 bg-gradient-to-r ${colours.gradient} transition-all duration-500`}
               style={{
-                opacity: isHovered ? Math.min(opacity + 0.3, 1) : opacity * 0.6,
-                transform: isHovered ? 'scaleY(1.3)' : 'scaleY(1)',
-                filter: isHovered ? `drop-shadow(0 0 3px ${colours.glow})` : 'none',
+                opacity: isHovered || showArrivalGlow ? Math.min(opacity + 0.3, 1) : opacity * 0.6,
+                transform: isHovered ? 'scaleY(1.2)' : 'scaleY(1)',
+                filter: showArrivalGlow ? `drop-shadow(0 0 4px ${colours.glow})` : 'none',
               }}
             />
           ))}
         </div>
 
-        {/* Header: Name + Platform */}
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h3
-            className="text-base font-semibold text-white truncate transition-all duration-300 flex-1"
-            style={{
-              textShadow: isHovered ? `0 0 15px ${colours.glow}` : 'none',
-            }}
+        {/* ── Name + Platform Badge ── */}
+        <div
+          className="flex items-start justify-between"
+          style={{
+            gap: 'clamp(4px, 0.3vw, 6px)',
+            marginBottom: 'clamp(2px, 0.2vw, 4px)',
+          }}
+        >
+          <span
+            className="text-white font-semibold truncate flex-1"
+            style={{ fontSize: 'clamp(0.6rem, 0.75vw, 0.9rem)' }}
           >
             {prompt.name}
-          </h3>
-          <span className="shrink-0 px-2 py-0.5 text-xs rounded-lg bg-white/5 text-white/50">
-            {prompt.platformName}
+          </span>
+          {/* Platform icon */}
+          <span
+            className="relative shrink-0 overflow-hidden rounded-sm"
+            style={{ width: 'clamp(16px, 1.3vw, 22px)', height: 'clamp(16px, 1.3vw, 22px)' }}
+          >
+            <Image
+              src={`/icons/providers/${prompt.platformId}.png`}
+              alt={prompt.platformName}
+              fill
+              sizes="22px"
+              className="object-contain"
+              style={{ filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.4))' }}
+            />
           </span>
         </div>
 
-        {/* Prompt Preview */}
-        <p className="text-xs text-white/40 mb-3 line-clamp-2 leading-relaxed transition-colors duration-300 group-hover:text-white/60">
-          {promptPreview}
+        {/* ── Prompt Preview (single line) ── */}
+        <p
+          className="text-slate-300 truncate"
+          style={{
+            fontSize: 'clamp(0.625rem, 0.7vw, 0.85rem)',
+            marginBottom: 'clamp(4px, 0.35vw, 6px)',
+          }}
+        >
+          {prompt.optimisedPrompt ?? prompt.positivePrompt}
         </p>
 
-        {/* Stats Row */}
-        <div className="flex items-center gap-3 mb-3 text-xs">
-          {/* Coherence */}
-          <div className="flex items-center gap-1.5">
-            <div
-              className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${colours.gradient} transition-all duration-300`}
-              style={{
-                boxShadow: isHovered ? `0 0 6px 1px ${colours.glow}` : 'none',
-              }}
-            />
-            <span className={`${colours.accent} font-medium`}>
-              {prompt.coherenceScore}%
+        {/* ── Stats Row: Score + Platform + Family ── */}
+        <div
+          className="flex items-center"
+          style={{
+            gap: 'clamp(6px, 0.5vw, 10px)',
+            marginBottom: 'clamp(3px, 0.25vw, 5px)',
+          }}
+        >
+          {/* Score dot + percentage */}
+          {prompt.coherenceScore > 0 && (
+            <div className="flex items-center" style={{ gap: 'clamp(3px, 0.2vw, 4px)' }}>
+              <div
+                className={`rounded-full bg-gradient-to-r ${colours.gradient}`}
+                style={{
+                  width: 'clamp(6px, 0.45vw, 8px)',
+                  height: 'clamp(6px, 0.45vw, 8px)',
+                }}
+              />
+              <span
+                className={`${colours.accent} font-medium`}
+                style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.8rem)' }}
+              >
+                {prompt.coherenceScore}%
+              </span>
+            </div>
+          )}
+
+          {/* Primary family */}
+          {primaryFamily && (
+            <span
+              className="text-white/70 truncate"
+              style={{ fontSize: 'clamp(0.625rem, 0.5vw, 0.75rem)' }}
+            >
+              {primaryFamily}
             </span>
-          </div>
+          )}
 
-          {/* Character count */}
-          <span className="text-white/30">
-            {prompt.characterCount} chars
-          </span>
-
-          {/* Mood badge */}
-          <span
-            className={`px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide ${
-              prompt.mood === 'intense'
-                ? 'bg-orange-500/10 text-orange-400'
-                : prompt.mood === 'calm'
-                ? 'bg-emerald-500/10 text-emerald-400'
-                : 'bg-slate-500/10 text-slate-400'
-            }`}
-          >
-            {prompt.mood}
-          </span>
+          {/* Optimised badge */}
+          {prompt.isOptimised && (
+            <span
+              className="shrink-0 rounded bg-amber-500/15 text-amber-400 font-medium border border-amber-500/20"
+              style={{
+                padding: 'clamp(0px, 0.05vw, 1px) clamp(4px, 0.3vw, 6px)',
+                fontSize: 'clamp(0.5625rem, 0.5vw, 0.72rem)',
+              }}
+              title="This prompt went through the optimisation pipeline"
+            >
+              ✦ Optimised
+            </span>
+          )}
         </div>
 
-        {/* Families */}
-        {prompt.families.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {prompt.families.slice(0, 3).map((family) => (
-              <span
-                key={family}
-                className="px-2 py-0.5 text-[10px] rounded-md bg-white/5 text-white/40 transition-colors duration-300 group-hover:text-white/60"
-              >
-                {family}
-              </span>
-            ))}
-            {prompt.families.length > 3 && (
-              <span className="px-2 py-0.5 text-[10px] rounded-md bg-white/5 text-white/30">
-                +{prompt.families.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Footer: Time + Actions */}
-        <div className="flex items-center justify-between pt-2 border-t border-white/5">
-          <span className="text-[10px] text-white/30">
+        {/* ── Footer: Time + Folder Badge ── */}
+        <div className="flex items-center justify-between">
+          <span
+            className="text-slate-400"
+            style={{ fontSize: 'clamp(0.625rem, 0.5vw, 0.75rem)' }}
+          >
             {relativeTime}
           </span>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1">
-            {showDeleteConfirm ? (
-              <>
-                <button
-                  onClick={handleCancelDelete}
-                  className="px-2 py-1 text-[10px] rounded bg-white/5 text-white/50 hover:bg-white/10 hover:text-white transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-2 py-1 text-[10px] rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
-                >
-                  Confirm
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleDelete}
-                  className="p-1.5 text-white/30 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                  aria-label="Delete prompt"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-                {onEdit && (
-                  <button
-                    onClick={handleEdit}
-                    className="p-1.5 text-white/30 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
-                    aria-label="Edit prompt"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                )}
-                <button
-                  onClick={handleLoad}
-                  className={`px-2.5 py-1 text-[10px] rounded-md transition-all ${colours.accent} bg-white/5 hover:bg-white/10`}
-                  style={{
-                    textShadow: isHovered ? `0 0 8px ${colours.glow}` : 'none',
-                  }}
-                >
-                  Load →
-                </button>
-              </>
-            )}
-          </div>
+          {prompt.folder && (
+            <span
+              className="text-cyan-300/90 bg-cyan-500/10 border border-cyan-500/20 rounded truncate"
+              style={{
+                padding: 'clamp(0px, 0.05vw, 1px) clamp(4px, 0.3vw, 5px)',
+                fontSize: 'clamp(0.625rem, 0.55vw, 0.75rem)',
+                maxWidth: '50%',
+              }}
+            >
+              {prompt.folder}
+            </span>
+          )}
         </div>
-      </div>
-    </div>
+        </div>{/* end relative z-10 content wrapper */}
+      </button>
+
+      {/* ── Arrival glow animation (co-located per code-standard.md §6.2) ── */}
+      <style jsx>{`
+        .saved-card--arrival {
+          animation: arrivalPulse 2s ease-out forwards;
+        }
+
+        @keyframes arrivalPulse {
+          0% {
+            box-shadow:
+              0 0 0 0 rgba(16, 185, 129, 0),
+              inset 0 0 0 0 rgba(16, 185, 129, 0);
+            border-color: rgba(16, 185, 129, 0.5);
+          }
+          15% {
+            box-shadow:
+              0 0 30px 8px rgba(16, 185, 129, 0.2),
+              inset 0 0 15px 3px rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.6);
+          }
+          50% {
+            box-shadow:
+              0 0 15px 4px rgba(16, 185, 129, 0.08),
+              inset 0 0 8px 2px rgba(16, 185, 129, 0.04);
+            border-color: rgba(16, 185, 129, 0.3);
+          }
+          100% {
+            box-shadow: 0 0 0 0 transparent;
+            border-color: rgba(255, 255, 255, 0.1);
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .saved-card--arrival {
+            animation: none;
+          }
+        }
+      `}</style>
+    </>
   );
 }
 

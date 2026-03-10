@@ -1,6 +1,6 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 16 February 2026  
+**Last updated:** 9 March 2026  
 **Version:** 3.0 (Universal clamp() · Unified Grid · Window Containment)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
@@ -302,10 +302,10 @@ Keep styling consistent with the existing design system.
 
 **§ 6.0.1 Minimum Text Size Floor (Hard Rule)**
 
-No text in Promagen may render below **9px** at any viewport width. This means:
+No text in Promagen may render below **10px** at any viewport width. This means:
 
-- Every `clamp()` first value (minimum) for `fontSize` must be ≥ `9px` (≥ `0.5625rem`)
-- The "Tiny (icon labels)" scale is updated to `clamp(9px, 0.65vw, 11px)` (was 8px floor)
+- Every `clamp()` first value (minimum) for `fontSize` must be ≥ `10px` (≥ `0.625rem`)
+- The "Tiny (icon labels)" scale is updated to `clamp(10px, 0.65vw, 11px)` (was 8px floor)
 - Em-based font sizes inside snap-fit containers: `0.75em` of the minimum snap-fit base (12px) = 9px — this is the floor
 - Any font size that computes below 9px at any viewport width fails review
 
@@ -819,6 +819,66 @@ All gaps between cells = GRID_GAP = clamp(6px, 0.5vw, 10px)
 **Authority:** Golden Rule #12, `docs/authority/best-working-practice.md` § Unified Grid Architecture
 
 ---
+
+
+
+### § 6.7 Commodity Brand Colour Palette (Hard Rule)
+
+**Added:** 9 March 2026 (v3.0)
+
+All commodity card borders, glows, tooltip accents, and visual indicators use an **8-colour bright hex palette**. No slate tones, no opacity-reduced colours on dark backgrounds.
+
+| Name   | Hex       | Tailwind Equivalent |
+| ------ | --------- | ------------------- |
+| Red    | `#EF4444` | `red-500`           |
+| Orange | `#F97316` | `orange-500`        |
+| Gold   | `#EAB308` | `yellow-500`        |
+| Green  | `#22C55E` | `green-500`         |
+| Cyan   | `#06B6D4` | `cyan-500`          |
+| Blue   | `#3B82F6` | `blue-500`          |
+| Purple | `#A855F7` | `purple-500`        |
+| Pink   | `#EC4899` | `pink-500`          |
+
+**Rules:**
+- Border: always `border: 2px solid ${brandHex}` — solid hex, never `hexToRgba()` with opacity
+- Default fallback: `#38BDF8` (cyan) when commodity has no mapping
+- Colour assignment lives in `sort-movers.ts` `COMMODITY_BRAND_COLOURS` map
+- Each of the 34 commodities is mapped to exactly one colour
+
+### § 6.8 Conflict Detection Matching Rules (Hard Rule)
+
+**Added:** 9 March 2026 (v2.0 conflict engine)
+
+The prompt intelligence conflict detection engine (`conflict-detection.ts`) uses `termsMatch()` for comparing user selections against conflict rules. The matching rules are:
+
+1. **Exact match** (case-insensitive) — always fires
+2. **Comma-segment match** — compound phrases split on commas, each segment tested independently
+3. **Start-of-segment match** — shorter term must appear at the **start** of the longer segment, followed by a space or comma. "neon" matches "neon glow" but "detailed" does NOT match "highly detailed"
+
+**Never use raw `includes()` for conflict matching** — it causes false positives where a conflict term embedded inside a longer phrase triggers incorrectly.
+
+**Mood conflict threshold:** requires **2+** terms per mood group to fire. A single calm term + single intense term is normal scene composition, not a conflict.
+
+**Era conflict threshold:** requires **2+** terms per era group to fire. A single past + single future term is often intentional (retro-futurism).
+
+### § 6.9 Scene Starters Data Completeness (Hard Rule)
+
+**Added:** 9 March 2026
+
+All 200 scenes in `scene-starters.json` must have **all 11 prefill categories filled**: subject, style, lighting, colour, atmosphere, environment, action, composition, camera, materials, fidelity.
+
+**New fields (optional but populated for all 200 scenes):**
+- `mood`: 'calm' | 'intense' | 'neutral'
+- `suggestedColours`: string[] (4 palette colours)
+- `examplePrompt`: string (assembled Tier 3 prompt)
+
+**Tier 4 `reducedPrefills`** must include all 11 categories — Tier 4 platforms handle extra terms gracefully.
+
+**Scoring target:** 100% health score on all 42 platforms across all 4 tiers. Verified by:
+- No term triggers a family opposition penalty (use untagged synonyms when necessary)
+- No term triggers a defined conflict or semantic tag conflict
+- No mood conflict (requires 2+ terms per group, so single calm+intense is fine)
+- `hasSubject` credits both typed text AND dropdown selections
 
 ## 7. Accessibility Rules
 
@@ -1683,6 +1743,8 @@ Before shipping any component that uses `ResizeObserver`, `requestAnimationFrame
 ---
 
 ## Changelog
+
+- **9 March 2026**: Added § 6.7 Commodity Brand Colour Palette (8 bright hex colours, no slate, solid border rule). Added § 6.8 Conflict Detection Matching Rules (word-boundary termsMatch, mood/era 2+ threshold). Added § 6.9 Scene Starters Data Completeness (all 11 categories, 100% score target).
 
 - **16 Feb 2026 (v3.0):** Major architecture update — three new mandates baked into the code standard:
   - **§ 6.0 Universal `clamp()` Sizing:** Every visible dimension (text, icons, buttons, gaps, padding, margins, container dimensions) must use CSS `clamp()` for fluid scaling. No fixed `px`/`rem`/Tailwind size classes for scalable dimensions. Full property-by-property table, standard recipes, and exceptions list. Golden Rule #11.

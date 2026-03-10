@@ -43,7 +43,10 @@ import { resolveIsNight } from '@/lib/weather/day-night';
 import { getMoonPhase } from '@/lib/weather/weather-prompt-generator';
 
 // Provider → weather mapping (resolves provider ID to weather city + coords)
-import { getProviderWeatherMapping, getProviderTier } from '@/data/providers/provider-weather-map';
+import { getProviderWeatherMapping } from '@/data/providers/provider-weather-map';
+
+// Global prompt tier — user's Pro selection controls ALL flag tooltips
+import { useGlobalPromptTier } from '@/hooks/use-global-prompt-tier';
 
 // Types
 import type { WeatherData } from '@/hooks/use-weather';
@@ -402,7 +405,7 @@ export function ProviderCell({
   const demoDisplay =
     mapping && !liveDisplay ? generateDemoWeather(mapping.lat, mapping.lon) : null;
   const weatherDisplay = liveDisplay ?? demoDisplay;
-  const providerTier = getProviderTier(provider.id);
+  const { tier: providerTier } = useGlobalPromptTier();
 
   // ── Resolve day/night + display emoji ─────────────────────────────────
   // Uses the same 3-tier cascade as exchange cards (shared utility).

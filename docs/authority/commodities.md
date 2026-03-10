@@ -1,7 +1,7 @@
 # Commodities System Architecture
 
 > **Authority Document** — Promagen Commodities Feed  
-> **Last Updated**: 2026-02-08 (v2.6 — Retail Units, Currency-Branded Colours, Strict 2dp)
+> **Last Updated**: 2026-03-09 (v3.0 — Brand Colour Palette, Fact Tooltip, Flame Indicator, Per-Flag Fix, Conflict-Free Prompts)
 > **Status**: Production
 
 ---
@@ -28,7 +28,7 @@
 
 ## Overview
 
-The Commodities system provides real-time pricing data for **78 commodities** across three groups:
+The Commodities system provides real-time pricing data for **34 commodities** across three groups:
 
 - **Energy** (crude oil, natural gas, coal, etc.)
 - **Agriculture** (grains, softs, livestock)
@@ -42,8 +42,8 @@ The Commodities system provides real-time pricing data for **78 commodities** ac
 | **Scheduler**     | Clock-aligned slots     | Rolling 5-min timer                  |
 | **Cache**         | Per-request             | Per-commodity (2h TTL)               |
 | **Rate Limit**    | 60/min (Professional)   | 60/min (shared; scheduler does 1/5m) |
-| **Cold Start**    | Instant                 | ~390 min (~6.5 hours)                |
-| **Queue Order**   | Deterministic           | Full Fisher-Yates shuffle (all 78)   |
+| **Cold Start**    | Instant                 | ~170 min (~2.8 hours)                |
+| **Queue Order**   | Deterministic           | Full Fisher-Yates shuffle (all 34)   |
 
 ---
 
@@ -70,7 +70,7 @@ The Commodities system provides real-time pricing data for **78 commodities** ac
 │  │  │  SSOT   │  │ Per-Commodity│  │ Rolling Scheduler           │ │   │
 │  │  │  init   │  │ Cache (2h)   │  │ • 5-min ticks (1 per call)  │ │   │
 │  │  │         │  │              │  │ • Full Fisher-Yates shuffle  │ │   │
-│  │  └────┬────┘  └──────┬───────┘  │ • All 78 randomised each    │ │   │
+│  │  └────┬────┘  └──────┬───────┘  │ • All 34 randomised each    │ │   │
 │  │       │              │          │   cycle — no tiers           │ │   │
 │  │       ▼              ▼          └────────────┬────────────────┘ │   │
 │  │  ┌─────────┐  ┌──────────────┐               │                  │   │
@@ -141,7 +141,7 @@ interface Commodity {
 }
 ```
 
-### Commodity Groups (78 Total Active)
+### Commodity Groups (34 Total Active)
 
 | Group           | Subgroups                                             | Count | Examples                                |
 | --------------- | ----------------------------------------------------- | ----- | --------------------------------------- |
@@ -188,7 +188,7 @@ const MIN_INTERVAL_MS = 2 * 60 * 1000; // 2-min safety floor
 | Metric                      | Value              |
 | --------------------------- | ------------------ |
 | Interval                    | 5 minutes          |
-| Time to fill all 78         | ~390 min (~6.5 hr) |
+| Time to fill all 34         | ~170 min (~2.8 hr) |
 | Cycles per day              | ~3.7               |
 | API calls per day           | ~288               |
 | Combined with Indices (~96) | ~384 total MS      |
@@ -197,14 +197,14 @@ const MIN_INTERVAL_MS = 2 * 60 * 1000; // 2-min safety floor
 
 #### Full Fisher-Yates Queue Randomisation
 
-Each cycle rebuilds the queue from scratch. **All 78 commodities are fully shuffled** — no tiers, no priority ordering, no double-word preference. Every commodity has an equal chance of being fetched at any position.
+Each cycle rebuilds the queue from scratch. **All 34 commodities are fully shuffled** — no tiers, no priority ordering, no double-word preference. Every commodity has an equal chance of being fetched at any position.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  ALL 78 COMMODITIES                         ← FISHER-YATES      │
+│  ALL 34 COMMODITIES                         ← FISHER-YATES      │
 │  Fully shuffled using Fisher-Yates (Durstenfeld) algorithm       │
 │  O(n) in-place, Math.random() — fine for non-crypto use          │
-│  With 78! permutations (~1.1 × 10^115), order never repeats     │
+│  With 34! permutations (~2.95 × 10^38), order never repeats     │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -233,7 +233,7 @@ function buildQueue(): string[] {
 ```typescript
 const perItemCache = new GenericCache<ParsedCommodityData>(
   COMMODITY_CACHE_TTL_SECONDS * 1000, // 2 hours (7200s)
-  200, // Max entries (78 commodities + headroom)
+  100, // Max entries (34 commodities + headroom)
 );
 ```
 
@@ -334,6 +334,48 @@ Row 4: 🇪🇺 €0.91 / g        ← EUR conversion in RETAIL unit (amber text
 Row 5: 🇬🇧 £0.77 / g        ← GBP conversion in RETAIL unit (purple text-purple-400)
 Row 6: 🇺🇸 $0.99 / g        ← USD conversion (cyan text-cyan-400, non-USD/EUR/GBP only)
 ```
+
+### Commodity Brand Colour Palette (v3.0)
+
+Each commodity is assigned one of 8 bright hex colours. These are used for card border, glow, fact tooltip glow, and prompt tooltip accents. **No slate tones permitted.**
+
+| Colour  | Hex       | Commodities                                                  |
+| ------- | --------- | ------------------------------------------------------------ |
+| Red     | `#EF4444` | coffee, eggs_ch, beef, salmon                                |
+| Orange  | `#F97316` | gasoline, wheat, orange_juice, live_cattle, sunflower_oil    |
+| Gold    | `#EAB308` | gold, corn, cheese, palm_oil                                 |
+| Green   | `#22C55E` | lumber, soybeans, tea, canola                                |
+| Cyan    | `#06B6D4` | silver, oat, milk, poultry                                   |
+| Blue    | `#3B82F6` | platinum, barley, cotton, rapeseed, wool                     |
+| Purple  | `#A855F7` | rice, sugar, eggs_us, lean_hogs                              |
+| Pink    | `#EC4899` | cocoa, butter, feeder_cattle, potatoes                       |
+
+**Default fallback:** `#38BDF8` (cyan) — used when commodity ID has no mapping.
+
+**Border rule:** Always `border: 2px solid ${brandHex}` — solid hex, never opacity-reduced. This ensures visibility on dark backgrounds.
+
+### Flame Indicator (v3.0)
+
+When `|deltaPct| >= 3%`, a `🔥` emoji is appended to the delta percentage text. This signals an unusually large price move at a glance.
+
+### Fact Tooltip (v3.0)
+
+**File:** `commodity-fact-tooltip.tsx` (145 lines)
+
+Hovering the commodity emoji triggers a portal tooltip positioned **below** the trigger (not to the right). Content:
+- **Fun fact** from `fact` field (34/34 commodities filled)
+- **Year first traded** from `yearFirstTraded` field (28/34 filled)
+- **Brand colour glow** matching the card border
+- **Copy button** (same ethereal glow pattern as weather tooltips)
+- **400ms close delay** — prevents flicker on mouse-out
+
+No speech dependency. No group badge. Portal-based positioning.
+
+### Per-Flag Prompt Tooltip Fix (v3.0)
+
+**Bug:** All 3 conversion flags had `<CommodityPromptTooltip>` wrappers with `absolute inset-0`. All 3 were in the DOM simultaneously, so hovering any flag always showed the same prompt (the last one rendered).
+
+**Fix:** Only the **active phase** (`idx === phase`) gets the `<CommodityPromptTooltip>` wrapper and `pointerEvents: 'auto'`. Inactive phases get a plain `<Flag>` with `pointerEvents: 'none'`.
 
 ### Currency-Branded Colours (v2.5)
 
@@ -825,7 +867,7 @@ GET /api/commodities/config
 Response:
 {
   version: 2,
-  ids: string[],        // All 78 active commodity IDs
+  ids: string[],        // All 34 active commodity IDs
   catalog: Commodity[], // Full catalog entries
   defaults: string[],   // Default selected IDs
 }
@@ -881,7 +923,7 @@ Response:
 │ FRONTEND (Source of Truth)                                        │
 │                                                                    │
 │  commodities.catalog.json ─────────┐                              │
-│  (78 commodities, Zod-validated)   │                              │
+│  (34 commodities, Zod-validated)   │                              │
 │                                    ▼                              │
 │  /api/commodities/config ──────────────────────────────────────┐  │
 │  Returns: { version, ids, catalog, defaults }                  │  │
@@ -897,7 +939,7 @@ Response:
 │         │                                                         │
 │         └──► On failure: loadSsotSnapshot() ──► 'snapshot-fallback'│
 │                                                                    │
-│  Scheduler uses catalog IDs to cycle through all 78 commodities   │
+│  Scheduler uses catalog IDs to cycle through all 34 commodities   │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -927,7 +969,7 @@ await saveSsotSnapshot(FEED_ID, {
 
 | Feature     | Behavior                                                   |
 | ----------- | ---------------------------------------------------------- |
-| Movers Grid | Shows top 4 winners + top 4 losers from ALL 78 commodities |
+| Movers Grid | Shows top 4 winners + top 4 losers from ALL 34 commodities |
 | Data Source | Gateway fetches all active commodities                     |
 | Selection   | Not customizable                                           |
 | Refresh     | Re-sorts every 10 minutes from cached data                 |
@@ -968,7 +1010,7 @@ function validateCommoditiesSelection(commodityIds, tier, catalogMap) {
 | File                                       | Purpose                                                               |
 | ------------------------------------------ | --------------------------------------------------------------------- |
 | `src/marketstack/commodities.ts`           | FeedHandler implementation                                            |
-| `src/marketstack/commodities-scheduler.ts` | Rolling 5-min scheduler with full Fisher-Yates randomisation (all 78) |
+| `src/marketstack/commodities-scheduler.ts` | Rolling 5-min scheduler with full Fisher-Yates randomisation (all 34) |
 | `src/marketstack/commodities-adapter.ts`   | Marketstack v2 API adapter                                            |
 | `src/marketstack/commodities-budget.ts`    | Separate budget tracker                                               |
 | `src/server.ts`                            | Feed initialization and startup                                       |
@@ -977,17 +1019,19 @@ function validateCommoditiesSelection(commodityIds, tier, catalogMap) {
 
 | File                                                          | Purpose                                              |
 | ------------------------------------------------------------- | ---------------------------------------------------- |
-| `src/data/commodities/commodities.catalog.json`               | SSOT catalog (78 commodities)                        |
+| `src/data/commodities/commodities.catalog.json`               | SSOT catalog (34 commodities)                        |
 | `src/data/commodities/commodities.schema.ts`                  | Zod validation schema                                |
 | `src/data/commodities/index.ts`                               | Catalog helpers and routing                          |
 | `src/lib/commodities/catalog.ts`                              | Typed helper layer                                   |
 | `src/lib/commodities/convert.ts`                              | Currency conversion + smart lines (v2.6, strict 2dp) |
 | `src/lib/commodities/sort-movers.ts`                          | Winner/loser sorting + retail line builder (v2.6)    |
-| `src/lib/commodities/retail-units.ts`                         | **NEW** Retail unit mapping (78 × 3 regions)         |
+| `src/lib/commodities/retail-units.ts`                         | Retail unit mapping (34 × 3 regions)         |
 | `src/hooks/use-commodities-quotes.ts`                         | Centralized polling hook                             |
 | `src/components/ribbon/commodities-movers-grid.tsx`           | Presentational grid (snap-fit + windows)             |
 | `src/components/ribbon/commodities-movers-grid.container.tsx` | Data container (sorting logic)                       |
-| `src/components/ribbon/commodity-mover-card.tsx`              | Individual card (v2.5, branded colours + divider)    |
+| `src/components/ribbon/commodity-mover-card.tsx`              | Individual card (v3.0, 359 lines — brand border, flame, per-flag fix) |
+| `src/components/ribbon/commodity-fact-tooltip.tsx`             | Fact tooltip (v3.0, 145 lines — portal below emoji)  |
+| `src/components/ribbon/commodity-prompt-tooltip.tsx`           | Prompt tooltip (v3.0, 743 lines — no group badge, copy top-right) |
 | `src/components/ribbon/commodities-ribbon.container.tsx`      | Ribbon container (2dp formatting)                    |
 | `src/components/ui/flag.tsx`                                  | Flag component (SVG + emoji fallback)                |
 | `src/app/api/commodities/config/route.ts`                     | SSOT config endpoint                                 |
@@ -1151,6 +1195,14 @@ const debug = getCommoditiesQuotesDebugSnapshot();
 
 | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-03-09 | **v3.0**: **8 Bright Brand Colour Palette.** Replaced per-currency colour classes with 8 bold hex colours assigned per commodity: Red=#EF4444, Orange=#F97316, Gold=#EAB308, Green=#22C55E, Cyan=#06B6D4, Blue=#3B82F6, Purple=#A855F7, Pink=#EC4899. No slate tones. Border always solid 2px brand colour hex (`border: 2px solid ${hoverHex}`), no opacity. Default fallback: `#38BDF8` (cyan). |
+| 2026-03-09 | **v3.0**: **Commodity Fact Tooltip (NEW).** `commodity-fact-tooltip.tsx` (145 lines). Portal below emoji trigger. Shows fun fact (`fact` field, 34/34 filled) + year first traded (`yearFirstTraded`, 28/34 filled). 400ms close delay, ethereal glow from brand colour, copy button. No speech dependency. |
+| 2026-03-09 | **v3.0**: **Flame Indicator.** `🔥` emoji appended to delta percentage when `|deltaPct| >= 3%`. Signals unusually large commodity price moves. |
+| 2026-03-09 | **v3.0**: **Per-Flag Prompt Tooltip Fix.** Only the active phase (idx===phase) gets `<CommodityPromptTooltip>` + `pointerEvents: 'auto'`. Inactive phases get plain Flag + `pointerEvents: 'none'`. Previously all 3 flags had tooltip wrappers causing same-prompt display bug. |
+| 2026-03-09 | **v3.0**: **Prompt Tooltip Cleanup.** Group badge (Agriculture/Energy/Metals pill) removed from both Free and Pro tooltip headers. Copy button moved from bottom row to top-right of header (matching WeatherPromptTooltip pattern). `GROUP_LABELS` and `GROUP_BADGE_CLASSES` constants deleted; unused `group` prefixed `_group`. |
+| 2026-03-09 | **v3.0**: **Card Layout v8.0.** Line 2 centred with `gap: '3ch'`. Flag-to-currency gap increased 5× to `clamp(16px, 1.5vw, 30px)`. White names. `sort-movers.ts` now outputs `fact: string|null` and `yearFirstTraded: number|null` per commodity. |
+| 2026-03-09 | **v3.0**: **yearFirstTraded Data.** 12 additional values filled: butter=1996, canola=1963, cheese=2011, eggs_us=1898, feeder_cattle=1971, lean_hogs=1966, live_cattle=1964, lumber=1969, milk=1996, oat=1877, rapeseed=1994, salmon=2006. Total: 28/34 commodities now have year data. |
+| 2026-03-09 | **v3.0**: **Catalog Trimmed to 34.** Active commodity count reduced from 78 to 34. Cold start: ~170 min (~2.8 hours). Budget: ~288 calls/day. |
 | 2026-02-05 | **v2.4**: Flag component for ALL flag displays (base + conversions)                                                                                                                                                                                                                                                                                                                                                                  |
 | 2026-02-05 | **v2.4**: ConversionLineData interface with countryCode + priceText structure                                                                                                                                                                                                                                                                                                                                                        |
 | 2026-02-05 | **v2.4**: Windows compatibility via SVG flags instead of emoji text                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1164,7 +1216,7 @@ const debug = getCommoditiesQuotesDebugSnapshot();
 | 2026-02-04 | **Added customization guide**: Line numbers for font, gaps, spacing adjustments                                                                                                                                                                                                                                                                                                                                                      |
 | 2026-02-03 | Added cold-start burst mode (1-min → 2-min transition)                                                                                                                                                                                                                                                                                                                                                                               |
 | 2026-02-03 | Removed `commodities.selected.json` dependency                                                                                                                                                                                                                                                                                                                                                                                       |
-| 2026-02-03 | Frontend config now returns ALL 78 active commodities                                                                                                                                                                                                                                                                                                                                                                                |
+| 2026-02-03 | Frontend config now returns ALL active commodities (34 as of v3.0)                                                                                                                                                                                                                                                                                                                                                                                |
 | 2026-02-03 | Added movers grid placeholder handling for cold-start gaps                                                                                                                                                                                                                                                                                                                                                                           |
 | 2026-02-02 | Migrated from fallback provider to Marketstack v2                                                                                                                                                                                                                                                                                                                                                                                    |
 | 2026-01-15 | Initial commodities feed implementation                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -1173,9 +1225,9 @@ const debug = getCommoditiesQuotesDebugSnapshot();
 | 2026-02-06 | **Shrinkable finance ribbon**: Documented wrapper spec (not implemented — superseded by v3.0 content-driven detection)                                                                                                                                                                                                                                                                                                               |
 | 2026-02-06 | **Font range updated**: MIN_FONT_PX=12, MAX_FONT_PX=24 (was 18/32)                                                                                                                                                                                                                                                                                                                                                                   |
 | 2026-02-07 | **Content-driven row detection (v3.0)**: Removed `MIN_CARD_HEIGHT_PX` magic number. Unified reflow pass measures actual content height from offscreen measurer and decides font + row count together. `BREATHING_ROOM_PX = 8` ensures nothing sits flush against window edges. Bottom row drops when content can't fit two rows — exactly like Engine Bay provider icons.                                                            |
-| 2026-02-07 | **Gateway scheduler audit**: Interval 1-min/2-min → **5-min fixed** (no cold-start burst). Rate limit corrected from "1/min hard limit" to **60/min Professional tier**. Cold start corrected from 78/156 min to **~390 min (~6.5 hours)**. Budget allocation updated: ~288 calls/day (8.6%), not ~720 (21.6%).                                                                                                                      |
+| 2026-02-07 | **Gateway scheduler audit**: Interval 1-min/2-min → **5-min fixed** (no cold-start burst). Rate limit corrected from "1/min hard limit" to **60/min Professional tier**. Cold start corrected from 78/156 min to **~170 min (~2.8 hours)**. Budget allocation updated: ~288 calls/day (8.6%), not ~720 (21.6%).                                                                                                                      |
 | 2026-02-08 | **Full queue randomisation**: Removed 3-tier ordering (double-word → priority → shuffled remainder). ALL 78 commodities now fully shuffled via Fisher-Yates each cycle — no tiers, no priority, no double-word preference. Removed `DOUBLE_WORD_COMMODITY_IDS` constant (22 items), `priorityIds` state, and `doubleWordIds`/`priorityIds` from /trace output. Every commodity has equal chance of being fetched first after deploy. |
 | 2026-02-08 | **v2.5**: Currency-branded conversion line colours — USD cyan (`text-cyan-400`), EUR amber (`text-amber-400`), GBP purple (`text-purple-400`). Added `currencyColorClass()` helper in `commodity-mover-card.tsx`. Subtle `border-t border-white/5` divider between delta row and conversion lines.                                                                                                                                   |
-| 2026-02-08 | **v2.6**: Retail unit system — new `retail-units.ts` maps all 78 commodities × 3 regions (US/UK/EU) with consumer-friendly units (kg, g, lb, gal, litre, kWh, 250g, 500g, 12oz, dozen, etc.). Conversion lines now show e.g. `€2.63 / kg` instead of `€2,632.80`. Added `formatRetailPrice()` and `buildRetailConversionLines()` to `sort-movers.ts`.                                                                                |
+| 2026-02-08 | **v2.6**: Retail unit system — new `retail-units.ts` maps all 34 commodities × 3 regions (US/UK/EU) with consumer-friendly units (kg, g, lb, gal, litre, kWh, 250g, 500g, 12oz, dozen, etc.). Conversion lines now show e.g. `€2.63 / kg` instead of `€2,632.80`. Added `formatRetailPrice()` and `buildRetailConversionLines()` to `sort-movers.ts`.                                                                                |
 | 2026-02-08 | **v2.6**: Strict 2dp pricing — removed all conditional 3dp/4dp branches from `formatUsdPrice`, `formatEurPrice`, `formatGbpPrice`, `formatZarPrice`, `formatCommodityPrice`. All commodity prices now display exactly 2 decimal places globally.                                                                                                                                                                                     |
 | 2026-02-08 | **v2.6**: Livestock exclusion — removed `live_cattle`, `lean_hogs`, `feeder_cattle` from retail units map. Live animal futures fall back to raw converted prices (no unit suffix).                                                                                                                                                                                                                                                   |

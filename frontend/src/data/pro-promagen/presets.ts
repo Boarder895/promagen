@@ -5,8 +5,9 @@
 // Quick selection presets for exchanges and FX pairs.
 // Provides one-click sensible defaults for regional focus.
 //
-// UPDATED: Added Stock Indices row to FEATURE_COMPARISON with dropdown.
-// UPDATED: Added Weather Prompt Format row for Pro users.
+// v3.0.0: FX Pairs row removed (no longer configurable).
+//         Scene Starters + Saved Prompts rows added.
+//         Weather tooltip updated to clarify ALL flags, not just weather.
 //
 // Authority: docs/authority/paid_tier.md §5.10
 // ============================================================================
@@ -246,9 +247,12 @@ export const FX_PRESETS: FxPreset[] = [
 // ============================================================================
 // Authority: docs/authority/paid_tier.md §5.10
 //
-// UPDATED: Added Stock Indices row with interactive dropdown.
-// UPDATED: Added Weather Prompt Format row for tier selection.
-// Indices selection controls which exchange cards show benchmark data.
+// v3.0.0 (10 Mar 2026):
+// - REMOVED: FX Pairs row (FX pairs are now fixed, not configurable)
+// - ADDED: Scene Starters row (25 free / 200 total)
+// - ADDED: Saved Prompts row (browser only vs cross-device)
+// - KEPT: Exchanges, Weather Prompt Format, Reference Frame, Daily Prompts,
+//         Prompt Stacking
 // ============================================================================
 
 export interface FeatureRow {
@@ -261,19 +265,12 @@ export interface FeatureRow {
   /** Whether to highlight this row */
   highlight: boolean;
   /** Whether this row has an interactive dropdown in Pro column */
-  hasDropdown?: 'fx' | 'exchange' | 'weather-prompt-tier';
+  hasDropdown?: 'exchange' | 'weather-prompt-tier';
   /** Optional tooltip explanation */
   tooltip?: string;
 }
 
 export const FEATURE_COMPARISON: FeatureRow[] = [
-  {
-    feature: 'FX Pairs',
-    standard: '8 fixed',
-    pro: '0–16, your choice',
-    highlight: true,
-    hasDropdown: 'fx',
-  },
   {
     feature: 'Exchanges',
     standard: '16 fixed',
@@ -287,7 +284,21 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
     pro: 'Select any tier (1–4)',
     highlight: true,
     hasDropdown: 'weather-prompt-tier',
-    tooltip: 'Choose prompt format matching your AI platform: CLIP-Based, Midjourney, Natural Language, or Plain Language',
+    tooltip: 'Choose prompt format for ALL flag tooltips across the site: CLIP-Based, Midjourney, Natural Language, or Plain Language',
+  },
+  {
+    feature: 'Scene Starters',
+    standard: '25 free scenes',
+    pro: '200 scenes across 23 worlds',
+    highlight: true,
+    tooltip: 'One-click scene presets that prefill 5–8 categories in the prompt builder',
+  },
+  {
+    feature: 'Saved Prompts',
+    standard: 'Browser only',
+    pro: 'Saved across devices',
+    highlight: false,
+    tooltip: 'Save prompts from any tooltip or the builder. Pro syncs across all your devices',
   },
   {
     feature: 'Reference Frame',
@@ -297,7 +308,7 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
   },
   {
     feature: 'Daily Prompts',
-    standard: '10 per day',
+    standard: '5 per day',
     pro: 'Unlimited',
     highlight: true,
   },
@@ -306,6 +317,7 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
     standard: 'Base limits',
     pro: '+1 on 7 categories',
     highlight: false,
+    tooltip: 'Extra selection on Style, Lighting, Colour, Atmosphere, Materials, Fidelity, and Negative categories',
   },
 ];
 

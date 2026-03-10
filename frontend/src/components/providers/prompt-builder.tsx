@@ -146,6 +146,7 @@ import { SceneSelector } from '@/components/providers/scene-selector';
 import { ExploreDrawer, type CascadeScoreMap } from '@/components/providers/explore-drawer';
 import { getSceneById } from '@/data/scenes';
 import { trackEvent } from '@/lib/analytics/events';
+import { SaveIcon } from '@/components/prompts/library/save-icon';
 
 // ============================================================================
 // Types
@@ -418,7 +419,7 @@ function StageBadge({
   if (compositionMode === 'static') {
     return (
       <span
-        className="inline-flex items-center gap-1 rounded-md border border-slate-600/50 bg-slate-800/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-400"
+        className="inline-flex items-center gap-1 rounded-md border border-slate-600/50 bg-slate-800/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-200"
         title="Raw selections — no intelligence applied. What you pick is what you get."
       >
         📋 Static
@@ -440,7 +441,7 @@ function StageBadge({
   if (isOptimizerEnabled && !wasOptimized) {
     return (
       <span
-        className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-950/30 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400/80"
+        className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-950/30 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400"
         title="Platform-formatted and already within optimal length."
       >
         ✓ Optimal
@@ -513,10 +514,10 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
             </SignInButton>
             <div className="flex flex-col gap-2">
               <h3 className="text-lg font-semibold text-white">
-                You&apos;ve used your 5 free prompts
+                You&apos;ve used your 3 free prompts
               </h3>
               <p className="text-sm text-purple-200">
-                Sign in to unlock 10 prompts per day — free forever.
+                Sign in to unlock 5 prompts per day and the prompt optimizer — free forever.
               </p>
               <ul className="mt-0.1 text-left text-xs text-purple-300 space-y-1">
                 <li className="flex items-center gap-2">
@@ -531,7 +532,7 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span>10 prompts per day (resets at midnight)</span>
+                  <span>5 prompts per day (resets at midnight)</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -545,7 +546,7 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span>Dynamic composition packs</span>
+                  <span>Prompt optimizer — platform-tuned output</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <svg
@@ -592,7 +593,7 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
                   ? `Resets in ${getTimeUntilReset()}`
                   : 'Resets at midnight in your timezone'}
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-200">
                 Upgrade to Pro Promagen for unlimited prompts.
               </p>
             </div>
@@ -610,7 +611,7 @@ function LockOverlay({ lockState, dailyResetTime }: LockOverlayProps) {
 function AnonymousCounter({ count, limit }: { count: number; limit: number }) {
   const remaining = Math.max(0, limit - count);
   return (
-    <span className="text-xs text-slate-400">
+    <span className="text-xs text-slate-200">
       {remaining} of {limit} free prompts
     </span>
   );
@@ -618,7 +619,7 @@ function AnonymousCounter({ count, limit }: { count: number; limit: number }) {
 
 function DailyCounter({ count, limit }: { count: number; limit: number }) {
   return (
-    <span className="text-xs text-slate-400">
+    <span className="text-xs text-slate-200">
       {count}/{limit} prompts today
     </span>
   );
@@ -825,17 +826,38 @@ export function PromptBuilder({
 
     try {
       const storedPrompt = sessionStorage.getItem('promagen_load_prompt');
+      console.debug('[PromptBuilder] Load check — isMounted:', isMounted, 'hasData:', !!storedPrompt);
+
       if (storedPrompt) {
         const prompt = JSON.parse(storedPrompt) as {
           selections?: Record<PromptCategory, string[]>;
           customValues?: Record<PromptCategory, string>;
+          _rawPositivePrompt?: string;
+          _rawNegativePrompt?: string;
         };
 
-        if (prompt.selections || prompt.customValues) {
+        // Check if there are actual structured selections (non-empty)
+        const hasSelections = prompt.selections &&
+          Object.values(prompt.selections).some((arr) => Array.isArray(arr) && arr.length > 0);
+        const hasCustomValues = prompt.customValues &&
+          Object.values(prompt.customValues).some((v) => typeof v === 'string' && v.length > 0);
+
+        console.debug('[PromptBuilder] Load data:', {
+          hasSelections,
+          hasCustomValues,
+          hasRawText: !!prompt._rawPositivePrompt,
+          rawTextLength: prompt._rawPositivePrompt?.length ?? 0,
+          selectionKeys: prompt.selections ? Object.keys(prompt.selections).filter(k => {
+            const v = prompt.selections?.[k as PromptCategory];
+            return Array.isArray(v) && v.length > 0;
+          }) : [],
+        });
+
+        if (hasSelections || hasCustomValues) {
+          // Structured load — populate category dropdowns
           setCategoryState((prev) => {
             const newState = { ...prev };
 
-            // Load selections
             if (prompt.selections) {
               for (const [cat, selected] of Object.entries(prompt.selections)) {
                 const category = cat as PromptCategory;
@@ -848,7 +870,6 @@ export function PromptBuilder({
               }
             }
 
-            // Load custom values
             if (prompt.customValues) {
               for (const [cat, value] of Object.entries(prompt.customValues)) {
                 const category = cat as PromptCategory;
@@ -861,15 +882,29 @@ export function PromptBuilder({
               }
             }
 
+            console.debug('[PromptBuilder] Structured load applied');
             return newState;
           });
+        } else if (prompt._rawPositivePrompt) {
+          // Fallback for tooltip-origin prompts: paste raw text into subject custom field
+          console.debug('[PromptBuilder] Raw text fallback — pasting into subject.customValue');
+          setCategoryState((prev) => ({
+            ...prev,
+            subject: {
+              ...prev.subject,
+              customValue: prompt._rawPositivePrompt ?? '',
+            },
+          }));
+        } else {
+          console.debug('[PromptBuilder] No usable data found in stored prompt');
         }
 
         // Clear after reading
         sessionStorage.removeItem('promagen_load_prompt');
+        console.debug('[PromptBuilder] Cleared sessionStorage');
       }
-    } catch {
-      // Silently ignore parse errors
+    } catch (err) {
+      console.error('[PromptBuilder] Load error:', err);
     }
   }, [isMounted]);
 
@@ -1993,7 +2028,7 @@ export function PromptBuilder({
               {providerSelector ? (
                 <div className="flex items-center gap-2">
                   {providerSelector}
-                  <span className="text-sm text-slate-400">· Prompt builder</span>
+                  <span className="text-sm text-slate-200">· Prompt builder</span>
                 </div>
               ) : (
                 <h2 className="text-lg font-semibold text-slate-50">
@@ -2025,16 +2060,17 @@ export function PromptBuilder({
                 │
               </span>
 
-              {/* Text Length Optimizer toggle */}
+              {/* Text Length Optimizer toggle — locked for anonymous users */}
               <TextLengthOptimizer
                 isEnabled={isOptimizerEnabled}
                 onToggle={setOptimizerEnabled}
                 platformId={platformId}
                 platformName={provider.name}
-                disabled={isOptimizerDisabled || isLocked}
+                disabled={isOptimizerDisabled || isLocked || !isAuthenticated}
                 tooltipContent={tooltipContent}
                 analysis={hasContent ? analysis : null}
                 compact
+                lockedForAnonymous={!isAuthenticated}
               />
             </div>
 
@@ -2103,7 +2139,7 @@ export function PromptBuilder({
       >
         <div className="flex flex-col gap-4">
           {/* Instruction text - green style */}
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-emerald-400">
             <span className="text-emerald-400">
               Click Done or click away to close dropdowns. Type in any field to add custom entries.
             </span>
@@ -2168,8 +2204,8 @@ export function PromptBuilder({
                   />
                   {/* Improvement 3: Negative overflow badge — shows when "Try in" carried more negatives than the dropdown limit */}
                   {isNegative && state.customValue && state.selected.length >= maxSelections && (
-                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400">
-                      <svg className="h-3 w-3 text-sky-400/60" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm6.5-.25A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /></svg>
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-200">
+                      <svg className="h-3 w-3 text-sky-400" viewBox="0 0 16 16" fill="currentColor"><path fillRule="evenodd" d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm6.5-.25A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" /></svg>
                       <span>{state.selected.length} shown + {state.customValue.split(',').filter(Boolean).length} overflow — all included in prompt</span>
                     </div>
                   )}
@@ -2234,7 +2270,7 @@ export function PromptBuilder({
 
           {/* Sparse input warning */}
           {hasContent && Object.keys(selections).length < 3 && (
-            <p className="text-xs text-slate-500">💡 Tip: Add more detail for better results</p>
+            <p className="text-xs text-slate-200">💡 Tip: Add more detail for better results</p>
           )}
 
           {/* ============================================================ */}
@@ -2244,7 +2280,7 @@ export function PromptBuilder({
             {/* Header row: "Assembled prompt" + char count + Clear all */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-medium text-slate-300">Assembled prompt</span>
+                <span className="text-xs font-medium text-white">Assembled prompt</span>
                 {/* Improvement 2: Stage indicator badge */}
                 {hasContent && (
                   <StageBadge
@@ -2267,13 +2303,13 @@ export function PromptBuilder({
                 {/* Char count + token estimate inline */}
                 {hasContent && (
                   <span className="flex items-center gap-2 text-xs tabular-nums">
-                    <span className="text-slate-500">{promptText.length} chars</span>
+                    <span className="text-slate-200">{promptText.length} chars</span>
                     {assembled.estimatedTokens != null && (
                       <span
                         className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 ${
                           assembled.tokenLimit && assembled.estimatedTokens > assembled.tokenLimit
                             ? 'bg-amber-500/10 text-amber-400'
-                            : 'text-slate-500'
+                            : 'text-slate-200'
                         }`}
                         title={
                           assembled.tokenLimit && assembled.estimatedTokens > assembled.tokenLimit
@@ -2293,7 +2329,7 @@ export function PromptBuilder({
                   <button
                     type="button"
                     onClick={() => { handleClear(); setInspiredByData(null); setWeatherWeightOverrides(undefined); }}
-                    className="text-xs font-medium bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent hover:from-sky-300 hover:via-emerald-200 hover:to-indigo-300 transition-all"
+                    className="text-xs font-medium bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent hover:from-sky-300 hover:via-emerald-200 hover:to-indigo-300 transition-all cursor-pointer"
                   >
                     Clear all
                   </button>
@@ -2314,7 +2350,7 @@ export function PromptBuilder({
                     {inspiredByData.tempC !== null ? ` · ${inspiredByData.tempC}°C` : ''}
                     {' · '}{inspiredByData.conditions}
                   </span>
-                  <span className="text-xs text-sky-500/50 opacity-0 transition-opacity group-hover:opacity-100">← back</span>
+                  <span className="text-xs text-sky-400 opacity-0 transition-opacity group-hover:opacity-100">← back</span>
                 </a>
                 {/* Upgrade 5: Prompt Fingerprint Verification badge */}
                 {fingerprintStatus === 'match' && (
@@ -2359,27 +2395,38 @@ export function PromptBuilder({
                   )}
                   {/* Inline copy icon — flows after last character, floats right */}
                   {!isLocked && (
-                    <button
-                      type="button"
-                      onClick={handleCopyAssembled}
-                      className={`ml-2 inline-flex float-right rounded-md p-1 transition-all ${
-                        copiedAssembled
-                          ? 'bg-emerald-500/20 text-emerald-400'
-                          : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
-                      }`}
-                      title={copiedAssembled ? 'Copied!' : 'Copy assembled prompt'}
-                      aria-label={copiedAssembled ? 'Copied to clipboard' : 'Copy assembled prompt to clipboard'}
-                    >
-                      {copiedAssembled ? (
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                      )}
-                    </button>
+                    <span className="ml-1 inline-flex float-right gap-1">
+                      <SaveIcon
+                        positivePrompt={promptText}
+                        platformId={provider.id ?? ''}
+                        platformName={provider.name}
+                        source="builder"
+                        tier={platformTier}
+                        selections={selections as Record<string, unknown>}
+                        size="sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCopyAssembled}
+                        className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
+                          copiedAssembled
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                        }`}
+                        title={copiedAssembled ? 'Copied!' : 'Copy assembled prompt'}
+                        aria-label={copiedAssembled ? 'Copied to clipboard' : 'Copy assembled prompt to clipboard'}
+                      >
+                        {copiedAssembled ? (
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </button>
+                    </span>
                   )}
                 </pre>
               ) : (
@@ -2415,7 +2462,7 @@ export function PromptBuilder({
                         {optimizedResult.removedTermNames.map((name, i) => (
                           <span
                             key={i}
-                            className="inline-flex items-center rounded-md bg-amber-900/30 px-1.5 py-0.5 text-[0.7rem] text-amber-300/80"
+                            className="inline-flex items-center rounded-md bg-amber-900/30 px-1.5 py-0.5 text-xs text-amber-300"
                           >
                             ✕ {name}
                           </span>
@@ -2445,27 +2492,40 @@ export function PromptBuilder({
                     {optimizedResult.optimized}
                     {/* Inline copy icon — flows after last character, floats right */}
                     {!isLocked && (
-                      <button
-                        type="button"
-                        onClick={handleCopyOptimized}
-                        className={`ml-2 inline-flex float-right rounded-md p-1 transition-all ${
-                          copiedOptimized
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-white/5 text-emerald-300/50 hover:bg-white/10 hover:text-emerald-200'
-                        }`}
-                        title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
-                        aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
-                      >
-                        {copiedOptimized ? (
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                      </button>
+                      <span className="ml-1 inline-flex float-right gap-1">
+                        <SaveIcon
+                          positivePrompt={promptText}
+                          optimisedPrompt={optimizedResult.optimized}
+                          isOptimised={true}
+                          platformId={provider.id ?? ''}
+                          platformName={provider.name}
+                          source="builder"
+                          tier={platformTier}
+                          selections={selections as Record<string, unknown>}
+                          size="sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCopyOptimized}
+                          className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
+                            copiedOptimized
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200 cursor-pointer'
+                          }`}
+                          title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
+                          aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
+                        >
+                          {copiedOptimized ? (
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                      </span>
                     )}
                   </pre>
                 </div>
@@ -2509,27 +2569,40 @@ export function PromptBuilder({
                     {optimizedResult.optimized}
                     {/* Inline copy icon — flows after last character, floats right */}
                     {!isLocked && (
-                      <button
-                        type="button"
-                        onClick={handleCopyOptimized}
-                        className={`ml-2 inline-flex float-right rounded-md p-1 transition-all ${
-                          copiedOptimized
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-white/5 text-emerald-300/50 hover:bg-white/10 hover:text-emerald-200'
-                        }`}
-                        title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
-                        aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
-                      >
-                        {copiedOptimized ? (
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        )}
-                      </button>
+                      <span className="ml-1 inline-flex float-right gap-1">
+                        <SaveIcon
+                          positivePrompt={promptText}
+                          optimisedPrompt={optimizedResult.optimized}
+                          isOptimised={true}
+                          platformId={provider.id ?? ''}
+                          platformName={provider.name}
+                          source="builder"
+                          tier={platformTier}
+                          selections={selections as Record<string, unknown>}
+                          size="sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCopyOptimized}
+                          className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
+                            copiedOptimized
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200 cursor-pointer'
+                          }`}
+                          title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
+                          aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
+                        >
+                          {copiedOptimized ? (
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                      </span>
                     )}
                   </pre>
                 </div>
@@ -2563,7 +2636,7 @@ export function PromptBuilder({
               inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all
               ${
                 hasContent && !isLocked
-                  ? 'border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800'
+                  ? 'border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800 cursor-pointer'
                   : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-600'
               }
               focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80
@@ -2616,7 +2689,7 @@ export function PromptBuilder({
             className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 ${
               isLocked
                 ? 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
-                : 'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400'
+                : 'border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer'
             }`}
           >
             <span className="text-base">🎲</span>
@@ -2631,8 +2704,8 @@ export function PromptBuilder({
             className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-emerald-400/80 ${
               hasContent && !isLocked
                 ? savedConfirmation
-                  ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300'
-                  : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400'
+                  ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300 cursor-pointer'
+                  : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400 cursor-pointer'
                 : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
             }`}
           >
@@ -2667,7 +2740,7 @@ export function PromptBuilder({
           <button
             type="button"
             onClick={handleDone}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-600 bg-slate-800 px-5 py-2 text-sm font-medium text-slate-100 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-700 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-600 bg-slate-800 px-5 py-2 text-sm font-medium text-slate-100 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-700 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80 cursor-pointer"
           >
             <svg
               className="h-4 w-4"
@@ -2692,7 +2765,7 @@ export function PromptBuilder({
               href={outboundHref}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-sky-500/70 bg-sky-600/10 px-4 py-2 text-sm font-medium text-sky-100 hover:bg-sky-500/20 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-sky-500/70 bg-sky-600/10 px-4 py-2 text-sm font-medium text-sky-100 hover:bg-sky-500/20 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80 cursor-pointer"
             >
               <svg
                 className="h-4 w-4 text-sky-100"

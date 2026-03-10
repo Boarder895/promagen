@@ -1,10 +1,13 @@
 // src/components/home/prompt-showcase.tsx
 // ============================================================================
-// PROMPT OF THE MOMENT — Showcase Component (v9 — Morph Animation)
+// PROMPT OF THE MOMENT — Showcase Component (v9.1 — 💾 Save Icon)
 // ============================================================================
 // Centre-column hero for the new homepage. Displays live weather-driven
 // prompts for the current rotation city via a single hero prompt area
 // with 4 tier tab pills (CLIP · Midjourney · Natural Language · Plain).
+//
+// v9.1.0: Added 💾 save icon next to copy button (saved-page.md §7.1).
+//         One-click save to Library with auto-naming and toast feedback.
 //
 // v9.0.0 CHANGES (Idea 4 — Morph Animation + cleanup):
 // - Per-term staggered morph animation on city rotation
@@ -71,6 +74,7 @@ import type { PromptCategory } from '@/types/prompt-builder';
 import { getPlatformTierId } from '@/data/platform-tiers';
 import { sendShowcaseTelemetry } from '@/lib/telemetry/prompt-telemetry-client';
 import { selectionsFromMap, tierToRefPlatform } from '@/lib/prompt-builder';
+import { SaveIcon } from '@/components/prompts/library/save-icon';
 
 // ============================================================================
 // TIER DISPLAY CONFIG
@@ -981,6 +985,14 @@ function CityContent({
               source="showcase"
               platformId={activeDisplay.key === 'tier2' ? 'midjourney' : activeDisplay.key === 'tier1' ? 'leonardo' : activeDisplay.key === 'tier3' ? 'openai' : 'canva'}
               tier={parseInt(activeTier.replace('tier', ''), 10)}
+            />
+            <SaveIcon
+              positivePrompt={promptText}
+              platformId={activeDisplay.key === 'tier2' ? 'midjourney' : activeDisplay.key === 'tier1' ? 'leonardo' : activeDisplay.key === 'tier3' ? 'openai' : 'canva'}
+              platformName={activeDisplay.label}
+              source="tooltip"
+              tier={parseInt(activeTier.replace('tier', ''), 10)}
+              size="lg"
             />
             <CopyButton text={promptText} label={activeDisplay.label} />
           </div>

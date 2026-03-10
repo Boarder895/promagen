@@ -22,21 +22,21 @@ import type { CompressionTier } from '@/types/compression';
 // ============================================================================
 
 /**
- * Maximum prompt copies for anonymous users (cumulative, not daily).
- * Low enough to drive sign-ups, high enough to demonstrate value.
+ * Maximum prompt copies for anonymous users per day.
+ * Just enough to experience the quality, tight enough to drive sign-ups.
  *
  * Security note: This is enforced client-side via localStorage.
  * Users can bypass by clearing storage or using incognito.
  * This is acceptable - it's a soft conversion gate, not a paywall.
  */
-export const ANONYMOUS_FREE_LIMIT = 5;
+export const ANONYMOUS_FREE_LIMIT = 3;
 
 /**
  * Maximum prompt copies per day for free authenticated users.
- * Low enough to encourage upgrades, high enough to love the product.
- * Tier progression: Anonymous 5/day → Free 10/day → Paid unlimited
+ * Enough to love the product, tight enough to drive upgrades.
+ * Tier progression: Anonymous 3/day → Free 5/day → Paid unlimited
  */
-export const FREE_DAILY_LIMIT = 10;
+export const FREE_DAILY_LIMIT = 5;
 
 /**
  * Paid users have unlimited daily prompt copies.

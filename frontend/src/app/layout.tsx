@@ -7,6 +7,7 @@ import { PauseProvider } from '@/state/pause';
 import ErrorBoundary from '@/components/error-boundary';
 import { ChunkErrorBoundary } from '@/components/chunk-error-boundary';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
+import { QuickSaveToastGlobal } from '@/components/prompts/library/quick-save-toast-global';
 import { env } from '@/lib/env';
 
 // Vercel Pro: Web Analytics + Speed Insights (no visual impact)
@@ -77,6 +78,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <ChunkErrorBoundary>{children}</ChunkErrorBoundary>
             </ErrorBoundary>
           </PauseProvider>
+
+          {/* Quick Save Toast — global mount for 💾 save feedback on all pages */}
+          <QuickSaveToastGlobal />
 
           {/* Global analytics for every page */}
           <GoogleAnalytics />

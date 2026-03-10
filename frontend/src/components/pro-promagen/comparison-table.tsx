@@ -1,22 +1,15 @@
 // src/components/pro-promagen/comparison-table.tsx
 // ============================================================================
-// COMPARISON TABLE (v2.4.0)
+// COMPARISON TABLE (v3.0.0)
 // ============================================================================
 // Standard vs Pro Promagen comparison table.
 //
-// UPDATED v2.4.0 (29 Jan 2026):
-// - CHANGED: FX picker now opens in fullscreen mode via parent callback
-// - ADDED: FxPickerTrigger component (matches ExchangePickerTrigger pattern)
-// - ADDED: onOpenFxPicker callback prop
-// - REMOVED: ChipsDropdown usage for FX (replaced with trigger button)
-// - REMOVED: ChipsDropdown component entirely (indices dropdown removed)
-//
-// UPDATED v2.3.0 (29 Jan 2026):
-// - CHANGED: Exchange picker now opens in fullscreen mode via parent callback
-// - REMOVED: Internal isExchangePickerOpen state
-// - REMOVED: Inline picker rendering (parent handles fullscreen picker)
-// - ADDED: onOpenExchangePicker callback prop
-// - All other functionality preserved
+// v3.0.0 (10 Mar 2026):
+// - REMOVED: FxPickerTrigger component (FX pairs no longer configurable)
+// - REMOVED: onOpenFxPicker callback prop
+// - REMOVED: fxOptions / selectedFxPairs / onFxChange props
+// - ADDED: Scene Starters + Saved Prompts rows via presets.ts
+// - All exchange picker functionality preserved
 //
 // BUTTON STYLING: Uses canonical purple-pink gradient from code-standard.md §6.1
 // - bg-gradient-to-r from-purple-600/20 to-pink-600/20
@@ -54,30 +47,22 @@ export interface SelectionItem {
 }
 
 export interface ComparisonTableProps {
-  /** FX pair options for dropdown */
-  fxOptions: SelectionItem[];
   /** Exchange options for dropdown (legacy, kept for compatibility) */
   exchangeOptions: SelectionItem[];
   /** Full exchange catalog with iso2/continent data (for ExchangePicker) */
   exchangeCatalog?: ExchangeCatalogEntry[];
-  /** Currently selected FX pair IDs */
-  selectedFxPairs: string[];
   /** Currently selected exchange IDs */
   selectedExchanges: string[];
   /** Currently selected weather prompt tier */
   selectedPromptTier: PromptTier;
-  /** Callback when FX selection changes */
-  onFxChange: (ids: string[]) => void;
   /** Callback when exchange selection changes */
   onExchangeChange: (ids: string[]) => void;
   /** Callback when weather prompt tier changes */
   onPromptTierChange: (tier: PromptTier) => void;
   /** Whether user is paid tier (enables interaction) */
   isPaidUser: boolean;
-  /** NEW v2.3.0: Callback to open fullscreen exchange picker (parent handles rendering) */
+  /** Callback to open fullscreen exchange picker (parent handles rendering) */
   onOpenExchangePicker?: () => void;
-  /** NEW v2.4.0: Callback to open fullscreen FX picker (parent handles rendering) */
-  onOpenFxPicker?: () => void;
 }
 
 // ============================================================================
@@ -159,7 +144,7 @@ function InfoTooltip({ content }: InfoTooltipProps) {
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
           />
         </svg>
       </span>
@@ -237,66 +222,6 @@ function ExchangePickerTrigger({
 // ============================================================================
 // Uses sky-emerald gradient to distinguish from exchange picker
 // Deviation: Slightly larger padding for better touch target
-// ============================================================================
-
-interface FxPickerTriggerProps {
-  selectedCount: number;
-  maxCount: number;
-  onClick: () => void;
-  disabled?: boolean;
-}
-
-function FxPickerTrigger({
-  selectedCount,
-  maxCount,
-  onClick,
-  disabled = false,
-}: FxPickerTriggerProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`
-        inline-flex items-center justify-center gap-2 rounded-full
-        border px-4 py-2 text-sm font-medium shadow-sm
-        transition-all duration-200
-        focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80
-        ${
-          disabled
-            ? 'border-slate-700 bg-slate-800/50 text-slate-500 cursor-not-allowed'
-            : 'border-sky-500/70 bg-gradient-to-r from-sky-600/20 to-emerald-600/20 text-sky-100 hover:from-sky-600/30 hover:to-emerald-600/30 hover:border-sky-400 cursor-pointer'
-        }
-      `}
-      aria-label={`Select FX pairs. Currently ${selectedCount} of ${maxCount} selected.`}
-    >
-      {/* Currency exchange icon */}
-      <svg
-        className="w-4 h-4 text-sky-100"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-
-      {/* Label */}
-      <span className="text-sky-100">Select FX Pairs</span>
-
-      {/* Count badge */}
-      <span className="ml-1 px-2 py-0.5 text-xs font-mono rounded-full bg-sky-500/30 text-sky-200">
-        {selectedCount}/{maxCount}
-      </span>
-    </button>
-  );
-}
-
 // ============================================================================
 // WEATHER PROMPT TIER DROPDOWN (Single Select)
 // ============================================================================
@@ -437,35 +362,18 @@ function TierDropdown({ selectedTier, onChange, disabled = false }: TierDropdown
 // ============================================================================
 
 export function ComparisonTable({
-  fxOptions: _fxOptions, // Keep for type compat - now using fullscreen picker
   exchangeOptions: _exchangeOptions, // Keep for type compat
   exchangeCatalog: _exchangeCatalog, // Keep for type compat
-  selectedFxPairs,
   selectedExchanges,
   selectedPromptTier,
-  onFxChange: _onFxChange, // Handled by parent via fullscreen picker
   onExchangeChange: _onExchangeChange, // Handled by parent via fullscreen picker
   onPromptTierChange,
   isPaidUser,
   onOpenExchangePicker,
-  onOpenFxPicker,
 }: ComparisonTableProps) {
   // Render the Pro column value - either static text or dropdown
   const renderProValue = (row: FeatureRow) => {
-    if (row.hasDropdown === 'fx') {
-      // v2.4.0: Trigger opens fullscreen picker via parent callback
-      return (
-        <FxPickerTrigger
-          selectedCount={selectedFxPairs.length}
-          maxCount={PRO_SELECTION_LIMITS.FX_MAX}
-          onClick={() => onOpenFxPicker?.()}
-          disabled={false}
-        />
-      );
-    }
-
     if (row.hasDropdown === 'exchange') {
-      // v2.3.0: Trigger opens fullscreen picker via parent callback
       return (
         <ExchangePickerTrigger
           selectedCount={selectedExchanges.length}
@@ -489,7 +397,7 @@ export function ComparisonTable({
     // Static value
     return (
       <span
-        className={`text-sm font-medium ${row.highlight ? 'text-emerald-400' : 'text-white/60'}`}
+        className={`text-sm font-medium ${row.highlight ? 'text-emerald-400' : 'text-white'}`}
       >
         {row.pro}
       </span>
@@ -511,11 +419,11 @@ export function ComparisonTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/5">
-              <th className="px-4 py-2.5 text-left text-sm font-medium text-white/50">Feature</th>
-              <th className="px-4 py-2.5 text-center text-sm font-medium text-white/50">
+              <th className="px-4 py-2.5 text-left text-sm font-medium text-slate-200">Feature</th>
+              <th className="px-4 py-2.5 text-center text-sm font-medium text-slate-200">
                 Standard
               </th>
-              <th className="px-4 py-2.5 text-center text-sm font-medium text-white/50">
+              <th className="px-4 py-2.5 text-center text-sm font-medium text-slate-200">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="text-amber-400">★</span>
                   Pro Promagen
@@ -537,13 +445,13 @@ export function ComparisonTable({
                   hover:bg-white/5
                 `}
               >
-                <td className="px-4 py-3 text-sm font-medium text-white/80">
+                <td className="px-4 py-3 text-sm font-medium text-white">
                   <span className="flex items-center">
                     {row.feature}
                     {row.tooltip && <InfoTooltip content={row.tooltip} />}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-center text-sm font-medium text-white/40">
+                <td className="px-4 py-3 text-center text-sm font-medium text-slate-200">
                   {row.standard}
                 </td>
                 <td className="px-4 py-3">
@@ -558,7 +466,7 @@ export function ComparisonTable({
       {/* Preview mode hint for free users */}
       {!isPaidUser && (
         <div className="px-4 py-2.5 border-t border-white/5 bg-amber-500/5">
-          <p className="text-xs font-medium text-amber-400/70 text-center">
+          <p className="text-xs font-medium text-amber-400 text-center">
             ★ Try it out! Upgrade to Pro Promagen to save your selections
           </p>
         </div>

@@ -1,6 +1,6 @@
 // src/components/home/community-pulse.tsx
 // ============================================================================
-// COMMUNITY PULSE — Right rail on new homepage (v9.0.0 — 8 platform prompt cards)
+// COMMUNITY PULSE — Right rail on new homepage (v9.1.0 — 8 platform prompt cards + 💾 save)
 // ============================================================================
 // Structurally mirrors scene-starters-preview.tsx for visual symmetry.
 //
@@ -10,8 +10,9 @@
 //   - Line 2: Prompt description (subject + style, italic)
 //   - Line 3: "Created in" + flag + location name (city/town)
 //   - Feedback widget: 👍👌👎 inline (replaces hearts, feeds into unified learning pipeline)
-//   - Flag hover: portal tooltip with full optimised prompt + copy button
+//   - Flag hover: portal tooltip with full optimised prompt + copy button + 💾 save icon
 //
+// v9.1.0: Added 💾 save icon to tooltip header (saved-page.md §7.1)
 // v9.0.0: Removed online users cards. Extended from 6 to 8 prompt cards.
 //
 // Rotation: all 8 picks rotate every 30 minutes (deterministic)
@@ -30,6 +31,7 @@ import demoPrompts from '@/data/community-pulse/demo-prompts.json';
 import { useCommunityPulse } from '@/hooks/use-community-pulse';
 import type { CommunityPulseEntry } from '@/types/homepage';
 import FeedbackWidget from '@/components/ux/feedback-widget';
+import { SaveIcon } from '@/components/prompts/library/save-icon';
 
 // ============================================================================
 // CONSTANTS — MATCHED TO scene-starters-preview.tsx
@@ -210,7 +212,7 @@ function PromptTooltipContent({
 
       {/* Content */}
       <div className="relative z-10 flex flex-col gap-3">
-        {/* Header: "Image Prompt" + copy button */}
+        {/* Header: "Image Prompt" + save/copy buttons */}
         <div className="mb-1 flex items-center justify-between gap-2">
           <span
             className="text-base font-semibold text-white"
@@ -218,46 +220,55 @@ function PromptTooltipContent({
           >
             Image Prompt
           </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCopy();
-            }}
-            className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all duration-200 ${
-              copied
-                ? 'bg-emerald-500/20 text-emerald-400'
-                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
-            }`}
-            title={copied ? 'Copied!' : 'Copy prompt'}
-            aria-label={copied ? 'Copied to clipboard' : 'Copy prompt to clipboard'}
-          >
-            {copied ? (
-              <svg
-                className="h-3.5 w-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg
-                className="h-3.5 w-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <SaveIcon
+              positivePrompt={entry.optimisedPrompt}
+              platformId={entry.platformId}
+              platformName={entry.platformName}
+              source="tooltip"
+              size="md"
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCopy();
+              }}
+              className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all duration-200 ${
+                copied
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+              }`}
+              title={copied ? 'Copied!' : 'Copy prompt'}
+              aria-label={copied ? 'Copied to clipboard' : 'Copy prompt to clipboard'}
+            >
+              {copied ? (
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Platform label */}

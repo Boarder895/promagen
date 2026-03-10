@@ -77,6 +77,7 @@ import {
 } from '@/lib/weather/weather-prompt-generator';
 import { toFullWeather, type ExchangeWeatherDisplay } from '@/lib/weather/weather-types';
 import { WeatherPromptTooltip } from '@/components/exchanges/weather/weather-prompt-tooltip';
+import { useGlobalPromptTier } from '@/hooks/use-global-prompt-tier';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 
@@ -252,6 +253,7 @@ export default function MissionControl({
 }: MissionControlProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const contentZoneRef = useRef<HTMLDivElement>(null);
+  const { tier: globalTier } = useGlobalPromptTier();
 
   // ══════════════════════════════════════════════════════════════════════════
   // WEATHER & PROMPT LOGIC — Uses same data source as LSE London exchange card
@@ -588,6 +590,7 @@ export default function MissionControl({
                 city={cityName}
                 tz={timezone}
                 weather={weatherData}
+                tier={globalTier}
                 tooltipPosition="right"
                 verticalPosition="below"
                 latitude={previewExchange?.latitude}

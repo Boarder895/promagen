@@ -276,11 +276,11 @@ For paid users, the layout stays identical; the difference is the chosen FX set.
 
 ## 2.2 Commodities Row
 
-The Commodities row displays a **Movers Grid** showing the top 2–4 winners and top 2–4 losers from ALL 78 tracked commodities. The grid auto-detects available height: on large screens it shows 4 cards per panel (2×2), on smaller screens the bottom row auto-hides to show 2 cards per panel (2×1).
+The Commodities row displays a **Movers Grid** showing the top 2–4 winners and top 2–4 losers from ALL 34 tracked commodities. The grid auto-detects available height: on large screens it shows 4 cards per panel (2×2), on smaller screens the bottom row auto-hides to show 2 cards per panel (2×1).
 
 > **⚠️ Full Documentation:** See **`docs/authority/commodities.md`** for complete technical details including:
 >
-> - 78-commodity catalog structure and schema
+> - 34-commodity catalog structure and schema
 > - Gateway rolling scheduler (cold-start burst mode)
 > - Marketstack API integration
 > - Per-commodity cache (2h TTL) and budget management
@@ -305,7 +305,7 @@ The Commodities row displays a **Movers Grid** showing the top 2–4 winners and
 
 | Aspect           | Value                                                      |
 | ---------------- | ---------------------------------------------------------- |
-| Data source      | All 78 active commodities from gateway                     |
+| Data source      | All 34 active commodities from gateway                     |
 | Display          | 2×2 or 2×1 per panel (auto-detected from available height) |
 | Re-sort interval | Every 10 minutes from cached data                          |
 | API timing       | :10, :40 (10-min offset from FX)                           |
@@ -315,14 +315,30 @@ The Commodities row displays a **Movers Grid** showing the top 2–4 winners and
 
 | File                                                          | Purpose           |
 | ------------------------------------------------------------- | ----------------- |
-| `src/data/commodities/commodities.catalog.json`               | SSOT catalog (78) |
+| `src/data/commodities/commodities.catalog.json`               | SSOT catalog (34) |
 | `src/components/ribbon/commodities-movers-grid.tsx`           | UI component      |
 | `src/components/ribbon/commodities-movers-grid.container.tsx` | Data container    |
-| `src/components/ribbon/commodity-mover-card.tsx`              | Individual card   |
+| `src/components/ribbon/commodity-mover-card.tsx`              | Individual card (v3.0, 359 lines) |
+| `src/components/ribbon/commodity-fact-tooltip.tsx`             | Fact tooltip (v3.0, 145 lines) |
+| `src/components/ribbon/commodity-prompt-tooltip.tsx`           | Prompt tooltip (v3.0, 743 lines) |
 | `src/lib/commodities/sort-movers.ts`                          | Sorting algorithm |
 | `src/hooks/use-commodities-quotes.ts`                         | Polling hook      |
 
 ---
+
+### Commodity Card v3.0 Features (9 March 2026)
+
+**Brand colour palette:** Each commodity gets one of 8 bright hex colours (see `code-standard.md` § 6.7). Card border: `2px solid ${brandHex}` (always solid, never opacity-reduced). Glow and tooltip accents match.
+
+**Fact tooltip:** Hovering emoji shows portal tooltip below with fun fact + year first traded. 400ms close delay, brand colour glow, copy button. File: `commodity-fact-tooltip.tsx` (145 lines).
+
+**Flame indicator:** `🔥` appended to delta percentage when `|deltaPct| >= 3%`.
+
+**Per-flag tooltip fix:** Only active phase flag gets `<CommodityPromptTooltip>` + `pointerEvents: 'auto'`. Inactive phases: plain `<Flag>` + `pointerEvents: 'none'`. Fixed same-prompt display bug.
+
+**Prompt tooltip cleanup:** Group badge (Agriculture/Energy/Metals) removed. Copy button moved to header top-right. `GROUP_LABELS`/`GROUP_BADGE_CLASSES` deleted.
+
+**Layout:** Line 2 centred, `gap: '3ch'`. Flag-to-currency gap: `clamp(16px, 1.5vw, 30px)`. White commodity names.
 
 ## 2.3 Crypto Row
 

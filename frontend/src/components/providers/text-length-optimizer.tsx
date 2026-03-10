@@ -23,6 +23,13 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { PromptLengthAnalysis } from '@/types/prompt-limits';
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Close delay matches WeatherPromptTooltip and CommodityPromptTooltip (400ms) */
+const CLOSE_DELAY_MS = 400;
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -37,6 +44,8 @@ export interface TextLengthOptimizerProps {
   platformName: string;
   /** Whether toggle is disabled (Static mode active) */
   disabled?: boolean;
+  /** Whether locked because user is anonymous (not signed in) */
+  lockedForAnonymous?: boolean;
   /** Tooltip content */
   tooltipContent: {
     maxChars: string;
@@ -67,6 +76,7 @@ export function TextLengthOptimizer({
   onToggle,
   platformName,
   disabled = false,
+  lockedForAnonymous = false,
   tooltipContent,
   analysis,
   compact = false,
@@ -78,10 +88,26 @@ export function TextLengthOptimizer({
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ============================================================================
   // HANDLERS
   // ============================================================================
+
+  const handleMouseEnter = useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setShowTooltip(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    closeTimerRef.current = setTimeout(() => {
+      setShowTooltip(false);
+      closeTimerRef.current = null;
+    }, CLOSE_DELAY_MS);
+  }, []);
 
   const handleToggle = useCallback(() => {
     if (disabled) return;
@@ -180,10 +206,10 @@ export function TextLengthOptimizer({
     <div className="relative">
       <div
         className="relative"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        onFocus={() => setShowTooltip(true)}
-        onBlur={() => setShowTooltip(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleMouseEnter}
+        onBlur={handleMouseLeave}
       >
         <button
           ref={buttonRef}
@@ -219,7 +245,7 @@ export function TextLengthOptimizer({
 
           {/* Toggle arrows - matches Dynamic toggle */}
           <svg
-            className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} ${disabled ? 'text-slate-500' : isEnabled ? 'text-purple-300/70' : 'text-slate-500'}`}
+            className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} ${disabled ? 'text-slate-300' : isEnabled ? 'text-purple-300' : 'text-slate-300'}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -241,6 +267,8 @@ export function TextLengthOptimizer({
             id="text-length-optimizer-tooltip"
             role="tooltip"
             className="absolute left-0 top-full z-50 mt-2 w-80 rounded-lg border border-slate-700 bg-slate-800/95 p-4 text-sm shadow-xl backdrop-blur-sm"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
             {/* Tooltip arrow */}
             <div className="absolute -top-1.5 left-6 h-3 w-3 rotate-45 border-l border-t border-slate-700 bg-slate-800/95" />
@@ -254,17 +282,17 @@ export function TextLengthOptimizer({
             </div>
 
             {/* Content */}
-            <div className="relative space-y-2 text-xs">
+            <div className="relative space-y-2 text-sm">
               {/* Max chars */}
               <div className="flex justify-between">
-                <span className="text-slate-400">Maximum:</span>
-                <span className="text-slate-200">{tooltipContent.maxChars}</span>
+                <span className="text-slate-200">Maximum:</span>
+                <span className="text-white">{tooltipContent.maxChars}</span>
               </div>
 
               {/* Sweet spot */}
               <div className="flex justify-between">
-                <span className="text-slate-400">Sweet spot:</span>
-                <span className="text-slate-200">{tooltipContent.sweetSpot}</span>
+                <span className="text-slate-200">Sweet spot:</span>
+                <span className="text-white">{tooltipContent.sweetSpot}</span>
               </div>
 
               {/* Divider */}
@@ -272,18 +300,18 @@ export function TextLengthOptimizer({
 
               {/* Platform note */}
               <div className="rounded bg-slate-900/50 p-2">
-                <p className="text-slate-300">
+                <p className="text-white">
                   <span className="mr-1">💡</span>
                   {tooltipContent.platformNote}
                 </p>
-                <p className="mt-1 text-slate-400">
+                <p className="mt-1 text-slate-200">
                   {tooltipContent.benefit}
                 </p>
               </div>
 
               {/* Quality impact */}
               <div className="flex justify-between pt-1">
-                <span className="text-slate-400">Expected improvement:</span>
+                <span className="text-slate-200">Expected improvement:</span>
                 <span className="font-medium text-emerald-400">
                   ~{tooltipContent.qualityImpact}
                 </span>
@@ -292,8 +320,8 @@ export function TextLengthOptimizer({
               {/* Current status (if analysis available) */}
               {analysis && (
                 <div className="mt-2 rounded bg-slate-900/50 p-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">Current:</span>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-200">Current:</span>
                     <span
                       className={`font-medium ${
                         analysis.status === 'optimal'
@@ -314,28 +342,45 @@ export function TextLengthOptimizer({
                   {/* Suggestions when under */}
                   {analysis.status === 'under' &&
                     analysis.suggestedCategories.length > 0 && (
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="mt-1 text-sm text-slate-200">
                         Try adding: {analysis.suggestedCategories.join(', ')}
                       </p>
                     )}
                 </div>
               )}
 
-              {/* Disabled notice */}
-              {disabled && (
-                <p className="mt-2 text-xs text-amber-400/80">
-                  ⚠ Only available in Dynamic mode
+              {/* Anonymous lock notice — clickable link to /sign-in */}
+              {lockedForAnonymous && (
+                <a
+                  href="/sign-in"
+                  className="mt-2 block w-full rounded-lg bg-purple-500/10 p-2.5 ring-1 ring-purple-500/20 hover:bg-purple-500/20 hover:ring-purple-400/30 transition-all cursor-pointer text-left"
+                >
+                  <p className="text-sm font-medium text-purple-200">
+                    ✨ Sign in to unlock the optimizer
+                  </p>
+                  <p className="mt-0.5 text-sm text-slate-200">
+                    See your prompts rewritten and tuned for each platform
+                  </p>
+                </a>
+              )}
+
+              {/* Static mode disabled notice */}
+              {disabled && !lockedForAnonymous && (
+                <p className="mt-2 text-sm text-amber-400">
+                  Switch to Dynamic mode to enable
                 </p>
               )}
             </div>
 
             {/* Footer instruction */}
-            <p className="mt-3 text-[10px] text-slate-500">
-              {disabled
-                ? 'Switch to Dynamic mode to enable'
-                : isEnabled
-                  ? 'Click to disable optimization'
-                  : 'Click to enable optimization'}
+            <p className="mt-3 text-xs text-slate-200">
+              {lockedForAnonymous
+                ? 'Sign in for free to unlock'
+                : disabled
+                  ? 'Switch to Dynamic mode to enable'
+                  : isEnabled
+                    ? 'Click to disable optimization'
+                    : 'Click to enable optimization'}
             </p>
           </div>
         )}

@@ -25,9 +25,16 @@
 
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { CompositionMode } from '@/types/composition';
 import { getPlatformTierId, type PlatformTierId } from '@/data/platform-tiers';
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Close delay matches WeatherPromptTooltip and CommodityPromptTooltip (400ms) */
+const CLOSE_DELAY_MS = 400;
 
 // ============================================================================
 // TYPES
@@ -167,10 +174,26 @@ export function CompositionModeToggle({
   // ============================================================================
 
   const [showTooltip, setShowTooltip] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ============================================================================
   // HANDLERS
   // ============================================================================
+
+  const handleMouseEnter = useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setShowTooltip(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    closeTimerRef.current = setTimeout(() => {
+      setShowTooltip(false);
+      closeTimerRef.current = null;
+    }, CLOSE_DELAY_MS);
+  }, []);
 
   const handleToggle = useCallback(() => {
     if (disabled) return;
@@ -223,10 +246,10 @@ export function CompositionModeToggle({
     <div className="relative">
       <div
         className="relative"
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        onFocus={() => setShowTooltip(true)}
-        onBlur={() => setShowTooltip(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleMouseEnter}
+        onBlur={handleMouseLeave}
       >
         <button
           type="button"
@@ -278,7 +301,7 @@ export function CompositionModeToggle({
 
           {/* Toggle arrows */}
           <svg
-            className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-purple-300/70`}
+            className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} text-purple-300`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -293,23 +316,25 @@ export function CompositionModeToggle({
           </svg>
         </button>
 
-        {/* Tooltip */}
+        {/* Tooltip — 400ms close delay matches flag prompt tooltips */}
         {showTooltip && (
           <div
             id="composition-mode-tooltip"
             role="tooltip"
-            className="absolute left-0 top-full z-50 mt-2 w-80 rounded-lg border border-slate-700 bg-slate-800/95 p-3 text-xs shadow-xl backdrop-blur-sm"
+            className="absolute left-0 top-full z-50 mt-2 w-80 rounded-lg border border-slate-700 bg-slate-800/95 p-3 text-sm shadow-xl backdrop-blur-sm"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
             {/* Tooltip arrow */}
             <div className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 border-l border-t border-slate-700 bg-slate-800/95" />
 
             {/* Tooltip content */}
-            <div className="relative whitespace-pre-line leading-relaxed text-slate-300">
+            <div className="relative whitespace-pre-line leading-relaxed text-white">
               {tooltipContent}
             </div>
 
             {/* Click instruction */}
-            <p className="mt-2 text-[10px] text-slate-500">
+            <p className="mt-2 text-xs text-slate-200">
               Click to switch to {isStatic ? 'Dynamic' : 'Static'} mode
             </p>
           </div>

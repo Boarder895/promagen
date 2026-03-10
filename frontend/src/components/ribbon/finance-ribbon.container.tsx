@@ -32,7 +32,7 @@ import FxPairLabel from '@/components/ribbon/fx-pair-label';
 import type { FxFlagTooltipData } from '@/components/ribbon/fx-pair-label';
 
 import { useFxQuotes, type FxTickDirection } from '@/hooks/use-fx-quotes';
-import { useWeatherPromptTier } from '@/hooks/use-weather-prompt-tier';
+import { useGlobalPromptTier } from '@/hooks/use-global-prompt-tier';
 import { assertFxPairsSsotValid, getFxRibbonPairs } from '@/lib/finance/fx-pairs';
 import { getCurrencyCityInfo } from '@/lib/fx/fx-currency-city-map';
 
@@ -113,7 +113,6 @@ function toWeatherDisplay(data: ExchangeWeatherData): ExchangeWeatherDisplay {
 
 interface UseFxRibbonDataOptions {
   weatherIndex?: Map<string, ExchangeWeatherData>;
-  isPaidUser?: boolean;
 }
 
 /**
@@ -121,15 +120,15 @@ interface UseFxRibbonDataOptions {
  * Now resolves weather data per currency for city-vibes tooltips.
  */
 function useFxRibbonData(options: UseFxRibbonDataOptions = {}) {
-  const { weatherIndex, isPaidUser = false } = options;
+  const { weatherIndex } = options;
 
   const { payload, quotesById, movementById } = useFxQuotes({
     enabled: true,
     intervalMs: POLL_INTERVAL_MS,
   });
 
-  // FX ribbon tier (independent from exchange cards)
-  const { tier: fxTier } = useWeatherPromptTier(isPaidUser, 'fx-ribbon');
+  // Global prompt tier — unified across ALL flag tooltips (v3.0.0)
+  const { tier: fxTier, isPro: isProUser } = useGlobalPromptTier();
 
   // SSOT: validate once (dev/build feedback), then use SSOT order as-is.
   const pairs = useMemo(() => {
@@ -163,7 +162,7 @@ function useFxRibbonData(options: UseFxRibbonDataOptions = {}) {
             latitude: baseCityInfo.latitude,
             longitude: baseCityInfo.longitude,
             tier: fxTier,
-            isPro: isPaidUser,
+            isPro: isProUser,
           };
         }
       }
@@ -181,7 +180,7 @@ function useFxRibbonData(options: UseFxRibbonDataOptions = {}) {
             latitude: quoteCityInfo.latitude,
             longitude: quoteCityInfo.longitude,
             tier: fxTier,
-            isPro: isPaidUser,
+            isPro: isProUser,
           };
         }
       }
@@ -203,7 +202,7 @@ function useFxRibbonData(options: UseFxRibbonDataOptions = {}) {
         isNeutral,
       };
     });
-  }, [pairs, quotesById, movementById, weatherIndex, fxTier, isPaidUser]);
+  }, [pairs, quotesById, movementById, weatherIndex, fxTier, isProUser]);
 
   return { buildId, mode, allChips };
 }
@@ -215,16 +214,14 @@ function useFxRibbonData(options: UseFxRibbonDataOptions = {}) {
 export interface FinanceRibbonRowProps {
   /** Weather data keyed by exchange ID — for city-vibes tooltips */
   weatherIndex?: Map<string, ExchangeWeatherData>;
-  /** Whether the current user is a paid/Pro user */
-  isPaidUser?: boolean;
 }
 
 /**
  * TOP FX RIBBON - 5 pairs (positions 0-4)
  * EUR/USD, GBP/USD, GBP/ZAR, USD/CAD, USD/CNY
  */
-export function FinanceRibbonTop({ weatherIndex, isPaidUser }: FinanceRibbonRowProps = {}) {
-  const { buildId, mode, allChips } = useFxRibbonData({ weatherIndex, isPaidUser });
+export function FinanceRibbonTop({ weatherIndex }: FinanceRibbonRowProps = {}) {
+  const { buildId, mode, allChips } = useFxRibbonData({ weatherIndex });
 
   const chips = useMemo(
     () => allChips.slice(0, FX_ROW_CONFIG.topRowSize),
@@ -246,8 +243,8 @@ export function FinanceRibbonTop({ weatherIndex, isPaidUser }: FinanceRibbonRowP
  * BOTTOM FX RIBBON - 5 pairs (positions 5-9)
  * USD/INR, USD/BRL, AUD/USD, USD/NOK, USD/MYR
  */
-export function FinanceRibbonBottom({ weatherIndex, isPaidUser }: FinanceRibbonRowProps = {}) {
-  const { buildId, mode, allChips } = useFxRibbonData({ weatherIndex, isPaidUser });
+export function FinanceRibbonBottom({ weatherIndex }: FinanceRibbonRowProps = {}) {
+  const { buildId, mode, allChips } = useFxRibbonData({ weatherIndex });
 
   const chips = useMemo(
     () => allChips.slice(FX_ROW_CONFIG.topRowSize, FX_ROW_CONFIG.topRowSize + FX_ROW_CONFIG.bottomRowSize),

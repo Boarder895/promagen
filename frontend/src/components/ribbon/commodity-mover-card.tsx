@@ -44,6 +44,7 @@ import { Flag } from '@/components/ui/flag';
 import { CommodityPromptTooltip } from '@/components/ribbon/commodity-prompt-tooltip';
 import { CommodityFactTooltip } from '@/components/ribbon/commodity-fact-tooltip';
 import { useCommodityTooltipData } from '@/hooks/use-commodity-tooltip-data';
+import { useGlobalPromptTier } from '@/hooks/use-global-prompt-tier';
 import { resolveWeather, deriveSeason } from '@/lib/commodities/country-weather-resolver';
 import type { CommodityWeatherSlice } from '@/lib/commodities/commodity-prompt-types';
 
@@ -129,6 +130,9 @@ export default function CommodityMoverCard({
 
   const [isHovered, setIsHovered] = useState(false);
 
+  // ── Global prompt tier (user's Pro selection) ──────────────────────
+  const { tier: globalTier, isPro } = useGlobalPromptTier();
+
   // ── Tooltip resolution (shared across all flags) ────────────────────
   const tooltipData = useCommodityTooltipData(id, deltaPct);
 
@@ -153,6 +157,8 @@ export default function CommodityMoverCard({
       disabled: !tooltipData.available,
       verticalPosition: 'below' as const,
       flagIndex,
+      tier: globalTier,
+      isPro,
     };
   }
 

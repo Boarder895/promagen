@@ -2,6 +2,11 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared configuration — every project inherits these settings.
+//
+// SPEED OPTIMIZATION (v2.0.0):
+// - cacheDirectory: persistent transform cache — SWC output survives between
+//   runs so the 30K+ lines of intelligence JSON and all TS transforms only
+//   parse once. Subsequent runs reuse cached transforms.
 // ─────────────────────────────────────────────────────────────────────────────
 const sharedConfig = {
   setupFilesAfterEnv: ['<rootDir>/src/setuptests.ts'],
@@ -56,33 +61,28 @@ const sharedConfig = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = {
+  // Persistent cache — SWC transforms + JSON parses survive between runs.
+  // First run: normal speed. Subsequent runs: significantly faster.
+  cacheDirectory: '<rootDir>/node_modules/.cache/jest',
+
   projects: [
     // ── 1. DATA — JSON SSOT integrity, schemas, shapes ──────────────────
-    // Pure validation — no DOM, no React. Runs first in CI because if your
-    // data is broken, nothing else matters.
     {
       ...sharedConfig,
       displayName: 'data',
       testEnvironment: 'node',
       testMatch: [
-        // All tests under src/data/ (both tests/ and __tests__/ subdirs)
         '<rootDir>/src/data/**/*.test.{ts,tsx}',
-        // App-scoped integrity tests
         '<rootDir>/src/__tests__/*.integrity.test.{ts,tsx}',
-        // Schema validation tests
         '<rootDir>/src/__tests__/schemas.test.{ts,tsx}',
         '<rootDir>/src/__tests__/schemas.catalogs.test.{ts,tsx}',
         '<rootDir>/src/__tests__/providers.schema.test.{ts,tsx}',
-        // FX pairs data test
         '<rootDir>/src/__tests__/fx-pairs.test.{ts,tsx}',
-        // Phase 0–4 evolution data integrity (lives under components/ but is pure data)
         '<rootDir>/src/components/providers/__tests__/phase-4-evolution.test.{ts,tsx}',
       ],
     },
 
     // ── 2. LEARNING — ML scoring engine ─────────────────────────────────
-    // Weight recalibration, A/B testing, term quality, redundancy detection,
-    // combo mining, confidence multipliers. Pure computation, no DOM.
     {
       ...sharedConfig,
       displayName: 'learning',
@@ -92,7 +92,6 @@ module.exports = {
     },
 
     // ── 3. INTELLIGENCE — Prompt scoring engines ────────────────────────
-    // Suggestion engine, conflict detection, market mood, platform optimization.
     {
       ...sharedConfig,
       displayName: 'intelligence',
@@ -101,7 +100,6 @@ module.exports = {
     },
 
     // ── 4. HOOKS — React hooks ──────────────────────────────────────────
-    // All hooks under src/hooks/ — requires jsdom for renderHook().
     {
       ...sharedConfig,
       displayName: 'hooks',
@@ -110,13 +108,11 @@ module.exports = {
     },
 
     // ── 5. COMPONENTS — React component rendering ───────────────────────
-    // Exchange cards, tabs, nav, prompt builder, provider details.
     {
       ...sharedConfig,
       displayName: 'components',
       testEnvironment: 'jsdom',
       testMatch: ['<rootDir>/src/components/**/*.test.{ts,tsx}'],
-      // phase-4-evolution is pure data validation — runs under 'data' project
       testPathIgnorePatterns: [
         '/node_modules/',
         '/.next/',
@@ -126,11 +122,6 @@ module.exports = {
     },
 
     // ── 6. API — Route handler contracts ────────────────────────────────
-    // Auth, exchanges, FX, providers, weather, outbound redirects.
-    // Note: the old config excluded /src/app/api/ — this project restores them.
-    //
-    // setupFiles silences console.debug/error noise from route handlers.
-    // coverageThreshold prevents new routes from being added without tests.
     {
       ...sharedConfig,
       displayName: 'api',
@@ -152,7 +143,6 @@ module.exports = {
     },
 
     // ── 7. UTIL — Pure library/utility functions ────────────────────────
-    // Clock, FX normalisation, number formatting, ribbon selection, flags.
     {
       ...sharedConfig,
       displayName: 'util',
@@ -169,8 +159,6 @@ module.exports = {
     },
 
     // ── 8. APP — App-scoped integration / catch-all ─────────────────────
-    // Compression, plans matrix, user aggregation, a11y, finance ribbon,
-    // holidays. Mixed .ts/.tsx so uses jsdom.
     {
       ...sharedConfig,
       displayName: 'app',

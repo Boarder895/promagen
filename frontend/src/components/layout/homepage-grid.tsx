@@ -175,6 +175,12 @@ const navButtonStyles =
 // ============================================================================
 const GRID_GAP = 'clamp(12px, 1.25vw, 24px)';
 
+/** Stable empty arrays — prevents new reference on every render when props are omitted */
+const EMPTY_EXCHANGES: ReadonlyArray<Exchange> = [];
+const EMPTY_DEMO_PAIRS: FxPairCatalogEntry[] = [];
+const EMPTY_PROVIDER_IDS: string[] = [];
+const EMPTY_PROVIDERS: Provider[] = [];
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -219,6 +225,10 @@ export type HomepageGridProps = {
   selectedProvider?: import('@/types/providers').Provider | null;
   /** Callback when user selects/deselects a provider in Engine Bay */
   onProviderChange?: (provider: import('@/types/providers').Provider | null) => void;
+  /** Override left rail panel className (default: standard ring-white/10 panel) */
+  leftRailClassName?: string;
+  /** Override right rail panel className (default: standard ring-white/10 panel) */
+  rightRailClassName?: string;
 };
 
 // ============================================================================
@@ -424,9 +434,9 @@ export default function HomepageGrid({
   rightContent,
   showFinanceRibbon = false,
   demoMode = false,
-  demoPairs = [],
-  exchanges = [],
-  displayedProviderIds = [],
+  demoPairs = EMPTY_DEMO_PAIRS,
+  exchanges = EMPTY_EXCHANGES,
+  displayedProviderIds = EMPTY_PROVIDER_IDS,
   isPaidUser = false,
   referenceFrame = 'greenwich',
   onReferenceFrameChange,
@@ -434,7 +444,7 @@ export default function HomepageGrid({
   cityName,
   // countryCode - available in props but unused in this component
   isAuthenticated = false,
-  providers = [],
+  providers = EMPTY_PROVIDERS,
   showEngineBay = false,
   showMissionControl = false,
   weatherIndex,
@@ -447,6 +457,8 @@ export default function HomepageGrid({
   isStudioSubPage = false,
   selectedProvider,
   onProviderChange,
+  leftRailClassName,
+  rightRailClassName,
 }: HomepageGridProps): React.ReactElement {
   const leftRef = useRef<HTMLDivElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
@@ -457,15 +469,18 @@ export default function HomepageGrid({
   const pathname = usePathname();
   const isHomepage = pathname === '/';
   const isWorldContext = pathname === '/world-context';
+  const isLibrary = pathname === '/studio/library';
 
   // --------------------------------------------------------------------------
   // SPEECH SYNTHESIS — British female voice (shared utility)
   // --------------------------------------------------------------------------
   const [isSpeaking, setIsSpeaking] = React.useState(false);
 
-  const heroText = isWorldContext
-    ? "Every country flag on this page hides a surprise — hover over one and you'll see a live AI image prompt, crafted from the real weather happening in that city right now. The commodities tell visual stories too. Everything you see is live, and every prompt works across all 42 AI platforms."
-    : "That prompt in the centre rewrites itself every few minutes — a new city, real weather, a completely new scene. You'll never see the same one twice. And those colours aren't random.";
+  const heroText = isLibrary
+    ? "Every prompt you've saved lives right here. Pick one, load it into the builder, reformat it for any platform. This is your collection — the prompts that caught your eye."
+    : isWorldContext
+      ? "Every country flag on this page hides a surprise — hover over one and you'll see a live AI image prompt, crafted from the real weather happening in that city right now. The commodities tell visual stories too. Everything you see is live, and every prompt works across all 42 AI platforms."
+      : "That prompt in the centre rewrites itself every few minutes — a new city, real weather, a completely new scene. You'll never see the same one twice. And those colours aren't random.";
 
   const handleListenClick = useCallback(() => {
     if (isSpeaking) {
@@ -560,12 +575,12 @@ export default function HomepageGrid({
     // 3. Bottom FX ribbon (5 pairs) — with city-vibes tooltips on flags
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <FinanceRibbonTop weatherIndex={weatherIndex} isPaidUser={isPaidUser} />
+        <FinanceRibbonTop weatherIndex={weatherIndex} />
         {!hideCommodities && <CommoditiesMoversGrid />}
-        <FinanceRibbonBottom weatherIndex={weatherIndex} isPaidUser={isPaidUser} />
+        <FinanceRibbonBottom weatherIndex={weatherIndex} />
       </div>
     );
-  }, [showFinanceRibbon, demoMode, demoPairs, hideCommodities, weatherIndex, isPaidUser]);
+  }, [showFinanceRibbon, demoMode, demoPairs, hideCommodities, weatherIndex]);
 
   // ============================================================================
   // RENDER
@@ -627,7 +642,7 @@ export default function HomepageGrid({
             <section
               role="complementary"
               aria-label="Eastern exchanges"
-              className="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+              className={leftRailClassName ?? "flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"}
               data-testid="rail-east-wrapper"
             >
               <div
@@ -828,7 +843,7 @@ export default function HomepageGrid({
             <section
               role="complementary"
               aria-label="Western exchanges"
-              className="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+              className={rightRailClassName ?? "flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"}
               data-testid="rail-west-wrapper"
             >
               <div
