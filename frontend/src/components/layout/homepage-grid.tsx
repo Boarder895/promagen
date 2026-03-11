@@ -81,25 +81,6 @@ import MissionControl from '@/components/home/mission-control';
 // ICONS (for fallback nav only)
 // ============================================================================
 
-function WandIcon(): React.ReactElement {
-  return (
-    <svg
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59"
-      />
-    </svg>
-  );
-}
-
 function HomeIcon(): React.ReactElement {
   return (
     <svg
@@ -157,12 +138,31 @@ function GlobeIcon(): React.ReactElement {
   );
 }
 
+function BookmarkIcon(): React.ReactElement {
+  return (
+    <svg
+      className="h-4 w-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+      />
+    </svg>
+  );
+}
+
 // ============================================================================
 // SHARED STYLES
 // ============================================================================
 
 const navButtonStyles =
-  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80';
+  'inline-flex items-center justify-center gap-2 rounded-full border border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 px-4 py-1.5 text-sm font-medium text-purple-100 shadow-sm transition-all hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 cursor-pointer';
 
 // ============================================================================
 // SHARED GRID GAP — Single source of truth for all grid spacing
@@ -189,6 +189,8 @@ export type HomepageGridProps = {
   mainLabel: string;
   /** Override the centre heading text (default: "Promagen — Intelligent Prompt Builder") */
   headingText?: string;
+  /** Override the Listen button speech text (default: page-specific from pathname detection) */
+  heroTextOverride?: string;
   leftContent: ReactNode;
   centre: ReactNode;
   rightContent: ReactNode;
@@ -221,6 +223,8 @@ export type HomepageGridProps = {
   isProPromagenPage?: boolean;
   /** When true, Mission Control shows 3 buttons: Home | Studio | Pro */
   isStudioSubPage?: boolean;
+  /** When true, Mission Control shows 3 buttons: Home | World Context | Pro (no My Prompts self-link) */
+  isMyPromptsPage?: boolean;
   /** Controlled provider selection from Engine Bay (lifted state) */
   selectedProvider?: import('@/types/providers').Provider | null;
   /** Callback when user selects/deselects a provider in Engine Bay */
@@ -429,6 +433,7 @@ export function LeaderboardIntro({
 export default function HomepageGrid({
   mainLabel,
   headingText,
+  heroTextOverride,
   leftContent,
   centre,
   rightContent,
@@ -455,6 +460,7 @@ export default function HomepageGrid({
   isStudioPage = false,
   isProPromagenPage = false,
   isStudioSubPage = false,
+  isMyPromptsPage = false,
   selectedProvider,
   onProviderChange,
   leftRailClassName,
@@ -476,11 +482,15 @@ export default function HomepageGrid({
   // --------------------------------------------------------------------------
   const [isSpeaking, setIsSpeaking] = React.useState(false);
 
-  const heroText = isLibrary
-    ? "Every prompt you've saved lives right here. Pick one, load it into the builder, reformat it for any platform. This is your collection — the prompts that caught your eye."
-    : isWorldContext
-      ? "Every country flag on this page hides a surprise — hover over one and you'll see a live AI image prompt, crafted from the real weather happening in that city right now. The commodities tell visual stories too. Everything you see is live, and every prompt works across all 42 AI platforms."
-      : "That prompt in the centre rewrites itself every few minutes — a new city, real weather, a completely new scene. You'll never see the same one twice. And those colours aren't random.";
+  const heroText = heroTextOverride
+    ? heroTextOverride
+    : isLibrary
+      ? "Every prompt you've saved lives right here. Pick one, load it into the builder, reformat it for any platform. This is your collection — the prompts that caught your eye."
+      : isWorldContext
+        ? "Every country flag on this page hides a surprise — hover over one and you'll see a live AI image prompt, crafted from the real weather happening in that city right now. The commodities tell visual stories too. Everything you see is live, and every prompt works across all 42 AI platforms."
+        : isProPromagenPage
+          ? "You've seen what the free view can do. Pro gives you the keys — pick your exchanges, choose your tier, make it yours."
+          : "That prompt in the centre rewrites itself every few minutes — a new city, real weather, a completely new scene. You'll never see the same one twice. And those colours aren't random.";
 
   const handleListenClick = useCallback(() => {
     if (isSpeaking) {
@@ -782,10 +792,10 @@ export default function HomepageGrid({
                       World Context
                     </a>
                   )}
-                  {!isStudioPage && !isStudioSubPage && (
-                    <a href="/studio" className={navButtonStyles}>
-                      <WandIcon />
-                      Studio
+                  {!isMyPromptsPage && (
+                    <a href="/studio/library" className={navButtonStyles}>
+                      <BookmarkIcon />
+                      My Prompts
                     </a>
                   )}
                   {!isProPromagenPage && (
@@ -834,6 +844,7 @@ export default function HomepageGrid({
                   isStudioPage={isStudioPage}
                   isProPromagenPage={isProPromagenPage}
                   isStudioSubPage={isStudioSubPage}
+                  isMyPromptsPage={isMyPromptsPage}
                   isWorldContextPage={isWorldContext}
                 />
               </div>

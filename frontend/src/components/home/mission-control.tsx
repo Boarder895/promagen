@@ -1,69 +1,24 @@
 // src/components/home/mission-control.tsx
 // ============================================================================
-// MISSION CONTROL - Smart Automated Prompts Panel (v5.0.0)
+// MISSION CONTROL - Smart Automated Prompts Panel (v6.0.0)
 // ============================================================================
 // Right-side panel with weather-driven prompt preview.
 //
-// v5.0.0 CHANGES:
-// - ADDED: World Context button on ALL pages (links to /world-context)
-// - Grid expanded from 2→3 columns (default) and 3→4 (studio sub-pages)
-// - Homepage: Studio | World Context | Pro (3 buttons)
-// - Studio page: Home | World Context | Pro (3 buttons)
-// - Pro Promagen: Studio | World Context | Home (3 buttons)
-// - Studio sub-pages: Home | World Context | Studio | Pro (4 buttons)
-// - Provider pages: Home | World Context | Studio | Pro (4 buttons)
-// - Authority: docs/authority/homepage.md §9.1, buttons.md
+// v6.0.0 CHANGES:
+// - REMOVED: Studio button entirely (Studio hub no longer primary nav)
+// - ADDED: My Prompts button (links to /studio/library)
+// - ADDED: isMyPromptsPage prop (3-button: Home | World Context | Pro)
+// - Homepage: World Context | Pro | My Prompts (3 buttons)
+// - World Context: Home | Pro | My Prompts (3 buttons)
+// - Pro Promagen: World Context | Home | My Prompts (3 buttons)
+// - Provider pages: Home | World Context | Pro | My Prompts (4 buttons)
+// - Studio hub/sub-pages: Home | World Context | Pro | My Prompts (4 buttons)
+// - My Prompts page: Home | World Context | Pro (3 buttons - no self-link)
 //
-// v4.0.0 CHANGES:
-// - REMOVED: Sign-in button from Mission Control (now in homepage-grid Hero Window)
-// - REMOVED: All Clerk auth imports, hooks, and state logic
-// - REMOVED: isAuthenticated prop (no longer needed)
-// - REMOVED: userIconPath, actionButtonLoading (sign-in only)
-// - Former grid: 2 columns (default) and 3 (studio sub-pages)
-// - Homepage: Studio | Pro (2 buttons)
-// - Studio page: Home | Pro (2 buttons)
-// - Pro Promagen: Studio | Home (2 buttons)
-// - Studio sub-pages: Home | Studio | Pro (3 buttons)
-//
-// v3.5.1 CHANGES:
-// - ADDED: isStudioSubPage prop for 4-button layout on Studio sub-pages
-// - When isStudioSubPage=true, shows Home | Studio | Pro (3 buttons)
-// - Grid changes from grid-cols-3 to grid-cols-4
-// - Studio button links to /studio (the hub page)
-// - Added separate renderHomeButton, renderStudioButton, renderProButton functions
-// - All other functionality unchanged
-//
-// v3.4.0 CHANGES:
-// - ADDED: isProPromagenPage prop to swap Pro button for Home button
-// - When isProPromagenPage=true, shows Home button instead of Pro button
-// - Added renderSecondButton function for Pro/Home toggle
-//
-// v3.3.0 CHANGES:
-// - ADDED: isStudioPage prop to swap Studio button for Home button
-// - When isStudioPage=true, shows Home button instead of Studio button
-// - All other functionality unchanged
-//
-// v3.2.14 CHANGES:
-// - ADDED: FitText component for responsive font sizing (min/max)
-// - ADDED: font-semibold to "London Real Time Text Prompt" label
-// - FIXED: exchanges prop now accepts readonly Exchange[] (type compatibility)
-//
-// v3.2.13 CHANGES:
-// - FIXED: weatherData extraction - removed erroneous .current accessor
-// - FIXED: tooltipPosition="right" (opens LEFT on right-side panel)
-// - FIXED: Type conversion from ExchangeWeatherData to ExchangeWeatherDisplay
-// - Flag tooltip now shows same prompt as LSE London exchange card
-// - Label changed: "London" → "London Real Time Text Prompt"
-// - Removed question mark cursor (cursor-help → cursor-pointer)
-//
-// v3.2.11 CHANGES:
-// - Added mounted state to prevent SSR hydration issues
-// - Added timeout fallback (3s) for hydration safety
-// - Proper loading state with visible "Loading..." text
-//
+// Previous: v5.0.0 World Context, v4.0.0 sign-in removal, v3.x context swaps
 // Authority: buttons.md, mission-control.md
-// Security: 10/10 — No user input handling, type-safe data flow
-// Existing features preserved: Yes (sign-in lives in homepage-grid Hero Window)
+// Security: 10/10 - No user input handling, type-safe data flow
+// Existing features preserved: Yes
 // ============================================================================
 
 'use client';
@@ -192,6 +147,8 @@ export interface MissionControlProps {
   isStudioSubPage?: boolean;
   /** When true, shows Home button instead of World Context button (for /world-context page) */
   isWorldContextPage?: boolean;
+  /** When true, shows 3 buttons: Home | World Context | Pro (no My Prompts self-link) */
+  isMyPromptsPage?: boolean;
 }
 
 // ============================================================================
@@ -226,9 +183,9 @@ const actionButtonActive =
 const homeIconPath =
   'M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25';
 
-// Studio/Wand icon path
-const studioIconPath =
-  'M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59';
+// My Prompts / Bookmark icon path (Heroicons bookmark)
+const myPromptsIconPath =
+  'M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z';
 
 // Pro/Star icon path
 const proIconPath =
@@ -250,6 +207,7 @@ export default function MissionControl({
   isProPromagenPage = false,
   isStudioSubPage = false,
   isWorldContextPage = false,
+  isMyPromptsPage = false,
 }: MissionControlProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const contentZoneRef = useRef<HTMLDivElement>(null);
@@ -386,13 +344,13 @@ export default function MissionControl({
   );
 
   // ══════════════════════════════════════════════════════════════════════════
-  // RENDER STUDIO BUTTON — Always links to /studio
+  // RENDER MY PROMPTS BUTTON — Always links to /studio/library
   // ══════════════════════════════════════════════════════════════════════════
-  const renderStudioButton = () => (
+  const renderMyPromptsButton = () => (
     <a
-      href="/studio"
+      href="/studio/library"
       className={`${actionButtonBase} ${actionButtonActive}`}
-      aria-label="Open Prompt Studio"
+      aria-label="View My Prompts"
       style={{
         padding: 'clamp(0.4rem, 0.5vh, 0.7rem) clamp(0.4rem, 0.5vw, 0.7rem)',
         gap: 'clamp(0.2rem, 0.3vw, 0.4rem)',
@@ -410,10 +368,10 @@ export default function MissionControl({
           height: 'clamp(14px, 1vw, 18px)',
         }}
       >
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={studioIconPath} />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={myPromptsIconPath} />
       </svg>
-      <span className="text-purple-100" style={{ fontSize: 'clamp(0.75rem, 0.9vw, 0.875rem)' }}>
-        Studio
+      <span className="text-purple-100" style={{ fontSize: 'clamp(0.6rem, 0.75vw, 0.8rem)' }}>
+        My Prompts
       </span>
     </a>
   );
@@ -492,28 +450,22 @@ export default function MissionControl({
   );
 
   // ══════════════════════════════════════════════════════════════════════════
-  // RENDER FIRST BUTTON — Home or Studio depending on isStudioPage
+  // RENDER FIRST BUTTON — World Context or Home (swaps on /world-context)
   // ══════════════════════════════════════════════════════════════════════════
   const renderFirstButton = () => {
-    if (isStudioPage) {
-      // On Studio page: show Home button
+    if (isWorldContextPage) {
       return renderHomeButton();
     }
-
-    // On Homepage or Pro Promagen page (default): show Studio button
-    return renderStudioButton();
+    return renderWorldContextButton();
   };
 
   // ══════════════════════════════════════════════════════════════════════════
-  // RENDER SECOND BUTTON — Home or Pro depending on isProPromagenPage
+  // RENDER SECOND BUTTON — Pro or Home (swaps on /pro-promagen)
   // ══════════════════════════════════════════════════════════════════════════
   const renderSecondButton = () => {
     if (isProPromagenPage) {
-      // On Pro Promagen page: show Home button
       return renderHomeButton();
     }
-
-    // On Homepage or Studio page (default): show Pro button
     return renderProButton();
   };
 
@@ -523,7 +475,11 @@ export default function MissionControl({
   // - Default: 3 columns (First | World Context | Second)
   // v5.0.0: +1 column for World Context button on all pages
   // ══════════════════════════════════════════════════════════════════════════
-  const gridCols = isStudioSubPage ? 'grid-cols-4' : 'grid-cols-3';
+  // v6.0.0: isMyPromptsPage → 3-col (no self-link)
+  // isStudioSubPage OR isStudioPage → 4-col (Home + World Context + Pro + My Prompts)
+  // Default → 3-col (World Context + Pro + My Prompts)
+  const use4Col = (isStudioSubPage || isStudioPage) && !isMyPromptsPage;
+  const gridCols = use4Col ? 'grid-cols-4' : 'grid-cols-3';
 
   // ══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -704,30 +660,39 @@ export default function MissionControl({
         </div>
       </div>
 
-      {/* ACTION ZONE — Grid layout (3 or 4 columns — World Context / Home always in middle)
-           v5.0.0: World Context button added on all pages
-           v6.0.0: On /world-context, middle slot shows Home instead of World Context
+      {/* ACTION ZONE — Grid layout (3 or 4 columns)
+           v6.0.0: Studio button removed, My Prompts button added
+           3-col default: World Context | Pro | My Prompts
+           4-col (sub-pages): Home | World Context | Pro | My Prompts
+           My Prompts page: Home | World Context | Pro (3-col, no self-link)
            Authority: docs/authority/homepage.md §9.1 */}
       <div className={`grid ${gridCols}`} style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
-        {isStudioSubPage ? (
-          // 4-button layout for Studio sub-pages / Provider pages:
-          // Home | World Context | Studio | Pro
+        {isMyPromptsPage ? (
+          // My Prompts page: 3 buttons, no self-link
+          // Home | World Context | Pro
+          <>
+            {renderHomeButton()}
+            {renderWorldContextButton()}
+            {renderProButton()}
+          </>
+        ) : use4Col ? (
+          // 4-button layout for Studio hub / sub-pages / Provider pages:
+          // Home | World Context | Pro | My Prompts
           <>
             {renderHomeButton()}
             {isWorldContextPage ? renderHomeButton() : renderWorldContextButton()}
-            {renderStudioButton()}
             {renderProButton()}
+            {renderMyPromptsButton()}
           </>
         ) : (
-          // 3-button layout (default): First | World Context/Home | Second
-          // Homepage:      Studio | World Context | Pro
-          // World Context: Studio | Home          | Pro
-          // Studio:        Home   | World Context | Pro
-          // Pro Promagen:  Studio | World Context | Home
+          // 3-button layout (default):
+          // Homepage:      World Context | Pro      | My Prompts
+          // World Context: Home          | Pro      | My Prompts
+          // Pro Promagen:  World Context | Home     | My Prompts
           <>
             {renderFirstButton()}
-            {isWorldContextPage ? renderHomeButton() : renderWorldContextButton()}
             {renderSecondButton()}
+            {renderMyPromptsButton()}
           </>
         )}
       </div>

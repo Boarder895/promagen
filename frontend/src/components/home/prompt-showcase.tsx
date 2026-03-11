@@ -314,24 +314,27 @@ function ProviderIcon({
 // ============================================================================
 
 const CATEGORY_COLOURS: Record<string, string> = {
-  subject:     '#FCD34D', // yellow-300 — gold, distinct from quality white
-  action:      '#A3E635', // lime-400
-  style:       '#C084FC', // purple-400
+  subject: '#FCD34D', // yellow-300 — gold, distinct from quality white
+  action: '#A3E635', // lime-400
+  style: '#C084FC', // purple-400
   environment: '#38BDF8', // sky-400
   composition: '#34D399', // emerald-400
-  camera:      '#FB923C', // orange-400
-  lighting:    '#FBBF24', // amber-400
-  colour:      '#F472B6', // pink-400
-  atmosphere:  '#22D3EE', // cyan-400
-  materials:   '#2DD4BF', // teal-400
-  fidelity:    '#93C5FD', // blue-300 — quality boosters, distinct soft blue
-  negative:    '#F87171', // red-400
-  structural:  '#94A3B8', // slate-400 — glue text, readable but quiet
+  camera: '#FB923C', // orange-400
+  lighting: '#FBBF24', // amber-400
+  colour: '#F472B6', // pink-400
+  atmosphere: '#22D3EE', // cyan-400
+  materials: '#2DD4BF', // teal-400
+  fidelity: '#93C5FD', // blue-300 — quality boosters, distinct soft blue
+  negative: '#F87171', // red-400
+  structural: '#94A3B8', // slate-400 — glue text, readable but quiet
 };
 
 /** Default CLIP weights per category (from platform-formats.json) */
 const DEFAULT_WEIGHTS: Partial<Record<PromptCategory, number>> = {
-  subject: 1.2, style: 1.15, lighting: 1.1, environment: 1.05,
+  subject: 1.2,
+  style: 1.15,
+  lighting: 1.1,
+  environment: 1.05,
 };
 
 interface AnatomySegment {
@@ -377,13 +380,22 @@ function parsePromptUnified(
   termIndex: Map<string, PromptCategory>,
 ): AnatomySegment[] {
   // Build sorted list of terms (longest first for greedy matching)
-  const termEntries = Array.from(termIndex.entries())
-    .sort((a, b) => b[0].length - a[0].length);
+  const termEntries = Array.from(termIndex.entries()).sort((a, b) => b[0].length - a[0].length);
 
   // Also build a fidelity keyword list for structural fallback detection
-  const fidelityTerms = ['masterpiece', 'best quality', 'highly detailed', 'sharp focus',
-    '8k', '4k', 'intricate textures', 'intricate details', 'ultra detailed',
-    'high resolution', 'fine details'];
+  const fidelityTerms = [
+    'masterpiece',
+    'best quality',
+    'highly detailed',
+    'sharp focus',
+    '8k',
+    '4k',
+    'intricate textures',
+    'intricate details',
+    'ultra detailed',
+    'high resolution',
+    'fine details',
+  ];
 
   // Find all category term matches with their positions
   type Match = { start: number; end: number; category: PromptCategory; weight: number };
@@ -396,9 +408,7 @@ function parsePromptUnified(
       const idx = lowerPrompt.indexOf(term, searchFrom);
       if (idx === -1) break;
       // Check overlap with existing matches
-      const overlaps = matches.some(
-        (m) => idx < m.end && idx + term.length > m.start,
-      );
+      const overlaps = matches.some((m) => idx < m.end && idx + term.length > m.start);
       if (!overlaps) {
         // Check if this term is inside a CLIP weight wrapper: (term:1.2)
         let weight = DEFAULT_WEIGHTS[category] ?? 1.0;
@@ -421,9 +431,7 @@ function parsePromptUnified(
     while (searchFrom < lowerPrompt.length) {
       const idx = lowerPrompt.indexOf(fTerm, searchFrom);
       if (idx === -1) break;
-      const overlaps = matches.some(
-        (m) => idx < m.end && idx + fTerm.length > m.start,
-      );
+      const overlaps = matches.some((m) => idx < m.end && idx + fTerm.length > m.start);
       if (!overlaps) {
         matches.push({ start: idx, end: idx + fTerm.length, category: 'fidelity', weight: 1.0 });
       }
@@ -691,7 +699,10 @@ const IntelligenceBridge = React.memo(function IntelligenceBridge({
       {/* Label */}
       <span
         className="shrink-0 font-medium text-slate-400"
-        style={{ fontSize: 'clamp(0.6rem, 0.75vw, 0.85rem)', marginRight: 'clamp(4px, 0.3vw, 6px)' }}
+        style={{
+          fontSize: 'clamp(0.6rem, 0.75vw, 0.85rem)',
+          marginRight: 'clamp(4px, 0.3vw, 6px)',
+        }}
       >
         Intelligence Engine
       </span>
@@ -711,8 +722,12 @@ const IntelligenceBridge = React.memo(function IntelligenceBridge({
           >
             <span aria-hidden="true">{pill.emoji}</span>
             <span className="text-slate-300">{pill.input}</span>
-            <span className="text-slate-500" aria-hidden="true">→</span>
-            <span style={{ color: outputColour }} className="font-medium">{pill.output}</span>
+            <span className="text-slate-500" aria-hidden="true">
+              →
+            </span>
+            <span style={{ color: outputColour }} className="font-medium">
+              {pill.output}
+            </span>
           </span>
         );
       })}
@@ -921,7 +936,10 @@ function CityContent({
               <span className="shrink-0">{display.tabLabel}</span>
               {/* Preview: top 3 provider icons + overflow count */}
               {previewIcons.length > 0 && (
-                <span className="inline-flex items-center" style={{ gap: 'clamp(1px, 0.1vw, 2px)', marginLeft: 'clamp(2px, 0.15vw, 3px)' }}>
+                <span
+                  className="inline-flex items-center"
+                  style={{ gap: 'clamp(1px, 0.1vw, 2px)', marginLeft: 'clamp(2px, 0.15vw, 3px)' }}
+                >
                   {previewIcons.map((p) => (
                     <Image
                       key={p.id}
@@ -939,7 +957,13 @@ function CityContent({
                     />
                   ))}
                   {extraCount > 0 && (
-                    <span style={{ fontSize: 'clamp(0.55rem, 0.65vw, 0.78rem)', opacity: 0.6, marginLeft: 'clamp(2px, 0.15vw, 3px)' }}>
+                    <span
+                      style={{
+                        fontSize: 'clamp(0.55rem, 0.65vw, 0.78rem)',
+                        opacity: 0.6,
+                        marginLeft: 'clamp(2px, 0.15vw, 3px)',
+                      }}
+                    >
                       +{extraCount}
                     </span>
                   )}
@@ -983,12 +1007,28 @@ function CityContent({
             <FeedbackWidget
               itemId={promptId}
               source="showcase"
-              platformId={activeDisplay.key === 'tier2' ? 'midjourney' : activeDisplay.key === 'tier1' ? 'leonardo' : activeDisplay.key === 'tier3' ? 'openai' : 'canva'}
+              platformId={
+                activeDisplay.key === 'tier2'
+                  ? 'midjourney'
+                  : activeDisplay.key === 'tier1'
+                    ? 'leonardo'
+                    : activeDisplay.key === 'tier3'
+                      ? 'openai'
+                      : 'canva'
+              }
               tier={parseInt(activeTier.replace('tier', ''), 10)}
             />
             <SaveIcon
               positivePrompt={promptText}
-              platformId={activeDisplay.key === 'tier2' ? 'midjourney' : activeDisplay.key === 'tier1' ? 'leonardo' : activeDisplay.key === 'tier3' ? 'openai' : 'canva'}
+              platformId={
+                activeDisplay.key === 'tier2'
+                  ? 'midjourney'
+                  : activeDisplay.key === 'tier1'
+                    ? 'leonardo'
+                    : activeDisplay.key === 'tier3'
+                      ? 'openai'
+                      : 'canva'
+              }
               platformName={activeDisplay.label}
               source="tooltip"
               tier={parseInt(activeTier.replace('tier', ''), 10)}
@@ -1027,10 +1067,7 @@ function CityContent({
             >
               Try in
             </span>
-            <div
-              className="flex flex-nowrap items-center overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30"
-              style={{ gap: 'clamp(5px, 0.4vw, 8px)' }}
-            >
+            <div className="flex flex-wrap items-center" style={{ gap: 'clamp(5px, 0.4vw, 8px)' }}>
               {providers.map((p) => (
                 <ProviderIcon
                   key={p.id}
@@ -1147,7 +1184,10 @@ function CountdownTimer({
           className="inline-block rounded-sm object-cover"
           style={COUNTDOWN_FLAG_STYLE}
         />
-        <span className="tabular-nums font-semibold text-amber-300" style={{ filter: 'brightness(1.3)' }}>
+        <span
+          className="tabular-nums font-semibold text-amber-300"
+          style={{ filter: 'brightness(1.3)' }}
+        >
           Now
         </span>
       </span>
@@ -1342,7 +1382,13 @@ function OnlineUsersBar({ total, countries }: { total: number; countries: Online
 // MAIN COMPONENT
 // ============================================================================
 
-export default function PromptShowcase({ selectedProviderId, onTierChange }: { selectedProviderId?: string; onTierChange?: (tierId: number) => void }) {
+export default function PromptShowcase({
+  selectedProviderId,
+  onTierChange,
+}: {
+  selectedProviderId?: string;
+  onTierChange?: (tierId: number) => void;
+}) {
   const { data, previousData, isLoading, isTransitioning, error } = usePromptShowcase();
 
   // ── Online users (Phase 6) ─────────────────────────────────────────────
@@ -1400,7 +1446,10 @@ export default function PromptShowcase({ selectedProviderId, onTierChange }: { s
           className="ml-auto italic text-amber-400/80 truncate"
           style={{ fontSize: 'clamp(0.1rem, 0.75vw, 1rem)' }}
         >
-          <CountdownTimer nextCity={data.nextCity ?? 'Loading'} nextCountryCode={data.nextCountryCode ?? 'XX'} />
+          <CountdownTimer
+            nextCity={data.nextCity ?? 'Loading'}
+            nextCountryCode={data.nextCountryCode ?? 'XX'}
+          />
         </span>
       </div>
 
@@ -1409,10 +1458,7 @@ export default function PromptShowcase({ selectedProviderId, onTierChange }: { s
         {/* Previous city (fading out during transition) */}
         {isTransitioning && previousData && (
           <div className="showcase-fade-out absolute inset-0" aria-hidden="true">
-            <CityContent
-              data={previousData}
-              selectedProviderId={selectedProviderId}
-            />
+            <CityContent data={previousData} selectedProviderId={selectedProviderId} />
           </div>
         )}
 

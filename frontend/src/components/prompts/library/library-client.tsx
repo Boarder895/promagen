@@ -187,7 +187,7 @@ export default function LibraryClient({ providers }: LibraryClientProps) {
 
   const centreContent = (
     <section
-      aria-label="Prompt library"
+      aria-label="My Prompts"
       className="flex h-full min-h-0 flex-col"
       data-testid="library-panel"
     >
@@ -312,7 +312,7 @@ export default function LibraryClient({ providers }: LibraryClientProps) {
 
   return (
     <HomepageGrid
-        mainLabel="Prompt Library"
+        mainLabel="My Prompts"
         headingText="Promagen — Your Saved Prompts"
         leftContent={leftRail}
         centre={centreContent}
@@ -331,6 +331,7 @@ export default function LibraryClient({ providers }: LibraryClientProps) {
         showMissionControl
         hideCommodities
         isStudioSubPage
+        isMyPromptsPage
         leftRailClassName="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm border-2 border-emerald-500/30"
         rightRailClassName="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm border-2 border-violet-500/30"
       />

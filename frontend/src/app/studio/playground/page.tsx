@@ -1,16 +1,13 @@
 // src/app/studio/playground/page.tsx
 // ============================================================================
-// PROMPT PLAYGROUND PAGE - Server Component (Dynamic)
+// PROMPT LAB PAGE - Server Component (Dynamic)
 // ============================================================================
 // Builder-first flow: Start with the prompt builder, select provider from dropdown.
 // Same layout as /providers/[id] but with provider selector instead of pre-selected.
 //
-// UPDATED (28 Jan 2026): Full integration with Engine Bay & Mission Control
-// - Now fetches live weather from gateway (same pattern as homepage)
-// - Uses HomepageGrid with showEngineBay, showMissionControl
-// - Uses isStudioSubPage for 4-button Mission Control layout
-// - Force dynamic rendering for live weather data
-// - Uses ExchangeWeatherData type (not the old ExchangeWeather)
+// v2.0.0 (Mar 2026): Renamed to Prompt Lab. Delegated to client wrapper
+// (playground-page-client.tsx) so Listen button text can change dynamically
+// when user selects a provider. Same pattern as homepage → homepage-client.
 //
 // Server responsibilities:
 // - Load all providers from catalog
@@ -18,8 +15,9 @@
 // - Fetch weather from gateway (with demo fallback)
 // - SEO metadata
 //
-// Client responsibilities (PlaygroundWorkspace):
-// - Provider selection dropdown
+// Client responsibilities (PlaygroundPageClient → PlaygroundWorkspace):
+// - Provider selection dropdown + state tracking
+// - Dynamic Listen button text (no provider vs provider selected)
 // - Full prompt builder functionality
 // - All intelligence features
 //
@@ -32,9 +30,7 @@ import type { Metadata } from 'next';
 // Force dynamic rendering - page needs live weather data
 export const dynamic = 'force-dynamic';
 
-import ExchangeList from '@/components/ribbon/exchange-list';
-import HomepageGrid from '@/components/layout/homepage-grid';
-import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
+import PlaygroundPageClient from './playground-page-client';
 import { getProviders } from '@/lib/providers/api';
 import { getHomepageExchanges } from '@/lib/exchange-order';
 import { getWeatherIndex } from '@/lib/weather/fetch-weather';
@@ -45,21 +41,21 @@ import { getRailsRelative, GREENWICH } from '@/lib/location';
 // ============================================================================
 
 export const metadata: Metadata = {
-  title: 'Prompt Playground — Promagen',
+  title: 'Prompt Lab — Promagen',
   description:
-    'Build AI image prompts with live market context. Select any provider, see real-time formatting, and compare outputs across platforms.',
+    'Prompt Lab — build, compare and switch between all 42 AI image platforms in real time.',
   openGraph: {
-    title: 'Prompt Playground — Promagen',
+    title: 'Prompt Lab — Promagen',
     description:
-      'Build AI image prompts with live market context. Select any provider, see real-time formatting, and compare outputs across platforms.',
+      'Prompt Lab — build, compare and switch between all 42 AI image platforms in real time.',
     type: 'website',
     siteName: 'Promagen',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Prompt Playground — Promagen',
+    title: 'Prompt Lab — Promagen',
     description:
-      'Build AI image prompts with live market context. Select any provider, see real-time formatting, and compare outputs across platforms.',
+      'Prompt Lab — build, compare and switch between all 42 AI image platforms in real time.',
   },
 };
 
@@ -76,56 +72,18 @@ export default async function PlaygroundPage() {
   ]);
 
   // Order exchanges relative to Greenwich (default for server render)
-  // Client-side location detection will re-order if user is authenticated
   const { left, right } = getRailsRelative(allExchanges, GREENWICH);
 
   // Combine for market pulse
   const allOrderedExchanges = [...left, ...right.slice().reverse()];
 
-  // Provider IDs for market pulse
-  const providerIds = providers.map((p) => p.id);
-
-  // Left rail content: Eastern exchanges
-  const leftExchanges = (
-    <div className="space-y-2">
-      <ExchangeList
-        exchanges={left}
-        weatherByExchange={weatherIndex}
-        emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
-        side="left"
-      />
-    </div>
-  );
-
-  // Centre: Playground workspace with provider selector
-  const centreContent = <PlaygroundWorkspace providers={providers} />;
-
-  // Right rail content: Western exchanges
-  const rightExchanges = (
-    <div className="space-y-2">
-      <ExchangeList
-        exchanges={right}
-        weatherByExchange={weatherIndex}
-        emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
-        side="right"
-      />
-    </div>
-  );
-
   return (
-    <HomepageGrid
-      mainLabel="Prompt Playground — Select a provider to build prompts"
-      leftContent={leftExchanges}
-      centre={centreContent}
-      rightContent={rightExchanges}
-      showFinanceRibbon={false}
-      exchanges={allOrderedExchanges}
-      displayedProviderIds={providerIds}
+    <PlaygroundPageClient
       providers={providers}
-      showEngineBay
-      showMissionControl
+      leftExchanges={left}
+      rightExchanges={right}
+      allOrderedExchanges={allOrderedExchanges}
       weatherIndex={weatherIndex}
-      isStudioSubPage
     />
   );
 }

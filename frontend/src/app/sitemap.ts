@@ -23,9 +23,9 @@ import { env } from '@/lib/env';
  *
  * Priority tiers:
  * 1.0  — homepage (money page)
- * 0.9  — studio + pro (conversion pages)
+ * 0.9  — pro (conversion page)
  * 0.8  — providers + leaderboard (high-value discovery)
- * 0.7  — studio sub-pages (engagement)
+ * 0.7  — Prompt Lab + My Prompts (engagement)
  * 0.6  — secondary public pages
  */
 
@@ -42,7 +42,6 @@ const routes: SitemapEntry[] = [
   { path: '/', priority: 1.0, changeFrequency: 'daily' },
 
   // --- Tier 2: Conversion pages ---
-  { path: '/studio', priority: 0.9, changeFrequency: 'daily' },
   { path: '/pro-promagen', priority: 0.9, changeFrequency: 'weekly' },
 
   // --- Tier 3: High-value discovery ---
@@ -52,8 +51,6 @@ const routes: SitemapEntry[] = [
   { path: '/providers/compare', priority: 0.8, changeFrequency: 'daily' },
 
   // --- Tier 4: Studio sub-pages ---
-  { path: '/studio/learn', priority: 0.7, changeFrequency: 'weekly' },
-  { path: '/studio/explore', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/studio/playground', priority: 0.7, changeFrequency: 'weekly' },
   { path: '/studio/library', priority: 0.7, changeFrequency: 'weekly' },
 
@@ -61,9 +58,7 @@ const routes: SitemapEntry[] = [
   { path: '/macro', priority: 0.6, changeFrequency: 'daily' },
   { path: '/status', priority: 0.6, changeFrequency: 'daily' },
 
-  // Legacy aliases (providers/studio/* routes that mirror /studio/*)
-  { path: '/providers/studio/learn', priority: 0.5, changeFrequency: 'weekly' },
-  { path: '/providers/studio/playground', priority: 0.5, changeFrequency: 'weekly' },
+  // Legacy aliases
   { path: '/providers/leaderboard', priority: 0.5, changeFrequency: 'daily' },
 ];
 

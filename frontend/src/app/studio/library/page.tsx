@@ -36,7 +36,7 @@ import { getProviders } from '@/lib/providers/api';
 // ============================================================================
 
 export const metadata: Metadata = {
-  title: 'Prompt Library — Promagen',
+  title: 'My Prompts — Promagen',
   description: 'Your saved prompts. Save, organise, and reload your favourite AI image prompts.',
 };
 

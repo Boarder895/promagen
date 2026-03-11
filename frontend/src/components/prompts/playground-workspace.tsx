@@ -42,6 +42,8 @@ import type { PromptBuilderProvider } from '@/components/providers/prompt-builde
 export interface PlaygroundWorkspaceProps {
   /** All providers from the catalog */
   providers: Provider[];
+  /** Callback when provider selection changes (null = no provider selected) */
+  onProviderChange?: (hasProvider: boolean) => void;
 }
 
 // ============================================================================
@@ -173,9 +175,15 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 // MAIN COMPONENT
 // ============================================================================
 
-export default function PlaygroundWorkspace({ providers }: PlaygroundWorkspaceProps) {
+export default function PlaygroundWorkspace({ providers, onProviderChange }: PlaygroundWorkspaceProps) {
   // Selected provider ID (null = none selected)
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+
+  // Handle provider selection — update state and notify parent
+  const handleProviderSelect = useCallback((providerId: string) => {
+    setSelectedProviderId(providerId);
+    onProviderChange?.(true);
+  }, [onProviderChange]);
 
   // Find the selected provider object
   const selectedProvider = useMemo(() => {
@@ -188,11 +196,6 @@ export default function PlaygroundWorkspace({ providers }: PlaygroundWorkspacePr
     if (!selectedProvider) return null;
     return toPromptBuilderProvider(selectedProvider);
   }, [selectedProvider]);
-
-  // Handle provider selection
-  const handleProviderSelect = useCallback((providerId: string) => {
-    setSelectedProviderId(providerId);
-  }, []);
 
   // Provider selector element to pass to PromptBuilder
   const providerSelectorElement = useMemo(

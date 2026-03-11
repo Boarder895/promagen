@@ -162,6 +162,7 @@ export default async function ProviderPage({
   return (
     <HomepageGrid
       mainLabel={`Prompt builder for ${providerName}`}
+      heroTextOverride={`This builder is shaped around ${providerName}. Every word was chosen for how this platform reads it. The vocabulary grows overnight — new phrases arrive while you sleep.`}
       leftContent={leftExchanges}
       centre={centreContent}
       rightContent={rightExchanges}

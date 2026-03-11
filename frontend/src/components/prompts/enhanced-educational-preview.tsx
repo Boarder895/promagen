@@ -480,10 +480,13 @@ export default function EnhancedEducationalPreview({
     return 'Untitled Prompt';
   }, [selections]);
 
-  // Handle provider selection - stays on this page
+  // Handle provider selection — notify parent to switch to real PromptBuilder
   const handleProviderSelect = useCallback((providerId: string | null) => {
     setSelectedProviderId(providerId);
-  }, []);
+    if (providerId) {
+      _onSelectProvider(providerId);
+    }
+  }, [_onSelectProvider]);
 
   // Handle category selection change
   const handleCategoryChange = useCallback((category: PromptCategory, newSelections: string[]) => {

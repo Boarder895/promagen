@@ -634,6 +634,7 @@ export default function ProPromagenClient({
       weatherByExchange={effectiveWeatherMap}
       indexByExchange={indexByExchange}
       emptyMessage="No eastern exchanges selected"
+      side="left"
     />
   ) : (
     railSkeleton
@@ -645,6 +646,7 @@ export default function ProPromagenClient({
       weatherByExchange={effectiveWeatherMap}
       indexByExchange={indexByExchange}
       emptyMessage="No western exchanges selected"
+      side="right"
     />
   ) : (
     railSkeleton
@@ -659,6 +661,7 @@ export default function ProPromagenClient({
   return (
     <HomepageGrid
       mainLabel="Pro Promagen Configuration"
+      headingText="Pro Promagen — Unlock the Full Engine"
       leftContent={leftExchanges}
       centre={centreContent}
       rightContent={rightExchanges}
