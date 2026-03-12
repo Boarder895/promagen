@@ -39,6 +39,23 @@ interface IntelligencePanelProps {
   onSuggestionClick?: (suggestion: StyleSuggestion) => void;
   onMoodTermClick?: (term: string, category: 'atmosphere' | 'colour' | 'lighting') => void;
   compact?: boolean;
+  /** Category metadata for suggestion chips — icon + color per familyId */
+  categoryMeta?: Record<string, { icon: string; color: string }>;
+}
+
+// ============================================================================
+// UTILITY — Same hexToRgba as exchange-card.tsx for consistent glow
+// ============================================================================
+
+function hexToRgba(hex: string, alpha: number): string {
+  const cleanHex = hex.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) {
+    return `rgba(168, 85, 247, ${alpha})`;
+  }
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // ============================================================================
@@ -65,9 +82,8 @@ function ConflictCard({ conflict }: { conflict: ConflictWarning }) {
   return (
     <div
       className={`
-        rounded-lg border p-3 cursor-pointer transition-all
+        rounded-lg border p-3 cursor-pointer transition-all overflow-hidden
         ${severityColors[conflict.severity]}
-        hover:scale-[1.02]
       `}
       onClick={() => setExpanded(!expanded)}
       onKeyDown={(e) => {
@@ -118,30 +134,75 @@ function ConflictCard({ conflict }: { conflict: ConflictWarning }) {
 
 function SuggestionChip({
   suggestion,
-  onClick
+  onClick,
+  meta
 }: {
   suggestion: StyleSuggestion;
   onClick?: () => void;
+  meta?: { icon: string; color: string };
 }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  // ── Commodity-card-identical glow pattern ──────────────────────────
+  // Copied from commodity-mover-card.tsx lines 176-190:
+  //   border: always `2px solid ${hoverHex}` (colored outline)
+  //   background: 0.05 default, 0.08 on hover
+  //   boxShadow: ONLY on hover
+  //   Ethereal radial gradient overlays on hover
+  // ───────────────────────────────────────────────────────────────────
+  const hoverHex = meta?.color ?? '#34d399';
+  const glowRgba = hexToRgba(hoverHex, 0.5);
+  const glowSoft = hexToRgba(hoverHex, 0.3);
+
+  const chipStyle: React.CSSProperties = {
+    padding: 'clamp(6px, 0.4vw, 10px) clamp(8px, 0.6vw, 14px)',
+    borderRadius: 'clamp(8px, 0.6vw, 12px)',
+    background: isHovered ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+    border: `2px solid ${hoverHex}`,
+    boxShadow: isHovered
+      ? `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`
+      : 'none',
+    transition: 'box-shadow 200ms ease-out, background 200ms ease-out',
+  };
+
   return (
-    <button
-      onClick={onClick}
-      className="
-        group flex items-center gap-2 px-3 py-1.5 rounded-full
-        bg-gradient-to-r from-emerald-500/20 to-teal-500/20
-        border border-emerald-500/30
-        hover:border-emerald-500/60 hover:scale-105
-        transition-all duration-200
-      "
-    >
-      <span className="text-emerald-400 text-sm">+ {suggestion.term}</span>
-      <span className="
-        opacity-0 group-hover:opacity-100 transition-opacity
-        text-xs text-white/50 max-w-0 group-hover:max-w-[150px] overflow-hidden
-      ">
-        {suggestion.reason}
-      </span>
-    </button>
+    <div className="relative w-full overflow-hidden" style={{ borderRadius: 'clamp(8px, 0.6vw, 12px)' }}>
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="relative flex items-center gap-2 w-full cursor-pointer"
+        style={chipStyle}
+      >
+        {/* Ethereal glow — top radial (matches commodity-card) */}
+        {isHovered && (
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)`,
+              opacity: 0.6,
+              borderRadius: 'inherit',
+            }}
+          />
+        )}
+        {/* Ethereal glow — bottom radial */}
+        {isHovered && (
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`,
+              opacity: 0.4,
+              borderRadius: 'inherit',
+            }}
+          />
+        )}
+        {meta?.icon && (
+          <span className="shrink-0 relative z-10" style={{ fontSize: 'clamp(12px, 0.8vw, 16px)' }}>{meta.icon}</span>
+        )}
+        <span className="text-sm text-white font-medium truncate relative z-10">+ {suggestion.term}</span>
+        <span className="text-xs text-slate-400 ml-auto shrink-0 truncate max-w-[40%] relative z-10">{suggestion.reason}</span>
+      </button>
+    </div>
   );
 }
 
@@ -248,7 +309,8 @@ export function IntelligencePanel({
   tier,
   onSuggestionClick,
   onMoodTermClick,
-  compact = false
+  compact = false,
+  categoryMeta,
 }: IntelligencePanelProps) {
   const [activeTab, setActiveTab] = useState<'conflicts' | 'suggestions' | 'market'>('conflicts');
   const tierConfig = TIER_CONFIGS[tier];
@@ -266,7 +328,7 @@ export function IntelligencePanel({
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-white flex items-center gap-2">
             <span className="text-xl">🧠</span>
-            Prompt Intelligence
+            <span className="truncate">Prompt Intelligence</span>
           </h3>
           
           {/* Platform badge */}
@@ -323,7 +385,7 @@ export function IntelligencePanel({
       </div>
       
       {/* Content */}
-      <div className="p-4 space-y-4 max-h-[400px] overflow-y-auto">
+      <div className="p-4 space-y-4 overflow-y-auto overflow-x-hidden">
         {/* Compact mode: show everything */}
         {compact ? (
           <>
@@ -347,10 +409,19 @@ export function IntelligencePanel({
             {activeTab === 'conflicts' && (
               <div className="space-y-3">
                 {conflicts.length === 0 ? (
-                  <div className="text-center py-8">
-                    <span className="text-4xl mb-2 block">✅</span>
-                    <p className="text-white/60">No conflicts detected</p>
-                    <p className="text-white/40 text-sm">Your selections work well together!</p>
+                  <div className="py-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">✅</span>
+                      <p className="text-sm text-white font-medium">Selections are harmonious</p>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Checked against 145 conflict rules (era clashes, lighting contradictions,
+                      style incompatibilities). Try mixing opposing terms like
+                      <span className="text-amber-300"> vintage </span> +
+                      <span className="text-amber-300"> cyberpunk</span> or
+                      <span className="text-amber-300"> golden hour </span> +
+                      <span className="text-amber-300"> neon glow</span> to see conflicts appear.
+                    </p>
                   </div>
                 ) : (
                   <>
@@ -376,15 +447,16 @@ export function IntelligencePanel({
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-white/60">
+                    <p className="text-sm text-slate-300">
                       Based on your style selections:
                     </p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-col gap-2">
                       {suggestions.map((suggestion, i) => (
                         <SuggestionChip
                           key={i}
                           suggestion={suggestion}
                           onClick={() => onSuggestionClick?.(suggestion)}
+                          meta={categoryMeta?.[suggestion.familyId]}
                         />
                       ))}
                     </div>

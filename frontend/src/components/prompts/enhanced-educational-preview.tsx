@@ -25,15 +25,44 @@
 
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Combobox } from '@/components/ui/combobox';
 import { FourTierPromptPreview } from '@/components/prompt-builder/four-tier-prompt-preview';
 import { IntelligencePanel } from '@/components/prompt-builder/intelligence-panel';
+import { SceneSelector } from '@/components/providers/scene-selector';
+import { CompositionModeToggle } from '@/components/composition-mode-toggle';
+import { AspectRatioSelector } from '@/components/providers/aspect-ratio-selector';
+import { ExploreDrawer } from '@/components/providers/explore-drawer';
+import { TextLengthOptimizer } from '@/components/providers/text-length-optimizer';
+import { LengthIndicator } from '@/components/providers/length-indicator';
+import { OptimizationTransparencyPanel } from '@/components/providers/optimization-transparency-panel';
 import { SavePromptModal, type SavePromptData } from '@/components/prompts/save-prompt-modal';
 import { useSavedPrompts } from '@/hooks/use-saved-prompts';
-import { generateAllTierPrompts } from '@/lib/prompt-builder/enhanced-generators';
+import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
+import { usePromptOptimization } from '@/hooks/use-prompt-optimization';
+import { useFeedbackMemory } from '@/hooks/use-feedback-memory';
+import FeedbackInvitation from '@/components/ux/feedback-invitation';
+import FeedbackMemoryBanner from '@/components/ux/feedback-memory-banner';
+import {
+  storeFeedbackPending,
+  readFeedbackPending,
+  isDismissedRecently,
+} from '@/lib/feedback/feedback-client';
+import type { FeedbackPendingData } from '@/lib/feedback/feedback-client';
+import type { FeedbackRating } from '@/types/feedback';
+import {
+  assemblePrompt,
+  assembleStatic,
+  formatPromptForCopy,
+} from '@/lib/prompt-builder';
+import { assembleCompositionPack } from '@/lib/composition-engine';
+import { postProcessAssembled } from '@/lib/prompt-post-process';
+import { rewriteWithSynergy } from '@/lib/weather/synergy-rewriter';
 import { loadCategoryVocabulary, detectDominantFamily, type CategoryKey } from '@/lib/vocabulary/vocabulary-loader';
+import { getOrderedOptions } from '@/lib/prompt-intelligence';
+import { getEnhancedCategoryConfig } from '@/lib/prompt-builder';
 import { getPlatformTier } from '@/lib/compress';
+import type { AspectRatioId } from '@/types/composition';
 import {
   CATEGORY_ORDER,
   CATEGORY_META,
@@ -47,6 +76,7 @@ import {
   type ConflictWarning,
   type StyleSuggestion,
 } from '@/types/prompt-intelligence';
+import type { CategoryState } from '@/types/prompt-builder';
 import type { Provider } from '@/types/providers';
 
 // ============================================================================
@@ -55,7 +85,8 @@ import type { Provider } from '@/types/providers';
 
 export interface EnhancedEducationalPreviewProps {
   providers: Provider[];
-  onSelectProvider: (providerId: string) => void;
+  /** Notify parent when provider selection changes (for Listen text only — does NOT trigger view switch) */
+  onProviderChange?: (hasProvider: boolean) => void;
 }
 
 // ============================================================================
@@ -68,6 +99,115 @@ const DISPLAY_CATEGORIES: PromptCategory[] = CATEGORY_ORDER;
 /** Default tier for educational mode when no provider selected */
 const DEFAULT_TIER: PlatformTier = 1;
 
+/** Representative platform per tier for 4-tier educational comparison.
+ *  assemblePrompt() needs a platformId to format correctly per tier. */
+const TIER_REPRESENTATIVE: Record<PlatformTier, string> = {
+  1: 'stability',    // CLIP-based (weights, parentheses)
+  2: 'midjourney',   // MJ syntax (::weight, --params)
+  3: 'openai',       // Natural language (DALL·E 3)
+  4: 'canva',        // Plain, simple
+};
+
+/** Midjourney family platforms for AR parameter injection */
+const MIDJOURNEY_FAMILY = ['midjourney', 'bluewillow', 'niji'];
+
+/** Category dot colors for Selection Echo Strip and Fill Heatmap */
+const CATEGORY_COLORS: Record<PromptCategory, string> = {
+  subject: '#f472b6',     // pink-400
+  action: '#fb923c',      // orange-400
+  style: '#a78bfa',       // violet-400
+  environment: '#34d399',  // emerald-400
+  composition: '#60a5fa',  // blue-400
+  camera: '#38bdf8',      // sky-400
+  lighting: '#fbbf24',    // amber-400
+  atmosphere: '#94a3b8',  // slate-400
+  colour: '#f87171',      // red-400
+  materials: '#a3e635',   // lime-400
+  fidelity: '#2dd4bf',    // teal-400
+  negative: '#e879f9',    // fuchsia-400
+};
+
+/** Category icon+color map for IntelligencePanel suggestion chips */
+const INTELLIGENCE_CATEGORY_META: Record<string, { icon: string; color: string }> = Object.fromEntries(
+  CATEGORY_ORDER.map((cat) => [
+    cat,
+    { icon: CATEGORY_META[cat]?.icon ?? '🔹', color: CATEGORY_COLORS[cat] ?? '#6366f1' },
+  ]),
+);
+
+// ============================================================================
+// LIVE DIFF VIEW — Shows what intelligence adds when toggling Static↔Dynamic
+// ============================================================================
+// Human factor: Transparency builds trust. Curiosity Gap — users toggle
+// back and forth to see what changes. No other prompt builder does this.
+// ============================================================================
+
+/** Normalise term for comparison — strip CLIP weight syntax, lowercase, trim */
+function normaliseTerm(term: string): string {
+  return term
+    .replace(/\({1,2}([^)]+?)(?::[0-9.]+)?\){1,2}/g, '$1')
+    .replace(/\{+([^}]+?)\}+/g, '$1')
+    .replace(/::[0-9.]+/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+interface DiffResult {
+  index: number;
+  type: 'added' | 'modified';
+}
+
+/** Compute term-level diff between old and new prompt text */
+function computePromptDiff(oldText: string, newText: string, separator: string = ', '): DiffResult[] {
+  if (!oldText.trim() || !newText.trim()) return [];
+  const oldTerms = oldText.split(separator).map((t) => t.trim()).filter(Boolean);
+  const newTerms = newText.split(separator).map((t) => t.trim()).filter(Boolean);
+  const oldNormalised = new Set(oldTerms.map(normaliseTerm));
+  const oldExact = new Set(oldTerms);
+  const diffs: DiffResult[] = [];
+  for (let i = 0; i < newTerms.length; i++) {
+    const term = newTerms[i]!;
+    const norm = normaliseTerm(term);
+    if (!oldNormalised.has(norm)) {
+      diffs.push({ index: i, type: 'added' });
+    } else if (!oldExact.has(term)) {
+      diffs.push({ index: i, type: 'modified' });
+    }
+  }
+  return diffs;
+}
+
+/** Render prompt text with highlighted diff terms that fade out */
+function DiffHighlightedText({
+  text, diffs, separator = ', ', fadingOut,
+}: {
+  text: string; diffs: DiffResult[]; separator?: string; fadingOut: boolean;
+}) {
+  const terms = text.split(separator).map((t) => t.trim()).filter(Boolean);
+  const diffMap = new Map(diffs.map((d) => [d.index, d.type]));
+  return (
+    <>
+      {terms.map((term, i) => {
+        const diffType = diffMap.get(i);
+        const isLast = i === terms.length - 1;
+        const suffix = !isLast ? separator : '';
+        if (!diffType) return <React.Fragment key={i}>{term}{suffix}</React.Fragment>;
+        const baseClass = diffType === 'added'
+          ? 'bg-emerald-500/25 text-emerald-200 rounded px-0.5 -mx-0.5'
+          : 'bg-purple-500/20 text-purple-200 rounded px-0.5 -mx-0.5';
+        return (
+          <React.Fragment key={i}>
+            <span className={`${baseClass} transition-all duration-1000 ease-out ${fadingOut ? 'bg-transparent !text-inherit' : ''}`}>
+              {term}
+            </span>
+            {suffix}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+}
+
 // ============================================================================
 // DNA BAR (FULL WIDTH HEADER VERSION)
 // ============================================================================
@@ -75,45 +215,66 @@ const DEFAULT_TIER: PlatformTier = 1;
 interface DnaBarProps {
   selections: PromptSelections;
   dominantFamily: string | null;
+  /** Real health score from prompt intelligence engine (0–100) */
+  healthScore: number;
+  /** Number of detected conflicts */
+  conflictCount: number;
 }
 
-function DnaBar({ selections, dominantFamily }: DnaBarProps) {
+function DnaBar({ selections, dominantFamily, healthScore: _healthScore, conflictCount }: DnaBarProps) {
   // Calculate which categories have selections
   const filledCategories = useMemo(() => {
     return CATEGORY_ORDER.filter((cat: PromptCategory) => selections[cat].length > 0);
   }, [selections]);
 
-  // Calculate coherence score
+  const totalFilled = filledCategories.length;
+  const totalCategories = CATEGORY_ORDER.length;
+
+  // ── Realistic DNA score ──────────────────────────────────────────────
+  // The engine's healthScore starts at 50 and is too generous (3 categories
+  // = 76%). This scoring is built from scratch with honest thresholds:
+  //
+  //   Fill rate:       0–45 points  (each of 12 cats = 3.75 pts)
+  //   Subject:         +15 points   (essential for any prompt)
+  //   Style:           +10 points   (defines the visual language)
+  //   Dominant family:  +8 points   (coherent style detected)
+  //   Lighting:         +5 points   (major quality factor)
+  //   Fidelity:         +5 points   (quality boosters present)
+  //   Conflict penalty: -12 per conflict
+  //   Max theoretical:  88 (without fidelity+lighting), ~98 perfect
+  //
+  // A prompt with subject + style + 2 others = 15 + 10 + 15 = 40%
+  // 8/12 categories + subject + style + family = 30 + 15 + 10 + 8 = 63%
+  // 12/12 + all bonuses - 0 conflicts = 45 + 15 + 10 + 8 + 5 + 5 = 88%
+  // ─────────────────────────────────────────────────────────────────────
   const score = useMemo(() => {
-    let filled = 0;
-    const total = CATEGORY_ORDER.length;
+    if (totalFilled === 0) return 0;
 
-    for (const cat of CATEGORY_ORDER) {
-      if (selections[cat].length > 0) {
-        filled++;
-      }
-    }
+    let s = 0;
 
-    // Base score from fill rate
-    let baseScore = Math.round((filled / total) * 60);
+    // Fill rate: each category = 3.75 points (45 max)
+    s += Math.round(totalFilled * 3.75);
 
-    // Bonus for having a dominant family (coherent style)
-    if (dominantFamily) {
-      baseScore += 20;
-    }
+    // Subject bonus
+    if (selections.subject?.length > 0) s += 15;
 
-    // Bonus for having subject (essential)
-    if (selections.subject.length > 0) {
-      baseScore += 10;
-    }
+    // Style bonus
+    if (selections.style?.length > 0) s += 10;
 
-    // Bonus for having style
-    if (selections.style.length > 0) {
-      baseScore += 10;
-    }
+    // Dominant family bonus (real coherence)
+    if (dominantFamily) s += 8;
 
-    return Math.min(100, baseScore);
-  }, [selections, dominantFamily]);
+    // Lighting present (quality)
+    if (selections.lighting?.length > 0) s += 5;
+
+    // Fidelity present (quality boosters)
+    if (selections.fidelity?.length > 0) s += 5;
+
+    // Conflict penalty — harsh, visible
+    s -= conflictCount * 12;
+
+    return Math.max(0, Math.min(100, s));
+  }, [totalFilled, selections, dominantFamily, conflictCount]);
 
   // Color based on score
   const scoreColor =
@@ -135,43 +296,35 @@ function DnaBar({ selections, dominantFamily }: DnaBarProps) {
       </div>
 
       {/* Progress Bar Container - Stretches to fill */}
-      <div className="flex-1 flex flex-col gap-1.5 min-w-0">
-        {/* Main progress bar */}
+      <div className="flex-1 min-w-0">
+        {/* Main progress bar — score only, no secondary bar */}
         <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-700 ease-out`}
             style={{ width: `${score}%` }}
           />
         </div>
-
-        {/* Category segment indicators */}
-        <div className="flex gap-0.5">
-          {CATEGORY_ORDER.map((cat) => {
-            const isFilled = filledCategories.includes(cat);
-            const meta = CATEGORY_META[cat];
-            return (
-              <div
-                key={cat}
-                className={`flex-1 h-1 rounded-full transition-all duration-300 ${
-                  isFilled ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : 'bg-white/10'
-                }`}
-                title={`${meta.icon} ${meta.label}${isFilled ? ' ✓' : ''}`}
-              />
-            );
-          })}
-        </div>
       </div>
 
       {/* Score Display */}
       <div className="flex items-center gap-2 shrink-0">
         <span className={`text-xl font-bold tabular-nums ${scoreColor}`}>{score}%</span>
-        <span className="text-[10px] text-white/40 hidden md:inline">coherence</span>
+        <div className="flex flex-col shrink-0 hidden md:flex">
+          <span className="text-slate-400" style={{ fontSize: 'clamp(9px, 0.6vw, 11px)' }}>
+            {totalFilled}/{totalCategories} filled
+          </span>
+          {conflictCount > 0 && (
+            <span className="text-amber-400" style={{ fontSize: 'clamp(9px, 0.6vw, 11px)' }}>
+              ⚠ {conflictCount} conflict{conflictCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Family Badge */}
       {dominantFamily && (
         <div className="shrink-0 px-2.5 py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/40 rounded-full">
-          <span className="text-[10px] font-medium text-purple-300 capitalize whitespace-nowrap">
+          <span className="font-medium text-purple-300 capitalize whitespace-nowrap" style={{ fontSize: 'clamp(9px, 0.6vw, 11px)' }}>
             {dominantFamily}
           </span>
         </div>
@@ -190,6 +343,8 @@ interface CategoryDropdownProps {
   onSelectionChange: (selections: string[]) => void;
   disabled?: boolean;
   tier: PlatformTier;
+  /** Smart-reordered options (Phase L6) — when provided, replaces default vocabulary order */
+  reorderedOptions?: string[];
 }
 
 function CategoryDropdown({
@@ -198,6 +353,7 @@ function CategoryDropdown({
   onSelectionChange,
   disabled = false,
   tier,
+  reorderedOptions,
 }: CategoryDropdownProps) {
   const meta = CATEGORY_META[category];
   const limit = STANDARD_LIMITS[tier][category];
@@ -206,6 +362,9 @@ function CategoryDropdown({
   const vocabulary = useMemo(() => {
     return loadCategoryVocabulary(category as CategoryKey);
   }, [category]);
+
+  // Use reordered options if provided, otherwise default vocabulary order
+  const displayOptions = reorderedOptions ?? vocabulary.dropdownOptions;
 
   const handleSelectChange = useCallback(
     (newSelections: string[]) => {
@@ -224,9 +383,9 @@ function CategoryDropdown({
     <div className="space-y-1">
       <div className="flex items-center gap-2">
         <span className="text-base">{meta.icon}</span>
-        <span className="text-xs font-medium text-white/70">{meta.label}</span>
+        <span className="text-xs font-medium text-slate-300">{meta.label}</span>
         {selections.length > 0 && (
-          <span className="text-[10px] text-emerald-400/70">
+          <span className="text-xs text-emerald-400">
             {selections.length}/{limit}
           </span>
         )}
@@ -234,7 +393,7 @@ function CategoryDropdown({
       <Combobox
         id={`edu-${category}`}
         label={meta.label}
-        options={vocabulary.dropdownOptions}
+        options={displayOptions}
         selected={selections}
         customValue=""
         onSelectChange={handleSelectChange}
@@ -334,88 +493,94 @@ function ProviderSelector({ providers, selectedId, onSelect }: ProviderSelectorP
 }
 
 // ============================================================================
-// MOCK INTELLIGENCE DATA
+// REAL INTELLIGENCE — Wired to the full prompt-intelligence engine
+// ============================================================================
+// Replaces the former useMockIntelligence (v2.1.0) which had 1 hardcoded
+// conflict pair. Now uses the same analyzePrompt() pipeline as the real
+// prompt builder — 85 conflict groups, real DNA scoring, real suggestions.
+//
+// Maps real engine types (DetectedConflict, SuggestedOption) to the shapes
+// IntelligencePanel expects (ConflictWarning, StyleSuggestion) so the panel
+// component requires zero changes.
 // ============================================================================
 
-function useMockIntelligence(selections: PromptSelections, dominantFamily: string | null) {
-  const conflicts: ConflictWarning[] = useMemo(() => {
-    const result: ConflictWarning[] = [];
-    const allTerms = Object.values(selections)
-      .flat()
-      .map((t) => t.toLowerCase());
+function useRealIntelligence(
+  selections: PromptSelections,
+  selectedProviderId: string | null,
+  hasContent: boolean,
+) {
+  // Build PromptState from educational preview selections
+  // Use 'stability' as default platformId when none selected (Tier 1, CLIP-based)
+  const platformId = selectedProviderId ?? 'stability';
 
-    if (allTerms.includes('neon glow') && allTerms.includes('golden hour')) {
-      result.push({
-        term1: 'neon glow',
-        term2: 'golden hour',
-        severity: 'high',
-        reason: 'Conflicting light sources',
-        category1: 'lighting',
-        category2: 'lighting',
-      });
-    }
-
-    return result;
-  }, [selections]);
-
-  const suggestions: StyleSuggestion[] = useMemo(() => {
-    if (!dominantFamily) return [];
-
-    const familySuggestions: Record<string, StyleSuggestion[]> = {
-      cyberpunk: [
-        {
-          term: 'holographic elements',
-          reason: 'Complements cyberpunk',
-          familyId: 'cyberpunk',
-          confidence: 0.9,
-        },
-        {
-          term: 'rain reflections',
-          reason: 'Enhances urban atmosphere',
-          familyId: 'cyberpunk',
-          confidence: 0.85,
-        },
-      ],
-      fantasy: [
-        {
-          term: 'magical particles',
-          reason: 'Enhances fantasy feel',
-          familyId: 'fantasy',
-          confidence: 0.9,
-        },
-        {
-          term: 'ethereal glow',
-          reason: 'Mystical lighting',
-          familyId: 'fantasy',
-          confidence: 0.85,
-        },
-      ],
-    };
-
-    return (
-      familySuggestions[dominantFamily] || [
-        {
-          term: 'dramatic lighting',
-          reason: 'Universal enhancement',
-          familyId: 'general',
-          confidence: 0.7,
-        },
-      ]
-    );
-  }, [dominantFamily]);
-
-  const platformHints: string[] = useMemo(
-    () => [
-      '💡 Tier 1 (CLIP): Use (term:1.2) weights for emphasis',
-      '💡 Tier 2 (MJ): Add --ar 16:9 for aspect ratio',
-      '💡 Tier 3 (DALL·E): Write naturally',
-    ],
-    [],
+  const { analysis, conflictCount, hasHardConflicts, healthScore } = usePromptAnalysis(
+    {
+      subject: selections.subject?.[0] ?? '',
+      selections: selections as Partial<Record<PromptCategory, string[]>>,
+      negatives: selections.negative ?? [],
+      platformId,
+    },
+    {
+      enabled: hasContent,
+      debounceMs: 200,
+    },
   );
 
-  const weatherSuggestions: string[] = useMemo(() => ['wet surfaces', 'rain droplets'], []);
+  // Map DetectedConflict[] → ConflictWarning[] for IntelligencePanel
+  const conflicts: ConflictWarning[] = useMemo(() => {
+    if (!analysis?.conflicts?.conflicts) return [];
+    return analysis.conflicts.conflicts.map((c) => ({
+      term1: c.terms[0] ?? '',
+      term2: c.terms[1] ?? c.terms[0] ?? '',
+      severity: (c.severity === 'hard' ? 'high' : 'medium') as ConflictWarning['severity'],
+      reason: c.reason,
+      category1: c.categories[0] ?? ('style' as PromptCategory),
+      category2: c.categories[1] ?? c.categories[0] ?? ('style' as PromptCategory),
+    }));
+  }, [analysis]);
 
-  return { conflicts, suggestions, platformHints, weatherSuggestions };
+  // Map SuggestedOption[] → StyleSuggestion[] for IntelligencePanel
+  // Store category in familyId so click handler can route to correct category
+  const suggestions: StyleSuggestion[] = useMemo(() => {
+    if (!analysis?.suggestions?.suggestions) return [];
+    const all: StyleSuggestion[] = [];
+    for (const [category, opts] of Object.entries(analysis.suggestions.suggestions)) {
+      if (!opts) continue;
+      for (const opt of opts) {
+        all.push({
+          term: opt.option,
+          reason: opt.reason,
+          familyId: category, // Used by click handler to route to correct category
+          confidence: Math.min(1, opt.score / 100),
+        });
+      }
+    }
+    // Sort by confidence descending, take top 6
+    all.sort((a, b) => b.confidence - a.confidence);
+    return all.slice(0, 6);
+  }, [analysis]);
+
+  // Real platform hints from analysis
+  const platformHints: string[] = useMemo(() => {
+    const tier = getPlatformTier(platformId);
+    const hints: string[] = [];
+    if (tier === 1) hints.push('💡 Tier 1 (CLIP): Use (term:1.2) weights for emphasis');
+    if (tier === 2) hints.push('💡 Tier 2 (MJ): Add --ar 16:9 for aspect ratio');
+    if (tier === 3) hints.push('💡 Tier 3 (NatLang): Write naturally, describe the scene');
+    if (tier === 4) hints.push('💡 Tier 4 (Plain): Keep it simple, fewer terms work better');
+    if (conflictCount > 0) {
+      hints.push(`⚠️ ${conflictCount} conflict${conflictCount > 1 ? 's' : ''} detected — review your selections`);
+    }
+    return hints;
+  }, [platformId, conflictCount]);
+
+  // Weather suggestions from market mood (if available)
+  const weatherSuggestions: string[] = useMemo(() => {
+    if (!analysis?.marketSuggestions?.length) return [];
+    return analysis.marketSuggestions.map((s) => s.option);
+  }, [analysis]);
+
+  return { conflicts, suggestions, platformHints, weatherSuggestions, healthScore, hasHardConflicts, conflictCount };
 }
 
 // ============================================================================
@@ -424,7 +589,7 @@ function useMockIntelligence(selections: PromptSelections, dominantFamily: strin
 
 export default function EnhancedEducationalPreview({
   providers,
-  onSelectProvider: _onSelectProvider,
+  onProviderChange: _onProviderChange,
 }: EnhancedEducationalPreviewProps) {
   // State
   const [selections, setSelections] = useState<PromptSelections>(EMPTY_SELECTIONS);
@@ -433,14 +598,105 @@ export default function EnhancedEducationalPreview({
   const [savedConfirmation, setSavedConfirmation] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Composition mode: 'static' = raw selections, 'dynamic' = platform-formatted
+  const [compositionMode, setCompositionMode] = useState<'static' | 'dynamic'>('dynamic');
+
+  // Aspect ratio state (Phase L3)
+  const [aspectRatio, setAspectRatio] = useState<AspectRatioId | null>(null);
+
+  // Live Diff state — tracks previous prompt for comparison
+  const prevPromptRef = useRef<string>('');
+  const [diffData, setDiffData] = useState<{ diffs: DiffResult[]; text: string } | null>(null);
+  const [diffFading, setDiffFading] = useState(false);
+  const prevModeRef = useRef(compositionMode);
+
+  // Explore Drawer accordion state — only one category expanded at a time
+  const [expandedExploreCategory, setExpandedExploreCategory] = useState<PromptCategory | null>(null);
+
+  // Feedback system state (Phase L7)
+  const [feedbackPending, setFeedbackPending] = useState<FeedbackPendingData | null>(null);
+  const { getOverlap } = useFeedbackMemory();
+
+  // Check for pending feedback on mount
+  useEffect(() => {
+    if (isDismissedRecently()) return;
+    const pending = readFeedbackPending();
+    if (pending) setFeedbackPending(pending);
+  }, []);
+
+  // Feedback overlap detection
+  const feedbackOverlap = useMemo(
+    () => getOverlap(
+      selectedProviderId ?? 'playground',
+      selections as PromptSelections,
+    ),
+    [selections, getOverlap, selectedProviderId],
+  );
+
   // Save hook
   const { savePrompt } = useSavedPrompts();
 
-  // Determine tier from selected provider (or default)
-  const activeTier: PlatformTier = useMemo(() => {
-    if (!selectedProviderId) return DEFAULT_TIER;
-    const tier = getPlatformTier(selectedProviderId);
-    return tier as PlatformTier;
+  // Scene Starters state
+  const [_activeSceneId, setActiveSceneId] = useState<string | undefined>(undefined);
+
+  // ── CategoryState adapter for SceneSelector ──
+  // SceneSelector reads/writes Record<PromptCategory, CategoryState>.
+  // Educational preview uses PromptSelections (Record<string, string[]>).
+  // This adapter bridges the two formats without changing either component.
+  const categoryStateForScene = useMemo(() => {
+    const state: Record<PromptCategory, CategoryState> = {} as Record<PromptCategory, CategoryState>;
+    for (const cat of CATEGORY_ORDER) {
+      state[cat] = {
+        selected: selections[cat] ?? [],
+        customValue: '',
+      };
+    }
+    return state;
+  }, [selections]);
+
+  const setCategoryStateAdapter: React.Dispatch<
+    React.SetStateAction<Record<PromptCategory, CategoryState>>
+  > = useCallback(
+    (action) => {
+      setSelections((prev) => {
+        // Build current categoryState from prev selections
+        const currentCatState: Record<PromptCategory, CategoryState> = {} as Record<PromptCategory, CategoryState>;
+        for (const cat of CATEGORY_ORDER) {
+          currentCatState[cat] = {
+            selected: prev[cat] ?? [],
+            customValue: '',
+          };
+        }
+        // Apply the action (function or value)
+        const nextCatState =
+          typeof action === 'function' ? action(currentCatState) : action;
+        // Convert back to PromptSelections
+        const nextSelections: PromptSelections = { ...prev };
+        for (const cat of CATEGORY_ORDER) {
+          nextSelections[cat] = nextCatState[cat]?.selected ?? [];
+        }
+        return nextSelections;
+      });
+    },
+    [],
+  );
+
+  const handleActiveSceneChange = useCallback(
+    (sceneId: string | undefined, _prefills?: Record<string, string[]>) => {
+      setActiveSceneId(sceneId);
+    },
+    [],
+  );
+
+  // Active tier — clickable by user OR set by provider selection
+  const [activeTier, setActiveTier] = useState<PlatformTier>(DEFAULT_TIER);
+
+  // Sync activeTier when provider changes
+  useEffect(() => {
+    if (selectedProviderId) {
+      const tier = getPlatformTier(selectedProviderId) as PlatformTier;
+      setActiveTier(tier);
+    }
   }, [selectedProviderId]);
 
   // Get selected provider object
@@ -455,10 +711,135 @@ export default function EnhancedEducationalPreview({
     return detectDominantFamily(allTerms);
   }, [selections]);
 
-  // Generate prompts from selections
+  // ============================================================================
+  // 3-Stage Assembly Pipeline (One Brain)
+  // ============================================================================
+  // Stage 1 (Static):  assembleStatic()  — raw comma join in CATEGORY_ORDER
+  // Stage 2 (Dynamic): assemblePrompt(skipTrim: true) — platform formatting
+  // Post-process: postProcessAssembled() — polish pass (Dynamic only)
+  //
+  // Runs once per tier using representative platforms, producing the same
+  // GeneratedPrompts shape the FourTierPromptPreview expects.
+  // ============================================================================
+
   const generatedPrompts: GeneratedPrompts = useMemo(() => {
-    // Cast to add index signature for generator compatibility
-    return generateAllTierPrompts(selections as PromptSelections & Record<string, string[]>);
+    const result: GeneratedPrompts = {
+      tier1: '', tier2: '', tier3: '', tier4: '',
+      negative: { tier1: '', tier2: '', tier3: '', tier4: '' },
+    };
+
+    // Synergy rewrite (Dynamic only) — same pass the real builder runs
+    const rewritten = compositionMode === 'dynamic'
+      ? rewriteWithSynergy(selections).selections
+      : selections;
+
+    for (const tier of [1, 2, 3, 4] as PlatformTier[]) {
+      // Use selected provider for its tier, representative for others
+      const platformId = (selectedProviderId && getPlatformTier(selectedProviderId) === tier)
+        ? selectedProviderId
+        : TIER_REPRESENTATIVE[tier];
+
+      let assembled;
+      if (compositionMode === 'static') {
+        // Stage 1: Raw user selections, no intelligence
+        assembled = assembleStatic(platformId, selections);
+      } else {
+        // Stage 2: Full platform-specific formatting (skipTrim — no optimizer in preview)
+        const raw = assemblePrompt(platformId, rewritten, undefined, { skipTrim: true });
+        // Post-process polish (leak phrases, dedup, grammar)
+        const atmosHint = (selections.atmosphere ?? []).join(' ');
+        assembled = postProcessAssembled(raw, tier, atmosHint);
+      }
+
+      const tierKey = `tier${tier}` as keyof Omit<GeneratedPrompts, 'negative'>;
+      result[tierKey] = formatPromptForCopy(assembled);
+      result.negative[tierKey as keyof GeneratedPrompts['negative']] = assembled.negative ?? '';
+    }
+
+    return result;
+  }, [selections, compositionMode, selectedProviderId]);
+
+  // ============================================================================
+  // Aspect Ratio Composition Pack (Phase L3)
+  // ============================================================================
+  const compositionPack = useMemo(() => {
+    if (!aspectRatio) return null;
+    const platformId = selectedProviderId ?? 'stability';
+    return assembleCompositionPack(platformId, aspectRatio, compositionMode, selections);
+  }, [aspectRatio, selectedProviderId, compositionMode, selections]);
+
+  // Active tier prompt text (for copy, diff, and "What If")
+  const activeTierPromptText = useMemo(() => {
+    const tierKey = `tier${activeTier}` as keyof Omit<GeneratedPrompts, 'negative'>;
+    let text = generatedPrompts[tierKey] ?? '';
+
+    // Inject AR composition if present
+    if (compositionPack) {
+      const platformId = selectedProviderId ?? TIER_REPRESENTATIVE[activeTier];
+      if (compositionPack.text) {
+        // Inject composition text before --no for MJ family
+        const isMJ = MIDJOURNEY_FAMILY.includes(platformId.toLowerCase());
+        if (isMJ && text.includes(' --no ')) {
+          const parts = text.split(' --no ');
+          text = `${(parts[0] ?? '').trim()}, ${compositionPack.text} --no ${parts[1] ?? ''}`;
+        } else if (text) {
+          text = `${text.trim()}, ${compositionPack.text}`;
+        }
+      }
+      if (compositionPack.useNativeAR && compositionPack.arParameter) {
+        text = `${text.trim()} ${compositionPack.arParameter}`;
+      }
+    }
+    return text;
+  }, [generatedPrompts, activeTier, compositionPack, selectedProviderId]);
+
+  // ============================================================================
+  // Live Diff — tracks mode changes and computes visual diff (3s fade)
+  // ============================================================================
+  useEffect(() => {
+    if (prevModeRef.current !== compositionMode && prevPromptRef.current && activeTierPromptText) {
+      const diffs = computePromptDiff(prevPromptRef.current, activeTierPromptText);
+      if (diffs.length > 0) {
+        setDiffData({ diffs, text: activeTierPromptText });
+        setDiffFading(false);
+        // Start fade after 1.5s, clear after 3s
+        const fadeTimer = setTimeout(() => setDiffFading(true), 1500);
+        const clearTimer = setTimeout(() => setDiffData(null), 3000);
+        prevModeRef.current = compositionMode;
+        prevPromptRef.current = activeTierPromptText;
+        return () => { clearTimeout(fadeTimer); clearTimeout(clearTimer); };
+      }
+    }
+    prevModeRef.current = compositionMode;
+    prevPromptRef.current = activeTierPromptText;
+  }, [compositionMode, activeTierPromptText]);
+
+  // ============================================================================
+  // Smart Dropdown Reorder (Phase L6)
+  // ============================================================================
+  // Options reorder by relevance as user builds — cyberpunk-adjacent terms
+  // float to the top when cyberpunk is selected. Same engine as real builder.
+  // Human factor: Optimal Stimulation — options rearrange, creating discovery.
+  // ============================================================================
+  const reorderedOptionsMap = useMemo(() => {
+    const map = new Map<PromptCategory, string[]>();
+    const anyContent = Object.values(selections).some((arr) => arr.length > 0);
+    if (!anyContent) return map;
+
+    for (const cat of DISPLAY_CATEGORIES) {
+      if (cat === 'negative') continue;
+      const config = getEnhancedCategoryConfig(cat);
+      if (!config || config.options.length === 0) continue;
+
+      const scored = getOrderedOptions({
+        options: config.options,
+        category: cat,
+        selections: selections as Partial<Record<PromptCategory, string[]>>,
+      });
+
+      map.set(cat, scored.map((s) => s.option));
+    }
+    return map;
   }, [selections]);
 
   // Check if we have any content
@@ -466,9 +847,31 @@ export default function EnhancedEducationalPreview({
     return Object.values(selections).some((arr) => arr.length > 0);
   }, [selections]);
 
-  // Get intelligence data
-  const { conflicts, suggestions, platformHints, weatherSuggestions } =
-    useMockIntelligence(selections, dominantFamily);
+  // Get intelligence data — real engine (85 conflict groups, DNA scoring, suggestions)
+  const { conflicts, suggestions, platformHints, weatherSuggestions, healthScore: realHealthScore, conflictCount: realConflictCount } =
+    useRealIntelligence(selections, selectedProviderId, hasContent);
+
+  // ============================================================================
+  // Text Length Optimizer (Phase L4)
+  // ============================================================================
+  const optimizerPlatformId = selectedProviderId ?? 'stability';
+
+  const {
+    isOptimizerEnabled,
+    setOptimizerEnabled,
+    analysis: optimizerAnalysis,
+    getOptimizedPrompt,
+    isToggleDisabled: isOptimizerDisabled,
+    tooltipContent: optimizerTooltipContent,
+  } = usePromptOptimization({
+    platformId: optimizerPlatformId,
+    promptText: activeTierPromptText,
+    selections,
+    compositionMode,
+  });
+
+  const optimizedResult = useMemo(() => getOptimizedPrompt(), [getOptimizedPrompt]);
+  const wasOptimized = optimizedResult.optimizedLength < optimizedResult.originalLength;
 
   // Suggested save name
   const suggestedSaveName = useMemo(() => {
@@ -480,13 +883,12 @@ export default function EnhancedEducationalPreview({
     return 'Untitled Prompt';
   }, [selections]);
 
-  // Handle provider selection — notify parent to switch to real PromptBuilder
+  // Handle provider selection — stays in educational preview (no view switch)
+  // Only notifies parent for heroText / Listen button text changes
   const handleProviderSelect = useCallback((providerId: string | null) => {
     setSelectedProviderId(providerId);
-    if (providerId) {
-      _onSelectProvider(providerId);
-    }
-  }, [_onSelectProvider]);
+    _onProviderChange?.(!!providerId);
+  }, [_onProviderChange]);
 
   // Handle category selection change
   const handleCategoryChange = useCallback((category: PromptCategory, newSelections: string[]) => {
@@ -496,12 +898,18 @@ export default function EnhancedEducationalPreview({
     }));
   }, []);
 
-  // Handle suggestion click
+  // Handle suggestion click — routes to correct category via familyId
   const handleSuggestionClick = useCallback(
     (suggestion: StyleSuggestion) => {
+      // familyId holds the real category (set by useRealIntelligence mapping)
+      const category = suggestion.familyId as PromptCategory;
+      const validCategory = CATEGORY_ORDER.includes(category) ? category : 'style';
       setSelections((prev) => ({
         ...prev,
-        style: [...prev.style, suggestion.term].slice(0, STANDARD_LIMITS[activeTier].style),
+        [validCategory]: [...prev[validCategory], suggestion.term].slice(
+          0,
+          STANDARD_LIMITS[activeTier][validCategory],
+        ),
       }));
     },
     [activeTier],
@@ -535,42 +943,63 @@ export default function EnhancedEducationalPreview({
     setSelections(newSelections);
   }, [activeTier]);
 
-  // Handle clear all (clears selections AND provider)
+  // Handle clear all (clears selections AND provider AND scene AND AR AND drawer)
   const handleClear = useCallback(() => {
     setSelections(EMPTY_SELECTIONS);
     setSelectedProviderId(null);
+    setActiveSceneId(undefined);
+    setAspectRatio(null);
+    setDiffData(null);
+    setExpandedExploreCategory(null);
   }, []);
 
-  // Handle copy
+  // Handle tier selection — user clicks a tier card to highlight it
+  const handleTierSelect = useCallback((tier: PlatformTier) => {
+    setActiveTier(tier);
+  }, []);
+
+  // Handle copy — uses optimized text when optimizer is on, otherwise activeTierPromptText
+  // Also stores feedback pending data for post-copy feedback invitation
   const handleCopy = useCallback(async () => {
-    const tierKey = `tier${activeTier}` as keyof Omit<GeneratedPrompts, 'negative'>;
-    const text = generatedPrompts[tierKey];
+    const text = isOptimizerEnabled && wasOptimized
+      ? optimizedResult.optimized
+      : activeTierPromptText;
     if (text) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+
+      // Store feedback pending for post-copy invitation
+      if (!isDismissedRecently()) {
+        const pending: FeedbackPendingData = {
+          eventId: `lab-${Date.now()}`,
+          platform: selectedProviderId ?? 'playground',
+          tier: activeTier,
+          copiedAt: Date.now(),
+        };
+        storeFeedbackPending(pending);
+        setFeedbackPending(pending);
+      }
     }
-  }, [activeTier, generatedPrompts]);
+  }, [activeTierPromptText, isOptimizerEnabled, wasOptimized, optimizedResult, selectedProviderId, activeTier]);
 
   // Handle save
   const handleSavePrompt = useCallback(
     (data: SavePromptData) => {
-      const tierKey = `tier${activeTier}` as keyof Omit<GeneratedPrompts, 'negative'>;
-      const promptText = generatedPrompts[tierKey];
       const negativeTierKey = `tier${activeTier}` as keyof GeneratedPrompts['negative'];
 
       savePrompt({
         name: data.name,
         platformId: selectedProviderId || 'playground',
         platformName: selectedProvider?.name || 'Playground',
-        positivePrompt: promptText,
+        positivePrompt: activeTierPromptText,
         negativePrompt: generatedPrompts.negative[negativeTierKey] || '',
         selections: selections,
         customValues: {},
         families: dominantFamily ? [dominantFamily] : [],
         mood: 'neutral',
         coherenceScore: 80,
-        characterCount: promptText.length,
+        characterCount: activeTierPromptText.length,
         notes: data.notes,
         tags: data.tags,
       });
@@ -579,7 +1008,7 @@ export default function EnhancedEducationalPreview({
       setSavedConfirmation(true);
       setTimeout(() => setSavedConfirmation(false), 2000);
     },
-    [activeTier, generatedPrompts, savePrompt, selectedProvider, selectedProviderId, selections, dominantFamily],
+    [activeTier, activeTierPromptText, generatedPrompts, savePrompt, selectedProvider, selectedProviderId, selections, dominantFamily],
   );
 
   // Determine if we show single tier (provider selected) or all 4 (educational)
@@ -592,7 +1021,7 @@ export default function EnhancedEducationalPreview({
     >
       {/* Header - Full width DNA bar */}
       <header className="shrink-0 border-b border-slate-800/50 p-4 md:px-6 md:pt-5">
-        {/* Main header row: Provider | DNA Bar (stretches) | Market Mood */}
+        {/* Main header row: Provider | Composition Mode | DNA Bar */}
         <div className="flex items-center gap-3">
           <ProviderSelector
             providers={providers}
@@ -600,8 +1029,32 @@ export default function EnhancedEducationalPreview({
             onSelect={handleProviderSelect}
           />
 
+          {/* Composition Mode Toggle — Static/Dynamic (same as real builder) */}
+          <CompositionModeToggle
+            compositionMode={compositionMode}
+            onModeChange={setCompositionMode}
+            platformId={selectedProviderId ?? 'stability'}
+            disabled={false}
+            compact
+          />
+
+          {/* Divider */}
+          <span className="text-slate-700" aria-hidden="true">│</span>
+
+          {/* Text Length Optimizer toggle (Phase L4) */}
+          <TextLengthOptimizer
+            isEnabled={isOptimizerEnabled}
+            onToggle={setOptimizerEnabled}
+            platformId={optimizerPlatformId}
+            platformName={selectedProvider?.name ?? 'Stability'}
+            disabled={isOptimizerDisabled}
+            tooltipContent={optimizerTooltipContent}
+            analysis={hasContent ? optimizerAnalysis : null}
+            compact
+          />
+
           {/* DNA Bar - flex-1 makes it stretch to fill available space */}
-          <DnaBar selections={selections} dominantFamily={dominantFamily} />
+          <DnaBar selections={selections} dominantFamily={dominantFamily} healthScore={realHealthScore} conflictCount={realConflictCount} />
         </div>
 
         {/* Show selected provider tier info */}
@@ -618,34 +1071,242 @@ export default function EnhancedEducationalPreview({
 
       {/* Main Content */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+        {/* ════════════════════════════════════════════════════════ */}
+        {/* Scene Starters — quick-start strip (Phase L1)          */}
+        {/* Same component as real prompt builder. Collapsed by     */}
+        {/* default. Selecting a scene prefills all categories.     */}
+        {/* Human factor: Variable Reward + Peak-End Rule —         */}
+        {/* the cascade of dropdowns filling at once is the peak.   */}
+        {/* ════════════════════════════════════════════════════════ */}
+        <SceneSelector
+          categoryState={categoryStateForScene}
+          setCategoryState={setCategoryStateAdapter}
+          userTier="paid"
+          isLocked={false}
+          onActiveSceneChange={handleActiveSceneChange}
+          platformTier={activeTier}
+        />
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left Column: Categories + Preview */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Category Selections - 2 column grid, all 12 categories */}
+
+            {/* ═══════════════════════════════════════════════════ */}
+            {/* Selection Echo Strip — bird's-eye view of ALL      */}
+            {/* selected terms across ALL categories as chips.     */}
+            {/* Click any chip to deselect. Color-coded by cat.    */}
+            {/* Human factor: Cognitive Load reduction — users see  */}
+            {/* their entire prompt composition without scrolling.  */}
+            {/* No other builder shows a live "shopping cart" of    */}
+            {/* all selections simultaneously.                     */}
+            {/* ═══════════════════════════════════════════════════ */}
+            {hasContent && (
+              <div className="rounded-xl bg-slate-900/80 border border-white/10 p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-medium text-slate-400">Your selections</span>
+                  <span className="text-xs text-slate-400">
+                    {Object.values(selections).flat().length} terms
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {DISPLAY_CATEGORIES.map((cat) =>
+                    (selections[cat] ?? []).map((term) => (
+                      <button
+                        key={`${cat}-${term}`}
+                        type="button"
+                        onClick={() => {
+                          setSelections((prev) => ({
+                            ...prev,
+                            [cat]: prev[cat].filter((t) => t !== term),
+                          }));
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-800/60 px-2 py-0.5 text-xs text-slate-200 hover:border-red-400/40 hover:bg-red-950/20 hover:text-red-300 transition-all cursor-pointer"
+                        title={`${CATEGORY_META[cat]?.label ?? cat} — click to remove`}
+                      >
+                        <span
+                          className="inline-block rounded-full"
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            backgroundColor: CATEGORY_COLORS[cat] ?? '#6366f1',
+                          }}
+                        />
+                        {term}
+                        <span className="text-xs text-slate-400">✕</span>
+                      </button>
+                    )),
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Category Selections + Explore Drawers */}
             <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {DISPLAY_CATEGORIES.map((category) => (
-                  <CategoryDropdown
-                    key={category}
-                    category={category}
-                    selections={selections[category]}
-                    onSelectionChange={(newSel) => handleCategoryChange(category, newSel)}
-                    tier={activeTier}
-                  />
-                ))}
+                {DISPLAY_CATEGORIES.map((category) => {
+                  const maxSelections = STANDARD_LIMITS[activeTier][category] ?? 1;
+                  return (
+                    <div key={category} className="flex flex-col gap-1">
+                      <CategoryDropdown
+                        category={category}
+                        selections={selections[category]}
+                        onSelectionChange={(newSel) => handleCategoryChange(category, newSel)}
+                        tier={activeTier}
+                        reorderedOptions={reorderedOptionsMap.get(category)}
+                      />
+                      {/* Phase L5: Explore Drawer — expandable vocabulary panel */}
+                      <ExploreDrawer
+                        category={category}
+                        selectedTerms={selections[category] ?? []}
+                        onAddTerm={(term) => {
+                          const current = selections[category] ?? [];
+                          if (current.length < maxSelections && !current.includes(term)) {
+                            handleCategoryChange(category, [...current, term]);
+                          }
+                        }}
+                        maxSelections={maxSelections}
+                        isLocked={false}
+                        platformTier={activeTier}
+                        isExpanded={expandedExploreCategory === category}
+                        onToggle={() =>
+                          setExpandedExploreCategory(
+                            expandedExploreCategory === category ? null : category,
+                          )
+                        }
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
+
+            {/* ═══════════════════════════════════════════════════ */}
+            {/* Aspect Ratio — 13th row (Phase L3)                 */}
+            {/* Same component as real builder. Shows native AR     */}
+            {/* support per platform. Injects --ar params for MJ.  */}
+            {/* ═══════════════════════════════════════════════════ */}
+            <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4">
+              <AspectRatioSelector
+                selected={aspectRatio}
+                onSelect={setAspectRatio}
+                platformId={selectedProviderId ?? 'stability'}
+                compositionMode={compositionMode}
+                disabled={false}
+                isLocked={false}
+              />
+            </div>
+
+            {/* ═══════════════════════════════════════════════════ */}
+            {/* Live Diff Overlay — shows what intelligence adds   */}
+            {/* when toggling Static↔Dynamic. 3-second fade.       */}
+            {/* Human factor: Transparency builds trust.            */}
+            {/* ═══════════════════════════════════════════════════ */}
+            {diffData && (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-4 transition-all">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-medium text-emerald-400">
+                    ✨ Intelligence added:
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {diffData.diffs.filter(d => d.type === 'added').length} new ·{' '}
+                    {diffData.diffs.filter(d => d.type === 'modified').length} enhanced
+                  </span>
+                </div>
+                <p className="text-sm text-slate-200 leading-relaxed">
+                  <DiffHighlightedText
+                    text={diffData.text}
+                    diffs={diffData.diffs}
+                    fadingOut={diffFading}
+                  />
+                </p>
+              </div>
+            )}
 
             {/* 4-Tier Prompt Preview */}
             <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4">
               <FourTierPromptPreview
                 prompts={generatedPrompts}
                 currentTier={activeTier}
+                onTierSelect={handleTierSelect}
                 compact={false}
                 showNegative={true}
                 singleTierMode={singleTierMode}
               />
             </div>
+
+            {/* ═══════════════════════════════════════════════════ */}
+            {/* Text Length Optimizer Output (Phase L4)             */}
+            {/* Shows length indicator, optimization result, and   */}
+            {/* transparency panel when optimizer is enabled.       */}
+            {/* Human factor: Loss Aversion — "23 tokens over"     */}
+            {/* creates urgency to trim.                           */}
+            {/* ═══════════════════════════════════════════════════ */}
+            {hasContent && (
+              <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4 space-y-3">
+                {/* Length Indicator — always visible when there's content */}
+                <LengthIndicator
+                  analysis={optimizerAnalysis}
+                  isOptimizerEnabled={isOptimizerEnabled}
+                  optimizedLength={isOptimizerEnabled ? optimizedResult.optimizedLength : undefined}
+                  willTrim={isOptimizerEnabled && wasOptimized}
+                  compact
+                />
+
+                {/* Optimization result — shows when optimizer trims */}
+                {isOptimizerEnabled && wasOptimized && (
+                  <>
+                    <div className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-400">↓</span>
+                        <span className="text-xs text-amber-200">
+                          <span className="font-medium">Optimized:</span>{' '}
+                          {optimizedResult.originalLength} → {optimizedResult.optimizedLength} chars{' '}
+                          <span className="text-amber-400/60">
+                            (saved {optimizedResult.originalLength - optimizedResult.optimizedLength})
+                          </span>
+                        </span>
+                      </div>
+                      {optimizedResult.removedTermNames && optimizedResult.removedTermNames.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {optimizedResult.removedTermNames.map((name, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center rounded-md bg-amber-900/30 px-1.5 py-0.5 text-xs text-amber-300"
+                            >
+                              ✕ {name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Transparency Panel — shows which phase achieved the target */}
+                    <OptimizationTransparencyPanel
+                      removedTerms={optimizedResult.removedTerms ?? []}
+                      achievedAtPhase={optimizedResult.achievedAtPhase ?? -1}
+                      originalLength={optimizedResult.originalLength}
+                      optimizedLength={optimizedResult.optimizedLength}
+                      isPro={false}
+                    />
+
+                    {/* Optimized prompt preview */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-emerald-300">Optimized prompt</span>
+                        <span className="text-xs text-emerald-400/70 tabular-nums">
+                          {optimizedResult.optimizedLength} chars
+                        </span>
+                      </div>
+                      <div className="min-h-[40px] max-h-[120px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+                        <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
+                          {optimizedResult.optimized}
+                        </pre>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Educational Note (only when no provider selected) */}
             {!singleTierMode && (
@@ -673,6 +1334,7 @@ export default function EnhancedEducationalPreview({
                 onSuggestionClick={handleSuggestionClick}
                 onMoodTermClick={handleMoodTermClick}
                 compact={false}
+                categoryMeta={INTELLIGENCE_CATEGORY_META}
               />
             </div>
           </div>
@@ -692,7 +1354,7 @@ export default function EnhancedEducationalPreview({
               ${
                 hasContent
                   ? 'border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800'
-                  : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-600'
+                  : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-400'
               }
               focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80
             `}
@@ -724,7 +1386,7 @@ export default function EnhancedEducationalPreview({
                     d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                   />
                 </svg>
-                Copy prompt
+                {isOptimizerEnabled && wasOptimized ? 'Copy optimized prompt' : 'Copy prompt'}
               </>
             )}
           </button>
@@ -747,7 +1409,7 @@ export default function EnhancedEducationalPreview({
             className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80 ${
               hasContent || selectedProviderId
                 ? 'border-slate-600 bg-slate-800 text-slate-100 hover:border-slate-400 hover:bg-slate-700'
-                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
+                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-400'
             }`}
           >
             Clear all
@@ -763,7 +1425,7 @@ export default function EnhancedEducationalPreview({
                 ? savedConfirmation
                   ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300'
                   : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400'
-                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-500'
+                : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-400'
             }`}
           >
             {savedConfirmation ? (
@@ -795,14 +1457,35 @@ export default function EnhancedEducationalPreview({
         </div>
       </footer>
 
+      {/* Phase L7: Feedback Memory Banner — contextual overlap hint */}
+      {feedbackOverlap && !feedbackPending && (
+        <div style={{ marginTop: 'clamp(6px, 0.4vw, 10px)', padding: '0 1rem' }}>
+          <FeedbackMemoryBanner
+            overlap={feedbackOverlap}
+            platformName={selectedProvider?.name ?? 'Prompt Lab'}
+            userTier={null}
+          />
+        </div>
+      )}
+
+      {/* Phase L7: Feedback Invitation — post-copy rating widget */}
+      {feedbackPending && (
+        <div style={{ marginTop: 'clamp(6px, 0.4vw, 10px)', padding: '0 1rem' }}>
+          <FeedbackInvitation
+            pending={feedbackPending}
+            onComplete={(_rating?: FeedbackRating) => {
+              setFeedbackPending(null);
+            }}
+          />
+        </div>
+      )}
+
       {/* Save Prompt Modal */}
       <SavePromptModal
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         onSave={handleSavePrompt}
-        promptPreview={
-          generatedPrompts[`tier${activeTier}` as keyof Omit<GeneratedPrompts, 'negative'>]
-        }
+        promptPreview={activeTierPromptText}
         suggestedName={suggestedSaveName}
       />
     </section>

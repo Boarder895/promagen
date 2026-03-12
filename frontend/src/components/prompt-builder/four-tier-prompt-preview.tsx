@@ -39,6 +39,8 @@ interface FourTierPromptPreviewProps {
   prompts: GeneratedPrompts;
   currentTier: PlatformTier;
   onCopy?: (tier: PlatformTier, text: string) => void;
+  /** Called when user clicks a tier card to select it */
+  onTierSelect?: (tier: PlatformTier) => void;
   compact?: boolean;
   showNegative?: boolean;
   /** When true, only shows the currentTier card (provider selected mode) */
@@ -55,6 +57,8 @@ interface TierCardProps {
   negative: string;
   isActive: boolean;
   onCopy: () => void;
+  /** Called when card is clicked to select this tier */
+  onClick?: () => void;
   compact?: boolean;
   /** When true, card takes full width */
   fullWidth?: boolean;
@@ -249,6 +253,7 @@ function TierCard({
   negative,
   isActive,
   onCopy,
+  onClick,
   compact,
   fullWidth,
   compressionLookup,
@@ -296,12 +301,17 @@ function TierCard({
   
   return (
     <div
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
       className={`
         relative rounded-xl border-2 transition-all duration-300
         ${isActive ? `${colors.border} bg-gradient-to-br ${colors.bg}` : 'border-white/10 bg-white/5'}
         ${isActive ? 'ring-2 ring-offset-2 ring-offset-black ring-white/20' : ''}
         ${compact ? 'p-3' : 'p-4'}
         ${fullWidth ? 'col-span-full' : ''}
+        ${onClick ? 'cursor-pointer hover:border-white/30' : ''}
       `}
     >
       {/* Header */}
@@ -424,6 +434,7 @@ export function FourTierPromptPreview({
   prompts,
   currentTier,
   onCopy,
+  onTierSelect,
   compact = false,
   showNegative = true,
   singleTierMode = false,
@@ -498,6 +509,7 @@ export function FourTierPromptPreview({
           negative={showNegative ? prompts.negative.tier1 : ''}
           isActive={currentTier === 1}
           onCopy={() => handleCopy(1, prompts.tier1)}
+          onClick={onTierSelect ? () => onTierSelect(1) : undefined}
           compact={compact}
           compressionLookup={compressionLookup}
           platformId={platformId}
@@ -508,6 +520,7 @@ export function FourTierPromptPreview({
           negative={showNegative ? prompts.negative.tier2 : ''}
           isActive={currentTier === 2}
           onCopy={() => handleCopy(2, prompts.tier2)}
+          onClick={onTierSelect ? () => onTierSelect(2) : undefined}
           compact={compact}
           compressionLookup={compressionLookup}
           platformId={platformId}
@@ -518,6 +531,7 @@ export function FourTierPromptPreview({
           negative={showNegative ? prompts.negative.tier3 : ''}
           isActive={currentTier === 3}
           onCopy={() => handleCopy(3, prompts.tier3)}
+          onClick={onTierSelect ? () => onTierSelect(3) : undefined}
           compact={compact}
           compressionLookup={compressionLookup}
           platformId={platformId}
@@ -528,6 +542,7 @@ export function FourTierPromptPreview({
           negative={showNegative ? prompts.negative.tier4 : ''}
           isActive={currentTier === 4}
           onCopy={() => handleCopy(4, prompts.tier4)}
+          onClick={onTierSelect ? () => onTierSelect(4) : undefined}
           compact={compact}
           compressionLookup={compressionLookup}
           platformId={platformId}

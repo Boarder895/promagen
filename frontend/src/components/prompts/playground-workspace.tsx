@@ -221,7 +221,8 @@ export default function PlaygroundWorkspace({ providers, onProviderChange }: Pla
       ) : (
         // v2.0.0: Show EnhancedEducationalPreview instead of EmptyState
         // Users can build prompts and see 4-tier preview even without selecting a provider
-        <EnhancedEducationalPreview providers={providers} onSelectProvider={handleProviderSelect} />
+        // onProviderChange notifies parent for heroText only — does NOT set selectedProviderId
+        <EnhancedEducationalPreview providers={providers} onProviderChange={onProviderChange} />
       )}
     </div>
   );
