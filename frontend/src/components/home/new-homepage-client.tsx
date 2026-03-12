@@ -220,28 +220,32 @@ export default function NewHomepageClient({
       style={{ gap: 'clamp(12px, 1.25vw, 24px)' }}
       data-testid="rail-centre-inner"
     >
-      {/* Prompt of the Moment — hidden when table expanded (table takes full space) */}
-      {!isTableExpanded && <PromptShowcase selectedProviderId={selectedProvider?.id} onTierChange={setShowcaseTierId} />}
-
-      {/* Leaderboard intro — "42 AI Image Generators" heading + expand trigger
-          Positioned directly above the providers table, flowing naturally.
-          Hidden when table is expanded (no gap to fill). */}
+      {/* Prompt of the Moment — desktop only. Mobile homepage is leaderboard-only. */}
       {!isTableExpanded && (
-        <LeaderboardIntro
-          isExpanded={isTableExpanded}
-          onToggle={handleExpandToggle}
-          activeTierId={showcaseTierId}
-          tierFilter={tierFilter}
-          onClearFilter={handleClearFilter}
-          highlightCount={highlightCount}
-          onActivateFilter={handleActivateFilter}
-        />
+        <div className="hidden md:block">
+          <PromptShowcase selectedProviderId={selectedProvider?.id} onTierChange={setShowcaseTierId} />
+        </div>
+      )}
+
+      {/* Leaderboard intro — desktop only. Mobile homepage is leaderboard-only. */}
+      {!isTableExpanded && (
+        <div className="hidden md:block">
+          <LeaderboardIntro
+            isExpanded={isTableExpanded}
+            onToggle={handleExpandToggle}
+            activeTierId={showcaseTierId}
+            tierFilter={tierFilter}
+            onClearFilter={handleClearFilter}
+            highlightCount={highlightCount}
+            onActivateFilter={handleActivateFilter}
+          />
+        </div>
       )}
 
       {/* AI Providers Leaderboard */}
       <section
         aria-label="AI providers leaderboard"
-        className="flex min-h-0 flex-1 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+        className="flex min-h-0 flex-1 flex-col bg-transparent p-0 shadow-none ring-0 md:rounded-3xl md:bg-slate-950/70 md:p-4 md:shadow-sm md:ring-1 md:ring-white/10"
       >
         <ProvidersTable
           providers={providers}
