@@ -47,6 +47,8 @@ import { getProviderWeatherMapping } from '@/data/providers/provider-weather-map
 
 // Global prompt tier — user's Pro selection controls ALL flag tooltips
 import { useGlobalPromptTier } from '@/hooks/use-global-prompt-tier';
+// Platform tier lookup — resolves provider ID → native tier (1-4)
+import { getPlatformTierId } from '@/data/platform-tiers';
 
 // Types
 import type { WeatherData } from '@/hooks/use-weather';
@@ -405,7 +407,7 @@ export function ProviderCell({
   const demoDisplay =
     mapping && !liveDisplay ? generateDemoWeather(mapping.lat, mapping.lon) : null;
   const weatherDisplay = liveDisplay ?? demoDisplay;
-  const { tier: providerTier } = useGlobalPromptTier();
+  const { tier: providerTier } = useGlobalPromptTier('leaderboard', getPlatformTierId(provider.id));
 
   // ── Resolve day/night + display emoji ─────────────────────────────────
   // Uses the same 3-tier cascade as exchange cards (shared utility).
@@ -510,6 +512,7 @@ export function ProviderCell({
                 tier={providerTier}
                 isPro={isPro}
                 tooltipPosition="left"
+                verticalPosition="above"
                 latitude={mapping.lat}
                 longitude={mapping.lon}
               >

@@ -389,7 +389,7 @@ export function ComparisonTable({
         <TierDropdown
           selectedTier={selectedPromptTier}
           onChange={onPromptTierChange}
-          disabled={false}
+          disabled={!isPaidUser}
         />
       );
     }

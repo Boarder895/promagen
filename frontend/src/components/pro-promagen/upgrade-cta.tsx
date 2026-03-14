@@ -1,11 +1,16 @@
 // src/components/pro-promagen/upgrade-cta.tsx
 // ============================================================================
-// UPGRADE CTA
+// UPGRADE CTA / PAYMENT PANEL v2.0.0
 // ============================================================================
-// Call-to-action button for upgrading or saving preferences.
-// Free users: "Upgrade to Pro Promagen" → Stripe placeholder
-// Paid users: "Save Preferences" → localStorage + Clerk sync
+// Proper payment placeholder panel with real height.
+// Free users: Upgrade panel with Stripe placeholder area.
+// Paid users: Save panel with status feedback.
+//
+// This panel shares space with TierPreviewPanel — both must match height
+// so the hover swap doesn't cause layout shift.
+//
 // Authority: docs/authority/paid_tier.md
+// Existing features preserved: Yes
 // ============================================================================
 
 'use client';
@@ -34,14 +39,10 @@ export function UpgradeCta({
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  // Handle upgrade (free users)
   const handleUpgrade = useCallback(() => {
-    // Placeholder: Navigate to Stripe checkout
-    // TODO: Integrate Stripe checkout
     window.location.href = '/upgrade';
   }, []);
 
-  // Handle save (paid users)
   const handleSave = useCallback(async () => {
     if (!onSave) return;
     setIsSaving(true);
@@ -58,80 +59,114 @@ export function UpgradeCta({
     }
   }, [onSave]);
 
-  // Free user CTA
+  // Free user — payment placeholder panel
   if (!isPaidUser) {
     return (
-      <div className="rounded-2xl overflow-hidden ring-1 ring-amber-500/30 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10">
-        <div className="p-4 text-center">
-          <p className="text-xs text-white/50 mb-3">
-            Preview mode — your selections won&apos;t be saved
-          </p>
+      <div
+        className="rounded-2xl overflow-hidden ring-1 ring-amber-500/30"
+        style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(249, 115, 22, 0.06), rgba(245, 158, 11, 0.04))',
+          minHeight: 'clamp(140px, 14vw, 200px)',
+          padding: 'clamp(16px, 1.5vw, 24px)',
+        }}
+      >
+        <div className="flex flex-col items-center justify-center h-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
+          {/* Stripe placeholder area */}
+          <div
+            className="w-full rounded-xl ring-1 ring-white/10 flex items-center justify-center"
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              minHeight: 'clamp(48px, 4.5vw, 64px)',
+              padding: 'clamp(8px, 0.8vw, 12px)',
+            }}
+          >
+            <span
+              className="text-white/30"
+              style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.85rem)' }}
+            >
+              Payment integration coming soon
+            </span>
+          </div>
+
+          {/* Upgrade button */}
           <button
             type="button"
             onClick={handleUpgrade}
-            className="w-full py-3 px-6 rounded-xl font-semibold text-white bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+            className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+            style={{
+              padding: 'clamp(10px, 1vw, 14px) clamp(16px, 1.5vw, 24px)',
+              fontSize: 'clamp(0.8rem, 0.95vw, 1rem)',
+            }}
           >
-            <span className="flex items-center justify-center gap-2">
+            <span className="flex items-center justify-center" style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}>
               <span>✨</span>
               <span>Upgrade to Pro Promagen</span>
             </span>
           </button>
-          <p className="text-[10px] text-white/30 mt-2">
-            Unlock customization, unlimited prompts, and more
-          </p>
+
+          {/* Subtext */}
+          <span
+            className="text-white/30 text-center"
+            style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
+          >
+            Preview mode — your selections won&apos;t be saved
+          </span>
         </div>
       </div>
     );
   }
 
-  // Paid user CTA
+  // Paid user — save panel
   return (
-    <div className="rounded-2xl overflow-hidden ring-1 ring-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-emerald-500/10">
-      <div className="p-4 text-center">
-        <p className="text-xs text-white/50 mb-3">
+    <div
+      className="rounded-2xl overflow-hidden ring-1 ring-emerald-500/30"
+      style={{
+        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(20, 184, 166, 0.06), rgba(16, 185, 129, 0.04))',
+        minHeight: 'clamp(140px, 14vw, 200px)',
+        padding: 'clamp(16px, 1.5vw, 24px)',
+      }}
+    >
+      <div className="flex flex-col items-center justify-center h-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
+        <span
+          className="text-white/50"
+          style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.85rem)' }}
+        >
           {hasChanges ? 'You have unsaved changes' : 'Your preferences are saved'}
-        </p>
+        </span>
+
         <button
           type="button"
           onClick={handleSave}
           disabled={isSaving || !hasChanges}
-          className={`
-            w-full py-3 px-6 rounded-xl font-semibold text-white transition-all duration-300
-            ${
-              hasChanges
-                ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-400 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40'
-                : 'bg-white/10 cursor-not-allowed'
-            }
-            ${isSaving ? 'opacity-50 cursor-wait' : ''}
-          `}
+          className={`w-full rounded-xl font-semibold text-white transition-all duration-300 ${
+            hasChanges
+              ? 'cursor-pointer bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-400 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40'
+              : 'bg-white/10 cursor-default'
+          } ${isSaving ? 'cursor-wait' : ''}`}
+          style={{
+            padding: 'clamp(10px, 1vw, 14px) clamp(16px, 1.5vw, 24px)',
+            fontSize: 'clamp(0.8rem, 0.95vw, 1rem)',
+          }}
         >
-          <span className="flex items-center justify-center gap-2">
+          <span className="flex items-center justify-center" style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}>
             {isSaving ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                <span>Saving...</span>
-              </>
+              <><span className="animate-spin">⏳</span><span>Saving...</span></>
             ) : saveStatus === 'success' ? (
-              <>
-                <span>✓</span>
-                <span>Saved!</span>
-              </>
+              <><span>✓</span><span>Saved!</span></>
             ) : saveStatus === 'error' ? (
-              <>
-                <span>✕</span>
-                <span>Error — try again</span>
-              </>
+              <><span>✕</span><span>Error — try again</span></>
             ) : (
-              <>
-                <span>💾</span>
-                <span>Save Preferences</span>
-              </>
+              <><span>💾</span><span>Save Preferences</span></>
             )}
           </span>
         </button>
-        <p className="text-[10px] text-white/30 mt-2">
+
+        <span
+          className="text-white/30 text-center"
+          style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
+        >
           Changes apply to your homepage immediately
-        </p>
+        </span>
       </div>
     </div>
   );

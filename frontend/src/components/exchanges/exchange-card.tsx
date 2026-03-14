@@ -340,6 +340,8 @@ interface ExtendedExchangeCardProps extends ExchangeCardProps {
   promptTier?: PromptTier;
   isPro?: boolean;
   railPosition?: 'left' | 'right';
+  /** Vertical tooltip orientation. Bottom cards use 'above' to avoid scroll cut-off. */
+  tooltipVerticalPosition?: 'center' | 'below' | 'above';
 }
 
 export const ExchangeCard = React.memo(function ExchangeCard({
@@ -348,6 +350,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
   promptTier = 3,
   isPro = false,
   railPosition = 'left',
+  tooltipVerticalPosition = 'center',
 }: ExtendedExchangeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -526,6 +529,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
                   tier={promptTier}
                   isPro={isPro}
                   tooltipPosition={railPosition}
+                  verticalPosition={tooltipVerticalPosition}
                   latitude={latitude}
                   longitude={longitude}
                 >

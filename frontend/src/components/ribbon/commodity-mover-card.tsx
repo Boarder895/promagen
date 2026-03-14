@@ -131,7 +131,7 @@ export default function CommodityMoverCard({
   const [isHovered, setIsHovered] = useState(false);
 
   // ── Global prompt tier (user's Pro selection) ──────────────────────
-  const { tier: globalTier, isPro } = useGlobalPromptTier();
+  const { tier: globalTier, isPro } = useGlobalPromptTier('commodities');
 
   // ── Tooltip resolution (shared across all flags) ────────────────────
   const tooltipData = useCommodityTooltipData(id, deltaPct);
@@ -155,7 +155,7 @@ export default function CommodityMoverCard({
       season: deriveSeason(flagCountryCode) ?? ('summer' as const),
       weather: buildWeatherSlice(flagCountryCode),
       disabled: !tooltipData.available,
-      verticalPosition: 'below' as const,
+      verticalPosition: 'top-third' as const,
       flagIndex,
       tier: globalTier,
       isPro,

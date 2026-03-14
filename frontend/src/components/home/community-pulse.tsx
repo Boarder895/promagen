@@ -158,6 +158,7 @@ interface DemoEntry {
 function PromptTooltipContent({
   entry,
   position,
+  verticalPosition = 'center',
   onMouseEnter,
   onMouseLeave,
   onCopy,
@@ -165,6 +166,7 @@ function PromptTooltipContent({
 }: {
   entry: DemoEntry;
   position: { top: number; left: number };
+  verticalPosition?: 'center' | 'above';
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onCopy: () => void;
@@ -181,7 +183,7 @@ function PromptTooltipContent({
       style={{
         top: position.top,
         left: position.left,
-        transform: 'translateY(-50%)',
+        transform: verticalPosition === 'above' ? 'translateY(-100%)' : 'translateY(-50%)',
         zIndex: 99999,
         background: 'rgba(15, 23, 42, 0.97)',
         border: `1px solid ${glowBorder}`,
@@ -294,10 +296,13 @@ const UserPromptCard = React.memo(function UserPromptCard({
   entry,
   cardFont,
   isGlowActive,
+  isBottom = false,
 }: {
   entry: DemoEntry;
   cardFont: number;
   isGlowActive: boolean;
+  /** When true, tooltip opens upward to avoid scroll cut-off */
+  isBottom?: boolean;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [tooltipVisible, setTooltipVisible] = useState(false);
@@ -341,12 +346,12 @@ const UserPromptCard = React.memo(function UserPromptCard({
     if (flagRef.current) {
       const rect = flagRef.current.getBoundingClientRect();
       setTooltipCoords({
-        top: rect.top + rect.height / 2,
+        top: isBottom ? rect.top - TOOLTIP_GAP : rect.top + rect.height / 2,
         left: rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP,
       });
     }
     setTooltipVisible(true);
-  }, [clearCloseTimeout]);
+  }, [clearCloseTimeout, isBottom]);
 
   const handleFlagLeave = useCallback(() => {
     startCloseDelay();
@@ -505,6 +510,7 @@ const UserPromptCard = React.memo(function UserPromptCard({
           <PromptTooltipContent
             entry={entry}
             position={tooltipCoords}
+            verticalPosition={isBottom ? 'above' : 'center'}
             onMouseEnter={handleTooltipEnter}
             onMouseLeave={handleTooltipLeave}
             onCopy={handleCopy}
@@ -676,6 +682,7 @@ export default function CommunityPulse() {
             entry={entry}
             cardFont={cardFont}
             isGlowActive={glowOn && index === activeGlowIndex}
+            isBottom={index === displayCards.length - 1}
           />
         ))}
       </div>

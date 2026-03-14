@@ -8,7 +8,17 @@
 // - Copy icon to copy prompt to clipboard
 // - Uses React Portal to render at document.body (escapes all containers)
 // - 400ms hover persistence for easy copy access
-// - Tier-based prompt format (Free: Tier 3, Pro: Selectable 1-4)
+// - Tier-based prompt format (surface-aware variety for free users)
+// - Coloured tier badge (replaces plain text tier indicator)
+// - Blurred tier previews for free users (Loss Aversion / Curiosity Gap)
+//
+// UPDATES (13 Mar 2026):
+// - Coloured tier pill badge matching commodity tooltip TIER_META style
+// - Free users: blurred preview rows for 3 other tiers with lock icon
+// - "Unlock all formats" CTA linking to /pro-promagen
+// - Fixed: text-slate-500 (banned §6.0.2) → coloured tier badge
+// - Human Factors: Variable Reward (different tiers per surface),
+//   Loss Aversion (see what you can't control), Curiosity Gap (blurred)
 //
 // UPDATES (26 Jan 2026):
 // - REMOVED: Country/city name from tooltip header (flag is sufficient)
@@ -23,12 +33,13 @@
 //
 // Authority: docs/authority/ai_providers.md §4-Tier Prompt System
 // Authority: docs/authority/best-working-practice.md §Tooltip Standards
+// Authority: docs/authority/human-factors.md §Variable Reward, §Loss Aversion
 // Existing features preserved: Yes
 // ============================================================================
 
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { SaveIcon } from '@/components/prompts/library/save-icon';
 import {
@@ -68,9 +79,10 @@ export interface WeatherPromptTooltipProps {
   /**
    * Vertical alignment of tooltip relative to trigger.
    * 'center' = vertically centered on trigger (default)
-   * 'below' = positioned below the trigger
+   * 'below' = positioned below the trigger (auto-flips to center if viewport overflow)
+   * 'above' = positioned above the trigger (tooltip bottom aligns with trigger top)
    */
-  verticalPosition?: 'center' | 'below';
+  verticalPosition?: 'center' | 'below' | 'above' | 'top-third';
   /** Latitude for solar/lunar elevation calculation (lighting engine). Optional. */
   latitude?: number | null;
   /** Longitude for solar/lunar elevation calculation (lighting engine). Optional. */
@@ -104,6 +116,62 @@ const TOOLTIP_GAP = 8;
 
 /** Tooltip dimensions for positioning calculations */
 const TOOLTIP_WIDTH = 450;
+
+/**
+ * Tier display metadata — colours, labels, representative platforms.
+ * Mirrors commodity-prompt-tooltip.tsx TIER_META exactly (compare, don't invent).
+ */
+interface TierMeta {
+  label: string;
+  shortLabel: string;
+  platforms: string;
+  accentClass: string;
+  dotClass: string;
+  bgClass: string;
+  ringClass: string;
+}
+
+const TIER_META: Record<number, TierMeta> = {
+  1: {
+    label: 'CLIP-Based',
+    shortLabel: 'CLIP',
+    platforms: 'Stable Diffusion · Leonardo · Flux',
+    accentClass: 'text-blue-400',
+    dotClass: 'bg-blue-400',
+    bgClass: 'bg-blue-500/15',
+    ringClass: 'ring-blue-500/30',
+  },
+  2: {
+    label: 'Midjourney Family',
+    shortLabel: 'MJ',
+    platforms: 'Midjourney · BlueWillow',
+    accentClass: 'text-purple-400',
+    dotClass: 'bg-purple-400',
+    bgClass: 'bg-purple-500/15',
+    ringClass: 'ring-purple-500/30',
+  },
+  3: {
+    label: 'Natural Language',
+    shortLabel: 'NatLang',
+    platforms: 'DALL·E · Imagen · Adobe Firefly',
+    accentClass: 'text-emerald-400',
+    dotClass: 'bg-emerald-400',
+    bgClass: 'bg-emerald-500/15',
+    ringClass: 'ring-emerald-500/30',
+  },
+  4: {
+    label: 'Plain Language',
+    shortLabel: 'Plain',
+    platforms: 'Canva · Craiyon · Microsoft Designer',
+    accentClass: 'text-orange-400',
+    dotClass: 'bg-orange-400',
+    bgClass: 'bg-orange-500/15',
+    ringClass: 'ring-orange-500/30',
+  },
+};
+
+/** All 4 tiers for iteration */
+const ALL_TIERS: PromptTier[] = [1, 2, 3, 4];
 
 // ============================================================================
 // HELPERS
@@ -166,7 +234,7 @@ function CopyIcon({ onClick, copied }: CopyIconProps) {
       }}
       className={`
         inline-flex items-center justify-center
-        w-6 h-6 rounded-md
+        w-6 h-6 rounded-md cursor-pointer
         transition-all duration-200
         ${
           copied
@@ -207,6 +275,87 @@ function CopyIcon({ onClick, copied }: CopyIconProps) {
 }
 
 // ============================================================================
+// LOCK ICON — used on blurred tier preview rows
+// ============================================================================
+
+function LockIcon() {
+  return (
+    <svg
+      className="w-3 h-3 text-slate-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+// ============================================================================
+// BLURRED TIER PREVIEW ROW — teaser for free users (Curiosity Gap)
+// ============================================================================
+
+interface BlurredTierRowProps {
+  tierNum: PromptTier;
+  previewText: string;
+}
+
+function BlurredTierRow({ tierNum, previewText }: BlurredTierRowProps) {
+  const meta = TIER_META[tierNum];
+  if (!meta) return null;
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-white/[0.03]">
+      {/* Tier colour dot + label */}
+      <span className={`w-1.5 h-1.5 rounded-full ${meta.dotClass} shrink-0`} style={{ opacity: 0.5 }} />
+      <span
+        className={`text-xs font-semibold ${meta.accentClass} shrink-0`}
+        style={{ opacity: 0.6, fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)' }}
+      >
+        T{tierNum}
+      </span>
+
+      {/* Blurred preview text — visible shape, unreadable content */}
+      <span
+        className="flex-1 text-xs text-slate-400 truncate select-none"
+        style={{
+          filter: 'blur(4px)',
+          WebkitFilter: 'blur(4px)',
+          fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)',
+        }}
+        aria-hidden="true"
+      >
+        {previewText.slice(0, 80)}
+      </span>
+
+      {/* Lock icon */}
+      <LockIcon />
+    </div>
+  );
+}
+
+// ============================================================================
+// TIER BADGE COMPONENT — coloured pill (replaces banned text-slate-500)
+// ============================================================================
+
+function TierBadge({ tier }: { tier: PromptTier }) {
+  const meta = TIER_META[tier];
+  if (!meta) return null;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full ${meta.bgClass} ${meta.accentClass} ring-1 ${meta.ringClass}`}
+      style={{ fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)' }}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${meta.dotClass}`} />
+      Tier {tier}: {meta.label}
+    </span>
+  );
+}
+
+// ============================================================================
 // TOOLTIP CONTENT COMPONENT (rendered via Portal)
 // ============================================================================
 
@@ -216,13 +365,15 @@ interface TooltipContentProps {
   isPro: boolean;
   tempColor: string;
   position: { top: number; left: number };
-  verticalPosition: 'center' | 'below';
+  verticalPosition: 'center' | 'below' | 'above' | 'top-third';
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onCopy: () => void;
   copied: boolean;
   savePlatformId: string;
   savePlatformName: string;
+  /** Preview prompts for other tiers (free users only). Map of tierNum → prompt text. */
+  previewPrompts: Record<number, string>;
 }
 
 function TooltipContent({
@@ -238,10 +389,14 @@ function TooltipContent({
   copied,
   savePlatformId,
   savePlatformName,
+  previewPrompts,
 }: TooltipContentProps) {
   const glowRgba = hexToRgba(tempColor, 0.3);
   const glowBorder = hexToRgba(tempColor, 0.5);
   const glowSoft = hexToRgba(tempColor, 0.15);
+
+  // Other tiers for blurred preview (exclude current active tier)
+  const otherTiers = ALL_TIERS.filter((t) => t !== tier);
 
   return (
     <div
@@ -254,7 +409,14 @@ function TooltipContent({
       style={{
         top: position.top,
         left: position.left,
-        transform: verticalPosition === 'below' ? 'none' : 'translateY(-50%)',
+        transform:
+          verticalPosition === 'below'
+            ? 'none'
+            : verticalPosition === 'above'
+              ? 'translateY(-100%)'
+              : verticalPosition === 'top-third'
+              ? 'translateY(-33%)'
+              : 'translateY(-50%)',
         zIndex: 99999,
         background: 'rgba(15, 23, 42, 0.97)',
         border: `1px solid ${glowBorder}`,
@@ -280,7 +442,6 @@ function TooltipContent({
         className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
         style={{
           background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)`,
-          opacity: 0.6,
         }}
       />
 
@@ -316,11 +477,10 @@ function TooltipContent({
           </div>
         </div>
 
-        {/* Tier indicator */}
-        <span className="text-xs text-slate-500 -mt-1">
-          Tier {tier}:{' '}
-          {tier === 1 ? 'CLIP-Based' : tier === 2 ? 'Midjourney Family' : tier === 3 ? 'Natural Language' : 'Plain Language'}
-        </span>
+        {/* Tier indicator — coloured badge (replaces banned text-slate-500) */}
+        <div className="-mt-1">
+          <TierBadge tier={tier} />
+        </div>
 
         {/* Prompt text */}
         <p
@@ -329,6 +489,44 @@ function TooltipContent({
         >
           {prompt}
         </p>
+
+        {/* ── Blurred tier previews (free users only) ────────────────────── */}
+        {!isPro && otherTiers.length > 0 && (
+          <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-white/[0.06]">
+            <span
+              className="text-xs text-slate-400 font-medium mb-0.5"
+              style={{ fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)' }}
+            >
+              Other formats available
+            </span>
+            {otherTiers.map((t) => (
+              <BlurredTierRow
+                key={t}
+                tierNum={t}
+                previewText={previewPrompts[t] ?? 'Prompt preview not available'}
+              />
+            ))}
+
+            {/* Upgrade CTA */}
+            <a
+              href="/pro-promagen"
+              className="flex items-center justify-center gap-1.5 mt-1.5 px-3 py-1.5 rounded-lg
+                bg-gradient-to-r from-amber-600/20 to-orange-600/20
+                ring-1 ring-amber-500/25
+                text-amber-400 text-xs font-medium
+                hover:from-amber-600/30 hover:to-orange-600/30
+                transition-all duration-200 cursor-pointer
+                no-underline"
+              style={{ fontSize: 'clamp(0.625rem, 0.85vw, 0.75rem)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Unlock all formats
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -349,6 +547,7 @@ function TooltipContent({
  * - Hovering either trigger OR tooltip keeps it open
  * - NO question mark cursor (cursor-pointer only)
  * - NO country/city name in header (flag image is sufficient)
+ * - Free users see blurred previews of other tier formats
  */
 export function WeatherPromptTooltip({
   children,
@@ -368,6 +567,8 @@ export function WeatherPromptTooltip({
   const [copied, setCopied] = useState(false);
   const [tooltipCoords, setTooltipCoords] = useState({ top: 0, left: 0 });
   const [isMounted, setIsMounted] = useState(false);
+  // Resolved vertical position — may auto-flip from 'below' to 'center' on viewport overflow
+  const [resolvedVPos, setResolvedVPos] = useState<'center' | 'below' | 'above' | 'top-third'>(verticalPosition);
 
   const triggerRef = useRef<HTMLSpanElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -381,19 +582,48 @@ export function WeatherPromptTooltip({
   // Convert display weather to full for prompt generation
   const fullWeather = toFullWeather(weather);
 
-  // Generate prompt if weather data available
+  // Derive local hour once (shared across all tier generations)
+  const localHour = getLocalHour(tz);
+
+  // Generate prompt for active tier
   // v8.0.0 Chat 5: generateWeatherPrompt returns WeatherPromptResult; extract .text for display.
   const promptResult = fullWeather
     ? generateWeatherPrompt({
         city,
         weather: fullWeather,
-        localHour: getLocalHour(tz),
+        localHour,
         tier,
         latitude,
         longitude,
       })
     : null;
   const prompt = promptResult?.text ?? null;
+
+  // Generate preview prompts for other tiers (free users only).
+  // Lazy: only compute when we have weather data. Cost is negligible — the heavy
+  // physics computation is shared via module-level caches; only the assembly step
+  // runs 3 extra times.
+  const previewPrompts = useMemo(() => {
+    if (isPro || !fullWeather) return {};
+
+    const previews: Record<number, string> = {};
+    for (const t of ALL_TIERS) {
+      if (t === tier) continue; // Skip active tier (already generated above)
+      const result = generateWeatherPrompt({
+        city,
+        weather: fullWeather,
+        localHour,
+        tier: t,
+        latitude,
+        longitude,
+      });
+      if (result?.text) {
+        previews[t] = result.text;
+      }
+    }
+    return previews;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro, city, localHour, tier, latitude, longitude, weather.tempC]);
 
   // Get temperature-based color for glow
   const tempColor = weather.tempC !== null ? getTemperatureColor(weather.tempC) : '#38BDF8'; // Default cyan
@@ -420,12 +650,14 @@ export function WeatherPromptTooltip({
    * - Left rail (tooltipPosition='left'): opens to RIGHT of trigger
    * - Right rail (tooltipPosition='right'): opens to LEFT of trigger
    * - verticalPosition='center': vertically centered on trigger
-   * - verticalPosition='below': positioned below the trigger
+   * - verticalPosition='below': positioned below the trigger (auto-flips to center if overflow)
+   * - verticalPosition='above': positioned above the trigger (tooltip bottom at trigger top)
    */
   const calculatePosition = useCallback(() => {
     if (!triggerRef.current) return;
 
     const rect = triggerRef.current.getBoundingClientRect();
+    const viewportH = window.innerHeight;
 
     let left: number;
 
@@ -437,17 +669,36 @@ export function WeatherPromptTooltip({
       left = rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP;
     }
 
-    // Vertical positioning
+    // Estimated tooltip height (prompt content + blurred previews + CTA)
+    // Conservative estimate — actual height varies by content length
+    const ESTIMATED_TOOLTIP_H = 550;
+
+    // Vertical positioning with viewport overflow detection
     let top: number;
+    let resolved: 'center' | 'below' | 'above' | 'top-third' = verticalPosition;
+
     if (verticalPosition === 'below') {
-      // Position below the trigger
       top = rect.bottom + TOOLTIP_GAP;
+      // Auto-flip to center if tooltip would overflow viewport bottom
+      if (top + ESTIMATED_TOOLTIP_H > viewportH - 16) {
+        top = rect.top + rect.height / 2;
+        resolved = 'center';
+      }
+    } else if (verticalPosition === 'above') {
+      // Tooltip bottom aligns with trigger top
+      top = rect.top - TOOLTIP_GAP;
+      // Auto-flip to center if tooltip would overflow viewport top
+      if (top - ESTIMATED_TOOLTIP_H < 16) {
+        top = rect.top + rect.height / 2;
+        resolved = 'center';
+      }
     } else {
-      // Vertically center relative to trigger
+      // Center — vertically centered relative to trigger
       top = rect.top + rect.height / 2;
     }
 
     setTooltipCoords({ top, left });
+    setResolvedVPos(resolved);
   }, [tooltipPosition, verticalPosition]);
 
   /**
@@ -539,13 +790,14 @@ export function WeatherPromptTooltip({
             isPro={isPro}
             tempColor={tempColor}
             position={tooltipCoords}
-            verticalPosition={verticalPosition}
+            verticalPosition={resolvedVPos}
             onMouseEnter={handleTooltipEnter}
             onMouseLeave={handleTooltipLeave}
             onCopy={handleCopy}
             copied={copied}
             savePlatformId={propPlatformId ?? TIER_DEFAULT_PLATFORM[tier]?.id ?? 'openai'}
             savePlatformName={propPlatformName ?? TIER_DEFAULT_PLATFORM[tier]?.name ?? 'OpenAI DALL·E'}
+            previewPrompts={previewPrompts}
           />,
           document.body,
         )}

@@ -1,8 +1,15 @@
 // src/components/ribbon/commodity-prompt-tooltip.tsx
 // ============================================================================
-// COMMODITY PROMPT TOOLTIP v2.1 — Multi-Tier Pro Display + 💾 Save
+// COMMODITY PROMPT TOOLTIP v2.2 — Multi-Tier Pro Display + 💾 Save + Blurred Previews
 // ============================================================================
 // Tooltip that displays dynamically generated image prompts for commodities.
+//
+// v2.2: Coloured TierBadge pill replaces plain text tier indicator.
+//       Free users see blurred preview rows for other 3 tiers with lock icon.
+//       "Unlock all formats" CTA linking to /pro-promagen.
+//       Human Factors: Loss Aversion (see what you can't control),
+//       Curiosity Gap (blurred text entices upgrade).
+//       Existing features preserved: Yes
 //
 // v2.1: Added 💾 save icon next to copy in both Free and Pro tooltip headers.
 //       Fires saveToLibrary() + triggerQuickSaveToast() for one-click save.
@@ -87,9 +94,10 @@ export interface CommodityPromptTooltipProps {
   /**
    * Vertical alignment of tooltip relative to trigger.
    * 'center' = vertically centered on trigger (default)
-   * 'below' = positioned below the trigger
+   * 'below' = positioned below the trigger (auto-flips to center if viewport overflow)
+   * 'above' = positioned above the trigger (tooltip bottom aligns with trigger top)
    */
-  verticalPosition?: 'center' | 'below';
+  verticalPosition?: 'center' | 'below' | 'above' | 'top-third';
   /** Disable the tooltip (renders children only) */
   disabled?: boolean;
 }
@@ -158,6 +166,94 @@ const TIER_PLATFORM: Record<number, { id: string; name: string }> = {
   3: { id: 'openai', name: 'DALL·E 3' },
   4: { id: 'canva', name: 'Canva' },
 };
+
+/** All 4 tiers for iteration */
+const ALL_TIERS: (1 | 2 | 3 | 4)[] = [1, 2, 3, 4];
+
+/** Background + ring classes per tier for TierBadge pill */
+const TIER_BADGE_STYLES: Record<number, { bgClass: string; ringClass: string }> = {
+  1: { bgClass: 'bg-blue-500/15', ringClass: 'ring-blue-500/30' },
+  2: { bgClass: 'bg-purple-500/15', ringClass: 'ring-purple-500/30' },
+  3: { bgClass: 'bg-emerald-500/15', ringClass: 'ring-emerald-500/30' },
+  4: { bgClass: 'bg-orange-500/15', ringClass: 'ring-orange-500/30' },
+};
+
+// ============================================================================
+// LOCK ICON — used on blurred tier preview rows
+// ============================================================================
+
+function LockIcon() {
+  return (
+    <svg
+      className="w-3 h-3 text-slate-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+// ============================================================================
+// BLURRED TIER PREVIEW ROW — teaser for free users (Curiosity Gap)
+// ============================================================================
+
+interface BlurredTierRowProps {
+  tierNum: 1 | 2 | 3 | 4;
+  previewText: string;
+}
+
+function BlurredTierRow({ tierNum, previewText }: BlurredTierRowProps) {
+  const meta = TIER_META[tierNum];
+  if (!meta) return null;
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 bg-white/[0.03]">
+      <span className={`w-1.5 h-1.5 rounded-full ${meta.dotClass} shrink-0`} style={{ opacity: 0.5 }} />
+      <span
+        className={`text-xs font-semibold ${meta.accentClass} shrink-0`}
+        style={{ opacity: 0.6, fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)' }}
+      >
+        T{tierNum}
+      </span>
+      <span
+        className="flex-1 text-xs text-slate-400 truncate select-none"
+        style={{
+          filter: 'blur(4px)',
+          WebkitFilter: 'blur(4px)',
+          fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)',
+        }}
+        aria-hidden="true"
+      >
+        {previewText.slice(0, 80)}
+      </span>
+      <LockIcon />
+    </div>
+  );
+}
+
+// ============================================================================
+// TIER BADGE — coloured pill (replaces plain text tier indicator)
+// ============================================================================
+
+function TierBadge({ tier }: { tier: number }) {
+  const meta = TIER_META[tier];
+  const badge = TIER_BADGE_STYLES[tier];
+  if (!meta || !badge) return null;
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full ${badge.bgClass} ${meta.accentClass} ring-1 ${badge.ringClass}`}
+      style={{ fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)' }}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${meta.dotClass}`} />
+      Tier {tier}: {meta.label}
+    </span>
+  );
+}
 
 // ============================================================================
 // HELPERS
@@ -335,11 +431,13 @@ interface FreeTooltipContentProps {
   glowColor: string;
   group: CommodityGroup;
   position: { top: number; left: number };
-  verticalPosition: 'center' | 'below';
+  verticalPosition: 'center' | 'below' | 'above' | 'top-third';
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   onCopy: () => void;
   copied: boolean;
+  /** All 4 tier prompts for blurred preview rows */
+  allPrompts: AllTierPrompts;
 }
 
 function FreeTooltipContent({
@@ -353,6 +451,7 @@ function FreeTooltipContent({
   onMouseLeave,
   onCopy,
   copied,
+  allPrompts,
 }: FreeTooltipContentProps) {
   const glowRgba = hexToRgba(glowColor, 0.3);
   const glowBorder = hexToRgba(glowColor, 0.5);
@@ -365,7 +464,7 @@ function FreeTooltipContent({
       style={{
         top: position.top,
         left: position.left,
-        transform: verticalPosition === 'below' ? 'none' : 'translateY(-50%)',
+        transform: verticalPosition === 'below' ? 'none' : verticalPosition === 'above' ? 'translateY(-100%)' : verticalPosition === 'top-third' ? 'translateY(-33%)' : 'translateY(-50%)',
         zIndex: 99999,
         background: 'rgba(15, 23, 42, 0.97)',
         border: `1px solid ${glowBorder}`,
@@ -417,10 +516,10 @@ function FreeTooltipContent({
           </div>
         </div>
 
-        {/* Tier indicator */}
-        <span className="text-xs text-slate-400 -mt-1">
-          Tier {tier}: {TIER_META[tier]?.label ?? 'Plain'}
-        </span>
+        {/* Tier indicator — coloured badge (replaces plain text) */}
+        <div className="-mt-1">
+          <TierBadge tier={tier} />
+        </div>
 
         {/* Prompt text */}
         <p
@@ -429,6 +528,53 @@ function FreeTooltipContent({
         >
           {prompt}
         </p>
+
+        {/* ── Blurred tier previews (free users — Curiosity Gap) ─────── */}
+        {(() => {
+          const otherTiers = ALL_TIERS.filter((t) => t !== tier);
+          const promptMap: Record<number, string> = {
+            1: allPrompts.tier1,
+            2: allPrompts.tier2,
+            3: allPrompts.tier3,
+            4: allPrompts.tier4,
+          };
+          return otherTiers.length > 0 ? (
+            <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-white/[0.06]">
+              <span
+                className="text-xs text-slate-400 font-medium mb-0.5"
+                style={{ fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)' }}
+              >
+                Other formats available
+              </span>
+              {otherTiers.map((t) => (
+                <BlurredTierRow
+                  key={t}
+                  tierNum={t}
+                  previewText={promptMap[t] ?? 'Prompt preview not available'}
+                />
+              ))}
+
+              {/* Upgrade CTA */}
+              <a
+                href="/pro-promagen"
+                className="flex items-center justify-center gap-1.5 mt-1.5 px-3 py-1.5 rounded-lg
+                  bg-gradient-to-r from-amber-600/20 to-orange-600/20
+                  ring-1 ring-amber-500/25
+                  text-amber-400 text-xs font-medium
+                  hover:from-amber-600/30 hover:to-orange-600/30
+                  transition-all duration-200 cursor-pointer
+                  no-underline"
+                style={{ fontSize: 'clamp(0.625rem, 0.85vw, 0.75rem)' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Unlock all formats
+              </a>
+            </div>
+          ) : null;
+        })()}
       </div>
     </div>
   );
@@ -444,7 +590,7 @@ interface ProTooltipContentProps {
   glowColor: string;
   group: CommodityGroup;
   position: { top: number; left: number };
-  verticalPosition: 'center' | 'below';
+  verticalPosition: 'center' | 'below' | 'above' | 'top-third';
   onMouseEnter: () => void;
   onMouseLeave: () => void;
   blueprintUsed: boolean;
@@ -483,7 +629,7 @@ function ProTooltipContent({
       style={{
         top: position.top,
         left: position.left,
-        transform: verticalPosition === 'below' ? 'none' : 'translateY(-50%)',
+        transform: verticalPosition === 'below' ? 'none' : verticalPosition === 'above' ? 'translateY(-100%)' : verticalPosition === 'top-third' ? 'translateY(-33%)' : 'translateY(-50%)',
         zIndex: 99999,
         background: 'rgba(15, 23, 42, 0.97)',
         border: `1px solid ${glowBorder}`,
@@ -609,6 +755,8 @@ export function CommodityPromptTooltip({
   const [copied, setCopied] = useState(false);
   const [tooltipCoords, setTooltipCoords] = useState({ top: 0, left: 0 });
   const [isMounted, setIsMounted] = useState(false);
+  // Resolved vertical position — may auto-flip from 'below'/'above' to 'center' on overflow
+  const [resolvedVPos, setResolvedVPos] = useState<'center' | 'below' | 'above' | 'top-third'>(verticalPosition);
 
   const triggerRef = useRef<HTMLSpanElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -656,11 +804,13 @@ export function CommodityPromptTooltip({
 
   /**
    * Calculate tooltip position based on trigger's viewport position.
+   * Supports 'above', 'below', and 'center' with auto-flip on overflow.
    */
   const calculatePosition = useCallback(() => {
     if (!triggerRef.current) return;
 
     const rect = triggerRef.current.getBoundingClientRect();
+    const viewportH = window.innerHeight;
 
     let left: number;
     if (tooltipPosition === 'left') {
@@ -669,14 +819,29 @@ export function CommodityPromptTooltip({
       left = rect.left - TOOLTIP_WIDTH - TOOLTIP_GAP;
     }
 
+    const ESTIMATED_TOOLTIP_H = 550;
+
     let top: number;
+    let resolved: 'center' | 'below' | 'above' | 'top-third' = verticalPosition;
+
     if (verticalPosition === 'below') {
       top = rect.bottom + TOOLTIP_GAP;
+      if (top + ESTIMATED_TOOLTIP_H > viewportH - 16) {
+        top = rect.top + rect.height / 2;
+        resolved = 'center';
+      }
+    } else if (verticalPosition === 'above') {
+      top = rect.top - TOOLTIP_GAP;
+      if (top - ESTIMATED_TOOLTIP_H < 16) {
+        top = rect.top + rect.height / 2;
+        resolved = 'center';
+      }
     } else {
       top = rect.top + rect.height / 2;
     }
 
     setTooltipCoords({ top, left });
+    setResolvedVPos(resolved);
   }, [tooltipPosition, verticalPosition]);
 
   const clearCloseTimeout = useCallback(() => {
@@ -749,7 +914,7 @@ export function CommodityPromptTooltip({
               glowColor={glow.glowColor}
               group={group}
               position={tooltipCoords}
-              verticalPosition={verticalPosition}
+              verticalPosition={resolvedVPos}
               onMouseEnter={handleTooltipEnter}
               onMouseLeave={handleTooltipLeave}
               blueprintUsed={output.blueprintUsed}
@@ -761,11 +926,12 @@ export function CommodityPromptTooltip({
               glowColor={glow.glowColor}
               group={group}
               position={tooltipCoords}
-              verticalPosition={verticalPosition}
+              verticalPosition={resolvedVPos}
               onMouseEnter={handleTooltipEnter}
               onMouseLeave={handleTooltipLeave}
               onCopy={handleCopy}
               copied={copied}
+              allPrompts={output.allPrompts}
             />
           ),
           document.body,
