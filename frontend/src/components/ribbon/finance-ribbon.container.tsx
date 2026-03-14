@@ -128,7 +128,8 @@ function useFxRibbonData(options: UseFxRibbonDataOptions = {}) {
   });
 
   // Global prompt tier — unified across ALL flag tooltips (v3.0.0)
-  const { tier: fxTier, isPro: isProUser } = useGlobalPromptTier();
+  // Surface-aware: free users see Tier 1 (CLIP) on FX ribbon for variety
+  const { tier: fxTier, isPro: isProUser } = useGlobalPromptTier('fx-ribbon');
 
   // SSOT: validate once (dev/build feedback), then use SSOT order as-is.
   const pairs = useMemo(() => {

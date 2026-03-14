@@ -279,8 +279,8 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
     hasDropdown: 'exchange',
   },
   {
-    feature: 'Weather Prompt Format',
-    standard: 'Plain Language (Tier 4)',
+    feature: 'All Prompt Format',
+    standard: 'Varies by surface',
     pro: 'Select any tier (1–4)',
     highlight: true,
     hasDropdown: 'weather-prompt-tier',
@@ -318,6 +318,13 @@ export const FEATURE_COMPARISON: FeatureRow[] = [
     pro: '+1 on 7 categories',
     highlight: false,
     tooltip: 'Extra selection on Style, Lighting, Colour, Atmosphere, Materials, Fidelity, and Negative categories',
+  },
+  {
+    feature: 'Vote Weight',
+    standard: '1.0×',
+    pro: '1.5× influence',
+    highlight: false,
+    tooltip: 'Your votes on AI provider image quality rankings carry 50% more weight',
   },
 ];
 

@@ -147,6 +147,8 @@ export interface PromagenAuthState {
   locationInfo: LocationInfo;
   /** Set reference frame (paid users only) */
   setReferenceFrame: (frame: ReferenceFrame) => Promise<void>;
+  /** Prompt tier from Clerk metadata (null if not set). Pro users only. */
+  clerkPromptTier: number | null;
 }
 
 // ============================================================================
@@ -210,10 +212,17 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
   const publicMetadata = user?.publicMetadata as {
     tier?: UserTier;
     referenceFrame?: ReferenceFrame;
+    promptTier?: number;
   } | undefined;
 
   const userTier: UserTier = publicMetadata?.tier ?? 'free';
   const storedReferenceFrame: ReferenceFrame = publicMetadata?.referenceFrame ?? 'user';
+  /** Prompt tier from Clerk metadata (null if not set — Pro users only) */
+  const clerkPromptTier: number | null =
+    publicMetadata?.promptTier != null &&
+    [1, 2, 3, 4].includes(publicMetadata.promptTier)
+      ? publicMetadata.promptTier
+      : null;
 
   // Compute account age in days from Clerk's user.createdAt (0 for anonymous/unknown)
   const accountAgeDays = useMemo(() => {
@@ -415,6 +424,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     trackPromptCopy: trackUsage,
     locationInfo,
     setReferenceFrame,
+    clerkPromptTier,
   };
 }
 

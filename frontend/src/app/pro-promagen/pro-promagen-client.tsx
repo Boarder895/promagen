@@ -83,8 +83,11 @@ import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
 import { useWeather } from '@/hooks/use-weather';
 import { getRailsRelative } from '@/lib/location';
-import { ComparisonTable, UpgradeCta } from '@/components/pro-promagen';
+import { UpgradeCta } from '@/components/pro-promagen';
 import { ExchangePicker } from '@/components/pro-promagen/exchange-picker';
+import { FeatureControlPanel } from '@/components/pro-promagen/feature-control-panel';
+import { usePromptShowcase } from '@/hooks/use-prompt-showcase';
+import { SaveIcon } from '@/components/prompts/library/save-icon';
 import {
   PRO_SELECTION_LIMITS,
   type FxPairCatalogEntry,
@@ -236,6 +239,208 @@ function convertToWeatherDataMap(
 // COMPONENT
 // ============================================================================
 
+
+// ============================================================================
+// TIER PREVIEW PANEL — 4 horizontal tooltip clones with live PotM data
+// ============================================================================
+// Shown when Prompt Format card is hovered. Fills the CTA area.
+// Each window is a visual clone of WeatherPromptTooltip.
+// Uses live Prompt of the Moment data (rotates every 3 mins).
+// Active tier gets enhanced glow. Copy + Save buttons on each.
+// Animated amber header matches mission control shimmer.
+// ============================================================================
+
+const TIER_DISPLAY: Array<{
+  tier: 1 | 2 | 3 | 4;
+  label: string;
+  color: string;
+  dotClass: string;
+  bgClass: string;
+  ringClass: string;
+  promptKey: 'tier1' | 'tier2' | 'tier3' | 'tier4';
+  platformId: string;
+  platformName: string;
+}> = [
+  { tier: 1, label: 'CLIP-Based', color: '#60a5fa', dotClass: 'bg-blue-400', bgClass: 'bg-blue-500/15', ringClass: 'ring-blue-500/30', promptKey: 'tier1', platformId: 'leonardo', platformName: 'Leonardo AI' },
+  { tier: 2, label: 'Midjourney', color: '#c084fc', dotClass: 'bg-purple-400', bgClass: 'bg-purple-500/15', ringClass: 'ring-purple-500/30', promptKey: 'tier2', platformId: 'midjourney', platformName: 'Midjourney' },
+  { tier: 3, label: 'Natural Language', color: '#34d399', dotClass: 'bg-emerald-400', bgClass: 'bg-emerald-500/15', ringClass: 'ring-emerald-500/30', promptKey: 'tier3', platformId: 'openai', platformName: 'OpenAI DALL·E' },
+  { tier: 4, label: 'Plain Language', color: '#fb923c', dotClass: 'bg-orange-400', bgClass: 'bg-orange-500/15', ringClass: 'ring-orange-500/30', promptKey: 'tier4', platformId: 'canva', platformName: 'Canva' },
+];
+
+const FALLBACK_PROMPTS: Record<string, string> = {
+  tier1: '(masterpiece:1.3), (professional photography:1.2), Tower Bridge at golden hour, warm amber light reflecting on Thames, (scattered clouds:1.1), cobblestone texture, sharp focus, 50mm lens',
+  tier2: 'Tower Bridge London at golden hour, warm amber light on Thames, scattered clouds, cobblestone foreground --ar 16:9 --v 7 --s 500 --no blur, watermark',
+  tier3: 'A professional photograph of Tower Bridge during golden hour with warm amber light reflecting off the Thames. Scattered clouds above, cobblestones lining the foreground.',
+  tier4: 'Tower Bridge London, golden hour, warm light, Thames river, cobblestones, professional photography',
+};
+
+function hexToRgbaPanel(hex: string, alpha: number): string {
+  const c = hex.replace('#', '');
+  const r = parseInt(c.substring(0, 2), 16);
+  const g = parseInt(c.substring(2, 4), 16);
+  const b = parseInt(c.substring(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return `rgba(56, 189, 248, ${alpha})`;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function TierWindowCopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = React.useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { /* noop */ }
+  }, [text]);
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); handleCopy(); }}
+      className={`inline-flex items-center justify-center rounded-md cursor-pointer transition-all duration-200 ${
+        copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+      }`}
+      style={{ width: 'clamp(22px, 1.6vw, 28px)', height: 'clamp(22px, 1.6vw, 28px)' }}
+      title={copied ? 'Copied!' : 'Copy prompt'}
+      aria-label={copied ? 'Copied to clipboard' : 'Copy prompt to clipboard'}
+    >
+      {copied ? (
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+function TierPreviewPanel({ activeTier }: { activeTier: number }) {
+  const { data: potmData } = usePromptShowcase();
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Animated amber header — double gap above and below */}
+      <div style={{ padding: 'clamp(12px, 1.2vw, 20px) 0' }}>
+        <p
+          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
+        >
+          Select the tier you require for all prompts
+        </p>
+      </div>
+
+      {/* 4 tooltip windows — single horizontal row */}
+      <div
+        className="flex flex-1 min-h-0"
+        style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}
+      >
+        {TIER_DISPLAY.map((t) => {
+          const isActive = t.tier === activeTier;
+          const glowRgba = hexToRgbaPanel(t.color, isActive ? 0.4 : 0.25);
+          const glowBorder = hexToRgbaPanel(t.color, isActive ? 0.7 : 0.4);
+          const glowSoft = hexToRgbaPanel(t.color, isActive ? 0.2 : 0.1);
+          const promptText = potmData?.prompts?.[t.promptKey] ?? FALLBACK_PROMPTS[t.promptKey]!;
+
+          return (
+            <div
+              key={t.tier}
+              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+              style={{
+                background: 'rgba(15, 23, 42, 0.97)',
+                border: `1px solid ${glowBorder}`,
+                boxShadow: isActive
+                  ? `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`
+                  : `0 0 20px 4px ${glowRgba}, inset 0 0 15px 2px ${glowSoft}`,
+                padding: 'clamp(10px, 1vw, 16px)',
+                transition: 'box-shadow 200ms ease-out, border-color 200ms ease-out',
+              }}
+            >
+              {/* Ethereal glow — top radial (exact tooltip pattern) */}
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
+              />
+              {/* Bottom glow accent */}
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
+              />
+
+              {/* Content — matches WeatherPromptTooltip layout */}
+              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                {/* Header — "Image Prompt" + copy/save */}
+                <div className="flex items-center justify-between">
+                  <span
+                    className="font-semibold text-white"
+                    style={{
+                      fontSize: 'clamp(0.75rem, 0.9vw, 0.95rem)',
+                      textShadow: `0 0 12px ${glowRgba}`,
+                    }}
+                  >
+                    Image Prompt
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <SaveIcon
+                      positivePrompt={promptText}
+                      platformId={t.platformId}
+                      platformName={t.platformName}
+                      source="tooltip"
+                      tier={t.tier}
+                      size="sm"
+                    />
+                    <TierWindowCopyButton text={promptText} />
+                  </div>
+                </div>
+
+                {/* Tier badge pill */}
+                <span
+                  className={`inline-flex items-center self-start rounded-full font-medium ${t.bgClass} ring-1 ${t.ringClass}`}
+                  style={{
+                    fontSize: 'clamp(0.625rem, 0.75vw, 0.7rem)',
+                    padding: 'clamp(1px, 0.15vw, 3px) clamp(6px, 0.6vw, 10px)',
+                    gap: 'clamp(4px, 0.4vw, 6px)',
+                    color: t.color,
+                  }}
+                >
+                  <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(5px, 0.5vw, 7px)', height: 'clamp(5px, 0.5vw, 7px)' }} />
+                  Tier {t.tier}: {t.label}
+                </span>
+
+                {/* Prompt text */}
+                <p
+                  className="text-slate-200 leading-relaxed flex-1 overflow-hidden whitespace-pre-wrap break-words"
+                  style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.85rem)' }}
+                >
+                  {promptText}
+                </p>
+
+                {/* Active indicator */}
+                {isActive && (
+                  <span
+                    className="inline-flex items-center self-start gap-1 text-emerald-400 font-semibold"
+                    style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
+                  >
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Selected
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// MAIN COMPONENT
+// ============================================================================
+
 export default function ProPromagenClient({
   exchangeCatalog,
   fxCatalog: _fxCatalog,
@@ -244,7 +449,7 @@ export default function ProPromagenClient({
   demoWeatherIndex,
   providers = [],
 }: ProPromagenClientProps) {
-  const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
+  const { isAuthenticated, userTier, locationInfo, setReferenceFrame, clerkPromptTier } = usePromagenAuth();
 
   const isPaidUser = userTier === 'paid';
 
@@ -274,6 +479,7 @@ export default function ProPromagenClient({
       setInitialExchanges(storedExch);
     }
 
+    // Tier: localStorage first (warm cache), Clerk may override below
     try {
       const storedTier = localStorage.getItem(STORAGE_KEYS.PROMPT_TIER);
       if (storedTier !== null) {
@@ -287,6 +493,15 @@ export default function ProPromagenClient({
     setHydrated(true);
   }, []);
 
+  // Clerk metadata is the source of truth — override localStorage when it arrives.
+  // Clerk hydrates async, so clerkPromptTier may be null on first render then
+  // populate on subsequent renders. This effect catches that.
+  useEffect(() => {
+    if (clerkPromptTier !== null && [1, 2, 3, 4].includes(clerkPromptTier)) {
+      setSelectedPromptTier(clerkPromptTier as PromptTier);
+    }
+  }, [clerkPromptTier]);
+
   // ============================================================================
   // STATE - Fullscreen Pickers (v2.3.0 Exchange, v2.6.0 FX)
   // ============================================================================
@@ -294,6 +509,7 @@ export default function ProPromagenClient({
   // No headers, no badges, no comparison table, no CTA - just the picker
   // ============================================================================
   const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
+  const [formatHovered, setFormatHovered] = useState(false);
 
   // Detect changes from initial state (FX no longer tracked — fixed pairs)
   const hasChanges = useMemo(() => {
@@ -308,17 +524,6 @@ export default function ProPromagenClient({
   // DERIVED DATA - Dropdown options with country labels
   // ============================================================================
 
-  // Exchange options for dropdown with country as subLabel
-  const exchangeOptions = useMemo(() => {
-    return exchangeCatalog.map((exch) => ({
-      id: exch.id,
-      label: `${exch.exchange} (${exch.city})`,
-      subLabel: exch.country,
-    }));
-  }, [exchangeCatalog]);
-
-  // Indices options for dropdown with exchange name as subLabel
-  // Only show indices for currently selected exchanges
   // Exchange picker options - converted from catalog (v2.3.0)
   const exchangePickerOptions = useMemo(() => {
     return catalogToPickerOptions(exchangeCatalog);
@@ -447,8 +652,17 @@ export default function ProPromagenClient({
 
   const handlePromptTierChange = useCallback((tier: PromptTier) => {
     setSelectedPromptTier(tier);
-    // Auto-save to localStorage on every change
+    // Save to localStorage (warm cache for immediate reads)
     saveToStorage(STORAGE_KEYS.PROMPT_TIER, tier);
+    // Persist to Clerk publicMetadata (survives cache clear / device switch)
+    fetch('/api/user/preferences', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ promptTier: tier }),
+    }).catch((err) => {
+      console.error('[pro-promagen] Failed to sync promptTier to Clerk:', err);
+    });
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -458,7 +672,8 @@ export default function ProPromagenClient({
     // Update initial state to reflect saved state
     setInitialExchanges(selectedExchanges);
 
-    // TODO: Sync to Clerk metadata (debounced)
+    // Prompt tier synced to Clerk in handlePromptTierChange (v2.1.0)
+    // Exchange selection remains localStorage-only (demo/preview data)
     await new Promise((resolve) => setTimeout(resolve, 500));
   }, [selectedExchanges]);
 
@@ -534,74 +749,69 @@ export default function ProPromagenClient({
     </section>
   ) : (
     // ========================================================================
-    // NORMAL MODE - Comparison table with headers, badges, CTA
+    // NORMAL MODE — Feature Control Panel (3×3 grid)
     // ========================================================================
     <section
       aria-label="Pro Promagen Configuration"
-      className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 p-4 shadow-sm ring-1 ring-white/10"
+      className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
+      style={{ padding: 'clamp(10px, 1vw, 16px)' }}
       data-testid="pro-promagen-panel"
     >
-      {/* Header */}
-      <header className="shrink-0 mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+      {/* Header — compact */}
+      <header className="shrink-0" style={{ marginBottom: 'clamp(6px, 0.7vw, 12px)' }}>
+        <div className="flex items-center justify-between">
+          <h2
+            className="font-semibold text-white flex items-center"
+            style={{ fontSize: 'clamp(0.8rem, 1vw, 1.1rem)', gap: 'clamp(4px, 0.4vw, 8px)' }}
+          >
             <span className="text-amber-400">★</span>
             Pro Promagen
           </h2>
-          <a href="/" className="text-xs text-white/40 hover:text-white/60 transition-colors">
-            ← Back to Home
-          </a>
+          <span
+            className={`inline-flex items-center rounded-full ring-1 ${
+              isPaidUser
+                ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/30'
+                : 'bg-amber-500/10 text-amber-400 ring-amber-500/30'
+            }`}
+            style={{
+              fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)',
+              padding: 'clamp(2px, 0.2vw, 4px) clamp(6px, 0.6vw, 10px)',
+              gap: 'clamp(3px, 0.3vw, 6px)',
+            }}
+          >
+            <span
+              className="rounded-full bg-current"
+              style={{ width: 'clamp(4px, 0.4vw, 6px)', height: 'clamp(4px, 0.4vw, 6px)' }}
+            />
+            {isPaidUser ? 'Your engine. Your rules.' : 'Preview — try before you buy'}
+          </span>
         </div>
-        <p className="text-sm text-white/50">
-          {isPaidUser
-            ? 'Configure your personalized market view'
-            : 'Preview Pro features — try before you buy'}
-        </p>
       </header>
 
-      {/* Mode Badge */}
-      <div className="shrink-0 mb-4">
-        <span
-          className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-full ring-1 ${
-            isPaidUser
-              ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/30'
-              : 'bg-amber-500/10 text-amber-400 ring-amber-500/30'
-          }`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-current" />
-          {isPaidUser ? 'Configuration Mode' : 'Preview Mode'}
-        </span>
-      </div>
-
-      {/* Comparison Table - Scrollable */}
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
-        <ComparisonTable
-          selectedExchanges={selectedExchanges}
-          selectedPromptTier={selectedPromptTier}
-          onExchangeChange={handleExchangeChange}
-          onPromptTierChange={handlePromptTierChange}
-          exchangeOptions={exchangeOptions}
+      {/* Feature Control Panel — 3×3 grid */}
+      <div className="shrink-0">
+        <FeatureControlPanel
           isPaidUser={isPaidUser}
-          exchangeCatalog={exchangeCatalog}
+          selectedPromptTier={selectedPromptTier}
+          onPromptTierChange={handlePromptTierChange}
+          selectedExchangeCount={selectedExchanges.length}
           onOpenExchangePicker={handleOpenExchangePicker}
+          onFormatHover={setFormatHovered}
         />
       </div>
 
-      {/* Demo Data Disclaimer */}
-      {!isPaidUser && (
-        <div className="shrink-0 mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 text-center">
-          <p className="text-sm font-medium text-white/70">
-            ⚠ All data shown is for demonstration purposes only
-          </p>
-          <p className="text-xs text-white/40 mt-1">
-            Upgrade to Pro Promagen to access real-time market data
-          </p>
-        </div>
-      )}
-
-      {/* Save/Upgrade CTA */}
-      <div className="shrink-0 mt-auto pt-4">
-        <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />
+      {/* Bottom panel — payment area / tier preview on Format hover */}
+      <div
+        className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
+        style={{
+          marginTop: 'clamp(8px, 0.8vw, 12px)',
+        }}
+      >
+        {formatHovered ? (
+          <TierPreviewPanel activeTier={selectedPromptTier} />
+        ) : (
+          <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />
+        )}
       </div>
     </section>
   );

@@ -1,26 +1,29 @@
 // src/hooks/use-global-prompt-tier.ts
 // ============================================================================
-// GLOBAL PROMPT TIER HOOK — Single Source of Truth
+// GLOBAL PROMPT TIER HOOK — Surface-Aware Variety for Free Users
 // ============================================================================
-// Provides the user's selected prompt tier to ALL emoji flag tooltips across
-// every page. One selection on /pro-promagen controls every surface:
+// Provides the user's prompt tier to ALL emoji flag tooltips.
 //
-//   1. Exchange card flags   (exchange-list → exchange-card → WeatherPromptTooltip)
-//   2. Mission Control flag  (mission-control → WeatherPromptTooltip)
-//   3. Provider table flags  (provider-cell → WeatherPromptTooltip)
-//   4. FX ribbon flags       (finance-ribbon → fx-pair-label → WeatherPromptTooltip)
-//   5. Commodity ribbon flags (commodity-mover-card → CommodityPromptTooltip)
+// FREE USERS: Each surface gets its own fixed tier so users experience the
+// full range of prompt formats across the platform. This creates Variable
+// Reward (human-factors.md) and Loss Aversion — users see rich Tier 1-3
+// prompts they can't control without upgrading.
 //
-// Free users: Locked to Tier 4 (Plain Language) per paid_tier.md §5.10
-// Pro users:  Returns stored selection from localStorage (set on /pro-promagen)
+//   Surface            │ Free Tier │ Rationale
+//   ───────────────────┼───────────┼──────────────────────────────────────
+//   exchange-cards     │ Tier 3    │ Most visible — rich natural sentences
+//   leaderboard        │ *native*  │ Each provider's own tier (educational)
+//   fx-ribbon          │ Tier 1    │ Technical CLIP weights look advanced
+//   commodities        │ Tier 2    │ MJ parameters are visually distinctive
+//   mission-control    │ Tier 4    │ Simplest entry point, accessible
+//
+// PRO USERS: Return their stored selection from localStorage (set on
+// /pro-promagen). One global selection overrides ALL surfaces.
 //
 // Storage key: 'promagen:pro:prompt-tier' (same key pro-promagen-client.tsx writes)
 //
-// REPLACES: use-weather-prompt-tier.ts section-based approach
-// That hook split tiers per section (exchange-cards vs fx-ribbon).
-// This hook unifies ALL surfaces under one user-selected tier.
-//
 // Authority: docs/authority/paid_tier.md §5.10
+// Authority: docs/authority/human-factors.md §Variable Reward
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -38,11 +41,33 @@ import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 const STORAGE_KEY = 'promagen:pro:prompt-tier';
 
 /**
- * Default tier for Standard Promagen users.
- * Matches comparison table: Standard = "Plain Language (Tier 4)"
- * Authority: paid_tier.md §5.10 comparison table
+ * UI surfaces that display prompt tooltips.
+ * Each surface can have an independent free-user tier.
  */
-const FREE_DEFAULT_TIER: PromptTier = 4;
+export type PromptSurface =
+  | 'exchange-cards'
+  | 'leaderboard'
+  | 'fx-ribbon'
+  | 'commodities'
+  | 'mission-control';
+
+/**
+ * Default tiers per surface for Standard Promagen users.
+ * 'leaderboard' uses the provider's native tier (passed via nativeTier param).
+ * All other surfaces have a fixed tier to create variety across the platform.
+ */
+const FREE_SURFACE_TIERS: Record<Exclude<PromptSurface, 'leaderboard'>, PromptTier> = {
+  'exchange-cards': 3,   // Natural Language — DALL·E, Imagen, Firefly
+  'fx-ribbon': 1,        // CLIP-Based — technical weighted syntax
+  'commodities': 2,      // Midjourney Family — MJ parameters
+  'mission-control': 4,  // Plain Language — simple, accessible
+};
+
+/**
+ * Fallback tier when leaderboard surface has no native tier data.
+ * Also the Pro user default when no stored preference exists.
+ */
+const FALLBACK_TIER: PromptTier = 4;
 
 // ============================================================================
 // TYPES
@@ -56,33 +81,73 @@ export interface UseGlobalPromptTierReturn {
 }
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Resolve the free-user tier for a given surface.
+ * Leaderboard uses the provider's native tier; other surfaces use the fixed map.
+ */
+function resolveFreeTier(surface: PromptSurface, nativeTier?: PromptTier): PromptTier {
+  if (surface === 'leaderboard') {
+    return nativeTier ?? FALLBACK_TIER;
+  }
+  return FREE_SURFACE_TIERS[surface];
+}
+
+// ============================================================================
 // HOOK
 // ============================================================================
 
 /**
- * Returns the user's global prompt tier for all emoji flag tooltips.
+ * Returns the user's prompt tier for a specific tooltip surface.
  *
- * Call this in any client component that renders a prompt tooltip.
- * No props needed — it reads auth state and localStorage internally.
+ * @param surface    - Which UI surface is requesting the tier
+ * @param nativeTier - For 'leaderboard': the provider's own tier from platform-tiers.ts
+ * @returns          - Tier (1-4) and Pro status
  *
  * @example
- * const { tier, isPro } = useGlobalPromptTier();
- * <WeatherPromptTooltip tier={tier} ... />
- * <CommodityPromptTooltip tier={tier} isPro={isPro} ... />
+ * // Exchange cards — free users see Tier 3
+ * const { tier, isPro } = useGlobalPromptTier('exchange-cards');
+ *
+ * // Leaderboard — free users see provider's native tier
+ * const nativeTier = getPlatformTierId(provider.id);
+ * const { tier, isPro } = useGlobalPromptTier('leaderboard', nativeTier);
+ *
+ * // FX ribbon — free users see Tier 1 (CLIP)
+ * const { tier, isPro } = useGlobalPromptTier('fx-ribbon');
  */
-export function useGlobalPromptTier(): UseGlobalPromptTierReturn {
-  const { userTier } = usePromagenAuth();
+export function useGlobalPromptTier(
+  surface: PromptSurface = 'exchange-cards',
+  nativeTier?: PromptTier,
+): UseGlobalPromptTierReturn {
+  const { userTier, clerkPromptTier } = usePromagenAuth();
   const isPro = userTier === 'paid';
 
-  const [tier, setTier] = useState<PromptTier>(FREE_DEFAULT_TIER);
+  const freeTier = resolveFreeTier(surface, nativeTier);
+  const [tier, setTier] = useState<PromptTier>(freeTier);
 
-  // Load stored tier from localStorage (Pro users only)
+  // Priority chain for Pro users:
+  // 1. Clerk publicMetadata (source of truth — survives cache clear / device switch)
+  // 2. localStorage (warm cache — faster than waiting for Clerk hydration)
+  // 3. FALLBACK_TIER (Tier 4)
   useEffect(() => {
     if (!isPro) {
-      setTier(FREE_DEFAULT_TIER);
+      setTier(freeTier);
       return;
     }
 
+    // 1. Clerk metadata (authoritative)
+    if (clerkPromptTier !== null && [1, 2, 3, 4].includes(clerkPromptTier)) {
+      setTier(clerkPromptTier as PromptTier);
+      // Sync Clerk → localStorage (warm cache for next load)
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(clerkPromptTier));
+      } catch { /* storage unavailable */ }
+      return;
+    }
+
+    // 2. localStorage fallback (Clerk may still be hydrating)
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored !== null) {
@@ -93,12 +158,12 @@ export function useGlobalPromptTier(): UseGlobalPromptTierReturn {
         }
       }
     } catch {
-      // Storage unavailable — use default
+      // Storage unavailable
     }
 
-    // Pro user with no stored preference — default to Tier 4
-    setTier(FREE_DEFAULT_TIER);
-  }, [isPro]);
+    // 3. Default
+    setTier(FALLBACK_TIER);
+  }, [isPro, freeTier, clerkPromptTier]);
 
   // Listen for storage changes (if user opens Pro page in another tab)
   useEffect(() => {
@@ -122,7 +187,7 @@ export function useGlobalPromptTier(): UseGlobalPromptTierReturn {
   }, [isPro]);
 
   return {
-    tier: isPro ? tier : FREE_DEFAULT_TIER,
+    tier: isPro ? tier : freeTier,
     isPro,
   };
 }

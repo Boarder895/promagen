@@ -1,16 +1,17 @@
 // src/app/api/user/preferences/route.ts
 // ============================================================================
-// USER PREFERENCES API - v2.0.0
+// USER PREFERENCES API - v2.1.0
 // ============================================================================
 // Save user preferences to Clerk publicMetadata.
 // Supports:
 // - referenceFrame (for paid users - exchange ordering)
 // - compositionMode (for all users - static/dynamic)
 // - aspectRatio (for all users - last selected AR)
+// - promptTier (for paid users - All Prompt Format tier 1-4)
 //
 // Security:
 // - Authenticated users only (Clerk session required)
-// - Paid users only for referenceFrame changes
+// - Paid users only for referenceFrame and promptTier changes
 // - All inputs validated against strict whitelists
 // - No user-provided code execution
 // - Rate limiting via Clerk
@@ -32,6 +33,7 @@ interface UpdatePreferencesBody {
   referenceFrame?: ReferenceFrame;
   compositionMode?: CompositionMode;
   aspectRatio?: AspectRatioId | null;
+  promptTier?: number;
 }
 
 interface PreferencesResponse {
@@ -39,6 +41,7 @@ interface PreferencesResponse {
   referenceFrame: ReferenceFrame;
   compositionMode: CompositionMode;
   aspectRatio: AspectRatioId | null;
+  promptTier: number | null;
 }
 
 // ============================================================================
@@ -78,6 +81,13 @@ function isValidCompositionMode(value: unknown): value is CompositionMode {
 
 function isValidAspectRatio(value: unknown): value is AspectRatioId {
   return typeof value === 'string' && VALID_ASPECT_RATIOS.includes(value as AspectRatioId);
+}
+
+/** Valid prompt tiers: 1-4 */
+const VALID_PROMPT_TIERS = [1, 2, 3, 4] as const;
+
+function isValidPromptTier(value: unknown): value is number {
+  return typeof value === 'number' && VALID_PROMPT_TIERS.includes(value as 1 | 2 | 3 | 4);
 }
 
 // ============================================================================
@@ -145,6 +155,12 @@ function extractAspectRatio(metadata: Record<string, unknown>): AspectRatioId | 
   return null;
 }
 
+function extractPromptTier(metadata: Record<string, unknown>): number | null {
+  const tier = metadata?.promptTier;
+  if (isValidPromptTier(tier)) return tier;
+  return null;
+}
+
 // ============================================================================
 // GET - Read current preferences
 // ============================================================================
@@ -169,6 +185,7 @@ export async function GET() {
       referenceFrame: extractReferenceFrame(metadata),
       compositionMode: extractCompositionMode(metadata),
       aspectRatio: extractAspectRatio(metadata),
+      promptTier: extractPromptTier(metadata),
     };
 
     return NextResponse.json({
@@ -239,6 +256,16 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    // Validate promptTier if provided
+    if (body.promptTier !== undefined) {
+      if (!isValidPromptTier(body.promptTier)) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid promptTier value (must be 1-4)' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Get current user to check tier and existing metadata
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
@@ -253,6 +280,14 @@ export async function PATCH(request: NextRequest) {
     if (body.referenceFrame !== undefined && currentTier !== 'paid') {
       return NextResponse.json(
         { success: false, error: 'Reference frame toggle is a paid feature' },
+        { status: 403 }
+      );
+    }
+
+    // promptTier: paid users only
+    if (body.promptTier !== undefined && currentTier !== 'paid') {
+      return NextResponse.json(
+        { success: false, error: 'Prompt tier selection is a paid feature' },
         { status: 403 }
       );
     }
@@ -281,6 +316,10 @@ export async function PATCH(request: NextRequest) {
       updatedMetadata.aspectRatio = body.aspectRatio;
     }
 
+    if (body.promptTier !== undefined) {
+      updatedMetadata.promptTier = body.promptTier;
+    }
+
     // ========================================================================
     // PERSIST TO CLERK
     // ========================================================================
@@ -295,6 +334,7 @@ export async function PATCH(request: NextRequest) {
       referenceFrame: extractReferenceFrame(updatedMetadata),
       compositionMode: extractCompositionMode(updatedMetadata),
       aspectRatio: extractAspectRatio(updatedMetadata),
+      promptTier: extractPromptTier(updatedMetadata),
     };
 
     return NextResponse.json({
