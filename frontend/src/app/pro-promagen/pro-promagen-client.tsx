@@ -1738,7 +1738,7 @@ export default function ProPromagenClient({
       </header>
 
       {/* Feature Control Panel — 3×3 grid (1/4 of available height, min 6 cards) */}
-      <div className="overflow-hidden" style={{ flex: '1 1 0%', minHeight: 'clamp(130px, 12vw, 200px)' }}>
+      <div className="overflow-hidden" style={{ flex: '1 1 0%', minHeight: 'clamp(140px, 16vw, 270px)' }}>
         <FeatureControlPanel
           isPaidUser={isPaidUser}
           selectedPromptTier={selectedPromptTier}

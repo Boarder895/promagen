@@ -119,7 +119,7 @@ function FeatureCard({
           : '0 1px 3px rgba(0, 0, 0, 0.1)',
         transition: 'border-color 200ms ease-out, box-shadow 200ms ease-out',
         paddingInline: 'clamp(8px, 0.8vw, 14px)',
-        minHeight: 'clamp(60px, 5.5vw, 90px)',
+        minHeight: 'clamp(50px, 4.5vw, 80px)',
       }}
       onMouseEnter={() => { setIsHovered(true); onHoverChange?.(true); }}
       onMouseLeave={() => { setIsHovered(false); onHoverChange?.(false); }}
@@ -177,13 +177,13 @@ function FeatureCard({
             <>
               <span
                 className="text-white"
-                style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)' }}
+                style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
               >
                 {isPro ? '' : freeValue}
               </span>
               <span
                 className="font-medium"
-                style={{ color, fontSize: 'clamp(0.625rem, 0.8vw, 0.9rem)' }}
+                style={{ color, fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}
               >
                 {isPro ? proValue : `Pro: ${proValue}`}
               </span>
@@ -335,7 +335,7 @@ export function FeatureControlPanel({
         >
           {isPaidUser ? (
             <>
-              <span className="text-amber-400 font-medium" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)', marginBottom: 'clamp(2px, 0.2vw, 3px)' }}>
+              <span className="text-amber-400 font-medium" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', marginBottom: 'clamp(2px, 0.2vw, 3px)' }}>
                 Select tier ↓
               </span>
               <MiniTierSelector
@@ -346,7 +346,7 @@ export function FeatureControlPanel({
             </>
           ) : (
             <>
-              <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)' }}>
+              <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
                 Varies by surface
               </span>
               <MiniTierSelector
@@ -437,10 +437,10 @@ export function FeatureControlPanel({
           isPro={isPaidUser}
           actionAlwaysColored={true}
         >
-          <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)' }}>
-            Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative
+          <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+            Style, Lighting, Colour, Atmosphere, Materials, Fidelity
           </span>
-          <span className="font-medium" style={{ color: '#fb923c', fontSize: 'clamp(0.625rem, 0.8vw, 0.9rem)' }}>
+          <span className="font-medium" style={{ color: '#fb923c', fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}>
             {isPaidUser ? '+1 on each' : 'Pro: +1 on each'}
           </span>
         </FeatureCard>
