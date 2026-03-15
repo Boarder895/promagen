@@ -546,6 +546,29 @@ const COMPONENT_STYLES = `
 
 ### Unified Grid Architecture (grid is the single source of truth)
 
+### Equal-gap card spacing (one system, never two)
+
+**Purpose:** When cards live inside a flex/grid container that controls their height, the internal vertical spacing (gap above first line, between lines, below last line) must be controlled by exactly one CSS mechanism.
+
+**The problem:** Mixing `padding` (all four sides) with `align-content: space-evenly` causes double-stacking — the top gap becomes padding + space-evenly gap, while the bottom gap appears smaller because content fills downward into it. This is invisible in code review and only shows on screen.
+
+**The rule — pick one, never both:**
+
+| Approach                | Card padding                         | Inner layout                                    | Parent sizing        | When to use                                    |
+| ----------------------- | ------------------------------------ | ----------------------------------------------- | -------------------- | ---------------------------------------------- |
+| **Content-sized**       | `padding` all sides                  | `flex-col` with `gap`                           | `shrink-0`           | Cards dictate own height, simple, always works |
+| **Viewport-controlled** | `paddingInline` only (zero vertical) | `display: grid` + `align-content: space-evenly` | `flex: N 1 0%` ratio | Cards fill assigned space with equal gaps      |
+
+**Never mix approaches** — that's what causes "gap above is huge, bottom line touches the edge."
+
+**Container query units (`cqh`) are not the answer** for card spacing. They scale text with container height but don't solve spacing distribution. `container-type: size` changes the containing block and creates unexpected layout side effects.
+
+**When building layout without a browser preview:** Ship one layout change per build. Screenshot, diagnose, then change one thing. Multiple layout changes compound errors invisibly.
+
+**Reference implementation:** `src/components/pro-promagen/feature-control-panel.tsx` (v2.0.0+)
+
+**Authority:** `code-standard.md` § 6.10
+
 **Purpose:** The Promagen homepage uses a single CSS grid that owns all column definitions, row flow, and inter-panel spacing. No panel is "master" or "slave" — the grid is the only source of truth for positioning. Height changes to any panel just work because CSS vertical flow handles that natively.
 
 **Hard rules (non-negotiable):**
@@ -960,6 +983,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **15 Mar 2026:** Added "Equal-gap card spacing" subsection under UI Consistency. One vertical spacing system per card — never mix `padding` with `space-evenly`. Viewport-controlled cards use `paddingInline` only + `align-content: space-evenly`. Content-sized cards use `padding` + `flex-col`. Cross-ref code-standard.md § 6.10.
 - **16 Feb 2026:** Major v3.0 alignment with code-standard.md. Three updates:
   - **Universal `clamp()` Sizing** — Expanded "Fluid Typography" (text-only) into full universal mandate covering ALL visible dimensions: text, icons, buttons, gaps, padding, margins, container heights, image wrappers. Added standard scale tables for icons, spacing, and containers alongside existing text scales. Added code examples for buttons, icons, panels, and flag images. Added exceptions list and compliance check. Cross-ref code-standard.md § 6.0, Golden Rule #11.
   - **Unified Grid Architecture (NEW)** — One CSS grid is the single source of truth for all panel positioning. One `GRID_GAP` constant (a `clamp()` value) controls all inter-panel spacing. Panels don't know about each other. Visual reference diagram, forbidden patterns, and compliance check. Cross-ref code-standard.md § 6.6, Golden Rule #12.

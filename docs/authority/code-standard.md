@@ -820,8 +820,6 @@ All gaps between cells = GRID_GAP = clamp(6px, 0.5vw, 10px)
 
 ---
 
-
-
 ### § 6.7 Commodity Brand Colour Palette (Hard Rule)
 
 **Added:** 9 March 2026 (v3.0)
@@ -840,6 +838,7 @@ All commodity card borders, glows, tooltip accents, and visual indicators use an
 | Pink   | `#EC4899` | `pink-500`          |
 
 **Rules:**
+
 - Border: always `border: 2px solid ${brandHex}` — solid hex, never `hexToRgba()` with opacity
 - Default fallback: `#38BDF8` (cyan) when commodity has no mapping
 - Colour assignment lives in `sort-movers.ts` `COMMODITY_BRAND_COLOURS` map
@@ -868,6 +867,7 @@ The prompt intelligence conflict detection engine (`conflict-detection.ts`) uses
 All 200 scenes in `scene-starters.json` must have **all 11 prefill categories filled**: subject, style, lighting, colour, atmosphere, environment, action, composition, camera, materials, fidelity.
 
 **New fields (optional but populated for all 200 scenes):**
+
 - `mood`: 'calm' | 'intense' | 'neutral'
 - `suggestedColours`: string[] (4 palette colours)
 - `examplePrompt`: string (assembled Tier 3 prompt)
@@ -875,10 +875,36 @@ All 200 scenes in `scene-starters.json` must have **all 11 prefill categories fi
 **Tier 4 `reducedPrefills`** must include all 11 categories — Tier 4 platforms handle extra terms gracefully.
 
 **Scoring target:** 100% health score on all 42 platforms across all 4 tiers. Verified by:
+
 - No term triggers a family opposition penalty (use untagged synonyms when necessary)
 - No term triggers a defined conflict or semantic tag conflict
 - No mood conflict (requires 2+ terms per group, so single calm+intense is fine)
 - `hasSubject` credits both typed text AND dropdown selections
+
+### § 6.10 Equal-Gap Card Layout (Anti-Stacking Rule)
+
+**Added:** 15 March 2026
+
+When a card must distribute content rows with visually equal spacing above, between, and below:
+
+**Hard rules:**
+
+1. **One system controls vertical spacing — never two.** Use `display: grid` + `grid-template-rows: auto auto` + `align-content: space-evenly` on the inner content div. This produces mathematically equal gaps above row 1, between rows, and below the last row.
+2. **Zero vertical padding on the card.** Use `paddingInline` only. If `padding` (all sides) and `space-evenly` both exist, they stack — top gap becomes padding + space-evenly gap, bottom gap appears smaller because content fills downward. One system, not two.
+3. **Card height comes from the parent grid, not `minHeight`.** The outer grid assigns cell height via `grid-template-rows: repeat(N, 1fr)`. Cards fill their cell.
+4. **Emoji `lineHeight: 1`** — emojis have inconsistent line-height across browsers. Always set `lineHeight: 1` on emoji spans inside grid-tracked cards.
+5. **Responsive row hiding** — when the viewport is too short for all rows, hide the least-critical cards: `@media (max-height: Xpx) { .grid > :nth-child(n+N) { display: none; } }` and reduce `grid-template-rows` accordingly.
+6. **Flex ratio + `minHeight` for parent containers** — use `flex: 1 1 0%` / `flex: 3 1 0%` for proportional splits. Add `minHeight` on the smaller section to prevent it shrinking below usable size. The ratio is the target, the `minHeight` is the floor.
+
+**Forbidden patterns:**
+
+- Mixing `padding` (block) with `space-evenly` / `justify-between` / `align-content` (causes uneven visual gaps)
+- Using `cqh` (container query height) units for text sizing inside grid-tracked cards (creates `container-type: size` side effects that break layout)
+- Setting `minHeight` on individual cards when the parent grid already assigns row height
+
+**Reference implementation:** `src/components/pro-promagen/feature-control-panel.tsx` (v2.0.0+)
+
+**Authority:** `best-working-practice.md` § Equal-gap card spacing
 
 ## 7. Accessibility Rules
 
@@ -1744,8 +1770,8 @@ Before shipping any component that uses `ResizeObserver`, `requestAnimationFrame
 
 ## Changelog
 
+- **15 March 2026**: Added § 6.10 Equal-Gap Card Layout (anti-stacking rule). One vertical spacing system per card, `paddingInline` only, `align-content: space-evenly`, responsive row hiding via `max-height` media query. Cross-ref best-working-practice.md.
 - **9 March 2026**: Added § 6.7 Commodity Brand Colour Palette (8 bright hex colours, no slate, solid border rule). Added § 6.8 Conflict Detection Matching Rules (word-boundary termsMatch, mood/era 2+ threshold). Added § 6.9 Scene Starters Data Completeness (all 11 categories, 100% score target).
-
 - **16 Feb 2026 (v3.0):** Major architecture update — three new mandates baked into the code standard:
   - **§ 6.0 Universal `clamp()` Sizing:** Every visible dimension (text, icons, buttons, gaps, padding, margins, container dimensions) must use CSS `clamp()` for fluid scaling. No fixed `px`/`rem`/Tailwind size classes for scalable dimensions. Full property-by-property table, standard recipes, and exceptions list. Golden Rule #11.
   - **§ 6.6 Unified Grid Architecture:** One CSS grid is the single source of truth for all panel positioning. One `GRID_GAP` constant (a `clamp()` value) controls all inter-panel spacing. Panels don't know about each other — the grid handles positioning and flow. Visual reference diagram. Golden Rule #12.

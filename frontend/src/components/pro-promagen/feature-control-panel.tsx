@@ -1,21 +1,19 @@
 // src/components/pro-promagen/feature-control-panel.tsx
 // ============================================================================
-// FEATURE CONTROL PANEL v1.2.0 — Pro Promagen Purchase/Config Page
+// FEATURE CONTROL PANEL v2.0.0 — Pro Promagen Purchase/Config Page
 // ============================================================================
 // 3×3 grid of exchange-card-style feature cards.
 // Each card: unique glow colour, hover effect, live data where relevant.
 //
-// v1.2.0:
-// - Grid: grid-template-rows: repeat(3, 1fr) + height: 100% — 3 rows fill
-//   parent evenly. Cards no longer have minHeight — they take their grid cell.
-// - Padding tightened: clamp(8px, 0.8vw, 14px) → clamp(6px, 0.6vw, 12px)
-//
-// v1.1.0:
-// - a11y: role="button", tabIndex, onKeyDown on actionable cards
-// - Minimum text 10px (0.625rem) — code-standard §6.0.1
-// - onAction optional — info-only cards don't navigate
-// - "Go unlimited" is payment placeholder (links to /upgrade)
-// - No link on: Daily Prompts (paid), Frame, Stacking, Vote Power
+// v2.0.0 (15 Mar 2026):
+// - REVERT to natural-height approach: cards size themselves based on content.
+//   Parent wrapper uses shrink-0, preview panel takes flex-1.
+// - REMOVED all cqh units and container queries — back to vw-based clamp()
+// - 2 rows per card: Row 1 (emoji + label + stat), Row 2 (free value + pro value)
+// - Row 3 (action label) removed per instruction
+// - Free value text: WHITE (text-white) — no grey, no opacity, no slate
+// - Pro value text: card's own bright colour
+// - ZERO banned colours: no text-slate-500, no text-slate-600, no text-white/40
 //
 // Code Standard Compliance:
 // - All clamp() sizing (§6.0), min 10px text (§6.0.1)
@@ -73,9 +71,7 @@ interface FeatureCardProps {
   isPro: boolean;
   children?: React.ReactNode;
   stat?: string;
-  /** Notifies parent when hover state changes */
   onHoverChange?: (hovering: boolean) => void;
-  /** When true, action label uses card colour at rest (not grey) */
   actionAlwaysColored?: boolean;
 }
 
@@ -85,13 +81,13 @@ function FeatureCard({
   color,
   freeValue,
   proValue,
-  actionLabel,
+  actionLabel: _actionLabel,
   onAction,
   isPro,
   children,
   stat,
   onHoverChange,
-  actionAlwaysColored,
+  actionAlwaysColored: _actionAlwaysColored,
 }: FeatureCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const hasAction = typeof onAction === 'function';
@@ -122,7 +118,8 @@ function FeatureCard({
           ? `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`
           : '0 1px 3px rgba(0, 0, 0, 0.1)',
         transition: 'border-color 200ms ease-out, box-shadow 200ms ease-out',
-        padding: 'clamp(6px, 0.6vw, 12px)',
+        paddingInline: 'clamp(8px, 0.8vw, 14px)',
+        minHeight: 'clamp(60px, 5.5vw, 90px)',
       }}
       onMouseEnter={() => { setIsHovered(true); onHoverChange?.(true); }}
       onMouseLeave={() => { setIsHovered(false); onHoverChange?.(false); }}
@@ -150,14 +147,17 @@ function FeatureCard({
         aria-hidden="true"
       />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col h-full">
+      {/* Content — auto rows, space-evenly = equal gap above/between/below */}
+      <div
+        className="relative z-10 h-full"
+        style={{ display: 'grid', gridTemplateRows: 'auto auto', alignContent: 'space-evenly' }}
+      >
         {/* Row 1: Emoji + Label + Stat */}
-        <div className="flex items-center gap-1.5 mb-auto">
-          <span style={{ fontSize: 'clamp(0.9rem, 1.1vw, 1.2rem)' }}>{emoji}</span>
+        <div className="flex items-center gap-1.5">
+          <span style={{ fontSize: 'clamp(0.9rem, 1.1vw, 1.2rem)', lineHeight: 1 }}>{emoji}</span>
           <span
-            className="font-semibold text-white truncate"
-            style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}
+            className="font-semibold truncate"
+            style={{ color, fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}
           >
             {label}
           </span>
@@ -172,50 +172,23 @@ function FeatureCard({
         </div>
 
         {/* Row 2: Values or custom content */}
-        <div className="flex-1 flex flex-col justify-center" style={{ gap: 'clamp(2px, 0.3vw, 4px)' }}>
+        <div className="flex flex-col" style={{ gap: 'clamp(2px, 0.25vw, 4px)' }}>
           {children ?? (
             <>
               <span
-                className="text-white/40"
-                style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
+                className="text-white"
+                style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)' }}
               >
                 {isPro ? '' : freeValue}
               </span>
               <span
                 className="font-medium"
-                style={{ color, fontSize: 'clamp(0.625rem, 0.8vw, 0.85rem)' }}
+                style={{ color, fontSize: 'clamp(0.625rem, 0.8vw, 0.9rem)' }}
               >
                 {isPro ? proValue : `Pro: ${proValue}`}
               </span>
             </>
           )}
-        </div>
-
-        {/* Row 3: Action label */}
-        <div className="mt-auto pt-1">
-          <span
-            className={`inline-flex items-center gap-1 font-semibold uppercase tracking-wide ${hasAction ? 'cursor-pointer' : ''}`}
-            style={{
-              color: actionAlwaysColored ? color : (isHovered && hasAction ? color : 'rgba(255, 255, 255, 0.5)'),
-              fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)',
-              transition: 'color 200ms ease-out',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {actionLabel}
-            {hasAction && (
-              <svg
-                className="w-3 h-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                style={{ transition: 'transform 200ms ease-out', transform: isHovered ? 'translateX(2px)' : 'none' }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            )}
-          </span>
         </div>
       </div>
     </div>
@@ -287,13 +260,9 @@ export interface FeatureControlPanelProps {
   onPromptTierChange: (tier: PromptTier) => void;
   selectedExchangeCount: number;
   onOpenExchangePicker: () => void;
-  /** Called when Prompt Format card hover state changes */
   onFormatHover?: (hovering: boolean) => void;
-  /** Called when Scenes card hover state changes */
   onScenesHover?: (hovering: boolean) => void;
-  /** Called when Saved card hover state changes */
   onSavedHover?: (hovering: boolean) => void;
-  /** Called when Prompt Lab card hover state changes */
   onLabHover?: (hovering: boolean) => void;
 }
 
@@ -331,6 +300,10 @@ export function FeatureControlPanel({
           gap: clamp(6px, 0.6vw, 10px);
           height: 100%;
         }
+        @media (max-height: 820px) {
+          .feature-grid > :nth-child(n+7) { display: none; }
+          .feature-grid { grid-template-rows: repeat(2, 1fr); }
+        }
       ` }} />
 
       <div className="feature-grid">
@@ -362,7 +335,7 @@ export function FeatureControlPanel({
         >
           {isPaidUser ? (
             <>
-              <span className="text-amber-400 font-medium" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)', marginBottom: 'clamp(2px, 0.2vw, 3px)' }}>
+              <span className="text-amber-400 font-medium" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)', marginBottom: 'clamp(2px, 0.2vw, 3px)' }}>
                 Select tier ↓
               </span>
               <MiniTierSelector
@@ -373,7 +346,7 @@ export function FeatureControlPanel({
             </>
           ) : (
             <>
-              <span className="text-white/40" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}>
+              <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)' }}>
                 Varies by surface
               </span>
               <MiniTierSelector
@@ -464,10 +437,10 @@ export function FeatureControlPanel({
           isPro={isPaidUser}
           actionAlwaysColored={true}
         >
-          <span className="text-white/40" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}>
+          <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)' }}>
             Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative
           </span>
-          <span className="font-medium" style={{ color: '#fb923c', fontSize: 'clamp(0.625rem, 0.8vw, 0.85rem)' }}>
+          <span className="font-medium" style={{ color: '#fb923c', fontSize: 'clamp(0.625rem, 0.8vw, 0.9rem)' }}>
             {isPaidUser ? '+1 on each' : 'Pro: +1 on each'}
           </span>
         </FeatureCard>

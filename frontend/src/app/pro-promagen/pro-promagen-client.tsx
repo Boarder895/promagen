@@ -13,10 +13,10 @@
 // - FIX: Reverted next/image back to <img> — next/image optimization pipeline
 //   causes 404 spam for missing provider icons (e.g. dreamstudio.png).
 //   <img> + onError handles missing icons silently. eslint-disable comments added.
-// - FIX: Centre column layout — feature panel 1/3, preview windows 2/3 (fixed ratio).
-//   Feature grid uses grid-template-rows: repeat(3, 1fr) to fill its 1/3 evenly.
-//   Removed all scrolling from preview windows (user can't interact with them).
-//   Consistent across dev/prod regardless of viewport height.
+// - FIX: Centre column layout reverted to natural-height approach.
+//   Feature panel: shrink-0 (content dictates height).
+//   Preview panel: flex-1 min-h-0 (takes remaining space).
+//   Cards always look correct because they size themselves.
 //
 // v3.1.0 (15 Mar 2026):
 // - REMOVED: FX Picker fullscreen mode (FX pairs no longer configurable)
@@ -1737,8 +1737,8 @@ export default function ProPromagenClient({
         </div>
       </header>
 
-      {/* Feature Control Panel — 3×3 grid (1/3 of available height) */}
-      <div className="min-h-0 overflow-hidden" style={{ flex: '1 1 0%' }}>
+      {/* Feature Control Panel — 3×3 grid (1/4 of available height, min 6 cards) */}
+      <div className="overflow-hidden" style={{ flex: '1 1 0%', minHeight: 'clamp(130px, 12vw, 200px)' }}>
         <FeatureControlPanel
           isPaidUser={isPaidUser}
           selectedPromptTier={selectedPromptTier}
@@ -1752,11 +1752,11 @@ export default function ProPromagenClient({
         />
       </div>
 
-      {/* Bottom panel — preview windows (2/3 of available height) */}
+      {/* Bottom panel — preview windows (3/4 of available height) */}
       <div
         className="min-h-0 flex flex-col rounded-xl overflow-hidden"
         style={{
-          flex: '2 1 0%',
+          flex: '3 1 0%',
           marginTop: 'clamp(8px, 0.8vw, 12px)',
         }}
       >
