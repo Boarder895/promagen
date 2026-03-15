@@ -1,11 +1,18 @@
 // src/app/pro-promagen/pro-promagen-client.tsx
 // ============================================================================
-// PRO PROMAGEN CLIENT (v3.0.0)
+// PRO PROMAGEN CLIENT (v3.2.0)
 // ============================================================================
 // Client component for the /pro-promagen configuration page.
 // Uses SAME layout as homepage (HomepageGrid + ExchangeCard + FxRibbon).
 //
-// v3.0.0 (10 Mar 2026):
+// v3.2.0 (15 Mar 2026):
+// - FIX: Countdown shows NEXT city (nextCity/nextCountryCode) — was incorrectly
+//   changed to current city in v3.1.0, causing both sections to show same city
+// - KEPT: Weather data below "What Promagen Sees" shows CURRENT city (city/countryCode)
+//   with conditions · temp °C · local time
+// - FIX: All 5 <img> tags converted to next/image <Image fill> — 0 lint warnings
+//
+// v3.1.0 (15 Mar 2026):
 // - REMOVED: FX Picker fullscreen mode (FX pairs no longer configurable)
 // - REMOVED: FxPicker import, catalogToFxPickerOptions, fxPickerOptions memo
 // - REMOVED: onOpenFxPicker / handleCloseFxPicker handlers
@@ -77,6 +84,7 @@
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
@@ -88,6 +96,7 @@ import { ExchangePicker } from '@/components/pro-promagen/exchange-picker';
 import { FeatureControlPanel } from '@/components/pro-promagen/feature-control-panel';
 import { usePromptShowcase } from '@/hooks/use-prompt-showcase';
 import { SaveIcon } from '@/components/prompts/library/save-icon';
+import { useSavedPrompts } from '@/hooks/use-saved-prompts';
 import {
   PRO_SELECTION_LIMITS,
   type FxPairCatalogEntry,
@@ -99,6 +108,9 @@ import type { Exchange, Hemisphere } from '@/data/exchanges/types';
 import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 import type { Provider } from '@/types/providers';
+import type { WeatherCategoryMap, PromptCategory } from '@/types/prompt-builder';
+import { getPlatformTierId } from '@/data/platform-tiers';
+import { assemblePrompt, selectionsFromMap } from '@/lib/prompt-builder';
 import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
 
 // ============================================================================
@@ -438,6 +450,934 @@ function TierPreviewPanel({ activeTier }: { activeTier: number }) {
   );
 }
 
+// ============================================================================
+// SCENES PREVIEW PANEL — 5 free world windows + 18 pro world emojis
+// ============================================================================
+// Shown when Scenes card is hovered. Same glass/glow pattern as TierPreviewPanel.
+// Human Factor: Endowment Effect — you already own 5 worlds, imagine 18 more.
+// ============================================================================
+
+const FREE_WORLD_WINDOWS: Array<{
+  emoji: string;
+  label: string;
+  color: string;
+  scenes: Array<{ emoji: string; name: string }>;
+}> = [
+  {
+    emoji: '👤', label: 'Portraits & People', color: '#f59e0b',
+    scenes: [
+      { emoji: '🎭', name: 'Dramatic Portrait' },
+      { emoji: '⚔️', name: 'Fantasy Hero' },
+      { emoji: '📸', name: 'Street Photographer' },
+    ],
+  },
+  {
+    emoji: '🌍', label: 'Landscapes & Worlds', color: '#22c55e',
+    scenes: [
+      { emoji: '🌳', name: 'Enchanted Forest' },
+      { emoji: '🏜️', name: 'Desert Ruins' },
+      { emoji: '🧜', name: 'Underwater Kingdom' },
+    ],
+  },
+  {
+    emoji: '🌫️', label: 'Mood & Atmosphere', color: '#60a5fa',
+    scenes: [
+      { emoji: '🕵️', name: 'Film Noir' },
+      { emoji: '💭', name: 'Dreamscape' },
+      { emoji: '💛', name: 'Golden Romance' },
+    ],
+  },
+  {
+    emoji: '🎨', label: 'Style-Forward', color: '#f472b6',
+    scenes: [
+      { emoji: '⚡', name: 'Anime Action' },
+      { emoji: '🐲', name: 'Concept Art Creature' },
+      { emoji: '✨', name: 'Art Deco Poster' },
+    ],
+  },
+  {
+    emoji: '🔥', label: 'Trending / Seasonal', color: '#fb923c',
+    scenes: [
+      { emoji: '🌱', name: 'Solarpunk Utopia' },
+      { emoji: '📚', name: 'Dark Academia' },
+      { emoji: '🌸', name: 'Cottagecore Morning' },
+    ],
+  },
+];
+
+const PRO_WORLD_EMOJIS = ['🎬', '⚔️', '🚀', '🏛️', '🏙️', '🌋', '🏗️', '🎭', '🦇', '🎪', '🪔', '🔮', '🍷', '🐉', '⛏️', '⛈️', '🍂', '🔬'];
+
+function ScenesPreviewPanel() {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Animated amber header */}
+      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+        <p
+          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
+        >
+          200 one-click scenes across 23 worlds
+        </p>
+      </div>
+
+      {/* 5 free world windows — horizontal row */}
+      <div
+        className="flex flex-1 min-h-0"
+        style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}
+      >
+        {FREE_WORLD_WINDOWS.map((w) => {
+          const glowRgba = hexToRgbaPanel(w.color, 0.3);
+          const glowBorder = hexToRgbaPanel(w.color, 0.5);
+          const glowSoft = hexToRgbaPanel(w.color, 0.15);
+
+          return (
+            <div
+              key={w.label}
+              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+              style={{
+                background: 'rgba(15, 23, 42, 0.97)',
+                border: `1px solid ${glowBorder}`,
+                boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+                padding: 'clamp(8px, 0.8vw, 14px)',
+                transition: 'box-shadow 200ms ease-out',
+              }}
+            >
+              {/* Ethereal glow — top radial */}
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
+              />
+              {/* Bottom glow accent */}
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
+              />
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                {/* World emoji + label */}
+                <div className="flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                  <span style={{ fontSize: 'clamp(1rem, 1.3vw, 1.5rem)' }}>{w.emoji}</span>
+                  <span
+                    className="font-semibold text-white truncate"
+                    style={{
+                      fontSize: 'clamp(0.65rem, 0.8vw, 0.85rem)',
+                      textShadow: `0 0 12px ${glowRgba}`,
+                    }}
+                  >
+                    {w.label}
+                  </span>
+                </div>
+
+                {/* Scene count badge */}
+                <span
+                  className="inline-flex items-center self-start rounded-full font-medium ring-1"
+                  style={{
+                    fontSize: 'clamp(0.625rem, 0.7vw, 0.7rem)',
+                    padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.6vw, 8px)',
+                    background: hexToRgbaPanel(w.color, 0.15),
+                    borderColor: hexToRgbaPanel(w.color, 0.3),
+                    color: w.color,
+                  }}
+                >
+                  5 scenes
+                </span>
+
+                {/* 3 scene entries */}
+                <div className="flex flex-col flex-1" style={{ gap: 'clamp(2px, 0.25vw, 4px)' }}>
+                  {w.scenes.map((s) => (
+                    <div key={s.name} className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                      <span style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)' }}>{s.emoji}</span>
+                      <span
+                        className="text-slate-300 truncate"
+                        style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
+                      >
+                        {s.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* "Included" badge */}
+                <span
+                  className="inline-flex items-center self-start text-emerald-400 font-semibold"
+                  style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Free
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Pro worlds row — 18 emojis + label */}
+      <div
+        className="flex items-center justify-center flex-wrap"
+        style={{ gap: 'clamp(4px, 0.4vw, 6px)', paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
+      >
+        {PRO_WORLD_EMOJIS.map((e, i) => (
+          <span
+            key={i}
+            style={{ fontSize: 'clamp(0.8rem, 0.9vw, 1rem)' }}
+            title="Pro world"
+          >
+            {e}
+          </span>
+        ))}
+        <span
+          className="text-amber-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}
+        >
+          +18 worlds with Pro
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// SAVED PREVIEW PANEL — user's actual saved prompts at risk
+// ============================================================================
+// Shown when Saved card is hovered. Shows up to 5 most recent saved prompts
+// in tooltip-glass windows with platform brand colours.
+// Human Factor: Endowment Effect — these are YOUR prompts shown back to you.
+// Human Factor: Loss Aversion — "Browser only" on every window.
+// ============================================================================
+
+const SAVED_DEFAULT_COLOR = '#a78bfa';
+
+const SAVED_PLATFORM_COLORS: Readonly<Record<string, string>> = {
+  midjourney: '#7C3AED',
+  openai: '#10B981',
+  'google-imagen': '#4285F4',
+  leonardo: '#EC4899',
+  flux: '#F97316',
+  stability: '#8B5CF6',
+  'adobe-firefly': '#FF6B35',
+  ideogram: '#06B6D4',
+  playground: '#3B82F6',
+  'microsoft-designer': '#0078D4',
+  novelai: '#A855F7',
+  canva: '#00C4CC',
+  nightcafe: '#D946EF',
+  picsart: '#FF3366',
+  craiyon: '#FBBF24',
+  bluewillow: '#3B82F6',
+  dreamstudio: '#A855F7',
+  runway: '#EF4444',
+  freepik: '#0EA5E9',
+  artbreeder: '#10B981',
+  deepai: '#6366F1',
+};
+
+function SavedPreviewPanel() {
+  const { allPrompts } = useSavedPrompts();
+  const recentPrompts = allPrompts.slice(0, 5);
+  const hasPrompts = recentPrompts.length > 0;
+  const emptySlots = 5 - recentPrompts.length;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Animated amber header — personalised with real count */}
+      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+        <p
+          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
+        >
+          {hasPrompts
+            ? `${allPrompts.length} prompt${allPrompts.length === 1 ? '' : 's'} saved — browser only`
+            : 'Start saving prompts — build your library'}
+        </p>
+      </div>
+
+      {/* 5 prompt windows — horizontal row */}
+      <div
+        className="flex flex-1 min-h-0"
+        style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}
+      >
+        {/* Filled windows — real saved prompts */}
+        {recentPrompts.map((prompt) => {
+          const platformColor = SAVED_PLATFORM_COLORS[prompt.platformId] ?? SAVED_DEFAULT_COLOR;
+          const glowRgba = hexToRgbaPanel(platformColor, 0.3);
+          const glowBorder = hexToRgbaPanel(platformColor, 0.5);
+          const glowSoft = hexToRgbaPanel(platformColor, 0.15);
+
+          return (
+            <div
+              key={prompt.id}
+              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+              style={{
+                background: 'rgba(15, 23, 42, 0.97)',
+                border: `1px solid ${glowBorder}`,
+                boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+                padding: 'clamp(8px, 0.8vw, 14px)',
+                transition: 'box-shadow 200ms ease-out',
+              }}
+            >
+              {/* Ethereal glow — top radial */}
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
+              />
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
+              />
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                {/* Platform name + icon */}
+                <div className="flex items-center justify-between">
+                  <span
+                    className="font-semibold truncate"
+                    style={{
+                      color: platformColor,
+                      fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)',
+                      textShadow: `0 0 12px ${glowRgba}`,
+                    }}
+                  >
+                    {prompt.platformName}
+                  </span>
+                  <div className="relative rounded shrink-0" style={{ width: 'clamp(18px, 1.6vw, 24px)', height: 'clamp(18px, 1.6vw, 24px)' }}>
+                    <Image
+                      src={`/icons/providers/${prompt.platformId}.png`}
+                      alt=""
+                      fill
+                      className="rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                </div>
+
+                {/* Tier badge */}
+                {prompt.tier && (
+                  <span
+                    className="inline-flex items-center self-start rounded-full font-medium ring-1"
+                    style={{
+                      fontSize: 'clamp(0.625rem, 0.7vw, 0.7rem)',
+                      padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.6vw, 8px)',
+                      background: hexToRgbaPanel(platformColor, 0.15),
+                      borderColor: hexToRgbaPanel(platformColor, 0.3),
+                      color: platformColor,
+                    }}
+                  >
+                    Tier {prompt.tier}
+                  </span>
+                )}
+
+                {/* Prompt text — fills available space */}
+                <p
+                  className="text-slate-200 leading-relaxed flex-1 overflow-hidden whitespace-pre-wrap break-words"
+                  style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.8rem)' }}
+                >
+                  {prompt.positivePrompt}
+                </p>
+
+                {/* Browser only warning */}
+                <span
+                  className="inline-flex items-center self-start text-amber-400 font-semibold"
+                  style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Browser only
+                </span>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Empty slots — dashed outlines showing capacity */}
+        {Array.from({ length: emptySlots }).map((_, i) => (
+          <div
+            key={`empty-${i}`}
+            className="relative flex-1 rounded-xl flex flex-col items-center justify-center"
+            style={{
+              border: '1px dashed rgba(167, 139, 250, 0.5)',
+              padding: 'clamp(8px, 0.8vw, 14px)',
+              background: 'rgba(15, 23, 42, 0.4)',
+            }}
+          >
+            <span style={{ fontSize: 'clamp(1.2rem, 1.5vw, 1.8rem)', color: 'rgba(167, 139, 250, 0.5)' }}>💾</span>
+            <span
+              className="text-slate-400 text-center"
+              style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)', marginTop: 'clamp(4px, 0.4vw, 6px)' }}
+            >
+              Empty slot
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Bottom contrast line */}
+      <div
+        className="flex items-center justify-between"
+        style={{ paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
+      >
+        <span
+          className="text-amber-400"
+          style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}
+        >
+          {hasPrompts ? 'Clear cache = all gone' : 'Copy a prompt from any flag tooltip → it appears here'}
+        </span>
+        <span
+          className="text-emerald-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}
+        >
+          Pro: Synced forever
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// PROMPT LAB PREVIEW PANEL v3 — Full Intelligence Pipeline
+// ============================================================================
+// Window 1: "What Promagen Sees" — dynamic categoryMap data, all 12 categories
+// Windows 2-5: REAL assemblePrompt() per rotating provider (not PotM text)
+// Countdown: 3-state matching homepage, as heading in Window 1
+// Colour-coded prompts via parsePromptUnified pattern
+//
+// Authority: docs/authority/code-standard.md, docs/authority/homepage.md §4
+// Existing features preserved: Yes
+// ============================================================================
+
+// ── Category colours — exact copy from prompt-showcase.tsx ─────────────────
+
+const CATEGORY_COLOURS: Record<string, string> = {
+  subject: '#FCD34D',
+  action: '#A3E635',
+  style: '#C084FC',
+  environment: '#38BDF8',
+  composition: '#34D399',
+  camera: '#FB923C',
+  lighting: '#FBBF24',
+  colour: '#F472B6',
+  atmosphere: '#22D3EE',
+  materials: '#2DD4BF',
+  fidelity: '#93C5FD',
+  negative: '#F87171',
+  structural: '#94A3B8',
+};
+
+const CATEGORY_EMOJIS: Record<string, string> = {
+  subject: '📍',
+  action: '💨',
+  style: '🎨',
+  environment: '🏛️',
+  composition: '📐',
+  camera: '📷',
+  lighting: '💡',
+  colour: '🌡️',
+  atmosphere: '☁️',
+  materials: '🧱',
+  fidelity: '✨',
+  negative: '🚫',
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  subject: 'Subject',
+  action: 'Action',
+  style: 'Style',
+  environment: 'Venue',
+  composition: 'Composition',
+  camera: 'Camera',
+  lighting: 'Lighting',
+  colour: 'Colour',
+  atmosphere: 'Atmosphere',
+  materials: 'Surface',
+  fidelity: 'Quality',
+  negative: 'Negative',
+};
+
+// ── Term index + prompt parser (from prompt-showcase.tsx) ──────────────────
+
+const LAB_DEFAULT_WEIGHTS: Partial<Record<string, number>> = {
+  subject: 1.2, style: 1.15, lighting: 1.1,
+};
+const LAB_FIDELITY_TERMS = [
+  'masterpiece', 'best quality', 'highly detailed', 'sharp focus',
+  '8k', '4k', 'ultra detailed', 'high resolution',
+];
+
+function labBuildTermIndex(categoryMap: WeatherCategoryMap): Map<string, PromptCategory> {
+  const index = new Map<string, PromptCategory>();
+  for (const [cat, terms] of Object.entries(categoryMap.selections ?? {})) {
+    if (!terms) continue;
+    for (const term of terms) {
+      const key = term.toLowerCase().trim();
+      if (key) index.set(key, cat as PromptCategory);
+    }
+  }
+  for (const [cat, phrase] of Object.entries(categoryMap.customValues ?? {})) {
+    if (!phrase) continue;
+    const key = phrase.toLowerCase().trim();
+    if (key) index.set(key, cat as PromptCategory);
+  }
+  return index;
+}
+
+interface LabSegment { text: string; category: string; weight: number }
+
+function labParsePrompt(promptText: string, termIndex: Map<string, PromptCategory>): LabSegment[] {
+  const termEntries = Array.from(termIndex.entries()).sort((a, b) => b[0].length - a[0].length);
+  type Match = { start: number; end: number; category: string; weight: number };
+  const matches: Match[] = [];
+  const lower = promptText.toLowerCase();
+
+  for (const [term, category] of termEntries) {
+    let from = 0;
+    while (from < lower.length) {
+      const idx = lower.indexOf(term, from);
+      if (idx === -1) break;
+      if (!matches.some((m) => idx < m.end && idx + term.length > m.start)) {
+        let w = LAB_DEFAULT_WEIGHTS[category] ?? 1.0;
+        if (idx > 0 && promptText[idx - 1] === '(') {
+          const after = promptText.slice(idx + term.length);
+          const wm = after.match(/^:(\d+\.?\d*)\)/);
+          if (wm) w = parseFloat(wm[1]!);
+        }
+        matches.push({ start: idx, end: idx + term.length, category, weight: w });
+      }
+      from = idx + 1;
+    }
+  }
+  for (const ft of LAB_FIDELITY_TERMS) {
+    let from = 0;
+    while (from < lower.length) {
+      const idx = lower.indexOf(ft, from);
+      if (idx === -1) break;
+      if (!matches.some((m) => idx < m.end && idx + ft.length > m.start)) {
+        matches.push({ start: idx, end: idx + ft.length, category: 'fidelity', weight: 1.0 });
+      }
+      from = idx + 1;
+    }
+  }
+  matches.sort((a, b) => a.start - b.start);
+  const segs: LabSegment[] = [];
+  let cursor = 0;
+  for (const m of matches) {
+    if (m.start > cursor) segs.push({ text: promptText.slice(cursor, m.start), category: 'structural', weight: 0.5 });
+    segs.push({ text: promptText.slice(m.start, m.end), category: m.category, weight: m.weight });
+    cursor = m.end;
+  }
+  if (cursor < promptText.length) segs.push({ text: promptText.slice(cursor), category: 'structural', weight: 0.5 });
+  if (segs.length === 0) segs.push({ text: promptText, category: 'structural', weight: 0.5 });
+  return segs;
+}
+
+// ── Tier metadata ─────────────────────────────────────────────────────────
+
+const LAB_TIER_META: Array<{
+  tier: 1 | 2 | 3 | 4;
+  label: string;
+  color: string;
+  dotClass: string;
+  bgClass: string;
+  ringClass: string;
+  promptKey: 'tier1' | 'tier2' | 'tier3' | 'tier4';
+}> = [
+  { tier: 1, label: 'CLIP-Based', color: '#60a5fa', dotClass: 'bg-blue-400', bgClass: 'bg-blue-500/15', ringClass: 'ring-blue-500/30', promptKey: 'tier1' },
+  { tier: 2, label: 'Midjourney', color: '#c084fc', dotClass: 'bg-purple-400', bgClass: 'bg-purple-500/15', ringClass: 'ring-purple-500/30', promptKey: 'tier2' },
+  { tier: 3, label: 'Natural Language', color: '#34d399', dotClass: 'bg-emerald-400', bgClass: 'bg-emerald-500/15', ringClass: 'ring-emerald-500/30', promptKey: 'tier3' },
+  { tier: 4, label: 'Plain Language', color: '#fb923c', dotClass: 'bg-orange-400', bgClass: 'bg-orange-500/15', ringClass: 'ring-orange-500/30', promptKey: 'tier4' },
+];
+
+
+// ── Hooks ─────────────────────────────────────────────────────────────────
+
+function useLabCountdown(): { totalSec: number; timeStr: string } {
+  const [totalSec, setTotalSec] = React.useState(180);
+  React.useEffect(() => {
+    const R = 3 * 60 * 1000;
+    function tick() {
+      const now = Date.now();
+      setTotalSec(Math.floor(Math.max(0, (Math.floor(now / R) + 1) * R - now) / 1000));
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return { totalSec, timeStr: `${m}:${String(s).padStart(2, '0')}` };
+}
+
+/**
+ * Provider rotation with exact timing, progress bar (0→1), and seconds left.
+ * The interval triggers provider changes at EXACTLY intervalMs.
+ * Progress updates every 200ms for smooth bar fill.
+ */
+function useProviderRotation(
+  providers: Array<{ id: string; name: string }>,
+  intervalMs: number,
+): { provider: { id: string; name: string } | null; progress: number; secsLeft: number } {
+  const [index, setIndex] = React.useState(0);
+  const [progress, setProgress] = React.useState(0);
+  const [secsLeft, setSecsLeft] = React.useState(Math.ceil(intervalMs / 1000));
+  const startRef = React.useRef(Date.now());
+
+  React.useEffect(() => {
+    if (providers.length === 0) return;
+    startRef.current = Date.now();
+    setProgress(0);
+    setSecsLeft(Math.ceil(intervalMs / 1000));
+
+    const tick = () => {
+      const elapsed = Date.now() - startRef.current;
+      if (elapsed >= intervalMs) {
+        startRef.current = Date.now();
+        setIndex((prev) => (prev + 1) % providers.length);
+        setProgress(0);
+        setSecsLeft(Math.ceil(intervalMs / 1000));
+      } else {
+        setProgress(elapsed / intervalMs);
+        setSecsLeft(Math.max(0, Math.ceil((intervalMs - elapsed) / 1000)));
+      }
+    };
+
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, [providers.length, intervalMs]);
+
+  return { provider: providers[index] ?? null, progress, secsLeft };
+}
+
+// ── Exact rotation intervals ──────────────────────────────────────────────
+const ROTATION_T1_MS = 20_000;  // 20 seconds
+const ROTATION_T2_MS = 42_500;  // 42.5 seconds
+const ROTATION_T3_MS = 20_000;  // 20 seconds
+const ROTATION_T4_MS = 20_000;  // 20 seconds
+
+// ── MAIN COMPONENT ────────────────────────────────────────────────────────
+
+function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
+  const { data: potmData } = usePromptShowcase();
+  const { totalSec, timeStr } = useLabCountdown();
+
+  const categoryMap = potmData?.tierSelections?.tier1?.categoryMap;
+
+  // Top providers per tier by image quality rank
+  const tierProviders = React.useMemo(() => {
+    const result: Record<number, Array<{ id: string; name: string }>> = { 1: [], 2: [], 3: [], 4: [] };
+    for (const p of providers) {
+      const tierId = getPlatformTierId(p.id);
+      if (tierId && result[tierId]) result[tierId].push({ id: p.id, name: p.name });
+    }
+    for (const tid of [1, 2, 3, 4]) {
+      const arr = result[tid] ?? [];
+      arr.sort((a, b) => {
+        const ap = providers.find((pp) => pp.id === a.id);
+        const bp = providers.find((pp) => pp.id === b.id);
+        return (ap?.imageQualityRank ?? 999) - (bp?.imageQualityRank ?? 999);
+      });
+      if (tid !== 2) result[tid] = arr.slice(0, 5);
+    }
+    return result;
+  }, [providers]);
+
+  // Independent rotation per tier with exact intervals
+  const t1 = useProviderRotation(tierProviders[1] ?? [], ROTATION_T1_MS);
+  const t2 = useProviderRotation(tierProviders[2] ?? [], ROTATION_T2_MS);
+  const t3 = useProviderRotation(tierProviders[3] ?? [], ROTATION_T3_MS);
+  const t4 = useProviderRotation(tierProviders[4] ?? [], ROTATION_T4_MS);
+  const tierStates = [t1, t2, t3, t4];
+
+  // Soonest provider change across all tiers
+  const minSecsLeft = Math.min(t1.secsLeft, t2.secsLeft, t3.secsLeft, t4.secsLeft);
+
+  // REAL per-provider prompts via assemblePrompt()
+  const providerPrompts = React.useMemo(() => {
+    if (!categoryMap) return ['', '', '', ''];
+    const sel = selectionsFromMap(categoryMap);
+    return tierStates.map((ts) => {
+      if (!ts.provider) return '';
+      try {
+        return assemblePrompt(ts.provider.id, sel, categoryMap.weightOverrides).positive;
+      } catch { return ''; }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryMap, t1.provider?.id, t2.provider?.id, t3.provider?.id, t4.provider?.id]);
+
+  // Dynamic category rows — only show categories that have data
+  const categoryRows = React.useMemo(() => {
+    if (!categoryMap) return [];
+    const rows: Array<{ cat: string; emoji: string; label: string; color: string; selection: string; custom: string }> = [];
+    const allCats = ['subject', 'environment', 'lighting', 'atmosphere', 'style', 'colour', 'camera', 'composition', 'materials', 'action', 'fidelity', 'negative'];
+    for (const cat of allCats) {
+      const sel = categoryMap.selections?.[cat as PromptCategory];
+      const custom = categoryMap.customValues?.[cat as PromptCategory];
+      const neg = cat === 'negative' ? categoryMap.negative : undefined;
+      if (!(sel && sel.length > 0) && !(custom && custom.trim()) && !(neg && neg.length > 0)) continue;
+      rows.push({
+        cat,
+        emoji: CATEGORY_EMOJIS[cat] ?? '\u2022',
+        label: CATEGORY_LABELS[cat] ?? cat,
+        color: CATEGORY_COLOURS[cat] ?? '#94A3B8',
+        selection: sel?.join(', ') ?? '',
+        custom: cat === 'negative' ? (neg?.join(', ') ?? '') : (custom?.trim() ?? ''),
+      });
+    }
+    return rows;
+  }, [categoryMap]);
+
+  return (
+    <div className="flex flex-col h-full">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes lab-fade { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+        .lab-fade-in { animation: lab-fade 0.5s ease-out forwards; }
+      ` }} />
+
+      {/* ── Centered amber pulsing header ─────────────────────────────── */}
+      <div style={{ padding: 'clamp(8px, 0.8vw, 14px) 0' }}>
+        <p
+          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
+        >
+          One workspace — all 42 platforms — instant switching
+        </p>
+      </div>
+
+      {/* ── 5 windows ────────────────────────────────────────────────── */}
+      <div className="flex flex-1 min-h-0" style={{ gap: 'clamp(4px, 0.4vw, 7px)' }}>
+
+        {/* ── Window 1: What Promagen Sees ────────────────────────────── */}
+        <div
+          className="relative rounded-xl overflow-hidden flex flex-col"
+          style={{
+            flex: '0 0 24%',
+            background: 'rgba(15, 23, 42, 0.97)',
+            border: '1px solid rgba(251, 113, 133, 0.4)',
+            boxShadow: '0 0 30px 6px rgba(251, 113, 133, 0.15), inset 0 0 20px 2px rgba(251, 113, 133, 0.08)',
+            padding: 'clamp(8px, 0.8vw, 12px)',
+          }}
+        >
+          <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(251, 113, 133, 0.2) 0%, transparent 70%)' }} />
+          <div className="relative z-10 flex flex-col h-full overflow-y-auto" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+
+            {/* Countdown — shows NEXT city arriving, matching homepage pattern:
+                Normal:   [flag] NextCity arriving in M:SS
+                Imminent: [flag] NextCity in M:SS
+                Now:      [flag] Now                        */}
+            {potmData && (
+              <div className="inline-flex items-center shrink-0" style={{ gap: 'clamp(6px, 0.5vw, 10px)', marginBottom: 'clamp(2px, 0.2vw, 4px)' }}>
+                <div className="relative rounded-sm shrink-0 overflow-hidden" style={{ width: 'clamp(18px, 1.5vw, 24px)', height: 'clamp(14px, 1.1vw, 18px)' }}>
+                  <Image
+                    src={`/flags/${(potmData.nextCountryCode ?? '').toLowerCase()}.svg`}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+                {totalSec <= 3 ? (
+                  <span className="tabular-nums font-semibold text-amber-300" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)', filter: 'brightness(1.3)' }}>Now</span>
+                ) : totalSec <= 29 ? (
+                  <>
+                    <span className="text-white font-medium" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>{potmData.nextCity}</span>
+                    <span className="tabular-nums text-amber-400" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)', filter: 'brightness(1.15)' }}>in {timeStr}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-white font-medium" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>{potmData.nextCity}</span>
+                    <span className="tabular-nums text-slate-400" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>arriving in {timeStr}</span>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* "What Promagen Sees" — centered, pink with glow, double gap */}
+            <span
+              className="font-semibold text-center shrink-0"
+              style={{
+                fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)',
+                color: '#fb7185',
+                textShadow: '0 0 12px rgba(251, 113, 133, 0.4)',
+                margin: 'clamp(6px, 0.6vw, 10px) 0',
+              }}
+            >
+              What Promagen Sees
+            </span>
+
+            {/* Current city weather data — flag + city name, then conditions · temp · time */}
+            {potmData && (
+              <div
+                className="flex flex-col items-center shrink-0"
+                style={{ margin: 'clamp(6px, 0.6vw, 10px) 0', gap: 'clamp(2px, 0.2vw, 4px)' }}
+              >
+                <div className="inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                  <div className="relative rounded-sm shrink-0 overflow-hidden" style={{ width: 'clamp(16px, 1.3vw, 20px)', height: 'clamp(12px, 1vw, 15px)' }}>
+                    <Image
+                      src={`/flags/${(potmData.countryCode ?? '').toLowerCase()}.svg`}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                  <span className="text-white font-semibold" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>
+                    {potmData.city}
+                  </span>
+                </div>
+                <span className="text-slate-400 text-center" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.78rem)' }}>
+                  {potmData.conditions}
+                  {potmData.weather?.tempC != null && (
+                    <> · {Math.round(potmData.weather.tempC)}°C</>
+                  )}
+                  {potmData.localTime && (
+                    <> · {potmData.localTime}</>
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* Dynamic category rows — only categories with data shown */}
+            {categoryRows.map((row) => (
+              <div key={row.cat} className="flex flex-col" style={{ gap: 'clamp(2px, 0.2vw, 4px)' }}>
+                <div className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                  <span style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}>{row.emoji}</span>
+                  <span className="text-slate-300" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}>{row.label}</span>
+                  <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}>{'\u2192'}</span>
+                  <span className="font-medium truncate" style={{ color: row.color, fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}>{row.selection}</span>
+                </div>
+                {row.custom && (
+                  <span className="text-slate-300 leading-tight" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', paddingLeft: 'clamp(16px, 1.4vw, 22px)' }}>
+                    {row.custom.length > 100 ? row.custom.slice(0, 98) + '\u2026' : row.custom}
+                  </span>
+                )}
+              </div>
+            ))}
+
+            {/* Amber animated "Next provider in Xs" — footer of window 1 */}
+            <div className="mt-auto shrink-0" style={{ paddingTop: 'clamp(4px, 0.4vw, 6px)' }}>
+              <p
+                className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+                style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.95rem)' }}
+              >
+                Next provider in {minSecsLeft}s
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Windows 2-5: Per-Provider Assembled Prompts ────────────── */}
+        {LAB_TIER_META.map((t, idx) => {
+          const { provider, progress } = tierStates[idx]!;
+          const glowRgba = hexToRgbaPanel(t.color, 0.3);
+          const glowBorder = hexToRgbaPanel(t.color, 0.5);
+          const glowSoft = hexToRgbaPanel(t.color, 0.15);
+          const promptText = providerPrompts[idx] ?? '';
+          const tierCategoryMap = potmData?.tierSelections?.[t.promptKey]?.categoryMap;
+
+          return (
+            <div
+              key={`${t.tier}-${provider?.id}`}
+              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+              style={{
+                background: 'rgba(15, 23, 42, 0.97)',
+                border: `1px solid ${glowBorder}`,
+                boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+                padding: 'clamp(8px, 0.8vw, 12px)',
+                paddingBottom: 'clamp(10px, 1vw, 14px)',
+                transition: 'box-shadow 200ms ease-out',
+              }}
+            >
+              <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }} />
+              <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
+
+              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                {/* Provider name + icon (crossfades on rotation) */}
+                <div className="flex items-center justify-between lab-fade-in" key={provider?.id ?? t.tier}>
+                  <span className="font-semibold truncate" style={{ color: t.color, fontSize: 'clamp(0.7rem, 0.8vw, 0.85rem)', textShadow: `0 0 12px ${glowRgba}` }}>
+                    {provider?.name ?? t.label}
+                  </span>
+                  {provider && (
+                    <div className="relative rounded shrink-0" style={{ width: 'clamp(16px, 1.4vw, 22px)', height: 'clamp(16px, 1.4vw, 22px)' }}>
+                      <Image
+                        src={`/icons/providers/${provider.id}.png`}
+                        alt=""
+                        fill
+                        className="rounded object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Tier badge — double gap above and below */}
+                <span
+                  className={`inline-flex items-center self-start rounded-full font-medium ${t.bgClass} ring-1 ${t.ringClass}`}
+                  style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.6vw, 10px)', gap: 'clamp(3px, 0.3vw, 5px)', color: t.color, margin: 'clamp(3px, 0.3vw, 5px) 0' }}
+                >
+                  <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(4px, 0.4vw, 6px)', height: 'clamp(4px, 0.4vw, 6px)' }} />
+                  Tier {t.tier}: {t.label}
+                </span>
+
+                {/* Colour-coded prompt — REAL assemblePrompt() output */}
+                {promptText ? (
+                  <div className="flex-1 overflow-hidden">
+                    <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)' }}>
+                      {(() => {
+                        if (!tierCategoryMap) return <span className="text-slate-200">{promptText}</span>;
+                        const termIndex = labBuildTermIndex(tierCategoryMap);
+                        if (termIndex.size === 0) return <span className="text-slate-200">{promptText}</span>;
+                        const segments = labParsePrompt(promptText.replace(/([a-z])([A-Z])/g, '$1 $2'), termIndex);
+                        return segments.map((seg, i) => {
+                          const clr = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                          return (
+                            <span key={i} style={{ color: clr, textShadow: seg.weight >= 1.05 ? `0 0 10px ${clr}50` : undefined }}>
+                              {seg.text}
+                            </span>
+                          );
+                        });
+                      })()}
+                    </p>
+                  </div>
+                ) : (
+                  <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}>Loading...</span>
+                )}
+              </div>
+
+              {/* Progress bar — 2px at absolute bottom, fills in tier colour */}
+              <div
+                className="absolute bottom-0 left-0 right-0 overflow-hidden"
+                style={{ height: '2px', background: 'rgba(255,255,255,0.06)' }}
+              >
+                <div style={{ height: '100%', width: `${Math.round(progress * 100)}%`, background: t.color, transition: 'width 200ms linear' }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── 42 provider icons row ────────────────────────────────────── */}
+      <div className="flex items-center justify-center flex-wrap" style={{ gap: 'clamp(2px, 0.25vw, 4px)', paddingTop: 'clamp(6px, 0.6vw, 10px)' }}>
+        {providers.slice(0, 42).map((p) => (
+          <div key={p.id} className="relative rounded" style={{ width: 'clamp(14px, 1.2vw, 18px)', height: 'clamp(14px, 1.2vw, 18px)' }}>
+            <Image
+              src={`/icons/providers/${p.id}.png`}
+              alt=""
+              fill
+              className="rounded object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          </div>
+        ))}
+        <span className="font-semibold" style={{ color: '#fb7185', fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}>
+          42 platforms — switch instantly
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // MAIN COMPONENT
 // ============================================================================
 
@@ -510,6 +1450,9 @@ export default function ProPromagenClient({
   // ============================================================================
   const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
   const [formatHovered, setFormatHovered] = useState(false);
+  const [scenesHovered, setScenesHovered] = useState(false);
+  const [savedHovered, setSavedHovered] = useState(false);
+  const [labHovered, setLabHovered] = useState(false);
 
   // Detect changes from initial state (FX no longer tracked — fixed pairs)
   const hasChanges = useMemo(() => {
@@ -797,6 +1740,9 @@ export default function ProPromagenClient({
           selectedExchangeCount={selectedExchanges.length}
           onOpenExchangePicker={handleOpenExchangePicker}
           onFormatHover={setFormatHovered}
+          onScenesHover={setScenesHovered}
+          onSavedHover={setSavedHovered}
+          onLabHover={setLabHovered}
         />
       </div>
 
@@ -809,6 +1755,12 @@ export default function ProPromagenClient({
       >
         {formatHovered ? (
           <TierPreviewPanel activeTier={selectedPromptTier} />
+        ) : scenesHovered ? (
+          <ScenesPreviewPanel />
+        ) : savedHovered ? (
+          <SavedPreviewPanel />
+        ) : labHovered ? (
+          <PromptLabPreviewPanel providers={providers} />
         ) : (
           <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />
         )}

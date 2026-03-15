@@ -1,7 +1,7 @@
 # paid_tier.md â€” What Is Free and What Is Paid in Promagen
 
-**Last updated:** 4 March 2026  
-**Version:** 2.0.0  
+**Last updated:** 14 March 2026  
+**Version:** 3.0.0  
 **Status:** Authoritative  
 **Scope:** Product behaviour, access rules, and monetisation boundaries  
 **Rule:** If a capability is not explicitly listed in this document, it is free.
@@ -113,18 +113,18 @@ Sign-in methods:
 
 **Anonymous users (not signed in):**
 
-- **5 free prompts per day** before sign-in required
+- **3 free prompts per day** before sign-in required
 - **Daily reset at midnight** in user's local timezone (same as authenticated users)
-- Anonymous usage counter visible: "X/5 free prompts"
+- Anonymous usage counter visible: "X/3 free prompts"
 - Stored in localStorage (browser-local, no account needed)
-- After 5 prompts: overlay locks with "Sign in to continue" button
+- After 3 prompts: overlay locks with "Sign in to continue" button
 
 **Visual treatment when locked (anonymous or free user at limit):**
 
 - All category dropdowns show **disabled styling only** (purple-tinted, non-interactive)
 - **NO "Sign in to continue" text displayed inside individual dropdowns** (clean UX)
 - Centred overlay with action button at top of the prompt builder section
-- Message: "You've used your 5 free prompts" (anonymous) or "Daily limit reached" (free user)
+- Message: "You've used your 3 free prompts" (anonymous) or "Daily limit reached" (free user)
 - Benefits list shown in overlay
 - Lock icon appears in dropdown labels only
 - Dropdown arrows hidden when locked
@@ -134,7 +134,7 @@ Sign-in methods:
 
 - **Full access to all 12 categories** with ~2,100 curated prompt terms
 - **Platform-aware selection limits** as documented in Â§5.6 and prompt-builder-page.md
-- **10 prompts per day** â€” tracked on "Copy prompt" button clicks
+- **5 prompts per day** â€” tracked on "Copy prompt" button clicks
 - **Daily reset at midnight** in user's local timezone
 - When quota reached: dropdowns lock with "Upgrade to Pro Promagen for unlimited" message
 
@@ -170,14 +170,14 @@ Sign-in methods:
 
 ```typescript
 interface AnonymousUsage {
-  count: number; // Current prompt count (0-5)
+  count: number; // Current prompt count (0-3)
   lastResetDate: string; // YYYY-MM-DD for daily reset
   version: 2; // Schema version
   checksum: string; // HMAC of count + lastResetDate + version
 }
 ```
 
-If checksum validation fails, counter resets to 0 and user is shown a gentle message: "Usage data was reset. You have 5 prompts remaining today."
+If checksum validation fails, counter resets to 0 and user is shown a gentle message: "Usage data was reset. You have 3 prompts remaining today."
 
 ### 3.4 Geographic ordering (reference frame)
 
@@ -206,6 +206,7 @@ User tier is stored in Clerk's `publicMetadata`:
 ```typescript
 interface ClerkPublicMetadata {
   tier: 'free' | 'paid';
+  promptTier?: number; // 1–4, paid users only (All Prompt Format selection)
   exchangeSelection?: {
     exchangeIds: string[];
     updatedAt: string;
@@ -221,13 +222,14 @@ interface ClerkPublicMetadata {
 
 ```typescript
 function Component() {
-  const { userTier, categoryLimits, platformTier } = usePromagenAuth({
+  const { userTier, categoryLimits, platformTier, clerkPromptTier } = usePromagenAuth({
     platformId,
   });
   // userTier: 'free' | 'paid' (internal)
   // UI should display: "Standard Promagen" | "Pro Promagen"
   // categoryLimits: Platform-aware limits for current provider
   // platformTier: 1 | 2 | 3 | 4
+  // clerkPromptTier: number | null — stored prompt tier preference (paid users only)
 }
 ```
 
@@ -855,6 +857,50 @@ Selection limits are **platform-aware** â€” different AI platforms handle p
 
 **Source of truth:** `src/data/platform-tiers.ts` (tier definitions) and `src/lib/usage/constants.ts` (category limits).
 
+#### Surface-Aware Prompt Tier System (All Prompt Format)
+
+The prompt tier displayed in flag tooltips is **surface-aware** for Standard Promagen users and **globally overridable** for Pro Promagen users.
+
+**Standard Promagen — Variable Reward (per-surface rotation):**
+
+Free users see different tiers on different surfaces, creating variety:
+
+| Surface          | Default Tier | Rationale                                        |
+| ---------------- | ------------ | ------------------------------------------------ |
+| Exchange cards   | Tier 3       | Most visible — rich natural sentences            |
+| AI Leaderboard   | *native*     | Each provider's own tier (educational variety)   |
+| FX ribbon        | Tier 1       | Technical CLIP weights look advanced             |
+| Commodities      | Tier 2       | Midjourney parameters are visually distinctive   |
+| Mission Control  | Tier 4       | Simplest entry point, accessible                 |
+
+**Source of truth:** `FREE_SURFACE_TIERS` in `src/hooks/use-global-prompt-tier.ts`
+
+**Pro Promagen — Global override:**
+
+Paid users select a single tier (1–4) that applies to ALL surfaces. Selection is stored:
+
+1. **localStorage** (`promagen:pro:prompt-tier`) — immediate read on page load
+2. **Clerk metadata** (`publicMetadata.promptTier`) — cross-device sync, source of truth
+3. **API route** (`/api/user/preferences` PATCH) — validates tier is 1–4, rejects free users with 403
+
+**Priority chain (Pro users):** Clerk metadata → localStorage → Tier 4 fallback
+
+When Clerk data arrives (async hydration), it overwrites localStorage to ensure consistency. The `useEffect` in `use-global-prompt-tier.ts` watches `[isPro, freeTier, clerkPromptTier]`.
+
+**Hook:** `useGlobalPromptTier(surface, nativeTier?)` — returns `{ tier, setTier }`. Every tooltip consumer passes its surface name. The hook decides whether to use the free surface tier or the Pro global override.
+
+**Consumer files that pass surface:**
+
+| File                                | Surface param     |
+| ----------------------------------- | ----------------- |
+| `exchange-list.tsx`                 | `'exchange-cards'`|
+| `provider-cell.tsx`                 | `'leaderboard'`   |
+| `finance-ribbon.container.tsx`      | `'fx-ribbon'`     |
+| `commodity-mover-card.tsx`          | `'commodities'`   |
+| `mission-control.tsx`               | `'mission-control'`|
+
+**Naming:** The feature was renamed from "Weather Prompt Format" to "All Prompt Format" in `presets.ts` because it affects ALL prompt tooltips (weather-driven, city-vibe, and leaderboard), not just weather.
+
 #### Category Limits by Tier (Free Users)
 
 | Category       | Tier 1 | Tier 2 | Tier 3 | Tier 4 | Pro Bonus |
@@ -1002,177 +1048,239 @@ Authority for implementation: `docs/authority/TODO-api-integration.md`
 
 ---
 
-### 5.10 Pro Promagen Configuration Page (`/pro-promagen`)
+### 5.10 Pro Promagen Page — Feature Control Panel (`/pro-promagen`)
 
-The `/pro-promagen` route allows Pro users to configure their FX pairs and exchanges. It uses the **standard homepage layout** â€” identical styling, components, and structure â€” with demo data instead of live API calls.
+**Last updated:** 14 March 2026
+**Architecture:** Feature Control Panel v1.1.0 (cockpit approach)
+**Replaces:** Comparison table layout (removed 14 March 2026)
 
-#### Page Purpose
+The `/pro-promagen` route serves **two purposes from the same UI**:
 
-| User Type | Mode          | Behaviour                                                                     |
-| --------- | ------------- | ----------------------------------------------------------------------------- |
-| Free user | Preview       | Interactive pickers, no persistence, demo data, "Upgrade to Pro Promagen" CTA |
-| Paid user | Configuration | Interactive pickers, saves to localStorage + Clerk, "Save Preferences" CTA    |
+| User Type | Mode          | Behaviour                                                                                    |
+| --------- | ------------- | -------------------------------------------------------------------------------------------- |
+| Free user | Preview       | 9 feature cards show Standard vs Pro values. Hover-previews show features. CTA → `/upgrade`  |
+| Paid user | Configuration | Same 9 cards become live controls. Tier selector active. Exchange Picker accessible. CTA → Save |
+
+No other SaaS uses this pattern — the same page is both the sales page and the configuration cockpit.
 
 #### Page Layout (Uses HomepageGrid — same as `/` and `/world-context`)
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│  [FX Ribbon — demo prices based on user's FX pair selection]         │
+│  "Pro Promagen — Unlock the Full Engine"                              │
 ├──────────┬─────────────────────────────────────────┬──────────────────┤
 │          │                                         │                  │
-│ Engine   │  Standard vs Pro Promagen               │  Mission         │
-│ Bay      │  ┌─────────────────────────────────────┐│  Control         │
-│ (xl+)    │  │ Feature          │ Std    │ Pro     ││  (Home button    │
-│          │  ├──────────────────┼────────┼─────────┤│  instead of Pro) │
-│ Exchange │  │ FX Pairs         │ 8      │ [Picker]││                  │
-│ Cards    │  │ Exchanges        │ 16     │ [Picker]││  Exchange        │
-│ (left)   │  │ Weather Prompt   │ Tier 4 │ [1–4]   ││  Cards           │
-│          │  │ Reference Frame  │ You    │ Toggle  ││  (right)         │
-│          │  │ Daily Prompts    │ 10     │ Unlimitd││                  │
-│          │  │ Prompt Stacking  │ Base   │ +1      ││                  │
-│          │  └─────────────────────────────────────┘│                  │
+│ Engine   │  ★ Pro Promagen  [Preview/Config badge] │  Mission         │
+│ Bay      │  ┌──────────┬──────────┬──────────┐     │  Control         │
+│ (xl+)    │  │⚡ Daily   │🎨 Format │🎬 Scenes │     │                  │
+│          │  │ Prompts  │          │          │     │  Exchange        │
+│ Exchange │  ├──────────┼──────────┼──────────┤     │  Cards           │
+│ Cards    │  │📊 Exchange│💾 Saved  │🧪 Prompt │     │  (right)         │
+│ (left)   │  │          │          │   Lab    │     │                  │
+│          │  ├──────────┼──────────┼──────────┤     │                  │
+│          │  │🌍 Frame  │⚙️ Stacking│🏆 Vote  │     │                  │
+│          │  │          │          │  Power   │     │                  │
+│          │  └──────────┴──────────┴──────────┘     │                  │
 │          │                                         │                  │
-│          │  [Upgrade to Pro] or [Save Preferences] │                  │
+│          │  ┌─────────────────────────────────────┐ │                  │
+│          │  │  HOVER PREVIEW / PAYMENT AREA       │ │                  │
+│          │  │  (swaps on card hover)               │ │                  │
+│          │  └─────────────────────────────────────┘ │                  │
+│          │                                         │                  │
+│          │  [★ Upgrade to Pro Promagen]  (CTA)     │                  │
 │          │                                         │                  │
 └──────────┴─────────────────────────────────────────┴──────────────────┘
 ```
 
-**v2.0.0 additions:** Engine Bay (left, xl+ only) shows provider icon grid. Mission Control (right) shows Home button instead of Pro button (since user is already on Pro page).
+#### The 9 Feature Cards (3×3 Grid)
 
-#### Comparison Table (Centre Column)
+Each card uses the **exchange-card glow pattern** — same `hexToRgba()`, same triple-layer `boxShadow`, same radial gradient overlays, same 200ms transition. Each card has a unique colour.
 
-The comparison table shows Standard vs Pro features. **FX Pairs, Exchanges, and Weather Prompt Format** have interactive controls (fullscreen pickers or dropdown). Other rows are read-only display.
+| Card | Emoji | Label         | Colour  | Free Value                | Pro Value               | Action (Free)  | Action (Pro) | Live Stat        |
+| ---- | ----- | ------------- | ------- | ------------------------- | ----------------------- | -------------- | ------------ | ---------------- |
+| 1    | ⚡    | Daily Prompts | #f59e0b | X / 3 today               | Unlimited               | Go unlimited → | Unlimited    | count/limit or ∞ |
+| 2    | 🎨    | Prompt Format | #60a5fa | Varies by surface          | Your choice             | Pro only       | Active       | T1–T4 label      |
+| 3    | 🎬    | Scenes        | #c084fc | 25 free scenes             | 200 · 23 worlds         | Unlock 175 →   | Explore →    | 25 or 200        |
+| 4    | 📊    | Exchanges     | #22d3ee | 16 fixed                   | 0–16, your choice       | Customise →    | Configure →  | count            |
+| 5    | 💾    | Saved         | #a78bfa | X · browser only           | Synced across devices   | View library → | Open library →| saved count     |
+| 6    | 🧪    | Prompt Lab    | #fb7185 | Pro exclusive               | Full access             | Pro only       | Open lab →   | —                |
+| 7    | 🌍    | Frame         | #34d399 | Your location              | You / Greenwich toggle  | Pro only       | Active       | —                |
+| 8    | ⚙️    | Stacking      | #fb923c | Base limits                | +1 on 7 categories      | Pro only       | Active       | —                |
+| 9    | 🏆    | Vote Power    | #fbbf24 | 1.0×                      | 1.5× influence          | Pro only       | Active       | 1.0× or 1.5×    |
 
-**Source of truth:** `FEATURE_COMPARISON` array in `src/data/pro-promagen/presets.ts`
+**Cards with navigation** (→ arrow on hover): Daily Prompts (free only → `/upgrade`), Scenes, Exchanges (opens picker), Saved, Prompt Lab (paid only).
 
-| Feature                   | Standard                | Pro                     | Interactive       |
-| ------------------------- | ----------------------- | ----------------------- | ----------------- |
-| **FX Pairs**              | 8 fixed                 | 0–16, your choice       | Fullscreen picker |
-| **Exchanges**             | 16 fixed                | 0–16, your choice       | Fullscreen picker |
-| **Weather Prompt Format** | Plain Language (Tier 4) | Select any tier (1–4)   | Dropdown selector |
-| Reference Frame           | Your location           | Toggle: You / Greenwich | —                 |
-| Daily Prompts             | 10 per day              | Unlimited               | —                 |
-| Prompt Stacking           | Base limits             | +1 on 7 categories      | —                 |
+**Cards without navigation** (info-only): Daily Prompts (paid), Prompt Format, Frame, Stacking, Vote Power.
 
-**Removed in v2.8.0:** Stock Indices row was removed when ChipsDropdown was deleted (duplicate React key errors). Index selection now handled per-exchange in Exchange Picker.
+**Live data cards:** Daily Prompts reads `useDailyUsage` count. Saved reads `useSavedPrompts().allPrompts.length`. Exchange count reads `selectedExchanges.length`.
 
-**Not shown in table:** Vote Weight (internal, 1.0× free / 1.5× Pro).
+#### Prompt Format Card — Tier Selector + Hover Preview
 
-#### Picker Trigger Styling
+The Prompt Format card has special behaviour:
 
-| Picker    | Trigger Style                                              | Done Button Style |
-| --------- | ---------------------------------------------------------- | ----------------- |
-| Exchanges | Purple-pink gradient (`from-purple-600/20 to-pink-600/20`) | Purple gradient   |
-| FX Pairs  | Emerald-sky gradient (`from-emerald-600/20 to-sky-600/20`) | Emerald gradient  |
+**Inside the card:**
+- Paid users see "Select tier ↓" label (amber) above 4 tier selector buttons (T1/T2/T3/T4)
+- Active tier button has solid fill (0.35 alpha + 0.7 border) vs inactive (0.03 alpha)
+- Free users see "Varies by surface" label + disabled tier buttons (visible but non-interactive)
+- Selection saves to localStorage + Clerk metadata via `handlePromptTierChange`
 
-#### Fullscreen Picker Mode
+**Below the cards (hover preview):**
+- When user hovers the Prompt Format card, the CTA/payment area transforms into **4 horizontal tooltip-style windows**
+- Each window is a visual clone of `WeatherPromptTooltip`:
+  - Same `rgba(15, 23, 42, 0.97)` dark glass background
+  - Same tier-coloured triple-layer box-shadow + radial gradient overlays
+  - Same "Image Prompt" header with text-shadow glow
+  - Same `TierBadge` coloured pill (blue T1, purple T2, emerald T3, orange T4)
+  - Same copy button + SaveIcon
+- **Live data:** Prompts come from `usePromptShowcase()` (Prompt of the Moment) — same data that rotates every 3 minutes on the homepage. Falls back to static London/Tower Bridge prompts if API hasn't loaded.
+- **Active tier highlighted:** The window matching the user's selected tier gets enhanced glow (0.4/0.7 alpha vs 0.25/0.4) and an emerald "✓ Selected" indicator
+- **Animated header:** "Select the tier you require for all prompts" in amber, `animate-pulse` (matches mission control "Hover over a countries flag" animation), double gap above and below
+- **Mouse leave** → reverts to CTA/payment area
 
-When a picker trigger is clicked:
-
-1. **Entire centre panel becomes the picker** (no headers, no badges, no table)
-2. Picker fills the available space with its accordion interface
-3. Done button at bottom returns to comparison table view
-4. Only ONE picker can be open at a time
-
-**State Management:**
-
-```typescript
-// In pro-promagen-client.tsx (v2.8.0)
-// Two separate booleans (not a union type)
-const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
-const [isFxPickerFullscreen, setIsFxPickerFullscreen] = useState(false);
-
-// Weather prompt tier (Pro feature)
-const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
-// Default tier 4 (Plain Language) for free users
-// Pro users can select any tier (1–4) via comparison table dropdown
-
-// When isExchangePickerFullscreen: Show ExchangePicker fullscreen
-// When isFxPickerFullscreen: Show FxPicker fullscreen
-// Otherwise: Show normal comparison table + weather tier dropdown
+**State flow:**
 ```
+Prompt Format card hover → setFormatHovered(true)
+  → CTA area conditionally renders TierPreviewPanel
+  → TierPreviewPanel calls usePromptShowcase() for live PotM data
+  → 4 windows render with potmData.prompts.tier1–tier4
+Mouse leave → setFormatHovered(false) → CTA/UpgradeCta renders
+```
+
+#### Future Hover Previews (Planned)
+
+The same hover-to-preview pattern will extend to other feature cards:
+- **Scenes card** → hover shows scene starter grid preview
+- **Other cards** → hover shows relevant feature preview in the CTA area
+
+This creates a non-destructive "peek" at each feature without navigating away from the page.
+
+#### Exchange Picker (Fullscreen Mode)
+
+When paid users click the Exchanges card (or free users click "Customise"):
+
+1. **Entire centre panel becomes the Exchange Picker** (fullscreen mode)
+2. Only the Done button visible at bottom — NO header, NO cards, NO CTA
+3. Continental accordion groups show all 89 exchanges by 7 regions
+4. "Done — Save Selection" button closes picker and returns to cards
+5. State managed via `isExchangePickerFullscreen` boolean
+
+**Note:** FX Picker was fully removed (v3.0.0, 10 March 2026). FX pair selection is no longer available on the Pro page. The FX ribbon is hidden on this route (`showFinanceRibbon={false}`).
 
 #### Demo Mode (Zero API Cost)
 
 | Data Type        | Source                       | Display                    |
 | ---------------- | ---------------------------- | -------------------------- |
-| FX ribbon prices | `fx-pairs.json` demo values  | Shows demo prices          |
 | Exchange clocks  | Client `Intl.DateTimeFormat` | Real local time            |
 | Market status    | Client calculation           | Open/Closed                |
-| Weather badges   | Demo placeholder             | Shows "â€”" or static icon |
+| Weather badges   | Demo placeholder             | Shows "—" or static icon   |
 | Exchange cards   | Same component as homepage   | Identical styling          |
+| PotM prompts     | `/api/homepage/prompt-of-the-moment` | Live (shared with homepage) |
 
-**Key rule:** Exchange cards must use the **exact same component** as homepage (`ExchangeCard`), just fed demo data.
+#### Component Architecture
 
-#### Component Reuse
+| Component             | Source                                          | Notes                                    |
+| --------------------- | ----------------------------------------------- | ---------------------------------------- |
+| `HomepageGrid`        | `@/components/layout/homepage-grid`             | Standard 3-column layout                 |
+| `FeatureControlPanel` | `@/components/pro-promagen/feature-control-panel` | 3×3 feature card grid (v1.1.0)           |
+| `TierPreviewPanel`    | `pro-promagen-client.tsx` (inline)              | 4 tooltip-clone windows with PotM data   |
+| `UpgradeCta`          | `@/components/pro-promagen/upgrade-cta`         | Mode-aware button                        |
+| `ExchangePicker`      | `@/components/pro-promagen/exchange-picker`     | Continental accordion (fullscreen mode)  |
+| `ExchangeList`        | `@/components/ribbon/exchange-list`             | Left/right exchange rails                |
+| `EngineBay`           | `@/components/home/engine-bay`                  | Provider icon grid (xl+ only)            |
+| `MissionControl`      | `@/components/home/mission-control`             | Home button shown (not Pro button)       |
+| `SaveIcon`            | `@/components/prompts/library/save-icon`        | Save button in tier preview windows      |
+| `usePromptShowcase`   | `@/hooks/use-prompt-showcase`                   | Live PotM data for tier preview          |
 
-| Component        | Source                                      | Notes                                 |
-| ---------------- | ------------------------------------------- | ------------------------------------- |
-| `HomepageGrid`   | `@/components/layout/homepage-grid`         | Standard 3-column layout              |
-| `FxRibbon`       | `@/components/fx/fx-ribbon`                 | Fed demo prices                       |
-| `ExchangeCard`   | `@/components/exchanges/exchange-card`      | Fed demo weather                      |
-| `ExchangePicker` | `@/components/pro-promagen/exchange-picker` | Continental accordion                 |
-| `FxPicker`       | `@/components/fx/fx-picker`                 | Regional accordion                    |
-| `EngineBay`      | `@/components/home/engine-bay`              | Provider icon grid (v2.0.0, xl+ only) |
-| `MissionControl` | `@/components/home/mission-control`         | Home button shown (not Pro) (v2.0.0)  |
+#### State Management
+
+```typescript
+// In pro-promagen-client.tsx (v3.0.0+)
+const [selectedExchanges, setSelectedExchanges] = useState<string[]>(defaultExchangeIds);
+const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
+const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
+const [formatHovered, setFormatHovered] = useState(false);
+
+// Hydration gate — false until useEffect reads localStorage
+const [hydrated, setHydrated] = useState(false);
+
+// Clerk metadata override for prompt tier
+useEffect(() => {
+  if (clerkPromptTier !== null && [1, 2, 3, 4].includes(clerkPromptTier)) {
+    setSelectedPromptTier(clerkPromptTier as PromptTier);
+  }
+}, [clerkPromptTier]);
+```
 
 #### Data Flow
 
-1. Page loads → show SSOT defaults (tier 4 for weather prompt format)
-2. `useEffect` reads localStorage for saved preferences (exchanges, FX pairs, weather tier)
-3. User clicks FX or Exchange picker trigger → fullscreen picker opens
-4. User makes selections in accordion
-5. "Done" → returns to table, selection state updated
-6. User selects weather prompt tier from dropdown in comparison table (Pro only)
-7. **Paid users:** Save → localStorage + Clerk metadata
-8. **Free users:** Preview only, CTA → `/upgrade`
+1. Page loads → show SSOT defaults (tier 4, 16 exchanges)
+2. `useEffect` reads localStorage for saved preferences
+3. Clerk metadata hydrates async → overrides localStorage tier if present
+4. User hovers Prompt Format card → `formatHovered=true` → tier preview appears
+5. User clicks T1–T4 button in card → tier saves to localStorage + Clerk
+6. User clicks Exchanges card → fullscreen picker opens
+7. User makes selections in accordion → "Done" returns to card grid
+8. **Paid users:** Save → localStorage + Clerk metadata
+9. **Free users:** Preview only, "Go unlimited" → `/upgrade`
 
 #### File Structure
 
 ```
 src/
 ├── app/pro-promagen/
-│   ├── page.tsx                    # Server component (119 lines)
-│   ├── pro-promagen-client.tsx     # Client orchestrator (815 lines, v2.8.0)
-│   ├── error.tsx                   # Error boundary (61 lines)
-│   └── loading.tsx                 # Loading skeleton (101 lines)
+│   ├── page.tsx                      # Server component
+│   ├── pro-promagen-client.tsx       # Client orchestrator + TierPreviewPanel (895 lines, v3.0.0+)
+│   ├── error.tsx                     # Error boundary
+│   └── loading.tsx                   # Loading skeleton
 ├── components/pro-promagen/
-│   ├── comparison-table.tsx        # Table with picker triggers (570 lines, v2.4.0)
-│   ├── exchange-picker.tsx         # Continental accordion (970 lines)
-│   ├── upgrade-cta.tsx             # Mode-aware button (140 lines)
-│   ├── index.ts                    # Barrel export
+│   ├── feature-control-panel.tsx     # 3×3 feature card grid (465 lines, v1.1.0)
+│   ├── exchange-picker.tsx           # Continental accordion (970 lines)
+│   ├── upgrade-cta.tsx               # Mode-aware button (175 lines)
+│   ├── index.ts                      # Barrel export
 │   └── __tests__/
 │       └── exchange-picker.test.tsx
-├── components/fx/
-│   ├── fx-picker.tsx               # Regional FX accordion (794 lines)
-│   └── picker-toggle.tsx           # Picker toggle utilities (309 lines)
 ├── data/pro-promagen/
-│   ├── presets.ts                  # FEATURE_COMPARISON + WEATHER_PROMPT_TIER_OPTIONS (353 lines)
-│   └── currency-search-data.ts    # FX search index (173 lines)
-├── lib/pro-promagen/
-│   ├── exchange-picker-helpers.ts  # Grouping/search utilities (349 lines)
-│   ├── types.ts                   # TypeScript interfaces (376 lines)
-│   └── index.ts                   # Barrel export
-└── lib/fx/
-    ├── fx-regions.ts               # Currency → Region mapping (218 lines)
-    └── fx-picker-helpers.ts        # Grouping/search utilities (275 lines)
+│   ├── presets.ts                    # FEATURE_COMPARISON + WEATHER_PROMPT_TIER_OPTIONS
+│   └── currency-search-data.ts      # FX search index (legacy, may be removed)
+└── lib/pro-promagen/
+    ├── exchange-picker-helpers.ts    # Grouping/search utilities
+    ├── types.ts                      # TypeScript interfaces
+    └── index.ts                      # Barrel export
 ```
 
-**Total Pro Promagen code:** ~5,623 lines across 15 files.
+**Dead files (not imported, candidates for removal):**
+- `comparison-table.tsx` — replaced by FeatureControlPanel
+- `scene-grid-preview.tsx` — removed from render
+- `tier-comparison-strip.tsx` — removed from render
+- `tier-showcase.tsx` — removed from render
+- `usage-snapshot.tsx` — removed from render
 
 #### Validation Rules
 
-- FX pairs: 0 â‰¤ count â‰¤ 16, all IDs must exist in SSOT catalog
-- Exchanges: 0 â‰¤ count â‰¤ 16, all IDs must exist in SSOT catalog
+- Exchanges: 0 ≤ count ≤ 16, all IDs must exist in SSOT catalog
+- Prompt tier: 1, 2, 3, or 4 only (validated in `/api/user/preferences` route)
+- Free users can fully interact (try before buy) but selections don't persist
 
-Rules:
+#### Stripe Integration (Planned)
 
-- Free users can fully interact (try before buy)
-- Selections only persist for paid users
-- Demo data avoids API costs
-- Homepage reflects saved preferences after save
+Payment will be handled via **Stripe Checkout** (redirect flow, not embedded):
 
-Authority for components: See `code-standard.md` Â§8.4 for dropdown patterns.
+1. "Go unlimited" / "Upgrade to Pro Promagen" button → calls `/api/stripe/checkout`
+2. API route creates a Stripe Checkout Session with the Pro Promagen product/price
+3. User redirected to Stripe's hosted payment page (PCI-compliant, handles 3D Secure)
+4. On success: Stripe fires `checkout.session.completed` webhook → `/api/stripe/webhook`
+5. Webhook handler updates Clerk `publicMetadata.tier` from `'free'` to `'paid'`
+6. User redirected back to `/pro-promagen` which now renders in Configuration mode
+
+**Required setup:**
+- Stripe account (verified with business bank account)
+- npm package: `stripe`
+- Environment variables: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
+- One product "Pro Promagen" with recurring price created in Stripe Dashboard
+
+**The payment area** below the 9 feature cards is the designated space for Stripe. Currently shows `UpgradeCta` button. When Stripe is integrated, this area expands to show pricing, payment button, and any promotional content. The hover-preview system (tier windows) temporarily replaces this area on Prompt Format hover, then reverts.
+
+Authority for implementation: `docs/authority/code-standard.md`, `docs/authority/homepage.md`
 
 ---
 
@@ -1196,15 +1304,23 @@ Scene Starters are curated one-click prompt templates in the prompt builder. The
 
 | Aspect                     | Standard Promagen                        | Pro Promagen                   |
 | -------------------------- | ---------------------------------------- | ------------------------------ |
-| Scene count                | 25 scenes                                | 200 scenes (25 free + 175 pro) |
-| Worlds accessible          | All 10 worlds (limited scenes per world) | All 10 worlds (full library)   |
+| Scene count                | 25 scenes                                 | 200 scenes (25 free + 175 pro) |
+| Worlds accessible          | 5 free worlds (limited scenes per world)  | All 23 worlds (full library)   |
 | Tier-aware prefills        | Yes                                      | Yes                            |
 | Modification tracking      | Yes                                      | Yes                            |
 | Flavour phrases in Explore | Yes (when scene has them)                | Yes (when scene has them)      |
 
 #### Scene Distribution
 
-200 scenes across 10 worlds: Portraits & People, Fantasy & Mythology, Sci-Fi & Futurism, Nature & Landscapes, Urban & Architecture, Abstract & Artistic, Horror & Dark, Historical & Period, Food & Still Life, Underwater & Aerial. Each world has exactly 20 scenes. Free scenes are spread across all worlds so every user can experience every theme.
+200 scenes across 23 worlds (5 free + 18 pro):
+
+**Free worlds (5 worlds, 25 scenes — 5 each):**
+Portraits & People, Landscapes & Worlds, Mood & Atmosphere, Style-Forward, Trending / Seasonal
+
+**Pro worlds (18 worlds, 175 scenes):**
+Cinematic, Fantasy & Mythology, Sci-Fi & Future, Historical Eras, Urban & Street, Nature & Elements, Architecture & Interiors, Portraiture & Character, Dark & Horror, Whimsical & Surreal, Cultural & Ceremonial, Abstract & Experimental, Food & Still Life, Animals & Creatures, Commodity-Inspired, Weather-Driven, Seasonal, Micro & Macro
+
+Free scenes are concentrated in 5 dedicated free worlds so free users get a complete experience within those themes. Pro scenes span 18 additional thematic worlds.
 
 #### Pro Gate Behaviour
 
@@ -1218,6 +1334,55 @@ Scene Starters are curated one-click prompt templates in the prompt builder. The
 
 See `scene-starters.md` for full architecture, data schema, and file locations.
 
+---
+
+### 5.13 Prompt Lab (`/studio/playground`) — Pro Promagen exclusive
+
+The Prompt Lab is a second prompt builder environment at `/studio/playground`. It is listed as card 6 (🧪) in the Feature Control Panel on `/pro-promagen`.
+
+#### Tier Comparison
+
+| Aspect             | Standard Promagen          | Pro Promagen      |
+| ------------------ | -------------------------- | ----------------- |
+| Access             | Not available              | Full access       |
+| Route              | —                          | `/studio/playground` |
+| Provider selection | —                          | Dropdown (all 42) |
+| Intelligence panel | —                          | Full panel        |
+| Tier preview       | —                          | All 4 tiers       |
+
+#### Current Status
+
+**Gating: NOT IMPLEMENTED.** The `/studio/playground` route currently has zero auth checks — any user can access it. This was flagged as requiring a Pro gate (auth check + lock overlay) but has not been built.
+
+**When gating is implemented:**
+- Anonymous users → redirect to sign-in
+- Free signed-in users → lock overlay with "Upgrade to Pro Promagen" CTA linking to `/pro-promagen`
+- Pro users → full access
+
+#### Architecture
+
+The Prompt Lab reuses the same components as the standard prompt builder (`/providers/[id]`) but with a provider selector dropdown instead of a pre-selected provider from the URL.
+
+| File                                              | Purpose                        |
+| ------------------------------------------------- | ------------------------------ |
+| `src/app/studio/playground/page.tsx`              | Server component (data fetch)  |
+| `src/app/studio/playground/playground-page-client.tsx` | Client wrapper (provider state) |
+| `src/components/prompts/playground-workspace.tsx`  | Workspace with dropdown        |
+
+**Key difference from standard builder:**
+- Standard (`/providers/[id]`): Provider pre-selected from URL, static header
+- Prompt Lab (`/studio/playground`): Provider selected via dropdown, dynamic header, all 42 platforms accessible from one page
+
+#### Feature Control Panel Integration
+
+On the Pro page:
+- **Free users:** Card shows "Pro exclusive" / "Pro only" — no navigation link
+- **Paid users:** Card shows "Full access" / "Open lab →" — links to `/studio/playground`
+
+Authority: `docs/authority/prompt-intelligence.md` §9
+
+---
+
 ## 6. Invariants (apply to everyone, always)
 
 These rules are **never overridden**, including for paid users:
@@ -1229,7 +1394,8 @@ These rules are **never overridden**, including for paid users:
 - No drag-and-drop ordering
 - No favourites-first ordering
 - No manual pinning
-- **Prompt builder access is tiered** — Anonymous: 5/day, Free signed-in: 10/day, Pro: unlimited (§3.2)
+- **Prompt builder access is tiered** — Anonymous: 3/day, Free signed-in: 5/day, Pro: unlimited (§3.2)
+- **Prompt Lab (`/studio/playground`) requires Pro Promagen** — NOT YET GATED (see §5.13)
 
 Users may choose **scope** and **reference**, but not **physics**.
 
@@ -1264,6 +1430,10 @@ Authority for those lives elsewhere:
 - Category limits → `src/lib/usage/constants.ts`
 - Homepage features → `docs/authority/homepage.md`
 - Scene Starters → `docs/authority/scene-starters.md`
+- Feature Control Panel → `src/components/pro-promagen/feature-control-panel.tsx`
+- Surface-aware prompt tiers → `src/hooks/use-global-prompt-tier.ts`
+- Prompt tier API → `src/app/api/user/preferences/route.ts`
+- Prompt Lab → `docs/authority/prompt-intelligence.md` §9
 - Ask Promagen → **NOT IMPLEMENTED** (§5.9, planned feature)
 - WorldPrompt Live Background → **NOT IMPLEMENTED** (§5.11, see `worldprompt-creative-engine.md` for original spec)
 
@@ -1301,6 +1471,9 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **14 Mar 2026:** **FEATURE CONTROL PANEL COCKPIT (v3.0.0)** — Complete rewrite of §5.10. Comparison table replaced by 3×3 Feature Control Panel — 9 exchange-card-style feature cards with unique glow colours, live data, and hover-triggered previews. Prompt Format card shows inline T1–T4 tier selector with "Select tier ↓" label; hover triggers 4 horizontal tooltip-clone windows below the cards showing live Prompt of the Moment data in all 4 tiers with copy/save buttons and animated amber header. Each card serves dual purpose: sales (free users see Standard vs Pro) and configuration (paid users interact directly). Exchange Picker fullscreen mode preserved. FX Picker references removed (was deleted v3.0.0). Vote Weight now visible as card 9 (was deliberately hidden). Dead files noted: comparison-table.tsx, scene-grid-preview.tsx, tier-comparison-strip.tsx, tier-showcase.tsx, usage-snapshot.tsx. Added Stripe integration plan. Updated file structure and line counts.
+- **14 Mar 2026:** **SURFACE-AWARE PROMPT TIER SYSTEM + LIMITS UPDATE (v3.0.0)** — §3.2/§3.3: Anonymous daily limit reduced from 5 to 3 (matches `ANONYMOUS_FREE_LIMIT = 3` in constants.ts). §4.1: Added `promptTier` to Clerk metadata interface. §5.6: Added "Surface-Aware Prompt Tier System" subsection documenting the per-surface free tier rotation (Variable Reward pattern) and Pro global override with Clerk persistence. "Weather Prompt Format" renamed to "All Prompt Format" throughout. 5 consumer files documented (exchange-list, provider-cell, finance-ribbon, commodity-mover-card, mission-control).
+- **14 Mar 2026:** **DOC CORRECTIONS (v3.0.0)** — §5.12: Fixed world count from "10 worlds" to "23 worlds" (5 free + 18 pro). Updated world name list to match `worlds.ts` (was showing incorrect names like "Underwater & Aerial" which don't exist). §5.13: Added Prompt Lab section — documents Pro exclusive status, current lack of auth gating, architecture, and Feature Control Panel integration. §6: Added Prompt Lab gating invariant (not yet enforced). §5.10: Added dead file cleanup table (1,136 lines across 5 orphaned files). §7: Added 4 new authority references.
 - **4 Mar 2026:** **DOC AUDIT v2.0.0** — Cross-referenced all sections against src.zip. 12 corrections:
   - §2.1: Added 6 missing homepage free features (Prompt of the Moment, Like system, Community Pulse, Online Users, World Context page, Market Pulse description updated to "dynamic" from "4 cities")
   - §5.6: Removed stale duplicate Tier 4 platform list (Firefly, Ideogram, Recraft, etc. — these were from the old spec, not matching `platform-tiers.ts`)

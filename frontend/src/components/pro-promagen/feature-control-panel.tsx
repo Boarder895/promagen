@@ -70,6 +70,8 @@ interface FeatureCardProps {
   stat?: string;
   /** Notifies parent when hover state changes */
   onHoverChange?: (hovering: boolean) => void;
+  /** When true, action label uses card colour at rest (not grey) */
+  actionAlwaysColored?: boolean;
 }
 
 function FeatureCard({
@@ -84,6 +86,7 @@ function FeatureCard({
   children,
   stat,
   onHoverChange,
+  actionAlwaysColored,
 }: FeatureCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const hasAction = typeof onAction === 'function';
@@ -189,7 +192,7 @@ function FeatureCard({
           <span
             className={`inline-flex items-center gap-1 font-semibold uppercase tracking-wide ${hasAction ? 'cursor-pointer' : ''}`}
             style={{
-              color: isHovered && hasAction ? color : 'rgba(255, 255, 255, 0.5)',
+              color: actionAlwaysColored ? color : (isHovered && hasAction ? color : 'rgba(255, 255, 255, 0.5)'),
               fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)',
               transition: 'color 200ms ease-out',
               letterSpacing: '0.05em',
@@ -282,6 +285,12 @@ export interface FeatureControlPanelProps {
   onOpenExchangePicker: () => void;
   /** Called when Prompt Format card hover state changes */
   onFormatHover?: (hovering: boolean) => void;
+  /** Called when Scenes card hover state changes */
+  onScenesHover?: (hovering: boolean) => void;
+  /** Called when Saved card hover state changes */
+  onSavedHover?: (hovering: boolean) => void;
+  /** Called when Prompt Lab card hover state changes */
+  onLabHover?: (hovering: boolean) => void;
 }
 
 export function FeatureControlPanel({
@@ -291,6 +300,9 @@ export function FeatureControlPanel({
   selectedExchangeCount,
   onOpenExchangePicker,
   onFormatHover,
+  onScenesHover,
+  onSavedHover,
+  onLabHover,
 }: FeatureControlPanelProps) {
   const { dailyUsage, anonymousUsage } = usePromagenAuth();
   const { allPrompts } = useSavedPrompts();
@@ -340,6 +352,7 @@ export function FeatureControlPanel({
           isPro={isPaidUser}
           stat={isPaidUser ? (tierLabel?.short ?? 'T4') : ''}
           onHoverChange={onFormatHover}
+          actionAlwaysColored={true}
         >
           {isPaidUser ? (
             <>
@@ -377,6 +390,7 @@ export function FeatureControlPanel({
           onAction={() => nav('/')}
           isPro={isPaidUser}
           stat={isPaidUser ? '200' : '25'}
+          onHoverChange={onScenesHover}
         />
 
         {/* ── 📊 Exchanges ────────────────────────────────── */}
@@ -403,6 +417,8 @@ export function FeatureControlPanel({
           onAction={() => nav('/studio/library')}
           isPro={isPaidUser}
           stat={String(savedCount)}
+          onHoverChange={onSavedHover}
+          actionAlwaysColored={true}
         />
 
         {/* ── 🧪 Prompt Lab ───────────────────────────────── */}
@@ -415,6 +431,8 @@ export function FeatureControlPanel({
           actionLabel={isPaidUser ? 'Open lab' : 'Pro only'}
           onAction={isPaidUser ? () => nav('/studio/playground') : undefined}
           isPro={isPaidUser}
+          onHoverChange={onLabHover}
+          actionAlwaysColored={true}
         />
 
         {/* ── 🌍 Reference Frame ──────────────────────────── */}
@@ -426,6 +444,7 @@ export function FeatureControlPanel({
           proValue="You / Greenwich toggle"
           actionLabel={isPaidUser ? 'Active' : 'Pro only'}
           isPro={isPaidUser}
+          actionAlwaysColored={true}
         />
 
         {/* ── ⚙️ Prompt Stacking ─────────────────────────── */}
@@ -437,6 +456,7 @@ export function FeatureControlPanel({
           proValue="+1 on 7 categories"
           actionLabel={isPaidUser ? 'Active' : 'Pro only'}
           isPro={isPaidUser}
+          actionAlwaysColored={true}
         >
           <span className="text-white/40" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}>
             Style, Lighting, Colour, Atmosphere, Materials, Fidelity, Negative
@@ -456,6 +476,7 @@ export function FeatureControlPanel({
           actionLabel={isPaidUser ? 'Active' : 'Pro only'}
           isPro={isPaidUser}
           stat={isPaidUser ? '1.5×' : '1.0×'}
+          actionAlwaysColored={true}
         />
       </div>
     </>
