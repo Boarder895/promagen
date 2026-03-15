@@ -14,6 +14,7 @@
 //   causes 404 spam for missing provider icons (e.g. dreamstudio.png).
 //   <img> + onError handles missing icons silently. eslint-disable comments added.
 // - FIX: Centre column layout — feature panel 1/3, preview windows 2/3 (fixed ratio).
+//   Feature grid uses grid-template-rows: repeat(3, 1fr) to fill its 1/3 evenly.
 //   Removed all scrolling from preview windows (user can't interact with them).
 //   Consistent across dev/prod regardless of viewport height.
 //

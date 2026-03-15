@@ -1,9 +1,14 @@
 // src/components/pro-promagen/feature-control-panel.tsx
 // ============================================================================
-// FEATURE CONTROL PANEL v1.1.0 — Pro Promagen Purchase/Config Page
+// FEATURE CONTROL PANEL v1.2.0 — Pro Promagen Purchase/Config Page
 // ============================================================================
 // 3×3 grid of exchange-card-style feature cards.
 // Each card: unique glow colour, hover effect, live data where relevant.
+//
+// v1.2.0:
+// - Grid: grid-template-rows: repeat(3, 1fr) + height: 100% — 3 rows fill
+//   parent evenly. Cards no longer have minHeight — they take their grid cell.
+// - Padding tightened: clamp(8px, 0.8vw, 14px) → clamp(6px, 0.6vw, 12px)
 //
 // v1.1.0:
 // - a11y: role="button", tabIndex, onKeyDown on actionable cards
@@ -117,8 +122,7 @@ function FeatureCard({
           ? `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`
           : '0 1px 3px rgba(0, 0, 0, 0.1)',
         transition: 'border-color 200ms ease-out, box-shadow 200ms ease-out',
-        padding: 'clamp(8px, 0.8vw, 14px)',
-        minHeight: 'clamp(80px, 7vw, 110px)',
+        padding: 'clamp(6px, 0.6vw, 12px)',
       }}
       onMouseEnter={() => { setIsHovered(true); onHoverChange?.(true); }}
       onMouseLeave={() => { setIsHovered(false); onHoverChange?.(false); }}
@@ -323,7 +327,9 @@ export function FeatureControlPanel({
         .feature-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(3, 1fr);
           gap: clamp(6px, 0.6vw, 10px);
+          height: 100%;
         }
       ` }} />
 
