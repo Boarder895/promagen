@@ -13,8 +13,9 @@
 // - FIX: Reverted next/image back to <img> — next/image optimization pipeline
 //   causes 404 spam for missing provider icons (e.g. dreamstudio.png).
 //   <img> + onError handles missing icons silently. eslint-disable comments added.
-// - FIX: Preview panel minHeight clamp(260px, 28vh, 400px) — prevents the 5 preview
-//   windows from being crushed on shorter viewports (prod vs dev parity)
+// - FIX: Centre column layout — feature panel 1/3, preview windows 2/3 (fixed ratio).
+//   Removed all scrolling from preview windows (user can't interact with them).
+//   Consistent across dev/prod regardless of viewport height.
 //
 // v3.1.0 (15 Mar 2026):
 // - REMOVED: FX Picker fullscreen mode (FX pairs no longer configurable)
@@ -1165,7 +1166,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
           }}
         >
           <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(251, 113, 133, 0.2) 0%, transparent 70%)' }} />
-          <div className="relative z-10 flex flex-col h-full overflow-y-auto" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+          <div className="relative z-10 flex flex-col h-full overflow-hidden" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
 
             {/* Countdown — shows NEXT city arriving, matching homepage pattern:
                 Normal:   [flag] NextCity arriving in M:SS
@@ -1735,8 +1736,8 @@ export default function ProPromagenClient({
         </div>
       </header>
 
-      {/* Feature Control Panel — 3×3 grid */}
-      <div className="shrink-0">
+      {/* Feature Control Panel — 3×3 grid (1/3 of available height) */}
+      <div className="min-h-0 overflow-hidden" style={{ flex: '1 1 0%' }}>
         <FeatureControlPanel
           isPaidUser={isPaidUser}
           selectedPromptTier={selectedPromptTier}
@@ -1750,12 +1751,12 @@ export default function ProPromagenClient({
         />
       </div>
 
-      {/* Bottom panel — payment area / tier preview on Format hover */}
+      {/* Bottom panel — preview windows (2/3 of available height) */}
       <div
-        className="flex-1 flex flex-col rounded-xl overflow-hidden"
+        className="min-h-0 flex flex-col rounded-xl overflow-hidden"
         style={{
+          flex: '2 1 0%',
           marginTop: 'clamp(8px, 0.8vw, 12px)',
-          minHeight: 'clamp(260px, 28vh, 400px)',
         }}
       >
         {formatHovered ? (
