@@ -10,7 +10,11 @@
 //   changed to current city in v3.1.0, causing both sections to show same city
 // - KEPT: Weather data below "What Promagen Sees" shows CURRENT city (city/countryCode)
 //   with conditions · temp °C · local time
-// - FIX: All 5 <img> tags converted to next/image <Image fill> — 0 lint warnings
+// - FIX: Reverted next/image back to <img> — next/image optimization pipeline
+//   causes 404 spam for missing provider icons (e.g. dreamstudio.png).
+//   <img> + onError handles missing icons silently. eslint-disable comments added.
+// - FIX: Preview panel minHeight clamp(260px, 28vh, 400px) — prevents the 5 preview
+//   windows from being crushed on shorter viewports (prod vs dev parity)
 //
 // v3.1.0 (15 Mar 2026):
 // - REMOVED: FX Picker fullscreen mode (FX pairs no longer configurable)
@@ -84,7 +88,6 @@
 'use client';
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import Image from 'next/image';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
@@ -742,15 +745,17 @@ function SavedPreviewPanel() {
                   >
                     {prompt.platformName}
                   </span>
-                  <div className="relative rounded shrink-0" style={{ width: 'clamp(18px, 1.6vw, 24px)', height: 'clamp(18px, 1.6vw, 24px)' }}>
-                    <Image
-                      src={`/icons/providers/${prompt.platformId}.png`}
-                      alt=""
-                      fill
-                      className="rounded object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/icons/providers/${prompt.platformId}.png`}
+                    alt=""
+                    className="rounded shrink-0"
+                    style={{
+                      width: 'clamp(18px, 1.6vw, 24px)',
+                      height: 'clamp(18px, 1.6vw, 24px)',
+                    }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
                 </div>
 
                 {/* Tier badge */}
@@ -1168,15 +1173,14 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                 Now:      [flag] Now                        */}
             {potmData && (
               <div className="inline-flex items-center shrink-0" style={{ gap: 'clamp(6px, 0.5vw, 10px)', marginBottom: 'clamp(2px, 0.2vw, 4px)' }}>
-                <div className="relative rounded-sm shrink-0 overflow-hidden" style={{ width: 'clamp(18px, 1.5vw, 24px)', height: 'clamp(14px, 1.1vw, 18px)' }}>
-                  <Image
-                    src={`/flags/${(potmData.nextCountryCode ?? '').toLowerCase()}.svg`}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/flags/${(potmData.nextCountryCode ?? '').toLowerCase()}.svg`}
+                  alt=""
+                  className="rounded-sm object-cover shrink-0"
+                  style={{ width: 'clamp(18px, 1.5vw, 24px)', height: 'clamp(14px, 1.1vw, 18px)' }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
                 {totalSec <= 3 ? (
                   <span className="tabular-nums font-semibold text-amber-300" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)', filter: 'brightness(1.3)' }}>Now</span>
                 ) : totalSec <= 29 ? (
@@ -1213,15 +1217,14 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                 style={{ margin: 'clamp(6px, 0.6vw, 10px) 0', gap: 'clamp(2px, 0.2vw, 4px)' }}
               >
                 <div className="inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                  <div className="relative rounded-sm shrink-0 overflow-hidden" style={{ width: 'clamp(16px, 1.3vw, 20px)', height: 'clamp(12px, 1vw, 15px)' }}>
-                    <Image
-                      src={`/flags/${(potmData.countryCode ?? '').toLowerCase()}.svg`}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  </div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/flags/${(potmData.countryCode ?? '').toLowerCase()}.svg`}
+                    alt=""
+                    className="rounded-sm object-cover shrink-0"
+                    style={{ width: 'clamp(16px, 1.3vw, 20px)', height: 'clamp(12px, 1vw, 15px)' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
                   <span className="text-white font-semibold" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>
                     {potmData.city}
                   </span>
@@ -1299,15 +1302,16 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                     {provider?.name ?? t.label}
                   </span>
                   {provider && (
-                    <div className="relative rounded shrink-0" style={{ width: 'clamp(16px, 1.4vw, 22px)', height: 'clamp(16px, 1.4vw, 22px)' }}>
-                      <Image
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={`/icons/providers/${provider.id}.png`}
                         alt=""
-                        fill
-                        className="rounded object-cover"
+                        className="rounded shrink-0"
+                        style={{ width: 'clamp(16px, 1.4vw, 22px)', height: 'clamp(16px, 1.4vw, 22px)' }}
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
-                    </div>
+                    </>
                   )}
                 </div>
 
@@ -1360,15 +1364,15 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
       {/* ── 42 provider icons row ────────────────────────────────────── */}
       <div className="flex items-center justify-center flex-wrap" style={{ gap: 'clamp(2px, 0.25vw, 4px)', paddingTop: 'clamp(6px, 0.6vw, 10px)' }}>
         {providers.slice(0, 42).map((p) => (
-          <div key={p.id} className="relative rounded" style={{ width: 'clamp(14px, 1.2vw, 18px)', height: 'clamp(14px, 1.2vw, 18px)' }}>
-            <Image
-              src={`/icons/providers/${p.id}.png`}
-              alt=""
-              fill
-              className="rounded object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          </div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={p.id}
+            src={`/icons/providers/${p.id}.png`}
+            alt=""
+            className="rounded"
+            style={{ width: 'clamp(14px, 1.2vw, 18px)', height: 'clamp(14px, 1.2vw, 18px)' }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
         ))}
         <span className="font-semibold" style={{ color: '#fb7185', fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}>
           42 platforms — switch instantly
@@ -1748,9 +1752,10 @@ export default function ProPromagenClient({
 
       {/* Bottom panel — payment area / tier preview on Format hover */}
       <div
-        className="flex-1 min-h-0 flex flex-col rounded-xl overflow-hidden"
+        className="flex-1 flex flex-col rounded-xl overflow-hidden"
         style={{
           marginTop: 'clamp(8px, 0.8vw, 12px)',
+          minHeight: 'clamp(260px, 28vh, 400px)',
         }}
       >
         {formatHovered ? (
