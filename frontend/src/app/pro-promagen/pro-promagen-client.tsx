@@ -1417,6 +1417,12 @@ export default function ProPromagenClient({
   // Hydration gate — false until useEffect reads localStorage
   const [hydrated, setHydrated] = useState(false);
 
+  // Remove SSR heading shell on mount — it was rendered by page.tsx (server
+  // component) to give the browser an instant LCP paint before JS hydrates.
+  useEffect(() => {
+    document.getElementById('pro-ssr-shell')?.remove();
+  }, []);
+
   // Read localStorage after mount (client-only, runs once)
   useEffect(() => {
     const storedExch = loadArrayFromStorage(STORAGE_KEYS.EXCHANGE_SELECTION);
@@ -1760,17 +1766,25 @@ export default function ProPromagenClient({
           marginTop: 'clamp(8px, 0.8vw, 12px)',
         }}
       >
-        {formatHovered ? (
+        {/* All preview panels rendered always — toggled via CSS display.
+            This avoids the mount-on-hover spike (PromptLabPreviewPanel starts
+            5 timers + assemblePrompt + 42 icons on mount). With CSS toggle,
+            hover just flips display — zero React work, instant paint. */}
+        <div style={{ display: formatHovered ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <TierPreviewPanel activeTier={selectedPromptTier} />
-        ) : scenesHovered ? (
+        </div>
+        <div style={{ display: scenesHovered ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ScenesPreviewPanel />
-        ) : savedHovered ? (
+        </div>
+        <div style={{ display: savedHovered ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <SavedPreviewPanel />
-        ) : labHovered ? (
+        </div>
+        <div style={{ display: labHovered ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <PromptLabPreviewPanel providers={providers} />
-        ) : (
+        </div>
+        <div style={{ display: (!formatHovered && !scenesHovered && !savedHovered && !labHovered) ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />
-        )}
+        </div>
       </div>
     </section>
   );

@@ -305,12 +305,12 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
       if (!response.ok) {
         // Revert on error
         setLocalReferenceFrame(null);
-        console.error('[usePromagenAuth] Failed to save reference frame');
+        console.warn('[usePromagenAuth] Failed to save reference frame');
       }
     } catch (error) {
       // Revert on error
       setLocalReferenceFrame(null);
-      console.error('[usePromagenAuth] Error saving reference frame:', error);
+      console.warn('[usePromagenAuth] Error saving reference frame:', error);
     }
   }, [userTier]);
 

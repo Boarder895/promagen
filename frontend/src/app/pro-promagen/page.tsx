@@ -107,13 +107,35 @@ export default function ProPromagenPage() {
   const providers = getProviders();
 
   return (
-    <ProPromagenClient
-      exchangeCatalog={exchangeCatalog}
-      fxCatalog={fxCatalog}
-      defaultExchangeIds={defaultExchangeIds}
-      defaultFxPairIds={defaultFxPairIds}
-      demoWeatherIndex={demoWeatherIndex}
-      providers={providers}
-    />
+    <>
+      {/* ================================================================
+          SSR HEADING SHELL — Paints the LCP element (h2) instantly at TTFB
+          before the client JS bundle downloads, parses, and hydrates.
+          ProPromagenClient removes this on mount via useEffect.
+          ================================================================ */}
+      <div
+        id="pro-ssr-shell"
+        className="pointer-events-none fixed inset-x-0 top-0 z-50 flex min-h-[80px] items-center justify-center bg-slate-950"
+        aria-hidden="true"
+      >
+        <h2
+          className="font-semibold leading-tight text-center"
+          style={{ fontSize: 'clamp(0.75rem, 1.1vw, 2rem)' }}
+        >
+          <span className="bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent">
+            Pro Promagen — Unlock the Full Engine
+          </span>
+        </h2>
+      </div>
+
+      <ProPromagenClient
+        exchangeCatalog={exchangeCatalog}
+        fxCatalog={fxCatalog}
+        defaultExchangeIds={defaultExchangeIds}
+        defaultFxPairIds={defaultFxPairIds}
+        demoWeatherIndex={demoWeatherIndex}
+        providers={providers}
+      />
+    </>
   );
 }
