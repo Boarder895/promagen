@@ -1463,7 +1463,9 @@ export default function ProPromagenClient({
     }
 
     setHydrated(true);
-  }, [exchangeCatalog]);
+    // exchangeCatalog is a stable server-component prop — never changes after mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Clerk metadata is the source of truth — override localStorage when it arrives.
   // Clerk hydrates async, so clerkPromptTier may be null on first render then

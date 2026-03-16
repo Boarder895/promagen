@@ -61,8 +61,6 @@ export interface UseDailyUsageReturn extends DailyUsageState {
 export interface UseDailyUsageOptions {
   /** User's tier (free or paid) */
   userTier: 'free' | 'paid';
-  /** Whether Clerk auth state has resolved */
-  authLoaded?: boolean;
   /** Whether user is authenticated */
   isAuthenticated: boolean;
   /** User ID (for caching) - null for anonymous */
@@ -142,10 +140,10 @@ function createInitialState(isAuthenticated: boolean, userTier: 'free' | 'paid')
  * 3. Paid authenticated: No limits
  */
 export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageReturn {
-  const { userTier, authLoaded = true, isAuthenticated, userId } = options;
+  const { userTier, isAuthenticated, userId } = options;
 
   const [state, setState] = useState<DailyUsageState>(() =>
-    createInitialState(isAuthenticated, userTier),
+    createInitialState(isAuthenticated, userTier)
   );
 
   // ============================================================================
@@ -208,14 +206,6 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
    * Fetch current usage status from server.
    */
   const refreshAuthenticatedUsage = useCallback(async () => {
-    if (!authLoaded) {
-      setState((prev) => ({
-        ...prev,
-        isLoading: userTier !== 'paid',
-      }));
-      return;
-    }
-
     if (!isAuthenticated || !userId) {
       setState((prev) => ({
         ...prev,
@@ -277,7 +267,7 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
         isAnonymous: false,
       }));
     }
-  }, [authLoaded, isAuthenticated, userId, userTier]);
+  }, [isAuthenticated, userId, userTier]);
 
   /**
    * Track authenticated prompt copy.
@@ -349,7 +339,7 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
         return true;
       }
     },
-    [isAuthenticated, userId, userTier, state.isAtLimit],
+    [isAuthenticated, userId, userTier, state.isAtLimit]
   );
 
   // ============================================================================
@@ -378,7 +368,7 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
         return trackAuthenticatedUsage(providerId);
       }
     },
-    [isAuthenticated, trackAnonymousUsage, trackAuthenticatedUsage],
+    [isAuthenticated, trackAnonymousUsage, trackAuthenticatedUsage]
   );
 
   // ============================================================================
@@ -387,9 +377,8 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
 
   // Fetch usage on mount and when auth changes
   useEffect(() => {
-    if (!authLoaded) return;
     refreshUsage();
-  }, [authLoaded, refreshUsage]);
+  }, [refreshUsage]);
 
   // Update state when auth status changes
   useEffect(() => {
