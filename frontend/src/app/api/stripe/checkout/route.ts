@@ -3,15 +3,13 @@
 // STRIPE CHECKOUT SESSION API ROUTE v2.0.0
 // ============================================================================
 // Creates a Stripe Checkout Session and returns the redirect URL.
-// Requires Clerk authentication — reads userId from session cookie JWT.
 //
-// v2.0.0: Switched from auth() to direct JWT cookie reading because auth()
-//         returns null in route handlers on Vercel production despite valid
-//         session cookies being present.
+// Auth: Reads userId from __session cookie JWT (see clerk-session.ts).
+// Confirms user via clerkClient.users.getUser() before proceeding.
 //
 // Authority: docs/authority/stripe.md §5.1
-// Security: 10/10 — userId from httpOnly cookie verified by clerkMiddleware,
-//           confirmed via clerkClient.users.getUser(), Price IDs server-side only
+// Security: 10/10 — userId from httpOnly cookie, confirmed via Clerk API,
+//           Price IDs server-side only
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -44,7 +42,7 @@ interface ClerkPublicMetadata {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // 1. Get userId from session cookie (see clerk-session.ts for why not auth())
+    // 1. Get userId from session cookie JWT
     const userId = getUserIdFromSession(request);
 
     if (!userId) {
@@ -65,13 +63,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 3. Get user from Clerk (confirms user exists + gets email + metadata)
+    // 3. Confirm user exists in Clerk + get email + metadata
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     const email = user.emailAddresses[0]?.emailAddress ?? undefined;
     const metadata = (user.publicMetadata ?? {}) as ClerkPublicMetadata;
 
-    // 4. Check if user is already Pro
+    // 4. Block if already Pro
     if (metadata.tier === 'paid' && metadata.stripeSubscriptionId) {
       return NextResponse.json(
         { error: 'Already subscribed to Pro Promagen' },
@@ -79,14 +77,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 5. Get the correct Price ID from env vars
+    // 5. Get Price ID from env vars
     const priceId = getStripePriceId(plan);
 
-    // 6. Build Checkout Session parameters
+    // 6. Build Checkout Session
     const origin = request.headers.get('origin') ?? 'https://promagen.com';
 
-    const baseParams = {
-      mode: 'subscription' as const,
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         trial_period_days: 7,
@@ -101,21 +99,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         : email
           ? { customer_email: email }
           : {}),
-    };
+    });
 
-    // 7. Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create(baseParams);
-
-    // 8. Verify session URL exists
     if (!session.url) {
-      console.error('[stripe-checkout] Session created but no URL returned');
       return NextResponse.json(
-        { error: 'Failed to create checkout session' },
+        { error: 'Stripe returned no checkout URL' },
         { status: 500 },
       );
     }
 
-    // 9. Return the redirect URL
     return NextResponse.json({ url: session.url });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

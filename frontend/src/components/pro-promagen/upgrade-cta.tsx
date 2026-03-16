@@ -11,12 +11,9 @@
 // - Cognitive Load (§11): Two cards, one glance, instant comparison, no toggle
 // - Anchoring: Monthly shown left (high anchor), annual feels cheap by comparison
 //
-// This panel shares space with TierPreviewPanel — both must match height
-// so the hover swap doesn't cause layout shift.
-//
 // Authority: docs/authority/stripe.md §7
 // Security: 10/10 — Price IDs server-side only, no card data touches our code
-// Existing features preserved: Yes (rewrite of placeholder)
+// Existing features preserved: Yes
 // ============================================================================
 
 'use client';
@@ -35,59 +32,7 @@ export interface UpgradeCtaProps {
   hasChanges?: boolean;
 }
 
-// ============================================================================
-// SUBSCRIBE BUTTON (handles auth + checkout redirect)
-// ============================================================================
-
-function SubscribeButton({
-  plan,
-  label,
-  isLoading,
-  onSubscribe,
-  isSignedIn,
-}: {
-  plan: 'monthly' | 'annual';
-  label: string;
-  isLoading: boolean;
-  onSubscribe: (plan: 'monthly' | 'annual') => void;
-  isSignedIn: boolean | undefined;
-}) {
-
-  const button = (
-    <button
-      type="button"
-      onClick={() => onSubscribe(plan)}
-      disabled={isLoading || !isSignedIn}
-      className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 disabled:cursor-wait"
-      style={{
-        padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
-        fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
-      }}
-    >
-      {isLoading ? '⏳ Redirecting...' : label}
-    </button>
-  );
-
-  // If not signed in, wrap in Clerk's SignInButton to trigger modal
-  if (!isSignedIn) {
-    return (
-      <SignInButton mode="modal">
-        <button
-          type="button"
-          className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
-          style={{
-            padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
-            fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
-          }}
-        >
-          {label}
-        </button>
-      </SignInButton>
-    );
-  }
-
-  return button;
-}
+type CheckingOutPlan = 'monthly' | 'annual' | null;
 
 // ============================================================================
 // COMPONENT
@@ -101,7 +46,7 @@ export function UpgradeCta({
   const { isSignedIn } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkingOutPlan, setCheckingOutPlan] = useState<CheckingOutPlan>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -111,11 +56,9 @@ export function UpgradeCta({
     const params = new URLSearchParams(window.location.search);
     if (params.get('success') === 'true') {
       setShowSuccess(true);
-      // Clean up URL without reload
       const url = new URL(window.location.href);
       url.searchParams.delete('success');
       window.history.replaceState({}, '', url.toString());
-      // Auto-dismiss after 5 seconds
       const timer = setTimeout(() => setShowSuccess(false), 5000);
       return () => clearTimeout(timer);
     }
@@ -123,7 +66,7 @@ export function UpgradeCta({
 
   // ── Checkout flow ──
   const handleSubscribe = useCallback(async (plan: 'monthly' | 'annual') => {
-    setIsCheckingOut(true);
+    setCheckingOutPlan(plan);
     setCheckoutError(null);
     try {
       const response = await fetch('/api/stripe/checkout', {
@@ -133,38 +76,25 @@ export function UpgradeCta({
         body: JSON.stringify({ plan }),
       });
 
-      // Handle non-JSON responses (server crash, HTML error page)
       const contentType = response.headers.get('content-type') ?? '';
       if (!contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('[upgrade-cta] Non-JSON response:', text.slice(0, 200));
         setCheckoutError('Server error — please try again');
-        setIsCheckingOut(false);
+        setCheckingOutPlan(null);
         return;
       }
 
       const data = await response.json();
 
-      if (!response.ok) {
-        console.error('[upgrade-cta] Checkout error:', data.error);
+      if (!response.ok || !data.url) {
         setCheckoutError(data.error ?? 'Something went wrong');
-        setIsCheckingOut(false);
+        setCheckingOutPlan(null);
         return;
       }
 
-      if (!data.url) {
-        console.error('[upgrade-cta] No URL in response:', data);
-        setCheckoutError('No checkout URL returned');
-        setIsCheckingOut(false);
-        return;
-      }
-
-      // Redirect to Stripe Checkout
       window.location.href = data.url;
-    } catch (error) {
-      console.error('[upgrade-cta] Checkout fetch error:', error);
+    } catch {
       setCheckoutError('Connection error — please try again');
-      setIsCheckingOut(false);
+      setCheckingOutPlan(null);
     }
   }, []);
 
@@ -178,15 +108,11 @@ export function UpgradeCta({
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        console.error('[upgrade-cta] Portal error:', data.error);
-        return;
+      if (response.ok && data.url) {
+        window.location.href = data.url;
       }
-
-      window.location.href = data.url;
-    } catch (error) {
-      console.error('[upgrade-cta] Portal fetch error:', error);
+    } catch {
+      // Silent — portal is non-critical
     }
   }, []);
 
@@ -208,7 +134,7 @@ export function UpgradeCta({
   }, [onSave]);
 
   // ============================================================================
-  // SUCCESS TOAST (shown after checkout redirect back)
+  // SUCCESS TOAST
   // ============================================================================
 
   if (showSuccess && isPaidUser) {
@@ -241,7 +167,7 @@ export function UpgradeCta({
   }
 
   // ============================================================================
-  // PAID USER VIEW — Save + Manage Subscription
+  // PAID USER VIEW
   // ============================================================================
 
   if (isPaidUser) {
@@ -262,9 +188,7 @@ export function UpgradeCta({
             {hasChanges ? 'You have unsaved changes' : 'Your preferences are saved'}
           </span>
 
-          {/* Button row */}
           <div className="flex w-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
-            {/* Save Preferences — primary */}
             <button
               type="button"
               onClick={handleSave}
@@ -292,7 +216,6 @@ export function UpgradeCta({
               </span>
             </button>
 
-            {/* Manage Subscription — secondary/ghost */}
             <button
               type="button"
               onClick={handleManageSubscription}
@@ -335,7 +258,7 @@ export function UpgradeCta({
         {/* Two pricing cards side-by-side */}
         <div className="flex w-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
 
-          {/* ── MONTHLY CARD ── neutral styling */}
+          {/* ── MONTHLY CARD ── */}
           <div
             className="flex-1 rounded-xl ring-1 ring-white/20 flex flex-col items-center justify-between"
             style={{
@@ -366,16 +289,36 @@ export function UpgradeCta({
               </span>
             </div>
 
-            <SubscribeButton
-              plan="monthly"
-              label="Start Free Trial"
-              isLoading={isCheckingOut}
-              onSubscribe={handleSubscribe}
-              isSignedIn={isSignedIn}
-            />
+            {!isSignedIn ? (
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+                  style={{
+                    padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+                    fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+                  }}
+                >
+                  Start Free Trial
+                </button>
+              </SignInButton>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSubscribe('monthly')}
+                disabled={checkingOutPlan !== null}
+                className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 disabled:cursor-wait"
+                style={{
+                  padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+                  fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+                }}
+              >
+                {checkingOutPlan === 'monthly' ? '⏳ Redirecting...' : 'Start Free Trial'}
+              </button>
+            )}
           </div>
 
-          {/* ── ANNUAL CARD ── emerald accent, "Best Value" badge (Von Restorff) */}
+          {/* ── ANNUAL CARD ── emerald accent, "Best Value" badge */}
           <div
             className="flex-1 rounded-xl ring-1 ring-emerald-500/50 flex flex-col items-center justify-between relative"
             style={{
@@ -384,7 +327,6 @@ export function UpgradeCta({
               gap: 'clamp(6px, 0.6vw, 10px)',
             }}
           >
-            {/* Best Value badge */}
             <span
               className="absolute rounded-full bg-emerald-500/20 text-emerald-400 font-semibold ring-1 ring-emerald-500/40"
               style={{
@@ -425,13 +367,33 @@ export function UpgradeCta({
               </span>
             </div>
 
-            <SubscribeButton
-              plan="annual"
-              label="Start Free Trial"
-              isLoading={isCheckingOut}
-              onSubscribe={handleSubscribe}
-              isSignedIn={isSignedIn}
-            />
+            {!isSignedIn ? (
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+                  style={{
+                    padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+                    fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+                  }}
+                >
+                  Start Free Trial
+                </button>
+              </SignInButton>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSubscribe('annual')}
+                disabled={checkingOutPlan !== null}
+                className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 disabled:cursor-wait"
+                style={{
+                  padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+                  fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+                }}
+              >
+                {checkingOutPlan === 'annual' ? '⏳ Redirecting...' : 'Start Free Trial'}
+              </button>
+            )}
           </div>
         </div>
 
