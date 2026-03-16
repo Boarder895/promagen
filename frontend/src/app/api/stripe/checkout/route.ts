@@ -79,7 +79,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const baseParams = {
       mode: 'subscription' as const,
-      payment_method_types: ['card' as const],
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
         trial_period_days: 7,

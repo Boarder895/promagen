@@ -100,6 +100,7 @@ export function UpgradeCta({
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Detect ?success=true on mount
@@ -121,6 +122,7 @@ export function UpgradeCta({
   // ── Checkout flow ──
   const handleSubscribe = useCallback(async (plan: 'monthly' | 'annual') => {
     setIsCheckingOut(true);
+    setCheckoutError(null);
     try {
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
@@ -128,10 +130,28 @@ export function UpgradeCta({
         body: JSON.stringify({ plan }),
       });
 
+      // Handle non-JSON responses (server crash, HTML error page)
+      const contentType = response.headers.get('content-type') ?? '';
+      if (!contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('[upgrade-cta] Non-JSON response:', text.slice(0, 200));
+        setCheckoutError('Server error — please try again');
+        setIsCheckingOut(false);
+        return;
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
         console.error('[upgrade-cta] Checkout error:', data.error);
+        setCheckoutError(data.error ?? 'Something went wrong');
+        setIsCheckingOut(false);
+        return;
+      }
+
+      if (!data.url) {
+        console.error('[upgrade-cta] No URL in response:', data);
+        setCheckoutError('No checkout URL returned');
         setIsCheckingOut(false);
         return;
       }
@@ -140,6 +160,7 @@ export function UpgradeCta({
       window.location.href = data.url;
     } catch (error) {
       console.error('[upgrade-cta] Checkout fetch error:', error);
+      setCheckoutError('Connection error — please try again');
       setIsCheckingOut(false);
     }
   }, []);
@@ -407,6 +428,16 @@ export function UpgradeCta({
             />
           </div>
         </div>
+
+        {/* Error message */}
+        {checkoutError && (
+          <span
+            className="text-red-400 text-center font-medium"
+            style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}
+          >
+            {checkoutError}
+          </span>
+        )}
 
         {/* Subtext */}
         <span
