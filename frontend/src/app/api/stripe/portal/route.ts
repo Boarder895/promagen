@@ -1,14 +1,18 @@
 // src/app/api/stripe/portal/route.ts
 // ============================================================================
-// STRIPE CUSTOMER PORTAL API ROUTE v1.0.0
+// STRIPE CUSTOMER PORTAL API ROUTE v1.1.0
 // ============================================================================
 // Creates a Stripe Billing Portal session for subscription management.
 // Pro users can cancel, update payment method, and view invoices.
+// runtime = 'nodejs' required for Stripe SDK + Clerk auth context.
 //
 // Authority: docs/authority/stripe.md §5.3
 // Security: 10/10 — Clerk auth required, customer ID from server metadata
-// Existing features preserved: Yes (new file)
+// Existing features preserved: Yes
 // ============================================================================
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';

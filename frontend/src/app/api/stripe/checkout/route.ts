@@ -1,15 +1,23 @@
 // src/app/api/stripe/checkout/route.ts
 // ============================================================================
-// STRIPE CHECKOUT SESSION API ROUTE v1.0.0
+// STRIPE CHECKOUT SESSION API ROUTE v1.1.0
 // ============================================================================
 // Creates a Stripe Checkout Session and returns the redirect URL.
 // Requires Clerk authentication — user must be signed in.
 //
+// CRITICAL: runtime = 'nodejs' required because:
+// 1. Stripe SDK is a Node.js package (not Edge-compatible)
+// 2. Clerk auth() needs Node.js async context to read session cookies
+// Without this, auth() returns null even when cookies are present.
+//
 // Authority: docs/authority/stripe.md §5.1
 // Security: 10/10 — Clerk auth required, Price IDs server-side only,
 //           no user input reaches Stripe except plan selection
-// Existing features preserved: Yes (new file)
+// Existing features preserved: Yes
 // ============================================================================
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';

@@ -1,11 +1,12 @@
 // src/app/api/stripe/webhook/route.ts
 // ============================================================================
-// STRIPE WEBHOOK HANDLER v1.0.0
+// STRIPE WEBHOOK HANDLER v1.1.0
 // ============================================================================
 // Receives Stripe webhook events and keeps Clerk metadata in sync.
 //
 // CRITICAL: This route reads the raw request body for signature verification.
 // Next.js App Router body parsing must NOT interfere — we use request.text().
+// runtime = 'nodejs' required for Stripe SDK + raw body access.
 //
 // Events handled:
 // - checkout.session.completed → Set tier: 'paid', store Stripe IDs
@@ -14,8 +15,11 @@
 //
 // Authority: docs/authority/stripe.md §5.2
 // Security: 10/10 — Webhook signature verified, no external input trusted
-// Existing features preserved: Yes (new file)
+// Existing features preserved: Yes
 // ============================================================================
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
