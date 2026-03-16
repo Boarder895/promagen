@@ -787,6 +787,21 @@ export default function HomepageGrid({
                   )}
                 </button>
 
+                {/* Pro badge — only visible for paid users, sits right of Listen */}
+                {isPaidUser && (
+                  <span
+                    className="inline-flex flex-shrink-0 items-center rounded-full bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40 font-semibold"
+                    style={{
+                      fontSize: 'clamp(0.4rem, 0.5vw, 0.7rem)',
+                      padding: 'clamp(2px, 0.2vw, 4px) clamp(6px, 0.6vw, 10px)',
+                      marginLeft: 'clamp(4px, 0.4vw, 8px)',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    PRO
+                  </span>
+                )}
+
                 {/* Dead centre — Heading (absolute so left/right content can't push it off-centre) */}
                 <h2
                   className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-semibold leading-tight text-center"

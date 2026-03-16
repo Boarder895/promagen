@@ -343,7 +343,7 @@ function TierPreviewPanel({ activeTier }: { activeTier: number }) {
       <div style={{ padding: 'clamp(12px, 1.2vw, 20px) 0' }}>
         <p
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
-          style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
         >
           Select the tier you require for all prompts
         </p>
@@ -393,7 +393,7 @@ function TierPreviewPanel({ activeTier }: { activeTier: number }) {
                   <span
                     className="font-semibold text-white"
                     style={{
-                      fontSize: 'clamp(0.75rem, 0.9vw, 0.95rem)',
+                      fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)',
                       textShadow: `0 0 12px ${glowRgba}`,
                     }}
                   >
@@ -416,7 +416,7 @@ function TierPreviewPanel({ activeTier }: { activeTier: number }) {
                 <span
                   className={`inline-flex items-center self-start rounded-full font-medium ${t.bgClass} ring-1 ${t.ringClass}`}
                   style={{
-                    fontSize: 'clamp(0.625rem, 0.75vw, 0.7rem)',
+                    fontSize: 'clamp(0.625rem, 0.65vw, 0.65rem)',
                     padding: 'clamp(1px, 0.15vw, 3px) clamp(6px, 0.6vw, 10px)',
                     gap: 'clamp(4px, 0.4vw, 6px)',
                     color: t.color,
@@ -429,7 +429,7 @@ function TierPreviewPanel({ activeTier }: { activeTier: number }) {
                 {/* Prompt text */}
                 <p
                   className="text-slate-200 leading-relaxed flex-1 overflow-hidden whitespace-pre-wrap break-words"
-                  style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.85rem)' }}
+                  style={{ fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)' }}
                 >
                   {promptText}
                 </p>
@@ -438,7 +438,7 @@ function TierPreviewPanel({ activeTier }: { activeTier: number }) {
                 {isActive && (
                   <span
                     className="inline-flex items-center self-start gap-1 text-emerald-400 font-semibold"
-                    style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
+                    style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
                   >
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -519,7 +519,7 @@ function ScenesPreviewPanel() {
       <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
         <p
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
-          style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
         >
           200 one-click scenes across 23 worlds
         </p>
@@ -562,11 +562,11 @@ function ScenesPreviewPanel() {
               <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
                 {/* World emoji + label */}
                 <div className="flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                  <span style={{ fontSize: 'clamp(1rem, 1.3vw, 1.5rem)' }}>{w.emoji}</span>
+                  <span style={{ fontSize: 'clamp(0.95rem, 1.2vw, 1.45rem)' }}>{w.emoji}</span>
                   <span
                     className="font-semibold text-white truncate"
                     style={{
-                      fontSize: 'clamp(0.65rem, 0.8vw, 0.85rem)',
+                      fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)',
                       textShadow: `0 0 12px ${glowRgba}`,
                     }}
                   >
@@ -578,7 +578,7 @@ function ScenesPreviewPanel() {
                 <span
                   className="inline-flex items-center self-start rounded-full font-medium ring-1"
                   style={{
-                    fontSize: 'clamp(0.625rem, 0.7vw, 0.7rem)',
+                    fontSize: 'clamp(0.625rem, 0.6vw, 0.65rem)',
                     padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.6vw, 8px)',
                     background: hexToRgbaPanel(w.color, 0.15),
                     borderColor: hexToRgbaPanel(w.color, 0.3),
@@ -592,10 +592,10 @@ function ScenesPreviewPanel() {
                 <div className="flex flex-col flex-1" style={{ gap: 'clamp(2px, 0.25vw, 4px)' }}>
                   {w.scenes.map((s) => (
                     <div key={s.name} className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
-                      <span style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)' }}>{s.emoji}</span>
+                      <span style={{ fontSize: 'clamp(0.65rem, 0.7vw, 0.85rem)' }}>{s.emoji}</span>
                       <span
                         className="text-slate-300 truncate"
-                        style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
+                        style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
                       >
                         {s.name}
                       </span>
@@ -606,7 +606,7 @@ function ScenesPreviewPanel() {
                 {/* "Included" badge */}
                 <span
                   className="inline-flex items-center self-start text-emerald-400 font-semibold"
-                  style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
+                  style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -627,7 +627,7 @@ function ScenesPreviewPanel() {
         {PRO_WORLD_EMOJIS.map((e, i) => (
           <span
             key={i}
-            style={{ fontSize: 'clamp(0.8rem, 0.9vw, 1rem)' }}
+            style={{ fontSize: 'clamp(0.75rem, 0.8vw, 0.95rem)' }}
             title="Pro world"
           >
             {e}
@@ -635,7 +635,7 @@ function ScenesPreviewPanel() {
         ))}
         <span
           className="text-amber-400 font-semibold"
-          style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}
         >
           +18 worlds with Pro
         </span>
@@ -691,7 +691,7 @@ function SavedPreviewPanel() {
       <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
         <p
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
-          style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
         >
           {hasPrompts
             ? `${allPrompts.length} prompt${allPrompts.length === 1 ? '' : 's'} saved — browser only`
@@ -741,7 +741,7 @@ function SavedPreviewPanel() {
                     className="font-semibold truncate"
                     style={{
                       color: platformColor,
-                      fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)',
+                      fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)',
                       textShadow: `0 0 12px ${glowRgba}`,
                     }}
                   >
@@ -765,7 +765,7 @@ function SavedPreviewPanel() {
                   <span
                     className="inline-flex items-center self-start rounded-full font-medium ring-1"
                     style={{
-                      fontSize: 'clamp(0.625rem, 0.7vw, 0.7rem)',
+                      fontSize: 'clamp(0.625rem, 0.6vw, 0.65rem)',
                       padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.6vw, 8px)',
                       background: hexToRgbaPanel(platformColor, 0.15),
                       borderColor: hexToRgbaPanel(platformColor, 0.3),
@@ -779,7 +779,7 @@ function SavedPreviewPanel() {
                 {/* Prompt text — fills available space */}
                 <p
                   className="text-slate-200 leading-relaxed flex-1 overflow-hidden whitespace-pre-wrap break-words"
-                  style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.8rem)' }}
+                  style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
                 >
                   {prompt.positivePrompt}
                 </p>
@@ -787,7 +787,7 @@ function SavedPreviewPanel() {
                 {/* Browser only warning */}
                 <span
                   className="inline-flex items-center self-start text-amber-400 font-semibold"
-                  style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
+                  style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
                 >
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -810,10 +810,10 @@ function SavedPreviewPanel() {
               background: 'rgba(15, 23, 42, 0.4)',
             }}
           >
-            <span style={{ fontSize: 'clamp(1.2rem, 1.5vw, 1.8rem)', color: 'rgba(167, 139, 250, 0.5)' }}>💾</span>
+            <span style={{ fontSize: 'clamp(1.15rem, 1.4vw, 1.75rem)', color: 'rgba(167, 139, 250, 0.5)' }}>💾</span>
             <span
               className="text-slate-400 text-center"
-              style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)', marginTop: 'clamp(4px, 0.4vw, 6px)' }}
+              style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', marginTop: 'clamp(4px, 0.4vw, 6px)' }}
             >
               Empty slot
             </span>
@@ -828,13 +828,13 @@ function SavedPreviewPanel() {
       >
         <span
           className="text-amber-400"
-          style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
         >
           {hasPrompts ? 'Clear cache = all gone' : 'Copy a prompt from any flag tooltip → it appears here'}
         </span>
         <span
           className="text-emerald-400 font-semibold"
-          style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
         >
           Pro: Synced forever
         </span>
@@ -1146,7 +1146,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
       <div style={{ padding: 'clamp(8px, 0.8vw, 14px) 0' }}>
         <p
           className="italic text-amber-400/80 animate-pulse text-center font-semibold"
-          style={{ fontSize: 'clamp(0.75rem, 0.9vw, 1rem)' }}
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
         >
           One workspace — all 42 platforms — instant switching
         </p>
@@ -1184,29 +1184,29 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
                 {totalSec <= 3 ? (
-                  <span className="tabular-nums font-semibold text-amber-300" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)', filter: 'brightness(1.3)' }}>Now</span>
+                  <span className="tabular-nums font-semibold text-amber-300" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)', filter: 'brightness(1.3)' }}>Now</span>
                 ) : totalSec <= 29 ? (
                   <>
-                    <span className="text-white font-medium" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>{potmData.nextCity}</span>
-                    <span className="tabular-nums text-amber-400" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)', filter: 'brightness(1.15)' }}>in {timeStr}</span>
+                    <span className="text-white font-medium" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>{potmData.nextCity}</span>
+                    <span className="tabular-nums text-amber-400" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)', filter: 'brightness(1.15)' }}>in {timeStr}</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-white font-medium" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>{potmData.nextCity}</span>
-                    <span className="tabular-nums text-slate-400" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>arriving in {timeStr}</span>
+                    <span className="text-white font-medium" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>{potmData.nextCity}</span>
+                    <span className="tabular-nums text-slate-400" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>arriving in {timeStr}</span>
                   </>
                 )}
               </div>
             )}
 
-            {/* "What Promagen Sees" — centered, pink with glow, double gap */}
+            {/* "What Promagen Sees" — centered, pink with glow, halved gap */}
             <span
               className="font-semibold text-center shrink-0"
               style={{
-                fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)',
+                fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)',
                 color: '#fb7185',
                 textShadow: '0 0 12px rgba(251, 113, 133, 0.4)',
-                margin: 'clamp(6px, 0.6vw, 10px) 0',
+                margin: 'clamp(3px, 0.3vw, 5px) 0',
               }}
             >
               What Promagen Sees
@@ -1216,7 +1216,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
             {potmData && (
               <div
                 className="flex flex-col items-center shrink-0"
-                style={{ margin: 'clamp(6px, 0.6vw, 10px) 0', gap: 'clamp(2px, 0.2vw, 4px)' }}
+                style={{ margin: 'clamp(3px, 0.3vw, 5px) 0', gap: 'clamp(2px, 0.2vw, 4px)' }}
               >
                 <div className="inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1227,11 +1227,11 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                     style={{ width: 'clamp(16px, 1.3vw, 20px)', height: 'clamp(12px, 1vw, 15px)' }}
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
-                  <span className="text-white font-semibold" style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}>
+                  <span className="text-white font-semibold" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>
                     {potmData.city}
                   </span>
                 </div>
-                <span className="text-slate-400 text-center" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.78rem)' }}>
+                <span className="text-slate-400 text-center" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.73rem)' }}>
                   {potmData.conditions}
                   {potmData.weather?.tempC != null && (
                     <> · {Math.round(potmData.weather.tempC)}°C</>
@@ -1247,13 +1247,13 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
             {categoryRows.map((row) => (
               <div key={row.cat} className="flex flex-col" style={{ gap: 'clamp(2px, 0.2vw, 4px)' }}>
                 <div className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
-                  <span style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}>{row.emoji}</span>
-                  <span className="text-slate-300" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}>{row.label}</span>
-                  <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}>{'\u2192'}</span>
-                  <span className="font-medium truncate" style={{ color: row.color, fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}>{row.selection}</span>
+                  <span style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}>{row.emoji}</span>
+                  <span className="text-slate-300" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{row.label}</span>
+                  <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{'\u2192'}</span>
+                  <span className="font-medium truncate" style={{ color: row.color, fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{row.selection}</span>
                 </div>
                 {row.custom && (
-                  <span className="text-slate-300 leading-tight" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', paddingLeft: 'clamp(16px, 1.4vw, 22px)' }}>
+                  <span className="text-slate-300 leading-tight" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', paddingLeft: 'clamp(15.0px, 1.3vw, 21.0px)' }}>
                     {row.custom.length > 100 ? row.custom.slice(0, 98) + '\u2026' : row.custom}
                   </span>
                 )}
@@ -1264,7 +1264,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
             <div className="mt-auto shrink-0" style={{ paddingTop: 'clamp(4px, 0.4vw, 6px)' }}>
               <p
                 className="italic text-amber-400/80 animate-pulse text-center font-semibold"
-                style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.95rem)' }}
+                style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.9rem)' }}
               >
                 Next provider in {minSecsLeft}s
               </p>
@@ -1300,7 +1300,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
               <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
                 {/* Provider name + icon (crossfades on rotation) */}
                 <div className="flex items-center justify-between lab-fade-in" key={provider?.id ?? t.tier}>
-                  <span className="font-semibold truncate" style={{ color: t.color, fontSize: 'clamp(0.7rem, 0.8vw, 0.85rem)', textShadow: `0 0 12px ${glowRgba}` }}>
+                  <span className="font-semibold truncate" style={{ color: t.color, fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)', textShadow: `0 0 12px ${glowRgba}` }}>
                     {provider?.name ?? t.label}
                   </span>
                   {provider && (
@@ -1320,7 +1320,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                 {/* Tier badge — double gap above and below */}
                 <span
                   className={`inline-flex items-center self-start rounded-full font-medium ${t.bgClass} ring-1 ${t.ringClass}`}
-                  style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.6vw, 10px)', gap: 'clamp(3px, 0.3vw, 5px)', color: t.color, margin: 'clamp(3px, 0.3vw, 5px) 0' }}
+                  style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.6vw, 10px)', gap: 'clamp(3px, 0.3vw, 5px)', color: t.color, margin: 'clamp(3px, 0.3vw, 5px) 0' }}
                 >
                   <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(4px, 0.4vw, 6px)', height: 'clamp(4px, 0.4vw, 6px)' }} />
                   Tier {t.tier}: {t.label}
@@ -1329,7 +1329,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                 {/* Colour-coded prompt — REAL assemblePrompt() output */}
                 {promptText ? (
                   <div className="flex-1 overflow-hidden">
-                    <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.85rem)' }}>
+                    <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.8rem)' }}>
                       {(() => {
                         if (!tierCategoryMap) return <span className="text-slate-200">{promptText}</span>;
                         const termIndex = labBuildTermIndex(tierCategoryMap);
@@ -1347,7 +1347,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                     </p>
                   </div>
                 ) : (
-                  <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}>Loading...</span>
+                  <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>Loading...</span>
                 )}
               </div>
 
@@ -1376,7 +1376,7 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         ))}
-        <span className="font-semibold" style={{ color: '#fb7185', fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}>
+        <span className="font-semibold" style={{ color: '#fb7185', fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}>
           42 platforms — switch instantly
         </span>
       </div>

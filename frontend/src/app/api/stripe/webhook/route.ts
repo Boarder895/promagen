@@ -1,13 +1,16 @@
 // src/app/api/stripe/webhook/route.ts
 // ============================================================================
-// STRIPE WEBHOOK HANDLER v2.0.0
+// STRIPE WEBHOOK HANDLER v3.0.0
 // ============================================================================
 // Receives Stripe webhook events and keeps Clerk metadata in sync.
 //
 // Events handled:
-// - checkout.session.completed → Set tier: 'paid', store Stripe IDs
-// - customer.subscription.updated → Track cancellation state
-// - customer.subscription.deleted → Revert tier: 'free'
+// - checkout.session.completed → Set tier: 'paid', store Stripe IDs + periodEndDate
+// - customer.subscription.updated → Track cancellation state + periodEndDate
+// - customer.subscription.deleted → Revert tier: 'free', clear period data
+//
+// v3.0.0: Added periodEndDate (Unix timestamp) storage for UI countdown timer.
+//         On cancellation-pending, the UI shows a live countdown to periodEndDate.
 //
 // Authority: docs/authority/stripe.md §5.2
 // Security: 10/10 — Webhook signature verified, no external input trusted
@@ -20,7 +23,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
-import { verifyWebhookEvent } from '@/lib/stripe/stripe';
+import { stripe, verifyWebhookEvent } from '@/lib/stripe/stripe';
 import type Stripe from 'stripe';
 
 // ============================================================================
@@ -32,6 +35,9 @@ interface ClerkPublicMetadata {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   cancelAtPeriodEnd?: boolean;
+  /** Unix timestamp (seconds) — when the current billing period ends.
+   *  Used by the UI countdown timer on cancellation-pending state. */
+  periodEndDate?: number;
   [key: string]: unknown;
 }
 
@@ -67,6 +73,16 @@ async function findClerkUserByStripeCustomerId(
 }
 
 // ============================================================================
+// STRIPE TYPE HELPERS
+// ============================================================================
+
+/** Safely read current_period_end from a Stripe subscription object.
+ *  The field always exists in the API response but some SDK type versions omit it. */
+function getSubscriptionPeriodEnd(sub: Stripe.Subscription): number | undefined {
+  return (sub as unknown as { current_period_end?: number }).current_period_end;
+}
+
+// ============================================================================
 // EVENT HANDLERS
 // ============================================================================
 
@@ -86,14 +102,26 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     ? session.subscription
     : session.subscription?.id ?? null;
 
+  // Fetch subscription to get current_period_end (trial end / first billing cycle)
+  let periodEndDate: number | undefined;
+  if (subscriptionId) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(subscriptionId);
+      periodEndDate = getSubscriptionPeriodEnd(sub);
+    } catch (err) {
+      console.warn('[stripe-webhook] Could not fetch subscription for period end:', err);
+    }
+  }
+
   await updateClerkMetadata(clerkUserId, {
     tier: 'paid',
     stripeCustomerId: customerId ?? undefined,
     stripeSubscriptionId: subscriptionId ?? undefined,
     cancelAtPeriodEnd: false,
+    periodEndDate,
   });
 
-  console.debug(`[stripe-webhook] Activated Pro for user ${clerkUserId}`);
+  console.debug(`[stripe-webhook] Activated Pro for user ${clerkUserId} (periodEnd: ${periodEndDate ?? 'unknown'})`);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
@@ -109,9 +137,17 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription): Pro
     return;
   }
 
+  const periodEnd = getSubscriptionPeriodEnd(subscription);
+
   await updateClerkMetadata(clerkUserId, {
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    periodEndDate: periodEnd,
   });
+
+  console.debug(
+    `[stripe-webhook] Subscription updated for user ${clerkUserId}: ` +
+    `cancel=${subscription.cancel_at_period_end}, periodEnd=${periodEnd}`,
+  );
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
@@ -131,6 +167,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription): Pro
     tier: 'free',
     stripeSubscriptionId: undefined,
     cancelAtPeriodEnd: undefined,
+    periodEndDate: undefined,
   });
 
   console.debug(`[stripe-webhook] Reverted user ${clerkUserId} to free tier`);

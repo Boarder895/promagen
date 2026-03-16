@@ -154,17 +154,17 @@ function FeatureCard({
       >
         {/* Row 1: Emoji + Label + Stat */}
         <div className="flex items-center gap-1.5">
-          <span style={{ fontSize: 'clamp(0.9rem, 1.1vw, 1.2rem)', lineHeight: 1 }}>{emoji}</span>
+          <span style={{ fontSize: 'clamp(0.85rem, 1.0vw, 1.15rem)', lineHeight: 1 }}>{emoji}</span>
           <span
             className="font-semibold truncate"
-            style={{ color, fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)' }}
+            style={{ color, fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}
           >
             {label}
           </span>
           {stat && (
             <span
               className="ml-auto font-bold tabular-nums shrink-0"
-              style={{ color, fontSize: 'clamp(0.75rem, 0.9vw, 0.95rem)' }}
+              style={{ color, fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)' }}
             >
               {stat}
             </span>
@@ -177,13 +177,13 @@ function FeatureCard({
             <>
               <span
                 className="text-white"
-                style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+                style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}
               >
                 {isPro ? '' : freeValue}
               </span>
               <span
                 className="font-medium"
-                style={{ color, fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}
+                style={{ color, fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}
               >
                 {isPro ? proValue : `Pro: ${proValue}`}
               </span>
@@ -227,7 +227,7 @@ function MiniTierSelector({
             }`}
             style={{
               padding: 'clamp(2px, 0.3vw, 4px) clamp(6px, 0.6vw, 10px)',
-              fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)',
+              fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)',
               background: isActive ? hexToRgba(info.color, 0.35) : 'rgba(255,255,255,0.03)',
               border: `1px solid ${isActive ? hexToRgba(info.color, 0.7) : 'rgba(255,255,255,0.08)'}`,
               color: isActive ? info.color : 'rgba(255,255,255,0.4)',
@@ -335,7 +335,7 @@ export function FeatureControlPanel({
         >
           {isPaidUser ? (
             <>
-              <span className="text-amber-400 font-medium" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', marginBottom: 'clamp(2px, 0.2vw, 3px)' }}>
+              <span className="text-amber-400 font-medium" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)', marginBottom: 'clamp(2px, 0.2vw, 3px)' }}>
                 Select tier ↓
               </span>
               <MiniTierSelector
@@ -346,7 +346,7 @@ export function FeatureControlPanel({
             </>
           ) : (
             <>
-              <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+              <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
                 Varies by surface
               </span>
               <MiniTierSelector
@@ -437,10 +437,10 @@ export function FeatureControlPanel({
           isPro={isPaidUser}
           actionAlwaysColored={true}
         >
-          <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+          <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
             Style, Lighting, Colour, Atmosphere, Materials, Fidelity
           </span>
-          <span className="font-medium" style={{ color: '#fb923c', fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)' }}>
+          <span className="font-medium" style={{ color: '#fb923c', fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}>
             {isPaidUser ? '+1 on each' : 'Pro: +1 on each'}
           </span>
         </FeatureCard>
