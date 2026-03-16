@@ -37,6 +37,10 @@ const isProtectedRoute = createRouteMatcher([
 const isAdminPageRoute = createRouteMatcher(['/admin(.*)']);
 const isAdminApiRoute = createRouteMatcher(['/api/admin(.*)']);
 
+// Stripe routes that need auth context passed via header
+// (auth() in route handlers doesn't reliably receive context from clerkMiddleware)
+const isStripeAuthRoute = createRouteMatcher(['/api/stripe/checkout(.*)', '/api/stripe/portal(.*)', '/api/stripe/debug(.*)']);
+
 function getPromagenRequestId(req: NextRequest): string {
   return (
     req.headers.get('x-promagen-request-id') ??
@@ -268,7 +272,20 @@ const prodMiddleware = clerkMiddleware(async (auth, req) => {
     }
   }
 
-  // 4) Continue
+  // 4) Stripe auth routes — resolve userId in middleware and pass as request header.
+  //    auth() inside route handlers doesn't reliably receive the Clerk context from
+  //    clerkMiddleware on Vercel production. Middleware auth() works, so we pass it through.
+  if (isStripeAuthRoute(req)) {
+    const { userId } = await auth();
+    const requestHeaders = new Headers(req.headers);
+    if (userId) {
+      requestHeaders.set('x-clerk-user-id', userId);
+    }
+    const res = NextResponse.next({ request: { headers: requestHeaders } });
+    return applySecurityHeaders(res, false, isDevHealth, requestId);
+  }
+
+  // 5) Continue
   const res = NextResponse.next();
   return applySecurityHeaders(res, false, isDevHealth, requestId);
 });

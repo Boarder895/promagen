@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import { stripe } from '@/lib/stripe/stripe';
 
 // ============================================================================
@@ -35,8 +35,8 @@ interface ClerkPublicMetadata {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // 1. Verify Clerk authentication
-    const { userId } = await auth();
+    // 1. Get userId from middleware header (set by clerkMiddleware in middleware.ts)
+    const userId = request.headers.get('x-clerk-user-id');
 
     if (!userId) {
       return NextResponse.json(
