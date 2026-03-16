@@ -98,7 +98,7 @@ export function UpgradeCta({
   onSave,
   hasChanges = false,
 }: UpgradeCtaProps) {
-  const { isSignedIn, getToken } = useAuth();
+  const { isSignedIn } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -126,21 +126,10 @@ export function UpgradeCta({
     setIsCheckingOut(true);
     setCheckoutError(null);
     try {
-      // Get Clerk session token for server-side auth verification
-      const token = await getToken();
-
-      if (!token) {
-        setCheckoutError('Session expired — please sign in again');
-        setIsCheckingOut(false);
-        return;
-      }
-
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ plan }),
       });
 
@@ -177,18 +166,15 @@ export function UpgradeCta({
       setCheckoutError('Connection error — please try again');
       setIsCheckingOut(false);
     }
-  }, [getToken]);
+  }, []);
 
   // ── Portal flow ──
   const handleManageSubscription = useCallback(async () => {
     try {
-      const token = await getToken();
       const response = await fetch('/api/stripe/portal', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
       });
 
       const data = await response.json();
@@ -202,7 +188,7 @@ export function UpgradeCta({
     } catch (error) {
       console.error('[upgrade-cta] Portal fetch error:', error);
     }
-  }, [getToken]);
+  }, []);
 
   // ── Save flow ──
   const handleSave = useCallback(async () => {
