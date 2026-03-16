@@ -19,7 +19,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { SignInButton } from '@clerk/nextjs';
 
 // ============================================================================
@@ -44,6 +44,7 @@ export function UpgradeCta({
   hasChanges = false,
 }: UpgradeCtaProps) {
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [checkingOutPlan, setCheckingOutPlan] = useState<CheckingOutPlan>(null);
@@ -73,7 +74,7 @@ export function UpgradeCta({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, email: user?.primaryEmailAddress?.emailAddress }),
       });
 
       const contentType = response.headers.get('content-type') ?? '';
@@ -96,7 +97,7 @@ export function UpgradeCta({
       setCheckoutError('Connection error — please try again');
       setCheckingOutPlan(null);
     }
-  }, []);
+  }, [user?.primaryEmailAddress?.emailAddress]);
 
   // ── Portal flow ──
   const handleManageSubscription = useCallback(async () => {

@@ -25,6 +25,7 @@ import Stripe from 'stripe';
 
 interface CheckoutRequestBody {
   plan?: unknown;
+  email?: unknown;
 }
 
 // ============================================================================
@@ -57,6 +58,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 2. Parse and validate request body
     const body = (await request.json()) as CheckoutRequestBody;
     const plan = body.plan;
+    // Email from client (Clerk useUser hook) — used to pre-fill Stripe Checkout
+    const clientEmail = typeof body.email === 'string' && body.email.includes('@')
+      ? body.email : undefined;
 
     if (plan !== 'monthly' && plan !== 'annual') {
       return NextResponse.json(
@@ -99,8 +103,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       allow_promotion_codes: true,
       ...(session.stripeCustomerId
         ? { customer: session.stripeCustomerId }
-        : session.email
-          ? { customer_email: session.email }
+        : (clientEmail ?? session.email)
+          ? { customer_email: clientEmail ?? session.email }
           : {}),
     });
 
