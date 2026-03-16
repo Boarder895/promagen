@@ -42,7 +42,11 @@ import {
 } from '@/lib/usage';
 import { getPlatformConfiguration } from '@/data/compression';
 import type { CompressionTier } from '@/types/compression';
-import { type ReferenceFrame, type GeoCoordinates, GREENWICH } from '@/lib/location';
+import {
+  type ReferenceFrame,
+  type GeoCoordinates,
+  GREENWICH,
+} from '@/lib/location';
 
 // ============================================================================
 // TYPES
@@ -60,9 +64,9 @@ export type UserTier = 'free' | 'paid';
  * - quota_reached: Free authenticated user hit 10/day → "Go Pro for unlimited"
  */
 export type PromptLockState =
-  | 'unlocked' // Full access
-  | 'anonymous_limit' // Anonymous user has used 5 free prompts
-  | 'quota_reached'; // Free authenticated user has used 10 prompts today
+  | 'unlocked'           // Full access
+  | 'anonymous_limit'    // Anonymous user has used 5 free prompts
+  | 'quota_reached';     // Free authenticated user has used 10 prompts today
 
 /**
  * Usage information for anonymous users.
@@ -205,26 +209,27 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
   const { user } = useUser();
 
   // Extract user tier and reference frame from Clerk's public metadata
-  const publicMetadata = user?.publicMetadata as
-    | {
-        tier?: UserTier;
-        referenceFrame?: ReferenceFrame;
-        promptTier?: number;
-      }
-    | undefined;
+  const publicMetadata = user?.publicMetadata as {
+    tier?: UserTier;
+    referenceFrame?: ReferenceFrame;
+    promptTier?: number;
+  } | undefined;
 
   const userTier: UserTier = publicMetadata?.tier ?? 'free';
   const storedReferenceFrame: ReferenceFrame = publicMetadata?.referenceFrame ?? 'user';
   /** Prompt tier from Clerk metadata (null if not set — Pro users only) */
   const clerkPromptTier: number | null =
-    publicMetadata?.promptTier != null && [1, 2, 3, 4].includes(publicMetadata.promptTier)
+    publicMetadata?.promptTier != null &&
+    [1, 2, 3, 4].includes(publicMetadata.promptTier)
       ? publicMetadata.promptTier
       : null;
 
   // Compute account age in days from Clerk's user.createdAt (0 for anonymous/unknown)
   const accountAgeDays = useMemo(() => {
     if (!user?.createdAt) return 0;
-    const created = user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt);
+    const created = user.createdAt instanceof Date
+      ? user.createdAt
+      : new Date(user.createdAt);
     const now = new Date();
     const diffMs = now.getTime() - created.getTime();
     return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
@@ -267,8 +272,9 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
   } else if (userTier === 'paid') {
     // Paid: Use stored preference (or local optimistic state)
     effectiveReferenceFrame = localReferenceFrame ?? storedReferenceFrame;
-    effectiveCoordinates =
-      effectiveReferenceFrame === 'greenwich' ? GREENWICH : detectedCoordinates;
+    effectiveCoordinates = effectiveReferenceFrame === 'greenwich'
+      ? GREENWICH
+      : detectedCoordinates;
   } else {
     // Free signed-in: Always user location (no choice)
     effectiveReferenceFrame = 'user';
@@ -279,45 +285,49 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
    * Set reference frame (paid users only).
    * Updates Clerk metadata and local state optimistically.
    */
-  const setReferenceFrame = useCallback(
-    async (frame: ReferenceFrame) => {
-      if (userTier !== 'paid') {
-        console.warn('[usePromagenAuth] Reference frame toggle is paid-only');
-        return;
-      }
+  const setReferenceFrame = useCallback(async (frame: ReferenceFrame) => {
+    if (userTier !== 'paid') {
+      console.warn('[usePromagenAuth] Reference frame toggle is paid-only');
+      return;
+    }
 
-      // Optimistic update
-      setLocalReferenceFrame(frame);
+    // Optimistic update
+    setLocalReferenceFrame(frame);
 
-      try {
-        const response = await fetch('/api/user/preferences', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ referenceFrame: frame }),
-        });
+    try {
+      const response = await fetch('/api/user/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ referenceFrame: frame }),
+      });
 
-        if (!response.ok) {
-          // Revert on error
-          setLocalReferenceFrame(null);
-          console.warn('[usePromagenAuth] Failed to save reference frame');
-        }
-      } catch (error) {
+      if (!response.ok) {
         // Revert on error
         setLocalReferenceFrame(null);
-        console.warn('[usePromagenAuth] Error saving reference frame:', error);
+        console.warn('[usePromagenAuth] Failed to save reference frame');
       }
-    },
-    [userTier],
-  );
+    } catch (error) {
+      // Revert on error
+      setLocalReferenceFrame(null);
+      console.warn('[usePromagenAuth] Error saving reference frame:', error);
+    }
+  }, [userTier]);
 
   // ============================================================================
   // DAILY USAGE TRACKING
   // ============================================================================
 
-  const { count, limit, remaining, isAtLimit, resetTime, trackUsage, isAnonymous } = useDailyUsage({
+  const {
+    count,
+    limit,
+    remaining,
+    isAtLimit,
+    resetTime,
+    trackUsage,
+    isAnonymous,
+  } = useDailyUsage({
     userTier,
-    authLoaded: isLoaded,
     isAuthenticated,
     userId: userId ?? null,
   });
@@ -356,7 +366,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
   // Anonymous users get free tier limits
   const categoryLimits = useMemo(
     () => getCategoryLimitsForPlatformTier(platformTier, userTier),
-    [platformTier, userTier],
+    [platformTier, userTier]
   );
 
   // ============================================================================
