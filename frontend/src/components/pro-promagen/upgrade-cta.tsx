@@ -1,21 +1,29 @@
 // src/components/pro-promagen/upgrade-cta.tsx
 // ============================================================================
-// UPGRADE CTA / PAYMENT PANEL v2.0.0
+// UPGRADE CTA / PAYMENT PANEL v3.0.0
 // ============================================================================
-// Proper payment placeholder panel with real height.
-// Free users: Upgrade panel with Stripe placeholder area.
-// Paid users: Save panel with status feedback.
+// Free users: Side-by-side pricing cards (monthly + annual) with Stripe Checkout.
+// Paid users: Save preferences + Manage Subscription (Stripe Portal).
+//
+// Human factors applied:
+// - Loss Aversion (§8): Monthly price next to annual makes £42 loss visible
+// - Von Restorff (§12): Annual card has emerald accent — stands out
+// - Cognitive Load (§11): Two cards, one glance, instant comparison, no toggle
+// - Anchoring: Monthly shown left (high anchor), annual feels cheap by comparison
 //
 // This panel shares space with TierPreviewPanel — both must match height
 // so the hover swap doesn't cause layout shift.
 //
-// Authority: docs/authority/paid_tier.md
-// Existing features preserved: Yes
+// Authority: docs/authority/stripe.md §7
+// Security: 10/10 — Price IDs server-side only, no card data touches our code
+// Existing features preserved: Yes (rewrite of placeholder)
 // ============================================================================
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useAuth } from '@clerk/nextjs';
+import { SignInButton } from '@clerk/nextjs';
 
 // ============================================================================
 // TYPES
@@ -25,6 +33,59 @@ export interface UpgradeCtaProps {
   isPaidUser: boolean;
   onSave?: () => Promise<void>;
   hasChanges?: boolean;
+}
+
+// ============================================================================
+// SUBSCRIBE BUTTON (handles auth + checkout redirect)
+// ============================================================================
+
+function SubscribeButton({
+  plan,
+  label,
+  isLoading,
+  onSubscribe,
+}: {
+  plan: 'monthly' | 'annual';
+  label: string;
+  isLoading: boolean;
+  onSubscribe: (plan: 'monthly' | 'annual') => void;
+}) {
+  const { isSignedIn } = useAuth();
+
+  const button = (
+    <button
+      type="button"
+      onClick={() => onSubscribe(plan)}
+      disabled={isLoading || !isSignedIn}
+      className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 disabled:cursor-wait"
+      style={{
+        padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+        fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+      }}
+    >
+      {isLoading ? '⏳ Redirecting...' : label}
+    </button>
+  );
+
+  // If not signed in, wrap in Clerk's SignInButton to trigger modal
+  if (!isSignedIn) {
+    return (
+      <SignInButton mode="modal">
+        <button
+          type="button"
+          className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+          style={{
+            padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+            fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+          }}
+        >
+          {label}
+        </button>
+      </SignInButton>
+    );
+  }
+
+  return button;
 }
 
 // ============================================================================
@@ -38,11 +99,73 @@ export function UpgradeCta({
 }: UpgradeCtaProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleUpgrade = useCallback(() => {
-    window.location.href = '/upgrade';
+  // Detect ?success=true on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === 'true') {
+      setShowSuccess(true);
+      // Clean up URL without reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('success');
+      window.history.replaceState({}, '', url.toString());
+      // Auto-dismiss after 5 seconds
+      const timer = setTimeout(() => setShowSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
+  // ── Checkout flow ──
+  const handleSubscribe = useCallback(async (plan: 'monthly' | 'annual') => {
+    setIsCheckingOut(true);
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('[upgrade-cta] Checkout error:', data.error);
+        setIsCheckingOut(false);
+        return;
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('[upgrade-cta] Checkout fetch error:', error);
+      setIsCheckingOut(false);
+    }
+  }, []);
+
+  // ── Portal flow ──
+  const handleManageSubscription = useCallback(async () => {
+    try {
+      const response = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('[upgrade-cta] Portal error:', data.error);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('[upgrade-cta] Portal fetch error:', error);
+    }
+  }, []);
+
+  // ── Save flow ──
   const handleSave = useCallback(async () => {
     if (!onSave) return;
     setIsSaving(true);
@@ -59,113 +182,238 @@ export function UpgradeCta({
     }
   }, [onSave]);
 
-  // Free user — payment placeholder panel
-  if (!isPaidUser) {
+  // ============================================================================
+  // SUCCESS TOAST (shown after checkout redirect back)
+  // ============================================================================
+
+  if (showSuccess && isPaidUser) {
     return (
       <div
-        className="rounded-2xl overflow-hidden ring-1 ring-amber-500/30"
+        className="rounded-2xl overflow-hidden ring-1 ring-emerald-500/40 flex items-center justify-center"
         style={{
-          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(249, 115, 22, 0.06), rgba(245, 158, 11, 0.04))',
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(20, 184, 166, 0.08), rgba(16, 185, 129, 0.05))',
           minHeight: 'clamp(140px, 14vw, 200px)',
           padding: 'clamp(16px, 1.5vw, 24px)',
         }}
       >
-        <div className="flex flex-col items-center justify-center h-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
-          {/* Stripe placeholder area */}
-          <div
-            className="w-full rounded-xl ring-1 ring-white/10 flex items-center justify-center"
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              minHeight: 'clamp(48px, 4.5vw, 64px)',
-              padding: 'clamp(8px, 0.8vw, 12px)',
-            }}
-          >
-            <span
-              className="text-white/30"
-              style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.85rem)' }}
-            >
-              Payment integration coming soon
-            </span>
-          </div>
-
-          {/* Upgrade button */}
-          <button
-            type="button"
-            onClick={handleUpgrade}
-            className="w-full rounded-xl font-semibold text-white cursor-pointer bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:from-amber-400 hover:via-orange-400 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
-            style={{
-              padding: 'clamp(10px, 1vw, 14px) clamp(16px, 1.5vw, 24px)',
-              fontSize: 'clamp(0.8rem, 0.95vw, 1rem)',
-            }}
-          >
-            <span className="flex items-center justify-center" style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}>
-              <span>✨</span>
-              <span>Upgrade to Pro Promagen</span>
-            </span>
-          </button>
-
-          {/* Subtext */}
+        <div className="text-center" style={{ gap: 'clamp(8px, 0.8vw, 12px)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <span style={{ fontSize: 'clamp(1.5rem, 2vw, 2.5rem)' }}>🎉</span>
           <span
-            className="text-white/30 text-center"
-            style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
+            className="text-emerald-400 font-semibold"
+            style={{ fontSize: 'clamp(0.9rem, 1vw, 1.1rem)' }}
           >
-            Preview mode — your selections won&apos;t be saved
+            Welcome to Pro Promagen!
+          </span>
+          <span
+            className="text-white/50"
+            style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.85rem)' }}
+          >
+            Your 7-day free trial has started
           </span>
         </div>
       </div>
     );
   }
 
-  // Paid user — save panel
+  // ============================================================================
+  // PAID USER VIEW — Save + Manage Subscription
+  // ============================================================================
+
+  if (isPaidUser) {
+    return (
+      <div
+        className="rounded-2xl overflow-hidden ring-1 ring-emerald-500/30"
+        style={{
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(20, 184, 166, 0.06), rgba(16, 185, 129, 0.04))',
+          minHeight: 'clamp(140px, 14vw, 200px)',
+          padding: 'clamp(16px, 1.5vw, 24px)',
+        }}
+      >
+        <div className="flex flex-col items-center justify-center h-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
+          <span
+            className="text-white/50"
+            style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.85rem)' }}
+          >
+            {hasChanges ? 'You have unsaved changes' : 'Your preferences are saved'}
+          </span>
+
+          {/* Button row */}
+          <div className="flex w-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
+            {/* Save Preferences — primary */}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving || !hasChanges}
+              className={`flex-1 rounded-xl font-semibold text-white transition-all duration-300 ${
+                hasChanges
+                  ? 'cursor-pointer bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-400 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40'
+                  : 'bg-white/10 cursor-default'
+              } ${isSaving ? 'cursor-wait' : ''}`}
+              style={{
+                padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+                fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+              }}
+            >
+              <span className="flex items-center justify-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                {isSaving ? (
+                  <><span className="animate-spin">⏳</span><span>Saving...</span></>
+                ) : saveStatus === 'success' ? (
+                  <><span>✓</span><span>Saved!</span></>
+                ) : saveStatus === 'error' ? (
+                  <><span>✕</span><span>Error — try again</span></>
+                ) : (
+                  <><span>💾</span><span>Save Preferences</span></>
+                )}
+              </span>
+            </button>
+
+            {/* Manage Subscription — secondary/ghost */}
+            <button
+              type="button"
+              onClick={handleManageSubscription}
+              className="flex-1 rounded-xl font-medium text-white/70 cursor-pointer ring-1 ring-white/20 hover:ring-white/40 hover:text-white transition-all duration-200 bg-white/5 hover:bg-white/10"
+              style={{
+                padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+                fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+              }}
+            >
+              Manage Subscription
+            </button>
+          </div>
+
+          <span
+            className="text-white/30 text-center"
+            style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
+          >
+            Changes apply to your homepage immediately
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // FREE USER VIEW — Side-by-side pricing cards
+  // ============================================================================
+
   return (
     <div
-      className="rounded-2xl overflow-hidden ring-1 ring-emerald-500/30"
+      className="rounded-2xl overflow-hidden ring-1 ring-amber-500/30"
       style={{
-        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(20, 184, 166, 0.06), rgba(16, 185, 129, 0.04))',
+        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(249, 115, 22, 0.04), rgba(245, 158, 11, 0.03))',
         minHeight: 'clamp(140px, 14vw, 200px)',
-        padding: 'clamp(16px, 1.5vw, 24px)',
+        padding: 'clamp(12px, 1.2vw, 20px)',
       }}
     >
-      <div className="flex flex-col items-center justify-center h-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
-        <span
-          className="text-white/50"
-          style={{ fontSize: 'clamp(0.7rem, 0.85vw, 0.85rem)' }}
-        >
-          {hasChanges ? 'You have unsaved changes' : 'Your preferences are saved'}
-        </span>
+      <div className="flex flex-col h-full justify-center" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
 
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving || !hasChanges}
-          className={`w-full rounded-xl font-semibold text-white transition-all duration-300 ${
-            hasChanges
-              ? 'cursor-pointer bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-400 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40'
-              : 'bg-white/10 cursor-default'
-          } ${isSaving ? 'cursor-wait' : ''}`}
-          style={{
-            padding: 'clamp(10px, 1vw, 14px) clamp(16px, 1.5vw, 24px)',
-            fontSize: 'clamp(0.8rem, 0.95vw, 1rem)',
-          }}
-        >
-          <span className="flex items-center justify-center" style={{ gap: 'clamp(6px, 0.5vw, 8px)' }}>
-            {isSaving ? (
-              <><span className="animate-spin">⏳</span><span>Saving...</span></>
-            ) : saveStatus === 'success' ? (
-              <><span>✓</span><span>Saved!</span></>
-            ) : saveStatus === 'error' ? (
-              <><span>✕</span><span>Error — try again</span></>
-            ) : (
-              <><span>💾</span><span>Save Preferences</span></>
-            )}
-          </span>
-        </button>
+        {/* Two pricing cards side-by-side */}
+        <div className="flex w-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
 
+          {/* ── MONTHLY CARD ── neutral styling */}
+          <div
+            className="flex-1 rounded-xl ring-1 ring-white/20 flex flex-col items-center justify-between"
+            style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              padding: 'clamp(10px, 1vw, 16px)',
+              gap: 'clamp(6px, 0.6vw, 10px)',
+            }}
+          >
+            <span
+              className="text-white/60 font-medium"
+              style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.85rem)' }}
+            >
+              Monthly
+            </span>
+
+            <div className="text-center">
+              <span
+                className="text-white font-bold block"
+                style={{ fontSize: 'clamp(1.1rem, 1.4vw, 1.6rem)' }}
+              >
+                £15.99
+              </span>
+              <span
+                className="text-white/40"
+                style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
+              >
+                per month
+              </span>
+            </div>
+
+            <SubscribeButton
+              plan="monthly"
+              label="Start Free Trial"
+              isLoading={isCheckingOut}
+              onSubscribe={handleSubscribe}
+            />
+          </div>
+
+          {/* ── ANNUAL CARD ── emerald accent, "Best Value" badge (Von Restorff) */}
+          <div
+            className="flex-1 rounded-xl ring-1 ring-emerald-500/50 flex flex-col items-center justify-between relative"
+            style={{
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(20, 184, 166, 0.05))',
+              padding: 'clamp(10px, 1vw, 16px)',
+              gap: 'clamp(6px, 0.6vw, 10px)',
+            }}
+          >
+            {/* Best Value badge */}
+            <span
+              className="absolute rounded-full bg-emerald-500/20 text-emerald-400 font-semibold ring-1 ring-emerald-500/40"
+              style={{
+                top: 'clamp(-8px, -0.6vw, -6px)',
+                right: 'clamp(8px, 1vw, 16px)',
+                fontSize: 'clamp(0.55rem, 0.6vw, 0.65rem)',
+                padding: 'clamp(1px, 0.15vw, 3px) clamp(6px, 0.6vw, 10px)',
+              }}
+            >
+              ★ Best Value
+            </span>
+
+            <span
+              className="text-emerald-400 font-medium"
+              style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.85rem)' }}
+            >
+              Annual
+            </span>
+
+            <div className="text-center">
+              <span
+                className="text-white font-bold block"
+                style={{ fontSize: 'clamp(1.1rem, 1.4vw, 1.6rem)' }}
+              >
+                £12.49
+              </span>
+              <span
+                className="text-white/40 block"
+                style={{ fontSize: 'clamp(0.575rem, 0.65vw, 0.7rem)' }}
+              >
+                per month, billed as £149.99/year
+              </span>
+              <span
+                className="text-emerald-400 font-semibold block"
+                style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)', marginTop: 'clamp(2px, 0.2vw, 4px)' }}
+              >
+                Save £42
+              </span>
+            </div>
+
+            <SubscribeButton
+              plan="annual"
+              label="Start Free Trial"
+              isLoading={isCheckingOut}
+              onSubscribe={handleSubscribe}
+            />
+          </div>
+        </div>
+
+        {/* Subtext */}
         <span
           className="text-white/30 text-center"
-          style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
+          style={{ fontSize: 'clamp(0.575rem, 0.65vw, 0.7rem)' }}
         >
-          Changes apply to your homepage immediately
+          7-day free trial on both plans · Cancel any time
         </span>
       </div>
     </div>
