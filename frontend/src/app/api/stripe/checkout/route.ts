@@ -1,18 +1,17 @@
 // src/app/api/stripe/checkout/route.ts
 // ============================================================================
-// STRIPE CHECKOUT SESSION API ROUTE v1.1.0
+// STRIPE CHECKOUT SESSION API ROUTE v2.0.0
 // ============================================================================
 // Creates a Stripe Checkout Session and returns the redirect URL.
-// Requires Clerk authentication — user must be signed in.
+// Requires Clerk authentication — reads userId from session cookie JWT.
 //
-// CRITICAL: runtime = 'nodejs' required because:
-// 1. Stripe SDK is a Node.js package (not Edge-compatible)
-// 2. Clerk auth() needs Node.js async context to read session cookies
-// Without this, auth() returns null even when cookies are present.
+// v2.0.0: Switched from auth() to direct JWT cookie reading because auth()
+//         returns null in route handlers on Vercel production despite valid
+//         session cookies being present.
 //
 // Authority: docs/authority/stripe.md §5.1
-// Security: 10/10 — Clerk auth required, Price IDs server-side only,
-//           no user input reaches Stripe except plan selection
+// Security: 10/10 — userId from httpOnly cookie verified by clerkMiddleware,
+//           confirmed via clerkClient.users.getUser(), Price IDs server-side only
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -23,6 +22,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { stripe, getStripePriceId } from '@/lib/stripe/stripe';
+import { getUserIdFromSession } from '@/lib/stripe/clerk-session';
 
 // ============================================================================
 // TYPES
@@ -44,10 +44,8 @@ interface ClerkPublicMetadata {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // 1. Get userId from middleware header (set by clerkMiddleware in middleware.ts)
-    //    auth() in route handlers doesn't reliably receive Clerk context on Vercel production,
-    //    so middleware resolves it and passes via x-clerk-user-id header.
-    const userId = request.headers.get('x-clerk-user-id');
+    // 1. Get userId from session cookie (see clerk-session.ts for why not auth())
+    const userId = getUserIdFromSession(request);
 
     if (!userId) {
       return NextResponse.json(
@@ -67,7 +65,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 3. Get user email for pre-filling checkout
+    // 3. Get user from Clerk (confirms user exists + gets email + metadata)
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     const email = user.emailAddresses[0]?.emailAddress ?? undefined;

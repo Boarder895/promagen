@@ -1,13 +1,13 @@
 // src/app/api/stripe/portal/route.ts
 // ============================================================================
-// STRIPE CUSTOMER PORTAL API ROUTE v1.1.0
+// STRIPE CUSTOMER PORTAL API ROUTE v2.0.0
 // ============================================================================
 // Creates a Stripe Billing Portal session for subscription management.
 // Pro users can cancel, update payment method, and view invoices.
-// runtime = 'nodejs' required for Stripe SDK + Clerk auth context.
+// v2.0.0: Uses getUserIdFromSession() instead of broken auth()
 //
 // Authority: docs/authority/stripe.md §5.3
-// Security: 10/10 — Clerk auth required, customer ID from server metadata
+// Security: 10/10 — userId from session cookie, confirmed via clerkClient
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -18,6 +18,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { stripe } from '@/lib/stripe/stripe';
+import { getUserIdFromSession } from '@/lib/stripe/clerk-session';
 
 // ============================================================================
 // TYPES
@@ -35,8 +36,8 @@ interface ClerkPublicMetadata {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // 1. Get userId from middleware header (set by clerkMiddleware in middleware.ts)
-    const userId = request.headers.get('x-clerk-user-id');
+    // 1. Get userId from session cookie
+    const userId = getUserIdFromSession(request);
 
     if (!userId) {
       return NextResponse.json(
