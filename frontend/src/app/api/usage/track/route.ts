@@ -43,7 +43,24 @@ export async function GET(request: NextRequest) {
     const isPaidUser = false;
     
     const date = getTodayInTimezone(timezone);
-    const status = await getUsageStatus(userId, date, isPaidUser);
+    
+    let status;
+    try {
+      status = await getUsageStatus(userId, date, isPaidUser);
+    } catch (kvError) {
+      // KV unavailable — return safe defaults so the client doesn't error-loop
+      console.warn('[usage/track] KV read failed, returning defaults:', kvError);
+      const tomorrow = new Date();
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      tomorrow.setUTCHours(0, 0, 0, 0);
+      status = {
+        count: 0,
+        limit: FREE_DAILY_LIMIT,
+        remaining: FREE_DAILY_LIMIT,
+        isAtLimit: false,
+        resetTime: tomorrow.toISOString(),
+      };
+    }
     
     return NextResponse.json({
       success: true,
