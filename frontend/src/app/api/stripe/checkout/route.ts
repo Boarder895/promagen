@@ -1,17 +1,5 @@
 // src/app/api/stripe/checkout/route.ts
-// ============================================================================
-// STRIPE CHECKOUT SESSION API ROUTE v2.0.0
-// ============================================================================
-// Creates a Stripe Checkout Session and returns the redirect URL.
-//
-// Auth: Reads userId from __session cookie JWT (see clerk-session.ts).
-// Confirms user via clerkClient.users.getUser() before proceeding.
-//
-// Authority: docs/authority/stripe.md §5.1
-// Security: 10/10 — userId from httpOnly cookie, confirmed via Clerk API,
-//           Price IDs server-side only
-// Existing features preserved: Yes
-// ============================================================================
+// v2.1.0 — Per-step error trapping to identify exact failure point
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,71 +7,78 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
-import { stripe, getStripePriceId } from '@/lib/stripe/stripe';
+import { getStripePriceId } from '@/lib/stripe/stripe';
 import { getUserIdFromSession } from '@/lib/stripe/clerk-session';
+import Stripe from 'stripe';
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface CheckoutRequestBody {
-  plan?: unknown;
-}
-
+interface CheckoutRequestBody { plan?: unknown; }
 interface ClerkPublicMetadata {
   tier?: 'free' | 'paid';
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
 }
 
-// ============================================================================
-// POST HANDLER
-// ============================================================================
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Step 1: Auth
+  const userId = getUserIdFromSession(request);
+  if (!userId) {
+    return NextResponse.json({ error: 'Step 1 failed: No userId in session cookie' }, { status: 401 });
+  }
+
+  // Step 2: Parse body
+  let plan: string;
   try {
-    // 1. Get userId from session cookie JWT
-    const userId = getUserIdFromSession(request);
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Sign in required to subscribe' },
-        { status: 401 },
-      );
-    }
-
-    // 2. Parse and validate request body
     const body = (await request.json()) as CheckoutRequestBody;
-    const { plan } = body;
-
+    plan = body.plan as string;
     if (plan !== 'monthly' && plan !== 'annual') {
-      return NextResponse.json(
-        { error: 'Invalid plan. Must be "monthly" or "annual".' },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: 'Step 2 failed: Invalid plan' }, { status: 400 });
     }
+  } catch (err) {
+    return NextResponse.json({ error: `Step 2 failed: ${err instanceof Error ? err.message : String(err)}` }, { status: 400 });
+  }
 
-    // 3. Confirm user exists in Clerk + get email + metadata
+  // Step 3: Clerk user lookup
+  let email: string | undefined;
+  let metadata: ClerkPublicMetadata;
+  try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
-    const email = user.emailAddresses[0]?.emailAddress ?? undefined;
-    const metadata = (user.publicMetadata ?? {}) as ClerkPublicMetadata;
+    email = user.emailAddresses[0]?.emailAddress ?? undefined;
+    metadata = (user.publicMetadata ?? {}) as ClerkPublicMetadata;
+  } catch (err) {
+    return NextResponse.json({ error: `Step 3 failed (Clerk getUser): ${err instanceof Error ? err.message : String(err)}` }, { status: 500 });
+  }
 
-    // 4. Block if already Pro
-    if (metadata.tier === 'paid' && metadata.stripeSubscriptionId) {
-      return NextResponse.json(
-        { error: 'Already subscribed to Pro Promagen' },
-        { status: 409 },
-      );
+  // Step 4: Already Pro check
+  if (metadata.tier === 'paid' && metadata.stripeSubscriptionId) {
+    return NextResponse.json({ error: 'Step 4: Already subscribed' }, { status: 409 });
+  }
+
+  // Step 5: Price ID
+  let priceId: string;
+  try {
+    priceId = getStripePriceId(plan as 'monthly' | 'annual');
+  } catch (err) {
+    return NextResponse.json({ error: `Step 5 failed (Price ID): ${err instanceof Error ? err.message : String(err)}` }, { status: 500 });
+  }
+
+  // Step 6: Create Stripe instance fresh (not singleton — avoids cached old key)
+  let stripeClient: Stripe;
+  try {
+    const key = (process.env.STRIPE_SECRET_KEY ?? '').trim();
+    if (!key) {
+      return NextResponse.json({ error: 'Step 6 failed: STRIPE_SECRET_KEY not set' }, { status: 500 });
     }
+    stripeClient = new Stripe(key);
+  } catch (err) {
+    return NextResponse.json({ error: `Step 6 failed (Stripe init): ${err instanceof Error ? err.message : String(err)}` }, { status: 500 });
+  }
 
-    // 5. Get Price ID from env vars
-    const priceId = getStripePriceId(plan);
-
-    // 6. Build Checkout Session
+  // Step 7: Create Checkout Session
+  try {
     const origin = request.headers.get('origin') ?? 'https://promagen.com';
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripeClient.checkout.sessions.create({
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
       subscription_data: {
@@ -102,19 +97,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (!session.url) {
-      return NextResponse.json(
-        { error: 'Stripe returned no checkout URL' },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Step 7 failed: No URL returned' }, { status: 500 });
     }
 
     return NextResponse.json({ url: session.url });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('[stripe-checkout] Error:', message);
-    return NextResponse.json(
-      { error: `Checkout failed: ${message}` },
-      { status: 500 },
-    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[stripe-checkout] Step 7 error:', message);
+    return NextResponse.json({ error: `Step 7 failed (Stripe session): ${message}` }, { status: 500 });
   }
 }
