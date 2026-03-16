@@ -58,10 +58,17 @@ export default function ProPromagenLoading() {
 
         {/* Centre panel */}
         <main className="rounded-3xl bg-slate-950/70 ring-1 ring-white/10 p-4 space-y-4">
-          {/* Header */}
-          <div className="space-y-2 mb-4">
-            <div className="h-5 w-40 rounded bg-white/10 animate-pulse" />
-            <div className="h-3 w-64 rounded bg-white/5 animate-pulse" />
+          {/* Real heading — renders instantly as server HTML for fast LCP.
+              Matches the exact heading in HomepageGrid (same font-size, gradient). */}
+          <div className="flex items-center justify-center py-3">
+            <h2
+              className="font-semibold leading-tight text-center"
+              style={{ fontSize: 'clamp(0.75rem, 1.1vw, 2rem)' }}
+            >
+              <span className="bg-gradient-to-r from-sky-400 via-emerald-300 to-indigo-400 bg-clip-text text-transparent whitespace-nowrap">
+                Pro Promagen — Unlock the Full Engine
+              </span>
+            </h2>
           </div>
 
           {/* Mode badge */}

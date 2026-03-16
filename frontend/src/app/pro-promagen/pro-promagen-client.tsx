@@ -1417,12 +1417,6 @@ export default function ProPromagenClient({
   // Hydration gate — false until useEffect reads localStorage
   const [hydrated, setHydrated] = useState(false);
 
-  // Remove SSR heading shell on mount — it was rendered by page.tsx (server
-  // component) to give the browser an instant LCP paint before JS hydrates.
-  useEffect(() => {
-    document.getElementById('pro-ssr-shell')?.remove();
-  }, []);
-
   // Read localStorage after mount (client-only, runs once)
   useEffect(() => {
     const storedExch = loadArrayFromStorage(STORAGE_KEYS.EXCHANGE_SELECTION);
