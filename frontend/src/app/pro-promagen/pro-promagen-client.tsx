@@ -1554,18 +1554,21 @@ export default function ProPromagenClient({
     userTier: isPaidUser ? 'paid' : 'free',
   });
 
-  // Build indexByExchange map (same helper logic as homepage-client)
+  // Build indexByExchange map — bidirectional key support (v3.0.0)
+  // Gateway may return simple IDs (pre-deploy) or compound IDs (post-deploy).
+  // Pro page cards use compound IDs. We alias both directions so lookups always work.
   const indexByExchange = useMemo(() => {
     const map = new Map<string, IndexQuoteData>();
-    for (const [exchangeId, quote] of quotesById.entries()) {
+
+    for (const [quoteId, quote] of quotesById.entries()) {
       if (!quote) continue;
       const indexName = typeof quote.indexName === 'string' ? quote.indexName : null;
       const price =
         typeof quote.price === 'number' && Number.isFinite(quote.price) ? quote.price : null;
       if (!indexName || price === null) continue;
 
-      const movement = movementById.get(exchangeId);
-      map.set(exchangeId, {
+      const movement = movementById.get(quoteId);
+      const data: IndexQuoteData = {
         indexName,
         price,
         change:
@@ -1575,10 +1578,35 @@ export default function ProPromagenClient({
             ? quote.percentChange
             : 0,
         tick: movement?.tick ?? 'flat',
-      });
+      };
+
+      // Set for the exact quote ID (could be simple or compound)
+      map.set(quoteId, data);
+
+      // Also set plain exchangeId from compound keys (homepage-style fallback)
+      const sepIdx = quoteId.indexOf('::');
+      if (sepIdx !== -1) {
+        const plainId = quoteId.substring(0, sepIdx);
+        if (!map.has(plainId)) {
+          map.set(plainId, data);
+        }
+      }
     }
+
+    // Reverse alias: for each selected compound key, if there's data under
+    // the plain exchangeId but not the compound key, copy it across.
+    // This handles the case where gateway returns simple IDs (pre-deploy).
+    for (const compoundKey of selectedExchanges) {
+      if (map.has(compoundKey)) continue; // Already has compound-keyed data
+      const { exchangeId } = parseCompoundKey(compoundKey);
+      const data = map.get(exchangeId);
+      if (data) {
+        map.set(compoundKey, data);
+      }
+    }
+
     return map;
-  }, [quotesById, movementById]);
+  }, [quotesById, movementById, selectedExchanges]);
 
   // Fetch live weather (same hook as homepage)
   const { weather: liveWeatherById } = useWeather();
