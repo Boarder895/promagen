@@ -44,13 +44,14 @@ function SubscribeButton({
   label,
   isLoading,
   onSubscribe,
+  isSignedIn,
 }: {
   plan: 'monthly' | 'annual';
   label: string;
   isLoading: boolean;
   onSubscribe: (plan: 'monthly' | 'annual') => void;
+  isSignedIn: boolean | undefined;
 }) {
-  const { isSignedIn } = useAuth();
 
   const button = (
     <button
@@ -97,6 +98,7 @@ export function UpgradeCta({
   onSave,
   hasChanges = false,
 }: UpgradeCtaProps) {
+  const { isSignedIn, getToken } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -124,9 +126,21 @@ export function UpgradeCta({
     setIsCheckingOut(true);
     setCheckoutError(null);
     try {
+      // Get Clerk session token for server-side auth verification
+      const token = await getToken();
+
+      if (!token) {
+        setCheckoutError('Session expired — please sign in again');
+        setIsCheckingOut(false);
+        return;
+      }
+
       const response = await fetch('/api/stripe/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
         body: JSON.stringify({ plan }),
       });
 
@@ -163,14 +177,18 @@ export function UpgradeCta({
       setCheckoutError('Connection error — please try again');
       setIsCheckingOut(false);
     }
-  }, []);
+  }, [getToken]);
 
   // ── Portal flow ──
   const handleManageSubscription = useCallback(async () => {
     try {
+      const token = await getToken();
       const response = await fetch('/api/stripe/portal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
       });
 
       const data = await response.json();
@@ -184,7 +202,7 @@ export function UpgradeCta({
     } catch (error) {
       console.error('[upgrade-cta] Portal fetch error:', error);
     }
-  }, []);
+  }, [getToken]);
 
   // ── Save flow ──
   const handleSave = useCallback(async () => {
@@ -367,6 +385,7 @@ export function UpgradeCta({
               label="Start Free Trial"
               isLoading={isCheckingOut}
               onSubscribe={handleSubscribe}
+              isSignedIn={isSignedIn}
             />
           </div>
 
@@ -425,6 +444,7 @@ export function UpgradeCta({
               label="Start Free Trial"
               isLoading={isCheckingOut}
               onSubscribe={handleSubscribe}
+              isSignedIn={isSignedIn}
             />
           </div>
         </div>
