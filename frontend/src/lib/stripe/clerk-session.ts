@@ -1,43 +1,52 @@
 // src/lib/stripe/clerk-session.ts
 // ============================================================================
-// CLERK SESSION HELPER v1.0.0
+// CLERK SESSION HELPER v2.0.0
 // ============================================================================
-// Extracts userId from Clerk's __session cookie JWT.
+// Extracts userId and claims from Clerk's __session cookie JWT.
 //
-// WHY: Clerk's auth() returns null in Next.js App Router route handlers on
-// Vercel production. The session cookies ARE present and valid (verified by
-// clerkMiddleware), but auth() doesn't read them in route handlers.
-//
-// This helper decodes the JWT from the cookie to get the userId (sub claim).
-// The JWT was already signature-verified by clerkMiddleware. We then confirm
-// the user exists via clerkClient.users.getUser() in the route handler.
+// WHY: Both auth() and clerkClient().users.getUser() fail in route handlers
+// on Vercel production. The session cookies ARE present and valid (verified
+// by clerkMiddleware). This helper decodes the JWT directly.
 //
 // Authority: docs/authority/stripe.md
 // ============================================================================
 
 import type { NextRequest } from 'next/server';
 
+export interface SessionData {
+  userId: string;
+  email?: string;
+  tier?: 'free' | 'paid';
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+}
+
 /**
- * Extract userId from Clerk's session JWT cookie.
- * Tries all __session* cookies (Clerk may use a suffixed name).
+ * Extract session data from Clerk's session JWT cookie.
  */
-export function getUserIdFromSession(request: NextRequest): string | null {
+export function getSessionFromCookie(request: NextRequest): SessionData | null {
   const cookies = request.cookies.getAll();
   const sessionCookies = cookies.filter((c) => c.name.startsWith('__session'));
 
   for (const cookie of sessionCookies) {
-    const userId = decodeJwtSubject(cookie.value);
-    if (userId) return userId;
+    const data = decodeSessionJwt(cookie.value);
+    if (data) return data;
   }
 
   return null;
 }
 
 /**
- * Decode a JWT payload and extract the 'sub' claim.
- * Does NOT verify signature — clerkMiddleware already did that.
+ * Simple userId extraction (backward compat).
  */
-function decodeJwtSubject(jwt: string): string | null {
+export function getUserIdFromSession(request: NextRequest): string | null {
+  return getSessionFromCookie(request)?.userId ?? null;
+}
+
+/**
+ * Decode a Clerk session JWT and extract relevant claims.
+ */
+function decodeSessionJwt(jwt: string): SessionData | null {
   try {
     const parts = jwt.split('.');
     if (parts.length !== 3) return null;
@@ -50,9 +59,20 @@ function decodeJwtSubject(jwt: string): string | null {
     const payload = JSON.parse(json) as Record<string, unknown>;
 
     const sub = payload.sub;
-    if (typeof sub === 'string' && sub.length > 0) return sub;
+    if (typeof sub !== 'string' || sub.length === 0) return null;
 
-    return null;
+    // Extract public metadata if present in the JWT
+    const metadata = payload.publicMetadata as Record<string, unknown> | undefined;
+
+    return {
+      userId: sub,
+      email: typeof payload.email === 'string' ? payload.email : undefined,
+      tier: metadata?.tier === 'paid' ? 'paid' : 'free',
+      stripeCustomerId: typeof metadata?.stripeCustomerId === 'string'
+        ? metadata.stripeCustomerId : undefined,
+      stripeSubscriptionId: typeof metadata?.stripeSubscriptionId === 'string'
+        ? metadata.stripeSubscriptionId : undefined,
+    };
   } catch {
     return null;
   }
