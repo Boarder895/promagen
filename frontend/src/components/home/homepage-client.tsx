@@ -395,11 +395,22 @@ export default function HomepageClient({
   const indexByExchange = useMemo(() => {
     const map = new Map<string, IndexQuoteData>();
 
-    for (const [exchangeId, quote] of quotesById.entries()) {
-      const movement = movementById.get(exchangeId);
+    for (const [quoteId, quote] of quotesById.entries()) {
+      const movement = movementById.get(quoteId);
       const data = toIndexQuoteData(quote, movement);
       if (data) {
-        map.set(exchangeId, data);
+        // Set for the exact quote ID (may be compound like "cse-colombo::cse_all_share")
+        map.set(quoteId, data);
+
+        // Also set for the plain exchangeId so homepage cards (which use plain IDs) find data.
+        // First-come wins — the default benchmark (listed first by config) takes priority.
+        const sepIdx = quoteId.indexOf('::');
+        if (sepIdx !== -1) {
+          const plainId = quoteId.substring(0, sepIdx);
+          if (!map.has(plainId)) {
+            map.set(plainId, data);
+          }
+        }
       }
     }
 

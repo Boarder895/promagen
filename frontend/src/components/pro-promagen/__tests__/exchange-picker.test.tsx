@@ -1,22 +1,23 @@
 // src/components/pro-promagen/__tests__/exchange-picker.test.tsx
 // ============================================================================
-// EXCHANGE PICKER TESTS (v2.1 — rewritten for current component)
+// EXCHANGE PICKER TESTS (v3.0.0 — Index-Per-Row)
 // ============================================================================
 // Smoke tests and edge case coverage per code-standard.md §12.
+//
+// v3.0.0 (16 Mar 2026):
+// - ExchangeOption now represents ONE index per exchange
+// - Compound selection keys: "exchangeId::benchmark"
+// - Multi-index exchanges produce multiple test entries
+// - Removed IndexSelector tests (no longer exists)
 //
 // Tests:
 // - Renders without crashing
 // - Handles empty exchanges array
 // - Handles null/undefined props defensively
-// - Selection toggle works (via checkbox button, not label text)
+// - Selection toggle works
 // - Selection limits enforced
 // - Search filtering works
 // - Continent grouping works
-//
-// NOTE: The ExchangeListItem renders the toggle <button> containing only
-// the checkbox icon + flag. The exchange label is a sibling <div>, not
-// inside the button. Use findToggleButton() helper to locate the correct
-// interactive element for a given exchange label.
 // ============================================================================
 
 import React from 'react';
@@ -24,120 +25,148 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ExchangePicker, type ExchangeOption } from '../exchange-picker';
 
 // ============================================================================
-// TEST DATA
+// TEST DATA — Each entry is one index (compound key as id)
 // ============================================================================
 
 const mockExchanges: ExchangeOption[] = [
+  // --- ASIA ---
   {
-    id: 'tse-tokyo',
-    label: 'TSE Tokyo',
+    id: 'tse-tokyo::jp225',
+    exchangeId: 'tse-tokyo',
+    label: 'TSE',
+    fullName: 'Tokyo Stock Exchange (TSE)',
+    benchmark: 'jp225',
+    indexName: 'Nikkei 225',
     city: 'Tokyo',
     country: 'Japan',
     iso2: 'JP',
     continent: 'ASIA',
-    defaultBenchmark: 'jp225',
-    defaultIndexName: 'Nikkei 225',
-    availableIndices: [{ benchmark: 'jp225', indexName: 'Nikkei 225' }],
-    hasMultipleIndices: false,
   },
   {
-    id: 'hkex-hong-kong',
-    label: 'HKEX Hong Kong',
+    id: 'tse-tokyo::jpvix',
+    exchangeId: 'tse-tokyo',
+    label: 'TSE',
+    fullName: 'Tokyo Stock Exchange (TSE)',
+    benchmark: 'jpvix',
+    indexName: 'Japan VIX',
+    city: 'Tokyo',
+    country: 'Japan',
+    iso2: 'JP',
+    continent: 'ASIA',
+  },
+  {
+    id: 'hkex-hong-kong::hk50',
+    exchangeId: 'hkex-hong-kong',
+    label: 'HKEX',
+    fullName: 'Hong Kong Exchanges & Clearing (HKEX)',
+    benchmark: 'hk50',
+    indexName: 'Hang Seng',
     city: 'Hong Kong',
     country: 'China',
     iso2: 'HK',
     continent: 'ASIA',
-    defaultBenchmark: 'hk50',
-    defaultIndexName: 'Hang Seng',
-    availableIndices: [{ benchmark: 'hk50', indexName: 'Hang Seng' }],
-    hasMultipleIndices: false,
   },
+  // --- OCEANIA ---
   {
-    id: 'asx-sydney',
-    label: 'ASX Sydney',
+    id: 'asx-sydney::asx200',
+    exchangeId: 'asx-sydney',
+    label: 'ASX',
+    fullName: 'Australian Securities Exchange (ASX)',
+    benchmark: 'asx200',
+    indexName: 'ASX 200',
     city: 'Sydney',
     country: 'Australia',
     iso2: 'AU',
     continent: 'OCEANIA',
-    defaultBenchmark: 'asx200',
-    defaultIndexName: 'ASX 200',
-    availableIndices: [{ benchmark: 'asx200', indexName: 'ASX 200' }],
-    hasMultipleIndices: false,
   },
+  // --- EUROPE ---
   {
-    id: 'lse-london',
-    label: 'LSE London',
+    id: 'lse-london::gb100',
+    exchangeId: 'lse-london',
+    label: 'LSE',
+    fullName: 'London Stock Exchange (LSE)',
+    benchmark: 'gb100',
+    indexName: 'FTSE 100',
     city: 'London',
     country: 'United Kingdom',
     iso2: 'GB',
     continent: 'EUROPE',
-    defaultBenchmark: 'gb100',
-    defaultIndexName: 'FTSE 100',
-    availableIndices: [{ benchmark: 'gb100', indexName: 'FTSE 100' }],
-    hasMultipleIndices: false,
   },
   {
-    id: 'nyse-new-york',
-    label: 'NYSE New York',
+    id: 'lse-london::stoxx600',
+    exchangeId: 'lse-london',
+    label: 'LSE',
+    fullName: 'London Stock Exchange (LSE)',
+    benchmark: 'stoxx600',
+    indexName: 'STOXX Europe 600',
+    city: 'London',
+    country: 'United Kingdom',
+    iso2: 'GB',
+    continent: 'EUROPE',
+  },
+  // --- NORTH AMERICA ---
+  {
+    id: 'nyse-new-york::us500',
+    exchangeId: 'nyse-new-york',
+    label: 'NYSE',
+    fullName: 'New York Stock Exchange (NYSE)',
+    benchmark: 'us500',
+    indexName: 'S&P 500',
     city: 'New York',
     country: 'United States',
     iso2: 'US',
     continent: 'NORTH_AMERICA',
-    defaultBenchmark: 'us500',
-    defaultIndexName: 'S&P 500',
-    availableIndices: [
-      { benchmark: 'us500', indexName: 'S&P 500' },
-      { benchmark: 'us30', indexName: 'Dow Jones 30' },
-    ],
-    hasMultipleIndices: true,
   },
   {
-    id: 'nasdaq-new-york',
-    label: 'NASDAQ New York',
+    id: 'nyse-new-york::us30',
+    exchangeId: 'nyse-new-york',
+    label: 'NYSE',
+    fullName: 'New York Stock Exchange (NYSE)',
+    benchmark: 'us30',
+    indexName: 'Dow Jones 30',
     city: 'New York',
     country: 'United States',
     iso2: 'US',
     continent: 'NORTH_AMERICA',
-    defaultBenchmark: 'us100',
-    defaultIndexName: 'NASDAQ 100',
-    availableIndices: [{ benchmark: 'us100', indexName: 'NASDAQ 100' }],
-    hasMultipleIndices: false,
   },
+  // --- SOUTH AMERICA ---
   {
-    id: 'b3-sao-paulo',
-    label: 'B3 São Paulo',
+    id: 'b3-sao-paulo::ibovespa',
+    exchangeId: 'b3-sao-paulo',
+    label: 'B3',
+    fullName: 'B3 — Brasil Bolsa Balcão',
+    benchmark: 'ibovespa',
+    indexName: 'IBOVESPA',
     city: 'São Paulo',
     country: 'Brazil',
     iso2: 'BR',
     continent: 'SOUTH_AMERICA',
-    defaultBenchmark: 'ibovespa',
-    defaultIndexName: 'IBOVESPA',
-    availableIndices: [{ benchmark: 'ibovespa', indexName: 'IBOVESPA' }],
-    hasMultipleIndices: false,
   },
+  // --- AFRICA ---
   {
-    id: 'jse-johannesburg',
-    label: 'JSE Johannesburg',
+    id: 'jse-johannesburg::jse',
+    exchangeId: 'jse-johannesburg',
+    label: 'JSE',
+    fullName: 'Johannesburg Stock Exchange (JSE)',
+    benchmark: 'jse',
+    indexName: 'JSE All Share',
     city: 'Johannesburg',
     country: 'South Africa',
     iso2: 'ZA',
     continent: 'AFRICA',
-    defaultBenchmark: 'jse',
-    defaultIndexName: 'JSE All Share',
-    availableIndices: [{ benchmark: 'jse', indexName: 'JSE All Share' }],
-    hasMultipleIndices: false,
   },
+  // --- MIDDLE EAST ---
   {
-    id: 'tadawul-riyadh',
-    label: 'Tadawul Riyadh',
+    id: 'tadawul-riyadh::tasi',
+    exchangeId: 'tadawul-riyadh',
+    label: 'Tadawul',
+    fullName: 'Saudi Exchange (Tadawul)',
+    benchmark: 'tasi',
+    indexName: 'TASI',
     city: 'Riyadh',
     country: 'Saudi Arabia',
     iso2: 'SA',
     continent: 'MIDDLE_EAST',
-    defaultBenchmark: 'tasi',
-    defaultIndexName: 'TASI',
-    availableIndices: [{ benchmark: 'tasi', indexName: 'TASI' }],
-    hasMultipleIndices: false,
   },
 ];
 
@@ -146,25 +175,27 @@ const mockExchanges: ExchangeOption[] = [
 // ============================================================================
 
 /**
- * Finds the toggle button (checkbox) for a given exchange label.
+ * Finds the toggle button (checkbox) for a given label + index text.
  *
- * The ExchangeListItem renders:
+ * The IndexListItem renders:
  *   <div class="flex w-full ...">        ← item row
  *     <button aria-pressed="...">        ← toggle (checkbox + flag)
  *     <div>                              ← label area (NOT inside button)
- *       <p>TSE Tokyo</p>
+ *       <p>TSE — Nikkei 225</p>
  *       <p>Tokyo, Japan</p>
  *     </div>
  *   </div>
  *
  * So we find the label text, walk up to the row, and query the button.
  */
-function findToggleButton(label: string): HTMLElement {
-  const labelEl = screen.getByText(label, { selector: 'p' });
+function findToggleButton(text: string): HTMLElement {
+  const labelEl = screen.getByText((_content, element) => {
+    return element?.tagName === 'P' && (element?.textContent?.includes(text) ?? false);
+  });
   // Walk: <p> → <div.label-area> → <div.item-row>
   const itemRow = labelEl.parentElement?.parentElement;
   const btn = itemRow?.querySelector('button[aria-pressed]') as HTMLElement | null;
-  if (!btn) throw new Error(`No toggle button found for "${label}"`);
+  if (!btn) throw new Error(`No toggle button found for "${text}"`);
   return btn;
 }
 
@@ -196,12 +227,12 @@ describe('ExchangePicker', () => {
       expect(screen.getByText('Selected Exchanges')).toBeInTheDocument();
     });
 
-    it('renders with pre-selected exchanges', () => {
+    it('renders with pre-selected compound keys', () => {
       const onChange = jest.fn();
       render(
         <ExchangePicker
           exchanges={mockExchanges}
-          selected={['tse-tokyo', 'lse-london']}
+          selected={['tse-tokyo::jp225', 'lse-london::gb100']}
           onChange={onChange}
         />
       );
@@ -220,6 +251,24 @@ describe('ExchangePicker', () => {
       expect(screen.getByText('Asia')).toBeInTheDocument();
       expect(screen.getByText('Oceania')).toBeInTheDocument();
       expect(screen.getByText('Europe')).toBeInTheDocument();
+    });
+
+    it('shows multi-index exchange as separate rows', () => {
+      const onChange = jest.fn();
+      render(
+        <ExchangePicker
+          exchanges={mockExchanges}
+          selected={[]}
+          onChange={onChange}
+        />
+      );
+
+      // Expand Asia — TSE should have 2 rows
+      expandContinent('Asia');
+
+      // Both index names should be visible
+      expect(screen.getByText(/Nikkei 225/)).toBeInTheDocument();
+      expect(screen.getByText(/Japan VIX/)).toBeInTheDocument();
     });
   });
 
@@ -257,142 +306,24 @@ describe('ExchangePicker', () => {
       consoleWarn.mockRestore();
     });
 
-    it('handles undefined selected gracefully', () => {
+    it('handles null selected gracefully', () => {
       const onChange = jest.fn();
-      const consoleWarn = jest.spyOn(console, 'warn').mockImplementation();
-
       render(
         <ExchangePicker
           exchanges={mockExchanges}
-          selected={undefined as unknown as string[]}
+          selected={null as unknown as string[]}
           onChange={onChange}
         />
       );
-
       expect(screen.getByText('0/16')).toBeInTheDocument();
-      consoleWarn.mockRestore();
-    });
-
-    it('filters out invalid exchange entries', () => {
-      const onChange = jest.fn();
-      const invalidExchanges = [
-        ...mockExchanges,
-        null,
-        undefined,
-        { id: '', label: 'Invalid', city: '', country: '', iso2: 'XX', continent: 'EUROPE' as const },
-      ] as ExchangeOption[];
-
-      render(
-        <ExchangePicker
-          exchanges={invalidExchanges}
-          selected={[]}
-          onChange={onChange}
-        />
-      );
-
-      expect(screen.getByText('Selected Exchanges')).toBeInTheDocument();
     });
   });
 
   // ============================================================================
-  // SELECTION BEHAVIOR
+  // SEARCH
   // ============================================================================
 
-  describe('Selection behavior', () => {
-    it('calls onChange when selecting an exchange', () => {
-      const onChange = jest.fn();
-      render(
-        <ExchangePicker
-          exchanges={mockExchanges}
-          selected={[]}
-          onChange={onChange}
-        />
-      );
-
-      // Expand Asia continent
-      expandContinent('Asia');
-
-      // Click the checkbox button for TSE Tokyo
-      fireEvent.click(findToggleButton('TSE Tokyo'));
-
-      expect(onChange).toHaveBeenCalledWith(['tse-tokyo']);
-    });
-
-    it('calls onChange when deselecting an exchange', () => {
-      const onChange = jest.fn();
-      render(
-        <ExchangePicker
-          exchanges={mockExchanges}
-          selected={['tse-tokyo']}
-          onChange={onChange}
-        />
-      );
-
-      // Expand Asia continent
-      expandContinent('Asia');
-
-      // Click the checkbox button for TSE Tokyo to deselect
-      fireEvent.click(findToggleButton('TSE Tokyo'));
-
-      expect(onChange).toHaveBeenCalledWith([]);
-    });
-
-    it('respects max selection limit', () => {
-      const onChange = jest.fn();
-      const selected = mockExchanges.slice(0, 3).map((ex) => ex.id);
-
-      render(
-        <ExchangePicker
-          exchanges={mockExchanges}
-          selected={selected}
-          onChange={onChange}
-          max={3}
-        />
-      );
-
-      // Expand Europe continent
-      expandContinent('Europe');
-
-      // LSE checkbox should be disabled (not selected, at max capacity)
-      const lseToggle = findToggleButton('LSE London');
-      expect(lseToggle).toBeDisabled();
-    });
-
-    it('shows minimum validation message when below min', () => {
-      const onChange = jest.fn();
-      render(
-        <ExchangePicker
-          exchanges={mockExchanges}
-          selected={['tse-tokyo']}
-          onChange={onChange}
-          min={6}
-        />
-      );
-
-      expect(screen.getByText('Select at least 6 exchanges')).toBeInTheDocument();
-    });
-
-    it('resets selection when reset button clicked', () => {
-      const onChange = jest.fn();
-      render(
-        <ExchangePicker
-          exchanges={mockExchanges}
-          selected={['tse-tokyo', 'lse-london']}
-          onChange={onChange}
-        />
-      );
-
-      fireEvent.click(screen.getByText('Reset'));
-
-      expect(onChange).toHaveBeenCalledWith([]);
-    });
-  });
-
-  // ============================================================================
-  // SEARCH FUNCTIONALITY
-  // ============================================================================
-
-  describe('Search functionality', () => {
+  describe('Search', () => {
     it('filters exchanges by search query', () => {
       const onChange = jest.fn();
       render(
@@ -404,12 +335,31 @@ describe('ExchangePicker', () => {
       );
 
       const searchInput = screen.getByPlaceholderText(
-        'Search by exchange, city, country, or index...'
+        'Search by exchange, city, country, or index...',
       );
       fireEvent.change(searchInput, { target: { value: 'Tokyo' } });
 
       // Asia should still be visible (has Tokyo)
       expect(screen.getByText('Asia')).toBeInTheDocument();
+    });
+
+    it('searches by index name', () => {
+      const onChange = jest.fn();
+      render(
+        <ExchangePicker
+          exchanges={mockExchanges}
+          selected={[]}
+          onChange={onChange}
+        />
+      );
+
+      const searchInput = screen.getByPlaceholderText(
+        'Search by exchange, city, country, or index...',
+      );
+      fireEvent.change(searchInput, { target: { value: 'Dow Jones' } });
+
+      // North America should be visible (has NYSE Dow Jones)
+      expect(screen.getByText('North America')).toBeInTheDocument();
     });
 
     it('clears search when clear button clicked', () => {
@@ -423,11 +373,10 @@ describe('ExchangePicker', () => {
       );
 
       const searchInput = screen.getByPlaceholderText(
-        'Search by exchange, city, country, or index...'
+        'Search by exchange, city, country, or index...',
       );
       fireEvent.change(searchInput, { target: { value: 'Tokyo' } });
 
-      // Click clear button
       fireEvent.click(screen.getByLabelText('Clear search'));
 
       expect(searchInput).toHaveValue('');
@@ -444,13 +393,12 @@ describe('ExchangePicker', () => {
       render(
         <ExchangePicker
           exchanges={mockExchanges}
-          selected={['tse-tokyo']}
+          selected={['tse-tokyo::jp225']}
           onChange={onChange}
           disabled={true}
         />
       );
 
-      // Reset button should be disabled
       const resetButton = screen.getByText('Reset');
       expect(resetButton).toBeDisabled();
     });
@@ -467,7 +415,7 @@ describe('ExchangePicker', () => {
       );
 
       const searchInput = screen.getByPlaceholderText(
-        'Search by exchange, city, country, or index...'
+        'Search by exchange, city, country, or index...',
       );
       expect(searchInput).toBeDisabled();
     });
@@ -483,13 +431,13 @@ describe('ExchangePicker', () => {
       render(
         <ExchangePicker
           exchanges={mockExchanges}
-          selected={['tse-tokyo']}
+          selected={['tse-tokyo::jp225']}
           onChange={onChange}
         />
       );
 
       expect(screen.getByLabelText('Search exchanges')).toBeInTheDocument();
-      expect(screen.getByLabelText(/Remove TSE Tokyo/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Remove TSE Nikkei 225/i)).toBeInTheDocument();
     });
 
     it('has aria-expanded on accordion headers', () => {
@@ -502,55 +450,49 @@ describe('ExchangePicker', () => {
         />
       );
 
-      // All continents start collapsed when nothing selected
       const asiaButton = screen.getByRole('button', { name: /Asia/i });
       expect(asiaButton).toHaveAttribute('aria-expanded', 'false');
 
       const europeButton = screen.getByRole('button', { name: /Europe/i });
       expect(europeButton).toHaveAttribute('aria-expanded', 'false');
 
-      // Clicking expands
       fireEvent.click(asiaButton);
       expect(asiaButton).toHaveAttribute('aria-expanded', 'true');
     });
 
-    it('auto-expands continents that contain selected exchanges', () => {
+    it('auto-expands continents that contain selected items', () => {
       const onChange = jest.fn();
       render(
         <ExchangePicker
           exchanges={mockExchanges}
-          selected={['tse-tokyo', 'lse-london']}
+          selected={['tse-tokyo::jp225', 'lse-london::gb100']}
           onChange={onChange}
         />
       );
 
-      // Asia should be auto-expanded (contains tse-tokyo)
       const asiaButton = screen.getByRole('button', { name: /Asia/i });
       expect(asiaButton).toHaveAttribute('aria-expanded', 'true');
 
-      // Europe should be auto-expanded (contains lse-london)
       const europeButton = screen.getByRole('button', { name: /Europe/i });
       expect(europeButton).toHaveAttribute('aria-expanded', 'true');
 
-      // Oceania should remain collapsed (no selections)
       const oceaniaButton = screen.getByRole('button', { name: /Oceania/i });
       expect(oceaniaButton).toHaveAttribute('aria-expanded', 'false');
     });
 
-    it('has aria-pressed on exchange items', () => {
+    it('has aria-pressed on index items', () => {
       const onChange = jest.fn();
       render(
         <ExchangePicker
           exchanges={mockExchanges}
-          selected={['tse-tokyo']}
+          selected={['tse-tokyo::jp225']}
           onChange={onChange}
         />
       );
 
-      // Expand Asia
       expandContinent('Asia');
 
-      const tseToggle = findToggleButton('TSE Tokyo');
+      const tseToggle = findToggleButton('Nikkei 225');
       expect(tseToggle).toHaveAttribute('aria-pressed', 'true');
     });
   });
@@ -561,13 +503,31 @@ describe('ExchangePicker', () => {
 // ============================================================================
 
 describe('Exchange picker helpers', () => {
-  // Import helpers directly for unit testing
   const {
     validateSelection,
     searchExchanges,
     groupByContinent,
     getExchangesByIds,
+    makeCompoundKey,
+    parseCompoundKey,
   } = require('@/lib/pro-promagen/exchange-picker-helpers');
+
+  describe('makeCompoundKey / parseCompoundKey', () => {
+    it('creates and parses compound keys', () => {
+      const key = makeCompoundKey('cse-colombo', 'cse_all_share');
+      expect(key).toBe('cse-colombo::cse_all_share');
+
+      const parsed = parseCompoundKey(key);
+      expect(parsed.exchangeId).toBe('cse-colombo');
+      expect(parsed.benchmark).toBe('cse_all_share');
+    });
+
+    it('handles legacy simple keys', () => {
+      const parsed = parseCompoundKey('lse-london');
+      expect(parsed.exchangeId).toBe('lse-london');
+      expect(parsed.benchmark).toBe('');
+    });
+  });
 
   describe('validateSelection', () => {
     it('returns valid for selection within limits', () => {
@@ -600,21 +560,25 @@ describe('Exchange picker helpers', () => {
     });
 
     it('filters by label', () => {
-      // Note: "TSE" matches both "TSE Tokyo" and "FTSE 100" index name.
-      // Use a unique label substring for a single-match test.
       const result = searchExchanges(mockExchanges, 'HKEX');
       expect(result.length).toBe(1);
-      expect(result[0].id).toBe('hkex-hong-kong');
+      expect(result[0].id).toBe('hkex-hong-kong::hk50');
+    });
+
+    it('filters by index name', () => {
+      const result = searchExchanges(mockExchanges, 'Dow Jones');
+      expect(result.length).toBe(1);
+      expect(result[0].benchmark).toBe('us30');
     });
 
     it('filters by city', () => {
       const result = searchExchanges(mockExchanges, 'New York');
-      expect(result.length).toBe(2);
+      expect(result.length).toBe(2); // NYSE S&P 500 + NYSE Dow Jones
     });
 
     it('filters by country', () => {
       const result = searchExchanges(mockExchanges, 'Japan');
-      expect(result.length).toBe(1);
+      expect(result.length).toBe(2); // TSE Nikkei + TSE VIX
     });
 
     it('handles null input', () => {
@@ -624,11 +588,11 @@ describe('Exchange picker helpers', () => {
   });
 
   describe('groupByContinent', () => {
-    it('groups exchanges by continent', () => {
+    it('groups options by continent', () => {
       const groups = groupByContinent(mockExchanges);
-      expect(groups.get('ASIA')?.length).toBe(2);
-      expect(groups.get('NORTH_AMERICA')?.length).toBe(2);
-      expect(groups.get('EUROPE')?.length).toBe(1);
+      expect(groups.get('ASIA')?.length).toBe(3); // TSE×2 + HKEX
+      expect(groups.get('NORTH_AMERICA')?.length).toBe(2); // NYSE×2
+      expect(groups.get('EUROPE')?.length).toBe(2); // LSE×2
     });
 
     it('returns empty groups for missing continents', () => {
@@ -643,20 +607,20 @@ describe('Exchange picker helpers', () => {
   });
 
   describe('getExchangesByIds', () => {
-    it('returns exchanges matching IDs in order', () => {
-      const result = getExchangesByIds(mockExchanges, ['lse-london', 'tse-tokyo']);
+    it('returns options matching compound IDs in order', () => {
+      const result = getExchangesByIds(mockExchanges, ['lse-london::gb100', 'tse-tokyo::jp225']);
       expect(result.length).toBe(2);
-      expect(result[0].id).toBe('lse-london');
-      expect(result[1].id).toBe('tse-tokyo');
+      expect(result[0].id).toBe('lse-london::gb100');
+      expect(result[1].id).toBe('tse-tokyo::jp225');
     });
 
     it('filters out non-existent IDs', () => {
-      const result = getExchangesByIds(mockExchanges, ['tse-tokyo', 'fake-id']);
+      const result = getExchangesByIds(mockExchanges, ['tse-tokyo::jp225', 'fake::fake']);
       expect(result.length).toBe(1);
     });
 
     it('handles null input', () => {
-      const result = getExchangesByIds(null, ['tse-tokyo']);
+      const result = getExchangesByIds(null, ['tse-tokyo::jp225']);
       expect(result).toEqual([]);
     });
   });

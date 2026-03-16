@@ -48,6 +48,9 @@ export interface ExchangeCatalogEntry {
   /** Full exchange name, e.g., "New York Stock Exchange (NYSE)" */
   exchange: string;
 
+  /** Short display name for UI, e.g., "NYSE" (city shown separately) */
+  name?: string;
+
   /** Country name, e.g., "United States" */
   country: string;
 

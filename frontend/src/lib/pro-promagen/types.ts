@@ -156,6 +156,8 @@ export interface ExchangeCatalogEntry {
   id: string;
   city: string;
   exchange: string;
+  /** Short display name for UI, e.g., "NYSE" (city shown separately) */
+  name?: string;
   country: string;
   iso2: string;
   tz: string;

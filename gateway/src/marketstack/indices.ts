@@ -80,8 +80,8 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
       if (!raw || typeof raw !== 'object') continue;
       const r = raw as Record<string, unknown>;
 
-      // Validate and sanitize ID
-      const id = typeof r['id'] === 'string' ? r['id'].toLowerCase().trim().slice(0, 30) : '';
+      // Validate and sanitize ID (v3.0.0: compound IDs like "cse-colombo::cse_all_share")
+      const id = typeof r['id'] === 'string' ? r['id'].toLowerCase().trim().slice(0, 80) : '';
 
       // Validate benchmark key
       const benchmarkFromRoot = typeof r['benchmark'] === 'string' ? r['benchmark'] : '';
@@ -156,23 +156,33 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
 
   /**
    * Parse API response to quotes.
+   * v3.0.0: Fans out shared benchmarks — one Marketstack response row can
+   * produce quotes for multiple catalog items (e.g. de40 → xetra::de40 + fra::de40).
    */
   parseQuotes(data: unknown, catalog: IndexCatalogItem[]): IndexQuote[] {
     // Parse raw response
     const parsed = parseMarketstackResponse(data);
 
-    // Build benchmark -> catalog item map
-    const benchmarkMap = new Map<string, IndexCatalogItem>();
+    // Build benchmark -> catalog items map (one benchmark may serve multiple compound IDs)
+    const benchmarkMap = new Map<string, IndexCatalogItem[]>();
     for (const item of catalog) {
-      benchmarkMap.set(item.benchmark, item);
+      const list = benchmarkMap.get(item.benchmark);
+      if (list) {
+        list.push(item);
+      } else {
+        benchmarkMap.set(item.benchmark, [item]);
+      }
     }
 
-    // Convert to IndexQuote format
+    // Convert to IndexQuote format — fan out to all catalog items per benchmark
     const quotes: IndexQuote[] = [];
+    const resolvedBenchmarks = new Set<string>();
 
     for (const entry of parsed) {
-      const catalogItem = benchmarkMap.get(entry.benchmark);
-      if (!catalogItem) continue;
+      const catalogItems = benchmarkMap.get(entry.benchmark);
+      if (!catalogItems || catalogItems.length === 0) continue;
+
+      resolvedBenchmarks.add(entry.benchmark);
 
       // Calculate change and percent change from open/close
       let change: number | null = null;
@@ -183,24 +193,26 @@ const indicesConfig: FeedConfig<IndexCatalogItem, IndexQuote> = {
         percentChange = ((entry.close - entry.open) / entry.open) * 100;
       }
 
-      quotes.push({
-        id: catalogItem.id,
-        benchmark: catalogItem.benchmark,
-        indexName: catalogItem.indexName,
-        price: entry.close,
-        change: change !== null && Number.isFinite(change) ? Math.round(change * 100) / 100 : null,
-        percentChange:
-          percentChange !== null && Number.isFinite(percentChange)
-            ? Math.round(percentChange * 100) / 100
-            : null,
-        asOf: entry.date ? new Date(entry.date).toISOString() : null,
-      });
+      // Create a quote for EACH catalog item sharing this benchmark
+      for (const catalogItem of catalogItems) {
+        quotes.push({
+          id: catalogItem.id,
+          benchmark: catalogItem.benchmark,
+          indexName: catalogItem.indexName,
+          price: entry.close,
+          change: change !== null && Number.isFinite(change) ? Math.round(change * 100) / 100 : null,
+          percentChange:
+            percentChange !== null && Number.isFinite(percentChange)
+              ? Math.round(percentChange * 100) / 100
+              : null,
+          asOf: entry.date ? new Date(entry.date).toISOString() : null,
+        });
+      }
     }
 
-    // Add any catalog items not in API response (with null prices)
-    const foundBenchmarks = new Set(quotes.map((q) => q.benchmark));
+    // Add any catalog items whose benchmark was NOT in API response (null prices)
     for (const item of catalog) {
-      if (!foundBenchmarks.has(item.benchmark)) {
+      if (!resolvedBenchmarks.has(item.benchmark)) {
         quotes.push({
           id: item.id,
           benchmark: item.benchmark,
@@ -285,10 +297,11 @@ const INDICES_SELECTION_LIMITS = {
 } as const;
 
 /**
- * Valid exchange ID format: lowercase letters, numbers, hyphens.
+ * Valid exchange ID format: lowercase letters, numbers, hyphens, underscores.
+ * v3.0.0: Also allows compound keys with :: separator (e.g. "cse-colombo::cse_all_share").
  */
 function isValidExchangeIdFormat(id: string): boolean {
-  return /^[a-z0-9-]{3,30}$/.test(id);
+  return /^[a-z0-9_-]{3,30}(::[a-z0-9_-]{1,50})?$/.test(id);
 }
 
 /**
@@ -341,7 +354,7 @@ export function validateIndicesSelection(
       exchangeIds
         .filter((id): id is string => typeof id === 'string')
         .map((id) => id.toLowerCase().trim())
-        .filter((id) => id.length > 0 && id.length <= 30),
+        .filter((id) => id.length > 0 && id.length <= 80),
     ),
   ];
 

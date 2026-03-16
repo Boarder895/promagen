@@ -51,7 +51,7 @@ function getGatewaySecret(): string {
 
 const INDICES_MIN = 6;
 const INDICES_MAX = 16;
-const EXCHANGE_ID_RE = /^[a-z0-9-]{3,30}$/;
+const EXCHANGE_ID_RE = /^[a-z0-9_-]{3,30}(::[a-z0-9_-]{1,50})?$/;
 
 const PublicMetadataSchema = z
   .object({
@@ -93,7 +93,7 @@ function normaliseAndValidateExchangeIds(
     if (typeof raw !== 'string') continue;
     const id = raw.toLowerCase().trim();
     if (!id) continue;
-    if (id.length > 30) continue;
+    if (id.length > 80) continue;
 
     if (!seen.has(id)) {
       seen.add(id);

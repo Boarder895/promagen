@@ -108,7 +108,11 @@ import {
   type ExchangeCatalogEntry,
   isMultiIndexConfig,
 } from '@/lib/pro-promagen/types';
-import { catalogToPickerOptions } from '@/lib/pro-promagen/exchange-picker-helpers';
+import {
+  catalogToPickerOptions,
+  simpleIdsToCompoundKeys,
+  parseCompoundKey,
+} from '@/lib/pro-promagen/exchange-picker-helpers';
 import type { Exchange, Hemisphere } from '@/data/exchanges/types';
 import type { ExchangeWeather } from '@/lib/weather/exchange-weather';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
@@ -180,10 +184,16 @@ function saveToStorage<T>(key: string, value: T): void {
 /**
  * Convert catalog entry to Exchange type for rails.
  * Handles both legacy and multi-index marketstack formats.
+ *
+ * v3.0.0: Added overrideId and selectedBenchmark for compound key support.
+ * When selectedBenchmark is provided, the marketstack config is narrowed to
+ * just that index so the exchange card displays the correct index name.
  */
 function catalogToExchange(
   entry: ExchangeCatalogEntry,
   _weather: ExchangeWeather | null,
+  overrideId?: string,
+  selectedBenchmark?: string,
 ): Exchange {
   // Convert marketstack to the MarketstackConfig format expected by Exchange
   const ms = entry.marketstack;
@@ -196,8 +206,17 @@ function catalogToExchange(
       availableIndices: [],
     };
   } else if (isMultiIndexConfig(ms)) {
-    // Already in new format
-    marketstack = ms;
+    if (selectedBenchmark) {
+      // Narrow to selected index
+      const selectedIdx = ms.availableIndices.find((i) => i.benchmark === selectedBenchmark);
+      marketstack = {
+        defaultBenchmark: selectedBenchmark,
+        defaultIndexName: selectedIdx?.indexName ?? ms.defaultIndexName,
+        availableIndices: selectedIdx ? [selectedIdx] : ms.availableIndices,
+      };
+    } else {
+      marketstack = ms;
+    }
   } else {
     // Convert legacy format to new format
     marketstack = {
@@ -208,9 +227,10 @@ function catalogToExchange(
   }
 
   return {
-    id: entry.id,
+    id: overrideId ?? entry.id,
     city: entry.city,
     exchange: entry.exchange,
+    name: entry.name,
     country: entry.country,
     iso2: entry.iso2,
     tz: entry.tz,
@@ -1408,11 +1428,15 @@ export default function ProPromagenClient({
   // wrong content flash — they see skeleton → correct content.
   // ============================================================================
 
-  const [selectedExchanges, setSelectedExchanges] = useState<string[]>(defaultExchangeIds);
+  const [selectedExchanges, setSelectedExchanges] = useState<string[]>(() =>
+    simpleIdsToCompoundKeys(defaultExchangeIds, exchangeCatalog),
+  );
   const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
 
   // Track initial state for change detection
-  const [initialExchanges, setInitialExchanges] = useState<string[]>(defaultExchangeIds);
+  const [initialExchanges, setInitialExchanges] = useState<string[]>(() =>
+    simpleIdsToCompoundKeys(defaultExchangeIds, exchangeCatalog),
+  );
 
   // Hydration gate — false until useEffect reads localStorage
   const [hydrated, setHydrated] = useState(false);
@@ -1421,8 +1445,10 @@ export default function ProPromagenClient({
   useEffect(() => {
     const storedExch = loadArrayFromStorage(STORAGE_KEYS.EXCHANGE_SELECTION);
     if (storedExch) {
-      setSelectedExchanges(storedExch);
-      setInitialExchanges(storedExch);
+      // Convert any legacy simple IDs to compound keys
+      const compound = simpleIdsToCompoundKeys(storedExch, exchangeCatalog);
+      setSelectedExchanges(compound);
+      setInitialExchanges(compound);
     }
 
     // Tier: localStorage first (warm cache), Clerk may override below
@@ -1437,7 +1463,7 @@ export default function ProPromagenClient({
     }
 
     setHydrated(true);
-  }, []);
+  }, [exchangeCatalog]);
 
   // Clerk metadata is the source of truth — override localStorage when it arrives.
   // Clerk hydrates async, so clerkPromptTier may be null on first render then
@@ -1483,9 +1509,17 @@ export default function ProPromagenClient({
   // ============================================================================
 
   const previewExchanges = useMemo((): Exchange[] => {
-    const filtered = exchangeCatalog.filter((e) => selectedExchanges.includes(e.id));
-    filtered.sort((a, b) => a.longitude - b.longitude);
-    return filtered.map((e) => catalogToExchange(e, demoWeatherIndex.get(e.id) ?? null));
+    const exchanges: Exchange[] = [];
+    for (const compoundKey of selectedExchanges) {
+      const { exchangeId, benchmark } = parseCompoundKey(compoundKey);
+      const entry = exchangeCatalog.find((e) => e.id === exchangeId);
+      if (!entry || entry.id.startsWith('city-vibe-')) continue;
+      exchanges.push(
+        catalogToExchange(entry, demoWeatherIndex.get(exchangeId) ?? null, compoundKey, benchmark),
+      );
+    }
+    exchanges.sort((a, b) => a.longitude - b.longitude);
+    return exchanges;
   }, [exchangeCatalog, selectedExchanges, demoWeatherIndex]);
 
   // Split into left/right rails based on user location (or Greenwich)
@@ -1581,6 +1615,26 @@ export default function ProPromagenClient({
     }
     return merged;
   }, [liveWeatherMap, weatherDataMap]);
+
+  // ============================================================================
+  // COMPOUND KEY ALIASING (v3.0.0)
+  // ============================================================================
+  // Exchange cards now have id=compoundKey (e.g. "cse-colombo::cse_all_share")
+  // but weather/index data arrives keyed by simple exchangeId ("cse-colombo").
+  // Alias compound keys → same data so ExchangeCard lookups work.
+  // ============================================================================
+
+  const aliasedWeatherMap = useMemo(() => {
+    const map = new Map(effectiveWeatherMap);
+    for (const compoundKey of selectedExchanges) {
+      const { exchangeId } = parseCompoundKey(compoundKey);
+      if (compoundKey !== exchangeId) {
+        const data = effectiveWeatherMap.get(exchangeId);
+        if (data) map.set(compoundKey, data);
+      }
+    }
+    return map;
+  }, [effectiveWeatherMap, selectedExchanges]);
 
   // ============================================================================
   // HANDLERS
@@ -1808,7 +1862,7 @@ export default function ProPromagenClient({
   const leftExchanges = hydrated ? (
     <ExchangeList
       exchanges={leftRail}
-      weatherByExchange={effectiveWeatherMap}
+      weatherByExchange={aliasedWeatherMap}
       indexByExchange={indexByExchange}
       emptyMessage="No eastern exchanges selected"
       side="left"
@@ -1820,7 +1874,7 @@ export default function ProPromagenClient({
   const rightExchanges = hydrated ? (
     <ExchangeList
       exchanges={rightRail}
-      weatherByExchange={effectiveWeatherMap}
+      weatherByExchange={aliasedWeatherMap}
       indexByExchange={indexByExchange}
       emptyMessage="No western exchanges selected"
       side="right"

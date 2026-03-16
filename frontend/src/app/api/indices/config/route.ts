@@ -100,59 +100,108 @@ export async function GET(): Promise<Response> {
   const allExchanges = ExchangesCatalogSchema.parse(exchangesCatalogJson);
   const selectedExchanges = ExchangesSelectedSchema.parse(exchangesSelectedJson);
 
-  // Filter active exchanges with marketstack config
-  const activeExchanges = allExchanges.filter(
-    (e) =>
-      e.isActive !== false &&
-      typeof e.marketstack?.benchmark === 'string' &&
-      e.marketstack.benchmark.length > 0,
-  );
-
   // =========================================================================
-  // DECOUPLED (v2.0.0): defaultExchangeIds = ALL active exchanges
-  // Previously: only the 16 from exchanges.selected.json
-  // Now: every active exchange with a valid benchmark so the gateway fetches
-  // index data for ALL exchanges. Pro users selecting any exchange will
-  // have index data available.
+  // v3.0.0: Emit one entry per INDEX (not per exchange).
+  // Multi-index exchanges produce multiple entries with compound IDs:
+  //   "cse-colombo::cse_all_share", "cse-colombo::cse_general"
+  // Single-index exchanges also get compound IDs for consistency.
+  // The gateway fetches unique Marketstack symbols (deduped), then fans
+  // quotes back out to every compound entry sharing that benchmark.
   // =========================================================================
-  const defaultExchangeIds = activeExchanges.map((e) => e.id.toLowerCase().trim());
 
-  // Keep SSOT 16 as freeDefaultIds for forward-compatibility
-  // Gateway can use this to limit free/anonymous GET responses
-  const freeDefaultIds = selectedExchanges.ids.map((id) => id.toLowerCase().trim());
+  // Step 1: Build flat list of all index entries with compound IDs
+  interface IndexEntry {
+    compoundId: string;
+    exchangeId: string;
+    city: string;
+    exchange: string;
+    country: string;
+    iso2: string | null;
+    tz: string;
+    benchmark: string;
+    indexName: string;
+  }
 
-  // SSOT integrity checks: freeDefaultIds must exist in catalog and have benchmark + indexName
-  const byId = new Map<string, z.infer<typeof ExchangeCatalogItemSchema>>(
-    allExchanges.map((e) => [e.id.toLowerCase().trim(), e]),
-  );
+  const allIndexEntries: IndexEntry[] = [];
 
-  for (const id of freeDefaultIds) {
-    const ex = byId.get(id);
-    if (!ex) {
-      throw new Error(`[indices/config] SSOT selected exchange not found in catalog: ${id}`);
-    }
-    if (!ex.marketstack?.benchmark) {
-      throw new Error(
-        `[indices/config] SSOT selected exchange missing marketstack benchmark mapping: ${id}`,
-      );
-    }
-    if (!ex.marketstack?.indexName) {
-      throw new Error(
-        `[indices/config] SSOT selected exchange missing marketstack indexName mapping: ${id}`,
-      );
+  for (const e of allExchanges) {
+    if (e.isActive === false) continue;
+    if (e.id.startsWith('city-vibe-')) continue;
+
+    const ms = e.marketstack;
+    if (!ms) continue;
+
+    // Common fields
+    const base = {
+      exchangeId: e.id.toLowerCase().trim(),
+      city: (e.city ?? '').toString(),
+      exchange: (e.exchange ?? '').toString(),
+      country: (e.country ?? '').toString(),
+      iso2: e.iso2 ?? null,
+      tz: e.tz ?? 'UTC',
+    };
+
+    // Check if MarketstackSchema already transformed it (union → {benchmark, indexName})
+    const benchmark = ms.benchmark;
+    const indexName = ms.indexName;
+
+    if (!benchmark || !indexName) continue;
+
+    // For the config response we only emit the single default (Zod already collapsed it).
+    // But we need to check if the RAW catalog entry has availableIndices.
+    // Re-read from the raw catalog to get all indices.
+    const rawEntry = (exchangesCatalogJson as Array<Record<string, unknown>>).find(
+      (r) => typeof r['id'] === 'string' && r['id'].toLowerCase().trim() === base.exchangeId,
+    );
+
+    const rawMs = rawEntry?.['marketstack'] as Record<string, unknown> | undefined;
+    const rawAvailable = rawMs?.['availableIndices'] as
+      | Array<{ benchmark: string; indexName: string }>
+      | undefined;
+
+    if (Array.isArray(rawAvailable) && rawAvailable.length > 1) {
+      // Multi-index: emit one entry per available index
+      for (const idx of rawAvailable) {
+        if (!idx.benchmark || !idx.indexName) continue;
+        allIndexEntries.push({
+          ...base,
+          compoundId: `${base.exchangeId}::${idx.benchmark}`,
+          benchmark: idx.benchmark,
+          indexName: idx.indexName,
+        });
+      }
+    } else {
+      // Single-index: emit one entry
+      allIndexEntries.push({
+        ...base,
+        compoundId: `${base.exchangeId}::${benchmark}`,
+        benchmark,
+        indexName,
+      });
     }
   }
 
+  // defaultExchangeIds = ALL compound IDs (gateway fetches all)
+  const defaultExchangeIds = allIndexEntries.map((e) => e.compoundId);
+
+  // freeDefaultIds = default benchmark per SSOT-16 exchange (backward compat)
+  const freeDefaultIds = selectedExchanges.ids.map((id) => {
+    const entry = allIndexEntries.find(
+      (e) => e.exchangeId === id.toLowerCase().trim(),
+    );
+    return entry?.compoundId ?? id.toLowerCase().trim();
+  });
+
   // Build response format expected by gateway
-  const exchanges = activeExchanges.map((e) => ({
-    id: e.id.toLowerCase().trim(),
-    city: (e.city ?? '').toString(),
-    exchange: (e.exchange ?? '').toString(),
-    country: (e.country ?? '').toString(),
-    iso2: e.iso2 ?? null,
-    tz: e.tz ?? 'UTC',
-    benchmark: e.marketstack?.benchmark ?? null,
-    indexName: e.marketstack?.indexName ?? null,
+  const exchanges = allIndexEntries.map((e) => ({
+    id: e.compoundId,
+    city: e.city,
+    exchange: e.exchange,
+    country: e.country,
+    iso2: e.iso2,
+    tz: e.tz,
+    benchmark: e.benchmark,
+    indexName: e.indexName,
   }));
 
   return NextResponse.json(

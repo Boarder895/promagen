@@ -1,13 +1,18 @@
 // src/lib/pro-promagen/exchange-picker-helpers.ts
 // ============================================================================
-// EXCHANGE PICKER DATA HELPERS
+// EXCHANGE PICKER DATA HELPERS (v3.0.0 — Index-Per-Row)
 // ============================================================================
-// Transforms exchange catalog data into the format needed by ExchangePicker.
+// Each index is its own selectable option. Multi-index exchanges produce
+// multiple ExchangeOption entries, each with a compound key:
+//   "exchangeId::benchmark"  (e.g. "cse-colombo::cse_all_share")
 //
-// UPDATED v2.0.0 (30 Jan 2026):
-// - Multi-index support: ExchangeOption now includes availableIndices
-// - New IndexSelection type for tracking user's chosen index per exchange
-// - Backward compatible with existing picker usage
+// Single-index exchanges also get compound keys for consistency.
+//
+// v3.0.0 (16 Mar 2026):
+// - ExchangeOption now represents a single index, not an exchange
+// - Compound selection keys: "exchangeId::benchmark"
+// - Removed IndexPreferences/IndexSelector — selection IS the preference
+// - City-vibe entries filtered out
 //
 // Authority: docs/authority/paid_tier.md §5.3
 // ============================================================================
@@ -23,28 +28,102 @@ import {
 export { PRO_SELECTION_LIMITS };
 
 // ============================================================================
+// COMPOUND KEY HELPERS
+// ============================================================================
+
+const KEY_SEPARATOR = '::';
+
+/**
+ * Build a compound selection key from exchange ID and benchmark.
+ * @example makeCompoundKey('cse-colombo', 'cse_all_share') → 'cse-colombo::cse_all_share'
+ */
+export function makeCompoundKey(exchangeId: string, benchmark: string): string {
+  return `${exchangeId}${KEY_SEPARATOR}${benchmark}`;
+}
+
+/**
+ * Parse a compound selection key back to its parts.
+ * @example parseCompoundKey('cse-colombo::cse_all_share') → { exchangeId: 'cse-colombo', benchmark: 'cse_all_share' }
+ */
+export function parseCompoundKey(key: string): { exchangeId: string; benchmark: string } {
+  const idx = key.indexOf(KEY_SEPARATOR);
+  if (idx === -1) {
+    // Legacy simple key — treat entire string as exchangeId with empty benchmark
+    return { exchangeId: key, benchmark: '' };
+  }
+  return {
+    exchangeId: key.substring(0, idx),
+    benchmark: key.substring(idx + KEY_SEPARATOR.length),
+  };
+}
+
+/**
+ * Convert an array of simple exchange IDs to compound keys using default benchmarks.
+ * Used to migrate SSOT defaults and legacy localStorage values.
+ * Already-compound keys pass through unchanged.
+ */
+export function simpleIdsToCompoundKeys(
+  ids: string[],
+  catalog: ExchangeCatalogEntry[],
+): string[] {
+  if (!Array.isArray(ids) || !Array.isArray(catalog)) return [];
+
+  return ids.map((id) => {
+    // Already compound?
+    if (id.includes(KEY_SEPARATOR)) return id;
+
+    const entry = catalog.find((e) => e.id === id);
+    if (!entry) return id; // Unknown — pass through, will be filtered later
+
+    const ms = entry.marketstack;
+    let benchmark = '';
+    if (ms) {
+      benchmark = isMultiIndexConfig(ms) ? ms.defaultBenchmark : ms.benchmark;
+    }
+    return benchmark ? makeCompoundKey(id, benchmark) : id;
+  });
+}
+
+/**
+ * Extract unique exchange IDs from an array of compound keys.
+ * Used when the API needs plain exchange IDs (e.g. weather, indices).
+ */
+export function compoundKeysToExchangeIds(keys: string[]): string[] {
+  if (!Array.isArray(keys)) return [];
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const key of keys) {
+    const { exchangeId } = parseCompoundKey(key);
+    if (!seen.has(exchangeId)) {
+      seen.add(exchangeId);
+      result.push(exchangeId);
+    }
+  }
+  return result;
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
 /**
- * Single index option within an exchange.
- */
-export interface IndexOption {
-  /** Marketstack benchmark key */
-  benchmark: string;
-  /** Human-readable index name */
-  indexName: string;
-}
-
-/**
- * Exchange option for the picker component.
- * Includes multi-index support for Pro Promagen.
+ * A single selectable option in the picker.
+ * Each option represents ONE index of ONE exchange.
+ * Multi-index exchanges produce multiple ExchangeOption entries.
  */
 export interface ExchangeOption {
-  /** Unique exchange ID */
+  /** Compound selection key: "exchangeId::benchmark" */
   id: string;
-  /** Display label (e.g., "NYSE New York") */
+  /** Base exchange ID from catalog (e.g. "cse-colombo") */
+  exchangeId: string;
+  /** Short display label for the exchange (e.g., "CSE") */
   label: string;
+  /** Full exchange name for search (e.g., "Colombo Stock Exchange (CSE)") */
+  fullName: string;
+  /** The specific benchmark for this option */
+  benchmark: string;
+  /** Human-readable index name (e.g., "CSE All Share") */
+  indexName: string;
   /** City name */
   city: string;
   /** Country name */
@@ -53,30 +132,19 @@ export interface ExchangeOption {
   iso2: string;
   /** Continent grouping */
   continent: Continent;
-  /** Default benchmark code */
-  defaultBenchmark: string;
-  /** Default index name for display */
-  defaultIndexName: string;
-  /** All available indices for this exchange */
-  availableIndices: IndexOption[];
-  /** Whether this exchange has multiple index options */
-  hasMultipleIndices: boolean;
 }
 
 /**
- * User's selection for a single exchange.
- * Includes optional index preference for multi-index exchanges.
+ * Legacy re-export for backward compatibility.
+ * @deprecated Use compound keys instead of ExchangeSelection
  */
 export interface ExchangeSelection {
-  /** Exchange ID */
   exchangeId: string;
-  /** User's chosen benchmark (optional, defaults to exchange's default) */
   benchmark?: string;
 }
 
 /**
- * Map of exchange ID to selected benchmark.
- * Used for tracking user's index preferences.
+ * @deprecated Use compound keys — IndexPreferences map is no longer needed
  */
 export type IndexPreferences = Map<string, string>;
 
@@ -85,124 +153,64 @@ export type IndexPreferences = Map<string, string>;
 // ============================================================================
 
 /**
- * Transform a single exchange catalog entry into an ExchangeOption for the picker.
- * Now includes multi-index data. Handles both legacy and new marketstack formats.
+ * Transform a single exchange catalog entry into ExchangeOption(s).
+ * Returns one option per available index. Single-index exchanges produce one option.
  */
-export function toExchangeOption(entry: ExchangeCatalogEntry): ExchangeOption {
-  const abbrevMatch = entry.exchange.match(/\(([^)]+)\)/);
-  const abbrev = abbrevMatch ? abbrevMatch[1] : null;
-  // Construct label from abbreviation + city, or fall back to exchange name
-  const label = abbrev ? `${abbrev} ${entry.city}` : entry.exchange;
+export function toExchangeOptions(entry: ExchangeCatalogEntry): ExchangeOption[] {
+  const label = entry.name || entry.exchange;
+  const fullName = entry.exchange;
 
-  // Handle both legacy (benchmark/indexName) and new (defaultBenchmark/availableIndices) formats
   const ms = entry.marketstack;
-  
-  let defaultBenchmark: string;
-  let defaultIndexName: string;
-  let availableIndices: IndexOption[];
-  
-  if (!ms) {
-    // No marketstack data - use empty defaults
-    defaultBenchmark = '';
-    defaultIndexName = '';
-    availableIndices = [];
-  } else if (isMultiIndexConfig(ms)) {
-    // New multi-index format
-    defaultBenchmark = ms.defaultBenchmark;
-    defaultIndexName = ms.defaultIndexName;
-    availableIndices = ms.availableIndices;
-  } else {
-    // Legacy single-index format
-    defaultBenchmark = ms.benchmark;
-    defaultIndexName = ms.indexName;
-    availableIndices = [{ benchmark: ms.benchmark, indexName: ms.indexName }];
+
+  interface IndexInfo {
+    benchmark: string;
+    indexName: string;
   }
 
-  return {
-    id: entry.id,
+  let indices: IndexInfo[];
+
+  if (!ms) {
+    indices = [{ benchmark: '', indexName: '' }];
+  } else if (isMultiIndexConfig(ms)) {
+    indices = ms.availableIndices;
+  } else {
+    indices = [{ benchmark: ms.benchmark, indexName: ms.indexName }];
+  }
+
+  const continent = getContinent(entry.iso2);
+
+  return indices.map((idx) => ({
+    id: idx.benchmark ? makeCompoundKey(entry.id, idx.benchmark) : entry.id,
+    exchangeId: entry.id,
     label,
+    fullName,
+    benchmark: idx.benchmark,
+    indexName: idx.indexName,
     city: entry.city,
     country: entry.country,
     iso2: entry.iso2,
-    continent: getContinent(entry.iso2),
-    defaultBenchmark,
-    defaultIndexName,
-    availableIndices,
-    hasMultipleIndices: availableIndices.length > 1,
-  };
+    continent,
+  }));
 }
 
 /**
  * Transform the full exchange catalog into picker options.
+ * Each index of each exchange becomes its own option.
+ * City-vibe entries are excluded.
  */
 export function catalogToPickerOptions(catalog: ExchangeCatalogEntry[]): ExchangeOption[] {
+  if (!Array.isArray(catalog)) return [];
+
   return catalog
-    .map(toExchangeOption)
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-// ============================================================================
-// INDEX SELECTION HELPERS
-// ============================================================================
-
-/**
- * Get the active benchmark for an exchange given user preferences.
- */
-export function getActiveBenchmark(
-  exchange: ExchangeOption,
-  preferences: IndexPreferences,
-): string {
-  const userPref = preferences.get(exchange.id);
-  if (userPref) {
-    // Validate preference exists in available indices
-    const isValid = exchange.availableIndices.some(
-      (idx) => idx.benchmark === userPref,
-    );
-    if (isValid) return userPref;
-  }
-  return exchange.defaultBenchmark;
-}
-
-/**
- * Get the active index name for display.
- */
-export function getActiveIndexName(
-  exchange: ExchangeOption,
-  preferences: IndexPreferences,
-): string {
-  const activeBenchmark = getActiveBenchmark(exchange, preferences);
-  const index = exchange.availableIndices.find(
-    (idx) => idx.benchmark === activeBenchmark,
-  );
-  return index?.indexName ?? exchange.defaultIndexName;
-}
-
-/**
- * Convert array of ExchangeSelection to IndexPreferences map.
- */
-export function selectionsToPreferences(
-  selections: ExchangeSelection[],
-): IndexPreferences {
-  const map = new Map<string, string>();
-  for (const sel of selections) {
-    if (sel.benchmark) {
-      map.set(sel.exchangeId, sel.benchmark);
-    }
-  }
-  return map;
-}
-
-/**
- * Convert IndexPreferences map back to ExchangeSelection array.
- */
-export function preferencesToSelections(
-  selectedIds: string[],
-  preferences: IndexPreferences,
-): ExchangeSelection[] {
-  return selectedIds.map((exchangeId) => ({
-    exchangeId,
-    benchmark: preferences.get(exchangeId),
-  }));
+    .filter((entry) => !entry.id.startsWith('city-vibe-'))
+    .flatMap(toExchangeOptions)
+    .sort((a, b) => {
+      // Primary: exchange label
+      const labelCmp = a.label.localeCompare(b.label);
+      if (labelCmp !== 0) return labelCmp;
+      // Secondary: index name (keeps same-exchange indices together)
+      return a.indexName.localeCompare(b.indexName);
+    });
 }
 
 // ============================================================================
@@ -210,20 +218,10 @@ export function preferencesToSelections(
 // ============================================================================
 
 /**
- * Filter picker options by continent.
- */
-export function filterByContinent(
-  options: ExchangeOption[],
-  continent: Continent
-): ExchangeOption[] {
-  return options.filter((opt) => opt.continent === continent);
-}
-
-/**
  * Get exchange options grouped by continent.
  */
 export function groupByContinent(
-  options: ExchangeOption[]
+  options: ExchangeOption[],
 ): Map<Continent, ExchangeOption[]> {
   const groups = new Map<Continent, ExchangeOption[]>();
 
@@ -241,7 +239,6 @@ export function groupByContinent(
     groups.set(continent, []);
   }
 
-  // Defensive: bail early if options is null/undefined (e.g. data still loading)
   if (!Array.isArray(options)) return groups;
 
   for (const option of options) {
@@ -253,32 +250,36 @@ export function groupByContinent(
   }
 
   for (const [, list] of groups) {
-    list.sort((a, b) => a.label.localeCompare(b.label));
+    list.sort((a, b) => {
+      const labelCmp = a.label.localeCompare(b.label);
+      if (labelCmp !== 0) return labelCmp;
+      return a.indexName.localeCompare(b.indexName);
+    });
   }
 
   return groups;
 }
 
 /**
- * Search exchanges by query.
- * Now also searches by index names.
+ * Search options by query.
+ * Searches label, fullName, indexName, city, country.
  */
 export function searchExchanges(
   options: ExchangeOption[],
-  query: string
+  query: string,
 ): ExchangeOption[] {
-  // Defensive: bail early if options is null/undefined
   if (!Array.isArray(options)) return [];
   if (!query.trim()) return options;
 
   const q = query.toLowerCase().trim();
-  
+
   return options.filter(
     (opt) =>
       opt.label.toLowerCase().includes(q) ||
+      opt.fullName.toLowerCase().includes(q) ||
+      opt.indexName.toLowerCase().includes(q) ||
       opt.city.toLowerCase().includes(q) ||
-      opt.country.toLowerCase().includes(q) ||
-      opt.availableIndices.some((idx) => idx.indexName.toLowerCase().includes(q))
+      opt.country.toLowerCase().includes(q),
   );
 }
 
@@ -287,15 +288,13 @@ export function searchExchanges(
 // ============================================================================
 
 /**
- * Get exchange objects by their IDs.
+ * Get exchange option objects by their compound IDs.
  */
 export function getExchangesByIds(
   allExchanges: ExchangeOption[],
-  selectedIds: string[]
+  selectedIds: string[],
 ): ExchangeOption[] {
-  // Defensive: bail early if either input is null/undefined
   if (!Array.isArray(allExchanges) || !Array.isArray(selectedIds)) return [];
-  // Preserve order of selectedIds
   const result: ExchangeOption[] = [];
   for (const id of selectedIds) {
     const exchange = allExchanges.find((ex) => ex.id === id);
@@ -307,43 +306,32 @@ export function getExchangesByIds(
 }
 
 /**
- * Validate exchange selection against limits.
+ * Validate selection against limits.
  */
 export function validateSelection(
   selected: string[],
   min: number,
-  max: number
+  max: number,
 ): { valid: boolean; message?: string } {
-  // Defensive: treat null/undefined as empty selection
   if (!Array.isArray(selected)) {
-    return { valid: min <= 0, message: min > 0 ? `Select at least ${min} exchange${min === 1 ? '' : 's'}` : undefined };
+    return {
+      valid: min <= 0,
+      message: min > 0 ? `Select at least ${min} index${min === 1 ? '' : ' views'}` : undefined,
+    };
   }
   if (selected.length < min) {
     return {
       valid: false,
-      message: `Select at least ${min} exchange${min === 1 ? '' : 's'}`,
+      message: `Select at least ${min} index${min === 1 ? '' : ' views'}`,
     };
   }
 
   if (selected.length > max) {
     return {
       valid: false,
-      message: `Maximum ${max} exchanges allowed`,
+      message: `Maximum ${max} index views allowed`,
     };
   }
 
   return { valid: true };
-}
-
-/**
- * Count exchanges with multiple indices in selection.
- */
-export function countMultiIndexExchanges(
-  allExchanges: ExchangeOption[],
-  selectedIds: string[]
-): number {
-  return selectedIds.filter((id) => {
-    const ex = allExchanges.find((e) => e.id === id);
-    return ex?.hasMultipleIndices ?? false;
-  }).length;
 }

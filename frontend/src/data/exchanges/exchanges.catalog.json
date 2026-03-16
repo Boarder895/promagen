@@ -142,7 +142,7 @@
       ]
     },
     "hoverColor": "#EF4444",
-    "name": "Borsa Italiana"
+    "name": "BIT"
   },
   {
     "id": "bse-mumbai",
@@ -237,7 +237,7 @@
       ]
     },
     "hoverColor": "#34D399",
-    "name": "Euronext Amsterdam"
+    "name": "Euronext AMS"
   },
   {
     "id": "euronext-brussels",
@@ -282,7 +282,7 @@
       ]
     },
     "hoverColor": "#22C55E",
-    "name": "Euronext Brussels"
+    "name": "Euronext BRU"
   },
   {
     "id": "euronext-lisbon",
@@ -315,7 +315,7 @@
       ]
     },
     "hoverColor": "#84CC16",
-    "name": "Euronext Lisbon"
+    "name": "Euronext LIS"
   },
   {
     "id": "euronext-paris",
@@ -360,7 +360,7 @@
       ]
     },
     "hoverColor": "#16A34A",
-    "name": "Euronext Paris"
+    "name": "Euronext PAR"
   },
   {
     "id": "hkex-hong-kong",
@@ -522,7 +522,7 @@
       ]
     },
     "hoverColor": "#F472B6",
-    "name": "Nasdaq Copenhagen"
+    "name": "Nasdaq CPH"
   },
   {
     "id": "nasdaq-helsinki",
@@ -551,7 +551,7 @@
       ]
     },
     "hoverColor": "#6366F1",
-    "name": "Nasdaq Helsinki"
+    "name": "Nasdaq HEL"
   },
   {
     "id": "qse-doha",
@@ -709,7 +709,7 @@
       ]
     },
     "hoverColor": "#EF4444",
-    "name": "Bahrain Bourse"
+    "name": "BHB"
   },
   {
     "id": "xbel-belgrade",
@@ -1085,7 +1085,7 @@
       ]
     },
     "hoverColor": "#7C3AED",
-    "name": "Nasdaq Riga"
+    "name": "Nasdaq RIG"
   },
   {
     "id": "xsap-sapporo",
@@ -1180,7 +1180,7 @@
       ]
     },
     "hoverColor": "#FBBF24",
-    "name": "Börse Stuttgart"
+    "name": "Börse STU"
   },
   {
     "id": "adx-abu-dhabi",
@@ -1346,7 +1346,7 @@
       ]
     },
     "hoverColor": "#FBBF24",
-    "name": "Bursa Malaysia"
+    "name": "Bursa MY"
   },
   {
     "id": "cse-colombo",
@@ -1529,7 +1529,7 @@
       ]
     },
     "hoverColor": "#EF4444",
-    "name": "Wiener Börse"
+    "name": "WBAG"
   },
   {
     "id": "ise-dublin",
@@ -1554,7 +1554,7 @@
       ]
     },
     "hoverColor": "#22C55E",
-    "name": "Euronext Dublin"
+    "name": "Euronext DUB"
   },
   {
     "id": "pse-prague",
@@ -1833,7 +1833,7 @@
       ]
     },
     "hoverColor": "#22C55E",
-    "name": "Boursa Kuwait"
+    "name": "Boursa KW"
   },
   {
     "id": "msm-muscat",
@@ -2066,7 +2066,7 @@
       ]
     },
     "hoverColor": "#EF4444",
-    "name": "CSE Casablanca"
+    "name": "CSE Casa"
   },
   {
     "id": "bse-gaborone",
