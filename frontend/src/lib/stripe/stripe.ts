@@ -15,11 +15,17 @@ import Stripe from 'stripe';
 // SINGLETON
 // ============================================================================
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripeSecretKey = (process.env.STRIPE_SECRET_KEY ?? '').trim();
 
 if (!stripeSecretKey) {
   throw new Error(
     '[stripe] STRIPE_SECRET_KEY is not set. Add it to .env.local or Vercel env vars.',
+  );
+}
+
+if (!stripeSecretKey.startsWith('sk_test_') && !stripeSecretKey.startsWith('sk_live_')) {
+  throw new Error(
+    `[stripe] Invalid STRIPE_SECRET_KEY format: starts with "${stripeSecretKey.slice(0, 8)}". Must start with sk_test_ or sk_live_.`,
   );
 }
 
