@@ -121,7 +121,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const message = error instanceof Error ? error.message : String(error);
     console.error('[stripe-checkout] Error:', message);
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: `Checkout failed: ${message}` },
       { status: 500 },
     );
   }
