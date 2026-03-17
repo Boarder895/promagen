@@ -58,13 +58,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="h-full overflow-hidden">
+    <html lang="en" className="h-full overflow-hidden" suppressHydrationWarning>
       {/*
         CRITICAL: Body is exactly viewport height with NO overflow.
         All scrolling happens inside individual containers (providers table, exchange rails).
         ProvenanceFooter is now inside homepage-grid, not here.
       */}
-      <body className="h-dvh overflow-hidden antialiased text-slate-900">
+      <body className="h-dvh overflow-hidden antialiased text-slate-900" suppressHydrationWarning>
         <ClerkProvider>
           <PauseProvider>
             <ErrorBoundary>
