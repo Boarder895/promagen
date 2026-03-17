@@ -93,7 +93,6 @@ const COUNTRY_TO_CONTINENT: Record<string, Continent> = {
   IE: 'EUROPE',
   RU: 'EUROPE',
   UA: 'EUROPE',
-  TR: 'EUROPE',
   BG: 'EUROPE',
   HR: 'EUROPE',
   RS: 'EUROPE',
@@ -131,6 +130,7 @@ const COUNTRY_TO_CONTINENT: Record<string, Continent> = {
   SY: 'MIDDLE_EAST',
   YE: 'MIDDLE_EAST',
   PS: 'MIDDLE_EAST',
+  TR: 'MIDDLE_EAST',
 
   // ========================================================================
   // AFRICA

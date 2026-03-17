@@ -264,6 +264,7 @@ export interface FeatureControlPanelProps {
   onScenesHover?: (hovering: boolean) => void;
   onSavedHover?: (hovering: boolean) => void;
   onLabHover?: (hovering: boolean) => void;
+  onExchangesHover?: (hovering: boolean) => void;
 }
 
 export function FeatureControlPanel({
@@ -276,6 +277,7 @@ export function FeatureControlPanel({
   onScenesHover,
   onSavedHover,
   onLabHover,
+  onExchangesHover,
 }: FeatureControlPanelProps) {
   const { dailyUsage, anonymousUsage } = usePromagenAuth();
   const { allPrompts } = useSavedPrompts();
@@ -383,6 +385,7 @@ export function FeatureControlPanel({
           onAction={() => onOpenExchangePicker()}
           isPro={isPaidUser}
           stat={String(selectedExchangeCount)}
+          onHoverChange={onExchangesHover}
         />
 
         {/* ── 💾 Saved Prompts ────────────────────────────── */}

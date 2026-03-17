@@ -412,6 +412,14 @@
     "hoursTemplate": "africa-south-africa",
     "holidaysRef": "jse-johannesburg",
     "hemisphere": "SE",
+    "marketstack": {
+      "defaultBenchmark": "jse",
+      "defaultIndexName": "JSE All Share",
+      "availableIndices": [
+        { "benchmark": "jse", "indexName": "JSE All Share" },
+        { "benchmark": "sa40", "indexName": "FTSE/JSE Top 40" }
+      ]
+    },
     "hoverColor": "#EAB308",
     "name": "JSE"
   },
@@ -560,6 +568,13 @@
     "hoursTemplate": "latam-chile",
     "holidaysRef": "sse-santiago",
     "hemisphere": "SW",
+    "marketstack": {
+      "defaultBenchmark": "igpa",
+      "defaultIndexName": "IGPA",
+      "availableIndices": [
+        { "benchmark": "igpa", "indexName": "IGPA" }
+      ]
+    },
     "hoverColor": "#EF4444",
     "name": "SSE Santiago"
   },
@@ -1683,7 +1698,7 @@
     "tz": "Europe/Zagreb",
     "longitude": 15.9819,
     "latitude": 45.815,
-    "hoursTemplate": "europe-standard",
+    "hoursTemplate": "europe-croatia",
     "holidaysRef": "zse-zagreb",
     "hemisphere": "NE",
     "marketstack": {
@@ -1709,7 +1724,7 @@
     "tz": "Europe/Dublin",
     "longitude": -6.2603,
     "latitude": 53.3498,
-    "hoursTemplate": "europe-standard",
+    "hoursTemplate": "europe-ireland",
     "holidaysRef": "ise-dublin",
     "hemisphere": "NE",
     "marketstack": {

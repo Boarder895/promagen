@@ -89,7 +89,7 @@
 
 'use client';
 
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
@@ -1404,6 +1404,366 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
   );
 }
 
+// ============================================================================
+// EXCHANGES PREVIEW PANEL — 5 windows: CTA + 4 regional mini-cards
+// ============================================================================
+// Shown when Exchanges card is hovered. Same glass/glow pattern as others.
+// Window 1: Amber CTA — "Choose the exchanges that power your prompts" + button
+// Windows 2-5: Americas, Europe, Africa & Middle East, Asia Pacific
+// Each shows popular exchange mini-cards matching the real rail card style.
+// Only renders full cards that fit — no partial/clipped cards.
+//
+// Human Factor: Curiosity Gap — user sees real exchange cards and wants control.
+// Human Factor: Loss Aversion — "16 fixed" vs "your choice" creates desire.
+// ============================================================================
+
+const EXCHANGE_REGIONS: Array<{
+  label: string;
+  emoji: string;
+  color: string;
+  iso2Codes: string[];
+}> = [
+  {
+    label: 'Americas',
+    emoji: '🗽',
+    color: '#38bdf8',
+    iso2Codes: ['US', 'CA', 'MX', 'BR', 'AR', 'CL', 'PE'],
+  },
+  {
+    label: 'Europe',
+    emoji: '🏰',
+    color: '#6366f1',
+    iso2Codes: ['GB', 'DE', 'FR', 'IT', 'ES', 'NL', 'CH', 'SE', 'NO', 'DK', 'FI', 'PL', 'AT', 'IE', 'PT', 'GR', 'RU'],
+  },
+  {
+    label: 'Africa & M. East',
+    emoji: '🌍',
+    color: '#10b981',
+    iso2Codes: ['ZA', 'EG', 'NG', 'KE', 'AE', 'SA', 'IL', 'QA', 'KW', 'MA', 'TR'],
+  },
+  {
+    label: 'Asia Pacific',
+    emoji: '🌏',
+    color: '#fb7185',
+    iso2Codes: ['JP', 'CN', 'HK', 'SG', 'KR', 'TW', 'IN', 'TH', 'MY', 'ID', 'AU', 'NZ', 'PH'],
+  },
+];
+
+function ExchangesPreviewPanel({
+  exchangeCatalog,
+  onOpenPicker,
+}: {
+  exchangeCatalog: ExchangeCatalogEntry[];
+  onOpenPicker: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const cardMeasureRef = useRef<HTMLDivElement>(null);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const [measuredCardHeight, setMeasuredCardHeight] = useState(0);
+
+  // Measure container height via ResizeObserver (same as Engine Bay)
+  useEffect(() => {
+    if (!panelRef.current) return;
+    const obs = new ResizeObserver((entries) => {
+      const h = entries[0]?.contentRect?.height ?? 0;
+      setContainerHeight(h);
+    });
+    obs.observe(panelRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  // Measure actual first card height after render (not guessing)
+  useEffect(() => {
+    if (!cardMeasureRef.current) return;
+    const obs = new ResizeObserver((entries) => {
+      const h = entries[0]?.borderBoxSize?.[0]?.blockSize ?? entries[0]?.contentRect?.height ?? 0;
+      if (h > 0) setMeasuredCardHeight(h);
+    });
+    obs.observe(cardMeasureRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  // Calculate visible cards — Engine Bay pattern: Math.floor(available / (item + gap))
+  // Gap is clamp(12px, 1.2vw, 18px) — compute from viewport width
+  const computedGap = typeof window !== 'undefined'
+    ? Math.min(18, Math.max(12, window.innerWidth * 0.012))
+    : 14;
+  const HEADING_SPACE = 32;
+  const availableForCards = Math.max(0, containerHeight - HEADING_SPACE - 8);
+  const effectiveCardHeight = measuredCardHeight > 0 ? measuredCardHeight : 40;
+  const maxVisibleCards = Math.max(1, Math.floor(
+    (availableForCards + computedGap) / (effectiveCardHeight + computedGap),
+  ));
+
+  // Group exchanges by region — ONE per country (dedup by iso2), exclude city-vibe
+  // Sort order follows iso2Codes array order (Americas: US, CA, MX first)
+  const regionExchanges = useMemo(() => {
+    const realExchanges = exchangeCatalog.filter((e) => !e.id.startsWith('city-vibe-'));
+    return EXCHANGE_REGIONS.map((region) => {
+      const seen = new Set<string>();
+      const deduped: ExchangeCatalogEntry[] = [];
+      for (const e of realExchanges) {
+        const iso = (e.iso2 ?? '').toUpperCase();
+        if (region.iso2Codes.includes(iso) && !seen.has(iso)) {
+          seen.add(iso);
+          deduped.push(e);
+        }
+      }
+      // Sort by position in iso2Codes array — controls display order
+      deduped.sort((a, b) => {
+        const aIdx = region.iso2Codes.indexOf((a.iso2 ?? '').toUpperCase());
+        const bIdx = region.iso2Codes.indexOf((b.iso2 ?? '').toUpperCase());
+        return aIdx - bIdx;
+      });
+      return deduped.slice(0, maxVisibleCards);
+    });
+  }, [exchangeCatalog, maxVisibleCards]);
+
+  const ctaColor = '#22d3ee';
+  const ctaGlowRgba = hexToRgbaPanel(ctaColor, 0.3);
+  const ctaGlowBorder = hexToRgbaPanel(ctaColor, 0.5);
+  const ctaGlowSoft = hexToRgbaPanel(ctaColor, 0.15);
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Animated amber header */}
+      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+        <p
+          className="italic text-amber-400 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
+        >
+          Choose the exchanges that power your prompts
+        </p>
+      </div>
+
+      {/* 5 windows: CTA + 4 regions */}
+      <div
+        ref={panelRef}
+        className="flex flex-1 min-h-0"
+        style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}
+      >
+        {/* Window 1: CTA — Click to configure */}
+        <div
+          className="relative flex-1 rounded-xl overflow-hidden flex flex-col items-center justify-center cursor-pointer"
+          style={{
+            background: 'rgba(15, 23, 42, 0.97)',
+            border: `1px solid ${ctaGlowBorder}`,
+            boxShadow: `0 0 30px 6px ${ctaGlowRgba}, 0 0 60px 12px ${ctaGlowSoft}, inset 0 0 20px 2px ${ctaGlowRgba}`,
+            padding: 'clamp(10px, 1vw, 16px)',
+            transition: 'box-shadow 200ms ease-out',
+          }}
+          onClick={onOpenPicker}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenPicker(); } }}
+          aria-label="Open exchange selection"
+        >
+          {/* Ethereal glow — top radial */}
+          <div
+            className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+            style={{ background: `radial-gradient(ellipse at 50% 0%, ${ctaGlowRgba} 0%, transparent 70%)` }}
+          />
+          <div
+            className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+            style={{ background: `radial-gradient(ellipse at 50% 100%, ${ctaGlowSoft} 0%, transparent 60%)` }}
+          />
+
+          <div className="relative z-10 flex flex-col items-center" style={{ gap: 'clamp(10px, 1vw, 18px)' }}>
+            {/* Globe icon */}
+            <span style={{ fontSize: 'clamp(1.5rem, 2vw, 2.5rem)' }}>📊</span>
+
+            {/* Instruction text */}
+            <p
+              className="text-white font-semibold text-center"
+              style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
+            >
+              Configure Your Exchanges
+            </p>
+            <p
+              className="text-slate-300 text-center leading-relaxed"
+              style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+            >
+              Select 6–16 exchanges to shape every prompt
+            </p>
+
+            {/* CTA button — matches exchange glow colour */}
+            <div
+              className="inline-flex items-center rounded-full ring-1 font-medium"
+              style={{
+                padding: 'clamp(5px, 0.5vw, 8px) clamp(14px, 1.4vw, 22px)',
+                fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)',
+                background: hexToRgbaPanel(ctaColor, 0.2),
+                borderColor: hexToRgbaPanel(ctaColor, 0.5),
+                color: ctaColor,
+                gap: 'clamp(4px, 0.4vw, 6px)',
+              }}
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+              Click to Select
+            </div>
+          </div>
+        </div>
+
+        {/* Windows 2-5: Regional exchange cards */}
+        {EXCHANGE_REGIONS.map((region, idx) => {
+          const glowRgba = hexToRgbaPanel(region.color, 0.3);
+          const glowBorder = hexToRgbaPanel(region.color, 0.5);
+          const glowSoft = hexToRgbaPanel(region.color, 0.15);
+          const exchanges = regionExchanges[idx] ?? [];
+          const isFirstRegion = idx === 0;
+
+          return (
+            <div
+              key={region.label}
+              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+              style={{
+                background: 'rgba(15, 23, 42, 0.97)',
+                border: `1px solid ${glowBorder}`,
+                boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+                padding: 'clamp(8px, 0.8vw, 14px)',
+                transition: 'box-shadow 200ms ease-out',
+              }}
+            >
+              {/* Ethereal glow — top radial */}
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
+              />
+              <div
+                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+                style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
+              />
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
+                {/* Region heading */}
+                <div className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                  <span style={{ fontSize: 'clamp(0.85rem, 1vw, 1.2rem)' }}>{region.emoji}</span>
+                  <span
+                    className="font-semibold text-white truncate"
+                    style={{
+                      fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)',
+                      textShadow: `0 0 12px ${glowRgba}`,
+                    }}
+                  >
+                    {region.label}
+                  </span>
+                  <span
+                    className="ml-auto font-bold tabular-nums shrink-0"
+                    style={{ color: region.color, fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+                  >
+                    {exchanges.length}
+                  </span>
+                </div>
+
+                {/* Mini exchange cards — matching real rail card style */}
+                <div className="flex flex-col flex-1 overflow-hidden" style={{ gap: 'clamp(12px, 1.2vw, 18px)' }}>
+                  {exchanges.map((ex, exIdx) => {
+                    const exColor = ex.hoverColor ?? '#A855F7';
+                    const exGlow = hexToRgbaPanel(exColor, 0.25);
+                    const exBorder = hexToRgbaPanel(exColor, 0.4);
+                    // Same logic as real exchange card: extract defaultIndexName properly
+                    // Uses isMultiIndexConfig type guard for type-safe access
+                    const ms = ex.marketstack;
+                    const indexName = ms
+                      ? (isMultiIndexConfig(ms) ? ms.defaultIndexName : ms.indexName)
+                      : '';
+                    // Attach measurement ref to very first card (first region, first card)
+                    const measureRef = isFirstRegion && exIdx === 0 ? cardMeasureRef : undefined;
+
+                    return (
+                      <div
+                        key={ex.id}
+                        ref={measureRef}
+                        className="relative rounded-lg overflow-hidden shrink-0"
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: `1px solid ${exBorder}`,
+                          boxShadow: `0 0 12px 2px ${exGlow}, inset 0 0 8px 1px ${hexToRgbaPanel(exColor, 0.1)}`,
+                          padding: 'clamp(5px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px)',
+                        }}
+                      >
+                        {/* Ethereal glow - top radial (same as real exchange card) */}
+                        <span
+                          className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
+                          style={{
+                            background: `radial-gradient(ellipse at 50% 0%, ${exGlow} 0%, transparent 70%)`,
+                          }}
+                          aria-hidden="true"
+                        />
+                        <div className="relative z-10 flex items-center" style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}>
+                          {/* Flag */}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/flags/${(ex.iso2 ?? '').toLowerCase()}.svg`}
+                            alt=""
+                            className="rounded-sm shrink-0"
+                            style={{
+                              width: 'clamp(16px, 1.4vw, 22px)',
+                              height: 'clamp(11px, 1vw, 15px)',
+                            }}
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                          {/* Exchange name */}
+                          <span
+                            className="font-medium text-slate-100 truncate"
+                            style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+                          >
+                            {ex.name ?? ex.exchange ?? ex.id}
+                          </span>
+                          {/* City — right aligned */}
+                          <span
+                            className="text-slate-300 truncate ml-auto shrink-0"
+                            style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
+                          >
+                            {ex.city}
+                          </span>
+                        </div>
+                        {/* Index name row — only shown when data exists (same as real rails) */}
+                        {indexName && (
+                          <div className="relative z-10" style={{ marginTop: 'clamp(2px, 0.2vw, 3px)' }}>
+                            <span
+                              className="text-slate-400"
+                              style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
+                            >
+                              {indexName}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom row — exchange count + Pro benefit */}
+      <div
+        className="flex items-center justify-between"
+        style={{ paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
+      >
+        <span
+          className="text-amber-400"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+        >
+          {exchangeCatalog.filter((e) => !e.id.startsWith('city-vibe-')).length} exchanges across 7 continents
+        </span>
+        <span
+          className="text-emerald-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+        >
+          Pro: Your selection, everywhere
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // MAIN COMPONENT
 // ============================================================================
 
@@ -1483,10 +1843,53 @@ export default function ProPromagenClient({
   // No headers, no badges, no comparison table, no CTA - just the picker
   // ============================================================================
   const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
-  const [formatHovered, setFormatHovered] = useState(false);
-  const [scenesHovered, setScenesHovered] = useState(false);
-  const [savedHovered, setSavedHovered] = useState(false);
-  const [labHovered, setLabHovered] = useState(false);
+
+  // ============================================================================
+  // HOVER BRIDGE — unified panel visibility with 2s linger delay
+  // ============================================================================
+  // Pattern: Card hover opens panel → card leave starts 2s timer → if cursor
+  // enters preview panel before timer expires, cancel timer and keep open →
+  // panel closes only when cursor leaves preview panel. Mutual exclusion:
+  // hovering a new card immediately switches to that panel.
+  // ============================================================================
+  type PreviewPanel = 'format' | 'scenes' | 'saved' | 'lab' | 'exchanges';
+  const [activePanel, setActivePanel] = useState<PreviewPanel | null>(null);
+  const lingerRef = useRef<ReturnType<typeof setTimeout>>();
+  const inPreviewRef = useRef(false);
+
+  const handleCardHover = useCallback((panel: PreviewPanel, hovering: boolean) => {
+    clearTimeout(lingerRef.current);
+    if (hovering) {
+      inPreviewRef.current = false;
+      setActivePanel(panel);
+    } else {
+      lingerRef.current = setTimeout(() => {
+        if (!inPreviewRef.current) {
+          setActivePanel(null);
+        }
+      }, 2000);
+    }
+  }, []);
+
+  const handlePreviewEnter = useCallback(() => {
+    clearTimeout(lingerRef.current);
+    inPreviewRef.current = true;
+  }, []);
+
+  const handlePreviewLeave = useCallback(() => {
+    inPreviewRef.current = false;
+    setActivePanel(null);
+  }, []);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => clearTimeout(lingerRef.current), []);
+
+  // Wrapper callbacks matching FeatureControlPanel prop signatures
+  const setFormatHovered = useCallback((h: boolean) => handleCardHover('format', h), [handleCardHover]);
+  const setScenesHovered = useCallback((h: boolean) => handleCardHover('scenes', h), [handleCardHover]);
+  const setSavedHovered = useCallback((h: boolean) => handleCardHover('saved', h), [handleCardHover]);
+  const setLabHovered = useCallback((h: boolean) => handleCardHover('lab', h), [handleCardHover]);
+  const setExchangesHovered = useCallback((h: boolean) => handleCardHover('exchanges', h), [handleCardHover]);
 
   // Detect changes from initial state (FX no longer tracked — fixed pairs)
   const hasChanges = useMemo(() => {
@@ -1836,34 +2239,41 @@ export default function ProPromagenClient({
           onScenesHover={setScenesHovered}
           onSavedHover={setSavedHovered}
           onLabHover={setLabHovered}
+          onExchangesHover={setExchangesHovered}
         />
       </div>
 
       {/* Bottom panel — preview windows (3/4 of available height) */}
+      {/* Hover bridge: onMouseEnter cancels linger timeout, onMouseLeave closes */}
       <div
         className="min-h-0 flex flex-col rounded-xl overflow-hidden"
         style={{
           flex: '3 1 0%',
           marginTop: 'clamp(8px, 0.8vw, 12px)',
         }}
+        onMouseEnter={activePanel ? handlePreviewEnter : undefined}
+        onMouseLeave={activePanel ? handlePreviewLeave : undefined}
       >
         {/* All preview panels rendered always — toggled via CSS display.
             This avoids the mount-on-hover spike (PromptLabPreviewPanel starts
             5 timers + assemblePrompt + 42 icons on mount). With CSS toggle,
             hover just flips display — zero React work, instant paint. */}
-        <div style={{ display: formatHovered ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'format' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <TierPreviewPanel activeTier={selectedPromptTier} />
         </div>
-        <div style={{ display: scenesHovered ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'scenes' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ScenesPreviewPanel />
         </div>
-        <div style={{ display: savedHovered ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'saved' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <SavedPreviewPanel />
         </div>
-        <div style={{ display: labHovered ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'lab' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <PromptLabPreviewPanel providers={providers} />
         </div>
-        <div style={{ display: (!formatHovered && !scenesHovered && !savedHovered && !labHovered) ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: activePanel === 'exchanges' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+          <ExchangesPreviewPanel exchangeCatalog={exchangeCatalog} onOpenPicker={handleOpenExchangePicker} />
+        </div>
+        <div style={{ display: activePanel === null ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />
         </div>
       </div>
