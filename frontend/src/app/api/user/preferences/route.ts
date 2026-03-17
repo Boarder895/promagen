@@ -26,6 +26,17 @@ import type { ReferenceFrame } from '@/lib/location';
 import type { CompositionMode, AspectRatioId } from '@/types/composition';
 
 // ============================================================================
+// AUTH WITH RETRY (cause #2: cold-start JWKS validation delay)
+// ============================================================================
+
+async function authWithRetry(): Promise<{ userId: string | null }> {
+  const first = await auth();
+  if (first.userId) return first;
+  await new Promise((r) => setTimeout(r, 150));
+  return auth();
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -167,12 +178,12 @@ function extractPromptTier(metadata: Record<string, unknown>): number | null {
 
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const { userId } = await authWithRetry();
 
     if (!userId) {
       return NextResponse.json(
-        { success: false, code: 'NOT_AUTHENTICATED' },
-        { status: 200 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       );
     }
 
@@ -207,12 +218,12 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await authWithRetry();
 
     if (!userId) {
       return NextResponse.json(
-        { success: false, code: 'NOT_AUTHENTICATED' },
-        { status: 200 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       );
     }
 

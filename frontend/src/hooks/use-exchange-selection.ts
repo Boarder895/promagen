@@ -19,7 +19,7 @@
 'use client';
 
 import { useMemo, useCallback, useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 
 import exchangesSelectedJson from '@/data/exchanges/exchanges.selected.json';
 import type { UserTier } from './use-promagen-auth';
@@ -178,6 +178,7 @@ function debugLog(message: string, data?: Record<string, unknown>): void {
  */
 export function useExchangeSelection(): ExchangeSelectionResult {
   const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
 
   // Local state for optimistic updates
   const [localSelection, setLocalSelection] = useState<string[] | null>(null);
@@ -272,9 +273,13 @@ export function useExchangeSelection(): ExchangeSelectionResult {
       try {
         debugLog('Saving selection to Clerk', { count: ids.length });
 
+        const token = await getToken();
         const response = await fetch('/api/user/preferences', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
           credentials: 'same-origin',
           body: JSON.stringify({
             exchangeSelection: {
@@ -301,7 +306,7 @@ export function useExchangeSelection(): ExchangeSelectionResult {
         setIsSaving(false);
       }
     },
-    [canCustomize],
+    [canCustomize, getToken],
   );
 
   /**

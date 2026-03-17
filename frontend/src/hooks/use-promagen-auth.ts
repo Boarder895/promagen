@@ -149,6 +149,8 @@ export interface PromagenAuthState {
   setReferenceFrame: (frame: ReferenceFrame) => Promise<void>;
   /** Prompt tier from Clerk metadata (null if not set). Pro users only. */
   clerkPromptTier: number | null;
+  /** Clerk getToken() for Bearer auth on API calls */
+  getToken: () => Promise<string | null>;
 }
 
 // ============================================================================
@@ -205,7 +207,7 @@ export interface UsePromagenAuthOptions {
  */
 export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenAuthState {
   const { platformId } = options;
-  const { isLoaded, isSignedIn, userId } = useAuth();
+  const { isLoaded, isSignedIn, userId, getToken } = useAuth();
   const { user } = useUser();
 
   // Extract user tier and reference frame from Clerk's public metadata
@@ -295,9 +297,13 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     setLocalReferenceFrame(frame);
 
     try {
+      const token = await getToken();
       const response = await fetch('/api/user/preferences', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
         credentials: 'same-origin',
         body: JSON.stringify({ referenceFrame: frame }),
       });
@@ -312,7 +318,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
       setLocalReferenceFrame(null);
       console.debug('[usePromagenAuth] Error saving reference frame:', error);
     }
-  }, [userTier]);
+  }, [userTier, getToken]);
 
   // ============================================================================
   // DAILY USAGE TRACKING
@@ -330,6 +336,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     userTier,
     isAuthenticated,
     userId: userId ?? null,
+    getToken,
   });
 
   // ============================================================================
@@ -425,6 +432,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     locationInfo,
     setReferenceFrame,
     clerkPromptTier,
+    getToken,
   };
 }
 

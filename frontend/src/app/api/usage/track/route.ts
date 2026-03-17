@@ -19,20 +19,35 @@ import {
 } from '@/lib/usage';
 
 // ============================================================================
+// AUTH WITH RETRY (cause #2: cold-start JWKS validation delay)
+// ============================================================================
+// On serverless cold starts, Clerk's auth() must fetch JWKS keys to validate
+// the session JWT. If this is slow, auth() returns userId: null even though
+// the request has a valid Bearer token or session cookie. Retrying once after
+// a short delay gives Clerk time to complete the JWKS fetch.
+// ============================================================================
+
+async function authWithRetry(): Promise<{ userId: string | null }> {
+  const first = await auth();
+  if (first.userId) return first;
+
+  // Wait 150ms for JWKS cache to warm, then retry once
+  await new Promise((r) => setTimeout(r, 150));
+  return auth();
+}
+
+// ============================================================================
 // GET - Get current usage status
 // ============================================================================
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await authWithRetry();
     
     if (!userId) {
-      // Return 200 with not-authenticated flag (not 401) to prevent
-      // browser-native "Failed to load resource" console errors.
-      // The client hook checks data.success and handles this gracefully.
       return NextResponse.json(
-        { success: false, code: 'NOT_AUTHENTICATED' },
-        { status: 200 }
+        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+        { status: 401 }
       );
     }
     
@@ -89,12 +104,12 @@ interface TrackRequestBody {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId } = await authWithRetry();
     
     if (!userId) {
       return NextResponse.json(
-        { success: false, code: 'NOT_AUTHENTICATED' },
-        { status: 200 }
+        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+        { status: 401 }
       );
     }
     
