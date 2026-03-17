@@ -1647,5 +1647,109 @@
     "hemisphere": "NW",
     "hoursTemplate": "americas-us",
     "holidaysRef": "city-vibe-washington-dc"
+  },
+  {
+    "id": "cse-colombo",
+    "city": "Colombo",
+    "exchange": "Colombo Stock Exchange (CSE)",
+    "country": "Sri Lanka",
+    "iso2": "LK",
+    "tz": "Asia/Colombo",
+    "longitude": 79.8612,
+    "latitude": 6.9271,
+    "hoursTemplate": "asia-srilanka",
+    "holidaysRef": "cse-colombo",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "aspi",
+      "defaultIndexName": "CSE All Share",
+      "availableIndices": [
+        {
+          "benchmark": "aspi",
+          "indexName": "CSE All Share"
+        }
+      ]
+    },
+    "hoverColor": "#FB923C",
+    "name": "CSE",
+    "isActive": false
+  },
+  {
+    "id": "zse-zagreb",
+    "city": "Zagreb",
+    "exchange": "Zagreb Stock Exchange (ZSE)",
+    "country": "Croatia",
+    "iso2": "HR",
+    "tz": "Europe/Zagreb",
+    "longitude": 15.9819,
+    "latitude": 45.815,
+    "hoursTemplate": "europe-standard",
+    "holidaysRef": "zse-zagreb",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "crobex",
+      "defaultIndexName": "CROBEX",
+      "availableIndices": [
+        {
+          "benchmark": "crobex",
+          "indexName": "CROBEX"
+        }
+      ]
+    },
+    "hoverColor": "#3B82F6",
+    "name": "ZSE",
+    "isActive": false
+  },
+  {
+    "id": "ise-dublin",
+    "city": "Dublin",
+    "exchange": "Euronext Dublin (ISE)",
+    "country": "Ireland",
+    "iso2": "IE",
+    "tz": "Europe/Dublin",
+    "longitude": -6.2603,
+    "latitude": 53.3498,
+    "hoursTemplate": "europe-standard",
+    "holidaysRef": "ise-dublin",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "iseq",
+      "defaultIndexName": "ISEQ Overall",
+      "availableIndices": [
+        {
+          "benchmark": "iseq",
+          "indexName": "ISEQ Overall"
+        }
+      ]
+    },
+    "hoverColor": "#22C55E",
+    "name": "ISE",
+    "isActive": false
+  },
+  {
+    "id": "bursa-kuala-lumpur",
+    "city": "Kuala Lumpur",
+    "exchange": "Bursa Malaysia",
+    "country": "Malaysia",
+    "iso2": "MY",
+    "tz": "Asia/Kuala_Lumpur",
+    "longitude": 101.6869,
+    "latitude": 3.139,
+    "hoursTemplate": "asia-malaysia",
+    "holidaysRef": "bursa-kuala-lumpur",
+    "hemisphere": "NE",
+    "marketstack": {
+      "defaultBenchmark": "fklci",
+      "defaultIndexName": "FTSE Bursa KLCI",
+      "availableIndices": [
+        {
+          "benchmark": "fklci",
+          "indexName": "FTSE Bursa KLCI"
+        }
+      ]
+    },
+    "hoverColor": "#EF4444",
+    "name": "Bursa",
+    "isActive": false
   }
 ]

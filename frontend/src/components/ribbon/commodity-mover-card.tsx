@@ -247,7 +247,7 @@ export default function CommodityMoverCard({
       {/* LINE 2 — Flag + Base Price + Delta (centred, 3ch gaps, 🔥 ≥3%) */}
       <div
         className="flex items-center justify-center min-w-0 relative z-10"
-        style={{ gap: '3ch' }}
+        style={{ gap: '1.5ch' }}
         data-testid="commodity-price"
       >
         <span className="flex items-center shrink-0" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
