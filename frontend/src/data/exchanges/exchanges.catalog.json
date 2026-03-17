@@ -1,8 +1,8 @@
 [
   {
     "id": "b3-sao-paulo",
-    "city": "São Paulo",
-    "exchange": "B3 — Brasil Bolsa Balcão",
+    "city": "S\u00e3o Paulo",
+    "exchange": "B3 \u2014 Brasil Bolsa Balc\u00e3o",
     "country": "Brazil",
     "iso2": "BR",
     "tz": "America/Sao_Paulo",
@@ -81,7 +81,7 @@
   {
     "id": "bme-madrid",
     "city": "Madrid",
-    "exchange": "BME - Bolsas y Mercados Españoles (BMEX)",
+    "exchange": "BME - Bolsas y Mercados Espa\u00f1oles (BMEX)",
     "country": "Spain",
     "iso2": "ES",
     "tz": "Europe/Madrid",
@@ -124,13 +124,9 @@
     "holidaysRef": "borsa-italiana-milan",
     "hemisphere": "NE",
     "marketstack": {
-      "defaultBenchmark": "it40",
-      "defaultIndexName": "FTSE MIB 40",
+      "defaultBenchmark": "eu350",
+      "defaultIndexName": "Euro Stoxx 350",
       "availableIndices": [
-        {
-          "benchmark": "it40",
-          "indexName": "FTSE MIB 40"
-        },
         {
           "benchmark": "eu350",
           "indexName": "Euro Stoxx 350"
@@ -297,17 +293,9 @@
     "holidaysRef": "euronext-lisbon",
     "hemisphere": "NW",
     "marketstack": {
-      "defaultBenchmark": "psi_20",
-      "defaultIndexName": "PSI 20",
+      "defaultBenchmark": "psi_geral",
+      "defaultIndexName": "PSI Geral",
       "availableIndices": [
-        {
-          "benchmark": "psi_20",
-          "indexName": "PSI 20"
-        },
-        {
-          "benchmark": "psi",
-          "indexName": "PSI General"
-        },
         {
           "benchmark": "psi_geral",
           "indexName": "PSI Geral"
@@ -424,24 +412,6 @@
     "hoursTemplate": "africa-south-africa",
     "holidaysRef": "jse-johannesburg",
     "hemisphere": "SE",
-    "marketstack": {
-      "defaultBenchmark": "jse",
-      "defaultIndexName": "JSE All Share",
-      "availableIndices": [
-        {
-          "benchmark": "jse",
-          "indexName": "JSE All Share"
-        },
-        {
-          "benchmark": "sa40",
-          "indexName": "FTSE/JSE Top 40"
-        },
-        {
-          "benchmark": "saall",
-          "indexName": "JSE All Share (Alt)"
-        }
-      ]
-    },
     "hoverColor": "#EAB308",
     "name": "JSE"
   },
@@ -458,13 +428,9 @@
     "holidaysRef": "lse-london",
     "hemisphere": "NW",
     "marketstack": {
-      "defaultBenchmark": "gb100",
-      "defaultIndexName": "FTSE 100",
+      "defaultBenchmark": "eu600",
+      "defaultIndexName": "STOXX Europe 600",
       "availableIndices": [
-        {
-          "benchmark": "gb100",
-          "indexName": "FTSE 100"
-        },
         {
           "benchmark": "eu600",
           "indexName": "STOXX Europe 600"
@@ -554,31 +520,6 @@
     "name": "Nasdaq HEL"
   },
   {
-    "id": "qse-doha",
-    "city": "Doha",
-    "exchange": "Qatar Stock Exchange (QSE)",
-    "country": "Qatar",
-    "iso2": "QA",
-    "tz": "Asia/Qatar",
-    "longitude": 51.5074,
-    "latitude": 25.2854,
-    "hoursTemplate": "gulf-qatar",
-    "holidaysRef": "qse-doha",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "qe",
-      "defaultIndexName": "QE Index",
-      "availableIndices": [
-        {
-          "benchmark": "qe",
-          "indexName": "QE Index"
-        }
-      ]
-    },
-    "hoverColor": "#7C3AED",
-    "name": "QSE"
-  },
-  {
     "id": "six-zurich",
     "city": "Zurich",
     "exchange": "SIX Swiss Exchange",
@@ -619,16 +560,6 @@
     "hoursTemplate": "latam-chile",
     "holidaysRef": "sse-santiago",
     "hemisphere": "SW",
-    "marketstack": {
-      "defaultBenchmark": "igpa",
-      "defaultIndexName": "IGPA",
-      "availableIndices": [
-        {
-          "benchmark": "igpa",
-          "indexName": "IGPA"
-        }
-      ]
-    },
     "hoverColor": "#EF4444",
     "name": "SSE Santiago"
   },
@@ -683,88 +614,9 @@
     "name": "SZSE"
   },
   {
-    "id": "xbah-manama",
-    "city": "Manama",
-    "exchange": "Bahrain Bourse",
-    "country": "Bahrain",
-    "iso2": "BH",
-    "tz": "Asia/Bahrain",
-    "longitude": 50.5832,
-    "latitude": 26.2285,
-    "hoursTemplate": "gulf-bahrain",
-    "holidaysRef": "xbah-manama",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "estirad",
-      "defaultIndexName": "Bahrain All Share",
-      "availableIndices": [
-        {
-          "benchmark": "estirad",
-          "indexName": "Bahrain All Share"
-        },
-        {
-          "benchmark": "bsx",
-          "indexName": "BSX"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "BHB"
-  },
-  {
-    "id": "xbel-belgrade",
-    "city": "Belgrade",
-    "exchange": "Belgrade Stock Exchange (BELEX)",
-    "country": "Serbia",
-    "iso2": "RS",
-    "tz": "Europe/Belgrade",
-    "longitude": 20.4489,
-    "latitude": 44.7866,
-    "hoursTemplate": "europe-serbia",
-    "holidaysRef": "xbel-belgrade",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "belex_15",
-      "defaultIndexName": "BELEX 15",
-      "availableIndices": [
-        {
-          "benchmark": "belex_15",
-          "indexName": "BELEX 15"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "BELEX"
-  },
-  {
-    "id": "xbog-bogota",
-    "city": "Bogota",
-    "exchange": "Bolsa de Valores de Colombia (BVC)",
-    "country": "Colombia",
-    "iso2": "CO",
-    "tz": "America/Bogota",
-    "longitude": -74.0721,
-    "latitude": 4.711,
-    "hoursTemplate": "latam-colombia",
-    "holidaysRef": "xbog-bogota",
-    "hemisphere": "NW",
-    "marketstack": {
-      "defaultBenchmark": "colcap",
-      "defaultIndexName": "COLCAP",
-      "availableIndices": [
-        {
-          "benchmark": "colcap",
-          "indexName": "COLCAP"
-        }
-      ]
-    },
-    "hoverColor": "#FBBF24",
-    "name": "BVC"
-  },
-  {
     "id": "xetra-frankfurt",
     "city": "Frankfurt",
-    "exchange": "Deutsche Börse Xetra",
+    "exchange": "Deutsche B\u00f6rse Xetra",
     "country": "Germany",
     "iso2": "DE",
     "tz": "Europe/Berlin",
@@ -780,22 +632,6 @@
         {
           "benchmark": "de40",
           "indexName": "DAX 40"
-        },
-        {
-          "benchmark": "mdax",
-          "indexName": "MDAX"
-        },
-        {
-          "benchmark": "sdax",
-          "indexName": "SDAX"
-        },
-        {
-          "benchmark": "de_mid",
-          "indexName": "DAX Mid-Cap"
-        },
-        {
-          "benchmark": "de_small",
-          "indexName": "DAX Small-Cap"
         },
         {
           "benchmark": "eu50",
@@ -850,7 +686,7 @@
   {
     "id": "xfra-frankfurt",
     "city": "Frankfurt",
-    "exchange": "Deutsche Börse (XFRA)",
+    "exchange": "Deutsche B\u00f6rse (XFRA)",
     "country": "Germany",
     "iso2": "DE",
     "tz": "Europe/Berlin",
@@ -866,22 +702,6 @@
         {
           "benchmark": "de40",
           "indexName": "DAX 40"
-        },
-        {
-          "benchmark": "mdax",
-          "indexName": "MDAX"
-        },
-        {
-          "benchmark": "sdax",
-          "indexName": "SDAX"
-        },
-        {
-          "benchmark": "de_mid",
-          "indexName": "DAX Mid-Cap"
-        },
-        {
-          "benchmark": "de_small",
-          "indexName": "DAX Small-Cap"
         },
         {
           "benchmark": "eu50",
@@ -903,31 +723,6 @@
     },
     "hoverColor": "#FBBF24",
     "name": "FRA"
-  },
-  {
-    "id": "xice-reykjavik",
-    "city": "Reykjavik",
-    "exchange": "Nasdaq Iceland (ICEX)",
-    "country": "Iceland",
-    "iso2": "IS",
-    "tz": "Atlantic/Reykjavik",
-    "longitude": -21.8174,
-    "latitude": 64.1466,
-    "hoursTemplate": "europe-iceland",
-    "holidaysRef": "xice-reykjavik",
-    "hemisphere": "NW",
-    "marketstack": {
-      "defaultBenchmark": "icex",
-      "defaultIndexName": "ICEX",
-      "availableIndices": [
-        {
-          "benchmark": "icex",
-          "indexName": "ICEX"
-        }
-      ]
-    },
-    "hoverColor": "#3B82F6",
-    "name": "ICEX"
   },
   {
     "id": "xlim-lima",
@@ -1009,38 +804,9 @@
     "name": "Nagoya SE"
   },
   {
-    "id": "xnsa-lagos",
-    "city": "Lagos",
-    "exchange": "Nigerian Stock Exchange (NSE)",
-    "country": "Nigeria",
-    "iso2": "NG",
-    "tz": "Africa/Lagos",
-    "longitude": 3.3792,
-    "latitude": 6.5244,
-    "hoursTemplate": "africa-nigeria",
-    "holidaysRef": "xnsa-lagos",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "nse_all_share",
-      "defaultIndexName": "NSE All-Share",
-      "availableIndices": [
-        {
-          "benchmark": "nse_all_share",
-          "indexName": "NSE All-Share"
-        },
-        {
-          "benchmark": "nse-all_share",
-          "indexName": "NSE All-Share"
-        }
-      ]
-    },
-    "hoverColor": "#10B981",
-    "name": "NGX"
-  },
-  {
     "id": "xosl-oslo",
     "city": "Oslo",
-    "exchange": "Oslo Børs",
+    "exchange": "Oslo B\u00f8rs",
     "country": "Norway",
     "iso2": "NO",
     "tz": "Europe/Oslo",
@@ -1051,41 +817,16 @@
     "hemisphere": "NE",
     "marketstack": {
       "defaultBenchmark": "oslo",
-      "defaultIndexName": "Oslo Børs",
+      "defaultIndexName": "Oslo B\u00f8rs",
       "availableIndices": [
         {
           "benchmark": "oslo",
-          "indexName": "Oslo Børs"
+          "indexName": "Oslo B\u00f8rs"
         }
       ]
     },
     "hoverColor": "#EF4444",
-    "name": "Oslo Børs"
-  },
-  {
-    "id": "xris-riga",
-    "city": "Riga",
-    "exchange": "Nasdaq Riga",
-    "country": "Latvia",
-    "iso2": "LV",
-    "tz": "Europe/Riga",
-    "longitude": 24.1052,
-    "latitude": 56.9496,
-    "hoursTemplate": "europe-baltic",
-    "holidaysRef": "xris-riga",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "riga",
-      "defaultIndexName": "OMX Riga",
-      "availableIndices": [
-        {
-          "benchmark": "riga",
-          "indexName": "OMX Riga"
-        }
-      ]
-    },
-    "hoverColor": "#7C3AED",
-    "name": "Nasdaq RIG"
+    "name": "Oslo B\u00f8rs"
   },
   {
     "id": "xsap-sapporo",
@@ -1117,34 +858,9 @@
     "name": "Sapporo SE"
   },
   {
-    "id": "xstc-ho-chi-minh-city",
-    "city": "Ho Chi Minh City",
-    "exchange": "Ho Chi Minh Stock Exchange (HOSE)",
-    "country": "Vietnam",
-    "iso2": "VN",
-    "tz": "Asia/Ho_Chi_Minh",
-    "longitude": 106.6297,
-    "latitude": 10.8231,
-    "hoursTemplate": "asia-vietnam",
-    "holidaysRef": "xstc-ho-chi-minh-city",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "hnx",
-      "defaultIndexName": "HNX Index",
-      "availableIndices": [
-        {
-          "benchmark": "hnx",
-          "indexName": "HNX Index"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "HOSE"
-  },
-  {
     "id": "xstu-stuttgart",
     "city": "Stuttgart",
-    "exchange": "Börse Stuttgart",
+    "exchange": "B\u00f6rse Stuttgart",
     "country": "Germany",
     "iso2": "DE",
     "tz": "Europe/Berlin",
@@ -1162,14 +878,6 @@
           "indexName": "DAX 40"
         },
         {
-          "benchmark": "mdax",
-          "indexName": "MDAX"
-        },
-        {
-          "benchmark": "sdax",
-          "indexName": "SDAX"
-        },
-        {
           "benchmark": "eu350",
           "indexName": "Euro Stoxx 350"
         },
@@ -1180,57 +888,7 @@
       ]
     },
     "hoverColor": "#FBBF24",
-    "name": "Börse STU"
-  },
-  {
-    "id": "adx-abu-dhabi",
-    "city": "Abu Dhabi",
-    "exchange": "Abu Dhabi Securities Exchange (ADX)",
-    "country": "United Arab Emirates",
-    "iso2": "AE",
-    "tz": "Asia/Dubai",
-    "longitude": 54.3773,
-    "latitude": 24.4539,
-    "hoursTemplate": "gulf-uae",
-    "holidaysRef": "adx-abu-dhabi",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "adx_general",
-      "defaultIndexName": "ADX General",
-      "availableIndices": [
-        {
-          "benchmark": "adx_general",
-          "indexName": "ADX General"
-        }
-      ]
-    },
-    "hoverColor": "#FFB347",
-    "name": "ADX"
-  },
-  {
-    "id": "ase-amman",
-    "city": "Amman",
-    "exchange": "Amman Stock Exchange (ASE)",
-    "country": "Jordan",
-    "iso2": "JO",
-    "tz": "Asia/Amman",
-    "longitude": 35.9106,
-    "latitude": 31.9454,
-    "hoursTemplate": "gulf-jordan",
-    "holidaysRef": "ase-amman",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "ase",
-      "defaultIndexName": "ASE General",
-      "availableIndices": [
-        {
-          "benchmark": "ase",
-          "indexName": "ASE General"
-        }
-      ]
-    },
-    "hoverColor": "#D4A574",
-    "name": "ASE"
+    "name": "B\u00f6rse STU"
   },
   {
     "id": "asx-sydney",
@@ -1253,10 +911,6 @@
           "indexName": "ASX 200"
         },
         {
-          "benchmark": "asx_all_share",
-          "indexName": "ASX All Share"
-        },
-        {
           "benchmark": "au50",
           "indexName": "S&P/ASX 50"
         },
@@ -1270,34 +924,9 @@
     "name": "ASX"
   },
   {
-    "id": "athex-athens",
-    "city": "Athens",
-    "exchange": "Athens Stock Exchange (ATHEX)",
-    "country": "Greece",
-    "iso2": "GR",
-    "tz": "Europe/Athens",
-    "longitude": 23.7275,
-    "latitude": 37.9838,
-    "hoursTemplate": "europe-greece",
-    "holidaysRef": "athex-athens",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "athens_general",
-      "defaultIndexName": "Athens General",
-      "availableIndices": [
-        {
-          "benchmark": "athens_general",
-          "indexName": "Athens General"
-        }
-      ]
-    },
-    "hoverColor": "#60A5FA",
-    "name": "ATHEX"
-  },
-  {
     "id": "budapest-bet",
     "city": "Budapest",
-    "exchange": "Budapest Stock Exchange (BÉT)",
+    "exchange": "Budapest Stock Exchange (B\u00c9T)",
     "country": "Hungary",
     "iso2": "HU",
     "tz": "Europe/Budapest",
@@ -1313,69 +942,11 @@
         {
           "benchmark": "bux",
           "indexName": "BUX"
-        },
-        {
-          "benchmark": "bet",
-          "indexName": "BET"
         }
       ]
     },
     "hoverColor": "#A78BFA",
-    "name": "BÉT"
-  },
-  {
-    "id": "bursa-kuala-lumpur",
-    "city": "Kuala Lumpur",
-    "exchange": "Bursa Malaysia",
-    "country": "Malaysia",
-    "iso2": "MY",
-    "tz": "Asia/Kuala_Lumpur",
-    "longitude": 101.6869,
-    "latitude": 3.139,
-    "hoursTemplate": "asia-malaysia",
-    "holidaysRef": "bursa-kuala-lumpur",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "fklci",
-      "defaultIndexName": "FTSE Bursa KLCI",
-      "availableIndices": [
-        {
-          "benchmark": "fklci",
-          "indexName": "FTSE Bursa KLCI"
-        }
-      ]
-    },
-    "hoverColor": "#FBBF24",
-    "name": "Bursa MY"
-  },
-  {
-    "id": "cse-colombo",
-    "city": "Colombo",
-    "exchange": "Colombo Stock Exchange (CSE)",
-    "country": "Sri Lanka",
-    "iso2": "LK",
-    "tz": "Asia/Colombo",
-    "longitude": 79.8612,
-    "latitude": 6.9271,
-    "hoursTemplate": "asia-srilanka",
-    "holidaysRef": "cse-colombo",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "aspi",
-      "defaultIndexName": "CSE All Share",
-      "availableIndices": [
-        {
-          "benchmark": "aspi",
-          "indexName": "CSE All Share"
-        },
-        {
-          "benchmark": "cse_general",
-          "indexName": "CSE General"
-        }
-      ]
-    },
-    "hoverColor": "#FB923C",
-    "name": "CSE"
+    "name": "B\u00c9T"
   },
   {
     "id": "dfm-dubai",
@@ -1509,7 +1080,7 @@
   {
     "id": "wbag-vienna",
     "city": "Vienna",
-    "exchange": "Vienna Stock Exchange (Wiener Börse)",
+    "exchange": "Vienna Stock Exchange (Wiener B\u00f6rse)",
     "country": "Austria",
     "iso2": "AT",
     "tz": "Europe/Vienna",
@@ -1530,31 +1101,6 @@
     },
     "hoverColor": "#EF4444",
     "name": "WBAG"
-  },
-  {
-    "id": "ise-dublin",
-    "city": "Dublin",
-    "exchange": "Irish Stock Exchange (Euronext Dublin)",
-    "country": "Ireland",
-    "iso2": "IE",
-    "tz": "Europe/Dublin",
-    "longitude": -6.2603,
-    "latitude": 53.3498,
-    "hoursTemplate": "europe-ireland",
-    "holidaysRef": "ise-dublin",
-    "hemisphere": "NW",
-    "marketstack": {
-      "defaultBenchmark": "iseq",
-      "defaultIndexName": "ISEQ Overall",
-      "availableIndices": [
-        {
-          "benchmark": "iseq",
-          "indexName": "ISEQ Overall"
-        }
-      ]
-    },
-    "hoverColor": "#22C55E",
-    "name": "Euronext DUB"
   },
   {
     "id": "pse-prague",
@@ -1607,31 +1153,6 @@
     "name": "LJSE"
   },
   {
-    "id": "zse-zagreb",
-    "city": "Zagreb",
-    "exchange": "Zagreb Stock Exchange (ZSE)",
-    "country": "Croatia",
-    "iso2": "HR",
-    "tz": "Europe/Zagreb",
-    "longitude": 15.9819,
-    "latitude": 45.815,
-    "hoursTemplate": "europe-croatia",
-    "holidaysRef": "zse-zagreb",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "crobex",
-      "defaultIndexName": "CROBEX",
-      "availableIndices": [
-        {
-          "benchmark": "crobex",
-          "indexName": "CROBEX"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "ZSE"
-  },
-  {
     "id": "bcpb-bratislava",
     "city": "Bratislava",
     "exchange": "Bratislava Stock Exchange (BCPB)",
@@ -1682,210 +1203,6 @@
     "name": "LuxSE"
   },
   {
-    "id": "mse-skopje",
-    "city": "Skopje",
-    "exchange": "Macedonian Stock Exchange (MSE)",
-    "country": "North Macedonia",
-    "iso2": "MK",
-    "tz": "Europe/Skopje",
-    "longitude": 21.4314,
-    "latitude": 41.9981,
-    "hoursTemplate": "europe-macedonia",
-    "holidaysRef": "mse-skopje",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "mbi_10",
-      "defaultIndexName": "MBI 10",
-      "availableIndices": [
-        {
-          "benchmark": "mbi_10",
-          "indexName": "MBI 10"
-        }
-      ]
-    },
-    "hoverColor": "#FBBF24",
-    "name": "MSE"
-  },
-  {
-    "id": "mnse-podgorica",
-    "city": "Podgorica",
-    "exchange": "Montenegro Stock Exchange (MNSE)",
-    "country": "Montenegro",
-    "iso2": "ME",
-    "tz": "Europe/Podgorica",
-    "longitude": 19.2636,
-    "latitude": 42.4304,
-    "hoursTemplate": "europe-montenegro",
-    "holidaysRef": "mnse-podgorica",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "monex",
-      "defaultIndexName": "MONEX",
-      "availableIndices": [
-        {
-          "benchmark": "monex",
-          "indexName": "MONEX"
-        }
-      ]
-    },
-    "hoverColor": "#F97316",
-    "name": "MNSE"
-  },
-  {
-    "id": "sase-sarajevo",
-    "city": "Sarajevo",
-    "exchange": "Sarajevo Stock Exchange (SASE)",
-    "country": "Bosnia and Herzegovina",
-    "iso2": "BA",
-    "tz": "Europe/Sarajevo",
-    "longitude": 18.4131,
-    "latitude": 43.8563,
-    "hoursTemplate": "europe-bosnia",
-    "holidaysRef": "sase-sarajevo",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "sasx_10",
-      "defaultIndexName": "SASX-10",
-      "availableIndices": [
-        {
-          "benchmark": "sasx_10",
-          "indexName": "SASX-10"
-        },
-        {
-          "benchmark": "sasx-10",
-          "indexName": "SASX-10"
-        }
-      ]
-    },
-    "hoverColor": "#3B82F6",
-    "name": "SASE"
-  },
-  {
-    "id": "pfts-kyiv",
-    "city": "Kyiv",
-    "exchange": "PFTS Stock Exchange (Ukraine)",
-    "country": "Ukraine",
-    "iso2": "UA",
-    "tz": "Europe/Kyiv",
-    "longitude": 30.5234,
-    "latitude": 50.4501,
-    "hoursTemplate": "europe-ukraine",
-    "holidaysRef": "pfts-kyiv",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "pfts",
-      "defaultIndexName": "PFTS Index",
-      "availableIndices": [
-        {
-          "benchmark": "pfts",
-          "indexName": "PFTS Index"
-        }
-      ]
-    },
-    "hoverColor": "#FBBF24",
-    "name": "PFTS"
-  },
-  {
-    "id": "bse-beirut",
-    "city": "Beirut",
-    "exchange": "Beirut Stock Exchange (BSE)",
-    "country": "Lebanon",
-    "iso2": "LB",
-    "tz": "Asia/Beirut",
-    "longitude": 35.5018,
-    "latitude": 33.8938,
-    "hoursTemplate": "gulf-lebanon",
-    "holidaysRef": "bse-beirut",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "blom",
-      "defaultIndexName": "BLOM Stock Index",
-      "availableIndices": [
-        {
-          "benchmark": "blom",
-          "indexName": "BLOM Stock Index"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "BSE Beirut"
-  },
-  {
-    "id": "kse-kuwait",
-    "city": "Kuwait City",
-    "exchange": "Boursa Kuwait",
-    "country": "Kuwait",
-    "iso2": "KW",
-    "tz": "Asia/Kuwait",
-    "longitude": 47.9774,
-    "latitude": 29.3759,
-    "hoursTemplate": "gulf-kuwait",
-    "holidaysRef": "kse-kuwait",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "kuwait_all_share",
-      "defaultIndexName": "Kuwait All Share",
-      "availableIndices": [
-        {
-          "benchmark": "kuwait_all_share",
-          "indexName": "Kuwait All Share"
-        }
-      ]
-    },
-    "hoverColor": "#22C55E",
-    "name": "Boursa KW"
-  },
-  {
-    "id": "msm-muscat",
-    "city": "Muscat",
-    "exchange": "Muscat Securities Market (MSM)",
-    "country": "Oman",
-    "iso2": "OM",
-    "tz": "Asia/Muscat",
-    "longitude": 58.5922,
-    "latitude": 23.588,
-    "hoursTemplate": "gulf-oman",
-    "holidaysRef": "msm-muscat",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "msm_30",
-      "defaultIndexName": "MSM 30",
-      "availableIndices": [
-        {
-          "benchmark": "msm_30",
-          "indexName": "MSM 30"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "MSM"
-  },
-  {
-    "id": "kase-almaty",
-    "city": "Almaty",
-    "exchange": "Kazakhstan Stock Exchange (KASE)",
-    "country": "Kazakhstan",
-    "iso2": "KZ",
-    "tz": "Asia/Almaty",
-    "longitude": 76.9286,
-    "latitude": 43.222,
-    "hoursTemplate": "asia-kazakhstan",
-    "holidaysRef": "kase-almaty",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "kase",
-      "defaultIndexName": "KASE Index",
-      "availableIndices": [
-        {
-          "benchmark": "kase",
-          "indexName": "KASE Index"
-        }
-      ]
-    },
-    "hoverColor": "#22D3EE",
-    "name": "KASE"
-  },
-  {
     "id": "psx-karachi",
     "city": "Karachi",
     "exchange": "Pakistan Stock Exchange (PSX)",
@@ -1909,314 +1226,6 @@
     },
     "hoverColor": "#22C55E",
     "name": "PSX"
-  },
-  {
-    "id": "dse-dhaka",
-    "city": "Dhaka",
-    "exchange": "Dhaka Stock Exchange (DSE)",
-    "country": "Bangladesh",
-    "iso2": "BD",
-    "tz": "Asia/Dhaka",
-    "longitude": 90.4125,
-    "latitude": 23.8103,
-    "hoursTemplate": "asia-bangladesh",
-    "holidaysRef": "dse-dhaka",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "dse_broad",
-      "defaultIndexName": "DSE Broad",
-      "availableIndices": [
-        {
-          "benchmark": "dse_broad",
-          "indexName": "DSE Broad"
-        }
-      ]
-    },
-    "hoverColor": "#10B981",
-    "name": "DSE"
-  },
-  {
-    "id": "mse-ulaanbaatar",
-    "city": "Ulaanbaatar",
-    "exchange": "Mongolian Stock Exchange (MSE)",
-    "country": "Mongolia",
-    "iso2": "MN",
-    "tz": "Asia/Ulaanbaatar",
-    "longitude": 106.9057,
-    "latitude": 47.9184,
-    "hoursTemplate": "asia-mongolia",
-    "holidaysRef": "mse-ulaanbaatar",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "mse_20",
-      "defaultIndexName": "MSE Top 20",
-      "availableIndices": [
-        {
-          "benchmark": "mse_20",
-          "indexName": "MSE Top 20"
-        },
-        {
-          "benchmark": "mse",
-          "indexName": "MSE Index"
-        }
-      ]
-    },
-    "hoverColor": "#3B82F6",
-    "name": "MSE Mongolia"
-  },
-  {
-    "id": "lsx-vientiane",
-    "city": "Vientiane",
-    "exchange": "Lao Securities Exchange (LSX)",
-    "country": "Laos",
-    "iso2": "LA",
-    "tz": "Asia/Vientiane",
-    "longitude": 102.6331,
-    "latitude": 17.9757,
-    "hoursTemplate": "asia-laos",
-    "holidaysRef": "lsx-vientiane",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "lsx_composite",
-      "defaultIndexName": "LSX Composite",
-      "availableIndices": [
-        {
-          "benchmark": "lsx_composite",
-          "indexName": "LSX Composite"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "LSX"
-  },
-  {
-    "id": "nse-nairobi",
-    "city": "Nairobi",
-    "exchange": "Nairobi Securities Exchange (NSE)",
-    "country": "Kenya",
-    "iso2": "KE",
-    "tz": "Africa/Nairobi",
-    "longitude": 36.8219,
-    "latitude": -1.2921,
-    "hoursTemplate": "africa-kenya",
-    "holidaysRef": "nse-nairobi",
-    "hemisphere": "SE",
-    "marketstack": {
-      "defaultBenchmark": "nairobi_all_share",
-      "defaultIndexName": "NSE All Share",
-      "availableIndices": [
-        {
-          "benchmark": "nairobi_all_share",
-          "indexName": "NSE All Share"
-        },
-        {
-          "benchmark": "nairobi_20",
-          "indexName": "NSE 20"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "NSE Nairobi"
-  },
-  {
-    "id": "gse-accra",
-    "city": "Accra",
-    "exchange": "Ghana Stock Exchange (GSE)",
-    "country": "Ghana",
-    "iso2": "GH",
-    "tz": "Africa/Accra",
-    "longitude": -0.187,
-    "latitude": 5.6037,
-    "hoursTemplate": "africa-ghana",
-    "holidaysRef": "gse-accra",
-    "hemisphere": "NE",
-    "marketstack": {
-      "defaultBenchmark": "ggseci",
-      "defaultIndexName": "GSE Composite",
-      "availableIndices": [
-        {
-          "benchmark": "ggseci",
-          "indexName": "GSE Composite"
-        }
-      ]
-    },
-    "hoverColor": "#FBBF24",
-    "name": "GSE"
-  },
-  {
-    "id": "cse-casablanca",
-    "city": "Casablanca",
-    "exchange": "Casablanca Stock Exchange (CSE)",
-    "country": "Morocco",
-    "iso2": "MA",
-    "tz": "Africa/Casablanca",
-    "longitude": -7.5898,
-    "latitude": 33.5731,
-    "hoursTemplate": "africa-morocco",
-    "holidaysRef": "cse-casablanca",
-    "hemisphere": "NW",
-    "marketstack": {
-      "defaultBenchmark": "cfg_25",
-      "defaultIndexName": "CFG 25",
-      "availableIndices": [
-        {
-          "benchmark": "cfg_25",
-          "indexName": "CFG 25"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "CSE Casa"
-  },
-  {
-    "id": "bse-gaborone",
-    "city": "Gaborone",
-    "exchange": "Botswana Stock Exchange (BSE)",
-    "country": "Botswana",
-    "iso2": "BW",
-    "tz": "Africa/Gaborone",
-    "longitude": 25.9231,
-    "latitude": -24.6282,
-    "hoursTemplate": "africa-botswana",
-    "holidaysRef": "bse-gaborone",
-    "hemisphere": "SE",
-    "marketstack": {
-      "defaultBenchmark": "gaborone",
-      "defaultIndexName": "BSE DCI",
-      "availableIndices": [
-        {
-          "benchmark": "gaborone",
-          "indexName": "BSE DCI"
-        }
-      ]
-    },
-    "hoverColor": "#60A5FA",
-    "name": "BSE Gaborone"
-  },
-  {
-    "id": "nsx-windhoek",
-    "city": "Windhoek",
-    "exchange": "Namibian Stock Exchange (NSX)",
-    "country": "Namibia",
-    "iso2": "NA",
-    "tz": "Africa/Windhoek",
-    "longitude": 17.0658,
-    "latitude": -22.5609,
-    "hoursTemplate": "africa-namibia",
-    "holidaysRef": "nsx-windhoek",
-    "hemisphere": "SE",
-    "marketstack": {
-      "defaultBenchmark": "nsx_overall",
-      "defaultIndexName": "NSX Overall",
-      "availableIndices": [
-        {
-          "benchmark": "nsx_overall",
-          "indexName": "NSX Overall"
-        }
-      ]
-    },
-    "hoverColor": "#3B82F6",
-    "name": "NSX"
-  },
-  {
-    "id": "dse-dar-es-salaam",
-    "city": "Dar es Salaam",
-    "exchange": "Dar es Salaam Stock Exchange (DSE)",
-    "country": "Tanzania",
-    "iso2": "TZ",
-    "tz": "Africa/Dar_es_Salaam",
-    "longitude": 39.2083,
-    "latitude": -6.7924,
-    "hoursTemplate": "africa-tanzania",
-    "holidaysRef": "dse-dar-es-salaam",
-    "hemisphere": "SE",
-    "marketstack": {
-      "defaultBenchmark": "dsei",
-      "defaultIndexName": "DSE Index",
-      "availableIndices": [
-        {
-          "benchmark": "dsei",
-          "indexName": "DSE Index"
-        }
-      ]
-    },
-    "hoverColor": "#22C55E",
-    "name": "DSE Dar"
-  },
-  {
-    "id": "sem-port-louis",
-    "city": "Port Louis",
-    "exchange": "Stock Exchange of Mauritius (SEM)",
-    "country": "Mauritius",
-    "iso2": "MU",
-    "tz": "Indian/Mauritius",
-    "longitude": 57.4989,
-    "latitude": -20.1609,
-    "hoursTemplate": "africa-mauritius",
-    "holidaysRef": "sem-port-louis",
-    "hemisphere": "SE",
-    "marketstack": {
-      "defaultBenchmark": "semdex",
-      "defaultIndexName": "SEMDEX",
-      "availableIndices": [
-        {
-          "benchmark": "semdex",
-          "indexName": "SEMDEX"
-        }
-      ]
-    },
-    "hoverColor": "#EF4444",
-    "name": "SEM"
-  },
-  {
-    "id": "bvc-caracas",
-    "city": "Caracas",
-    "exchange": "Caracas Stock Exchange (BVC)",
-    "country": "Venezuela",
-    "iso2": "VE",
-    "tz": "America/Caracas",
-    "longitude": -66.9036,
-    "latitude": 10.4806,
-    "hoursTemplate": "latam-venezuela",
-    "holidaysRef": "bvc-caracas",
-    "hemisphere": "NW",
-    "marketstack": {
-      "defaultBenchmark": "bvpsi",
-      "defaultIndexName": "IBC Index",
-      "availableIndices": [
-        {
-          "benchmark": "bvpsi",
-          "indexName": "IBC Index"
-        }
-      ]
-    },
-    "hoverColor": "#FBBF24",
-    "name": "BVC Caracas"
-  },
-  {
-    "id": "bvq-quito",
-    "city": "Quito",
-    "exchange": "Quito Stock Exchange (BVQ)",
-    "country": "Ecuador",
-    "iso2": "EC",
-    "tz": "America/Guayaquil",
-    "longitude": -78.4678,
-    "latitude": -0.1807,
-    "hoursTemplate": "latam-ecuador",
-    "holidaysRef": "bvq-quito",
-    "hemisphere": "SW",
-    "marketstack": {
-      "defaultBenchmark": "ecuador_general",
-      "defaultIndexName": "Ecuador General",
-      "availableIndices": [
-        {
-          "benchmark": "ecuador_general",
-          "indexName": "Ecuador General"
-        }
-      ]
-    },
-    "hoverColor": "#FBBF24",
-    "name": "BVQ"
   },
   {
     "id": "tsx-toronto",
@@ -2320,10 +1329,6 @@
         {
           "benchmark": "us100",
           "indexName": "NASDAQ 100"
-        },
-        {
-          "benchmark": "us1000",
-          "indexName": "Russell 1000"
         }
       ]
     },
@@ -2357,10 +1362,6 @@
         {
           "benchmark": "us100",
           "indexName": "NASDAQ 100"
-        },
-        {
-          "benchmark": "us1000",
-          "indexName": "Russell 1000"
         }
       ]
     },
@@ -2523,14 +1524,14 @@
   },
   {
     "id": "city-vibe-malaga",
-    "city": "Málaga",
+    "city": "M\u00e1laga",
     "latitude": 36.7213,
     "longitude": -4.4214,
     "tz": "Europe/Madrid",
     "iso2": "ES",
     "country": "Spain",
     "exchange": "City Vibe (virtual)",
-    "name": "Málaga",
+    "name": "M\u00e1laga",
     "hemisphere": "NE",
     "hoursTemplate": "europe-spain",
     "holidaysRef": "city-vibe-malaga"

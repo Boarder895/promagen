@@ -131,15 +131,15 @@ const SelectionChip = React.memo(function SelectionChip({
 
   return (
     <div
-      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800/80 
-                 px-2.5 py-1.5 ring-1 ring-white/10 transition-all duration-200
-                 hover:bg-slate-700/80 hover:ring-emerald-500/30"
+      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800 
+                 px-2.5 py-1.5 ring-1 ring-slate-700 transition-all duration-200
+                 hover:bg-slate-700 hover:ring-emerald-500"
     >
       <Flag iso2={option.iso2} size={20} className="shrink-0" />
-      <span className="text-xs font-medium text-slate-200 whitespace-nowrap">
+      <span className="text-xs font-medium text-white whitespace-nowrap">
         {option.label}
         {option.indexName && (
-          <span className="text-slate-400"> · {option.indexName}</span>
+          <span className="text-slate-200"> · {option.indexName}</span>
         )}
       </span>
       <button
@@ -147,10 +147,10 @@ const SelectionChip = React.memo(function SelectionChip({
         onClick={onRemove}
         disabled={disabled}
         className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full
-                   text-slate-500 transition-colors cursor-pointer
-                   hover:bg-red-500/20 hover:text-red-400
-                   focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
-                   disabled:cursor-not-allowed disabled:opacity-50"
+                   text-slate-300 transition-colors cursor-pointer
+                   hover:bg-red-900 hover:text-red-400
+                   focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400
+                   disabled:cursor-not-allowed"
         aria-label={`Remove ${option.label} ${option.indexName}`}
       >
         <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -198,7 +198,7 @@ const ProgressBar = React.memo(function ProgressBar({ current, min, max }: Progr
 
   return (
     <div className="flex items-center gap-3">
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800/80">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800">
         <div
           className={`h-full rounded-full transition-all duration-300 ease-out ${getBarClasses()}`}
           style={{ width: `${percentage}%` }}
@@ -241,8 +241,8 @@ const AccordionHeader = React.memo(function AccordionHeader({
     <div
       className={`flex items-center justify-between border-b border-white/5 px-4 py-3
                   transition-all duration-200
-                  ${isExpanded ? 'bg-slate-800/40' : 'hover:bg-slate-800/30'}
-                  ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                  ${isExpanded ? 'bg-slate-800' : 'hover:bg-slate-800'}
+                  ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
       style={{
         boxShadow: isExpanded ? `inset 0 0 30px ${config.glow}` : 'none',
       }}
@@ -252,13 +252,13 @@ const AccordionHeader = React.memo(function AccordionHeader({
         onClick={onToggle}
         disabled={disabled}
         className="flex flex-1 items-center gap-3 rounded text-left
-                   focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
+                   focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400
                    disabled:cursor-not-allowed"
         aria-expanded={isExpanded}
         aria-controls={`continent-panel-${config.id}`}
       >
         <svg
-          className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${
+          className={`h-4 w-4 text-slate-300 transition-transform duration-200 ${
             isExpanded ? 'rotate-90' : ''
           }`}
           fill="none"
@@ -268,15 +268,15 @@ const AccordionHeader = React.memo(function AccordionHeader({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        <span className="text-3xl" aria-hidden="true">
+        <span aria-hidden="true" style={{ fontSize: 'clamp(16px, 1.4vw, 20px)', lineHeight: 1 }}>
           {config.emoji}
         </span>
-        <span className="text-base font-medium text-slate-200">{config.label}</span>
+        <span className="text-base font-medium text-white">{config.label}</span>
         <span
           className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
             selectedCount > 0
-              ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
-              : 'bg-slate-700/50 text-slate-500'
+              ? 'bg-emerald-900 text-emerald-300 ring-1 ring-emerald-500'
+              : 'bg-slate-700 text-slate-300'
           }`}
         >
           {selectedCount} selected
@@ -292,14 +292,14 @@ const AccordionHeader = React.memo(function AccordionHeader({
           }}
           disabled={disabled || (!canSelectMore && selectedCount === 0)}
           className={`rounded-full px-3 py-1 text-xs font-medium transition-all
-                      focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
-                      disabled:cursor-not-allowed disabled:opacity-50
+                      focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400
+                      disabled:cursor-not-allowed
                       ${
                         selectedCount === totalCount
-                          ? 'bg-slate-700/50 text-slate-400 hover:bg-red-500/20 hover:text-red-400'
+                          ? 'bg-slate-700 text-slate-300 hover:bg-red-900 hover:text-red-400'
                           : canSelectMore
                             ? `bg-gradient-to-r ${config.gradient} text-white shadow-sm hover:shadow-md`
-                            : 'bg-slate-800/50 text-slate-500'
+                            : 'bg-slate-800 text-slate-300'
                       }`}
         >
           {selectedCount === totalCount ? 'Clear' : 'Select All'}
@@ -346,10 +346,10 @@ const IndexListItem = React.memo(function IndexListItem({
       className={`flex w-full items-center gap-3 px-4 py-2.5 transition-all duration-150
                   ${
                     isSelected
-                      ? 'border-l-2 border-emerald-500 bg-emerald-500/10'
+                      ? 'border-l-2 border-emerald-500 bg-emerald-950'
                       : disabled
-                        ? 'border-l-2 border-transparent opacity-50'
-                        : 'border-l-2 border-transparent hover:bg-slate-800/50'
+                        ? 'border-l-2 border-transparent'
+                        : 'border-l-2 border-transparent hover:bg-slate-800'
                   }
                   ${!disabled || isSelected ? 'cursor-pointer' : 'cursor-not-allowed'}`}
       onClick={handleRowClick}
@@ -367,7 +367,7 @@ const IndexListItem = React.memo(function IndexListItem({
         }}
         disabled={disabled && !isSelected}
         className="flex items-center gap-3 text-left
-                   focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
+                   focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400
                    disabled:cursor-not-allowed"
         aria-pressed={isSelected}
       >
@@ -375,7 +375,7 @@ const IndexListItem = React.memo(function IndexListItem({
           className={`flex h-5 w-5 items-center justify-center rounded border transition-all ${
             isSelected
               ? 'border-emerald-500 bg-emerald-500 text-white'
-              : 'border-slate-600 bg-slate-800/50'
+              : 'border-slate-600 bg-slate-800'
           }`}
           aria-hidden="true"
         >
@@ -390,34 +390,27 @@ const IndexListItem = React.memo(function IndexListItem({
             </svg>
           )}
         </span>
-        <Flag iso2={option.iso2} size={24} className="shrink-0" />
+        <Flag iso2={option.iso2} size={20} className="shrink-0" />
       </button>
 
       {/* Exchange + Index info */}
       <div className="min-w-0 flex-1">
         <p
-          className={`truncate text-sm font-medium ${isSelected ? 'text-emerald-300' : 'text-slate-200'}`}
+          className={`truncate text-sm font-medium ${isSelected ? 'text-emerald-300' : 'text-white'}`}
         >
           {option.label}
           {option.indexName && (
-            <span className={`ml-1.5 font-normal ${isSelected ? 'text-emerald-400/70' : 'text-slate-400'}`}>
+            <span className={`ml-1.5 font-normal ${isSelected ? 'text-emerald-400' : 'text-slate-200'}`}>
               — {option.indexName}
             </span>
           )}
         </p>
-        <p className="truncate text-xs text-slate-500">
+        <p className="truncate text-xs text-slate-300">
           {option.city}
           {option.city && option.country ? ', ' : ''}
           {option.country}
         </p>
       </div>
-
-      {/* Benchmark badge when selected */}
-      {isSelected && option.benchmark && (
-        <span className="rounded-md bg-slate-700/50 px-2 py-0.5 text-[10px] font-mono text-slate-400">
-          {option.benchmark}
-        </span>
-      )}
     </div>
   );
 });
@@ -555,8 +548,8 @@ export function ExchangePicker({
   // Don't render until mounted (prevents hydration mismatch)
   if (!mounted) {
     return (
-      <div className="flex h-96 items-center justify-center rounded-xl border border-white/10 bg-slate-900/50">
-        <div className="text-sm text-slate-500">Loading exchanges...</div>
+      <div className="flex h-96 items-center justify-center rounded-xl border border-slate-700 bg-slate-900">
+        <div className="text-sm text-slate-300">Loading exchanges...</div>
       </div>
     );
   }
@@ -564,16 +557,16 @@ export function ExchangePicker({
   return (
     <div
       className="flex h-full max-h-[calc(100vh-200px)] flex-col overflow-hidden rounded-xl 
-                 border border-white/10 bg-slate-900/80 backdrop-blur-sm"
+                 border border-white/5 bg-slate-900"
       role="region"
       aria-label="Exchange and index selector"
     >
       {/* ================================================================== */}
       {/* STICKY SELECTION TRAY                                             */}
       {/* ================================================================== */}
-      <div className="shrink-0 border-b border-white/5 bg-slate-900/95">
+      <div className="shrink-0 border-b border-white/5 bg-slate-900">
         <div className="flex items-center justify-between px-4 py-3">
-          <h3 className="text-sm font-semibold text-slate-200">
+          <h3 className="text-sm font-semibold text-white">
             Selected Exchanges
           </h3>
           {safeSelected.length > 0 && (
@@ -582,10 +575,10 @@ export function ExchangePicker({
               onClick={resetAll}
               disabled={disabled}
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium
-                         text-slate-400 ring-1 ring-white/10 transition-all cursor-pointer
-                         hover:bg-red-500/10 hover:text-red-400 hover:ring-red-500/30
-                         focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50
-                         disabled:cursor-not-allowed disabled:opacity-50"
+                         text-slate-300 ring-1 ring-slate-700 transition-all cursor-pointer
+                         hover:bg-red-900 hover:text-red-400 hover:ring-red-700
+                         focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400
+                         disabled:cursor-not-allowed"
             >
               <svg
                 className="h-3.5 w-3.5"
@@ -619,7 +612,7 @@ export function ExchangePicker({
           </div>
         ) : (
           <div className="px-4 pb-3">
-            <p className="text-xs italic text-slate-500">
+            <p className="text-xs italic text-slate-300">
               No exchanges selected. Browse continents below to add exchanges.
             </p>
           </div>
@@ -630,7 +623,7 @@ export function ExchangePicker({
         </div>
 
         {!validation.valid && validation.message && (
-          <div className="border-t border-red-500/20 bg-red-500/10 px-4 py-2">
+          <div className="border-t border-red-800 bg-red-950 px-4 py-2">
             <p className="text-xs font-medium text-red-400">{validation.message}</p>
           </div>
         )}
@@ -642,7 +635,7 @@ export function ExchangePicker({
       <div className="shrink-0 border-b border-white/5 px-4 py-3">
         <div className="relative">
           <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -663,10 +656,10 @@ export function ExchangePicker({
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by exchange, city, country, or index..."
             disabled={disabled}
-            className="w-full rounded-lg border border-white/10 bg-slate-800/50
-                       py-2.5 pl-10 pr-10 text-sm text-slate-200 placeholder:text-slate-500
-                       transition-all focus:border-emerald-500/50 focus:outline-none
-                       focus:ring-1 focus:ring-emerald-500/50 disabled:opacity-50"
+            className="w-full rounded-lg border border-slate-700 bg-slate-800
+                       py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-slate-400
+                       transition-all focus:border-emerald-500 focus:outline-none
+                       focus:ring-1 focus:ring-emerald-500 disabled:cursor-not-allowed"
             aria-label="Search exchanges"
           />
           {searchQuery && (
@@ -674,8 +667,8 @@ export function ExchangePicker({
               type="button"
               onClick={() => setSearchQuery('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1
-                         text-slate-500 hover:bg-slate-700/50 hover:text-slate-300 cursor-pointer
-                         focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400/50"
+                         text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer
+                         focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400"
               aria-label="Clear search"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -697,8 +690,8 @@ export function ExchangePicker({
       <div
         className="min-h-0 flex-1 overflow-y-auto
                    max-h-[400px] lg:max-h-none
-                   scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20
-                   hover:scrollbar-thumb-white/30"
+                   scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-600
+                   hover:scrollbar-thumb-slate-500"
       >
         {CONTINENT_CONFIGS.map((config) => {
           const continentOptions = filteredExchanges.get(config.id) || [];
@@ -728,7 +721,7 @@ export function ExchangePicker({
               {isExpanded && (
                 <div
                   id={`continent-panel-${config.id}`}
-                  className="bg-slate-900/30"
+                  className="bg-slate-900"
                   style={{
                     boxShadow: `inset 0 0 40px ${config.glow}`,
                   }}
@@ -737,13 +730,13 @@ export function ExchangePicker({
                 >
                   {hasNoSearchResults ? (
                     <div className="px-4 py-6 text-center">
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-slate-300">
                         No exchanges match &quot;{searchQuery}&quot; in {config.label}
                       </p>
                     </div>
                   ) : continentOptions.length === 0 ? (
                     <div className="px-4 py-6 text-center">
-                      <p className="text-sm text-slate-500">No exchanges available</p>
+                      <p className="text-sm text-slate-300">No exchanges available</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2">
@@ -768,8 +761,8 @@ export function ExchangePicker({
       {/* ================================================================== */}
       {/* FOOTER: Quick tips                                                */}
       {/* ================================================================== */}
-      <div className="shrink-0 border-t border-white/5 bg-slate-800/30 px-4 py-3">
-        <p className="text-center text-[10px] text-slate-500">
+      <div className="shrink-0 border-t border-white/5 bg-slate-800 px-4 py-3">
+        <p className="text-center text-[10px] text-slate-300">
           💡 Tip: Multi-index exchanges show one row per index • Select All respects the{' '}
           {max} limit
         </p>

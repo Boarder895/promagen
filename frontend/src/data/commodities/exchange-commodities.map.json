@@ -55,9 +55,9 @@
   },
   {
     "commodityId": "palm_oil",
-    "primaryExchangeId": "bursa-kuala-lumpur",
+    "primaryExchangeId": "set-bangkok",
     "secondaryExchangeIds": [
-      "set-bangkok"
+      "idx-jakarta"
     ],
     "weight": 7,
     "extraExchangeIds": []
@@ -145,9 +145,9 @@
   },
   {
     "commodityId": "tea",
-    "primaryExchangeId": "nse-nairobi",
+    "primaryExchangeId": "psx-karachi",
     "secondaryExchangeIds": [
-      "cse-colombo"
+      "nse-mumbai"
     ],
     "weight": 22,
     "extraExchangeIds": []

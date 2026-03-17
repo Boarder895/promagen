@@ -1587,10 +1587,21 @@ export default function ProPromagenClient({
 
     // Reverse alias: for each selected compound key, if there's data under
     // the plain exchangeId but not the compound key, copy it across.
-    // This handles the case where gateway returns simple IDs (pre-deploy).
+    // ONLY for single-index exchanges (one compound key per exchangeId).
+    // For multi-index exchanges (e.g. cse-colombo::aspi + cse-colombo::cse_general),
+    // a missing compound key means Marketstack doesn't carry that index —
+    // show null (renders as —) rather than copying the wrong index's data.
+    const compoundKeysPerExchange = new Map<string, number>();
+    for (const compoundKey of selectedExchanges) {
+      const { exchangeId } = parseCompoundKey(compoundKey);
+      compoundKeysPerExchange.set(exchangeId, (compoundKeysPerExchange.get(exchangeId) ?? 0) + 1);
+    }
+
     for (const compoundKey of selectedExchanges) {
       if (map.has(compoundKey)) continue; // Already has compound-keyed data
       const { exchangeId } = parseCompoundKey(compoundKey);
+      // Only alias for single-index exchanges — multi-index missing = genuinely no data
+      if ((compoundKeysPerExchange.get(exchangeId) ?? 0) > 1) continue;
       const data = map.get(exchangeId);
       if (data) {
         map.set(compoundKey, data);
