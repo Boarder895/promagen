@@ -171,8 +171,8 @@ export async function GET() {
 
     if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
+        { success: false, code: 'NOT_AUTHENTICATED' },
+        { status: 200 }
       );
     }
 
@@ -211,8 +211,8 @@ export async function PATCH(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
+        { success: false, code: 'NOT_AUTHENTICATED' },
+        { status: 200 }
       );
     }
 

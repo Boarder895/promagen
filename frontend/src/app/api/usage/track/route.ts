@@ -27,9 +27,12 @@ export async function GET(request: NextRequest) {
     const { userId } = await auth();
     
     if (!userId) {
+      // Return 200 with not-authenticated flag (not 401) to prevent
+      // browser-native "Failed to load resource" console errors.
+      // The client hook checks data.success and handles this gracefully.
       return NextResponse.json(
-        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
-        { status: 401 }
+        { success: false, code: 'NOT_AUTHENTICATED' },
+        { status: 200 }
       );
     }
     
@@ -90,8 +93,8 @@ export async function POST(request: NextRequest) {
     
     if (!userId) {
       return NextResponse.json(
-        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
-        { status: 401 }
+        { success: false, code: 'NOT_AUTHENTICATED' },
+        { status: 200 }
       );
     }
     

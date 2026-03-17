@@ -658,6 +658,7 @@ export function ExchangePicker({
           <input
             ref={searchInputRef}
             type="text"
+            name="exchange-search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by exchange, city, country, or index..."
