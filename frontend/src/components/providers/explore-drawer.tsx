@@ -491,7 +491,6 @@ export function ExploreDrawer({
             <input
               ref={searchRef}
               type="text"
-              name="explore-search"
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder={`Search ${category} phrases...`}

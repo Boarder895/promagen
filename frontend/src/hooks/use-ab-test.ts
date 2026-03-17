@@ -213,7 +213,7 @@ export function useABTest(): UseABTestReturn {
         error: null,
       });
     } catch (err) {
-      console.debug('[useABTest] Fetch error:', err);
+      console.error('[useABTest] Fetch error:', err);
 
       // Don't clear cached data — stale assignment > no assignment
       setState((prev) => ({

@@ -149,8 +149,6 @@ export interface PromagenAuthState {
   setReferenceFrame: (frame: ReferenceFrame) => Promise<void>;
   /** Prompt tier from Clerk metadata (null if not set). Pro users only. */
   clerkPromptTier: number | null;
-  /** Clerk getToken() for Bearer auth on API calls */
-  getToken: () => Promise<string | null>;
 }
 
 // ============================================================================
@@ -207,7 +205,7 @@ export interface UsePromagenAuthOptions {
  */
 export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenAuthState {
   const { platformId } = options;
-  const { isLoaded, isSignedIn, userId, getToken } = useAuth();
+  const { isLoaded, isSignedIn, userId } = useAuth();
   const { user } = useUser();
 
   // Extract user tier and reference frame from Clerk's public metadata
@@ -289,7 +287,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
    */
   const setReferenceFrame = useCallback(async (frame: ReferenceFrame) => {
     if (userTier !== 'paid') {
-      console.debug('[usePromagenAuth] Reference frame toggle is paid-only');
+      console.warn('[usePromagenAuth] Reference frame toggle is paid-only');
       return;
     }
 
@@ -297,13 +295,9 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     setLocalReferenceFrame(frame);
 
     try {
-      const token = await getToken();
       const response = await fetch('/api/user/preferences', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify({ referenceFrame: frame }),
       });
@@ -311,14 +305,14 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
       if (!response.ok) {
         // Revert on error
         setLocalReferenceFrame(null);
-        console.debug('[usePromagenAuth] Failed to save reference frame');
+        console.warn('[usePromagenAuth] Failed to save reference frame');
       }
     } catch (error) {
       // Revert on error
       setLocalReferenceFrame(null);
-      console.debug('[usePromagenAuth] Error saving reference frame:', error);
+      console.warn('[usePromagenAuth] Error saving reference frame:', error);
     }
-  }, [userTier, getToken]);
+  }, [userTier]);
 
   // ============================================================================
   // DAILY USAGE TRACKING
@@ -336,7 +330,6 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     userTier,
     isAuthenticated,
     userId: userId ?? null,
-    getToken,
   });
 
   // ============================================================================
@@ -432,7 +425,6 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     locationInfo,
     setReferenceFrame,
     clerkPromptTier,
-    getToken,
   };
 }
 

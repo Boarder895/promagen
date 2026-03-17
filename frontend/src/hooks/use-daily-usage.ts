@@ -65,8 +65,6 @@ export interface UseDailyUsageOptions {
   isAuthenticated: boolean;
   /** User ID (for caching) - null for anonymous */
   userId: string | null;
-  /** Clerk getToken() for Bearer auth on API calls */
-  getToken?: () => Promise<string | null>;
 }
 
 // ============================================================================
@@ -142,7 +140,7 @@ function createInitialState(isAuthenticated: boolean, userTier: 'free' | 'paid')
  * 3. Paid authenticated: No limits
  */
 export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageReturn {
-  const { userTier, isAuthenticated, userId, getToken } = options;
+  const { userTier, isAuthenticated, userId } = options;
 
   const [state, setState] = useState<DailyUsageState>(() =>
     createInitialState(isAuthenticated, userTier)
@@ -230,20 +228,11 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
     }
 
     try {
-      // Get Clerk JWT to bypass cookie timing issues
-      const token = getToken ? await getToken() : null;
-      if (!token) {
-        // Token not yet available — skip silently, will retry on next cycle
-        setState((prev) => ({ ...prev, isLoading: false }));
-        return;
-      }
-
       const timezone = getTimezone();
       const response = await fetch(`/api/usage/track?timezone=${encodeURIComponent(timezone)}`, {
         method: 'GET',
         headers: {
           'x-timezone': timezone,
-          'Authorization': `Bearer ${token}`,
         },
         credentials: 'same-origin',
       });
@@ -270,7 +259,7 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
         });
       }
     } catch (error) {
-      console.debug('[useDailyUsage] Failed to fetch usage:', error);
+      console.warn('[useDailyUsage] Failed to fetch usage:', error);
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -278,7 +267,7 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
         isAnonymous: false,
       }));
     }
-  }, [isAuthenticated, userId, userTier, getToken]);
+  }, [isAuthenticated, userId, userTier]);
 
   /**
    * Track authenticated prompt copy.
@@ -302,17 +291,12 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
       }
 
       try {
-        // Get Clerk JWT for Bearer auth
-        const token = getToken ? await getToken() : null;
-        if (!token) return true; // Fail open if token unavailable
-
         const timezone = getTimezone();
         const response = await fetch('/api/usage/track', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-timezone': timezone,
-            'Authorization': `Bearer ${token}`,
           },
           credentials: 'same-origin',
           body: JSON.stringify({
@@ -350,12 +334,12 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
 
         return true;
       } catch (error) {
-        console.debug('[useDailyUsage] Failed to track usage:', error);
+        console.warn('[useDailyUsage] Failed to track usage:', error);
         // Fail open - allow the copy to proceed
         return true;
       }
     },
-    [isAuthenticated, userId, userTier, state.isAtLimit, getToken]
+    [isAuthenticated, userId, userTier, state.isAtLimit]
   );
 
   // ============================================================================

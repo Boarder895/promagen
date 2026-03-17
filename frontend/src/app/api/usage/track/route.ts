@@ -19,30 +19,12 @@ import {
 } from '@/lib/usage';
 
 // ============================================================================
-// AUTH WITH RETRY (cause #2: cold-start JWKS validation delay)
-// ============================================================================
-// On serverless cold starts, Clerk's auth() must fetch JWKS keys to validate
-// the session JWT. If this is slow, auth() returns userId: null even though
-// the request has a valid Bearer token or session cookie. Retrying once after
-// a short delay gives Clerk time to complete the JWKS fetch.
-// ============================================================================
-
-async function authWithRetry(): Promise<{ userId: string | null }> {
-  const first = await auth();
-  if (first.userId) return first;
-
-  // Wait 150ms for JWKS cache to warm, then retry once
-  await new Promise((r) => setTimeout(r, 150));
-  return auth();
-}
-
-// ============================================================================
 // GET - Get current usage status
 // ============================================================================
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await authWithRetry();
+    const { userId } = await auth();
     
     if (!userId) {
       return NextResponse.json(
@@ -104,7 +86,7 @@ interface TrackRequestBody {
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await authWithRetry();
+    const { userId } = await auth();
     
     if (!userId) {
       return NextResponse.json(

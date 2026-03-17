@@ -176,7 +176,7 @@ export function useWeather(): UseWeatherResult {
     } catch (err) {
       if (!isMountedRef.current) return;
 
-      console.debug('[useWeather] Fetch failed:', err);
+      console.warn('[useWeather] Fetch failed:', err);
       setError(err instanceof Error ? err.message : 'Fetch failed');
     } finally {
       if (isMountedRef.current) {
