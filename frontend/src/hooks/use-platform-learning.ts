@@ -208,7 +208,7 @@ export function usePlatformLearning(): UsePlatformLearningReturn {
           reason instanceof Error
             ? reason.message
             : 'Failed to fetch platform data';
-        console.error('[usePlatformLearning] Both fetches rejected:', msg);
+        console.debug('[usePlatformLearning] Both fetches rejected:', msg);
 
         // Single atomic update — error path
         setState((prev) => ({
@@ -275,7 +275,7 @@ export function usePlatformLearning(): UsePlatformLearningReturn {
       });
     } catch (err) {
       // Guards against JSON parse errors or buildLookup crashes
-      console.error('[usePlatformLearning] Processing error:', err);
+      console.debug('[usePlatformLearning] Processing error:', err);
 
       // Single atomic update — catch path
       // Do not clear existing cached lookups — stale > nothing

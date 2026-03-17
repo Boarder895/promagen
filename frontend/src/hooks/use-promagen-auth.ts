@@ -287,7 +287,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
    */
   const setReferenceFrame = useCallback(async (frame: ReferenceFrame) => {
     if (userTier !== 'paid') {
-      console.warn('[usePromagenAuth] Reference frame toggle is paid-only');
+      console.debug('[usePromagenAuth] Reference frame toggle is paid-only');
       return;
     }
 
@@ -305,12 +305,12 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
       if (!response.ok) {
         // Revert on error
         setLocalReferenceFrame(null);
-        console.warn('[usePromagenAuth] Failed to save reference frame');
+        console.debug('[usePromagenAuth] Failed to save reference frame');
       }
     } catch (error) {
       // Revert on error
       setLocalReferenceFrame(null);
-      console.warn('[usePromagenAuth] Error saving reference frame:', error);
+      console.debug('[usePromagenAuth] Error saving reference frame:', error);
     }
   }, [userTier]);
 

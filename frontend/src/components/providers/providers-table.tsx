@@ -139,7 +139,7 @@ async function fetchIndexRatings(providerIds: string[]): Promise<Map<string, Pro
     });
 
     if (!response.ok) {
-      console.warn('[ProvidersTable] Failed to fetch index ratings:', response.status);
+      console.debug('[ProvidersTable] Failed to fetch index ratings:', response.status);
       return new Map();
     }
 
@@ -154,7 +154,7 @@ async function fetchIndexRatings(providerIds: string[]): Promise<Map<string, Pro
 
     return ratings;
   } catch (error) {
-    console.error('[ProvidersTable] Error fetching index ratings:', error);
+    console.debug('[ProvidersTable] Error fetching index ratings:', error);
     return new Map();
   }
 }

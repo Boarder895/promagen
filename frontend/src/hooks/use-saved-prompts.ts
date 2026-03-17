@@ -115,14 +115,14 @@ function loadFromStorage(): SavedPrompt[] {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
       console.debug(`[SavedPrompts] Migration complete — ${prompts.length} prompts updated`);
     } else if (data.version !== STORAGE_VERSION) {
-      console.warn(
+      console.debug(
         `[SavedPrompts] Unknown storage version "${data.version}", expected "${STORAGE_VERSION}"`
       );
     }
 
     return prompts;
   } catch (error) {
-    console.error('[SavedPrompts] Failed to load from storage:', error);
+    console.debug('[SavedPrompts] Failed to load from storage:', error);
     return [];
   }
 }
@@ -141,7 +141,7 @@ function saveToStorage(prompts: SavedPrompt[]): boolean {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return true;
   } catch (error) {
-    console.error('[SavedPrompts] Failed to save to storage:', error);
+    console.debug('[SavedPrompts] Failed to save to storage:', error);
     return false;
   }
 }
@@ -606,13 +606,13 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
 
       // Check max folder limit
       if (folders.length >= MAX_FOLDERS) {
-        console.warn(`[SavedPrompts] Cannot create folder — max ${MAX_FOLDERS} reached`);
+        console.debug(`[SavedPrompts] Cannot create folder — max ${MAX_FOLDERS} reached`);
         return false;
       }
 
       // Check for duplicate name (case-insensitive)
       if (folders.some((f) => f.toLowerCase() === sanitised.toLowerCase())) {
-        console.warn(`[SavedPrompts] Folder "${sanitised}" already exists`);
+        console.debug(`[SavedPrompts] Folder "${sanitised}" already exists`);
         return false;
       }
 
@@ -645,7 +645,7 @@ export function useSavedPrompts(): UseSavedPromptsReturn {
             f.toLowerCase() !== oldName.toLowerCase()
         )
       ) {
-        console.warn(`[SavedPrompts] Folder "${sanitisedNew}" already exists`);
+        console.debug(`[SavedPrompts] Folder "${sanitisedNew}" already exists`);
         return false;
       }
 

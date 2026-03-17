@@ -98,7 +98,7 @@ function safeWriteStorage(key: string, value: unknown): void {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {
     // Storage unavailable or quota exceeded
-    console.warn('[composition-mode] localStorage write failed');
+    console.debug('[composition-mode] localStorage write failed');
   }
 }
 
@@ -283,7 +283,7 @@ export function useCompositionMode(): UseCompositionModeResult {
     (mode: CompositionMode) => {
       // Strict validation - reject invalid inputs
       if (!isValidCompositionMode(mode)) {
-        console.warn('[composition-mode] Invalid mode rejected:', mode);
+        console.debug('[composition-mode] Invalid mode rejected:', mode);
         return;
       }
 
@@ -310,7 +310,7 @@ export function useCompositionMode(): UseCompositionModeResult {
     (ratio: AspectRatioId | null) => {
       // Validate non-null values
       if (ratio !== null && !isValidAspectRatio(ratio)) {
-        console.warn('[composition-mode] Invalid aspect ratio rejected:', ratio);
+        console.debug('[composition-mode] Invalid aspect ratio rejected:', ratio);
         return;
       }
 

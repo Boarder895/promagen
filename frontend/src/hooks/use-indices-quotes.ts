@@ -653,7 +653,7 @@ if (typeof window !== 'undefined') {
     const targetKey = selectionKey ?? 'default';
     const store = stores.get(targetKey);
     if (!store) {
-      console.warn(`No store found for key: ${targetKey}`);
+      console.debug(`No store found for key: ${targetKey}`);
       return null;
     }
     debugLog('MANUAL REFRESH TRIGGERED');

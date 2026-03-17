@@ -79,7 +79,7 @@ const DEBUG_SELECTION = process.env.NODE_ENV !== 'production';
 function getDefaultExchangeIds(): string[] {
   const raw = exchangesSelectedJson as { ids?: unknown };
   if (!raw || !Array.isArray(raw.ids)) {
-    console.error('[useExchangeSelection] Invalid exchanges.selected.json format');
+    console.debug('[useExchangeSelection] Invalid exchanges.selected.json format');
     return [];
   }
   return raw.ids.filter((id): id is string => typeof id === 'string' && id.length > 0);
@@ -124,7 +124,7 @@ function getExchangeSelectionFromMetadata(
   const exchangeIds = selection.exchangeIds;
   if (!isExchangeIds(exchangeIds)) {
     if (DEBUG_SELECTION) {
-      console.warn('[useExchangeSelection] Invalid exchangeIds in Clerk metadata:', exchangeIds);
+      console.debug('[useExchangeSelection] Invalid exchangeIds in Clerk metadata:', exchangeIds);
     }
     return null;
   }
@@ -252,12 +252,12 @@ export function useExchangeSelection(): ExchangeSelectionResult {
   const updateSelection = useCallback(
     async (ids: string[]): Promise<boolean> => {
       if (!canCustomize) {
-        console.warn('[useExchangeSelection] Cannot customize - not a paid user');
+        console.debug('[useExchangeSelection] Cannot customize - not a paid user');
         return false;
       }
 
       if (!validateExchangeIds(ids)) {
-        console.error('[useExchangeSelection] Invalid selection:', {
+        console.debug('[useExchangeSelection] Invalid selection:', {
           count: ids.length,
           min: MIN_EXCHANGES,
           max: MAX_EXCHANGES,
@@ -286,7 +286,7 @@ export function useExchangeSelection(): ExchangeSelectionResult {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('[useExchangeSelection] Save failed:', response.status, errorData);
+          console.debug('[useExchangeSelection] Save failed:', response.status, errorData);
           setLocalSelection(null); // Revert
           return false;
         }
@@ -294,7 +294,7 @@ export function useExchangeSelection(): ExchangeSelectionResult {
         debugLog('Selection saved successfully');
         return true;
       } catch (error) {
-        console.error('[useExchangeSelection] Save error:', error);
+        console.debug('[useExchangeSelection] Save error:', error);
         setLocalSelection(null); // Revert
         return false;
       } finally {
@@ -309,7 +309,7 @@ export function useExchangeSelection(): ExchangeSelectionResult {
    */
   const resetToDefaults = useCallback(async (): Promise<boolean> => {
     if (!canCustomize) {
-      console.warn('[useExchangeSelection] Cannot reset - not a paid user');
+      console.debug('[useExchangeSelection] Cannot reset - not a paid user');
       return false;
     }
 

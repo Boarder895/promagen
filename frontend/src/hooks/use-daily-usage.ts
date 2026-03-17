@@ -259,7 +259,7 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
         });
       }
     } catch (error) {
-      console.warn('[useDailyUsage] Failed to fetch usage:', error);
+      console.debug('[useDailyUsage] Failed to fetch usage:', error);
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -334,7 +334,7 @@ export function useDailyUsage(options: UseDailyUsageOptions): UseDailyUsageRetur
 
         return true;
       } catch (error) {
-        console.warn('[useDailyUsage] Failed to track usage:', error);
+        console.debug('[useDailyUsage] Failed to track usage:', error);
         // Fail open - allow the copy to proceed
         return true;
       }

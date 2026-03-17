@@ -224,13 +224,13 @@ export function useImageQualityVote(
         // API failed but local vote is already recorded
         // Log for debugging but don't disrupt UX
         if (process.env.NODE_ENV === 'development') {
-          console.warn('[Vote] API returned error:', response.status);
+          console.debug('[Vote] API returned error:', response.status);
         }
       }
     } catch (error) {
       // Network error - vote is recorded locally
       if (process.env.NODE_ENV === 'development') {
-        console.warn('[Vote] Network error:', error);
+        console.debug('[Vote] Network error:', error);
       }
     } finally {
       pendingVoteRef.current = null;

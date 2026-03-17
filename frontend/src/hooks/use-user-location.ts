@@ -231,7 +231,7 @@ export function useUserLocation(options?: {
         isFallback: true,
       });
     } catch (error) {
-      console.error('[useUserLocation] Detection failed:', error);
+      console.debug('[useUserLocation] Detection failed:', error);
 
       setState({
         location: null,

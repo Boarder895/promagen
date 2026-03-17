@@ -420,7 +420,7 @@ export function useLearnedWeights(): UseLearnedWeightsReturn {
 
       lastFetchedAt = Date.now();
     } catch (err) {
-      console.error('[useLearnedWeights] Fetch error:', err);
+      console.debug('[useLearnedWeights] Fetch error:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch');
       // Do not clear existing cached data on error — stale > nothing
     } finally {
