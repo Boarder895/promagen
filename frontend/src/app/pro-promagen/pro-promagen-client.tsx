@@ -1543,16 +1543,8 @@ export default function ProPromagenClient({
   // LIVE DATA — Index quotes + Weather (same pattern as homepage)
   // ============================================================================
 
-  // Fetch live index quotes for selected exchanges
-  // FIX v2.7.0: Always use GET (exchangeIds: undefined). The /api/indices route
-  // blocks POST (405) — paid user selection is derived server-side from Clerk
-  // publicMetadata.exchangeSelection.exchangeIds. Passing exchangeIds here would
-  // trigger the hook's POST path, which the API rejects.
-  const { quotesById, movementById } = useIndicesQuotes({
-    enabled: true,
-    exchangeIds: undefined,
-    userTier: isPaidUser ? 'paid' : 'free',
-  });
+  // Server derives tier + selection from Clerk session cookie.
+  const { quotesById, movementById } = useIndicesQuotes({ enabled: true });
 
   // Build indexByExchange map — bidirectional key support (v3.0.0)
   // Gateway may return simple IDs (pre-deploy) or compound IDs (post-deploy).

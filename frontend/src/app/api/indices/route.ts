@@ -299,17 +299,28 @@ export async function GET(): Promise<Response> {
       }
     }
 
-    // Paid users: selection comes ONLY from Clerk metadata.
+    // Paid users: selection comes from Clerk metadata.
+    // If no custom selection saved yet, fall back to SSOT defaults so page is never blank.
     const exchangeIdsRaw = md.exchangeSelection?.exchangeIds;
 
     if (!exchangeIdsRaw || !Array.isArray(exchangeIdsRaw) || exchangeIdsRaw.length === 0) {
-      return NextResponse.json(
-        {
-          error: 'Paid user has no exchange selection configured',
-          hint: 'Set publicMetadata.exchangeSelection.exchangeIds in Clerk for this user.',
-        },
-        { status: 400, headers: { 'Cache-Control': 'private, no-store' } },
-      );
+      try {
+        const upstream = await proxyGatewayJson(gatewayIndicesUrl, {
+          method: 'GET',
+          headers: { accept: 'application/json' },
+        });
+        return NextResponse.json(upstream.json, {
+          status: upstream.status,
+          headers: { 'Cache-Control': 'private, no-store' },
+        });
+      } catch (fetchError) {
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          console.error('[/api/indices] Gateway timeout (paid user, no selection)');
+          return errorResponse(504, 'Gateway timeout');
+        }
+        console.error('[/api/indices] Gateway fetch error (paid user, no selection):', fetchError);
+        return errorResponse(502, 'Gateway unavailable');
+      }
     }
 
     const validated = normaliseAndValidateExchangeIds(exchangeIdsRaw, allowedIds);

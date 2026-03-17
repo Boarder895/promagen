@@ -15,11 +15,8 @@
 // - weatherIndex now uses ExchangeWeatherData type (matches card expectations)
 // - Emoji updates based on actual weather conditions
 //
-// UPDATED (2026-01-17): Now tier-aware indices fetching!
-// - Uses useExchangeSelection to get user's exchange selection
-// - Passes exchangeIds to useIndicesQuotes for dynamic API calls
-// - FREE users: SSOT defaults
-// - PAID users: Custom selections from Clerk metadata
+// Indices fetching: always GET /api/indices — server derives tier + selection
+// from the Clerk session cookie. Browser never sends exchangeIds or tier.
 //
 // Server component (page.tsx) passes all exchanges.
 // This component orders them dynamically based on:
@@ -319,19 +316,13 @@ export default function HomepageClient({
     isLoading: isSelectionLoading,
   } = useExchangeSelection();
 
-  // Fetch index quotes with user's selection
-  // - FREE users: exchangeIds is undefined → GET request with SSOT defaults
-  // - PAID users with custom: exchangeIds provided → POST request with custom IDs
+  // Fetch index quotes — server derives tier + selection from Clerk session cookie.
+  // Browser never sends exchangeIds or tier (security model per §7.1).
   const {
     quotesById,
     movementById,
     status: indicesStatus,
-  } = useIndicesQuotes({
-    enabled: true,
-    // Only pass exchangeIds for paid users with custom selections
-    exchangeIds: userTier === 'paid' && isCustomSelection ? selectedExchangeIds : undefined,
-    userTier,
-  });
+  } = useIndicesQuotes({ enabled: true });
 
   // Track displayed provider IDs for market pulse connections
   const [displayedProviderIds, setDisplayedProviderIds] = useState<string[]>([]);
