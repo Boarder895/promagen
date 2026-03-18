@@ -305,7 +305,7 @@ export function FeatureControlPanel({
               {tierLabel?.short ?? 'T4 · Plain'}
             </span>
           ) : (
-            <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
+            <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
               Varies by surface
             </span>
           )}

@@ -1,8 +1,9 @@
 # Prompt Intelligence
 
-**Last updated:** 8 January 2026  
+**Last updated:** 18 March 2026  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture, data structures, and implementation plan for the Prompt Intelligence system.
+**Cross-reference:** For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For Prompt Lab parity features, see `paid_tier.md` §5.13. For prompt builder architecture, see `prompt-builder-page.md`.
 
 ---
 
@@ -898,20 +899,24 @@ function intelligentRandomise(
 ### 9.1 Route Structure
 
 ```
-src/app/prompts/
-├── layout.tsx              # Shared prompts section layout
-├── page.tsx                # /prompts → redirects to /prompts/library
-├── playground/
-│   └── page.tsx            # Standalone prompt builder with provider selector
-├── library/
-│   └── page.tsx            # Saved prompts grid
-├── explore/
-│   └── page.tsx            # Style family browser
-├── learn/
-│   └── page.tsx            # Education hub
-└── trending/
-    └── page.tsx            # Community trends (Phase 4)
+src/app/
+├── studio/
+│   ├── playground/
+│   │   ├── page.tsx                # Prompt Lab server component (data fetch)
+│   │   └── playground-page-client.tsx  # Client wrapper (provider state)
+│   └── library/
+│       └── page.tsx            # Saved prompts grid (/studio/library)
+├── prompts/
+│   └── explore/
+│       └── page.tsx            # Style family browser
+└── (future)
+    ├── learn/
+    │   └── page.tsx            # Education hub
+    └── trending/
+        └── page.tsx            # Community trends (Phase 4)
 ```
+
+**Route correction (18 March 2026):** The Prompt Lab was originally planned at `/prompts/playground` but was implemented at `/studio/playground`. The Library moved from `/prompts/library` to `/studio/library`. This doc now reflects the actual routes.
 
 Insert after Section 9.1 (Route Structure), before Section 9.2 (Page Definitions)
 
@@ -957,24 +962,27 @@ Non-Regression Rule: New pages must not modify HomepageGrid, exchange rails, Fin
 
 ### 9.2 Page Definitions
 
-#### `/prompts/playground` — Prompt Playground
+#### `/studio/playground` — Prompt Lab (Pro Promagen exclusive)
 
 | Aspect       | Detail                                                                            |
 | ------------ | --------------------------------------------------------------------------------- |
 | Purpose      | Builder-first entry: Create prompts without pre-selecting a provider              |
 | Content      | Full Prompt Builder with provider dropdown selector in header                     |
-| Features     | Provider switching (instant reformat); All intelligence features; Live comparison |
-| Entry points | Direct bookmark; Site nav; "Build a prompt" CTAs                                  |
+| Features     | Provider switching (instant reformat); All intelligence features; Colour-coded prompts; 4-tier preview |
+| Entry points | Pro page card 6 (🧪 Prompt Lab); Direct URL; "Prompt Lab" button in standard builder footer |
 | Exit points  | "Open in X" launches provider; Save → Library; Copy to clipboard                  |
+| Auth gate    | **Pro Promagen exclusive** — NOT YET GATED (see `paid_tier.md` §5.13)            |
 
 **Key Difference from `/providers/[id]`:**
 
-| Aspect    | `/providers/[id]`                     | `/prompts/playground`                               |
+| Aspect    | `/providers/[id]`                     | `/studio/playground`                                |
 | --------- | ------------------------------------- | --------------------------------------------------- |
 | Header    | Static: "Midjourney · Prompt builder" | Dropdown: "[▼ Select Provider...] · Prompt builder" |
 | Provider  | Pre-selected from URL                 | User selects from all 42                            |
 | Use case  | "I want to use Midjourney"            | "I want to build a prompt"                          |
 | Switching | Navigate to different URL             | Instant dropdown change                             |
+| 4-tier    | N/A                                   | Shows all 4 tier prompts with colour coding         |
+| Optimizer | Active when provider selected         | Disabled until provider selected (neutral mode)     |
 
 **Provider Switching Behaviour:**
 
@@ -985,9 +993,46 @@ Non-Regression Rule: New pages must not modify HomepageGrid, exchange rails, Fin
 
 **Implementation:**
 
-- Uses `PlaygroundWorkspace` component (client)
-- Passes `providerSelector` prop to `PromptBuilder`
-- Uses `Combobox` component with `compact` mode for header selector
+| File                                                   | Purpose                         | Lines |
+| ------------------------------------------------------ | ------------------------------- | ----- |
+| `src/app/studio/playground/page.tsx`                   | Server component (data fetch)   | —     |
+| `src/app/studio/playground/playground-page-client.tsx` | Client wrapper (provider state) | —     |
+| `src/components/prompts/playground-workspace.tsx`      | Workspace with dropdown         | —     |
+| `src/components/prompts/enhanced-educational-preview.tsx` | Lab preview & parity features | 1,899 |
+| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | 4-tier colour-coded preview | 647   |
+| `src/components/prompt-builder/intelligence-panel.tsx` | Conflicts/Suggestions/Mood tabs | 515   |
+| `src/components/prompt-builder/prompt-intelligence-builder.tsx` | Intelligence builder     | 714   |
+
+#### Prompt Lab Parity Features (v5.0.0 — 18 March 2026)
+
+The Prompt Lab now has full feature parity with the standard builder for colour-coded prompts and optimizer UX. These features are implemented in `enhanced-educational-preview.tsx` (1,899 lines):
+
+**1. Colour-coded prompts in all 4 tiers:** `FourTierPromptPreview` receives `isPro` and `termIndex` props. When `isPro=true`, each tier card renders prompt text via `parsePromptIntoSegments()` with `CATEGORY_COLOURS` from `src/lib/prompt-colours.ts`.
+
+**2. Assembled prompt box:** Full-width box between category grid and 4-tier cards showing `activeTierPromptText`. Colour-coded for Pro users. Inline `SaveIcon` + copy icons (float-right). `StageBadge` in header. Char count right-aligned.
+
+**3. Dynamic label switching:** When `isOptimizerEnabled && selectedProviderId`:
+- Label: "Assembled prompt" → "Optimized prompt in [Provider] [icon]" (`text-emerald-300`)
+- Border: `border-slate-600` → `border-emerald-600/50 bg-emerald-950/20`
+- Text: `text-slate-100` → `text-emerald-100`
+- Copy tooltip: "Copy assembled prompt" → "Copy optimized prompt"
+- **Note:** Condition does NOT include `wasOptimized` — switches the moment optimizer is enabled with a provider
+
+**4. Provider icon on optimized label:** 20×20px provider icon next to "Optimized prompt in [ProviderName]". `onError` hides icon if missing.
+
+**5. StageBadge:** Local component: 📋 Static / ✨ Dynamic / ⚡ Optimized / ✓ Optimal. In assembled prompt box header.
+
+**6. Optimizer disabled in neutral mode:** When no provider is selected, the optimizer toggle is force-disabled. Tooltip: "Select an AI provider above to enable optimisation." When provider selected → real platform tooltip.
+
+**7. Green "Within optimal range":** When optimizer ON + provider selected + no trimming: emerald bar "✓ Within optimal range — X chars / No trimming needed".
+
+**8. LabCategoryColourLegend:** Same restyled design as standard builder's `CategoryColourLegend`. Positioned in header between `│` divider and Optimize toggle.
+
+**9. Inline copy + save icons:** Copy + `SaveIcon` inside both assembled and optimized prompt boxes. Optimized box: `min-h-[60px] max-h-[150px]`.
+
+**10. Lifetime counter wiring:** All 3 copy handlers call `incrementLifetimePrompts()`.
+
+**11. cursor-pointer on all interactive elements:** Copy prompt, Randomise, Clear, Save footer buttons. Intelligence panel Conflicts/Suggestions tabs and weather suggestion buttons.
 
 #### `/prompts/library` — Your Saved Prompts
 
@@ -1037,15 +1082,19 @@ PROMAGEN
 ├── Providers (/providers)
 │   └── [Provider] Prompt Builder (/providers/[id])  ← Provider-first flow
 │
-├── Prompts (/prompts)  ← NEW SECTION
-│   ├── Playground (/prompts/playground)  ← Builder-first flow
-│   ├── Library (/prompts/library)
-│   ├── Explore (/prompts/explore)
-│   ├── Learn (/prompts/learn)
-│   └── Trending (/prompts/trending)
+├── Studio (/studio)  ← CREATIVE TOOLS
+│   ├── Prompt Lab (/studio/playground)  ← Builder-first flow (Pro exclusive)
+│   └── Library (/studio/library)  ← Saved prompts
 │
-└── Settings (/settings)
-    └── Prompt Intelligence (/settings/prompt-intelligence)
+├── Prompts (/prompts)
+│   └── Explore (/prompts/explore)  ← Style family browser
+│
+├── World Context (/world-context)  ← Exchange detail page
+├── Pro Promagen (/pro-promagen)  ← Config + upgrade page
+│
+└── (Future)
+    ├── Learn (/prompts/learn)
+    └── Trending (/prompts/trending)
 ```
 
 ### 9.4 Connection Flow
@@ -1248,14 +1297,27 @@ PROMAGEN
 
 ---
 
-## 12. Files Modified (Existing)
+## 12. Files Modified (Existing) + New Files
 
-| File                                          | Changes                                                             |
-| --------------------------------------------- | ------------------------------------------------------------------- |
-| `src/lib/prompt-builder.ts`                   | Import intelligence; use smart trim; Subject anchor                 |
-| `src/hooks/use-prompt-optimization.ts`        | Use smart trim; protect custom text                                 |
-| `src/components/providers/prompt-builder.tsx` | Add Market Mood toggle; DNA bar; suggested chips; conflict warnings |
-| `src/components/ui/combobox.tsx`              | Accept reordered options; display relevance hints                   |
+### Modified Files
+
+| File                                                 | Changes                                                                     |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- |
+| `src/lib/prompt-builder.ts`                          | Import intelligence; use smart trim; Subject anchor; `selectionsFromMap()`  |
+| `src/hooks/use-prompt-optimization.ts`               | Use smart trim; protect custom text                                         |
+| `src/components/providers/prompt-builder.tsx`         | DNA bar; conflict warnings; colour-coded prompts; legend; lifetime counter (v11.0.0, 3,104 lines) |
+| `src/components/ui/combobox.tsx`                      | `labelColour` prop (v7.3.0, 811 lines); reordered options; relevance hints |
+| `src/components/prompts/enhanced-educational-preview.tsx` | Lab parity: colour-coding, assembled box, dynamic label, StageBadge, optimizer neutral mode (v5.0.0, 1,899 lines) |
+| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | `isPro` + `termIndex` props for colour-coded rendering (v5.0.0, 647 lines) |
+| `src/components/prompt-builder/intelligence-panel.tsx` | cursor-pointer on Conflicts/Suggestions/Market Mood tabs (515 lines) |
+| `src/components/prompt-builder/prompt-intelligence-builder.tsx` | `colourTermIndex` computation, passes to FourTierPromptPreview (714 lines) |
+
+### New Files (v5.0.0)
+
+| File                           | Purpose                                             | Lines |
+| ------------------------------ | --------------------------------------------------- | ----- |
+| `src/lib/prompt-colours.ts`    | SSOT: 13 category colours, labels, emojis, parser   | 210   |
+| `src/lib/lifetime-counter.ts`  | `incrementLifetimePrompts()` + `getLifetimePrompts()` | 33  |
 
 ---
 
@@ -1311,6 +1373,13 @@ When modifying for Prompt Intelligence:
 - Do NOT change authentication or usage tracking
 - Do NOT change platform adapter output formats
 - Preserve all 18 existing features
+- **Do NOT duplicate CATEGORY_COLOURS — use `src/lib/prompt-colours.ts` as sole SSOT**
+- **Do NOT add `wasOptimized` to the dynamic label condition — it switches on optimizer enable, not on trimming**
+- **Do NOT remove `incrementLifetimePrompts()` from any copy handler**
+- **Do NOT remove cursor-pointer from intelligence panel tabs**
+- **Four-tier-prompt-preview `isPro` and `termIndex` props must be passed through from parent — do NOT hardcode**
+- **Optimizer neutral mode: when `!selectedProviderId`, force-disable optimizer — do NOT allow enabling without a provider**
+- **Prompt Lab route is `/studio/playground` — do NOT use the legacy `/prompts/playground` path**
 
 **Existing features preserved:** Yes (required for every change)
 
@@ -1318,6 +1387,7 @@ When modifying for Prompt Intelligence:
 
 ## Changelog
 
+- **18 Mar 2026 (v2.0.0):** **PROMPT LAB PARITY + COLOUR-CODED INTELLIGENCE + ROUTE CORRECTION** — §9: Corrected Prompt Lab route from `/prompts/playground` to `/studio/playground` (actual implementation). Library route corrected to `/studio/library`. Added full Prompt Lab Parity Features subsection (11 features): colour-coded 4-tier prompts via `isPro`/`termIndex` props on `FourTierPromptPreview`, assembled prompt box with StageBadge and dynamic label switching, provider icon on optimized label, optimizer neutral mode (disabled until provider selected), green "Within optimal range" feedback, `LabCategoryColourLegend` in header, inline copy + save icons, `incrementLifetimePrompts()` wiring. §12: Updated files table — added `enhanced-educational-preview.tsx` (1,899 lines), `four-tier-prompt-preview.tsx` (647 lines), `intelligence-panel.tsx` (515 lines), `prompt-intelligence-builder.tsx` (714 lines), `prompt-colours.ts` (210 lines), `lifetime-counter.ts` (33 lines). Updated `prompt-builder.tsx` to v11.0.0 (3,104 lines), `combobox.tsx` to v7.3.0 (811 lines). §15: Added 7 new non-regression rules (SSOT colours, no `wasOptimized` gate, lifetime counter, cursor-pointer, isPro props, optimizer neutral mode, route path). Updated navigation structure §9.3 with corrected routes including `/studio/*`, `/world-context`, `/pro-promagen`.
 - **7 Jan 2026 (v1.0.0):** Initial document. Defines Prompt Intelligence architecture, data structures, scoring algorithm, integration plan, new pages, and build phases.
 
 # Weather Description → City Prompt Fix

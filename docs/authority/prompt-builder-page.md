@@ -1,9 +1,9 @@
 # Prompt Builder Page
 
-**Last updated:** 4 March 2026
+**Last updated:** 18 March 2026
 **Owner:** Promagen
 **Authority:** This document defines the architecture and behaviour for the provider-specific prompt builder page (`/providers/[id]`).
-**Cross-reference:** For unified assembly engine architecture, see `unified-prompt-brain.md`. For optimizer engine architecture, see `prompt-optimizer.md`. For composition mode definitions, see §3-Stage Assembly Pipeline below.
+**Cross-reference:** For unified assembly engine architecture, see `unified-prompt-brain.md`. For optimizer engine architecture, see `prompt-optimizer.md`. For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For composition mode definitions, see §3-Stage Assembly Pipeline below.
 
 ---
 
@@ -275,9 +275,19 @@ export function ProviderWorkspace({ provider }: ProviderWorkspaceProps) {
 ### PromptBuilder
 
 **File:** `frontend/src/components/providers/prompt-builder.tsx`
-**Version:** 10.0.0 (2,746 lines)
+**Version:** 11.0.0 (3,104 lines)
 
-**Purpose:** Full-featured prompt crafting interface with 3-stage assembly pipeline (Static/Dynamic/Optimize), platform-specific optimization, platform-aware category limits, and authentication-gated access.
+**Purpose:** Full-featured prompt crafting interface with 3-stage assembly pipeline (Static/Dynamic/Optimize), platform-specific optimization, platform-aware category limits, colour-coded prompt anatomy (Pro), lifetime prompt counter, and authentication-gated access.
+
+**New in v11.0.0:**
+
+- **Colour-coded prompt anatomy (Pro only):** Assembled and optimized prompt text renders terms in category colours via `parsePromptIntoSegments()` from SSOT `prompt-colours.ts`. Free users see plain monochrome text.
+- **Category dropdown label colours (Pro only):** Each of the 12 category dropdown labels takes on its category colour via `labelColour` prop on Combobox v7.3.0.
+- **CategoryColourLegend:** 🎨 icon in header bar (between TextLengthOptimizer and intelligence badges). Hover shows 13-colour key tooltip with emoji, label, and colour dot for each category. Restyled: solid `rgba(15, 23, 42, 0.97)` bg, `rounded-xl`, ethereal glow overlay, centred arrow.
+- **Colour legend position:** Moved from "Assembled prompt" row to header bar for better visibility.
+- **Lifetime prompt counter:** All 3 copy handlers (`handleCopyPrompt`, `handleCopyAssembled`, `handleCopyOptimized`) call `incrementLifetimePrompts()` from `src/lib/lifetime-counter.ts`. Feeds the Pro Gem Badge tier progression (see `paid_tier.md` §5.15).
+- **Dynamic assembled prompt label:** When optimizer is ON and provider is selected, the assembled prompt box transitions: label → "Optimized prompt in [Provider] [icon]" (emerald), border → emerald, text → emerald. Condition: `isOptimizerEnabled && selectedProviderId` (no `wasOptimized` check — switches the moment optimizer is enabled).
+- **Inline copy + save icons in assembled box:** Float-right clipboard SVG + SaveIcon inside the assembled prompt box (matches optimized box pattern).
 
 **New in v10.0.0:**
 
@@ -375,7 +385,7 @@ Click Done or click away to close dropdowns. Type in any field to add custom ent
 
 2. **Authentication Layer** (conditional): Usage counter for free users, central lock overlay for unauthenticated or over-quota users. NO per-dropdown lock overlay text.
 
-3. **Composition Mode Toggle + Text Length Optimizer**: Static/Dynamic toggle with platform-specific tooltips, optimizer toggle with divider. See §3-Stage Assembly Pipeline.
+3. **Composition Mode Toggle + Colour Legend + Text Length Optimizer**: Static/Dynamic toggle with platform-specific tooltips. 🎨 CategoryColourLegend (Pro only) — hover shows 13-colour key. Optimizer toggle with divider. See §3-Stage Assembly Pipeline and §Colour-Coded Prompt Anatomy below.
 
 4. **Category Dropdowns** (12 categories with platform-aware limits): Multi-select comboboxes with custom entry support. Grid: 3 columns desktop, 2 tablet, 1 mobile. Negative spans full width. ~100 options per positive category, ~1000 for negative. Platform-aware limits (see §12-Category Dropdown System). Pro Promagen bonus: +1 on stackable categories. When locked: disabled styling only, no text overlay.
 
@@ -387,9 +397,9 @@ Click Done or click away to close dropdowns. Type in any field to add custom ent
 
 8. **Stage Indicator Badge**: Shows current assembly stage above the prompt preview: `📋 Static` | `✨ Dynamic` | `⚡ Optimized` | `✓ Optimal`.
 
-9. **Assembled Prompt Preview**: Shows compiled positive prompt from `assemblePrompt(platformId, selections, weatherWeightOverrides?)`. NO separator line, NO "Negative prompt:" label. Clear all button with Core Colours gradient. Inline copy icon (float-right, SVG clipboard icon). "Inspired by" badge when pre-loaded from homepage "Try in".
+9. **Assembled Prompt Preview**: Shows compiled positive prompt from `assemblePrompt(platformId, selections, weatherWeightOverrides?)`. Colour-coded by category for Pro users via `parsePromptIntoSegments()` (free users see plain `text-slate-100`). NO separator line, NO "Negative prompt:" label. Clear all button with Core Colours gradient. Inline copy icon + SaveIcon (float-right). "Inspired by" badge when pre-loaded from homepage "Try in". **Dynamic label (v11.0.0):** When `isOptimizerEnabled && selectedProviderId`, label changes to "Optimized prompt in [Provider] [icon]" (emerald), border changes to emerald, text to `text-emerald-100`.
 
-10. **Optimized Prompt Preview** (when optimizer ON): Emerald-bordered box with optimized text. Shows char count, removed terms, optimization transparency panel (Pro-only). Inline copy icon float-right. Length indicator below.
+10. **Optimized Prompt Preview** (when optimizer ON): Emerald-bordered box with optimized text, colour-coded by category for Pro users. Shows char count, removed terms, optimization transparency panel (Pro-only). Inline copy icon float-right. Length indicator below.
 
 11. **Prompt Intelligence Section**: DNA Bar (coherence visualisation), conflict warnings (when `intelligencePrefs.conflictWarningsEnabled`), smart suggestion chips (4 compact / 6 full), health badge with coherence score.
 
@@ -472,6 +482,55 @@ Both prompt preview boxes (assembled + optimized) have inline copy icons that fl
 - Assembled: `bg-white/5 text-slate-400` → hover `bg-white/10 text-slate-200`
 - Optimized: `bg-white/5 text-emerald-300/50` → hover `bg-white/10 text-emerald-200`
 - Copied state: `bg-emerald-500/20 text-emerald-400` with checkmark SVG
+
+### Colour-Coded Prompt Anatomy (v11.0.0 — Pro Promagen exclusive)
+
+Pro users see colour-coded prompt text in both the assembled and optimized prompt preview boxes. Each term is coloured according to its source category, making the prompt scannable and educational. Free users see plain monochrome text (`text-slate-100` for assembled, `text-emerald-100` for optimized).
+
+**SSOT:** `src/lib/prompt-colours.ts` (210 lines) — single source of truth for all 13 category colours, labels, emojis, `buildTermIndexFromSelections()`, and `parsePromptIntoSegments()`.
+
+**How it works:**
+
+1. `buildTermIndexFromSelections(selections)` builds a `Map<string, PromptCategory>` from the user's current selections (lowercased terms → category name)
+2. `parsePromptIntoSegments(promptText, termIndex)` walks the prompt text and matches terms against the index, producing an array of `{ text, category }` segments
+3. Each segment renders as `<span style={{ color: CATEGORY_COLOURS[category] }}>` — unmatched text gets the `structural` colour
+
+**13 category colours:**
+
+| Category    | Hex       | Purpose                     |
+| ----------- | --------- | --------------------------- |
+| Subject     | `#FCD34D` | Gold — the star of the show |
+| Action      | `#A3E635` | Lime — movement / energy    |
+| Style       | `#C084FC` | Purple — artistic reference |
+| Environment | `#38BDF8` | Sky blue — place / setting  |
+| Composition | `#34D399` | Emerald — framing           |
+| Camera      | `#FB923C` | Orange — lens / angle       |
+| Lighting    | `#FBBF24` | Amber — light source        |
+| Colour      | `#F472B6` | Pink — colour grade         |
+| Atmosphere  | `#22D3EE` | Cyan — fog / particles      |
+| Materials   | `#2DD4BF` | Teal — surface / texture    |
+| Fidelity    | `#93C5FD` | Soft blue — quality boosters|
+| Negative    | `#F87171` | Red — constraints           |
+| Structural  | `#94A3B8` | Slate — commas, glue text   |
+
+**Category dropdown label colours:** When `isPro=true`, each of the 12 Combobox instances passes `labelColour={CATEGORY_COLOURS[category]}`. The label text renders in the category colour instead of default white.
+
+**CategoryColourLegend:** A 🎨 icon in the header bar (between TextLengthOptimizer and intelligence badges). Hover shows tooltip with all 13 categories, each with emoji, coloured dot, and label. Restyled: solid `rgba(15, 23, 42, 0.97)` bg, `rounded-xl`, ethereal glow overlay, centred arrow, emoji `clamp(18px, 1.4vw, 22px)`, min 10px font, 400ms close delay. Width: `clamp(280px, 22vw, 340px)`.
+
+**Human factors:** Von Restorff Effect (category isolation), Loss Aversion (free users see plain text — visible upgrade value), Colour Psychology on Dark Interfaces §17 (3× weight on dark backgrounds).
+
+**Cross-reference:** Full tier comparison and surface list in `paid_tier.md` §5.14.
+
+### Lifetime Prompt Counter (v11.0.0)
+
+All 3 copy handlers in prompt-builder.tsx call `incrementLifetimePrompts()` from `src/lib/lifetime-counter.ts` on successful clipboard write. This feeds the Pro Gem Badge tier progression (see `paid_tier.md` §5.15).
+
+**Wired handlers:**
+- `handleCopyPrompt` — footer Copy button
+- `handleCopyAssembled` — inline copy icon in assembled prompt box
+- `handleCopyOptimized` — inline copy icon in optimized prompt box
+
+**Storage:** `localStorage('promagen:lifetime_prompts')` — simple integer counter. Zero dependencies. SSR-safe (`typeof window === 'undefined'` guard).
 
 ---
 
@@ -737,7 +796,7 @@ For these 28 platforms, custom negative text would be ignored anyway — only th
 ## Combobox Component
 
 **File:** `frontend/src/components/ui/combobox.tsx`
-**Version:** 6.4.0
+**Version:** 7.3.0 (811 lines)
 
 ### Enhanced Features for Authentication
 
@@ -752,6 +811,7 @@ For these 28 platforms, custom negative text would be ignored anyway — only th
 - Pink character counter for custom text
 - **Double-click protection** via ref guard (v6.3.0)
 - **Compact mode** for header use (v6.4.0) — hides label, tooltip, pt-8 padding
+- **`labelColour` prop (v7.3.0)** — Pro Promagen feature. When set, the category label text renders in the specified colour instead of default white/slate. Used for colour-coded category headings. Example: `labelColour="#FCD34D"` makes Subject label gold.
 
 ### Auto-Close Behaviour (v6.3.0)
 
@@ -796,14 +856,17 @@ frontend/src/
 ├── components/
 │   ├── composition-mode-toggle.tsx # Static/Dynamic toggle v1.0.0 (322 lines)
 │   ├── providers/
-│   │   ├── prompt-builder.tsx      # Main prompt builder v10.0.0 (2,746 lines)
-│   │   ├── text-length-optimizer.tsx  # Optimizer toggle v1.0.0 (347 lines)
+│   │   ├── prompt-builder.tsx      # Main prompt builder v11.0.0 (3,104 lines)
+│   │   ├── text-length-optimizer.tsx  # Optimizer toggle v1.0.0 (392 lines)
 │   │   ├── length-indicator.tsx    # Length vs sweet spot (224 lines)
 │   │   ├── optimization-transparency-panel.tsx  # Pro-only detail (419 lines)
 │   │   ├── aspect-ratio-selector.tsx  # AR buttons v1.2.0 (322 lines)
 │   │   └── provider-workspace.tsx  # Centre column wrapper (61 lines)
+│   ├── prompt-builder/
+│   │   ├── four-tier-prompt-preview.tsx  # 4-tier preview with colour props (v5.0.0)
+│   │   └── intelligence-panel.tsx       # Conflicts/Suggestions/Market Mood tabs
 │   └── ui/
-│       └── combobox.tsx            # Multi-select combobox v6.4.0
+│       └── combobox.tsx            # Multi-select combobox v7.3.0 (811 lines)
 ├── hooks/
 │   ├── use-promagen-auth.ts        # Auth, tier, limits, usage (421 lines)
 │   ├── use-composition-mode.ts     # Composition mode persistence (352 lines)
@@ -817,6 +880,7 @@ frontend/src/
 │   ├── prompt-builder.ts           # Unified assembly engine (1,738 lines)
 │   │   ├── assemblePrompt(platformId, selections, weightOverrides?)  # THE ONE BRAIN
 │   │   ├── assembleStatic(platformId, selections)  # Raw comma join (no intelligence)
+│   │   ├── selectionsFromMap()     # Convert WeatherCategoryMap → PromptSelections
 │   │   ├── getPlatformFormat()     # Looks up platform config
 │   │   ├── getEffectiveOrder()     # Impact-priority category ordering
 │   │   ├── assembleTierAware()     # Internal: weight merge + dedup + token estimation
@@ -826,6 +890,8 @@ frontend/src/
 │   │   ├── convertNegativesToPositives()
 │   │   ├── supportsNativeNegative()
 │   │   └── formatPromptForCopy()
+│   ├── prompt-colours.ts           # SSOT: 13 category colours, labels, emojis, parser (210 lines, v1.0.0)
+│   ├── lifetime-counter.ts         # incrementLifetimePrompts() + getLifetimePrompts() (33 lines, v1.0.0)
 │   ├── prompt-post-process.ts      # Post-processing engine (216 lines, 6 exports)
 │   ├── prompt-dna.ts              # DNA fingerprint hashing
 │   ├── adaptive-weights.ts        # Weight merge: weather × platform
@@ -1108,6 +1174,12 @@ When modifying the prompt builder page:
 - **Preserve 3-stage pipeline: Static/Dynamic/Optimize must remain independent paths**
 - **Do not re-add Market Mood toggle to prompt builder (removed from scope)**
 - **Tooltip body text must stay text-slate-300 — do not change to emerald-400**
+- **Do not duplicate CATEGORY_COLOURS — use `src/lib/prompt-colours.ts` as sole SSOT**
+- **Do not hardcode category colours in components — always import from prompt-colours.ts**
+- **CategoryColourLegend must stay in the header bar — do not move back to assembled prompt row**
+- **Dynamic label condition is `isOptimizerEnabled && selectedProviderId` — do NOT add `wasOptimized`**
+- **`incrementLifetimePrompts()` must be called in all copy handlers — do not remove from any**
+- **`labelColour` prop on Combobox is Pro-only — free users must see white/slate labels**
 
 **Existing features preserved:** Yes (required for every change)
 
@@ -1130,6 +1202,8 @@ These features were removed as they added no value:
 ---
 
 ## Changelog
+
+- **18 Mar 2026 (v11.0.0):** **COLOUR-CODED PROMPT ANATOMY + LIFETIME COUNTER + DYNAMIC LABEL** — Pro Promagen users see colour-coded prompt text in assembled and optimized preview boxes via `parsePromptIntoSegments()` from SSOT `src/lib/prompt-colours.ts` (210 lines, 13 colours). Category dropdown labels take on their category colour via Combobox `labelColour` prop (v7.3.0, 811 lines). CategoryColourLegend moved from assembled prompt row to header bar (between TextLengthOptimizer and intelligence badges). Restyled: solid `rgba(15,23,42,0.97)` bg, `rounded-xl`, ethereal glow overlay, `clamp(280px, 22vw, 340px)` width. Dynamic assembled prompt label: when `isOptimizerEnabled && selectedProviderId`, label → "Optimized prompt in [Provider] [icon]" (emerald), border → emerald, text → emerald. Condition intentionally excludes `wasOptimized` — switches on enable, not on trimming. Inline copy + SaveIcon added to assembled prompt box (float-right, matching optimized box). `incrementLifetimePrompts()` wired into all 3 copy handlers (`handleCopyPrompt`, `handleCopyAssembled`, `handleCopyOptimized`). New file: `src/lib/lifetime-counter.ts` (33 lines). New file: `src/lib/prompt-colours.ts` (210 lines). prompt-builder.tsx grew from 2,746 to 3,104 lines. Combobox grew from ~760 to 811 lines. See `paid_tier.md` §5.14 for full colour table, §5.15 for Pro Gem Badge integration.
 
 - **4 Mar 2026 (v10.1.0):** **3-STAGE PIPELINE + UI POLISH** — Added 3-stage assembly pipeline (Static/Dynamic/Optimize) with `assembleStatic()` for raw output. Composition Mode Toggle now accepts `platformId` prop for tier-specific Dynamic tooltips (T1 CLIP / T2 MJ / T3 NL / T4 Plain). Text Length Optimizer tooltip body text reverted from `text-emerald-400` to `text-slate-300` for readability. Instruction text changed "Press Done" → "Click Done". Stage indicator badge added (📋/✨/⚡/✓). Inline copy icons added to both assembled and optimized prompt preview boxes (float-right positioning). Visual diff highlighting on Static→Dynamic switch. Market Mood toggle removed from prompt builder scope (`setIntelligencePref` removed from destructuring). PotM ProviderIcon visibility fix: `bg-white/15` + `drop-shadow(0 0 3px rgba(255,255,255,0.4))`. All 42 platforms pushed to architectural ceiling. prompt-builder.tsx grew from ~2,431 to 2,746 lines. prompt-builder.ts grew from ~1,519 to 1,738 lines. New test: `prompt-builder-3-stage.test.ts` (653 lines, ~41 cases). Dynamic config guard tests cover all 42 platforms. See `unified-prompt-brain.md` for full architecture.
 

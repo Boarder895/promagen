@@ -1,8 +1,8 @@
 # Prompt Optimizer — Authority Documentation
 
-**Version:** 3.0.0
+**Version:** 4.0.0
 **Authority:** This is the single source of truth for the prompt optimizer subsystem.
-**Last updated:** 24 Feb 2026
+**Last updated:** 18 March 2026
 
 ---
 
@@ -17,8 +17,10 @@ No competitor provides this. Most generators either hard-truncate or silently dr
 **Cross-references:**
 
 - Prompt builder page architecture → `prompt-builder-page.md`
-- Pro tier gating for Transparency Panel → `paid_tier.md`
+- Pro tier gating for Transparency Panel → `paid_tier.md` §5.14 (colour-coded anatomy), §5.13 (Prompt Lab parity)
 - Intelligence/scoring/semantic tags → `prompt-intelligence.md`
+- Prompt Lab optimizer behaviour → `prompt-lab.md` (neutral mode, dynamic label, "Within optimal range")
+- Colour-coded prompt text in optimizer output → `code-standard.md` § 6.14 (SSOT colours)
 
 ---
 
@@ -35,7 +37,7 @@ No competitor provides this. Most generators either hard-truncate or silently dr
 | **prompt-limits.json**                  | `src/data/providers/`                        | 558   | Platform-specific limits for all 42 platforms: maxChars, idealMin/Max, tokenLimit, architecture                 |
 | **prompt-limits.schema.json**           | `src/data/providers/`                        | 117   | JSON Schema validation for prompt-limits.json                                                                   |
 | **optimization-transparency-panel.tsx** | `src/components/providers/`                  | 419   | Pro-only UI panel showing optimization reasoning grouped by phase                                               |
-| **text-length-optimizer.tsx**           | `src/components/providers/`                  | 347   | Toggle component: OFF=Core Colours gradient outline, ON=purple gradient fill                                    |
+| **text-length-optimizer.tsx**           | `src/components/providers/`                  | 392   | Toggle component: OFF=Core Colours gradient outline, ON=purple gradient fill                                    |
 | **platform-optimization.ts**            | `src/lib/prompt-intelligence/engines/`       | 589   | Platform formatting engine: prompt assembly, smart trim, category ordering                                      |
 | **platform-optimization.test.ts**       | `src/lib/prompt-intelligence/engines/tests/` | 420   | Jest tests for platform formatting                                                                              |
 
@@ -625,8 +627,9 @@ Fallback: if the reconstructed clause doesn't match the prompt string exactly, i
 | Consumer                              | Import                         | Purpose                                 |
 | ------------------------------------- | ------------------------------ | --------------------------------------- |
 | `use-prompt-optimization.ts`          | `optimizePromptGoldStandard()` | React hook wraps the engine             |
-| `optimization-transparency-panel.tsx` | Types from optimizer           | Displays removedTerms by phase          |
-| Prompt builder page                   | Via hook                       | Copy-to-clipboard triggers optimization |
+| `optimization-transparency-panel.tsx` | Types from optimizer           | Displays removedTerms by phase (Pro only) |
+| `prompt-builder.tsx` (standard)       | Via hook                       | Copy-to-clipboard triggers optimization; separate optimized prompt box when `wasOptimized` |
+| `enhanced-educational-preview.tsx` (Lab) | Via hook                    | Dynamic label switching; neutral mode; "Within optimal range" feedback; colour-coded optimized text |
 
 ### 12.3 Data Dependencies
 
@@ -647,4 +650,99 @@ clip-bpe-vocab.json (optional) ────────────────�
 | 1   | Python tools (`generate-semantic-pairs.py`, `generate-clip-vocab.py`) not yet present in repo | Planned — system degrades gracefully without them                   |
 | 2   | `semantic-pairs.json` not yet generated                                                       | Planned — only hand-curated pairs used until then                   |
 | 3   | `clip-bpe-vocab.json` not yet generated                                                       | Planned — improved heuristic (~93%) used as fallback                |
-| 4   | Pro/tier wiring for Transparency Panel                                                        | `isPro` and `tier` props not yet passed through from page component |
+| 4   | ~~Pro/tier wiring for Transparency Panel~~                                                    | **RESOLVED (v4.0.0)** — `isPro` now correctly passed in both standard builder and Prompt Lab |
+
+---
+
+## 14. Optimizer in the Prompt Lab (v4.0.0 — 18 March 2026)
+
+The Prompt Lab (`/studio/playground`) uses the same optimizer engine but with different UI behaviour than the standard builder. These differences are documented here as optimizer-specific concerns.
+
+### 14.1 Neutral Mode (Optimizer Disabled Until Provider Selected)
+
+When no provider is selected in the Prompt Lab, the optimizer toggle is force-disabled:
+
+```typescript
+const finalOptimizerDisabled = isOptimizerDisabled || !selectedProviderId;
+```
+
+**Tooltip in neutral mode:** "Select an AI provider above to enable optimisation."
+**Tooltip when provider selected:** Real platform-specific tooltip (same as standard builder).
+
+**Rationale:** Without a platform, there's no `promptLimit` to optimise against. The standard builder never hits this state because the provider is always pre-selected from the URL.
+
+### 14.2 Dynamic Label Switching (Assembled → Optimized)
+
+In the Prompt Lab, the assembled prompt box **changes identity** when the optimizer is enabled:
+
+| Condition | Label | Border | Text colour | Copy tooltip |
+| --- | --- | --- | --- | --- |
+| `!isOptimizerEnabled \|\| !selectedProviderId` | "Assembled prompt" | `border-slate-600 bg-slate-950/80` | `text-slate-100` | "Copy assembled prompt" |
+| `isOptimizerEnabled && selectedProviderId` | "Optimized prompt in [Provider] [icon]" | `border-emerald-600/50 bg-emerald-950/20` | `text-emerald-100` | "Copy optimized prompt" |
+
+**Critical design decision:** The condition is `isOptimizerEnabled && selectedProviderId` — it does **NOT** include `wasOptimized`. The label switches the moment the optimizer is enabled with a provider, regardless of whether trimming occurred. This was a deliberate correction (18 March 2026) after an incorrect implementation that only switched when `wasOptimized` was true.
+
+**Why no `wasOptimized` check:** The prompt has gone through the optimization pipeline either way. The `StageBadge` already shows "✓ Optimal" when no trimming was needed — having the label say "Assembled prompt" while the badge says "Optimal" is contradictory.
+
+**Provider icon:** 20×20px icon from `selectedProvider.localIcon || /icons/providers/${selectedProvider.id}.png`. `onError` hides the icon.
+
+### 14.3 "Within Optimal Range" Feedback
+
+When the optimizer is ON, a provider is selected, and the prompt didn't need trimming:
+
+```
+✓ Within optimal range — 342 chars / No trimming needed
+```
+
+Rendered as an emerald bar below the optimized prompt box. This replaces the empty space that would otherwise appear when the `OptimizationTransparencyPanel` has nothing to show (no removed terms).
+
+### 14.4 Colour-Coded Optimized Text (Pro Only)
+
+Both the assembled and optimized prompt preview boxes render **colour-coded text** for Pro users via `parsePromptIntoSegments()` from `src/lib/prompt-colours.ts`. Each term is coloured according to its source category (Subject = gold, Style = purple, etc.). Free users see plain monochrome text.
+
+This applies to the optimizer's output text as well — when the optimizer removes or compresses terms, the remaining terms retain their colour coding. The colour is determined by the term index built from user selections, not from the optimizer output.
+
+### 14.5 `isPro` Wiring Fix
+
+The `OptimizationTransparencyPanel` in the Prompt Lab was previously hardcoded to `isPro={false}`, meaning Pro users never saw the transparency panel in the Lab. This was fixed (18 March 2026) to correctly pass `isPro={isPro}` from the `usePromagenAuth` hook.
+
+### 14.6 Standard Builder vs Lab Optimizer Behaviour
+
+| Aspect | Standard Builder (`prompt-builder.tsx`) | Prompt Lab (`enhanced-educational-preview.tsx`) |
+| --- | --- | --- |
+| Optimizer always available | Yes (provider always known from URL) | No — disabled until provider selected (neutral mode) |
+| Optimized prompt display | Separate box below assembled (visible when `wasOptimized`) | Same box — label dynamically switches |
+| Label switch condition | N/A (separate boxes) | `isOptimizerEnabled && selectedProviderId` (no `wasOptimized`) |
+| "Within optimal range" | Not shown | Emerald bar when no trimming needed |
+| Transparency Panel | `isPro` from hook | `isPro` from hook (was hardcoded `false`, now fixed) |
+| Colour-coded output | Pro only | Pro only |
+| Copy handler | `handleCopyOptimized` (separate button) | Same button — copies optimized when optimizer ON |
+
+---
+
+## 15. Non-Regression Rules
+
+When modifying the optimizer subsystem:
+
+- Do NOT change the 4-pipeline architecture (Keywords, Midjourney, Natural, Plain)
+- Do NOT change scoring formula or category weights without full test suite run
+- Do NOT add `wasOptimized` to the Lab's dynamic label condition — the label switches on optimizer enable, not on trimming
+- Do NOT re-hardcode `isPro={false}` on `OptimizationTransparencyPanel` in the Lab
+- Do NOT allow enabling the optimizer in the Lab without a selected provider
+- Do NOT remove the "Within optimal range" emerald bar from the Lab
+- Preserve all 5 optimization phases (0–4) in each pipeline
+- Preserve Midjourney `--` parameter protection
+- Preserve natural language clause reconstruction
+- Preserve colour-coded output for Pro users
+
+**Existing features preserved:** Yes (required for every change)
+
+---
+
+## Changelog
+
+- **18 Mar 2026 (v4.0.0):** **LAB OPTIMIZER PARITY + NEUTRAL MODE + DYNAMIC LABEL** — Added §14 documenting all Prompt Lab–specific optimizer behaviours. §14.1: Neutral mode — optimizer force-disabled when no provider selected via `finalOptimizerDisabled`, tooltip "Select an AI provider above to enable optimisation." §14.2: Dynamic label switching — assembled prompt box label/border/text transitions from slate to emerald when `isOptimizerEnabled && selectedProviderId`. Documented the deliberate exclusion of `wasOptimized` from the condition. §14.3: "Within optimal range" emerald bar when no trimming needed. §14.4: Colour-coded optimized text (Pro only) via `parsePromptIntoSegments()`. §14.5: `isPro` wiring fix — `OptimizationTransparencyPanel` in Lab corrected from hardcoded `false` to hook value. §14.6: Standard Builder vs Lab comparison table (7 aspects). Updated §12.2 consumers table (added Lab with specific behaviours). Updated open items: #4 resolved (isPro now wired). Updated file line count: text-length-optimizer.tsx 347→392. Added §15 Non-Regression Rules (10 rules). Added cross-references to `prompt-lab.md` and `code-standard.md` § 6.14.
+- **24 Feb 2026 (v3.0.0):** Phase C — Semantic similarity engine, prompt compression/rewriting (59 rules), real CLIP BPE tokenization. See §9 for full feature table.
+- **Feb 2026 (v2.1.0):** Phase B — Expanded redundancy pairs (29→217), injected-term discovery, per-strategy weights.
+- **Feb 2026 (v2.0.0):** Phase A — Tier-aware routing, 4 optimizer pipelines, per-strategy weights + decay, Midjourney protection, natural language clause surgery.
+- **Jan 2026 (v1.0.0):** Original — single pipeline, basic redundancy (29 pairs), character-based trimming.

@@ -278,6 +278,63 @@ function convertToWeatherDataMap(
 // COMPONENT
 // ============================================================================
 
+// ============================================================================
+// SHARED AUTO-SCROLL — 17-second cycle: hold top → scroll down → hold bottom → scroll up
+// ============================================================================
+// Authority: best-working-practice.md § Auto-scroll animation pattern
+// Spec: 0.3s hold top → 8s down → 0.3s hold bottom → 8s up → repeat
+// Bug fix: observe BOTH container + content, skip measurements when hidden
+//   (display:none panels report 0 dims → scrollDist = 0 → animation dead).
+//   Periodic 2s re-measure catches content changes ResizeObserver misses.
+// ============================================================================
+
+const PRO_AUTO_SCROLL_CSS = `
+  @keyframes proAutoScroll {
+    0%, 1.8% { transform: translateY(0); }
+    48.8% { transform: translateY(var(--scroll-dist, 0px)); }
+    50.6% { transform: translateY(var(--scroll-dist, 0px)); }
+    97.6% { transform: translateY(0); }
+    100% { transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pro-auto-scroll { animation: none !important; }
+  }
+`;
+
+function useAutoScroll(): {
+  containerRef: React.RefObject<HTMLDivElement>;
+  contentRef: React.RefObject<HTMLDivElement>;
+  scrollDist: number;
+} {
+  const containerRef = React.useRef<HTMLDivElement>(null!);
+  const contentRef = React.useRef<HTMLDivElement>(null!);
+  const [scrollDist, setScrollDist] = React.useState(0);
+
+  React.useEffect(() => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return;
+
+    const measure = () => {
+      // Skip when parent is display:none (all dims are 0)
+      if (container.clientHeight < 10) return;
+      const overflow = content.scrollHeight - container.clientHeight;
+      const next = Math.max(0, overflow);
+      setScrollDist((prev) => (next === prev ? prev : next));
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(container);
+    ro.observe(content);
+    // Periodic re-measure catches content changes ResizeObserver misses
+    const tid = setInterval(measure, 2000);
+    return () => { ro.disconnect(); clearInterval(tid); };
+  }, []);
+
+  return { containerRef, contentRef, scrollDist };
+}
+
 
 // ============================================================================
 // TIER PREVIEW PANEL — 4 horizontal tooltip clones with live PotM data
@@ -337,7 +394,7 @@ function TierWindowCopyButton({ text }: { text: string }) {
       type="button"
       onClick={(e) => { e.stopPropagation(); handleCopy(); }}
       className={`inline-flex items-center justify-center rounded-md cursor-pointer transition-all duration-200 ${
-        copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+        copied ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-white hover:bg-white/10 hover:text-white'
       }`}
       style={{ width: 'clamp(22px, 1.6vw, 28px)', height: 'clamp(22px, 1.6vw, 28px)' }}
       title={copied ? 'Copied!' : 'Copy prompt'}
@@ -353,6 +410,136 @@ function TierWindowCopyButton({ text }: { text: string }) {
         </svg>
       )}
     </button>
+  );
+}
+
+// ── TierWindow: Individual tier card with auto-scroll on prompt text ──────
+function TierWindow({
+  t,
+  isActive,
+  isBlurred,
+  isFreeVisible,
+  isPaidUser,
+  onTierChange,
+  promptText,
+}: {
+  t: typeof TIER_DISPLAY[number];
+  isActive: boolean;
+  isBlurred: boolean;
+  isFreeVisible: boolean;
+  isPaidUser: boolean;
+  onTierChange?: (tier: 1 | 2 | 3 | 4) => void;
+  promptText: string;
+}) {
+  const { containerRef, contentRef, scrollDist } = useAutoScroll();
+
+  const goldHex = '#EAB308';
+  const useGoldGlow = isPaidUser && isActive;
+  const baseRgba = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.35 : 0.2) : (isFreeVisible ? 0.3 : 0.08));
+  const baseBorder = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.6 : 0.35) : (isFreeVisible ? 0.5 : 0.12));
+  const baseSoft = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.15 : 0.08) : (isFreeVisible ? 0.12 : 0.04));
+  const glowRgba = useGoldGlow ? hexToRgbaPanel(goldHex, 0.35) : baseRgba;
+  const glowBorder = useGoldGlow ? hexToRgbaPanel(goldHex, 0.65) : baseBorder;
+  const glowSoft = useGoldGlow ? hexToRgbaPanel(goldHex, 0.15) : baseSoft;
+  const shadow = (isActive && isPaidUser) || isFreeVisible
+    ? `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`
+    : `0 0 20px 4px ${glowRgba}, inset 0 0 15px 2px ${glowSoft}`;
+
+  return (
+    <div
+      role={isPaidUser ? 'button' : undefined}
+      tabIndex={isPaidUser ? 0 : undefined}
+      onClick={isPaidUser && onTierChange ? () => onTierChange(t.tier) : undefined}
+      onKeyDown={isPaidUser && onTierChange ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTierChange(t.tier); }
+      } : undefined}
+      className={`relative flex-1 rounded-xl overflow-hidden flex flex-col ${isPaidUser ? 'cursor-pointer' : ''}`}
+      style={{
+        background: 'rgba(15, 23, 42, 0.97)',
+        border: `1px solid ${glowBorder}`,
+        boxShadow: shadow,
+        padding: 'clamp(10px, 1vw, 16px)',
+        transition: 'box-shadow 200ms ease-out, border-color 200ms ease-out',
+      }}
+    >
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }} />
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
+
+      <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)', textShadow: `0 0 12px ${hexToRgbaPanel(t.color, 0.4)}` }}>
+            Image Prompt
+          </span>
+          {!isBlurred && (
+            <div className="flex items-center gap-1">
+              <SaveIcon positivePrompt={promptText} platformId={t.platformId} platformName={t.platformName} source="tooltip" tier={t.tier} size="sm" />
+              <TierWindowCopyButton text={promptText} />
+            </div>
+          )}
+        </div>
+
+        {/* Tier badge */}
+        <span
+          className={`inline-flex items-center self-start rounded-full font-medium ${t.bgClass} ring-1 ${t.ringClass}`}
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.65rem)', padding: 'clamp(1px, 0.15vw, 3px) clamp(6px, 0.6vw, 10px)', gap: 'clamp(4px, 0.4vw, 6px)', color: t.color }}
+        >
+          <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(5px, 0.5vw, 7px)', height: 'clamp(5px, 0.5vw, 7px)' }} />
+          Tier {t.tier}: {t.label}
+        </span>
+
+        {/* Auto-scrolling prompt text */}
+        <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
+          <div
+            ref={contentRef}
+            className="pro-auto-scroll"
+            style={{ '--scroll-dist': `-${scrollDist}px`, animation: scrollDist > 0 && !isBlurred ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
+          >
+            <p
+              className={`leading-relaxed whitespace-pre-wrap break-words ${isBlurred ? 'text-white select-none' : 'text-white'}`}
+              style={{
+                fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)',
+                filter: isBlurred ? 'blur(4px)' : undefined,
+                WebkitFilter: isBlurred ? 'blur(4px)' : undefined,
+              }}
+              aria-hidden={isBlurred}
+            >
+              {promptText}
+            </p>
+          </div>
+        </div>
+
+        {/* Lock icon overlay */}
+        {isBlurred && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <svg className="text-white" style={{ width: 'clamp(20px, 2vw, 28px)', height: 'clamp(20px, 2vw, 28px)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+        )}
+
+        {/* Active indicator — gold crown for paid active tier */}
+        {isPaidUser && isActive && (
+          <div className="flex items-center self-start" style={{ gap: 'clamp(3px, 0.3vw, 5px)', marginTop: 'clamp(2px, 0.2vw, 4px)' }}>
+            <span style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}>👑</span>
+            <span className="font-medium text-amber-400" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>Active tier</span>
+          </div>
+        )}
+
+        {/* Upgrade CTA */}
+        {!isPaidUser && !isFreeVisible && (
+          <button
+            type="button"
+            className="mt-auto inline-flex items-center self-start gap-1 cursor-pointer"
+            style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
+            onClick={(e) => { e.stopPropagation(); document.querySelector('[data-upgrade-cta]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
+          >
+            <span className="text-amber-400 font-medium">🔓 Upgrade to unlock</span>
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -393,141 +580,17 @@ function TierPreviewPanel({
           const isBlurred = !isPaidUser && t.tier !== FREE_VISIBLE_TIER;
           const promptText = potmData?.prompts?.[t.promptKey] ?? FALLBACK_PROMPTS[t.promptKey]!;
 
-          // ── Glow intensities ──
-          // Paid active = gold glow; paid inactive = tier colour dim
-          // Free visible = tier colour bright; free blurred = barely visible
-          const goldHex = '#EAB308';
-          const useGoldGlow = isPaidUser && isActive;
-
-          const baseRgba = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.35 : 0.2) : (isFreeVisible ? 0.3 : 0.08));
-          const baseBorder = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.6 : 0.35) : (isFreeVisible ? 0.5 : 0.12));
-          const baseSoft = hexToRgbaPanel(t.color, isPaidUser ? (isActive ? 0.15 : 0.08) : (isFreeVisible ? 0.12 : 0.04));
-
-          // Gold override for paid active
-          const glowRgba = useGoldGlow ? hexToRgbaPanel(goldHex, 0.35) : baseRgba;
-          const glowBorder = useGoldGlow ? hexToRgbaPanel(goldHex, 0.65) : baseBorder;
-          const glowSoft = useGoldGlow ? hexToRgbaPanel(goldHex, 0.15) : baseSoft;
-
-          const shadow = (isActive && isPaidUser) || isFreeVisible
-            ? `0 0 40px 8px ${glowRgba}, 0 0 80px 16px ${glowSoft}, inset 0 0 25px 3px ${glowRgba}`
-            : `0 0 20px 4px ${glowRgba}, inset 0 0 15px 2px ${glowSoft}`;
-
           return (
-            <div
+            <TierWindow
               key={t.tier}
-              role={isPaidUser ? 'button' : undefined}
-              tabIndex={isPaidUser ? 0 : undefined}
-              onClick={isPaidUser && onTierChange ? () => onTierChange(t.tier) : undefined}
-              onKeyDown={isPaidUser && onTierChange ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTierChange(t.tier); }
-              } : undefined}
-              className={`relative flex-1 rounded-xl overflow-hidden flex flex-col ${
-                isPaidUser ? 'cursor-pointer' : ''
-              }`}
-              style={{
-                background: 'rgba(15, 23, 42, 0.97)',
-                border: `1px solid ${glowBorder}`,
-                boxShadow: shadow,
-                padding: 'clamp(10px, 1vw, 16px)',
-                transition: 'box-shadow 200ms ease-out, border-color 200ms ease-out',
-              }}
-            >
-              {/* Ethereal glow — top radial */}
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
-              />
-              {/* Bottom glow accent */}
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
-              />
-
-              {/* Content */}
-              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                {/* Header — "Image Prompt" + copy/save (visible tiers only) */}
-                <div className="flex items-center justify-between">
-                  <span
-                    className="font-semibold text-white"
-                    style={{
-                      fontSize: 'clamp(0.7rem, 0.8vw, 0.9rem)',
-                      textShadow: `0 0 12px ${hexToRgbaPanel(t.color, 0.4)}`,
-                    }}
-                  >
-                    Image Prompt
-                  </span>
-                  {!isBlurred && (
-                    <div className="flex items-center gap-1">
-                      <SaveIcon
-                        positivePrompt={promptText}
-                        platformId={t.platformId}
-                        platformName={t.platformName}
-                        source="tooltip"
-                        tier={t.tier}
-                        size="sm"
-                      />
-                      <TierWindowCopyButton text={promptText} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Tier badge pill */}
-                <span
-                  className={`inline-flex items-center self-start rounded-full font-medium ${t.bgClass} ring-1 ${t.ringClass}`}
-                  style={{
-                    fontSize: 'clamp(0.625rem, 0.65vw, 0.65rem)',
-                    padding: 'clamp(1px, 0.15vw, 3px) clamp(6px, 0.6vw, 10px)',
-                    gap: 'clamp(4px, 0.4vw, 6px)',
-                    color: t.color,
-                  }}
-                >
-                  <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(5px, 0.5vw, 7px)', height: 'clamp(5px, 0.5vw, 7px)' }} />
-                  Tier {t.tier}: {t.label}
-                </span>
-
-                {/* Prompt text — blurred for free users on locked tiers */}
-                <p
-                  className={`leading-relaxed flex-1 overflow-hidden whitespace-pre-wrap break-words ${
-                    isBlurred ? 'text-slate-400 select-none' : 'text-slate-200'
-                  }`}
-                  style={{
-                    fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)',
-                    filter: isBlurred ? 'blur(4px)' : undefined,
-                    WebkitFilter: isBlurred ? 'blur(4px)' : undefined,
-                  }}
-                  aria-hidden={isBlurred}
-                >
-                  {promptText}
-                </p>
-
-                {/* Lock icon overlay — centred on blurred tiers */}
-                {isBlurred && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                    <svg
-                      className="text-slate-400"
-                      style={{ width: 'clamp(20px, 2vw, 28px)', height: 'clamp(20px, 2vw, 28px)' }}
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
-                    >
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                  </div>
-                )}
-
-                {/* ✓ Selected — gold badge for paid active tier */}
-                {isPaidUser && isActive && (
-                  <span
-                    className="inline-flex items-center self-start gap-1 font-semibold"
-                    style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', color: '#EAB308' }}
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    Selected
-                  </span>
-                )}
-              </div>
-            </div>
+              t={t}
+              isActive={isActive}
+              isBlurred={isBlurred}
+              isFreeVisible={isFreeVisible}
+              isPaidUser={isPaidUser}
+              onTierChange={onTierChange}
+              promptText={promptText}
+            />
           );
         })}
       </div>
@@ -702,7 +765,7 @@ function ScenesPreviewPanel() {
                     <div key={s.name} className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
                       <span style={{ fontSize: 'clamp(0.65rem, 0.7vw, 0.85rem)' }}>{s.emoji}</span>
                       <span
-                        className="text-slate-300 truncate"
+                        className="text-white truncate"
                         style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
                       >
                         {s.name}
@@ -886,7 +949,7 @@ function SavedPreviewPanel() {
 
                 {/* Prompt text — fills available space */}
                 <p
-                  className="text-slate-200 leading-relaxed flex-1 overflow-hidden whitespace-pre-wrap break-words"
+                  className="text-white leading-relaxed flex-1 overflow-hidden whitespace-pre-wrap break-words"
                   style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
                 >
                   {prompt.positivePrompt}
@@ -920,7 +983,7 @@ function SavedPreviewPanel() {
           >
             <span style={{ fontSize: 'clamp(1.15rem, 1.4vw, 1.75rem)', color: 'rgba(167, 139, 250, 0.5)' }}>💾</span>
             <span
-              className="text-slate-400 text-center"
+              className="text-purple-400 text-center"
               style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', marginTop: 'clamp(4px, 0.4vw, 6px)' }}
             >
               Empty slot
@@ -1091,9 +1154,112 @@ const ROTATION_T4_MS = 20_000;  // 20 seconds
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────
 
+// ── LabTierWindow: Per-tier prompt window with auto-scroll ────────────────
+function LabTierWindow({
+  tier: t,
+  provider,
+  progress,
+  promptText,
+  tierCategoryMap,
+}: {
+  tier: typeof LAB_TIER_META[number];
+  provider: { id: string; name: string } | null;
+  progress: number;
+  promptText: string;
+  tierCategoryMap?: WeatherCategoryMap;
+}) {
+  const { containerRef, contentRef, scrollDist } = useAutoScroll();
+  const glowRgba = hexToRgbaPanel(t.color, 0.3);
+  const glowBorder = hexToRgbaPanel(t.color, 0.5);
+  const glowSoft = hexToRgbaPanel(t.color, 0.15);
+
+  return (
+    <div
+      className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+      style={{
+        background: 'rgba(15, 23, 42, 0.97)',
+        border: `1px solid ${glowBorder}`,
+        boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+        padding: 'clamp(8px, 0.8vw, 12px)',
+        paddingBottom: 'clamp(10px, 1vw, 14px)',
+        transition: 'box-shadow 200ms ease-out',
+      }}
+    >
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }} />
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
+
+      <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+        {/* Provider name + icon */}
+        <div className="flex items-center justify-between lab-fade-in shrink-0" key={provider?.id ?? t.tier}>
+          <span className="font-semibold truncate" style={{ color: t.color, fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)', textShadow: `0 0 12px ${glowRgba}` }}>
+            {provider?.name ?? t.label}
+          </span>
+          {provider && (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/icons/providers/${provider.id}.png`}
+                alt=""
+                className="rounded shrink-0"
+                style={{ width: 'clamp(16px, 1.4vw, 22px)', height: 'clamp(16px, 1.4vw, 22px)' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </>
+          )}
+        </div>
+
+        {/* Tier badge */}
+        <span
+          className={`inline-flex items-center self-start rounded-full font-medium shrink-0 ${t.bgClass} ring-1 ${t.ringClass}`}
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.6vw, 10px)', gap: 'clamp(3px, 0.3vw, 5px)', color: t.color, margin: 'clamp(3px, 0.3vw, 5px) 0' }}
+        >
+          <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(4px, 0.4vw, 6px)', height: 'clamp(4px, 0.4vw, 6px)' }} />
+          Tier {t.tier}: {t.label}
+        </span>
+
+        {/* Auto-scrolling colour-coded prompt */}
+        {promptText ? (
+          <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
+            <div
+              ref={contentRef}
+              className="pro-auto-scroll"
+              style={{ '--scroll-dist': `-${scrollDist}px`, animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
+            >
+              <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.8rem)' }}>
+                {(() => {
+                  if (!tierCategoryMap) return <span className="text-white">{promptText}</span>;
+                  const termIndex = labBuildTermIndex(tierCategoryMap);
+                  if (termIndex.size === 0) return <span className="text-white">{promptText}</span>;
+                  const segments = labParsePrompt(promptText.replace(/([a-z])([A-Z])/g, '$1 $2'), termIndex);
+                  return segments.map((seg, i) => {
+                    const clr = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                    return (
+                      <span key={i} style={{ color: clr, textShadow: seg.weight >= 1.05 ? `0 0 10px ${clr}50` : undefined }}>
+                        {seg.text}
+                      </span>
+                    );
+                  });
+                })()}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>Loading...</span>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="absolute bottom-0 left-0 right-0 overflow-hidden" style={{ height: '2px', background: 'rgba(255,255,255,0.06)' }}>
+        <div style={{ height: '100%', width: `${Math.round(progress * 100)}%`, background: t.color, transition: 'width 200ms linear' }} />
+      </div>
+    </div>
+  );
+}
+
 function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
   const { data: potmData } = usePromptShowcase();
   const { totalSec, timeStr } = useLabCountdown();
+  const { containerRef: w1ContainerRef, contentRef: w1ContentRef, scrollDist: w1ScrollDist } = useAutoScroll();
 
   const categoryMap = potmData?.tierSelections?.tier1?.categoryMap;
 
@@ -1193,12 +1359,9 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
           }}
         >
           <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(251, 113, 133, 0.2) 0%, transparent 70%)' }} />
-          <div className="relative z-10 flex flex-col h-full overflow-hidden" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+          <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
 
-            {/* Countdown — shows NEXT city arriving, matching homepage pattern:
-                Normal:   [flag] NextCity arriving in M:SS
-                Imminent: [flag] NextCity in M:SS
-                Now:      [flag] Now                        */}
+            {/* Countdown — fixed at top */}
             {potmData && (
               <div className="inline-flex items-center shrink-0" style={{ gap: 'clamp(6px, 0.5vw, 10px)', marginBottom: 'clamp(2px, 0.2vw, 4px)' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1219,13 +1382,13 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
                 ) : (
                   <>
                     <span className="text-white font-medium" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>{potmData.nextCity}</span>
-                    <span className="tabular-nums text-slate-400" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>arriving in {timeStr}</span>
+                    <span className="tabular-nums text-amber-400" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>arriving in {timeStr}</span>
                   </>
                 )}
               </div>
             )}
 
-            {/* "What Promagen Sees" — centered, pink with glow, halved gap */}
+            {/* "What Promagen Sees" — fixed */}
             <span
               className="font-semibold text-center shrink-0"
               style={{
@@ -1238,56 +1401,67 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
               What Promagen Sees
             </span>
 
-            {/* Current city weather data — flag + city name, then conditions · temp · time */}
-            {potmData && (
+            {/* Auto-scrolling middle section */}
+            <div ref={w1ContainerRef} className="flex-1 min-h-0 overflow-hidden">
               <div
-                className="flex flex-col items-center shrink-0"
-                style={{ margin: 'clamp(3px, 0.3vw, 5px) 0', gap: 'clamp(2px, 0.2vw, 4px)' }}
+                ref={w1ContentRef}
+                className="pro-auto-scroll"
+                style={{ '--scroll-dist': `-${w1ScrollDist}px`, animation: w1ScrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
               >
-                <div className="inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/flags/${(potmData.countryCode ?? '').toLowerCase()}.svg`}
-                    alt=""
-                    className="rounded-sm object-cover shrink-0"
-                    style={{ width: 'clamp(16px, 1.3vw, 20px)', height: 'clamp(12px, 1vw, 15px)' }}
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                  <span className="text-white font-semibold" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>
-                    {potmData.city}
-                  </span>
-                </div>
-                <span className="text-slate-400 text-center" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.73rem)' }}>
-                  {potmData.conditions}
-                  {potmData.weather?.tempC != null && (
-                    <> · {Math.round(potmData.weather.tempC)}°C</>
-                  )}
-                  {potmData.localTime && (
-                    <> · {potmData.localTime}</>
-                  )}
-                </span>
-              </div>
-            )}
-
-            {/* Dynamic category rows — only categories with data shown */}
-            {categoryRows.map((row) => (
-              <div key={row.cat} className="flex flex-col" style={{ gap: 'clamp(2px, 0.2vw, 4px)' }}>
-                <div className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
-                  <span style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}>{row.emoji}</span>
-                  <span className="text-slate-300" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{row.label}</span>
-                  <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{'\u2192'}</span>
-                  <span className="font-medium truncate" style={{ color: row.color, fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{row.selection}</span>
-                </div>
-                {row.custom && (
-                  <span className="text-slate-300 leading-tight" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', paddingLeft: 'clamp(15.0px, 1.3vw, 21.0px)' }}>
-                    {row.custom.length > 100 ? row.custom.slice(0, 98) + '\u2026' : row.custom}
-                  </span>
+                {/* Current city weather data */}
+                {potmData && (
+                  <div
+                    className="flex flex-col items-center"
+                    style={{ margin: 'clamp(3px, 0.3vw, 5px) 0', gap: 'clamp(2px, 0.2vw, 4px)' }}
+                  >
+                    <div className="inline-flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`/flags/${(potmData.countryCode ?? '').toLowerCase()}.svg`}
+                        alt=""
+                        className="rounded-sm object-cover shrink-0"
+                        style={{ width: 'clamp(16px, 1.3vw, 20px)', height: 'clamp(12px, 1vw, 15px)' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <span className="text-white font-semibold" style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.85rem)' }}>
+                        {potmData.city}
+                      </span>
+                    </div>
+                    <span className="text-white text-center" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.73rem)' }}>
+                      {potmData.conditions}
+                      {potmData.weather?.tempC != null && (
+                        <> · {Math.round(potmData.weather.tempC)}°C</>
+                      )}
+                      {potmData.localTime && (
+                        <> · {potmData.localTime}</>
+                      )}
+                    </span>
+                  </div>
                 )}
-              </div>
-            ))}
 
-            {/* Amber animated "Next provider in Xs" — footer of window 1 */}
-            <div className="mt-auto shrink-0" style={{ paddingTop: 'clamp(4px, 0.4vw, 6px)' }}>
+                {/* Dynamic category rows */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                  {categoryRows.map((row) => (
+                    <div key={row.cat} className="flex flex-col" style={{ gap: 'clamp(2px, 0.2vw, 4px)' }}>
+                      <div className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                        <span style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}>{row.emoji}</span>
+                        <span style={{ color: row.color, fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{row.label}</span>
+                        <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{'\u2192'}</span>
+                        <span className="font-medium truncate" style={{ color: row.color, fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>{row.selection}</span>
+                      </div>
+                      {row.custom && (
+                        <span className="text-white leading-tight" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', paddingLeft: 'clamp(15.0px, 1.3vw, 21.0px)' }}>
+                          {row.custom.length > 100 ? row.custom.slice(0, 98) + '\u2026' : row.custom}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Amber animated footer — fixed at bottom */}
+            <div className="shrink-0" style={{ paddingTop: 'clamp(4px, 0.4vw, 6px)' }}>
               <p
                 className="italic text-amber-400/80 animate-pulse text-center font-semibold"
                 style={{ fontSize: 'clamp(0.65rem, 0.75vw, 0.9rem)' }}
@@ -1299,94 +1473,16 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
         </div>
 
         {/* ── Windows 2-5: Per-Provider Assembled Prompts ────────────── */}
-        {LAB_TIER_META.map((t, idx) => {
-          const { provider, progress } = tierStates[idx]!;
-          const glowRgba = hexToRgbaPanel(t.color, 0.3);
-          const glowBorder = hexToRgbaPanel(t.color, 0.5);
-          const glowSoft = hexToRgbaPanel(t.color, 0.15);
-          const promptText = providerPrompts[idx] ?? '';
-          const tierCategoryMap = potmData?.tierSelections?.[t.promptKey]?.categoryMap;
-
-          return (
-            <div
-              key={`${t.tier}-${provider?.id}`}
-              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
-              style={{
-                background: 'rgba(15, 23, 42, 0.97)',
-                border: `1px solid ${glowBorder}`,
-                boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
-                padding: 'clamp(8px, 0.8vw, 12px)',
-                paddingBottom: 'clamp(10px, 1vw, 14px)',
-                transition: 'box-shadow 200ms ease-out',
-              }}
-            >
-              <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }} />
-              <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
-
-              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
-                {/* Provider name + icon (crossfades on rotation) */}
-                <div className="flex items-center justify-between lab-fade-in" key={provider?.id ?? t.tier}>
-                  <span className="font-semibold truncate" style={{ color: t.color, fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)', textShadow: `0 0 12px ${glowRgba}` }}>
-                    {provider?.name ?? t.label}
-                  </span>
-                  {provider && (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={`/icons/providers/${provider.id}.png`}
-                        alt=""
-                        className="rounded shrink-0"
-                        style={{ width: 'clamp(16px, 1.4vw, 22px)', height: 'clamp(16px, 1.4vw, 22px)' }}
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    </>
-                  )}
-                </div>
-
-                {/* Tier badge — double gap above and below */}
-                <span
-                  className={`inline-flex items-center self-start rounded-full font-medium ${t.bgClass} ring-1 ${t.ringClass}`}
-                  style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.6vw, 10px)', gap: 'clamp(3px, 0.3vw, 5px)', color: t.color, margin: 'clamp(3px, 0.3vw, 5px) 0' }}
-                >
-                  <span className={`rounded-full ${t.dotClass}`} style={{ width: 'clamp(4px, 0.4vw, 6px)', height: 'clamp(4px, 0.4vw, 6px)' }} />
-                  Tier {t.tier}: {t.label}
-                </span>
-
-                {/* Colour-coded prompt — REAL assemblePrompt() output */}
-                {promptText ? (
-                  <div className="flex-1 overflow-hidden">
-                    <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.8rem)' }}>
-                      {(() => {
-                        if (!tierCategoryMap) return <span className="text-slate-200">{promptText}</span>;
-                        const termIndex = labBuildTermIndex(tierCategoryMap);
-                        if (termIndex.size === 0) return <span className="text-slate-200">{promptText}</span>;
-                        const segments = labParsePrompt(promptText.replace(/([a-z])([A-Z])/g, '$1 $2'), termIndex);
-                        return segments.map((seg, i) => {
-                          const clr = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
-                          return (
-                            <span key={i} style={{ color: clr, textShadow: seg.weight >= 1.05 ? `0 0 10px ${clr}50` : undefined }}>
-                              {seg.text}
-                            </span>
-                          );
-                        });
-                      })()}
-                    </p>
-                  </div>
-                ) : (
-                  <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>Loading...</span>
-                )}
-              </div>
-
-              {/* Progress bar — 2px at absolute bottom, fills in tier colour */}
-              <div
-                className="absolute bottom-0 left-0 right-0 overflow-hidden"
-                style={{ height: '2px', background: 'rgba(255,255,255,0.06)' }}
-              >
-                <div style={{ height: '100%', width: `${Math.round(progress * 100)}%`, background: t.color, transition: 'width 200ms linear' }} />
-              </div>
-            </div>
-          );
-        })}
+        {LAB_TIER_META.map((t, idx) => (
+          <LabTierWindow
+            key={`${t.tier}-${tierStates[idx]?.provider?.id}`}
+            tier={t}
+            provider={tierStates[idx]?.provider ?? null}
+            progress={tierStates[idx]?.progress ?? 0}
+            promptText={providerPrompts[idx] ?? ''}
+            tierCategoryMap={potmData?.tierSelections?.[t.promptKey]?.categoryMap}
+          />
+        ))}
       </div>
 
       {/* ── 42 provider icons row ────────────────────────────────────── */}
@@ -1427,28 +1523,11 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
 
 function DailyPromptsPreviewPanel() {
   const { data: potmData } = usePromptShowcase();
-  const scrollRef = React.useRef<HTMLDivElement>(null);
-  const contentRef = React.useRef<HTMLDivElement>(null);
-  const [scrollDistance, setScrollDistance] = React.useState(0);
+  const { containerRef: scrollRef, contentRef, scrollDist } = useAutoScroll();
 
   const categoryMap = potmData?.tierSelections?.tier1?.categoryMap;
   // Derive provider from tier1 providers (PromptOfTheMoment has no .provider field)
   const provider = potmData?.tierProviders?.tier1?.[0] ?? null;
-
-  // Compute scroll distance from content overflow
-  React.useEffect(() => {
-    const container = scrollRef.current;
-    const content = contentRef.current;
-    if (!container || !content) return;
-    const measure = () => {
-      const overflow = content.scrollHeight - container.clientHeight;
-      setScrollDistance(Math.max(0, overflow));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(content);
-    return () => ro.disconnect();
-  }, [categoryMap]);
 
   // Build category rows from PotM data
   const categoryRows = React.useMemo(() => {
@@ -1507,8 +1586,6 @@ function DailyPromptsPreviewPanel() {
     window.location.href = `/providers/${provider.id}`;
   }, [provider, potmData]);
 
-  const totalCycleSec = 17;
-
   return (
     <div
       className="flex flex-col h-full cursor-pointer"
@@ -1517,21 +1594,7 @@ function DailyPromptsPreviewPanel() {
       role="button"
       tabIndex={0}
     >
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes dailyScroll {
-          0%, 1.8% { transform: translateY(0); }
-          47% { transform: translateY(var(--scroll-dist, 0px)); }
-          48.8%, 51.2% { transform: translateY(var(--scroll-dist, 0px)); }
-          98.2% { transform: translateY(0); }
-          100% { transform: translateY(0); }
-        }
-        .daily-scroll-inner {
-          animation: dailyScroll ${totalCycleSec}s ease-in-out infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .daily-scroll-inner { animation: none; }
-        }
-      `}} />
+      <style dangerouslySetInnerHTML={{ __html: PRO_AUTO_SCROLL_CSS }} />
 
       {/* Animated amber header — matches other preview panels */}
       <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
@@ -1560,8 +1623,8 @@ function DailyPromptsPreviewPanel() {
 
         <div
           ref={contentRef}
-          className="daily-scroll-inner"
-          style={{ '--scroll-dist': `-${scrollDistance}px`, padding: 'clamp(10px, 1vw, 16px)' } as React.CSSProperties}
+          className="pro-auto-scroll"
+          style={{ '--scroll-dist': `-${scrollDist}px`, padding: 'clamp(10px, 1vw, 16px)', animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none' } as React.CSSProperties}
         >
           {/* Provider name badge */}
           {provider && (
@@ -1577,8 +1640,8 @@ function DailyPromptsPreviewPanel() {
               <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.7rem, 0.75vw, 0.85rem)' }}>
                 {provider.name}
               </span>
-              <span className="text-white/40" style={{ fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)' }}>
-                · Prompt builder
+              <span className="font-semibold" style={{ fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)', color: '#fb7185' }}>
+                → Open Prompt Builder
               </span>
             </div>
           )}
@@ -1632,13 +1695,13 @@ function DailyPromptsPreviewPanel() {
                       </span>
                     ))}
                     {row.terms.length > 3 && (
-                      <span style={{ fontSize: 'clamp(0.45rem, 0.4vw, 0.55rem)', color: 'rgba(255,255,255,0.3)' }}>
+                      <span style={{ fontSize: 'clamp(0.45rem, 0.4vw, 0.55rem)', color: '#fbbf24' }}>
                         +{row.terms.length - 3}
                       </span>
                     )}
                   </div>
                 ) : (
-                  <span style={{ fontSize: 'clamp(0.45rem, 0.4vw, 0.55rem)', color: 'rgba(255,255,255,0.2)' }}>—</span>
+                  <span style={{ fontSize: 'clamp(0.45rem, 0.4vw, 0.55rem)', color: 'rgba(255,255,255,0.7)' }}>—</span>
                 )}
               </div>
             ))}
@@ -1656,7 +1719,7 @@ function DailyPromptsPreviewPanel() {
               >
                 ✨ Dynamic
               </span>
-              <span className="ml-auto text-white/30" style={{ fontSize: 'clamp(0.5rem, 0.45vw, 0.6rem)' }}>
+              <span className="ml-auto text-amber-400" style={{ fontSize: 'clamp(0.5rem, 0.45vw, 0.6rem)' }}>
                 {assembledText.length} chars
               </span>
             </div>
@@ -1717,7 +1780,7 @@ function DailyPromptsPreviewPanel() {
           <div style={{ marginTop: 'clamp(8px, 0.8vw, 12px)', paddingTop: 'clamp(6px, 0.6vw, 10px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-1 mb-1">
               <span style={{ fontSize: 'clamp(0.65rem, 0.6vw, 0.75rem)' }}>🎨</span>
-              <span className="font-medium text-white/60" style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)' }}>
+              <span className="font-medium text-white" style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)' }}>
                 Category Colour Key
               </span>
             </div>
@@ -1783,6 +1846,116 @@ const EXCHANGE_REGIONS: Array<{
   },
 ];
 
+// ── ExchangeRegionWindow: Single region column with auto-scroll ───────────
+function ExchangeRegionWindow({
+  region,
+  exchanges,
+  isFirstRegion,
+  cardMeasureRef,
+}: {
+  region: typeof EXCHANGE_REGIONS[number];
+  exchanges: ExchangeCatalogEntry[];
+  isFirstRegion: boolean;
+  cardMeasureRef: React.RefObject<HTMLDivElement>;
+}) {
+  const { containerRef, contentRef, scrollDist } = useAutoScroll();
+  const glowRgba = hexToRgbaPanel(region.color, 0.3);
+  const glowBorder = hexToRgbaPanel(region.color, 0.5);
+  const glowSoft = hexToRgbaPanel(region.color, 0.15);
+
+  return (
+    <div
+      className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+      style={{
+        background: 'rgba(15, 23, 42, 0.97)',
+        border: `1px solid ${glowBorder}`,
+        boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+        padding: 'clamp(8px, 0.8vw, 14px)',
+        transition: 'box-shadow 200ms ease-out',
+      }}
+    >
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }} />
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
+
+      <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
+        {/* Region heading — fixed */}
+        <div className="flex items-center shrink-0" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+          <span style={{ fontSize: 'clamp(0.85rem, 1vw, 1.2rem)' }}>{region.emoji}</span>
+          <span className="font-semibold text-white truncate" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)', textShadow: `0 0 12px ${glowRgba}` }}>
+            {region.label}
+          </span>
+          <span className="ml-auto font-bold tabular-nums shrink-0" style={{ color: region.color, fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+            {exchanges.length}
+          </span>
+        </div>
+
+        {/* Auto-scrolling exchange cards */}
+        <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
+          <div
+            ref={contentRef}
+            className="pro-auto-scroll"
+            style={{ '--scroll-dist': `-${scrollDist}px`, animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none', display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 1.2vw, 18px)' } as React.CSSProperties}
+          >
+            {exchanges.map((ex, exIdx) => {
+              const exColor = ex.hoverColor ?? '#A855F7';
+              const exGlow = hexToRgbaPanel(exColor, 0.25);
+              const exBorder = hexToRgbaPanel(exColor, 0.4);
+              const ms = ex.marketstack;
+              const indexName = ms
+                ? (isMultiIndexConfig(ms) ? ms.defaultIndexName : ms.indexName)
+                : '';
+              const measureRef = isFirstRegion && exIdx === 0 ? cardMeasureRef : undefined;
+
+              return (
+                <div
+                  key={ex.id}
+                  ref={measureRef}
+                  className="relative rounded-lg overflow-hidden shrink-0"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid ${exBorder}`,
+                    boxShadow: `0 0 12px 2px ${exGlow}, inset 0 0 8px 1px ${hexToRgbaPanel(exColor, 0.1)}`,
+                    padding: 'clamp(5px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px)',
+                  }}
+                >
+                  <span
+                    className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
+                    style={{ background: `radial-gradient(ellipse at 50% 0%, ${exGlow} 0%, transparent 70%)` }}
+                    aria-hidden="true"
+                  />
+                  <div className="relative z-10 flex items-center" style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/flags/${(ex.iso2 ?? '').toLowerCase()}.svg`}
+                      alt=""
+                      className="rounded-sm shrink-0"
+                      style={{ width: 'clamp(16px, 1.4vw, 22px)', height: 'clamp(11px, 1vw, 15px)' }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <span className="font-medium text-white truncate" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+                      {ex.name ?? ex.exchange ?? ex.id}
+                    </span>
+                    <span className="text-white truncate ml-auto shrink-0" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
+                      {ex.city}
+                    </span>
+                  </div>
+                  {indexName && (
+                    <div className="relative z-10" style={{ marginTop: 'clamp(2px, 0.2vw, 3px)' }}>
+                      <span className="text-cyan-400" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
+                        {indexName}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ExchangesPreviewPanel({
   exchangeCatalog,
   onOpenPicker,
@@ -1790,8 +1963,8 @@ function ExchangesPreviewPanel({
   exchangeCatalog: ExchangeCatalogEntry[];
   onOpenPicker: () => void;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const cardMeasureRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null!);
+  const cardMeasureRef = useRef<HTMLDivElement>(null!);
   const [containerHeight, setContainerHeight] = useState(0);
   const [measuredCardHeight, setMeasuredCardHeight] = useState(0);
 
@@ -1914,7 +2087,7 @@ function ExchangesPreviewPanel({
               Configure Your Exchanges
             </p>
             <p
-              className="text-slate-300 text-center leading-relaxed"
+              className="text-white text-center leading-relaxed"
               style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
             >
               Select 6–16 exchanges to shape every prompt
@@ -1941,139 +2114,15 @@ function ExchangesPreviewPanel({
         </div>
 
         {/* Windows 2-5: Regional exchange cards */}
-        {EXCHANGE_REGIONS.map((region, idx) => {
-          const glowRgba = hexToRgbaPanel(region.color, 0.3);
-          const glowBorder = hexToRgbaPanel(region.color, 0.5);
-          const glowSoft = hexToRgbaPanel(region.color, 0.15);
-          const exchanges = regionExchanges[idx] ?? [];
-          const isFirstRegion = idx === 0;
-
-          return (
-            <div
-              key={region.label}
-              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
-              style={{
-                background: 'rgba(15, 23, 42, 0.97)',
-                border: `1px solid ${glowBorder}`,
-                boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
-                padding: 'clamp(8px, 0.8vw, 14px)',
-                transition: 'box-shadow 200ms ease-out',
-              }}
-            >
-              {/* Ethereal glow — top radial */}
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
-              />
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
-              />
-
-              {/* Content */}
-              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
-                {/* Region heading */}
-                <div className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
-                  <span style={{ fontSize: 'clamp(0.85rem, 1vw, 1.2rem)' }}>{region.emoji}</span>
-                  <span
-                    className="font-semibold text-white truncate"
-                    style={{
-                      fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)',
-                      textShadow: `0 0 12px ${glowRgba}`,
-                    }}
-                  >
-                    {region.label}
-                  </span>
-                  <span
-                    className="ml-auto font-bold tabular-nums shrink-0"
-                    style={{ color: region.color, fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
-                  >
-                    {exchanges.length}
-                  </span>
-                </div>
-
-                {/* Mini exchange cards — matching real rail card style */}
-                <div className="flex flex-col flex-1 overflow-hidden" style={{ gap: 'clamp(12px, 1.2vw, 18px)' }}>
-                  {exchanges.map((ex, exIdx) => {
-                    const exColor = ex.hoverColor ?? '#A855F7';
-                    const exGlow = hexToRgbaPanel(exColor, 0.25);
-                    const exBorder = hexToRgbaPanel(exColor, 0.4);
-                    // Same logic as real exchange card: extract defaultIndexName properly
-                    // Uses isMultiIndexConfig type guard for type-safe access
-                    const ms = ex.marketstack;
-                    const indexName = ms
-                      ? (isMultiIndexConfig(ms) ? ms.defaultIndexName : ms.indexName)
-                      : '';
-                    // Attach measurement ref to very first card (first region, first card)
-                    const measureRef = isFirstRegion && exIdx === 0 ? cardMeasureRef : undefined;
-
-                    return (
-                      <div
-                        key={ex.id}
-                        ref={measureRef}
-                        className="relative rounded-lg overflow-hidden shrink-0"
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: `1px solid ${exBorder}`,
-                          boxShadow: `0 0 12px 2px ${exGlow}, inset 0 0 8px 1px ${hexToRgbaPanel(exColor, 0.1)}`,
-                          padding: 'clamp(5px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px)',
-                        }}
-                      >
-                        {/* Ethereal glow - top radial (same as real exchange card) */}
-                        <span
-                          className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
-                          style={{
-                            background: `radial-gradient(ellipse at 50% 0%, ${exGlow} 0%, transparent 70%)`,
-                          }}
-                          aria-hidden="true"
-                        />
-                        <div className="relative z-10 flex items-center" style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}>
-                          {/* Flag */}
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`/flags/${(ex.iso2 ?? '').toLowerCase()}.svg`}
-                            alt=""
-                            className="rounded-sm shrink-0"
-                            style={{
-                              width: 'clamp(16px, 1.4vw, 22px)',
-                              height: 'clamp(11px, 1vw, 15px)',
-                            }}
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                          {/* Exchange name */}
-                          <span
-                            className="font-medium text-slate-100 truncate"
-                            style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
-                          >
-                            {ex.name ?? ex.exchange ?? ex.id}
-                          </span>
-                          {/* City — right aligned */}
-                          <span
-                            className="text-slate-300 truncate ml-auto shrink-0"
-                            style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
-                          >
-                            {ex.city}
-                          </span>
-                        </div>
-                        {/* Index name row — only shown when data exists (same as real rails) */}
-                        {indexName && (
-                          <div className="relative z-10" style={{ marginTop: 'clamp(2px, 0.2vw, 3px)' }}>
-                            <span
-                              className="text-slate-400"
-                              style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
-                            >
-                              {indexName}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {EXCHANGE_REGIONS.map((region, idx) => (
+          <ExchangeRegionWindow
+            key={region.label}
+            region={region}
+            exchanges={regionExchanges[idx] ?? []}
+            isFirstRegion={idx === 0}
+            cardMeasureRef={cardMeasureRef}
+          />
+        ))}
       </div>
 
       {/* Bottom row — exchange count + Pro benefit */}
@@ -2182,7 +2231,7 @@ export default function ProPromagenClient({
   const switchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
   const inPreviewRef = useRef(false);
   const activePanelRef = useRef<PreviewPanel | null>(null);
-  const previewPanelRef = useRef<HTMLDivElement>(null);
+  const previewPanelRef = useRef<HTMLDivElement>(null!);
 
   // Keep activePanelRef in sync
   useEffect(() => {

@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 7 March 2026
+**Last updated:** 18 March 2026
 
 ---
 
@@ -184,8 +184,10 @@ Promagen must feel calm and premium. Random container styles make pages feel "ch
 
 ### Minimum text size and banned colours
 
-**Minimum text size — 9px floor:**
-No text in Promagen may render below 9px. Every `clamp()` min value for `fontSize` must be ≥ 9px (≥ 0.5625rem). Em-based sizes in snap-fit containers must not compute below 9px at the minimum snap-fit base. The reference is the "6 categories" text in scene cards — that is the smallest acceptable text.
+**Minimum text size — 10px floor:**
+No text in Promagen may render below 10px. Every `clamp()` min value for `fontSize` must be ≥ 10px (≥ 0.625rem). Em-based sizes in snap-fit containers must not compute below 10px at the minimum snap-fit base. The reference is the "6 categories" text in scene cards — that is the smallest acceptable text.
+
+**Note:** Updated from 9px to 10px (18 March 2026). The previous 9px floor was too small for readability at standard viewing distance.
 
 **Banned text colours:**
 `text-slate-500` (`#64748b`) and `text-slate-600` (`#475569`) are banned. They are invisible on Promagen's dark backgrounds. Dimmest permitted: `text-slate-400` (`#94A3B8`). For subtler text, use `text-white/60` (opacity on white) instead of darker slate classes.
@@ -853,6 +855,160 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 ---
 
+### Tooltip standards (cross-component consistency)
+
+**Added:** 18 March 2026
+
+All custom tooltips (weather-prompt-tooltip, commodity-prompt-tooltip, CategoryColourLegend, and any future tooltips) must follow these rules:
+
+**1. Close delay: 400ms** — Every custom tooltip has a 400ms delay on mouse leave before closing. This prevents accidental closure when cursor briefly exits the tooltip boundary. Native HTML `title` tooltips are exempt (browser-controlled).
+
+**2. Background: solid `rgba(15, 23, 42, 0.97)`** — No opacity-based backgrounds. The solid dark glass ensures readability. No transparency, no blur filters.
+
+**3. Sign-in prompts: plain `<a href="/sign-in">`** — Never use `SignInButton mode="modal"` inside tooltips. Clerk's modal portal fights with z-index stacking in z-50 tooltips, causing the modal to render behind the tooltip. Use a plain anchor tag instead.
+
+**4. No question mark icons** — Tooltip triggers must never use `?`, `❓`, or `HelpCircle` icons. The element itself is the hover target. If a dedicated trigger is needed, use `(i)` — never `?`. Question marks imply confusion; Promagen's UI should feel confident.
+
+**5. Minimum font: 10px** — All tooltip text uses `clamp()` with a minimum of 10px (see updated font floor above).
+
+**Authority:** `code-standard.md` § 7.1, § 6.0.4, § 6.0.5
+
+---
+
+### Cursor-pointer on all interactive elements
+
+**Added:** 18 March 2026
+
+Every element that responds to user click must show `cursor: pointer`. An arrow cursor on a clickable element is broken UX — the user cannot tell it's interactive.
+
+This applies to: buttons, tab pills, clickable cards, toggles, copy/save icons, intelligence panel tabs (Conflicts, Suggestions, Market Mood), weather suggestion chips, and any `<div>` or `<span>` with an `onClick` handler.
+
+**Review gate:** Hover every interactive element before shipping. If the cursor stays as an arrow, add `cursor-pointer` (Tailwind class) or `style={{ cursor: 'pointer' }}`.
+
+**Authority:** `code-standard.md` § 6.0.4
+
+---
+
+### SSOT colour constants (prompt-colours.ts)
+
+**Added:** 18 March 2026
+
+All 13 prompt category colours (Subject=gold, Action=lime, Style=purple, etc.) are defined **once** in `src/lib/prompt-colours.ts` and imported everywhere. No component may define its own `CATEGORY_COLOURS` constant.
+
+**Why this matters:** Before the SSOT, there were 3 separate `CATEGORY_COLOURS` definitions (prompt-showcase, pro-promagen-client, admin vocab page) that drifted apart. One had structural=slate, another had structural=fuchsia. The SSOT eliminates this class of bug.
+
+**Exports:** `CATEGORY_COLOURS`, `CATEGORY_LABELS`, `CATEGORY_EMOJIS`, `buildTermIndexFromSelections()`, `parsePromptIntoSegments()`.
+
+**Consumers (6 files):** `prompt-builder.tsx`, `enhanced-educational-preview.tsx`, `four-tier-prompt-preview.tsx`, `prompt-showcase.tsx`, `pro-promagen-client.tsx`, `prompt-intelligence-builder.tsx`.
+
+**Authority:** `code-standard.md` § 6.14
+
+---
+
+### Debounced intent pattern (hover panel switching)
+
+**Added:** 18 March 2026
+
+When hoverable cards trigger preview panels below them (e.g., Pro page Feature Control Panel), use **temporal debouncing** to filter accidental triggers during diagonal cursor movement.
+
+**The problem:** Cards sit above the preview panel. Moving the cursor from a card down to its preview crosses other cards, triggering unwanted panel switches.
+
+**Failed approach (intent triangle, v4.0):** An Amazon-style geometric corridor from cursor anchor to preview panel edges. This failed because the single-point triangle apex created a razor-thin corridor that only worked ~5% of the time on small card grids. **Do not re-implement.**
+
+**Correct approach (debounced intent, v5.0):**
+
+| State | Behaviour |
+| --- | --- |
+| No panel active | First card hover → switch immediately (0ms) |
+| Same card re-hovered | No action |
+| Different card hovered while panel active | 150ms debounce → switch if cursor stays |
+| Card leave (no other card entered) | 2-second linger timer → close if cursor doesn't enter preview |
+| Cursor enters preview panel | Cancel all timers (safe zone) |
+| Cursor leaves preview panel | Close immediately |
+
+**Why 150ms:** Fast enough to feel instant for deliberate hovers. Long enough to filter diagonal movement across a 3×3 card grid where cards are small and closely spaced.
+
+**Reference implementation:** `src/app/pro-promagen/pro-promagen-client.tsx` (v5.0.0)
+
+**Authority:** `code-standard.md` § 6.11
+
+---
+
+### Auto-scroll animation pattern (preview showcases)
+
+**Added:** 18 March 2026
+
+When content overflows a fixed-height container and needs to be showcased without user interaction (e.g., Daily Prompts preview panel showing a miniaturised builder), use CSS `@keyframes` auto-scrolling with `translateY`.
+
+**Timing spec:**
+
+1. Content starts at `translateY(0)` (top visible)
+2. 0.3s hold at top
+3. Slow scroll down over ~8 seconds (ease-in-out)
+4. 0.3s hold at bottom
+5. Slow scroll back up over ~8 seconds
+6. Total cycle: ~17 seconds, repeat infinitely
+
+**Scroll distance:** Computed dynamically via `ResizeObserver` on content height minus container height. Stored as CSS custom property `--scroll-dist`.
+
+**Rules:**
+- Animation defined in `<style dangerouslySetInnerHTML>` (co-located, not globals.css)
+- `@media (prefers-reduced-motion: reduce)` disables the animation
+- Container uses `overflow: hidden` (no visible scrollbar)
+- ResizeObserver cleanup in useEffect return
+
+**Reference implementation:** `DailyPromptsPreviewPanel` in `pro-promagen-client.tsx`
+
+**Authority:** `code-standard.md` § 6.12
+
+---
+
+### Shared hook state sync (same-tab StorageEvent)
+
+**Added:** 18 March 2026
+
+When multiple instances of the same React hook need to stay in sync on the same page (e.g., `useGlobalPromptTier` on the Pro page and exchange tooltips), use **synthetic StorageEvent dispatch** after writing to localStorage.
+
+**The problem:** Native `StorageEvent` only fires in OTHER browser tabs. When one hook instance writes to localStorage, other instances on the same page don't hear it.
+
+**The solution:** After `localStorage.setItem()`, dispatch:
+
+```typescript
+window.dispatchEvent(
+  new StorageEvent('storage', {
+    key: STORAGE_KEY,
+    newValue: JSON.stringify(newValue),
+  }),
+);
+```
+
+Every hook instance listening via `window.addEventListener('storage', ...)` picks it up — same tab and other tabs.
+
+**Rules:**
+- The hook that writes the value owns the dispatch — not the caller
+- Never use local `useState` for state that needs cross-component sync — always use the shared hook
+- The shared hook is the single source of truth — components never read localStorage directly
+
+**Reference implementation:** `src/hooks/use-global-prompt-tier.ts` (v2.0.0)
+
+**Authority:** `code-standard.md` § 6.13, `paid_tier.md` § 5.16
+
+---
+
+### "Show the tool, not the output" principle
+
+**Added:** 18 March 2026
+
+When designing preview panels or feature showcases, prefer showing **what the tool looks like to use** over showing **what it produces**.
+
+**Example:** The Daily Prompts preview on the Pro page. Three other previews already show prompt output (Prompt Format shows 4-tier text, Prompt Lab shows category data + tier prompts, Saved shows saved prompt text). Adding another output view would be repetition. Instead, the Daily Prompts preview shows a miniaturised version of the standard builder — 12 colour-coded category rows with selected chips, assembled prompt box, optimized prompt box. Users see the cockpit, not the product.
+
+**When to apply:** Any time you're designing a feature showcase, onboarding element, or marketing preview. Ask: "Has the user already seen what this tool *produces* elsewhere?" If yes, show what it *looks like to use* instead.
+
+**Human factor:** Curiosity Gap — showing the tool creates "I want to try this" more effectively than showing the output, because the output is static but the tool is interactive.
+
+---
+
 ## Performance Guardrails (CLS Prevention)
 
 **Purpose:**
@@ -983,6 +1139,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **18 Mar 2026:** Major update — 7 new subsections under UI Consistency + UX Patterns. (1) Tooltip standards: 400ms close delay, solid `rgba(15,23,42,0.97)` bg, sign-in as plain `<a>` not `SignInButton mode="modal"`, no question mark icons. (2) Cursor-pointer on all interactive elements. (3) SSOT colour constants: `prompt-colours.ts` as sole source of truth for 13 category colours, 6 consumers listed. (4) Debounced intent pattern: 150ms hover panel switching replacing failed intent triangle, full state table. (5) Auto-scroll animation pattern: 17s cycle spec, ResizeObserver distance, CSS custom property. (6) Shared hook state sync: synthetic StorageEvent for same-tab cross-hook sync. (7) "Show the tool, not the output" principle for feature showcases. Updated minimum text size from 9px to 10px floor. Cross-refs: code-standard.md §6.0.4/6.0.5/6.11-6.14, paid_tier.md §5.14/5.16.
 - **15 Mar 2026:** Added "Equal-gap card spacing" subsection under UI Consistency. One vertical spacing system per card — never mix `padding` with `space-evenly`. Viewport-controlled cards use `paddingInline` only + `align-content: space-evenly`. Content-sized cards use `padding` + `flex-col`. Cross-ref code-standard.md § 6.10.
 - **16 Feb 2026:** Major v3.0 alignment with code-standard.md. Three updates:
   - **Universal `clamp()` Sizing** — Expanded "Fluid Typography" (text-only) into full universal mandate covering ALL visible dimensions: text, icons, buttons, gaps, padding, margins, container heights, image wrappers. Added standard scale tables for icons, spacing, and containers alongside existing text scales. Added code examples for buttons, icons, panels, and flag images. Added exceptions list and compliance check. Cross-ref code-standard.md § 6.0, Golden Rule #11.

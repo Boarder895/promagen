@@ -1,7 +1,7 @@
 # paid_tier.md â€” What Is Free and What Is Paid in Promagen
 
-**Last updated:** 17 March 2026  
-**Version:** 4.0.0  
+**Last updated:** 18 March 2026  
+**Version:** 5.0.0  
 **Status:** Authoritative  
 **Scope:** Product behaviour, access rules, and monetisation boundaries  
 **Rule:** If a capability is not explicitly listed in this document, it is free.
@@ -1093,8 +1093,8 @@ Authority for implementation: `docs/authority/TODO-api-integration.md`
 
 ### 5.10 Pro Promagen Page — Feature Control Panel (`/pro-promagen`)
 
-**Last updated:** 17 March 2026
-**Architecture:** Feature Control Panel v2.0.0 + Hover Bridge v4.0.0
+**Last updated:** 18 March 2026
+**Architecture:** Feature Control Panel v2.1.0 + Debounced Intent v5.0.0
 **Replaces:** Comparison table layout (removed 14 March 2026)
 
 The `/pro-promagen` route serves **two purposes from the same UI**:
@@ -1192,35 +1192,38 @@ Prompt Format card hover → setFormatHovered(true)
 Mouse leave → setFormatHovered(false) → CTA/UpgradeCta renders
 ```
 
-#### Hover Bridge Pattern (All 9 Cards — v4.0.0)
+#### Hover Bridge + Debounced Intent Pattern (All 9 Cards — v5.0.0)
 
-All 9 feature cards use the **hover bridge** pattern for preview panels:
+All 9 feature cards (6 with previews, 3 info-only) use the **debounced intent detection** pattern for preview panels:
 
-1. **Card hover** → opens corresponding preview panel instantly
-2. **Card leave** → starts 2-second linger timer
-3. **Cursor enters preview panel before timer expires** → cancels timer, panel stays open
-4. **Cursor leaves preview panel** → panel closes immediately
-5. **Hovering a different card** → immediately switches to that card's panel (no delay)
+1. **No active panel → first card hover** → opens preview instantly (zero debounce)
+2. **Same card re-hovered** → no action (already showing)
+3. **Different card hovered while panel is active** → 150ms debounce starts. If cursor leaves that card within 150ms (passing through toward the preview), switch is cancelled. If cursor stays 150ms (deliberate hover), panel switches.
+4. **Cursor enters preview panel** → cancels all debounces and linger timers (safe zone)
+5. **Card leave without entering another card** → starts 2-second linger timer
+6. **Cursor leaves preview panel** → panel closes immediately
 
-**Linger duration:** 2000ms. Below 1500ms is too rushed. Above 2500ms feels sluggish.
+**Why 150ms debounce (not 100ms or 200ms):** 150ms is fast enough to feel instant for deliberate hovers, long enough to filter diagonal cursor movement across cards while heading toward the preview panel below. Tested against the 3×3 grid layout where cards are small and closely spaced.
 
-**Implementation:** Single `activePanel` state (union type) + `lingerRef` (setTimeout) + `inPreviewRef` (boolean). Preview panel container has `onMouseEnter`/`onMouseLeave` handlers, only attached when `activePanel !== null`.
+**History:** v4.0.0 used an intent triangle (Amazon mega-menu pattern) — a geometric corridor from cursor anchor to preview panel edges. This failed because the single-point triangle apex created a razor-thin corridor that only worked ~5% of the time on small card grids. v5.0.0 replaces geometry with temporal debouncing, which is geometry-independent and works 100% of the time.
 
-**Performance:** All 6 preview panels are always mounted, toggled via `style={{ display: activePanel === 'x' ? 'flex' : 'none' }}`. This avoids mount-on-hover spikes. CSS toggle = zero React work, instant paint.
+**Implementation:** Single `activePanel` state (union type) + `lingerRef` (2s setTimeout) + `switchDebounceRef` (150ms setTimeout) + `inPreviewRef` (boolean). Preview panel container has `onMouseEnter`/`onMouseLeave` handlers, only attached when `activePanel !== null`.
+
+**Performance:** All 7 preview panels (6 feature + 1 CTA/payment) are always mounted, toggled via `style={{ display: activePanel === 'x' ? 'flex' : 'none' }}`. This avoids mount-on-hover spikes. CSS toggle = zero React work, instant paint.
 
 **Preview panels per card:**
 
-| Card             | Preview Panel         | Content                                                |
-| ---------------- | --------------------- | ------------------------------------------------------ |
-| ⚡ Daily Prompts | None                  | No preview (info-only card)                            |
-| 🎨 Prompt Format | TierPreviewPanel      | 4 horizontal tooltip-clone windows with live PotM data |
-| 🎬 Scenes        | ScenesPreviewPanel    | 5 free world windows + 18 pro world emojis             |
-| 📊 Exchanges     | ExchangesPreviewPanel | CTA window + 4 regional mini exchange cards            |
-| 💾 Saved         | SavedPreviewPanel     | Up to 5 most recent saved prompts                      |
-| 🧪 Prompt Lab    | PromptLabPreviewPanel | "What Promagen Sees" + 4 rotating provider prompts     |
-| 🌍 Frame         | None                  | No preview                                             |
-| ⚙️ Stacking      | None                  | No preview                                             |
-| 🏆 Vote Power    | None                  | No preview                                             |
+| Card             | Preview Panel              | Content                                                              |
+| ---------------- | -------------------------- | -------------------------------------------------------------------- |
+| ⚡ Daily Prompts | DailyPromptsPreviewPanel   | Miniaturised builder mockup with auto-scrolling colour-coded prompt  |
+| 🎨 Prompt Format | TierPreviewPanel           | 4 horizontal tooltip-clone windows with live PotM data               |
+| 🎬 Scenes        | ScenesPreviewPanel         | 5 free world windows + 18 pro world emojis                          |
+| 📊 Exchanges     | ExchangesPreviewPanel      | CTA window + 4 regional mini exchange cards                          |
+| 💾 Saved         | SavedPreviewPanel          | Up to 5 most recent saved prompts                                    |
+| 🧪 Prompt Lab    | PromptLabPreviewPanel      | "What Promagen Sees" + 4 rotating provider prompts                   |
+| 🌍 Frame         | None                       | No preview                                                           |
+| ⚙️ Stacking      | None                       | No preview                                                           |
+| 🏆 Vote Power    | None                       | No preview                                                           |
 
 #### Exchanges Preview Panel (v4.0.0)
 
@@ -1229,6 +1232,36 @@ When the Exchanges card is hovered, 5 vertical windows appear:
 **Window 1 (CTA):** "Configure Your Exchanges" with 📊 icon, description ("Select 6–16 exchanges to shape every prompt"), and clickable "Click to Select" button opening the fullscreen Exchange Picker. Cyan (#22d3ee) glow.
 
 **Windows 2–5 (Regional):** Americas, Europe, Africa & M. East, Asia Pacific. Each shows mini exchange cards with flag + name + city + index name (where available). Cards styled identically to real rail cards. One exchange per country (deduped by iso2). Display order follows `iso2Codes` array (Americas: US, CA, MX first). Only whole cards shown — uses Engine Bay measurement pattern (ResizeObserver + `Math.floor`). Amber header: "Choose the exchanges that power your prompts".
+
+#### Daily Prompts Preview Panel (v5.0.0)
+
+When the Daily Prompts card is hovered, a miniaturised, read-only snapshot of the standard prompt builder appears. This shows what the tool *looks like to use*, not the output — differentiating from the Prompt Lab and Prompt Format previews.
+
+**Content (auto-scrolling vertically):**
+
+- **Provider badge** — icon + name from PotM `tierProviders.tier1[0]`
+- **12 category rows** in a compact 2-column grid, each label in its `CATEGORY_COLOURS` colour with selected terms as coloured chips (max 3 visible + overflow count)
+- **Assembled prompt box** — full colour-coded text via `parsePromptIntoSegments()`, "✨ Dynamic" stage badge, char count
+- **Optimized prompt box** — emerald border, "⚡ Optimized" badge, colour-coded text
+- **🎨 Category Colour Key** — 4-column mini legend at the bottom
+
+**Auto-scroll animation:**
+- Content starts at `translateY(0)` (top visible)
+- 0.3s hold
+- Slow scroll down over ~8 seconds (CSS `@keyframes`, ease-in-out)
+- 0.3s hold at bottom
+- Slow scroll back up over ~8 seconds
+- Total cycle: ~17 seconds
+- `prefers-reduced-motion` disables the scroll
+- Scroll distance computed via `ResizeObserver` on content height minus container height
+
+**Data source:** `usePromptShowcase()` — same PotM data that rotates every 3 minutes on the homepage. Assembled prompt computed live via `assemblePrompt()` with the PotM's `categoryMap` and `tierProviders.tier1[0]`.
+
+**Click behaviour:** Clicking anywhere in the preview navigates to `/providers/{providerId}` with the PotM payload pre-loaded via `sessionStorage.setItem('promagen:preloaded-payload', ...)`. User lands in the real builder with live data already populated.
+
+**Amber header text:** "Unlimited colour-coded prompts — this is what Pro looks like" — italic, pulsing, same `text-amber-400/80 animate-pulse` pattern as all other preview panels.
+
+**Design matches:** Same glass/glow pattern as other preview panels — amber (#f59e0b) tint matching Daily Prompts card colour, `rgba(15, 23, 42, 0.97)` background, triple-layer box-shadow, radial gradient overlays.
 
 #### Exchange Selection Save Gating
 
@@ -1261,63 +1294,88 @@ When paid users click the Exchanges card (or free users click "Customise"):
 
 #### Component Architecture
 
-| Component             | Source                                            | Notes                                   |
-| --------------------- | ------------------------------------------------- | --------------------------------------- |
-| `HomepageGrid`        | `@/components/layout/homepage-grid`               | Standard 3-column layout                |
-| `FeatureControlPanel` | `@/components/pro-promagen/feature-control-panel` | 3×3 feature card grid (v1.1.0)          |
-| `TierPreviewPanel`    | `pro-promagen-client.tsx` (inline)                | 4 tooltip-clone windows with PotM data  |
-| `UpgradeCta`          | `@/components/pro-promagen/upgrade-cta`           | Mode-aware button                       |
-| `ExchangePicker`      | `@/components/pro-promagen/exchange-picker`       | Continental accordion (fullscreen mode) |
-| `ExchangeList`        | `@/components/ribbon/exchange-list`               | Left/right exchange rails               |
-| `EngineBay`           | `@/components/home/engine-bay`                    | Provider icon grid (xl+ only)           |
-| `MissionControl`      | `@/components/home/mission-control`               | Home button shown (not Pro button)      |
-| `SaveIcon`            | `@/components/prompts/library/save-icon`          | Save button in tier preview windows     |
-| `usePromptShowcase`   | `@/hooks/use-prompt-showcase`                     | Live PotM data for tier preview         |
+| Component                  | Source                                            | Notes                                           |
+| -------------------------- | ------------------------------------------------- | ----------------------------------------------- |
+| `HomepageGrid`             | `@/components/layout/homepage-grid`               | Standard 3-column layout                        |
+| `FeatureControlPanel`      | `@/components/pro-promagen/feature-control-panel` | 3×3 feature card grid (v2.1.0, 419 lines)       |
+| `TierPreviewPanel`         | `pro-promagen-client.tsx` (inline)                | 4 tooltip-clone windows with PotM data          |
+| `DailyPromptsPreviewPanel` | `pro-promagen-client.tsx` (inline)                | Auto-scrolling miniaturised builder mockup       |
+| `UpgradeCta`               | `@/components/pro-promagen/upgrade-cta`           | Mode-aware button                               |
+| `ExchangePicker`           | `@/components/pro-promagen/exchange-picker`       | Continental accordion (fullscreen mode)          |
+| `ExchangeList`             | `@/components/ribbon/exchange-list`               | Left/right exchange rails                       |
+| `EngineBay`                | `@/components/home/engine-bay`                    | Provider icon grid (xl+ only)                   |
+| `MissionControl`           | `@/components/home/mission-control`               | Home button shown (not Pro button)              |
+| `ProGemBadge`              | `@/components/layout/pro-gem-badge`               | Evolving hexagonal gem badge (§5.15)            |
+| `SaveIcon`                 | `@/components/prompts/library/save-icon`          | Save button in tier preview windows             |
+| `usePromptShowcase`        | `@/hooks/use-prompt-showcase`                     | Live PotM data (3-min rotation)                 |
+| `useGlobalPromptTier`      | `@/hooks/use-global-prompt-tier`                  | Shared tier hook — SSOT for all surfaces (§5.16)|
 
-#### State Management (v4.0.0 — Hover Bridge)
+#### State Management (v5.0.0 — Debounced Intent + Shared Tier Hook)
 
 ```typescript
-// In pro-promagen-client.tsx (v4.0.0+)
+// In pro-promagen-client.tsx (v5.0.0+)
 const [selectedExchanges, setSelectedExchanges] =
   useState<string[]>(defaultExchangeIds);
-const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
+// Tier selection uses the shared hook — single source of truth across
+// Pro page, exchange tooltips, and all other surfaces. No local state.
+const { tier: selectedPromptTier, saveTier: hookSaveTier } =
+  useGlobalPromptTier("pro-page");
 const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] =
   useState(false);
 
-// Hover Bridge — unified panel visibility with 2s linger delay
-type PreviewPanel = "format" | "scenes" | "saved" | "lab" | "exchanges";
+// Debounced Intent — unified panel visibility
+type PreviewPanel =
+  | "daily"
+  | "format"
+  | "scenes"
+  | "saved"
+  | "lab"
+  | "exchanges";
 const [activePanel, setActivePanel] = useState<PreviewPanel | null>(null);
 const lingerRef = useRef<ReturnType<typeof setTimeout>>();
+const switchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
 const inPreviewRef = useRef(false);
 
 // Hydration gate — false until useEffect reads localStorage
 const [hydrated, setHydrated] = useState(false);
 
-// Clerk metadata override for prompt tier
-useEffect(() => {
-  if (clerkPromptTier !== null && [1, 2, 3, 4].includes(clerkPromptTier)) {
-    setSelectedPromptTier(clerkPromptTier as PromptTier);
-  }
-}, [clerkPromptTier]);
+// handlePromptTierChange delegates to hookSaveTier —
+// handles local state, localStorage, Clerk persistence, AND same-tab sync
+const handlePromptTierChange = useCallback(
+  (tier: PromptTier) => hookSaveTier(tier),
+  [hookSaveTier],
+);
 ```
 
-**Key change (v3.0.0 → v4.0.0):** Four individual boolean hover states (`formatHovered`, `scenesHovered`, `savedHovered`, `labHovered`) replaced with single `activePanel` union type + hover bridge pattern. All 9 cards now participate in the same system.
+**Key changes (v4.0.0 → v5.0.0):**
+- `useState<PromptTier>(4)` **removed** — replaced by `useGlobalPromptTier('pro-page')` shared hook
+- Clerk tier hydration `useEffect` **removed** — hook handles internally
+- `handlePromptTierChange` **simplified** from 12 lines to 1 (delegates to `hookSaveTier`)
+- `PreviewPanel` type gains `'daily'` (6 preview panels, not 5)
+- Intent triangle refs (`mousePosRef`, `intentAnchorRef`, `sectionRef`) **removed** — replaced by `switchDebounceRef`
+- Same-tab sync: `saveTier()` in hook dispatches synthetic `StorageEvent` so all hook instances update immediately
 
-#### Data Flow
+#### Data Flow (v5.0.0)
 
-1. Page loads → show SSOT defaults (tier 4, 16 exchanges)
-2. `useEffect` reads localStorage for saved preferences
-3. Clerk metadata hydrates async → overrides localStorage tier if present
-4. User hovers any feature card → `handleCardHover(panel, true)` → `activePanel` set → preview appears
-5. User leaves card → 2s linger timer starts
-6. If cursor enters preview panel within 2s → timer cancelled, panel stays
-7. Cursor leaves preview → `activePanel` null → CTA/payment area shown
-8. User clicks T1–T4 in Prompt Format card → tier saves to localStorage + Clerk
-9. User hovers Exchanges card → ExchangesPreviewPanel shows regional mini-cards
-10. User clicks "Click to Select" in preview (or clicks card) → fullscreen picker opens
-11. User makes selections → "Done" returns to card grid
-12. **Paid users:** Save → localStorage + Clerk metadata → propagates to all surfaces
-13. **Free users:** Preview only, "Start Free Trial" → Stripe Checkout
+1. Page loads → show SSOT defaults (tier from shared hook, 16 exchanges)
+2. `useGlobalPromptTier('pro-page')` hook reads Clerk metadata → localStorage → fallback Tier 4
+3. `useEffect` reads localStorage for saved exchange preferences
+4. User hovers any feature card → `handleCardHover(panel, true)`
+5. If no panel active → switch instantly. If different panel active → 150ms debounce starts
+6. If cursor stays 150ms → `activePanel` set → preview appears
+7. If cursor leaves card within 150ms → debounce cancelled (pass-through filtered)
+8. User leaves card without entering another → 2s linger timer starts
+9. If cursor enters preview panel within 2s → timer cancelled, panel stays
+10. Cursor leaves preview → `activePanel` null → CTA/payment area shown
+11. User clicks T1–T4 in Prompt Format card → `hookSaveTier()` fires → updates local state + localStorage + Clerk + dispatches StorageEvent for same-tab sync
+12. All exchange tooltips on the page pick up the tier change via their own `useGlobalPromptTier` hook instances (StorageEvent listener)
+13. User hovers Daily Prompts card → DailyPromptsPreviewPanel shows miniaturised builder with auto-scrolling colour-coded prompt
+14. User clicks inside Daily Prompts preview → navigates to `/providers/{providerId}` with PotM payload pre-loaded
+15. User hovers Exchanges card → ExchangesPreviewPanel shows regional mini-cards
+16. User clicks "Click to Select" in preview (or clicks card) → fullscreen picker opens
+17. User makes selections → "Done" returns to card grid
+18. **Paid users:** Save → localStorage + Clerk metadata → propagates to all surfaces
+19. **Free users:** Preview only, "Start Free Trial" → Stripe Checkout
 
 #### File Structure
 
@@ -1325,16 +1383,22 @@ useEffect(() => {
 src/
 ├── app/pro-promagen/
 │   ├── page.tsx                      # Server component
-│   ├── pro-promagen-client.tsx       # Client orchestrator + 5 preview panels (2,359 lines, v4.0.0)
+│   ├── pro-promagen-client.tsx       # Client orchestrator + 7 preview panels (2,716 lines, v5.0.0)
 │   ├── error.tsx                     # Error boundary
 │   └── loading.tsx                   # Loading skeleton (LCP-optimised heading)
 ├── components/pro-promagen/
-│   ├── feature-control-panel.tsx     # 3×3 feature card grid (468 lines, v2.0.0)
+│   ├── feature-control-panel.tsx     # 3×3 feature card grid (419 lines, v2.1.0)
 │   ├── exchange-picker.tsx           # Continental accordion (774 lines, v3.0.0)
 │   ├── upgrade-cta.tsx               # Stripe pricing cards + trial buttons (609 lines)
 │   ├── index.ts                      # Barrel export
 │   └── __tests__/
 │       └── exchange-picker.test.tsx
+├── components/layout/
+│   └── pro-gem-badge.tsx             # Evolving hexagonal gem badge (NEW, ~200 lines)
+├── hooks/
+│   └── use-global-prompt-tier.ts     # Shared tier hook — SSOT for all surfaces (244 lines, v2.0.0)
+├── lib/
+│   └── lifetime-counter.ts           # incrementLifetimePrompts() + getLifetimePrompts() (NEW)
 ├── data/pro-promagen/
 │   ├── presets.ts                    # FEATURE_COMPARISON + WEATHER_PROMPT_TIER_OPTIONS
 │   └── currency-search-data.ts      # FX search index (legacy, may be removed)
@@ -1482,13 +1546,18 @@ The Prompt Lab is a second prompt builder environment at `/studio/playground`. I
 
 #### Tier Comparison
 
-| Aspect             | Standard Promagen | Pro Promagen         |
-| ------------------ | ----------------- | -------------------- |
-| Access             | Not available     | Full access          |
-| Route              | —                 | `/studio/playground` |
-| Provider selection | —                 | Dropdown (all 42)    |
-| Intelligence panel | —                 | Full panel           |
-| Tier preview       | —                 | All 4 tiers          |
+| Aspect                     | Standard Promagen | Pro Promagen                     |
+| -------------------------- | ----------------- | -------------------------------- |
+| Access                     | Not available     | Full access                      |
+| Route                      | —                 | `/studio/playground`             |
+| Provider selection         | —                 | Dropdown (all 42)                |
+| Intelligence panel         | —                 | Full panel                       |
+| Tier preview               | —                 | All 4 tiers (colour-coded)       |
+| Colour-coded prompts       | —                 | Full colour-coding (§5.14)       |
+| Assembled prompt box       | —                 | Colour-coded + stage badge       |
+| Dynamic label switching    | —                 | Assembled → Optimized on toggle  |
+| Colour legend              | —                 | LabCategoryColourLegend in header |
+| Optimizer neutral mode     | —                 | Disabled until provider selected |
 
 #### Current Status
 
@@ -1509,11 +1578,42 @@ The Prompt Lab reuses the same components as the standard prompt builder (`/prov
 | `src/app/studio/playground/page.tsx`                   | Server component (data fetch)   |
 | `src/app/studio/playground/playground-page-client.tsx` | Client wrapper (provider state) |
 | `src/components/prompts/playground-workspace.tsx`      | Workspace with dropdown         |
+| `src/components/prompts/enhanced-educational-preview.tsx` | Lab preview (1,899 lines, v5.0.0) |
 
 **Key difference from standard builder:**
 
 - Standard (`/providers/[id]`): Provider pre-selected from URL, static header
 - Prompt Lab (`/studio/playground`): Provider selected via dropdown, dynamic header, all 42 platforms accessible from one page
+
+#### Prompt Lab Parity Features (v5.0.0)
+
+These features bring the Lab to parity with the standard builder:
+
+**Colour-coded prompts in all 4 tiers:** `FourTierPromptPreview` receives `isPro` and `termIndex` props. When `isPro=true`, each tier card renders prompt text via `parsePromptIntoSegments()` with `CATEGORY_COLOURS`. All 5 `TierCard` calls updated (single-tier + 4 multi-tier). File: `four-tier-prompt-preview.tsx`.
+
+**Assembled prompt box:** Full-width box between category grid and 4-tier cards showing `activeTierPromptText`. Colour-coded for Pro users. Inline `SaveIcon` + copy icons (float-right). `StageBadge` in header. Char count right-aligned. States: `copiedAssembled` + `handleCopyAssembled` callback.
+
+**Optimized prompt box provider label:** When provider selected, shows "Optimized prompt in [ProviderName] [icon]" with 20×20px provider icon. `onError` hides icon if missing. Provider from `selectedProvider.localIcon || /icons/providers/${selectedProvider.id}.png`.
+
+**Dynamic label switching:** When `isOptimizerEnabled && selectedProviderId`:
+- Label: "Optimized prompt in [Provider] [icon]" in `text-emerald-300`
+- Border: `border-emerald-600/50 bg-emerald-950/20`
+- Text: `text-emerald-100`
+- Copy tooltip: "Copy optimized prompt"
+Otherwise: "Assembled prompt" in white, `border-slate-600 bg-slate-950/80`.
+**Note:** The condition does NOT include `wasOptimized` — the label switches the moment the optimizer is enabled with a provider, regardless of whether trimming occurred.
+
+**Optimizer disabled in neutral mode:** `finalOptimizerDisabled = isOptimizerDisabled || !selectedProviderId`. Neutral tooltip: "Select an AI provider above to enable optimisation." Provider selected → real platform tooltip.
+
+**Green "Within optimal range":** When optimizer ON + provider selected + no trimming: emerald bar "✓ Within optimal range — X chars / No trimming needed".
+
+**StageBadge:** Local component showing 📋 Static / ✨ Dynamic / ⚡ Optimized / ✓ Optimal. Appears in assembled prompt box header.
+
+**LabCategoryColourLegend:** Local component (same restyled design as standard builder's `CategoryColourLegend`). Positioned in header between `│` divider and Optimize toggle. Emoji doubled `clamp(18px, 1.4vw, 22px)`, solid `rgba(15, 23, 42, 0.97)` bg, `rounded-xl`, ethereal glow overlay.
+
+**Inline copy + save icons:** Copy + `SaveIcon` inside both assembled and optimized prompt boxes (matching standard builder: clipboard SVG float-right). Optimized box height: `min-h-[60px] max-h-[150px]`.
+
+**Lifetime counter wiring:** All 3 copy handlers (`handleCopy`, `handleCopyOptimized`, `handleCopyAssembled`) call `incrementLifetimePrompts()` on successful copy.
 
 #### Feature Control Panel Integration
 
@@ -1566,10 +1666,10 @@ Pro Promagen users see colour-coded prompt text in the prompt builder, replacing
 
 Colour-coding is active on:
 
-- **Standard prompt builder** (`/providers/[id]`) — assembled + optimized prompt boxes + category labels
-- **Prompt Lab** (`/studio/playground`) — category labels
+- **Standard prompt builder** (`/providers/[id]`) — assembled + optimized prompt boxes + category labels + colour legend in header
+- **Prompt Lab** (`/studio/playground`) — category labels + assembled + optimized prompt boxes + 4-tier preview cards + LabCategoryColourLegend in header
 - **Homepage Prompt of the Moment** — always visible (not Pro-gated, uses same SSOT colours)
-- **Pro Promagen page** (`/pro-promagen`) — preview windows (always visible, uses same SSOT colours)
+- **Pro Promagen page** (`/pro-promagen`) — all preview windows (always visible, uses same SSOT colours) + Daily Prompts preview (miniaturised builder with colour-coded text)
 
 #### Colour Legend Tooltip
 
@@ -1579,58 +1679,99 @@ A small 🎨 icon appears next to the "Assembled prompt" heading (Pro users only
 
 | File                                                 | Purpose                       | Version |
 | ---------------------------------------------------- | ----------------------------- | ------- |
-| `src/lib/prompt-colours.ts`                          | SSOT: colours, labels, parser | v1.0.0  |
-| `src/components/ui/combobox.tsx`                     | `labelColour` prop            | v7.3.0  |
-| `src/components/providers/prompt-builder.tsx`        | Pro colour-coding + legend    | v10.2.0 |
-| `src/components/prompts/enhanced-prompt-builder.tsx` | Pro label colours             | v1.1.0  |
-| `src/components/home/prompt-showcase.tsx`            | Imports shared SSOT           | v9.2.0  |
-| `src/app/pro-promagen/pro-promagen-client.tsx`       | Imports shared SSOT           | v3.3.0  |
+| `src/lib/prompt-colours.ts`                          | SSOT: colours, labels, parser   | v1.0.0  |
+| `src/components/ui/combobox.tsx`                     | `labelColour` prop              | v7.3.0  |
+| `src/components/providers/prompt-builder.tsx`        | Pro colour-coding + legend      | v10.2.0 |
+| `src/components/prompts/enhanced-educational-preview.tsx` | Lab colour-coding (full parity) | v5.0.0  |
+| `src/components/prompt-builder/four-tier-prompt-preview.tsx` | Colour-coded 4-tier cards | v5.0.0  |
+| `src/components/home/prompt-showcase.tsx`            | Imports shared SSOT             | v9.2.0  |
+| `src/app/pro-promagen/pro-promagen-client.tsx`       | Imports shared SSOT + Daily preview | v5.0.0  |
 
 ---
 
-#### 13 Category Colours (SSOT)
+### 5.15 Pro Gem Badge (evolving visual identity)
 
-| #   | Category    | Colour    | Hex       | Purpose                     |
-| --- | ----------- | --------- | --------- | --------------------------- |
-| 1   | Subject     | Gold      | `#FCD34D` | The star of the show        |
-| 2   | Action      | Lime      | `#A3E635` | Movement / energy           |
-| 3   | Style       | Purple    | `#C084FC` | Artistic reference          |
-| 4   | Environment | Sky blue  | `#38BDF8` | Place / setting             |
-| 5   | Composition | Emerald   | `#34D399` | Framing / structure         |
-| 6   | Camera      | Orange    | `#FB923C` | Lens / angle                |
-| 7   | Lighting    | Amber     | `#FBBF24` | Light source / direction    |
-| 8   | Colour      | Pink      | `#F472B6` | Colour grade                |
-| 9   | Atmosphere  | Cyan      | `#22D3EE` | Fog / haze / particles      |
-| 10  | Materials   | Teal      | `#2DD4BF` | Surface / texture           |
-| 11  | Fidelity    | Soft blue | `#93C5FD` | Quality boosters (8K, etc.) |
-| 12  | Negative    | Red       | `#F87171` | Constraints / exclusions    |
-| 13  | Structural  | Fuchsia   | `#E879F9` | Commas, glue text           |
+The Pro Gem Badge replaces the flat green "PRO" pill in the shared layout. It appears on every page (via `homepage-grid.tsx`) in the header row, right of the Listen button.
 
-**SSOT file:** `src/lib/prompt-colours.ts` — single source of truth for all colour constants, labels, emojis, and the prompt text parser.
+#### Evolving Tiers (6 levels by lifetime prompt count)
 
-#### Surfaces
+| Threshold | Tier Name      | Colour  | Hex       |
+| --------- | -------------- | ------- | --------- |
+| 0+        | Raw Crystal    | Purple  | `#a78bfa` |
+| 100+      | Cut Sapphire   | Blue    | `#38bdf8` |
+| 500+      | Emerald        | Green   | `#34d399` |
+| 1,000+    | Amber          | Gold    | `#fbbf24` |
+| 5,000+    | Rose Diamond   | Pink    | `#f472b6` |
+| 10,000+   | Prismatic      | White   | `#f0f0f0` |
 
-Colour-coding is active on:
+**Visual:** Hexagonal SVG with "P" centre mark. Pulsing glow animation via `drop-shadow` that intensifies per tier. Hover intensifies glow by 1.5×. The Prismatic tier (10K+) gets an inner facet with a shimmer animation. Hover tooltip: "Pro Promagen · [Tier Name] · X prompts crafted".
 
-- **Standard prompt builder** (`/providers/[id]`) — assembled + optimized prompt boxes + category labels
-- **Prompt Lab** (`/studio/playground`) — category labels
-- **Homepage Prompt of the Moment** — always visible (not Pro-gated, uses same SSOT colours)
-- **Pro Promagen page** (`/pro-promagen`) — preview windows (always visible, uses same SSOT colours)
+**Lifetime counter:** `src/lib/lifetime-counter.ts` provides `incrementLifetimePrompts()` and `getLifetimePrompts()`. Single localStorage key `promagen:lifetime_prompts`. Fallback: reads `promagen_saved_prompts` count if lifetime key not yet set.
 
-#### Colour Legend Tooltip
+**Counter wiring:** `incrementLifetimePrompts()` is called in all copy handlers in both builders:
+- `prompt-builder.tsx`: `handleCopyPrompt`, `handleCopyAssembled`, `handleCopyOptimized` (3 calls)
+- `enhanced-educational-preview.tsx`: `handleCopy`, `handleCopyOptimized`, `handleCopyAssembled` (3 calls)
 
-A small 🎨 icon appears next to the "Assembled prompt" heading (Pro users only). Hover or click shows a tooltip with all 13 category→colour mappings. Built per tooltip standards: 400ms close delay, min 10px font, no opacity dimming.
+**Design rules:**
+- All sizing via `clamp()` — desktop-only, no mobile breakpoints
+- Pulsing animation via `<style dangerouslySetInnerHTML>` — nothing in globals.css
+- `prefers-reduced-motion: reduce` → animation disabled
+- No opacity-based state dimming
 
 #### Files
 
-| File                                                 | Purpose                       | Version |
-| ---------------------------------------------------- | ----------------------------- | ------- |
-| `src/lib/prompt-colours.ts`                          | SSOT: colours, labels, parser | v1.0.0  |
-| `src/components/ui/combobox.tsx`                     | `labelColour` prop            | v7.3.0  |
-| `src/components/providers/prompt-builder.tsx`        | Pro colour-coding + legend    | v10.2.0 |
-| `src/components/prompts/enhanced-prompt-builder.tsx` | Pro label colours             | v1.1.0  |
-| `src/components/home/prompt-showcase.tsx`            | Imports shared SSOT           | v9.2.0  |
-| `src/app/pro-promagen/pro-promagen-client.tsx`       | Imports shared SSOT           | v3.3.0  |
+| File                                          | Purpose                     | Status |
+| --------------------------------------------- | --------------------------- | ------ |
+| `src/components/layout/pro-gem-badge.tsx`     | ProGemBadge component (NEW) | v1.0.0 |
+| `src/lib/lifetime-counter.ts`                 | Counter utilities (NEW)     | v1.0.0 |
+| `src/components/layout/homepage-grid.tsx`     | Imports ProGemBadge         | v5.0.0 |
+| `src/components/providers/prompt-builder.tsx`  | Wires incrementLifetimePrompts | v5.0.0 |
+| `src/components/prompts/enhanced-educational-preview.tsx` | Wires incrementLifetimePrompts | v5.0.0 |
+
+---
+
+### 5.16 Bidirectional Tier Sync (Pro page ↔ exchange tooltips)
+
+The prompt tier selection is now a single source of truth across all surfaces via `useGlobalPromptTier` hook. Changes made in one location propagate instantly to all others.
+
+#### The Problem (pre v5.0.0)
+
+The Pro page had its own `useState<PromptTier>(4)` local state (line 1799 of v4.0.0). Exchange tooltips read from `useGlobalPromptTier` hook. Two separate React states — clicking a tier preview updated one, the tooltips read the other. They only synced on page refresh.
+
+#### The Fix (v5.0.0)
+
+**Single hook:** Pro page replaced `useState` with `useGlobalPromptTier('pro-page')`. The `'pro-page'` surface was added to the `PromptSurface` union type and `FREE_SURFACE_TIERS` map (defaults to Tier 4 for free users).
+
+**Same-tab sync:** `saveTier()` in the hook now dispatches a synthetic `StorageEvent` after writing to localStorage. Native `StorageEvent` only fires in other tabs — this dispatch fires in the same tab, so every `useGlobalPromptTier` instance on the page picks it up in the same render cycle.
+
+#### Flow
+
+| Action | Where | What happens everywhere |
+| --- | --- | --- |
+| Click T1 in preview window | Pro page → `hookSaveTier(1)` | Updates React state + localStorage + Clerk + dispatches StorageEvent → all tooltip hook instances update → next hover shows T1 format |
+| Click T3 inside a tooltip | Exchange tooltip → `onTierChange(3)` | Same `saveTier` path → preview window tick moves to T3 → tooltip re-renders in T3 format |
+| Open Pro page in another tab | N/A | Cross-tab `StorageEvent` fires naturally → hook picks it up |
+
+**Save Preferences button:** No longer involved in tier selection. It remains for exchange selections only. Tier changes are live — no save step needed.
+
+#### PromptSurface Type (v2.0.0)
+
+```typescript
+export type PromptSurface =
+  | "exchange-cards" // Free: Tier 3 (Natural Language)
+  | "leaderboard" // Free: native tier per provider
+  | "fx-ribbon" // Free: Tier 1 (CLIP-Based)
+  | "commodities" // Free: Tier 2 (Midjourney Family)
+  | "mission-control" // Free: Tier 4 (Plain Language)
+  | "pro-page"; // Free: Tier 4 (overridden by Pro selection)
+```
+
+#### Files
+
+| File | Change |
+| --- | --- |
+| `src/hooks/use-global-prompt-tier.ts` | Added `'pro-page'` to `PromptSurface`, added synthetic `StorageEvent` dispatch in `saveTier()` |
+| `src/app/pro-promagen/pro-promagen-client.tsx` | Replaced `useState<PromptTier>` with `useGlobalPromptTier('pro-page')`, removed Clerk hydration `useEffect`, simplified `handlePromptTierChange` to 1 line |
 
 ---
 
@@ -1682,9 +1823,11 @@ Authority for those lives elsewhere:
 - Homepage features → `docs/authority/homepage.md`
 - Scene Starters → `docs/authority/scene-starters.md`
 - Feature Control Panel → `src/components/pro-promagen/feature-control-panel.tsx`
-- Surface-aware prompt tiers → `src/hooks/use-global-prompt-tier.ts`
+- Surface-aware prompt tiers → `src/hooks/use-global-prompt-tier.ts` (v5.0.0, includes `'pro-page'` surface + same-tab sync)
 - Prompt tier API → `src/app/api/user/preferences/route.ts`
 - Prompt Lab → `docs/authority/prompt-intelligence.md` §9
+- Prompt Lab parity features → `src/components/prompts/enhanced-educational-preview.tsx` (v5.0.0)
+- Pro Gem Badge → `src/components/layout/pro-gem-badge.tsx` + `src/lib/lifetime-counter.ts`
 - Stripe payments → `docs/authority/stripe.md`
 - Continental exchange grouping → `src/lib/geo/continents.ts`
 - Ask Promagen → **NOT IMPLEMENTED** (§5.9, planned feature)
@@ -1722,6 +1865,7 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **18 Mar 2026:** **PRO PAGE OVERHAUL v5.0.0 — DAILY PREVIEW + TIER SYNC + DEBOUNCED INTENT + GEM BADGE + LAB PARITY** — Major Pro page and Prompt Lab update across 8 files. §5.10: Hover Bridge replaced by Debounced Intent v5.0.0 — 150ms debounce on card-to-card switches filters diagonal cursor movement (replaces failed Intent Triangle from v4.1). Daily Prompts card gains preview panel (`DailyPromptsPreviewPanel`) — miniaturised builder mockup with 12 colour-coded category rows, assembled + optimized prompt boxes, auto-scrolling (17s cycle: 0.3s hold → 8s down → 0.3s hold → 8s up), click navigates to `/providers/{id}` with PotM payload. `PreviewPanel` type expanded from 5 to 6 values (`'daily'` added). Pro page local `useState<PromptTier>` replaced by `useGlobalPromptTier('pro-page')` shared hook — single source of truth for tier across Pro page and all exchange tooltips. Same-tab sync via synthetic `StorageEvent` dispatch in `saveTier()`. §5.13: Prompt Lab parity — all 4 tier preview cards colour-coded, assembled prompt box with StageBadge, dynamic label switching (assembled → optimized when optimizer enabled, no `wasOptimized` gate), provider icon on optimized label, `LabCategoryColourLegend` in header, optimizer disabled in neutral mode, green "Within optimal range" feedback, inline copy + save icons. §5.15: Pro Gem Badge — evolving hexagonal gem replaces flat PRO pill in homepage-grid header. 6 tiers by lifetime prompt count (Raw Crystal → Cut Sapphire → Emerald → Amber → Rose Diamond → Prismatic). Pulsing glow animation, `prefers-reduced-motion` respected, all sizing `clamp()`. `incrementLifetimePrompts()` wired into all 6 copy handlers (3 in standard builder, 3 in Lab). §5.16: Bidirectional Tier Sync — `'pro-page'` added to `PromptSurface` type, `useGlobalPromptTier` dispatches synthetic StorageEvent for same-tab sync. Files: pro-promagen-client.tsx (2,716 lines), enhanced-educational-preview.tsx (1,899 lines), feature-control-panel.tsx (419 lines), use-global-prompt-tier.ts (244 lines), pro-gem-badge.tsx (~200 lines, NEW), lifetime-counter.ts (NEW), homepage-grid.tsx (updated), four-tier-prompt-preview.tsx (updated).
 - **17 Mar 2026:** **COLOUR-CODED PROMPT ANATOMY (v4.1.0)** — Added §5.14. Pro Promagen users see colour-coded prompt text in the prompt builder: 12 category colours + 1 structural (slate-400). Category dropdown labels take on their category colour. Assembled and optimized prompt preview boxes render terms in category colours. 🎨 legend tooltip shows the full colour key (400ms close delay, min 10px font). New shared SSOT: `src/lib/prompt-colours.ts` replaces 3 duplicated local `CATEGORY_COLOURS` constants (prompt-showcase, pro-promagen-client). Combobox v7.3.0 adds `labelColour` prop. Human factors: Von Restorff Effect (category isolation), Loss Aversion (free users see plain text), Colour Psychology in Dark Interfaces §17 (3× weight on dark backgrounds).
 - **17 Mar 2026:** **COLOUR-CODED PROMPT ANATOMY (v4.1.0)** — Added §5.14. Pro Promagen users see colour-coded prompt text in the prompt builder: 12 category colours + 1 structural (fuchsia). Category dropdown labels take on their category colour. Assembled and optimized prompt preview boxes render terms in category colours. 🎨 legend tooltip shows the full colour key (400ms close delay, min 10px font). Structural colour changed from slate-400 (#94A3B8, invisible on dark) to fuchsia-400 (#E879F9). New shared SSOT: `src/lib/prompt-colours.ts` replaces 3 duplicated local `CATEGORY_COLOURS` constants (prompt-showcase, pro-promagen-client, and admin vocab page excluded). Combobox v7.3.0 adds `labelColour` prop. Human factors: Von Restorff Effect (category isolation), Loss Aversion (free users see plain text), Colour Psychology in Dark Interfaces §17 (3× weight on dark backgrounds).
 - **17 Mar 2026:** **HOVER BRIDGE + EXCHANGES PREVIEW + DATA FIXES (v4.0.0)** — §5.10: Replaced 4 individual boolean hover states with unified `activePanel` union type + 2-second hover bridge pattern (linger delay + stay-while-inside). All 9 feature cards now participate in the same hover system. Added ExchangesPreviewPanel (5 windows: CTA + 4 regional mini-exchange cards matching real rail card style). Exchange card count uses Engine Bay measurement pattern (ResizeObserver on first card). Added exchange selection save gating documentation (free = preview only, paid = persists everywhere). Updated State Management, Data Flow, File Structure sections. §5.3: JSE Johannesburg and SSE Santiago marketstack fields populated in exchanges.catalog.json (zero empty marketstack entries remain). Zagreb hoursTemplate `europe-standard` → `europe-croatia`, Dublin `europe-standard` → `europe-ireland`. Turkey (TR) moved from EUROPE to MIDDLE_EAST in continents.ts (affects picker grouping + preview panel). §5.10 Stripe: Updated from "Planned" to "LIVE" with pricing (£15.99/mo, £149.99/yr), cancellation policy, and full file list. Added `stripeCustomerId`, `cancelAtPeriodEnd`, `currentPeriodEnd` to ClerkPublicMetadata. Updated line counts across all files.

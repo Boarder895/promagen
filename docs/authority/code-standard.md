@@ -1,7 +1,7 @@
 # Promagen Code Standard (API-free edition)
 
-**Last updated:** 9 March 2026  
-**Version:** 3.0 (Universal clamp() · Unified Grid · Window Containment)  
+**Last updated:** 18 March 2026  
+**Version:** 4.0 (Debounced Intent · Shared Hook Sync · SSOT Colours · Auto-Scroll)  
 **Scope:** Frontend code inside the `frontend/` workspace only.
 
 ---
@@ -338,6 +338,28 @@ Never dim, fade, or reduce the opacity of UI elements to indicate a disabled or 
 **Exception:** Crossfade transitions between content swaps (e.g., batch rotation `opacity 0 → 1`) are permitted because they are momentary animation, not a resting state.
 
 **Compliance check:** Search for `opacity:` and `opacity-` in component files. Any opacity below 1.0 applied as a resting visual state (not a transition) is a violation.
+
+---
+
+### § 6.0.4 Cursor-Pointer on All Clickable Elements (Hard Rule)
+
+**Added:** 18 March 2026
+
+Every element that responds to user interaction (click, toggle, tab switch, button, link, selectable row) must have `cursor: pointer` explicitly set. An arrow cursor on an interactive element is broken UX — the user cannot tell it's clickable.
+
+**Applies to:** All `<button>` elements, tab bar pills, clickable cards, toggle switches, copy/save/randomise action buttons, intelligence panel tabs (Conflicts, Suggestions, Market Mood), weather suggestion chips, and any `<div>` or `<span>` with an `onClick` handler.
+
+**Implementation:** Use Tailwind `cursor-pointer` class or `style={{ cursor: 'pointer' }}`.
+
+**Compliance check:** Hover every interactive element. Arrow cursor = missing `cursor-pointer`.
+
+---
+
+### § 6.0.5 No Question Mark Icons on Tooltips (Hard Rule)
+
+**Added:** 18 March 2026
+
+Tooltip triggers must never use a `?` icon, question mark emoji, or `HelpCircle` icon. Question marks imply confusion — Promagen's UI should feel confident. If a dedicated trigger is needed, use a small info indicator `(i)` — never `?`.
 
 ````
 ### § 6.0 Universal `clamp()` Sizing (Non-Negotiable)
@@ -906,6 +928,140 @@ When a card must distribute content rows with visually equal spacing above, betw
 
 **Authority:** `best-working-practice.md` § Equal-gap card spacing
 
+### § 6.11 Debounced Intent Pattern (Hover Panel Switching)
+
+**Added:** 18 March 2026 (v4.0)
+
+When multiple hoverable elements (cards, tabs, menu items) trigger panel switches below or beside them, use **temporal debouncing** to filter accidental triggers during diagonal cursor movement.
+
+**Pattern:**
+
+| State | Hover behaviour | Why |
+| --- | --- | --- |
+| No panel active | First card hover → switch immediately (0ms) | Instant feedback for first interaction |
+| Same card re-hovered | No action | Already showing correct panel |
+| Different card hovered | 150ms debounce → switch if cursor stays | Filters pass-throughs during diagonal movement toward preview |
+| Card leave (no other card entered) | 2-second linger timer → close if cursor doesn't enter preview | Forgiveness for accidental departure |
+| Cursor enters preview panel | Cancel all timers | Safe zone — user arrived at destination |
+| Cursor leaves preview panel | Close immediately | Clear intent to leave |
+
+**Why 150ms:** Fast enough to feel instant for deliberate hovers. Long enough to filter diagonal cursor movement across a 3×3 card grid where cards are small and closely spaced. Tested against the Pro page Feature Control Panel.
+
+**Why NOT intent triangle:** v4.0 initially shipped an Amazon-style intent triangle (geometric corridor from cursor anchor to preview panel edges). This failed because the single-point triangle apex created a razor-thin corridor that only worked ~5% of the time on small card grids. Temporal debouncing is geometry-independent and works 100% of the time.
+
+**Implementation:**
+
+```typescript
+const switchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
+const lingerRef = useRef<ReturnType<typeof setTimeout>>();
+const inPreviewRef = useRef(false);
+// In handleCardHover: if panel active + different card → setTimeout(150ms)
+// On card leave: clearTimeout(switchDebounceRef), start lingerRef(2000ms)
+// On preview enter: clearTimeout both refs, set inPreviewRef = true
+```
+
+**Reference implementation:** `src/app/pro-promagen/pro-promagen-client.tsx` (v5.0.0)
+
+---
+
+### § 6.12 Auto-Scroll Animation Pattern
+
+**Added:** 18 March 2026 (v4.0)
+
+When content overflows a fixed-height container and needs to be showcased without user interaction (e.g., a preview panel showing a miniaturised builder), use CSS `@keyframes` auto-scrolling with `translateY`.
+
+**Timing spec:**
+
+1. Content starts at `translateY(0)` (top visible)
+2. 0.3s hold at top (≈1.8% of cycle)
+3. Slow scroll down over ~8 seconds (ease-in-out)
+4. 0.3s hold at bottom (≈1.8% of cycle)
+5. Slow scroll back up over ~8 seconds (ease-in-out)
+6. Total cycle: ~17 seconds
+7. Repeat infinitely
+
+**Scroll distance:** Computed dynamically via `ResizeObserver` on content height minus container height. Stored as a CSS custom property `--scroll-dist` and referenced in the `@keyframes`:
+
+```css
+@keyframes dailyScroll {
+  0%, 1.8% { transform: translateY(0); }
+  47% { transform: translateY(var(--scroll-dist, 0px)); }
+  48.8%, 51.2% { transform: translateY(var(--scroll-dist, 0px)); }
+  98.2% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+```
+
+**Rules:**
+- Animation defined in `<style dangerouslySetInnerHTML>` (co-located, not globals.css)
+- `@media (prefers-reduced-motion: reduce)` disables the animation
+- Container uses `overflow: hidden` (not `auto` — no scrollbar visible)
+- ResizeObserver cleanup in useEffect return
+
+**Reference implementation:** `DailyPromptsPreviewPanel` in `pro-promagen-client.tsx`
+
+---
+
+### § 6.13 Shared Hook State Sync (Same-Tab StorageEvent)
+
+**Added:** 18 March 2026 (v4.0)
+
+When multiple instances of the same hook need to stay in sync across the same page (e.g., tier selection on the Pro page propagating to exchange tooltips), use **synthetic StorageEvent dispatch** after writing to localStorage.
+
+**Problem:** Native `StorageEvent` only fires in OTHER browser tabs. When the Pro page's `useGlobalPromptTier('pro-page')` writes to localStorage, the exchange list's `useGlobalPromptTier('exchange-cards')` on the same page doesn't hear it.
+
+**Solution:** After `localStorage.setItem()`, dispatch a synthetic event:
+
+```typescript
+localStorage.setItem(STORAGE_KEY, JSON.stringify(newValue));
+window.dispatchEvent(
+  new StorageEvent('storage', {
+    key: STORAGE_KEY,
+    newValue: JSON.stringify(newValue),
+  }),
+);
+```
+
+Every hook instance listening via `window.addEventListener('storage', ...)` picks it up — same tab and other tabs.
+
+**Rules:**
+- The hook that writes the value owns the dispatch — not the caller
+- The hook's `useEffect` cleanup must remove the storage listener
+- Never use local `useState` for state that needs cross-component sync — always use the shared hook
+- The shared hook is the single source of truth — components never read localStorage directly
+
+**Reference implementation:** `src/hooks/use-global-prompt-tier.ts` (v2.0.0)
+
+**Authority:** `paid_tier.md` §5.16 Bidirectional Tier Sync
+
+---
+
+### § 6.14 SSOT Colour Constants (prompt-colours.ts)
+
+**Added:** 18 March 2026 (v4.0)
+
+All prompt category colours are defined once in `src/lib/prompt-colours.ts` and imported everywhere. No component may define its own `CATEGORY_COLOURS` constant.
+
+**Exports:**
+
+| Export | Purpose |
+| --- | --- |
+| `CATEGORY_COLOURS` | Record of 13 category → hex colour mappings |
+| `CATEGORY_LABELS` | Record of category → display label |
+| `CATEGORY_EMOJIS` | Record of category → emoji |
+| `buildTermIndexFromSelections()` | Builds `Map<string, PromptCategory>` from user selections |
+| `parsePromptIntoSegments()` | Splits prompt text into `{ text, category }[]` segments |
+
+**Consumers (must import, never duplicate):**
+- `prompt-builder.tsx` (standard builder)
+- `enhanced-educational-preview.tsx` (Prompt Lab)
+- `four-tier-prompt-preview.tsx` (4-tier preview cards)
+- `prompt-showcase.tsx` (homepage PotM)
+- `pro-promagen-client.tsx` (Pro page previews)
+- `prompt-intelligence-builder.tsx` (intelligence builder)
+
+**Forbidden:** Defining local `CATEGORY_COLOURS` in any component. If a component needs colours, import from `@/lib/prompt-colours`.
+
 ## 7. Accessibility Rules
 
 All interactive elements must be keyboard accessible.
@@ -964,6 +1120,12 @@ import Tooltip from '@/components/ui/tooltip';
 **4. Desktop only** - Tooltips are hover-only; mobile has no hover, so design must work without tooltips
 
 **5. Never block interaction** - Tooltip must not interfere with clicking the element
+
+**6. Close delay: 400ms** — All custom tooltips (weather, commodity, colour legend) must have a 400ms close delay on mouse leave. This prevents accidental closure when the cursor briefly exits the tooltip boundary. Matches the standard across weather-prompt-tooltip, commodity-prompt-tooltip, and CategoryColourLegend. Native `title` attribute tooltips are exempt (browser-controlled).
+
+**7. Sign-in prompts inside tooltips: plain `<a href="/sign-in">`** — Never use `SignInButton mode="modal"` inside tooltips. Clerk's modal portal fights with z-index stacking in z-50 tooltips, causing the modal to render behind the tooltip. Use a plain anchor tag instead.
+
+**8. No question mark icons** — See § 6.0.5. Tooltip triggers must never use `?`, `❓`, or `HelpCircle` icons. Use the element itself as the hover target.
 
 ### Examples
 
@@ -1770,6 +1932,7 @@ Before shipping any component that uses `ResizeObserver`, `requestAnimationFrame
 
 ## Changelog
 
+- **18 March 2026 (v4.0):** Major update — 6 new hard rules and 4 new patterns. Added § 6.0.4 cursor-pointer on ALL clickable elements (arrow cursor = broken UX). Added § 6.0.5 no question mark icons on tooltips. Added § 6.11 Debounced Intent Pattern (150ms hover panel switching, replaces failed intent triangle). Added § 6.12 Auto-Scroll Animation Pattern (17s cycle with ResizeObserver-computed distance, co-located `@keyframes`). Added § 6.13 Shared Hook State Sync (synthetic StorageEvent for same-tab cross-hook sync). Added § 6.14 SSOT Colour Constants (`prompt-colours.ts` is the sole source of truth for all 13 category colours — no local duplicates). Updated § 7.1 Tooltip Standards: added rules 6–8 (400ms close delay, sign-in as plain `<a>` not `SignInButton mode="modal"`, no question marks cross-ref to § 6.0.5). Updated § 8.4 prompt builder data locations (added `prompt-colours.ts` 210 lines, `lifetime-counter.ts` 33 lines, updated `prompt-builder.ts` 1,738 lines). Cross-references: `paid_tier.md` §5.14 (colour anatomy), §5.15 (gem badge), §5.16 (tier sync).
 - **15 March 2026**: Added § 6.10 Equal-Gap Card Layout (anti-stacking rule). One vertical spacing system per card, `paddingInline` only, `align-content: space-evenly`, responsive row hiding via `max-height` media query. Cross-ref best-working-practice.md.
 - **9 March 2026**: Added § 6.7 Commodity Brand Colour Palette (8 bright hex colours, no slate, solid border rule). Added § 6.8 Conflict Detection Matching Rules (word-boundary termsMatch, mood/era 2+ threshold). Added § 6.9 Scene Starters Data Completeness (all 11 categories, 100% score target).
 - **16 Feb 2026 (v3.0):** Major architecture update — three new mandates baked into the code standard:
@@ -1977,7 +2140,9 @@ The prompt builder uses a 9-category dropdown system with platform-specific opti
 - Options: `src/data/providers/prompt-options.json`
 - Platform formats: `src/data/providers/platform-formats.json`
 - Types: `src/types/prompt-builder.ts`
-- Logic: `src/lib/prompt-builder.ts` (1,519 lines)
+- Logic: `src/lib/prompt-builder.ts` (1,738 lines)
+- Colours: `src/lib/prompt-colours.ts` (210 lines) — SSOT for all 13 category colours
+- Lifetime: `src/lib/lifetime-counter.ts` (33 lines) — prompt copy counter
 
 **Category Schema:**
 

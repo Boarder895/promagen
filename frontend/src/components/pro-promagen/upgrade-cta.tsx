@@ -143,25 +143,6 @@ function ProRetentionPanel({
   onSave: () => void;
   onManageSubscription: () => void;
 }) {
-  // ── Cycling text: 3 phases, same animate-pulse as TierPreviewPanel ──
-  // Phase 0 (0–2.5s): "Your Promagen, your way"   animate-pulse
-  // Phase 1 (2.5–5s): "Live on your homepage now"  animate-pulse
-  // Phase 2 (5s+):    "Your Promagen, your way"    static gold (no pulse)
-  const [textPhase, setTextPhase] = React.useState(0);
-
-  React.useEffect(() => {
-    const t1 = setTimeout(() => setTextPhase(1), 2500);
-    const t2 = setTimeout(() => setTextPhase(2), 5000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, []);
-
-  const cyclingText = textPhase === 1
-    ? 'Live on your homepage now'
-    : 'Your Promagen, your way';
-
-  // animate-pulse during phases 0 and 1 only (matches free-user amber header exactly)
-  const isPulsing = textPhase < 2;
-
   // ── Save click handler — never uses disabled, gates in code instead ──
   const handleSaveClick = React.useCallback(() => {
     if (isSaving) return;
@@ -171,23 +152,38 @@ function ProRetentionPanel({
   // Show emerald when save succeeded (saveStatus set by parent for 2s)
   const showEmerald = saveStatus === 'success';
 
+  // Header text: default amber cycling, turns green on save success
+  const headerText = showEmerald
+    ? 'Your preferences are saved'
+    : hasChanges
+      ? 'You have unsaved changes'
+      : 'Your Promagen, your way';
+
+  // Colour: green on save, amber-yellow on unsaved changes, gold default
+  const headerColor = showEmerald
+    ? '#34d399'
+    : hasChanges
+      ? '#FBBF24'
+      : '#EAB308';
+
   return (
     <div className="flex flex-col h-full">
-      {/* Gold cycling text — SAME pattern as free-user "Unlimited prompts..." header */}
-      {/* Compare: line 538 uses "italic text-amber-400/80 animate-pulse text-center font-semibold" */}
+      {/* Header — always pulses, identical to other preview panel headers
+          (italic text-amber-400/80 animate-pulse text-center font-semibold) */}
       <div style={{ padding: 'clamp(12px, 1.2vw, 20px) 0' }}>
         <p
-          className={`italic text-center font-semibold ${isPulsing ? 'animate-pulse' : ''}`}
+          className="italic text-center font-semibold animate-pulse"
           style={{
             fontSize: 'clamp(0.75rem, 0.9vw, 1rem)',
-            color: '#EAB308',
+            color: headerColor,
+            transition: 'color 300ms ease-out',
           }}
         >
-          {cyclingText}
+          {headerText}
         </p>
       </div>
 
-      {/* Gold panel — same position/size as the two pricing cards */}
+      {/* Gold panel */}
       <div
         className="relative flex-1 rounded-xl overflow-hidden flex flex-col items-center justify-center"
         style={{
@@ -210,14 +206,15 @@ function ProRetentionPanel({
         />
 
         <div className="relative z-10 flex flex-col items-center w-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
-          {/* Status line */}
+          {/* Info line — purple (Scenes colour) */}
           <span
+            className="text-center"
             style={{
               fontSize: 'clamp(0.625rem, 0.85vw, 0.9rem)',
-              color: hasChanges ? '#FBBF24' : '#EAB308',
+              color: '#c084fc',
             }}
           >
-            {hasChanges ? 'You have unsaved changes' : 'Your preferences are saved'}
+            Changes apply to your homepage immediately
           </span>
 
           <div className="flex w-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
@@ -264,13 +261,6 @@ function ProRetentionPanel({
               Manage Subscription
             </button>
           </div>
-
-          <span
-            className="text-slate-400 text-center"
-            style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
-          >
-            Changes apply to your homepage immediately
-          </span>
         </div>
       </div>
     </div>
@@ -499,7 +489,7 @@ export function UpgradeCta({
             </button>
 
             <span
-              className="text-slate-400 text-center"
+              className="text-amber-400 text-center"
               style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}
             >
               Click the timer to reactivate via Stripe
@@ -718,9 +708,9 @@ export function UpgradeCta({
         </span>
       )}
 
-      {/* Subtext — 10px floor, text-slate-400 (no grey, no opacity) */}
+      {/* Subtext — 10px floor, bright white (no grey) */}
       <span
-        className="text-slate-400 text-center"
+        className="text-white text-center"
         style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.75rem)' }}
       >
         7-day free trial on both plans · Cancel any time
