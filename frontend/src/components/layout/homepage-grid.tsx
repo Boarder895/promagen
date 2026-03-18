@@ -74,6 +74,7 @@ import { speakText, stopSpeaking } from '@/lib/speech';
 
 import EngineBay from '@/components/home/engine-bay';
 import MissionControl from '@/components/home/mission-control';
+import { ProGemBadge } from '@/components/layout/pro-gem-badge';
 
 // AuthButton: Imported directly from @/components/auth (no longer lazy-loaded separately)
 
@@ -787,20 +788,8 @@ export default function HomepageGrid({
                   )}
                 </button>
 
-                {/* Pro badge — only visible for paid users, sits right of Listen */}
-                {isPaidUser && (
-                  <span
-                    className="inline-flex flex-shrink-0 items-center rounded-full bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40 font-semibold"
-                    style={{
-                      fontSize: 'clamp(0.4rem, 0.5vw, 0.7rem)',
-                      padding: 'clamp(2px, 0.2vw, 4px) clamp(6px, 0.6vw, 10px)',
-                      marginLeft: 'clamp(4px, 0.4vw, 8px)',
-                      letterSpacing: '0.05em',
-                    }}
-                  >
-                    PRO
-                  </span>
-                )}
+                {/* Pro badge — evolving gem for paid users, sits right of Listen */}
+                {isPaidUser && <ProGemBadge />}
 
                 {/* Dead centre — Heading (absolute so left/right content can't push it off-centre) */}
                 <h2

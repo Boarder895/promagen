@@ -93,6 +93,7 @@ import React, { useMemo, useState, useCallback, useEffect, useRef } from 'react'
 import HomepageGrid from '@/components/layout/homepage-grid';
 import ExchangeList from '@/components/ribbon/exchange-list';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
+import { useGlobalPromptTier } from '@/hooks/use-global-prompt-tier';
 import { useIndicesQuotes } from '@/hooks/use-indices-quotes';
 import { useWeather } from '@/hooks/use-weather';
 import { getRailsRelative } from '@/lib/location';
@@ -1410,6 +1411,334 @@ function PromptLabPreviewPanel({ providers }: { providers: Provider[] }) {
 }
 
 // ============================================================================
+// DAILY PROMPTS PREVIEW PANEL — Miniaturised builder mockup with auto-scroll
+// ============================================================================
+// Shown when Daily Prompts card is hovered. Displays a read-only snapshot of
+// the standard builder with colour-coded category headings, selected chips
+// from PotM data, assembled prompt, and optimized prompt. Auto-scrolls
+// vertically to reveal the full content. Clicking navigates to the standard
+// builder with the PotM provider pre-selected.
+//
+// Human factors:
+// - Show the Tool, Not the Output — users see what Pro looks like to USE
+// - Auto-scroll: Peak-End Rule — the scroll reveals content gradually
+// - Click-to-navigate: Curiosity Gap — "try it yourself"
+// ============================================================================
+
+function DailyPromptsPreviewPanel() {
+  const { data: potmData } = usePromptShowcase();
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const [scrollDistance, setScrollDistance] = React.useState(0);
+
+  const categoryMap = potmData?.tierSelections?.tier1?.categoryMap;
+  // Derive provider from tier1 providers (PromptOfTheMoment has no .provider field)
+  const provider = potmData?.tierProviders?.tier1?.[0] ?? null;
+
+  // Compute scroll distance from content overflow
+  React.useEffect(() => {
+    const container = scrollRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return;
+    const measure = () => {
+      const overflow = content.scrollHeight - container.clientHeight;
+      setScrollDistance(Math.max(0, overflow));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [categoryMap]);
+
+  // Build category rows from PotM data
+  const categoryRows = React.useMemo(() => {
+    if (!categoryMap) return [];
+    const rows: Array<{ cat: string; emoji: string; label: string; color: string; terms: string[] }> = [];
+    const allCats = ['subject', 'action', 'style', 'environment', 'composition', 'camera', 'lighting', 'colour', 'atmosphere', 'materials', 'fidelity', 'negative'];
+    for (const cat of allCats) {
+      const sel = categoryMap.selections?.[cat as PromptCategory] ?? [];
+      const custom = cat === 'negative'
+        ? (categoryMap.negative ?? [])
+        : (categoryMap.customValues?.[cat as PromptCategory]?.trim() ? [categoryMap.customValues[cat as PromptCategory]!] : []);
+      const allTerms = [...sel, ...custom].filter(Boolean);
+      rows.push({
+        cat,
+        emoji: CATEGORY_EMOJIS[cat] ?? '\u2022',
+        label: CATEGORY_LABELS[cat] ?? cat,
+        color: CATEGORY_COLOURS[cat] ?? '#94A3B8',
+        terms: allTerms,
+      });
+    }
+    return rows;
+  }, [categoryMap]);
+
+  // Assemble prompt text from PotM
+  const assembledText = React.useMemo(() => {
+    if (!categoryMap || !provider) return '';
+    try {
+      const sel = selectionsFromMap(categoryMap);
+      return assemblePrompt(provider.id, sel, categoryMap.weightOverrides).positive;
+    } catch { return ''; }
+  }, [categoryMap, provider]);
+
+  // Parse for colour coding
+  const colourSegments = React.useMemo(() => {
+    if (!assembledText || !categoryMap) return null;
+    const termIndex = new Map<string, PromptCategory>();
+    for (const [cat, terms] of Object.entries(categoryMap.selections)) {
+      if (!terms) continue;
+      for (const term of terms) {
+        const key = term.toLowerCase().trim();
+        if (key) termIndex.set(key, cat as PromptCategory);
+      }
+    }
+    if (termIndex.size === 0) return null;
+    return sharedParsePrompt(assembledText, termIndex);
+  }, [assembledText, categoryMap]);
+
+  // Navigate to builder on click
+  const handleClick = React.useCallback(() => {
+    if (!provider) return;
+    try {
+      if (potmData?.tierSelections?.tier1) {
+        sessionStorage.setItem('promagen:preloaded-payload', JSON.stringify(potmData.tierSelections.tier1));
+      }
+    } catch { /* ignore */ }
+    window.location.href = `/providers/${provider.id}`;
+  }, [provider, potmData]);
+
+  const totalCycleSec = 17;
+
+  return (
+    <div
+      className="flex flex-col h-full cursor-pointer"
+      onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
+      role="button"
+      tabIndex={0}
+    >
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes dailyScroll {
+          0%, 1.8% { transform: translateY(0); }
+          47% { transform: translateY(var(--scroll-dist, 0px)); }
+          48.8%, 51.2% { transform: translateY(var(--scroll-dist, 0px)); }
+          98.2% { transform: translateY(0); }
+          100% { transform: translateY(0); }
+        }
+        .daily-scroll-inner {
+          animation: dailyScroll ${totalCycleSec}s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .daily-scroll-inner { animation: none; }
+        }
+      `}} />
+
+      {/* Animated amber header — matches other preview panels */}
+      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+        <p
+          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
+        >
+          Unlimited colour-coded prompts — this is what Pro looks like
+        </p>
+      </div>
+
+      {/* Auto-scrolling content area */}
+      <div
+        ref={scrollRef}
+        className="flex-1 min-h-0 overflow-hidden rounded-xl"
+        style={{
+          background: 'rgba(15, 23, 42, 0.97)',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          boxShadow: '0 0 30px 6px rgba(245,158,11,0.15), 0 0 60px 12px rgba(245,158,11,0.06), inset 0 0 20px 2px rgba(245,158,11,0.1)',
+        }}
+      >
+        {/* Ethereal glow overlays */}
+        <div className="pointer-events-none absolute inset-0 rounded-xl overflow-hidden" style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(245,158,11,0.08), transparent 70%)', pointerEvents: 'none' }} />
+        </div>
+
+        <div
+          ref={contentRef}
+          className="daily-scroll-inner"
+          style={{ '--scroll-dist': `-${scrollDistance}px`, padding: 'clamp(10px, 1vw, 16px)' } as React.CSSProperties}
+        >
+          {/* Provider name badge */}
+          {provider && (
+            <div className="flex items-center gap-2 mb-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/icons/providers/${provider.id}.png`}
+                alt=""
+                style={{ width: 'clamp(16px, 1.2vw, 20px)', height: 'clamp(16px, 1.2vw, 20px)' }}
+                className="rounded"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+              <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.7rem, 0.75vw, 0.85rem)' }}>
+                {provider.name}
+              </span>
+              <span className="text-white/40" style={{ fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)' }}>
+                · Prompt builder
+              </span>
+            </div>
+          )}
+
+          {/* Miniaturised category grid — 2 columns */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 'clamp(3px, 0.3vw, 5px)',
+              marginBottom: 'clamp(8px, 0.8vw, 12px)',
+            }}
+          >
+            {categoryRows.map((row) => (
+              <div
+                key={row.cat}
+                className="rounded-md overflow-hidden"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  padding: 'clamp(3px, 0.3vw, 5px) clamp(5px, 0.5vw, 8px)',
+                }}
+              >
+                {/* Category label — colour-coded */}
+                <div className="flex items-center gap-1 mb-0.5">
+                  <span style={{ fontSize: 'clamp(0.55rem, 0.5vw, 0.65rem)' }}>{row.emoji}</span>
+                  <span
+                    className="font-semibold truncate"
+                    style={{ color: row.color, fontSize: 'clamp(0.55rem, 0.55vw, 0.65rem)' }}
+                  >
+                    {row.label}
+                  </span>
+                </div>
+                {/* Selected terms as mini chips */}
+                {row.terms.length > 0 ? (
+                  <div className="flex flex-wrap gap-0.5">
+                    {row.terms.slice(0, 3).map((term, i) => (
+                      <span
+                        key={i}
+                        className="rounded truncate"
+                        style={{
+                          fontSize: 'clamp(0.5rem, 0.45vw, 0.6rem)',
+                          padding: '1px 4px',
+                          background: `${row.color}15`,
+                          border: `1px solid ${row.color}30`,
+                          color: row.color,
+                          maxWidth: '90px',
+                        }}
+                      >
+                        {term}
+                      </span>
+                    ))}
+                    {row.terms.length > 3 && (
+                      <span style={{ fontSize: 'clamp(0.45rem, 0.4vw, 0.55rem)', color: 'rgba(255,255,255,0.3)' }}>
+                        +{row.terms.length - 3}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 'clamp(0.45rem, 0.4vw, 0.55rem)', color: 'rgba(255,255,255,0.2)' }}>—</span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Assembled prompt box */}
+          <div style={{ marginBottom: 'clamp(6px, 0.6vw, 10px)' }}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-medium text-white" style={{ fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)' }}>
+                Assembled prompt
+              </span>
+              <span
+                className="inline-flex items-center gap-1 rounded-md border border-purple-500/30 bg-purple-500/10 px-1 py-0.5 font-medium text-purple-400"
+                style={{ fontSize: 'clamp(0.45rem, 0.45vw, 0.55rem)' }}
+              >
+                ✨ Dynamic
+              </span>
+              <span className="ml-auto text-white/30" style={{ fontSize: 'clamp(0.5rem, 0.45vw, 0.6rem)' }}>
+                {assembledText.length} chars
+              </span>
+            </div>
+            <div
+              className="rounded-lg"
+              style={{
+                border: '1px solid rgba(100,116,139,0.4)',
+                background: 'rgba(2,6,23,0.6)',
+                padding: 'clamp(6px, 0.6vw, 10px)',
+              }}
+            >
+              <p style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)', lineHeight: 1.5, wordBreak: 'break-word' }}>
+                {colourSegments
+                  ? colourSegments.map((seg, i) => {
+                      const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                      return <span key={i} style={{ color: c }}>{seg.text}</span>;
+                    })
+                  : <span style={{ color: '#cbd5e1' }}>{assembledText}</span>
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Optimized prompt box */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-medium text-emerald-300" style={{ fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)' }}>
+                Optimized prompt
+              </span>
+              <span
+                className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1 py-0.5 font-medium text-emerald-400"
+                style={{ fontSize: 'clamp(0.45rem, 0.45vw, 0.55rem)' }}
+              >
+                ⚡ Optimized
+              </span>
+            </div>
+            <div
+              className="rounded-lg"
+              style={{
+                border: '1px solid rgba(52,211,153,0.3)',
+                background: 'rgba(6,78,59,0.15)',
+                padding: 'clamp(6px, 0.6vw, 10px)',
+              }}
+            >
+              <p style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)', lineHeight: 1.5, color: '#a7f3d0', wordBreak: 'break-word' }}>
+                {colourSegments
+                  ? colourSegments.map((seg, i) => {
+                      const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                      return <span key={i} style={{ color: c }}>{seg.text}</span>;
+                    })
+                  : <span>{assembledText}</span>
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Mini colour key */}
+          <div style={{ marginTop: 'clamp(8px, 0.8vw, 12px)', paddingTop: 'clamp(6px, 0.6vw, 10px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-1 mb-1">
+              <span style={{ fontSize: 'clamp(0.65rem, 0.6vw, 0.75rem)' }}>🎨</span>
+              <span className="font-medium text-white/60" style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)' }}>
+                Category Colour Key
+              </span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2px 8px' }}>
+              {categoryRows.slice(0, 12).map((row) => (
+                <div key={row.cat} className="flex items-center gap-1">
+                  <span className="rounded-full flex-shrink-0" style={{ width: 4, height: 4, background: row.color }} />
+                  <span className="truncate" style={{ fontSize: 'clamp(0.45rem, 0.4vw, 0.55rem)', color: row.color }}>
+                    {row.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // EXCHANGES PREVIEW PANEL — 5 windows: CTA + 4 regional mini-cards
 // ============================================================================
 // Shown when Exchanges card is hovered. Same glass/glow pattern as others.
@@ -1780,7 +2109,7 @@ export default function ProPromagenClient({
   demoWeatherIndex,
   providers = [],
 }: ProPromagenClientProps) {
-  const { isAuthenticated, userTier, locationInfo, setReferenceFrame, clerkPromptTier } = usePromagenAuth();
+  const { isAuthenticated, userTier, locationInfo, setReferenceFrame } = usePromagenAuth();
 
   const isPaidUser = userTier === 'paid';
 
@@ -1796,7 +2125,9 @@ export default function ProPromagenClient({
   const [selectedExchanges, setSelectedExchanges] = useState<string[]>(() =>
     simpleIdsToCompoundKeys(defaultExchangeIds, exchangeCatalog),
   );
-  const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
+  // Tier selection now uses the shared hook — single source of truth across
+  // Pro page, exchange tooltips, and all other surfaces. No local state needed.
+  const { tier: selectedPromptTier, saveTier: hookSaveTier } = useGlobalPromptTier('pro-page');
 
   // Track initial state for change detection
   const [initialExchanges, setInitialExchanges] = useState<string[]>(() =>
@@ -1816,30 +2147,12 @@ export default function ProPromagenClient({
       setInitialExchanges(compound);
     }
 
-    // Tier: localStorage first (warm cache), Clerk may override below
-    try {
-      const storedTier = localStorage.getItem(STORAGE_KEYS.PROMPT_TIER);
-      if (storedTier !== null) {
-        const parsed = JSON.parse(storedTier) as number;
-        if ([1, 2, 3, 4].includes(parsed)) setSelectedPromptTier(parsed as PromptTier);
-      }
-    } catch {
-      /* ignore */
-    }
-
     setHydrated(true);
     // exchangeCatalog is a stable server-component prop — never changes after mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Clerk metadata is the source of truth — override localStorage when it arrives.
-  // Clerk hydrates async, so clerkPromptTier may be null on first render then
-  // populate on subsequent renders. This effect catches that.
-  useEffect(() => {
-    if (clerkPromptTier !== null && [1, 2, 3, 4].includes(clerkPromptTier)) {
-      setSelectedPromptTier(clerkPromptTier as PromptTier);
-    }
-  }, [clerkPromptTier]);
+  // Clerk metadata tier sync handled by useGlobalPromptTier hook internally.
 
   // ============================================================================
   // STATE - Fullscreen Pickers (v2.3.0 Exchange, v2.6.0 FX)
@@ -1850,31 +2163,94 @@ export default function ProPromagenClient({
   const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
 
   // ============================================================================
-  // HOVER BRIDGE — unified panel visibility with 2s linger delay
+  // HOVER BRIDGE + INTENT TRIANGLE — Amazon mega-menu pattern
   // ============================================================================
-  // Pattern: Card hover opens panel → card leave starts 2s timer → if cursor
-  // enters preview panel before timer expires, cancel timer and keep open →
-  // panel closes only when cursor leaves preview panel. Mutual exclusion:
-  // hovering a new card immediately switches to that panel.
+  // Problem: Cards sit above the preview panel. Moving cursor from a card
+  // down to its preview crosses other cards, triggering unwanted panel switches.
+  //
+  // Solution: When a panel is active and cursor moves toward the preview,
+  // an invisible triangle (cursor anchor → preview top-left → preview top-right)
+  // protects the path. Card hovers inside the triangle are suppressed.
+  //
+  // When cursor moves laterally (outside triangle), switches happen normally.
   // ============================================================================
-  type PreviewPanel = 'format' | 'scenes' | 'saved' | 'lab' | 'exchanges';
+  type PreviewPanel = 'daily' | 'format' | 'scenes' | 'saved' | 'lab' | 'exchanges';
   const [activePanel, setActivePanel] = useState<PreviewPanel | null>(null);
   const lingerRef = useRef<ReturnType<typeof setTimeout>>();
   const inPreviewRef = useRef(false);
 
+  // Intent triangle refs
+  const mousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const intentAnchorRef = useRef<{ x: number; y: number } | null>(null);
+  const previewPanelRef = useRef<HTMLDivElement>(null);
+  const activePanelRef = useRef<PreviewPanel | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Keep activePanelRef in sync (avoids stale closure in mousemove)
+  useEffect(() => {
+    activePanelRef.current = activePanel;
+  }, [activePanel]);
+
+  // Track mouse position on the entire section
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePosRef.current = { x: e.clientX, y: e.clientY };
+    };
+    section.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => section.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Point-in-triangle check (2D cross product method)
+  const isInsideIntentTriangle = useCallback((): boolean => {
+    if (!intentAnchorRef.current || !previewPanelRef.current || !activePanelRef.current) return false;
+
+    const previewRect = previewPanelRef.current.getBoundingClientRect();
+    const cursor = mousePosRef.current;
+    const anchor = intentAnchorRef.current;
+
+    // Triangle: anchor (where cursor was when panel opened) →
+    //           preview top-left (with padding) → preview top-right (with padding)
+    // Expanded slightly (16px) so the triangle isn't razor-thin at the edges
+    const ax = anchor.x, ay = anchor.y;
+    const bx = previewRect.left - 16, by = previewRect.top;
+    const cx = previewRect.right + 16, cy = previewRect.top;
+    const px = cursor.x, py = cursor.y;
+
+    // Cross product signs — all same sign = inside triangle
+    const d1 = (bx - ax) * (py - ay) - (by - ay) * (px - ax);
+    const d2 = (cx - bx) * (py - by) - (cy - by) * (px - bx);
+    const d3 = (ax - cx) * (py - cy) - (ay - cy) * (px - cx);
+
+    const hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+    const hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+    return !(hasNeg && hasPos);
+  }, []);
+
   const handleCardHover = useCallback((panel: PreviewPanel, hovering: boolean) => {
     clearTimeout(lingerRef.current);
     if (hovering) {
+      // If a panel is already active and cursor is inside the intent triangle,
+      // suppress the switch — user is heading toward the preview, not this card
+      if (activePanelRef.current && activePanelRef.current !== panel && isInsideIntentTriangle()) {
+        return; // Suppress — cursor is in the protected corridor
+      }
+
       inPreviewRef.current = false;
       setActivePanel(panel);
+      // Set the intent anchor to current cursor position
+      intentAnchorRef.current = { ...mousePosRef.current };
     } else {
       lingerRef.current = setTimeout(() => {
         if (!inPreviewRef.current) {
           setActivePanel(null);
+          intentAnchorRef.current = null;
         }
       }, 2000);
     }
-  }, []);
+  }, [isInsideIntentTriangle]);
 
   const handlePreviewEnter = useCallback(() => {
     clearTimeout(lingerRef.current);
@@ -1883,6 +2259,7 @@ export default function ProPromagenClient({
 
   const handlePreviewLeave = useCallback(() => {
     inPreviewRef.current = false;
+    intentAnchorRef.current = null;
     setActivePanel(null);
   }, []);
 
@@ -1890,6 +2267,7 @@ export default function ProPromagenClient({
   useEffect(() => () => clearTimeout(lingerRef.current), []);
 
   // Wrapper callbacks matching FeatureControlPanel prop signatures
+  const setDailyHovered = useCallback((h: boolean) => handleCardHover('daily', h), [handleCardHover]);
   const setFormatHovered = useCallback((h: boolean) => handleCardHover('format', h), [handleCardHover]);
   const setScenesHovered = useCallback((h: boolean) => handleCardHover('scenes', h), [handleCardHover]);
   const setSavedHovered = useCallback((h: boolean) => handleCardHover('saved', h), [handleCardHover]);
@@ -2095,19 +2473,10 @@ export default function ProPromagenClient({
   }, []);
 
   const handlePromptTierChange = useCallback((tier: PromptTier) => {
-    setSelectedPromptTier(tier);
-    // Save to localStorage (warm cache for immediate reads)
-    saveToStorage(STORAGE_KEYS.PROMPT_TIER, tier);
-    // Persist to Clerk publicMetadata (survives cache clear / device switch)
-    fetch('/api/user/preferences', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ promptTier: tier }),
-    }).catch((err) => {
-      console.error('[pro-promagen] Failed to sync promptTier to Clerk:', err);
-    });
-  }, []);
+    // Delegates to shared hook — handles local state, localStorage,
+    // Clerk persistence, AND same-tab sync (dispatches StorageEvent)
+    hookSaveTier(tier);
+  }, [hookSaveTier]);
 
   const handleSave = useCallback(async () => {
     // Save is already done on each change, but this confirms to user
@@ -2196,6 +2565,7 @@ export default function ProPromagenClient({
     // NORMAL MODE — Feature Control Panel (3×3 grid)
     // ========================================================================
     <section
+      ref={sectionRef}
       aria-label="Pro Promagen Configuration"
       className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
       style={{ padding: 'clamp(10px, 1vw, 16px)' }}
@@ -2240,6 +2610,7 @@ export default function ProPromagenClient({
           onPromptTierChange={handlePromptTierChange}
           selectedExchangeCount={selectedExchanges.length}
           onOpenExchangePicker={handleOpenExchangePicker}
+          onDailyHover={setDailyHovered}
           onFormatHover={setFormatHovered}
           onScenesHover={setScenesHovered}
           onSavedHover={setSavedHovered}
@@ -2251,6 +2622,7 @@ export default function ProPromagenClient({
       {/* Bottom panel — preview windows (3/4 of available height) */}
       {/* Hover bridge: onMouseEnter cancels linger timeout, onMouseLeave closes */}
       <div
+        ref={previewPanelRef}
         className="min-h-0 flex flex-col rounded-xl overflow-hidden"
         style={{
           flex: '3 1 0%',
@@ -2263,6 +2635,9 @@ export default function ProPromagenClient({
             This avoids the mount-on-hover spike (PromptLabPreviewPanel starts
             5 timers + assemblePrompt + 42 icons on mount). With CSS toggle,
             hover just flips display — zero React work, instant paint. */}
+        <div style={{ display: activePanel === 'daily' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+          <DailyPromptsPreviewPanel />
+        </div>
         <div style={{ display: activePanel === 'format' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <TierPreviewPanel activeTier={selectedPromptTier} isPaidUser={isPaidUser} onTierChange={handlePromptTierChange} />
         </div>

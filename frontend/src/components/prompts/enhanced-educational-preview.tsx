@@ -58,6 +58,7 @@ import {
 } from '@/lib/prompt-builder';
 import { assembleCompositionPack } from '@/lib/composition-engine';
 import { postProcessAssembled } from '@/lib/prompt-post-process';
+import { incrementLifetimePrompts } from '@/lib/lifetime-counter';
 import { rewriteWithSynergy } from '@/lib/weather/synergy-rewriter';
 import { loadCategoryVocabulary, detectDominantFamily, type CategoryKey } from '@/lib/vocabulary/vocabulary-loader';
 import { getOrderedOptions } from '@/lib/prompt-intelligence';
@@ -1154,6 +1155,7 @@ export default function EnhancedEducationalPreview({
     if (text) {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      incrementLifetimePrompts();
       setTimeout(() => setCopied(false), 2000);
 
       // Store feedback pending for post-copy invitation
@@ -1175,6 +1177,7 @@ export default function EnhancedEducationalPreview({
     if (optimizedResult.optimized) {
       await navigator.clipboard.writeText(optimizedResult.optimized);
       setCopiedOptimized(true);
+      incrementLifetimePrompts();
       setTimeout(() => setCopiedOptimized(false), 2000);
     }
   }, [optimizedResult]);
@@ -1184,6 +1187,7 @@ export default function EnhancedEducationalPreview({
     if (activeTierPromptText) {
       await navigator.clipboard.writeText(activeTierPromptText);
       setCopiedAssembled(true);
+      incrementLifetimePrompts();
       setTimeout(() => setCopiedAssembled(false), 2000);
     }
   }, [activeTierPromptText]);
@@ -1438,24 +1442,50 @@ export default function EnhancedEducationalPreview({
             {/* ═══════════════════════════════════════════════════ */}
             {hasContent && (
               <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4 space-y-2">
-                {/* Header row: "Assembled prompt" + stage badge + char count */}
+                {/* Header row: dynamic label + stage badge + char count */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium text-white">Assembled prompt</span>
+                    {isOptimizerEnabled && wasOptimized && selectedProviderId ? (
+                      <span className="text-xs font-medium text-emerald-300 flex items-center gap-1.5">
+                        Optimized prompt
+                        {selectedProvider && (
+                          <>
+                            <span className="text-white/40">in</span>
+                            <span className="text-white/70">{selectedProvider.name}</span>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={selectedProvider.localIcon || `/icons/providers/${selectedProvider.id}.png`}
+                              alt=""
+                              style={{ width: 20, height: 20 }}
+                              className="inline-block rounded-sm"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          </>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-white">Assembled prompt</span>
+                    )}
                     <StageBadge
                       compositionMode={compositionMode}
                       isOptimizerEnabled={isOptimizerEnabled && !!selectedProviderId}
                       wasOptimized={wasOptimized}
                     />
                   </div>
-                  <span className="text-xs text-slate-200 tabular-nums">
+                  <span className={`text-xs tabular-nums ${isOptimizerEnabled && wasOptimized && selectedProviderId ? 'text-emerald-400/70' : 'text-slate-200'}`}>
                     {activeTierPromptText.length} chars
                   </span>
                 </div>
 
-                {/* Full-length prompt text box */}
-                <div className="min-h-[80px] max-h-[200px] overflow-y-auto rounded-xl border border-slate-600 bg-slate-950/80 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
-                  <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-slate-100">
+                {/* Full-length prompt text box — border shifts emerald when optimized */}
+                <div className={`min-h-[80px] max-h-[200px] overflow-y-auto rounded-xl border p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 ${
+                  isOptimizerEnabled && wasOptimized && selectedProviderId
+                    ? 'border-emerald-600/50 bg-emerald-950/20'
+                    : 'border-slate-600 bg-slate-950/80'
+                }`}>
+                  <pre className={`whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed ${
+                    isOptimizerEnabled && wasOptimized && selectedProviderId ? 'text-emerald-100' : 'text-slate-100'
+                  }`}>
                     {isPro && colourTermIndex.size > 0
                       ? (() => {
                           const segments = parsePromptIntoSegments(activeTierPromptText, colourTermIndex);
@@ -1489,10 +1519,12 @@ export default function EnhancedEducationalPreview({
                         className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
                           copiedAssembled
                             ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                            : isOptimizerEnabled && wasOptimized && selectedProviderId
+                              ? 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200'
+                              : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
                         }`}
-                        title={copiedAssembled ? 'Copied!' : 'Copy assembled prompt'}
-                        aria-label={copiedAssembled ? 'Copied to clipboard' : 'Copy assembled prompt to clipboard'}
+                        title={copiedAssembled ? 'Copied!' : isOptimizerEnabled && wasOptimized && selectedProviderId ? 'Copy optimized prompt' : 'Copy assembled prompt'}
+                        aria-label={copiedAssembled ? 'Copied to clipboard' : isOptimizerEnabled && wasOptimized && selectedProviderId ? 'Copy optimized prompt to clipboard' : 'Copy assembled prompt to clipboard'}
                       >
                         {copiedAssembled ? (
                           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

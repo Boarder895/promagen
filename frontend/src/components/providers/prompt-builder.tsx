@@ -120,6 +120,7 @@ import type { PromptCategory, PromptSelections, CategoryState, WeatherCategoryMa
 import { hashCategoryMap } from '@/lib/prompt-dna';
 import { rewriteWithSynergy } from '@/lib/weather/synergy-rewriter';
 import { postProcessAssembled } from '@/lib/prompt-post-process';
+import { incrementLifetimePrompts } from '@/lib/lifetime-counter';
 import { CATEGORY_ORDER } from '@/types/prompt-builder';
 import { VALID_ASPECT_RATIOS } from '@/types/composition';
 import {
@@ -1988,6 +1989,7 @@ export function PromptBuilder({
       const textToCopy = optimizedResult.optimized;
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
+      incrementLifetimePrompts();
       setTimeout(() => setCopied(false), 2000);
 
       if (provider.id) {
@@ -2064,6 +2066,7 @@ export function PromptBuilder({
     try {
       await navigator.clipboard.writeText(promptText);
       setCopiedAssembled(true);
+      incrementLifetimePrompts();
       setTimeout(() => setCopiedAssembled(false), 2000);
       if (provider.id) {
         trackPromptCopy({ providerId: provider.id, promptLength: promptText.length });
@@ -2082,6 +2085,7 @@ export function PromptBuilder({
       const textToCopy = optimizedResult.optimized;
       await navigator.clipboard.writeText(textToCopy);
       setCopiedOptimized(true);
+      incrementLifetimePrompts();
       setTimeout(() => setCopiedOptimized(false), 2000);
       if (provider.id) {
         trackPromptCopy({ providerId: provider.id, promptLength: textToCopy.length });

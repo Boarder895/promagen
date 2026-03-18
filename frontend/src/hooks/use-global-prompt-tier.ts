@@ -49,7 +49,8 @@ export type PromptSurface =
   | 'leaderboard'
   | 'fx-ribbon'
   | 'commodities'
-  | 'mission-control';
+  | 'mission-control'
+  | 'pro-page';
 
 /**
  * Default tiers per surface for Standard Promagen users.
@@ -61,6 +62,7 @@ const FREE_SURFACE_TIERS: Record<Exclude<PromptSurface, 'leaderboard'>, PromptTi
   'fx-ribbon': 1,        // CLIP-Based — technical weighted syntax
   'commodities': 2,      // Midjourney Family — MJ parameters
   'mission-control': 4,  // Plain Language — simple, accessible
+  'pro-page': 4,         // Pro page — defaults to Plain, overridden by user selection
 };
 
 /**
@@ -208,6 +210,14 @@ export function useGlobalPromptTier(
       // 2. localStorage (warm cache)
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newTier));
+        // Dispatch synthetic StorageEvent for same-tab sync
+        // (native StorageEvent only fires in OTHER tabs)
+        window.dispatchEvent(
+          new StorageEvent('storage', {
+            key: STORAGE_KEY,
+            newValue: JSON.stringify(newTier),
+          }),
+        );
       } catch {
         /* storage unavailable */
       }

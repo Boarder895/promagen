@@ -205,6 +205,7 @@ export interface FeatureControlPanelProps {
   onPromptTierChange: (tier: PromptTier) => void;
   selectedExchangeCount: number;
   onOpenExchangePicker: () => void;
+  onDailyHover?: (hovering: boolean) => void;
   onFormatHover?: (hovering: boolean) => void;
   onScenesHover?: (hovering: boolean) => void;
   onSavedHover?: (hovering: boolean) => void;
@@ -218,6 +219,7 @@ export function FeatureControlPanel({
   onPromptTierChange: _onPromptTierChange,
   selectedExchangeCount,
   onOpenExchangePicker,
+  onDailyHover,
   onFormatHover,
   onScenesHover,
   onSavedHover,
@@ -265,6 +267,7 @@ export function FeatureControlPanel({
           onAction={isPaidUser ? undefined : () => nav('/upgrade')}
           isPro={isPaidUser}
           stat={isPaidUser ? '∞' : `${promptCount}/${promptLimit}`}
+          onHoverChange={onDailyHover}
         />
 
         {/* ── 🎨 Prompt Format ────────────────────────────── */}
