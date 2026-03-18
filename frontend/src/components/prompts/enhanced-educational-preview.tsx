@@ -1445,7 +1445,7 @@ export default function EnhancedEducationalPreview({
                 {/* Header row: dynamic label + stage badge + char count */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {isOptimizerEnabled && wasOptimized && selectedProviderId ? (
+                    {isOptimizerEnabled && selectedProviderId ? (
                       <span className="text-xs font-medium text-emerald-300 flex items-center gap-1.5">
                         Optimized prompt
                         {selectedProvider && (
@@ -1472,19 +1472,19 @@ export default function EnhancedEducationalPreview({
                       wasOptimized={wasOptimized}
                     />
                   </div>
-                  <span className={`text-xs tabular-nums ${isOptimizerEnabled && wasOptimized && selectedProviderId ? 'text-emerald-400/70' : 'text-slate-200'}`}>
+                  <span className={`text-xs tabular-nums ${isOptimizerEnabled && selectedProviderId ? 'text-emerald-400/70' : 'text-slate-200'}`}>
                     {activeTierPromptText.length} chars
                   </span>
                 </div>
 
                 {/* Full-length prompt text box — border shifts emerald when optimized */}
                 <div className={`min-h-[80px] max-h-[200px] overflow-y-auto rounded-xl border p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 ${
-                  isOptimizerEnabled && wasOptimized && selectedProviderId
+                  isOptimizerEnabled && selectedProviderId
                     ? 'border-emerald-600/50 bg-emerald-950/20'
                     : 'border-slate-600 bg-slate-950/80'
                 }`}>
                   <pre className={`whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed ${
-                    isOptimizerEnabled && wasOptimized && selectedProviderId ? 'text-emerald-100' : 'text-slate-100'
+                    isOptimizerEnabled && selectedProviderId ? 'text-emerald-100' : 'text-slate-100'
                   }`}>
                     {isPro && colourTermIndex.size > 0
                       ? (() => {
@@ -1519,12 +1519,12 @@ export default function EnhancedEducationalPreview({
                         className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
                           copiedAssembled
                             ? 'bg-emerald-500/20 text-emerald-400'
-                            : isOptimizerEnabled && wasOptimized && selectedProviderId
+                            : isOptimizerEnabled && selectedProviderId
                               ? 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200'
                               : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
                         }`}
-                        title={copiedAssembled ? 'Copied!' : isOptimizerEnabled && wasOptimized && selectedProviderId ? 'Copy optimized prompt' : 'Copy assembled prompt'}
-                        aria-label={copiedAssembled ? 'Copied to clipboard' : isOptimizerEnabled && wasOptimized && selectedProviderId ? 'Copy optimized prompt to clipboard' : 'Copy assembled prompt to clipboard'}
+                        title={copiedAssembled ? 'Copied!' : isOptimizerEnabled && selectedProviderId ? 'Copy optimized prompt' : 'Copy assembled prompt'}
+                        aria-label={copiedAssembled ? 'Copied to clipboard' : isOptimizerEnabled && selectedProviderId ? 'Copy optimized prompt to clipboard' : 'Copy assembled prompt to clipboard'}
                       >
                         {copiedAssembled ? (
                           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

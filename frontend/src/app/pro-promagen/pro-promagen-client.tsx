@@ -2163,108 +2163,86 @@ export default function ProPromagenClient({
   const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
 
   // ============================================================================
-  // HOVER BRIDGE + INTENT TRIANGLE — Amazon mega-menu pattern
+  // HOVER BRIDGE + DEBOUNCED INTENT DETECTION
   // ============================================================================
   // Problem: Cards sit above the preview panel. Moving cursor from a card
   // down to its preview crosses other cards, triggering unwanted panel switches.
   //
-  // Solution: When a panel is active and cursor moves toward the preview,
-  // an invisible triangle (cursor anchor → preview top-left → preview top-right)
-  // protects the path. Card hovers inside the triangle are suppressed.
+  // Solution: When a panel is already active and cursor enters a DIFFERENT card,
+  // don't switch immediately. Instead, start a 150ms debounce. If the cursor
+  // leaves that card within 150ms (just passing through), cancel the switch.
+  // If it stays for 150ms, it's an intentional selection — switch panels.
   //
-  // When cursor moves laterally (outside triangle), switches happen normally.
+  // When NO panel is active, first hover switches immediately (no debounce).
+  // When cursor enters the SAME card that's already active, do nothing.
   // ============================================================================
   type PreviewPanel = 'daily' | 'format' | 'scenes' | 'saved' | 'lab' | 'exchanges';
   const [activePanel, setActivePanel] = useState<PreviewPanel | null>(null);
   const lingerRef = useRef<ReturnType<typeof setTimeout>>();
+  const switchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
   const inPreviewRef = useRef(false);
-
-  // Intent triangle refs
-  const mousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const intentAnchorRef = useRef<{ x: number; y: number } | null>(null);
-  const previewPanelRef = useRef<HTMLDivElement>(null);
   const activePanelRef = useRef<PreviewPanel | null>(null);
-  const sectionRef = useRef<HTMLElement>(null);
+  const previewPanelRef = useRef<HTMLDivElement>(null);
 
-  // Keep activePanelRef in sync (avoids stale closure in mousemove)
+  // Keep activePanelRef in sync
   useEffect(() => {
     activePanelRef.current = activePanel;
   }, [activePanel]);
 
-  // Track mouse position on the entire section
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      mousePosRef.current = { x: e.clientX, y: e.clientY };
-    };
-    section.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => section.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  // Point-in-triangle check (2D cross product method)
-  const isInsideIntentTriangle = useCallback((): boolean => {
-    if (!intentAnchorRef.current || !previewPanelRef.current || !activePanelRef.current) return false;
-
-    const previewRect = previewPanelRef.current.getBoundingClientRect();
-    const cursor = mousePosRef.current;
-    const anchor = intentAnchorRef.current;
-
-    // Triangle: anchor (where cursor was when panel opened) →
-    //           preview top-left (with padding) → preview top-right (with padding)
-    // Expanded slightly (16px) so the triangle isn't razor-thin at the edges
-    const ax = anchor.x, ay = anchor.y;
-    const bx = previewRect.left - 16, by = previewRect.top;
-    const cx = previewRect.right + 16, cy = previewRect.top;
-    const px = cursor.x, py = cursor.y;
-
-    // Cross product signs — all same sign = inside triangle
-    const d1 = (bx - ax) * (py - ay) - (by - ay) * (px - ax);
-    const d2 = (cx - bx) * (py - by) - (cy - by) * (px - bx);
-    const d3 = (ax - cx) * (py - cy) - (ay - cy) * (px - cx);
-
-    const hasNeg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-    const hasPos = (d1 > 0) || (d2 > 0) || (d3 > 0);
-
-    return !(hasNeg && hasPos);
-  }, []);
-
   const handleCardHover = useCallback((panel: PreviewPanel, hovering: boolean) => {
     clearTimeout(lingerRef.current);
+
     if (hovering) {
-      // If a panel is already active and cursor is inside the intent triangle,
-      // suppress the switch — user is heading toward the preview, not this card
-      if (activePanelRef.current && activePanelRef.current !== panel && isInsideIntentTriangle()) {
-        return; // Suppress — cursor is in the protected corridor
+      // Same card — no action needed
+      if (activePanelRef.current === panel) {
+        clearTimeout(switchDebounceRef.current);
+        return;
       }
 
-      inPreviewRef.current = false;
-      setActivePanel(panel);
-      // Set the intent anchor to current cursor position
-      intentAnchorRef.current = { ...mousePosRef.current };
+      // No active panel — switch immediately (first hover, no debounce)
+      if (!activePanelRef.current) {
+        inPreviewRef.current = false;
+        setActivePanel(panel);
+        return;
+      }
+
+      // Different card while panel is active — debounce to filter pass-throughs
+      // 150ms: fast enough to feel instant for deliberate hovers,
+      // long enough to filter diagonal cursor movement toward preview
+      clearTimeout(switchDebounceRef.current);
+      switchDebounceRef.current = setTimeout(() => {
+        inPreviewRef.current = false;
+        setActivePanel(panel);
+      }, 150);
     } else {
+      // Cursor left a card — cancel any pending switch debounce for THIS card
+      clearTimeout(switchDebounceRef.current);
+
+      // Start linger timeout (2s) — if cursor doesn't enter preview, close panel
       lingerRef.current = setTimeout(() => {
         if (!inPreviewRef.current) {
           setActivePanel(null);
-          intentAnchorRef.current = null;
         }
       }, 2000);
     }
-  }, [isInsideIntentTriangle]);
+  }, []);
 
   const handlePreviewEnter = useCallback(() => {
     clearTimeout(lingerRef.current);
+    clearTimeout(switchDebounceRef.current);
     inPreviewRef.current = true;
   }, []);
 
   const handlePreviewLeave = useCallback(() => {
     inPreviewRef.current = false;
-    intentAnchorRef.current = null;
     setActivePanel(null);
   }, []);
 
-  // Cleanup timer on unmount
-  useEffect(() => () => clearTimeout(lingerRef.current), []);
+  // Cleanup timers on unmount
+  useEffect(() => () => {
+    clearTimeout(lingerRef.current);
+    clearTimeout(switchDebounceRef.current);
+  }, []);
 
   // Wrapper callbacks matching FeatureControlPanel prop signatures
   const setDailyHovered = useCallback((h: boolean) => handleCardHover('daily', h), [handleCardHover]);
@@ -2565,7 +2543,6 @@ export default function ProPromagenClient({
     // NORMAL MODE — Feature Control Panel (3×3 grid)
     // ========================================================================
     <section
-      ref={sectionRef}
       aria-label="Pro Promagen Configuration"
       className="flex h-full min-h-0 flex-col rounded-3xl bg-slate-950/70 shadow-sm ring-1 ring-white/10"
       style={{ padding: 'clamp(10px, 1vw, 16px)' }}
