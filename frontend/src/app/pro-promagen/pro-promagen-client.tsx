@@ -121,6 +121,7 @@ import type { WeatherCategoryMap, PromptCategory } from '@/types/prompt-builder'
 import { getPlatformTierId } from '@/data/platform-tiers';
 import { assemblePrompt, selectionsFromMap } from '@/lib/prompt-builder';
 import type { ExchangeWeatherData, IndexQuoteData } from '@/components/exchanges/types';
+import { CATEGORY_COLOURS as SHARED_CATEGORY_COLOURS, CATEGORY_LABELS as SHARED_CATEGORY_LABELS, CATEGORY_EMOJIS as SHARED_CATEGORY_EMOJIS, parsePromptIntoSegments as sharedParsePrompt } from '@/lib/prompt-colours';
 
 // ============================================================================
 // TYPES
@@ -875,63 +876,22 @@ function SavedPreviewPanel() {
 // Existing features preserved: Yes
 // ============================================================================
 
-// ── Category colours — exact copy from prompt-showcase.tsx ─────────────────
+// ── Category colours — imported from @/lib/prompt-colours (SSOT) ────────────
 
-const CATEGORY_COLOURS: Record<string, string> = {
-  subject: '#FCD34D',
-  action: '#A3E635',
-  style: '#C084FC',
-  environment: '#38BDF8',
-  composition: '#34D399',
-  camera: '#FB923C',
-  lighting: '#FBBF24',
-  colour: '#F472B6',
-  atmosphere: '#22D3EE',
-  materials: '#2DD4BF',
-  fidelity: '#93C5FD',
-  negative: '#F87171',
-  structural: '#94A3B8',
-};
+const CATEGORY_COLOURS = SHARED_CATEGORY_COLOURS;
+const CATEGORY_EMOJIS: Record<string, string> = SHARED_CATEGORY_EMOJIS;
 
-const CATEGORY_EMOJIS: Record<string, string> = {
-  subject: '📍',
-  action: '💨',
-  style: '🎨',
-  environment: '🏛️',
-  composition: '📐',
-  camera: '📷',
-  lighting: '💡',
-  colour: '🌡️',
-  atmosphere: '☁️',
-  materials: '🧱',
-  fidelity: '✨',
-  negative: '🚫',
-};
-
+// Pro page uses custom display labels for some categories
 const CATEGORY_LABELS: Record<string, string> = {
-  subject: 'Subject',
-  action: 'Action',
-  style: 'Style',
+  ...SHARED_CATEGORY_LABELS,
   environment: 'Venue',
-  composition: 'Composition',
-  camera: 'Camera',
-  lighting: 'Lighting',
-  colour: 'Colour',
-  atmosphere: 'Atmosphere',
   materials: 'Surface',
   fidelity: 'Quality',
-  negative: 'Negative',
 };
 
-// ── Term index + prompt parser (from prompt-showcase.tsx) ──────────────────
-
-const LAB_DEFAULT_WEIGHTS: Partial<Record<string, number>> = {
-  subject: 1.2, style: 1.15, lighting: 1.1,
-};
-const LAB_FIDELITY_TERMS = [
-  'masterpiece', 'best quality', 'highly detailed', 'sharp focus',
-  '8k', '4k', 'ultra detailed', 'high resolution',
-];
+// ── Term index + prompt parser — delegates to @/lib/prompt-colours ──────────
+// labBuildTermIndex and labParsePrompt preserved as thin wrappers for
+// compatibility with the WeatherCategoryMap-based path used on this page.
 
 function labBuildTermIndex(categoryMap: WeatherCategoryMap): Map<string, PromptCategory> {
   const index = new Map<string, PromptCategory>();
@@ -950,53 +910,12 @@ function labBuildTermIndex(categoryMap: WeatherCategoryMap): Map<string, PromptC
   return index;
 }
 
+// Re-use shared parser as local alias for existing call sites
+
 interface LabSegment { text: string; category: string; weight: number }
 
 function labParsePrompt(promptText: string, termIndex: Map<string, PromptCategory>): LabSegment[] {
-  const termEntries = Array.from(termIndex.entries()).sort((a, b) => b[0].length - a[0].length);
-  type Match = { start: number; end: number; category: string; weight: number };
-  const matches: Match[] = [];
-  const lower = promptText.toLowerCase();
-
-  for (const [term, category] of termEntries) {
-    let from = 0;
-    while (from < lower.length) {
-      const idx = lower.indexOf(term, from);
-      if (idx === -1) break;
-      if (!matches.some((m) => idx < m.end && idx + term.length > m.start)) {
-        let w = LAB_DEFAULT_WEIGHTS[category] ?? 1.0;
-        if (idx > 0 && promptText[idx - 1] === '(') {
-          const after = promptText.slice(idx + term.length);
-          const wm = after.match(/^:(\d+\.?\d*)\)/);
-          if (wm) w = parseFloat(wm[1]!);
-        }
-        matches.push({ start: idx, end: idx + term.length, category, weight: w });
-      }
-      from = idx + 1;
-    }
-  }
-  for (const ft of LAB_FIDELITY_TERMS) {
-    let from = 0;
-    while (from < lower.length) {
-      const idx = lower.indexOf(ft, from);
-      if (idx === -1) break;
-      if (!matches.some((m) => idx < m.end && idx + ft.length > m.start)) {
-        matches.push({ start: idx, end: idx + ft.length, category: 'fidelity', weight: 1.0 });
-      }
-      from = idx + 1;
-    }
-  }
-  matches.sort((a, b) => a.start - b.start);
-  const segs: LabSegment[] = [];
-  let cursor = 0;
-  for (const m of matches) {
-    if (m.start > cursor) segs.push({ text: promptText.slice(cursor, m.start), category: 'structural', weight: 0.5 });
-    segs.push({ text: promptText.slice(m.start, m.end), category: m.category, weight: m.weight });
-    cursor = m.end;
-  }
-  if (cursor < promptText.length) segs.push({ text: promptText.slice(cursor), category: 'structural', weight: 0.5 });
-  if (segs.length === 0) segs.push({ text: promptText, category: 'structural', weight: 0.5 });
-  return segs;
+  return sharedParsePrompt(promptText, termIndex) as LabSegment[];
 }
 
 // ── Tier metadata ─────────────────────────────────────────────────────────

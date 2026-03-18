@@ -5,9 +5,9 @@
   "ssotSource": "frontend",
   "provenance": {
     "ssotVersion": 2,
-    "ssotHash": "b3a0ea73e3819c1004ec9bff116f03ef0c358be401f698b7255293d7fa0484bc",
-    "ssotFingerprint": "b3a0ea73e381",
-    "snapshotAt": "2026-03-17T07:35:12.341Z"
+    "ssotHash": "1843cddb1a2d06c3380a9f2ed689b977749a2088fd4479dd8da56dd4bbc79b8f",
+    "ssotFingerprint": "1843cddb1a2d",
+    "snapshotAt": "2026-03-17T09:36:18.298Z"
   },
   "catalog": [
     {
@@ -651,14 +651,6 @@
       "tz": "Africa/Lagos"
     },
     {
-      "id": "xnsa-lagos::nse-all_share",
-      "benchmark": "nse-all_share",
-      "indexName": "NSE All-Share",
-      "city": "Lagos",
-      "country": "Nigeria",
-      "tz": "Africa/Lagos"
-    },
-    {
       "id": "xosl-oslo::oslo",
       "benchmark": "oslo",
       "indexName": "Oslo Børs",
@@ -957,14 +949,6 @@
     {
       "id": "sase-sarajevo::sasx_10",
       "benchmark": "sasx_10",
-      "indexName": "SASX-10",
-      "city": "Sarajevo",
-      "country": "Bosnia and Herzegovina",
-      "tz": "Europe/Sarajevo"
-    },
-    {
-      "id": "sase-sarajevo::sasx-10",
-      "benchmark": "sasx-10",
       "indexName": "SASX-10",
       "city": "Sarajevo",
       "country": "Bosnia and Herzegovina",
@@ -1300,7 +1284,6 @@
     "xngo-nagoya::jp225",
     "xngo-nagoya::jpvix",
     "xnsa-lagos::nse_all_share",
-    "xnsa-lagos::nse-all_share",
     "xosl-oslo::oslo",
     "xris-riga::riga",
     "xsap-sapporo::jp225",
@@ -1339,7 +1322,6 @@
     "mse-skopje::mbi_10",
     "mnse-podgorica::monex",
     "sase-sarajevo::sasx_10",
-    "sase-sarajevo::sasx-10",
     "pfts-kyiv::pfts",
     "bse-beirut::blom",
     "kse-kuwait::kuwait_all_share",

@@ -33,6 +33,7 @@ import type {
   PromptSelections as PartialPromptSelections,
 } from '@/types/prompt-builder';
 import { CATEGORY_ORDER } from '@/types/prompt-builder';
+import { CATEGORY_COLOURS, buildTermIndexFromSelections, parsePromptIntoSegments } from '@/lib/prompt-colours';
 import { VALID_ASPECT_RATIOS, type AspectRatioId } from '@/types/composition';
 
 // Prompt Intelligence imports
@@ -302,13 +303,45 @@ interface TierCardProps {
   onSelect: () => void;
   onCopy: () => void;
   copied: boolean;
+  isPro?: boolean;
+  termIndex?: Map<string, PromptCategory>;
 }
 
-function TierCard({ tier, prompt, negative, isActive, onSelect, onCopy, copied }: TierCardProps) {
+function TierCard({ tier, prompt, negative, isActive, onSelect, onCopy, copied, isPro = false, termIndex }: TierCardProps) {
   const config = TIER_VISUAL_CONFIGS[tier];
 
   // Combine prompt with negative for tier 2
   const displayPrompt = tier === 2 && negative ? `${prompt} ${negative}` : prompt;
+
+  // Colour-coded text for Pro users
+  const renderPromptText = () => {
+    const text = displayPrompt
+      ? displayPrompt.length > 150
+        ? displayPrompt.slice(0, 150) + '...'
+        : displayPrompt
+      : '';
+
+    if (!text) return <span className="italic">Select options to generate prompt...</span>;
+
+    if (!isPro || !termIndex || termIndex.size === 0) return text;
+
+    const segments = parsePromptIntoSegments(text, termIndex);
+    const hasAnatomy = segments.some((s) => s.category !== 'structural');
+    if (!hasAnatomy) return text;
+
+    return (
+      <>
+        {segments.map((seg, i) => {
+          const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+          return (
+            <span key={i} style={{ color: c }}>
+              {seg.text}
+            </span>
+          );
+        })}
+      </>
+    );
+  };
 
   return (
     <div
@@ -368,14 +401,10 @@ function TierCard({ tier, prompt, negative, isActive, onSelect, onCopy, copied }
       >
         <p
           className={`break-words leading-relaxed ${
-            isActive ? 'text-white/90' : 'text-white/60'
+            isActive && !isPro ? 'text-white/90' : !isPro ? 'text-white/60' : ''
           } ${!displayPrompt && 'italic'}`}
         >
-          {displayPrompt
-            ? displayPrompt.length > 150
-              ? displayPrompt.slice(0, 150) + '...'
-              : displayPrompt
-            : 'Select options to generate prompt...'}
+          {renderPromptText()}
         </p>
       </div>
 
@@ -645,7 +674,7 @@ export default function EnhancedPromptBuilder({
 
   const {
     isAuthenticated: _isAuthenticated,
-    userTier: _userTier,
+    userTier,
     promptLockState,
     categoryLimits,
     platformTier: _platformTier,
@@ -653,6 +682,8 @@ export default function EnhancedPromptBuilder({
   } = usePromagenAuth({
     platformId,
   });
+
+  const isPro = userTier === 'paid';
 
   // ============================================================================
   // Computed Values
@@ -682,6 +713,12 @@ export default function EnhancedPromptBuilder({
     }
     return result;
   }, [categoryState]);
+
+  // ── Pro Promagen: Build term → category index for colour coding ────────
+  const colourTermIndex = useMemo(() => {
+    if (!isPro) return new Map<string, PromptCategory>();
+    return buildTermIndexFromSelections(selections);
+  }, [isPro, selections]);
 
   const hasContent = Object.keys(selections).length > 0;
 
@@ -957,6 +994,7 @@ export default function EnhancedPromptBuilder({
                       isLocked={isLocked}
                       chipOptions={getCategoryChips(category, state.selected, state.customValue)}
                       chipSectionLabel="More options"
+                      labelColour={isPro ? CATEGORY_COLOURS[category] : undefined}
                     />
                   </div>
                 );
@@ -999,6 +1037,8 @@ export default function EnhancedPromptBuilder({
                   onSelect={() => setActiveTier(tier)}
                   onCopy={() => handleCopyTier(tier)}
                   copied={copiedTier === tier}
+                  isPro={isPro}
+                  termIndex={colourTermIndex}
                 />
               ))}
             </div>

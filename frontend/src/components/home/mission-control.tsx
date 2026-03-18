@@ -211,7 +211,7 @@ export default function MissionControl({
 }: MissionControlProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
   const contentZoneRef = useRef<HTMLDivElement>(null);
-  const { tier: globalTier } = useGlobalPromptTier('mission-control');
+  const { tier: globalTier, isPro: mcIsPro, saveTier: mcSaveTier } = useGlobalPromptTier('mission-control');
 
   // ══════════════════════════════════════════════════════════════════════════
   // WEATHER & PROMPT LOGIC — Uses same data source as LSE London exchange card
@@ -547,6 +547,8 @@ export default function MissionControl({
                 tz={timezone}
                 weather={weatherData}
                 tier={globalTier}
+                isPro={mcIsPro}
+                onTierChange={mcSaveTier}
                 tooltipPosition="right"
                 verticalPosition="below"
                 latitude={previewExchange?.latitude}

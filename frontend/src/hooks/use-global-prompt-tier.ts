@@ -29,7 +29,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 import type { PromptTier } from '@/lib/weather/weather-prompt-generator';
 
@@ -78,6 +78,12 @@ export interface UseGlobalPromptTierReturn {
   tier: PromptTier;
   /** Whether user is Pro (for multi-tier tooltip display) */
   isPro: boolean;
+  /**
+   * Save a new tier selection (Pro users only).
+   * Writes localStorage + PATCHes Clerk metadata + updates local state.
+   * No-op for free users.
+   */
+  saveTier: (tier: PromptTier) => void;
 }
 
 // ============================================================================
@@ -186,9 +192,43 @@ export function useGlobalPromptTier(
     return () => window.removeEventListener('storage', handleStorage);
   }, [isPro]);
 
+  // ── Save tier (Pro users only) ──────────────────────────────────────────
+  // Same logic as pro-promagen-client.tsx handlePromptTierChange:
+  // 1. Update local state (immediate UI feedback)
+  // 2. Write localStorage (warm cache for next load + cross-tab sync)
+  // 3. PATCH Clerk metadata (survives cache clear / device switch)
+  const saveTier = useCallback(
+    (newTier: PromptTier) => {
+      if (!isPro) return;
+      if (![1, 2, 3, 4].includes(newTier)) return;
+
+      // 1. Local state
+      setTier(newTier);
+
+      // 2. localStorage (warm cache)
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newTier));
+      } catch {
+        /* storage unavailable */
+      }
+
+      // 3. Clerk metadata (fire-and-forget)
+      fetch('/api/user/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ promptTier: newTier }),
+      }).catch((err) => {
+        console.error('[useGlobalPromptTier] Failed to sync promptTier to Clerk:', err);
+      });
+    },
+    [isPro],
+  );
+
   return {
     tier: isPro ? tier : freeTier,
     isPro,
+    saveTier,
   };
 }
 

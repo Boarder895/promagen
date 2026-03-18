@@ -1,7 +1,7 @@
 # paid_tier.md â€” What Is Free and What Is Paid in Promagen
 
-**Last updated:** 14 March 2026  
-**Version:** 3.0.0  
+**Last updated:** 17 March 2026  
+**Version:** 4.0.0  
 **Status:** Authoritative  
 **Scope:** Product behaviour, access rules, and monetisation boundaries  
 **Rule:** If a capability is not explicitly listed in this document, it is free.
@@ -205,7 +205,7 @@ User tier is stored in Clerk's `publicMetadata`:
 
 ```typescript
 interface ClerkPublicMetadata {
-  tier: 'free' | 'paid';
+  tier: "free" | "paid";
   promptTier?: number; // 1–4, paid users only (All Prompt Format selection)
   exchangeSelection?: {
     exchangeIds: string[];
@@ -215,6 +215,9 @@ interface ClerkPublicMetadata {
     pairIds: string[];
     updatedAt: string;
   };
+  stripeCustomerId?: string; // Stripe customer ID (set on first checkout)
+  cancelAtPeriodEnd?: boolean; // true when user has cancelled but still has access
+  currentPeriodEnd?: string; // ISO timestamp — when current billing period ends
 }
 ```
 
@@ -222,9 +225,10 @@ interface ClerkPublicMetadata {
 
 ```typescript
 function Component() {
-  const { userTier, categoryLimits, platformTier, clerkPromptTier } = usePromagenAuth({
-    platformId,
-  });
+  const { userTier, categoryLimits, platformTier, clerkPromptTier } =
+    usePromagenAuth({
+      platformId,
+    });
   // userTier: 'free' | 'paid' (internal)
   // UI should display: "Standard Promagen" | "Pro Promagen"
   // categoryLimits: Platform-aware limits for current provider
@@ -438,11 +442,33 @@ Rules:
 
 Authority for implementation: `docs/authority/ribbon-homepage.md`
 
+#### Exchange Catalog Data Integrity (17 March 2026)
+
+All 53 real exchanges (excluding city-vibe entries) now have populated `marketstack` fields. Zero empty marketstack entries remain.
+
+**Fixes applied:**
+
+| Exchange              | Issue                                                        | Fix                                                                                                 |
+| --------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| JSE Johannesburg (ZA) | `marketstack: {}` — no index data                            | Added `defaultBenchmark: "jse"`, `defaultIndexName: "JSE All Share"`, plus `sa40` (FTSE/JSE Top 40) |
+| SSE Santiago (CL)     | `marketstack: {}` — no index data                            | Added `defaultBenchmark: "igpa"`, `defaultIndexName: "IGPA"`                                        |
+| ZSE Zagreb (HR)       | `hoursTemplate: "europe-standard"` (not in test allowed set) | Changed to `"europe-croatia"`                                                                       |
+| ISE Dublin (IE)       | `hoursTemplate: "europe-standard"` (not in test allowed set) | Changed to `"europe-ireland"`                                                                       |
+
+**Stale-but-valid API data:** Several exchanges return prices with old `asOf` dates (e.g., JSE All Share from 2023-04-21, FTSE 100 from 2023-05-03, CROBEX from 2021-03-03). These display the last known good data from Marketstack. If the API ever updates, the cards refresh automatically. Showing stale real data is better than showing nothing.
+
+#### Continental Classification Change (17 March 2026)
+
+**Turkey (TR)** moved from `EUROPE` to `MIDDLE_EAST` in `src/lib/geo/continents.ts`. This affects:
+
+- Exchange Picker accordion grouping (BIST Istanbul now under Middle East)
+- ExchangesPreviewPanel regional window (BIST now in "Africa & M. East" window)
+
 ---
 
 ### 5.4 Reserved (removed)
 
-_Section removed â€” exchange count and hemisphere selection merged into Â§5.3 Exchange selection._
+_Section removed — exchange count and hemisphere selection merged into §5.3 Exchange selection._
 
 ---
 
@@ -596,7 +622,24 @@ Each FX pair shows **two overlapping SVG flags** (base currency + quote currency
 
 ```typescript
 // Americas (18 currencies)
-(USD, CAD, MXN, BRL, ARS, CLP, COP, PEN, UYU, DOP, JMD, TTD, BSD, BBD, PAB, CRC, GTQ, HNL);
+(USD,
+  CAD,
+  MXN,
+  BRL,
+  ARS,
+  CLP,
+  COP,
+  PEN,
+  UYU,
+  DOP,
+  JMD,
+  TTD,
+  BSD,
+  BBD,
+  PAB,
+  CRC,
+  GTQ,
+  HNL);
 
 // Europe (25 currencies)
 (EUR,
@@ -776,7 +819,7 @@ interface FxSelectionLocal {
 ```typescript
 // In Clerk publicMetadata
 interface ClerkPublicMetadata {
-  tier: 'free' | 'paid';
+  tier: "free" | "paid";
   fxSelection?: {
     pairIds: string[]; // Max 16 items
     updatedAt: string; // ISO timestamp
@@ -865,13 +908,13 @@ The prompt tier displayed in flag tooltips is **surface-aware** for Standard Pro
 
 Free users see different tiers on different surfaces, creating variety:
 
-| Surface          | Default Tier | Rationale                                        |
-| ---------------- | ------------ | ------------------------------------------------ |
-| Exchange cards   | Tier 3       | Most visible — rich natural sentences            |
-| AI Leaderboard   | *native*     | Each provider's own tier (educational variety)   |
-| FX ribbon        | Tier 1       | Technical CLIP weights look advanced             |
-| Commodities      | Tier 2       | Midjourney parameters are visually distinctive   |
-| Mission Control  | Tier 4       | Simplest entry point, accessible                 |
+| Surface         | Default Tier | Rationale                                      |
+| --------------- | ------------ | ---------------------------------------------- |
+| Exchange cards  | Tier 3       | Most visible — rich natural sentences          |
+| AI Leaderboard  | _native_     | Each provider's own tier (educational variety) |
+| FX ribbon       | Tier 1       | Technical CLIP weights look advanced           |
+| Commodities     | Tier 2       | Midjourney parameters are visually distinctive |
+| Mission Control | Tier 4       | Simplest entry point, accessible               |
 
 **Source of truth:** `FREE_SURFACE_TIERS` in `src/hooks/use-global-prompt-tier.ts`
 
@@ -891,13 +934,13 @@ When Clerk data arrives (async hydration), it overwrites localStorage to ensure 
 
 **Consumer files that pass surface:**
 
-| File                                | Surface param     |
-| ----------------------------------- | ----------------- |
-| `exchange-list.tsx`                 | `'exchange-cards'`|
-| `provider-cell.tsx`                 | `'leaderboard'`   |
-| `finance-ribbon.container.tsx`      | `'fx-ribbon'`     |
-| `commodity-mover-card.tsx`          | `'commodities'`   |
-| `mission-control.tsx`               | `'mission-control'`|
+| File                           | Surface param       |
+| ------------------------------ | ------------------- |
+| `exchange-list.tsx`            | `'exchange-cards'`  |
+| `provider-cell.tsx`            | `'leaderboard'`     |
+| `finance-ribbon.container.tsx` | `'fx-ribbon'`       |
+| `commodity-mover-card.tsx`     | `'commodities'`     |
+| `mission-control.tsx`          | `'mission-control'` |
 
 **Naming:** The feature was renamed from "Weather Prompt Format" to "All Prompt Format" in `presets.ts` because it affects ALL prompt tooltips (weather-driven, city-vibe, and leaderboard), not just weather.
 
@@ -1050,15 +1093,15 @@ Authority for implementation: `docs/authority/TODO-api-integration.md`
 
 ### 5.10 Pro Promagen Page — Feature Control Panel (`/pro-promagen`)
 
-**Last updated:** 14 March 2026
-**Architecture:** Feature Control Panel v1.1.0 (cockpit approach)
+**Last updated:** 17 March 2026
+**Architecture:** Feature Control Panel v2.0.0 + Hover Bridge v4.0.0
 **Replaces:** Comparison table layout (removed 14 March 2026)
 
 The `/pro-promagen` route serves **two purposes from the same UI**:
 
-| User Type | Mode          | Behaviour                                                                                    |
-| --------- | ------------- | -------------------------------------------------------------------------------------------- |
-| Free user | Preview       | 9 feature cards show Standard vs Pro values. Hover-previews show features. CTA → `/upgrade`  |
+| User Type | Mode          | Behaviour                                                                                       |
+| --------- | ------------- | ----------------------------------------------------------------------------------------------- |
+| Free user | Preview       | 9 feature cards show Standard vs Pro values. Hover-previews show features. CTA → `/upgrade`     |
 | Paid user | Configuration | Same 9 cards become live controls. Tier selector active. Exchange Picker accessible. CTA → Save |
 
 No other SaaS uses this pattern — the same page is both the sales page and the configuration cockpit.
@@ -1096,17 +1139,17 @@ No other SaaS uses this pattern — the same page is both the sales page and the
 
 Each card uses the **exchange-card glow pattern** — same `hexToRgba()`, same triple-layer `boxShadow`, same radial gradient overlays, same 200ms transition. Each card has a unique colour.
 
-| Card | Emoji | Label         | Colour  | Free Value                | Pro Value               | Action (Free)  | Action (Pro) | Live Stat        |
-| ---- | ----- | ------------- | ------- | ------------------------- | ----------------------- | -------------- | ------------ | ---------------- |
-| 1    | ⚡    | Daily Prompts | #f59e0b | X / 3 today               | Unlimited               | Go unlimited → | Unlimited    | count/limit or ∞ |
-| 2    | 🎨    | Prompt Format | #60a5fa | Varies by surface          | Your choice             | Pro only       | Active       | T1–T4 label      |
-| 3    | 🎬    | Scenes        | #c084fc | 25 free scenes             | 200 · 23 worlds         | Unlock 175 →   | Explore →    | 25 or 200        |
-| 4    | 📊    | Exchanges     | #22d3ee | 16 fixed                   | 0–16, your choice       | Customise →    | Configure →  | count            |
-| 5    | 💾    | Saved         | #a78bfa | X · browser only           | Synced across devices   | View library → | Open library →| saved count     |
-| 6    | 🧪    | Prompt Lab    | #fb7185 | Pro exclusive               | Full access             | Pro only       | Open lab →   | —                |
-| 7    | 🌍    | Frame         | #34d399 | Your location              | You / Greenwich toggle  | Pro only       | Active       | —                |
-| 8    | ⚙️    | Stacking      | #fb923c | Base limits                | +1 on 7 categories      | Pro only       | Active       | —                |
-| 9    | 🏆    | Vote Power    | #fbbf24 | 1.0×                      | 1.5× influence          | Pro only       | Active       | 1.0× or 1.5×    |
+| Card | Emoji | Label         | Colour  | Free Value        | Pro Value              | Action (Free)  | Action (Pro)   | Live Stat        |
+| ---- | ----- | ------------- | ------- | ----------------- | ---------------------- | -------------- | -------------- | ---------------- |
+| 1    | ⚡    | Daily Prompts | #f59e0b | X / 3 today       | Unlimited              | Go unlimited → | Unlimited      | count/limit or ∞ |
+| 2    | 🎨    | Prompt Format | #60a5fa | Varies by surface | Your choice            | Pro only       | Active         | T1–T4 label      |
+| 3    | 🎬    | Scenes        | #c084fc | 25 free scenes    | 200 · 23 worlds        | Unlock 175 →   | Explore →      | 25 or 200        |
+| 4    | 📊    | Exchanges     | #22d3ee | 16 fixed          | 0–16, your choice      | Customise →    | Configure →    | count            |
+| 5    | 💾    | Saved         | #a78bfa | X · browser only  | Synced across devices  | View library → | Open library → | saved count      |
+| 6    | 🧪    | Prompt Lab    | #fb7185 | Pro exclusive     | Full access            | Pro only       | Open lab →     | —                |
+| 7    | 🌍    | Frame         | #34d399 | Your location     | You / Greenwich toggle | Pro only       | Active         | —                |
+| 8    | ⚙️    | Stacking      | #fb923c | Base limits       | +1 on 7 categories     | Pro only       | Active         | —                |
+| 9    | 🏆    | Vote Power    | #fbbf24 | 1.0×              | 1.5× influence         | Pro only       | Active         | 1.0× or 1.5×     |
 
 **Cards with navigation** (→ arrow on hover): Daily Prompts (free only → `/upgrade`), Scenes, Exchanges (opens picker), Saved, Prompt Lab (paid only).
 
@@ -1119,12 +1162,14 @@ Each card uses the **exchange-card glow pattern** — same `hexToRgba()`, same t
 The Prompt Format card has special behaviour:
 
 **Inside the card:**
+
 - Paid users see "Select tier ↓" label (amber) above 4 tier selector buttons (T1/T2/T3/T4)
 - Active tier button has solid fill (0.35 alpha + 0.7 border) vs inactive (0.03 alpha)
 - Free users see "Varies by surface" label + disabled tier buttons (visible but non-interactive)
 - Selection saves to localStorage + Clerk metadata via `handlePromptTierChange`
 
 **Below the cards (hover preview):**
+
 - When user hovers the Prompt Format card, the CTA/payment area transforms into **4 horizontal tooltip-style windows**
 - Each window is a visual clone of `WeatherPromptTooltip`:
   - Same `rgba(15, 23, 42, 0.97)` dark glass background
@@ -1138,6 +1183,7 @@ The Prompt Format card has special behaviour:
 - **Mouse leave** → reverts to CTA/payment area
 
 **State flow:**
+
 ```
 Prompt Format card hover → setFormatHovered(true)
   → CTA area conditionally renders TierPreviewPanel
@@ -1146,13 +1192,50 @@ Prompt Format card hover → setFormatHovered(true)
 Mouse leave → setFormatHovered(false) → CTA/UpgradeCta renders
 ```
 
-#### Future Hover Previews (Planned)
+#### Hover Bridge Pattern (All 9 Cards — v4.0.0)
 
-The same hover-to-preview pattern will extend to other feature cards:
-- **Scenes card** → hover shows scene starter grid preview
-- **Other cards** → hover shows relevant feature preview in the CTA area
+All 9 feature cards use the **hover bridge** pattern for preview panels:
 
-This creates a non-destructive "peek" at each feature without navigating away from the page.
+1. **Card hover** → opens corresponding preview panel instantly
+2. **Card leave** → starts 2-second linger timer
+3. **Cursor enters preview panel before timer expires** → cancels timer, panel stays open
+4. **Cursor leaves preview panel** → panel closes immediately
+5. **Hovering a different card** → immediately switches to that card's panel (no delay)
+
+**Linger duration:** 2000ms. Below 1500ms is too rushed. Above 2500ms feels sluggish.
+
+**Implementation:** Single `activePanel` state (union type) + `lingerRef` (setTimeout) + `inPreviewRef` (boolean). Preview panel container has `onMouseEnter`/`onMouseLeave` handlers, only attached when `activePanel !== null`.
+
+**Performance:** All 6 preview panels are always mounted, toggled via `style={{ display: activePanel === 'x' ? 'flex' : 'none' }}`. This avoids mount-on-hover spikes. CSS toggle = zero React work, instant paint.
+
+**Preview panels per card:**
+
+| Card             | Preview Panel         | Content                                                |
+| ---------------- | --------------------- | ------------------------------------------------------ |
+| ⚡ Daily Prompts | None                  | No preview (info-only card)                            |
+| 🎨 Prompt Format | TierPreviewPanel      | 4 horizontal tooltip-clone windows with live PotM data |
+| 🎬 Scenes        | ScenesPreviewPanel    | 5 free world windows + 18 pro world emojis             |
+| 📊 Exchanges     | ExchangesPreviewPanel | CTA window + 4 regional mini exchange cards            |
+| 💾 Saved         | SavedPreviewPanel     | Up to 5 most recent saved prompts                      |
+| 🧪 Prompt Lab    | PromptLabPreviewPanel | "What Promagen Sees" + 4 rotating provider prompts     |
+| 🌍 Frame         | None                  | No preview                                             |
+| ⚙️ Stacking      | None                  | No preview                                             |
+| 🏆 Vote Power    | None                  | No preview                                             |
+
+#### Exchanges Preview Panel (v4.0.0)
+
+When the Exchanges card is hovered, 5 vertical windows appear:
+
+**Window 1 (CTA):** "Configure Your Exchanges" with 📊 icon, description ("Select 6–16 exchanges to shape every prompt"), and clickable "Click to Select" button opening the fullscreen Exchange Picker. Cyan (#22d3ee) glow.
+
+**Windows 2–5 (Regional):** Americas, Europe, Africa & M. East, Asia Pacific. Each shows mini exchange cards with flag + name + city + index name (where available). Cards styled identically to real rail cards. One exchange per country (deduped by iso2). Display order follows `iso2Codes` array (Americas: US, CA, MX first). Only whole cards shown — uses Engine Bay measurement pattern (ResizeObserver + `Math.floor`). Amber header: "Choose the exchanges that power your prompts".
+
+#### Exchange Selection Save Gating
+
+| User Type | Can Open Picker | Can Browse    | Selections Persist         | Propagates to Other Pages |
+| --------- | --------------- | ------------- | -------------------------- | ------------------------- |
+| Free user | Yes             | Yes (preview) | No                         | No                        |
+| Paid user | Yes             | Yes           | Yes (localStorage + Clerk) | Yes (all surfaces)        |
 
 #### Exchange Picker (Fullscreen Mode)
 
@@ -1168,37 +1251,44 @@ When paid users click the Exchanges card (or free users click "Customise"):
 
 #### Demo Mode (Zero API Cost)
 
-| Data Type        | Source                       | Display                    |
-| ---------------- | ---------------------------- | -------------------------- |
-| Exchange clocks  | Client `Intl.DateTimeFormat` | Real local time            |
-| Market status    | Client calculation           | Open/Closed                |
-| Weather badges   | Demo placeholder             | Shows "—" or static icon   |
-| Exchange cards   | Same component as homepage   | Identical styling          |
-| PotM prompts     | `/api/homepage/prompt-of-the-moment` | Live (shared with homepage) |
+| Data Type       | Source                               | Display                     |
+| --------------- | ------------------------------------ | --------------------------- |
+| Exchange clocks | Client `Intl.DateTimeFormat`         | Real local time             |
+| Market status   | Client calculation                   | Open/Closed                 |
+| Weather badges  | Demo placeholder                     | Shows "—" or static icon    |
+| Exchange cards  | Same component as homepage           | Identical styling           |
+| PotM prompts    | `/api/homepage/prompt-of-the-moment` | Live (shared with homepage) |
 
 #### Component Architecture
 
-| Component             | Source                                          | Notes                                    |
-| --------------------- | ----------------------------------------------- | ---------------------------------------- |
-| `HomepageGrid`        | `@/components/layout/homepage-grid`             | Standard 3-column layout                 |
-| `FeatureControlPanel` | `@/components/pro-promagen/feature-control-panel` | 3×3 feature card grid (v1.1.0)           |
-| `TierPreviewPanel`    | `pro-promagen-client.tsx` (inline)              | 4 tooltip-clone windows with PotM data   |
-| `UpgradeCta`          | `@/components/pro-promagen/upgrade-cta`         | Mode-aware button                        |
-| `ExchangePicker`      | `@/components/pro-promagen/exchange-picker`     | Continental accordion (fullscreen mode)  |
-| `ExchangeList`        | `@/components/ribbon/exchange-list`             | Left/right exchange rails                |
-| `EngineBay`           | `@/components/home/engine-bay`                  | Provider icon grid (xl+ only)            |
-| `MissionControl`      | `@/components/home/mission-control`             | Home button shown (not Pro button)       |
-| `SaveIcon`            | `@/components/prompts/library/save-icon`        | Save button in tier preview windows      |
-| `usePromptShowcase`   | `@/hooks/use-prompt-showcase`                   | Live PotM data for tier preview          |
+| Component             | Source                                            | Notes                                   |
+| --------------------- | ------------------------------------------------- | --------------------------------------- |
+| `HomepageGrid`        | `@/components/layout/homepage-grid`               | Standard 3-column layout                |
+| `FeatureControlPanel` | `@/components/pro-promagen/feature-control-panel` | 3×3 feature card grid (v1.1.0)          |
+| `TierPreviewPanel`    | `pro-promagen-client.tsx` (inline)                | 4 tooltip-clone windows with PotM data  |
+| `UpgradeCta`          | `@/components/pro-promagen/upgrade-cta`           | Mode-aware button                       |
+| `ExchangePicker`      | `@/components/pro-promagen/exchange-picker`       | Continental accordion (fullscreen mode) |
+| `ExchangeList`        | `@/components/ribbon/exchange-list`               | Left/right exchange rails               |
+| `EngineBay`           | `@/components/home/engine-bay`                    | Provider icon grid (xl+ only)           |
+| `MissionControl`      | `@/components/home/mission-control`               | Home button shown (not Pro button)      |
+| `SaveIcon`            | `@/components/prompts/library/save-icon`          | Save button in tier preview windows     |
+| `usePromptShowcase`   | `@/hooks/use-prompt-showcase`                     | Live PotM data for tier preview         |
 
-#### State Management
+#### State Management (v4.0.0 — Hover Bridge)
 
 ```typescript
-// In pro-promagen-client.tsx (v3.0.0+)
-const [selectedExchanges, setSelectedExchanges] = useState<string[]>(defaultExchangeIds);
+// In pro-promagen-client.tsx (v4.0.0+)
+const [selectedExchanges, setSelectedExchanges] =
+  useState<string[]>(defaultExchangeIds);
 const [selectedPromptTier, setSelectedPromptTier] = useState<PromptTier>(4);
-const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] = useState(false);
-const [formatHovered, setFormatHovered] = useState(false);
+const [isExchangePickerFullscreen, setIsExchangePickerFullscreen] =
+  useState(false);
+
+// Hover Bridge — unified panel visibility with 2s linger delay
+type PreviewPanel = "format" | "scenes" | "saved" | "lab" | "exchanges";
+const [activePanel, setActivePanel] = useState<PreviewPanel | null>(null);
+const lingerRef = useRef<ReturnType<typeof setTimeout>>();
+const inPreviewRef = useRef(false);
 
 // Hydration gate — false until useEffect reads localStorage
 const [hydrated, setHydrated] = useState(false);
@@ -1211,17 +1301,23 @@ useEffect(() => {
 }, [clerkPromptTier]);
 ```
 
+**Key change (v3.0.0 → v4.0.0):** Four individual boolean hover states (`formatHovered`, `scenesHovered`, `savedHovered`, `labHovered`) replaced with single `activePanel` union type + hover bridge pattern. All 9 cards now participate in the same system.
+
 #### Data Flow
 
 1. Page loads → show SSOT defaults (tier 4, 16 exchanges)
 2. `useEffect` reads localStorage for saved preferences
 3. Clerk metadata hydrates async → overrides localStorage tier if present
-4. User hovers Prompt Format card → `formatHovered=true` → tier preview appears
-5. User clicks T1–T4 button in card → tier saves to localStorage + Clerk
-6. User clicks Exchanges card → fullscreen picker opens
-7. User makes selections in accordion → "Done" returns to card grid
-8. **Paid users:** Save → localStorage + Clerk metadata
-9. **Free users:** Preview only, "Go unlimited" → `/upgrade`
+4. User hovers any feature card → `handleCardHover(panel, true)` → `activePanel` set → preview appears
+5. User leaves card → 2s linger timer starts
+6. If cursor enters preview panel within 2s → timer cancelled, panel stays
+7. Cursor leaves preview → `activePanel` null → CTA/payment area shown
+8. User clicks T1–T4 in Prompt Format card → tier saves to localStorage + Clerk
+9. User hovers Exchanges card → ExchangesPreviewPanel shows regional mini-cards
+10. User clicks "Click to Select" in preview (or clicks card) → fullscreen picker opens
+11. User makes selections → "Done" returns to card grid
+12. **Paid users:** Save → localStorage + Clerk metadata → propagates to all surfaces
+13. **Free users:** Preview only, "Start Free Trial" → Stripe Checkout
 
 #### File Structure
 
@@ -1229,26 +1325,36 @@ useEffect(() => {
 src/
 ├── app/pro-promagen/
 │   ├── page.tsx                      # Server component
-│   ├── pro-promagen-client.tsx       # Client orchestrator + TierPreviewPanel (895 lines, v3.0.0+)
+│   ├── pro-promagen-client.tsx       # Client orchestrator + 5 preview panels (2,359 lines, v4.0.0)
 │   ├── error.tsx                     # Error boundary
-│   └── loading.tsx                   # Loading skeleton
+│   └── loading.tsx                   # Loading skeleton (LCP-optimised heading)
 ├── components/pro-promagen/
-│   ├── feature-control-panel.tsx     # 3×3 feature card grid (465 lines, v1.1.0)
-│   ├── exchange-picker.tsx           # Continental accordion (970 lines)
-│   ├── upgrade-cta.tsx               # Mode-aware button (175 lines)
+│   ├── feature-control-panel.tsx     # 3×3 feature card grid (468 lines, v2.0.0)
+│   ├── exchange-picker.tsx           # Continental accordion (774 lines, v3.0.0)
+│   ├── upgrade-cta.tsx               # Stripe pricing cards + trial buttons (609 lines)
 │   ├── index.ts                      # Barrel export
 │   └── __tests__/
 │       └── exchange-picker.test.tsx
 ├── data/pro-promagen/
 │   ├── presets.ts                    # FEATURE_COMPARISON + WEATHER_PROMPT_TIER_OPTIONS
 │   └── currency-search-data.ts      # FX search index (legacy, may be removed)
-└── lib/pro-promagen/
-    ├── exchange-picker-helpers.ts    # Grouping/search utilities
-    ├── types.ts                      # TypeScript interfaces
-    └── index.ts                      # Barrel export
+├── lib/pro-promagen/
+│   ├── exchange-picker-helpers.ts    # Grouping/search utilities
+│   ├── types.ts                      # TypeScript interfaces (incl. isMultiIndexConfig guard)
+│   └── index.ts                      # Barrel export
+├── lib/stripe/
+│   ├── stripe.ts                     # Stripe singleton
+│   └── clerk-session.ts              # JWT cookie reader
+├── lib/geo/
+│   └── continents.ts                 # 7 continent configs (Turkey → MIDDLE_EAST, 280 lines)
+└── app/api/stripe/
+    ├── checkout/route.ts             # Creates Checkout Session
+    ├── webhook/route.ts              # Handles Stripe events
+    └── portal/route.ts               # Customer Portal redirect
 ```
 
 **Dead files (not imported, candidates for removal):**
+
 - `comparison-table.tsx` — replaced by FeatureControlPanel
 - `scene-grid-preview.tsx` — removed from render
 - `tier-comparison-strip.tsx` — removed from render
@@ -1261,26 +1367,60 @@ src/
 - Prompt tier: 1, 2, 3, or 4 only (validated in `/api/user/preferences` route)
 - Free users can fully interact (try before buy) but selections don't persist
 
-#### Stripe Integration (Planned)
+#### Stripe Integration (LIVE — 16 March 2026)
 
-Payment will be handled via **Stripe Checkout** (redirect flow, not embedded):
+Payment is handled via **Stripe Checkout** (redirect flow, not embedded). Now live with real payments.
 
-1. "Go unlimited" / "Upgrade to Pro Promagen" button → calls `/api/stripe/checkout`
-2. API route creates a Stripe Checkout Session with the Pro Promagen product/price
-3. User redirected to Stripe's hosted payment page (PCI-compliant, handles 3D Secure)
-4. On success: Stripe fires `checkout.session.completed` webhook → `/api/stripe/webhook`
-5. Webhook handler updates Clerk `publicMetadata.tier` from `'free'` to `'paid'`
-6. User redirected back to `/pro-promagen` which now renders in Configuration mode
+**Pricing:**
 
-**Required setup:**
-- Stripe account (verified with business bank account)
-- npm package: `stripe`
-- Environment variables: `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`
-- One product "Pro Promagen" with recurring price created in Stripe Dashboard
+| Plan    | Price                                  | Billing           | Trial            |
+| ------- | -------------------------------------- | ----------------- | ---------------- |
+| Monthly | £15.99/month                           | Monthly recurring | 7-day free trial |
+| Annual  | £149.99/year (£12.49/month equivalent) | Yearly recurring  | 7-day free trial |
 
-**The payment area** below the 9 feature cards is the designated space for Stripe. Currently shows `UpgradeCta` button. When Stripe is integrated, this area expands to show pricing, payment button, and any promotional content. The hover-preview system (tier windows) temporarily replaces this area on Prompt Format hover, then reverts.
+**Currency:** GBP only (clean UK accounting — Promagen Ltd is UK-registered).
 
-Authority for implementation: `docs/authority/code-standard.md`, `docs/authority/homepage.md`
+**Checkout flow (sign-in first):**
+
+1. User clicks "Start Free Trial" on `/pro-promagen`
+2. If not signed in → Clerk sign-in modal first
+3. Frontend POSTs to `/api/stripe/checkout` with `{ priceId, email }`
+4. API creates Stripe Checkout Session (reads userId from `__session` JWT cookie)
+5. User redirected to Stripe's hosted payment page (PCI-compliant, 3D Secure, Apple Pay, Google Pay)
+6. On success: Stripe fires `checkout.session.completed` webhook → `/api/stripe/webhook`
+7. Webhook updates Clerk `publicMetadata.tier` from `'free'` to `'paid'` + stores `stripeCustomerId`
+8. User redirected back to `/pro-promagen` in Configuration mode
+
+**Cancellation policy:**
+
+- User accesses Stripe Customer Portal via "Manage Subscription" button on `/pro-promagen`
+- Cancellation sets `cancel_at_period_end: true` — user keeps Pro access until billing period ends
+- `cancelAtPeriodEnd` and `currentPeriodEnd` stored in Clerk metadata
+- When period ends: `customer.subscription.deleted` webhook fires → tier reverts to `'free'`
+- Users can reactivate via the same Portal before the period ends
+
+**Payment area:** Below the 9 feature cards. Shows side-by-side Monthly/Annual pricing cards when no panel is hovered. Hover-preview system temporarily replaces this area on card hover, then reverts.
+
+**Files:**
+
+| File                                          | Purpose                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| `src/lib/stripe/stripe.ts`                    | Stripe singleton                                                   |
+| `src/lib/stripe/clerk-session.ts`             | JWT cookie reader (bypasses `auth()` for App Router compatibility) |
+| `src/app/api/stripe/checkout/route.ts`        | Creates Checkout Session                                           |
+| `src/app/api/stripe/webhook/route.ts`         | Handles 4 Stripe events                                            |
+| `src/app/api/stripe/portal/route.ts`          | Creates Customer Portal session                                    |
+| `src/components/pro-promagen/upgrade-cta.tsx` | Pricing cards + trial buttons (609 lines)                          |
+
+**Environment variables (Vercel Production):**
+
+- `STRIPE_SECRET_KEY` — Live mode secret key
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` — Live mode publishable key
+- `STRIPE_WEBHOOK_SECRET` — Webhook signing secret
+- `STRIPE_PRICE_MONTHLY` — Monthly Price ID
+- `STRIPE_PRICE_ANNUAL` — Annual Price ID
+
+Authority: `docs/authority/stripe.md`
 
 ---
 
@@ -1304,8 +1444,8 @@ Scene Starters are curated one-click prompt templates in the prompt builder. The
 
 | Aspect                     | Standard Promagen                        | Pro Promagen                   |
 | -------------------------- | ---------------------------------------- | ------------------------------ |
-| Scene count                | 25 scenes                                 | 200 scenes (25 free + 175 pro) |
-| Worlds accessible          | 5 free worlds (limited scenes per world)  | All 23 worlds (full library)   |
+| Scene count                | 25 scenes                                | 200 scenes (25 free + 175 pro) |
+| Worlds accessible          | 5 free worlds (limited scenes per world) | All 23 worlds (full library)   |
 | Tier-aware prefills        | Yes                                      | Yes                            |
 | Modification tracking      | Yes                                      | Yes                            |
 | Flavour phrases in Explore | Yes (when scene has them)                | Yes (when scene has them)      |
@@ -1342,19 +1482,20 @@ The Prompt Lab is a second prompt builder environment at `/studio/playground`. I
 
 #### Tier Comparison
 
-| Aspect             | Standard Promagen          | Pro Promagen      |
-| ------------------ | -------------------------- | ----------------- |
-| Access             | Not available              | Full access       |
-| Route              | —                          | `/studio/playground` |
-| Provider selection | —                          | Dropdown (all 42) |
-| Intelligence panel | —                          | Full panel        |
-| Tier preview       | —                          | All 4 tiers       |
+| Aspect             | Standard Promagen | Pro Promagen         |
+| ------------------ | ----------------- | -------------------- |
+| Access             | Not available     | Full access          |
+| Route              | —                 | `/studio/playground` |
+| Provider selection | —                 | Dropdown (all 42)    |
+| Intelligence panel | —                 | Full panel           |
+| Tier preview       | —                 | All 4 tiers          |
 
 #### Current Status
 
 **Gating: NOT IMPLEMENTED.** The `/studio/playground` route currently has zero auth checks — any user can access it. This was flagged as requiring a Pro gate (auth check + lock overlay) but has not been built.
 
 **When gating is implemented:**
+
 - Anonymous users → redirect to sign-in
 - Free signed-in users → lock overlay with "Upgrade to Pro Promagen" CTA linking to `/pro-promagen`
 - Pro users → full access
@@ -1363,23 +1504,133 @@ The Prompt Lab is a second prompt builder environment at `/studio/playground`. I
 
 The Prompt Lab reuses the same components as the standard prompt builder (`/providers/[id]`) but with a provider selector dropdown instead of a pre-selected provider from the URL.
 
-| File                                              | Purpose                        |
-| ------------------------------------------------- | ------------------------------ |
-| `src/app/studio/playground/page.tsx`              | Server component (data fetch)  |
+| File                                                   | Purpose                         |
+| ------------------------------------------------------ | ------------------------------- |
+| `src/app/studio/playground/page.tsx`                   | Server component (data fetch)   |
 | `src/app/studio/playground/playground-page-client.tsx` | Client wrapper (provider state) |
-| `src/components/prompts/playground-workspace.tsx`  | Workspace with dropdown        |
+| `src/components/prompts/playground-workspace.tsx`      | Workspace with dropdown         |
 
 **Key difference from standard builder:**
+
 - Standard (`/providers/[id]`): Provider pre-selected from URL, static header
 - Prompt Lab (`/studio/playground`): Provider selected via dropdown, dynamic header, all 42 platforms accessible from one page
 
 #### Feature Control Panel Integration
 
 On the Pro page:
+
 - **Free users:** Card shows "Pro exclusive" / "Pro only" — no navigation link
 - **Paid users:** Card shows "Full access" / "Open lab →" — links to `/studio/playground`
 
 Authority: `docs/authority/prompt-intelligence.md` §9
+
+---
+
+### 5.14 Colour-Coded Prompt Anatomy (Pro Promagen exclusive)
+
+Pro Promagen users see colour-coded prompt text in the prompt builder, replacing the default monochrome rendering. Each term in the assembled and optimized prompt preview is coloured according to its source category, making the prompt scannable and educational.
+
+**Human factor:** Von Restorff Effect (isolation effect) — distinct category colours make individual terms pop against the dark background. Loss Aversion — free users see plain text; the visible colour-coding is a tangible value-add they're missing.
+
+#### Tier Comparison
+
+| Aspect                   | Standard Promagen        | Pro Promagen                             |
+| ------------------------ | ------------------------ | ---------------------------------------- |
+| Category dropdown labels | White/slate text         | Each label in its category colour        |
+| Assembled prompt text    | Plain `text-slate-100`   | Colour-coded by category                 |
+| Optimized prompt text    | Plain `text-emerald-100` | Colour-coded by category                 |
+| Colour legend tooltip    | Not visible              | 🎨 icon → hover shows 13-colour key      |
+| Structural text (glue)   | N/A                      | Slate (`#94A3B8`) — commas, prepositions |
+
+#### 13 Category Colours (SSOT)
+
+| #   | Category    | Colour    | Hex       | Purpose                     |
+| --- | ----------- | --------- | --------- | --------------------------- |
+| 1   | Subject     | Gold      | `#FCD34D` | The star of the show        |
+| 2   | Action      | Lime      | `#A3E635` | Movement / energy           |
+| 3   | Style       | Purple    | `#C084FC` | Artistic reference          |
+| 4   | Environment | Sky blue  | `#38BDF8` | Place / setting             |
+| 5   | Composition | Emerald   | `#34D399` | Framing / structure         |
+| 6   | Camera      | Orange    | `#FB923C` | Lens / angle                |
+| 7   | Lighting    | Amber     | `#FBBF24` | Light source / direction    |
+| 8   | Colour      | Pink      | `#F472B6` | Colour grade                |
+| 9   | Atmosphere  | Cyan      | `#22D3EE` | Fog / haze / particles      |
+| 10  | Materials   | Teal      | `#2DD4BF` | Surface / texture           |
+| 11  | Fidelity    | Soft blue | `#93C5FD` | Quality boosters (8K, etc.) |
+| 12  | Negative    | Red       | `#F87171` | Constraints / exclusions    |
+| 13  | Structural  | Slate     | `#94A3B8` | Commas, glue text           |
+
+**SSOT file:** `src/lib/prompt-colours.ts` — single source of truth for all colour constants, labels, emojis, and the prompt text parser.
+
+#### Surfaces
+
+Colour-coding is active on:
+
+- **Standard prompt builder** (`/providers/[id]`) — assembled + optimized prompt boxes + category labels
+- **Prompt Lab** (`/studio/playground`) — category labels
+- **Homepage Prompt of the Moment** — always visible (not Pro-gated, uses same SSOT colours)
+- **Pro Promagen page** (`/pro-promagen`) — preview windows (always visible, uses same SSOT colours)
+
+#### Colour Legend Tooltip
+
+A small 🎨 icon appears next to the "Assembled prompt" heading (Pro users only). Hover or click shows a tooltip with all 13 category→colour mappings. Built per tooltip standards: 400ms close delay, min 10px font, no opacity dimming.
+
+#### Files
+
+| File                                                 | Purpose                       | Version |
+| ---------------------------------------------------- | ----------------------------- | ------- |
+| `src/lib/prompt-colours.ts`                          | SSOT: colours, labels, parser | v1.0.0  |
+| `src/components/ui/combobox.tsx`                     | `labelColour` prop            | v7.3.0  |
+| `src/components/providers/prompt-builder.tsx`        | Pro colour-coding + legend    | v10.2.0 |
+| `src/components/prompts/enhanced-prompt-builder.tsx` | Pro label colours             | v1.1.0  |
+| `src/components/home/prompt-showcase.tsx`            | Imports shared SSOT           | v9.2.0  |
+| `src/app/pro-promagen/pro-promagen-client.tsx`       | Imports shared SSOT           | v3.3.0  |
+
+---
+
+#### 13 Category Colours (SSOT)
+
+| #   | Category    | Colour    | Hex       | Purpose                     |
+| --- | ----------- | --------- | --------- | --------------------------- |
+| 1   | Subject     | Gold      | `#FCD34D` | The star of the show        |
+| 2   | Action      | Lime      | `#A3E635` | Movement / energy           |
+| 3   | Style       | Purple    | `#C084FC` | Artistic reference          |
+| 4   | Environment | Sky blue  | `#38BDF8` | Place / setting             |
+| 5   | Composition | Emerald   | `#34D399` | Framing / structure         |
+| 6   | Camera      | Orange    | `#FB923C` | Lens / angle                |
+| 7   | Lighting    | Amber     | `#FBBF24` | Light source / direction    |
+| 8   | Colour      | Pink      | `#F472B6` | Colour grade                |
+| 9   | Atmosphere  | Cyan      | `#22D3EE` | Fog / haze / particles      |
+| 10  | Materials   | Teal      | `#2DD4BF` | Surface / texture           |
+| 11  | Fidelity    | Soft blue | `#93C5FD` | Quality boosters (8K, etc.) |
+| 12  | Negative    | Red       | `#F87171` | Constraints / exclusions    |
+| 13  | Structural  | Fuchsia   | `#E879F9` | Commas, glue text           |
+
+**SSOT file:** `src/lib/prompt-colours.ts` — single source of truth for all colour constants, labels, emojis, and the prompt text parser.
+
+#### Surfaces
+
+Colour-coding is active on:
+
+- **Standard prompt builder** (`/providers/[id]`) — assembled + optimized prompt boxes + category labels
+- **Prompt Lab** (`/studio/playground`) — category labels
+- **Homepage Prompt of the Moment** — always visible (not Pro-gated, uses same SSOT colours)
+- **Pro Promagen page** (`/pro-promagen`) — preview windows (always visible, uses same SSOT colours)
+
+#### Colour Legend Tooltip
+
+A small 🎨 icon appears next to the "Assembled prompt" heading (Pro users only). Hover or click shows a tooltip with all 13 category→colour mappings. Built per tooltip standards: 400ms close delay, min 10px font, no opacity dimming.
+
+#### Files
+
+| File                                                 | Purpose                       | Version |
+| ---------------------------------------------------- | ----------------------------- | ------- |
+| `src/lib/prompt-colours.ts`                          | SSOT: colours, labels, parser | v1.0.0  |
+| `src/components/ui/combobox.tsx`                     | `labelColour` prop            | v7.3.0  |
+| `src/components/providers/prompt-builder.tsx`        | Pro colour-coding + legend    | v10.2.0 |
+| `src/components/prompts/enhanced-prompt-builder.tsx` | Pro label colours             | v1.1.0  |
+| `src/components/home/prompt-showcase.tsx`            | Imports shared SSOT           | v9.2.0  |
+| `src/app/pro-promagen/pro-promagen-client.tsx`       | Imports shared SSOT           | v3.3.0  |
 
 ---
 
@@ -1434,12 +1685,12 @@ Authority for those lives elsewhere:
 - Surface-aware prompt tiers → `src/hooks/use-global-prompt-tier.ts`
 - Prompt tier API → `src/app/api/user/preferences/route.ts`
 - Prompt Lab → `docs/authority/prompt-intelligence.md` §9
+- Stripe payments → `docs/authority/stripe.md`
+- Continental exchange grouping → `src/lib/geo/continents.ts`
 - Ask Promagen → **NOT IMPLEMENTED** (§5.9, planned feature)
 - WorldPrompt Live Background → **NOT IMPLEMENTED** (§5.11, see `worldprompt-creative-engine.md` for original spec)
 
 This document only defines **who can control what**, and **when**.
-
----
 
 ---
 
@@ -1471,6 +1722,11 @@ If it is not written here, it is Standard Promagen (free).
 
 ## Changelog
 
+- **17 Mar 2026:** **COLOUR-CODED PROMPT ANATOMY (v4.1.0)** — Added §5.14. Pro Promagen users see colour-coded prompt text in the prompt builder: 12 category colours + 1 structural (slate-400). Category dropdown labels take on their category colour. Assembled and optimized prompt preview boxes render terms in category colours. 🎨 legend tooltip shows the full colour key (400ms close delay, min 10px font). New shared SSOT: `src/lib/prompt-colours.ts` replaces 3 duplicated local `CATEGORY_COLOURS` constants (prompt-showcase, pro-promagen-client). Combobox v7.3.0 adds `labelColour` prop. Human factors: Von Restorff Effect (category isolation), Loss Aversion (free users see plain text), Colour Psychology in Dark Interfaces §17 (3× weight on dark backgrounds).
+- **17 Mar 2026:** **COLOUR-CODED PROMPT ANATOMY (v4.1.0)** — Added §5.14. Pro Promagen users see colour-coded prompt text in the prompt builder: 12 category colours + 1 structural (fuchsia). Category dropdown labels take on their category colour. Assembled and optimized prompt preview boxes render terms in category colours. 🎨 legend tooltip shows the full colour key (400ms close delay, min 10px font). Structural colour changed from slate-400 (#94A3B8, invisible on dark) to fuchsia-400 (#E879F9). New shared SSOT: `src/lib/prompt-colours.ts` replaces 3 duplicated local `CATEGORY_COLOURS` constants (prompt-showcase, pro-promagen-client, and admin vocab page excluded). Combobox v7.3.0 adds `labelColour` prop. Human factors: Von Restorff Effect (category isolation), Loss Aversion (free users see plain text), Colour Psychology in Dark Interfaces §17 (3× weight on dark backgrounds).
+- **17 Mar 2026:** **HOVER BRIDGE + EXCHANGES PREVIEW + DATA FIXES (v4.0.0)** — §5.10: Replaced 4 individual boolean hover states with unified `activePanel` union type + 2-second hover bridge pattern (linger delay + stay-while-inside). All 9 feature cards now participate in the same hover system. Added ExchangesPreviewPanel (5 windows: CTA + 4 regional mini-exchange cards matching real rail card style). Exchange card count uses Engine Bay measurement pattern (ResizeObserver on first card). Added exchange selection save gating documentation (free = preview only, paid = persists everywhere). Updated State Management, Data Flow, File Structure sections. §5.3: JSE Johannesburg and SSE Santiago marketstack fields populated in exchanges.catalog.json (zero empty marketstack entries remain). Zagreb hoursTemplate `europe-standard` → `europe-croatia`, Dublin `europe-standard` → `europe-ireland`. Turkey (TR) moved from EUROPE to MIDDLE_EAST in continents.ts (affects picker grouping + preview panel). §5.10 Stripe: Updated from "Planned" to "LIVE" with pricing (£15.99/mo, £149.99/yr), cancellation policy, and full file list. Added `stripeCustomerId`, `cancelAtPeriodEnd`, `currentPeriodEnd` to ClerkPublicMetadata. Updated line counts across all files.
+- **16 Mar 2026:** **STRIPE LIVE MODE + CANCELLATION + LCP (v3.1.0)** — Stripe switched from sandbox to live payments. Pricing finalised: £15.99/month, £149.99/year (£12.49/mo equivalent), 7-day free trial on both plans. GBP only. Cancellation policy: `cancelAtPeriodEnd` keeps Pro access until billing period ends. Customer Portal for self-service cancellation/reactivation. Clerk auth in checkout uses JWT cookie reader (`clerk-session.ts`) instead of `auth()` for App Router compatibility. LCP fix: gradient heading in `loading.tsx` for fast server render. Preview panel mount spike fix: all panels always-rendered, toggled via CSS `display` property instead of conditional React rendering.
+- **16 Mar 2026:** **FONT SIZE REDUCTION + COMPOUND KEYS + EXCHANGE NAMES (v3.0.1)** — 77 fontSize clamp values reduced by 1 step across feature-control-panel, pro-promagen-client, and upgrade-cta. Exchange names shortened to abbreviations in exchanges.catalog.json (e.g., "Johannesburg Stock Exchange (JSE)" → "JSE"). Compound key system (`exchangeId::benchmark`) shipped for multi-index exchanges — config endpoint now emits all indices, gateway fans out quotes to compound IDs. Commodity mover card gap halved (3ch → 1.5ch).
 - **14 Mar 2026:** **FEATURE CONTROL PANEL COCKPIT (v3.0.0)** — Complete rewrite of §5.10. Comparison table replaced by 3×3 Feature Control Panel — 9 exchange-card-style feature cards with unique glow colours, live data, and hover-triggered previews. Prompt Format card shows inline T1–T4 tier selector with "Select tier ↓" label; hover triggers 4 horizontal tooltip-clone windows below the cards showing live Prompt of the Moment data in all 4 tiers with copy/save buttons and animated amber header. Each card serves dual purpose: sales (free users see Standard vs Pro) and configuration (paid users interact directly). Exchange Picker fullscreen mode preserved. FX Picker references removed (was deleted v3.0.0). Vote Weight now visible as card 9 (was deliberately hidden). Dead files noted: comparison-table.tsx, scene-grid-preview.tsx, tier-comparison-strip.tsx, tier-showcase.tsx, usage-snapshot.tsx. Added Stripe integration plan. Updated file structure and line counts.
 - **14 Mar 2026:** **SURFACE-AWARE PROMPT TIER SYSTEM + LIMITS UPDATE (v3.0.0)** — §3.2/§3.3: Anonymous daily limit reduced from 5 to 3 (matches `ANONYMOUS_FREE_LIMIT = 3` in constants.ts). §4.1: Added `promptTier` to Clerk metadata interface. §5.6: Added "Surface-Aware Prompt Tier System" subsection documenting the per-surface free tier rotation (Variable Reward pattern) and Pro global override with Clerk persistence. "Weather Prompt Format" renamed to "All Prompt Format" throughout. 5 consumer files documented (exchange-list, provider-cell, finance-ribbon, commodity-mover-card, mission-control).
 - **14 Mar 2026:** **DOC CORRECTIONS (v3.0.0)** — §5.12: Fixed world count from "10 worlds" to "23 worlds" (5 free + 18 pro). Updated world name list to match `worlds.ts` (was showing incorrect names like "Underwater & Aerial" which don't exist). §5.13: Added Prompt Lab section — documents Pro exclusive status, current lack of auth gating, architecture, and Feature Control Panel integration. §6: Added Prompt Lab gating invariant (not yet enforced). §5.10: Added dead file cleanup table (1,136 lines across 5 orphaned files). §7: Added 4 new authority references.

@@ -342,6 +342,8 @@ interface ExtendedExchangeCardProps extends ExchangeCardProps {
   railPosition?: 'left' | 'right';
   /** Vertical tooltip orientation. Bottom cards use 'above' to avoid scroll cut-off. */
   tooltipVerticalPosition?: 'center' | 'below' | 'above';
+  /** Callback to save tier selection (Pro users, from tooltip) */
+  onTierChange?: (tier: PromptTier) => void;
 }
 
 export const ExchangeCard = React.memo(function ExchangeCard({
@@ -351,6 +353,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
   isPro = false,
   railPosition = 'left',
   tooltipVerticalPosition = 'center',
+  onTierChange,
 }: ExtendedExchangeCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -528,6 +531,7 @@ export const ExchangeCard = React.memo(function ExchangeCard({
                   weather={weatherDisplay}
                   tier={promptTier}
                   isPro={isPro}
+                  onTierChange={onTierChange}
                   tooltipPosition={railPosition}
                   verticalPosition={tooltipVerticalPosition}
                   latitude={latitude}

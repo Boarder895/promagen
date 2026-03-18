@@ -78,6 +78,8 @@ interface LazyExchangeCardProps {
   indexQuote: IndexQuoteData | null;
   side: 'left' | 'right';
   promptTier: 1 | 2 | 3 | 4;
+  isPro: boolean;
+  onTierChange?: (tier: 1 | 2 | 3 | 4) => void;
   /** Vertical tooltip orientation. Bottom cards use 'above' to avoid scroll cut-off. */
   tooltipVerticalPosition?: 'center' | 'below' | 'above';
 }
@@ -103,6 +105,8 @@ function LazyExchangeCard({
   indexQuote,
   side,
   promptTier,
+  isPro,
+  onTierChange,
   tooltipVerticalPosition = 'center',
 }: LazyExchangeCardProps): JSX.Element {
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -140,6 +144,8 @@ function LazyExchangeCard({
       exchange={toCardData(exchange, weather, indexQuote)}
       railPosition={side}
       promptTier={promptTier}
+      isPro={isPro}
+      onTierChange={onTierChange}
       tooltipVerticalPosition={tooltipVerticalPosition}
     />
   );
@@ -185,7 +191,7 @@ export default function ExchangeList({
   emptyMessage,
   side = 'left',
 }: ExchangeListProps): JSX.Element {
-  const { tier: promptTier } = useGlobalPromptTier('exchange-cards');
+  const { tier: promptTier, isPro, saveTier } = useGlobalPromptTier('exchange-cards');
 
   if (!exchanges.length) {
     return (
@@ -212,6 +218,8 @@ export default function ExchangeList({
             indexQuote={indexQuote}
             side={side}
             promptTier={promptTier}
+            isPro={isPro}
+            onTierChange={saveTier}
             tooltipVerticalPosition={vPos}
           />
         );

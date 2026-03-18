@@ -70,6 +70,8 @@ export interface WeatherPromptTooltipProps {
   tier?: PromptTier;
   /** Whether user is Pro (for styling) */
   isPro?: boolean;
+  /** Callback to save tier selection (Pro users). Called when user clicks a tier row. */
+  onTierChange?: (tier: PromptTier) => void;
   /**
    * Which rail the trigger is on — determines tooltip open direction.
    * - 'left' = trigger is on left rail → tooltip opens to the RIGHT
@@ -337,6 +339,135 @@ function BlurredTierRow({ tierNum, previewText }: BlurredTierRowProps) {
 }
 
 // ============================================================================
+// PRO TIER SELECTOR — clickable tier rows for Pro users
+// ============================================================================
+// Human factor: Loss Aversion reversal — Pro users gain control they previously
+// lacked. The "✓ Selected" badge + save flash use Anticipatory Dopamine (§3):
+// the click feels rewarded immediately.
+//
+// Behaviour:
+// - All 4 tiers shown unblurred with full prompt text (truncated to 2 lines)
+// - Active/saved tier has "✓ Selected" badge + brighter styling
+// - Clicking another tier saves immediately (localStorage + Clerk)
+// - CTA area shows "✓ Saved" flash for 1.5s after selection
+// - Copy button on each row copies that tier's prompt text
+
+function ProTierSelector({
+  previewPrompts,
+  activeTier,
+  onTierChange,
+}: {
+  previewPrompts: Record<number, string>;
+  activeTier: PromptTier;
+  onTierChange?: (tier: PromptTier) => void;
+}) {
+  const [justSaved, setJustSaved] = useState(false);
+  const [copiedTier, setCopiedTier] = useState<number | null>(null);
+
+  const handleSelect = useCallback(
+    (t: PromptTier) => {
+      if (!onTierChange) return;
+      onTierChange(t);
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 1500);
+    },
+    [onTierChange],
+  );
+
+  const handleCopyTier = useCallback(
+    (t: number, text: string) => {
+      navigator.clipboard.writeText(text).catch(() => {});
+      setCopiedTier(t);
+      setTimeout(() => setCopiedTier(null), 1500);
+    },
+    [],
+  );
+
+  return (
+    <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-white/[0.06]">
+      <span
+        className="text-xs text-amber-400 font-medium mb-0.5"
+        style={{ fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)' }}
+      >
+        {justSaved ? '✓ Saved — all tooltips updated' : 'Select your prompt format'}
+      </span>
+      {ALL_TIERS.map((t) => {
+        const meta = TIER_META[t];
+        if (!meta) return null;
+        const text = previewPrompts[t] ?? '';
+        const isActive = t === activeTier;
+        return (
+          <button
+            key={t}
+            type="button"
+            onClick={() => handleSelect(t as PromptTier)}
+            className={`flex items-start gap-2 rounded-lg px-2.5 py-1.5 text-left transition-all duration-200 cursor-pointer ${
+              isActive
+                ? `${meta.bgClass} ring-1 ${meta.ringClass}`
+                : 'bg-white/[0.03] hover:bg-white/[0.06]'
+            }`}
+          >
+            {/* Tier colour dot + label */}
+            <span className={`w-1.5 h-1.5 rounded-full ${meta.dotClass} shrink-0 mt-1.5`} />
+            <span
+              className={`text-xs font-semibold ${meta.accentClass} shrink-0`}
+              style={{ fontSize: 'clamp(0.625rem, 0.8vw, 0.7rem)', minWidth: 'clamp(18px, 1.5vw, 22px)' }}
+            >
+              T{t}
+            </span>
+
+            {/* Prompt text — unblurred, 2-line clamp */}
+            <span
+              className={`flex-1 text-xs leading-relaxed ${isActive ? 'text-slate-200' : 'text-slate-400'}`}
+              style={{
+                fontSize: 'clamp(0.6rem, 0.7vw, 0.7rem)',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {text || 'Generating...'}
+            </span>
+
+            {/* Selected badge OR copy button */}
+            {isActive ? (
+              <span
+                className={`shrink-0 text-xs font-medium ${meta.accentClass}`}
+                style={{ fontSize: 'clamp(0.55rem, 0.65vw, 0.65rem)' }}
+              >
+                ✓
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopyTier(t, text);
+                }}
+                className="shrink-0 p-0.5 rounded text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                title={copiedTier === t ? 'Copied!' : `Copy T${t} prompt`}
+                aria-label={copiedTier === t ? 'Copied to clipboard' : `Copy Tier ${t} prompt`}
+              >
+                {copiedTier === t ? (
+                  <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </button>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================================================
 // TIER BADGE COMPONENT — coloured pill (replaces banned text-slate-500)
 // ============================================================================
 
@@ -372,8 +503,10 @@ interface TooltipContentProps {
   copied: boolean;
   savePlatformId: string;
   savePlatformName: string;
-  /** Preview prompts for other tiers (free users only). Map of tierNum → prompt text. */
+  /** Preview prompts for other tiers. Map of tierNum → prompt text. */
   previewPrompts: Record<number, string>;
+  /** Callback to save tier selection (Pro users). */
+  onTierChange?: (tier: PromptTier) => void;
 }
 
 function TooltipContent({
@@ -390,6 +523,7 @@ function TooltipContent({
   savePlatformId,
   savePlatformName,
   previewPrompts,
+  onTierChange,
 }: TooltipContentProps) {
   const glowRgba = hexToRgba(tempColor, 0.3);
   const glowBorder = hexToRgba(tempColor, 0.5);
@@ -490,7 +624,16 @@ function TooltipContent({
           {prompt}
         </p>
 
-        {/* ── Blurred tier previews (free users only) ────────────────────── */}
+        {/* ── Pro users: selectable tier rows (all 4 unblurred) ──────────── */}
+        {isPro && Object.keys(previewPrompts).length > 0 && (
+          <ProTierSelector
+            previewPrompts={previewPrompts}
+            activeTier={tier}
+            onTierChange={onTierChange}
+          />
+        )}
+
+        {/* ── Free users: blurred tier previews + upgrade CTA ────────────── */}
         {!isPro && otherTiers.length > 0 && (
           <div className="flex flex-col gap-1 mt-1 pt-2 border-t border-white/[0.06]">
             <span
@@ -556,6 +699,7 @@ export function WeatherPromptTooltip({
   weather,
   tier = getDefaultTier(),
   isPro = false,
+  onTierChange,
   tooltipPosition = 'left',
   verticalPosition = 'center',
   latitude,
@@ -599,16 +743,18 @@ export function WeatherPromptTooltip({
     : null;
   const prompt = promptResult?.text ?? null;
 
-  // Generate preview prompts for other tiers (free users only).
-  // Lazy: only compute when we have weather data. Cost is negligible — the heavy
-  // physics computation is shared via module-level caches; only the assembly step
-  // runs 3 extra times.
+  // Generate preview prompts for other tiers.
+  // Free users: other 3 tiers (blurred previews).
+  // Pro users: all 4 tiers (selectable rows — includes active tier for switching).
+  // Cost is negligible — the heavy physics computation is shared via module-level
+  // caches; only the assembly step runs 3 extra times.
   const previewPrompts = useMemo(() => {
-    if (isPro || !fullWeather) return {};
+    if (!fullWeather) return {};
 
     const previews: Record<number, string> = {};
     for (const t of ALL_TIERS) {
-      if (t === tier) continue; // Skip active tier (already generated above)
+      // Free users skip the active tier (it's displayed separately above)
+      if (!isPro && t === tier) continue;
       const result = generateWeatherPrompt({
         city,
         weather: fullWeather,
@@ -798,6 +944,7 @@ export function WeatherPromptTooltip({
             savePlatformId={propPlatformId ?? TIER_DEFAULT_PLATFORM[tier]?.id ?? 'openai'}
             savePlatformName={propPlatformName ?? TIER_DEFAULT_PLATFORM[tier]?.name ?? 'OpenAI DALL·E'}
             previewPrompts={previewPrompts}
+            onTierChange={onTierChange}
           />,
           document.body,
         )}

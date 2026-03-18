@@ -1,5 +1,13 @@
 // src/components/ui/combobox.tsx
 // Enhanced multi-select combobox with lock states, auto-close, and vocabulary chips
+// Version 7.3.0 - Added labelColour prop for Pro category colour-coding
+//
+// NEW in v7.3.0:
+// - labelColour prop: hex string override for label text colour
+// - When provided, label and info icon render in the given colour
+// - Used by prompt builders to show category colours for Pro Promagen users
+// - Locked state always shows slate-500 regardless of labelColour
+//
 // Version 7.2.0 - Added feedback hint chip tinting (Feedback-Driven Autopilot)
 //
 // NEW in v7.2.0:
@@ -120,6 +128,12 @@ export interface ComboboxProps {
    * Applied to both selected chips and dropdown/chip options.
    */
   feedbackHintTerms?: Record<string, 'positive' | 'negative'>;
+  /**
+   * Override colour for the label text (Pro Promagen feature).
+   * When provided, the label renders in this hex colour instead of slate-300.
+   * Used for category colour-coding in the prompt builder.
+   */
+  labelColour?: string;
 }
 
 export function Combobox({
@@ -146,6 +160,7 @@ export function Combobox({
   sceneOriginValues,
   onCustomTermSubmitted,
   feedbackHintTerms,
+  labelColour,
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState('');
@@ -415,16 +430,19 @@ export function Combobox({
           onClick={handleLabelClick}
           disabled={isLocked}
           className={`flex items-center gap-1.5 text-left text-xs font-medium transition-colors ${
-            isLocked ? 'text-slate-500 cursor-not-allowed' : 'text-slate-300 hover:text-slate-100'
+            isLocked ? 'text-slate-500 cursor-not-allowed' : labelColour ? '' : 'text-slate-300 hover:text-slate-100'
           }`}
+          style={!isLocked && labelColour ? { color: labelColour } : undefined}
         >
           <span>{label}</span>
           {!isLocked && (
             <svg
-              className="h-3.5 w-3.5 text-slate-500"
+              className="h-3.5 w-3.5"
+              style={{ color: labelColour ?? undefined }}
               fill="none"
               viewBox="0 0 24 24"
-              stroke="currentColor"
+              stroke={labelColour ?? 'currentColor'}
+              strokeOpacity={labelColour ? 0.5 : 1}
             >
               <path
                 strokeLinecap="round"

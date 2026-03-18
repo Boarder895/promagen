@@ -407,7 +407,9 @@ export function ProviderCell({
   const demoDisplay =
     mapping && !liveDisplay ? generateDemoWeather(mapping.lat, mapping.lon) : null;
   const weatherDisplay = liveDisplay ?? demoDisplay;
-  const { tier: providerTier } = useGlobalPromptTier('leaderboard', getPlatformTierId(provider.id));
+  const { tier: providerTier, isPro: hookIsPro, saveTier } = useGlobalPromptTier('leaderboard', getPlatformTierId(provider.id));
+  // Prefer prop isPro (passed from parent) but fall back to hook
+  const resolvedIsPro = isPro || hookIsPro;
 
   // ── Resolve day/night + display emoji ─────────────────────────────────
   // Uses the same 3-tier cascade as exchange cards (shared utility).
@@ -510,7 +512,8 @@ export function ProviderCell({
                 tz={provider.timezone}
                 weather={weatherDisplay}
                 tier={providerTier}
-                isPro={isPro}
+                isPro={resolvedIsPro}
+                onTierChange={saveTier}
                 tooltipPosition="left"
                 verticalPosition="above"
                 latitude={mapping.lat}

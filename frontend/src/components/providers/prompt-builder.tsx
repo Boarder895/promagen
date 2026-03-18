@@ -122,6 +122,13 @@ import { rewriteWithSynergy } from '@/lib/weather/synergy-rewriter';
 import { postProcessAssembled } from '@/lib/prompt-post-process';
 import { CATEGORY_ORDER } from '@/types/prompt-builder';
 import { VALID_ASPECT_RATIOS } from '@/types/composition';
+import {
+  CATEGORY_COLOURS,
+  CATEGORY_LABELS as COLOUR_LEGEND_LABELS,
+  CATEGORY_EMOJIS as COLOUR_LEGEND_EMOJIS,
+  buildTermIndexFromSelections,
+  parsePromptIntoSegments,
+} from '@/lib/prompt-colours';
 
 // Prompt Intelligence imports
 import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
@@ -455,6 +462,171 @@ function StageBadge({
       title="Platform intelligence applied — reordered, weighted, quality tags added. Enable Optimize to trim to ideal length."
     >
       ✨ Dynamic
+    </span>
+  );
+}
+
+// ============================================================================
+// Pro Promagen: Colour-coded prompt text
+// Human factor: Von Restorff Effect — each category colour isolates terms,
+// making the prompt scannable. Loss Aversion — free users see plain text,
+// Pro users see the rich colour-coded version (visible value-add).
+// ============================================================================
+
+/**
+ * Renders prompt text with colour-coded category segments (Pro Promagen only).
+ * When isPro is false, renders plain text with the given fallback class.
+ */
+function ColourCodedPromptText({
+  text,
+  termIndex,
+  isPro,
+  fallbackClass = 'text-slate-100',
+}: {
+  text: string;
+  termIndex: Map<string, PromptCategory>;
+  isPro: boolean;
+  fallbackClass?: string;
+}) {
+  if (!isPro || termIndex.size === 0) {
+    return <>{text}</>;
+  }
+
+  const segments = parsePromptIntoSegments(text, termIndex);
+  const hasAnatomy = segments.some((s) => s.category !== 'structural');
+
+  if (!hasAnatomy) {
+    return <span className={fallbackClass}>{text}</span>;
+  }
+
+  return (
+    <>
+      {segments.map((seg, i) => {
+        const segColour = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+        const isWeighted = seg.weight >= 1.05;
+        return (
+          <span
+            key={i}
+            style={{
+              color: segColour,
+              textShadow: isWeighted ? `0 0 10px ${segColour}50` : undefined,
+            }}
+          >
+            {seg.text}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
+/**
+ * Colour legend tooltip — shows all 13 category→colour mappings.
+ * Built per tooltip standards: 400ms close delay, min 10px font, no opacity.
+ * Only visible for Pro Promagen users.
+ */
+function CategoryColourLegend({ isPro }: { isPro: boolean }) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const closeTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const startCloseDelay = React.useCallback(() => {
+    closeTimerRef.current = setTimeout(() => setIsOpen(false), 400);
+  }, []);
+
+  const cancelCloseDelay = React.useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    return () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); };
+  }, []);
+
+  if (!isPro) return null;
+
+  const categories: PromptCategory[] = [
+    'subject', 'action', 'style', 'environment', 'composition', 'camera',
+    'lighting', 'colour', 'atmosphere', 'materials', 'fidelity', 'negative',
+  ];
+
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        className="inline-flex items-center justify-center rounded-md px-1 py-0.5 transition-all cursor-pointer bg-white/5 hover:bg-white/10"
+        style={{ fontSize: 'clamp(10px, 0.7vw, 12px)' }}
+        onMouseEnter={() => { cancelCloseDelay(); setIsOpen(true); }}
+        onMouseLeave={startCloseDelay}
+        onClick={() => setIsOpen((o) => !o)}
+        title="Prompt colour key — Pro Promagen"
+        aria-label="Show category colour legend"
+      >
+        🎨
+      </button>
+      {isOpen && (
+        <div
+          className="absolute left-0 top-full z-[9999] mt-1.5 rounded-lg border border-slate-700 bg-slate-800/95 px-3 py-2.5 shadow-xl backdrop-blur-sm"
+          style={{ width: 'clamp(220px, 18vw, 280px)' }}
+          onMouseEnter={cancelCloseDelay}
+          onMouseLeave={startCloseDelay}
+        >
+          {/* Arrow */}
+          <div className="absolute -top-1.5 left-3 h-3 w-3 rotate-45 border-l border-t border-slate-700 bg-slate-800/95" />
+          <div className="relative">
+            <p
+              className="font-medium text-white mb-2"
+              style={{ fontSize: 'clamp(10px, 0.7vw, 12px)' }}
+            >
+              Category Colour Key
+            </p>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+              {categories.map((cat) => (
+                <div key={cat} className="flex items-center gap-1.5">
+                  <span
+                    className="inline-block rounded-full flex-shrink-0"
+                    style={{
+                      width: 'clamp(6px, 0.5vw, 8px)',
+                      height: 'clamp(6px, 0.5vw, 8px)',
+                      backgroundColor: CATEGORY_COLOURS[cat],
+                    }}
+                  />
+                  <span
+                    className="text-slate-300 truncate"
+                    style={{
+                      fontSize: 'clamp(10px, 0.65vw, 11px)',
+                      color: CATEGORY_COLOURS[cat],
+                    }}
+                  >
+                    {COLOUR_LEGEND_EMOJIS[cat]} {COLOUR_LEGEND_LABELS[cat]}
+                  </span>
+                </div>
+              ))}
+              {/* Structural (13th) */}
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="inline-block rounded-full flex-shrink-0"
+                  style={{
+                    width: 'clamp(6px, 0.5vw, 8px)',
+                    height: 'clamp(6px, 0.5vw, 8px)',
+                    backgroundColor: CATEGORY_COLOURS.structural,
+                  }}
+                />
+                <span
+                  className="truncate"
+                  style={{
+                    fontSize: 'clamp(10px, 0.65vw, 11px)',
+                    color: CATEGORY_COLOURS.structural,
+                  }}
+                >
+                  ✏️ Structural
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </span>
   );
 }
@@ -1284,6 +1456,12 @@ export function PromptBuilder({
     return result;
   }, [categoryState]);
 
+  // ── Pro Promagen: Colour-coded prompt anatomy ──────────────────────────
+  const isPro = userTier === 'paid';
+
+  // NOTE: colourTermIndex is declared AFTER rewrittenSelections (below)
+  // to avoid temporal dead zone. See "Build term → category index" comment.
+
   // ── Upgrade 5: Prompt Fingerprint Verification ──────────────────────────
   // Computes hash of current builder state, compares with original hash
   // from homepage generator. Shows badge: match → green, modified → amber.
@@ -1351,6 +1529,21 @@ export function PromptBuilder({
     const { selections: rewritten } = rewriteWithSynergy(selections);
     return rewritten;
   }, [selections, compositionMode]);
+
+  // ── Pro Promagen: Build term → category index for colour coding ────────
+  // Placed here (after rewrittenSelections) to avoid temporal dead zone.
+  // Uses BOTH rewrittenSelections (matches the assembled prompt text) AND
+  // original selections (catches terms the synergy rewriter didn't touch).
+  const colourTermIndex = useMemo(() => {
+    if (!isPro) return new Map<string, PromptCategory>();
+    const index = buildTermIndexFromSelections(rewrittenSelections);
+    // Layer original selections underneath (rewritten terms win on conflicts)
+    const origIndex = buildTermIndexFromSelections(selections);
+    for (const [term, cat] of origIndex) {
+      if (!index.has(term)) index.set(term, cat);
+    }
+    return index;
+  }, [isPro, selections, rewrittenSelections]);
 
   // ============================================================================
   // 3-Stage Assembly Pipeline
@@ -2201,6 +2394,7 @@ export function PromptBuilder({
                     sceneOriginValues={getSceneOriginValues(category)}
                     onCustomTermSubmitted={(term) => submitCustomTerm(term, category)}
                     feedbackHintTerms={feedbackHintTerms}
+                    labelColour={isPro ? CATEGORY_COLOURS[category] : undefined}
                   />
                   {/* Improvement 3: Negative overflow badge — shows when "Try in" carried more negatives than the dropdown limit */}
                   {isNegative && state.customValue && state.selected.length >= maxSelections && (
@@ -2281,6 +2475,8 @@ export function PromptBuilder({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-white">Assembled prompt</span>
+                {/* Pro Promagen: Colour legend tooltip */}
+                {hasContent && <CategoryColourLegend isPro={isPro} />}
                 {/* Improvement 2: Stage indicator badge */}
                 {hasContent && (
                   <StageBadge
@@ -2391,7 +2587,12 @@ export function PromptBuilder({
                       fadingOut={diffFading}
                     />
                   ) : (
-                    promptText
+                    <ColourCodedPromptText
+                      text={promptText}
+                      termIndex={colourTermIndex}
+                      isPro={isPro}
+                      fallbackClass="text-slate-100"
+                    />
                   )}
                   {/* Inline copy icon — flows after last character, floats right */}
                   {!isLocked && (
@@ -2489,7 +2690,12 @@ export function PromptBuilder({
                 </div>
                 <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
                   <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
-                    {optimizedResult.optimized}
+                    <ColourCodedPromptText
+                      text={optimizedResult.optimized}
+                      termIndex={colourTermIndex}
+                      isPro={isPro}
+                      fallbackClass="text-emerald-100"
+                    />
                     {/* Inline copy icon — flows after last character, floats right */}
                     {!isLocked && (
                       <span className="ml-1 inline-flex float-right gap-1">
@@ -2566,7 +2772,12 @@ export function PromptBuilder({
                 </div>
                 <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
                   <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
-                    {optimizedResult.optimized}
+                    <ColourCodedPromptText
+                      text={optimizedResult.optimized}
+                      termIndex={colourTermIndex}
+                      isPro={isPro}
+                      fallbackClass="text-emerald-100"
+                    />
                     {/* Inline copy icon — flows after last character, floats right */}
                     {!isLocked && (
                       <span className="ml-1 inline-flex float-right gap-1">

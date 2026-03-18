@@ -55,6 +55,8 @@ interface CountdownParts {
 const MONTHLY_COLOR = '#F59E0B';
 /** Violet — intelligence, creativity, premium. Makes users feel smart for buying. */
 const ANNUAL_COLOR = '#8B5CF6';
+/** Gold — retention, identity, ownership. "You are Pro" — ongoing, not transactional. */
+const GOLD_COLOR = '#EAB308';
 
 // ============================================================================
 // HELPERS
@@ -108,6 +110,175 @@ function buildGlow(hex: string) {
     border: hexToRgba(hex, 0.5),
     soft: hexToRgba(hex, 0.15),
   };
+}
+
+// ============================================================================
+// PRO RETENTION PANEL — Gold identity panel for active Pro users
+// ============================================================================
+// Human factors:
+//   §17 Colour Psychology: Gold = retention, identity, premium (ongoing)
+//   §10 Peak-End Rule: Last impression of each visit = warm gold confirmation
+//   §5 Optimal Stimulation: 6s breathing pulse → settles to static
+//   §18 Animation as Communication: pulse answers "Is this alive?"
+//   §8 Loss Aversion: Gold panel replaces payment cards — visible proof of Pro status
+//
+// Layout matches free-user pricing cards exactly (same flex, gap, maxHeight).
+// Text cycles during 6s intro: "Your Promagen, your way" → "Live on your
+// homepage now" → back to "Your Promagen, your way" (static from then on).
+// Save button: default white/10, emerald flash ONLY on save success.
+// ============================================================================
+
+function ProRetentionPanel({
+  goldGlow,
+  hasChanges,
+  isSaving,
+  saveStatus,
+  onSave,
+  onManageSubscription,
+}: {
+  goldGlow: { rgba: string; border: string; soft: string };
+  hasChanges: boolean;
+  isSaving: boolean;
+  saveStatus: 'idle' | 'success' | 'error';
+  onSave: () => void;
+  onManageSubscription: () => void;
+}) {
+  // ── Cycling text state ──
+  // Phase 0 (0–2s):   "Your Promagen, your way"      breathing pulse
+  // Phase 1 (2–4s):   "Live on your homepage now"     breathing pulse
+  // Phase 2 (4–6s+):  "Your Promagen, your way"       pulse fades → static gold
+  const [textPhase, setTextPhase] = React.useState(0);
+  const [isPulsing, setIsPulsing] = React.useState(true);
+
+  React.useEffect(() => {
+    const t1 = setTimeout(() => setTextPhase(1), 2000);
+    const t2 = setTimeout(() => setTextPhase(2), 4000);
+    const t3 = setTimeout(() => setIsPulsing(false), 6000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
+  const cyclingText = textPhase === 1
+    ? 'Live on your homepage now'
+    : 'Your Promagen, your way';
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Co-located animation — breathing pulse for gold text (NOT in globals.css) */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes proGoldBreath {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+        .pro-gold-pulse {
+          animation: proGoldBreath 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pro-gold-pulse { animation: none; }
+        }
+      ` }} />
+
+      {/* Gold cycling text — same position as free-user "Unlimited prompts..." header */}
+      <div style={{ padding: 'clamp(12px, 1.2vw, 20px) 0' }}>
+        <p
+          className={`italic text-center font-semibold ${isPulsing ? 'pro-gold-pulse' : ''}`}
+          style={{
+            fontSize: 'clamp(0.75rem, 0.9vw, 1rem)',
+            color: '#EAB308',
+            transition: 'opacity 600ms ease-out',
+          }}
+        >
+          {cyclingText}
+        </p>
+      </div>
+
+      {/* Gold panel — same position/size as the two pricing cards */}
+      <div
+        className="relative flex-1 rounded-xl overflow-hidden flex flex-col items-center justify-center"
+        style={{
+          maxHeight: 'clamp(140px, 16vw, 270px)',
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: `1px solid ${goldGlow.border}`,
+          boxShadow: `0 0 40px 8px ${goldGlow.rgba}, 0 0 80px 16px ${goldGlow.soft}, inset 0 0 25px 3px ${goldGlow.rgba}`,
+          padding: 'clamp(16px, 1.5vw, 24px)',
+        }}
+      >
+        {/* Ethereal glow — top radial */}
+        <div
+          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+          style={{ background: `radial-gradient(ellipse at 50% 0%, ${goldGlow.rgba} 0%, transparent 70%)` }}
+        />
+        {/* Bottom glow accent */}
+        <div
+          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+          style={{ background: `radial-gradient(ellipse at 50% 100%, ${goldGlow.soft} 0%, transparent 60%)` }}
+        />
+
+        <div className="relative z-10 flex flex-col items-center w-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
+          {/* Status line */}
+          <span
+            style={{
+              fontSize: 'clamp(0.625rem, 0.85vw, 0.9rem)',
+              color: hasChanges ? '#FBBF24' : '#EAB308',
+            }}
+          >
+            {hasChanges ? 'You have unsaved changes' : 'Your preferences are saved'}
+          </span>
+
+          <div className="flex w-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
+            {/* Save button — default gold outline, emerald flash ONLY on success */}
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={isSaving || !hasChanges}
+              className={`flex-1 rounded-xl font-semibold text-white transition-all duration-300 ${
+                saveStatus === 'success'
+                  ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 shadow-lg shadow-emerald-500/25'
+                  : hasChanges
+                    ? 'cursor-pointer ring-1 ring-yellow-500/50 bg-yellow-500/10 hover:bg-yellow-500/20 hover:ring-yellow-400/60'
+                    : 'bg-white/10 cursor-default'
+              } ${isSaving ? 'cursor-wait' : ''}`}
+              style={{
+                padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+                fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+              }}
+            >
+              <span className="flex items-center justify-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                {isSaving ? (
+                  <><span className="animate-spin">⏳</span><span>Saving...</span></>
+                ) : saveStatus === 'success' ? (
+                  <><span>✓</span><span>Saved!</span></>
+                ) : saveStatus === 'error' ? (
+                  <><span>✕</span><span>Error — try again</span></>
+                ) : (
+                  <><span>💾</span><span>Save Preferences</span></>
+                )}
+              </span>
+            </button>
+
+            {/* Manage Subscription */}
+            <button
+              type="button"
+              onClick={onManageSubscription}
+              className="flex-1 rounded-xl font-medium text-white cursor-pointer ring-1 ring-white/20 hover:ring-white/40 transition-all duration-200 bg-white/5 hover:bg-white/10"
+              style={{
+                padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
+                fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
+              }}
+            >
+              Manage Subscription
+            </button>
+          </div>
+
+          <span
+            className="text-slate-400 text-center"
+            style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
+          >
+            Changes apply to your homepage immediately
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ============================================================================
@@ -270,132 +441,88 @@ export function UpgradeCta({
   }
 
   // ============================================================================
-  // PAID USER VIEW — Cancellation-pending or normal
+  // PAID USER VIEW — Gold retention panel (human-factors §17, §10 Peak-End)
+  // ============================================================================
+  // Gold = retention, identity, ownership. "You are Pro" — ongoing relationship.
+  // Layout matches the free-user pricing cards position exactly (same flex,
+  // same gap, same maxHeight) so transitioning from free→paid feels seamless.
+  // Breathing pulse + cycling text for first 6 seconds (§5 Optimal Stimulation),
+  // then settles to static gold (§18 Animation as Communication: answered).
   // ============================================================================
 
   if (isPaidUser) {
     const isCancelling = cancelAtPeriodEnd && countdown && !countdown.expired;
-    const activeGlow = isCancelling ? buildGlow(MONTHLY_COLOR) : emeraldGlow;
+    const goldGlow = buildGlow(GOLD_COLOR);
+    const activeGlow = isCancelling ? buildGlow(MONTHLY_COLOR) : goldGlow;
 
-    return (
-      <div
-        className="relative rounded-xl overflow-hidden flex flex-col items-center justify-center"
-        style={{
-          maxHeight: 'clamp(140px, 16vw, 270px)',
-          background: 'rgba(255, 255, 255, 0.05)',
-          border: `1px solid ${activeGlow.border}`,
-          boxShadow: `0 0 40px 8px ${activeGlow.rgba}, 0 0 80px 16px ${activeGlow.soft}, inset 0 0 25px 3px ${activeGlow.rgba}`,
-          padding: 'clamp(16px, 1.5vw, 24px)',
-        }}
-      >
-        {/* Ethereal glow — top radial */}
+    // ── Cancellation-pending path (unchanged) ──
+    if (isCancelling) {
+      return (
         <div
-          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-          style={{ background: `radial-gradient(ellipse at 50% 0%, ${activeGlow.rgba} 0%, transparent 70%)` }}
-        />
-        {/* Bottom glow accent */}
-        <div
-          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-          style={{ background: `radial-gradient(ellipse at 50% 100%, ${activeGlow.soft} 0%, transparent 60%)` }}
-        />
+          className="relative rounded-xl overflow-hidden flex flex-col items-center justify-center"
+          style={{
+            maxHeight: 'clamp(140px, 16vw, 270px)',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: `1px solid ${activeGlow.border}`,
+            boxShadow: `0 0 40px 8px ${activeGlow.rgba}, 0 0 80px 16px ${activeGlow.soft}, inset 0 0 25px 3px ${activeGlow.rgba}`,
+            padding: 'clamp(16px, 1.5vw, 24px)',
+          }}
+        >
+          {/* Ethereal glow — top radial */}
+          <div
+            className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+            style={{ background: `radial-gradient(ellipse at 50% 0%, ${activeGlow.rgba} 0%, transparent 70%)` }}
+          />
+          {/* Bottom glow accent */}
+          <div
+            className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
+            style={{ background: `radial-gradient(ellipse at 50% 100%, ${activeGlow.soft} 0%, transparent 60%)` }}
+          />
 
-        <div className="relative z-10 flex flex-col items-center w-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
+          <div className="relative z-10 flex flex-col items-center w-full" style={{ gap: 'clamp(10px, 1vw, 16px)' }}>
+            <span
+              className="text-amber-400 font-medium"
+              style={{ fontSize: 'clamp(0.625rem, 0.85vw, 0.9rem)' }}
+            >
+              Pro access ends in
+            </span>
 
-          {/* ── Cancellation countdown ── */}
-          {isCancelling ? (
-            <>
-              <span
-                className="text-amber-400 font-medium"
-                style={{ fontSize: 'clamp(0.625rem, 0.85vw, 0.9rem)' }}
-              >
-                Pro access ends in
-              </span>
+            {/* Countdown display — clickable to reactivate */}
+            <button
+              type="button"
+              onClick={handleManageSubscription}
+              className="cursor-pointer rounded-xl font-bold text-amber-400 ring-1 ring-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 hover:ring-amber-400/60 transition-all duration-200"
+              style={{
+                fontSize: 'clamp(1rem, 1.3vw, 1.5rem)',
+                padding: 'clamp(8px, 0.8vw, 14px) clamp(16px, 1.6vw, 28px)',
+                letterSpacing: '0.04em',
+              }}
+              title="Click to reactivate your subscription"
+            >
+              {formatCountdown(countdown)}
+            </button>
 
-              {/* Countdown display — clickable to reactivate */}
-              <button
-                type="button"
-                onClick={handleManageSubscription}
-                className="cursor-pointer rounded-xl font-bold text-amber-400 ring-1 ring-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 hover:ring-amber-400/60 transition-all duration-200"
-                style={{
-                  fontSize: 'clamp(1rem, 1.3vw, 1.5rem)',
-                  padding: 'clamp(8px, 0.8vw, 14px) clamp(16px, 1.6vw, 28px)',
-                  letterSpacing: '0.04em',
-                }}
-                title="Click to reactivate your subscription"
-              >
-                {formatCountdown(countdown)}
-              </button>
-
-              <span
-                className="text-slate-400 text-center"
-                style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}
-              >
-                Click the timer to reactivate via Stripe
-              </span>
-            </>
-          ) : (
-            /* ── Normal active Pro ── */
-            <>
-              <span
-                className="text-white/60"
-                style={{ fontSize: 'clamp(0.625rem, 0.85vw, 0.9rem)' }}
-              >
-                {hasChanges ? 'You have unsaved changes' : 'Your preferences are saved'}
-              </span>
-
-              <div className="flex w-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
-                {/* Save button */}
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isSaving || !hasChanges}
-                  className={`flex-1 rounded-xl font-semibold text-white transition-all duration-300 ${
-                    hasChanges
-                      ? 'cursor-pointer bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 hover:from-emerald-400 hover:via-teal-400 hover:to-emerald-400 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40'
-                      : 'bg-white/10 cursor-default'
-                  } ${isSaving ? 'cursor-wait' : ''}`}
-                  style={{
-                    padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
-                    fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
-                  }}
-                >
-                  <span className="flex items-center justify-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                    {isSaving ? (
-                      <><span className="animate-spin">⏳</span><span>Saving...</span></>
-                    ) : saveStatus === 'success' ? (
-                      <><span>✓</span><span>Saved!</span></>
-                    ) : saveStatus === 'error' ? (
-                      <><span>✕</span><span>Error — try again</span></>
-                    ) : (
-                      <><span>💾</span><span>Save Preferences</span></>
-                    )}
-                  </span>
-                </button>
-
-                {/* Manage Subscription */}
-                <button
-                  type="button"
-                  onClick={handleManageSubscription}
-                  className="flex-1 rounded-xl font-medium text-white cursor-pointer ring-1 ring-white/20 hover:ring-white/40 transition-all duration-200 bg-white/5 hover:bg-white/10"
-                  style={{
-                    padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
-                    fontSize: 'clamp(0.75rem, 0.85vw, 0.9rem)',
-                  }}
-                >
-                  Manage Subscription
-                </button>
-              </div>
-
-              <span
-                className="text-slate-400 text-center"
-                style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.75rem)' }}
-              >
-                Changes apply to your homepage immediately
-              </span>
-            </>
-          )}
+            <span
+              className="text-slate-400 text-center"
+              style={{ fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)' }}
+            >
+              Click the timer to reactivate via Stripe
+            </span>
+          </div>
         </div>
-      </div>
+      );
+    }
+
+    // ── Normal active Pro — gold retention panel ──
+    return (
+      <ProRetentionPanel
+        goldGlow={goldGlow}
+        hasChanges={hasChanges}
+        isSaving={isSaving}
+        saveStatus={saveStatus}
+        onSave={handleSave}
+        onManageSubscription={handleManageSubscription}
+      />
     );
   }
 

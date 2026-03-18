@@ -75,6 +75,7 @@ import { getPlatformTierId } from '@/data/platform-tiers';
 import { sendShowcaseTelemetry } from '@/lib/telemetry/prompt-telemetry-client';
 import { selectionsFromMap, tierToRefPlatform } from '@/lib/prompt-builder';
 import { SaveIcon } from '@/components/prompts/library/save-icon';
+import { CATEGORY_COLOURS } from '@/lib/prompt-colours';
 
 // ============================================================================
 // TIER DISPLAY CONFIG
@@ -313,21 +314,7 @@ function ProviderIcon({
 // Compact colour legend row educates users on what each colour means
 // ============================================================================
 
-const CATEGORY_COLOURS: Record<string, string> = {
-  subject: '#FCD34D', // yellow-300 — gold, distinct from quality white
-  action: '#A3E635', // lime-400
-  style: '#C084FC', // purple-400
-  environment: '#38BDF8', // sky-400
-  composition: '#34D399', // emerald-400
-  camera: '#FB923C', // orange-400
-  lighting: '#FBBF24', // amber-400
-  colour: '#F472B6', // pink-400
-  atmosphere: '#22D3EE', // cyan-400
-  materials: '#2DD4BF', // teal-400
-  fidelity: '#93C5FD', // blue-300 — quality boosters, distinct soft blue
-  negative: '#F87171', // red-400
-  structural: '#94A3B8', // slate-400 — glue text, readable but quiet
-};
+/** CATEGORY_COLOURS imported from @/lib/prompt-colours (SSOT) */
 
 /** Default CLIP weights per category (from platform-formats.json) */
 const DEFAULT_WEIGHTS: Partial<Record<PromptCategory, number>> = {

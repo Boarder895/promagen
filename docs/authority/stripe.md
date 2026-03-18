@@ -65,7 +65,7 @@ Both plans include a **7-day free trial**.
 4. Currency: `GBP`
 5. Billing period: **Monthly**
 6. Click **Save price**
-7. **Copy the Price ID** (starts with `price_`) — you need this for the environment variable `STRIPE_PRICE_MONTHLY`    price_1TBNTKJr4qMNqiuzabYgL3ep
+7. **Copy the Price ID** (starts with `price_`) — you need this for the environment variable `STRIPE_PRICE_MONTHLY` price_1TBNTKJr4qMNqiuzabYgL3ep
 
 ### 2.3 Create Price 2 — Annual
 
@@ -75,7 +75,7 @@ Both plans include a **7-day free trial**.
 4. Currency: `GBP`
 5. Billing period: **Yearly**
 6. Click **Save price**
-7. **Copy the Price ID** (starts with `price_`) — you need this for the environment variable `STRIPE_PRICE_ANNUAL`  price_1TBNV2Jr4qMNqiuzRvIsnxQe
+7. **Copy the Price ID** (starts with `price_`) — you need this for the environment variable `STRIPE_PRICE_ANNUAL` price_1TBNV2Jr4qMNqiuzRvIsnxQe
 
 ### 2.4 Set up the Customer Portal
 
@@ -302,7 +302,7 @@ User cancels via Stripe Portal
 
 ```typescript
 {
-  plan: 'monthly' | 'annual';
+  plan: "monthly" | "annual";
 }
 ```
 
@@ -618,3 +618,26 @@ Add a single-line pointer in these existing authority docs:
 | Date        | Version | Change                                                                               |
 | ----------- | ------- | ------------------------------------------------------------------------------------ |
 | 15 Mar 2026 | 1.0.0   | Initial document. Pricing, trial, Clerk integration, 3 API routes, upgrade panel UX. |
+
+Two approaches depending on the purpose:
+For yourself (site owner) — Clerk metadata directly:
+
+Go to Clerk Dashboard → Users → find your account
+Click your user → scroll to Public Metadata → Edit
+Set: {"tier": "paid"}
+Save. You're Pro instantly, no subscription, no charge, no expiry.
+
+For friends/family — 100% off Stripe coupon:
+This is better because it creates a real subscription through the full pipeline (checkout → webhook → Clerk), which is exactly what you need to test the Pro badge, cancellation flow, and countdown.
+
+Go to Stripe Dashboard (Live mode) → Product catalogue → Coupons → Create coupon
+Type: Percentage off
+Percentage: 100%
+Duration: Forever
+Max redemptions: set to however many people (e.g. 10)
+Give it a code like PROMAGENFAMILY
+Save
+
+Then share that code. When they click Subscribe on the Pro page, they enter PROMAGENFAMILY in the promo code field (which is already enabled — your checkout has allow_promotion_codes: true). They go through the full Stripe flow, get charged £0.00, and the webhook fires properly setting their Clerk metadata to tier: 'paid'.
+For testing cancellation specifically: use the coupon approach on a test friend's account. They subscribe with the code, you verify Pro badge shows, then they cancel through Manage Subscription, and you watch the cancellation-pending state and countdown work.
+The Clerk-direct approach skips Stripe entirely so there's no subscription to cancel — that's fine for your account since you're the owner, but not useful for testing the cancellation flow.
