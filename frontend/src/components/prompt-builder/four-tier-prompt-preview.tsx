@@ -30,6 +30,11 @@ import {
   lookupOptimalLength,
   type CompressionLookup,
 } from '@/lib/learning/compression-lookup';
+import {
+  CATEGORY_COLOURS,
+  parsePromptIntoSegments,
+} from '@/lib/prompt-colours';
+import type { PromptCategory } from '@/types/prompt-builder';
 
 // ============================================================================
 // TYPES
@@ -49,6 +54,10 @@ interface FourTierPromptPreviewProps {
   compressionLookup?: CompressionLookup | null;
   /** Step 7.9d: Platform slug for platform-aware length blending (null = tier-only) */
   platformId?: string | null;
+  /** Pro Promagen: enable colour-coded prompt anatomy */
+  isPro?: boolean;
+  /** Pro Promagen: term → category lookup for colour coding */
+  termIndex?: Map<string, PromptCategory>;
 }
 
 interface TierCardProps {
@@ -66,6 +75,10 @@ interface TierCardProps {
   compressionLookup?: CompressionLookup | null;
   /** Step 7.9d: Platform slug for blending */
   platformId?: string | null;
+  /** Pro Promagen: enable colour-coded prompt anatomy */
+  isPro?: boolean;
+  /** Pro Promagen: term → category lookup for colour coding */
+  termIndex?: Map<string, PromptCategory>;
 }
 
 // ============================================================================
@@ -258,6 +271,8 @@ function TierCard({
   fullWidth,
   compressionLookup,
   platformId,
+  isPro = false,
+  termIndex,
 }: TierCardProps) {
   const [copied, setCopied] = useState(false);
   const config = TIER_CONFIGS[tier];
@@ -370,10 +385,33 @@ function TierCard({
       >
         <p className={`
           break-words whitespace-pre-wrap
-          ${isActive ? 'text-white/90' : 'text-white/60'}
+          ${!isPro ? (isActive ? 'text-white/90' : 'text-white/60') : ''}
           ${!positive && 'italic text-white/30'}
         `}>
-          {positive || 'Select options to generate prompt...'}
+          {!positive
+            ? 'Select options to generate prompt...'
+            : isPro && termIndex && termIndex.size > 0
+              ? (() => {
+                  const segments = parsePromptIntoSegments(positive, termIndex);
+                  const hasAnatomy = segments.some((s) => s.category !== 'structural');
+                  if (!hasAnatomy) return positive;
+                  return segments.map((seg, i) => {
+                    const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                    return (
+                      <span
+                        key={i}
+                        style={{
+                          color: c,
+                          textShadow: seg.weight >= 1.05 ? `0 0 10px ${c}50` : undefined,
+                        }}
+                      >
+                        {seg.text}
+                      </span>
+                    );
+                  });
+                })()
+              : positive
+          }
         </p>
         
         {/* Negative for tier 2 (inline) */}
@@ -402,7 +440,7 @@ function TierCard({
           flex items-center justify-center gap-2
           transition-all duration-200
           ${positive
-            ? `${isActive
+            ? `cursor-pointer ${isActive
                 ? 'bg-white text-black hover:bg-white/90'
                 : 'bg-white/10 text-white hover:bg-white/20'
               }`
@@ -440,6 +478,8 @@ export function FourTierPromptPreview({
   singleTierMode = false,
   compressionLookup,
   platformId,
+  isPro = false,
+  termIndex,
 }: FourTierPromptPreviewProps) {
   const handleCopy = useCallback((tier: PlatformTier, text: string) => {
     onCopy?.(tier, text);
@@ -483,6 +523,8 @@ export function FourTierPromptPreview({
           fullWidth={true}
           compressionLookup={compressionLookup}
           platformId={platformId}
+          isPro={isPro}
+          termIndex={termIndex}
         />
       </div>
     );
@@ -513,6 +555,8 @@ export function FourTierPromptPreview({
           compact={compact}
           compressionLookup={compressionLookup}
           platformId={platformId}
+          isPro={isPro}
+          termIndex={termIndex}
         />
         <TierCard
           tier={2}
@@ -524,6 +568,8 @@ export function FourTierPromptPreview({
           compact={compact}
           compressionLookup={compressionLookup}
           platformId={platformId}
+          isPro={isPro}
+          termIndex={termIndex}
         />
         <TierCard
           tier={3}
@@ -535,6 +581,8 @@ export function FourTierPromptPreview({
           compact={compact}
           compressionLookup={compressionLookup}
           platformId={platformId}
+          isPro={isPro}
+          termIndex={termIndex}
         />
         <TierCard
           tier={4}
@@ -546,6 +594,8 @@ export function FourTierPromptPreview({
           compact={compact}
           compressionLookup={compressionLookup}
           platformId={platformId}
+          isPro={isPro}
+          termIndex={termIndex}
         />
       </div>
       

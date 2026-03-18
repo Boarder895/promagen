@@ -345,7 +345,7 @@ export function IntelligencePanel({
             <button
               onClick={() => setActiveTab('conflicts')}
               className={`
-                px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer
                 ${activeTab === 'conflicts'
                   ? 'bg-white/20 text-white'
                   : 'text-white/50 hover:text-white/80'
@@ -357,7 +357,7 @@ export function IntelligencePanel({
             <button
               onClick={() => setActiveTab('suggestions')}
               className={`
-                px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer
                 ${activeTab === 'suggestions'
                   ? 'bg-white/20 text-white'
                   : 'text-white/50 hover:text-white/80'
@@ -370,7 +370,7 @@ export function IntelligencePanel({
               <button
                 onClick={() => setActiveTab('market')}
                 className={`
-                  px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                  px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer
                   ${activeTab === 'market'
                     ? 'bg-white/20 text-white'
                     : 'text-white/50 hover:text-white/80'
@@ -474,7 +474,7 @@ export function IntelligencePanel({
                         <button
                           key={i}
                           onClick={() => onMoodTermClick?.(term, 'atmosphere')}
-                          className="px-3 py-1.5 bg-sky-500/20 border border-sky-500/30 rounded-full text-sm text-sky-400 hover:border-sky-500/60 transition-colors"
+                          className="px-3 py-1.5 bg-sky-500/20 border border-sky-500/30 rounded-full text-sm text-sky-400 hover:border-sky-500/60 transition-colors cursor-pointer"
                         >
                           + {term}
                         </button>

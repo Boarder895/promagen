@@ -37,6 +37,7 @@ import { TextLengthOptimizer } from '@/components/providers/text-length-optimize
 import { LengthIndicator } from '@/components/providers/length-indicator';
 import { OptimizationTransparencyPanel } from '@/components/providers/optimization-transparency-panel';
 import { SavePromptModal, type SavePromptData } from '@/components/prompts/save-prompt-modal';
+import { SaveIcon } from '@/components/prompts/library/save-icon';
 import { useSavedPrompts } from '@/hooks/use-saved-prompts';
 import { usePromptAnalysis } from '@/hooks/prompt-intelligence';
 import { usePromptOptimization } from '@/hooks/use-prompt-optimization';
@@ -63,6 +64,12 @@ import { getOrderedOptions } from '@/lib/prompt-intelligence';
 import { getEnhancedCategoryConfig } from '@/lib/prompt-builder';
 import { getPlatformTier } from '@/lib/compress';
 import type { AspectRatioId } from '@/types/composition';
+import {
+  CATEGORY_COLOURS,
+  buildTermIndexFromSelections,
+  parsePromptIntoSegments,
+} from '@/lib/prompt-colours';
+import { usePromagenAuth } from '@/hooks/use-promagen-auth';
 import {
   CATEGORY_ORDER,
   CATEGORY_META,
@@ -345,6 +352,8 @@ interface CategoryDropdownProps {
   tier: PlatformTier;
   /** Smart-reordered options (Phase L6) — when provided, replaces default vocabulary order */
   reorderedOptions?: string[];
+  /** Pro Promagen: colour for category label heading */
+  labelColour?: string;
 }
 
 function CategoryDropdown({
@@ -354,6 +363,7 @@ function CategoryDropdown({
   disabled = false,
   tier,
   reorderedOptions,
+  labelColour,
 }: CategoryDropdownProps) {
   const meta = CATEGORY_META[category];
   const limit = STANDARD_LIMITS[tier][category];
@@ -383,7 +393,12 @@ function CategoryDropdown({
     <div className="space-y-1">
       <div className="flex items-center gap-2">
         <span className="text-base">{meta.icon}</span>
-        <span className="text-xs font-medium text-slate-300">{meta.label}</span>
+        <span
+          className="text-xs font-medium text-slate-300"
+          style={labelColour ? { color: labelColour } : undefined}
+        >
+          {meta.label}
+        </span>
         {selections.length > 0 && (
           <span className="text-xs text-emerald-400">
             {selections.length}/{limit}
@@ -597,6 +612,7 @@ export default function EnhancedEducationalPreview({
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedConfirmation, setSavedConfirmation] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedOptimized, setCopiedOptimized] = useState(false);
 
   // Composition mode: 'static' = raw selections, 'dynamic' = platform-formatted
   const [compositionMode, setCompositionMode] = useState<'static' | 'dynamic'>('dynamic');
@@ -635,6 +651,18 @@ export default function EnhancedEducationalPreview({
 
   // Save hook
   const { savePrompt } = useSavedPrompts();
+
+  // ── Pro Promagen: Auth + colour-coded prompt anatomy ───────────────────
+  const { userTier } = usePromagenAuth({
+    platformId: selectedProviderId ?? undefined,
+  });
+  const isPro = userTier === 'paid';
+
+  // Build term → category index for colour coding (same as standard builder)
+  const colourTermIndex = useMemo(() => {
+    if (!isPro) return new Map<string, PromptCategory>();
+    return buildTermIndexFromSelections(selections);
+  }, [isPro, selections]);
 
   // Scene Starters state
   const [_activeSceneId, setActiveSceneId] = useState<string | undefined>(undefined);
@@ -983,6 +1011,15 @@ export default function EnhancedEducationalPreview({
     }
   }, [activeTierPromptText, isOptimizerEnabled, wasOptimized, optimizedResult, selectedProviderId, activeTier]);
 
+  // Inline copy: Optimized prompt box (matches standard builder pattern)
+  const handleCopyOptimized = useCallback(async () => {
+    if (optimizedResult.optimized) {
+      await navigator.clipboard.writeText(optimizedResult.optimized);
+      setCopiedOptimized(true);
+      setTimeout(() => setCopiedOptimized(false), 2000);
+    }
+  }, [optimizedResult]);
+
   // Handle save
   const handleSavePrompt = useCallback(
     (data: SavePromptData) => {
@@ -1153,6 +1190,7 @@ export default function EnhancedEducationalPreview({
                         onSelectionChange={(newSel) => handleCategoryChange(category, newSel)}
                         tier={activeTier}
                         reorderedOptions={reorderedOptionsMap.get(category)}
+                        labelColour={isPro ? CATEGORY_COLOURS[category] : undefined}
                       />
                       {/* Phase L5: Explore Drawer — expandable vocabulary panel */}
                       <ExploreDrawer
@@ -1231,6 +1269,8 @@ export default function EnhancedEducationalPreview({
                 compact={false}
                 showNegative={true}
                 singleTierMode={singleTierMode}
+                isPro={isPro}
+                termIndex={colourTermIndex}
               />
             </div>
 
@@ -1286,20 +1326,86 @@ export default function EnhancedEducationalPreview({
                       achievedAtPhase={optimizedResult.achievedAtPhase ?? -1}
                       originalLength={optimizedResult.originalLength}
                       optimizedLength={optimizedResult.optimizedLength}
-                      isPro={false}
+                      isPro={isPro}
                     />
 
                     {/* Optimized prompt preview */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-emerald-300">Optimized prompt</span>
+                        <span className="text-xs font-medium text-emerald-300 flex items-center gap-1.5">
+                          Optimized prompt
+                          {selectedProvider && (
+                            <>
+                              <span className="text-white/40">in</span>
+                              <span className="text-white/70">{selectedProvider.name}</span>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={selectedProvider.localIcon || `/icons/providers/${selectedProvider.id}.png`}
+                                alt=""
+                                style={{ width: 20, height: 20 }}
+                                className="inline-block rounded-sm"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              />
+                            </>
+                          )}
+                        </span>
                         <span className="text-xs text-emerald-400/70 tabular-nums">
                           {optimizedResult.optimizedLength} chars
                         </span>
                       </div>
-                      <div className="min-h-[40px] max-h-[120px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+                      <div className="min-h-[60px] max-h-[150px] overflow-y-auto rounded-xl border border-emerald-600/50 bg-emerald-950/20 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
                         <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-emerald-100">
-                          {optimizedResult.optimized}
+                          {isPro && colourTermIndex.size > 0
+                            ? (() => {
+                                const segments = parsePromptIntoSegments(optimizedResult.optimized, colourTermIndex);
+                                const hasAnatomy = segments.some((s) => s.category !== 'structural');
+                                if (!hasAnatomy) return optimizedResult.optimized;
+                                return segments.map((seg, i) => {
+                                  const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                                  return (
+                                    <span key={i} style={{ color: c, textShadow: seg.weight >= 1.05 ? `0 0 10px ${c}50` : undefined }}>
+                                      {seg.text}
+                                    </span>
+                                  );
+                                });
+                              })()
+                            : optimizedResult.optimized
+                          }
+                          {/* Inline copy + save icons — flows after last character, floats right */}
+                          <span className="ml-1 inline-flex float-right gap-1">
+                            <SaveIcon
+                              positivePrompt={activeTierPromptText}
+                              optimisedPrompt={optimizedResult.optimized}
+                              isOptimised={true}
+                              platformId={selectedProviderId ?? 'playground'}
+                              platformName={selectedProvider?.name ?? 'Playground'}
+                              source="builder"
+                              tier={activeTier}
+                              selections={selections as unknown as Record<string, unknown>}
+                              size="sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleCopyOptimized}
+                              className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
+                                copiedOptimized
+                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  : 'bg-white/5 text-emerald-300 hover:bg-white/10 hover:text-emerald-200 cursor-pointer'
+                              }`}
+                              title={copiedOptimized ? 'Copied!' : 'Copy optimized prompt'}
+                              aria-label={copiedOptimized ? 'Copied to clipboard' : 'Copy optimized prompt to clipboard'}
+                            >
+                              {copiedOptimized ? (
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </button>
+                          </span>
                         </pre>
                       </div>
                     </div>
@@ -1353,7 +1459,7 @@ export default function EnhancedEducationalPreview({
               inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all
               ${
                 hasContent
-                  ? 'border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800'
+                  ? 'border-slate-600 bg-slate-900 text-slate-50 hover:border-slate-400 hover:bg-slate-800 cursor-pointer'
                   : 'cursor-not-allowed border-slate-800 bg-slate-900/50 text-slate-400'
               }
               focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80
@@ -1395,7 +1501,7 @@ export default function EnhancedEducationalPreview({
           <button
             type="button"
             onClick={handleRandomise}
-            className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400"
+            className="inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-purple-400/80 border-purple-500/70 bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-100 hover:from-purple-600/30 hover:to-pink-600/30 hover:border-purple-400 cursor-pointer"
           >
             <span className="text-base">🎲</span>
             Randomise
@@ -1408,7 +1514,7 @@ export default function EnhancedEducationalPreview({
             disabled={!hasContent && !selectedProviderId}
             className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400/80 ${
               hasContent || selectedProviderId
-                ? 'border-slate-600 bg-slate-800 text-slate-100 hover:border-slate-400 hover:bg-slate-700'
+                ? 'border-slate-600 bg-slate-800 text-slate-100 hover:border-slate-400 hover:bg-slate-700 cursor-pointer'
                 : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-400'
             }`}
           >
@@ -1423,8 +1529,8 @@ export default function EnhancedEducationalPreview({
             className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all focus-visible:outline-none focus-visible:ring focus-visible:ring-emerald-400/80 ${
               hasContent
                 ? savedConfirmation
-                  ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300'
-                  : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400'
+                  ? 'border-emerald-400 bg-emerald-500/20 text-emerald-300 cursor-pointer'
+                  : 'border-emerald-500/70 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-100 hover:from-emerald-600/30 hover:to-teal-600/30 hover:border-emerald-400 cursor-pointer'
                 : 'cursor-not-allowed border-slate-700 bg-slate-800/50 text-slate-400'
             }`}
           >

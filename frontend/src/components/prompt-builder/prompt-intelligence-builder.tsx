@@ -26,6 +26,7 @@ import { generateAllTierPrompts } from '../../lib/prompt-builder/generators';
 import { FourTierPromptPreview } from './four-tier-prompt-preview';
 import { IntelligencePanel } from './intelligence-panel';
 import { IntelligentPhrasesCombobox } from '../ui/intelligent-phrases-combobox';
+import { buildTermIndexFromSelections } from '@/lib/prompt-colours';
 import type {
   PromptCategory,
   PromptSelections,
@@ -515,6 +516,12 @@ export function PromptIntelligenceBuilder({
   // Regenerate prompts from merged selections (standard words + phrases)
   const mergedPrompts = useMemo(() => generateAllTierPrompts(mergedSelections), [mergedSelections]);
 
+  // ── Pro Promagen: Build term → category index for colour coding ────────
+  const colourTermIndex = useMemo(() => {
+    if (!isPro) return new Map<string, PromptCategory>();
+    return buildTermIndexFromSelections(mergedSelections);
+  }, [isPro, mergedSelections]);
+
   // Combined Clear All — clears standard selections AND intelligent phrases
   const handleClearAll = useCallback(() => {
     clearAllStandard();
@@ -675,6 +682,8 @@ export function PromptIntelligenceBuilder({
             showNegative={true}
             compressionLookup={compressionLookup}
             platformId={platformId}
+            isPro={isPro}
+            termIndex={colourTermIndex}
           />
         </div>
 

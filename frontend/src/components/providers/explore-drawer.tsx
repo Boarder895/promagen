@@ -550,7 +550,7 @@ export function ExploreDrawer({
                   role="tab"
                   aria-selected={activeTab === tab.key}
                   className={`
-                    inline-flex items-center rounded-md border transition-colors
+                    inline-flex items-center rounded-md border transition-colors cursor-pointer
                     ${
                       activeTab === tab.key
                         ? tab.key === 'scene'
