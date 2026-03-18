@@ -66,6 +66,8 @@ import { getPlatformTier } from '@/lib/compress';
 import type { AspectRatioId } from '@/types/composition';
 import {
   CATEGORY_COLOURS,
+  CATEGORY_LABELS,
+  CATEGORY_EMOJIS,
   buildTermIndexFromSelections,
   parsePromptIntoSegments,
 } from '@/lib/prompt-colours';
@@ -599,6 +601,149 @@ function useRealIntelligence(
 }
 
 // ============================================================================
+// STAGE BADGE — shows pipeline stage: Static | Dynamic | Optimized | Optimal
+// Matches standard builder's StageBadge (prompt-builder.tsx)
+// ============================================================================
+
+function StageBadge({
+  compositionMode,
+  isOptimizerEnabled,
+  wasOptimized,
+}: {
+  compositionMode: 'static' | 'dynamic';
+  isOptimizerEnabled: boolean;
+  wasOptimized: boolean;
+}) {
+  if (compositionMode === 'static') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-slate-600/50 bg-slate-800/60 px-1.5 py-0.5 font-medium text-slate-200"
+        style={{ fontSize: 'clamp(10px, 0.65vw, 11px)' }}
+        title="Raw selections — no intelligence applied. What you pick is what you get."
+      >
+        📋 Static
+      </span>
+    );
+  }
+  if (isOptimizerEnabled && wasOptimized) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 font-medium text-emerald-400"
+        style={{ fontSize: 'clamp(10px, 0.65vw, 11px)' }}
+        title="Platform-formatted AND trimmed to optimal length for best results."
+      >
+        ⚡ Optimized
+      </span>
+    );
+  }
+  if (isOptimizerEnabled && !wasOptimized) {
+    return (
+      <span
+        className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-950/30 px-1.5 py-0.5 font-medium text-emerald-400"
+        style={{ fontSize: 'clamp(10px, 0.65vw, 11px)' }}
+        title="Platform-formatted and already within optimal length."
+      >
+        ✓ Optimal
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-md border border-purple-500/30 bg-purple-500/10 px-1.5 py-0.5 font-medium text-purple-400"
+      style={{ fontSize: 'clamp(10px, 0.65vw, 11px)' }}
+      title="Platform intelligence applied — reordered, weighted, quality tags added."
+    >
+      ✨ Dynamic
+    </span>
+  );
+}
+
+// ============================================================================
+// CATEGORY COLOUR LEGEND — Pro-only tooltip showing 13 category→colour map
+// Matches standard builder's restyled legend (prompt-builder.tsx)
+// 400ms close delay, solid bg, no opacity, min 10px font
+// ============================================================================
+
+function LabCategoryColourLegend({ isPro }: { isPro: boolean }) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const closeTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const startCloseDelay = React.useCallback(() => {
+    closeTimerRef.current = setTimeout(() => setIsOpen(false), 400);
+  }, []);
+  const cancelCloseDelay = React.useCallback(() => {
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+  }, []);
+  React.useEffect(() => {
+    return () => { if (closeTimerRef.current) clearTimeout(closeTimerRef.current); };
+  }, []);
+
+  if (!isPro) return null;
+
+  const categories: PromptCategory[] = [
+    'subject', 'action', 'style', 'environment', 'composition', 'camera',
+    'lighting', 'colour', 'atmosphere', 'materials', 'fidelity', 'negative',
+  ];
+
+  return (
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        className="inline-flex items-center justify-center rounded-lg px-1.5 py-1 transition-all cursor-pointer bg-white/5 hover:bg-white/10"
+        style={{ fontSize: 'clamp(18px, 1.4vw, 22px)' }}
+        onMouseEnter={() => { cancelCloseDelay(); setIsOpen(true); }}
+        onMouseLeave={startCloseDelay}
+        onClick={() => setIsOpen((o) => !o)}
+        title="Prompt colour key — Pro Promagen"
+        aria-label="Show category colour legend"
+      >
+        🎨
+      </button>
+      {isOpen && (
+        <div
+          className="absolute left-1/2 -translate-x-1/2 top-full z-[9999] mt-2 rounded-xl border border-slate-700 shadow-2xl"
+          style={{
+            width: 'clamp(280px, 22vw, 340px)',
+            background: 'rgba(15, 23, 42, 0.97)',
+            backdropFilter: 'blur(16px)',
+          }}
+          onMouseEnter={cancelCloseDelay}
+          onMouseLeave={startCloseDelay}
+        >
+          {/* Ethereal glow overlay */}
+          <div className="pointer-events-none absolute inset-0 rounded-xl overflow-hidden">
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(56,189,248,0.06), transparent)' }} />
+          </div>
+          {/* Arrow */}
+          <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45 border-l border-t border-slate-700" style={{ background: 'rgba(15, 23, 42, 0.97)' }} />
+          <div className="relative px-4 py-3">
+            <p className="font-semibold text-white mb-3" style={{ fontSize: 'clamp(12px, 0.85vw, 14px)' }}>
+              Category Colour Key
+            </p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+              {categories.map((cat) => (
+                <div key={cat} className="flex items-center gap-2">
+                  <span className="inline-block rounded-full flex-shrink-0" style={{ width: 'clamp(8px, 0.6vw, 10px)', height: 'clamp(8px, 0.6vw, 10px)', backgroundColor: CATEGORY_COLOURS[cat] }} />
+                  <span className="truncate" style={{ fontSize: 'clamp(11px, 0.75vw, 13px)', color: CATEGORY_COLOURS[cat] }}>
+                    {CATEGORY_EMOJIS[cat]} {CATEGORY_LABELS[cat]}
+                  </span>
+                </div>
+              ))}
+              <div className="flex items-center gap-2">
+                <span className="inline-block rounded-full flex-shrink-0" style={{ width: 'clamp(8px, 0.6vw, 10px)', height: 'clamp(8px, 0.6vw, 10px)', backgroundColor: CATEGORY_COLOURS.structural }} />
+                <span className="truncate" style={{ fontSize: 'clamp(11px, 0.75vw, 13px)', color: CATEGORY_COLOURS.structural }}>
+                  ✏️ Structural
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </span>
+  );
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -613,6 +758,7 @@ export default function EnhancedEducationalPreview({
   const [savedConfirmation, setSavedConfirmation] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copiedOptimized, setCopiedOptimized] = useState(false);
+  const [copiedAssembled, setCopiedAssembled] = useState(false);
 
   // Composition mode: 'static' = raw selections, 'dynamic' = platform-formatted
   const [compositionMode, setCompositionMode] = useState<'static' | 'dynamic'>('dynamic');
@@ -901,6 +1047,19 @@ export default function EnhancedEducationalPreview({
   const optimizedResult = useMemo(() => getOptimizedPrompt(), [getOptimizedPrompt]);
   const wasOptimized = optimizedResult.optimizedLength < optimizedResult.originalLength;
 
+  // ── Optimizer disabled in neutral mode (no provider selected) ──────────
+  // Prevents silently optimising for Stability when user hasn't chosen a platform.
+  const finalOptimizerDisabled = isOptimizerDisabled || !selectedProviderId;
+  const finalTooltipContent = !selectedProviderId
+    ? {
+        maxChars: '—',
+        sweetSpot: '—',
+        platformNote: 'Select an AI provider above to enable optimisation.',
+        benefit: 'The optimizer trims your prompt to the ideal length for the selected platform.',
+        qualityImpact: 'Each platform has different character limits and sweet spots.',
+      }
+    : optimizerTooltipContent;
+
   // Suggested save name
   const suggestedSaveName = useMemo(() => {
     const subject = selections.subject[0];
@@ -1020,6 +1179,15 @@ export default function EnhancedEducationalPreview({
     }
   }, [optimizedResult]);
 
+  // Inline copy: Assembled prompt box
+  const handleCopyAssembled = useCallback(async () => {
+    if (activeTierPromptText) {
+      await navigator.clipboard.writeText(activeTierPromptText);
+      setCopiedAssembled(true);
+      setTimeout(() => setCopiedAssembled(false), 2000);
+    }
+  }, [activeTierPromptText]);
+
   // Handle save
   const handleSavePrompt = useCallback(
     (data: SavePromptData) => {
@@ -1078,14 +1246,17 @@ export default function EnhancedEducationalPreview({
           {/* Divider */}
           <span className="text-slate-700" aria-hidden="true">│</span>
 
-          {/* Text Length Optimizer toggle (Phase L4) */}
+          {/* Pro Promagen: Colour legend — positioned between Dynamic and Optimize */}
+          {hasContent && <LabCategoryColourLegend isPro={isPro} />}
+
+          {/* Text Length Optimizer toggle (Phase L4) — disabled when no provider */}
           <TextLengthOptimizer
             isEnabled={isOptimizerEnabled}
             onToggle={setOptimizerEnabled}
             platformId={optimizerPlatformId}
-            platformName={selectedProvider?.name ?? 'Stability'}
-            disabled={isOptimizerDisabled}
-            tooltipContent={optimizerTooltipContent}
+            platformName={selectedProvider?.name ?? 'Select a provider'}
+            disabled={finalOptimizerDisabled}
+            tooltipContent={finalTooltipContent}
             analysis={hasContent ? optimizerAnalysis : null}
             compact
           />
@@ -1260,6 +1431,85 @@ export default function EnhancedEducationalPreview({
               </div>
             )}
 
+            {/* ═══════════════════════════════════════════════════ */}
+            {/* Assembled Prompt — full-length prompt preview      */}
+            {/* Matches standard builder's assembled prompt box.   */}
+            {/* Shows colour-coded text for Pro, inline copy+save. */}
+            {/* ═══════════════════════════════════════════════════ */}
+            {hasContent && (
+              <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4 space-y-2">
+                {/* Header row: "Assembled prompt" + stage badge + char count */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-white">Assembled prompt</span>
+                    <StageBadge
+                      compositionMode={compositionMode}
+                      isOptimizerEnabled={isOptimizerEnabled && !!selectedProviderId}
+                      wasOptimized={wasOptimized}
+                    />
+                  </div>
+                  <span className="text-xs text-slate-200 tabular-nums">
+                    {activeTierPromptText.length} chars
+                  </span>
+                </div>
+
+                {/* Full-length prompt text box */}
+                <div className="min-h-[80px] max-h-[200px] overflow-y-auto rounded-xl border border-slate-600 bg-slate-950/80 p-3 text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30">
+                  <pre className="whitespace-pre-wrap font-sans text-[0.8rem] leading-relaxed text-slate-100">
+                    {isPro && colourTermIndex.size > 0
+                      ? (() => {
+                          const segments = parsePromptIntoSegments(activeTierPromptText, colourTermIndex);
+                          const hasAnatomy = segments.some((s) => s.category !== 'structural');
+                          if (!hasAnatomy) return activeTierPromptText;
+                          return segments.map((seg, i) => {
+                            const c = CATEGORY_COLOURS[seg.category] ?? CATEGORY_COLOURS.structural;
+                            return (
+                              <span key={i} style={{ color: c, textShadow: seg.weight >= 1.05 ? `0 0 10px ${c}50` : undefined }}>
+                                {seg.text}
+                              </span>
+                            );
+                          });
+                        })()
+                      : activeTierPromptText
+                    }
+                    {/* Inline copy + save icons — flows after last character, floats right */}
+                    <span className="ml-1 inline-flex float-right gap-1">
+                      <SaveIcon
+                        positivePrompt={activeTierPromptText}
+                        platformId={selectedProviderId ?? 'playground'}
+                        platformName={selectedProvider?.name ?? 'Playground'}
+                        source="builder"
+                        tier={activeTier}
+                        selections={selections as unknown as Record<string, unknown>}
+                        size="sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCopyAssembled}
+                        className={`inline-flex items-center justify-center rounded-md p-1 transition-all cursor-pointer ${
+                          copiedAssembled
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200'
+                        }`}
+                        title={copiedAssembled ? 'Copied!' : 'Copy assembled prompt'}
+                        aria-label={copiedAssembled ? 'Copied to clipboard' : 'Copy assembled prompt to clipboard'}
+                      >
+                        {copiedAssembled ? (
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        )}
+                      </button>
+                    </span>
+                  </pre>
+                </div>
+              </div>
+            )}
+
             {/* 4-Tier Prompt Preview */}
             <div className="rounded-xl bg-slate-900/80 border border-white/10 p-4">
               <FourTierPromptPreview
@@ -1410,6 +1660,22 @@ export default function EnhancedEducationalPreview({
                       </div>
                     </div>
                   </>
+                )}
+
+                {/* Within optimal range — shows when optimizer ON but no trimming needed */}
+                {isOptimizerEnabled && !wasOptimized && selectedProviderId && (
+                  <div className="rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-3 py-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-400">✓</span>
+                        <span className="text-xs text-emerald-200">
+                          <span className="font-medium">Within optimal range</span> —{' '}
+                          {optimizedResult.optimizedLength} chars
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 'clamp(10px, 0.65vw, 11px)' }} className="text-emerald-400/70">No trimming needed</span>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

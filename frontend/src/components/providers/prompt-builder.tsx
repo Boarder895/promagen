@@ -555,8 +555,8 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
     <span className="relative inline-flex">
       <button
         type="button"
-        className="inline-flex items-center justify-center rounded-md px-1 py-0.5 transition-all cursor-pointer bg-white/5 hover:bg-white/10"
-        style={{ fontSize: 'clamp(10px, 0.7vw, 12px)' }}
+        className="inline-flex items-center justify-center rounded-lg px-1.5 py-1 transition-all cursor-pointer bg-white/5 hover:bg-white/10"
+        style={{ fontSize: 'clamp(18px, 1.4vw, 22px)' }}
         onMouseEnter={() => { cancelCloseDelay(); setIsOpen(true); }}
         onMouseLeave={startCloseDelay}
         onClick={() => setIsOpen((o) => !o)}
@@ -567,35 +567,51 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
       </button>
       {isOpen && (
         <div
-          className="absolute left-0 top-full z-[9999] mt-1.5 rounded-lg border border-slate-700 bg-slate-800/95 px-3 py-2.5 shadow-xl backdrop-blur-sm"
-          style={{ width: 'clamp(220px, 18vw, 280px)' }}
+          className="absolute left-1/2 -translate-x-1/2 top-full z-[9999] mt-2 rounded-xl border border-slate-700 shadow-2xl"
+          style={{
+            width: 'clamp(280px, 22vw, 340px)',
+            background: 'rgba(15, 23, 42, 0.97)',
+            backdropFilter: 'blur(16px)',
+          }}
           onMouseEnter={cancelCloseDelay}
           onMouseLeave={startCloseDelay}
         >
+          {/* Ethereal glow overlays (matches weather/commodity tooltips) */}
+          <div className="pointer-events-none absolute inset-0 rounded-xl overflow-hidden">
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(56,189,248,0.06), transparent)',
+              }}
+            />
+          </div>
           {/* Arrow */}
-          <div className="absolute -top-1.5 left-3 h-3 w-3 rotate-45 border-l border-t border-slate-700 bg-slate-800/95" />
-          <div className="relative">
+          <div
+            className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-3 w-3 rotate-45 border-l border-t border-slate-700"
+            style={{ background: 'rgba(15, 23, 42, 0.97)' }}
+          />
+          <div className="relative px-4 py-3">
             <p
-              className="font-medium text-white mb-2"
-              style={{ fontSize: 'clamp(10px, 0.7vw, 12px)' }}
+              className="font-semibold text-white mb-3"
+              style={{ fontSize: 'clamp(12px, 0.85vw, 14px)' }}
             >
               Category Colour Key
             </p>
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
               {categories.map((cat) => (
-                <div key={cat} className="flex items-center gap-1.5">
+                <div key={cat} className="flex items-center gap-2">
                   <span
                     className="inline-block rounded-full flex-shrink-0"
                     style={{
-                      width: 'clamp(6px, 0.5vw, 8px)',
-                      height: 'clamp(6px, 0.5vw, 8px)',
+                      width: 'clamp(8px, 0.6vw, 10px)',
+                      height: 'clamp(8px, 0.6vw, 10px)',
                       backgroundColor: CATEGORY_COLOURS[cat],
                     }}
                   />
                   <span
-                    className="text-slate-300 truncate"
+                    className="truncate"
                     style={{
-                      fontSize: 'clamp(10px, 0.65vw, 11px)',
+                      fontSize: 'clamp(11px, 0.75vw, 13px)',
                       color: CATEGORY_COLOURS[cat],
                     }}
                   >
@@ -604,19 +620,19 @@ function CategoryColourLegend({ isPro }: { isPro: boolean }) {
                 </div>
               ))}
               {/* Structural (13th) */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span
                   className="inline-block rounded-full flex-shrink-0"
                   style={{
-                    width: 'clamp(6px, 0.5vw, 8px)',
-                    height: 'clamp(6px, 0.5vw, 8px)',
+                    width: 'clamp(8px, 0.6vw, 10px)',
+                    height: 'clamp(8px, 0.6vw, 10px)',
                     backgroundColor: CATEGORY_COLOURS.structural,
                   }}
                 />
                 <span
                   className="truncate"
                   style={{
-                    fontSize: 'clamp(10px, 0.65vw, 11px)',
+                    fontSize: 'clamp(11px, 0.75vw, 13px)',
                     color: CATEGORY_COLOURS.structural,
                   }}
                 >
@@ -2265,6 +2281,9 @@ export function PromptBuilder({
                 compact
                 lockedForAnonymous={!isAuthenticated}
               />
+
+              {/* Pro Promagen: Colour legend — centered between optimizer and intelligence badges */}
+              {hasContent && <CategoryColourLegend isPro={isPro} />}
             </div>
 
             {/* Right side: Intelligence badges + Usage counter */}
@@ -2475,8 +2494,6 @@ export function PromptBuilder({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-medium text-white">Assembled prompt</span>
-                {/* Pro Promagen: Colour legend tooltip */}
-                {hasContent && <CategoryColourLegend isPro={isPro} />}
                 {/* Improvement 2: Stage indicator badge */}
                 {hasContent && (
                   <StageBadge
