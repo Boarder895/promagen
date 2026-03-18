@@ -1,22 +1,19 @@
 // src/app/studio/playground/playground-page-client.tsx
 // ============================================================================
-// PROMPT LAB CLIENT WRAPPER (v1.0.0)
+// PROMPT LAB CLIENT WRAPPER (v2.0.0)
 // ============================================================================
 // Client component for /studio/playground (Prompt Lab).
 // Same pattern as homepage-client.tsx and library-client.tsx.
 //
-// Responsibilities:
-// - Receives server-fetched data (providers, exchanges, weather)
-// - Tracks provider selection state from PlaygroundWorkspace
-// - Passes dynamic heroTextOverride to HomepageGrid (Listen button text)
-// - Passes headingText="Promagen — Prompt Lab"
+// v2.0.0 (18 Mar 2026):
+// - Uses useExchangeOrder() for Pro-aware exchange rail ordering.
+//   Pro users see exchanges anchored to their timezone.
+//   Free/anonymous see standard Greenwich east→west.
+// - Simplified props: receives flat `exchanges` array instead of pre-split.
 //
-// Human factors:
-// - Listen button text uses Curiosity Gap + Voice Psychology
-// - Two states: no provider selected (invitation) vs provider selected (guidance)
-// - British female RP rhythm: short sentences, no jargon, ≤15 words each
+// v1.0.0: Initial client wrapper with dynamic Listen text.
 //
-// Authority: docs/authority/prompt-intelligence.md §9
+// Authority: docs/authority/exchange-ordering.md, docs/authority/prompt-intelligence.md §9
 // Existing features preserved: Yes
 // ============================================================================
 
@@ -29,6 +26,7 @@ import PlaygroundWorkspace from '@/components/prompts/playground-workspace';
 import type { Exchange } from '@/data/exchanges/types';
 import type { ExchangeWeatherData } from '@/components/exchanges/types';
 import type { Provider } from '@/types/providers';
+import { useExchangeOrder } from '@/hooks/use-exchange-order';
 
 // ============================================================================
 // SPEECH TEXT — British female voice (same pattern as homepage/library/pro)
@@ -53,12 +51,8 @@ const HERO_TEXT_WITH_PROVIDER =
 export interface PlaygroundPageClientProps {
   /** All AI providers */
   providers: Provider[];
-  /** Eastern exchange rail content */
-  leftExchanges: ReadonlyArray<Exchange>;
-  /** Western exchange rail content */
-  rightExchanges: ReadonlyArray<Exchange>;
-  /** All exchanges ordered for market pulse */
-  allOrderedExchanges: ReadonlyArray<Exchange>;
+  /** All exchanges (flat, east→west from server) */
+  exchanges: ReadonlyArray<Exchange>;
   /** Weather data indexed by exchange ID */
   weatherIndex: Map<string, ExchangeWeatherData>;
 }
@@ -69,9 +63,7 @@ export interface PlaygroundPageClientProps {
 
 export default function PlaygroundPageClient({
   providers,
-  leftExchanges,
-  rightExchanges,
-  allOrderedExchanges,
+  exchanges,
   weatherIndex,
 }: PlaygroundPageClientProps) {
   // Track whether a provider is selected (drives Listen text)
@@ -81,17 +73,20 @@ export default function PlaygroundPageClient({
     setHasProvider(selected);
   }, []);
 
+  // Pro-aware exchange ordering — rotates for Pro users, passthrough for free
+  const { left, right, ordered } = useExchangeOrder(exchanges);
+
   // Speech text changes based on provider selection
   const heroText = hasProvider ? HERO_TEXT_WITH_PROVIDER : HERO_TEXT_NO_PROVIDER;
 
   // Provider IDs for market pulse
   const providerIds = providers.map((p) => p.id);
 
-  // Left rail content: Eastern exchanges
+  // Left rail content: exchanges (Pro-reordered)
   const leftContent = (
     <div className="space-y-2">
       <ExchangeList
-        exchanges={leftExchanges}
+        exchanges={left}
         weatherByExchange={weatherIndex}
         emptyMessage="No eastern exchanges selected yet. Choose markets to populate this rail."
         side="left"
@@ -107,11 +102,11 @@ export default function PlaygroundPageClient({
     />
   );
 
-  // Right rail content: Western exchanges
+  // Right rail content: exchanges (Pro-reordered)
   const rightContent = (
     <div className="space-y-2">
       <ExchangeList
-        exchanges={rightExchanges}
+        exchanges={right}
         weatherByExchange={weatherIndex}
         emptyMessage="No western exchanges selected yet. Choose markets to populate this rail."
         side="right"
@@ -128,7 +123,7 @@ export default function PlaygroundPageClient({
       centre={centreContent}
       rightContent={rightContent}
       showFinanceRibbon={false}
-      exchanges={allOrderedExchanges}
+      exchanges={ordered}
       displayedProviderIds={providerIds}
       providers={providers}
       showEngineBay

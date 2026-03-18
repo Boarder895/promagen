@@ -211,6 +211,8 @@ export interface FeatureControlPanelProps {
   onSavedHover?: (hovering: boolean) => void;
   onLabHover?: (hovering: boolean) => void;
   onExchangesHover?: (hovering: boolean) => void;
+  onFrameHover?: (hovering: boolean) => void;
+  onImageGenHover?: (hovering: boolean) => void;
 }
 
 export function FeatureControlPanel({
@@ -225,6 +227,8 @@ export function FeatureControlPanel({
   onSavedHover,
   onLabHover,
   onExchangesHover,
+  onFrameHover,
+  onImageGenHover,
 }: FeatureControlPanelProps) {
   const { dailyUsage, anonymousUsage } = usePromagenAuth();
   const { allPrompts } = useSavedPrompts();
@@ -378,6 +382,7 @@ export function FeatureControlPanel({
           actionLabel={isPaidUser ? 'Active' : 'Pro only'}
           isPro={isPaidUser}
           actionAlwaysColored={true}
+          onHoverChange={onFrameHover}
         />
 
         {/* ── ⚙️ Prompt Stacking ─────────────────────────── */}
@@ -399,18 +404,25 @@ export function FeatureControlPanel({
           </span>
         </FeatureCard>
 
-        {/* ── 🏆 Vote Weight ──────────────────────────────── */}
+        {/* ── 🖼️ Image Generation ─────────────────────────── */}
         <FeatureCard
-          emoji="🏆"
-          label="Vote Power"
-          color="#fbbf24"
-          freeValue="1.0×"
-          proValue="1.5× influence"
-          actionLabel={isPaidUser ? 'Active' : 'Pro only'}
+          emoji="🖼️"
+          label="Image Gen"
+          color="#e879f9"
+          freeValue="Copy & paste manually"
+          proValue="Generate inside Promagen"
+          actionLabel="Coming to Pro"
           isPro={isPaidUser}
-          stat={isPaidUser ? '1.5×' : '1.0×'}
           actionAlwaysColored={true}
-        />
+          onHoverChange={onImageGenHover}
+        >
+          <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
+            Bring your own API key
+          </span>
+          <span className="font-medium" style={{ color: '#e879f9', fontSize: 'clamp(0.625rem, 0.6vw, 0.75rem)' }}>
+            Coming to Pro
+          </span>
+        </FeatureCard>
       </div>
     </>
   );

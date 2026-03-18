@@ -17,7 +17,7 @@
 
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { SignInButton } from '@clerk/nextjs';
 import type { ReferenceFrame } from '@/lib/location';
 
@@ -70,6 +70,18 @@ export function ReferenceFrameToggle({
   // ============================================================================
 
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showGreenwichInfo, setShowGreenwichInfo] = useState(false);
+  const greenwichTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Greenwich tooltip: 400ms close delay (matches weather/commodity tooltips)
+  const handleGreenwichEnter = useCallback(() => {
+    if (greenwichTimerRef.current) clearTimeout(greenwichTimerRef.current);
+    setShowGreenwichInfo(true);
+  }, []);
+  const handleGreenwichLeave = useCallback(() => {
+    greenwichTimerRef.current = setTimeout(() => setShowGreenwichInfo(false), 400);
+  }, []);
+  useEffect(() => () => { if (greenwichTimerRef.current) clearTimeout(greenwichTimerRef.current); }, []);
 
   // Handle toggle click - only works for Pro users
   const handleToggle = useCallback(() => {
@@ -213,9 +225,85 @@ export function ReferenceFrameToggle({
       {/* Toggle button with tooltip trigger */}
       <div
         className="relative"
+        onMouseEnter={handleGreenwichEnter}
+        onMouseLeave={handleGreenwichLeave}
       >
         {/* Wrap in SignInButton for anonymous users */}
         {!isAuthenticated ? <SignInButton mode="modal">{toggleButton}</SignInButton> : toggleButton}
+
+        {/* Greenwich educational tooltip — 400ms close delay, solid bg, matches weather/commodity tooltip style */}
+        {showGreenwichInfo && !showUpgradePrompt && (
+          <div
+            role="tooltip"
+            className="absolute left-0 top-full z-50 mt-2 rounded-lg border border-purple-500/30 shadow-xl"
+            style={{
+              width: 'clamp(260px, 22vw, 340px)',
+              background: 'rgba(15, 23, 42, 0.97)',
+              backdropFilter: 'blur(12px)',
+              padding: 'clamp(12px, 1.2vw, 18px)',
+            }}
+            onMouseEnter={handleGreenwichEnter}
+            onMouseLeave={handleGreenwichLeave}
+          >
+            {/* Arrow */}
+            <div
+              className="absolute -top-1.5 left-4 h-3 w-3 rotate-45 border-l border-t border-purple-500/30"
+              style={{ background: 'rgba(15, 23, 42, 0.97)' }}
+            />
+
+            <div className="relative" style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 0.8vw, 12px)' }}>
+              {/* Header */}
+              <div className="flex items-center" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
+                <span style={{ fontSize: 'clamp(1rem, 1.2vw, 1.4rem)' }}>🌍</span>
+                <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.75rem, 0.85vw, 0.95rem)' }}>
+                  Greenwich Meridian
+                </span>
+              </div>
+
+              {/* Educational text */}
+              <p className="text-white leading-relaxed" style={{ fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)' }}>
+                The Greenwich Meridian (0° longitude) in London is the global reference line for timezones.
+                Every timezone on Earth is measured as hours ahead or behind Greenwich.
+              </p>
+
+              {/* Why it matters for Promagen */}
+              <div
+                className="rounded-lg"
+                style={{
+                  background: 'rgba(139, 92, 246, 0.1)',
+                  border: '1px solid rgba(139, 92, 246, 0.2)',
+                  padding: 'clamp(8px, 0.8vw, 12px)',
+                }}
+              >
+                <p className="font-medium text-purple-300" style={{ fontSize: 'clamp(0.65rem, 0.7vw, 0.8rem)', marginBottom: 'clamp(4px, 0.4vw, 6px)' }}>
+                  Why this matters for your prompts
+                </p>
+                <p className="text-white leading-relaxed" style={{ fontSize: 'clamp(0.6rem, 0.65vw, 0.75rem)' }}>
+                  Promagen orders exchanges east to west — following the sun across the globe.
+                  Morning light in Tokyo, golden hour in London, sunset in New York.
+                  Each exchange feeds real weather and time into your prompts.
+                </p>
+              </div>
+
+              {/* Pro teaser */}
+              {isPaidUser ? (
+                <div className="flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                  <span className="text-emerald-400" style={{ fontSize: 'clamp(0.6rem, 0.65vw, 0.75rem)' }}>✓</span>
+                  <span className="text-emerald-400 font-medium" style={{ fontSize: 'clamp(0.6rem, 0.65vw, 0.75rem)' }}>
+                    Toggle to recentre exchanges around {cityName || 'your location'}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                  <span style={{ fontSize: 'clamp(0.6rem, 0.65vw, 0.75rem)' }}>🔒</span>
+                  <span className="text-amber-400 font-medium" style={{ fontSize: 'clamp(0.6rem, 0.65vw, 0.75rem)' }}>
+                    Pro: Recentre exchanges around your location
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Upgrade prompt (for free signed-in users) */}
         {showUpgradePrompt && isAuthenticated && !isPaidUser && (
@@ -230,11 +318,11 @@ export function ReferenceFrameToggle({
             <div className="relative">
               <p className="mb-2 text-sm font-semibold text-purple-200">Pro Promagen Feature</p>
 
-              <p className="mb-3 text-xs text-slate-300">
+              <p className="mb-3 text-xs text-white">
                 Unlock the reference frame toggle and personalise your market view.
               </p>
 
-              <div className="mb-3 space-y-1.5 text-xs text-slate-400">
+              <div className="mb-3 space-y-1.5 text-xs text-white">
                 <div className="flex items-center gap-2">
                   <svg
                     className="h-3.5 w-3.5 text-emerald-400"

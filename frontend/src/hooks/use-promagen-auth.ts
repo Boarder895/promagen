@@ -257,9 +257,24 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
   // ============================================================================
   // REFERENCE FRAME LOGIC
   // ============================================================================
+  // BUG FIX: localReferenceFrame was pure React state — lost on every page
+  // navigation or re-mount. Clerk metadata takes seconds to propagate after
+  // server-side update, so the toggle snapped back to the stale stored value.
+  // FIX: localStorage as immediate cross-page cache. Write on toggle, read on
+  // mount, clear on API error. Clerk metadata is still the server-side SSOT.
+  // ============================================================================
 
-  // Local state for optimistic updates
-  const [localReferenceFrame, setLocalReferenceFrame] = useState<ReferenceFrame | null>(null);
+  const FRAME_STORAGE_KEY = 'promagen:referenceFrame';
+
+  // Initialise from localStorage (survives navigation), falls back to null
+  const [localReferenceFrame, setLocalReferenceFrame] = useState<ReferenceFrame | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const cached = localStorage.getItem(FRAME_STORAGE_KEY);
+      if (cached === 'user' || cached === 'greenwich') return cached;
+    } catch { /* SSR / storage blocked */ }
+    return null;
+  });
 
   // Determine effective reference frame
   let effectiveReferenceFrame: ReferenceFrame;
@@ -270,7 +285,7 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
     effectiveReferenceFrame = 'greenwich';
     effectiveCoordinates = GREENWICH;
   } else if (userTier === 'paid') {
-    // Paid: Use stored preference (or local optimistic state)
+    // Paid: Use localStorage cache → Clerk stored → default 'user'
     effectiveReferenceFrame = localReferenceFrame ?? storedReferenceFrame;
     effectiveCoordinates = effectiveReferenceFrame === 'greenwich'
       ? GREENWICH
@@ -283,7 +298,8 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
 
   /**
    * Set reference frame (paid users only).
-   * Updates Clerk metadata and local state optimistically.
+   * Updates localStorage immediately, then persists to Clerk metadata.
+   * localStorage survives SPA navigation; Clerk propagates eventually.
    */
   const setReferenceFrame = useCallback(async (frame: ReferenceFrame) => {
     if (userTier !== 'paid') {
@@ -291,8 +307,9 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
       return;
     }
 
-    // Optimistic update
+    // Optimistic update — React state + localStorage
     setLocalReferenceFrame(frame);
+    try { localStorage.setItem(FRAME_STORAGE_KEY, frame); } catch { /* blocked */ }
 
     try {
       const response = await fetch('/api/user/preferences', {
@@ -303,13 +320,15 @@ export function usePromagenAuth(options: UsePromagenAuthOptions = {}): PromagenA
       });
 
       if (!response.ok) {
-        // Revert on error
+        // Revert on error — both state and cache
         setLocalReferenceFrame(null);
+        try { localStorage.removeItem(FRAME_STORAGE_KEY); } catch { /* blocked */ }
         console.warn('[usePromagenAuth] Failed to save reference frame');
       }
     } catch (error) {
       // Revert on error
       setLocalReferenceFrame(null);
+      try { localStorage.removeItem(FRAME_STORAGE_KEY); } catch { /* blocked */ }
       console.warn('[usePromagenAuth] Error saving reference frame:', error);
     }
   }, [userTier]);

@@ -627,65 +627,225 @@ function TierPreviewPanel({
 }
 
 // ============================================================================
-// SCENES PREVIEW PANEL — 5 free world windows + 18 pro world emojis
+// SCENES PREVIEW PANEL — Pro world showcase with auto-scroll + rotation
 // ============================================================================
-// Shown when Scenes card is hovered. Same glass/glow pattern as TierPreviewPanel.
-// Human Factor: Endowment Effect — you already own 5 worlds, imagine 18 more.
+// Shown when Scenes card is hovered. Shows 4 rotating Pro worlds with real
+// scene names from scene-starters.json. Each column auto-scrolls.
+// Human Factor: Curiosity Gap — show the locked door, not the open one.
+//   Users see Pro worlds they CAN'T access (Cinematic, Fantasy, Horror, Sci-Fi...)
+//   not free worlds they already have. Specific names ("Dragon's Lair",
+//   "Blade Runner Rain") trigger mental imaging of the output.
+// Bottom row: compact anchor reminding them they already have 5 free worlds.
 // ============================================================================
 
-const FREE_WORLD_WINDOWS: Array<{
+const PRO_WORLD_SHOWCASE: Array<{
   emoji: string;
   label: string;
   color: string;
+  count: number;
   scenes: Array<{ emoji: string; name: string }>;
 }> = [
   {
-    emoji: '👤', label: 'Portraits & People', color: '#f59e0b',
+    emoji: '🎬', label: 'Cinematic', color: '#f472b6', count: 12,
     scenes: [
-      { emoji: '🎭', name: 'Dramatic Portrait' },
-      { emoji: '⚔️', name: 'Fantasy Hero' },
-      { emoji: '📸', name: 'Street Photographer' },
+      { emoji: '🎬', name: 'Blade Runner Rain' }, { emoji: '🎨', name: 'Wes Anderson Palette' },
+      { emoji: '🔷', name: 'Kubrick Symmetry' }, { emoji: '🌸', name: 'Ghibli Dreamscape' },
+      { emoji: '🔫', name: 'Tarantino Standoff' }, { emoji: '✨', name: 'Spielberg Wonder' },
+      { emoji: '🌀', name: 'Lynch Surreal' }, { emoji: '⚔️', name: 'Kurosawa Duel' },
+      { emoji: '🏙️', name: 'Nolan Inception' }, { emoji: '🌊', name: 'Tarkovsky Solitude' },
+      { emoji: '🏜️', name: 'Villeneuve Vast' }, { emoji: '🏭', name: 'Scott Industrial' },
     ],
   },
   {
-    emoji: '🌍', label: 'Landscapes & Worlds', color: '#22c55e',
+    emoji: '⚔️', label: 'Fantasy & Mythology', color: '#c084fc', count: 12,
     scenes: [
-      { emoji: '🌳', name: 'Enchanted Forest' },
-      { emoji: '🏜️', name: 'Desert Ruins' },
-      { emoji: '🧜', name: 'Underwater Kingdom' },
+      { emoji: '🐉', name: "Dragon's Lair" }, { emoji: '🧝', name: 'Elven Court' },
+      { emoji: '💀', name: 'Necromancer Tower' }, { emoji: '⚡', name: 'Norse Ragnarök' },
+      { emoji: '👹', name: 'Japanese Yōkai' }, { emoji: '🏛️', name: 'Greek Pantheon' },
+      { emoji: '🍄', name: 'Fairy Ring' }, { emoji: '⚒️', name: 'Dwarven Forge' },
+      { emoji: '📖', name: "Merlin's Study" }, { emoji: '🦑', name: 'Kraken Depths' },
+      { emoji: '🔥', name: 'Phoenix Rebirth' }, { emoji: '🌑', name: 'Shadow Realm' },
     ],
   },
   {
-    emoji: '🌫️', label: 'Mood & Atmosphere', color: '#60a5fa',
+    emoji: '🦇', label: 'Dark & Horror', color: '#ef4444', count: 8,
     scenes: [
-      { emoji: '🕵️', name: 'Film Noir' },
-      { emoji: '💭', name: 'Dreamscape' },
-      { emoji: '💛', name: 'Golden Romance' },
+      { emoji: '🦑', name: 'Lovecraftian Deep' }, { emoji: '🏚️', name: 'Haunted Manor' },
+      { emoji: '🧛', name: 'Gothic Vampire' }, { emoji: '😱', name: 'Psychological Dread' },
+      { emoji: '🎭', name: 'Plague Doctor' }, { emoji: '🌑', name: 'Cursed Forest' },
+      { emoji: '🕯️', name: 'Eldritch Ritual' }, { emoji: '🏥', name: 'Abandoned Asylum' },
     ],
   },
   {
-    emoji: '🎨', label: 'Style-Forward', color: '#f472b6',
+    emoji: '🚀', label: 'Sci-Fi & Future', color: '#22d3ee', count: 12,
     scenes: [
-      { emoji: '⚡', name: 'Anime Action' },
-      { emoji: '🐲', name: 'Concept Art Creature' },
-      { emoji: '✨', name: 'Art Deco Poster' },
+      { emoji: '🛸', name: 'Space Station Life' }, { emoji: '👽', name: 'Alien Marketplace' },
+      { emoji: '🤖', name: 'Mech Battle' }, { emoji: '🌿', name: 'Solarpunk City' },
+      { emoji: '☢️', name: 'Post-Apocalyptic' }, { emoji: '🧠', name: 'AI Consciousness' },
+      { emoji: '🚀', name: 'Colony Ship' }, { emoji: '⚛️', name: 'Quantum Lab' },
+      { emoji: '🔧', name: 'Cybernetic Surgery' }, { emoji: '🌅', name: 'Terraform Dawn' },
+      { emoji: '☀️', name: 'Dyson Sphere' }, { emoji: '💫', name: 'Digital Afterlife' },
     ],
   },
   {
-    emoji: '🔥', label: 'Trending / Seasonal', color: '#fb923c',
+    emoji: '🏛️', label: 'Historical Eras', color: '#fbbf24', count: 12,
     scenes: [
-      { emoji: '🌱', name: 'Solarpunk Utopia' },
-      { emoji: '📚', name: 'Dark Academia' },
-      { emoji: '🌸', name: 'Cottagecore Morning' },
+      { emoji: '🏛️', name: 'Ancient Egypt' }, { emoji: '⚔️', name: 'Roman Arena' },
+      { emoji: '🪓', name: 'Viking Raid' }, { emoji: '🎨', name: 'Renaissance Workshop' },
+      { emoji: '🎩', name: 'Victorian London' }, { emoji: '🎷', name: '1920s Jazz' },
+      { emoji: '🗡️', name: 'Samurai Duel' }, { emoji: '🏰', name: 'Medieval Siege' },
+      { emoji: '👑', name: 'Byzantine Court' }, { emoji: '🌞', name: 'Aztec Temple' },
+      { emoji: '🐪', name: 'Silk Road' }, { emoji: '🏭', name: 'Industrial Revolution' },
+    ],
+  },
+  {
+    emoji: '🏙️', label: 'Urban & Street', color: '#60a5fa', count: 12,
+    scenes: [
+      { emoji: '🏙️', name: 'Tokyo Neon' }, { emoji: '🚗', name: 'Havana Vintage' },
+      { emoji: '🌧️', name: 'Mumbai Monsoon' }, { emoji: '🌃', name: 'NY Rooftop' },
+      { emoji: '🧺', name: 'Marrakech Souk' }, { emoji: '🌫️', name: 'London Fog' },
+      { emoji: '☂️', name: 'Paris Rain' }, { emoji: '🌆', name: 'Shanghai Skyline' },
+      { emoji: '💃', name: 'Rio Carnival' }, { emoji: '🕌', name: 'Istanbul Bazaar' },
+      { emoji: '🍜', name: 'Bangkok Night Market' }, { emoji: '🎵', name: 'Berlin Underground' },
+    ],
+  },
+  {
+    emoji: '🎪', label: 'Whimsical & Surreal', color: '#a78bfa', count: 10,
+    scenes: [
+      { emoji: '🕰️', name: 'Dalí Dreamscape' }, { emoji: '🔍', name: 'Tiny World Macro' },
+      { emoji: '🏗️', name: 'Impossible Architecture' }, { emoji: '☁️', name: 'Cloud Kingdom' },
+      { emoji: '⏱️', name: 'Time Frozen' }, { emoji: '🖼️', name: 'Living Painting' },
+      { emoji: '🪖', name: 'Toy Soldier War' }, { emoji: '🍄', name: 'Mushroom Forest' },
+      { emoji: '🙃', name: 'Upside Down City' }, { emoji: '✂️', name: 'Paper Cut World' },
+    ],
+  },
+  {
+    emoji: '🌋', label: 'Nature & Elements', color: '#34d399', count: 10,
+    scenes: [
+      { emoji: '🌋', name: 'Volcanic Eruption' }, { emoji: '🌌', name: 'Aurora Borealis' },
+      { emoji: '💎', name: 'Bioluminescent Bay' }, { emoji: '⛈️', name: 'Supercell Storm' },
+      { emoji: '🌸', name: 'Cherry Blossom' }, { emoji: '🌊', name: 'Monsoon Deluge' },
+      { emoji: '🐠', name: 'Coral Reef' }, { emoji: '🧊', name: 'Frozen Waterfall' },
+      { emoji: '🏜️', name: 'Desert Mirage' }, { emoji: '🌲', name: 'Ancient Redwoods' },
     ],
   },
 ];
 
-const PRO_WORLD_EMOJIS = ['🎬', '⚔️', '🚀', '🏛️', '🏙️', '🌋', '🏗️', '🎭', '🦇', '🎪', '🪔', '🔮', '🍷', '🐉', '⛏️', '⛈️', '🍂', '🔬'];
+/** Rotation: show 4 worlds at a time, cycle every 20s through groups */
+const SCENE_GROUP_SIZE = 4;
+const SCENE_ROTATION_MS = 20_000;
+
+// ── SceneWorldWindow: Single Pro world column with auto-scroll ────────────
+function SceneWorldWindow({
+  world,
+}: {
+  world: typeof PRO_WORLD_SHOWCASE[number];
+}) {
+  const { containerRef, contentRef, scrollDist } = useAutoScroll();
+  const glowRgba = hexToRgbaPanel(world.color, 0.3);
+  const glowBorder = hexToRgbaPanel(world.color, 0.5);
+  const glowSoft = hexToRgbaPanel(world.color, 0.15);
+
+  return (
+    <div
+      className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+      style={{
+        background: 'rgba(15, 23, 42, 0.97)',
+        border: `1px solid ${glowBorder}`,
+        boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+        padding: 'clamp(8px, 0.8vw, 14px)',
+        transition: 'box-shadow 200ms ease-out',
+      }}
+    >
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }} />
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
+
+      <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+        {/* World heading — fixed */}
+        <div className="flex items-center shrink-0" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+          <span style={{ fontSize: 'clamp(0.95rem, 1.2vw, 1.45rem)' }}>{world.emoji}</span>
+          <span
+            className="font-semibold text-white truncate"
+            style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)', textShadow: `0 0 12px ${glowRgba}` }}
+          >
+            {world.label}
+          </span>
+        </div>
+
+        {/* Scene count badge — fixed */}
+        <span
+          className="inline-flex items-center self-start rounded-full font-medium ring-1 shrink-0"
+          style={{
+            fontSize: 'clamp(0.625rem, 0.6vw, 0.65rem)',
+            padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.6vw, 8px)',
+            background: hexToRgbaPanel(world.color, 0.15),
+            borderColor: hexToRgbaPanel(world.color, 0.3),
+            color: world.color,
+          }}
+        >
+          {world.count} scenes
+        </span>
+
+        {/* Auto-scrolling scene list */}
+        <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
+          <div
+            ref={contentRef}
+            className="pro-auto-scroll"
+            style={{
+              '--scroll-dist': `-${scrollDist}px`,
+              animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'clamp(2px, 0.25vw, 4px)',
+            } as React.CSSProperties}
+          >
+            {world.scenes.map((s) => (
+              <div key={s.name} className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
+                <span style={{ fontSize: 'clamp(0.65rem, 0.7vw, 0.85rem)' }}>{s.emoji}</span>
+                <span className="text-white truncate" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
+                  {s.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pro badge */}
+        <span
+          className="inline-flex items-center self-start font-semibold shrink-0"
+          style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', gap: 'clamp(2px, 0.2vw, 4px)', color: world.color }}
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Pro
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function ScenesPreviewPanel() {
+  // Rotate through groups of 4 Pro worlds every 20s
+  const [groupIdx, setGroupIdx] = React.useState(0);
+  const totalGroups = Math.ceil(PRO_WORLD_SHOWCASE.length / SCENE_GROUP_SIZE);
+
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setGroupIdx((prev) => (prev + 1) % totalGroups);
+    }, SCENE_ROTATION_MS);
+    return () => clearInterval(id);
+  }, [totalGroups]);
+
+  const visibleWorlds = React.useMemo(() => {
+    const start = groupIdx * SCENE_GROUP_SIZE;
+    return PRO_WORLD_SHOWCASE.slice(start, start + SCENE_GROUP_SIZE);
+  }, [groupIdx]);
+
   return (
     <div className="flex flex-col h-full">
+      <style dangerouslySetInnerHTML={{ __html: PRO_AUTO_SCROLL_CSS }} />
+
       {/* Animated amber header */}
       <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
         <p
@@ -696,119 +856,35 @@ function ScenesPreviewPanel() {
         </p>
       </div>
 
-      {/* 5 free world windows — horizontal row */}
+      {/* 4 Pro world windows — horizontal row, rotates */}
       <div
         className="flex flex-1 min-h-0"
         style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}
       >
-        {FREE_WORLD_WINDOWS.map((w) => {
-          const glowRgba = hexToRgbaPanel(w.color, 0.3);
-          const glowBorder = hexToRgbaPanel(w.color, 0.5);
-          const glowSoft = hexToRgbaPanel(w.color, 0.15);
-
-          return (
-            <div
-              key={w.label}
-              className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
-              style={{
-                background: 'rgba(15, 23, 42, 0.97)',
-                border: `1px solid ${glowBorder}`,
-                boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
-                padding: 'clamp(8px, 0.8vw, 14px)',
-                transition: 'box-shadow 200ms ease-out',
-              }}
-            >
-              {/* Ethereal glow — top radial */}
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }}
-              />
-              {/* Bottom glow accent */}
-              <div
-                className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden"
-                style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }}
-              />
-
-              {/* Content */}
-              <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                {/* World emoji + label */}
-                <div className="flex items-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
-                  <span style={{ fontSize: 'clamp(0.95rem, 1.2vw, 1.45rem)' }}>{w.emoji}</span>
-                  <span
-                    className="font-semibold text-white truncate"
-                    style={{
-                      fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)',
-                      textShadow: `0 0 12px ${glowRgba}`,
-                    }}
-                  >
-                    {w.label}
-                  </span>
-                </div>
-
-                {/* Scene count badge */}
-                <span
-                  className="inline-flex items-center self-start rounded-full font-medium ring-1"
-                  style={{
-                    fontSize: 'clamp(0.625rem, 0.6vw, 0.65rem)',
-                    padding: 'clamp(1px, 0.15vw, 2px) clamp(6px, 0.6vw, 8px)',
-                    background: hexToRgbaPanel(w.color, 0.15),
-                    borderColor: hexToRgbaPanel(w.color, 0.3),
-                    color: w.color,
-                  }}
-                >
-                  5 scenes
-                </span>
-
-                {/* 3 scene entries */}
-                <div className="flex flex-col flex-1" style={{ gap: 'clamp(2px, 0.25vw, 4px)' }}>
-                  {w.scenes.map((s) => (
-                    <div key={s.name} className="flex items-center" style={{ gap: 'clamp(3px, 0.3vw, 5px)' }}>
-                      <span style={{ fontSize: 'clamp(0.65rem, 0.7vw, 0.85rem)' }}>{s.emoji}</span>
-                      <span
-                        className="text-white truncate"
-                        style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}
-                      >
-                        {s.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* "Included" badge */}
-                <span
-                  className="inline-flex items-center self-start text-emerald-400 font-semibold"
-                  style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)', gap: 'clamp(2px, 0.2vw, 4px)' }}
-                >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Free
-                </span>
-              </div>
-            </div>
-          );
-        })}
+        {visibleWorlds.map((w) => (
+          <SceneWorldWindow key={w.label} world={w} />
+        ))}
       </div>
 
-      {/* Pro worlds row — 18 emojis + label */}
+      {/* Bottom row — free anchor + Pro count */}
       <div
-        className="flex items-center justify-center flex-wrap"
-        style={{ gap: 'clamp(4px, 0.4vw, 6px)', paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
+        className="flex items-center justify-between"
+        style={{ paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
       >
-        {PRO_WORLD_EMOJIS.map((e, i) => (
-          <span
-            key={i}
-            style={{ fontSize: 'clamp(0.75rem, 0.8vw, 0.95rem)' }}
-            title="Pro world"
-          >
-            {e}
-          </span>
-        ))}
+        <span
+          className="inline-flex items-center text-emerald-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', gap: 'clamp(3px, 0.3vw, 5px)' }}
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          5 free worlds · 25 scenes included
+        </span>
         <span
           className="text-amber-400 font-semibold"
-          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', marginLeft: 'clamp(4px, 0.4vw, 6px)' }}
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
         >
-          +18 worlds with Pro
+          +18 Pro worlds · 175 scenes
         </span>
       </div>
     </div>
@@ -1802,6 +1878,715 @@ function DailyPromptsPreviewPanel() {
 }
 
 // ============================================================================
+// FRAME PREVIEW PANEL — 5 reference city windows with real exchange cards
+// ============================================================================
+// Shows the value of Pro reference frame toggle. Each window is a different
+// city as the anchor point, showing the first 5 exchanges in that city's
+// rotated order. Exchange cards match the REAL exchange card style exactly
+// (flag + name + city + index name + hoverColor glow).
+//
+// Human Factor: Pattern Recognition — the same exchanges in different orders
+//   anchored to different cities. The user mentally substitutes their own city.
+// Human Factor: Peak-End Rule — the reference city badge is the peak visual.
+// Human Factor: Curiosity Gap — "what would MY city look like at the top?"
+// ============================================================================
+
+const FRAME_CITIES: Array<{
+  flag: string;
+  iso: string;
+  city: string;
+  color: string;
+  exchanges: Array<{
+    iso: string;
+    name: string;
+    city: string;
+    index: string;
+    color: string;
+  }>;
+}> = [
+  {
+    flag: '🇯🇵', iso: 'jp', city: 'Tokyo', color: '#fb7185',
+    exchanges: [
+      { iso: 'jp', name: 'TSE', city: 'Tokyo', index: 'Nikkei 225', color: '#E11D48' },
+      { iso: 'hk', name: 'HKEX', city: 'Hong Kong', index: 'Hang Seng', color: '#DC2626' },
+      { iso: 'th', name: 'SET', city: 'Bangkok', index: 'SET 50', color: '#7C3AED' },
+      { iso: 'in', name: 'NSE', city: 'Mumbai', index: 'NIFTY 50', color: '#2563EB' },
+      { iso: 'ae', name: 'DFM', city: 'Dubai', index: 'DFM General', color: '#059669' },
+      { iso: 'gb', name: 'LSE', city: 'London', index: 'FTSE 100', color: '#6366F1' },
+    ],
+  },
+  {
+    flag: '🇺🇸', iso: 'us', city: 'New York', color: '#60a5fa',
+    exchanges: [
+      { iso: 'us', name: 'NYSE', city: 'New York', index: 'S&P 500', color: '#2563EB' },
+      { iso: 'br', name: 'B3', city: 'São Paulo', index: 'BOVESPA', color: '#059669' },
+      { iso: 'nz', name: 'NZX', city: 'Wellington', index: 'NZX 50', color: '#0D9488' },
+      { iso: 'au', name: 'ASX', city: 'Sydney', index: 'ASX 200', color: '#2563EB' },
+      { iso: 'jp', name: 'TSE', city: 'Tokyo', index: 'Nikkei 225', color: '#E11D48' },
+      { iso: 'hk', name: 'HKEX', city: 'Hong Kong', index: 'Hang Seng', color: '#DC2626' },
+    ],
+  },
+  {
+    flag: '🇦🇺', iso: 'au', city: 'Sydney', color: '#22d3ee',
+    exchanges: [
+      { iso: 'au', name: 'ASX', city: 'Sydney', index: 'ASX 200', color: '#2563EB' },
+      { iso: 'jp', name: 'TSE', city: 'Tokyo', index: 'Nikkei 225', color: '#E11D48' },
+      { iso: 'hk', name: 'HKEX', city: 'Hong Kong', index: 'Hang Seng', color: '#DC2626' },
+      { iso: 'in', name: 'NSE', city: 'Mumbai', index: 'NIFTY 50', color: '#2563EB' },
+      { iso: 'gb', name: 'LSE', city: 'London', index: 'FTSE 100', color: '#6366F1' },
+      { iso: 'us', name: 'NYSE', city: 'New York', index: 'S&P 500', color: '#2563EB' },
+    ],
+  },
+  {
+    flag: '🇮🇳', iso: 'in', city: 'Mumbai', color: '#fbbf24',
+    exchanges: [
+      { iso: 'in', name: 'NSE', city: 'Mumbai', index: 'NIFTY 50', color: '#2563EB' },
+      { iso: 'ae', name: 'DFM', city: 'Dubai', index: 'DFM General', color: '#059669' },
+      { iso: 'tr', name: 'BIST', city: 'Istanbul', index: 'BIST 100', color: '#DC2626' },
+      { iso: 'za', name: 'JSE', city: 'Johannesburg', index: 'JSE All Share', color: '#D97706' },
+      { iso: 'gb', name: 'LSE', city: 'London', index: 'FTSE 100', color: '#6366F1' },
+      { iso: 'us', name: 'NYSE', city: 'New York', index: 'S&P 500', color: '#2563EB' },
+    ],
+  },
+  {
+    flag: '🇬🇧', iso: 'gb', city: 'London', color: '#34d399',
+    exchanges: [
+      { iso: 'gb', name: 'LSE', city: 'London', index: 'FTSE 100', color: '#6366F1' },
+      { iso: 'br', name: 'B3', city: 'São Paulo', index: 'BOVESPA', color: '#059669' },
+      { iso: 'us', name: 'NYSE', city: 'New York', index: 'S&P 500', color: '#2563EB' },
+      { iso: 'ca', name: 'TSX', city: 'Toronto', index: 'S&P/TSX', color: '#DC2626' },
+      { iso: 'nz', name: 'NZX', city: 'Wellington', index: 'NZX 50', color: '#0D9488' },
+      { iso: 'au', name: 'ASX', city: 'Sydney', index: 'ASX 200', color: '#2563EB' },
+    ],
+  },
+];
+
+// ── FrameCityWindow: Single reference city with exchange cards ─────────────
+function FrameCityWindow({
+  data,
+}: {
+  data: typeof FRAME_CITIES[number];
+}) {
+  const { containerRef, contentRef, scrollDist } = useAutoScroll();
+  const glowRgba = hexToRgbaPanel(data.color, 0.3);
+  const glowBorder = hexToRgbaPanel(data.color, 0.5);
+  const glowSoft = hexToRgbaPanel(data.color, 0.15);
+
+  return (
+    <div
+      className="relative flex-1 rounded-xl overflow-hidden flex flex-col"
+      style={{
+        background: 'rgba(15, 23, 42, 0.97)',
+        border: `1px solid ${glowBorder}`,
+        boxShadow: `0 0 30px 6px ${glowRgba}, 0 0 60px 12px ${glowSoft}, inset 0 0 20px 2px ${glowRgba}`,
+        padding: 'clamp(8px, 0.8vw, 14px)',
+        transition: 'box-shadow 200ms ease-out',
+      }}
+    >
+      {/* Ethereal glow overlays */}
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 0%, ${glowRgba} 0%, transparent 70%)` }} />
+      <div className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden" style={{ background: `radial-gradient(ellipse at 50% 100%, ${glowSoft} 0%, transparent 60%)` }} />
+
+      <div className="relative z-10 flex flex-col h-full" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
+        {/* ── Hero: Reference city bubble ──────────────────────────── */}
+        <div
+          className="flex flex-col items-center shrink-0 rounded-lg"
+          style={{
+            background: hexToRgbaPanel(data.color, 0.12),
+            border: `1px solid ${hexToRgbaPanel(data.color, 0.35)}`,
+            boxShadow: `0 0 16px 3px ${hexToRgbaPanel(data.color, 0.2)}, inset 0 0 10px 1px ${hexToRgbaPanel(data.color, 0.08)}`,
+            padding: 'clamp(6px, 0.6vw, 10px) clamp(8px, 0.8vw, 12px)',
+            gap: 'clamp(2px, 0.2vw, 4px)',
+          }}
+        >
+          {/* Flag — hero size */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/flags/${data.iso}.svg`}
+            alt=""
+            className="rounded-sm shrink-0"
+            style={{ width: 'clamp(24px, 2.2vw, 36px)', height: 'clamp(16px, 1.5vw, 24px)' }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          {/* City name */}
+          <span
+            className="font-bold text-center"
+            style={{
+              color: data.color,
+              fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)',
+              textShadow: `0 0 14px ${glowRgba}`,
+            }}
+          >
+            {data.city}
+          </span>
+          {/* Reference badge */}
+          <span
+            className="font-medium text-white"
+            style={{ fontSize: 'clamp(0.5rem, 0.5vw, 0.6rem)' }}
+          >
+            Reference Point
+          </span>
+        </div>
+
+        {/* ── Exchange cards — IDENTICAL to ExchangeRegionWindow cards ──── */}
+        <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden">
+          <div
+            ref={contentRef}
+            className="pro-auto-scroll"
+            style={{
+              '--scroll-dist': `-${scrollDist}px`,
+              animation: scrollDist > 0 ? 'proAutoScroll 17s ease-in-out infinite' : 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'clamp(8px, 0.8vw, 12px)',
+            } as React.CSSProperties}
+          >
+            {data.exchanges.map((ex) => {
+              const exGlow = hexToRgbaPanel(ex.color, 0.25);
+              const exBorder = hexToRgbaPanel(ex.color, 0.4);
+
+              return (
+                <div
+                  key={ex.iso + ex.name}
+                  className="relative rounded-lg overflow-hidden shrink-0"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid ${exBorder}`,
+                    boxShadow: `0 0 12px 2px ${exGlow}, inset 0 0 8px 1px ${hexToRgbaPanel(ex.color, 0.1)}`,
+                    padding: 'clamp(5px, 0.5vw, 8px) clamp(8px, 0.8vw, 12px)',
+                  }}
+                >
+                  {/* Ethereal glow — top radial (same as real exchange card) */}
+                  <span
+                    className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
+                    style={{ background: `radial-gradient(ellipse at 50% 0%, ${exGlow} 0%, transparent 70%)` }}
+                    aria-hidden="true"
+                  />
+                  <div className="relative z-10 flex items-center" style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}>
+                    {/* Flag */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/flags/${ex.iso}.svg`}
+                      alt=""
+                      className="rounded-sm shrink-0"
+                      style={{ width: 'clamp(16px, 1.4vw, 22px)', height: 'clamp(11px, 1vw, 15px)' }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    {/* Exchange name */}
+                    <span className="font-medium text-white truncate" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+                      {ex.name}
+                    </span>
+                    {/* City */}
+                    <span className="text-white truncate ml-auto shrink-0" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
+                      {ex.city}
+                    </span>
+                  </div>
+                  {/* Index name row */}
+                  <div className="relative z-10" style={{ marginTop: 'clamp(2px, 0.2vw, 3px)' }}>
+                    <span className="text-cyan-400" style={{ fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)' }}>
+                      {ex.index}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FramePreviewPanel() {
+  return (
+    <div className="flex flex-col h-full">
+      <style dangerouslySetInnerHTML={{ __html: PRO_AUTO_SCROLL_CSS }} />
+
+      {/* Animated amber header */}
+      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+        <p
+          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
+        >
+          Choose the reference that shapes your prompts
+        </p>
+      </div>
+
+      {/* 5 reference city windows */}
+      <div
+        className="flex flex-1 min-h-0"
+        style={{ gap: 'clamp(5px, 0.5vw, 8px)' }}
+      >
+        {FRAME_CITIES.map((c) => (
+          <FrameCityWindow key={c.city} data={c} />
+        ))}
+      </div>
+
+      {/* Bottom row */}
+      <div
+        className="flex items-center justify-between"
+        style={{ paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
+      >
+        <span
+          className="text-emerald-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+        >
+          ✓ Same exchanges, different perspective
+        </span>
+        <span
+          className="text-amber-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+        >
+          Pro: Your city leads
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// IMAGE GENERATION PREVIEW PANEL — Prompt → Image showcase (BYOAPI teaser)
+// ============================================================================
+// Shown when Image Gen card is hovered. Fills the CTA area.
+// Real AI-generated images from local assets with blur-to-sharp 10s reveal.
+// Prompt text colour-coded by category using CATEGORY_COLOURS SSOT.
+// Font matches PromptLabPreviewPanel: font-mono, clamp(0.625rem, 0.65vw, 0.8rem).
+//
+// Human Factor: Anticipatory Dopamine — blur-to-sharp simulates AI generation
+//   happening in real time. 10s resolve + 3s hold = the suspense-payoff loop.
+// Human Factor: Curiosity Gap — "Coming to Pro" creates desire for what's next
+// ============================================================================
+
+const IMAGEGEN_CSS = `
+  @keyframes imagegenReveal {
+    0% { filter: blur(18px) brightness(0.3) saturate(0.1); }
+    10% { filter: blur(12px) brightness(0.4) saturate(0.3); }
+    30% { filter: blur(6px) brightness(0.6) saturate(0.6); }
+    55% { filter: blur(1px) brightness(0.9) saturate(0.95); }
+    65%, 85% { filter: blur(0) brightness(1) saturate(1); }
+    100% { filter: blur(18px) brightness(0.3) saturate(0.1); }
+  }
+  @keyframes imagegenProgressBar {
+    0% { width: 0%; }
+    65% { width: 100%; }
+    66%, 100% { width: 0%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .imagegen-reveal { animation: none !important; filter: none !important; }
+    .imagegen-progress { display: none !important; }
+  }
+`;
+
+// Category colours from SSOT (prompt-colours.ts)
+const IG_C = {
+  subject: '#FCD34D',
+  action: '#A3E635',
+  style: '#C084FC',
+  environment: '#38BDF8',
+  composition: '#34D399',
+  camera: '#FB923C',
+  lighting: '#FBBF24',
+  colour: '#F472B6',
+  atmosphere: '#22D3EE',
+  materials: '#2DD4BF',
+  fidelity: '#93C5FD',
+  structural: '#94A3B8',
+};
+
+// ── 5 platforms, real prompts segmented by category colour ────────────────
+const IMAGEGEN_SHOWCASE: Array<{
+  scene: string;
+  platform: string;
+  platformId: string;
+  imagePath: string;
+  accentColor: string;
+  segments: Array<{ text: string; color: string }>;
+}> = [
+  {
+    scene: 'Cyberpunk Street',
+    platform: 'Leonardo AI',
+    platformId: 'leonardo',
+    imagePath: '/images/pro/imagegen-leonardo.jpg',
+    accentColor: '#EC4899',
+    segments: [
+      { text: '(', color: IG_C.structural },
+      { text: 'neon cyberpunk street', color: IG_C.environment },
+      { text: ':1.3)', color: IG_C.structural },
+      { text: ', ', color: IG_C.structural },
+      { text: 'rain-soaked asphalt', color: IG_C.atmosphere },
+      { text: ', ', color: IG_C.structural },
+      { text: '(', color: IG_C.structural },
+      { text: 'electric pink and blue neon signs', color: IG_C.lighting },
+      { text: ':1.2)', color: IG_C.structural },
+      { text: ', ', color: IG_C.structural },
+      { text: 'dense steam rising from vents', color: IG_C.atmosphere },
+      { text: ', ', color: IG_C.structural },
+      { text: 'cinematic', color: IG_C.style },
+      { text: ' ', color: IG_C.structural },
+      { text: 'shallow depth of field', color: IG_C.camera },
+      { text: ', ', color: IG_C.structural },
+      { text: 'reflective puddles', color: IG_C.materials },
+      { text: ', ', color: IG_C.structural },
+      { text: '8K ultra-detailed', color: IG_C.fidelity },
+    ],
+  },
+  {
+    scene: 'Desert Sunset',
+    platform: 'Flux Pro',
+    platformId: 'flux',
+    imagePath: '/images/pro/imagegen-flux.jpg',
+    accentColor: '#F59E0B',
+    segments: [
+      { text: 'vast golden desert at sunset', color: IG_C.environment },
+      { text: ', ', color: IG_C.structural },
+      { text: 'lone figure silhouetted on a sand dune ridge', color: IG_C.subject },
+      { text: ', ', color: IG_C.structural },
+      { text: 'dramatic orange and magenta sky', color: IG_C.colour },
+      { text: ', ', color: IG_C.structural },
+      { text: 'long shadows stretching across rippled sand', color: IG_C.lighting },
+      { text: ', ', color: IG_C.structural },
+      { text: 'cinematic wide-angle', color: IG_C.camera },
+      { text: ', ', color: IG_C.structural },
+      { text: 'hyperrealistic detail', color: IG_C.style },
+    ],
+  },
+  {
+    scene: 'Aurora Borealis',
+    platform: 'DALL·E 3',
+    platformId: 'openai',
+    imagePath: '/images/pro/imagegen-openai.png',
+    accentColor: '#10B981',
+    segments: [
+      { text: 'A dramatic aurora borealis', color: IG_C.subject },
+      { text: ' ', color: IG_C.structural },
+      { text: 'lighting up the night sky', color: IG_C.lighting },
+      { text: ' ', color: IG_C.structural },
+      { text: 'above a still glacial lake in Iceland', color: IG_C.environment },
+      { text: '. ', color: IG_C.structural },
+      { text: 'Vivid curtains of emerald green and deep violet', color: IG_C.colour },
+      { text: ' ', color: IG_C.structural },
+      { text: 'reflect perfectly in the mirror-calm water', color: IG_C.atmosphere },
+      { text: '. ', color: IG_C.structural },
+      { text: 'Snow-capped mountains frame the scene.', color: IG_C.composition },
+    ],
+  },
+  {
+    scene: 'Zen Garden',
+    platform: 'Ideogram',
+    platformId: 'ideogram',
+    imagePath: '/images/pro/imagegen-ideogram.png',
+    accentColor: '#06B6D4',
+    segments: [
+      { text: 'A Japanese zen garden', color: IG_C.environment },
+      { text: ' ', color: IG_C.structural },
+      { text: 'at twilight', color: IG_C.lighting },
+      { text: ' ', color: IG_C.structural },
+      { text: 'with glowing paper lanterns floating above a koi pond', color: IG_C.subject },
+      { text: '. ', color: IG_C.structural },
+      { text: 'Deep crimson maple leaves', color: IG_C.colour },
+      { text: ' ', color: IG_C.structural },
+      { text: 'scattered across moss-covered stepping stones', color: IG_C.materials },
+      { text: '. ', color: IG_C.structural },
+      { text: 'Warm golden lantern light', color: IG_C.lighting },
+      { text: ' ', color: IG_C.structural },
+      { text: 'contrasts against a cool indigo sky', color: IG_C.atmosphere },
+      { text: '. ', color: IG_C.structural },
+      { text: 'Mist rising from the still water.', color: IG_C.atmosphere },
+    ],
+  },
+  {
+    scene: 'Coral Reef',
+    platform: 'Imagine',
+    platformId: 'imagine-meta',
+    imagePath: '/images/pro/imagegen-imagine-meta.png',
+    accentColor: '#F97316',
+    segments: [
+      { text: 'An underwater coral reef scene', color: IG_C.environment },
+      { text: ' ', color: IG_C.structural },
+      { text: 'with bright tropical fish swimming', color: IG_C.subject },
+      { text: ' ', color: IG_C.structural },
+      { text: 'through shafts of sunlight', color: IG_C.lighting },
+      { text: '. ', color: IG_C.structural },
+      { text: 'Vivid orange and yellow coral formations', color: IG_C.colour },
+      { text: ' ', color: IG_C.structural },
+      { text: 'glow against deep ocean blue', color: IG_C.atmosphere },
+      { text: '. ', color: IG_C.structural },
+      { text: 'A sea turtle glides', color: IG_C.action },
+      { text: ' ', color: IG_C.structural },
+      { text: 'through crystal clear turquoise water', color: IG_C.materials },
+      { text: ' ', color: IG_C.structural },
+      { text: 'with light rays streaming down from the surface.', color: IG_C.lighting },
+    ],
+  },
+];
+
+function ImageGenPreviewPanel() {
+  const [activeIdx, setActiveIdx] = React.useState(0);
+  const [fadeState, setFadeState] = React.useState<'visible' | 'fading-out' | 'fading-in'>('visible');
+
+  // Rotate through all 5 cards every 15s — synced to blur-to-sharp cycle
+  // 300ms crossfade: fade-out → swap → fade-in
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setFadeState('fading-out');
+      setTimeout(() => {
+        setActiveIdx((prev) => (prev + 1) % IMAGEGEN_SHOWCASE.length);
+        setFadeState('fading-in');
+        setTimeout(() => setFadeState('visible'), 300);
+      }, 300);
+    }, 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  const item = IMAGEGEN_SHOWCASE[activeIdx]!;
+
+  return (
+    <div className="flex flex-col h-full">
+      <style dangerouslySetInnerHTML={{ __html: IMAGEGEN_CSS }} />
+
+      {/* Animated amber header — matches all other preview panels */}
+      <div style={{ padding: 'clamp(10px, 1vw, 16px) 0' }}>
+        <p
+          className="italic text-amber-400/80 animate-pulse text-center font-semibold"
+          style={{ fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}
+        >
+          From prompt to image — all inside Promagen
+        </p>
+      </div>
+
+      {/* Single full-height card with crossfade */}
+      <div
+        className="flex-1 min-h-0 overflow-hidden rounded-xl flex flex-col"
+        style={{
+          background: 'rgba(15, 23, 42, 0.97)',
+          border: '1px solid rgba(232, 121, 249, 0.3)',
+          boxShadow: '0 0 30px 6px rgba(232,121,249,0.15), 0 0 60px 12px rgba(232,121,249,0.06), inset 0 0 20px 2px rgba(232,121,249,0.1)',
+          padding: 'clamp(10px, 1vw, 16px)',
+          gap: 'clamp(8px, 0.8vw, 12px)',
+        }}
+      >
+        {/* Ethereal glow overlay */}
+        <div className="pointer-events-none absolute inset-0 rounded-xl overflow-hidden" style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(232,121,249,0.08), transparent 70%)', pointerEvents: 'none' }} />
+        </div>
+
+        {/* ── Flow header — fixed ── */}
+        <div
+          className="flex items-center justify-center rounded-lg shrink-0"
+          style={{
+            padding: 'clamp(8px, 0.8vw, 12px)',
+            background: 'rgba(232, 121, 249, 0.06)',
+            border: '1px solid rgba(232, 121, 249, 0.15)',
+            gap: 'clamp(8px, 0.8vw, 12px)',
+          }}
+        >
+          <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+            Your Prompt
+          </span>
+          <span style={{ color: '#e879f9', fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}>→</span>
+          <span className="font-semibold" style={{ color: '#e879f9', fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+            Your API Key
+          </span>
+          <span style={{ color: '#e879f9', fontSize: 'clamp(0.7rem, 0.8vw, 0.95rem)' }}>→</span>
+          <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+            Your Image
+          </span>
+          <span
+            className="ml-auto inline-flex items-center rounded-md font-semibold"
+            style={{
+              fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)',
+              padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.5vw, 8px)',
+              background: 'rgba(232, 121, 249, 0.15)',
+              border: '1px solid rgba(232, 121, 249, 0.4)',
+              color: '#e879f9',
+            }}
+          >
+            Coming to Pro
+          </span>
+        </div>
+
+        {/* ── Single showcase card — full remaining space ── */}
+        <div
+          className="relative rounded-lg overflow-hidden flex-1 min-h-0"
+          style={{
+            display: 'flex',
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: `1px solid ${item.accentColor}30`,
+            opacity: fadeState === 'fading-out' ? 0 : 1,
+            transition: 'opacity 300ms ease-in-out',
+          }}
+        >
+          {/* Top glow */}
+          <span
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg"
+            style={{ background: `radial-gradient(ellipse at 50% 0%, ${item.accentColor}15 0%, transparent 70%)` }}
+            aria-hidden="true"
+          />
+
+          {/* ── Left: Platform + colour-coded prompt ── */}
+          <div
+            className="relative z-10 flex flex-col"
+            style={{
+              flex: '1 1 0%',
+              padding: 'clamp(12px, 1.2vw, 20px)',
+              gap: 'clamp(6px, 0.6vw, 10px)',
+              borderRight: '1px solid rgba(255,255,255,0.06)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Platform + scene header */}
+            <div className="flex items-center shrink-0" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/icons/providers/${item.platformId}.png`}
+                alt=""
+                style={{ width: 'clamp(18px, 1.5vw, 24px)', height: 'clamp(18px, 1.5vw, 24px)' }}
+                className="rounded"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+              <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.75rem, 0.8vw, 0.95rem)' }}>
+                {item.platform}
+              </span>
+              <span className="text-white font-medium" style={{ fontSize: 'clamp(0.625rem, 0.7vw, 0.85rem)', marginLeft: 'auto' }}>
+                {item.scene}
+              </span>
+            </div>
+
+            {/* Colour-coded prompt text — full space, matching Prompt Lab font */}
+            <div className="flex-1 overflow-hidden">
+              <p className="font-mono leading-relaxed" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.8rem)' }}>
+                {item.segments.map((seg, si) => (
+                  <span key={si} style={{ color: seg.color }}>{seg.text}</span>
+                ))}
+              </p>
+            </div>
+
+            {/* Generate button */}
+            <div className="flex items-center shrink-0" style={{ gap: 'clamp(6px, 0.6vw, 10px)' }}>
+              <span
+                className="inline-flex items-center rounded-md font-semibold"
+                style={{
+                  fontSize: 'clamp(0.625rem, 0.7vw, 0.8rem)',
+                  padding: 'clamp(3px, 0.3vw, 5px) clamp(8px, 0.7vw, 12px)',
+                  background: `${item.accentColor}20`,
+                  border: `1px solid ${item.accentColor}40`,
+                  color: item.accentColor,
+                  gap: 'clamp(4px, 0.4vw, 6px)',
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ width: 'clamp(12px, 1vw, 16px)', height: 'clamp(12px, 1vw, 16px)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Generate
+              </span>
+              <span style={{ color: '#e879f9', fontSize: 'clamp(0.8rem, 0.85vw, 1rem)' }}>→</span>
+
+              {/* Rotation indicator — dots showing which card is active */}
+              <div className="flex items-center ml-auto" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
+                {IMAGEGEN_SHOWCASE.map((_, i) => (
+                  <span
+                    key={i}
+                    className="rounded-full"
+                    style={{
+                      width: 'clamp(5px, 0.4vw, 7px)',
+                      height: 'clamp(5px, 0.4vw, 7px)',
+                      background: i === activeIdx ? '#e879f9' : 'rgba(255,255,255,0.2)',
+                      transition: 'background 300ms ease',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right: Real AI-generated image with blur-to-sharp ── */}
+          <div className="relative" style={{ flex: '1 1 0%', overflow: 'hidden' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              key={activeIdx}
+              src={item.imagePath}
+              alt=""
+              className="imagegen-reveal"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                animation: 'imagegenReveal 15s ease-in-out infinite',
+              }}
+              loading="lazy"
+            />
+
+            {/* Progress bar */}
+            <div
+              key={`prog-${activeIdx}`}
+              className="imagegen-progress absolute"
+              style={{
+                bottom: 0,
+                left: 0,
+                height: 'clamp(3px, 0.25vw, 4px)',
+                background: 'linear-gradient(90deg, rgba(232,121,249,0.8), rgba(168,85,247,0.8))',
+                animation: 'imagegenProgressBar 15s ease-in-out infinite',
+                borderRadius: '0 2px 0 0',
+              }}
+            />
+
+            {/* Platform watermark */}
+            <div
+              className="absolute flex items-center"
+              style={{
+                bottom: 'clamp(6px, 0.6vw, 10px)',
+                right: 'clamp(6px, 0.6vw, 10px)',
+                padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.5vw, 8px)',
+                background: 'rgba(0,0,0,0.6)',
+                borderRadius: '4px',
+                gap: 'clamp(4px, 0.4vw, 6px)',
+                zIndex: 2,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/icons/providers/${item.platformId}.png`}
+                alt=""
+                style={{ width: 'clamp(12px, 1vw, 16px)', height: 'clamp(12px, 1vw, 16px)' }}
+                className="rounded"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+              <span className="text-white font-medium" style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}>
+                {item.platform}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom row */}
+      <div
+        className="flex items-center justify-between"
+        style={{ paddingTop: 'clamp(8px, 0.8vw, 12px)' }}
+      >
+        <span
+          className="inline-flex items-center text-emerald-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)', gap: 'clamp(3px, 0.3vw, 5px)' }}
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Your key · Your images · Your privacy
+        </span>
+        <span
+          className="text-amber-400 font-semibold"
+          style={{ fontSize: 'clamp(0.625rem, 0.65vw, 0.75rem)' }}
+        >
+          Coming to Pro Promagen
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // EXCHANGES PREVIEW PANEL — 5 windows: CTA + 4 regional mini-cards
 // ============================================================================
 // Shown when Exchanges card is hovered. Same glass/glow pattern as others.
@@ -2225,7 +3010,7 @@ export default function ProPromagenClient({
   // When NO panel is active, first hover switches immediately (no debounce).
   // When cursor enters the SAME card that's already active, do nothing.
   // ============================================================================
-  type PreviewPanel = 'daily' | 'format' | 'scenes' | 'saved' | 'lab' | 'exchanges';
+  type PreviewPanel = 'daily' | 'format' | 'scenes' | 'saved' | 'lab' | 'exchanges' | 'frame' | 'imagegen';
   const [activePanel, setActivePanel] = useState<PreviewPanel | null>(null);
   const lingerRef = useRef<ReturnType<typeof setTimeout>>();
   const switchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -2300,6 +3085,8 @@ export default function ProPromagenClient({
   const setSavedHovered = useCallback((h: boolean) => handleCardHover('saved', h), [handleCardHover]);
   const setLabHovered = useCallback((h: boolean) => handleCardHover('lab', h), [handleCardHover]);
   const setExchangesHovered = useCallback((h: boolean) => handleCardHover('exchanges', h), [handleCardHover]);
+  const setFrameHovered = useCallback((h: boolean) => handleCardHover('frame', h), [handleCardHover]);
+  const setImageGenHovered = useCallback((h: boolean) => handleCardHover('imagegen', h), [handleCardHover]);
 
   // Detect changes from initial state (FX no longer tracked — fixed pairs)
   const hasChanges = useMemo(() => {
@@ -2642,6 +3429,8 @@ export default function ProPromagenClient({
           onSavedHover={setSavedHovered}
           onLabHover={setLabHovered}
           onExchangesHover={setExchangesHovered}
+          onFrameHover={setFrameHovered}
+          onImageGenHover={setImageGenHovered}
         />
       </div>
 
@@ -2678,6 +3467,12 @@ export default function ProPromagenClient({
         </div>
         <div style={{ display: activePanel === 'exchanges' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <ExchangesPreviewPanel exchangeCatalog={exchangeCatalog} onOpenPicker={handleOpenExchangePicker} />
+        </div>
+        <div style={{ display: activePanel === 'frame' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+          <FramePreviewPanel />
+        </div>
+        <div style={{ display: activePanel === 'imagegen' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+          <ImageGenPreviewPanel />
         </div>
         <div data-upgrade-cta style={{ display: activePanel === null ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
           <UpgradeCta isPaidUser={isPaidUser} onSave={handleSave} hasChanges={hasChanges} />

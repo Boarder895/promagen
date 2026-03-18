@@ -4,6 +4,15 @@
 // ============================================================================
 // Provides east-to-west ordering of exchanges for the homepage rails.
 // Uses the canonical Exchange type from @/data/exchanges.
+//
+// v2.0.0 (18 Mar 2026):
+// - Added sortExchangesForUser(): array rotation for Pro user-anchored ordering.
+// - getRailsForHomepage() + getHomepageExchanges() now accept optional
+//   userLongitude param. When provided, exchanges rotate so the user's
+//   nearest market is first. When omitted, standard Greenwich ordering.
+// - Existing test contract preserved: zero-arg calls behave identically.
+//
+// Authority: docs/authority/exchange-ordering.md
 // ============================================================================
 
 import EXCHANGES from '@/data/exchanges';
@@ -113,6 +122,38 @@ function sortEastToWest(exchanges: Exchange[]): Exchange[] {
   return exchanges.slice().sort((a, b) => b.longitude - a.longitude);
 }
 
+/**
+ * Rotate an east-to-west sorted array so the exchange nearest to (or just
+ * west of) `anchorLongitude` sits at index 0. The array wraps around the
+ * globe — exchanges east of the anchor come last (they represent "yesterday"
+ * relative to the user).
+ *
+ * This is a simple array rotation — no new sort, no timezone parsing.
+ *
+ * @param sorted - Exchanges already sorted east → west (longitude desc)
+ * @param anchorLongitude - User's longitude (e.g. 139.7 for Tokyo)
+ * @returns Rotated array with user's nearest exchange first
+ *
+ * @example
+ * // Standard: NZX(174) → ASX(151) → TSE(139) → HKEX(114) → ... → NYSE(-74)
+ * // Tokyo anchor (139.7): TSE(139) → HKEX(114) → ... → NYSE(-74) → NZX(174) → ASX(151)
+ */
+export function sortExchangesForUser(
+  sorted: Exchange[],
+  anchorLongitude: number,
+): Exchange[] {
+  if (sorted.length <= 1) return sorted;
+
+  // Find the first exchange at or west of the user's longitude
+  const splitIdx = sorted.findIndex((e) => e.longitude <= anchorLongitude);
+
+  // User is further east than all exchanges — no rotation needed
+  if (splitIdx <= 0) return sorted;
+
+  // Rotate: user's nearest exchange first, then wrap
+  return [...sorted.slice(splitIdx), ...sorted.slice(0, splitIdx)];
+}
+
 // ============================================================================
 // Public API
 // ============================================================================
@@ -121,24 +162,36 @@ function sortEastToWest(exchanges: Exchange[]): Exchange[] {
  * Returns the left/right rails for the homepage:
  * - Loads the selected exchanges
  * - Orders them east→west using longitude
+ * - Optionally rotates to anchor around a user's longitude (Pro feature)
  * - Splits into two rails:
- *   - Left rail: more easterly half (ceil)
- *   - Right rail: more westerly half (reversed for visual symmetry)
+ *   - Left rail: first half
+ *   - Right rail: second half (reversed for visual symmetry)
+ *
+ * @param userLongitude - Optional anchor longitude for Pro user rotation.
+ *   When provided, exchanges rotate so the user's nearest market is first.
+ *   When omitted or null, standard Greenwich east→west ordering is used.
  *
  * @returns Object with left and right exchange arrays
  *
  * @example
  * ```ts
+ * // Standard (Greenwich):
  * const { left, right } = getRailsForHomepage();
- * // left = [Tokyo, Sydney, ...] (eastern)
- * // right = [New York, Chicago, ...] (western, reversed)
+ *
+ * // Pro (Tokyo user):
+ * const { left, right } = getRailsForHomepage(139.7);
  * ```
  */
-export function getRailsForHomepage(): Rails {
+export function getRailsForHomepage(userLongitude?: number | null): Rails {
   const selected = loadSelectedExchanges();
   if (!selected.length) return { left: [], right: [] };
 
-  const ordered = sortEastToWest(selected);
+  let ordered = sortEastToWest(selected);
+
+  // Pro user rotation: anchor around their longitude
+  if (userLongitude != null) {
+    ordered = sortExchangesForUser(ordered, userLongitude);
+  }
 
   const half = Math.ceil(ordered.length / 2);
   const left = ordered.slice(0, half);
@@ -148,13 +201,14 @@ export function getRailsForHomepage(): Rails {
 }
 
 /**
- * Returns the full east→west list of homepage exchanges.
+ * Returns the full ordered list of homepage exchanges.
  * Reconstructed from the rails for convenience.
  *
- * @returns Array of exchanges sorted east to west
+ * @param userLongitude - Optional anchor longitude for Pro user rotation.
+ * @returns Array of exchanges in display order
  */
-export function getHomepageExchanges(): Exchange[] {
-  const { left, right } = getRailsForHomepage();
+export function getHomepageExchanges(userLongitude?: number | null): Exchange[] {
+  const { left, right } = getRailsForHomepage(userLongitude);
   if (!left.length && !right.length) return [];
 
   // Undo the reversal applied to the right rail
