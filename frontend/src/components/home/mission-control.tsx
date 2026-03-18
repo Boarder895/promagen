@@ -220,24 +220,34 @@ export default function MissionControl({
   const previewExchange = useMemo(() => {
     if (exchanges.length === 0) return null;
 
+    // Helper: extract base exchange ID from compound key (e.g. "lse-london::ftse_100" → "lse-london")
+    const baseId = (id: string) => id.split('::')[0]!;
+
+    // Helper: check weather exists for an exchange (handles compound keys)
+    const hasWeather = (e: { id: string }) => {
+      if (!weatherIndex) return false;
+      return weatherIndex.has(e.id) || weatherIndex.has(baseId(e.id));
+    };
+
     if (nearestExchangeId) {
       const nearest = exchanges.find((e) => e.id === nearestExchangeId);
-      if (nearest && weatherIndex?.has(nearest.id)) return nearest;
+      if (nearest && hasWeather(nearest)) return nearest;
     }
 
     // Priority: Find LSE London exchange (same as ribbon card)
+    // Handles both simple ("lse-london") and compound ("lse-london::ftse_100") IDs
     const londonIds = ['lse-london', 'lse', 'london'];
     for (const id of londonIds) {
-      const london = exchanges.find((e) => e.id === id);
-      if (london && weatherIndex?.has(london.id)) return london;
+      const london = exchanges.find((e) => e.id === id || baseId(e.id) === id);
+      if (london && hasWeather(london)) return london;
     }
 
     const londonByCity = exchanges.find(
-      (e) => e.city?.toLowerCase() === 'london' && weatherIndex?.has(e.id),
+      (e) => e.city?.toLowerCase() === 'london' && hasWeather(e),
     );
     if (londonByCity) return londonByCity;
 
-    const anyWithWeather = exchanges.find((e) => weatherIndex?.has(e.id));
+    const anyWithWeather = exchanges.find((e) => hasWeather(e));
     if (anyWithWeather) return anyWithWeather;
 
     return exchanges[0] ?? null;
@@ -245,7 +255,8 @@ export default function MissionControl({
 
   const weatherData: ExchangeWeatherDisplay | null = useMemo(() => {
     if (!previewExchange || !weatherIndex) return null;
-    const data = weatherIndex.get(previewExchange.id);
+    // Try exact key first, then base ID (handles compound keys)
+    const data = weatherIndex.get(previewExchange.id) ?? weatherIndex.get(previewExchange.id.split('::')[0]!);
     if (!data) return null;
 
     // Convert ExchangeWeatherData to ExchangeWeatherDisplay

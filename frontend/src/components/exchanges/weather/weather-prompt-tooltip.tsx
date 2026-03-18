@@ -716,6 +716,8 @@ export function WeatherPromptTooltip({
 
   const triggerRef = useRef<HTMLSpanElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Grace period: after a click inside the tooltip, suppress close for 1.5s
+  const graceUntilRef = useRef<number>(0);
 
   // Track mount state for Portal (SSR safety)
   useEffect(() => {
@@ -862,9 +864,12 @@ export function WeatherPromptTooltip({
    */
   const startCloseDelay = useCallback(() => {
     clearCloseTimeout();
+    // If in grace period (after click inside tooltip), use 1.5s delay
+    const now = Date.now();
+    const delay = now < graceUntilRef.current ? 1500 : CLOSE_DELAY_MS;
     closeTimeoutRef.current = setTimeout(() => {
       setIsVisible(false);
-    }, CLOSE_DELAY_MS);
+    }, delay);
   }, [clearCloseTimeout]);
 
   /**
@@ -909,6 +914,12 @@ export function WeatherPromptTooltip({
     }
   }, [prompt]);
 
+  // Grace period handler: any click inside tooltip extends close delay to 1.5s
+  const handleGraceClick = useCallback(() => {
+    graceUntilRef.current = Date.now() + 1500;
+    clearCloseTimeout();
+  }, [clearCloseTimeout]);
+
   // If no weather data, just render children without tooltip
   if (!prompt || weather.tempC === null) {
     return <>{children}</>;
@@ -930,22 +941,24 @@ export function WeatherPromptTooltip({
       {isMounted &&
         isVisible &&
         createPortal(
-          <TooltipContent
-            prompt={prompt}
-            tier={tier}
-            isPro={isPro}
-            tempColor={tempColor}
-            position={tooltipCoords}
-            verticalPosition={resolvedVPos}
-            onMouseEnter={handleTooltipEnter}
-            onMouseLeave={handleTooltipLeave}
-            onCopy={handleCopy}
-            copied={copied}
-            savePlatformId={propPlatformId ?? TIER_DEFAULT_PLATFORM[tier]?.id ?? 'openai'}
-            savePlatformName={propPlatformName ?? TIER_DEFAULT_PLATFORM[tier]?.name ?? 'OpenAI DALL·E'}
-            previewPrompts={previewPrompts}
-            onTierChange={onTierChange}
-          />,
+          <div role="presentation" onClickCapture={handleGraceClick}>
+            <TooltipContent
+              prompt={prompt}
+              tier={tier}
+              isPro={isPro}
+              tempColor={tempColor}
+              position={tooltipCoords}
+              verticalPosition={resolvedVPos}
+              onMouseEnter={handleTooltipEnter}
+              onMouseLeave={handleTooltipLeave}
+              onCopy={handleCopy}
+              copied={copied}
+              savePlatformId={propPlatformId ?? TIER_DEFAULT_PLATFORM[tier]?.id ?? 'openai'}
+              savePlatformName={propPlatformName ?? TIER_DEFAULT_PLATFORM[tier]?.name ?? 'OpenAI DALL·E'}
+              previewPrompts={previewPrompts}
+              onTierChange={onTierChange}
+            />
+          </div>,
           document.body,
         )}
     </>

@@ -143,48 +143,44 @@ function ProRetentionPanel({
   onSave: () => void;
   onManageSubscription: () => void;
 }) {
-  // ── Cycling text state ──
-  // Phase 0 (0–2s):   "Your Promagen, your way"      breathing pulse
-  // Phase 1 (2–4s):   "Live on your homepage now"     breathing pulse
-  // Phase 2 (4–6s+):  "Your Promagen, your way"       pulse fades → static gold
+  // ── Cycling text: 3 phases, same animate-pulse as TierPreviewPanel ──
+  // Phase 0 (0–2.5s): "Your Promagen, your way"   animate-pulse
+  // Phase 1 (2.5–5s): "Live on your homepage now"  animate-pulse
+  // Phase 2 (5s+):    "Your Promagen, your way"    static gold (no pulse)
   const [textPhase, setTextPhase] = React.useState(0);
-  const [isPulsing, setIsPulsing] = React.useState(true);
 
   React.useEffect(() => {
-    const t1 = setTimeout(() => setTextPhase(1), 2000);
-    const t2 = setTimeout(() => setTextPhase(2), 4000);
-    const t3 = setTimeout(() => setIsPulsing(false), 6000);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const t1 = setTimeout(() => setTextPhase(1), 2500);
+    const t2 = setTimeout(() => setTextPhase(2), 5000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   const cyclingText = textPhase === 1
     ? 'Live on your homepage now'
     : 'Your Promagen, your way';
 
+  // animate-pulse during phases 0 and 1 only (matches free-user amber header exactly)
+  const isPulsing = textPhase < 2;
+
+  // ── Save click handler — never uses disabled, gates in code instead ──
+  const handleSaveClick = React.useCallback(() => {
+    if (isSaving) return;
+    onSave();
+  }, [isSaving, onSave]);
+
+  // Show emerald when save succeeded (saveStatus set by parent for 2s)
+  const showEmerald = saveStatus === 'success';
+
   return (
     <div className="flex flex-col h-full">
-      {/* Co-located animation — breathing pulse for gold text (NOT in globals.css) */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes proGoldBreath {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.6; }
-        }
-        .pro-gold-pulse {
-          animation: proGoldBreath 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .pro-gold-pulse { animation: none; }
-        }
-      ` }} />
-
-      {/* Gold cycling text — same position as free-user "Unlimited prompts..." header */}
+      {/* Gold cycling text — SAME pattern as free-user "Unlimited prompts..." header */}
+      {/* Compare: line 538 uses "italic text-amber-400/80 animate-pulse text-center font-semibold" */}
       <div style={{ padding: 'clamp(12px, 1.2vw, 20px) 0' }}>
         <p
-          className={`italic text-center font-semibold ${isPulsing ? 'pro-gold-pulse' : ''}`}
+          className={`italic text-center font-semibold ${isPulsing ? 'animate-pulse' : ''}`}
           style={{
             fontSize: 'clamp(0.75rem, 0.9vw, 1rem)',
             color: '#EAB308',
-            transition: 'opacity 600ms ease-out',
           }}
         >
           {cyclingText}
@@ -225,17 +221,17 @@ function ProRetentionPanel({
           </span>
 
           <div className="flex w-full" style={{ gap: 'clamp(8px, 0.8vw, 12px)' }}>
-            {/* Save button — default gold outline, emerald flash ONLY on success */}
+            {/* Save button — NO disabled attribute (browser greys it out, kills emerald).
+                Click gating done in handleSaveClick instead. */}
             <button
               type="button"
-              onClick={onSave}
-              disabled={isSaving || !hasChanges}
-              className={`flex-1 rounded-xl font-semibold text-white transition-all duration-300 ${
-                saveStatus === 'success'
+              onClick={handleSaveClick}
+              className={`flex-1 rounded-xl font-semibold text-white transition-all duration-300 cursor-pointer ${
+                showEmerald
                   ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 shadow-lg shadow-emerald-500/25'
                   : hasChanges
-                    ? 'cursor-pointer ring-1 ring-yellow-500/50 bg-yellow-500/10 hover:bg-yellow-500/20 hover:ring-yellow-400/60'
-                    : 'bg-white/10 cursor-default'
+                    ? 'ring-1 ring-yellow-500/50 bg-yellow-500/10 hover:bg-yellow-500/20 hover:ring-yellow-400/60'
+                    : 'bg-white/10 hover:bg-white/15 ring-1 ring-white/10 hover:ring-white/20'
               } ${isSaving ? 'cursor-wait' : ''}`}
               style={{
                 padding: 'clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px)',
@@ -245,7 +241,7 @@ function ProRetentionPanel({
               <span className="flex items-center justify-center" style={{ gap: 'clamp(4px, 0.4vw, 6px)' }}>
                 {isSaving ? (
                   <><span className="animate-spin">⏳</span><span>Saving...</span></>
-                ) : saveStatus === 'success' ? (
+                ) : showEmerald ? (
                   <><span>✓</span><span>Saved!</span></>
                 ) : saveStatus === 'error' ? (
                   <><span>✕</span><span>Error — try again</span></>

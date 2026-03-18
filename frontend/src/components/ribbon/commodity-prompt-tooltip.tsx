@@ -100,6 +100,8 @@ export interface CommodityPromptTooltipProps {
   verticalPosition?: 'center' | 'below' | 'above' | 'top-third';
   /** Disable the tooltip (renders children only) */
   disabled?: boolean;
+  /** Callback when tooltip visibility changes (for pausing flag rotation) */
+  onVisibilityChange?: (visible: boolean) => void;
 }
 
 // ============================================================================
@@ -750,6 +752,7 @@ export function CommodityPromptTooltip({
   tooltipPosition = 'left',
   verticalPosition = 'center',
   disabled = false,
+  onVisibilityChange,
 }: CommodityPromptTooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -760,6 +763,13 @@ export function CommodityPromptTooltip({
 
   const triggerRef = useRef<HTMLSpanElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Grace period: after a click inside the tooltip, suppress close for 1.5s
+  const graceUntilRef = useRef<number>(0);
+
+  // Fire visibility callback so parent can pause flag rotation
+  useEffect(() => {
+    onVisibilityChange?.(isVisible);
+  }, [isVisible, onVisibilityChange]);
 
   // Track mount state for Portal (SSR safety)
   useEffect(() => {
@@ -853,9 +863,12 @@ export function CommodityPromptTooltip({
 
   const startCloseDelay = useCallback(() => {
     clearCloseTimeout();
+    // If in grace period (after click inside tooltip), use 1.5s delay
+    const now = Date.now();
+    const delay = now < graceUntilRef.current ? 1500 : CLOSE_DELAY_MS;
     closeTimeoutRef.current = setTimeout(() => {
       setIsVisible(false);
-    }, CLOSE_DELAY_MS);
+    }, delay);
   }, [clearCloseTimeout]);
 
   const handleTriggerEnter = useCallback(() => {
@@ -886,6 +899,12 @@ export function CommodityPromptTooltip({
     }
   }, [prompt]);
 
+  // Grace period handler: any click inside tooltip extends close delay to 1.5s
+  const handleGraceClick = useCallback(() => {
+    graceUntilRef.current = Date.now() + 1500;
+    clearCloseTimeout();
+  }, [clearCloseTimeout]);
+
   // Disabled → render children only
   if (disabled) {
     return <>{children}</>;
@@ -907,7 +926,8 @@ export function CommodityPromptTooltip({
       {isMounted &&
         isVisible &&
         createPortal(
-          isPro ? (
+          <div role="presentation" onClickCapture={handleGraceClick}>
+          {isPro ? (
             <ProTooltipContent
               allPrompts={output.allPrompts}
               activeTier={tier}
@@ -933,7 +953,8 @@ export function CommodityPromptTooltip({
               copied={copied}
               allPrompts={output.allPrompts}
             />
-          ),
+          )}
+          </div>,
           document.body,
         )}
     </>

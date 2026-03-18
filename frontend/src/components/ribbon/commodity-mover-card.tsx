@@ -129,6 +129,8 @@ export default function CommodityMoverCard({
   } = data;
 
   const [isHovered, setIsHovered] = useState(false);
+  // Track whether a commodity tooltip is open — freezes phase rotation
+  const [tooltipOpen, setTooltipOpen] = useState(false);
 
   // ── Global prompt tier (user's Pro selection) ──────────────────────
   const { tier: globalTier, isPro } = useGlobalPromptTier('commodities');
@@ -159,6 +161,7 @@ export default function CommodityMoverCard({
       flagIndex,
       tier: globalTier,
       isPro,
+      onVisibilityChange: setTooltipOpen,
     };
   }
 
@@ -166,7 +169,11 @@ export default function CommodityMoverCard({
   const conversions = conversionLine3
     ? [conversionLine1, conversionLine2, conversionLine3]
     : [conversionLine1, conversionLine2];
-  const phase = currencyTick % conversions.length;
+  // Freeze phase while tooltip is open so the flag doesn't rotate away
+  const livephase = currencyTick % conversions.length;
+  const frozenPhaseRef = React.useRef(livephase);
+  if (!tooltipOpen) frozenPhaseRef.current = livephase;
+  const phase = tooltipOpen ? frozenPhaseRef.current : livephase;
 
   // ── Styling ─────────────────────────────────────────────────────────
   const deltaColorClass = direction === 'winner' ? 'text-emerald-400' : 'text-red-400';

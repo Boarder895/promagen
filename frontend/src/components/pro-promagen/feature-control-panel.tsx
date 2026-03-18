@@ -196,61 +196,6 @@ function FeatureCard({
 }
 
 // ============================================================================
-// MINI TIER SELECTOR
-// ============================================================================
-
-function MiniTierSelector({
-  selectedTier,
-  onChange,
-  disabled,
-}: {
-  selectedTier: PromptTier;
-  onChange: (tier: PromptTier) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="flex gap-1">
-      {([1, 2, 3, 4] as PromptTier[]).map((t) => {
-        const info = TIER_LABELS[t]!;
-        const isActive = t === selectedTier;
-        return (
-          <button
-            key={t}
-            type="button"
-            disabled={disabled}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!disabled) onChange(t);
-            }}
-            className={`flex items-center gap-1 rounded-full transition-all duration-200 ${
-              disabled ? 'cursor-default' : 'cursor-pointer'
-            }`}
-            style={{
-              padding: 'clamp(2px, 0.3vw, 4px) clamp(6px, 0.6vw, 10px)',
-              fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)',
-              background: isActive ? hexToRgba(info.color, 0.35) : 'rgba(255,255,255,0.03)',
-              border: `1px solid ${isActive ? hexToRgba(info.color, 0.7) : 'rgba(255,255,255,0.08)'}`,
-              color: isActive ? info.color : 'rgba(255,255,255,0.4)',
-              fontWeight: isActive ? 600 : 400,
-            }}
-          >
-            <span
-              className="rounded-full"
-              style={{
-                width: 'clamp(5px, 0.4vw, 6px)',
-                height: 'clamp(5px, 0.4vw, 6px)',
-                background: isActive ? info.color : 'rgba(255,255,255,0.2)',
-              }}
-            />
-            T{t}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -270,7 +215,7 @@ export interface FeatureControlPanelProps {
 export function FeatureControlPanel({
   isPaidUser,
   selectedPromptTier,
-  onPromptTierChange,
+  onPromptTierChange: _onPromptTierChange,
   selectedExchangeCount,
   onOpenExchangePicker,
   onFormatHover,
@@ -336,27 +281,30 @@ export function FeatureControlPanel({
           actionAlwaysColored={true}
         >
           {isPaidUser ? (
-            <>
-              <span className="text-amber-400 font-medium" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)', marginBottom: 'clamp(2px, 0.2vw, 3px)' }}>
-                Select tier ↓
-              </span>
-              <MiniTierSelector
-                selectedTier={selectedPromptTier}
-                onChange={onPromptTierChange}
-                disabled={false}
+            <span
+              className="inline-flex items-center gap-1 rounded-full font-medium"
+              style={{
+                fontSize: 'clamp(0.625rem, 0.6vw, 0.7rem)',
+                padding: 'clamp(2px, 0.2vw, 3px) clamp(6px, 0.6vw, 10px)',
+                background: hexToRgba(tierLabel?.color ?? '#60a5fa', 0.2),
+                border: `1px solid ${hexToRgba(tierLabel?.color ?? '#60a5fa', 0.4)}`,
+                color: tierLabel?.color ?? '#60a5fa',
+              }}
+            >
+              <span
+                className="rounded-full"
+                style={{
+                  width: 'clamp(5px, 0.4vw, 6px)',
+                  height: 'clamp(5px, 0.4vw, 6px)',
+                  background: tierLabel?.color ?? '#60a5fa',
+                }}
               />
-            </>
+              {tierLabel?.short ?? 'T4 · Plain'}
+            </span>
           ) : (
-            <>
-              <span className="text-white" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
-                Varies by surface
-              </span>
-              <MiniTierSelector
-                selectedTier={selectedPromptTier}
-                onChange={onPromptTierChange}
-                disabled={true}
-              />
-            </>
+            <span className="text-slate-400" style={{ fontSize: 'clamp(0.625rem, 0.55vw, 0.7rem)' }}>
+              Varies by surface
+            </span>
           )}
         </FeatureCard>
 
