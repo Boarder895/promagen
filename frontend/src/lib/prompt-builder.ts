@@ -595,6 +595,24 @@ function assembleKeywords(
     parts.push(...platformFormat.qualitySuffix);
   }
 
+  // 3b. Cross-source dedup — qualityPrefix/qualitySuffix may duplicate user
+  // selections (e.g., "sharp focus" in both qualitySuffix and fidelity).
+  // Strip weight syntax before comparing so "(sharp focus:1.2)" matches "sharp focus".
+  // Keeps the FIRST occurrence (qualityPrefix wins over user, user wins over suffix).
+  const stripWeights = (t: string) =>
+    t.replace(/^\({1,2}/, '').replace(/(?::[0-9.]+)?\){1,2}$/, '')
+      .replace(/^\{+/, '').replace(/\}+$/, '')
+      .replace(/::[0-9.]+$/, '')
+      .toLowerCase().trim();
+  const seenParts = new Set<string>();
+  const dedupedParts: string[] = [];
+  for (const part of parts) {
+    const key = stripWeights(part);
+    if (!key || seenParts.has(key)) continue;
+    seenParts.add(key);
+    dedupedParts.push(part);
+  }
+
   // 4. Trim to sweet spot — SKIPPED when skipTrim is true (Stage 2 Dynamic mode).
   //    Dynamic mode formats with full platform intelligence but leaves length
   //    untouched for the optimizer (Stage 3) to handle.
@@ -603,10 +621,10 @@ function assembleKeywords(
   let wasTrimmed = false;
 
   if (options?.skipTrim) {
-    trimmed = parts;
+    trimmed = dedupedParts;
   } else {
     const limit = platformFormat.sweetSpot || 80;
-    const result = trimPromptToLimit(parts, selections, limit, separator);
+    const result = trimPromptToLimit(dedupedParts, selections, limit, separator);
     trimmed = result.trimmed;
     wasTrimmed = result.wasTrimmed;
   }

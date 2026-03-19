@@ -139,11 +139,30 @@ export function parsePromptIntoSegments(
   const matches: Match[] = [];
   const lowerPrompt = promptText.toLowerCase();
 
+  // Word boundary check — prevents "text" matching inside "textures".
+  // A boundary is start/end of string or any non-alphanumeric character
+  // (comma, space, parenthesis, colon, etc.). Hyphens are allowed as
+  // word-internal (e.g. "tack-sharp" should match as one term).
+  const isWordBoundary = (pos: number, len: number): boolean => {
+    if (pos > 0) {
+      const before = lowerPrompt.charCodeAt(pos - 1);
+      // a-z: 97-122, 0-9: 48-57
+      if ((before >= 97 && before <= 122) || (before >= 48 && before <= 57)) return false;
+    }
+    const afterPos = pos + len;
+    if (afterPos < lowerPrompt.length) {
+      const after = lowerPrompt.charCodeAt(afterPos);
+      if ((after >= 97 && after <= 122) || (after >= 48 && after <= 57)) return false;
+    }
+    return true;
+  };
+
   for (const [term, category] of termEntries) {
     let searchFrom = 0;
     while (searchFrom < lowerPrompt.length) {
       const idx = lowerPrompt.indexOf(term, searchFrom);
       if (idx === -1) break;
+      if (!isWordBoundary(idx, term.length)) { searchFrom = idx + 1; continue; }
       const overlaps = matches.some((m) => idx < m.end && idx + term.length > m.start);
       if (!overlaps) {
         let weight = 1.0;
@@ -165,6 +184,7 @@ export function parsePromptIntoSegments(
     while (searchFrom < lowerPrompt.length) {
       const idx = lowerPrompt.indexOf(fTerm, searchFrom);
       if (idx === -1) break;
+      if (!isWordBoundary(idx, fTerm.length)) { searchFrom = idx + 1; continue; }
       const overlaps = matches.some((m) => idx < m.end && idx + fTerm.length > m.start);
       if (!overlaps) {
         matches.push({ start: idx, end: idx + fTerm.length, category: 'fidelity', weight: 1.0 });

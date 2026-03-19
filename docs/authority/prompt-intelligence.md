@@ -1,9 +1,9 @@
 # Prompt Intelligence
 
-**Last updated:** 18 March 2026  
+**Last updated:** 19 March 2026  
 **Owner:** Promagen  
 **Authority:** This document defines the architecture, data structures, and implementation plan for the Prompt Intelligence system.
-**Cross-reference:** For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For Prompt Lab parity features, see `paid_tier.md` §5.13. For prompt builder architecture, see `prompt-builder-page.md`.
+**Cross-reference:** For colour-coded prompt anatomy, see `paid_tier.md` §5.14. For Prompt Lab parity features, see `paid_tier.md` §5.13. For Image Generation preview panel (colour-coded segments from static data), see `paid_tier.md` §5.10 ImageGen Preview Panel. For prompt builder architecture, see `prompt-builder-page.md`.
 
 ---
 
@@ -1034,6 +1034,19 @@ The Prompt Lab now has full feature parity with the standard builder for colour-
 
 **11. cursor-pointer on all interactive elements:** Copy prompt, Randomise, Clear, Save footer buttons. Intelligence panel Conflicts/Suggestions tabs and weather suggestion buttons.
 
+#### Colour Pipeline in Pro Page Preview Panels (v6.0.0 — 19 March 2026)
+
+The colour-coded prompt pipeline extends beyond the builders to three Pro page preview panels:
+
+**Dynamic consumers (use `parsePromptIntoSegments()` at runtime):**
+- `DailyPromptsPreviewPanel` — parses assembled prompt from live PotM data via `sharedParsePrompt()` with a `termIndex` built from `categoryMap.selections`. Renders colour-coded assembled + optimized prompt boxes.
+- `LabTierWindow` (inside `PromptLabPreviewPanel`) — parses per-tier prompt text via `labParsePrompt()` with `labBuildTermIndex()` from `tierCategoryMap`. Renders colour-coded prompt in each of the 4 rotating provider windows.
+
+**Static consumer (uses hardcoded segment data):**
+- `ImageGenPreviewPanel` — does NOT use `parsePromptIntoSegments()`. Instead, each of the 5 showcase prompts is pre-segmented into `{ text, color }[]` arrays using `IG_C` (a local alias of `CATEGORY_COLOURS` hex values). This is because the prompts are static marketing copy, not dynamically assembled. The segments are hand-categorised: environment terms in sky-400, lighting in amber, style in purple, etc.
+
+**Why two patterns:** Dynamic parsing works when the prompt was assembled by `assemblePrompt()` and a `categoryMap` is available to build a `termIndex`. Static segments are used when the prompt text is predetermined and the categorisation is editorial (human-decided, not algorithm-decided).
+
 #### `/prompts/library` — Your Saved Prompts
 
 | Aspect       | Detail                                                             |
@@ -1311,6 +1324,7 @@ PROMAGEN
 | `src/components/prompt-builder/four-tier-prompt-preview.tsx` | `isPro` + `termIndex` props for colour-coded rendering (v5.0.0, 647 lines) |
 | `src/components/prompt-builder/intelligence-panel.tsx` | cursor-pointer on Conflicts/Suggestions/Market Mood tabs (515 lines) |
 | `src/components/prompt-builder/prompt-intelligence-builder.tsx` | `colourTermIndex` computation, passes to FourTierPromptPreview (714 lines) |
+| `src/app/pro-promagen/pro-promagen-client.tsx` | Colour pipeline consumer: DailyPromptsPreviewPanel (dynamic), LabTierWindow (dynamic), ImageGenPreviewPanel (static `IG_C` segments) (v6.0.0, 3,560 lines) |
 
 ### New Files (v5.0.0)
 
@@ -1380,6 +1394,7 @@ When modifying for Prompt Intelligence:
 - **Four-tier-prompt-preview `isPro` and `termIndex` props must be passed through from parent — do NOT hardcode**
 - **Optimizer neutral mode: when `!selectedProviderId`, force-disable optimizer — do NOT allow enabling without a provider**
 - **Prompt Lab route is `/studio/playground` — do NOT use the legacy `/prompts/playground` path**
+- **ImageGenPreviewPanel uses static `IG_C` segments — do NOT convert to dynamic `parsePromptIntoSegments()` (the prompts are editorial, not assembled)**
 
 **Existing features preserved:** Yes (required for every change)
 
@@ -1387,6 +1402,7 @@ When modifying for Prompt Intelligence:
 
 ## Changelog
 
+- **19 Mar 2026 (v2.1.0):** **COLOUR PIPELINE EXTENSION TO PRO PAGE PREVIEWS** — Added "Colour Pipeline in Pro Page Preview Panels" subsection documenting 3 consumers: DailyPromptsPreviewPanel (dynamic `sharedParsePrompt`), LabTierWindow (dynamic `labParsePrompt`), ImageGenPreviewPanel (static `IG_C` segments). §12: Added `pro-promagen-client.tsx` to modified files table (v6.0.0, 3,560 lines). §15: Added non-regression rule for ImageGen static segments (do not convert to dynamic parsing). Updated cross-reference header to include ImageGen preview panel.
 - **18 Mar 2026 (v2.0.0):** **PROMPT LAB PARITY + COLOUR-CODED INTELLIGENCE + ROUTE CORRECTION** — §9: Corrected Prompt Lab route from `/prompts/playground` to `/studio/playground` (actual implementation). Library route corrected to `/studio/library`. Added full Prompt Lab Parity Features subsection (11 features): colour-coded 4-tier prompts via `isPro`/`termIndex` props on `FourTierPromptPreview`, assembled prompt box with StageBadge and dynamic label switching, provider icon on optimized label, optimizer neutral mode (disabled until provider selected), green "Within optimal range" feedback, `LabCategoryColourLegend` in header, inline copy + save icons, `incrementLifetimePrompts()` wiring. §12: Updated files table — added `enhanced-educational-preview.tsx` (1,899 lines), `four-tier-prompt-preview.tsx` (647 lines), `intelligence-panel.tsx` (515 lines), `prompt-intelligence-builder.tsx` (714 lines), `prompt-colours.ts` (210 lines), `lifetime-counter.ts` (33 lines). Updated `prompt-builder.tsx` to v11.0.0 (3,104 lines), `combobox.tsx` to v7.3.0 (811 lines). §15: Added 7 new non-regression rules (SSOT colours, no `wasOptimized` gate, lifetime counter, cursor-pointer, isPro props, optimizer neutral mode, route path). Updated navigation structure §9.3 with corrected routes including `/studio/*`, `/world-context`, `/pro-promagen`.
 - **7 Jan 2026 (v1.0.0):** Initial document. Defines Prompt Intelligence architecture, data structures, scoring algorithm, integration plan, new pages, and build phases.
 

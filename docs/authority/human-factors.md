@@ -1,7 +1,7 @@
 # Human Factors in Digital Product Design — Authority Document
 
-**Last updated:** 7 March 2026
-**Version:** 1.0.0
+**Last updated:** 19 March 2026
+**Version:** 1.1.0
 **Owner:** Promagen
 **Scope:** Universal — applicable to any digital product with a user interface
 **Authority:** Every user-facing visual feature must name the human factor it exploits before implementation begins. This document defines what those factors are, why they work, and how to apply them. Backend and data-layer work is exempt.
@@ -88,6 +88,8 @@ This document arms you with that understanding. It is not a textbook. It is a fi
 
 **Design rule:** If your feature has a timer, ask whether the user can predict what happens when it expires. If yes, you're on a fixed schedule. Find a way to make the outcome uncertain while keeping the timing reliable.
 
+**Promagen example — Image Generation preview (19 March 2026):** The ImageGen preview panel rotates through 5 different AI platforms every 15 seconds with a crossfade. The user knows a new card is coming (fixed interval), but cannot predict which platform or which scene appears next (variable content). Each card shows a different prompt style (Leonardo with weights, DALL·E in prose, Flux keywords) paired with a different AI-generated image. The unpredictability of "what scene and platform will I see next?" keeps the user watching through multiple rotations.
+
 ---
 
 ## 3. Anticipatory Dopamine
@@ -109,6 +111,8 @@ This document arms you with that understanding. It is not a textbook. It is a fi
 **What kills it:** Instant delivery. If content appears with no build-up, there is no anticipation and therefore no dopamine spike. Loading spinners are not anticipation — they are frustration. The difference is whether the user knows WHAT is coming (anticipation) or is simply waiting for SOMETHING (frustration).
 
 **Design rule:** If your feature reveals new content, ask: "Does the user know what's coming before it arrives?" If no, add a preview. If yes, ask: "Does the final second feel different from the first?" If no, add acceleration.
+
+**Promagen example — Blur-to-sharp image reveal (19 March 2026):** The ImageGen preview panel shows AI-generated images that start at `blur(18px)` — a blurry smear of colour. Over 10 seconds the image resolves to crystal clarity. This perfectly maps the three-phase pattern: Awareness (the user sees blurred colour and knows an image is forming), Acceleration (the blur lifts faster in the final seconds, brightness and saturation sharpen), Payoff (3 seconds of sharp, beautiful image before the next cycle). The 10-second resolve creates the same suspense as watching a real AI generation complete. A fuchsia progress bar reinforces the acceleration phase visually.
 
 ---
 
@@ -447,6 +451,7 @@ Before building any user-facing visual feature, find the matching row:
 | Notification / alert       | Von Restorff + Peak-End Rule                            | Cognitive Load        | "Is this interruption worth a working memory slot?"         |
 | Onboarding / tutorial      | Curiosity Gap + Cognitive Load                          | Zeigarnik Effect      | "Am I opening gaps or closing them?"                        |
 | Visual polish / animation  | Aesthetic-Usability Effect + Animation as Communication | Optimal Stimulation   | "Does this animation answer one of the five questions?"     |
+| Image showcase / gen preview | Anticipatory Dopamine + Variable Reward               | Curiosity Gap         | "Does the user feel the image is being created for them?"   |
 
 ---
 
@@ -480,9 +485,11 @@ This takes 30 seconds. It prevents hours of building features that are technical
 | `homepage.md`              | Homepage component specs — features designed with these principles |
 | `scene-starters.md`        | Scene Starters UI — cascading glow exploits Variable Reward        |
 | `buttons.md`               | Button sizing and placement — Fitts's Law compliance               |
+| `paid_tier.md`             | Pro page preview panels — blur-to-sharp (§5.10 ImageGen), crossfade rotation, Loss Aversion in freemium gating |
 
 ---
 
 ## Changelog
 
+- **19 Mar 2026 — v1.1.0:** Added production examples to §2 Variable Reward (ImageGen crossfade rotation — 5 platforms, unpredictable content, fixed 15s interval) and §3 Anticipatory Dopamine (blur-to-sharp image reveal — 10s resolve maps three-phase anticipation pattern, fuchsia progress bar reinforces acceleration). Added "Image showcase / gen preview" row to §19 Decision Matrix (primary: Anticipatory Dopamine + Variable Reward, secondary: Curiosity Gap). Added `paid_tier.md` to §20 Related Documents. These are the first preview panels in Promagen that use real images rather than text/UI mockups — the visual medium amplifies both factors significantly compared to text-only showcases.
 - **7 Mar 2026 — v1.0.0:** Initial version. 18 principles covering curiosity, reward, anticipation, memory, stimulation, time perception, spatial framing, loss aversion, social proof, peak-end, cognitive load, isolation effect, motor control, aesthetics, dwell time, voice, colour, and animation. Decision matrix and application process. Written as a reusable cross-project reference.

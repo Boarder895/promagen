@@ -1062,6 +1062,36 @@ All prompt category colours are defined once in `src/lib/prompt-colours.ts` and 
 
 **Forbidden:** Defining local `CATEGORY_COLOURS` in any component. If a component needs colours, import from `@/lib/prompt-colours`.
 
+**Exception — static data arrays:** When colour values must be inlined in a static const array (e.g., `IMAGEGEN_SHOWCASE` segment data where each segment needs a colour at definition time), a local alias `IG_C` referencing the same hex values from `CATEGORY_COLOURS` is acceptable. The alias must be defined immediately above the data array, use the exact same hex values, and include a comment noting it mirrors the SSOT. This pattern avoids runtime imports in static data while keeping colours traceable.
+
+### § 6.15 Blur-to-Sharp Image Reveal Animation
+
+**Added:** 19 March 2026 (v4.1)
+
+CSS `filter: blur()` animation for showcasing AI-generated images. Simulates real-time image generation.
+
+**Keyframes:** `imagegenReveal` — 15s cycle. `blur(18px)` → resolves over 10s → `blur(0)` for 3s → resets. Paired with `imagegenProgressBar` — fuchsia gradient bar synced to same 15s cycle.
+
+**Rules:**
+- Co-located in `<style dangerouslySetInnerHTML>` (same as § 6.12)
+- `@media (prefers-reduced-motion: reduce)` must disable animation AND remove all filters (not just `animation: none` — the blur itself must be cleared)
+- Image element: `position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover`
+- When used with crossfade rotation (§ 6.16), apply `key={activeIdx}` to force animation reset on swap
+
+**Reference:** `ImageGenPreviewPanel` in `pro-promagen-client.tsx`
+
+### § 6.16 Static Image Asset Convention
+
+**Added:** 19 March 2026 (v4.1)
+
+AI-generated images and other static visual assets for feature previews live in `/public/images/pro/`.
+
+**Naming:** `{feature}-{platformId}.{ext}` — e.g., `imagegen-leonardo.jpg`, `imagegen-flux.jpg`, `imagegen-openai.png`.
+
+**Format:** JPEG for photographic content (smaller file size), PNG when transparency or lossless quality needed. No WebP requirement (browser support is sufficient but JPEG/PNG are simpler to generate from AI platforms).
+
+**Usage:** Referenced via `src="/images/pro/imagegen-{platformId}.{ext}"` in `<img>` tags (Next.js serves `/public/` at root). Always include `loading="lazy"`, empty `alt=""` (decorative), and `onError` handler hiding broken images.
+
 ## 7. Accessibility Rules
 
 All interactive elements must be keyboard accessible.
@@ -1932,6 +1962,7 @@ Before shipping any component that uses `ResizeObserver`, `requestAnimationFrame
 
 ## Changelog
 
+- **19 March 2026 (v4.1):** Added § 6.15 Blur-to-Sharp Image Reveal Animation (`imagegenReveal` + `imagegenProgressBar` keyframes, 15s cycle, `prefers-reduced-motion` must clear filters). Added § 6.16 Static Image Asset Convention (`/public/images/pro/`, naming pattern `{feature}-{platformId}.{ext}`, lazy loading, onError handlers). Updated § 6.14: added exception for `IG_C` local alias pattern in static data arrays (acceptable when hex values match SSOT exactly). Cross-references: `paid_tier.md` §5.10 v6.0.0, `best-working-practice.md` blur-to-sharp + crossfade rotation patterns.
 - **18 March 2026 (v4.0):** Major update — 6 new hard rules and 4 new patterns. Added § 6.0.4 cursor-pointer on ALL clickable elements (arrow cursor = broken UX). Added § 6.0.5 no question mark icons on tooltips. Added § 6.11 Debounced Intent Pattern (150ms hover panel switching, replaces failed intent triangle). Added § 6.12 Auto-Scroll Animation Pattern (17s cycle with ResizeObserver-computed distance, co-located `@keyframes`). Added § 6.13 Shared Hook State Sync (synthetic StorageEvent for same-tab cross-hook sync). Added § 6.14 SSOT Colour Constants (`prompt-colours.ts` is the sole source of truth for all 13 category colours — no local duplicates). Updated § 7.1 Tooltip Standards: added rules 6–8 (400ms close delay, sign-in as plain `<a>` not `SignInButton mode="modal"`, no question marks cross-ref to § 6.0.5). Updated § 8.4 prompt builder data locations (added `prompt-colours.ts` 210 lines, `lifetime-counter.ts` 33 lines, updated `prompt-builder.ts` 1,738 lines). Cross-references: `paid_tier.md` §5.14 (colour anatomy), §5.15 (gem badge), §5.16 (tier sync).
 - **15 March 2026**: Added § 6.10 Equal-Gap Card Layout (anti-stacking rule). One vertical spacing system per card, `paddingInline` only, `align-content: space-evenly`, responsive row hiding via `max-height` media query. Cross-ref best-working-practice.md.
 - **9 March 2026**: Added § 6.7 Commodity Brand Colour Palette (8 bright hex colours, no slate, solid border rule). Added § 6.8 Conflict Detection Matching Rules (word-boundary termsMatch, mood/era 2+ threshold). Added § 6.9 Scene Starters Data Completeness (all 11 categories, 100% score target).

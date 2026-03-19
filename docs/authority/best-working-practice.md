@@ -1,6 +1,6 @@
 # Best Working Practice
 
-**Last updated:** 18 March 2026
+**Last updated:** 19 March 2026
 
 ---
 
@@ -191,6 +191,9 @@ No text in Promagen may render below 10px. Every `clamp()` min value for `fontSi
 
 **Banned text colours:**
 `text-slate-500` (`#64748b`) and `text-slate-600` (`#475569`) are banned. They are invisible on Promagen's dark backgrounds. Dimmest permitted: `text-slate-400` (`#94A3B8`). For subtler text, use `text-white/60` (opacity on white) instead of darker slate classes.
+
+**Pro Promagen page — NO GREY TEXT (stricter rule):**
+On `/pro-promagen` specifically, no grey text of any kind: no `text-slate-400`, no `text-slate-500`, no `text-slate-600`, no `text-white/30`, no `text-white/40`, no muted grey whatsoever. All text must be bright — white, brand colours (amber, emerald, pink, cyan, fuchsia), or category colours from `prompt-colours.ts`. This page sells the product; every word must be visible and vibrant. Added 19 March 2026 after repeated violations.
 
 **Authority:** `code-standard.md` § 6.0.1, § 6.0.2
 
@@ -1009,6 +1012,89 @@ When designing preview panels or feature showcases, prefer showing **what the to
 
 ---
 
+### Blur-to-sharp image reveal animation
+
+**Added:** 19 March 2026
+
+When showcasing AI-generated images (or simulating image generation), use a CSS `filter: blur()` animation that resolves over 10 seconds. This mimics the experience of watching an AI image generator work in real time.
+
+**Timing spec (15s total cycle):**
+
+1. Start at `blur(18px)`, `brightness(0.3)`, `saturate(0.1)` — looks like generation just started
+2. Gradually resolve over ~10 seconds — blur lifts, brightness rises, saturation returns
+3. Crystal clear (`blur(0)`, `brightness(1)`, `saturate(1)`) for ~3 seconds — the payoff
+4. Fade back to blurred state — cycle restarts
+
+**CSS keyframes:**
+
+```css
+@keyframes imagegenReveal {
+  0% { filter: blur(18px) brightness(0.3) saturate(0.1); }
+  10% { filter: blur(12px) brightness(0.4) saturate(0.3); }
+  30% { filter: blur(6px) brightness(0.6) saturate(0.6); }
+  55% { filter: blur(1px) brightness(0.9) saturate(0.95); }
+  65%, 85% { filter: blur(0) brightness(1) saturate(1); }
+  100% { filter: blur(18px) brightness(0.3) saturate(0.1); }
+}
+```
+
+**Rules:**
+- Animation defined in `<style dangerouslySetInnerHTML>` (co-located, not globals.css)
+- `@media (prefers-reduced-motion: reduce)` disables the animation AND removes all filters
+- Pair with a fuchsia progress bar synced to the same cycle for visual feedback
+- Image uses `object-fit: cover` with `position: absolute; inset: 0`
+- When combined with crossfade rotation (see next pattern), use `key={activeIdx}` to reset the animation on card swap
+
+**Human factor:** Anticipatory Dopamine — the 10-second resolve creates the same suspense as waiting for a real image generation. The hold-at-sharp moment is the payoff. Research shows the moment *before* the reveal is more engaging than the reveal itself.
+
+**Reference implementation:** `ImageGenPreviewPanel` in `pro-promagen-client.tsx` (v6.0.0)
+
+---
+
+### Single-card crossfade rotation
+
+**Added:** 19 March 2026
+
+When a showcase has multiple items that should each get full visual space (e.g., prompt + image pairs), show one at a time and rotate with a crossfade. This replaces auto-scrolling when cards need the full panel height.
+
+**When to use instead of auto-scroll:** When each card contains a large visual element (image, chart, map) that benefits from maximum display area. Auto-scroll works for text-heavy content that overflows. Crossfade rotation works for visual content that needs to fill the space.
+
+**Timing spec:**
+- Each card visible for N seconds (synced to any internal animation — e.g., 15s matches blur-to-sharp cycle)
+- 300ms fade-out (opacity 1 → 0)
+- Swap content (React state update)
+- 300ms fade-in (opacity 0 → 1)
+- Total transition: 600ms
+
+**Implementation pattern:**
+
+```typescript
+const [activeIdx, setActiveIdx] = useState(0);
+const [fadeState, setFadeState] = useState<'visible' | 'fading-out' | 'fading-in'>('visible');
+
+useEffect(() => {
+  const id = setInterval(() => {
+    setFadeState('fading-out');
+    setTimeout(() => {
+      setActiveIdx((prev) => (prev + 1) % items.length);
+      setFadeState('fading-in');
+      setTimeout(() => setFadeState('visible'), 300);
+    }, 300);
+  }, ROTATION_MS);
+  return () => clearInterval(id);
+}, []);
+```
+
+**CSS:** `opacity: fadeState === 'fading-out' ? 0 : 1` with `transition: opacity 300ms ease-in-out`.
+
+**Key trick:** Use `key={activeIdx}` on any child elements with CSS animations (images, progress bars). This forces React to unmount/remount, resetting the animation from frame 0 without JavaScript intervention.
+
+**Navigation dots:** Show small dots (fuchsia or accent colour) at the bottom to indicate position. Active dot filled, others 20% white opacity.
+
+**Reference implementation:** `ImageGenPreviewPanel` in `pro-promagen-client.tsx` (v6.0.0). Also used by `ScenesPreviewPanel` for world rotation (different visual, same state pattern).
+
+---
+
 ## Performance Guardrails (CLS Prevention)
 
 **Purpose:**
@@ -1139,6 +1225,7 @@ OUTPUT FORMAT:
 
 ## Changelog
 
+- **19 Mar 2026:** Added 3 new subsections under UI Consistency + UX Patterns. (1) Blur-to-sharp image reveal animation: 15s CSS filter cycle (blur(18px)→blur(0) over 10s, hold 3s, reset), paired with fuchsia progress bar, `prefers-reduced-motion` disables filter entirely. Reference: ImageGenPreviewPanel. (2) Single-card crossfade rotation: 300ms fade-out/fade-in, `key={activeIdx}` for animation reset, navigation dots. Replaces auto-scroll when cards need full panel height for visual content. Reference: ImageGenPreviewPanel + ScenesPreviewPanel. (3) Pro page no-grey-text rule: stricter than site-wide banned colours — `/pro-promagen` prohibits ALL grey text including `text-slate-400` and `text-white/30`. All text must be bright (white, brand colours, category colours). Cross-refs: paid_tier.md §5.10 v6.0.0.
 - **18 Mar 2026:** Major update — 7 new subsections under UI Consistency + UX Patterns. (1) Tooltip standards: 400ms close delay, solid `rgba(15,23,42,0.97)` bg, sign-in as plain `<a>` not `SignInButton mode="modal"`, no question mark icons. (2) Cursor-pointer on all interactive elements. (3) SSOT colour constants: `prompt-colours.ts` as sole source of truth for 13 category colours, 6 consumers listed. (4) Debounced intent pattern: 150ms hover panel switching replacing failed intent triangle, full state table. (5) Auto-scroll animation pattern: 17s cycle spec, ResizeObserver distance, CSS custom property. (6) Shared hook state sync: synthetic StorageEvent for same-tab cross-hook sync. (7) "Show the tool, not the output" principle for feature showcases. Updated minimum text size from 9px to 10px floor. Cross-refs: code-standard.md §6.0.4/6.0.5/6.11-6.14, paid_tier.md §5.14/5.16.
 - **15 Mar 2026:** Added "Equal-gap card spacing" subsection under UI Consistency. One vertical spacing system per card — never mix `padding` with `space-evenly`. Viewport-controlled cards use `paddingInline` only + `align-content: space-evenly`. Content-sized cards use `padding` + `flex-col`. Cross-ref code-standard.md § 6.10.
 - **16 Feb 2026:** Major v3.0 alignment with code-standard.md. Three updates:

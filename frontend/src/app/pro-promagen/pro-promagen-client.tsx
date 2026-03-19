@@ -1716,7 +1716,10 @@ function DailyPromptsPreviewPanel() {
               <span className="font-semibold text-white" style={{ fontSize: 'clamp(0.7rem, 0.75vw, 0.85rem)' }}>
                 {provider.name}
               </span>
-              <span className="font-semibold" style={{ fontSize: 'clamp(0.6rem, 0.6vw, 0.7rem)', color: '#fb7185' }}>
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-rose-500/70 font-medium shadow-sm transition-all bg-gradient-to-r from-rose-600/20 to-pink-600/20 hover:from-rose-600/30 hover:to-pink-600/30 hover:border-rose-400"
+                style={{ fontSize: 'clamp(0.55rem, 0.55vw, 0.7rem)', color: '#fb7185', padding: 'clamp(2px, 0.2vw, 4px) clamp(6px, 0.6vw, 12px)' }}
+              >
                 → Open Prompt Builder
               </span>
             </div>
